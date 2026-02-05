@@ -13,7 +13,7 @@ bool ByteTreeWidget::operator<(const QTreeWidgetItem &other) const
     int column = treeWidget()->sortColumn();
     // sort by bytes
     if(column == 1) {
-        return this->data(1, 0x0100) < other.data(1, 0x0100);
+        return this->data(1, 0x0100).toULongLong() < other.data(1, 0x0100).toULongLong();
     }
     // default sorting
     return text(column).toLower() < other.text(column).toLower();
