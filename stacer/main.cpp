@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     QLatin1String hideOption("--hide");
     QLatin1String noSplashOption("--nosplash");
     
-    for (size_t i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i) {
       if (QString(argv[i]) == hideOption)
         isHide = true;
       else if (QString(argv[i]) == noSplashOption) 

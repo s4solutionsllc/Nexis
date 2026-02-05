@@ -59,7 +59,7 @@ void ResourcesPage::diskPieSeriesCustomize()
 {
     for (int i = 0; i < mDiskPieSeries->count(); ++i) {
         QPieSlice *slice = mDiskPieSeries->slices().at(i);
-        slice->setBrush(QColor((i < chartColors.count() ? chartColors.at(i) : i - chartColors.count())));
+        slice->setBrush(QColor(static_cast<QRgb>(i < chartColors.count() ? chartColors.at(i) : i - chartColors.count())));
         slice->setBorderColor(QColor(Qt::lightGray));
         connect(slice, &QPieSlice::hovered, this, [=](bool show) {
             slice->setExploded(show);

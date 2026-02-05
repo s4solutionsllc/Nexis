@@ -20,12 +20,14 @@ signals:
     void setErrorMessageS(const QString &msg);
     void clearInputsS();
     void disableElementsS(const bool status);
+    void setBtnSendTextS(const QString &text);
 
 private slots:
     void setErrorMessage(const QString &msg);
     void on_btnSend_clicked();
     void clearInputs();
     void disableElements(const bool status);
+    void setBtnSendText(const QString &text);
 
     void on_btnClose_clicked();
 

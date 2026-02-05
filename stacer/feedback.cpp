@@ -29,6 +29,7 @@ void Feedback::init()
     connect(this, &Feedback::clearInputsS,     this, &Feedback::clearInputs);
     connect(this, &Feedback::setErrorMessageS, this, &Feedback::setErrorMessage);
     connect(this, &Feedback::disableElementsS, this, &Feedback::disableElements);
+    connect(this, &Feedback::setBtnSendTextS,  this, &Feedback::setBtnSendText);
 }
 
 void Feedback::on_btnSend_clicked()
@@ -52,10 +53,10 @@ void Feedback::on_btnSend_clicked()
     if (! name.isEmpty() &&
         ! email.isEmpty() && isEmailValid)
     {
-        QtConcurrent::run([=] {
+        (void)QtConcurrent::run([=] {
             emit disableElementsS(true);
 
-            ui->btnSend->setText(tr("Sending.."));
+            emit setBtnSendTextS(tr("Sending.."));
             QStringList args;
 
             QJsonObject postData;
@@ -83,7 +84,7 @@ void Feedback::on_btnSend_clicked()
                 emit setErrorMessageS(tr("Something went wrong, try again !"));
             }
 
-            ui->btnSend->setText(tr("Save"));
+            emit setBtnSendTextS(tr("Save"));
             emit disableElementsS(false);
         });
 
@@ -111,6 +112,11 @@ void Feedback::clearInputs()
     ui->txtEmail->clear();
     ui->txtMessage->clear();
     ui->txtName->setFocus();
+}
+
+void Feedback::setBtnSendText(const QString &text)
+{
+    ui->btnSend->setText(text);
 }
 
 void Feedback::on_btnClose_clicked()

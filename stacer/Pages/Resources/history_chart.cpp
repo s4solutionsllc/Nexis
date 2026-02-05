@@ -53,7 +53,7 @@ void HistoryChart::init()
     };
     // set colors
     for (int i = 0; i < mSeriesList.count(); ++i) {
-        dynamic_cast<QSplineSeries*>(mChart->series().at(i))->setColor(QColor(colors.at(i)));
+        dynamic_cast<QSplineSeries*>(mChart->series().at(i))->setColor(QColor(static_cast<QRgb>(colors.at(i))));
     }
 
     // Chart Settings
