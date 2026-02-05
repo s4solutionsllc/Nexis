@@ -302,12 +302,12 @@ void SystemCleanerPage::systemClean()
 
 void SystemCleanerPage::on_btnScan_clicked()
 {
-    QtConcurrent::run(this, &SystemCleanerPage::systemScan);
+    QtConcurrent::run([this]() { systemScan(); });
 }
 
 void SystemCleanerPage::on_btnClean_clicked()
 {
-    QtConcurrent::run(this, &SystemCleanerPage::systemClean);
+    QtConcurrent::run([this]() { systemClean(); });
 }
 
 void SystemCleanerPage::on_btnBackToCategories_clicked()
