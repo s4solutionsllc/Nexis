@@ -19,7 +19,7 @@ StartupAppsPage::StartupAppsPage(QWidget *parent) :
 
 bool StartupAppsPage::checkIfDisabled(const QString& as_path)
 {
-    const QString disabled_str("X-GNOME-Autostart-enabled=false");
+    const QByteArray disabled_str("X-GNOME-Autostart-enabled=false");
     QFile autostart_file(as_path);
 
     autostart_file.open(QIODevice::ReadOnly | QIODevice::Text);
