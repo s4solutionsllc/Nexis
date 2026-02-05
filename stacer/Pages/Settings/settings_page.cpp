@@ -3,6 +3,7 @@
 #include "Managers/info_manager.h"
 #include "utilities.h"
 #include <QDesktopServices>
+#include <QRegularExpression>
 #include <QUrl>
 
 SettingsPage::~SettingsPage()
@@ -68,7 +69,7 @@ void SettingsPage::init()
     QFile startupAppFile(mStartupAppPath);
     if (startupAppFile.exists()) {
         QStringList appContent = FileUtil::readListFromFile(mStartupAppPath);
-        QString isHidden = Utilities::getDesktopValue(QRegExp("^Hidden=.*"), appContent).toLower();
+        QString isHidden = Utilities::getDesktopValue(QRegularExpression("^Hidden=.*"), appContent).toLower();
         ui->checkAutostart->setChecked(isHidden == "false");
     } else {
         ui->checkAutostart->setChecked(false);

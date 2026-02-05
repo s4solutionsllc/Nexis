@@ -42,7 +42,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 
         if (file.open(QIODevice::WriteOnly | openMode)) {
             QTextStream stream(&file);
-            stream << text << endl;
+            stream << text << Qt::endl;
 
             file.close();
         }

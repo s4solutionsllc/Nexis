@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 project(stacer-core)
 
 include_directories(
@@ -12,7 +12,7 @@ file(GLOB_RECURSE ${PROJECT_NAME}_srcs "${CMAKE_CURRENT_SOURCE_DIR}/**.cpp")
 
 add_definitions(-DSTACERCORE_LIBRARY)
 
-find_package(Qt5  COMPONENTS  Core Network REQUIRED)
+find_package(Qt6 COMPONENTS Core Network REQUIRED)
 
 add_library(${PROJECT_NAME}  STATIC  ${${PROJECT_NAME}_srcs})
-target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Network)
+target_link_libraries(${PROJECT_NAME} Qt6::Core Qt6::Network)

@@ -1,6 +1,7 @@
 #include "package_tool.h"
 
 #include <QDebug>
+#include <QRegularExpression>
 
 const PackageTool::PackageTools PackageTool::currentPackageTool =
         CommandUtil::isExecutable("apt-get") ? PackageTool::APT :
@@ -28,10 +29,10 @@ QStringList PackageTool::getDpkgPackages()
         packageList = CommandUtil::exec("bash", {"-c", "dpkg --get-selections 2> /dev/null"})
                 .trimmed()
                 .split('\n')
-                .filter(QRegExp("\\s+install$"));
+                .filter(QRegularExpression("\\s+install$"));
 
         for (int i = 0; i < packageList.count(); ++i)
-            packageList[i] = packageList.at(i).split(QRegExp("\\s+")).first();
+            packageList[i] = packageList.at(i).split(QRegularExpression("\\s+")).first();
 
     } catch(QString &ex) {
         qCritical() << ex;
@@ -130,7 +131,7 @@ QStringList PackageTool::getPacmanPackages()
                 .split('\n');
 
         for (int i = 0; i < packageList.count(); ++i)
-            packageList[i] = packageList.at(i).split(QRegExp("\\s+")).first();
+            packageList[i] = packageList.at(i).split(QRegularExpression("\\s+")).first();
 
     } catch(QString &ex) {
         qCritical() << ex;
@@ -172,7 +173,7 @@ QStringList PackageTool::getSnapPackages()
             packageList.removeFirst(); // remove titles e.g name, version
 
             for (int i = 0; i < packageList.count(); ++i)
-                packageList[i] = packageList.at(i).split(QRegExp("\\s+")).first();
+                packageList[i] = packageList.at(i).split(QRegularExpression("\\s+")).first();
 
         } catch (QString &ex) {
             qCritical() << ex;

@@ -1,6 +1,7 @@
 #include "processes_page.h"
 #include "ui_processes_page.h"
 #include "utilities.h"
+#include <QRegularExpression>
 
 ProcessesPage::~ProcessesPage()
 {
@@ -198,10 +199,11 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
 
 void ProcessesPage::on_txtProcessSearch_textChanged(const QString &val)
 {
-    QRegExp query(val, Qt::CaseInsensitive, QRegExp::Wildcard);
+    QString pattern = QRegularExpression::wildcardToRegularExpression(val);
+    QRegularExpression query(pattern, QRegularExpression::CaseInsensitiveOption);
 
     mSortFilterModel->setFilterKeyColumn(mHeaders.count() - 1); // process name
-    mSortFilterModel->setFilterRegExp(query);
+    mSortFilterModel->setFilterRegularExpression(query);
 }
 
 void ProcessesPage::on_sliderRefresh_valueChanged(const int &i)

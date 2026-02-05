@@ -1,5 +1,6 @@
 #include "disk_info.h"
 #include <QDebug>
+#include <QRegularExpression>
 
 QList<Disk*> DiskInfo::getDisks() const
 {
@@ -35,7 +36,7 @@ QList<QString> DiskInfo::devices()
         if (info.isValid()) set.insert(info.device());
     }
 
-    return set.toList();
+    return set.values();
 }
 
 DiskInfo::~DiskInfo()
@@ -50,7 +51,7 @@ QList<QString> DiskInfo::fileSystemTypes()
         if (info.isValid()) set.insert(info.fileSystemType());
     }
 
-    return set.toList();
+    return set.values();
 }
 
 QList<quint64> DiskInfo::getDiskIO() const
@@ -64,7 +65,7 @@ QList<quint64> DiskInfo::getDiskIO() const
     for (const QString diskName : diskNames) {
       QStringList diskStat = FileUtil::readStringFromFile(QString("/sys/block/%1/stat").arg(diskName))
               .trimmed()
-              .split(QRegExp("\\s+"));
+              .split(QRegularExpression("\\s+"));
 
       if (diskStat.count() > 7) {
           totalRead = totalRead + (diskStat.at(2).toLongLong() * 512);

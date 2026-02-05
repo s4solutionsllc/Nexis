@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QGraphicsDropShadowEffect>
+#include <QRegularExpression>
 
 class Utilities
 {
@@ -26,7 +27,7 @@ public:
     }
 
     static QString
-    getDesktopValue(const QRegExp &val, const QStringList &lines)
+    getDesktopValue(const QRegularExpression &val, const QStringList &lines)
     {
         QStringList filteredList = lines.filter(val);
         if (filteredList.count() > 0) {

@@ -3,6 +3,8 @@
 #include "utilities.h"
 #include <QStyle>
 #include <QDebug>
+#include <QRegularExpression>
+#include <QScreen>
 
 App::~App()
 {
@@ -25,7 +27,7 @@ void App::init()
 {
     setGeometry(
         QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter,
-            size(), qApp->desktop()->availableGeometry())
+            size(), qApp->primaryScreen()->availableGeometry())
     );
 
     // form settings
@@ -65,8 +67,8 @@ void App::init()
     }
 
     // GNOME SETTINGS
-    bool checkDesktopSession = QString(qgetenv("DESKTOP_SESSION")).contains(QRegExp("ubuntu", Qt::CaseInsensitive));
-    bool checkDistribution = SystemInfo().getDistribution().contains(QRegExp("ubuntu", Qt::CaseInsensitive));;
+    bool checkDesktopSession = QString(qgetenv("DESKTOP_SESSION")).contains(QRegularExpression("ubuntu", QRegularExpression::CaseInsensitiveOption));
+    bool checkDistribution = SystemInfo().getDistribution().contains(QRegularExpression("ubuntu", QRegularExpression::CaseInsensitiveOption));
 
     if (checkDesktopSession || checkDistribution) {
         gnomeSettingsPage = new GnomeSettingsPage(mSlidingStacked);

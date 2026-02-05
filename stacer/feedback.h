@@ -2,6 +2,7 @@
 #define FEEDBACK_H
 
 #include <QDialog>
+#include <QRegularExpression>
 
 namespace Ui {
 class Feedback;
@@ -37,7 +38,7 @@ private:
     QString mHeader;
     QString mFeedbackUrl;
 
-    QRegExp mMailRegex;
+    QRegularExpression mMailRegex;
 };
 
 #endif // FEEDBACK_H

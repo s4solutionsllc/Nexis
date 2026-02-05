@@ -17,7 +17,7 @@ Feedback::Feedback(QWidget *parent) :
     ui(new Ui::Feedback),
     mHeader("Content-Type: application/json"),
     mFeedbackUrl("https://stacer-web-api.herokuapp.com/feedback"),
-    mMailRegex("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b")
+    mMailRegex("\\A[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\z", QRegularExpression::CaseInsensitiveOption)
 {
     ui->setupUi(this);
 
@@ -26,9 +26,6 @@ Feedback::Feedback(QWidget *parent) :
 
 void Feedback::init()
 {
-    mMailRegex.setCaseSensitivity(Qt::CaseInsensitive);
-    mMailRegex.setPatternSyntax(QRegExp::RegExp);
-
     connect(this, &Feedback::clearInputsS,     this, &Feedback::clearInputs);
     connect(this, &Feedback::setErrorMessageS, this, &Feedback::setErrorMessage);
     connect(this, &Feedback::disableElementsS, this, &Feedback::disableElements);
@@ -40,7 +37,7 @@ void Feedback::on_btnSend_clicked()
     QString email = ui->txtEmail->text();
     QString message = ui->txtMessage->toPlainText();
 
-    bool isEmailValid = mMailRegex.exactMatch(email);
+    bool isEmailValid = mMailRegex.match(email).hasMatch();
 
     if (! isEmailValid) {
         emit setErrorMessageS(tr("Email address is not valid !"));

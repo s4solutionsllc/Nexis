@@ -1,6 +1,7 @@
 #include "system_info.h"
 
 #include <QObject>
+#include <QRegularExpression>
 #include <iostream>
 
 SystemInfo::SystemInfo()
@@ -12,17 +13,17 @@ SystemInfo::SystemInfo()
     try{
         QStringList lines = CommandUtil::exec("bash",{"-c", LSCPU_COMMAND}).split('\n');  //run command in English language (guaratee same behaviour across languages)
 
-        QRegExp regexp("\\s+");
+        QRegularExpression regexp("\\s+");
         QString space(" ");
 
-        auto filterModel = lines.filter(QRegExp("^Model name"));
+        auto filterModel = lines.filter(QRegularExpression("^Model name"));
         QString modelLine = filterModel.isEmpty() ? "error missing model:error missing model" : filterModel.first();
-        auto filterSpeed = lines.filter(QRegExp("^CPU max MHz"));
+        auto filterSpeed = lines.filter(QRegularExpression("^CPU max MHz"));
         QString speedLine = "error:0.0";
         if (filterSpeed.isEmpty())
         {
             // fallback to CPU MHz
-            filterSpeed = lines.filter(QRegExp("^CPU MHz"));
+            filterSpeed = lines.filter(QRegularExpression("^CPU MHz"));
             speedLine = filterSpeed.isEmpty() ? speedLine : filterSpeed.first();
         }
 

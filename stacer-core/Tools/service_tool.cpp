@@ -1,6 +1,7 @@
 #include "service_tool.h"
 
 #include <QDebug>
+#include <QRegularExpression>
 
 Service::Service(const QString &name, const QString description, const bool status, const bool active) :
     name(name),
@@ -19,9 +20,9 @@ QList<Service> ServiceTool::getServicesWithSystemctl()
 
         QStringList lines = CommandUtil::exec("systemctl", args)
                 .split(QChar('\n'))
-                .filter(QRegExp("[^@].service"));
+                .filter(QRegularExpression("[^@].service"));
 
-        QRegExp sep("\\s+");
+        QRegularExpression sep("\\s+");
         services.reserve(lines.size());
         for (const QString &line : lines)
         {
@@ -52,7 +53,7 @@ QString ServiceTool::getServiceDescription(const QString &serviceName)
     try {
         QStringList content = CommandUtil::exec("systemctl", args)
                 .split(QChar('\n'))
-                .filter(QRegExp("^Description"));
+                .filter(QRegularExpression("^Description"));
 
         if (content.length() > 0) {
             QStringList desc = content.first().split(QChar('='));
