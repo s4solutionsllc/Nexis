@@ -1,5 +1,8 @@
 #include "app_manager.h"
 #include <QDebug>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QStyleHints>
+#endif
 
 AppManager *AppManager::instance = nullptr;
 
@@ -13,19 +16,28 @@ AppManager *AppManager::ins()
 }
 
 AppManager::AppManager()
+    : mStyleValues(nullptr)
 {
     mSettingManager = SettingManager::ins();
 
-    mTrayIcon = new QSystemTrayIcon(QIcon(":/static/themes/default/img/sidebar-icons/dash.png"));
+    mTrayIcon = new QSystemTrayIcon(QIcon::fromTheme("utilities-system-monitor", QIcon(":/static/logo.png")));
 
     loadLanguageList();
-
-//    loadThemeList();
 
     if (mTranslator.load(QString("stacer_%1").arg(mSettingManager->getLanguage()), qApp->applicationDirPath() + "/translations")) {
         qApp->installTranslator(&mTranslator);
         (mSettingManager->getLanguage() == "ar") ? qApp->setLayoutDirection(Qt::RightToLeft) : qApp->setLayoutDirection(Qt::LeftToRight);
     }
+
+    // Live-switch when the system color scheme changes (Qt 6.5+)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    QObject::connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged,
+                     qApp, [this](Qt::ColorScheme) {
+                         if (mSettingManager->getColorScheme() == "auto") {
+                             updateStylesheet();
+                         }
+                     });
+#endif
 }
 
 QSystemTrayIcon *AppManager::getTrayIcon()
@@ -74,14 +86,36 @@ QMap<QString, QString> AppManager::getLanguageList() const
 //    return mThemeList;
 //}
 
+QString AppManager::resolveThemeName() const
+{
+    QString scheme = mSettingManager->getColorScheme();
+
+    if (scheme == "light") return "light";
+    if (scheme == "dark")  return "default";
+
+    // "auto" – detect system preference
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+    Qt::ColorScheme sys = QGuiApplication::styleHints()->colorScheme();
+    if (sys == Qt::ColorScheme::Light) return "light";
+#endif
+    return "default";
+}
+
 void AppManager::updateStylesheet()
 {
-    QString appThemePath = QString(":/static/themes/%1/style").arg(mSettingManager->getThemeName());
-    mStyleValues = new QSettings(QString("%1/values.ini").arg(appThemePath), QSettings::IniFormat);
+    QString themeName = resolveThemeName();
 
-    mStylesheetFileContent = FileUtil::readStringFromFile(QString("%1/style.qss").arg(appThemePath));
+    // Color values come from the theme-specific folder
+    delete mStyleValues;
+    mStyleValues = new QSettings(
+        QString(":/static/themes/%1/style/values.ini").arg(themeName),
+        QSettings::IniFormat);
 
-    // set values example: @color01 => #fff
+    // QSS is shared – always read from "default"
+    mStylesheetFileContent = FileUtil::readStringFromFile(
+        QStringLiteral(":/static/themes/default/style/style.qss"));
+
+    // Replace @tokens with values
     for (const QString &key : mStyleValues->allKeys()) {
         mStylesheetFileContent.replace(key, mStyleValues->value(key).toString());
     }

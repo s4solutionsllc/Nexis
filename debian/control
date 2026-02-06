@@ -19,7 +19,7 @@ Vcs-Browser: https://github.com/oguzhaninan/Stacer.git
 Package: stacer
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Recommends: systemd, curl
+Recommends: systemd, curl, adwaita-icon-theme | yaru-theme-icon
 Description: Linux System Optimizer and Monitoring
  Stacer is an open-source system optimizer and application monitor
  that helps users manage startup applications, clean system caches,

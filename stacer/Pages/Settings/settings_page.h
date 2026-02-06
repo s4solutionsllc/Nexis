@@ -33,6 +33,7 @@ private slots:
     void on_spinMemoryPercent_valueChanged(int value);
     void on_spinDiskPercent_valueChanged(int value);
     void on_checkAppQuitDontAsk_clicked(bool checked);
+    void cmbColorSchemeChanged(int index);
 
 private:
     Ui::SettingsPage *ui;

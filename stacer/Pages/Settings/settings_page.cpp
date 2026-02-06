@@ -86,6 +86,13 @@ void SettingsPage::init()
 
     ui->cmbStartPage->setCurrentText(mSettingManager->getStartPage());
 
+    // color scheme (appearance)
+    ui->cmbColorScheme->addItem(tr("Auto"), "auto");
+    ui->cmbColorScheme->addItem(tr("Light"), "light");
+    ui->cmbColorScheme->addItem(tr("Dark"), "dark");
+    ui->cmbColorScheme->setCurrentIndex(
+        ui->cmbColorScheme->findData(mSettingManager->getColorScheme()));
+
     // load resource percents
     ui->spinCpuPercent->setValue(mSettingManager->getCpuAlertPercent());
     ui->spinMemoryPercent->setValue(mSettingManager->getMemoryAlertPercent());
@@ -93,7 +100,7 @@ void SettingsPage::init()
 
     // effects
     QList<QWidget*> widgets = {
-        ui->cmbLanguages, /*ui->cmbThemes,*/ ui->cmbDisks, ui->cmbStartPage, ui->btnDonate,
+        ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme, ui->btnDonate,
         ui->spinCpuPercent, ui->spinMemoryPercent, ui->spinDiskPercent
     };
 
@@ -104,6 +111,7 @@ void SettingsPage::init()
 //    connect(ui->cmbThemes, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbThemesChanged(int)));
     connect(ui->cmbDisks, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbDiskChanged(int)));
     connect(ui->cmbStartPage, SIGNAL(currentTextChanged(QString)), this, SLOT(cmbStartPageChanged(QString)));
+    connect(ui->cmbColorScheme, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbColorSchemeChanged(int)));
 }
 
 void SettingsPage::cmbLanguagesChanged(const int &index)
@@ -173,4 +181,11 @@ void SettingsPage::on_spinDiskPercent_valueChanged(int value)
 void SettingsPage::on_checkAppQuitDontAsk_clicked(bool checked)
 {
     mSettingManager->setAppQuitDialogDontAsk(checked);
+}
+
+void SettingsPage::cmbColorSchemeChanged(int index)
+{
+    QString scheme = ui->cmbColorScheme->itemData(index).toString();
+    mSettingManager->setColorScheme(scheme);
+    apm->updateStylesheet();
 }

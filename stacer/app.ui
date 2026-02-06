@@ -47,13 +47,13 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>60</width>
+        <width>220</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>60</width>
+        <width>220</width>
         <height>16777215</height>
        </size>
       </property>
@@ -68,13 +68,13 @@
         <number>0</number>
        </property>
        <property name="topMargin">
-        <number>5</number>
+        <number>12</number>
        </property>
        <property name="rightMargin">
         <number>0</number>
        </property>
        <property name="bottomMargin">
-        <number>5</number>
+        <number>12</number>
        </property>
        <item>
         <spacer name="verticalSpacer_2">

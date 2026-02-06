@@ -1,4 +1,4 @@
-/****** DEFAULT THEME ******/
+/****** ADWAITA THEME ******/
 
 /*****************
     QScrollArea
@@ -8,16 +8,20 @@ QScrollArea {
 }
 
 QScrollBar:vertical {
-    width: 12;
-    margin: 0 0 0 2;
-    border-radius: 2;
+    width: 8;
+    margin: 0;
+    border-radius: 4;
     background-color: transparent;
 }
 
 QScrollBar::handle:vertical {
-    background-color: @color01;
-    min-height: 20px;
-    border-radius: 2;
+    background-color: @color06;
+    min-height: 30px;
+    border-radius: 4;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: @color04;
 }
 
 QScrollBar::add-line:vertical,
@@ -27,22 +31,24 @@ QScrollBar::sub-line:vertical {
 
 QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
-    border-bottom-right-radius: 2;
-    border-bottom-left-radius: 2;
     background-color: transparent;
 }
 
 QScrollBar:horizontal {
-    height: 12;
-    margin: 2 0 0 0;
-    border-radius: 2;
+    height: 8;
+    margin: 0;
+    border-radius: 4;
     background-color: transparent;
 }
 
 QScrollBar::handle:horizontal {
-    background-color: @color01;
-    min-width: 20px;
-    border-radius: 2;
+    background-color: @color06;
+    min-width: 30px;
+    border-radius: 4;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: @color04;
 }
 
 QScrollBar::add-line:horizontal,
@@ -52,8 +58,6 @@ QScrollBar::sub-line:horizontal {
 
 QScrollBar::add-page:horizontal,
 QScrollBar::sub-page:horizontal {
-    border-bottom-right-radius: 2;
-    border-bottom-left-radius: 2;
     background-color: transparent;
 }
 
@@ -65,30 +69,34 @@ QAbstractScrollArea::corner {
     QMessageBox
 **************/
 QMessageBox {
-    background-color: #212f3c;
+    background-color: @color01;
 }
 
 QMessageBox QLabel {
-    color: #fefefe;
+    color: @color05;
 }
 
 /*************
     QMenu
 **************/
 QMenu {
-    background-color: @color02;
-    border-radius: 2;
-    margin: 3px 5px;
+    background-color: @color01;
+    border-radius: 8;
+    border: 1px solid @borderColor;
+    padding: 4 0;
 }
 
 QMenu::item {
-    padding: 2px 30px;
+    padding: 6 24;
     color: @color05;
     font-size: 10pt;
+    border-radius: 6;
+    margin: 2 4;
 }
 
 QMenu::item:selected {
-    background-color: @color03;
+    background-color: @accentColor;
+    color: @color07;
 }
 
 QMenu::indicator {
@@ -167,9 +175,10 @@ QCheckBox[accessibleName="circle"]::indicator:checked {
 
 QToolTip {
     color: @color05;
-    padding: 2;
-    background-color: @sidebar;
-    border-radius: 3;
+    padding: 4 8;
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    border-radius: 6;
 }
 
 /***************
@@ -192,7 +201,6 @@ QToolTip {
 QSpinBox::up-button {
     subcontrol-origin: border;
     subcontrol-position: top right;
-
     width: 16px;
     border-image: url(:/static/themes/common/img/spinup.png) 1;
     border-width: 1px;
@@ -201,7 +209,6 @@ QSpinBox::up-button {
 QSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
-
     width: 16px;
     border-image: url(:/static/themes/common/img/spindown.png) 1;
     border-width: 1px;
@@ -213,17 +220,18 @@ QSpinBox::down-button {
 ***************/
 
 QSlider::groove:horizontal {
-    height: 2px;
-    background: @color12;
+    height: 4px;
+    background: @borderColor;
     margin: 2px 0;
+    border-radius: 2;
 }
 
 QSlider::handle:horizontal {
-    background-color: @color03;
-    width: 14px;
-    height: 14px;
+    background-color: @accentColor;
+    width: 16px;
+    height: 16px;
     margin: -6px 0;
-    border-radius: 7px;
+    border-radius: 8px;
 }
 
 /***************
@@ -231,38 +239,39 @@ QSlider::handle:horizontal {
 ***************/
 
 QComboBox {
-    border: 0;
-    border-radius: 2;
+    border: 1px solid @borderColor;
+    border-radius: 6;
     background-color: @color01;
-    padding: 4 0 4 10;
-    font-size: 11pt;
+    padding: 6 12;
+    font-size: 10pt;
     color: @color05;
     min-width: 100;
 }
 
-QComboBox::drop-down {
-    background-color: @color01;
-    subcontrol-position: top right;
-    width: 14;
-    padding: 0 5;
-    color: @color05;
-
-    border-left-width: 1px;
-    border-left-color: @color01;
-    border-left-style: solid;
-    image: url(:/static/themes/default/img/down-arrow.png);
-    border-top-right-radius: 2;
-    border-bottom-right-radius: 2;
+QComboBox:hover {
+    border-color: @color04;
 }
 
-QComboBox::down-arrow:on {
-    background-color: @color01;
-    color: @color05;
+QComboBox::drop-down {
+    background-color: transparent;
+    subcontrol-position: top right;
+    width: 20;
+    padding: 0 6;
+    border: 0;
+    border-top-right-radius: 6;
+    border-bottom-right-radius: 6;
+}
+
+QComboBox::down-arrow {
+    image: url(:/static/themes/default/img/down-arrow.png);
 }
 
 QComboBox QAbstractItemView {
     background-color: @color01;
-    border: 0;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+    selection-background-color: @accentColor;
+    selection-color: @color07;
 }
 
 /***************
@@ -284,14 +293,14 @@ QTableView {
     selection-color: @color05;
     color: @color05;
     font-size: 10pt;
-    gridline-color: @color08;
-    border-radius: 2;
+    gridline-color: @borderColor;
+    border-radius: 6;
 }
 
 QTableView::item {
-    font-size: 11pt;
+    font-size: 10pt;
     color: @color05;
-    padding: 6 0 6 -10;
+    padding: 8 6;
     background-color: @color01;
 }
 
@@ -301,12 +310,12 @@ QTableView::item:selected {
 
 QHeaderView::section {
     background-color: @color02;
-    border-width: 1 1 1 0;
+    border-width: 0 0 1 0;
     border-style: solid;
-    border-color: @color08;
-    font-size: 11pt;
-    color: @color16;
-    padding-left:10;
+    border-color: @borderColor;
+    font-size: 10pt;
+    color: @accentColor;
+    padding: 8 12;
 }
 
 QHeaderView::up-arrow {
@@ -322,54 +331,64 @@ QHeaderView::down-arrow {
 *******************/
 
 QMainWindow * {
-    font-family: "Ubuntu";
+    font-family: "Ubuntu", system-ui, sans-serif;
 }
 
 QLineEdit,
 QPlainTextEdit,
 QSpinBox {
-    border-radius: 2;
-    padding: 6;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+    padding: 8;
     background-color: @color01;
     font-size: 10pt;
     color: @color05;
 }
 
+QLineEdit:focus,
+QPlainTextEdit:focus,
+QSpinBox:focus {
+    border-color: @accentColor;
+}
+
 QPushButton {
-    border-radius: 2;
-    font-size: 11pt;
+    border-radius: 6;
+    font-size: 10pt;
+    padding: 8 16;
+    min-height: 18;
 }
 
 QPushButton[accessibleName="danger"] {
-    padding: 6 16;
-    background-color: @color09;
+    background-color: @destructiveColor;
     color: @color07;
+    border: 0;
 }
 
 QPushButton[accessibleName="danger"]:hover {
-    background-color: #c0392b;
+    background-color: @color09;
 }
 
 QPushButton[accessibleName="primary"] {
-    padding: 6 16;
-    background-color: @color03;
+    background-color: @accentColor;
     color: @color07;
+    border: 0;
 }
 
 QPushButton[accessibleName="primary"]:hover {
-    background-color: @color10;
+    background-color: @accentHover;
 }
 
 QLabel[accessibleName="dialog-title"] {
-    color: @color06;
-    font-size: 11pt;
+    color: @color05;
+    font-size: 12pt;
+    font-weight: bold;
     padding-bottom: 8;
     border: 0;
-    border-bottom: 1 solid @color06;
+    border-bottom: 1px solid @borderColor;
 }
 
 #lblErrorMsg {
-    color: @color09;
+    color: @destructiveColor;
 }
 
 /**************
@@ -378,85 +397,43 @@ QLabel[accessibleName="dialog-title"] {
 
 #sidebar {
     background-color: @sidebar;
-    min-width: 60;
+    min-width: 200;
+    max-width: 200;
+    border-right: 1px solid @borderColor;
 }
 
 #sidebar QPushButton {
-    border: 0px;
-    height: 42;
-    border-style: solid;
-    color: @color07;
-    margin: 0 0;
-    border-radius: 0;
+    border: 0;
+    height: 36;
+    border-radius: 6;
+    color: @color05;
+    margin: 1 8;
+    padding: 0 12;
+    text-align: left;
+    font-size: 10pt;
 }
 
-#sidebar QPushButton:checked,
-#sidebar QPushButton:hover {
-    background-color: @color03;
+#sidebar QPushButton:checked {
+    background-color: @accentColor;
+    color: @color07;
+}
+
+#sidebar QPushButton:hover:!checked {
+    background-color: @color02;
 }
 
 #pageTitle {
-    color: @color04;
-    padding: 5 0 8 0;
-    margin: 5 10;
+    color: @color05;
+    font-size: 12pt;
+    font-weight: bold;
+    padding: 12 0;
+    margin: 0 12;
     border: 0;
-    border-bottom: 1 solid @color04;
+    border-bottom: 1px solid @borderColor;
 }
 
 #pageContent {
-    background-color: @color08;
-}
-
-#btnDash {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/dash.png);
-}
-
-#btnSystemCleaner {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/cleaner.png);
-}
-
-#btnStartupApps {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/startup-apps.png);
-}
-
-#btnSearch {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/search.png);
-}
-
-#btnServices {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/services.png);
-}
-
-#btnProcesses {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/process.png);
-}
-
-#btnUninstaller {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/uninstaller.png);
-}
-
-#btnResources {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/resources.png);
-}
-
-#btnHelpers {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/helpers.png);
-}
-
-#btnAptSourceManager {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/ppa-manager.png);
-}
-
-#btnSettings {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/settings.png);
-}
-
-#btnFirewall {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/firewall.png);
-}
-
-#btnFeedback {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/feedback.png);
+    background-color: @pageContent;
 }
 
 /********************
@@ -466,8 +443,8 @@ QLabel[accessibleName="dialog-title"] {
 /* - Circle Bar - */
 
 #widgetCircleBar {
-    background-color: @color01;
-    border-radius: 1;
+    background-color: @cardBg;
+    border-radius: 12;
 }
 
 #lblCircleChartTitle,
@@ -480,8 +457,8 @@ QLabel[accessibleName="dialog-title"] {
 /* - Line Bar - */
 
 #lineChartWidget {
-    background-color: @color01;
-    border-radius: 1;
+    background-color: @cardBg;
+    border-radius: 12;
 }
 
 #lblLineChartTitle {
@@ -496,17 +473,19 @@ QLabel[accessibleName="dialog-title"] {
 
 #lblLineChartTotal {
     color: @color06;
-    font-size: 11pt;
+    font-size: 10pt;
 }
 
 #lineChartProgress {
-    background-color: @color08;
+    background-color: @color02;
     border: 0;
-    border-radius: 0;
+    border-radius: 3;
+    max-height: 6;
 }
 
 #lineChartProgress::chunk {
-    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #3498db, stop:1 #2980b9);
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 @accentColor, stop:1 @accentHover);
+    border-radius: 3;
 }
 
 /* - System Info - */
@@ -520,7 +499,7 @@ QLabel[accessibleName="dialog-title"] {
 #listViewSystemInfo {
     border: 0;
     background-color: transparent;
-    font-size: 12pt;
+    font-size: 11pt;
     color: @color06;
 }
 
@@ -566,13 +545,13 @@ QLabel[accessibleName="dialog-title"] {
 #btnBackToCategories {
     border: 0;
     font-size: 11pt;
-    color: @color03;
+    color: @accentColor;
 }
 
 #treeWidgetScanResult {
-    border: 1 solid @color13;
+    border: 1px solid @borderColor;
     background-color: transparent;
-    border-radius: 2;
+    border-radius: 6;
 }
 
 #treeWidgetScanResult QHeaderView::section {
@@ -580,9 +559,9 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #treeWidgetScanResult::item {
-    border-bottom: 1 solid @color14;
-    padding: 7 3;
-    font-size: 11pt;
+    border-bottom: 1px solid @borderColor;
+    padding: 8 6;
+    font-size: 10pt;
     color: @color11;
 }
 
@@ -614,12 +593,12 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #treeWidgetScanResult::branch {
-    border-bottom: 1 solid @color14;
+    border-bottom: 1px solid @borderColor;
 }
 
 #lblRemovedTotalSize {
     font-size: 11pt;
-    color: @color15;
+    color: @successColor;
 }
 
 /************************
@@ -631,14 +610,14 @@ QLabel[accessibleName="dialog-title"] {
 
 #lblStartupAppsTitle {
     color: @color11;
-    padding: 10 0 10 20;
+    padding: 10 0 10 12;
 }
 
 /* - Startup App - */
 
 #widgetStartupApp {
-    border-radius: 2;
-    background-color: @color01;
+    border-radius: 12;
+    background-color: @cardBg;
 }
 
 #lblStartupAppIcon {
@@ -650,7 +629,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #widgetStartupApp #lblStartupAppName {
-    font-size: 11pt;
+    font-size: 10pt;
     color: @color05;
 }
 
@@ -672,7 +651,7 @@ QLabel[accessibleName="dialog-title"] {
 /* - Startup App Edit - */
 
 #StartupAppEdit {
-    background-color: @color08;
+    background-color: @pageContent;
 }
 
 /**************************
@@ -692,8 +671,8 @@ QLabel[accessibleName="dialog-title"] {
 /* - Service Item - */
 
 #serviceItemWidget {
-    border-radius: 2;
-    background-color: @color01;
+    border-radius: 12;
+    background-color: @cardBg;
 }
 
 #serviceItemWidget:hover {
@@ -705,12 +684,12 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #ServiceItem #lblServiceName {
-    font-size: 11pt;
+    font-size: 10pt;
     color: @color05;
 }
 
 #ServiceItem #lblServiceDescription {
-    font-size: 10pt;
+    font-size: 9pt;
     color: @color06;
 }
 
@@ -744,12 +723,12 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #txtProcessSearch {
-    width: 150;
-    padding: 4 12;
-    border-radius: 12;
-    background: @color01 url(:/static/themes/default/img/search.png) no-repeat right center;
-    border: 1px solid @color02;
-    color: @color12;
+    width: 180;
+    padding: 6 12;
+    border-radius: 6;
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    color: @color05;
 }
 
 #lblRefresh {
@@ -766,16 +745,19 @@ QLabel[accessibleName="dialog-title"] {
 *************************/
 
 #nav QPushButton {
-    border-radius: 3;
-    padding: 5 10;
+    border-radius: 6;
+    padding: 6 12;
     font-size: 10pt;
-    background-color: @circleChartBackgroundColor;
-    color: @color07;
+    background-color: @color01;
+    color: @color05;
+    border: 1px solid @borderColor;
 }
 
 #nav QPushButton:hover,
 #nav QPushButton:checked {
-    background-color: @color03;
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
 }
 
 #lblPackagesTitle {
@@ -786,17 +768,17 @@ QLabel[accessibleName="dialog-title"] {
 
 #txtPackageSearch,
 #txtSearchAptSource {
-    padding: 4 12;
-    border-radius: 12;
-    background: @color01 url(:/static/themes/default/img/search.png) no-repeat right center;
-    border: 1px solid @color02;
-    color: @color12;
+    padding: 6 12;
+    border-radius: 6;
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    color: @color05;
 }
 
 #listWidgetPackages, #listWidgetSnapPackages {
     border: 0;
     background-color: transparent;
-    font-size: 11pt;
+    font-size: 10pt;
 }
 
 #listWidgetPackages::indicator, #listWidgetSnapPackages::indicator {
@@ -813,14 +795,15 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #listWidgetPackages::item, #listWidgetSnapPackages::item {
-    border-radius: 2;
-    min-height: 45;
-    background-color: @color01;
+    border-radius: 8;
+    min-height: 40;
+    background-color: @cardBg;
+    margin: 1 0;
 }
 
 #listWidgetPackages::item:text, #listWidgetSnapPackages::item:text {
     color: @color05;
-    padding-left: 15;
+    padding-left: 12;
 }
 
 #listWidgetPackages::item:selected, #listWidgetSnapPackages::item:selected {
@@ -864,7 +847,7 @@ QLabel[accessibleName="dialog-title"] {
 ****************/
 
 #SettingsPage QLabel {
-    font-size: 11pt;
+    font-size: 10pt;
     color: @color12;
 }
 
@@ -878,18 +861,19 @@ QLabel[accessibleName="dialog-title"] {
 ******************/
 
 #widgetUpdateBar {
-    background-color: @color03;
-    border-radius: 2;
+    background-color: @accentColor;
+    border-radius: 6;
 }
 
 #lblUpdateBarText {
     font-size: 10pt;
-    color: @color05;
+    color: @color07;
 }
 
 #btnDownloadUpdate {
     background-color: @color01;
-    padding: 4 10;
+    padding: 6 12;
+    border-radius: 6;
 }
 
 /****************
@@ -909,11 +893,11 @@ QLabel[accessibleName="dialog-title"] {
 
 #lblAptSourceTitle {
     color: @color11;
-    padding: 10 0 5 20;
+    padding: 10 0 5 12;
 }
 
 #txtAptSource {
-    padding: 7;
+    padding: 8;
 }
 
 #lblAptSourceSelectInfo {
@@ -923,14 +907,14 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #listWidgetAptSources {
-    selection-background-color: @color03;
+    selection-background-color: @accentColor;
 }
 
 /* - APT Source Repository Item - */
 
 #aptSourceRepositoryItemWidget {
-    border-radius: 2;
-    background-color: @color01;
+    border-radius: 12;
+    background-color: @cardBg;
 }
 
 #lblAptSourceIcon {
@@ -942,7 +926,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #lblAptSourceName {
-    font-size: 11pt;
+    font-size: 10pt;
     color: @color05;
 }
 
@@ -960,21 +944,22 @@ QLabel[accessibleName="dialog-title"] {
 SEARCH
 *******************************/
 #txtSearchInput {
-    padding: 5 12 5 24;
-    border-radius: 12;
-    background: @color01 url(:/static/themes/default/img/search.png) no-repeat left center;
-    border: 1px solid @color02;
-    color: @color12;
+    padding: 6 12;
+    border-radius: 6;
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    color: @color05;
 }
 
 #btnSearchAdvance {
-    padding: 3;
-    background-color: @color03;
+    padding: 6 12;
+    background-color: @accentColor;
     color: @color07;
+    border-radius: 6;
 }
 
 #lblFoundFilesInfo {
-    color: @color15;
+    color: @successColor;
 }
 
 #lblSearchDir {
@@ -984,8 +969,10 @@ SEARCH
 
 #btnBrowseSearchDir {
     background-color: @color01;
-    padding: 6 8;
+    padding: 6 12;
     color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: 6;
 }
 
 #advanceSearchPane QSpinBox {
@@ -1008,12 +995,11 @@ SEARCH
 #btnAdvancePaneToggle,
 #btnNewHost {
     font-size: 10pt;
-    text-decoration: underline;
-    color: @color03;
+    color: @accentColor;
+    border: 0;
 }
 
 #lblHostTitle {
     font-size: 11pt;
     color: @color12;
 }
-

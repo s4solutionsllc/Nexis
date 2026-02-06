@@ -38,7 +38,7 @@ void SettingManager::setThemeName(const QString &value)
 
 QString SettingManager::getThemeName() const
 {
-    return "default"; //mSettings->value(SettingKeys::ThemeName, "default").toString();
+    return mSettings->value(SettingKeys::ThemeName, "default").toString();
 }
 
 void SettingManager::setDiskName(const QString &value)
@@ -109,4 +109,14 @@ void SettingManager::setAppQuitDialogChoice(const QString &value)
 QString SettingManager::getAppQuitDialogChoice() const
 {
     return mSettings->value(SettingKeys::AppQuitDialogChoice, "close").toString();
+}
+
+void SettingManager::setColorScheme(const QString &value)
+{
+    mSettings->setValue(SettingKeys::ColorScheme, value);
+}
+
+QString SettingManager::getColorScheme() const
+{
+    return mSettings->value(SettingKeys::ColorScheme, "auto").toString();
 }

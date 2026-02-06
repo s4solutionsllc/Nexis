@@ -9,6 +9,9 @@
 #include <QJsonObject>
 #include <QTranslator>
 #include <QSystemTrayIcon>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QStyleHints>
+#endif
 
 #include "Utils/file_util.h"
 #include "Managers/setting_manager.h"
@@ -32,6 +35,8 @@ public:
     QSettings *getStyleValues() const;
 
     QSystemTrayIcon *getTrayIcon();
+
+    QString resolveThemeName() const;
 
 private:
     static AppManager *instance;

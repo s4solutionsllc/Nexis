@@ -4,6 +4,7 @@
 #include <QStyle>
 #include <QDebug>
 #include <QScreen>
+#include <QIcon>
 
 App::~App()
 {
@@ -64,6 +65,26 @@ void App::init()
     } else {
         ui->btnAptSourceManager->hide();
     }
+
+    // Set sidebar icons from system theme with bundled fallbacks
+    auto setIcon = [](QPushButton *btn, const QString &themeName, const QString &fallback, const QString &text) {
+        btn->setIcon(QIcon::fromTheme(themeName, QIcon(fallback)));
+        btn->setText(text);
+        btn->setIconSize(QSize(20, 20));
+    };
+
+    setIcon(ui->btnDash,             "utilities-system-monitor", ":/static/themes/default/img/sidebar-icons/dash.png",         tr("Dashboard"));
+    setIcon(ui->btnStartupApps,      "media-playback-start",     ":/static/themes/default/img/sidebar-icons/startup-apps.png", tr("Startup Apps"));
+    setIcon(ui->btnSystemCleaner,    "edit-clear-all",           ":/static/themes/default/img/sidebar-icons/cleaner.png",      tr("System Cleaner"));
+    setIcon(ui->btnSearch,           "edit-find",                ":/static/themes/default/img/sidebar-icons/search.png",        tr("Search"));
+    setIcon(ui->btnServices,         "system-run",               ":/static/themes/default/img/sidebar-icons/services.png",      tr("Services"));
+    setIcon(ui->btnProcesses,        "view-list-details",        ":/static/themes/default/img/sidebar-icons/process.png",       tr("Processes"));
+    setIcon(ui->btnHelpers,          "preferences-other",        ":/static/themes/default/img/sidebar-icons/helpers.png",       tr("Helpers"));
+    setIcon(ui->btnUninstaller,      "edit-delete",              ":/static/themes/default/img/sidebar-icons/uninstaller.png",   tr("Uninstaller"));
+    setIcon(ui->btnResources,        "preferences-system",       ":/static/themes/default/img/sidebar-icons/resources.png",     tr("Resources"));
+    setIcon(ui->btnAptSourceManager, "system-software-install",  ":/static/themes/default/img/sidebar-icons/ppa-manager.png",  tr("APT Repository Manager"));
+    setIcon(ui->btnSettings,         "preferences-desktop",      ":/static/themes/default/img/sidebar-icons/settings.png",      tr("Settings"));
+    setIcon(ui->btnFeedback,         "mail-message-new",         ":/static/themes/default/img/sidebar-icons/feedback.png",      tr("Feedback"));
 
     // add pages
     for (QWidget *page: mListPages) {

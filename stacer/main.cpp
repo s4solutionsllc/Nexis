@@ -3,6 +3,7 @@
 #include <QSplashScreen>
 #include <QDebug>
 #include <QFontDatabase>
+#include <QIcon>
 
 #include "app.h"
 
@@ -81,6 +82,11 @@ int main(int argc, char *argv[])
       else if (QString(argv[i]) == noSplashOption) 
         isNoSplash = true;
     }
+
+    // Ensure Adwaita icons are available as a fallback theme
+    if (QIcon::themeName().isEmpty())
+        QIcon::setThemeName("Adwaita");
+    QIcon::setFallbackThemeName("Adwaita");
 
     QFontDatabase::addApplicationFont(":/static/font/Ubuntu-R.ttf");
 

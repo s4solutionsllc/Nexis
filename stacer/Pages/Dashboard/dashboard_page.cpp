@@ -16,9 +16,9 @@ DashboardPage::~DashboardPage()
 DashboardPage::DashboardPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::DashboardPage),
-    mCpuBar(new CircleBar(tr("CPU"), {"#A8E063", "#56AB2F"}, this)),
-    mMemBar(new CircleBar(tr("MEMORY"), {"#FFB75E", "#ED8F03"}, this)),
-    mDiskBar(new CircleBar(tr("DISK"), {"#DC2430", "#7B4397"}, this)),
+    mCpuBar(new CircleBar(tr("CPU"), {"#2ec27e", "#26a269"}, this)),
+    mMemBar(new CircleBar(tr("MEMORY"), {"#E95420", "#c64516"}, this)),
+    mDiskBar(new CircleBar(tr("DISK"), {"#e01b24", "#c01c28"}, this)),
     mDownloadBar(new LineBar(tr("DOWNLOAD"), this)),
     mUploadBar(new LineBar(tr("UPLOAD"), this)),
     mTimer(new QTimer(this)),
