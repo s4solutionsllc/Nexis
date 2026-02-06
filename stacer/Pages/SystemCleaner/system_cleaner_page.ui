@@ -77,21 +77,18 @@
         <widget class="QLabel" name="lblCrashReportsImg">
          <property name="minimumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="text">
           <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="../../static.qrc">:/static/themes/default/img/c_crash.png</pixmap>
          </property>
          <property name="scaledContents">
           <bool>false</bool>
@@ -153,21 +150,18 @@
         <widget class="QLabel" name="lblAppCacheImg">
          <property name="minimumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="text">
           <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="../../static.qrc">:/static/themes/default/img/c_cache.png</pixmap>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -191,21 +185,18 @@
         <widget class="QLabel" name="lblTrashImg">
          <property name="minimumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="text">
           <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="../../static.qrc">:/static/themes/default/img/c_trash.png</pixmap>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -229,21 +220,18 @@
         <widget class="QLabel" name="lblPackageCacheImg">
          <property name="minimumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="textFormat">
           <enum>Qt::AutoText</enum>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="../../static.qrc">:/static/themes/default/img/c_package.png</pixmap>
          </property>
          <property name="scaledContents">
           <bool>false</bool>
@@ -377,21 +365,18 @@
         <widget class="QLabel" name="lblLogImage">
          <property name="minimumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>90</width>
-           <height>90</height>
+           <width>64</width>
+           <height>64</height>
           </size>
          </property>
          <property name="text">
           <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="../../static.qrc">:/static/themes/default/img/c_logs.png</pixmap>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

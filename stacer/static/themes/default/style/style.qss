@@ -162,11 +162,11 @@ QCheckBox[accessibleName="circle"]::indicator {
 }
 
 QCheckBox[accessibleName="circle"]::indicator:unchecked {
-    image: url(:/static/themes/common/img/un-check.png);
+    image: url(:/static/themes/common/img/circle-unchecked.svg);
 }
 
 QCheckBox[accessibleName="circle"]::indicator:checked {
-    image: url(:/static/themes/common/img/check.png);
+    image: url(:/static/themes/common/img/circle-checked.svg);
 }
 
 /*****************
@@ -263,7 +263,9 @@ QComboBox::drop-down {
 }
 
 QComboBox::down-arrow {
-    image: url(:/static/themes/default/img/down-arrow.png);
+    image: url(:/static/themes/common/img/chevron-down.svg);
+    width: 10;
+    height: 6;
 }
 
 QComboBox QAbstractItemView {
@@ -319,11 +321,15 @@ QHeaderView::section {
 }
 
 QHeaderView::up-arrow {
-    image: url(:/static/themes/default/img/asc.png);
+    image: url(:/static/themes/common/img/sort-asc.svg);
+    width: 10;
+    height: 8;
 }
 
 QHeaderView::down-arrow {
-    image: url(:/static/themes/default/img/dsc.png);
+    image: url(:/static/themes/common/img/sort-dsc.svg);
+    width: 10;
+    height: 8;
 }
 
 /******************
@@ -580,14 +586,14 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetScanResult::branch:has-children:!has-siblings:closed,
 #treeWidgetScanResult::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/default/img/right-arrow.png);
+    image: url(:/static/themes/common/img/chevron-right.svg);
     border-image: none;
     padding: 4;
 }
 
 #treeWidgetScanResult::branch:open:has-children:!has-siblings,
 #treeWidgetScanResult::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/default/img/down-arrow.png);
+    image: url(:/static/themes/common/img/chevron-down.svg);
     border-image: none;
     padding: 4;
 }

@@ -72,6 +72,12 @@
         <file>static/themes/common/img/folder.png</file>
         <file>static/themes/common/img/trash_2.png</file>
         <file>static/themes/common/img/delete.png</file>
+        <file>static/themes/common/img/chevron-down.svg</file>
+        <file>static/themes/common/img/chevron-right.svg</file>
+        <file>static/themes/common/img/sort-asc.svg</file>
+        <file>static/themes/common/img/sort-dsc.svg</file>
+        <file>static/themes/common/img/circle-checked.svg</file>
+        <file>static/themes/common/img/circle-unchecked.svg</file>
         <file>static/themes/default/img/sidebar-icons/helpers.png</file>
     </qresource>
 </RCC>

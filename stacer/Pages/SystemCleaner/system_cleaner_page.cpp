@@ -1,6 +1,7 @@
 ﻿#include "system_cleaner_page.h"
 #include "ui_system_cleaner_page.h"
 #include "byte_tree_widget.h"
+#include <QLabel>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -25,6 +26,17 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
 
 void SystemCleanerPage::init()
 {
+    // Set category icons from system theme with bundled fallbacks
+    auto setThemePixmap = [](QLabel *lbl, const QString &themeName, const QString &fallback) {
+        QIcon icon = QIcon::fromTheme(themeName, QIcon(fallback));
+        lbl->setPixmap(icon.pixmap(64, 64));
+    };
+    setThemePixmap(ui->lblPackageCacheImg, "package-x-generic",  ":/static/themes/default/img/c_package.png");
+    setThemePixmap(ui->lblCrashReportsImg, "dialog-warning",     ":/static/themes/default/img/c_crash.png");
+    setThemePixmap(ui->lblLogImage,        "text-x-generic",     ":/static/themes/default/img/c_logs.png");
+    setThemePixmap(ui->lblAppCacheImg,     "folder",             ":/static/themes/default/img/c_cache.png");
+    setThemePixmap(ui->lblTrashImg,        "user-trash",         ":/static/themes/default/img/c_trash.png");
+
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
     ui->treeWidgetScanResult->setColumnWidth(0, 600);
