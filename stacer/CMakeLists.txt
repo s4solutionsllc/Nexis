@@ -42,10 +42,10 @@ target_link_libraries(${PROJECT_NAME}
   stacer-core  Qt6::Core  Qt6::Gui  Qt6::Widgets  Qt6::Charts  Qt6::Svg  Qt6::Concurrent
 )
 
-# Running LTO in Release builds, if the C++ compiler is GNU GCC
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release"  AND  "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  target_compile_options(${PROJECT_NAME}  PRIVATE  "-flto")
-  list(APPEND CMAKE_EXE_LINKER_FLAGS "-flto")
+# Strict aliasing and LTO interact poorly with Qt's internal type-punning.
+# -fno-strict-aliasing is needed to prevent miscompilation under LTO.
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  target_compile_options(${PROJECT_NAME}  PRIVATE  "-fno-strict-aliasing")
 endif()
 
 install(
