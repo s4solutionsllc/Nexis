@@ -35,6 +35,10 @@ public:
     explicit SystemCleanerPage(QWidget *parent = nullptr);
     ~SystemCleanerPage();
 
+signals:
+    void scanFinishedS();
+    void cleanFinishedS();
+
 private slots:
     quint64 addTreeRoot(const CleanCategories &cat, const QString &title, const QFileInfoList &infos, bool noChild = false);
     void addTreeChild(const CleanCategories &cat, const QString &text, const quint64 &size);
@@ -47,6 +51,8 @@ private slots:
 
     void systemScan();
     void systemClean();
+    void onScanFinished();
+    void onCleanFinished();
     bool cleanValid();
 
     void on_checkSelectAllSystemScan_clicked(bool checked);
@@ -65,6 +71,32 @@ private:
     QIcon mDefaultIcon;
     QMovie *mLoadingMovie;
     QMovie *mLoadingMovie_2;
+
+    // Thread-safe scan state (set on main thread before worker, read on worker)
+    bool mScanPackageCache;
+    bool mScanCrashReports;
+    bool mScanAppLog;
+    bool mScanAppCache;
+    bool mScanTrash;
+    QString mLblPackageCacheText;
+    QString mLblCrashReportsText;
+    QString mLblAppLogText;
+    QString mLblAppCacheText;
+    QString mLblTrashText;
+    // Scan results (written on worker, read on main thread in onScanFinished)
+    QFileInfoList mPackageCaches;
+    QFileInfoList mCrashReports;
+    QFileInfoList mAppLogs;
+    QFileInfoList mAppCaches;
+
+    // Thread-safe clean state (set on main thread before worker, read on worker)
+    QStringList mFilesToDelete;
+    bool mCleanTrash;
+    QString mTrashPath;
+    // Clean results (written on worker, read on main thread in onCleanFinished)
+    quint64 mTotalCleanedSize;
+    // Children to remove from tree (indices captured on main thread before worker)
+    QList<QPair<int,int>> mChildrenToRemove;
 };
 
 #endif // SYSTEMCLEANERPAGE_H

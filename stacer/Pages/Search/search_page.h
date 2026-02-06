@@ -28,6 +28,9 @@ public:
     explicit SearchPage(QWidget *parent = 0);
     ~SearchPage();
 
+signals:
+    void searchFinishedS();
+
 private slots:
     void init();
 
@@ -41,6 +44,7 @@ private slots:
     void loadHeaderMenu();
     void loadDataToTable(const QList<QString> &results);
     void searching();
+    void onSearchFinished();
     QList<QStandardItem *> createRow(const QString &filepath);
 
     void on_tableFoundResults_doubleClicked(const QModelIndex &index);
@@ -57,6 +61,13 @@ private:
     QMenu mTableRowMenu;
     QString mSearchResultDateFormat;
     int rowRole;
+
+    // Thread-safe search state (written on main thread, read on worker)
+    QStringList mFindQuery;
+    bool mSearchAsRoot;
+    // Search results (written on worker thread, read on main thread)
+    QString mSearchResult;
+    bool mSearchHadError;
 };
 
 #endif // SEARCH_PAGE_H

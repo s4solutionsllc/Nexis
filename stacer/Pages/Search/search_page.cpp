@@ -65,6 +65,8 @@ void SearchPage::init()
     loadingMovie->start();
     ui->lblLoadingSearching->hide();
 
+    connect(this, &SearchPage::searchFinishedS, this, &SearchPage::onSearchFinished);
+
     initComboboxValues();
 
     QList<QWidget*> widgets = {
@@ -172,118 +174,131 @@ void SearchPage::on_btnAdvancePaneToggle_clicked()
 
 void SearchPage::on_btnSearchAdvance_clicked()
 {
-    (void)QtConcurrent::run([this]() { searching(); });
+    if (mSelectedDirectory.isEmpty()) {
+        ui->lblErrorMsg->show();
+        ui->lblErrorMsg->setText(tr("Select the search directory."));
+        return;
+    }
+
+    ui->lblErrorMsg->hide();
     ui->advanceSearchPane->hide();
+    ui->lblLoadingSearching->show();
+    ui->btnSearchAdvance->setEnabled(false);
+
+    // Build the find query from UI widgets (main thread)
+    mFindQuery.clear();
+    mFindQuery.append(mSelectedDirectory);
+
+    if (! ui->txtSearchInput->text().isEmpty()) {
+        if (ui->checkCaseInsensitive->isChecked()) {
+            if (ui->checkRegEx->isChecked()) {
+                mFindQuery.append("-iregex");
+            } else {
+                mFindQuery.append("-iname");
+            }
+        } else {
+            if (ui->checkRegEx->isChecked()) {
+                mFindQuery.append("-regex");
+            } else {
+                mFindQuery.append("-name");
+            }
+        }
+
+        mFindQuery.append(QString("%1").arg(ui->txtSearchInput->text()));
+    }
+
+    if (ui->checkInvert->isChecked()) {
+        mFindQuery.append("-invert");
+    }
+
+    if (ui->checkEmpty->isChecked()) {
+        mFindQuery.append("-empty");
+    }
+
+    if (ui->cmbSearchTypes->currentData().toString() != "all") {
+        mFindQuery.append("-type");
+        mFindQuery.append(ui->cmbSearchTypes->currentData().toString());
+    }
+
+    // TIME
+    if (ui->cmbTimeType->currentData().toString() != "-1") {
+        mFindQuery.append(ui->cmbTimeType->currentData().toString());
+        mFindQuery.append(QString("%1%2").arg(ui->cmbTimeCriteria->currentData().toString()).arg(ui->spinTime->value()));
+    }
+
+    // PERMISSIONS
+    if (ui->checkPermReadable->isChecked()) {
+        mFindQuery.append("-readable");
+    }
+
+    if (ui->checkPermWritable->isChecked()) {
+        mFindQuery.append("-writable");
+    }
+
+    if (ui->checkPermExecutable->isChecked()) {
+        mFindQuery.append("-executable");
+    }
+
+    // SIZE
+    if (ui->cmbSizeCriteria->currentData().toString() != "-1") {
+        QString size = QString("%1%2%3")
+                .arg(ui->cmbSizeCriteria->currentData().toString())
+                .arg(ui->spinSize->value())
+                .arg(ui->cmbSizeUnits->currentData().toString());
+
+        mFindQuery.append("-size");
+        mFindQuery.append(size);
+    }
+
+    // OWNER
+    if (ui->cmbUsers->currentData().toString() != "-1") {
+        mFindQuery.append("-user");
+        mFindQuery.append(ui->cmbUsers->currentText());
+    }
+
+    if (ui->cmbGroups->currentData().toString() != "-1") {
+        mFindQuery.append("-group");
+        mFindQuery.append(ui->cmbGroups->currentText());
+    }
+
+    mSearchAsRoot = ui->checkSearchAsRoot->isChecked();
+
+    // Launch worker thread (I/O only)
+    (void)QtConcurrent::run([this]() { searching(); });
 }
 
 void SearchPage::searching()
 {
-    if (mSelectedDirectory.isEmpty()) {
-        ui->lblErrorMsg->show();
-        ui->lblErrorMsg->setText(tr("Select the search directory."));
-    } else {
-        ui->lblErrorMsg->hide();
+    // Worker thread: only I/O, no UI access
+    mSearchHadError = false;
 
-        ui->lblLoadingSearching->show();
-        ui->btnSearchAdvance->setEnabled(false);
-
-        QStringList findQuery(mSelectedDirectory);
-
-        if (! ui->txtSearchInput->text().isEmpty()) {
-            if (ui->checkCaseInsensitive->isChecked()) {
-                if (ui->checkRegEx->isChecked()) {
-                    findQuery.append("-iregex");
-                } else {
-                    findQuery.append("-iname");
-                }
-            } else {
-                if (ui->checkRegEx->isChecked()) {
-                    findQuery.append("-regex");
-                } else {
-                    findQuery.append("-name");
-                }
-            }
-
-            findQuery.append(QString("%1").arg(ui->txtSearchInput->text()));
+    try {
+        if (mSearchAsRoot) {
+            mSearchResult = CommandUtil::sudoExec("find", mFindQuery);
+        } else {
+            mSearchResult = CommandUtil::exec("find", mFindQuery);
         }
-
-        if (ui->checkInvert->isChecked()) {
-            findQuery.append("-invert");
-        }
-
-        if (ui->checkEmpty->isChecked()) {
-            findQuery.append("-empty");
-        }
-
-        if (ui->cmbSearchTypes->currentData().toString() != "all") {
-            findQuery.append("-type");
-            findQuery.append(ui->cmbSearchTypes->currentData().toString());
-        }
-
-        // TIME
-        if (ui->cmbTimeType->currentData().toString() != "-1") {
-            findQuery.append(ui->cmbTimeType->currentData().toString());
-            findQuery.append(QString("%1%2").arg(ui->cmbTimeCriteria->currentData().toString()).arg(ui->spinTime->value()));
-        }
-
-        // PERMISSIONS
-        if (ui->checkPermReadable->isChecked()) {
-            findQuery.append("-readable");
-        }
-
-        if (ui->checkPermWritable->isChecked()) {
-            findQuery.append("-writable");
-        }
-
-        if (ui->checkPermExecutable->isChecked()) {
-            findQuery.append("-executable");
-        }
-
-        // SIZE
-        if (ui->cmbSizeCriteria->currentData().toString() != "-1") {
-            QString size = QString("%1%2%3")
-                    .arg(ui->cmbSizeCriteria->currentData().toString())
-                    .arg(ui->spinSize->value())
-                    .arg(ui->cmbSizeUnits->currentData().toString());
-
-            findQuery.append("-size");
-            findQuery.append(size);
-        }
-
-        // OWNER
-        if (ui->cmbUsers->currentData().toString() != "-1") {
-            findQuery.append("-user");
-            findQuery.append(ui->cmbUsers->currentText());
-        }
-
-        if (ui->cmbGroups->currentData().toString() != "-1") {
-            findQuery.append("-group");
-            findQuery.append(ui->cmbGroups->currentText());
-        }
-
-        // searching
-        QString result;
-
-        try {
-            if (ui->checkSearchAsRoot->isChecked()) {
-                result = CommandUtil::sudoExec("find", findQuery);
-            } else {
-                result = CommandUtil::exec("find", findQuery);
-            }
-
-            if (result.trimmed().isEmpty()) {
-                mItemModel->removeRows(0, mItemModel->rowCount()); // clear table
-            } else {
-                loadDataToTable(result.split("\n"));
-            }
-        } catch (QString ex) {
-            ui->lblErrorMsg->show();
-            ui->lblErrorMsg->setText(tr("Somethings went wrong, try again."));
-        }
-
-        ui->lblLoadingSearching->hide();
-        ui->btnSearchAdvance->setEnabled(true);
+    } catch (QString ex) {
+        mSearchHadError = true;
     }
+
+    emit searchFinishedS();
+}
+
+void SearchPage::onSearchFinished()
+{
+    // Main thread: all UI updates
+    if (mSearchHadError) {
+        ui->lblErrorMsg->show();
+        ui->lblErrorMsg->setText(tr("Somethings went wrong, try again."));
+    } else if (mSearchResult.trimmed().isEmpty()) {
+        mItemModel->removeRows(0, mItemModel->rowCount()); // clear table
+    } else {
+        loadDataToTable(mSearchResult.split("\n"));
+    }
+
+    ui->lblLoadingSearching->hide();
+    ui->btnSearchAdvance->setEnabled(true);
 }
 
 void SearchPage::loadDataToTable(const QList<QString> &foundFiles)

@@ -31,28 +31,48 @@ void UninstallerPage::init()
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages, ui->btnSnapPackages };
     Utilities::addDropShadow(widgets, 40);
 
-    (void)QtConcurrent::run([this]() { loadPackages(); });
-    (void)QtConcurrent::run([this]() { loadSnapPackages(); });
+    connect(this, &UninstallerPage::packagesLoadedS, this, &UninstallerPage::onPackagesLoaded);
+    connect(this, &UninstallerPage::snapPackagesLoadedS, this, &UninstallerPage::onSnapPackagesLoaded);
+
+    // Initial load via worker threads
+    (void)QtConcurrent::run([this]() { fetchPackages(); });
+    (void)QtConcurrent::run([this]() { fetchSnapPackages(); });
 
     connect(SignalMapper::ins(), &SignalMapper::sigUninstallStarted, this, &UninstallerPage::uninstallStarted);
-    connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, &UninstallerPage::loadPackages);
-    connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, &UninstallerPage::loadSnapPackages);
+    // After uninstall finishes, re-fetch packages on worker threads
+    connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, [this]() {
+        (void)QtConcurrent::run([this]() { fetchPackages(); });
+    });
+    connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, [this]() {
+        (void)QtConcurrent::run([this]() { fetchSnapPackages(); });
+    });
 }
 
-void UninstallerPage::loadPackages()
+void UninstallerPage::fetchPackages()
 {
+    // Worker thread: I/O only, no UI access
+    mPackages = tm->getPackages();
+    emit packagesLoadedS();
+}
+
+void UninstallerPage::fetchSnapPackages()
+{
+    // Worker thread: I/O only, no UI access
+    mSnapPackages = tm->getSnapPackages();
+    emit snapPackagesLoadedS();
+}
+
+void UninstallerPage::onPackagesLoaded()
+{
+    // Main thread: all UI updates
     emit uninstallStarted();
 
-    // clear items
     ui->listWidgetPackages->clear();
 
     QIcon icon(":/static/themes/common/img/package.png");
-    QStringList packages = tm->getPackages();
-    for (const QString &package : packages) {
+    for (const QString &package : mPackages) {
         QListWidgetItem *item = new QListWidgetItem(QIcon::fromTheme(package, icon), QString("  %1").arg(package));
-
         item->setCheckState(Qt::Unchecked);
-
         ui->listWidgetPackages->addItem(item);
     }
     setAppCount();
@@ -64,18 +84,15 @@ void UninstallerPage::loadPackages()
     ui->lblLoadingUninstaller->hide();
 }
 
-void UninstallerPage::loadSnapPackages()
+void UninstallerPage::onSnapPackagesLoaded()
 {
-    // clear items
+    // Main thread: all UI updates
     ui->listWidgetSnapPackages->clear();
 
     QIcon icon(":/static/themes/common/img/package.png");
-    QStringList packages = tm->getSnapPackages();
-    for (const QString &package : packages) {
+    for (const QString &package : mSnapPackages) {
         QListWidgetItem *item = new QListWidgetItem(QIcon::fromTheme(package, icon), QString("  %1").arg(package));
-
         item->setCheckState(Qt::Unchecked);
-
         ui->listWidgetSnapPackages->addItem(item);
     }
     setAppCount();

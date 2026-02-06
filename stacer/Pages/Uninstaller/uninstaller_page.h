@@ -21,6 +21,10 @@ public:
     explicit UninstallerPage(QWidget *parent = 0);
     ~UninstallerPage();
 
+signals:
+    void packagesLoadedS();
+    void snapPackagesLoadedS();
+
 public slots:
     void uninstallStarted();
 
@@ -33,8 +37,10 @@ private slots:
     void on_btnUninstall_clicked();
     QStringList getSelectedPackages();
     QStringList getSelectedSnapPackages();
-    void loadPackages();
-    void loadSnapPackages();
+    void fetchPackages();
+    void fetchSnapPackages();
+    void onPackagesLoaded();
+    void onSnapPackagesLoaded();
     void on_btnSystemPackages_clicked();
     void on_btnSnapPackages_clicked();
 
@@ -45,6 +51,10 @@ private:
     Ui::UninstallerPage *ui;
 
     ToolManager *tm;
+
+    // Thread-safe package data (written on worker, read on main thread)
+    QStringList mPackages;
+    QStringList mSnapPackages;
 };
 
 #endif // UNINSTALLERPAGE_H

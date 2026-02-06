@@ -51,6 +51,9 @@ void SystemCleanerPage::init()
     qRegisterMetaType<QList<QPersistentModelIndex>>();
     qRegisterMetaType<QAbstractItemModel::LayoutChangeHint>();
     qRegisterMetaType<Qt::SortOrder>();
+
+    connect(this, &SystemCleanerPage::scanFinishedS, this, &SystemCleanerPage::onScanFinished);
+    connect(this, &SystemCleanerPage::cleanFinishedS, this, &SystemCleanerPage::onCleanFinished);
 }
 
 quint64 SystemCleanerPage::addTreeRoot(const CleanCategories &cat, const QString &title, const QFileInfoList &infos, bool noChild)
@@ -122,76 +125,61 @@ void SystemCleanerPage::on_treeWidgetScanResult_itemClicked(QTreeWidgetItem *ite
 
 void SystemCleanerPage::systemScan()
 {
-    if (ui->checkPackageCache->isChecked() ||
-        ui->checkCrashReports->isChecked() ||
-        ui->checkAppLog->isChecked()       ||
-        ui->checkAppCache->isChecked()     ||
-        ui->checkTrash->isChecked()
-    ){
-        ui->btnScan->hide();
-        ui->lblLoadingScanner->show();
-        ui->checkPackageCache->setEnabled(false);
-        ui->checkCrashReports->setEnabled(false);
-        ui->checkAppLog->setEnabled(false);
-        ui->checkAppCache->setEnabled(false);
-        ui->checkTrash->setEnabled(false);
-        ui->checkSelectAllSystemScan->setEnabled(false);
-
-        ui->treeWidgetScanResult->setSortingEnabled(false);
-        ui->treeWidgetScanResult->clear();
-
-        quint64 totalSize = 0;
-
-        // Package Caches
-        if (ui->checkPackageCache->isChecked()) {
-            totalSize += addTreeRoot(PACKAGE_CACHE,
-                        ui->lblPackageCache->text(),
-                        tmr->getPackageCaches());
-        }
-
-        // Crash Reports
-        if (ui->checkCrashReports->isChecked()) {
-            totalSize += addTreeRoot(CRASH_REPORTS,
-                        ui->lblCrashReports->text(),
-                        im->getCrashReports());
-        }
-
-        // Application Logs
-        if (ui->checkAppLog->isChecked()) {
-            totalSize += addTreeRoot(APPLICATION_LOGS,
-                        ui->lblAppLog->text(),
-                        im->getAppLogs());
-        }
-
-        // Application Cache
-        if (ui->checkAppCache->isChecked()) {
-            totalSize += addTreeRoot(APPLICATION_CACHES,
-                        ui->lblAppCache->text(),
-                        im->getAppCaches());
-        }
-
-        // Trash
-        if(ui->checkTrash->isChecked()) {
-            totalSize += addTreeRoot(TRASH,
-                        ui->lblTrash->text(),
-                        { QFileInfo(QDir::homePath() + "/.local/share/Trash/") },
-                        true);
-        }
-
-        ui->lblTotalBytes->setText(tr("Total size: %1").arg(FormatUtil::formatBytes(totalSize)));
-
-        ui->treeWidgetScanResult->setSortingEnabled(true);
-        on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
-
-        // scan results page
-        ui->stackedWidget->setCurrentIndex(1);
-
-        ui->checkPackageCache->setChecked(false);
-        ui->checkCrashReports->setChecked(false);
-        ui->checkAppLog->setChecked(false);
-        ui->checkAppCache->setChecked(false);
-        ui->checkTrash->setChecked(false);
+    // Worker thread: only I/O, no UI access
+    if (mScanPackageCache) {
+        mPackageCaches = tmr->getPackageCaches();
     }
+    if (mScanCrashReports) {
+        mCrashReports = im->getCrashReports();
+    }
+    if (mScanAppLog) {
+        mAppLogs = im->getAppLogs();
+    }
+    if (mScanAppCache) {
+        mAppCaches = im->getAppCaches();
+    }
+
+    emit scanFinishedS();
+}
+
+void SystemCleanerPage::onScanFinished()
+{
+    // Main thread: all UI updates
+    ui->treeWidgetScanResult->setSortingEnabled(false);
+    ui->treeWidgetScanResult->clear();
+
+    quint64 totalSize = 0;
+
+    if (mScanPackageCache) {
+        totalSize += addTreeRoot(PACKAGE_CACHE, mLblPackageCacheText, mPackageCaches);
+    }
+    if (mScanCrashReports) {
+        totalSize += addTreeRoot(CRASH_REPORTS, mLblCrashReportsText, mCrashReports);
+    }
+    if (mScanAppLog) {
+        totalSize += addTreeRoot(APPLICATION_LOGS, mLblAppLogText, mAppLogs);
+    }
+    if (mScanAppCache) {
+        totalSize += addTreeRoot(APPLICATION_CACHES, mLblAppCacheText, mAppCaches);
+    }
+    if (mScanTrash) {
+        totalSize += addTreeRoot(TRASH, mLblTrashText,
+                    { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
+    }
+
+    ui->lblTotalBytes->setText(tr("Total size: %1").arg(FormatUtil::formatBytes(totalSize)));
+
+    ui->treeWidgetScanResult->setSortingEnabled(true);
+    on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
+
+    // scan results page
+    ui->stackedWidget->setCurrentIndex(1);
+
+    ui->checkPackageCache->setChecked(false);
+    ui->checkCrashReports->setChecked(false);
+    ui->checkAppLog->setChecked(false);
+    ui->checkAppCache->setChecked(false);
+    ui->checkTrash->setChecked(false);
 }
 
 bool SystemCleanerPage::cleanValid()
@@ -213,100 +201,139 @@ bool SystemCleanerPage::cleanValid()
 
 void SystemCleanerPage::systemClean()
 {
-    if (cleanValid()) {
-        ui->btnClean->hide();
-        ui->lblLoadingCleaner->show();
-        ui->treeWidgetScanResult->setEnabled(false);
+    // Worker thread: only I/O, no UI access
+    mTotalCleanedSize = 0;
 
-        quint64 totalCleanedSize = 0;
-
-        QTreeWidget *tree = ui->treeWidgetScanResult;
-
-        QStringList filesToDelete;
-
-        QList<QTreeWidgetItem *> children;
-
-        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-
-            QTreeWidgetItem *it = tree->topLevelItem(i);
-
-            CleanCategories cat = (CleanCategories) it->data(2, 0).toInt();
-
-            // Package Caches | Crash Reports | Application Logs | Application Caches
-            if (cat != CleanCategories::TRASH) {
-
-                for (int j = 0; j < it->childCount(); ++j) { // files
-
-                    if(it->child(j)->checkState(0) == Qt::Checked) { // if checked
-
-                        QString filePath = it->child(j)->data(2, 0).toString();
-
-                        filesToDelete << filePath;
-
-                        children.append(it->child(j));
-                    }
-                }
-            }
-
-            // Trash
-            else if (cat == CleanCategories::TRASH) {
-
-                if (it->checkState(0) == Qt::Checked) {
-
-                    QString trashPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation).append("/.local/share/Trash");
-
-                    QDir(trashPath + "/files").removeRecursively();
-                    QDir(trashPath + "/info").removeRecursively();
-                }
-            }
-        }
-
-        // get removed files total size
-        for (const QString &file : filesToDelete) {
-            totalCleanedSize += FileUtil::getFileSize(file);
-        }
-
-        // remove selected files
-        if(! filesToDelete.isEmpty()) {
-            CommandUtil::sudoExec("rm", QStringList() << "-rf" << filesToDelete);
-        }
-
-        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-            // clear removed childs
-            for (QTreeWidgetItem *item : children) {
-                tree->topLevelItem(i)->removeChild(item);
-            }
-        }
-
-        // update titles
-        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-
-            QTreeWidgetItem *it = tree->topLevelItem(i);
-
-            it->setText(0, QString("%1 (%2)")
-                        .arg(it->data(2, 1).toString())
-                        .arg(it->childCount()));
-
-            it->setText(1, QString("%1")
-                        .arg(FormatUtil::formatBytes(FileUtil::getFileSize(it->data(3, 0).toString()))));
-        }
-
-        ui->lblRemovedTotalSize->setText(tr("%1 size files cleaned.")
-                                         .arg(FormatUtil::formatBytes(totalCleanedSize)));
-
-        ui->btnClean->show();
-        ui->lblLoadingCleaner->hide();
-        ui->treeWidgetScanResult->setEnabled(true);
+    // Handle trash deletion
+    if (mCleanTrash) {
+        QDir(mTrashPath + "/files").removeRecursively();
+        QDir(mTrashPath + "/info").removeRecursively();
     }
+
+    // Get sizes before deletion
+    for (const QString &file : mFilesToDelete) {
+        mTotalCleanedSize += FileUtil::getFileSize(file);
+    }
+
+    // Remove selected files
+    if (!mFilesToDelete.isEmpty()) {
+        CommandUtil::sudoExec("rm", QStringList() << "-rf" << mFilesToDelete);
+    }
+
+    emit cleanFinishedS();
+}
+
+void SystemCleanerPage::onCleanFinished()
+{
+    // Main thread: all UI updates
+    QTreeWidget *tree = ui->treeWidgetScanResult;
+
+    // Remove children in reverse order to preserve indices
+    for (int k = mChildrenToRemove.size() - 1; k >= 0; --k) {
+        int parentIdx = mChildrenToRemove.at(k).first;
+        int childIdx = mChildrenToRemove.at(k).second;
+        QTreeWidgetItem *parent = tree->topLevelItem(parentIdx);
+        if (parent) {
+            delete parent->takeChild(childIdx);
+        }
+    }
+
+    // Update titles
+    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *it = tree->topLevelItem(i);
+        it->setText(0, QString("%1 (%2)")
+                    .arg(it->data(2, 1).toString())
+                    .arg(it->childCount()));
+        it->setText(1, QString("%1")
+                    .arg(FormatUtil::formatBytes(FileUtil::getFileSize(it->data(3, 0).toString()))));
+    }
+
+    ui->lblRemovedTotalSize->setText(tr("%1 size files cleaned.")
+                                     .arg(FormatUtil::formatBytes(mTotalCleanedSize)));
+
+    ui->btnClean->show();
+    ui->lblLoadingCleaner->hide();
+    ui->treeWidgetScanResult->setEnabled(true);
 }
 
 void SystemCleanerPage::on_btnScan_clicked()
 {
+    // Read checkbox states on main thread
+    mScanPackageCache = ui->checkPackageCache->isChecked();
+    mScanCrashReports = ui->checkCrashReports->isChecked();
+    mScanAppLog       = ui->checkAppLog->isChecked();
+    mScanAppCache     = ui->checkAppCache->isChecked();
+    mScanTrash        = ui->checkTrash->isChecked();
+
+    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash)) {
+        return;
+    }
+
+    // Read label texts on main thread (for tree root titles)
+    mLblPackageCacheText = ui->lblPackageCache->text();
+    mLblCrashReportsText = ui->lblCrashReports->text();
+    mLblAppLogText       = ui->lblAppLog->text();
+    mLblAppCacheText     = ui->lblAppCache->text();
+    mLblTrashText        = ui->lblTrash->text();
+
+    // Pre-scan UI updates (main thread)
+    ui->btnScan->hide();
+    ui->lblLoadingScanner->show();
+    ui->checkPackageCache->setEnabled(false);
+    ui->checkCrashReports->setEnabled(false);
+    ui->checkAppLog->setEnabled(false);
+    ui->checkAppCache->setEnabled(false);
+    ui->checkTrash->setEnabled(false);
+    ui->checkSelectAllSystemScan->setEnabled(false);
+
+    // Clear cached results
+    mPackageCaches.clear();
+    mCrashReports.clear();
+    mAppLogs.clear();
+    mAppCaches.clear();
+
+    // Launch worker thread (I/O only)
     (void)QtConcurrent::run([this]() { systemScan(); });
 }
 
 void SystemCleanerPage::on_btnClean_clicked()
 {
+    if (!cleanValid()) {
+        return;
+    }
+
+    // Pre-clean UI updates (main thread)
+    ui->btnClean->hide();
+    ui->lblLoadingCleaner->show();
+    ui->treeWidgetScanResult->setEnabled(false);
+
+    // Read tree widget state on main thread to build work lists
+    QTreeWidget *tree = ui->treeWidgetScanResult;
+    mFilesToDelete.clear();
+    mChildrenToRemove.clear();
+    mCleanTrash = false;
+
+    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *it = tree->topLevelItem(i);
+        CleanCategories cat = (CleanCategories) it->data(2, 0).toInt();
+
+        if (cat != CleanCategories::TRASH) {
+            for (int j = 0; j < it->childCount(); ++j) {
+                if (it->child(j)->checkState(0) == Qt::Checked) {
+                    QString filePath = it->child(j)->data(2, 0).toString();
+                    mFilesToDelete << filePath;
+                    mChildrenToRemove.append(QPair<int,int>(i, j));
+                }
+            }
+        } else if (cat == CleanCategories::TRASH) {
+            if (it->checkState(0) == Qt::Checked) {
+                mCleanTrash = true;
+                mTrashPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation).append("/.local/share/Trash");
+            }
+        }
+    }
+
+    // Launch worker thread (I/O only)
     (void)QtConcurrent::run([this]() { systemClean(); });
 }
 

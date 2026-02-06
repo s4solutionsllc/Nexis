@@ -41,7 +41,7 @@ jobs:
       - name: Build
         run: |
           cd build
-          make -j1 VERBOSE=1
+          make -j$(nproc)
 
       - name: Upload build artifact
         if: success()
