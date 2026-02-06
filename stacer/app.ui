@@ -450,7 +450,6 @@
       <zorder>btnUninstaller</zorder>
       <zorder>btnStartupApps</zorder>
       <zorder>btnResources</zorder>
-      <zorder>verticalSpacer_2</zorder>
       <zorder>btnSystemCleaner</zorder>
       <zorder>btnProcesses</zorder>
       <zorder>btnSettings</zorder>

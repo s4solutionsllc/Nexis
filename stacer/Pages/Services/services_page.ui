@@ -71,7 +71,7 @@
         </size>
        </property>
        <property name="sizeAdjustPolicy">
-        <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+        <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
        </property>
        <property name="frame">
         <bool>false</bool>
@@ -87,7 +87,7 @@
         </size>
        </property>
        <property name="sizeAdjustPolicy">
-        <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+        <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
        </property>
        <property name="frame">
         <bool>false</bool>
