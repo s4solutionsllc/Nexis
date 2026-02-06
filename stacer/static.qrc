@@ -58,10 +58,6 @@
         <file>static/themes/default/img/run.png</file>
         <file>static/themes/default/img/power.png</file>
         <file>static/themes/default/img/sidebar-icons/feedback.png</file>
-        <file>static/themes/default/img/sidebar-icons/gnome.png</file>
-        <file>static/themes/common/img/appearance.png</file>
-        <file>static/themes/common/img/ubuntu.png</file>
-        <file>static/themes/common/img/window.png</file>
         <file>static/themes/default/img/sidebar-icons/ppa-manager.png</file>
         <file>static/themes/default/img/ppa-repository.png</file>
         <file>static/splashscreen.png</file>

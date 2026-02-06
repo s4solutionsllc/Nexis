@@ -44,10 +44,6 @@ SOURCES += \
     Pages/Settings/settings_page.cpp \
     Pages/AptSourceManager/apt_source_manager_page.cpp \
     Pages/AptSourceManager/apt_source_repository_item.cpp \
-    Pages/GnomeSettings/gnome_settings_page.cpp \
-    Pages/GnomeSettings/unity_settings.cpp \
-    Pages/GnomeSettings/window_manager_settings.cpp \
-    Pages/GnomeSettings/appearance_settings.cpp \
     feedback.cpp \
     Pages/AptSourceManager/apt_source_edit.cpp \
     Managers/setting_manager.cpp \
@@ -79,10 +75,6 @@ HEADERS += \
     Pages/Settings/settings_page.h \
     Pages/AptSourceManager/apt_source_manager_page.h \
     Pages/AptSourceManager/apt_source_repository_item.h \
-    Pages/GnomeSettings/gnome_settings_page.h \
-    Pages/GnomeSettings/unity_settings.h \
-    Pages/GnomeSettings/window_manager_settings.h \
-    Pages/GnomeSettings/appearance_settings.h \
     sliding_stacked_widget.h \
     utilities.h \
     feedback.h \
@@ -111,10 +103,6 @@ FORMS += \
     Pages/Settings/settings_page.ui \
     Pages/AptSourceManager/apt_source_manager_page.ui \
     Pages/AptSourceManager/apt_source_repository_item.ui \
-    Pages/GnomeSettings/gnome_settings_page.ui \
-    Pages/GnomeSettings/unity_settings.ui \
-    Pages/GnomeSettings/window_manager_settings.ui \
-    Pages/GnomeSettings/appearance_settings.ui \
     Pages/AptSourceManager/apt_source_edit.ui \
     Pages/Search/search_page.ui \
     Pages/Helpers/helpers_page.ui \

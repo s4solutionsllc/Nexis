@@ -447,10 +447,6 @@ QLabel[accessibleName="dialog-title"] {
     qproperty-icon: url(:/static/themes/default/img/sidebar-icons/ppa-manager.png);
 }
 
-#btnGnomeSettings {
-    qproperty-icon: url(:/static/themes/default/img/sidebar-icons/gnome.png);
-}
-
 #btnSettings {
     qproperty-icon: url(:/static/themes/default/img/sidebar-icons/settings.png);
 }
@@ -957,55 +953,6 @@ QLabel[accessibleName="dialog-title"] {
 /* - APT Source Repository Item Edit - */
 
 #APTSourceEdit {
-    background-color: @pageContent;
-}
-
-/**************************
-    GNOME SETTINGS PAGE
-***************************/
-#GnomeSettingsPage QLabel {
-    font-size: 11pt;
-    color: @color12;
-}
-
-#GnomeSettingsPage QMenu {
-    background-color: @color01;
-}
-
-#GnomeSettingsPage QLabel[accessibleName="general-title"] {
-    font-size: 12pt;
-    font-weight: bold;
-    color: @color03;
-    border: 0;
-    border-bottom: 1 solid @color03;
-    padding-bottom: 5;
-}
-
-#GnomeSettingsPage QLabel[accessibleName="title"] {
-    font-size: 11pt;
-    font-weight: bold;
-    color: @color06;
-    border: 0;
-    border-bottom: 1 dashed @color06;
-    padding-bottom: 10;
-}
-
-#GnomeSettingsPage QPushButton {
-    border-radius: 3;
-    padding: 7 25;
-    font-size: 11pt;
-    background-color: @circleChartBackgroundColor;
-    color: @color07;
-}
-
-#GnomeSettingsPage QPushButton:hover,
-#GnomeSettingsPage QPushButton:checked {
-    background-color: @color03;
-}
-
-/* --- Unity Settings --- */
-
-#scrollAreaUnityContents {
     background-color: @pageContent;
 }
 

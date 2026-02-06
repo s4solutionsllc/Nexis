@@ -3,7 +3,6 @@
 #include "utilities.h"
 #include <QStyle>
 #include <QDebug>
-#include <QRegularExpression>
 #include <QScreen>
 
 App::~App()
@@ -64,18 +63,6 @@ void App::init()
         mListSidebarButtons.insert(7, ui->btnAptSourceManager);
     } else {
         ui->btnAptSourceManager->hide();
-    }
-
-    // GNOME SETTINGS
-    bool checkDesktopSession = QString(qgetenv("DESKTOP_SESSION")).contains(QRegularExpression("ubuntu", QRegularExpression::CaseInsensitiveOption));
-    bool checkDistribution = SystemInfo().getDistribution().contains(QRegularExpression("ubuntu", QRegularExpression::CaseInsensitiveOption));
-
-    if (checkDesktopSession || checkDistribution) {
-        gnomeSettingsPage = new GnomeSettingsPage(mSlidingStacked);
-        mListPages.insert(8, gnomeSettingsPage);
-        mListSidebarButtons.insert(8, ui->btnGnomeSettings);
-    } else {
-        ui->btnGnomeSettings->hide();
     }
 
     // add pages
@@ -258,11 +245,6 @@ void App::on_btnHelpers_clicked()
 void App::on_btnAptSourceManager_clicked()
 {
     pageClick(aptSourceManagerPage);
-}
-
-void App::on_btnGnomeSettings_clicked()
-{
-    pageClick(gnomeSettingsPage);
 }
 
 void App::on_btnSettings_clicked()
