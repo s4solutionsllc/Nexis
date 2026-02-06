@@ -6,8 +6,6 @@
 #include "Utils/command_util.h"
 #include "Info/cpu_info.h"
 
-#define LSCPU_COMMAND "LANG=nl_NL.UTF-8 lscpu"
-
 #include "stacer-core_global.h"
 
 class STACERCORESHARED_EXPORT SystemInfo

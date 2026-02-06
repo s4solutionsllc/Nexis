@@ -69,8 +69,18 @@ QList<double> CpuInfo::getLoadAvgs() const
 double CpuInfo::getAvgClock() const
 {
     const QStringList lines = CommandUtil::exec("bash",{"-c", LSCPU_COMMAND}).split('\n');
-    const QString clockMHz = lines.filter(QRegularExpression("^CPU MHz")).first().split(":").last();
-    return clockMHz.toDouble();
+    const QStringList filtered = lines.filter(QRegularExpression("^CPU MHz"));
+    if (!filtered.isEmpty()) {
+        return filtered.first().split(":").last().toDouble();
+    }
+    // Fallback: average the per-core clocks from /proc/cpuinfo
+    const QList<double> clocks = getClocks();
+    if (clocks.isEmpty())
+        return 0.0;
+    double sum = 0.0;
+    for (double c : clocks)
+        sum += c;
+    return sum / clocks.size();
 }
 
 QList<double> CpuInfo::getClocks() const

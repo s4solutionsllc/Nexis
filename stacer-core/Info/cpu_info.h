@@ -7,7 +7,7 @@
 #include "Utils/file_util.h"
 
 #define PROC_CPUINFO "/proc/cpuinfo"
-#define LSCPU_COMMAND "LANG=nl_NL.UTF-8 lscpu"
+#define LSCPU_COMMAND "LANG=C lscpu"
 #define PROC_LOADAVG "/proc/loadavg"
 #define PROC_STAT    "/proc/stat"
 

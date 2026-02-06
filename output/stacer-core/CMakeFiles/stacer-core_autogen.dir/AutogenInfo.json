@@ -1,0 +1,260 @@
+{
+	"BUILD_DIR" : "/home/luke/Documents/GitHub/Stacer/output/stacer-core/stacer-core_autogen",
+	"CMAKE_BINARY_DIR" : "/home/luke/Documents/GitHub/Stacer/output",
+	"CMAKE_CURRENT_BINARY_DIR" : "/home/luke/Documents/GitHub/Stacer/output/stacer-core",
+	"CMAKE_CURRENT_SOURCE_DIR" : "/home/luke/Documents/GitHub/Stacer/stacer-core",
+	"CMAKE_EXECUTABLE" : "/usr/bin/cmake",
+	"CMAKE_LIST_FILES" : 
+	[
+		"/home/luke/Documents/GitHub/Stacer/stacer-core/CMakeLists.txt",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6ConfigVersion.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6ConfigVersionImpl.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6Config.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6ConfigExtras.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicCMakeVersionHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6Targets.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6VersionlessTargets.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtFeature.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtFeatureCommon.cmake",
+		"/usr/share/cmake-3.28/Modules/CheckCXXCompilerFlag.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicAppleHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicFinalizerHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicPluginHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicTargetHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicWalkLibsHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicFindPackageHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicDependencyHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicTestHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicToolHelpers.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/QtPublicCMakeHelpers.cmake",
+		"/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6/Qt6Dependencies.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6Network/Qt6NetworkConfigVersion.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6Network/Qt6NetworkConfigVersionImpl.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6Network/Qt6NetworkConfig.cmake",
+		"/usr/share/cmake-3.28/Modules/CMakeFindDependencyMacro.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6Network/Qt6NetworkDependencies.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6Network/Qt6NetworkTargets.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6Network/Qt6NetworkTargets-none.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6Network/Qt6NetworkAdditionalTargetInfo.cmake",
+		"/usr/lib/x86_64-linux-gnu/cmake/Qt6Network/Qt6NetworkVersionlessTargets.cmake"
+	],
+	"CMAKE_SOURCE_DIR" : "/home/luke/Documents/GitHub/Stacer",
+	"DEP_FILE" : "/home/luke/Documents/GitHub/Stacer/output/stacer-core/stacer-core_autogen/deps",
+	"DEP_FILE_RULE_NAME" : "stacer-core_autogen/timestamp",
+	"HEADERS" : 
+	[
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/cpu_info.h",
+			"Mu",
+			"ANA6DEWBKY/moc_cpu_info.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/disk_info.h",
+			"Mu",
+			"ANA6DEWBKY/moc_disk_info.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/memory_info.h",
+			"Mu",
+			"ANA6DEWBKY/moc_memory_info.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/network_info.h",
+			"Mu",
+			"ANA6DEWBKY/moc_network_info.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/process.h",
+			"Mu",
+			"ANA6DEWBKY/moc_process.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/process_info.h",
+			"Mu",
+			"ANA6DEWBKY/moc_process_info.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/system_info.h",
+			"Mu",
+			"ANA6DEWBKY/moc_system_info.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Tools/apt_source_tool.h",
+			"Mu",
+			"WKHKOO7AB7/moc_apt_source_tool.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Tools/package_tool.h",
+			"Mu",
+			"WKHKOO7AB7/moc_package_tool.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Tools/service_tool.h",
+			"Mu",
+			"WKHKOO7AB7/moc_service_tool.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Utils/command_util.h",
+			"Mu",
+			"3AKZUBQRRA/moc_command_util.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Utils/file_util.h",
+			"Mu",
+			"3AKZUBQRRA/moc_file_util.cpp",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Utils/format_util.h",
+			"Mu",
+			"3AKZUBQRRA/moc_format_util.cpp",
+			null
+		]
+	],
+	"HEADER_EXTENSIONS" : [ "h", "hh", "h++", "hm", "hpp", "hxx", "in", "txx" ],
+	"INCLUDE_DIR" : "/home/luke/Documents/GitHub/Stacer/output/stacer-core/stacer-core_autogen/include",
+	"MOC_COMPILATION_FILE" : "/home/luke/Documents/GitHub/Stacer/output/stacer-core/stacer-core_autogen/mocs_compilation.cpp",
+	"MOC_DEFINITIONS" : 
+	[
+		"QT_CORE_LIB",
+		"QT_DEPRECATED_WARNINGS",
+		"QT_NETWORK_LIB",
+		"STACERCORE_LIBRARY"
+	],
+	"MOC_DEPEND_FILTERS" : 
+	[
+		[
+			"Q_PLUGIN_METADATA",
+			"[\n][ \t]*Q_PLUGIN_METADATA[ \t]*\\([^\\)]*FILE[ \t]*\"([^\"]+)\""
+		]
+	],
+	"MOC_INCLUDES" : 
+	[
+		"/home/luke/Documents/GitHub/Stacer/stacer-core",
+		"/home/luke/Documents/GitHub/Stacer/stacer-core/Info",
+		"/home/luke/Documents/GitHub/Stacer/stacer-core/Tools",
+		"/home/luke/Documents/GitHub/Stacer/stacer-core/Utils",
+		"/usr/include/x86_64-linux-gnu/qt6/QtCore",
+		"/usr/include/x86_64-linux-gnu/qt6",
+		"/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++",
+		"/usr/include/x86_64-linux-gnu/qt6/QtNetwork",
+		"/usr/include/c++/13",
+		"/usr/include/x86_64-linux-gnu/c++/13",
+		"/usr/include/c++/13/backward",
+		"/usr/lib/gcc/x86_64-linux-gnu/13/include",
+		"/usr/local/include",
+		"/usr/include/x86_64-linux-gnu",
+		"/usr/include"
+	],
+	"MOC_MACRO_NAMES" : 
+	[
+		"Q_OBJECT",
+		"Q_GADGET",
+		"Q_GADGET_EXPORT",
+		"Q_NAMESPACE",
+		"Q_NAMESPACE_EXPORT"
+	],
+	"MOC_OPTIONS" : [],
+	"MOC_PATH_PREFIX" : false,
+	"MOC_PREDEFS_CMD" : 
+	[
+		"/usr/bin/c++",
+		"-std=gnu++17",
+		"-dM",
+		"-E",
+		"-c",
+		"/usr/share/cmake-3.28/Modules/CMakeCXXCompilerABI.cpp"
+	],
+	"MOC_PREDEFS_FILE" : "/home/luke/Documents/GitHub/Stacer/output/stacer-core/stacer-core_autogen/moc_predefs.h",
+	"MOC_RELAXED_MODE" : false,
+	"MOC_SKIP" : [],
+	"MULTI_CONFIG" : false,
+	"PARALLEL" : 8,
+	"PARSE_CACHE_FILE" : "/home/luke/Documents/GitHub/Stacer/output/stacer-core/CMakeFiles/stacer-core_autogen.dir/ParseCache.txt",
+	"QT_MOC_EXECUTABLE" : "/usr/lib/qt6/libexec/moc",
+	"QT_UIC_EXECUTABLE" : "",
+	"QT_VERSION_MAJOR" : 6,
+	"QT_VERSION_MINOR" : 4,
+	"SETTINGS_FILE" : "/home/luke/Documents/GitHub/Stacer/output/stacer-core/CMakeFiles/stacer-core_autogen.dir/AutogenUsed.txt",
+	"SOURCES" : 
+	[
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/cpu_info.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/disk_info.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/memory_info.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/network_info.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/process.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/process_info.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Info/system_info.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Tools/apt_source_tool.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Tools/package_tool.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Tools/service_tool.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Utils/command_util.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Utils/file_util.cpp",
+			"Mu",
+			null
+		],
+		[
+			"/home/luke/Documents/GitHub/Stacer/stacer-core/Utils/format_util.cpp",
+			"Mu",
+			null
+		]
+	],
+	"VERBOSITY" : 0
+}
