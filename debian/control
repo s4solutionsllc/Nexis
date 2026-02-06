@@ -2,13 +2,25 @@ Source: stacer
 Section: utils
 Priority: optional
 Maintainer: Oguzhan INAN <oguzhan3488@gmail.com>
-Build-Depends: debhelper (>=9)
-Standards-Version: 3.9.6
+Build-Depends: debhelper-compat (= 13),
+               cmake (>= 3.16),
+               g++,
+               qt6-base-dev,
+               qt6-charts-dev,
+               qt6-svg-dev,
+               qt6-tools-dev,
+               qt6-tools-dev-tools,
+               qt6-l10n-tools,
+               libgl1-mesa-dev
+Standards-Version: 4.6.2
 Homepage: https://github.com/oguzhaninan/Stacer
 Vcs-Browser: https://github.com/oguzhaninan/Stacer.git
 
 Package: stacer
-Architecture: all
-Depends: ${misc:Depends}
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: systemd, curl
 Description: Linux System Optimizer and Monitoring
+ Stacer is an open-source system optimizer and application monitor
+ that helps users manage startup applications, clean system caches,
+ monitor resources, and manage services and packages.
