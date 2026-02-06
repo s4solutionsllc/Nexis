@@ -528,11 +528,16 @@ QLabel[accessibleName="dialog-title"] {
 
 #SystemCleanerPage #btnScan {
     border: 0;
-    background: url(:/static/themes/default/img/scan.png) no-repeat center;
+    border-radius: 6px;
+    background-color: @accentColor;
+    color: #ffffff;
+    font-size: 12pt;
+    font-weight: bold;
+    padding: 8px 24px;
 }
 
 #SystemCleanerPage #btnScan:hover {
-    background: url(:/static/themes/default/img/scan-active.png) no-repeat center;
+    background-color: @accentHover;
 }
 
 /* - System Clean Button - */

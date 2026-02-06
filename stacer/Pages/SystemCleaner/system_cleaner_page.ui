@@ -289,8 +289,8 @@
         <widget class="QPushButton" name="btnScan">
          <property name="minimumSize">
           <size>
-           <width>100</width>
-           <height>100</height>
+           <width>120</width>
+           <height>40</height>
           </size>
          </property>
          <property name="cursor">
@@ -300,13 +300,7 @@
           <enum>Qt::NoFocus</enum>
          </property>
          <property name="text">
-          <string/>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>100</width>
-           <height>100</height>
-          </size>
+          <string>Scan</string>
          </property>
         </widget>
        </item>
@@ -471,17 +465,8 @@
          <property name="focusPolicy">
           <enum>Qt::NoFocus</enum>
          </property>
-         <property name="accessibleName">
-          <string notr="true">circle</string>
-         </property>
          <property name="text">
           <string>Select All</string>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>30</width>
-           <height>30</height>
-          </size>
          </property>
         </widget>
        </item>
