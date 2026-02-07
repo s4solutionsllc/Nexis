@@ -4,6 +4,7 @@
 #include <Tools/service_tool.h>
 #include <Tools/package_tool.h>
 #include <Tools/apt_source_tool.h>
+#include <Tools/gnome_settings_tool.h>
 
 class ToolManager
 {
@@ -23,6 +24,8 @@ public:
     void uninstallPackages(const QStringList &packages);
     bool uninstallSnapPackages(const QStringList packages);
     QStringList dryRunRemovePackages(const QStringList &packages);
+
+    bool checkGnomeSettings() const;
 
     bool checkSourceRepository() const;
     QList<APTSourcePtr> getSourceList() const;

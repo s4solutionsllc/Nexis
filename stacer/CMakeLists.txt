@@ -17,6 +17,7 @@ include_directories(
   "${PAGES_DIR}/StartupApps"
   "${PAGES_DIR}/SystemCleaner"
   "${PAGES_DIR}/Uninstaller"
+  "${PAGES_DIR}/GnomeSettings"
   "${CMAKE_CURRENT_BINARY_DIR}" # Necessary for CMake 3.7 and older
 )
 

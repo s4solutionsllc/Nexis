@@ -198,7 +198,8 @@ QToolTip {
     QSpinBox
 ***************/
 
-QSpinBox::up-button {
+QSpinBox::up-button,
+QDoubleSpinBox::up-button {
     subcontrol-origin: border;
     subcontrol-position: top right;
     width: 16px;
@@ -206,7 +207,8 @@ QSpinBox::up-button {
     border-width: 1px;
 }
 
-QSpinBox::down-button {
+QSpinBox::down-button,
+QDoubleSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
     width: 16px;
@@ -342,7 +344,8 @@ QMainWindow * {
 
 QLineEdit,
 QPlainTextEdit,
-QSpinBox {
+QSpinBox,
+QDoubleSpinBox {
     border: 1px solid @borderColor;
     border-radius: 6;
     padding: 8;
@@ -353,7 +356,8 @@ QSpinBox {
 
 QLineEdit:focus,
 QPlainTextEdit:focus,
-QSpinBox:focus {
+QSpinBox:focus,
+QDoubleSpinBox:focus {
     border-color: @accentColor;
 }
 
@@ -981,6 +985,71 @@ QLabel[accessibleName="dialog-title"] {
 
 #APTSourceEdit {
     background-color: @pageContent;
+}
+
+/**************************
+    GNOME SETTINGS PAGE
+***************************/
+
+#GnomeSettingsPage QLabel {
+    font-size: 10pt;
+    color: @color12;
+}
+
+#GnomeSettingsPage QGroupBox {
+    border: 1px solid @borderColor;
+    border-radius: 12;
+    margin-top: 12;
+    padding: 12 12 6 12;
+    background-color: @cardBg;
+}
+
+#GnomeSettingsPage QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: @color05;
+    font-size: 11pt;
+    font-weight: bold;
+}
+
+/* Tab nav buttons */
+#GnomeSettingsPage QPushButton[accessibleName="navBtn"] {
+    border-radius: 6;
+    padding: 6 12;
+    font-size: 10pt;
+    background-color: @color01;
+    color: @color05;
+    border: 1px solid @borderColor;
+}
+
+#GnomeSettingsPage QPushButton[accessibleName="navBtn"]:hover,
+#GnomeSettingsPage QPushButton[accessibleName="navBtn"]:checked {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
+/* Browse buttons */
+#btnBrowseWallpaper,
+#btnBrowseWallpaperDark {
+    background-color: @color01;
+    padding: 6 12;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+}
+
+#btnBrowseWallpaper:hover,
+#btnBrowseWallpaperDark:hover {
+    border-color: @color04;
+}
+
+/* Speed value labels */
+#GnomeSettingsPage #lblMouseSpeedVal,
+#GnomeSettingsPage #lblTouchpadSpeedVal {
+    color: @color05;
+    font-weight: bold;
 }
 
 /*******************************

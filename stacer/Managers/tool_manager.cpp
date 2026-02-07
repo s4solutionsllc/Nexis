@@ -122,6 +122,14 @@ void ToolManager::uninstallPackages(const QStringList &packages)
 }
 
 /*
+ * GNOME Settings
+ */
+bool ToolManager::checkGnomeSettings() const
+{
+    return GnomeSettingsTool::isAvailable() && GnomeSettingsTool::schemaExists(GnomeSchema::INTERFACE);
+}
+
+/*
  * APT Source
  */
 bool ToolManager::checkSourceRepository() const

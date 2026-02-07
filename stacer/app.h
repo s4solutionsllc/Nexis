@@ -17,6 +17,7 @@
 #include "Pages/Resources/resources_page.h"
 #include "Pages/Settings/settings_page.h"
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
+#include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
 #include "Pages/Helpers/helpers_page.h"
 #include "feedback.h"
@@ -53,6 +54,7 @@ private slots:
     void on_btnProcesses_clicked();
     void on_btnSettings_clicked();
     void on_btnAptSourceManager_clicked();
+    void on_btnGnomeSettings_clicked();
 
     void on_btnFeedback_clicked();
 
@@ -79,6 +81,7 @@ private:
     UninstallerPage *uninstallerPage;
     ResourcesPage *resourcesPage;
     APTSourceManagerPage *aptSourceManagerPage;
+    GnomeSettingsPage *gnomeSettingsPage;
     SettingsPage *settingsPage;
     HelpersPage *helpersPage;
 

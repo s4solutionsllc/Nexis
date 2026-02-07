@@ -79,5 +79,6 @@
         <file>static/themes/common/img/circle-checked.svg</file>
         <file>static/themes/common/img/circle-unchecked.svg</file>
         <file>static/themes/default/img/sidebar-icons/helpers.png</file>
+        <file>static/themes/default/img/sidebar-icons/gnome-settings.png</file>
     </qresource>
 </RCC>

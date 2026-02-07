@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GnomeAppearanceTab</class>
+ <widget class="QWidget" name="GnomeAppearanceTab">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>650</width>
+    <height>500</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="leftMargin"><number>0</number></property>
+   <property name="topMargin"><number>6</number></property>
+   <property name="rightMargin"><number>0</number></property>
+   <property name="bottomMargin"><number>0</number></property>
+   <item>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
+     <widget class="QWidget" name="scrollContents">
+      <layout class="QGridLayout" name="gridLayout">
+       <property name="horizontalSpacing"><number>12</number></property>
+       <property name="verticalSpacing"><number>6</number></property>
+
+       <!-- Row 0: Color Scheme -->
+       <item row="0" column="0">
+        <widget class="QLabel" name="lblColorScheme">
+         <property name="text"><string>Color Scheme</string></property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="cmbColorScheme">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 1: GTK Theme -->
+       <item row="1" column="0">
+        <widget class="QLabel" name="lblGtkTheme">
+         <property name="text"><string>GTK Theme</string></property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLineEdit" name="editGtkTheme">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+        </widget>
+       </item>
+
+       <!-- Row 2: Icon Theme -->
+       <item row="2" column="0">
+        <widget class="QLabel" name="lblIconTheme">
+         <property name="text"><string>Icon Theme</string></property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QLineEdit" name="editIconTheme">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+        </widget>
+       </item>
+
+       <!-- Row 3: Cursor Theme -->
+       <item row="3" column="0">
+        <widget class="QLabel" name="lblCursorTheme">
+         <property name="text"><string>Cursor Theme</string></property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QLineEdit" name="editCursorTheme">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+        </widget>
+       </item>
+
+       <!-- Row 4: Cursor Size -->
+       <item row="4" column="0">
+        <widget class="QLabel" name="lblCursorSize">
+         <property name="text"><string>Cursor Size</string></property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QSpinBox" name="spinCursorSize">
+         <property name="minimum"><number>1</number></property>
+         <property name="maximum"><number>96</number></property>
+         <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 5: UI Font -->
+       <item row="5" column="0">
+        <widget class="QLabel" name="lblFont">
+         <property name="text"><string>UI Font</string></property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QLineEdit" name="editFont">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+        </widget>
+       </item>
+
+       <!-- Row 6: Document Font -->
+       <item row="6" column="0">
+        <widget class="QLabel" name="lblDocFont">
+         <property name="text"><string>Document Font</string></property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QLineEdit" name="editDocFont">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+        </widget>
+       </item>
+
+       <!-- Row 7: Monospace Font -->
+       <item row="7" column="0">
+        <widget class="QLabel" name="lblMonoFont">
+         <property name="text"><string>Monospace Font</string></property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QLineEdit" name="editMonoFont">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+        </widget>
+       </item>
+
+       <!-- Row 8: Text Scaling -->
+       <item row="8" column="0">
+        <widget class="QLabel" name="lblTextScaling">
+         <property name="text"><string>Text Scaling Factor</string></property>
+        </widget>
+       </item>
+       <item row="8" column="1">
+        <widget class="QDoubleSpinBox" name="spinTextScaling">
+         <property name="minimum"><double>0.500000000000000</double></property>
+         <property name="maximum"><double>3.000000000000000</double></property>
+         <property name="singleStep"><double>0.100000000000000</double></property>
+         <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 9: Font Antialiasing -->
+       <item row="9" column="0">
+        <widget class="QLabel" name="lblAntialiasing">
+         <property name="text"><string>Font Antialiasing</string></property>
+        </widget>
+       </item>
+       <item row="9" column="1">
+        <widget class="QComboBox" name="cmbAntialiasing">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 10: Font Hinting -->
+       <item row="10" column="0">
+        <widget class="QLabel" name="lblHinting">
+         <property name="text"><string>Font Hinting</string></property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QComboBox" name="cmbHinting">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 11: Animations -->
+       <item row="11" column="0">
+        <widget class="QLabel" name="lblAnimations">
+         <property name="text"><string>Animations</string></property>
+        </widget>
+       </item>
+       <item row="11" column="1">
+        <widget class="QCheckBox" name="chkAnimations">
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 12: Hot Corners -->
+       <item row="12" column="0">
+        <widget class="QLabel" name="lblHotCorners">
+         <property name="text"><string>Hot Corners</string></property>
+        </widget>
+       </item>
+       <item row="12" column="1">
+        <widget class="QCheckBox" name="chkHotCorners">
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 13: Clock Format -->
+       <item row="13" column="0">
+        <widget class="QLabel" name="lblClockFormat">
+         <property name="text"><string>Clock Format</string></property>
+        </widget>
+       </item>
+       <item row="13" column="1">
+        <widget class="QComboBox" name="cmbClockFormat">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 14: Clock Show Seconds -->
+       <item row="14" column="0">
+        <widget class="QLabel" name="lblClockSeconds">
+         <property name="text"><string>Clock Show Seconds</string></property>
+        </widget>
+       </item>
+       <item row="14" column="1">
+        <widget class="QCheckBox" name="chkClockSeconds">
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 15: Clock Show Weekday -->
+       <item row="15" column="0">
+        <widget class="QLabel" name="lblClockWeekday">
+         <property name="text"><string>Clock Show Weekday</string></property>
+        </widget>
+       </item>
+       <item row="15" column="1">
+        <widget class="QCheckBox" name="chkClockWeekday">
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Row 16: Battery Percentage -->
+       <item row="16" column="0">
+        <widget class="QLabel" name="lblBatteryPct">
+         <property name="text"><string>Show Battery Percentage</string></property>
+        </widget>
+       </item>
+       <item row="16" column="1">
+        <widget class="QCheckBox" name="chkBatteryPct">
+         <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+        </widget>
+       </item>
+
+       <!-- Spacer -->
+       <item row="17" column="0">
+        <spacer name="verticalSpacer">
+         <property name="orientation"><enum>Qt::Vertical</enum></property>
+         <property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

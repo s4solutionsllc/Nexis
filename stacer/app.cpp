@@ -67,6 +67,17 @@ void App::init()
         ui->btnAptSourceManager->hide();
     }
 
+    // GNOME SETTINGS
+    if (ToolManager::ins()->checkGnomeSettings()) {
+        gnomeSettingsPage = new GnomeSettingsPage(mSlidingStacked);
+        // Insert before Settings button (which is always last in the list before spacer)
+        int settingsIdx = mListSidebarButtons.indexOf(ui->btnSettings);
+        mListPages.insert(settingsIdx, gnomeSettingsPage);
+        mListSidebarButtons.insert(settingsIdx, ui->btnGnomeSettings);
+    } else {
+        ui->btnGnomeSettings->hide();
+    }
+
     // Set sidebar icons from system theme with bundled fallbacks
     auto setIcon = [](QPushButton *btn, const QString &themeName, const QString &fallback, const QString &text) {
         btn->setIcon(QIcon::fromTheme(themeName, QIcon(fallback)));
@@ -84,6 +95,7 @@ void App::init()
     setIcon(ui->btnUninstaller,      "edit-delete",              ":/static/themes/default/img/sidebar-icons/uninstaller.png",   tr("Uninstaller"));
     setIcon(ui->btnResources,        "preferences-system",       ":/static/themes/default/img/sidebar-icons/resources.png",     tr("Resources"));
     setIcon(ui->btnAptSourceManager, "system-software-install",  ":/static/themes/default/img/sidebar-icons/ppa-manager.png",  tr("APT Repository Manager"));
+    setIcon(ui->btnGnomeSettings,    "preferences-desktop-appearance", ":/static/themes/default/img/sidebar-icons/gnome-settings.png", tr("GNOME Settings"));
     setIcon(ui->btnSettings,         "preferences-desktop",      ":/static/themes/default/img/sidebar-icons/settings.png",      tr("Settings"));
     setIcon(ui->btnFeedback,         "mail-message-new",         ":/static/themes/default/img/sidebar-icons/feedback.png",      tr("Feedback"));
 
@@ -241,6 +253,11 @@ void App::on_btnHelpers_clicked()
 void App::on_btnAptSourceManager_clicked()
 {
     pageClick(aptSourceManagerPage);
+}
+
+void App::on_btnGnomeSettings_clicked()
+{
+    pageClick(gnomeSettingsPage);
 }
 
 void App::on_btnSettings_clicked()
