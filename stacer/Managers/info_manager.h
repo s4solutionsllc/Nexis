@@ -9,6 +9,7 @@
 #include <Info/network_info.h>
 #include <Info/system_info.h>
 #include <Info/process_info.h>
+#include <Info/thermal_info.h>
 
 class InfoManager
 {
@@ -45,6 +46,11 @@ public:
 
     QList<QString> getDevices();
     QList<QString> getFileSystemTypes();
+
+    QList<ThermalSensor> getThermalSensors() const;
+    double getThermalTemperature(int index) const;
+    bool hasThermalSensors() const;
+
 private:
     static InfoManager *instance;
 
@@ -55,6 +61,7 @@ private:
     NetworkInfo ni;
     SystemInfo si;
     ProcessInfo pi;
+    ThermalInfo ti;
 };
 
 #endif // INFO_MANAGER_H

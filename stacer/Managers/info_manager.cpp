@@ -149,4 +149,22 @@ QList<Process> InfoManager::getProcesses() const
     return pi.getProcessList();
 }
 
+/********************
+ * Thermal Provider
+ *******************/
+QList<ThermalSensor> InfoManager::getThermalSensors() const
+{
+    return ti.getSensors();
+}
+
+double InfoManager::getThermalTemperature(int index) const
+{
+    return ti.getTemperature(index);
+}
+
+bool InfoManager::hasThermalSensors() const
+{
+    return ti.hasSensors();
+}
+
 

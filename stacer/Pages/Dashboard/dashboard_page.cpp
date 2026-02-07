@@ -19,11 +19,13 @@ DashboardPage::DashboardPage(QWidget *parent) :
     mCpuBar(new CircleBar(tr("CPU"), {"#2ec27e", "#26a269"}, this)),
     mMemBar(new CircleBar(tr("MEMORY"), {"#E95420", "#c64516"}, this)),
     mDiskBar(new CircleBar(tr("DISK"), {"#e01b24", "#c01c28"}, this)),
+    mTempBar(new CircleBar(tr("TEMP"), {"#1c71d8", "#1a5fb4"}, this)),
     mDownloadBar(new LineBar(tr("DOWNLOAD"), this)),
     mUploadBar(new LineBar(tr("UPLOAD"), this)),
     mTimer(new QTimer(this)),
     im(InfoManager::ins()),
-    mSettingManager(SettingManager::ins())
+    mSettingManager(SettingManager::ins()),
+    mSelectedSensorIndex(0)
 {
     ui->setupUi(this);
 
@@ -34,14 +36,29 @@ DashboardPage::DashboardPage(QWidget *parent) :
 
 void DashboardPage::init()
 {
-    // Circle bars
+    // Circle bars (row 0)
     ui->circleBarsLayout->addWidget(mCpuBar);
     ui->circleBarsLayout->addWidget(mMemBar);
     ui->circleBarsLayout->addWidget(mDiskBar);
 
-    // line bars
+    // Line bars (stacked in col 2)
     ui->lineBarsLayout->addWidget(mDownloadBar);
     ui->lineBarsLayout->addWidget(mUploadBar);
+
+    // Temperature gauge (row 1, col 1) — graceful degradation
+    if (im->hasThermalSensors()) {
+        QList<ThermalSensor> sensors = im->getThermalSensors();
+        for (const ThermalSensor &s : sensors)
+            ui->cmbTempSensor->addItem(s.label);
+
+        ui->tempContainerLayout->addWidget(mTempBar);
+
+        connect(ui->cmbTempSensor, &QComboBox::currentIndexChanged,
+                this, &DashboardPage::onTempSensorChanged);
+        connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateTempBar);
+    } else {
+        ui->tempContainer->hide();
+    }
 
     // connections
     connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateCpuBar);
@@ -59,6 +76,8 @@ void DashboardPage::init()
     updateMemoryBar();
     updateDiskBar();
     updateNetworkBar();
+    if (im->hasThermalSensors())
+        updateTempBar();
 
     ui->widgetUpdateBar->hide();
 
@@ -69,6 +88,8 @@ void DashboardPage::init()
     QList<QWidget*> widgets = {
         mCpuBar, mMemBar, mDiskBar, mDownloadBar, mUploadBar
     };
+    if (im->hasThermalSensors())
+        widgets.append(mTempBar);
 
     Utilities::addDropShadow(widgets, 60);
 }
@@ -258,5 +279,22 @@ void DashboardPage::updateNetworkBar()
 
     l_RXbytes = RXbytes;
     l_TXbytes = TXbytes;
+}
+
+void DashboardPage::updateTempBar()
+{
+    double temp = im->getThermalTemperature(mSelectedSensorIndex);
+    int percent = qBound(0, static_cast<int>(temp), 100);
+
+    double tempF = temp * 9.0 / 5.0 + 32.0;
+    mTempBar->setValue(percent, QString("%1 \u00B0C / %2 \u00B0F")
+                       .arg(temp, 0, 'f', 1)
+                       .arg(tempF, 0, 'f', 1));
+}
+
+void DashboardPage::onTempSensorChanged(int index)
+{
+    mSelectedSensorIndex = index;
+    updateTempBar();
 }
 

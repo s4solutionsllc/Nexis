@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QTimer>
+#include <QComboBox>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -36,6 +37,8 @@ private slots:
     void updateMemoryBar();
     void updateDiskBar();
     void updateNetworkBar();
+    void updateTempBar();
+    void onTempSensorChanged(int index);
 
     void on_btnDownloadUpdate_clicked();
 
@@ -49,6 +52,7 @@ private:
     CircleBar* mCpuBar;
     CircleBar* mMemBar;
     CircleBar* mDiskBar;
+    CircleBar* mTempBar;
 
     LineBar *mDownloadBar;
     LineBar *mUploadBar;
@@ -57,6 +61,8 @@ private:
     InfoManager *im;
 
     SettingManager *mSettingManager;
+
+    int mSelectedSensorIndex;
 };
 
 #endif // DASHBOARDPAGE_H
