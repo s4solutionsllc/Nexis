@@ -21,6 +21,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
+            build-essential \
             cmake \
             g++ \
             libgl1-mesa-dev \
