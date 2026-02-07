@@ -42,22 +42,18 @@ bool ToolManager::serviceIsEnabled(const QString &sname) const
 /*
  * Packages
  */
-QStringList ToolManager::getPackages() const
+QList<Package> ToolManager::getPackages() const
 {
     switch (PackageTool::currentPackageTool) {
     case PackageTool::PackageTools::APT:
         return PackageTool::getDpkgPackages();
-        break;
     case PackageTool::PackageTools::YUM:
     case PackageTool::PackageTools::DNF:
         return PackageTool::getRpmPackages();
-        break;
     case PackageTool::PackageTools::PACMAN:
         return PackageTool::getPacmanPackages();
-        break;
     default:
-        return QStringList();
-        break;
+        return QList<Package>();
     }
 }
 
@@ -69,6 +65,21 @@ QStringList ToolManager::getSnapPackages() const
 bool ToolManager::uninstallSnapPackages(const QStringList packages)
 {
     return PackageTool::snapRemovePackages(packages);
+}
+
+QStringList ToolManager::dryRunRemovePackages(const QStringList &packages)
+{
+    switch (PackageTool::currentPackageTool) {
+    case PackageTool::PackageTools::APT:
+        return PackageTool::dpkgDryRunRemove(packages);
+    case PackageTool::PackageTools::YUM:
+    case PackageTool::PackageTools::DNF:
+        return PackageTool::rpmDryRunRemove(packages);
+    case PackageTool::PackageTools::PACMAN:
+        return PackageTool::pacmanDryRunRemove(packages);
+    default:
+        return QStringList();
+    }
 }
 
 QFileInfoList ToolManager::getPackageCaches() const

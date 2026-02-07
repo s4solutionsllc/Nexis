@@ -8,6 +8,12 @@
 
 #include "stacer-core_global.h"
 
+struct STACERCORESHARED_EXPORT Package {
+    QString name;
+    QString description;
+    QString section;
+};
+
 class STACERCORESHARED_EXPORT PackageTool
 {
 public:
@@ -23,18 +29,23 @@ public:
 public:
     // APT
     static QFileInfoList getDpkgPackageCaches();
-    static QStringList getDpkgPackages();
+    static QList<Package> getDpkgPackages();
     static bool dpkgRemovePackages(QStringList packages);
+    static QStringList dpkgDryRunRemove(const QStringList &packages);
 
     // DNF - YUM
-    static QStringList getRpmPackages();
+    static QList<Package> getRpmPackages();
     static bool dnfRemovePackages(QStringList packages);
     static bool yumRemovePackages(QStringList packages);
+    static QStringList rpmDryRunRemove(const QStringList &packages);
 
     // Arch
     static QFileInfoList getPacmanPackageCaches();
-    static QStringList getPacmanPackages();
+    static QList<Package> getPacmanPackages();
     static bool pacmanRemovePackages(QStringList packages);
+    static QStringList pacmanDryRunRemove(const QStringList &packages);
+
+    static QString friendlySectionName(const QString &section);
 
     // Snap
     static QStringList getSnapPackages();

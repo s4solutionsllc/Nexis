@@ -814,44 +814,48 @@ QLabel[accessibleName="dialog-title"] {
     color: @color05;
 }
 
-#listWidgetPackages, #listWidgetSnapPackages {
+#treeWidgetPackages, #listWidgetSnapPackages {
     border: 0;
     background-color: transparent;
     font-size: 10pt;
 }
 
-#listWidgetPackages::indicator, #listWidgetSnapPackages::indicator {
+#treeWidgetPackages::indicator, #listWidgetSnapPackages::indicator {
     width: 16;
     height: 16;
 }
 
-#listWidgetPackages::indicator:unchecked, #listWidgetSnapPackages::indicator:unchecked {
+#treeWidgetPackages::indicator:unchecked, #listWidgetSnapPackages::indicator:unchecked {
     image: url(:/static/themes/common/img/un-check.png);
 }
 
-#listWidgetPackages::indicator:checked, #listWidgetSnapPackages::indicator:checked {
+#treeWidgetPackages::indicator:checked, #listWidgetSnapPackages::indicator:checked {
     image: url(:/static/themes/common/img/check.png);
 }
 
-#listWidgetPackages::item, #listWidgetSnapPackages::item {
+#treeWidgetPackages::item, #listWidgetSnapPackages::item {
     border-radius: 8;
-    min-height: 40;
+    min-height: 36;
     background-color: @cardBg;
     margin: 1 0;
 }
 
-#listWidgetPackages::item:text, #listWidgetSnapPackages::item:text {
+#treeWidgetPackages::item:text, #listWidgetSnapPackages::item:text {
     color: @color05;
     padding-left: 12;
 }
 
-#listWidgetPackages::item:selected, #listWidgetSnapPackages::item:selected {
+#treeWidgetPackages::item:selected, #listWidgetSnapPackages::item:selected {
     background-color: @color02;
     border: 0;
 }
 
-#listWidgetPackages::item:hover, #listWidgetSnapPackages::item:hover {
+#treeWidgetPackages::item:hover, #listWidgetSnapPackages::item:hover {
     background-color: @color02;
+}
+
+#treeWidgetPackages::branch {
+    background-color: transparent;
 }
 
 /****************

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QListWidgetItem>
+#include <QTreeWidgetItem>
 #include <QtConcurrent>
 
 #include "Managers/tool_manager.h"
@@ -45,7 +46,7 @@ private slots:
     void on_btnSnapPackages_clicked();
 
     void on_listWidgetSnapPackages_itemClicked(QListWidgetItem *item);
-    void on_listWidgetPackages_itemClicked(QListWidgetItem *item);
+    void onTreeItemChanged(QTreeWidgetItem *item, int column);
 
 private:
     Ui::UninstallerPage *ui;
@@ -53,7 +54,7 @@ private:
     ToolManager *tm;
 
     // Thread-safe package data (written on worker, read on main thread)
-    QStringList mPackages;
+    QList<Package> mPackages;
     QStringList mSnapPackages;
 };
 

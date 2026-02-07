@@ -11,7 +11,7 @@ public:
     static ToolManager *ins();
 
     QList<Service> getServices() const;
-    QStringList getPackages() const;
+    QList<Package> getPackages() const;
     QStringList getSnapPackages() const;
     QFileInfoList getPackageCaches() const;
 
@@ -20,8 +20,9 @@ public:
     bool serviceIsActive(const QString &sname) const;
     bool serviceIsEnabled(const QString &sname) const;
 
-    void uninstallPackages(const QStringList &packages);    
+    void uninstallPackages(const QStringList &packages);
     bool uninstallSnapPackages(const QStringList packages);
+    QStringList dryRunRemovePackages(const QStringList &packages);
 
     bool checkSourceRepository() const;
     QList<APTSourcePtr> getSourceList() const;
