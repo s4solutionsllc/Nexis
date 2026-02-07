@@ -105,14 +105,8 @@ jobs:
             | `.AppImage` | `${{ steps.appimage.outputs.APPIMAGE_NAME }}` | Portable, runs on any Linux distro |
             | Binary | `stacer` | Standalone executable (requires Qt6 runtime) |
 
-            ### What's New in v2.0.0
-            - **Qt6 Migration** — Full port from Qt5 to Qt6 with C++17
-            - **Hardware Temperature Gauges** — Real-time CPU, NVMe, WiFi, GPU temps on Dashboard
-            - **GNOME Shell Settings** — Appearance, Window Manager, Mouse, Desktop preferences
-            - **Enhanced Uninstaller** — Section grouping, descriptions, dependency preview
-            - **Adwaita UI** — Modern GNOME design language with dark/light/auto theme
-            - **System Theme Icons** — Native icon integration with Adwaita fallback
-            - **Bug Fixes** — LTO crash, thread safety, memory leaks, CPU info, tray behavior
+            ### What's New in v2.0.1
+            - **Fix CPU Speed Display** — Dashboard system info now correctly shows CPU frequency
 
             ### System Requirements
             - Ubuntu 22.04+ / Debian 12+ / Fedora 36+ / openSUSE 15.4+ / Arch Linux

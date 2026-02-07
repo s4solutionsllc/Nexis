@@ -1,3 +1,11 @@
+stacer (2.0.1-1) unstable; urgency=medium
+
+  * Fix CPU speed displaying "0GHz" on Dashboard system info.
+    The lscpu "CPU max MHz" result was not assigned when the first
+    filter matched, so speedLine kept its default "error:0.0" value.
+
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Sat, 07 Feb 2026 00:00:00 +0000
+
 stacer (2.0.0-1) unstable; urgency=medium
 
   * Bump version to 2.0.0.
