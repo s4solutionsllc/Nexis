@@ -1,14 +1,23 @@
-stacer (1.2.0-1) unstable; urgency=medium
+stacer (2.0.0-1) unstable; urgency=medium
 
-  * Port entire codebase from Qt5 to Qt6.
-  * Require CMake 3.16+ and C++17.
-  * Remove dead Unity/GNOME Settings page (defunct since Ubuntu 18.04).
-  * Update Debian packaging for Qt6 build dependencies.
-  * Modernize debhelper compat level to 13.
-  * Fix Architecture from "all" to "any" (compiled binary).
-  * Target Ubuntu 24.04+ (Noble Numbat).
+  * Bump version to 2.0.0.
+  * Port entire codebase from Qt5 to Qt6 with C++17.
+  * Add hardware temperature gauges on Dashboard (hwmon sensors).
+  * Add GNOME Shell Settings page for modern desktop preferences.
+  * Redesign Uninstaller with section grouping, descriptions, and
+    dependency preview.
+  * Adwaita/GNOME UI modernization with dark/light/auto theme support.
+  * System theme icon integration with Adwaita fallback.
+  * Fix LTO crash from strict aliasing, thread safety issues, and
+    memory leaks.
+  * Fix CPU info locale and clock frequency detection.
+  * Fix system tray minimize vs close behavior.
+  * Remove dead Unity Settings page (defunct since Ubuntu 18.04).
+  * Modernize Debian packaging for Qt6 and debhelper compat 13.
+  * Add GitHub Actions CI workflow.
+  * Update attribution to Luke Simpson.
 
- -- Oguzhan Inan <oguzhan3488@gmail.com>  Thu, 06 Feb 2025 00:00:00 +0000
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Fri, 07 Feb 2026 00:00:00 +0000
 
 stacer (1.1.0-1) stable; urgency=medium
 

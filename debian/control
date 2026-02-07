@@ -1,7 +1,7 @@
 Source: stacer
 Section: utils
 Priority: optional
-Maintainer: Oguzhan INAN <oguzhan3488@gmail.com>
+Maintainer: Luke Simpson <luke@lsimpsonsfdc.com>
 Build-Depends: debhelper-compat (= 13),
                cmake (>= 3.16),
                g++,
@@ -13,8 +13,8 @@ Build-Depends: debhelper-compat (= 13),
                qt6-l10n-tools,
                libgl1-mesa-dev
 Standards-Version: 4.6.2
-Homepage: https://github.com/oguzhaninan/Stacer
-Vcs-Browser: https://github.com/oguzhaninan/Stacer.git
+Homepage: https://github.com/lsimpsonsfdc/Stacer
+Vcs-Browser: https://github.com/lsimpsonsfdc/Stacer.git
 
 Package: stacer
 Architecture: any

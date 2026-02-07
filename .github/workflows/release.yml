@@ -1,0 +1,125 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            cmake \
+            g++ \
+            libgl1-mesa-dev \
+            libfuse2 \
+            qt6-base-dev \
+            qt6-charts-dev \
+            qt6-svg-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            qt6-l10n-tools \
+            libqt6charts6-dev \
+            libqt6svg6-dev \
+            devscripts \
+            debhelper \
+            debhelper-compat \
+            fakeroot
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      # --- .deb package ---
+      - name: Build .deb package
+        run: dpkg-buildpackage -us -uc -b
+
+      - name: Find .deb file
+        id: deb
+        run: |
+          DEB=$(ls ../stacer_*.deb | head -1)
+          echo "DEB_PATH=$DEB" >> "$GITHUB_OUTPUT"
+          echo "DEB_NAME=$(basename $DEB)" >> "$GITHUB_OUTPUT"
+
+      # --- AppImage ---
+      - name: Install to AppDir
+        run: DESTDIR=${{ github.workspace }}/AppDir cmake --install build
+
+      - name: Download linuxdeploy and Qt plugin
+        run: |
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-qt-x86_64.AppImage
+
+      - name: Build AppImage
+        env:
+          QMAKE: /usr/bin/qmake6
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          ./linuxdeploy-x86_64.AppImage \
+            --appdir AppDir \
+            --desktop-file AppDir/usr/share/applications/stacer.desktop \
+            --icon-file AppDir/usr/share/icons/stacer.png \
+            --plugin qt \
+            --output appimage
+
+      - name: Find AppImage file
+        id: appimage
+        run: |
+          APPIMAGE=$(ls Stacer-*.AppImage | head -1)
+          echo "APPIMAGE_PATH=$APPIMAGE" >> "$GITHUB_OUTPUT"
+          echo "APPIMAGE_NAME=$(basename $APPIMAGE)" >> "$GITHUB_OUTPUT"
+
+      # --- GitHub Release ---
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Stacer ${{ github.ref_name }}
+          generate_release_notes: false
+          body: |
+            ## Stacer ${{ github.ref_name }}
+
+            ### Downloads
+            | Format | File | Description |
+            |--------|------|-------------|
+            | `.deb` | `${{ steps.deb.outputs.DEB_NAME }}` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |
+            | `.AppImage` | `${{ steps.appimage.outputs.APPIMAGE_NAME }}` | Portable, runs on any Linux distro |
+            | Binary | `stacer` | Standalone executable (requires Qt6 runtime) |
+
+            ### What's New in v2.0.0
+            - **Qt6 Migration** — Full port from Qt5 to Qt6 with C++17
+            - **Hardware Temperature Gauges** — Real-time CPU, NVMe, WiFi, GPU temps on Dashboard
+            - **GNOME Shell Settings** — Appearance, Window Manager, Mouse, Desktop preferences
+            - **Enhanced Uninstaller** — Section grouping, descriptions, dependency preview
+            - **Adwaita UI** — Modern GNOME design language with dark/light/auto theme
+            - **System Theme Icons** — Native icon integration with Adwaita fallback
+            - **Bug Fixes** — LTO crash, thread safety, memory leaks, CPU info, tray behavior
+
+            ### System Requirements
+            - Ubuntu 22.04+ / Debian 12+ / Fedora 36+ / openSUSE 15.4+ / Arch Linux
+            - Qt 6.2+ (6.5+ for automatic dark/light detection)
+
+            ---
+            Built from commit ${{ github.sha }}
+          files: |
+            ${{ steps.deb.outputs.DEB_PATH }}
+            ${{ steps.appimage.outputs.APPIMAGE_PATH }}
+            build/output/stacer
