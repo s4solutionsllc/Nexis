@@ -155,7 +155,7 @@ void SettingsPage::on_checkAutostart_clicked(bool checked)
 
 void SettingsPage::on_btnDonate_clicked()
 {
-    QDesktopServices::openUrl(QUrl("https://www.patreon.com/oguzhaninan"));
+    QDesktopServices::openUrl(QUrl("https://github.com/lsimpsonsfdc"));
 }
 
 void SettingsPage::cmbStartPageChanged(const QString text)

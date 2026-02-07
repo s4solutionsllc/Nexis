@@ -97,7 +97,7 @@ void DashboardPage::init()
 void DashboardPage::checkUpdate()
 {
     QNetworkAccessManager * nam = new QNetworkAccessManager(this);
-    const QNetworkRequest updateCheckRequest(QUrl("https://api.github.com/repos/oguzhaninan/Stacer/releases/latest"));
+    const QNetworkRequest updateCheckRequest(QUrl("https://api.github.com/repos/lsimpsonsfdc/Stacer/releases/latest"));
     connect(nam,&QNetworkAccessManager::finished,this,[this](QNetworkReply * reply){
         if(reply->error()==QNetworkReply::NoError)
         {
@@ -122,7 +122,7 @@ void DashboardPage::checkUpdate()
 
 void DashboardPage::on_btnDownloadUpdate_clicked()
 {
-    QDesktopServices::openUrl(QUrl("https://github.com/oguzhaninan/Stacer/releases/latest"));
+    QDesktopServices::openUrl(QUrl("https://github.com/lsimpsonsfdc/Stacer/releases/latest"));
 }
 
 void DashboardPage::systemInformationInit()
