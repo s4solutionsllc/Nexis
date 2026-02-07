@@ -53,6 +53,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    app.setQuitOnLastWindowClosed(false);
 
     qApp->setApplicationName("stacer");
     qApp->setApplicationDisplayName("Stacer");

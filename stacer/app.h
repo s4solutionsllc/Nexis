@@ -35,6 +35,7 @@ public:
 
 protected:
     void closeEvent(QCloseEvent *event) override;
+    void changeEvent(QEvent *event) override;
 
 private slots:
     void init();
@@ -59,7 +60,6 @@ private:
     QWidget *getPageByTitle(const QString &title);
     void checkSidebarButtonByTooltip(const QString &text);
     void createTrayActions();
-    void createQuitMessageBox();
 
 private:
     Ui::App *ui;
@@ -88,8 +88,6 @@ private:
 
     QMenu *mTrayMenu;
 
-    QPushButton *mBtnQuit, *mBtnContinue;
-    QMessageBox *mQuitMsgBox;
 };
 
 #endif // APP_H

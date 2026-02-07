@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QScreen>
 #include <QIcon>
+#include <QEvent>
 
 App::~App()
 {
@@ -101,52 +102,23 @@ void App::init()
     createTrayActions();
 
     mTrayIcon->show();
-
-    createQuitMessageBox();
-}
-
-void App::createQuitMessageBox()
-{
-    mBtnQuit = new QPushButton(tr("Quit"), this);
-    mBtnQuit->setAccessibleName("danger");
-    mBtnContinue = new QPushButton(tr("Continue"), this);
-    mBtnContinue->setAccessibleName("primary");
-    mQuitMsgBox = new QMessageBox(this);
-    QCheckBox *check = new QCheckBox("Don't ask again.");
-    check->setAccessibleName("circle");
-    mQuitMsgBox->setWindowTitle(tr("Quit"));
-    mQuitMsgBox->setText(tr("Will the program continue to work in the system tray?"));
-    mQuitMsgBox->addButton(mBtnQuit, QMessageBox::YesRole);
-    mQuitMsgBox->addButton(mBtnContinue, QMessageBox::NoRole);
-    mQuitMsgBox->setCheckBox(check);
-
-    connect(check, &QCheckBox::toggled, [this](bool checked) {
-        SettingManager::ins()->setAppQuitDialogDontAsk(checked);
-    });
 }
 
 void App::closeEvent(QCloseEvent *event)
 {
-    if (SettingManager::ins()->getAppQuitDialogDontAsk()) {
-        if (SettingManager::ins()->getAppQuitDialogChoice() == "close") {
-            event->accept();
-        } else {
-            event->ignore();
-            hide();
-        }
-    } else {
-        mQuitMsgBox->exec();
-        if (mQuitMsgBox->clickedButton() == mBtnContinue) {
-            SettingManager::ins()->setAppQuitDialogChoice("hide");
-            event->ignore();
-            hide();
-        } else if (mQuitMsgBox->clickedButton() == mBtnQuit) {
-            SettingManager::ins()->setAppQuitDialogChoice("close");
-            event->accept();
-        } else {
-            event->ignore();
-        }
+    mTrayIcon->hide();
+    event->accept();
+    qApp->quit();
+}
+
+void App::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::WindowStateChange && windowState().testFlag(Qt::WindowMinimized)) {
+        hide();
+        event->ignore();
+        return;
     }
+    QMainWindow::changeEvent(event);
 }
 
 void App::createTrayActions()
@@ -157,13 +129,16 @@ void App::createTrayActions()
         connect(action, &QAction::triggered, [=] {
             clickSidebarButton(toolTip, true);
         });
-        connect(mTrayIcon, &QSystemTrayIcon::activated, this, [=](QSystemTrayIcon::ActivationReason){
-            setVisible(true);
-            activateWindow();	
-        });
 
         mTrayMenu->addAction(action);
     }
+
+    connect(mTrayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason) {
+        setWindowState(windowState() & ~Qt::WindowMinimized);
+        show();
+        raise();
+        activateWindow();
+    });
 
     mTrayMenu->addSeparator();
 
