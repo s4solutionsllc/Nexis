@@ -67,6 +67,9 @@
         <file>static/themes/light/img/collapse.png</file>
         <file>static/themes/light/img/fit.png</file>
         <file>static/themes/light/img/trash.png</file>
+        <file>static/themes/light/img/service.png</file>
+        <file>static/themes/light/img/power.png</file>
+        <file>static/themes/light/img/run.png</file>
         <file>static/themes/common/img/package.png</file>
         <file>static/themes/default/img/sidebar-icons/search.png</file>
         <file>static/themes/common/img/folder.png</file>
@@ -80,5 +83,18 @@
         <file>static/themes/common/img/circle-unchecked.svg</file>
         <file>static/themes/default/img/sidebar-icons/helpers.png</file>
         <file>static/themes/default/img/sidebar-icons/gnome-settings.png</file>
+        <file>static/themes/light/img/sidebar-icons/dash.png</file>
+        <file>static/themes/light/img/sidebar-icons/cleaner.png</file>
+        <file>static/themes/light/img/sidebar-icons/process.png</file>
+        <file>static/themes/light/img/sidebar-icons/resources.png</file>
+        <file>static/themes/light/img/sidebar-icons/services.png</file>
+        <file>static/themes/light/img/sidebar-icons/startup-apps.png</file>
+        <file>static/themes/light/img/sidebar-icons/uninstaller.png</file>
+        <file>static/themes/light/img/sidebar-icons/settings.png</file>
+        <file>static/themes/light/img/sidebar-icons/feedback.png</file>
+        <file>static/themes/light/img/sidebar-icons/ppa-manager.png</file>
+        <file>static/themes/light/img/sidebar-icons/search.png</file>
+        <file>static/themes/light/img/sidebar-icons/helpers.png</file>
+        <file>static/themes/light/img/sidebar-icons/gnome-settings.png</file>
     </qresource>
 </RCC>

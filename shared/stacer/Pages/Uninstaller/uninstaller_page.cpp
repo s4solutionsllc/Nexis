@@ -22,7 +22,7 @@ UninstallerPage::UninstallerPage(QWidget *parent) :
 
 void UninstallerPage::init()
 {
-    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(SettingManager::ins()->getThemeName());
+    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(AppManager::ins()->resolveThemeName());
     QMovie *loadingMovie = new QMovie(iconLoading, QByteArray(), this);
     ui->lblLoadingUninstaller->setMovie(loadingMovie);
     loadingMovie->start();

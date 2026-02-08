@@ -576,11 +576,11 @@ QLabel[accessibleName="dialog-title"] {
 
 #SystemCleanerPage #btnClean {
     border: 0;
-    background: url(:/static/themes/default/img/clean.png) no-repeat center;
+    background: url(:/static/themes/@themeName/img/clean.png) no-repeat center;
 }
 
 #SystemCleanerPage #btnClean:hover {
-    background: url(:/static/themes/default/img/clean-active.png) no-repeat center;
+    background: url(:/static/themes/@themeName/img/clean-active.png) no-repeat center;
 }
 
 /* - System Scan Results - */
@@ -664,7 +664,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #lblStartupAppIcon {
-    image: url(:/static/themes/default/img/app.png);
+    image: url(:/static/themes/@themeName/img/app.png);
 }
 
 #widgetStartupApp:hover {
@@ -681,12 +681,12 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #widgetStartupApp #btnDeleteStartupApp {
-    qproperty-icon: url(:/static/themes/default/img/trash.png);
+    qproperty-icon: url(:/static/themes/@themeName/img/trash.png);
     border: 0;
 }
 
 #widgetStartupApp #btnEditStartupApp {
-    qproperty-icon: url(:/static/themes/default/img/edit.png);
+    qproperty-icon: url(:/static/themes/@themeName/img/edit.png);
     border: 0;
     margin-bottom: 2;
 }
@@ -723,7 +723,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #lblServiceIcon {
-    image: url(:/static/themes/default/img/service.png);
+    image: url(:/static/themes/@themeName/img/service.png);
 }
 
 #ServiceItem #lblServiceName {
@@ -737,11 +737,11 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #lblServiceStartupImg {
-    image: url(:/static/themes/default/img/power.png);
+    image: url(:/static/themes/@themeName/img/power.png);
 }
 
 #lblSystemRunningImg {
-    image: url(:/static/themes/default/img/run.png);
+    image: url(:/static/themes/@themeName/img/run.png);
 }
 
 /**********************
@@ -882,11 +882,11 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #checkHistoryTitle::indicator:unchecked {
-    image: url(:/static/themes/default/img/fit.png);
+    image: url(:/static/themes/@themeName/img/fit.png);
 }
 
 #checkHistoryTitle::indicator:checked {
-    image: url(:/static/themes/default/img/collapse.png);
+    image: url(:/static/themes/@themeName/img/collapse.png);
 }
 
 /***************
@@ -965,7 +965,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #lblAptSourceIcon {
-    image: url(:/static/themes/default/img/ppa-repository.png);
+    image: url(:/static/themes/@themeName/img/ppa-repository.png);
 }
 
 #aptSourceRepositoryItemWidget:hover {

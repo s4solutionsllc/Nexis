@@ -58,6 +58,7 @@ void DashboardPage::init()
         connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateTempBar);
     } else {
         ui->tempContainer->hide();
+        mTempBar->hide();       // prevent orphan widget rendering at (0,0)
     }
 
     // connections

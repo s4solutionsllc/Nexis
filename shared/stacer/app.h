@@ -62,6 +62,7 @@ private:
     QWidget *getPageByTitle(const QString &title);
     void checkSidebarButtonByTooltip(const QString &text);
     void createTrayActions();
+    void updateSidebarIcons();
 
 private:
     Ui::App *ui;

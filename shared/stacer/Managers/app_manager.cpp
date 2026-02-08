@@ -111,7 +111,7 @@ void AppManager::updateStylesheet()
         QString(":/static/themes/%1/style/values.ini").arg(themeName),
         QSettings::IniFormat);
 
-    // QSS is shared – always read from "default"
+    // Single QSS template – always from "default" which uses @token placeholders
     mStylesheetFileContent = FileUtil::readStringFromFile(
         QStringLiteral(":/static/themes/default/style/style.qss"));
 
