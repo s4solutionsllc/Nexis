@@ -1,6 +1,8 @@
 Stacer.pro.*
 dist/
 build/
+output/
 #*.AppImage
 .vscode
 Release/
+.DS_Store

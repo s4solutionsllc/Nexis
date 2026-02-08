@@ -9,8 +9,11 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build & Release
+  # ============================================================================
+  # Linux build: .deb + AppImage + raw binary
+  # ============================================================================
+  build-linux:
+    name: Linux Build
     runs-on: ubuntu-24.04
 
     steps:
@@ -50,6 +53,9 @@ jobs:
         run: cmake --build build -j$(nproc)
 
       # --- .deb package ---
+      - name: Symlink debian packaging directory
+        run: ln -s linux/debian debian
+
       - name: Build .deb package
         run: dpkg-buildpackage -us -uc -b
 
@@ -89,7 +95,93 @@ jobs:
           echo "APPIMAGE_PATH=$APPIMAGE" >> "$GITHUB_OUTPUT"
           echo "APPIMAGE_NAME=$(basename $APPIMAGE)" >> "$GITHUB_OUTPUT"
 
-      # --- GitHub Release ---
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            ${{ steps.deb.outputs.DEB_PATH }}
+            ${{ steps.appimage.outputs.APPIMAGE_PATH }}
+            build/output/stacer
+
+  # ============================================================================
+  # macOS build: .app bundle + .dmg
+  # ============================================================================
+  build-macos:
+    name: macOS Build
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install qt@6
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6)
+
+      - name: Build
+        run: cmake --build build -j$(sysctl -n hw.ncpu)
+
+      - name: Deploy Qt frameworks into .app bundle
+        run: $(brew --prefix qt@6)/bin/macdeployqt build/output/stacer.app -dmg
+
+      - name: Rename .dmg with version
+        id: dmg
+        run: |
+          mv build/output/stacer.dmg build/output/Stacer-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
+          echo "DMG_NAME=Stacer-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg" >> "$GITHUB_OUTPUT"
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: build/output/Stacer-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
+
+  # ============================================================================
+  # Create GitHub Release with all artifacts
+  # ============================================================================
+  release:
+    name: Create Release
+    needs: [build-linux, build-macos]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts
+          path: artifacts/linux
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-artifacts
+          path: artifacts/macos
+
+      - name: List artifacts
+        run: find artifacts -type f
+
+      - name: Find artifact files
+        id: files
+        run: |
+          DEB=$(find artifacts/linux -name '*.deb' | head -1)
+          APPIMAGE=$(find artifacts/linux -name '*.AppImage' | head -1)
+          BINARY=$(find artifacts/linux -name 'stacer' -not -name '*.app' -not -name '*.dmg' | head -1)
+          DMG=$(find artifacts/macos -name '*.dmg' | head -1)
+          echo "DEB_PATH=$DEB" >> "$GITHUB_OUTPUT"
+          echo "DEB_NAME=$(basename $DEB)" >> "$GITHUB_OUTPUT"
+          echo "APPIMAGE_PATH=$APPIMAGE" >> "$GITHUB_OUTPUT"
+          echo "APPIMAGE_NAME=$(basename $APPIMAGE)" >> "$GITHUB_OUTPUT"
+          echo "BINARY_PATH=$BINARY" >> "$GITHUB_OUTPUT"
+          echo "DMG_PATH=$DMG" >> "$GITHUB_OUTPUT"
+          echo "DMG_NAME=$(basename $DMG)" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -99,22 +191,27 @@ jobs:
             ## Stacer ${{ github.ref_name }}
 
             ### Downloads
+
+            #### Linux
             | Format | File | Description |
             |--------|------|-------------|
-            | `.deb` | `${{ steps.deb.outputs.DEB_NAME }}` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |
-            | `.AppImage` | `${{ steps.appimage.outputs.APPIMAGE_NAME }}` | Portable, runs on any Linux distro |
+            | `.deb` | `${{ steps.files.outputs.DEB_NAME }}` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |
+            | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_NAME }}` | Portable, runs on any Linux distro |
             | Binary | `stacer` | Standalone executable (requires Qt6 runtime) |
 
-            ### What's New in v2.0.1
-            - **Fix CPU Speed Display** — Dashboard system info now correctly shows CPU frequency
+            #### macOS
+            | Format | File | Description |
+            |--------|------|-------------|
+            | `.dmg` | `${{ steps.files.outputs.DMG_NAME }}` | macOS disk image (Apple Silicon) |
 
             ### System Requirements
-            - Ubuntu 22.04+ / Debian 12+ / Fedora 36+ / openSUSE 15.4+ / Arch Linux
-            - Qt 6.2+ (6.5+ for automatic dark/light detection)
+            - **Linux:** Ubuntu 22.04+ / Debian 12+ / Fedora 36+ — Qt 6.2+
+            - **macOS:** macOS 13+ (Ventura) — Apple Silicon (ARM64)
 
             ---
             Built from commit ${{ github.sha }}
           files: |
-            ${{ steps.deb.outputs.DEB_PATH }}
-            ${{ steps.appimage.outputs.APPIMAGE_PATH }}
-            build/output/stacer
+            ${{ steps.files.outputs.DEB_PATH }}
+            ${{ steps.files.outputs.APPIMAGE_PATH }}
+            ${{ steps.files.outputs.BINARY_PATH }}
+            ${{ steps.files.outputs.DMG_PATH }}
