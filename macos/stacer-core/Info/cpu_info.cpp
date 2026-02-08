@@ -49,17 +49,45 @@ double CpuInfo::getAvgClock() const
     // On macOS, use sysctl to get CPU frequency
     uint64_t freq = 0;
     size_t len = sizeof(freq);
+
     // Try hw.cpufrequency (Intel Macs)
-    if (sysctlbyname("hw.cpufrequency", &freq, &len, nullptr, 0) == 0) {
+    if (sysctlbyname("hw.cpufrequency", &freq, &len, nullptr, 0) == 0 && freq > 0) {
         return freq / 1e6; // Convert Hz to MHz
     }
-    // On Apple Silicon, try to get it from sysctl brand string
+
+    // Apple Silicon: real-time frequency requires root (powermetrics).
+    // Return the max P-core frequency from hw.cpufrequency_max if available.
+    freq = 0;
+    len = sizeof(freq);
+    if (sysctlbyname("hw.cpufrequency_max", &freq, &len, nullptr, 0) == 0 && freq > 0) {
+        return freq / 1e6;
+    }
+
+    // Last resort: look up known max frequencies by chip name.
     try {
-        QString brand = CommandUtil::exec("sysctl", {"-n", "machdep.cpu.brand_string"});
-        // e.g. "Apple M1 Pro" — no frequency in brand string on AS
-        // Fall back to 0 and let UI handle it
+        QString brand = CommandUtil::exec("sysctl", {"-n", "machdep.cpu.brand_string"}).trimmed();
+        if (brand.isEmpty())
+            brand = CommandUtil::exec("sysctl", {"-n", "hw.model"}).trimmed();
+
+        // Known Apple Silicon max P-core frequencies (MHz)
+        static const QMap<QString, double> knownFreqs = {
+            {"Apple M1",       3200}, {"Apple M1 Pro",   3200},
+            {"Apple M1 Max",   3200}, {"Apple M1 Ultra", 3200},
+            {"Apple M2",       3500}, {"Apple M2 Pro",   3500},
+            {"Apple M2 Max",   3500}, {"Apple M2 Ultra", 3500},
+            {"Apple M3",       4050}, {"Apple M3 Pro",   4050},
+            {"Apple M3 Max",   4050}, {"Apple M3 Ultra", 4050},
+            {"Apple M4",       4400}, {"Apple M4 Pro",   4500},
+            {"Apple M4 Max",   4500}, {"Apple M4 Ultra", 4500},
+        };
+
+        for (auto it = knownFreqs.constBegin(); it != knownFreqs.constEnd(); ++it) {
+            if (brand.contains(it.key(), Qt::CaseInsensitive))
+                return it.value();
+        }
     } catch (...) {}
-    return 0.0;
+
+    return 0.0;  // truly unknown — dashboard will omit GHz label
 }
 
 QList<double> CpuInfo::getClocks() const

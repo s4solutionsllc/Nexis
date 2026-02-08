@@ -166,7 +166,13 @@ void DashboardPage::updateCpuBar()
         }
     }
 
-    mCpuBar->setValue(cpuUsedPercent, QString("%1 GHz\n%2%").arg(cpuCurrentClockGHz, 0, 'f', 2).arg(cpuUsedPercent));
+    QString cpuLabel;
+    if (cpuCurrentClockGHz > 0.01)
+        cpuLabel = QString("%1 GHz\n%2%").arg(cpuCurrentClockGHz, 0, 'f', 2).arg(cpuUsedPercent);
+    else
+        cpuLabel = QString("%1%").arg(cpuUsedPercent);
+
+    mCpuBar->setValue(cpuUsedPercent, cpuLabel);
 }
 
 void DashboardPage::updateMemoryBar()

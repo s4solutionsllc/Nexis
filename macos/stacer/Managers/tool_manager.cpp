@@ -97,11 +97,11 @@ void ToolManager::uninstallPackages(const QStringList &packages)
 }
 
 /*
- * macOS System Settings
+ * macOS System Settings — not yet implemented; hide the tab for now.
  */
 bool ToolManager::checkGnomeSettings() const
 {
-    return GnomeSettingsTool::isAvailable();
+    return false;
 }
 
 /*

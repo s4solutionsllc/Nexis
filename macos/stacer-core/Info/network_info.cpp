@@ -1,5 +1,7 @@
 #include "network_info.h"
+#include "command_util.h"
 #include <QDebug>
+#include <QRegularExpression>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -7,13 +9,30 @@
 
 NetworkInfo::NetworkInfo()
 {
-    for (const QNetworkInterface &net: QNetworkInterface::allInterfaces()) {
-        if ((net.flags()  & QNetworkInterface::IsUp) &&
-            (net.flags()  & QNetworkInterface::IsRunning) &&
-            !(net.flags() & QNetworkInterface::IsLoopBack))
-        {
-            defaultNetworkInterface = net.name();
-            break;
+    // On macOS many virtual interfaces (anpi, bridge, awdl, utun) are
+    // Up+Running but carry no real traffic.  Ask the routing table for
+    // the interface that owns the default route – that's the one whose
+    // bandwidth the user actually cares about.
+    try {
+        QString out = CommandUtil::exec("route", {"-n", "get", "default"});
+        QRegularExpression re(R"(interface:\s*(\S+))");
+        QRegularExpressionMatch m = re.match(out);
+        if (m.hasMatch()) {
+            defaultNetworkInterface = m.captured(1);   // e.g. "en0"
+        }
+    } catch (...) {}
+
+    // Fallback: first interface with an IPv4/IPv6 address that isn't loopback
+    if (defaultNetworkInterface.isEmpty()) {
+        for (const QNetworkInterface &net : QNetworkInterface::allInterfaces()) {
+            if ((net.flags()  & QNetworkInterface::IsUp) &&
+                (net.flags()  & QNetworkInterface::IsRunning) &&
+                !(net.flags() & QNetworkInterface::IsLoopBack) &&
+                !net.addressEntries().isEmpty())
+            {
+                defaultNetworkInterface = net.name();
+                break;
+            }
         }
     }
 }
