@@ -1,0 +1,28 @@
+#ifndef PACKAGE_TOOL_SHARED_H
+#define PACKAGE_TOOL_SHARED_H
+
+#include <QString>
+#include <QList>
+
+struct Package {
+    QString name;
+    QString description;
+    QString section;
+};
+
+enum PackageTools {
+    APT,        // debian
+    DNF,        // fedora
+    YUM,        // fedora
+    PACMAN,     // arch
+    SNAP,       // snap
+    HOMEBREW,   // macOS
+    ZYPPER,     // opensuse
+    UNKNOWN
+};
+
+static PackageTools currentPackageTool;
+
+static QString friendlySectionName(const QString &sectionName);
+
+#endif // PACKAGE_TOOL_SHARED_H
