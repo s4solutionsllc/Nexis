@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
     QFontDatabase::addApplicationFont(":/static/font/Ubuntu-R.ttf");
 
-    QPixmap pixSplash(":/static/splashscreen.png");
+    QPixmap pixSplash(":/static/splashscreen-2.0.1.png");
 
     QSplashScreen *splash = new QSplashScreen(pixSplash);
 
