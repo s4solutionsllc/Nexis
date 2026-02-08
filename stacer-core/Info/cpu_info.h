@@ -6,10 +6,12 @@
 
 #include "Utils/file_util.h"
 
+#ifdef Q_OS_LINUX
 #define PROC_CPUINFO "/proc/cpuinfo"
 #define LSCPU_COMMAND "LANG=C lscpu"
 #define PROC_LOADAVG "/proc/loadavg"
 #define PROC_STAT    "/proc/stat"
+#endif
 
 #include "stacer-core_global.h"
 

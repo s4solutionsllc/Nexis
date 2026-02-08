@@ -19,31 +19,34 @@ StartupAppsPage::StartupAppsPage(QWidget *parent) :
 
 bool StartupAppsPage::checkIfDisabled(const QString& as_path)
 {
+#ifdef Q_OS_LINUX
     const QByteArray disabled_str("X-GNOME-Autostart-enabled=false");
     QFile autostart_file(as_path);
 
     autostart_file.open(QIODevice::ReadOnly | QIODevice::Text);
 
     return autostart_file.readAll().indexOf(disabled_str, 0) != -1;
+#else
+    Q_UNUSED(as_path);
+    return false;
+#endif
 }
 
 void StartupAppsPage::init()
 {
+#ifdef Q_OS_LINUX
     mAutostartPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation).append("/autostart");
+#elif defined(Q_OS_MACOS)
+    mAutostartPath = QDir::homePath() + "/Library/LaunchAgents";
+#endif
+
     QFileInfo asfi(mAutostartPath);
     bool startups_disabled = false;
 
-    /* original behavior, autostart is a dir and not...
-     * * a pre-exisiting file as is case on my machine.
-     */
     if (asfi.isDir() == true) {
         mAutostartPath.append("/");
     }
     else {
-    /* altered behavior for if a file is at this location instead
-     * * check for disabled string
-     * * * if found, don't add watcher
-     */
         startups_disabled = checkIfDisabled(mAutostartPath);
     }
 
@@ -73,6 +76,7 @@ void StartupAppsPage::loadApps()
     // clear
     ui->listWidgetStartup->clear();
 
+#ifdef Q_OS_LINUX
     QDir autostartFiles(mAutostartPath, "*.desktop");
 
     QLatin1String enabledStr("true");
@@ -111,6 +115,41 @@ void StartupAppsPage::loadApps()
             ui->listWidgetStartup->setItemWidget(item, app);
         }
     }
+#elif defined(Q_OS_MACOS)
+    // On macOS, look for .plist files in ~/Library/LaunchAgents
+    QDir autostartFiles(mAutostartPath, "*.plist");
+
+    for (const QFileInfo &f : autostartFiles.entryInfoList())
+    {
+        // Extract the label from the plist filename (remove .plist extension)
+        QString appName = f.baseName();
+
+        // Skip Apple internal agents
+        if (appName.startsWith("com.apple."))
+            continue;
+
+        // Check if the plist has a Disabled key
+        bool enabled = true;
+        QStringList lines = FileUtil::readListFromFile(f.absoluteFilePath());
+        for (int i = 0; i < lines.size(); ++i) {
+            if (lines.at(i).contains("Disabled") && i + 1 < lines.size()) {
+                enabled = !lines.at(i + 1).contains("true");
+                break;
+            }
+        }
+
+        QListWidgetItem *item = new QListWidgetItem(ui->listWidgetStartup);
+
+        StartupApp *app = new StartupApp(appName, enabled, f.absoluteFilePath(), this);
+
+        connect(app, &StartupApp::deleteAppS, this, &StartupAppsPage::loadApps);
+        connect(app, &StartupApp::editStartupAppS, this, &StartupAppsPage::openStartupAppEdit);
+
+        item->setSizeHint(app->sizeHint());
+
+        ui->listWidgetStartup->setItemWidget(item, app);
+    }
+#endif
 
     setAppCount();
 }

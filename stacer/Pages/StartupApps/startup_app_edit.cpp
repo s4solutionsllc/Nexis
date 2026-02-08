@@ -3,6 +3,7 @@
 #include "utilities.h"
 #include <QDebug>
 #include <QStyle>
+#include <QRegularExpression>
 
 StartupAppEdit::~StartupAppEdit()
 {
@@ -14,6 +15,7 @@ QString StartupAppEdit::selectedFilePath = "";
 StartupAppEdit::StartupAppEdit(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::StartupAppEdit),
+#ifdef Q_OS_LINUX
     mNewAppTemplate("[Desktop Entry]\n"
                    "Name=%1\n"
                    "Comment=%2\n"
@@ -21,6 +23,22 @@ StartupAppEdit::StartupAppEdit(QWidget *parent) :
                    "Type=Application\n"
                    "Terminal=false\n"
                    "Hidden=false\n")
+#elif defined(Q_OS_MACOS)
+    mNewAppTemplate("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+                   "<plist version=\"1.0\">\n"
+                   "<dict>\n"
+                   "    <key>Label</key>\n"
+                   "    <string>%1</string>\n"
+                   "    <key>ProgramArguments</key>\n"
+                   "    <array>\n"
+                   "        <string>%3</string>\n"
+                   "    </array>\n"
+                   "    <key>RunAtLoad</key>\n"
+                   "    <true/>\n"
+                   "</dict>\n"
+                   "</plist>\n")
+#endif
 {
     ui->setupUi(this);
 
@@ -34,7 +52,11 @@ void StartupAppEdit::init()
             size(), qApp->primaryScreen()->availableGeometry())
     );
 
+#ifdef Q_OS_LINUX
     mAutostartPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/autostart";
+#elif defined(Q_OS_MACOS)
+    mAutostartPath = QDir::homePath() + "/Library/LaunchAgents";
+#endif
 
     ui->lblErrorMsg->hide();
 
@@ -55,9 +77,29 @@ void StartupAppEdit::show()
 
         if(! lines.isEmpty())
         {
+#ifdef Q_OS_LINUX
             ui->txtStartupAppName->setText(Utilities::getDesktopValue(NAME_REG, lines));
             ui->txtStartupAppComment->setText(Utilities::getDesktopValue(COMMENT_REG, lines));
             ui->txtStartupAppCommand->setText(Utilities::getDesktopValue(EXEC_REG, lines));
+#elif defined(Q_OS_MACOS)
+            // Parse plist XML to extract Label, ProgramArguments
+            QString content = lines.join("\n");
+            QRegularExpression labelReg("<key>Label</key>\\s*<string>(.*?)</string>");
+            QRegularExpression progReg("<key>ProgramArguments</key>\\s*<array>\\s*<string>(.*?)</string>");
+
+            QRegularExpressionMatch labelMatch = labelReg.match(content);
+            if (labelMatch.hasMatch()) {
+                ui->txtStartupAppName->setText(labelMatch.captured(1));
+            }
+
+            QRegularExpressionMatch progMatch = progReg.match(content);
+            if (progMatch.hasMatch()) {
+                ui->txtStartupAppCommand->setText(progMatch.captured(1));
+            }
+
+            // Comment field: not standard in plists, leave empty or use Label
+            ui->txtStartupAppComment->setText(ui->txtStartupAppName->text());
+#endif
         }
     }
 
@@ -79,6 +121,7 @@ void StartupAppEdit::on_btnSave_clicked()
 {
     if(isValid()) {
         if(! selectedFilePath.isEmpty()) {
+#ifdef Q_OS_LINUX
             QStringList lines = FileUtil::readListFromFile(selectedFilePath);
 
             changeDesktopValue(lines, NAME_REG, QString("Name=%1").arg(ui->txtStartupAppName->text()));
@@ -86,6 +129,15 @@ void StartupAppEdit::on_btnSave_clicked()
             changeDesktopValue(lines, EXEC_REG, QString("Exec=%1").arg(ui->txtStartupAppCommand->text()));
 
             FileUtil::writeFile(selectedFilePath, lines.join("\n"), QIODevice::ReadWrite | QIODevice::Truncate);
+#elif defined(Q_OS_MACOS)
+            // For macOS, rewrite the plist with updated values
+            QString appContent = mNewAppTemplate
+                    .arg(ui->txtStartupAppName->text())
+                    .arg(ui->txtStartupAppComment->text())
+                    .arg(ui->txtStartupAppCommand->text());
+
+            FileUtil::writeFile(selectedFilePath, appContent, QIODevice::ReadWrite | QIODevice::Truncate);
+#endif
         }
         else {
             // new file content
@@ -102,7 +154,11 @@ void StartupAppEdit::on_btnSave_clicked()
 
             qDebug() << appFileName;
 
+#ifdef Q_OS_LINUX
             QString path = QString("%1/%2.desktop").arg(mAutostartPath).arg(appFileName);
+#elif defined(Q_OS_MACOS)
+            QString path = QString("%1/%2.plist").arg(mAutostartPath).arg(appFileName);
+#endif
 
             FileUtil::writeFile(path, appContent);
         }

@@ -5,8 +5,10 @@
 #include "Utils/file_util.h"
 #include <QSharedPointer>
 
+#ifdef Q_OS_LINUX
 #define APT_SOURCES_LIST_D_PATH "/etc/apt/sources.list.d"
 #define APT_SOURCES_LIST_PATH "/etc/apt/sources.list"
+#endif
 
 //          isSource options uri distribution componentes
 // example "deb [arch=amd64] http://packages.microsoft.com/repos/vscode stable main"

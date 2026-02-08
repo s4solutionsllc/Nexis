@@ -45,25 +45,43 @@ target_link_libraries(${PROJECT_NAME}
 
 # Strict aliasing and LTO interact poorly with Qt's internal type-punning.
 # -fno-strict-aliasing is needed to prevent miscompilation under LTO.
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   target_compile_options(${PROJECT_NAME}  PRIVATE  "-fno-strict-aliasing")
 endif()
 
-install(
-  TARGETS  ${PROJECT_NAME}
-  CONFIGURATIONS Release RelWithDebInfo MinSizeRel # Not allowing to install an unoptimized build
-  RUNTIME  DESTINATION  bin
-)
+if(APPLE)
+  # macOS: Build as a .app bundle
+  set_target_properties(${PROJECT_NAME} PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.stacer.app"
+    MACOSX_BUNDLE_BUNDLE_NAME "Stacer"
+    MACOSX_BUNDLE_BUNDLE_VERSION "2.0.1"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "2.0.1"
+  )
 
-install(
-  FILES           "${PROJECT_ROOT}/applications/stacer.desktop"
-  DESTINATION     share/applications
-  CONFIGURATIONS  Release RelWithDebInfo MinSizeRel
-)
+  install(
+    TARGETS  ${PROJECT_NAME}
+    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+    BUNDLE  DESTINATION  .
+    RUNTIME  DESTINATION  bin
+  )
+else()
+  install(
+    TARGETS  ${PROJECT_NAME}
+    CONFIGURATIONS Release RelWithDebInfo MinSizeRel # Not allowing to install an unoptimized build
+    RUNTIME  DESTINATION  bin
+  )
 
-install(
-  FILES           "${PROJECT_ROOT}/stacer/static/logo.png"
-  DESTINATION     share/icons
-  CONFIGURATIONS  Release RelWithDebInfo MinSizeRel
-  RENAME          stacer.png
-)
+  install(
+    FILES           "${PROJECT_ROOT}/applications/stacer.desktop"
+    DESTINATION     share/applications
+    CONFIGURATIONS  Release RelWithDebInfo MinSizeRel
+  )
+
+  install(
+    FILES           "${PROJECT_ROOT}/stacer/static/logo.png"
+    DESTINATION     share/icons
+    CONFIGURATIONS  Release RelWithDebInfo MinSizeRel
+    RENAME          stacer.png
+  )
+endif()

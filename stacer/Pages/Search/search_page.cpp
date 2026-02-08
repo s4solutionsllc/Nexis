@@ -228,15 +228,30 @@ void SearchPage::on_btnSearchAdvance_clicked()
 
     // PERMISSIONS
     if (ui->checkPermReadable->isChecked()) {
+#ifdef Q_OS_LINUX
         mFindQuery.append("-readable");
+#elif defined(Q_OS_MACOS)
+        mFindQuery.append("-perm");
+        mFindQuery.append("+r");
+#endif
     }
 
     if (ui->checkPermWritable->isChecked()) {
+#ifdef Q_OS_LINUX
         mFindQuery.append("-writable");
+#elif defined(Q_OS_MACOS)
+        mFindQuery.append("-perm");
+        mFindQuery.append("+w");
+#endif
     }
 
     if (ui->checkPermExecutable->isChecked()) {
+#ifdef Q_OS_LINUX
         mFindQuery.append("-executable");
+#elif defined(Q_OS_MACOS)
+        mFindQuery.append("-perm");
+        mFindQuery.append("+x");
+#endif
     }
 
     // SIZE
@@ -389,7 +404,11 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
                 }
             }
             else if (action->data().toString() == "move-trash") {
+#ifdef Q_OS_LINUX
                 QString trashPath(QDir::homePath() + "/.local/share/Trash");
+#elif defined(Q_OS_MACOS)
+                QString trashPath(QDir::homePath() + "/.Trash");
+#endif
 
                 while (! selectionModel->selectedRows().isEmpty()) {
                     QModelIndex index = selectionModel->selectedRows().first();
@@ -400,15 +419,24 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
                     QString filePath = folderPath + "/" + fileName;
 
                     bool isAnotherUser = QFileInfo(filePath).owner() != InfoManager::ins()->getUserName();
+#ifdef Q_OS_LINUX
                     if (isAnotherUser) {
                         CommandUtil::sudoExec("mv", {filePath, trashPath + "/files"});
                     } else {
                         CommandUtil::exec("mv", {filePath, trashPath + "/files"});
                     }
+#elif defined(Q_OS_MACOS)
+                    if (isAnotherUser) {
+                        CommandUtil::sudoExec("mv", {filePath, trashPath});
+                    } else {
+                        CommandUtil::exec("mv", {filePath, trashPath});
+                    }
+#endif
 
                     if (QFile(filePath).exists()) {
                         selectionModel->select(index, QItemSelectionModel::Deselect);
                     } else {
+#ifdef Q_OS_LINUX
                         QString infoContent = QString("[Trash Info]\n"
                                             "Path=%1\n"
                                             "DeletionDate=%2")
@@ -416,6 +444,8 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
                                 .arg(QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss"));
 
                         FileUtil::writeFile(trashPath + "/info/" + fileName + ".trashinfo", infoContent);
+#endif
+                        // macOS doesn't use .trashinfo metadata files
 
                         mSortFilterModel->removeRow(index.row());
                     }

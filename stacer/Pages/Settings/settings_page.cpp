@@ -60,6 +60,7 @@ void SettingsPage::init()
     }
 
     // start on boot
+#ifdef Q_OS_LINUX
     mStartupAppPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation).append("/autostart");
     if (! QDir(mStartupAppPath).exists()) {
         QDir().mkdir(mStartupAppPath);
@@ -74,6 +75,20 @@ void SettingsPage::init()
     } else {
         ui->checkAutostart->setChecked(false);
     }
+#elif defined(Q_OS_MACOS)
+    mStartupAppPath = QDir::homePath() + "/Library/LaunchAgents";
+    if (! QDir(mStartupAppPath).exists()) {
+        QDir().mkdir(mStartupAppPath);
+    }
+    mStartupAppPath.append("/com.stacer.app.plist");
+
+    QFile startupAppFile(mStartupAppPath);
+    if (startupAppFile.exists()) {
+        ui->checkAutostart->setChecked(true);
+    } else {
+        ui->checkAutostart->setChecked(false);
+    }
+#endif
 
     // app quit dont ask
     ui->checkAppQuitDontAsk->setChecked(mSettingManager->getAppQuitDialogDontAsk());
@@ -139,6 +154,7 @@ void SettingsPage::cmbDiskChanged(const int &index)
 void SettingsPage::on_checkAutostart_clicked(bool checked)
 {
     if (checked) {
+#ifdef Q_OS_LINUX
         QString appTemplate = QString("[Desktop Entry]\n"
                                       "Name=Stacer\n"
                                       "Comment=Linux System Optimizer and Monitoring\n"
@@ -146,8 +162,26 @@ void SettingsPage::on_checkAutostart_clicked(bool checked)
                                       "Type=Application\n"
                                       "Terminal=false\n"
                                       "Hidden=false\n");
-
         FileUtil::writeFile(mStartupAppPath, appTemplate);
+#elif defined(Q_OS_MACOS)
+        QString plistTemplate = QString(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+            "<plist version=\"1.0\">\n"
+            "<dict>\n"
+            "    <key>Label</key>\n"
+            "    <string>com.stacer.app</string>\n"
+            "    <key>ProgramArguments</key>\n"
+            "    <array>\n"
+            "        <string>stacer</string>\n"
+            "        <string>--hide</string>\n"
+            "    </array>\n"
+            "    <key>RunAtLoad</key>\n"
+            "    <true/>\n"
+            "</dict>\n"
+            "</plist>\n");
+        FileUtil::writeFile(mStartupAppPath, plistTemplate);
+#endif
     } else {
         QFile::remove(mStartupAppPath);
     }

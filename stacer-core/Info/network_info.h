@@ -21,8 +21,10 @@ public:
 private:
     QString defaultNetworkInterface;
 
+#ifdef Q_OS_LINUX
     QString rxPath;
     QString txPath;
+#endif
 };
 
 #endif // NETWORK_INFO_H

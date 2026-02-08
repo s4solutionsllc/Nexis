@@ -3,7 +3,9 @@
 
 #include "Utils/file_util.h"
 
+#ifdef Q_OS_LINUX
 #define PROC_MEMINFO "/proc/meminfo"
+#endif
 
 #include "stacer-core_global.h"
 

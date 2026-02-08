@@ -24,6 +24,7 @@ StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QStrin
 
 void StartupApp::on_checkStartup_clicked(bool status)
 {
+#ifdef Q_OS_LINUX
     QStringList lines = FileUtil::readListFromFile(mFilePath);
 
     // Hidden=[true|false]
@@ -48,6 +49,40 @@ void StartupApp::on_checkStartup_clicked(bool status)
     }
 
     FileUtil::writeFile(mFilePath, lines.join('\n').append('\n'));
+#elif defined(Q_OS_MACOS)
+    // macOS LaunchAgents: toggle Disabled key in plist
+    QStringList lines = FileUtil::readListFromFile(mFilePath);
+    QRegularExpression disabledKeyReg("^\\s*<key>Disabled</key>");
+    int pos = lines.indexOf(disabledKeyReg);
+
+    if (status) {
+        // Enable: remove Disabled key and its value
+        if (pos != -1) {
+            lines.removeAt(pos); // remove <key>Disabled</key>
+            if (pos < lines.size()) {
+                lines.removeAt(pos); // remove <true/> or <false/>
+            }
+        }
+    } else {
+        // Disable: add or update Disabled key
+        if (pos != -1) {
+            // Update the value line
+            if (pos + 1 < lines.size()) {
+                lines.replace(pos + 1, "\t<true/>");
+            }
+        } else {
+            // Insert before </dict>
+            QRegularExpression dictEndReg("^\\s*</dict>");
+            int dictEnd = lines.indexOf(dictEndReg);
+            if (dictEnd != -1) {
+                lines.insert(dictEnd, "\t<true/>");
+                lines.insert(dictEnd, "\t<key>Disabled</key>");
+            }
+        }
+    }
+
+    FileUtil::writeFile(mFilePath, lines.join('\n').append('\n'));
+#endif
 }
 
 void StartupApp::on_btnDeleteStartupApp_clicked()

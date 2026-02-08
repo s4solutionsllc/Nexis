@@ -8,7 +8,7 @@
 # IBM System z:                                                                  s390, s390x
 # SPARC:                                                                         sparcv9, sparc64, sparc
 
-cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 cmake_policy(PUSH)
 if(POLICY CMP0054)

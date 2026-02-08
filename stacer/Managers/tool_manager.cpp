@@ -45,6 +45,7 @@ bool ToolManager::serviceIsEnabled(const QString &sname) const
 QList<Package> ToolManager::getPackages() const
 {
     switch (PackageTool::currentPackageTool) {
+#ifdef Q_OS_LINUX
     case PackageTool::PackageTools::APT:
         return PackageTool::getDpkgPackages();
     case PackageTool::PackageTools::YUM:
@@ -52,6 +53,11 @@ QList<Package> ToolManager::getPackages() const
         return PackageTool::getRpmPackages();
     case PackageTool::PackageTools::PACMAN:
         return PackageTool::getPacmanPackages();
+#endif
+#ifdef Q_OS_MACOS
+    case PackageTool::PackageTools::HOMEBREW:
+        return PackageTool::getHomebrewPackages();
+#endif
     default:
         return QList<Package>();
     }
@@ -59,17 +65,27 @@ QList<Package> ToolManager::getPackages() const
 
 QStringList ToolManager::getSnapPackages() const
 {
+#ifdef Q_OS_LINUX
     return PackageTool::getSnapPackages();
+#else
+    return QStringList();
+#endif
 }
 
 bool ToolManager::uninstallSnapPackages(const QStringList packages)
 {
+#ifdef Q_OS_LINUX
     return PackageTool::snapRemovePackages(packages);
+#else
+    Q_UNUSED(packages);
+    return false;
+#endif
 }
 
 QStringList ToolManager::dryRunRemovePackages(const QStringList &packages)
 {
     switch (PackageTool::currentPackageTool) {
+#ifdef Q_OS_LINUX
     case PackageTool::PackageTools::APT:
         return PackageTool::dpkgDryRunRemove(packages);
     case PackageTool::PackageTools::YUM:
@@ -77,6 +93,11 @@ QStringList ToolManager::dryRunRemovePackages(const QStringList &packages)
         return PackageTool::rpmDryRunRemove(packages);
     case PackageTool::PackageTools::PACMAN:
         return PackageTool::pacmanDryRunRemove(packages);
+#endif
+#ifdef Q_OS_MACOS
+    case PackageTool::PackageTools::HOMEBREW:
+        return PackageTool::homebrewDryRunRemove(packages);
+#endif
     default:
         return QStringList();
     }
@@ -85,6 +106,7 @@ QStringList ToolManager::dryRunRemovePackages(const QStringList &packages)
 QFileInfoList ToolManager::getPackageCaches() const
 {
     switch (PackageTool::currentPackageTool) {
+#ifdef Q_OS_LINUX
     case PackageTool::PackageTools::APT:
         return PackageTool::getDpkgPackageCaches();
         break;
@@ -95,6 +117,12 @@ QFileInfoList ToolManager::getPackageCaches() const
     case PackageTool::PackageTools::PACMAN:
         return PackageTool::getPacmanPackageCaches();
         break;
+#endif
+#ifdef Q_OS_MACOS
+    case PackageTool::PackageTools::HOMEBREW:
+        return PackageTool::getHomebrewCaches();
+        break;
+#endif
     default:
         return QFileInfoList();
         break;
@@ -104,6 +132,7 @@ QFileInfoList ToolManager::getPackageCaches() const
 void ToolManager::uninstallPackages(const QStringList &packages)
 {
     switch (PackageTool::currentPackageTool) {
+#ifdef Q_OS_LINUX
     case PackageTool::PackageTools::APT:
         PackageTool::dpkgRemovePackages(packages);
         break;
@@ -116,21 +145,33 @@ void ToolManager::uninstallPackages(const QStringList &packages)
     case PackageTool::PackageTools::PACMAN:
         PackageTool::pacmanRemovePackages(packages);
         break;
+#endif
+#ifdef Q_OS_MACOS
+    case PackageTool::PackageTools::HOMEBREW:
+        PackageTool::homebrewRemovePackages(packages);
+        break;
+#endif
     default:
         break;
     }
 }
 
 /*
- * GNOME Settings
+ * GNOME Settings / macOS System Settings
  */
 bool ToolManager::checkGnomeSettings() const
 {
+#ifdef Q_OS_LINUX
     return GnomeSettingsTool::isAvailable() && GnomeSettingsTool::schemaExists(GnomeSchema::INTERFACE);
+#elif defined(Q_OS_MACOS)
+    return GnomeSettingsTool::isAvailable();
+#else
+    return false;
+#endif
 }
 
 /*
- * APT Source
+ * APT Source / Homebrew Taps
  */
 bool ToolManager::checkSourceRepository() const
 {
@@ -161,4 +202,3 @@ void ToolManager::addAPTRepository(const QString &repository, const bool isSourc
 {
     AptSourceTool::addRepository(repository, isSource);
 }
-

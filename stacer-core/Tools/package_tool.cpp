@@ -4,6 +4,8 @@
 #include <QHash>
 #include <QRegularExpression>
 
+#ifdef Q_OS_LINUX
+
 const PackageTool::PackageTools PackageTool::currentPackageTool =
         CommandUtil::isExecutable("apt-get") ? PackageTool::APT :
         CommandUtil::isExecutable("dnf")     ? PackageTool::DNF :
@@ -12,13 +14,22 @@ const PackageTool::PackageTools PackageTool::currentPackageTool =
         CommandUtil::isExecutable("zypper")  ? PackageTool::ZYPPER :
                                                PackageTool::UNKNOWN;
 
+#elif defined(Q_OS_MACOS)
+
+const PackageTool::PackageTools PackageTool::currentPackageTool =
+        CommandUtil::isExecutable("brew") ? PackageTool::HOMEBREW :
+                                            PackageTool::UNKNOWN;
+
+#endif
+
 /***********
- * DPKG
+ * DPKG (Linux only)
  ***********/
+#ifdef Q_OS_LINUX
+
 QFileInfoList PackageTool::getDpkgPackageCaches()
 {
     QDir caches("/var/cache/apt/archives/");
-
     return caches.entryInfoList(QDir::Files);
 }
 
@@ -154,8 +165,6 @@ QList<Package> PackageTool::getPacmanPackages()
         QString output = CommandUtil::exec("bash", {"-c", "pacman -Qi 2> /dev/null"})
                 .trimmed();
 
-        // pacman -Qi outputs blocks separated by blank lines
-        // Each block has "Field : Value" lines
         const QStringList lines = output.split('\n');
         Package pkg;
         for (const QString &line : lines) {
@@ -279,7 +288,6 @@ QStringList PackageTool::rpmDryRunRemove(const QStringList &packages)
         args.insert(1, "--assumeno");
         QString output = CommandUtil::exec("dnf", args);
 
-        // Parse the "Removing:" section lines
         bool inRemoveSection = false;
         const QStringList lines = output.split('\n');
         for (const QString &line : lines) {
@@ -311,8 +319,6 @@ QStringList PackageTool::pacmanDryRunRemove(const QStringList &packages)
 
         const QStringList lines = output.trimmed().split('\n');
         for (const QString &line : lines) {
-            // pacman --print outputs full paths like /var/cache/pacman/pkg/name-ver.pkg.tar
-            // or just package names depending on version
             QString name = line.section('/', -1).section('-', 0, 0);
             if (!name.isEmpty())
                 wouldRemove << name;
@@ -323,8 +329,94 @@ QStringList PackageTool::pacmanDryRunRemove(const QStringList &packages)
     return wouldRemove;
 }
 
+#endif // Q_OS_LINUX
+
+/**********
+ * HOMEBREW (macOS only)
+ **********/
+#ifdef Q_OS_MACOS
+
+QFileInfoList PackageTool::getHomebrewCaches()
+{
+    QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    QDir caches(homePath + "/Library/Caches/Homebrew");
+    if (!caches.exists()) {
+        // Try the newer location
+        caches.setPath("/opt/homebrew/var/cache");
+    }
+    return caches.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+}
+
+QList<Package> PackageTool::getHomebrewPackages()
+{
+    QList<Package> packages;
+
+    try {
+        // Get list of installed formulae with descriptions
+        QString output = CommandUtil::exec("brew", {"list", "--formula", "-1"}).trimmed();
+        QStringList formulae = output.split('\n', Qt::SkipEmptyParts);
+
+        for (const QString &name : formulae) {
+            Package pkg;
+            pkg.name = name.trimmed();
+            pkg.section = "formula";
+            pkg.description = ""; // Description fetched on-demand would be too slow
+            if (!pkg.name.isEmpty())
+                packages.append(pkg);
+        }
+
+        // Also get casks
+        output = CommandUtil::exec("brew", {"list", "--cask", "-1"}).trimmed();
+        QStringList casks = output.split('\n', Qt::SkipEmptyParts);
+
+        for (const QString &name : casks) {
+            Package pkg;
+            pkg.name = name.trimmed();
+            pkg.section = "cask";
+            pkg.description = "";
+            if (!pkg.name.isEmpty())
+                packages.append(pkg);
+        }
+    } catch (QString &ex) {
+        qCritical() << ex;
+    }
+
+    return packages;
+}
+
+bool PackageTool::homebrewRemovePackages(QStringList packages)
+{
+    try {
+        packages.insert(0, "uninstall");
+        CommandUtil::exec("brew", packages);
+        return true;
+    } catch (QString &ex) {
+        qCritical() << ex;
+    }
+    return false;
+}
+
+QStringList PackageTool::homebrewDryRunRemove(const QStringList &packages)
+{
+    // Homebrew doesn't have a built-in dry-run for uninstall
+    // We can check for dependents that would be affected
+    QStringList wouldRemove;
+    for (const QString &pkg : packages) {
+        wouldRemove << pkg;
+        try {
+            QString deps = CommandUtil::exec("brew", {"uses", "--installed", pkg}).trimmed();
+            if (!deps.isEmpty()) {
+                wouldRemove << deps.split('\n');
+            }
+        } catch (...) {}
+    }
+    return wouldRemove;
+}
+
+#endif // Q_OS_MACOS
+
 /********************
- * Section Names
+ * Section Names (cross-platform)
  ********************/
 QString PackageTool::friendlySectionName(const QString &section)
 {
@@ -353,13 +445,15 @@ QString PackageTool::friendlySectionName(const QString &section)
         {"php", "PHP"}, {"lisp", "Lisp"},
         {"ocaml", "OCaml"}, {"haskell", "Haskell"},
         {"rust", "Rust"}, {"golang", "Go"},
+        // macOS Homebrew sections
+        {"formula", "Homebrew Formula"}, {"cask", "Homebrew Cask"},
     };
 
     // Exact match
     if (map.contains(section))
         return map.value(section);
 
-    // Handle composite sections like "universe/libs" → take last part
+    // Handle composite sections like "universe/libs"
     QString last = section.section('/', -1);
     if (map.contains(last))
         return map.value(last);

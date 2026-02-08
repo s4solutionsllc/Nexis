@@ -3,7 +3,7 @@
 # The linker is handled separately per compiler, so, you can do something like this:
 # -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=clang++
 
-cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 
 cmake_policy(PUSH)

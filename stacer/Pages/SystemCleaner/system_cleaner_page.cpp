@@ -175,8 +175,13 @@ void SystemCleanerPage::onScanFinished()
         totalSize += addTreeRoot(APPLICATION_CACHES, mLblAppCacheText, mAppCaches);
     }
     if (mScanTrash) {
+#ifdef Q_OS_LINUX
         totalSize += addTreeRoot(TRASH, mLblTrashText,
                     { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
+#elif defined(Q_OS_MACOS)
+        totalSize += addTreeRoot(TRASH, mLblTrashText,
+                    { QFileInfo(QDir::homePath() + "/.Trash/") }, true);
+#endif
     }
 
     ui->lblTotalBytes->setText(tr("Total size: %1").arg(FormatUtil::formatBytes(totalSize)));
@@ -218,8 +223,20 @@ void SystemCleanerPage::systemClean()
 
     // Handle trash deletion
     if (mCleanTrash) {
+#ifdef Q_OS_LINUX
         QDir(mTrashPath + "/files").removeRecursively();
         QDir(mTrashPath + "/info").removeRecursively();
+#elif defined(Q_OS_MACOS)
+        // macOS trash is a flat directory, remove all contents
+        QDir trashDir(mTrashPath);
+        for (const QFileInfo &entry : trashDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+            if (entry.isDir()) {
+                QDir(entry.absoluteFilePath()).removeRecursively();
+            } else {
+                QFile::remove(entry.absoluteFilePath());
+            }
+        }
+#endif
     }
 
     // Get sizes before deletion
@@ -340,7 +357,11 @@ void SystemCleanerPage::on_btnClean_clicked()
         } else if (cat == CleanCategories::TRASH) {
             if (it->checkState(0) == Qt::Checked) {
                 mCleanTrash = true;
+#ifdef Q_OS_LINUX
                 mTrashPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation).append("/.local/share/Trash");
+#elif defined(Q_OS_MACOS)
+                mTrashPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation).append("/.Trash");
+#endif
             }
         }
     }

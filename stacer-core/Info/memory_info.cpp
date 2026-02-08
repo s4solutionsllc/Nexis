@@ -5,18 +5,18 @@
 MemoryInfo::MemoryInfo():
     memTotal(0),
     memFree(0),
-    memUsed(0)
+    memUsed(0),
+    buffers(0),
+    cached(0),
+    sreclaimable(0),
+    shmem(0),
+    swapTotal(0),
+    swapFree(0),
+    swapUsed(0)
 { }
 
-/* https://access.redhat.com/solutions/406773
- *
- * https://stackoverflow.com/questions/41224738/
- *   Total used memory = MemTotal - MemFree
- *   Non cache/buffer memory (green) = Total used memory - (Buffers + Cached memory)
- *   Buffers (blue) = Buffers
- *   Cached memory (yellow) = Cached + SReclaimable - Shmem
- *   Swap = SwapTotal - SwapFree
-*/
+#ifdef Q_OS_LINUX
+
 void MemoryInfo::updateMemoryInfo()
 {
     QStringList lines = FileUtil::readListFromFile(PROC_MEMINFO)
@@ -38,6 +38,58 @@ void MemoryInfo::updateMemoryInfo()
     memUsed = (memTotal - (memFree + buffers + cached));
     swapUsed = (swapTotal - swapFree);
 }
+
+#elif defined(Q_OS_MACOS)
+
+#include <sys/sysctl.h>
+#include <mach/mach.h>
+#include <mach/mach_host.h>
+#include <mach/vm_statistics.h>
+
+void MemoryInfo::updateMemoryInfo()
+{
+    // Total physical memory via sysctl
+    int64_t physMem = 0;
+    size_t len = sizeof(physMem);
+    if (sysctlbyname("hw.memsize", &physMem, &len, nullptr, 0) == 0) {
+        memTotal = static_cast<quint64>(physMem);
+    }
+
+    // VM statistics via Mach
+    vm_size_t pageSize;
+    host_page_size(mach_host_self(), &pageSize);
+
+    vm_statistics64_data_t vmStat;
+    mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+    kern_return_t err = host_statistics64(mach_host_self(),
+                                          HOST_VM_INFO64,
+                                          reinterpret_cast<host_info64_t>(&vmStat),
+                                          &count);
+    if (err == KERN_SUCCESS) {
+        quint64 free = static_cast<quint64>(vmStat.free_count) * pageSize;
+        quint64 inactive = static_cast<quint64>(vmStat.inactive_count) * pageSize;
+        quint64 purgeable = static_cast<quint64>(vmStat.purgeable_count) * pageSize;
+
+        // macOS "available" memory ≈ free + inactive + purgeable
+        memFree = free + inactive + purgeable;
+        memUsed = memTotal > memFree ? memTotal - memFree : 0;
+
+        // Cached approximation: inactive + purgeable pages
+        cached = inactive + purgeable;
+        buffers = 0; // macOS doesn't have a separate buffer concept
+    }
+
+    // Swap usage via sysctl
+    struct xsw_usage swapUsage;
+    len = sizeof(swapUsage);
+    if (sysctlbyname("vm.swapusage", &swapUsage, &len, nullptr, 0) == 0) {
+        swapTotal = swapUsage.xsu_total;
+        swapUsed = swapUsage.xsu_used;
+        swapFree = swapUsage.xsu_avail;
+    }
+}
+
+#endif
 
 quint64 MemoryInfo::getSwapUsed() const
 {

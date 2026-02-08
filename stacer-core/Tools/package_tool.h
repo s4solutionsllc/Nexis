@@ -23,10 +23,12 @@ public:
         YUM,        // fedora
         PACMAN,     // arch
         ZYPPER,     // opensuse
+        HOMEBREW,   // macOS
         UNKNOWN
     };
 
 public:
+#ifdef Q_OS_LINUX
     // APT
     static QFileInfoList getDpkgPackageCaches();
     static QList<Package> getDpkgPackages();
@@ -45,11 +47,20 @@ public:
     static bool pacmanRemovePackages(QStringList packages);
     static QStringList pacmanDryRunRemove(const QStringList &packages);
 
-    static QString friendlySectionName(const QString &section);
-
     // Snap
     static QStringList getSnapPackages();
     static bool snapRemovePackages(QStringList packages);
+#endif
+
+#ifdef Q_OS_MACOS
+    // Homebrew
+    static QFileInfoList getHomebrewCaches();
+    static QList<Package> getHomebrewPackages();
+    static bool homebrewRemovePackages(QStringList packages);
+    static QStringList homebrewDryRunRemove(const QStringList &packages);
+#endif
+
+    static QString friendlySectionName(const QString &section);
 
     static const PackageTools currentPackageTool;
 };

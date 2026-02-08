@@ -7,7 +7,9 @@
 #include <QSet>
 #include "stacer-core_global.h"
 
+#ifdef Q_OS_LINUX
 #define PROC_MOUNTS "/proc/mounts"
+#endif
 
 class Disk;
 
