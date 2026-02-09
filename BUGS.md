@@ -6,11 +6,12 @@
 
 ## HIGH Severity
 
-- [ ] **BUG-01: Memory info calculation — swapped variables** (HIGH)
+- [x] **BUG-01: Memory info calculation — swapped variables** (HIGH)
   - **File:** `linux/stacer-core/Info/memory_info.cpp:33-34`
   - **Description:** `sreclaimable` and `shmem` are assigned to the wrong indices when parsing `/proc/meminfo`. `Shmem` is at index 6 and `SReclaimable` at index 7, but the code assigns them backwards, causing incorrect memory usage display.
   - **Upstream:** [#535](https://github.com/oguzhaninan/Stacer/issues/535), [#525](https://github.com/oguzhaninan/Stacer/issues/525)
   - **Fix complexity:** Trivial (swap two lines)
+  - **Resolved:** Swapped assignments so shmem=index 6 and sreclaimable=index 7
 
 - [ ] **BUG-02: System Cleaner deletes entire directories with `rm -rf`** (HIGH)
   - **File:** `linux/stacer/Pages/SystemCleaner/system_cleaner_page.cpp:229`
@@ -18,19 +19,21 @@
   - **Upstream:** [#548](https://github.com/oguzhaninan/Stacer/issues/548), [#459](https://github.com/oguzhaninan/Stacer/issues/459)
   - **Fix complexity:** Moderate (change deletion logic to empty contents, not remove directories)
 
-- [ ] **BUG-03: No single-instance enforcement** (HIGH)
+- [x] **BUG-03: No single-instance enforcement** (HIGH)
   - **File:** `shared/stacer/main.cpp`
   - **Description:** No `QLockFile`, `QSharedMemory`, or any mechanism to prevent multiple instances. Duplicate launches cause race conditions, especially dangerous for `/etc/hosts` editing.
   - **Upstream:** [#274](https://github.com/oguzhaninan/Stacer/issues/274)
   - **Fix complexity:** Moderate (standard Qt single-instance pattern)
+  - **Resolved:** Added QLockFile in main.cpp with warning dialog on duplicate launch
 
 ## MEDIUM Severity
 
-- [ ] **BUG-04: CPU speed shows 0 GHz on modern kernels** (MEDIUM)
+- [x] **BUG-04: CPU speed shows 0 GHz on modern kernels** (MEDIUM)
   - **Files:** `linux/stacer-core/Info/cpu_info.cpp:74-101`, `shared/stacer/Pages/Dashboard/dashboard_page.cpp:150-176`
   - **Description:** Code reads "cpu MHz" from `/proc/cpuinfo`, which modern kernels don't populate. Falls back to `lscpu` but that can also fail. Should use `/sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq`. Dashboard degrades to showing only `%`.
   - **Upstream:** [#409](https://github.com/oguzhaninan/Stacer/issues/409)
   - **Fix complexity:** Moderate (add sysfs fallback path)
+  - **Resolved:** Added sysfs cpufreq fallback in both cpu_info.cpp and system_info.cpp
 
 - [ ] **BUG-05: Background threads not cleaned up on exit** (MEDIUM)
   - **Files:** `shared/stacer/Pages/Uninstaller/uninstaller_page.cpp:40-51,238-246`, `shared/stacer/app.cpp:118-123`
@@ -58,10 +61,11 @@
   - **Upstream:** [#494](https://github.com/oguzhaninan/Stacer/issues/494)
   - **Fix complexity:** Moderate
 
-- [ ] **BUG-09: Non-English locale parsing failures** (LOW)
+- [x] **BUG-09: Non-English locale parsing failures** (LOW)
   - **File:** `linux/stacer-core/Info/cpu_info.cpp` and other system command parsers
   - **Description:** Commands like `lscpu` output localized text, but code filters for English strings (`"^CPU MHz"`). Fails on non-English systems. Fixed in QuentiumYT fork with `LC_ALL=C`.
   - **Fix complexity:** Trivial (prefix commands with `LC_ALL=C`)
+  - **Resolved:** Changed LANG=C to LC_ALL=C in cpu_info.cpp and system_info.cpp
 
 - [ ] **BUG-10: Memory leak in System Cleaner** (LOW)
   - **Scope:** System Cleaner page

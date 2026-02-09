@@ -55,6 +55,7 @@ void StartupAppEdit::show()
     ui->txtStartupAppName->clear();
     ui->txtStartupAppComment->clear();
     ui->txtStartupAppCommand->clear();
+    ui->spnStartupDelay->setValue(0);
     ui->lblErrorMsg->hide();
 
     if(! selectedFilePath.isEmpty())
@@ -75,7 +76,21 @@ void StartupAppEdit::show()
 
             QRegularExpressionMatch progMatch = progReg.match(content);
             if (progMatch.hasMatch()) {
-                ui->txtStartupAppCommand->setText(progMatch.captured(1));
+                QString cmd = progMatch.captured(1);
+                // Detect shell-wrapped delay: /bin/bash -c "sleep N && <cmd>"
+                QRegularExpression sleepReg("^/bin/bash$");
+                if (sleepReg.match(cmd).hasMatch()) {
+                    QRegularExpression argReg("sleep\\s+(\\d+)\\s*&&\\s*(.+)");
+                    QRegularExpressionMatch argMatch = argReg.match(content);
+                    if (argMatch.hasMatch()) {
+                        ui->spnStartupDelay->setValue(argMatch.captured(1).toInt());
+                        ui->txtStartupAppCommand->setText(argMatch.captured(2).trimmed());
+                    } else {
+                        ui->txtStartupAppCommand->setText(cmd);
+                    }
+                } else {
+                    ui->txtStartupAppCommand->setText(cmd);
+                }
             }
 
             // Comment field: not standard in plists, leave empty or use Label
@@ -97,24 +112,48 @@ void StartupAppEdit::changeDesktopValue(QStringList &lines, const QRegularExpres
     }
 }
 
+QString StartupAppEdit::buildPlistContent()
+{
+    int delay = ui->spnStartupDelay->value();
+    QString label = ui->txtStartupAppName->text();
+    QString cmd = ui->txtStartupAppCommand->text();
+
+    QString plist;
+    plist += "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+             "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+             "<plist version=\"1.0\">\n"
+             "<dict>\n"
+             "    <key>Label</key>\n"
+             "    <string>" + label + "</string>\n"
+             "    <key>ProgramArguments</key>\n"
+             "    <array>\n";
+
+    if (delay > 0) {
+        plist += "        <string>/bin/bash</string>\n"
+                 "        <string>-c</string>\n"
+                 "        <string>sleep " + QString::number(delay) + " &amp;&amp; " + cmd + "</string>\n";
+    } else {
+        plist += "        <string>" + cmd + "</string>\n";
+    }
+
+    plist += "    </array>\n"
+             "    <key>RunAtLoad</key>\n"
+             "    <true/>\n"
+             "</dict>\n"
+             "</plist>\n";
+
+    return plist;
+}
+
 void StartupAppEdit::on_btnSave_clicked()
 {
     if(isValid()) {
         if(! selectedFilePath.isEmpty()) {
-            // For macOS, rewrite the plist with updated values
-            QString appContent = mNewAppTemplate
-                    .arg(ui->txtStartupAppName->text())
-                    .arg(ui->txtStartupAppComment->text())
-                    .arg(ui->txtStartupAppCommand->text());
-
+            QString appContent = buildPlistContent();
             FileUtil::writeFile(selectedFilePath, appContent, QIODevice::ReadWrite | QIODevice::Truncate);
         }
         else {
-            // new file content
-            QString appContent = mNewAppTemplate
-                    .arg(ui->txtStartupAppName->text())
-                    .arg(ui->txtStartupAppComment->text())
-                    .arg(ui->txtStartupAppCommand->text());
+            QString appContent = buildPlistContent();
 
             // file name
             QString appFileName = ui->txtStartupAppName->text()

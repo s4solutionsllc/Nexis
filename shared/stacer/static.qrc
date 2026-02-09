@@ -54,6 +54,8 @@
         <file>static/themes/light/style/values.ini</file>
         <file>static/themes/default/style/values.ini</file>
         <file>static/logo.png</file>
+        <file>static/logo.svg</file>
+        <file>static/tray-icon.svg</file>
         <file>static/themes/default/img/run.png</file>
         <file>static/themes/default/img/power.png</file>
         <file>static/themes/default/img/sidebar-icons/feedback.png</file>

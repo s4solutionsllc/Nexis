@@ -4,7 +4,7 @@
 #include "command_util.h"
 
 #define PROC_CPUINFO "/proc/cpuinfo"
-#define LSCPU_COMMAND "LANG=C lscpu"
+#define LSCPU_COMMAND "LC_ALL=C lscpu"
 #define PROC_LOADAVG "/proc/loadavg"
 #define PROC_STAT    "/proc/stat"
 
@@ -73,19 +73,37 @@ QList<double> CpuInfo::getLoadAvgs() const
 
 double CpuInfo::getAvgClock() const
 {
-    const QStringList lines = CommandUtil::exec("bash",{"-c", LSCPU_COMMAND}).split('\n');
-    const QStringList filtered = lines.filter(QRegularExpression("^CPU MHz"));
-    if (!filtered.isEmpty()) {
-        return filtered.first().split(":").last().toDouble();
-    }
-    // Fallback: average the per-core clocks from /proc/cpuinfo
+    // Try lscpu first
+    try {
+        const QStringList lines = CommandUtil::exec("bash",{"-c", LSCPU_COMMAND}).split('\n');
+        const QStringList filtered = lines.filter(QRegularExpression("^CPU MHz"));
+        if (!filtered.isEmpty()) {
+            double mhz = filtered.first().split(":").last().toDouble();
+            if (mhz > 0.0)
+                return mhz;
+        }
+    } catch (...) {}
+
+    // Fallback: per-core clocks from /proc/cpuinfo
     const QList<double> clocks = getClocks();
-    if (clocks.isEmpty())
-        return 0.0;
-    double sum = 0.0;
-    for (double c : clocks)
-        sum += c;
-    return sum / clocks.size();
+    if (!clocks.isEmpty()) {
+        double sum = 0.0;
+        for (double c : clocks)
+            sum += c;
+        double avg = sum / clocks.size();
+        if (avg > 0.0)
+            return avg;
+    }
+
+    // Fallback: sysfs cpufreq (works on modern kernels where /proc/cpuinfo lacks MHz)
+    QString freqStr = FileUtil::readStringFromFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq").trimmed();
+    if (!freqStr.isEmpty()) {
+        double khz = freqStr.toDouble();
+        if (khz > 0.0)
+            return khz / 1000.0; // kHz to MHz
+    }
+
+    return 0.0;
 }
 
 QList<double> CpuInfo::getClocks() const

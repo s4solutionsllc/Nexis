@@ -4,6 +4,9 @@
 #include <QDebug>
 #include <QFontDatabase>
 #include <QIcon>
+#include <QLockFile>
+#include <QDir>
+#include <QMessageBox>
 
 #include "app.h"
 
@@ -58,7 +61,18 @@ int main(int argc, char *argv[])
     qApp->setApplicationName("stacer");
     qApp->setApplicationDisplayName("Stacer");
     qApp->setApplicationVersion("2.0.1");
-    qApp->setWindowIcon(QIcon(":/static/logo.png"));
+    qApp->setWindowIcon(QIcon(":/static/logo.svg"));
+
+    // Single-instance enforcement (BUG-03 / FR-02)
+    QString lockPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/stacer.lock";
+    QLockFile lockFile(lockPath);
+    lockFile.setStaleLockTime(0);
+
+    if (!lockFile.tryLock(100)) {
+        QMessageBox::warning(nullptr, "Stacer",
+            QObject::tr("Another instance of Stacer is already running."));
+        return 1;
+    }
 
     {
        QCommandLineOption hideOption("hide", "Hide Stacer while launching.");

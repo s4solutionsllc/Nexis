@@ -21,7 +21,7 @@ public:
     bool serviceIsActive(const QString &sname) const;
     bool serviceIsEnabled(const QString &sname) const;
 
-    void uninstallPackages(const QStringList &packages);
+    void uninstallPackages(const QStringList &packages, bool purge = false);
     bool uninstallSnapPackages(const QStringList packages);
     QStringList dryRunRemovePackages(const QStringList &packages);
 

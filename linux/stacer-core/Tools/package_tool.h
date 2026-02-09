@@ -13,7 +13,7 @@ public:
     // APT
     static QFileInfoList getDpkgPackageCaches();
     static QList<Package> getDpkgPackages();
-    static bool dpkgRemovePackages(QStringList packages);
+    static bool dpkgRemovePackages(QStringList packages, bool purge = false);
     static QStringList dpkgDryRunRemove(const QStringList &packages);
 
     // DNF - YUM

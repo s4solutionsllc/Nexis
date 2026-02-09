@@ -101,11 +101,11 @@ QFileInfoList ToolManager::getPackageCaches() const
     }
 }
 
-void ToolManager::uninstallPackages(const QStringList &packages)
+void ToolManager::uninstallPackages(const QStringList &packages, bool purge)
 {
     switch (PackageTool::currentPackageTool) {
     case APT:
-        PackageTool::dpkgRemovePackages(packages);
+        PackageTool::dpkgRemovePackages(packages, purge);
         break;
     case YUM:
         PackageTool::yumRemovePackages(packages);

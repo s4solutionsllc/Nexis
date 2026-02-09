@@ -284,7 +284,7 @@
      </widget>
     </widget>
    </item>
-   <item row="5" column="0" colspan="3" alignment="Qt::AlignHCenter|Qt::AlignBottom">
+   <item row="6" column="0" colspan="3" alignment="Qt::AlignHCenter|Qt::AlignBottom">
     <widget class="QLabel" name="lblLoadingUninstaller">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -314,6 +314,16 @@
     </spacer>
    </item>
    <item row="4" column="0" colspan="3" alignment="Qt::AlignHCenter">
+    <widget class="QCheckBox" name="chkPurge">
+     <property name="text">
+      <string>Purge (also remove configuration files)</string>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="3" alignment="Qt::AlignHCenter">
     <widget class="QPushButton" name="btnUninstall">
      <property name="enabled">
       <bool>true</bool>

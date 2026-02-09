@@ -52,10 +52,10 @@ QList<Package> PackageTool::getDpkgPackages()
     return packages;
 }
 
-bool PackageTool::dpkgRemovePackages(QStringList packages)
+bool PackageTool::dpkgRemovePackages(QStringList packages, bool purge)
 {
     try {
-        packages.insert(0, "remove");
+        packages.insert(0, purge ? "purge" : "remove");
         packages.insert(1, "-y");
 
         CommandUtil::sudoExec("apt-get", packages);

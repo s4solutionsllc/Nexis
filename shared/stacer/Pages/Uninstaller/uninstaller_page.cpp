@@ -30,6 +30,10 @@ void UninstallerPage::init()
 
     ui->stackedWidget->setCurrentIndex(0);
 
+#ifdef Q_OS_MACOS
+    ui->chkPurge->hide();
+#endif
+
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages, ui->btnSnapPackages };
     Utilities::addDropShadow(widgets, 40);
 
@@ -235,11 +239,13 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (reply != QMessageBox::Ok)
         return;
 
+    bool purge = ui->chkPurge->isChecked();
+
     (void)QtConcurrent::run([=]
     {
         emit SignalMapper::ins()->sigUninstallStarted();
 
-        ToolManager::ins()->uninstallPackages(selectedPackages);
+        ToolManager::ins()->uninstallPackages(selectedPackages, purge);
         ToolManager::ins()->uninstallSnapPackages(selectedSnapPackages);
 
         emit SignalMapper::ins()->sigUninstallFinished();

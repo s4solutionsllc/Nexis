@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Outer ring -->
+  <circle cx="128" cy="128" r="120" fill="#3d4f5f" stroke="#5a6d7e" stroke-width="4"/>
+  <!-- Inner ring -->
+  <circle cx="128" cy="128" r="100" fill="#2d3e4e"/>
+  <!-- Gauge arc background -->
+  <path d="M 48 168 A 95 95 0 1 1 208 168" fill="none" stroke="#1a2a3a" stroke-width="12" stroke-linecap="round"/>
+  <!-- Gauge arc colored portion (teal accent) -->
+  <path d="M 48 168 A 95 95 0 1 1 188 60" fill="none" stroke="#2ec27e" stroke-width="12" stroke-linecap="round"/>
+  <!-- Needle -->
+  <line x1="128" y1="128" x2="72" y2="72" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="128" cy="128" r="10" fill="#e8e8e8"/>
+  <!-- Tick marks -->
+  <line x1="55" y1="80" x2="65" y2="88" stroke="#8899a6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="42" y1="118" x2="54" y2="120" stroke="#8899a6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="128" y1="36" x2="128" y2="48" stroke="#8899a6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="201" y1="80" x2="191" y2="88" stroke="#8899a6" stroke-width="2" stroke-linecap="round"/>
+  <line x1="214" y1="118" x2="202" y2="120" stroke="#8899a6" stroke-width="2" stroke-linecap="round"/>
+</svg>

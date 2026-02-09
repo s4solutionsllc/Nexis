@@ -20,7 +20,7 @@ AppManager::AppManager()
 {
     mSettingManager = SettingManager::ins();
 
-    mTrayIcon = new QSystemTrayIcon(QIcon::fromTheme("utilities-system-monitor", QIcon(":/static/logo.png")));
+    mTrayIcon = new QSystemTrayIcon(QIcon::fromTheme("utilities-system-monitor", QIcon(":/static/tray-icon.svg")));
 
     loadLanguageList();
 

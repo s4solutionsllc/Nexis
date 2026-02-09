@@ -48,6 +48,7 @@ void StartupAppEdit::show()
     ui->txtStartupAppName->clear();
     ui->txtStartupAppComment->clear();
     ui->txtStartupAppCommand->clear();
+    ui->spnStartupDelay->setValue(0);
     ui->lblErrorMsg->hide();
 
     if(! selectedFilePath.isEmpty())
@@ -59,6 +60,9 @@ void StartupAppEdit::show()
             ui->txtStartupAppName->setText(Utilities::getDesktopValue(NAME_REG, lines));
             ui->txtStartupAppComment->setText(Utilities::getDesktopValue(COMMENT_REG, lines));
             ui->txtStartupAppCommand->setText(Utilities::getDesktopValue(EXEC_REG, lines));
+
+            QString delayStr = Utilities::getDesktopValue(DELAY_REG, lines);
+            ui->spnStartupDelay->setValue(delayStr.toInt());
         }
     }
 
@@ -86,6 +90,14 @@ void StartupAppEdit::on_btnSave_clicked()
             changeDesktopValue(lines, COMMENT_REG, QString("Comment=%1").arg(ui->txtStartupAppComment->text()));
             changeDesktopValue(lines, EXEC_REG, QString("Exec=%1").arg(ui->txtStartupAppCommand->text()));
 
+            int delay = ui->spnStartupDelay->value();
+            if (delay > 0) {
+                changeDesktopValue(lines, DELAY_REG, QString("X-GNOME-Autostart-Delay=%1").arg(delay));
+            } else {
+                int pos = lines.indexOf(DELAY_REG);
+                if (pos != -1) lines.removeAt(pos);
+            }
+
             FileUtil::writeFile(selectedFilePath, lines.join("\n"), QIODevice::ReadWrite | QIODevice::Truncate);
         }
         else {
@@ -94,6 +106,10 @@ void StartupAppEdit::on_btnSave_clicked()
                     .arg(ui->txtStartupAppName->text())
                     .arg(ui->txtStartupAppComment->text())
                     .arg(ui->txtStartupAppCommand->text());
+
+            int delay = ui->spnStartupDelay->value();
+            if (delay > 0)
+                appContent += QString("X-GNOME-Autostart-Delay=%1\n").arg(delay);
 
             // file name
             QString appFileName = ui->txtStartupAppName->text()
@@ -116,6 +132,11 @@ void StartupAppEdit::on_btnSave_clicked()
     }
 
     selectedFilePath = "";
+}
+
+QString StartupAppEdit::buildPlistContent()
+{
+    return QString(); // Not used on Linux
 }
 
 bool StartupAppEdit::isValid()

@@ -85,8 +85,9 @@ QFileInfoList ToolManager::getPackageCaches() const
     }
 }
 
-void ToolManager::uninstallPackages(const QStringList &packages)
+void ToolManager::uninstallPackages(const QStringList &packages, bool purge)
 {
+    Q_UNUSED(purge); // Homebrew always removes config files
     switch (PackageTool::currentPackageTool) {
     case HOMEBREW:
         PackageTool::homebrewRemovePackages(packages);

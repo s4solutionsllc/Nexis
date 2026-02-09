@@ -151,8 +151,17 @@ QFileInfoList SystemInfo::getAppCaches() const
 
     // macOS caches are in ~/Library/Caches
     QDir caches(homePath + "/Library/Caches");
+    QFileInfoList result = caches.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 
-    return caches.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+    // Include pip cache from PIP_CACHE_DIR if set and outside ~/Library/Caches
+    QString pipCacheEnv = qgetenv("PIP_CACHE_DIR");
+    if (!pipCacheEnv.isEmpty()) {
+        QFileInfo pipInfo(pipCacheEnv);
+        if (pipInfo.exists() && !pipInfo.absoluteFilePath().startsWith(caches.absolutePath()))
+            result.append(pipInfo);
+    }
+
+    return result;
 }
 
 // --- Cross-platform methods ---

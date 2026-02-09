@@ -12,6 +12,7 @@
 #define EXEC_REG QRegularExpression("^Exec=.*")
 #define GNOME_ENABLED_REG QRegularExpression("^X-GNOME-Autostart-enabled=.*")
 #define HIDDEN_REG QRegularExpression("^Hidden=.*")
+#define DELAY_REG QRegularExpression("^X-GNOME-Autostart-Delay=.*")
 
 namespace Ui {
     class StartupAppEdit;
@@ -39,6 +40,7 @@ private slots:
     bool isValid();
     void on_btnSave_clicked();
     void changeDesktopValue(QStringList &lines, const QRegularExpression &reg, const QString &text);
+    QString buildPlistContent();
 
 private:
     Ui::StartupAppEdit *ui;

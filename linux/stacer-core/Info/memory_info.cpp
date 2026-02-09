@@ -30,8 +30,8 @@ void MemoryInfo::updateMemoryInfo()
     cached = getValue(3);
     swapTotal = getValue(4);
     swapFree = getValue(5);
-    sreclaimable = getValue(6);
-    shmem = getValue(7);
+    shmem = getValue(6);
+    sreclaimable = getValue(7);
 #undef getValue
 
     cached = (cached + sreclaimable - shmem);

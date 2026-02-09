@@ -4,7 +4,7 @@
 #include <QRegularExpression>
 #include <iostream>
 
-#define LSCPU_COMMAND "LANG=C lscpu"
+#define LSCPU_COMMAND "LC_ALL=C lscpu"
 
 SystemInfo::SystemInfo()
 {
@@ -34,7 +34,17 @@ SystemInfo::SystemInfo()
         speed = speedLine.split(":").last();
 
         model = model.contains('@') ? model.split("@").first() : model; // intel : AMD
-        speed = QString::number(speed.toDouble()/1000.0) + "GHz";
+
+        double speedMHz = speed.toDouble();
+
+        // Fallback: sysfs cpufreq if lscpu returned 0
+        if (speedMHz <= 0.0) {
+            QString freqStr = FileUtil::readStringFromFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq").trimmed();
+            if (!freqStr.isEmpty())
+                speedMHz = freqStr.toDouble() / 1000.0; // kHz to MHz
+        }
+
+        speed = QString::number(speedMHz / 1000.0) + "GHz";
 
         this->cpuModel = model.trimmed().replace(regexp, space);
         this->cpuSpeed = speed.trimmed().replace(regexp, space);
@@ -105,8 +115,17 @@ QFileInfoList SystemInfo::getAppCaches() const
     QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 
     QDir caches(homePath + "/.cache");
+    QFileInfoList result = caches.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 
-    return caches.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+    // Include pip cache from PIP_CACHE_DIR if set and outside ~/.cache
+    QString pipCacheEnv = qgetenv("PIP_CACHE_DIR");
+    if (!pipCacheEnv.isEmpty()) {
+        QFileInfo pipInfo(pipCacheEnv);
+        if (pipInfo.exists() && !pipInfo.absoluteFilePath().startsWith(caches.absolutePath()))
+            result.append(pipInfo);
+    }
+
+    return result;
 }
 
 // --- Cross-platform methods ---
