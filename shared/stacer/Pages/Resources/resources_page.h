@@ -27,6 +27,7 @@ private slots:
     void updateDiskReadWrite();
     void updateMemoryChart();
     void updateNetworkChart();
+    void updateGpuChart();
     void initDiskPieChart();
     void diskPieSeriesCustomize();
 
@@ -43,6 +44,7 @@ private:
     HistoryChart *mChartDiskReadWrite;
     HistoryChart *mChartMemory;
     HistoryChart *mChartNetwork;
+    HistoryChart *mChartGpu;
 
     QChartView *mChartViewDiskPie;
     QChart *mChartDiskPie;

@@ -40,6 +40,9 @@ private slots:
     void updateTempBar();
     void onTempSensorChanged(int index);
 
+    void updateGpuBar();
+    void onGpuDeviceChanged(int index);
+
     void on_btnDownloadUpdate_clicked();
 
 signals:
@@ -53,6 +56,7 @@ private:
     CircleBar* mMemBar;
     CircleBar* mDiskBar;
     CircleBar* mTempBar;
+    CircleBar* mGpuBar;
 
     LineBar *mDownloadBar;
     LineBar *mUploadBar;
@@ -63,6 +67,7 @@ private:
     SettingManager *mSettingManager;
 
     int mSelectedSensorIndex;
+    int mSelectedGpuIndex;
 };
 
 #endif // DASHBOARDPAGE_H

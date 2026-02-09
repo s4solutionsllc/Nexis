@@ -16,6 +16,7 @@ ResourcesPage::ResourcesPage(QWidget *parent) :
     mChartDiskReadWrite(new HistoryChart(tr("History of Disk Read Write"), 2, new QCategoryAxis, this)),
     mChartMemory(new HistoryChart(tr("History of Memory"), 2, nullptr, this)),
     mChartNetwork(new HistoryChart(tr("History of Network"), 2, new QCategoryAxis, this)),
+    mChartGpu(nullptr),
     mChartDiskPie(new QChart),
     mTimer(new QTimer(this))
 {
@@ -36,7 +37,18 @@ void ResourcesPage::init()
     mChartCpu->setYMax(100);
     mChartMemory->setYMax(100);
 
+    // GPU chart — only if GPU(s) detected
+    if (im->hasGpu()) {
+        int gpuCount = im->getGpuDevices().size();
+        mChartGpu = new HistoryChart(tr("History of GPU"), gpuCount, nullptr, this);
+        mChartGpu->setYMax(100);
+    }
+
     QList<QWidget*> widgets = { mChartCpu, mChartCpuLoadAvg, mChartDiskReadWrite, mChartMemory, mChartNetwork };
+
+    // Insert GPU chart after CPU charts
+    if (mChartGpu)
+        widgets.insert(2, mChartGpu);  // after CPU Load Avg, before Disk R/W
 
     for (QWidget *widget : widgets) {
         ui->chartsLayout->addWidget(widget);
@@ -49,6 +61,9 @@ void ResourcesPage::init()
     connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateDiskReadWrite);
     connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateMemoryChart);
     connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateNetworkChart);
+
+    if (mChartGpu)
+        connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateGpuChart);
 
     mTimer->start(1000);
 
@@ -390,6 +405,38 @@ void ResourcesPage::updateCpuChart()
     }
 
     mChartCpu->setSeriesList(seriesList);
+
+    second++;
+}
+
+void ResourcesPage::updateGpuChart()
+{
+    if (!mChartGpu)
+        return;
+
+    static int second = 0;
+
+    im->updateGpuInfo();
+    QList<GpuDevice> gpus = im->getGpuDevices();
+
+    QVector<QSplineSeries *> seriesList = mChartGpu->getSeriesList();
+
+    for (int j = 0; j < seriesList.count() && j < gpus.size(); j++) {
+        int util = qMax(0, gpus.at(j).utilization);  // -1 → 0
+
+        for (int i = 0; i < (second < 61 ? second : 61); i++)
+            seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
+
+        seriesList.at(j)->insert(0, QPointF(0, util));
+
+        seriesList.at(j)->setName(QString("%1: %2%")
+                                  .arg(gpus.at(j).name)
+                                  .arg(util));
+
+        if (second > 61) seriesList.at(j)->removePoints(61, 1);
+    }
+
+    mChartGpu->setSeriesList(seriesList);
 
     second++;
 }

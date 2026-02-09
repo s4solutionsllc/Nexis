@@ -35,8 +35,8 @@
    <property name="spacing">
     <number>0</number>
    </property>
-   <!-- Row 0: CircleBars spanning all 3 columns -->
-   <item row="0" column="0" colspan="3">
+   <!-- Row 0: CircleBars spanning all 4 columns -->
+   <item row="0" column="0" colspan="4">
     <widget class="QWidget" name="circleBars" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -198,8 +198,46 @@
      </layout>
     </widget>
    </item>
-   <!-- Row 1, Col 2: Line Bars (Download / Upload stacked) -->
+   <!-- Row 1, Col 2: GPU container -->
    <item row="1" column="2">
+    <widget class="QWidget" name="gpuContainer" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QVBoxLayout" name="gpuContainerLayout">
+      <property name="spacing">
+       <number>5</number>
+      </property>
+      <property name="leftMargin">
+       <number>10</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
+      <property name="bottomMargin">
+       <number>5</number>
+      </property>
+      <item>
+       <widget class="QComboBox" name="cmbGpuDevice">
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <!-- Row 1, Col 3: Line Bars (Download / Upload stacked) -->
+   <item row="1" column="3">
     <widget class="QWidget" name="lineBars" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -233,7 +271,7 @@
     </widget>
    </item>
    <!-- Row 2: Update Bar spanning all columns -->
-   <item row="2" column="0" colspan="3">
+   <item row="2" column="0" colspan="4">
     <widget class="QWidget" name="widgetUpdateBar" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">

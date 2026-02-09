@@ -10,6 +10,7 @@
 #include <Info/system_info.h>
 #include <Info/process_info.h>
 #include <Info/thermal_info.h>
+#include <Info/gpu_info.h>
 
 class InfoManager
 {
@@ -51,6 +52,10 @@ public:
     double getThermalTemperature(int index) const;
     bool hasThermalSensors() const;
 
+    QList<GpuDevice> getGpuDevices() const;
+    void updateGpuInfo();
+    bool hasGpu() const;
+
 private:
     static InfoManager *instance;
 
@@ -62,6 +67,7 @@ private:
     SystemInfo si;
     ProcessInfo pi;
     ThermalInfo ti;
+    GpuInfo gi;
 };
 
 #endif // INFO_MANAGER_H

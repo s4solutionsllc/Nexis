@@ -25,7 +25,9 @@ DashboardPage::DashboardPage(QWidget *parent) :
     mTimer(new QTimer(this)),
     im(InfoManager::ins()),
     mSettingManager(SettingManager::ins()),
-    mSelectedSensorIndex(0)
+    mSelectedSensorIndex(0),
+    mGpuBar(new CircleBar(tr("GPU"), {"#813d9c", "#613583"}, this)),
+    mSelectedGpuIndex(0)
 {
     ui->setupUi(this);
 
@@ -61,6 +63,26 @@ void DashboardPage::init()
         mTempBar->hide();       // prevent orphan widget rendering at (0,0)
     }
 
+    // GPU gauge — graceful degradation
+    if (im->hasGpu()) {
+        QList<GpuDevice> gpus = im->getGpuDevices();
+        for (const GpuDevice &g : gpus)
+            ui->cmbGpuDevice->addItem(g.name);
+
+        // Hide the combo box if there's only one GPU
+        if (gpus.size() <= 1)
+            ui->cmbGpuDevice->hide();
+
+        ui->gpuContainerLayout->addWidget(mGpuBar);
+
+        connect(ui->cmbGpuDevice, &QComboBox::currentIndexChanged,
+                this, &DashboardPage::onGpuDeviceChanged);
+        connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateGpuBar);
+    } else {
+        ui->gpuContainer->hide();
+        mGpuBar->hide();
+    }
+
     // connections
     connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateCpuBar);
     connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateMemoryBar);
@@ -79,6 +101,8 @@ void DashboardPage::init()
     updateNetworkBar();
     if (im->hasThermalSensors())
         updateTempBar();
+    if (im->hasGpu())
+        updateGpuBar();
 
     ui->widgetUpdateBar->hide();
 
@@ -91,6 +115,8 @@ void DashboardPage::init()
     };
     if (im->hasThermalSensors())
         widgets.append(mTempBar);
+    if (im->hasGpu())
+        widgets.append(mGpuBar);
 
     Utilities::addDropShadow(widgets, 60);
 }
@@ -303,5 +329,25 @@ void DashboardPage::onTempSensorChanged(int index)
 {
     mSelectedSensorIndex = index;
     updateTempBar();
+}
+
+void DashboardPage::updateGpuBar()
+{
+    im->updateGpuInfo();
+
+    QList<GpuDevice> gpus = im->getGpuDevices();
+    if (mSelectedGpuIndex < 0 || mSelectedGpuIndex >= gpus.size())
+        return;
+
+    const GpuDevice &gpu = gpus.at(mSelectedGpuIndex);
+    int util = qMax(0, gpu.utilization);  // -1 → 0 for display
+
+    mGpuBar->setValue(util, QString("%1%").arg(util));
+}
+
+void DashboardPage::onGpuDeviceChanged(int index)
+{
+    mSelectedGpuIndex = index;
+    updateGpuBar();
 }
 

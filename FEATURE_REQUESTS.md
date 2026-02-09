@@ -18,7 +18,7 @@
 
 ## From Community Issues (oguzhaninan/Stacer)
 
-- [ ] **FR-11: GPU load / temperature monitoring** — Issues [#105](https://github.com/oguzhaninan/Stacer/issues/105), [#405](https://github.com/oguzhaninan/Stacer/issues/405).
+- [x] **FR-11: GPU load / temperature monitoring** — Issues [#105](https://github.com/oguzhaninan/Stacer/issues/105), [#405](https://github.com/oguzhaninan/Stacer/issues/405). **Resolved:** Added GpuInfo class with platform-specific implementations. Linux: AMD sysfs gpu_busy_percent, NVIDIA nvidia-smi, Intel frequency ratio. macOS: IOKit IOAccelerator PerformanceStatistics. Dashboard shows GPU CircleBar with multi-GPU selector. Resources page shows GPU utilization history chart. Temperature was already supported via ThermalInfo.
 - [ ] **FR-12: Hardware info tab** — Issue [#527](https://github.com/oguzhaninan/Stacer/issues/527).
 - [ ] **FR-13: CLI interface** — Issue [#411](https://github.com/oguzhaninan/Stacer/issues/411).
 - [ ] **FR-14: Flatpak distribution** — Issue [#493](https://github.com/oguzhaninan/Stacer/issues/493).

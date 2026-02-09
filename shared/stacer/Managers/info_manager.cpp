@@ -167,4 +167,22 @@ bool InfoManager::hasThermalSensors() const
     return ti.hasSensors();
 }
 
+/********************
+ * GPU Provider
+ *******************/
+QList<GpuDevice> InfoManager::getGpuDevices() const
+{
+    return gi.getGpuDevices();
+}
+
+void InfoManager::updateGpuInfo()
+{
+    gi.updateGpuInfo();
+}
+
+bool InfoManager::hasGpu() const
+{
+    return gi.hasGpu();
+}
+
 
