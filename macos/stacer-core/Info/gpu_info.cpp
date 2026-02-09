@@ -78,6 +78,7 @@ static QString detectVendor(io_object_t accel, const QString &modelName)
                 if (vid == 0x1002) return "AMD";
                 if (vid == 0x10de) return "NVIDIA";
                 if (vid == 0x8086) return "Intel";
+                return "Unknown";
             }
         }
         CFRelease(vendorRef);

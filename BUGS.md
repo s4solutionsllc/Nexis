@@ -73,6 +73,12 @@
   - **Upstream:** [#229](https://github.com/oguzhaninan/Stacer/issues/229)
   - **Fix complexity:** Moderate (audit and fix object lifecycle)
 
+- [x] **BUG-11: macOS crash on launch — double CFRelease in GPU detection** (HIGH)
+  - **File:** `macos/stacer-core/Info/gpu_info.cpp:71-84`
+  - **Description:** In `detectVendor()`, when `vendorRef` is a `CFDataRef` with length >= 2, the code calls `CFRelease(vendorRef)` at line 77 then falls through to a second `CFRelease(vendorRef)` at line 83 if the vendor ID doesn't match any known value (AMD/NVIDIA/Intel). The double-free triggers `EXC_BREAKPOINT` in `CoreFoundation::CF_IS_OBJC`, crashing the app immediately on startup.
+  - **Fix complexity:** Trivial (add early return after first CFRelease to prevent fallthrough)
+  - **Resolved:** Added `return "Unknown"` after the vendor-ID checks to prevent double CFRelease
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
