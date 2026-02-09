@@ -60,7 +60,8 @@
 
 ### Code Contributors
 
-This project exists thanks to all the people who have previously contributed. [[Contribute](CONTRIBUTING.md)].  Please let me know if you would like to join in the fun.
+This project exists thanks to all the people who have previously contributed. [[Contribute](CONTRIBUTING.md)].</br>
+Please let me know if you would like to join in the fun.
 <a href="https://github.com/lsimpsonsfdc/Stacer/graphs/contributors"><img src="https://opencollective.com/Stacer/contributors.svg?width=890&button=false" /></a>
 
 <!--
