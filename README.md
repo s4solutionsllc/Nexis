@@ -56,15 +56,13 @@
     <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-11.png" width="700">
 </p>
 
-## Contributors
-
-### Code Contributors
+<!--
 
 This project exists thanks to all the people who have previously contributed. [[Contribute](CONTRIBUTING.md)].</br>
 Please let me know if you would like to join in the fun.
 <a href="https://github.com/lsimpsonsfdc/Stacer/graphs/contributors"><img src="https://opencollective.com/Stacer/contributors.svg?width=890&button=false" /></a>
 
-<!--
+
 ### Financial Contributors
 
 Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/Stacer/contribute)]
