@@ -26,16 +26,16 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
 
 void SystemCleanerPage::init()
 {
-    // Set category icons from system theme with bundled fallbacks
+    // Set category icons from system theme with bundled Adwaita SVG fallbacks
     auto setThemePixmap = [](QLabel *lbl, const QString &themeName, const QString &fallback) {
         QIcon icon = QIcon::fromTheme(themeName, QIcon(fallback));
         lbl->setPixmap(icon.pixmap(64, 64));
     };
-    setThemePixmap(ui->lblPackageCacheImg, "package-x-generic",  ":/static/themes/default/img/c_package.png");
-    setThemePixmap(ui->lblCrashReportsImg, "dialog-warning",     ":/static/themes/default/img/c_crash.png");
-    setThemePixmap(ui->lblLogImage,        "text-x-generic",     ":/static/themes/default/img/c_logs.png");
-    setThemePixmap(ui->lblAppCacheImg,     "folder",             ":/static/themes/default/img/c_cache.png");
-    setThemePixmap(ui->lblTrashImg,        "user-trash",         ":/static/themes/default/img/c_trash.png");
+    setThemePixmap(ui->lblPackageCacheImg, "package-x-generic",  ":/static/themes/common/img/c_package.svg");
+    setThemePixmap(ui->lblCrashReportsImg, "dialog-warning",     ":/static/themes/common/img/c_crash.svg");
+    setThemePixmap(ui->lblLogImage,        "text-x-generic",     ":/static/themes/common/img/c_logs.svg");
+    setThemePixmap(ui->lblAppCacheImg,     "folder",             ":/static/themes/common/img/c_cache.svg");
+    setThemePixmap(ui->lblTrashImg,        "user-trash",         ":/static/themes/common/img/c_trash.svg");
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);

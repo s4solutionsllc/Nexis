@@ -83,6 +83,11 @@
         <file>static/themes/common/img/sort-dsc.svg</file>
         <file>static/themes/common/img/circle-checked.svg</file>
         <file>static/themes/common/img/circle-unchecked.svg</file>
+        <file>static/themes/common/img/c_package.svg</file>
+        <file>static/themes/common/img/c_crash.svg</file>
+        <file>static/themes/common/img/c_logs.svg</file>
+        <file>static/themes/common/img/c_cache.svg</file>
+        <file>static/themes/common/img/c_trash.svg</file>
         <file>static/themes/default/img/sidebar-icons/helpers.png</file>
         <file>static/themes/default/img/sidebar-icons/gnome-settings.png</file>
         <file>static/themes/default/img/sidebar-icons/dash.svg</file>

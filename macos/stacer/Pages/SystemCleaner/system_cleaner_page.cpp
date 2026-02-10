@@ -13,7 +13,7 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
     ui(new Ui::SystemCleanerPage),
     im(InfoManager::ins()),
     tmr(ToolManager::ins()),
-    mDefaultIcon(QIcon::fromTheme("application-x-executable", QIcon(":/static/themes/common/img/package.png"))),
+    mDefaultIcon(QIcon(":/static/themes/common/img/package.png")),
     mLoadingMovie(nullptr),
     mLoadingMovie_2(nullptr)
 {
@@ -26,16 +26,16 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
 
 void SystemCleanerPage::init()
 {
-    // Set category icons from system theme with bundled fallbacks
-    auto setThemePixmap = [](QLabel *lbl, const QString &themeName, const QString &fallback) {
-        QIcon icon = QIcon::fromTheme(themeName, QIcon(fallback));
-        lbl->setPixmap(icon.pixmap(64, 64));
+    // macOS: use bundled Adwaita-style SVGs directly — the system icon theme
+    // only provides greyscale symbolic icons that Qt can't recolor.
+    auto setPixmap = [](QLabel *lbl, const QString &svgPath) {
+        lbl->setPixmap(QIcon(svgPath).pixmap(64, 64));
     };
-    setThemePixmap(ui->lblPackageCacheImg, "package-x-generic",  ":/static/themes/default/img/c_package.png");
-    setThemePixmap(ui->lblCrashReportsImg, "dialog-warning",     ":/static/themes/default/img/c_crash.png");
-    setThemePixmap(ui->lblLogImage,        "text-x-generic",     ":/static/themes/default/img/c_logs.png");
-    setThemePixmap(ui->lblAppCacheImg,     "folder",             ":/static/themes/default/img/c_cache.png");
-    setThemePixmap(ui->lblTrashImg,        "user-trash",         ":/static/themes/default/img/c_trash.png");
+    setPixmap(ui->lblPackageCacheImg, ":/static/themes/common/img/c_package.svg");
+    setPixmap(ui->lblCrashReportsImg, ":/static/themes/common/img/c_crash.svg");
+    setPixmap(ui->lblLogImage,        ":/static/themes/common/img/c_logs.svg");
+    setPixmap(ui->lblAppCacheImg,     ":/static/themes/common/img/c_cache.svg");
+    setPixmap(ui->lblTrashImg,        ":/static/themes/common/img/c_trash.svg");
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
@@ -111,7 +111,8 @@ void SystemCleanerPage::addTreeChild(const QString &data, const QString &text, c
 {
     ByteTreeWidget *item = new ByteTreeWidget(parent);
     item->setValues(text, size, data);
-    item->setIcon(0, QIcon::fromTheme(text, mDefaultIcon));
+    // macOS: skip theme lookup — filenames won't match any theme icons
+    item->setIcon(0, mDefaultIcon);
 }
 
 void SystemCleanerPage::addTreeChild(const CleanCategories &cat, const QString &text, const quint64 &size)
