@@ -22,17 +22,30 @@ APTSourceManagerPage::APTSourceManagerPage(QWidget *parent) :
 
 void APTSourceManagerPage::init()
 {
+#ifdef Q_OS_MAC
+    // macOS: Homebrew packages instead of APT repositories
+    ui->txtAptSource->setPlaceholderText(tr("example %1")
+                                         .arg("'package-name'"));
+    // Hide controls that don't apply to Homebrew packages
+    ui->btnEditAptSource->hide();
+    ui->checkEnableSource->hide();
+    ui->lblAptSourceSelectInfo->setText(tr("Select to uninstall."));
+#else
     ui->txtAptSource->setPlaceholderText(tr("example %1")
                                          .arg("'deb http://archive.ubuntu.com/ubuntu xenial main'"));
+#endif
 
     loadAptSources();
 
     on_btnCancel_clicked();
 
     QList<QWidget*> widgets = {
-        ui->btnAddAPTSourceRepository, ui->btnCancel, ui->btnDeleteAptSource, ui->btnEditAptSource,
+        ui->btnAddAPTSourceRepository, ui->btnCancel, ui->btnDeleteAptSource,
         ui->txtSearchAptSource, ui->txtSearchAptSource
     };
+#ifndef Q_OS_MAC
+    widgets.append(ui->btnEditAptSource);
+#endif
     Utilities::addDropShadow(widgets, 40);
 }
 
@@ -45,7 +58,9 @@ void APTSourceManagerPage::loadAptSources()
     for (APTSourcePtr &aptSource: aptSourceList) {
 
         QListWidgetItem *listItem = new QListWidgetItem(ui->listWidgetAptSources);
-        listItem->setData(5, aptSource->source); // for search
+        // Store searchable text: name + uri + description
+        QString searchData = aptSource->source + " " + aptSource->uri + " " + aptSource->components;
+        listItem->setData(5, searchData);
 
         APTSourceRepositoryItem *aptSourceItem = new APTSourceRepositoryItem(aptSource, ui->listWidgetAptSources);
 
@@ -56,8 +71,15 @@ void APTSourceManagerPage::loadAptSources()
 
     ui->notFoundWidget->setVisible(aptSourceList.isEmpty());
 
+#ifdef Q_OS_MAC
+    ui->lblAptSourceTitle->setText(tr("Homebrew Packages (%1)")
+                                   .arg(aptSourceList.count()));
+    if (aptSourceList.isEmpty())
+        ui->lblNotFound->setText(tr("No Homebrew Packages Found"));
+#else
     ui->lblAptSourceTitle->setText(tr("APT Repositories (%1)")
                                    .arg(aptSourceList.count()));
+#endif
 }
 
 void APTSourceManagerPage::on_btnAddAPTSourceRepository_clicked(bool checked)
@@ -83,17 +105,28 @@ void APTSourceManagerPage::on_btnCancel_clicked()
 {
     ui->btnAddAPTSourceRepository->setChecked(false);
     changeElementsVisible(false);
+#ifdef Q_OS_MAC
+    ui->btnAddAPTSourceRepository->setText(tr("Install"));
+#else
     ui->btnAddAPTSourceRepository->setText(tr("Add Repository"));
+#endif
 }
 
 void APTSourceManagerPage::changeElementsVisible(const bool checked)
 {
     ui->txtAptSource->setVisible(checked);
-    ui->checkEnableSource->setVisible(checked);
     ui->btnCancel->setVisible(checked);
-    ui->btnEditAptSource->setVisible(!checked);
     ui->btnDeleteAptSource->setVisible(!checked);
     ui->bottomSectionHorizontalSpacer->changeSize(0, 0, checked ? QSizePolicy::Minimum : QSizePolicy::Expanding);
+#ifdef Q_OS_MAC
+    // Homebrew packages can't be edited or toggled — keep these hidden
+    ui->checkEnableSource->setVisible(false);
+    ui->btnEditAptSource->setVisible(false);
+    ui->btnDeleteAptSource->setText(tr("Uninstall"));
+#else
+    ui->checkEnableSource->setVisible(checked);
+    ui->btnEditAptSource->setVisible(!checked);
+#endif
 }
 
 void APTSourceManagerPage::on_listWidgetAptSources_itemClicked(QListWidgetItem *item)
@@ -112,7 +145,10 @@ void APTSourceManagerPage::on_listWidgetAptSources_itemClicked(QListWidgetItem *
 void APTSourceManagerPage::on_listWidgetAptSources_itemDoubleClicked(QListWidgetItem *item)
 {
     on_listWidgetAptSources_itemClicked(item);
+#ifndef Q_OS_MAC
+    // Edit is not applicable for Homebrew packages
     on_btnEditAptSource_clicked();
+#endif
 }
 
 void APTSourceManagerPage::on_btnDeleteAptSource_clicked()

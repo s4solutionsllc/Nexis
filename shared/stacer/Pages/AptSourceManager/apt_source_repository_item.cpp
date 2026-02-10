@@ -24,6 +24,19 @@ void APTSourceRepositoryItem::init()
 
     Utilities::addDropShadow(this, 30, 10);
 
+#ifdef Q_OS_MAC
+    // Homebrew packages can't be enabled/disabled — hide the toggle
+    ui->checkAptSource->hide();
+    {
+        // Build display: "Name — description" with (Cask) suffix for cask packages
+        QString display = mAptSource->source;
+        if (!mAptSource->components.isEmpty())
+            display += QString::fromUtf8(" \u2014 ") + mAptSource->components;
+        if (mAptSource->isSource)
+            display += tr(" (Cask)");
+        ui->lblAptSourceName->setText(display);
+    }
+#else
     ui->checkAptSource->setChecked(mAptSource->isActive);
 
     // example "deb [arch=amd64] http://packages.microsoft.com/repos/vscode stable main"
@@ -36,6 +49,7 @@ void APTSourceRepositoryItem::init()
     } else {
         ui->lblAptSourceName->setText(source);
     }
+#endif
 
     ui->lblAptSourceName->setToolTip(ui->lblAptSourceName->text());
 }

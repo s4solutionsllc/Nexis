@@ -97,6 +97,18 @@
   - **Fix complexity:** Trivial (extract PCI bus ID from device symlink, pass to nvidia-smi)
   - **Resolved:** Use PCI bus ID from `/sys/class/drm/cardN/device` symlink instead of DRM card index
 
+- [x] **BUG-15: Uninstaller fails to find brew on macOS — PATH not set in GUI apps** (MEDIUM)
+  - **File:** `macos/stacer-core/Tools/package_tool.cpp:7-9`
+  - **Description:** `PackageTool::currentPackageTool` uses `CommandUtil::isExecutable("brew")` which relies on the shell PATH, but macOS GUI apps don't inherit the user's shell PATH. This causes `currentPackageTool` to be `UNKNOWN`, making the Uninstaller page show 0 packages. All `CommandUtil::exec("brew", ...)` calls throughout the file have the same problem.
+  - **Fix complexity:** Trivial (use `findBrew()` pattern with absolute paths, same as apt_source_tool.cpp)
+  - **Resolved:** Added `findBrew()` with well-known Homebrew binary paths; used absolute paths in all exec calls
+
+- [x] **BUG-16: Uninstaller shows no descriptions for Homebrew packages** (LOW)
+  - **File:** `macos/stacer-core/Tools/package_tool.cpp:26-61`
+  - **Description:** `getHomebrewPackages()` uses `brew list --formula -1` and `brew list --cask -1` which only return package names with no metadata. All packages display with empty descriptions.
+  - **Fix complexity:** Moderate (switch to `brew info --json=v2 --installed` for rich metadata)
+  - **Resolved:** Rewrote to use `brew info --json=v2 --installed` JSON parsing with name + description for formulae and human-friendly name + description for casks
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

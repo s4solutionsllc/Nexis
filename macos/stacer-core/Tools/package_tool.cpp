@@ -3,10 +3,25 @@
 #include <QDebug>
 #include <QHash>
 #include <QStandardPaths>
+#include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+
+// Homebrew binary path — checked at well-known locations since GUI apps
+// don't inherit the user's shell PATH.
+static QString findBrew()
+{
+    for (const QString &path : {"/opt/homebrew/bin/brew", "/usr/local/bin/brew"}) {
+        if (QFileInfo(path).isExecutable())
+            return path;
+    }
+    return QString();
+}
 
 const PackageTools PackageTool::currentPackageTool =
-        CommandUtil::isExecutable("brew") ? HOMEBREW :
-                                            UNKNOWN;
+        !findBrew().isEmpty() ? HOMEBREW :
+                                UNKNOWN;
 
 /**********
  * HOMEBREW
@@ -27,33 +42,56 @@ QList<Package> PackageTool::getHomebrewPackages()
 {
     QList<Package> packages;
 
+    QString brew = findBrew();
+    if (brew.isEmpty())
+        return packages;
+
     try {
-        // Get list of installed formulae with descriptions
-        QString output = CommandUtil::exec("brew", {"list", "--formula", "-1"}).trimmed();
-        QStringList formulae = output.split('\n', Qt::SkipEmptyParts);
+        // Single call to get metadata (name + description) for all installed packages
+        QString jsonOutput = CommandUtil::exec(brew, {"info", "--json=v2", "--installed"}).trimmed();
+        QJsonDocument doc = QJsonDocument::fromJson(jsonOutput.toUtf8());
 
-        for (const QString &name : formulae) {
+        if (doc.isNull()) {
+            qCritical() << "Failed to parse brew info JSON";
+            return packages;
+        }
+
+        QJsonObject root = doc.object();
+
+        // Installed formulae
+        QJsonArray formulae = root.value("formulae").toArray();
+        for (const QJsonValue &val : formulae) {
+            QJsonObject obj = val.toObject();
             Package pkg;
-            pkg.name = name.trimmed();
+            pkg.name = obj.value("name").toString();
             pkg.section = "formula";
-            pkg.description = ""; // Description fetched on-demand would be too slow
+            pkg.description = obj.value("desc").toString();
             if (!pkg.name.isEmpty())
                 packages.append(pkg);
         }
 
-        // Also get casks
-        output = CommandUtil::exec("brew", {"list", "--cask", "-1"}).trimmed();
-        QStringList casks = output.split('\n', Qt::SkipEmptyParts);
-
-        for (const QString &name : casks) {
+        // Installed casks
+        QJsonArray casks = root.value("casks").toArray();
+        for (const QJsonValue &val : casks) {
+            QJsonObject obj = val.toObject();
             Package pkg;
-            pkg.name = name.trimmed();
+            pkg.name = obj.value("token").toString();
             pkg.section = "cask";
-            pkg.description = "";
+            // Cask "name" is the human-friendly name (e.g. "AltTab")
+            QJsonArray names = obj.value("name").toArray();
+            pkg.description = names.isEmpty() ? "" : names.first().toString();
+            // Append the description text if available
+            QString desc = obj.value("desc").toString();
+            if (!desc.isEmpty()) {
+                if (!pkg.description.isEmpty())
+                    pkg.description += QString::fromUtf8(" \u2014 ") + desc;
+                else
+                    pkg.description = desc;
+            }
             if (!pkg.name.isEmpty())
                 packages.append(pkg);
         }
-    } catch (QString &ex) {
+    } catch (const QString &ex) {
         qCritical() << ex;
     }
 
@@ -62,11 +100,15 @@ QList<Package> PackageTool::getHomebrewPackages()
 
 bool PackageTool::homebrewRemovePackages(QStringList packages)
 {
+    QString brew = findBrew();
+    if (brew.isEmpty())
+        return false;
+
     try {
         packages.insert(0, "uninstall");
-        CommandUtil::exec("brew", packages);
+        CommandUtil::exec(brew, packages);
         return true;
-    } catch (QString &ex) {
+    } catch (const QString &ex) {
         qCritical() << ex;
     }
     return false;
@@ -74,13 +116,17 @@ bool PackageTool::homebrewRemovePackages(QStringList packages)
 
 QStringList PackageTool::homebrewDryRunRemove(const QStringList &packages)
 {
+    QString brew = findBrew();
+    if (brew.isEmpty())
+        return packages;
+
     // Homebrew doesn't have a built-in dry-run for uninstall
     // We can check for dependents that would be affected
     QStringList wouldRemove;
     for (const QString &pkg : packages) {
         wouldRemove << pkg;
         try {
-            QString deps = CommandUtil::exec("brew", {"uses", "--installed", pkg}).trimmed();
+            QString deps = CommandUtil::exec(brew, {"uses", "--installed", pkg}).trimmed();
             if (!deps.isEmpty()) {
                 wouldRemove << deps.split('\n');
             }

@@ -32,6 +32,8 @@ void UninstallerPage::init()
 
 #ifdef Q_OS_MACOS
     ui->chkPurge->hide();
+    // Snap packages don't exist on macOS — hide the tab button
+    ui->btnSnapPackages->hide();
 #endif
 
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages, ui->btnSnapPackages };
@@ -153,7 +155,11 @@ void UninstallerPage::setAppCount()
     for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i)
         count += ui->treeWidgetPackages->topLevelItem(i)->childCount();
 
+#ifdef Q_OS_MAC
+    ui->btnSystemPackages->setText(tr("Homebrew Packages (%1)").arg(count));
+#else
     ui->btnSystemPackages->setText(tr("Packages (%1)").arg(count));
+#endif
     ui->notFoundWidget->setVisible(! count);
     ui->treeWidgetPackages->setVisible(count);
 
@@ -162,7 +168,9 @@ void UninstallerPage::setAppCount()
     ui->notFoundWidget_2->setVisible(! snapCount);
     ui->listWidgetSnapPackages->setVisible(snapCount);
 
+#ifndef Q_OS_MAC
     ui->btnSnapPackages->setVisible(CommandUtil::isExecutable("snap"));
+#endif
 
     ui->btnUninstall->setVisible(count || snapCount);
 }
