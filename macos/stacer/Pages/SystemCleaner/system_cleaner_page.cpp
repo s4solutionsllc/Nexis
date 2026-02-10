@@ -13,7 +13,7 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
     ui(new Ui::SystemCleanerPage),
     im(InfoManager::ins()),
     tmr(ToolManager::ins()),
-    mDefaultIcon(QIcon::fromTheme("application-x-executable")),
+    mDefaultIcon(QIcon::fromTheme("application-x-executable", QIcon(":/static/themes/common/img/package.png"))),
     mLoadingMovie(nullptr),
     mLoadingMovie_2(nullptr)
 {

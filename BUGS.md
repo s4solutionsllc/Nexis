@@ -79,6 +79,12 @@
   - **Fix complexity:** Trivial (add early return after first CFRelease to prevent fallthrough)
   - **Resolved:** Added `return "Unknown"` after the vendor-ID checks to prevent double CFRelease
 
+- [x] **BUG-12: Missing icon fallback for mDefaultIcon on macOS** (LOW)
+  - **Files:** `macos/stacer/Pages/SystemCleaner/system_cleaner_page.cpp:16`, `linux/stacer/Pages/SystemCleaner/system_cleaner_page.cpp:16`
+  - **Description:** `mDefaultIcon` used `QIcon::fromTheme("application-x-executable")` with no fallback argument. On macOS (and Linux systems without a full icon theme), this returns a null icon, causing blank icons in the System Cleaner tree view entries.
+  - **Fix complexity:** Trivial (add bundled fallback icon as second argument)
+  - **Resolved:** Added `QIcon(":/static/themes/common/img/package.png")` as fallback on both platforms
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

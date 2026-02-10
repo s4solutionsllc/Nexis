@@ -10,6 +10,50 @@
   <b>Linux System Optimizer and Monitoring</b>
 </p>
 
+## Prerequisites
+
+### Linux
+
+Install Qt 6 development libraries and the Adwaita icon theme:
+
+**Ubuntu / Debian:**
+```bash
+sudo apt install qt6-base-dev qt6-charts-dev qt6-svg-dev qt6-tools-dev-tools \
+  libqt6concurrent6 adwaita-icon-theme cmake g++
+```
+
+**Fedora / RHEL:**
+```bash
+sudo dnf install qt6-qtbase-devel qt6-qtcharts-devel qt6-qtsvg-devel \
+  qt6-linguist adwaita-icon-theme cmake gcc-c++
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S qt6-base qt6-charts qt6-svg qt6-tools adwaita-icon-theme cmake
+```
+
+### macOS
+
+Install dependencies via Homebrew. The **adwaita-icon-theme** package is required for consistent icon rendering — without it, many UI icons will appear blank.
+
+```bash
+brew install qt@6 cmake adwaita-icon-theme
+```
+
+After installing, ensure Qt is in your path:
+```bash
+export PATH="$(brew --prefix qt@6)/bin:$PATH"
+```
+
+### Build
+
+```bash
+mkdir -p build && cd build
+cmake ..
+make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+```
+
 ## Screenshots
 
 <p align="center">
