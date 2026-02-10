@@ -919,8 +919,10 @@ QLabel[accessibleName="dialog-title"] {
 
 #btnDownloadUpdate {
     background-color: @color01;
-    padding: 6 12;
-    border-radius: 6;
+    padding: 2 10;
+    border-radius: 4;
+    font-size: 9pt;
+    max-height: 22px;
 }
 
 /****************

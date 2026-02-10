@@ -68,11 +68,13 @@ void StartupAppsPage::loadApps()
 
     for (const QFileInfo &f : autostartFiles.entryInfoList())
     {
-        // Extract the label from the plist filename (remove .plist extension)
-        QString appName = f.baseName();
+        // completeBaseName() gives the full name minus the last extension,
+        // e.g. "com.jetbrains.toolbox.plist" → "com.jetbrains.toolbox"
+        // (baseName() only returns the part before the *first* dot, i.e. "com")
+        QString identifier = f.completeBaseName();
 
         // Skip Apple internal agents
-        if (appName.startsWith("com.apple."))
+        if (identifier.startsWith("com.apple."))
             continue;
 
         // Check if the plist has a Disabled key
@@ -83,6 +85,34 @@ void StartupAppsPage::loadApps()
                 enabled = !lines.at(i + 1).contains("true");
                 break;
             }
+        }
+
+        // Derive a human-friendly display name from the reverse-DNS identifier.
+        // e.g. "com.jetbrains.toolbox" → "Jetbrains Toolbox"
+        //      "com.Tautulli.Tautulli" → "Tautulli"
+        //      "homebrew.mxcl.redis"   → "Redis"
+        QString appName = identifier;
+        QStringList parts = identifier.split('.');
+        if (parts.size() >= 3) {
+            // Drop the first component (com/org/io/homebrew/etc.) and deduplicate
+            QStringList nameParts;
+            for (int i = 1; i < parts.size(); ++i) {
+                // Skip parts that duplicate the previous one (case-insensitive),
+                // e.g. "com.Tautulli.Tautulli" → just "Tautulli"
+                if (!nameParts.isEmpty()
+                    && nameParts.last().compare(parts.at(i), Qt::CaseInsensitive) == 0)
+                    continue;
+                QString p = parts.at(i);
+                if (!p.isEmpty())
+                    p[0] = p[0].toUpper();
+                nameParts << p;
+            }
+            appName = nameParts.join(' ');
+        } else if (parts.size() == 2) {
+            // Two-part identifier — use the second component
+            appName = parts.last();
+            if (!appName.isEmpty())
+                appName[0] = appName[0].toUpper();
         }
 
         QListWidgetItem *item = new QListWidgetItem(ui->listWidgetStartup);

@@ -7,6 +7,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QRegularExpression>
+#include <QVersionNumber>
 
 DashboardPage::~DashboardPage()
 {
@@ -135,9 +136,11 @@ void DashboardPage::checkUpdate()
 
             if (match.hasMatch())
             {
-                const QString version = match.captured();
+                const QVersionNumber remote = QVersionNumber::fromString(match.captured());
+                const QVersionNumber local  = QVersionNumber::fromString(qApp->applicationVersion());
 
-                if (qApp->applicationVersion() != version) {
+                // Only show the update bar when the remote release is newer
+                if (!remote.isNull() && !local.isNull() && local < remote) {
                     emit sigShowUpdateBar();
                 }
             }
