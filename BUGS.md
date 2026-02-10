@@ -85,6 +85,12 @@
   - **Fix complexity:** Trivial (add bundled fallback icon as second argument)
   - **Resolved:** Added `QIcon(":/static/themes/common/img/package.png")` as fallback on both platforms
 
+- [x] **BUG-13: NVIDIA GPU utilization always 0% — wrong device index** (LOW)
+  - **File:** `linux/stacer-core/Info/gpu_info.cpp:100-108,148-163`
+  - **Description:** `discoverGpus()` used the DRM card index (e.g. `card1` → index 1) as the nvidia-smi `--id=` parameter, but nvidia-smi uses its own 0-based enumeration. On systems where card0 is a simple framebuffer and card1 is the NVIDIA GPU, `--id=1` queries a non-existent device, returning nothing. Fix: use the PCI bus ID (e.g. `0000:07:00.0`) which nvidia-smi always resolves correctly.
+  - **Fix complexity:** Trivial (extract PCI bus ID from device symlink, pass to nvidia-smi)
+  - **Resolved:** Use PCI bus ID from `/sys/class/drm/cardN/device` symlink instead of DRM card index
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

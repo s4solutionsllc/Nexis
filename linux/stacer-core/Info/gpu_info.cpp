@@ -101,9 +101,14 @@ void GpuInfo::discoverGpus()
             dev.vendor = "NVIDIA";
             dev.name = readDeviceName(cardPath, cardIndex, "NVIDIA");
 
-            // NVIDIA: use nvidia-smi for utilization
+            // NVIDIA: use nvidia-smi for utilization, addressed by PCI bus ID
+            // (DRM card index != nvidia-smi device index when other cards exist)
             if (CommandUtil::isExecutable("nvidia-smi")) {
-                dev.queryCommand = "nvidia-smi";
+                QFileInfo devLink(cardPath + "/device");
+                if (devLink.isSymLink()) {
+                    // e.g. "0000:07:00.0" from the symlink target
+                    dev.queryCommand = devLink.symLinkTarget().section('/', -1);
+                }
             }
 
             mDevices.append(dev);
@@ -146,13 +151,13 @@ void GpuInfo::updateGpuInfo()
             }
 
         } else if (dev.vendor == "NVIDIA") {
-            // NVIDIA: query nvidia-smi
+            // NVIDIA: query nvidia-smi using PCI bus ID (stored in queryCommand)
             if (!dev.queryCommand.isEmpty()) {
                 try {
                     QString output = CommandUtil::exec("nvidia-smi",
                         {"--query-gpu=utilization.gpu",
                          "--format=csv,noheader,nounits",
-                         QString("--id=%1").arg(dev.deviceIndex)});
+                         QString("--id=%1").arg(dev.queryCommand)});
                     QString val = output.trimmed().split('\n').first().trimmed();
                     bool ok = false;
                     int pct = val.toInt(&ok);
