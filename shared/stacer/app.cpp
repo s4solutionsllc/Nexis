@@ -89,7 +89,11 @@ void App::init()
     ui->btnHelpers->setText(tr("Helpers"));
     ui->btnUninstaller->setText(tr("Uninstaller"));
     ui->btnResources->setText(tr("Resources"));
+#ifdef Q_OS_MAC
+    ui->btnAptSourceManager->setText(tr("Homebrew"));
+#else
     ui->btnAptSourceManager->setText(tr("APT Repository Manager"));
+#endif
     ui->btnGnomeSettings->setText(tr("GNOME Settings"));
     ui->btnSettings->setText(tr("Settings"));
     ui->btnFeedback->setText(tr("Feedback"));
@@ -277,22 +281,28 @@ void App::updateSidebarIcons()
     QString theme = AppManager::ins()->resolveThemeName();
 
     auto setIcon = [&](QPushButton *btn, const QString &sysTheme, const QString &iconName) {
-        QString fallback = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, iconName);
-        btn->setIcon(QIcon::fromTheme(sysTheme, QIcon(fallback)));
+        QString svgPath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, iconName);
+#ifdef Q_OS_MAC
+        // macOS: always use bundled SVGs — Adwaita symbolic icons are greyscale
+        // and Qt doesn't recolor them like GNOME does.
+        btn->setIcon(QIcon(svgPath));
+#else
+        btn->setIcon(QIcon::fromTheme(sysTheme, QIcon(svgPath)));
+#endif
         btn->setIconSize(QSize(20, 20));
     };
 
-    setIcon(ui->btnDash,             "utilities-system-monitor",       "dash.png");
-    setIcon(ui->btnStartupApps,      "media-playback-start",           "startup-apps.png");
-    setIcon(ui->btnSystemCleaner,    "edit-clear-all",                 "cleaner.png");
-    setIcon(ui->btnSearch,           "edit-find",                      "search.png");
-    setIcon(ui->btnServices,         "system-run",                     "services.png");
-    setIcon(ui->btnProcesses,        "view-list-details",              "process.png");
-    setIcon(ui->btnHelpers,          "preferences-other",              "helpers.png");
-    setIcon(ui->btnUninstaller,      "edit-delete",                    "uninstaller.png");
-    setIcon(ui->btnResources,        "preferences-system",             "resources.png");
-    setIcon(ui->btnAptSourceManager, "system-software-install",        "ppa-manager.png");
-    setIcon(ui->btnGnomeSettings,    "preferences-desktop-appearance", "gnome-settings.png");
-    setIcon(ui->btnSettings,         "preferences-desktop",            "settings.png");
-    setIcon(ui->btnFeedback,         "mail-message-new",               "feedback.png");
+    setIcon(ui->btnDash,             "utilities-system-monitor",       "dash.svg");
+    setIcon(ui->btnStartupApps,      "media-playback-start",           "startup-apps.svg");
+    setIcon(ui->btnSystemCleaner,    "edit-clear-all",                 "cleaner.svg");
+    setIcon(ui->btnSearch,           "edit-find",                      "search.svg");
+    setIcon(ui->btnServices,         "system-run",                     "services.svg");
+    setIcon(ui->btnProcesses,        "view-list",                      "process.svg");
+    setIcon(ui->btnHelpers,          "preferences-other",              "helpers.svg");
+    setIcon(ui->btnUninstaller,      "edit-delete",                    "uninstaller.svg");
+    setIcon(ui->btnResources,        "preferences-system",             "resources.svg");
+    setIcon(ui->btnAptSourceManager, "system-software-install",        "ppa-manager.svg");
+    setIcon(ui->btnGnomeSettings,    "preferences-desktop-appearance", "gnome-settings.svg");
+    setIcon(ui->btnSettings,         "applications-system",            "settings.svg");
+    setIcon(ui->btnFeedback,         "mail-message-new",               "feedback.svg");
 }

@@ -98,6 +98,16 @@ int main(int argc, char *argv[])
         isNoSplash = true;
     }
 
+#ifdef Q_OS_MAC
+    // macOS: Homebrew-installed icon themes aren't in Qt's default search paths.
+    // Add both ARM (/opt/homebrew) and Intel (/usr/local) Homebrew locations.
+    {
+        QStringList paths = QIcon::themeSearchPaths();
+        paths << "/opt/homebrew/share/icons" << "/usr/local/share/icons";
+        QIcon::setThemeSearchPaths(paths);
+    }
+#endif
+
     // Ensure Adwaita icons are available as a fallback theme
     if (QIcon::themeName().isEmpty())
         QIcon::setThemeName("Adwaita");

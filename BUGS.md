@@ -85,6 +85,12 @@
   - **Fix complexity:** Trivial (add bundled fallback icon as second argument)
   - **Resolved:** Added `QIcon(":/static/themes/common/img/package.png")` as fallback on both platforms
 
+- [x] **BUG-13: Sidebar icons use fallback PNGs on macOS instead of Adwaita theme** (LOW)
+  - **Files:** `shared/stacer/main.cpp`, `shared/stacer/app.cpp`
+  - **Description:** `QIcon::fromTheme()` can't find Homebrew-installed Adwaita icons on macOS because Qt's icon theme search paths don't include `/opt/homebrew/share/icons` or `/usr/local/share/icons`. The `XDG_DATA_DIRS` environment variable is empty on macOS, so Qt falls back to basic bundled PNG silhouettes instead of the proper Adwaita theme icons.
+  - **Fix complexity:** Trivial (add Homebrew icon paths to `QIcon::setThemeSearchPaths()`)
+  - **Resolved:** Added macOS-specific search paths in main.cpp; fixed 2 icon names missing from Adwaita; deleted orphan light theme stylesheet
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

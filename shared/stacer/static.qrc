@@ -85,6 +85,19 @@
         <file>static/themes/common/img/circle-unchecked.svg</file>
         <file>static/themes/default/img/sidebar-icons/helpers.png</file>
         <file>static/themes/default/img/sidebar-icons/gnome-settings.png</file>
+        <file>static/themes/default/img/sidebar-icons/dash.svg</file>
+        <file>static/themes/default/img/sidebar-icons/startup-apps.svg</file>
+        <file>static/themes/default/img/sidebar-icons/cleaner.svg</file>
+        <file>static/themes/default/img/sidebar-icons/search.svg</file>
+        <file>static/themes/default/img/sidebar-icons/services.svg</file>
+        <file>static/themes/default/img/sidebar-icons/process.svg</file>
+        <file>static/themes/default/img/sidebar-icons/helpers.svg</file>
+        <file>static/themes/default/img/sidebar-icons/uninstaller.svg</file>
+        <file>static/themes/default/img/sidebar-icons/resources.svg</file>
+        <file>static/themes/default/img/sidebar-icons/ppa-manager.svg</file>
+        <file>static/themes/default/img/sidebar-icons/gnome-settings.svg</file>
+        <file>static/themes/default/img/sidebar-icons/settings.svg</file>
+        <file>static/themes/default/img/sidebar-icons/feedback.svg</file>
         <file>static/themes/light/img/sidebar-icons/dash.png</file>
         <file>static/themes/light/img/sidebar-icons/cleaner.png</file>
         <file>static/themes/light/img/sidebar-icons/process.png</file>
@@ -98,5 +111,18 @@
         <file>static/themes/light/img/sidebar-icons/search.png</file>
         <file>static/themes/light/img/sidebar-icons/helpers.png</file>
         <file>static/themes/light/img/sidebar-icons/gnome-settings.png</file>
+        <file>static/themes/light/img/sidebar-icons/dash.svg</file>
+        <file>static/themes/light/img/sidebar-icons/startup-apps.svg</file>
+        <file>static/themes/light/img/sidebar-icons/cleaner.svg</file>
+        <file>static/themes/light/img/sidebar-icons/search.svg</file>
+        <file>static/themes/light/img/sidebar-icons/services.svg</file>
+        <file>static/themes/light/img/sidebar-icons/process.svg</file>
+        <file>static/themes/light/img/sidebar-icons/helpers.svg</file>
+        <file>static/themes/light/img/sidebar-icons/uninstaller.svg</file>
+        <file>static/themes/light/img/sidebar-icons/resources.svg</file>
+        <file>static/themes/light/img/sidebar-icons/ppa-manager.svg</file>
+        <file>static/themes/light/img/sidebar-icons/gnome-settings.svg</file>
+        <file>static/themes/light/img/sidebar-icons/settings.svg</file>
+        <file>static/themes/light/img/sidebar-icons/feedback.svg</file>
     </qresource>
 </RCC>
