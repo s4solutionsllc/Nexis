@@ -131,12 +131,19 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
   "${GUI_SHARED_DIR}/Pages/Search"
 )
 
+# macOS app icon
+if(APPLE)
+  set(MACOS_ICON "${CMAKE_SOURCE_DIR}/macos/stacer.icns")
+  set_source_files_properties("${MACOS_ICON}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+endif()
+
 add_executable(stacer
   ${GUI_SHARED_SRCS}
   ${GUI_SHARED_HDRS}
   ${GUI_PLAT_SRCS}
   "${GUI_SHARED_DIR}/static.qrc"
   ${QM_FILES}
+  $<$<PLATFORM_ID:Darwin>:${MACOS_ICON}>
 )
 
 target_link_libraries(stacer
@@ -161,6 +168,7 @@ if(APPLE)
     MACOSX_BUNDLE_BUNDLE_NAME "Stacer"
     MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    MACOSX_BUNDLE_ICON_FILE "stacer"
   )
 
   install(
