@@ -1,6 +1,6 @@
 
 <p align="center">
-⚠️ <b>This project is no longer abandoned, and has been adopted. Further releases are planned.</b>⚠️
+⚠️ <b>This is an actively maintained continuation of <a href="https://github.com/oguzhaninan/Stacer">oguzhaninan / Stacer</a>. Further releases are planned.</b>⚠️
 </p>
 
 <p align="center">
