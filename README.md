@@ -1,18 +1,63 @@
 
 <p align="center">
-⚠️ <b>This is an actively maintained continuation of <a href="https://github.com/oguzhaninan/Stacer">oguzhaninan / Stacer</a>. Further releases are planned.</b>⚠️
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/header.png" width="800">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/header.png" width="800">    
+  <b>Linux & macOS System Optimizer and Monitor</b><br>
+  <sub>Actively maintained Qt6 fork of <a href="https://github.com/oguzhaninan/Stacer">oguzhaninan/Stacer</a></sub>
 </p>
+
 <p align="center">
-  <b>Linux System Optimizer and Monitoring</b>
+  <a href="https://github.com/lsimpsonsfdc/Stacer/releases/latest"><img src="https://img.shields.io/github/v/release/lsimpsonsfdc/Stacer?label=latest%20release" alt="Latest Release"></a>
+  <a href="https://github.com/lsimpsonsfdc/Stacer/actions/workflows/build.yml"><img src="https://github.com/lsimpsonsfdc/Stacer/actions/workflows/build.yml/badge.svg?branch=native" alt="Build Status"></a>
+  <a href="https://github.com/lsimpsonsfdc/Stacer/blob/native/LICENSE"><img src="https://img.shields.io/github/license/lsimpsonsfdc/Stacer" alt="License: GPL v3"></a>
+  <img src="https://img.shields.io/badge/Qt-6-41cd52?logo=qt" alt="Qt 6">
+  <img src="https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus" alt="C++17">
+  <img src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS-lightgrey" alt="Platforms: Linux | macOS">
 </p>
 
-## Prerequisites
+## Features
 
-### Linux
+- **Dashboard** -- Real-time CPU, memory, disk, and network monitoring with circular gauges
+- **GPU Monitoring** -- GPU utilization tracking for NVIDIA, AMD, and Intel (Linux); Apple Silicon (macOS)
+- **System Cleaner** -- Remove package caches, crash reports, application logs, and app caches
+- **Process Manager** -- View, sort, and manage running processes
+- **Service Manager** -- Start, stop, and toggle system services (systemd / launchd)
+- **Startup Apps** -- Manage auto-start applications with configurable delay
+- **Package Uninstaller** -- Uninstall packages via APT, DNF, Pacman, Snap (Linux) or Homebrew (macOS)
+- **Resource Monitor** -- Historical charts for CPU, memory, network, and disk I/O
+- **Hosts File Editor** -- Manage `/etc/hosts` entries
+- **APT Source Manager / Homebrew Taps** -- Manage package repositories
+- **Desktop Settings** -- Adjust GNOME (Linux) or macOS desktop preferences
+- **Theme Support** -- Dark, light, and system-auto color schemes
+- **Internationalization** -- 26 languages supported
+
+## Why This Fork?
+
+The [original Stacer](https://github.com/oguzhaninan/Stacer) by oguzhaninan is no longer actively maintained. This fork picks up where it left off:
+
+| | Upstream (oguzhaninan) | This Fork |
+|---|---|---|
+| **Status** | Inactive since 2020 | Actively maintained |
+| **Qt version** | Qt 5 | Qt 6 with C++17 |
+| **Platforms** | Linux only | Linux and macOS |
+| **GPU monitoring** | Not available | NVIDIA, AMD, Intel, Apple Silicon |
+| **Themes** | Single theme | Dark, light, and system-auto |
+| **Known bugs** | 50+ open issues | Critical bugs fixed (see [BUGS.md](BUGS.md)) |
+
+## Downloads
+
+Pre-built binaries are available on the [Releases page](https://github.com/lsimpsonsfdc/Stacer/releases/latest):
+
+- **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
+- **macOS Apple Silicon**: `.dmg` disk image
+
+## Building from Source
+
+### Prerequisites
+
+#### Linux
 
 Install Qt 6 development libraries and the Adwaita icon theme:
 
@@ -33,9 +78,9 @@ sudo dnf install qt6-qtbase-devel qt6-qtcharts-devel qt6-qtsvg-devel \
 sudo pacman -S qt6-base qt6-charts qt6-svg qt6-tools adwaita-icon-theme cmake
 ```
 
-### macOS
+#### macOS
 
-Install dependencies via Homebrew. The **adwaita-icon-theme** package is required for consistent icon rendering — without it, many UI icons will appear blank.
+Install dependencies via Homebrew. The **adwaita-icon-theme** package is required for consistent icon rendering -- without it, many UI icons will appear blank.
 
 ```bash
 brew install qt@6 cmake adwaita-icon-theme
@@ -100,9 +145,13 @@ make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
     <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-11.png" width="700">
 </p>
 
-## Built With
+## Development
 
-This fork is co-authored by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding agent. Claude Code contributes to architecture decisions, feature implementation, bug fixes, CI/CD pipelines, and release engineering — working alongside the human maintainer as a pair-programming partner.
+This fork is co-authored by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding agent. Claude Code contributes to architecture decisions, feature implementation, bug fixes, CI/CD pipelines, and release engineering -- working alongside the human maintainer as a pair-programming partner.
+
+## Contributing
+
+Bug reports and feature requests are tracked in [BUGS.md](BUGS.md) and [FEATURE_REQUESTS.md](FEATURE_REQUESTS.md). Feel free to [open an issue](https://github.com/lsimpsonsfdc/Stacer/issues) or submit a pull request.
 
 <!--
 
