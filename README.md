@@ -100,6 +100,10 @@ make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
     <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-11.png" width="700">
 </p>
 
+## Built With
+
+This fork is co-authored by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding agent. Claude Code contributes to architecture decisions, feature implementation, bug fixes, CI/CD pipelines, and release engineering — working alongside the human maintainer as a pair-programming partner.
+
 <!--
 
 This project exists thanks to all the people who have previously contributed. [[Contribute](CONTRIBUTING.md)].</br>

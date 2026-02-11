@@ -310,6 +310,8 @@ jobs:
             - **macOS:** macOS 13+ (Ventura) — Apple Silicon (ARM64)
 
             ---
+            🤖 Co-authored by [Claude Code](https://claude.ai/claude-code) — Anthropic's AI coding agent.
+
             Built from commit ${{ github.sha }}
           files: |
             ${{ steps.files.outputs.DEB_PATH }}
