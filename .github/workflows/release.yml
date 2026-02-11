@@ -59,12 +59,13 @@ jobs:
       - name: Build .deb package
         run: dpkg-buildpackage -us -uc -b
 
-      - name: Find .deb file
+      - name: Collect .deb file
         id: deb
         run: |
-          DEB=$(ls ../stacer_*.deb | head -1)
+          cp ../stacer_*.deb .
+          DEB=$(ls stacer_*.deb | head -1)
           echo "DEB_PATH=$DEB" >> "$GITHUB_OUTPUT"
-          echo "DEB_NAME=$(basename $DEB)" >> "$GITHUB_OUTPUT"
+          echo "DEB_NAME=$DEB" >> "$GITHUB_OUTPUT"
 
       # --- AppImage ---
       - name: Install to AppDir
