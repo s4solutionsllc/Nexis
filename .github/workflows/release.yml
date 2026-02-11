@@ -199,33 +199,28 @@ jobs:
           body: |
             ## Stacer ${{ github.ref_name }}
 
-            ### What's New since v2.0.0
-
-            #### 🍎 macOS Platform Support
-            - **Native .app bundle uninstaller** — Scans `/Applications` and `~/Applications`, parses `Info.plist` for display names and versions, filters out Apple system apps, moves to Trash via Finder (recoverable)
-            - **Homebrew package manager** — Tree widget grouped by Formula/Cask sections with multi-select checkboxes, search with auto-expand, dry-run dependency confirmation, and async background loading
-            - **macOS app icon** — Stacer logo now appears in Finder, Dock, and Spotlight
-            - **Sidebar & System Cleaner icons** — Fixed Adwaita theme discovery for Homebrew-installed icon themes
-            - **Startup Apps** — Display names from `Info.plist` instead of raw file names; autostart delay via shell sleep wrapper
-
-            #### 🖥️ Cross-Platform Features
-            - **GPU load monitoring** — Dashboard and Resources pages show GPU utilization for AMD (sysfs), NVIDIA (nvidia-smi), Intel (frequency ratio), and macOS (IOKit)
-            - **Autostart delay option** — Configurable delay before auto-started apps launch
-            - **Single-instance enforcement** — Prevents multiple copies via `QLockFile`
-            - **Purge vs remove option** — Uninstaller can fully purge packages including config files (Linux)
-            - **Pip cache cleaning** — Detects non-standard locations via `PIP_CACHE_DIR`
-            - **Git-describe versioning** — App version automatically includes commit count and hash for dev builds
+            ### What's New since v2.1.0
 
             #### 🐛 Bug Fixes
-            - Fix NVIDIA GPU utilization always reading 0% (wrong device index)
-            - Fix Homebrew PATH resolution in macOS GUI apps
-            - Fix Homebrew packages showing no descriptions (now uses `brew info --json=v2`)
-            - Fix update alert and Startup Apps display name on macOS
-            - Fix non-English locale parsing (`LC_ALL=C`)
-            - Fix swapped memory variables in `/proc/meminfo` parsing
-            - Fix CPU speed showing 0 GHz on modern kernels (sysfs cpufreq fallback)
-            - Fix macOS crash from double `CFRelease` in GPU detection
-            - Replace System Cleaner category icons with Adwaita SVGs
+            - **Feedback form replaced with GitHub Issues launcher (BUG-17)** — The old feedback dialog posted data to the original author's Heroku backend, which has been shut down since 2022. The form has been replaced with a quick-link dialog that opens the appropriate GitHub issue template (bug report, feature request, or general feedback) in the browser. No user data is collected or transmitted.
+            - **macOS .app bundle re-signed after macdeployqt** — `macdeployqt` modifies the binary and embedded frameworks, invalidating the ad-hoc code signature. The release workflow now re-signs the bundle (`codesign --force --deep --sign -`) immediately after deployment, preventing the "Code Signature Invalid" / SIGKILL crash that occurred on first launch for macOS users.
+            - **Release workflow: .deb artifact copy fixed** — The Debian package was not being copied into the GitHub Actions workspace before the upload step, causing `.deb` uploads to silently fail. The workflow now explicitly copies the `.deb` before the upload action runs.
+
+            #### Improvements
+            - **Structured GitHub issue templates** — Added `.github/ISSUE_TEMPLATE/` with separate YAML-based templates for bug reports, feature requests, and general feedback. Each template pre-fills labels, assignees, and structured fields to make triage easier.
+            - **Version-independent splashscreen filename** — Splash screen asset renamed from `splashscreen-2.0.1.png` to `splashscreen.png` so future version bumps don't require updating the asset reference in source.
+
+            ---
+
+            ### Full Changelog since v2.1.0
+
+            | Commit | Summary |
+            |--------|---------|
+            | `27d60a5` | Use version-independent splashscreen filename |
+            | `2d10d39` | Replace feedback form with GitHub Issues launcher (BUG-17) |
+            | `0ba166d` | Fix macOS release: re-sign app bundle after macdeployqt |
+            | `131cc51` | Update macOS install instructions with xattr quarantine fix |
+            | `c3d2fdf` | Fix release workflow: copy .deb into workspace before upload |
 
             ---
 
