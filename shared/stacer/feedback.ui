@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>476</width>
-    <height>350</height>
+    <width>420</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,99 +16,119 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QVBoxLayout" name="mainLayout">
    <property name="leftMargin">
     <number>30</number>
    </property>
    <property name="topMargin">
-    <number>20</number>
+    <number>25</number>
    </property>
    <property name="rightMargin">
     <number>30</number>
    </property>
    <property name="bottomMargin">
-    <number>20</number>
+    <number>25</number>
    </property>
    <property name="spacing">
     <number>15</number>
    </property>
-   <item row="5" column="0" colspan="3">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Maximum</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>359</width>
-       <height>2</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="3" column="0" colspan="3">
-    <widget class="QPlainTextEdit" name="txtMessage">
-     <property name="placeholderText">
-      <string>Message</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="3">
-    <widget class="QLineEdit" name="txtName">
-     <property name="placeholderText">
-      <string>Name</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="3">
-    <widget class="QLineEdit" name="txtEmail">
-     <property name="placeholderText">
-      <string>Email Address</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0" colspan="3">
+   <item>
     <widget class="QLabel" name="lblTitle">
      <property name="accessibleName">
       <string notr="true">dialog-title</string>
      </property>
      <property name="text">
-      <string>Send a Feedback</string>
+      <string>How can we help?</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </item>
-   <item row="4" column="2">
-    <widget class="QPushButton" name="btnSend">
+   <item>
+    <widget class="QLabel" name="lblSubtitle">
+     <property name="text">
+      <string>Opens GitHub in your browser</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: #888; font-size: 11px;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="btnReportBug">
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
      </property>
      <property name="accessibleName">
       <string notr="true">primary</string>
      </property>
      <property name="text">
-      <string>Send</string>
+      <string>Report a Bug</string>
      </property>
-     <property name="default">
-      <bool>true</bool>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>38</height>
+      </size>
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QLabel" name="lblErrorMsg">
+   <item>
+    <widget class="QPushButton" name="btnRequestFeature">
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="accessibleName">
+      <string notr="true">primary</string>
+     </property>
      <property name="text">
-      <string/>
+      <string>Request a Feature</string>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>38</height>
+      </size>
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
+   <item>
+    <widget class="QPushButton" name="btnFeedback">
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="accessibleName">
+      <string notr="true">primary</string>
+     </property>
+     <property name="text">
+      <string>General Feedback</string>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>38</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>5</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
     <widget class="QPushButton" name="btnClose">
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
@@ -123,11 +143,6 @@
    </item>
   </layout>
  </widget>
- <tabstops>
-  <tabstop>txtName</tabstop>
-  <tabstop>txtEmail</tabstop>
-  <tabstop>txtMessage</tabstop>
- </tabstops>
  <resources/>
  <connections/>
 </ui>

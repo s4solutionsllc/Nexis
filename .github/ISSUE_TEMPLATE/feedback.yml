@@ -1,0 +1,24 @@
+name: General Feedback
+description: Share feedback, questions, or ideas
+labels: ["feedback"]
+body:
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Your Feedback
+      description: Share your thoughts, questions, or suggestions
+      placeholder: Tell us what's on your mind...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform (optional)
+      options:
+        - Linux
+        - macOS
+        - Both
+        - N/A
+    validations:
+      required: false

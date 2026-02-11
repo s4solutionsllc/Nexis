@@ -109,6 +109,12 @@
   - **Fix complexity:** Moderate (switch to `brew info --json=v2 --installed` for rich metadata)
   - **Resolved:** Rewrote to use `brew info --json=v2 --installed` JSON parsing with name + description for formulae and human-friendly name + description for casks
 
+- [x] **BUG-17: Feedback form sends user data to defunct upstream Heroku endpoint** (MEDIUM)
+  - **File:** `shared/stacer/feedback.cpp:19`
+  - **Description:** The feedback dialog collects name, email, and message, then POSTs via `curl` to `https://stacer-web-api.herokuapp.com/feedback` — the original upstream author's Heroku backend. Heroku free tier was retired in 2022, so the endpoint is dead. Even if alive, data would go to the wrong party.
+  - **Fix complexity:** Moderate (replace with GitHub Issues launcher)
+  - **Resolved:** Replaced feedback form with quick-link dialog that opens GitHub Issues templates (bug report, feature request, general feedback). No user data collected or transmitted.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

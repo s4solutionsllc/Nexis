@@ -2,7 +2,6 @@
 #define FEEDBACK_H
 
 #include <QDialog>
-#include <QRegularExpression>
 
 namespace Ui {
 class Feedback;
@@ -13,34 +12,19 @@ class Feedback : public QDialog
     Q_OBJECT
 
 public:
-    explicit Feedback(QWidget *parent = 0);
+    explicit Feedback(QWidget *parent = nullptr);
     ~Feedback();
 
-signals:
-    void setErrorMessageS(const QString &msg);
-    void clearInputsS();
-    void disableElementsS(const bool status);
-    void setBtnSendTextS(const QString &text);
-
 private slots:
-    void setErrorMessage(const QString &msg);
-    void on_btnSend_clicked();
-    void clearInputs();
-    void disableElements(const bool status);
-    void setBtnSendText(const QString &text);
-
+    void on_btnReportBug_clicked();
+    void on_btnRequestFeature_clicked();
+    void on_btnFeedback_clicked();
     void on_btnClose_clicked();
-
-private:
-    void init();
 
 private:
     Ui::Feedback *ui;
 
-    QString mHeader;
-    QString mFeedbackUrl;
-
-    QRegularExpression mMailRegex;
+    static const QString ISSUES_BASE_URL;
 };
 
 #endif // FEEDBACK_H
