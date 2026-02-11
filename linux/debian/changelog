@@ -1,3 +1,20 @@
+stacer (2.1.0-1) unstable; urgency=medium
+
+  * Full macOS platform support with native .app bundle management.
+  * Add GPU load/utilization monitoring on Dashboard and Resources.
+  * Add autostart delay option for startup applications.
+  * Add purge vs remove option in the Uninstaller (Linux).
+  * Add pip cache cleaning with PIP_CACHE_DIR support.
+  * Add single-instance enforcement via QLockFile.
+  * Replace System Cleaner icons with Adwaita SVGs.
+  * Derive app version from git describe at build time.
+  * Fix NVIDIA GPU utilization always reading 0%.
+  * Fix non-English locale parsing with LC_ALL=C.
+  * Fix swapped memory variables in /proc/meminfo parsing.
+  * Fix CPU speed showing 0 GHz on modern kernels.
+
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Mon, 10 Feb 2026 00:00:00 +0000
+
 stacer (2.0.1-1) unstable; urgency=medium
 
   * Fix CPU speed displaying "0GHz" on Dashboard system info.

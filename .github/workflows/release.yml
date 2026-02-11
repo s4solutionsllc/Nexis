@@ -190,22 +190,115 @@ jobs:
           body: |
             ## Stacer ${{ github.ref_name }}
 
+            ### What's New since v2.0.0
+
+            #### 🍎 macOS Platform Support
+            - **Native .app bundle uninstaller** — Scans `/Applications` and `~/Applications`, parses `Info.plist` for display names and versions, filters out Apple system apps, moves to Trash via Finder (recoverable)
+            - **Homebrew package manager** — Tree widget grouped by Formula/Cask sections with multi-select checkboxes, search with auto-expand, dry-run dependency confirmation, and async background loading
+            - **macOS app icon** — Stacer logo now appears in Finder, Dock, and Spotlight
+            - **Sidebar & System Cleaner icons** — Fixed Adwaita theme discovery for Homebrew-installed icon themes
+            - **Startup Apps** — Display names from `Info.plist` instead of raw file names; autostart delay via shell sleep wrapper
+
+            #### 🖥️ Cross-Platform Features
+            - **GPU load monitoring** — Dashboard and Resources pages show GPU utilization for AMD (sysfs), NVIDIA (nvidia-smi), Intel (frequency ratio), and macOS (IOKit)
+            - **Autostart delay option** — Configurable delay before auto-started apps launch
+            - **Single-instance enforcement** — Prevents multiple copies via `QLockFile`
+            - **Purge vs remove option** — Uninstaller can fully purge packages including config files (Linux)
+            - **Pip cache cleaning** — Detects non-standard locations via `PIP_CACHE_DIR`
+            - **Git-describe versioning** — App version automatically includes commit count and hash for dev builds
+
+            #### 🐛 Bug Fixes
+            - Fix NVIDIA GPU utilization always reading 0% (wrong device index)
+            - Fix Homebrew PATH resolution in macOS GUI apps
+            - Fix Homebrew packages showing no descriptions (now uses `brew info --json=v2`)
+            - Fix update alert and Startup Apps display name on macOS
+            - Fix non-English locale parsing (`LC_ALL=C`)
+            - Fix swapped memory variables in `/proc/meminfo` parsing
+            - Fix CPU speed showing 0 GHz on modern kernels (sysfs cpufreq fallback)
+            - Fix macOS crash from double `CFRelease` in GPU detection
+            - Replace System Cleaner category icons with Adwaita SVGs
+
+            ---
+
             ### Downloads
 
-            #### Linux
+            #### Linux (x86_64)
             | Format | File | Description |
             |--------|------|-------------|
             | `.deb` | `${{ steps.files.outputs.DEB_NAME }}` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |
-            | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_NAME }}` | Portable, runs on any Linux distro |
+            | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_NAME }}` | Portable — runs on any Linux distro |
             | Binary | `stacer` | Standalone executable (requires Qt6 runtime) |
 
-            #### macOS
+            #### macOS (Apple Silicon)
             | Format | File | Description |
             |--------|------|-------------|
-            | `.dmg` | `${{ steps.files.outputs.DMG_NAME }}` | macOS disk image (Apple Silicon) |
+            | `.dmg` | `${{ steps.files.outputs.DMG_NAME }}` | macOS disk image for Apple Silicon (M1/M2/M3/M4) |
+
+            ---
+
+            ### Installation Instructions
+
+            #### Linux — `.deb` (Ubuntu / Debian / Mint)
+            ```bash
+            # Install the package
+            sudo dpkg -i ${{ steps.files.outputs.DEB_NAME }}
+
+            # Fix any missing dependencies
+            sudo apt-get install -f
+
+            # Launch
+            stacer
+            ```
+
+            #### Linux — AppImage (Any Distro)
+            ```bash
+            # Make executable and run
+            chmod +x ${{ steps.files.outputs.APPIMAGE_NAME }}
+            ./${{ steps.files.outputs.APPIMAGE_NAME }}
+            ```
+            > **Note:** AppImage requires FUSE. On Ubuntu 22.04+: `sudo apt install libfuse2`
+
+            #### Linux — Build from Source
+            ```bash
+            # Install dependencies (Ubuntu/Debian)
+            sudo apt install build-essential cmake g++ \
+              qt6-base-dev qt6-charts-dev qt6-svg-dev \
+              qt6-tools-dev qt6-l10n-tools libgl1-mesa-dev
+
+            # Build
+            git clone https://github.com/lsimpsonsfdc/Stacer.git
+            cd Stacer && mkdir build && cd build
+            cmake -DCMAKE_BUILD_TYPE=Release ..
+            make -j$(nproc)
+
+            # Run
+            ./output/stacer
+            ```
+
+            #### macOS — `.dmg`
+            1. Download `${{ steps.files.outputs.DMG_NAME }}`
+            2. Open the `.dmg` and drag **Stacer** to your **Applications** folder
+            3. On first launch, right-click → **Open** (to bypass Gatekeeper for unsigned apps)
+
+            #### macOS — Build from Source
+            ```bash
+            # Install dependencies
+            brew install qt@6 cmake adwaita-icon-theme
+
+            # Build
+            git clone https://github.com/lsimpsonsfdc/Stacer.git
+            cd Stacer && mkdir build && cd build
+            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) ..
+            make -j$(sysctl -n hw.ncpu)
+
+            # Run
+            open output/stacer.app
+            ```
+
+            ---
 
             ### System Requirements
-            - **Linux:** Ubuntu 22.04+ / Debian 12+ / Fedora 36+ — Qt 6.2+
+            - **Linux:** Ubuntu 22.04+ / Debian 12+ / Fedora 36+ — Qt 6.2+, x86_64
             - **macOS:** macOS 13+ (Ventura) — Apple Silicon (ARM64)
 
             ---
