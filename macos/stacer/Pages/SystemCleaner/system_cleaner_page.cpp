@@ -232,9 +232,27 @@ void SystemCleanerPage::systemClean()
         mTotalCleanedSize += FileUtil::getFileSize(file);
     }
 
-    // Remove selected files
-    if (!mFilesToDelete.isEmpty()) {
-        CommandUtil::sudoExec("rm", QStringList() << "-rf" << mFilesToDelete);
+    // Remove selected files and empty selected directories
+    QStringList filesToRemove;
+    for (const QString &path : mFilesToDelete) {
+        QFileInfo fi(path);
+        if (fi.isDir()) {
+            // Empty directory contents but preserve the directory itself,
+            // so services/apps that depend on it existing aren't broken (BUG-02)
+            QDir dir(path);
+            for (const QFileInfo &entry : dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+                if (entry.isDir()) {
+                    QDir(entry.absoluteFilePath()).removeRecursively();
+                } else {
+                    QFile::remove(entry.absoluteFilePath());
+                }
+            }
+        } else {
+            filesToRemove << path;
+        }
+    }
+    if (!filesToRemove.isEmpty()) {
+        CommandUtil::sudoExec("rm", QStringList() << "-rf" << filesToRemove);
     }
 
     emit cleanFinishedS();

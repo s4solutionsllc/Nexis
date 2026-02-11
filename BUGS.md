@@ -13,11 +13,12 @@
   - **Fix complexity:** Trivial (swap two lines)
   - **Resolved:** Swapped assignments so shmem=index 6 and sreclaimable=index 7
 
-- [ ] **BUG-02: System Cleaner deletes entire directories with `rm -rf`** (HIGH)
+- [x] **BUG-02: System Cleaner deletes entire directories with `rm -rf`** (HIGH)
   - **File:** `linux/stacer/Pages/SystemCleaner/system_cleaner_page.cpp:229`
   - **Description:** `getAppCaches()` returns both files and directories (`QDir::Dirs`), and the cleaner calls `sudo rm -rf` on them. This deletes entire log/cache directories rather than just their contents, breaking services like Apache2/Nginx that need the directory to exist.
   - **Upstream:** [#548](https://github.com/oguzhaninan/Stacer/issues/548), [#459](https://github.com/oguzhaninan/Stacer/issues/459)
   - **Fix complexity:** Moderate (change deletion logic to empty contents, not remove directories)
+  - **Resolved:** systemClean() now partitions paths into files vs directories; directories are emptied (contents removed) while preserving the directory itself
 
 - [x] **BUG-03: No single-instance enforcement** (HIGH)
   - **File:** `shared/stacer/main.cpp`
