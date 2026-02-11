@@ -116,6 +116,12 @@
   - **Fix complexity:** Moderate (replace with GitHub Issues launcher)
   - **Resolved:** Replaced feedback form with quick-link dialog that opens GitHub Issues templates (bug report, feature request, general feedback). No user data collected or transmitted.
 
+- [x] **BUG-18: Settings page version label hardcoded to v2.0.1** (LOW)
+  - **File:** `shared/stacer/Pages/Settings/settings_page.ui:236`
+  - **Description:** The `lblCreatedBy` label in the Settings page contained a hardcoded version string `v2.0.1` that was never updated. The version should be set dynamically from `qApp->applicationVersion()`, which is already populated from the cmake-derived `APP_VERSION` macro.
+  - **Fix complexity:** Trivial (set label text in constructor using qApp->applicationVersion())
+  - **Resolved:** Removed hardcoded version from .ui file; both platform settings_page.cpp files now set lblCreatedBy text dynamically
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

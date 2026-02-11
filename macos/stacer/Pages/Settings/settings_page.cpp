@@ -2,6 +2,7 @@
 #include "ui_settings_page.h"
 #include "Managers/info_manager.h"
 #include "utilities.h"
+#include <QApplication>
 #include <QDesktopServices>
 #include <QRegularExpression>
 #include <QUrl>
@@ -18,6 +19,14 @@ SettingsPage::SettingsPage(QWidget *parent) :
     mSettingManager(SettingManager::ins())
 {
     ui->setupUi(this);
+
+    // Set version label dynamically from cmake-derived APP_VERSION
+    ui->lblCreatedBy->setText(
+        QString("<html><head/><body><p>Stacer v%1 "
+                "<a href=\"https://github.com/lsimpsonsfdc\">"
+                "<span style=\" text-decoration: underline; color:#007af4;\">"
+                "Luke Simpson</span></a></p></body></html>")
+            .arg(qApp->applicationVersion()));
 
     init();
 }
