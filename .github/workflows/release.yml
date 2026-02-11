@@ -279,7 +279,11 @@ jobs:
             #### macOS — `.dmg`
             1. Download `${{ steps.files.outputs.DMG_NAME }}`
             2. Open the `.dmg` and drag **Stacer** to your **Applications** folder
-            3. On first launch, right-click → **Open** (to bypass Gatekeeper for unsigned apps)
+            3. Remove the quarantine attribute (required for unsigned apps):
+               ```bash
+               xattr -cr /Applications/Stacer.app
+               ```
+            4. Double-click **Stacer** in Applications to launch
 
             #### macOS — Build from Source
             ```bash
