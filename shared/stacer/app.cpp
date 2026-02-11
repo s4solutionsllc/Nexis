@@ -7,6 +7,7 @@
 #include <QScreen>
 #include <QIcon>
 #include <QEvent>
+#include <QThreadPool>
 
 App::~App()
 {
@@ -128,6 +129,11 @@ void App::closeEvent(QCloseEvent *event)
 {
     mTrayIcon->hide();
     event->accept();
+
+    // Wait for background threads (scans, uninstalls, etc.) to finish
+    // so in-progress operations aren't interrupted (BUG-05)
+    QThreadPool::globalInstance()->waitForDone();
+
     qApp->quit();
 }
 

@@ -59,6 +59,11 @@ private:
     // Thread-safe package data (written on worker, read on main thread)
     QList<Package> mPackages;
     QStringList mSnapPackages;
+
+    // Track background tasks so they can be awaited on shutdown (BUG-05)
+    QFuture<void> mFetchFuture;
+    QFuture<void> mFetchSnapFuture;
+    QFuture<void> mUninstallFuture;
 };
 
 #endif // UNINSTALLERPAGE_H

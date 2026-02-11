@@ -97,6 +97,9 @@ private:
     quint64 mTotalCleanedSize;
     // Children to remove from tree (indices captured on main thread before worker)
     QList<QPair<int,int>> mChildrenToRemove;
+
+    // Track background tasks so they can be awaited on shutdown (BUG-05)
+    QFuture<void> mWorkerFuture;
 };
 
 #endif // SYSTEMCLEANERPAGE_H

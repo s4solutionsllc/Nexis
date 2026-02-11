@@ -320,7 +320,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mAppCaches.clear();
 
     // Launch worker thread (I/O only)
-    (void)QtConcurrent::run([this]() { systemScan(); });
+    mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
 }
 
 void SystemCleanerPage::on_btnClean_clicked()
@@ -361,7 +361,7 @@ void SystemCleanerPage::on_btnClean_clicked()
     }
 
     // Launch worker thread (I/O only)
-    (void)QtConcurrent::run([this]() { systemClean(); });
+    mWorkerFuture = QtConcurrent::run([this]() { systemClean(); });
 }
 
 void SystemCleanerPage::on_btnBackToCategories_clicked()

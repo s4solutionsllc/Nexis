@@ -44,16 +44,16 @@ void UninstallerPage::init()
     connect(ui->treeWidgetPackages, &QTreeWidget::itemChanged, this, &UninstallerPage::onTreeItemChanged);
 
     // Initial load via worker threads
-    (void)QtConcurrent::run([this]() { fetchPackages(); });
-    (void)QtConcurrent::run([this]() { fetchSnapPackages(); });
+    mFetchFuture = QtConcurrent::run([this]() { fetchPackages(); });
+    mFetchSnapFuture = QtConcurrent::run([this]() { fetchSnapPackages(); });
 
     connect(SignalMapper::ins(), &SignalMapper::sigUninstallStarted, this, &UninstallerPage::uninstallStarted);
     // After uninstall finishes, re-fetch packages on worker threads
     connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, [this]() {
-        (void)QtConcurrent::run([this]() { fetchPackages(); });
+        mFetchFuture = QtConcurrent::run([this]() { fetchPackages(); });
     });
     connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, [this]() {
-        (void)QtConcurrent::run([this]() { fetchSnapPackages(); });
+        mFetchSnapFuture = QtConcurrent::run([this]() { fetchSnapPackages(); });
     });
 }
 
@@ -257,7 +257,7 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (reply != QMessageBox::Ok)
         return;
 
-    (void)QtConcurrent::run([=]
+    mUninstallFuture = QtConcurrent::run([=]
     {
         emit SignalMapper::ins()->sigUninstallStarted();
         ToolManager::ins()->trashApps(selectedPaths);
@@ -305,7 +305,7 @@ void UninstallerPage::on_btnUninstall_clicked()
 
     bool purge = ui->chkPurge->isChecked();
 
-    (void)QtConcurrent::run([=]
+    mUninstallFuture = QtConcurrent::run([=]
     {
         emit SignalMapper::ins()->sigUninstallStarted();
 

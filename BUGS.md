@@ -36,11 +36,12 @@
   - **Fix complexity:** Moderate (add sysfs fallback path)
   - **Resolved:** Added sysfs cpufreq fallback in both cpu_info.cpp and system_info.cpp
 
-- [ ] **BUG-05: Background threads not cleaned up on exit** (MEDIUM)
+- [x] **BUG-05: Background threads not cleaned up on exit** (MEDIUM)
   - **Files:** `shared/stacer/Pages/Uninstaller/uninstaller_page.cpp:40-51,238-246`, `shared/stacer/app.cpp:118-123`
   - **Description:** `QtConcurrent::run()` calls discard `QFuture` objects. `closeEvent()` calls `qApp->quit()` without waiting for threads. App processes linger after close; in-progress package uninstalls may be interrupted.
   - **Upstream:** [QuentiumYT #18](https://github.com/QuentiumYT/Stacer/issues/18), [QuentiumYT #26](https://github.com/QuentiumYT/Stacer/pull/26)
   - **Fix complexity:** Moderate (store QFuture objects, wait in destructor)
+  - **Resolved:** closeEvent() now calls QThreadPool::globalInstance()->waitForDone() before quitting; QFuture objects stored in UninstallerPage and SystemCleanerPage
 
 - [ ] **BUG-06: Slow startup with large /etc/hosts file** (MEDIUM)
   - **File:** `shared/stacer/Pages/Helpers/host_manage.cpp:57,62-100`
