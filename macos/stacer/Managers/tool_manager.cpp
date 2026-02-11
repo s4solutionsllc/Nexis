@@ -98,6 +98,19 @@ void ToolManager::uninstallPackages(const QStringList &packages, bool purge)
 }
 
 /*
+ * macOS native .app bundles
+ */
+QList<Package> ToolManager::getInstalledApps() const
+{
+    return PackageTool::getInstalledApps();
+}
+
+bool ToolManager::trashApps(const QStringList &appPaths)
+{
+    return PackageTool::trashApps(appPaths);
+}
+
+/*
  * macOS System Settings — not yet implemented; hide the tab for now.
  */
 bool ToolManager::checkGnomeSettings() const

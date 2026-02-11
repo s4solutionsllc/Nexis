@@ -8,6 +8,14 @@
 #include "apt_source_edit.h"
 #include "Managers/info_manager.h"
 
+#ifdef Q_OS_MAC
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
+#include <QtConcurrent>
+#include "Managers/tool_manager.h"
+#include "signal_mapper.h"
+#endif
+
 namespace Ui {
 class APTSourceManagerPage;
 }
@@ -23,6 +31,11 @@ public:
 public:
     static APTSourcePtr selectedAptSource;
 
+#ifdef Q_OS_MAC
+signals:
+    void brewPackagesLoaded();
+#endif
+
 private slots:
     void loadAptSources();
     void changeElementsVisible(const bool checked);
@@ -34,6 +47,14 @@ private slots:
     void on_btnEditAptSource_clicked();
     void on_btnCancel_clicked();
 
+#ifdef Q_OS_MAC
+    void fetchBrewPackages();
+    void onBrewPackagesLoaded();
+    void onTreeItemChanged(QTreeWidgetItem *item, int column);
+    QStringList getSelectedBrewPackages();
+    void updateBrewUninstallButton();
+#endif
+
 private:
     void init();
 
@@ -41,6 +62,11 @@ private:
     Ui::APTSourceManagerPage *ui;
 
     QSharedPointer<APTSourceEdit> mAptSourceEditDialog;
+
+#ifdef Q_OS_MAC
+    QTreeWidget *mTreeWidget = nullptr;
+    QList<Package> mBrewPackages;
+#endif
 };
 
 #endif

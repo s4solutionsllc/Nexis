@@ -60,7 +60,11 @@ void UninstallerPage::init()
 void UninstallerPage::fetchPackages()
 {
     // Worker thread: I/O only, no UI access
+#ifdef Q_OS_MAC
+    mPackages = tm->getInstalledApps();
+#else
     mPackages = tm->getPackages();
+#endif
     emit packagesLoadedS();
 }
 
@@ -108,9 +112,18 @@ void UninstallerPage::onPackagesLoaded()
 
         for (const Package &pkg : pkgs) {
             QTreeWidgetItem *item = new QTreeWidgetItem(sectionItem);
+#ifdef Q_OS_MAC
+            // macOS .app bundles: "Name version"
+            QString displayText = pkg.description.isEmpty()
+                ? pkg.name
+                : QString("%1 %2").arg(pkg.name, pkg.description);
+            item->setData(0, Qt::UserRole + 1, pkg.path);
+#else
+            // Linux: "description (name)"
             QString displayText = pkg.description.isEmpty()
                 ? pkg.name
                 : QString("%1 (%2)").arg(pkg.description, pkg.name);
+#endif
             item->setText(0, displayText);
             item->setIcon(0, QIcon::fromTheme(pkg.name, fallbackIcon));
             item->setCheckState(0, Qt::Unchecked);
@@ -156,7 +169,7 @@ void UninstallerPage::setAppCount()
         count += ui->treeWidgetPackages->topLevelItem(i)->childCount();
 
 #ifdef Q_OS_MAC
-    ui->btnSystemPackages->setText(tr("Homebrew Packages (%1)").arg(count));
+    ui->btnSystemPackages->setText(tr("Applications (%1)").arg(count));
 #else
     ui->btnSystemPackages->setText(tr("Packages (%1)").arg(count));
 #endif
@@ -206,8 +219,51 @@ QStringList UninstallerPage::getSelectedSnapPackages()
     return selectedPackages;
 }
 
+#ifdef Q_OS_MAC
+QStringList UninstallerPage::getSelectedAppPaths()
+{
+    QStringList paths;
+    for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *section = ui->treeWidgetPackages->topLevelItem(i);
+        for (int j = 0; j < section->childCount(); ++j) {
+            QTreeWidgetItem *item = section->child(j);
+            if (item->checkState(0) == Qt::Checked)
+                paths << item->data(0, Qt::UserRole + 1).toString();
+        }
+    }
+    return paths;
+}
+#endif
+
 void UninstallerPage::on_btnUninstall_clicked()
 {
+#ifdef Q_OS_MAC
+    QStringList selectedNames = getSelectedPackages();
+    QStringList selectedPaths = getSelectedAppPaths();
+
+    if (selectedPaths.isEmpty())
+        return;
+
+    QString message = tr("The following applications will be moved to Trash:\n\n");
+    message += selectedNames.join("\n");
+
+    QMessageBox::StandardButton reply = QMessageBox::warning(
+        this,
+        tr("Confirm Move to Trash"),
+        message,
+        QMessageBox::Ok | QMessageBox::Cancel,
+        QMessageBox::Cancel);
+
+    if (reply != QMessageBox::Ok)
+        return;
+
+    (void)QtConcurrent::run([=]
+    {
+        emit SignalMapper::ins()->sigUninstallStarted();
+        ToolManager::ins()->trashApps(selectedPaths);
+        emit SignalMapper::ins()->sigUninstallFinished();
+    });
+#else
     QStringList selectedPackages = getSelectedPackages();
     QStringList selectedSnapPackages = getSelectedSnapPackages();
 
@@ -258,6 +314,7 @@ void UninstallerPage::on_btnUninstall_clicked()
 
         emit SignalMapper::ins()->sigUninstallFinished();
     });
+#endif
 }
 
 void UninstallerPage::uninstallStarted()

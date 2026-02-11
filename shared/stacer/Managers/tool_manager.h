@@ -25,6 +25,10 @@ public:
     bool uninstallSnapPackages(const QStringList packages);
     QStringList dryRunRemovePackages(const QStringList &packages);
 
+    // macOS native .app bundles
+    QList<Package> getInstalledApps() const;
+    bool trashApps(const QStringList &appPaths);
+
     bool checkGnomeSettings() const;
 
     bool checkSourceRepository() const;

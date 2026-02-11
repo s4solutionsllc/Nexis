@@ -8,6 +8,7 @@ struct Package {
     QString name;
     QString description;
     QString section;
+    QString path;  // Full filesystem path (macOS .app bundles; empty on Linux)
 };
 
 enum PackageTools {

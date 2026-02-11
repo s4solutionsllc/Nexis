@@ -87,7 +87,12 @@ void App::init()
     ui->btnServices->setText(tr("Services"));
     ui->btnProcesses->setText(tr("Processes"));
     ui->btnHelpers->setText(tr("Helpers"));
+#ifdef Q_OS_MAC
+    ui->btnUninstaller->setText(tr("Applications"));
+    ui->btnUninstaller->setToolTip(tr("Applications"));
+#else
     ui->btnUninstaller->setText(tr("Uninstaller"));
+#endif
     ui->btnResources->setText(tr("Resources"));
 #ifdef Q_OS_MAC
     ui->btnAptSourceManager->setText(tr("Homebrew"));

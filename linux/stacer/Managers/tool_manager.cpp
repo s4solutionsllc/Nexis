@@ -122,6 +122,12 @@ void ToolManager::uninstallPackages(const QStringList &packages, bool purge)
 }
 
 /*
+ * macOS native .app bundles (stubs — not applicable on Linux)
+ */
+QList<Package> ToolManager::getInstalledApps() const { return {}; }
+bool ToolManager::trashApps(const QStringList &) { return false; }
+
+/*
  * GNOME Settings
  */
 bool ToolManager::checkGnomeSettings() const

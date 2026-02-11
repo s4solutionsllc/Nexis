@@ -16,6 +16,10 @@ public:
     static bool homebrewRemovePackages(QStringList packages);
     static QStringList homebrewDryRunRemove(const QStringList &packages);
 
+    // macOS native .app bundles
+    static QList<Package> getInstalledApps();
+    static bool trashApps(const QStringList &appPaths);
+
     static QString friendlySectionName(const QString &section);
 
     static const PackageTools currentPackageTool;

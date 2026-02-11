@@ -135,6 +135,98 @@ QStringList PackageTool::homebrewDryRunRemove(const QStringList &packages)
     return wouldRemove;
 }
 
+/**************************
+ * macOS native .app bundles
+ **************************/
+
+static QList<Package> scanAppDirectory(const QString &dirPath, const QString &section)
+{
+    QList<Package> apps;
+    QDir dir(dirPath);
+    if (!dir.exists())
+        return apps;
+
+    const QFileInfoList entries = dir.entryInfoList({"*.app"}, QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QFileInfo &entry : entries) {
+        QString appPath = entry.absoluteFilePath();
+        QString plistPath = appPath + "/Contents/Info.plist";
+
+        if (!QFileInfo::exists(plistPath))
+            continue;
+
+        // Parse Info.plist via plutil → JSON
+        QString bundleId, displayName, version;
+        try {
+            QString json = CommandUtil::exec("/usr/bin/plutil",
+                {"-convert", "json", "-o", "-", plistPath}).trimmed();
+            QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
+            if (!doc.isNull()) {
+                QJsonObject obj = doc.object();
+                bundleId    = obj.value("CFBundleIdentifier").toString();
+                displayName = obj.value("CFBundleDisplayName").toString();
+                if (displayName.isEmpty())
+                    displayName = obj.value("CFBundleName").toString();
+                version = obj.value("CFBundleShortVersionString").toString();
+            }
+        } catch (...) {
+            // plutil failed — fall through to folder-name fallback
+        }
+
+        // Filter out Apple system apps
+        if (bundleId.startsWith("com.apple."))
+            continue;
+
+        Package pkg;
+        pkg.name = displayName.isEmpty()
+                       ? entry.completeBaseName()  // "Slack" from "Slack.app"
+                       : displayName;
+        pkg.description = version;
+        pkg.section = section;
+        pkg.path = appPath;
+
+        if (!pkg.name.isEmpty())
+            apps.append(pkg);
+    }
+
+    return apps;
+}
+
+QList<Package> PackageTool::getInstalledApps()
+{
+    QList<Package> apps;
+
+    // Scan /Applications (system-wide installs)
+    apps.append(scanAppDirectory("/Applications", "applications"));
+
+    // Scan ~/Applications (user-specific installs)
+    QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    apps.append(scanAppDirectory(homePath + "/Applications", "user-applications"));
+
+    // Sort alphabetically by name
+    std::sort(apps.begin(), apps.end(), [](const Package &a, const Package &b) {
+        return a.name.compare(b.name, Qt::CaseInsensitive) < 0;
+    });
+
+    return apps;
+}
+
+bool PackageTool::trashApps(const QStringList &appPaths)
+{
+    bool allOk = true;
+    for (const QString &path : appPaths) {
+        try {
+            // Use Finder to move to Trash (recoverable, handles admin auth automatically)
+            QString script = QString("tell application \"Finder\" to delete POSIX file \"%1\"")
+                                 .arg(path);
+            CommandUtil::exec("/usr/bin/osascript", {"-e", script});
+        } catch (const QString &ex) {
+            qCritical() << "Failed to trash:" << path << ex;
+            allOk = false;
+        }
+    }
+    return allOk;
+}
+
 /********************
  * Section Names
  ********************/
@@ -167,6 +259,8 @@ QString PackageTool::friendlySectionName(const QString &section)
         {"rust", "Rust"}, {"golang", "Go"},
         // macOS Homebrew sections
         {"formula", "Homebrew Formula"}, {"cask", "Homebrew Cask"},
+        // macOS native application sections
+        {"applications", "Applications"}, {"user-applications", "User Applications"},
     };
 
     // Exact match

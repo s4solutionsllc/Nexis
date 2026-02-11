@@ -29,6 +29,11 @@
 - [x] **FR-19: Purge vs remove option in uninstaller** — Issue [#484](https://github.com/oguzhaninan/Stacer/issues/484). **Resolved:** Added purge checkbox to uninstaller UI; APT uses `purge` instead of `remove` when checked. Hidden on macOS (not applicable).
 - [ ] **FR-20: Docker image / volume management** — Issue [#454](https://github.com/oguzhaninan/Stacer/issues/454).
 
+## macOS Platform
+
+- [x] **FR-21: macOS native .app bundle uninstaller** — Scan /Applications and ~/Applications for .app bundles, parse Info.plist for display name and version, filter out Apple system apps (com.apple.*), move to Trash via Finder AppleScript. **Resolved:** Implemented in PackageTool::getInstalledApps() and trashApps(). Uninstaller page now shows "Applications" on macOS with "Name version" format.
+- [x] **FR-22: Homebrew page tree widget with multi-select uninstall** — Replace flat QListWidget on macOS Homebrew page with QTreeWidget grouped by Formula/Cask sections, checkboxes for multi-select, search with auto-expand, dry-run dependency confirmation, and async background loading. **Resolved:** Programmatic QTreeWidget in APTSourceManagerPage, mirrors Uninstaller page layout. Install field retained.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

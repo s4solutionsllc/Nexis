@@ -38,6 +38,9 @@ private slots:
     void on_btnUninstall_clicked();
     QStringList getSelectedPackages();
     QStringList getSelectedSnapPackages();
+#ifdef Q_OS_MAC
+    QStringList getSelectedAppPaths();
+#endif
     void fetchPackages();
     void fetchSnapPackages();
     void onPackagesLoaded();
