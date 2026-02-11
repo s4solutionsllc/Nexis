@@ -130,7 +130,15 @@ jobs:
         run: cmake --build build -j$(sysctl -n hw.ncpu)
 
       - name: Deploy Qt frameworks into .app bundle
-        run: $(brew --prefix qt@6)/bin/macdeployqt build/output/stacer.app -dmg
+        run: |
+          $(brew --prefix qt@6)/bin/macdeployqt build/output/stacer.app
+          # macdeployqt modifies the binary and frameworks, invalidating the
+          # ad-hoc code signature. Re-sign so macOS doesn't kill the process
+          # with "Code Signature Invalid" (SIGKILL) on launch.
+          codesign --force --deep --sign - build/output/stacer.app
+          # Now create the .dmg from the properly signed bundle
+          hdiutil create -volname "Stacer" -srcfolder build/output/stacer.app \
+            -ov -format UDZO build/output/stacer.dmg
 
       - name: Rename .dmg with version
         id: dmg
