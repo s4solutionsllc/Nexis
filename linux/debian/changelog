@@ -1,3 +1,18 @@
+stacer (2.1.1-1) unstable; urgency=medium
+
+  * Replace feedback form with GitHub Issues launcher (BUG-17).
+    The old form posted to a defunct Heroku endpoint; no user data is now
+    collected or transmitted. Opens browser to the appropriate GitHub issue
+    template (bug report, feature request, or general feedback).
+  * Add GitHub issue templates for bug reports, feature requests, and
+    general feedback (.github/ISSUE_TEMPLATE/).
+  * Fix macOS release: re-sign .app bundle after macdeployqt to prevent
+    Code Signature Invalid crash on launch.
+  * Fix release workflow: copy .deb into workspace before upload step.
+  * Use version-independent splashscreen filename (splashscreen.png).
+
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Tue, 11 Feb 2026 00:00:00 +0000
+
 stacer (2.1.0-1) unstable; urgency=medium
 
   * Full macOS platform support with native .app bundle management.
