@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
     qApp->setApplicationName("stacer");
     qApp->setApplicationDisplayName("Stacer");
-    qApp->setApplicationVersion("2.0.1");
+    qApp->setApplicationVersion(APP_VERSION);
     qApp->setWindowIcon(QIcon(":/static/logo.svg"));
 
     // Single-instance enforcement (BUG-03 / FR-02)
