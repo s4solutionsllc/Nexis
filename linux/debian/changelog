@@ -1,3 +1,14 @@
+stacer (2.1.2-1) unstable; urgency=medium
+
+  * Fix System Cleaner deleting entire cache/log directories instead of
+    emptying their contents (BUG-02). Directories are now preserved while
+    only their contents are removed.
+  * Fix Settings page showing hardcoded stale version "v2.0.1" instead of
+    the actual build version (BUG-18). The label now pulls dynamically from
+    qApp->applicationVersion(), which is derived from cmake/git at build time.
+
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Wed, 11 Feb 2026 00:00:00 +0000
+
 stacer (2.1.1-1) unstable; urgency=medium
 
   * Replace feedback form with GitHub Issues launcher (BUG-17).
