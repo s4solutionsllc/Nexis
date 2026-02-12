@@ -8,7 +8,7 @@
 - [ ] **FR-01: deb822 APT source file support** — Modern `.sources` format used by Debian 13+ / Ubuntu 24.04+. QuentiumYT commit `87279f6`.
 - [x] **FR-02: Single-instance enforcement** — Prevent multiple app copies via QLockFile/QSharedMemory. Focus existing window on re-launch. QuentiumYT issue #12. **Resolved:** Added QLockFile-based enforcement in main.cpp.
 - [ ] **FR-03: Expanded cache cleaning (Electron apps, npm, gradle, etc.)** — Scan `~/.config/*/Cache` and `~/.config/*/GPUCache` for Electron apps (Discord, Slack, VSCode). Also npm, bun, gradle, expo caches. QuentiumYT v1.5.0.
-- [ ] **FR-04: Background thread cleanup on exit** — Wait for QtConcurrent threads to finish before quitting. QuentiumYT commit `fa70178`.
+- [x] **FR-04: Background thread cleanup on exit** — Wait for QtConcurrent threads to finish before quitting. QuentiumYT commit `fa70178`.
 - [x] **FR-05: LC_ALL=C for system command parsing** — Force English output so `lscpu` and similar commands parse correctly on non-English systems. QuentiumYT commit `e0b957f`. **Resolved:** Changed LANG=C to LC_ALL=C in lscpu calls.
 - [ ] **FR-06: ARM64 Linux architecture support** — Build for armhf, arm64, i386, powerpc, ppc64el, riscv64, s390x.
 - [x] **FR-07: SVG logo and colorful tray icon** — Redesigned logo in SVG with tray icon that works on light and dark themes. QuentiumYT commit `347bcbe`. **Resolved:** Created logo.svg and tray-icon.svg; updated app icon and tray icon to use SVGs.
