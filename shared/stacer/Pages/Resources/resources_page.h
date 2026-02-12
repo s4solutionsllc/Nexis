@@ -9,6 +9,8 @@
 #include <QChart>
 #include <QSpacerItem>
 
+#include "disk_analyzer_widget.h"
+
 namespace Ui {
     class ResourcesPage;
 }
@@ -28,8 +30,6 @@ private slots:
     void updateMemoryChart();
     void updateNetworkChart();
     void updateGpuChart();
-    void initDiskPieChart();
-    void diskPieSeriesCustomize();
 
 private:
     void init();
@@ -46,12 +46,7 @@ private:
     HistoryChart *mChartNetwork;
     HistoryChart *mChartGpu;
 
-    QChartView *mChartViewDiskPie;
-    QChart *mChartDiskPie;
-
-    QWidget *gridWidgetDiskPie;
-    QGridLayout *gridLayoutDiskPie;
-    QPieSeries *mDiskPieSeries;
+    DiskAnalyzerWidget *mDiskAnalyzer;
 
     QList<int> chartColors;
 

@@ -34,6 +34,10 @@
 - [x] **FR-21: macOS native .app bundle uninstaller** — Scan /Applications and ~/Applications for .app bundles, parse Info.plist for display name and version, filter out Apple system apps (com.apple.*), move to Trash via Finder AppleScript. **Resolved:** Implemented in PackageTool::getInstalledApps() and trashApps(). Uninstaller page now shows "Applications" on macOS with "Name version" format.
 - [x] **FR-22: Homebrew page tree widget with multi-select uninstall** — Replace flat QListWidget on macOS Homebrew page with QTreeWidget grouped by Formula/Cask sections, checkboxes for multi-select, search with auto-expand, dry-run dependency confirmation, and async background loading. **Resolved:** Programmatic QTreeWidget in APTSourceManagerPage, mirrors Uninstaller page layout. Install field retained.
 
+## From Our Issues (lsimpsonsfdc/Stacer)
+
+- [x] **FR-23: Disk Usage Analyzer for File System page** — Replace the limited File System graph (device/filesystem-type only) with a true disk usage analyzer: pie chart of capacity usage per device, tree view of folders with % capacity used, and drill-down navigation. Issue [#2](https://github.com/lsimpsonsfdc/Stacer/issues/2). **Resolved:** Added DiskUsageWorker (async directory scanner with cancellation) and DiskAnalyzerWidget (pie chart + sortable tree with percentage bars, drill-down, breadcrumb navigation). Replaces old File System pie chart in ResourcesPage. Cross-platform via Qt APIs.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
