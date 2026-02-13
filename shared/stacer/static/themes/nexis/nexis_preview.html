@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexis Logo Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 60px;
+    padding: 60px 40px;
+    background: #0f1014;
+    font-family: 'Inter', sans-serif;
+    color: #888;
+  }
+
+  .section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .label {
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  .preview-light {
+    background: #f5f5f5;
+    border-radius: 20px;
+    padding: 50px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .preview-dark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .combo {
+    background: #1A1C22;
+    border-radius: 20px;
+    padding: 50px 60px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+  }
+
+  .combo img.icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  svg, img { max-width: 100%; height: auto; }
+</style>
+</head>
+<body>
+
+  <div class="section">
+    <span class="label">Light Background</span>
+    <div class="preview-light">
+      <img src="nexis_logo.svg" alt="Nexis Logo" width="500">
+    </div>
+  </div>
+
+  <div class="section">
+    <span class="label">Dark Background</span>
+    <div class="preview-dark">
+      <img src="nexis_logo_dark.svg" alt="Nexis Logo Dark" width="500">
+    </div>
+  </div>
+
+  <div class="section">
+    <span class="label">Icon + Wordmark Combo</span>
+    <div class="combo">
+      <img class="icon" src="nexis logo.png" alt="Nexis Icon">
+      <img src="nexis_logo.svg" alt="Nexis Logo" width="360">
+    </div>
+  </div>
+
+</body>
+</html>
