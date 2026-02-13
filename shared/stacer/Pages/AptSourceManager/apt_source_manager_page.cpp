@@ -45,6 +45,7 @@ void APTSourceManagerPage::init()
 
     // Create tree widget programmatically (mirrors UninstallerPage's treeWidgetPackages)
     mTreeWidget = new QTreeWidget(ui->verticalWidget_2);
+    mTreeWidget->setObjectName("treeWidgetPackages");
     mTreeWidget->setHeaderHidden(true);
     mTreeWidget->setColumnCount(1);
     mTreeWidget->setFocusPolicy(Qt::NoFocus);

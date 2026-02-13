@@ -135,6 +135,12 @@
   - **Fix complexity:** Trivial (create matching SVG, update .ui reference)
   - **Resolved:** Created `chevron-left.svg` mirroring the existing `chevron-right.svg` style (#77767b stroke); updated button icon reference to use the common SVG at 12×12
 
+- [x] **BUG-21: Homebrew repo manager tree view ignores dark theme — white background** (LOW)
+  - **File:** `shared/stacer/Pages/AptSourceManager/apt_source_manager_page.cpp:47`
+  - **Description:** The `QTreeWidget` created programmatically for the Homebrew package list had no `objectName`, so the QSS selectors for `#treeWidgetPackages` (which set `background-color: transparent`, themed item colors, etc.) never applied. The tree view kept its default white background in dark mode.
+  - **Fix complexity:** Trivial (add `setObjectName("treeWidgetPackages")`)
+  - **Resolved:** Added object name so existing QSS theme rules apply correctly
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
