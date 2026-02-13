@@ -57,6 +57,7 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
 
     // --- Action button ---
     mActionButton = new QPushButton(this);
+    mActionButton->setAccessibleName("primary");
     mActionButton->setCursor(Qt::PointingHandCursor);
     connect(mActionButton, &QPushButton::clicked, this, &DiskUsageLauncherWidget::onActionClicked);
 
