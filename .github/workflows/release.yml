@@ -199,21 +199,31 @@ jobs:
           body: |
             ## Stacer ${{ github.ref_name }}
 
-            ### What's New since v2.1.1
+            ### What's New since v2.1.2
+
+            #### Features
+            - **External Disk Analyzer launcher (FR-23)** — Replaced the built-in pie chart with a launcher for the user's preferred disk analysis tool (Filelight, Baobab, ncdu, etc.).
+            - **Configurable disk analyzer preference (FR-24)** — New Settings option to choose which disk analyzer tool to launch.
+            - **Dev Tool Caches cleaning (FR-03)** — New System Cleaner category covering npm, pip, Cargo, Go, Maven, Gradle, CocoaPods, Composer, NuGet, and Dart/Flutter caches.
 
             #### Bug Fixes
-            - **System Cleaner no longer deletes entire directories (BUG-02)** — `getAppCaches()` returned both files and directories, and the cleaner called `sudo rm -rf` on them, deleting entire log/cache directories and breaking services that need the directory to exist. The cleaner now empties directory contents while preserving the directories themselves.
-            - **Settings page version label is now dynamic (BUG-18)** — The "Created by" label in the Settings page had a hardcoded `v2.0.1` that was never updated. It now pulls the version dynamically from `qApp->applicationVersion()`, which is derived from cmake/git describe at build time.
+            - **Background threads now join on exit (BUG-05)** — Prevents unclean shutdown and potential crashes on quit.
+            - **System Cleaner checkbox state fix (BUG-19)** — File selection checkboxes now correctly toggle.
+            - **System Cleaner minimum size threshold (BUG-20)** — Scan results now respect the configured minimum size filter.
+            - **Homebrew tree view theme styling (BUG-21)** — The Homebrew tree in APT Source Manager now inherits the active theme.
 
             ---
 
-            ### Full Changelog since v2.1.1
+            ### Full Changelog since v2.1.2
 
             | Commit | Summary |
             |--------|---------|
-            | `63ae74d` | Fix Settings page hardcoded version label (BUG-18) |
-            | `16856ca` | Fix System Cleaner: empty directories instead of deleting them (BUG-02) |
-            | `fcae88d` | Add Claude Code co-author credit to README and release notes |
+            | `54af3a8` | Fix Homebrew tree view theme styling (BUG-21) |
+            | `842bf80` | Add Dev Tool Caches category and fix UI bugs (FR-03, BUG-19, BUG-20) |
+            | `e2dbd93` | Add configurable disk analyzer preference (FR-24) |
+            | `7d7c6da` | Use primary button styling for disk launcher action |
+            | `0b643ff` | Replace custom disk analyzer with external tool launcher (FR-23) |
+            | `be20f48` | Wait for background threads on exit (BUG-05) |
 
             ---
 

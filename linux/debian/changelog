@@ -1,3 +1,22 @@
+stacer (2.1.3-1) unstable; urgency=medium
+
+  * Replace custom Disk Analyzer pie chart with external tool launcher
+    (FR-23). Users can now configure their preferred disk analyzer
+    (Filelight, Baobab, ncdu, etc.) in Settings.
+  * Add configurable disk analyzer preference in Settings page (FR-24).
+  * Add Dev Tool Caches cleaning category for npm, pip, Cargo, Go, Maven,
+    Gradle, CocoaPods, Composer, NuGet, and Dart/Flutter caches (FR-03).
+  * Fix background threads not joining on exit, preventing clean shutdown
+    (BUG-05).
+  * Fix System Cleaner checkbox state not toggling file selections
+    (BUG-19).
+  * Fix System Cleaner scan results not respecting minimum size threshold
+    (BUG-20).
+  * Fix Homebrew tree view not inheriting theme styling in APT Source
+    Manager (BUG-21).
+
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Thu, 13 Feb 2026 00:00:00 +0000
+
 stacer (2.1.2-1) unstable; urgency=medium
 
   * Fix System Cleaner deleting entire cache/log directories instead of
