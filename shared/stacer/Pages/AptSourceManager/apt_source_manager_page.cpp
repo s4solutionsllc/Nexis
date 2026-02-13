@@ -7,6 +7,7 @@
 
 #ifdef Q_OS_MAC
 #include <QFont>
+#include <QHeaderView>
 #include "Managers/app_manager.h"
 #include <Tools/package_tool.h>
 #endif
@@ -43,10 +44,13 @@ void APTSourceManagerPage::init()
     ui->listWidgetAptSources->hide();
     ui->notFoundWidget->hide();
 
-    // Create tree widget programmatically (mirrors UninstallerPage's treeWidgetPackages)
+    // Create tree widget programmatically (matches System Cleaner table style)
     mTreeWidget = new QTreeWidget(ui->verticalWidget_2);
     mTreeWidget->setObjectName("treeWidgetPackages");
-    mTreeWidget->setHeaderHidden(true);
+    mTreeWidget->setHeaderHidden(false);
+    mTreeWidget->setHeaderLabels({ tr("Package") });
+    mTreeWidget->header()->setFixedHeight(30);
+    mTreeWidget->header()->setStretchLastSection(true);
     mTreeWidget->setColumnCount(1);
     mTreeWidget->setFocusPolicy(Qt::NoFocus);
     mTreeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);

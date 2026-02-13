@@ -818,44 +818,37 @@ QLabel[accessibleName="dialog-title"] {
     color: @color05;
 }
 
-#treeWidgetPackages, #listWidgetSnapPackages {
-    border: 0;
+/* -- Package tree (Uninstaller + Homebrew) -- table style matching System Cleaner -- */
+
+#treeWidgetPackages {
+    border: 1px solid @borderColor;
     background-color: transparent;
+    border-radius: 6;
     font-size: 10pt;
 }
 
-#treeWidgetPackages::indicator, #listWidgetSnapPackages::indicator {
-    width: 16;
-    height: 16;
+#treeWidgetPackages QHeaderView::section {
+    border-top: 1;
 }
 
-#treeWidgetPackages::indicator:unchecked, #listWidgetSnapPackages::indicator:unchecked {
+#treeWidgetPackages::item {
+    border-bottom: 1px solid @borderColor;
+    padding: 8 6;
+    font-size: 10pt;
+    color: @color11;
+}
+
+#treeWidgetPackages::indicator {
+    width: 14;
+    height: 14;
+}
+
+#treeWidgetPackages::indicator:unchecked {
     image: url(:/static/themes/common/img/un-check.png);
 }
 
-#treeWidgetPackages::indicator:checked, #listWidgetSnapPackages::indicator:checked {
+#treeWidgetPackages::indicator:checked {
     image: url(:/static/themes/common/img/check.png);
-}
-
-#treeWidgetPackages::item, #listWidgetSnapPackages::item {
-    border-radius: 8;
-    min-height: 36;
-    background-color: @cardBg;
-    margin: 1 0;
-}
-
-#treeWidgetPackages::item:text, #listWidgetSnapPackages::item:text {
-    color: @color05;
-    padding-left: 12;
-}
-
-#treeWidgetPackages::item:selected, #listWidgetSnapPackages::item:selected {
-    background-color: @color02;
-    border: 0;
-}
-
-#treeWidgetPackages::item:hover, #listWidgetSnapPackages::item:hover {
-    background-color: @color02;
 }
 
 #treeWidgetPackages::branch:has-children:!has-siblings:closed,
@@ -873,7 +866,49 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #treeWidgetPackages::branch {
+    border-bottom: 1px solid @borderColor;
+}
+
+/* -- Snap package list (card style, unchanged) -- */
+
+#listWidgetSnapPackages {
+    border: 0;
     background-color: transparent;
+    font-size: 10pt;
+}
+
+#listWidgetSnapPackages::indicator {
+    width: 16;
+    height: 16;
+}
+
+#listWidgetSnapPackages::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#listWidgetSnapPackages::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+#listWidgetSnapPackages::item {
+    border-radius: 8;
+    min-height: 36;
+    background-color: @cardBg;
+    margin: 1 0;
+}
+
+#listWidgetSnapPackages::item:text {
+    color: @color05;
+    padding-left: 12;
+}
+
+#listWidgetSnapPackages::item:selected {
+    background-color: @color02;
+    border: 0;
+}
+
+#listWidgetSnapPackages::item:hover {
+    background-color: @color02;
 }
 
 /****************

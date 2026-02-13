@@ -141,6 +141,12 @@
   - **Fix complexity:** Trivial (add `setObjectName("treeWidgetPackages")`)
   - **Resolved:** Added object name so existing QSS theme rules apply correctly
 
+- [x] **BUG-23: Uninstaller and Homebrew tree views use card styling inconsistent with System Cleaner table layout** (LOW)
+  - **Files:** `shared/stacer/static/themes/default/style/style.qss`, `shared/stacer/Pages/Uninstaller/uninstallerpage.ui`, `shared/stacer/Pages/Uninstaller/uninstaller_page.cpp`, `shared/stacer/Pages/AptSourceManager/apt_source_manager_page.cpp`
+  - **Description:** The Uninstaller and Homebrew (APT Source Manager) pages used a card-style layout for tree items (rounded corners, card background, no header, no row dividers) while the System Cleaner scan results used a clean bordered table with a visible header, row dividers, and flat item styling. This inconsistency made the grouped tree views look different across pages despite serving the same purpose.
+  - **Fix complexity:** Moderate (restyle QSS, enable headers in .ui and code)
+  - **Resolved:** Replaced card-style QSS rules with table-style rules matching `#treeWidgetScanResult`; enabled visible header with column labels; configured header height to 30px
+
 - [x] **BUG-22: Uninstaller and APT Source Manager tree views have no expand/collapse indicator** (LOW)
   - **File:** `shared/stacer/static/themes/default/style/style.qss`
   - **Description:** The `#treeWidgetPackages` QSS selector set `::branch` to transparent background but had no `::branch:has-children` pseudo-state rules to show chevron icons. Users had no visual cue that section headers could be expanded or collapsed, making the grouped layout confusing. The System Cleaner tree (`#treeWidgetScanResult`) already had the correct chevron rules — this was just missing from the packages tree.

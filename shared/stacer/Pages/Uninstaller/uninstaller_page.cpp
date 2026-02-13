@@ -1,5 +1,6 @@
 #include "uninstaller_page.h"
 #include "ui_uninstallerpage.h"
+#include <QHeaderView>
 #include <QMovie>
 #include <QMessageBox>
 #include <QMap>
@@ -22,6 +23,11 @@ UninstallerPage::UninstallerPage(QWidget *parent) :
 
 void UninstallerPage::init()
 {
+    // Configure tree header to match System Cleaner table style
+    ui->treeWidgetPackages->header()->setFixedHeight(30);
+    ui->treeWidgetPackages->setHeaderLabels({ tr("Application") });
+    ui->treeWidgetPackages->header()->setStretchLastSection(true);
+
     QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(AppManager::ins()->resolveThemeName());
     QMovie *loadingMovie = new QMovie(iconLoading, QByteArray(), this);
     ui->lblLoadingUninstaller->setMovie(loadingMovie);
