@@ -36,7 +36,7 @@
 
 ## From Our Issues (lsimpsonsfdc/Stacer)
 
-- [x] **FR-23: Disk Usage Analyzer for File System page** — Replace the limited File System graph (device/filesystem-type only) with a true disk usage analyzer: pie chart of capacity usage per device, tree view of folders with % capacity used, and drill-down navigation. Issue [#2](https://github.com/lsimpsonsfdc/Stacer/issues/2). **Resolved:** Added DiskUsageWorker (async directory scanner with cancellation) and DiskAnalyzerWidget (pie chart + sortable tree with percentage bars, drill-down, breadcrumb navigation). Replaces old File System pie chart in ResourcesPage. Cross-platform via Qt APIs.
+- [x] **FR-23: Disk Usage Analyzer launcher** — Provide a launcher card on the Resources page that detects the best disk-usage tool for the platform/DE (Baobab on GNOME, Filelight elsewhere, GrandPerspective on macOS) and offers launch or install actions. Issue [#2](https://github.com/lsimpsonsfdc/Stacer/issues/2). **Resolved:** Replaced custom DiskAnalyzerWidget with DiskUsageLauncherWidget that delegates to dedicated tools.
 
 ## Notes
 

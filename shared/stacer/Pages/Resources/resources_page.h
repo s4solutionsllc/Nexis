@@ -5,11 +5,10 @@
 #include <QTimer>
 
 #include "history_chart.h"
+#include "disk_usage_launcher_widget.h"
 #include "Managers/info_manager.h"
 #include <QChart>
 #include <QSpacerItem>
-
-#include "disk_analyzer_widget.h"
 
 namespace Ui {
     class ResourcesPage;
@@ -46,7 +45,7 @@ private:
     HistoryChart *mChartNetwork;
     HistoryChart *mChartGpu;
 
-    DiskAnalyzerWidget *mDiskAnalyzer;
+    DiskUsageLauncherWidget *mDiskLauncher;
 
     QList<int> chartColors;
 

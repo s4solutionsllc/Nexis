@@ -17,7 +17,7 @@ ResourcesPage::ResourcesPage(QWidget *parent) :
     mChartMemory(new HistoryChart(tr("History of Memory"), 2, nullptr, this)),
     mChartNetwork(new HistoryChart(tr("History of Network"), 2, new QCategoryAxis, this)),
     mChartGpu(nullptr),
-    mDiskAnalyzer(nullptr),
+    mDiskLauncher(nullptr),
     mTimer(new QTimer(this))
 {
     ui->setupUi(this);
@@ -67,10 +67,10 @@ void ResourcesPage::init()
 
     mTimer->start(1000);
 
-    // Disk Usage Analyzer (FR-23) — replaces old File System pie chart
-    mDiskAnalyzer = new DiskAnalyzerWidget(chartColors, this);
-    ui->chartsLayout->addWidget(mDiskAnalyzer);
-    Utilities::addDropShadow(mDiskAnalyzer, 40);
+    // Disk Usage Analyzer launcher (FR-23)
+    mDiskLauncher = new DiskUsageLauncherWidget(this);
+    ui->chartsLayout->addWidget(mDiskLauncher);
+    Utilities::addDropShadow(mDiskLauncher, 40);
 }
 
 void ResourcesPage::updateDiskReadWrite()
