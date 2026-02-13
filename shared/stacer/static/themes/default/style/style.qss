@@ -858,6 +858,20 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @color02;
 }
 
+#treeWidgetPackages::branch:has-children:!has-siblings:closed,
+#treeWidgetPackages::branch:closed:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-right.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetPackages::branch:open:has-children:!has-siblings,
+#treeWidgetPackages::branch:open:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-down.svg);
+    border-image: none;
+    padding: 4;
+}
+
 #treeWidgetPackages::branch {
     background-color: transparent;
 }

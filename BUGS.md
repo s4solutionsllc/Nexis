@@ -141,6 +141,12 @@
   - **Fix complexity:** Trivial (add `setObjectName("treeWidgetPackages")`)
   - **Resolved:** Added object name so existing QSS theme rules apply correctly
 
+- [x] **BUG-22: Uninstaller and APT Source Manager tree views have no expand/collapse indicator** (LOW)
+  - **File:** `shared/stacer/static/themes/default/style/style.qss`
+  - **Description:** The `#treeWidgetPackages` QSS selector set `::branch` to transparent background but had no `::branch:has-children` pseudo-state rules to show chevron icons. Users had no visual cue that section headers could be expanded or collapsed, making the grouped layout confusing. The System Cleaner tree (`#treeWidgetScanResult`) already had the correct chevron rules — this was just missing from the packages tree.
+  - **Fix complexity:** Trivial (add QSS branch pseudo-state rules matching System Cleaner pattern)
+  - **Resolved:** Added `::branch:closed:has-children` (chevron-right.svg) and `::branch:open:has-children` (chevron-down.svg) rules to `#treeWidgetPackages`
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
