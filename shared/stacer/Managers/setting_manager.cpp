@@ -120,3 +120,23 @@ QString SettingManager::getColorScheme() const
 {
     return mSettings->value(SettingKeys::ColorScheme, "auto").toString();
 }
+
+void SettingManager::setDiskAnalyzerTool(const QString &value)
+{
+    mSettings->setValue(SettingKeys::DiskAnalyzerTool, value);
+}
+
+QString SettingManager::getDiskAnalyzerTool() const
+{
+    return mSettings->value(SettingKeys::DiskAnalyzerTool, "auto").toString();
+}
+
+void SettingManager::setDiskAnalyzerCustomPath(const QString &value)
+{
+    mSettings->setValue(SettingKeys::DiskAnalyzerCustomPath, value);
+}
+
+QString SettingManager::getDiskAnalyzerCustomPath() const
+{
+    return mSettings->value(SettingKeys::DiskAnalyzerCustomPath, "").toString();
+}

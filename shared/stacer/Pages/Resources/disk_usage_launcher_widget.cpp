@@ -8,14 +8,15 @@
 #include <QUrl>
 #include <QIcon>
 #include <QMessageBox>
+#include <QFileInfo>
 #include <QtConcurrent>
 
 #ifdef Q_OS_MACOS
-#include <QFileInfo>
 #include <QDir>
 #endif
 
 #include "Managers/app_manager.h"
+#include "Managers/setting_manager.h"
 #include "signal_mapper.h"
 #include "Utils/command_util.h"
 #include "Tools/package_tool.h"
@@ -84,8 +85,12 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
 #ifdef Q_OS_LINUX
     if (mState == LAUNCH_BAOBAB || mState == INSTALL_BAOBAB)
         toolIcon = QIcon::fromTheme("org.gnome.baobab", QIcon::fromTheme("baobab"));
-    else
+    else if (mState == LAUNCH_FILELIGHT || mState == INSTALL_FILELIGHT_FLATPAK)
         toolIcon = QIcon::fromTheme("org.kde.filelight", QIcon::fromTheme("filelight"));
+    else if (mState == LAUNCH_QDIRSTAT)
+        toolIcon = QIcon::fromTheme("qdirstat", QIcon::fromTheme("folder"));
+    else
+        toolIcon = QIcon::fromTheme("drive-harddisk");
 #elif defined(Q_OS_MACOS)
     toolIcon = QIcon::fromTheme("drive-harddisk");
 #endif
@@ -100,7 +105,114 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
             this, &DiskUsageLauncherWidget::applyThemeColors);
 }
 
+// ---------------------------------------------------------------------------
+// Detection
+// ---------------------------------------------------------------------------
+
 void DiskUsageLauncherWidget::detect()
+{
+    // Check user preference first; fall back to auto-detection
+    QString pref = SettingManager::ins()->getDiskAnalyzerTool();
+
+    if (pref.isEmpty() || pref == "auto") {
+        autoDetect();
+    } else {
+        // User explicitly chose a tool — try to resolve it
+        if (!resolveNamedTool(pref)) {
+            // Shouldn't normally happen; fall back to auto
+            autoDetect();
+        }
+    }
+}
+
+bool DiskUsageLauncherWidget::resolveNamedTool(const QString &toolKey)
+{
+    // --- Custom executable ---
+    if (toolKey == "custom") {
+        QString customPath = SettingManager::ins()->getDiskAnalyzerCustomPath();
+        if (customPath.isEmpty()) {
+            mState = NOT_FOUND;
+            mCustomDisplayName = tr("Custom");
+            return true;
+        }
+        // Check if it exists in PATH or as an absolute path
+        bool found = !QStandardPaths::findExecutable(customPath).isEmpty()
+                     || QFileInfo(customPath).isExecutable();
+        if (found) {
+            mState = LAUNCH_CUSTOM;
+            // Show just the filename for a cleaner display
+            mCustomDisplayName = QFileInfo(customPath).fileName();
+        } else {
+            mState = NOT_FOUND;
+            mCustomDisplayName = QFileInfo(customPath).fileName();
+        }
+        return true;
+    }
+
+    // --- Known Linux tools ---
+    if (toolKey == "baobab") {
+        if (!QStandardPaths::findExecutable("baobab").isEmpty())
+            mState = LAUNCH_BAOBAB;
+        else
+            mState = INSTALL_BAOBAB;
+        return true;
+    }
+    if (toolKey == "filelight") {
+        if (!QStandardPaths::findExecutable("filelight").isEmpty())
+            mState = LAUNCH_FILELIGHT;
+        else if (!QStandardPaths::findExecutable("flatpak").isEmpty())
+            mState = INSTALL_FILELIGHT_FLATPAK;
+        else
+            mState = NO_FLATPAK;
+        return true;
+    }
+    if (toolKey == "qdirstat") {
+        if (!QStandardPaths::findExecutable("qdirstat").isEmpty())
+            mState = LAUNCH_QDIRSTAT;
+        else
+            mState = NOT_FOUND;
+        return true;
+    }
+    if (toolKey == "ncdu") {
+        if (!QStandardPaths::findExecutable("ncdu").isEmpty())
+            mState = LAUNCH_NCDU;
+        else
+            mState = NOT_FOUND;
+        return true;
+    }
+
+#ifdef Q_OS_MACOS
+    // --- Known macOS tools ---
+    if (toolKey == "grandperspective") {
+        if (QFileInfo("/Applications/GrandPerspective.app").exists() ||
+            QFileInfo(QDir::homePath() + "/Applications/GrandPerspective.app").exists())
+            mState = LAUNCH_GRANDPERSPECTIVE;
+        else
+            mState = LINK_GRANDPERSPECTIVE;
+        return true;
+    }
+    if (toolKey == "daisydisk") {
+        if (QFileInfo("/Applications/DaisyDisk.app").exists() ||
+            QFileInfo(QDir::homePath() + "/Applications/DaisyDisk.app").exists())
+            mState = LAUNCH_DAISYDISK;
+        else
+            mState = LINK_DAISYDISK;
+        return true;
+    }
+    if (toolKey == "omnidisksweeper") {
+        if (QFileInfo("/Applications/OmniDiskSweeper.app").exists() ||
+            QFileInfo(QDir::homePath() + "/Applications/OmniDiskSweeper.app").exists())
+            mState = LAUNCH_OMNIDISKSWEEPER;
+        else
+            mState = LINK_OMNIDISKSWEEPER;
+        return true;
+    }
+#endif
+
+    return false; // unknown key
+}
+
+void DiskUsageLauncherWidget::autoDetect()
 {
 #ifdef Q_OS_LINUX
     QString desktop = qEnvironmentVariable("XDG_CURRENT_DESKTOP").toUpper();
@@ -130,9 +242,14 @@ void DiskUsageLauncherWidget::detect()
 #endif
 }
 
+// ---------------------------------------------------------------------------
+// UI
+// ---------------------------------------------------------------------------
+
 void DiskUsageLauncherWidget::updateUi()
 {
     switch (mState) {
+    // ---- Launchable tools ----
     case LAUNCH_BAOBAB:
         mToolNameLabel->setText(tr("Disk Usage Analyzer (Baobab)"));
         mDescriptionLabel->setText(tr("Visualize disk usage as a graphical treemap."));
@@ -140,6 +257,60 @@ void DiskUsageLauncherWidget::updateUi()
         mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
         mActionButton->setText(tr("Launch Disk Usage Analyzer"));
         break;
+    case LAUNCH_FILELIGHT:
+        mToolNameLabel->setText(tr("Filelight"));
+        mDescriptionLabel->setText(tr("Visualize disk usage with interactive sunburst charts."));
+        mStatusLabel->setText(tr("Status: Installed"));
+        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
+        mActionButton->setText(tr("Launch Filelight"));
+        break;
+    case LAUNCH_QDIRSTAT:
+        mToolNameLabel->setText(tr("QDirStat"));
+        mDescriptionLabel->setText(tr("Qt-based directory statistics with treemap visualization."));
+        mStatusLabel->setText(tr("Status: Installed"));
+        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
+        mActionButton->setText(tr("Launch QDirStat"));
+        break;
+    case LAUNCH_NCDU:
+        mToolNameLabel->setText(tr("ncdu"));
+        mDescriptionLabel->setText(tr("NCurses disk usage analyzer. Opens in a terminal."));
+        mStatusLabel->setText(tr("Status: Installed"));
+        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
+        mActionButton->setText(tr("Launch ncdu"));
+        break;
+#ifdef Q_OS_MACOS
+    case LAUNCH_GRANDPERSPECTIVE:
+        mToolNameLabel->setText(tr("GrandPerspective"));
+        mDescriptionLabel->setText(tr("Visualize disk usage as a treemap."));
+        mStatusLabel->setText(tr("Status: Installed"));
+        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
+        mActionButton->setText(tr("Launch GrandPerspective"));
+        break;
+    case LAUNCH_DAISYDISK:
+        mToolNameLabel->setText(tr("DaisyDisk"));
+        mDescriptionLabel->setText(tr("Visualize disk usage with an interactive sunburst chart."));
+        mStatusLabel->setText(tr("Status: Installed"));
+        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
+        mActionButton->setText(tr("Launch DaisyDisk"));
+        break;
+    case LAUNCH_OMNIDISKSWEEPER:
+        mToolNameLabel->setText(tr("OmniDiskSweeper"));
+        mDescriptionLabel->setText(tr("Quickly find and delete large files."));
+        mStatusLabel->setText(tr("Status: Installed"));
+        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
+        mActionButton->setText(tr("Launch OmniDiskSweeper"));
+        break;
+#endif
+    case LAUNCH_CUSTOM: {
+        mToolNameLabel->setText(mCustomDisplayName);
+        mDescriptionLabel->setText(tr("User-configured disk usage analyzer."));
+        mStatusLabel->setText(tr("Status: Installed"));
+        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
+        mActionButton->setText(tr("Launch %1").arg(mCustomDisplayName));
+        break;
+    }
+
+    // ---- Installable / link tools ----
     case INSTALL_BAOBAB:
         mToolNameLabel->setText(tr("Disk Usage Analyzer (Baobab)"));
         mDescriptionLabel->setText(tr("Visualize disk usage as a graphical treemap. "
@@ -147,13 +318,6 @@ void DiskUsageLauncherWidget::updateUi()
         mStatusLabel->setText(tr("Status: Not installed"));
         mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
         mActionButton->setText(tr("Install Disk Usage Analyzer"));
-        break;
-    case LAUNCH_FILELIGHT:
-        mToolNameLabel->setText(tr("Filelight"));
-        mDescriptionLabel->setText(tr("Visualize disk usage with interactive sunburst charts."));
-        mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch Filelight"));
         break;
     case INSTALL_FILELIGHT_FLATPAK:
         mToolNameLabel->setText(tr("Filelight"));
@@ -172,13 +336,6 @@ void DiskUsageLauncherWidget::updateUi()
         mActionButton->setText(tr("Install Flatpak"));
         break;
 #ifdef Q_OS_MACOS
-    case LAUNCH_GRANDPERSPECTIVE:
-        mToolNameLabel->setText(tr("GrandPerspective"));
-        mDescriptionLabel->setText(tr("Visualize disk usage as a treemap."));
-        mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch GrandPerspective"));
-        break;
     case LINK_GRANDPERSPECTIVE:
         mToolNameLabel->setText(tr("GrandPerspective"));
         mDescriptionLabel->setText(tr("Visualize disk usage as a treemap. "
@@ -187,7 +344,34 @@ void DiskUsageLauncherWidget::updateUi()
         mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
         mActionButton->setText(tr("Get GrandPerspective"));
         break;
+    case LINK_DAISYDISK:
+        mToolNameLabel->setText(tr("DaisyDisk"));
+        mDescriptionLabel->setText(tr("Visualize disk usage with an interactive sunburst chart. "
+                                      "DaisyDisk is not currently installed."));
+        mStatusLabel->setText(tr("Status: Not installed"));
+        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
+        mActionButton->setText(tr("Get DaisyDisk"));
+        break;
+    case LINK_OMNIDISKSWEEPER:
+        mToolNameLabel->setText(tr("OmniDiskSweeper"));
+        mDescriptionLabel->setText(tr("Quickly find and delete large files. "
+                                      "OmniDiskSweeper is not currently installed."));
+        mStatusLabel->setText(tr("Status: Not installed"));
+        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
+        mActionButton->setText(tr("Get OmniDiskSweeper"));
+        break;
 #endif
+
+    // ---- Fallbacks ----
+    case NOT_FOUND:
+        mToolNameLabel->setText(mCustomDisplayName.isEmpty()
+                                    ? tr("Selected tool") : mCustomDisplayName);
+        mDescriptionLabel->setText(tr("The selected disk usage analyzer was not found on this system. "
+                                      "Install it or choose a different tool in Settings."));
+        mStatusLabel->setText(tr("Status: Not installed"));
+        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
+        mActionButton->hide();
+        break;
     case NO_TOOL:
         mToolNameLabel->setText(tr("No disk usage tool available"));
         mDescriptionLabel->setText(tr("No supported disk usage analyzer was found for this platform."));
@@ -196,6 +380,10 @@ void DiskUsageLauncherWidget::updateUi()
         break;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------------
 
 void DiskUsageLauncherWidget::onActionClicked()
 {
@@ -264,6 +452,31 @@ void DiskUsageLauncherWidget::onActionClicked()
         break;
     }
 
+    case LAUNCH_QDIRSTAT:
+        QProcess::startDetached("qdirstat", {});
+        break;
+
+    case LAUNCH_NCDU: {
+        // ncdu is a TUI app — launch inside the default terminal emulator
+#ifdef Q_OS_LINUX
+        // Try common terminal emulators in order of popularity
+        QStringList terminals = {"x-terminal-emulator", "gnome-terminal",
+                                 "konsole", "xfce4-terminal", "xterm"};
+        for (const QString &term : terminals) {
+            if (!QStandardPaths::findExecutable(term).isEmpty()) {
+                if (term == "gnome-terminal")
+                    QProcess::startDetached(term, {"--", "ncdu", "/"});
+                else
+                    QProcess::startDetached(term, {"-e", "ncdu /"});
+                break;
+            }
+        }
+#elif defined(Q_OS_MACOS)
+        QProcess::startDetached("open", {"-a", "Terminal", "ncdu"});
+#endif
+        break;
+    }
+
 #ifdef Q_OS_MACOS
     case LAUNCH_GRANDPERSPECTIVE:
         QProcess::startDetached("open", {"-a", "GrandPerspective"});
@@ -272,8 +485,32 @@ void DiskUsageLauncherWidget::onActionClicked()
     case LINK_GRANDPERSPECTIVE:
         QDesktopServices::openUrl(QUrl("https://grandperspectiv.sourceforge.net"));
         break;
+
+    case LAUNCH_DAISYDISK:
+        QProcess::startDetached("open", {"-a", "DaisyDisk"});
+        break;
+
+    case LINK_DAISYDISK:
+        QDesktopServices::openUrl(QUrl("https://daisydiskapp.com"));
+        break;
+
+    case LAUNCH_OMNIDISKSWEEPER:
+        QProcess::startDetached("open", {"-a", "OmniDiskSweeper"});
+        break;
+
+    case LINK_OMNIDISKSWEEPER:
+        QDesktopServices::openUrl(QUrl("https://www.omnigroup.com/more"));
+        break;
 #endif
 
+    case LAUNCH_CUSTOM: {
+        QString customPath = SettingManager::ins()->getDiskAnalyzerCustomPath();
+        if (!customPath.isEmpty())
+            QProcess::startDetached(customPath, {});
+        break;
+    }
+
+    case NOT_FOUND:
     case NO_TOOL:
         break;
     }

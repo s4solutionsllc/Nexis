@@ -390,6 +390,82 @@
      </property>
     </widget>
    </item>
+   <item row="7" column="2" alignment="Qt::AlignLeft">
+    <widget class="QLabel" name="lblDiskAnalyzer">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Disk Analyzer</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="2" alignment="Qt::AlignLeft">
+    <widget class="QComboBox" name="cmbDiskAnalyzer">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>150</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>200</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="3" alignment="Qt::AlignLeft">
+    <widget class="QLabel" name="lblDiskAnalyzerCustomPath">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Custom Executable Path</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="3" alignment="Qt::AlignLeft">
+    <widget class="QLineEdit" name="txtDiskAnalyzerCustomPath">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>200</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="placeholderText">
+      <string>/usr/bin/my-analyzer</string>
+     </property>
+    </widget>
+   </item>
    <item row="1" column="1">
     <widget class="QComboBox" name="cmbDisks">
      <property name="sizePolicy">

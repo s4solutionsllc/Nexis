@@ -6,6 +6,7 @@
 #include <QDesktopServices>
 #include <QRegularExpression>
 #include <QUrl>
+#include <QLineEdit>
 
 SettingsPage::~SettingsPage()
 {
@@ -94,10 +95,13 @@ void SettingsPage::init()
     ui->spinMemoryPercent->setValue(mSettingManager->getMemoryAlertPercent());
     ui->spinDiskPercent->setValue(mSettingManager->getDiskAlertPercent());
 
+    // disk analyzer preference
+    initDiskAnalyzerCombo();
+
     // effects
     QList<QWidget*> widgets = {
         ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme, ui->btnDonate,
-        ui->spinCpuPercent, ui->spinMemoryPercent, ui->spinDiskPercent
+        ui->spinCpuPercent, ui->spinMemoryPercent, ui->spinDiskPercent, ui->cmbDiskAnalyzer
     };
 
     Utilities::addDropShadow(widgets, 50);
@@ -107,6 +111,7 @@ void SettingsPage::init()
     connect(ui->cmbDisks, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbDiskChanged(int)));
     connect(ui->cmbStartPage, SIGNAL(currentTextChanged(QString)), this, SLOT(cmbStartPageChanged(QString)));
     connect(ui->cmbColorScheme, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbColorSchemeChanged(int)));
+    connect(ui->cmbDiskAnalyzer, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbDiskAnalyzerChanged(int)));
 }
 
 void SettingsPage::cmbLanguagesChanged(const int &index)
@@ -183,4 +188,46 @@ void SettingsPage::cmbColorSchemeChanged(int index)
     QString scheme = ui->cmbColorScheme->itemData(index).toString();
     mSettingManager->setColorScheme(scheme);
     apm->updateStylesheet();
+}
+
+void SettingsPage::initDiskAnalyzerCombo()
+{
+    // Platform-specific tool list for macOS
+    ui->cmbDiskAnalyzer->addItem(tr("Auto (Detect)"), "auto");
+    ui->cmbDiskAnalyzer->addItem(tr("GrandPerspective"), "grandperspective");
+    ui->cmbDiskAnalyzer->addItem(tr("DaisyDisk"), "daisydisk");
+    ui->cmbDiskAnalyzer->addItem(tr("OmniDiskSweeper"), "omnidisksweeper");
+    ui->cmbDiskAnalyzer->addItem(tr("Custom..."), "custom");
+
+    // Restore saved preference
+    QString saved = mSettingManager->getDiskAnalyzerTool();
+    int idx = ui->cmbDiskAnalyzer->findData(saved);
+    if (idx >= 0)
+        ui->cmbDiskAnalyzer->setCurrentIndex(idx);
+    else
+        ui->cmbDiskAnalyzer->setCurrentIndex(0); // fallback to Auto
+
+    // Restore custom path
+    ui->txtDiskAnalyzerCustomPath->setText(mSettingManager->getDiskAnalyzerCustomPath());
+
+    updateCustomPathVisibility();
+}
+
+void SettingsPage::updateCustomPathVisibility()
+{
+    bool isCustom = (ui->cmbDiskAnalyzer->currentData().toString() == "custom");
+    ui->lblDiskAnalyzerCustomPath->setVisible(isCustom);
+    ui->txtDiskAnalyzerCustomPath->setVisible(isCustom);
+}
+
+void SettingsPage::cmbDiskAnalyzerChanged(int index)
+{
+    QString tool = ui->cmbDiskAnalyzer->itemData(index).toString();
+    mSettingManager->setDiskAnalyzerTool(tool);
+    updateCustomPathVisibility();
+}
+
+void SettingsPage::on_txtDiskAnalyzerCustomPath_editingFinished()
+{
+    mSettingManager->setDiskAnalyzerCustomPath(ui->txtDiskAnalyzerCustomPath->text().trimmed());
 }

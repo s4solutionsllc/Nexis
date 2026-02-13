@@ -15,6 +15,8 @@ namespace SettingKeys {
     const QString AppQuitDialogDontAsk("AppQuitDialogDontAsk");
     const QString AppQuitDialogChoice("AppQuitDialogChoice");
     const QString ColorScheme("ColorScheme");
+    const QString DiskAnalyzerTool("DiskAnalyzerTool");
+    const QString DiskAnalyzerCustomPath("DiskAnalyzerCustomPath");
 }
 
 class SettingManager
@@ -53,6 +55,12 @@ public:
 
     void setColorScheme(const QString &value);
     QString getColorScheme() const;
+
+    void setDiskAnalyzerTool(const QString &value);
+    QString getDiskAnalyzerTool() const;
+
+    void setDiskAnalyzerCustomPath(const QString &value);
+    QString getDiskAnalyzerCustomPath() const;
 
 private:
     static SettingManager *instance;

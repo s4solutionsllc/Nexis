@@ -34,9 +34,17 @@ private slots:
     void on_spinDiskPercent_valueChanged(int value);
     void on_checkAppQuitDontAsk_clicked(bool checked);
     void cmbColorSchemeChanged(int index);
+    void cmbDiskAnalyzerChanged(int index);
+    void on_txtDiskAnalyzerCustomPath_editingFinished();
 
 private:
     Ui::SettingsPage *ui;
+
+    /// Populate the disk analyzer combobox with platform-appropriate tools.
+    void initDiskAnalyzerCombo();
+
+    /// Show or hide the custom path field based on current selection.
+    void updateCustomPathVisibility();
 
 private:
     AppManager *apm;
