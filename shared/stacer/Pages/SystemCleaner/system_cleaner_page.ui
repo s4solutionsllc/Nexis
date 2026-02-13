@@ -120,7 +120,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="2" colspan="5">
+       <item row="11" column="2" colspan="6">
         <spacer name="verticalSpacer_4">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -412,7 +412,64 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="8">
+       <item row="2" column="7" alignment="Qt::AlignHCenter">
+        <widget class="QLabel" name="lblDevToolCacheImg">
+         <property name="minimumSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="7" alignment="Qt::AlignHCenter">
+        <widget class="QLabel" name="lblDevToolCache">
+         <property name="text">
+          <string>Dev Tool Caches</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="7" alignment="Qt::AlignHCenter|Qt::AlignTop">
+        <widget class="QCheckBox" name="checkDevToolCache">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="accessibleName">
+          <string notr="true">circle</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="9">
         <spacer name="horizontalSpacer_3">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -622,12 +679,12 @@
             </property>
             <property name="icon">
              <iconset resource="../../static.qrc">
-              <normaloff>:/static/themes/default/img/back.png</normaloff>:/static/themes/default/img/back.png</iconset>
+              <normaloff>:/static/themes/common/img/chevron-left.svg</normaloff>:/static/themes/common/img/chevron-left.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
-              <width>20</width>
-              <height>20</height>
+              <width>12</width>
+              <height>12</height>
              </size>
             </property>
            </widget>
@@ -740,38 +797,38 @@
               </property>
               <item>
                <property name="text">
-                <string>Name</string>
+                <string>Name (A–Z)</string>
                </property>
                <property name="icon">
                 <iconset resource="../../static.qrc">
-                 <normaloff>:/static/themes/default/img/asc.png</normaloff>:/static/themes/default/img/asc.png</iconset>
+                 <normaloff>:/static/themes/common/img/sort-asc.svg</normaloff>:/static/themes/common/img/sort-asc.svg</iconset>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Name</string>
+                <string>Name (Z–A)</string>
                </property>
                <property name="icon">
                 <iconset resource="../../static.qrc">
-                 <normaloff>:/static/themes/default/img/dsc.png</normaloff>:/static/themes/default/img/dsc.png</iconset>
+                 <normaloff>:/static/themes/common/img/sort-dsc.svg</normaloff>:/static/themes/common/img/sort-dsc.svg</iconset>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Size</string>
+                <string>Size (Small–Large)</string>
                </property>
                <property name="icon">
                 <iconset resource="../../static.qrc">
-                 <normaloff>:/static/themes/default/img/asc.png</normaloff>:/static/themes/default/img/asc.png</iconset>
+                 <normaloff>:/static/themes/common/img/sort-asc.svg</normaloff>:/static/themes/common/img/sort-asc.svg</iconset>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Size</string>
+                <string>Size (Large–Small)</string>
                </property>
                <property name="icon">
                 <iconset resource="../../static.qrc">
-                 <normaloff>:/static/themes/default/img/dsc.png</normaloff>:/static/themes/default/img/dsc.png</iconset>
+                 <normaloff>:/static/themes/common/img/sort-dsc.svg</normaloff>:/static/themes/common/img/sort-dsc.svg</iconset>
                </property>
               </item>
              </widget>

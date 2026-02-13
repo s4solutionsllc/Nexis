@@ -7,7 +7,7 @@
 
 - [ ] **FR-01: deb822 APT source file support** — Modern `.sources` format used by Debian 13+ / Ubuntu 24.04+. QuentiumYT commit `87279f6`.
 - [x] **FR-02: Single-instance enforcement** — Prevent multiple app copies via QLockFile/QSharedMemory. Focus existing window on re-launch. QuentiumYT issue #12. **Resolved:** Added QLockFile-based enforcement in main.cpp.
-- [ ] **FR-03: Expanded cache cleaning (Electron apps, npm, gradle, etc.)** — Scan `~/.config/*/Cache` and `~/.config/*/GPUCache` for Electron apps (Discord, Slack, VSCode). Also npm, bun, gradle, expo caches. QuentiumYT v1.5.0.
+- [x] **FR-03: Expanded cache cleaning (Electron apps, npm, gradle, etc.)** — Scan `~/.config/*/Cache` and `~/.config/*/GPUCache` for Electron apps (Discord, Slack, VSCode). Also npm, bun, gradle, expo caches. QuentiumYT v1.5.0. **Resolved:** Added "Dev Tool Caches" as a 6th System Cleaner category. Scans Electron app caches (~/.config/*/Cache on Linux, ~/Library/Application Support/*/Cache on macOS) and well-known dev tool paths (~/.npm, ~/.gradle/caches, ~/.cargo/registry, etc.). Ambiguous "Cache"/"GPUCache" entries are renamed to "appName/Cache" for clarity.
 - [x] **FR-04: Background thread cleanup on exit** — Wait for QtConcurrent threads to finish before quitting. QuentiumYT commit `fa70178`.
 - [x] **FR-05: LC_ALL=C for system command parsing** — Force English output so `lscpu` and similar commands parse correctly on non-English systems. QuentiumYT commit `e0b957f`. **Resolved:** Changed LANG=C to LC_ALL=C in lscpu calls.
 - [ ] **FR-06: ARM64 Linux architecture support** — Build for armhf, arm64, i386, powerpc, ppc64el, riscv64, s390x.

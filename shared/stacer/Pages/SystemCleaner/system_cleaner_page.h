@@ -28,7 +28,8 @@ public:
         CRASH_REPORTS,
         APPLICATION_LOGS,
         APPLICATION_CACHES,
-        TRASH
+        TRASH,
+        DEV_TOOL_CACHES
     };
 
 public:
@@ -83,11 +84,14 @@ private:
     QString mLblAppLogText;
     QString mLblAppCacheText;
     QString mLblTrashText;
+    bool mScanDevToolCache;
+    QString mLblDevToolCacheText;
     // Scan results (written on worker, read on main thread in onScanFinished)
     QFileInfoList mPackageCaches;
     QFileInfoList mCrashReports;
     QFileInfoList mAppLogs;
     QFileInfoList mAppCaches;
+    QFileInfoList mDevToolCaches;
 
     // Thread-safe clean state (set on main thread before worker, read on worker)
     QStringList mFilesToDelete;

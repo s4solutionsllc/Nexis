@@ -38,6 +38,7 @@ public:
     QFileInfoList getCrashReports() const;
     QFileInfoList getAppLogs() const;
     QFileInfoList getAppCaches() const;
+    QFileInfoList getDevToolCaches() const;
 
     void updateProcesses();
     QList<Process> getProcesses() const;

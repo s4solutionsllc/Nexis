@@ -36,6 +36,7 @@ void SystemCleanerPage::init()
     setThemePixmap(ui->lblLogImage,        "text-x-generic",     ":/static/themes/common/img/c_logs.svg");
     setThemePixmap(ui->lblAppCacheImg,     "folder",             ":/static/themes/common/img/c_cache.svg");
     setThemePixmap(ui->lblTrashImg,        "user-trash",         ":/static/themes/common/img/c_trash.svg");
+    setThemePixmap(ui->lblDevToolCacheImg, "applications-development", ":/static/themes/common/img/c_devtools.svg");
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
@@ -147,6 +148,9 @@ void SystemCleanerPage::systemScan()
     if (mScanAppCache) {
         mAppCaches = im->getAppCaches();
     }
+    if (mScanDevToolCache) {
+        mDevToolCaches = im->getDevToolCaches();
+    }
 
     emit scanFinishedS();
 }
@@ -171,6 +175,29 @@ void SystemCleanerPage::onScanFinished()
     if (mScanAppCache) {
         totalSize += addTreeRoot(APPLICATION_CACHES, mLblAppCacheText, mAppCaches);
     }
+    if (mScanDevToolCache) {
+        totalSize += addTreeRoot(DEV_TOOL_CACHES, mLblDevToolCacheText, mDevToolCaches);
+
+        // Post-process: rename ambiguous "Cache"/"GPUCache" entries to "appName/Cache"
+        // so users can distinguish which Electron app each cache belongs to.
+        for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
+            QTreeWidgetItem *root = ui->treeWidgetScanResult->topLevelItem(i);
+            if (root->data(2, 0).toInt() == DEV_TOOL_CACHES) {
+                for (int j = 0; j < root->childCount(); ++j) {
+                    QTreeWidgetItem *child = root->child(j);
+                    QString name = child->text(0);
+                    if (name == "Cache" || name == "GPUCache") {
+                        // Extract parent dir name from the absolute path
+                        QString absPath = child->data(2, 0).toString();
+                        QDir dir(absPath);
+                        dir.cdUp();
+                        child->setText(0, dir.dirName() + "/" + name);
+                    }
+                }
+                break;
+            }
+        }
+    }
     if (mScanTrash) {
         totalSize += addTreeRoot(TRASH, mLblTrashText,
                     { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
@@ -189,6 +216,7 @@ void SystemCleanerPage::onScanFinished()
     ui->checkAppLog->setChecked(false);
     ui->checkAppCache->setChecked(false);
     ui->checkTrash->setChecked(false);
+    ui->checkDevToolCache->setChecked(false);
 }
 
 bool SystemCleanerPage::cleanValid()
@@ -291,8 +319,9 @@ void SystemCleanerPage::on_btnScan_clicked()
     mScanAppLog       = ui->checkAppLog->isChecked();
     mScanAppCache     = ui->checkAppCache->isChecked();
     mScanTrash        = ui->checkTrash->isChecked();
+    mScanDevToolCache = ui->checkDevToolCache->isChecked();
 
-    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash)) {
+    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash || mScanDevToolCache)) {
         return;
     }
 
@@ -302,6 +331,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mLblAppLogText       = ui->lblAppLog->text();
     mLblAppCacheText     = ui->lblAppCache->text();
     mLblTrashText        = ui->lblTrash->text();
+    mLblDevToolCacheText = ui->lblDevToolCache->text();
 
     // Pre-scan UI updates (main thread)
     ui->btnScan->hide();
@@ -311,6 +341,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     ui->checkAppLog->setEnabled(false);
     ui->checkAppCache->setEnabled(false);
     ui->checkTrash->setEnabled(false);
+    ui->checkDevToolCache->setEnabled(false);
     ui->checkSelectAllSystemScan->setEnabled(false);
 
     // Clear cached results
@@ -318,6 +349,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mCrashReports.clear();
     mAppLogs.clear();
     mAppCaches.clear();
+    mDevToolCaches.clear();
 
     // Launch worker thread (I/O only)
     mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
@@ -374,6 +406,7 @@ void SystemCleanerPage::on_btnBackToCategories_clicked()
     ui->checkAppLog->setEnabled(true);
     ui->checkAppCache->setEnabled(true);
     ui->checkTrash->setEnabled(true);
+    ui->checkDevToolCache->setEnabled(true);
     ui->treeWidgetScanResult->clear();
     ui->stackedWidget->setCurrentIndex(0);
     ui->checkSelectAllSystemScan->setEnabled(true);
@@ -387,6 +420,7 @@ void SystemCleanerPage::on_checkSelectAllSystemScan_clicked(bool checked)
     ui->checkCrashReports->setChecked(checked);
     ui->checkPackageCache->setChecked(checked);
     ui->checkTrash->setChecked(checked);
+    ui->checkDevToolCache->setChecked(checked);
 }
 
 void SystemCleanerPage::on_checkSelectAll_clicked(bool checked)

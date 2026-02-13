@@ -25,6 +25,7 @@ public:
     QFileInfoList getCrashReports() const;
     QFileInfoList getAppLogs() const;
     QFileInfoList getAppCaches() const;
+    QFileInfoList getDevToolCaches() const;
 
     QStringList getUserList() const;
     QStringList getGroupList() const;

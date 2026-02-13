@@ -128,6 +128,47 @@ QFileInfoList SystemInfo::getAppCaches() const
     return result;
 }
 
+QFileInfoList SystemInfo::getDevToolCaches() const
+{
+    QFileInfoList result;
+    QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+
+    // Electron / Chromium app caches under ~/.config/*/Cache and ~/.config/*/GPUCache
+    QDir configDir(homePath + "/.config");
+    if (configDir.exists()) {
+        QFileInfoList entries = configDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const QFileInfo &entry : entries) {
+            QDir subDir(entry.absoluteFilePath());
+            QFileInfo cacheDir(subDir.absoluteFilePath("Cache"));
+            QFileInfo gpuCacheDir(subDir.absoluteFilePath("GPUCache"));
+            if (cacheDir.exists() && cacheDir.isDir())
+                result.append(cacheDir);
+            if (gpuCacheDir.exists() && gpuCacheDir.isDir())
+                result.append(gpuCacheDir);
+        }
+    }
+
+    // Well-known dev tool cache paths
+    QStringList devToolPaths = {
+        homePath + "/.npm",
+        homePath + "/.bun/install/cache",
+        homePath + "/.gradle/caches",
+        homePath + "/.m2/repository",
+        homePath + "/.expo",
+        homePath + "/.yarn/cache",
+        homePath + "/.nuget/packages",
+        homePath + "/.cargo/registry",
+    };
+
+    for (const QString &path : devToolPaths) {
+        QFileInfo info(path);
+        if (info.exists())
+            result.append(info);
+    }
+
+    return result;
+}
+
 // --- Cross-platform methods ---
 
 QString SystemInfo::getUsername() const

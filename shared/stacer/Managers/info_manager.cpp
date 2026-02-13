@@ -136,6 +136,11 @@ QFileInfoList InfoManager::getAppCaches() const
     return si.getAppCaches();
 }
 
+QFileInfoList InfoManager::getDevToolCaches() const
+{
+    return si.getDevToolCaches();
+}
+
 /********************
  * Process Provider
  *******************/

@@ -123,6 +123,18 @@
   - **Fix complexity:** Trivial (set label text in constructor using qApp->applicationVersion())
   - **Resolved:** Removed hardcoded version from .ui file; both platform settings_page.cpp files now set lblCreatedBy text dynamically
 
+- [x] **BUG-19: System Cleaner sort dropdown shows duplicate "Name" and "Size" entries** (LOW)
+  - **File:** `shared/stacer/Pages/SystemCleaner/system_cleaner_page.ui`
+  - **Description:** The sort-by combobox contained four items labelled "Name", "Name", "Size", "Size" — differentiated only by tiny asc/dsc PNG arrow icons from the default theme. Users see two identical "Name" and two identical "Size" entries with no indication of sort direction. Additionally the icons used theme-specific PNGs (`asc.png`/`dsc.png`) instead of the common SVGs (`sort-asc.svg`/`sort-dsc.svg`) used elsewhere.
+  - **Fix complexity:** Trivial (rename labels to include direction, swap PNGs for common SVGs)
+  - **Resolved:** Labels changed to "Name (A–Z)", "Name (Z–A)", "Size (Small–Large)", "Size (Large–Small)"; icons switched to common/img/sort-asc.svg and sort-dsc.svg
+
+- [x] **BUG-20: System Cleaner back button uses theme-specific PNG inconsistent with app styling** (LOW)
+  - **File:** `shared/stacer/Pages/SystemCleaner/system_cleaner_page.ui`
+  - **Description:** The "Back" button on the scan results page used `back.png` from the default theme — a bright blue circled arrow that clashes with the subtle grey Adwaita-style SVG icons used throughout the rest of the app. No `chevron-left.svg` existed in the common theme.
+  - **Fix complexity:** Trivial (create matching SVG, update .ui reference)
+  - **Resolved:** Created `chevron-left.svg` mirroring the existing `chevron-right.svg` style (#77767b stroke); updated button icon reference to use the common SVG at 12×12
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
