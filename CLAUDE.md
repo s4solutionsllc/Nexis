@@ -1,8 +1,8 @@
-# Stacer — Claude Code Project Instructions
+# Nexis — Claude Code Project Instructions
 
 ## Project Overview
 
-Stacer is a Linux System Optimizer and Monitoring tool (C++/Qt). This is a fork of [oguzhaninan/Stacer](https://github.com/oguzhaninan/Stacer).
+Nexis is a Linux & macOS System Optimizer and Monitoring tool (C++/Qt). Originally forked from [oguzhaninan/Stacer](https://github.com/oguzhaninan/Stacer), now rebranded and independently developed.
 
 ## Tracking Files
 
@@ -38,12 +38,12 @@ make -j$(nproc)
 
 ## Key Directories
 
-- `stacer-core/` — Core library (system info, utilities)
-- `stacer/` — Qt GUI application (pages, widgets)
+- `nexis-core/` — Core library (system info, utilities)
+- `nexis/` — Qt GUI application (pages, widgets)
 - `shared/` — Shared code between platforms
 - `linux/` — Linux-specific implementations
 - `translations/` — i18n `.ts` files
 
 ## Notable Forks
 
-- **QuentiumYT/Stacer** — Most active fork (78 stars). Reference for fixes and features.
+- **QuentiumYT/Stacer** — Most active fork of the original project (78 stars). Reference for fixes and features.

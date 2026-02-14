@@ -17,12 +17,12 @@ jobs:
         include:
           - os: ubuntu-24.04
             name: Linux (x64)
-            artifact-name: stacer-linux-x64
-            artifact-path: build/output/stacer
+            artifact-name: nexis-linux-x64
+            artifact-path: build/output/nexis
           - os: macos-14
             name: macOS (ARM64)
-            artifact-name: stacer-macos-arm64
-            artifact-path: build/output/stacer.app
+            artifact-name: nexis-macos-arm64
+            artifact-path: build/output/nexis.app
 
     steps:
       - name: Checkout

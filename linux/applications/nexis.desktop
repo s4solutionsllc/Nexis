@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Nexis
+Exec=nexis
+Comment=Linux System Optimizer and Monitoring
+Icon=nexis
+Type=Application
+Terminal=false
+Categories=Utility;

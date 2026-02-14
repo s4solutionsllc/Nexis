@@ -1,17 +1,17 @@
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/header.png" width="800">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/header.png" width="800">
 </p>
 
 <p align="center">
   <b>Linux & macOS System Optimizer and Monitor</b><br>
-  <sub>Actively maintained Qt6 fork of <a href="https://github.com/oguzhaninan/Stacer">oguzhaninan/Stacer</a></sub>
+  <sub>Actively maintained Qt6 fork of <a href="https://github.com/oguzhaninan/Stacer">oguzhaninan/Stacer</a>, rebranded as Nexis</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/lsimpsonsfdc/Stacer/releases/latest"><img src="https://img.shields.io/github/v/release/lsimpsonsfdc/Stacer?label=latest%20release" alt="Latest Release"></a>
-  <a href="https://github.com/lsimpsonsfdc/Stacer/actions/workflows/build.yml"><img src="https://github.com/lsimpsonsfdc/Stacer/actions/workflows/build.yml/badge.svg?branch=native" alt="Build Status"></a>
-  <a href="https://github.com/lsimpsonsfdc/Stacer/blob/native/LICENSE"><img src="https://img.shields.io/github/license/lsimpsonsfdc/Stacer" alt="License: GPL v3"></a>
+  <a href="https://github.com/lsimpsonsfdc/Nexis/releases/latest"><img src="https://img.shields.io/github/v/release/lsimpsonsfdc/Nexis?label=latest%20release" alt="Latest Release"></a>
+  <a href="https://github.com/lsimpsonsfdc/Nexis/actions/workflows/build.yml"><img src="https://github.com/lsimpsonsfdc/Nexis/actions/workflows/build.yml/badge.svg?branch=native" alt="Build Status"></a>
+  <a href="https://github.com/lsimpsonsfdc/Nexis/blob/native/LICENSE"><img src="https://img.shields.io/github/license/lsimpsonsfdc/Nexis" alt="License: GPL v3"></a>
   <img src="https://img.shields.io/badge/Qt-6-41cd52?logo=qt" alt="Qt 6">
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus" alt="C++17">
   <img src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS-lightgrey" alt="Platforms: Linux | macOS">
@@ -35,7 +35,7 @@
 
 ## Why This Fork?
 
-The [original Stacer](https://github.com/oguzhaninan/Stacer) by oguzhaninan is no longer actively maintained. This fork picks up where it left off:
+The [original project](https://github.com/oguzhaninan/Stacer) by oguzhaninan is no longer actively maintained. This fork picks up where it left off:
 
 | | Upstream (oguzhaninan) | This Fork |
 |---|---|---|
@@ -48,7 +48,7 @@ The [original Stacer](https://github.com/oguzhaninan/Stacer) by oguzhaninan is n
 
 ## Downloads
 
-Pre-built binaries are available on the [Releases page](https://github.com/lsimpsonsfdc/Stacer/releases/latest):
+Pre-built binaries are available on the [Releases page](https://github.com/lsimpsonsfdc/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **macOS Apple Silicon**: `.dmg` disk image
@@ -102,47 +102,47 @@ make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
 ## Screenshots
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-01.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-01.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-02.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-02.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-03.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-03.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-04.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-04.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-05.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-05.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-06.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-06.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-07.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-07.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-08.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-08.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-09.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-09.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-10.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-10.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Stacer/native/screenshots/Stacer-2.0.1-11.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-11.png" width="700">
 </p>
 
 ## Development
@@ -151,35 +151,35 @@ This fork is co-authored by [Claude Code](https://claude.ai/claude-code), Anthro
 
 ## Contributing
 
-Bug reports and feature requests are tracked in [BUGS.md](BUGS.md) and [FEATURE_REQUESTS.md](FEATURE_REQUESTS.md). Feel free to [open an issue](https://github.com/lsimpsonsfdc/Stacer/issues) or submit a pull request.
+Bug reports and feature requests are tracked in [BUGS.md](BUGS.md) and [FEATURE_REQUESTS.md](FEATURE_REQUESTS.md). Feel free to [open an issue](https://github.com/lsimpsonsfdc/Nexis/issues) or submit a pull request.
 
 <!--
 
 This project exists thanks to all the people who have previously contributed. [[Contribute](CONTRIBUTING.md)].</br>
 Please let me know if you would like to join in the fun.
-<a href="https://github.com/lsimpsonsfdc/Stacer/graphs/contributors"><img src="https://opencollective.com/Stacer/contributors.svg?width=890&button=false" /></a>
+<a href="https://github.com/lsimpsonsfdc/Nexis/graphs/contributors"><img src="https://opencollective.com/Nexis/contributors.svg?width=890&button=false" /></a>
 
 
 ### Financial Contributors
 
-Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/Stacer/contribute)]
+Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/Nexis/contribute)]
 
 #### Individuals
 
-<a href="https://opencollective.com/Stacer"><img src="https://opencollective.com/Stacer/individuals.svg?width=890"></a>
+<a href="https://opencollective.com/Nexis"><img src="https://opencollective.com/Nexis/individuals.svg?width=890"></a>
 
 #### Organizations
 
-Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/Stacer/contribute)]
+Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/Nexis/contribute)]
 
-<a href="https://opencollective.com/Stacer/organization/0/website"><img src="https://opencollective.com/Stacer/organization/0/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/1/website"><img src="https://opencollective.com/Stacer/organization/1/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/2/website"><img src="https://opencollective.com/Stacer/organization/2/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/3/website"><img src="https://opencollective.com/Stacer/organization/3/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/4/website"><img src="https://opencollective.com/Stacer/organization/4/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/5/website"><img src="https://opencollective.com/Stacer/organization/5/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/6/website"><img src="https://opencollective.com/Stacer/organization/6/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/7/website"><img src="https://opencollective.com/Stacer/organization/7/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/8/website"><img src="https://opencollective.com/Stacer/organization/8/avatar.svg"></a>
-<a href="https://opencollective.com/Stacer/organization/9/website"><img src="https://opencollective.com/Stacer/organization/9/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/0/website"><img src="https://opencollective.com/Nexis/organization/0/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/1/website"><img src="https://opencollective.com/Nexis/organization/1/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/2/website"><img src="https://opencollective.com/Nexis/organization/2/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/3/website"><img src="https://opencollective.com/Nexis/organization/3/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/4/website"><img src="https://opencollective.com/Nexis/organization/4/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/5/website"><img src="https://opencollective.com/Nexis/organization/5/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/6/website"><img src="https://opencollective.com/Nexis/organization/6/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/7/website"><img src="https://opencollective.com/Nexis/organization/7/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/8/website"><img src="https://opencollective.com/Nexis/organization/8/avatar.svg"></a>
+<a href="https://opencollective.com/Nexis/organization/9/website"><img src="https://opencollective.com/Nexis/organization/9/avatar.svg"></a>
 -->

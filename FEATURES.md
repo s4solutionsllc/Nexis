@@ -1,4 +1,4 @@
-# Stacer Feature Matrix
+# Nexis Feature Matrix
 
 A comparison of features available on each supported platform.
 

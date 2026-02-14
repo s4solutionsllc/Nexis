@@ -1,0 +1,12 @@
+#ifndef NEXISCORE_GLOBAL_H
+#define NEXISCORE_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(NEXISCORE_LIBRARY)
+#  define NEXISCORESHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define NEXISCORESHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // NEXISCORE_GLOBAL_H

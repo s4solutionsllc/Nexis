@@ -34,9 +34,9 @@
 - [x] **FR-21: macOS native .app bundle uninstaller** — Scan /Applications and ~/Applications for .app bundles, parse Info.plist for display name and version, filter out Apple system apps (com.apple.*), move to Trash via Finder AppleScript. **Resolved:** Implemented in PackageTool::getInstalledApps() and trashApps(). Uninstaller page now shows "Applications" on macOS with "Name version" format.
 - [x] **FR-22: Homebrew page tree widget with multi-select uninstall** — Replace flat QListWidget on macOS Homebrew page with QTreeWidget grouped by Formula/Cask sections, checkboxes for multi-select, search with auto-expand, dry-run dependency confirmation, and async background loading. **Resolved:** Programmatic QTreeWidget in APTSourceManagerPage, mirrors Uninstaller page layout. Install field retained.
 
-## From Our Issues (lsimpsonsfdc/Stacer)
+## From Our Issues (lsimpsonsfdc/Nexis)
 
-- [x] **FR-23: Disk Usage Analyzer launcher** — Provide a launcher card on the Resources page that detects the best disk-usage tool for the platform/DE (Baobab on GNOME, Filelight elsewhere, GrandPerspective on macOS) and offers launch or install actions. Issue [#2](https://github.com/lsimpsonsfdc/Stacer/issues/2). **Resolved:** Replaced custom DiskAnalyzerWidget with DiskUsageLauncherWidget that delegates to dedicated tools.
+- [x] **FR-23: Disk Usage Analyzer launcher** — Provide a launcher card on the Resources page that detects the best disk-usage tool for the platform/DE (Baobab on GNOME, Filelight elsewhere, GrandPerspective on macOS) and offers launch or install actions. Issue [#2](https://github.com/lsimpsonsfdc/Nexis/issues/2). **Resolved:** Replaced custom DiskAnalyzerWidget with DiskUsageLauncherWidget that delegates to dedicated tools.
 - [x] **FR-24: Configurable disk analyzer preference** — Allow users to choose their preferred disk usage analyzer from Settings instead of relying solely on auto-detection. Adds a "Disk Analyzer" combobox to the Settings page with platform-specific tool options (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper) plus a "Custom..." option with a free-form executable path. The Resources page launcher widget reads this preference and respects the user's choice. Extends FR-23.
 
 ## Notes

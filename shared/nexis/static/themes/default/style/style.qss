@@ -1,0 +1,1168 @@
+/****** ADWAITA THEME ******/
+
+/*****************
+    QScrollArea
+******************/
+QScrollArea {
+    border: 0;
+}
+
+QScrollBar:vertical {
+    width: 8;
+    margin: 0;
+    border-radius: 4;
+    background-color: transparent;
+}
+
+QScrollBar::handle:vertical {
+    background-color: @color06;
+    min-height: 30px;
+    border-radius: 4;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: @color04;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background-color: transparent;
+}
+
+QScrollBar:horizontal {
+    height: 8;
+    margin: 0;
+    border-radius: 4;
+    background-color: transparent;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: @color06;
+    min-width: 30px;
+    border-radius: 4;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: @color04;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    height: 0;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background-color: transparent;
+}
+
+QAbstractScrollArea::corner {
+    background: transparent;
+}
+
+/*************
+    QMessageBox
+**************/
+QMessageBox {
+    background-color: @color01;
+}
+
+QMessageBox QLabel {
+    color: @color05;
+}
+
+/*************
+    QMenu
+**************/
+QMenu {
+    background-color: @color01;
+    border-radius: 8;
+    border: 1px solid @borderColor;
+    padding: 4 0;
+}
+
+QMenu::item {
+    padding: 6 24;
+    color: @color05;
+    font-size: 10pt;
+    border-radius: 6;
+    margin: 2 4;
+}
+
+QMenu::item:selected {
+    background-color: @accentColor;
+    color: @color07;
+}
+
+QMenu::indicator {
+    width: 14px;
+    height: 14px;
+}
+
+QMenu::indicator:non-exclusive:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+QMenu::indicator:non-exclusive:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+/*****************
+    QRadioButton
+******************/
+
+QRadioButton {
+    color: @color12;
+    font-size: 11pt;
+}
+
+QRadioButton::indicator {
+    width: 16;
+    height: 16;
+}
+
+QRadioButton::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+QRadioButton::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+/*****************
+    QCheckBox
+******************/
+
+QCheckBox::indicator {
+    width: 44px;
+    height: 24px;
+}
+
+QCheckBox::indicator:checked {
+    image: url(:/static/themes/common/img/checkbox.png);
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-checkbox.png);
+}
+
+QCheckBox[accessibleName="circle"] {
+    font-size: 10pt;
+    color: @color06;
+}
+
+QCheckBox[accessibleName="circle"]::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+QCheckBox[accessibleName="circle"]::indicator:unchecked {
+    image: url(:/static/themes/common/img/circle-unchecked.svg);
+}
+
+QCheckBox[accessibleName="circle"]::indicator:checked {
+    image: url(:/static/themes/common/img/circle-checked.svg);
+}
+
+/*****************
+    QToolTip
+******************/
+
+QToolTip {
+    color: @color05;
+    padding: 4 8;
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+}
+
+/***************
+    Not Found
+***************/
+
+#notFoundWidget, QWidget[accessibleName="notFoundWidget"] {
+    background: url(:/static/themes/common/img/not-found.png) no-repeat top center;
+}
+
+#notFoundWidget QLabel, QWidget[accessibleName="notFoundWidget"] {
+    color: @color06;
+    font-size: 13pt;
+}
+
+/***************
+    QSpinBox
+***************/
+
+QSpinBox::up-button,
+QDoubleSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 16px;
+    border-image: url(:/static/themes/common/img/spinup.svg) 1;
+    border-width: 1px;
+}
+
+QSpinBox::down-button,
+QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 16px;
+    border-image: url(:/static/themes/common/img/spindown.svg) 1;
+    border-width: 1px;
+    border-top-width: 0;
+}
+
+/***************
+    QSlider
+***************/
+
+QSlider::groove:horizontal {
+    height: 4px;
+    background: @borderColor;
+    margin: 2px 0;
+    border-radius: 2;
+}
+
+QSlider::handle:horizontal {
+    background-color: @accentColor;
+    width: 16px;
+    height: 16px;
+    margin: -6px 0;
+    border-radius: 8px;
+}
+
+/***************
+    QComboBox
+***************/
+
+QComboBox {
+    border: 1px solid @borderColor;
+    border-radius: 6;
+    background-color: @color01;
+    padding: 6 12;
+    font-size: 10pt;
+    color: @color05;
+    min-width: 100;
+}
+
+QComboBox:hover {
+    border-color: @color04;
+}
+
+QComboBox::drop-down {
+    background-color: transparent;
+    subcontrol-position: top right;
+    width: 20;
+    padding: 0 6;
+    border: 0;
+    border-top-right-radius: 6;
+    border-bottom-right-radius: 6;
+}
+
+QComboBox::down-arrow {
+    image: url(:/static/themes/common/img/chevron-down.svg);
+    width: 10;
+    height: 6;
+}
+
+QComboBox QAbstractItemView {
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+    selection-background-color: @accentColor;
+    selection-color: @color07;
+}
+
+/***************
+    QGroupBox
+***************/
+
+QGroupBox::title {
+    font-size: 11pt;
+    font-weight: bold;
+    color: @color06;
+}
+
+/***************
+    QTableView
+***************/
+
+QTableView {
+    background-color: transparent;
+    selection-color: @color05;
+    color: @color05;
+    font-size: 10pt;
+    gridline-color: @borderColor;
+    border-radius: 6;
+}
+
+QTableView::item {
+    font-size: 10pt;
+    color: @color05;
+    padding: 8 6;
+    background-color: @color01;
+}
+
+QTableView::item:selected {
+    background-color: @color02;
+}
+
+QHeaderView::section {
+    background-color: @color02;
+    border-width: 0 0 1 0;
+    border-style: solid;
+    border-color: @borderColor;
+    font-size: 10pt;
+    color: @accentColor;
+    padding: 8 12;
+}
+
+QHeaderView::up-arrow {
+    image: url(:/static/themes/common/img/sort-asc.svg);
+    width: 10;
+    height: 8;
+}
+
+QHeaderView::down-arrow {
+    image: url(:/static/themes/common/img/sort-dsc.svg);
+    width: 10;
+    height: 8;
+}
+
+/******************
+    QMainWindow
+*******************/
+
+QMainWindow * {
+    font-family: "Ubuntu", system-ui, sans-serif;
+}
+
+QLineEdit,
+QPlainTextEdit,
+QSpinBox,
+QDoubleSpinBox {
+    border: 1px solid @borderColor;
+    border-radius: 6;
+    padding: 8;
+    background-color: @color01;
+    font-size: 10pt;
+    color: @color05;
+}
+
+QLineEdit:focus,
+QPlainTextEdit:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border-color: @accentColor;
+}
+
+QPushButton {
+    border-radius: 6;
+    font-size: 10pt;
+    padding: 8 16;
+    min-height: 18;
+}
+
+QPushButton[accessibleName="danger"] {
+    background-color: @destructiveColor;
+    color: @color07;
+    border: 0;
+}
+
+QPushButton[accessibleName="danger"]:hover {
+    background-color: @color09;
+}
+
+QPushButton[accessibleName="primary"] {
+    background-color: @accentColor;
+    color: @color07;
+    border: 0;
+}
+
+QPushButton[accessibleName="primary"]:hover {
+    background-color: @accentHover;
+}
+
+QLabel[accessibleName="dialog-title"] {
+    color: @color05;
+    font-size: 12pt;
+    font-weight: bold;
+    padding-bottom: 8;
+    border: 0;
+    border-bottom: 1px solid @borderColor;
+}
+
+#lblErrorMsg {
+    color: @destructiveColor;
+}
+
+/**************
+    Sidebar
+***************/
+
+#sidebar {
+    background-color: @sidebar;
+    min-width: 200;
+    max-width: 200;
+    border-right: 1px solid @borderColor;
+}
+
+#sidebar QPushButton {
+    border: 0;
+    height: 36;
+    border-radius: 6;
+    color: @color05;
+    margin: 1 8;
+    padding: 0 12;
+    text-align: left;
+    font-size: 10pt;
+}
+
+#sidebar QPushButton:checked {
+    background-color: @accentColor;
+    color: @color07;
+}
+
+#sidebar QPushButton:hover:!checked {
+    background-color: @color02;
+}
+
+#pageTitle {
+    color: @color05;
+    font-size: 12pt;
+    font-weight: bold;
+    padding: 12 0;
+    margin: 0 12;
+    border: 0;
+    border-bottom: 1px solid @borderColor;
+}
+
+#pageContent {
+    background-color: @pageContent;
+}
+
+/********************
+    DASHBOARD PAGE
+*********************/
+
+/* - Circle Bar - */
+
+#widgetCircleBar {
+    background-color: @cardBg;
+    border-radius: 12;
+}
+
+#lblCircleChartTitle,
+#lblCircleChartValue {
+    color: @color05;
+    font-size: 13pt;
+    margin: 0;
+}
+
+/* - Line Bar - */
+
+#lineChartWidget {
+    background-color: @cardBg;
+    border-radius: 12;
+}
+
+#lblLineChartTitle {
+    color: @color05;
+    font-size: 13pt;
+}
+
+#lblLineChartValue {
+    color: @color05;
+    font-size: 13pt;
+}
+
+#lblLineChartTotal {
+    color: @color06;
+    font-size: 10pt;
+}
+
+#lineChartProgress {
+    background-color: @color02;
+    border: 0;
+    border-radius: 3;
+    max-height: 6;
+}
+
+#lineChartProgress::chunk {
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 @accentColor, stop:1 @accentHover);
+    border-radius: 3;
+}
+
+/* - Temperature Gauge - */
+
+#tempContainer {
+    background-color: @cardBg;
+    border-radius: 12;
+}
+
+#cmbTempSensor {
+    background-color: @color02;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+    padding: 4 8;
+    font-size: 10pt;
+}
+
+#cmbTempSensor::drop-down {
+    border: 0;
+    width: 20;
+}
+
+#cmbTempSensor QAbstractItemView {
+    background-color: @color01;
+    color: @color05;
+    border: 1px solid @borderColor;
+    selection-background-color: @color02;
+}
+
+/* - System Info - */
+
+#lblSystemInfoTitle {
+    color: @color05;
+    font-size: 13pt;
+    padding-left: 5;
+}
+
+#listViewSystemInfo {
+    border: 0;
+    background-color: transparent;
+    font-size: 11pt;
+    color: @color06;
+}
+
+/**************************
+    SYSTEM CLEANER PAGE
+***************************/
+
+#cleanerCategories QCheckBox[accessibleName=circle]::indicator {
+    width: 26;
+    height: 26;
+}
+
+#cleanerCategories QLabel,
+#checkSelectAllSystemScan {
+    font-size: 11pt;
+    color: @color05;
+}
+
+/* - System Scan Button - */
+
+#SystemCleanerPage #btnScan {
+    border: 0;
+    border-radius: 6px;
+    background-color: @accentColor;
+    color: #ffffff;
+    font-size: 12pt;
+    font-weight: bold;
+    padding: 8px 24px;
+}
+
+#SystemCleanerPage #btnScan:hover {
+    background-color: @accentHover;
+}
+
+/* - System Clean Button - */
+
+#SystemCleanerPage #btnClean {
+    border: 0;
+    background: url(:/static/themes/@themeName/img/clean.png) no-repeat center;
+}
+
+#SystemCleanerPage #btnClean:hover {
+    background: url(:/static/themes/@themeName/img/clean-active.png) no-repeat center;
+}
+
+/* - System Scan Results - */
+
+#btnBackToCategories {
+    border: 0;
+    font-size: 11pt;
+    color: @accentColor;
+}
+
+#treeWidgetScanResult {
+    border: 1px solid @borderColor;
+    background-color: transparent;
+    border-radius: 6;
+}
+
+#treeWidgetScanResult QHeaderView::section {
+    border-top: 1;
+}
+
+#treeWidgetScanResult::item {
+    border-bottom: 1px solid @borderColor;
+    padding: 8 6;
+    font-size: 10pt;
+    color: @color11;
+}
+
+#treeWidgetScanResult::indicator {
+    width: 14;
+    height: 14;
+}
+
+#treeWidgetScanResult::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+#treeWidgetScanResult::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#treeWidgetScanResult::branch:has-children:!has-siblings:closed,
+#treeWidgetScanResult::branch:closed:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-right.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetScanResult::branch:open:has-children:!has-siblings,
+#treeWidgetScanResult::branch:open:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-down.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetScanResult::branch {
+    border-bottom: 1px solid @borderColor;
+}
+
+#lblRemovedTotalSize {
+    font-size: 11pt;
+    color: @successColor;
+}
+
+/************************
+    STARTUP APPS PAGE
+*************************/
+#listWidgetStartup {
+    background-color: transparent;
+}
+
+#lblStartupAppsTitle {
+    color: @color11;
+    padding: 10 0 10 12;
+}
+
+/* - Startup App - */
+
+#widgetStartupApp {
+    border-radius: 12;
+    background-color: @cardBg;
+}
+
+#lblStartupAppIcon {
+    image: url(:/static/themes/@themeName/img/app.png);
+}
+
+#widgetStartupApp:hover {
+    background-color: @color02;
+}
+
+#widgetStartupApp #lblStartupAppName {
+    font-size: 10pt;
+    color: @color05;
+}
+
+#checkStartup {
+    margin-top: 3;
+}
+
+#widgetStartupApp #btnDeleteStartupApp {
+    qproperty-icon: url(:/static/themes/@themeName/img/trash.png);
+    border: 0;
+}
+
+#widgetStartupApp #btnEditStartupApp {
+    qproperty-icon: url(:/static/themes/@themeName/img/edit.png);
+    border: 0;
+    margin-bottom: 2;
+}
+
+/* - Startup App Edit - */
+
+#StartupAppEdit {
+    background-color: @pageContent;
+}
+
+/**************************
+    SERVICES PAGE
+***************************/
+
+#ServicesPage QListWidget {
+    background-color: transparent;
+}
+
+#lblServicesTitle {
+    font-size: 11pt;
+    color: @color11;
+    padding: 10 0;
+}
+
+/* - Service Item - */
+
+#serviceItemWidget {
+    border-radius: 12;
+    background-color: @cardBg;
+}
+
+#serviceItemWidget:hover {
+    background-color: @color02;
+}
+
+#lblServiceIcon {
+    image: url(:/static/themes/@themeName/img/service.png);
+}
+
+#ServiceItem #lblServiceName {
+    font-size: 10pt;
+    color: @color05;
+}
+
+#ServiceItem #lblServiceDescription {
+    font-size: 9pt;
+    color: @color06;
+}
+
+#lblServiceStartupImg {
+    image: url(:/static/themes/@themeName/img/power.png);
+}
+
+#lblSystemRunningImg {
+    image: url(:/static/themes/@themeName/img/run.png);
+}
+
+/**********************
+    PROCESSES PAGE
+***********************/
+
+#lblProcessTitle {
+    color: @color11;
+    padding: 10 0;
+    font-size: 11pt;
+}
+
+#checkAllProcesses {
+    margin-top: 2;
+    color: @color12;
+    font-size: 10pt;
+}
+
+#checkAllProcesses::indicator {
+    width: 14;
+    height: 14;
+}
+
+#txtProcessSearch {
+    width: 180;
+    padding: 6 12;
+    border-radius: 6;
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    color: @color05;
+}
+
+#lblRefresh {
+    color: @color12;
+    font-size: 10pt;
+}
+
+#sliderRefresh {
+    margin-top: 3;
+}
+
+/************************
+    UNINSTALLER PAGE
+*************************/
+
+#nav QPushButton {
+    border-radius: 6;
+    padding: 6 12;
+    font-size: 10pt;
+    background-color: @color01;
+    color: @color05;
+    border: 1px solid @borderColor;
+}
+
+#nav QPushButton:hover,
+#nav QPushButton:checked {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
+#lblPackagesTitle {
+    color: @color11;
+    padding: 10 0;
+    font-size: 11pt;
+}
+
+#txtPackageSearch,
+#txtSearchAptSource {
+    padding: 6 12;
+    border-radius: 6;
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    color: @color05;
+}
+
+/* -- Package tree (Uninstaller + Homebrew) -- table style matching System Cleaner -- */
+
+#treeWidgetPackages {
+    border: 1px solid @borderColor;
+    background-color: transparent;
+    border-radius: 6;
+    font-size: 10pt;
+}
+
+#treeWidgetPackages QHeaderView::section {
+    border-top: 1;
+}
+
+#treeWidgetPackages::item {
+    border-bottom: 1px solid @borderColor;
+    padding: 8 6;
+    font-size: 10pt;
+    color: @color11;
+}
+
+#treeWidgetPackages::indicator {
+    width: 14;
+    height: 14;
+}
+
+#treeWidgetPackages::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#treeWidgetPackages::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+#treeWidgetPackages::branch:has-children:!has-siblings:closed,
+#treeWidgetPackages::branch:closed:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-right.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetPackages::branch:open:has-children:!has-siblings,
+#treeWidgetPackages::branch:open:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-down.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetPackages::branch {
+    border-bottom: 1px solid @borderColor;
+}
+
+/* -- Snap package list (card style, unchanged) -- */
+
+#listWidgetSnapPackages {
+    border: 0;
+    background-color: transparent;
+    font-size: 10pt;
+}
+
+#listWidgetSnapPackages::indicator {
+    width: 16;
+    height: 16;
+}
+
+#listWidgetSnapPackages::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#listWidgetSnapPackages::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+#listWidgetSnapPackages::item {
+    border-radius: 8;
+    min-height: 36;
+    background-color: @cardBg;
+    margin: 1 0;
+}
+
+#listWidgetSnapPackages::item:text {
+    color: @color05;
+    padding-left: 12;
+}
+
+#listWidgetSnapPackages::item:selected {
+    background-color: @color02;
+    border: 0;
+}
+
+#listWidgetSnapPackages::item:hover {
+    background-color: @color02;
+}
+
+/****************
+    HISTORIES
+*****************/
+
+#charts {
+    background-color: @pageContent;
+}
+
+#lblHistoryTitle {
+    font-size: 11pt;
+    margin: 6 0 10 0;
+    color: @color12;
+}
+
+#checkHistoryTitle::indicator {
+    width: 16;
+    height: 16;
+}
+
+#checkHistoryTitle::indicator:unchecked {
+    image: url(:/static/themes/@themeName/img/fit.png);
+}
+
+#checkHistoryTitle::indicator:checked {
+    image: url(:/static/themes/@themeName/img/collapse.png);
+}
+
+/***************
+    SETTINGS
+****************/
+
+#SettingsPage QLabel {
+    font-size: 10pt;
+    color: @color12;
+}
+
+#lblCreatedBy {
+    font-size: 9pt;
+    color: @color06;
+}
+
+/*****************
+    UPDATE BAR
+******************/
+
+#widgetUpdateBar {
+    background-color: @accentColor;
+    border-radius: 6;
+}
+
+#lblUpdateBarText {
+    font-size: 10pt;
+    color: @color07;
+}
+
+#btnDownloadUpdate {
+    background-color: @color01;
+    padding: 2 10;
+    border-radius: 4;
+    font-size: 9pt;
+    max-height: 22px;
+}
+
+/****************
+    FEEDBACK
+*****************/
+
+#Feedback {
+    background-color: @pageContent;
+}
+
+/**************************
+    APT SOURCE MANAGER PAGE
+***************************/
+#listWidgetAptSources {
+    background-color: transparent;
+}
+
+#lblAptSourceTitle {
+    color: @color11;
+    padding: 10 0 5 12;
+}
+
+#txtAptSource {
+    padding: 8;
+}
+
+#lblAptSourceSelectInfo {
+    margin-top: 5;
+    font-size: 10pt;
+    color: @color05;
+}
+
+#listWidgetAptSources {
+    selection-background-color: @accentColor;
+}
+
+/* - APT Source Repository Item - */
+
+#aptSourceRepositoryItemWidget {
+    border-radius: 12;
+    background-color: @cardBg;
+}
+
+#lblAptSourceIcon {
+    image: url(:/static/themes/@themeName/img/ppa-repository.png);
+}
+
+#aptSourceRepositoryItemWidget:hover {
+    background-color: @color02;
+}
+
+#lblAptSourceName {
+    font-size: 10pt;
+    color: @color05;
+}
+
+#checkAptSource {
+    margin-top: 3;
+}
+
+/* - APT Source Repository Item Edit - */
+
+#APTSourceEdit {
+    background-color: @pageContent;
+}
+
+/**************************
+    GNOME SETTINGS PAGE
+***************************/
+
+#GnomeSettingsPage QLabel {
+    font-size: 10pt;
+    color: @color12;
+}
+
+#GnomeSettingsPage QGroupBox {
+    border: 1px solid @borderColor;
+    border-radius: 12;
+    margin-top: 12;
+    padding: 12 12 6 12;
+    background-color: @cardBg;
+}
+
+#GnomeSettingsPage QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: @color05;
+    font-size: 11pt;
+    font-weight: bold;
+}
+
+/* Tab nav buttons */
+#GnomeSettingsPage QPushButton[accessibleName="navBtn"] {
+    border-radius: 6;
+    padding: 6 12;
+    font-size: 10pt;
+    background-color: @color01;
+    color: @color05;
+    border: 1px solid @borderColor;
+}
+
+#GnomeSettingsPage QPushButton[accessibleName="navBtn"]:hover,
+#GnomeSettingsPage QPushButton[accessibleName="navBtn"]:checked {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
+/* Browse buttons */
+#btnBrowseWallpaper,
+#btnBrowseWallpaperDark {
+    background-color: @color01;
+    padding: 6 12;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+}
+
+#btnBrowseWallpaper:hover,
+#btnBrowseWallpaperDark:hover {
+    border-color: @color04;
+}
+
+/* Speed value labels */
+#GnomeSettingsPage #lblMouseSpeedVal,
+#GnomeSettingsPage #lblTouchpadSpeedVal {
+    color: @color05;
+    font-weight: bold;
+}
+
+/*******************************
+SEARCH
+*******************************/
+#txtSearchInput {
+    padding: 6 12;
+    border-radius: 6;
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    color: @color05;
+}
+
+#btnSearchAdvance {
+    padding: 6 12;
+    background-color: @accentColor;
+    color: @color07;
+    border-radius: 6;
+}
+
+#lblFoundFilesInfo {
+    color: @successColor;
+}
+
+#lblSearchDir {
+    font-size: 10pt;
+    color: @color06;
+}
+
+#btnBrowseSearchDir {
+    background-color: @color01;
+    padding: 6 12;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+}
+
+#advanceSearchPane QSpinBox {
+    padding: 4 6;
+}
+
+#advanceSearchPane QCheckBox[accessibleName="circle"]::indicator {
+    width: 15px;
+    height: 15px;
+}
+
+#advanceSearchPane QLabel {
+    color: @color06;
+}
+
+#advanceSearchPane QLineEdit {
+    padding: 4 6;
+}
+
+#btnAdvancePaneToggle,
+#btnNewHost {
+    font-size: 10pt;
+    color: @accentColor;
+    border: 0;
+}
+
+#lblHostTitle {
+    font-size: 11pt;
+    color: @color12;
+}

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
-project(Stacer VERSION 2.1.3)
+project(Nexis VERSION 1.0.1)
 
 # Adding features(build cache + faster linkers) and reasonable defaults(Debug build by default)
 include("${CMAKE_CURRENT_SOURCE_DIR}/shared/cmake/cxxbasics/CXXBasics.cmake")
@@ -30,10 +30,10 @@ else()
 endif()
 
 # ============================================================================
-# stacer-core (static library) — shared + platform sources
+# nexis-core (static library) — shared + platform sources
 # ============================================================================
-set(CORE_SHARED_DIR "${SHARED_DIR}/stacer-core")
-set(CORE_PLAT_DIR   "${PLATFORM_DIR}/stacer-core")
+set(CORE_SHARED_DIR "${SHARED_DIR}/nexis-core")
+set(CORE_PLAT_DIR   "${PLATFORM_DIR}/nexis-core")
 
 # Include dirs: platform first (so platform headers shadow shared when both exist)
 include_directories(
@@ -52,28 +52,28 @@ file(GLOB_RECURSE CORE_SHARED_HDRS "${CORE_SHARED_DIR}/**.h")
 file(GLOB_RECURSE CORE_PLAT_SRCS   "${CORE_PLAT_DIR}/**.cpp")
 file(GLOB_RECURSE CORE_PLAT_HDRS   "${CORE_PLAT_DIR}/**.h")
 
-add_definitions(-DSTACERCORE_LIBRARY)
+add_definitions(-DNEXISCORE_LIBRARY)
 
 find_package(Qt6 COMPONENTS Core Network REQUIRED)
 
-add_library(stacer-core STATIC
+add_library(nexis-core STATIC
   ${CORE_SHARED_SRCS} ${CORE_SHARED_HDRS}
   ${CORE_PLAT_SRCS}   ${CORE_PLAT_HDRS}
 )
-target_link_libraries(stacer-core Qt6::Core Qt6::Network)
+target_link_libraries(nexis-core Qt6::Core Qt6::Network)
 
 # macOS-specific frameworks needed for system info APIs (IOKit, CoreFoundation)
 if(APPLE)
   find_library(IOKIT_FRAMEWORK IOKit)
   find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
-  target_link_libraries(stacer-core ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK})
+  target_link_libraries(nexis-core ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK})
 endif()
 
 # ============================================================================
-# stacer (executable) — shared + platform GUI sources
+# nexis (executable) — shared + platform GUI sources
 # ============================================================================
-set(GUI_SHARED_DIR "${SHARED_DIR}/stacer")
-set(GUI_PLAT_DIR   "${PLATFORM_DIR}/stacer")
+set(GUI_SHARED_DIR "${SHARED_DIR}/nexis")
+set(GUI_PLAT_DIR   "${PLATFORM_DIR}/nexis")
 
 # Include dirs (platform first, then shared)
 include_directories(
@@ -106,9 +106,9 @@ file(GLOB_RECURSE GUI_SHARED_HDRS "${GUI_SHARED_DIR}/**.h")
 file(GLOB_RECURSE GUI_PLAT_SRCS   "${GUI_PLAT_DIR}/**.cpp")
 
 # Translations
-file(GLOB_RECURSE STACER_TRANSLATIONS "${SHARED_DIR}/translations/**.ts")
+file(GLOB_RECURSE NEXIS_TRANSLATIONS "${SHARED_DIR}/translations/**.ts")
 find_package(Qt6 COMPONENTS LinguistTools)
-qt_create_translation(QM_FILES STACER_TRANSLATIONS ${GUI_SHARED_SRCS} ${GUI_PLAT_SRCS})
+qt_create_translation(QM_FILES NEXIS_TRANSLATIONS ${GUI_SHARED_SRCS} ${GUI_PLAT_SRCS})
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${QM_FILES}")
 
 set(CMAKE_AUTOUIC ON)
@@ -133,11 +133,11 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
 
 # macOS app icon
 if(APPLE)
-  set(MACOS_ICON "${CMAKE_SOURCE_DIR}/macos/stacer.icns")
+  set(MACOS_ICON "${CMAKE_SOURCE_DIR}/macos/nexis.icns")
   set_source_files_properties("${MACOS_ICON}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 endif()
 
-add_executable(stacer
+add_executable(nexis
   ${GUI_SHARED_SRCS}
   ${GUI_SHARED_HDRS}
   ${GUI_PLAT_SRCS}
@@ -146,8 +146,8 @@ add_executable(stacer
   $<$<PLATFORM_ID:Darwin>:${MACOS_ICON}>
 )
 
-target_link_libraries(stacer
-  stacer-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent
+target_link_libraries(nexis
+  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent
 )
 
 # Derive version from git describe at build time (e.g. "2.0.1+29.g3e36629")
@@ -174,13 +174,13 @@ else()
   set(APP_VERSION "${PROJECT_VERSION}")
 endif()
 message(STATUS "App version: ${APP_VERSION}")
-target_compile_definitions(stacer PRIVATE "APP_VERSION=\"${APP_VERSION}\"")
+target_compile_definitions(nexis PRIVATE "APP_VERSION=\"${APP_VERSION}\"")
 
 # Strict aliasing fix for Qt + LTO
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"
    OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
    OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-  target_compile_options(stacer PRIVATE "-fno-strict-aliasing")
+  target_compile_options(nexis PRIVATE "-fno-strict-aliasing")
 endif()
 
 # ============================================================================
@@ -188,17 +188,17 @@ endif()
 # ============================================================================
 if(APPLE)
   # macOS: Build as a .app bundle
-  set_target_properties(stacer PROPERTIES
+  set_target_properties(nexis PROPERTIES
     MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.stacer.app"
-    MACOSX_BUNDLE_BUNDLE_NAME "Stacer"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "com.nexis.app"
+    MACOSX_BUNDLE_BUNDLE_NAME "Nexis"
     MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
-    MACOSX_BUNDLE_ICON_FILE "stacer"
+    MACOSX_BUNDLE_ICON_FILE "nexis"
   )
 
   install(
-    TARGETS stacer
+    TARGETS nexis
     CONFIGURATIONS Release RelWithDebInfo MinSizeRel
     BUNDLE DESTINATION .
     RUNTIME DESTINATION bin
@@ -206,13 +206,13 @@ if(APPLE)
 else()
   # Linux: Install binary, .desktop file, and icon
   install(
-    TARGETS stacer
+    TARGETS nexis
     CONFIGURATIONS Release RelWithDebInfo MinSizeRel
     RUNTIME DESTINATION bin
   )
 
   install(
-    FILES "${PLATFORM_DIR}/applications/stacer.desktop"
+    FILES "${PLATFORM_DIR}/applications/nexis.desktop"
     DESTINATION share/applications
     CONFIGURATIONS Release RelWithDebInfo MinSizeRel
   )
@@ -221,6 +221,6 @@ else()
     FILES "${GUI_SHARED_DIR}/static/logo.png"
     DESTINATION share/icons
     CONFIGURATIONS Release RelWithDebInfo MinSizeRel
-    RENAME stacer.png
+    RENAME nexis.png
   )
 endif()

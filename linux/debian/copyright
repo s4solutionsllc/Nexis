@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: stacer
-Source: https://github.com/lsimpsonsfdc/Stacer/
+Upstream-Name: nexis
+Source: https://github.com/lsimpsonsfdc/Nexis/
 
 Files: *
 Copyright: 2017-2019 Oguzhan INAN <oguzhan3488@gmail.com>

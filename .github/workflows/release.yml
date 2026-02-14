@@ -62,8 +62,8 @@ jobs:
       - name: Collect .deb file
         id: deb
         run: |
-          cp ../stacer_*.deb .
-          DEB=$(ls stacer_*.deb | head -1)
+          cp ../nexis_*.deb .
+          DEB=$(ls nexis_*.deb | head -1)
           echo "DEB_PATH=$DEB" >> "$GITHUB_OUTPUT"
           echo "DEB_NAME=$DEB" >> "$GITHUB_OUTPUT"
 
@@ -84,15 +84,15 @@ jobs:
         run: |
           ./linuxdeploy-x86_64.AppImage \
             --appdir AppDir \
-            --desktop-file AppDir/usr/share/applications/stacer.desktop \
-            --icon-file AppDir/usr/share/icons/stacer.png \
+            --desktop-file AppDir/usr/share/applications/nexis.desktop \
+            --icon-file AppDir/usr/share/icons/nexis.png \
             --plugin qt \
             --output appimage
 
       - name: Find AppImage file
         id: appimage
         run: |
-          APPIMAGE=$(ls Stacer-*.AppImage | head -1)
+          APPIMAGE=$(ls Nexis-*.AppImage | head -1)
           echo "APPIMAGE_PATH=$APPIMAGE" >> "$GITHUB_OUTPUT"
           echo "APPIMAGE_NAME=$(basename $APPIMAGE)" >> "$GITHUB_OUTPUT"
 
@@ -103,7 +103,7 @@ jobs:
           path: |
             ${{ steps.deb.outputs.DEB_PATH }}
             ${{ steps.appimage.outputs.APPIMAGE_PATH }}
-            build/output/stacer
+            build/output/nexis
 
   # ============================================================================
   # macOS build: .app bundle + .dmg
@@ -131,26 +131,26 @@ jobs:
 
       - name: Deploy Qt frameworks into .app bundle
         run: |
-          $(brew --prefix qt@6)/bin/macdeployqt build/output/stacer.app
+          $(brew --prefix qt@6)/bin/macdeployqt build/output/nexis.app
           # macdeployqt modifies the binary and frameworks, invalidating the
           # ad-hoc code signature. Re-sign so macOS doesn't kill the process
           # with "Code Signature Invalid" (SIGKILL) on launch.
-          codesign --force --deep --sign - build/output/stacer.app
+          codesign --force --deep --sign - build/output/nexis.app
           # Now create the .dmg from the properly signed bundle
-          hdiutil create -volname "Stacer" -srcfolder build/output/stacer.app \
-            -ov -format UDZO build/output/stacer.dmg
+          hdiutil create -volname "Nexis" -srcfolder build/output/nexis.app \
+            -ov -format UDZO build/output/nexis.dmg
 
       - name: Rename .dmg with version
         id: dmg
         run: |
-          mv build/output/stacer.dmg build/output/Stacer-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
-          echo "DMG_NAME=Stacer-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg" >> "$GITHUB_OUTPUT"
+          mv build/output/nexis.dmg build/output/Nexis-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
+          echo "DMG_NAME=Nexis-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg" >> "$GITHUB_OUTPUT"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifacts
-          path: build/output/Stacer-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
+          path: build/output/Nexis-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
 
   # ============================================================================
   # Create GitHub Release with all artifacts
@@ -181,7 +181,7 @@ jobs:
         run: |
           DEB=$(find artifacts/linux -name '*.deb' | head -1)
           APPIMAGE=$(find artifacts/linux -name '*.AppImage' | head -1)
-          BINARY=$(find artifacts/linux -name 'stacer' -not -name '*.app' -not -name '*.dmg' | head -1)
+          BINARY=$(find artifacts/linux -name 'nexis' -not -name '*.app' -not -name '*.dmg' | head -1)
           DMG=$(find artifacts/macos -name '*.dmg' | head -1)
           echo "DEB_PATH=$DEB" >> "$GITHUB_OUTPUT"
           echo "DEB_NAME=$(basename $DEB)" >> "$GITHUB_OUTPUT"
@@ -194,10 +194,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Stacer ${{ github.ref_name }}
+          name: Nexis ${{ github.ref_name }}
           generate_release_notes: false
           body: |
-            ## Stacer ${{ github.ref_name }}
+            ## Nexis ${{ github.ref_name }}
 
             ### What's New since v2.1.2
 
@@ -234,7 +234,7 @@ jobs:
             |--------|------|-------------|
             | `.deb` | `${{ steps.files.outputs.DEB_NAME }}` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |
             | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_NAME }}` | Portable — runs on any Linux distro |
-            | Binary | `stacer` | Standalone executable (requires Qt6 runtime) |
+            | Binary | `nexis` | Standalone executable (requires Qt6 runtime) |
 
             #### macOS (Apple Silicon)
             | Format | File | Description |
@@ -254,7 +254,7 @@ jobs:
             sudo apt-get install -f
 
             # Launch
-            stacer
+            nexis
             ```
 
             #### Linux — AppImage (Any Distro)
@@ -273,23 +273,23 @@ jobs:
               qt6-tools-dev qt6-l10n-tools libgl1-mesa-dev
 
             # Build
-            git clone https://github.com/lsimpsonsfdc/Stacer.git
-            cd Stacer && mkdir build && cd build
+            git clone https://github.com/lsimpsonsfdc/Nexis.git
+            cd Nexis && mkdir build && cd build
             cmake -DCMAKE_BUILD_TYPE=Release ..
             make -j$(nproc)
 
             # Run
-            ./output/stacer
+            ./output/nexis
             ```
 
             #### macOS — `.dmg`
             1. Download `${{ steps.files.outputs.DMG_NAME }}`
-            2. Open the `.dmg` and drag **Stacer** to your **Applications** folder
+            2. Open the `.dmg` and drag **Nexis** to your **Applications** folder
             3. Remove the quarantine attribute (required for unsigned apps):
                ```bash
-               xattr -cr /Applications/Stacer.app
+               xattr -cr /Applications/Nexis.app
                ```
-            4. Double-click **Stacer** in Applications to launch
+            4. Double-click **Nexis** in Applications to launch
 
             #### macOS — Build from Source
             ```bash
@@ -297,13 +297,13 @@ jobs:
             brew install qt@6 cmake adwaita-icon-theme
 
             # Build
-            git clone https://github.com/lsimpsonsfdc/Stacer.git
-            cd Stacer && mkdir build && cd build
+            git clone https://github.com/lsimpsonsfdc/Nexis.git
+            cd Nexis && mkdir build && cd build
             cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) ..
             make -j$(sysctl -n hw.ncpu)
 
             # Run
-            open output/stacer.app
+            open output/nexis.app
             ```
 
             ---

@@ -1,4 +1,4 @@
-Source: stacer
+Source: nexis
 Section: utils
 Priority: optional
 Maintainer: Luke Simpson <luke@lsimpsonsfdc.com>
@@ -13,14 +13,14 @@ Build-Depends: debhelper-compat (= 13),
                qt6-l10n-tools,
                libgl1-mesa-dev
 Standards-Version: 4.6.2
-Homepage: https://github.com/lsimpsonsfdc/Stacer
-Vcs-Browser: https://github.com/lsimpsonsfdc/Stacer.git
+Homepage: https://github.com/lsimpsonsfdc/Nexis
+Vcs-Browser: https://github.com/lsimpsonsfdc/Nexis.git
 
-Package: stacer
+Package: nexis
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Recommends: systemd, curl, adwaita-icon-theme | yaru-theme-icon
 Description: Linux System Optimizer and Monitoring
- Stacer is an open-source system optimizer and application monitor
+ Nexis is an open-source system optimizer and application monitor
  that helps users manage startup applications, clean system caches,
  monitor resources, and manage services and packages.
