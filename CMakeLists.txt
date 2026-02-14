@@ -218,7 +218,7 @@ else()
   )
 
   install(
-    FILES "${GUI_SHARED_DIR}/static/logo.png"
+    FILES "${CMAKE_SOURCE_DIR}/icons/hicolor/256x256/apps/nexis.png"
     DESTINATION share/icons
     CONFIGURATIONS Release RelWithDebInfo MinSizeRel
     RENAME nexis.png
