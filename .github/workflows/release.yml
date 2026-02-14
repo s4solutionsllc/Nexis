@@ -199,31 +199,16 @@ jobs:
           body: |
             ## Nexis ${{ github.ref_name }}
 
-            ### What's New since v2.1.2
+            **Nexis** is a cross-platform system optimizer and monitoring tool for Linux and macOS, forked from [Stacer](https://github.com/oguzhaninan/Stacer) and independently developed.
 
-            #### Features
-            - **External Disk Analyzer launcher (FR-23)** — Replaced the built-in pie chart with a launcher for the user's preferred disk analysis tool (Filelight, Baobab, ncdu, etc.).
-            - **Configurable disk analyzer preference (FR-24)** — New Settings option to choose which disk analyzer tool to launch.
-            - **Dev Tool Caches cleaning (FR-03)** — New System Cleaner category covering npm, pip, Cargo, Go, Maven, Gradle, CocoaPods, Composer, NuGet, and Dart/Flutter caches.
+            ### Highlights
 
-            #### Bug Fixes
-            - **Background threads now join on exit (BUG-05)** — Prevents unclean shutdown and potential crashes on quit.
-            - **System Cleaner checkbox state fix (BUG-19)** — File selection checkboxes now correctly toggle.
-            - **System Cleaner minimum size threshold (BUG-20)** — Scan results now respect the configured minimum size filter.
-            - **Homebrew tree view theme styling (BUG-21)** — The Homebrew tree in APT Source Manager now inherits the active theme.
-
-            ---
-
-            ### Full Changelog since v2.1.2
-
-            | Commit | Summary |
-            |--------|---------|
-            | `54af3a8` | Fix Homebrew tree view theme styling (BUG-21) |
-            | `842bf80` | Add Dev Tool Caches category and fix UI bugs (FR-03, BUG-19, BUG-20) |
-            | `e2dbd93` | Add configurable disk analyzer preference (FR-24) |
-            | `7d7c6da` | Use primary button styling for disk launcher action |
-            | `0b643ff` | Replace custom disk analyzer with external tool launcher (FR-23) |
-            | `be20f48` | Wait for background threads on exit (BUG-05) |
+            - Complete rebrand from Stacer to Nexis
+            - Native macOS support (Apple Silicon)
+            - Light and dark theme support with auto-detection
+            - System Cleaner with Dev Tool Caches category (npm, pip, Cargo, Go, Maven, etc.)
+            - External disk analyzer launcher (Filelight, Baobab, ncdu, etc.)
+            - Improved SVG icons and UI polish
 
             ---
 
