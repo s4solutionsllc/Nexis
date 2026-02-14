@@ -29,11 +29,14 @@ Fix swapped memory variables (BUG-01)
 
 ## Build
 
+**EXECUTE WITHOUT ASKING:** Run `cmake` and `make` commands automatically when the user asks for a build or rebuild. Do not prompt for confirmation.
+
 ```bash
-# From project root
-mkdir -p build && cd build
-cmake ..
-make -j$(nproc)
+# Clean rebuild (from project root)
+rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) && cmake --build build -j$(sysctl -n hw.ncpu)
+
+# Incremental rebuild
+cmake --build build -j$(sysctl -n hw.ncpu)
 ```
 
 ## Key Directories

@@ -26,10 +26,15 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
 
 void SystemCleanerPage::init()
 {
-    // Set category icons from system theme with bundled Adwaita SVG fallbacks
+    // Set category icons from system theme with bundled SVG fallbacks.
+    // Render at exactly 64×64 and enable scaledContents so the label
+    // always shows the full image regardless of intrinsic SVG size.
     auto setThemePixmap = [](QLabel *lbl, const QString &themeName, const QString &fallback) {
         QIcon icon = QIcon::fromTheme(themeName, QIcon(fallback));
-        lbl->setPixmap(icon.pixmap(64, 64));
+        QPixmap pm = icon.pixmap(QSize(64, 64));
+        lbl->setFixedSize(64, 64);
+        lbl->setScaledContents(true);
+        lbl->setPixmap(pm);
     };
     setThemePixmap(ui->lblPackageCacheImg, "package-x-generic",  ":/static/themes/common/img/c_package.svg");
     setThemePixmap(ui->lblCrashReportsImg, "dialog-warning",     ":/static/themes/common/img/c_crash.svg");

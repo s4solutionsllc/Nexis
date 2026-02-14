@@ -26,10 +26,14 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
 
 void SystemCleanerPage::init()
 {
-    // macOS: use bundled Adwaita-style SVGs directly — the system icon theme
-    // only provides greyscale symbolic icons that Qt can't recolor.
+    // macOS: use bundled SVGs directly — the system icon theme only provides
+    // greyscale symbolic icons that Qt can't recolor.  Render at exactly 64×64
+    // and enable scaledContents so the label always shows the full image.
     auto setPixmap = [](QLabel *lbl, const QString &svgPath) {
-        lbl->setPixmap(QIcon(svgPath).pixmap(64, 64));
+        QPixmap pm = QIcon(svgPath).pixmap(QSize(64, 64));
+        lbl->setFixedSize(64, 64);
+        lbl->setScaledContents(true);
+        lbl->setPixmap(pm);
     };
     setPixmap(ui->lblPackageCacheImg, ":/static/themes/common/img/c_package.svg");
     setPixmap(ui->lblCrashReportsImg, ":/static/themes/common/img/c_crash.svg");
