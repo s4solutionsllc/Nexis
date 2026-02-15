@@ -186,12 +186,4 @@ void GpuInfo::updateGpuInfo()
     }
 }
 
-QList<GpuDevice> GpuInfo::getGpuDevices() const
-{
-    return mDevices;
-}
-
-bool GpuInfo::hasGpu() const
-{
-    return !mDevices.isEmpty();
-}
+// Getters (getGpuDevices, hasGpu) are in shared/nexis-core/Info/gpu_info_shared.cpp

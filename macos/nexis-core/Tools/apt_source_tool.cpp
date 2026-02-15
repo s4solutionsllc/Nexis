@@ -1,26 +1,12 @@
 #include "apt_source_tool.h"
 #include "Utils/command_util.h"
 #include "Utils/file_util.h"
+#include "Utils/brew_util.h"
 #include <QDebug>
-#include <QFileInfo>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
 #include <QRegularExpression>
 
 // On macOS, APT sources don't exist. This adapter maps the APTSource
 // interface to Homebrew installed packages (formulae + casks).
-
-// Homebrew binary path — checked at well-known locations since GUI apps
-// don't inherit the user's shell PATH.
-static QString findBrew()
-{
-    for (const QString &path : {"/opt/homebrew/bin/brew", "/usr/local/bin/brew"}) {
-        if (QFileInfo(path).isExecutable())
-            return path;
-    }
-    return QString();
-}
 
 bool AptSourceTool::checkSourceRepository()
 {
@@ -75,7 +61,6 @@ QList<APTSourcePtr> AptSourceTool::getSourceList()
     QList<APTSourcePtr> sourceList;
 
     try {
-        // Single call to get metadata (name + description) for all installed packages
         QString jsonOutput = CommandUtil::exec(findBrew(), {"info", "--json=v2", "--installed"}).trimmed();
         QJsonDocument doc = QJsonDocument::fromJson(jsonOutput.toUtf8());
 
@@ -84,43 +69,15 @@ QList<APTSourcePtr> AptSourceTool::getSourceList()
             return sourceList;
         }
 
-        QJsonObject root = doc.object();
-
-        // Installed formulae
-        QJsonArray formulae = root.value("formulae").toArray();
-        for (const QJsonValue &val : formulae) {
-            QJsonObject obj = val.toObject();
+        for (const BrewEntry &e : parseBrewJson(doc)) {
             APTSourcePtr source(new APTSource);
-            source->uri          = obj.value("name").toString();
+            source->uri          = e.identifier;
             source->isActive     = true;
-            source->isSource     = false;
-            source->distribution = "formula";
+            source->isSource     = e.isCask;
+            source->distribution = e.isCask ? "cask" : "formula";
             source->filePath     = "";
-
-            // "source" stores the display name (formula name is already readable)
-            source->source = obj.value("name").toString();
-            // "components" stores the description
-            source->components = obj.value("desc").toString();
-
-            sourceList.append(source);
-        }
-
-        // Installed casks
-        QJsonArray casks = root.value("casks").toArray();
-        for (const QJsonValue &val : casks) {
-            QJsonObject obj = val.toObject();
-            APTSourcePtr source(new APTSource);
-            source->uri          = obj.value("token").toString();   // e.g. "alt-tab"
-            source->isActive     = true;
-            source->isSource     = true;    // reuse to flag cask packages
-            source->distribution = "cask";
-            source->filePath     = "";
-
-            // Cask "name" is the human-friendly name (e.g. "AltTab")
-            QJsonArray names = obj.value("name").toArray();
-            source->source = names.isEmpty() ? source->uri : names.first().toString();
-            // "components" stores the description
-            source->components = obj.value("desc").toString();
+            source->source       = e.displayName;
+            source->components   = e.description;
 
             sourceList.append(source);
         }

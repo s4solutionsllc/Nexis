@@ -4,12 +4,7 @@
 #include <QRegularExpression>
 #include <QDir>
 
-Service::Service(const QString &name, const QString description, const bool status, const bool active) :
-    name(name),
-    description(description),
-    status(status),
-    active(active)
-{ }
+// Service constructor is in shared/nexis-core/Tools/service_tool_shared.cpp
 
 // macOS uses launchd (launchctl) instead of systemd (systemctl)
 // Services are defined as plist files in:

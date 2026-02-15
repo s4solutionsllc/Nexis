@@ -48,7 +48,4 @@ void ProcessInfo::updateProcesses()
     }
 }
 
-QList<Process> ProcessInfo::getProcessList() const
-{
-    return processList;
-}
+// getProcessList() is in shared/nexis-core/Info/process_info_shared.cpp

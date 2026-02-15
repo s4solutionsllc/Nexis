@@ -7,18 +7,7 @@
 #include <mach/mach_host.h>
 #include <mach/vm_statistics.h>
 
-MemoryInfo::MemoryInfo():
-    memTotal(0),
-    memFree(0),
-    memUsed(0),
-    buffers(0),
-    cached(0),
-    sreclaimable(0),
-    shmem(0),
-    swapTotal(0),
-    swapFree(0),
-    swapUsed(0)
-{ }
+// Constructor and getters are in shared/nexis-core/Info/memory_info_shared.cpp
 
 void MemoryInfo::updateMemoryInfo()
 {
@@ -61,34 +50,4 @@ void MemoryInfo::updateMemoryInfo()
         swapUsed = swapUsage.xsu_used;
         swapFree = swapUsage.xsu_avail;
     }
-}
-
-quint64 MemoryInfo::getSwapUsed() const
-{
-    return swapUsed;
-}
-
-quint64 MemoryInfo::getSwapFree() const
-{
-    return swapFree;
-}
-
-quint64 MemoryInfo::getSwapTotal() const
-{
-    return swapTotal;
-}
-
-quint64 MemoryInfo::getMemUsed() const
-{
-    return memUsed;
-}
-
-quint64 MemoryInfo::getMemFree() const
-{
-    return memFree;
-}
-
-quint64 MemoryInfo::getMemTotal() const
-{
-    return memTotal;
 }

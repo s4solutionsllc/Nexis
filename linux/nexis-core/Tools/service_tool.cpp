@@ -4,12 +4,7 @@
 #include <QRegularExpression>
 #include <QDir>
 
-Service::Service(const QString &name, const QString description, const bool status, const bool active) :
-    name(name),
-    description(description),
-    status(status),
-    active(active)
-{ }
+// Service constructor is in shared/nexis-core/Tools/service_tool_shared.cpp
 
 QList<Service> ServiceTool::getServicesWithSystemctl()
 {
