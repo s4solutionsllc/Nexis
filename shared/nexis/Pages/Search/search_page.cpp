@@ -226,7 +226,23 @@ void SearchPage::on_btnSearchAdvance_clicked()
         mFindQuery.append(QString("%1%2").arg(ui->cmbTimeCriteria->currentData().toString()).arg(ui->spinTime->value()));
     }
 
-    // PERMISSIONS (GNU find flags)
+    // PERMISSIONS — BSD find uses -perm +mode, GNU find uses -readable/-writable/-executable
+#ifdef Q_OS_MACOS
+    if (ui->checkPermReadable->isChecked()) {
+        mFindQuery.append("-perm");
+        mFindQuery.append("+r");
+    }
+
+    if (ui->checkPermWritable->isChecked()) {
+        mFindQuery.append("-perm");
+        mFindQuery.append("+w");
+    }
+
+    if (ui->checkPermExecutable->isChecked()) {
+        mFindQuery.append("-perm");
+        mFindQuery.append("+x");
+    }
+#else
     if (ui->checkPermReadable->isChecked()) {
         mFindQuery.append("-readable");
     }
@@ -238,6 +254,7 @@ void SearchPage::on_btnSearchAdvance_clicked()
     if (ui->checkPermExecutable->isChecked()) {
         mFindQuery.append("-executable");
     }
+#endif
 
     // SIZE
     if (ui->cmbSizeCriteria->currentData().toString() != "-1") {
@@ -389,7 +406,11 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
                 }
             }
             else if (action->data().toString() == "move-trash") {
+#ifdef Q_OS_MACOS
+                QString trashPath(QDir::homePath() + "/.Trash");
+#else
                 QString trashPath(QDir::homePath() + "/.local/share/Trash");
+#endif
 
                 while (! selectionModel->selectedRows().isEmpty()) {
                     QModelIndex index = selectionModel->selectedRows().first();
@@ -400,6 +421,21 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
                     QString filePath = folderPath + "/" + fileName;
 
                     bool isAnotherUser = QFileInfo(filePath).owner() != InfoManager::ins()->getUserName();
+#ifdef Q_OS_MACOS
+                    // macOS: move directly to ~/.Trash (no metadata files)
+                    if (isAnotherUser) {
+                        CommandUtil::sudoExec("mv", {filePath, trashPath});
+                    } else {
+                        CommandUtil::exec("mv", {filePath, trashPath});
+                    }
+
+                    if (QFile(filePath).exists()) {
+                        selectionModel->select(index, QItemSelectionModel::Deselect);
+                    } else {
+                        mSortFilterModel->removeRow(index.row());
+                    }
+#else
+                    // Linux: move to trash/files/ and create FreeDesktop .trashinfo metadata
                     if (isAnotherUser) {
                         CommandUtil::sudoExec("mv", {filePath, trashPath + "/files"});
                     } else {
@@ -419,6 +455,7 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
 
                         mSortFilterModel->removeRow(index.row());
                     }
+#endif
                 }
 
                 selectionModel->clearSelection();

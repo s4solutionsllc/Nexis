@@ -13,7 +13,11 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
     ui(new Ui::SystemCleanerPage),
     im(InfoManager::ins()),
     tmr(ToolManager::ins()),
+#ifdef Q_OS_MACOS
+    mDefaultIcon(QIcon(":/static/themes/common/img/package.png")),
+#else
     mDefaultIcon(QIcon::fromTheme("application-x-executable", QIcon(":/static/themes/common/img/package.png"))),
+#endif
     mLoadingMovie(nullptr),
     mLoadingMovie_2(nullptr)
 {
@@ -26,7 +30,24 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
 
 void SystemCleanerPage::init()
 {
-    // Set category icons from system theme with bundled SVG fallbacks.
+#ifdef Q_OS_MACOS
+    // macOS: use bundled SVGs directly — the system icon theme only provides
+    // greyscale symbolic icons that Qt can't recolor.  Render at exactly 64×64
+    // and enable scaledContents so the label always shows the full image.
+    auto setPixmap = [](QLabel *lbl, const QString &svgPath) {
+        QPixmap pm = QIcon(svgPath).pixmap(QSize(64, 64));
+        lbl->setFixedSize(64, 64);
+        lbl->setScaledContents(true);
+        lbl->setPixmap(pm);
+    };
+    setPixmap(ui->lblPackageCacheImg, ":/static/themes/common/img/c_package.svg");
+    setPixmap(ui->lblCrashReportsImg, ":/static/themes/common/img/c_crash.svg");
+    setPixmap(ui->lblLogImage,        ":/static/themes/common/img/c_logs.svg");
+    setPixmap(ui->lblAppCacheImg,     ":/static/themes/common/img/c_cache.svg");
+    setPixmap(ui->lblTrashImg,        ":/static/themes/common/img/c_trash.svg");
+    setPixmap(ui->lblDevToolCacheImg, ":/static/themes/common/img/c_devtools.svg");
+#else
+    // Linux: use system theme icons with bundled SVG fallbacks.
     // Render at exactly 64×64 and enable scaledContents so the label
     // always shows the full image regardless of intrinsic SVG size.
     auto setThemePixmap = [](QLabel *lbl, const QString &themeName, const QString &fallback) {
@@ -42,6 +63,7 @@ void SystemCleanerPage::init()
     setThemePixmap(ui->lblAppCacheImg,     "folder",             ":/static/themes/common/img/c_cache.svg");
     setThemePixmap(ui->lblTrashImg,        "user-trash",         ":/static/themes/common/img/c_trash.svg");
     setThemePixmap(ui->lblDevToolCacheImg, "applications-development", ":/static/themes/common/img/c_devtools.svg");
+#endif
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
@@ -117,7 +139,12 @@ void SystemCleanerPage::addTreeChild(const QString &data, const QString &text, c
 {
     ByteTreeWidget *item = new ByteTreeWidget(parent);
     item->setValues(text, size, data);
+#ifdef Q_OS_MACOS
+    // macOS: skip theme lookup — filenames won't match any theme icons
+    item->setIcon(0, mDefaultIcon);
+#else
     item->setIcon(0, QIcon::fromTheme(text, mDefaultIcon));
+#endif
 }
 
 void SystemCleanerPage::addTreeChild(const CleanCategories &cat, const QString &text, const quint64 &size)
@@ -204,8 +231,13 @@ void SystemCleanerPage::onScanFinished()
         }
     }
     if (mScanTrash) {
+#ifdef Q_OS_MACOS
+        totalSize += addTreeRoot(TRASH, mLblTrashText,
+                    { QFileInfo(QDir::homePath() + "/.Trash/") }, true);
+#else
         totalSize += addTreeRoot(TRASH, mLblTrashText,
                     { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
+#endif
     }
 
     ui->lblTotalBytes->setText(tr("Total size: %1").arg(FormatUtil::formatBytes(totalSize)));
@@ -248,8 +280,21 @@ void SystemCleanerPage::systemClean()
 
     // Handle trash deletion
     if (mCleanTrash) {
+#ifdef Q_OS_MACOS
+        // macOS trash is a flat directory, remove all contents
+        QDir trashDir(mTrashPath);
+        for (const QFileInfo &entry : trashDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+            if (entry.isDir()) {
+                QDir(entry.absoluteFilePath()).removeRecursively();
+            } else {
+                QFile::remove(entry.absoluteFilePath());
+            }
+        }
+#else
+        // Linux FreeDesktop trash: remove files/ and info/ subdirectories
         QDir(mTrashPath + "/files").removeRecursively();
         QDir(mTrashPath + "/info").removeRecursively();
+#endif
     }
 
     // Get sizes before deletion
@@ -392,7 +437,11 @@ void SystemCleanerPage::on_btnClean_clicked()
         } else if (cat == CleanCategories::TRASH) {
             if (it->checkState(0) == Qt::Checked) {
                 mCleanTrash = true;
+#ifdef Q_OS_MACOS
+                mTrashPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation).append("/.Trash");
+#else
                 mTrashPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation).append("/.local/share/Trash");
+#endif
             }
         }
     }
