@@ -24,8 +24,10 @@ StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QStrin
 
 void StartupApp::on_checkStartup_clicked(bool status)
 {
-    // macOS LaunchAgents: toggle Disabled key in plist
     QStringList lines = FileUtil::readListFromFile(mFilePath);
+
+#ifdef Q_OS_MACOS
+    // macOS LaunchAgents: toggle Disabled key in plist XML
     QRegularExpression disabledKeyReg("^\\s*<key>Disabled</key>");
     int pos = lines.indexOf(disabledKeyReg);
 
@@ -54,6 +56,29 @@ void StartupApp::on_checkStartup_clicked(bool status)
             }
         }
     }
+#else
+    // Linux .desktop: toggle Hidden and X-GNOME-Autostart-enabled keys
+    // Hidden=[true|false]
+    int pos = lines.indexOf(HIDDEN_REG);
+
+    QString _status = status ? "true" : "false";
+
+    if (pos != -1) {
+        _status = status ? "false" : "true";
+        lines.replace(pos, QString("Hidden=%1").arg(_status));
+    } else {
+        // X-GNOME-Autostart-enabled=[true|false]
+        pos = lines.indexOf(GNOME_ENABLED_REG);
+        if (pos != -1) {
+            lines.replace(pos, QString("X-GNOME-Autostart-enabled=%1").arg(_status));
+        }
+    }
+
+    if (pos == -1) {
+        _status = status ? "false" : "true";
+        lines.append(QString("Hidden=%1").arg(_status));
+    }
+#endif
 
     FileUtil::writeFile(mFilePath, lines.join('\n').append('\n'));
 }

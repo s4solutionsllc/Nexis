@@ -58,7 +58,23 @@ void SettingsPage::init()
         ui->cmbDisks->setCurrentIndex(ui->cmbDisks->findData(dk));
     }
 
-    // start on boot (autostart .desktop)
+    // start on boot — platform-specific path and check
+#ifdef Q_OS_MACOS
+    // macOS: LaunchAgent plist
+    mStartupAppPath = QDir::homePath() + "/Library/LaunchAgents";
+    if (! QDir(mStartupAppPath).exists()) {
+        QDir().mkdir(mStartupAppPath);
+    }
+    mStartupAppPath.append("/com.nexis.app.plist");
+
+    QFile startupAppFile(mStartupAppPath);
+    if (startupAppFile.exists()) {
+        ui->checkAutostart->setChecked(true);
+    } else {
+        ui->checkAutostart->setChecked(false);
+    }
+#else
+    // Linux: XDG autostart .desktop entry
     mStartupAppPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation).append("/autostart");
     if (! QDir(mStartupAppPath).exists()) {
         QDir().mkdir(mStartupAppPath);
@@ -73,6 +89,7 @@ void SettingsPage::init()
     } else {
         ui->checkAutostart->setChecked(false);
     }
+#endif
 
     // app quit dont ask
     ui->checkAppQuitDontAsk->setChecked(mSettingManager->getAppQuitDialogDontAsk());
@@ -133,6 +150,26 @@ void SettingsPage::cmbDiskChanged(const int &index)
 void SettingsPage::on_checkAutostart_clicked(bool checked)
 {
     if (checked) {
+#ifdef Q_OS_MACOS
+        // macOS: write LaunchAgent plist
+        QString appTemplate = QString(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+            "<plist version=\"1.0\">\n"
+            "<dict>\n"
+            "    <key>Label</key>\n"
+            "    <string>com.nexis.app</string>\n"
+            "    <key>ProgramArguments</key>\n"
+            "    <array>\n"
+            "        <string>nexis</string>\n"
+            "        <string>--hide</string>\n"
+            "    </array>\n"
+            "    <key>RunAtLoad</key>\n"
+            "    <true/>\n"
+            "</dict>\n"
+            "</plist>\n");
+#else
+        // Linux: write XDG autostart .desktop entry
         QString appTemplate = QString("[Desktop Entry]\n"
                                       "Name=Nexis\n"
                                       "Comment=Linux System Optimizer and Monitoring\n"
@@ -140,6 +177,7 @@ void SettingsPage::on_checkAutostart_clicked(bool checked)
                                       "Type=Application\n"
                                       "Terminal=false\n"
                                       "Hidden=false\n");
+#endif
         FileUtil::writeFile(mStartupAppPath, appTemplate);
     } else {
         QFile::remove(mStartupAppPath);
@@ -185,12 +223,18 @@ void SettingsPage::cmbColorSchemeChanged(int index)
 
 void SettingsPage::initDiskAnalyzerCombo()
 {
-    // Platform-specific tool list for Linux
+    // Platform-specific disk analyzer tool list
     ui->cmbDiskAnalyzer->addItem(tr("Auto (Detect)"), "auto");
+#ifdef Q_OS_MACOS
+    ui->cmbDiskAnalyzer->addItem(tr("GrandPerspective"), "grandperspective");
+    ui->cmbDiskAnalyzer->addItem(tr("DaisyDisk"), "daisydisk");
+    ui->cmbDiskAnalyzer->addItem(tr("OmniDiskSweeper"), "omnidisksweeper");
+#else
     ui->cmbDiskAnalyzer->addItem(tr("Baobab (GNOME Disk Usage Analyzer)"), "baobab");
     ui->cmbDiskAnalyzer->addItem(tr("Filelight (KDE)"), "filelight");
     ui->cmbDiskAnalyzer->addItem(tr("QDirStat"), "qdirstat");
     ui->cmbDiskAnalyzer->addItem(tr("ncdu (Terminal)"), "ncdu");
+#endif
     ui->cmbDiskAnalyzer->addItem(tr("Custom..."), "custom");
 
     // Restore saved preference

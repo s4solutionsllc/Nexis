@@ -19,13 +19,28 @@ StartupAppsPage::StartupAppsPage(QWidget *parent) :
 
 bool StartupAppsPage::checkIfDisabled(const QString& as_path)
 {
+#ifdef Q_OS_MACOS
+    // macOS LaunchAgents directory is never globally disabled
     Q_UNUSED(as_path);
     return false;
+#else
+    // Linux: check if X-GNOME-Autostart-enabled=false is present
+    const QByteArray disabled_str("X-GNOME-Autostart-enabled=false");
+    QFile autostart_file(as_path);
+
+    autostart_file.open(QIODevice::ReadOnly | QIODevice::Text);
+
+    return autostart_file.readAll().indexOf(disabled_str, 0) != -1;
+#endif
 }
 
 void StartupAppsPage::init()
 {
+#ifdef Q_OS_MACOS
     mAutostartPath = QDir::homePath() + "/Library/LaunchAgents";
+#else
+    mAutostartPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation).append("/autostart");
+#endif
 
     QFileInfo asfi(mAutostartPath);
     bool startups_disabled = false;
@@ -63,7 +78,8 @@ void StartupAppsPage::loadApps()
     // clear
     ui->listWidgetStartup->clear();
 
-    // On macOS, look for .plist files in ~/Library/LaunchAgents
+#ifdef Q_OS_MACOS
+    // macOS: load .plist files from ~/Library/LaunchAgents
     QDir autostartFiles(mAutostartPath, "*.plist");
 
     for (const QFileInfo &f : autostartFiles.entryInfoList())
@@ -126,6 +142,47 @@ void StartupAppsPage::loadApps()
 
         ui->listWidgetStartup->setItemWidget(item, app);
     }
+#else
+    // Linux: load .desktop files from XDG autostart directory
+    QDir autostartFiles(mAutostartPath, "*.desktop");
+
+    QLatin1String enabledStr("true");
+    for (const QFileInfo &f : autostartFiles.entryInfoList())
+    {
+        QStringList lines = FileUtil::readListFromFile(f.absoluteFilePath());
+
+        QString appName = Utilities::getDesktopValue(NAME_REG, lines); // get name
+
+        if(! appName.isEmpty()) // has a name
+        {
+            bool enabled = false;
+
+            // Hidden=[true|false]
+            QString hidden = Utilities::getDesktopValue(HIDDEN_REG, lines).toLower();
+
+            // X-GNOME-Autostart-enabled=[true|false]
+            QString gnomeEnabled = Utilities::getDesktopValue(GNOME_ENABLED_REG, lines).toLower();
+
+            if (! hidden.isEmpty()) {
+                enabled = (hidden != enabledStr);
+            } else {
+                enabled = (gnomeEnabled == enabledStr);
+            }
+
+            QListWidgetItem *item = new QListWidgetItem(ui->listWidgetStartup);
+
+            // new app
+            StartupApp *app = new StartupApp(appName, enabled, f.absoluteFilePath(), this);
+
+            connect(app, &StartupApp::deleteAppS, this, &StartupAppsPage::loadApps);
+            connect(app, &StartupApp::editStartupAppS, this, &StartupAppsPage::openStartupAppEdit);
+
+            item->setSizeHint(app->sizeHint());
+
+            ui->listWidgetStartup->setItemWidget(item, app);
+        }
+    }
+#endif
 
     setAppCount();
 }
