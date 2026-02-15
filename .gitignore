@@ -1,8 +1,7 @@
-Nexis.pro.*
 dist/
 build/
 output/
-#*.AppImage
+*.AppImage
 .vscode
 Release/
 .DS_Store

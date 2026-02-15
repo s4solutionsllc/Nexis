@@ -23,11 +23,6 @@
         <file>static/themes/default/img/refresh.png</file>
         <file>static/themes/default/img/asc.png</file>
         <file>static/themes/default/img/dsc.png</file>
-        <file>static/themes/default/img/c_package.png</file>
-        <file>static/themes/default/img/c_crash.png</file>
-        <file>static/themes/default/img/c_logs.png</file>
-        <file>static/themes/default/img/c_cache.png</file>
-        <file>static/themes/default/img/c_trash.png</file>
         <file>static/themes/default/img/fit.png</file>
         <file>static/themes/default/img/collapse.png</file>
         <file>static/themes/default/img/scan.png</file>
@@ -36,7 +31,6 @@
         <file>static/themes/default/img/clean-active.png</file>
         <file>static/themes/default/img/down-arrow.png</file>
         <file>static/themes/default/img/right-arrow.png</file>
-        <file>static/themes/default/img/back.png</file>
         <file>static/font/Ubuntu-R.ttf</file>
         <file>static/themes/default/img/sidebar-icons/settings.png</file>
         <file>static/languages.json</file>
@@ -53,7 +47,6 @@
         <file>static/themes/light/img/loading.gif</file>
         <file>static/themes/light/style/values.ini</file>
         <file>static/themes/default/style/values.ini</file>
-        <file>static/logo.png</file>
         <file>static/logo.svg</file>
         <file>static/tray-icon.svg</file>
         <file>static/themes/default/img/run.png</file>
