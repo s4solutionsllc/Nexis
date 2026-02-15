@@ -412,7 +412,7 @@ void DiskUsageLauncherWidget::onActionClicked()
         mActionButton->setText(tr("Installing..."));
         (void)QtConcurrent::run([this]() {
             CommandUtil::exec("flatpak", {"install", "--user", "-y",
-                                          "flathub", "org.kde.filelight"});
+                                          "flathub", "org.kde.filelight"}, {}, 300000);
             QMetaObject::invokeMethod(this, [this]() {
                 detect();
                 updateUi();

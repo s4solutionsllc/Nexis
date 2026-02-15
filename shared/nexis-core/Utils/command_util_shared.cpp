@@ -7,7 +7,7 @@
 
 #include <memory>
 
-QString CommandUtil::exec(const QString &cmd, QStringList args, QByteArray data)
+QString CommandUtil::exec(const QString &cmd, QStringList args, QByteArray data, int timeoutMs)
 {
     std::unique_ptr<QProcess> process(new QProcess());
     process->start(cmd, args);
@@ -18,8 +18,7 @@ QString CommandUtil::exec(const QString &cmd, QStringList args, QByteArray data)
         process->closeWriteChannel();
     }
 
-    // 10 minutes
-    process->waitForFinished(600*1000);
+    process->waitForFinished(timeoutMs);
 
     QTextStream stdOut(process->readAllStandardOutput());
 

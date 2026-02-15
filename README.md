@@ -102,47 +102,47 @@ make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
 ## Screenshots
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-01.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-01.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-02.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-02.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-03.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-03.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-04.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-04.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-05.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-05.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-06.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-06.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-07.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-07.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-08.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-08.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-09.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-09.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-10.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-10.png" width="700">
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Stacer-2.0.1-11.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-11.png" width="700">
 </p>
 
 ## Development

@@ -294,7 +294,7 @@ void SearchPage::searching()
         if (mSearchAsRoot) {
             mSearchResult = CommandUtil::sudoExec("find", mFindQuery);
         } else {
-            mSearchResult = CommandUtil::exec("find", mFindQuery);
+            mSearchResult = CommandUtil::exec("find", mFindQuery, {}, 120000);
         }
     } catch (QString ex) {
         mSearchHadError = true;

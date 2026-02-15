@@ -32,7 +32,7 @@ QList<Package> PackageTool::getHomebrewPackages()
         return packages;
 
     try {
-        QString jsonOutput = CommandUtil::exec(brew, {"info", "--json=v2", "--installed"}).trimmed();
+        QString jsonOutput = CommandUtil::exec(brew, {"info", "--json=v2", "--installed"}, {}, 120000).trimmed();
         QJsonDocument doc = QJsonDocument::fromJson(jsonOutput.toUtf8());
 
         if (doc.isNull()) {
@@ -75,7 +75,7 @@ bool PackageTool::homebrewRemovePackages(QStringList packages)
 
     try {
         packages.insert(0, "uninstall");
-        CommandUtil::exec(brew, packages);
+        CommandUtil::exec(brew, packages, {}, 120000);
         return true;
     } catch (const QString &ex) {
         qCritical() << ex;

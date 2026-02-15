@@ -31,25 +31,29 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
         level = "UNDEFINED"; break;
     }
 
-    if (type != QtWarningMsg) {
+    // In release builds, suppress Qt warnings (noisy but harmless).
+    // In debug builds, let them through — they often indicate real problems.
+#ifdef QT_NO_DEBUG
+    if (type == QtWarningMsg)
+        return;
+#endif
 
-        QString text = QString("[%1] [%2] %3")
-                                .arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss"))
-                                .arg(level)
-                                .arg(message);
+    QString text = QString("[%1] [%2] %3")
+                            .arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss"))
+                            .arg(level)
+                            .arg(message);
 
-        static QString logPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    static QString logPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
 
-        QFile file(logPath + "/nexis.log");
+    QFile file(logPath + "/nexis.log");
 
-        QIODevice::OpenMode openMode = file.size() > (1L << 20) ? QIODevice::Truncate : QIODevice::Append;
+    QIODevice::OpenMode openMode = file.size() > (1L << 20) ? QIODevice::Truncate : QIODevice::Append;
 
-        if (file.open(QIODevice::WriteOnly | openMode)) {
-            QTextStream stream(&file);
-            stream << text << Qt::endl;
+    if (file.open(QIODevice::WriteOnly | openMode)) {
+        QTextStream stream(&file);
+        stream << text << Qt::endl;
 
-            file.close();
-        }
+        file.close();
     }
 }
 

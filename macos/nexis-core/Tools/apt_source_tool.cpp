@@ -61,7 +61,7 @@ QList<APTSourcePtr> AptSourceTool::getSourceList()
     QList<APTSourcePtr> sourceList;
 
     try {
-        QString jsonOutput = CommandUtil::exec(findBrew(), {"info", "--json=v2", "--installed"}).trimmed();
+        QString jsonOutput = CommandUtil::exec(findBrew(), {"info", "--json=v2", "--installed"}, {}, 120000).trimmed();
         QJsonDocument doc = QJsonDocument::fromJson(jsonOutput.toUtf8());
 
         if (doc.isNull()) {

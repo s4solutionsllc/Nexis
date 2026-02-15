@@ -44,7 +44,7 @@ QList<Package> PackageTool::getDpkgPackages()
 
     try {
         QString output = CommandUtil::exec("bash", {"-c",
-            "dpkg-query -W -f '${Package}\\t${Section}\\t${binary:Summary}\\n' 2> /dev/null"})
+            "dpkg-query -W -f '${Package}\\t${Section}\\t${binary:Summary}\\n' 2> /dev/null"}, {}, 60000)
                 .trimmed();
 
         const QStringList lines = output.split('\n');
@@ -94,7 +94,7 @@ QList<Package> PackageTool::getRpmPackages()
 
     try {
         QString output = CommandUtil::exec("bash", {"-c",
-            "rpm -qa --queryformat '%{NAME}\\t%{GROUP}\\t%{SUMMARY}\\n' 2> /dev/null"})
+            "rpm -qa --queryformat '%{NAME}\\t%{GROUP}\\t%{SUMMARY}\\n' 2> /dev/null"}, {}, 60000)
                 .trimmed();
 
         const QStringList lines = output.split('\n');
@@ -167,7 +167,7 @@ QList<Package> PackageTool::getPacmanPackages()
     QList<Package> packages;
 
     try {
-        QString output = CommandUtil::exec("bash", {"-c", "pacman -Qi 2> /dev/null"})
+        QString output = CommandUtil::exec("bash", {"-c", "pacman -Qi 2> /dev/null"}, {}, 60000)
                 .trimmed();
 
         const QStringList lines = output.split('\n');
