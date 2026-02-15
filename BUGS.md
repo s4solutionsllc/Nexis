@@ -189,10 +189,11 @@
   - **Fix complexity:** Trivial (search-and-replace)
   - **Resolved:** Changed all `toLong()` to `toLongLong()` in memory, network, and process info files
 
-- [ ] **BUG-30: Review Phase 2 margin changes for unintended layout side-effects** (LOW)
+- [x] **BUG-30: Review Phase 2 margin changes for unintended layout side-effects** (LOW)
   - **Scope:** UI-wide — margins adjusted during Phase 2 of `revision_plan.md`
   - **Description:** During Phase 2 (UI Consistency & Spacing), margin and spacing values were standardised across multiple pages. These changes should be visually reviewed on both macOS and Linux to confirm no layout regressions (clipped text, collapsed sections, excessive whitespace, etc.).
   - **Fix complexity:** Review-only (visual QA pass)
+  - **Resolved:** Reverted all Phase 2.1 margin changes — restored original per-page margin values across 10 .ui files
 
 ## Notes
 
