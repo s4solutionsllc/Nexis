@@ -3,8 +3,8 @@
 #include <QHash>
 #include <QRegularExpression>
 
-#define HWMON_BASE "/sys/class/hwmon"
-#define MAX_SANE_TEMP 200.0
+static constexpr const char *HWMON_BASE = "/sys/class/hwmon";
+static constexpr double MAX_SANE_TEMP = 200.0;
 
 static QString friendlyDeviceName(const QString &driverName)
 {

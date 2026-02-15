@@ -3,10 +3,10 @@
 #include <QRegularExpression>
 #include "command_util.h"
 
-#define PROC_CPUINFO "/proc/cpuinfo"
-#define LSCPU_COMMAND "LC_ALL=C lscpu"
-#define PROC_LOADAVG "/proc/loadavg"
-#define PROC_STAT    "/proc/stat"
+static constexpr const char *PROC_CPUINFO = "/proc/cpuinfo";
+static constexpr const char *LSCPU_COMMAND = "LC_ALL=C lscpu";
+static constexpr const char *PROC_LOADAVG = "/proc/loadavg";
+static constexpr const char *PROC_STAT    = "/proc/stat";
 
 int CpuInfo::getCpuPhysicalCoreCount() const
 {

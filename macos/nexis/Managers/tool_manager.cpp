@@ -16,7 +16,7 @@ ToolManager *ToolManager::ins()
  */
 QList<Service> ToolManager::getServices() const
 {
-    return ServiceTool::getServicesWithSystemctl();
+    return ServiceTool::getServices();
 }
 
 bool ToolManager::changeServiceStatus(const QString &sname, bool status) const

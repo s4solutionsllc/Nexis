@@ -4,7 +4,7 @@
 #include <QRegularExpression>
 #include <iostream>
 
-#define LSCPU_COMMAND "LC_ALL=C lscpu"
+static constexpr const char *LSCPU_COMMAND = "LC_ALL=C lscpu";
 
 SystemInfo::SystemInfo()
 {

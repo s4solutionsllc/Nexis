@@ -13,7 +13,7 @@ QList<quint64> DiskInfo::getDiskIO() const
     quint64 totalRead = 0;
     quint64 totalWrite = 0;
 
-    for (const QString diskName : diskNames) {
+    for (const QString &diskName : diskNames) {
       QStringList diskStat = FileUtil::readStringFromFile(QString("/sys/block/%1/stat").arg(diskName))
               .trimmed()
               .split(QRegularExpression("\\s+"));
@@ -33,7 +33,7 @@ QStringList DiskInfo::getDiskNames() const
 {
     QDir blocks("/sys/block");
     QStringList disks;
-    for (const QFileInfo entryInfo : blocks.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot)) {
+    for (const QFileInfo &entryInfo : blocks.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot)) {
         if (QFile::exists(QString("%1/device").arg(entryInfo.absoluteFilePath()))) {
             disks.append(entryInfo.baseName());
         }

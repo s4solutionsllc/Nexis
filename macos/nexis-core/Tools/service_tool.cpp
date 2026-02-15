@@ -12,7 +12,7 @@
 //   /Library/LaunchAgents/        (system-wide agents, run as user)
 //   ~/Library/LaunchAgents/       (per-user agents)
 
-QList<Service> ServiceTool::getServicesWithSystemctl()
+QList<Service> ServiceTool::getServices()
 {
     QList<Service> services = {};
 

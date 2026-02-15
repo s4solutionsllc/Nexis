@@ -1,5 +1,6 @@
 #include "host_manage.h"
 #include "ui_host_manage.h"
+#include "nexis_roles.h"
 #include <qdebug.h>
 #include <QRegularExpression>
 
@@ -40,7 +41,7 @@ void HostManage::init()
     mSortFilterModel->setSourceModel(mItemModel);
 
     ui->tableViewHosts->setModel(mSortFilterModel);
-    mSortFilterModel->setSortRole(1);
+    mSortFilterModel->setSortRole(SortRole);
     mSortFilterModel->setDynamicSortFilter(true);
 
     ui->tableViewHosts->horizontalHeader()->setSectionsMovable(true);
@@ -102,16 +103,16 @@ void HostManage::loadTableData()
 QList<QStandardItem*> HostManage::createRow(const QPair<int, HostItem> &item)
 {
     QStandardItem *i_ip = new QStandardItem(item.second.ip);
-    i_ip->setData(item.first, 9);
-    i_ip->setData(item.second.ip, 1);
+    i_ip->setData(item.first, LineNumberRole);
+    i_ip->setData(item.second.ip, SortRole);
     i_ip->setData(item.second.ip, Qt::ToolTipRole);
 
     QStandardItem *i_fullQualified = new QStandardItem(item.second.fullQualified);
-    i_fullQualified->setData(item.second.fullQualified, 1);
+    i_fullQualified->setData(item.second.fullQualified, SortRole);
     i_fullQualified->setData(item.second.fullQualified, Qt::ToolTipRole);
 
     QStandardItem *i_aliases = new QStandardItem(item.second.aliases);
-    i_aliases->setData(item.second.aliases, 1);
+    i_aliases->setData(item.second.aliases, SortRole);
     i_aliases->setData(item.second.aliases, Qt::ToolTipRole);
 
     return {
@@ -200,7 +201,7 @@ void HostManage::on_tableViewHosts_customContextMenuRequested(const QPoint &pos)
             if (action->data().toString() == "edit") {
                 QModelIndex index = selectionModel->selectedRows().first();
 
-                updatedLine = mSortFilterModel->index(index.row(), 0).data(9).toInt();
+                updatedLine = mSortFilterModel->index(index.row(), 0).data(LineNumberRole).toInt();
 
                 ui->txtIP->setText(mHostItemList.value(updatedLine).ip);
                 ui->txtFullyQualified->setText(mHostItemList.value(updatedLine).fullQualified);
@@ -214,7 +215,7 @@ void HostManage::on_tableViewHosts_customContextMenuRequested(const QPoint &pos)
                 while (! selectionModel->selectedRows().isEmpty()) {
                     QModelIndex index = selectionModel->selectedRows().first();
 
-                    int lineNumber = mSortFilterModel->index(index.row(), 0).data(9).toInt();
+                    int lineNumber = mSortFilterModel->index(index.row(), 0).data(LineNumberRole).toInt();
 
                     mHostFileContent.replace(lineNumber, "");
 

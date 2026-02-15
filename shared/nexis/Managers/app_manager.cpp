@@ -52,12 +52,12 @@ QSettings *AppManager::getStyleValues() const
 
 void AppManager::loadLanguageList()
 {
-    QByteArray lanuagesJson = FileUtil::readStringFromFile(":/static/languages.json").toUtf8();
-    QJsonArray lanuages = QJsonDocument::fromJson(lanuagesJson).array();
+    QByteArray languagesJson = FileUtil::readStringFromFile(":/static/languages.json").toUtf8();
+    QJsonArray languages = QJsonDocument::fromJson(languagesJson).array();
 
-    for (int i = 0; i < lanuages.count(); ++i) {
+    for (int i = 0; i < languages.count(); ++i) {
 
-        QJsonObject ob = lanuages.at(i).toObject();
+        QJsonObject ob = languages.at(i).toObject();
 
         mLanguageList.insert(ob["value"].toString(), ob["text"].toString());
     }

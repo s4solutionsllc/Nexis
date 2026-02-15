@@ -47,7 +47,7 @@ void ServicesPage::loadServices()
     bool runningStatus = runningIndex == 1;
     bool startupStatus = startupIndex == 1;
 
-    for (const Service s : mServices) {
+    for (const Service &s : mServices) {
         bool runningFilter = runningIndex != 0 ? s.active == runningStatus : true;
         bool startupFilter = startupIndex != 0 ? s.status == startupStatus : true;
 

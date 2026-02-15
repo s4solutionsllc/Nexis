@@ -1,6 +1,7 @@
 #include "processes_page.h"
 #include "ui_processes_page.h"
 #include "utilities.h"
+#include "nexis_roles.h"
 #include <QRegularExpression>
 
 ProcessesPage::~ProcessesPage()
@@ -40,7 +41,7 @@ void ProcessesPage::init()
     mItemModel->setHorizontalHeaderLabels(mHeaders);
 
     ui->tableProcess->setModel(mSortFilterModel);
-    mSortFilterModel->setSortRole(1);
+    mSortFilterModel->setSortRole(SortRole);
     mSortFilterModel->setDynamicSortFilter(true);
     mSortFilterModel->sort(5, Qt::SortOrder::DescendingOrder);
 
@@ -58,8 +59,8 @@ void ProcessesPage::init()
 
     ui->tableProcess->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->tableProcess->horizontalHeader(), SIGNAL(customContextMenuRequested(const QPoint&)),
-        this, SLOT(on_tableProcess_customContextMenuRequested(const QPoint&)));
+    connect(ui->tableProcess->horizontalHeader(), &QHeaderView::customContextMenuRequested,
+        this, &ProcessesPage::on_tableProcess_customContextMenuRequested);
 
     loadHeaderMenu();
 
@@ -120,15 +121,15 @@ void ProcessesPage::loadProcesses()
 
     // selected item
     if (! selecteds.isEmpty()) {
-        mSeletedRowModel = selecteds.first();
+        mSelectedRowModel = selecteds.first();
 
         for (int i = 0; i < mSortFilterModel->rowCount(); ++i) {
-            if (mSortFilterModel->index(i, 0).data(1).toInt() == mSeletedRowModel.data(1).toInt()) {
+            if (mSortFilterModel->index(i, 0).data(SortRole).toInt() == mSelectedRowModel.data(SortRole).toInt()) {
                 ui->tableProcess->selectRow(i);
             }
         }
     } else {
-        mSeletedRowModel = QModelIndex();
+        mSelectedRowModel = QModelIndex();
     }
 }
 
@@ -136,7 +137,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
 {
     QList<QStandardItem*> row;
 
-    int data = 1;
+    int data = SortRole;
 
     QStandardItem *pid_i = new QStandardItem(QString::number(proc.getPid()));
     pid_i->setData(proc.getPid(), data);
@@ -214,10 +215,10 @@ void ProcessesPage::on_sliderRefresh_valueChanged(const int &i)
 
 void ProcessesPage::on_btnEndProcess_clicked()
 {
-    pid_t pid = mSeletedRowModel.data(1).toInt();
+    pid_t pid = mSelectedRowModel.data(SortRole).toInt();
 
     if (pid) {
-        QString selectedUname = mSortFilterModel->index(mSeletedRowModel.row(), 4).data(1).toString();
+        QString selectedUname = mSortFilterModel->index(mSelectedRowModel.row(), 4).data(SortRole).toString();
 
         try {
             if (selectedUname == im->getUserName()) {

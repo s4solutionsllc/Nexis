@@ -68,7 +68,7 @@ void StartupAppsPage::init()
         ui->btnAddStartupApp->setEnabled(false);
     }
 
-    connect(ui->btnAddStartupApp, SIGNAL(clicked()), this, SLOT(openStartupAppEdit()));
+    connect(ui->btnAddStartupApp, &QPushButton::clicked, this, [this]() { openStartupAppEdit(); });
 
     Utilities::addDropShadow(ui->btnAddStartupApp, 60);
 }

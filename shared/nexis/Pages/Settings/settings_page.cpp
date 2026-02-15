@@ -125,12 +125,12 @@ void SettingsPage::init()
 
     Utilities::addDropShadow(widgets, 50);
 
-    // connects
-    connect(ui->cmbLanguages, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbLanguagesChanged(int)));
-    connect(ui->cmbDisks, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbDiskChanged(int)));
-    connect(ui->cmbStartPage, SIGNAL(currentTextChanged(QString)), this, SLOT(cmbStartPageChanged(QString)));
-    connect(ui->cmbColorScheme, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbColorSchemeChanged(int)));
-    connect(ui->cmbDiskAnalyzer, SIGNAL(currentIndexChanged(int)), this, SLOT(cmbDiskAnalyzerChanged(int)));
+    // connects (type-safe pointer-to-member syntax)
+    connect(ui->cmbLanguages, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbLanguagesChanged);
+    connect(ui->cmbDisks, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskChanged);
+    connect(ui->cmbStartPage, &QComboBox::currentTextChanged, this, &SettingsPage::cmbStartPageChanged);
+    connect(ui->cmbColorScheme, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbColorSchemeChanged);
+    connect(ui->cmbDiskAnalyzer, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskAnalyzerChanged);
 }
 
 void SettingsPage::cmbLanguagesChanged(const int &index)

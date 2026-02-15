@@ -1,5 +1,6 @@
 #include "search_page.h"
 #include "ui_search_page.h"
+#include "nexis_roles.h"
 #include <qdebug.h>
 #include <QClipboard>
 
@@ -31,7 +32,7 @@ void SearchPage::init()
     mSortFilterModel->setSourceModel(mItemModel);
 
     ui->tableFoundResults->setModel(mSortFilterModel);
-    mSortFilterModel->setSortRole(1);
+    mSortFilterModel->setSortRole(SortRole);
     mSortFilterModel->setDynamicSortFilter(true);
     mSortFilterModel->sort(1, Qt::SortOrder::DescendingOrder);
 
@@ -51,7 +52,7 @@ void SearchPage::init()
     loadHeaderMenu();
     loadTableRowMenu();
 
-    rowRole = 1;
+    rowRole = SortRole;
     mSearchResultDateFormat = "dd.MM.yyyy hh:mm:ss";
 
     ui->advanceSearchPane->setHidden(false);

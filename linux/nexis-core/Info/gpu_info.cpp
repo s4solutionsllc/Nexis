@@ -5,11 +5,11 @@
 #include <QRegularExpression>
 
 // PCI vendor IDs
-#define PCI_VENDOR_AMD    "0x1002"
-#define PCI_VENDOR_NVIDIA "0x10de"
-#define PCI_VENDOR_INTEL  "0x8086"
+static constexpr const char *PCI_VENDOR_AMD    = "0x1002";
+static constexpr const char *PCI_VENDOR_NVIDIA = "0x10de";
+static constexpr const char *PCI_VENDOR_INTEL  = "0x8086";
 
-#define DRM_BASE "/sys/class/drm"
+static constexpr const char *DRM_BASE = "/sys/class/drm";
 
 GpuInfo::GpuInfo()
 {

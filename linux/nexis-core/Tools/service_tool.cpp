@@ -6,7 +6,7 @@
 
 // Service constructor is in shared/nexis-core/Tools/service_tool_shared.cpp
 
-QList<Service> ServiceTool::getServicesWithSystemctl()
+QList<Service> ServiceTool::getServices()
 {
     QList<Service> services = {};
 

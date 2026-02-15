@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <QRegularExpression>
 
-#define PROC_MEMINFO "/proc/meminfo"
+static constexpr const char *PROC_MEMINFO = "/proc/meminfo";
 
 // Constructor and getters are in shared/nexis-core/Info/memory_info_shared.cpp
 

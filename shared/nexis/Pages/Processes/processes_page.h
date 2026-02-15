@@ -39,7 +39,7 @@ private:
 
     QStandardItemModel *mItemModel;
     QSortFilterProxyModel *mSortFilterModel;
-    QModelIndex mSeletedRowModel;
+    QModelIndex mSelectedRowModel;
     QStringList mHeaders;
     QMenu mHeaderMenu;
     QTimer *mTimer;

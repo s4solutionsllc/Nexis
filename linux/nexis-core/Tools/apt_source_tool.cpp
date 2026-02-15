@@ -4,8 +4,8 @@
 #include <QDebug>
 #include <QRegularExpression>
 
-#define APT_SOURCES_LIST_D_PATH "/etc/apt/sources.list.d"
-#define APT_SOURCES_LIST_PATH "/etc/apt/sources.list"
+static constexpr const char *APT_SOURCES_LIST_D_PATH = "/etc/apt/sources.list.d";
+static constexpr const char *APT_SOURCES_LIST_PATH   = "/etc/apt/sources.list";
 
 bool AptSourceTool::checkSourceRepository()
 {

@@ -19,7 +19,7 @@ public:
 class NEXISCORESHARED_EXPORT ServiceTool
 {
 public:
-    static QList<Service> getServicesWithSystemctl();
+    static QList<Service> getServices();
     static bool serviceIsActive(const QString &serviceName);
     static bool changeServiceStatus(const QString &sname, bool status);
     static bool changeServiceActive(const QString &sname, bool status);

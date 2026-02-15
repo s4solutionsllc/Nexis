@@ -28,7 +28,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     case QtFatalMsg:
         level = "FATAL"; break;
     default:
-        level = "UNDEFIEND"; break;
+        level = "UNDEFINED"; break;
     }
 
     if (type != QtWarningMsg) {
