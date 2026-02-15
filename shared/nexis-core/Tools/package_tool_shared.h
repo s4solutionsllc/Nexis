@@ -22,8 +22,4 @@ enum PackageTools {
     UNKNOWN
 };
 
-static PackageTools currentPackageTool;
-
-static QString friendlySectionName(const QString &sectionName);
-
 #endif // PACKAGE_TOOL_SHARED_H

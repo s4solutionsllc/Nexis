@@ -134,11 +134,6 @@ void StartupAppEdit::on_btnSave_clicked()
     selectedFilePath = "";
 }
 
-QString StartupAppEdit::buildPlistContent()
-{
-    return QString(); // Not used on Linux
-}
-
 bool StartupAppEdit::isValid()
 {
     return ! ui->txtStartupAppName->text().isEmpty() &&

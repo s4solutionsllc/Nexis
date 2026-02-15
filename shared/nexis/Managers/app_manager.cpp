@@ -68,24 +68,6 @@ QMap<QString, QString> AppManager::getLanguageList() const
     return mLanguageList;
 }
 
-//void AppManager::loadThemeList()
-//{
-//    QByteArray themesJson = FileUtil::readStringFromFile(":/static/themes.json").toUtf8();
-//    QJsonArray themes = QJsonDocument::fromJson(themesJson).array();
-
-//    for (int i = 0; i < themes.count(); ++i) {
-
-//        QJsonObject ob = themes.at(i).toObject();
-
-//        mThemeList.insert(ob["value"].toString(), ob["text"].toString());
-//    }
-//}
-
-//QMap<QString, QString> AppManager::getThemeList() const
-//{
-//    return mThemeList;
-//}
-
 QString AppManager::resolveThemeName() const
 {
     QString scheme = mSettingManager->getColorScheme();

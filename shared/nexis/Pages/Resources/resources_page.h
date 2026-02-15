@@ -47,8 +47,6 @@ private:
 
     DiskUsageLauncherWidget *mDiskLauncher;
 
-    QList<int> chartColors;
-
     QTimer *mTimer;
 };
 

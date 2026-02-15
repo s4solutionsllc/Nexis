@@ -27,13 +27,6 @@ ResourcesPage::ResourcesPage(QWidget *parent) :
 
 void ResourcesPage::init()
 {
-    chartColors = {
-        0x2ec27e, 0xe01b24, 0x1c71d8, 0xe5a50a, 0xE95420,
-        0x26a269, 0x813d9c, 0x241f31, 0xc64516, 0xc01c28,
-        0x613583, 0xcd9309, 0xa51d2d, 0x3d3846, 0x77767b,
-        0x1a5fb4, 0x33d17a, 0xf66151, 0xf8e45c, 0x5e5c64
-    };
-
     mChartCpu->setYMax(100);
     mChartMemory->setYMax(100);
 

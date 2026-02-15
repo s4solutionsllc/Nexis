@@ -17,30 +17,6 @@ Service::Service(const QString &name, const QString description, const bool stat
 //   /Library/LaunchAgents/        (system-wide agents, run as user)
 //   ~/Library/LaunchAgents/       (per-user agents)
 
-static QList<QPair<QString, QString>> discoverPlists()
-{
-    // Returns list of (plistPath, label) pairs
-    QList<QPair<QString, QString>> plists;
-
-    QStringList searchDirs = {
-        "/Library/LaunchDaemons",
-        "/Library/LaunchAgents",
-        QDir::homePath() + "/Library/LaunchAgents"
-    };
-
-    for (const QString &dir : searchDirs) {
-        QDir d(dir);
-        if (!d.exists()) continue;
-        for (const QFileInfo &fi : d.entryInfoList({"*.plist"}, QDir::Files)) {
-            // Extract the label from the filename (remove .plist extension)
-            QString label = fi.baseName();
-            plists.append({fi.absoluteFilePath(), label});
-        }
-    }
-
-    return plists;
-}
-
 QList<Service> ServiceTool::getServicesWithSystemctl()
 {
     QList<Service> services = {};
