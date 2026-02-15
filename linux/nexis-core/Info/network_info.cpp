@@ -25,7 +25,7 @@ quint64 NetworkInfo::getRXbytes() const
 {
     quint64 rx = FileUtil::readStringFromFile(rxPath)
             .trimmed()
-            .toLong();
+            .toLongLong();
 
     return rx;
 }
@@ -34,7 +34,7 @@ quint64 NetworkInfo::getTXbytes() const
 {
     quint64 tx = FileUtil::readStringFromFile(txPath)
             .trimmed()
-            .toLong();
+            .toLongLong();
 
     return tx;
 }

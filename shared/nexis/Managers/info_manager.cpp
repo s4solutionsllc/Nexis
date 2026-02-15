@@ -80,7 +80,7 @@ quint64 InfoManager::getMemTotal() const
 /*
  * Disk Provider
  */
-QList<Disk*> InfoManager::getDisks() const
+QList<Disk> InfoManager::getDisks() const
 {
     return di.getDisks();
 }

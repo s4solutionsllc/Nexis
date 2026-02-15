@@ -24,10 +24,10 @@ void ProcessInfo::updateProcesses()
                 if (procLine.count() >= columns.count()) {
                     Process proc;
 
-                    proc.setPid(procLine.takeFirst().toLong());
-                    proc.setRss(procLine.takeFirst().toLong() << 10);
+                    proc.setPid(procLine.takeFirst().toLongLong());
+                    proc.setRss(procLine.takeFirst().toLongLong() << 10);
                     proc.setPmem(procLine.takeFirst().toDouble());
-                    proc.setVsize(procLine.takeFirst().toLong() << 10);
+                    proc.setVsize(procLine.takeFirst().toLongLong() << 10);
                     proc.setUname(procLine.takeFirst());
                     proc.setPcpu(procLine.takeFirst().toDouble());
                     proc.setStartTime(procLine.takeFirst());

@@ -239,20 +239,21 @@ void DashboardPage::updateDiskBar()
 {
     im->updateDiskInfo();
 
-    if(! im->getDisks().isEmpty()) {
-        Disk *disk = nullptr;
+    const QList<Disk> allDisks = im->getDisks();
+    if (!allDisks.isEmpty()) {
+        const Disk *disk = nullptr;
         QString selectedDiskName = mSettingManager->getDiskName();
-        for (Disk *d: im->getDisks()) {
-            if (d->name.trimmed() == selectedDiskName.trimmed())
-                disk = d;
+        for (const Disk &d : allDisks) {
+            if (d.name.trimmed() == selectedDiskName.trimmed())
+                disk = &d;
         }
 
-        if (! disk) {
-            for (Disk *d: im->getDisks())
-                if (d->name.trimmed() == QStorageInfo::root().displayName().trimmed())
-                    disk = d;
-            if (! disk)
-                disk = im->getDisks().at(0);
+        if (!disk) {
+            for (const Disk &d : allDisks)
+                if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed())
+                    disk = &d;
+            if (!disk)
+                disk = &allDisks.at(0);
         }
 
         int diskPercent = 0;

@@ -21,9 +21,15 @@ void MemoryInfo::updateMemoryInfo()
 {
     QStringList lines = FileUtil::readListFromFile(PROC_MEMINFO)
             .filter(QRegularExpression("^MemTotal|^MemFree|^Buffers|^Cached|^SwapTotal|^SwapFree|^Shmem|^SReclaimable"));
+
+    if (lines.size() < 8) {
+        qWarning() << "MemoryInfo: expected 8 lines from /proc/meminfo, got" << lines.size();
+        return;
+    }
+
     QRegularExpression sep("\\s+");
 
-#define getValue(l) lines.at(l).split(sep).at(1).toLong() << 10;
+#define getValue(l) lines.at(l).split(sep).at(1).toLongLong() << 10;
     memTotal = getValue(0);
     memFree = getValue(1);
     buffers = getValue(2);

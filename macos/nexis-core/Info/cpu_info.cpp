@@ -22,12 +22,12 @@ int CpuInfo::getCpuPhysicalCoreCount() const
 
 int CpuInfo::getCpuCoreCount() const
 {
-    static quint8 count = 0;
+    static int count = 0;
     if (!count) {
         int val = 0;
         size_t len = sizeof(val);
         if (sysctlbyname("hw.logicalcpu", &val, &len, nullptr, 0) == 0)
-            count = static_cast<quint8>(val);
+            count = val;
     }
     return count;
 }

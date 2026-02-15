@@ -4,7 +4,8 @@
 CircleBar::~CircleBar()
 {
     delete ui;
-    delete mChart;
+    // mChart is owned by mChartView (via QChartView constructor) which is a
+    // child widget of this CircleBar — Qt's parent-child tree handles cleanup.
 }
 
 CircleBar::CircleBar(const QString &title, const QStringList &colors, QWidget *parent) :

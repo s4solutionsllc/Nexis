@@ -43,7 +43,7 @@ int CpuInfo::getCpuPhysicalCoreCount() const
 
 int CpuInfo::getCpuCoreCount() const
 {
-    static quint8 count = 0;
+    static int count = 0;
 
     if (! count) {
         QStringList cpuinfo = FileUtil::readListFromFile(PROC_CPUINFO);

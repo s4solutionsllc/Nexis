@@ -22,6 +22,23 @@ QFileInfoList PackageTool::getDpkgPackageCaches()
     return caches.entryInfoList(QDir::Files);
 }
 
+QFileInfoList PackageTool::getYumDnfPackageCaches()
+{
+    QFileInfoList caches;
+
+    // DNF cache (Fedora 22+, RHEL 8+, etc.)
+    QDir dnfCache("/var/cache/dnf/");
+    if (dnfCache.exists())
+        caches.append(dnfCache.entryInfoList(QDir::Files, QDir::Size));
+
+    // YUM cache (older Fedora, RHEL 7 and below, CentOS)
+    QDir yumCache("/var/cache/yum/");
+    if (yumCache.exists())
+        caches.append(yumCache.entryInfoList(QDir::Files, QDir::Size));
+
+    return caches;
+}
+
 QList<Package> PackageTool::getDpkgPackages()
 {
     QList<Package> packages;

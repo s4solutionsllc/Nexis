@@ -47,10 +47,10 @@ void SettingsPage::init()
 
     // load disks
     InfoManager::ins()->updateDiskInfo();
-    QList<Disk*> disks = InfoManager::ins()->getDisks();
+    const QList<Disk> disks = InfoManager::ins()->getDisks();
 
-    for (const Disk *disk : disks) {
-        ui->cmbDisks->addItem(QString("%1  (%2)").arg(disk->device).arg(disk->name), disk->name);
+    for (const Disk &disk : disks) {
+        ui->cmbDisks->addItem(QString("%1  (%2)").arg(disk.device).arg(disk.name), disk.name);
     }
 
     QString dk = mSettingManager->getDiskName().isEmpty() ? QStorageInfo::root().displayName() : mSettingManager->getDiskName();

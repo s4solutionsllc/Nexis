@@ -153,6 +153,42 @@
   - **Fix complexity:** Trivial (add QSS branch pseudo-state rules matching System Cleaner pattern)
   - **Resolved:** Added `::branch:closed:has-children` (chevron-right.svg) and `::branch:open:has-children` (chevron-down.svg) rules to `#treeWidgetPackages`
 
+- [x] **BUG-24: YUM/DNF getPackageCaches() returns Pacman paths (copy-paste bug)** (MEDIUM)
+  - **File:** `linux/nexis/Managers/tool_manager.cpp:91-93`
+  - **Description:** The `YUM`/`DNF` case in `getPackageCaches()` called `PackageTool::getPacmanPackageCaches()` instead of a YUM/DNF cache function. On Fedora/RHEL systems, this returns incorrect results (Pacman paths that don't exist).
+  - **Fix complexity:** Moderate (add new `getYumDnfPackageCaches()` method)
+  - **Resolved:** Added `PackageTool::getYumDnfPackageCaches()` scanning `/var/cache/dnf/` and `/var/cache/yum/`
+
+- [x] **BUG-25: CircleBar potential double-delete of QChart** (MEDIUM)
+  - **File:** `shared/nexis/Pages/Dashboard/circlebar.cpp`
+  - **Description:** `QChartView` constructor takes ownership of the `QChart*`, but the `CircleBar` destructor also called `delete mChart`. This is a potential double-free crash.
+  - **Fix complexity:** Trivial (remove manual delete)
+  - **Resolved:** Removed `delete mChart` from destructor; Qt parent-child ownership handles cleanup
+
+- [x] **BUG-26: DiskInfo raw pointer ownership — Rule of Three violation** (MEDIUM)
+  - **Files:** `shared/nexis-core/Info/disk_info.h`, `shared/nexis-core/Info/disk_info_shared.cpp`
+  - **Description:** `QList<Disk*>` with `new`/`qDeleteAll` but no copy constructor or assignment operator. If `DiskInfo` is copied, double-free occurs. `Disk` is a plain struct with no polymorphism — heap allocation unnecessary.
+  - **Fix complexity:** Moderate (change to value semantics, update all call sites)
+  - **Resolved:** Changed to `QList<Disk>` with value semantics; updated DiskInfo, InfoManager, DashboardPage, and both SettingsPage files
+
+- [x] **BUG-27: Linux /proc/meminfo no bounds checking** (MEDIUM)
+  - **File:** `linux/nexis-core/Info/memory_info.cpp`
+  - **Description:** After regex-filtering `/proc/meminfo`, code accesses `lines.at(0)` through `lines.at(7)` with no size check. If the kernel omits a line or the regex doesn't match all 8 expected entries, the app crashes with an out-of-bounds exception.
+  - **Fix complexity:** Trivial (add guard clause)
+  - **Resolved:** Added `lines.size() < 8` guard with early return and warning log
+
+- [x] **BUG-28: quint8 core count overflow at 256 threads** (LOW)
+  - **Files:** `linux/nexis-core/Info/cpu_info.cpp`, `macos/nexis-core/Info/cpu_info.cpp`
+  - **Description:** `getCpuCoreCount()` used `static quint8 count` which maxes at 255. AMD EPYC 9004 has 256 threads — overflow to 0 would cause division-by-zero in per-core CPU calculations.
+  - **Fix complexity:** Trivial (change to `int`)
+  - **Resolved:** Changed `quint8` to `int` on both platforms
+
+- [x] **BUG-29: toLong() truncation for 64-bit values** (LOW)
+  - **Files:** `linux/nexis-core/Info/memory_info.cpp`, `linux/nexis-core/Info/network_info.cpp`, `linux/nexis-core/Info/process_info.cpp`, `macos/nexis-core/Info/process_info.cpp`
+  - **Description:** `toLong()` returns 32-bit on 32-bit platforms. Memory sizes (shifted left by 10), network byte counters, RSS, and VSIZE can all exceed 2^31. Using `toLongLong()` makes the 64-bit intent explicit.
+  - **Fix complexity:** Trivial (search-and-replace)
+  - **Resolved:** Changed all `toLong()` to `toLongLong()` in memory, network, and process info files
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

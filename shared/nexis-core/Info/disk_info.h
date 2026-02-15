@@ -7,30 +7,27 @@
 #include <QSet>
 #include "nexis-core_global.h"
 
-class Disk;
+struct Disk {
+    QString name;
+    QString device;
+    QString fileSystemType;
+    quint64 size = 0;
+    quint64 free = 0;
+    quint64 used = 0;
+};
 
 class NEXISCORESHARED_EXPORT DiskInfo
 {
 public:
-    QList<Disk*> getDisks() const;
+    QList<Disk> getDisks() const;
     void updateDiskInfo();
     QList<quint64> getDiskIO() const;
     QStringList getDiskNames() const;
     QList<QString> fileSystemTypes();
     QList<QString> devices();
-    ~DiskInfo();
 
 private:
-    QList<Disk*> disks;
-};
-
-struct Disk {
-    QString name;
-    QString device;
-    QString fileSystemType;
-    quint64 size;
-    quint64 free;
-    quint64 used;
+    QList<Disk> disks;
 };
 
 

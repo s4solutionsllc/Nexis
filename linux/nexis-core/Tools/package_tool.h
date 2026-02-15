@@ -17,6 +17,7 @@ public:
     static QStringList dpkgDryRunRemove(const QStringList &packages);
 
     // DNF - YUM
+    static QFileInfoList getYumDnfPackageCaches();
     static QList<Package> getRpmPackages();
     static bool dnfRemovePackages(QStringList packages);
     static bool yumRemovePackages(QStringList packages);

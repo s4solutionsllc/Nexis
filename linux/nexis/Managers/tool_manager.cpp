@@ -90,7 +90,7 @@ QFileInfoList ToolManager::getPackageCaches() const
         break;
     case YUM:
     case DNF:
-        return PackageTool::getPacmanPackageCaches();
+        return PackageTool::getYumDnfPackageCaches();
         break;
     case PACMAN:
         return PackageTool::getPacmanPackageCaches();
