@@ -576,11 +576,11 @@ QLabel[accessibleName="dialog-title"] {
 
 #SystemCleanerPage #btnClean {
     border: 0;
-    background: url(:/static/themes/@themeName/img/clean.svg) no-repeat center;
+    background: url(:/static/themes/@themeName/img/clean.png) no-repeat center;
 }
 
 #SystemCleanerPage #btnClean:hover {
-    background: url(:/static/themes/@themeName/img/clean-active.svg) no-repeat center;
+    background: url(:/static/themes/@themeName/img/clean-active.png) no-repeat center;
 }
 
 /* - System Scan Results - */

@@ -17,16 +17,16 @@
         <file>static/themes/default/img/collapse.png</file>
         <file>static/themes/default/img/scan.png</file>
         <file>static/themes/default/img/scan-active.png</file>
-        <file>static/themes/default/img/clean.svg</file>
-        <file>static/themes/default/img/clean-active.svg</file>
+        <file>static/themes/default/img/clean.png</file>
+        <file>static/themes/default/img/clean-active.png</file>
         <file>static/themes/default/img/down-arrow.png</file>
         <file>static/themes/default/img/right-arrow.png</file>
         <file>static/font/Ubuntu-R.ttf</file>
         <file>static/languages.json</file>
         <file>static/themes.json</file>
         <file>static/themes/light/img/app.png</file>
-        <file>static/themes/light/img/clean-active.svg</file>
-        <file>static/themes/light/img/clean.svg</file>
+        <file>static/themes/light/img/clean-active.png</file>
+        <file>static/themes/light/img/clean.png</file>
         <file>static/themes/light/img/down-arrow.png</file>
         <file>static/themes/light/img/edit.png</file>
         <file>static/themes/light/img/right-arrow.png</file>
