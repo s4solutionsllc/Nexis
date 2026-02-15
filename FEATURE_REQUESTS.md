@@ -39,6 +39,11 @@
 - [x] **FR-23: Disk Usage Analyzer launcher** — Provide a launcher card on the Resources page that detects the best disk-usage tool for the platform/DE (Baobab on GNOME, Filelight elsewhere, GrandPerspective on macOS) and offers launch or install actions. Issue [#2](https://github.com/lsimpsonsfdc/Nexis/issues/2). **Resolved:** Replaced custom DiskAnalyzerWidget with DiskUsageLauncherWidget that delegates to dedicated tools.
 - [x] **FR-24: Configurable disk analyzer preference** — Allow users to choose their preferred disk usage analyzer from Settings instead of relying solely on auto-detection. Adds a "Disk Analyzer" combobox to the Settings page with platform-specific tool options (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper) plus a "Custom..." option with a free-form executable path. The Resources page launcher widget reads this preference and respects the user's choice. Extends FR-23.
 
+## UI Consistency
+
+- [ ] **FR-25: Remove `QIcon::fromTheme()` — use bundled assets only** — Replace all `QIcon::fromTheme()` calls with direct `QIcon(...)` loading from bundled QRC assets. Currently Linux uses the system icon theme (Adwaita, Breeze, etc.) producing different visuals per desktop environment, while macOS already uses bundled assets. Affected files: `app.cpp`, `system_cleaner_page.cpp`, `uninstaller_page.cpp`, `apt_source_manager_page.cpp`, `disk_usage_launcher_widget.cpp`. Asset gap: needs a generic "disk/storage" SVG for the disk usage launcher. Formerly revision_plan.md Phase 10.1.
+- [ ] **FR-26: Remove hardcoded Ubuntu font from `.ui` files** — Strip all `<family>Ubuntu</family>` font property blocks from `.ui` files so Qt uses the platform's native system font. The Ubuntu font is only available on Ubuntu-based distros; on macOS and other Linux distros Qt falls back unpredictably. Removing it ensures the app looks native everywhere. Formerly revision_plan.md Phase 10.2.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

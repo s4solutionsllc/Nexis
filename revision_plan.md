@@ -508,7 +508,7 @@ find_package(Qt6 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network REQUI
 
 ---
 
-## Phase 10 — Icon and Font Consistency (Deferred)
+## Phase 10 — Icon and Font Consistency (Moved to FR-25, FR-26)
 
 **Goal:** Make the application visually identical on macOS and Linux by using bundled assets exclusively and removing hardcoded fonts. This phase is intentionally placed last — the owner may choose an alternative approach for icon/font strategy.
 
