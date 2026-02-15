@@ -434,7 +434,7 @@ find_package(Qt6 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network REQUI
 
 ---
 
-## Phase 8 — Asset Normalization: Migrate to SVG
+## Phase 8 — Asset Normalization: Migrate to SVG ✅
 
 **Goal:** Replace raster PNGs with resolution-independent SVGs wherever possible, and set display sizes in code/QSS. This eliminates dimension inconsistencies, supports HiDPI/Retina displays naturally, and reduces bundle size.
 

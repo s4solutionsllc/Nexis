@@ -576,11 +576,11 @@ QLabel[accessibleName="dialog-title"] {
 
 #SystemCleanerPage #btnClean {
     border: 0;
-    background: url(:/static/themes/@themeName/img/clean.png) no-repeat center;
+    background: url(:/static/themes/@themeName/img/clean.svg) no-repeat center;
 }
 
 #SystemCleanerPage #btnClean:hover {
-    background: url(:/static/themes/@themeName/img/clean-active.png) no-repeat center;
+    background: url(:/static/themes/@themeName/img/clean-active.svg) no-repeat center;
 }
 
 /* - System Scan Results - */
@@ -737,11 +737,11 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #lblServiceStartupImg {
-    image: url(:/static/themes/@themeName/img/power.png);
+    image: url(:/static/themes/@themeName/img/power.svg);
 }
 
 #lblSystemRunningImg {
-    image: url(:/static/themes/@themeName/img/run.png);
+    image: url(:/static/themes/@themeName/img/run.svg);
 }
 
 /**********************
