@@ -44,6 +44,10 @@
 - [ ] **FR-25: Remove `QIcon::fromTheme()` — use bundled assets only** — Replace all `QIcon::fromTheme()` calls with direct `QIcon(...)` loading from bundled QRC assets. Currently Linux uses the system icon theme (Adwaita, Breeze, etc.) producing different visuals per desktop environment, while macOS already uses bundled assets. Affected files: `app.cpp`, `system_cleaner_page.cpp`, `uninstaller_page.cpp`, `apt_source_manager_page.cpp`, `disk_usage_launcher_widget.cpp`. Asset gap: needs a generic "disk/storage" SVG for the disk usage launcher. Formerly revision_plan.md Phase 10.1.
 - [ ] **FR-26: Remove hardcoded Ubuntu font from `.ui` files** — Strip all `<family>Ubuntu</family>` font property blocks from `.ui` files so Qt uses the platform's native system font. The Ubuntu font is only available on Ubuntu-based distros; on macOS and other Linux distros Qt falls back unpredictably. Removing it ensures the app looks native everywhere. Formerly revision_plan.md Phase 10.2.
 
+## GNOME Settings
+
+- [ ] **FR-27: GNOME Settings — populate theme/font fields as dropdowns with installed values** — Replace the plain `QLineEdit` fields for GTK Theme, Icon Theme, Cursor Theme, UI Font, Document Font, Monospace Font, and Titlebar Font with `QComboBox` (or `QFontComboBox` for fonts) that enumerate installed options. For themes, scan `/usr/share/themes/`, `/usr/share/icons/`, `/usr/share/cursors/` etc. For fonts, use `QFontDatabase`. Users currently must type exact theme/font names with no guidance on what's available.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

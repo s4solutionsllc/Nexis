@@ -195,6 +195,18 @@
   - **Fix complexity:** Review-only (visual QA pass)
   - **Resolved:** Reverted all Phase 2.1 margin changes — restored original per-page margin values across 10 .ui files
 
+- [ ] **BUG-31: GNOME Settings silently fails when `gsettings set` errors** (MEDIUM)
+  - **Scope:** GNOME Settings page — all 4 tabs
+  - **Description:** When `gsettings set` fails (invalid value, permission denied, locked key), the error is only logged via `qCritical()`. The UI widget retains the new value, giving the user no indication the change didn't apply. Should revert the widget to the previous value and show a brief inline error or status bar message.
+  - **Files:** `shared/nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp`, `gnome_wm_tab.cpp`, `gnome_mouse_tab.cpp`, `gnome_desktop_tab.cpp`
+  - **Fix complexity:** Moderate (wrap `GnomeSettingsTool::set*` calls with success check, revert widget on failure, add user-visible feedback)
+
+- [ ] **BUG-32: GNOME Settings speed sliders spawn subprocess per pixel of drag** (LOW)
+  - **Scope:** GNOME Settings → Mouse & Touchpad tab
+  - **Description:** The mouse and touchpad speed sliders connect `QSlider::valueChanged` directly to `GnomeSettingsTool::setD()`, which spawns a `gsettings set` subprocess. Dragging the slider fires `valueChanged` on every pixel of movement, potentially spawning hundreds of subprocesses in a single drag gesture. Should debounce writes with a `QTimer` (e.g., 200ms delay) so only the final value is written.
+  - **Files:** `shared/nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp`
+  - **Fix complexity:** Trivial (add a `QTimer::singleShot` or a member `QTimer` with 200ms interval to debounce slider writes)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
