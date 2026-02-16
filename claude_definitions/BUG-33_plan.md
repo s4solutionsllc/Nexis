@@ -14,4 +14,4 @@ Add a `QCheckBox { color: @color05; }` rule to the QSS so all standard checkboxe
 
 - [x] Incremental build to verify compilation.
 - [x] Mark BUG-33 as `[x]` in `BUGS.md` with resolution note.
-- [ ] Commit and push.
+- [x] Commit and push.
