@@ -215,6 +215,12 @@
   - **Files:** `shared/nexis/static/themes/default/style/style.qss`
   - **Fix complexity:** Trivial (add a single QSS rule for QCheckBox text color)
 
+- [ ] **BUG-34: Settings page "Luke Simpson" link uses hardcoded blue instead of Nexis orange** (LOW)
+  - **Scope:** Settings page
+  - **Description:** The `lblCreatedBy` QLabel in `settings_page.cpp` builds an HTML string with an inline `color:#007af4` (blue) for the "Luke Simpson" GitHub profile link. This doesn't match the Nexis brand accent color (`@accentColor` = `#E95420`). The link color should be the Nexis orange (`#E95420`) with an orange hover (`#accentHover` = `#c64516`). Since QLabel rich text doesn't support CSS hover, the fix should use QSS `a` link styling on the label or switch to hardcoding the accent orange in the inline span style. Both the `.ui` default text (line ~240) and the dynamic `setText()` call in the constructor (line ~25) contain the blue color and need updating.
+  - **Files:** `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/Pages/Settings/settings_page.ui`
+  - **Fix complexity:** Trivial (replace `#007af4` with `#E95420` in both the .cpp and .ui HTML strings)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
