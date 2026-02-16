@@ -532,6 +532,52 @@ QLabel[accessibleName="dialog-title"] {
 
 
 /**************************
+    HARDWARE INFO PAGE
+***************************/
+
+#HardwareInfoPage {
+    background-color: transparent;
+}
+
+#HardwareInfoPage #scrollArea,
+#HardwareInfoPage #scrollContent {
+    background-color: transparent;
+}
+
+#HardwareInfoPage QGroupBox {
+    border: 1px solid @borderColor;
+    border-radius: 12;
+    margin-top: 12;
+    padding: 12 12 6 12;
+    background-color: @cardBg;
+}
+
+#HardwareInfoPage QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: @color05;
+    font-size: 11pt;
+    font-weight: bold;
+}
+
+#HardwareInfoPage QTableWidget {
+    background-color: transparent;
+    border: 0;
+}
+
+#HardwareInfoPage QTableWidget::item {
+    color: @color05;
+    background-color: transparent;
+    padding: 4 8;
+}
+
+#HardwareInfoPage QHeaderView::section {
+    background-color: @color02;
+    color: @accentColor;
+}
+
+/**************************
     SYSTEM CLEANER PAGE
 ***************************/
 
