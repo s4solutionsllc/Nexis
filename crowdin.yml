@@ -8,8 +8,8 @@ files:
     translation: /shared/translations/nexis_%two_letters_code%.ts
     languages_mapping:
       two_letters_code:
+        ca: ca-es
         zh-CN: zh-cn
         zh-TW: zh-tw
-        ca-ES: ca-es
         uk: ua
         vi: vn
