@@ -31,7 +31,6 @@ void HardwareInfoPage::init()
     populateProcessor();
     populateGraphics();
     populateMemory();
-    populateThermal();
 }
 
 void HardwareInfoPage::addRow(QTableWidget *table, const QString &label, const QString &value)
@@ -207,38 +206,3 @@ void HardwareInfoPage::populateMemory()
     fitTableHeight(t);
 }
 
-void HardwareInfoPage::populateThermal()
-{
-    QTableWidget *t = ui->tblThermal;
-    t->verticalHeader()->setVisible(false);
-
-    if (!im->hasThermalSensors()) {
-        ui->grpThermal->hide();
-        return;
-    }
-
-    t->setColumnCount(4);
-    t->setHorizontalHeaderLabels({
-        tr("Sensor"), tr("Temperature"), tr("Max"), tr("Critical")
-    });
-
-    QList<ThermalSensor> sensors = im->getThermalSensors();
-    for (int i = 0; i < sensors.size(); ++i) {
-        const ThermalSensor &s = sensors.at(i);
-        double temp = im->getThermalTemperature(i);
-
-        int row = t->rowCount();
-        t->insertRow(row);
-        t->setItem(row, 0, new QTableWidgetItem(s.label));
-        t->setItem(row, 1, new QTableWidgetItem(
-            temp >= 0 ? QString("%1 \u00B0C").arg(temp, 0, 'f', 1) : tr("N/A")));
-        t->setItem(row, 2, new QTableWidgetItem(
-            s.maxTemp >= 0 ? QString("%1 \u00B0C").arg(s.maxTemp, 0, 'f', 1) : tr("N/A")));
-        t->setItem(row, 3, new QTableWidgetItem(
-            s.critTemp >= 0 ? QString("%1 \u00B0C").arg(s.critTemp, 0, 'f', 1) : tr("N/A")));
-    }
-
-    t->horizontalHeader()->setStretchLastSection(true);
-    t->resizeColumnsToContents();
-    fitTableHeight(t);
-}
