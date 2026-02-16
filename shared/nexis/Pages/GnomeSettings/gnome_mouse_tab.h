@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+class QTimer;
+
 namespace Ui {
     class GnomeMouseTab;
 }
@@ -23,6 +25,8 @@ private:
 
     Ui::GnomeMouseTab *ui;
     bool mLoading;
+    QTimer *mMouseSpeedTimer;
+    QTimer *mTouchpadSpeedTimer;
 };
 
 #endif // GNOME_MOUSE_TAB_H

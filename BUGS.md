@@ -202,11 +202,12 @@
   - **Fix complexity:** Moderate (wrap `GnomeSettingsTool::set*` calls with success check, revert widget on failure, add user-visible feedback)
   - **Resolved:** Added `CommandUtil::execWithStatus()` for exit code checking; changed `GnomeSettingsTool::set*()` to return bool; all ~49 tab lambdas now check return value, revert widgets with QSignalBlocker on failure, and emit `settingFailed` signal to show transient inline error via `GnomeSettingsPage::showError()`
 
-- [ ] **BUG-32: GNOME Settings speed sliders spawn subprocess per pixel of drag** (LOW)
+- [x] **BUG-32: GNOME Settings speed sliders spawn subprocess per pixel of drag** (LOW)
   - **Scope:** GNOME Settings → Mouse & Touchpad tab
   - **Description:** The mouse and touchpad speed sliders connect `QSlider::valueChanged` directly to `GnomeSettingsTool::setD()`, which spawns a `gsettings set` subprocess. Dragging the slider fires `valueChanged` on every pixel of movement, potentially spawning hundreds of subprocesses in a single drag gesture. Should debounce writes with a `QTimer` (e.g., 200ms delay) so only the final value is written.
   - **Files:** `shared/nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp`
   - **Fix complexity:** Trivial (add a `QTimer::singleShot` or a member `QTimer` with 200ms interval to debounce slider writes)
+  - **Resolved:** Added two member `QTimer*` (mMouseSpeedTimer, mTouchpadSpeedTimer) with 200ms single-shot interval. Slider `valueChanged` now updates the label immediately for responsive UX but only restarts the debounce timer; the actual `gsettings set` call fires on timeout after 200ms of inactivity.
 
 ## Notes
 

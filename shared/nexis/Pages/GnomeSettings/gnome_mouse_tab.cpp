@@ -2,6 +2,7 @@
 #include "ui_gnome_mouse_tab.h"
 
 #include <QSignalBlocker>
+#include <QTimer>
 #include <Tools/gnome_settings_tool.h>
 
 GnomeMouseTab::GnomeMouseTab(QWidget *parent) :
@@ -10,6 +11,14 @@ GnomeMouseTab::GnomeMouseTab(QWidget *parent) :
     mLoading(false)
 {
     ui->setupUi(this);
+
+    mMouseSpeedTimer = new QTimer(this);
+    mMouseSpeedTimer->setSingleShot(true);
+    mMouseSpeedTimer->setInterval(200);
+
+    mTouchpadSpeedTimer = new QTimer(this);
+    mTouchpadSpeedTimer->setSingleShot(true);
+    mTouchpadSpeedTimer->setInterval(200);
 
     // Make transparent so @pageContent background shows through in dark mode
     ui->scrollArea->viewport()->setAutoFillBackground(false);
@@ -34,15 +43,17 @@ GnomeMouseTab::GnomeMouseTab(QWidget *parent) :
     });
     connect(ui->sliderMouseSpeed, &QSlider::valueChanged, this, [this](int val) {
         if (mLoading) return;
-        double speed = val / 100.0;
+        ui->lblMouseSpeedVal->setText(QString::number(val / 100.0, 'f', 2));
+        mMouseSpeedTimer->start();
+    });
+    connect(mMouseSpeedTimer, &QTimer::timeout, this, [this]() {
+        double speed = ui->sliderMouseSpeed->value() / 100.0;
         double prevSpeed = GnomeSettingsTool::getD(GnomeSchema::MOUSE, GnomeKey::SPEED);
         if (!GnomeSettingsTool::setD(GnomeSchema::MOUSE, GnomeKey::SPEED, speed)) {
             const QSignalBlocker blocker(ui->sliderMouseSpeed);
             ui->sliderMouseSpeed->setValue(static_cast<int>(prevSpeed * 100));
             ui->lblMouseSpeedVal->setText(QString::number(prevSpeed, 'f', 2));
             emit settingFailed(tr("Failed to apply Mouse Speed"));
-        } else {
-            ui->lblMouseSpeedVal->setText(QString::number(speed, 'f', 2));
         }
     });
     connect(ui->cmbAccelProfile, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
@@ -84,15 +95,17 @@ GnomeMouseTab::GnomeMouseTab(QWidget *parent) :
     });
     connect(ui->sliderTouchpadSpeed, &QSlider::valueChanged, this, [this](int val) {
         if (mLoading) return;
-        double speed = val / 100.0;
+        ui->lblTouchpadSpeedVal->setText(QString::number(val / 100.0, 'f', 2));
+        mTouchpadSpeedTimer->start();
+    });
+    connect(mTouchpadSpeedTimer, &QTimer::timeout, this, [this]() {
+        double speed = ui->sliderTouchpadSpeed->value() / 100.0;
         double prevSpeed = GnomeSettingsTool::getD(GnomeSchema::TOUCHPAD, GnomeKey::SPEED);
         if (!GnomeSettingsTool::setD(GnomeSchema::TOUCHPAD, GnomeKey::SPEED, speed)) {
             const QSignalBlocker blocker(ui->sliderTouchpadSpeed);
             ui->sliderTouchpadSpeed->setValue(static_cast<int>(prevSpeed * 100));
             ui->lblTouchpadSpeedVal->setText(QString::number(prevSpeed, 'f', 2));
             emit settingFailed(tr("Failed to apply Touchpad Speed"));
-        } else {
-            ui->lblTouchpadSpeedVal->setText(QString::number(speed, 'f', 2));
         }
     });
     connect(ui->chkTwoFingerScroll, &QCheckBox::toggled, this, [this](bool checked) {
