@@ -138,6 +138,10 @@ QRadioButton::indicator:checked {
     QCheckBox
 ******************/
 
+QCheckBox {
+    color: @color05;
+}
+
 QCheckBox::indicator {
     width: 44px;
     height: 24px;
