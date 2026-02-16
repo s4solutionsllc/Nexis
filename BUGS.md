@@ -221,6 +221,12 @@
   - **Files:** `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/Pages/Settings/settings_page.ui`
   - **Fix complexity:** Trivial (replace `#007af4` with `#E95420` in both the .cpp and .ui HTML strings)
 
+- [ ] **BUG-35: Remove "Donate" button from Settings page until donation method is established** (LOW)
+  - **Scope:** Settings page
+  - **Description:** The Settings page has a `btnDonate` QPushButton whose click handler (`on_btnDonate_clicked`) simply opens the GitHub profile URL. There is no actual donation mechanism in place. The button should be removed from both the `.ui` layout and the `.cpp` slot until a real donation method is identified. Remove the widget from the UI file and delete the `on_btnDonate_clicked` slot implementation.
+  - **Files:** `shared/nexis/Pages/Settings/settings_page.ui`, `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/Pages/Settings/settings_page.h`
+  - **Fix complexity:** Trivial (remove widget from .ui, delete slot from .cpp/.h)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
