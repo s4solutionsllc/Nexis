@@ -47,6 +47,43 @@ cmake --build build -j$(sysctl -n hw.ncpu)
 - `linux/` — Linux-specific implementations
 - `translations/` — i18n `.ts` files
 
+## Feature / Bug Resolution Workflow
+
+When the user requests a new feature or asks to fix a bug, follow this three-phase workflow **automatically**. All artifacts go in the `claude_definitions/` folder.
+
+### Phase 1 — Research (`{ID}_research.md`)
+
+1. Create `claude_definitions/{ID}_research.md` (e.g., `FR-25_research.md` or `BUG-31_research.md`).
+2. Perform deep research on the request:
+   - Read all relevant source files, headers, `.ui` files, QSS, and CMakeLists.txt.
+   - Trace call chains, signal/slot connections, and data flow end-to-end.
+   - Understand how the current behavior works, what it does, and all its specificities.
+   - Identify edge cases, platform differences (macOS vs Linux), and potential side effects.
+   - Review upstream Stacer and QuentiumYT forks for prior art or related fixes.
+3. Write a detailed report of all findings in the research file. Include file paths, line numbers, code snippets, and architectural context.
+
+### Phase 2 — Plan (`{ID}_plan.md`)
+
+1. Create `claude_definitions/{ID}_plan.md`.
+2. Write a detailed implementation plan with:
+   - Numbered tasks/phases, each with specific files and changes.
+   - Checkboxes (`[ ]`) for each task to track completion.
+   - Clear acceptance criteria for each task.
+   - Build verification steps.
+3. **Wait for user approval before proceeding to Phase 3.**
+
+### Phase 3 — Implementation
+
+1. Once the user approves the plan, implement it fully. Do not stop until all tasks and phases are completed.
+2. As each task/phase is completed, mark it `[x]` in the plan document.
+3. Run incremental builds after each significant change to catch issues early.
+4. **Code quality rules during implementation:**
+   - Do not add unnecessary comments.
+   - Do not use `any` or unknown types.
+   - Continuously verify you are not introducing new issues (build checks, grep for regressions).
+5. Update `BUGS.md` or `FEATURE_REQUESTS.md` with resolution notes and commit hash.
+6. Commit and push when complete.
+
 ## Notable Forks
 
 - **QuentiumYT/Stacer** — Most active fork of the original project (78 stars). Reference for fixes and features.

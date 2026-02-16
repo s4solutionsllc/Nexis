@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(cmake *)",
+      "Bash(cmake --build *)",
+      "Bash(rm -rf build && cmake *)",
+      "Bash(make *)"
+    ]
+  }
+}
