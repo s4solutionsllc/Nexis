@@ -49,6 +49,10 @@
 - [x] **FR-27: GNOME Settings — populate theme/font fields as dropdowns with installed values** — Replace the plain `QLineEdit` fields for GTK Theme, Icon Theme, Cursor Theme, UI Font, Document Font, Monospace Font, and Titlebar Font with `QComboBox` (or `QFontComboBox` for fonts) that enumerate installed options. For themes, scan `/usr/share/themes/`, `/usr/share/icons/`, `/usr/share/cursors/` etc. For fonts, use `QFontDatabase`. Users currently must type exact theme/font names with no guidance on what's available.
   - **Resolved:** Replaced 3 theme QLineEdits with editable QComboBoxes populated by scanning `/usr/share/themes/`, `/usr/share/icons/`, and user dirs. Replaced 4 font QLineEdits with QFontComboBox + QSpinBox pairs that parse/compose GNOME's "FontFamily Size" format. Monospace font combo filtered to fixed-pitch families only.
 
+## Community Requests
+
+- [ ] **FR-28: Dashboard-only fullscreen / kiosk mode** — Add a fullscreen mode that hides the sidebar and title bar, showing only the Dashboard widgets. Intended for use on small secondary monitors as a dedicated system monitor (similar to HardwareVisualizer). Sub-features: (a) Toggle fullscreen via menu/shortcut that hides the sidebar (`QFrame#sidebar`), title bar, and system info text, expanding the dashboard to fill the window. (b) Option to enlarge dashboard widgets (CircleBars, LineCharts) to use the freed space. (c) Remember the last selected temperature sensor device across sessions. Community issue [#4](https://github.com/lsimpsonsfdc/Nexis/issues/4) by @Vai0Lou.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
