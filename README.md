@@ -139,6 +139,34 @@ make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
     <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-11.png" width="700">
 </p>
 
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-12.png" width="700">
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-13.png" width="700">
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-14.png" width="700">
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-15.png" width="700">
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-16.png" width="700">
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-17.png" width="700">
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-18.png" width="700">
+</p>
+
 ## Development
 
 Nexis is co-authored by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding agent. Claude Code contributes to architecture decisions, feature implementation, bug fixes, CI/CD pipelines, and release engineering -- working alongside the human maintainer as a pair-programming partner.
