@@ -4,14 +4,16 @@ A comparison of features available on each supported platform.
 
 | Feature | Linux | macOS | Notes |
 |---|:---:|:---:|---|
-| **Dashboard** | Yes | Yes | CPU, Memory, Disk, and Network monitoring |
+| **Dashboard** | Yes | Yes | CPU, Memory, Disk, GPU, and Network monitoring |
+| **Dashboard Kiosk Mode** | Yes | Yes | F11 fullscreen dashboard-only mode; ESC to exit |
+| **Hardware Info** | Yes | Yes | System, Processor, Graphics, and Memory details |
 | **Startup Apps** | Yes | Yes | Linux: `.desktop` files in `~/.config/autostart/`; macOS: LaunchAgents plists |
 | **System Cleaner** | Yes | Yes | Package caches, crash reports, app logs, app caches, trash |
 | **File Search** | Yes | Yes | Linux: GNU `find`; macOS: BSD `find` |
 | **Services Manager** | Yes | Yes | Linux: `systemctl`; macOS: `launchctl` |
 | **Process Manager** | Yes | Yes | View and manage running processes |
 | **Package Uninstaller** | Yes | Yes | Linux: APT/DNF/YUM/Pacman; macOS: Homebrew |
-| **Resource Monitor** | Yes | Yes | Historical CPU, Memory, Network, and Disk I/O charts |
+| **Resource Monitor** | Yes | Yes | Historical CPU, Memory, GPU, Network, and Disk I/O charts |
 | **Helpers (Hosts/DNS)** | Yes | Yes | Edit `/etc/hosts` file |
 | **Source Manager** | Yes | Yes | Linux: APT sources/PPAs; macOS: Homebrew taps |
 | **Desktop Settings** | Yes | Yes | Linux: GNOME `gsettings`; macOS: `defaults` command |
