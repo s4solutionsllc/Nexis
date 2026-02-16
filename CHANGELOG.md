@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Expanded cache cleaning (FR-03):** Electron app caches and dev tool paths.
 - **Single-instance enforcement (FR-02):** QLockFile prevents duplicate launches.
 - **SVG logo and tray icon (FR-07):** Redesigned in SVG for all themes.
-- **Crowdin translation integration (FR-08):** Automated PR workflows for 25 languages.
+- **Crowdin translation integration (FR-08):** Automated PR workflows for 34 languages.
 - **Pip cache cleaning (FR-17):** PIP_CACHE_DIR env var support.
 
 ### Fixed

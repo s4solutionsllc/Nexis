@@ -21,7 +21,7 @@ A comparison of features available on each supported platform.
 | **Thermal Monitoring** | Yes | Yes | Linux: `hwmon` sensors; macOS: `osx-cpu-temp` |
 | **Snap Packages** | Yes | No | Linux-only package format |
 | **Theme Support** | Yes | Yes | Dark and light themes |
-| **Internationalization** | Yes | Yes | 25 languages |
+| **Internationalization** | Yes | Yes | 34 languages |
 
 ## Platform-Specific Details
 

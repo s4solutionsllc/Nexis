@@ -5,7 +5,7 @@
 
 <p align="center">
   <b>Linux & macOS System Optimizer and Monitor</b><br>
-  <sub>Actively maintained Qt6 fork of <a href="https://github.com/oguzhaninan/Stacer">oguzhaninan/Stacer</a>, rebranded as Nexis</sub>
+  <sub>Open-source system optimizer and monitor built with Qt 6 and C++17</sub>
 </p>
 
 <p align="center">
@@ -20,32 +20,25 @@
 
 ## Features
 
-- **Dashboard** -- Real-time CPU, memory, disk, and network monitoring with circular gauges
+- **Dashboard** -- Real-time CPU, memory, disk, GPU, and network monitoring with circular gauges
+- **Hardware Info** -- Detailed system, processor, graphics, and memory information at a glance
+- **Kiosk Mode** -- F11 fullscreen dashboard-only mode for dedicated monitoring displays
 - **GPU Monitoring** -- GPU utilization tracking for NVIDIA, AMD, and Intel (Linux); Apple Silicon (macOS)
 - **System Cleaner** -- Remove package caches, crash reports, application logs, and app caches
 - **Process Manager** -- View, sort, and manage running processes
 - **Service Manager** -- Start, stop, and toggle system services (systemd / launchd)
 - **Startup Apps** -- Manage auto-start applications with configurable delay
 - **Package Uninstaller** -- Uninstall packages via APT, DNF, Pacman, Snap (Linux) or Homebrew (macOS)
-- **Resource Monitor** -- Historical charts for CPU, memory, network, and disk I/O
+- **Resource Monitor** -- Historical charts for CPU, memory, GPU, network, and disk I/O
 - **Hosts File Editor** -- Manage `/etc/hosts` entries
 - **APT Source Manager / Homebrew Taps** -- Manage package repositories
 - **Desktop Settings** -- Adjust GNOME (Linux) or macOS desktop preferences
 - **Theme Support** -- Dark, light, and system-auto color schemes
-- **Internationalization** -- 26 languages supported
+- **Internationalization** -- 34 languages supported
 
-## Why This Fork?
+## Background
 
-The [original project](https://github.com/oguzhaninan/Stacer) by oguzhaninan is no longer actively maintained. This fork picks up where it left off:
-
-| | Upstream (oguzhaninan) | This Fork |
-|---|---|---|
-| **Status** | Inactive since 2020 | Actively maintained |
-| **Qt version** | Qt 5 | Qt 6 with C++17 |
-| **Platforms** | Linux only | Linux and macOS |
-| **GPU monitoring** | Not available | NVIDIA, AMD, Intel, Apple Silicon |
-| **Themes** | Single theme | Dark, light, and system-auto |
-| **Known bugs** | 50+ open issues | Critical bugs fixed (see [BUGS.md](BUGS.md)) |
+Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popular Linux system optimizer created by oguzhaninan. After the original project went inactive in 2020, development continued here -- porting to Qt 6 and C++17, adding native macOS support, GPU monitoring, a hardware info panel, kiosk mode, and fixing 38+ bugs inherited from the upstream codebase. As the feature-set diverged, the project was rebranded as Nexis to reflect that it had become something new. Stacer laid the foundation; Nexis is where it goes from here.
 
 ## Downloads
 
@@ -148,11 +141,11 @@ make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
 
 ## Development
 
-This fork is co-authored by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding agent. Claude Code contributes to architecture decisions, feature implementation, bug fixes, CI/CD pipelines, and release engineering -- working alongside the human maintainer as a pair-programming partner.
+Nexis is co-authored by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding agent. Claude Code contributes to architecture decisions, feature implementation, bug fixes, CI/CD pipelines, and release engineering -- working alongside the human maintainer as a pair-programming partner.
 
 ## Translations
 
-Nexis supports 26 languages. Translations are managed via [Crowdin](https://crowdin.com/project/nexis) -- no coding required to contribute. Sign up, pick a language, and start translating in your browser.
+Nexis supports 34 languages. Translations are managed via [Crowdin](https://crowdin.com/project/nexis) -- no coding required to contribute. Sign up, pick a language, and start translating in your browser.
 
 New translations are automatically synced back to this repository via pull request.
 
@@ -176,35 +169,4 @@ To enable the Crowdin sync pipeline for a new fork:
 
 ## Contributing
 
-Bug reports and feature requests are tracked in [BUGS.md](BUGS.md) and [FEATURE_REQUESTS.md](FEATURE_REQUESTS.md). Feel free to [open an issue](https://github.com/lsimpsonsfdc/Nexis/issues) or submit a pull request.
-
-<!--
-
-This project exists thanks to all the people who have previously contributed. [[Contribute](CONTRIBUTING.md)].</br>
-Please let me know if you would like to join in the fun.
-<a href="https://github.com/lsimpsonsfdc/Nexis/graphs/contributors"><img src="https://opencollective.com/Nexis/contributors.svg?width=890&button=false" /></a>
-
-
-### Financial Contributors
-
-Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/Nexis/contribute)]
-
-#### Individuals
-
-<a href="https://opencollective.com/Nexis"><img src="https://opencollective.com/Nexis/individuals.svg?width=890"></a>
-
-#### Organizations
-
-Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/Nexis/contribute)]
-
-<a href="https://opencollective.com/Nexis/organization/0/website"><img src="https://opencollective.com/Nexis/organization/0/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/1/website"><img src="https://opencollective.com/Nexis/organization/1/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/2/website"><img src="https://opencollective.com/Nexis/organization/2/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/3/website"><img src="https://opencollective.com/Nexis/organization/3/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/4/website"><img src="https://opencollective.com/Nexis/organization/4/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/5/website"><img src="https://opencollective.com/Nexis/organization/5/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/6/website"><img src="https://opencollective.com/Nexis/organization/6/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/7/website"><img src="https://opencollective.com/Nexis/organization/7/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/8/website"><img src="https://opencollective.com/Nexis/organization/8/avatar.svg"></a>
-<a href="https://opencollective.com/Nexis/organization/9/website"><img src="https://opencollective.com/Nexis/organization/9/avatar.svg"></a>
--->
+Bug reports and feature requests are tracked in [BUGS.md](BUGS.md) and [FEATURE_REQUESTS.md](FEATURE_REQUESTS.md). See [CHANGELOG.md](CHANGELOG.md) for release history. Feel free to [open an issue](https://github.com/lsimpsonsfdc/Nexis/issues) or submit a pull request.
