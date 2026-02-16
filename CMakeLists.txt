@@ -151,29 +151,7 @@ target_link_libraries(nexis
   nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent
 )
 
-# Derive version from git describe at build time (e.g. "2.0.1+29.g3e36629")
-# Falls back to CMake PROJECT_VERSION if git is unavailable or not in a repo.
-execute_process(
-  COMMAND git describe --tags --always
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  OUTPUT_VARIABLE GIT_DESCRIBE
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  ERROR_QUIET
-  RESULT_VARIABLE GIT_DESCRIBE_RESULT
-)
-if(GIT_DESCRIBE_RESULT EQUAL 0 AND GIT_DESCRIBE MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)-([0-9]+)-g([0-9a-f]+)$")
-  # Tagged commit with additional commits: "v2.0.1-29-g3e36629" → "2.0.1+29.g3e36629"
-  set(APP_VERSION "${CMAKE_MATCH_1}+${CMAKE_MATCH_2}.${CMAKE_MATCH_3}")
-elseif(GIT_DESCRIBE_RESULT EQUAL 0 AND GIT_DESCRIBE MATCHES "^v?([0-9]+\\.[0-9]+\\.[0-9]+)$")
-  # Exactly on a tag: "v2.0.1" → "2.0.1"
-  set(APP_VERSION "${CMAKE_MATCH_1}")
-elseif(GIT_DESCRIBE_RESULT EQUAL 0)
-  # No matching tag pattern — use raw describe output
-  set(APP_VERSION "${GIT_DESCRIBE}")
-else()
-  # Not in a git repo or git not available — use CMake version
-  set(APP_VERSION "${PROJECT_VERSION}")
-endif()
+set(APP_VERSION "${PROJECT_VERSION}")
 message(STATUS "App version: ${APP_VERSION}")
 target_compile_definitions(nexis PRIVATE "APP_VERSION=\"${APP_VERSION}\"")
 
