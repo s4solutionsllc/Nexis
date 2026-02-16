@@ -12,7 +12,7 @@
 - [x] **FR-05: LC_ALL=C for system command parsing** — Force English output so `lscpu` and similar commands parse correctly on non-English systems. QuentiumYT commit `e0b957f`. **Resolved:** Changed LANG=C to LC_ALL=C in lscpu calls.
 - [ ] **FR-06: ARM64 Linux architecture support** — Build for armhf, arm64, i386, powerpc, ppc64el, riscv64, s390x.
 - [x] **FR-07: SVG logo and colorful tray icon** — Redesigned logo in SVG with tray icon that works on light and dark themes. QuentiumYT commit `347bcbe`. **Resolved:** Created logo.svg and tray-icon.svg; updated app icon and tray icon to use SVGs.
-- [ ] **FR-08: Crowdin translation integration** — Professional translation management with automated PR workflows.
+- [x] **FR-08: Crowdin translation integration** — Professional translation management with automated PR workflows. **Resolved:** Added `crowdin.yml`, GitHub Actions for sync (`crowdin-sync.yml`) and lupdate normalization (`lupdate.yml`). Fixed Galician language attribute, added Romanian to `languages.json`, refreshed source strings with lupdate (417 strings). README updated with Crowdin badge and maintainer setup instructions.
 - [ ] **FR-09: APT-RPM support (ALT Linux, PCLinuxOS, Vine Linux)** — QuentiumYT PR #31.
 - [ ] **FR-10: Startup app customization enhancements** — Expanded options for managing auto-start applications. QuentiumYT v1.5.0.
 

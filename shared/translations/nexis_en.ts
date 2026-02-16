@@ -93,7 +93,7 @@
     </message>
     <message>
         <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="338"/>
-        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="86"/>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="260"/>
         <source>Add Repository</source>
         <translation type="unfinished"></translation>
     </message>
@@ -108,25 +108,81 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="25"/>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="36"/>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="82"/>
         <source>example %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="59"/>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="51"/>
+        <source>Package</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="123"/>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="190"/>
+        <source>Homebrew Packages (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="126"/>
+        <source>No Homebrew Packages Found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="128"/>
         <source>APT Repositories (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="66"/>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="224"/>
+        <source>Uninstall Selected (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="226"/>
+        <source>Uninstall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="233"/>
         <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="258"/>
+        <source>Install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="319"/>
+        <source>The following packages will be uninstalled:
+
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="321"/>
+        <source>Packages that also depend on these:
+
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="325"/>
+        <source>Confirm Uninstall</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>APTSourceRepositoryItem</name>
     <message>
-        <location filename="../nexis/Pages/AptSourceManager/apt_source_repository_item.cpp" line="34"/>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_repository_item.cpp" line="36"/>
+        <source> (Cask)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/AptSourceManager/apt_source_repository_item.cpp" line="48"/>
         <source>%1 (Source Code)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -135,160 +191,96 @@
     <name>App</name>
     <message>
         <location filename="../nexis/app.ui" line="101"/>
+        <location filename="../nexis/app.cpp" line="84"/>
         <source>Dashboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../nexis/app.ui" line="135"/>
+        <location filename="../nexis/app.cpp" line="85"/>
         <source>Startup Apps</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../nexis/app.ui" line="163"/>
+        <location filename="../nexis/app.cpp" line="86"/>
         <source>System Cleaner</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/app.ui" line="250"/>
-        <source>Uninstaller</source>
+        <location filename="../nexis/app.ui" line="194"/>
+        <location filename="../nexis/app.cpp" line="87"/>
+        <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../nexis/app.ui" line="278"/>
-        <source>Resources</source>
+        <location filename="../nexis/app.cpp" line="95"/>
+        <source>Uninstaller</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../nexis/app.ui" line="306"/>
-        <source>APT Repository Manager</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/app.ui" line="222"/>
-        <source>Processes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/app.ui" line="194"/>
-        <source>Services</source>
+        <location filename="../nexis/app.cpp" line="97"/>
+        <source>Resources</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../nexis/app.ui" line="334"/>
-        <source>Gnome Settings</source>
+        <location filename="../nexis/app.cpp" line="90"/>
+        <source>Helpers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../nexis/app.ui" line="362"/>
+        <location filename="../nexis/app.cpp" line="101"/>
+        <source>APT Repository Manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/app.ui" line="390"/>
+        <location filename="../nexis/app.cpp" line="103"/>
+        <source>GNOME Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/app.ui" line="250"/>
+        <location filename="../nexis/app.cpp" line="89"/>
+        <source>Processes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/app.ui" line="222"/>
+        <location filename="../nexis/app.cpp" line="88"/>
+        <source>Services</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/app.ui" line="418"/>
+        <location filename="../nexis/app.cpp" line="104"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/app.ui" line="403"/>
+        <location filename="../nexis/app.ui" line="459"/>
+        <location filename="../nexis/app.cpp" line="105"/>
         <source>Feedback</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/app.cpp" line="111"/>
+        <location filename="../nexis/app.cpp" line="92"/>
+        <location filename="../nexis/app.cpp" line="93"/>
+        <source>Applications</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/app.cpp" line="99"/>
+        <source>Homebrew</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/app.cpp" line="171"/>
         <source>Quit</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>AppearanceSettings</name>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="44"/>
-        <source>Screen Applications</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="74"/>
-        <source>Screen Reader</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="100"/>
-        <source>Screen Keyboard</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="136"/>
-        <source>Background Image Mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="166"/>
-        <source>Desktop Mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="204"/>
-        <source>Login Mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="252"/>
-        <source>Icons</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="282"/>
-        <source>Home Icon</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="308"/>
-        <source>Trash Icon</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="321"/>
-        <source>Mounted Volumes Icon</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="347"/>
-        <source>Show Desktop Icons</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="373"/>
-        <source>Network Icon</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.cpp" line="71"/>
-        <source>None</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.cpp" line="71"/>
-        <source>Wallpaper</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.cpp" line="71"/>
-        <source>Centered</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.cpp" line="72"/>
-        <source>Scaled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.cpp" line="72"/>
-        <source>Stretched</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.cpp" line="72"/>
-        <source>Zoom</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/appearance_settings.cpp" line="72"/>
-        <source>Spanned</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -300,114 +292,378 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="156"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="125"/>
         <source>SYSTEM INFO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="230"/>
-        <source>There are update currently available.</source>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="310"/>
+        <source>There are updates currently available.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="246"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="326"/>
         <source>Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="14"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="20"/>
         <source>CPU</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="15"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="21"/>
         <source>MEMORY</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="16"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="22"/>
         <source>DISK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="17"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="23"/>
+        <source>TEMP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="24"/>
         <source>DOWNLOAD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="18"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="25"/>
         <source>UPLOAD</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="111"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="30"/>
+        <source>GPU</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="165"/>
         <source>Hostname: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="112"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="166"/>
         <source>Platform: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="113"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="167"/>
         <source>Distribution: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="114"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="168"/>
         <source>Kernel Release: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="115"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="169"/>
         <source>CPU Model: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="117"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="170"/>
+        <source>CPU Core: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="171"/>
         <source>CPU Speed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="116"/>
-        <source>CPU Cores: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="133"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="189"/>
         <source>High CPU Usage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="134"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="190"/>
         <source>The amount of CPU used is over %1%.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="162"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="224"/>
         <source>High Memory Usage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="163"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="225"/>
         <source>The amount of memory used is over %1%.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="202"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="269"/>
         <source>High Disk Usage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="203"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="270"/>
         <source>The amount of disk used is over %1%.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="241"/>
-        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="245"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="308"/>
+        <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="312"/>
         <source>Total: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DiskUsageLauncherWidget</name>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="29"/>
+        <source>Disk Usage Analysis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="135"/>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="254"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="315"/>
+        <source>Disk Usage Analyzer (Baobab)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="255"/>
+        <source>Visualize disk usage as a graphical treemap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="256"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="263"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="270"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="277"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="285"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="292"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="299"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="307"/>
+        <source>Status: Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="258"/>
+        <source>Launch Disk Usage Analyzer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="261"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="323"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="331"/>
+        <source>Filelight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="262"/>
+        <source>Visualize disk usage with interactive sunburst charts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="265"/>
+        <source>Launch Filelight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="268"/>
+        <source>QDirStat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="269"/>
+        <source>Qt-based directory statistics with treemap visualization.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="272"/>
+        <source>Launch QDirStat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="275"/>
+        <source>ncdu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="276"/>
+        <source>NCurses disk usage analyzer. Opens in a terminal.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="279"/>
+        <source>Launch ncdu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="283"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="340"/>
+        <source>GrandPerspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="284"/>
+        <source>Visualize disk usage as a treemap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="287"/>
+        <source>Launch GrandPerspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="290"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="348"/>
+        <source>DaisyDisk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="291"/>
+        <source>Visualize disk usage with an interactive sunburst chart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="294"/>
+        <source>Launch DaisyDisk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="297"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="356"/>
+        <source>OmniDiskSweeper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="298"/>
+        <source>Quickly find and delete large files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="301"/>
+        <source>Launch OmniDiskSweeper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="306"/>
+        <source>User-configured disk usage analyzer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="309"/>
+        <source>Launch %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="316"/>
+        <source>Visualize disk usage as a graphical treemap. Baobab is not currently installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="318"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="326"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="334"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="343"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="351"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="359"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="371"/>
+        <source>Status: Not installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="320"/>
+        <source>Install Disk Usage Analyzer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="324"/>
+        <source>Visualize disk usage with interactive sunburst charts. Filelight is not currently installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="328"/>
+        <source>Install Filelight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="332"/>
+        <source>Visualize disk usage with interactive sunburst charts. Flatpak is required to install Filelight on this system.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="336"/>
+        <source>Install Flatpak</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="341"/>
+        <source>Visualize disk usage as a treemap. GrandPerspective is not currently installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="345"/>
+        <source>Get GrandPerspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="349"/>
+        <source>Visualize disk usage with an interactive sunburst chart. DaisyDisk is not currently installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="353"/>
+        <source>Get DaisyDisk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="357"/>
+        <source>Quickly find and delete large files. OmniDiskSweeper is not currently installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="361"/>
+        <source>Get OmniDiskSweeper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="368"/>
+        <source>Selected tool</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="369"/>
+        <source>The selected disk usage analyzer was not found on this system. Install it or choose a different tool in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="376"/>
+        <source>No disk usage tool available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="377"/>
+        <source>No supported disk usage analyzer was found for this platform.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="397"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="412"/>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="427"/>
+        <source>Installing...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="445"/>
+        <source>Unsupported Package Manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/disk_usage_launcher_widget.cpp" line="446"/>
+        <source>Could not detect a supported package manager to install Flatpak.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -419,87 +675,583 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.ui" line="38"/>
-        <source>Name</source>
+        <location filename="../nexis/feedback.ui" line="41"/>
+        <source>How can we help?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.ui" line="45"/>
-        <source>Email Address</source>
+        <location filename="../nexis/feedback.ui" line="51"/>
+        <source>Opens GitHub in your browser</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.ui" line="68"/>
-        <source>Send</source>
+        <location filename="../nexis/feedback.ui" line="70"/>
+        <source>Report a Bug</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.ui" line="94"/>
-        <source>Message</source>
+        <location filename="../nexis/feedback.ui" line="89"/>
+        <source>Request a Feature</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.ui" line="104"/>
-        <source>Send a Feedback</source>
+        <location filename="../nexis/feedback.ui" line="108"/>
+        <source>General Feedback</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.cpp" line="46"/>
-        <source>Email address is not valid !</source>
+        <location filename="../nexis/feedback.ui" line="137"/>
+        <source>danger</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.cpp" line="51"/>
-        <source>Your message must be at least 25 characters !</source>
+        <location filename="../nexis/feedback.ui" line="140"/>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GnomeAppearanceTab</name>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="34"/>
+        <source>Color Scheme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.cpp" line="61"/>
-        <source>Sending..</source>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="48"/>
+        <source>GTK Theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.cpp" line="79"/>
-        <source>&lt;font color=&apos;#2ecc71&apos;&gt;Your Feedback has been successfully sended.&lt;/font&gt;</source>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="60"/>
+        <source>Icon Theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.cpp" line="81"/>
-        <location filename="../nexis/feedback.cpp" line="86"/>
-        <source>Something went wrong, try again !</source>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="72"/>
+        <source>Cursor Theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.cpp" line="89"/>
-        <source>Save</source>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="84"/>
+        <source>Cursor Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/feedback.cpp" line="94"/>
-        <source>Fields cannot be left blank !</source>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="98"/>
+        <source>UI Font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="110"/>
+        <source>Document Font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="122"/>
+        <source>Monospace Font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="134"/>
+        <source>Text Scaling Factor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="149"/>
+        <source>Font Antialiasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="163"/>
+        <source>Font Hinting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="177"/>
+        <source>Animations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="190"/>
+        <source>Hot Corners</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="203"/>
+        <source>Clock Format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="217"/>
+        <source>Clock Show Seconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="230"/>
+        <source>Clock Show Weekday</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="243"/>
+        <source>Show Battery Percentage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="124"/>
+        <source>Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="125"/>
+        <source>Prefer Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="126"/>
+        <source>Prefer Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="151"/>
+        <source>12 Hour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="152"/>
+        <source>24 Hour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="158"/>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="166"/>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="159"/>
+        <source>Grayscale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="160"/>
+        <source>RGBA</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="167"/>
+        <source>Slight</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="168"/>
+        <source>Medium</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="169"/>
+        <source>Full</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GnomeDesktopTab</name>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="28"/>
+        <source>Background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="35"/>
+        <source>Wallpaper (Light)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="47"/>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="69"/>
+        <source>Browse...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="57"/>
+        <source>Wallpaper (Dark)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="79"/>
+        <source>Picture Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="96"/>
+        <source>Sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="103"/>
+        <source>Event Sounds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="115"/>
+        <source>Input Feedback Sounds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="127"/>
+        <source>Allow Volume Over 100%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="32"/>
+        <source>Select Wallpaper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="33"/>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="48"/>
+        <source>Images (*.png *.jpg *.jpeg *.bmp *.svg *.webp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="47"/>
+        <source>Select Dark Wallpaper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="92"/>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="93"/>
+        <source>Wallpaper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="94"/>
+        <source>Centered</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="95"/>
+        <source>Scaled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="96"/>
+        <source>Stretched</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="97"/>
+        <source>Zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="98"/>
+        <source>Spanned</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GnomeMouseTab</name>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="28"/>
+        <source>Mouse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="35"/>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="120"/>
+        <source>Natural Scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="47"/>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="132"/>
+        <source>Speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="63"/>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="148"/>
+        <source>0.00</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="72"/>
+        <source>Acceleration Profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="85"/>
+        <source>Left-Handed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="101"/>
+        <source>Touchpad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="108"/>
+        <source>Tap to Click</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="157"/>
+        <source>Two-Finger Scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="169"/>
+        <source>Edge Scrolling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="181"/>
+        <source>Disable While Typing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="92"/>
+        <source>Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="93"/>
+        <source>Flat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="94"/>
+        <source>Adaptive</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>GnomeSettingsPage</name>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="14"/>
-        <source>Gnome Settings</source>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="20"/>
+        <source>GNOME Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="49"/>
-        <source>Unity Settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="81"/>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="68"/>
         <source>Window Manager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="110"/>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="90"/>
+        <source>Mouse &amp; Touchpad</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="112"/>
+        <source>Desktop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="43"/>
         <source>Appearance</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>GnomeWmTab</name>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="28"/>
+        <source>Window Preferences</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="35"/>
+        <source>Button Layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="46"/>
+        <source>Focus Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="59"/>
+        <source>Titlebar Font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="70"/>
+        <source>Workspaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="83"/>
+        <source>Double-Click Titlebar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="96"/>
+        <source>Middle-Click Titlebar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="109"/>
+        <source>Right-Click Titlebar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="122"/>
+        <source>Auto-Raise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="134"/>
+        <source>Raise on Click</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="150"/>
+        <source>Compositor (Mutter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="157"/>
+        <source>Dynamic Workspaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="169"/>
+        <source>Edge Tiling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="181"/>
+        <source>Auto-Maximize</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="193"/>
+        <source>Center New Windows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="205"/>
+        <source>Workspaces on Primary Display Only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="115"/>
+        <source>Click</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="116"/>
+        <source>Sloppy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="117"/>
+        <source>Mouse</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HelpersPage</name>
+    <message>
+        <location filename="../nexis/Pages/Helpers/helpers_page.ui" line="14"/>
+        <source>Helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/helpers_page.ui" line="62"/>
+        <source>Host Manage</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HostManage</name>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="14"/>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="60"/>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="173"/>
+        <source>primary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="63"/>
+        <source>Save Changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="110"/>
+        <source>New Host</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="146"/>
+        <source>IP Address *</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="153"/>
+        <source>Fully Qualified Name *</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="160"/>
+        <location filename="../nexis/Pages/Helpers/host_manage.cpp" line="37"/>
+        <source>Aliases</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="176"/>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="189"/>
+        <source>danger</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.ui" line="192"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.cpp" line="26"/>
+        <location filename="../nexis/Pages/Helpers/host_manage.cpp" line="100"/>
+        <source>Hosts (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.cpp" line="37"/>
+        <source>IP Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.cpp" line="37"/>
+        <source>Full Qualified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.cpp" line="137"/>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.cpp" line="141"/>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Helpers/host_manage.cpp" line="149"/>
+        <source>The IP and Fully Qualified fields are required.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -527,67 +1279,67 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="27"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="29"/>
         <source>User</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="26"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
         <source>Resident Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="26"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
         <source>%Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="26"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
         <source>Virtual Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="27"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="29"/>
         <source>Start Time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="27"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="29"/>
         <source>State</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="27"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="29"/>
         <source>Group</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="30"/>
         <source>Nice</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="30"/>
         <source>CPU Time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="30"/>
         <source>Session</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="30"/>
         <source>Process</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="119"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="120"/>
         <source>Processes (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="210"/>
+        <location filename="../nexis/Pages/Processes/processes_page.cpp" line="212"/>
         <source>Refresh (%1)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -597,6 +1349,17 @@
     <message>
         <location filename="../nexis/Managers/setting_manager.cpp" line="61"/>
         <source>Dashboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/main.cpp" line="77"/>
+        <source>Another instance of Nexis is already running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../macos/nexis-core/Info/system_info.cpp" line="11"/>
+        <location filename="../../linux/nexis-core/Info/system_info.cpp" line="11"/>
+        <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -628,43 +1391,310 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="75"/>
+        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="36"/>
+        <source>History of GPU</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="96"/>
         <source>Read: %1/s Total: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="81"/>
+        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="102"/>
         <source>Write: %1/s Total: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="118"/>
+        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="139"/>
         <source>%1 Minute Average: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="164"/>
+        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="185"/>
         <source>Download: %1/s Total: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="169"/>
+        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="190"/>
         <source>Upload: %1/s  Total: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="213"/>
+        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="234"/>
         <source>Swap: %1 (%2%) %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="222"/>
+        <location filename="../nexis/Pages/Resources/resources_page.cpp" line="243"/>
         <source>Memory: %1 (%2%) %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Resources/resources_page.ui" line="14"/>
         <source>Resources</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SearchPage</name>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="14"/>
+        <source>Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="101"/>
+        <source>Browse...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="113"/>
+        <source>Search...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="145"/>
+        <source>primary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="208"/>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="367"/>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="403"/>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="511"/>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="527"/>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="543"/>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="581"/>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="604"/>
+        <source>circle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="211"/>
+        <source>Case Insensitive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="298"/>
+        <source> minute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="370"/>
+        <source>Search as Root</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="377"/>
+        <source>Owner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="406"/>
+        <source>RegEx</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="483"/>
+        <source>Permissions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="490"/>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="26"/>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="514"/>
+        <source>Readable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="530"/>
+        <source>Writable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="546"/>
+        <source>Executable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="555"/>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="584"/>
+        <source>Empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="591"/>
+        <source>File or Folder:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="607"/>
+        <source>Invert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="650"/>
+        <source>Advanced Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.ui" line="690"/>
+        <source>BETA version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="26"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="26"/>
+        <source>Path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="26"/>
+        <source>User</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="26"/>
+        <source>Group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="27"/>
+        <source>Creation Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="27"/>
+        <source>Last Access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="27"/>
+        <source>Last Modification</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="27"/>
+        <source>Last Change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="84"/>
+        <source>Open Folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="88"/>
+        <source>Move Trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="92"/>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="125"/>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="128"/>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="136"/>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="145"/>
+        <source>Choose</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="131"/>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="132"/>
+        <source>File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="133"/>
+        <source>Directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="134"/>
+        <source>Symbolic Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="137"/>
+        <source>Access</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="138"/>
+        <source>Modify</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="139"/>
+        <source>Change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="141"/>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="146"/>
+        <source>Smaller (&lt;)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="142"/>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="147"/>
+        <source>Equal (=)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="143"/>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="148"/>
+        <source>Greater (&gt;)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="158"/>
+        <source>Select Directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="164"/>
+        <source>Directory: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="173"/>
+        <source>Advanced Search %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="180"/>
+        <source>Select the search directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="311"/>
+        <source>Somethings went wrong, try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Search/search_page.cpp" line="330"/>
+        <source>%1 files found. Showing %2 of them.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -734,93 +1764,178 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="110"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="97"/>
         <source>Memory Percent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="204"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="129"/>
         <source>Disk Percent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="233"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="290"/>
+        <source>Appearance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="373"/>
+        <source>App Quit Don&apos;t Ask</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="402"/>
+        <source>Disk Analyzer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="446"/>
+        <source>Custom Executable Path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="465"/>
+        <source>/usr/bin/my-analyzer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="509"/>
         <source>Disks</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="246"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="158"/>
         <source>Language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="259"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="171"/>
         <source>Autostart Nexis</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="317"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="229"/>
         <source>Alert messages (Show a warning after the specified percentage)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="422"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="522"/>
         <source>Start Page</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="301"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="213"/>
         <source>CPU Percent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="324"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Created by &lt;a href=&quot;https://github.com/oguzhaninan&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;Oğuzhan İNAN&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="355"/>
+        <location filename="../nexis/Pages/Settings/settings_page.ui" line="267"/>
         <source>Donate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.ui" line="97"/>
-        <source>Theme</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="74"/>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="99"/>
         <source>Dashboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="74"/>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="99"/>
         <source>Startup Apps</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="74"/>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="99"/>
         <source>System Cleaner</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="75"/>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="99"/>
+        <source>Search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
         <source>Services</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="75"/>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
         <source>Processes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="75"/>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
         <source>Uninstaller</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="75"/>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
         <source>Resources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
+        <source>Helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="106"/>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="107"/>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="108"/>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="227"/>
+        <source>Auto (Detect)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="229"/>
+        <source>GrandPerspective</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="230"/>
+        <source>DaisyDisk</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="231"/>
+        <source>OmniDiskSweeper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="233"/>
+        <source>Baobab (GNOME Disk Usage Analyzer)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="234"/>
+        <source>Filelight (KDE)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="235"/>
+        <source>QDirStat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="236"/>
+        <source>ncdu (Terminal)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Settings/settings_page.cpp" line="238"/>
+        <source>Custom...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -845,32 +1960,42 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="74"/>
+        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="78"/>
+        <source>Startup Delay (seconds)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="94"/>
+        <source> s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="117"/>
         <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="44"/>
+        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="101"/>
         <source>Fields cannot be left blank. </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="58"/>
+        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="64"/>
         <source>App Comment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="51"/>
+        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="57"/>
         <source>App Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="97"/>
+        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="71"/>
         <source>Command</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="87"/>
+        <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="47"/>
         <source>Application</source>
         <translation type="unfinished"></translation>
     </message>
@@ -893,7 +2018,12 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="89"/>
+        <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="67"/>
+        <source>Startup Apps are disabled.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="195"/>
         <source>Startup Applications (%1)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -906,47 +2036,99 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="63"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="66"/>
         <source>Crash Reports</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="177"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="174"/>
         <source>Application Logs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="215"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="209"/>
         <source>Application Caches</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="363"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="303"/>
+        <source>Scan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="348"/>
         <source>Trash</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="401"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="383"/>
         <source>Package Caches</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="521"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="440"/>
+        <source>Dev Tool Caches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="526"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="665"/>
+        <source>Select All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="601"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="662"/>
+        <source>circle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="678"/>
         <source> Back</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="32"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="786"/>
+        <source>Sort by: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="800"/>
+        <source>Name (A–Z)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="809"/>
+        <source>Name (Z–A)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="818"/>
+        <source>Size (Small–Large)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="827"/>
+        <source>Size (Large–Small)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="73"/>
         <source>File Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="32"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="73"/>
         <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="285"/>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="243"/>
+        <source>Total size: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="356"/>
         <source>%1 size files cleaned.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -959,356 +2141,104 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="90"/>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="78"/>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="200"/>
+        <source>notFoundWidget</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="155"/>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="28"/>
+        <source>Application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="319"/>
+        <source>Purge (also remove configuration files)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="380"/>
+        <source>System Packages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="402"/>
+        <source>Snap Packages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="451"/>
         <source>Search...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="192"/>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="108"/>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="230"/>
         <source>Not Found Installed Packages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="140"/>
+        <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="349"/>
         <source>Uninstall Selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="67"/>
-        <source>System Installed Packages (%1)</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="178"/>
+        <source>Applications (%1)</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>UnitySettings</name>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="65"/>
-        <source>Applications</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="180"/>
+        <source>Packages (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="108"/>
-        <source>Show &quot;Recently Used&quot; applications</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="186"/>
+        <source>Snap Packages (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="134"/>
-        <source>Enable search of your files</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="253"/>
+        <source>The following applications will be moved to Trash:
+
+</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="160"/>
-        <source>Show &quot;More Suggestions&quot;</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="258"/>
+        <source>Confirm Move to Trash</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="186"/>
-        <source>Search</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="291"/>
+        <source>The following packages will be removed:
+
+</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="196"/>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="683"/>
-        <source>General</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="294"/>
+        <source>Snap packages:
+</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="229"/>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="660"/>
-        <source>Transparency Level</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="298"/>
+        <source>The following additional packages will also be removed:
+
+</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="280"/>
-        <source>Behaviour</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="304"/>
+        <source>Confirm Uninstall</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="323"/>
-        <source>Auto Hide</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="339"/>
-        <source>Left Side</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="380"/>
-        <source>Minimize applications with clicking</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="396"/>
-        <source>Top-Left Corner</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="412"/>
-        <source>Reveal Sensitivity</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="438"/>
-        <source>Reveal Location</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="464"/>
-        <source>Launcher</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="474"/>
-        <source>Appearance</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="507"/>
-        <source>Left</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="526"/>
-        <source>Bottom</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="542"/>
-        <source>Visibility</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="558"/>
-        <source>Primary Desktop</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="612"/>
-        <source>Icon size</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="628"/>
-        <source>All Desktops</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="644"/>
-        <source>Position</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="726"/>
-        <source>Search online sources</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="752"/>
-        <source>Background Blur</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="778"/>
-        <source>Panel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="801"/>
-        <source>Indicators</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="840"/>
-        <source>Date</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="862"/>
-        <source>Calendar</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="875"/>
-        <source>Date &amp; Time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="888"/>
-        <source>24-Hour Time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="910"/>
-        <source>Weekday</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="923"/>
-        <source>Include</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="945"/>
-        <source>Seconds</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="958"/>
-        <source>Volume</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="971"/>
-        <source>Show my name</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>WindowManagerSettings</name>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="90"/>
-        <source>General</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="100"/>
-        <source>Titlebar Actions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="155"/>
-        <source>Right click</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="168"/>
-        <source>Double click</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="181"/>
-        <source>Middle click</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="257"/>
-        <source>Additional</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="267"/>
-        <source>Workspace Settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="310"/>
-        <source>Vertical workspaces</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="333"/>
-        <source>Workspace switcher</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="356"/>
-        <source>Horizontal workspaces</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="379"/>
-        <source>Focus Behaviour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="409"/>
-        <source>Focus mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="460"/>
-        <source>Raise on click</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="483"/>
-        <source>Hardware Acceleration</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="538"/>
-        <source>Text quality</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="66"/>
-        <source>Fast</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="66"/>
-        <source>Good</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="66"/>
-        <source>Best</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="68"/>
-        <source>Click</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="68"/>
-        <source>Sloppy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="68"/>
-        <source>Mouse</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="80"/>
-        <source>Toggle Shade</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="80"/>
-        <source>Maximize</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="80"/>
-        <source>Maximize Horizontally</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="81"/>
-        <source>Maximize Vertically</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="81"/>
-        <source>Minimize</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="82"/>
-        <source>None</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="82"/>
-        <source>Lower</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="82"/>
-        <source>Menu</source>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="378"/>
+        <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="386"/>
+        <source>Uninstall Selected (%1)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

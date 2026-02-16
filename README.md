@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/Qt-6-41cd52?logo=qt" alt="Qt 6">
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus" alt="C++17">
   <img src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS-lightgrey" alt="Platforms: Linux | macOS">
+  <a href="https://crowdin.com/project/nexis"><img src="https://badges.crowdin.net/nexis/localized.svg" alt="Crowdin"></a>
 </p>
 
 ## Features
@@ -148,6 +149,27 @@ make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
 ## Development
 
 This fork is co-authored by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding agent. Claude Code contributes to architecture decisions, feature implementation, bug fixes, CI/CD pipelines, and release engineering -- working alongside the human maintainer as a pair-programming partner.
+
+## Translations
+
+Nexis supports 26 languages. Translations are managed via [Crowdin](https://crowdin.com/project/nexis) -- no coding required to contribute. Sign up, pick a language, and start translating in your browser.
+
+New translations are automatically synced back to this repository via pull request.
+
+### Maintainer Setup
+
+To enable the Crowdin sync pipeline for a new fork:
+
+1. Create a project at [crowdin.com](https://crowdin.com) (free for open source).
+2. Add two repository secrets in GitHub Settings > Secrets:
+   - `CROWDIN_PROJECT_ID` -- numeric project ID from the Crowdin dashboard.
+   - `CROWDIN_PERSONAL_TOKEN` -- personal access token from Crowdin account settings.
+3. Seed the project with existing translations (one-time):
+   ```bash
+   pip install crowdin-cli
+   crowdin upload translations --config crowdin.yml
+   ```
+4. The `crowdin-sync.yml` GitHub Action handles ongoing sync automatically.
 
 ## Contributing
 

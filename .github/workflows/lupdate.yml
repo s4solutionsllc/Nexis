@@ -1,0 +1,32 @@
+name: Qt lupdate
+
+on:
+  push:
+    branches:
+      - l10n_crowdin_translations
+
+jobs:
+  lupdate:
+    name: Normalize translation files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Qt6 LinguistTools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-l10n-tools qt6-tools-dev-tools
+
+      - name: Run lupdate
+        run: |
+          lupdate -recursive shared/ macos/ linux/ \
+            -ts shared/translations/nexis_en.ts \
+            -no-obsolete
+
+      - name: Commit normalized translations
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'chore(i18n): normalize with lupdate'
+          add: 'shared/translations/*.ts'
+          default_author: github_actions
