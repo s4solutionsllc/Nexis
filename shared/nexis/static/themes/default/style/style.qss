@@ -567,14 +567,10 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #HardwareInfoPage QTableWidget::item {
+    font-size: 10pt;
     color: @color05;
-    background-color: transparent;
-    padding: 4 8;
-}
-
-#HardwareInfoPage QHeaderView::section {
-    background-color: @color02;
-    color: @accentColor;
+    padding: 8 6;
+    background-color: @color01;
 }
 
 /**************************

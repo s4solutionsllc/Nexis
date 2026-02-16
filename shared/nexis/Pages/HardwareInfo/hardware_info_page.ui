@@ -45,7 +45,7 @@
            <widget class="QTableWidget" name="tblSystem">
             <property name="columnCount"><number>2</number></property>
             <property name="showGrid"><bool>false</bool></property>
-            <property name="alternatingRowColors"><bool>true</bool></property>
+            <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
             <property name="selectionMode"><enum>QAbstractItemView::NoSelection</enum></property>
             <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
@@ -68,7 +68,7 @@
            <widget class="QTableWidget" name="tblProcessor">
             <property name="columnCount"><number>2</number></property>
             <property name="showGrid"><bool>false</bool></property>
-            <property name="alternatingRowColors"><bool>true</bool></property>
+            <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
             <property name="selectionMode"><enum>QAbstractItemView::NoSelection</enum></property>
             <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
@@ -91,7 +91,7 @@
            <widget class="QTableWidget" name="tblGraphics">
             <property name="columnCount"><number>2</number></property>
             <property name="showGrid"><bool>false</bool></property>
-            <property name="alternatingRowColors"><bool>true</bool></property>
+            <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
             <property name="selectionMode"><enum>QAbstractItemView::NoSelection</enum></property>
             <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
@@ -114,7 +114,7 @@
            <widget class="QTableWidget" name="tblMemory">
             <property name="columnCount"><number>2</number></property>
             <property name="showGrid"><bool>false</bool></property>
-            <property name="alternatingRowColors"><bool>true</bool></property>
+            <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
             <property name="selectionMode"><enum>QAbstractItemView::NoSelection</enum></property>
             <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
@@ -136,7 +136,7 @@
           <item>
            <widget class="QTableWidget" name="tblStorage">
             <property name="showGrid"><bool>false</bool></property>
-            <property name="alternatingRowColors"><bool>true</bool></property>
+            <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
             <property name="selectionMode"><enum>QAbstractItemView::NoSelection</enum></property>
             <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
@@ -157,7 +157,7 @@
           <item>
            <widget class="QTableWidget" name="tblNetwork">
             <property name="showGrid"><bool>false</bool></property>
-            <property name="alternatingRowColors"><bool>true</bool></property>
+            <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
             <property name="selectionMode"><enum>QAbstractItemView::NoSelection</enum></property>
             <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
@@ -178,7 +178,7 @@
           <item>
            <widget class="QTableWidget" name="tblThermal">
             <property name="showGrid"><bool>false</bool></property>
-            <property name="alternatingRowColors"><bool>true</bool></property>
+            <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
             <property name="selectionMode"><enum>QAbstractItemView::NoSelection</enum></property>
             <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>

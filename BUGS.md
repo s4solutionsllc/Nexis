@@ -244,6 +244,13 @@
   - **Fix complexity:** Moderate (restructure QMovie lifecycle, add start() calls at show-time)
   - **Resolved:** Pre-initialised both QMovie objects in the constructor; theme-change lambda now reuses them via `setFileName()` (fixing the memory leak); added `start()` before `show()` in both `on_btnScan_clicked()` and `on_btnClean_clicked()`; added `stop()` in `onScanFinished()`, `onCleanFinished()`, and `on_btnBackToCategories_clicked()`.
 
+- [x] **BUG-38: HardwareInfoPage table rows illegible in dark mode — alternating row colours use system palette** (LOW)
+  - **Scope:** Hardware Info page
+  - **Description:** All 7 `QTableWidget` instances in `hardware_info_page.ui` have `alternatingRowColors` enabled, but no `alternate-background-color` is defined in the QSS. Qt falls back to the macOS system palette (light grey/white), creating light-background alternating rows with white (`@color05`) text — illegible. The page-specific QSS also sets `background-color: transparent` on items, which lets the alternating colour show through rather than overriding it. No other page in the app uses `alternatingRowColors`. The fix should disable `alternatingRowColors`, use opaque `@color01` item backgrounds (matching the global `QTableView::item` rule), and remove the page-specific `QHeaderView::section` override to inherit the complete global rule.
+  - **Files:** `shared/nexis/Pages/HardwareInfo/hardware_info_page.ui`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Fix complexity:** Trivial (remove UI property, update QSS rules)
+  - **Resolved:** Removed `alternatingRowColors` from all 7 tables, added `frameShape: NoFrame`, updated QSS item rule to use opaque `@color01` background matching global `QTableView::item`, removed page-specific `QHeaderView::section` override to inherit complete global rule.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
