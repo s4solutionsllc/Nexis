@@ -2,17 +2,17 @@
 
 ## Overview
 
-Implement FR-28 (Dashboard fullscreen/kiosk mode) first, then FR-12 (Hardware Info tab). FR-28 is smaller in scope and establishes patterns (settings keys, keyboard shortcuts) that FR-12 will reuse.
+Implement FR-28 (Dashboard fullscreen/kiosk mode) first, then FR-12 (Hardware Info tab). FR-28 is smaller in scope and establishes patterns (settings keys, keyboard shortcuts) that FR-12 will reuse. Task A6 removes the Dashboard's system info panel (which FR-12 replaces) and reorganises the remaining widgets.
 
 ---
 
 ## Phase A: FR-28 — Dashboard Fullscreen / Kiosk Mode
 
-### Task A1: Add kiosk mode settings infrastructure
+### Task A1: Add kiosk mode and device-selection settings infrastructure
 
-- [ ] In `setting_manager.h`: Add `SettingKeys::KioskMode`, `SettingKeys::TempSensorId` key constants.
-- [ ] In `setting_manager.h`: Add method declarations: `setKioskMode(bool)`, `getKioskMode()`, `setTempSensorId(const QString &)`, `getTempSensorId()`.
-- [ ] In `setting_manager.cpp`: Implement getter/setter pairs. KioskMode defaults to `false`. TempSensorId defaults to empty string.
+- [ ] In `setting_manager.h`: Add `SettingKeys::KioskMode`, `SettingKeys::TempSensorId`, `SettingKeys::GpuDeviceId` key constants.
+- [ ] In `setting_manager.h`: Add method declarations: `setKioskMode(bool)`, `getKioskMode()`, `setTempSensorId(const QString &)`, `getTempSensorId()`, `setGpuDeviceId(const QString &)`, `getGpuDeviceId()`.
+- [ ] In `setting_manager.cpp`: Implement getter/setter pairs. KioskMode defaults to `false`. TempSensorId and GpuDeviceId default to empty string.
 
 ### Task A2: Implement kiosk mode toggle in App
 
@@ -24,10 +24,12 @@ Implement FR-28 (Dashboard fullscreen/kiosk mode) first, then FR-12 (Hardware In
   - If enable: `ui->sidebar->hide()`, `ui->pageTitle->hide()`, `showFullScreen()`, force switch to dashboard page via `pageClick(dashboardPage, false)`.
   - If disable: `showNormal()`, `ui->sidebar->show()`, `ui->pageTitle->show()`.
 
-### Task A3: Persist temperature sensor selection
+### Task A3: Persist temperature sensor and GPU device selection
 
 - [ ] In `dashboard_page.cpp` `init()`: After populating `cmbTempSensor`, read `SettingManager::ins()->getTempSensorId()`. Find matching sensor by id and set combo index. Fall back to index 0 if not found.
-- [ ] In `dashboard_page.cpp` `onTempSensorChanged()`: Save the selected sensor's id via `SettingManager::ins()->setTempSensorId(...)`.
+- [ ] In `dashboard_page.cpp`: When temperature sensor combo changes, save the selected sensor's id via `SettingManager::ins()->setTempSensorId(...)`.
+- [ ] In `dashboard_page.cpp` `init()`: After populating `cmbGpuDevice`, read `SettingManager::ins()->getGpuDeviceId()`. Find matching GPU by name and set combo index. Fall back to index 0 if not found.
+- [ ] In `dashboard_page.cpp`: When GPU device combo changes, save the selected GPU's name via `SettingManager::ins()->setGpuDeviceId(...)`.
 
 ### Task A4: Add ESC key to exit kiosk mode
 
@@ -37,6 +39,14 @@ Implement FR-28 (Dashboard fullscreen/kiosk mode) first, then FR-12 (Hardware In
 
 - [ ] Incremental build.
 - [ ] Mark FR-28 as `[x]` in `FEATURE_REQUESTS.md` with resolution note.
+
+### Task A6: Remove system info panel from Dashboard and reorganise layout
+
+- [ ] In `dashboard_page.ui`: Remove the `systemInfo` widget (contains `lblSystemInfoTitle` and `listViewSystemInfo`) from row 1, column 0 of the grid layout.
+- [ ] In `dashboard_page.ui`: Reorganise row 1 so `tempContainer`, `gpuContainer`, and `lineBars` (network download/upload) expand evenly across the freed space. Adjust column spans so the three modules share the full width.
+- [ ] In `dashboard_page.cpp`: Remove `systemInformationInit()` method and its call from the constructor, plus remove any related includes or variables.
+- [ ] In `dashboard_page.h`: Remove `systemInformationInit()` declaration and any related members.
+- [ ] Incremental build to verify.
 
 ---
 
@@ -50,11 +60,11 @@ Implement FR-28 (Dashboard fullscreen/kiosk mode) first, then FR-12 (Hardware In
 - [ ] Create `hardware_info_page.ui`: Scrollable layout with grouped sections (see Task B3).
 - [ ] In `CMakeLists.txt`: Add `"${GUI_SHARED_DIR}/Pages/HardwareInfo"` to `CMAKE_AUTOUIC_SEARCH_PATHS` and `target_include_directories`.
 
-### Task B2: Register page in App
+### Task B2: Register page in App (sidebar position: between Dashboard and Startup Apps)
 
 - [ ] In `app.h`: Add `HardwareInfoPage *hardwareInfoPage` member, `void on_btnHardwareInfo_clicked()` slot.
-- [ ] In `app.ui`: Add `btnHardwareInfo` QPushButton to sidebar (between Resources and Helpers, or after Resources).
-- [ ] In `app.cpp` `init()`: Instantiate `HardwareInfoPage`, insert into `mListPages` and `mListSidebarButtons` at appropriate index.
+- [ ] In `app.ui`: Add `btnHardwareInfo` QPushButton to sidebar **between `btnDash` (Dashboard) and `btnStartupApps` (Startup Apps)**.
+- [ ] In `app.cpp` `init()`: Instantiate `HardwareInfoPage`, insert into `mListPages` and `mListSidebarButtons` at index 1 (after Dashboard, before Startup Apps).
 - [ ] In `app.cpp`: Implement `on_btnHardwareInfo_clicked()` → `pageClick(hardwareInfoPage)`.
 - [ ] In `app.cpp` `updateSidebarIcons()`: Add icon for `btnHardwareInfo` using a bundled SVG.
 
@@ -85,7 +95,7 @@ Implement FR-28 (Dashboard fullscreen/kiosk mode) first, then FR-12 (Hardware In
 - [ ] In `linux/nexis-core/Info/cpu_info.cpp`: Implement via sysfs `/sys/devices/system/cpu/cpu0/cache/`.
 - [ ] In `macos/nexis-core/Info/cpu_info.cpp`: Implement via `sysctl hw.l1dcachesize`, `hw.l2cachesize`, `hw.l3cachesize`.
 
-### Task B6: Create sidebar icon
+### Task B6: Create sidebar icon (position: between Dashboard and Startup Apps)
 
 - [ ] Create `hardware-info.svg` in both `shared/nexis/static/themes/default/img/sidebar-icons/` and `shared/nexis/static/themes/light/img/sidebar-icons/`. Use 20×20 monochrome style matching existing icons (circuit board or CPU chip motif).
 - [ ] Register in `static.qrc`.
@@ -99,6 +109,6 @@ Implement FR-28 (Dashboard fullscreen/kiosk mode) first, then FR-12 (Hardware In
 
 ## Phase C: Commit and Push
 
-- [ ] Commit FR-28 changes.
-- [ ] Commit FR-12 changes (separate commit).
+- [ ] Commit FR-28 changes (kiosk mode, device persistence, dashboard layout).
+- [ ] Commit FR-12 changes (hardware info page, sidebar registration, extended info).
 - [ ] Push both.
