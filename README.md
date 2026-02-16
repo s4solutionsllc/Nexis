@@ -166,8 +166,11 @@ To enable the Crowdin sync pipeline for a new fork:
    - `CROWDIN_PERSONAL_TOKEN` -- personal access token from Crowdin account settings.
 3. Seed the project with existing translations (one-time):
    ```bash
-   pip install crowdin-cli
-   crowdin upload translations --config crowdin.yml
+   brew install crowdin                # macOS
+   export CROWDIN_PROJECT_ID=<id>
+   export CROWDIN_PERSONAL_TOKEN=<token>
+   crowdin upload sources --config crowdin.yml
+   crowdin upload translations --config crowdin.yml --auto-approve-imported
    ```
 4. The `crowdin-sync.yml` GitHub Action handles ongoing sync automatically.
 
