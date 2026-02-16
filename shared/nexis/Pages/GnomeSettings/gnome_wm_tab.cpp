@@ -1,8 +1,25 @@
 #include "gnome_wm_tab.h"
 #include "ui_gnome_wm_tab.h"
 
+#include <QFontComboBox>
 #include <QSignalBlocker>
+#include <QSpinBox>
 #include <Tools/gnome_settings_tool.h>
+
+static void parseFontValue(const QString &value, QString &family, int &size)
+{
+    size = 11;
+    family = value;
+    int lastSpace = value.lastIndexOf(' ');
+    if (lastSpace > 0) {
+        bool ok;
+        int parsed = value.mid(lastSpace + 1).toInt(&ok);
+        if (ok && parsed > 0) {
+            family = value.left(lastSpace);
+            size = parsed;
+        }
+    }
+}
 
 GnomeWmTab::GnomeWmTab(QWidget *parent) :
     QWidget(parent),
@@ -44,15 +61,24 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
             emit settingFailed(tr("Failed to apply Focus Mode"));
         }
     });
-    connect(ui->editTitlebarFont, &QLineEdit::editingFinished, this, [this]() {
+    auto applyTitlebarFont = [this]() {
         if (mLoading) return;
+        QString newValue = ui->fontTitlebarFont->currentFont().family() + " "
+                         + QString::number(ui->spinTitlebarFontSize->value());
         QString prev = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT);
-        if (!GnomeSettingsTool::setS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT, ui->editTitlebarFont->text())) {
-            const QSignalBlocker blocker(ui->editTitlebarFont);
-            ui->editTitlebarFont->setText(prev);
+        if (!GnomeSettingsTool::setS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT, newValue)) {
+            QString prevFamily;
+            int prevSize;
+            parseFontValue(prev, prevFamily, prevSize);
+            const QSignalBlocker b1(ui->fontTitlebarFont);
+            const QSignalBlocker b2(ui->spinTitlebarFontSize);
+            ui->fontTitlebarFont->setCurrentFont(QFont(prevFamily));
+            ui->spinTitlebarFontSize->setValue(prevSize);
             emit settingFailed(tr("Failed to apply Titlebar Font"));
         }
-    });
+    };
+    connect(ui->fontTitlebarFont, &QFontComboBox::currentFontChanged, this, applyTitlebarFont);
+    connect(ui->spinTitlebarFontSize, QOverload<int>::of(&QSpinBox::valueChanged), this, applyTitlebarFont);
     connect(ui->spinWorkspaces, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int val) {
         if (mLoading) return;
         int prev = GnomeSettingsTool::getI(GnomeSchema::WM_PREFS, GnomeKey::NUM_WORKSPACES);
@@ -187,7 +213,12 @@ void GnomeWmTab::loadSettings()
         int fmIdx = ui->cmbFocusMode->findData(fm);
         if (fmIdx >= 0) ui->cmbFocusMode->setCurrentIndex(fmIdx);
 
-        ui->editTitlebarFont->setText(GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT));
+        QString tbFontVal = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT);
+        QString tbFamily;
+        int tbSize;
+        parseFontValue(tbFontVal, tbFamily, tbSize);
+        ui->fontTitlebarFont->setCurrentFont(QFont(tbFamily));
+        ui->spinTitlebarFontSize->setValue(tbSize);
         ui->spinWorkspaces->setValue(GnomeSettingsTool::getI(GnomeSchema::WM_PREFS, GnomeKey::NUM_WORKSPACES));
 
         addTitlebarActions(ui->cmbDblClick);

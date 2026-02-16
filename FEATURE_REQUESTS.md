@@ -46,7 +46,8 @@
 
 ## GNOME Settings
 
-- [ ] **FR-27: GNOME Settings — populate theme/font fields as dropdowns with installed values** — Replace the plain `QLineEdit` fields for GTK Theme, Icon Theme, Cursor Theme, UI Font, Document Font, Monospace Font, and Titlebar Font with `QComboBox` (or `QFontComboBox` for fonts) that enumerate installed options. For themes, scan `/usr/share/themes/`, `/usr/share/icons/`, `/usr/share/cursors/` etc. For fonts, use `QFontDatabase`. Users currently must type exact theme/font names with no guidance on what's available.
+- [x] **FR-27: GNOME Settings — populate theme/font fields as dropdowns with installed values** — Replace the plain `QLineEdit` fields for GTK Theme, Icon Theme, Cursor Theme, UI Font, Document Font, Monospace Font, and Titlebar Font with `QComboBox` (or `QFontComboBox` for fonts) that enumerate installed options. For themes, scan `/usr/share/themes/`, `/usr/share/icons/`, `/usr/share/cursors/` etc. For fonts, use `QFontDatabase`. Users currently must type exact theme/font names with no guidance on what's available.
+  - **Resolved:** Replaced 3 theme QLineEdits with editable QComboBoxes populated by scanning `/usr/share/themes/`, `/usr/share/icons/`, and user dirs. Replaced 4 font QLineEdits with QFontComboBox + QSpinBox pairs that parse/compose GNOME's "FontFamily Size" format. Monospace font combo filtered to fixed-pitch families only.
 
 ## Notes
 

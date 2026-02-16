@@ -60,8 +60,29 @@
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QLineEdit" name="editTitlebarFont">
-            <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+           <widget class="QWidget" name="containerTitlebarFont">
+            <layout class="QHBoxLayout" name="layoutTitlebarFont">
+             <property name="leftMargin"><number>0</number></property>
+             <property name="topMargin"><number>0</number></property>
+             <property name="rightMargin"><number>0</number></property>
+             <property name="bottomMargin"><number>0</number></property>
+             <property name="spacing"><number>6</number></property>
+             <item>
+              <widget class="QFontComboBox" name="fontTitlebarFont">
+               <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="spinTitlebarFontSize">
+               <property name="minimum"><number>6</number></property>
+               <property name="maximum"><number>72</number></property>
+               <property name="value"><number>11</number></property>
+               <property name="suffix"><string> pt</string></property>
+               <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
 
@@ -227,6 +248,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QFontComboBox</class>
+   <extends>QComboBox</extends>
+   <header>QFontComboBox</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

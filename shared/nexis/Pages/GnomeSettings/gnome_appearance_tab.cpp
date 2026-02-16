@@ -1,7 +1,12 @@
 #include "gnome_appearance_tab.h"
 #include "ui_gnome_appearance_tab.h"
 
+#include <QDir>
+#include <QFontComboBox>
+#include <QFontDatabase>
 #include <QSignalBlocker>
+#include <QSpinBox>
+#include <QStandardPaths>
 #include <Tools/gnome_settings_tool.h>
 
 GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
@@ -14,6 +19,9 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Make transparent so @pageContent background shows through in dark mode
     ui->scrollArea->viewport()->setAutoFillBackground(false);
     ui->scrollContents->setAutoFillBackground(false);
+
+    // Monospace font filter
+    ui->fontMonoFont->setFontFilters(QFontComboBox::MonospacedFonts);
 
     loadSettings();
 
@@ -31,34 +39,34 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     });
 
     // GTK Theme
-    connect(ui->editGtkTheme, &QLineEdit::editingFinished, this, [this]() {
+    connect(ui->cmbGtkTheme, &QComboBox::currentTextChanged, this, [this](const QString &text) {
         if (mLoading) return;
         QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME, ui->editGtkTheme->text())) {
-            const QSignalBlocker blocker(ui->editGtkTheme);
-            ui->editGtkTheme->setText(prev);
+        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME, text)) {
+            const QSignalBlocker blocker(ui->cmbGtkTheme);
+            ui->cmbGtkTheme->setCurrentText(prev);
             emit settingFailed(tr("Failed to apply GTK Theme"));
         }
     });
 
     // Icon Theme
-    connect(ui->editIconTheme, &QLineEdit::editingFinished, this, [this]() {
+    connect(ui->cmbIconTheme, &QComboBox::currentTextChanged, this, [this](const QString &text) {
         if (mLoading) return;
         QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME, ui->editIconTheme->text())) {
-            const QSignalBlocker blocker(ui->editIconTheme);
-            ui->editIconTheme->setText(prev);
+        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME, text)) {
+            const QSignalBlocker blocker(ui->cmbIconTheme);
+            ui->cmbIconTheme->setCurrentText(prev);
             emit settingFailed(tr("Failed to apply Icon Theme"));
         }
     });
 
     // Cursor Theme
-    connect(ui->editCursorTheme, &QLineEdit::editingFinished, this, [this]() {
+    connect(ui->cmbCursorTheme, &QComboBox::currentTextChanged, this, [this](const QString &text) {
         if (mLoading) return;
         QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME, ui->editCursorTheme->text())) {
-            const QSignalBlocker blocker(ui->editCursorTheme);
-            ui->editCursorTheme->setText(prev);
+        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME, text)) {
+            const QSignalBlocker blocker(ui->cmbCursorTheme);
+            ui->cmbCursorTheme->setCurrentText(prev);
             emit settingFailed(tr("Failed to apply Cursor Theme"));
         }
     });
@@ -74,33 +82,40 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
         }
     });
 
-    // Fonts
-    connect(ui->editFont, &QLineEdit::editingFinished, this, [this]() {
+    // UI Font
+    connect(ui->fontFont, &QFontComboBox::currentFontChanged, this, [this]() {
         if (mLoading) return;
-        QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::FONT_NAME);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::FONT_NAME, ui->editFont->text())) {
-            const QSignalBlocker blocker(ui->editFont);
-            ui->editFont->setText(prev);
-            emit settingFailed(tr("Failed to apply Font"));
-        }
+        applyFont(GnomeSchema::INTERFACE, GnomeKey::FONT_NAME,
+                  ui->fontFont, ui->spinFontSize, tr("Font"));
     });
-    connect(ui->editDocFont, &QLineEdit::editingFinished, this, [this]() {
+    connect(ui->spinFontSize, QOverload<int>::of(&QSpinBox::valueChanged), this, [this]() {
         if (mLoading) return;
-        QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::DOCUMENT_FONT);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::DOCUMENT_FONT, ui->editDocFont->text())) {
-            const QSignalBlocker blocker(ui->editDocFont);
-            ui->editDocFont->setText(prev);
-            emit settingFailed(tr("Failed to apply Document Font"));
-        }
+        applyFont(GnomeSchema::INTERFACE, GnomeKey::FONT_NAME,
+                  ui->fontFont, ui->spinFontSize, tr("Font"));
     });
-    connect(ui->editMonoFont, &QLineEdit::editingFinished, this, [this]() {
+
+    // Document Font
+    connect(ui->fontDocFont, &QFontComboBox::currentFontChanged, this, [this]() {
         if (mLoading) return;
-        QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::MONOSPACE_FONT);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::MONOSPACE_FONT, ui->editMonoFont->text())) {
-            const QSignalBlocker blocker(ui->editMonoFont);
-            ui->editMonoFont->setText(prev);
-            emit settingFailed(tr("Failed to apply Monospace Font"));
-        }
+        applyFont(GnomeSchema::INTERFACE, GnomeKey::DOCUMENT_FONT,
+                  ui->fontDocFont, ui->spinDocFontSize, tr("Document Font"));
+    });
+    connect(ui->spinDocFontSize, QOverload<int>::of(&QSpinBox::valueChanged), this, [this]() {
+        if (mLoading) return;
+        applyFont(GnomeSchema::INTERFACE, GnomeKey::DOCUMENT_FONT,
+                  ui->fontDocFont, ui->spinDocFontSize, tr("Document Font"));
+    });
+
+    // Monospace Font
+    connect(ui->fontMonoFont, &QFontComboBox::currentFontChanged, this, [this]() {
+        if (mLoading) return;
+        applyFont(GnomeSchema::INTERFACE, GnomeKey::MONOSPACE_FONT,
+                  ui->fontMonoFont, ui->spinMonoFontSize, tr("Monospace Font"));
+    });
+    connect(ui->spinMonoFontSize, QOverload<int>::of(&QSpinBox::valueChanged), this, [this]() {
+        if (mLoading) return;
+        applyFont(GnomeSchema::INTERFACE, GnomeKey::MONOSPACE_FONT,
+                  ui->fontMonoFont, ui->spinMonoFontSize, tr("Monospace Font"));
     });
 
     // Text Scaling
@@ -213,16 +228,34 @@ void GnomeAppearanceTab::loadSettings()
     int csIdx = ui->cmbColorScheme->findData(colorScheme);
     if (csIdx >= 0) ui->cmbColorScheme->setCurrentIndex(csIdx);
 
-    // Themes
-    ui->editGtkTheme->setText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME));
-    ui->editIconTheme->setText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME));
-    ui->editCursorTheme->setText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME));
+    // Themes — populate from filesystem, then set current value
+    ui->cmbGtkTheme->addItems(discoverGtkThemes());
+    ui->cmbGtkTheme->setCurrentText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME));
+
+    ui->cmbIconTheme->addItems(discoverIconThemes());
+    ui->cmbIconTheme->setCurrentText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME));
+
+    ui->cmbCursorTheme->addItems(discoverCursorThemes());
+    ui->cmbCursorTheme->setCurrentText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME));
+
     ui->spinCursorSize->setValue(GnomeSettingsTool::getI(GnomeSchema::INTERFACE, GnomeKey::CURSOR_SIZE));
 
-    // Fonts
-    ui->editFont->setText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::FONT_NAME));
-    ui->editDocFont->setText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::DOCUMENT_FONT));
-    ui->editMonoFont->setText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::MONOSPACE_FONT));
+    // Fonts — parse "FontFamily Size" and set combo + spin
+    QString family;
+    int size;
+
+    parseFontValue(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::FONT_NAME), family, size);
+    ui->fontFont->setCurrentFont(QFont(family));
+    ui->spinFontSize->setValue(size);
+
+    parseFontValue(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::DOCUMENT_FONT), family, size);
+    ui->fontDocFont->setCurrentFont(QFont(family));
+    ui->spinDocFontSize->setValue(size);
+
+    parseFontValue(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::MONOSPACE_FONT), family, size);
+    ui->fontMonoFont->setCurrentFont(QFont(family));
+    ui->spinMonoFontSize->setValue(size);
+
     ui->spinTextScaling->setValue(GnomeSettingsTool::getD(GnomeSchema::INTERFACE, GnomeKey::TEXT_SCALING));
 
     // Checkboxes
@@ -257,4 +290,110 @@ void GnomeAppearanceTab::loadSettings()
     if (hIdx >= 0) ui->cmbHinting->setCurrentIndex(hIdx);
 
     mLoading = false;
+}
+
+QStringList GnomeAppearanceTab::discoverGtkThemes()
+{
+    QSet<QString> themes;
+    QStringList searchPaths = {
+        QStringLiteral("/usr/share/themes"),
+        QDir::homePath() + QStringLiteral("/.local/share/themes"),
+        QDir::homePath() + QStringLiteral("/.themes")
+    };
+
+    for (const QString &basePath : searchPaths) {
+        QDir baseDir(basePath);
+        if (!baseDir.exists()) continue;
+        for (const QString &entry : baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            QDir themeDir(basePath + "/" + entry);
+            if (themeDir.exists("gtk-3.0") || themeDir.exists("gtk-4.0"))
+                themes.insert(entry);
+        }
+    }
+
+    QStringList result(themes.begin(), themes.end());
+    result.sort(Qt::CaseInsensitive);
+    return result;
+}
+
+QStringList GnomeAppearanceTab::discoverIconThemes()
+{
+    QSet<QString> themes;
+    QStringList searchPaths = {
+        QStringLiteral("/usr/share/icons"),
+        QDir::homePath() + QStringLiteral("/.local/share/icons"),
+        QDir::homePath() + QStringLiteral("/.icons")
+    };
+
+    for (const QString &basePath : searchPaths) {
+        QDir baseDir(basePath);
+        if (!baseDir.exists()) continue;
+        for (const QString &entry : baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            if (entry == "default") continue;
+            QDir iconDir(basePath + "/" + entry);
+            if (iconDir.exists("index.theme"))
+                themes.insert(entry);
+        }
+    }
+
+    QStringList result(themes.begin(), themes.end());
+    result.sort(Qt::CaseInsensitive);
+    return result;
+}
+
+QStringList GnomeAppearanceTab::discoverCursorThemes()
+{
+    QSet<QString> themes;
+    QStringList searchPaths = {
+        QStringLiteral("/usr/share/icons"),
+        QDir::homePath() + QStringLiteral("/.local/share/icons"),
+        QDir::homePath() + QStringLiteral("/.icons")
+    };
+
+    for (const QString &basePath : searchPaths) {
+        QDir baseDir(basePath);
+        if (!baseDir.exists()) continue;
+        for (const QString &entry : baseDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            QDir iconDir(basePath + "/" + entry);
+            if (iconDir.exists("cursors"))
+                themes.insert(entry);
+        }
+    }
+
+    QStringList result(themes.begin(), themes.end());
+    result.sort(Qt::CaseInsensitive);
+    return result;
+}
+
+void GnomeAppearanceTab::parseFontValue(const QString &value, QString &family, int &size)
+{
+    size = 11;
+    family = value;
+
+    int lastSpace = value.lastIndexOf(' ');
+    if (lastSpace > 0) {
+        bool ok;
+        int parsed = value.mid(lastSpace + 1).toInt(&ok);
+        if (ok && parsed > 0) {
+            family = value.left(lastSpace);
+            size = parsed;
+        }
+    }
+}
+
+void GnomeAppearanceTab::applyFont(const QString &schema, const QString &key,
+                                    QFontComboBox *combo, QSpinBox *spin, const QString &label)
+{
+    QString newValue = combo->currentFont().family() + " " + QString::number(spin->value());
+    QString prev = GnomeSettingsTool::getS(schema, key);
+    if (!GnomeSettingsTool::setS(schema, key, newValue)) {
+        QString prevFamily;
+        int prevSize;
+        parseFontValue(prev, prevFamily, prevSize);
+        const QSignalBlocker b1(combo);
+        const QSignalBlocker b2(spin);
+        combo->setCurrentFont(QFont(prevFamily));
+        spin->setValue(prevSize);
+        emit settingFailed(tr("Failed to apply %1").arg(label));
+    }
 }
