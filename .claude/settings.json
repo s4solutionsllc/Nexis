@@ -5,7 +5,8 @@
       "Bash(cmake *)",
       "Bash(cmake --build *)",
       "Bash(rm -rf build && cmake *)",
-      "Bash(make *)"
+      "Bash(make *)",
+      "WebSearch"
     ]
   }
 }
