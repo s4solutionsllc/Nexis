@@ -31,7 +31,6 @@ public:
 private slots:
     void init();
     void checkUpdate();
-    void systemInformationInit();
 
     void updateCpuBar();
     void updateMemoryBar();

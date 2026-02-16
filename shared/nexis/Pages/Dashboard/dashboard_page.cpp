@@ -33,8 +33,6 @@ DashboardPage::DashboardPage(QWidget *parent) :
     ui->setupUi(this);
 
     init();
-
-    systemInformationInit();
 }
 
 void DashboardPage::init()
@@ -54,6 +52,18 @@ void DashboardPage::init()
         for (const ThermalSensor &s : sensors)
             ui->cmbTempSensor->addItem(s.label);
 
+        // Restore saved sensor selection
+        QString savedSensorId = mSettingManager->getTempSensorId();
+        if (!savedSensorId.isEmpty()) {
+            for (int i = 0; i < sensors.size(); ++i) {
+                if (sensors.at(i).id == savedSensorId) {
+                    ui->cmbTempSensor->setCurrentIndex(i);
+                    mSelectedSensorIndex = i;
+                    break;
+                }
+            }
+        }
+
         ui->tempContainerLayout->addWidget(mTempBar);
 
         connect(ui->cmbTempSensor, &QComboBox::currentIndexChanged,
@@ -69,6 +79,18 @@ void DashboardPage::init()
         QList<GpuDevice> gpus = im->getGpuDevices();
         for (const GpuDevice &g : gpus)
             ui->cmbGpuDevice->addItem(g.name);
+
+        // Restore saved GPU selection
+        QString savedGpuId = mSettingManager->getGpuDeviceId();
+        if (!savedGpuId.isEmpty()) {
+            for (int i = 0; i < gpus.size(); ++i) {
+                if (gpus.at(i).name == savedGpuId) {
+                    ui->cmbGpuDevice->setCurrentIndex(i);
+                    mSelectedGpuIndex = i;
+                    break;
+                }
+            }
+        }
 
         // Hide the combo box if there's only one GPU
         if (gpus.size() <= 1)
@@ -155,26 +177,6 @@ void DashboardPage::on_btnDownloadUpdate_clicked()
     QDesktopServices::openUrl(QUrl("https://github.com/lsimpsonsfdc/Nexis/releases/latest"));
 }
 
-void DashboardPage::systemInformationInit()
-{
-    // get system information
-    SystemInfo sysInfo;
-
-    QStringList infos;
-    infos
-        << tr("Hostname: %1").arg(sysInfo.getHostname())
-        << tr("Platform: %1").arg(sysInfo.getPlatform())
-        << tr("Distribution: %1").arg(sysInfo.getDistribution())
-        << tr("Kernel Release: %1").arg(sysInfo.getKernel())
-        << tr("CPU Model: %1").arg(sysInfo.getCpuModel())
-        << tr("CPU Core: %1").arg(sysInfo.getCpuCore())
-        << tr("CPU Speed: %1").arg(sysInfo.getCpuSpeed());
-
-    QStringListModel *systemInfoModel = new QStringListModel(infos,ui->listViewSystemInfo);
-    const auto oldModel = ui->listViewSystemInfo->selectionModel();
-    delete  oldModel;
-    ui->listViewSystemInfo->setModel(systemInfoModel);
-}
 
 void DashboardPage::updateCpuBar()
 {
@@ -332,6 +334,11 @@ void DashboardPage::updateTempBar()
 void DashboardPage::onTempSensorChanged(int index)
 {
     mSelectedSensorIndex = index;
+
+    QList<ThermalSensor> sensors = im->getThermalSensors();
+    if (index >= 0 && index < sensors.size())
+        mSettingManager->setTempSensorId(sensors.at(index).id);
+
     updateTempBar();
 }
 
@@ -352,6 +359,11 @@ void DashboardPage::updateGpuBar()
 void DashboardPage::onGpuDeviceChanged(int index)
 {
     mSelectedGpuIndex = index;
+
+    QList<GpuDevice> gpus = im->getGpuDevices();
+    if (index >= 0 && index < gpus.size())
+        mSettingManager->setGpuDeviceId(gpus.at(index).name);
+
     updateGpuBar();
 }
 

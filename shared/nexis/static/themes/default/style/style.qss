@@ -530,20 +530,6 @@ QLabel[accessibleName="dialog-title"] {
     selection-background-color: @color02;
 }
 
-/* - System Info - */
-
-#lblSystemInfoTitle {
-    color: @color05;
-    font-size: 13pt;
-    padding-left: 5;
-}
-
-#listViewSystemInfo {
-    border: 0;
-    background-color: transparent;
-    font-size: 11pt;
-    color: @color06;
-}
 
 /**************************
     SYSTEM CLEANER PAGE

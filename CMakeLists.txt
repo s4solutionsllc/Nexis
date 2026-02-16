@@ -103,6 +103,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
   "${GUI_SHARED_DIR}/Pages/AptSourceManager"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings"
   "${GUI_SHARED_DIR}/Pages/Search"
+  "${GUI_SHARED_DIR}/Pages/HardwareInfo"
 )
 
 # macOS app icon
@@ -143,6 +144,7 @@ target_include_directories(nexis PRIVATE
   "${GUI_SHARED_DIR}/Pages/AptSourceManager"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings"
   "${GUI_SHARED_DIR}/Pages/Search"
+  "${GUI_SHARED_DIR}/Pages/HardwareInfo"
   "${CMAKE_BINARY_DIR}"
 )
 

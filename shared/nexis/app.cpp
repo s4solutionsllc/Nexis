@@ -18,6 +18,7 @@ App::App(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::App),
     mSlidingStacked(new SlidingStackedWidget(this)),
+    mKioskMode(false),
     mTrayIcon(AppManager::ins()->getTrayIcon()),
     mTrayMenu(new QMenu(this))
 {
@@ -38,6 +39,7 @@ void App::init()
     ui->horizontalLayout->setSpacing(0);
 
     dashboardPage = new DashboardPage(mSlidingStacked);
+    hardwareInfoPage = new HardwareInfoPage(mSlidingStacked);
     startupAppsPage = new StartupAppsPage(mSlidingStacked);
     searchPage = new SearchPage(mSlidingStacked);
     systemCleanerPage = new SystemCleanerPage(mSlidingStacked);
@@ -51,12 +53,12 @@ void App::init()
     ui->pageContentLayout->addWidget(mSlidingStacked);
 
     mListPages = {
-        dashboardPage, startupAppsPage, systemCleanerPage, searchPage, servicesPage,
+        dashboardPage, hardwareInfoPage, startupAppsPage, systemCleanerPage, searchPage, servicesPage,
         processPage, uninstallerPage, resourcesPage, helpersPage, settingsPage
     };
 
     mListSidebarButtons = {
-        ui->btnDash, ui->btnStartupApps, ui->btnSystemCleaner, ui->btnSearch, ui->btnServices,
+        ui->btnDash, ui->btnHardwareInfo, ui->btnStartupApps, ui->btnSystemCleaner, ui->btnSearch, ui->btnServices,
         ui->btnProcesses, ui->btnHelpers, ui->btnUninstaller, ui->btnResources, ui->btnSettings
     };
 
@@ -82,6 +84,7 @@ void App::init()
 
     // Set sidebar button labels
     ui->btnDash->setText(tr("Dashboard"));
+    ui->btnHardwareInfo->setText(tr("Hardware Info"));
     ui->btnStartupApps->setText(tr("Startup Apps"));
     ui->btnSystemCleaner->setText(tr("System Cleaner"));
     ui->btnSearch->setText(tr("Search"));
@@ -123,6 +126,21 @@ void App::init()
     createTrayActions();
 
     mTrayIcon->show();
+
+    // Kiosk mode shortcuts
+    QAction *kioskToggle = new QAction(this);
+    kioskToggle->setShortcut(Qt::Key_F11);
+    addAction(kioskToggle);
+    connect(kioskToggle, &QAction::triggered, this, &App::toggleKioskMode);
+
+    QAction *kioskExit = new QAction(this);
+    kioskExit->setShortcut(Qt::Key_Escape);
+    addAction(kioskExit);
+    connect(kioskExit, &QAction::triggered, this, &App::exitKioskMode);
+
+    // Restore kiosk mode from last session
+    if (SettingManager::ins()->getKioskMode())
+        applyKioskMode(true);
 }
 
 void App::closeEvent(QCloseEvent *event)
@@ -224,6 +242,11 @@ void App::on_btnDash_clicked()
     pageClick(dashboardPage);
 }
 
+void App::on_btnHardwareInfo_clicked()
+{
+    pageClick(hardwareInfoPage);
+}
+
 void App::on_btnStartupApps_clicked()
 {
     pageClick(startupAppsPage);
@@ -304,6 +327,7 @@ void App::updateSidebarIcons()
     };
 
     setIcon(ui->btnDash,             "utilities-system-monitor",       "dash.svg");
+    setIcon(ui->btnHardwareInfo,     "computer",                       "hardware-info.svg");
     setIcon(ui->btnStartupApps,      "media-playback-start",           "startup-apps.svg");
     setIcon(ui->btnSystemCleaner,    "edit-clear-all",                 "cleaner.svg");
     setIcon(ui->btnSearch,           "edit-find",                      "search.svg");
@@ -316,4 +340,34 @@ void App::updateSidebarIcons()
     setIcon(ui->btnGnomeSettings,    "preferences-desktop-appearance", "gnome-settings.svg");
     setIcon(ui->btnSettings,         "applications-system",            "settings.svg");
     setIcon(ui->btnFeedback,         "mail-message-new",               "feedback.svg");
+}
+
+void App::toggleKioskMode()
+{
+    mKioskMode = !mKioskMode;
+    SettingManager::ins()->setKioskMode(mKioskMode);
+    applyKioskMode(mKioskMode);
+}
+
+void App::exitKioskMode()
+{
+    if (!mKioskMode)
+        return;
+    mKioskMode = false;
+    SettingManager::ins()->setKioskMode(false);
+    applyKioskMode(false);
+}
+
+void App::applyKioskMode(bool enable)
+{
+    if (enable) {
+        ui->sidebar->hide();
+        ui->pageTitle->hide();
+        pageClick(dashboardPage, false);
+        showFullScreen();
+    } else {
+        showNormal();
+        ui->sidebar->show();
+        ui->pageTitle->show();
+    }
 }

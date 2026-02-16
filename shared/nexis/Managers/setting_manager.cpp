@@ -140,3 +140,33 @@ QString SettingManager::getDiskAnalyzerCustomPath() const
 {
     return mSettings->value(SettingKeys::DiskAnalyzerCustomPath, "").toString();
 }
+
+void SettingManager::setKioskMode(bool value)
+{
+    mSettings->setValue(SettingKeys::KioskMode, value);
+}
+
+bool SettingManager::getKioskMode() const
+{
+    return mSettings->value(SettingKeys::KioskMode, false).toBool();
+}
+
+void SettingManager::setTempSensorId(const QString &value)
+{
+    mSettings->setValue(SettingKeys::TempSensorId, value);
+}
+
+QString SettingManager::getTempSensorId() const
+{
+    return mSettings->value(SettingKeys::TempSensorId, "").toString();
+}
+
+void SettingManager::setGpuDeviceId(const QString &value)
+{
+    mSettings->setValue(SettingKeys::GpuDeviceId, value);
+}
+
+QString SettingManager::getGpuDeviceId() const
+{
+    return mSettings->value(SettingKeys::GpuDeviceId, "").toString();
+}

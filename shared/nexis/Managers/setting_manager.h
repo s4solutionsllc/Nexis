@@ -17,6 +17,9 @@ namespace SettingKeys {
     const QString ColorScheme("ColorScheme");
     const QString DiskAnalyzerTool("DiskAnalyzerTool");
     const QString DiskAnalyzerCustomPath("DiskAnalyzerCustomPath");
+    const QString KioskMode("KioskMode");
+    const QString TempSensorId("TempSensorId");
+    const QString GpuDeviceId("GpuDeviceId");
 }
 
 class SettingManager
@@ -61,6 +64,15 @@ public:
 
     void setDiskAnalyzerCustomPath(const QString &value);
     QString getDiskAnalyzerCustomPath() const;
+
+    void setKioskMode(bool value);
+    bool getKioskMode() const;
+
+    void setTempSensorId(const QString &value);
+    QString getTempSensorId() const;
+
+    void setGpuDeviceId(const QString &value);
+    QString getGpuDeviceId() const;
 
 private:
     static SettingManager *instance;

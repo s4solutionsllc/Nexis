@@ -2,6 +2,7 @@
 #define APP_H
 
 #include <QMainWindow>
+#include <QAction>
 
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
@@ -20,6 +21,7 @@
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
 #include "Pages/Helpers/helpers_page.h"
+#include "Pages/HardwareInfo/hardware_info_page.h"
 #include "feedback.h"
 
 namespace Ui {
@@ -44,6 +46,7 @@ private slots:
     void clickSidebarButton(QString pageTitle, bool isShow = false);
 
     void on_btnDash_clicked();
+    void on_btnHardwareInfo_clicked();
     void on_btnSystemCleaner_clicked();
     void on_btnStartupApps_clicked();
     void on_btnServices_clicked();
@@ -58,11 +61,15 @@ private slots:
 
     void on_btnFeedback_clicked();
 
+    void toggleKioskMode();
+    void exitKioskMode();
+
 private:
     QWidget *getPageByTitle(const QString &title);
     void checkSidebarButtonByTooltip(const QString &text);
     void createTrayActions();
     void updateSidebarIcons();
+    void applyKioskMode(bool enable);
 
 private:
     Ui::App *ui;
@@ -74,6 +81,7 @@ private:
     SlidingStackedWidget *mSlidingStacked;
 
     DashboardPage *dashboardPage;
+    HardwareInfoPage *hardwareInfoPage;
     StartupAppsPage *startupAppsPage;
     SystemCleanerPage *systemCleanerPage;
     SearchPage *searchPage;
@@ -87,6 +95,8 @@ private:
     HelpersPage *helpersPage;
 
     QSharedPointer<Feedback> feedback;
+
+    bool mKioskMode;
 
     QSystemTrayIcon *mTrayIcon;
 
