@@ -5,7 +5,6 @@
 #include <Info/cpu_info.h>
 #include <Utils/format_util.h>
 
-#include <QNetworkInterface>
 #include <QHeaderView>
 #include <QSysInfo>
 #include <QProcess>
@@ -32,8 +31,6 @@ void HardwareInfoPage::init()
     populateProcessor();
     populateGraphics();
     populateMemory();
-    populateStorage();
-    populateNetwork();
     populateThermal();
 }
 
@@ -50,6 +47,15 @@ void HardwareInfoPage::addRow(QTableWidget *table, const QString &label, const Q
 
     QTableWidgetItem *valueItem = new QTableWidgetItem(value);
     table->setItem(row, 1, valueItem);
+}
+
+void HardwareInfoPage::fitTableHeight(QTableWidget *table)
+{
+    const int rowHeight = 30;
+    const int headerHeight = table->horizontalHeader()->isVisible() ? 36 : 0;
+    int height = headerHeight + table->rowCount() * rowHeight;
+    table->setFixedHeight(height);
+    table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 }
 
 void HardwareInfoPage::populateSystem()
@@ -77,7 +83,7 @@ void HardwareInfoPage::populateSystem()
 #endif
 
     t->resizeColumnsToContents();
-    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    fitTableHeight(t);
 }
 
 void HardwareInfoPage::populateProcessor()
@@ -156,7 +162,7 @@ void HardwareInfoPage::populateProcessor()
 #endif
 
     t->resizeColumnsToContents();
-    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    fitTableHeight(t);
 }
 
 void HardwareInfoPage::populateGraphics()
@@ -182,7 +188,7 @@ void HardwareInfoPage::populateGraphics()
     }
 
     t->resizeColumnsToContents();
-    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    fitTableHeight(t);
 }
 
 void HardwareInfoPage::populateMemory()
@@ -198,77 +204,7 @@ void HardwareInfoPage::populateMemory()
     addRow(t, tr("Swap Total"), FormatUtil::formatBytes(im->getSwapTotal()));
 
     t->resizeColumnsToContents();
-    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-}
-
-void HardwareInfoPage::populateStorage()
-{
-    QTableWidget *t = ui->tblStorage;
-    t->verticalHeader()->setVisible(false);
-
-    im->updateDiskInfo();
-    QList<Disk> disks = im->getDisks();
-
-    t->setColumnCount(6);
-    t->setHorizontalHeaderLabels({
-        tr("Device"), tr("Mount Point"), tr("Filesystem"),
-        tr("Total"), tr("Used"), tr("Free")
-    });
-
-    for (const Disk &d : disks) {
-        int row = t->rowCount();
-        t->insertRow(row);
-        t->setItem(row, 0, new QTableWidgetItem(d.device));
-        t->setItem(row, 1, new QTableWidgetItem(d.name));
-        t->setItem(row, 2, new QTableWidgetItem(d.fileSystemType));
-        t->setItem(row, 3, new QTableWidgetItem(FormatUtil::formatBytes(d.size)));
-        t->setItem(row, 4, new QTableWidgetItem(FormatUtil::formatBytes(d.used)));
-        t->setItem(row, 5, new QTableWidgetItem(FormatUtil::formatBytes(d.free)));
-    }
-
-    t->horizontalHeader()->setStretchLastSection(true);
-    t->resizeColumnsToContents();
-    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
-}
-
-void HardwareInfoPage::populateNetwork()
-{
-    QTableWidget *t = ui->tblNetwork;
-    t->verticalHeader()->setVisible(false);
-
-    t->setColumnCount(4);
-    t->setHorizontalHeaderLabels({
-        tr("Interface"), tr("MAC Address"), tr("IPv4"), tr("IPv6")
-    });
-
-    QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
-    for (const QNetworkInterface &iface : interfaces) {
-        if (iface.flags().testFlag(QNetworkInterface::IsLoopBack))
-            continue;
-
-        QString ipv4, ipv6;
-        const auto entries = iface.addressEntries();
-        for (const QNetworkAddressEntry &entry : entries) {
-            if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol && ipv4.isEmpty())
-                ipv4 = entry.ip().toString();
-            else if (entry.ip().protocol() == QAbstractSocket::IPv6Protocol && ipv6.isEmpty())
-                ipv6 = entry.ip().toString();
-        }
-
-        if (ipv4.isEmpty() && ipv6.isEmpty() && iface.hardwareAddress().isEmpty())
-            continue;
-
-        int row = t->rowCount();
-        t->insertRow(row);
-        t->setItem(row, 0, new QTableWidgetItem(iface.humanReadableName()));
-        t->setItem(row, 1, new QTableWidgetItem(iface.hardwareAddress()));
-        t->setItem(row, 2, new QTableWidgetItem(ipv4));
-        t->setItem(row, 3, new QTableWidgetItem(ipv6));
-    }
-
-    t->horizontalHeader()->setStretchLastSection(true);
-    t->resizeColumnsToContents();
-    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    fitTableHeight(t);
 }
 
 void HardwareInfoPage::populateThermal()
@@ -304,5 +240,5 @@ void HardwareInfoPage::populateThermal()
 
     t->horizontalHeader()->setStretchLastSection(true);
     t->resizeColumnsToContents();
-    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+    fitTableHeight(t);
 }

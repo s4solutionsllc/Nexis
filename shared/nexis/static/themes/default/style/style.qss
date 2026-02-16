@@ -548,7 +548,6 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
     border-radius: 12;
     margin-top: 12;
-    padding: 12 12 6 12;
     background-color: @cardBg;
 }
 

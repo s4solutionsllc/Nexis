@@ -26,11 +26,11 @@ private:
     void populateProcessor();
     void populateGraphics();
     void populateMemory();
-    void populateStorage();
-    void populateNetwork();
+
     void populateThermal();
 
     void addRow(QTableWidget *table, const QString &label, const QString &value);
+    void fitTableHeight(QTableWidget *table);
 
 private:
     Ui::HardwareInfoPage *ui;
