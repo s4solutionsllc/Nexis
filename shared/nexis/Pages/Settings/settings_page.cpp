@@ -25,7 +25,7 @@ SettingsPage::SettingsPage(QWidget *parent) :
     ui->lblCreatedBy->setText(
         QString("<html><head/><body><p>Nexis v%1 "
                 "<a href=\"https://github.com/lsimpsonsfdc\">"
-                "<span style=\" text-decoration: underline; color:#007af4;\">"
+                "<span style=\" text-decoration: underline; color:#E95420;\">"
                 "Luke Simpson</span></a></p></body></html>")
             .arg(qApp->applicationVersion()));
 
