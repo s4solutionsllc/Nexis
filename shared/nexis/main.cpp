@@ -66,6 +66,7 @@ int main(int argc, char *argv[])
     qApp->setApplicationDisplayName("Nexis");
     qApp->setApplicationVersion(APP_VERSION);
     qApp->setWindowIcon(QIcon(":/static/logo.svg"));
+    qApp->setDesktopFileName("nexis");
 
     // Single-instance enforcement (BUG-03 / FR-02)
     QString lockPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/nexis.lock";

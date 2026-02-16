@@ -85,7 +85,7 @@ jobs:
           ./linuxdeploy-x86_64.AppImage \
             --appdir AppDir \
             --desktop-file AppDir/usr/share/applications/nexis.desktop \
-            --icon-file AppDir/usr/share/icons/nexis.png \
+            --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/nexis.png \
             --plugin qt \
             --output appimage
 

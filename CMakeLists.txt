@@ -196,10 +196,11 @@ else()
     CONFIGURATIONS Release RelWithDebInfo MinSizeRel
   )
 
-  install(
-    FILES "${CMAKE_SOURCE_DIR}/icons/hicolor/256x256/apps/nexis.png"
-    DESTINATION share/icons
-    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
-    RENAME nexis.png
-  )
+  foreach(_size 16x16 32x32 48x48 64x64 128x128 256x256)
+    install(
+      FILES "${CMAKE_SOURCE_DIR}/icons/hicolor/${_size}/apps/nexis.png"
+      DESTINATION "share/icons/hicolor/${_size}/apps"
+      CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+    )
+  endforeach()
 endif()
