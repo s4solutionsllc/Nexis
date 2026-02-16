@@ -19,7 +19,7 @@
 ## From Community Issues (oguzhaninan/Stacer)
 
 - [x] **FR-11: GPU load / temperature monitoring** — Issues [#105](https://github.com/oguzhaninan/Stacer/issues/105), [#405](https://github.com/oguzhaninan/Stacer/issues/405). **Resolved:** Added GpuInfo class with platform-specific implementations. Linux: AMD sysfs gpu_busy_percent, NVIDIA nvidia-smi, Intel frequency ratio. macOS: IOKit IOAccelerator PerformanceStatistics. Dashboard shows GPU CircleBar with multi-GPU selector. Resources page shows GPU utilization history chart. Temperature was already supported via ThermalInfo.
-- [ ] **FR-12: Hardware info tab** — Issue [#527](https://github.com/oguzhaninan/Stacer/issues/527).
+- [ ] **FR-12: Hardware info tab** — Issue [#527](https://github.com/oguzhaninan/Stacer/issues/527). See also FR-28 (dashboard kiosk mode) — both serve the "dedicated system monitor" use case.
 - [ ] **FR-13: CLI interface** — Issue [#411](https://github.com/oguzhaninan/Stacer/issues/411).
 - [ ] **FR-14: Flatpak distribution** — Issue [#493](https://github.com/oguzhaninan/Stacer/issues/493).
 - [x] **FR-15: Autostart delay option** — Issue [#424](https://github.com/oguzhaninan/Stacer/issues/424). **Resolved:** Added delay spinbox to startup app editor. Linux uses X-GNOME-Autostart-Delay; macOS uses shell sleep wrapper.
@@ -51,7 +51,7 @@
 
 ## Community Requests
 
-- [ ] **FR-28: Dashboard-only fullscreen / kiosk mode** — Add a fullscreen mode that hides the sidebar and title bar, showing only the Dashboard widgets. Intended for use on small secondary monitors as a dedicated system monitor (similar to HardwareVisualizer). Sub-features: (a) Toggle fullscreen via menu/shortcut that hides the sidebar (`QFrame#sidebar`), title bar, and system info text, expanding the dashboard to fill the window. (b) Option to enlarge dashboard widgets (CircleBars, LineCharts) to use the freed space. (c) Remember the last selected temperature sensor device across sessions. Community issue [#4](https://github.com/lsimpsonsfdc/Nexis/issues/4) by @Vai0Lou.
+- [ ] **FR-28: Dashboard-only fullscreen / kiosk mode** — Add a fullscreen mode that hides the sidebar and title bar, showing only the Dashboard widgets. Intended for use on small secondary monitors as a dedicated system monitor (similar to HardwareVisualizer). Sub-features: (a) Toggle fullscreen via menu/shortcut that hides the sidebar (`QFrame#sidebar`), title bar, and system info text, expanding the dashboard to fill the window. (b) Option to enlarge dashboard widgets (CircleBars, LineCharts) to use the freed space. (c) Remember the last selected temperature sensor device across sessions. See also FR-12 (hardware info tab) — both serve the "dedicated system monitor" use case. Community issue [#4](https://github.com/lsimpsonsfdc/Nexis/issues/4) by @Vai0Lou.
 
 ## Notes
 
