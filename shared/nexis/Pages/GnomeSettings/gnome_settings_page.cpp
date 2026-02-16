@@ -1,6 +1,7 @@
 #include "gnome_settings_page.h"
 #include "ui_gnome_settings_page.h"
 
+#include <QTimer>
 #include <Tools/gnome_settings_tool.h>
 
 GnomeSettingsPage::GnomeSettingsPage(QWidget *parent) :
@@ -53,6 +54,11 @@ void GnomeSettingsPage::init()
         });
     }
 
+    connect(mAppearanceTab, &GnomeAppearanceTab::settingFailed, this, &GnomeSettingsPage::showError);
+    connect(mWmTab, &GnomeWmTab::settingFailed, this, &GnomeSettingsPage::showError);
+    connect(mMouseTab, &GnomeMouseTab::settingFailed, this, &GnomeSettingsPage::showError);
+    connect(mDesktopTab, &GnomeDesktopTab::settingFailed, this, &GnomeSettingsPage::showError);
+
     // Start on Appearance
     ui->stackedWidget->setCurrentIndex(0);
     ui->btnAppearance->setChecked(true);
@@ -61,4 +67,14 @@ void GnomeSettingsPage::init()
 void GnomeSettingsPage::onTabButtonClicked(int index)
 {
     ui->stackedWidget->setCurrentIndex(index);
+}
+
+void GnomeSettingsPage::showError(const QString &message)
+{
+    ui->lblStatus->setText(message);
+    ui->lblStatus->setVisible(true);
+    QTimer::singleShot(4000, this, [this]() {
+        ui->lblStatus->setVisible(false);
+        ui->lblStatus->clear();
+    });
 }

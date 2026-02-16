@@ -2,6 +2,7 @@
 #include "ui_gnome_desktop_tab.h"
 
 #include <QFileDialog>
+#include <QSignalBlocker>
 #include <Tools/gnome_settings_tool.h>
 
 GnomeDesktopTab::GnomeDesktopTab(QWidget *parent) :
@@ -26,52 +27,90 @@ GnomeDesktopTab::GnomeDesktopTab(QWidget *parent) :
     // Wallpaper light
     connect(ui->editWallpaper, &QLineEdit::editingFinished, this, [this]() {
         if (mLoading) return;
-        GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI, ui->editWallpaper->text());
+        QString prev = GnomeSettingsTool::getS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI);
+        if (!GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI, ui->editWallpaper->text())) {
+            const QSignalBlocker blocker(ui->editWallpaper);
+            ui->editWallpaper->setText(prev);
+            emit settingFailed(tr("Failed to apply Wallpaper"));
+        }
     });
     connect(ui->btnBrowseWallpaper, &QPushButton::clicked, this, [this]() {
         QString file = QFileDialog::getOpenFileName(this, tr("Select Wallpaper"), QDir::homePath(),
             tr("Images (*.png *.jpg *.jpeg *.bmp *.svg *.webp)"));
         if (!file.isEmpty()) {
             QString uri = "file://" + file;
-            ui->editWallpaper->setText(uri);
-            GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI, uri);
+            QString prev = GnomeSettingsTool::getS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI);
+            if (!GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI, uri)) {
+                ui->editWallpaper->setText(prev);
+                emit settingFailed(tr("Failed to apply Wallpaper"));
+            } else {
+                ui->editWallpaper->setText(uri);
+            }
         }
     });
 
     // Wallpaper dark
     connect(ui->editWallpaperDark, &QLineEdit::editingFinished, this, [this]() {
         if (mLoading) return;
-        GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI_DARK, ui->editWallpaperDark->text());
+        QString prev = GnomeSettingsTool::getS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI_DARK);
+        if (!GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI_DARK, ui->editWallpaperDark->text())) {
+            const QSignalBlocker blocker(ui->editWallpaperDark);
+            ui->editWallpaperDark->setText(prev);
+            emit settingFailed(tr("Failed to apply Dark Wallpaper"));
+        }
     });
     connect(ui->btnBrowseWallpaperDark, &QPushButton::clicked, this, [this]() {
         QString file = QFileDialog::getOpenFileName(this, tr("Select Dark Wallpaper"), QDir::homePath(),
             tr("Images (*.png *.jpg *.jpeg *.bmp *.svg *.webp)"));
         if (!file.isEmpty()) {
             QString uri = "file://" + file;
-            ui->editWallpaperDark->setText(uri);
-            GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI_DARK, uri);
+            QString prev = GnomeSettingsTool::getS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI_DARK);
+            if (!GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_URI_DARK, uri)) {
+                ui->editWallpaperDark->setText(prev);
+                emit settingFailed(tr("Failed to apply Dark Wallpaper"));
+            } else {
+                ui->editWallpaperDark->setText(uri);
+            }
         }
     });
 
     // Picture options
     connect(ui->cmbPictureOptions, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_OPTIONS,
-                                ui->cmbPictureOptions->currentData().toString());
+        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_OPTIONS);
+        if (!GnomeSettingsTool::setS(GnomeSchema::BACKGROUND, GnomeKey::PICTURE_OPTIONS,
+                                     ui->cmbPictureOptions->currentData().toString())) {
+            const QSignalBlocker blocker(ui->cmbPictureOptions);
+            int idx = ui->cmbPictureOptions->findData(prevVal);
+            if (idx >= 0) ui->cmbPictureOptions->setCurrentIndex(idx);
+            emit settingFailed(tr("Failed to apply Picture Options"));
+        }
     });
 
     // Sound checkboxes
     connect(ui->chkEventSounds, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        GnomeSettingsTool::setB(GnomeSchema::SOUND, GnomeKey::EVENT_SOUNDS, checked);
+        if (!GnomeSettingsTool::setB(GnomeSchema::SOUND, GnomeKey::EVENT_SOUNDS, checked)) {
+            const QSignalBlocker blocker(ui->chkEventSounds);
+            ui->chkEventSounds->setChecked(!checked);
+            emit settingFailed(tr("Failed to apply Event Sounds"));
+        }
     });
     connect(ui->chkInputFeedback, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        GnomeSettingsTool::setB(GnomeSchema::SOUND, GnomeKey::INPUT_FEEDBACK, checked);
+        if (!GnomeSettingsTool::setB(GnomeSchema::SOUND, GnomeKey::INPUT_FEEDBACK, checked)) {
+            const QSignalBlocker blocker(ui->chkInputFeedback);
+            ui->chkInputFeedback->setChecked(!checked);
+            emit settingFailed(tr("Failed to apply Input Feedback Sounds"));
+        }
     });
     connect(ui->chkVolumeOver100, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        GnomeSettingsTool::setB(GnomeSchema::SOUND, GnomeKey::VOLUME_OVER_100, checked);
+        if (!GnomeSettingsTool::setB(GnomeSchema::SOUND, GnomeKey::VOLUME_OVER_100, checked)) {
+            const QSignalBlocker blocker(ui->chkVolumeOver100);
+            ui->chkVolumeOver100->setChecked(!checked);
+            emit settingFailed(tr("Failed to apply Volume Over 100%%"));
+        }
     });
 }
 

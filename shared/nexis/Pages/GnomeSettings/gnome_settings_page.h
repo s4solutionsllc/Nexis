@@ -20,6 +20,9 @@ public:
     explicit GnomeSettingsPage(QWidget *parent = nullptr);
     ~GnomeSettingsPage();
 
+public slots:
+    void showError(const QString &message);
+
 private slots:
     void onTabButtonClicked(int index);
 

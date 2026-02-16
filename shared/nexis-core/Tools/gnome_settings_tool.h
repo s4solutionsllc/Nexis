@@ -18,10 +18,10 @@ public:
     static int     getI(const QString &schema, const QString &key);
     static double  getD(const QString &schema, const QString &key);
 
-    static void setS(const QString &schema, const QString &key, const QString &value);
-    static void setB(const QString &schema, const QString &key, bool value);
-    static void setI(const QString &schema, const QString &key, int value);
-    static void setD(const QString &schema, const QString &key, double value);
+    static bool setS(const QString &schema, const QString &key, const QString &value);
+    static bool setB(const QString &schema, const QString &key, bool value);
+    static bool setI(const QString &schema, const QString &key, int value);
+    static bool setD(const QString &schema, const QString &key, double value);
 
 private:
     static QSet<QString> cachedSchemas();

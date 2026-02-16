@@ -15,6 +15,9 @@ public:
     explicit GnomeMouseTab(QWidget *parent = nullptr);
     ~GnomeMouseTab();
 
+signals:
+    void settingFailed(const QString &message);
+
 private:
     void loadSettings();
 

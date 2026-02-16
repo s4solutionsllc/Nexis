@@ -58,26 +58,27 @@ double GnomeSettingsTool::getD(const QString &schema, const QString &key)
     return getS(schema, key).toDouble();
 }
 
-void GnomeSettingsTool::setS(const QString &schema, const QString &key, const QString &value)
+bool GnomeSettingsTool::setS(const QString &schema, const QString &key, const QString &value)
 {
-    try {
-        CommandUtil::exec("gsettings", {"set", schema, key, value});
-    } catch (const QString &ex) {
-        qCritical() << "GnomeSettingsTool::setS failed:" << schema << key << value << ex;
+    ExecResult result = CommandUtil::execWithStatus("gsettings", {"set", schema, key, value});
+    if (result.exitCode != 0) {
+        qCritical() << "GnomeSettingsTool::setS failed:" << schema << key << value << result.error;
+        return false;
     }
+    return true;
 }
 
-void GnomeSettingsTool::setB(const QString &schema, const QString &key, bool value)
+bool GnomeSettingsTool::setB(const QString &schema, const QString &key, bool value)
 {
-    setS(schema, key, value ? "true" : "false");
+    return setS(schema, key, value ? "true" : "false");
 }
 
-void GnomeSettingsTool::setI(const QString &schema, const QString &key, int value)
+bool GnomeSettingsTool::setI(const QString &schema, const QString &key, int value)
 {
-    setS(schema, key, QString::number(value));
+    return setS(schema, key, QString::number(value));
 }
 
-void GnomeSettingsTool::setD(const QString &schema, const QString &key, double value)
+bool GnomeSettingsTool::setD(const QString &schema, const QString &key, double value)
 {
-    setS(schema, key, QString::number(value, 'f', 6));
+    return setS(schema, key, QString::number(value, 'f', 6));
 }

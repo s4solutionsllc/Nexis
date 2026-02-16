@@ -15,6 +15,9 @@ public:
     explicit GnomeWmTab(QWidget *parent = nullptr);
     ~GnomeWmTab();
 
+signals:
+    void settingFailed(const QString &message);
+
 private:
     void loadSettings();
 

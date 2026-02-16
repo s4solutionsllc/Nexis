@@ -15,6 +15,9 @@ public:
     explicit GnomeDesktopTab(QWidget *parent = nullptr);
     ~GnomeDesktopTab();
 
+signals:
+    void settingFailed(const QString &message);
+
 private:
     void loadSettings();
 

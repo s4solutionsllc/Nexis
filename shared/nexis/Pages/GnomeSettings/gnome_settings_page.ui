@@ -144,6 +144,16 @@
     </layout>
    </item>
    <item>
+    <widget class="QLabel" name="lblStatus">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="visible">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QStackedWidget" name="stackedWidget"/>
    </item>
   </layout>

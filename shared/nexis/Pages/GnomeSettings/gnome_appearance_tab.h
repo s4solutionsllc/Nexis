@@ -15,6 +15,9 @@ public:
     explicit GnomeAppearanceTab(QWidget *parent = nullptr);
     ~GnomeAppearanceTab();
 
+signals:
+    void settingFailed(const QString &message);
+
 private:
     void loadSettings();
 

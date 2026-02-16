@@ -1103,6 +1103,16 @@ QLabel[accessibleName="dialog-title"] {
     font-weight: bold;
 }
 
+/* Inline error status label */
+#GnomeSettingsPage #lblStatus {
+    color: #d32f2f;
+    background-color: rgba(211, 47, 47, 0.08);
+    border: 1px solid rgba(211, 47, 47, 0.25);
+    border-radius: 6;
+    padding: 6 12;
+    font-size: 9pt;
+}
+
 /*******************************
 SEARCH
 *******************************/
