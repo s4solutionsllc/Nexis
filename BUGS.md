@@ -209,6 +209,12 @@
   - **Fix complexity:** Trivial (add a `QTimer::singleShot` or a member `QTimer` with 200ms interval to debounce slider writes)
   - **Resolved:** Added two member `QTimer*` (mMouseSpeedTimer, mTouchpadSpeedTimer) with 200ms single-shot interval. Slider `valueChanged` now updates the label immediately for responsive UX but only restarts the debounce timer; the actual `gsettings set` call fires on timeout after 200ms of inactivity.
 
+- [ ] **BUG-33: Uninstaller "Purge" checkbox text invisible in dark mode** (LOW)
+  - **Scope:** Uninstaller page
+  - **Description:** The `chkPurge` QCheckBox ("Purge (also remove configuration files)") has no explicit text color in the QSS. The stylesheet defines `QCheckBox::indicator` styling (custom toggle images) but never sets a `color` property on `QCheckBox` itself. In dark mode, Qt falls back to the system palette default, which is typically black or very dark text — invisible against the dark background. The "circle" variant checkboxes (used elsewhere) work because they explicitly set `color: @color06`, but standard checkboxes like `chkPurge` are unstyled. Fix should add a `QCheckBox { color: @color05; }` rule to the QSS so all standard checkboxes use the theme's primary text color.
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`
+  - **Fix complexity:** Trivial (add a single QSS rule for QCheckBox text color)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
