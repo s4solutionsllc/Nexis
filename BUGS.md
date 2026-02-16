@@ -230,6 +230,12 @@
   - **Fix complexity:** Trivial (remove widget from .ui, delete slot from .cpp/.h)
   - **Resolved:** Removed `btnDonate` widget from .ui, deleted `on_btnDonate_clicked` slot from .cpp/.h, removed from drop shadow widget list, cleaned up unused QDesktopServices/QUrl includes.
 
+- [ ] **BUG-36: System Cleaner "Total Size" label text invisible in dark mode** (LOW)
+  - **Scope:** System Cleaner page (scan results view)
+  - **Description:** The `lblTotalBytes` QLabel ("Total size: X.XX MB") has no explicit color styling — no QSS rule for `#lblTotalBytes` and no inline stylesheet. In dark mode, Qt falls back to the default palette text color (typically black/dark), making the text invisible against the dark background. Other labels on the same page (e.g. `#cleanerCategories QLabel` and `#lblRemovedTotalSize`) have explicit color rules in the QSS, but `lblTotalBytes` was missed. Fix should add a `#lblTotalBytes { color: @color05; }` rule to the QSS (or group it with existing label selectors) so it uses the theme's primary text color.
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`, `shared/nexis/Pages/SystemCleaner/system_cleaner_page.ui`
+  - **Fix complexity:** Trivial (add a QSS color rule for `#lblTotalBytes`)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
