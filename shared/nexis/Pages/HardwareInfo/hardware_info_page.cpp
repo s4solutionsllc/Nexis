@@ -77,11 +77,7 @@ void HardwareInfoPage::populateSystem()
 #endif
 
     t->resizeColumnsToContents();
-    t->resizeRowsToContents();
-    int height = 0;
-    for (int i = 0; i < t->rowCount(); ++i)
-        height += t->rowHeight(i);
-    t->setFixedHeight(height + 2);
+    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
 
 void HardwareInfoPage::populateProcessor()
@@ -160,11 +156,7 @@ void HardwareInfoPage::populateProcessor()
 #endif
 
     t->resizeColumnsToContents();
-    t->resizeRowsToContents();
-    int height = 0;
-    for (int i = 0; i < t->rowCount(); ++i)
-        height += t->rowHeight(i);
-    t->setFixedHeight(height + 2);
+    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
 
 void HardwareInfoPage::populateGraphics()
@@ -190,11 +182,7 @@ void HardwareInfoPage::populateGraphics()
     }
 
     t->resizeColumnsToContents();
-    t->resizeRowsToContents();
-    int height = 0;
-    for (int i = 0; i < t->rowCount(); ++i)
-        height += t->rowHeight(i);
-    t->setFixedHeight(height + 2);
+    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
 
 void HardwareInfoPage::populateMemory()
@@ -210,11 +198,7 @@ void HardwareInfoPage::populateMemory()
     addRow(t, tr("Swap Total"), FormatUtil::formatBytes(im->getSwapTotal()));
 
     t->resizeColumnsToContents();
-    t->resizeRowsToContents();
-    int height = 0;
-    for (int i = 0; i < t->rowCount(); ++i)
-        height += t->rowHeight(i);
-    t->setFixedHeight(height + 2);
+    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
 
 void HardwareInfoPage::populateStorage()
@@ -244,11 +228,7 @@ void HardwareInfoPage::populateStorage()
 
     t->horizontalHeader()->setStretchLastSection(true);
     t->resizeColumnsToContents();
-    t->resizeRowsToContents();
-    int height = t->horizontalHeader()->height() + 2;
-    for (int i = 0; i < t->rowCount(); ++i)
-        height += t->rowHeight(i);
-    t->setFixedHeight(height + 2);
+    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
 
 void HardwareInfoPage::populateNetwork()
@@ -288,11 +268,7 @@ void HardwareInfoPage::populateNetwork()
 
     t->horizontalHeader()->setStretchLastSection(true);
     t->resizeColumnsToContents();
-    t->resizeRowsToContents();
-    int height = t->horizontalHeader()->height() + 2;
-    for (int i = 0; i < t->rowCount(); ++i)
-        height += t->rowHeight(i);
-    t->setFixedHeight(height + 2);
+    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
 
 void HardwareInfoPage::populateThermal()
@@ -328,9 +304,5 @@ void HardwareInfoPage::populateThermal()
 
     t->horizontalHeader()->setStretchLastSection(true);
     t->resizeColumnsToContents();
-    t->resizeRowsToContents();
-    int height = t->horizontalHeader()->height() + 2;
-    for (int i = 0; i < t->rowCount(); ++i)
-        height += t->rowHeight(i);
-    t->setFixedHeight(height + 2);
+    t->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
 }
