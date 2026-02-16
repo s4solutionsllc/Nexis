@@ -648,6 +648,11 @@ QLabel[accessibleName="dialog-title"] {
     color: @successColor;
 }
 
+#lblTotalBytes {
+    font-size: 11pt;
+    color: @color05;
+}
+
 /************************
     STARTUP APPS PAGE
 *************************/
