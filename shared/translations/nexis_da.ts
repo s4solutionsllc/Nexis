@@ -1,62 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="ru_RU" sourcelanguage="en">
+<TS version="2.1" language="da_DK" sourcelanguage="en">
   <context>
     <name>APTSourceEdit</name>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="14"/>
       <source>APT Repository Edit</source>
-      <translation>Редактирование репозитория APT</translation>
+      <translation type="unfinished">APT Repository Edit</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="38"/>
       <source>APT Repository</source>
-      <translation>Репозиторий APT</translation>
+      <translation type="unfinished">APT Repository</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="48"/>
       <source>Components</source>
-      <translation>Компоненты</translation>
+      <translation type="unfinished">Components</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="55"/>
       <source>Options</source>
-      <translation>Параметры</translation>
+      <translation type="unfinished">Options</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="71"/>
       <source>Cancel</source>
-      <translation>Отмена</translation>
+      <translation type="unfinished">Cancel</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="87"/>
       <source>Fields cannot be left blank. </source>
-      <translation>Необходимо заполнить поля. </translation>
+      <translation type="unfinished">Fields cannot be left blank. </translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="94"/>
       <source>URI</source>
-      <translation>Адрес</translation>
+      <translation type="unfinished">URI</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="110"/>
       <source>Save</source>
-      <translation>Сохранить</translation>
+      <translation type="unfinished">Save</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="133"/>
       <source>Distribution</source>
-      <translation>Дистрибутив</translation>
+      <translation type="unfinished">Distribution</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="152"/>
       <source>Source</source>
-      <translation>Исходный код</translation>
+      <translation type="unfinished">Source</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_edit.ui" line="177"/>
       <source>Binary</source>
-      <translation>Готовые пакеты</translation>
+      <translation type="unfinished">Binary</translation>
     </message>
   </context>
   <context>
@@ -64,54 +64,54 @@
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="188"/>
       <source>Search...</source>
-      <translation>Поиск...</translation>
+      <translation type="unfinished">Search...</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="226"/>
       <source>Edit</source>
-      <translation>Изменить</translation>
+      <translation type="unfinished">Edit</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="14"/>
       <source>APT Repository Manager</source>
-      <translation>Менеджер репозиториев APT</translation>
+      <translation type="unfinished">APT Repository Manager</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="125"/>
       <source>Not Found APT Repositories</source>
-      <translation>Не найдены репозитории APT</translation>
+      <translation type="unfinished">Not Found APT Repositories</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="269"/>
       <source>Delete</source>
-      <translation>Удалить</translation>
+      <translation type="unfinished">Delete</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="308"/>
       <source>Enable Source</source>
-      <translation>Включить источник</translation>
+      <translation type="unfinished">Enable Source</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="338"/>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="260"/>
       <source>Add Repository</source>
-      <translation>Добавить репозиторий</translation>
+      <translation type="unfinished">Add Repository</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="371"/>
       <source>Cancel</source>
-      <translation>Отмена</translation>
+      <translation type="unfinished">Cancel</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="419"/>
       <source>Select to delete or edit.</source>
-      <translation>Выберите для удаления или редактирования.</translation>
+      <translation type="unfinished">Select to delete or edit.</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="36"/>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="82"/>
       <source>example %1</source>
-      <translation>пример %1</translation>
+      <translation type="unfinished">example %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="51"/>
@@ -132,7 +132,7 @@
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="128"/>
       <source>APT Repositories (%1)</source>
-      <translation>Репозиториев APT (%1)</translation>
+      <translation type="unfinished">APT Repositories (%1)</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="224"/>
@@ -147,7 +147,7 @@
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="233"/>
       <source>Save</source>
-      <translation>Сохранить</translation>
+      <translation type="unfinished">Save</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="258"/>
@@ -188,7 +188,7 @@
     <message>
       <location filename="../nexis/Pages/AptSourceManager/apt_source_repository_item.cpp" line="48"/>
       <source>%1 (Source Code)</source>
-      <translation>%1 (Исходный код)</translation>
+      <translation type="unfinished">%1 (Source Code)</translation>
     </message>
   </context>
   <context>
@@ -197,19 +197,19 @@
       <location filename="../nexis/app.ui" line="101"/>
       <location filename="../nexis/app.cpp" line="84"/>
       <source>Dashboard</source>
-      <translation>Обзор</translation>
+      <translation type="unfinished">Dashboard</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="135"/>
       <location filename="../nexis/app.cpp" line="85"/>
       <source>Startup Apps</source>
-      <translation>Автозапуск приложений</translation>
+      <translation type="unfinished">Startup Apps</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="163"/>
       <location filename="../nexis/app.cpp" line="86"/>
       <source>System Cleaner</source>
-      <translation>Очистка системы</translation>
+      <translation type="unfinished">System Cleaner</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="194"/>
@@ -221,13 +221,13 @@
       <location filename="../nexis/app.ui" line="278"/>
       <location filename="../nexis/app.cpp" line="95"/>
       <source>Uninstaller</source>
-      <translation>Удаление пакетов</translation>
+      <translation type="unfinished">Uninstaller</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="306"/>
       <location filename="../nexis/app.cpp" line="97"/>
       <source>Resources</source>
-      <translation>Ресурсы</translation>
+      <translation type="unfinished">Resources</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="334"/>
@@ -239,7 +239,7 @@
       <location filename="../nexis/app.ui" line="362"/>
       <location filename="../nexis/app.cpp" line="101"/>
       <source>APT Repository Manager</source>
-      <translation>Менеджер репозиториев APT</translation>
+      <translation type="unfinished">APT Repository Manager</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="390"/>
@@ -251,25 +251,25 @@
       <location filename="../nexis/app.ui" line="250"/>
       <location filename="../nexis/app.cpp" line="89"/>
       <source>Processes</source>
-      <translation>Процессы</translation>
+      <translation type="unfinished">Processes</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="222"/>
       <location filename="../nexis/app.cpp" line="88"/>
       <source>Services</source>
-      <translation>Службы</translation>
+      <translation type="unfinished">Services</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="418"/>
       <location filename="../nexis/app.cpp" line="104"/>
       <source>Settings</source>
-      <translation>Настройки</translation>
+      <translation type="unfinished">Settings</translation>
     </message>
     <message>
       <location filename="../nexis/app.ui" line="459"/>
       <location filename="../nexis/app.cpp" line="105"/>
       <source>Feedback</source>
-      <translation>Обратная связь</translation>
+      <translation type="unfinished">Feedback</translation>
     </message>
     <message>
       <location filename="../nexis/app.cpp" line="92"/>
@@ -285,7 +285,7 @@
     <message>
       <location filename="../nexis/app.cpp" line="171"/>
       <source>Quit</source>
-      <translation>Выход</translation>
+      <translation type="unfinished">Quit</translation>
     </message>
   </context>
   <context>
@@ -293,12 +293,12 @@
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="20"/>
       <source>Dashboard</source>
-      <translation>Обзор</translation>
+      <translation type="unfinished">Dashboard</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="125"/>
       <source>SYSTEM INFO</source>
-      <translation>СИСТЕМНАЯ ИНФОРМАЦИЯ</translation>
+      <translation type="unfinished">SYSTEM INFO</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="310"/>
@@ -308,22 +308,22 @@
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.ui" line="326"/>
       <source>Download</source>
-      <translation>Скачать</translation>
+      <translation type="unfinished">Download</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="20"/>
       <source>CPU</source>
-      <translation>ЦП</translation>
+      <translation type="unfinished">CPU</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="21"/>
       <source>MEMORY</source>
-      <translation>ПАМЯТЬ</translation>
+      <translation type="unfinished">MEMORY</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="22"/>
       <source>DISK</source>
-      <translation>ДИСК</translation>
+      <translation type="unfinished">DISK</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="23"/>
@@ -333,12 +333,12 @@
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="24"/>
       <source>DOWNLOAD</source>
-      <translation>ПОЛУЧЕНИЕ</translation>
+      <translation type="unfinished">DOWNLOAD</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="25"/>
       <source>UPLOAD</source>
-      <translation>ОТПРАВКА</translation>
+      <translation type="unfinished">UPLOAD</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="30"/>
@@ -348,73 +348,73 @@
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="165"/>
       <source>Hostname: %1</source>
-      <translation>Имя компьютера: %1</translation>
+      <translation type="unfinished">Hostname: %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="166"/>
       <source>Platform: %1</source>
-      <translation>Платформа: %1</translation>
+      <translation type="unfinished">Platform: %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="167"/>
       <source>Distribution: %1</source>
-      <translation>Дистрибутив: %1</translation>
+      <translation type="unfinished">Distribution: %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="168"/>
       <source>Kernel Release: %1</source>
-      <translation>Версия ядра: %1</translation>
+      <translation type="unfinished">Kernel Release: %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="169"/>
       <source>CPU Model: %1</source>
-      <translation>Модель ЦП: %1</translation>
+      <translation type="unfinished">CPU Model: %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="170"/>
       <source>CPU Core: %1</source>
-      <translation>Ядра ЦП: %1</translation>
+      <translation type="unfinished">CPU Core: %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="171"/>
       <source>CPU Speed: %1</source>
-      <translation>Частота ЦП: %1</translation>
+      <translation type="unfinished">CPU Speed: %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="189"/>
       <source>High CPU Usage</source>
-      <translation>Высокая загрузка процессора</translation>
+      <translation type="unfinished">High CPU Usage</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="190"/>
       <source>The amount of CPU used is over %1%.</source>
-      <translation>Использование процессора превышает %1%.</translation>
+      <translation type="unfinished">The amount of CPU used is over %1%.</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="224"/>
       <source>High Memory Usage</source>
-      <translation>Высокое потребление памяти</translation>
+      <translation type="unfinished">High Memory Usage</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="225"/>
       <source>The amount of memory used is over %1%.</source>
-      <translation>Использование памяти превышает %1%.</translation>
+      <translation type="unfinished">The amount of memory used is over %1%.</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="269"/>
       <source>High Disk Usage</source>
-      <translation>Высокая загрузка диска</translation>
+      <translation type="unfinished">High Disk Usage</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="270"/>
       <source>The amount of disk used is over %1%.</source>
-      <translation>Использование диска превышает %1%.</translation>
+      <translation type="unfinished">The amount of disk used is over %1%.</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="308"/>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="312"/>
       <source>Total: %1</source>
-      <translation>Всего: %1</translation>
+      <translation type="unfinished">Total: %1</translation>
     </message>
   </context>
   <context>
@@ -676,7 +676,7 @@
     <message>
       <location filename="../nexis/feedback.ui" line="14"/>
       <source>Feedback</source>
-      <translation>Отправить отзыв</translation>
+      <translation type="unfinished">Feedback</translation>
     </message>
     <message>
       <location filename="../nexis/feedback.ui" line="41"/>
@@ -1044,7 +1044,7 @@
     <message>
       <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="68"/>
       <source>Window Manager</source>
-      <translation>Оконный менеджер</translation>
+      <translation type="unfinished">Window Manager</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="90"/>
@@ -1059,7 +1059,7 @@
     <message>
       <location filename="../nexis/Pages/GnomeSettings/gnome_settings_page.ui" line="43"/>
       <source>Appearance</source>
-      <translation>Внешний вид</translation>
+      <translation type="unfinished">Appearance</translation>
     </message>
   </context>
   <context>
@@ -1265,87 +1265,87 @@
       <location filename="../nexis/Pages/Processes/processes_page.ui" line="14"/>
       <location filename="../nexis/Pages/Processes/processes_page.ui" line="55"/>
       <source>Processes</source>
-      <translation>Процессы</translation>
+      <translation type="unfinished">Processes</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.ui" line="71"/>
       <source>All Processes</source>
-      <translation>Все процессы</translation>
+      <translation type="unfinished">All Processes</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.ui" line="96"/>
       <source>Search...</source>
-      <translation>Поиск...</translation>
+      <translation type="unfinished">Search...</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.ui" line="217"/>
       <source>End Process</source>
-      <translation>Завершить процесс</translation>
+      <translation type="unfinished">End Process</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="29"/>
       <source>User</source>
-      <translation>Пользователь</translation>
+      <translation type="unfinished">User</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
       <source>Resident Memory</source>
-      <translation>Резидентная память</translation>
+      <translation type="unfinished">Resident Memory</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
       <source>%Memory</source>
-      <translation>%Память</translation>
+      <translation type="unfinished">%Memory</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
       <source>Virtual Memory</source>
-      <translation>Виртуальная память</translation>
+      <translation type="unfinished">Virtual Memory</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="29"/>
       <source>Start Time</source>
-      <translation>Запущен</translation>
+      <translation type="unfinished">Start Time</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="29"/>
       <source>State</source>
-      <translation>Состояние</translation>
+      <translation type="unfinished">State</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="29"/>
       <source>Group</source>
-      <translation>Группа</translation>
+      <translation type="unfinished">Group</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="30"/>
       <source>Nice</source>
-      <translation>Приоритет</translation>
+      <translation type="unfinished">Nice</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="30"/>
       <source>CPU Time</source>
-      <translation>Время ЦП</translation>
+      <translation type="unfinished">CPU Time</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="30"/>
       <source>Session</source>
-      <translation>Сессия</translation>
+      <translation type="unfinished">Session</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="30"/>
       <source>Process</source>
-      <translation>Процесс</translation>
+      <translation type="unfinished">Process</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="120"/>
       <source>Processes (%1)</source>
-      <translation>Процессы (%1)</translation>
+      <translation type="unfinished">Processes (%1)</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Processes/processes_page.cpp" line="212"/>
       <source>Refresh (%1)</source>
-      <translation>Обновление (%1)</translation>
+      <translation type="unfinished">Refresh (%1)</translation>
     </message>
   </context>
   <context>
@@ -1353,7 +1353,7 @@
     <message>
       <location filename="../nexis/Managers/setting_manager.cpp" line="61"/>
       <source>Dashboard</source>
-      <translation>Обзор</translation>
+      <translation type="unfinished">Dashboard</translation>
     </message>
     <message>
       <location filename="../nexis/main.cpp" line="77"/>
@@ -1372,27 +1372,27 @@
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="14"/>
       <source>History of CPU</source>
-      <translation>Использование процессора</translation>
+      <translation type="unfinished">History of CPU</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="15"/>
       <source>History of CPU Load Averages</source>
-      <translation>Средняя загрузка процессора</translation>
+      <translation type="unfinished">History of CPU Load Averages</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="16"/>
       <source>History of Disk Read Write</source>
-      <translation>Диск</translation>
+      <translation type="unfinished">History of Disk Read Write</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="17"/>
       <source>History of Memory</source>
-      <translation>Память и раздел подкачки</translation>
+      <translation type="unfinished">History of Memory</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="18"/>
       <source>History of Network</source>
-      <translation>Загрузка сети</translation>
+      <translation type="unfinished">History of Network</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="36"/>
@@ -1402,42 +1402,42 @@
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="96"/>
       <source>Read: %1/s Total: %2</source>
-      <translation>Чтение: %1/c Всего: %2</translation>
+      <translation type="unfinished">Read: %1/s Total: %2</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="102"/>
       <source>Write: %1/s Total: %2</source>
-      <translation>Запись: %1/c Всего: %2</translation>
+      <translation type="unfinished">Write: %1/s Total: %2</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="139"/>
       <source>%1 Minute Average: %2</source>
-      <translation>Среднее за %1 минут: %2</translation>
+      <translation type="unfinished">%1 Minute Average: %2</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="185"/>
       <source>Download: %1/s Total: %2</source>
-      <translation>Получение: %1/c Всего: %2</translation>
+      <translation type="unfinished">Download: %1/s Total: %2</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="190"/>
       <source>Upload: %1/s  Total: %2</source>
-      <translation>Отправка: %1/c Всего: %2</translation>
+      <translation type="unfinished">Upload: %1/s  Total: %2</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="234"/>
       <source>Swap: %1 (%2%) %3</source>
-      <translation>Файл подкачки: %1 (%2%) %3</translation>
+      <translation type="unfinished">Swap: %1 (%2%) %3</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="243"/>
       <source>Memory: %1 (%2%) %3</source>
-      <translation>Память: %1 (%2%) %3</translation>
+      <translation type="unfinished">Memory: %1 (%2%) %3</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.ui" line="14"/>
       <source>Resources</source>
-      <translation>Ресурсы</translation>
+      <translation type="unfinished">Resources</translation>
     </message>
   </context>
   <context>
@@ -1707,57 +1707,57 @@
     <message>
       <location filename="../nexis/Pages/Services/services_page.ui" line="14"/>
       <source>Services</source>
-      <translation>Службы</translation>
+      <translation type="unfinished">Services</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.ui" line="137"/>
       <source>Startup at boot ?</source>
-      <translation>Запускать при загрузке?</translation>
+      <translation type="unfinished">Startup at boot ?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.ui" line="190"/>
       <source>Running Now ?</source>
-      <translation>Запущена сейчас?</translation>
+      <translation type="unfinished">Running Now ?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.ui" line="244"/>
       <source>Not Found System Service</source>
-      <translation>Системные службы не найдены</translation>
+      <translation type="unfinished">Not Found System Service</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.cpp" line="27"/>
       <source>Running Status</source>
-      <translation>Статус</translation>
+      <translation type="unfinished">Running Status</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.cpp" line="27"/>
       <source>Running</source>
-      <translation>Запущена</translation>
+      <translation type="unfinished">Running</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.cpp" line="27"/>
       <source>Not Running</source>
-      <translation>Не запущена</translation>
+      <translation type="unfinished">Not Running</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.cpp" line="28"/>
       <source>Startup Status</source>
-      <translation>Автозапуск</translation>
+      <translation type="unfinished">Startup Status</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.cpp" line="28"/>
       <source>Enabled</source>
-      <translation>Включено</translation>
+      <translation type="unfinished">Enabled</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.cpp" line="28"/>
       <source>Disabled</source>
-      <translation>Отключено</translation>
+      <translation type="unfinished">Disabled</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Services/services_page.cpp" line="75"/>
       <source>System Services (%1)</source>
-      <translation>Системные службы (%1)</translation>
+      <translation type="unfinished">System Services (%1)</translation>
     </message>
   </context>
   <context>
@@ -1765,17 +1765,17 @@
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="20"/>
       <source>Settings</source>
-      <translation>Настройки</translation>
+      <translation type="unfinished">Settings</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="97"/>
       <source>Memory Percent</source>
-      <translation>Загрузка памяти</translation>
+      <translation type="unfinished">Memory Percent</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="129"/>
       <source>Disk Percent</source>
-      <translation>Загрузка диска</translation>
+      <translation type="unfinished">Disk Percent</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="290"/>
@@ -1805,52 +1805,52 @@
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="509"/>
       <source>Disks</source>
-      <translation>Диски</translation>
+      <translation type="unfinished">Disks</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="158"/>
       <source>Language</source>
-      <translation>Язык</translation>
+      <translation type="unfinished">Language</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="171"/>
       <source>Autostart Nexis</source>
-      <translation>Автозапуск Nexis</translation>
+      <translation type="unfinished">Autostart Nexis</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="229"/>
       <source>Alert messages (Show a warning after the specified percentage)</source>
-      <translation>Показывать предупреждение после указанного процента</translation>
+      <translation type="unfinished">Alert messages (Show a warning after the specified percentage)</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="522"/>
       <source>Start Page</source>
-      <translation>Стартовый экран</translation>
+      <translation type="unfinished">Start Page</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="213"/>
       <source>CPU Percent</source>
-      <translation>Загрузка ЦП</translation>
+      <translation type="unfinished">CPU Percent</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.ui" line="267"/>
       <source>Donate</source>
-      <translation>Пожертвовать</translation>
+      <translation type="unfinished">Donate</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="99"/>
       <source>Dashboard</source>
-      <translation>Обзор</translation>
+      <translation type="unfinished">Dashboard</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="99"/>
       <source>Startup Apps</source>
-      <translation>Запускаемые приложения</translation>
+      <translation type="unfinished">Startup Apps</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="99"/>
       <source>System Cleaner</source>
-      <translation>Очистка системы</translation>
+      <translation type="unfinished">System Cleaner</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="99"/>
@@ -1860,22 +1860,22 @@
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
       <source>Services</source>
-      <translation>Службы</translation>
+      <translation type="unfinished">Services</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
       <source>Processes</source>
-      <translation>Процессы</translation>
+      <translation type="unfinished">Processes</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
       <source>Uninstaller</source>
-      <translation>Удаление пакетов</translation>
+      <translation type="unfinished">Uninstaller</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
       <source>Resources</source>
-      <translation>Ресурсы</translation>
+      <translation type="unfinished">Resources</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Settings/settings_page.cpp" line="100"/>
@@ -1948,12 +1948,12 @@
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app.ui" line="128"/>
       <source>Edit App</source>
-      <translation>Редактировать</translation>
+      <translation type="unfinished">Edit App</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app.ui" line="150"/>
       <source>Delete App</source>
-      <translation>Удалить</translation>
+      <translation type="unfinished">Delete App</translation>
     </message>
   </context>
   <context>
@@ -1961,7 +1961,7 @@
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="20"/>
       <source>Startup App</source>
-      <translation>Запуск приложения</translation>
+      <translation type="unfinished">Startup App</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="78"/>
@@ -1976,32 +1976,32 @@
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="117"/>
       <source>Save</source>
-      <translation>Сохранить</translation>
+      <translation type="unfinished">Save</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="101"/>
       <source>Fields cannot be left blank. </source>
-      <translation>Необходимо заполнить поля. </translation>
+      <translation type="unfinished">Fields cannot be left blank. </translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="64"/>
       <source>App Comment</source>
-      <translation>Описание</translation>
+      <translation type="unfinished">App Comment</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="57"/>
       <source>App Name</source>
-      <translation>Имя</translation>
+      <translation type="unfinished">App Name</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="71"/>
       <source>Command</source>
-      <translation>Команда</translation>
+      <translation type="unfinished">Command</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_app_edit.ui" line="47"/>
       <source>Application</source>
-      <translation>Приложение</translation>
+      <translation type="unfinished">Application</translation>
     </message>
   </context>
   <context>
@@ -2009,17 +2009,17 @@
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_apps_page.ui" line="201"/>
       <source>Not Found Startup Apps</source>
-      <translation>Автоматически запускаемые приложения не найдены</translation>
+      <translation type="unfinished">Not Found Startup Apps</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_apps_page.ui" line="14"/>
       <source>Startup Apps</source>
-      <translation>Автозапуск приложений</translation>
+      <translation type="unfinished">Startup Apps</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_apps_page.ui" line="101"/>
       <source>Add Startup App</source>
-      <translation>Добавить</translation>
+      <translation type="unfinished">Add Startup App</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="67"/>
@@ -2029,7 +2029,7 @@
     <message>
       <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="195"/>
       <source>Startup Applications (%1)</source>
-      <translation>Автоматически запускаемые приложения (%1)</translation>
+      <translation type="unfinished">Startup Applications (%1)</translation>
     </message>
   </context>
   <context>
@@ -2037,22 +2037,22 @@
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="14"/>
       <source>System Cleaner</source>
-      <translation>Очистка системы</translation>
+      <translation type="unfinished">System Cleaner</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="66"/>
       <source>Crash Reports</source>
-      <translation>Отчёты об ошибках</translation>
+      <translation type="unfinished">Crash Reports</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="174"/>
       <source>Application Logs</source>
-      <translation>Журналы приложений</translation>
+      <translation type="unfinished">Application Logs</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="209"/>
       <source>Application Caches</source>
-      <translation>Кэш приложений</translation>
+      <translation type="unfinished">Application Caches</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="303"/>
@@ -2062,12 +2062,12 @@
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="348"/>
       <source>Trash</source>
-      <translation>Корзина</translation>
+      <translation type="unfinished">Trash</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="383"/>
       <source>Package Caches</source>
-      <translation>Загруженные пакеты</translation>
+      <translation type="unfinished">Package Caches</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="440"/>
@@ -2089,7 +2089,7 @@
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="678"/>
       <source> Back</source>
-      <translation> Назад</translation>
+      <translation type="unfinished"> Back</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="786"/>
@@ -2119,12 +2119,12 @@
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="73"/>
       <source>File Name</source>
-      <translation>Имя файла</translation>
+      <translation type="unfinished">File Name</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="73"/>
       <source>Size</source>
-      <translation>Размер</translation>
+      <translation type="unfinished">Size</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="243"/>
@@ -2134,7 +2134,7 @@
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="356"/>
       <source>%1 size files cleaned.</source>
-      <translation>Освобождено %1.</translation>
+      <translation type="unfinished">%1 size files cleaned.</translation>
     </message>
   </context>
   <context>
@@ -2142,7 +2142,7 @@
     <message>
       <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="14"/>
       <source>Uninstaller</source>
-      <translation>Удаление пакетов</translation>
+      <translation type="unfinished">Uninstaller</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="78"/>
@@ -2174,18 +2174,18 @@
     <message>
       <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="451"/>
       <source>Search...</source>
-      <translation>Поиск...</translation>
+      <translation type="unfinished">Search...</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="108"/>
       <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="230"/>
       <source>Not Found Installed Packages</source>
-      <translation>Установленные пакеты не найдены</translation>
+      <translation type="unfinished">Not Found Installed Packages</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Uninstaller/uninstallerpage.ui" line="349"/>
       <source>Uninstall Selected</source>
-      <translation>Удалить выбранные</translation>
+      <translation type="unfinished">Uninstall Selected</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Uninstaller/uninstaller_page.cpp" line="178"/>
