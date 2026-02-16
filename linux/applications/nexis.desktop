@@ -6,3 +6,4 @@ Icon=nexis
 Type=Application
 Terminal=false
 Categories=Utility;
+StartupWMClass=nexis
