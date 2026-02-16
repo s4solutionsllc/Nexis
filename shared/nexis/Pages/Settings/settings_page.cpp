@@ -3,9 +3,7 @@
 #include "Managers/info_manager.h"
 #include "utilities.h"
 #include <QApplication>
-#include <QDesktopServices>
 #include <QRegularExpression>
-#include <QUrl>
 #include <QLineEdit>
 
 SettingsPage::~SettingsPage()
@@ -119,7 +117,7 @@ void SettingsPage::init()
 
     // effects
     QList<QWidget*> widgets = {
-        ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme, ui->btnDonate,
+        ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme,
         ui->spinCpuPercent, ui->spinMemoryPercent, ui->spinDiskPercent, ui->cmbDiskAnalyzer
     };
 
@@ -182,11 +180,6 @@ void SettingsPage::on_checkAutostart_clicked(bool checked)
     } else {
         QFile::remove(mStartupAppPath);
     }
-}
-
-void SettingsPage::on_btnDonate_clicked()
-{
-    QDesktopServices::openUrl(QUrl("https://github.com/lsimpsonsfdc"));
 }
 
 void SettingsPage::cmbStartPageChanged(const QString text)

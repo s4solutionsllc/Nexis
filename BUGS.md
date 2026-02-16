@@ -222,11 +222,12 @@
   - **Fix complexity:** Trivial (replace `#007af4` with `#E95420` in both the .cpp and .ui HTML strings)
   - **Resolved:** Replaced `#007af4` with `#E95420` (Nexis accent orange) in both the `.cpp` constructor setText call and the `.ui` default label text.
 
-- [ ] **BUG-35: Remove "Donate" button from Settings page until donation method is established** (LOW)
+- [x] **BUG-35: Remove "Donate" button from Settings page until donation method is established** (LOW)
   - **Scope:** Settings page
   - **Description:** The Settings page has a `btnDonate` QPushButton whose click handler (`on_btnDonate_clicked`) simply opens the GitHub profile URL. There is no actual donation mechanism in place. The button should be removed from both the `.ui` layout and the `.cpp` slot until a real donation method is identified. Remove the widget from the UI file and delete the `on_btnDonate_clicked` slot implementation.
   - **Files:** `shared/nexis/Pages/Settings/settings_page.ui`, `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/Pages/Settings/settings_page.h`
   - **Fix complexity:** Trivial (remove widget from .ui, delete slot from .cpp/.h)
+  - **Resolved:** Removed `btnDonate` widget from .ui, deleted `on_btnDonate_clicked` slot from .cpp/.h, removed from drop shadow widget list, cleaned up unused QDesktopServices/QUrl includes.
 
 ## Notes
 
