@@ -237,11 +237,12 @@
   - **Fix complexity:** Trivial (add a QSS color rule for `#lblTotalBytes`)
   - **Resolved:** Added `#lblTotalBytes { font-size: 11pt; color: @color05; }` rule to style.qss, matching the style of neighbouring System Cleaner labels.
 
-- [ ] **BUG-37: System Cleaner scanLoading.gif animation not playing and delayed initialisation** (MEDIUM)
+- [x] **BUG-37: System Cleaner scanLoading.gif animation not playing and delayed initialisation** (MEDIUM)
   - **Scope:** System Cleaner page
   - **Description:** The `scanLoading.gif` loading spinner shown after clicking the Scan button has two issues: (1) **Animation doesn't play** — the `QMovie` is created and `start()`-ed inside the `sigChangedAppTheme` lambda (line 79), but on every theme change a **new** `QMovie` is allocated without deleting the previous one (memory leak), and the movie may have finished or stopped by the time the user clicks Scan. (2) **Delayed initialisation** — `mLoadingMovie` is `nullptr` until the first `sigChangedAppTheme` signal fires during `App::init()`. If the signal hasn't fired yet, showing the label displays nothing. The same issues apply to `mLoadingMovie_2` / `lblLoadingCleaner`. Fix should: pre-initialise both `QMovie` objects in the constructor with the default theme; on theme change, update the movie filename and restart instead of allocating new objects; ensure `start()` is called just before `show()` in `on_btnScan_clicked()` and `on_btnClean_clicked()` to guarantee the animation is actively running when the label becomes visible.
   - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp`, `shared/nexis/Pages/SystemCleaner/system_cleaner_page.h`
   - **Fix complexity:** Moderate (restructure QMovie lifecycle, add start() calls at show-time)
+  - **Resolved:** Pre-initialised both QMovie objects in the constructor; theme-change lambda now reuses them via `setFileName()` (fixing the memory leak); added `start()` before `show()` in both `on_btnScan_clicked()` and `on_btnClean_clicked()`; added `stop()` in `onScanFinished()`, `onCleanFinished()`, and `on_btnBackToCategories_clicked()`.
 
 ## Notes
 

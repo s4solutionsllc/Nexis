@@ -23,6 +23,15 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QString themeName = AppManager::ins()->resolveThemeName();
+    mLoadingMovie = new QMovie(
+        QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName), {}, this);
+    ui->lblLoadingScanner->setMovie(mLoadingMovie);
+
+    mLoadingMovie_2 = new QMovie(
+        QString(":/static/themes/%1/img/loading.gif").arg(themeName), {}, this);
+    ui->lblLoadingCleaner->setMovie(mLoadingMovie_2);
+
     init();
 
     ui->stackedWidget->setCurrentIndex(0);
@@ -72,19 +81,17 @@ void SystemCleanerPage::init()
     ui->treeWidgetScanResult->header()->setFixedHeight(30);
     ui->treeWidgetScanResult->setHeaderLabels({ tr("File Name"), tr("Size") });
 
-    // loaders
+    // loaders — update GIF source on theme change (reuse existing QMovie objects)
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, [=] {
         QString themeName = AppManager::ins()->resolveThemeName();
 
-        mLoadingMovie = new QMovie(QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName),{},this);
-        ui->lblLoadingScanner->setMovie(mLoadingMovie);
-        mLoadingMovie->start();
-        ui->lblLoadingScanner->hide();
+        mLoadingMovie->stop();
+        mLoadingMovie->setFileName(
+            QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName));
 
-        mLoadingMovie_2 = new QMovie(QString(":/static/themes/%1/img/loading.gif").arg(themeName),{},this);
-        ui->lblLoadingCleaner->setMovie(mLoadingMovie_2);
-        mLoadingMovie_2->start();
-        ui->lblLoadingCleaner->hide();
+        mLoadingMovie_2->stop();
+        mLoadingMovie_2->setFileName(
+            QString(":/static/themes/%1/img/loading.gif").arg(themeName));
     });
 
     // needed to suppress qt warnings (signal/slot <> threads)
@@ -246,6 +253,7 @@ void SystemCleanerPage::onScanFinished()
     on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
 
     // scan results page
+    mLoadingMovie->stop();
     ui->stackedWidget->setCurrentIndex(1);
 
     ui->checkPackageCache->setChecked(false);
@@ -357,6 +365,7 @@ void SystemCleanerPage::onCleanFinished()
                                      .arg(FormatUtil::formatBytes(mTotalCleanedSize)));
 
     ui->btnClean->show();
+    mLoadingMovie_2->stop();
     ui->lblLoadingCleaner->hide();
     ui->treeWidgetScanResult->setEnabled(true);
 }
@@ -385,6 +394,7 @@ void SystemCleanerPage::on_btnScan_clicked()
 
     // Pre-scan UI updates (main thread)
     ui->btnScan->hide();
+    mLoadingMovie->start();
     ui->lblLoadingScanner->show();
     ui->checkPackageCache->setEnabled(false);
     ui->checkCrashReports->setEnabled(false);
@@ -413,6 +423,7 @@ void SystemCleanerPage::on_btnClean_clicked()
 
     // Pre-clean UI updates (main thread)
     ui->btnClean->hide();
+    mLoadingMovie_2->start();
     ui->lblLoadingCleaner->show();
     ui->treeWidgetScanResult->setEnabled(false);
 
@@ -454,6 +465,7 @@ void SystemCleanerPage::on_btnBackToCategories_clicked()
 {
     ui->btnScan->show();
     ui->lblRemovedTotalSize->clear();
+    mLoadingMovie->stop();
     ui->lblLoadingScanner->hide();
     ui->checkPackageCache->setEnabled(true);
     ui->checkCrashReports->setEnabled(true);
