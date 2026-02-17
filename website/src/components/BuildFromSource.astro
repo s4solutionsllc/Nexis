@@ -1,0 +1,95 @@
+---
+const tabs = [
+  {
+    id: 'ubuntu',
+    label: 'Ubuntu / Debian',
+    code: `sudo apt install qt6-base-dev qt6-charts-dev qt6-svg-dev qt6-tools-dev-tools \\
+  libqt6concurrent6 adwaita-icon-theme cmake g++
+
+mkdir -p build && cd build
+cmake ..
+make -j$(nproc)`,
+  },
+  {
+    id: 'fedora',
+    label: 'Fedora',
+    code: `sudo dnf install qt6-qtbase-devel qt6-qtcharts-devel qt6-qtsvg-devel \\
+  qt6-linguist adwaita-icon-theme cmake gcc-c++
+
+mkdir -p build && cd build
+cmake ..
+make -j$(nproc)`,
+  },
+  {
+    id: 'arch',
+    label: 'Arch',
+    code: `sudo pacman -S qt6-base qt6-charts qt6-svg qt6-tools adwaita-icon-theme cmake
+
+mkdir -p build && cd build
+cmake ..
+make -j$(nproc)`,
+  },
+  {
+    id: 'macos',
+    label: 'macOS',
+    code: `brew install qt@6 cmake adwaita-icon-theme
+export PATH="$(brew --prefix qt@6)/bin:$PATH"
+
+mkdir -p build && cd build
+cmake ..
+make -j$(sysctl -n hw.ncpu)`,
+  },
+];
+---
+
+<section id="build" class="bg-nexis-dark-card/50 py-20 md:py-28">
+  <div class="mx-auto max-w-3xl px-6">
+    <h2 class="text-center text-3xl font-bold text-white md:text-4xl">Build from Source</h2>
+    <p class="mx-auto mt-4 max-w-2xl text-center text-nexis-muted">
+      Clone the repo and build with CMake on any supported platform.
+    </p>
+
+    <div class="mt-10">
+      <!-- Tab buttons -->
+      <div class="flex flex-wrap gap-1 rounded-t-lg border border-b-0 border-nexis-border bg-nexis-dark p-1">
+        {tabs.map((tab, i) => (
+          <button
+            data-tab={tab.id}
+            class:list={[
+              'build-tab rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+              i === 0 ? 'bg-nexis-dark-surface text-nexis-orange' : 'text-nexis-muted hover:text-nexis-light',
+            ]}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <!-- Tab content -->
+      {tabs.map((tab, i) => (
+        <div
+          data-tab-content={tab.id}
+          class:list={['build-content rounded-b-lg border border-nexis-border bg-nexis-dark p-4', i !== 0 && 'hidden']}
+        >
+          <pre class="overflow-x-auto text-sm leading-relaxed text-nexis-light"><code>{tab.code}</code></pre>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.build-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-tab');
+      document.querySelectorAll('.build-tab').forEach(b => {
+        b.classList.remove('bg-nexis-dark-surface', 'text-nexis-orange');
+        b.classList.add('text-nexis-muted');
+      });
+      btn.classList.add('bg-nexis-dark-surface', 'text-nexis-orange');
+      btn.classList.remove('text-nexis-muted');
+      document.querySelectorAll('.build-content').forEach(c => c.classList.add('hidden'));
+      document.querySelector(`[data-tab-content="${id}"]`)?.classList.remove('hidden');
+    });
+  });
+</script>

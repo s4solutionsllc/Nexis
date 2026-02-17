@@ -1,0 +1,35 @@
+---
+const screenshots = [
+  { src: '/Nexis/images/screenshots/dashboard.png', alt: 'Dashboard with real-time system monitoring', caption: 'Dashboard' },
+  { src: '/Nexis/images/screenshots/hardware-info.png', alt: 'Hardware information page showing system specs', caption: 'Hardware Info' },
+  { src: '/Nexis/images/screenshots/system-cleaner.png', alt: 'System cleaner scanning for removable files', caption: 'System Cleaner' },
+  { src: '/Nexis/images/screenshots/resource-monitor.png', alt: 'Resource monitor with historical CPU, memory, GPU, and network charts', caption: 'Resource Monitor' },
+  { src: '/Nexis/images/screenshots/services.png', alt: 'Service manager showing system services', caption: 'Services' },
+  { src: '/Nexis/images/screenshots/uninstaller.png', alt: 'Package uninstaller with grouped package list', caption: 'Uninstaller' },
+];
+---
+
+<section id="screenshots" class="bg-nexis-dark-card/50 py-20 md:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <h2 class="text-center text-3xl font-bold text-white md:text-4xl">See it in action</h2>
+    <p class="mx-auto mt-4 max-w-2xl text-center text-nexis-muted">
+      A look at the key pages across the application.
+    </p>
+
+    <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {screenshots.map(shot => (
+        <div class="group overflow-hidden rounded-xl border border-nexis-border transition-colors hover:border-nexis-orange/50">
+          <img
+            src={shot.src}
+            alt={shot.alt}
+            class="w-full transition-transform duration-300 group-hover:scale-[1.02]"
+            loading="lazy"
+          />
+          <div class="bg-nexis-dark-card px-4 py-3">
+            <p class="text-sm font-medium text-nexis-muted">{shot.caption}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

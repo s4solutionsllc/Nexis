@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lsimpsonsfdc.github.io/Nexis/sitemap-index.xml

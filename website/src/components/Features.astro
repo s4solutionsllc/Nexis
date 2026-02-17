@@ -1,0 +1,55 @@
+---
+const features = [
+  {
+    title: 'Real-time Dashboard',
+    description: 'CPU, memory, disk, GPU, and network at a glance with circular gauges and live charts.',
+    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
+  },
+  {
+    title: 'Hardware Info',
+    description: 'Detailed system, processor, graphics, and memory specs in a clean, organized view.',
+    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>`,
+  },
+  {
+    title: 'System Cleaner',
+    description: 'Reclaim disk space by removing package caches, crash reports, app logs, and trash.',
+    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>`,
+  },
+  {
+    title: 'GPU Monitoring',
+    description: 'Track utilization for NVIDIA, AMD, and Intel on Linux; Apple Silicon on macOS.',
+    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>`,
+  },
+  {
+    title: 'Kiosk Mode',
+    description: 'F11 fullscreen dashboard for dedicated monitoring on a secondary display.',
+    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>`,
+  },
+  {
+    title: 'Cross-platform',
+    description: 'Native on Linux and macOS with platform-specific integrations for each OS.',
+    icon: `<svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>`,
+  },
+];
+---
+
+<section id="features" class="py-20 md:py-28">
+  <div class="mx-auto max-w-6xl px-6">
+    <h2 class="text-center text-3xl font-bold text-white md:text-4xl">
+      Everything you need to manage your system
+    </h2>
+    <p class="mx-auto mt-4 max-w-2xl text-center text-nexis-muted">
+      From real-time monitoring to deep cleaning, Nexis gives you full control over your Linux or macOS machine.
+    </p>
+
+    <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {features.map(feature => (
+        <div class="group rounded-xl border border-nexis-border bg-nexis-dark-card p-6 transition-colors hover:border-nexis-orange/50">
+          <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-nexis-dark-surface text-nexis-orange" set:html={feature.icon} />
+          <h3 class="text-lg font-semibold text-white">{feature.title}</h3>
+          <p class="mt-2 text-sm text-nexis-muted">{feature.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

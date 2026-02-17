@@ -1,0 +1,61 @@
+---
+const links = [
+  { href: '#features', label: 'Features' },
+  { href: '#screenshots', label: 'Screenshots' },
+  { href: '#download', label: 'Download' },
+  { href: 'https://github.com/lsimpsonsfdc/Nexis', label: 'GitHub', external: true },
+];
+---
+
+<nav class="fixed top-0 left-0 right-0 z-50 border-b border-nexis-border/50 bg-nexis-dark/80 backdrop-blur-lg">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <a href="/Nexis/" class="flex items-center gap-3">
+      <img src="/Nexis/images/logo.svg" alt="Nexis" class="h-8 w-8" />
+      <span class="text-lg font-bold text-nexis-light">Nexis</span>
+    </a>
+
+    <!-- Desktop nav -->
+    <div class="hidden items-center gap-8 md:flex">
+      {links.map(link => (
+        <a
+          href={link.href}
+          class="text-sm text-nexis-muted transition-colors hover:text-nexis-light"
+          {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        >
+          {link.label}
+        </a>
+      ))}
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button
+      id="mobile-menu-btn"
+      class="text-nexis-muted md:hidden"
+      aria-label="Toggle menu"
+    >
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden border-t border-nexis-border/50 bg-nexis-dark/95 px-6 pb-4 md:hidden">
+    {links.map(link => (
+      <a
+        href={link.href}
+        class="block py-2 text-sm text-nexis-muted transition-colors hover:text-nexis-light"
+        {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      >
+        {link.label}
+      </a>
+    ))}
+  </div>
+</nav>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+  btn?.addEventListener('click', () => menu?.classList.toggle('hidden'));
+  menu?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => menu?.classList.add('hidden')));
+</script>
