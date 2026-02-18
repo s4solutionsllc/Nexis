@@ -255,6 +255,12 @@
   - **Fix complexity:** Trivial (remove UI property, update QSS rules)
   - **Resolved:** Removed `alternatingRowColors` from all 7 tables, added `frameShape: NoFrame`, updated QSS item rule to use opaque `@color01` background matching global `QTableView::item`, removed page-specific `QHeaderView::section` override to inherit complete global rule.
 
+- [x] **BUG-39: `getDesktopValue()` truncates Exec lines containing `=` (env variables)** (MEDIUM)
+  - **File:** `shared/nexis/utilities.h:29-40`
+  - **Description:** `getDesktopValue()` uses `split("=")` + `directive.last()` to extract values from `.desktop` file keys. When the value itself contains `=` (common with `Exec=env QT_QPA_PLATFORM=xcb /usr/bin/app`), `split("=")` produces multiple segments and `last()` returns only the portion after the final `=`, losing the env variable and everything before it. QuentiumYT fixed this in commit `77a9928` by using `section('=', 1)` which returns everything after the first `=`. The fix is a one-line change.
+  - **Fix complexity:** Trivial (change `split("=")` + `last()` to `section('=', 1)`)
+  - **Resolved:** Changed to `indexOf('=')` + `mid()` approach which correctly returns everything after the first `=`
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

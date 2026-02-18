@@ -31,9 +31,10 @@ public:
     {
         QStringList filteredList = lines.filter(val);
         if (filteredList.count() > 0) {
-            QStringList directive = filteredList.first().trimmed().split("=");
-            if (directive.count() > 1) {
-                return directive.last().trimmed();
+            QString line = filteredList.first().trimmed();
+            int eqPos = line.indexOf('=');
+            if (eqPos != -1) {
+                return line.mid(eqPos + 1).trimmed();
             }
         }
         return QString("");

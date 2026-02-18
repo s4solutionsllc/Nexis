@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>380</width>
-    <height>270</height>
+    <height>340</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -55,6 +55,20 @@
     <widget class="QLineEdit" name="txtStartupAppName">
      <property name="placeholderText">
       <string>App Name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLineEdit" name="txtStartupAppGenericName">
+     <property name="placeholderText">
+      <string>Generic Name (e.g. Web Browser)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QLineEdit" name="txtStartupAppIcon">
+     <property name="placeholderText">
+      <string>Icon name or path</string>
      </property>
     </widget>
    </item>
@@ -138,6 +152,8 @@
  </widget>
  <tabstops>
   <tabstop>txtStartupAppName</tabstop>
+  <tabstop>txtStartupAppGenericName</tabstop>
+  <tabstop>txtStartupAppIcon</tabstop>
   <tabstop>txtStartupAppComment</tabstop>
   <tabstop>txtStartupAppCommand</tabstop>
   <tabstop>spnStartupDelay</tabstop>

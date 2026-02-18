@@ -14,7 +14,7 @@
 - [x] **FR-07: SVG logo and colorful tray icon** — Redesigned logo in SVG with tray icon that works on light and dark themes. QuentiumYT commit `347bcbe`. **Resolved:** Created logo.svg and tray-icon.svg; updated app icon and tray icon to use SVGs.
 - [x] **FR-08: Crowdin translation integration** — Professional translation management with automated PR workflows. **Resolved:** Added `crowdin.yml`, GitHub Actions for sync (`crowdin-sync.yml`) and lupdate normalization (`lupdate.yml`). Fixed Galician language attribute, added Romanian to `languages.json`, refreshed source strings with lupdate (417 strings). README updated with Crowdin badge and maintainer setup instructions.
 - [ ] **FR-09: APT-RPM support (ALT Linux, PCLinuxOS, Vine Linux)** — QuentiumYT PR #31.
-- [ ] **FR-10: Startup app customization enhancements** — Expanded options for managing auto-start applications. QuentiumYT v1.5.0.
+- [x] **FR-10: Startup app customization enhancements** — Expanded options for managing auto-start applications. QuentiumYT v1.5.0. **Resolved:** Fixed BUG-39 (`getDesktopValue()` truncation). Added search/filter bar to Startup Apps list page. Added GenericName and Icon fields to the editor dialog (Linux only; hidden on macOS). Display real app icons on list cards via `QIcon::fromTheme()` (Linux) and `QFileIconProvider` for `.app` bundles (macOS). Improved Linux new-app `.desktop` template with optional GenericName, Icon, and `X-GNOME-Autostart-enabled=true`.
 
 ## From Community Issues (oguzhaninan/Stacer)
 

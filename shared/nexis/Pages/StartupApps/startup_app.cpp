@@ -1,16 +1,22 @@
 #include "startup_app.h"
 #include "ui_startup_app.h"
 #include "utilities.h"
+#include <QIcon>
+#include <QFileInfo>
+#ifdef Q_OS_MACOS
+#include <QFileIconProvider>
+#endif
 
 StartupApp::~StartupApp()
 {
     delete ui;
 }
 
-StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QString &filePath, QWidget *parent) :
+StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QString &filePath, const QString &iconName, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::StartupApp),
     mStartupAppName(startupAppName),
+    mIconName(iconName),
     mEnabled(enabled),
     mFilePath(filePath)
 {
@@ -18,6 +24,31 @@ StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QStrin
 
     ui->lblStartupAppName->setText(startupAppName);
     ui->checkStartup->setChecked(enabled);
+
+    // Resolve and display app icon
+    QIcon appIcon;
+    if (!iconName.isEmpty()) {
+#ifdef Q_OS_MACOS
+        // On macOS, iconName is the path to a .app bundle
+        if (iconName.endsWith(".app") && QFileInfo::exists(iconName)) {
+            QFileIconProvider iconProvider;
+            appIcon = iconProvider.icon(QFileInfo(iconName));
+        }
+#else
+        // On Linux, iconName is a freedesktop icon theme name or absolute path
+        appIcon = QIcon::fromTheme(iconName);
+        if (appIcon.isNull() && QFileInfo::exists(iconName)) {
+            appIcon = QIcon(iconName);
+        }
+#endif
+    }
+
+    if (!appIcon.isNull()) {
+        QSize iconSize = ui->lblStartupAppIcon->minimumSize();
+        ui->lblStartupAppIcon->setPixmap(appIcon.pixmap(iconSize));
+    } else {
+        ui->lblStartupAppIcon->hide();
+    }
 
     Utilities::addDropShadow(this, 50);
 }

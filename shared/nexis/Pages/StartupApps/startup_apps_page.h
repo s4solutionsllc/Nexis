@@ -31,6 +31,7 @@ private slots:
     void init();
     void openStartupAppEdit(const QString filePath = QString());
     void setAppCount();
+    void filterStartupApps(const QString &text);
 
 private:
     Ui::StartupAppsPage *ui;

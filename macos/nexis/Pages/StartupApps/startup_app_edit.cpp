@@ -49,6 +49,10 @@ void StartupAppEdit::init()
 
     ui->lblErrorMsg->hide();
 
+    // GenericName and Icon are Linux .desktop concepts — hide on macOS
+    ui->txtStartupAppGenericName->hide();
+    ui->txtStartupAppIcon->hide();
+
     setStyleSheet(AppManager::ins()->getStylesheetFileContent());
 }
 

@@ -2,6 +2,10 @@
 #include "ui_startup_apps_page.h"
 #include "utilities.h"
 
+#ifdef Q_OS_MACOS
+#include <QFileIconProvider>
+#endif
+
 StartupAppsPage::~StartupAppsPage()
 {
     delete ui;
@@ -69,13 +73,14 @@ void StartupAppsPage::init()
     }
 
     connect(ui->btnAddStartupApp, &QPushButton::clicked, this, [this]() { openStartupAppEdit(); });
+    connect(ui->txtSearchStartup, &QLineEdit::textChanged, this, &StartupAppsPage::filterStartupApps);
 
-    Utilities::addDropShadow(ui->btnAddStartupApp, 60);
+    Utilities::addDropShadow({ui->btnAddStartupApp, ui->txtSearchStartup}, 60);
 }
 
 void StartupAppsPage::loadApps()
 {
-    // clear
+    ui->txtSearchStartup->clear();
     ui->listWidgetStartup->clear();
 
 #ifdef Q_OS_MACOS
@@ -131,9 +136,18 @@ void StartupAppsPage::loadApps()
                 appName[0] = appName[0].toUpper();
         }
 
+        // Try to derive an icon from ProgramArguments if it points to a .app bundle
+        QString macIconPath;
+        QString content = lines.join("\n");
+        QRegularExpression progArgReg("<string>(/[^<]*\\.app)[^<]*</string>");
+        QRegularExpressionMatch appMatch = progArgReg.match(content);
+        if (appMatch.hasMatch()) {
+            macIconPath = appMatch.captured(1);
+        }
+
         QListWidgetItem *item = new QListWidgetItem(ui->listWidgetStartup);
 
-        StartupApp *app = new StartupApp(appName, enabled, f.absoluteFilePath(), this);
+        StartupApp *app = new StartupApp(appName, enabled, f.absoluteFilePath(), macIconPath, this);
 
         connect(app, &StartupApp::deleteAppS, this, &StartupAppsPage::loadApps);
         connect(app, &StartupApp::editStartupAppS, this, &StartupAppsPage::openStartupAppEdit);
@@ -169,10 +183,11 @@ void StartupAppsPage::loadApps()
                 enabled = (gnomeEnabled == enabledStr);
             }
 
+            QString iconName = Utilities::getDesktopValue(ICON_REG, lines);
+
             QListWidgetItem *item = new QListWidgetItem(ui->listWidgetStartup);
 
-            // new app
-            StartupApp *app = new StartupApp(appName, enabled, f.absoluteFilePath(), this);
+            StartupApp *app = new StartupApp(appName, enabled, f.absoluteFilePath(), iconName, this);
 
             connect(app, &StartupApp::deleteAppS, this, &StartupAppsPage::loadApps);
             connect(app, &StartupApp::editStartupAppS, this, &StartupAppsPage::openStartupAppEdit);
@@ -197,6 +212,18 @@ void StartupAppsPage::setAppCount()
 
     ui->notFoundWidget->setVisible(! count);
     ui->listWidgetStartup->setVisible(count);
+}
+
+void StartupAppsPage::filterStartupApps(const QString &text)
+{
+    for (int i = 0; i < ui->listWidgetStartup->count(); ++i) {
+        QListWidgetItem *item = ui->listWidgetStartup->item(i);
+        StartupApp *app = qobject_cast<StartupApp*>(ui->listWidgetStartup->itemWidget(item));
+        if (app) {
+            bool matches = text.isEmpty() || app->getAppName().contains(text, Qt::CaseInsensitive);
+            item->setHidden(!matches);
+        }
+    }
 }
 
 void StartupAppsPage::openStartupAppEdit(const QString filePath)

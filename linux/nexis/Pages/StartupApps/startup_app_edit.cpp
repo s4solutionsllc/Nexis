@@ -49,6 +49,8 @@ void StartupAppEdit::show()
 {
     // clear fields
     ui->txtStartupAppName->clear();
+    ui->txtStartupAppGenericName->clear();
+    ui->txtStartupAppIcon->clear();
     ui->txtStartupAppComment->clear();
     ui->txtStartupAppCommand->clear();
     ui->spnStartupDelay->setValue(0);
@@ -61,6 +63,8 @@ void StartupAppEdit::show()
         if(! lines.isEmpty())
         {
             ui->txtStartupAppName->setText(Utilities::getDesktopValue(NAME_REG, lines));
+            ui->txtStartupAppGenericName->setText(Utilities::getDesktopValue(GENERIC_NAME_REG, lines));
+            ui->txtStartupAppIcon->setText(Utilities::getDesktopValue(ICON_REG, lines));
             ui->txtStartupAppComment->setText(Utilities::getDesktopValue(COMMENT_REG, lines));
             ui->txtStartupAppCommand->setText(Utilities::getDesktopValue(EXEC_REG, lines));
 
@@ -93,6 +97,22 @@ void StartupAppEdit::on_btnSave_clicked()
             changeDesktopValue(lines, COMMENT_REG, QString("Comment=%1").arg(ui->txtStartupAppComment->text()));
             changeDesktopValue(lines, EXEC_REG, QString("Exec=%1").arg(ui->txtStartupAppCommand->text()));
 
+            QString genericName = ui->txtStartupAppGenericName->text();
+            if (!genericName.isEmpty()) {
+                changeDesktopValue(lines, GENERIC_NAME_REG, QString("GenericName=%1").arg(genericName));
+            } else {
+                int pos = lines.indexOf(GENERIC_NAME_REG);
+                if (pos != -1) lines.removeAt(pos);
+            }
+
+            QString iconName = ui->txtStartupAppIcon->text();
+            if (!iconName.isEmpty()) {
+                changeDesktopValue(lines, ICON_REG, QString("Icon=%1").arg(iconName));
+            } else {
+                int pos = lines.indexOf(ICON_REG);
+                if (pos != -1) lines.removeAt(pos);
+            }
+
             int delay = ui->spnStartupDelay->value();
             if (delay > 0) {
                 changeDesktopValue(lines, DELAY_REG, QString("X-GNOME-Autostart-Delay=%1").arg(delay));
@@ -109,6 +129,16 @@ void StartupAppEdit::on_btnSave_clicked()
                     .arg(ui->txtStartupAppName->text())
                     .arg(ui->txtStartupAppComment->text())
                     .arg(ui->txtStartupAppCommand->text());
+
+            QString genericName = ui->txtStartupAppGenericName->text();
+            if (!genericName.isEmpty())
+                appContent += QString("GenericName=%1\n").arg(genericName);
+
+            QString iconName = ui->txtStartupAppIcon->text();
+            if (!iconName.isEmpty())
+                appContent += QString("Icon=%1\n").arg(iconName);
+
+            appContent += "X-GNOME-Autostart-enabled=true\n";
 
             int delay = ui->spnStartupDelay->value();
             if (delay > 0)
