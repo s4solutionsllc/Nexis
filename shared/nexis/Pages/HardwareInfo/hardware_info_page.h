@@ -27,6 +27,7 @@ private:
     void populateGraphics();
     void populateMemory();
     void populateBattery();
+    void populateStorage();
 
     void addRow(QTableWidget *table, const QString &label, const QString &value);
     void fitTableHeight(QTableWidget *table);

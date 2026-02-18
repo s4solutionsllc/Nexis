@@ -32,6 +32,7 @@ void HardwareInfoPage::init()
     populateGraphics();
     populateMemory();
     populateBattery();
+    populateStorage();
 }
 
 void HardwareInfoPage::addRow(QTableWidget *table, const QString &label, const QString &value)
@@ -292,6 +293,139 @@ void HardwareInfoPage::populateBattery()
                .arg(bat.chargeStartThreshold)
                .arg(bat.chargeStopThreshold)
                .arg(tr("managed by TLP")));
+    }
+
+    t->resizeColumnsToContents();
+    fitTableHeight(t);
+}
+
+void HardwareInfoPage::populateStorage()
+{
+    QTableWidget *t = ui->tblStorage;
+    t->horizontalHeader()->setVisible(false);
+    t->verticalHeader()->setVisible(false);
+    t->horizontalHeader()->setStretchLastSection(true);
+
+    if (!im->hasDiskHealth()) {
+        ui->grpStorage->hide();
+        return;
+    }
+
+    QList<DriveHealth> drives = im->getDriveHealth();
+    if (drives.isEmpty()) {
+        ui->grpStorage->hide();
+        return;
+    }
+
+    for (int i = 0; i < drives.size(); ++i) {
+        const DriveHealth &d = drives.at(i);
+
+        QString driveName = d.model.isEmpty() ? d.deviceName : d.model;
+        if (drives.size() > 1)
+            addRow(t, tr("Drive %1").arg(i + 1), driveName);
+        else
+            addRow(t, tr("Drive"), driveName);
+
+        if (d.sizeBytes > 0)
+            addRow(t, tr("  Size"), FormatUtil::formatBytes(d.sizeBytes));
+
+        QString typeStr;
+        switch (d.driveType) {
+        case DriveHealth::NVMe:     typeStr = "NVMe SSD"; break;
+        case DriveHealth::SATA_SSD: typeStr = "SATA SSD"; break;
+        case DriveHealth::SATA_HDD: typeStr = "HDD"; break;
+        default:                    typeStr = d.protocol; break;
+        }
+        if (!typeStr.isEmpty())
+            addRow(t, tr("  Type"), typeStr);
+
+        if (!d.healthVerdict.isEmpty()) {
+            QString healthStr;
+            if (d.healthPercent >= 0)
+                healthStr = QString("%1% (%2)").arg(d.healthPercent).arg(d.healthVerdict);
+            else
+                healthStr = d.healthVerdict;
+
+            int row = t->rowCount();
+            t->insertRow(row);
+
+            QTableWidgetItem *labelItem = new QTableWidgetItem(tr("  Health"));
+            QFont bold = labelItem->font();
+            bold.setBold(true);
+            labelItem->setFont(bold);
+            t->setItem(row, 0, labelItem);
+
+            QTableWidgetItem *valueItem = new QTableWidgetItem(healthStr);
+            if (d.healthVerdict == "Good")
+                valueItem->setForeground(QColor("#2ec27e"));
+            else if (d.healthVerdict == "Caution")
+                valueItem->setForeground(QColor("#e5a50a"));
+            else if (d.healthVerdict == "Critical")
+                valueItem->setForeground(QColor("#e01b24"));
+            t->setItem(row, 1, valueItem);
+        }
+
+        if (d.temperatureCelsius >= 0) {
+            double tempF = d.temperatureCelsius * 9.0 / 5.0 + 32.0;
+            addRow(t, tr("  Temperature"), QString("%1 \u00B0C / %2 \u00B0F")
+                   .arg(d.temperatureCelsius, 0, 'f', 0)
+                   .arg(tempF, 0, 'f', 0));
+        }
+
+        if (d.driveType == DriveHealth::NVMe) {
+            if (d.percentageUsed >= 0)
+                addRow(t, tr("  Endurance Used"), QString("%1%").arg(d.percentageUsed));
+            if (d.availableSpare >= 0)
+                addRow(t, tr("  Available Spare"), QString("%1%").arg(d.availableSpare));
+            if (d.dataUnitsWritten >= 0) {
+                double tb = d.dataUnitsWritten * 512000.0 / (1024.0 * 1024.0 * 1024.0 * 1024.0);
+                addRow(t, tr("  Data Written"), QString("%1 TB").arg(tb, 0, 'f', 2));
+            }
+            if (d.dataUnitsRead >= 0) {
+                double tb = d.dataUnitsRead * 512000.0 / (1024.0 * 1024.0 * 1024.0 * 1024.0);
+                addRow(t, tr("  Data Read"), QString("%1 TB").arg(tb, 0, 'f', 2));
+            }
+            if (d.unsafeShutdowns >= 0)
+                addRow(t, tr("  Unsafe Shutdowns"), QString::number(d.unsafeShutdowns));
+            if (d.mediaErrors >= 0)
+                addRow(t, tr("  Media Errors"), QString::number(d.mediaErrors));
+        }
+
+        if (d.driveType == DriveHealth::SATA_SSD) {
+            if (d.wearLevelingCount >= 0)
+                addRow(t, tr("  Wear Leveling"), QString("%1%").arg(d.wearLevelingCount));
+            if (d.reallocatedSectors >= 0)
+                addRow(t, tr("  Reallocated Sectors"), QString::number(d.reallocatedSectors));
+        }
+
+        if (d.driveType == DriveHealth::SATA_HDD) {
+            if (d.reallocatedSectors >= 0)
+                addRow(t, tr("  Reallocated Sectors"), QString::number(d.reallocatedSectors));
+            if (d.pendingSectors >= 0)
+                addRow(t, tr("  Pending Sectors"), QString::number(d.pendingSectors));
+            if (d.uncorrectableSectors >= 0)
+                addRow(t, tr("  Uncorrectable Sectors"), QString::number(d.uncorrectableSectors));
+        }
+
+        if (d.powerOnHours >= 0) {
+            int days = d.powerOnHours / 24;
+            addRow(t, tr("  Power-On Time"), QString("%1 hours (%2 days)").arg(d.powerOnHours).arg(days));
+        }
+        if (d.powerCycles >= 0)
+            addRow(t, tr("  Power Cycles"), QString::number(d.powerCycles));
+
+        if (!d.smartPassed)
+            addRow(t, tr("  SMART Status"), tr("FAILING"));
+
+        if (d.needsElevation)
+            addRow(t, tr("  Note"), tr("Limited data \u2014 smartctl requires elevated permissions"));
+
+        if (i < drives.size() - 1) {
+            int row = t->rowCount();
+            t->insertRow(row);
+            t->setItem(row, 0, new QTableWidgetItem(""));
+            t->setItem(row, 1, new QTableWidgetItem(""));
+        }
     }
 
     t->resizeColumnsToContents();

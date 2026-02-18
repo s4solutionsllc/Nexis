@@ -119,6 +119,13 @@ void SettingsPage::init()
         ui->spinBatteryHealthPercent->hide();
     }
 
+    // disk health alert
+    ui->checkDiskHealthAlert->setChecked(mSettingManager->getDiskHealthAlertEnabled());
+    if (!InfoManager::ins()->hasDiskHealth()) {
+        ui->lblDiskHealthAlert->hide();
+        ui->checkDiskHealthAlert->hide();
+    }
+
     // disk analyzer preference
     initDiskAnalyzerCombo();
 
@@ -273,4 +280,9 @@ void SettingsPage::cmbDiskAnalyzerChanged(int index)
 void SettingsPage::on_txtDiskAnalyzerCustomPath_editingFinished()
 {
     mSettingManager->setDiskAnalyzerCustomPath(ui->txtDiskAnalyzerCustomPath->text().trimmed());
+}
+
+void SettingsPage::on_checkDiskHealthAlert_clicked(bool checked)
+{
+    mSettingManager->setDiskHealthAlertEnabled(checked);
 }

@@ -12,6 +12,7 @@
 #include <Info/thermal_info.h>
 #include <Info/gpu_info.h>
 #include <Info/battery_info.h>
+#include <Info/disk_health_info.h>
 
 class InfoManager
 {
@@ -62,6 +63,12 @@ public:
     void updateBatteryInfo();
     bool hasBattery() const;
 
+    QList<DriveHealth> getDriveHealth() const;
+    void refreshDiskHealth();
+    void refreshDiskHealthElevated(const QString &device);
+    bool hasDiskHealth() const;
+    bool hasSmartctl() const;
+
 private:
     static InfoManager *instance;
 
@@ -75,6 +82,7 @@ private:
     ThermalInfo ti;
     GpuInfo gi;
     BatteryInfo bi;
+    DiskHealthInfo dhi;
 };
 
 #endif // INFO_MANAGER_H

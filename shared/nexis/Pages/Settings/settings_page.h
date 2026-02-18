@@ -36,6 +36,7 @@ void cmbStartPageChanged(const QString text);
     void cmbColorSchemeChanged(int index);
     void cmbDiskAnalyzerChanged(int index);
     void on_txtDiskAnalyzerCustomPath_editingFinished();
+    void on_checkDiskHealthAlert_clicked(bool checked);
 
 private:
     Ui::SettingsPage *ui;

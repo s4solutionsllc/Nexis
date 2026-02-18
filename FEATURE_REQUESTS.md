@@ -56,6 +56,9 @@
 ## Hardware Health
 
 - [~] **FR-29: Battery & SSD/Disk health monitoring** — Add battery health metrics (cycle count, max vs design capacity, health %, temperature, charge rate) via IOKit (macOS) and `/sys/class/power_supply/` (Linux). Add SMART-based disk health monitoring for NVMe (Percentage Used, Available Spare, Media Errors, Unsafe Shutdowns, Power On Hours) and SATA SSDs/HDDs (Reallocated Sectors, Wear Leveling, Pending Sectors) via `smartctl` (Linux) and IOKit/diskutil (macOS). Dashboard integration with CircleBar gauges, Hardware Info page expansion, configurable alert thresholds, and historical health tracking on the Resources page. See `claude_definitions/FR-29_feature_request.md` for full specification.
+  - **Phase 1 (Battery Health) resolved:** commit `66646a8`. BatteryInfo class with macOS IOKit and Linux sysfs implementations. Hardware Info Battery section, Settings battery alert threshold, Dashboard battery CircleBar.
+  - **Phase 2 (Disk Health / SMART) resolved:** DiskHealthInfo class with macOS diskutil plist + smartctl and Linux sysfs + smartctl implementations. Hardware Info Storage section with per-drive health display, color-coded verdicts (Good/Caution/Critical), NVMe and SATA-specific attributes. Settings disk health alert toggle. Supports Apple Fabric, NVMe, SATA SSD, and SATA HDD drive types.
+  - **Phase 3 (Dashboard + Resources charts) planned:** Dashboard CircleBar for disk health, Resources page health history chart.
 
 ## Notes
 

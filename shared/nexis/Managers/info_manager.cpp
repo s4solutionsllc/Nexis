@@ -207,3 +207,31 @@ bool InfoManager::hasBattery() const
 {
     return bi.hasBattery();
 }
+
+/********************
+ * Disk Health Provider
+ *******************/
+QList<DriveHealth> InfoManager::getDriveHealth() const
+{
+    return dhi.getDrives();
+}
+
+void InfoManager::refreshDiskHealth()
+{
+    dhi.refreshHealth();
+}
+
+void InfoManager::refreshDiskHealthElevated(const QString &device)
+{
+    dhi.refreshHealthElevated(device);
+}
+
+bool InfoManager::hasDiskHealth() const
+{
+    return dhi.hasDrives();
+}
+
+bool InfoManager::hasSmartctl() const
+{
+    return dhi.hasSmartctl();
+}

@@ -200,3 +200,13 @@ QString SettingManager::getBatteryAlertSnoozedUntil() const
 {
     return mSettings->value(SettingKeys::BatteryAlertSnoozedUntil, "").toString();
 }
+
+void SettingManager::setDiskHealthAlertEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::DiskHealthAlertEnabled, value);
+}
+
+bool SettingManager::getDiskHealthAlertEnabled() const
+{
+    return mSettings->value(SettingKeys::DiskHealthAlertEnabled, true).toBool();
+}

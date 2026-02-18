@@ -23,6 +23,7 @@ namespace SettingKeys {
     const QString BatteryAlertPercent("BatteryAlertPercent");
     const QString BatteryAlertLastHealth("BatteryAlertLastHealth");
     const QString BatteryAlertSnoozedUntil("BatteryAlertSnoozedUntil");
+    const QString DiskHealthAlertEnabled("DiskHealthAlertEnabled");
 }
 
 class SettingManager
@@ -85,6 +86,9 @@ public:
 
     void setBatteryAlertSnoozedUntil(const QString &value);
     QString getBatteryAlertSnoozedUntil() const;
+
+    void setDiskHealthAlertEnabled(bool value);
+    bool getDiskHealthAlertEnabled() const;
 
 private:
     static SettingManager *instance;

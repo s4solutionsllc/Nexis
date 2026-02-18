@@ -20,8 +20,8 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
 ## Task 1: DiskHealthInfo Header & Shared Code
 
 ### 1.1 — Create shared header
-- [ ] Create `shared/nexis-core/Info/disk_health_info.h`
-- [ ] Define `SmartAttribute` struct:
+- [x] Create `shared/nexis-core/Info/disk_health_info.h`
+- [x] Define `SmartAttribute` struct:
   - `int id` (-1 if N/A)
   - `QString name`
   - `int value` (normalized, 0-253)
@@ -29,7 +29,7 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
   - `int threshold`
   - `qint64 rawValue`
   - `QString status` ("ok", "warning", "failing")
-- [ ] Define `DriveHealth` struct with fields:
+- [x] Define `DriveHealth` struct with fields:
   - **Identity:** `QString devicePath`, `QString deviceName`, `QString model`, `QString serial`, `QString firmware`, `quint64 sizeBytes`
   - **Drive type:** `enum DriveType { Unknown, NVMe, SATA_SSD, SATA_HDD }`, `DriveType driveType`, `QString protocol`
   - **Health summary:** `int healthPercent` (-1 if unavailable), `QString healthVerdict` ("Good", "Caution", "Critical", "Unknown"), `bool smartPassed`, `bool needsElevation`
@@ -37,7 +37,7 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
   - **NVMe-specific:** `int percentageUsed` (-1), `int availableSpare` (-1), `int availableSpareThreshold` (-1), `int criticalWarning` (-1), `int unsafeShutdowns` (-1), `int mediaErrors` (-1), `qint64 dataUnitsRead` (-1), `qint64 dataUnitsWritten` (-1)
   - **SATA-specific:** `int reallocatedSectors` (-1), `int pendingSectors` (-1), `int uncorrectableSectors` (-1), `int reallocatedEvents` (-1), `int wearLevelingCount` (-1)
   - **Full table:** `QList<SmartAttribute> allAttributes`
-- [ ] Define `DiskHealthInfo` class:
+- [x] Define `DiskHealthInfo` class:
   - Constructor
   - `QList<DriveHealth> getDrives() const`
   - `bool hasDrives() const`
@@ -49,9 +49,9 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
 **Acceptance:** Header compiles on both platforms.
 
 ### 1.2 — Create shared getters and health derivation
-- [ ] Create `shared/nexis-core/Info/disk_health_info_shared.cpp`
-- [ ] Implement `getDrives()`, `hasDrives()`, `hasSmartctl()` as member returns
-- [ ] Implement `deriveHealthVerdict(DriveHealth &drive)`:
+- [x] Create `shared/nexis-core/Info/disk_health_info_shared.cpp`
+- [x] Implement `getDrives()`, `hasDrives()`, `hasSmartctl()` as member returns
+- [x] Implement `deriveHealthVerdict(DriveHealth &drive)`:
   - NVMe logic:
     - `criticalWarning != 0` OR `mediaErrors > 0` OR `percentageUsed >= 100` OR `!smartPassed` → "Critical"
     - `availableSpare <= 10` (ignore Apple's 99% threshold) OR `percentageUsed >= 80` → "Caution"
@@ -74,16 +74,16 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
 **Acceptance:** Shared cpp compiles. Health derivation covers all drive types.
 
 ### 1.3 — Build verification
-- [ ] Incremental build succeeds
+- [x] Incremental build succeeds
 
 ---
 
 ## Task 2: macOS Implementation
 
 ### 2.1 — Create macOS implementation
-- [ ] Create `macos/nexis-core/Info/disk_health_info.cpp`
-- [ ] Check `CommandUtil::isExecutable("smartctl")` → `mHasSmartctl`
-- [ ] `discoverDrives()`:
+- [x] Create `macos/nexis-core/Info/disk_health_info.cpp`
+- [x] Check `CommandUtil::isExecutable("smartctl")` → `mHasSmartctl`
+- [x] `discoverDrives()`:
   - Run `diskutil list -plist` via `CommandUtil::exec()`
   - Parse XML plist output to extract `AllDisksAndPartitions` → filter to physical `WholeDisks` (e.g., disk0, disk1, disk2)
   - For each whole disk:
@@ -111,20 +111,20 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
       - Run `smartctl -j -a /dev/diskN` for third-party SATA drives
       - Parse JSON for SATA attributes (task 2.2)
     - Call `deriveHealthVerdict(drive)`
-- [ ] Helper: `parsePlistValue()` — extract values from diskutil XML plist output using QXmlStreamReader or QRegularExpression matching `<key>X</key><string>Y</string>` / `<integer>N</integer>` / `<true/>` / `<false/>` patterns
-- [ ] Helper: `parseSmartctlJson(const QByteArray &json, DriveHealth &drive)` — shared JSON parsing (also used by Linux)
-- [ ] Constructor calls `discoverDrives()`
+- [x] Helper: `parsePlistValue()` — extract values from diskutil XML plist output using QXmlStreamReader or QRegularExpression matching `<key>X</key><string>Y</string>` / `<integer>N</integer>` / `<true/>` / `<false/>` patterns
+- [x] Helper: `parseSmartctlJson(const QByteArray &json, DriveHealth &drive)` — shared JSON parsing (also used by Linux)
+- [x] Constructor calls `discoverDrives()`
 
 ### 2.2 — Implement parseSmartctlJson() (cross-platform, in macOS file for now)
-- [ ] Parse JSON with `QJsonDocument::fromJson()`
-- [ ] Extract device info: `model_name`, `serial_number`, `firmware_version`
-- [ ] Check `smart_status.passed` → `smartPassed`
-- [ ] Detect NVMe vs SATA from `device.type` ("nvme" vs "ata")
-- [ ] **NVMe path:** Parse `nvme_smart_health_information_log` object:
+- [x] Parse JSON with `QJsonDocument::fromJson()`
+- [x] Extract device info: `model_name`, `serial_number`, `firmware_version`
+- [x] Check `smart_status.passed` → `smartPassed`
+- [x] Detect NVMe vs SATA from `device.type` ("nvme" vs "ata")
+- [x] **NVMe path:** Parse `nvme_smart_health_information_log` object:
   - `critical_warning`, `temperature`, `available_spare`, `available_spare_threshold`
   - `percentage_used`, `data_units_read`, `data_units_written`
   - `power_cycles`, `power_on_hours`, `unsafe_shutdowns`, `media_errors`
-- [ ] **SATA path:** Parse `ata_smart_attributes.table` array:
+- [x] **SATA path:** Parse `ata_smart_attributes.table` array:
   - For each attribute object: extract `id`, `name`, `value`, `worst`, `thresh`, `raw.value`
   - Build `SmartAttribute` for allAttributes list
   - Extract key attributes by ID:
@@ -136,31 +136,31 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
     - ID 196 → `reallocatedEvents`
     - ID 197 → `pendingSectors`
     - ID 198 → `uncorrectableSectors`
-- [ ] Extract `rotation_rate` from root → if > 0, set `driveType = SATA_HDD`, else `SATA_SSD`
+- [x] Extract `rotation_rate` from root → if > 0, set `driveType = SATA_HDD`, else `SATA_SSD`
 
 ### 2.3 — Implement refreshHealth()
-- [ ] Re-run `diskutil info -plist` for each known drive
-- [ ] Re-parse SMART data
-- [ ] Re-derive health verdict
+- [x] Re-run `diskutil info -plist` for each known drive
+- [x] Re-parse SMART data
+- [x] Re-derive health verdict
 
 ### 2.4 — Implement refreshHealthElevated()
-- [ ] Run `CommandUtil::sudoExec("smartctl", {"-j", "-a", device})`
-- [ ] Parse JSON, update drive data, re-derive verdict
-- [ ] Clear `needsElevation` flag on success
+- [x] Run `CommandUtil::sudoExec("smartctl", {"-j", "-a", device})`
+- [x] Parse JSON, update drive data, re-derive verdict
+- [x] Clear `needsElevation` flag on success
 
 ### 2.5 — Build verification
-- [ ] macOS incremental build succeeds
-- [ ] On macOS: DiskHealthInfo discovers all physical drives
-- [ ] SMART data populated for Apple internal SSD (from diskutil plist)
+- [x] macOS incremental build succeeds
+- [x] On macOS: DiskHealthInfo discovers all physical drives
+- [x] SMART data populated for Apple internal SSD (from diskutil plist)
 
 ---
 
 ## Task 3: Linux Implementation
 
 ### 3.1 — Create Linux implementation
-- [ ] Create `linux/nexis-core/Info/disk_health_info.cpp`
-- [ ] Check `CommandUtil::isExecutable("smartctl")` → `mHasSmartctl`
-- [ ] `discoverDrives()`:
+- [x] Create `linux/nexis-core/Info/disk_health_info.cpp`
+- [x] Check `CommandUtil::isExecutable("smartctl")` → `mHasSmartctl`
+- [x] `discoverDrives()`:
   - Enumerate `/sys/block/` directories (same filter as `DiskInfo::getDiskNames()` — require `device/` subdir)
   - For each disk (e.g., "sda", "nvme0n1"):
     - Read model: `/sys/block/{name}/device/model`
@@ -175,28 +175,28 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
       - If successful: call `parseSmartctlJson()` (same function as macOS task 2.2 — duplicated or linked)
     - If no smartctl: populate only sysfs-derived fields (model, size, type)
     - Call `deriveHealthVerdict(drive)`
-- [ ] `parseSmartctlJson()` — duplicate the same implementation from macOS (identical logic, both use QJsonDocument)
-- [ ] Constructor calls `discoverDrives()`
+- [x] `parseSmartctlJson()` — duplicate the same implementation from macOS (identical logic, both use QJsonDocument)
+- [x] Constructor calls `discoverDrives()`
 
 ### 3.2 — Implement refreshHealth()
-- [ ] For each known drive, re-run smartctl and re-parse
-- [ ] Update health verdicts
+- [x] For each known drive, re-run smartctl and re-parse
+- [x] Update health verdicts
 
 ### 3.3 — Implement refreshHealthElevated()
-- [ ] Run `CommandUtil::exec("pkexec", {"smartctl", "-j", "-a", device})`
-- [ ] Parse JSON, update drive data, clear `needsElevation`
+- [x] Run `CommandUtil::exec("pkexec", {"smartctl", "-j", "-a", device})`
+- [x] Parse JSON, update drive data, clear `needsElevation`
 
 ### 3.4 — Build verification
-- [ ] Linux incremental build succeeds (cross-compile or clean macOS build verifying no Linux-specific compile errors)
+- [x] Linux incremental build succeeds (cross-compile or clean macOS build verifying no Linux-specific compile errors)
 
 ---
 
 ## Task 4: InfoManager Integration
 
 ### 4.1 — Update InfoManager header
-- [ ] Add `#include <Info/disk_health_info.h>` to `info_manager.h`
-- [ ] Add `DiskHealthInfo dhi;` to private members
-- [ ] Add public method declarations:
+- [x] Add `#include <Info/disk_health_info.h>` to `info_manager.h`
+- [x] Add `DiskHealthInfo dhi;` to private members
+- [x] Add public method declarations:
   - `QList<DriveHealth> getDriveHealth() const;`
   - `void refreshDiskHealth();`
   - `void refreshDiskHealthElevated(const QString &device);`
@@ -204,7 +204,7 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
   - `bool hasSmartctl() const;`
 
 ### 4.2 — Update InfoManager implementation
-- [ ] Add Disk Health Provider section to `info_manager.cpp`:
+- [x] Add Disk Health Provider section to `info_manager.cpp`:
   ```cpp
   QList<DriveHealth> InfoManager::getDriveHealth() const { return dhi.getDrives(); }
   void InfoManager::refreshDiskHealth() { dhi.refreshHealth(); }
@@ -214,24 +214,24 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
   ```
 
 ### 4.3 — Build verification
-- [ ] Incremental build succeeds
+- [x] Incremental build succeeds
 
 ---
 
 ## Task 5: Hardware Info — Storage Section
 
 ### 5.1 — Add storage section to UI
-- [ ] Edit `shared/nexis/Pages/HardwareInfo/hardware_info_page.ui`:
+- [x] Edit `shared/nexis/Pages/HardwareInfo/hardware_info_page.ui`:
   - Add `grpStorage` QGroupBox (title: "Storage") **after** `grpBattery`, **before** the vertical spacer
   - Add `tblStorage` QTableWidget inside (2 columns, same properties as `tblBattery`)
   - Match all widget properties: showGrid=false, frameShape=NoFrame, selectionMode=NoSelection, editTriggers=NoEditTriggers, focusPolicy=NoFocus, scrollBars=AlwaysOff
 
 ### 5.2 — Add populate method declaration
-- [ ] Edit `hardware_info_page.h`:
+- [x] Edit `hardware_info_page.h`:
   - Add `void populateStorage();` to private methods
 
 ### 5.3 — Implement populateStorage()
-- [ ] Edit `hardware_info_page.cpp`:
+- [x] Edit `hardware_info_page.cpp`:
   - Add `populateStorage()` call in `init()` after `populateBattery()`
   - Implement `populateStorage()`:
     ```
@@ -364,16 +364,16 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
     ```
 
 ### 5.4 — Build and visual verification
-- [ ] Incremental build succeeds
-- [ ] Storage section appears in Hardware Info with drive health data
-- [ ] Health verdict is color-coded (green/yellow/red)
+- [x] Incremental build succeeds
+- [x] Storage section appears in Hardware Info with drive health data
+- [x] Health verdict is color-coded (green/yellow/red)
 
 ---
 
 ## Task 6: SettingManager — Disk Health Alert Key
 
 ### 6.1 — Add key to header
-- [ ] Edit `setting_manager.h`:
+- [x] Edit `setting_manager.h`:
   - Add to `SettingKeys` namespace:
     ```cpp
     const QString DiskHealthAlertEnabled("DiskHealthAlertEnabled");
@@ -385,25 +385,25 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
     ```
 
 ### 6.2 — Implement getter/setter
-- [ ] Edit `setting_manager.cpp`:
+- [x] Edit `setting_manager.cpp`:
   - `DiskHealthAlertEnabled` — default `true` (enabled)
 
 ### 6.3 — Build verification
-- [ ] Incremental build succeeds
+- [x] Incremental build succeeds
 
 ---
 
 ## Task 7: Settings Page — Disk Health Alert Toggle
 
 ### 7.1 — Add UI widget
-- [ ] Edit `shared/nexis/Pages/Settings/settings_page.ui`:
+- [x] Edit `shared/nexis/Pages/Settings/settings_page.ui`:
   - Add `lblDiskHealthAlert` QLabel (text: "Disk Health Alert") at Row 7, Column 4 (or appropriate position in the existing grid layout)
   - Add `checkDiskHealthAlert` QCheckBox at Row 8, Column 4 — cursor=PointingHandCursor, focusPolicy=NoFocus
 
 ### 7.2 — Wire loading and saving
-- [ ] Edit `settings_page.h`:
+- [x] Edit `settings_page.h`:
   - Add `void on_checkDiskHealthAlert_clicked(bool checked);` slot declaration
-- [ ] Edit `settings_page.cpp`:
+- [x] Edit `settings_page.cpp`:
   - In `init()`:
     ```cpp
     ui->checkDiskHealthAlert->setChecked(mSettingManager->getDiskHealthAlertEnabled());
@@ -416,27 +416,27 @@ Dashboard changes and Resources page charts are deferred to Phase 3.
     ```
 
 ### 7.3 — Build verification
-- [ ] Incremental build succeeds
+- [x] Incremental build succeeds
 
 ---
 
 ## Task 8: Final Verification & Cleanup
 
 ### 8.1 — Clean rebuild
-- [ ] Full clean rebuild on macOS: `rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) && cmake --build build -j$(sysctl -n hw.ncpu)`
-- [ ] Verify zero warnings in disk_health_info files
+- [x] Full clean rebuild on macOS: `rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) && cmake --build build -j$(sysctl -n hw.ncpu)`
+- [x] Verify zero warnings in disk_health_info files
 
 ### 8.2 — Functional testing
-- [ ] Hardware Info: Storage section shows all detected drives with model and health
-- [ ] Hardware Info: NVMe drives show percentage used, available spare, media errors, etc.
-- [ ] Hardware Info: Health verdict is correctly color-coded
-- [ ] Hardware Info: Apple internal SSD shows Verified/Failing with limitation note
-- [ ] Settings: Disk health alert toggle persists across app restarts
+- [x] Hardware Info: Storage section shows all detected drives with model and health
+- [x] Hardware Info: NVMe drives show percentage used, available spare, media errors, etc.
+- [x] Hardware Info: Health verdict is correctly color-coded
+- [x] Hardware Info: Apple internal SSD shows Verified/Failing with limitation note
+- [x] Settings: Disk health alert toggle persists across app restarts
 
 ### 8.3 — Update tracking files
-- [ ] Mark FR-29 Phase 2 tasks complete in this plan document
-- [ ] Update FEATURE_REQUESTS.md with Phase 2 resolution notes
-- [ ] Commit and push
+- [x] Mark FR-29 Phase 2 tasks complete in this plan document
+- [x] Update FEATURE_REQUESTS.md with Phase 2 resolution notes
+- [x] Commit and push
 
 ---
 
