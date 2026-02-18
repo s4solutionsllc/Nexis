@@ -509,19 +509,14 @@ void SystemCleanerPage::initScheduleIndicator()
     if (!pageLayout) return;
 
     mScheduleIndicator = new QFrame;
-    mScheduleIndicator->setStyleSheet(
-        "QFrame { background: rgba(128,128,128,30); border-radius: 6px; padding: 8px; }");
+    mScheduleIndicator->setObjectName("scheduleIndicator");
 
     QHBoxLayout *indicatorLayout = new QHBoxLayout(mScheduleIndicator);
     indicatorLayout->setContentsMargins(12, 6, 12, 6);
 
-    QLabel *iconLabel = new QLabel(QString::fromUtf8("\xf0\x9f\x93\x85"));
-    iconLabel->setFixedWidth(24);
-    indicatorLayout->addWidget(iconLabel);
-
     mLblNextSchedule = new QLabel;
     mLblLastSchedule = new QLabel;
-    mLblLastSchedule->setStyleSheet("color: gray; font-size: 11px;");
+    mLblLastSchedule->setObjectName("lblLastSchedule");
 
     QVBoxLayout *textLayout = new QVBoxLayout;
     textLayout->setSpacing(2);

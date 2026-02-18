@@ -680,6 +680,20 @@ QLabel[accessibleName="dialog-title"] {
     color: @color05;
 }
 
+/* - Schedule Indicator - */
+
+#scheduleIndicator {
+    background-color: @cardBg;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+    padding: 8;
+}
+
+#lblLastSchedule {
+    font-size: 9pt;
+    color: @color06;
+}
+
 /************************
     STARTUP APPS PAGE
 *************************/
@@ -986,6 +1000,34 @@ QLabel[accessibleName="dialog-title"] {
 #lblCreatedBy {
     font-size: 9pt;
     color: @color06;
+}
+
+#SettingsPage QLabel[accessibleName="title"] {
+    font-size: 11pt;
+    font-weight: bold;
+    color: @color05;
+    padding-top: 8;
+}
+
+#lblQuickSetupSummary {
+    font-size: 9pt;
+    color: @color06;
+}
+
+/* - Shared dialog label styles - */
+
+QLabel[accessibleName="dimmed"] {
+    color: @color06;
+}
+
+QLabel[accessibleName="dimmed-small"] {
+    font-size: 9pt;
+    color: @color06;
+}
+
+#lblTrashWarning {
+    font-size: 9pt;
+    color: @warningColor;
 }
 
 /*****************

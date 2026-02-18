@@ -307,49 +307,59 @@ void SettingsPage::initScheduledCleaning()
     QGridLayout *grid = qobject_cast<QGridLayout *>(layout());
     if (!grid) return;
 
-    // Find the row of the vertical spacer (row 9) and insert before it
-    // We'll use row 9 for the scheduled cleaning section and push the spacer down
+    // Remove the footer (row 10) and spacer (row 9) so we can insert
+    // the Scheduled Cleaning section above them, then re-add them below.
+    QLayoutItem *spacerItem = grid->itemAtPosition(9, 0);
+    if (spacerItem) grid->removeItem(spacerItem);
+    grid->removeWidget(ui->lblCreatedBy);
 
     // Section title
     QLabel *lblTitle = new QLabel(tr("Scheduled Cleaning"));
     lblTitle->setProperty("accessibleName", "title");
-    grid->addWidget(lblTitle, 11, 0, 1, 6);
+    grid->addWidget(lblTitle, 9, 0, 1, 6);
 
     // Quick setup
     mChkQuickSetup = new QCheckBox(tr("Enable automatic weekly cleaning"));
     mChkQuickSetup->setCursor(Qt::PointingHandCursor);
-    grid->addWidget(mChkQuickSetup, 12, 0, 1, 2);
+    grid->addWidget(mChkQuickSetup, 10, 0, 1, 2);
 
     mLblQuickSetupSummary = new QLabel;
-    mLblQuickSetupSummary->setStyleSheet("color: gray; font-size: 11px;");
-    grid->addWidget(mLblQuickSetupSummary, 12, 2, 1, 2);
+    mLblQuickSetupSummary->setObjectName("lblQuickSetupSummary");
+    grid->addWidget(mLblQuickSetupSummary, 10, 2, 1, 2);
 
     // Manage Schedules + View History buttons
     mBtnManageSchedules = new QPushButton(tr("Manage Schedules..."));
     mBtnManageSchedules->setCursor(Qt::PointingHandCursor);
     mBtnManageSchedules->setFocusPolicy(Qt::NoFocus);
-    grid->addWidget(mBtnManageSchedules, 13, 0);
+    grid->addWidget(mBtnManageSchedules, 11, 0);
 
     mBtnViewHistory = new QPushButton(tr("View Cleaning History"));
     mBtnViewHistory->setCursor(Qt::PointingHandCursor);
     mBtnViewHistory->setFocusPolicy(Qt::NoFocus);
-    grid->addWidget(mBtnViewHistory, 13, 1);
+    grid->addWidget(mBtnViewHistory, 11, 1);
 
     // Threshold alert
     mChkThresholdAlert = new QCheckBox(tr("Notify when junk exceeds"));
     mChkThresholdAlert->setCursor(Qt::PointingHandCursor);
-    grid->addWidget(mChkThresholdAlert, 14, 0, 1, 2);
+    grid->addWidget(mChkThresholdAlert, 12, 0, 1, 2);
 
     mSpnThresholdGB = new QSpinBox;
     mSpnThresholdGB->setRange(1, 100);
     mSpnThresholdGB->setSuffix(tr(" GB"));
     mSpnThresholdGB->setFocusPolicy(Qt::ClickFocus);
-    grid->addWidget(mSpnThresholdGB, 14, 2);
+    grid->addWidget(mSpnThresholdGB, 12, 2);
 
     // Cleaning notifications
     mChkCleaningNotifications = new QCheckBox(tr("Show notification after scheduled clean"));
     mChkCleaningNotifications->setCursor(Qt::PointingHandCursor);
-    grid->addWidget(mChkCleaningNotifications, 15, 0, 1, 3);
+    grid->addWidget(mChkCleaningNotifications, 13, 0, 1, 3);
+
+    // Re-add spacer and footer below the new section
+    if (spacerItem) grid->addItem(spacerItem, 14, 0);
+    grid->addWidget(ui->lblCreatedBy, 15, 3, 1, 2, Qt::AlignRight);
+
+    // Drop shadows matching existing Settings widgets
+    Utilities::addDropShadow({mBtnManageSchedules, mBtnViewHistory, mSpnThresholdGB}, 50);
 
     // Restore saved state
     mChkThresholdAlert->setChecked(mSettingManager->getThresholdAlertEnabled());
@@ -428,9 +438,14 @@ void SettingsPage::onManageSchedules()
 {
     QDialog dialog(this);
     dialog.setWindowTitle(tr("Manage Cleaning Schedules"));
+    dialog.setObjectName("manageSchedulesDialog");
     dialog.setMinimumSize(550, 400);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
+
+    QLabel *dlgTitle = new QLabel(tr("Manage Cleaning Schedules"));
+    dlgTitle->setProperty("accessibleName", "dialog-title");
+    layout->addWidget(dlgTitle);
 
     QScrollArea *scrollArea = new QScrollArea;
     scrollArea->setWidgetResizable(true);
@@ -461,7 +476,7 @@ void SettingsPage::onManageSchedules()
             QVBoxLayout *infoLayout = new QVBoxLayout;
             QLabel *nameLabel = new QLabel(QString("<b>%1</b>").arg(s.name));
             QLabel *freqLabel = new QLabel(ScheduleManager::frequencyDisplayText(s));
-            freqLabel->setStyleSheet("color: gray;");
+            freqLabel->setProperty("accessibleName", "dimmed");
 
             QString lastRunText;
             if (s.lastRun.isValid()) {
@@ -472,7 +487,7 @@ void SettingsPage::onManageSchedules()
                 lastRunText = tr("Never run");
             }
             QLabel *lastLabel = new QLabel(lastRunText);
-            lastLabel->setStyleSheet("color: gray; font-size: 11px;");
+            lastLabel->setProperty("accessibleName", "dimmed-small");
 
             infoLayout->addWidget(nameLabel);
             infoLayout->addWidget(freqLabel);
@@ -483,6 +498,7 @@ void SettingsPage::onManageSchedules()
             editBtn->setFocusPolicy(Qt::NoFocus);
             QPushButton *deleteBtn = new QPushButton(tr("Delete"));
             deleteBtn->setFocusPolicy(Qt::NoFocus);
+            deleteBtn->setProperty("accessibleName", "danger");
             cardLayout->addWidget(editBtn);
             cardLayout->addWidget(deleteBtn);
 
@@ -522,6 +538,7 @@ void SettingsPage::onManageSchedules()
 
     QPushButton *addBtn = new QPushButton(tr("Add Schedule"));
     addBtn->setCursor(Qt::PointingHandCursor);
+    addBtn->setProperty("accessibleName", "primary");
     connect(addBtn, &QPushButton::clicked, [this, &dialog, &refreshList]() {
         ScheduleEditorDialog editor(&dialog);
         connect(&editor, &ScheduleEditorDialog::scheduleCreated, [](const ScheduleManager::CleaningSchedule &s) {
@@ -547,9 +564,14 @@ void SettingsPage::onViewCleaningHistory()
 {
     QDialog dialog(this);
     dialog.setWindowTitle(tr("Cleaning History"));
+    dialog.setObjectName("cleaningHistoryDialog");
     dialog.setMinimumSize(600, 400);
 
     QVBoxLayout *layout = new QVBoxLayout(&dialog);
+
+    QLabel *dlgTitle = new QLabel(tr("Cleaning History"));
+    dlgTitle->setProperty("accessibleName", "dialog-title");
+    layout->addWidget(dlgTitle);
 
     QPlainTextEdit *textEdit = new QPlainTextEdit;
     textEdit->setReadOnly(true);
@@ -576,6 +598,7 @@ void SettingsPage::onViewCleaningHistory()
 
     QHBoxLayout *btnRow = new QHBoxLayout;
     QPushButton *clearBtn = new QPushButton(tr("Clear History"));
+    clearBtn->setProperty("accessibleName", "danger");
     connect(clearBtn, &QPushButton::clicked, [logPath, textEdit]() {
         QFile::remove(logPath);
         textEdit->setPlainText("");

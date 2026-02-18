@@ -12,6 +12,7 @@ ScheduleEditorDialog::ScheduleEditorDialog(QWidget *parent)
 {
     buildUI();
     setWindowTitle(tr("New Cleaning Schedule"));
+    mLblDialogTitle->setText(tr("New Cleaning Schedule"));
 
     // Defaults
     mTxtName->setText(tr("Weekly Cleanup"));
@@ -34,6 +35,7 @@ ScheduleEditorDialog::ScheduleEditorDialog(const ScheduleManager::CleaningSchedu
 {
     buildUI();
     setWindowTitle(tr("Edit Cleaning Schedule"));
+    mLblDialogTitle->setText(tr("Edit Cleaning Schedule"));
     populateFromSchedule(schedule);
     onFrequencyChanged();
 }
@@ -45,6 +47,11 @@ void ScheduleEditorDialog::buildUI()
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(12);
     mainLayout->setContentsMargins(20, 15, 20, 15);
+
+    // Dialog title (themed via QSS accessibleName="dialog-title")
+    mLblDialogTitle = new QLabel;
+    mLblDialogTitle->setProperty("accessibleName", "dialog-title");
+    mainLayout->addWidget(mLblDialogTitle);
 
     // Schedule name
     QFormLayout *nameForm = new QFormLayout;
@@ -141,7 +148,7 @@ void ScheduleEditorDialog::buildUI()
     catGrid->addWidget(mChkDevToolCaches, 2, 1);
 
     mLblTrashWarning = new QLabel(tr("\xe2\x9a\xa0 Trash is permanently deleted and cannot be recovered"));
-    mLblTrashWarning->setStyleSheet("color: #d4a017; font-size: 11px;");
+    mLblTrashWarning->setObjectName("lblTrashWarning");
     mLblTrashWarning->setVisible(false);
     catGrid->addWidget(mLblTrashWarning, 3, 0, 1, 2);
 
@@ -165,7 +172,7 @@ void ScheduleEditorDialog::buildUI()
 
     // Error label
     mLblError = new QLabel;
-    mLblError->setStyleSheet("color: red;");
+    mLblError->setObjectName("lblErrorMsg");
     mLblError->setVisible(false);
     mainLayout->addWidget(mLblError);
 
@@ -176,6 +183,7 @@ void ScheduleEditorDialog::buildUI()
     mBtnCancel = new QPushButton(tr("Cancel"));
     mBtnSave = new QPushButton(tr("Save"));
     mBtnSave->setDefault(true);
+    mBtnSave->setProperty("accessibleName", "primary");
     btnRow->addWidget(mBtnCancel);
     btnRow->addWidget(mBtnSave);
     mainLayout->addLayout(btnRow);

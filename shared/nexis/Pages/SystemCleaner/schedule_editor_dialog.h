@@ -40,6 +40,7 @@ private:
     QString mScheduleId;
     bool mDryRunCompleted = false;
 
+    QLabel *mLblDialogTitle;
     QLineEdit *mTxtName;
     QRadioButton *mRadDaily;
     QRadioButton *mRadEveryNDays;
