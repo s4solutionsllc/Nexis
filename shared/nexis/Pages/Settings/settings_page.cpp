@@ -451,7 +451,10 @@ void SettingsPage::onManageSchedules()
 
     QScrollArea *scrollArea = new QScrollArea;
     scrollArea->setWidgetResizable(true);
-    scrollArea->viewport()->setAutoFillBackground(false);
+    QPalette scrollPal = scrollArea->palette();
+    scrollPal.setColor(QPalette::Window, dialog.palette().color(QPalette::Window));
+    scrollArea->setPalette(scrollPal);
+    scrollArea->viewport()->setPalette(scrollPal);
     QWidget *scrollWidget = new QWidget;
     scrollWidget->setAutoFillBackground(false);
     QVBoxLayout *listLayout = new QVBoxLayout(scrollWidget);
