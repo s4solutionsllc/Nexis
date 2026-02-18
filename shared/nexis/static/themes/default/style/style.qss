@@ -411,8 +411,8 @@ QLabel[accessibleName="dialog-title"] {
 
 #sidebar {
     background-color: @sidebar;
-    min-width: @dp200;
-    max-width: @dp200;
+    min-width: 200;
+    max-width: 200;
     border-right: 1px solid @borderColor;
 }
 
