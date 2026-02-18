@@ -155,6 +155,11 @@ QCheckBox::indicator:unchecked {
     image: url(:/static/themes/common/img/un-checkbox.png);
 }
 
+QCheckBox:focus {
+    outline: none;
+    border: none;
+}
+
 QCheckBox[accessibleName="circle"] {
     font-size: 10pt;
     color: @color06;

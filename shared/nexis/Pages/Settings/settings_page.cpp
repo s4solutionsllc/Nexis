@@ -331,11 +331,13 @@ void SettingsPage::initScheduledCleaning()
     mBtnManageSchedules = new QPushButton(tr("Manage Schedules..."));
     mBtnManageSchedules->setCursor(Qt::PointingHandCursor);
     mBtnManageSchedules->setFocusPolicy(Qt::NoFocus);
+    mBtnManageSchedules->setProperty("accessibleName", "primary");
     grid->addWidget(mBtnManageSchedules, 11, 0);
 
     mBtnViewHistory = new QPushButton(tr("View Cleaning History"));
     mBtnViewHistory->setCursor(Qt::PointingHandCursor);
     mBtnViewHistory->setFocusPolicy(Qt::NoFocus);
+    mBtnViewHistory->setProperty("accessibleName", "primary");
     grid->addWidget(mBtnViewHistory, 11, 1);
 
     // Threshold alert
