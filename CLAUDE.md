@@ -88,6 +88,20 @@ When the user requests a new feature or asks to fix a bug, follow this three-pha
 
 When a bug or feature request is marked `[x]` (done), move its associated `claude_definitions/` files (`{ID}_research.md`, `{ID}_plan.md`, and any other `{ID}_*.md` variants) to `claude_definitions/Archive/`. This keeps the active working directory clean and limited to open/in-progress items. Files for open (`[ ]`) or in-progress (`[~]`) items must remain in `claude_definitions/`.
 
+## Qt/QSS Gotchas
+
+### QScrollArea Viewport in Programmatic Dialogs
+
+When creating a `QScrollArea` inside a programmatically-built `QDialog`, the viewport renders with the system palette (white) instead of the dialog's QSS-themed background. `QPalette` propagation, `setAutoFillBackground(false)`, and `WA_TranslucentBackground` do **not** work due to timing/precedence conflicts between Qt's palette system and QSS.
+
+**Working pattern** (matches HardwareInfoPage):
+```cpp
+scrollArea->setFrameShape(QFrame::NoFrame);
+scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
+scrollWidget->setStyleSheet("background-color:transparent;");
+```
+This makes the scroll area and its content transparent so the dialog's QSS `background-color: @color01` shows through.
+
 ## Notable Forks
 
 - **QuentiumYT/Stacer** — Most active fork of the original project (78 stars). Reference for fixes and features.
