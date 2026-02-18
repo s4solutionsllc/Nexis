@@ -37,10 +37,13 @@ StartupAppEdit::StartupAppEdit(QWidget *parent) :
 
 void StartupAppEdit::init()
 {
-    setGeometry(
-        QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter,
-            size(), qApp->primaryScreen()->availableGeometry())
-    );
+    QScreen *screen = qApp->primaryScreen();
+    if (screen) {
+        setGeometry(
+            QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter,
+                size(), screen->availableGeometry())
+        );
+    }
 
     mAutostartPath = QDir::homePath() + "/Library/LaunchAgents";
 

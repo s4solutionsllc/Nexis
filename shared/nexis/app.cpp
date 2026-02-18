@@ -7,6 +7,7 @@
 #include <QScreen>
 #include <QIcon>
 #include <QEvent>
+#include <QWindow>
 #include <QThreadPool>
 
 App::~App()
@@ -29,10 +30,13 @@ App::App(QWidget *parent) :
 
 void App::init()
 {
-    setGeometry(
-        QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter,
-            size(), qApp->primaryScreen()->availableGeometry())
-    );
+    QScreen *screen = qApp->primaryScreen();
+    if (screen) {
+        setGeometry(
+            QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter,
+                size(), screen->availableGeometry())
+        );
+    }
 
     // form settings
     ui->horizontalLayout->setContentsMargins(0,0,0,0);
@@ -180,8 +184,8 @@ void App::createTrayActions()
     connect(mTrayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason) {
         setWindowState(windowState() & ~Qt::WindowMinimized);
         show();
-        raise();
-        activateWindow();
+        if (windowHandle())
+            windowHandle()->requestActivate();
     });
 
     mTrayMenu->addSeparator();
@@ -203,7 +207,8 @@ void App::clickSidebarButton(QString pageTitle, bool isShow)
         pageClick(mListPages.first());
     }
     setVisible(isShow);
-    if (isShow) activateWindow();
+    if (isShow && windowHandle())
+        windowHandle()->requestActivate();
 }
 
 void App::checkSidebarButtonByTooltip(const QString &text)

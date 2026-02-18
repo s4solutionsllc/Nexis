@@ -58,11 +58,12 @@
   - **Upstream:** [#111](https://github.com/oguzhaninan/Stacer/issues/111), [#482](https://github.com/oguzhaninan/Stacer/issues/482)
   - **Fix complexity:** Hard (architectural — would need QML migration)
 
-- [ ] **BUG-08: Wayland compatibility** (LOW)
+- [x] **BUG-08: Wayland compatibility** (LOW)
   - **Scope:** Platform / Qt level
   - **Description:** App fails to launch with `QT_QPA_PLATFORM=wayland`.
   - **Upstream:** [#494](https://github.com/oguzhaninan/Stacer/issues/494)
   - **Fix complexity:** Moderate
+  - **Resolved:** Guarded all 3 `primaryScreen()` call sites against null (the crash cause on Wayland where screen info arrives asynchronously). Replaced `raise()`/`activateWindow()` with `windowHandle()->requestActivate()` which uses the `xdg-activation` protocol on Wayland compositors.
 
 - [x] **BUG-09: Non-English locale parsing failures** (LOW)
   - **File:** `linux/nexis-core/Info/cpu_info.cpp` and other system command parsers
