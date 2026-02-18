@@ -43,11 +43,12 @@
   - **Fix complexity:** Moderate (store QFuture objects, wait in destructor)
   - **Resolved:** closeEvent() now calls QThreadPool::globalInstance()->waitForDone() before quitting; QFuture objects stored in UninstallerPage and SystemCleanerPage
 
-- [ ] **BUG-06: Slow startup with large /etc/hosts file** (MEDIUM)
+- [x] **BUG-06: Slow startup with large /etc/hosts file** (MEDIUM)
   - **File:** `shared/nexis/Pages/Helpers/host_manage.cpp:57,62-100`
   - **Description:** Entire hosts file is read and parsed into UI model at startup with no lazy loading or pagination. Systems with large hosts files (ad-blockers, Pi-hole exports with 10,000+ entries) experience UI freezing.
   - **Upstream:** [#492](https://github.com/oguzhaninan/Stacer/issues/492)
   - **Fix complexity:** Moderate (defer loading, add pagination or virtual scrolling)
+  - **Resolved:** Four fixes: (1) Deferred loading — file is only read when user navigates to Helpers page via `loadIfNeeded()` with `mLoaded` flag, eliminating startup impact entirely. (2) Batched model population — `blockSignals(true)` and `setDynamicSortFilter(false)` during bulk `appendRow()` loop, single `invalidate()`+`reset()` after. (3) Pre-compiled regex — `QRegularExpression("\\s+")` is now `static const`, compiled once. (4) Incremental updates — add/edit/delete operations modify only the affected model row instead of calling `loadTableData()` to rebuild everything.
 
 ## LOW Severity
 

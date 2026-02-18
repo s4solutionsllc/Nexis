@@ -29,6 +29,7 @@ class HostManage : public QWidget
 public:
     explicit HostManage(QWidget *parent = 0);
     ~HostManage();
+    void loadIfNeeded();
 
 private slots:
     void init();
@@ -58,6 +59,7 @@ private:
     QMap<int, HostItem> mHostItemList;
 
     int updatedLine;
+    bool mLoaded = false;
 };
 
 #endif // HOST_MANAGE_H

@@ -28,5 +28,6 @@ void HelpersPage::init()
 
 void HelpersPage::on_btnHostManage_clicked()
 {
+    widgetHostManage->loadIfNeeded();
     ui->stackedWidget->setCurrentIndex(0);
 }
