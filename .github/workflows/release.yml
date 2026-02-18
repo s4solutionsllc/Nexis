@@ -10,11 +10,24 @@ permissions:
 
 jobs:
   # ============================================================================
-  # Linux build: .deb + AppImage + raw binary
+  # Linux build matrix: x86_64 + ARM64 — .deb + AppImage + raw binary
   # ============================================================================
   build-linux:
-    name: Linux Build
-    runs-on: ubuntu-24.04
+    name: Linux Build (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+            linuxdeploy-arch: x86_64
+            deb-arch: amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            linuxdeploy-arch: aarch64
+            deb-arch: arm64
 
     steps:
       - name: Checkout
@@ -73,16 +86,16 @@ jobs:
 
       - name: Download linuxdeploy and Qt plugin
         run: |
-          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-qt-x86_64.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.linuxdeploy-arch }}.AppImage
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.linuxdeploy-arch }}.AppImage
+          chmod +x linuxdeploy-${{ matrix.linuxdeploy-arch }}.AppImage linuxdeploy-plugin-qt-${{ matrix.linuxdeploy-arch }}.AppImage
 
       - name: Build AppImage
         env:
           QMAKE: /usr/bin/qmake6
           VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
-          ./linuxdeploy-x86_64.AppImage \
+          ./linuxdeploy-${{ matrix.linuxdeploy-arch }}.AppImage \
             --appdir AppDir \
             --desktop-file AppDir/usr/share/applications/nexis.desktop \
             --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/nexis.png \
@@ -99,7 +112,7 @@ jobs:
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-artifacts
+          name: linux-artifacts-${{ matrix.arch }}
           path: |
             ${{ steps.deb.outputs.DEB_PATH }}
             ${{ steps.appimage.outputs.APPIMAGE_PATH }}
@@ -161,11 +174,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Linux artifacts
+      - name: Download Linux x86_64 artifacts
         uses: actions/download-artifact@v4
         with:
-          name: linux-artifacts
-          path: artifacts/linux
+          name: linux-artifacts-x86_64
+          path: artifacts/linux-x86_64
+
+      - name: Download Linux ARM64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts-arm64
+          path: artifacts/linux-arm64
 
       - name: Download macOS artifacts
         uses: actions/download-artifact@v4
@@ -179,15 +198,28 @@ jobs:
       - name: Find artifact files
         id: files
         run: |
-          DEB=$(find artifacts/linux -name '*.deb' | head -1)
-          APPIMAGE=$(find artifacts/linux -name '*.AppImage' | head -1)
-          BINARY=$(find artifacts/linux -name 'nexis' -not -name '*.app' -not -name '*.dmg' | head -1)
+          # x86_64
+          DEB_X64=$(find artifacts/linux-x86_64 -name '*.deb' | head -1)
+          APPIMAGE_X64=$(find artifacts/linux-x86_64 -name '*.AppImage' | head -1)
+          BINARY_X64=$(find artifacts/linux-x86_64 -name 'nexis' -not -name '*.app' -not -name '*.dmg' | head -1)
+          echo "DEB_X64_PATH=$DEB_X64" >> "$GITHUB_OUTPUT"
+          echo "DEB_X64_NAME=$(basename $DEB_X64)" >> "$GITHUB_OUTPUT"
+          echo "APPIMAGE_X64_PATH=$APPIMAGE_X64" >> "$GITHUB_OUTPUT"
+          echo "APPIMAGE_X64_NAME=$(basename $APPIMAGE_X64)" >> "$GITHUB_OUTPUT"
+          echo "BINARY_X64_PATH=$BINARY_X64" >> "$GITHUB_OUTPUT"
+
+          # ARM64
+          DEB_ARM64=$(find artifacts/linux-arm64 -name '*.deb' | head -1)
+          APPIMAGE_ARM64=$(find artifacts/linux-arm64 -name '*.AppImage' | head -1)
+          BINARY_ARM64=$(find artifacts/linux-arm64 -name 'nexis' -not -name '*.app' -not -name '*.dmg' | head -1)
+          echo "DEB_ARM64_PATH=$DEB_ARM64" >> "$GITHUB_OUTPUT"
+          echo "DEB_ARM64_NAME=$(basename $DEB_ARM64)" >> "$GITHUB_OUTPUT"
+          echo "APPIMAGE_ARM64_PATH=$APPIMAGE_ARM64" >> "$GITHUB_OUTPUT"
+          echo "APPIMAGE_ARM64_NAME=$(basename $APPIMAGE_ARM64)" >> "$GITHUB_OUTPUT"
+          echo "BINARY_ARM64_PATH=$BINARY_ARM64" >> "$GITHUB_OUTPUT"
+
+          # macOS
           DMG=$(find artifacts/macos -name '*.dmg' | head -1)
-          echo "DEB_PATH=$DEB" >> "$GITHUB_OUTPUT"
-          echo "DEB_NAME=$(basename $DEB)" >> "$GITHUB_OUTPUT"
-          echo "APPIMAGE_PATH=$APPIMAGE" >> "$GITHUB_OUTPUT"
-          echo "APPIMAGE_NAME=$(basename $APPIMAGE)" >> "$GITHUB_OUTPUT"
-          echo "BINARY_PATH=$BINARY" >> "$GITHUB_OUTPUT"
           echo "DMG_PATH=$DMG" >> "$GITHUB_OUTPUT"
           echo "DMG_NAME=$(basename $DMG)" >> "$GITHUB_OUTPUT"
 
@@ -205,6 +237,7 @@ jobs:
 
             - Complete rebrand from Stacer to Nexis
             - Native macOS support (Apple Silicon)
+            - Linux x86_64 and ARM64 support
             - Light and dark theme support with auto-detection
             - System Cleaner with Dev Tool Caches category (npm, pip, Cargo, Go, Maven, etc.)
             - External disk analyzer launcher (Filelight, Baobab, ncdu, etc.)
@@ -217,9 +250,16 @@ jobs:
             #### Linux (x86_64)
             | Format | File | Description |
             |--------|------|-------------|
-            | `.deb` | `${{ steps.files.outputs.DEB_NAME }}` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |
-            | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_NAME }}` | Portable — runs on any Linux distro |
+            | `.deb` | `${{ steps.files.outputs.DEB_X64_NAME }}` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |
+            | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_X64_NAME }}` | Portable — runs on any Linux distro |
             | Binary | `nexis` | Standalone executable (requires Qt6 runtime) |
+
+            #### Linux (ARM64 / aarch64)
+            | Format | File | Description |
+            |--------|------|-------------|
+            | `.deb` | `${{ steps.files.outputs.DEB_ARM64_NAME }}` | For Ubuntu 22.04+ ARM64 (Raspberry Pi 5, Jetson, Graviton, etc.) |
+            | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_ARM64_NAME }}` | Portable ARM64 — runs on any ARM64 Linux distro |
+            | Binary | `nexis` | Standalone ARM64 executable (requires Qt6 runtime) |
 
             #### macOS (Apple Silicon)
             | Format | File | Description |
@@ -232,8 +272,10 @@ jobs:
 
             #### Linux — `.deb` (Ubuntu / Debian / Mint)
             ```bash
-            # Install the package
-            sudo dpkg -i ${{ steps.files.outputs.DEB_NAME }}
+            # Install the package (use the correct .deb for your architecture)
+            sudo dpkg -i ${{ steps.files.outputs.DEB_X64_NAME }}   # x86_64
+            # or
+            sudo dpkg -i ${{ steps.files.outputs.DEB_ARM64_NAME }}  # ARM64
 
             # Fix any missing dependencies
             sudo apt-get install -f
@@ -244,15 +286,15 @@ jobs:
 
             #### Linux — AppImage (Any Distro)
             ```bash
-            # Make executable and run
-            chmod +x ${{ steps.files.outputs.APPIMAGE_NAME }}
-            ./${{ steps.files.outputs.APPIMAGE_NAME }}
+            # Make executable and run (use the correct AppImage for your architecture)
+            chmod +x ${{ steps.files.outputs.APPIMAGE_X64_NAME }}
+            ./${{ steps.files.outputs.APPIMAGE_X64_NAME }}
             ```
             > **Note:** AppImage requires FUSE. On Ubuntu 22.04+: `sudo apt install libfuse2`
 
             #### Linux — Build from Source
             ```bash
-            # Install dependencies (Ubuntu/Debian)
+            # Install dependencies (Ubuntu/Debian — works on both x86_64 and ARM64)
             sudo apt install build-essential cmake g++ \
               qt6-base-dev qt6-charts-dev qt6-svg-dev \
               qt6-tools-dev qt6-l10n-tools libgl1-mesa-dev
@@ -294,7 +336,7 @@ jobs:
             ---
 
             ### System Requirements
-            - **Linux:** Ubuntu 22.04+ / Debian 12+ / Fedora 36+ — Qt 6.2+, x86_64
+            - **Linux:** Ubuntu 22.04+ / Debian 12+ / Fedora 36+ — Qt 6.2+, x86_64 or ARM64 (aarch64)
             - **macOS:** macOS 13+ (Ventura) — Apple Silicon (ARM64)
 
             ---
@@ -302,7 +344,10 @@ jobs:
 
             Built from commit ${{ github.sha }}
           files: |
-            ${{ steps.files.outputs.DEB_PATH }}
-            ${{ steps.files.outputs.APPIMAGE_PATH }}
-            ${{ steps.files.outputs.BINARY_PATH }}
+            ${{ steps.files.outputs.DEB_X64_PATH }}
+            ${{ steps.files.outputs.APPIMAGE_X64_PATH }}
+            ${{ steps.files.outputs.BINARY_X64_PATH }}
+            ${{ steps.files.outputs.DEB_ARM64_PATH }}
+            ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}
+            ${{ steps.files.outputs.BINARY_ARM64_PATH }}
             ${{ steps.files.outputs.DMG_PATH }}

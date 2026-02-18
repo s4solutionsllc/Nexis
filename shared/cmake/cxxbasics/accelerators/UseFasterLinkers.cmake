@@ -43,7 +43,8 @@ if(CXXBASICS_USE_FASTER_LINKERS)
           cberror("Could not obtain CMAKE_C_COMPILER nor CMAKE_CXX_COMPILER")
         endif()
 
-        if("${__cxxbasics_target_arch}" STREQUAL "x86_64")
+        if("${__cxxbasics_target_arch}" STREQUAL "x86_64"
+            OR "${__cxxbasics_target_arch}" STREQUAL "armv8")
           # Lets check if the compiler supports the LLD linker
           execute_process(COMMAND ${compiler} -fuse-ld=lld -Wl,--version
               OUTPUT_VARIABLE __cxxbasics_ld_version
@@ -59,7 +60,7 @@ if(CXXBASICS_USE_FASTER_LINKERS)
             set(__cxxbasics_using_lld_linker ON)
             cbok("${__cxxbasics_current_compiler}(${compiler})'s linker set to: LLD linker")
           endif()
-        endif("${__cxxbasics_target_arch}" STREQUAL "x86_64")
+        endif()
       endif()
 
       # We set the GNU gold linker if we failed to set LLD

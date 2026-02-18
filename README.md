@@ -45,6 +45,7 @@ Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popu
 Pre-built binaries are available on the [Releases page](https://github.com/lsimpsonsfdc/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
+- **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
 - **macOS Apple Silicon**: `.dmg` disk image
 
 ## Building from Source

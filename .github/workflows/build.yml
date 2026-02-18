@@ -19,6 +19,10 @@ jobs:
             name: Linux (x64)
             artifact-name: nexis-linux-x64
             artifact-path: build/output/nexis
+          - os: ubuntu-24.04-arm
+            name: Linux (ARM64)
+            artifact-name: nexis-linux-arm64
+            artifact-path: build/output/nexis
           - os: macos-14
             name: macOS (ARM64)
             artifact-name: nexis-macos-arm64
