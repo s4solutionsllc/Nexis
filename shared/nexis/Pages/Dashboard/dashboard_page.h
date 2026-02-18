@@ -43,6 +43,7 @@ private slots:
     void onGpuDeviceChanged(int index);
 
     void updateBatteryBar();
+    void updateDiskHealthBar();
 
     void on_btnDownloadUpdate_clicked();
 
@@ -59,6 +60,7 @@ private:
     CircleBar* mTempBar;
     CircleBar* mGpuBar;
     CircleBar* mBatteryBar;
+    CircleBar* mDiskHealthBar;
 
     LineBar *mDownloadBar;
     LineBar *mUploadBar;

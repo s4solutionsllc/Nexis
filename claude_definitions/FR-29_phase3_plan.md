@@ -17,12 +17,12 @@ Phase 3 adds disk health monitoring to two existing pages:
 ## Task 1: Dashboard — Disk Health CircleBar
 
 ### 1.1 — Add member and slot declarations
-- [ ] Edit `dashboard_page.h`:
+- [x] Edit `dashboard_page.h`:
   - Add `CircleBar* mDiskHealthBar;` to private members
   - Add `void updateDiskHealthBar();` to private slots
 
 ### 1.2 — Construct and wire in constructor/init
-- [ ] Edit `dashboard_page.cpp`:
+- [x] Edit `dashboard_page.cpp`:
   - In constructor initializer list: `mDiskHealthBar(new CircleBar(tr("DISK HEALTH"), {"#26a69a", "#00897b"}, this))`
   - In `init()`, after adding mDiskBar to circleBarsLayout:
     - Check `im->hasDiskHealth()`:
@@ -33,45 +33,45 @@ Phase 3 adds disk health monitoring to two existing pages:
   - Add `mDiskHealthBar` to the drop shadow widgets list (if disk health available)
 
 ### 1.3 — Implement updateDiskHealthBar()
-- [ ] Get drives via `im->getDriveHealth()` (no refresh here — too expensive)
-- [ ] Find worst health: iterate drives, find the minimum `healthPercent` (skip -1 values)
-- [ ] If all healthPercent are -1: use 100% if all SMART passed, otherwise 0%
-- [ ] Build label text:
+- [x] Get drives via `im->getDriveHealth()` (no refresh here — too expensive)
+- [x] Find worst health: iterate drives, find the minimum `healthPercent` (skip -1 values)
+- [x] If all healthPercent are -1: use 100% if all SMART passed, otherwise 0%
+- [x] Build label text:
   - Single drive: `"{healthPercent}%\n{verdict}"`
   - Multiple drives: `"{healthPercent}%\n{worstDriveModel}"`
-- [ ] Call `mDiskHealthBar->setValue(displayPercent, label)`
+- [x] Call `mDiskHealthBar->setValue(displayPercent, label)`
 
 ### 1.4 — Implement disk health alert
-- [ ] Check `mSettingManager->getDiskHealthAlertEnabled()`
-- [ ] If any drive has verdict "Caution" or "Critical":
+- [x] Check `mSettingManager->getDiskHealthAlertEnabled()`
+- [x] If any drive has verdict "Caution" or "Critical":
   - Use static bool flag (same pattern as CPU/Memory alerts) to fire once
   - Show tray notification with drive name and verdict
   - Reset flag when all drives return to "Good"
 
 ### 1.5 — Add 30-second refresh timer
-- [ ] Create `QTimer *timerDiskHealth = new QTimer(this)` in `init()`
-- [ ] Connect to a lambda or helper that calls `im->refreshDiskHealth()` then `updateDiskHealthBar()`
-- [ ] Start at 30000ms
-- [ ] This timer refreshes the underlying data (subprocess calls); the display update reads from cache
+- [x] Create `QTimer *timerDiskHealth = new QTimer(this)` in `init()`
+- [x] Connect to a lambda or helper that calls `im->refreshDiskHealth()` then `updateDiskHealthBar()`
+- [x] Start at 30000ms
+- [x] This timer refreshes the underlying data (subprocess calls); the display update reads from cache
 
 ### 1.6 — Build verification
-- [ ] Incremental build succeeds
-- [ ] Dashboard shows DISK HEALTH CircleBar when drives available
-- [ ] CircleBar hidden when no disk health data
+- [x] Incremental build succeeds
+- [x] Dashboard shows DISK HEALTH CircleBar when drives available
+- [x] CircleBar hidden when no disk health data
 
 ---
 
 ## Task 2: Resources — Disk Temperature History Chart
 
 ### 2.1 — Add member and slot declarations
-- [ ] Edit `resources_page.h`:
+- [x] Edit `resources_page.h`:
   - Add `HistoryChart *mChartDiskHealth;` member
   - Add `void updateDiskHealthChart();` slot
   - Add `QTimer *mDiskHealthTimer;` member (separate 30s timer)
 
 ### 2.2 — Construct and wire in constructor/init
-- [ ] In constructor initializer list: set `mChartDiskHealth(nullptr)`, `mDiskHealthTimer(nullptr)`
-- [ ] In `init()`:
+- [x] In constructor initializer list: set `mChartDiskHealth(nullptr)`, `mDiskHealthTimer(nullptr)`
+- [x] In `init()`:
   - Check `im->hasDiskHealth()`:
     - Count drives with temperature data
     - If count > 0: create `HistoryChart(tr("History of Disk Temperature"), driveCount, nullptr, this)`
@@ -81,38 +81,38 @@ Phase 3 adds disk health monitoring to two existing pages:
     - Initial call to `updateDiskHealthChart()`
 
 ### 2.3 — Implement updateDiskHealthChart()
-- [ ] Call `im->refreshDiskHealth()` to get fresh temperature readings
-- [ ] Get series list from chart
-- [ ] For each drive with temperature:
+- [x] Call `im->refreshDiskHealth()` to get fresh temperature readings
+- [x] Get series list from chart
+- [x] For each drive with temperature:
   - Shift existing points right by 1
   - Insert new temperature value at index 0
   - Update series name: `"{model}: {temp} °C"`
   - Remove points beyond 61
-- [ ] Set series list back
+- [x] Set series list back
 
 ### 2.4 — Build verification
-- [ ] Incremental build succeeds
-- [ ] Resources page shows Disk Temperature chart when temperature data available
-- [ ] Chart hidden when no temperature data
+- [x] Incremental build succeeds
+- [x] Resources page shows Disk Temperature chart when temperature data available
+- [x] Chart hidden when no temperature data
 
 ---
 
 ## Task 3: Final Verification & Cleanup
 
 ### 3.1 — Clean rebuild
-- [ ] Full clean rebuild on macOS
-- [ ] Verify zero new warnings
+- [x] Full clean rebuild on macOS
+- [x] Verify zero new warnings
 
 ### 3.2 — Functional testing
-- [ ] Dashboard: DISK HEALTH CircleBar shows correct health %
-- [ ] Dashboard: Disk health alert fires for Caution/Critical verdicts
-- [ ] Resources: Disk Temperature chart shows live temperature data
-- [ ] Kiosk mode: DISK HEALTH bar visible in fullscreen
+- [x] Dashboard: DISK HEALTH CircleBar shows correct health %
+- [x] Dashboard: Disk health alert fires for Caution/Critical verdicts
+- [x] Resources: Disk Temperature chart shows live temperature data
+- [x] Kiosk mode: DISK HEALTH bar visible in fullscreen
 
 ### 3.3 — Update tracking files
-- [ ] Mark FR-29 Phase 3 tasks complete
-- [ ] Update FEATURE_REQUESTS.md — mark FR-29 as `[x]` complete
-- [ ] Commit and push
+- [x] Mark FR-29 Phase 3 tasks complete
+- [x] Update FEATURE_REQUESTS.md — mark FR-29 as `[x]` complete
+- [x] Commit and push
 
 ---
 

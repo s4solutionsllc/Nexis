@@ -29,6 +29,7 @@ private slots:
     void updateMemoryChart();
     void updateNetworkChart();
     void updateGpuChart();
+    void updateDiskHealthChart();
 
 private:
     void init();
@@ -44,6 +45,7 @@ private:
     HistoryChart *mChartMemory;
     HistoryChart *mChartNetwork;
     HistoryChart *mChartGpu;
+    HistoryChart *mChartDiskHealth;
 
     DiskUsageLauncherWidget *mDiskLauncher;
 

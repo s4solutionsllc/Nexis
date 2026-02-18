@@ -17,6 +17,7 @@ ResourcesPage::ResourcesPage(QWidget *parent) :
     mChartMemory(new HistoryChart(tr("History of Memory"), 2, nullptr, this)),
     mChartNetwork(new HistoryChart(tr("History of Network"), 2, new QCategoryAxis, this)),
     mChartGpu(nullptr),
+    mChartDiskHealth(nullptr),
     mDiskLauncher(nullptr),
     mTimer(new QTimer(this))
 {
@@ -37,11 +38,29 @@ void ResourcesPage::init()
         mChartGpu->setYMax(100);
     }
 
+    // Disk health temperature chart — only if drives with temperature data exist
+    if (im->hasDiskHealth()) {
+        QList<DriveHealth> drives = im->getDriveHealth();
+        int tempDriveCount = 0;
+        for (const DriveHealth &d : drives) {
+            if (d.temperatureCelsius >= 0)
+                tempDriveCount++;
+        }
+        if (tempDriveCount > 0) {
+            mChartDiskHealth = new HistoryChart(tr("History of Disk Temperature"), tempDriveCount, nullptr, this);
+            mChartDiskHealth->setYMax(100);
+        }
+    }
+
     QList<QWidget*> widgets = { mChartCpu, mChartCpuLoadAvg, mChartDiskReadWrite, mChartMemory, mChartNetwork };
 
     // Insert GPU chart after CPU charts
     if (mChartGpu)
         widgets.insert(2, mChartGpu);  // after CPU Load Avg, before Disk R/W
+
+    // Insert disk health chart after Network, before Disk Launcher
+    if (mChartDiskHealth)
+        widgets.append(mChartDiskHealth);
 
     for (QWidget *widget : widgets) {
         ui->chartsLayout->addWidget(widget);
@@ -57,6 +76,13 @@ void ResourcesPage::init()
 
     if (mChartGpu)
         connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateGpuChart);
+
+    if (mChartDiskHealth) {
+        QTimer *diskHealthTimer = new QTimer(this);
+        connect(diskHealthTimer, &QTimer::timeout, this, &ResourcesPage::updateDiskHealthChart);
+        diskHealthTimer->start(30 * 1000);
+        updateDiskHealthChart();
+    }
 
     mTimer->start(1000);
 
@@ -306,4 +332,45 @@ void ResourcesPage::updateGpuChart()
     mChartGpu->setSeriesList(seriesList);
 
     second++;
+}
+
+void ResourcesPage::updateDiskHealthChart()
+{
+    if (!mChartDiskHealth)
+        return;
+
+    static int tick = 0;
+
+    im->refreshDiskHealth();
+    QList<DriveHealth> drives = im->getDriveHealth();
+
+    QVector<QSplineSeries *> seriesList = mChartDiskHealth->getSeriesList();
+
+    int seriesIdx = 0;
+    for (const DriveHealth &d : drives) {
+        if (d.temperatureCelsius < 0)
+            continue;
+        if (seriesIdx >= seriesList.count())
+            break;
+
+        double temp = d.temperatureCelsius;
+
+        for (int i = 0; i < (tick < 61 ? tick : 61); i++)
+            seriesList.at(seriesIdx)->replace(i, (i + 1), seriesList.at(seriesIdx)->at(i).y());
+
+        seriesList.at(seriesIdx)->insert(0, QPointF(0, temp));
+
+        QString model = d.model.isEmpty() ? d.deviceName : d.model;
+        seriesList.at(seriesIdx)->setName(QString("%1: %2 \u00B0C")
+                                          .arg(model)
+                                          .arg(temp, 0, 'f', 0));
+
+        if (tick > 61) seriesList.at(seriesIdx)->removePoints(61, 1);
+
+        seriesIdx++;
+    }
+
+    mChartDiskHealth->setSeriesList(seriesList);
+
+    tick++;
 }

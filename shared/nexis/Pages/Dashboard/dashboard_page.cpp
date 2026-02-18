@@ -30,7 +30,8 @@ DashboardPage::DashboardPage(QWidget *parent) :
     mSelectedSensorIndex(0),
     mGpuBar(new CircleBar(tr("GPU"), {"#813d9c", "#613583"}, this)),
     mSelectedGpuIndex(0),
-    mBatteryBar(new CircleBar(tr("BATTERY"), {"#f5c211", "#e5a50a"}, this))
+    mBatteryBar(new CircleBar(tr("BATTERY"), {"#f5c211", "#e5a50a"}, this)),
+    mDiskHealthBar(new CircleBar(tr("DISK HEALTH"), {"#26a69a", "#00897b"}, this))
 {
     ui->setupUi(this);
 
@@ -43,6 +44,13 @@ void DashboardPage::init()
     ui->circleBarsLayout->addWidget(mCpuBar);
     ui->circleBarsLayout->addWidget(mMemBar);
     ui->circleBarsLayout->addWidget(mDiskBar);
+
+    // Disk health gauge (row 0) — graceful degradation
+    if (im->hasDiskHealth()) {
+        ui->circleBarsLayout->addWidget(mDiskHealthBar);
+    } else {
+        mDiskHealthBar->hide();
+    }
 
     // Line bars (stacked in col 2)
     ui->lineBarsLayout->addWidget(mDownloadBar);
@@ -117,6 +125,16 @@ void DashboardPage::init()
         mBatteryBar->hide();
     }
 
+    // Disk health gauge — 30s refresh (subprocess calls are expensive)
+    if (im->hasDiskHealth()) {
+        QTimer *timerDiskHealth = new QTimer(this);
+        connect(timerDiskHealth, &QTimer::timeout, this, [this]() {
+            im->refreshDiskHealth();
+            updateDiskHealthBar();
+        });
+        timerDiskHealth->start(30 * 1000);
+    }
+
     // connections
     connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateCpuBar);
     connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateMemoryBar);
@@ -139,6 +157,8 @@ void DashboardPage::init()
         updateGpuBar();
     if (im->hasBattery())
         updateBatteryBar();
+    if (im->hasDiskHealth())
+        updateDiskHealthBar();
 
     ui->widgetUpdateBar->hide();
 
@@ -155,6 +175,8 @@ void DashboardPage::init()
         widgets.append(mGpuBar);
     if (im->hasBattery())
         widgets.append(mBatteryBar);
+    if (im->hasDiskHealth())
+        widgets.append(mDiskHealthBar);
 
     Utilities::addDropShadow(widgets, 60);
 }
@@ -432,3 +454,78 @@ void DashboardPage::updateBatteryBar()
     }
 }
 
+void DashboardPage::updateDiskHealthBar()
+{
+    QList<DriveHealth> drives = im->getDriveHealth();
+    if (drives.isEmpty())
+        return;
+
+    int worstHealth = 100;
+    QString worstVerdict = "Good";
+    QString worstModel;
+    bool hasAnyHealth = false;
+
+    for (const DriveHealth &d : drives) {
+        if (d.healthPercent >= 0) {
+            hasAnyHealth = true;
+            if (d.healthPercent < worstHealth) {
+                worstHealth = d.healthPercent;
+                worstVerdict = d.healthVerdict;
+                worstModel = d.model.isEmpty() ? d.deviceName : d.model;
+            }
+        } else if (!d.smartPassed) {
+            hasAnyHealth = true;
+            worstHealth = 0;
+            worstVerdict = "Critical";
+            worstModel = d.model.isEmpty() ? d.deviceName : d.model;
+        }
+    }
+
+    if (!hasAnyHealth) {
+        bool allPassed = true;
+        for (const DriveHealth &d : drives) {
+            if (!d.smartPassed) {
+                allPassed = false;
+                break;
+            }
+        }
+        worstHealth = allPassed ? 100 : 0;
+        worstVerdict = allPassed ? "Good" : "Critical";
+    }
+
+    int displayPercent = qBound(0, worstHealth, 100);
+
+    QString label;
+    if (drives.size() > 1 && !worstModel.isEmpty())
+        label = QString("%1%\n%2").arg(displayPercent).arg(worstVerdict);
+    else
+        label = QString("%1%\n%2").arg(displayPercent).arg(worstVerdict);
+
+    mDiskHealthBar->setValue(displayPercent, label);
+
+    // Disk health alert
+    if (mSettingManager->getDiskHealthAlertEnabled()) {
+        bool anyBad = false;
+        QString badDrive;
+        QString badVerdict;
+        for (const DriveHealth &d : drives) {
+            if (d.healthVerdict == "Caution" || d.healthVerdict == "Critical") {
+                anyBad = true;
+                badDrive = d.model.isEmpty() ? d.deviceName : d.model;
+                badVerdict = d.healthVerdict;
+                break;
+            }
+        }
+
+        static bool alertShown = false;
+        if (anyBad && !alertShown) {
+            AppManager::ins()->getTrayIcon()->showMessage(
+                tr("Disk Health Warning"),
+                tr("%1 status: %2").arg(badDrive, badVerdict),
+                QSystemTrayIcon::Warning);
+            alertShown = true;
+        } else if (!anyBad) {
+            alertShown = false;
+        }
+    }
+}
