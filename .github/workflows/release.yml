@@ -69,6 +69,15 @@ jobs:
       - name: Symlink debian packaging directory
         run: ln -s linux/debian debian
 
+      - name: Sync debian changelog version from tag
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          CURRENT_DEB_VERSION=$(head -1 debian/changelog | grep -oP '\(\K[^)]+' | cut -d- -f1)
+          if [ "$CURRENT_DEB_VERSION" != "$TAG_VERSION" ]; then
+            echo "Updating debian/changelog from $CURRENT_DEB_VERSION to $TAG_VERSION"
+            sed -i "1s/($CURRENT_DEB_VERSION-/(${TAG_VERSION}-/" debian/changelog
+          fi
+
       - name: Build .deb package
         run: dpkg-buildpackage -us -uc -b
 
@@ -174,6 +183,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download Linux x86_64 artifacts
         uses: actions/download-artifact@v4
         with:
@@ -223,126 +235,62 @@ jobs:
           echo "DMG_PATH=$DMG" >> "$GITHUB_OUTPUT"
           echo "DMG_NAME=$(basename $DMG)" >> "$GITHUB_OUTPUT"
 
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          # Extract the section for this version from CHANGELOG.md
+          # Matches from "## [X.Y.Z]" to the next "## [" or end of file
+          NOTES=$(awk "/^## \\[${TAG_VERSION}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md)
+
+          if [ -z "$NOTES" ]; then
+            echo "No changelog entry found for version $TAG_VERSION, using tag name"
+            NOTES="Release $TAG_VERSION"
+          fi
+
+          # Build the full release body with changelog + download table
+          {
+            echo "## What's New"
+            echo ""
+            echo "$NOTES"
+            echo "---"
+            echo ""
+            echo "### Downloads"
+            echo ""
+            echo "#### Linux (x86_64)"
+            echo "| Format | File | Description |"
+            echo "|--------|------|-------------|"
+            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |"
+            echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_X64_PATH }})\` | Portable — runs on any Linux distro |"
+            echo "| Binary | \`nexis\` | Standalone executable (requires Qt6 runtime) |"
+            echo ""
+            echo "#### Linux (ARM64 / aarch64)"
+            echo "| Format | File | Description |"
+            echo "|--------|------|-------------|"
+            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_ARM64_PATH }})\` | For Ubuntu 22.04+ ARM64 (Raspberry Pi 5, Jetson, Graviton, etc.) |"
+            echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }})\` | Portable ARM64 — runs on any ARM64 Linux distro |"
+            echo "| Binary | \`nexis\` | Standalone ARM64 executable (requires Qt6 runtime) |"
+            echo ""
+            echo "#### macOS (Apple Silicon)"
+            echo "| Format | File | Description |"
+            echo "|--------|------|-------------|"
+            echo "| \`.dmg\` | \`$(basename ${{ steps.files.outputs.DMG_PATH }})\` | macOS disk image for Apple Silicon (M1/M2/M3/M4) |"
+            echo ""
+            echo "---"
+            echo ""
+            echo "See assets below for Linux (.deb, .AppImage) and macOS (.dmg) packages."
+            echo ""
+            echo "**Full Changelog:** https://github.com/lsimpsonsfdc/Nexis/compare/...${GITHUB_REF_NAME}"
+          } > /tmp/release_body.md
+
+          echo "BODY_FILE=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: Nexis ${{ github.ref_name }}
           generate_release_notes: false
-          body: |
-            ## Nexis ${{ github.ref_name }}
-
-            **Nexis** is a cross-platform system optimizer and monitoring tool for Linux and macOS, forked from [Stacer](https://github.com/oguzhaninan/Stacer) and independently developed.
-
-            ### Highlights
-
-            - Complete rebrand from Stacer to Nexis
-            - Native macOS support (Apple Silicon)
-            - Linux x86_64 and ARM64 support
-            - Light and dark theme support with auto-detection
-            - System Cleaner with Dev Tool Caches category (npm, pip, Cargo, Go, Maven, etc.)
-            - External disk analyzer launcher (Filelight, Baobab, ncdu, etc.)
-            - Improved SVG icons and UI polish
-
-            ---
-
-            ### Downloads
-
-            #### Linux (x86_64)
-            | Format | File | Description |
-            |--------|------|-------------|
-            | `.deb` | `${{ steps.files.outputs.DEB_X64_NAME }}` | For Ubuntu 22.04+, Debian 12+, Linux Mint 21+ |
-            | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_X64_NAME }}` | Portable — runs on any Linux distro |
-            | Binary | `nexis` | Standalone executable (requires Qt6 runtime) |
-
-            #### Linux (ARM64 / aarch64)
-            | Format | File | Description |
-            |--------|------|-------------|
-            | `.deb` | `${{ steps.files.outputs.DEB_ARM64_NAME }}` | For Ubuntu 22.04+ ARM64 (Raspberry Pi 5, Jetson, Graviton, etc.) |
-            | `.AppImage` | `${{ steps.files.outputs.APPIMAGE_ARM64_NAME }}` | Portable ARM64 — runs on any ARM64 Linux distro |
-            | Binary | `nexis` | Standalone ARM64 executable (requires Qt6 runtime) |
-
-            #### macOS (Apple Silicon)
-            | Format | File | Description |
-            |--------|------|-------------|
-            | `.dmg` | `${{ steps.files.outputs.DMG_NAME }}` | macOS disk image for Apple Silicon (M1/M2/M3/M4) |
-
-            ---
-
-            ### Installation Instructions
-
-            #### Linux — `.deb` (Ubuntu / Debian / Mint)
-            ```bash
-            # Install the package (use the correct .deb for your architecture)
-            sudo dpkg -i ${{ steps.files.outputs.DEB_X64_NAME }}   # x86_64
-            # or
-            sudo dpkg -i ${{ steps.files.outputs.DEB_ARM64_NAME }}  # ARM64
-
-            # Fix any missing dependencies
-            sudo apt-get install -f
-
-            # Launch
-            nexis
-            ```
-
-            #### Linux — AppImage (Any Distro)
-            ```bash
-            # Make executable and run (use the correct AppImage for your architecture)
-            chmod +x ${{ steps.files.outputs.APPIMAGE_X64_NAME }}
-            ./${{ steps.files.outputs.APPIMAGE_X64_NAME }}
-            ```
-            > **Note:** AppImage requires FUSE. On Ubuntu 22.04+: `sudo apt install libfuse2`
-
-            #### Linux — Build from Source
-            ```bash
-            # Install dependencies (Ubuntu/Debian — works on both x86_64 and ARM64)
-            sudo apt install build-essential cmake g++ \
-              qt6-base-dev qt6-charts-dev qt6-svg-dev \
-              qt6-tools-dev qt6-l10n-tools libgl1-mesa-dev
-
-            # Build
-            git clone https://github.com/lsimpsonsfdc/Nexis.git
-            cd Nexis && mkdir build && cd build
-            cmake -DCMAKE_BUILD_TYPE=Release ..
-            make -j$(nproc)
-
-            # Run
-            ./output/nexis
-            ```
-
-            #### macOS — `.dmg`
-            1. Download `${{ steps.files.outputs.DMG_NAME }}`
-            2. Open the `.dmg` and drag **Nexis** to your **Applications** folder
-            3. Remove the quarantine attribute (required for unsigned apps):
-               ```bash
-               xattr -cr /Applications/Nexis.app
-               ```
-            4. Double-click **Nexis** in Applications to launch
-
-            #### macOS — Build from Source
-            ```bash
-            # Install dependencies
-            brew install qt@6 cmake adwaita-icon-theme
-
-            # Build
-            git clone https://github.com/lsimpsonsfdc/Nexis.git
-            cd Nexis && mkdir build && cd build
-            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) ..
-            make -j$(sysctl -n hw.ncpu)
-
-            # Run
-            open output/nexis.app
-            ```
-
-            ---
-
-            ### System Requirements
-            - **Linux:** Ubuntu 22.04+ / Debian 12+ / Fedora 36+ — Qt 6.2+, x86_64 or ARM64 (aarch64)
-            - **macOS:** macOS 13+ (Ventura) — Apple Silicon (ARM64)
-
-            ---
-            🤖 Co-authored by [Claude Code](https://claude.ai/claude-code) — Anthropic's AI coding agent.
-
-            Built from commit ${{ github.sha }}
+          body_path: /tmp/release_body.md
           files: |
             ${{ steps.files.outputs.DEB_X64_PATH }}
             ${{ steps.files.outputs.APPIMAGE_X64_PATH }}

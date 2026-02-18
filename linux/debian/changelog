@@ -1,3 +1,67 @@
+nexis (1.2.0-1) unstable; urgency=medium
+
+  * Add scheduled/automated cleaning (FR-16): quick-setup toggle, custom
+    schedule management, cleaning history viewer, threshold alerts, and
+    tray notifications.
+  * Add battery and disk health monitoring (FR-29): battery CircleBar on
+    Dashboard, SMART-based disk health via smartctl/IOKit, disk temperature
+    history chart on Resources page.
+  * Add startup apps improvements (FR-10): search/filter bar, inline editor
+    fields, and application icons.
+  * Add ARM64 Linux CI (FR-06): GitHub Actions workflow for ARM64 builds.
+  * Fix large /etc/hosts files freezing UI at startup (BUG-06).
+  * Fix HiDPI/4K scaling across the entire UI (BUG-07).
+  * Fix Wayland compatibility issues (BUG-08).
+  * Fix System Cleaner memory leak (BUG-10).
+  * Fix desktop file parser truncating Exec lines with env variables (BUG-39).
+  * Fix FR-16 UI regressions: layout position and theme compliance (BUG-40).
+  * Fix Manage Schedules dialog scroll area in dark mode (BUG-41).
+  * Add generic QDialog dark mode theming rules.
+  * Fix checkbox focus ring styling.
+
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Tue, 18 Feb 2026 00:00:00 +0000
+
+nexis (1.1.2-1) unstable; urgency=medium
+
+  * Add Hardware Info page (FR-12): System, Processor, Graphics, and Memory
+    details with platform-specific cache size retrieval.
+  * Add Dashboard kiosk mode (FR-28): F11 fullscreen, ESC exit, state
+    persisted across sessions.
+  * Add Crowdin translations via GitHub Action integration.
+  * Fix Uninstaller "Purge" checkbox text in dark mode (BUG-33).
+  * Fix Settings page author link color (BUG-34).
+  * Remove non-functional "Donate" button (BUG-35).
+  * Fix System Cleaner "Total Size" label in dark mode (BUG-36).
+  * Fix System Cleaner scanLoading.gif animation and QMovie leak (BUG-37).
+  * Fix Hardware Info table rows in dark mode (BUG-38).
+
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Sun, 16 Feb 2026 00:00:00 +0000
+
+nexis (1.1.0-1) unstable; urgency=medium
+
+  * Add GPU monitoring on Dashboard and Resources (FR-11).
+  * Add Disk Usage Analyzer launcher (FR-23) and configurable preference
+    (FR-24).
+  * Add GNOME Settings dropdowns (FR-27).
+  * Add Homebrew page tree widget (FR-22).
+  * Add macOS .app bundle uninstaller (FR-21).
+  * Add purge option in uninstaller (FR-19).
+  * Add autostart delay option (FR-15).
+  * Add expanded cache cleaning for dev tools (FR-03).
+  * Add single-instance enforcement via QLockFile (FR-02).
+  * Add SVG logo and tray icon (FR-07).
+  * Add Crowdin translation integration for 34 languages (FR-08).
+  * Add pip cache cleaning (FR-17).
+  * Fix swapped memory variables (BUG-01).
+  * Fix System Cleaner deleting entire cache directories (BUG-02).
+  * Fix CPU speed fallback (BUG-04).
+  * Fix background thread cleanup on exit (BUG-05).
+  * Fix non-English locale parsing (BUG-09).
+  * Fix macOS crash from double CFRelease (BUG-11).
+  * Fix numerous additional bugs (BUG-12 through BUG-32).
+
+ -- Luke Simpson <luke@lsimpsonsfdc.com>  Thu, 16 Jan 2025 00:00:00 +0000
+
 nexis (1.0.1-1) unstable; urgency=medium
 
   * Rebrand from Stacer to Nexis.
