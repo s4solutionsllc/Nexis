@@ -451,12 +451,10 @@ void SettingsPage::onManageSchedules()
 
     QScrollArea *scrollArea = new QScrollArea;
     scrollArea->setWidgetResizable(true);
-    QPalette scrollPal = scrollArea->palette();
-    scrollPal.setColor(QPalette::Window, dialog.palette().color(QPalette::Window));
-    scrollArea->setPalette(scrollPal);
-    scrollArea->viewport()->setPalette(scrollPal);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
     QWidget *scrollWidget = new QWidget;
-    scrollWidget->setAutoFillBackground(false);
+    scrollWidget->setStyleSheet("background-color:transparent;");
     QVBoxLayout *listLayout = new QVBoxLayout(scrollWidget);
 
     std::function<void()> refreshList = [&]() {
