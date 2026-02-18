@@ -32,11 +32,25 @@ public:
 private:
     static qreal computeFactor()
     {
-        QScreen *screen = QGuiApplication::primaryScreen();
-        if (!screen)
-            return 1.0;
-        qreal dpr = screen->devicePixelRatio();
-        return (dpr > 1.0) ? dpr : 1.0;
+        // Qt6 enables automatic high-DPI scaling by default: logical
+        // coordinates stay at 1× and the framework handles the 2× (or
+        // higher) physical rendering behind the scenes.  Reading
+        // devicePixelRatio() and multiplying again would double every
+        // dimension in logical space, making the UI 4× on Retina.
+        //
+        // Only apply manual scaling when Qt's built-in DPI scaling has
+        // been explicitly disabled via the environment variable
+        // QT_ENABLE_HIGHDPI_SCALING=0.
+        QByteArray env = qgetenv("QT_ENABLE_HIGHDPI_SCALING");
+        if (!env.isEmpty() && env == "0") {
+            QScreen *screen = QGuiApplication::primaryScreen();
+            if (screen) {
+                qreal dpr = screen->devicePixelRatio();
+                if (dpr > 1.0)
+                    return dpr;
+            }
+        }
+        return 1.0;
     }
 };
 
