@@ -452,6 +452,8 @@ void SettingsPage::onManageSchedules()
     QScrollArea *scrollArea = new QScrollArea;
     scrollArea->setWidgetResizable(true);
     QWidget *scrollWidget = new QWidget;
+    scrollWidget->setAutoFillBackground(false);
+    scrollWidget->setAttribute(Qt::WA_TranslucentBackground);
     QVBoxLayout *listLayout = new QVBoxLayout(scrollWidget);
 
     std::function<void()> refreshList = [&]() {
