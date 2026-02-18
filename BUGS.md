@@ -69,11 +69,12 @@
   - **Fix complexity:** Trivial (prefix commands with `LC_ALL=C`)
   - **Resolved:** Changed LANG=C to LC_ALL=C in cpu_info.cpp and system_info.cpp
 
-- [ ] **BUG-10: Memory leak in System Cleaner** (LOW)
+- [x] **BUG-10: Memory leak in System Cleaner** (LOW)
   - **Scope:** System Cleaner page
   - **Description:** Long-running sessions see memory grow from ~150MB to 2GB+ due to improper C++ memory management in the cleaner component.
   - **Upstream:** [#229](https://github.com/oguzhaninan/Stacer/issues/229)
   - **Fix complexity:** Moderate (audit and fix object lifecycle)
+  - **Resolved:** Five fixes: (1) Added `mScanInProgress`/`mCleanInProgress` guards to prevent concurrent workers racing on shared QFileInfoList members — the primary cause of unbounded growth. (2) Destructor now calls `mWorkerFuture.waitForFinished()` before `delete ui` to prevent use-after-free. (3) Scoped SignalMapper lambda with `this` context for auto-disconnect. (4) Clear scan result lists after tree is built to release QFileInfo storage between scans. (5) Replaced redundant `FileUtil::getFileSize()` recursive directory traversals in `onCleanFinished()` with sum of already-stored `SortRole` data from tree items.
 
 - [x] **BUG-11: macOS crash on launch — double CFRelease in GPU detection** (HIGH)
   - **File:** `macos/nexis-core/Info/gpu_info.cpp:71-84`

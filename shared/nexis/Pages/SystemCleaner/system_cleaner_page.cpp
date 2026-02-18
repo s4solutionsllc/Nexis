@@ -1,10 +1,12 @@
 #include "system_cleaner_page.h"
 #include "ui_system_cleaner_page.h"
 #include "byte_tree_widget.h"
+#include "nexis_roles.h"
 #include <QLabel>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
+    mWorkerFuture.waitForFinished();
     delete ui;
 }
 
@@ -82,7 +84,7 @@ void SystemCleanerPage::init()
     ui->treeWidgetScanResult->setHeaderLabels({ tr("File Name"), tr("Size") });
 
     // loaders — update GIF source on theme change (reuse existing QMovie objects)
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, [=] {
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, [this] {
         QString themeName = AppManager::ins()->resolveThemeName();
 
         mLoadingMovie->stop();
@@ -262,6 +264,15 @@ void SystemCleanerPage::onScanFinished()
     ui->checkAppCache->setChecked(false);
     ui->checkTrash->setChecked(false);
     ui->checkDevToolCache->setChecked(false);
+
+    // Release scan result lists — data is now in the tree widget (BUG-10)
+    mPackageCaches.clear();
+    mCrashReports.clear();
+    mAppLogs.clear();
+    mAppCaches.clear();
+    mDevToolCaches.clear();
+
+    mScanInProgress = false;
 }
 
 bool SystemCleanerPage::cleanValid()
@@ -351,14 +362,17 @@ void SystemCleanerPage::onCleanFinished()
         }
     }
 
-    // Update titles
+    // Update titles — sum remaining children's stored sizes instead of
+    // re-traversing the filesystem (BUG-10)
     for (int i = 0; i < tree->topLevelItemCount(); ++i) {
         QTreeWidgetItem *it = tree->topLevelItem(i);
+        quint64 remainingSize = 0;
+        for (int j = 0; j < it->childCount(); ++j)
+            remainingSize += it->child(j)->data(1, SortRole).toULongLong();
         it->setText(0, QString("%1 (%2)")
                     .arg(it->data(2, 1).toString())
                     .arg(it->childCount()));
-        it->setText(1, QString("%1")
-                    .arg(FormatUtil::formatBytes(FileUtil::getFileSize(it->data(3, 0).toString()))));
+        it->setText(1, FormatUtil::formatBytes(remainingSize));
     }
 
     ui->lblRemovedTotalSize->setText(tr("%1 size files cleaned.")
@@ -368,10 +382,15 @@ void SystemCleanerPage::onCleanFinished()
     mLoadingMovie_2->stop();
     ui->lblLoadingCleaner->hide();
     ui->treeWidgetScanResult->setEnabled(true);
+
+    mCleanInProgress = false;
 }
 
 void SystemCleanerPage::on_btnScan_clicked()
 {
+    if (mScanInProgress || mCleanInProgress)
+        return;
+
     // Read checkbox states on main thread
     mScanPackageCache = ui->checkPackageCache->isChecked();
     mScanCrashReports = ui->checkCrashReports->isChecked();
@@ -411,12 +430,17 @@ void SystemCleanerPage::on_btnScan_clicked()
     mAppCaches.clear();
     mDevToolCaches.clear();
 
+    mScanInProgress = true;
+
     // Launch worker thread (I/O only)
     mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
 }
 
 void SystemCleanerPage::on_btnClean_clicked()
 {
+    if (mScanInProgress || mCleanInProgress)
+        return;
+
     if (!cleanValid()) {
         return;
     }
@@ -457,12 +481,17 @@ void SystemCleanerPage::on_btnClean_clicked()
         }
     }
 
+    mCleanInProgress = true;
+
     // Launch worker thread (I/O only)
     mWorkerFuture = QtConcurrent::run([this]() { systemClean(); });
 }
 
 void SystemCleanerPage::on_btnBackToCategories_clicked()
 {
+    if (mScanInProgress || mCleanInProgress)
+        return;
+
     ui->btnScan->show();
     ui->lblRemovedTotalSize->clear();
     mLoadingMovie->stop();
