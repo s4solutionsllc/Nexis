@@ -11,8 +11,10 @@
 #include <QThread>
 #include "Managers/app_manager.h"
 
-#include <Managers/info_manager.h>
-#include <Managers/tool_manager.h>
+#include <Managers/cleaner_service.h>
+
+class QLabel;
+class QFrame;
 
 namespace Ui {
     class SystemCleanerPage;
@@ -59,15 +61,14 @@ private slots:
     void on_checkSelectAllSystemScan_clicked(bool checked);
     void on_checkSelectAll_clicked(bool check);
     void on_cbSortBy_currentIndexChanged(int idx);
+    void updateScheduleIndicator();
 
 private:
     void init();
+    void initScheduleIndicator();
 
 private:
     Ui::SystemCleanerPage *ui;
-
-    InfoManager *im;
-    ToolManager *tmr;
 
     QIcon mDefaultIcon;
     QMovie *mLoadingMovie;
@@ -96,7 +97,6 @@ private:
     // Thread-safe clean state (set on main thread before worker, read on worker)
     QStringList mFilesToDelete;
     bool mCleanTrash;
-    QString mTrashPath;
     // Clean results (written on worker, read on main thread in onCleanFinished)
     quint64 mTotalCleanedSize;
     // Children to remove from tree (indices captured on main thread before worker)
@@ -108,6 +108,11 @@ private:
 
     // Track background tasks so they can be awaited on shutdown (BUG-05)
     QFuture<void> mWorkerFuture;
+
+    // Schedule indicator panel
+    QFrame *mScheduleIndicator = nullptr;
+    QLabel *mLblNextSchedule = nullptr;
+    QLabel *mLblLastSchedule = nullptr;
 };
 
 #endif // SYSTEMCLEANERPAGE_H

@@ -3,6 +3,10 @@
 
 #include <QWidget>
 #include <QMapIterator>
+#include <QCheckBox>
+#include <QSpinBox>
+#include <QPushButton>
+#include <QLabel>
 
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
@@ -23,11 +27,10 @@ public:
 private slots:
     void init();
 
-//    void cmbThemesChanged(const int &index);
     void cmbLanguagesChanged(const int &index);
     void cmbDiskChanged(const int &index);
     void on_checkAutostart_clicked(bool checked);
-void cmbStartPageChanged(const QString text);
+    void cmbStartPageChanged(const QString text);
     void on_spinCpuPercent_valueChanged(int value);
     void on_spinMemoryPercent_valueChanged(int value);
     void on_spinDiskPercent_valueChanged(int value);
@@ -38,14 +41,20 @@ void cmbStartPageChanged(const QString text);
     void on_txtDiskAnalyzerCustomPath_editingFinished();
     void on_checkDiskHealthAlert_clicked(bool checked);
 
+    void onQuickSetupToggled(bool checked);
+    void onThresholdToggled(bool checked);
+    void onThresholdGBChanged(int value);
+    void onManageSchedules();
+    void onViewCleaningHistory();
+    void onCleaningNotificationsToggled(bool checked);
+    void updateScheduleSummary();
+
 private:
     Ui::SettingsPage *ui;
 
-    /// Populate the disk analyzer combobox with platform-appropriate tools.
     void initDiskAnalyzerCombo();
-
-    /// Show or hide the custom path field based on current selection.
     void updateCustomPathVisibility();
+    void initScheduledCleaning();
 
 private:
     AppManager *apm;
@@ -53,6 +62,15 @@ private:
     QString mStartupAppPath;
 
     SettingManager *mSettingManager;
+
+    // Scheduled cleaning widgets (created programmatically)
+    QCheckBox *mChkQuickSetup = nullptr;
+    QLabel *mLblQuickSetupSummary = nullptr;
+    QPushButton *mBtnManageSchedules = nullptr;
+    QCheckBox *mChkThresholdAlert = nullptr;
+    QSpinBox *mSpnThresholdGB = nullptr;
+    QPushButton *mBtnViewHistory = nullptr;
+    QCheckBox *mChkCleaningNotifications = nullptr;
 };
 
 #endif // SETTINGS_PAGE_H

@@ -3,7 +3,11 @@
 #include "byte_tree_widget.h"
 #include "nexis_roles.h"
 #include "dpi.h"
+#include <Managers/schedule_manager.h>
+#include <Utils/format_util.h>
 #include <QLabel>
+#include <QFrame>
+#include <QHBoxLayout>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -14,8 +18,6 @@ SystemCleanerPage::~SystemCleanerPage()
 SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::SystemCleanerPage),
-    im(InfoManager::ins()),
-    tmr(ToolManager::ins()),
 #ifdef Q_OS_MACOS
     mDefaultIcon(QIcon(":/static/themes/common/img/package.png")),
 #else
@@ -104,6 +106,8 @@ void SystemCleanerPage::init()
 
     connect(this, &SystemCleanerPage::scanFinishedS, this, &SystemCleanerPage::onScanFinished);
     connect(this, &SystemCleanerPage::cleanFinishedS, this, &SystemCleanerPage::onCleanFinished);
+
+    initScheduleIndicator();
 }
 
 quint64 SystemCleanerPage::addTreeRoot(const CleanCategories &cat, const QString &title, const QFileInfoList &infos, bool noChild)
@@ -177,22 +181,22 @@ void SystemCleanerPage::on_treeWidgetScanResult_itemClicked(QTreeWidgetItem *ite
 
 void SystemCleanerPage::systemScan()
 {
-    // Worker thread: only I/O, no UI access
-    if (mScanPackageCache) {
-        mPackageCaches = tmr->getPackageCaches();
-    }
-    if (mScanCrashReports) {
-        mCrashReports = im->getCrashReports();
-    }
-    if (mScanAppLog) {
-        mAppLogs = im->getAppLogs();
-    }
-    if (mScanAppCache) {
-        mAppCaches = im->getAppCaches();
-    }
-    if (mScanDevToolCache) {
-        mDevToolCaches = im->getDevToolCaches();
-    }
+    // Worker thread: delegate I/O to CleanerService
+    QList<CleanerService::CleanCategory> categories;
+    if (mScanPackageCache)  categories << CleanerService::PACKAGE_CACHE;
+    if (mScanCrashReports)  categories << CleanerService::CRASH_REPORTS;
+    if (mScanAppLog)        categories << CleanerService::APPLICATION_LOGS;
+    if (mScanAppCache)      categories << CleanerService::APPLICATION_CACHES;
+    if (mScanDevToolCache)  categories << CleanerService::DEV_TOOL_CACHES;
+
+    CleanerService::ScanResult result = CleanerService::ins()->scan(categories);
+
+    // Distribute results back to member variables for onScanFinished()
+    mPackageCaches = result.categoryFiles.value(CleanerService::PACKAGE_CACHE);
+    mCrashReports  = result.categoryFiles.value(CleanerService::CRASH_REPORTS);
+    mAppLogs       = result.categoryFiles.value(CleanerService::APPLICATION_LOGS);
+    mAppCaches     = result.categoryFiles.value(CleanerService::APPLICATION_CACHES);
+    mDevToolCaches = result.categoryFiles.value(CleanerService::DEV_TOOL_CACHES);
 
     emit scanFinishedS();
 }
@@ -295,54 +299,15 @@ bool SystemCleanerPage::cleanValid()
 
 void SystemCleanerPage::systemClean()
 {
-    // Worker thread: only I/O, no UI access
+    // Worker thread: delegate I/O to CleanerService
     mTotalCleanedSize = 0;
 
-    // Handle trash deletion
     if (mCleanTrash) {
-#ifdef Q_OS_MACOS
-        // macOS trash is a flat directory, remove all contents
-        QDir trashDir(mTrashPath);
-        for (const QFileInfo &entry : trashDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
-            if (entry.isDir()) {
-                QDir(entry.absoluteFilePath()).removeRecursively();
-            } else {
-                QFile::remove(entry.absoluteFilePath());
-            }
-        }
-#else
-        // Linux FreeDesktop trash: remove files/ and info/ subdirectories
-        QDir(mTrashPath + "/files").removeRecursively();
-        QDir(mTrashPath + "/info").removeRecursively();
-#endif
+        mTotalCleanedSize += CleanerService::ins()->cleanTrash();
     }
 
-    // Get sizes before deletion
-    for (const QString &file : mFilesToDelete) {
-        mTotalCleanedSize += FileUtil::getFileSize(file);
-    }
-
-    // Remove selected files and empty selected directories
-    QStringList filesToRemove;
-    for (const QString &path : mFilesToDelete) {
-        QFileInfo fi(path);
-        if (fi.isDir()) {
-            // Empty directory contents but preserve the directory itself,
-            // so services/apps that depend on it existing aren't broken (BUG-02)
-            QDir dir(path);
-            for (const QFileInfo &entry : dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
-                if (entry.isDir()) {
-                    QDir(entry.absoluteFilePath()).removeRecursively();
-                } else {
-                    QFile::remove(entry.absoluteFilePath());
-                }
-            }
-        } else {
-            filesToRemove << path;
-        }
-    }
-    if (!filesToRemove.isEmpty()) {
-        CommandUtil::sudoExec("rm", QStringList() << "-rf" << filesToRemove);
+    if (!mFilesToDelete.isEmpty()) {
+        mTotalCleanedSize += CleanerService::ins()->cleanFiles(mFilesToDelete);
     }
 
     emit cleanFinishedS();
@@ -473,11 +438,6 @@ void SystemCleanerPage::on_btnClean_clicked()
         } else if (cat == CleanCategories::TRASH) {
             if (it->checkState(0) == Qt::Checked) {
                 mCleanTrash = true;
-#ifdef Q_OS_MACOS
-                mTrashPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation).append("/.Trash");
-#else
-                mTrashPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation).append("/.local/share/Trash");
-#endif
             }
         }
     }
@@ -538,5 +498,89 @@ void SystemCleanerPage::on_cbSortBy_currentIndexChanged(int idx)
         case 1: ui->treeWidgetScanResult->sortItems(0, Qt::DescendingOrder); break;
         case 2: ui->treeWidgetScanResult->sortItems(1, Qt::AscendingOrder); break;
         case 3: ui->treeWidgetScanResult->sortItems(1, Qt::DescendingOrder); break;
+    }
+}
+
+void SystemCleanerPage::initScheduleIndicator()
+{
+    // Add a schedule indicator panel below the categories on page 0
+    QWidget *page0 = ui->stackedWidget->widget(0);
+    QLayout *pageLayout = page0->layout();
+    if (!pageLayout) return;
+
+    mScheduleIndicator = new QFrame;
+    mScheduleIndicator->setStyleSheet(
+        "QFrame { background: rgba(128,128,128,30); border-radius: 6px; padding: 8px; }");
+
+    QHBoxLayout *indicatorLayout = new QHBoxLayout(mScheduleIndicator);
+    indicatorLayout->setContentsMargins(12, 6, 12, 6);
+
+    QLabel *iconLabel = new QLabel(QString::fromUtf8("\xf0\x9f\x93\x85"));
+    iconLabel->setFixedWidth(24);
+    indicatorLayout->addWidget(iconLabel);
+
+    mLblNextSchedule = new QLabel;
+    mLblLastSchedule = new QLabel;
+    mLblLastSchedule->setStyleSheet("color: gray; font-size: 11px;");
+
+    QVBoxLayout *textLayout = new QVBoxLayout;
+    textLayout->setSpacing(2);
+    textLayout->addWidget(mLblNextSchedule);
+    textLayout->addWidget(mLblLastSchedule);
+    indicatorLayout->addLayout(textLayout, 1);
+
+    pageLayout->addWidget(mScheduleIndicator);
+
+    connect(ScheduleManager::ins(), &ScheduleManager::schedulesChanged,
+            this, &SystemCleanerPage::updateScheduleIndicator);
+
+    updateScheduleIndicator();
+}
+
+void SystemCleanerPage::updateScheduleIndicator()
+{
+    QList<ScheduleManager::CleaningSchedule> schedules = ScheduleManager::ins()->getAllSchedules();
+
+    bool hasEnabled = false;
+    QDateTime earliest;
+    QString nextName;
+    QDateTime lastRun;
+    quint64 lastBytes = 0;
+
+    for (const auto &s : schedules) {
+        if (!s.enabled) continue;
+        hasEnabled = true;
+
+        QDateTime next = ScheduleManager::ins()->getNextRunTime(s);
+        if (!earliest.isValid() || next < earliest) {
+            earliest = next;
+            nextName = s.name;
+        }
+
+        if (s.lastRun.isValid() && (!lastRun.isValid() || s.lastRun > lastRun)) {
+            lastRun = s.lastRun;
+            lastBytes = s.lastBytesFreed;
+        }
+    }
+
+    if (!hasEnabled) {
+        mScheduleIndicator->hide();
+        return;
+    }
+
+    mScheduleIndicator->show();
+
+    if (earliest.isValid()) {
+        mLblNextSchedule->setText(
+            tr("Next: %1 \xe2\x80\x94 %2").arg(nextName, earliest.toString("ddd, MMM d h:mm AP")));
+    }
+
+    if (lastRun.isValid()) {
+        mLblLastSchedule->setText(
+            tr("Last: %1 \xe2\x80\x94 cleaned %2")
+                .arg(lastRun.toString("MMM d"))
+                .arg(FormatUtil::formatBytes(lastBytes)));
+    } else {
+        mLblLastSchedule->setText(tr("No previous scheduled cleans"));
     }
 }

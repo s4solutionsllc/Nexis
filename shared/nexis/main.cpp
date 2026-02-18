@@ -7,8 +7,14 @@
 #include <QLockFile>
 #include <QDir>
 #include <QMessageBox>
+#include <QSystemTrayIcon>
+#include <QTimer>
 
 #include "app.h"
+#include <Managers/setting_manager.h>
+#include <Managers/cleaner_service.h>
+#include <Managers/schedule_manager.h>
+#include <Utils/format_util.h>
 
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -57,6 +63,21 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     }
 }
 
+static void showNotificationAndExit(QApplication &app, const QString &title, const QString &message)
+{
+    if (!SettingManager::ins()->getCleaningNotificationsEnabled()) {
+        return;
+    }
+
+    QSystemTrayIcon *tray = new QSystemTrayIcon(QIcon(":/static/logo.svg"), &app);
+    tray->show();
+    tray->showMessage(title, message, QSystemTrayIcon::Information, 5000);
+
+    // Allow notification to display before exiting
+    QTimer::singleShot(5000, &app, &QApplication::quit);
+    app.exec();
+}
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -67,6 +88,67 @@ int main(int argc, char *argv[])
     qApp->setApplicationVersion(APP_VERSION);
     qApp->setWindowIcon(QIcon(":/static/logo.svg"));
     qApp->setDesktopFileName("nexis");
+
+    // ── Headless mode detection (before QLockFile) ──────────────────────
+    // Parse --clean <schedule-id> and --check-threshold before the
+    // single-instance lock so that OS-scheduled headless invocations
+    // don't conflict with a running GUI instance.
+
+    QString cleanScheduleId;
+    bool checkThreshold = false;
+
+    for (int i = 1; i < argc; ++i) {
+        QString arg(argv[i]);
+        if (arg == "--clean" && i + 1 < argc) {
+            cleanScheduleId = QString(argv[++i]);
+        } else if (arg == "--check-threshold") {
+            checkThreshold = true;
+        }
+    }
+
+    bool headless = !cleanScheduleId.isEmpty() || checkThreshold;
+
+    // ── Headless --clean ────────────────────────────────────────────────
+    if (!cleanScheduleId.isEmpty()) {
+        qInstallMessageHandler(messageHandler);
+
+        CleanerService::CleanResult result =
+            CleanerService::ins()->cleanSchedule(cleanScheduleId);
+
+        if (result.totalBytesFreed > 0 || !result.scheduleName.isEmpty()) {
+            QString msg = QObject::tr("Cleaned %1 (%2)")
+                .arg(FormatUtil::formatBytes(result.totalBytesFreed))
+                .arg(result.scheduleName);
+            showNotificationAndExit(app, "Nexis", msg);
+        }
+
+        return 0;
+    }
+
+    // ── Headless --check-threshold ─────────────────────────────────────
+    if (checkThreshold) {
+        qInstallMessageHandler(messageHandler);
+
+        if (!SettingManager::ins()->getThresholdAlertEnabled()) {
+            return 0;
+        }
+
+        CleanerService::ScanResult result =
+            CleanerService::ins()->scan(CleanerService::allCategories());
+
+        quint64 thresholdBytes =
+            static_cast<quint64>(SettingManager::ins()->getThresholdGB()) * 1073741824ULL;
+
+        if (result.totalSize >= thresholdBytes) {
+            QString msg = QObject::tr("Nexis found %1 of cleanable files. Open Nexis to review.")
+                .arg(FormatUtil::formatBytes(result.totalSize));
+            showNotificationAndExit(app, "Nexis", msg);
+        }
+
+        return 0;
+    }
+
+    // ── GUI mode ────────────────────────────────────────────────────────
 
     // Single-instance enforcement (BUG-03 / FR-02)
     QString lockPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/nexis.lock";
@@ -81,7 +163,7 @@ int main(int argc, char *argv[])
 
     {
        QCommandLineOption hideOption("hide", "Hide Nexis while launching.");
-       QCommandLineOption noSplashOption("nosplash", "Hide splash screen while launching.");    
+       QCommandLineOption noSplashOption("nosplash", "Hide splash screen while launching.");
         QCommandLineParser parser;
         parser.addVersionOption();
         parser.addHelpOption();
@@ -92,14 +174,14 @@ int main(int argc, char *argv[])
 
     bool isHide = false;
     bool isNoSplash = false;
-    
+
     QLatin1String hideOption("--hide");
     QLatin1String noSplashOption("--nosplash");
-    
+
     for (int i = 1; i < argc; ++i) {
       if (QString(argv[i]) == hideOption)
         isHide = true;
-      else if (QString(argv[i]) == noSplashOption) 
+      else if (QString(argv[i]) == noSplashOption)
         isNoSplash = true;
     }
 

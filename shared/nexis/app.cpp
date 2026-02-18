@@ -3,6 +3,8 @@
 #include "utilities.h"
 #include "signal_mapper.h"
 #include "dpi.h"
+#include <Managers/cleaner_service.h>
+#include <Utils/format_util.h>
 #include <QStyle>
 #include <QDebug>
 #include <QScreen>
@@ -146,6 +148,24 @@ void App::init()
     // Restore kiosk mode from last session
     if (SettingManager::ins()->getKioskMode())
         applyKioskMode(true);
+
+    // Relay CleanerService signals through SignalMapper for app-wide access
+    connect(CleanerService::ins(), &CleanerService::cleaningStarted,
+            SignalMapper::ins(), &SignalMapper::sigScheduledCleanStarted);
+    connect(CleanerService::ins(), &CleanerService::cleaningFinished,
+            this, [this](CleanerService::CleanResult result) {
+        emit SignalMapper::ins()->sigScheduledCleanFinished(
+            result.totalBytesFreed, result.totalFilesRemoved);
+
+        if (SettingManager::ins()->getCleaningNotificationsEnabled()) {
+            mTrayIcon->showMessage(
+                tr("Scheduled Clean Complete"),
+                tr("Cleaned %1 — %2")
+                    .arg(FormatUtil::formatBytes(result.totalBytesFreed),
+                         result.scheduleName),
+                QSystemTrayIcon::Information, 5000);
+        }
+    });
 }
 
 void App::closeEvent(QCloseEvent *event)

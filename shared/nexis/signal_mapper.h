@@ -14,6 +14,8 @@ signals:
     void sigChangedAppTheme();
     void sigUninstallStarted();
     void sigUninstallFinished();
+    void sigScheduledCleanStarted(QString scheduleName);
+    void sigScheduledCleanFinished(quint64 bytesFreed, int fileCount);
 
 private:
     static SignalMapper *instance;

@@ -24,6 +24,10 @@ namespace SettingKeys {
     const QString BatteryAlertLastHealth("BatteryAlertLastHealth");
     const QString BatteryAlertSnoozedUntil("BatteryAlertSnoozedUntil");
     const QString DiskHealthAlertEnabled("DiskHealthAlertEnabled");
+    const QString Schedules("Schedules");
+    const QString CleaningNotificationsEnabled("CleaningNotificationsEnabled");
+    const QString ThresholdAlertEnabled("ThresholdAlertEnabled");
+    const QString ThresholdGB("ThresholdGB");
 }
 
 class SettingManager
@@ -89,6 +93,18 @@ public:
 
     void setDiskHealthAlertEnabled(bool value);
     bool getDiskHealthAlertEnabled() const;
+
+    void setSchedules(const QString &json);
+    QString getSchedules() const;
+
+    void setCleaningNotificationsEnabled(bool value);
+    bool getCleaningNotificationsEnabled() const;
+
+    void setThresholdAlertEnabled(bool value);
+    bool getThresholdAlertEnabled() const;
+
+    void setThresholdGB(int value);
+    int getThresholdGB() const;
 
 private:
     static SettingManager *instance;

@@ -210,3 +210,43 @@ bool SettingManager::getDiskHealthAlertEnabled() const
 {
     return mSettings->value(SettingKeys::DiskHealthAlertEnabled, true).toBool();
 }
+
+void SettingManager::setSchedules(const QString &json)
+{
+    mSettings->setValue(SettingKeys::Schedules, json);
+}
+
+QString SettingManager::getSchedules() const
+{
+    return mSettings->value(SettingKeys::Schedules, "[]").toString();
+}
+
+void SettingManager::setCleaningNotificationsEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::CleaningNotificationsEnabled, value);
+}
+
+bool SettingManager::getCleaningNotificationsEnabled() const
+{
+    return mSettings->value(SettingKeys::CleaningNotificationsEnabled, true).toBool();
+}
+
+void SettingManager::setThresholdAlertEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::ThresholdAlertEnabled, value);
+}
+
+bool SettingManager::getThresholdAlertEnabled() const
+{
+    return mSettings->value(SettingKeys::ThresholdAlertEnabled, false).toBool();
+}
+
+void SettingManager::setThresholdGB(int value)
+{
+    mSettings->setValue(SettingKeys::ThresholdGB, value);
+}
+
+int SettingManager::getThresholdGB() const
+{
+    return mSettings->value(SettingKeys::ThresholdGB, 5).toInt();
+}

@@ -1,10 +1,22 @@
 #include "settings_page.h"
 #include "ui_settings_page.h"
 #include "Managers/info_manager.h"
+#include "Managers/schedule_manager.h"
+#include "Managers/cleaner_service.h"
+#include "Pages/SystemCleaner/schedule_editor_dialog.h"
 #include "utilities.h"
 #include <QApplication>
 #include <QRegularExpression>
 #include <QLineEdit>
+#include <QGridLayout>
+#include <QGroupBox>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QPlainTextEdit>
+#include <QDialog>
+#include <QScrollArea>
+#include <Utils/format_util.h>
+#include <functional>
 
 SettingsPage::~SettingsPage()
 {
@@ -143,6 +155,9 @@ void SettingsPage::init()
     connect(ui->cmbStartPage, &QComboBox::currentTextChanged, this, &SettingsPage::cmbStartPageChanged);
     connect(ui->cmbColorScheme, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbColorSchemeChanged);
     connect(ui->cmbDiskAnalyzer, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskAnalyzerChanged);
+
+    // scheduled cleaning
+    initScheduledCleaning();
 }
 
 void SettingsPage::cmbLanguagesChanged(const int &index)
@@ -285,4 +300,321 @@ void SettingsPage::on_txtDiskAnalyzerCustomPath_editingFinished()
 void SettingsPage::on_checkDiskHealthAlert_clicked(bool checked)
 {
     mSettingManager->setDiskHealthAlertEnabled(checked);
+}
+
+void SettingsPage::initScheduledCleaning()
+{
+    QGridLayout *grid = qobject_cast<QGridLayout *>(layout());
+    if (!grid) return;
+
+    // Find the row of the vertical spacer (row 9) and insert before it
+    // We'll use row 9 for the scheduled cleaning section and push the spacer down
+
+    // Section title
+    QLabel *lblTitle = new QLabel(tr("Scheduled Cleaning"));
+    lblTitle->setProperty("accessibleName", "title");
+    grid->addWidget(lblTitle, 11, 0, 1, 6);
+
+    // Quick setup
+    mChkQuickSetup = new QCheckBox(tr("Enable automatic weekly cleaning"));
+    mChkQuickSetup->setCursor(Qt::PointingHandCursor);
+    grid->addWidget(mChkQuickSetup, 12, 0, 1, 2);
+
+    mLblQuickSetupSummary = new QLabel;
+    mLblQuickSetupSummary->setStyleSheet("color: gray; font-size: 11px;");
+    grid->addWidget(mLblQuickSetupSummary, 12, 2, 1, 2);
+
+    // Manage Schedules + View History buttons
+    mBtnManageSchedules = new QPushButton(tr("Manage Schedules..."));
+    mBtnManageSchedules->setCursor(Qt::PointingHandCursor);
+    mBtnManageSchedules->setFocusPolicy(Qt::NoFocus);
+    grid->addWidget(mBtnManageSchedules, 13, 0);
+
+    mBtnViewHistory = new QPushButton(tr("View Cleaning History"));
+    mBtnViewHistory->setCursor(Qt::PointingHandCursor);
+    mBtnViewHistory->setFocusPolicy(Qt::NoFocus);
+    grid->addWidget(mBtnViewHistory, 13, 1);
+
+    // Threshold alert
+    mChkThresholdAlert = new QCheckBox(tr("Notify when junk exceeds"));
+    mChkThresholdAlert->setCursor(Qt::PointingHandCursor);
+    grid->addWidget(mChkThresholdAlert, 14, 0, 1, 2);
+
+    mSpnThresholdGB = new QSpinBox;
+    mSpnThresholdGB->setRange(1, 100);
+    mSpnThresholdGB->setSuffix(tr(" GB"));
+    mSpnThresholdGB->setFocusPolicy(Qt::ClickFocus);
+    grid->addWidget(mSpnThresholdGB, 14, 2);
+
+    // Cleaning notifications
+    mChkCleaningNotifications = new QCheckBox(tr("Show notification after scheduled clean"));
+    mChkCleaningNotifications->setCursor(Qt::PointingHandCursor);
+    grid->addWidget(mChkCleaningNotifications, 15, 0, 1, 3);
+
+    // Restore saved state
+    mChkThresholdAlert->setChecked(mSettingManager->getThresholdAlertEnabled());
+    mSpnThresholdGB->setValue(mSettingManager->getThresholdGB());
+    mSpnThresholdGB->setEnabled(mSettingManager->getThresholdAlertEnabled());
+    mChkCleaningNotifications->setChecked(mSettingManager->getCleaningNotificationsEnabled());
+
+    // Check if quick setup schedule exists
+    bool hasQuickSetup = false;
+    for (const auto &s : ScheduleManager::ins()->getAllSchedules()) {
+        if (s.name == "Weekly Cleanup" && s.frequency == ScheduleManager::Weekly) {
+            hasQuickSetup = true;
+            break;
+        }
+    }
+    mChkQuickSetup->setChecked(hasQuickSetup);
+    updateScheduleSummary();
+
+    // Connections
+    connect(mChkQuickSetup, &QCheckBox::toggled, this, &SettingsPage::onQuickSetupToggled);
+    connect(mChkThresholdAlert, &QCheckBox::toggled, this, &SettingsPage::onThresholdToggled);
+    connect(mSpnThresholdGB, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsPage::onThresholdGBChanged);
+    connect(mBtnManageSchedules, &QPushButton::clicked, this, &SettingsPage::onManageSchedules);
+    connect(mBtnViewHistory, &QPushButton::clicked, this, &SettingsPage::onViewCleaningHistory);
+    connect(mChkCleaningNotifications, &QCheckBox::toggled, this, &SettingsPage::onCleaningNotificationsToggled);
+    connect(ScheduleManager::ins(), &ScheduleManager::schedulesChanged, this, &SettingsPage::updateScheduleSummary);
+}
+
+void SettingsPage::onQuickSetupToggled(bool checked)
+{
+    ScheduleManager *sm = ScheduleManager::ins();
+
+    if (checked) {
+        ScheduleManager::CleaningSchedule s;
+        s.name = "Weekly Cleanup";
+        s.frequency = ScheduleManager::Weekly;
+        s.dayOfWeek = 0; // Sunday
+        s.hour = 3;
+        s.minute = 0;
+        s.categories = {
+            CleanerService::PACKAGE_CACHE,
+            CleanerService::CRASH_REPORTS,
+            CleanerService::APPLICATION_LOGS,
+            CleanerService::APPLICATION_CACHES,
+            CleanerService::DEV_TOOL_CACHES
+        };
+        s.minFileAgeSecs = 86400;
+        sm->createSchedule(s);
+    } else {
+        for (const auto &s : sm->getAllSchedules()) {
+            if (s.name == "Weekly Cleanup" && s.frequency == ScheduleManager::Weekly) {
+                sm->deleteSchedule(s.id);
+                break;
+            }
+        }
+    }
+}
+
+void SettingsPage::onThresholdToggled(bool checked)
+{
+    mSettingManager->setThresholdAlertEnabled(checked);
+    mSpnThresholdGB->setEnabled(checked);
+}
+
+void SettingsPage::onThresholdGBChanged(int value)
+{
+    mSettingManager->setThresholdGB(value);
+}
+
+void SettingsPage::onCleaningNotificationsToggled(bool checked)
+{
+    mSettingManager->setCleaningNotificationsEnabled(checked);
+}
+
+void SettingsPage::onManageSchedules()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Manage Cleaning Schedules"));
+    dialog.setMinimumSize(550, 400);
+
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+
+    QScrollArea *scrollArea = new QScrollArea;
+    scrollArea->setWidgetResizable(true);
+    QWidget *scrollWidget = new QWidget;
+    QVBoxLayout *listLayout = new QVBoxLayout(scrollWidget);
+
+    std::function<void()> refreshList = [&]() {
+        QLayoutItem *item;
+        while ((item = listLayout->takeAt(0)) != nullptr) {
+            delete item->widget();
+            delete item;
+        }
+
+        QList<ScheduleManager::CleaningSchedule> schedules = ScheduleManager::ins()->getAllSchedules();
+
+        if (schedules.isEmpty()) {
+            listLayout->addWidget(new QLabel(tr("No schedules configured.")));
+        }
+
+        for (const auto &s : schedules) {
+            QGroupBox *card = new QGroupBox;
+            QHBoxLayout *cardLayout = new QHBoxLayout(card);
+
+            QCheckBox *enableCheck = new QCheckBox;
+            enableCheck->setChecked(s.enabled);
+            cardLayout->addWidget(enableCheck);
+
+            QVBoxLayout *infoLayout = new QVBoxLayout;
+            QLabel *nameLabel = new QLabel(QString("<b>%1</b>").arg(s.name));
+            QLabel *freqLabel = new QLabel(ScheduleManager::frequencyDisplayText(s));
+            freqLabel->setStyleSheet("color: gray;");
+
+            QString lastRunText;
+            if (s.lastRun.isValid()) {
+                lastRunText = tr("Last: %1 — %2")
+                    .arg(s.lastRun.toString("MMM d, h:mm AP"))
+                    .arg(FormatUtil::formatBytes(s.lastBytesFreed));
+            } else {
+                lastRunText = tr("Never run");
+            }
+            QLabel *lastLabel = new QLabel(lastRunText);
+            lastLabel->setStyleSheet("color: gray; font-size: 11px;");
+
+            infoLayout->addWidget(nameLabel);
+            infoLayout->addWidget(freqLabel);
+            infoLayout->addWidget(lastLabel);
+            cardLayout->addLayout(infoLayout, 1);
+
+            QPushButton *editBtn = new QPushButton(tr("Edit"));
+            editBtn->setFocusPolicy(Qt::NoFocus);
+            QPushButton *deleteBtn = new QPushButton(tr("Delete"));
+            deleteBtn->setFocusPolicy(Qt::NoFocus);
+            cardLayout->addWidget(editBtn);
+            cardLayout->addWidget(deleteBtn);
+
+            QString schedId = s.id;
+
+            connect(enableCheck, &QCheckBox::toggled, [schedId](bool checked) {
+                ScheduleManager::CleaningSchedule updated = ScheduleManager::ins()->getSchedule(schedId);
+                updated.enabled = checked;
+                ScheduleManager::ins()->updateSchedule(updated);
+            });
+
+            connect(editBtn, &QPushButton::clicked, [this, schedId, &dialog, &refreshList]() {
+                ScheduleManager::CleaningSchedule existing = ScheduleManager::ins()->getSchedule(schedId);
+                ScheduleEditorDialog editor(existing, &dialog);
+                connect(&editor, &ScheduleEditorDialog::scheduleUpdated, [](const ScheduleManager::CleaningSchedule &s) {
+                    ScheduleManager::ins()->updateSchedule(s);
+                });
+                editor.exec();
+                refreshList();
+            });
+
+            connect(deleteBtn, &QPushButton::clicked, [schedId, &refreshList]() {
+                ScheduleManager::ins()->deleteSchedule(schedId);
+                refreshList();
+            });
+
+            listLayout->addWidget(card);
+        }
+
+        listLayout->addStretch();
+    };
+
+    refreshList();
+
+    scrollArea->setWidget(scrollWidget);
+    layout->addWidget(scrollArea);
+
+    QPushButton *addBtn = new QPushButton(tr("Add Schedule"));
+    addBtn->setCursor(Qt::PointingHandCursor);
+    connect(addBtn, &QPushButton::clicked, [this, &dialog, &refreshList]() {
+        ScheduleEditorDialog editor(&dialog);
+        connect(&editor, &ScheduleEditorDialog::scheduleCreated, [](const ScheduleManager::CleaningSchedule &s) {
+            ScheduleManager::ins()->createSchedule(s);
+        });
+        editor.exec();
+        refreshList();
+    });
+
+    QPushButton *closeBtn = new QPushButton(tr("Close"));
+    connect(closeBtn, &QPushButton::clicked, &dialog, &QDialog::accept);
+
+    QHBoxLayout *btnRow = new QHBoxLayout;
+    btnRow->addWidget(addBtn);
+    btnRow->addStretch();
+    btnRow->addWidget(closeBtn);
+    layout->addLayout(btnRow);
+
+    dialog.exec();
+}
+
+void SettingsPage::onViewCleaningHistory()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Cleaning History"));
+    dialog.setMinimumSize(600, 400);
+
+    QVBoxLayout *layout = new QVBoxLayout(&dialog);
+
+    QPlainTextEdit *textEdit = new QPlainTextEdit;
+    textEdit->setReadOnly(true);
+
+    QString logPath = mSettingManager->getConfigPath() + "/clean_history.log";
+    QFile logFile(logPath);
+    if (logFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QStringList lines;
+        QTextStream stream(&logFile);
+        while (!stream.atEnd()) {
+            lines.append(stream.readLine());
+        }
+        logFile.close();
+
+        // Show last 50 lines
+        int start = qMax(0, lines.size() - 50);
+        QStringList recent = lines.mid(start);
+        textEdit->setPlainText(recent.join('\n'));
+    } else {
+        textEdit->setPlainText(tr("No cleaning history available."));
+    }
+
+    layout->addWidget(textEdit);
+
+    QHBoxLayout *btnRow = new QHBoxLayout;
+    QPushButton *clearBtn = new QPushButton(tr("Clear History"));
+    connect(clearBtn, &QPushButton::clicked, [logPath, textEdit]() {
+        QFile::remove(logPath);
+        textEdit->setPlainText("");
+    });
+    btnRow->addWidget(clearBtn);
+    btnRow->addStretch();
+    QPushButton *closeBtn = new QPushButton(tr("Close"));
+    connect(closeBtn, &QPushButton::clicked, &dialog, &QDialog::accept);
+    btnRow->addWidget(closeBtn);
+    layout->addLayout(btnRow);
+
+    dialog.exec();
+}
+
+void SettingsPage::updateScheduleSummary()
+{
+    QList<ScheduleManager::CleaningSchedule> schedules = ScheduleManager::ins()->getAllSchedules();
+
+    if (schedules.isEmpty()) {
+        mLblQuickSetupSummary->setText(tr("No schedules active"));
+        return;
+    }
+
+    // Find next upcoming schedule
+    QDateTime earliest;
+    QString nextName;
+    for (const auto &s : schedules) {
+        if (!s.enabled) continue;
+        QDateTime next = ScheduleManager::ins()->getNextRunTime(s);
+        if (!earliest.isValid() || next < earliest) {
+            earliest = next;
+            nextName = s.name;
+        }
+    }
+
+    if (earliest.isValid()) {
+        mLblQuickSetupSummary->setText(
+            tr("Next: %1 — %2").arg(nextName, earliest.toString("ddd, MMM d h:mm AP")));
+    } else {
+        mLblQuickSetupSummary->setText(tr("%1 schedule(s) configured").arg(schedules.size()));
+    }
 }
