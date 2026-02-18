@@ -66,6 +66,17 @@ QAbstractScrollArea::corner {
 }
 
 /*************
+    QDialog
+**************/
+QDialog {
+    background-color: @color01;
+}
+
+QDialog QLabel {
+    color: @color05;
+}
+
+/*************
     QMessageBox
 **************/
 QMessageBox {
