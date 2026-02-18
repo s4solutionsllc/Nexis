@@ -8,16 +8,16 @@ QScrollArea {
 }
 
 QScrollBar:vertical {
-    width: 8;
+    width: @dp8;
     margin: 0;
-    border-radius: 4;
+    border-radius: @dp4;
     background-color: transparent;
 }
 
 QScrollBar::handle:vertical {
     background-color: @color06;
-    min-height: 30px;
-    border-radius: 4;
+    min-height: @dp30px;
+    border-radius: @dp4;
 }
 
 QScrollBar::handle:vertical:hover {
@@ -35,16 +35,16 @@ QScrollBar::sub-page:vertical {
 }
 
 QScrollBar:horizontal {
-    height: 8;
+    height: @dp8;
     margin: 0;
-    border-radius: 4;
+    border-radius: @dp4;
     background-color: transparent;
 }
 
 QScrollBar::handle:horizontal {
     background-color: @color06;
-    min-width: 30px;
-    border-radius: 4;
+    min-width: @dp30px;
+    border-radius: @dp4;
 }
 
 QScrollBar::handle:horizontal:hover {
@@ -87,11 +87,11 @@ QMenu {
 }
 
 QMenu::item {
-    padding: 6 24;
+    padding: @dp6 @dp24;
     color: @color05;
     font-size: 10pt;
-    border-radius: 6;
-    margin: 2 4;
+    border-radius: @dp6;
+    margin: @dp2 @dp4;
 }
 
 QMenu::item:selected {
@@ -100,8 +100,8 @@ QMenu::item:selected {
 }
 
 QMenu::indicator {
-    width: 14px;
-    height: 14px;
+    width: @dp14px;
+    height: @dp14px;
 }
 
 QMenu::indicator:non-exclusive:unchecked {
@@ -122,8 +122,8 @@ QRadioButton {
 }
 
 QRadioButton::indicator {
-    width: 16;
-    height: 16;
+    width: @dp16;
+    height: @dp16;
 }
 
 QRadioButton::indicator:unchecked {
@@ -143,8 +143,8 @@ QCheckBox {
 }
 
 QCheckBox::indicator {
-    width: 44px;
-    height: 24px;
+    width: @dp44px;
+    height: @dp24px;
 }
 
 QCheckBox::indicator:checked {
@@ -161,8 +161,8 @@ QCheckBox[accessibleName="circle"] {
 }
 
 QCheckBox[accessibleName="circle"]::indicator {
-    width: 18px;
-    height: 18px;
+    width: @dp18px;
+    height: @dp18px;
 }
 
 QCheckBox[accessibleName="circle"]::indicator:unchecked {
@@ -206,7 +206,7 @@ QSpinBox::up-button,
 QDoubleSpinBox::up-button {
     subcontrol-origin: border;
     subcontrol-position: top right;
-    width: 16px;
+    width: @dp16px;
     border-image: url(:/static/themes/common/img/spinup.svg) 1;
     border-width: 1px;
 }
@@ -215,7 +215,7 @@ QSpinBox::down-button,
 QDoubleSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
-    width: 16px;
+    width: @dp16px;
     border-image: url(:/static/themes/common/img/spindown.svg) 1;
     border-width: 1px;
     border-top-width: 0;
@@ -234,10 +234,10 @@ QSlider::groove:horizontal {
 
 QSlider::handle:horizontal {
     background-color: @accentColor;
-    width: 16px;
-    height: 16px;
-    margin: -6px 0;
-    border-radius: 8px;
+    width: @dp16px;
+    height: @dp16px;
+    margin: -@dp6px 0;
+    border-radius: @dp8px;
 }
 
 /***************
@@ -246,12 +246,12 @@ QSlider::handle:horizontal {
 
 QComboBox {
     border: 1px solid @borderColor;
-    border-radius: 6;
+    border-radius: @dp6;
     background-color: @color01;
-    padding: 6 12;
+    padding: @dp6 @dp12;
     font-size: 10pt;
     color: @color05;
-    min-width: 100;
+    min-width: @dp100;
 }
 
 QComboBox:hover {
@@ -261,8 +261,8 @@ QComboBox:hover {
 QComboBox::drop-down {
     background-color: transparent;
     subcontrol-position: top right;
-    width: 20;
-    padding: 0 6;
+    width: @dp20;
+    padding: 0 @dp6;
     border: 0;
     border-top-right-radius: 6;
     border-bottom-right-radius: 6;
@@ -308,7 +308,7 @@ QTableView {
 QTableView::item {
     font-size: 10pt;
     color: @color05;
-    padding: 8 6;
+    padding: @dp8 @dp6;
     background-color: @color01;
 }
 
@@ -323,7 +323,7 @@ QHeaderView::section {
     border-color: @borderColor;
     font-size: 10pt;
     color: @accentColor;
-    padding: 8 12;
+    padding: @dp8 @dp12;
 }
 
 QHeaderView::up-arrow {
@@ -351,8 +351,8 @@ QPlainTextEdit,
 QSpinBox,
 QDoubleSpinBox {
     border: 1px solid @borderColor;
-    border-radius: 6;
-    padding: 8;
+    border-radius: @dp6;
+    padding: @dp8;
     background-color: @color01;
     font-size: 10pt;
     color: @color05;
@@ -366,10 +366,10 @@ QDoubleSpinBox:focus {
 }
 
 QPushButton {
-    border-radius: 6;
+    border-radius: @dp6;
     font-size: 10pt;
-    padding: 8 16;
-    min-height: 18;
+    padding: @dp8 @dp16;
+    min-height: @dp18;
 }
 
 QPushButton[accessibleName="danger"] {
@@ -411,18 +411,18 @@ QLabel[accessibleName="dialog-title"] {
 
 #sidebar {
     background-color: @sidebar;
-    min-width: 200;
-    max-width: 200;
+    min-width: @dp200;
+    max-width: @dp200;
     border-right: 1px solid @borderColor;
 }
 
 #sidebar QPushButton {
     border: 0;
-    height: 36;
-    border-radius: 6;
+    height: @dp36;
+    border-radius: @dp6;
     color: @color05;
-    margin: 1 8;
-    padding: 0 12;
+    margin: 1 @dp8;
+    padding: 0 @dp12;
     text-align: left;
     font-size: 10pt;
 }
@@ -440,8 +440,8 @@ QLabel[accessibleName="dialog-title"] {
     color: @color05;
     font-size: 12pt;
     font-weight: bold;
-    padding: 12 0;
-    margin: 0 12;
+    padding: @dp12 0;
+    margin: 0 @dp12;
     border: 0;
     border-bottom: 1px solid @borderColor;
 }
@@ -568,7 +568,7 @@ QLabel[accessibleName="dialog-title"] {
 #HardwareInfoPage QTableWidget::item {
     font-size: 10pt;
     color: @color05;
-    padding: 8 6;
+    padding: @dp8 @dp6;
     background-color: @color01;
 }
 
@@ -577,8 +577,8 @@ QLabel[accessibleName="dialog-title"] {
 ***************************/
 
 #cleanerCategories QCheckBox[accessibleName=circle]::indicator {
-    width: 26;
-    height: 26;
+    width: @dp26;
+    height: @dp26;
 }
 
 #cleanerCategories QLabel,
@@ -591,12 +591,12 @@ QLabel[accessibleName="dialog-title"] {
 
 #SystemCleanerPage #btnScan {
     border: 0;
-    border-radius: 6px;
+    border-radius: @dp6px;
     background-color: @accentColor;
     color: #ffffff;
     font-size: 12pt;
     font-weight: bold;
-    padding: 8px 24px;
+    padding: @dp8px @dp24px;
 }
 
 #SystemCleanerPage #btnScan:hover {
@@ -634,14 +634,14 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetScanResult::item {
     border-bottom: 1px solid @borderColor;
-    padding: 8 6;
+    padding: @dp8 @dp6;
     font-size: 10pt;
     color: @color11;
 }
 
 #treeWidgetScanResult::indicator {
-    width: 14;
-    height: 14;
+    width: @dp14;
+    height: @dp14;
 }
 
 #treeWidgetScanResult::indicator:checked {
@@ -797,14 +797,14 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #checkAllProcesses::indicator {
-    width: 14;
-    height: 14;
+    width: @dp14;
+    height: @dp14;
 }
 
 #txtProcessSearch {
-    width: 180;
-    padding: 6 12;
-    border-radius: 6;
+    width: @dp180;
+    padding: @dp6 @dp12;
+    border-radius: @dp6;
     background-color: @color01;
     border: 1px solid @borderColor;
     color: @color05;
@@ -824,8 +824,8 @@ QLabel[accessibleName="dialog-title"] {
 *************************/
 
 #nav QPushButton {
-    border-radius: 6;
-    padding: 6 12;
+    border-radius: @dp6;
+    padding: @dp6 @dp12;
     font-size: 10pt;
     background-color: @color01;
     color: @color05;
@@ -847,8 +847,8 @@ QLabel[accessibleName="dialog-title"] {
 
 #txtPackageSearch,
 #txtSearchAptSource {
-    padding: 6 12;
-    border-radius: 6;
+    padding: @dp6 @dp12;
+    border-radius: @dp6;
     background-color: @color01;
     border: 1px solid @borderColor;
     color: @color05;
@@ -869,14 +869,14 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetPackages::item {
     border-bottom: 1px solid @borderColor;
-    padding: 8 6;
+    padding: @dp8 @dp6;
     font-size: 10pt;
     color: @color11;
 }
 
 #treeWidgetPackages::indicator {
-    width: 14;
-    height: 14;
+    width: @dp14;
+    height: @dp14;
 }
 
 #treeWidgetPackages::indicator:unchecked {
@@ -914,8 +914,8 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #listWidgetSnapPackages::indicator {
-    width: 16;
-    height: 16;
+    width: @dp16;
+    height: @dp16;
 }
 
 #listWidgetSnapPackages::indicator:unchecked {
@@ -927,15 +927,15 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #listWidgetSnapPackages::item {
-    border-radius: 8;
-    min-height: 36;
+    border-radius: @dp8;
+    min-height: @dp36;
     background-color: @cardBg;
     margin: 1 0;
 }
 
 #listWidgetSnapPackages::item:text {
     color: @color05;
-    padding-left: 12;
+    padding-left: @dp12;
 }
 
 #listWidgetSnapPackages::item:selected {
@@ -962,8 +962,8 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #checkHistoryTitle::indicator {
-    width: 16;
-    height: 16;
+    width: @dp16;
+    height: @dp16;
 }
 
 #checkHistoryTitle::indicator:unchecked {
@@ -1004,10 +1004,10 @@ QLabel[accessibleName="dialog-title"] {
 
 #btnDownloadUpdate {
     background-color: @color01;
-    padding: 2 10;
-    border-radius: 4;
+    padding: @dp2 @dp10;
+    border-radius: @dp4;
     font-size: 9pt;
-    max-height: 22px;
+    max-height: @dp22px;
 }
 
 /****************
@@ -1102,8 +1102,8 @@ QLabel[accessibleName="dialog-title"] {
 
 /* Tab nav buttons */
 #GnomeSettingsPage QPushButton[accessibleName="navBtn"] {
-    border-radius: 6;
-    padding: 6 12;
+    border-radius: @dp6;
+    padding: @dp6 @dp12;
     font-size: 10pt;
     background-color: @color01;
     color: @color05;
@@ -1121,10 +1121,10 @@ QLabel[accessibleName="dialog-title"] {
 #btnBrowseWallpaper,
 #btnBrowseWallpaperDark {
     background-color: @color01;
-    padding: 6 12;
+    padding: @dp6 @dp12;
     color: @color05;
     border: 1px solid @borderColor;
-    border-radius: 6;
+    border-radius: @dp6;
 }
 
 #btnBrowseWallpaper:hover,
@@ -1153,18 +1153,18 @@ QLabel[accessibleName="dialog-title"] {
 SEARCH
 *******************************/
 #txtSearchInput {
-    padding: 6 12;
-    border-radius: 6;
+    padding: @dp6 @dp12;
+    border-radius: @dp6;
     background-color: @color01;
     border: 1px solid @borderColor;
     color: @color05;
 }
 
 #btnSearchAdvance {
-    padding: 6 12;
+    padding: @dp6 @dp12;
     background-color: @accentColor;
     color: @color07;
-    border-radius: 6;
+    border-radius: @dp6;
 }
 
 #lblFoundFilesInfo {
@@ -1178,19 +1178,19 @@ SEARCH
 
 #btnBrowseSearchDir {
     background-color: @color01;
-    padding: 6 12;
+    padding: @dp6 @dp12;
     color: @color05;
     border: 1px solid @borderColor;
-    border-radius: 6;
+    border-radius: @dp6;
 }
 
 #advanceSearchPane QSpinBox {
-    padding: 4 6;
+    padding: @dp4 @dp6;
 }
 
 #advanceSearchPane QCheckBox[accessibleName="circle"]::indicator {
-    width: 15px;
-    height: 15px;
+    width: @dp15px;
+    height: @dp15px;
 }
 
 #advanceSearchPane QLabel {
@@ -1198,7 +1198,7 @@ SEARCH
 }
 
 #advanceSearchPane QLineEdit {
-    padding: 4 6;
+    padding: @dp4 @dp6;
 }
 
 #btnAdvancePaneToggle,

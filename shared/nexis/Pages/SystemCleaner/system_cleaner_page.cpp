@@ -2,6 +2,7 @@
 #include "ui_system_cleaner_page.h"
 #include "byte_tree_widget.h"
 #include "nexis_roles.h"
+#include "dpi.h"
 #include <QLabel>
 
 SystemCleanerPage::~SystemCleanerPage()
@@ -46,8 +47,8 @@ void SystemCleanerPage::init()
     // greyscale symbolic icons that Qt can't recolor.  Render at exactly 64×64
     // and enable scaledContents so the label always shows the full image.
     auto setPixmap = [](QLabel *lbl, const QString &svgPath) {
-        QPixmap pm = QIcon(svgPath).pixmap(QSize(64, 64));
-        lbl->setFixedSize(64, 64);
+        QPixmap pm = QIcon(svgPath).pixmap(Dpi::scale(64, 64));
+        lbl->setFixedSize(Dpi::scale(64, 64));
         lbl->setScaledContents(true);
         lbl->setPixmap(pm);
     };
@@ -63,8 +64,8 @@ void SystemCleanerPage::init()
     // always shows the full image regardless of intrinsic SVG size.
     auto setThemePixmap = [](QLabel *lbl, const QString &themeName, const QString &fallback) {
         QIcon icon = QIcon::fromTheme(themeName, QIcon(fallback));
-        QPixmap pm = icon.pixmap(QSize(64, 64));
-        lbl->setFixedSize(64, 64);
+        QPixmap pm = icon.pixmap(Dpi::scale(64, 64));
+        lbl->setFixedSize(Dpi::scale(64, 64));
         lbl->setScaledContents(true);
         lbl->setPixmap(pm);
     };
@@ -78,9 +79,9 @@ void SystemCleanerPage::init()
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
-    ui->treeWidgetScanResult->setColumnWidth(0, 600);
+    ui->treeWidgetScanResult->setColumnWidth(0, Dpi::scale(600));
 
-    ui->treeWidgetScanResult->header()->setFixedHeight(30);
+    ui->treeWidgetScanResult->header()->setFixedHeight(Dpi::scale(30));
     ui->treeWidgetScanResult->setHeaderLabels({ tr("File Name"), tr("Size") });
 
     // loaders — update GIF source on theme change (reuse existing QMovie objects)

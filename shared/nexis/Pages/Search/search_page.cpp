@@ -1,6 +1,7 @@
 #include "search_page.h"
 #include "ui_search_page.h"
 #include "nexis_roles.h"
+#include "dpi.h"
 #include <qdebug.h>
 #include <QClipboard>
 
@@ -37,7 +38,7 @@ void SearchPage::init()
     mSortFilterModel->sort(1, Qt::SortOrder::DescendingOrder);
 
     ui->tableFoundResults->horizontalHeader()->setSectionsMovable(true);
-    ui->tableFoundResults->horizontalHeader()->setFixedHeight(32);
+    ui->tableFoundResults->horizontalHeader()->setFixedHeight(Dpi::scale(32));
     ui->tableFoundResults->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     ui->tableFoundResults->horizontalHeader()->setCursor(Qt::PointingHandCursor);
     ui->tableFoundResults->horizontalHeader()->resizeSection(0, 150);

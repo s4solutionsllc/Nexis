@@ -1,5 +1,6 @@
 #include "history_chart.h"
 #include "ui_history_chart.h"
+#include "dpi.h"
 
 HistoryChart::~HistoryChart()
 {
@@ -62,8 +63,8 @@ void HistoryChart::init()
     mChart->axes(Qt::Horizontal).first()->setRange(0, 60);
     mChart->axes(Qt::Horizontal).first()->setReverse(true);
 
-    mChart->setContentsMargins(-11, -11, -11, -11);
-    mChart->setMargins(QMargins(20, 0, 10, 10));
+    mChart->setContentsMargins(-Dpi::scale(11), -Dpi::scale(11), -Dpi::scale(11), -Dpi::scale(11));
+    mChart->setMargins(QMargins(Dpi::scale(20), 0, Dpi::scale(10), Dpi::scale(10)));
     ui->layoutHistoryChart->addWidget(mChartView, 1, 0, 1, 3);
 
     // theme changed

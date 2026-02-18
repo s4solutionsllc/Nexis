@@ -1,4 +1,5 @@
 #include "disk_usage_launcher_widget.h"
+#include "dpi.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -48,11 +49,11 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
     infoLayout->addWidget(mStatusLabel);
 
     auto *iconLabel = new QLabel(this);
-    iconLabel->setFixedSize(48, 48);
+    iconLabel->setFixedSize(Dpi::scale(48, 48));
     iconLabel->setScaledContents(true);
 
     auto *contentLayout = new QHBoxLayout;
-    contentLayout->setContentsMargins(12, 0, 12, 0);
+    contentLayout->setContentsMargins(Dpi::scale(12), 0, Dpi::scale(12), 0);
     contentLayout->addWidget(iconLabel, 0, Qt::AlignTop);
     contentLayout->addLayout(infoLayout, 1);
 
@@ -63,15 +64,15 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
     connect(mActionButton, &QPushButton::clicked, this, &DiskUsageLauncherWidget::onActionClicked);
 
     auto *buttonLayout = new QHBoxLayout;
-    buttonLayout->setContentsMargins(12, 0, 12, 12);
+    buttonLayout->setContentsMargins(Dpi::scale(12), 0, Dpi::scale(12), Dpi::scale(12));
     buttonLayout->addStretch();
     buttonLayout->addWidget(mActionButton);
     buttonLayout->addStretch();
 
     // --- Main layout ---
     auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 6, 12, 0);
-    mainLayout->setSpacing(8);
+    mainLayout->setContentsMargins(Dpi::scale(12), Dpi::scale(6), Dpi::scale(12), 0);
+    mainLayout->setSpacing(Dpi::scale(8));
     mainLayout->addWidget(mTitleLabel);
     mainLayout->addLayout(contentLayout);
     mainLayout->addLayout(buttonLayout);
@@ -95,7 +96,7 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
     toolIcon = QIcon::fromTheme("drive-harddisk");
 #endif
     if (!toolIcon.isNull())
-        iconLabel->setPixmap(toolIcon.pixmap(48, 48));
+        iconLabel->setPixmap(toolIcon.pixmap(Dpi::scale(48), Dpi::scale(48)));
     else
         iconLabel->hide();
 

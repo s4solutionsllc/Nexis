@@ -1,5 +1,7 @@
 #include "app_manager.h"
+#include "dpi.h"
 #include <QDebug>
+#include <QRegularExpression>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 #include <QStyleHints>
 #endif
@@ -100,6 +102,17 @@ void AppManager::updateStylesheet()
     // Replace @tokens with values
     for (const QString &key : mStyleValues->allKeys()) {
         mStylesheetFileContent.replace(key, mStyleValues->value(key).toString());
+    }
+
+    // Replace @dpN tokens with DPI-scaled pixel values (e.g. @dp12 → "24" at 2× DPR)
+    static const QRegularExpression dpRx(QStringLiteral("@dp(\\d+)"));
+    QRegularExpressionMatch m;
+    qsizetype offset = 0;
+    while ((m = dpRx.match(mStylesheetFileContent, offset)).hasMatch()) {
+        int base = m.captured(1).toInt();
+        QString scaled = QString::number(Dpi::scale(base));
+        mStylesheetFileContent.replace(m.capturedStart(), m.capturedLength(), scaled);
+        offset = m.capturedStart() + scaled.length();
     }
 
     qApp->setStyleSheet(mStylesheetFileContent);

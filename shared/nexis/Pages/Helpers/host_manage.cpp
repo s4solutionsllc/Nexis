@@ -1,6 +1,7 @@
 #include "host_manage.h"
 #include "ui_host_manage.h"
 #include "nexis_roles.h"
+#include "dpi.h"
 #include <qdebug.h>
 #include <QRegularExpression>
 
@@ -54,7 +55,7 @@ void HostManage::init()
     mSortFilterModel->setDynamicSortFilter(true);
 
     ui->tableViewHosts->horizontalHeader()->setSectionsMovable(true);
-    ui->tableViewHosts->horizontalHeader()->setFixedHeight(32);
+    ui->tableViewHosts->horizontalHeader()->setFixedHeight(Dpi::scale(32));
     ui->tableViewHosts->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     ui->tableViewHosts->horizontalHeader()->setCursor(Qt::PointingHandCursor);
     ui->tableViewHosts->horizontalHeader()->resizeSection(0, 195);

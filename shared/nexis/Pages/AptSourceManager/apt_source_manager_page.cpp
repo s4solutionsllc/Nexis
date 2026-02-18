@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include "utilities.h"
 #include "Managers/tool_manager.h"
+#include "dpi.h"
 
 #ifdef Q_OS_MAC
 #include <QFont>
@@ -49,14 +50,14 @@ void APTSourceManagerPage::init()
     mTreeWidget->setObjectName("treeWidgetPackages");
     mTreeWidget->setHeaderHidden(false);
     mTreeWidget->setHeaderLabels({ tr("Package") });
-    mTreeWidget->header()->setFixedHeight(30);
+    mTreeWidget->header()->setFixedHeight(Dpi::scale(30));
     mTreeWidget->header()->setStretchLastSection(true);
     mTreeWidget->setColumnCount(1);
     mTreeWidget->setFocusPolicy(Qt::NoFocus);
     mTreeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mTreeWidget->setSelectionMode(QAbstractItemView::NoSelection);
-    mTreeWidget->setIconSize(QSize(20, 20));
-    mTreeWidget->setIndentation(20);
+    mTreeWidget->setIconSize(Dpi::scale(20, 20));
+    mTreeWidget->setIndentation(Dpi::scale(20));
     mTreeWidget->setFont(QFont("Ubuntu", 10));
 
     // Insert into the existing vertical layout

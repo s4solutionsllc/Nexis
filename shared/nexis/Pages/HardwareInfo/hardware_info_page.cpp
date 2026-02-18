@@ -9,6 +9,7 @@
 #include <QSysInfo>
 #include <QProcess>
 #include <QDir>
+#include "dpi.h"
 
 HardwareInfoPage::~HardwareInfoPage()
 {
@@ -52,8 +53,8 @@ void HardwareInfoPage::addRow(QTableWidget *table, const QString &label, const Q
 
 void HardwareInfoPage::fitTableHeight(QTableWidget *table)
 {
-    const int rowHeight = 30;
-    const int headerHeight = table->horizontalHeader()->isVisible() ? 36 : 0;
+    const int rowHeight = Dpi::scale(30);
+    const int headerHeight = table->horizontalHeader()->isVisible() ? Dpi::scale(36) : 0;
     int height = headerHeight + table->rowCount() * rowHeight;
     table->setFixedHeight(height);
     table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);

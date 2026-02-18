@@ -1,5 +1,6 @@
 #include "circlebar.h"
 #include "ui_circlebar.h"
+#include "dpi.h"
 
 CircleBar::~CircleBar()
 {
@@ -46,7 +47,7 @@ void CircleBar::init()
 
     // chart settings
     mChart->setBackgroundBrush(QBrush(transparent));
-    mChart->setContentsMargins(-20, -20, -20, -65);
+    mChart->setContentsMargins(-Dpi::scale(20), -Dpi::scale(20), -Dpi::scale(20), -Dpi::scale(65));
     mChart->addSeries(mSeries);
     mChart->legend()->hide();
 

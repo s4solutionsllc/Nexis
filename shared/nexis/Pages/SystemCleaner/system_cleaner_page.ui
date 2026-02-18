@@ -83,8 +83,8 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>128</width>
+           <height>128</height>
           </size>
          </property>
          <property name="text">
@@ -156,8 +156,8 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>128</width>
+           <height>128</height>
           </size>
          </property>
          <property name="text">
@@ -191,8 +191,8 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>128</width>
+           <height>128</height>
           </size>
          </property>
          <property name="text">
@@ -226,8 +226,8 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>128</width>
+           <height>128</height>
           </size>
          </property>
          <property name="textFormat">
@@ -365,8 +365,8 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>128</width>
+           <height>128</height>
           </size>
          </property>
          <property name="text">
@@ -422,8 +422,8 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>128</width>
+           <height>128</height>
           </size>
          </property>
          <property name="text">
@@ -621,8 +621,8 @@
             </property>
             <property name="maximumSize">
              <size>
-              <width>100</width>
-              <height>100</height>
+              <width>200</width>
+              <height>200</height>
              </size>
             </property>
             <property name="cursor">

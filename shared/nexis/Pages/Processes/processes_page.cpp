@@ -2,6 +2,7 @@
 #include "ui_processes_page.h"
 #include "utilities.h"
 #include "nexis_roles.h"
+#include "dpi.h"
 #include <QRegularExpression>
 
 ProcessesPage::~ProcessesPage()
@@ -46,7 +47,7 @@ void ProcessesPage::init()
     mSortFilterModel->sort(5, Qt::SortOrder::DescendingOrder);
 
     ui->tableProcess->horizontalHeader()->setSectionsMovable(true);
-    ui->tableProcess->horizontalHeader()->setFixedHeight(36);
+    ui->tableProcess->horizontalHeader()->setFixedHeight(Dpi::scale(36));
     ui->tableProcess->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     ui->tableProcess->horizontalHeader()->setCursor(Qt::PointingHandCursor);
     ui->tableProcess->horizontalHeader()->resizeSection(0, 70);

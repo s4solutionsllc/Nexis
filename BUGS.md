@@ -52,11 +52,12 @@
 
 ## LOW Severity
 
-- [ ] **BUG-07: HiDPI / 4K scaling issues** (LOW)
+- [x] **BUG-07: HiDPI / 4K scaling issues** (LOW)
   - **Scope:** UI-wide (QWidget-based)
   - **Description:** QWidget UI doesn't scale properly on HiDPI displays. Text truncation, garbled service lists on 4K monitors. Full fix requires QML migration.
   - **Upstream:** [#111](https://github.com/oguzhaninan/Stacer/issues/111), [#482](https://github.com/oguzhaninan/Stacer/issues/482)
   - **Fix complexity:** Hard (architectural — would need QML migration)
+  - **Resolved:** Lightweight 3-pronged fix without QML migration: (1) Created `Dpi::scale()` utility class (`dpi.h`) that scales pixel values by `devicePixelRatio()` — applied to 12 C++ files covering headers, icons, margins, and chart offsets. (2) Extended QSS token system with `@dpN` tokens replaced at stylesheet load time — ~80 structural pixel values in `style.qss` converted. (3) Relaxed `.ui` file `maximumSize` constraints on 6 files (service items, startup apps, linebar, system cleaner icons/buttons) to allow layout-managed scaling.
 
 - [x] **BUG-08: Wayland compatibility** (LOW)
   - **Scope:** Platform / Qt level

@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QMap>
 #include "utilities.h"
+#include "dpi.h"
 
 UninstallerPage::~UninstallerPage()
 {
@@ -24,7 +25,7 @@ UninstallerPage::UninstallerPage(QWidget *parent) :
 void UninstallerPage::init()
 {
     // Configure tree header to match System Cleaner table style
-    ui->treeWidgetPackages->header()->setFixedHeight(30);
+    ui->treeWidgetPackages->header()->setFixedHeight(Dpi::scale(30));
     ui->treeWidgetPackages->setHeaderLabels({ tr("Application") });
     ui->treeWidgetPackages->header()->setStretchLastSection(true);
 

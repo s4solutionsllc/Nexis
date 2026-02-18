@@ -2,6 +2,7 @@
 #include "ui_app.h"
 #include "utilities.h"
 #include "signal_mapper.h"
+#include "dpi.h"
 #include <QStyle>
 #include <QDebug>
 #include <QScreen>
@@ -328,7 +329,7 @@ void App::updateSidebarIcons()
 #else
         btn->setIcon(QIcon::fromTheme(sysTheme, QIcon(svgPath)));
 #endif
-        btn->setIconSize(QSize(20, 20));
+        btn->setIconSize(Dpi::scale(20, 20));
     };
 
     setIcon(ui->btnDash,             "utilities-system-monitor",       "dash.svg");
