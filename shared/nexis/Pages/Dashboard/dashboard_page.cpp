@@ -3,6 +3,7 @@
 
 #include "utilities.h"
 
+#include <QDateTime>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -28,7 +29,8 @@ DashboardPage::DashboardPage(QWidget *parent) :
     mSettingManager(SettingManager::ins()),
     mSelectedSensorIndex(0),
     mGpuBar(new CircleBar(tr("GPU"), {"#813d9c", "#613583"}, this)),
-    mSelectedGpuIndex(0)
+    mSelectedGpuIndex(0),
+    mBatteryBar(new CircleBar(tr("BATTERY"), {"#f5c211", "#e5a50a"}, this))
 {
     ui->setupUi(this);
 
@@ -106,6 +108,15 @@ void DashboardPage::init()
         mGpuBar->hide();
     }
 
+    // Battery gauge — graceful degradation
+    if (im->hasBattery()) {
+        ui->batteryContainerLayout->addWidget(mBatteryBar);
+        connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateBatteryBar);
+    } else {
+        ui->batteryContainer->hide();
+        mBatteryBar->hide();
+    }
+
     // connections
     connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateCpuBar);
     connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateMemoryBar);
@@ -126,6 +137,8 @@ void DashboardPage::init()
         updateTempBar();
     if (im->hasGpu())
         updateGpuBar();
+    if (im->hasBattery())
+        updateBatteryBar();
 
     ui->widgetUpdateBar->hide();
 
@@ -140,6 +153,8 @@ void DashboardPage::init()
         widgets.append(mTempBar);
     if (im->hasGpu())
         widgets.append(mGpuBar);
+    if (im->hasBattery())
+        widgets.append(mBatteryBar);
 
     Utilities::addDropShadow(widgets, 60);
 }
@@ -365,5 +380,55 @@ void DashboardPage::onGpuDeviceChanged(int index)
         mSettingManager->setGpuDeviceId(gpus.at(index).name);
 
     updateGpuBar();
+}
+
+void DashboardPage::updateBatteryBar()
+{
+    im->updateBatteryInfo();
+    BatteryData bat = im->getBatteryData();
+
+    if (!bat.hasBattery)
+        return;
+
+    int displayValue = (bat.healthPercent >= 0) ? bat.healthPercent : bat.chargePercent;
+    displayValue = qBound(0, displayValue, 100);
+
+    QString label;
+    if (bat.healthPercent >= 0 && bat.cycleCount >= 0)
+        label = QString("%1%\n%2 %3").arg(bat.healthPercent).arg(bat.cycleCount).arg(tr("cycles"));
+    else if (bat.healthPercent >= 0)
+        label = QString("%1%").arg(bat.healthPercent);
+    else
+        label = QString("%1%").arg(bat.chargePercent);
+
+    mBatteryBar->setValue(displayValue, label);
+
+    // Battery health alert (inverted: warn when BELOW threshold)
+    int alertPercent = mSettingManager->getBatteryAlertPercent();
+    if (alertPercent > 0 && bat.healthPercent >= 0) {
+        int lastHealth = mSettingManager->getBatteryAlertLastHealth();
+        QString snoozedUntilStr = mSettingManager->getBatteryAlertSnoozedUntil();
+        bool snoozed = false;
+        if (!snoozedUntilStr.isEmpty()) {
+            QDateTime snoozedUntil = QDateTime::fromString(snoozedUntilStr, Qt::ISODate);
+            snoozed = snoozedUntil.isValid() && QDateTime::currentDateTime() < snoozedUntil;
+        }
+
+        bool shouldFire = bat.healthPercent < alertPercent &&
+                          !snoozed &&
+                          (lastHealth == 0 || bat.healthPercent <= lastHealth - 5);
+
+        if (shouldFire) {
+            QString msg = tr("Battery health is %1% (%2).").arg(bat.healthPercent).arg(bat.condition);
+            if (bat.cycleCount >= 0)
+                msg += QString(" %1 %2.").arg(bat.cycleCount).arg(tr("cycles used"));
+
+            AppManager::ins()->getTrayIcon()->showMessage(
+                tr("Battery Health Warning"),
+                msg,
+                QSystemTrayIcon::Warning);
+            mSettingManager->setBatteryAlertLastHealth(bat.healthPercent);
+        }
+    }
 }
 

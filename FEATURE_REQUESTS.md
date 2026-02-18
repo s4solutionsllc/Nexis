@@ -53,6 +53,10 @@
 
 - [x] **FR-28: Dashboard-only fullscreen / kiosk mode** — Add a fullscreen mode that hides the sidebar and title bar, showing only the Dashboard widgets. Intended for use on small secondary monitors as a dedicated system monitor (similar to HardwareVisualizer). Sub-features: (a) Toggle fullscreen via menu/shortcut that hides the sidebar (`QFrame#sidebar`), title bar, and system info text, expanding the dashboard to fill the window. (b) Option to enlarge dashboard widgets (CircleBars, LineCharts) to use the freed space. (c) Remember the last selected temperature sensor device across sessions. See also FR-12 (hardware info tab) — both serve the "dedicated system monitor" use case. Community issue [#4](https://github.com/lsimpsonsfdc/Nexis/issues/4) by @Vai0Lou. **Resolved:** F11 toggles kiosk mode (hides sidebar + page title, shows fullscreen dashboard). ESC exits kiosk mode. State persisted across sessions. Temperature sensor and GPU device selections remembered via SettingManager. Dashboard system info panel removed (replaced by FR-12 Hardware Info tab); temp/GPU/network modules now fill full width.
 
+## Hardware Health
+
+- [~] **FR-29: Battery & SSD/Disk health monitoring** — Add battery health metrics (cycle count, max vs design capacity, health %, temperature, charge rate) via IOKit (macOS) and `/sys/class/power_supply/` (Linux). Add SMART-based disk health monitoring for NVMe (Percentage Used, Available Spare, Media Errors, Unsafe Shutdowns, Power On Hours) and SATA SSDs/HDDs (Reallocated Sectors, Wear Leveling, Pending Sectors) via `smartctl` (Linux) and IOKit/diskutil (macOS). Dashboard integration with CircleBar gauges, Hardware Info page expansion, configurable alert thresholds, and historical health tracking on the Resources page. See `claude_definitions/FR-29_feature_request.md` for full specification.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

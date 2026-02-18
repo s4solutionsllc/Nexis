@@ -20,6 +20,9 @@ namespace SettingKeys {
     const QString KioskMode("KioskMode");
     const QString TempSensorId("TempSensorId");
     const QString GpuDeviceId("GpuDeviceId");
+    const QString BatteryAlertPercent("BatteryAlertPercent");
+    const QString BatteryAlertLastHealth("BatteryAlertLastHealth");
+    const QString BatteryAlertSnoozedUntil("BatteryAlertSnoozedUntil");
 }
 
 class SettingManager
@@ -73,6 +76,15 @@ public:
 
     void setGpuDeviceId(const QString &value);
     QString getGpuDeviceId() const;
+
+    void setBatteryAlertPercent(const int value);
+    int getBatteryAlertPercent() const;
+
+    void setBatteryAlertLastHealth(const int value);
+    int getBatteryAlertLastHealth() const;
+
+    void setBatteryAlertSnoozedUntil(const QString &value);
+    QString getBatteryAlertSnoozedUntil() const;
 
 private:
     static SettingManager *instance;

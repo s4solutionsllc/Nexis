@@ -190,4 +190,20 @@ bool InfoManager::hasGpu() const
     return gi.hasGpu();
 }
 
+/********************
+ * Battery Provider
+ *******************/
+BatteryData InfoManager::getBatteryData() const
+{
+    return bi.getBatteryData();
+}
 
+void InfoManager::updateBatteryInfo()
+{
+    bi.updateBatteryInfo();
+}
+
+bool InfoManager::hasBattery() const
+{
+    return bi.hasBattery();
+}

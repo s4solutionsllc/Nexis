@@ -11,6 +11,7 @@
 #include <Info/process_info.h>
 #include <Info/thermal_info.h>
 #include <Info/gpu_info.h>
+#include <Info/battery_info.h>
 
 class InfoManager
 {
@@ -57,6 +58,10 @@ public:
     void updateGpuInfo();
     bool hasGpu() const;
 
+    BatteryData getBatteryData() const;
+    void updateBatteryInfo();
+    bool hasBattery() const;
+
 private:
     static InfoManager *instance;
 
@@ -69,6 +74,7 @@ private:
     ProcessInfo pi;
     ThermalInfo ti;
     GpuInfo gi;
+    BatteryInfo bi;
 };
 
 #endif // INFO_MANAGER_H

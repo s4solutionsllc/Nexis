@@ -112,6 +112,13 @@ void SettingsPage::init()
     ui->spinMemoryPercent->setValue(mSettingManager->getMemoryAlertPercent());
     ui->spinDiskPercent->setValue(mSettingManager->getDiskAlertPercent());
 
+    // battery health alert (hide on desktops with no battery)
+    ui->spinBatteryHealthPercent->setValue(mSettingManager->getBatteryAlertPercent());
+    if (!InfoManager::ins()->hasBattery()) {
+        ui->lblBatteryHealthPercent->hide();
+        ui->spinBatteryHealthPercent->hide();
+    }
+
     // disk analyzer preference
     initDiskAnalyzerCombo();
 
@@ -200,6 +207,11 @@ void SettingsPage::on_spinMemoryPercent_valueChanged(int value)
 void SettingsPage::on_spinDiskPercent_valueChanged(int value)
 {
     mSettingManager->setDiskAlertPercent(value);
+}
+
+void SettingsPage::on_spinBatteryHealthPercent_valueChanged(int value)
+{
+    mSettingManager->setBatteryAlertPercent(value);
 }
 
 void SettingsPage::on_checkAppQuitDontAsk_clicked(bool checked)

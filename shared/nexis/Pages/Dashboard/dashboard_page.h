@@ -42,6 +42,8 @@ private slots:
     void updateGpuBar();
     void onGpuDeviceChanged(int index);
 
+    void updateBatteryBar();
+
     void on_btnDownloadUpdate_clicked();
 
 signals:
@@ -56,6 +58,7 @@ private:
     CircleBar* mDiskBar;
     CircleBar* mTempBar;
     CircleBar* mGpuBar;
+    CircleBar* mBatteryBar;
 
     LineBar *mDownloadBar;
     LineBar *mUploadBar;

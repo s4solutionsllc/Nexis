@@ -170,3 +170,33 @@ QString SettingManager::getGpuDeviceId() const
 {
     return mSettings->value(SettingKeys::GpuDeviceId, "").toString();
 }
+
+void SettingManager::setBatteryAlertPercent(const int value)
+{
+    mSettings->setValue(SettingKeys::BatteryAlertPercent, value);
+}
+
+int SettingManager::getBatteryAlertPercent() const
+{
+    return mSettings->value(SettingKeys::BatteryAlertPercent, 0).toInt();
+}
+
+void SettingManager::setBatteryAlertLastHealth(const int value)
+{
+    mSettings->setValue(SettingKeys::BatteryAlertLastHealth, value);
+}
+
+int SettingManager::getBatteryAlertLastHealth() const
+{
+    return mSettings->value(SettingKeys::BatteryAlertLastHealth, 0).toInt();
+}
+
+void SettingManager::setBatteryAlertSnoozedUntil(const QString &value)
+{
+    mSettings->setValue(SettingKeys::BatteryAlertSnoozedUntil, value);
+}
+
+QString SettingManager::getBatteryAlertSnoozedUntil() const
+{
+    return mSettings->value(SettingKeys::BatteryAlertSnoozedUntil, "").toString();
+}
