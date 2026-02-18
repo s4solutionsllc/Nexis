@@ -84,6 +84,10 @@ When the user requests a new feature or asks to fix a bug, follow this three-pha
 5. Update `BUGS.md` or `FEATURE_REQUESTS.md` with resolution notes and commit hash.
 6. Commit and push when complete.
 
+### Archiving Completed Work
+
+When a bug or feature request is marked `[x]` (done), move its associated `claude_definitions/` files (`{ID}_research.md`, `{ID}_plan.md`, and any other `{ID}_*.md` variants) to `claude_definitions/Archive/`. This keeps the active working directory clean and limited to open/in-progress items. Files for open (`[ ]`) or in-progress (`[~]`) items must remain in `claude_definitions/`.
+
 ## Notable Forks
 
 - **QuentiumYT/Stacer** — Most active fork of the original project (78 stars). Reference for fixes and features.
