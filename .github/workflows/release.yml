@@ -118,6 +118,9 @@ jobs:
           echo "APPIMAGE_PATH=$APPIMAGE" >> "$GITHUB_OUTPUT"
           echo "APPIMAGE_NAME=$(basename $APPIMAGE)" >> "$GITHUB_OUTPUT"
 
+      - name: Rename binary with architecture
+        run: cp build/output/nexis build/output/nexis-${{ matrix.arch }}
+
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -125,7 +128,7 @@ jobs:
           path: |
             ${{ steps.deb.outputs.DEB_PATH }}
             ${{ steps.appimage.outputs.APPIMAGE_PATH }}
-            build/output/nexis
+            build/output/nexis-${{ matrix.arch }}
 
   # ============================================================================
   # macOS build: .app bundle + .dmg
@@ -213,7 +216,7 @@ jobs:
           # x86_64
           DEB_X64=$(find artifacts/linux-x86_64 -name '*.deb' | head -1)
           APPIMAGE_X64=$(find artifacts/linux-x86_64 -name '*.AppImage' | head -1)
-          BINARY_X64=$(find artifacts/linux-x86_64 -name 'nexis' -not -name '*.app' -not -name '*.dmg' | head -1)
+          BINARY_X64=$(find artifacts/linux-x86_64 -name 'nexis-x86_64' | head -1)
           echo "DEB_X64_PATH=$DEB_X64" >> "$GITHUB_OUTPUT"
           echo "DEB_X64_NAME=$(basename $DEB_X64)" >> "$GITHUB_OUTPUT"
           echo "APPIMAGE_X64_PATH=$APPIMAGE_X64" >> "$GITHUB_OUTPUT"
@@ -223,7 +226,7 @@ jobs:
           # ARM64
           DEB_ARM64=$(find artifacts/linux-arm64 -name '*.deb' | head -1)
           APPIMAGE_ARM64=$(find artifacts/linux-arm64 -name '*.AppImage' | head -1)
-          BINARY_ARM64=$(find artifacts/linux-arm64 -name 'nexis' -not -name '*.app' -not -name '*.dmg' | head -1)
+          BINARY_ARM64=$(find artifacts/linux-arm64 -name 'nexis-arm64' | head -1)
           echo "DEB_ARM64_PATH=$DEB_ARM64" >> "$GITHUB_OUTPUT"
           echo "DEB_ARM64_NAME=$(basename $DEB_ARM64)" >> "$GITHUB_OUTPUT"
           echo "APPIMAGE_ARM64_PATH=$APPIMAGE_ARM64" >> "$GITHUB_OUTPUT"
