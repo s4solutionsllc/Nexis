@@ -111,6 +111,14 @@ bool ToolManager::trashApps(const QStringList &appPaths)
 }
 
 /*
+ * Docker
+ */
+bool ToolManager::checkDocker() const
+{
+    return DockerTool::isDockerInstalled();
+}
+
+/*
  * macOS System Settings — not yet implemented; hide the tab for now.
  */
 bool ToolManager::checkGnomeSettings() const

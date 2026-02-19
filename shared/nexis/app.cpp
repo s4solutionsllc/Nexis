@@ -78,6 +78,16 @@ void App::init()
         ui->btnAptSourceManager->hide();
     }
 
+    // DOCKER
+    if (ToolManager::ins()->checkDocker()) {
+        dockerPage = new DockerPage(mSlidingStacked);
+        int dockerIdx = mListSidebarButtons.indexOf(ui->btnHelpers);
+        mListPages.insert(dockerIdx, dockerPage);
+        mListSidebarButtons.insert(dockerIdx, ui->btnDocker);
+    } else {
+        ui->btnDocker->hide();
+    }
+
     // GNOME SETTINGS
     if (ToolManager::ins()->checkGnomeSettings()) {
         gnomeSettingsPage = new GnomeSettingsPage(mSlidingStacked);
@@ -105,6 +115,7 @@ void App::init()
     ui->btnUninstaller->setText(tr("Uninstaller"));
 #endif
     ui->btnResources->setText(tr("Resources"));
+    ui->btnDocker->setText(tr("Docker"));
 #ifdef Q_OS_MAC
     ui->btnAptSourceManager->setText(tr("Homebrew"));
 #else
@@ -308,6 +319,11 @@ void App::on_btnResources_clicked()
     pageClick(resourcesPage);
 }
 
+void App::on_btnDocker_clicked()
+{
+    pageClick(dockerPage);
+}
+
 void App::on_btnHelpers_clicked()
 {
     pageClick(helpersPage);
@@ -362,6 +378,7 @@ void App::updateSidebarIcons()
     setIcon(ui->btnHelpers,          "preferences-other",              "helpers.svg");
     setIcon(ui->btnUninstaller,      "edit-delete",                    "uninstaller.svg");
     setIcon(ui->btnResources,        "preferences-system",             "resources.svg");
+    setIcon(ui->btnDocker,           "docker",                         "docker.svg");
     setIcon(ui->btnAptSourceManager, "system-software-install",        "ppa-manager.svg");
     setIcon(ui->btnGnomeSettings,    "preferences-desktop-appearance", "gnome-settings.svg");
     setIcon(ui->btnSettings,         "applications-system",            "settings.svg");

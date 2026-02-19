@@ -128,6 +128,14 @@ QList<Package> ToolManager::getInstalledApps() const { return {}; }
 bool ToolManager::trashApps(const QStringList &) { return false; }
 
 /*
+ * Docker
+ */
+bool ToolManager::checkDocker() const
+{
+    return DockerTool::isDockerInstalled();
+}
+
+/*
  * GNOME Settings
  */
 bool ToolManager::checkGnomeSettings() const

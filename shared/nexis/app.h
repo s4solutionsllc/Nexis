@@ -22,6 +22,7 @@
 #include "Pages/Search/search_page.h"
 #include "Pages/Helpers/helpers_page.h"
 #include "Pages/HardwareInfo/hardware_info_page.h"
+#include "Pages/Docker/docker_page.h"
 #include "feedback.h"
 
 namespace Ui {
@@ -57,6 +58,7 @@ private slots:
     void on_btnProcesses_clicked();
     void on_btnSettings_clicked();
     void on_btnAptSourceManager_clicked();
+    void on_btnDocker_clicked();
     void on_btnGnomeSettings_clicked();
 
     void on_btnFeedback_clicked();
@@ -90,6 +92,7 @@ private:
     UninstallerPage *uninstallerPage;
     ResourcesPage *resourcesPage;
     APTSourceManagerPage *aptSourceManagerPage;
+    DockerPage *dockerPage;
     GnomeSettingsPage *gnomeSettingsPage;
     SettingsPage *settingsPage;
     HelpersPage *helpersPage;

@@ -104,6 +104,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
   "${GUI_SHARED_DIR}/Pages/GnomeSettings"
   "${GUI_SHARED_DIR}/Pages/Search"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo"
+  "${GUI_SHARED_DIR}/Pages/Docker"
 )
 
 # macOS app icon
@@ -145,6 +146,7 @@ target_include_directories(nexis PRIVATE
   "${GUI_SHARED_DIR}/Pages/GnomeSettings"
   "${GUI_SHARED_DIR}/Pages/Search"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo"
+  "${GUI_SHARED_DIR}/Pages/Docker"
   "${CMAKE_BINARY_DIR}"
 )
 

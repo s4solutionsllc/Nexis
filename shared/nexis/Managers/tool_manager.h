@@ -5,6 +5,7 @@
 #include <Tools/package_tool.h>
 #include <Tools/apt_source_tool.h>
 #include <Tools/gnome_settings_tool.h>
+#include <Tools/docker_tool.h>
 
 class ToolManager
 {
@@ -30,6 +31,7 @@ public:
     bool trashApps(const QStringList &appPaths);
 
     bool checkGnomeSettings() const;
+    bool checkDocker() const;
 
     bool checkSourceRepository() const;
     QList<APTSourcePtr> getSourceList() const;
