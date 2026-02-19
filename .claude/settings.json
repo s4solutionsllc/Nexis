@@ -4,6 +4,7 @@
     "allow": [
       "Bash(cmake *)",
       "Bash(cmake --build *)",
+      "Bash(cmake --build build -j$(sysctl -n hw.ncpu) 2>&1)",
       "Bash(rm -rf build && cmake *)",
       "Bash(make *)",
       "WebSearch"
