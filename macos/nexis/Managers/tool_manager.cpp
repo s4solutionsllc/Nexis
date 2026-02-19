@@ -149,7 +149,7 @@ void ToolManager::changeAPTStatus(const APTSourcePtr aptSource, const bool statu
     AptSourceTool::changeStatus(aptSource, status);
 }
 
-void ToolManager::changeAPTSource(const APTSourcePtr aptSource, const QString newSource)
+void ToolManager::changeAPTSource(const APTSourcePtr aptSource, const APTSourcePtr newSource)
 {
     AptSourceTool::changeSource(aptSource, newSource);
 }

@@ -81,7 +81,7 @@ void APTSourceManagerPage::init()
 
 #else
     ui->txtAptSource->setPlaceholderText(tr("example %1")
-                                         .arg("'deb http://archive.ubuntu.com/ubuntu xenial main'"));
+                                         .arg("'ppa:deadsnakes/ppa'"));
 
     loadAptSources();
 
@@ -237,15 +237,21 @@ void APTSourceManagerPage::on_btnAddAPTSourceRepository_clicked(bool checked)
         QString aptSourceRepository = ui->txtAptSource->text().trimmed();
 
         if (! aptSourceRepository.isEmpty()) {
+            ui->btnAddAPTSourceRepository->setText(tr("Adding..."));
+            ui->btnAddAPTSourceRepository->setEnabled(false);
+
             ToolManager::ins()->addAPTRepository(aptSourceRepository, ui->checkEnableSource->isChecked());
 
             ui->txtAptSource->clear();
             ui->checkEnableSource->setChecked(false);
+            ui->btnAddAPTSourceRepository->setEnabled(true);
             on_btnCancel_clicked();
+            selectedAptSource.clear();
 #ifdef Q_OS_MAC
             (void)QtConcurrent::run([this]() { fetchBrewPackages(); });
 #else
             loadAptSources();
+            on_txtSearchAptSource_textChanged(ui->txtSearchAptSource->text());
 #endif
         }
     }
@@ -340,7 +346,9 @@ void APTSourceManagerPage::on_btnDeleteAptSource_clicked()
 #else
     if (! selectedAptSource.isNull()) {
         ToolManager::ins()->removeAPTSource(selectedAptSource);
+        selectedAptSource.clear();
         loadAptSources();
+        on_txtSearchAptSource_textChanged(ui->txtSearchAptSource->text());
     }
 #endif
 }
@@ -382,7 +390,11 @@ void APTSourceManagerPage::on_btnEditAptSource_clicked()
     if (! selectedAptSource.isNull()) {
         if (mAptSourceEditDialog.isNull()) {
             mAptSourceEditDialog = QSharedPointer<APTSourceEdit>(new APTSourceEdit(this));
-            connect(mAptSourceEditDialog.data(), &APTSourceEdit::saved, this, &APTSourceManagerPage::loadAptSources);
+            connect(mAptSourceEditDialog.data(), &APTSourceEdit::saved, this, [this]() {
+                selectedAptSource.clear();
+                loadAptSources();
+                on_txtSearchAptSource_textChanged(ui->txtSearchAptSource->text());
+            });
         }
         APTSourceEdit::selectedAptSource = selectedAptSource;
         mAptSourceEditDialog->show();

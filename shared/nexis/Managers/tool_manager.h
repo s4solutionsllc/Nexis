@@ -37,7 +37,7 @@ public:
     QList<APTSourcePtr> getSourceList() const;
     void removeAPTSource(const APTSourcePtr source);
     void changeAPTStatus(const APTSourcePtr aptSource, const bool status);
-    void changeAPTSource(const APTSourcePtr aptSource, const QString newSource);
+    void changeAPTSource(const APTSourcePtr aptSource, const APTSourcePtr newSource);
     void addAPTRepository(const QString &repository, const bool isSource);
 
 private:

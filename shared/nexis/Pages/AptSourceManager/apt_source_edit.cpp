@@ -35,7 +35,7 @@ void APTSourceEdit::show()
     ui->radioSource->setChecked(selectedAptSource->isSource);
     ui->txtOptions->setText(selectedAptSource->options);
     ui->txtUri->setText(selectedAptSource->uri);
-    ui->txtDistribution->setText(selectedAptSource->distribution);
+    ui->txtSuites->setText(selectedAptSource->suites);
     ui->txtComponents->setText(selectedAptSource->components);
 
     QDialog::show();
@@ -46,27 +46,23 @@ void APTSourceEdit::clearElements()
     ui->lblErrorMsg->hide();
     ui->txtOptions->clear();
     ui->txtUri->clear();
-    ui->txtDistribution->clear();
+    ui->txtSuites->clear();
     ui->txtComponents->clear();
 }
 
 void APTSourceEdit::on_btnSave_clicked()
 {
-    if (! ui->txtUri->text().isEmpty() &&
-        ! ui->txtDistribution->text().isEmpty())
-    {
-        QString sourceType = ui->radioBinary->isChecked() ? "deb" : "deb-src";
-        QString updatedAptSource = QString("%1 %2 %3 %4 %5")
-                .arg(sourceType)
-                .arg(ui->txtOptions->text())
-                .arg(ui->txtUri->text())
-                .arg(ui->txtDistribution->text())
-                .arg(ui->txtComponents->text());
+    if (!ui->txtUri->text().isEmpty() && !ui->txtSuites->text().isEmpty()) {
+        APTSourcePtr updatedAptSource(new APTSource(*selectedAptSource));
+        updatedAptSource->isSource = ui->radioSource->isChecked();
+        updatedAptSource->options = ui->txtOptions->text();
+        updatedAptSource->uri = ui->txtUri->text();
+        updatedAptSource->suites = ui->txtSuites->text();
+        updatedAptSource->components = ui->txtComponents->text();
 
         ToolManager::ins()->changeAPTSource(selectedAptSource, updatedAptSource);
 
         emit saved();
-
         close();
     } else {
         ui->lblErrorMsg->show();

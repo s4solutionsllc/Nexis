@@ -18,7 +18,7 @@ void AptSourceTool::removeAPTSource(const APTSourcePtr aptSource)
     // Uninstall a Homebrew package
     if (!aptSource->uri.isEmpty()) {
         try {
-            QString type = aptSource->distribution;  // "formula" or "cask"
+            QString type = aptSource->suites;  // "formula" or "cask"
             if (type == "cask") {
                 CommandUtil::exec(findBrew(), {"uninstall", "--cask", aptSource->uri});
             } else {
@@ -42,7 +42,7 @@ void AptSourceTool::addRepository(const QString &repository, const bool isSource
     }
 }
 
-void AptSourceTool::changeSource(const APTSourcePtr aptSource, const QString newSource)
+void AptSourceTool::changeSource(const APTSourcePtr aptSource, const APTSourcePtr newSource)
 {
     Q_UNUSED(aptSource);
     Q_UNUSED(newSource);
@@ -74,7 +74,7 @@ QList<APTSourcePtr> AptSourceTool::getSourceList()
             source->uri          = e.identifier;
             source->isActive     = true;
             source->isSource     = e.isCask;
-            source->distribution = e.isCask ? "cask" : "formula";
+            source->suites       = e.isCask ? "cask" : "formula";
             source->filePath     = "";
             source->source       = e.displayName;
             source->components   = e.description;

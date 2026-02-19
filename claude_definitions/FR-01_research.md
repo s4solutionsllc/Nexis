@@ -1,12 +1,8 @@
-Perfect. Now I have all the information I need. Let me create the comprehensive research document:
-
----
-
 # FR-01 Research: deb822 APT Source File Support
 
 ## Feature Summary
 
-Add support for the modern `.sources` format (deb822 — RFC 822 key-value style) used by Debian 13+ and Ubuntu 24.04+. Currently, Nexis only parses the legacy one-line `.list` format from `/etc/apt/sources.list` and `/etc/apt/sources.list.d/*.list` files. The `.sources` format uses `/etc/apt/sources.list.d/*.sources` with a structured, multi-line key-value syntax that is easier to parse, extends more naturally, and better handles complex repository configurations.
+Add support for the modern `.sources` format (deb822 — RFC 822 key-value style) used by Debian 13+ and Ubuntu 24.04+. Currently, Nexis only parses the legacy one-line `.list` format from `/etc/apt/sources.list` and `/etc/apt/sources.list.d/*.list` files. The `.sources` format uses `/etc/apt/sources.list.d/*.sources` with a structured, multi-line key-value syntax.
 
 **Upstream Reference:** QuentiumYT/Stacer commit `87279f6`
 
@@ -14,24 +10,9 @@ Add support for the modern `.sources` format (deb822 — RFC 822 key-value style
 
 ## Current Architecture
 
-### File Structure & Parsing
-
-**Linux implementation:** `/Users/luke/Documents/GitHub/Nexis/linux/nexis-core/Tools/apt_source_tool.cpp` (128 lines)
-
-**Current locations scanned:**
-- `/etc/apt/sources.list` (legacy monolithic file)
-- `/etc/apt/sources.list.d/*.list` (legacy modular files)
-
-**Regex pattern used (line 88):**
-```cpp
-QRegularExpression("^\\s{0,}#{0,}\\s{0,}deb")
-```
-
-This matches lines starting with optional whitespace, optional `#` comment marker, whitespace, and `deb` or `deb-src` keyword.
-
 ### Data Model
 
-**APTSource struct** (`/Users/luke/Documents/GitHub/Nexis/shared/nexis-core/Tools/apt_source_tool.h`, lines 11-22):
+**APTSource struct** (`shared/nexis-core/Tools/apt_source_tool.h`, lines 11-22):
 ```cpp
 class APTSource {
 public:
@@ -41,331 +22,241 @@ public:
     QString uri;           // http://archive.ubuntu.com/ubuntu
     QString distribution;  // xenial, focal, jammy, etc.
     QString components;    // main, universe, restricted, multiverse
-    
     QString source;        // Full parsed line (for storage/display)
-    bool isActive;         // false if line starts with #
+    bool isActive;         // false if line starts with # (legacy) or Enabled: no (deb822)
 };
+typedef QSharedPointer<APTSource> APTSourcePtr;
 ```
 
-### Parsing Logic (apt_source_tool.cpp:78-127)
+### ToolManager Interface
 
-1. **Discovery:** Lines 82-83 get all `.list` files from `/etc/apt/sources.list.d/` + the main `/etc/apt/sources.list`
-2. **Per-file processing:** Lines 86-124 read each file, filter lines matching regex, split by whitespace
-3. **Field extraction:** Lines 109-117
-   - `sourceColumns[0]`: "deb" or "deb-src"
-   - `sourceColumns[1]`: URI (after removing options)
-   - `sourceColumns[2]`: Distribution
-   - `sourceColumns[3+]`: Components (joined with spaces)
-4. **Comment detection:** Lines 96, 98 — comment lines start with `#`
-5. **Status tracking:** isActive = !line.startsWith('#')
+`shared/nexis/Managers/tool_manager.h` (lines 36-41):
+```cpp
+bool checkSourceRepository() const;
+QList<APTSourcePtr> getSourceList() const;
+void removeAPTSource(const APTSourcePtr source);
+void changeAPTStatus(const APTSourcePtr aptSource, const bool status);
+void changeAPTSource(const APTSourcePtr aptSource, const QString newSource);
+void addAPTRepository(const QString &repository, const bool isSource);
+```
 
-### UI Flow
+Note: `changeAPTSource` currently takes a `QString` — this must change to `APTSourcePtr` for format-aware writing.
 
-**APTSourceManagerPage** (`/Users/luke/Documents/GitHub/Nexis/shared/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp`):
+### Linux Parser Implementation
 
-1. **Initialization (line 86):** `loadAptSources()` called on Linux
-2. **Loading (lines 101-132):** Calls `ToolManager::ins()->getSourceList()` → `AptSourceTool::getSourceList()`
-3. **Display (lines 108-119):** For each APTSource, creates `APTSourceRepositoryItem` widget with:
-   - Checkbox for enable/disable
-   - Source description label
-   - Optional "(Source Code)" suffix for deb-src
-4. **Editing (lines 380-390):** Launches `APTSourceEdit` dialog on double-click
-5. **Modification:**
-   - **Enable/Disable (apt_source_repository_item.cpp:62-64):** Toggles `#` prefix via `changeStatus()`
-   - **Edit (apt_source_edit.cpp:53-73):** Reconstructs full line as `"deb [options] uri distribution components"`
-   - **Delete (apt_source_manager_page.cpp:341-344):** Removes entire line via `removeAPTSource()`
-   - **Add (apt_source_manager_page.cpp:231-251):** Calls `add-apt-repository` command
+**File:** `linux/nexis-core/Tools/apt_source_tool.cpp` (128 lines)
 
-### Modification Methods (apt_source_tool.cpp:19-76)
+Constants:
+```cpp
+static constexpr const char *APT_SOURCES_LIST_D_PATH = "/etc/apt/sources.list.d";
+static constexpr const char *APT_SOURCES_LIST_PATH   = "/etc/apt/sources.list";
+```
 
-**changeSource()** (lines 36-63) — generic write method:
-- Reads entire file into `QStringList` (line 38)
-- Linear search for matching line (lines 42-48)
-- Replace or remove (lines 51-54)
-- Write back with `sudo tee` (line 61)
+**`getSourceList()`** (lines 78-127):
+1. Discovery: `QDir(APT_SOURCES_LIST_D_PATH).entryInfoList({"*.list"})` + `QFileInfo(APT_SOURCES_LIST_PATH)`
+2. Per-file: `FileUtil::readListFromFile()` → filter with regex `"^\\s{0,}#{0,}\\s{0,}deb"`
+3. Per-line: Split by whitespace, extract uri (col 1), distribution (col 2), components (col 3+)
+4. Status: `isActive = !line.startsWith('#')`
 
-**changeStatus()** (lines 65-76):
-- Toggles comment prefix: `"# " + line` or remove `"#"`
-- Calls `changeSource()` with modified line
+**`changeSource()`** (lines 36-63):
+- Reads file into QStringList (one line per element)
+- Linear search for matching line via `indexOf(aptSource->source)`
+- Replace or remove that line
+- Write back via `CommandUtil::sudoExec("tee", {filePath}, data)`
 
-**removeAPTSource()** (lines 19-22):
-- Wrapper: calls `changeSource(aptSource, "")`
+**`changeStatus()`** (lines 65-76):
+- Toggles comment prefix: `"# " + line` or removes `"#"`
+- Delegates to `changeSource()`
+
+**`removeAPTSource()`** (lines 19-22):
+- Calls `changeSource(aptSource, "")` — empty string triggers line removal
+
+**`addRepository()`** (lines 24-34):
+- Runs `CommandUtil::sudoExec("add-apt-repository", {"-y", repo})` — external tool handles file creation
+
+### UI Layer
+
+**APTSourceManagerPage** (`shared/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp`, 391 lines):
+- `loadAptSources()`: Calls `ToolManager::ins()->getSourceList()`, creates `APTSourceRepositoryItem` per source
+- `on_btnEditAptSource_clicked()`: Launches `APTSourceEdit` dialog
+- `on_btnDeleteAptSource_clicked()`: Calls `ToolManager::ins()->removeAPTSource()`
+- `on_btnAddAPTSourceRepository_clicked()`: Calls `ToolManager::ins()->addAPTRepository()`
+- Search filtering via `QListWidgetItem::setData(5, searchData)`
+
+**APTSourceEdit** (`shared/nexis/Pages/AptSourceManager/apt_source_edit.cpp`, 80 lines):
+- `show()`: Populates fields from `selectedAptSource->isSource`, `options`, `uri`, `distribution`, `components`
+- `on_btnSave_clicked()`: Rebuilds `.list` format string: `"deb [options] uri distribution components"`
+  Calls `ToolManager::ins()->changeAPTSource(selectedAptSource, updatedString)`
+
+**APTSourceRepositoryItem** (`shared/nexis/Pages/AptSourceManager/apt_source_repository_item.cpp`, 66 lines):
+- `init()`: Strips inline options with regex `\\s[\\[]+.*[\\]]+`, sets label text
+- `on_checkAptSource_clicked()`: Calls `ToolManager::ins()->changeAPTStatus()`
+
+### macOS Implementation (Homebrew Adapter)
+
+`macos/nexis-core/Tools/apt_source_tool.cpp` (90 lines) — Maps APT interface to Homebrew packages. Not relevant for deb822.
 
 ---
 
-## The deb822 Format
+## The deb822 Format Specification
 
 ### Structure
 
-deb822 (RFC 822 key-value) format used in `/etc/apt/sources.list.d/*.sources` files:
+Stanza-based RFC 822 key-value format. Multiple stanzas per file, separated by blank lines.
 
 ```
 Types: deb deb-src
-URIs: http://archive.ubuntu.com/ubuntu/
-Suites: focal focal-updates focal-backports
-Components: main universe restricted multiverse
-Signed-By: /etc/apt/keyrings/ubuntu-archive-keyring.gpg
+URIs: https://deb.debian.org/debian
+Suites: trixie trixie-updates
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
-Types: deb
-URIs: http://security.ubuntu.com/ubuntu/
-Suites: focal-security
-Components: main universe restricted multiverse
+Types: deb deb-src
+URIs: https://deb.debian.org/debian-security
+Suites: trixie-security
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 ```
 
-### Key Differences vs `.list` Format
+### Key Differences from `.list` Format
 
-| Aspect | `.list` (old) | `.sources` (deb822/new) |
-|--------|---------------|------------------------|
-| **File format** | One entry per line | Stanza-based (RFC 822) |
-| **Line syntax** | `deb [options] uri suite components` | Key-value pairs, multi-line |
-| **Example** | `deb http://archive.ubuntu.com/ubuntu focal main` | `Types: deb`<br>`URIs: http://archive.ubuntu.com/ubuntu`<br>`Suites: focal`<br>`Components: main` |
-| **Multiple URIs** | Repeat entire line per URI | Single `URIs:` field with space-separated values |
-| **Multiple types** | Separate `deb` + `deb-src` lines | `Types: deb deb-src` in one stanza |
-| **Options** | Inline: `[arch=amd64 lang=en]` | Separate field: `Architectures: amd64`<br>`Languages: en` |
-| **Disabling** | Comment with `#` | `Enabled: no` field |
-| **Signing key** | Inline in URI | Separate `Signed-By:` field with path |
-| **File extension** | `.list` | `.sources` |
-| **File location** | `/etc/apt/sources.list.d/` | `/etc/apt/sources.list.d/` (same dir) |
+| Aspect | `.list` (legacy) | `.sources` (deb822) |
+|--------|-------------------|----------------------|
+| Structure | Single line per repo | Multi-line stanza per repo |
+| Multiple types | Separate line for `deb` and `deb-src` | `Types: deb deb-src` on one field |
+| Multiple suites | Separate line per suite | `Suites: trixie trixie-updates` on one field |
+| Options | Square brackets `[arch=amd64,armel]` | Separate fields: `Architectures: amd64 armel` |
+| Comments | `#` anywhere on line | `#` only at start of line |
+| Enable/Disable | Comment/uncomment with `#` | `Enabled: yes/no` field |
+| GPG keys | Inline `[signed-by=/path]` | `Signed-By:` field (supports embedded keys) |
+| File extension | `.list` | `.sources` |
+| Deprecation | Deprecated, removal after ~2029 | Current recommended format |
 
-### Field Reference
+### Required Fields
 
-**Core fields (required in most cases):**
-- `Types:` — Space-separated list of `deb`, `deb-src` (or both)
-- `URIs:` — Space-separated list of repository URLs
-- `Suites:` — Space-separated distribution names (focal, jammy, etc.)
-- `Components:` — Space-separated component names (main, universe, etc.)
+| Field | Description |
+|-------|-------------|
+| `Types` | `deb` (binary), `deb-src` (source), or both. Space-separated. |
+| `URIs` | Base URL(s). Multiple URIs space-separated. |
+| `Suites` | Distribution codenames. Multiple suites space-separated. |
+| `Components` | Repository sections. Required unless Suites is an exact path ending in `/`. |
 
-**Optional fields:**
-- `Enabled: yes|no` — Replaces comment-prefixing
-- `Architectures:` — Space-separated architectures (amd64, i386, etc.)
-- `Languages:` — Space-separated language codes
-- `Targets:` — Package index types (Packages, Sources, Translations, etc.)
-- `PDiffs:` — Enable/disable differential updates (yes/no)
-- `By-Hash:` — Enable/disable hash-based indexing (yes/no)
-- `Allow-Insecure: yes|no` — GPG signature bypass (dangerous)
-- `Allow-Weak: yes|no` — Allow weak algorithms
-- `Signed-By:` — Path to GPG keyring file (replaces inline key handling)
-- `Comment:` — Free-text description
+### Optional Fields
 
-**Special stanza (metadata):**
+| Field | Values | Description |
+|-------|--------|-------------|
+| `Enabled` | `yes` / `no` (default: `yes`) | Enable/disable without deleting |
+| `Signed-By` | File path or embedded PGP key | GPG keyring. Supports inline PGP blocks (APT 2.3.10+). |
+| `Architectures` | Space-separated | Limits architectures |
+| `Languages` | Space-separated | Translation languages |
+| `Targets` | Space-separated | Download targets |
+| `PDiffs` | `yes` / `no` | Partial index updates |
+| `By-Hash` | `yes` / `no` / `force` | Hash-based URI construction |
+| `Trusted` | `yes` / `no` | Override trust assessment (dangerous) |
+| `Allow-Insecure` | `yes` / `no` | Allow unsigned repos |
+| `Allow-Weak` | `yes` / `no` | Allow weak crypto |
+| `Check-Valid-Until` | `yes` / `no` | Replay attack detection |
+
+### Multiline Values (Embedded GPG Keys)
+
+Continuation lines indented with exactly one leading space. Empty lines represented as ` .` (space+dot):
 ```
-X-Repolib-Name: My Repository
-X-Repolib-Description: Custom description
+Signed-By:
+ -----BEGIN PGP PUBLIC KEY BLOCK-----
+ .
+ mDMEYCQjIxYJKwYBBAHaRw8BAQdAD/P5Nvvnvk66SxBBHDb...
+ -----END PGP PUBLIC KEY BLOCK-----
 ```
+
+### Default Distro Files
+
+- **Debian 13:** `/etc/apt/sources.list.d/debian.sources`
+- **Ubuntu 24.04:** `/etc/apt/sources.list.d/ubuntu.sources`
+
+### Migration Tool
+
+APT provides `apt modernize-sources` to convert `.list` → `.sources`.
 
 ---
 
-## Code Areas Requiring Changes
+## QuentiumYT Implementation (Commit `87279f6`)
 
-### 1. **Parser Rewrite: apt_source_tool.cpp**
+### Key Design Decisions
 
-**Current line-based approach won't work for deb822.** Need:
+1. **Renamed `distribution` → `suites`** in APTSource struct (matches APT terminology)
+2. **Changed `changeSource()` signature** from `QString newSource` to `APTSourcePtr newSource` — structured object instead of raw string
+3. **`removeAPTSource()`** passes `nullptr` instead of empty string to `changeSource()`
+4. **`changeStatus()`** creates copy of APTSource with `isActive` flag set, delegates to `changeSource()` — format-specific enable/disable logic lives in `changeSource()`
+5. **Edit dialog** builds `APTSourcePtr` object instead of format-specific string
+6. **Stanza matching** uses synthetic source string: `"deb uri suites components"` compared against `aptSource->source`
+7. **Preserves field ordering** when rewriting stanzas (iterates original line order, inserts new fields at end)
+8. **Preserves `Signed-By` multi-line values** with special continuation-line handling
+9. **Preserves comments** within stanzas at their original line positions
+10. **Deletes file** when all stanzas are removed (instead of leaving empty file)
+11. **Also deletes `.list` file** when last line is removed
 
-- **New `.sources` file discovery** (line 82): Also scan for `*.sources` files in `/etc/apt/sources.list.d/`
-- **New deb822 parser function:** Parse RFC 822 key-value stanzas (space-separated keys, values can span multiple lines if indented)
-- **Normalization:** Convert both `.list` and `.sources` entries into the same `APTSource` struct
+### UX Improvements in Same Commit
 
-**Specific parsing challenges:**
-1. **Multi-line values:** If a line is indented, it's a continuation of the previous field
-   - Example:
-     ```
-     URIs: http://archive.ubuntu.com/ubuntu/
-      http://mirror.example.com/ubuntu/
-     ```
-   - Both URLs should parse as a single space-separated list
-2. **Multiple stanzas per file:** A `.sources` file can contain multiple repository entries, separated by blank lines
-3. **Field name case-insensitivity:** RFC 822 keys are case-insensitive; standardize to Title-Case (e.g., `Types:`, `Suites:`)
-4. **Comment handling:** deb822 uses `#` for comments too, but entire-line comments only (not inline)
-5. **Enabled/disabled state:**
-   - `.list`: Comment prefix `#`
-   - `.sources`: `Enabled: no` field
-
-**Proposed structure:**
-```cpp
-// New: Parse a single .sources stanza into APTSource
-APTSourcePtr parseSourcesStanza(const QStringList &stanzaLines, const QString &filePath);
-
-// New: Tokenize RFC 822 stanza (handle multi-line values)
-QMap<QString, QString> parseRfc822Stanza(const QStringList &lines);
-
-// Enhanced: AptSourceTool::getSourceList() calls both parsers
-```
-
-### 2. **File Writing: changeSource() Rewrite**
-
-**Current approach (line-replacement via tee) won't work for multi-stanza deb822 files.**
-
-- **For `.list` files:** Existing line-based logic can stay
-- **For `.sources` files:** Need stanza-aware replacement
-  - Find the stanza containing the target entry (match on URI + Suites + Components)
-  - Replace/remove the entire stanza
-  - Write back all stanzas
-
-**Proposed function:**
-```cpp
-void changeSourcesStanza(const APTSourcePtr aptSource, const QString newStanzaText);
-```
-
-### 3. **Status Toggle: changeStatus() Enhancement**
-
-**For `.list` files:** Existing comment-toggle logic stays
-
-**For `.sources` files:**
-```cpp
-// Instead of prepending/removing #:
-// Find "Enabled:" field, set to "no" or remove it (default = yes)
-if (!status) {
-    stanza["Enabled"] = "no";
-} else {
-    stanza.remove("Enabled");  // Default is enabled
-}
-```
-
-### 4. **Reconstruction in apt_source_edit.cpp**
-
-**Current reconstruction (line 59-64):**
-```cpp
-QString updatedAptSource = QString("%1 %2 %3 %4 %5")
-    .arg(sourceType)
-    .arg(ui->txtOptions->text())
-    .arg(ui->txtUri->text())
-    .arg(ui->txtDistribution->text())
-    .arg(ui->txtComponents->text());
-```
-
-**For deb822, need conditional logic:**
-```cpp
-if (aptSource->filePath.endsWith(".sources")) {
-    // Build deb822 stanza
-    updatedAptSource = buildDeb822Stanza(sourceType, options, uri, distribution, components);
-} else {
-    // Build legacy .list line
-    updatedAptSource = buildListLine(sourceType, options, uri, distribution, components);
-}
-```
-
-### 5. **Parsing in apt_source_repository_item.cpp (line 43-51)**
-
-The current code strips options with regex `\\s[\\[]+.*[\\]]+` because legacy format has inline options. deb822 has no inline options, so this regex won't apply.
-
-```cpp
-#ifdef Q_OS_LINUX
-    if (mAptSource->filePath.endsWith(".sources")) {
-        // deb822: no inline options, display differently
-        ui->lblAptSourceName->setText(mAptSource->source);  // Full stanza description
-    } else {
-        // Legacy .list: strip inline options as before
-        QString source = mAptSource->source;
-        source.remove(QRegularExpression("\\s[\\[]+.*[\\]]+"));
-        ui->lblAptSourceName->setText(source);
-    }
-#endif
-```
+- Selection cleared after reload, delete, edit save
+- "Adding..." button feedback during `add-apt-repository` execution
+- Search filter preserved across add/delete operations
+- Placeholder changed to `'ppa:deadsnakes/ppa'` format
+- Translation updates: "Distribution" → "Suites"
 
 ---
 
-## Key Implementation Gaps
+## Implementation Impact Analysis
 
-### 1. No RFC 822 Parser in Codebase
+### Files Requiring Changes
 
-Qt has no built-in RFC 822 parser. Need to write one:
+| File | Change Scope | Description |
+|------|-------------|-------------|
+| `shared/nexis-core/Tools/apt_source_tool.h` | **Moderate** | Rename `distribution` → `suites`, change `changeSource()` signature |
+| `linux/nexis-core/Tools/apt_source_tool.cpp` | **Major** | Full parser rewrite: deb822 parsing, stanza-aware writing, `Enabled:` field |
+| `shared/nexis/Managers/tool_manager.h` | **Minor** | Update `changeAPTSource()` signature |
+| `linux/nexis/Managers/tool_manager.cpp` | **Minor** | Forward new signature |
+| `shared/nexis/Pages/AptSourceManager/apt_source_edit.cpp` | **Moderate** | Build `APTSourcePtr` instead of format string |
+| `shared/nexis/Pages/AptSourceManager/apt_source_edit.ui` | **Minor** | Rename `txtDistribution` → `txtSuites` |
+| `shared/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp` | **Minor** | UX improvements, selection clearing |
+| `shared/nexis/Pages/AptSourceManager/apt_source_repository_item.cpp` | **None** | Display logic already works (source field is a synthetic string) |
+| Translation `.ts` files | **Minor** | "Distribution" → "Suites" terminology |
 
-```cpp
-// Pseudo-code structure
-class Rfc822Parser {
-    static QMap<QString, QString> parse(const QStringList &lines) {
-        // Handle line continuations (indented lines)
-        // Split on ':' to get key-value pairs
-        // Return normalized key-value map
-    }
-    
-    static QStringList formatStanza(const QMap<QString, QString> &fields) {
-        // Reverse: build RFC 822 stanza from map
-    }
-};
-```
+### Files NOT Requiring Changes
 
-### 2. No Enabled/Disabled Field Handling
+- `macos/nexis-core/Tools/apt_source_tool.cpp` — Homebrew adapter, no APT
+- `macos/nexis/Managers/tool_manager.cpp` — macOS ToolManager, no APT changes needed (just forward new signature)
+- `CMakeLists.txt` — No new files or dependencies
+- `shared/nexis/Pages/AptSourceManager/apt_source_manager_page.ui` — Layout unchanged
+- `shared/nexis/Pages/AptSourceManager/apt_source_repository_item.ui` — Layout unchanged
 
-Current code assumes comments; deb822 uses `Enabled: yes/no` field. Need to:
-- On read: Check `Enabled:` field (default = yes)
-- On write: Add/remove `Enabled: no` instead of prepending `#`
+### Data Flow Impact
 
-### 3. Multi-Stanza File Handling
-
-A single `.sources` file can have multiple stanzas (repositories). Current code assumes one entry per line. Need:
-- Read entire file at once
-- Split by blank lines to get stanzas
-- Parse each stanza into separate `APTSource` objects
-- On modification, reconstruct the entire file with updated stanza
-
-### 4. No Validation of Reconstructed Lines
-
-When user edits and saves via the dialog, the reconstructed line must:
-- For `.list`: Maintain correct order (deb/deb-src, options, uri, distribution, components)
-- For `.sources`: Maintain correct field names (Types:, URIs:, Suites:, Components:)
-- Ensure no syntax errors before writing back
-
----
-
-## Signal/Slot Connections Affected
-
-**apt_source_manager_page.cpp:**
-- `loadAptSources()` (line 101) — Will call enhanced `getSourceList()` that now handles both formats
-- `on_btnEditAptSource_clicked()` (line 380) — Dialog will need awareness of file format
-- `on_btnDeleteAptSource_clicked()` (line 305) — Will call `removeAPTSource()` which must handle both formats
-
-**apt_source_edit.cpp:**
-- `show()` (line 27) — Populate dialog fields from both `.list` and `.sources` format
-- `on_btnSave_clicked()` (line 53) — Reconstruct appropriate format before calling `changeAPTSource()`
-
-**apt_source_repository_item.cpp:**
-- `on_checkAptSource_clicked()` (line 62) — Will call `changeAPTStatus()` which must handle both formats
+1. **Read path:** `getSourceList()` must discover `*.sources` files AND `*.list` files, parse each format appropriately, produce the same `APTSourcePtr` objects
+2. **Write path:** `changeSource()` branches on `filePath.endsWith(".sources")` vs `.list`
+3. **Status toggle:** `changeStatus()` creates modified copy, delegates to `changeSource()`
+4. **Delete:** `removeAPTSource()` passes nullptr, `changeSource()` handles stanza removal or line removal
+5. **UI display:** `APTSourceRepositoryItem` already works — `source` field is populated uniformly for both formats
 
 ---
 
 ## Platform Considerations
 
-**This feature is Linux-only:**
-- macOS uses Homebrew, not APT (apt_source_tool.cpp in macos/ is a stub)
-- APT (`apt`, `add-apt-repository`) is Debian/Ubuntu exclusive
-- deb822 format is Debian/Ubuntu exclusive (Debian 13+, Ubuntu 24.04+)
-
-**Backward compatibility:**
-- Systems with only `.list` files (Ubuntu 22.04 LTS and older) must continue working
-- Parser must auto-detect file format and handle both
-- Writing should preserve original format (don't convert `.list` to `.sources` automatically)
+- **Linux-only feature:** macOS uses Homebrew, not APT
+- **Backward compatibility:** Systems with only `.list` files must continue working (Ubuntu 22.04 LTS and older)
+- **Format preservation:** Writing should preserve original format (don't convert `.list` to `.sources`)
+- **Mixed environments:** Both `.list` and `.sources` files can coexist in `/etc/apt/sources.list.d/`
 
 ---
 
-## Test Cases to Consider
+## Edge Cases
 
-1. **Mixed environment:** Some repos in `.list` files, others in `.sources` files
-2. **Multi-stanza `.sources` file:** One file with multiple repository entries
-3. **Multi-line RFC 822 fields:** URIs or other fields spanning multiple lines
-4. **Disabled entries:** Both `# deb ...` (legacy) and `Enabled: no` (deb822)
-5. **Complex options:** `[arch=amd64,i386 signed-by=/usr/share/...]` in legacy format
-6. **Edge cases:**
-   - Empty `.sources` file
-   - `.sources` file with only comments
-   - Malformed stanzas (missing required fields)
-
----
-
-## File Paths Summary
-
-| File | Role |
-|------|------|
-| `/Users/luke/Documents/GitHub/Nexis/linux/nexis-core/Tools/apt_source_tool.cpp` (128 lines) | **CORE PARSER** — Line-by-line `.list` parsing; must rewrite to handle deb822 |
-| `/Users/luke/Documents/GitHub/Nexis/shared/nexis-core/Tools/apt_source_tool.h` | **DATA MODEL** — APTSource struct (compatible with both formats) |
-| `/Users/luke/Documents/GitHub/Nexis/shared/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp` (391 lines) | **UI CONTROLLER** — Calls getSourceList(), loadAptSources(); needs no changes |
-| `/Users/luke/Documents/GitHub/Nexis/shared/nexis/Pages/AptSourceManager/apt_source_edit.cpp` (80 lines) | **EDIT DIALOG** — Reconstructs source line; needs format-aware logic (lines 59-64) |
-| `/Users/luke/Documents/GitHub/Nexis/shared/nexis/Pages/AptSourceManager/apt_source_repository_item.cpp` (66 lines) | **ITEM WIDGET** — Displays sources; needs format-aware display logic (lines 43-51) |
-| `/Users/luke/Documents/GitHub/Nexis/CMakeLists.txt` | **BUILD** — No changes needed; no new dependencies |
-| `/Users/luke/Documents/GitHub/Nexis/shared/nexis/Managers/tool_manager.h` | **INTEGRATION** — Methods: getSourceList(), changeAPTSource(), changeAPTStatus(), removeAPTSource(), addAPTRepository() |
-
----
-
-## Conclusion
-
-The deb822 support requires a significant rewrite of the APT parsing layer to handle multi-stanza RFC 822 format while maintaining backward compatibility with legacy `.list` files. The main implementation burden is in `apt_source_tool.cpp` (parser rewrite, multi-stanza file handling, `Enabled:` field support). The UI layer requires only minor adjustments for format-aware reconstruction and display. The data model (`APTSource` struct) is already compatible with both formats.
+1. Mixed `.list` and `.sources` files in same directory
+2. Multiple stanzas in single `.sources` file
+3. Multi-line RFC 822 fields (embedded GPG keys in `Signed-By:`)
+4. Disabled sources: both `# deb ...` (legacy) and `Enabled: no` (deb822)
+5. `Types: deb deb-src` — single stanza represents both binary and source (should create one APTSource entry, not two)
+6. Empty `.sources` file or comment-only files
+7. Malformed stanzas (missing required fields)
+8. File deletion when last stanza/line is removed
+9. Continuation lines in values (indented with space)
+10. Unknown fields (should be preserved on rewrite)

@@ -128,9 +128,9 @@
     </spacer>
    </item>
    <item row="5" column="0" colspan="4">
-    <widget class="QLineEdit" name="txtDistribution">
+    <widget class="QLineEdit" name="txtSuites">
      <property name="placeholderText">
-      <string>Distribution</string>
+      <string>Suites</string>
      </property>
     </widget>
    </item>
@@ -199,7 +199,7 @@
  <tabstops>
   <tabstop>txtOptions</tabstop>
   <tabstop>txtUri</tabstop>
-  <tabstop>txtDistribution</tabstop>
+  <tabstop>txtSuites</tabstop>
   <tabstop>txtComponents</tabstop>
  </tabstops>
  <resources/>
