@@ -5,12 +5,12 @@
 #include "utilities.h"
 #include "Managers/tool_manager.h"
 #include "dpi.h"
+#include <Tools/package_tool.h>
 
 #ifdef Q_OS_MAC
 #include <QFont>
 #include <QHeaderView>
 #include "Managers/app_manager.h"
-#include <Tools/package_tool.h>
 #endif
 
 APTSourceManagerPage::~APTSourceManagerPage()
@@ -80,8 +80,13 @@ void APTSourceManagerPage::init()
     });
 
 #else
-    ui->txtAptSource->setPlaceholderText(tr("example %1")
-                                         .arg("'ppa:deadsnakes/ppa'"));
+    if (PackageTool::currentPackageTool == APT_RPM) {
+        ui->txtAptSource->setPlaceholderText(tr("example %1")
+            .arg("'rpm [p10] http://mirror.yandex.ru/altlinux/ p10/branch/x86_64-i586 classic'"));
+    } else {
+        ui->txtAptSource->setPlaceholderText(tr("example %1")
+            .arg("'ppa:deadsnakes/ppa'"));
+    }
 
     loadAptSources();
 

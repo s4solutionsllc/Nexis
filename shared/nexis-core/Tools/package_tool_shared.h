@@ -13,6 +13,7 @@ struct Package {
 
 enum PackageTools {
     APT,        // debian
+    APT_RPM,    // ALT Linux, PCLinuxOS, Vine Linux (apt-get + rpm)
     DNF,        // fedora
     YUM,        // fedora
     PACMAN,     // arch

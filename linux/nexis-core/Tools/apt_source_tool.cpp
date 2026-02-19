@@ -1,4 +1,5 @@
 #include "apt_source_tool.h"
+#include "package_tool.h"
 #include "Utils/command_util.h"
 #include "Utils/file_util.h"
 #include <QDebug>
@@ -6,6 +7,21 @@
 
 static constexpr const char *APT_SOURCES_LIST_D_PATH = "/etc/apt/sources.list.d";
 static constexpr const char *APT_SOURCES_LIST_PATH   = "/etc/apt/sources.list";
+
+static bool isAptRpm()
+{
+    return PackageTool::currentPackageTool == APT_RPM;
+}
+
+static QString binaryType()
+{
+    return isAptRpm() ? "rpm" : "deb";
+}
+
+static QString sourceType()
+{
+    return isAptRpm() ? "rpm-src" : "deb-src";
+}
 
 bool AptSourceTool::checkSourceRepository()
 {
@@ -15,16 +31,28 @@ bool AptSourceTool::checkSourceRepository()
 
 void AptSourceTool::removeAPTSource(const APTSourcePtr aptSource)
 {
-    changeSource(aptSource, nullptr);
+    if (isAptRpm() && CommandUtil::isExecutable("apt-repo")) {
+        CommandUtil::sudoExec("apt-repo", {"rm", aptSource->source});
+    } else {
+        changeSource(aptSource, nullptr);
+    }
 }
 
 void AptSourceTool::addRepository(const QString &repository, const bool isSource)
 {
     if (!repository.isEmpty()) {
-        QStringList args = { "-y", repository };
-        if (isSource)
-            args << "-s";
-        CommandUtil::sudoExec("add-apt-repository", args);
+        if (isAptRpm() && CommandUtil::isExecutable("apt-repo")) {
+            QString source = repository;
+            if (isSource && !source.startsWith(sourceType())) {
+                source.replace(QRegularExpression("^" + binaryType() + "\\s"), sourceType() + " ");
+            }
+            CommandUtil::sudoExec("apt-repo", {"add", source});
+        } else {
+            QStringList args = { "-y", repository };
+            if (isSource)
+                args << "-s";
+            CommandUtil::sudoExec("add-apt-repository", args);
+        }
     }
 }
 
@@ -55,7 +83,7 @@ void AptSourceTool::changeSource(const APTSourcePtr aptSource, const APTSourcePt
                 }
             }
 
-            QString typeStr = aptSource->isSource ? "deb-src" : "deb";
+            QString typeStr = aptSource->isSource ? sourceType() : binaryType();
             QString currentSource = QString("%1 %2 %3 %4")
                 .arg(typeStr)
                 .arg(fields.value("URIs"))
@@ -67,7 +95,7 @@ void AptSourceTool::changeSource(const APTSourcePtr aptSource, const APTSourcePt
                     return; // skip = remove stanza
                 }
                 // Update fields from newSource
-                fields["Types"] = newSource->isSource ? "deb-src" : "deb";
+                fields["Types"] = newSource->isSource ? sourceType() : binaryType();
                 fields["URIs"] = newSource->uri.trimmed();
                 fields["Suites"] = newSource->suites.trimmed();
                 fields["Components"] = newSource->components.trimmed();
@@ -181,7 +209,7 @@ void AptSourceTool::changeSource(const APTSourcePtr aptSource, const APTSourcePt
             if (!newSource) {
                 sourceFileContent.removeAt(pos);
             } else {
-                QString line = newSource->isSource ? "deb-src" : "deb";
+                QString line = newSource->isSource ? sourceType() : binaryType();
                 if (!newSource->options.isEmpty())
                     line += " " + newSource->options;
                 line += " " + newSource->uri + " " + newSource->suites;
@@ -240,17 +268,17 @@ QList<APTSourcePtr> AptSourceTool::getSourceList()
                 }
 
                 QString types = fields.value("Types");
-                if (types.contains("deb")) {
+                if (types.contains(binaryType())) {
                     APTSourcePtr aptSource(new APTSource);
                     aptSource->filePath = info.absoluteFilePath();
-                    aptSource->isSource = types.contains("deb-src");
+                    aptSource->isSource = types.contains(sourceType());
                     aptSource->uri = fields.value("URIs");
                     aptSource->suites = fields.value("Suites");
                     aptSource->components = fields.value("Components");
                     aptSource->options = "";
                     aptSource->isActive = fields.value("Enabled", "yes").toLower() == "yes";
 
-                    QString typeStr = aptSource->isSource ? "deb-src" : "deb";
+                    QString typeStr = aptSource->isSource ? sourceType() : binaryType();
                     aptSource->source = QString("%1 %2 %3 %4")
                         .arg(typeStr).arg(aptSource->uri)
                         .arg(aptSource->suites).arg(aptSource->components);
@@ -275,7 +303,7 @@ QList<APTSourcePtr> AptSourceTool::getSourceList()
         } else if (info.fileName().endsWith(".list")) {
             // Parse legacy one-line .list format
             QStringList fileContent = FileUtil::readListFromFile(info.absoluteFilePath())
-                .filter(QRegularExpression("^\\s{0,}#{0,}\\s{0,}deb"));
+                .filter(QRegularExpression("^\\s{0,}#{0,}\\s{0,}" + binaryType()));
 
             for (const QString &line : fileContent) {
                 QString _line = line.trimmed();
@@ -293,8 +321,8 @@ QList<APTSourcePtr> AptSourceTool::getSourceList()
                 _line.remove(regexOption);
 
                 QStringList sourceColumns = _line.trimmed().split(QRegularExpression("\\s+"));
-                bool isBinary = sourceColumns.first() == "deb";
-                bool isSource = sourceColumns.first() == "deb-src";
+                bool isBinary = sourceColumns.first() == binaryType();
+                bool isSource = sourceColumns.first() == sourceType();
 
                 if ((isBinary || isSource) && sourceColumns.count() > 2) {
                     aptSource->isSource = isSource;

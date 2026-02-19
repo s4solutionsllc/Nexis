@@ -4,6 +4,8 @@
 #include <QRegularExpression>
 
 const PackageTools PackageTool::currentPackageTool =
+        (CommandUtil::isExecutable("apt-get") && CommandUtil::isExecutable("rpm")
+            && !CommandUtil::isExecutable("dpkg")) ? APT_RPM :
         CommandUtil::isExecutable("apt-get") ? APT :
         CommandUtil::isExecutable("dnf")     ? DNF :
         CommandUtil::isExecutable("yum")     ? YUM :

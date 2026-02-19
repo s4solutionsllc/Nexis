@@ -429,6 +429,7 @@ void DiskUsageLauncherWidget::onActionClicked()
         // Determine the right package manager install command
         QString pkg = "flatpak";
         switch (PackageTool::currentPackageTool) {
+        case APT_RPM:
         case APT:
             CommandUtil::sudoExec("apt-get", {"install", "-y", pkg});
             break;

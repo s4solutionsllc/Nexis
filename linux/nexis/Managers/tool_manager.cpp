@@ -47,6 +47,7 @@ QList<Package> ToolManager::getPackages() const
     switch (PackageTool::currentPackageTool) {
     case APT:
         return PackageTool::getDpkgPackages();
+    case APT_RPM:
     case YUM:
     case DNF:
         return PackageTool::getRpmPackages();
@@ -71,6 +72,7 @@ QStringList ToolManager::dryRunRemovePackages(const QStringList &packages)
 {
     switch (PackageTool::currentPackageTool) {
     case APT:
+    case APT_RPM:
         return PackageTool::dpkgDryRunRemove(packages);
     case YUM:
     case DNF:
@@ -86,6 +88,7 @@ QFileInfoList ToolManager::getPackageCaches() const
 {
     switch (PackageTool::currentPackageTool) {
     case APT:
+    case APT_RPM:
         return PackageTool::getDpkgPackageCaches();
         break;
     case YUM:
@@ -105,6 +108,7 @@ void ToolManager::uninstallPackages(const QStringList &packages, bool purge)
 {
     switch (PackageTool::currentPackageTool) {
     case APT:
+    case APT_RPM:
         PackageTool::dpkgRemovePackages(packages, purge);
         break;
     case YUM:
