@@ -282,6 +282,19 @@
   - **Fix complexity:** Trivial (escape `&` as `&&` in the `.ui` file so Qt renders a literal `&`)
   - **Resolved:** Changed `&amp;` to `&amp;&amp;` in the `.ui` XML, which Qt interprets as a literal `&` character.
 
+- [ ] **BUG-43: Host Manager — multiple data integrity and security issues** (MEDIUM)
+  - **Scope:** Helpers page → Host Manage dialog
+  - **Files:** `shared/nexis/Pages/Helpers/host_manage.cpp`
+  - **Description:** The Host Manager (`/etc/hosts` editor) has several issues that should be investigated and addressed:
+    1. **Predictable temp file (security):** Save writes to hardcoded `/tmp/nexis_etc_host_new_content` then `sudo mv` to `/etc/hosts`. Predictable path enables symlink attacks. Should use `QTemporaryFile`.
+    2. **No error handling on save:** `FileUtil::writeFile()` return value is ignored; `sudoExec("mv", ...)` failure is only logged to `qDebug()` with no user feedback. In-memory and on-disk states can silently diverge.
+    3. **Empty line placeholders on delete:** Deleted entries are replaced with empty strings instead of removed from the list, causing file bloat and potential line number mapping drift on subsequent edits before save.
+    4. **Line number drift after mixed add/delete:** Adding entries uses `mHostFileContent.size()` for line numbers, but deletions leave empty slots, causing line number references to desync from actual file content.
+    5. **No input validation:** IP addresses, FQDNs, and aliases are not validated — invalid formats are accepted and written to `/etc/hosts`, potentially breaking name resolution.
+    6. **No backup before write:** No backup of original `/etc/hosts` is created before overwriting; if the save introduces errors, there's no recovery path.
+    7. **No confirmation dialog:** "Save Changes" immediately writes to `/etc/hosts` with no confirmation or diff view.
+  - **Fix complexity:** Moderate (multiple targeted fixes across the save path, deletion logic, and validation)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
