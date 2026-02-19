@@ -60,6 +60,13 @@
   - **Phase 2 (Disk Health / SMART) resolved:** DiskHealthInfo class with macOS diskutil plist + smartctl and Linux sysfs + smartctl implementations. Hardware Info Storage section with per-drive health display, color-coded verdicts (Good/Caution/Critical), NVMe and SATA-specific attributes. Settings disk health alert toggle. Supports Apple Fabric, NVMe, SATA SSD, and SATA HDD drive types.
   - **Phase 3 (Dashboard + Resources) resolved:** Dashboard "DISK HEALTH" CircleBar showing worst-drive health % with teal color scheme and tray alerts. Resources page "Disk Temperature" HistoryChart with per-drive temperature monitoring (30s refresh). All three phases complete.
 
+## Kiosk Mode
+
+- [ ] **FR-30: Kiosk mode UI controls and discoverability** — Kiosk mode (FR-28) is currently only accessible via keyboard shortcuts (F11 to toggle, ESC to exit). There are no buttons, menu entries, or visual hints anywhere in the UI — users must read the README or discover F11 by accident. Add mouse/touch-accessible controls so kiosk mode is discoverable and usable without a keyboard. Three sub-features:
+  - **(a) System tray menu toggle** — Add a checkable "Kiosk Mode (F11)" action to the tray icon context menu, inserted before the separator/Quit action. Shows a checkmark when active. Calls `App::toggleKioskMode()`. This is especially important because once in kiosk mode the sidebar is hidden — the tray icon becomes the only non-keyboard way to exit. File: `shared/nexis/app.cpp` (`createTrayActions()`).
+  - **(b) Dashboard kiosk toggle button** — Add a small fullscreen/expand icon button to the Dashboard page (top-right corner area, near the temperature/GPU sensor dropdowns). Clicking it enters kiosk mode. When in kiosk mode, the button switches to a collapse/exit icon and remains visible so the user has a clickable exit path. Consider using a bundled SVG icon (e.g. `fullscreen.svg` / `fullscreen-exit.svg`) consistent with the app's icon style. Files: `shared/nexis/Pages/Dashboard/dashboard_page.{h,cpp,ui}`.
+  - **(c) Transient "ESC to exit" overlay** — When kiosk mode activates, display a semi-transparent overlay label (e.g. "Press ESC or click ✕ to exit kiosk mode") centered on the Dashboard that auto-fades after ~3–4 seconds using `QPropertyAnimation` on the label's `windowOpacity` or a `QGraphicsOpacityEffect`. Provides first-time discoverability without permanent clutter on a monitoring display. File: `shared/nexis/app.cpp` (`applyKioskMode()`).
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
