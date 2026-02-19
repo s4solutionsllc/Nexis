@@ -72,6 +72,7 @@ private:
     void createTrayActions();
     void updateSidebarIcons();
     void applyKioskMode(bool enable);
+    void showKioskOverlay();
 
 private:
     Ui::App *ui;
@@ -104,6 +105,8 @@ private:
     QSystemTrayIcon *mTrayIcon;
 
     QMenu *mTrayMenu;
+
+    QAction *mKioskAction;
 
 };
 

@@ -71,6 +71,8 @@
         <file>static/themes/common/img/c_cache.svg</file>
         <file>static/themes/common/img/c_trash.svg</file>
         <file>static/themes/common/img/c_devtools.svg</file>
+        <file>static/themes/common/img/fullscreen.svg</file>
+        <file>static/themes/common/img/fullscreen-exit.svg</file>
         <file>static/themes/default/img/sidebar-icons/dash.svg</file>
         <file>static/themes/default/img/sidebar-icons/hardware-info.svg</file>
         <file>static/themes/default/img/sidebar-icons/startup-apps.svg</file>

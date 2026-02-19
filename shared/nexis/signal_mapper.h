@@ -16,6 +16,8 @@ signals:
     void sigUninstallFinished();
     void sigScheduledCleanStarted(QString scheduleName);
     void sigScheduledCleanFinished(quint64 bytesFreed, int fileCount);
+    void sigKioskToggleRequested();
+    void sigKioskModeChanged(bool enabled);
 
 private:
     static SignalMapper *instance;

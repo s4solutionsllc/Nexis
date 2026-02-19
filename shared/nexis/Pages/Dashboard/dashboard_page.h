@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QComboBox>
+#include <QPushButton>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -28,7 +29,11 @@ public:
     explicit DashboardPage(QWidget *parent = 0);
     ~DashboardPage();
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private slots:
+    void onKioskModeChanged(bool enabled);
     void init();
     void checkUpdate();
 
@@ -72,6 +77,8 @@ private:
 
     int mSelectedSensorIndex;
     int mSelectedGpuIndex;
+
+    QPushButton *mKioskButton;
 };
 
 #endif // DASHBOARDPAGE_H

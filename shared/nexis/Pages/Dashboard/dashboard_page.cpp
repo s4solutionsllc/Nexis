@@ -2,12 +2,14 @@
 #include "ui_dashboard_page.h"
 
 #include "utilities.h"
+#include "signal_mapper.h"
 
 #include <QDateTime>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QRegularExpression>
+#include <QResizeEvent>
 #include <QVersionNumber>
 
 DashboardPage::~DashboardPage()
@@ -31,7 +33,8 @@ DashboardPage::DashboardPage(QWidget *parent) :
     mGpuBar(new CircleBar(tr("GPU"), {"#813d9c", "#613583"}, this)),
     mSelectedGpuIndex(0),
     mBatteryBar(new CircleBar(tr("BATTERY"), {"#f5c211", "#e5a50a"}, this)),
-    mDiskHealthBar(new CircleBar(tr("DISK HEALTH"), {"#26a69a", "#00897b"}, this))
+    mDiskHealthBar(new CircleBar(tr("DISK HEALTH"), {"#26a69a", "#00897b"}, this)),
+    mKioskButton(new QPushButton(this))
 {
     ui->setupUi(this);
 
@@ -179,6 +182,22 @@ void DashboardPage::init()
         widgets.append(mDiskHealthBar);
 
     Utilities::addDropShadow(widgets, 60);
+
+    // Kiosk mode toggle button (floating, top-right)
+    mKioskButton->setFixedSize(32, 32);
+    mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
+    mKioskButton->setIconSize(QSize(16, 16));
+    mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
+    mKioskButton->setCursor(Qt::PointingHandCursor);
+    mKioskButton->setFocusPolicy(Qt::NoFocus);
+    mKioskButton->setObjectName("btnKioskToggle");
+    mKioskButton->raise();
+
+    connect(mKioskButton, &QPushButton::clicked, []() {
+        emit SignalMapper::ins()->sigKioskToggleRequested();
+    });
+    connect(SignalMapper::ins(), &SignalMapper::sigKioskModeChanged,
+            this, &DashboardPage::onKioskModeChanged);
 }
 
 void DashboardPage::checkUpdate()
@@ -528,4 +547,21 @@ void DashboardPage::updateDiskHealthBar()
             alertShown = false;
         }
     }
+}
+
+void DashboardPage::onKioskModeChanged(bool enabled)
+{
+    if (enabled) {
+        mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen-exit.svg"));
+        mKioskButton->setToolTip(tr("Exit Kiosk Mode (ESC)"));
+    } else {
+        mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
+        mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
+    }
+}
+
+void DashboardPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    mKioskButton->move(width() - mKioskButton->width() - 10, 10);
 }

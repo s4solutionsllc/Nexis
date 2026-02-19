@@ -546,6 +546,18 @@ QLabel[accessibleName="dialog-title"] {
     selection-background-color: @color02;
 }
 
+/* - Kiosk Toggle Button - */
+
+#btnKioskToggle {
+    border: 0;
+    background-color: transparent;
+    border-radius: @dp4;
+}
+
+#btnKioskToggle:hover {
+    background-color: @color02;
+}
+
 
 /**************************
     HARDWARE INFO PAGE

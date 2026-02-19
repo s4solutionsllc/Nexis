@@ -12,6 +12,9 @@
 #include <QEvent>
 #include <QWindow>
 #include <QThreadPool>
+#include <QLabel>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
 
 App::~App()
 {
@@ -160,6 +163,10 @@ void App::init()
     if (SettingManager::ins()->getKioskMode())
         applyKioskMode(true);
 
+    // Dashboard kiosk toggle button → App::toggleKioskMode
+    connect(SignalMapper::ins(), &SignalMapper::sigKioskToggleRequested,
+            this, &App::toggleKioskMode);
+
     // Relay CleanerService signals through SignalMapper for app-wide access
     connect(CleanerService::ins(), &CleanerService::cleaningStarted,
             SignalMapper::ins(), &SignalMapper::sigScheduledCleanStarted);
@@ -219,6 +226,14 @@ void App::createTrayActions()
         if (windowHandle())
             windowHandle()->requestActivate();
     });
+
+    mTrayMenu->addSeparator();
+
+    mKioskAction = new QAction(tr("Kiosk Mode (F11)"), this);
+    mKioskAction->setCheckable(true);
+    mKioskAction->setChecked(mKioskMode);
+    connect(mKioskAction, &QAction::triggered, this, &App::toggleKioskMode);
+    mTrayMenu->addAction(mKioskAction);
 
     mTrayMenu->addSeparator();
 
@@ -403,14 +418,58 @@ void App::exitKioskMode()
 
 void App::applyKioskMode(bool enable)
 {
+    mKioskAction->blockSignals(true);
+    mKioskAction->setChecked(enable);
+    mKioskAction->blockSignals(false);
+
     if (enable) {
         ui->sidebar->hide();
         ui->pageTitle->hide();
         pageClick(dashboardPage, false);
         showFullScreen();
+        showKioskOverlay();
     } else {
         showNormal();
         ui->sidebar->show();
         ui->pageTitle->show();
     }
+
+    emit SignalMapper::ins()->sigKioskModeChanged(enable);
+}
+
+void App::showKioskOverlay()
+{
+    QLabel *overlay = new QLabel(this);
+    overlay->setText(tr("Press ESC to exit kiosk mode"));
+    overlay->setAlignment(Qt::AlignCenter);
+    overlay->setObjectName("kioskOverlay");
+    overlay->setStyleSheet(
+        "background-color: rgba(0, 0, 0, 160);"
+        "color: white;"
+        "font-size: 14pt;"
+        "padding: 16px 32px;"
+        "border-radius: 8px;"
+    );
+    overlay->adjustSize();
+
+    QWidget *target = mSlidingStacked;
+    int x = target->x() + (target->width() - overlay->width()) / 2;
+    int y = target->y() + (target->height() - overlay->height()) / 2;
+    overlay->move(x, y);
+    overlay->raise();
+    overlay->show();
+
+    auto *effect = new QGraphicsOpacityEffect(overlay);
+    overlay->setGraphicsEffect(effect);
+
+    auto *fadeOut = new QPropertyAnimation(effect, "opacity");
+    fadeOut->setDuration(2000);
+    fadeOut->setStartValue(1.0);
+    fadeOut->setEndValue(0.0);
+    fadeOut->setEasingCurve(QEasingCurve::OutCubic);
+
+    QTimer::singleShot(1500, fadeOut, [fadeOut]() {
+        fadeOut->start(QAbstractAnimation::DeleteWhenStopped);
+    });
+    connect(fadeOut, &QPropertyAnimation::finished, overlay, &QLabel::deleteLater);
 }
