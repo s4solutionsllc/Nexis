@@ -51,7 +51,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 6 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 29 features implemented, 42 bugs fixed since fork
+- 30 features implemented, 42 bugs fixed since fork
 
 ---
 
@@ -111,7 +111,11 @@ Real-time system monitoring at a glance with circular gauge widgets.
 
 **Additional features:**
 - Update checker — compares installed version against GitHub releases
-- Kiosk mode — F11 toggles fullscreen dashboard-only view (hides sidebar + title bar), ESC to exit, state persisted across sessions
+- Kiosk mode — fullscreen dashboard-only view (hides sidebar + title bar), state persisted across sessions. Three entry/exit methods:
+  - **Keyboard:** F11 to toggle, ESC to exit
+  - **System tray:** Checkable "Kiosk Mode (F11)" action in tray context menu
+  - **Dashboard button:** Floating fullscreen/collapse icon at top-right corner, swaps between enter/exit icons
+  - On activation, a transient "Press ESC to exit kiosk mode" overlay fades in then out (~3.5s)
 
 ### 2. Hardware Info
 
@@ -394,10 +398,12 @@ Six singleton managers mediate between UI pages and the core library.
 | `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 
-**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 4 global signals:
+**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 7 global signals:
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
 - `sigUninstallStarted()` / `sigUninstallFinished()` — progress feedback
 - `sigScheduledCleanStarted/Finished()` — tray notification system
+- `sigKioskToggleRequested()` — Dashboard button requests kiosk toggle from App
+- `sigKioskModeChanged(bool)` — App broadcasts kiosk state to Dashboard button and tray menu
 
 ---
 
@@ -574,12 +580,13 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
    - GNOME Settings: only if `ToolManager::checkGnomeSettings()` returns true
 4. Add pages to stacked widget
 5. Connect sidebar buttons to `pageClick()` slot
-6. Create system tray icon with context menu (mirrors sidebar navigation)
-7. Restore kiosk mode state if previously saved
+6. Create system tray icon with context menu (mirrors sidebar navigation + kiosk mode toggle)
+7. Connect `SignalMapper::sigKioskToggleRequested` to `App::toggleKioskMode` (Dashboard button → App)
+8. Restore kiosk mode state if previously saved
 
 ### Navigation
 
-Sidebar buttons trigger `SlidingStackedWidget::slideInIndex()` with horizontal slide animation. The tray icon context menu provides the same page navigation. F11 toggles kiosk mode (fullscreen Dashboard only).
+Sidebar buttons trigger `SlidingStackedWidget::slideInIndex()` with horizontal slide animation. The tray icon context menu provides the same page navigation plus a checkable kiosk mode toggle. F11, the tray action, and the Dashboard button all toggle kiosk mode through synchronized signals.
 
 ---
 

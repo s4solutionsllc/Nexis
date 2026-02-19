@@ -82,11 +82,31 @@ When the user requests a new feature or asks to fix a bug, follow this three-pha
    - Do not use `any` or unknown types.
    - Continuously verify you are not introducing new issues (build checks, grep for regressions).
 5. Update `BUGS.md` or `FEATURE_REQUESTS.md` with resolution notes and commit hash.
-6. Commit and push when complete.
+6. Update project documentation (see **Documentation Maintenance** below).
+7. Commit and push when complete.
 
 ### Archiving Completed Work
 
 When a bug or feature request is marked `[x]` (done), move its associated `claude_definitions/` files (`{ID}_research.md`, `{ID}_plan.md`, and any other `{ID}_*.md` variants) to `claude_definitions/Archive/`. This keeps the active working directory clean and limited to open/in-progress items. Files for open (`[ ]`) or in-progress (`[~]`) items must remain in `claude_definitions/`.
+
+## Documentation Maintenance
+
+Two living documents in `docs/` must be kept in sync with the codebase as features are added or bugs are fixed:
+
+- **`docs/APPLICATION_OVERVIEW.md`** — What the app does and how it's built. Update when:
+  - A new feature is implemented (add to the relevant page section, update counts/stats)
+  - A page gains new UI elements, gauges, buttons, or modes
+  - Architecture changes (new managers, signals, build targets, themes, etc.)
+  - Platform support changes (new backends, new conditional pages)
+
+- **`docs/ARCHITECTURE_REVIEW.md`** — How the architecture works, strengths, weaknesses, and recommendations. Update when:
+  - New architectural patterns are introduced (new signals, new singletons, new cross-component communication)
+  - Existing weaknesses are addressed or new ones are discovered
+  - Signal counts change on SignalMapper (the review tracks this)
+  - Timer/polling patterns change
+  - The recommended improvements list needs revision
+
+**When to update:** After completing any feature (`[x]` in FEATURE_REQUESTS.md) or bug fix (`[x]` in BUGS.md), review both documents and make targeted updates to reflect the changes. Keep updates concise — modify existing sections rather than appending paragraphs.
 
 ## Qt/QSS Gotchas
 

@@ -222,15 +222,18 @@ signals:
     void sigUninstallFinished();
     void sigScheduledCleanStarted(QString scheduleName);
     void sigScheduledCleanFinished(quint64 bytesFreed, int fileCount);
+    void sigKioskToggleRequested();
+    void sigKioskModeChanged(bool enabled);
 };
 ```
 
 **Usage pattern:**
 - Settings page changes theme → emits `sigChangedAppTheme()`
 - All 14 pages listen → reload theme-dependent icons, GIF loaders, and colors
+- Dashboard kiosk button → emits `sigKioskToggleRequested()` → App toggles kiosk mode → emits `sigKioskModeChanged(bool)` → Dashboard button swaps icon, tray action syncs checkmark
 - No page needs a pointer to any other page — complete decoupling
 
-**Assessment:** With only 5 signals, this is **appropriately simple**. It avoids passing page pointers around and keeps cross-component communication explicit. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
+**Assessment:** With 7 signals, this is still **appropriately simple**. The kiosk mode signals (FR-30) demonstrate the pattern working well for bidirectional communication between App and DashboardPage without coupling them. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
 
 ---
 
@@ -712,7 +715,7 @@ public:
 
 **What:** Replace `SignalMapper` with a typed event bus library if the signal count grows beyond ~15.
 
-**When:** Currently 5 signals — well within SignalMapper's comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
+**When:** Currently 7 signals — well within SignalMapper's comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
 
 **Candidate:** [eventpp](https://github.com/wqking/eventpp) (header-only, C++11+, well-tested).
 
@@ -819,6 +822,6 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Managers/app_manager.cpp` | Add QSS token validation (§2C), lines 88-121 |
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | Primary refactor target for DataRefreshService (§2A) — has 3 timers |
 | `shared/nexis/Pages/Resources/resources_page.cpp` | Secondary refactor target — duplicates Dashboard polling |
-| `shared/nexis/Managers/signal_mapper.h` | Global event bus — monitor signal count growth |
+| `shared/nexis/signal_mapper.h` | Global event bus (7 signals) — monitor signal count growth |
 | `shared/nexis/Managers/cleaner_service.cpp` | Example of thick manager with real business logic |
 | `shared/nexis/Managers/schedule_manager.cpp` | Example of OS-native integration complexity |
