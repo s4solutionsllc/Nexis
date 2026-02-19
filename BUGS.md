@@ -50,7 +50,7 @@
   - **Fix complexity:** Moderate (defer loading, add pagination or virtual scrolling)
   - **Resolved:** Four fixes: (1) Deferred loading — file is only read when user navigates to Helpers page via `loadIfNeeded()` with `mLoaded` flag, eliminating startup impact entirely. (2) Batched model population — `blockSignals(true)` and `setDynamicSortFilter(false)` during bulk `appendRow()` loop, single `invalidate()`+`reset()` after. (3) Pre-compiled regex — `QRegularExpression("\\s+")` is now `static const`, compiled once. (4) Incremental updates — add/edit/delete operations modify only the affected model row instead of calling `loadTableData()` to rebuild everything.
 
-- [ ] **BUG-42: Settings page layout issues — inconsistent column count and minimum size too large** (MEDIUM)
+- [ ] **BUG-44: Settings page layout issues — inconsistent column count and minimum size too large** (MEDIUM)
   - **Scope:** Settings page
   - **Description:** The Settings page has layout problems that need a complete UI review: (1) Most rows use a 4-column grid layout, but the row ending with "Disk Health Alert" uses 5 columns, breaking alignment. (2) The page enforces a minimum size that prevents the application window from being reduced past a certain point, which is too restrictive. A full audit of the Settings page grid layout is needed to ensure consistent column counts, proper stretch factors, and reasonable minimum size constraints.
   - **Files:** `shared/nexis/Pages/Settings/settings_page.ui`, `shared/nexis/Pages/Settings/settings_page.cpp`
