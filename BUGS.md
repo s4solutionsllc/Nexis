@@ -275,6 +275,13 @@
   - **Fix complexity:** Moderate (need to find an approach that actually overrides the viewport background)
   - **Resolved:** Used inline `setStyleSheet("background-color:transparent")` on both the QScrollArea and its content QWidget, plus `setFrameShape(QFrame::NoFrame)`. This matches the pattern used by HardwareInfoPage's QSS rules (`#HardwareInfoPage #scrollArea, #scrollContent { background-color: transparent; }`). Palette-based approaches failed due to timing/precedence conflicts between Qt's palette system and QSS; inline stylesheet transparency lets the dialog's QSS-themed `@color01` background show through naturally.
 
+- [x] **BUG-42: GNOME Settings "Mouse & Touchpad" tab button renders as "Mouse_Touchpad" on Linux** (LOW)
+  - **Scope:** GNOME Settings page
+  - **File:** `shared/nexis/Pages/GnomeSettings/gnome_settings_page.ui:90`
+  - **Description:** The tab button for Mouse & Touchpad settings displays as "Mouse_Touchpad" on Ubuntu because Qt interprets a single `&` in button text as a mnemonic prefix (underlines the next character). The `&amp;` in the XML becomes `&` which Qt treats as a keyboard shortcut indicator rather than a literal ampersand.
+  - **Fix complexity:** Trivial (escape `&` as `&&` in the `.ui` file so Qt renders a literal `&`)
+  - **Resolved:** Changed `&amp;` to `&amp;&amp;` in the `.ui` XML, which Qt interprets as a literal `&` character.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

@@ -87,7 +87,7 @@
      <item>
       <widget class="QPushButton" name="btnMouse">
        <property name="text">
-        <string>Mouse &amp; Touchpad</string>
+        <string>Mouse &amp;&amp; Touchpad</string>
        </property>
        <property name="checkable">
         <bool>true</bool>
