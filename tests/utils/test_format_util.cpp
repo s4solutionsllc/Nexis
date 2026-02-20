@@ -1,4 +1,5 @@
 #include <QTest>
+#include <climits>
 #include "format_util.h"
 
 class TestFormatUtil : public QObject
@@ -13,6 +14,9 @@ private slots:
     void formatBytes_mebibytes();
     void formatBytes_gibibytes();
     void formatBytes_tebibytes();
+    void formatBytes_multiTiB();
+    void formatBytes_maxUint64();
+    void formatBytes_nearBoundary();
 };
 
 void TestFormatUtil::formatBytes_zero()
@@ -50,6 +54,26 @@ void TestFormatUtil::formatBytes_gibibytes()
 void TestFormatUtil::formatBytes_tebibytes()
 {
     QCOMPARE(FormatUtil::formatBytes(1099511627776), QString("1.0 TiB"));
+}
+
+void TestFormatUtil::formatBytes_multiTiB()
+{
+    // 2 TiB = 2199023255552
+    QCOMPARE(FormatUtil::formatBytes(2199023255552ULL), QString("2.0 TiB"));
+}
+
+void TestFormatUtil::formatBytes_maxUint64()
+{
+    // UINT64_MAX should produce a valid TiB string without crashing
+    QString result = FormatUtil::formatBytes(UINT64_MAX);
+    QVERIFY(!result.isEmpty());
+    QVERIFY(result.contains("TiB"));
+}
+
+void TestFormatUtil::formatBytes_nearBoundary()
+{
+    // 1023 * 1024 = 1047552 — just below 1 MiB boundary
+    QCOMPARE(FormatUtil::formatBytes(1023ULL * 1024), QString("1023.0 KiB"));
 }
 
 QTEST_MAIN(TestFormatUtil)

@@ -44,7 +44,8 @@ public:
     void deleteSchedule(const QString &id);
 
     void syncToOS();
-    QDateTime getNextRunTime(const CleaningSchedule &schedule) const;
+    QDateTime getNextRunTime(const CleaningSchedule &schedule,
+                             const QDateTime &now = QDateTime()) const;
 
     static QString frequencyDisplayText(const CleaningSchedule &schedule);
 

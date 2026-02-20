@@ -428,8 +428,11 @@ linux/
   nexis-core/           (Linux core implementations)
   nexis/                (Linux GUI implementations)
 tests/
-  CMakeLists.txt        (test target configuration)
-  utils/                (utility class tests)
+  CMakeLists.txt        (test target configuration with add_nexis_test() macro)
+  utils/                (FormatUtil, FileUtil, CommandUtil tests)
+  core/                 (DiskHealthInfo verdict + JSON parsing tests)
+  managers/             (ScheduleManager tests)
+  theme/                (theme token validation tests)
 ```
 
 ### Build Targets
@@ -444,9 +447,10 @@ tests/
 - macOS: `.app` bundle with icon, installs to `/Applications`
 - Linux: Binary to `/usr/bin`, `.desktop` file, hicolor icons (16x16 through 256x256)
 
-**`nexis-tests`** — Test executable (Qt Test + CTest)
-- Sources: `tests/**/*.cpp`
-- Dependencies: `nexis-core`, Qt6::Test
+**Test executables** — 6 CTest-registered executables (Qt Test + CTest)
+- Per-file executables via `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable)
+- 63 test methods: FormatUtil (10), FileUtil (10), CommandUtil (9), DiskHealthInfo (20), ScheduleManager (15), ThemeTokens (7)
+- Dependencies: `nexis-core`, Qt6::Test (ScheduleManager test also compiles schedule_manager.cpp + setting_manager.cpp directly)
 - Gated behind `BUILD_TESTING` option (default ON)
 - Run via: `ctest --test-dir build --output-on-failure`
 

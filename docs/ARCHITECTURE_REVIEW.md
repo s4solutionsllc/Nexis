@@ -332,14 +332,21 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ---
 
-### 5. ~~No Automated Test Suite~~ (Infrastructure Added)
+### 5. ~~No Automated Test Suite~~ (Resolved)
 
-**Status:** Test infrastructure established in Phase 4 (FR-33). Qt Test framework configured with CTest integration, CI test step on all 3 matrix runners, and one smoke test (`FormatUtil::formatBytes()`). The `tests/` directory, `BUILD_TESTING` CMake option, and CI pipeline are in place. Unit test coverage is minimal (1 test) — expanding to 15-20 tests is tracked in Phase 7 (FR-36).
+**Status:** Unit test suite implemented in Phase 7 (FR-36). 6 CTest executables with 63 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo verdict logic + smartctl JSON parsing), manager logic (ScheduleManager next-run-time + display text), and theme token validation (both themes, all tokens).
+
+**Refactoring for testability:**
+- `parseSmartctlJson()` deduplicated from 2 platform files into shared public static `parseSmartctlJsonInto()`
+- `deriveHealthVerdict()` made public static (pure struct logic)
+- `getNextRunTime()` accepts optional `now` parameter for deterministic testing
+- `PROJECT_SOURCE_DIR` compile definition enables theme tests to locate source-tree files
 
 **Remaining barriers to broader testing:**
-- ~~Singleton coupling (§2) blocks mock injection~~ — resolved in Phase 6 (FR-35): all 10 page constructors accept optional manager pointers for test injection
-- ~~Info classes read real OS state — no abstraction for test data~~ — resolved in Phase 5 (FR-34): abstract base classes enable mock subclasses for testing
-- Pages tightly bound to `.ui` files and Qt widgets
+- ~~Singleton coupling (§2) blocks mock injection~~ — resolved in Phase 6 (FR-35)
+- ~~Info classes read real OS state — no abstraction for test data~~ — resolved in Phase 5 (FR-34)
+- Pages tightly bound to `.ui` files and Qt widgets (UI testing out of scope)
+- CleanerService in GUI executable target — not linkable as library for unit tests
 
 ---
 
@@ -489,16 +496,15 @@ DashboardPage::DashboardPage() {
 
 ### Priority 3: Medium (Testing & Quality)
 
-#### 3A. Basic Unit Test Suite (Infrastructure Done)
+#### 3A. ~~Basic Unit Test Suite~~ (Implemented)
 
-**Infrastructure (Phase 4, FR-33):** Complete. Qt Test framework configured with CTest, `tests/` directory created, `BUILD_TESTING` CMake option (default ON), CI test step on all 3 matrix runners, and one smoke test validating `FormatUtil::formatBytes()` across all branches.
+**Completed (Phase 7, FR-36).** 6 test executables with 63 test methods:
+1. **Utility classes** — FormatUtil (10 methods), FileUtil (10 methods), CommandUtil (9 methods)
+2. **Info class parsing** — DiskHealthInfo verdict logic (14 methods) + smartctl JSON parsing (6 methods)
+3. **Manager logic** — ScheduleManager `getNextRunTime()` (11 methods) + `frequencyDisplayText()` (4 methods)
+4. **Theme validation** — Token resolution, color format, theme parity, full substitution (7 methods)
 
-**Remaining (Phase 7, FR-36):** Write 15-20 unit tests covering:
-1. **Info class parsing** — MemoryInfo calculations (BUG-01 was a variable swap), DiskHealthInfo SMART parsing, CpuInfo load average computation
-2. **Utility classes** — FormatUtil (expand), FileUtil operations, CommandUtil timeout handling
-3. **Manager logic** — CleanerService scan categorization, ScheduleManager CRUD operations
-
-~~Requires §2B (DI)~~ (Done, FR-35) for testing manager-dependent code.
+**Key refactoring:** `parseSmartctlJsonInto()` shared static (dedup), `deriveHealthVerdict()` public static, `getNextRunTime()` injectable `now` parameter. CMake macro `add_nexis_test()` for per-file executables. MemoryInfo/CpuInfo tests deferred (Linux-only /proc parsing). CleanerService tests deferred (GUI lib dependency).
 
 ---
 
@@ -579,26 +585,21 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 
 ### Testing Strategy
 
-A phased approach to introducing automated testing:
+**Phase 1 (Done):** Test infrastructure — Qt Test + CTest + CI integration (FR-33).
 
-**Phase 1 (Done):** Test infrastructure established — Qt Test + CTest + CI integration (FR-33). One smoke test validates the pipeline.
+**Phase 2 (Done):** Unit test suite — 6 test executables, 63 test methods (FR-36). Covers utility functions (FormatUtil, FileUtil, CommandUtil), DiskHealthInfo parsing + verdict logic, ScheduleManager next-run-time calculations, and theme token validation. Refactored production code for testability without changing behavior.
 
-**Phase 2 (Next):** Dependency injection implemented (§2B, FR-35). Add 15-20 unit tests covering core library logic:
-- FormatUtil, FileUtil, CommandUtil (pure functions, easy to test)
-- MemoryInfo parsing (prevent BUG-01 class regressions)
-- DiskHealthInfo SMART data parsing
-- CleanerService scan categorization
-
-**Phase 3 (Following quarter):** Add integration tests for managers:
-- ScheduleManager CRUD (JSON persistence, no OS scheduler interaction)
+**Phase 3 (Future):** Expand test coverage:
+- MemoryInfo/CpuInfo parsing (requires Linux mock data or platform-specific tests)
+- CleanerService (requires extracting logic from GUI executable into library)
 - SettingManager defaults and overrides
-- AptSourceTool format parsing (mock filesystem)
+- Integration tests for manager CRUD operations
 
-**Phase 4 (Later):** Explore UI regression testing:
+**Phase 4 (Future):** UI regression testing:
 - Screenshot comparison in CI
 - Automated dark/light mode rendering checks
 
-**Target:** 30-40% test coverage of core library and managers by end of the cycle. Focus on high-risk areas (file operations, system commands, data parsing) rather than UI code.
+**Current state:** ~63 test methods covering core library, utilities, manager logic, and theme validation. Focus on high-risk areas identified by past bugs (data parsing, format conversion, SMART verdict logic, schedule calculations).
 
 ---
 
@@ -633,7 +634,7 @@ A phased approach to introducing automated testing:
 3. ~~**Dependency injection on all page constructors**~~ — Done (Phase 6, FR-35): testable without framework overhead
 4. **Centralized DataRefreshService** — 3 timers instead of 25, with pause/resume for battery optimization
 5. **QSS token validation** — Build-time warnings for theme inconsistencies
-6. **20-30 unit tests** covering core library parsing and utility functions
+6. ~~**20-30 unit tests**~~ — Done (Phase 7, FR-36): 63 test methods across 6 executables covering core library, utilities, managers, and theme validation
 7. **Still QWidgets** — Proven, stable, with the HiDPI problem solved
 8. **Still singletons** — But with DI constructors as escape hatches for testing
 

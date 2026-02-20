@@ -72,9 +72,12 @@ public:
     virtual void refreshHealth() = 0;
     virtual void refreshHealthElevated(const QString &device) = 0;
 
+    // Public for testability (FR-36). Operates purely on the DriveHealth struct.
+    static void parseSmartctlJsonInto(const QByteArray &json, DriveHealth &drive);
+    static void deriveHealthVerdict(DriveHealth &drive);
+
 protected:
     virtual void discoverDrives() = 0;
-    void deriveHealthVerdict(DriveHealth &drive);
 
     QList<DriveHealth> mDrives;
     bool mHasSmartctl = false;

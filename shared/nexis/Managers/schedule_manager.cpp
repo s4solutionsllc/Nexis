@@ -149,47 +149,48 @@ void ScheduleManager::deleteSchedule(const QString &id)
     }
 }
 
-QDateTime ScheduleManager::getNextRunTime(const CleaningSchedule &schedule) const
+QDateTime ScheduleManager::getNextRunTime(const CleaningSchedule &schedule,
+                                           const QDateTime &now) const
 {
-    QDateTime now = QDateTime::currentDateTime();
+    QDateTime effectiveNow = now.isValid() ? now : QDateTime::currentDateTime();
     QDateTime next;
 
     switch (schedule.frequency) {
     case Daily:
-        next = QDateTime(now.date(), QTime(schedule.hour, schedule.minute));
-        if (next <= now) next = next.addDays(1);
+        next = QDateTime(effectiveNow.date(), QTime(schedule.hour, schedule.minute));
+        if (next <= effectiveNow) next = next.addDays(1);
         break;
 
     case EveryNDays: {
         if (schedule.lastRun.isValid()) {
             next = schedule.lastRun;
             next.setTime(QTime(schedule.hour, schedule.minute));
-            while (next <= now) {
+            while (next <= effectiveNow) {
                 next = next.addDays(schedule.everyNDays);
             }
         } else {
-            next = QDateTime(now.date(), QTime(schedule.hour, schedule.minute));
-            if (next <= now) next = next.addDays(schedule.everyNDays);
+            next = QDateTime(effectiveNow.date(), QTime(schedule.hour, schedule.minute));
+            if (next <= effectiveNow) next = next.addDays(schedule.everyNDays);
         }
         break;
     }
 
     case Weekly: {
-        int currentDow = now.date().dayOfWeek() % 7; // Qt: Mon=1..Sun=7 → 0=Sun conversion
+        int currentDow = effectiveNow.date().dayOfWeek() % 7; // Qt: Mon=1..Sun=7 → 0=Sun conversion
         int targetDow = schedule.dayOfWeek;
         int daysUntil = (targetDow - currentDow + 7) % 7;
 
-        next = QDateTime(now.date().addDays(daysUntil), QTime(schedule.hour, schedule.minute));
-        if (next <= now) next = next.addDays(7);
+        next = QDateTime(effectiveNow.date().addDays(daysUntil), QTime(schedule.hour, schedule.minute));
+        if (next <= effectiveNow) next = next.addDays(7);
         break;
     }
 
     case Monthly: {
-        QDate targetDate(now.date().year(), now.date().month(),
-                         qMin(schedule.dayOfMonth, now.date().daysInMonth()));
+        QDate targetDate(effectiveNow.date().year(), effectiveNow.date().month(),
+                         qMin(schedule.dayOfMonth, effectiveNow.date().daysInMonth()));
         next = QDateTime(targetDate, QTime(schedule.hour, schedule.minute));
-        if (next <= now) {
-            QDate nextMonth = now.date().addMonths(1);
+        if (next <= effectiveNow) {
+            QDate nextMonth = effectiveNow.date().addMonths(1);
             targetDate = QDate(nextMonth.year(), nextMonth.month(),
                                qMin(schedule.dayOfMonth, nextMonth.daysInMonth()));
             next = QDateTime(targetDate, QTime(schedule.hour, schedule.minute));
