@@ -1,4 +1,4 @@
-#include "network_info.h"
+#include "network_info_macos.h"
 #include "command_util.h"
 #include <QDebug>
 #include <QRegularExpression>
@@ -7,7 +7,7 @@
 #include <net/if_dl.h>
 #include <ifaddrs.h>
 
-NetworkInfo::NetworkInfo()
+NetworkInfoMacOS::NetworkInfoMacOS()
 {
     // On macOS many virtual interfaces (anpi, bridge, awdl, utun) are
     // Up+Running but carry no real traffic.  Ask the routing table for
@@ -37,7 +37,7 @@ NetworkInfo::NetworkInfo()
     }
 }
 
-quint64 NetworkInfo::getRXbytes() const
+quint64 NetworkInfoMacOS::getRXbytes() const
 {
     quint64 rx = 0;
     struct ifaddrs *ifap, *ifa;
@@ -59,7 +59,7 @@ quint64 NetworkInfo::getRXbytes() const
     return rx;
 }
 
-quint64 NetworkInfo::getTXbytes() const
+quint64 NetworkInfoMacOS::getTXbytes() const
 {
     quint64 tx = 0;
     struct ifaddrs *ifap, *ifa;
@@ -81,12 +81,12 @@ quint64 NetworkInfo::getTXbytes() const
     return tx;
 }
 
-QList<QNetworkInterface> NetworkInfo::getAllInterfaces()
+QList<QNetworkInterface> NetworkInfoMacOS::getAllInterfaces()
 {
     return QNetworkInterface::allInterfaces();
 }
 
-QString NetworkInfo::getDefaultNetworkInterface() const
+QString NetworkInfoMacOS::getDefaultNetworkInterface() const
 {
     return defaultNetworkInterface;
 }

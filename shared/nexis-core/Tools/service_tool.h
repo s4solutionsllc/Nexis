@@ -19,12 +19,14 @@ public:
 class NEXISCORESHARED_EXPORT ServiceTool
 {
 public:
-    static QList<Service> getServices();
-    static bool serviceIsActive(const QString &serviceName);
-    static bool changeServiceStatus(const QString &sname, bool status);
-    static bool changeServiceActive(const QString &sname, bool status);
-    static bool serviceIsEnabled(const QString &serviceName);
-    static QString getServiceDescription(const QString &serviceName);
+    virtual ~ServiceTool() = default;
+
+    virtual QList<Service> getServices() = 0;
+    virtual bool serviceIsActive(const QString &serviceName) = 0;
+    virtual bool changeServiceStatus(const QString &sname, bool status) = 0;
+    virtual bool changeServiceActive(const QString &sname, bool status) = 0;
+    virtual bool serviceIsEnabled(const QString &serviceName) = 0;
+    virtual QString getServiceDescription(const QString &serviceName) = 0;
 };
 
 #endif // SERVICE_TOOL_H

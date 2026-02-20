@@ -1,8 +1,10 @@
 #ifndef TOOL_MANAGER_H
 #define TOOL_MANAGER_H
 
+#include <memory>
+
 #include <Tools/service_tool.h>
-#include <Tools/package_tool.h>
+#include <Tools/package_tool_shared.h>
 #include <Tools/apt_source_tool.h>
 #include <Tools/gnome_settings_tool.h>
 #include <Tools/docker_tool.h>
@@ -40,8 +42,17 @@ public:
     void changeAPTSource(const APTSourcePtr aptSource, const APTSourcePtr newSource);
     void addAPTRepository(const QString &repository, const bool isSource);
 
+    GnomeSettingsTool *gnomeSettings() const { return mGnomeSettings.get(); }
+    PackageTool *packageTool() const { return mPackageTool.get(); }
+
 private:
+    ToolManager();
     static ToolManager *instance;
+
+    std::unique_ptr<ServiceTool> mServiceTool;
+    std::unique_ptr<PackageTool> mPackageTool;
+    std::unique_ptr<AptSourceTool> mAptSourceTool;
+    std::unique_ptr<GnomeSettingsTool> mGnomeSettings;
 };
 
 #endif // TOOL_MANAGER_H

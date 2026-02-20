@@ -20,14 +20,14 @@ struct GpuDevice {
 class NEXISCORESHARED_EXPORT GpuInfo
 {
 public:
-    GpuInfo();
+    virtual ~GpuInfo() = default;
 
     QList<GpuDevice> getGpuDevices() const;
-    void updateGpuInfo();       // re-read utilization values
+    virtual void updateGpuInfo() = 0;
     bool hasGpu() const;
 
-private:
-    void discoverGpus();
+protected:
+    virtual void discoverGpus() = 0;
     QList<GpuDevice> mDevices;
 };
 

@@ -20,7 +20,8 @@
 #include "Managers/setting_manager.h"
 #include "signal_mapper.h"
 #include "Utils/command_util.h"
-#include "Tools/package_tool.h"
+#include "Tools/package_tool_shared.h"
+#include "Managers/tool_manager.h"
 
 DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
     : QWidget(parent),
@@ -428,7 +429,7 @@ void DiskUsageLauncherWidget::onActionClicked()
         mActionButton->setText(tr("Installing..."));
         // Determine the right package manager install command
         QString pkg = "flatpak";
-        switch (PackageTool::currentPackageTool) {
+        switch (ToolManager::ins()->packageTool()->currentPackageTool) {
         case APT_RPM:
         case APT:
             CommandUtil::sudoExec("apt-get", {"install", "-y", pkg});

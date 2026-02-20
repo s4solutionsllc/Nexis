@@ -1,4 +1,4 @@
-#include "thermal_info.h"
+#include "thermal_info_linux.h"
 #include <QDir>
 #include <QHash>
 #include <QRegularExpression>
@@ -40,12 +40,12 @@ static QString friendlyDeviceName(const QString &driverName)
     return friendly;
 }
 
-ThermalInfo::ThermalInfo()
+ThermalInfoLinux::ThermalInfoLinux()
 {
     discoverSensors();
 }
 
-void ThermalInfo::discoverSensors()
+void ThermalInfoLinux::discoverSensors()
 {
     mSensors.clear();
 
@@ -118,12 +118,7 @@ void ThermalInfo::discoverSensors()
     }
 }
 
-QList<ThermalSensor> ThermalInfo::getSensors() const
-{
-    return mSensors;
-}
-
-double ThermalInfo::getTemperature(int index) const
+double ThermalInfoLinux::getTemperature(int index) const
 {
     if (index < 0 || index >= mSensors.size())
         return 0.0;
@@ -135,7 +130,3 @@ double ThermalInfo::getTemperature(int index) const
     return millideg / 1000.0;
 }
 
-bool ThermalInfo::hasSensors() const
-{
-    return !mSensors.isEmpty();
-}

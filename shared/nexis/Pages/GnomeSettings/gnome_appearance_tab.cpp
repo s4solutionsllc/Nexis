@@ -1,4 +1,5 @@
 #include "gnome_appearance_tab.h"
+#include "Managers/tool_manager.h"
 #include "ui_gnome_appearance_tab.h"
 
 #include <QDir>
@@ -7,7 +8,6 @@
 #include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStandardPaths>
-#include <Tools/gnome_settings_tool.h>
 
 GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     QWidget(parent),
@@ -28,8 +28,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Color Scheme
     connect(ui->cmbColorScheme, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::COLOR_SCHEME);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::COLOR_SCHEME,
+        QString prevVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::COLOR_SCHEME);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::INTERFACE, GnomeKey::COLOR_SCHEME,
                                      ui->cmbColorScheme->currentData().toString())) {
             const QSignalBlocker blocker(ui->cmbColorScheme);
             int idx = ui->cmbColorScheme->findData(prevVal);
@@ -41,8 +41,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // GTK Theme
     connect(ui->cmbGtkTheme, &QComboBox::currentTextChanged, this, [this](const QString &text) {
         if (mLoading) return;
-        QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME, text)) {
+        QString prev = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME, text)) {
             const QSignalBlocker blocker(ui->cmbGtkTheme);
             ui->cmbGtkTheme->setCurrentText(prev);
             emit settingFailed(tr("Failed to apply GTK Theme"));
@@ -52,8 +52,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Icon Theme
     connect(ui->cmbIconTheme, &QComboBox::currentTextChanged, this, [this](const QString &text) {
         if (mLoading) return;
-        QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME, text)) {
+        QString prev = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME, text)) {
             const QSignalBlocker blocker(ui->cmbIconTheme);
             ui->cmbIconTheme->setCurrentText(prev);
             emit settingFailed(tr("Failed to apply Icon Theme"));
@@ -63,8 +63,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Cursor Theme
     connect(ui->cmbCursorTheme, &QComboBox::currentTextChanged, this, [this](const QString &text) {
         if (mLoading) return;
-        QString prev = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME, text)) {
+        QString prev = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME, text)) {
             const QSignalBlocker blocker(ui->cmbCursorTheme);
             ui->cmbCursorTheme->setCurrentText(prev);
             emit settingFailed(tr("Failed to apply Cursor Theme"));
@@ -74,8 +74,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Cursor Size
     connect(ui->spinCursorSize, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int val) {
         if (mLoading) return;
-        int prev = GnomeSettingsTool::getI(GnomeSchema::INTERFACE, GnomeKey::CURSOR_SIZE);
-        if (!GnomeSettingsTool::setI(GnomeSchema::INTERFACE, GnomeKey::CURSOR_SIZE, val)) {
+        int prev = ToolManager::ins()->gnomeSettings()->getI(GnomeSchema::INTERFACE, GnomeKey::CURSOR_SIZE);
+        if (!ToolManager::ins()->gnomeSettings()->setI(GnomeSchema::INTERFACE, GnomeKey::CURSOR_SIZE, val)) {
             const QSignalBlocker blocker(ui->spinCursorSize);
             ui->spinCursorSize->setValue(prev);
             emit settingFailed(tr("Failed to apply Cursor Size"));
@@ -121,8 +121,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Text Scaling
     connect(ui->spinTextScaling, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, [this](double val) {
         if (mLoading) return;
-        double prev = GnomeSettingsTool::getD(GnomeSchema::INTERFACE, GnomeKey::TEXT_SCALING);
-        if (!GnomeSettingsTool::setD(GnomeSchema::INTERFACE, GnomeKey::TEXT_SCALING, val)) {
+        double prev = ToolManager::ins()->gnomeSettings()->getD(GnomeSchema::INTERFACE, GnomeKey::TEXT_SCALING);
+        if (!ToolManager::ins()->gnomeSettings()->setD(GnomeSchema::INTERFACE, GnomeKey::TEXT_SCALING, val)) {
             const QSignalBlocker blocker(ui->spinTextScaling);
             ui->spinTextScaling->setValue(prev);
             emit settingFailed(tr("Failed to apply Text Scaling"));
@@ -132,7 +132,7 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Checkboxes
     connect(ui->chkAnimations, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::INTERFACE, GnomeKey::ENABLE_ANIMATIONS, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::INTERFACE, GnomeKey::ENABLE_ANIMATIONS, checked)) {
             const QSignalBlocker blocker(ui->chkAnimations);
             ui->chkAnimations->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Animations"));
@@ -140,7 +140,7 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     });
     connect(ui->chkHotCorners, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::INTERFACE, GnomeKey::ENABLE_HOT_CORNERS, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::INTERFACE, GnomeKey::ENABLE_HOT_CORNERS, checked)) {
             const QSignalBlocker blocker(ui->chkHotCorners);
             ui->chkHotCorners->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Hot Corners"));
@@ -148,7 +148,7 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     });
     connect(ui->chkClockSeconds, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::INTERFACE, GnomeKey::CLOCK_SECONDS, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::INTERFACE, GnomeKey::CLOCK_SECONDS, checked)) {
             const QSignalBlocker blocker(ui->chkClockSeconds);
             ui->chkClockSeconds->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Clock Seconds"));
@@ -156,7 +156,7 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     });
     connect(ui->chkClockWeekday, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::INTERFACE, GnomeKey::CLOCK_WEEKDAY, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::INTERFACE, GnomeKey::CLOCK_WEEKDAY, checked)) {
             const QSignalBlocker blocker(ui->chkClockWeekday);
             ui->chkClockWeekday->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Clock Weekday"));
@@ -164,7 +164,7 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     });
     connect(ui->chkBatteryPct, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::INTERFACE, GnomeKey::SHOW_BATTERY_PCT, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::INTERFACE, GnomeKey::SHOW_BATTERY_PCT, checked)) {
             const QSignalBlocker blocker(ui->chkBatteryPct);
             ui->chkBatteryPct->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Battery Percentage"));
@@ -174,8 +174,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Clock Format
     connect(ui->cmbClockFormat, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::CLOCK_FORMAT);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::CLOCK_FORMAT,
+        QString prevVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::CLOCK_FORMAT);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::INTERFACE, GnomeKey::CLOCK_FORMAT,
                                      ui->cmbClockFormat->currentData().toString())) {
             const QSignalBlocker blocker(ui->cmbClockFormat);
             int idx = ui->cmbClockFormat->findData(prevVal);
@@ -187,8 +187,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Font Antialiasing
     connect(ui->cmbAntialiasing, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::FONT_ANTIALIASING);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::FONT_ANTIALIASING,
+        QString prevVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::FONT_ANTIALIASING);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::INTERFACE, GnomeKey::FONT_ANTIALIASING,
                                      ui->cmbAntialiasing->currentData().toString())) {
             const QSignalBlocker blocker(ui->cmbAntialiasing);
             int idx = ui->cmbAntialiasing->findData(prevVal);
@@ -200,8 +200,8 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
     // Font Hinting
     connect(ui->cmbHinting, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::FONT_HINTING);
-        if (!GnomeSettingsTool::setS(GnomeSchema::INTERFACE, GnomeKey::FONT_HINTING,
+        QString prevVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::FONT_HINTING);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::INTERFACE, GnomeKey::FONT_HINTING,
                                      ui->cmbHinting->currentData().toString())) {
             const QSignalBlocker blocker(ui->cmbHinting);
             int idx = ui->cmbHinting->findData(prevVal);
@@ -224,51 +224,51 @@ void GnomeAppearanceTab::loadSettings()
     ui->cmbColorScheme->addItem(tr("Default"),      "default");
     ui->cmbColorScheme->addItem(tr("Prefer Dark"),   "prefer-dark");
     ui->cmbColorScheme->addItem(tr("Prefer Light"),  "prefer-light");
-    QString colorScheme = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::COLOR_SCHEME);
+    QString colorScheme = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::COLOR_SCHEME);
     int csIdx = ui->cmbColorScheme->findData(colorScheme);
     if (csIdx >= 0) ui->cmbColorScheme->setCurrentIndex(csIdx);
 
     // Themes — populate from filesystem, then set current value
     ui->cmbGtkTheme->addItems(discoverGtkThemes());
-    ui->cmbGtkTheme->setCurrentText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME));
+    ui->cmbGtkTheme->setCurrentText(ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::GTK_THEME));
 
     ui->cmbIconTheme->addItems(discoverIconThemes());
-    ui->cmbIconTheme->setCurrentText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME));
+    ui->cmbIconTheme->setCurrentText(ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::ICON_THEME));
 
     ui->cmbCursorTheme->addItems(discoverCursorThemes());
-    ui->cmbCursorTheme->setCurrentText(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME));
+    ui->cmbCursorTheme->setCurrentText(ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::CURSOR_THEME));
 
-    ui->spinCursorSize->setValue(GnomeSettingsTool::getI(GnomeSchema::INTERFACE, GnomeKey::CURSOR_SIZE));
+    ui->spinCursorSize->setValue(ToolManager::ins()->gnomeSettings()->getI(GnomeSchema::INTERFACE, GnomeKey::CURSOR_SIZE));
 
     // Fonts — parse "FontFamily Size" and set combo + spin
     QString family;
     int size;
 
-    parseFontValue(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::FONT_NAME), family, size);
+    parseFontValue(ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::FONT_NAME), family, size);
     ui->fontFont->setCurrentFont(QFont(family));
     ui->spinFontSize->setValue(size);
 
-    parseFontValue(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::DOCUMENT_FONT), family, size);
+    parseFontValue(ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::DOCUMENT_FONT), family, size);
     ui->fontDocFont->setCurrentFont(QFont(family));
     ui->spinDocFontSize->setValue(size);
 
-    parseFontValue(GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::MONOSPACE_FONT), family, size);
+    parseFontValue(ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::MONOSPACE_FONT), family, size);
     ui->fontMonoFont->setCurrentFont(QFont(family));
     ui->spinMonoFontSize->setValue(size);
 
-    ui->spinTextScaling->setValue(GnomeSettingsTool::getD(GnomeSchema::INTERFACE, GnomeKey::TEXT_SCALING));
+    ui->spinTextScaling->setValue(ToolManager::ins()->gnomeSettings()->getD(GnomeSchema::INTERFACE, GnomeKey::TEXT_SCALING));
 
     // Checkboxes
-    ui->chkAnimations->setChecked(GnomeSettingsTool::getB(GnomeSchema::INTERFACE, GnomeKey::ENABLE_ANIMATIONS));
-    ui->chkHotCorners->setChecked(GnomeSettingsTool::getB(GnomeSchema::INTERFACE, GnomeKey::ENABLE_HOT_CORNERS));
-    ui->chkClockSeconds->setChecked(GnomeSettingsTool::getB(GnomeSchema::INTERFACE, GnomeKey::CLOCK_SECONDS));
-    ui->chkClockWeekday->setChecked(GnomeSettingsTool::getB(GnomeSchema::INTERFACE, GnomeKey::CLOCK_WEEKDAY));
-    ui->chkBatteryPct->setChecked(GnomeSettingsTool::getB(GnomeSchema::INTERFACE, GnomeKey::SHOW_BATTERY_PCT));
+    ui->chkAnimations->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::INTERFACE, GnomeKey::ENABLE_ANIMATIONS));
+    ui->chkHotCorners->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::INTERFACE, GnomeKey::ENABLE_HOT_CORNERS));
+    ui->chkClockSeconds->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::INTERFACE, GnomeKey::CLOCK_SECONDS));
+    ui->chkClockWeekday->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::INTERFACE, GnomeKey::CLOCK_WEEKDAY));
+    ui->chkBatteryPct->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::INTERFACE, GnomeKey::SHOW_BATTERY_PCT));
 
     // Clock Format
     ui->cmbClockFormat->addItem(tr("12 Hour"), "12h");
     ui->cmbClockFormat->addItem(tr("24 Hour"), "24h");
-    QString clockFmt = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::CLOCK_FORMAT);
+    QString clockFmt = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::CLOCK_FORMAT);
     int cfIdx = ui->cmbClockFormat->findData(clockFmt);
     if (cfIdx >= 0) ui->cmbClockFormat->setCurrentIndex(cfIdx);
 
@@ -276,7 +276,7 @@ void GnomeAppearanceTab::loadSettings()
     ui->cmbAntialiasing->addItem(tr("None"),      "none");
     ui->cmbAntialiasing->addItem(tr("Grayscale"), "grayscale");
     ui->cmbAntialiasing->addItem(tr("RGBA"),      "rgba");
-    QString aa = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::FONT_ANTIALIASING);
+    QString aa = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::FONT_ANTIALIASING);
     int aaIdx = ui->cmbAntialiasing->findData(aa);
     if (aaIdx >= 0) ui->cmbAntialiasing->setCurrentIndex(aaIdx);
 
@@ -285,7 +285,7 @@ void GnomeAppearanceTab::loadSettings()
     ui->cmbHinting->addItem(tr("Slight"), "slight");
     ui->cmbHinting->addItem(tr("Medium"), "medium");
     ui->cmbHinting->addItem(tr("Full"),   "full");
-    QString hint = GnomeSettingsTool::getS(GnomeSchema::INTERFACE, GnomeKey::FONT_HINTING);
+    QString hint = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::INTERFACE, GnomeKey::FONT_HINTING);
     int hIdx = ui->cmbHinting->findData(hint);
     if (hIdx >= 0) ui->cmbHinting->setCurrentIndex(hIdx);
 
@@ -385,8 +385,8 @@ void GnomeAppearanceTab::applyFont(const QString &schema, const QString &key,
                                     QFontComboBox *combo, QSpinBox *spin, const QString &label)
 {
     QString newValue = combo->currentFont().family() + " " + QString::number(spin->value());
-    QString prev = GnomeSettingsTool::getS(schema, key);
-    if (!GnomeSettingsTool::setS(schema, key, newValue)) {
+    QString prev = ToolManager::ins()->gnomeSettings()->getS(schema, key);
+    if (!ToolManager::ins()->gnomeSettings()->setS(schema, key, newValue)) {
         QString prevFamily;
         int prevSize;
         parseFontValue(prev, prevFamily, prevSize);

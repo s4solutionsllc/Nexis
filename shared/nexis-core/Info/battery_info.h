@@ -36,16 +36,15 @@ struct BatteryData {
 class NEXISCORESHARED_EXPORT BatteryInfo
 {
 public:
-    BatteryInfo();
+    virtual ~BatteryInfo() = default;
 
     BatteryData getBatteryData() const;
     bool hasBattery() const;
-    void updateBatteryInfo();
+    virtual void updateBatteryInfo() = 0;
 
-private:
-    void discoverBattery();
+protected:
+    virtual void discoverBattery() = 0;
     BatteryData mData;
-    QString mBatteryPath;       // Linux: sysfs path; macOS: unused
 };
 
 #endif // BATTERY_INFO_H

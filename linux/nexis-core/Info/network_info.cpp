@@ -1,7 +1,7 @@
-#include "network_info.h"
+#include "network_info_linux.h"
 #include <QDebug>
 
-NetworkInfo::NetworkInfo()
+NetworkInfoLinux::NetworkInfoLinux()
 {
     for (const QNetworkInterface &net: QNetworkInterface::allInterfaces()) {
 
@@ -21,7 +21,7 @@ NetworkInfo::NetworkInfo()
             .arg(defaultNetworkInterface);
 }
 
-quint64 NetworkInfo::getRXbytes() const
+quint64 NetworkInfoLinux::getRXbytes() const
 {
     quint64 rx = FileUtil::readStringFromFile(rxPath)
             .trimmed()
@@ -30,7 +30,7 @@ quint64 NetworkInfo::getRXbytes() const
     return rx;
 }
 
-quint64 NetworkInfo::getTXbytes() const
+quint64 NetworkInfoLinux::getTXbytes() const
 {
     quint64 tx = FileUtil::readStringFromFile(txPath)
             .trimmed()
@@ -39,12 +39,12 @@ quint64 NetworkInfo::getTXbytes() const
     return tx;
 }
 
-QList<QNetworkInterface> NetworkInfo::getAllInterfaces()
+QList<QNetworkInterface> NetworkInfoLinux::getAllInterfaces()
 {
     return QNetworkInterface::allInterfaces();
 }
 
-QString NetworkInfo::getDefaultNetworkInterface() const
+QString NetworkInfoLinux::getDefaultNetworkInterface() const
 {
     return defaultNetworkInterface;
 }

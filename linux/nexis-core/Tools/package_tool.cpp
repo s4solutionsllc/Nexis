@@ -1,9 +1,11 @@
-#include "package_tool.h"
+#include "package_tool_linux.h"
 
 #include <QDebug>
 #include <QRegularExpression>
 
-const PackageTools PackageTool::currentPackageTool =
+PackageToolLinux::PackageToolLinux()
+{
+    currentPackageTool =
         (CommandUtil::isExecutable("apt-get") && CommandUtil::isExecutable("rpm")
             && !CommandUtil::isExecutable("dpkg")) ? APT_RPM :
         CommandUtil::isExecutable("apt-get") ? APT :
@@ -12,27 +14,146 @@ const PackageTools PackageTool::currentPackageTool =
         CommandUtil::isExecutable("pacman")  ? PACMAN :
         CommandUtil::isExecutable("zypper")  ? ZYPPER :
                                                UNKNOWN;
+}
+
+QList<Package> PackageToolLinux::getPackages()
+{
+    switch (currentPackageTool) {
+    case APT:
+        return getDpkgPackages();
+    case APT_RPM:
+    case YUM:
+    case DNF:
+        return getRpmPackages();
+    case PACMAN:
+        return getPacmanPackages();
+    default:
+        return {};
+    }
+}
+
+QFileInfoList PackageToolLinux::getPackageCaches()
+{
+    switch (currentPackageTool) {
+    case APT:
+    case APT_RPM:
+        return getDpkgPackageCaches();
+    case YUM:
+    case DNF:
+        return getYumDnfPackageCaches();
+    case PACMAN:
+        return getPacmanPackageCaches();
+    default:
+        return {};
+    }
+}
+
+void PackageToolLinux::uninstallPackages(const QStringList &packages, bool purge)
+{
+    switch (currentPackageTool) {
+    case APT:
+    case APT_RPM:
+        dpkgRemovePackages(packages, purge);
+        break;
+    case YUM:
+        yumRemovePackages(packages);
+        break;
+    case DNF:
+        dnfRemovePackages(packages);
+        break;
+    case PACMAN:
+        pacmanRemovePackages(packages);
+        break;
+    default:
+        break;
+    }
+}
+
+QStringList PackageToolLinux::dryRunRemovePackages(const QStringList &packages)
+{
+    switch (currentPackageTool) {
+    case APT:
+    case APT_RPM:
+        return dpkgDryRunRemove(packages);
+    case YUM:
+    case DNF:
+        return rpmDryRunRemove(packages);
+    case PACMAN:
+        return pacmanDryRunRemove(packages);
+    default:
+        return {};
+    }
+}
+
+QStringList PackageToolLinux::getSnapPackages()
+{
+    QStringList packageList = {};
+
+    if (CommandUtil::isExecutable("snap")) {
+        try {
+            packageList = CommandUtil::exec("snap", {"list"})
+                    .trimmed()
+                    .split('\n');
+
+            packageList.removeFirst();
+
+            for (int i = 0; i < packageList.count(); ++i)
+                packageList[i] = packageList.at(i).split(QRegularExpression("\\s+")).first();
+
+        } catch (QString &ex) {
+            qCritical() << ex;
+        }
+    }
+
+    return packageList;
+}
+
+bool PackageToolLinux::uninstallSnapPackages(const QStringList &packages)
+{
+    try {
+        QStringList args = packages;
+        args.insert(0, "remove");
+        qDebug() << args;
+
+        CommandUtil::sudoExec("snap", args);
+
+        return true;
+
+    } catch(QString &ex) {
+        qCritical() << ex;
+    }
+
+    return false;
+}
+
+QList<Package> PackageToolLinux::getInstalledApps()
+{
+    return {};
+}
+
+bool PackageToolLinux::trashApps(const QStringList &)
+{
+    return false;
+}
 
 /***********
  * DPKG
  ***********/
 
-QFileInfoList PackageTool::getDpkgPackageCaches()
+QFileInfoList PackageToolLinux::getDpkgPackageCaches()
 {
     QDir caches("/var/cache/apt/archives/");
     return caches.entryInfoList(QDir::Files);
 }
 
-QFileInfoList PackageTool::getYumDnfPackageCaches()
+QFileInfoList PackageToolLinux::getYumDnfPackageCaches()
 {
     QFileInfoList caches;
 
-    // DNF cache (Fedora 22+, RHEL 8+, etc.)
     QDir dnfCache("/var/cache/dnf/");
     if (dnfCache.exists())
         caches.append(dnfCache.entryInfoList(QDir::Files, QDir::Size));
 
-    // YUM cache (older Fedora, RHEL 7 and below, CentOS)
     QDir yumCache("/var/cache/yum/");
     if (yumCache.exists())
         caches.append(yumCache.entryInfoList(QDir::Files, QDir::Size));
@@ -40,7 +161,7 @@ QFileInfoList PackageTool::getYumDnfPackageCaches()
     return caches;
 }
 
-QList<Package> PackageTool::getDpkgPackages()
+QList<Package> PackageToolLinux::getDpkgPackages()
 {
     QList<Package> packages;
 
@@ -70,7 +191,7 @@ QList<Package> PackageTool::getDpkgPackages()
     return packages;
 }
 
-bool PackageTool::dpkgRemovePackages(QStringList packages, bool purge)
+bool PackageToolLinux::dpkgRemovePackages(QStringList packages, bool purge)
 {
     try {
         packages.insert(0, purge ? "purge" : "remove");
@@ -90,7 +211,7 @@ bool PackageTool::dpkgRemovePackages(QStringList packages, bool purge)
 /**********
  * RPM
  **********/
-QList<Package> PackageTool::getRpmPackages()
+QList<Package> PackageToolLinux::getRpmPackages()
 {
     QList<Package> packages;
 
@@ -120,7 +241,7 @@ QList<Package> PackageTool::getRpmPackages()
     return packages;
 }
 
-bool PackageTool::dnfRemovePackages(QStringList packages)
+bool PackageToolLinux::dnfRemovePackages(QStringList packages)
 {
     try {
         packages.insert(0, "remove");
@@ -137,7 +258,7 @@ bool PackageTool::dnfRemovePackages(QStringList packages)
     return false;
 }
 
-bool PackageTool::yumRemovePackages(QStringList packages)
+bool PackageToolLinux::yumRemovePackages(QStringList packages)
 {
     try {
         packages.insert(0, "remove");
@@ -157,14 +278,14 @@ bool PackageTool::yumRemovePackages(QStringList packages)
 /**********
  * PACMAN
  **********/
-QFileInfoList PackageTool::getPacmanPackageCaches()
+QFileInfoList PackageToolLinux::getPacmanPackageCaches()
 {
     QDir caches("/var/cache/pacman/pkg/");
 
     return caches.entryInfoList(QDir::Files);
 }
 
-QList<Package> PackageTool::getPacmanPackages()
+QList<Package> PackageToolLinux::getPacmanPackages()
 {
     QList<Package> packages;
 
@@ -193,7 +314,6 @@ QList<Package> PackageTool::getPacmanPackages()
             else if (key == "Groups")
                 pkg.section = (val == "None") ? "misc" : val;
         }
-        // Last block
         if (!pkg.name.isEmpty())
             packages.append(pkg);
     } catch(QString &ex) {
@@ -203,7 +323,7 @@ QList<Package> PackageTool::getPacmanPackages()
     return packages;
 }
 
-bool PackageTool::pacmanRemovePackages(QStringList packages)
+bool PackageToolLinux::pacmanRemovePackages(QStringList packages)
 {
     try {
         packages.push_back("--noconfirm");
@@ -221,52 +341,9 @@ bool PackageTool::pacmanRemovePackages(QStringList packages)
 }
 
 /**********
- * SNAP
- **********/
-QStringList PackageTool::getSnapPackages()
-{
-    QStringList packageList = {};
-
-    if (CommandUtil::isExecutable("snap")) {
-        try {
-            packageList = CommandUtil::exec("snap", {"list"})
-                    .trimmed()
-                    .split('\n');
-
-            packageList.removeFirst(); // remove titles e.g name, version
-
-            for (int i = 0; i < packageList.count(); ++i)
-                packageList[i] = packageList.at(i).split(QRegularExpression("\\s+")).first();
-
-        } catch (QString &ex) {
-            qCritical() << ex;
-        }
-    }
-
-    return packageList;
-}
-
-bool PackageTool::snapRemovePackages(QStringList packages)
-{
-    try {
-        packages.insert(0, "remove");
-        qDebug() << packages;
-
-        CommandUtil::sudoExec("snap", packages);
-
-        return true;
-
-    } catch(QString &ex) {
-        qCritical() << ex;
-    }
-
-    return false;
-}
-
-/**********
  * DRY-RUN
  **********/
-QStringList PackageTool::dpkgDryRunRemove(const QStringList &packages)
+QStringList PackageToolLinux::dpkgDryRunRemove(const QStringList &packages)
 {
     QStringList wouldRemove;
     try {
@@ -286,7 +363,7 @@ QStringList PackageTool::dpkgDryRunRemove(const QStringList &packages)
     return wouldRemove;
 }
 
-QStringList PackageTool::rpmDryRunRemove(const QStringList &packages)
+QStringList PackageToolLinux::rpmDryRunRemove(const QStringList &packages)
 {
     QStringList wouldRemove;
     try {
@@ -315,7 +392,7 @@ QStringList PackageTool::rpmDryRunRemove(const QStringList &packages)
     return wouldRemove;
 }
 
-QStringList PackageTool::pacmanDryRunRemove(const QStringList &packages)
+QStringList PackageToolLinux::pacmanDryRunRemove(const QStringList &packages)
 {
     QStringList wouldRemove;
     try {

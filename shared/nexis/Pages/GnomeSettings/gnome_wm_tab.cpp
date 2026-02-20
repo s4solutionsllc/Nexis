@@ -1,10 +1,10 @@
 #include "gnome_wm_tab.h"
+#include "Managers/tool_manager.h"
 #include "ui_gnome_wm_tab.h"
 
 #include <QFontComboBox>
 #include <QSignalBlocker>
 #include <QSpinBox>
-#include <Tools/gnome_settings_tool.h>
 
 static void parseFontValue(const QString &value, QString &family, int &size)
 {
@@ -33,9 +33,9 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     ui->scrollContents->setAutoFillBackground(false);
 
     // Hide groups for missing schemas
-    if (!GnomeSettingsTool::schemaExists(GnomeSchema::WM_PREFS))
+    if (!ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::WM_PREFS))
         ui->groupWmPrefs->hide();
-    if (!GnomeSettingsTool::schemaExists(GnomeSchema::MUTTER))
+    if (!ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::MUTTER))
         ui->groupMutter->hide();
 
     loadSettings();
@@ -43,8 +43,8 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     // WM Preferences connections
     connect(ui->editButtonLayout, &QLineEdit::editingFinished, this, [this]() {
         if (mLoading) return;
-        QString prev = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::BUTTON_LAYOUT);
-        if (!GnomeSettingsTool::setS(GnomeSchema::WM_PREFS, GnomeKey::BUTTON_LAYOUT, ui->editButtonLayout->text())) {
+        QString prev = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::BUTTON_LAYOUT);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::WM_PREFS, GnomeKey::BUTTON_LAYOUT, ui->editButtonLayout->text())) {
             const QSignalBlocker blocker(ui->editButtonLayout);
             ui->editButtonLayout->setText(prev);
             emit settingFailed(tr("Failed to apply Button Layout"));
@@ -52,8 +52,8 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     });
     connect(ui->cmbFocusMode, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::FOCUS_MODE);
-        if (!GnomeSettingsTool::setS(GnomeSchema::WM_PREFS, GnomeKey::FOCUS_MODE,
+        QString prevVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::FOCUS_MODE);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::WM_PREFS, GnomeKey::FOCUS_MODE,
                                      ui->cmbFocusMode->currentData().toString())) {
             const QSignalBlocker blocker(ui->cmbFocusMode);
             int idx = ui->cmbFocusMode->findData(prevVal);
@@ -65,8 +65,8 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
         if (mLoading) return;
         QString newValue = ui->fontTitlebarFont->currentFont().family() + " "
                          + QString::number(ui->spinTitlebarFontSize->value());
-        QString prev = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT);
-        if (!GnomeSettingsTool::setS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT, newValue)) {
+        QString prev = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT, newValue)) {
             QString prevFamily;
             int prevSize;
             parseFontValue(prev, prevFamily, prevSize);
@@ -81,8 +81,8 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     connect(ui->spinTitlebarFontSize, QOverload<int>::of(&QSpinBox::valueChanged), this, applyTitlebarFont);
     connect(ui->spinWorkspaces, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int val) {
         if (mLoading) return;
-        int prev = GnomeSettingsTool::getI(GnomeSchema::WM_PREFS, GnomeKey::NUM_WORKSPACES);
-        if (!GnomeSettingsTool::setI(GnomeSchema::WM_PREFS, GnomeKey::NUM_WORKSPACES, val)) {
+        int prev = ToolManager::ins()->gnomeSettings()->getI(GnomeSchema::WM_PREFS, GnomeKey::NUM_WORKSPACES);
+        if (!ToolManager::ins()->gnomeSettings()->setI(GnomeSchema::WM_PREFS, GnomeKey::NUM_WORKSPACES, val)) {
             const QSignalBlocker blocker(ui->spinWorkspaces);
             ui->spinWorkspaces->setValue(prev);
             emit settingFailed(tr("Failed to apply Workspaces"));
@@ -92,8 +92,8 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     // Titlebar actions
     connect(ui->cmbDblClick, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_DBL_CLICK);
-        if (!GnomeSettingsTool::setS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_DBL_CLICK,
+        QString prevVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_DBL_CLICK);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_DBL_CLICK,
                                      ui->cmbDblClick->currentData().toString())) {
             const QSignalBlocker blocker(ui->cmbDblClick);
             int idx = ui->cmbDblClick->findData(prevVal);
@@ -103,8 +103,8 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     });
     connect(ui->cmbMidClick, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_MID_CLICK);
-        if (!GnomeSettingsTool::setS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_MID_CLICK,
+        QString prevVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_MID_CLICK);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_MID_CLICK,
                                      ui->cmbMidClick->currentData().toString())) {
             const QSignalBlocker blocker(ui->cmbMidClick);
             int idx = ui->cmbMidClick->findData(prevVal);
@@ -114,8 +114,8 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     });
     connect(ui->cmbRightClick, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
         if (mLoading) return;
-        QString prevVal = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_RIGHT_CLICK);
-        if (!GnomeSettingsTool::setS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_RIGHT_CLICK,
+        QString prevVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_RIGHT_CLICK);
+        if (!ToolManager::ins()->gnomeSettings()->setS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_RIGHT_CLICK,
                                      ui->cmbRightClick->currentData().toString())) {
             const QSignalBlocker blocker(ui->cmbRightClick);
             int idx = ui->cmbRightClick->findData(prevVal);
@@ -127,7 +127,7 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     // WM checkboxes
     connect(ui->chkAutoRaise, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::WM_PREFS, GnomeKey::AUTO_RAISE, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::WM_PREFS, GnomeKey::AUTO_RAISE, checked)) {
             const QSignalBlocker blocker(ui->chkAutoRaise);
             ui->chkAutoRaise->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Auto Raise"));
@@ -135,7 +135,7 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     });
     connect(ui->chkRaiseOnClick, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::WM_PREFS, GnomeKey::RAISE_ON_CLICK, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::WM_PREFS, GnomeKey::RAISE_ON_CLICK, checked)) {
             const QSignalBlocker blocker(ui->chkRaiseOnClick);
             ui->chkRaiseOnClick->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Raise on Click"));
@@ -145,7 +145,7 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     // Mutter checkboxes
     connect(ui->chkDynamicWorkspaces, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::MUTTER, GnomeKey::DYNAMIC_WORKSPACES, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::MUTTER, GnomeKey::DYNAMIC_WORKSPACES, checked)) {
             const QSignalBlocker blocker(ui->chkDynamicWorkspaces);
             ui->chkDynamicWorkspaces->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Dynamic Workspaces"));
@@ -153,7 +153,7 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     });
     connect(ui->chkEdgeTiling, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::MUTTER, GnomeKey::EDGE_TILING, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::MUTTER, GnomeKey::EDGE_TILING, checked)) {
             const QSignalBlocker blocker(ui->chkEdgeTiling);
             ui->chkEdgeTiling->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Edge Tiling"));
@@ -161,7 +161,7 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     });
     connect(ui->chkAutoMaximize, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::MUTTER, GnomeKey::AUTO_MAXIMIZE, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::MUTTER, GnomeKey::AUTO_MAXIMIZE, checked)) {
             const QSignalBlocker blocker(ui->chkAutoMaximize);
             ui->chkAutoMaximize->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Auto Maximize"));
@@ -169,7 +169,7 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     });
     connect(ui->chkCenterNewWindows, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::MUTTER, GnomeKey::CENTER_NEW_WINDOWS, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::MUTTER, GnomeKey::CENTER_NEW_WINDOWS, checked)) {
             const QSignalBlocker blocker(ui->chkCenterNewWindows);
             ui->chkCenterNewWindows->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Center New Windows"));
@@ -177,7 +177,7 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
     });
     connect(ui->chkWorkspacesPrimary, &QCheckBox::toggled, this, [this](bool checked) {
         if (mLoading) return;
-        if (!GnomeSettingsTool::setB(GnomeSchema::MUTTER, GnomeKey::WORKSPACES_PRIMARY, checked)) {
+        if (!ToolManager::ins()->gnomeSettings()->setB(GnomeSchema::MUTTER, GnomeKey::WORKSPACES_PRIMARY, checked)) {
             const QSignalBlocker blocker(ui->chkWorkspacesPrimary);
             ui->chkWorkspacesPrimary->setChecked(!checked);
             emit settingFailed(tr("Failed to apply Workspaces on Primary"));
@@ -203,51 +203,51 @@ void GnomeWmTab::loadSettings()
     };
 
     // WM Preferences
-    if (GnomeSettingsTool::schemaExists(GnomeSchema::WM_PREFS)) {
-        ui->editButtonLayout->setText(GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::BUTTON_LAYOUT));
+    if (ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::WM_PREFS)) {
+        ui->editButtonLayout->setText(ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::BUTTON_LAYOUT));
 
         ui->cmbFocusMode->addItem(tr("Click"),  "click");
         ui->cmbFocusMode->addItem(tr("Sloppy"), "sloppy");
         ui->cmbFocusMode->addItem(tr("Mouse"),  "mouse");
-        QString fm = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::FOCUS_MODE);
+        QString fm = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::FOCUS_MODE);
         int fmIdx = ui->cmbFocusMode->findData(fm);
         if (fmIdx >= 0) ui->cmbFocusMode->setCurrentIndex(fmIdx);
 
-        QString tbFontVal = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT);
+        QString tbFontVal = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::TITLEBAR_FONT);
         QString tbFamily;
         int tbSize;
         parseFontValue(tbFontVal, tbFamily, tbSize);
         ui->fontTitlebarFont->setCurrentFont(QFont(tbFamily));
         ui->spinTitlebarFontSize->setValue(tbSize);
-        ui->spinWorkspaces->setValue(GnomeSettingsTool::getI(GnomeSchema::WM_PREFS, GnomeKey::NUM_WORKSPACES));
+        ui->spinWorkspaces->setValue(ToolManager::ins()->gnomeSettings()->getI(GnomeSchema::WM_PREFS, GnomeKey::NUM_WORKSPACES));
 
         addTitlebarActions(ui->cmbDblClick);
         addTitlebarActions(ui->cmbMidClick);
         addTitlebarActions(ui->cmbRightClick);
 
-        QString dbl = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_DBL_CLICK);
+        QString dbl = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_DBL_CLICK);
         int dblIdx = ui->cmbDblClick->findData(dbl);
         if (dblIdx >= 0) ui->cmbDblClick->setCurrentIndex(dblIdx);
 
-        QString mid = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_MID_CLICK);
+        QString mid = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_MID_CLICK);
         int midIdx = ui->cmbMidClick->findData(mid);
         if (midIdx >= 0) ui->cmbMidClick->setCurrentIndex(midIdx);
 
-        QString right = GnomeSettingsTool::getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_RIGHT_CLICK);
+        QString right = ToolManager::ins()->gnomeSettings()->getS(GnomeSchema::WM_PREFS, GnomeKey::ACTION_RIGHT_CLICK);
         int rightIdx = ui->cmbRightClick->findData(right);
         if (rightIdx >= 0) ui->cmbRightClick->setCurrentIndex(rightIdx);
 
-        ui->chkAutoRaise->setChecked(GnomeSettingsTool::getB(GnomeSchema::WM_PREFS, GnomeKey::AUTO_RAISE));
-        ui->chkRaiseOnClick->setChecked(GnomeSettingsTool::getB(GnomeSchema::WM_PREFS, GnomeKey::RAISE_ON_CLICK));
+        ui->chkAutoRaise->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::WM_PREFS, GnomeKey::AUTO_RAISE));
+        ui->chkRaiseOnClick->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::WM_PREFS, GnomeKey::RAISE_ON_CLICK));
     }
 
     // Mutter
-    if (GnomeSettingsTool::schemaExists(GnomeSchema::MUTTER)) {
-        ui->chkDynamicWorkspaces->setChecked(GnomeSettingsTool::getB(GnomeSchema::MUTTER, GnomeKey::DYNAMIC_WORKSPACES));
-        ui->chkEdgeTiling->setChecked(GnomeSettingsTool::getB(GnomeSchema::MUTTER, GnomeKey::EDGE_TILING));
-        ui->chkAutoMaximize->setChecked(GnomeSettingsTool::getB(GnomeSchema::MUTTER, GnomeKey::AUTO_MAXIMIZE));
-        ui->chkCenterNewWindows->setChecked(GnomeSettingsTool::getB(GnomeSchema::MUTTER, GnomeKey::CENTER_NEW_WINDOWS));
-        ui->chkWorkspacesPrimary->setChecked(GnomeSettingsTool::getB(GnomeSchema::MUTTER, GnomeKey::WORKSPACES_PRIMARY));
+    if (ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::MUTTER)) {
+        ui->chkDynamicWorkspaces->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::MUTTER, GnomeKey::DYNAMIC_WORKSPACES));
+        ui->chkEdgeTiling->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::MUTTER, GnomeKey::EDGE_TILING));
+        ui->chkAutoMaximize->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::MUTTER, GnomeKey::AUTO_MAXIMIZE));
+        ui->chkCenterNewWindows->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::MUTTER, GnomeKey::CENTER_NEW_WINDOWS));
+        ui->chkWorkspacesPrimary->setChecked(ToolManager::ins()->gnomeSettings()->getB(GnomeSchema::MUTTER, GnomeKey::WORKSPACES_PRIMARY));
     }
 
     mLoading = false;

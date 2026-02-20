@@ -1,11 +1,11 @@
-#include "disk_info.h"
+#include "disk_info_linux.h"
 #include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
 
 #include "Utils/file_util.h"
 
-QList<quint64> DiskInfo::getDiskIO() const
+QList<quint64> DiskInfoLinux::getDiskIO() const
 {
     static QStringList diskNames = getDiskNames();
 
@@ -29,7 +29,7 @@ QList<quint64> DiskInfo::getDiskIO() const
     return diskReadWrite;
 }
 
-QStringList DiskInfo::getDiskNames() const
+QStringList DiskInfoLinux::getDiskNames() const
 {
     QDir blocks("/sys/block");
     QStringList disks;

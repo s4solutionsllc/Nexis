@@ -344,7 +344,7 @@ Nexis follows a **three-tier architecture**:
 
 **Data flows downward** (pages call managers, managers call core library). **Events flow upward** via Qt signals (core library emits updates, managers relay to pages via `SignalMapper`).
 
-**Platform abstraction** is compile-time: CMake places platform-specific headers before shared headers in include paths, so `#include "cpu_info.h"` resolves to the platform version when both exist.
+**Platform abstraction** is compile-time: shared headers define abstract base classes with pure virtual methods; platform subclasses (e.g., `CpuInfoLinux`, `CpuInfoMacOS`) implement them. Managers use `std::unique_ptr<Interface>` with `#ifdef Q_OS_MACOS` factory construction.
 
 ---
 
@@ -394,10 +394,10 @@ Six singleton managers mediate between UI pages and the core library.
 
 | Manager | Role |
 |---------|------|
-| `InfoManager` | Facade over all 11 Info classes. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
+| `InfoManager` | Facade over all 10 Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
 | `AppManager` | Theme/stylesheet loading, language management, system tray icon, color scheme detection. |
 | `SettingManager` | `QSettings` wrapper with 30+ typed getters/setters for persistent preferences. |
-| `ToolManager` | Facade over all 5 Tool classes. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
+| `ToolManager` | Facade over all 5 Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
 | `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 

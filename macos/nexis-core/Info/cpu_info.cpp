@@ -1,4 +1,4 @@
-#include "cpu_info.h"
+#include "cpu_info_macos.h"
 
 #include <QRegularExpression>
 #include "command_util.h"
@@ -8,7 +8,7 @@
 #include <mach/processor_info.h>
 #include <mach/mach_host.h>
 
-int CpuInfo::getCpuPhysicalCoreCount() const
+int CpuInfoMacOS::getCpuPhysicalCoreCount() const
 {
     static int count = 0;
     if (!count) {
@@ -20,7 +20,7 @@ int CpuInfo::getCpuPhysicalCoreCount() const
     return count;
 }
 
-int CpuInfo::getCpuCoreCount() const
+int CpuInfoMacOS::getCpuCoreCount() const
 {
     static int count = 0;
     if (!count) {
@@ -32,7 +32,7 @@ int CpuInfo::getCpuCoreCount() const
     return count;
 }
 
-QList<double> CpuInfo::getLoadAvgs() const
+QList<double> CpuInfoMacOS::getLoadAvgs() const
 {
     QList<double> avgs = {0, 0, 0};
     double loadavg[3];
@@ -44,7 +44,7 @@ QList<double> CpuInfo::getLoadAvgs() const
     return avgs;
 }
 
-double CpuInfo::getAvgClock() const
+double CpuInfoMacOS::getAvgClock() const
 {
     // On macOS, use sysctl to get CPU frequency
     uint64_t freq = 0;
@@ -90,7 +90,7 @@ double CpuInfo::getAvgClock() const
     return 0.0;  // truly unknown — dashboard will omit GHz label
 }
 
-QList<double> CpuInfo::getClocks() const
+QList<double> CpuInfoMacOS::getClocks() const
 {
     // macOS doesn't expose per-core clock speeds
     QList<double> clocks;
@@ -101,7 +101,7 @@ QList<double> CpuInfo::getClocks() const
     return clocks;
 }
 
-QList<int> CpuInfo::getCpuPercents() const
+QList<int> CpuInfoMacOS::getCpuPercents() const
 {
     QList<int> cpuPercents;
 
@@ -173,9 +173,3 @@ QList<int> CpuInfo::getCpuPercents() const
     return cpuPercents;
 }
 
-int CpuInfo::getCpuPercent(const QList<double> &cpuTimes, const int &processor) const
-{
-    Q_UNUSED(cpuTimes);
-    Q_UNUSED(processor);
-    return 0;
-}

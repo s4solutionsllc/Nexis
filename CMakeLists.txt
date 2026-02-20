@@ -96,8 +96,21 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Utils/command_util_platform.cpp"
   )
   set(CORE_PLAT_HDRS
+    "${CORE_PLAT_DIR}/Info/battery_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/cpu_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/disk_health_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/disk_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/gpu_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/memory_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/network_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/process_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/system_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/thermal_info_macos.h"
+    "${CORE_PLAT_DIR}/Tools/apt_source_tool_macos.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_constants.h"
-    "${CORE_PLAT_DIR}/Tools/package_tool.h"
+    "${CORE_PLAT_DIR}/Tools/gnome_settings_tool_macos.h"
+    "${CORE_PLAT_DIR}/Tools/package_tool_macos.h"
+    "${CORE_PLAT_DIR}/Tools/service_tool_macos.h"
     "${CORE_PLAT_DIR}/Utils/brew_util.h"
   )
 else()
@@ -119,8 +132,21 @@ else()
     "${CORE_PLAT_DIR}/Utils/command_util_platform.cpp"
   )
   set(CORE_PLAT_HDRS
+    "${CORE_PLAT_DIR}/Info/battery_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/cpu_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/disk_health_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/disk_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/gpu_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/memory_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/network_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/process_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/system_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/thermal_info_linux.h"
+    "${CORE_PLAT_DIR}/Tools/apt_source_tool_linux.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_constants.h"
-    "${CORE_PLAT_DIR}/Tools/package_tool.h"
+    "${CORE_PLAT_DIR}/Tools/gnome_settings_tool_linux.h"
+    "${CORE_PLAT_DIR}/Tools/package_tool_linux.h"
+    "${CORE_PLAT_DIR}/Tools/service_tool_linux.h"
   )
 endif()
 
@@ -170,6 +196,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.cpp"
   "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
+  "${GUI_SHARED_DIR}/Managers/tool_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/schedule_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
   "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_edit.cpp"
@@ -251,13 +278,11 @@ set(GUI_SHARED_HDRS
 
 if(APPLE)
   set(GUI_PLAT_SRCS
-    "${GUI_PLAT_DIR}/Managers/tool_manager.cpp"
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
   )
   set(GUI_PLAT_HDRS)
 else()
   set(GUI_PLAT_SRCS
-    "${GUI_PLAT_DIR}/Managers/tool_manager.cpp"
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
   )
   set(GUI_PLAT_HDRS)

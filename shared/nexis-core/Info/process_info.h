@@ -14,12 +14,14 @@ class NEXISCORESHARED_EXPORT ProcessInfo : public QObject
     Q_OBJECT
 
 public:
+    virtual ~ProcessInfo() = default;
+
     QList<Process> getProcessList() const;
 
 public slots:
-    void updateProcesses();
+    virtual void updateProcesses() = 0;
 
-private:
+protected:
     QList<Process> processList;
 };
 

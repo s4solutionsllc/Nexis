@@ -208,34 +208,35 @@
 
 ### Tasks
 
-- [ ] **5.1 Convert Info classes to abstract interfaces (11 classes)**
-  - For each class in `shared/nexis-core/Info/`:
-    - Make methods `virtual ... = 0` in the shared header
-    - Add `virtual ~ClassName() = default`
-    - Rename platform implementations (e.g., `CpuInfoLinux`, `CpuInfoMacOS`)
-    - Platform `.cpp` files include the platform-specific header and implement overrides
-  - Classes: `CpuInfo`, `MemoryInfo`, `DiskInfo`, `NetworkInfo`, `SystemInfo`, `ProcessInfo`, `ThermalInfo`, `GpuInfo`, `BatteryInfo`, `DiskHealthInfo`, plus shared `disk_info_shared.cpp` logic
-  - Can be done incrementally — one class at a time
+- [x] **5.1 Convert Info classes to abstract interfaces (10 classes)**
+  - Converted all 10 Info classes in `shared/nexis-core/Info/` to abstract bases with `virtual ... = 0` and `virtual ~ClassName() = default`
+  - Created 20 platform subclass headers (`*_linux.h`, `*_macos.h`)
+  - InfoManager updated to `std::unique_ptr` with `#ifdef Q_OS_MACOS` factory construction
 
-- [ ] **5.2 Convert Tool classes to abstract interfaces (5 classes)**
-  - Same pattern for: `PackageTool`, `ServiceTool`, `AptSourceTool`, `GnomeSettingsTool`, `DockerTool`
-  - Note: `DockerTool` has a shared implementation (no platform split) — it becomes the concrete class directly
+- [x] **5.2 Convert Tool classes to abstract interfaces (4 classes)**
+  - Converted ServiceTool, AptSourceTool, GnomeSettingsTool from static methods to virtual instance methods
+  - Created unified PackageTool abstract base from divergent platform APIs
+  - Created 8 platform subclass headers; DockerTool unchanged (shared-only)
 
-- [ ] **5.3 Update InfoManager to use platform-specific subclasses**
-  - File: `shared/nexis/Managers/info_manager.h`
-  - Change member types from concrete classes to `std::unique_ptr<Interface>`
-  - Use `#ifdef Q_OS_MAC` to instantiate the correct subclass
-  - Same for `ToolManager`
+- [x] **5.3 Update InfoManager and ToolManager to use platform-specific subclasses**
+  - Both managers use `std::unique_ptr<Interface>` members
+  - `#ifdef Q_OS_MACOS` in constructors for platform subclass instantiation
+  - ToolManager consolidated from 2 platform `.cpp` files to 1 shared file
 
-- [ ] **5.4 Update explicit source lists (Phase 2) with renamed files**
+- [x] **5.4 Update explicit source lists (Phase 2) with renamed files**
+  - Added 28 new platform subclass headers to `CORE_PLAT_HDRS`
+  - Moved `tool_manager.cpp` from `GUI_PLAT_SRCS` to `GUI_SHARED_SRCS`
+  - Removed deleted files from source lists
 
-- [ ] **5.5 Build verification on macOS**
-  - Full clean rebuild
-  - Acceptance: all 16 classes compile; no linker errors; app behavior unchanged
+- [x] **5.5 Build verification on macOS**
+  - Clean rebuild: zero errors, zero new warnings
+  - All existing tests pass (1/1 FormatUtilTests)
+  - App launches and pages display correct data
 
-- [ ] **5.6 Update Architecture Review**
-  - Mark §1B as addressed
-  - Update weakness §1 (No Formal Platform Interfaces) to note it's resolved
+- [x] **5.6 Update Architecture Review**
+  - Weakness §1 (No Formal Platform Interfaces) marked as resolved
+  - Strength §1 updated to reflect abstract base class pattern
+  - Recommendation §1B marked as done
 
 **Estimated effort:** 8-12 hours (can be split across multiple sessions)
 **Release target:** v1.4.0

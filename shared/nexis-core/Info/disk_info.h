@@ -19,16 +19,17 @@ struct Disk {
 class NEXISCORESHARED_EXPORT DiskInfo
 {
 public:
+    virtual ~DiskInfo() = default;
+
     QList<Disk> getDisks() const;
     void updateDiskInfo();
-    QList<quint64> getDiskIO() const;
-    QStringList getDiskNames() const;
+    virtual QList<quint64> getDiskIO() const = 0;
+    virtual QStringList getDiskNames() const = 0;
     QList<QString> fileSystemTypes();
     QList<QString> devices();
 
-private:
+protected:
     QList<Disk> disks;
 };
-
 
 #endif // DISKINFO_H

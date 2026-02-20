@@ -1,4 +1,5 @@
-#include "system_info.h"
+#include "system_info_macos.h"
+#include "cpu_info_macos.h"
 
 #include <QObject>
 #include <QRegularExpression>
@@ -6,7 +7,7 @@
 
 #include <sys/sysctl.h>
 
-SystemInfo::SystemInfo()
+SystemInfoMacOS::SystemInfoMacOS()
 {
     QString unknown(QObject::tr("Unknown"));
 
@@ -69,7 +70,7 @@ SystemInfo::SystemInfo()
     }
 
     // CPU Cores
-    CpuInfo ci;
+    CpuInfoMacOS ci;
     this->cpuCore = QString::number(ci.getCpuPhysicalCoreCount());
 
     // Username
@@ -82,7 +83,7 @@ SystemInfo::SystemInfo()
     this->username = name;
 }
 
-QStringList SystemInfo::getUserList() const
+QStringList SystemInfoMacOS::getUserList() const
 {
     QStringList users;
     try {
@@ -99,7 +100,7 @@ QStringList SystemInfo::getUserList() const
     return users;
 }
 
-QStringList SystemInfo::getGroupList() const
+QStringList SystemInfoMacOS::getGroupList() const
 {
     QStringList groups;
     try {
@@ -114,7 +115,7 @@ QStringList SystemInfo::getGroupList() const
     return groups;
 }
 
-QFileInfoList SystemInfo::getCrashReports() const
+QFileInfoList SystemInfoMacOS::getCrashReports() const
 {
     QFileInfoList reports;
 
@@ -129,7 +130,7 @@ QFileInfoList SystemInfo::getCrashReports() const
     return reports;
 }
 
-QFileInfoList SystemInfo::getAppLogs() const
+QFileInfoList SystemInfoMacOS::getAppLogs() const
 {
     QFileInfoList logs;
 
@@ -145,7 +146,7 @@ QFileInfoList SystemInfo::getAppLogs() const
     return logs;
 }
 
-QFileInfoList SystemInfo::getAppCaches() const
+QFileInfoList SystemInfoMacOS::getAppCaches() const
 {
     QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 
@@ -164,7 +165,7 @@ QFileInfoList SystemInfo::getAppCaches() const
     return result;
 }
 
-QFileInfoList SystemInfo::getDevToolCaches() const
+QFileInfoList SystemInfoMacOS::getDevToolCaches() const
 {
     QFileInfoList result;
     QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);

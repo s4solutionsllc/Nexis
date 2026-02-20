@@ -11,15 +11,14 @@
 class NEXISCORESHARED_EXPORT CpuInfo
 {
 public:
-    int getCpuPhysicalCoreCount() const;
-    int getCpuCoreCount() const;
-    QList<int> getCpuPercents() const;
-    QList<double> getLoadAvgs() const;
-    double getAvgClock() const;
-    QList<double> getClocks() const;
+    virtual ~CpuInfo() = default;
 
-private:
-    int getCpuPercent(const QList<double> &cpuTimes, const int &processor = 0) const;
+    virtual int getCpuPhysicalCoreCount() const = 0;
+    virtual int getCpuCoreCount() const = 0;
+    virtual QList<int> getCpuPercents() const = 0;
+    virtual QList<double> getLoadAvgs() const = 0;
+    virtual double getAvgClock() const = 0;
+    virtual QList<double> getClocks() const = 0;
 };
 
 #endif // CPUINFO_H

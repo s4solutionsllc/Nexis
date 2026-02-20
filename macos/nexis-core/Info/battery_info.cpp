@@ -1,4 +1,4 @@
-#include "battery_info.h"
+#include "battery_info_macos.h"
 
 #include <IOKit/IOKitLib.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -42,14 +42,14 @@ static QString deriveCondition(int healthPercent)
     return QStringLiteral("Replace");
 }
 
-BatteryInfo::BatteryInfo()
+BatteryInfoMacOS::BatteryInfoMacOS()
 {
     discoverBattery();
     if (mData.hasBattery)
         updateBatteryInfo();
 }
 
-void BatteryInfo::discoverBattery()
+void BatteryInfoMacOS::discoverBattery()
 {
     mData = BatteryData();
 
@@ -74,7 +74,7 @@ void BatteryInfo::discoverBattery()
     IOObjectRelease(service);
 }
 
-void BatteryInfo::updateBatteryInfo()
+void BatteryInfoMacOS::updateBatteryInfo()
 {
     if (!mData.hasBattery)
         return;

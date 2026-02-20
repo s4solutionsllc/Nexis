@@ -1,4 +1,4 @@
-#include "memory_info.h"
+#include "memory_info_macos.h"
 #include <QDebug>
 #include <QRegularExpression>
 
@@ -9,7 +9,7 @@
 
 // Constructor and getters are in shared/nexis-core/Info/memory_info_shared.cpp
 
-void MemoryInfo::updateMemoryInfo()
+void MemoryInfoMacOS::updateMemoryInfo()
 {
     // Total physical memory via sysctl
     int64_t physMem = 0;

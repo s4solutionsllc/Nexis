@@ -1,4 +1,4 @@
-#include "disk_health_info.h"
+#include "disk_health_info_linux.h"
 #include "Utils/command_util.h"
 #include "Utils/file_util.h"
 
@@ -97,13 +97,13 @@ static void parseSmartctlJson(const QByteArray &json, DriveHealth &drive)
     }
 }
 
-DiskHealthInfo::DiskHealthInfo()
+DiskHealthInfoLinux::DiskHealthInfoLinux()
 {
     mHasSmartctl = CommandUtil::isExecutable("smartctl");
     discoverDrives();
 }
 
-void DiskHealthInfo::discoverDrives()
+void DiskHealthInfoLinux::discoverDrives()
 {
     mDrives.clear();
 
@@ -180,12 +180,12 @@ void DiskHealthInfo::discoverDrives()
     }
 }
 
-void DiskHealthInfo::refreshHealth()
+void DiskHealthInfoLinux::refreshHealth()
 {
     discoverDrives();
 }
 
-void DiskHealthInfo::refreshHealthElevated(const QString &device)
+void DiskHealthInfoLinux::refreshHealthElevated(const QString &device)
 {
     if (!mHasSmartctl)
         return;

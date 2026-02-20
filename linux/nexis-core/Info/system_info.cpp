@@ -1,4 +1,5 @@
-#include "system_info.h"
+#include "system_info_linux.h"
+#include "cpu_info_linux.h"
 
 #include <QObject>
 #include <QRegularExpression>
@@ -6,7 +7,7 @@
 
 static constexpr const char *LSCPU_COMMAND = "LC_ALL=C lscpu";
 
-SystemInfo::SystemInfo()
+SystemInfoLinux::SystemInfoLinux()
 {
     QString unknown(QObject::tr("Unknown"));
     QString model = nullptr;
@@ -53,7 +54,7 @@ SystemInfo::SystemInfo()
         this->cpuSpeed = unknown;
     }
 
-    CpuInfo ci;
+    CpuInfoLinux ci;
     this->cpuCore = QString::number(ci.getCpuPhysicalCoreCount());
 
     // get username
@@ -72,7 +73,7 @@ SystemInfo::SystemInfo()
    this->username = name;
 }
 
-QStringList SystemInfo::getUserList() const
+QStringList SystemInfoLinux::getUserList() const
 {
     QStringList passwdUsers = FileUtil::readListFromFile("/etc/passwd");
     QStringList users;
@@ -84,7 +85,7 @@ QStringList SystemInfo::getUserList() const
     return users;
 }
 
-QStringList SystemInfo::getGroupList() const
+QStringList SystemInfoLinux::getGroupList() const
 {
     QStringList groupFile = FileUtil::readListFromFile("/etc/group");
     QStringList groups;
@@ -96,21 +97,21 @@ QStringList SystemInfo::getGroupList() const
     return groups;
 }
 
-QFileInfoList SystemInfo::getCrashReports() const
+QFileInfoList SystemInfoLinux::getCrashReports() const
 {
     QDir reports("/var/crash");
 
     return reports.entryInfoList(QDir::Files);
 }
 
-QFileInfoList SystemInfo::getAppLogs() const
+QFileInfoList SystemInfoLinux::getAppLogs() const
 {
     QDir logs("/var/log");
 
     return logs.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 }
 
-QFileInfoList SystemInfo::getAppCaches() const
+QFileInfoList SystemInfoLinux::getAppCaches() const
 {
     QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 
@@ -128,7 +129,7 @@ QFileInfoList SystemInfo::getAppCaches() const
     return result;
 }
 
-QFileInfoList SystemInfo::getDevToolCaches() const
+QFileInfoList SystemInfoLinux::getDevToolCaches() const
 {
     QFileInfoList result;
     QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);

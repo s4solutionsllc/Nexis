@@ -1,4 +1,4 @@
-#include "cpu_info.h"
+#include "cpu_info_linux.h"
 
 #include <QRegularExpression>
 #include "command_util.h"
@@ -8,7 +8,7 @@ static constexpr const char *LSCPU_COMMAND = "LC_ALL=C lscpu";
 static constexpr const char *PROC_LOADAVG = "/proc/loadavg";
 static constexpr const char *PROC_STAT    = "/proc/stat";
 
-int CpuInfo::getCpuPhysicalCoreCount() const
+int CpuInfoLinux::getCpuPhysicalCoreCount() const
 {
     static int count = 0;
 
@@ -41,7 +41,7 @@ int CpuInfo::getCpuPhysicalCoreCount() const
     return count;
 }
 
-int CpuInfo::getCpuCoreCount() const
+int CpuInfoLinux::getCpuCoreCount() const
 {
     static int count = 0;
 
@@ -55,7 +55,7 @@ int CpuInfo::getCpuCoreCount() const
     return count;
 }
 
-QList<double> CpuInfo::getLoadAvgs() const
+QList<double> CpuInfoLinux::getLoadAvgs() const
 {
     QList<double> avgs = {0, 0, 0};
 
@@ -71,7 +71,7 @@ QList<double> CpuInfo::getLoadAvgs() const
     return avgs;
 }
 
-double CpuInfo::getAvgClock() const
+double CpuInfoLinux::getAvgClock() const
 {
     // Try lscpu first
     try {
@@ -106,7 +106,7 @@ double CpuInfo::getAvgClock() const
     return 0.0;
 }
 
-QList<double> CpuInfo::getClocks() const
+QList<double> CpuInfoLinux::getClocks() const
 {
     QStringList lines = FileUtil::readListFromFile(PROC_CPUINFO)
             .filter(QRegularExpression("^cpu MHz"));
@@ -118,7 +118,7 @@ QList<double> CpuInfo::getClocks() const
     return clocks;
 }
 
-QList<int> CpuInfo::getCpuPercents() const
+QList<int> CpuInfoLinux::getCpuPercents() const
 {
     QList<double> cpuTimes;
 
@@ -129,7 +129,7 @@ QList<int> CpuInfo::getCpuPercents() const
     if (! times.isEmpty())
     {
         QRegularExpression sep("\\s+");
-        int count = CpuInfo::getCpuCoreCount() + 1;
+        int count = CpuInfoLinux::getCpuCoreCount() + 1;
         for (int i = 0; i < count; ++i)
         {
             QStringList n_times = times.at(i).split(sep);
@@ -146,7 +146,7 @@ QList<int> CpuInfo::getCpuPercents() const
     return cpuPercents;
 }
 
-int CpuInfo::getCpuPercent(const QList<double> &cpuTimes, const int &processor) const
+int CpuInfoLinux::getCpuPercent(const QList<double> &cpuTimes, const int &processor) const
 {
     const int N = getCpuCoreCount()+1;
 

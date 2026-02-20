@@ -3,6 +3,14 @@
 
 #include <Info/system_info.h>
 #include <Info/cpu_info.h>
+
+#ifdef Q_OS_MACOS
+#include <Info/system_info_macos.h>
+#include <Info/cpu_info_macos.h>
+#else
+#include <Info/system_info_linux.h>
+#include <Info/cpu_info_linux.h>
+#endif
 #include <Utils/format_util.h>
 
 #include <QHeaderView>
@@ -67,7 +75,11 @@ void HardwareInfoPage::populateSystem()
     t->verticalHeader()->setVisible(false);
     t->horizontalHeader()->setStretchLastSection(true);
 
-    SystemInfo sysInfo;
+#ifdef Q_OS_MACOS
+    SystemInfoMacOS sysInfo;
+#else
+    SystemInfoLinux sysInfo;
+#endif
     addRow(t, tr("Hostname"), sysInfo.getHostname());
     addRow(t, tr("Platform"), sysInfo.getPlatform());
     addRow(t, tr("Distribution"), sysInfo.getDistribution());
@@ -95,8 +107,13 @@ void HardwareInfoPage::populateProcessor()
     t->verticalHeader()->setVisible(false);
     t->horizontalHeader()->setStretchLastSection(true);
 
-    SystemInfo sysInfo;
-    CpuInfo cpuInfo;
+#ifdef Q_OS_MACOS
+    SystemInfoMacOS sysInfo;
+    CpuInfoMacOS cpuInfo;
+#else
+    SystemInfoLinux sysInfo;
+    CpuInfoLinux cpuInfo;
+#endif
 
     addRow(t, tr("Model"), sysInfo.getCpuModel());
     addRow(t, tr("Physical Cores"), QString::number(cpuInfo.getCpuPhysicalCoreCount()));

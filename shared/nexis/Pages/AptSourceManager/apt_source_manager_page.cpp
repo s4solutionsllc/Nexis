@@ -5,7 +5,7 @@
 #include "utilities.h"
 #include "Managers/tool_manager.h"
 #include "dpi.h"
-#include <Tools/package_tool.h>
+#include <Tools/package_tool_shared.h>
 
 #ifdef Q_OS_MAC
 #include <QFont>
@@ -80,7 +80,7 @@ void APTSourceManagerPage::init()
     });
 
 #else
-    if (PackageTool::currentPackageTool == APT_RPM) {
+    if (ToolManager::ins()->packageTool()->currentPackageTool == APT_RPM) {
         ui->txtAptSource->setPlaceholderText(tr("example %1")
             .arg("'rpm [p10] http://mirror.yandex.ru/altlinux/ p10/branch/x86_64-i586 classic'"));
     } else {

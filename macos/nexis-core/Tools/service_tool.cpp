@@ -1,4 +1,4 @@
-#include "service_tool.h"
+#include "service_tool_macos.h"
 
 #include <QDebug>
 #include <QRegularExpression>
@@ -12,7 +12,7 @@
 //   /Library/LaunchAgents/        (system-wide agents, run as user)
 //   ~/Library/LaunchAgents/       (per-user agents)
 
-QList<Service> ServiceTool::getServices()
+QList<Service> ServiceToolMacOS::getServices()
 {
     QList<Service> services = {};
 
@@ -51,14 +51,14 @@ QList<Service> ServiceTool::getServices()
     return services;
 }
 
-QString ServiceTool::getServiceDescription(const QString &serviceName)
+QString ServiceToolMacOS::getServiceDescription(const QString &serviceName)
 {
     // On macOS, service descriptions are in plist files
     // For simplicity, return the service label
     return serviceName;
 }
 
-bool ServiceTool::serviceIsActive(const QString &serviceName)
+bool ServiceToolMacOS::serviceIsActive(const QString &serviceName)
 {
     try {
         QString result = CommandUtil::exec("launchctl", {"list", serviceName});
@@ -68,13 +68,13 @@ bool ServiceTool::serviceIsActive(const QString &serviceName)
     }
 }
 
-bool ServiceTool::serviceIsEnabled(const QString &serviceName)
+bool ServiceToolMacOS::serviceIsEnabled(const QString &serviceName)
 {
     // If it appears in launchctl list, it's enabled/loaded
     return serviceIsActive(serviceName);
 }
 
-bool ServiceTool::changeServiceStatus(const QString &sname, bool status)
+bool ServiceToolMacOS::changeServiceStatus(const QString &sname, bool status)
 {
     try {
         // Find the plist file for this service
@@ -101,7 +101,7 @@ bool ServiceTool::changeServiceStatus(const QString &sname, bool status)
     return false;
 }
 
-bool ServiceTool::changeServiceActive(const QString &sname, bool status)
+bool ServiceToolMacOS::changeServiceActive(const QString &sname, bool status)
 {
     try {
         if (status) {

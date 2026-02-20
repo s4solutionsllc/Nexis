@@ -64,16 +64,16 @@ struct DriveHealth {
 class NEXISCORESHARED_EXPORT DiskHealthInfo
 {
 public:
-    DiskHealthInfo();
+    virtual ~DiskHealthInfo() = default;
 
     QList<DriveHealth> getDrives() const;
     bool hasDrives() const;
     bool hasSmartctl() const;
-    void refreshHealth();
-    void refreshHealthElevated(const QString &device);
+    virtual void refreshHealth() = 0;
+    virtual void refreshHealthElevated(const QString &device) = 0;
 
-private:
-    void discoverDrives();
+protected:
+    virtual void discoverDrives() = 0;
     void deriveHealthVerdict(DriveHealth &drive);
 
     QList<DriveHealth> mDrives;

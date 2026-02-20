@@ -9,8 +9,9 @@ class NEXISCORESHARED_EXPORT MemoryInfo
 {
 public:
     MemoryInfo();
+    virtual ~MemoryInfo() = default;
 
-    void updateMemoryInfo();
+    virtual void updateMemoryInfo() = 0;
 
     quint64 getMemTotal() const;
     quint64 getMemFree() const;
@@ -20,8 +21,7 @@ public:
     quint64 getSwapFree() const;
     quint64 getSwapUsed() const;
 
-private:
-    // memory
+protected:
     quint64 memTotal;
     quint64 memFree;
     quint64 memUsed;
@@ -30,7 +30,6 @@ private:
     quint64 sreclaimable;
     quint64 shmem;
 
-    // swap
     quint64 swapTotal;
     quint64 swapFree;
     quint64 swapUsed;

@@ -1,4 +1,4 @@
-#include "service_tool.h"
+#include "service_tool_linux.h"
 
 #include <QDebug>
 #include <QRegularExpression>
@@ -6,7 +6,7 @@
 
 // Service constructor is in shared/nexis-core/Tools/service_tool_shared.cpp
 
-QList<Service> ServiceTool::getServices()
+QList<Service> ServiceToolLinux::getServices()
 {
     QList<Service> services = {};
 
@@ -40,7 +40,7 @@ QList<Service> ServiceTool::getServices()
     return services;
 }
 
-QString ServiceTool::getServiceDescription(const QString &serviceName)
+QString ServiceToolLinux::getServiceDescription(const QString &serviceName)
 {
     QStringList args = { "cat", serviceName };
 
@@ -64,7 +64,7 @@ QString ServiceTool::getServiceDescription(const QString &serviceName)
 }
 
 
-bool ServiceTool::serviceIsActive(const QString &serviceName)
+bool ServiceToolLinux::serviceIsActive(const QString &serviceName)
 {
     QStringList args = { "is-active", serviceName };
 
@@ -79,7 +79,7 @@ bool ServiceTool::serviceIsActive(const QString &serviceName)
     return ! result.trimmed().compare("active");
 }
 
-bool ServiceTool::serviceIsEnabled(const QString &serviceName)
+bool ServiceToolLinux::serviceIsEnabled(const QString &serviceName)
 {
     QStringList args = { "is-enabled", serviceName };
 
@@ -94,7 +94,7 @@ bool ServiceTool::serviceIsEnabled(const QString &serviceName)
     return ! result.trimmed().compare("enabled");
 }
 
-bool ServiceTool::changeServiceStatus(const QString &sname, bool status)
+bool ServiceToolLinux::changeServiceStatus(const QString &sname, bool status)
 {
     try {
 
@@ -111,7 +111,7 @@ bool ServiceTool::changeServiceStatus(const QString &sname, bool status)
     return false;
 }
 
-bool ServiceTool::changeServiceActive(const QString &sname, bool status)
+bool ServiceToolLinux::changeServiceActive(const QString &sname, bool status)
 {
     try {
 

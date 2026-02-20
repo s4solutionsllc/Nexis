@@ -9,13 +9,13 @@
 
 1. [Architecture at a Glance](#architecture-at-a-glance)
 2. [Architecture Strengths](#architecture-strengths)
-   - [Platform Abstraction via Include-Path Shadowing](#1-platform-abstraction-via-include-path-shadowing)
+   - [Platform Abstraction via Abstract Base Classes](#1-platform-abstraction-via-abstract-base-classes)
    - [Singleton Manager Facades](#2-singleton-manager-facades)
    - [QSS Token System](#3-qss-token-system)
    - [Graceful Degradation](#4-graceful-degradation)
    - [SignalMapper for Cross-Component Events](#5-signalmapper-for-cross-component-events)
 3. [Architecture Weaknesses](#architecture-weaknesses)
-   - [No Formal Platform Interfaces](#1-no-formal-platform-interfaces)
+   - [~~No Formal Platform Interfaces~~ (Resolved)](#1-no-formal-platform-interfaces)
    - [Singleton Coupling Limits Testability](#2-singleton-coupling-limits-testability)
    - [Manager Layer Inconsistency](#3-manager-layer-inconsistency)
    - [CMake GLOB_RECURSE](#4-cmake-glob_recurse)
@@ -57,8 +57,8 @@ Nexis is structured as a **three-tier desktop application**:
 ```
 
 **Key architectural decisions:**
-- **Compile-time platform abstraction** — CMake include-path precedence, not runtime polymorphism
-- **Singleton managers** — Static `ins()` accessors, no dependency injection framework
+- **Compile-time platform abstraction** — Abstract base classes with pure virtual methods; platform subclasses selected via `#ifdef Q_OS_MACOS` at construction time
+- **Singleton managers** — Static `ins()` accessors, `std::unique_ptr` members, no dependency injection framework
 - **Timer-driven polling** — QTimers in each page drive data refresh (1s/5s/30s intervals)
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
 - **Qt signals** — `SignalMapper` singleton as a lightweight global event bus
@@ -69,31 +69,43 @@ Nexis is structured as a **three-tier desktop application**:
 
 ## Architecture Strengths
 
-### 1. Platform Abstraction via Include-Path Shadowing
+### 1. Platform Abstraction via Abstract Base Classes
 
-**How it works:** CMake places `${PLATFORM_DIR}` (macos/ or linux/) *before* `${SHARED_DIR}` in include paths. When a page writes `#include "cpu_info.h"`, the compiler resolves to the platform-specific header first if it exists, falling back to the shared header otherwise.
+**How it works:** Shared headers in `shared/nexis-core/` define abstract base classes with `virtual ... = 0` for platform-specific methods and concrete implementations for shared logic. Platform subclasses (e.g., `CpuInfoLinux`, `CpuInfoMacOS`) in `linux/` and `macos/` directories `override` pure virtuals with platform-specific implementations. CMake include-path precedence still resolves platform directories first, but the compiler now **enforces** the contract via pure virtual methods.
 
-```cmake
-# CMakeLists.txt:49-58 — platform directories listed first
-target_include_directories(nexis-core PUBLIC
-  "${CORE_PLAT_DIR}"        # macos/nexis-core/ or linux/nexis-core/
-  "${CORE_PLAT_DIR}/Info"
-  ...
-  "${CORE_SHARED_DIR}"      # shared/nexis-core/
-  "${CORE_SHARED_DIR}/Info"
-  ...
-)
+```cpp
+// shared/nexis-core/Info/cpu_info.h — abstract interface
+class CpuInfo {
+public:
+    virtual ~CpuInfo() = default;
+    virtual int getCpuCoreCount() const = 0;  // compile-time enforcement
+    // ...
+};
+
+// macos/nexis-core/Info/cpu_info_macos.h
+class CpuInfoMacOS : public CpuInfo {
+    int getCpuCoreCount() const override;  // sysctl
+};
 ```
 
-**In practice:** `shared/nexis-core/Info/cpu_info.h` defines the interface. `macos/nexis-core/Info/cpu_info.cpp` implements it using `sysctl` and Mach APIs. `linux/nexis-core/Info/cpu_info.cpp` implements it using `/proc/stat` and sysfs. The same header, different implementations — selected at compile time.
+**Managers use factory construction:**
+```cpp
+// info_manager.cpp constructor
+#ifdef Q_OS_MACOS
+    ci = std::make_unique<CpuInfoMacOS>();
+#else
+    ci = std::make_unique<CpuInfoLinux>();
+#endif
+```
 
 **Why this is good:**
-- **Zero runtime overhead** — no virtual dispatch, no vtables, no factory methods
-- **Clean separation** — shared logic stays in `shared/`, platform deltas are isolated
-- **Simple mental model** — one header file defines the contract; platform `.cpp` files fulfill it
-- **Pragmatic** — appropriate for a desktop app where the target platform is known at build time
+- **Compile-time enforcement** — missing platform methods produce clear "unimplemented pure virtual" errors, not opaque linker failures
+- **Clean separation** — shared logic stays in abstract base, platform deltas isolated in subclasses
+- **Two-tier hierarchy** — avoids unnecessary interface/base/impl three-tier complexity
+- **Negligible overhead** — virtual dispatch at 1-30 Hz polling rates adds no measurable cost
+- **Future-proof** — adding a new platform (e.g., Windows) requires creating new subclasses; the compiler guides what to implement
 
-**Assessment:** This pattern is **elegant and appropriate** for the project's scale and constraints. It would need rethinking only if Nexis needed to support platform selection at runtime (which it doesn't).
+**Assessment:** This pattern provides **compiler-enforced platform contracts** while maintaining the pragmatic simplicity of the original include-path architecture. The 14 abstract base classes (10 Info + 4 Tool) cover all platform-specific code.
 
 ---
 
@@ -102,26 +114,26 @@ target_include_directories(nexis-core PUBLIC
 Six manager singletons act as **stable API surfaces** over the core library:
 
 ```cpp
-// shared/nexis/Managers/info_manager.h — facade over 11 Info classes
+// shared/nexis/Managers/info_manager.h — facade over 10 Info classes
 class InfoManager {
 public:
     static InfoManager *ins();
 
-    // CPU — delegates to CpuInfo ci member
+    // CPU — delegates to CpuInfo via unique_ptr
     int getCpuCoreCount() const;
     QList<int> getCpuPercents() const;
 
-    // Memory — delegates to MemoryInfo mi member
+    // Memory — delegates to MemoryInfo via unique_ptr
     void updateMemoryInfo();
     quint64 getMemUsed() const;
     quint64 getMemTotal() const;
-    // ... 50+ methods across 11 info providers
+    // ... 50+ methods across 10 info providers
 
 private:
-    CpuInfo ci;     // Held by value — no heap allocation
-    MemoryInfo mi;
-    DiskInfo di;
-    // ... 10 total
+    std::unique_ptr<CpuInfo> ci;     // Platform subclass via factory
+    std::unique_ptr<MemoryInfo> mi;
+    std::unique_ptr<DiskInfo> di;
+    // ... 10 total — #ifdef Q_OS_MACOS in constructor
 };
 ```
 
@@ -239,28 +251,27 @@ signals:
 
 ## Architecture Weaknesses
 
-### 1. No Formal Platform Interfaces
+### ~~1. No Formal Platform Interfaces~~ (Resolved)
 
-**The problem:** Include-path shadowing works by convention. There's no compiler-enforced contract that `linux/Info/cpu_info.cpp` and `macos/Info/cpu_info.cpp` implement the same methods.
+**Status:** Resolved in Phase 5 (FR-34). All 10 Info classes and 4 platform-split Tool classes now use abstract base classes with pure virtual methods in shared headers. Platform implementations are named subclasses (e.g., `CpuInfoLinux`, `CpuInfoMacOS`) that `override` each pure virtual. Missing platform methods are caught at compile time with clear "unimplemented pure virtual" errors.
 
+**Pattern adopted (two-tier hierarchy):**
 ```cpp
-// shared/nexis-core/Info/cpu_info.h — the "interface" (but it's just a class, not abstract)
+// shared/nexis-core/Info/cpu_info.h — abstract base
 class CpuInfo {
 public:
-    int getCpuPhysicalCoreCount() const;
-    int getCpuCoreCount() const;
-    QList<int> getCpuPercents() const;
-    QList<double> getLoadAvgs() const;
-    double getAvgClock() const;
-    QList<double> getClocks() const;
+    virtual ~CpuInfo() = default;
+    virtual int getCpuCoreCount() const = 0;
+    // ... pure virtual for platform methods
+};
+
+// macos/nexis-core/Info/cpu_info_macos.h
+class CpuInfoMacOS : public CpuInfo {
+    int getCpuCoreCount() const override;  // uses sysctl
 };
 ```
 
-**Risk scenario:** A developer adds `getCoreTempCelsius()` to `linux/cpu_info.cpp` but forgets the macOS implementation. The Linux build succeeds. The macOS build fails with a **linker error** (undefined symbol) — not a compiler error. The problem only surfaces when someone builds on the other platform, or in CI.
-
-**Impact:** Medium. CI covers both platforms, so missing implementations are caught. But errors are **late** (link-time) rather than **early** (compile-time), and the error messages are opaque linker errors rather than clear "unimplemented pure virtual" messages.
-
-**All 11 Info classes and 5 Tool classes have this exposure** — 16 classes where platform parity is enforced only by convention.
+InfoManager and ToolManager hold `std::unique_ptr<Interface>` members with `#ifdef Q_OS_MACOS` factory construction. Virtual dispatch overhead is negligible at 1-30 Hz polling rates.
 
 ---
 
@@ -324,7 +335,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 **Remaining barriers to broader testing:**
 - Singleton coupling (§2) blocks mock injection — addressed in Phase 6 (FR-35)
-- Info classes read real OS state — no abstraction for test data — addressed in Phase 5 (FR-34)
+- ~~Info classes read real OS state — no abstraction for test data~~ — resolved in Phase 5 (FR-34): abstract base classes enable mock subclasses for testing
 - Pages tightly bound to `.ui` files and Qt widgets
 
 ---
@@ -383,57 +394,9 @@ Both checks emit `qWarning()` at runtime (visible in debug output) without alter
 
 ---
 
-#### 1B. Add Abstract Base Classes for Platform Code
+#### ~~1B. Add Abstract Base Classes for Platform Code~~ (Done)
 
-**What:** Define pure virtual interfaces for the 11 Info classes and 5 Tool classes. Platform implementations become named subclasses.
-
-**Why:** Catches missing platform methods at compile time (not link time). Makes the platform contract explicit. Future-proofs for additional platforms (Windows, BSD).
-
-**How:**
-
-```cpp
-// shared/nexis-core/Info/cpu_info.h — becomes an interface
-class CpuInfo {
-public:
-    virtual ~CpuInfo() = default;
-    virtual int getCpuPhysicalCoreCount() const = 0;
-    virtual int getCpuCoreCount() const = 0;
-    virtual QList<int> getCpuPercents() const = 0;
-    virtual QList<double> getLoadAvgs() const = 0;
-    virtual double getAvgClock() const = 0;
-    virtual QList<double> getClocks() const = 0;
-};
-
-// linux/nexis-core/Info/cpu_info_linux.h
-class CpuInfoLinux : public CpuInfo {
-public:
-    int getCpuCoreCount() const override;  // reads /proc/cpuinfo
-    // ... all pure virtuals implemented
-};
-
-// macos/nexis-core/Info/cpu_info_macos.h
-class CpuInfoMacOS : public CpuInfo {
-public:
-    int getCpuCoreCount() const override;  // calls sysctl
-    // ... all pure virtuals implemented
-};
-```
-
-InfoManager would use `#ifdef Q_OS_MAC` to instantiate the correct subclass:
-
-```cpp
-#ifdef Q_OS_MAC
-    std::unique_ptr<CpuInfo> ci = std::make_unique<CpuInfoMacOS>();
-#else
-    std::unique_ptr<CpuInfo> ci = std::make_unique<CpuInfoLinux>();
-#endif
-```
-
-**Trade-off:** Adds virtual dispatch overhead (one vtable lookup per call). For a desktop app polling at 1s intervals, this overhead is **completely negligible**.
-
-**Effort:** Medium (touch all 16 classes — split into header + 2 implementations each). Can be done incrementally, one class at a time.
-
-**Files affected:** All files in `shared/nexis-core/Info/`, `shared/nexis-core/Tools/`, and their platform counterparts.
+**Status:** Completed in Phase 5 (FR-34). All 10 Info classes and 4 Tool classes converted to abstract base + platform subclass pattern. 29 new platform subclass headers created. InfoManager and ToolManager use `std::unique_ptr<Interface>` with `#ifdef Q_OS_MACOS` factory construction. PackageTool unified from divergent platform APIs (dpkg/rpm/pacman vs Homebrew) into a single abstract interface. ToolManager consolidated from 2 platform `.cpp` files to 1 shared file with `#ifdef` only in the constructor.
 
 ---
 
@@ -711,7 +674,7 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | File | Why It Matters |
 |------|---------------|
 | `CMakeLists.txt` | Replace GLOB_RECURSE (§1A) |
-| `shared/nexis-core/Info/cpu_info.h` | Template for abstract base class pattern (§1B) — 10 other Info classes follow this one |
+| `shared/nexis-core/Info/cpu_info.h` | ~~Template for abstract base class pattern (§1B)~~ Done — now an abstract base class with pure virtuals, 9 other Info classes follow this pattern |
 | `shared/nexis/Managers/info_manager.h` | Add DI constructor args (§2B), holds all Info instances |
 | `shared/nexis/Managers/app_manager.cpp` | ~~Add QSS token validation (§2C)~~ Done — token + color format validation added |
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | Primary refactor target for DataRefreshService (§2A) — has 3 timers |

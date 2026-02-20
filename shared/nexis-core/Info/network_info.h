@@ -10,19 +10,16 @@
 class NEXISCORESHARED_EXPORT NetworkInfo
 {
 public:
-    NetworkInfo();
+    virtual ~NetworkInfo() = default;
 
-    QString getDefaultNetworkInterface() const;
-    QList<QNetworkInterface> getAllInterfaces();
+    virtual QString getDefaultNetworkInterface() const = 0;
+    virtual QList<QNetworkInterface> getAllInterfaces() = 0;
 
-    quint64 getRXbytes() const;
-    quint64 getTXbytes() const;
+    virtual quint64 getRXbytes() const = 0;
+    virtual quint64 getTXbytes() const = 0;
 
-private:
+protected:
     QString defaultNetworkInterface;
-
-    QString rxPath;
-    QString txPath;
 };
 
 #endif // NETWORK_INFO_H

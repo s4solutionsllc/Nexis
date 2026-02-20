@@ -1,4 +1,4 @@
-#include "gpu_info.h"
+#include "gpu_info_linux.h"
 #include "Utils/command_util.h"
 
 #include <QDir>
@@ -11,7 +11,7 @@ static constexpr const char *PCI_VENDOR_INTEL  = "0x8086";
 
 static constexpr const char *DRM_BASE = "/sys/class/drm";
 
-GpuInfo::GpuInfo()
+GpuInfoLinux::GpuInfoLinux()
 {
     discoverGpus();
 }
@@ -58,7 +58,7 @@ static QString readDeviceName(const QString &cardPath, int cardIndex, const QStr
     return QString("%1 GPU %2").arg(vendor).arg(cardIndex);
 }
 
-void GpuInfo::discoverGpus()
+void GpuInfoLinux::discoverGpus()
 {
     mDevices.clear();
 
@@ -132,7 +132,7 @@ void GpuInfo::discoverGpus()
     }
 }
 
-void GpuInfo::updateGpuInfo()
+void GpuInfoLinux::updateGpuInfo()
 {
     for (int i = 0; i < mDevices.size(); ++i) {
         GpuDevice &dev = mDevices[i];

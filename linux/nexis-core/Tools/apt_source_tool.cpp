@@ -1,5 +1,4 @@
-#include "apt_source_tool.h"
-#include "package_tool.h"
+#include "apt_source_tool_linux.h"
 #include "Utils/command_util.h"
 #include "Utils/file_util.h"
 #include <QDebug>
@@ -10,7 +9,9 @@ static constexpr const char *APT_SOURCES_LIST_PATH   = "/etc/apt/sources.list";
 
 static bool isAptRpm()
 {
-    return PackageTool::currentPackageTool == APT_RPM;
+    return CommandUtil::isExecutable("apt-get")
+        && CommandUtil::isExecutable("rpm")
+        && !CommandUtil::isExecutable("dpkg");
 }
 
 static QString binaryType()
@@ -23,13 +24,13 @@ static QString sourceType()
     return isAptRpm() ? "rpm-src" : "deb-src";
 }
 
-bool AptSourceTool::checkSourceRepository()
+bool AptSourceToolLinux::checkSourceRepository()
 {
     QDir sourceList(APT_SOURCES_LIST_D_PATH);
     return sourceList.exists();
 }
 
-void AptSourceTool::removeAPTSource(const APTSourcePtr aptSource)
+void AptSourceToolLinux::removeAPTSource(const APTSourcePtr aptSource)
 {
     if (isAptRpm() && CommandUtil::isExecutable("apt-repo")) {
         CommandUtil::sudoExec("apt-repo", {"rm", aptSource->source});
@@ -38,7 +39,7 @@ void AptSourceTool::removeAPTSource(const APTSourcePtr aptSource)
     }
 }
 
-void AptSourceTool::addRepository(const QString &repository, const bool isSource)
+void AptSourceToolLinux::addRepository(const QString &repository, const bool isSource)
 {
     if (!repository.isEmpty()) {
         if (isAptRpm() && CommandUtil::isExecutable("apt-repo")) {
@@ -56,7 +57,7 @@ void AptSourceTool::addRepository(const QString &repository, const bool isSource
     }
 }
 
-void AptSourceTool::changeSource(const APTSourcePtr aptSource, const APTSourcePtr newSource)
+void AptSourceToolLinux::changeSource(const APTSourcePtr aptSource, const APTSourcePtr newSource)
 {
     if (aptSource->filePath.endsWith(".sources")) {
         // deb822 format: stanza-aware rewriting
@@ -232,14 +233,14 @@ void AptSourceTool::changeSource(const APTSourcePtr aptSource, const APTSourcePt
     }
 }
 
-void AptSourceTool::changeStatus(const APTSourcePtr aptSource, const bool status)
+void AptSourceToolLinux::changeStatus(const APTSourcePtr aptSource, const bool status)
 {
     APTSourcePtr newSource(new APTSource(*aptSource));
     newSource->isActive = status;
     changeSource(aptSource, newSource);
 }
 
-QList<APTSourcePtr> AptSourceTool::getSourceList()
+QList<APTSourcePtr> AptSourceToolLinux::getSourceList()
 {
     QList<APTSourcePtr> aptSourceList;
 

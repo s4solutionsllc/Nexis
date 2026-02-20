@@ -1,8 +1,8 @@
 #include "gnome_settings_page.h"
+#include "Managers/tool_manager.h"
 #include "ui_gnome_settings_page.h"
 
 #include <QTimer>
-#include <Tools/gnome_settings_tool.h>
 
 GnomeSettingsPage::GnomeSettingsPage(QWidget *parent) :
     QWidget(parent),
@@ -35,16 +35,16 @@ void GnomeSettingsPage::init()
     };
 
     // Hide tabs whose schemas are missing
-    if (!GnomeSettingsTool::schemaExists(GnomeSchema::WM_PREFS) &&
-        !GnomeSettingsTool::schemaExists(GnomeSchema::MUTTER)) {
+    if (!ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::WM_PREFS) &&
+        !ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::MUTTER)) {
         ui->btnWindowManager->hide();
     }
-    if (!GnomeSettingsTool::schemaExists(GnomeSchema::MOUSE) &&
-        !GnomeSettingsTool::schemaExists(GnomeSchema::TOUCHPAD)) {
+    if (!ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::MOUSE) &&
+        !ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::TOUCHPAD)) {
         ui->btnMouse->hide();
     }
-    if (!GnomeSettingsTool::schemaExists(GnomeSchema::BACKGROUND) &&
-        !GnomeSettingsTool::schemaExists(GnomeSchema::SOUND)) {
+    if (!ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::BACKGROUND) &&
+        !ToolManager::ins()->gnomeSettings()->schemaExists(GnomeSchema::SOUND)) {
         ui->btnDesktop->hide();
     }
 

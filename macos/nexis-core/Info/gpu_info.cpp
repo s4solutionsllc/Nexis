@@ -1,9 +1,9 @@
-#include "gpu_info.h"
+#include "gpu_info_macos.h"
 
 #include <IOKit/IOKitLib.h>
 #include <CoreFoundation/CoreFoundation.h>
 
-GpuInfo::GpuInfo()
+GpuInfoMacOS::GpuInfoMacOS()
 {
     discoverGpus();
 }
@@ -94,7 +94,7 @@ static QString detectVendor(io_object_t accel, const QString &modelName)
     return "Apple";  // On Apple Silicon, typically no vendor-id
 }
 
-void GpuInfo::discoverGpus()
+void GpuInfoMacOS::discoverGpus()
 {
     mDevices.clear();
 
@@ -127,7 +127,7 @@ void GpuInfo::discoverGpus()
     IOObjectRelease(iterator);
 }
 
-void GpuInfo::updateGpuInfo()
+void GpuInfoMacOS::updateGpuInfo()
 {
     // Re-enumerate IOAccelerators and read PerformanceStatistics
     io_iterator_t iterator = 0;

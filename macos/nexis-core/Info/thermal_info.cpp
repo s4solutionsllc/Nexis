@@ -1,4 +1,4 @@
-#include "thermal_info.h"
+#include "thermal_info_macos.h"
 
 #include <IOKit/IOKitLib.h>
 #include <cstring>
@@ -137,12 +137,12 @@ static double smcGetTemp(const char *key)
 
 // ── ThermalInfo implementation ──────────────────────────────────────
 
-ThermalInfo::ThermalInfo()
+ThermalInfoMacOS::ThermalInfoMacOS()
 {
     discoverSensors();
 }
 
-void ThermalInfo::discoverSensors()
+void ThermalInfoMacOS::discoverSensors()
 {
     mSensors.clear();
 
@@ -175,12 +175,7 @@ void ThermalInfo::discoverSensors()
     }
 }
 
-QList<ThermalSensor> ThermalInfo::getSensors() const
-{
-    return mSensors;
-}
-
-double ThermalInfo::getTemperature(int index) const
+double ThermalInfoMacOS::getTemperature(int index) const
 {
     if (index < 0 || index >= mSensors.size())
         return 0.0;
@@ -189,7 +184,3 @@ double ThermalInfo::getTemperature(int index) const
     return (t > 0.0) ? t : 0.0;
 }
 
-bool ThermalInfo::hasSensors() const
-{
-    return !mSensors.isEmpty();
-}

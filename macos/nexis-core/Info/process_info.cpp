@@ -1,9 +1,9 @@
-#include "process_info.h"
+#include "process_info_macos.h"
 
 #include <QDebug>
 #include <QRegularExpression>
 
-void ProcessInfo::updateProcesses()
+void ProcessInfoMacOS::updateProcesses()
 {
     processList.clear();
 

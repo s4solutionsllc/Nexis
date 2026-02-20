@@ -1,4 +1,4 @@
-#include "apt_source_tool.h"
+#include "apt_source_tool_macos.h"
 #include "Utils/command_util.h"
 #include "Utils/file_util.h"
 #include "Utils/brew_util.h"
@@ -8,12 +8,12 @@
 // On macOS, APT sources don't exist. This adapter maps the APTSource
 // interface to Homebrew installed packages (formulae + casks).
 
-bool AptSourceTool::checkSourceRepository()
+bool AptSourceToolMacOS::checkSourceRepository()
 {
     return !findBrew().isEmpty();
 }
 
-void AptSourceTool::removeAPTSource(const APTSourcePtr aptSource)
+void AptSourceToolMacOS::removeAPTSource(const APTSourcePtr aptSource)
 {
     // Uninstall a Homebrew package
     if (!aptSource->uri.isEmpty()) {
@@ -30,7 +30,7 @@ void AptSourceTool::removeAPTSource(const APTSourcePtr aptSource)
     }
 }
 
-void AptSourceTool::addRepository(const QString &repository, const bool isSource)
+void AptSourceToolMacOS::addRepository(const QString &repository, const bool isSource)
 {
     Q_UNUSED(isSource);
     if (!repository.isEmpty()) {
@@ -42,21 +42,21 @@ void AptSourceTool::addRepository(const QString &repository, const bool isSource
     }
 }
 
-void AptSourceTool::changeSource(const APTSourcePtr aptSource, const APTSourcePtr newSource)
+void AptSourceToolMacOS::changeSource(const APTSourcePtr aptSource, const APTSourcePtr newSource)
 {
     Q_UNUSED(aptSource);
     Q_UNUSED(newSource);
     // Not applicable for Homebrew packages
 }
 
-void AptSourceTool::changeStatus(const APTSourcePtr aptSource, const bool status)
+void AptSourceToolMacOS::changeStatus(const APTSourcePtr aptSource, const bool status)
 {
     Q_UNUSED(aptSource);
     Q_UNUSED(status);
     // Not applicable for Homebrew packages (they're either installed or not)
 }
 
-QList<APTSourcePtr> AptSourceTool::getSourceList()
+QList<APTSourcePtr> AptSourceToolMacOS::getSourceList()
 {
     QList<APTSourcePtr> sourceList;
 

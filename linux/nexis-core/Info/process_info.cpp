@@ -1,9 +1,9 @@
-#include "process_info.h"
+#include "process_info_linux.h"
 
 #include <QDebug>
 #include <QRegularExpression>
 
-void ProcessInfo::updateProcesses()
+void ProcessInfoLinux::updateProcesses()
 {
     processList.clear();
 

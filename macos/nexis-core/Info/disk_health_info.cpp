@@ -1,4 +1,4 @@
-#include "disk_health_info.h"
+#include "disk_health_info_macos.h"
 #include "Utils/command_util.h"
 
 #include <QJsonDocument>
@@ -161,13 +161,13 @@ static void parseSmartctlJson(const QByteArray &json, DriveHealth &drive)
     }
 }
 
-DiskHealthInfo::DiskHealthInfo()
+DiskHealthInfoMacOS::DiskHealthInfoMacOS()
 {
     mHasSmartctl = CommandUtil::isExecutable("smartctl");
     discoverDrives();
 }
 
-void DiskHealthInfo::discoverDrives()
+void DiskHealthInfoMacOS::discoverDrives()
 {
     mDrives.clear();
 
@@ -276,12 +276,12 @@ void DiskHealthInfo::discoverDrives()
     }
 }
 
-void DiskHealthInfo::refreshHealth()
+void DiskHealthInfoMacOS::refreshHealth()
 {
     discoverDrives();
 }
 
-void DiskHealthInfo::refreshHealthElevated(const QString &device)
+void DiskHealthInfoMacOS::refreshHealthElevated(const QString &device)
 {
     if (!mHasSmartctl)
         return;

@@ -1,4 +1,4 @@
-#include "gnome_settings_tool.h"
+#include "gnome_settings_tool_macos.h"
 #include "Utils/command_util.h"
 
 #include <QDebug>
@@ -7,13 +7,13 @@
 // The "schema" maps to the macOS domain (e.g., "com.apple.dock")
 // The "key" maps to the defaults key.
 
-bool GnomeSettingsTool::isAvailable()
+bool GnomeSettingsToolMacOS::isAvailable()
 {
     // `defaults` is always available on macOS
     return true;
 }
 
-bool GnomeSettingsTool::schemaExists(const QString &schema)
+bool GnomeSettingsToolMacOS::schemaExists(const QString &schema)
 {
     // Check if the domain has any keys
     try {
@@ -24,7 +24,7 @@ bool GnomeSettingsTool::schemaExists(const QString &schema)
     }
 }
 
-QSet<QString> GnomeSettingsTool::cachedSchemas()
+QSet<QString> GnomeSettingsToolMacOS::cachedSchemas()
 {
     static QSet<QString> schemas;
     if (schemas.isEmpty()) {
@@ -40,68 +40,68 @@ QSet<QString> GnomeSettingsTool::cachedSchemas()
     return schemas;
 }
 
-QString GnomeSettingsTool::getS(const QString &schema, const QString &key)
+QString GnomeSettingsToolMacOS::getS(const QString &schema, const QString &key)
 {
     try {
         QString val = CommandUtil::exec("defaults", {"read", schema, key});
         return val.trimmed();
     } catch (const QString &ex) {
-        qCritical() << "GnomeSettingsTool::getS (macOS defaults) failed:" << schema << key << ex;
+        qCritical() << "GnomeSettingsToolMacOS::getS (macOS defaults) failed:" << schema << key << ex;
         return QString();
     }
 }
 
-bool GnomeSettingsTool::getB(const QString &schema, const QString &key)
+bool GnomeSettingsToolMacOS::getB(const QString &schema, const QString &key)
 {
     QString val = getS(schema, key);
     return val == "1" || val.toLower() == "true";
 }
 
-int GnomeSettingsTool::getI(const QString &schema, const QString &key)
+int GnomeSettingsToolMacOS::getI(const QString &schema, const QString &key)
 {
     return getS(schema, key).toInt();
 }
 
-double GnomeSettingsTool::getD(const QString &schema, const QString &key)
+double GnomeSettingsToolMacOS::getD(const QString &schema, const QString &key)
 {
     return getS(schema, key).toDouble();
 }
 
-bool GnomeSettingsTool::setS(const QString &schema, const QString &key, const QString &value)
+bool GnomeSettingsToolMacOS::setS(const QString &schema, const QString &key, const QString &value)
 {
     ExecResult result = CommandUtil::execWithStatus("defaults", {"write", schema, key, "-string", value});
     if (result.exitCode != 0) {
-        qCritical() << "GnomeSettingsTool::setS (macOS defaults) failed:" << schema << key << value << result.error;
+        qCritical() << "GnomeSettingsToolMacOS::setS (macOS defaults) failed:" << schema << key << value << result.error;
         return false;
     }
     return true;
 }
 
-bool GnomeSettingsTool::setB(const QString &schema, const QString &key, bool value)
+bool GnomeSettingsToolMacOS::setB(const QString &schema, const QString &key, bool value)
 {
     ExecResult result = CommandUtil::execWithStatus("defaults", {"write", schema, key, "-bool", value ? "true" : "false"});
     if (result.exitCode != 0) {
-        qCritical() << "GnomeSettingsTool::setB (macOS defaults) failed:" << schema << key << result.error;
+        qCritical() << "GnomeSettingsToolMacOS::setB (macOS defaults) failed:" << schema << key << result.error;
         return false;
     }
     return true;
 }
 
-bool GnomeSettingsTool::setI(const QString &schema, const QString &key, int value)
+bool GnomeSettingsToolMacOS::setI(const QString &schema, const QString &key, int value)
 {
     ExecResult result = CommandUtil::execWithStatus("defaults", {"write", schema, key, "-int", QString::number(value)});
     if (result.exitCode != 0) {
-        qCritical() << "GnomeSettingsTool::setI (macOS defaults) failed:" << schema << key << result.error;
+        qCritical() << "GnomeSettingsToolMacOS::setI (macOS defaults) failed:" << schema << key << result.error;
         return false;
     }
     return true;
 }
 
-bool GnomeSettingsTool::setD(const QString &schema, const QString &key, double value)
+bool GnomeSettingsToolMacOS::setD(const QString &schema, const QString &key, double value)
 {
     ExecResult result = CommandUtil::execWithStatus("defaults", {"write", schema, key, "-float", QString::number(value, 'f', 6)});
     if (result.exitCode != 0) {
-        qCritical() << "GnomeSettingsTool::setD (macOS defaults) failed:" << schema << key << result.error;
+        qCritical() << "GnomeSettingsToolMacOS::setD (macOS defaults) failed:" << schema << key << result.error;
         return false;
     }
     return true;

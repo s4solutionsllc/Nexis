@@ -1,4 +1,4 @@
-#include "battery_info.h"
+#include "battery_info_linux.h"
 #include <QDir>
 #include <QFile>
 
@@ -33,14 +33,14 @@ static QString deriveCondition(int healthPercent)
     return QStringLiteral("Replace");
 }
 
-BatteryInfo::BatteryInfo()
+BatteryInfoLinux::BatteryInfoLinux()
 {
     discoverBattery();
     if (mData.hasBattery)
         updateBatteryInfo();
 }
 
-void BatteryInfo::discoverBattery()
+void BatteryInfoLinux::discoverBattery()
 {
     mData = BatteryData();
     mBatteryPath.clear();
@@ -77,7 +77,7 @@ void BatteryInfo::discoverBattery()
     }
 }
 
-void BatteryInfo::updateBatteryInfo()
+void BatteryInfoLinux::updateBatteryInfo()
 {
     if (!mData.hasBattery || mBatteryPath.isEmpty())
         return;

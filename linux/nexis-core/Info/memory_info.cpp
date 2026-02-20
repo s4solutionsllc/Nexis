@@ -1,4 +1,4 @@
-#include "memory_info.h"
+#include "memory_info_linux.h"
 #include <QDebug>
 #include <QRegularExpression>
 
@@ -6,7 +6,7 @@ static constexpr const char *PROC_MEMINFO = "/proc/meminfo";
 
 // Constructor and getters are in shared/nexis-core/Info/memory_info_shared.cpp
 
-void MemoryInfo::updateMemoryInfo()
+void MemoryInfoLinux::updateMemoryInfo()
 {
     QStringList lines = FileUtil::readListFromFile(PROC_MEMINFO)
             .filter(QRegularExpression("^MemTotal|^MemFree|^Buffers|^Cached|^SwapTotal|^SwapFree|^Shmem|^SReclaimable"));

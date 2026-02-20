@@ -1,10 +1,10 @@
-#include "disk_info.h"
+#include "disk_info_macos.h"
 #include <QDir>
 #include <QRegularExpression>
 
 #include "Utils/command_util.h"
 
-QList<quint64> DiskInfo::getDiskIO() const
+QList<quint64> DiskInfoMacOS::getDiskIO() const
 {
     QList<quint64> diskReadWrite;
     quint64 totalRead = 0;
@@ -32,7 +32,7 @@ QList<quint64> DiskInfo::getDiskIO() const
     return diskReadWrite;
 }
 
-QStringList DiskInfo::getDiskNames() const
+QStringList DiskInfoMacOS::getDiskNames() const
 {
     QStringList diskNames;
     // On macOS, list disk devices from /dev/disk*

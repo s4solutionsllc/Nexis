@@ -1,29 +1,82 @@
-#include "package_tool.h"
+#include "package_tool_macos.h"
 #include "Utils/brew_util.h"
 
 #include <QDebug>
 #include <QStandardPaths>
 
-const PackageTools PackageTool::currentPackageTool =
-        !findBrew().isEmpty() ? HOMEBREW :
-                                UNKNOWN;
+PackageToolMacOS::PackageToolMacOS()
+{
+    currentPackageTool = !findBrew().isEmpty() ? HOMEBREW : UNKNOWN;
+}
+
+QList<Package> PackageToolMacOS::getPackages()
+{
+    switch (currentPackageTool) {
+    case HOMEBREW:
+        return getHomebrewPackages();
+    default:
+        return {};
+    }
+}
+
+QFileInfoList PackageToolMacOS::getPackageCaches()
+{
+    switch (currentPackageTool) {
+    case HOMEBREW:
+        return getHomebrewCaches();
+    default:
+        return {};
+    }
+}
+
+void PackageToolMacOS::uninstallPackages(const QStringList &packages, bool purge)
+{
+    Q_UNUSED(purge);
+    switch (currentPackageTool) {
+    case HOMEBREW:
+        homebrewRemovePackages(packages);
+        break;
+    default:
+        break;
+    }
+}
+
+QStringList PackageToolMacOS::dryRunRemovePackages(const QStringList &packages)
+{
+    switch (currentPackageTool) {
+    case HOMEBREW:
+        return homebrewDryRunRemove(packages);
+    default:
+        return {};
+    }
+}
+
+QStringList PackageToolMacOS::getSnapPackages()
+{
+    return {};
+}
+
+bool PackageToolMacOS::uninstallSnapPackages(const QStringList &packages)
+{
+    Q_UNUSED(packages);
+    return false;
+}
 
 /**********
  * HOMEBREW
  **********/
 
-QFileInfoList PackageTool::getHomebrewCaches()
+QFileInfoList PackageToolMacOS::getHomebrewCaches()
 {
     QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     QDir caches(homePath + "/Library/Caches/Homebrew");
     if (!caches.exists()) {
-        // Try the newer location
         caches.setPath("/opt/homebrew/var/cache");
     }
     return caches.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 }
 
-QList<Package> PackageTool::getHomebrewPackages()
+QList<Package> PackageToolMacOS::getHomebrewPackages()
 {
     QList<Package> packages;
 
@@ -46,7 +99,6 @@ QList<Package> PackageTool::getHomebrewPackages()
             pkg.section = e.isCask ? "cask" : "formula";
 
             if (e.isCask) {
-                // For casks, show displayName + description
                 pkg.description = e.displayName;
                 if (!e.description.isEmpty()) {
                     if (!pkg.description.isEmpty())
@@ -67,7 +119,7 @@ QList<Package> PackageTool::getHomebrewPackages()
     return packages;
 }
 
-bool PackageTool::homebrewRemovePackages(QStringList packages)
+bool PackageToolMacOS::homebrewRemovePackages(QStringList packages)
 {
     QString brew = findBrew();
     if (brew.isEmpty())
@@ -83,14 +135,12 @@ bool PackageTool::homebrewRemovePackages(QStringList packages)
     return false;
 }
 
-QStringList PackageTool::homebrewDryRunRemove(const QStringList &packages)
+QStringList PackageToolMacOS::homebrewDryRunRemove(const QStringList &packages)
 {
     QString brew = findBrew();
     if (brew.isEmpty())
         return packages;
 
-    // Homebrew doesn't have a built-in dry-run for uninstall
-    // We can check for dependents that would be affected
     QStringList wouldRemove;
     for (const QString &pkg : packages) {
         wouldRemove << pkg;
@@ -123,7 +173,6 @@ static QList<Package> scanAppDirectory(const QString &dirPath, const QString &se
         if (!QFileInfo::exists(plistPath))
             continue;
 
-        // Parse Info.plist via plutil → JSON
         QString bundleId, displayName, version;
         try {
             QString json = CommandUtil::exec("/usr/bin/plutil",
@@ -137,17 +186,14 @@ static QList<Package> scanAppDirectory(const QString &dirPath, const QString &se
                     displayName = obj.value("CFBundleName").toString();
                 version = obj.value("CFBundleShortVersionString").toString();
             }
-        } catch (...) {
-            // plutil failed — fall through to folder-name fallback
-        }
+        } catch (...) {}
 
-        // Filter out Apple system apps
         if (bundleId.startsWith("com.apple."))
             continue;
 
         Package pkg;
         pkg.name = displayName.isEmpty()
-                       ? entry.completeBaseName()  // "Slack" from "Slack.app"
+                       ? entry.completeBaseName()
                        : displayName;
         pkg.description = version;
         pkg.section = section;
@@ -160,18 +206,15 @@ static QList<Package> scanAppDirectory(const QString &dirPath, const QString &se
     return apps;
 }
 
-QList<Package> PackageTool::getInstalledApps()
+QList<Package> PackageToolMacOS::getInstalledApps()
 {
     QList<Package> apps;
 
-    // Scan /Applications (system-wide installs)
     apps.append(scanAppDirectory("/Applications", "applications"));
 
-    // Scan ~/Applications (user-specific installs)
     QString homePath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
     apps.append(scanAppDirectory(homePath + "/Applications", "user-applications"));
 
-    // Sort alphabetically by name
     std::sort(apps.begin(), apps.end(), [](const Package &a, const Package &b) {
         return a.name.compare(b.name, Qt::CaseInsensitive) < 0;
     });
@@ -179,12 +222,11 @@ QList<Package> PackageTool::getInstalledApps()
     return apps;
 }
 
-bool PackageTool::trashApps(const QStringList &appPaths)
+bool PackageToolMacOS::trashApps(const QStringList &appPaths)
 {
     bool allOk = true;
     for (const QString &path : appPaths) {
         try {
-            // Use Finder to move to Trash (recoverable, handles admin auth automatically)
             QString script = QString("tell application \"Finder\" to delete POSIX file \"%1\"")
                                  .arg(path);
             CommandUtil::exec("/usr/bin/osascript", {"-e", script});

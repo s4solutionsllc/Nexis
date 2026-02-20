@@ -2,6 +2,7 @@
 #define INFO_MANAGER_H
 
 #include <QObject>
+#include <memory>
 
 #include <Info/cpu_info.h>
 #include <Info/disk_info.h>
@@ -70,19 +71,20 @@ public:
     bool hasSmartctl() const;
 
 private:
+    InfoManager();
+
     static InfoManager *instance;
 
-private:
-    CpuInfo ci;
-    DiskInfo di;
-    MemoryInfo mi;
-    NetworkInfo ni;
-    SystemInfo si;
-    ProcessInfo pi;
-    ThermalInfo ti;
-    GpuInfo gi;
-    BatteryInfo bi;
-    DiskHealthInfo dhi;
+    std::unique_ptr<CpuInfo> ci;
+    std::unique_ptr<DiskInfo> di;
+    std::unique_ptr<MemoryInfo> mi;
+    std::unique_ptr<NetworkInfo> ni;
+    std::unique_ptr<SystemInfo> si;
+    std::unique_ptr<ProcessInfo> pi;
+    std::unique_ptr<ThermalInfo> ti;
+    std::unique_ptr<GpuInfo> gi;
+    std::unique_ptr<BatteryInfo> bi;
+    std::unique_ptr<DiskHealthInfo> dhi;
 };
 
 #endif // INFO_MANAGER_H

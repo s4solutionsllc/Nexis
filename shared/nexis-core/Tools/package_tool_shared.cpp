@@ -2,7 +2,7 @@
 // Platform-specific methods live in linux/nexis-core/Tools/package_tool.cpp
 // and macos/nexis-core/Tools/package_tool.cpp.
 
-#include "package_tool.h"
+#include "package_tool_shared.h"
 
 #include <QHash>
 

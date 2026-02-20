@@ -4,14 +4,13 @@
 #include "Utils/file_util.h"
 #include "Utils/format_util.h"
 #include "Utils/command_util.h"
-#include "Info/cpu_info.h"
 
 #include "nexis-core_global.h"
 
 class NEXISCORESHARED_EXPORT SystemInfo
 {
 public:
-    SystemInfo();
+    virtual ~SystemInfo() = default;
 
     QString getHostname() const;
     QString getPlatform() const;
@@ -22,16 +21,15 @@ public:
     QString getCpuCore() const;
     QString getUsername() const;
 
-    QFileInfoList getCrashReports() const;
-    QFileInfoList getAppLogs() const;
-    QFileInfoList getAppCaches() const;
-    QFileInfoList getDevToolCaches() const;
+    virtual QFileInfoList getCrashReports() const = 0;
+    virtual QFileInfoList getAppLogs() const = 0;
+    virtual QFileInfoList getAppCaches() const = 0;
+    virtual QFileInfoList getDevToolCaches() const = 0;
 
-    QStringList getUserList() const;
-    QStringList getGroupList() const;
+    virtual QStringList getUserList() const = 0;
+    virtual QStringList getGroupList() const = 0;
 
-private slots:
-private:
+protected:
     QString cpuCore;
     QString cpuModel;
     QString cpuSpeed;

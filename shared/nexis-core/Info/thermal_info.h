@@ -18,14 +18,14 @@ struct ThermalSensor {
 class NEXISCORESHARED_EXPORT ThermalInfo
 {
 public:
-    ThermalInfo();
+    virtual ~ThermalInfo() = default;
 
-    QList<ThermalSensor> getSensors() const;
-    double getTemperature(int index) const;
-    bool hasSensors() const;
+    QList<ThermalSensor> getSensors() const { return mSensors; }
+    virtual double getTemperature(int index) const = 0;
+    bool hasSensors() const { return !mSensors.isEmpty(); }
 
-private:
-    void discoverSensors();
+protected:
+    virtual void discoverSensors() = 0;
     QList<ThermalSensor> mSensors;
 };
 
