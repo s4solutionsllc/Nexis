@@ -301,6 +301,13 @@
     7. **No confirmation dialog:** "Save Changes" immediately writes to `/etc/hosts` with no confirmation or diff view.
   - **Fix complexity:** Moderate (multiple targeted fixes across the save path, deletion logic, and validation)
 
+- [x] **BUG-45: Kiosk mode toggle button icons display in gray instead of Nexis orange** (LOW)
+  - **Scope:** Dashboard page — kiosk mode toggle button (FR-30)
+  - **Files:** `shared/nexis/static/themes/common/img/fullscreen.svg`, `shared/nexis/static/themes/common/img/fullscreen-exit.svg`
+  - **Description:** The fullscreen/collapse SVG icons added in FR-30 use `stroke="#77767b"` (gray), matching the chevron convention. The icons should use the Nexis accent color (`#E95420` orange) to make the kiosk toggle button visually prominent and on-brand. The accent color is identical across both dark and light themes, so a hardcoded orange in the common directory works universally.
+  - **Fix complexity:** Trivial (change stroke color in 2 SVG files)
+  - **Resolved:** Changed stroke color from `#77767b` to `#E95420` in both SVGs.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
