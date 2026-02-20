@@ -2,7 +2,6 @@
 #define DASHBOARDPAGE_H
 
 #include <QWidget>
-#include <QTimer>
 #include <QComboBox>
 #include <QPushButton>
 #include <QJsonDocument>
@@ -19,6 +18,7 @@
 
 class AppManager;
 class SignalMapper;
+class DataRefreshService;
 
 namespace Ui {
     class DashboardPage;
@@ -33,7 +33,8 @@ public:
                            InfoManager *infoManager = nullptr,
                            SettingManager *settingManager = nullptr,
                            AppManager *appManager = nullptr,
-                           SignalMapper *signalMapper = nullptr);
+                           SignalMapper *signalMapper = nullptr,
+                           DataRefreshService *refreshService = nullptr);
     ~DashboardPage();
 
 protected:
@@ -44,18 +45,16 @@ private slots:
     void init();
     void checkUpdate();
 
-    void updateCpuBar();
-    void updateMemoryBar();
-    void updateDiskBar();
-    void updateNetworkBar();
+    void onCpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
+    void onMemoryUpdated(quint64 used, quint64 total, quint64 swapUsed, quint64 swapTotal);
+    void onNetworkUpdated(quint64 rxBytes, quint64 txBytes);
+    void onDiskUsageUpdated(const QList<Disk> &disks);
     void updateTempBar();
+    void onGpuUpdated(const QList<GpuDevice> &gpus);
     void onTempSensorChanged(int index);
-
-    void updateGpuBar();
     void onGpuDeviceChanged(int index);
-
-    void updateBatteryBar();
-    void updateDiskHealthBar();
+    void onBatteryUpdated(const BatteryData &bat);
+    void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 
     void on_btnDownloadUpdate_clicked();
 
@@ -77,11 +76,11 @@ private:
     LineBar *mDownloadBar;
     LineBar *mUploadBar;
 
-    QTimer *mTimer;
     InfoManager *im;
     SettingManager *mSettingManager;
     AppManager *mAppManager;
     SignalMapper *mSignalMapper;
+    DataRefreshService *mRefresh;
 
     int mSelectedSensorIndex;
     int mSelectedGpuIndex;

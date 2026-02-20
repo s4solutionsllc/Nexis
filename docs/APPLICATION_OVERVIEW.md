@@ -48,7 +48,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 11 system info providers
 - 5 tool classes (package management, services, Docker, APT sources, GNOME settings)
 - 3 utility classes
-- 6 manager singletons
+- 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
 - 30 features implemented, 42 bugs fixed since fork
@@ -328,9 +328,9 @@ Nexis follows a **three-tier architecture**:
 │  Helpers, AptSourceManager, GnomeSettings, Docker,      │
 │  Settings                                               │
 ├─────────────────────────────────────────────────────────┤
-│                  Manager Layer (6)                       │
+│                  Manager Layer (7)                       │
 │  InfoManager, AppManager, SettingManager, ToolManager,  │
-│  CleanerService, ScheduleManager                        │
+│  CleanerService, ScheduleManager, DataRefreshService    │
 ├─────────────────────────────────────────────────────────┤
 │                Core Library (nexis-core)                 │
 │  Info: CpuInfo, MemoryInfo, DiskInfo, NetworkInfo,      │
@@ -390,7 +390,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 
 ## Manager Layer
 
-Six singleton managers mediate between UI pages and the core library.
+Seven singleton managers mediate between UI pages and the core library.
 
 | Manager | Role |
 |---------|------|
@@ -400,13 +400,15 @@ Six singleton managers mediate between UI pages and the core library.
 | `ToolManager` | Facade over all 5 Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
 | `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
+| `DataRefreshService` | Centralized polling service with 4 QTimers (1s/5s/30s/configurable). Polls InfoManager once per interval, emits 10 typed data-change signals. Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
-**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 7 global signals:
+**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 8 global signals:
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
 - `sigUninstallStarted()` / `sigUninstallFinished()` — progress feedback
 - `sigScheduledCleanStarted/Finished()` — tray notification system
 - `sigKioskToggleRequested()` — Dashboard button requests kiosk toggle from App
 - `sigKioskModeChanged(bool)` — App broadcasts kiosk state to Dashboard button and tray menu
+- `sigAppVisibilityChanged(bool)` — App broadcasts visibility state for DataRefreshService pause/resume
 
 ---
 
@@ -618,7 +620,11 @@ CpuInfo::getCpuPercents()           ← Core library reads /proc/stat or Mach AP
     ↓
 InfoManager::ins()->getCpuPercents() ← Manager facade delegates to CpuInfo instance
     ↓
-DashboardPage::updateCpuBar()        ← Page method called by QTimer every 1s
+DataRefreshService::onFastTick()     ← Centralized service polls every 1s
+    ↓
+emit cpuUpdated(percents, clock, loadAvgs) ← Typed signal with data payload
+    ↓
+DashboardPage::onCpuUpdated(...)     ← Page receives data as reactive subscriber
     ↓
 mCpuBar->setValue(average)           ← CircleBar widget updates visual gauge
 ```
@@ -657,14 +663,18 @@ emit SignalMapper::ins()->sigChangedAppTheme()  ← Global event
 
 ### Refresh Timing
 
-| Data | Refresh Rate | Triggered By |
-|------|-------------|--------------|
-| CPU, Memory, Network | 1 second | QTimer per page |
-| Disk usage | 5 seconds | QTimer |
-| Disk health, temperature | 30 seconds | QTimer |
-| Processes | 1–10 seconds | User-configurable slider |
-| Services, packages | On demand | Manual refresh / page navigation |
-| Hardware info | Once | Page construction |
+All periodic polling is centralized in `DataRefreshService`, which owns 4 QTimers and emits typed data signals. Pages subscribe as reactive consumers — no page owns a QTimer.
+
+| Data | Refresh Rate | Timer Tier | Signal |
+|------|-------------|------------|--------|
+| CPU, Memory, Network, Disk I/O, GPU, Temp, Battery | 1 second | Fast (mFastTimer) | `cpuUpdated`, `memoryUpdated`, `networkUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `batteryUpdated` |
+| Disk usage | 5 seconds | Medium (mMediumTimer) | `diskUsageUpdated` |
+| Disk health (SMART) | 30 seconds | Slow (mSlowTimer) | `diskHealthUpdated` |
+| Processes | 1–10 seconds | Configurable (mProcessTimer) | `processesUpdated` |
+| Services, packages | On demand | — | Manual refresh / page navigation |
+| Hardware info | Once | — | Page construction |
+
+**Battery optimization:** When the app is minimized to tray, `DataRefreshService::pause()` stops all 4 timers (unless kiosk mode is active). On restore, `resume()` fires immediate ticks then restarts timers.
 
 ---
 
@@ -685,7 +695,7 @@ emit SignalMapper::ins()->sigChangedAppTheme()  ← Global event
 │   │   ├── Tools/              5 tool classes
 │   │   └── Utils/              3 utility classes
 │   ├── nexis/                  GUI application (shared)
-│   │   ├── Managers/           6 manager singletons
+│   │   ├── Managers/           7 manager singletons
 │   │   ├── Pages/              14 page implementations
 │   │   │   ├── Dashboard/
 │   │   │   ├── HardwareInfo/

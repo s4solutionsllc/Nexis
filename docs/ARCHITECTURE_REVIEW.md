@@ -45,9 +45,9 @@ Nexis is structured as a **three-tier desktop application**:
 │  Each page owns its .ui file, QTimers, and presentation logic     │
 │  Files: shared/nexis/Pages/*/*.cpp                                │
 ├────────────────────────────────────────────────────────────────────┤
-│  Manager Layer: 6 Singletons                                      │
+│  Manager Layer: 7 Singletons                                      │
 │  InfoManager, AppManager, SettingManager, ToolManager,            │
-│  CleanerService, ScheduleManager                                  │
+│  CleanerService, ScheduleManager, DataRefreshService              │
 │  Files: shared/nexis/Managers/*.cpp                               │
 ├────────────────────────────────────────────────────────────────────┤
 │  Core Library: nexis-core (static lib)                            │
@@ -59,7 +59,7 @@ Nexis is structured as a **three-tier desktop application**:
 **Key architectural decisions:**
 - **Compile-time platform abstraction** — Abstract base classes with pure virtual methods; platform subclasses selected via `#ifdef Q_OS_MACOS` at construction time
 - **Singleton managers with DI escape hatches** — Static `ins()` accessors with `std::unique_ptr` members; all 10 page constructors accept optional manager pointers for test injection (FR-35)
-- **Timer-driven polling** — QTimers in each page drive data refresh (1s/5s/30s intervals)
+- **Centralized polling** — `DataRefreshService` singleton owns 4 QTimers (1s/5s/30s/configurable) and emits typed data signals; pages subscribe as reactive consumers
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
 - **Qt signals** — `SignalMapper` singleton as a lightweight global event bus
 
@@ -236,6 +236,7 @@ signals:
     void sigScheduledCleanFinished(quint64 bytesFreed, int fileCount);
     void sigKioskToggleRequested();
     void sigKioskModeChanged(bool enabled);
+    void sigAppVisibilityChanged(bool visible);
 };
 ```
 
@@ -243,9 +244,10 @@ signals:
 - Settings page changes theme → emits `sigChangedAppTheme()`
 - All 14 pages listen → reload theme-dependent icons, GIF loaders, and colors
 - Dashboard kiosk button → emits `sigKioskToggleRequested()` → App toggles kiosk mode → emits `sigKioskModeChanged(bool)` → Dashboard button swaps icon, tray action syncs checkmark
+- App minimized/restored → emits `sigAppVisibilityChanged(bool)` → DataRefreshService pauses/resumes polling
 - No page needs a pointer to any other page — complete decoupling
 
-**Assessment:** With 7 signals, this is still **appropriately simple**. The kiosk mode signals (FR-30) demonstrate the pattern working well for bidirectional communication between App and DashboardPage without coupling them. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
+**Assessment:** With 8 signals, this is still **appropriately simple**. The kiosk mode signals (FR-30) and visibility signal (FR-37) demonstrate the pattern working well for decoupled communication between App, DashboardPage, and DataRefreshService. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
 
 ---
 
@@ -350,34 +352,16 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ---
 
-### 6. Fragmented Timer/Polling
+### ~~6. Fragmented Timer/Polling~~ (Resolved)
 
-Each page manages its own QTimer refresh cycles independently:
+**Status:** Resolved in Phase 8 (FR-37). All per-page QTimers in Dashboard (3), Resources (2), and Processes (1) replaced with a centralized `DataRefreshService` singleton that owns 4 QTimers (1s fast, 5s medium, 30s slow, configurable process) and emits 10 typed data-change signals. Pages subscribe as reactive consumers — no monitoring page owns a QTimer.
 
-```cpp
-// dashboard_page.cpp — 3 separate timers in one page
-mTimer = new QTimer(this);
-connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateCpuBar);
-connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateMemoryBar);
-connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateNetworkBar);
-mTimer->start(1000);  // 1s
-
-QTimer *timerDisk = new QTimer(this);
-connect(timerDisk, &QTimer::timeout, this, &DashboardPage::updateDiskBar);
-timerDisk->start(5000);  // 5s
-
-QTimer *timerDiskHealth = new QTimer(this);
-connect(timerDiskHealth, &QTimer::timeout, [this]() { im->refreshDiskHealth(); });
-timerDiskHealth->start(30000);  // 30s
-```
-
-**The problems:**
-- **~25 active QTimers** across all pages when the app is open
-- **Duplicate work** — Dashboard and Resources both call `InfoManager::ins()->updateMemoryInfo()` on their own 1s timers
-- **No background optimization** — all timers fire even when the app is minimized to tray, wasting CPU and battery
-- **No coordination** — each page is an island, unaware of what other pages are polling
-
-**Impact:** On a laptop, unnecessary polling while minimized drains battery. On a busy system, redundant `InfoManager` update calls do double the work. The timer count will grow linearly with every new monitoring feature.
+**Fixes delivered:**
+- 6 per-page QTimers → 4 centralized QTimers (in one location)
+- Eliminated duplicate `updateMemoryInfo()`, `updateGpuInfo()`, and `refreshDiskHealth()` calls
+- Fixed `getCpuPercents()` static-delta bug (two callers consuming same function-scope statics)
+- Added pause/resume via `sigAppVisibilityChanged(bool)` — all polling stops when minimized to tray (kiosk mode overrides)
+- Pages are simpler — receive typed data payloads, don't manage polling or call InfoManager directly
 
 ---
 
@@ -412,73 +396,13 @@ Both checks emit `qWarning()` at runtime (visible in debug output) without alter
 
 ### Priority 2: High (Scalability)
 
-#### 2A. Centralized DataRefreshService
+#### ~~2A. Centralized DataRefreshService~~ (Done)
 
-**What:** Replace per-page QTimers with a single service that polls at defined intervals and emits data-change signals.
+**Status:** Completed in Phase 8 (FR-37). Created `DataRefreshService` singleton (`shared/nexis/Managers/data_refresh_service.{h,cpp}`) with 4 QTimers (1s fast, 5s medium, 30s slow, configurable process) and 10 typed data signals (`cpuUpdated`, `memoryUpdated`, `networkUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `batteryUpdated`, `diskUsageUpdated`, `diskHealthUpdated`, `processesUpdated`).
 
-**Why:** Eliminates duplicate polling, enables background optimization, and makes pages reactive instead of active.
+Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Processes (removed 1 timer) to reactive signal subscribers. Added `sigAppVisibilityChanged(bool)` to SignalMapper for pause/resume (kiosk mode overrides). DI constructor parameter follows FR-35 pattern.
 
-**Design:**
-
-```cpp
-class DataRefreshService : public QObject {
-    Q_OBJECT
-public:
-    static DataRefreshService *ins();
-    void start();
-    void pause();   // called when app is minimized/backgrounded
-    void resume();  // called when app is restored
-
-signals:
-    // 1-second data
-    void cpuDataUpdated(QList<int> percents);
-    void memoryDataUpdated(quint64 used, quint64 total, quint64 swapUsed, quint64 swapTotal);
-    void networkDataUpdated(quint64 rx, quint64 tx);
-    void gpuDataUpdated(QList<GpuDevice> devices);
-
-    // 5-second data
-    void diskDataUpdated(QList<Disk> disks);
-
-    // 30-second data
-    void diskHealthUpdated(QList<DriveHealth> drives);
-    void thermalDataUpdated(QList<ThermalSensor> sensors);
-
-private:
-    QTimer *mFastTimer;    // 1s — CPU, memory, network, GPU
-    QTimer *mMediumTimer;  // 5s — disk usage
-    QTimer *mSlowTimer;    // 30s — SMART health, temperature
-};
-```
-
-**Pages become reactive subscribers:**
-
-```cpp
-// Before: DashboardPage owns timers and calls InfoManager
-DashboardPage::DashboardPage() {
-    mTimer = new QTimer(this);
-    connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateCpuBar);
-    mTimer->start(1000);
-}
-
-// After: DashboardPage subscribes to data updates
-DashboardPage::DashboardPage() {
-    connect(DataRefreshService::ins(), &DataRefreshService::cpuDataUpdated,
-            this, [this](QList<int> percents) {
-        int avg = std::accumulate(percents.begin(), percents.end(), 0) / percents.size();
-        mCpuBar->setValue(avg);
-    });
-}
-```
-
-**Benefits:**
-- ~25 QTimers → 3 QTimers
-- Zero duplicate `InfoManager::updateMemoryInfo()` calls
-- `pause()`/`resume()` for battery optimization when minimized
-- Pages are simpler — just react to data, don't manage polling
-
-**Effort:** Large (refactor all 14 pages to use signals instead of timers). Can be done incrementally — start with Dashboard and Resources, which have the most timers.
-
-**Files affected:** All page `.cpp` files, new `DataRefreshService` manager class.
+**Results:** 6 per-page QTimers → 4 centralized QTimers. Zero duplicate InfoManager calls. Fixed `getCpuPercents()` static-delta bug. Battery optimization via pause on minimize.
 
 ---
 
@@ -550,7 +474,7 @@ public:
 
 **What:** Replace `SignalMapper` with a typed event bus library if the signal count grows beyond ~15.
 
-**When:** Currently 7 signals — well within SignalMapper's comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
+**When:** Currently 8 signals — well within SignalMapper's comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
 
 **Candidate:** [eventpp](https://github.com/wqking/eventpp) (header-only, C++11+, well-tested).
 
@@ -632,7 +556,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 1. ~~**Explicit source lists in CMake**~~ — Done (Phase 2)
 2. **Abstract base classes for all platform code** — Compile-time enforcement of platform parity
 3. ~~**Dependency injection on all page constructors**~~ — Done (Phase 6, FR-35): testable without framework overhead
-4. **Centralized DataRefreshService** — 3 timers instead of 25, with pause/resume for battery optimization
+4. ~~**Centralized DataRefreshService**~~ — Done (Phase 8, FR-37): 4 timers instead of 6 per-page, with pause/resume for battery optimization
 5. **QSS token validation** — Build-time warnings for theme inconsistencies
 6. ~~**20-30 unit tests**~~ — Done (Phase 7, FR-36): 63 test methods across 6 executables covering core library, utilities, managers, and theme validation
 7. **Still QWidgets** — Proven, stable, with the HiDPI problem solved
@@ -650,8 +574,8 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis-core/Info/cpu_info.h` | ~~Template for abstract base class pattern (§1B)~~ Done — now an abstract base class with pure virtuals, 9 other Info classes follow this pattern |
 | `shared/nexis/Managers/info_manager.h` | ~~Add DI constructor args (§2B)~~ Done (FR-35), holds all Info instances |
 | `shared/nexis/Managers/app_manager.cpp` | ~~Add QSS token validation (§2C)~~ Done — token + color format validation added |
-| `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | Primary refactor target for DataRefreshService (§2A) — has 3 timers |
-| `shared/nexis/Pages/Resources/resources_page.cpp` | Secondary refactor target — duplicates Dashboard polling |
-| `shared/nexis/signal_mapper.h` | Global event bus (7 signals) — monitor signal count growth |
+| `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | ~~Primary refactor target for DataRefreshService (§2A)~~ Done — subscribes to DataRefreshService signals, zero timers |
+| `shared/nexis/Pages/Resources/resources_page.cpp` | ~~Secondary refactor target~~ Done — subscribes to DataRefreshService signals, zero timers |
+| `shared/nexis/signal_mapper.h` | Global event bus (8 signals) — monitor signal count growth |
 | `shared/nexis/Managers/cleaner_service.cpp` | Example of thick manager with real business logic |
 | `shared/nexis/Managers/schedule_manager.cpp` | Example of OS-native integration complexity |

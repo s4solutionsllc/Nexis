@@ -6,11 +6,12 @@
 #include <QSortFilterProxyModel>
 #include <QDebug>
 #include <QScrollBar>
-#include <QTimer>
 #include <QMenu>
 #include <QAction>
 
 #include "Managers/info_manager.h"
+
+class DataRefreshService;
 
 namespace Ui {
     class ProcessesPage;
@@ -22,12 +23,13 @@ class ProcessesPage : public QWidget
 
 public:
     explicit ProcessesPage(QWidget *parent = nullptr,
-                           InfoManager *infoManager = nullptr);
+                           InfoManager *infoManager = nullptr,
+                           DataRefreshService *refreshService = nullptr);
     ~ProcessesPage();
 
 private slots:
     void init();
-    void loadProcesses();
+    void onProcessesUpdated(const QList<Process> &processes, const QString &userName);
     void loadHeaderMenu();
     QList<QStandardItem *> createRow(const Process &proc);
     void on_txtProcessSearch_textChanged(const QString &val);
@@ -43,8 +45,8 @@ private:
     QModelIndex mSelectedRowModel;
     QStringList mHeaders;
     QMenu mHeaderMenu;
-    QTimer *mTimer;
     InfoManager *im;
+    DataRefreshService *mRefresh;
 };
 
 #endif // PROCESSESPAGE_H

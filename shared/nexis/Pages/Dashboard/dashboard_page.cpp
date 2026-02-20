@@ -3,6 +3,7 @@
 
 #include "utilities.h"
 #include "Managers/app_manager.h"
+#include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
 
 #include <QDateTime>
@@ -20,7 +21,7 @@ DashboardPage::~DashboardPage()
 
 DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
                              SettingManager *settingManager, AppManager *appManager,
-                             SignalMapper *signalMapper) :
+                             SignalMapper *signalMapper, DataRefreshService *refreshService) :
     QWidget(parent),
     ui(new Ui::DashboardPage),
     mCpuBar(new CircleBar(tr("CPU"), {"#2ec27e", "#26a269"}, this)),
@@ -29,11 +30,11 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mTempBar(new CircleBar(tr("TEMP"), {"#1c71d8", "#1a5fb4"}, this)),
     mDownloadBar(new LineBar(tr("DOWNLOAD"), this)),
     mUploadBar(new LineBar(tr("UPLOAD"), this)),
-    mTimer(new QTimer(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
     mSettingManager(settingManager ? settingManager : SettingManager::ins()),
     mAppManager(appManager ? appManager : AppManager::ins()),
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
+    mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
     mSelectedSensorIndex(0),
     mGpuBar(new CircleBar(tr("GPU"), {"#813d9c", "#613583"}, this)),
     mSelectedGpuIndex(0),
@@ -86,7 +87,8 @@ void DashboardPage::init()
 
         connect(ui->cmbTempSensor, &QComboBox::currentIndexChanged,
                 this, &DashboardPage::onTempSensorChanged);
-        connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateTempBar);
+        connect(mRefresh, &DataRefreshService::tempUpdated,
+                this, &DashboardPage::updateTempBar);
     } else {
         ui->tempContainer->hide();
         mTempBar->hide();       // prevent orphan widget rendering at (0,0)
@@ -118,7 +120,8 @@ void DashboardPage::init()
 
         connect(ui->cmbGpuDevice, &QComboBox::currentIndexChanged,
                 this, &DashboardPage::onGpuDeviceChanged);
-        connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateGpuBar);
+        connect(mRefresh, &DataRefreshService::gpuUpdated,
+                this, &DashboardPage::onGpuUpdated);
     } else {
         ui->gpuContainer->hide();
         mGpuBar->hide();
@@ -127,46 +130,28 @@ void DashboardPage::init()
     // Battery gauge — graceful degradation
     if (im->hasBattery()) {
         ui->batteryContainerLayout->addWidget(mBatteryBar);
-        connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateBatteryBar);
+        connect(mRefresh, &DataRefreshService::batteryUpdated,
+                this, &DashboardPage::onBatteryUpdated);
     } else {
         ui->batteryContainer->hide();
         mBatteryBar->hide();
     }
 
-    // Disk health gauge — 30s refresh (subprocess calls are expensive)
+    // Disk health gauge — subscribe to 30s refresh
     if (im->hasDiskHealth()) {
-        QTimer *timerDiskHealth = new QTimer(this);
-        connect(timerDiskHealth, &QTimer::timeout, this, [this]() {
-            im->refreshDiskHealth();
-            updateDiskHealthBar();
-        });
-        timerDiskHealth->start(30 * 1000);
+        connect(mRefresh, &DataRefreshService::diskHealthUpdated,
+                this, &DashboardPage::onDiskHealthUpdated);
     }
 
-    // connections
-    connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateCpuBar);
-    connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateMemoryBar);
-    connect(mTimer, &QTimer::timeout, this, &DashboardPage::updateNetworkBar);
-
-    QTimer *timerDisk = new QTimer(this);
-    connect(timerDisk, &QTimer::timeout, this, &DashboardPage::updateDiskBar);
-    timerDisk->start(5 * 1000);
-
-    mTimer->start(1 * 1000);
-
-    // initialization
-    updateCpuBar();
-    updateMemoryBar();
-    updateDiskBar();
-    updateNetworkBar();
-    if (im->hasThermalSensors())
-        updateTempBar();
-    if (im->hasGpu())
-        updateGpuBar();
-    if (im->hasBattery())
-        updateBatteryBar();
-    if (im->hasDiskHealth())
-        updateDiskHealthBar();
+    // Subscribe to DataRefreshService signals
+    connect(mRefresh, &DataRefreshService::cpuUpdated,
+            this, &DashboardPage::onCpuUpdated);
+    connect(mRefresh, &DataRefreshService::memoryUpdated,
+            this, &DashboardPage::onMemoryUpdated);
+    connect(mRefresh, &DataRefreshService::networkUpdated,
+            this, &DashboardPage::onNetworkUpdated);
+    connect(mRefresh, &DataRefreshService::diskUsageUpdated,
+            this, &DashboardPage::onDiskUsageUpdated);
 
     ui->widgetUpdateBar->hide();
 
@@ -239,10 +224,12 @@ void DashboardPage::on_btnDownloadUpdate_clicked()
 }
 
 
-void DashboardPage::updateCpuBar()
+void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
+                                  const QList<double> &loadAvgs)
 {
-    int cpuUsedPercent = im->getCpuPercents().at(0);
-    double cpuCurrentClockGHz = im->getCpuClock()/1000.0;
+    Q_UNUSED(loadAvgs)
+
+    int cpuUsedPercent = percents.at(0);
 
     // alert message
     int cpuAlerPercent = mSettingManager->getCpuAlertPercent();
@@ -259,25 +246,27 @@ void DashboardPage::updateCpuBar()
     }
 
     QString cpuLabel;
-    if (cpuCurrentClockGHz > 0.01)
-        cpuLabel = QString("%1 GHz\n%2%").arg(cpuCurrentClockGHz, 0, 'f', 2).arg(cpuUsedPercent);
+    if (clockGHz > 0.00001)
+        cpuLabel = QString("%1 GHz\n%2%").arg(clockGHz, 0, 'f', 2).arg(cpuUsedPercent);
     else
         cpuLabel = QString("%1%").arg(cpuUsedPercent);
 
     mCpuBar->setValue(cpuUsedPercent, cpuLabel);
 }
 
-void DashboardPage::updateMemoryBar()
+void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
+                                     quint64 swapUsed, quint64 swapTotal)
 {
-    im->updateMemoryInfo();
+    Q_UNUSED(swapUsed)
+    Q_UNUSED(swapTotal)
 
     int memUsedPercent = 0;
-    if (im->getMemTotal()) {
-        memUsedPercent = ((double)im->getMemUsed() / (double)im->getMemTotal()) * 100.0;
+    if (total) {
+        memUsedPercent = ((double)used / (double)total) * 100.0;
     }
 
-    QString f_memUsed  = FormatUtil::formatBytes(im->getMemUsed());
-    QString f_memTotal = FormatUtil::formatBytes(im->getMemTotal());
+    QString f_memUsed  = FormatUtil::formatBytes(used);
+    QString f_memTotal = FormatUtil::formatBytes(total);
 
     // alert message
     int memoryAlertPercent = mSettingManager->getMemoryAlertPercent();
@@ -298,67 +287,62 @@ void DashboardPage::updateMemoryBar()
                      .arg(f_memTotal));
 }
 
-void DashboardPage::updateDiskBar()
+void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
 {
-    im->updateDiskInfo();
+    if (disks.isEmpty())
+        return;
 
-    const QList<Disk> allDisks = im->getDisks();
-    if (!allDisks.isEmpty()) {
-        const Disk *disk = nullptr;
-        QString selectedDiskName = mSettingManager->getDiskName();
-        for (const Disk &d : allDisks) {
-            if (d.name.trimmed() == selectedDiskName.trimmed())
-                disk = &d;
-        }
-
-        if (!disk) {
-            for (const Disk &d : allDisks)
-                if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed())
-                    disk = &d;
-            if (!disk)
-                disk = &allDisks.at(0);
-        }
-
-        int diskPercent = 0;
-        if (disk->size > 0) {
-            diskPercent = ((double) disk->used / (double) disk->size) * 100.0;
-        }
-
-        // alert message
-        int diskAlertPercent = mSettingManager->getDiskAlertPercent();
-        if (diskAlertPercent > 0) {
-            static bool isShow = true;
-            if (diskPercent > diskAlertPercent && isShow) {
-                mAppManager->getTrayIcon()->showMessage(tr("High Disk Usage"),
-                                                              tr("The amount of disk used is over %1%.").arg(diskAlertPercent),
-                                                              QSystemTrayIcon::Warning);
-                isShow = false;
-            } else if (diskPercent < diskAlertPercent) {
-                isShow = true;
-            }
-        }
-
-        QString sizeText = FormatUtil::formatBytes(disk->size);
-        QString usedText = FormatUtil::formatBytes(disk->used);
-
-        mDiskBar->setValue(diskPercent, QString("%1 / %2")
-                          .arg(usedText)
-                          .arg(sizeText));
+    const Disk *disk = nullptr;
+    QString selectedDiskName = mSettingManager->getDiskName();
+    for (const Disk &d : disks) {
+        if (d.name.trimmed() == selectedDiskName.trimmed())
+            disk = &d;
     }
+
+    if (!disk) {
+        for (const Disk &d : disks)
+            if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed())
+                disk = &d;
+        if (!disk)
+            disk = &disks.at(0);
+    }
+
+    int diskPercent = 0;
+    if (disk->size > 0) {
+        diskPercent = ((double) disk->used / (double) disk->size) * 100.0;
+    }
+
+    // alert message
+    int diskAlertPercent = mSettingManager->getDiskAlertPercent();
+    if (diskAlertPercent > 0) {
+        static bool isShow = true;
+        if (diskPercent > diskAlertPercent && isShow) {
+            mAppManager->getTrayIcon()->showMessage(tr("High Disk Usage"),
+                                                          tr("The amount of disk used is over %1%.").arg(diskAlertPercent),
+                                                          QSystemTrayIcon::Warning);
+            isShow = false;
+        } else if (diskPercent < diskAlertPercent) {
+            isShow = true;
+        }
+    }
+
+    QString sizeText = FormatUtil::formatBytes(disk->size);
+    QString usedText = FormatUtil::formatBytes(disk->used);
+
+    mDiskBar->setValue(diskPercent, QString("%1 / %2")
+                      .arg(usedText)
+                      .arg(sizeText));
 }
 
-void DashboardPage::updateNetworkBar()
+void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 {
-    static quint64 l_RXbytes = im->getRXbytes();
-    static quint64 l_TXbytes = im->getTXbytes();
+    static quint64 l_RXbytes = rxBytes;
+    static quint64 l_TXbytes = txBytes;
     static quint64 max_RXbytes = 1L << 20; // 1 MEBI
     static quint64 max_TXbytes = 1L << 20; // 1 MEBI
 
-    quint64 RXbytes = im->getRXbytes();
-    quint64 TXbytes = im->getTXbytes();
-
-    quint64 d_RXbytes = (RXbytes - l_RXbytes);
-    quint64 d_TXbytes = (TXbytes - l_TXbytes);
+    quint64 d_RXbytes = (rxBytes - l_RXbytes);
+    quint64 d_TXbytes = (txBytes - l_TXbytes);
 
     QString downText = FormatUtil::formatBytes(d_RXbytes);
     QString upText   = FormatUtil::formatBytes(d_TXbytes);
@@ -368,17 +352,17 @@ void DashboardPage::updateNetworkBar()
 
     mDownloadBar->setValue(downPercent,
                           QString("%1/s").arg(downText),
-                          tr("Total: %1").arg(FormatUtil::formatBytes(RXbytes)));
+                          tr("Total: %1").arg(FormatUtil::formatBytes(rxBytes)));
 
     mUploadBar->setValue(upPercent,
                         QString("%1/s").arg(upText),
-                        tr("Total: %1").arg(FormatUtil::formatBytes(TXbytes)));
+                        tr("Total: %1").arg(FormatUtil::formatBytes(txBytes)));
 
     max_RXbytes = qMax(max_RXbytes, d_RXbytes);
     max_TXbytes = qMax(max_TXbytes, d_TXbytes);
 
-    l_RXbytes = RXbytes;
-    l_TXbytes = TXbytes;
+    l_RXbytes = rxBytes;
+    l_TXbytes = txBytes;
 }
 
 void DashboardPage::updateTempBar()
@@ -403,11 +387,8 @@ void DashboardPage::onTempSensorChanged(int index)
     updateTempBar();
 }
 
-void DashboardPage::updateGpuBar()
+void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 {
-    im->updateGpuInfo();
-
-    QList<GpuDevice> gpus = im->getGpuDevices();
     if (mSelectedGpuIndex < 0 || mSelectedGpuIndex >= gpus.size())
         return;
 
@@ -425,14 +406,11 @@ void DashboardPage::onGpuDeviceChanged(int index)
     if (index >= 0 && index < gpus.size())
         mSettingManager->setGpuDeviceId(gpus.at(index).name);
 
-    updateGpuBar();
+    onGpuUpdated(gpus);
 }
 
-void DashboardPage::updateBatteryBar()
+void DashboardPage::onBatteryUpdated(const BatteryData &bat)
 {
-    im->updateBatteryInfo();
-    BatteryData bat = im->getBatteryData();
-
     if (!bat.hasBattery)
         return;
 
@@ -478,9 +456,8 @@ void DashboardPage::updateBatteryBar()
     }
 }
 
-void DashboardPage::updateDiskHealthBar()
+void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 {
-    QList<DriveHealth> drives = im->getDriveHealth();
     if (drives.isEmpty())
         return;
 

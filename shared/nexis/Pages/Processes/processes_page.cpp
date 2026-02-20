@@ -3,6 +3,7 @@
 #include "utilities.h"
 #include "nexis_roles.h"
 #include "dpi.h"
+#include "Managers/data_refresh_service.h"
 #include <QRegularExpression>
 
 ProcessesPage::~ProcessesPage()
@@ -10,13 +11,14 @@ ProcessesPage::~ProcessesPage()
     delete ui;
 }
 
-ProcessesPage::ProcessesPage(QWidget *parent, InfoManager *infoManager) :
+ProcessesPage::ProcessesPage(QWidget *parent, InfoManager *infoManager,
+                               DataRefreshService *refreshService) :
   QWidget(parent),
   ui(new Ui::ProcessesPage),
   mItemModel(new QStandardItemModel(this)),
   mSortFilterModel(new QSortFilterProxyModel(this)),
   im(infoManager ? infoManager : InfoManager::ins()),
-  mTimer(new QTimer(this))
+  mRefresh(refreshService ? refreshService : DataRefreshService::ins())
 {
     ui->setupUi(this);
 
@@ -52,11 +54,8 @@ void ProcessesPage::init()
     ui->tableProcess->horizontalHeader()->setCursor(Qt::PointingHandCursor);
     ui->tableProcess->horizontalHeader()->resizeSection(0, 70);
 
-    loadProcesses();
-
-    connect(mTimer, &QTimer::timeout, this, &ProcessesPage::loadProcesses);
-    mTimer->setInterval(1000);
-    mTimer->start();
+    connect(mRefresh, &DataRefreshService::processesUpdated,
+            this, &ProcessesPage::onProcessesUpdated);
 
     ui->tableProcess->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -95,16 +94,11 @@ void ProcessesPage::loadHeaderMenu()
     }
 }
 
-void ProcessesPage::loadProcesses()
+void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QString &userName)
 {
     QModelIndexList selecteds = ui->tableProcess->selectionModel()->selectedRows();
 
     mItemModel->removeRows(0, mItemModel->rowCount());
-
-    im->updateProcesses();
-
-    QList<Process> processes = im->getProcesses();
-    QString username = im->getUserName();
 
     if (ui->checkAllProcesses->isChecked()) {
         for (const Process &proc : processes) {
@@ -112,7 +106,7 @@ void ProcessesPage::loadProcesses()
         }
     } else  {
         for (const Process &proc : processes) {
-            if (username == proc.getUname()) {
+            if (userName == proc.getUname()) {
                 mItemModel->appendRow(createRow(proc));
             }
         }
@@ -211,7 +205,7 @@ void ProcessesPage::on_txtProcessSearch_textChanged(const QString &val)
 void ProcessesPage::on_sliderRefresh_valueChanged(const int &i)
 {
     ui->lblRefresh->setText(tr("Refresh (%1)").arg(i));
-    mTimer->setInterval(i * 1000);
+    mRefresh->setProcessRefreshInterval(i * 1000);
 }
 
 void ProcessesPage::on_btnEndProcess_clicked()

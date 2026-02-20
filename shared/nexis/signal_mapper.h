@@ -18,6 +18,7 @@ signals:
     void sigScheduledCleanFinished(quint64 bytesFreed, int fileCount);
     void sigKioskToggleRequested();
     void sigKioskModeChanged(bool enabled);
+    void sigAppVisibilityChanged(bool visible);
 
 private:
     static SignalMapper *instance;

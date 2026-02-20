@@ -4,6 +4,7 @@
 #include "signal_mapper.h"
 #include "dpi.h"
 #include <Managers/cleaner_service.h>
+#include <Managers/data_refresh_service.h>
 #include <Utils/format_util.h>
 #include <QStyle>
 #include <QDebug>
@@ -137,6 +138,8 @@ void App::init()
         mSlidingStacked->addWidget(page);
     }
 
+    DataRefreshService::ins()->start();
+
     AppManager::ins()->updateStylesheet();
 
     Utilities::addDropShadow(ui->sidebar, 60);
@@ -201,6 +204,7 @@ void App::closeEvent(QCloseEvent *event)
 void App::changeEvent(QEvent *event)
 {
     if (event->type() == QEvent::WindowStateChange && windowState().testFlag(Qt::WindowMinimized)) {
+        emit SignalMapper::ins()->sigAppVisibilityChanged(false);
         hide();
         event->ignore();
         return;
@@ -225,6 +229,7 @@ void App::createTrayActions()
         show();
         if (windowHandle())
             windowHandle()->requestActivate();
+        emit SignalMapper::ins()->sigAppVisibilityChanged(true);
     });
 
     mTrayMenu->addSeparator();
@@ -256,6 +261,8 @@ void App::clickSidebarButton(QString pageTitle, bool isShow)
     setVisible(isShow);
     if (isShow && windowHandle())
         windowHandle()->requestActivate();
+    if (isShow)
+        emit SignalMapper::ins()->sigAppVisibilityChanged(true);
 }
 
 void App::checkSidebarButtonByTooltip(const QString &text)

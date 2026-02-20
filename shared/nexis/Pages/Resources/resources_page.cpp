@@ -1,16 +1,19 @@
- #include "resources_page.h"
+#include "resources_page.h"
 #include "ui_resources_page.h"
 #include "utilities.h"
+#include "Managers/data_refresh_service.h"
 
 ResourcesPage::~ResourcesPage()
 {
     delete ui;
 }
 
-ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager) :
+ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
+                               DataRefreshService *refreshService) :
     QWidget(parent),
     ui(new Ui::ResourcesPage),
     im(infoManager ? infoManager : InfoManager::ins()),
+    mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
     mChartCpu(new HistoryChart(tr("History of CPU"), im->getCpuCoreCount(), nullptr, this)),
     mChartCpuLoadAvg(new HistoryChart(tr("History of CPU Load Averages"), 3, nullptr, this)),
     mChartDiskReadWrite(new HistoryChart(tr("History of Disk Read Write"), 2, new QCategoryAxis, this)),
@@ -18,8 +21,7 @@ ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager) :
     mChartNetwork(new HistoryChart(tr("History of Network"), 2, new QCategoryAxis, this)),
     mChartGpu(nullptr),
     mChartDiskHealth(nullptr),
-    mDiskLauncher(nullptr),
-    mTimer(new QTimer(this))
+    mDiskLauncher(nullptr)
 {
     ui->setupUi(this);
 
@@ -68,23 +70,23 @@ void ResourcesPage::init()
 
     Utilities::addDropShadow(widgets, 40);
 
-    connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateCpuChart);
-    connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateCpuLoadAvg);
-    connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateDiskReadWrite);
-    connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateMemoryChart);
-    connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateNetworkChart);
+    // Subscribe to DataRefreshService signals
+    connect(mRefresh, &DataRefreshService::cpuUpdated,
+            this, &ResourcesPage::onCpuUpdated);
+    connect(mRefresh, &DataRefreshService::memoryUpdated,
+            this, &ResourcesPage::onMemoryUpdated);
+    connect(mRefresh, &DataRefreshService::networkUpdated,
+            this, &ResourcesPage::onNetworkUpdated);
+    connect(mRefresh, &DataRefreshService::diskIOUpdated,
+            this, &ResourcesPage::onDiskIOUpdated);
 
     if (mChartGpu)
-        connect(mTimer, &QTimer::timeout, this, &ResourcesPage::updateGpuChart);
+        connect(mRefresh, &DataRefreshService::gpuUpdated,
+                this, &ResourcesPage::onGpuUpdated);
 
-    if (mChartDiskHealth) {
-        QTimer *diskHealthTimer = new QTimer(this);
-        connect(diskHealthTimer, &QTimer::timeout, this, &ResourcesPage::updateDiskHealthChart);
-        diskHealthTimer->start(30 * 1000);
-        updateDiskHealthChart();
-    }
-
-    mTimer->start(1000);
+    if (mChartDiskHealth)
+        connect(mRefresh, &DataRefreshService::diskHealthUpdated,
+                this, &ResourcesPage::onDiskHealthUpdated);
 
     // Disk Usage Analyzer launcher (FR-23)
     mDiskLauncher = new DiskUsageLauncherWidget(this);
@@ -92,11 +94,9 @@ void ResourcesPage::init()
     Utilities::addDropShadow(mDiskLauncher, 40);
 }
 
-void ResourcesPage::updateDiskReadWrite()
+void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
 {
     static int second = 0;
-
-    QList<quint64> diskReadWrite = im->getDiskIO();
 
     QVector<QSplineSeries*> seriesList = mChartDiskReadWrite->getSeriesList();
 
@@ -108,12 +108,12 @@ void ResourcesPage::updateDiskReadWrite()
         if(second > 61) seriesList.at(j)->removePoints(61, 1);
     }
 
-    static quint64 l_readBytes  = diskReadWrite.at(0); // last
-    static quint64 l_writeBytes = diskReadWrite.at(1); // last
+    static quint64 l_readBytes  = io.at(0); // last
+    static quint64 l_writeBytes = io.at(1); // last
     static quint64 maxY = (1L << 10) * 100; // 100 KIBI
 
-    quint64 readBytes  = diskReadWrite.at(0);
-    quint64 writeBytes = diskReadWrite.at(1);
+    quint64 readBytes  = io.at(0);
+    quint64 writeBytes = io.at(1);
 
     quint64 d_readByte = (readBytes - l_readBytes);
     quint64 d_writeByte = (writeBytes - l_writeBytes);
@@ -143,42 +143,70 @@ void ResourcesPage::updateDiskReadWrite()
     second++;
 }
 
-void ResourcesPage::updateCpuLoadAvg()
+void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
+                                   const QList<double> &loadAvgs)
 {
-    static int second, maxAvg = im->getCpuCoreCount();
+    Q_UNUSED(clockGHz)
 
-    static int minutes[] = {1, 5, 15};
+    // --- CPU per-core chart ---
+    {
+        static int second = 0;
 
-    QList<double> cpuLoadAvgs = im->getCpuLoadAvgs();
+        QVector<QSplineSeries *> seriesList = mChartCpu->getSeriesList();
 
-    QVector<QSplineSeries*> seriesList = mChartCpuLoadAvg->getSeriesList();
+        for (int j = 0; j < seriesList.count(); j++){
+            int p = percents.at(j+1);
 
-    for (int j = 0; j < seriesList.count(); ++j) {
-        double avg = cpuLoadAvgs.at(j);
+            for (int i = 0; i < (second < 61 ? second : 61); i++)
+                seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
 
-        for (int i = 0; i < (second < 61 ? second : 61); ++i) {
-            seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
+            seriesList.at(j)->insert(0, QPointF(0, p));
+
+            seriesList.at(j)->setName(QString("CPU%1: %2%").arg(j+1).arg(p));
+
+            if(second > 61) seriesList.at(j)->removePoints(61, 1);
         }
 
-        seriesList.at(j)->insert(0, QPointF(0, avg));
+        mChartCpu->setSeriesList(seriesList);
 
-        seriesList.at(j)->setName(tr("%1 Minute Average: %2")
-                                  .arg(minutes[j])
-                                  .arg(avg));
-
-        if (second > 61) seriesList.at(j)->removePoints(61, 1);
-
-        maxAvg = qMax((int)ceil(avg), maxAvg);
+        second++;
     }
 
-    mChartCpuLoadAvg->setYMax(maxAvg);
+    // --- CPU load average chart ---
+    {
+        static int second = 0;
+        static int maxAvg = im->getCpuCoreCount();
+        static int minutes[] = {1, 5, 15};
 
-    mChartCpuLoadAvg->setSeriesList(seriesList);
+        QVector<QSplineSeries*> seriesList = mChartCpuLoadAvg->getSeriesList();
 
-    second++;
+        for (int j = 0; j < seriesList.count(); ++j) {
+            double avg = loadAvgs.at(j);
+
+            for (int i = 0; i < (second < 61 ? second : 61); ++i) {
+                seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
+            }
+
+            seriesList.at(j)->insert(0, QPointF(0, avg));
+
+            seriesList.at(j)->setName(tr("%1 Minute Average: %2")
+                                      .arg(minutes[j])
+                                      .arg(avg));
+
+            if (second > 61) seriesList.at(j)->removePoints(61, 1);
+
+            maxAvg = qMax((int)ceil(avg), maxAvg);
+        }
+
+        mChartCpuLoadAvg->setYMax(maxAvg);
+
+        mChartCpuLoadAvg->setSeriesList(seriesList);
+
+        second++;
+    }
 }
 
-void ResourcesPage::updateNetworkChart()
+void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 {
     static int second = 0;
 
@@ -192,16 +220,13 @@ void ResourcesPage::updateNetworkChart()
         if(second > 61) seriesList.at(j)->removePoints(61, 1);
     }
 
-    quint64 RXbytes = im->getRXbytes();
-    quint64 TXbytes = im->getTXbytes();
-
-    static quint64 l_RXbytes = RXbytes;
-    static quint64 l_TXbytes = TXbytes;
+    static quint64 l_RXbytes = rxBytes;
+    static quint64 l_TXbytes = txBytes;
     static quint64 max_RXbytes = 1L << 20; // 1 MEBI
     static quint64 max_TXbytes = 1L << 20; // 1 MEBI
 
-    quint64 d_RXbytes = (RXbytes - l_RXbytes);
-    quint64 d_TXbytes = (TXbytes - l_TXbytes);
+    quint64 d_RXbytes = (rxBytes - l_RXbytes);
+    quint64 d_TXbytes = (txBytes - l_TXbytes);
 
     QString downText = FormatUtil::formatBytes(d_RXbytes);
     QString upText   = FormatUtil::formatBytes(d_TXbytes);
@@ -210,20 +235,20 @@ void ResourcesPage::updateNetworkChart()
     seriesList.at(0)->insert(0, QPointF(0, d_RXbytes));
     seriesList.at(0)->setName(tr("Download: %1/s Total: %2")
                               .arg(downText)
-                              .arg(FormatUtil::formatBytes(RXbytes)));
+                              .arg(FormatUtil::formatBytes(rxBytes)));
 
     seriesList.at(1)->insert(0, QPointF(0, d_TXbytes));
     seriesList.at(1)->setName(tr("Upload: %1/s  Total: %2")
                               .arg(upText)
-                              .arg(FormatUtil::formatBytes(TXbytes)));
+                              .arg(FormatUtil::formatBytes(txBytes)));
 
     max_RXbytes = qMax(max_RXbytes, d_RXbytes);
     max_TXbytes = qMax(max_TXbytes, d_TXbytes);
 
     int max = qMax(max_RXbytes, max_TXbytes);
 
-    l_RXbytes = RXbytes;
-    l_TXbytes = TXbytes;
+    l_RXbytes = rxBytes;
+    l_TXbytes = txBytes;
 
     mChartNetwork->setYMax(max);
 
@@ -234,13 +259,12 @@ void ResourcesPage::updateNetworkChart()
     second++;
 }
 
-void ResourcesPage::updateMemoryChart()
+void ResourcesPage::onMemoryUpdated(quint64 used, quint64 total,
+                                      quint64 swapUsed, quint64 swapTotal)
 {
     static int second = 0;
 
     QVector<QSplineSeries *> seriesList = mChartMemory->getSeriesList();
-
-    im->updateMemoryInfo();
 
     // points swap
     for (int j = 0; j < seriesList.count(); j++) {
@@ -253,64 +277,35 @@ void ResourcesPage::updateMemoryChart()
 
     // Swap
     double percent = 0;
-    if (im->getSwapTotal()) // arithmetic exception control
-        percent = ((double) im->getSwapUsed() / (double) im->getSwapTotal()) * 100.0;
+    if (swapTotal) // arithmetic exception control
+        percent = ((double) swapUsed / (double) swapTotal) * 100.0;
 
     seriesList.at(0)->insert(0, QPointF(0, percent));
     seriesList.at(0)->setName(tr("Swap: %1 (%2%) %3")
-                              .arg(FormatUtil::formatBytes(im->getSwapUsed()))
+                              .arg(FormatUtil::formatBytes(swapUsed))
                               .arg(QString::asprintf("%.1f",percent))
-                              .arg(FormatUtil::formatBytes(im->getSwapTotal())));
+                              .arg(FormatUtil::formatBytes(swapTotal)));
 
     // Memory
-    double percent2 = ((double) im->getMemUsed() / (double) im->getMemTotal()) * 100.0;
+    double percent2 = ((double) used / (double) total) * 100.0;
 
     seriesList.at(1)->insert(0, QPointF(0, percent2));
     seriesList.at(1)->setName(tr("Memory: %1 (%2%) %3")
-                              .arg(FormatUtil::formatBytes(im->getMemUsed()))
+                              .arg(FormatUtil::formatBytes(used))
                               .arg(QString::asprintf("%.1f",percent2))
-                              .arg(FormatUtil::formatBytes(im->getMemTotal())));
+                              .arg(FormatUtil::formatBytes(total)));
 
     mChartMemory->setSeriesList(seriesList);
 
     second++;
 }
 
-void ResourcesPage::updateCpuChart()
-{
-    static int second = 0;
-
-    QList<int> cpuPercents = im->getCpuPercents();
-
-    QVector<QSplineSeries *> seriesList = mChartCpu->getSeriesList();
-
-    for (int j = 0; j < seriesList.count(); j++){
-        int p = cpuPercents.at(j+1);
-
-        for (int i = 0; i < (second < 61 ? second : 61); i++)
-            seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
-
-        seriesList.at(j)->insert(0, QPointF(0, p));
-
-        seriesList.at(j)->setName(QString("CPU%1: %2%").arg(j+1).arg(p));
-
-        if(second > 61) seriesList.at(j)->removePoints(61, 1);
-    }
-
-    mChartCpu->setSeriesList(seriesList);
-
-    second++;
-}
-
-void ResourcesPage::updateGpuChart()
+void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 {
     if (!mChartGpu)
         return;
 
     static int second = 0;
-
-    im->updateGpuInfo();
-    QList<GpuDevice> gpus = im->getGpuDevices();
 
     QVector<QSplineSeries *> seriesList = mChartGpu->getSeriesList();
 
@@ -334,15 +329,12 @@ void ResourcesPage::updateGpuChart()
     second++;
 }
 
-void ResourcesPage::updateDiskHealthChart()
+void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 {
     if (!mChartDiskHealth)
         return;
 
     static int tick = 0;
-
-    im->refreshDiskHealth();
-    QList<DriveHealth> drives = im->getDriveHealth();
 
     QVector<QSplineSeries *> seriesList = mChartDiskHealth->getSeriesList();
 

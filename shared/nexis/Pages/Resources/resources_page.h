@@ -2,13 +2,14 @@
 #define RESOURCESPAGE_H
 
 #include <QWidget>
-#include <QTimer>
 
 #include "history_chart.h"
 #include "disk_usage_launcher_widget.h"
 #include "Managers/info_manager.h"
 #include <QChart>
 #include <QSpacerItem>
+
+class DataRefreshService;
 
 namespace Ui {
     class ResourcesPage;
@@ -20,17 +21,17 @@ class ResourcesPage : public QWidget
 
 public:
     explicit ResourcesPage(QWidget *parent = nullptr,
-                           InfoManager *infoManager = nullptr);
+                           InfoManager *infoManager = nullptr,
+                           DataRefreshService *refreshService = nullptr);
     ~ResourcesPage();
 
 private slots:
-    void updateCpuChart();
-    void updateCpuLoadAvg();
-    void updateDiskReadWrite();
-    void updateMemoryChart();
-    void updateNetworkChart();
-    void updateGpuChart();
-    void updateDiskHealthChart();
+    void onCpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
+    void onMemoryUpdated(quint64 used, quint64 total, quint64 swapUsed, quint64 swapTotal);
+    void onNetworkUpdated(quint64 rxBytes, quint64 txBytes);
+    void onDiskIOUpdated(const QList<quint64> &io);
+    void onGpuUpdated(const QList<GpuDevice> &gpus);
+    void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 
 private:
     void init();
@@ -39,6 +40,7 @@ private:
     Ui::ResourcesPage *ui;
 
     InfoManager *im;
+    DataRefreshService *mRefresh;
 
     HistoryChart *mChartCpu;
     HistoryChart *mChartCpuLoadAvg;
@@ -49,8 +51,6 @@ private:
     HistoryChart *mChartDiskHealth;
 
     DiskUsageLauncherWidget *mDiskLauncher;
-
-    QTimer *mTimer;
 };
 
 #endif // RESOURCESPAGE_H
