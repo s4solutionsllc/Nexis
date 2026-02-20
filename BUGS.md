@@ -309,6 +309,13 @@
   - **Fix complexity:** Trivial (change stroke color in 2 SVG files)
   - **Resolved:** Changed stroke color from `#77767b` to `#E95420` in both SVGs.
 
+- [x] **BUG-46: Kiosk mode "Press ESC" overlay not centered on monitor** (LOW)
+  - **Scope:** Dashboard page → kiosk mode overlay
+  - **File:** `shared/nexis/app.cpp:440-475` (`showKioskOverlay()`)
+  - **Description:** When entering kiosk mode, the "Press ESC to exit kiosk mode" overlay label is not centered on the monitor. The positioning code uses `mSlidingStacked->x()` and `mSlidingStacked->y()` as offsets and centers within that widget's bounds, but since the overlay is parented to `App` (the main window), those coordinates place it relative to the stacked widget's position within the window — not the center of the actual screen/window. In fullscreen mode the sidebar is hidden, but the offset calculation still factors in the stacked widget's geometry rather than centering on the full window. The overlay should be centered on the entire window (or screen) so it appears in the middle of the monitor regardless of internal widget layout.
+  - **Fix complexity:** Trivial (center relative to the full window geometry instead of `mSlidingStacked`)
+  - **Resolved:** Replaced `mSlidingStacked`-relative positioning with `QScreen::geometry()` centering, which is immediately available (no async `showFullScreen()` timing issue) and multi-monitor safe.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

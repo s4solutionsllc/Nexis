@@ -452,10 +452,12 @@ void App::showKioskOverlay()
     );
     overlay->adjustSize();
 
-    QWidget *target = mSlidingStacked;
-    int x = target->x() + (target->width() - overlay->width()) / 2;
-    int y = target->y() + (target->height() - overlay->height()) / 2;
-    overlay->move(x, y);
+    QScreen *screen = windowHandle() ? windowHandle()->screen() : qApp->primaryScreen();
+    if (screen) {
+        int x = (screen->geometry().width() - overlay->width()) / 2;
+        int y = (screen->geometry().height() - overlay->height()) / 2;
+        overlay->move(x, y);
+    }
     overlay->raise();
     overlay->show();
 
