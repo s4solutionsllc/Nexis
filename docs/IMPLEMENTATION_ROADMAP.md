@@ -144,19 +144,19 @@
 
 ### Tasks
 
-- [ ] **3.1 Add token validation to `AppManager::updateStylesheet()`**
+- [x] **3.1 Add token validation to `AppManager::updateStylesheet()`**
   - File: `shared/nexis/Managers/app_manager.cpp`
   - After loading QSS and values.ini, scan for `@token` patterns
   - Emit `qWarning()` for any token found in QSS but missing from values.ini
   - Skip `@dp\d+` tokens (handled separately by DPI regex)
   - Acceptance: `qWarning` output when a token is missing; existing tokens all resolve cleanly
 
-- [ ] **3.2 Validate color format in values.ini**
+- [x] **3.2 Validate color format in values.ini**
   - After loading values.ini, check that color tokens start with `#` and are valid hex
   - Emit `qWarning()` for malformed values
   - Acceptance: typo like `color01 = 1e1e1e` (missing `#`) produces a warning
 
-- [ ] **3.3 Update Architecture Review**
+- [x] **3.3 Update Architecture Review**
   - Mark §2C as addressed
   - Update the QSS Token Validation Gap weakness section
 

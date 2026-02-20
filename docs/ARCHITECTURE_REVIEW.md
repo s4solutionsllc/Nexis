@@ -371,27 +371,16 @@ timerDiskHealth->start(30000);  // 30s
 
 ---
 
-### 7. QSS Token Validation Gap
+### ~~7. QSS Token Validation Gap~~ (Addressed)
 
-Token replacement in `AppManager::updateStylesheet()` is pure string substitution with no validation:
+**Status:** Addressed in Phase 3 (FR-32). `AppManager::updateStylesheet()` now includes two runtime validation passes before token replacement:
 
-```cpp
-// app_manager.cpp:103-105
-for (const QString &key : mStyleValues->allKeys()) {
-    mStylesheetFileContent.replace(key, mStyleValues->value(key).toString());
-}
-```
+1. **Token existence check:** Scans the raw QSS template for `@token` patterns (regex `@([a-zA-Z][a-zA-Z0-9_]*)`), skips `@dpN` DPI tokens, and emits `qWarning()` for any token not found in the active theme's `values.ini`.
+2. **Color format validation:** Iterates all `values.ini` entries (excluding `@themeName`) and warns if any value is not a valid CSS hex color (`#rgb`, `#rgba`, `#rrggbb`, or `#rrggbbaa`).
 
-**Failure modes:**
-- **Typo in values.ini:** `color01 = 1e1e1e` (missing `#`) → invalid QSS → entire stylesheet silently breaks
-- **Missing token:** A new `@newColor` used in `style.qss` but not defined in `values.ini` → literal `@newColor` text appears in UI
-- **No validation:** Color values aren't checked for valid hex format
+Both checks emit `qWarning()` at runtime (visible in debug output) without altering application behavior. This catches typos, missing tokens, and malformed color values during development and theme switching.
 
-**Evidence:** Multiple bugs were caused by theme system gaps:
-- BUG-21, BUG-33, BUG-36, BUG-38: Text invisible in dark mode due to missing QSS rules
-- BUG-40: Hardcoded inline colors (`"color: gray"`, `rgba(128,128,128,30)`) bypassed the token system entirely
-
-These bugs share a root cause: there's no automated check that the QSS and `values.ini` are in sync.
+**Remaining gap:** Hardcoded inline `setStyleSheet()` calls (e.g., in `disk_usage_launcher_widget.cpp`) and missing QSS rules for unstyled widgets are not caught by token validation. These represent a different failure class (BUG-21, BUG-33, BUG-36, BUG-38, BUG-40) that would require static analysis or screenshot regression tests (FR-41) to detect.
 
 ---
 
@@ -568,35 +557,9 @@ DashboardPage testPage(nullptr, &mockIM);
 
 ---
 
-#### 2C. QSS Token Validation
+#### ~~2C. QSS Token Validation~~ (Done)
 
-**What:** Add validation to `AppManager::updateStylesheet()` that checks all `@tokens` in `style.qss` have corresponding values in `values.ini`.
-
-**How:**
-
-```cpp
-void AppManager::updateStylesheet() {
-    // ... existing code to load QSS and values.ini ...
-
-    // NEW: Validate all @tokens have values
-    static const QRegularExpression tokenRx("@([a-zA-Z][a-zA-Z0-9_]*)");
-    auto it = tokenRx.globalMatch(mStylesheetFileContent);
-    while (it.hasNext()) {
-        QRegularExpressionMatch m = it.next();
-        QString token = m.captured(1);
-        if (token.startsWith("dp")) continue;  // handled by DPI regex
-        if (!mStyleValues->contains(token)) {
-            qWarning() << "QSS token missing from values.ini:" << token;
-        }
-    }
-
-    // ... existing replacement code ...
-}
-```
-
-**Effort:** Minimal (15 minutes, ~10 lines of code).
-
-**Files affected:** `shared/nexis/Managers/app_manager.cpp`
+**Status:** Completed in Phase 3 (FR-32). Two validation passes added to `updateStylesheet()`: token existence check (QSS `@tokens` vs `values.ini` keys) and color format validation (hex format check on all non-`@themeName` values). Both emit `qWarning()` diagnostics.
 
 ---
 
@@ -781,7 +744,7 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `CMakeLists.txt` | Replace GLOB_RECURSE (§1A) |
 | `shared/nexis-core/Info/cpu_info.h` | Template for abstract base class pattern (§1B) — 10 other Info classes follow this one |
 | `shared/nexis/Managers/info_manager.h` | Add DI constructor args (§2B), holds all Info instances |
-| `shared/nexis/Managers/app_manager.cpp` | Add QSS token validation (§2C), lines 88-121 |
+| `shared/nexis/Managers/app_manager.cpp` | ~~Add QSS token validation (§2C)~~ Done — token + color format validation added |
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | Primary refactor target for DataRefreshService (§2A) — has 3 timers |
 | `shared/nexis/Pages/Resources/resources_page.cpp` | Secondary refactor target — duplicates Dashboard polling |
 | `shared/nexis/signal_mapper.h` | Global event bus (7 signals) — monitor signal count growth |

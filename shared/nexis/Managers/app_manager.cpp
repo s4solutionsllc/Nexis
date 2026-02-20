@@ -99,6 +99,40 @@ void AppManager::updateStylesheet()
     mStylesheetFileContent = FileUtil::readStringFromFile(
         QStringLiteral(":/static/themes/default/style/style.qss"));
 
+    // --- Token validation: check QSS @tokens against values.ini ---
+    {
+        static const QRegularExpression tokenRx(QStringLiteral("@([a-zA-Z][a-zA-Z0-9_]*)"));
+        static const QRegularExpression dpTokenRx(QStringLiteral("^dp\\d+$"));
+        const QStringList allKeys = mStyleValues->allKeys();
+        const QSet<QString> knownTokens(allKeys.begin(), allKeys.end());
+
+        QRegularExpressionMatchIterator it = tokenRx.globalMatch(mStylesheetFileContent);
+        while (it.hasNext()) {
+            QRegularExpressionMatch m = it.next();
+            QString tokenName = m.captured(1);
+            QString fullToken = m.captured(0);
+
+            if (dpTokenRx.match(tokenName).hasMatch())
+                continue;
+
+            if (!knownTokens.contains(fullToken))
+                qWarning() << "Theme:" << themeName << "- QSS token" << fullToken << "not found in values.ini";
+        }
+    }
+
+    // --- Color format validation: check values.ini entries are valid hex ---
+    {
+        static const QRegularExpression hexRx(QStringLiteral("^#[0-9a-fA-F]+$"));
+        for (const QString &key : mStyleValues->allKeys()) {
+            if (key == QStringLiteral("@themeName"))
+                continue;
+            QString value = mStyleValues->value(key).toString();
+            int len = value.length();
+            if (!hexRx.match(value).hasMatch() || (len != 4 && len != 5 && len != 7 && len != 9))
+                qWarning() << "Theme:" << themeName << "- token" << key << "has invalid color value:" << value;
+        }
+    }
+
     // Replace @tokens with values
     for (const QString &key : mStyleValues->allKeys()) {
         mStylesheetFileContent.replace(key, mStyleValues->value(key).toString());
