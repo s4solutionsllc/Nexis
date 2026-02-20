@@ -312,26 +312,9 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ---
 
-### 4. CMake GLOB_RECURSE
+### 4. ~~CMake GLOB_RECURSE~~ (Resolved)
 
-The build system uses `GLOB_RECURSE` to collect source files:
-
-```cmake
-# CMakeLists.txt:37-40
-file(GLOB_RECURSE CORE_SHARED_SRCS "${CORE_SHARED_DIR}/**.cpp")
-file(GLOB_RECURSE CORE_SHARED_HDRS "${CORE_SHARED_DIR}/**.h")
-file(GLOB_RECURSE CORE_PLAT_SRCS   "${CORE_PLAT_DIR}/**.cpp")
-file(GLOB_RECURSE CORE_PLAT_HDRS   "${CORE_PLAT_DIR}/**.h")
-```
-
-**Why this is an anti-pattern:** Adding or removing a `.cpp` file does not trigger CMake reconfiguration. The developer must manually re-run `cmake -B build` for the change to take effect. This leads to:
-- "I added a new file but it's not compiling" — common confusion
-- Stale object files lingering after file deletion
-- CI builds passing when local builds fail (or vice versa)
-
-CMake's official documentation explicitly warns against this pattern: *"We do not recommend using GLOB to collect a list of source files from your source tree."*
-
-**Scope:** Both the `nexis-core` static library and the `nexis` executable use GLOB_RECURSE — all source files in the project.
+**Status:** Resolved in Phase 2. All `GLOB_RECURSE` calls replaced with explicit `set()` source lists in `CMakeLists.txt`. Source files are now organized into 10 explicit lists (shared/platform, core/GUI, .cpp/.h) plus a translations list. When adding or removing a file, developers update the corresponding `set()` block — CMake reconfiguration is deterministic.
 
 ---
 
@@ -416,30 +399,9 @@ These bugs share a root cause: there's no automated check that the QSS and `valu
 
 ### Priority 1: Critical (Foundational)
 
-#### 1A. Replace GLOB_RECURSE with Explicit Source Lists
+#### ~~1A. Replace GLOB_RECURSE with Explicit Source Lists~~ (Done)
 
-**What:** Replace all `file(GLOB_RECURSE ...)` calls in `CMakeLists.txt` with explicit file lists.
-
-**Why:** Eliminates the class of "file not found" / "stale build" issues. Follows CMake best practices. One-time effort.
-
-**How:** Either inline the file lists or use separate `sources.cmake` includes:
-
-```cmake
-# Option A: Inline (for smaller directories)
-set(CORE_SHARED_SRCS
-    ${CORE_SHARED_DIR}/Info/cpu_info_shared.cpp
-    ${CORE_SHARED_DIR}/Info/memory_info_shared.cpp
-    ${CORE_SHARED_DIR}/Info/disk_info_shared.cpp
-    ...
-)
-
-# Option B: Include file (keeps CMakeLists.txt clean)
-include(${CORE_SHARED_DIR}/sources.cmake)
-```
-
-**Effort:** Small (1-2 hours). Enumerate existing files, replace 4 GLOB_RECURSE calls.
-
-**Files affected:** `CMakeLists.txt` (lines 37-40, 77-80)
+**Status:** Completed in Phase 2. All 9 `GLOB_RECURSE` calls replaced with inline `set()` blocks using Option A (inline lists). Source files organized into core shared/platform and GUI shared/platform categories with platform-conditional `if(APPLE)/else()` blocks.
 
 ---
 
@@ -799,7 +761,7 @@ A phased approach to introducing automated testing:
 
 **Where Nexis's architecture should be in 12 months:**
 
-1. **Explicit source lists in CMake** — No more GLOB_RECURSE surprises
+1. ~~**Explicit source lists in CMake**~~ — Done (Phase 2)
 2. **Abstract base classes for all platform code** — Compile-time enforcement of platform parity
 3. **Dependency injection on all page constructors** — Testable without framework overhead
 4. **Centralized DataRefreshService** — 3 timers instead of 25, with pause/resume for battery optimization

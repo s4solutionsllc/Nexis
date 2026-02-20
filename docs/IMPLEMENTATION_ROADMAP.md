@@ -113,20 +113,21 @@
 
 ### Tasks
 
-- [ ] **2.1 Enumerate all source files currently collected by GLOB_RECURSE**
-  - Run cmake, inspect the generated build files to get the exact file lists
-  - Separate into 4 categories: core shared, core platform, gui shared, gui platform
+- [x] **2.1 Enumerate all source files currently collected by GLOB_RECURSE**
+  - Enumerated into 10 categories: core shared/platform .cpp/.h, GUI shared/platform .cpp/.h, plus translations
+  - Full inventory documented in `claude_definitions/PHASE2_research.md`
 
-- [ ] **2.2 Replace GLOB_RECURSE with explicit `set()` lists**
+- [x] **2.2 Replace GLOB_RECURSE with explicit `set()` lists**
   - File: `CMakeLists.txt`
-  - Replace the 4 `file(GLOB_RECURSE ...)` calls (lines ~37-40 and ~77-80) with explicit `set(...)` blocks
-  - Consider using `sources.cmake` include files if the lists are long
+  - Replaced all 9 `file(GLOB_RECURSE ...)` calls with inline `set()` blocks
+  - Platform sources use `if(APPLE)/else()` conditional blocks
 
-- [ ] **2.3 Add a comment in CMakeLists.txt documenting the convention**
-  - Note: "When adding a new .cpp or .h file, add it to the appropriate source list below"
-  - Acceptance: `cmake -B build` succeeds; incremental build works; no files missing
+- [x] **2.3 Add a comment in CMakeLists.txt documenting the convention**
+  - Added: "Source files are listed explicitly (not globbed). When adding or removing a source file, update the appropriate set() block."
+  - Clean rebuild passes with zero errors
 
-- [ ] **2.4 Update CLAUDE.md build instructions if needed**
+- [x] **2.4 Update CLAUDE.md build instructions if needed**
+  - No changes needed — build commands are unchanged
 
 **Estimated effort:** 1-2 hours
 **Release target:** v1.3.0

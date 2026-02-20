@@ -34,10 +34,95 @@ endif()
 set(CORE_SHARED_DIR "${SHARED_DIR}/nexis-core")
 set(CORE_PLAT_DIR   "${PLATFORM_DIR}/nexis-core")
 
-file(GLOB_RECURSE CORE_SHARED_SRCS "${CORE_SHARED_DIR}/**.cpp")
-file(GLOB_RECURSE CORE_SHARED_HDRS "${CORE_SHARED_DIR}/**.h")
-file(GLOB_RECURSE CORE_PLAT_SRCS   "${CORE_PLAT_DIR}/**.cpp")
-file(GLOB_RECURSE CORE_PLAT_HDRS   "${CORE_PLAT_DIR}/**.h")
+# Source files are listed explicitly (not globbed). When adding or removing
+# a .cpp or .h file, update the appropriate set() block below.
+
+set(CORE_SHARED_SRCS
+  "${CORE_SHARED_DIR}/Info/battery_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/disk_health_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/disk_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/gpu_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/memory_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/process.cpp"
+  "${CORE_SHARED_DIR}/Info/process_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/system_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Tools/docker_tool.cpp"
+  "${CORE_SHARED_DIR}/Tools/package_tool_shared.cpp"
+  "${CORE_SHARED_DIR}/Tools/service_tool_shared.cpp"
+  "${CORE_SHARED_DIR}/Utils/command_util_shared.cpp"
+  "${CORE_SHARED_DIR}/Utils/file_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/format_util.cpp"
+)
+
+set(CORE_SHARED_HDRS
+  "${CORE_SHARED_DIR}/nexis-core_global.h"
+  "${CORE_SHARED_DIR}/Info/battery_info.h"
+  "${CORE_SHARED_DIR}/Info/cpu_info.h"
+  "${CORE_SHARED_DIR}/Info/disk_health_info.h"
+  "${CORE_SHARED_DIR}/Info/disk_info.h"
+  "${CORE_SHARED_DIR}/Info/gpu_info.h"
+  "${CORE_SHARED_DIR}/Info/memory_info.h"
+  "${CORE_SHARED_DIR}/Info/network_info.h"
+  "${CORE_SHARED_DIR}/Info/process.h"
+  "${CORE_SHARED_DIR}/Info/process_info.h"
+  "${CORE_SHARED_DIR}/Info/system_info.h"
+  "${CORE_SHARED_DIR}/Info/thermal_info.h"
+  "${CORE_SHARED_DIR}/Tools/apt_source_tool.h"
+  "${CORE_SHARED_DIR}/Tools/docker_tool.h"
+  "${CORE_SHARED_DIR}/Tools/gnome_settings_tool.h"
+  "${CORE_SHARED_DIR}/Tools/package_tool_shared.h"
+  "${CORE_SHARED_DIR}/Tools/service_tool.h"
+  "${CORE_SHARED_DIR}/Utils/command_util.h"
+  "${CORE_SHARED_DIR}/Utils/file_util.h"
+  "${CORE_SHARED_DIR}/Utils/format_util.h"
+)
+
+if(APPLE)
+  set(CORE_PLAT_SRCS
+    "${CORE_PLAT_DIR}/Info/battery_info.cpp"
+    "${CORE_PLAT_DIR}/Info/cpu_info.cpp"
+    "${CORE_PLAT_DIR}/Info/disk_health_info.cpp"
+    "${CORE_PLAT_DIR}/Info/disk_info_platform.cpp"
+    "${CORE_PLAT_DIR}/Info/gpu_info.cpp"
+    "${CORE_PLAT_DIR}/Info/memory_info.cpp"
+    "${CORE_PLAT_DIR}/Info/network_info.cpp"
+    "${CORE_PLAT_DIR}/Info/process_info.cpp"
+    "${CORE_PLAT_DIR}/Info/system_info.cpp"
+    "${CORE_PLAT_DIR}/Info/thermal_info.cpp"
+    "${CORE_PLAT_DIR}/Tools/apt_source_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/gnome_settings_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/package_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/service_tool.cpp"
+    "${CORE_PLAT_DIR}/Utils/command_util_platform.cpp"
+  )
+  set(CORE_PLAT_HDRS
+    "${CORE_PLAT_DIR}/Tools/gnome_settings_constants.h"
+    "${CORE_PLAT_DIR}/Tools/package_tool.h"
+    "${CORE_PLAT_DIR}/Utils/brew_util.h"
+  )
+else()
+  set(CORE_PLAT_SRCS
+    "${CORE_PLAT_DIR}/Info/battery_info.cpp"
+    "${CORE_PLAT_DIR}/Info/cpu_info.cpp"
+    "${CORE_PLAT_DIR}/Info/disk_health_info.cpp"
+    "${CORE_PLAT_DIR}/Info/disk_info_platform.cpp"
+    "${CORE_PLAT_DIR}/Info/gpu_info.cpp"
+    "${CORE_PLAT_DIR}/Info/memory_info.cpp"
+    "${CORE_PLAT_DIR}/Info/network_info.cpp"
+    "${CORE_PLAT_DIR}/Info/process_info.cpp"
+    "${CORE_PLAT_DIR}/Info/system_info.cpp"
+    "${CORE_PLAT_DIR}/Info/thermal_info.cpp"
+    "${CORE_PLAT_DIR}/Tools/apt_source_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/gnome_settings_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/package_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/service_tool.cpp"
+    "${CORE_PLAT_DIR}/Utils/command_util_platform.cpp"
+  )
+  set(CORE_PLAT_HDRS
+    "${CORE_PLAT_DIR}/Tools/gnome_settings_constants.h"
+    "${CORE_PLAT_DIR}/Tools/package_tool.h"
+  )
+endif()
 
 add_library(nexis-core STATIC
   ${CORE_SHARED_SRCS} ${CORE_SHARED_HDRS}
@@ -73,14 +158,148 @@ endif()
 set(GUI_SHARED_DIR "${SHARED_DIR}/nexis")
 set(GUI_PLAT_DIR   "${PLATFORM_DIR}/nexis")
 
-# Sources (include .h files for AUTOMOC to find Q_OBJECT classes)
-file(GLOB_RECURSE GUI_SHARED_SRCS "${GUI_SHARED_DIR}/**.cpp")
-file(GLOB_RECURSE GUI_SHARED_HDRS "${GUI_SHARED_DIR}/**.h")
-file(GLOB_RECURSE GUI_PLAT_SRCS   "${GUI_PLAT_DIR}/**.cpp")
-file(GLOB_RECURSE GUI_PLAT_HDRS   "${GUI_PLAT_DIR}/**.h")
+# Sources — include .h files for AUTOMOC to find Q_OBJECT classes.
+# When adding or removing a source file, update the appropriate set() block.
+
+set(GUI_SHARED_SRCS
+  "${GUI_SHARED_DIR}/app.cpp"
+  "${GUI_SHARED_DIR}/feedback.cpp"
+  "${GUI_SHARED_DIR}/main.cpp"
+  "${GUI_SHARED_DIR}/signal_mapper.cpp"
+  "${GUI_SHARED_DIR}/sliding_stacked_widget.cpp"
+  "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
+  "${GUI_SHARED_DIR}/Managers/cleaner_service.cpp"
+  "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
+  "${GUI_SHARED_DIR}/Managers/schedule_manager.cpp"
+  "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_edit.cpp"
+  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_manager_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_repository_item.cpp"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.cpp"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/linebar.cpp"
+  "${GUI_SHARED_DIR}/Pages/Docker/docker_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_appearance_tab.cpp"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_desktop_tab.cpp"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_mouse_tab.cpp"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_settings_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_wm_tab.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/helpers_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/host_manage.cpp"
+  "${GUI_SHARED_DIR}/Pages/HardwareInfo/hardware_info_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Processes/processes_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Resources/disk_usage_launcher_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Resources/history_chart.cpp"
+  "${GUI_SHARED_DIR}/Pages/Resources/resources_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Search/search_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Services/service_item.cpp"
+  "${GUI_SHARED_DIR}/Pages/Services/services_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Settings/settings_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/StartupApps/startup_app.cpp"
+  "${GUI_SHARED_DIR}/Pages/StartupApps/startup_apps_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/SystemCleaner/byte_tree_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.cpp"
+  "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.cpp"
+)
+
+set(GUI_SHARED_HDRS
+  "${GUI_SHARED_DIR}/app.h"
+  "${GUI_SHARED_DIR}/dpi.h"
+  "${GUI_SHARED_DIR}/feedback.h"
+  "${GUI_SHARED_DIR}/nexis_roles.h"
+  "${GUI_SHARED_DIR}/signal_mapper.h"
+  "${GUI_SHARED_DIR}/sliding_stacked_widget.h"
+  "${GUI_SHARED_DIR}/utilities.h"
+  "${GUI_SHARED_DIR}/Managers/app_manager.h"
+  "${GUI_SHARED_DIR}/Managers/cleaner_service.h"
+  "${GUI_SHARED_DIR}/Managers/info_manager.h"
+  "${GUI_SHARED_DIR}/Managers/schedule_manager.h"
+  "${GUI_SHARED_DIR}/Managers/setting_manager.h"
+  "${GUI_SHARED_DIR}/Managers/tool_manager.h"
+  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_edit.h"
+  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_manager_page.h"
+  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_repository_item.h"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.h"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_page.h"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/linebar.h"
+  "${GUI_SHARED_DIR}/Pages/Docker/docker_page.h"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_appearance_tab.h"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_desktop_tab.h"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_mouse_tab.h"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_settings_page.h"
+  "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_wm_tab.h"
+  "${GUI_SHARED_DIR}/Pages/Helpers/helpers_page.h"
+  "${GUI_SHARED_DIR}/Pages/Helpers/host_manage.h"
+  "${GUI_SHARED_DIR}/Pages/HardwareInfo/hardware_info_page.h"
+  "${GUI_SHARED_DIR}/Pages/Processes/processes_page.h"
+  "${GUI_SHARED_DIR}/Pages/Resources/disk_usage_launcher_widget.h"
+  "${GUI_SHARED_DIR}/Pages/Resources/history_chart.h"
+  "${GUI_SHARED_DIR}/Pages/Resources/resources_page.h"
+  "${GUI_SHARED_DIR}/Pages/Search/search_page.h"
+  "${GUI_SHARED_DIR}/Pages/Services/service_item.h"
+  "${GUI_SHARED_DIR}/Pages/Services/services_page.h"
+  "${GUI_SHARED_DIR}/Pages/Settings/settings_page.h"
+  "${GUI_SHARED_DIR}/Pages/StartupApps/startup_app.h"
+  "${GUI_SHARED_DIR}/Pages/StartupApps/startup_app_edit.h"
+  "${GUI_SHARED_DIR}/Pages/StartupApps/startup_apps_page.h"
+  "${GUI_SHARED_DIR}/Pages/SystemCleaner/byte_tree_widget.h"
+  "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.h"
+  "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.h"
+  "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
+)
+
+if(APPLE)
+  set(GUI_PLAT_SRCS
+    "${GUI_PLAT_DIR}/Managers/tool_manager.cpp"
+    "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
+  )
+  set(GUI_PLAT_HDRS)
+else()
+  set(GUI_PLAT_SRCS
+    "${GUI_PLAT_DIR}/Managers/tool_manager.cpp"
+    "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
+  )
+  set(GUI_PLAT_HDRS)
+endif()
 
 # Translations
-file(GLOB_RECURSE NEXIS_TRANSLATIONS "${SHARED_DIR}/translations/**.ts")
+set(NEXIS_TRANSLATIONS
+  "${SHARED_DIR}/translations/nexis_af.ts"
+  "${SHARED_DIR}/translations/nexis_ar.ts"
+  "${SHARED_DIR}/translations/nexis_ca-es.ts"
+  "${SHARED_DIR}/translations/nexis_cs.ts"
+  "${SHARED_DIR}/translations/nexis_da.ts"
+  "${SHARED_DIR}/translations/nexis_de.ts"
+  "${SHARED_DIR}/translations/nexis_el.ts"
+  "${SHARED_DIR}/translations/nexis_en.ts"
+  "${SHARED_DIR}/translations/nexis_es.ts"
+  "${SHARED_DIR}/translations/nexis_fi.ts"
+  "${SHARED_DIR}/translations/nexis_fr.ts"
+  "${SHARED_DIR}/translations/nexis_gl.ts"
+  "${SHARED_DIR}/translations/nexis_he.ts"
+  "${SHARED_DIR}/translations/nexis_hi.ts"
+  "${SHARED_DIR}/translations/nexis_hu.ts"
+  "${SHARED_DIR}/translations/nexis_it.ts"
+  "${SHARED_DIR}/translations/nexis_ja.ts"
+  "${SHARED_DIR}/translations/nexis_kn.ts"
+  "${SHARED_DIR}/translations/nexis_ko.ts"
+  "${SHARED_DIR}/translations/nexis_ml.ts"
+  "${SHARED_DIR}/translations/nexis_nl.ts"
+  "${SHARED_DIR}/translations/nexis_no.ts"
+  "${SHARED_DIR}/translations/nexis_oc.ts"
+  "${SHARED_DIR}/translations/nexis_pl.ts"
+  "${SHARED_DIR}/translations/nexis_pt.ts"
+  "${SHARED_DIR}/translations/nexis_ro.ts"
+  "${SHARED_DIR}/translations/nexis_ru.ts"
+  "${SHARED_DIR}/translations/nexis_sr.ts"
+  "${SHARED_DIR}/translations/nexis_sv.ts"
+  "${SHARED_DIR}/translations/nexis_tr.ts"
+  "${SHARED_DIR}/translations/nexis_ua.ts"
+  "${SHARED_DIR}/translations/nexis_vn.ts"
+  "${SHARED_DIR}/translations/nexis_zh-cn.ts"
+  "${SHARED_DIR}/translations/nexis_zh-tw.ts"
+)
 find_package(Qt6 COMPONENTS LinguistTools)
 qt_create_translation(QM_FILES NEXIS_TRANSLATIONS ${GUI_SHARED_SRCS} ${GUI_PLAT_SRCS})
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${QM_FILES}")
