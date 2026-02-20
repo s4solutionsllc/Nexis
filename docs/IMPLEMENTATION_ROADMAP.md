@@ -253,26 +253,19 @@
 
 ### Tasks
 
-- [ ] **6.1 Add DI constructor parameters to all 14 page classes**
-  - Pattern:
-    ```cpp
-    explicit DashboardPage(QWidget *parent = nullptr,
-                           InfoManager *infoMgr = InfoManager::ins(),
-                           SettingManager *settingMgr = SettingManager::ins());
-    ```
-  - Default values mean zero changes to production call sites
-  - Each page gets parameters for the managers it actually uses
+- [x] **6.1 Add DI constructor parameters to all 10 page classes with manager dependencies**
+  - Pattern: `nullptr`-default parameters with ternary fallback in initializers
+  - 4 pages with zero dependencies (StartupAppsPage, HelpersPage, GnomeSettingsPage, DockerPage) unchanged
 
-- [ ] **6.2 Replace member initializers with constructor args**
-  - Change `im(InfoManager::ins())` in member initializer lists to use the injected parameter
-  - Acceptance: `grep -r "InfoManager::ins()" shared/nexis/Pages/` shows zero results outside constructors' default arguments
+- [x] **6.2 Replace all `::ins()` calls in page method bodies with member access**
+  - All `::ins()` calls in page `.cpp` method bodies replaced with member variable access
+  - Only remaining `::ins()` calls are in constructor ternary fallback defaults
 
-- [ ] **6.3 Build verification**
-  - Acceptance: incremental build passes; no behavior change
+- [x] **6.3 Build verification**
+  - Clean build passes; all tests pass; no behavior change
 
-- [ ] **6.4 Update Architecture Review**
-  - Mark §2B as addressed
-  - Update weakness §2 (Singleton Coupling) to note DI escape hatches are in place
+- [x] **6.4 Update Architecture Review**
+  - §2B marked as done; weakness §2 marked as partially resolved; testing strategy updated
 
 **Estimated effort:** 3-4 hours
 **Release target:** v1.4.0

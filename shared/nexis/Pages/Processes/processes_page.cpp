@@ -10,12 +10,12 @@ ProcessesPage::~ProcessesPage()
     delete ui;
 }
 
-ProcessesPage::ProcessesPage(QWidget *parent) :
+ProcessesPage::ProcessesPage(QWidget *parent, InfoManager *infoManager) :
   QWidget(parent),
   ui(new Ui::ProcessesPage),
   mItemModel(new QStandardItemModel(this)),
   mSortFilterModel(new QSortFilterProxyModel(this)),
-  im(InfoManager::ins()),
+  im(infoManager ? infoManager : InfoManager::ins()),
   mTimer(new QTimer(this))
 {
     ui->setupUi(this);

@@ -12,10 +12,13 @@ UninstallerPage::~UninstallerPage()
     delete ui;
 }
 
-UninstallerPage::UninstallerPage(QWidget *parent) :
+UninstallerPage::UninstallerPage(QWidget *parent, ToolManager *toolManager,
+                                 AppManager *appManager, SignalMapper *signalMapper) :
     QWidget(parent),
     ui(new Ui::UninstallerPage),
-    tm(ToolManager::ins())
+    tm(toolManager ? toolManager : ToolManager::ins()),
+    mAppManager(appManager ? appManager : AppManager::ins()),
+    mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins())
 {
     ui->setupUi(this);
 
@@ -29,7 +32,7 @@ void UninstallerPage::init()
     ui->treeWidgetPackages->setHeaderLabels({ tr("Application") });
     ui->treeWidgetPackages->header()->setStretchLastSection(true);
 
-    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(AppManager::ins()->resolveThemeName());
+    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(mAppManager->resolveThemeName());
     QMovie *loadingMovie = new QMovie(iconLoading, QByteArray(), this);
     ui->lblLoadingUninstaller->setMovie(loadingMovie);
     loadingMovie->start();
@@ -54,12 +57,12 @@ void UninstallerPage::init()
     mFetchFuture = QtConcurrent::run([this]() { fetchPackages(); });
     mFetchSnapFuture = QtConcurrent::run([this]() { fetchSnapPackages(); });
 
-    connect(SignalMapper::ins(), &SignalMapper::sigUninstallStarted, this, &UninstallerPage::uninstallStarted);
+    connect(mSignalMapper, &SignalMapper::sigUninstallStarted, this, &UninstallerPage::uninstallStarted);
     // After uninstall finishes, re-fetch packages on worker threads
-    connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, [this]() {
+    connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         mFetchFuture = QtConcurrent::run([this]() { fetchPackages(); });
     });
-    connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, [this]() {
+    connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         mFetchSnapFuture = QtConcurrent::run([this]() { fetchSnapPackages(); });
     });
 }
@@ -266,9 +269,9 @@ void UninstallerPage::on_btnUninstall_clicked()
 
     mUninstallFuture = QtConcurrent::run([=]
     {
-        emit SignalMapper::ins()->sigUninstallStarted();
-        ToolManager::ins()->trashApps(selectedPaths);
-        emit SignalMapper::ins()->sigUninstallFinished();
+        emit mSignalMapper->sigUninstallStarted();
+        tm->trashApps(selectedPaths);
+        emit mSignalMapper->sigUninstallFinished();
     });
 #else
     QStringList selectedPackages = getSelectedPackages();
@@ -314,12 +317,12 @@ void UninstallerPage::on_btnUninstall_clicked()
 
     mUninstallFuture = QtConcurrent::run([=]
     {
-        emit SignalMapper::ins()->sigUninstallStarted();
+        emit mSignalMapper->sigUninstallStarted();
 
-        ToolManager::ins()->uninstallPackages(selectedPackages, purge);
-        ToolManager::ins()->uninstallSnapPackages(selectedSnapPackages);
+        tm->uninstallPackages(selectedPackages, purge);
+        tm->uninstallSnapPackages(selectedSnapPackages);
 
-        emit SignalMapper::ins()->sigUninstallFinished();
+        emit mSignalMapper->sigUninstallFinished();
     });
 #endif
 }

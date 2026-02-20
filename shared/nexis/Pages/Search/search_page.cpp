@@ -5,9 +5,11 @@
 #include <qdebug.h>
 #include <QClipboard>
 
-SearchPage::SearchPage(QWidget *parent) :
+SearchPage::SearchPage(QWidget *parent, InfoManager *infoManager, SettingManager *settingManager) :
     QWidget(parent),
     ui(new Ui::SearchPage),
+    mInfoManager(infoManager ? infoManager : InfoManager::ins()),
+    mSettingManager(settingManager ? settingManager : SettingManager::ins()),
     mItemModel(new QStandardItemModel(this)),
     mSortFilterModel(new QSortFilterProxyModel(this))
 {
@@ -61,7 +63,7 @@ void SearchPage::init()
 
     ui->lblErrorMsg->hide();
 
-    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(SettingManager::ins()->getThemeName());
+    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(mSettingManager->getThemeName());
     QMovie *loadingMovie = new QMovie(iconLoading, QByteArray(), this);
     ui->lblLoadingSearching->setMovie(loadingMovie);
     loadingMovie->start();
@@ -124,10 +126,10 @@ void SearchPage::loadHeaderMenu()
 void SearchPage::initComboboxValues()
 {
     ui->cmbUsers->addItem(tr("Choose"), "-1");
-    ui->cmbUsers->addItems(InfoManager::ins()->getUserList());
+    ui->cmbUsers->addItems(mInfoManager->getUserList());
 
     ui->cmbGroups->addItem(tr("Choose"), "-1");
-    ui->cmbGroups->addItems(InfoManager::ins()->getGroupList());
+    ui->cmbGroups->addItems(mInfoManager->getGroupList());
 
     ui->cmbSearchTypes->addItem(tr("All"), "all");
     ui->cmbSearchTypes->addItem(tr("File"), "f");
@@ -422,7 +424,7 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
 
                     QString filePath = folderPath + "/" + fileName;
 
-                    bool isAnotherUser = QFileInfo(filePath).owner() != InfoManager::ins()->getUserName();
+                    bool isAnotherUser = QFileInfo(filePath).owner() != mInfoManager->getUserName();
 #ifdef Q_OS_MACOS
                     // macOS: move directly to ~/.Trash (no metadata files)
                     if (isAnotherUser) {
@@ -471,7 +473,7 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
 
                     QString filePath = folderPath + "/" + fileName;
 
-                    bool isAnotherUser = QFileInfo(filePath).owner() != InfoManager::ins()->getUserName();
+                    bool isAnotherUser = QFileInfo(filePath).owner() != mInfoManager->getUserName();
                     if (isAnotherUser) {
                         CommandUtil::sudoExec("rm", {"-rf", filePath });
                     } else {

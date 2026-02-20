@@ -23,11 +23,15 @@ SettingsPage::~SettingsPage()
     delete ui;
 }
 
-SettingsPage::SettingsPage(QWidget *parent) :
+SettingsPage::SettingsPage(QWidget *parent, AppManager *appManager,
+                           SettingManager *settingManager, InfoManager *infoManager,
+                           ScheduleManager *scheduleManager) :
     QWidget(parent),
     ui(new Ui::SettingsPage),
-    apm(AppManager::ins()),
-    mSettingManager(SettingManager::ins())
+    apm(appManager ? appManager : AppManager::ins()),
+    mInfoManager(infoManager ? infoManager : InfoManager::ins()),
+    mScheduleManager(scheduleManager ? scheduleManager : ScheduleManager::ins()),
+    mSettingManager(settingManager ? settingManager : SettingManager::ins())
 {
     ui->setupUi(this);
 
@@ -56,8 +60,8 @@ void SettingsPage::init()
     ui->cmbLanguages->setCurrentText(apm->getLanguageList().value(lc));
 
     // load disks
-    InfoManager::ins()->updateDiskInfo();
-    const QList<Disk> disks = InfoManager::ins()->getDisks();
+    mInfoManager->updateDiskInfo();
+    const QList<Disk> disks = mInfoManager->getDisks();
 
     for (const Disk &disk : disks) {
         ui->cmbDisks->addItem(QString("%1  (%2)").arg(disk.device).arg(disk.name), disk.name);
@@ -126,14 +130,14 @@ void SettingsPage::init()
 
     // battery health alert (hide on desktops with no battery)
     ui->spinBatteryHealthPercent->setValue(mSettingManager->getBatteryAlertPercent());
-    if (!InfoManager::ins()->hasBattery()) {
+    if (!mInfoManager->hasBattery()) {
         ui->lblBatteryHealthPercent->hide();
         ui->spinBatteryHealthPercent->hide();
     }
 
     // disk health alert
     ui->checkDiskHealthAlert->setChecked(mSettingManager->getDiskHealthAlertEnabled());
-    if (!InfoManager::ins()->hasDiskHealth()) {
+    if (!mInfoManager->hasDiskHealth()) {
         ui->lblDiskHealthAlert->hide();
         ui->checkDiskHealthAlert->hide();
     }
@@ -371,7 +375,7 @@ void SettingsPage::initScheduledCleaning()
 
     // Check if quick setup schedule exists
     bool hasQuickSetup = false;
-    for (const auto &s : ScheduleManager::ins()->getAllSchedules()) {
+    for (const auto &s : mScheduleManager->getAllSchedules()) {
         if (s.name == "Weekly Cleanup" && s.frequency == ScheduleManager::Weekly) {
             hasQuickSetup = true;
             break;
@@ -387,12 +391,12 @@ void SettingsPage::initScheduledCleaning()
     connect(mBtnManageSchedules, &QPushButton::clicked, this, &SettingsPage::onManageSchedules);
     connect(mBtnViewHistory, &QPushButton::clicked, this, &SettingsPage::onViewCleaningHistory);
     connect(mChkCleaningNotifications, &QCheckBox::toggled, this, &SettingsPage::onCleaningNotificationsToggled);
-    connect(ScheduleManager::ins(), &ScheduleManager::schedulesChanged, this, &SettingsPage::updateScheduleSummary);
+    connect(mScheduleManager, &ScheduleManager::schedulesChanged, this, &SettingsPage::updateScheduleSummary);
 }
 
 void SettingsPage::onQuickSetupToggled(bool checked)
 {
-    ScheduleManager *sm = ScheduleManager::ins();
+    ScheduleManager *sm = mScheduleManager;
 
     if (checked) {
         ScheduleManager::CleaningSchedule s;
@@ -464,7 +468,7 @@ void SettingsPage::onManageSchedules()
             delete item;
         }
 
-        QList<ScheduleManager::CleaningSchedule> schedules = ScheduleManager::ins()->getAllSchedules();
+        QList<ScheduleManager::CleaningSchedule> schedules = mScheduleManager->getAllSchedules();
 
         if (schedules.isEmpty()) {
             listLayout->addWidget(new QLabel(tr("No schedules configured.")));
@@ -509,24 +513,24 @@ void SettingsPage::onManageSchedules()
 
             QString schedId = s.id;
 
-            connect(enableCheck, &QCheckBox::toggled, [schedId](bool checked) {
-                ScheduleManager::CleaningSchedule updated = ScheduleManager::ins()->getSchedule(schedId);
+            connect(enableCheck, &QCheckBox::toggled, [this, schedId](bool checked) {
+                ScheduleManager::CleaningSchedule updated = mScheduleManager->getSchedule(schedId);
                 updated.enabled = checked;
-                ScheduleManager::ins()->updateSchedule(updated);
+                mScheduleManager->updateSchedule(updated);
             });
 
             connect(editBtn, &QPushButton::clicked, [this, schedId, &dialog, &refreshList]() {
-                ScheduleManager::CleaningSchedule existing = ScheduleManager::ins()->getSchedule(schedId);
+                ScheduleManager::CleaningSchedule existing = mScheduleManager->getSchedule(schedId);
                 ScheduleEditorDialog editor(existing, &dialog);
-                connect(&editor, &ScheduleEditorDialog::scheduleUpdated, [](const ScheduleManager::CleaningSchedule &s) {
-                    ScheduleManager::ins()->updateSchedule(s);
+                connect(&editor, &ScheduleEditorDialog::scheduleUpdated, this, [this](const ScheduleManager::CleaningSchedule &s) {
+                    mScheduleManager->updateSchedule(s);
                 });
                 editor.exec();
                 refreshList();
             });
 
-            connect(deleteBtn, &QPushButton::clicked, [schedId, &refreshList]() {
-                ScheduleManager::ins()->deleteSchedule(schedId);
+            connect(deleteBtn, &QPushButton::clicked, [this, schedId, &refreshList]() {
+                mScheduleManager->deleteSchedule(schedId);
                 refreshList();
             });
 
@@ -546,8 +550,8 @@ void SettingsPage::onManageSchedules()
     addBtn->setProperty("accessibleName", "primary");
     connect(addBtn, &QPushButton::clicked, [this, &dialog, &refreshList]() {
         ScheduleEditorDialog editor(&dialog);
-        connect(&editor, &ScheduleEditorDialog::scheduleCreated, [](const ScheduleManager::CleaningSchedule &s) {
-            ScheduleManager::ins()->createSchedule(s);
+        connect(&editor, &ScheduleEditorDialog::scheduleCreated, this, [this](const ScheduleManager::CleaningSchedule &s) {
+            mScheduleManager->createSchedule(s);
         });
         editor.exec();
         refreshList();
@@ -620,7 +624,7 @@ void SettingsPage::onViewCleaningHistory()
 
 void SettingsPage::updateScheduleSummary()
 {
-    QList<ScheduleManager::CleaningSchedule> schedules = ScheduleManager::ins()->getAllSchedules();
+    QList<ScheduleManager::CleaningSchedule> schedules = mScheduleManager->getAllSchedules();
 
     if (schedules.isEmpty()) {
         mLblQuickSetupSummary->setText(tr("No schedules active"));
@@ -632,7 +636,7 @@ void SettingsPage::updateScheduleSummary()
     QString nextName;
     for (const auto &s : schedules) {
         if (!s.enabled) continue;
-        QDateTime next = ScheduleManager::ins()->getNextRunTime(s);
+        QDateTime next = mScheduleManager->getNextRunTime(s);
         if (!earliest.isValid() || next < earliest) {
             earliest = next;
             nextName = s.name;

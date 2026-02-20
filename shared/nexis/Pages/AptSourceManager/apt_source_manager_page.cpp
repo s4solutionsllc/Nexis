@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include "utilities.h"
 #include "Managers/tool_manager.h"
+#include "signal_mapper.h"
 #include "dpi.h"
 #include <Tools/package_tool_shared.h>
 
@@ -20,9 +21,11 @@ APTSourceManagerPage::~APTSourceManagerPage()
 
 APTSourcePtr APTSourceManagerPage::selectedAptSource = nullptr;
 
-APTSourceManagerPage::APTSourceManagerPage(QWidget *parent) :
+APTSourceManagerPage::APTSourceManagerPage(QWidget *parent, ToolManager *toolManager, SignalMapper *signalMapper) :
     QWidget(parent),
-    ui(new Ui::APTSourceManagerPage)
+    ui(new Ui::APTSourceManagerPage),
+    mToolManager(toolManager ? toolManager : ToolManager::ins()),
+    mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins())
 {
     ui->setupUi(this);
 
@@ -75,12 +78,12 @@ void APTSourceManagerPage::init()
     (void)QtConcurrent::run([this]() { fetchBrewPackages(); });
 
     // Re-fetch after uninstall finishes
-    connect(SignalMapper::ins(), &SignalMapper::sigUninstallFinished, this, [this]() {
+    connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         (void)QtConcurrent::run([this]() { fetchBrewPackages(); });
     });
 
 #else
-    if (ToolManager::ins()->packageTool()->currentPackageTool == APT_RPM) {
+    if (mToolManager->packageTool()->currentPackageTool == APT_RPM) {
         ui->txtAptSource->setPlaceholderText(tr("example %1")
             .arg("'rpm [p10] http://mirror.yandex.ru/altlinux/ p10/branch/x86_64-i586 classic'"));
     } else {
@@ -107,7 +110,7 @@ void APTSourceManagerPage::loadAptSources()
 {
     ui->listWidgetAptSources->clear();
 
-    QList<APTSourcePtr> aptSourceList = ToolManager::ins()->getSourceList();
+    QList<APTSourcePtr> aptSourceList = mToolManager->getSourceList();
 
     for (APTSourcePtr &aptSource: aptSourceList) {
 
@@ -140,7 +143,7 @@ void APTSourceManagerPage::loadAptSources()
 void APTSourceManagerPage::fetchBrewPackages()
 {
     // Worker thread: I/O only, no UI access
-    mBrewPackages = ToolManager::ins()->getPackages();
+    mBrewPackages = mToolManager->getPackages();
     emit brewPackagesLoaded();
 }
 
@@ -245,7 +248,7 @@ void APTSourceManagerPage::on_btnAddAPTSourceRepository_clicked(bool checked)
             ui->btnAddAPTSourceRepository->setText(tr("Adding..."));
             ui->btnAddAPTSourceRepository->setEnabled(false);
 
-            ToolManager::ins()->addAPTRepository(aptSourceRepository, ui->checkEnableSource->isChecked());
+            mToolManager->addAPTRepository(aptSourceRepository, ui->checkEnableSource->isChecked());
 
             ui->txtAptSource->clear();
             ui->checkEnableSource->setChecked(false);
@@ -321,7 +324,7 @@ void APTSourceManagerPage::on_btnDeleteAptSource_clicked()
         return;
 
     // Dry-run to show dependencies
-    QStringList allWouldRemove = ToolManager::ins()->dryRunRemovePackages(selected);
+    QStringList allWouldRemove = mToolManager->dryRunRemovePackages(selected);
     QStringList additional;
     for (const QString &pkg : allWouldRemove) {
         if (!selected.contains(pkg))
@@ -343,14 +346,14 @@ void APTSourceManagerPage::on_btnDeleteAptSource_clicked()
         return;
 
     QStringList packagesToRemove = selected;
-    (void)QtConcurrent::run([packagesToRemove]() {
-        emit SignalMapper::ins()->sigUninstallStarted();
-        ToolManager::ins()->uninstallPackages(packagesToRemove);
-        emit SignalMapper::ins()->sigUninstallFinished();
+    (void)QtConcurrent::run([this, packagesToRemove]() {
+        emit mSignalMapper->sigUninstallStarted();
+        mToolManager->uninstallPackages(packagesToRemove);
+        emit mSignalMapper->sigUninstallFinished();
     });
 #else
     if (! selectedAptSource.isNull()) {
-        ToolManager::ins()->removeAPTSource(selectedAptSource);
+        mToolManager->removeAPTSource(selectedAptSource);
         selectedAptSource.clear();
         loadAptSources();
         on_txtSearchAptSource_textChanged(ui->txtSearchAptSource->text());

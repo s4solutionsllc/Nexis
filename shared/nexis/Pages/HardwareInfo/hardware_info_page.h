@@ -15,7 +15,8 @@ class HardwareInfoPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit HardwareInfoPage(QWidget *parent = 0);
+    explicit HardwareInfoPage(QWidget *parent = nullptr,
+                              InfoManager *infoManager = nullptr);
     ~HardwareInfoPage();
 
 private slots:

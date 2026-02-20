@@ -19,7 +19,10 @@ class UninstallerPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit UninstallerPage(QWidget *parent = 0);
+    explicit UninstallerPage(QWidget *parent = nullptr,
+                             ToolManager *toolManager = nullptr,
+                             AppManager *appManager = nullptr,
+                             SignalMapper *signalMapper = nullptr);
     ~UninstallerPage();
 
 signals:
@@ -55,6 +58,8 @@ private:
     Ui::UninstallerPage *ui;
 
     ToolManager *tm;
+    AppManager *mAppManager;
+    SignalMapper *mSignalMapper;
 
     // Thread-safe package data (written on worker, read on main thread)
     QList<Package> mPackages;

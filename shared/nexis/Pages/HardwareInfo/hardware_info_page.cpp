@@ -24,10 +24,10 @@ HardwareInfoPage::~HardwareInfoPage()
     delete ui;
 }
 
-HardwareInfoPage::HardwareInfoPage(QWidget *parent) :
+HardwareInfoPage::HardwareInfoPage(QWidget *parent, InfoManager *infoManager) :
     QWidget(parent),
     ui(new Ui::HardwareInfoPage),
-    im(InfoManager::ins())
+    im(infoManager ? infoManager : InfoManager::ins())
 {
     ui->setupUi(this);
 

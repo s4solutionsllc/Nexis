@@ -15,6 +15,8 @@
 
 class QLabel;
 class QFrame;
+class SignalMapper;
+class ScheduleManager;
 
 namespace Ui {
     class SystemCleanerPage;
@@ -35,7 +37,11 @@ public:
     };
 
 public:
-    explicit SystemCleanerPage(QWidget *parent = nullptr);
+    explicit SystemCleanerPage(QWidget *parent = nullptr,
+                               AppManager *appManager = nullptr,
+                               SignalMapper *signalMapper = nullptr,
+                               CleanerService *cleanerService = nullptr,
+                               ScheduleManager *scheduleManager = nullptr);
     ~SystemCleanerPage();
 
 signals:
@@ -69,6 +75,10 @@ private:
 
 private:
     Ui::SystemCleanerPage *ui;
+    AppManager *mAppManager;
+    SignalMapper *mSignalMapper;
+    CleanerService *mCleanerService;
+    ScheduleManager *mScheduleManager;
 
     QIcon mDefaultIcon;
     QMovie *mLoadingMovie;

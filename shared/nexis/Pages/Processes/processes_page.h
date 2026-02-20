@@ -21,7 +21,8 @@ class ProcessesPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit ProcessesPage(QWidget *parent = 0);
+    explicit ProcessesPage(QWidget *parent = nullptr,
+                           InfoManager *infoManager = nullptr);
     ~ProcessesPage();
 
 private slots:

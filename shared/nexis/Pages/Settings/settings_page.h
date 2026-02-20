@@ -12,6 +12,9 @@
 #include "Managers/setting_manager.h"
 #include "signal_mapper.h"
 
+class InfoManager;
+class ScheduleManager;
+
 namespace Ui {
     class SettingsPage;
 }
@@ -21,7 +24,11 @@ class SettingsPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit SettingsPage(QWidget *parent = 0);
+    explicit SettingsPage(QWidget *parent = nullptr,
+                          AppManager *appManager = nullptr,
+                          SettingManager *settingManager = nullptr,
+                          InfoManager *infoManager = nullptr,
+                          ScheduleManager *scheduleManager = nullptr);
     ~SettingsPage();
 
 private slots:
@@ -58,6 +65,8 @@ private:
 
 private:
     AppManager *apm;
+    InfoManager *mInfoManager;
+    ScheduleManager *mScheduleManager;
 
     QString mStartupAppPath;
 

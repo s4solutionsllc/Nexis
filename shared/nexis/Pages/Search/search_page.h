@@ -25,7 +25,9 @@ class SearchPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit SearchPage(QWidget *parent = 0);
+    explicit SearchPage(QWidget *parent = nullptr,
+                        InfoManager *infoManager = nullptr,
+                        SettingManager *settingManager = nullptr);
     ~SearchPage();
 
 signals:
@@ -51,6 +53,8 @@ private slots:
 
 private:
     Ui::SearchPage *ui;
+    InfoManager *mInfoManager;
+    SettingManager *mSettingManager;
 
     QString mSelectedDirectory;
 

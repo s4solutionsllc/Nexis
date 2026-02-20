@@ -19,7 +19,8 @@ class ResourcesPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit ResourcesPage(QWidget *parent = 0);
+    explicit ResourcesPage(QWidget *parent = nullptr,
+                           InfoManager *infoManager = nullptr);
     ~ResourcesPage();
 
 private slots:

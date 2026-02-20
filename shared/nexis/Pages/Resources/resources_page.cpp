@@ -7,10 +7,10 @@ ResourcesPage::~ResourcesPage()
     delete ui;
 }
 
-ResourcesPage::ResourcesPage(QWidget *parent) :
+ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager) :
     QWidget(parent),
     ui(new Ui::ResourcesPage),
-    im(InfoManager::ins()),
+    im(infoManager ? infoManager : InfoManager::ins()),
     mChartCpu(new HistoryChart(tr("History of CPU"), im->getCpuCoreCount(), nullptr, this)),
     mChartCpuLoadAvg(new HistoryChart(tr("History of CPU Load Averages"), 3, nullptr, this)),
     mChartDiskReadWrite(new HistoryChart(tr("History of Disk Read Write"), 2, new QCategoryAxis, this)),

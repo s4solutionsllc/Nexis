@@ -13,7 +13,8 @@ class ServicesPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit ServicesPage(QWidget *parent = 0);
+    explicit ServicesPage(QWidget *parent = nullptr,
+                          ToolManager *toolManager = nullptr);
     ~ServicesPage();
 
 signals:
@@ -32,6 +33,7 @@ public slots:
 
 private:
     Ui::ServicesPage *ui;
+    ToolManager *mToolManager;
 
     QList<Service> mServices;
 };

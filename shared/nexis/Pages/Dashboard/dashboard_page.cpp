@@ -2,6 +2,7 @@
 #include "ui_dashboard_page.h"
 
 #include "utilities.h"
+#include "Managers/app_manager.h"
 #include "signal_mapper.h"
 
 #include <QDateTime>
@@ -17,7 +18,9 @@ DashboardPage::~DashboardPage()
     delete ui;
 }
 
-DashboardPage::DashboardPage(QWidget *parent) :
+DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
+                             SettingManager *settingManager, AppManager *appManager,
+                             SignalMapper *signalMapper) :
     QWidget(parent),
     ui(new Ui::DashboardPage),
     mCpuBar(new CircleBar(tr("CPU"), {"#2ec27e", "#26a269"}, this)),
@@ -27,8 +30,10 @@ DashboardPage::DashboardPage(QWidget *parent) :
     mDownloadBar(new LineBar(tr("DOWNLOAD"), this)),
     mUploadBar(new LineBar(tr("UPLOAD"), this)),
     mTimer(new QTimer(this)),
-    im(InfoManager::ins()),
-    mSettingManager(SettingManager::ins()),
+    im(infoManager ? infoManager : InfoManager::ins()),
+    mSettingManager(settingManager ? settingManager : SettingManager::ins()),
+    mAppManager(appManager ? appManager : AppManager::ins()),
+    mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mSelectedSensorIndex(0),
     mGpuBar(new CircleBar(tr("GPU"), {"#813d9c", "#613583"}, this)),
     mSelectedGpuIndex(0),
@@ -193,10 +198,10 @@ void DashboardPage::init()
     mKioskButton->setObjectName("btnKioskToggle");
     mKioskButton->raise();
 
-    connect(mKioskButton, &QPushButton::clicked, []() {
-        emit SignalMapper::ins()->sigKioskToggleRequested();
+    connect(mKioskButton, &QPushButton::clicked, this, [this]() {
+        emit mSignalMapper->sigKioskToggleRequested();
     });
-    connect(SignalMapper::ins(), &SignalMapper::sigKioskModeChanged,
+    connect(mSignalMapper, &SignalMapper::sigKioskModeChanged,
             this, &DashboardPage::onKioskModeChanged);
 }
 
@@ -244,7 +249,7 @@ void DashboardPage::updateCpuBar()
     if (cpuAlerPercent > 0) {
         static bool isShow = true;
         if (cpuUsedPercent > cpuAlerPercent && isShow) {
-            AppManager::ins()->getTrayIcon()->showMessage(tr("High CPU Usage"),
+            mAppManager->getTrayIcon()->showMessage(tr("High CPU Usage"),
                                                           tr("The amount of CPU used is over %1%.").arg(cpuAlerPercent),
                                                           QSystemTrayIcon::Warning);
             isShow = false;
@@ -279,7 +284,7 @@ void DashboardPage::updateMemoryBar()
     if (memoryAlertPercent > 0) {
         static bool isShow = true;
         if (memUsedPercent > memoryAlertPercent && isShow) {
-            AppManager::ins()->getTrayIcon()->showMessage(tr("High Memory Usage"),
+            mAppManager->getTrayIcon()->showMessage(tr("High Memory Usage"),
                                                           tr("The amount of memory used is over %1%.").arg(memoryAlertPercent),
                                                           QSystemTrayIcon::Warning);
             isShow = false;
@@ -324,7 +329,7 @@ void DashboardPage::updateDiskBar()
         if (diskAlertPercent > 0) {
             static bool isShow = true;
             if (diskPercent > diskAlertPercent && isShow) {
-                AppManager::ins()->getTrayIcon()->showMessage(tr("High Disk Usage"),
+                mAppManager->getTrayIcon()->showMessage(tr("High Disk Usage"),
                                                               tr("The amount of disk used is over %1%.").arg(diskAlertPercent),
                                                               QSystemTrayIcon::Warning);
                 isShow = false;
@@ -464,7 +469,7 @@ void DashboardPage::updateBatteryBar()
             if (bat.cycleCount >= 0)
                 msg += QString(" %1 %2.").arg(bat.cycleCount).arg(tr("cycles used"));
 
-            AppManager::ins()->getTrayIcon()->showMessage(
+            mAppManager->getTrayIcon()->showMessage(
                 tr("Battery Health Warning"),
                 msg,
                 QSystemTrayIcon::Warning);
@@ -538,7 +543,7 @@ void DashboardPage::updateDiskHealthBar()
 
         static bool alertShown = false;
         if (anyBad && !alertShown) {
-            AppManager::ins()->getTrayIcon()->showMessage(
+            mAppManager->getTrayIcon()->showMessage(
                 tr("Disk Health Warning"),
                 tr("%1 status: %2").arg(badDrive, badVerdict),
                 QSystemTrayIcon::Warning);

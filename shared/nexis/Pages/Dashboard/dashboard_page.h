@@ -17,6 +17,9 @@
 
 #include "Managers/setting_manager.h"
 
+class AppManager;
+class SignalMapper;
+
 namespace Ui {
     class DashboardPage;
 }
@@ -26,7 +29,11 @@ class DashboardPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit DashboardPage(QWidget *parent = 0);
+    explicit DashboardPage(QWidget *parent = nullptr,
+                           InfoManager *infoManager = nullptr,
+                           SettingManager *settingManager = nullptr,
+                           AppManager *appManager = nullptr,
+                           SignalMapper *signalMapper = nullptr);
     ~DashboardPage();
 
 protected:
@@ -72,8 +79,9 @@ private:
 
     QTimer *mTimer;
     InfoManager *im;
-
     SettingManager *mSettingManager;
+    AppManager *mAppManager;
+    SignalMapper *mSignalMapper;
 
     int mSelectedSensorIndex;
     int mSelectedGpuIndex;

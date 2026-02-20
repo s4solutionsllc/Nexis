@@ -16,7 +16,7 @@
    - [SignalMapper for Cross-Component Events](#5-signalmapper-for-cross-component-events)
 3. [Architecture Weaknesses](#architecture-weaknesses)
    - [~~No Formal Platform Interfaces~~ (Resolved)](#1-no-formal-platform-interfaces)
-   - [Singleton Coupling Limits Testability](#2-singleton-coupling-limits-testability)
+   - [~~Singleton Coupling Limits Testability~~ (Partially Resolved)](#2-singleton-coupling-limits-testability)
    - [Manager Layer Inconsistency](#3-manager-layer-inconsistency)
    - [CMake GLOB_RECURSE](#4-cmake-glob_recurse)
    - [No Automated Test Suite](#5-no-automated-test-suite)
@@ -58,7 +58,7 @@ Nexis is structured as a **three-tier desktop application**:
 
 **Key architectural decisions:**
 - **Compile-time platform abstraction** — Abstract base classes with pure virtual methods; platform subclasses selected via `#ifdef Q_OS_MACOS` at construction time
-- **Singleton managers** — Static `ins()` accessors, `std::unique_ptr` members, no dependency injection framework
+- **Singleton managers with DI escape hatches** — Static `ins()` accessors with `std::unique_ptr` members; all 10 page constructors accept optional manager pointers for test injection (FR-35)
 - **Timer-driven polling** — QTimers in each page drive data refresh (1s/5s/30s intervals)
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
 - **Qt signals** — `SignalMapper` singleton as a lightweight global event bus
@@ -275,27 +275,30 @@ InfoManager and ToolManager hold `std::unique_ptr<Interface>` members with `#ifd
 
 ---
 
-### 2. Singleton Coupling Limits Testability
+### 2. ~~Singleton Coupling Limits Testability~~ (Partially Resolved)
 
-Every page hardcodes its manager dependencies via static `ins()` calls:
+**Status:** Partially resolved in Phase 6 (FR-35). All 10 page classes with manager dependencies now accept optional manager pointers via constructor parameters with `nullptr` defaults. When `nullptr`, pages fall back to the `::ins()` singleton. Production call sites in `app.cpp` are unchanged.
 
 ```cpp
-// shared/nexis/Pages/Dashboard/dashboard_page.cpp:28
-DashboardPage::DashboardPage(QWidget *parent) :
-    QWidget(parent),
-    ...
-    im(InfoManager::ins()),          // Hardcoded singleton
-    mSettingManager(SettingManager::ins()),  // Hardcoded singleton
-    ...
+// After (FR-35) — backward compatible with default argument
+explicit DashboardPage(QWidget *parent = nullptr,
+                       InfoManager *infoManager = nullptr,
+                       SettingManager *settingManager = nullptr,
+                       AppManager *appManager = nullptr,
+                       SignalMapper *signalMapper = nullptr);
+
+// Constructor initializer — ternary fallback
+im(infoManager ? infoManager : InfoManager::ins()),
+mSettingManager(settingManager ? settingManager : SettingManager::ins()),
+mAppManager(appManager ? appManager : AppManager::ins()),
+mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins())
+
+// Test code can now inject mocks:
+MockInfoManager mockIM;
+DashboardPage testPage(nullptr, &mockIM);
 ```
 
-**Consequence:** It's impossible to test `DashboardPage` with mock data without either:
-1. Replacing the global `InfoManager::instance` pointer (fragile, not thread-safe)
-2. Running on a real OS with real CPU/memory data (not a unit test — it's an integration test)
-
-**Current state:** No tests exist, so this isn't actively blocking anything. But it means that adding tests in the future requires refactoring every page constructor first.
-
-**Scope of coupling:** All 14 pages reference `InfoManager::ins()` and/or `SettingManager::ins()` directly. Several also reference `ToolManager::ins()`, `AppManager::ins()`, and `SignalMapper::ins()`.
+**Remaining limitation:** Child widgets (CircleBar, HistoryChart, DiskUsageLauncherWidget, etc.) still use `::ins()` directly. These are out of scope for FR-35 — they would need their own DI parameters or a different approach to fully decouple from singletons.
 
 ---
 
@@ -334,7 +337,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 **Status:** Test infrastructure established in Phase 4 (FR-33). Qt Test framework configured with CTest integration, CI test step on all 3 matrix runners, and one smoke test (`FormatUtil::formatBytes()`). The `tests/` directory, `BUILD_TESTING` CMake option, and CI pipeline are in place. Unit test coverage is minimal (1 test) — expanding to 15-20 tests is tracked in Phase 7 (FR-36).
 
 **Remaining barriers to broader testing:**
-- Singleton coupling (§2) blocks mock injection — addressed in Phase 6 (FR-35)
+- ~~Singleton coupling (§2) blocks mock injection~~ — resolved in Phase 6 (FR-35): all 10 page constructors accept optional manager pointers for test injection
 - ~~Info classes read real OS state — no abstraction for test data~~ — resolved in Phase 5 (FR-34): abstract base classes enable mock subclasses for testing
 - Pages tightly bound to `.ui` files and Qt widgets
 
@@ -472,40 +475,9 @@ DashboardPage::DashboardPage() {
 
 ---
 
-#### 2B. Dependency Injection for Managers
+#### ~~2B. Dependency Injection for Managers~~ (Done)
 
-**What:** Add constructor parameters with default values so pages can receive injected managers for testing, while production code remains unchanged.
-
-**Why:** Unblocks unit testing without breaking any existing code.
-
-**How:**
-
-```cpp
-// Before
-class DashboardPage : public QWidget {
-    InfoManager *im = InfoManager::ins();  // hardcoded
-};
-
-// After — backward compatible with default argument
-class DashboardPage : public QWidget {
-public:
-    explicit DashboardPage(QWidget *parent = nullptr,
-                           InfoManager *infoMgr = InfoManager::ins());
-private:
-    InfoManager *im;
-};
-
-// Production code unchanged:
-dashboardPage = new DashboardPage();  // uses singleton default
-
-// Test code can inject mocks:
-MockInfoManager mockIM;
-DashboardPage testPage(nullptr, &mockIM);
-```
-
-**Effort:** Small-medium (touch 14 page constructors + their header files). No runtime behavior change.
-
-**Files affected:** All page `.h` and `.cpp` files (constructor signatures only).
+**Status:** Completed in Phase 6 (FR-35). All 10 page classes with manager dependencies now accept optional `nullptr`-default constructor parameters with ternary fallback to `::ins()` singletons. All `::ins()` calls in page method bodies replaced with member variable access. Production call sites in `app.cpp` unchanged. 4 pages with zero manager dependencies (StartupAppsPage, HelpersPage, GnomeSettingsPage, DockerPage) required no changes. Child widgets still use `::ins()` directly (known limitation, future scope).
 
 ---
 
@@ -526,7 +498,7 @@ DashboardPage testPage(nullptr, &mockIM);
 2. **Utility classes** — FormatUtil (expand), FileUtil operations, CommandUtil timeout handling
 3. **Manager logic** — CleanerService scan categorization, ScheduleManager CRUD operations
 
-Requires §2B (DI) for testing manager-dependent code.
+~~Requires §2B (DI)~~ (Done, FR-35) for testing manager-dependent code.
 
 ---
 
@@ -611,7 +583,7 @@ A phased approach to introducing automated testing:
 
 **Phase 1 (Done):** Test infrastructure established — Qt Test + CTest + CI integration (FR-33). One smoke test validates the pipeline.
 
-**Phase 2 (Next):** Implement dependency injection (§2B) across all page constructors, then add 15-20 unit tests covering core library logic:
+**Phase 2 (Next):** Dependency injection implemented (§2B, FR-35). Add 15-20 unit tests covering core library logic:
 - FormatUtil, FileUtil, CommandUtil (pure functions, easy to test)
 - MemoryInfo parsing (prevent BUG-01 class regressions)
 - DiskHealthInfo SMART data parsing
@@ -658,7 +630,7 @@ A phased approach to introducing automated testing:
 
 1. ~~**Explicit source lists in CMake**~~ — Done (Phase 2)
 2. **Abstract base classes for all platform code** — Compile-time enforcement of platform parity
-3. **Dependency injection on all page constructors** — Testable without framework overhead
+3. ~~**Dependency injection on all page constructors**~~ — Done (Phase 6, FR-35): testable without framework overhead
 4. **Centralized DataRefreshService** — 3 timers instead of 25, with pause/resume for battery optimization
 5. **QSS token validation** — Build-time warnings for theme inconsistencies
 6. **20-30 unit tests** covering core library parsing and utility functions
@@ -675,7 +647,7 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 |------|---------------|
 | `CMakeLists.txt` | Replace GLOB_RECURSE (§1A) |
 | `shared/nexis-core/Info/cpu_info.h` | ~~Template for abstract base class pattern (§1B)~~ Done — now an abstract base class with pure virtuals, 9 other Info classes follow this pattern |
-| `shared/nexis/Managers/info_manager.h` | Add DI constructor args (§2B), holds all Info instances |
+| `shared/nexis/Managers/info_manager.h` | ~~Add DI constructor args (§2B)~~ Done (FR-35), holds all Info instances |
 | `shared/nexis/Managers/app_manager.cpp` | ~~Add QSS token validation (§2C)~~ Done — token + color format validation added |
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | Primary refactor target for DataRefreshService (§2A) — has 3 timers |
 | `shared/nexis/Pages/Resources/resources_page.cpp` | Secondary refactor target — duplicates Dashboard polling |

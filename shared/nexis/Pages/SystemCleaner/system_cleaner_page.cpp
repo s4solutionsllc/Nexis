@@ -4,6 +4,7 @@
 #include "nexis_roles.h"
 #include "dpi.h"
 #include <Managers/schedule_manager.h>
+#include "signal_mapper.h"
 #include <Utils/format_util.h>
 #include <QLabel>
 #include <QFrame>
@@ -15,9 +16,15 @@ SystemCleanerPage::~SystemCleanerPage()
     delete ui;
 }
 
-SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
+SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
+                                     SignalMapper *signalMapper, CleanerService *cleanerService,
+                                     ScheduleManager *scheduleManager) :
     QWidget(parent),
     ui(new Ui::SystemCleanerPage),
+    mAppManager(appManager ? appManager : AppManager::ins()),
+    mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
+    mCleanerService(cleanerService ? cleanerService : CleanerService::ins()),
+    mScheduleManager(scheduleManager ? scheduleManager : ScheduleManager::ins()),
 #ifdef Q_OS_MACOS
     mDefaultIcon(QIcon(":/static/themes/common/img/package.png")),
 #else
@@ -28,7 +35,7 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QString themeName = AppManager::ins()->resolveThemeName();
+    QString themeName = mAppManager->resolveThemeName();
     mLoadingMovie = new QMovie(
         QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName), {}, this);
     ui->lblLoadingScanner->setMovie(mLoadingMovie);
@@ -87,8 +94,8 @@ void SystemCleanerPage::init()
     ui->treeWidgetScanResult->setHeaderLabels({ tr("File Name"), tr("Size") });
 
     // loaders — update GIF source on theme change (reuse existing QMovie objects)
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, [this] {
-        QString themeName = AppManager::ins()->resolveThemeName();
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, [this] {
+        QString themeName = mAppManager->resolveThemeName();
 
         mLoadingMovie->stop();
         mLoadingMovie->setFileName(
@@ -189,7 +196,7 @@ void SystemCleanerPage::systemScan()
     if (mScanAppCache)      categories << CleanerService::APPLICATION_CACHES;
     if (mScanDevToolCache)  categories << CleanerService::DEV_TOOL_CACHES;
 
-    CleanerService::ScanResult result = CleanerService::ins()->scan(categories);
+    CleanerService::ScanResult result = mCleanerService->scan(categories);
 
     // Distribute results back to member variables for onScanFinished()
     mPackageCaches = result.categoryFiles.value(CleanerService::PACKAGE_CACHE);
@@ -303,11 +310,11 @@ void SystemCleanerPage::systemClean()
     mTotalCleanedSize = 0;
 
     if (mCleanTrash) {
-        mTotalCleanedSize += CleanerService::ins()->cleanTrash();
+        mTotalCleanedSize += mCleanerService->cleanTrash();
     }
 
     if (!mFilesToDelete.isEmpty()) {
-        mTotalCleanedSize += CleanerService::ins()->cleanFiles(mFilesToDelete);
+        mTotalCleanedSize += mCleanerService->cleanFiles(mFilesToDelete);
     }
 
     emit cleanFinishedS();
@@ -526,7 +533,7 @@ void SystemCleanerPage::initScheduleIndicator()
 
     pageLayout->addWidget(mScheduleIndicator);
 
-    connect(ScheduleManager::ins(), &ScheduleManager::schedulesChanged,
+    connect(mScheduleManager, &ScheduleManager::schedulesChanged,
             this, &SystemCleanerPage::updateScheduleIndicator);
 
     updateScheduleIndicator();
@@ -534,7 +541,7 @@ void SystemCleanerPage::initScheduleIndicator()
 
 void SystemCleanerPage::updateScheduleIndicator()
 {
-    QList<ScheduleManager::CleaningSchedule> schedules = ScheduleManager::ins()->getAllSchedules();
+    QList<ScheduleManager::CleaningSchedule> schedules = mScheduleManager->getAllSchedules();
 
     bool hasEnabled = false;
     QDateTime earliest;
@@ -546,7 +553,7 @@ void SystemCleanerPage::updateScheduleIndicator()
         if (!s.enabled) continue;
         hasEnabled = true;
 
-        QDateTime next = ScheduleManager::ins()->getNextRunTime(s);
+        QDateTime next = mScheduleManager->getNextRunTime(s);
         if (!earliest.isValid() || next < earliest) {
             earliest = next;
             nextName = s.name;

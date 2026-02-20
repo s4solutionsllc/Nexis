@@ -10,9 +10,10 @@ ServicesPage::~ServicesPage()
     delete ui;
 }
 
-ServicesPage::ServicesPage(QWidget *parent) :
+ServicesPage::ServicesPage(QWidget *parent, ToolManager *toolManager) :
     QWidget(parent),
-    ui(new Ui::ServicesPage)
+    ui(new Ui::ServicesPage),
+    mToolManager(toolManager ? toolManager : ToolManager::ins())
 {
     ui->setupUi(this);
 
@@ -33,7 +34,7 @@ void ServicesPage::init()
 
 void ServicesPage::getServices()
 {
-    this->mServices = ToolManager::ins()->getServices();
+    this->mServices = mToolManager->getServices();
     emit loadServicesS();
 }
 

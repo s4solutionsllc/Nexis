@@ -8,6 +8,9 @@
 #include "apt_source_edit.h"
 #include "Managers/info_manager.h"
 
+class ToolManager;
+class SignalMapper;
+
 #ifdef Q_OS_MAC
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
@@ -25,7 +28,9 @@ class APTSourceManagerPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit APTSourceManagerPage(QWidget *parent = 0);
+    explicit APTSourceManagerPage(QWidget *parent = nullptr,
+                                  ToolManager *toolManager = nullptr,
+                                  SignalMapper *signalMapper = nullptr);
     ~APTSourceManagerPage();
 
 public:
@@ -60,6 +65,8 @@ private:
 
 private:
     Ui::APTSourceManagerPage *ui;
+    ToolManager *mToolManager;
+    SignalMapper *mSignalMapper;
 
     QSharedPointer<APTSourceEdit> mAptSourceEditDialog;
 
