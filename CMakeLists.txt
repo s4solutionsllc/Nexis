@@ -14,7 +14,7 @@ set(SHARED_DIR   "${PROJECT_ROOT}/shared")
 
 # Activating MOC and searching for the Qt6 dependencies
 set(CMAKE_AUTOMOC ON)
-find_package(Qt6 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network Test REQUIRED)
 
 # Setting the minimum C++ standard
 set(CMAKE_CXX_STANDARD           17)
@@ -383,6 +383,15 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"
    OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
    OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
   target_compile_options(nexis PRIVATE "-fno-strict-aliasing")
+endif()
+
+# ============================================================================
+# Tests (Qt Test + CTest)
+# ============================================================================
+option(BUILD_TESTING "Build the test suite" ON)
+if(BUILD_TESTING)
+  enable_testing()
+  add_subdirectory(tests)
 endif()
 
 # ============================================================================

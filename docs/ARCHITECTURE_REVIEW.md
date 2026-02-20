@@ -318,25 +318,14 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ---
 
-### 5. No Automated Test Suite
+### 5. ~~No Automated Test Suite~~ (Infrastructure Added)
 
-**Current state:** Zero unit tests, zero integration tests, zero regression tests. Quality assurance is:
-- CI builds on Ubuntu + macOS (catches compilation failures)
-- Manual visual QA (catches UI issues when someone looks)
-- Bug reports from usage
+**Status:** Test infrastructure established in Phase 4 (FR-33). Qt Test framework configured with CTest integration, CI test step on all 3 matrix runners, and one smoke test (`FormatUtil::formatBytes()`). The `tests/` directory, `BUILD_TESTING` CMake option, and CI pipeline are in place. Unit test coverage is minimal (1 test) — expanding to 15-20 tests is tracked in Phase 7 (FR-36).
 
-**Evidence of the cost:**
-- **43 bugs** fixed across 2024–2026, many of which were regressions caught late:
-  - BUG-30: Margin changes during a UI consistency pass caused layout regressions — entire change set had to be **reverted** after visual QA
-  - BUG-40: FR-16 (scheduled cleaning) introduced 8 hardcoded color values that broke dark mode — caught only during post-implementation review
-  - BUG-37: QMovie memory leak in System Cleaner — `new QMovie()` on every theme change without deleting the previous one
-  - BUG-01: Memory info calculation had **swapped variables** (shmem/sreclaimable) — a logic bug that automated tests would catch trivially
-
-**Barriers to testing:**
-- Singleton coupling (§2) blocks mock injection
-- Info classes read real OS state — no abstraction for test data
+**Remaining barriers to broader testing:**
+- Singleton coupling (§2) blocks mock injection — addressed in Phase 6 (FR-35)
+- Info classes read real OS state — no abstraction for test data — addressed in Phase 5 (FR-34)
 - Pages tightly bound to `.ui` files and Qt widgets
-- No test infrastructure (no `tests/` directory, no test framework configured)
 
 ---
 
@@ -565,36 +554,16 @@ DashboardPage testPage(nullptr, &mockIM);
 
 ### Priority 3: Medium (Testing & Quality)
 
-#### 3A. Basic Unit Test Suite
+#### 3A. Basic Unit Test Suite (Infrastructure Done)
 
-**What:** Add a `tests/` directory with Qt Test framework tests covering core library logic.
+**Infrastructure (Phase 4, FR-33):** Complete. Qt Test framework configured with CTest, `tests/` directory created, `BUILD_TESTING` CMake option (default ON), CI test step on all 3 matrix runners, and one smoke test validating `FormatUtil::formatBytes()` across all branches.
 
-**Target coverage priorities:**
+**Remaining (Phase 7, FR-36):** Write 15-20 unit tests covering:
 1. **Info class parsing** — MemoryInfo calculations (BUG-01 was a variable swap), DiskHealthInfo SMART parsing, CpuInfo load average computation
-2. **Utility classes** — FormatUtil::formatBytes(), FileUtil operations, CommandUtil timeout handling
+2. **Utility classes** — FormatUtil (expand), FileUtil operations, CommandUtil timeout handling
 3. **Manager logic** — CleanerService scan categorization, ScheduleManager CRUD operations
 
-**Framework:** Qt Test (`QTest`) — already available as a Qt dependency.
-
-**Example test:**
-
-```cpp
-class TestFormatUtil : public QObject {
-    Q_OBJECT
-private slots:
-    void testFormatBytes() {
-        QCOMPARE(FormatUtil::formatBytes(0), "0 B");
-        QCOMPARE(FormatUtil::formatBytes(1023), "1023 B");
-        QCOMPARE(FormatUtil::formatBytes(1024), "1.0 KiB");
-        QCOMPARE(FormatUtil::formatBytes(1536), "1.5 KiB");
-        QCOMPARE(FormatUtil::formatBytes(1073741824), "1.0 GiB");
-    }
-};
-```
-
-**Effort:** Medium (set up test infrastructure, write 15-20 initial tests). Requires §2B (DI) for testing manager-dependent code.
-
-**Files affected:** New `tests/` directory, `CMakeLists.txt` additions for test target.
+Requires §2B (DI) for testing manager-dependent code.
 
 ---
 
@@ -677,9 +646,9 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 
 A phased approach to introducing automated testing:
 
-**Phase 1 (Now):** Implement dependency injection (§2B) across all page constructors. This is prerequisite infrastructure — no tests yet, but the architecture supports them.
+**Phase 1 (Done):** Test infrastructure established — Qt Test + CTest + CI integration (FR-33). One smoke test validates the pipeline.
 
-**Phase 2 (Next quarter):** Add 15-20 unit tests covering core library logic:
+**Phase 2 (Next):** Implement dependency injection (§2B) across all page constructors, then add 15-20 unit tests covering core library logic:
 - FormatUtil, FileUtil, CommandUtil (pure functions, easy to test)
 - MemoryInfo parsing (prevent BUG-01 class regressions)
 - DiskHealthInfo SMART data parsing

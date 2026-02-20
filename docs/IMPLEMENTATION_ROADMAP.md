@@ -173,32 +173,25 @@
 
 ### Tasks
 
-- [ ] **4.1 Create `tests/` directory structure**
-  ```
-  tests/
-    CMakeLists.txt         (test target configuration)
-    test_main.cpp          (Qt Test runner entry point)
-    core/                  (tests for nexis-core classes)
-    utils/                 (tests for utility classes)
-    managers/              (tests for manager logic)
-  ```
+- [x] **4.1 Create `tests/` directory structure**
+  - Created `tests/CMakeLists.txt` (test target) and `tests/utils/` (utility tests)
+  - `test_main.cpp` omitted — `QTEST_MAIN()` per-file is the standard Qt Test pattern
 
-- [ ] **4.2 Add test target to root CMakeLists.txt**
-  - Add `enable_testing()` and `add_subdirectory(tests)` (behind a `BUILD_TESTING` option defaulting to ON)
-  - Link test executable against `nexis-core` and `Qt6::Test`
-  - Register with CTest via `add_test()`
-  - Acceptance: `cmake -B build -DBUILD_TESTING=ON && cmake --build build --target nexis-tests` compiles
+- [x] **4.2 Add test target to root CMakeLists.txt**
+  - Added `Qt6::Test` to `find_package`, `BUILD_TESTING` option (default ON), `enable_testing()`, `add_subdirectory(tests)`
+  - `nexis-tests` executable links `nexis-core` + `Qt6::Test`, registered with CTest
 
-- [ ] **4.3 Add one smoke test to validate the framework**
-  - `tests/utils/test_format_util.cpp` — test `FormatUtil::formatBytes(0)` returns `"0 B"`
-  - Acceptance: `ctest --test-dir build` runs and passes
+- [x] **4.3 Add one smoke test to validate the framework**
+  - `tests/utils/test_format_util.cpp` — 7 test methods covering all `formatBytes()` branches
+  - Note: actual output is `"0 bytes"` not `"0 B"` as originally documented
 
-- [ ] **4.4 Add CI test step (GitHub Actions)**
-  - Add `ctest --test-dir build --output-on-failure` to the CI build workflow
-  - Acceptance: CI builds now run tests; one passing test visible in CI logs
+- [x] **4.4 Add CI test step (GitHub Actions)**
+  - Added `ctest --test-dir build --output-on-failure` to `.github/workflows/build.yml`
+  - Runs on all 3 matrix runners (Linux x64, Linux ARM64, macOS ARM64)
 
-- [ ] **4.5 Update CLAUDE.md with test conventions**
-  - Document how to add new tests, test file naming, and the test build command
+- [x] **4.5 Update CLAUDE.md with test conventions**
+  - Added Testing section with framework, file naming, directory structure, and build commands
+  - Added `tests/` to Key Directories
 
 **Estimated effort:** 2-3 hours
 **Release target:** v1.3.0

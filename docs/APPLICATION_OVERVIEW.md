@@ -415,7 +415,7 @@ Six singleton managers mediate between UI pages and the core library.
 ### CMake Structure
 
 ```
-CMakeLists.txt          (root — project config, both targets)
+CMakeLists.txt          (root — project config, all targets)
 shared/
   cmake/cxxbasics/      (build cache, faster linkers, defaults)
   nexis-core/           (shared core library sources)
@@ -427,6 +427,9 @@ macos/
 linux/
   nexis-core/           (Linux core implementations)
   nexis/                (Linux GUI implementations)
+tests/
+  CMakeLists.txt        (test target configuration)
+  utils/                (utility class tests)
 ```
 
 ### Build Targets
@@ -441,6 +444,12 @@ linux/
 - macOS: `.app` bundle with icon, installs to `/Applications`
 - Linux: Binary to `/usr/bin`, `.desktop` file, hicolor icons (16x16 through 256x256)
 
+**`nexis-tests`** — Test executable (Qt Test + CTest)
+- Sources: `tests/**/*.cpp`
+- Dependencies: `nexis-core`, Qt6::Test
+- Gated behind `BUILD_TESTING` option (default ON)
+- Run via: `ctest --test-dir build --output-on-failure`
+
 ### Qt 6 Modules Used
 
 | Module | Purpose |
@@ -452,6 +461,7 @@ linux/
 | Svg | QSvgRenderer for SVG icon rendering |
 | Concurrent | `QtConcurrent::run` for async operations |
 | Network | `QNetworkInterface` for network info |
+| Test | Qt Test framework for unit tests (CTest integration) |
 | LinguistTools | `qt_create_translation` for i18n |
 
 ### Build Commands

@@ -66,6 +66,9 @@ jobs:
       - name: Build
         run: cmake --build build -j$(sysctl -n hw.ncpu 2>/dev/null || nproc)
 
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
       - name: Upload build artifact
         if: success()
         uses: actions/upload-artifact@v4

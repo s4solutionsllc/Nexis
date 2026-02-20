@@ -39,6 +39,24 @@ rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(
 cmake --build build -j$(sysctl -n hw.ncpu)
 ```
 
+## Testing
+
+Framework: Qt Test (QTest) with CTest integration. Tests build by default (`BUILD_TESTING=ON`).
+
+```bash
+# Run tests (after building)
+ctest --test-dir build --output-on-failure
+
+# Build without tests
+cmake -B build -DBUILD_TESTING=OFF ...
+```
+
+**Adding a new test:**
+1. Create `tests/<category>/test_<classname>.cpp` (categories: `utils/`, `core/`, `managers/`)
+2. Use `QTEST_MAIN(TestClassName)` and `#include "test_<classname>.moc"` at the end
+3. Add the file to the source list in `tests/CMakeLists.txt`
+4. Register with CTest via `add_test(NAME <TestName> COMMAND nexis-tests)`
+
 ## Key Directories
 
 - `nexis-core/` — Core library (system info, utilities)
@@ -46,6 +64,7 @@ cmake --build build -j$(sysctl -n hw.ncpu)
 - `shared/` — Shared code between platforms
 - `linux/` — Linux-specific implementations
 - `translations/` — i18n `.ts` files
+- `tests/` — Qt Test unit tests (CTest integration)
 
 ## Feature / Bug Resolution Workflow
 
