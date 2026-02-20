@@ -241,8 +241,11 @@ Miscellaneous utility tools.
 
 **Hosts File Manager** — GUI editor for `/etc/hosts`:
 - Add, edit, delete entries (IP address, hostname, aliases)
-- Enable/disable entries without deletion
-- Save changes (requires sudo elevation)
+- Input validation: IPv4/IPv6 via `QHostAddress`, hostname format per RFC 1123 (with underscore tolerance), alias validation
+- Save changes with confirmation dialog showing change summary (N added, N modified, N deleted)
+- Automatic backup to `/etc/hosts.nexis-backup` before each save (permission-preserving via `sudo cp -p`)
+- Writes via `sudo tee` (no temp file — content piped through stdin for security)
+- Error feedback: auth cancellation and write failures shown via `QMessageBox`; success shown in status label
 - Lazy-loaded: file parsed only when user navigates to the page
 
 ### 11. APT Repository Manager / Homebrew

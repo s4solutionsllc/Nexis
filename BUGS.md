@@ -288,9 +288,9 @@
   - **Fix complexity:** Trivial (escape `&` as `&&` in the `.ui` file so Qt renders a literal `&`)
   - **Resolved:** Changed `&amp;` to `&amp;&amp;` in the `.ui` XML, which Qt interprets as a literal `&` character.
 
-- [ ] **BUG-43: Host Manager — multiple data integrity and security issues** (MEDIUM)
+- [x] **BUG-43: Host Manager — multiple data integrity and security issues** (MEDIUM)
   - **Scope:** Helpers page → Host Manage dialog
-  - **Files:** `shared/nexis/Pages/Helpers/host_manage.cpp`
+  - **Files:** `shared/nexis/Pages/Helpers/host_manage.cpp`, `shared/nexis/Pages/Helpers/host_manage.h`
   - **Description:** The Host Manager (`/etc/hosts` editor) has several issues that should be investigated and addressed:
     1. **Predictable temp file (security):** Save writes to hardcoded `/tmp/nexis_etc_host_new_content` then `sudo mv` to `/etc/hosts`. Predictable path enables symlink attacks. Should use `QTemporaryFile`.
     2. **No error handling on save:** `FileUtil::writeFile()` return value is ignored; `sudoExec("mv", ...)` failure is only logged to `qDebug()` with no user feedback. In-memory and on-disk states can silently diverge.
@@ -300,6 +300,7 @@
     6. **No backup before write:** No backup of original `/etc/hosts` is created before overwriting; if the save introduces errors, there's no recovery path.
     7. **No confirmation dialog:** "Save Changes" immediately writes to `/etc/hosts` with no confirmation or diff view.
   - **Fix complexity:** Moderate (multiple targeted fixes across the save path, deletion logic, and validation)
+  - **Resolved:** Seven fixes: (1) Replaced predictable temp file + `sudo mv` with `sudo tee` stdin pipe (no temp file, no symlink risk, preserves file ownership). (2) Added error detection — verifies tee success via stdout echo, shows `QMessageBox::critical()` on failure (auth cancelled, permission denied), success message in `lblChangesMsg`. (3) Fixed deletion to use `removeAt()` + full model rebuild instead of empty-string placeholders — no more blank lines in saved file. (4) Added input validation: IPv4/IPv6 via `QHostAddress`, hostname via RFC 1123 regex (with underscore tolerance), per-alias validation, inline error messages. (5) Added backup: `sudo cp -p /etc/hosts /etc/hosts.nexis-backup` before each save (warns but doesn't block on failure). (6) Added confirmation dialog with change summary (N added, N modified, N deleted) and no-change detection. (7) Removed unused `isAddHost` member.
 
 - [x] **BUG-45: Kiosk mode toggle button icons display in gray instead of Nexis orange** (LOW)
   - **Scope:** Dashboard page — kiosk mode toggle button (FR-30)

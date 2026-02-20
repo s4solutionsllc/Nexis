@@ -48,7 +48,6 @@ private slots:
 private:
     Ui::HostManage *ui;
 
-    bool isAddHost;
     QList<QString> mHeaderList;
 
     QStandardItemModel *mItemModel;
@@ -56,10 +55,14 @@ private:
     QMenu mTableRowMenu;
 
     QStringList mHostFileContent;
+    QStringList mOriginalHostFileContent;
     QMap<int, HostItem> mHostItemList;
 
     int updatedLine;
     bool mLoaded = false;
+
+    static bool isValidIP(const QString &ip);
+    static bool isValidHostname(const QString &hostname);
 };
 
 #endif // HOST_MANAGE_H
