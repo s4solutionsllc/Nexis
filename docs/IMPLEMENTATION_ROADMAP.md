@@ -46,7 +46,7 @@
 | **6** | **Medium** | Dependency injection | Arch §2B | Small-Med | v1.4.0 |
 | **7** | **Medium** | Unit test suite | Arch §3A (tests) | Medium | v1.4.0 |
 | ~~**8**~~ | ~~**Low**~~ | ~~Centralized data refresh~~ | ~~Arch §2A~~ | ~~Large~~ | ~~v1.5.0~~ ✅ |
-| **9** | **Deferred** | GUI consistency, plugin arch, event bus, CI screenshots | FR-38, FR-39, FR-40, FR-41 | — | — |
+| **9** | **Deferred** | GUI consistency, plugin arch, event bus, ~~CI screenshots~~ | FR-38, FR-39, FR-40, ~~FR-41~~ ✅ | — | — |
 
 ---
 
@@ -398,11 +398,9 @@ These items are intentionally deferred. They should be reconsidered if/when thei
 - **Current status:** 8 signals — well within the simple singleton's comfort zone
 - **When to revisit:** If multiple new cross-component features push the signal count significantly higher
 
-### 9D. CI Screenshot Regression Tests (FR-41)
+### ~~9D. CI Screenshot Regression Tests (FR-41)~~ ✅
 - **Scope:** Per-page screenshot capture with perceptual diff comparison in CI. Architecture Review §3B.
-- **Trigger:** After Phase 7 (unit tests) is stable and BUG-30-class visual regressions recur
-- **Current status:** Deferred — requires maintaining reference images and setting up headless rendering in CI
-- **When to revisit:** After the unit test suite has been running successfully for several releases
+- **Status:** Completed. Implemented `test-ScreenshotTests` executable linked against new `nexis-gui` static library. Captures 11 pages × 2 themes, Qt-native pixel diff with per-page tolerance, Xvfb for Linux CI, visual diff artifact upload, non-blocking initially. Reference images committed for macOS; Linux refs to be generated on first CI run. Update script at `scripts/update_screenshots.sh`.
 
 ---
 

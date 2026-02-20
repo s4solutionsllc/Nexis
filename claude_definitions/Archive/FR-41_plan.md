@@ -13,9 +13,9 @@ Add automated screenshot capture and perceptual diff comparison to the CI pipeli
 Create the QTest-based executable that captures all pages in both themes and compares against reference images.
 
 ### Task 1.1 — Create screenshot test source file
-- [ ] Create `tests/screenshots/test_screenshots.cpp`
-- [ ] Use `QTEST_MAIN(ScreenshotTests)` pattern with `#include "test_screenshots.moc"`
-- [ ] Define the `ScreenshotTests` QTest class with:
+- [x] Create `tests/screenshots/test_screenshots.cpp`
+- [x] Use `QTEST_MAIN(ScreenshotTests)` pattern with `#include "test_screenshots.moc"`
+- [x] Define the `ScreenshotTests` QTest class with:
   - `initTestCase()` — creates `QApplication`, instantiates `App`, calls `App::init()`, waits for theme to apply
   - `cleanupTestCase()` — cleans up the App instance
   - `capturePage(int pageIndex, const QString &pageName)` — helper that uses `QWidget::grab()` to capture a page screenshot
@@ -59,7 +59,7 @@ Create the QTest-based executable that captures all pages in both themes and com
 - Each PNG is 1024×768 and contains rendered UI (not blank/black)
 
 ### Task 1.2 — Implement pixel comparison with tolerance
-- [ ] Add `imagesMatch()` helper function in the test file:
+- [x] Add `imagesMatch()` helper function in the test file:
   ```cpp
   struct CompareResult {
       bool passed;
@@ -71,10 +71,10 @@ Create the QTest-based executable that captures all pages in both themes and com
 
   CompareResult compareImages(const QImage &actual, const QImage &reference, double tolerancePercent);
   ```
-- [ ] Compare logic: iterate all pixels, count mismatches, compute percentage
-- [ ] Generate a diff image highlighting changed pixels in red (for CI artifact upload on failure)
-- [ ] Default tolerance: 1.0% (configurable via environment variable `NEXIS_SCREENSHOT_TOLERANCE`)
-- [ ] On mismatch: save the actual image, reference image, and diff image side-by-side to `build/test_screenshots/failures/`
+- [x] Compare logic: iterate all pixels, count mismatches, compute percentage
+- [x] Generate a diff image highlighting changed pixels in red (for CI artifact upload on failure)
+- [x] Default tolerance: 1.0% (configurable via environment variable `NEXIS_SCREENSHOT_TOLERANCE`)
+- [x] On mismatch: save the actual image, reference image, and diff image side-by-side to `build/test_screenshots/failures/`
 
 **Acceptance criteria:**
 - `imagesMatch()` returns true for identical images
@@ -82,7 +82,7 @@ Create the QTest-based executable that captures all pages in both themes and com
 - Diff image clearly highlights changed pixels
 
 ### Task 1.3 — Platform detection for reference image paths
-- [ ] Detect platform at runtime to select correct reference image directory:
+- [x] Detect platform at runtime to select correct reference image directory:
   ```cpp
   QString platformDir() {
       #ifdef Q_OS_MACOS
@@ -92,19 +92,19 @@ Create the QTest-based executable that captures all pages in both themes and com
       #endif
   }
   ```
-- [ ] Reference images loaded from: `{PROJECT_SOURCE_DIR}/tests/reference_screenshots/{platform}/{theme}/{pagename}.png`
-- [ ] The `PROJECT_SOURCE_DIR` compile definition is already provided by the `add_nexis_test()` macro
-- [ ] If reference image does not exist, skip comparison and log a warning (don't fail — allows first-run generation)
+- [x] Reference images loaded from: `{PROJECT_SOURCE_DIR}/tests/reference_screenshots/{platform}/{theme}/{pagename}.png`
+- [x] The `PROJECT_SOURCE_DIR` compile definition is already provided by the `add_nexis_test()` macro
+- [x] If reference image does not exist, skip comparison and log a warning (don't fail — allows first-run generation)
 
 **Acceptance criteria:**
 - Test loads correct platform-specific reference images
 - Missing reference images produce warnings, not failures
 
 ### Task 1.4 — Generate mode (reference image capture)
-- [ ] Support a `--generate` command-line argument or `NEXIS_GENERATE_REFS=1` environment variable
-- [ ] In generate mode: capture all pages and save directly to `tests/reference_screenshots/{platform}/{theme}/` (overwriting existing references)
-- [ ] Skip comparison entirely in generate mode — just capture and save
-- [ ] Print summary: "Generated 22 reference screenshots for {platform}"
+- [x] Support a `--generate` command-line argument or `NEXIS_GENERATE_REFS=1` environment variable
+- [x] In generate mode: capture all pages and save directly to `tests/reference_screenshots/{platform}/{theme}/` (overwriting existing references)
+- [x] Skip comparison entirely in generate mode — just capture and save
+- [x] Print summary: "Generated 22 reference screenshots for {platform}"
 
 **Acceptance criteria:**
 - Running with `NEXIS_GENERATE_REFS=1` creates/overwrites reference images in the correct directory structure
@@ -115,7 +115,7 @@ Create the QTest-based executable that captures all pages in both themes and com
 ## Phase 2 — CMake Integration
 
 ### Task 2.1 — Register screenshot test in CMakeLists.txt
-- [ ] Add new test registration in `tests/CMakeLists.txt`:
+- [x] Add new test registration in `tests/CMakeLists.txt`:
   ```cmake
   # ── Screenshot regression tests ─────────────────────────────────────────────
   add_nexis_test(NAME ScreenshotTests
@@ -132,8 +132,8 @@ Create the QTest-based executable that captures all pages in both themes and com
       "${CMAKE_SOURCE_DIR}/shared/nexis/Pages"
   )
   ```
-- [ ] Verify the `nexis-app` (or equivalent GUI library target) exposes the necessary symbols — if not, may need to compile page sources directly (like ScheduleTests does for its manager sources)
-- [ ] Alternative: if the app is built as an executable (not a library), create a static library target in the main `CMakeLists.txt` containing all GUI sources, and link the screenshot test against it
+- [x] Verify the `nexis-app` (or equivalent GUI library target) exposes the necessary symbols — if not, may need to compile page sources directly (like ScheduleTests does for its manager sources)
+- [x] Alternative: if the app is built as an executable (not a library), create a static library target in the main `CMakeLists.txt` containing all GUI sources, and link the screenshot test against it
 
 **Acceptance criteria:**
 - `cmake -B build` succeeds with the new test registered
@@ -141,7 +141,7 @@ Create the QTest-based executable that captures all pages in both themes and com
 - `ctest --test-dir build` lists `ScreenshotTests` in the test list
 
 ### Task 2.2 — Create reference screenshot directory structure
-- [ ] Create the directory tree:
+- [x] Create the directory tree:
   ```
   tests/reference_screenshots/
     linux/
@@ -151,7 +151,7 @@ Create the QTest-based executable that captures all pages in both themes and com
       dark/.gitkeep
       light/.gitkeep
   ```
-- [ ] Add `.gitkeep` files so the empty directories are tracked
+- [x] Add `.gitkeep` files so the empty directories are tracked
 
 **Acceptance criteria:**
 - Directory structure exists and is committed
@@ -162,7 +162,7 @@ Create the QTest-based executable that captures all pages in both themes and com
 ## Phase 3 — CI Workflow Changes
 
 ### Task 3.1 — Add Xvfb and ImageMagick to Linux CI dependencies
-- [ ] In `.github/workflows/build.yml`, add to the Linux dependency install step:
+- [x] In `.github/workflows/build.yml`, add to the Linux dependency install step:
   ```yaml
   xvfb \
   imagemagick
@@ -174,7 +174,7 @@ Create the QTest-based executable that captures all pages in both themes and com
 - Existing build/test steps still pass
 
 ### Task 3.2 — Wrap test step with Xvfb on Linux
-- [ ] Modify the `Test` step in `build.yml` to use `xvfb-run` on Linux:
+- [x] Modify the `Test` step in `build.yml` to use `xvfb-run` on Linux:
   ```yaml
   - name: Test
     run: |
@@ -184,7 +184,7 @@ Create the QTest-based executable that captures all pages in both themes and com
         ctest --test-dir build --output-on-failure
       fi
   ```
-- [ ] The `-a` flag auto-selects an available display number, avoiding conflicts
+- [x] The `-a` flag auto-selects an available display number, avoiding conflicts
 
 **Acceptance criteria:**
 - Existing unit tests still pass on all 3 platforms
@@ -192,7 +192,7 @@ Create the QTest-based executable that captures all pages in both themes and com
 - macOS tests run without Xvfb (not needed)
 
 ### Task 3.3 — Upload failure artifacts on screenshot mismatch
-- [ ] Add a new step after `Test` that uploads diff images when screenshot tests fail:
+- [x] Add a new step after `Test` that uploads diff images when screenshot tests fail:
   ```yaml
   - name: Upload screenshot diffs
     if: failure()
@@ -210,8 +210,8 @@ Create the QTest-based executable that captures all pages in both themes and com
 - Artifact contains actual/reference/diff images for failed comparisons
 
 ### Task 3.4 — Make screenshot tests non-blocking initially
-- [ ] Set the screenshot test to not fail the CTest run by adding `PROPERTIES WILL_FAIL FALSE` or by using `continue-on-error: true` at the CI step level
-- [ ] Alternative approach: separate the test step into two:
+- [x] Set the screenshot test to not fail the CTest run by adding `PROPERTIES WILL_FAIL FALSE` or by using `continue-on-error: true` at the CI step level
+- [x] Alternative approach: separate the test step into two:
   ```yaml
   - name: Unit Tests
     run: |
@@ -230,7 +230,7 @@ Create the QTest-based executable that captures all pages in both themes and com
         ctest --test-dir build --output-on-failure -R ScreenshotTests
       fi
   ```
-- [ ] This keeps unit test failures blocking while screenshot failures are informational until references stabilize
+- [x] This keeps unit test failures blocking while screenshot failures are informational until references stabilize
 
 **Acceptance criteria:**
 - Unit test failures still block the CI build
@@ -242,18 +242,18 @@ Create the QTest-based executable that captures all pages in both themes and com
 ## Phase 4 — Generate Initial Reference Images
 
 ### Task 4.1 — Generate macOS reference images locally
-- [ ] Build the project locally on macOS
-- [ ] Run: `NEXIS_GENERATE_REFS=1 ./build/test-ScreenshotTests`
-- [ ] Verify 22 images generated in `tests/reference_screenshots/macos/{dark,light}/`
-- [ ] Visually inspect each screenshot to confirm correct rendering
-- [ ] Commit the reference images
+- [x] Build the project locally on macOS
+- [x] Run: `NEXIS_GENERATE_REFS=1 ./build/test-ScreenshotTests`
+- [x] Verify 22 images generated in `tests/reference_screenshots/macos/{dark,light}/`
+- [x] Visually inspect each screenshot to confirm correct rendering
+- [x] Commit the reference images
 
 ### Task 4.2 — Generate Linux reference images via CI
-- [ ] Temporarily modify CI to run screenshot tests in generate mode:
+- [x] Temporarily modify CI to run screenshot tests in generate mode:
   - Set `NEXIS_GENERATE_REFS=1` environment variable
   - Upload generated reference images as CI artifacts
-- [ ] Download the Linux artifacts and commit them to `tests/reference_screenshots/linux/{dark,light}/`
-- [ ] Revert the CI to comparison mode (remove `NEXIS_GENERATE_REFS=1`)
+- [x] Download the Linux artifacts and commit them to `tests/reference_screenshots/linux/{dark,light}/`
+- [x] Revert the CI to comparison mode (remove `NEXIS_GENERATE_REFS=1`)
 
 **Alternative approach:** If the Linux CI environment matches a local Linux setup (Ubuntu 24.04 + Qt 6), generate locally instead.
 
@@ -263,15 +263,15 @@ Create the QTest-based executable that captures all pages in both themes and com
 - Images are committed to the repository
 
 ### Task 4.3 — Validate Linux architecture consistency
-- [ ] Determine if Linux x86_64 and ARM64 produce identical screenshots (same Qt rendering)
-- [ ] If font/rendering differs between architectures, create separate reference sets:
+- [x] Determine if Linux x86_64 and ARM64 produce identical screenshots (same Qt rendering)
+- [x] If font/rendering differs between architectures, create separate reference sets:
   ```
   tests/reference_screenshots/
     linux-x86_64/
     linux-arm64/
     macos/
   ```
-- [ ] Update platform detection in test code to distinguish architectures on Linux
+- [x] Update platform detection in test code to distinguish architectures on Linux
 
 **Acceptance criteria:**
 - Reference images match the CI environment for each platform/architecture combination
@@ -282,7 +282,7 @@ Create the QTest-based executable that captures all pages in both themes and com
 ## Phase 5 — Reference Image Update Script
 
 ### Task 5.1 — Create update script
-- [ ] Create `scripts/update_screenshots.sh`:
+- [x] Create `scripts/update_screenshots.sh`:
   ```bash
   #!/bin/bash
   # Regenerate reference screenshots for the current platform.
@@ -301,8 +301,8 @@ Create the QTest-based executable that captures all pages in both themes and com
   echo "  git add tests/reference_screenshots/"
   echo "  git commit -m 'chore: update reference screenshots'"
   ```
-- [ ] Make the script executable: `chmod +x scripts/update_screenshots.sh`
-- [ ] For Linux with Xvfb: detect and use `xvfb-run` if no display is available
+- [x] Make the script executable: `chmod +x scripts/update_screenshots.sh`
+- [x] For Linux with Xvfb: detect and use `xvfb-run` if no display is available
 
 **Acceptance criteria:**
 - Running `./scripts/update_screenshots.sh` regenerates all reference images for the current platform
@@ -313,22 +313,22 @@ Create the QTest-based executable that captures all pages in both themes and com
 ## Phase 6 — Documentation & Tracking Updates
 
 ### Task 6.1 — Update FEATURE_REQUESTS.md
-- [ ] Mark FR-41 as `[x]` done with resolution summary
+- [x] Mark FR-41 as `[x]` done with resolution summary
 
 ### Task 6.2 — Update docs/APPLICATION_OVERVIEW.md
-- [ ] Add screenshot regression tests to the testing section
-- [ ] Update test counts (executables and methods)
-- [ ] Document the reference image directory structure
+- [x] Add screenshot regression tests to the testing section
+- [x] Update test counts (executables and methods)
+- [x] Document the reference image directory structure
 
 ### Task 6.3 — Update docs/ARCHITECTURE_REVIEW.md
-- [ ] Note the new CI testing capability under the testing section
-- [ ] Update any test infrastructure descriptions
+- [x] Note the new CI testing capability under the testing section
+- [x] Update any test infrastructure descriptions
 
 ### Task 6.4 — Update IMPLEMENTATION_ROADMAP.md
-- [ ] Mark relevant FR-41 tasks as complete in the roadmap
+- [x] Mark relevant FR-41 tasks as complete in the roadmap
 
 ### Task 6.5 — Archive research and plan files
-- [ ] Move `claude_definitions/FR-41_research.md` and `claude_definitions/FR-41_plan.md` to `claude_definitions/Archive/`
+- [x] Move `claude_definitions/FR-41_research.md` and `claude_definitions/FR-41_plan.md` to `claude_definitions/Archive/`
 
 ---
 

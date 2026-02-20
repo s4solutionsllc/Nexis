@@ -48,7 +48,8 @@ jobs:
             qt6-tools-dev-tools \
             qt6-l10n-tools \
             libqt6charts6-dev \
-            libqt6svg6-dev
+            libqt6svg6-dev \
+            xvfb
 
       # --- macOS dependencies ---
       - name: Install dependencies (macOS)
@@ -66,8 +67,31 @@ jobs:
       - name: Build
         run: cmake --build build -j$(sysctl -n hw.ncpu 2>/dev/null || nproc)
 
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
+      - name: Unit Tests
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
+          else
+            ctest --test-dir build --output-on-failure -E ScreenshotTests
+          fi
+
+      - name: Screenshot Tests (FR-41)
+        continue-on-error: true
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            xvfb-run -a ctest --test-dir build --output-on-failure -R ScreenshotTests
+          else
+            ctest --test-dir build --output-on-failure -R ScreenshotTests
+          fi
+
+      - name: Upload screenshot diffs
+        if: failure() || success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-diffs-${{ matrix.artifact-name }}
+          path: build/test_screenshots/failures/
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Upload build artifact
         if: success()

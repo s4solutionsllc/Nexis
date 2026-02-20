@@ -432,18 +432,11 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 ---
 
-#### 3B. CI Screenshot Regression Tests
+#### 3B. CI Screenshot Regression Tests ✅
 
-**What:** Capture screenshots of each page at startup in CI and compare against reference images to catch visual regressions.
+**Status:** Implemented (FR-41). The `test-ScreenshotTests` executable captures all 11 always-visible pages in both Dark and Light themes (22 screenshots per platform), compares against committed reference PNGs using a Qt-native pixel diff with configurable per-page tolerance, and uploads visual diff artifacts on failure. CI runs screenshot tests as non-blocking (`continue-on-error`) until references stabilize. Linux CI uses Xvfb for headless GUI rendering.
 
-**Why:** BUG-30 (margin regressions across 10 `.ui` files) and BUG-40 (dark mode breakage from hardcoded colors) were caught only by manual QA — sometimes after the code was already committed.
-
-**How:**
-- Use Qt's `QPixmap::grab(widget)` to capture each page programmatically
-- Compare against reference PNGs using ImageMagick `compare` (perceptual diff)
-- Flag differences above a threshold for manual review in CI
-
-**Effort:** Large (initial setup + maintaining reference images). Best as a long-term investment after basic unit tests are in place.
+**Architecture change:** The GUI sources were extracted into a `nexis-gui` static library so that both the `nexis` executable and the screenshot test can link against them without duplicating the source list. Reference images are stored in-repo under `tests/reference_screenshots/{platform}/{theme}/`.
 
 ---
 
@@ -519,11 +512,13 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 - SettingManager defaults and overrides
 - Integration tests for manager CRUD operations
 
-**Phase 4 (Future):** UI regression testing:
-- Screenshot comparison in CI
-- Automated dark/light mode rendering checks
+**Phase 4 (Done):** UI regression testing (FR-41):
+- Screenshot comparison in CI — 11 pages × 2 themes per platform
+- Qt-native pixel diff with configurable per-page tolerance
+- Visual diff artifact upload on CI failure for manual review
+- Non-blocking initially (`continue-on-error`) until references stabilize
 
-**Current state:** ~63 test methods covering core library, utilities, manager logic, and theme validation. Focus on high-risk areas identified by past bugs (data parsing, format conversion, SMART verdict logic, schedule calculations).
+**Current state:** 7 CTest executables — 63 unit test methods covering core library, utilities, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage.
 
 ---
 

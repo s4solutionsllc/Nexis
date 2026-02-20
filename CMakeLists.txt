@@ -179,7 +179,8 @@ if(APPLE)
 endif()
 
 # ============================================================================
-# nexis (executable) — shared + platform GUI sources
+# nexis-gui (static library) — shared + platform GUI sources (no main.cpp)
+# Used by the nexis executable and by screenshot regression tests (FR-41).
 # ============================================================================
 set(GUI_SHARED_DIR "${SHARED_DIR}/nexis")
 set(GUI_PLAT_DIR   "${PLATFORM_DIR}/nexis")
@@ -190,7 +191,6 @@ set(GUI_PLAT_DIR   "${PLATFORM_DIR}/nexis")
 set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/app.cpp"
   "${GUI_SHARED_DIR}/feedback.cpp"
-  "${GUI_SHARED_DIR}/main.cpp"
   "${GUI_SHARED_DIR}/signal_mapper.cpp"
   "${GUI_SHARED_DIR}/sliding_stacked_widget.cpp"
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
@@ -353,24 +353,18 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
   "${GUI_SHARED_DIR}/Pages/Docker"
 )
 
-# macOS app icon
-if(APPLE)
-  set(MACOS_ICON "${CMAKE_SOURCE_DIR}/macos/nexis.icns")
-  set_source_files_properties("${MACOS_ICON}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-endif()
-
-add_executable(nexis
+# --- nexis-gui static library (everything except main.cpp) ---
+add_library(nexis-gui STATIC
   ${GUI_SHARED_SRCS}
   ${GUI_SHARED_HDRS}
   ${GUI_PLAT_SRCS}
   ${GUI_PLAT_HDRS}
   "${GUI_SHARED_DIR}/static.qrc"
-  ${QM_FILES}
-  $<$<PLATFORM_ID:Darwin>:${MACOS_ICON}>
 )
 
-# Include dirs (platform first, then shared)
-target_include_directories(nexis PRIVATE
+# Include dirs are PUBLIC so that consumers (nexis executable, screenshot tests)
+# inherit them without re-listing.
+target_include_directories(nexis-gui PUBLIC
   "${GUI_PLAT_DIR}"
   "${GUI_PLAT_DIR}/Managers"
   "${GUI_PLAT_DIR}/Pages/StartupApps"
@@ -396,21 +390,36 @@ target_include_directories(nexis PRIVATE
   "${CMAKE_BINARY_DIR}"
 )
 
-target_compile_definitions(nexis PRIVATE QT_DEPRECATED_WARNINGS)
-target_link_libraries(nexis
-  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent
-)
-
 set(APP_VERSION "${PROJECT_VERSION}")
 message(STATUS "App version: ${APP_VERSION}")
-target_compile_definitions(nexis PRIVATE "APP_VERSION=\"${APP_VERSION}\"")
+
+target_compile_definitions(nexis-gui PUBLIC QT_DEPRECATED_WARNINGS "APP_VERSION=\"${APP_VERSION}\"")
+target_link_libraries(nexis-gui PUBLIC
+  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent
+)
 
 # Strict aliasing fix for Qt + LTO
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"
    OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"
    OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-  target_compile_options(nexis PRIVATE "-fno-strict-aliasing")
+  target_compile_options(nexis-gui PRIVATE "-fno-strict-aliasing")
 endif()
+
+# --- nexis executable (thin wrapper: just main.cpp + translations + icon) ---
+
+# macOS app icon
+if(APPLE)
+  set(MACOS_ICON "${CMAKE_SOURCE_DIR}/macos/nexis.icns")
+  set_source_files_properties("${MACOS_ICON}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+endif()
+
+add_executable(nexis
+  "${GUI_SHARED_DIR}/main.cpp"
+  ${QM_FILES}
+  $<$<PLATFORM_ID:Darwin>:${MACOS_ICON}>
+)
+
+target_link_libraries(nexis nexis-gui)
 
 # ============================================================================
 # Tests (Qt Test + CTest)

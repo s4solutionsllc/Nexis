@@ -435,6 +435,8 @@ tests/
   core/                 (DiskHealthInfo verdict + JSON parsing tests)
   managers/             (ScheduleManager tests)
   theme/                (theme token validation tests)
+  screenshots/          (FR-41 screenshot regression tests)
+  reference_screenshots/  (per-platform reference PNGs: {linux,macos}/{dark,light}/)
 ```
 
 ### Build Targets
@@ -443,16 +445,23 @@ tests/
 - Sources: `shared/nexis-core/**/*.cpp` + `{platform}/nexis-core/**/*.cpp`
 - Dependencies: Qt6::Core, Qt6::Network, IOKit + CoreFoundation (macOS only)
 
-**`nexis`** — GUI executable
-- Sources: `shared/nexis/**/*.cpp` + `{platform}/nexis/**/*.cpp` + `static.qrc` + translations
+**`nexis-gui`** — Static library (all GUI code except main.cpp)
+- Sources: `shared/nexis/**/*.cpp` + `{platform}/nexis/**/*.cpp` + `static.qrc`
 - Dependencies: `nexis-core`, Qt6::Core, Gui, Widgets, Charts, Svg, Concurrent
+- Shared by both the `nexis` executable and the screenshot test
+
+**`nexis`** — GUI executable
+- Sources: `main.cpp` + translations + icon
+- Dependencies: `nexis-gui` (inherits all Qt and core dependencies)
 - macOS: `.app` bundle with icon, installs to `/Applications`
 - Linux: Binary to `/usr/bin`, `.desktop` file, hicolor icons (16x16 through 256x256)
 
-**Test executables** — 6 CTest-registered executables (Qt Test + CTest)
-- Per-file executables via `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable)
-- 63 test methods: FormatUtil (10), FileUtil (10), CommandUtil (9), DiskHealthInfo (20), ScheduleManager (15), ThemeTokens (7)
-- Dependencies: `nexis-core`, Qt6::Test (ScheduleManager test also compiles schedule_manager.cpp + setting_manager.cpp directly)
+**Test executables** — 7 CTest-registered executables (Qt Test + CTest)
+- 6 unit test executables via `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable)
+- 1 screenshot regression test executable linked against `nexis-gui`
+- 63 unit test methods: FormatUtil (10), FileUtil (10), CommandUtil (9), DiskHealthInfo (20), ScheduleManager (15), ThemeTokens (7)
+- Screenshot test: captures 11 pages × 2 themes, compares against reference PNGs with per-page pixel tolerance
+- Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)
 - Run via: `ctest --test-dir build --output-on-failure`
 

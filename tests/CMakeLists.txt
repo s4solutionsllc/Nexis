@@ -41,3 +41,13 @@ add_nexis_test(NAME ScheduleTests
 
 # ── Theme validation tests ─────────────────────────────────────────────────────
 add_nexis_test(NAME ThemeTokenTests   SOURCES theme/test_theme_tokens.cpp)
+
+# ── Screenshot regression tests (FR-41) ───────────────────────────────────────
+# Links against the full nexis-gui library (not just nexis-core) because it
+# instantiates the App window with all pages, managers, and themes.
+add_executable(test-ScreenshotTests screenshots/test_screenshots.cpp)
+target_link_libraries(test-ScreenshotTests nexis-gui Qt6::Test)
+target_compile_definitions(test-ScreenshotTests PRIVATE
+  PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+add_test(NAME ScreenshotTests COMMAND test-ScreenshotTests)
