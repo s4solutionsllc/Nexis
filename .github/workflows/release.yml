@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   # ============================================================================
@@ -302,3 +303,8 @@ jobs:
             ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}
             ${{ steps.files.outputs.BINARY_ARM64_PATH }}
             ${{ steps.files.outputs.DMG_PATH }}
+
+      - name: Trigger website rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref native

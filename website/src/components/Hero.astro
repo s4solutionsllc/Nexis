@@ -1,3 +1,18 @@
+---
+let version = "Latest";
+try {
+  const res = await fetch("https://api.github.com/repos/lsimpsonsfdc/Nexis/releases/latest", {
+    headers: { "Accept": "application/vnd.github.v3+json" },
+  });
+  if (res.ok) {
+    const data = await res.json();
+    version = data.tag_name ?? "Latest";
+  }
+} catch {
+  // API unavailable (rate-limited, offline) — fall back to generic label
+}
+---
+
 <section class="relative overflow-hidden pt-32 pb-16 md:pt-40 md:pb-24">
   <!-- Gradient glow -->
   <div class="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-nexis-orange/10 blur-3xl"></div>
@@ -21,7 +36,7 @@
         class="inline-flex items-center gap-2 rounded-lg bg-nexis-orange px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-nexis-orange-hover"
       >
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-        Download v1.2.0
+        Download {version}
       </a>
       <a
         href="https://github.com/lsimpsonsfdc/Nexis"
