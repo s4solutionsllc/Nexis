@@ -6,6 +6,12 @@
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
 
+#ifdef Q_OS_MACOS
+#include <Info/system_info_macos.h>
+#else
+#include <Info/system_info_linux.h>
+#endif
+
 #include <QDateTime>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -13,6 +19,14 @@
 #include <QRegularExpression>
 #include <QResizeEvent>
 #include <QVersionNumber>
+
+static QColor colorFromStyle(const QString &token)
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    if (sv)
+        return QColor(sv->value(token).toString());
+    return QColor("#888888");
+}
 
 DashboardPage::~DashboardPage()
 {
@@ -24,22 +38,23 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
                              SignalMapper *signalMapper, DataRefreshService *refreshService) :
     QWidget(parent),
     ui(new Ui::DashboardPage),
-    mCpuBar(new CircleBar(tr("CPU"), {"#2ec27e", "#26a269"}, this)),
-    mMemBar(new CircleBar(tr("MEMORY"), {"#E95420", "#c64516"}, this)),
-    mDiskBar(new CircleBar(tr("DISK"), {"#e01b24", "#c01c28"}, this)),
-    mTempBar(new CircleBar(tr("TEMP"), {"#1c71d8", "#1a5fb4"}, this)),
-    mDownloadBar(new LineBar(tr("DOWNLOAD"), this)),
-    mUploadBar(new LineBar(tr("UPLOAD"), this)),
+    mCpuTile(new MetricTile(tr("CPU"), colorFromStyle("@cpuColor"), this)),
+    mMemTile(new MetricTile(tr("MEMORY"), colorFromStyle("@memoryColor"), this)),
+    mDiskTile(new DiskTile(colorFromStyle("@diskColor"), colorFromStyle("@color02"), this)),
+    mTempTile(new MetricTile(tr("TEMP"), colorFromStyle("@tempColor"), this)),
+    mGpuTile(new MetricTile(tr("GPU"), colorFromStyle("@gpuColor"), this)),
+    mBatteryTile(new MetricTile(tr("BATTERY"), colorFromStyle("@batteryColor"), this)),
+    mDiskHealthTile(new MetricTile(tr("DISK HEALTH"), colorFromStyle("@diskHealthColor"), this)),
+    mNetworkTile(new NetworkTile(colorFromStyle("@networkColor"), this)),
+    mCmbTempSensor(new QComboBox(this)),
+    mCmbGpuDevice(new QComboBox(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
     mSettingManager(settingManager ? settingManager : SettingManager::ins()),
     mAppManager(appManager ? appManager : AppManager::ins()),
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
     mSelectedSensorIndex(0),
-    mGpuBar(new CircleBar(tr("GPU"), {"#813d9c", "#613583"}, this)),
     mSelectedGpuIndex(0),
-    mBatteryBar(new CircleBar(tr("BATTERY"), {"#f5c211", "#e5a50a"}, this)),
-    mDiskHealthBar(new CircleBar(tr("DISK HEALTH"), {"#26a69a", "#00897b"}, this)),
     mKioskButton(new QPushButton(this))
 {
     ui->setupUi(this);
@@ -49,101 +64,157 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
 
 void DashboardPage::init()
 {
-    // Circle bars (row 0)
-    ui->circleBarsLayout->addWidget(mCpuBar);
-    ui->circleBarsLayout->addWidget(mMemBar);
-    ui->circleBarsLayout->addWidget(mDiskBar);
+    // Bento grid layout (mockup-aligned):
+    //  Row 0: HeroCard(CPU+Memory) (colspan 2) | Disk | Network
+    //  Row 1: GPU* | Temp* | Battery* | DiskHealth*
+    // * = conditional tiles
 
-    // Disk health gauge (row 0) — graceful degradation
-    if (im->hasDiskHealth()) {
-        ui->circleBarsLayout->addWidget(mDiskHealthBar);
+    int row = 0;
+    int col = 0;
+
+    // Row 0: Hero card (CPU + Memory combined) + Disk + Network
+    mHeroCard = new HeroCard(mCpuTile, mMemTile, this);
+    ui->bentoGrid->addWidget(mHeroCard, 0, 0, 1, 2);
+    ui->bentoGrid->addWidget(mDiskTile, 0, 2);
+    ui->bentoGrid->addWidget(mNetworkTile, 0, 3);
+
+    // Set Hero display mode for CPU and Memory tiles
+    mCpuTile->setDisplayMode(MetricTile::Hero);
+    mMemTile->setDisplayMode(MetricTile::Hero);
+
+    // Row 1: remaining tiles placed dynamically based on available hardware
+    row = 1;
+    col = 0;
+
+    if (im->hasGpu()) {
+        mGpuTile->setDisplayMode(MetricTile::Large);
+        ui->bentoGrid->addWidget(mGpuTile, row, col++);
     } else {
-        mDiskHealthBar->hide();
+        mGpuTile->hide();
     }
 
-    // Line bars (stacked in col 2)
-    ui->lineBarsLayout->addWidget(mDownloadBar);
-    ui->lineBarsLayout->addWidget(mUploadBar);
+    if (im->hasThermalSensors()) {
+        mTempTile->setDisplayMode(MetricTile::Large);
+        ui->bentoGrid->addWidget(mTempTile, row, col++);
+    } else {
+        mTempTile->hide();
+    }
 
-    // Temperature gauge (row 1, col 1) — graceful degradation
+    if (im->hasBattery()) {
+        mBatteryTile->setDisplayMode(MetricTile::Large);
+        ui->bentoGrid->addWidget(mBatteryTile, row, col++);
+    } else {
+        mBatteryTile->hide();
+    }
+
+    if (im->hasDiskHealth()) {
+        mDiskHealthTile->setDisplayMode(MetricTile::Large);
+        ui->bentoGrid->addWidget(mDiskHealthTile, row, col++);
+    } else {
+        mDiskHealthTile->hide();
+    }
+
+    // If only a few tiles in row 1, let them stretch
+    for (int c = 0; c < 4; ++c)
+        ui->bentoGrid->setColumnStretch(c, 1);
+
+    // Temperature sensor combo box (overlaid on temp tile)
     if (im->hasThermalSensors()) {
         QList<ThermalSensor> sensors = im->getThermalSensors();
         for (const ThermalSensor &s : sensors)
-            ui->cmbTempSensor->addItem(s.label);
+            mCmbTempSensor->addItem(s.label);
 
-        // Restore saved sensor selection
         QString savedSensorId = mSettingManager->getTempSensorId();
         if (!savedSensorId.isEmpty()) {
             for (int i = 0; i < sensors.size(); ++i) {
                 if (sensors.at(i).id == savedSensorId) {
-                    ui->cmbTempSensor->setCurrentIndex(i);
+                    mCmbTempSensor->setCurrentIndex(i);
                     mSelectedSensorIndex = i;
                     break;
                 }
             }
         }
 
-        ui->tempContainerLayout->addWidget(mTempBar);
+        mCmbTempSensor->setObjectName("cmbTempSensor");
+        mCmbTempSensor->setCursor(Qt::PointingHandCursor);
+        mCmbTempSensor->setFocusPolicy(Qt::NoFocus);
+        mCmbTempSensor->setMaximumWidth(140);
+        mTempTile->setSubtitle("");
+        mTempTile->layout()->addWidget(mCmbTempSensor);
 
-        connect(ui->cmbTempSensor, &QComboBox::currentIndexChanged,
+        connect(mCmbTempSensor, &QComboBox::currentIndexChanged,
                 this, &DashboardPage::onTempSensorChanged);
         connect(mRefresh, &DataRefreshService::tempUpdated,
-                this, &DashboardPage::updateTempBar);
+                this, &DashboardPage::updateTempTile);
     } else {
-        ui->tempContainer->hide();
-        mTempBar->hide();       // prevent orphan widget rendering at (0,0)
+        mCmbTempSensor->hide();
     }
 
-    // GPU gauge — graceful degradation
+    // GPU device combo box
     if (im->hasGpu()) {
         QList<GpuDevice> gpus = im->getGpuDevices();
         for (const GpuDevice &g : gpus)
-            ui->cmbGpuDevice->addItem(g.name);
+            mCmbGpuDevice->addItem(g.name);
 
-        // Restore saved GPU selection
         QString savedGpuId = mSettingManager->getGpuDeviceId();
         if (!savedGpuId.isEmpty()) {
             for (int i = 0; i < gpus.size(); ++i) {
                 if (gpus.at(i).name == savedGpuId) {
-                    ui->cmbGpuDevice->setCurrentIndex(i);
+                    mCmbGpuDevice->setCurrentIndex(i);
                     mSelectedGpuIndex = i;
                     break;
                 }
             }
         }
 
-        // Hide the combo box if there's only one GPU
         if (gpus.size() <= 1)
-            ui->cmbGpuDevice->hide();
+            mCmbGpuDevice->hide();
+        else {
+            mCmbGpuDevice->setObjectName("cmbGpuDevice");
+            mCmbGpuDevice->setCursor(Qt::PointingHandCursor);
+            mCmbGpuDevice->setFocusPolicy(Qt::NoFocus);
+            mCmbGpuDevice->setMaximumWidth(140);
+            mGpuTile->layout()->addWidget(mCmbGpuDevice);
+        }
 
-        ui->gpuContainerLayout->addWidget(mGpuBar);
-
-        connect(ui->cmbGpuDevice, &QComboBox::currentIndexChanged,
+        connect(mCmbGpuDevice, &QComboBox::currentIndexChanged,
                 this, &DashboardPage::onGpuDeviceChanged);
         connect(mRefresh, &DataRefreshService::gpuUpdated,
                 this, &DashboardPage::onGpuUpdated);
     } else {
-        ui->gpuContainer->hide();
-        mGpuBar->hide();
+        mCmbGpuDevice->hide();
     }
 
-    // Battery gauge — graceful degradation
+    // Battery gauge
     if (im->hasBattery()) {
-        ui->batteryContainerLayout->addWidget(mBatteryBar);
         connect(mRefresh, &DataRefreshService::batteryUpdated,
                 this, &DashboardPage::onBatteryUpdated);
-    } else {
-        ui->batteryContainer->hide();
-        mBatteryBar->hide();
     }
 
-    // Disk health gauge — subscribe to 30s refresh
+    // Disk health gauge
     if (im->hasDiskHealth()) {
         connect(mRefresh, &DataRefreshService::diskHealthUpdated,
                 this, &DashboardPage::onDiskHealthUpdated);
     }
 
-    // Subscribe to DataRefreshService signals
+    // Set CPU model + core info as subtitle
+    {
+#ifdef Q_OS_MACOS
+        SystemInfoMacOS sysInfo;
+#else
+        SystemInfoLinux sysInfo;
+#endif
+        QString cpuModel = sysInfo.getCpuModel();
+        int coreCount = im->getCpuCoreCount();
+        if (!cpuModel.isEmpty()) {
+            QString cpuSubtitle = cpuModel;
+            if (coreCount > 0)
+                cpuSubtitle += QString(" \u2022 %1C").arg(coreCount);
+            mCpuTile->setSubtitle(cpuSubtitle);
+        }
+    }
+
+    // Core data signals
     connect(mRefresh, &DataRefreshService::cpuUpdated,
             this, &DashboardPage::onCpuUpdated);
     connect(mRefresh, &DataRefreshService::memoryUpdated,
@@ -153,25 +224,41 @@ void DashboardPage::init()
     connect(mRefresh, &DataRefreshService::diskUsageUpdated,
             this, &DashboardPage::onDiskUsageUpdated);
 
-    ui->widgetUpdateBar->hide();
+    // Set network interface name
+    QString ifName = im->getDefaultNetworkInterface();
+    if (!ifName.isEmpty())
+        mNetworkTile->setInterfaceName(ifName);
 
-    // check update
+    // Quick actions bar
+    buildQuickActions();
+
+    // Update bar
+    ui->widgetUpdateBar->hide();
     checkUpdate();
     connect(this, &DashboardPage::sigShowUpdateBar, ui->widgetUpdateBar, &QWidget::show);
 
+    // Drop shadows on tiles
     QList<QWidget*> widgets = {
-        mCpuBar, mMemBar, mDiskBar, mDownloadBar, mUploadBar
+        mHeroCard, mDiskTile, mNetworkTile
     };
     if (im->hasThermalSensors())
-        widgets.append(mTempBar);
+        widgets.append(mTempTile);
     if (im->hasGpu())
-        widgets.append(mGpuBar);
+        widgets.append(mGpuTile);
     if (im->hasBattery())
-        widgets.append(mBatteryBar);
+        widgets.append(mBatteryTile);
     if (im->hasDiskHealth())
-        widgets.append(mDiskHealthBar);
+        widgets.append(mDiskHealthTile);
 
     Utilities::addDropShadow(widgets, 60);
+
+    // System summary card
+    buildSystemSummary();
+
+    // Status footer
+    ui->lblFooterRight->setText(
+        QString("Nexis v%1 \u2022 Refreshing every 1s")
+            .arg(qApp->applicationVersion()));
 
     // Kiosk mode toggle button (floating, top-right)
     mKioskButton->setFixedSize(32, 32);
@@ -188,6 +275,79 @@ void DashboardPage::init()
     });
     connect(mSignalMapper, &SignalMapper::sigKioskModeChanged,
             this, &DashboardPage::onKioskModeChanged);
+}
+
+void DashboardPage::buildSystemSummary()
+{
+#ifdef Q_OS_MACOS
+    SystemInfoMacOS sysInfo;
+#else
+    SystemInfoLinux sysInfo;
+#endif
+
+    ui->systemSummary->setObjectName("systemSummaryCard");
+
+    // Replace default horizontal layout with vertical for inline summary
+    // Remove existing layout items
+    while (ui->summaryLayout->count() > 0) {
+        QLayoutItem *item = ui->summaryLayout->takeAt(0);
+        delete item;
+    }
+
+    // Title
+    auto *lblTitle = new QLabel(tr("SYSTEM"), ui->systemSummary);
+    lblTitle->setObjectName("summaryLabel");
+    ui->summaryLayout->addWidget(lblTitle);
+
+    // Container for the two-line summary
+    auto *summaryWidget = new QWidget(ui->systemSummary);
+    auto *vbox = new QVBoxLayout(summaryWidget);
+    vbox->setContentsMargins(0, 0, 0, 0);
+    vbox->setSpacing(2);
+
+    // Line 1: hostname (bold) + OS + CPU + RAM
+    QString hostname = sysInfo.getHostname();
+    QString os = sysInfo.getDistribution();
+    QString cpu = sysInfo.getCpuModel();
+    quint64 memTotal = im->getMemTotal();
+    QString ram = FormatUtil::formatBytes(memTotal) + " RAM";
+
+    auto *lblLine1 = new QLabel(ui->systemSummary);
+    lblLine1->setObjectName("summaryValue");
+    lblLine1->setText(QString("<b>%1</b> <span style='color: #6B6E78;'>\u2022 %2 \u2022 %3 \u2022 %4</span>")
+        .arg(hostname, os, cpu, ram));
+    vbox->addWidget(lblLine1);
+    mSummaryLabels.append(lblLine1);
+
+    ui->summaryLayout->addWidget(summaryWidget);
+    ui->summaryLayout->addStretch();
+}
+
+void DashboardPage::buildQuickActions()
+{
+    ui->quickActionsCard->setObjectName("quickActionsCard");
+
+    auto *lblTitle = new QLabel(tr("QUICK ACTIONS"), this);
+    lblTitle->setObjectName("quickActionsTitle");
+    ui->quickActionsLayout->addWidget(lblTitle);
+    ui->quickActionsLayout->addStretch();
+
+    auto makeBtn = [this](const QString &text, bool primary, const QString &page) {
+        auto *btn = new QPushButton(text, this);
+        btn->setObjectName("quickActionBtn");
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setFocusPolicy(Qt::NoFocus);
+        if (primary)
+            btn->setAccessibleName("quickActionPrimary");
+        connect(btn, &QPushButton::clicked, this, [this, page]() {
+            emit mSignalMapper->sigNavigateToPage(page);
+        });
+        return btn;
+    };
+
+    ui->quickActionsLayout->addWidget(makeBtn(tr("Clean System"), true, tr("System Cleaner")));
+    ui->quickActionsLayout->addWidget(makeBtn(tr("View Processes"), false, tr("Processes")));
+    ui->quickActionsLayout->addWidget(makeBtn(tr("Check Updates"), false, tr("Settings")));
 }
 
 void DashboardPage::checkUpdate()
@@ -207,7 +367,6 @@ void DashboardPage::checkUpdate()
                 const QVersionNumber remote = QVersionNumber::fromString(match.captured());
                 const QVersionNumber local  = QVersionNumber::fromString(qApp->applicationVersion());
 
-                // Only show the update bar when the remote release is newer
                 if (!remote.isNull() && !local.isNull() && local < remote) {
                     emit sigShowUpdateBar();
                 }
@@ -222,7 +381,6 @@ void DashboardPage::on_btnDownloadUpdate_clicked()
 {
     QDesktopServices::openUrl(QUrl("https://github.com/lsimpsonsfdc/Nexis/releases/latest"));
 }
-
 
 void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
                                   const QList<double> &loadAvgs)
@@ -245,21 +403,18 @@ void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
         }
     }
 
-    QString cpuLabel;
-    if (clockGHz > 0.00001)
-        cpuLabel = QString("%1 GHz\n%2%").arg(clockGHz, 0, 'f', 2).arg(cpuUsedPercent);
-    else
-        cpuLabel = QString("%1%").arg(cpuUsedPercent);
+    QString valueText = QString("%1%").arg(cpuUsedPercent);
 
-    mCpuBar->setValue(cpuUsedPercent, cpuLabel);
+    mCpuTile->setValue(cpuUsedPercent, valueText);
+    mCpuTile->addDataPoint(cpuUsedPercent);
+
+    if (clockGHz > 0.00001)
+        mCpuTile->setSecondaryValue(QString("%1 GHz").arg(clockGHz, 0, 'f', 2));
 }
 
 void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
                                      quint64 swapUsed, quint64 swapTotal)
 {
-    Q_UNUSED(swapUsed)
-    Q_UNUSED(swapTotal)
-
     int memUsedPercent = 0;
     if (total) {
         memUsedPercent = ((double)used / (double)total) * 100.0;
@@ -282,9 +437,13 @@ void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
         }
     }
 
-    mMemBar->setValue(memUsedPercent, QString("%1 / %2")
-                     .arg(f_memUsed)
-                     .arg(f_memTotal));
+    mMemTile->setValue(memUsedPercent, QString("%1%").arg(memUsedPercent));
+    mMemTile->addDataPoint(memUsedPercent);
+    mMemTile->setSecondaryValue(QString("%1 / %2").arg(f_memUsed, f_memTotal));
+
+    QString swapSubtitle = QString("Swap: %1 / %2")
+        .arg(FormatUtil::formatBytes(swapUsed), FormatUtil::formatBytes(swapTotal));
+    mMemTile->setSubtitle(swapSubtitle);
 }
 
 void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
@@ -329,51 +488,31 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
     QString sizeText = FormatUtil::formatBytes(disk->size);
     QString usedText = FormatUtil::formatBytes(disk->used);
 
-    mDiskBar->setValue(diskPercent, QString("%1 / %2")
-                      .arg(usedText)
-                      .arg(sizeText));
+    mDiskTile->setValue(diskPercent, usedText, sizeText);
 }
 
 void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 {
     static quint64 l_RXbytes = rxBytes;
     static quint64 l_TXbytes = txBytes;
-    static quint64 max_RXbytes = 1L << 20; // 1 MEBI
-    static quint64 max_TXbytes = 1L << 20; // 1 MEBI
 
     quint64 d_RXbytes = (rxBytes - l_RXbytes);
     quint64 d_TXbytes = (txBytes - l_TXbytes);
 
-    QString downText = FormatUtil::formatBytes(d_RXbytes);
-    QString upText   = FormatUtil::formatBytes(d_TXbytes);
-
-    int downPercent = ((double) d_RXbytes / (double) max_RXbytes) * 100.0;
-    int upPercent   = ((double) d_TXbytes / (double) max_TXbytes) * 100.0;
-
-    mDownloadBar->setValue(downPercent,
-                          QString("%1/s").arg(downText),
-                          tr("Total: %1").arg(FormatUtil::formatBytes(rxBytes)));
-
-    mUploadBar->setValue(upPercent,
-                        QString("%1/s").arg(upText),
-                        tr("Total: %1").arg(FormatUtil::formatBytes(txBytes)));
-
-    max_RXbytes = qMax(max_RXbytes, d_RXbytes);
-    max_TXbytes = qMax(max_TXbytes, d_TXbytes);
+    mNetworkTile->setValues(d_RXbytes, d_TXbytes, rxBytes, txBytes);
 
     l_RXbytes = rxBytes;
     l_TXbytes = txBytes;
 }
 
-void DashboardPage::updateTempBar()
+void DashboardPage::updateTempTile()
 {
     double temp = im->getThermalTemperature(mSelectedSensorIndex);
     int percent = qBound(0, static_cast<int>(temp), 100);
 
     double tempF = temp * 9.0 / 5.0 + 32.0;
-    mTempBar->setValue(percent, QString("%1 \u00B0C / %2 \u00B0F")
-                       .arg(temp, 0, 'f', 1)
-                       .arg(tempF, 0, 'f', 1));
+    mTempTile->setValue(percent, QString("%1\u00B0C").arg(temp, 0, 'f', 1));
+    mTempTile->addDataPoint(temp);
 }
 
 void DashboardPage::onTempSensorChanged(int index)
@@ -384,7 +523,7 @@ void DashboardPage::onTempSensorChanged(int index)
     if (index >= 0 && index < sensors.size())
         mSettingManager->setTempSensorId(sensors.at(index).id);
 
-    updateTempBar();
+    updateTempTile();
 }
 
 void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
@@ -393,9 +532,10 @@ void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
         return;
 
     const GpuDevice &gpu = gpus.at(mSelectedGpuIndex);
-    int util = qMax(0, gpu.utilization);  // -1 → 0 for display
+    int util = qMax(0, gpu.utilization);
 
-    mGpuBar->setValue(util, QString("%1%").arg(util));
+    mGpuTile->setValue(util, QString("%1%").arg(util));
+    mGpuTile->addDataPoint(util);
 }
 
 void DashboardPage::onGpuDeviceChanged(int index)
@@ -418,14 +558,18 @@ void DashboardPage::onBatteryUpdated(const BatteryData &bat)
     displayValue = qBound(0, displayValue, 100);
 
     QString label;
-    if (bat.healthPercent >= 0 && bat.cycleCount >= 0)
-        label = QString("%1%\n%2 %3").arg(bat.healthPercent).arg(bat.cycleCount).arg(tr("cycles"));
-    else if (bat.healthPercent >= 0)
+    if (bat.healthPercent >= 0)
         label = QString("%1%").arg(bat.healthPercent);
     else
         label = QString("%1%").arg(bat.chargePercent);
 
-    mBatteryBar->setValue(displayValue, label);
+    QString subtitle;
+    if (bat.cycleCount >= 0)
+        subtitle = QString("%1 %2").arg(bat.cycleCount).arg(tr("cycles"));
+
+    mBatteryTile->setValue(displayValue, label);
+    if (!subtitle.isEmpty())
+        mBatteryTile->setSubtitle(subtitle);
 
     // Battery health alert (inverted: warn when BELOW threshold)
     int alertPercent = mSettingManager->getBatteryAlertPercent();
@@ -463,7 +607,6 @@ void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 
     int worstHealth = 100;
     QString worstVerdict = "Good";
-    QString worstModel;
     bool hasAnyHealth = false;
 
     for (const DriveHealth &d : drives) {
@@ -472,13 +615,11 @@ void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
             if (d.healthPercent < worstHealth) {
                 worstHealth = d.healthPercent;
                 worstVerdict = d.healthVerdict;
-                worstModel = d.model.isEmpty() ? d.deviceName : d.model;
             }
         } else if (!d.smartPassed) {
             hasAnyHealth = true;
             worstHealth = 0;
             worstVerdict = "Critical";
-            worstModel = d.model.isEmpty() ? d.deviceName : d.model;
         }
     }
 
@@ -496,13 +637,19 @@ void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 
     int displayPercent = qBound(0, worstHealth, 100);
 
-    QString label;
-    if (drives.size() > 1 && !worstModel.isEmpty())
-        label = QString("%1%\n%2").arg(displayPercent).arg(worstVerdict);
-    else
-        label = QString("%1%\n%2").arg(displayPercent).arg(worstVerdict);
+    mDiskHealthTile->setValue(displayPercent, QString("%1%").arg(displayPercent));
+    mDiskHealthTile->setSubtitle(worstVerdict);
 
-    mDiskHealthBar->setValue(displayPercent, label);
+    // Populate drive health on disk tile (first time only)
+    static bool diskHealthPopulated = false;
+    if (!diskHealthPopulated) {
+        for (const DriveHealth &d : drives) {
+            QString name = d.model.isEmpty() ? d.deviceName : d.model;
+            bool good = (d.healthVerdict == "Good" || d.smartPassed);
+            mDiskTile->setDriveHealth(name, d.healthVerdict, good);
+        }
+        diskHealthPopulated = true;
+    }
 
     // Disk health alert
     if (mSettingManager->getDiskHealthAlertEnabled()) {

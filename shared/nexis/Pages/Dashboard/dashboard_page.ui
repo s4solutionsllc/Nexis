@@ -19,196 +19,94 @@
   <property name="windowTitle">
    <string>Dashboard</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QVBoxLayout" name="mainLayout">
    <property name="leftMargin">
-    <number>5</number>
+    <number>12</number>
    </property>
    <property name="topMargin">
-    <number>5</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>5</number>
+    <number>12</number>
    </property>
    <property name="bottomMargin">
-    <number>5</number>
-   </property>
-   <property name="spacing">
     <number>0</number>
    </property>
-   <!-- Row 0: CircleBars spanning all 4 columns -->
-   <item row="0" column="0" colspan="4">
-    <widget class="QWidget" name="circleBars" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+   <property name="spacing">
+    <number>10</number>
+   </property>
+   <!-- Bento grid: tiles added programmatically -->
+   <item>
+    <layout class="QGridLayout" name="bentoGrid">
+     <property name="spacing">
+      <number>10</number>
      </property>
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>200</height>
-      </size>
-     </property>
-     <layout class="QHBoxLayout" name="circleBarsLayout">
-      <property name="spacing">
-       <number>20</number>
-      </property>
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>5</number>
-      </property>
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
-      <property name="bottomMargin">
-       <number>5</number>
-      </property>
-     </layout>
-    </widget>
+    </layout>
    </item>
-   <!-- Row 1, Col 0: Temperature container -->
-   <item row="1" column="0">
-    <widget class="QWidget" name="tempContainer" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+   <!-- Row 3: Quick Actions + System Summary side by side -->
+   <item>
+    <layout class="QHBoxLayout" name="row3Layout">
+     <property name="spacing">
+      <number>10</number>
      </property>
-     <layout class="QVBoxLayout" name="tempContainerLayout">
-      <property name="spacing">
-       <number>5</number>
-      </property>
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>10</number>
-      </property>
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
-      <property name="bottomMargin">
-       <number>5</number>
-      </property>
-      <item>
-       <widget class="QComboBox" name="cmbTempSensor">
-        <property name="cursor">
-         <cursorShape>PointingHandCursor</cursorShape>
+     <item>
+      <widget class="QWidget" name="quickActionsCard" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QHBoxLayout" name="quickActionsLayout">
+        <property name="leftMargin">
+         <number>16</number>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
+        <property name="topMargin">
+         <number>10</number>
         </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <!-- Row 1, Col 1: GPU container -->
-   <item row="1" column="1">
-    <widget class="QWidget" name="gpuContainer" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <layout class="QVBoxLayout" name="gpuContainerLayout">
-      <property name="spacing">
-       <number>5</number>
-      </property>
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>10</number>
-      </property>
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
-      <property name="bottomMargin">
-       <number>5</number>
-      </property>
-      <item>
-       <widget class="QComboBox" name="cmbGpuDevice">
-        <property name="cursor">
-         <cursorShape>PointingHandCursor</cursorShape>
+        <property name="rightMargin">
+         <number>16</number>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
+        <property name="bottomMargin">
+         <number>10</number>
         </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
+        <property name="spacing">
+         <number>8</number>
+        </property>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QWidget" name="systemSummary" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <layout class="QHBoxLayout" name="summaryLayout">
+        <property name="leftMargin">
+         <number>16</number>
+        </property>
+        <property name="topMargin">
+         <number>10</number>
+        </property>
+        <property name="rightMargin">
+         <number>16</number>
+        </property>
+        <property name="bottomMargin">
+         <number>10</number>
+        </property>
+        <property name="spacing">
+         <number>24</number>
+        </property>
+       </layout>
+      </widget>
+     </item>
+    </layout>
    </item>
-   <!-- Row 1, Col 2: Line Bars (Download / Upload stacked) -->
-   <item row="1" column="2">
-    <widget class="QWidget" name="lineBars" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>150</width>
-       <height>0</height>
-      </size>
-     </property>
-     <layout class="QVBoxLayout" name="lineBarsLayout">
-      <property name="spacing">
-       <number>20</number>
-      </property>
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>10</number>
-      </property>
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
-      <property name="bottomMargin">
-       <number>10</number>
-      </property>
-     </layout>
-    </widget>
-   </item>
-   <!-- Row 1, Col 3: Battery container -->
-   <item row="1" column="3">
-    <widget class="QWidget" name="batteryContainer" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <layout class="QVBoxLayout" name="batteryContainerLayout">
-      <property name="spacing">
-       <number>5</number>
-      </property>
-      <property name="leftMargin">
-       <number>10</number>
-      </property>
-      <property name="topMargin">
-       <number>10</number>
-      </property>
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
-      <property name="bottomMargin">
-       <number>5</number>
-      </property>
-     </layout>
-    </widget>
-   </item>
-   <!-- Row 2: Update Bar spanning all columns -->
-   <item row="2" column="0" colspan="4">
+   <!-- Update bar -->
+   <item>
     <widget class="QWidget" name="widgetUpdateBar" native="true">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -221,9 +119,6 @@
        <width>0</width>
        <height>31</height>
       </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
      </property>
      <layout class="QHBoxLayout" name="updateBarLayout">
       <property name="spacing">
@@ -261,6 +156,71 @@
         </property>
         <property name="text">
          <string>Download</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <!-- Spacer pushes footer to bottom -->
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <!-- Status Footer -->
+   <item>
+    <widget class="QWidget" name="statusFooter" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>24</height>
+      </size>
+     </property>
+     <layout class="QHBoxLayout" name="footerLayout">
+      <property name="leftMargin">
+       <number>12</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>12</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item alignment="Qt::AlignLeft|Qt::AlignVCenter">
+       <widget class="QLabel" name="lblFooterLeft">
+        <property name="text">
+         <string>Ctrl+K: Command Palette</string>
+        </property>
+       </widget>
+      </item>
+      <item alignment="Qt::AlignRight|Qt::AlignVCenter">
+       <widget class="QLabel" name="lblFooterRight">
+        <property name="text">
+         <string/>
         </property>
        </widget>
       </item>

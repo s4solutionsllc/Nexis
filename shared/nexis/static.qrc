@@ -87,6 +87,11 @@
         <file>static/themes/default/img/sidebar-icons/gnome-settings.svg</file>
         <file>static/themes/default/img/sidebar-icons/settings.svg</file>
         <file>static/themes/default/img/sidebar-icons/feedback.svg</file>
+        <file>static/themes/default/img/sidebar-icons/sidebar-collapse.svg</file>
+        <file>static/themes/default/img/sidebar-icons/sidebar-expand.svg</file>
+        <file>static/themes/default/img/sidebar-icons/sidebar-logo.svg</file>
+        <file>static/themes/default/img/sidebar-icons/sidebar-logo-collapsed.svg</file>
+        <file>static/themes/default/img/sidebar-icons/docker.svg</file>
         <file>static/themes/light/img/sidebar-icons/dash.svg</file>
         <file>static/themes/light/img/sidebar-icons/hardware-info.svg</file>
         <file>static/themes/light/img/sidebar-icons/startup-apps.svg</file>
@@ -101,5 +106,10 @@
         <file>static/themes/light/img/sidebar-icons/gnome-settings.svg</file>
         <file>static/themes/light/img/sidebar-icons/settings.svg</file>
         <file>static/themes/light/img/sidebar-icons/feedback.svg</file>
+        <file>static/themes/light/img/sidebar-icons/sidebar-collapse.svg</file>
+        <file>static/themes/light/img/sidebar-icons/sidebar-expand.svg</file>
+        <file>static/themes/light/img/sidebar-icons/sidebar-logo.svg</file>
+        <file>static/themes/light/img/sidebar-icons/sidebar-logo-collapsed.svg</file>
+        <file>static/themes/light/img/sidebar-icons/docker.svg</file>
     </qresource>
 </RCC>

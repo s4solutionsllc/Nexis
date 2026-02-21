@@ -98,17 +98,24 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 ### 1. Dashboard
 
-Real-time system monitoring at a glance with circular gauge widgets.
+Real-time system monitoring at a glance in a **bento grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. `MetricTile` supports three `DisplayMode` values — **Normal**, **Hero**, and **Large** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling.
 
-**Gauges (all conditional — hidden if hardware absent):**
-- **CPU** — Average utilization across all cores (1s refresh)
-- **Memory** — RAM usage percentage (1s refresh)
-- **Disk** — Root partition usage percentage (5s refresh)
-- **Disk Health** — Worst-drive SMART health percentage, teal gradient (30s refresh)
-- **Battery** — Charge level percentage, yellow gradient (5s refresh)
-- **Temperature** — Selectable sensor from dropdown (1s refresh)
-- **GPU** — Utilization percentage with multi-GPU selector (1s refresh)
-- **Network** — Download/upload speed history as line bars (1s refresh)
+**Row 0 — Hero row:**
+- **HeroCard** (column span 2) — Combined CPU + Memory tile with vertical divider. Each half is a `MetricTile` in Hero display mode with sparkline history.
+- **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health info via `setDriveHealth()` (5s refresh)
+- **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
+
+**Row 1 — Metric tiles (conditional — hidden if hardware absent):**
+- **GPU** — Utilization percentage with multi-GPU selector, sparkline history (1s refresh)
+- **Temperature** — Selectable sensor from dropdown, sparkline history (1s refresh)
+- **Battery** — Charge level percentage (5s refresh)
+- **Disk Health** — Worst-drive SMART health percentage (30s refresh)
+
+**Quick Actions bar** — Consolidated row of pill-shaped buttons: "Clean System" (accent-colored primary), "View Processes", "Check Updates". Each navigates to its target page.
+
+**System summary** in inline format alongside quick actions — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
+
+**Footer status bar** — Displays app version and refresh interval at the bottom edge.
 
 **Additional features:**
 - Update checker — compares installed version against GitHub releases
@@ -403,13 +410,14 @@ Seven singleton managers mediate between UI pages and the core library.
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 | `DataRefreshService` | Centralized polling service with 4 QTimers (1s/5s/30s/configurable). Polls InfoManager once per interval, emits 10 typed data-change signals. Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
-**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 8 global signals:
+**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 9 global signals:
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
 - `sigUninstallStarted()` / `sigUninstallFinished()` — progress feedback
 - `sigScheduledCleanStarted/Finished()` — tray notification system
 - `sigKioskToggleRequested()` — Dashboard button requests kiosk toggle from App
 - `sigKioskModeChanged(bool)` — App broadcasts kiosk state to Dashboard button and tray menu
 - `sigAppVisibilityChanged(bool)` — App broadcasts visibility state for DataRefreshService pause/resume
+- `sigCleanableSizeChanged(quint64)` — System Cleaner broadcasts total cleanable size for cross-tile data flow
 
 ---
 
@@ -518,10 +526,16 @@ shared/nexis/static/themes/
 
 `values.ini` defines tokens:
 ```ini
-color01=#36363a
-accentColor=#E95420
+color01=#1A1C22
+accentColor=#FF6B1A
 dp8=8px
 borderColor=#5e5c64
+cpuColor=#FF6B1A
+memoryColor=#3B82F6
+diskColor=#10B981
+networkColor=#8B5CF6
+gpuColor=#F59E0B
+tempColor=#EF4444
 ```
 
 `style.qss` references them:
@@ -535,8 +549,10 @@ At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all
 ### Color Scheme
 
 - **Auto** — Follows system preference via `QStyleHints::colorSchemeChanged` (Qt 6.5+)
-- **Light** — Loads `light/values.ini` overrides
-- **Dark** — Loads `default/values.ini` (the default theme)
+- **Light** — Loads `light/values.ini` overrides. The refined light theme uses a warm cream base (`#F5F0EB`) for reduced eye strain.
+- **Dark** — Loads `default/values.ini`. The refined dark theme uses a deep charcoal base (`#1A1C22`) with a warm orange accent (`#FF6B1A`).
+
+**Per-metric color tokens** (`@cpuColor`, `@memoryColor`, `@diskColor`, `@networkColor`, `@gpuColor`, `@tempColor`) are defined in `values.ini` and used by `MetricTile` sparklines and the Resources charts, giving each metric a consistent named color across all pages and themes.
 
 ### DPI Scaling
 
@@ -615,6 +631,10 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 
 ### Navigation
 
+The sidebar is **collapsible**, organized into three labelled groups — **MONITOR**, **MANAGE**, and **SYSTEM** — matching the logical grouping of the 14 pages. When collapsed, it shrinks to a 64 px icon-rail showing only page icons plus section indicator dots; the collapse and expand transitions use a smooth width animation. The sidebar can be toggled with the **Ctrl+B** keyboard shortcut or the collapse button at the top of the panel. The sidebar header displays a **gradient logo** (full wordmark when expanded, lettermark when collapsed) above a **separator line**, with a **version label** below. Active page badges use a cleaner dot indicator in collapsed mode.
+
+A **Command Palette** (activated with **Ctrl+K**) provides a fuzzy-search popup for navigating directly to any page and executing common actions (e.g., "run clean", "toggle kiosk") without touching the sidebar.
+
 Sidebar buttons trigger `SlidingStackedWidget::slideInIndex()` with horizontal slide animation. The tray icon context menu provides the same page navigation plus a checkable kiosk mode toggle. F11, the tray action, and the Dashboard button all toggle kiosk mode through synchronized signals.
 
 ---
@@ -636,7 +656,7 @@ emit cpuUpdated(percents, clock, loadAvgs) ← Typed signal with data payload
     ↓
 DashboardPage::onCpuUpdated(...)     ← Page receives data as reactive subscriber
     ↓
-mCpuBar->setValue(average)           ← CircleBar widget updates visual gauge
+mCpuTile->setValue(average)          ← MetricTile widget updates sparkline and label
 ```
 
 ### Example: Uninstalling a Homebrew package

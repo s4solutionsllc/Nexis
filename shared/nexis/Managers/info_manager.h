@@ -33,6 +33,7 @@ public:
 
     quint64 getRXbytes() const;
     quint64 getTXbytes() const;
+    QString getDefaultNetworkInterface() const;
 
     QList<Disk> getDisks() const;
     QList<quint64> getDiskIO();

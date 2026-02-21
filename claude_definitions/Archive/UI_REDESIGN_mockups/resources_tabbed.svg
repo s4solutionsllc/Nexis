@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700">
+  <defs>
+    <linearGradient id="og7" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF4500"/>
+      <stop offset="30%" stop-color="#FF6B1A"/>
+      <stop offset="60%" stop-color="#FF8C00"/>
+      <stop offset="100%" stop-color="#FFB347"/>
+    </linearGradient>
+    <filter id="cs7">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="700" fill="#1A1C22"/>
+
+  <!-- Collapsed sidebar (icon rail) -->
+  <rect x="0" y="0" width="64" height="700" fill="#222228"/>
+  <line x1="64" y1="0" x2="64" y2="700" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="32" y="32" font-family="SF Pro Display, sans-serif" font-size="18" font-weight="700" fill="url(#og7)" text-anchor="middle">N</text>
+  <line x1="14" y1="44" x2="50" y2="44" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Resources icon (selected) -->
+  <rect x="10" y="140" width="44" height="40" rx="10" fill="#FF6B1A" opacity="0.15"/>
+  <rect x="10" y="140" width="3" height="40" rx="1.5" fill="#FF6B1A"/>
+  <polyline points="22,162 28,152 34,158 40,146" fill="none" stroke="#FF6B1A" stroke-width="1.5"/>
+
+  <!-- Main content -->
+
+  <!-- Page title -->
+  <text x="90" y="36" font-family="SF Pro Display, sans-serif" font-size="16" font-weight="700" fill="#F0F2F5">Resources</text>
+
+  <!-- Tab strip with mini sparkline previews -->
+  <rect x="84" y="50" width="1096" height="50" rx="0" fill="#222228"/>
+  <line x1="84" y1="100" x2="1180" y2="100" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- CPU tab (selected) -->
+  <rect x="92" y="54" width="120" height="42" rx="8" fill="#FF6B1A" opacity="0.1"/>
+  <text x="108" y="70" font-family="SF Pro Display, sans-serif" font-size="10" font-weight="600" fill="#FF6B1A">CPU</text>
+  <!-- Mini sparkline in tab -->
+  <polyline points="108,80 118,78 128,82 138,76 148,84 158,74 168,80 178,76 188,78 198,80"
+            fill="none" stroke="#FF6B1A" stroke-width="1" stroke-linejoin="round"/>
+  <rect x="92" y="96" width="120" height="3" rx="1.5" fill="#FF6B1A"/>
+
+  <!-- Load tab -->
+  <text x="228" y="70" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Load Avg</text>
+  <polyline points="228,80 238,80 248,79 258,80 268,79 278,80 288,79 298,80 308,80 318,80"
+            fill="none" stroke="#6B6E78" stroke-width="1"/>
+
+  <!-- GPU tab -->
+  <text x="348" y="70" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">GPU</text>
+  <polyline points="348,80 358,80 368,80 378,80 388,80 398,80 408,80 418,80 428,80 438,80"
+            fill="none" stroke="#6B6E78" stroke-width="1"/>
+
+  <!-- Disk I/O tab -->
+  <text x="468" y="70" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Disk I/O</text>
+  <polyline points="468,80 478,78 488,82 498,76 508,80 518,78 528,80 538,82 548,78 558,80"
+            fill="none" stroke="#6B6E78" stroke-width="1"/>
+
+  <!-- Memory tab -->
+  <text x="588" y="70" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Memory</text>
+  <polyline points="588,80 598,80 608,80 618,80 628,80 638,80 648,80 658,80 668,80 678,80"
+            fill="none" stroke="#6B6E78" stroke-width="1"/>
+
+  <!-- Network tab -->
+  <text x="708" y="70" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Network</text>
+  <polyline points="708,80 718,78 728,82 738,76 748,84 758,74 768,80 778,78 788,80 798,82"
+            fill="none" stroke="#6B6E78" stroke-width="1"/>
+
+  <!-- Temp tab -->
+  <text x="828" y="70" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Temp</text>
+  <polyline points="828,80 838,79 848,81 858,78 868,80 878,79 888,80 898,79 908,80 918,79"
+            fill="none" stroke="#6B6E78" stroke-width="1"/>
+
+  <!-- Right: Expand All toggle -->
+  <rect x="1060" y="62" width="100" height="26" rx="6" fill="#32343A" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="1110" y="79" font-family="SF Pro Display, sans-serif" font-size="10" fill="#9A9DA6" text-anchor="middle">All Charts ↕</text>
+
+  <!-- ===== LARGE CHART VIEW (CPU selected) ===== -->
+  <rect x="84" y="110" width="1096" height="400" rx="16" fill="#2A2C32" filter="url(#cs7)"/>
+  <rect x="84" y="110" width="1096" height="400" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Chart title -->
+  <text x="112" y="140" font-family="SF Pro Display, sans-serif" font-size="13" font-weight="600" fill="#F0F2F5">History of CPU</text>
+  <!-- Expand button -->
+  <rect x="1118" y="122" width="36" height="24" rx="6" fill="#32343A"/>
+  <text x="1136" y="138" font-family="SF Pro Display, sans-serif" font-size="12" fill="#9A9DA6" text-anchor="middle">⤢</text>
+
+  <!-- Legend -->
+  <circle cx="112" cy="162" r="4" fill="#FF6B1A"/>
+  <text x="122" y="166" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">Core 0: 18%</text>
+  <circle cx="212" cy="162" r="4" fill="#FFB347"/>
+  <text x="222" y="166" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">Core 1: 24%</text>
+  <circle cx="312" cy="162" r="4" fill="#E05454"/>
+  <text x="322" y="166" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">Core 2: 15%</text>
+  <circle cx="412" cy="162" r="4" fill="#5B9BD5"/>
+  <text x="422" y="166" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">Core 3: 31%</text>
+  <circle cx="512" cy="162" r="4" fill="#813D9C"/>
+  <text x="522" y="166" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">Core 4: 20%</text>
+  <circle cx="612" cy="162" r="4" fill="#26A69A"/>
+  <text x="622" y="166" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">Core 5: 22%</text>
+  <circle cx="712" cy="162" r="4" fill="#2EC27E"/>
+  <text x="722" y="166" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">Core 6: 19%</text>
+  <circle cx="812" cy="162" r="4" fill="#CD9309"/>
+  <text x="822" y="166" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">Core 7: 26%</text>
+
+  <!-- Y-axis labels -->
+  <text x="128" y="192" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="end">100%</text>
+  <text x="128" y="252" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="end">75%</text>
+  <text x="128" y="312" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="end">50%</text>
+  <text x="128" y="372" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="end">25%</text>
+  <text x="128" y="432" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="end">0%</text>
+
+  <!-- Grid lines -->
+  <line x1="140" y1="188" x2="1140" y2="188" stroke="#3A3D4A" stroke-width="0.5"/>
+  <line x1="140" y1="248" x2="1140" y2="248" stroke="#3A3D4A" stroke-width="0.5"/>
+  <line x1="140" y1="308" x2="1140" y2="308" stroke="#3A3D4A" stroke-width="0.5"/>
+  <line x1="140" y1="368" x2="1140" y2="368" stroke="#3A3D4A" stroke-width="0.5"/>
+  <line x1="140" y1="428" x2="1140" y2="428" stroke="#3A3D4A" stroke-width="0.5"/>
+
+  <!-- X-axis labels -->
+  <text x="140" y="450" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78">60s</text>
+  <text x="390" y="450" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="middle">45s</text>
+  <text x="640" y="450" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="middle">30s</text>
+  <text x="890" y="450" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="middle">15s</text>
+  <text x="1140" y="450" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="end">now</text>
+
+  <!-- Chart lines (8 cores, varying patterns) -->
+  <!-- Core 0 (orange) -->
+  <polyline points="140,380 180,376 220,384 260,370 300,390 340,364 380,378 420,360 460,388 500,372 540,380 580,374 620,384 660,376 700,370 740,378 780,374 820,382 860,376 900,368 940,380 980,372 1020,378 1060,374 1100,380 1140,376"
+            fill="none" stroke="#FF6B1A" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- Core 1 (amber) -->
+  <polyline points="140,368 180,360 220,372 260,356 300,376 340,350 380,366 420,348 460,374 500,360 540,368 580,358 620,370 660,362 700,354 740,366 780,360 820,370 860,362 900,352 940,366 980,358 1020,364 1060,358 1100,366 1140,360"
+            fill="none" stroke="#FFB347" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- Core 2 (red) -->
+  <polyline points="140,392 180,388 220,396 260,384 300,400 340,380 380,394 420,378 460,402 500,388 540,394 580,386 620,398 660,390 700,382 740,392 780,388 820,396 860,388 900,380 940,394 980,386 1020,392 1060,388 1100,394 1140,388"
+            fill="none" stroke="#E05454" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- Core 3 (blue) -->
+  <polyline points="140,346 180,340 220,354 260,330 300,360 340,324 380,344 420,320 460,356 500,338 540,346 580,334 620,350 660,340 700,328 740,344 780,336 820,348 860,340 900,326 940,344 980,334 1020,342 1060,336 1100,346 1140,338"
+            fill="none" stroke="#5B9BD5" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- Summary card below chart -->
+  <rect x="112" y="462" width="1024" height="36" rx="8" fill="#32343A"/>
+  <text x="128" y="484" font-family="SF Pro Display, sans-serif" font-size="10" fill="#F0F2F5" font-weight="600">Summary</text>
+  <text x="200" y="484" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Avg: 22%</text>
+  <text x="290" y="484" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Peak: 67% (Core 3, 12s ago)</text>
+  <text x="520" y="484" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Load: 0.25 / 0.72 / 0.50</text>
+  <text x="730" y="484" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Model: AMD Ryzen 7 5700X</text>
+  <text x="978" y="484" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Freq: 2.83 GHz</text>
+
+  <!-- Disk Usage Launcher at bottom -->
+  <rect x="84" y="520" width="1096" height="60" rx="16" fill="#2A2C32" filter="url(#cs7)"/>
+  <rect x="84" y="520" width="1096" height="60" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="112" y="546" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78">DISK USAGE ANALYSIS</text>
+  <text x="112" y="566" font-family="SF Pro Display, sans-serif" font-size="10" fill="#9A9DA6">Baobab (Disk Usage Analyzer) — Visualize disk usage as a graphical treemap</text>
+  <circle cx="520" cy="552" r="4" fill="#2EC27E"/>
+  <text x="530" y="556" font-family="SF Pro Display, sans-serif" font-size="10" fill="#2EC27E" font-weight="600">Installed</text>
+  <rect x="1040" y="538" width="120" height="28" rx="14" fill="#FF6B1A" opacity="0.12" stroke="#FF6B1A" stroke-width="1"/>
+  <text x="1100" y="556" font-family="SF Pro Display, sans-serif" font-size="10" font-weight="600" fill="#FF6B1A" text-anchor="middle">Launch →</text>
+
+  <!-- Title -->
+  <text x="640" y="620" font-family="SF Pro Display, sans-serif" font-size="14" font-weight="700" fill="#FF6B1A" text-anchor="middle">Resources Page Redesign: Tabbed Chart Viewer with Sparkline Preview Tabs</text>
+  <text x="640" y="640" font-family="SF Pro Display, sans-serif" font-size="11" fill="#6B6E78" text-anchor="middle">One large chart at a time (no scrolling) • Mini sparklines in tab strip • Summary bar • "All Charts" toggle for stacked view</text>
+</svg>

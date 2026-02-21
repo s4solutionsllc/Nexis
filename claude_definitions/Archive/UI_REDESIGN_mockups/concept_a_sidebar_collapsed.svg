@@ -1,0 +1,278 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="orangeGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF4500"/>
+      <stop offset="30%" stop-color="#FF6B1A"/>
+      <stop offset="60%" stop-color="#FF8C00"/>
+      <stop offset="100%" stop-color="#FFB347"/>
+    </linearGradient>
+    <linearGradient id="cpuG2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF4500"/>
+      <stop offset="100%" stop-color="#FFB347"/>
+    </linearGradient>
+    <linearGradient id="memG2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFB347"/>
+      <stop offset="100%" stop-color="#FF8C00"/>
+    </linearGradient>
+    <linearGradient id="diskG2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E05454"/>
+      <stop offset="100%" stop-color="#FF6B6B"/>
+    </linearGradient>
+    <filter id="cs2">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#1A1C22"/>
+
+  <!-- ===== COLLAPSED SIDEBAR (64px icon rail) ===== -->
+  <rect x="0" y="0" width="64" height="800" fill="#222228"/>
+  <line x1="64" y1="0" x2="64" y2="800" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Logo icon (N) -->
+  <text x="32" y="36" font-family="SF Pro Display, Helvetica Neue, sans-serif" font-size="20" font-weight="700" fill="url(#orangeGrad2)" text-anchor="middle" letter-spacing="1">N</text>
+  <line x1="14" y1="50" x2="50" y2="50" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Expand button -->
+  <rect x="46" y="22" width="16" height="16" rx="4" fill="#2A2C32"/>
+  <text x="54" y="33" font-family="sans-serif" font-size="8" fill="#6B6E78" text-anchor="middle">»</text>
+
+  <!-- MONITOR section indicator -->
+  <rect x="18" y="68" width="28" height="2" rx="1" fill="#3A3D4A"/>
+
+  <!-- Dashboard icon (selected) -->
+  <rect x="10" y="78" width="44" height="40" rx="10" fill="#FF6B1A" opacity="0.15"/>
+  <rect x="10" y="78" width="3" height="40" rx="1.5" fill="#FF6B1A"/>
+  <!-- Grid icon -->
+  <rect x="24" y="90" width="7" height="7" rx="1.5" fill="#FF6B1A"/>
+  <rect x="33" y="90" width="7" height="7" rx="1.5" fill="#FF6B1A"/>
+  <rect x="24" y="99" width="7" height="7" rx="1.5" fill="#FF6B1A"/>
+  <rect x="33" y="99" width="7" height="7" rx="1.5" fill="#FF6B1A"/>
+
+  <!-- Hardware icon -->
+  <rect x="24" y="132" width="16" height="12" rx="2" fill="none" stroke="#9A9DA6" stroke-width="1.3"/>
+  <line x1="28" y1="136" x2="36" y2="136" stroke="#9A9DA6" stroke-width="1"/>
+  <line x1="28" y1="139" x2="34" y2="139" stroke="#9A9DA6" stroke-width="1"/>
+
+  <!-- Resources icon (chart) -->
+  <polyline points="24,176 28,170 32,174 36,166 40,172" fill="none" stroke="#9A9DA6" stroke-width="1.3"/>
+
+  <!-- MANAGE section indicator -->
+  <rect x="18" y="196" width="28" height="2" rx="1" fill="#3A3D4A"/>
+
+  <!-- Cleaner icon (broom) -->
+  <circle cx="32" cy="218" r="8" fill="none" stroke="#9A9DA6" stroke-width="1.3"/>
+  <line x1="32" y1="214" x2="32" y2="222" stroke="#9A9DA6" stroke-width="1.3"/>
+  <!-- Cleaner badge -->
+  <circle cx="42" cy="210" r="5" fill="#FF6B1A"/>
+  <text x="42" y="213" font-family="sans-serif" font-size="6" fill="white" text-anchor="middle" font-weight="700">!</text>
+
+  <!-- Processes icon -->
+  <line x1="24" y1="248" x2="40" y2="248" stroke="#9A9DA6" stroke-width="1.3"/>
+  <line x1="24" y1="252" x2="36" y2="252" stroke="#9A9DA6" stroke-width="1.3"/>
+  <line x1="24" y1="256" x2="40" y2="256" stroke="#9A9DA6" stroke-width="1.3"/>
+
+  <!-- Services icon (gear) -->
+  <circle cx="32" cy="282" r="6" fill="none" stroke="#9A9DA6" stroke-width="1.3"/>
+  <circle cx="32" cy="282" r="2" fill="#9A9DA6"/>
+
+  <!-- Startup icon (play) -->
+  <polygon points="28,306 28,320 38,313" fill="none" stroke="#9A9DA6" stroke-width="1.3"/>
+
+  <!-- Uninstaller icon (box) -->
+  <rect x="25" y="338" width="14" height="14" rx="2" fill="none" stroke="#9A9DA6" stroke-width="1.3"/>
+  <line x1="28" y1="345" x2="36" y2="345" stroke="#9A9DA6" stroke-width="1.3"/>
+
+  <!-- SYSTEM section indicator -->
+  <rect x="18" y="368" width="28" height="2" rx="1" fill="#3A3D4A"/>
+
+  <!-- Docker icon -->
+  <rect x="24" y="382" width="16" height="10" rx="2" fill="none" stroke="#9A9DA6" stroke-width="1.3"/>
+  <line x1="28" y1="386" x2="28" y2="388" stroke="#9A9DA6" stroke-width="1.3"/>
+  <line x1="32" y1="386" x2="32" y2="388" stroke="#9A9DA6" stroke-width="1.3"/>
+  <line x1="36" y1="386" x2="36" y2="388" stroke="#9A9DA6" stroke-width="1.3"/>
+  <!-- Docker running dot -->
+  <circle cx="44" cy="380" r="3" fill="#2EC27E"/>
+
+  <!-- Helpers icon (wrench) -->
+  <line x1="28" y1="416" x2="36" y2="424" stroke="#9A9DA6" stroke-width="1.5"/>
+  <circle cx="28" cy="416" r="3" fill="none" stroke="#9A9DA6" stroke-width="1"/>
+
+  <!-- Settings gear (bottom) -->
+  <circle cx="32" cy="762" r="8" fill="none" stroke="#9A9DA6" stroke-width="1.3"/>
+  <circle cx="32" cy="762" r="3" fill="#9A9DA6"/>
+
+  <!-- ===== MAIN CONTENT AREA (wider with collapsed sidebar) ===== -->
+
+  <!-- Row 1: Hero Card (CPU+Memory) + Disk + Network -->
+
+  <!-- Hero Card: CPU + Memory -->
+  <rect x="84" y="20" width="520" height="220" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="84" y="20" width="520" height="220" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- CPU Section -->
+  <text x="112" y="52" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">CPU</text>
+  <text x="112" y="92" font-family="SF Pro Display, sans-serif" font-size="40" font-weight="700" fill="#F0F2F5">22%</text>
+  <text x="198" y="92" font-family="SF Pro Display, sans-serif" font-size="14" fill="#6B6E78">2.83 GHz</text>
+  <!-- Sparkline -->
+  <polyline points="112,122 128,118 144,124 160,112 176,130 192,108 208,120 224,106 240,126 256,114 272,120 288,116 304,124 320,118"
+            fill="none" stroke="#FF6B1A" stroke-width="2" stroke-linejoin="round"/>
+  <polyline points="112,122 128,118 144,124 160,112 176,130 192,108 208,120 224,106 240,126 256,114 272,120 288,116 304,124 320,118 320,142 112,142"
+            fill="#FF6B1A" opacity="0.08"/>
+  <!-- Gauge -->
+  <path d="M 112 160 L 320 160" stroke="#32343A" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 112 160 L 158 160" stroke="url(#cpuG2)" stroke-width="6" stroke-linecap="round"/>
+  <text x="112" y="184" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Ryzen 7 5700X • 8C/16T</text>
+  <text x="320" y="184" font-family="SF Pro Display, sans-serif" font-size="10" fill="#2EC27E" text-anchor="end">↓ stable</text>
+
+  <!-- Divider -->
+  <line x1="344" y1="40" x2="344" y2="220" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Memory Section -->
+  <text x="368" y="52" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">MEMORY</text>
+  <text x="368" y="92" font-family="SF Pro Display, sans-serif" font-size="40" font-weight="700" fill="#F0F2F5">16%</text>
+  <text x="448" y="92" font-family="SF Pro Display, sans-serif" font-size="14" fill="#6B6E78">5.0 / 31.2 GiB</text>
+  <polyline points="368,122 384,121 400,122 416,121 432,123 448,120 464,122 480,120 496,123 512,121 528,120 544,122 560,121 576,122"
+            fill="none" stroke="#FFB347" stroke-width="2" stroke-linejoin="round"/>
+  <polyline points="368,122 384,121 400,122 416,121 432,123 448,120 464,122 480,120 496,123 512,121 528,120 544,122 560,121 576,122 576,142 368,142"
+            fill="#FFB347" opacity="0.08"/>
+  <path d="M 368 160 L 576 160" stroke="#32343A" stroke-width="6" stroke-linecap="round"/>
+  <path d="M 368 160 L 401 160" stroke="url(#memG2)" stroke-width="6" stroke-linecap="round"/>
+  <text x="368" y="184" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Swap: 308 KiB / 8.0 GiB</text>
+  <text x="576" y="184" font-family="SF Pro Display, sans-serif" font-size="10" fill="#2EC27E" text-anchor="end">→ stable</text>
+
+  <!-- Disk Card -->
+  <rect x="618" y="20" width="270" height="220" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="618" y="20" width="270" height="220" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="646" y="52" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">DISK</text>
+  <circle cx="753" cy="118" r="55" fill="none" stroke="#32343A" stroke-width="10"/>
+  <circle cx="753" cy="118" r="55" fill="none" stroke="url(#diskG2)" stroke-width="10"
+          stroke-dasharray="31 315" stroke-dashoffset="0" transform="rotate(-90 753 118)"/>
+  <text x="753" y="114" font-family="SF Pro Display, sans-serif" font-size="26" font-weight="700" fill="#F0F2F5" text-anchor="middle">9%</text>
+  <text x="753" y="134" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78" text-anchor="middle">83.8 / 937 GiB</text>
+  <text x="646" y="206" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">NVMe 1: </text>
+  <text x="700" y="206" font-family="SF Pro Display, sans-serif" font-size="10" fill="#2EC27E">Good</text>
+  <text x="756" y="206" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">NVMe 2: </text>
+  <text x="810" y="206" font-family="SF Pro Display, sans-serif" font-size="10" fill="#2EC27E">Good</text>
+  <!-- Quick action -->
+  <rect x="646" y="216" width="86" height="18" rx="9" fill="#FF6B1A" opacity="0.12" stroke="#FF6B1A" stroke-width="0.5"/>
+  <text x="689" y="228" font-family="SF Pro Display, sans-serif" font-size="8" font-weight="600" fill="#FF6B1A" text-anchor="middle">Clean 2.1 GB</text>
+
+  <!-- Network Card -->
+  <rect x="902" y="20" width="278" height="220" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="902" y="20" width="278" height="220" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="930" y="52" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">NETWORK</text>
+
+  <text x="930" y="78" font-family="SF Pro Display, sans-serif" font-size="10" fill="#26A69A">↓ Download</text>
+  <text x="1154" y="78" font-family="SF Pro Display, sans-serif" font-size="20" font-weight="600" fill="#F0F2F5" text-anchor="end">28.7 KB/s</text>
+  <polyline points="930,96 950,94 970,98 990,88 1010,102 1030,86 1050,95 1070,84 1090,100 1110,90 1130,96 1154,93"
+            fill="none" stroke="#26A69A" stroke-width="1.5" stroke-linejoin="round"/>
+  <polyline points="930,96 950,94 970,98 990,88 1010,102 1030,86 1050,95 1070,84 1090,100 1110,90 1130,96 1154,93 1154,112 930,112"
+            fill="#26A69A" opacity="0.08"/>
+
+  <text x="930" y="136" font-family="SF Pro Display, sans-serif" font-size="10" fill="#E05454">↑ Upload</text>
+  <text x="1154" y="136" font-family="SF Pro Display, sans-serif" font-size="20" font-weight="600" fill="#F0F2F5" text-anchor="end">8.0 KB/s</text>
+  <polyline points="930,154 950,153 970,155 990,152 1010,156 1030,151 1050,154 1070,150 1090,155 1110,152 1130,154 1154,153"
+            fill="none" stroke="#E05454" stroke-width="1.5" stroke-linejoin="round"/>
+  <polyline points="930,154 950,153 970,155 990,152 1010,156 1030,151 1050,154 1070,150 1090,155 1110,152 1130,154 1154,153 1154,170 930,170"
+            fill="#E05454" opacity="0.08"/>
+
+  <line x1="930" y1="186" x2="1154" y2="186" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="930" y="206" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Total ↓ 9.2 GiB  •  Total ↑ 25.8 GiB</text>
+  <text x="930" y="224" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Interface: eth0</text>
+
+  <!-- Row 2: GPU + Temp + Battery + Disk Health -->
+  <!-- GPU -->
+  <rect x="84" y="256" width="262" height="180" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="84" y="256" width="262" height="180" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="112" y="288" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">GPU</text>
+  <text x="112" y="322" font-family="SF Pro Display, sans-serif" font-size="32" font-weight="700" fill="#F0F2F5">0%</text>
+  <polyline points="112,350 138,350 164,350 190,349 216,350 242,350 268,350 294,350 320,350"
+            fill="none" stroke="#813D9C" stroke-width="2"/>
+  <path d="M 112 374 L 320 374" stroke="#32343A" stroke-width="4" stroke-linecap="round"/>
+  <text x="112" y="400" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">NVIDIA GPU 1</text>
+  <rect x="112" y="408" width="130" height="20" rx="4" fill="#32343A" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="122" y="422" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">NVIDIA GPU 1 ▾</text>
+
+  <!-- Temperature -->
+  <rect x="360" y="256" width="244" height="180" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="360" y="256" width="244" height="180" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="388" y="288" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">TEMPERATURE</text>
+  <text x="388" y="324" font-family="SF Pro Display, sans-serif" font-size="32" font-weight="700" fill="#F0F2F5">29.9°C</text>
+  <text x="502" y="324" font-family="SF Pro Display, sans-serif" font-size="14" fill="#6B6E78">/ 85.7°F</text>
+  <polyline points="388,354 408,352 428,356 448,349 468,354 488,347 508,356 528,351 548,350 568,354 578,352"
+            fill="none" stroke="#5B9BD5" stroke-width="2" stroke-linejoin="round"/>
+  <polyline points="388,354 408,352 428,356 448,349 468,354 488,347 508,356 528,351 548,350 568,354 578,352 578,370 388,370"
+            fill="#5B9BD5" opacity="0.08"/>
+  <rect x="388" y="388" width="150" height="20" rx="4" fill="#32343A" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="398" y="402" font-family="SF Pro Display, sans-serif" font-size="9" fill="#9A9DA6">NVMe - Sensor 2 ▾</text>
+
+  <!-- Battery -->
+  <rect x="618" y="256" width="270" height="180" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="618" y="256" width="270" height="180" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="646" y="288" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">BATTERY</text>
+  <text x="646" y="324" font-family="SF Pro Display, sans-serif" font-size="32" font-weight="700" fill="#F0F2F5">85%</text>
+  <rect x="732" y="306" width="34" height="16" rx="3" fill="none" stroke="#2EC27E" stroke-width="1.5"/>
+  <rect x="766" y="310" width="3" height="8" rx="1" fill="#2EC27E"/>
+  <rect x="735" y="309" width="25" height="10" rx="1.5" fill="#2EC27E"/>
+  <polyline points="646,354 672,353 698,352 724,354 750,353 776,352 802,354 828,353 854,352 862,353"
+            fill="none" stroke="#2EC27E" stroke-width="2" stroke-linejoin="round"/>
+  <text x="646" y="396" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Charging • 523 cycles</text>
+  <text x="862" y="396" font-family="SF Pro Display, sans-serif" font-size="10" fill="#2EC27E" text-anchor="end">Healthy</text>
+  <text x="646" y="416" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">~2h 15m remaining</text>
+
+  <!-- Disk Health -->
+  <rect x="902" y="256" width="278" height="180" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="902" y="256" width="278" height="180" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="930" y="288" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">DISK HEALTH</text>
+
+  <rect x="930" y="302" width="224" height="44" rx="8" fill="#32343A"/>
+  <text x="944" y="320" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#F0F2F5">NVMe 1</text>
+  <circle cx="1020" cy="316" r="4" fill="#2EC27E"/>
+  <text x="1030" y="320" font-family="SF Pro Display, sans-serif" font-size="10" fill="#2EC27E">Good</text>
+  <text x="1100" y="320" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78">30°C</text>
+  <text x="944" y="338" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78">937 GB NVMe • Endurance: 98% remaining</text>
+
+  <rect x="930" y="354" width="224" height="44" rx="8" fill="#32343A"/>
+  <text x="944" y="372" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#F0F2F5">NVMe 2</text>
+  <circle cx="1020" cy="368" r="4" fill="#2EC27E"/>
+  <text x="1030" y="372" font-family="SF Pro Display, sans-serif" font-size="10" fill="#2EC27E">Good</text>
+  <text x="1100" y="372" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78">28°C</text>
+  <text x="944" y="390" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78">512 GB NVMe • Endurance: 99% remaining</text>
+
+  <text x="930" y="422" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78">SMART check: 12s ago</text>
+
+  <!-- Row 3: Quick Actions + System Summary (wider) -->
+  <rect x="84" y="452" width="524" height="70" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="84" y="452" width="524" height="70" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="112" y="478" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">QUICK ACTIONS</text>
+  <rect x="112" y="490" width="120" height="24" rx="12" fill="#FF6B1A" opacity="0.15" stroke="#FF6B1A" stroke-width="1"/>
+  <text x="172" y="506" font-family="SF Pro Display, sans-serif" font-size="10" font-weight="600" fill="#FF6B1A" text-anchor="middle">Clean System</text>
+  <rect x="244" y="490" width="130" height="24" rx="12" fill="#32343A" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="309" y="506" font-family="SF Pro Display, sans-serif" font-size="10" fill="#9A9DA6" text-anchor="middle">View Processes</text>
+  <rect x="386" y="490" width="130" height="24" rx="12" fill="#32343A" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="451" y="506" font-family="SF Pro Display, sans-serif" font-size="10" fill="#9A9DA6" text-anchor="middle">Check Updates</text>
+
+  <rect x="622" y="452" width="558" height="70" rx="16" fill="#2A2C32" filter="url(#cs2)"/>
+  <rect x="622" y="452" width="558" height="70" rx="16" fill="none" stroke="#3A3D4A" stroke-width="1"/>
+  <text x="650" y="478" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" letter-spacing="1">SYSTEM</text>
+  <text x="650" y="500" font-family="SF Pro Display, sans-serif" font-size="11" fill="#F0F2F5">media</text>
+  <text x="696" y="500" font-family="SF Pro Display, sans-serif" font-size="11" fill="#6B6E78">• Ubuntu 24.04 LTS • Ryzen 7 5700X 8-Core • 31.2 GiB RAM</text>
+  <text x="650" y="516" font-family="SF Pro Display, sans-serif" font-size="10" fill="#6B6E78">Last clean: 2h ago (2.3 GB freed) • Next scheduled: Tomorrow 3:00 AM • Uptime: 3d 14h 22m</text>
+
+  <!-- Footer -->
+  <rect x="84" y="770" width="1096" height="24" rx="0" fill="#222228"/>
+  <text x="104" y="786" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78">Ctrl+K: Command Palette</text>
+  <text x="1160" y="786" font-family="SF Pro Display, sans-serif" font-size="9" fill="#6B6E78" text-anchor="end">Nexis v1.2.1 • Refreshing every 1s</text>
+
+  <!-- Tooltip showing on hover of sidebar icon -->
+  <rect x="68" y="88" width="80" height="26" rx="6" fill="#32343A" stroke="#3A3D4A" stroke-width="1" filter="url(#cs2)"/>
+  <text x="108" y="105" font-family="SF Pro Display, sans-serif" font-size="11" fill="#F0F2F5" text-anchor="middle">Dashboard</text>
+  <!-- tooltip arrow -->
+  <polygon points="68,98 62,101 68,104" fill="#32343A"/>
+
+  <!-- Title annotation -->
+  <text x="640" y="568" font-family="SF Pro Display, sans-serif" font-size="14" font-weight="700" fill="#FF6B1A" text-anchor="middle">Concept A: Collapsed Sidebar (Icon Rail Mode) — 64px vs 220px</text>
+  <text x="640" y="588" font-family="SF Pro Display, sans-serif" font-size="11" fill="#6B6E78" text-anchor="middle">Content area gains 156px width • Tooltip on hover • Section dividers • Badge notifications • Expand button</text>
+</svg>

@@ -169,6 +169,11 @@ quint64 InfoManager::getTXbytes() const
     return ni->getTXbytes();
 }
 
+QString InfoManager::getDefaultNetworkInterface() const
+{
+    return ni->getDefaultNetworkInterface();
+}
+
 /********************
  * System Provider
  *******************/
