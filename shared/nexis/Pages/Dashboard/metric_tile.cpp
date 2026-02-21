@@ -5,21 +5,18 @@
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
 
-MetricTile::MetricTile(const QString &title, const QColor &color, QWidget *parent)
+MetricTile::MetricTile(const QString &title, const QString &colorToken, QWidget *parent)
     : QWidget(parent),
       mTitle(title),
-      mColor(color),
+      mColorToken(colorToken),
       mDisplayMode(Normal),
       mCurrentTrend(Stable)
 {
     setObjectName("metricTile");
     buildLayout();
+    refreshThemeColors();
 
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, [this]() {
-        QSettings *sv = AppManager::ins()->getStyleValues();
-        QString cardBg = sv->value("@cardBg").toString();
-        mChart->setBackgroundBrush(QColor(cardBg));
-    });
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &MetricTile::refreshThemeColors);
 }
 
 void MetricTile::buildLayout()
@@ -54,16 +51,12 @@ void MetricTile::buildLayout()
 
     // Sparkline chart
     mSeries = new QLineSeries();
-    mSeries->setPen(QPen(mColor, 1.5));
 
     QLineSeries *baseline = new QLineSeries();
     for (int i = 0; i < SPARKLINE_SIZE; ++i)
         baseline->append(i, 0);
 
     mAreaSeries = new QAreaSeries(mSeries, baseline);
-    QColor fillColor = mColor;
-    fillColor.setAlphaF(0.1);
-    mAreaSeries->setBrush(fillColor);
     mAreaSeries->setPen(Qt::NoPen);
 
     mChart = new QChart();
@@ -73,12 +66,6 @@ void MetricTile::buildLayout()
     mChart->setMargins(QMargins(0, 0, 0, 0));
     mChart->setBackgroundRoundness(0);
     mChart->layout()->setContentsMargins(0, 0, 0, 0);
-
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    if (sv)
-        mChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
-    else
-        mChart->setBackgroundBrush(Qt::transparent);
 
     auto *axisX = new QValueAxis();
     axisX->setRange(0, SPARKLINE_SIZE - 1);
@@ -107,8 +94,6 @@ void MetricTile::buildLayout()
     mProgressBar->setValue(0);
     mProgressBar->setTextVisible(false);
     mProgressBar->setFixedHeight(4);
-    QString chunkStyle = QString("QProgressBar#metricTileProgress::chunk { background-color: %1; border-radius: 2; }").arg(mColor.name());
-    mProgressBar->setStyleSheet(chunkStyle);
     mainLayout->addWidget(mProgressBar);
 
     mainLayout->addSpacing(2);
@@ -130,20 +115,6 @@ void MetricTile::buildLayout()
     mBtnAction->setFocusPolicy(Qt::NoFocus);
     mBtnAction->hide();
     mBtnAction->setFixedHeight(22);
-    mBtnAction->setStyleSheet(
-        "QPushButton#metricTileAction {"
-        "  font-size: 8pt;"
-        "  padding: 2px 8px;"
-        "  border-radius: 10px;"
-        "  border: 1px solid " + mColor.name() + ";"
-        "  color: " + mColor.name() + ";"
-        "  background: transparent;"
-        "}"
-        "QPushButton#metricTileAction:hover {"
-        "  background-color: " + mColor.name() + ";"
-        "  color: #ffffff;"
-        "}"
-    );
 
     footerLayout->addWidget(mLblSubtitle);
     footerLayout->addStretch();
@@ -219,6 +190,43 @@ void MetricTile::setSecondaryValue(const QString &text)
 {
     mLblSecondaryValue->setText(text);
     mLblSecondaryValue->setVisible(!text.isEmpty());
+}
+
+void MetricTile::refreshThemeColors()
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    if (!sv)
+        return;
+
+    QColor color(sv->value(mColorToken).toString());
+    QString colorHex = color.name();
+    QString hoverText = sv->value("@color07").toString();
+
+    mSeries->setPen(QPen(color, 1.5));
+
+    QColor fillColor = color;
+    fillColor.setAlphaF(0.1);
+    mAreaSeries->setBrush(fillColor);
+
+    mChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
+
+    mProgressBar->setStyleSheet(
+        QString("QProgressBar#metricTileProgress::chunk { background-color: %1; border-radius: 2; }").arg(colorHex));
+
+    mBtnAction->setStyleSheet(
+        "QPushButton#metricTileAction {"
+        "  font-size: 8pt;"
+        "  padding: 2px 8px;"
+        "  border-radius: 10px;"
+        "  border: 1px solid " + colorHex + ";"
+        "  color: " + colorHex + ";"
+        "  background: transparent;"
+        "}"
+        "QPushButton#metricTileAction:hover {"
+        "  background-color: " + colorHex + ";"
+        "  color: " + hoverText + ";"
+        "}"
+    );
 }
 
 void MetricTile::updateSparkline()

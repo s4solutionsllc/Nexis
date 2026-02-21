@@ -259,59 +259,51 @@ void DiskUsageLauncherWidget::updateUi()
         mToolNameLabel->setText(tr("Disk Usage Analyzer (Baobab)"));
         mDescriptionLabel->setText(tr("Visualize disk usage as a graphical treemap."));
         mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch Disk Usage Analyzer"));
+                mActionButton->setText(tr("Launch Disk Usage Analyzer"));
         break;
     case LAUNCH_FILELIGHT:
         mToolNameLabel->setText(tr("Filelight"));
         mDescriptionLabel->setText(tr("Visualize disk usage with interactive sunburst charts."));
         mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch Filelight"));
+                mActionButton->setText(tr("Launch Filelight"));
         break;
     case LAUNCH_QDIRSTAT:
         mToolNameLabel->setText(tr("QDirStat"));
         mDescriptionLabel->setText(tr("Qt-based directory statistics with treemap visualization."));
         mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch QDirStat"));
+                mActionButton->setText(tr("Launch QDirStat"));
         break;
     case LAUNCH_NCDU:
         mToolNameLabel->setText(tr("ncdu"));
         mDescriptionLabel->setText(tr("NCurses disk usage analyzer. Opens in a terminal."));
         mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch ncdu"));
+                mActionButton->setText(tr("Launch ncdu"));
         break;
 #ifdef Q_OS_MACOS
     case LAUNCH_GRANDPERSPECTIVE:
         mToolNameLabel->setText(tr("GrandPerspective"));
         mDescriptionLabel->setText(tr("Visualize disk usage as a treemap."));
         mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch GrandPerspective"));
+                mActionButton->setText(tr("Launch GrandPerspective"));
         break;
     case LAUNCH_DAISYDISK:
         mToolNameLabel->setText(tr("DaisyDisk"));
         mDescriptionLabel->setText(tr("Visualize disk usage with an interactive sunburst chart."));
         mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch DaisyDisk"));
+                mActionButton->setText(tr("Launch DaisyDisk"));
         break;
     case LAUNCH_OMNIDISKSWEEPER:
         mToolNameLabel->setText(tr("OmniDiskSweeper"));
         mDescriptionLabel->setText(tr("Quickly find and delete large files."));
         mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch OmniDiskSweeper"));
+                mActionButton->setText(tr("Launch OmniDiskSweeper"));
         break;
 #endif
     case LAUNCH_CUSTOM: {
         mToolNameLabel->setText(mCustomDisplayName);
         mDescriptionLabel->setText(tr("User-configured disk usage analyzer."));
         mStatusLabel->setText(tr("Status: Installed"));
-        mStatusLabel->setStyleSheet("color: #2ec27e; font-weight: bold;");
-        mActionButton->setText(tr("Launch %1").arg(mCustomDisplayName));
+                mActionButton->setText(tr("Launch %1").arg(mCustomDisplayName));
         break;
     }
 
@@ -321,24 +313,21 @@ void DiskUsageLauncherWidget::updateUi()
         mDescriptionLabel->setText(tr("Visualize disk usage as a graphical treemap. "
                                       "Baobab is not currently installed."));
         mStatusLabel->setText(tr("Status: Not installed"));
-        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
-        mActionButton->setText(tr("Install Disk Usage Analyzer"));
+                mActionButton->setText(tr("Install Disk Usage Analyzer"));
         break;
     case INSTALL_FILELIGHT_FLATPAK:
         mToolNameLabel->setText(tr("Filelight"));
         mDescriptionLabel->setText(tr("Visualize disk usage with interactive sunburst charts. "
                                       "Filelight is not currently installed."));
         mStatusLabel->setText(tr("Status: Not installed"));
-        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
-        mActionButton->setText(tr("Install Filelight"));
+                mActionButton->setText(tr("Install Filelight"));
         break;
     case NO_FLATPAK:
         mToolNameLabel->setText(tr("Filelight"));
         mDescriptionLabel->setText(tr("Visualize disk usage with interactive sunburst charts. "
                                       "Flatpak is required to install Filelight on this system."));
         mStatusLabel->setText(tr("Status: Not installed"));
-        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
-        mActionButton->setText(tr("Install Flatpak"));
+                mActionButton->setText(tr("Install Flatpak"));
         break;
 #ifdef Q_OS_MACOS
     case LINK_GRANDPERSPECTIVE:
@@ -346,24 +335,21 @@ void DiskUsageLauncherWidget::updateUi()
         mDescriptionLabel->setText(tr("Visualize disk usage as a treemap. "
                                       "GrandPerspective is not currently installed."));
         mStatusLabel->setText(tr("Status: Not installed"));
-        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
-        mActionButton->setText(tr("Get GrandPerspective"));
+                mActionButton->setText(tr("Get GrandPerspective"));
         break;
     case LINK_DAISYDISK:
         mToolNameLabel->setText(tr("DaisyDisk"));
         mDescriptionLabel->setText(tr("Visualize disk usage with an interactive sunburst chart. "
                                       "DaisyDisk is not currently installed."));
         mStatusLabel->setText(tr("Status: Not installed"));
-        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
-        mActionButton->setText(tr("Get DaisyDisk"));
+                mActionButton->setText(tr("Get DaisyDisk"));
         break;
     case LINK_OMNIDISKSWEEPER:
         mToolNameLabel->setText(tr("OmniDiskSweeper"));
         mDescriptionLabel->setText(tr("Quickly find and delete large files. "
                                       "OmniDiskSweeper is not currently installed."));
         mStatusLabel->setText(tr("Status: Not installed"));
-        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
-        mActionButton->setText(tr("Get OmniDiskSweeper"));
+                mActionButton->setText(tr("Get OmniDiskSweeper"));
         break;
 #endif
 
@@ -374,8 +360,7 @@ void DiskUsageLauncherWidget::updateUi()
         mDescriptionLabel->setText(tr("The selected disk usage analyzer was not found on this system. "
                                       "Install it or choose a different tool in Settings."));
         mStatusLabel->setText(tr("Status: Not installed"));
-        mStatusLabel->setStyleSheet("color: #77767b; font-weight: bold;");
-        mActionButton->hide();
+                mActionButton->hide();
         break;
     case NO_TOOL:
         mToolNameLabel->setText(tr("No disk usage tool available"));
@@ -384,6 +369,8 @@ void DiskUsageLauncherWidget::updateUi()
         mActionButton->hide();
         break;
     }
+
+    applyThemeColors();
 }
 
 // ---------------------------------------------------------------------------
@@ -528,4 +515,15 @@ void DiskUsageLauncherWidget::applyThemeColors()
     QString textColor = sv->value("@color12").toString();
     mToolNameLabel->setStyleSheet(QString("color: %1;").arg(textColor));
     mDescriptionLabel->setStyleSheet(QString("color: %1;").arg(textColor));
+
+    bool installed = (mState == LAUNCH_BAOBAB || mState == LAUNCH_FILELIGHT ||
+                      mState == LAUNCH_QDIRSTAT || mState == LAUNCH_NCDU ||
+                      mState == LAUNCH_CUSTOM
+#ifdef Q_OS_MACOS
+                      || mState == LAUNCH_GRANDPERSPECTIVE || mState == LAUNCH_DAISYDISK
+                      || mState == LAUNCH_OMNIDISKSWEEPER
+#endif
+                      );
+    QString statusColor = sv->value(installed ? "@successColor" : "@tertiaryText").toString();
+    mStatusLabel->setStyleSheet(QString("color: %1; font-weight: bold;").arg(statusColor));
 }

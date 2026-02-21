@@ -18,6 +18,8 @@
 #include <QProcess>
 #include <QDir>
 #include "dpi.h"
+#include "Managers/app_manager.h"
+#include "signal_mapper.h"
 
 HardwareInfoPage::~HardwareInfoPage()
 {
@@ -32,6 +34,8 @@ HardwareInfoPage::HardwareInfoPage(QWidget *parent, InfoManager *infoManager) :
     ui->setupUi(this);
 
     init();
+
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &HardwareInfoPage::refreshThemeColors);
 }
 
 void HardwareInfoPage::init()
@@ -374,12 +378,16 @@ void HardwareInfoPage::populateStorage()
             t->setItem(row, 0, labelItem);
 
             QTableWidgetItem *valueItem = new QTableWidgetItem(healthStr);
-            if (d.healthVerdict == "Good")
-                valueItem->setForeground(QColor("#2ec27e"));
-            else if (d.healthVerdict == "Caution")
-                valueItem->setForeground(QColor("#e5a50a"));
-            else if (d.healthVerdict == "Critical")
-                valueItem->setForeground(QColor("#e01b24"));
+            QSettings *sv = AppManager::ins()->getStyleValues();
+            if (sv) {
+                if (d.healthVerdict == "Good")
+                    valueItem->setForeground(QColor(sv->value("@successColor").toString()));
+                else if (d.healthVerdict == "Caution")
+                    valueItem->setForeground(QColor(sv->value("@warningColor").toString()));
+                else if (d.healthVerdict == "Critical")
+                    valueItem->setForeground(QColor(sv->value("@destructiveColor").toString()));
+            }
+            mHealthItems.append({valueItem, d.healthVerdict});
             t->setItem(row, 1, valueItem);
         }
 
@@ -448,5 +456,21 @@ void HardwareInfoPage::populateStorage()
 
     t->resizeColumnsToContents();
     fitTableHeight(t);
+}
+
+void HardwareInfoPage::refreshThemeColors()
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    if (!sv)
+        return;
+
+    for (const HealthItem &entry : mHealthItems) {
+        if (entry.verdict == "Good")
+            entry.item->setForeground(QColor(sv->value("@successColor").toString()));
+        else if (entry.verdict == "Caution")
+            entry.item->setForeground(QColor(sv->value("@warningColor").toString()));
+        else if (entry.verdict == "Critical")
+            entry.item->setForeground(QColor(sv->value("@destructiveColor").toString()));
+    }
 }
 

@@ -51,15 +51,13 @@ void HistoryChart::init()
 
     mChartView->setRenderHint(QPainter::Antialiasing);
 
-    QList<int> colors = {
-        0x2ec27e, 0xe01b24, 0x1c71d8, 0xe5a50a, 0xE95420,
-        0x26a269, 0x813d9c, 0x241f31, 0xc64516, 0xc01c28,
-        0x613583, 0xcd9309, 0xa51d2d, 0x3d3846, 0x77767b,
-        0x1a5fb4, 0x33d17a, 0xf66151, 0xf8e45c, 0x5e5c64
-    };
-    // set colors
-    for (int i = 0; i < mSeriesList.count(); ++i) {
-        dynamic_cast<QSplineSeries*>(mChart->series().at(i))->setColor(QColor(static_cast<QRgb>(colors.at(i))));
+    QSettings *sv = mAppManager->getStyleValues();
+    if (sv) {
+        for (int i = 0; i < mSeriesList.count(); ++i) {
+            QString token = QString("@chartSeries%1").arg(i + 1, 2, 10, QChar('0'));
+            QColor c(sv->value(token).toString());
+            dynamic_cast<QSplineSeries*>(mChart->series().at(i))->setColor(c);
+        }
     }
 
     // Chart Settings
@@ -72,11 +70,12 @@ void HistoryChart::init()
     mChart->setMargins(QMargins(Dpi::scale(20), 0, Dpi::scale(10), Dpi::scale(10)));
     ui->layoutHistoryChart->addWidget(mChartView, 1, 0, 1, 3);
 
-    // theme changed
     connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, [=] {
-        QString chartLabelColor = mAppManager->getStyleValues()->value("@chartLabelColor").toString();
-        QString chartGridColor = mAppManager->getStyleValues()->value("@chartGridColor").toString();
-        QString historyChartBackground = mAppManager->getStyleValues()->value("@historyChartBackgroundColor").toString();
+        QSettings *sv = mAppManager->getStyleValues();
+        if (!sv) return;
+        QString chartLabelColor = sv->value("@chartLabelColor").toString();
+        QString chartGridColor = sv->value("@chartGridColor").toString();
+        QString historyChartBackground = sv->value("@historyChartBackgroundColor").toString();
 
         mChart->axes(Qt::Horizontal).first()->setLabelsColor(chartLabelColor);
         mChart->axes(Qt::Horizontal).first()->setGridLineColor(chartGridColor);
@@ -86,6 +85,12 @@ void HistoryChart::init()
 
         mChart->setBackgroundBrush(QColor(historyChartBackground));
         mChart->legend()->setLabelColor(chartLabelColor);
+
+        for (int i = 0; i < mSeriesList.count(); ++i) {
+            QString token = QString("@chartSeries%1").arg(i + 1, 2, 10, QChar('0'));
+            QColor c(sv->value(token).toString());
+            dynamic_cast<QSplineSeries*>(mChart->series().at(i))->setColor(c);
+        }
     });
 }
 

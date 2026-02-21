@@ -5,7 +5,6 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QPushButton>
-#include <QColor>
 #include <QtCharts>
 #include <functional>
 
@@ -17,7 +16,7 @@ public:
     enum TrendDirection { Rising, Falling, Stable };
     enum DisplayMode { Normal, Hero, Large };
 
-    explicit MetricTile(const QString &title, const QColor &color, QWidget *parent = nullptr);
+    explicit MetricTile(const QString &title, const QString &colorToken, QWidget *parent = nullptr);
     ~MetricTile() = default;
 
     void setValue(int percent, const QString &valueText);
@@ -30,11 +29,12 @@ public:
 
 private:
     void buildLayout();
+    void refreshThemeColors();
     void updateSparkline();
     void updateTrend();
 
     QString mTitle;
-    QColor mColor;
+    QString mColorToken;
     DisplayMode mDisplayMode;
 
     QLabel *mLblTitle;

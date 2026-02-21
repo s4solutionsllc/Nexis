@@ -35,13 +35,19 @@ SettingsPage::SettingsPage(QWidget *parent, AppManager *appManager,
 {
     ui->setupUi(this);
 
-    // Set version label dynamically from cmake-derived APP_VERSION
-    ui->lblCreatedBy->setText(
-        QString("<html><head/><body><p>Nexis v%1 "
-                "<a href=\"https://github.com/lsimpsonsfdc\">"
-                "<span style=\" text-decoration: underline; color:#E95420;\">"
-                "Luke Simpson</span></a></p></body></html>")
-            .arg(qApp->applicationVersion()));
+    auto updateCreditLink = [this]() {
+        QSettings *sv = apm->getStyleValues();
+        QString accent = sv ? sv->value("@accentColor").toString() : "#E95420";
+        ui->lblCreatedBy->setText(
+            QString("<html><head/><body><p>Nexis v%1 "
+                    "<a href=\"https://github.com/lsimpsonsfdc\">"
+                    "<span style=\" text-decoration: underline; color:%2;\">"
+                    "Luke Simpson</span></a></p></body></html>")
+                .arg(qApp->applicationVersion(), accent));
+    };
+    updateCreditLink();
+
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, updateCreditLink);
 
     init();
 }

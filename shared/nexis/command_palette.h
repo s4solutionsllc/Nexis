@@ -6,6 +6,7 @@
 #include <QListWidget>
 #include <QVBoxLayout>
 #include <QKeyEvent>
+#include <QGraphicsDropShadowEffect>
 #include <functional>
 
 struct CommandItem {
@@ -32,9 +33,12 @@ private:
     void filterCommands(const QString &text);
     void executeSelected();
 
+    void refreshThemeColors();
+
     QLineEdit *mSearchBox;
     QListWidget *mResultsList;
     QList<CommandItem> mCommands;
+    QGraphicsDropShadowEffect *mShadowEffect;
 };
 
 #endif // COMMAND_PALETTE_H

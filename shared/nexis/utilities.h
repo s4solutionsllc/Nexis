@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QGraphicsDropShadowEffect>
 #include <QRegularExpression>
+#include "Managers/app_manager.h"
 
 class Utilities
 {
@@ -17,10 +18,17 @@ public:
     static void
     addDropShadow(QList<QWidget *> widgets, const int alpha, const int blur = 15)
     {
+        QColor baseColor(0, 0, 0, alpha);
+        QSettings *sv = AppManager::ins()->getStyleValues();
+        if (sv) {
+            baseColor = QColor(sv->value("@shadowColor").toString());
+            baseColor.setAlpha(alpha);
+        }
+
         for (QWidget *widget: widgets) {
             QGraphicsDropShadowEffect *effect = new QGraphicsDropShadowEffect(widget);
             effect->setBlurRadius(blur);
-            effect->setColor(QColor(0, 0, 0, alpha));
+            effect->setColor(baseColor);
             effect->setOffset(0);
             widget->setGraphicsEffect(effect);
         }

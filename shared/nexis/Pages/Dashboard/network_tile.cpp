@@ -5,21 +5,16 @@
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
 
-NetworkTile::NetworkTile(const QColor &color, QWidget *parent)
+NetworkTile::NetworkTile(const QString &colorToken, QWidget *parent)
     : QWidget(parent),
-      mColor(color),
-      mUploadColor("#E05454"),
+      mColorToken(colorToken),
       mMaxSeen(1024.0 * 1024.0)
 {
     setObjectName("networkTile");
     buildLayout();
+    refreshThemeColors();
 
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, [this]() {
-        QSettings *sv = AppManager::ins()->getStyleValues();
-        QString cardBg = sv->value("@cardBg").toString();
-        mRxChart->setBackgroundBrush(QColor(cardBg));
-        mTxChart->setBackgroundBrush(QColor(cardBg));
-    });
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &NetworkTile::refreshThemeColors);
 }
 
 void NetworkTile::buildLayout()
@@ -41,7 +36,6 @@ void NetworkTile::buildLayout()
 
     mLblDownLabel = new QLabel(QStringLiteral("\u2193 Download"), this);
     mLblDownLabel->setObjectName("networkTileLabel");
-    mLblDownLabel->setStyleSheet(QString("color: %1;").arg(mColor.name()));
 
     mLblDownValue = new QLabel("0 B/s", this);
     mLblDownValue->setObjectName("networkTileValue");
@@ -54,16 +48,12 @@ void NetworkTile::buildLayout()
 
     // Download sparkline
     mRxSeries = new QLineSeries();
-    mRxSeries->setPen(QPen(mColor, 1.5));
 
     QLineSeries *rxBaseline = new QLineSeries();
     for (int i = 0; i < SPARKLINE_SIZE; ++i)
         rxBaseline->append(i, 0);
 
     mRxAreaSeries = new QAreaSeries(mRxSeries, rxBaseline);
-    QColor rxFill = mColor;
-    rxFill.setAlphaF(0.08);
-    mRxAreaSeries->setBrush(rxFill);
     mRxAreaSeries->setPen(Qt::NoPen);
 
     mRxChart = new QChart();
@@ -73,12 +63,6 @@ void NetworkTile::buildLayout()
     mRxChart->setMargins(QMargins(0, 0, 0, 0));
     mRxChart->setBackgroundRoundness(0);
     mRxChart->layout()->setContentsMargins(0, 0, 0, 0);
-
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    if (sv)
-        mRxChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
-    else
-        mRxChart->setBackgroundBrush(Qt::transparent);
 
     auto *rxAxisX = new QValueAxis();
     rxAxisX->setRange(0, SPARKLINE_SIZE - 1);
@@ -108,7 +92,6 @@ void NetworkTile::buildLayout()
 
     mLblUpLabel = new QLabel(QStringLiteral("\u2191 Upload"), this);
     mLblUpLabel->setObjectName("networkTileLabel");
-    mLblUpLabel->setStyleSheet(QString("color: %1;").arg(mUploadColor.name()));
 
     mLblUpValue = new QLabel("0 B/s", this);
     mLblUpValue->setObjectName("networkTileValue");
@@ -121,16 +104,12 @@ void NetworkTile::buildLayout()
 
     // Upload sparkline
     mTxSeries = new QLineSeries();
-    mTxSeries->setPen(QPen(mUploadColor, 1.5));
 
     QLineSeries *txBaseline = new QLineSeries();
     for (int i = 0; i < SPARKLINE_SIZE; ++i)
         txBaseline->append(i, 0);
 
     mTxAreaSeries = new QAreaSeries(mTxSeries, txBaseline);
-    QColor txFill = mUploadColor;
-    txFill.setAlphaF(0.08);
-    mTxAreaSeries->setBrush(txFill);
     mTxAreaSeries->setPen(Qt::NoPen);
 
     mTxChart = new QChart();
@@ -140,11 +119,6 @@ void NetworkTile::buildLayout()
     mTxChart->setMargins(QMargins(0, 0, 0, 0));
     mTxChart->setBackgroundRoundness(0);
     mTxChart->layout()->setContentsMargins(0, 0, 0, 0);
-
-    if (sv)
-        mTxChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
-    else
-        mTxChart->setBackgroundBrush(Qt::transparent);
 
     auto *txAxisX = new QValueAxis();
     txAxisX->setRange(0, SPARKLINE_SIZE - 1);
@@ -190,20 +164,6 @@ void NetworkTile::buildLayout()
     mBtnAction->setFocusPolicy(Qt::NoFocus);
     mBtnAction->hide();
     mBtnAction->setFixedHeight(22);
-    mBtnAction->setStyleSheet(
-        "QPushButton#metricTileAction {"
-        "  font-size: 8pt;"
-        "  padding: 2px 8px;"
-        "  border-radius: 10px;"
-        "  border: 1px solid " + mColor.name() + ";"
-        "  color: " + mColor.name() + ";"
-        "  background: transparent;"
-        "}"
-        "QPushButton#metricTileAction:hover {"
-        "  background-color: " + mColor.name() + ";"
-        "  color: #ffffff;"
-        "}"
-    );
     mainLayout->addWidget(mBtnAction);
 
     // Initialize buffers
@@ -213,6 +173,48 @@ void NetworkTile::buildLayout()
         mRxSeries->append(i, 0);
         mTxSeries->append(i, 0);
     }
+}
+
+void NetworkTile::refreshThemeColors()
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    if (!sv)
+        return;
+
+    QColor dlColor(sv->value(mColorToken).toString());
+    QColor ulColor(sv->value("@networkUploadColor").toString());
+    QString cardBg = sv->value("@cardBg").toString();
+    QString hoverText = sv->value("@color07").toString();
+
+    mRxSeries->setPen(QPen(dlColor, 1.5));
+    QColor rxFill = dlColor;
+    rxFill.setAlphaF(0.08);
+    mRxAreaSeries->setBrush(rxFill);
+    mRxChart->setBackgroundBrush(QColor(cardBg));
+
+    mTxSeries->setPen(QPen(ulColor, 1.5));
+    QColor txFill = ulColor;
+    txFill.setAlphaF(0.08);
+    mTxAreaSeries->setBrush(txFill);
+    mTxChart->setBackgroundBrush(QColor(cardBg));
+
+    mLblDownLabel->setStyleSheet(QString("color: %1;").arg(dlColor.name()));
+    mLblUpLabel->setStyleSheet(QString("color: %1;").arg(ulColor.name()));
+
+    mBtnAction->setStyleSheet(
+        "QPushButton#metricTileAction {"
+        "  font-size: 8pt;"
+        "  padding: 2px 8px;"
+        "  border-radius: 10px;"
+        "  border: 1px solid " + dlColor.name() + ";"
+        "  color: " + dlColor.name() + ";"
+        "  background: transparent;"
+        "}"
+        "QPushButton#metricTileAction:hover {"
+        "  background-color: " + dlColor.name() + ";"
+        "  color: " + hoverText + ";"
+        "}"
+    );
 }
 
 void NetworkTile::setValues(quint64 rxDelta, quint64 txDelta, quint64 rxTotal, quint64 txTotal)

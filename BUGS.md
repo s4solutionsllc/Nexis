@@ -316,6 +316,13 @@
   - **Fix complexity:** Trivial (center relative to the full window geometry instead of `mSlidingStacked`)
   - **Resolved:** Replaced `mSlidingStacked`-relative positioning with `QScreen::geometry()` centering, which is immediately available (no async `showFullScreen()` timing issue) and multi-monitor safe.
 
+- [x] **BUG-47: Theme not fully applied when switching via Appearance dropdown** (MEDIUM)
+  - **Scope:** App-wide — Dashboard tiles, Resources page, Hardware Info page, Settings page, Command Palette
+  - **Description:** When the user switches themes via Settings → Appearance (Dark/Light/Auto), many widgets don't fully update their colors. Root causes: (1) Dashboard tiles (MetricTile, NetworkTile, DiskTile) bake `QColor` values at construction time from theme tokens but never re-resolve them on theme change. (2) `sigChangedAppTheme` listeners are incomplete — e.g., MetricTile only updates chart background, not sparkline pen, area fill, progress bar, or action button colors. (3) DiskTile has no theme listener at all. (4) Inline `setStyleSheet()` calls with hardcoded hex colors (`#2ec27e`, `#77767b`, `#E05454`, `#6B6E78`, `#E95420`) override the global QSS and don't respond to theme changes. (5) CommandPalette shadow color is hardcoded. (6) HardwareInfoPage health verdict table foreground colors are hardcoded.
+  - **Files:** `metric_tile.h/.cpp`, `network_tile.h/.cpp`, `disk_tile.h/.cpp`, `dashboard_page.cpp`, `disk_usage_launcher_widget.cpp`, `hardware_info_page.h/.cpp`, `settings_page.cpp`, `command_palette.h/.cpp`, `default/style/values.ini`, `light/style/values.ini`
+  - **Fix complexity:** Moderate (add `refreshThemeColors()` methods to all affected widgets, change constructors to accept token names instead of resolved QColor, expand existing theme listeners, replace all hardcoded colors with token lookups)
+  - **Resolved:** Eliminated all hardcoded colors across 12 files. Added 24 new theme tokens to both values.ini files. All widgets now resolve colors from theme tokens at runtime via `refreshThemeColors()` methods connected to `sigChangedAppTheme`.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

@@ -554,6 +554,15 @@ At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all
 
 **Per-metric color tokens** (`@cpuColor`, `@memoryColor`, `@diskColor`, `@networkColor`, `@gpuColor`, `@tempColor`) are defined in `values.ini` and used by `MetricTile` sparklines and the Resources charts, giving each metric a consistent named color across all pages and themes.
 
+**Extended tokens** added for full theme coverage (24 additional tokens per theme):
+- **Network:** `@networkUploadColor` — upload sparkline/label color
+- **Overlay/Shadow:** `@overlayBackground`, `@overlayText`, `@shadowColor` — kiosk overlay and drop shadow colors (8-digit hex `#AARRGGBB` for alpha support)
+- **Chart Series Palette:** `@chartSeries01` through `@chartSeries20` — 20 colors for `HistoryChart` data lines, with light-theme variants optimized for white backgrounds
+
+### Live Theme Refresh
+
+All color-bearing widgets implement a `refreshThemeColors()` method connected to `SignalMapper::sigChangedAppTheme`. Constructors accept token name strings (e.g., `"@cpuColor"`) instead of resolved `QColor` values. On theme switch, each widget re-resolves its tokens from `AppManager::getStyleValues()` and updates all visual properties (series pens, area fills, chart backgrounds, inline stylesheets, progress bar chunks, shadow effects). This pattern ensures zero hardcoded colors in C++ code — every color comes from `values.ini`.
+
 ### DPI Scaling
 
 QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at stylesheet load time based on `devicePixelRatio()`. The `Dpi::scale()` utility class handles pixel scaling in C++ code. This solved HiDPI/4K display issues without requiring a QML migration.

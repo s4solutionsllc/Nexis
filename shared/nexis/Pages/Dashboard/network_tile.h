@@ -12,7 +12,7 @@ class NetworkTile : public QWidget
     Q_OBJECT
 
 public:
-    explicit NetworkTile(const QColor &color, QWidget *parent = nullptr);
+    explicit NetworkTile(const QString &colorToken, QWidget *parent = nullptr);
     ~NetworkTile() = default;
 
     void setValues(quint64 rxDelta, quint64 txDelta, quint64 rxTotal, quint64 txTotal);
@@ -21,9 +21,9 @@ public:
 
 private:
     void buildLayout();
+    void refreshThemeColors();
 
-    QColor mColor;
-    QColor mUploadColor;
+    QString mColorToken;
 
     QLabel *mLblTitle;
     QLabel *mLblDownLabel;

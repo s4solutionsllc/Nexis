@@ -3,14 +3,19 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QVBoxLayout>
+#include "Managers/app_manager.h"
+#include "signal_mapper.h"
 
-DiskTile::DiskTile(const QColor &arcColor, const QColor &trackColor, QWidget *parent)
-    : QWidget(parent), mArcColor(arcColor), mTrackColor(trackColor),
+DiskTile::DiskTile(const QString &arcColorToken, const QString &trackColorToken, QWidget *parent)
+    : QWidget(parent), mArcColorToken(arcColorToken), mTrackColorToken(trackColorToken),
       mPercent(0)
 {
     setObjectName("diskTile");
     setMinimumSize(140, 160);
     buildLayout();
+    refreshThemeColors();
+
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &DiskTile::refreshThemeColors);
 }
 
 void DiskTile::buildLayout()
@@ -60,8 +65,12 @@ void DiskTile::setDriveHealth(const QString &driveName, const QString &status, b
     driveLabel->setObjectName("diskTileSubtitle");
 
     auto *statusLabel = new QLabel(status, mHealthContainer);
-    statusLabel->setStyleSheet(QString("color: %1; font-size: 9pt; font-weight: 600;")
-        .arg(healthy ? "#2EC27E" : "#c01c28"));
+
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    QString healthColor = sv ? sv->value(healthy ? "@successColor" : "@destructiveColor").toString() : (healthy ? "#2ec27e" : "#c01c28");
+    statusLabel->setStyleSheet(QString("color: %1; font-size: 9pt; font-weight: 600;").arg(healthColor));
+
+    mHealthEntries.append({statusLabel, healthy});
 
     auto *pair = new QHBoxLayout();
     pair->setContentsMargins(0, 0, 0, 0);
@@ -71,6 +80,23 @@ void DiskTile::setDriveHealth(const QString &driveName, const QString &status, b
     mHealthLayout->addLayout(pair);
 
     mHealthContainer->show();
+}
+
+void DiskTile::refreshThemeColors()
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    if (!sv)
+        return;
+
+    mArcColor = QColor(sv->value(mArcColorToken).toString());
+    mTrackColor = QColor(sv->value(mTrackColorToken).toString());
+
+    for (const HealthEntry &entry : mHealthEntries) {
+        QString healthColor = sv->value(entry.healthy ? "@successColor" : "@destructiveColor").toString();
+        entry.statusLabel->setStyleSheet(QString("color: %1; font-size: 9pt; font-weight: 600;").arg(healthColor));
+    }
+
+    update();
 }
 
 void DiskTile::paintEvent(QPaintEvent *event)

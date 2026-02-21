@@ -92,8 +92,13 @@ private:
     QPushButton *mKioskButton;
 
     QList<QLabel*> mSummaryLabels;
+    QString mSummaryHostname;
+    QString mSummaryOs;
+    QString mSummaryCpu;
+    QString mSummaryRam;
 
     void buildSystemSummary();
+    void refreshSummaryColors();
     void buildQuickActions();
 };
 

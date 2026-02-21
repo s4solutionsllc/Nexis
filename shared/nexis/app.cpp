@@ -754,9 +754,12 @@ void App::showKioskOverlay()
     overlay->setText(tr("Press ESC to exit kiosk mode"));
     overlay->setAlignment(Qt::AlignCenter);
     overlay->setObjectName("kioskOverlay");
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    QString overlayBg = sv ? sv->value("@overlayBackground").toString() : "#A0000000";
+    QString overlayText = sv ? sv->value("@overlayText").toString() : "#ffffff";
     overlay->setStyleSheet(
-        "background-color: rgba(0, 0, 0, 160);"
-        "color: white;"
+        "background-color: " + overlayBg + ";"
+        "color: " + overlayText + ";"
         "font-size: 14pt;"
         "padding: 16px 32px;"
         "border-radius: 8px;"

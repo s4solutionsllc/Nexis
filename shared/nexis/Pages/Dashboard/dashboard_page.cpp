@@ -20,14 +20,6 @@
 #include <QResizeEvent>
 #include <QVersionNumber>
 
-static QColor colorFromStyle(const QString &token)
-{
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    if (sv)
-        return QColor(sv->value(token).toString());
-    return QColor("#888888");
-}
-
 DashboardPage::~DashboardPage()
 {
     delete ui;
@@ -38,14 +30,14 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
                              SignalMapper *signalMapper, DataRefreshService *refreshService) :
     QWidget(parent),
     ui(new Ui::DashboardPage),
-    mCpuTile(new MetricTile(tr("CPU"), colorFromStyle("@cpuColor"), this)),
-    mMemTile(new MetricTile(tr("MEMORY"), colorFromStyle("@memoryColor"), this)),
-    mDiskTile(new DiskTile(colorFromStyle("@diskColor"), colorFromStyle("@color02"), this)),
-    mTempTile(new MetricTile(tr("TEMP"), colorFromStyle("@tempColor"), this)),
-    mGpuTile(new MetricTile(tr("GPU"), colorFromStyle("@gpuColor"), this)),
-    mBatteryTile(new MetricTile(tr("BATTERY"), colorFromStyle("@batteryColor"), this)),
-    mDiskHealthTile(new MetricTile(tr("DISK HEALTH"), colorFromStyle("@diskHealthColor"), this)),
-    mNetworkTile(new NetworkTile(colorFromStyle("@networkColor"), this)),
+    mCpuTile(new MetricTile(tr("CPU"), "@cpuColor", this)),
+    mMemTile(new MetricTile(tr("MEMORY"), "@memoryColor", this)),
+    mDiskTile(new DiskTile("@diskColor", "@color02", this)),
+    mTempTile(new MetricTile(tr("TEMP"), "@tempColor", this)),
+    mGpuTile(new MetricTile(tr("GPU"), "@gpuColor", this)),
+    mBatteryTile(new MetricTile(tr("BATTERY"), "@batteryColor", this)),
+    mDiskHealthTile(new MetricTile(tr("DISK HEALTH"), "@diskHealthColor", this)),
+    mNetworkTile(new NetworkTile("@networkColor", this)),
     mCmbTempSensor(new QComboBox(this)),
     mCmbGpuDevice(new QComboBox(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
@@ -287,40 +279,48 @@ void DashboardPage::buildSystemSummary()
 
     ui->systemSummary->setObjectName("systemSummaryCard");
 
-    // Replace default horizontal layout with vertical for inline summary
-    // Remove existing layout items
     while (ui->summaryLayout->count() > 0) {
         QLayoutItem *item = ui->summaryLayout->takeAt(0);
         delete item;
     }
 
-    // Title
     auto *lblTitle = new QLabel(tr("SYSTEM"), ui->systemSummary);
     lblTitle->setObjectName("summaryLabel");
     ui->summaryLayout->addWidget(lblTitle);
 
-    // Container for the two-line summary
     auto *summaryWidget = new QWidget(ui->systemSummary);
     auto *vbox = new QVBoxLayout(summaryWidget);
     vbox->setContentsMargins(0, 0, 0, 0);
     vbox->setSpacing(2);
 
-    // Line 1: hostname (bold) + OS + CPU + RAM
-    QString hostname = sysInfo.getHostname();
-    QString os = sysInfo.getDistribution();
-    QString cpu = sysInfo.getCpuModel();
-    quint64 memTotal = im->getMemTotal();
-    QString ram = FormatUtil::formatBytes(memTotal) + " RAM";
+    mSummaryHostname = sysInfo.getHostname();
+    mSummaryOs = sysInfo.getDistribution();
+    mSummaryCpu = sysInfo.getCpuModel();
+    mSummaryRam = FormatUtil::formatBytes(im->getMemTotal()) + " RAM";
 
     auto *lblLine1 = new QLabel(ui->systemSummary);
     lblLine1->setObjectName("summaryValue");
-    lblLine1->setText(QString("<b>%1</b> <span style='color: #6B6E78;'>\u2022 %2 \u2022 %3 \u2022 %4</span>")
-        .arg(hostname, os, cpu, ram));
-    vbox->addWidget(lblLine1);
     mSummaryLabels.append(lblLine1);
+    vbox->addWidget(lblLine1);
 
     ui->summaryLayout->addWidget(summaryWidget);
     ui->summaryLayout->addStretch();
+
+    refreshSummaryColors();
+
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, &DashboardPage::refreshSummaryColors);
+}
+
+void DashboardPage::refreshSummaryColors()
+{
+    QSettings *sv = mAppManager->getStyleValues();
+    if (!sv || mSummaryLabels.isEmpty())
+        return;
+
+    QString tertiaryText = sv->value("@tertiaryText").toString();
+    mSummaryLabels.first()->setText(
+        QString("<b>%1</b> <span style='color: %5;'>\u2022 %2 \u2022 %3 \u2022 %4</span>")
+            .arg(mSummaryHostname, mSummaryOs, mSummaryCpu, mSummaryRam, tertiaryText));
 }
 
 void DashboardPage::buildQuickActions()

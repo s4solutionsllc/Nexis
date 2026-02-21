@@ -13,7 +13,7 @@ class DiskTile : public QWidget
     Q_OBJECT
 
 public:
-    explicit DiskTile(const QColor &arcColor, const QColor &trackColor, QWidget *parent = nullptr);
+    explicit DiskTile(const QString &arcColorToken, const QString &trackColorToken, QWidget *parent = nullptr);
     ~DiskTile() = default;
 
     void setValue(int percent, const QString &usedText, const QString &totalText);
@@ -25,7 +25,10 @@ protected:
 
 private:
     void buildLayout();
+    void refreshThemeColors();
 
+    QString mArcColorToken;
+    QString mTrackColorToken;
     QColor mArcColor;
     QColor mTrackColor;
 
@@ -37,6 +40,12 @@ private:
     QLabel *mLblSubtitle;
     QWidget *mHealthContainer;
     QHBoxLayout *mHealthLayout;
+
+    struct HealthEntry {
+        QLabel *statusLabel;
+        bool healthy;
+    };
+    QList<HealthEntry> mHealthEntries;
 };
 
 #endif // DISK_TILE_H

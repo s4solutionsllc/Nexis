@@ -193,6 +193,7 @@ void AppManager::updateStylesheet() {
 - **Theme = data, not code** — switching themes means loading a different `values.ini`
 - **DPI scaling without QML** — the `@dpN` tokens solved HiDPI scaling (BUG-07) in QSS, avoiding a costly QML migration
 - **Live switching** — Auto mode responds to `QStyleHints::colorSchemeChanged` (Qt 6.5+)
+- **Zero hardcoded colors** — all C++ widgets accept token name strings (e.g., `"@cpuColor"`) and implement `refreshThemeColors()` methods connected to `sigChangedAppTheme`. This ensures every color resolves from `values.ini` at runtime, including chart series, sparklines, progress bars, shadows, and overlays (BUG-47). 24 extended tokens cover network upload colors, overlay/shadow colors (8-digit `#AARRGGBB` hex), and a 20-color chart series palette.
 
 **Assessment:** **Elegant and maintainable.** This approach is better than the common alternative of maintaining separate QSS files per theme, which leads to divergence and missed updates.
 
@@ -385,7 +386,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 Both checks emit `qWarning()` at runtime (visible in debug output) without altering application behavior. This catches typos, missing tokens, and malformed color values during development and theme switching.
 
-**Remaining gap:** Hardcoded inline `setStyleSheet()` calls (e.g., in `disk_usage_launcher_widget.cpp`) and missing QSS rules for unstyled widgets are not caught by token validation. These represent a different failure class (BUG-21, BUG-33, BUG-36, BUG-38, BUG-40) that would require static analysis or screenshot regression tests (FR-41) to detect.
+**Remaining gap (largely resolved):** Hardcoded inline `setStyleSheet()` calls were eliminated across 12 files in BUG-47. All widgets now use `refreshThemeColors()` methods connected to `sigChangedAppTheme` to re-resolve token colors on theme switch. The only remaining inline stylesheets use dynamically-resolved token values, not hardcoded hex colors. Missing QSS rules for unstyled widgets remain a potential issue detectable by screenshot regression tests (FR-41).
 
 ---
 

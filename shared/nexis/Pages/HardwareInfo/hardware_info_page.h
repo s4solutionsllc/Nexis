@@ -32,10 +32,17 @@ private:
 
     void addRow(QTableWidget *table, const QString &label, const QString &value);
     void fitTableHeight(QTableWidget *table);
+    void refreshThemeColors();
+
+    struct HealthItem {
+        QTableWidgetItem *item;
+        QString verdict;
+    };
 
 private:
     Ui::HardwareInfoPage *ui;
     InfoManager *im;
+    QList<HealthItem> mHealthItems;
 };
 
 #endif // HARDWARE_INFO_PAGE_H

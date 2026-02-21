@@ -1,9 +1,11 @@
 #include "command_palette.h"
-#include <QGraphicsDropShadowEffect>
 #include <QApplication>
+#include "Managers/app_manager.h"
+#include "signal_mapper.h"
 
 CommandPalette::CommandPalette(QWidget *parent)
-    : QWidget(parent)
+    : QWidget(parent),
+      mShadowEffect(nullptr)
 {
     setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground);
@@ -11,6 +13,9 @@ CommandPalette::CommandPalette(QWidget *parent)
     setFixedWidth(480);
 
     buildLayout();
+    refreshThemeColors();
+
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &CommandPalette::refreshThemeColors);
 }
 
 void CommandPalette::buildLayout()
@@ -39,16 +44,28 @@ void CommandPalette::buildLayout()
     innerLayout->addWidget(mResultsList);
     mainLayout->addWidget(container);
 
-    auto *shadow = new QGraphicsDropShadowEffect(container);
-    shadow->setBlurRadius(24);
-    shadow->setOffset(0, 4);
-    shadow->setColor(QColor(0, 0, 0, 100));
-    container->setGraphicsEffect(shadow);
+    mShadowEffect = new QGraphicsDropShadowEffect(container);
+    mShadowEffect->setBlurRadius(24);
+    mShadowEffect->setOffset(0, 4);
+    container->setGraphicsEffect(mShadowEffect);
 
     connect(mSearchBox, &QLineEdit::textChanged, this, &CommandPalette::filterCommands);
     connect(mResultsList, &QListWidget::itemActivated, this, [this]() {
         executeSelected();
     });
+}
+
+void CommandPalette::refreshThemeColors()
+{
+    if (!mShadowEffect)
+        return;
+
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    if (sv) {
+        QColor shadowColor(sv->value("@shadowColor").toString());
+        shadowColor.setAlpha(100);
+        mShadowEffect->setColor(shadowColor);
+    }
 }
 
 void CommandPalette::addCommand(const QString &name, const QString &category, std::function<void()> action)
