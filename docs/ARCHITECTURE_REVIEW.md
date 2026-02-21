@@ -195,6 +195,10 @@ void AppManager::updateStylesheet() {
 - **Live switching** — Auto mode responds to `QStyleHints::colorSchemeChanged` (Qt 6.5+)
 - **Zero hardcoded colors** — all C++ widgets accept token name strings (e.g., `"@cpuColor"`) and implement `refreshThemeColors()` methods connected to `sigChangedAppTheme`. This ensures every color resolves from `values.ini` at runtime, including chart series, sparklines, progress bars, shadows, and overlays (BUG-47). 24 extended tokens cover network upload colors, overlay/shadow colors (8-digit `#AARRGGBB` hex), and a 20-color chart series palette.
 
+**User-configurable tokens** (like `@fontFamily`) are handled separately from theme tokens — they live in `SettingManager` (not `values.ini`) and are replaced after the theme token loop. This avoids polluting `values.ini` with non-color values that would fail hex validation.
+
+**Bundled assets:** All icons use bundled SVGs from QRC resources rather than `QIcon::fromTheme()`, ensuring consistent visuals across desktop environments. Four font families (Inter, Ubuntu, JetBrains Mono) are embedded in the binary via `QFontDatabase::addApplicationFont()`, with a user-configurable font picker on the Settings page.
+
 **Assessment:** **Elegant and maintainable.** This approach is better than the common alternative of maintaining separate QSS files per theme, which leads to divergence and missed updates.
 
 ---

@@ -44,6 +44,7 @@ private slots:
     void on_spinBatteryHealthPercent_valueChanged(int value);
     void on_checkAppQuitDontAsk_clicked(bool checked);
     void cmbColorSchemeChanged(int index);
+    void cmbFontChanged(int index);
     void cmbDiskAnalyzerChanged(int index);
     void on_txtDiskAnalyzerCustomPath_editingFinished();
     void on_checkDiskHealthAlert_clicked(bool checked);

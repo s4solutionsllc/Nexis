@@ -1,4 +1,5 @@
 #include "app_manager.h"
+#include "setting_manager.h"
 #include "dpi.h"
 #include <QDebug>
 #include <QRegularExpression>
@@ -115,6 +116,10 @@ void AppManager::updateStylesheet()
             if (dpTokenRx.match(tokenName).hasMatch())
                 continue;
 
+            // Font token is user-configurable, not in values.ini
+            if (tokenName == QStringLiteral("fontFamily"))
+                continue;
+
             if (!knownTokens.contains(fullToken))
                 qWarning() << "Theme:" << themeName << "- QSS token" << fullToken << "not found in values.ini";
         }
@@ -136,6 +141,16 @@ void AppManager::updateStylesheet()
     // Replace @tokens with values
     for (const QString &key : mStyleValues->allKeys()) {
         mStylesheetFileContent.replace(key, mStyleValues->value(key).toString());
+    }
+
+    // Font preference (user-configurable, not theme-specific)
+    {
+        QString fontFamily = SettingManager::ins()->getAppFont();
+        if (fontFamily == QStringLiteral("system-ui"))
+            mStylesheetFileContent.replace(QStringLiteral("@fontFamily"), QStringLiteral("system-ui, sans-serif"));
+        else
+            mStylesheetFileContent.replace(QStringLiteral("@fontFamily"),
+                QString("\"%1\", system-ui, sans-serif").arg(fontFamily));
     }
 
     // Replace @dpN tokens with DPI-scaled pixel values (e.g. @dp12 → "24" at 2× DPR)

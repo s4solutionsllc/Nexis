@@ -92,18 +92,14 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent,
 
     // Set the icon after detection so we know which tool
     QIcon toolIcon;
-#ifdef Q_OS_LINUX
     if (mState == LAUNCH_BAOBAB || mState == INSTALL_BAOBAB)
-        toolIcon = QIcon::fromTheme("org.gnome.baobab", QIcon::fromTheme("baobab"));
+        toolIcon = QIcon(":/static/themes/common/img/disk-baobab.svg");
     else if (mState == LAUNCH_FILELIGHT || mState == INSTALL_FILELIGHT_FLATPAK)
-        toolIcon = QIcon::fromTheme("org.kde.filelight", QIcon::fromTheme("filelight"));
+        toolIcon = QIcon(":/static/themes/common/img/disk-filelight.svg");
     else if (mState == LAUNCH_QDIRSTAT)
-        toolIcon = QIcon::fromTheme("qdirstat", QIcon::fromTheme("folder"));
+        toolIcon = QIcon(":/static/themes/common/img/disk-qdirstat.svg");
     else
-        toolIcon = QIcon::fromTheme("drive-harddisk");
-#elif defined(Q_OS_MACOS)
-    toolIcon = QIcon::fromTheme("drive-harddisk");
-#endif
+        toolIcon = QIcon(":/static/themes/common/img/disk-harddisk.svg");
     if (!toolIcon.isNull())
         iconLabel->setPixmap(toolIcon.pixmap(Dpi::scale(48), Dpi::scale(48)));
     else

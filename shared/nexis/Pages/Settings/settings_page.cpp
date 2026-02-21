@@ -129,6 +129,14 @@ void SettingsPage::init()
     ui->cmbColorScheme->setCurrentIndex(
         ui->cmbColorScheme->findData(mSettingManager->getColorScheme()));
 
+    // font family
+    ui->cmbFont->addItem(tr("Inter (Recommended)"), "Inter");
+    ui->cmbFont->addItem("Ubuntu", "Ubuntu");
+    ui->cmbFont->addItem("JetBrains Mono", "JetBrains Mono");
+    ui->cmbFont->addItem(tr("System Default"), "system-ui");
+    ui->cmbFont->setCurrentIndex(
+        ui->cmbFont->findData(mSettingManager->getAppFont()));
+
     // load resource percents
     ui->spinCpuPercent->setValue(mSettingManager->getCpuAlertPercent());
     ui->spinMemoryPercent->setValue(mSettingManager->getMemoryAlertPercent());
@@ -154,7 +162,8 @@ void SettingsPage::init()
     // effects
     QList<QWidget*> widgets = {
         ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme,
-        ui->spinCpuPercent, ui->spinMemoryPercent, ui->spinDiskPercent, ui->cmbDiskAnalyzer
+        ui->cmbFont, ui->spinCpuPercent, ui->spinMemoryPercent, ui->spinDiskPercent,
+        ui->cmbDiskAnalyzer
     };
 
     Utilities::addDropShadow(widgets, 50);
@@ -164,6 +173,7 @@ void SettingsPage::init()
     connect(ui->cmbDisks, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskChanged);
     connect(ui->cmbStartPage, &QComboBox::currentTextChanged, this, &SettingsPage::cmbStartPageChanged);
     connect(ui->cmbColorScheme, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbColorSchemeChanged);
+    connect(ui->cmbFont, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbFontChanged);
     connect(ui->cmbDiskAnalyzer, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskAnalyzerChanged);
 
     // scheduled cleaning
@@ -255,6 +265,13 @@ void SettingsPage::cmbColorSchemeChanged(int index)
 {
     QString scheme = ui->cmbColorScheme->itemData(index).toString();
     mSettingManager->setColorScheme(scheme);
+    apm->updateStylesheet();
+}
+
+void SettingsPage::cmbFontChanged(int index)
+{
+    QString fontFamily = ui->cmbFont->itemData(index).toString();
+    mSettingManager->setAppFont(fontFamily);
     apm->updateStylesheet();
 }
 

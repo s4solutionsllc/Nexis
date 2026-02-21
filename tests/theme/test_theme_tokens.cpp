@@ -44,10 +44,13 @@ private:
         while (it.hasNext()) {
             auto match = it.next();
             QString token = match.captured(1);
-            // Exclude @dp patterns (e.g., dp8, dp4, dp30px)
-            if (!QRegularExpression("^dp\\d+").match(token).hasMatch()) {
-                tokens.insert("@" + token);
-            }
+            // Exclude @dp patterns (e.g., dp8, dp4, dp30px) and
+            // user-configurable tokens not stored in values.ini
+            if (QRegularExpression("^dp\\d+").match(token).hasMatch())
+                continue;
+            if (token == "fontFamily")
+                continue;
+            tokens.insert("@" + token);
         }
         return tokens;
     }

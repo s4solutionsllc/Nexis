@@ -201,6 +201,9 @@ int main(int argc, char *argv[])
     QIcon::setFallbackThemeName("Adwaita");
 
     QFontDatabase::addApplicationFont(":/static/font/Ubuntu-R.ttf");
+    QFontDatabase::addApplicationFont(":/static/font/Inter-Regular.ttf");
+    QFontDatabase::addApplicationFont(":/static/font/Inter-Bold.ttf");
+    QFontDatabase::addApplicationFont(":/static/font/JetBrainsMono-Regular.ttf");
 
     QPixmap pixSplash(":/static/splashscreen.png");
 

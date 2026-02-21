@@ -29,6 +29,7 @@ namespace SettingKeys {
     const QString ThresholdAlertEnabled("ThresholdAlertEnabled");
     const QString ThresholdGB("ThresholdGB");
     const QString SidebarCollapsed("SidebarCollapsed");
+    const QString AppFont("AppFont");
 }
 
 class SettingManager
@@ -109,6 +110,9 @@ public:
 
     void setSidebarCollapsed(bool value);
     bool getSidebarCollapsed() const;
+
+    void setAppFont(const QString &value);
+    QString getAppFont() const;
 
 private:
     static SettingManager *instance;

@@ -61,7 +61,6 @@ void APTSourceManagerPage::init()
     mTreeWidget->setSelectionMode(QAbstractItemView::NoSelection);
     mTreeWidget->setIconSize(Dpi::scale(20, 20));
     mTreeWidget->setIndentation(Dpi::scale(20));
-    mTreeWidget->setFont(QFont("Ubuntu", 10));
 
     // Insert into the existing vertical layout
     ui->verticalLayout->addWidget(mTreeWidget);
@@ -181,7 +180,7 @@ void APTSourceManagerPage::onBrewPackagesLoaded()
                 ? pkg.name
                 : QString("%1 (%2)").arg(pkg.description, pkg.name);
             item->setText(0, displayText);
-            item->setIcon(0, QIcon::fromTheme(pkg.name, fallbackIcon));
+            item->setIcon(0, fallbackIcon);
             item->setCheckState(0, Qt::Unchecked);
             item->setData(0, Qt::UserRole, pkg.name);
             // Store section (formula/cask) for potential future use

@@ -35,10 +35,13 @@ StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QStrin
             appIcon = iconProvider.icon(QFileInfo(iconName));
         }
 #else
-        // On Linux, iconName is a freedesktop icon theme name or absolute path
-        appIcon = QIcon::fromTheme(iconName);
-        if (appIcon.isNull() && QFileInfo::exists(iconName)) {
+        // On Linux, iconName is a freedesktop icon theme name or absolute path.
+        // Try loading directly from path first, then fall back to theme lookup.
+        if (QFileInfo::exists(iconName)) {
             appIcon = QIcon(iconName);
+        }
+        if (appIcon.isNull()) {
+            appIcon = QIcon::fromTheme(iconName, QIcon(":/static/themes/common/img/package.png"));
         }
 #endif
     }

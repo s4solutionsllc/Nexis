@@ -22,6 +22,9 @@
         <file>static/themes/default/img/down-arrow.png</file>
         <file>static/themes/default/img/right-arrow.png</file>
         <file>static/font/Ubuntu-R.ttf</file>
+        <file>static/font/Inter-Regular.ttf</file>
+        <file>static/font/Inter-Bold.ttf</file>
+        <file>static/font/JetBrainsMono-Regular.ttf</file>
         <file>static/languages.json</file>
         <file>static/themes.json</file>
         <file>static/themes/light/img/app.png</file>
@@ -71,6 +74,10 @@
         <file>static/themes/common/img/c_cache.svg</file>
         <file>static/themes/common/img/c_trash.svg</file>
         <file>static/themes/common/img/c_devtools.svg</file>
+        <file>static/themes/common/img/disk-baobab.svg</file>
+        <file>static/themes/common/img/disk-filelight.svg</file>
+        <file>static/themes/common/img/disk-qdirstat.svg</file>
+        <file>static/themes/common/img/disk-harddisk.svg</file>
         <file>static/themes/common/img/fullscreen.svg</file>
         <file>static/themes/common/img/fullscreen-exit.svg</file>
         <file>static/themes/default/img/sidebar-icons/dash.svg</file>

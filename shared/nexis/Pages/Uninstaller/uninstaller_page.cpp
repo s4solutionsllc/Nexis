@@ -113,7 +113,7 @@ void UninstallerPage::onPackagesLoaded(QList<Package> packages)
                 : QString("%1 (%2)").arg(pkg.description, pkg.name);
 #endif
             item->setText(0, displayText);
-            item->setIcon(0, QIcon::fromTheme(pkg.name, fallbackIcon));
+            item->setIcon(0, fallbackIcon);
             item->setCheckState(0, Qt::Unchecked);
             item->setData(0, Qt::UserRole, pkg.name);
         }
@@ -135,7 +135,7 @@ void UninstallerPage::onSnapPackagesLoaded(QStringList packages)
 
     QIcon icon(":/static/themes/common/img/package.png");
     for (const QString &package : packages) {
-        QListWidgetItem *item = new QListWidgetItem(QIcon::fromTheme(package, icon), QString("  %1").arg(package));
+        QListWidgetItem *item = new QListWidgetItem(icon, QString("  %1").arg(package));
         item->setCheckState(Qt::Unchecked);
         ui->listWidgetSnapPackages->addItem(item);
     }

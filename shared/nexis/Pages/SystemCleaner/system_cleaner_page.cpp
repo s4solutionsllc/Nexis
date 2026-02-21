@@ -25,11 +25,7 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mCleanerService(cleanerService ? cleanerService : CleanerService::ins()),
     mScheduleManager(scheduleManager ? scheduleManager : ScheduleManager::ins()),
-#ifdef Q_OS_MACOS
     mDefaultIcon(QIcon(":/static/themes/common/img/package.png")),
-#else
-    mDefaultIcon(QIcon::fromTheme("application-x-executable", QIcon(":/static/themes/common/img/package.png"))),
-#endif
     mLoadingMovie(nullptr),
     mLoadingMovie_2(nullptr)
 {
@@ -51,10 +47,9 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
 
 void SystemCleanerPage::init()
 {
-#ifdef Q_OS_MACOS
-    // macOS: use bundled SVGs directly — the system icon theme only provides
-    // greyscale symbolic icons that Qt can't recolor.  Render at exactly 64×64
-    // and enable scaledContents so the label always shows the full image.
+    // Use bundled SVGs for consistent appearance across all platforms.
+    // Render at exactly 64×64 and enable scaledContents so the label
+    // always shows the full image regardless of intrinsic SVG size.
     auto setPixmap = [](QLabel *lbl, const QString &svgPath) {
         QPixmap pm = QIcon(svgPath).pixmap(Dpi::scale(64, 64));
         lbl->setFixedSize(Dpi::scale(64, 64));
@@ -67,24 +62,6 @@ void SystemCleanerPage::init()
     setPixmap(ui->lblAppCacheImg,     ":/static/themes/common/img/c_cache.svg");
     setPixmap(ui->lblTrashImg,        ":/static/themes/common/img/c_trash.svg");
     setPixmap(ui->lblDevToolCacheImg, ":/static/themes/common/img/c_devtools.svg");
-#else
-    // Linux: use system theme icons with bundled SVG fallbacks.
-    // Render at exactly 64×64 and enable scaledContents so the label
-    // always shows the full image regardless of intrinsic SVG size.
-    auto setThemePixmap = [](QLabel *lbl, const QString &themeName, const QString &fallback) {
-        QIcon icon = QIcon::fromTheme(themeName, QIcon(fallback));
-        QPixmap pm = icon.pixmap(Dpi::scale(64, 64));
-        lbl->setFixedSize(Dpi::scale(64, 64));
-        lbl->setScaledContents(true);
-        lbl->setPixmap(pm);
-    };
-    setThemePixmap(ui->lblPackageCacheImg, "package-x-generic",  ":/static/themes/common/img/c_package.svg");
-    setThemePixmap(ui->lblCrashReportsImg, "dialog-warning",     ":/static/themes/common/img/c_crash.svg");
-    setThemePixmap(ui->lblLogImage,        "text-x-generic",     ":/static/themes/common/img/c_logs.svg");
-    setThemePixmap(ui->lblAppCacheImg,     "folder",             ":/static/themes/common/img/c_cache.svg");
-    setThemePixmap(ui->lblTrashImg,        "user-trash",         ":/static/themes/common/img/c_trash.svg");
-    setThemePixmap(ui->lblDevToolCacheImg, "applications-development", ":/static/themes/common/img/c_devtools.svg");
-#endif
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
@@ -160,12 +137,7 @@ void SystemCleanerPage::addTreeChild(const QString &data, const QString &text, c
 {
     ByteTreeWidget *item = new ByteTreeWidget(parent);
     item->setValues(text, size, data);
-#ifdef Q_OS_MACOS
-    // macOS: skip theme lookup — filenames won't match any theme icons
     item->setIcon(0, mDefaultIcon);
-#else
-    item->setIcon(0, QIcon::fromTheme(text, mDefaultIcon));
-#endif
 }
 
 void SystemCleanerPage::addTreeChild(const CleanCategories &cat, const QString &text, const quint64 &size)

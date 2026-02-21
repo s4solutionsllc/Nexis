@@ -575,31 +575,27 @@ void App::updateSidebarIcons()
 {
     QString theme = AppManager::ins()->resolveThemeName();
 
-    auto setIcon = [&](QPushButton *btn, const QString &sysTheme, const QString &iconName) {
+    auto setIcon = [&](QPushButton *btn, const QString &iconName) {
         QString svgPath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, iconName);
-#ifdef Q_OS_MAC
         btn->setIcon(QIcon(svgPath));
-#else
-        btn->setIcon(QIcon::fromTheme(sysTheme, QIcon(svgPath)));
-#endif
         btn->setIconSize(Dpi::scale(20, 20));
     };
 
-    setIcon(btnDash,             "utilities-system-monitor",       "dash.svg");
-    setIcon(btnHardwareInfo,     "computer",                       "hardware-info.svg");
-    setIcon(btnResources,        "preferences-system",             "resources.svg");
-    setIcon(btnSystemCleaner,    "edit-clear-all",                 "cleaner.svg");
-    setIcon(btnSearch,           "edit-find",                      "search.svg");
-    setIcon(btnProcesses,        "view-list",                      "process.svg");
-    setIcon(btnServices,         "system-run",                     "services.svg");
-    setIcon(btnStartupApps,      "media-playback-start",           "startup-apps.svg");
-    setIcon(btnUninstaller,      "edit-delete",                    "uninstaller.svg");
-    setIcon(btnDocker,           "docker",                         "docker.svg");
-    setIcon(btnHelpers,          "preferences-other",              "helpers.svg");
-    setIcon(btnAptSourceManager, "system-software-install",        "ppa-manager.svg");
-    setIcon(btnGnomeSettings,    "preferences-desktop-appearance", "gnome-settings.svg");
-    setIcon(btnSettings,         "applications-system",            "settings.svg");
-    setIcon(btnFeedback,         "mail-message-new",               "feedback.svg");
+    setIcon(btnDash,             "dash.svg");
+    setIcon(btnHardwareInfo,     "hardware-info.svg");
+    setIcon(btnResources,        "resources.svg");
+    setIcon(btnSystemCleaner,    "cleaner.svg");
+    setIcon(btnSearch,           "search.svg");
+    setIcon(btnProcesses,        "process.svg");
+    setIcon(btnServices,         "services.svg");
+    setIcon(btnStartupApps,      "startup-apps.svg");
+    setIcon(btnUninstaller,      "uninstaller.svg");
+    setIcon(btnDocker,           "docker.svg");
+    setIcon(btnHelpers,          "helpers.svg");
+    setIcon(btnAptSourceManager, "ppa-manager.svg");
+    setIcon(btnGnomeSettings,    "gnome-settings.svg");
+    setIcon(btnSettings,         "settings.svg");
+    setIcon(btnFeedback,         "feedback.svg");
 
     // Sidebar toggle icon
     if (mSidebarCollapsed)

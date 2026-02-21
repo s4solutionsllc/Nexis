@@ -260,3 +260,13 @@ bool SettingManager::getSidebarCollapsed() const
 {
     return mSettings->value(SettingKeys::SidebarCollapsed, false).toBool();
 }
+
+void SettingManager::setAppFont(const QString &value)
+{
+    mSettings->setValue(SettingKeys::AppFont, value);
+}
+
+QString SettingManager::getAppFont() const
+{
+    return mSettings->value(SettingKeys::AppFont, "Inter").toString();
+}

@@ -311,6 +311,7 @@ Configure Nexis application preferences.
 
 - **Language** — 34+ languages via Crowdin translations
 - **Color Scheme** — Auto / Light / Dark mode
+- **Font** — Choose application font family (Inter, Ubuntu, JetBrains Mono, System Default); applied live via `@fontFamily` QSS token
 - **Start Page** — Choose which page opens on launch
 - **Autostart** — Launch Nexis at login (creates `.desktop` or `.plist`)
 - **Disk Partition** — Select partition to monitor on Dashboard
@@ -544,7 +545,7 @@ QDialog { background-color: @color01; }
 QPushButton { background-color: @accentColor; border-radius: @dp8; }
 ```
 
-At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all `@token` occurrences in the QSS, and applies the result via `qApp->setStyleSheet()`.
+At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all `@token` occurrences in the QSS, and applies the result via `qApp->setStyleSheet()`. User-configurable tokens like `@fontFamily` are handled separately — they are stored in `SettingManager` (not `values.ini`) and replaced after the theme token loop.
 
 ### Color Scheme
 
@@ -579,7 +580,7 @@ QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at st
 
 ### Settings Keys (30+)
 
-**Appearance:** ThemeName, Language, ColorScheme
+**Appearance:** ThemeName, Language, ColorScheme, AppFont
 **Behavior:** StartPage, KioskMode, AppQuitDialogDontAsk/Choice
 **Thresholds:** CPUAlertPercent, MemoryAlertPercent, DiskAlertPercent, BatteryAlertPercent
 **Tools:** DiskAnalyzerTool, DiskAnalyzerCustomPath, DiskName, TempSensorId, GpuDeviceId
