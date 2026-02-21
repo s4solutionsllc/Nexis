@@ -3,6 +3,7 @@
 #include "dpi.h"
 #include <QDebug>
 #include <QRegularExpression>
+#include <algorithm>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 #include <QStyleHints>
 #endif
@@ -103,7 +104,7 @@ void AppManager::updateStylesheet()
     // --- Token validation: check QSS @tokens against values.ini ---
     {
         static const QRegularExpression tokenRx(QStringLiteral("@([a-zA-Z][a-zA-Z0-9_]*)"));
-        static const QRegularExpression dpTokenRx(QStringLiteral("^dp\\d+$"));
+        static const QRegularExpression dpTokenRx(QStringLiteral("^dp\\d+(px)?$"));
         const QStringList allKeys = mStyleValues->allKeys();
         const QSet<QString> knownTokens(allKeys.begin(), allKeys.end());
 
@@ -138,8 +139,12 @@ void AppManager::updateStylesheet()
         }
     }
 
-    // Replace @tokens with values
-    for (const QString &key : mStyleValues->allKeys()) {
+    // Replace @tokens with values (longest keys first to avoid substring collisions,
+    // e.g. @sidebar must not clobber @sidebarDivider)
+    QStringList sortedKeys = mStyleValues->allKeys();
+    std::sort(sortedKeys.begin(), sortedKeys.end(),
+              [](const QString &a, const QString &b) { return a.length() > b.length(); });
+    for (const QString &key : sortedKeys) {
         mStylesheetFileContent.replace(key, mStyleValues->value(key).toString());
     }
 

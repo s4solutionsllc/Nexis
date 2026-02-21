@@ -800,11 +800,10 @@ void App::setupCommandPalette()
 
     // Actions
     mCommandPalette->addCommand(tr("Toggle Theme"), tr("Action"), [this]() {
-        QString current = SettingManager::ins()->getThemeName();
-        QString next = (current == "default") ? "light" : "default";
-        SettingManager::ins()->setThemeName(next);
+        QString current = SettingManager::ins()->getColorScheme();
+        QString next = (current == "light") ? "dark" : "light";
+        SettingManager::ins()->setColorScheme(next);
         AppManager::ins()->updateStylesheet();
-        emit SignalMapper::ins()->sigChangedAppTheme();
     });
 
     mCommandPalette->addCommand(tr("Toggle Sidebar"), tr("Action"), [this]() {

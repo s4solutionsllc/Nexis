@@ -323,6 +323,27 @@
   - **Fix complexity:** Moderate (add `refreshThemeColors()` methods to all affected widgets, change constructors to accept token names instead of resolved QColor, expand existing theme listeners, replace all hardcoded colors with token lookups)
   - **Resolved:** Eliminated all hardcoded colors across 12 files. Added 24 new theme tokens to both values.ini files. All widgets now resolve colors from theme tokens at runtime via `refreshThemeColors()` methods connected to `sigChangedAppTheme`.
 
+- [x] **BUG-48: Qt resources not loaded — Q_INIT_RESOURCE missing for static library** (HIGH)
+  - **Scope:** App-wide — all `:/` resource paths (QSS, icons, fonts, images)
+  - **Files:** `shared/nexis/main.cpp`, `CMakeLists.txt`
+  - **Description:** The `static.qrc` resource file is compiled into the `nexis-gui` static library, but the final `nexis` executable never explicitly calls `Q_INIT_RESOURCE(static)`. The linker dead-strips the `qrc_static.cpp.o` object file because no other code references its symbols. Result: all `:/` resource paths return empty at runtime — no stylesheet (empty `qApp->setStyleSheet("")`), no icons, no fonts, no images. This is the root cause of font and theme switching appearing broken (the stylesheet was empty, so changing settings had no visible effect).
+  - **Fix complexity:** Trivial (add `Q_INIT_RESOURCE(static)` before `QApplication` construction in `main.cpp`)
+  - **Resolved:** Added `Q_INIT_RESOURCE(static)` to `main.cpp`
+
+- [x] **BUG-49: Token replacement ordering causes substring collisions in QSS** (MEDIUM)
+  - **Scope:** Theme engine — `AppManager::updateStylesheet()`
+  - **File:** `shared/nexis/Managers/app_manager.cpp`
+  - **Description:** `QSettings::allKeys()` returns keys in alphabetical order. When replacing `@sidebar` before `@sidebarDivider`, the shorter key matches inside the longer one, producing mangled values like `#EDE7E0Divider` instead of the correct color. Same issue with `@cardBg` vs `@cardBgElevated` and `@accentBgTint` vs `@accentColor`/`@accentHover`. The fix is to sort keys by length (longest first) before replacement.
+  - **Fix complexity:** Trivial (sort allKeys by descending length)
+  - **Resolved:** Added `std::sort` by descending length before the token replacement loop
+
+- [x] **BUG-50: Command palette "Toggle Theme" uses wrong SettingManager methods** (LOW)
+  - **Scope:** Command Palette → Toggle Theme action
+  - **File:** `shared/nexis/app.cpp`
+  - **Description:** The "Toggle Theme" command used `getThemeName()`/`setThemeName()` which read/write the legacy `ThemeName` key. But `AppManager::resolveThemeName()` reads `getColorScheme()`. The toggle had no effect because it wrote to a key that nothing reads.
+  - **Fix complexity:** Trivial (switch to `getColorScheme()`/`setColorScheme()`)
+  - **Resolved:** Changed to use `getColorScheme()`/`setColorScheme()` with `"dark"`/`"light"` values; removed redundant `sigChangedAppTheme` emit (already done by `updateStylesheet()`)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

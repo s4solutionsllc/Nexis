@@ -80,6 +80,10 @@ static void showNotificationAndExit(QApplication &app, const QString &title, con
 
 int main(int argc, char *argv[])
 {
+    // Force-include the Qt Resource data from the nexis-gui static library.
+    // Without this, the linker dead-strips qrc_static.cpp.o and all :/ paths fail.
+    Q_INIT_RESOURCE(static);
+
     QApplication app(argc, argv);
     app.setQuitOnLastWindowClosed(false);
 
