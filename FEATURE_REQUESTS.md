@@ -89,6 +89,8 @@
 
 - [x] **FR-43: UI Mockup Polish** — Brought the FR-42 implementation in line with approved SVG mockups. Six changes: (1) sidebar active state uses orange tint + orange text instead of gray, (2) footer status bar showing version and refresh rate, (3) consolidated Quick Actions bar with pill buttons, (4) Nexis branded SVG logo in sidebar (wordmark expanded, lettermark collapsed), (5) HeroCard combining CPU + Memory tiles with vertical divider, (6) DiskTile with custom-painted donut chart replacing sparkline MetricTile. **Resolved:** Implemented in 6 phases.
 
+- [x] **FR-44: Pixel-Perfect Mockup Alignment — 29-Item Fix** — Addressed all remaining deviations between the Concept A mockup and the actual UI. 29 fixes including: MetricTile DisplayMode (Normal/Hero/Large) with per-mode font sizes, NetworkTile rewritten with two-row layout (Download/Upload labels + sparklines, divider, interface name), DiskTile drive health info display, system summary rewritten to inline format (hostname bold + OS/CPU/RAM inline), sidebar gradient logo + separator line + version label + section indicators (collapsed) + cleaner badge/dot, dashboard grid reorganized (Row 0 = HeroCard cs2 + Disk + Network, Row 1 = GPU/Temp/Battery/DiskHealth). **Resolved:** All 29 items implemented.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

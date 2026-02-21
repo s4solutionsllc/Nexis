@@ -5,6 +5,7 @@
 #include <QAction>
 #include <QButtonGroup>
 #include <QPropertyAnimation>
+#include <QFrame>
 
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
@@ -106,9 +107,14 @@ private:
     // Sidebar widgets
     QVBoxLayout *mSidebarLayout;
     QLabel *mLogoLabel;
+    QFrame *mLogoSeparator;
     QPushButton *mBtnSidebarToggle;
     QButtonGroup *mSidebarBtnGroup;
     QList<QLabel*> mSectionHeaders;
+    QList<QFrame*> mSectionIndicators;
+    QLabel *mVersionLabel;
+    QLabel *mCleanerBadge;
+    QLabel *mCleanerBadgeDot;
 
     // Sidebar buttons (programmatically created)
     QPushButton *btnDash;

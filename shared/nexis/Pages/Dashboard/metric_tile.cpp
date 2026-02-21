@@ -9,6 +9,7 @@ MetricTile::MetricTile(const QString &title, const QColor &color, QWidget *paren
     : QWidget(parent),
       mTitle(title),
       mColor(color),
+      mDisplayMode(Normal),
       mCurrentTrend(Stable)
 {
     setObjectName("metricTile");
@@ -27,34 +28,29 @@ void MetricTile::buildLayout()
     mainLayout->setContentsMargins(12, 10, 12, 8);
     mainLayout->setSpacing(4);
 
-    // Header row: title + value
-    auto *headerLayout = new QHBoxLayout();
-    headerLayout->setContentsMargins(0, 0, 0, 0);
-
+    // Title
     mLblTitle = new QLabel(mTitle, this);
     mLblTitle->setObjectName("metricTileTitle");
+    mainLayout->addWidget(mLblTitle);
+
+    // Value + Secondary value row
+    auto *valueLayout = new QHBoxLayout();
+    valueLayout->setContentsMargins(0, 0, 0, 0);
+    valueLayout->setSpacing(8);
 
     mLblValue = new QLabel("--", this);
     mLblValue->setObjectName("metricTileValue");
-    mLblValue->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    mLblValue->setAlignment(Qt::AlignLeft | Qt::AlignBaseline);
 
-    headerLayout->addWidget(mLblTitle);
-    headerLayout->addStretch();
-    headerLayout->addWidget(mLblValue);
-    mainLayout->addLayout(headerLayout);
+    mLblSecondaryValue = new QLabel(this);
+    mLblSecondaryValue->setObjectName("metricTileSubtitle");
+    mLblSecondaryValue->setAlignment(Qt::AlignLeft | Qt::AlignBaseline);
+    mLblSecondaryValue->hide();
 
-    // Progress bar
-    mProgressBar = new QProgressBar(this);
-    mProgressBar->setObjectName("metricTileProgress");
-    mProgressBar->setRange(0, 100);
-    mProgressBar->setValue(0);
-    mProgressBar->setTextVisible(false);
-    mProgressBar->setFixedHeight(4);
-    QString chunkStyle = QString("QProgressBar#metricTileProgress::chunk { background-color: %1; border-radius: 2; }").arg(mColor.name());
-    mProgressBar->setStyleSheet(chunkStyle);
-    mainLayout->addWidget(mProgressBar);
-
-    mainLayout->addSpacing(2);
+    valueLayout->addWidget(mLblValue);
+    valueLayout->addWidget(mLblSecondaryValue);
+    valueLayout->addStretch();
+    mainLayout->addLayout(valueLayout);
 
     // Sparkline chart
     mSeries = new QLineSeries();
@@ -104,7 +100,20 @@ void MetricTile::buildLayout()
     mChartView->setMaximumHeight(60);
     mainLayout->addWidget(mChartView);
 
-    // Footer row: subtitle + trend
+    // Progress bar (below sparkline per mockup)
+    mProgressBar = new QProgressBar(this);
+    mProgressBar->setObjectName("metricTileProgress");
+    mProgressBar->setRange(0, 100);
+    mProgressBar->setValue(0);
+    mProgressBar->setTextVisible(false);
+    mProgressBar->setFixedHeight(4);
+    QString chunkStyle = QString("QProgressBar#metricTileProgress::chunk { background-color: %1; border-radius: 2; }").arg(mColor.name());
+    mProgressBar->setStyleSheet(chunkStyle);
+    mainLayout->addWidget(mProgressBar);
+
+    mainLayout->addSpacing(2);
+
+    // Footer row: subtitle + trend + action
     auto *footerLayout = new QHBoxLayout();
     footerLayout->setContentsMargins(0, 0, 0, 0);
 
@@ -175,13 +184,13 @@ void MetricTile::setTrendDirection(TrendDirection dir)
     mCurrentTrend = dir;
     switch (dir) {
     case Rising:
-        mLblTrend->setText(QStringLiteral("\u2191"));
+        mLblTrend->setText(QStringLiteral("\u2191 rising"));
         break;
     case Falling:
-        mLblTrend->setText(QStringLiteral("\u2193"));
+        mLblTrend->setText(QStringLiteral("\u2193 falling"));
         break;
     case Stable:
-        mLblTrend->setText(QStringLiteral("\u2192"));
+        mLblTrend->setText(QStringLiteral("\u2192 stable"));
         break;
     }
 }
@@ -193,6 +202,23 @@ void MetricTile::setQuickAction(const QString &text, std::function<void()> callb
     mLblTrend->hide();
     QObject::disconnect(mBtnAction, &QPushButton::clicked, nullptr, nullptr);
     connect(mBtnAction, &QPushButton::clicked, this, [callback]() { callback(); });
+}
+
+void MetricTile::setDisplayMode(DisplayMode mode)
+{
+    mDisplayMode = mode;
+
+    mLblValue->setProperty("heroMode", mode == Hero ? "true" : "false");
+    mLblValue->setProperty("largeMode", mode == Large ? "true" : "false");
+
+    mLblValue->style()->unpolish(mLblValue);
+    mLblValue->style()->polish(mLblValue);
+}
+
+void MetricTile::setSecondaryValue(const QString &text)
+{
+    mLblSecondaryValue->setText(text);
+    mLblSecondaryValue->setVisible(!text.isEmpty());
 }
 
 void MetricTile::updateSparkline()

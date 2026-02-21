@@ -30,6 +30,14 @@ void DiskTile::buildLayout()
     mLblSubtitle->setObjectName("diskTileSubtitle");
     mLblSubtitle->setAlignment(Qt::AlignCenter);
     layout->addWidget(mLblSubtitle);
+
+    // Drive health container (hidden until populated)
+    mHealthContainer = new QWidget(this);
+    mHealthLayout = new QHBoxLayout(mHealthContainer);
+    mHealthLayout->setContentsMargins(0, 4, 0, 0);
+    mHealthLayout->setSpacing(12);
+    mHealthContainer->hide();
+    layout->addWidget(mHealthContainer);
 }
 
 void DiskTile::setValue(int percent, const QString &usedText, const QString &totalText)
@@ -44,6 +52,25 @@ void DiskTile::setValue(int percent, const QString &usedText, const QString &tot
 void DiskTile::setSubtitle(const QString &text)
 {
     mLblSubtitle->setText(text);
+}
+
+void DiskTile::setDriveHealth(const QString &driveName, const QString &status, bool healthy)
+{
+    auto *driveLabel = new QLabel(driveName + ": ", mHealthContainer);
+    driveLabel->setObjectName("diskTileSubtitle");
+
+    auto *statusLabel = new QLabel(status, mHealthContainer);
+    statusLabel->setStyleSheet(QString("color: %1; font-size: 9pt; font-weight: 600;")
+        .arg(healthy ? "#2EC27E" : "#c01c28"));
+
+    auto *pair = new QHBoxLayout();
+    pair->setContentsMargins(0, 0, 0, 0);
+    pair->setSpacing(2);
+    pair->addWidget(driveLabel);
+    pair->addWidget(statusLabel);
+    mHealthLayout->addLayout(pair);
+
+    mHealthContainer->show();
 }
 
 void DiskTile::paintEvent(QPaintEvent *event)

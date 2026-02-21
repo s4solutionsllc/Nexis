@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QColor>
 #include <QPushButton>
+#include <QHBoxLayout>
 #include <functional>
 
 class DiskTile : public QWidget
@@ -17,6 +18,7 @@ public:
 
     void setValue(int percent, const QString &usedText, const QString &totalText);
     void setSubtitle(const QString &text);
+    void setDriveHealth(const QString &driveName, const QString &status, bool healthy = true);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -33,6 +35,8 @@ private:
 
     QLabel *mLblTitle;
     QLabel *mLblSubtitle;
+    QWidget *mHealthContainer;
+    QHBoxLayout *mHealthLayout;
 };
 
 #endif // DISK_TILE_H

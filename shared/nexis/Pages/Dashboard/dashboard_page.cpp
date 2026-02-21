@@ -64,44 +64,51 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
 
 void DashboardPage::init()
 {
-    // Bento grid layout:
-    //  Row 0: HeroCard(CPU+Memory) (colspan 2) | Network (colspan 2)
-    //  Row 1: Disk | GPU* | Temp* | Battery* / DiskHealth*
+    // Bento grid layout (mockup-aligned):
+    //  Row 0: HeroCard(CPU+Memory) (colspan 2) | Disk | Network
+    //  Row 1: GPU* | Temp* | Battery* | DiskHealth*
     // * = conditional tiles
 
     int row = 0;
     int col = 0;
 
-    // Row 0: Hero card (CPU + Memory combined) + Network
+    // Row 0: Hero card (CPU + Memory combined) + Disk + Network
     mHeroCard = new HeroCard(mCpuTile, mMemTile, this);
     ui->bentoGrid->addWidget(mHeroCard, 0, 0, 1, 2);
-    ui->bentoGrid->addWidget(mNetworkTile, 0, 2, 1, 2);
+    ui->bentoGrid->addWidget(mDiskTile, 0, 2);
+    ui->bentoGrid->addWidget(mNetworkTile, 0, 3);
+
+    // Set Hero display mode for CPU and Memory tiles
+    mCpuTile->setDisplayMode(MetricTile::Hero);
+    mMemTile->setDisplayMode(MetricTile::Hero);
 
     // Row 1: remaining tiles placed dynamically based on available hardware
     row = 1;
     col = 0;
 
-    ui->bentoGrid->addWidget(mDiskTile, row, col++);
-
     if (im->hasGpu()) {
+        mGpuTile->setDisplayMode(MetricTile::Large);
         ui->bentoGrid->addWidget(mGpuTile, row, col++);
     } else {
         mGpuTile->hide();
     }
 
     if (im->hasThermalSensors()) {
+        mTempTile->setDisplayMode(MetricTile::Large);
         ui->bentoGrid->addWidget(mTempTile, row, col++);
     } else {
         mTempTile->hide();
     }
 
     if (im->hasBattery()) {
+        mBatteryTile->setDisplayMode(MetricTile::Large);
         ui->bentoGrid->addWidget(mBatteryTile, row, col++);
     } else {
         mBatteryTile->hide();
     }
 
     if (im->hasDiskHealth()) {
+        mDiskHealthTile->setDisplayMode(MetricTile::Large);
         ui->bentoGrid->addWidget(mDiskHealthTile, row, col++);
     } else {
         mDiskHealthTile->hide();
@@ -190,6 +197,23 @@ void DashboardPage::init()
                 this, &DashboardPage::onDiskHealthUpdated);
     }
 
+    // Set CPU model + core info as subtitle
+    {
+#ifdef Q_OS_MACOS
+        SystemInfoMacOS sysInfo;
+#else
+        SystemInfoLinux sysInfo;
+#endif
+        QString cpuModel = sysInfo.getCpuModel();
+        int coreCount = im->getCpuCoreCount();
+        if (!cpuModel.isEmpty()) {
+            QString cpuSubtitle = cpuModel;
+            if (coreCount > 0)
+                cpuSubtitle += QString(" \u2022 %1C").arg(coreCount);
+            mCpuTile->setSubtitle(cpuSubtitle);
+        }
+    }
+
     // Core data signals
     connect(mRefresh, &DataRefreshService::cpuUpdated,
             this, &DashboardPage::onCpuUpdated);
@@ -199,6 +223,11 @@ void DashboardPage::init()
             this, &DashboardPage::onNetworkUpdated);
     connect(mRefresh, &DataRefreshService::diskUsageUpdated,
             this, &DashboardPage::onDiskUsageUpdated);
+
+    // Set network interface name
+    QString ifName = im->getDefaultNetworkInterface();
+    if (!ifName.isEmpty())
+        mNetworkTile->setInterfaceName(ifName);
 
     // Quick actions bar
     buildQuickActions();
@@ -258,29 +287,39 @@ void DashboardPage::buildSystemSummary()
 
     ui->systemSummary->setObjectName("systemSummaryCard");
 
-    auto addSummaryItem = [this](const QString &label, const QString &value) {
-        auto *container = new QWidget(ui->systemSummary);
-        auto *vbox = new QVBoxLayout(container);
-        vbox->setContentsMargins(0, 0, 0, 0);
-        vbox->setSpacing(2);
+    // Replace default horizontal layout with vertical for inline summary
+    // Remove existing layout items
+    while (ui->summaryLayout->count() > 0) {
+        QLayoutItem *item = ui->summaryLayout->takeAt(0);
+        delete item;
+    }
 
-        auto *lblLabel = new QLabel(label, container);
-        lblLabel->setObjectName("summaryLabel");
-        auto *lblValue = new QLabel(value, container);
-        lblValue->setObjectName("summaryValue");
+    // Title
+    auto *lblTitle = new QLabel(tr("SYSTEM"), ui->systemSummary);
+    lblTitle->setObjectName("summaryLabel");
+    ui->summaryLayout->addWidget(lblTitle);
 
-        vbox->addWidget(lblLabel);
-        vbox->addWidget(lblValue);
-        ui->summaryLayout->addWidget(container);
+    // Container for the two-line summary
+    auto *summaryWidget = new QWidget(ui->systemSummary);
+    auto *vbox = new QVBoxLayout(summaryWidget);
+    vbox->setContentsMargins(0, 0, 0, 0);
+    vbox->setSpacing(2);
 
-        mSummaryLabels.append(lblValue);
-    };
+    // Line 1: hostname (bold) + OS + CPU + RAM
+    QString hostname = sysInfo.getHostname();
+    QString os = sysInfo.getDistribution();
+    QString cpu = sysInfo.getCpuModel();
+    quint64 memTotal = im->getMemTotal();
+    QString ram = FormatUtil::formatBytes(memTotal) + " RAM";
 
-    addSummaryItem(tr("Hostname"), sysInfo.getHostname());
-    addSummaryItem(tr("OS"), sysInfo.getDistribution());
-    addSummaryItem(tr("Kernel"), sysInfo.getKernel());
-    addSummaryItem(tr("CPU"), sysInfo.getCpuModel());
+    auto *lblLine1 = new QLabel(ui->systemSummary);
+    lblLine1->setObjectName("summaryValue");
+    lblLine1->setText(QString("<b>%1</b> <span style='color: #6B6E78;'>\u2022 %2 \u2022 %3 \u2022 %4</span>")
+        .arg(hostname, os, cpu, ram));
+    vbox->addWidget(lblLine1);
+    mSummaryLabels.append(lblLine1);
 
+    ui->summaryLayout->addWidget(summaryWidget);
     ui->summaryLayout->addStretch();
 }
 
@@ -365,22 +404,17 @@ void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
     }
 
     QString valueText = QString("%1%").arg(cpuUsedPercent);
-    QString subtitle;
-    if (clockGHz > 0.00001)
-        subtitle = QString("%1 GHz").arg(clockGHz, 0, 'f', 2);
 
     mCpuTile->setValue(cpuUsedPercent, valueText);
     mCpuTile->addDataPoint(cpuUsedPercent);
-    if (!subtitle.isEmpty())
-        mCpuTile->setSubtitle(subtitle);
+
+    if (clockGHz > 0.00001)
+        mCpuTile->setSecondaryValue(QString("%1 GHz").arg(clockGHz, 0, 'f', 2));
 }
 
 void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
                                      quint64 swapUsed, quint64 swapTotal)
 {
-    Q_UNUSED(swapUsed)
-    Q_UNUSED(swapTotal)
-
     int memUsedPercent = 0;
     if (total) {
         memUsedPercent = ((double)used / (double)total) * 100.0;
@@ -405,7 +439,11 @@ void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
 
     mMemTile->setValue(memUsedPercent, QString("%1%").arg(memUsedPercent));
     mMemTile->addDataPoint(memUsedPercent);
-    mMemTile->setSubtitle(QString("%1 / %2").arg(f_memUsed, f_memTotal));
+    mMemTile->setSecondaryValue(QString("%1 / %2").arg(f_memUsed, f_memTotal));
+
+    QString swapSubtitle = QString("Swap: %1 / %2")
+        .arg(FormatUtil::formatBytes(swapUsed), FormatUtil::formatBytes(swapTotal));
+    mMemTile->setSubtitle(swapSubtitle);
 }
 
 void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
@@ -601,6 +639,17 @@ void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 
     mDiskHealthTile->setValue(displayPercent, QString("%1%").arg(displayPercent));
     mDiskHealthTile->setSubtitle(worstVerdict);
+
+    // Populate drive health on disk tile (first time only)
+    static bool diskHealthPopulated = false;
+    if (!diskHealthPopulated) {
+        for (const DriveHealth &d : drives) {
+            QString name = d.model.isEmpty() ? d.deviceName : d.model;
+            bool good = (d.healthVerdict == "Good" || d.smartPassed);
+            mDiskTile->setDriveHealth(name, d.healthVerdict, good);
+        }
+        diskHealthPopulated = true;
+    }
 
     // Disk health alert
     if (mSettingManager->getDiskHealthAlertEnabled()) {

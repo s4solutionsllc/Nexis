@@ -513,6 +513,46 @@ QLabel[accessibleName="dialog-title"] {
     border-bottom: 0;
 }
 
+#sidebarDividerLine {
+    background-color: @sidebarDivider;
+    border: 0;
+    max-height: 1;
+    margin: 4 12;
+}
+
+#sidebarVersionLabel {
+    color: @tertiaryText;
+    font-size: 8pt;
+    padding: 0 12;
+}
+
+#sidebarBadge {
+    background-color: @accentColor;
+    color: #ffffff;
+    font-size: 7pt;
+    font-weight: 700;
+    border-radius: 8;
+    padding: 1 6;
+    min-width: 16;
+    max-height: 16;
+}
+
+#sidebarBadgeDot {
+    background-color: @accentColor;
+    border-radius: 4;
+    min-width: 8;
+    max-width: 8;
+    min-height: 8;
+    max-height: 8;
+}
+
+#sidebarSectionIndicator {
+    background-color: @sidebarDivider;
+    border: 0;
+    max-height: 1;
+    margin: 2 16;
+}
+
 /********************
     COMMAND PALETTE
 *********************/
@@ -667,6 +707,14 @@ QLabel[accessibleName="dialog-title"] {
     font-weight: 700;
 }
 
+#metricTileValue[heroMode="true"] {
+    font-size: 36pt;
+}
+
+#metricTileValue[largeMode="true"] {
+    font-size: 30pt;
+}
+
 #metricTileSubtitle {
     color: @tertiaryText;
     font-size: 9pt;
@@ -712,6 +760,53 @@ QLabel[accessibleName="dialog-title"] {
 #diskTileSubtitle {
     color: @tertiaryText;
     font-size: 9pt;
+}
+
+/* - Network Tile - */
+
+#networkTile {
+    background-color: @cardBg;
+    border-radius: 12;
+    border: 1px solid @borderColor;
+}
+
+#networkTile:hover {
+    background-color: @cardBgElevated;
+    border-color: @accentColor;
+}
+
+#networkTileTitle {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+#networkDivider {
+    background-color: @borderColor;
+    border: 0;
+    max-height: 1;
+    margin: 4 0;
+}
+
+#networkTileLabel {
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+#networkTileValue {
+    color: @color05;
+    font-size: 13pt;
+    font-weight: 700;
+}
+
+#networkTileFooter {
+    color: @tertiaryText;
+    font-size: 8pt;
+}
+
+#networkTileInterface {
+    color: @tertiaryText;
+    font-size: 8pt;
 }
 
 /* - System Summary Card - */

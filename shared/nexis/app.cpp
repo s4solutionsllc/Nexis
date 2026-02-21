@@ -93,10 +93,26 @@ void App::buildSidebar()
     logoRow->addWidget(mBtnSidebarToggle);
 
     mSidebarLayout->addLayout(logoRow);
+
+    // Logo separator line (#6)
+    mLogoSeparator = new QFrame(ui->sidebar);
+    mLogoSeparator->setObjectName("sidebarDividerLine");
+    mLogoSeparator->setFrameShape(QFrame::HLine);
+    mLogoSeparator->setFixedHeight(1);
+    mSidebarLayout->addWidget(mLogoSeparator);
     mSidebarLayout->addSpacing(4);
 
     // ---- MONITOR section ----
     mSidebarLayout->addWidget(createSectionHeader(tr("MONITOR")));
+    {
+        auto *indicator = new QFrame(ui->sidebar);
+        indicator->setObjectName("sidebarSectionIndicator");
+        indicator->setFrameShape(QFrame::HLine);
+        indicator->setFixedHeight(1);
+        indicator->hide();
+        mSectionIndicators.append(indicator);
+        mSidebarLayout->addWidget(indicator);
+    }
 
     btnDash = createSidebarButton(tr("Dashboard"));
     btnDash->setChecked(true);
@@ -110,6 +126,15 @@ void App::buildSidebar()
 
     // ---- MANAGE section ----
     mSidebarLayout->addWidget(createSectionHeader(tr("MANAGE")));
+    {
+        auto *indicator = new QFrame(ui->sidebar);
+        indicator->setObjectName("sidebarSectionIndicator");
+        indicator->setFrameShape(QFrame::HLine);
+        indicator->setFixedHeight(1);
+        indicator->hide();
+        mSectionIndicators.append(indicator);
+        mSidebarLayout->addWidget(indicator);
+    }
 
     btnSystemCleaner = createSidebarButton(tr("System Cleaner"));
     mSidebarLayout->addWidget(btnSystemCleaner);
@@ -135,6 +160,15 @@ void App::buildSidebar()
 
     // ---- SYSTEM section ----
     mSidebarLayout->addWidget(createSectionHeader(tr("SYSTEM")));
+    {
+        auto *indicator = new QFrame(ui->sidebar);
+        indicator->setObjectName("sidebarSectionIndicator");
+        indicator->setFrameShape(QFrame::HLine);
+        indicator->setFixedHeight(1);
+        indicator->hide();
+        mSectionIndicators.append(indicator);
+        mSidebarLayout->addWidget(indicator);
+    }
 
     btnDocker = createSidebarButton(tr("Docker"));
     mSidebarLayout->addWidget(btnDocker);
@@ -155,8 +189,15 @@ void App::buildSidebar()
     btnSettings = createSidebarButton(tr("Settings"));
     mSidebarLayout->addWidget(btnSettings);
 
-    // Spacer pushes feedback to bottom
+    // Spacer pushes feedback/version to bottom
     mSidebarLayout->addStretch();
+
+    // Version label (#3)
+    mVersionLabel = new QLabel(QString("v%1").arg(qApp->applicationVersion()), ui->sidebar);
+    mVersionLabel->setObjectName("sidebarVersionLabel");
+    mVersionLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    mSidebarLayout->addWidget(mVersionLabel);
+    mSidebarLayout->addSpacing(4);
 
     // Feedback button (not a page - opens dialog)
     btnFeedback = new QPushButton(ui->sidebar);
@@ -167,6 +208,18 @@ void App::buildSidebar()
     btnFeedback->setIconSize(Dpi::scale(20, 20));
     btnFeedback->setObjectName("btnFeedback");
     mSidebarLayout->addWidget(btnFeedback);
+
+    // System Cleaner badge overlay (#8, #29)
+    mCleanerBadge = new QLabel(ui->sidebar);
+    mCleanerBadge->setObjectName("sidebarBadge");
+    mCleanerBadge->setAlignment(Qt::AlignCenter);
+    mCleanerBadge->setFixedSize(32, 16);
+    mCleanerBadge->hide();
+
+    mCleanerBadgeDot = new QLabel(ui->sidebar);
+    mCleanerBadgeDot->setObjectName("sidebarBadgeDot");
+    mCleanerBadgeDot->setFixedSize(8, 8);
+    mCleanerBadgeDot->hide();
 }
 
 void App::init()
@@ -358,6 +411,32 @@ void App::init()
     // Dashboard kiosk toggle button -> App::toggleKioskMode
     connect(SignalMapper::ins(), &SignalMapper::sigKioskToggleRequested,
             this, &App::toggleKioskMode);
+
+    // Update System Cleaner badge when cleanable size changes
+    connect(SignalMapper::ins(), &SignalMapper::sigCleanableSizeChanged,
+            this, [this](quint64 bytes) {
+        if (bytes > 0) {
+            QString text = FormatUtil::formatBytes(bytes);
+            mCleanerBadge->setText(text);
+            if (!mSidebarCollapsed) {
+                mCleanerBadge->show();
+                mCleanerBadgeDot->hide();
+            } else {
+                mCleanerBadge->hide();
+                mCleanerBadgeDot->show();
+            }
+            // Position badge relative to btnSystemCleaner
+            QPoint btnPos = btnSystemCleaner->pos();
+            int btnW = btnSystemCleaner->width();
+            mCleanerBadge->move(btnPos.x() + btnW - mCleanerBadge->width() - 8,
+                                btnPos.y() + 2);
+            mCleanerBadgeDot->move(btnPos.x() + btnW - 16,
+                                   btnPos.y() + 4);
+        } else {
+            mCleanerBadge->hide();
+            mCleanerBadgeDot->hide();
+        }
+    });
 
     // Relay CleanerService signals through SignalMapper
     connect(CleanerService::ins(), &CleanerService::cleaningStarted,
@@ -564,6 +643,20 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     // Toggle section headers visibility
     for (QLabel *header : mSectionHeaders)
         header->setVisible(!collapsed);
+
+    // Toggle section indicators (visible only when collapsed)
+    for (QFrame *indicator : mSectionIndicators)
+        indicator->setVisible(collapsed);
+
+    // Toggle version label
+    if (mVersionLabel)
+        mVersionLabel->setVisible(!collapsed);
+
+    // Toggle badge vs dot
+    if (mCleanerBadge && mCleanerBadge->text().length() > 0) {
+        mCleanerBadge->setVisible(!collapsed);
+        mCleanerBadgeDot->setVisible(collapsed);
+    }
 
     // Toggle button text visibility
     for (QPushButton *btn : mListSidebarButtons) {

@@ -15,6 +15,7 @@ class MetricTile : public QWidget
 
 public:
     enum TrendDirection { Rising, Falling, Stable };
+    enum DisplayMode { Normal, Hero, Large };
 
     explicit MetricTile(const QString &title, const QColor &color, QWidget *parent = nullptr);
     ~MetricTile() = default;
@@ -24,6 +25,8 @@ public:
     void setSubtitle(const QString &text);
     void setTrendDirection(TrendDirection dir);
     void setQuickAction(const QString &text, std::function<void()> callback);
+    void setDisplayMode(DisplayMode mode);
+    void setSecondaryValue(const QString &text);
 
 private:
     void buildLayout();
@@ -32,9 +35,11 @@ private:
 
     QString mTitle;
     QColor mColor;
+    DisplayMode mDisplayMode;
 
     QLabel *mLblTitle;
     QLabel *mLblValue;
+    QLabel *mLblSecondaryValue;
     QProgressBar *mProgressBar;
     QChartView *mChartView;
     QLineSeries *mSeries;
