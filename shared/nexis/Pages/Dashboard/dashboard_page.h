@@ -99,7 +99,6 @@ private:
 
     void buildSystemSummary();
     void refreshSummaryColors();
-    void buildQuickActions();
 };
 
 #endif // DASHBOARDPAGE_H

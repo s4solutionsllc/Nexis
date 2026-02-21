@@ -221,9 +221,6 @@ void DashboardPage::init()
     if (!ifName.isEmpty())
         mNetworkTile->setInterfaceName(ifName);
 
-    // Quick actions bar
-    buildQuickActions();
-
     // Update bar
     ui->widgetUpdateBar->hide();
     checkUpdate();
@@ -321,33 +318,6 @@ void DashboardPage::refreshSummaryColors()
     mSummaryLabels.first()->setText(
         QString("<b>%1</b> <span style='color: %5;'>\u2022 %2 \u2022 %3 \u2022 %4</span>")
             .arg(mSummaryHostname, mSummaryOs, mSummaryCpu, mSummaryRam, tertiaryText));
-}
-
-void DashboardPage::buildQuickActions()
-{
-    ui->quickActionsCard->setObjectName("quickActionsCard");
-
-    auto *lblTitle = new QLabel(tr("QUICK ACTIONS"), this);
-    lblTitle->setObjectName("quickActionsTitle");
-    ui->quickActionsLayout->addWidget(lblTitle);
-    ui->quickActionsLayout->addStretch();
-
-    auto makeBtn = [this](const QString &text, bool primary, const QString &page) {
-        auto *btn = new QPushButton(text, this);
-        btn->setObjectName("quickActionBtn");
-        btn->setCursor(Qt::PointingHandCursor);
-        btn->setFocusPolicy(Qt::NoFocus);
-        if (primary)
-            btn->setAccessibleName("quickActionPrimary");
-        connect(btn, &QPushButton::clicked, this, [this, page]() {
-            emit mSignalMapper->sigNavigateToPage(page);
-        });
-        return btn;
-    };
-
-    ui->quickActionsLayout->addWidget(makeBtn(tr("Clean System"), true, tr("System Cleaner")));
-    ui->quickActionsLayout->addWidget(makeBtn(tr("View Processes"), false, tr("Processes")));
-    ui->quickActionsLayout->addWidget(makeBtn(tr("Check Updates"), false, tr("Settings")));
 }
 
 void DashboardPage::checkUpdate()

@@ -828,45 +828,6 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 10pt;
 }
 
-/* - Quick Actions Card - */
-
-#quickActionsCard {
-    background-color: @cardBg;
-    border-radius: 10;
-    border: 1px solid @borderColor;
-}
-
-#quickActionsTitle {
-    color: @tertiaryText;
-    font-size: 8pt;
-    font-weight: 600;
-}
-
-#quickActionBtn {
-    font-size: 9pt;
-    padding: 6 16;
-    border-radius: 14;
-    border: 1px solid @borderColor;
-    color: @color06;
-    background-color: transparent;
-}
-
-#quickActionBtn:hover {
-    background-color: @color02;
-    color: @color05;
-}
-
-#quickActionBtn[accessibleName="quickActionPrimary"] {
-    background-color: @accentColor;
-    color: @color07;
-    border-color: @accentColor;
-}
-
-#quickActionBtn[accessibleName="quickActionPrimary"]:hover {
-    background-color: @accentHover;
-    border-color: @accentHover;
-}
-
 /* - Status Footer - */
 
 #statusFooter {

@@ -111,9 +111,7 @@ Real-time system monitoring at a glance in a **bento grid layout** of specialize
 - **Battery** — Charge level percentage (5s refresh)
 - **Disk Health** — Worst-drive SMART health percentage (30s refresh)
 
-**Quick Actions bar** — Consolidated row of pill-shaped buttons: "Clean System" (accent-colored primary), "View Processes", "Check Updates". Each navigates to its target page.
-
-**System summary** in inline format alongside quick actions — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
+**System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
 
 **Footer status bar** — Displays app version and refresh interval at the bottom edge.
 
