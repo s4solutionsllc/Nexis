@@ -2,14 +2,17 @@
 #include "ui_search_page.h"
 #include "nexis_roles.h"
 #include "dpi.h"
+#include "Services/file_search_service.h"
 #include <qdebug.h>
 #include <QClipboard>
 
-SearchPage::SearchPage(QWidget *parent, InfoManager *infoManager, SettingManager *settingManager) :
+SearchPage::SearchPage(QWidget *parent, InfoManager *infoManager,
+                       SettingManager *settingManager, FileSearchService *searchService) :
     QWidget(parent),
     ui(new Ui::SearchPage),
     mInfoManager(infoManager ? infoManager : InfoManager::ins()),
     mSettingManager(settingManager ? settingManager : SettingManager::ins()),
+    mSearchService(searchService ? searchService : FileSearchService::ins()),
     mItemModel(new QStandardItemModel(this)),
     mSortFilterModel(new QSortFilterProxyModel(this))
 {
@@ -69,7 +72,8 @@ void SearchPage::init()
     loadingMovie->start();
     ui->lblLoadingSearching->hide();
 
-    connect(this, &SearchPage::searchFinishedS, this, &SearchPage::onSearchFinished);
+    connect(mSearchService, &FileSearchService::searchFinished,
+            this, &SearchPage::onSearchFinished);
 
     initComboboxValues();
 
@@ -189,133 +193,43 @@ void SearchPage::on_btnSearchAdvance_clicked()
     ui->lblLoadingSearching->show();
     ui->btnSearchAdvance->setEnabled(false);
 
-    // Build the find query from UI widgets (main thread)
-    mFindQuery.clear();
-    mFindQuery.append(mSelectedDirectory);
+    // Build search params from UI widgets
+    FileSearchParams params;
+    params.directory = mSelectedDirectory;
+    params.namePattern = ui->txtSearchInput->text();
+    params.caseInsensitive = ui->checkCaseInsensitive->isChecked();
+    params.isRegex = ui->checkRegEx->isChecked();
+    params.invertMatch = ui->checkInvert->isChecked();
+    params.findEmpty = ui->checkEmpty->isChecked();
+    params.fileType = ui->cmbSearchTypes->currentData().toString();
+    params.timeType = ui->cmbTimeType->currentData().toString();
+    params.timeCriteria = ui->cmbTimeCriteria->currentData().toString();
+    params.timeValue = ui->spinTime->value();
+    params.permReadable = ui->checkPermReadable->isChecked();
+    params.permWritable = ui->checkPermWritable->isChecked();
+    params.permExecutable = ui->checkPermExecutable->isChecked();
+    params.sizeCriteria = ui->cmbSizeCriteria->currentData().toString();
+    params.sizeValue = ui->spinSize->value();
+    params.sizeUnit = ui->cmbSizeUnits->currentData().toString();
+    params.searchAsRoot = ui->checkSearchAsRoot->isChecked();
 
-    if (! ui->txtSearchInput->text().isEmpty()) {
-        if (ui->checkCaseInsensitive->isChecked()) {
-            if (ui->checkRegEx->isChecked()) {
-                mFindQuery.append("-iregex");
-            } else {
-                mFindQuery.append("-iname");
-            }
-        } else {
-            if (ui->checkRegEx->isChecked()) {
-                mFindQuery.append("-regex");
-            } else {
-                mFindQuery.append("-name");
-            }
-        }
+    if (ui->cmbUsers->currentData().toString() != "-1")
+        params.userName = ui->cmbUsers->currentText();
+    if (ui->cmbGroups->currentData().toString() != "-1")
+        params.groupName = ui->cmbGroups->currentText();
 
-        mFindQuery.append(QString("%1").arg(ui->txtSearchInput->text()));
-    }
-
-    if (ui->checkInvert->isChecked()) {
-        mFindQuery.append("-invert");
-    }
-
-    if (ui->checkEmpty->isChecked()) {
-        mFindQuery.append("-empty");
-    }
-
-    if (ui->cmbSearchTypes->currentData().toString() != "all") {
-        mFindQuery.append("-type");
-        mFindQuery.append(ui->cmbSearchTypes->currentData().toString());
-    }
-
-    // TIME
-    if (ui->cmbTimeType->currentData().toString() != "-1") {
-        mFindQuery.append(ui->cmbTimeType->currentData().toString());
-        mFindQuery.append(QString("%1%2").arg(ui->cmbTimeCriteria->currentData().toString()).arg(ui->spinTime->value()));
-    }
-
-    // PERMISSIONS — BSD find uses -perm +mode, GNU find uses -readable/-writable/-executable
-#ifdef Q_OS_MACOS
-    if (ui->checkPermReadable->isChecked()) {
-        mFindQuery.append("-perm");
-        mFindQuery.append("+r");
-    }
-
-    if (ui->checkPermWritable->isChecked()) {
-        mFindQuery.append("-perm");
-        mFindQuery.append("+w");
-    }
-
-    if (ui->checkPermExecutable->isChecked()) {
-        mFindQuery.append("-perm");
-        mFindQuery.append("+x");
-    }
-#else
-    if (ui->checkPermReadable->isChecked()) {
-        mFindQuery.append("-readable");
-    }
-
-    if (ui->checkPermWritable->isChecked()) {
-        mFindQuery.append("-writable");
-    }
-
-    if (ui->checkPermExecutable->isChecked()) {
-        mFindQuery.append("-executable");
-    }
-#endif
-
-    // SIZE
-    if (ui->cmbSizeCriteria->currentData().toString() != "-1") {
-        QString size = QString("%1%2%3")
-                .arg(ui->cmbSizeCriteria->currentData().toString())
-                .arg(ui->spinSize->value())
-                .arg(ui->cmbSizeUnits->currentData().toString());
-
-        mFindQuery.append("-size");
-        mFindQuery.append(size);
-    }
-
-    // OWNER
-    if (ui->cmbUsers->currentData().toString() != "-1") {
-        mFindQuery.append("-user");
-        mFindQuery.append(ui->cmbUsers->currentText());
-    }
-
-    if (ui->cmbGroups->currentData().toString() != "-1") {
-        mFindQuery.append("-group");
-        mFindQuery.append(ui->cmbGroups->currentText());
-    }
-
-    mSearchAsRoot = ui->checkSearchAsRoot->isChecked();
-
-    // Launch worker thread (I/O only)
-    (void)QtConcurrent::run([this]() { searching(); });
+    mSearchService->search(params);
 }
 
-void SearchPage::searching()
+void SearchPage::onSearchFinished(const QStringList &results, bool hadError)
 {
-    // Worker thread: only I/O, no UI access
-    mSearchHadError = false;
-
-    try {
-        if (mSearchAsRoot) {
-            mSearchResult = CommandUtil::sudoExec("find", mFindQuery);
-        } else {
-            mSearchResult = CommandUtil::exec("find", mFindQuery, {}, 120000);
-        }
-    } catch (QString ex) {
-        mSearchHadError = true;
-    }
-
-    emit searchFinishedS();
-}
-
-void SearchPage::onSearchFinished()
-{
-    // Main thread: all UI updates
-    if (mSearchHadError) {
+    if (hadError) {
         ui->lblErrorMsg->show();
         ui->lblErrorMsg->setText(tr("Somethings went wrong, try again."));
-    } else if (mSearchResult.trimmed().isEmpty()) {
-        mItemModel->removeRows(0, mItemModel->rowCount()); // clear table
+    } else if (results.isEmpty()) {
+        mItemModel->removeRows(0, mItemModel->rowCount());
     } else {
-        loadDataToTable(mSearchResult.split("\n"));
+        loadDataToTable(results);
     }
 
     ui->lblLoadingSearching->hide();
@@ -410,56 +324,20 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
                 }
             }
             else if (action->data().toString() == "move-trash") {
-#ifdef Q_OS_MACOS
-                QString trashPath(QDir::homePath() + "/.Trash");
-#else
-                QString trashPath(QDir::homePath() + "/.local/share/Trash");
-#endif
-
                 while (! selectionModel->selectedRows().isEmpty()) {
                     QModelIndex index = selectionModel->selectedRows().first();
 
                     QString fileName = mSortFilterModel->index(index.row(), 0).data(rowRole).toString();
                     QString folderPath = mSortFilterModel->index(index.row(), 1).data(rowRole).toString();
-
                     QString filePath = folderPath + "/" + fileName;
 
-                    bool isAnotherUser = QFileInfo(filePath).owner() != mInfoManager->getUserName();
-#ifdef Q_OS_MACOS
-                    // macOS: move directly to ~/.Trash (no metadata files)
-                    if (isAnotherUser) {
-                        CommandUtil::sudoExec("mv", {filePath, trashPath});
-                    } else {
-                        CommandUtil::exec("mv", {filePath, trashPath});
-                    }
+                    mSearchService->moveToTrash(filePath, fileName, mInfoManager->getUserName());
 
                     if (QFile(filePath).exists()) {
                         selectionModel->select(index, QItemSelectionModel::Deselect);
                     } else {
                         mSortFilterModel->removeRow(index.row());
                     }
-#else
-                    // Linux: move to trash/files/ and create FreeDesktop .trashinfo metadata
-                    if (isAnotherUser) {
-                        CommandUtil::sudoExec("mv", {filePath, trashPath + "/files"});
-                    } else {
-                        CommandUtil::exec("mv", {filePath, trashPath + "/files"});
-                    }
-
-                    if (QFile(filePath).exists()) {
-                        selectionModel->select(index, QItemSelectionModel::Deselect);
-                    } else {
-                        QString infoContent = QString("[Trash Info]\n"
-                                            "Path=%1\n"
-                                            "DeletionDate=%2")
-                                .arg(filePath)
-                                .arg(QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss"));
-
-                        FileUtil::writeFile(trashPath + "/info/" + fileName + ".trashinfo", infoContent);
-
-                        mSortFilterModel->removeRow(index.row());
-                    }
-#endif
                 }
 
                 selectionModel->clearSelection();
@@ -470,15 +348,9 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
 
                     QString fileName = mSortFilterModel->index(index.row(), 0).data(rowRole).toString();
                     QString folderPath = mSortFilterModel->index(index.row(), 1).data(rowRole).toString();
-
                     QString filePath = folderPath + "/" + fileName;
 
-                    bool isAnotherUser = QFileInfo(filePath).owner() != mInfoManager->getUserName();
-                    if (isAnotherUser) {
-                        CommandUtil::sudoExec("rm", {"-rf", filePath });
-                    } else {
-                        CommandUtil::exec("rm", {"-rf", filePath });
-                    }
+                    mSearchService->deleteFile(filePath, mInfoManager->getUserName());
 
                     if (QFile(filePath).exists()) {
                         selectionModel->select(index, QItemSelectionModel::Deselect);

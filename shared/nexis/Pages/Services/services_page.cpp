@@ -3,39 +3,35 @@
 #include "service_item.h"
 
 #include "utilities.h"
-#include <QtConcurrent>
+#include "Services/system_service_manager.h"
 
 ServicesPage::~ServicesPage()
 {
     delete ui;
 }
 
-ServicesPage::ServicesPage(QWidget *parent, ToolManager *toolManager) :
+ServicesPage::ServicesPage(QWidget *parent, SystemServiceManager *serviceManager) :
     QWidget(parent),
     ui(new Ui::ServicesPage),
-    mToolManager(toolManager ? toolManager : ToolManager::ins())
+    mServiceManager(serviceManager ? serviceManager : SystemServiceManager::ins())
 {
     ui->setupUi(this);
 
-    init();    
+    init();
 }
 
 void ServicesPage::init()
 {
-    connect(this, &ServicesPage::loadServicesS, this, &ServicesPage::loadServices);
-    (void)QtConcurrent::run([this]() { getServices(); });
+    connect(mServiceManager, &SystemServiceManager::servicesFetched,
+            this, &ServicesPage::loadServices);
+
+    mServiceManager->fetchServices();
 
     ui->cmbRunningStatus->addItems({ tr("Running Status"), tr("Running"), tr("Not Running") });
     ui->cmbStartupStatus->addItems({ tr("Startup Status"), tr("Enabled"), tr("Disabled") });
 
     Utilities::addDropShadow(ui->cmbRunningStatus, 30);
     Utilities::addDropShadow(ui->cmbStartupStatus, 30);
-}
-
-void ServicesPage::getServices()
-{
-    this->mServices = mToolManager->getServices();
-    emit loadServicesS();
 }
 
 void ServicesPage::loadServices()
@@ -48,7 +44,9 @@ void ServicesPage::loadServices()
     bool runningStatus = runningIndex == 1;
     bool startupStatus = startupIndex == 1;
 
-    for (const Service &s : mServices) {
+    const QList<Service> &services = mServiceManager->services();
+
+    for (const Service &s : services) {
         bool runningFilter = runningIndex != 0 ? s.active == runningStatus : true;
         bool startupFilter = startupIndex != 0 ? s.status == startupStatus : true;
 

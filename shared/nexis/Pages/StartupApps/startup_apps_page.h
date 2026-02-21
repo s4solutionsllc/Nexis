@@ -5,12 +5,11 @@
 #include <QDebug>
 #include <QSharedPointer>
 #include <QAbstractItemModel>
-#include <QFileSystemWatcher>
 
 #include "startup_app.h"
 #include "startup_app_edit.h"
 
-#include "Utils/file_util.h"
+class StartupService;
 
 namespace Ui {
     class StartupAppsPage;
@@ -21,7 +20,8 @@ class StartupAppsPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit StartupAppsPage(QWidget *parent = 0);
+    explicit StartupAppsPage(QWidget *parent = nullptr,
+                             StartupService *startupService = nullptr);
     ~StartupAppsPage();
 
 public slots:
@@ -38,11 +38,7 @@ private:
 
 private:
     QSharedPointer<StartupAppEdit> mStartupAppEdit;
-
-    QFileSystemWatcher mFileSystemWatcher;
-    QString mAutostartPath;
-
-    bool checkIfDisabled(const QString& as_path);
+    StartupService *mStartupService;
 };
 
 #endif // STARTUPAPPSPAGE_H

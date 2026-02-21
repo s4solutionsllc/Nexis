@@ -2,7 +2,8 @@
 #define SERVICESPAGE_H
 
 #include <QWidget>
-#include "Managers/tool_manager.h"
+
+class SystemServiceManager;
 
 namespace Ui {
     class ServicesPage;
@@ -14,15 +15,11 @@ class ServicesPage : public QWidget
 
 public:
     explicit ServicesPage(QWidget *parent = nullptr,
-                          ToolManager *toolManager = nullptr);
+                          SystemServiceManager *serviceManager = nullptr);
     ~ServicesPage();
-
-signals:
-    void loadServicesS();
 
 private slots:
     void init();
-    void getServices();
     void loadServices();
 
     void on_cmbRunningStatus_currentIndexChanged(int index);
@@ -33,9 +30,7 @@ public slots:
 
 private:
     Ui::ServicesPage *ui;
-    ToolManager *mToolManager;
-
-    QList<Service> mServices;
+    SystemServiceManager *mServiceManager;
 };
 
 #endif // SERVICESPAGE_H

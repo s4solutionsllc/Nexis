@@ -12,6 +12,7 @@
 #include "Managers/info_manager.h"
 
 class DataRefreshService;
+class ProcessService;
 
 namespace Ui {
     class ProcessesPage;
@@ -24,7 +25,8 @@ class ProcessesPage : public QWidget
 public:
     explicit ProcessesPage(QWidget *parent = nullptr,
                            InfoManager *infoManager = nullptr,
-                           DataRefreshService *refreshService = nullptr);
+                           DataRefreshService *refreshService = nullptr,
+                           ProcessService *processService = nullptr);
     ~ProcessesPage();
 
 private slots:
@@ -47,6 +49,7 @@ private:
     QMenu mHeaderMenu;
     InfoManager *im;
     DataRefreshService *mRefresh;
+    ProcessService *mProcessService;
 };
 
 #endif // PROCESSESPAGE_H

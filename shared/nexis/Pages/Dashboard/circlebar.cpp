@@ -1,6 +1,8 @@
 #include "circlebar.h"
 #include "ui_circlebar.h"
 #include "dpi.h"
+#include "Managers/app_manager.h"
+#include "signal_mapper.h"
 
 CircleBar::~CircleBar()
 {
@@ -9,9 +11,12 @@ CircleBar::~CircleBar()
     // child widget of this CircleBar — Qt's parent-child tree handles cleanup.
 }
 
-CircleBar::CircleBar(const QString &title, const QStringList &colors, QWidget *parent) :
+CircleBar::CircleBar(const QString &title, const QStringList &colors, QWidget *parent,
+                     AppManager *appManager, SignalMapper *signalMapper) :
     QWidget(parent),
     ui(new Ui::CircleBar),
+    mAppManager(appManager ? appManager : AppManager::ins()),
+    mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mColors(colors),
     mChart(new QChart),
     mChartView(new QChartView(mChart)),
@@ -56,8 +61,8 @@ void CircleBar::init()
 
     ui->layoutCircleBar->insertWidget(1, mChartView);
 
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, [=] {
-        QSettings *styleValues = AppManager::ins()->getStyleValues();
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, [=] {
+        QSettings *styleValues = mAppManager->getStyleValues();
         mChartView->setBackgroundBrush(QColor(styleValues->value("@circleChartBackgroundColor").toString()));
         mSeries->slices().last()->setColor(styleValues->value("@pageContent").toString()); // trail color
     });

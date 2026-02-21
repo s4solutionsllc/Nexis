@@ -1,15 +1,21 @@
 #include "history_chart.h"
 #include "ui_history_chart.h"
 #include "dpi.h"
+#include "Managers/app_manager.h"
+#include "signal_mapper.h"
 
 HistoryChart::~HistoryChart()
 {
     delete ui;
 }
 
-HistoryChart::HistoryChart(const QString &title, const int &seriesCount, QCategoryAxis* categoriAxisY, QWidget *parent) :
+HistoryChart::HistoryChart(const QString &title, const int &seriesCount,
+                           QCategoryAxis* categoriAxisY, QWidget *parent,
+                           AppManager *appManager, SignalMapper *signalMapper) :
     QWidget(parent),
     ui(new Ui::HistoryChart),
+    mAppManager(appManager ? appManager : AppManager::ins()),
+    mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mTitle(title),
     mSeriesCount(seriesCount),
     mChartView(new QChartView(this)),
@@ -22,7 +28,6 @@ HistoryChart::HistoryChart(const QString &title, const int &seriesCount, QCatego
     if (categoriAxisY) {
         mAxisY = categoriAxisY;
         mAxisY->setLabelsPosition(QCategoryAxis::AxisLabelsPositionOnValue);
-        // Remove the default Y axis created by createDefaultAxes() before adding the custom one
         QList<QAbstractAxis*> verticalAxes = mChart->axes(Qt::Vertical);
         for (QAbstractAxis *axis : verticalAxes) {
             mChart->removeAxis(axis);
@@ -68,10 +73,10 @@ void HistoryChart::init()
     ui->layoutHistoryChart->addWidget(mChartView, 1, 0, 1, 3);
 
     // theme changed
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, [=] {
-        QString chartLabelColor = AppManager::ins()->getStyleValues()->value("@chartLabelColor").toString();
-        QString chartGridColor = AppManager::ins()->getStyleValues()->value("@chartGridColor").toString();
-        QString historyChartBackground = AppManager::ins()->getStyleValues()->value("@historyChartBackgroundColor").toString();
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, [=] {
+        QString chartLabelColor = mAppManager->getStyleValues()->value("@chartLabelColor").toString();
+        QString chartGridColor = mAppManager->getStyleValues()->value("@chartGridColor").toString();
+        QString historyChartBackground = mAppManager->getStyleValues()->value("@historyChartBackgroundColor").toString();
 
         mChart->axes(Qt::Horizontal).first()->setLabelsColor(chartLabelColor);
         mChart->axes(Qt::Horizontal).first()->setGridLineColor(chartGridColor);

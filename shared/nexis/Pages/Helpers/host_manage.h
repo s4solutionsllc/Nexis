@@ -5,29 +5,21 @@
 #include <QStandardItemModel>
 #include <QSortFilterProxyModel>
 #include <QMenu>
-#include "Utils/file_util.h"
-#include "Utils/command_util.h"
 
 #include "utilities.h"
+#include "Services/host_service.h"
 
 namespace Ui {
 class HostManage;
 }
-
-class HostItem
-{
-public:
-    QString ip;
-    QString fullQualified;
-    QString aliases;
-};
 
 class HostManage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit HostManage(QWidget *parent = 0);
+    explicit HostManage(QWidget *parent = nullptr,
+                        HostService *hostService = nullptr);
     ~HostManage();
     void loadIfNeeded();
 
@@ -41,7 +33,7 @@ private slots:
     void on_btnCancel_clicked();
     void loadTableRowMenu();
     void on_btnSaveChanges_clicked();
-    QList<QStandardItem *> createRow(const QPair<int, HostItem> &item);
+    QList<QStandardItem *> createRow(const QPair<int, HostEntry> &item);
 
     void on_tableViewHosts_customContextMenuRequested(const QPoint &pos);
 
@@ -54,15 +46,14 @@ private:
     QSortFilterProxyModel *mSortFilterModel;
     QMenu mTableRowMenu;
 
+    HostService *mHostService;
+
     QStringList mHostFileContent;
     QStringList mOriginalHostFileContent;
-    QMap<int, HostItem> mHostItemList;
+    QMap<int, HostEntry> mHostItemList;
 
     int updatedLine;
     bool mLoaded = false;
-
-    static bool isValidIP(const QString &ip);
-    static bool isValidHostname(const QString &hostname);
 };
 
 #endif // HOST_MANAGE_H

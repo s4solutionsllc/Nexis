@@ -6,17 +6,21 @@
 #include <QMap>
 #include "utilities.h"
 #include "dpi.h"
+#include "Managers/app_manager.h"
+#include "signal_mapper.h"
+#include "Services/package_service.h"
+#include <Utils/command_util.h>
 
 UninstallerPage::~UninstallerPage()
 {
     delete ui;
 }
 
-UninstallerPage::UninstallerPage(QWidget *parent, ToolManager *toolManager,
+UninstallerPage::UninstallerPage(QWidget *parent, PackageService *packageService,
                                  AppManager *appManager, SignalMapper *signalMapper) :
     QWidget(parent),
     ui(new Ui::UninstallerPage),
-    tm(toolManager ? toolManager : ToolManager::ins()),
+    mPackageService(packageService ? packageService : PackageService::ins()),
     mAppManager(appManager ? appManager : AppManager::ins()),
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins())
 {
@@ -27,7 +31,6 @@ UninstallerPage::UninstallerPage(QWidget *parent, ToolManager *toolManager,
 
 void UninstallerPage::init()
 {
-    // Configure tree header to match System Cleaner table style
     ui->treeWidgetPackages->header()->setFixedHeight(Dpi::scale(30));
     ui->treeWidgetPackages->setHeaderLabels({ tr("Application") });
     ui->treeWidgetPackages->header()->setStretchLastSection(true);
@@ -42,69 +45,46 @@ void UninstallerPage::init()
 
 #ifdef Q_OS_MACOS
     ui->chkPurge->hide();
-    // Snap packages don't exist on macOS — hide the tab button
     ui->btnSnapPackages->hide();
 #endif
 
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages, ui->btnSnapPackages };
     Utilities::addDropShadow(widgets, 40);
 
-    connect(this, &UninstallerPage::packagesLoadedS, this, &UninstallerPage::onPackagesLoaded);
-    connect(this, &UninstallerPage::snapPackagesLoadedS, this, &UninstallerPage::onSnapPackagesLoaded);
+    connect(mPackageService, &PackageService::packagesFetched,
+            this, &UninstallerPage::onPackagesLoaded);
+    connect(mPackageService, &PackageService::snapPackagesFetched,
+            this, &UninstallerPage::onSnapPackagesLoaded);
     connect(ui->treeWidgetPackages, &QTreeWidget::itemChanged, this, &UninstallerPage::onTreeItemChanged);
 
-    // Initial load via worker threads
-    mFetchFuture = QtConcurrent::run([this]() { fetchPackages(); });
-    mFetchSnapFuture = QtConcurrent::run([this]() { fetchSnapPackages(); });
+    mPackageService->fetchPackages();
+    mPackageService->fetchSnapPackages();
 
     connect(mSignalMapper, &SignalMapper::sigUninstallStarted, this, &UninstallerPage::uninstallStarted);
-    // After uninstall finishes, re-fetch packages on worker threads
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
-        mFetchFuture = QtConcurrent::run([this]() { fetchPackages(); });
+        mPackageService->fetchPackages();
     });
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
-        mFetchSnapFuture = QtConcurrent::run([this]() { fetchSnapPackages(); });
+        mPackageService->fetchSnapPackages();
     });
 }
 
-void UninstallerPage::fetchPackages()
+void UninstallerPage::onPackagesLoaded(QList<Package> packages)
 {
-    // Worker thread: I/O only, no UI access
-#ifdef Q_OS_MAC
-    mPackages = tm->getInstalledApps();
-#else
-    mPackages = tm->getPackages();
-#endif
-    emit packagesLoadedS();
-}
-
-void UninstallerPage::fetchSnapPackages()
-{
-    // Worker thread: I/O only, no UI access
-    mSnapPackages = tm->getSnapPackages();
-    emit snapPackagesLoadedS();
-}
-
-void UninstallerPage::onPackagesLoaded()
-{
-    // Main thread: all UI updates
     emit uninstallStarted();
 
     ui->treeWidgetPackages->clear();
     ui->treeWidgetPackages->blockSignals(true);
 
-    // Group packages by section
     QMap<QString, QList<Package>> grouped;
-    for (const Package &pkg : mPackages) {
+    for (const Package &pkg : packages) {
         QString section = pkg.section.isEmpty() ? "other" : pkg.section;
-        // Strip repository prefix (e.g. "universe/libs" → "libs")
         section = section.section('/', -1);
         grouped[section].append(pkg);
     }
 
     QIcon fallbackIcon(":/static/themes/common/img/package.png");
 
-    // Create tree: section headers with package children
     QStringList sections = grouped.keys();
     sections.sort();
 
@@ -123,13 +103,11 @@ void UninstallerPage::onPackagesLoaded()
         for (const Package &pkg : pkgs) {
             QTreeWidgetItem *item = new QTreeWidgetItem(sectionItem);
 #ifdef Q_OS_MAC
-            // macOS .app bundles: "Name version"
             QString displayText = pkg.description.isEmpty()
                 ? pkg.name
                 : QString("%1 %2").arg(pkg.name, pkg.description);
             item->setData(0, Qt::UserRole + 1, pkg.path);
 #else
-            // Linux: "description (name)"
             QString displayText = pkg.description.isEmpty()
                 ? pkg.name
                 : QString("%1 (%2)").arg(pkg.description, pkg.name);
@@ -151,13 +129,12 @@ void UninstallerPage::onPackagesLoaded()
     ui->lblLoadingUninstaller->hide();
 }
 
-void UninstallerPage::onSnapPackagesLoaded()
+void UninstallerPage::onSnapPackagesLoaded(QStringList packages)
 {
-    // Main thread: all UI updates
     ui->listWidgetSnapPackages->clear();
 
     QIcon icon(":/static/themes/common/img/package.png");
-    for (const QString &package : mSnapPackages) {
+    for (const QString &package : packages) {
         QListWidgetItem *item = new QListWidgetItem(QIcon::fromTheme(package, icon), QString("  %1").arg(package));
         item->setCheckState(Qt::Unchecked);
         ui->listWidgetSnapPackages->addItem(item);
@@ -173,7 +150,6 @@ void UninstallerPage::onSnapPackagesLoaded()
 
 void UninstallerPage::setAppCount()
 {
-    // Count all child items across all sections in the tree
     int count = 0;
     for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i)
         count += ui->treeWidgetPackages->topLevelItem(i)->childCount();
@@ -267,12 +243,7 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (reply != QMessageBox::Ok)
         return;
 
-    mUninstallFuture = QtConcurrent::run([=]
-    {
-        emit mSignalMapper->sigUninstallStarted();
-        tm->trashApps(selectedPaths);
-        emit mSignalMapper->sigUninstallFinished();
-    });
+    mPackageService->trashApps(selectedPaths);
 #else
     QStringList selectedPackages = getSelectedPackages();
     QStringList selectedSnapPackages = getSelectedSnapPackages();
@@ -280,12 +251,10 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (selectedPackages.isEmpty() && selectedSnapPackages.isEmpty())
         return;
 
-    // Run dry-run to discover dependency removals
     QStringList allWouldRemove;
     if (!selectedPackages.isEmpty())
-        allWouldRemove = tm->dryRunRemovePackages(selectedPackages);
+        allWouldRemove = mPackageService->dryRunRemovePackages(selectedPackages);
 
-    // Build confirmation message
     QStringList additionalPackages;
     for (const QString &pkg : allWouldRemove) {
         if (!selectedPackages.contains(pkg))
@@ -315,15 +284,8 @@ void UninstallerPage::on_btnUninstall_clicked()
 
     bool purge = ui->chkPurge->isChecked();
 
-    mUninstallFuture = QtConcurrent::run([=]
-    {
-        emit mSignalMapper->sigUninstallStarted();
-
-        tm->uninstallPackages(selectedPackages, purge);
-        tm->uninstallSnapPackages(selectedSnapPackages);
-
-        emit mSignalMapper->sigUninstallFinished();
-    });
+    mPackageService->uninstallPackages(selectedPackages, purge);
+    mPackageService->uninstallSnapPackages(selectedSnapPackages);
 #endif
 }
 
@@ -339,7 +301,6 @@ void UninstallerPage::uninstallStarted()
 void UninstallerPage::on_txtPackageSearch_textChanged(const QString &val)
 {
     if (ui->stackedWidget->currentIndex() == 0) {
-        // Tree widget search for system packages
         for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i) {
             QTreeWidgetItem *section = ui->treeWidgetPackages->topLevelItem(i);
             int visibleChildren = 0;
@@ -357,7 +318,6 @@ void UninstallerPage::on_txtPackageSearch_textChanged(const QString &val)
                 section->setExpanded(true);
         }
     } else {
-        // Flat list search for snap packages
         QList<QListWidgetItem*> matches = ui->listWidgetSnapPackages->findItems(val, Qt::MatchFlag::MatchContains);
         for (int i = 0; i < ui->listWidgetSnapPackages->count(); ++i)
             ui->listWidgetSnapPackages->item(i)->setHidden(true);
@@ -378,7 +338,7 @@ void UninstallerPage::on_btnSnapPackages_clicked()
 
 void UninstallerPage::on_listWidgetSnapPackages_itemClicked(QListWidgetItem *item)
 {
-    //item->setCheckState(item->checkState() == Qt::Checked ? Qt::Unchecked : Qt::Checked);
+    Q_UNUSED(item);
     ui->btnUninstall->setText(tr("Uninstall Selected (%1)")
                               .arg(getSelectedSnapPackages().count() + getSelectedPackages().count()));
 }

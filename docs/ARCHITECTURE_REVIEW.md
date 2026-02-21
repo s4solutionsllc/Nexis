@@ -37,13 +37,18 @@
 
 ## Architecture at a Glance
 
-Nexis is structured as a **three-tier desktop application**:
+Nexis is structured as a **four-tier desktop application**:
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │  UI Layer: 14 QWidget Pages                                       │
-│  Each page owns its .ui file, QTimers, and presentation logic     │
+│  Each page owns its .ui file and presentation logic               │
 │  Files: shared/nexis/Pages/*/*.cpp                                │
+├────────────────────────────────────────────────────────────────────┤
+│  Service Layer: 7 Domain Services + NexisPage base class          │
+│  StartupService, FileSearchService, HostService, ProcessService,  │
+│  SystemServiceManager, DockerService, PackageService              │
+│  Files: shared/nexis/Services/*.cpp                               │
 ├────────────────────────────────────────────────────────────────────┤
 │  Manager Layer: 7 Singletons                                      │
 │  InfoManager, AppManager, SettingManager, ToolManager,            │
@@ -51,19 +56,21 @@ Nexis is structured as a **three-tier desktop application**:
 │  Files: shared/nexis/Managers/*.cpp                               │
 ├────────────────────────────────────────────────────────────────────┤
 │  Core Library: nexis-core (static lib)                            │
-│  11 Info providers + 5 Tools + 3 Utils                            │
+│  13 Info providers + 7 Tools + 3 Utils                            │
 │  Files: shared/nexis-core/**/*.cpp + {platform}/nexis-core/**     │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
 **Key architectural decisions:**
 - **Compile-time platform abstraction** — Abstract base classes with pure virtual methods; platform subclasses selected via `#ifdef Q_OS_MACOS` at construction time
-- **Singleton managers with DI escape hatches** — Static `ins()` accessors with `std::unique_ptr` members; all 10 page constructors accept optional manager pointers for test injection (FR-35)
+- **Domain service layer (FR-42)** — Business logic extracted from pages into singleton services (`Services/` directory). Services handle async operations via `QThreadPool::start()` and emit result signals. Pages are thin UI consumers. Follows the `CleanerService` pattern.
+- **Singleton managers with DI escape hatches** — Static `ins()` accessors with `std::unique_ptr` members; all page and widget constructors accept optional dependency pointers for test injection (FR-35, FR-42)
 - **Centralized polling** — `DataRefreshService` singleton owns 4 QTimers (1s/5s/30s/configurable) and emits typed data signals; pages subscribe as reactive consumers
+- **Page lifecycle hooks** — `NexisPage` base class with virtual `onPageActivated()`/`onPageDeactivated()` called by `App::pageClick()`. Enables lazy loading and pause-on-hide patterns.
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
 - **Qt signals** — `SignalMapper` singleton as a lightweight global event bus
 
-**Scale:** ~5,000–6,000 lines of C++ across core library + GUI, 14 pages, 34 translations, 3 themes.
+**Scale:** ~6,000–7,000 lines of C++ across core library + services + GUI, 14 pages, 34 translations, 3 themes.
 
 ---
 

@@ -2,6 +2,7 @@
 #include "ui_app.h"
 #include "utilities.h"
 #include "signal_mapper.h"
+#include "nexis_page.h"
 #include "dpi.h"
 #include <Managers/cleaner_service.h>
 #include <Managers/data_refresh_service.h>
@@ -287,12 +288,21 @@ QWidget* App::getPageByTitle(const QString &title)
 void App::pageClick(QWidget *widget, bool slide)
 {
     if (widget) {
+        QWidget *current = mSlidingStacked->currentWidget();
+        if (current != widget) {
+            if (auto *page = qobject_cast<NexisPage*>(current))
+                page->onPageDeactivated();
+        }
+
         ui->pageTitle->setText(widget->windowTitle());
         if (slide) {
             mSlidingStacked->slideInIdx(mSlidingStacked->indexOf(widget));
         } else {
             mSlidingStacked->setCurrentWidget(widget);
         }
+
+        if (auto *page = qobject_cast<NexisPage*>(widget))
+            page->onPageActivated();
     }
 }
 

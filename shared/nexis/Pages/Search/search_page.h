@@ -13,8 +13,9 @@
 #include "Utils/format_util.h"
 #include "Managers/setting_manager.h"
 #include <QMovie>
-#include <QtConcurrent>
 #include <QDesktopServices>
+
+class FileSearchService;
 
 namespace Ui {
 class SearchPage;
@@ -27,11 +28,9 @@ class SearchPage : public QWidget
 public:
     explicit SearchPage(QWidget *parent = nullptr,
                         InfoManager *infoManager = nullptr,
-                        SettingManager *settingManager = nullptr);
+                        SettingManager *settingManager = nullptr,
+                        FileSearchService *searchService = nullptr);
     ~SearchPage();
-
-signals:
-    void searchFinishedS();
 
 private slots:
     void init();
@@ -45,8 +44,7 @@ private slots:
     void loadTableRowMenu();
     void loadHeaderMenu();
     void loadDataToTable(const QList<QString> &results);
-    void searching();
-    void onSearchFinished();
+    void onSearchFinished(const QStringList &results, bool hadError);
     QList<QStandardItem *> createRow(const QString &filepath);
 
     void on_tableFoundResults_doubleClicked(const QModelIndex &index);
@@ -55,6 +53,7 @@ private:
     Ui::SearchPage *ui;
     InfoManager *mInfoManager;
     SettingManager *mSettingManager;
+    FileSearchService *mSearchService;
 
     QString mSelectedDirectory;
 
@@ -65,13 +64,6 @@ private:
     QMenu mTableRowMenu;
     QString mSearchResultDateFormat;
     int rowRole;
-
-    // Thread-safe search state (written on main thread, read on worker)
-    QStringList mFindQuery;
-    bool mSearchAsRoot;
-    // Search results (written on worker thread, read on main thread)
-    QString mSearchResult;
-    bool mSearchHadError;
 };
 
 #endif // SEARCH_PAGE_H

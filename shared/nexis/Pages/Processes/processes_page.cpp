@@ -4,6 +4,7 @@
 #include "nexis_roles.h"
 #include "dpi.h"
 #include "Managers/data_refresh_service.h"
+#include "Services/process_service.h"
 #include <QRegularExpression>
 
 ProcessesPage::~ProcessesPage()
@@ -12,13 +13,15 @@ ProcessesPage::~ProcessesPage()
 }
 
 ProcessesPage::ProcessesPage(QWidget *parent, InfoManager *infoManager,
-                               DataRefreshService *refreshService) :
+                               DataRefreshService *refreshService,
+                               ProcessService *processService) :
   QWidget(parent),
   ui(new Ui::ProcessesPage),
   mItemModel(new QStandardItemModel(this)),
   mSortFilterModel(new QSortFilterProxyModel(this)),
   im(infoManager ? infoManager : InfoManager::ins()),
-  mRefresh(refreshService ? refreshService : DataRefreshService::ins())
+  mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
+  mProcessService(processService ? processService : ProcessService::ins())
 {
     ui->setupUi(this);
 
@@ -214,16 +217,7 @@ void ProcessesPage::on_btnEndProcess_clicked()
 
     if (pid) {
         QString selectedUname = mSortFilterModel->index(mSelectedRowModel.row(), 4).data(SortRole).toString();
-
-        try {
-            if (selectedUname == im->getUserName()) {
-                CommandUtil::exec("kill", { QString::number(pid) });
-            } else {
-                CommandUtil::sudoExec("kill", { QString::number(pid) });
-            }
-        } catch (QString &ex) {
-            qCritical() << ex;
-        }
+        mProcessService->killProcess(pid, selectedUname, im->getUserName());
     }
 }
 

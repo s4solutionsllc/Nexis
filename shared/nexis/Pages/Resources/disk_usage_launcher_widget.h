@@ -5,12 +5,21 @@
 #include <QLabel>
 #include <QPushButton>
 
+class AppManager;
+class SignalMapper;
+class SettingManager;
+class ToolManager;
+
 class DiskUsageLauncherWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit DiskUsageLauncherWidget(QWidget *parent = nullptr);
+    explicit DiskUsageLauncherWidget(QWidget *parent = nullptr,
+                                     AppManager *appManager = nullptr,
+                                     SignalMapper *signalMapper = nullptr,
+                                     SettingManager *settingManager = nullptr,
+                                     ToolManager *toolManager = nullptr);
 
 private slots:
     void onActionClicked();
@@ -43,24 +52,19 @@ private:
         NO_TOOL       ///< Unsupported platform / nothing available
     };
 
-    /// Resolve which tool to use: checks user preference first, falls back
-    /// to platform auto-detection when the preference is "auto".
     void detect();
-
-    /// Try to resolve a specific tool by its settings key (e.g. "baobab",
-    /// "grandperspective", "custom"). Returns true if a state was set.
     bool resolveNamedTool(const QString &toolKey);
-
-    /// Original auto-detection logic (platform/DE-aware).
     void autoDetect();
-
     void updateUi();
     void applyThemeColors();
 
     State mState;
-
-    /// Human-readable name shown when the tool is a custom executable.
     QString mCustomDisplayName;
+
+    AppManager *mAppManager;
+    SignalMapper *mSignalMapper;
+    SettingManager *mSettingManager;
+    ToolManager *mToolManager;
 
     QLabel *mTitleLabel;
     QLabel *mToolNameLabel;

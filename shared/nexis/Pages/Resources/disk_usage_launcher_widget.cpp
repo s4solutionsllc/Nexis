@@ -23,9 +23,17 @@
 #include "Tools/package_tool_shared.h"
 #include "Managers/tool_manager.h"
 
-DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
+DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent,
+                                                   AppManager *appManager,
+                                                   SignalMapper *signalMapper,
+                                                   SettingManager *settingManager,
+                                                   ToolManager *toolManager)
     : QWidget(parent),
-      mState(NO_TOOL)
+      mState(NO_TOOL),
+      mAppManager(appManager ? appManager : AppManager::ins()),
+      mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
+      mSettingManager(settingManager ? settingManager : SettingManager::ins()),
+      mToolManager(toolManager ? toolManager : ToolManager::ins())
 {
     // --- Title (matches HistoryChart's lblHistoryTitle) ---
     mTitleLabel = new QLabel(tr("Disk Usage Analysis"), this);
@@ -103,7 +111,7 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
 
     // Theme change support
     applyThemeColors();
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme,
             this, &DiskUsageLauncherWidget::applyThemeColors);
 }
 
@@ -113,15 +121,12 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent)
 
 void DiskUsageLauncherWidget::detect()
 {
-    // Check user preference first; fall back to auto-detection
-    QString pref = SettingManager::ins()->getDiskAnalyzerTool();
+    QString pref = mSettingManager->getDiskAnalyzerTool();
 
     if (pref.isEmpty() || pref == "auto") {
         autoDetect();
     } else {
-        // User explicitly chose a tool — try to resolve it
         if (!resolveNamedTool(pref)) {
-            // Shouldn't normally happen; fall back to auto
             autoDetect();
         }
     }
@@ -131,18 +136,16 @@ bool DiskUsageLauncherWidget::resolveNamedTool(const QString &toolKey)
 {
     // --- Custom executable ---
     if (toolKey == "custom") {
-        QString customPath = SettingManager::ins()->getDiskAnalyzerCustomPath();
+        QString customPath = mSettingManager->getDiskAnalyzerCustomPath();
         if (customPath.isEmpty()) {
             mState = NOT_FOUND;
             mCustomDisplayName = tr("Custom");
             return true;
         }
-        // Check if it exists in PATH or as an absolute path
         bool found = !QStandardPaths::findExecutable(customPath).isEmpty()
                      || QFileInfo(customPath).isExecutable();
         if (found) {
             mState = LAUNCH_CUSTOM;
-            // Show just the filename for a cleaner display
             mCustomDisplayName = QFileInfo(customPath).fileName();
         } else {
             mState = NOT_FOUND;
@@ -397,7 +400,6 @@ void DiskUsageLauncherWidget::onActionClicked()
     case INSTALL_BAOBAB: {
         mActionButton->setEnabled(false);
         mActionButton->setText(tr("Installing..."));
-        // sudoExec blocks but uses pkexec for auth, so it's acceptable
         CommandUtil::sudoExec("apt-get", {"install", "-y", "baobab"});
         detect();
         updateUi();
@@ -427,9 +429,8 @@ void DiskUsageLauncherWidget::onActionClicked()
     case NO_FLATPAK: {
         mActionButton->setEnabled(false);
         mActionButton->setText(tr("Installing..."));
-        // Determine the right package manager install command
         QString pkg = "flatpak";
-        switch (ToolManager::ins()->packageTool()->currentPackageTool) {
+        switch (mToolManager->packageTool()->currentPackageTool) {
         case APT_RPM:
         case APT:
             CommandUtil::sudoExec("apt-get", {"install", "-y", pkg});
@@ -462,7 +463,6 @@ void DiskUsageLauncherWidget::onActionClicked()
     case LAUNCH_NCDU: {
         // ncdu is a TUI app — launch inside the default terminal emulator
 #ifdef Q_OS_LINUX
-        // Try common terminal emulators in order of popularity
         QStringList terminals = {"x-terminal-emulator", "gnome-terminal",
                                  "konsole", "xfce4-terminal", "xterm"};
         for (const QString &term : terminals) {
@@ -507,7 +507,7 @@ void DiskUsageLauncherWidget::onActionClicked()
 #endif
 
     case LAUNCH_CUSTOM: {
-        QString customPath = SettingManager::ins()->getDiskAnalyzerCustomPath();
+        QString customPath = mSettingManager->getDiskAnalyzerCustomPath();
         if (!customPath.isEmpty())
             QProcess::startDetached(customPath, {});
         break;
@@ -521,7 +521,7 @@ void DiskUsageLauncherWidget::onActionClicked()
 
 void DiskUsageLauncherWidget::applyThemeColors()
 {
-    QSettings *sv = AppManager::ins()->getStyleValues();
+    QSettings *sv = mAppManager->getStyleValues();
     if (!sv)
         return;
 

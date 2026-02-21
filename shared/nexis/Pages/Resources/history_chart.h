@@ -6,8 +6,10 @@
 #include <QtCharts>
 #include <QTimer>
 
-#include "Managers/app_manager.h"
 #include "Utils/format_util.h"
+
+class AppManager;
+class SignalMapper;
 
 namespace Ui {
     class HistoryChart;
@@ -18,7 +20,9 @@ class HistoryChart : public QWidget
     Q_OBJECT
 
 public:
-    explicit HistoryChart(const QString &title, const int &seriesCount, QCategoryAxis* categoriAxisY = nullptr, QWidget *parent = 0);
+    explicit HistoryChart(const QString &title, const int &seriesCount,
+                          QCategoryAxis* categoriAxisY = nullptr, QWidget *parent = 0,
+                          AppManager *appManager = nullptr, SignalMapper *signalMapper = nullptr);
     ~HistoryChart();
 
     QVector<QSplineSeries *> getSeriesList() const;
@@ -35,6 +39,9 @@ private:
 
 private:
     Ui::HistoryChart *ui;
+
+    AppManager *mAppManager;
+    SignalMapper *mSignalMapper;
 
     QString mTitle;
     int mSeriesCount;

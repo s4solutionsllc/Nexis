@@ -2,14 +2,14 @@
 #include "ui_docker_page.h"
 #include "utilities.h"
 #include "dpi.h"
-#include "Managers/app_manager.h"
+#include "Services/docker_service.h"
 #include <Utils/format_util.h>
 #include <QMessageBox>
-#include <QThreadPool>
 
-DockerPage::DockerPage(QWidget *parent) :
+DockerPage::DockerPage(QWidget *parent, DockerService *dockerService) :
     QWidget(parent),
     ui(new Ui::DockerPage),
+    mDockerService(dockerService ? dockerService : DockerService::ins()),
     mDaemonRunning(false),
     mContainersLoaded(false),
     mVolumesLoaded(false)
@@ -52,16 +52,16 @@ void DockerPage::init()
 
     Utilities::addDropShadow({ui->txtSearch, ui->btnRefresh, ui->btnRemoveSelected, ui->btnPrune}, 40);
 
-    connect(this, &DockerPage::imagesLoadedS, this, &DockerPage::onImagesLoaded);
-    connect(this, &DockerPage::containersLoadedS, this, &DockerPage::onContainersLoaded);
-    connect(this, &DockerPage::volumesLoadedS, this, &DockerPage::onVolumesLoaded);
-    connect(this, &DockerPage::daemonCheckedS, this, &DockerPage::onDaemonChecked);
+    connect(mDockerService, &DockerService::daemonChecked,
+            this, &DockerPage::onDaemonChecked);
+    connect(mDockerService, &DockerService::imagesFetched,
+            this, &DockerPage::onImagesLoaded);
+    connect(mDockerService, &DockerService::containersFetched,
+            this, &DockerPage::onContainersLoaded);
+    connect(mDockerService, &DockerService::volumesFetched,
+            this, &DockerPage::onVolumesLoaded);
 
-    QThreadPool::globalInstance()->start([this]() {
-        bool running = DockerTool::isDaemonRunning();
-        QString ver = running ? DockerTool::dockerVersion() : QString();
-        emit daemonCheckedS(running, ver);
-    });
+    mDockerService->checkDaemon();
 }
 
 void DockerPage::onDaemonChecked(bool running, const QString &version)
@@ -71,7 +71,7 @@ void DockerPage::onDaemonChecked(bool running, const QString &version)
 
     if (running) {
         ui->stackedWidget->setCurrentIndex(1);
-        mFetchImagesFuture = QtConcurrent::run([this]() { fetchImages(); });
+        mDockerService->fetchImages();
     } else {
         ui->stackedWidget->setCurrentIndex(2);
     }
@@ -101,26 +101,9 @@ void DockerPage::setStatusMessage(const QString &msg)
     ui->lblItemCount->setText(msg);
 }
 
-void DockerPage::fetchImages()
+void DockerPage::onImagesLoaded(QList<DockerImage> images)
 {
-    mImages = DockerTool::getImages();
-    emit imagesLoadedS();
-}
-
-void DockerPage::fetchContainers()
-{
-    mContainers = DockerTool::getContainers();
-    emit containersLoadedS();
-}
-
-void DockerPage::fetchVolumes()
-{
-    mVolumes = DockerTool::getVolumes();
-    emit volumesLoadedS();
-}
-
-void DockerPage::onImagesLoaded()
-{
+    mImages = images;
     buildImagesTree();
 
     int dangling = 0;
@@ -140,8 +123,9 @@ void DockerPage::onImagesLoaded()
     setStatusMessage(status);
 }
 
-void DockerPage::onContainersLoaded()
+void DockerPage::onContainersLoaded(QList<DockerContainer> containers)
 {
+    mContainers = containers;
     mContainersLoaded = true;
     buildContainersTree();
 
@@ -153,8 +137,9 @@ void DockerPage::onContainersLoaded()
     setStatusMessage(tr("%1 containers (%2 running)").arg(mContainers.size()).arg(running));
 }
 
-void DockerPage::onVolumesLoaded()
+void DockerPage::onVolumesLoaded(QList<DockerVolume> volumes)
 {
+    mVolumes = volumes;
     mVolumesLoaded = true;
     buildVolumesTree();
 
@@ -366,9 +351,9 @@ void DockerPage::on_tabWidget_currentChanged(int index)
     ui->cmbContainerFilter->setVisible(index == 1);
 
     if (index == 1 && !mContainersLoaded && mDaemonRunning) {
-        mFetchContainersFuture = QtConcurrent::run([this]() { fetchContainers(); });
+        mDockerService->fetchContainers();
     } else if (index == 2 && !mVolumesLoaded && mDaemonRunning) {
-        mFetchVolumesFuture = QtConcurrent::run([this]() { fetchVolumes(); });
+        mDockerService->fetchVolumes();
     }
 
     on_txtSearch_textChanged(ui->txtSearch->text());
@@ -380,31 +365,21 @@ void DockerPage::on_cmbContainerFilter_currentIndexChanged(int /*index*/)
         buildContainersTree();
 }
 
-void DockerPage::refreshCurrentTab()
-{
-    if (!mDaemonRunning) return;
-
-    int tab = ui->tabWidget->currentIndex();
-    if (tab == 0) {
-        mFetchImagesFuture = QtConcurrent::run([this]() { fetchImages(); });
-    } else if (tab == 1) {
-        mContainersLoaded = false;
-        mFetchContainersFuture = QtConcurrent::run([this]() { fetchContainers(); });
-    } else if (tab == 2) {
-        mVolumesLoaded = false;
-        mFetchVolumesFuture = QtConcurrent::run([this]() { fetchVolumes(); });
-    }
-}
-
 void DockerPage::on_btnRefresh_clicked()
 {
-    QThreadPool::globalInstance()->start([this]() {
-        bool running = DockerTool::isDaemonRunning();
-        QString ver = running ? DockerTool::dockerVersion() : QString();
-        emit daemonCheckedS(running, ver);
-    });
-    if (mDaemonRunning)
-        refreshCurrentTab();
+    mDockerService->checkDaemon();
+    if (mDaemonRunning) {
+        int tab = ui->tabWidget->currentIndex();
+        if (tab == 0)
+            mDockerService->fetchImages();
+        else if (tab == 1) {
+            mContainersLoaded = false;
+            mDockerService->fetchContainers();
+        } else if (tab == 2) {
+            mVolumesLoaded = false;
+            mDockerService->fetchVolumes();
+        }
+    }
 }
 
 void DockerPage::on_btnRemoveSelected_clicked()
@@ -418,10 +393,7 @@ void DockerPage::on_btnRemoveSelected_clicked()
                 tr("Remove %1 selected image(s)? This cannot be undone.").arg(ids.size()),
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return;
-        QThreadPool::globalInstance()->start([this, ids]() {
-            DockerTool::removeImages(ids);
-            fetchImages();
-        });
+        mDockerService->removeImages(ids);
     } else if (tab == 1) {
         QStringList ids = getSelectedContainerIds();
         if (ids.isEmpty()) return;
@@ -429,11 +401,7 @@ void DockerPage::on_btnRemoveSelected_clicked()
                 tr("Remove %1 selected container(s)? This cannot be undone.").arg(ids.size()),
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return;
-        QThreadPool::globalInstance()->start([this, ids]() {
-            DockerTool::removeContainers(ids);
-            mContainersLoaded = false;
-            fetchContainers();
-        });
+        mDockerService->removeContainers(ids);
     } else if (tab == 2) {
         QStringList names = getSelectedVolumeNames();
         if (names.isEmpty()) return;
@@ -441,11 +409,7 @@ void DockerPage::on_btnRemoveSelected_clicked()
                 tr("Remove %1 selected volume(s)? All data in these volumes will be permanently lost.").arg(names.size()),
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return;
-        QThreadPool::globalInstance()->start([this, names]() {
-            DockerTool::removeVolumes(names);
-            mVolumesLoaded = false;
-            fetchVolumes();
-        });
+        mDockerService->removeVolumes(names);
     }
 }
 
@@ -458,30 +422,19 @@ void DockerPage::on_btnPrune_clicked()
                 tr("Remove all dangling (unused) images? This cannot be undone."),
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return;
-        QThreadPool::globalInstance()->start([this]() {
-            DockerTool::pruneImages();
-            fetchImages();
-        });
+        mDockerService->pruneImages();
     } else if (tab == 1) {
         if (QMessageBox::warning(this, tr("Prune Containers"),
                 tr("Remove all stopped containers? This cannot be undone."),
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return;
-        QThreadPool::globalInstance()->start([this]() {
-            DockerTool::pruneContainers();
-            mContainersLoaded = false;
-            fetchContainers();
-        });
+        mDockerService->pruneContainers();
     } else if (tab == 2) {
         if (QMessageBox::warning(this, tr("Prune Volumes"),
                 tr("Remove all unused volumes? All data in these volumes will be permanently lost."),
                 QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
             return;
-        QThreadPool::globalInstance()->start([this]() {
-            DockerTool::pruneVolumes();
-            mVolumesLoaded = false;
-            fetchVolumes();
-        });
+        mDockerService->pruneVolumes();
     }
 }
 
@@ -489,22 +442,12 @@ void DockerPage::on_btnStartContainer_clicked()
 {
     QStringList ids = getSelectedContainerIds();
     if (ids.isEmpty()) return;
-    QThreadPool::globalInstance()->start([this, ids]() {
-        for (const QString &id : ids)
-            DockerTool::startContainer(id);
-        mContainersLoaded = false;
-        fetchContainers();
-    });
+    mDockerService->startContainers(ids);
 }
 
 void DockerPage::on_btnStopContainer_clicked()
 {
     QStringList ids = getSelectedContainerIds();
     if (ids.isEmpty()) return;
-    QThreadPool::globalInstance()->start([this, ids]() {
-        for (const QString &id : ids)
-            DockerTool::stopContainer(id);
-        mContainersLoaded = false;
-        fetchContainers();
-    });
+    mDockerService->stopContainers(ids);
 }

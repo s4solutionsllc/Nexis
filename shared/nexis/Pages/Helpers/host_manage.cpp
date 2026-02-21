@@ -3,8 +3,6 @@
 #include "nexis_roles.h"
 #include "dpi.h"
 #include <qdebug.h>
-#include <QRegularExpression>
-#include <QHostAddress>
 #include <QMessageBox>
 
 HostManage::~HostManage()
@@ -17,16 +15,17 @@ void HostManage::loadIfNeeded()
     if (mLoaded)
         return;
     mLoaded = true;
-    mHostFileContent = FileUtil::readListFromFile("/etc/hosts");
+    mHostFileContent = mHostService->readHostFile();
     mOriginalHostFileContent = mHostFileContent;
     loadTableData();
 }
 
-HostManage::HostManage(QWidget *parent):
+HostManage::HostManage(QWidget *parent, HostService *hostService):
     QWidget(parent),
     mItemModel(new QStandardItemModel(this)),
     mSortFilterModel(new QSortFilterProxyModel(this)),
     updatedLine(-1),
+    mHostService(hostService ? hostService : HostService::ins()),
     ui(new Ui::HostManage)
 {
     ui->setupUi(this);
@@ -71,27 +70,7 @@ void HostManage::init()
 
 void HostManage::loadHostItems()
 {
-    mHostItemList.clear();
-
-    int i = 0;
-    for (const QString &line: mHostFileContent)
-    {
-        if (! line.trimmed().startsWith("#") && ! line.trimmed().isEmpty())
-        {
-            static const QRegularExpression whitespace("\\s+");
-            QStringList lineItems = line.trimmed().split(whitespace);
-
-            if (lineItems.count() > 1) {
-                HostItem hItem;
-                hItem.ip = lineItems.at(0).trimmed();
-                hItem.fullQualified = lineItems.at(1).trimmed();
-                hItem.aliases = lineItems.count() > 2 ? lineItems.mid(2).join(" ") : "";
-
-                mHostItemList.insert(i, hItem);
-            }
-        }
-        i++;
-    }
+    mHostItemList = mHostService->parseHostEntries(mHostFileContent);
 }
 
 void HostManage::loadTableData()
@@ -104,11 +83,11 @@ void HostManage::loadTableData()
 
     mItemModel->removeRows(0, mItemModel->rowCount());
 
-    QMapIterator<int,HostItem> itemIterator(mHostItemList);
+    QMapIterator<int, HostEntry> itemIterator(mHostItemList);
 
     while (itemIterator.hasNext()) {
         itemIterator.next();
-        mItemModel->appendRow(createRow(QPair<int, HostItem>(itemIterator.key(), itemIterator.value())));
+        mItemModel->appendRow(createRow(QPair<int, HostEntry>(itemIterator.key(), itemIterator.value())));
     }
 
     mItemModel->blockSignals(false);
@@ -119,7 +98,7 @@ void HostManage::loadTableData()
     ui->lblHostTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
 }
 
-QList<QStandardItem*> HostManage::createRow(const QPair<int, HostItem> &item)
+QList<QStandardItem*> HostManage::createRow(const QPair<int, HostEntry> &item)
 {
     QStandardItem *i_ip = new QStandardItem(item.second.ip);
     i_ip->setData(item.first, LineNumberRole);
@@ -174,13 +153,13 @@ void HostManage::on_btnSave_clicked()
         return;
     }
 
-    if (!isValidIP(ip)) {
+    if (!HostService::isValidIP(ip)) {
         ui->lblErrorMsg->setText(tr("Invalid IP address format."));
         ui->lblErrorMsg->show();
         return;
     }
 
-    if (!isValidHostname(fq)) {
+    if (!HostService::isValidHostname(fq)) {
         ui->lblErrorMsg->setText(tr("Invalid hostname format."));
         ui->lblErrorMsg->show();
         return;
@@ -190,7 +169,7 @@ void HostManage::on_btnSave_clicked()
         static const QRegularExpression whitespace("\\s+");
         QStringList aliasList = aliases.split(whitespace, Qt::SkipEmptyParts);
         for (const QString &alias : aliasList) {
-            if (!isValidHostname(alias)) {
+            if (!HostService::isValidHostname(alias)) {
                 ui->lblErrorMsg->setText(tr("Invalid alias format: %1").arg(alias));
                 ui->lblErrorMsg->show();
                 return;
@@ -203,7 +182,7 @@ void HostManage::on_btnSave_clicked()
     {
         QString line = aliases.isEmpty() ? QString("%1 %2").arg(ip, fq) : QString("%1 %2 %3").arg(ip, fq, aliases);
 
-        HostItem hItem;
+        HostEntry hItem;
         hItem.ip = ip;
         hItem.fullQualified = fq;
         hItem.aliases = aliases;
@@ -213,7 +192,7 @@ void HostManage::on_btnSave_clicked()
             int lineNum = mHostFileContent.size();
             mHostFileContent.append(line);
             mHostItemList.insert(lineNum, hItem);
-            mItemModel->appendRow(createRow(QPair<int, HostItem>(lineNum, hItem)));
+            mItemModel->appendRow(createRow(QPair<int, HostEntry>(lineNum, hItem)));
         } else {
             // Edit existing entry
             mHostFileContent.replace(updatedLine, line);
@@ -290,10 +269,7 @@ void HostManage::on_btnSaveChanges_clicked()
         return;
 
     // Create backup (best-effort — warn but don't block on failure)
-    try {
-        CommandUtil::sudoExec("cp", {"-p", "/etc/hosts", "/etc/hosts.nexis-backup"});
-    } catch (const QString &ex) {
-        qWarning() << "Backup failed:" << ex;
+    if (!mHostService->createBackup()) {
         QMessageBox::StandardButton proceed = QMessageBox::warning(
             this, tr("Backup Failed"),
             tr("Could not create backup of /etc/hosts.\n\n"
@@ -304,27 +280,14 @@ void HostManage::on_btnSaveChanges_clicked()
             return;
     }
 
-    // Write via sudo tee (no temp file — content piped through stdin)
-    // tee echoes stdin to stdout on success, so a non-empty return confirms the write
-    QString content = mHostFileContent.join("\n") + "\n";
-    try {
-        QString result = CommandUtil::sudoExec("tee", {"/etc/hosts"}, content.toUtf8());
-
-        if (result.isEmpty() && !content.trimmed().isEmpty()) {
-            QMessageBox::critical(
-                this, tr("Save Failed"),
-                tr("Failed to write to /etc/hosts.\n\n"
-                   "The operation was cancelled or permission was denied."));
-            return;
-        }
-
+    // Write via the host service
+    if (mHostService->saveHostFile(mHostFileContent)) {
         mOriginalHostFileContent = mHostFileContent;
         ui->lblChangesMsg->setText(tr("Changes saved successfully."));
-    } catch (const QString &ex) {
-        qCritical() << "Save failed:" << ex;
+    } else {
         QMessageBox::critical(
             this, tr("Save Failed"),
-            tr("Failed to write to /etc/hosts.\n\n%1").arg(ex));
+            tr("Failed to write to /etc/hosts."));
     }
 }
 
@@ -372,34 +335,4 @@ void HostManage::on_tableViewHosts_customContextMenuRequested(const QPoint &pos)
             }
         }
     }
-}
-
-bool HostManage::isValidIP(const QString &ip)
-{
-    QHostAddress addr;
-    return addr.setAddress(ip);
-}
-
-bool HostManage::isValidHostname(const QString &hostname)
-{
-    if (hostname.isEmpty() || hostname.length() > 253)
-        return false;
-
-    // RFC 1123: labels separated by dots, each 1-63 chars, alphanumeric + hyphens
-    // Also allow underscores (common in practice despite not being strictly RFC-compliant)
-    static const QRegularExpression labelRegex("^[a-zA-Z0-9]([a-zA-Z0-9_-]{0,61}[a-zA-Z0-9])?$");
-
-    QStringList labels = hostname.split('.');
-    for (const QString &label : labels) {
-        if (label.isEmpty() || label.length() > 63)
-            return false;
-        // Single-char labels are valid (e.g. "a" in "a.example.com")
-        if (label.length() == 1) {
-            if (!label.at(0).isLetterOrNumber())
-                return false;
-        } else if (!labelRegex.match(label).hasMatch()) {
-            return false;
-        }
-    }
-    return true;
 }

@@ -3,8 +3,9 @@
 
 #include <QWidget>
 #include <QtCharts>
-#include "Managers/app_manager.h"
-#include "signal_mapper.h"
+
+class AppManager;
+class SignalMapper;
 
 namespace Ui {
     class CircleBar;
@@ -15,7 +16,8 @@ class CircleBar : public QWidget
     Q_OBJECT
 
 public:
-    explicit CircleBar(const QString &title, const QStringList &colors, QWidget *parent = 0);
+    explicit CircleBar(const QString &title, const QStringList &colors, QWidget *parent = 0,
+                       AppManager *appManager = nullptr, SignalMapper *signalMapper = nullptr);
     ~CircleBar();
 
 public slots:
@@ -27,7 +29,9 @@ private slots:
 private:
     Ui::CircleBar *ui;
 
-private:
+    AppManager *mAppManager;
+    SignalMapper *mSignalMapper;
+
     QStringList mColors;
 
     QChart *mChart;

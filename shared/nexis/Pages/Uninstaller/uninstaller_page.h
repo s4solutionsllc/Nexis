@@ -4,11 +4,12 @@
 #include <QWidget>
 #include <QListWidgetItem>
 #include <QTreeWidgetItem>
-#include <QtConcurrent>
 
-#include "Managers/tool_manager.h"
-#include "Managers/app_manager.h"
-#include "signal_mapper.h"
+#include <Tools/package_tool_shared.h>
+
+class PackageService;
+class AppManager;
+class SignalMapper;
 
 namespace Ui {
     class UninstallerPage;
@@ -20,14 +21,10 @@ class UninstallerPage : public QWidget
 
 public:
     explicit UninstallerPage(QWidget *parent = nullptr,
-                             ToolManager *toolManager = nullptr,
+                             PackageService *packageService = nullptr,
                              AppManager *appManager = nullptr,
                              SignalMapper *signalMapper = nullptr);
     ~UninstallerPage();
-
-signals:
-    void packagesLoadedS();
-    void snapPackagesLoadedS();
 
 public slots:
     void uninstallStarted();
@@ -44,10 +41,8 @@ private slots:
 #ifdef Q_OS_MAC
     QStringList getSelectedAppPaths();
 #endif
-    void fetchPackages();
-    void fetchSnapPackages();
-    void onPackagesLoaded();
-    void onSnapPackagesLoaded();
+    void onPackagesLoaded(QList<Package> packages);
+    void onSnapPackagesLoaded(QStringList packages);
     void on_btnSystemPackages_clicked();
     void on_btnSnapPackages_clicked();
 
@@ -57,18 +52,9 @@ private slots:
 private:
     Ui::UninstallerPage *ui;
 
-    ToolManager *tm;
+    PackageService *mPackageService;
     AppManager *mAppManager;
     SignalMapper *mSignalMapper;
-
-    // Thread-safe package data (written on worker, read on main thread)
-    QList<Package> mPackages;
-    QStringList mSnapPackages;
-
-    // Track background tasks so they can be awaited on shutdown (BUG-05)
-    QFuture<void> mFetchFuture;
-    QFuture<void> mFetchSnapFuture;
-    QFuture<void> mUninstallFuture;
 };
 
 #endif // UNINSTALLERPAGE_H

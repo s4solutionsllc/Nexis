@@ -43,15 +43,16 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 **Origin:** Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), the popular Linux system optimizer that went inactive in 2020 with 38+ known bugs. After porting to Qt 6, adding native macOS support, fixing those inherited bugs, and adding GPU monitoring, hardware health tracking, scheduled cleaning, Docker management, and more, the project was rebranded as **Nexis** to reflect that it had become something distinct.
 
 **By the numbers:**
-- ~5,000–6,000 lines of C++ code
+- ~6,000–7,000 lines of C++ code
 - 14 application pages
-- 11 system info providers
-- 5 tool classes (package management, services, Docker, APT sources, GNOME settings)
+- 13 system info providers (11 Info + 2 platform-specific: StartupInfo, FileSearchTool)
+- 7 tool classes (package management, services, Docker, APT sources, GNOME settings, file search, startup info)
+- 7 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService)
 - 3 utility classes
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 30 features implemented, 42 bugs fixed since fork
+- 31 features implemented, 42 bugs fixed since fork
 
 ---
 
@@ -700,11 +701,12 @@ All periodic polling is centralized in `DataRefreshService`, which owns 4 QTimer
 │   └── Archive/                Completed research/plans
 ├── shared/
 │   ├── nexis-core/             Core library (shared)
-│   │   ├── Info/               11 system info providers
-│   │   ├── Tools/              5 tool classes
+│   │   ├── Info/               13 system info providers (incl. StartupInfo)
+│   │   ├── Tools/              7 tool classes (incl. FileSearchTool)
 │   │   └── Utils/              3 utility classes
 │   ├── nexis/                  GUI application (shared)
 │   │   ├── Managers/           7 manager singletons
+│   │   ├── Services/           7 domain services
 │   │   ├── Pages/              14 page implementations
 │   │   │   ├── Dashboard/
 │   │   │   ├── HardwareInfo/
