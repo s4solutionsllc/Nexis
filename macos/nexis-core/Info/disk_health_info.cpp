@@ -177,9 +177,20 @@ void DiskHealthInfoMacOS::discoverDrives()
             } catch (...) {}
         }
 
-        // Filter out virtual disks (APFS containers, disk images)
-        // Keep only physical drives that have a BusProtocol
-        if (drive.protocol.isEmpty())
+        // Filter out virtual disks and disk images
+        if (drive.protocol.isEmpty() || drive.protocol == "Disk Image")
+            continue;
+
+        // Deduplicate by model name — macOS exposes the same physical SSD
+        // as multiple device nodes (e.g. disk0–disk3 all via Apple Fabric)
+        bool duplicate = false;
+        for (const DriveHealth &existing : mDrives) {
+            if (!drive.model.isEmpty() && existing.model == drive.model) {
+                duplicate = true;
+                break;
+            }
+        }
+        if (duplicate)
             continue;
 
         deriveHealthVerdict(drive);

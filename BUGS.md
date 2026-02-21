@@ -358,6 +358,13 @@
   - **Fix complexity:** Trivial (change widget type from QPushButton to QToolButton)
   - **Resolved:** Changed `mBtnSidebarToggle` from `QPushButton` to `QToolButton` with `setAutoRaise(true)`. QToolButton correctly renders SVG icons on macOS Qt6. Pixel grab confirms center pixel renders as white `(211,211,211,211)` premultiplied. Removed unnecessary `QPainter` recoloring — direct `QIcon(svgPath)` works with QToolButton, matching the pattern used by all other sidebar icons.
 
+- [x] **BUG-53: Duplicate drive health entries on macOS — disk tile shows same SSD 4 times** (MEDIUM)
+  - **Scope:** Dashboard page → Disk tile drive health row
+  - **File:** `macos/nexis-core/Info/disk_health_info.cpp`
+  - **Description:** `discoverDrives()` iterates every item in `diskutil list -plist`'s `WholeDisks` array without deduplication. On Apple Silicon Macs, a single internal SSD appears as 4+ device nodes (`disk0`–`disk3`) all with `BusProtocol = "Apple Fabric"` and the same `MediaName`. Mounted `.dmg` disk images also appear with `BusProtocol = "Disk Image"`. The only filter was `protocol.isEmpty()`, so all duplicates and disk images passed through, resulting in "Apple SSD: Good" displayed 4 times and "Disk Image: Critical" twice on a single-drive Mac.
+  - **Fix complexity:** Trivial (add "Disk Image" protocol filter + deduplicate by model name)
+  - **Resolved:** Added `protocol == "Disk Image"` to the existing filter, and model-based deduplication that skips drives whose `model` string already exists in `mDrives`.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
