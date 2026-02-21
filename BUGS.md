@@ -344,6 +344,20 @@
   - **Fix complexity:** Trivial (switch to `getColorScheme()`/`setColorScheme()`)
   - **Resolved:** Changed to use `getColorScheme()`/`setColorScheme()` with `"dark"`/`"light"` values; removed redundant `sigChangedAppTheme` emit (already done by `updateStylesheet()`)
 
+- [x] **BUG-51: Disk tile percentage text invisible in dark mode — QPainter uses system palette** (LOW)
+  - **Scope:** Dashboard page → Disk tile donut chart
+  - **File:** `shared/nexis/Pages/Dashboard/disk_tile.cpp`
+  - **Description:** The disk usage percentage text drawn in the center of the donut chart used `palette().color(QPalette::WindowText)` via `QPainter`, which returns the system palette color (dark text on macOS) rather than the QSS-themed color. This made the percentage invisible against the dark donut chart background. The CPU and Memory tiles don't have this issue because they use QLabels styled by QSS with `color: @color05`. DiskTile paints manually with `QPainter`, bypassing QSS entirely.
+  - **Fix complexity:** Trivial (resolve `@color05` from theme values, use in `paintEvent()`)
+  - **Resolved:** Added `QColor mTextColor` member resolved from `@color05` in `refreshThemeColors()`, replaced `palette().color(QPalette::WindowText)` with `mTextColor` in `paintEvent()`
+
+- [x] **BUG-52: Sidebar collapse/expand icon renders black in dark mode** (LOW)
+  - **Scope:** Sidebar → collapse/expand toggle button
+  - **File:** `shared/nexis/app.cpp`
+  - **Description:** The sidebar collapse/expand SVG icons have correct per-theme hardcoded fills (`#ffffff` in dark, `#3d3846` in light), but Qt6's macOS SVG icon engine may recolor QPushButton icons, causing the white fill to render as black. The icon loaded correctly (not null) but displayed in the wrong color.
+  - **Fix complexity:** Trivial (render SVG to QPixmap and recolor with `CompositionMode_SourceIn`)
+  - **Resolved:** Replaced direct SVG `QIcon` loading with pixmap-recoloring approach — renders SVG to `QPixmap`, then uses `QPainter::CompositionMode_SourceIn` to fill with `@color05` theme color. Applied in both `updateSidebarIcons()` and `toggleSidebarCollapse()`.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

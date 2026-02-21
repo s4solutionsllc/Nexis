@@ -19,6 +19,7 @@
 #include <QPropertyAnimation>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QPainter>
 
 App::~App()
 {
@@ -597,12 +598,24 @@ void App::updateSidebarIcons()
     setIcon(btnSettings,         "settings.svg");
     setIcon(btnFeedback,         "feedback.svg");
 
-    // Sidebar toggle icon
-    if (mSidebarCollapsed)
-        mBtnSidebarToggle->setIcon(QIcon(QString(":/static/themes/%1/img/sidebar-icons/sidebar-expand.svg").arg(theme)));
-    else
-        mBtnSidebarToggle->setIcon(QIcon(QString(":/static/themes/%1/img/sidebar-icons/sidebar-collapse.svg").arg(theme)));
-    mBtnSidebarToggle->setIconSize(Dpi::scale(16, 16));
+    // Sidebar toggle icon — render SVG to pixmap with explicit theme color
+    // to avoid Qt6 macOS icon colorization quirks
+    {
+        QString toggleName = mSidebarCollapsed ? "sidebar-expand.svg" : "sidebar-collapse.svg";
+        QString togglePath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, toggleName);
+        QSize iconSize = Dpi::scale(16, 16);
+        QPixmap pix = QIcon(togglePath).pixmap(iconSize);
+        if (!pix.isNull()) {
+            QSettings *sv = AppManager::ins()->getStyleValues();
+            QColor fgColor(sv ? sv->value("@color05").toString() : "#F0F2F5");
+            QPainter p(&pix);
+            p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+            p.fillRect(pix.rect(), fgColor);
+            p.end();
+        }
+        mBtnSidebarToggle->setIcon(QIcon(pix));
+        mBtnSidebarToggle->setIconSize(iconSize);
+    }
 
     // Sidebar logo
     QString logoFile = mSidebarCollapsed ? "sidebar-logo-collapsed.svg" : "sidebar-logo.svg";
@@ -686,12 +699,23 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
             btnFeedback->setText(savedFeedback);
     }
 
-    // Update toggle icon and logo
+    // Update toggle icon and logo — recolor to match theme
     QString theme = AppManager::ins()->resolveThemeName();
-    if (collapsed)
-        mBtnSidebarToggle->setIcon(QIcon(QString(":/static/themes/%1/img/sidebar-icons/sidebar-expand.svg").arg(theme)));
-    else
-        mBtnSidebarToggle->setIcon(QIcon(QString(":/static/themes/%1/img/sidebar-icons/sidebar-collapse.svg").arg(theme)));
+    {
+        QString toggleName = collapsed ? "sidebar-expand.svg" : "sidebar-collapse.svg";
+        QString togglePath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, toggleName);
+        QSize iconSize = Dpi::scale(16, 16);
+        QPixmap pix = QIcon(togglePath).pixmap(iconSize);
+        if (!pix.isNull()) {
+            QSettings *sv = AppManager::ins()->getStyleValues();
+            QColor fgColor(sv ? sv->value("@color05").toString() : "#F0F2F5");
+            QPainter p(&pix);
+            p.setCompositionMode(QPainter::CompositionMode_SourceIn);
+            p.fillRect(pix.rect(), fgColor);
+            p.end();
+        }
+        mBtnSidebarToggle->setIcon(QIcon(pix));
+    }
 
     // Swap logo variant
     QString logoFile = collapsed ? "sidebar-logo-collapsed.svg" : "sidebar-logo.svg";

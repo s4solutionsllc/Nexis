@@ -90,6 +90,7 @@ void DiskTile::refreshThemeColors()
 
     mArcColor = QColor(sv->value(mArcColorToken).toString());
     mTrackColor = QColor(sv->value(mTrackColorToken).toString());
+    mTextColor = QColor(sv->value("@color05").toString());
 
     for (const HealthEntry &entry : mHealthEntries) {
         QString healthColor = sv->value(entry.healthy ? "@successColor" : "@destructiveColor").toString();
@@ -148,7 +149,7 @@ void DiskTile::paintEvent(QPaintEvent *event)
     boldFont.setPixelSize(fontSize);
     boldFont.setBold(true);
     painter.setFont(boldFont);
-    painter.setPen(palette().color(QPalette::WindowText));
+    painter.setPen(mTextColor);
 
     QString percentText = QString("%1%").arg(mPercent);
     QRectF textRect = arcRect.adjusted(penWidth, penWidth, -penWidth, -penWidth);

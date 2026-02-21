@@ -31,6 +31,7 @@ private:
     QString mTrackColorToken;
     QColor mArcColor;
     QColor mTrackColor;
+    QColor mTextColor;
 
     int mPercent;
     QString mUsedText;
