@@ -6,6 +6,7 @@
 #include <QButtonGroup>
 #include <QPropertyAnimation>
 #include <QFrame>
+#include <QToolButton>
 
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
@@ -108,7 +109,7 @@ private:
     QVBoxLayout *mSidebarLayout;
     QLabel *mLogoLabel;
     QFrame *mLogoSeparator;
-    QPushButton *mBtnSidebarToggle;
+    QToolButton *mBtnSidebarToggle;
     QButtonGroup *mSidebarBtnGroup;
     QList<QLabel*> mSectionHeaders;
     QList<QFrame*> mSectionIndicators;

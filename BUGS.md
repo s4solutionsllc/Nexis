@@ -353,10 +353,10 @@
 
 - [x] **BUG-52: Sidebar collapse/expand icon renders black in dark mode** (LOW)
   - **Scope:** Sidebar → collapse/expand toggle button
-  - **File:** `shared/nexis/app.cpp`
-  - **Description:** The sidebar collapse/expand SVG icons have correct per-theme hardcoded fills (`#ffffff` in dark, `#3d3846` in light), but Qt6's macOS SVG icon engine may recolor QPushButton icons, causing the white fill to render as black. The icon loaded correctly (not null) but displayed in the wrong color.
-  - **Fix complexity:** Trivial (render SVG to QPixmap and recolor with `CompositionMode_SourceIn`)
-  - **Resolved:** Replaced direct SVG `QIcon` loading with pixmap-recoloring approach — renders SVG to `QPixmap`, then uses `QPainter::CompositionMode_SourceIn` to fill with `@color05` theme color. Applied in both `updateSidebarIcons()` and `toggleSidebarCollapse()`.
+  - **Files:** `shared/nexis/app.cpp`, `shared/nexis/app.h`
+  - **Description:** The sidebar collapse/expand SVG icons have correct per-theme fills (`#ffffff` in dark, `#3d3846` in light), and the SVG pixmap data is correct (verified by pixel sampling). However, `QPushButton` on macOS Qt6 does not render the icon at all — a `grab()` of the rendered button shows all pixels as fully transparent `(0,0,0,0)`. The user sees the dark sidebar background (`#222228`) through the transparent button, appearing as a "black" icon. The root cause is that macOS Qt6's `QPushButton` icon painting fails for icon-only buttons with `background: transparent` and no text.
+  - **Fix complexity:** Trivial (change widget type from QPushButton to QToolButton)
+  - **Resolved:** Changed `mBtnSidebarToggle` from `QPushButton` to `QToolButton` with `setAutoRaise(true)`. QToolButton correctly renders SVG icons on macOS Qt6. Pixel grab confirms center pixel renders as white `(211,211,211,211)` premultiplied. Removed unnecessary `QPainter` recoloring — direct `QIcon(svgPath)` works with QToolButton, matching the pattern used by all other sidebar icons.
 
 ## Notes
 

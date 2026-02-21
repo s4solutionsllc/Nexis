@@ -19,7 +19,6 @@
 #include <QPropertyAnimation>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include <QPainter>
 
 App::~App()
 {
@@ -84,14 +83,15 @@ void App::buildSidebar()
     logoRow->addWidget(mLogoLabel);
     logoRow->addStretch();
 
-    mBtnSidebarToggle = new QPushButton(ui->sidebar);
+    mBtnSidebarToggle = new QToolButton(ui->sidebar);
     mBtnSidebarToggle->setObjectName("btnSidebarToggle");
     mBtnSidebarToggle->setCursor(Qt::PointingHandCursor);
     mBtnSidebarToggle->setFocusPolicy(Qt::NoFocus);
     mBtnSidebarToggle->setCheckable(false);
+    mBtnSidebarToggle->setAutoRaise(true);
     mBtnSidebarToggle->setIconSize(Dpi::scale(16, 16));
     mBtnSidebarToggle->setFixedSize(Dpi::scale(28, 28));
-    connect(mBtnSidebarToggle, &QPushButton::clicked, this, &App::toggleSidebarCollapse);
+    connect(mBtnSidebarToggle, &QToolButton::clicked, this, &App::toggleSidebarCollapse);
     logoRow->addWidget(mBtnSidebarToggle);
 
     mSidebarLayout->addLayout(logoRow);
@@ -598,23 +598,12 @@ void App::updateSidebarIcons()
     setIcon(btnSettings,         "settings.svg");
     setIcon(btnFeedback,         "feedback.svg");
 
-    // Sidebar toggle icon — render SVG to pixmap with explicit theme color
-    // to avoid Qt6 macOS icon colorization quirks
+    // Sidebar toggle icon
     {
         QString toggleName = mSidebarCollapsed ? "sidebar-expand.svg" : "sidebar-collapse.svg";
         QString togglePath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, toggleName);
-        QSize iconSize = Dpi::scale(16, 16);
-        QPixmap pix = QIcon(togglePath).pixmap(iconSize);
-        if (!pix.isNull()) {
-            QSettings *sv = AppManager::ins()->getStyleValues();
-            QColor fgColor(sv ? sv->value("@color05").toString() : "#F0F2F5");
-            QPainter p(&pix);
-            p.setCompositionMode(QPainter::CompositionMode_SourceIn);
-            p.fillRect(pix.rect(), fgColor);
-            p.end();
-        }
-        mBtnSidebarToggle->setIcon(QIcon(pix));
-        mBtnSidebarToggle->setIconSize(iconSize);
+        mBtnSidebarToggle->setIcon(QIcon(togglePath));
+        mBtnSidebarToggle->setIconSize(Dpi::scale(16, 16));
     }
 
     // Sidebar logo
@@ -699,22 +688,13 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
             btnFeedback->setText(savedFeedback);
     }
 
-    // Update toggle icon and logo — recolor to match theme
+    // Update toggle icon and logo
     QString theme = AppManager::ins()->resolveThemeName();
     {
         QString toggleName = collapsed ? "sidebar-expand.svg" : "sidebar-collapse.svg";
         QString togglePath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, toggleName);
-        QSize iconSize = Dpi::scale(16, 16);
-        QPixmap pix = QIcon(togglePath).pixmap(iconSize);
-        if (!pix.isNull()) {
-            QSettings *sv = AppManager::ins()->getStyleValues();
-            QColor fgColor(sv ? sv->value("@color05").toString() : "#F0F2F5");
-            QPainter p(&pix);
-            p.setCompositionMode(QPainter::CompositionMode_SourceIn);
-            p.fillRect(pix.rect(), fgColor);
-            p.end();
-        }
-        mBtnSidebarToggle->setIcon(QIcon(pix));
+        mBtnSidebarToggle->setIcon(QIcon(togglePath));
+        mBtnSidebarToggle->setIconSize(Dpi::scale(16, 16));
     }
 
     // Swap logo variant
