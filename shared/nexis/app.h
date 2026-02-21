@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QAction>
+#include <QButtonGroup>
+#include <QPropertyAnimation>
 
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
@@ -24,6 +26,10 @@
 #include "Pages/HardwareInfo/hardware_info_page.h"
 #include "Pages/Docker/docker_page.h"
 #include "feedback.h"
+#include "command_palette.h"
+
+class QLabel;
+class QVBoxLayout;
 
 namespace Ui {
     class App;
@@ -46,25 +52,9 @@ private slots:
     void pageClick(QWidget *widget, bool slide = true);
     void clickSidebarButton(QString pageTitle, bool isShow = false);
 
-    void on_btnDash_clicked();
-    void on_btnHardwareInfo_clicked();
-    void on_btnSystemCleaner_clicked();
-    void on_btnStartupApps_clicked();
-    void on_btnServices_clicked();
-    void on_btnSearch_clicked();
-    void on_btnUninstaller_clicked();
-    void on_btnHelpers_clicked();
-    void on_btnResources_clicked();
-    void on_btnProcesses_clicked();
-    void on_btnSettings_clicked();
-    void on_btnAptSourceManager_clicked();
-    void on_btnDocker_clicked();
-    void on_btnGnomeSettings_clicked();
-
-    void on_btnFeedback_clicked();
-
     void toggleKioskMode();
     void exitKioskMode();
+    void toggleSidebarCollapse();
 
 private:
     QWidget *getPageByTitle(const QString &title);
@@ -73,6 +63,11 @@ private:
     void updateSidebarIcons();
     void applyKioskMode(bool enable);
     void showKioskOverlay();
+
+    void buildSidebar();
+    QPushButton *createSidebarButton(const QString &tooltip);
+    QLabel *createSectionHeader(const QString &text);
+    void applySidebarCollapse(bool collapsed, bool animate = true);
 
 private:
     Ui::App *ui;
@@ -101,13 +96,42 @@ private:
     QSharedPointer<Feedback> feedback;
 
     bool mKioskMode;
+    bool mSidebarCollapsed;
+    bool mPreKioskCollapsed;
 
     QSystemTrayIcon *mTrayIcon;
-
     QMenu *mTrayMenu;
-
     QAction *mKioskAction;
 
+    // Sidebar widgets
+    QVBoxLayout *mSidebarLayout;
+    QPushButton *mBtnSidebarToggle;
+    QButtonGroup *mSidebarBtnGroup;
+    QList<QLabel*> mSectionHeaders;
+
+    // Sidebar buttons (programmatically created)
+    QPushButton *btnDash;
+    QPushButton *btnHardwareInfo;
+    QPushButton *btnResources;
+    QPushButton *btnSystemCleaner;
+    QPushButton *btnSearch;
+    QPushButton *btnProcesses;
+    QPushButton *btnServices;
+    QPushButton *btnStartupApps;
+    QPushButton *btnUninstaller;
+    QPushButton *btnDocker;
+    QPushButton *btnHelpers;
+    QPushButton *btnAptSourceManager;
+    QPushButton *btnGnomeSettings;
+    QPushButton *btnSettings;
+    QPushButton *btnFeedback;
+
+    CommandPalette *mCommandPalette;
+
+    void setupCommandPalette();
+
+    static const int SIDEBAR_EXPANDED_WIDTH = 220;
+    static const int SIDEBAR_COLLAPSED_WIDTH = 64;
 };
 
 #endif // APP_H

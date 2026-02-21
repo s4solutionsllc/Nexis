@@ -61,7 +61,10 @@ Nexis is structured as a **three-tier desktop application**:
 - **Singleton managers with DI escape hatches** — Static `ins()` accessors with `std::unique_ptr` members; all 10 page constructors accept optional manager pointers for test injection (FR-35)
 - **Centralized polling** — `DataRefreshService` singleton owns 4 QTimers (1s/5s/30s/configurable) and emits typed data signals; pages subscribe as reactive consumers
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
-- **Qt signals** — `SignalMapper` singleton as a lightweight global event bus
+- **Qt signals** — `SignalMapper` singleton as a lightweight global event bus (10 signals after FR-42)
+- **Dashboard widgets** — Dashboard gauges replaced with `MetricTile`/`NetworkTile` widgets (FR-42) that embed QtCharts sparklines; original `CircleBar`/`LineBar` source files preserved for potential reuse elsewhere
+- **Sidebar** — Sidebar navigation buttons are built programmatically in `app.cpp` (not defined in `.ui`) with grouped sections and collapse animation driven by `sigSidebarCollapseToggled`
+- **CommandPalette** — `Ctrl+K` global command palette widget (`command_palette.h/.cpp`) for keyboard-driven navigation and actions
 
 **Scale:** ~5,000–6,000 lines of C++ across core library + GUI, 14 pages, 34 translations, 3 themes.
 
@@ -247,7 +250,7 @@ signals:
 - App minimized/restored → emits `sigAppVisibilityChanged(bool)` → DataRefreshService pauses/resumes polling
 - No page needs a pointer to any other page — complete decoupling
 
-**Assessment:** With 8 signals, this is still **appropriately simple**. The kiosk mode signals (FR-30) and visibility signal (FR-37) demonstrate the pattern working well for decoupled communication between App, DashboardPage, and DataRefreshService. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
+**Assessment:** With 10 signals, this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), and UI redesign signals `sigSidebarCollapseToggled` and `sigNavigateToPage` (FR-42) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, and the new CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
 
 ---
 
@@ -467,7 +470,7 @@ public:
 
 **What:** Replace `SignalMapper` with a typed event bus library if the signal count grows beyond ~15.
 
-**When:** Currently 8 signals — well within SignalMapper's comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
+**When:** Currently 10 signals — well within SignalMapper's comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
 
 **Candidate:** [eventpp](https://github.com/wqking/eventpp) (header-only, C++11+, well-tested).
 
@@ -571,6 +574,9 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Managers/app_manager.cpp` | ~~Add QSS token validation (§2C)~~ Done — token + color format validation added |
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | ~~Primary refactor target for DataRefreshService (§2A)~~ Done — subscribes to DataRefreshService signals, zero timers |
 | `shared/nexis/Pages/Resources/resources_page.cpp` | ~~Secondary refactor target~~ Done — subscribes to DataRefreshService signals, zero timers |
-| `shared/nexis/signal_mapper.h` | Global event bus (8 signals) — monitor signal count growth |
+| `shared/nexis/signal_mapper.h` | Global event bus (10 signals after FR-42) — monitor signal count growth |
+| `shared/nexis/Widgets/MetricTile/metric_tile.h/.cpp` | Dashboard metric tile with QtCharts sparkline (replaces CircleBar on Dashboard) |
+| `shared/nexis/Widgets/NetworkTile/network_tile.h/.cpp` | Dashboard network tile with QtCharts sparkline (replaces LineBar on Dashboard) |
+| `shared/nexis/Widgets/CommandPalette/command_palette.h/.cpp` | Ctrl+K command palette for keyboard-driven navigation and actions |
 | `shared/nexis/Managers/cleaner_service.cpp` | Example of thick manager with real business logic |
 | `shared/nexis/Managers/schedule_manager.cpp` | Example of OS-native integration complexity |

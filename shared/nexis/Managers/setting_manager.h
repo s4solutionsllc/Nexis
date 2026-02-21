@@ -28,6 +28,7 @@ namespace SettingKeys {
     const QString CleaningNotificationsEnabled("CleaningNotificationsEnabled");
     const QString ThresholdAlertEnabled("ThresholdAlertEnabled");
     const QString ThresholdGB("ThresholdGB");
+    const QString SidebarCollapsed("SidebarCollapsed");
 }
 
 class SettingManager
@@ -105,6 +106,9 @@ public:
 
     void setThresholdGB(int value);
     int getThresholdGB() const;
+
+    void setSidebarCollapsed(bool value);
+    bool getSidebarCollapsed() const;
 
 private:
     static SettingManager *instance;

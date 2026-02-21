@@ -97,17 +97,21 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 ### 1. Dashboard
 
-Real-time system monitoring at a glance with circular gauge widgets.
+Real-time system monitoring at a glance in a **bento grid layout** of `MetricTile` widgets, replacing the earlier circular gauge (CircleBar) design.
 
-**Gauges (all conditional — hidden if hardware absent):**
-- **CPU** — Average utilization across all cores (1s refresh)
-- **Memory** — RAM usage percentage (1s refresh)
-- **Disk** — Root partition usage percentage (5s refresh)
-- **Disk Health** — Worst-drive SMART health percentage, teal gradient (30s refresh)
-- **Battery** — Charge level percentage, yellow gradient (5s refresh)
-- **Temperature** — Selectable sensor from dropdown (1s refresh)
-- **GPU** — Utilization percentage with multi-GPU selector (1s refresh)
-- **Network** — Download/upload speed history as line bars (1s refresh)
+**Metric tiles (all conditional — hidden if hardware absent):**
+- **CPU** — Average utilization across all cores, sparkline history (1s refresh)
+- **Memory** — RAM usage percentage, sparkline history (1s refresh)
+- **Disk** — Root partition usage percentage, sparkline history (5s refresh)
+- **Disk Health** — Worst-drive SMART health percentage, teal accent (30s refresh)
+- **Battery** — Charge level percentage, yellow accent (5s refresh)
+- **Temperature** — Selectable sensor from dropdown, sparkline history (1s refresh)
+- **GPU** — Utilization percentage with multi-GPU selector, sparkline history (1s refresh)
+- **Network** — `NetworkTile` variant with dual sparklines for download and upload speed (1s refresh)
+
+Each tile exposes **quick-action buttons** (e.g., open Resources chart, open Settings for the metric) that appear on hover.
+
+**System summary card** at the bottom of the grid consolidates hostname, uptime, OS, and active alerts in a single strip.
 
 **Additional features:**
 - Update checker — compares installed version against GitHub releases
@@ -517,10 +521,16 @@ shared/nexis/static/themes/
 
 `values.ini` defines tokens:
 ```ini
-color01=#36363a
-accentColor=#E95420
+color01=#1A1C22
+accentColor=#FF6B1A
 dp8=8px
 borderColor=#5e5c64
+cpuColor=#FF6B1A
+memoryColor=#3B82F6
+diskColor=#10B981
+networkColor=#8B5CF6
+gpuColor=#F59E0B
+tempColor=#EF4444
 ```
 
 `style.qss` references them:
@@ -534,8 +544,10 @@ At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all
 ### Color Scheme
 
 - **Auto** — Follows system preference via `QStyleHints::colorSchemeChanged` (Qt 6.5+)
-- **Light** — Loads `light/values.ini` overrides
-- **Dark** — Loads `default/values.ini` (the default theme)
+- **Light** — Loads `light/values.ini` overrides. The refined light theme uses a warm cream base (`#F5F0EB`) for reduced eye strain.
+- **Dark** — Loads `default/values.ini`. The refined dark theme uses a deep charcoal base (`#1A1C22`) with a warm orange accent (`#FF6B1A`).
+
+**Per-metric color tokens** (`@cpuColor`, `@memoryColor`, `@diskColor`, `@networkColor`, `@gpuColor`, `@tempColor`) are defined in `values.ini` and used by `MetricTile` sparklines and the Resources charts, giving each metric a consistent named color across all pages and themes.
 
 ### DPI Scaling
 
@@ -614,6 +626,10 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 
 ### Navigation
 
+The sidebar is **collapsible**, organized into three labelled groups — **MONITOR**, **MANAGE**, and **SYSTEM** — matching the logical grouping of the 14 pages. When collapsed, it shrinks to a 64 px icon-rail showing only page icons; the collapse and expand transitions use a smooth width animation. The sidebar can be toggled with the **Ctrl+B** keyboard shortcut or the collapse button at the top of the panel.
+
+A **Command Palette** (activated with **Ctrl+K**) provides a fuzzy-search popup for navigating directly to any page and executing common actions (e.g., "run clean", "toggle kiosk") without touching the sidebar.
+
 Sidebar buttons trigger `SlidingStackedWidget::slideInIndex()` with horizontal slide animation. The tray icon context menu provides the same page navigation plus a checkable kiosk mode toggle. F11, the tray action, and the Dashboard button all toggle kiosk mode through synchronized signals.
 
 ---
@@ -635,7 +651,7 @@ emit cpuUpdated(percents, clock, loadAvgs) ← Typed signal with data payload
     ↓
 DashboardPage::onCpuUpdated(...)     ← Page receives data as reactive subscriber
     ↓
-mCpuBar->setValue(average)           ← CircleBar widget updates visual gauge
+mCpuTile->setValue(average)          ← MetricTile widget updates sparkline and label
 ```
 
 ### Example: Uninstalling a Homebrew package

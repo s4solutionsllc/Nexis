@@ -427,8 +427,6 @@ QLabel[accessibleName="dialog-title"] {
 
 #sidebar {
     background-color: @sidebar;
-    min-width: 200;
-    max-width: 200;
     border-right: 1px solid @borderColor;
 }
 
@@ -436,30 +434,127 @@ QLabel[accessibleName="dialog-title"] {
     border: 0;
     height: @dp36;
     border-radius: @dp6;
-    color: @color05;
+    color: @color06;
     margin: 1 @dp8;
     padding: 0 @dp12;
     text-align: left;
     font-size: 10pt;
+    border-left: 3px solid transparent;
 }
 
 #sidebar QPushButton:checked {
-    background-color: @accentColor;
-    color: @color07;
+    background-color: @color02;
+    color: @color05;
+    font-weight: 600;
+    border-left: 3px solid @accentColor;
 }
 
 #sidebar QPushButton:hover:!checked {
     background-color: @color02;
+    color: @color05;
+    border-left: 3px solid @borderColor;
 }
 
-#pageTitle {
-    color: @color05;
-    font-size: 12pt;
+/* Section headers */
+#sectionHeader {
+    font-size: 8pt;
+    font-weight: 600;
+    color: @tertiaryText;
+    padding: 12px 12px 4px 20px;
+    text-transform: uppercase;
+    border: 0;
+    border-top: 1px solid @borderColor;
+    margin-top: 6px;
+    background: transparent;
+}
+
+/* Sidebar toggle button */
+#btnSidebarToggle {
+    border: 0;
+    height: @dp36;
+    border-radius: @dp6;
+    color: @accentColor;
+    margin: 0 @dp8;
+    padding: 0 @dp12;
+    text-align: left;
+    font-size: 11pt;
     font-weight: bold;
-    padding: @dp12 0;
-    margin: 0 @dp12;
+}
+
+#btnSidebarToggle:hover {
+    background-color: @color02;
+}
+
+/* Collapsed sidebar overrides */
+#sidebar[collapsed="true"] QPushButton {
+    text-align: center;
+    padding: 0;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+}
+
+#sidebar[collapsed="true"] QPushButton:checked {
+    border-left: 0;
+    border-bottom: 3px solid @accentColor;
+}
+
+#sidebar[collapsed="true"] QPushButton:hover:!checked {
+    border-left: 0;
+    border-bottom: 3px solid @borderColor;
+}
+
+#sidebar[collapsed="true"] #btnSidebarToggle {
+    text-align: center;
+    padding: 0;
+    border-left: 0;
+    border-bottom: 0;
+}
+
+/********************
+    COMMAND PALETTE
+*********************/
+
+#commandPaletteInner {
+    background-color: @cardBg;
+    border-radius: 12;
+    border: 1px solid @borderColor;
+}
+
+#commandPaletteSearch {
+    background-color: @color01;
+    color: @color05;
     border: 0;
     border-bottom: 1px solid @borderColor;
+    border-radius: 12px 12px 0 0;
+    padding: 14 16;
+    font-size: 13pt;
+}
+
+#commandPaletteSearch:focus {
+    border-bottom: 1px solid @accentColor;
+}
+
+#commandPaletteResults {
+    background-color: transparent;
+    border: 0;
+    padding: 4 0;
+}
+
+#commandPaletteResults::item {
+    color: @color06;
+    padding: 8 16;
+    border: 0;
+    font-size: 10pt;
+}
+
+#commandPaletteResults::item:selected {
+    background-color: @color02;
+    color: @color05;
+    border-left: 3px solid @accentColor;
+}
+
+#commandPaletteResults::item:hover:!selected {
+    background-color: @color02;
 }
 
 #pageContent {
@@ -516,6 +611,73 @@ QLabel[accessibleName="dialog-title"] {
 #lineChartProgress::chunk {
     background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 @accentColor, stop:1 @accentHover);
     border-radius: 3;
+}
+
+/* - Metric Tile - */
+
+#metricTile {
+    background-color: @cardBg;
+    border-radius: 12;
+    border: 1px solid @borderColor;
+}
+
+#metricTile:hover {
+    background-color: @cardBgElevated;
+    border-color: @accentColor;
+}
+
+#metricTileTitle {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+#metricTileValue {
+    color: @color05;
+    font-size: 18pt;
+    font-weight: 700;
+}
+
+#metricTileSubtitle {
+    color: @tertiaryText;
+    font-size: 9pt;
+}
+
+#metricTileProgress {
+    background-color: @color02;
+    border: 0;
+    border-radius: 2;
+    max-height: 4;
+}
+
+#metricTileProgress::chunk {
+    border-radius: 2;
+}
+
+#metricTileAction {
+    font-size: 8pt;
+    padding: 2 8;
+    border-radius: 10;
+    background: transparent;
+}
+
+/* - System Summary Card - */
+
+#systemSummaryCard {
+    background-color: @cardBg;
+    border-radius: 10;
+    border: 1px solid @borderColor;
+}
+
+#summaryLabel {
+    color: @tertiaryText;
+    font-size: 8pt;
+    font-weight: 600;
+}
+
+#summaryValue {
+    color: @color05;
+    font-size: 10pt;
 }
 
 /* - Temperature Gauge - */

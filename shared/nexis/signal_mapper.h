@@ -19,6 +19,8 @@ signals:
     void sigKioskToggleRequested();
     void sigKioskModeChanged(bool enabled);
     void sigAppVisibilityChanged(bool visible);
+    void sigSidebarCollapseToggled(bool collapsed);
+    void sigNavigateToPage(const QString &pageTitle);
 
 private:
     static SignalMapper *instance;

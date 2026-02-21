@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QComboBox>
 #include <QPushButton>
+#include <QLabel>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -11,8 +12,8 @@
 #include <QtConcurrent>
 
 #include "Managers/info_manager.h"
-#include "circlebar.h"
-#include "linebar.h"
+#include "metric_tile.h"
+#include "network_tile.h"
 
 #include "Managers/setting_manager.h"
 
@@ -49,7 +50,7 @@ private slots:
     void onMemoryUpdated(quint64 used, quint64 total, quint64 swapUsed, quint64 swapTotal);
     void onNetworkUpdated(quint64 rxBytes, quint64 txBytes);
     void onDiskUsageUpdated(const QList<Disk> &disks);
-    void updateTempBar();
+    void updateTempTile();
     void onGpuUpdated(const QList<GpuDevice> &gpus);
     void onTempSensorChanged(int index);
     void onGpuDeviceChanged(int index);
@@ -64,17 +65,17 @@ signals:
 private:
     Ui::DashboardPage *ui;
 
-private:
-    CircleBar* mCpuBar;
-    CircleBar* mMemBar;
-    CircleBar* mDiskBar;
-    CircleBar* mTempBar;
-    CircleBar* mGpuBar;
-    CircleBar* mBatteryBar;
-    CircleBar* mDiskHealthBar;
+    MetricTile *mCpuTile;
+    MetricTile *mMemTile;
+    MetricTile *mDiskTile;
+    MetricTile *mTempTile;
+    MetricTile *mGpuTile;
+    MetricTile *mBatteryTile;
+    MetricTile *mDiskHealthTile;
+    NetworkTile *mNetworkTile;
 
-    LineBar *mDownloadBar;
-    LineBar *mUploadBar;
+    QComboBox *mCmbTempSensor;
+    QComboBox *mCmbGpuDevice;
 
     InfoManager *im;
     SettingManager *mSettingManager;
@@ -86,6 +87,10 @@ private:
     int mSelectedGpuIndex;
 
     QPushButton *mKioskButton;
+
+    QList<QLabel*> mSummaryLabels;
+
+    void buildSystemSummary();
 };
 
 #endif // DASHBOARDPAGE_H

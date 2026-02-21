@@ -250,3 +250,13 @@ int SettingManager::getThresholdGB() const
 {
     return mSettings->value(SettingKeys::ThresholdGB, 5).toInt();
 }
+
+void SettingManager::setSidebarCollapsed(bool value)
+{
+    mSettings->setValue(SettingKeys::SidebarCollapsed, value);
+}
+
+bool SettingManager::getSidebarCollapsed() const
+{
+    return mSettings->value(SettingKeys::SidebarCollapsed, false).toBool();
+}

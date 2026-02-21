@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <linearGradient id="og5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF4500"/>
+      <stop offset="30%" stop-color="#FF6B1A"/>
+      <stop offset="60%" stop-color="#FF8C00"/>
+      <stop offset="100%" stop-color="#FFB347"/>
+    </linearGradient>
+    <filter id="cs5">
+      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+    <filter id="panelShadow">
+      <feDropShadow dx="4" dy="0" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="800" fill="#1A1C22"/>
+
+  <!-- ===== ICON RAIL (48px) ===== -->
+  <rect x="0" y="0" width="48" height="800" fill="#1E2028"/>
+  <line x1="48" y1="0" x2="48" y2="800" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Logo (N) -->
+  <text x="24" y="32" font-family="SF Pro Display, Helvetica Neue, sans-serif" font-size="18" font-weight="700" fill="url(#og5)" text-anchor="middle">N</text>
+  <line x1="10" y1="44" x2="38" y2="44" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Dashboard (selected) -->
+  <rect x="6" y="56" width="36" height="36" rx="10" fill="#FF6B1A" opacity="0.15"/>
+  <rect x="6" y="56" width="3" height="36" rx="1.5" fill="#FF6B1A"/>
+  <!-- Grid icon -->
+  <rect x="17" y="66" width="6" height="6" rx="1.5" fill="#FF6B1A"/>
+  <rect x="25" y="66" width="6" height="6" rx="1.5" fill="#FF6B1A"/>
+  <rect x="17" y="74" width="6" height="6" rx="1.5" fill="#FF6B1A"/>
+  <rect x="25" y="74" width="6" height="6" rx="1.5" fill="#FF6B1A"/>
+
+  <!-- Hardware icon -->
+  <rect x="16" y="108" width="16" height="12" rx="2" fill="none" stroke="#6B6E78" stroke-width="1.3"/>
+  <line x1="20" y1="112" x2="28" y2="112" stroke="#6B6E78" stroke-width="0.8"/>
+  <line x1="20" y1="115" x2="26" y2="115" stroke="#6B6E78" stroke-width="0.8"/>
+
+  <!-- Tools (with fly-out open indicator) -->
+  <rect x="6" y="136" width="36" height="36" rx="10" fill="#2A2C32"/>
+  <circle cx="24" cy="154" r="7" fill="none" stroke="#F0F2F5" stroke-width="1.3"/>
+  <line x1="24" y1="150" x2="24" y2="158" stroke="#F0F2F5" stroke-width="1.3"/>
+  <line x1="20" y1="154" x2="28" y2="154" stroke="#F0F2F5" stroke-width="1.3"/>
+  <!-- Active dot -->
+  <circle cx="40" cy="140" r="3" fill="#FF6B1A"/>
+
+  <!-- Resources icon (chart) -->
+  <polyline points="16,204 20,196 24,200 28,190 32,198" fill="none" stroke="#6B6E78" stroke-width="1.3"/>
+
+  <!-- Docker -->
+  <rect x="14" y="226" width="20" height="12" rx="2" fill="none" stroke="#6B6E78" stroke-width="1.3"/>
+  <line x1="19" y1="230" x2="19" y2="234" stroke="#6B6E78" stroke-width="1"/>
+  <line x1="24" y1="230" x2="24" y2="234" stroke="#6B6E78" stroke-width="1"/>
+  <line x1="29" y1="230" x2="29" y2="234" stroke="#6B6E78" stroke-width="1"/>
+  <!-- Running dot -->
+  <circle cx="38" cy="224" r="3" fill="#2EC27E"/>
+
+  <!-- Settings (bottom) -->
+  <circle cx="24" cy="764" r="8" fill="none" stroke="#6B6E78" stroke-width="1.3"/>
+  <circle cx="24" cy="764" r="3" fill="#6B6E78"/>
+
+  <!-- ===== CONTEXTUAL FLY-OUT PANEL (showing "Tools" expanded) ===== -->
+  <rect x="48" y="0" width="200" height="800" fill="#222228" filter="url(#panelShadow)"/>
+  <line x1="248" y1="0" x2="248" y2="800" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Panel header -->
+  <text x="68" y="34" font-family="SF Pro Display, sans-serif" font-size="15" font-weight="700" fill="#F0F2F5">Tools</text>
+  <!-- Close X -->
+  <text x="228" y="34" font-family="sans-serif" font-size="14" fill="#6B6E78" text-anchor="middle">×</text>
+
+  <line x1="58" y1="48" x2="238" y2="48" stroke="#3A3D4A" stroke-width="1"/>
+
+  <!-- Tool items -->
+  <rect x="58" y="60" width="180" height="36" rx="8" fill="#FF6B1A" opacity="0.08"/>
+  <text x="78" y="82" font-family="SF Pro Display, sans-serif" font-size="13" fill="#FF6B1A">System Cleaner</text>
+  <rect x="184" y="70" width="42" height="16" rx="8" fill="#FF6B1A" opacity="0.15"/>
+  <text x="205" y="82" font-family="SF Pro Display, sans-serif" font-size="8" font-weight="600" fill="#FF6B1A" text-anchor="middle">2.1 GB</text>
+
+  <text x="78" y="118" font-family="SF Pro Display, sans-serif" font-size="13" fill="#9A9DA6">Processes</text>
+  <text x="78" y="152" font-family="SF Pro Display, sans-serif" font-size="13" fill="#9A9DA6">Services</text>
+  <text x="78" y="186" font-family="SF Pro Display, sans-serif" font-size="13" fill="#9A9DA6">Startup Apps</text>
+  <text x="78" y="220" font-family="SF Pro Display, sans-serif" font-size="13" fill="#9A9DA6">Applications</text>
+
+  <line x1="68" y1="240" x2="228" y2="240" stroke="#3A3D4A" stroke-width="1"/>
+
+  <text x="78" y="268" font-family="SF Pro Display, sans-serif" font-size="13" fill="#9A9DA6">Helpers</text>
+  <text x="78" y="302" font-family="SF Pro Display, sans-serif" font-size="13" fill="#9A9DA6">Repositories</text>
+  <text x="78" y="336" font-family="SF Pro Display, sans-serif" font-size="13" fill="#9A9DA6">GNOME Settings</text>
+
+  <!-- ===== MAIN CONTENT (dimmed/shifted to show panel interaction) ===== -->
+  <!-- Semi-transparent overlay to show the panel interaction -->
+  <rect x="248" y="0" width="952" height="800" fill="#1A1C22" opacity="0.5"/>
+
+  <!-- Visible content behind overlay (Dashboard cards, faded) -->
+  <!-- Row 1 cards -->
+  <rect x="268" y="20" width="440" height="200" rx="16" fill="#2A2C32" opacity="0.5"/>
+  <rect x="268" y="20" width="440" height="200" rx="16" fill="none" stroke="#3A3D4A" stroke-width="0.5" opacity="0.5"/>
+  <text x="296" y="52" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" opacity="0.5" letter-spacing="1">CPU</text>
+  <text x="296" y="90" font-family="SF Pro Display, sans-serif" font-size="36" font-weight="700" fill="#F0F2F5" opacity="0.5">22%</text>
+
+  <rect x="722" y="20" width="220" height="200" rx="16" fill="#2A2C32" opacity="0.5"/>
+  <rect x="722" y="20" width="220" height="200" rx="16" fill="none" stroke="#3A3D4A" stroke-width="0.5" opacity="0.5"/>
+  <text x="750" y="52" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" opacity="0.5" letter-spacing="1">DISK</text>
+
+  <rect x="956" y="20" width="220" height="200" rx="16" fill="#2A2C32" opacity="0.5"/>
+  <rect x="956" y="20" width="220" height="200" rx="16" fill="none" stroke="#3A3D4A" stroke-width="0.5" opacity="0.5"/>
+  <text x="984" y="52" font-family="SF Pro Display, sans-serif" font-size="11" font-weight="600" fill="#6B6E78" opacity="0.5" letter-spacing="1">NETWORK</text>
+
+  <!-- Row 2 cards -->
+  <rect x="268" y="236" width="210" height="160" rx="16" fill="#2A2C32" opacity="0.5"/>
+  <rect x="498" y="236" width="210" height="160" rx="16" fill="#2A2C32" opacity="0.5"/>
+  <rect x="722" y="236" width="220" height="160" rx="16" fill="#2A2C32" opacity="0.5"/>
+  <rect x="956" y="236" width="220" height="160" rx="16" fill="#2A2C32" opacity="0.5"/>
+
+  <!-- Title annotation (outside the dim area) -->
+  <rect x="300" y="480" width="650" height="90" rx="16" fill="#2A2C32" filter="url(#cs5)"/>
+  <text x="625" y="510" font-family="SF Pro Display, sans-serif" font-size="14" font-weight="700" fill="#FF6B1A" text-anchor="middle">Concept C: Icon Rail (48px) + Contextual Fly-Out Panel</text>
+  <text x="625" y="532" font-family="SF Pro Display, sans-serif" font-size="11" fill="#9A9DA6" text-anchor="middle">Click a category icon → panel slides out with page list • Click away → panel closes</text>
+  <text x="625" y="550" font-family="SF Pro Display, sans-serif" font-size="11" fill="#6B6E78" text-anchor="middle">Only 48px consumed when panel closed • Badge notifications on icons • Grouped by category</text>
+</svg>
