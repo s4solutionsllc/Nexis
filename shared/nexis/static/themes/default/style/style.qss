@@ -443,8 +443,8 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #sidebar QPushButton:checked {
-    background-color: @color02;
-    color: @color05;
+    background-color: @accentBgTint;
+    color: @accentColor;
     font-weight: 600;
     border-left: 3px solid @accentColor;
 }
@@ -468,17 +468,18 @@ QLabel[accessibleName="dialog-title"] {
     background: transparent;
 }
 
+/* Sidebar logo */
+#sidebarLogo {
+    background: transparent;
+    border: 0;
+}
+
 /* Sidebar toggle button */
 #btnSidebarToggle {
     border: 0;
-    height: @dp36;
-    border-radius: @dp6;
-    color: @accentColor;
-    margin: 0 @dp8;
-    padding: 0 @dp12;
-    text-align: left;
-    font-size: 11pt;
-    font-weight: bold;
+    border-radius: @dp4;
+    background: transparent;
+    padding: 0;
 }
 
 #btnSidebarToggle:hover {
@@ -494,6 +495,8 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #sidebar[collapsed="true"] QPushButton:checked {
+    background-color: @accentBgTint;
+    color: @accentColor;
     border-left: 0;
     border-bottom: 3px solid @accentColor;
 }
@@ -613,6 +616,32 @@ QLabel[accessibleName="dialog-title"] {
     border-radius: 3;
 }
 
+/* - Hero Card (CPU + Memory combined) - */
+
+#heroCard {
+    background-color: @cardBg;
+    border-radius: 12;
+    border: 1px solid @borderColor;
+}
+
+#heroCard:hover {
+    background-color: @cardBgElevated;
+    border-color: @accentColor;
+}
+
+#heroCardLeft, #heroCardRight {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
+#heroCardDivider {
+    background-color: @borderColor;
+    border: 0;
+    max-width: 1;
+    margin: 10 0;
+}
+
 /* - Metric Tile - */
 
 #metricTile {
@@ -661,6 +690,30 @@ QLabel[accessibleName="dialog-title"] {
     background: transparent;
 }
 
+/* - Disk Donut Tile - */
+
+#diskTile {
+    background-color: @cardBg;
+    border-radius: 12;
+    border: 1px solid @borderColor;
+}
+
+#diskTile:hover {
+    background-color: @cardBgElevated;
+    border-color: @accentColor;
+}
+
+#diskTileTitle {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+#diskTileSubtitle {
+    color: @tertiaryText;
+    font-size: 9pt;
+}
+
 /* - System Summary Card - */
 
 #systemSummaryCard {
@@ -678,6 +731,58 @@ QLabel[accessibleName="dialog-title"] {
 #summaryValue {
     color: @color05;
     font-size: 10pt;
+}
+
+/* - Quick Actions Card - */
+
+#quickActionsCard {
+    background-color: @cardBg;
+    border-radius: 10;
+    border: 1px solid @borderColor;
+}
+
+#quickActionsTitle {
+    color: @tertiaryText;
+    font-size: 8pt;
+    font-weight: 600;
+}
+
+#quickActionBtn {
+    font-size: 9pt;
+    padding: 6 16;
+    border-radius: 14;
+    border: 1px solid @borderColor;
+    color: @color06;
+    background-color: transparent;
+}
+
+#quickActionBtn:hover {
+    background-color: @color02;
+    color: @color05;
+}
+
+#quickActionBtn[accessibleName="quickActionPrimary"] {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
+#quickActionBtn[accessibleName="quickActionPrimary"]:hover {
+    background-color: @accentHover;
+    border-color: @accentHover;
+}
+
+/* - Status Footer - */
+
+#statusFooter {
+    background-color: @sidebar;
+    border-top: 1px solid @borderColor;
+    border-radius: 0;
+}
+
+#statusFooter QLabel {
+    color: @tertiaryText;
+    font-size: 8pt;
 }
 
 /* - Temperature Gauge - */

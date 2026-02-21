@@ -40,7 +40,7 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     ui(new Ui::DashboardPage),
     mCpuTile(new MetricTile(tr("CPU"), colorFromStyle("@cpuColor"), this)),
     mMemTile(new MetricTile(tr("MEMORY"), colorFromStyle("@memoryColor"), this)),
-    mDiskTile(new MetricTile(tr("DISK"), colorFromStyle("@diskColor"), this)),
+    mDiskTile(new DiskTile(colorFromStyle("@diskColor"), colorFromStyle("@color02"), this)),
     mTempTile(new MetricTile(tr("TEMP"), colorFromStyle("@tempColor"), this)),
     mGpuTile(new MetricTile(tr("GPU"), colorFromStyle("@gpuColor"), this)),
     mBatteryTile(new MetricTile(tr("BATTERY"), colorFromStyle("@batteryColor"), this)),
@@ -65,17 +65,17 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
 void DashboardPage::init()
 {
     // Bento grid layout:
-    //  Row 0: CPU (colspan 2) | Memory | Network
+    //  Row 0: HeroCard(CPU+Memory) (colspan 2) | Network (colspan 2)
     //  Row 1: Disk | GPU* | Temp* | Battery* / DiskHealth*
     // * = conditional tiles
 
     int row = 0;
     int col = 0;
 
-    // Row 0: CPU hero tile (spans 2 cols)
-    ui->bentoGrid->addWidget(mCpuTile, 0, 0, 1, 2);
-    ui->bentoGrid->addWidget(mMemTile, 0, 2, 1, 1);
-    ui->bentoGrid->addWidget(mNetworkTile, 0, 3, 1, 1);
+    // Row 0: Hero card (CPU + Memory combined) + Network
+    mHeroCard = new HeroCard(mCpuTile, mMemTile, this);
+    ui->bentoGrid->addWidget(mHeroCard, 0, 0, 1, 2);
+    ui->bentoGrid->addWidget(mNetworkTile, 0, 2, 1, 2);
 
     // Row 1: remaining tiles placed dynamically based on available hardware
     row = 1;
@@ -200,16 +200,8 @@ void DashboardPage::init()
     connect(mRefresh, &DataRefreshService::diskUsageUpdated,
             this, &DashboardPage::onDiskUsageUpdated);
 
-    // Quick actions on tiles
-    mCpuTile->setQuickAction(tr("Processes"), [this]() {
-        emit mSignalMapper->sigNavigateToPage(tr("Processes"));
-    });
-    mDiskTile->setQuickAction(tr("Clean"), [this]() {
-        emit mSignalMapper->sigNavigateToPage(tr("System Cleaner"));
-    });
-    mNetworkTile->setQuickAction(tr("Details"), [this]() {
-        emit mSignalMapper->sigNavigateToPage(tr("Resources"));
-    });
+    // Quick actions bar
+    buildQuickActions();
 
     // Update bar
     ui->widgetUpdateBar->hide();
@@ -218,7 +210,7 @@ void DashboardPage::init()
 
     // Drop shadows on tiles
     QList<QWidget*> widgets = {
-        mCpuTile, mMemTile, mDiskTile, mNetworkTile
+        mHeroCard, mDiskTile, mNetworkTile
     };
     if (im->hasThermalSensors())
         widgets.append(mTempTile);
@@ -233,6 +225,11 @@ void DashboardPage::init()
 
     // System summary card
     buildSystemSummary();
+
+    // Status footer
+    ui->lblFooterRight->setText(
+        QString("Nexis v%1 \u2022 Refreshing every 1s")
+            .arg(qApp->applicationVersion()));
 
     // Kiosk mode toggle button (floating, top-right)
     mKioskButton->setFixedSize(32, 32);
@@ -285,6 +282,33 @@ void DashboardPage::buildSystemSummary()
     addSummaryItem(tr("CPU"), sysInfo.getCpuModel());
 
     ui->summaryLayout->addStretch();
+}
+
+void DashboardPage::buildQuickActions()
+{
+    ui->quickActionsCard->setObjectName("quickActionsCard");
+
+    auto *lblTitle = new QLabel(tr("QUICK ACTIONS"), this);
+    lblTitle->setObjectName("quickActionsTitle");
+    ui->quickActionsLayout->addWidget(lblTitle);
+    ui->quickActionsLayout->addStretch();
+
+    auto makeBtn = [this](const QString &text, bool primary, const QString &page) {
+        auto *btn = new QPushButton(text, this);
+        btn->setObjectName("quickActionBtn");
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setFocusPolicy(Qt::NoFocus);
+        if (primary)
+            btn->setAccessibleName("quickActionPrimary");
+        connect(btn, &QPushButton::clicked, this, [this, page]() {
+            emit mSignalMapper->sigNavigateToPage(page);
+        });
+        return btn;
+    };
+
+    ui->quickActionsLayout->addWidget(makeBtn(tr("Clean System"), true, tr("System Cleaner")));
+    ui->quickActionsLayout->addWidget(makeBtn(tr("View Processes"), false, tr("Processes")));
+    ui->quickActionsLayout->addWidget(makeBtn(tr("Check Updates"), false, tr("Settings")));
 }
 
 void DashboardPage::checkUpdate()
@@ -426,8 +450,7 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
     QString sizeText = FormatUtil::formatBytes(disk->size);
     QString usedText = FormatUtil::formatBytes(disk->used);
 
-    mDiskTile->setValue(diskPercent, QString("%1%").arg(diskPercent));
-    mDiskTile->setSubtitle(QString("%1 / %2").arg(usedText, sizeText));
+    mDiskTile->setValue(diskPercent, usedText, sizeText);
 }
 
 void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)

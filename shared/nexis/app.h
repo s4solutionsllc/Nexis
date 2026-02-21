@@ -105,6 +105,7 @@ private:
 
     // Sidebar widgets
     QVBoxLayout *mSidebarLayout;
+    QLabel *mLogoLabel;
     QPushButton *mBtnSidebarToggle;
     QButtonGroup *mSidebarBtnGroup;
     QList<QLabel*> mSectionHeaders;

@@ -16,6 +16,7 @@
 #include <QLabel>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
+#include <QHBoxLayout>
 #include <QVBoxLayout>
 
 App::~App()
@@ -69,17 +70,29 @@ void App::buildSidebar()
     mSidebarLayout->setContentsMargins(0, 8, 0, 8);
     mSidebarLayout->setSpacing(0);
 
-    // Collapse toggle button
+    // Logo + collapse toggle row
+    auto *logoRow = new QHBoxLayout();
+    logoRow->setContentsMargins(12, 4, 8, 4);
+    logoRow->setSpacing(0);
+
+    mLogoLabel = new QLabel(ui->sidebar);
+    mLogoLabel->setObjectName("sidebarLogo");
+    mLogoLabel->setFixedHeight(Dpi::scale(28));
+    mLogoLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    logoRow->addWidget(mLogoLabel);
+    logoRow->addStretch();
+
     mBtnSidebarToggle = new QPushButton(ui->sidebar);
     mBtnSidebarToggle->setObjectName("btnSidebarToggle");
     mBtnSidebarToggle->setCursor(Qt::PointingHandCursor);
     mBtnSidebarToggle->setFocusPolicy(Qt::NoFocus);
     mBtnSidebarToggle->setCheckable(false);
-    mBtnSidebarToggle->setIconSize(Dpi::scale(18, 18));
-    mBtnSidebarToggle->setFixedHeight(Dpi::scale(36));
+    mBtnSidebarToggle->setIconSize(Dpi::scale(16, 16));
+    mBtnSidebarToggle->setFixedSize(Dpi::scale(28, 28));
     connect(mBtnSidebarToggle, &QPushButton::clicked, this, &App::toggleSidebarCollapse);
-    mSidebarLayout->addWidget(mBtnSidebarToggle);
+    logoRow->addWidget(mBtnSidebarToggle);
 
+    mSidebarLayout->addLayout(logoRow);
     mSidebarLayout->addSpacing(4);
 
     // ---- MONITOR section ----
@@ -210,7 +223,6 @@ void App::init()
     btnGnomeSettings->setText(tr("GNOME Settings"));
     btnSettings->setText(tr("Settings"));
     btnFeedback->setText(tr("Feedback"));
-    mBtnSidebarToggle->setText(tr("Nexis"));
 
     mListPages = {
         dashboardPage, hardwareInfoPage, resourcesPage, systemCleanerPage, searchPage,
@@ -505,7 +517,14 @@ void App::updateSidebarIcons()
         mBtnSidebarToggle->setIcon(QIcon(QString(":/static/themes/%1/img/sidebar-icons/sidebar-expand.svg").arg(theme)));
     else
         mBtnSidebarToggle->setIcon(QIcon(QString(":/static/themes/%1/img/sidebar-icons/sidebar-collapse.svg").arg(theme)));
-    mBtnSidebarToggle->setIconSize(Dpi::scale(18, 18));
+    mBtnSidebarToggle->setIconSize(Dpi::scale(16, 16));
+
+    // Sidebar logo
+    QString logoFile = mSidebarCollapsed ? "sidebar-logo-collapsed.svg" : "sidebar-logo.svg";
+    QString logoPath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, logoFile);
+    QPixmap logoPix(logoPath);
+    if (!logoPix.isNull())
+        mLogoLabel->setPixmap(logoPix.scaledToHeight(Dpi::scale(20), Qt::SmoothTransformation));
 }
 
 void App::toggleSidebarCollapse()
@@ -558,27 +577,29 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
         }
     }
 
-    // Toggle toggle-button and feedback button text
+    // Toggle feedback button text
     if (collapsed) {
-        mBtnSidebarToggle->setProperty("sidebarText", mBtnSidebarToggle->text());
-        mBtnSidebarToggle->setText(QString());
         btnFeedback->setProperty("sidebarText", btnFeedback->text());
         btnFeedback->setText(QString());
     } else {
-        QString savedToggle = mBtnSidebarToggle->property("sidebarText").toString();
-        if (!savedToggle.isEmpty())
-            mBtnSidebarToggle->setText(savedToggle);
         QString savedFeedback = btnFeedback->property("sidebarText").toString();
         if (!savedFeedback.isEmpty())
             btnFeedback->setText(savedFeedback);
     }
 
-    // Update toggle icon
+    // Update toggle icon and logo
     QString theme = AppManager::ins()->resolveThemeName();
     if (collapsed)
         mBtnSidebarToggle->setIcon(QIcon(QString(":/static/themes/%1/img/sidebar-icons/sidebar-expand.svg").arg(theme)));
     else
         mBtnSidebarToggle->setIcon(QIcon(QString(":/static/themes/%1/img/sidebar-icons/sidebar-collapse.svg").arg(theme)));
+
+    // Swap logo variant
+    QString logoFile = collapsed ? "sidebar-logo-collapsed.svg" : "sidebar-logo.svg";
+    QString logoPath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, logoFile);
+    QPixmap logoPix(logoPath);
+    if (!logoPix.isNull())
+        mLogoLabel->setPixmap(logoPix.scaledToHeight(Dpi::scale(20), Qt::SmoothTransformation));
 
     // Set dynamic property for QSS targeting
     ui->sidebar->setProperty("collapsed", collapsed);

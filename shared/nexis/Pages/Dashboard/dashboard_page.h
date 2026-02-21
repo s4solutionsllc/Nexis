@@ -14,6 +14,8 @@
 #include "Managers/info_manager.h"
 #include "metric_tile.h"
 #include "network_tile.h"
+#include "hero_card.h"
+#include "disk_tile.h"
 
 #include "Managers/setting_manager.h"
 
@@ -67,12 +69,13 @@ private:
 
     MetricTile *mCpuTile;
     MetricTile *mMemTile;
-    MetricTile *mDiskTile;
+    DiskTile *mDiskTile;
     MetricTile *mTempTile;
     MetricTile *mGpuTile;
     MetricTile *mBatteryTile;
     MetricTile *mDiskHealthTile;
     NetworkTile *mNetworkTile;
+    HeroCard *mHeroCard;
 
     QComboBox *mCmbTempSensor;
     QComboBox *mCmbGpuDevice;
@@ -91,6 +94,7 @@ private:
     QList<QLabel*> mSummaryLabels;
 
     void buildSystemSummary();
+    void buildQuickActions();
 };
 
 #endif // DASHBOARDPAGE_H

@@ -97,21 +97,24 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 ### 1. Dashboard
 
-Real-time system monitoring at a glance in a **bento grid layout** of `MetricTile` widgets, replacing the earlier circular gauge (CircleBar) design.
+Real-time system monitoring at a glance in a **bento grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design.
 
-**Metric tiles (all conditional — hidden if hardware absent):**
-- **CPU** — Average utilization across all cores, sparkline history (1s refresh)
-- **Memory** — RAM usage percentage, sparkline history (1s refresh)
-- **Disk** — Root partition usage percentage, sparkline history (5s refresh)
-- **Disk Health** — Worst-drive SMART health percentage, teal accent (30s refresh)
-- **Battery** — Charge level percentage, yellow accent (5s refresh)
-- **Temperature** — Selectable sensor from dropdown, sparkline history (1s refresh)
-- **GPU** — Utilization percentage with multi-GPU selector, sparkline history (1s refresh)
+**Row 0 — Hero tiles:**
+- **HeroCard** — Combined CPU + Memory tile with vertical divider. Each half is a `MetricTile` with sparkline history.
 - **Network** — `NetworkTile` variant with dual sparklines for download and upload speed (1s refresh)
 
-Each tile exposes **quick-action buttons** (e.g., open Resources chart, open Settings for the metric) that appear on hover.
+**Row 1 — Metric tiles (conditional — hidden if hardware absent):**
+- **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage and capacity text (5s refresh)
+- **Disk Health** — Worst-drive SMART health percentage (30s refresh)
+- **Battery** — Charge level percentage (5s refresh)
+- **Temperature** — Selectable sensor from dropdown, sparkline history (1s refresh)
+- **GPU** — Utilization percentage with multi-GPU selector, sparkline history (1s refresh)
 
-**System summary card** at the bottom of the grid consolidates hostname, uptime, OS, and active alerts in a single strip.
+**Quick Actions bar** — Consolidated row of pill-shaped buttons: "Clean System" (accent-colored primary), "View Processes", "Check Updates". Each navigates to its target page.
+
+**System summary card** alongside quick actions, showing hostname, OS, kernel, and CPU model.
+
+**Footer status bar** — Displays app version and refresh interval at the bottom edge.
 
 **Additional features:**
 - Update checker — compares installed version against GitHub releases

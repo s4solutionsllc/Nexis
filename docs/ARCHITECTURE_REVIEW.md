@@ -62,7 +62,7 @@ Nexis is structured as a **three-tier desktop application**:
 - **Centralized polling** — `DataRefreshService` singleton owns 4 QTimers (1s/5s/30s/configurable) and emits typed data signals; pages subscribe as reactive consumers
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
 - **Qt signals** — `SignalMapper` singleton as a lightweight global event bus (10 signals after FR-42)
-- **Dashboard widgets** — Dashboard gauges replaced with `MetricTile`/`NetworkTile` widgets (FR-42) that embed QtCharts sparklines; original `CircleBar`/`LineBar` source files preserved for potential reuse elsewhere
+- **Dashboard widgets** — Dashboard gauges replaced with `MetricTile`/`NetworkTile`/`HeroCard`/`DiskTile` widgets (FR-42, FR-43). `HeroCard` wraps two `MetricTile` instances side-by-side with a divider. `DiskTile` uses custom `QPainter` donut chart. Original `CircleBar`/`LineBar` source files preserved for potential reuse elsewhere
 - **Sidebar** — Sidebar navigation buttons are built programmatically in `app.cpp` (not defined in `.ui`) with grouped sections and collapse animation driven by `sigSidebarCollapseToggled`
 - **CommandPalette** — `Ctrl+K` global command palette widget (`command_palette.h/.cpp`) for keyboard-driven navigation and actions
 
@@ -575,8 +575,10 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | ~~Primary refactor target for DataRefreshService (§2A)~~ Done — subscribes to DataRefreshService signals, zero timers |
 | `shared/nexis/Pages/Resources/resources_page.cpp` | ~~Secondary refactor target~~ Done — subscribes to DataRefreshService signals, zero timers |
 | `shared/nexis/signal_mapper.h` | Global event bus (10 signals after FR-42) — monitor signal count growth |
-| `shared/nexis/Widgets/MetricTile/metric_tile.h/.cpp` | Dashboard metric tile with QtCharts sparkline (replaces CircleBar on Dashboard) |
-| `shared/nexis/Widgets/NetworkTile/network_tile.h/.cpp` | Dashboard network tile with QtCharts sparkline (replaces LineBar on Dashboard) |
+| `shared/nexis/Pages/Dashboard/metric_tile.h/.cpp` | Dashboard metric tile with QtCharts sparkline (replaces CircleBar on Dashboard) |
+| `shared/nexis/Pages/Dashboard/network_tile.h/.cpp` | Dashboard network tile with QtCharts sparkline (replaces LineBar on Dashboard) |
+| `shared/nexis/Pages/Dashboard/hero_card.h/.cpp` | Combined CPU+Memory tile wrapping two MetricTiles with divider (FR-43) |
+| `shared/nexis/Pages/Dashboard/disk_tile.h/.cpp` | Disk usage donut chart with custom QPainter rendering (FR-43) |
 | `shared/nexis/Widgets/CommandPalette/command_palette.h/.cpp` | Ctrl+K command palette for keyboard-driven navigation and actions |
 | `shared/nexis/Managers/cleaner_service.cpp` | Example of thick manager with real business logic |
 | `shared/nexis/Managers/schedule_manager.cpp` | Example of OS-native integration complexity |

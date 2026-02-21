@@ -87,6 +87,8 @@
 
 - [x] **FR-42: UI Redesign — Bento Dashboard with Collapsible Sidebar** — Complete visual overhaul of the dashboard and sidebar. Collapsible sidebar with grouped sections (MONITOR/MANAGE/SYSTEM), smooth 250ms animation, icon-rail at 64px, Ctrl+B shortcut. Bento grid dashboard replacing CircleBar/LineBar gauges with MetricTile widgets featuring sparkline charts, progress bars, trend indicators, and quick-action buttons. NetworkTile with dual download/upload sparklines. Refined dark theme (#1A1C22 base, #FF6B1A accent) and warm cream light theme (#F5F0EB). Command Palette (Ctrl+K) for fuzzy navigation and actions. System summary card on dashboard. Per-metric named color tokens. **Resolved:** Implemented in 6 phases — sidebar infrastructure, color palette, MetricTile/NetworkTile widgets, bento grid layout, sidebar polish, command palette.
 
+- [x] **FR-43: UI Mockup Polish** — Brought the FR-42 implementation in line with approved SVG mockups. Six changes: (1) sidebar active state uses orange tint + orange text instead of gray, (2) footer status bar showing version and refresh rate, (3) consolidated Quick Actions bar with pill buttons, (4) Nexis branded SVG logo in sidebar (wordmark expanded, lettermark collapsed), (5) HeroCard combining CPU + Memory tiles with vertical divider, (6) DiskTile with custom-painted donut chart replacing sparkline MetricTile. **Resolved:** Implemented in 6 phases.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
