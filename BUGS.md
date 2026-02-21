@@ -365,6 +365,13 @@
   - **Fix complexity:** Trivial (add "Disk Image" protocol filter + deduplicate by model name)
   - **Resolved:** Added `protocol == "Disk Image"` to the existing filter, and model-based deduplication that skips drives whose `model` string already exists in `mDrives`.
 
+- [x] **BUG-54: Gnome Settings Appearance tab missing QGroupBox containers** (LOW)
+  - **Scope:** Gnome Settings page → Appearance tab
+  - **File:** `shared/nexis/Pages/GnomeSettings/gnome_appearance_tab.ui`
+  - **Description:** The Appearance tab uses a flat `QGridLayout` with all 17 settings at the same level, while the other three tabs (Window Manager, Mouse, Desktop) use `QGroupBox` containers to visually group related settings into titled card sections. This breaks visual consistency — the Appearance tab lacks the border/radius/background styling applied by the `#GnomeSettingsPage QGroupBox` QSS rules.
+  - **Fix complexity:** Trivial (restructure UI file layout only, no C++ changes)
+  - **Resolved:** Replaced flat grid with `QVBoxLayout` containing 4 QGroupBoxes: Themes (5 settings), Fonts (6 settings), Interface (2 settings), Clock & Status (4 settings).
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
