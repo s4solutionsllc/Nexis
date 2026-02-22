@@ -149,7 +149,7 @@
        </property>
        <property name="icon">
         <iconset resource="../../static.qrc">
-         <normaloff>:/static/themes/default/img/sidebar-icons/search.png</normaloff>:/static/themes/default/img/sidebar-icons/search.png</iconset>
+         <normaloff>:/static/themes/default/img/sidebar-icons/search.svg</normaloff>:/static/themes/default/img/sidebar-icons/search.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -666,28 +666,6 @@
      </property>
      <property name="text">
       <string/>
-     </property>
-     <property name="textFormat">
-      <enum>Qt::PlainText</enum>
-     </property>
-     <property name="scaledContents">
-      <bool>true</bool>
-     </property>
-     <property name="wordWrap">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="9" column="1" alignment="Qt::AlignRight">
-    <widget class="QLabel" name="lblBetaInfo">
-     <property name="styleSheet">
-      <string notr="true">color: rgb(252, 175, 62);</string>
-     </property>
-     <property name="lineWidth">
-      <number>0</number>
-     </property>
-     <property name="text">
-      <string>BETA version</string>
      </property>
      <property name="textFormat">
       <enum>Qt::PlainText</enum>

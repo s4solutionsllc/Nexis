@@ -393,6 +393,20 @@
   - **Fix complexity:** Moderate (add cross-platform filtering by filesystem type, device path, and mount path)
   - **Resolved:** Added `shouldIncludeDisk()` with 5 filter layers: (1) size > 0, (2) filesystem type exclusion list (tmpfs, squashfs, overlay, devtmpfs, cgroup, etc.), (3) device path filter (pseudo-device names, `/dev/loop*` Snap loopbacks), (4) mount path filter (`/snap/`), (5) macOS hidden system APFS volumes (`/System/Volumes/Preboot`, `Recovery`, `VM`, `Update`, etc.). Applied to `updateDiskInfo()`, `devices()`, and `fileSystemTypes()`.
 
+- [x] **BUG-58: Search page button shows blank orange rectangle — icon path references .png but file is .svg** (LOW)
+  - **Scope:** Search page
+  - **Description:** The `btnSearchAdvance` button in `search_page.ui` references `:/static/themes/default/img/sidebar-icons/search.png` but the actual resource file is `search.svg`. Qt fails to load the icon, leaving a blank orange button.
+  - **Files:** `shared/nexis/Pages/Search/search_page.ui`
+  - **Fix complexity:** Trivial (change `.png` to `.svg` in the icon path)
+  - **Resolved:** Updated icon path to `search.svg`.
+
+- [x] **BUG-59: Search page shows "BETA version" label from upstream Stacer** (LOW)
+  - **Scope:** Search page
+  - **Description:** A `lblBetaInfo` QLabel at the bottom-right of the Search page displays "BETA version" in orange text — a leftover from the original Stacer project. Not applicable to Nexis.
+  - **Files:** `shared/nexis/Pages/Search/search_page.ui`
+  - **Fix complexity:** Trivial (remove the label widget from the .ui file)
+  - **Resolved:** Removed `lblBetaInfo` widget and its grid item.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
