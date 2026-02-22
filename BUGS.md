@@ -379,6 +379,13 @@
   - **Fix complexity:** Trivial (adjust color tokens and shadow parameters)
   - **Resolved:** Increased `@borderColor` contrast in both themes (dark: `#3A3D4A`→`#4A4D5A`, light: `#E8E2DB`→`#D0C9C0`), added 2px downward shadow offset, increased shadow alpha from 60 to 80.
 
+- [x] **BUG-56: Navbar items centered instead of left-aligned after expanding from collapsed state** (MEDIUM)
+  - **Scope:** Sidebar / navbar
+  - **Description:** When the app is closed with the navbar collapsed and then reopened, the navbar correctly initializes in collapsed state. However, when the user expands the navbar, the nav item labels are centered instead of left-aligned as they should be. Items display correctly if the app is started with the navbar expanded. Root cause: `applySidebarCollapse()` only re-polished the parent `#sidebar` widget after changing its `collapsed` dynamic property, but Qt does not recursively re-polish children — so child `QPushButton` items retained the stale `text-align: center` from the `#sidebar[collapsed="true"]` QSS rule.
+  - **Files:** `shared/nexis/app.cpp`
+  - **Fix complexity:** Trivial (add child widget re-polish loop)
+  - **Resolved:** Added `unpolish()`/`polish()` calls on all child sidebar buttons (`mListSidebarButtons`, `btnFeedback`, `mBtnSidebarToggle`) after the parent property change, forcing Qt to re-evaluate property-dependent QSS selectors.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

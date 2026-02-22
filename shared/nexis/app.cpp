@@ -708,6 +708,18 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     ui->sidebar->setProperty("collapsed", collapsed);
     ui->sidebar->style()->unpolish(ui->sidebar);
     ui->sidebar->style()->polish(ui->sidebar);
+
+    // Re-polish child buttons so QSS selectors depending on the parent's
+    // collapsed property (e.g. #sidebar[collapsed="true"] QPushButton)
+    // are re-evaluated — Qt does not do this recursively.
+    for (QPushButton *btn : mListSidebarButtons) {
+        btn->style()->unpolish(btn);
+        btn->style()->polish(btn);
+    }
+    btnFeedback->style()->unpolish(btnFeedback);
+    btnFeedback->style()->polish(btnFeedback);
+    mBtnSidebarToggle->style()->unpolish(mBtnSidebarToggle);
+    mBtnSidebarToggle->style()->polish(mBtnSidebarToggle);
 }
 
 void App::toggleKioskMode()
