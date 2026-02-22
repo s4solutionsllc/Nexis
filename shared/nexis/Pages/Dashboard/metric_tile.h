@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QToolButton>
 #include <QtCharts>
 #include <functional>
 
@@ -27,9 +28,16 @@ public:
     void setDisplayMode(DisplayMode mode);
     void setSecondaryValue(const QString &text);
 
+    QToolButton *gearButton() const;
+    void setGearVisible(bool visible);
+
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
     void buildLayout();
     void refreshThemeColors();
+    void updateGearIcon();
     void updateSparkline();
     void updateTrend();
 
@@ -48,6 +56,7 @@ private:
     QLabel *mLblSubtitle;
     QLabel *mLblTrend;
     QPushButton *mBtnAction;
+    QToolButton *mGearButton;
 
     static const int SPARKLINE_SIZE = 60;
     QList<double> mDataBuffer;

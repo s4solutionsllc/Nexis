@@ -2,6 +2,7 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QResizeEvent>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
 
@@ -127,6 +128,18 @@ void MetricTile::buildLayout()
         mDataBuffer.append(0.0);
         mSeries->append(i, 0);
     }
+
+    // Gear button for optional selector (positioned absolutely, not in layout)
+    mGearButton = new QToolButton(this);
+    mGearButton->setObjectName("btnMetricGear");
+    mGearButton->setFixedSize(24, 24);
+    mGearButton->setIconSize(QSize(14, 14));
+    mGearButton->setAutoRaise(true);
+    mGearButton->setCursor(Qt::PointingHandCursor);
+    mGearButton->setFocusPolicy(Qt::NoFocus);
+    mGearButton->hide();
+    mGearButton->raise();
+    mGearButton->move(width() - mGearButton->width() - 10, 8);
 }
 
 void MetricTile::setValue(int percent, const QString &valueText)
@@ -227,6 +240,8 @@ void MetricTile::refreshThemeColors()
         "  color: " + hoverText + ";"
         "}"
     );
+
+    updateGearIcon();
 }
 
 void MetricTile::updateSparkline()
@@ -234,6 +249,29 @@ void MetricTile::updateSparkline()
     mSeries->clear();
     for (int i = 0; i < mDataBuffer.size(); ++i)
         mSeries->append(i, mDataBuffer.at(i));
+}
+
+void MetricTile::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    mGearButton->move(width() - mGearButton->width() - 10, 8);
+}
+
+void MetricTile::updateGearIcon()
+{
+    QString theme = AppManager::ins()->resolveThemeName();
+    QString path = QString(":/static/themes/%1/img/sidebar-icons/settings.svg").arg(theme);
+    mGearButton->setIcon(QIcon(path));
+}
+
+QToolButton *MetricTile::gearButton() const
+{
+    return mGearButton;
+}
+
+void MetricTile::setGearVisible(bool visible)
+{
+    mGearButton->setVisible(visible);
 }
 
 void MetricTile::updateTrend()

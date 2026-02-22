@@ -94,6 +94,8 @@
 
 - [x] **FR-45: Dashboard Disk Tile — Gear Icon Disk Selector** — Add a gear icon to the top-right corner of the DiskTile on the Dashboard. When clicked, shows a dropdown menu listing all detected disks by name. Selecting a disk updates the donut chart and usage text immediately and persists the selection. Gear icon only appears when 2+ disks are detected. Theme-aware icon (dark/light). Uses existing `SettingManager::setDiskName()`/`getDiskName()` for persistence. **Resolved:** Added QToolButton with QMenu (InstantPopup mode) in DiskTile, wired up in DashboardPage with cached disk list for immediate updates.
 
+- [x] **FR-46: Dashboard Temperature Tile — Gear Icon Sensor Selector** — Replace the QComboBox temperature sensor selector with a gear icon + QMenu dropdown, matching the pattern established by FR-45 (DiskTile). Gear icon added to the shared MetricTile widget (opt-in, hidden by default) so it can be reused for GPU device selection later. Gear icon only appears when 2+ sensors are detected. Selection persisted via `SettingManager::setTempSensorId()`/`getTempSensorId()`. **Resolved:** Added gear button to MetricTile, replaced combobox init in DashboardPage with gear menu wiring, removed #cmbTempSensor QSS rules and added #btnMetricGear rules.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

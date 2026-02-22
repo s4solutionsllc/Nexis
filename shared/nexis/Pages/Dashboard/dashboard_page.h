@@ -55,7 +55,7 @@ private slots:
     void onDiskUsageUpdated(const QList<Disk> &disks);
     void updateTempTile();
     void onGpuUpdated(const QList<GpuDevice> &gpus);
-    void onTempSensorChanged(int index);
+    void onTempSensorSelected(QAction *action);
     void onGpuDeviceChanged(int index);
     void onDiskSelected(QAction *action);
     void onBatteryUpdated(const BatteryData &bat);
@@ -79,9 +79,9 @@ private:
     NetworkTile *mNetworkTile;
     HeroCard *mHeroCard;
 
-    QComboBox *mCmbTempSensor;
     QComboBox *mCmbGpuDevice;
     QMenu *mDiskMenu;
+    QMenu *mTempSensorMenu;
     QList<Disk> mCachedDisks;
 
     InfoManager *im;

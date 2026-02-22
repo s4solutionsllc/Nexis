@@ -107,7 +107,7 @@ Real-time system monitoring at a glance in a **bento grid layout** of specialize
 
 **Row 1 — Metric tiles (conditional — hidden if hardware absent):**
 - **GPU** — Utilization percentage with multi-GPU selector, sparkline history (1s refresh)
-- **Temperature** — Selectable sensor from dropdown, sparkline history (1s refresh)
+- **Temperature** — Selectable sensor via gear icon menu (2+ sensors), sparkline history (1s refresh)
 - **Battery** — Charge level percentage (5s refresh)
 - **Disk Health** — Worst-drive SMART health percentage (30s refresh)
 

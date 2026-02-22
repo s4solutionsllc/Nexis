@@ -864,25 +864,20 @@ QLabel[accessibleName="dialog-title"] {
     border-radius: 12;
 }
 
-#cmbTempSensor {
-    background-color: @color02;
-    color: @color05;
-    border: 1px solid @borderColor;
-    border-radius: 6;
-    padding: 4 8;
-    font-size: 10pt;
-}
-
-#cmbTempSensor::drop-down {
+#btnMetricGear {
     border: 0;
-    width: 20;
+    background-color: transparent;
+    border-radius: 4;
+    padding: 0;
 }
 
-#cmbTempSensor QAbstractItemView {
-    background-color: @color01;
-    color: @color05;
-    border: 1px solid @borderColor;
-    selection-background-color: @color02;
+#btnMetricGear:hover {
+    background-color: @color02;
+}
+
+#btnMetricGear::menu-indicator {
+    width: 0;
+    height: 0;
 }
 
 /* - Kiosk Toggle Button - */

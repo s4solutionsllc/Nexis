@@ -38,7 +38,6 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mBatteryTile(new MetricTile(tr("BATTERY"), "@batteryColor", this)),
     mDiskHealthTile(new MetricTile(tr("DISK HEALTH"), "@diskHealthColor", this)),
     mNetworkTile(new NetworkTile("@networkColor", this)),
-    mCmbTempSensor(new QComboBox(this)),
     mCmbGpuDevice(new QComboBox(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
     mSettingManager(settingManager ? settingManager : SettingManager::ins()),
@@ -46,6 +45,7 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
     mDiskMenu(new QMenu(this)),
+    mTempSensorMenu(new QMenu(this)),
     mSelectedSensorIndex(0),
     mSelectedGpuIndex(0),
     mKioskButton(new QPushButton(this))
@@ -111,36 +111,38 @@ void DashboardPage::init()
     for (int c = 0; c < 4; ++c)
         ui->bentoGrid->setColumnStretch(c, 1);
 
-    // Temperature sensor combo box (overlaid on temp tile)
+    // Temperature sensor gear menu
     if (im->hasThermalSensors()) {
         QList<ThermalSensor> sensors = im->getThermalSensors();
-        for (const ThermalSensor &s : sensors)
-            mCmbTempSensor->addItem(s.label);
+
+        mTempSensorMenu->setObjectName("tempSensorMenu");
+        for (int i = 0; i < sensors.size(); ++i) {
+            QAction *action = mTempSensorMenu->addAction(sensors.at(i).label);
+            action->setData(i);
+            action->setCheckable(true);
+        }
 
         QString savedSensorId = mSettingManager->getTempSensorId();
         if (!savedSensorId.isEmpty()) {
             for (int i = 0; i < sensors.size(); ++i) {
                 if (sensors.at(i).id == savedSensorId) {
-                    mCmbTempSensor->setCurrentIndex(i);
                     mSelectedSensorIndex = i;
                     break;
                 }
             }
         }
 
-        mCmbTempSensor->setObjectName("cmbTempSensor");
-        mCmbTempSensor->setCursor(Qt::PointingHandCursor);
-        mCmbTempSensor->setFocusPolicy(Qt::NoFocus);
-        mCmbTempSensor->setMaximumWidth(140);
-        mTempTile->setSubtitle("");
-        mTempTile->layout()->addWidget(mCmbTempSensor);
+        for (QAction *a : mTempSensorMenu->actions())
+            a->setChecked(a->data().toInt() == mSelectedSensorIndex);
 
-        connect(mCmbTempSensor, &QComboBox::currentIndexChanged,
-                this, &DashboardPage::onTempSensorChanged);
+        mTempTile->gearButton()->setMenu(mTempSensorMenu);
+        mTempTile->gearButton()->setPopupMode(QToolButton::InstantPopup);
+        mTempTile->setGearVisible(sensors.size() >= 2);
+
+        connect(mTempSensorMenu, &QMenu::triggered,
+                this, &DashboardPage::onTempSensorSelected);
         connect(mRefresh, &DataRefreshService::tempUpdated,
                 this, &DashboardPage::updateTempTile);
-    } else {
-        mCmbTempSensor->hide();
     }
 
     // GPU device combo box
@@ -528,13 +530,17 @@ void DashboardPage::updateTempTile()
     mTempTile->addDataPoint(temp);
 }
 
-void DashboardPage::onTempSensorChanged(int index)
+void DashboardPage::onTempSensorSelected(QAction *action)
 {
+    int index = action->data().toInt();
     mSelectedSensorIndex = index;
 
     QList<ThermalSensor> sensors = im->getThermalSensors();
     if (index >= 0 && index < sensors.size())
         mSettingManager->setTempSensorId(sensors.at(index).id);
+
+    for (QAction *a : mTempSensorMenu->actions())
+        a->setChecked(a->data().toInt() == index);
 
     updateTempTile();
 }
