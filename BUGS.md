@@ -386,11 +386,12 @@
   - **Fix complexity:** Trivial (add child widget re-polish loop)
   - **Resolved:** Added `unpolish()`/`polish()` calls on all child sidebar buttons (`mListSidebarButtons`, `btnFeedback`, `mBtnSidebarToggle`) after the parent property change, forcing Qt to re-evaluate property-dependent QSS selectors.
 
-- [~] **BUG-57: Disk selector shows virtual filesystems, snapshots, and loopbacks** (MEDIUM)
+- [x] **BUG-57: Disk selector shows virtual filesystems, snapshots, and loopbacks** (MEDIUM)
   - **Scope:** Dashboard page → Disk tile gear menu; also affects disk usage display
-  - **Description:** `DiskInfo::updateDiskInfo()` in `disk_info_shared.cpp` calls `QStorageInfo::mountedVolumes()` with only an `isValid()` check — no filtering of filesystem type, mount path, or device characteristics. This causes the disk selector to include virtual filesystems (tmpfs, devfs, sysfs, proc), APFS snapshots, mounted DMG disk images, Snap loopback devices (`/dev/loop*`), Docker overlayfs, Flatpak squashfs, and network mounts. On a typical Ubuntu system with Snap packages, 20+ spurious entries appear. On macOS, Time Machine snapshots and installer DMGs clutter the list. The fix should filter `QStorageInfo::mountedVolumes()` in the shared code to only include real block device volumes, benefiting both platforms.
+  - **Description:** `DiskInfo::updateDiskInfo()` in `disk_info_shared.cpp` calls `QStorageInfo::mountedVolumes()` with only an `isValid()` check — no filtering of filesystem type, mount path, or device characteristics. This causes the disk selector to include virtual filesystems (tmpfs, devfs, sysfs, proc), APFS snapshots, mounted DMG disk images, Snap loopback devices (`/dev/loop*`), Docker overlayfs, Flatpak squashfs, and network mounts. On a typical Ubuntu system with Snap packages, 20+ spurious entries appear. On macOS, Time Machine snapshots and installer DMGs clutter the list.
   - **Files:** `shared/nexis-core/Info/disk_info_shared.cpp`
   - **Fix complexity:** Moderate (add cross-platform filtering by filesystem type, device path, and mount path)
+  - **Resolved:** Added `shouldIncludeDisk()` with 5 filter layers: (1) size > 0, (2) filesystem type exclusion list (tmpfs, squashfs, overlay, devtmpfs, cgroup, etc.), (3) device path filter (pseudo-device names, `/dev/loop*` Snap loopbacks), (4) mount path filter (`/snap/`), (5) macOS hidden system APFS volumes (`/System/Volumes/Preboot`, `Recovery`, `VM`, `Update`, etc.). Applied to `updateDiskInfo()`, `devices()`, and `fileSystemTypes()`.
 
 ## Notes
 
