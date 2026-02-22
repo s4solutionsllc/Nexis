@@ -17,12 +17,14 @@ const { title, description, slug } = Astro.props;
 
 <Base title={`${title} — Nexis User Guide`} description={description}>
   <Nav />
-  <div class="mx-auto flex max-w-6xl gap-8 px-6 pt-24 pb-20">
-    <GuideSidebar currentSlug={slug} />
-    <article class="guide-prose min-w-0 flex-1">
-      <slot />
-      <GuidePrevNext currentSlug={slug} />
-    </article>
+  <div class="mx-auto max-w-6xl px-6 pt-24 pb-20">
+    <div class="lg:flex lg:gap-8">
+      <GuideSidebar currentSlug={slug} />
+      <article class="guide-prose min-w-0 flex-1">
+        <slot />
+        <GuidePrevNext currentSlug={slug} />
+      </article>
+    </div>
   </div>
   <Footer />
 </Base>

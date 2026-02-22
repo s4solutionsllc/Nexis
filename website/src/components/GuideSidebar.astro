@@ -9,7 +9,20 @@ const { currentSlug } = Astro.props;
 const guides = (await getCollection('guide')).sort((a, b) => a.data.order - b.data.order);
 ---
 
-<aside class="hidden w-64 shrink-0 lg:block">
+<!-- Mobile guide nav toggle (visible below lg breakpoint) -->
+<button
+  id="guide-nav-toggle"
+  class="mb-4 flex w-full items-center gap-2 rounded-lg border border-nexis-border px-3 py-2 text-sm text-nexis-muted transition-colors hover:border-nexis-orange/50 hover:text-nexis-light lg:hidden"
+  aria-expanded="false"
+  aria-controls="guide-sidebar"
+>
+  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+  Guide Navigation
+</button>
+
+<aside id="guide-sidebar" class="hidden w-full shrink-0 lg:block lg:w-64">
   <nav class="sticky top-24 space-y-1 pr-4">
     <h3 class="mb-4 text-xs font-semibold uppercase tracking-wider text-nexis-muted">
       User Guide
@@ -30,3 +43,22 @@ const guides = (await getCollection('guide')).sort((a, b) => a.data.order - b.da
     ))}
   </nav>
 </aside>
+
+<script>
+  const toggle = document.getElementById('guide-nav-toggle');
+  const sidebar = document.getElementById('guide-sidebar');
+  toggle?.addEventListener('click', () => {
+    const isHidden = sidebar?.classList.contains('hidden');
+    sidebar?.classList.toggle('hidden');
+    toggle?.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+  });
+  // Close sidebar when a link is clicked on mobile
+  sidebar?.querySelectorAll('a').forEach(a =>
+    a.addEventListener('click', () => {
+      if (window.innerWidth < 1024) {
+        sidebar?.classList.add('hidden');
+        toggle?.setAttribute('aria-expanded', 'false');
+      }
+    })
+  );
+</script>
