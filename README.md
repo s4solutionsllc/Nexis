@@ -5,7 +5,7 @@
 
 <p align="center">
   <b>Linux & macOS System Optimizer and Monitor</b><br>
-  <sub>Open-source system optimizer and monitor built with Qt 6 and C++17</sub>
+  <sub>The only free, open-source, cross-platform all-in-one system optimizer, monitor, and manager</sub>
 </p>
 
 <p align="center">
@@ -25,16 +25,38 @@
 - **Kiosk Mode** -- F11 fullscreen dashboard-only mode for dedicated monitoring displays
 - **GPU Monitoring** -- GPU utilization tracking for NVIDIA, AMD, and Intel (Linux); Apple Silicon (macOS)
 - **System Cleaner** -- Remove package caches, crash reports, application logs, and app caches
+- **Scheduled Cleaning** -- Automated background cleaning via systemd, launchd, or cron
 - **Process Manager** -- View, sort, and manage running processes
 - **Service Manager** -- Start, stop, and toggle system services (systemd / launchd)
 - **Startup Apps** -- Manage auto-start applications with configurable delay
 - **Package Uninstaller** -- Uninstall packages via APT, DNF, Pacman, Snap (Linux) or Homebrew (macOS)
 - **Resource Monitor** -- Historical charts for CPU, memory, GPU, network, and disk I/O
+- **Docker Management** -- GUI for managing Docker images, containers, and volumes
+- **Battery & Disk Health** -- Battery cycle count and capacity degradation, SMART disk health (NVMe + SATA)
 - **Hosts File Editor** -- Manage `/etc/hosts` entries
 - **APT Source Manager / Homebrew Taps** -- Manage package repositories
 - **Desktop Settings** -- Adjust GNOME (Linux) or macOS desktop preferences
 - **Theme Support** -- Dark, light, and system-auto color schemes
 - **Internationalization** -- 34 languages supported
+
+## How Nexis Compares
+
+| | **Nexis** | Stacer | CleanMyMac X | BleachBit |
+|---|:---:|:---:|:---:|:---:|
+| **Real-time monitoring** | :white_check_mark: | :white_check_mark: | Partial | :x: |
+| **System cleaning** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Process/service management** | :white_check_mark: | :white_check_mark: | :x: | :x: |
+| **Package management** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: |
+| **GPU monitoring** | :white_check_mark: | :x: | :x: | :x: |
+| **Battery & disk health** | :white_check_mark: | :x: | :x: | :x: |
+| **Docker management** | :white_check_mark: | :x: | :x: | :x: |
+| **Scheduled cleaning** | :white_check_mark: | :x: | :white_check_mark: | :x: |
+| **Kiosk mode** | :white_check_mark: | :x: | :x: | :x: |
+| **Linux support** | :white_check_mark: | :white_check_mark: | :x: | :white_check_mark: |
+| **macOS support** | :white_check_mark: | :x: | :white_check_mark: | :x: |
+| **Actively maintained** | :white_check_mark: | :x: (since 2020) | :white_check_mark: | :white_check_mark: |
+| **Open source** | :white_check_mark: | :white_check_mark: | :x: | :white_check_mark: |
+| **Price** | **Free** | Free | ~$50/year | Free |
 
 ## Background
 
@@ -47,6 +69,47 @@ Pre-built binaries are available on the [Releases page](https://github.com/lsimp
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
 - **macOS Apple Silicon**: `.dmg` disk image
+
+## Screenshots
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-01.png" width="700">
+    <br><em>Dashboard -- real-time system monitoring</em>
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-04.png" width="700">
+    <br><em>System Cleaner -- remove caches, logs, and crash reports</em>
+</p>
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-10.png" width="700">
+    <br><em>Resources -- historical CPU, memory, GPU, network, and disk I/O charts</em>
+</p>
+
+<details>
+<summary><strong>View all screenshots</strong></summary>
+<br>
+
+| Page | Screenshot |
+|---|---|
+| Hardware Info | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-02.png" width="500"> |
+| Startup Apps | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-03.png" width="500"> |
+| Search | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-05.png" width="500"> |
+| Services | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-06.png" width="500"> |
+| Processes | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-07.png" width="500"> |
+| Uninstaller | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-08.png" width="500"> |
+| Docker | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-09.png" width="500"> |
+| Resources (cont.) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-11.png" width="500"> |
+| Helpers | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-12.png" width="500"> |
+| APT Repository Manager | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-13.png" width="500"> |
+| GNOME Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-14.png" width="500"> |
+| GNOME Settings (Window Manager) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-15.png" width="500"> |
+| GNOME Settings (Mouse/Touchpad) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-16.png" width="500"> |
+| Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-17.png" width="500"> |
+| Feedback | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-18.png" width="500"> |
+
+</details>
 
 ## Building from Source
 
@@ -94,80 +157,6 @@ cmake ..
 make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
 ```
 
-## Screenshots
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-01.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-02.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-03.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-04.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-05.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-06.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-07.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-08.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-09.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-10.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-11.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-12.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-13.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-14.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-15.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-16.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-17.png" width="700">
-</p>
-
-<p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-18.png" width="700">
-</p>
-
 ## Development
 
 Nexis is co-authored by [Claude Code](https://claude.ai/claude-code), Anthropic's AI coding agent. Claude Code contributes to architecture decisions, feature implementation, bug fixes, CI/CD pipelines, and release engineering -- working alongside the human maintainer as a pair-programming partner.
@@ -198,4 +187,4 @@ To enable the Crowdin sync pipeline for a new fork:
 
 ## Contributing
 
-Bug reports and feature requests are tracked in [BUGS.md](BUGS.md) and [FEATURE_REQUESTS.md](FEATURE_REQUESTS.md). See [CHANGELOG.md](CHANGELOG.md) for release history. Feel free to [open an issue](https://github.com/lsimpsonsfdc/Nexis/issues) or submit a pull request.
+Bug reports and feature requests are welcome! Please [open an issue](https://github.com/lsimpsonsfdc/Nexis/issues) or submit a pull request. See [CHANGELOG.md](CHANGELOG.md) for release history.

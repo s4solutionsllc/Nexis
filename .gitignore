@@ -5,3 +5,17 @@ output/
 .vscode
 Release/
 .DS_Store
+
+# Internal development tracking (kept locally, not published)
+BUGS.md
+FEATURE_REQUESTS.md
+FEATURES.md
+CLAUDE.md
+market_research.md
+claude_definitions/
+archive/
+test_screenshots/
+
+# Binary source files (kept locally)
+shared/nexis/static/nexis.icns
+shared/nexis/static/header.xcf
