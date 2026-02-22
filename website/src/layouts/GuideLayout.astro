@@ -1,0 +1,28 @@
+---
+import Base from './Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import GuideSidebar from '../components/GuideSidebar.astro';
+import GuidePrevNext from '../components/GuidePrevNext.astro';
+import '../styles/guide.css';
+
+interface Props {
+  title: string;
+  description: string;
+  slug: string;
+}
+
+const { title, description, slug } = Astro.props;
+---
+
+<Base title={`${title} — Nexis User Guide`} description={description}>
+  <Nav />
+  <div class="mx-auto flex max-w-6xl gap-8 px-6 pt-24 pb-20">
+    <GuideSidebar currentSlug={slug} />
+    <article class="guide-prose min-w-0 flex-1">
+      <slot />
+      <GuidePrevNext currentSlug={slug} />
+    </article>
+  </div>
+  <Footer />
+</Base>

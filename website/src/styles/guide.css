@@ -1,0 +1,51 @@
+.guide-prose h1 {
+  @apply text-3xl font-bold text-white mb-6;
+}
+.guide-prose h2 {
+  @apply text-2xl font-semibold text-white mt-12 mb-4 pb-2 border-b border-nexis-border;
+}
+.guide-prose h3 {
+  @apply text-xl font-semibold text-white mt-8 mb-3;
+}
+.guide-prose p {
+  @apply text-nexis-muted leading-relaxed mb-4;
+}
+.guide-prose ul, .guide-prose ol {
+  @apply text-nexis-muted mb-4 pl-6 space-y-2;
+}
+.guide-prose ul { @apply list-disc; }
+.guide-prose ol { @apply list-decimal; }
+.guide-prose li { @apply leading-relaxed; }
+.guide-prose code {
+  @apply bg-nexis-dark-card text-nexis-orange px-1.5 py-0.5 rounded text-sm font-mono;
+}
+.guide-prose pre {
+  @apply bg-nexis-dark-card border border-nexis-border rounded-lg p-4 mb-4 overflow-x-auto;
+}
+.guide-prose pre code {
+  @apply bg-transparent p-0 text-nexis-light;
+}
+.guide-prose img {
+  @apply rounded-xl border border-nexis-border shadow-lg my-6;
+}
+.guide-prose strong {
+  @apply text-white font-semibold;
+}
+.guide-prose a {
+  @apply text-nexis-orange hover:text-nexis-orange-hover underline;
+}
+.guide-prose blockquote {
+  @apply border-l-4 border-nexis-orange/50 bg-nexis-dark-card rounded-r-lg px-4 py-3 my-4 text-nexis-muted;
+}
+.guide-prose table {
+  @apply w-full border-collapse mb-4;
+}
+.guide-prose th {
+  @apply text-left text-xs font-semibold uppercase tracking-wider text-nexis-muted border-b border-nexis-border px-3 py-2;
+}
+.guide-prose td {
+  @apply text-sm text-nexis-muted border-b border-nexis-border/50 px-3 py-2;
+}
+.guide-prose kbd {
+  @apply inline-block bg-nexis-dark-surface border border-nexis-border rounded px-1.5 py-0.5 text-xs font-mono text-nexis-light shadow-sm;
+}

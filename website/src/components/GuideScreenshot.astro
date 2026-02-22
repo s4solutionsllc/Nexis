@@ -1,0 +1,21 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+}
+
+const { src, alt, caption } = Astro.props;
+---
+
+<figure class="my-6">
+  <img
+    src={`/Nexis/images/guide/${src}`}
+    alt={alt}
+    class="rounded-xl border border-nexis-border shadow-lg w-full"
+    loading="lazy"
+  />
+  {caption && (
+    <figcaption class="mt-2 text-center text-xs text-nexis-muted">{caption}</figcaption>
+  )}
+</figure>

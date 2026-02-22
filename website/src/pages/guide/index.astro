@@ -1,0 +1,32 @@
+---
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+import GuideCard from '../../components/GuideCard.astro';
+import { getCollection } from 'astro:content';
+
+const guides = (await getCollection('guide')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base title="User Guide — Nexis" description="Complete guide to using Nexis, the Linux & macOS system optimizer.">
+  <Nav />
+  <main class="mx-auto max-w-6xl px-6 pt-24 pb-20">
+    <div class="text-center mb-14">
+      <h1 class="text-4xl font-bold text-white">User Guide</h1>
+      <p class="mt-4 text-lg text-nexis-muted max-w-2xl mx-auto">
+        Everything you need to know about using Nexis to monitor, optimize, and manage your system.
+      </p>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {guides.map(guide => (
+        <GuideCard
+          title={guide.data.title}
+          description={guide.data.description}
+          href={`/Nexis/guide/${guide.slug}/`}
+        />
+      ))}
+    </div>
+  </main>
+  <Footer />
+</Base>

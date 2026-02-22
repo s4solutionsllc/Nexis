@@ -1,0 +1,32 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  currentSlug: string;
+}
+
+const { currentSlug } = Astro.props;
+const guides = (await getCollection('guide')).sort((a, b) => a.data.order - b.data.order);
+const currentIndex = guides.findIndex(g => g.slug === currentSlug);
+const prev = currentIndex > 0 ? guides[currentIndex - 1] : null;
+const next = currentIndex < guides.length - 1 ? guides[currentIndex + 1] : null;
+---
+
+<nav class="mt-16 flex items-stretch gap-4 border-t border-nexis-border pt-6">
+  {prev ? (
+    <a href={`/Nexis/guide/${prev.slug}/`} class="group flex-1 rounded-lg border border-nexis-border p-4 transition-colors hover:border-nexis-orange/50">
+      <span class="text-xs text-nexis-muted">Previous</span>
+      <span class="block text-sm font-medium text-nexis-light group-hover:text-nexis-orange mt-1">
+        &larr; {prev.data.title}
+      </span>
+    </a>
+  ) : <div class="flex-1" />}
+  {next ? (
+    <a href={`/Nexis/guide/${next.slug}/`} class="group flex-1 rounded-lg border border-nexis-border p-4 text-right transition-colors hover:border-nexis-orange/50">
+      <span class="text-xs text-nexis-muted">Next</span>
+      <span class="block text-sm font-medium text-nexis-light group-hover:text-nexis-orange mt-1">
+        {next.data.title} &rarr;
+      </span>
+    </a>
+  ) : <div class="flex-1" />}
+</nav>

@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+
+interface Props {
+  currentSlug: string;
+}
+
+const { currentSlug } = Astro.props;
+const guides = (await getCollection('guide')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<aside class="hidden w-64 shrink-0 lg:block">
+  <nav class="sticky top-24 space-y-1 pr-4">
+    <h3 class="mb-4 text-xs font-semibold uppercase tracking-wider text-nexis-muted">
+      User Guide
+    </h3>
+    {guides.map(guide => (
+      <a
+        href={`/Nexis/guide/${guide.slug}/`}
+        class:list={[
+          'block rounded-lg px-3 py-2 text-sm transition-colors',
+          currentSlug === guide.slug
+            ? 'bg-nexis-orange/10 font-medium text-nexis-orange'
+            : 'text-nexis-muted hover:bg-nexis-dark-card hover:text-nexis-light',
+        ]}
+      >
+        {guide.data.title}
+      </a>
+    ))}
+  </nav>
+</aside>

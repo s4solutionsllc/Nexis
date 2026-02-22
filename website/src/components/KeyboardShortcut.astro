@@ -1,0 +1,19 @@
+---
+interface Props {
+  keys: string;
+}
+
+const { keys } = Astro.props;
+const parts = keys.split('+');
+---
+
+<span class="inline-flex items-center gap-0.5">
+  {parts.map((key, i) => (
+    <>
+      <kbd class="inline-block bg-nexis-dark-surface border border-nexis-border rounded px-1.5 py-0.5 text-xs font-mono text-nexis-light shadow-sm">
+        {key}
+      </kbd>
+      {i < parts.length - 1 && <span class="text-nexis-muted text-xs">+</span>}
+    </>
+  ))}
+</span>

@@ -1,0 +1,24 @@
+---
+interface Props {
+  platform: 'linux' | 'macos' | 'both';
+}
+
+const { platform } = Astro.props;
+
+const config = {
+  linux: { label: 'Linux', color: 'border-yellow-500/50 bg-yellow-500/5', icon: '🐧' },
+  macos: { label: 'macOS', color: 'border-blue-500/50 bg-blue-500/5', icon: '🍎' },
+  both: { label: 'Platform Note', color: 'border-nexis-orange/50 bg-nexis-orange/5', icon: '💡' },
+};
+
+const { label, color, icon } = config[platform];
+---
+
+<div class:list={['rounded-lg border-l-4 px-4 py-3 my-4', color]}>
+  <p class="text-xs font-semibold uppercase tracking-wider text-nexis-muted mb-1">
+    {icon} {label}
+  </p>
+  <div class="text-sm text-nexis-muted">
+    <slot />
+  </div>
+</div>
