@@ -17,6 +17,7 @@ const guides = (await getCollection('guide')).sort((a, b) => a.data.order - b.da
     {guides.map(guide => (
       <a
         href={`/Nexis/guide/${guide.slug}/`}
+        aria-current={currentSlug === guide.slug ? 'page' : undefined}
         class:list={[
           'block rounded-lg px-3 py-2 text-sm transition-colors',
           currentSlug === guide.slug
