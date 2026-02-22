@@ -366,7 +366,7 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="4" alignment="Qt::AlignLeft">
+   <item row="7" column="3" alignment="Qt::AlignLeft">
     <widget class="QLabel" name="lblDiskHealthAlert">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -379,7 +379,7 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="4" alignment="Qt::AlignLeft">
+   <item row="8" column="3" alignment="Qt::AlignLeft">
     <widget class="QCheckBox" name="checkDiskHealthAlert">
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
@@ -504,7 +504,7 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="3" alignment="Qt::AlignLeft">
+   <item row="7" column="4" alignment="Qt::AlignLeft">
     <widget class="QLabel" name="lblDiskAnalyzerCustomPath">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -517,7 +517,7 @@
      </property>
     </widget>
    </item>
-   <item row="8" column="3" alignment="Qt::AlignLeft">
+   <item row="8" column="4" alignment="Qt::AlignLeft">
     <widget class="QLineEdit" name="txtDiskAnalyzerCustomPath">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
