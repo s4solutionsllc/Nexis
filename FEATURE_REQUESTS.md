@@ -98,6 +98,12 @@
 
 - [x] **FR-47: Remove Disk Health tile, enhance Disk Tile health badges** — Removed the standalone Disk Health MetricTile from the Dashboard. Enhanced `DiskTile::setDriveHealth()` to display the numeric health percentage alongside the verdict (e.g., "Apple SSD: Good (92%)"). Tray alerts and Settings toggle unchanged. **Resolved:** Added `healthPercent` param to `setDriveHealth()`, removed `mDiskHealthTile` from grid/shadows/signal wiring.
 
+## From Our Issues (lsimpsonsfdc/Nexis) — New
+
+- [ ] **FR-48: Monochrome app icon option** — Add an option to choose between the normal (colorful) and a monochrome app icon. Targeted at Linux users for better visual integration with system trays on GNOME and similar desktop environments where monochrome tray icons are the convention. Add a setting on the Settings page to toggle between "Color" and "Monochrome" icon styles, and update the tray icon accordingly at runtime. Requires creating a monochrome variant of the tray SVG. Issue [#5](https://github.com/lsimpsonsfdc/Nexis/issues/5) by @Vai0Lou.
+
+- [ ] **FR-49: Customizable dashboard (widget visibility and colors)** — Allow users to select which dashboard widgets/tiles are visible and which are hidden, plus optional color customization for visual elements like bars and charts. Primary motivation is better use of space on small monitors — users should be able to hide tiles they don't need (e.g., battery on a desktop, GPU on a headless box) so remaining tiles can expand. Secondary: per-tile accent color overrides. Add a dashboard settings panel (accessible via gear icon or Settings page section) with toggle switches for each tile and optional color pickers. Persist selections via SettingManager. Issue [#6](https://github.com/lsimpsonsfdc/Nexis/issues/6) by @Vai0Lou.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
