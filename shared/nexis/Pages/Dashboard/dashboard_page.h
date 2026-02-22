@@ -75,7 +75,6 @@ private:
     MetricTile *mTempTile;
     MetricTile *mGpuTile;
     MetricTile *mBatteryTile;
-    MetricTile *mDiskHealthTile;
     NetworkTile *mNetworkTile;
     HeroCard *mHeroCard;
 

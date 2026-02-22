@@ -36,7 +36,6 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mTempTile(new MetricTile(tr("TEMP"), "@tempColor", this)),
     mGpuTile(new MetricTile(tr("GPU"), "@gpuColor", this)),
     mBatteryTile(new MetricTile(tr("BATTERY"), "@batteryColor", this)),
-    mDiskHealthTile(new MetricTile(tr("DISK HEALTH"), "@diskHealthColor", this)),
     mNetworkTile(new NetworkTile("@networkColor", this)),
     mCmbGpuDevice(new QComboBox(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
@@ -98,13 +97,6 @@ void DashboardPage::init()
         ui->bentoGrid->addWidget(mBatteryTile, row, col++);
     } else {
         mBatteryTile->hide();
-    }
-
-    if (im->hasDiskHealth()) {
-        mDiskHealthTile->setDisplayMode(MetricTile::Large);
-        ui->bentoGrid->addWidget(mDiskHealthTile, row, col++);
-    } else {
-        mDiskHealthTile->hide();
     }
 
     // If only a few tiles in row 1, let them stretch
@@ -186,11 +178,9 @@ void DashboardPage::init()
                 this, &DashboardPage::onBatteryUpdated);
     }
 
-    // Disk health gauge
-    if (im->hasDiskHealth()) {
-        connect(mRefresh, &DataRefreshService::diskHealthUpdated,
-                this, &DashboardPage::onDiskHealthUpdated);
-    }
+    // Disk health data (populates disk tile badges + tray alerts)
+    connect(mRefresh, &DataRefreshService::diskHealthUpdated,
+            this, &DashboardPage::onDiskHealthUpdated);
 
     // Set CPU model + core info as subtitle
     {
@@ -245,8 +235,6 @@ void DashboardPage::init()
         widgets.append(mGpuTile);
     if (im->hasBattery())
         widgets.append(mBatteryTile);
-    if (im->hasDiskHealth())
-        widgets.append(mDiskHealthTile);
 
     Utilities::addDropShadow(widgets, 80);
 
@@ -655,9 +643,6 @@ void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
     }
 
     int displayPercent = qBound(0, worstHealth, 100);
-
-    mDiskHealthTile->setValue(displayPercent, QString("%1%").arg(displayPercent));
-    mDiskHealthTile->setSubtitle(worstVerdict);
 
     // Populate drive health on disk tile (first time only)
     static bool diskHealthPopulated = false;
