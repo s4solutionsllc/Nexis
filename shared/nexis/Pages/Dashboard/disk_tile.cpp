@@ -72,12 +72,17 @@ void DiskTile::setSubtitle(const QString &text)
     mLblSubtitle->setText(text);
 }
 
-void DiskTile::setDriveHealth(const QString &driveName, const QString &status, bool healthy)
+void DiskTile::setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy)
 {
     auto *driveLabel = new QLabel(driveName + ": ", mHealthContainer);
     driveLabel->setObjectName("diskTileSubtitle");
 
-    auto *statusLabel = new QLabel(status, mHealthContainer);
+    // Format: "Good (92%)" when percent available, "Good" otherwise
+    QString statusText = status;
+    if (healthPercent >= 0)
+        statusText += QString(" (%1%)").arg(healthPercent);
+
+    auto *statusLabel = new QLabel(statusText, mHealthContainer);
 
     QSettings *sv = AppManager::ins()->getStyleValues();
     QString healthColor = sv ? sv->value(healthy ? "@successColor" : "@destructiveColor").toString() : (healthy ? "#2ec27e" : "#c01c28");

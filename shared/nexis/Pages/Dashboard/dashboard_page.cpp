@@ -665,7 +665,7 @@ void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
         for (const DriveHealth &d : drives) {
             QString name = d.model.isEmpty() ? d.deviceName : d.model;
             bool good = (d.healthVerdict == "Good" || d.smartPassed);
-            mDiskTile->setDriveHealth(name, d.healthVerdict, good);
+            mDiskTile->setDriveHealth(name, d.healthVerdict, d.healthPercent, good);
         }
         diskHealthPopulated = true;
     }

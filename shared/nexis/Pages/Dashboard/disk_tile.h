@@ -19,7 +19,7 @@ public:
 
     void setValue(int percent, const QString &usedText, const QString &totalText);
     void setSubtitle(const QString &text);
-    void setDriveHealth(const QString &driveName, const QString &status, bool healthy = true);
+    void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy = true);
 
     QToolButton *gearButton() const;
     void setGearVisible(bool visible);
