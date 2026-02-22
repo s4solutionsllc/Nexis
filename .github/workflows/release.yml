@@ -239,6 +239,19 @@ jobs:
           echo "DMG_PATH=$DMG" >> "$GITHUB_OUTPUT"
           echo "DMG_NAME=$(basename $DMG)" >> "$GITHUB_OUTPUT"
 
+      - name: Delete pre-existing release for this tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # If a release already exists for this tag (e.g. from the pre-rebrand
+          # Stacer project), delete it so we start fresh with correct artifacts.
+          if gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            echo "Deleting pre-existing release for ${{ github.ref_name }}"
+            gh release delete "${{ github.ref_name }}" --repo "${{ github.repository }}" --yes
+          else
+            echo "No pre-existing release found for ${{ github.ref_name }}"
+          fi
+
       - name: Extract release notes from CHANGELOG.md
         id: notes
         run: |
@@ -293,6 +306,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Nexis ${{ github.ref_name }}
+          make_latest: true
           generate_release_notes: false
           body_path: /tmp/release_body.md
           files: |
