@@ -248,7 +248,7 @@ void DashboardPage::init()
     if (im->hasDiskHealth())
         widgets.append(mDiskHealthTile);
 
-    Utilities::addDropShadow(widgets, 60);
+    Utilities::addDropShadow(widgets, 80);
 
     // System summary card
     buildSystemSummary();

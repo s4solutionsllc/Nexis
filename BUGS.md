@@ -372,6 +372,13 @@
   - **Fix complexity:** Trivial (restructure UI file layout only, no C++ changes)
   - **Resolved:** Replaced flat grid with `QVBoxLayout` containing 4 QGroupBoxes: Themes (5 settings), Fonts (6 settings), Interface (2 settings), Clock & Status (4 settings).
 
+- [x] **BUG-55: Dashboard cards lack visible borders and depth** (LOW)
+  - **Scope:** Dashboard page
+  - **Description:** Dashboard cards (HeroCard, MetricTile, DiskTile, NetworkTile) appear borderless and flat. `@borderColor` is too close to `@cardBg` in both themes (only ~8 RGB points difference in dark theme), and drop shadows use zero offset with low opacity (alpha=60, ~24%), producing no perceptible depth.
+  - **Files:** `shared/nexis/static/themes/default/style/values.ini`, `shared/nexis/static/themes/light/style/values.ini`, `shared/nexis/utilities.h`, `shared/nexis/Pages/Dashboard/dashboard_page.cpp`
+  - **Fix complexity:** Trivial (adjust color tokens and shadow parameters)
+  - **Resolved:** Increased `@borderColor` contrast in both themes (dark: `#3A3D4A`→`#4A4D5A`, light: `#E8E2DB`→`#D0C9C0`), added 2px downward shadow offset, increased shadow alpha from 60 to 80.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

@@ -29,7 +29,7 @@ public:
             QGraphicsDropShadowEffect *effect = new QGraphicsDropShadowEffect(widget);
             effect->setBlurRadius(blur);
             effect->setColor(baseColor);
-            effect->setOffset(0);
+            effect->setOffset(0, 2);
             widget->setGraphicsEffect(effect);
         }
     }
