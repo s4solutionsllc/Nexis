@@ -100,6 +100,26 @@ void DiskTile::setDriveHealth(const QString &driveName, const QString &status, i
     mHealthContainer->show();
 }
 
+void DiskTile::clearDriveHealth()
+{
+    mHealthEntries.clear();
+
+    // Remove all child layouts and widgets from the health container
+    while (QLayoutItem *item = mHealthLayout->takeAt(0)) {
+        if (QLayout *childLayout = item->layout()) {
+            while (QLayoutItem *sub = childLayout->takeAt(0)) {
+                delete sub->widget();
+                delete sub;
+            }
+            delete childLayout;
+        }
+        delete item->widget();
+        delete item;
+    }
+
+    mHealthContainer->hide();
+}
+
 void DiskTile::refreshThemeColors()
 {
     QSettings *sv = AppManager::ins()->getStyleValues();

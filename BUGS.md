@@ -407,12 +407,19 @@
   - **Fix complexity:** Trivial (remove the label widget from the .ui file)
   - **Resolved:** Removed `lblBetaInfo` widget and its grid item.
 
-- [x] **BUG-60: Dashboard system summary shows "0 Bytes RAM" — memory not populated at init time** (MEDIUM)
+- [x] **BUG-60: Dashboard system summary shows "0 Bytes RAM" — memory not populated at init time** (LOW)
   - **Scope:** Dashboard page → System summary card
   - **Description:** The system summary card in the dashboard displays "0 Bytes RAM" because `buildSystemSummary()` calls `im->getMemTotal()` during `DashboardPage::init()`, before `DataRefreshService::start()` has triggered the first `updateMemoryInfo()`. The `memTotal` field is initialized to 0 in the `MemoryInfo` constructor and is never pre-populated. The `onMemoryUpdated()` slot updates the memory tile but never refreshes `mSummaryRam` or the summary label.
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`
   - **Fix complexity:** Trivial (update `mSummaryRam` in `onMemoryUpdated()` and refresh the summary label)
   - **Resolved:** Added guard in `onMemoryUpdated()` that updates `mSummaryRam` with the real total and calls `refreshSummaryColors()` on the first callback where `total > 0`.
+
+- [x] **BUG-61: Disk tile shows health badges for all physical drives instead of selected disk only** (MEDIUM)
+  - **Scope:** Dashboard page → Disk tile health badges
+  - **Description:** `onDiskHealthUpdated()` called `mDiskTile->setDriveHealth()` for every physical drive in the health list, displaying health badges for all drives regardless of which volume was selected in the disk gear menu. On a multi-drive system, all drives' health info appeared simultaneously. The health badge should only show the physical drive hosting the currently selected volume.
+  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.h`, `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/Pages/Dashboard/disk_tile.h`, `shared/nexis/Pages/Dashboard/disk_tile.cpp`
+  - **Fix complexity:** Moderate (add volume-to-physical-drive matching, cache health data, update badge on selection change)
+  - **Resolved:** Added `clearDriveHealth()` to DiskTile for removing existing badges. Added `updateDiskHealthBadge()` to DashboardPage that matches the selected volume's device path to a physical drive's health data using `extractBaseDevice()` (handles Linux SATA/NVMe partition stripping and macOS APFS synthesized volume paths). Falls back to the sole physical drive when only one exists (common on single-drive Macs). Called from `onDiskHealthUpdated()`, `onDiskUsageUpdated()`, and `onDiskSelected()`.
 
 ## Notes
 

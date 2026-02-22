@@ -477,6 +477,7 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
     QString usedText = FormatUtil::formatBytes(disk->used);
 
     mDiskTile->setValue(diskPercent, usedText, sizeText);
+    updateDiskHealthBadge();
 }
 
 void DashboardPage::onDiskSelected(QAction *action)
@@ -498,6 +499,8 @@ void DashboardPage::onDiskSelected(QAction *action)
             break;
         }
     }
+
+    updateDiskHealthBadge();
 }
 
 void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
@@ -613,53 +616,91 @@ void DashboardPage::onBatteryUpdated(const BatteryData &bat)
     }
 }
 
+// Extract the physical device path from a partition/volume device path.
+// Linux:  /dev/sda1      → /dev/sda
+//         /dev/nvme0n1p1  → /dev/nvme0n1
+// macOS:  /dev/disk3s1s1  → /dev/disk3  (synthesized container, may not
+//         match the physical device number on APFS systems)
+static QString extractBaseDevice(const QString &devicePath)
+{
+    // NVMe: /dev/nvme0n1p1 → /dev/nvme0n1
+    static const QRegularExpression nvmeRe("^(/dev/nvme\\d+n\\d+)p\\d+$");
+    auto match = nvmeRe.match(devicePath);
+    if (match.hasMatch())
+        return match.captured(1);
+
+    // macOS disk: /dev/disk3s1s1 → /dev/disk3
+    static const QRegularExpression macRe("^(/dev/disk\\d+)s\\d+.*$");
+    match = macRe.match(devicePath);
+    if (match.hasMatch())
+        return match.captured(1);
+
+    // SATA/SCSI/virtio: /dev/sda1 → /dev/sda, /dev/vda2 → /dev/vda
+    static const QRegularExpression sataRe("^(/dev/[a-z]+)\\d+$");
+    match = sataRe.match(devicePath);
+    if (match.hasMatch())
+        return match.captured(1);
+
+    return devicePath;
+}
+
+void DashboardPage::updateDiskHealthBadge()
+{
+    if (mCachedDriveHealth.isEmpty() || mCachedDisks.isEmpty())
+        return;
+
+    // Find the currently selected disk
+    const Disk *selectedDisk = nullptr;
+    QString selectedDiskName = mSettingManager->getDiskName();
+    for (const Disk &d : mCachedDisks) {
+        if (d.name.trimmed() == selectedDiskName.trimmed()) {
+            selectedDisk = &d;
+            break;
+        }
+    }
+    if (!selectedDisk) {
+        for (const Disk &d : mCachedDisks) {
+            if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed()) {
+                selectedDisk = &d;
+                break;
+            }
+        }
+        if (!selectedDisk)
+            selectedDisk = &mCachedDisks.first();
+    }
+
+    // Match the selected volume to its physical drive's health data
+    QString baseDev = extractBaseDevice(selectedDisk->device);
+    const DriveHealth *matched = nullptr;
+
+    for (const DriveHealth &dh : mCachedDriveHealth) {
+        if (dh.devicePath == baseDev) {
+            matched = &dh;
+            break;
+        }
+    }
+
+    // On macOS, APFS synthesized container numbering often won't match the
+    // physical device path. If there's only one physical drive, use it.
+    if (!matched && mCachedDriveHealth.size() == 1)
+        matched = &mCachedDriveHealth.first();
+
+    // Update the tile
+    mDiskTile->clearDriveHealth();
+    if (matched) {
+        QString name = matched->model.isEmpty() ? matched->deviceName : matched->model;
+        bool good = (matched->healthVerdict == "Good" || matched->smartPassed);
+        mDiskTile->setDriveHealth(name, matched->healthVerdict, matched->healthPercent, good);
+    }
+}
+
 void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 {
     if (drives.isEmpty())
         return;
 
-    int worstHealth = 100;
-    QString worstVerdict = "Good";
-    bool hasAnyHealth = false;
-
-    for (const DriveHealth &d : drives) {
-        if (d.healthPercent >= 0) {
-            hasAnyHealth = true;
-            if (d.healthPercent < worstHealth) {
-                worstHealth = d.healthPercent;
-                worstVerdict = d.healthVerdict;
-            }
-        } else if (!d.smartPassed) {
-            hasAnyHealth = true;
-            worstHealth = 0;
-            worstVerdict = "Critical";
-        }
-    }
-
-    if (!hasAnyHealth) {
-        bool allPassed = true;
-        for (const DriveHealth &d : drives) {
-            if (!d.smartPassed) {
-                allPassed = false;
-                break;
-            }
-        }
-        worstHealth = allPassed ? 100 : 0;
-        worstVerdict = allPassed ? "Good" : "Critical";
-    }
-
-    int displayPercent = qBound(0, worstHealth, 100);
-
-    // Populate drive health on disk tile (first time only)
-    static bool diskHealthPopulated = false;
-    if (!diskHealthPopulated) {
-        for (const DriveHealth &d : drives) {
-            QString name = d.model.isEmpty() ? d.deviceName : d.model;
-            bool good = (d.healthVerdict == "Good" || d.smartPassed);
-            mDiskTile->setDriveHealth(name, d.healthVerdict, d.healthPercent, good);
-        }
-        diskHealthPopulated = true;
-    }
+    mCachedDriveHealth = drives;
+    updateDiskHealthBadge();
 
     // Disk health alert
     if (mSettingManager->getDiskHealthAlertEnabled()) {

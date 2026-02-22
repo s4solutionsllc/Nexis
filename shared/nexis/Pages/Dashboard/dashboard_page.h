@@ -82,6 +82,7 @@ private:
     QMenu *mDiskMenu;
     QMenu *mTempSensorMenu;
     QList<Disk> mCachedDisks;
+    QList<DriveHealth> mCachedDriveHealth;
 
     InfoManager *im;
     SettingManager *mSettingManager;
@@ -102,6 +103,7 @@ private:
 
     void buildSystemSummary();
     void refreshSummaryColors();
+    void updateDiskHealthBadge();
 };
 
 #endif // DASHBOARDPAGE_H
