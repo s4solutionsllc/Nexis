@@ -92,6 +92,8 @@
 
 - [x] **FR-44: Pixel-Perfect Mockup Alignment — 29-Item Fix** — Addressed all remaining deviations between the Concept A mockup and the actual UI. 29 fixes including: MetricTile DisplayMode (Normal/Hero/Large) with per-mode font sizes, NetworkTile rewritten with two-row layout (Download/Upload labels + sparklines, divider, interface name), DiskTile drive health info display, system summary rewritten to inline format (hostname bold + OS/CPU/RAM inline), sidebar gradient logo + separator line + version label + section indicators (collapsed) + cleaner badge/dot, dashboard grid reorganized (Row 0 = HeroCard cs2 + Disk + Network, Row 1 = GPU/Temp/Battery/DiskHealth). **Resolved:** All 29 items implemented.
 
+- [x] **FR-45: Dashboard Disk Tile — Gear Icon Disk Selector** — Add a gear icon to the top-right corner of the DiskTile on the Dashboard. When clicked, shows a dropdown menu listing all detected disks by name. Selecting a disk updates the donut chart and usage text immediately and persists the selection. Gear icon only appears when 2+ disks are detected. Theme-aware icon (dark/light). Uses existing `SettingManager::setDiskName()`/`getDiskName()` for persistence. **Resolved:** Added QToolButton with QMenu (InstantPopup mode) in DiskTile, wired up in DashboardPage with cached disk list for immediate updates.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

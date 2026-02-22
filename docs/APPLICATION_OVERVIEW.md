@@ -102,7 +102,7 @@ Real-time system monitoring at a glance in a **bento grid layout** of specialize
 
 **Row 0 — Hero row:**
 - **HeroCard** (column span 2) — Combined CPU + Memory tile with vertical divider. Each half is a `MetricTile` in Hero display mode with sparkline history.
-- **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health info via `setDriveHealth()` (5s refresh)
+- **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health info via `setDriveHealth()` (5s refresh). Gear icon in top-right corner (visible when 2+ disks detected) opens a dropdown menu to switch the displayed disk; selection is persisted.
 - **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
 
 **Row 1 — Metric tiles (conditional — hidden if hardware absent):**

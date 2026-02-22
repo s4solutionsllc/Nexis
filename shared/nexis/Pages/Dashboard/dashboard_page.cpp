@@ -45,6 +45,7 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mAppManager(appManager ? appManager : AppManager::ins()),
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
+    mDiskMenu(new QMenu(this)),
     mSelectedSensorIndex(0),
     mSelectedGpuIndex(0),
     mKioskButton(new QPushButton(this))
@@ -215,6 +216,12 @@ void DashboardPage::init()
             this, &DashboardPage::onNetworkUpdated);
     connect(mRefresh, &DataRefreshService::diskUsageUpdated,
             this, &DashboardPage::onDiskUsageUpdated);
+
+    // Disk selector gear menu
+    mDiskMenu->setObjectName("diskSelectorMenu");
+    mDiskTile->gearButton()->setMenu(mDiskMenu);
+    mDiskTile->gearButton()->setPopupMode(QToolButton::InstantPopup);
+    connect(mDiskMenu, &QMenu::triggered, this, &DashboardPage::onDiskSelected);
 
     // Set network interface name
     QString ifName = im->getDefaultNetworkInterface();
@@ -421,6 +428,17 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
     if (disks.isEmpty())
         return;
 
+    mCachedDisks = disks;
+
+    // Rebuild gear menu with current disk list
+    mDiskMenu->clear();
+    for (const Disk &d : disks) {
+        QAction *action = mDiskMenu->addAction(d.name);
+        action->setData(d.name);
+        action->setCheckable(true);
+    }
+    mDiskTile->setGearVisible(disks.size() >= 2);
+
     const Disk *disk = nullptr;
     QString selectedDiskName = mSettingManager->getDiskName();
     for (const Disk &d : disks) {
@@ -435,6 +453,10 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
         if (!disk)
             disk = &disks.at(0);
     }
+
+    // Mark the selected disk in the gear menu
+    for (QAction *a : mDiskMenu->actions())
+        a->setChecked(a->data().toString() == disk->name);
 
     int diskPercent = 0;
     if (disk->size > 0) {
@@ -459,6 +481,27 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
     QString usedText = FormatUtil::formatBytes(disk->used);
 
     mDiskTile->setValue(diskPercent, usedText, sizeText);
+}
+
+void DashboardPage::onDiskSelected(QAction *action)
+{
+    QString diskName = action->data().toString();
+    mSettingManager->setDiskName(diskName);
+
+    for (const Disk &d : mCachedDisks) {
+        if (d.name == diskName) {
+            int percent = 0;
+            if (d.size > 0)
+                percent = static_cast<int>((double)d.used / (double)d.size * 100.0);
+            mDiskTile->setValue(percent,
+                               FormatUtil::formatBytes(d.used),
+                               FormatUtil::formatBytes(d.size));
+
+            for (QAction *a : mDiskMenu->actions())
+                a->setChecked(a->data().toString() == diskName);
+            break;
+        }
+    }
 }
 
 void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include <QMenu>
 #include <QPushButton>
 #include <QLabel>
 #include <QJsonDocument>
@@ -56,6 +57,7 @@ private slots:
     void onGpuUpdated(const QList<GpuDevice> &gpus);
     void onTempSensorChanged(int index);
     void onGpuDeviceChanged(int index);
+    void onDiskSelected(QAction *action);
     void onBatteryUpdated(const BatteryData &bat);
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 
@@ -79,6 +81,8 @@ private:
 
     QComboBox *mCmbTempSensor;
     QComboBox *mCmbGpuDevice;
+    QMenu *mDiskMenu;
+    QList<Disk> mCachedDisks;
 
     InfoManager *im;
     SettingManager *mSettingManager;

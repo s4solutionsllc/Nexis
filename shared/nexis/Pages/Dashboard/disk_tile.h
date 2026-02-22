@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QColor>
 #include <QPushButton>
+#include <QToolButton>
 #include <QHBoxLayout>
 #include <functional>
 
@@ -20,12 +21,17 @@ public:
     void setSubtitle(const QString &text);
     void setDriveHealth(const QString &driveName, const QString &status, bool healthy = true);
 
+    QToolButton *gearButton() const;
+    void setGearVisible(bool visible);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     void buildLayout();
     void refreshThemeColors();
+    void updateGearIcon();
 
     QString mArcColorToken;
     QString mTrackColorToken;
@@ -39,6 +45,7 @@ private:
 
     QLabel *mLblTitle;
     QLabel *mLblSubtitle;
+    QToolButton *mGearButton;
     QWidget *mHealthContainer;
     QHBoxLayout *mHealthLayout;
 

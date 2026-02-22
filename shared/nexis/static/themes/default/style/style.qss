@@ -762,6 +762,22 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 9pt;
 }
 
+#btnDiskGear {
+    border: 0;
+    background-color: transparent;
+    border-radius: 4;
+    padding: 0;
+}
+
+#btnDiskGear:hover {
+    background-color: @color02;
+}
+
+#btnDiskGear::menu-indicator {
+    width: 0;
+    height: 0;
+}
+
 /* - Network Tile - */
 
 #networkTile {
