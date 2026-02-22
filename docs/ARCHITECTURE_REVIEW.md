@@ -208,15 +208,6 @@ void AppManager::updateStylesheet() {
 Optional features hide themselves when their hardware or software dependencies are absent:
 
 ```cpp
-// shared/nexis/Pages/Dashboard/dashboard_page.cpp:49-53
-if (im->hasDiskHealth()) {
-    ui->circleBarsLayout->addWidget(mDiskHealthBar);
-} else {
-    mDiskHealthBar->hide();
-}
-```
-
-```cpp
 // shared/nexis/app.cpp — conditional page registration
 if (ToolManager::ins()->checkDocker()) {
     dockerPage = new DockerPage();
@@ -228,7 +219,7 @@ if (ToolManager::ins()->checkDocker()) {
 
 **The pattern applies at three levels:**
 1. **Page level** — Docker, GNOME Settings, and APT/Homebrew pages are hidden entirely if tools aren't detected
-2. **Widget level** — Battery, GPU, temperature, and disk health gauges hide if hardware is absent
+2. **Widget level** — Battery, GPU, and temperature gauges hide if hardware is absent; disk health info is shown inline on the DiskTile when available
 3. **Feature level** — macOS filters Apple system agents from startup apps; purge option hidden on non-APT systems
 
 **Why this matters:** Cross-platform apps often show all features with "not available on this platform" messages, which clutters the UI. Nexis's approach presents a **clean, relevant interface** tailored to each system's actual capabilities.

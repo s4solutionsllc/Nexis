@@ -96,6 +96,8 @@
 
 - [x] **FR-46: Dashboard Temperature Tile — Gear Icon Sensor Selector** — Replace the QComboBox temperature sensor selector with a gear icon + QMenu dropdown, matching the pattern established by FR-45 (DiskTile). Gear icon added to the shared MetricTile widget (opt-in, hidden by default) so it can be reused for GPU device selection later. Gear icon only appears when 2+ sensors are detected. Selection persisted via `SettingManager::setTempSensorId()`/`getTempSensorId()`. **Resolved:** Added gear button to MetricTile, replaced combobox init in DashboardPage with gear menu wiring, removed #cmbTempSensor QSS rules and added #btnMetricGear rules.
 
+- [x] **FR-47: Remove Disk Health tile, enhance Disk Tile health badges** — Removed the standalone Disk Health MetricTile from the Dashboard. Enhanced `DiskTile::setDriveHealth()` to display the numeric health percentage alongside the verdict (e.g., "Apple SSD: Good (92%)"). Tray alerts and Settings toggle unchanged. **Resolved:** Added `healthPercent` param to `setDriveHealth()`, removed `mDiskHealthTile` from grid/shadows/signal wiring.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
