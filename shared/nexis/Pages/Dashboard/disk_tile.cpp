@@ -104,14 +104,15 @@ void DiskTile::clearDriveHealth()
 {
     mHealthEntries.clear();
 
-    // Remove all child layouts and widgets from the health container
+    // Remove all child layouts and widgets from the health container.
+    // QLayout inherits QLayoutItem, so for child layout items takeAt()
+    // returns the QLayout* itself — deleting both would be a double-free.
     while (QLayoutItem *item = mHealthLayout->takeAt(0)) {
         if (QLayout *childLayout = item->layout()) {
             while (QLayoutItem *sub = childLayout->takeAt(0)) {
                 delete sub->widget();
                 delete sub;
             }
-            delete childLayout;
         }
         delete item->widget();
         delete item;
