@@ -54,7 +54,8 @@ jobs:
             devscripts \
             debhelper \
             debhelper-compat \
-            fakeroot
+            fakeroot \
+            xvfb
 
       - name: Extract version from tag
         id: version
