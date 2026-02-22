@@ -411,6 +411,12 @@ void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
     QString swapSubtitle = QString("Swap: %1 / %2")
         .arg(FormatUtil::formatBytes(swapUsed), FormatUtil::formatBytes(swapTotal));
     mMemTile->setSubtitle(swapSubtitle);
+
+    // Update system summary RAM if it was unavailable at init time (BUG-60)
+    if (total > 0 && mSummaryRam.startsWith("0")) {
+        mSummaryRam = FormatUtil::formatBytes(total) + " RAM";
+        refreshSummaryColors();
+    }
 }
 
 void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)

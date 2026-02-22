@@ -407,6 +407,13 @@
   - **Fix complexity:** Trivial (remove the label widget from the .ui file)
   - **Resolved:** Removed `lblBetaInfo` widget and its grid item.
 
+- [x] **BUG-60: Dashboard system summary shows "0 Bytes RAM" — memory not populated at init time** (MEDIUM)
+  - **Scope:** Dashboard page → System summary card
+  - **Description:** The system summary card in the dashboard displays "0 Bytes RAM" because `buildSystemSummary()` calls `im->getMemTotal()` during `DashboardPage::init()`, before `DataRefreshService::start()` has triggered the first `updateMemoryInfo()`. The `memTotal` field is initialized to 0 in the `MemoryInfo` constructor and is never pre-populated. The `onMemoryUpdated()` slot updates the memory tile but never refreshes `mSummaryRam` or the summary label.
+  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`
+  - **Fix complexity:** Trivial (update `mSummaryRam` in `onMemoryUpdated()` and refresh the summary label)
+  - **Resolved:** Added guard in `onMemoryUpdated()` that updates `mSummaryRam` with the real total and calls `refreshSummaryColors()` on the first callback where `total > 0`.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
