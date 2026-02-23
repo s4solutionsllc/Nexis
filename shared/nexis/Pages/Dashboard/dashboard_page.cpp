@@ -1085,9 +1085,12 @@ void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoi
             buildGrid();
         }
     } else {
+        // Look up the occupant by tileId from the grid (handles multi-cell tiles
+        // where the drop lands on a non-top-left cell)
+        QString occupantId = mOccupancy[targetRow][targetCol];
         DashboardTileWrapper *target = nullptr;
         for (DashboardTileWrapper *w : mTileWrappers) {
-            if (w->gridRow() == targetRow && w->gridCol() == targetCol && w != mDragSource) {
+            if (w->tileId() == occupantId && w != mDragSource) {
                 target = w;
                 break;
             }
@@ -1098,8 +1101,9 @@ void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoi
             int tgtRow = target->gridRow(), tgtCol = target->gridCol();
             int tgtRS = target->gridRowSpan(), tgtCS = target->gridColSpan();
 
-            bool srcFitsAtTarget = (tgtCol + srcCS <= GRID_COLS);
-            bool tgtFitsAtSource = (srcCol + tgtCS <= GRID_COLS);
+            // Use regionIsFree for full bounds + collision checking (rows AND cols)
+            bool srcFitsAtTarget = regionIsFree(tgtRow, tgtCol, srcRS, srcCS, mDragSource->tileId());
+            bool tgtFitsAtSource = regionIsFree(srcRow, srcCol, tgtRS, tgtCS, target->tileId());
 
             if (srcFitsAtTarget && tgtFitsAtSource) {
                 mDragSource->setGridPosition(tgtRow, tgtCol, srcRS, srcCS);
