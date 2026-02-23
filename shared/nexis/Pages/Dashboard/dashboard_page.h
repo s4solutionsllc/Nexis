@@ -17,6 +17,7 @@
 #include "metric_tile.h"
 #include "network_tile.h"
 #include "disk_tile.h"
+#include "dashboard_tile_wrapper.h"
 
 #include "Managers/setting_manager.h"
 
@@ -65,6 +66,10 @@ private slots:
     void toggleEditMode();
     void exitEditMode();
     void onResetLayout();
+    void onTileDragStarted(DashboardTileWrapper *wrapper, const QPoint &globalPos);
+    void onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint &globalPos);
+    void onTileDragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos);
+    void onTileResizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
 
 signals:
     void sigShowUpdateBar();
@@ -104,6 +109,10 @@ private:
     bool mEditMode;
     bool mKioskMode;
 
+    QList<DashboardTileWrapper*> mTileWrappers;
+    QWidget *mDragIndicator;
+    DashboardTileWrapper *mDragSource;
+
     QList<QLabel*> mSummaryLabels;
     QString mSummaryHostname;
     QString mSummaryOs;
@@ -113,6 +122,14 @@ private:
     void buildSystemSummary();
     void refreshSummaryColors();
     void updateDiskHealthBadge();
+    void buildGrid();
+    void rebuildLayout();
+    DashboardTileWrapper *wrapTile(const QString &id, QWidget *tile);
+    void applyDisplayModeForSpan(DashboardTileWrapper *wrapper);
+    QJsonArray serializeLayout() const;
+    void deserializeLayout(const QString &json);
+    QJsonArray defaultLayout() const;
+    int gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const;
 };
 
 #endif // DASHBOARDPAGE_H

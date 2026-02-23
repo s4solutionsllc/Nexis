@@ -54,7 +54,9 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mBtnDone(nullptr),
     mEditShortcut(nullptr),
     mEditMode(false),
-    mKioskMode(false)
+    mKioskMode(false),
+    mDragIndicator(nullptr),
+    mDragSource(nullptr)
 {
     ui->setupUi(this);
 
@@ -63,48 +65,35 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
 
 void DashboardPage::init()
 {
-    // Bento grid layout (default):
-    //  Row 0: CPU | Memory | Disk | Network
-    //  Row 1: GPU* | Temp* | Battery*
-    // * = conditional tiles
+    // Wrap each tile in a DashboardTileWrapper for drag/resize support
+    wrapTile("cpu", mCpuTile);
+    wrapTile("memory", mMemTile);
+    wrapTile("disk", mDiskTile);
+    wrapTile("network", mNetworkTile);
 
-    int row = 0;
-    int col = 0;
-
-    // Row 0: all four primary tiles
-    ui->bentoGrid->addWidget(mCpuTile, 0, 0);
-    ui->bentoGrid->addWidget(mMemTile, 0, 1);
-    ui->bentoGrid->addWidget(mDiskTile, 0, 2);
-    ui->bentoGrid->addWidget(mNetworkTile, 0, 3);
-
-    // Row 1: remaining tiles placed dynamically based on available hardware
-    row = 1;
-    col = 0;
-
-    if (im->hasGpu()) {
-        mGpuTile->setDisplayMode(MetricTile::Large);
-        ui->bentoGrid->addWidget(mGpuTile, row, col++);
-    } else {
+    if (im->hasGpu())
+        wrapTile("gpu", mGpuTile);
+    else
         mGpuTile->hide();
-    }
 
-    if (im->hasThermalSensors()) {
-        mTempTile->setDisplayMode(MetricTile::Large);
-        ui->bentoGrid->addWidget(mTempTile, row, col++);
-    } else {
+    if (im->hasThermalSensors())
+        wrapTile("temp", mTempTile);
+    else
         mTempTile->hide();
-    }
 
-    if (im->hasBattery()) {
-        mBatteryTile->setDisplayMode(MetricTile::Large);
-        ui->bentoGrid->addWidget(mBatteryTile, row, col++);
-    } else {
+    if (im->hasBattery())
+        wrapTile("battery", mBatteryTile);
+    else
         mBatteryTile->hide();
-    }
 
-    // If only a few tiles in row 1, let them stretch
-    for (int c = 0; c < 4; ++c)
-        ui->bentoGrid->setColumnStretch(c, 1);
+    // Load saved layout or use default, then build the grid
+    QString savedLayout = mSettingManager->getDashboardLayout();
+    if (savedLayout.isEmpty())
+        deserializeLayout(QString(QJsonDocument(defaultLayout()).toJson()));
+    else
+        deserializeLayout(savedLayout);
+
+    buildGrid();
 
     // Temperature sensor gear menu
     if (im->hasThermalSensors()) {
@@ -228,17 +217,10 @@ void DashboardPage::init()
     checkUpdate();
     connect(this, &DashboardPage::sigShowUpdateBar, ui->widgetUpdateBar, &QWidget::show);
 
-    // Drop shadows on tiles
-    QList<QWidget*> widgets = {
-        mCpuTile, mMemTile, mDiskTile, mNetworkTile
-    };
-    if (im->hasThermalSensors())
-        widgets.append(mTempTile);
-    if (im->hasGpu())
-        widgets.append(mGpuTile);
-    if (im->hasBattery())
-        widgets.append(mBatteryTile);
-
+    // Drop shadows on tile wrappers
+    QList<QWidget*> widgets;
+    for (DashboardTileWrapper *w : mTileWrappers)
+        widgets.append(w);
     Utilities::addDropShadow(widgets, 80);
 
     // System summary card
@@ -312,6 +294,17 @@ void DashboardPage::init()
 
     connect(mBtnDone, &QPushButton::clicked, this, &DashboardPage::exitEditMode);
     connect(mBtnResetLayout, &QPushButton::clicked, this, &DashboardPage::onResetLayout);
+
+    // Drag indicator overlay
+    mDragIndicator = new QWidget(this);
+    mDragIndicator->setObjectName("dragIndicator");
+    mDragIndicator->hide();
+    mDragIndicator->setAttribute(Qt::WA_TransparentForMouseEvents);
+    mDragSource = nullptr;
+
+    // Layout reset signal from Settings page
+    connect(mSignalMapper, &SignalMapper::sigDashboardLayoutReset,
+            this, &DashboardPage::rebuildLayout);
 }
 
 void DashboardPage::buildSystemSummary()
@@ -793,7 +786,8 @@ void DashboardPage::toggleEditMode()
         mKioskButton->hide();
         mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit-done.svg"));
         mEditButton->setToolTip(tr("Finish Editing (Ctrl+E)"));
-        // TODO: Task 7 will enable drag handles on tiles here
+        for (DashboardTileWrapper *w : mTileWrappers)
+            w->setEditMode(true);
     }
 }
 
@@ -804,14 +798,17 @@ void DashboardPage::exitEditMode()
     mKioskButton->show();
     mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
     mEditButton->setToolTip(tr("Customize Layout (Ctrl+E)"));
-    // TODO: Task 7 will disable drag handles and save layout here
+    for (DashboardTileWrapper *w : mTileWrappers)
+        w->setEditMode(false);
+    QJsonDocument doc(serializeLayout());
+    mSettingManager->setDashboardLayout(QString(doc.toJson(QJsonDocument::Compact)));
 }
 
 void DashboardPage::onResetLayout()
 {
     mSettingManager->clearDashboardLayout();
-    // TODO: Task 7 will call rebuildLayout() here
-    exitEditMode();
+    deserializeLayout(QString(QJsonDocument(defaultLayout()).toJson()));
+    buildGrid();
 }
 
 void DashboardPage::onKioskModeChanged(bool enabled)
@@ -830,6 +827,242 @@ void DashboardPage::onKioskModeChanged(bool enabled)
         mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
         mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
     }
+}
+
+DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
+{
+    auto *wrapper = new DashboardTileWrapper(id, tile, this);
+
+    connect(wrapper, &DashboardTileWrapper::dragStarted,
+            this, &DashboardPage::onTileDragStarted);
+    connect(wrapper, &DashboardTileWrapper::dragMoved,
+            this, &DashboardPage::onTileDragMoved);
+    connect(wrapper, &DashboardTileWrapper::dragFinished,
+            this, &DashboardPage::onTileDragFinished);
+    connect(wrapper, &DashboardTileWrapper::resizeRequested,
+            this, &DashboardPage::onTileResizeRequested);
+
+    mTileWrappers.append(wrapper);
+    return wrapper;
+}
+
+QJsonArray DashboardPage::defaultLayout() const
+{
+    QJsonArray arr;
+    auto addEntry = [&](const QString &id, int row, int col, int rs, int cs) {
+        QJsonObject obj;
+        obj["id"] = id;
+        obj["row"] = row;
+        obj["col"] = col;
+        obj["rowSpan"] = rs;
+        obj["colSpan"] = cs;
+        arr.append(obj);
+    };
+
+    addEntry("cpu", 0, 0, 1, 1);
+    addEntry("memory", 0, 1, 1, 1);
+    addEntry("disk", 0, 2, 1, 1);
+    addEntry("network", 0, 3, 1, 1);
+
+    int col = 0;
+    if (im->hasGpu()) addEntry("gpu", 1, col++, 1, 1);
+    if (im->hasThermalSensors()) addEntry("temp", 1, col++, 1, 1);
+    if (im->hasBattery()) addEntry("battery", 1, col++, 1, 1);
+
+    return arr;
+}
+
+void DashboardPage::deserializeLayout(const QString &json)
+{
+    QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
+    QJsonArray arr = doc.array();
+
+    for (const QJsonValue &val : arr) {
+        QJsonObject obj = val.toObject();
+        QString id = obj["id"].toString();
+        int row = obj["row"].toInt();
+        int col = obj["col"].toInt();
+        int rowSpan = obj["rowSpan"].toInt(1);
+        int colSpan = obj["colSpan"].toInt(1);
+
+        for (DashboardTileWrapper *w : mTileWrappers) {
+            if (w->tileId() == id) {
+                w->setGridPosition(row, col, rowSpan, colSpan);
+                break;
+            }
+        }
+    }
+}
+
+QJsonArray DashboardPage::serializeLayout() const
+{
+    QJsonArray arr;
+    for (const DashboardTileWrapper *w : mTileWrappers) {
+        QJsonObject obj;
+        obj["id"] = w->tileId();
+        obj["row"] = w->gridRow();
+        obj["col"] = w->gridCol();
+        obj["rowSpan"] = w->gridRowSpan();
+        obj["colSpan"] = w->gridColSpan();
+        arr.append(obj);
+    }
+    return arr;
+}
+
+void DashboardPage::buildGrid()
+{
+    while (ui->bentoGrid->count() > 0) {
+        QLayoutItem *item = ui->bentoGrid->takeAt(0);
+        if (item->widget())
+            item->widget()->setParent(nullptr);
+        delete item;
+    }
+
+    for (DashboardTileWrapper *w : mTileWrappers) {
+        w->setParent(this);
+        ui->bentoGrid->addWidget(w, w->gridRow(), w->gridCol(),
+                                  w->gridRowSpan(), w->gridColSpan());
+        applyDisplayModeForSpan(w);
+        w->show();
+    }
+
+    for (int c = 0; c < 4; ++c)
+        ui->bentoGrid->setColumnStretch(c, 1);
+}
+
+void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)
+{
+    auto *metric = qobject_cast<MetricTile*>(wrapper->innerWidget());
+    if (!metric)
+        return;
+
+    int area = wrapper->gridRowSpan() * wrapper->gridColSpan();
+    if (area >= 4)
+        metric->setDisplayMode(MetricTile::Hero);
+    else if (area >= 2)
+        metric->setDisplayMode(MetricTile::Large);
+    else
+        metric->setDisplayMode(MetricTile::Normal);
+}
+
+void DashboardPage::rebuildLayout()
+{
+    QString saved = mSettingManager->getDashboardLayout();
+    if (saved.isEmpty())
+        deserializeLayout(QString(QJsonDocument(defaultLayout()).toJson()));
+    else
+        deserializeLayout(saved);
+    buildGrid();
+}
+
+int DashboardPage::gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const
+{
+    for (DashboardTileWrapper *w : mTileWrappers) {
+        QRect tileRect = QRect(w->mapToGlobal(QPoint(0, 0)), w->size());
+        if (tileRect.contains(globalPos)) {
+            outRow = w->gridRow();
+            outCol = w->gridCol();
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void DashboardPage::onTileDragStarted(DashboardTileWrapper *wrapper, const QPoint &globalPos)
+{
+    Q_UNUSED(globalPos)
+    mDragSource = wrapper;
+    wrapper->setWindowOpacity(0.5);
+    wrapper->raise();
+}
+
+void DashboardPage::onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint &globalPos)
+{
+    Q_UNUSED(wrapper)
+
+    int targetRow, targetCol;
+    if (gridCellAtPos(globalPos, targetRow, targetCol)) {
+        for (DashboardTileWrapper *w : mTileWrappers) {
+            if (w->gridRow() == targetRow && w->gridCol() == targetCol && w != mDragSource) {
+                QPoint local = w->mapToParent(QPoint(0, 0));
+                mDragIndicator->setGeometry(local.x(), local.y(), w->width(), w->height());
+                mDragIndicator->show();
+                mDragIndicator->raise();
+                return;
+            }
+        }
+    }
+    mDragIndicator->hide();
+}
+
+void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos)
+{
+    wrapper->setWindowOpacity(1.0);
+    mDragIndicator->hide();
+
+    if (!mDragSource)
+        return;
+
+    int targetRow, targetCol;
+    if (!gridCellAtPos(globalPos, targetRow, targetCol)) {
+        mDragSource = nullptr;
+        return;
+    }
+
+    DashboardTileWrapper *target = nullptr;
+    for (DashboardTileWrapper *w : mTileWrappers) {
+        if (w->gridRow() == targetRow && w->gridCol() == targetCol && w != mDragSource) {
+            target = w;
+            break;
+        }
+    }
+
+    if (!target) {
+        mDragSource = nullptr;
+        return;
+    }
+
+    int srcRow = mDragSource->gridRow(), srcCol = mDragSource->gridCol();
+    int srcRS = mDragSource->gridRowSpan(), srcCS = mDragSource->gridColSpan();
+    int tgtRow = target->gridRow(), tgtCol = target->gridCol();
+    int tgtRS = target->gridRowSpan(), tgtCS = target->gridColSpan();
+
+    bool srcFitsAtTarget = (tgtCol + srcCS <= 4);
+    bool tgtFitsAtSource = (srcCol + tgtCS <= 4);
+
+    if (srcFitsAtTarget && tgtFitsAtSource) {
+        mDragSource->setGridPosition(tgtRow, tgtCol, srcRS, srcCS);
+        target->setGridPosition(srcRow, srcCol, tgtRS, tgtCS);
+        buildGrid();
+    }
+
+    mDragSource = nullptr;
+}
+
+void DashboardPage::onTileResizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan)
+{
+    int row = wrapper->gridRow();
+    int col = wrapper->gridCol();
+
+    if (col + newColSpan > 4)
+        return;
+
+    for (DashboardTileWrapper *other : mTileWrappers) {
+        if (other == wrapper)
+            continue;
+
+        for (int r = row; r < row + newRowSpan; ++r) {
+            for (int c = col; c < col + newColSpan; ++c) {
+                int oRow = other->gridRow(), oCol = other->gridCol();
+                int oRS = other->gridRowSpan(), oCS = other->gridColSpan();
+                if (r >= oRow && r < oRow + oRS && c >= oCol && c < oCol + oCS)
+                    return;
+            }
+        }
+    }
+
+    wrapper->setGridPosition(row, col, newRowSpan, newColSpan);
+    buildGrid();
 }
 
 void DashboardPage::resizeEvent(QResizeEvent *event)

@@ -860,6 +860,12 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @accentColorHover;
 }
 
+#dragIndicator {
+    background-color: @accentColor;
+    border: 2px solid @accentColor;
+    border-radius: 12;
+}
+
 /* - System Summary Card - */
 
 #systemSummaryCard {
