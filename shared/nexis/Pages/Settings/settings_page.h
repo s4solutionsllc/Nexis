@@ -39,6 +39,7 @@ private slots:
     void on_spinDiskPercent_valueChanged(int value);
     void on_spinBatteryHealthPercent_valueChanged(int value);
     void on_checkAppQuitDontAsk_clicked(bool checked);
+    void on_checkMinimizeToTray_clicked(bool checked);
     void cmbColorSchemeChanged(int index);
     void cmbFontChanged(int index);
     void cmbDiskAnalyzerChanged(int index);

@@ -461,6 +461,13 @@ void App::init()
 
 void App::closeEvent(QCloseEvent *event)
 {
+    if (SettingManager::ins()->getMinimizeToTray()) {
+        emit SignalMapper::ins()->sigAppVisibilityChanged(false);
+        hide();
+        event->ignore();
+        return;
+    }
+
     mTrayIcon->hide();
     event->accept();
 
@@ -472,10 +479,12 @@ void App::closeEvent(QCloseEvent *event)
 void App::changeEvent(QEvent *event)
 {
     if (event->type() == QEvent::WindowStateChange && windowState().testFlag(Qt::WindowMinimized)) {
-        emit SignalMapper::ins()->sigAppVisibilityChanged(false);
-        hide();
-        event->ignore();
-        return;
+        if (SettingManager::ins()->getMinimizeToTray()) {
+            emit SignalMapper::ins()->sigAppVisibilityChanged(false);
+            hide();
+            event->ignore();
+            return;
+        }
     }
     QMainWindow::changeEvent(event);
 }

@@ -118,6 +118,9 @@ void SettingsPage::init()
     // app quit dont ask
     ui->checkAppQuitDontAsk->setChecked(mSettingManager->getAppQuitDialogDontAsk());
 
+    // minimize to tray
+    ui->checkMinimizeToTray->setChecked(mSettingManager->getMinimizeToTray());
+
     // load pages
     ui->cmbStartPage->addItems({
         tr("Dashboard"), tr("Startup Apps"), tr("System Cleaner"), tr("Search"),
@@ -266,6 +269,11 @@ void SettingsPage::on_spinBatteryHealthPercent_valueChanged(int value)
 void SettingsPage::on_checkAppQuitDontAsk_clicked(bool checked)
 {
     mSettingManager->setAppQuitDialogDontAsk(checked);
+}
+
+void SettingsPage::on_checkMinimizeToTray_clicked(bool checked)
+{
+    mSettingManager->setMinimizeToTray(checked);
 }
 
 void SettingsPage::cmbColorSchemeChanged(int index)

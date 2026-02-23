@@ -112,6 +112,11 @@
 - [x] **FR-51: Customizable drag-and-drop dashboard tile layout with persistence** — Added an edit mode toggle (pencil icon next to kiosk button, Ctrl+E shortcut) that enables drag-and-drop reordering and snap-to-grid resizing of dashboard tiles. Tiles can be resized to 1x1, 1x2, 2x1, or 2x2 grid cells via corner resize handles. Layout is persisted as JSON in settings.ini across sessions. Reset Layout button available in edit toolbar and Settings page. Edit mode and kiosk mode are mutually exclusive. Implemented via DashboardTileWrapper decorator pattern for edit-mode mouse handling.
   **Resolved:** Commits 034ba36, 325f0fb
 
+## System Tray
+
+- [x] **FR-52: Minimize to system tray** — Add an option to minimize the application to the system tray instead of the taskbar. When enabled, closing or minimizing the window hides it from the taskbar/dock and keeps only the tray icon visible. Clicking the tray icon restores the window. A new "Minimize to Tray" toggle on the Settings page (General section) controls this behavior, persisted via `SettingManager`. When disabled (default), the app minimizes and closes normally. On macOS this hides from the Dock; on Linux it hides from the taskbar/panel. The existing tray icon and context menu (with Quit action) remain unchanged — the tray icon is always visible regardless of this setting.
+  **Resolved:** Added `MinimizeToTray` setting key with getter/setter (default false). "Minimize to system tray on close" checkbox in Settings General section. `closeEvent()` hides to tray instead of quitting when enabled. `changeEvent()` conditionally hides on minimize (was previously unconditional). Tray icon click restores window (existing behavior unchanged).
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

@@ -295,3 +295,13 @@ void SettingManager::clearDashboardLayout()
 {
     mSettings->remove(SettingKeys::DashboardLayout);
 }
+
+void SettingManager::setMinimizeToTray(bool value)
+{
+    mSettings->setValue(SettingKeys::MinimizeToTray, value);
+}
+
+bool SettingManager::getMinimizeToTray() const
+{
+    return mSettings->value(SettingKeys::MinimizeToTray, false).toBool();
+}

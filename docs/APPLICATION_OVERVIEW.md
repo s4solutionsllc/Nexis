@@ -320,6 +320,7 @@ Configure Nexis application preferences.
 - **Font** — Choose application font family (Inter, Ubuntu, JetBrains Mono, System Default); applied live via `@fontFamily` QSS token
 - **Start Page** — Choose which page opens on launch
 - **Autostart** — Launch Nexis at login (creates `.desktop` or `.plist`)
+- **Minimize to Tray** — When enabled, closing or minimizing the window hides it to the system tray instead of quitting or staying in the taskbar; clicking the tray icon restores the window (FR-52)
 - **Disk Partition** — Select partition to monitor on Dashboard
 - **Alert Thresholds** — CPU%, memory%, disk%, battery health% triggers for tray notifications
 - **Tray Icon Style** — Choose system tray icon appearance (Color, Symbolic, Outline, Accent); applied live via `AppManager::updateTrayIcon()`

@@ -32,6 +32,7 @@ namespace SettingKeys {
     const QString AppFont("AppFont");
     const QString TrayIconStyle("TrayIconStyle");
     const QString DashboardLayout("DashboardLayout");
+    const QString MinimizeToTray("MinimizeToTray");
 }
 
 class SettingManager
@@ -122,6 +123,9 @@ public:
     void setDashboardLayout(const QString &json);
     QString getDashboardLayout() const;
     void clearDashboardLayout();
+
+    void setMinimizeToTray(bool value);
+    bool getMinimizeToTray() const;
 
 private:
     static SettingManager *instance;

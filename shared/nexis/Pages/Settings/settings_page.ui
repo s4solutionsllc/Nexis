@@ -114,6 +114,14 @@
            </widget>
           </item>
 
+          <item row="5" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkMinimizeToTray">
+            <property name="text"><string>Minimize to system tray on close</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
          </layout>
         </widget>
        </item>
