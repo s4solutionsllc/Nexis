@@ -31,6 +31,7 @@ namespace SettingKeys {
     const QString SidebarCollapsed("SidebarCollapsed");
     const QString AppFont("AppFont");
     const QString TrayIconStyle("TrayIconStyle");
+    const QString DashboardLayout("DashboardLayout");
 }
 
 class SettingManager
@@ -117,6 +118,10 @@ public:
 
     void setTrayIconStyle(const QString &value);
     QString getTrayIconStyle() const;
+
+    void setDashboardLayout(const QString &json);
+    QString getDashboardLayout() const;
+    void clearDashboardLayout();
 
 private:
     static SettingManager *instance;

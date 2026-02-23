@@ -280,3 +280,18 @@ QString SettingManager::getTrayIconStyle() const
 {
     return mSettings->value(SettingKeys::TrayIconStyle, "color").toString();
 }
+
+void SettingManager::setDashboardLayout(const QString &json)
+{
+    mSettings->setValue(SettingKeys::DashboardLayout, json);
+}
+
+QString SettingManager::getDashboardLayout() const
+{
+    return mSettings->value(SettingKeys::DashboardLayout, "").toString();
+}
+
+void SettingManager::clearDashboardLayout()
+{
+    mSettings->remove(SettingKeys::DashboardLayout);
+}
