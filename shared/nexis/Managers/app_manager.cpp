@@ -24,7 +24,8 @@ AppManager::AppManager()
 {
     mSettingManager = SettingManager::ins();
 
-    mTrayIcon = new QSystemTrayIcon(QIcon(":/static/tray-icon.svg"));
+    mTrayIcon = new QSystemTrayIcon();
+    updateTrayIcon();
 
     loadLanguageList();
 
@@ -47,6 +48,23 @@ AppManager::AppManager()
 QSystemTrayIcon *AppManager::getTrayIcon()
 {
     return mTrayIcon;
+}
+
+void AppManager::updateTrayIcon()
+{
+    QString style = mSettingManager->getTrayIconStyle();
+    QString path;
+
+    if (style == "symbolic")
+        path = QStringLiteral(":/static/tray-icon-symbolic.svg");
+    else if (style == "outline")
+        path = QStringLiteral(":/static/tray-icon-outline.svg");
+    else if (style == "accent")
+        path = QStringLiteral(":/static/tray-icon-accent.svg");
+    else
+        path = QStringLiteral(":/static/tray-icon.svg");
+
+    mTrayIcon->setIcon(QIcon(path));
 }
 
 QSettings *AppManager::getStyleValues() const

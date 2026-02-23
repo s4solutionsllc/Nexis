@@ -32,6 +32,7 @@ public:
     QSettings *getStyleValues() const;
 
     QSystemTrayIcon *getTrayIcon();
+    void updateTrayIcon();
 
     QString resolveThemeName() const;
 
