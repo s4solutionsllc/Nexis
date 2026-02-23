@@ -56,23 +56,19 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
 
 void DashboardPage::init()
 {
-    // Bento grid layout (mockup-aligned):
-    //  Row 0: HeroCard(CPU+Memory) (colspan 2) | Disk | Network
-    //  Row 1: GPU* | Temp* | Battery* | DiskHealth*
+    // Bento grid layout (default):
+    //  Row 0: CPU | Memory | Disk | Network
+    //  Row 1: GPU* | Temp* | Battery*
     // * = conditional tiles
 
     int row = 0;
     int col = 0;
 
-    // Row 0: Hero card (CPU + Memory combined) + Disk + Network
-    mHeroCard = new HeroCard(mCpuTile, mMemTile, this);
-    ui->bentoGrid->addWidget(mHeroCard, 0, 0, 1, 2);
+    // Row 0: all four primary tiles
+    ui->bentoGrid->addWidget(mCpuTile, 0, 0);
+    ui->bentoGrid->addWidget(mMemTile, 0, 1);
     ui->bentoGrid->addWidget(mDiskTile, 0, 2);
     ui->bentoGrid->addWidget(mNetworkTile, 0, 3);
-
-    // Set Hero display mode for CPU and Memory tiles
-    mCpuTile->setDisplayMode(MetricTile::Hero);
-    mMemTile->setDisplayMode(MetricTile::Hero);
 
     // Row 1: remaining tiles placed dynamically based on available hardware
     row = 1;
@@ -227,7 +223,7 @@ void DashboardPage::init()
 
     // Drop shadows on tiles
     QList<QWidget*> widgets = {
-        mHeroCard, mDiskTile, mNetworkTile
+        mCpuTile, mMemTile, mDiskTile, mNetworkTile
     };
     if (im->hasThermalSensors())
         widgets.append(mTempTile);

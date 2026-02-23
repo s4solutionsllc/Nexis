@@ -263,7 +263,7 @@ QSlider::handle:horizontal {
 QComboBox {
     border: 1px solid @borderColor;
     border-radius: @dp6;
-    background-color: @color01;
+    background-color: @color02;
     padding: @dp6 @dp12;
     font-size: 10pt;
     color: @color05;
@@ -291,9 +291,10 @@ QComboBox::down-arrow {
 }
 
 QComboBox QAbstractItemView {
-    background-color: @color01;
+    background-color: @color02;
     border: 1px solid @borderColor;
     border-radius: 6;
+    color: @color05;
     selection-background-color: @accentColor;
     selection-color: @color07;
 }
@@ -369,7 +370,7 @@ QDoubleSpinBox {
     border: 1px solid @borderColor;
     border-radius: @dp6;
     padding: @dp8;
-    background-color: @color01;
+    background-color: @color02;
     font-size: 10pt;
     color: @color05;
 }
@@ -386,6 +387,14 @@ QPushButton {
     font-size: 10pt;
     padding: @dp8 @dp16;
     min-height: @dp18;
+    background-color: @color01;
+    color: @color05;
+    border: 1px solid @borderColor;
+}
+
+QPushButton:hover {
+    border-color: @accentColor;
+    color: @accentColor;
 }
 
 QPushButton[accessibleName="danger"] {
@@ -440,6 +449,7 @@ QLabel[accessibleName="dialog-title"] {
     text-align: left;
     font-size: 10pt;
     border-left: 3px solid transparent;
+    background-color: @sidebar;
 }
 
 #sidebar QPushButton:checked {
@@ -654,32 +664,6 @@ QLabel[accessibleName="dialog-title"] {
 #lineChartProgress::chunk {
     background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 @accentColor, stop:1 @accentHover);
     border-radius: 3;
-}
-
-/* - Hero Card (CPU + Memory combined) - */
-
-#heroCard {
-    background-color: @cardBg;
-    border-radius: 12;
-    border: 1px solid @borderColor;
-}
-
-#heroCard:hover {
-    background-color: @cardBgElevated;
-    border-color: @accentColor;
-}
-
-#heroCardLeft, #heroCardRight {
-    background-color: transparent;
-    border: 0;
-    border-radius: 0;
-}
-
-#heroCardDivider {
-    background-color: @borderColor;
-    border: 0;
-    max-width: 1;
-    margin: 10 0;
 }
 
 /* - Metric Tile - */
@@ -982,6 +966,7 @@ QLabel[accessibleName="dialog-title"] {
     border: 0;
     font-size: 11pt;
     color: @accentColor;
+    background-color: @accentBgTint;
 }
 
 #treeWidgetScanResult {
@@ -1625,6 +1610,7 @@ SEARCH
     font-size: 10pt;
     color: @accentColor;
     border: 0;
+    background-color: @accentBgTint;
 }
 
 #lblHostTitle {
