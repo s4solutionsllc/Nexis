@@ -422,6 +422,12 @@
   - **Fix complexity:** Moderate (add volume-to-physical-drive matching, cache health data, update badge on selection change)
   - **Resolved:** Added `clearDriveHealth()` to DiskTile for removing existing badges. Added `updateDiskHealthBadge()` to DashboardPage that matches the selected volume's device path to a physical drive's health data using `extractBaseDevice()` (handles Linux SATA/NVMe partition stripping and macOS APFS synthesized volume paths). Falls back to the sole physical drive when only one exists (common on single-drive Macs). Called from `onDiskHealthUpdated()`, `onDiskUsageUpdated()`, and `onDiskSelected()`.
 
+- [ ] **BUG-62: Dashboard grid has no empty tile slot support — resize and drag-to-empty blocked** (MEDIUM)
+  - **Scope:** Dashboard page — tile layout system (FR-51 implementation)
+  - **Description:** The dashboard grid layout was implemented without any concept of empty cells. Every grid position is occupied by a real tile widget, so: (1) **Resize is blocked** — `onTileResizeRequested()` rejects expansion when adjacent cells are occupied, which is almost always the case since the default layout packs 4 tiles across row 0 wall-to-wall. Only 2 of ~28 possible resize operations succeed in the default 7-tile layout. (2) **Drag-to-empty is impossible** — `gridCellAtPos()` resolves positions by hit-testing tile widgets; empty space returns 0 (unresolvable). `onTileDragFinished()` discards drops on empty cells. (3) **QGridLayout collapses** empty rows/columns since no spacer/placeholder widgets are inserted. Root causes: no occupancy grid data structure, `buildGrid()` only places real tiles, serialization only stores tile entries (no grid dimensions or empty markers). This is also a prerequisite for FR-49 (customizable dashboard with widget visibility), which requires hiding tiles and having remaining tiles expand into freed space.
+  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp` (`buildGrid()` L912-931, `gridCellAtPos()` L958-969, `onTileResizeRequested()` L1042-1066, `onTileDragFinished()` L998-1040), `shared/nexis/Pages/Dashboard/dashboard_tile_wrapper.cpp` (resize span L93-102)
+  - **Fix complexity:** Moderate (add occupancy grid, placeholder widgets for empty cells, pixel-to-cell resolution, drag-to-empty support, tile displacement or manual-clear-first resize policy)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
