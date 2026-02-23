@@ -83,6 +83,8 @@
         <file>static/themes/common/img/disk-harddisk.svg</file>
         <file>static/themes/common/img/fullscreen.svg</file>
         <file>static/themes/common/img/fullscreen-exit.svg</file>
+        <file>static/themes/common/img/grid-edit.svg</file>
+        <file>static/themes/common/img/grid-edit-done.svg</file>
         <file>static/themes/default/img/sidebar-icons/dash.svg</file>
         <file>static/themes/default/img/sidebar-icons/hardware-info.svg</file>
         <file>static/themes/default/img/sidebar-icons/startup-apps.svg</file>
