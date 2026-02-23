@@ -270,3 +270,13 @@ QString SettingManager::getAppFont() const
 {
     return mSettings->value(SettingKeys::AppFont, "Inter").toString();
 }
+
+void SettingManager::setTrayIconStyle(const QString &value)
+{
+    mSettings->setValue(SettingKeys::TrayIconStyle, value);
+}
+
+QString SettingManager::getTrayIconStyle() const
+{
+    return mSettings->value(SettingKeys::TrayIconStyle, "color").toString();
+}

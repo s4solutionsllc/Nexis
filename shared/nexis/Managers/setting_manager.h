@@ -30,6 +30,7 @@ namespace SettingKeys {
     const QString ThresholdGB("ThresholdGB");
     const QString SidebarCollapsed("SidebarCollapsed");
     const QString AppFont("AppFont");
+    const QString TrayIconStyle("TrayIconStyle");
 }
 
 class SettingManager
@@ -113,6 +114,9 @@ public:
 
     void setAppFont(const QString &value);
     QString getAppFont() const;
+
+    void setTrayIconStyle(const QString &value);
+    QString getTrayIconStyle() const;
 
 private:
     static SettingManager *instance;
