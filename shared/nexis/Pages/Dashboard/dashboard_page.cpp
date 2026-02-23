@@ -95,6 +95,9 @@ void DashboardPage::init()
 
     buildGrid();
 
+    // Give the tile grid all available vertical space
+    ui->mainLayout->setStretchFactor(ui->bentoGrid, 1);
+
     // Temperature sensor gear menu
     if (im->hasThermalSensors()) {
         QList<ThermalSensor> sensors = im->getThermalSensors();

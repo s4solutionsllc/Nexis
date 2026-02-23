@@ -43,34 +43,6 @@
      </property>
     </layout>
    </item>
-   <!-- System Summary (full width) -->
-   <item>
-    <widget class="QWidget" name="systemSummary" native="true">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <layout class="QHBoxLayout" name="summaryLayout">
-      <property name="leftMargin">
-       <number>16</number>
-      </property>
-      <property name="topMargin">
-       <number>10</number>
-      </property>
-      <property name="rightMargin">
-       <number>16</number>
-      </property>
-      <property name="bottomMargin">
-       <number>10</number>
-      </property>
-      <property name="spacing">
-       <number>24</number>
-      </property>
-     </layout>
-    </widget>
-   </item>
    <!-- Update bar -->
    <item>
     <widget class="QWidget" name="widgetUpdateBar" native="true">
@@ -128,19 +100,33 @@
      </layout>
     </widget>
    </item>
-   <!-- Spacer pushes footer to bottom -->
+   <!-- System Summary (full width, above footer) -->
    <item>
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+    <widget class="QWidget" name="systemSummary" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>0</height>
-      </size>
-     </property>
-    </spacer>
+     <layout class="QHBoxLayout" name="summaryLayout">
+      <property name="leftMargin">
+       <number>16</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>16</number>
+      </property>
+      <property name="bottomMargin">
+       <number>10</number>
+      </property>
+      <property name="spacing">
+       <number>24</number>
+      </property>
+     </layout>
+    </widget>
    </item>
    <!-- Status Footer -->
    <item>
