@@ -43,6 +43,7 @@ ScheduleEditorDialog::ScheduleEditorDialog(const ScheduleManager::CleaningSchedu
 void ScheduleEditorDialog::buildUI()
 {
     setMinimumSize(450, 480);
+    setObjectName("scheduleEditorDialog");
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(12);

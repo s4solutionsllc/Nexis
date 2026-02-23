@@ -76,6 +76,23 @@ QDialog QLabel {
     color: @color05;
 }
 
+QDialog QGroupBox {
+    border: 1px solid @borderColor;
+    border-radius: 12;
+    margin-top: 12;
+    padding: 12 12 6 12;
+    background-color: @cardBg;
+}
+
+QDialog QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: @color05;
+    font-size: 11pt;
+    font-weight: bold;
+}
+
 /*************
     QMessageBox
 **************/

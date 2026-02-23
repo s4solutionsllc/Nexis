@@ -52,6 +52,7 @@ SettingsPage::SettingsPage(QWidget *parent, AppManager *appManager,
     updateCreditLink();
 
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, updateCreditLink);
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &SettingsPage::refreshThemeColors);
 
     init();
 }
@@ -651,4 +652,14 @@ void SettingsPage::onResetDashboardLayout()
     auto *btn = findChild<QPushButton*>("btnResetDashboardLayout");
     if (btn)
         btn->setEnabled(false);
+}
+
+void SettingsPage::refreshThemeColors()
+{
+    Utilities::addDropShadow({
+        ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme,
+        ui->cmbFont, ui->cmbTrayIconStyle, ui->spinCpuPercent, ui->spinMemoryPercent,
+        ui->spinDiskPercent, ui->spinBatteryHealthPercent, ui->cmbDiskAnalyzer,
+        ui->btnManageSchedules, ui->btnViewHistory, ui->spnThresholdGB
+    }, 50);
 }

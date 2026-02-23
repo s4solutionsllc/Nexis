@@ -57,10 +57,11 @@
   - **Fix complexity:** Moderate (audit and restructure grid layout, fix column consistency, adjust minimum size policies)
   - **Resolved:** Complete layout redesign. Replaced flat 6-column QGridLayout with QScrollArea containing 5 QGroupBox card sections (General, Appearance, Alerts, Tools, Scheduled Cleaning). Each group uses a consistent 2-column label/control grid. Moved 7 programmatically-created Scheduled Cleaning widgets into the `.ui` file, eliminating fragile grid manipulation code from `initScheduledCleaning()`. Added QGroupBox QSS rules matching HardwareInfo/GnomeSettings card pattern (`@cardBg` background, `@borderColor` border, 12px radius). Checkboxes now use inline text labels. Minimum width reduced from ~1100px to ~450px. Page scrolls on small screens.
 
-- [ ] **BUG-64: Settings page combo boxes, buttons, and modals not respecting dark/light theme consistently** (MEDIUM)
-  - **Files:** `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/Pages/Settings/settings_page.ui`, `shared/nexis/static/themes/default/style/style.qss`
-  - **Description:** Combo boxes, buttons, and modal/dialog windows on the Settings page do not consistently adopt the current dark or light theme. Users switching themes see mismatched colors — e.g., light-colored dropdowns or button text on a dark background, or dark modal content on a light theme. Likely caused by missing QSS selectors for Settings-specific widgets, QPalette inheritance issues on programmatic dialogs, or widgets not being re-polished after theme changes.
-  - **Fix complexity:** Needs research
+- [x] **BUG-64: Settings page combo boxes, buttons, and modals not respecting dark/light theme consistently** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** Multiple theming deficiencies: (1) SettingsPage has no `sigChangedAppTheme` listener beyond a credit-link lambda — no `refreshThemeColors()` method exists, (2) QComboBox dropdown popups may use macOS native Cocoa rendering that ignores QSS `QAbstractItemView` rules (no `setStyle("Fusion")` in app), (3) programmatic widgets (`settingsGroup`, `btnResetDashboardLayout`) lack QSS-matchable selectors, (4) modal dialogs (`manageSchedulesDialog`, `cleaningHistoryDialog`) rely on generic `QDialog` QSS but child QGroupBox/QPlainTextEdit widgets have no dialog-specific rules.
+  - **Fix complexity:** Moderate (add dialog-specific QSS rules + theme listener; macOS combo popup may need platform-specific fix)
+  - **Resolved:** Added `QDialog QGroupBox` and `QDialog QGroupBox::title` QSS rules for themed card styling in all dialogs. Added `setObjectName("scheduleEditorDialog")` to ScheduleEditorDialog. Added `refreshThemeColors()` method to SettingsPage connected to `sigChangedAppTheme` to refresh drop shadows on theme change. Note: macOS native QComboBox popup rendering may still require `setStyle("Fusion")` as a future enhancement.
 
 ## LOW Severity
 

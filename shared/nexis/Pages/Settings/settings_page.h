@@ -54,6 +54,7 @@ private slots:
     void onCleaningNotificationsToggled(bool checked);
     void updateScheduleSummary();
     void onResetDashboardLayout();
+    void refreshThemeColors();
 
 private:
     Ui::SettingsPage *ui;
