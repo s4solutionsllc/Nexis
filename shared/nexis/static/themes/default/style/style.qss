@@ -866,6 +866,12 @@ QLabel[accessibleName="dialog-title"] {
     border-radius: 12;
 }
 
+#dashPlaceholder {
+    background-color: transparent;
+    border: @dp1 dashed @borderColor;
+    border-radius: @dp8;
+}
+
 /* - System Summary Card - */
 
 #systemSummaryCard {

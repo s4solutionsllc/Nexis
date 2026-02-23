@@ -788,6 +788,8 @@ void DashboardPage::toggleEditMode()
         mEditButton->setToolTip(tr("Finish Editing (Ctrl+E)"));
         for (DashboardTileWrapper *w : mTileWrappers)
             w->setEditMode(true);
+        for (QWidget *ph : mPlaceholders)
+            ph->setVisible(true);
     }
 }
 
@@ -800,6 +802,8 @@ void DashboardPage::exitEditMode()
     mEditButton->setToolTip(tr("Customize Layout (Ctrl+E)"));
     for (DashboardTileWrapper *w : mTileWrappers)
         w->setEditMode(false);
+    for (QWidget *ph : mPlaceholders)
+        ph->setVisible(false);
     QJsonDocument doc(serializeLayout());
     mSettingManager->setDashboardLayout(QString(doc.toJson(QJsonDocument::Compact)));
 }
@@ -880,10 +884,10 @@ void DashboardPage::deserializeLayout(const QString &json)
     for (const QJsonValue &val : arr) {
         QJsonObject obj = val.toObject();
         QString id = obj["id"].toString();
-        int row = obj["row"].toInt();
-        int col = obj["col"].toInt();
-        int rowSpan = obj["rowSpan"].toInt(1);
-        int colSpan = obj["colSpan"].toInt(1);
+        int row = qBound(0, obj["row"].toInt(), GRID_ROWS - 1);
+        int col = qBound(0, obj["col"].toInt(), GRID_COLS - 1);
+        int rowSpan = qBound(1, obj["rowSpan"].toInt(1), GRID_ROWS - row);
+        int colSpan = qBound(1, obj["colSpan"].toInt(1), GRID_COLS - col);
 
         for (DashboardTileWrapper *w : mTileWrappers) {
             if (w->tileId() == id) {
@@ -909,6 +913,32 @@ QJsonArray DashboardPage::serializeLayout() const
     return arr;
 }
 
+void DashboardPage::rebuildOccupancy()
+{
+    for (int r = 0; r < GRID_ROWS; ++r)
+        for (int c = 0; c < GRID_COLS; ++c)
+            mOccupancy[r][c].clear();
+
+    for (const DashboardTileWrapper *w : mTileWrappers) {
+        for (int r = w->gridRow(); r < w->gridRow() + w->gridRowSpan(); ++r)
+            for (int c = w->gridCol(); c < w->gridCol() + w->gridColSpan(); ++c)
+                if (r < GRID_ROWS && c < GRID_COLS)
+                    mOccupancy[r][c] = w->tileId();
+    }
+}
+
+bool DashboardPage::regionIsFree(int row, int col, int rowSpan, int colSpan,
+                                  const QString &ignoreTileId) const
+{
+    if (row + rowSpan > GRID_ROWS || col + colSpan > GRID_COLS)
+        return false;
+    for (int r = row; r < row + rowSpan; ++r)
+        for (int c = col; c < col + colSpan; ++c)
+            if (!mOccupancy[r][c].isEmpty() && mOccupancy[r][c] != ignoreTileId)
+                return false;
+    return true;
+}
+
 void DashboardPage::buildGrid()
 {
     while (ui->bentoGrid->count() > 0) {
@@ -917,6 +947,10 @@ void DashboardPage::buildGrid()
             item->widget()->setParent(nullptr);
         delete item;
     }
+    qDeleteAll(mPlaceholders);
+    mPlaceholders.clear();
+
+    rebuildOccupancy();
 
     for (DashboardTileWrapper *w : mTileWrappers) {
         w->setParent(this);
@@ -926,8 +960,23 @@ void DashboardPage::buildGrid()
         w->show();
     }
 
-    for (int c = 0; c < 4; ++c)
+    for (int r = 0; r < GRID_ROWS; ++r) {
+        for (int c = 0; c < GRID_COLS; ++c) {
+            if (mOccupancy[r][c].isEmpty()) {
+                auto *ph = new QWidget(this);
+                ph->setObjectName("dashPlaceholder");
+                ph->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                ph->setVisible(mEditMode);
+                ui->bentoGrid->addWidget(ph, r, c);
+                mPlaceholders.append(ph);
+            }
+        }
+    }
+
+    for (int c = 0; c < GRID_COLS; ++c)
         ui->bentoGrid->setColumnStretch(c, 1);
+    for (int r = 0; r < GRID_ROWS; ++r)
+        ui->bentoGrid->setRowStretch(r, 1);
 }
 
 void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)
@@ -955,17 +1004,30 @@ void DashboardPage::rebuildLayout()
     buildGrid();
 }
 
-int DashboardPage::gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const
+bool DashboardPage::gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const
 {
-    for (DashboardTileWrapper *w : mTileWrappers) {
-        QRect tileRect = QRect(w->mapToGlobal(QPoint(0, 0)), w->size());
-        if (tileRect.contains(globalPos)) {
-            outRow = w->gridRow();
-            outCol = w->gridCol();
-            return 1;
-        }
-    }
-    return 0;
+    QWidget *gridParent = ui->bentoGrid->parentWidget();
+    if (!gridParent)
+        return false;
+
+    QPoint local = gridParent->mapFromGlobal(globalPos);
+    QRect gridRect = ui->bentoGrid->geometry();
+
+    if (!gridRect.contains(local))
+        return false;
+
+    int x = local.x() - gridRect.x();
+    int y = local.y() - gridRect.y();
+
+    int cellW = gridRect.width() / GRID_COLS;
+    int cellH = gridRect.height() / GRID_ROWS;
+
+    if (cellW <= 0 || cellH <= 0)
+        return false;
+
+    outCol = qBound(0, x / cellW, GRID_COLS - 1);
+    outRow = qBound(0, y / cellH, GRID_ROWS - 1);
+    return true;
 }
 
 void DashboardPage::onTileDragStarted(DashboardTileWrapper *wrapper, const QPoint &globalPos)
@@ -981,18 +1043,24 @@ void DashboardPage::onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint 
     Q_UNUSED(wrapper)
 
     int targetRow, targetCol;
-    if (gridCellAtPos(globalPos, targetRow, targetCol)) {
-        for (DashboardTileWrapper *w : mTileWrappers) {
-            if (w->gridRow() == targetRow && w->gridCol() == targetCol && w != mDragSource) {
-                QPoint local = w->mapToParent(QPoint(0, 0));
-                mDragIndicator->setGeometry(local.x(), local.y(), w->width(), w->height());
-                mDragIndicator->show();
-                mDragIndicator->raise();
-                return;
-            }
-        }
+    if (!gridCellAtPos(globalPos, targetRow, targetCol)) {
+        mDragIndicator->hide();
+        return;
     }
-    mDragIndicator->hide();
+
+    if (mDragSource && mDragSource->gridRow() == targetRow && mDragSource->gridCol() == targetCol) {
+        mDragIndicator->hide();
+        return;
+    }
+
+    QRect gridRect = ui->bentoGrid->geometry();
+    int cellW = gridRect.width() / GRID_COLS;
+    int cellH = gridRect.height() / GRID_ROWS;
+    int x = gridRect.x() + targetCol * cellW;
+    int y = gridRect.y() + targetRow * cellH;
+    mDragIndicator->setGeometry(x, y, cellW, cellH);
+    mDragIndicator->show();
+    mDragIndicator->raise();
 }
 
 void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos)
@@ -1009,31 +1077,36 @@ void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoi
         return;
     }
 
-    DashboardTileWrapper *target = nullptr;
-    for (DashboardTileWrapper *w : mTileWrappers) {
-        if (w->gridRow() == targetRow && w->gridCol() == targetCol && w != mDragSource) {
-            target = w;
-            break;
+    if (mOccupancy[targetRow][targetCol].isEmpty()) {
+        int srcRS = mDragSource->gridRowSpan();
+        int srcCS = mDragSource->gridColSpan();
+        if (regionIsFree(targetRow, targetCol, srcRS, srcCS, mDragSource->tileId())) {
+            mDragSource->setGridPosition(targetRow, targetCol, srcRS, srcCS);
+            buildGrid();
         }
-    }
+    } else {
+        DashboardTileWrapper *target = nullptr;
+        for (DashboardTileWrapper *w : mTileWrappers) {
+            if (w->gridRow() == targetRow && w->gridCol() == targetCol && w != mDragSource) {
+                target = w;
+                break;
+            }
+        }
+        if (target) {
+            int srcRow = mDragSource->gridRow(), srcCol = mDragSource->gridCol();
+            int srcRS = mDragSource->gridRowSpan(), srcCS = mDragSource->gridColSpan();
+            int tgtRow = target->gridRow(), tgtCol = target->gridCol();
+            int tgtRS = target->gridRowSpan(), tgtCS = target->gridColSpan();
 
-    if (!target) {
-        mDragSource = nullptr;
-        return;
-    }
+            bool srcFitsAtTarget = (tgtCol + srcCS <= GRID_COLS);
+            bool tgtFitsAtSource = (srcCol + tgtCS <= GRID_COLS);
 
-    int srcRow = mDragSource->gridRow(), srcCol = mDragSource->gridCol();
-    int srcRS = mDragSource->gridRowSpan(), srcCS = mDragSource->gridColSpan();
-    int tgtRow = target->gridRow(), tgtCol = target->gridCol();
-    int tgtRS = target->gridRowSpan(), tgtCS = target->gridColSpan();
-
-    bool srcFitsAtTarget = (tgtCol + srcCS <= 4);
-    bool tgtFitsAtSource = (srcCol + tgtCS <= 4);
-
-    if (srcFitsAtTarget && tgtFitsAtSource) {
-        mDragSource->setGridPosition(tgtRow, tgtCol, srcRS, srcCS);
-        target->setGridPosition(srcRow, srcCol, tgtRS, tgtCS);
-        buildGrid();
+            if (srcFitsAtTarget && tgtFitsAtSource) {
+                mDragSource->setGridPosition(tgtRow, tgtCol, srcRS, srcCS);
+                target->setGridPosition(srcRow, srcCol, tgtRS, tgtCS);
+                buildGrid();
+            }
+        }
     }
 
     mDragSource = nullptr;
@@ -1044,22 +1117,8 @@ void DashboardPage::onTileResizeRequested(DashboardTileWrapper *wrapper, int new
     int row = wrapper->gridRow();
     int col = wrapper->gridCol();
 
-    if (col + newColSpan > 4)
+    if (!regionIsFree(row, col, newRowSpan, newColSpan, wrapper->tileId()))
         return;
-
-    for (DashboardTileWrapper *other : mTileWrappers) {
-        if (other == wrapper)
-            continue;
-
-        for (int r = row; r < row + newRowSpan; ++r) {
-            for (int c = col; c < col + newColSpan; ++c) {
-                int oRow = other->gridRow(), oCol = other->gridCol();
-                int oRS = other->gridRowSpan(), oCS = other->gridColSpan();
-                if (r >= oRow && r < oRow + oRS && c >= oCol && c < oCol + oCS)
-                    return;
-            }
-        }
-    }
 
     wrapper->setGridPosition(row, col, newRowSpan, newColSpan);
     buildGrid();

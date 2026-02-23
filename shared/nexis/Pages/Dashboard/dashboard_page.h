@@ -109,6 +109,11 @@ private:
     bool mEditMode;
     bool mKioskMode;
 
+    static const int GRID_ROWS = 4;
+    static const int GRID_COLS = 4;
+    QString mOccupancy[GRID_ROWS][GRID_COLS];
+    QList<QWidget*> mPlaceholders;
+
     QList<DashboardTileWrapper*> mTileWrappers;
     QWidget *mDragIndicator;
     DashboardTileWrapper *mDragSource;
@@ -129,7 +134,10 @@ private:
     QJsonArray serializeLayout() const;
     void deserializeLayout(const QString &json);
     QJsonArray defaultLayout() const;
-    int gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const;
+    bool gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const;
+    void rebuildOccupancy();
+    bool regionIsFree(int row, int col, int rowSpan, int colSpan,
+                      const QString &ignoreTileId = QString()) const;
 };
 
 #endif // DASHBOARDPAGE_H
