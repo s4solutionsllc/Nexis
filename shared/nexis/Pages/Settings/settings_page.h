@@ -53,6 +53,7 @@ private slots:
     void onViewCleaningHistory();
     void onCleaningNotificationsToggled(bool checked);
     void updateScheduleSummary();
+    void onResetDashboardLayout();
 
 private:
     Ui::SettingsPage *ui;
