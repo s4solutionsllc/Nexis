@@ -10,6 +10,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDesktopServices>
+#include <QShortcut>
 #include <QtConcurrent>
 
 #include "Managers/info_manager.h"
@@ -61,6 +62,9 @@ private slots:
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 
     void on_btnDownloadUpdate_clicked();
+    void toggleEditMode();
+    void exitEditMode();
+    void onResetLayout();
 
 signals:
     void sigShowUpdateBar();
@@ -92,6 +96,13 @@ private:
     int mSelectedGpuIndex;
 
     QPushButton *mKioskButton;
+    QPushButton *mEditButton;
+    QWidget *mEditToolbar;
+    QPushButton *mBtnResetLayout;
+    QPushButton *mBtnDone;
+    QShortcut *mEditShortcut;
+    bool mEditMode;
+    bool mKioskMode;
 
     QList<QLabel*> mSummaryLabels;
     QString mSummaryHostname;

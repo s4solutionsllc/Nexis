@@ -47,7 +47,14 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mTempSensorMenu(new QMenu(this)),
     mSelectedSensorIndex(0),
     mSelectedGpuIndex(0),
-    mKioskButton(new QPushButton(this))
+    mKioskButton(new QPushButton(this)),
+    mEditButton(new QPushButton(this)),
+    mEditToolbar(nullptr),
+    mBtnResetLayout(nullptr),
+    mBtnDone(nullptr),
+    mEditShortcut(nullptr),
+    mEditMode(false),
+    mKioskMode(false)
 {
     ui->setupUi(this);
 
@@ -257,6 +264,54 @@ void DashboardPage::init()
     });
     connect(mSignalMapper, &SignalMapper::sigKioskModeChanged,
             this, &DashboardPage::onKioskModeChanged);
+
+    // Edit mode toggle button (floating, to the left of kiosk button)
+    mEditButton->setFixedSize(32, 32);
+    mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
+    mEditButton->setIconSize(QSize(16, 16));
+    mEditButton->setToolTip(tr("Customize Layout (Ctrl+E)"));
+    mEditButton->setCursor(Qt::PointingHandCursor);
+    mEditButton->setFocusPolicy(Qt::NoFocus);
+    mEditButton->setObjectName("btnEditToggle");
+    mEditButton->raise();
+
+    connect(mEditButton, &QPushButton::clicked, this, &DashboardPage::toggleEditMode);
+
+    // Ctrl+E shortcut
+    mEditShortcut = new QShortcut(QKeySequence("Ctrl+E"), this);
+    connect(mEditShortcut, &QShortcut::activated, this, &DashboardPage::toggleEditMode);
+
+    // Edit mode toolbar (hidden by default, shown above bentoGrid)
+    mEditToolbar = new QWidget(this);
+    mEditToolbar->setObjectName("editToolbar");
+    mEditToolbar->setFixedHeight(40);
+    mEditToolbar->hide();
+
+    auto *toolbarLayout = new QHBoxLayout(mEditToolbar);
+    toolbarLayout->setContentsMargins(12, 4, 12, 4);
+
+    auto *lblCustomize = new QLabel(tr("Customize Layout"), mEditToolbar);
+    lblCustomize->setObjectName("editToolbarLabel");
+    toolbarLayout->addWidget(lblCustomize);
+    toolbarLayout->addStretch();
+
+    mBtnResetLayout = new QPushButton(tr("Reset Layout"), mEditToolbar);
+    mBtnResetLayout->setObjectName("btnResetLayout");
+    mBtnResetLayout->setCursor(Qt::PointingHandCursor);
+    mBtnResetLayout->setFocusPolicy(Qt::NoFocus);
+    toolbarLayout->addWidget(mBtnResetLayout);
+
+    mBtnDone = new QPushButton(tr("Done"), mEditToolbar);
+    mBtnDone->setObjectName("btnEditDone");
+    mBtnDone->setCursor(Qt::PointingHandCursor);
+    mBtnDone->setFocusPolicy(Qt::NoFocus);
+    toolbarLayout->addWidget(mBtnDone);
+
+    // Insert toolbar at the top of the main layout (before bentoGrid)
+    ui->mainLayout->insertWidget(0, mEditToolbar);
+
+    connect(mBtnDone, &QPushButton::clicked, this, &DashboardPage::exitEditMode);
+    connect(mBtnResetLayout, &QPushButton::clicked, this, &DashboardPage::onResetLayout);
 }
 
 void DashboardPage::buildSystemSummary()
@@ -725,12 +780,53 @@ void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
     }
 }
 
+void DashboardPage::toggleEditMode()
+{
+    if (mKioskMode)
+        return;
+
+    if (mEditMode)
+        exitEditMode();
+    else {
+        mEditMode = true;
+        mEditToolbar->show();
+        mKioskButton->hide();
+        mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit-done.svg"));
+        mEditButton->setToolTip(tr("Finish Editing (Ctrl+E)"));
+        // TODO: Task 7 will enable drag handles on tiles here
+    }
+}
+
+void DashboardPage::exitEditMode()
+{
+    mEditMode = false;
+    mEditToolbar->hide();
+    mKioskButton->show();
+    mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
+    mEditButton->setToolTip(tr("Customize Layout (Ctrl+E)"));
+    // TODO: Task 7 will disable drag handles and save layout here
+}
+
+void DashboardPage::onResetLayout()
+{
+    mSettingManager->clearDashboardLayout();
+    // TODO: Task 7 will call rebuildLayout() here
+    exitEditMode();
+}
+
 void DashboardPage::onKioskModeChanged(bool enabled)
 {
+    mKioskMode = enabled;
     if (enabled) {
+        if (mEditMode)
+            exitEditMode();
+        mEditButton->hide();
+        mEditShortcut->setEnabled(false);
         mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen-exit.svg"));
         mKioskButton->setToolTip(tr("Exit Kiosk Mode (ESC)"));
     } else {
+        mEditButton->show();
+        mEditShortcut->setEnabled(true);
         mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
         mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
     }
@@ -740,4 +836,5 @@ void DashboardPage::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     mKioskButton->move(width() - mKioskButton->width() - 10, 10);
+    mEditButton->move(width() - mKioskButton->width() - mEditButton->width() - 18, 10);
 }

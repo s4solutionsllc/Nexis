@@ -809,6 +809,57 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 8pt;
 }
 
+/* - Edit Mode Toolbar - */
+
+#editToolbar {
+    background-color: @cardBg;
+    border: 1px solid @borderColor;
+    border-radius: 8;
+}
+
+#editToolbarLabel {
+    color: @color05;
+    font-size: 10pt;
+    font-weight: 600;
+}
+
+#btnEditToggle {
+    border: 0;
+    background-color: transparent;
+    border-radius: 6;
+    padding: 4;
+}
+
+#btnEditToggle:hover {
+    background-color: @color02;
+}
+
+#btnResetLayout {
+    font-size: 9pt;
+    padding: 4 12;
+    border-radius: 6;
+    border: 1px solid @borderColor;
+    color: @color05;
+    background-color: transparent;
+}
+
+#btnResetLayout:hover {
+    background-color: @color02;
+}
+
+#btnEditDone {
+    font-size: 9pt;
+    padding: 4 12;
+    border-radius: 6;
+    border: 1px solid @accentColor;
+    color: @color07;
+    background-color: @accentColor;
+}
+
+#btnEditDone:hover {
+    background-color: @accentColorHover;
+}
+
 /* - System Summary Card - */
 
 #systemSummaryCard {
