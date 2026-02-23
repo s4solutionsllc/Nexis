@@ -874,7 +874,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #btnEditDone:hover {
-    background-color: @accentColorHover;
+    background-color: @accentHover;
 }
 
 #dragIndicator {

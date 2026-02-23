@@ -35,9 +35,10 @@ SettingsPage::SettingsPage(QWidget *parent, AppManager *appManager,
 {
     ui->setupUi(this);
 
-    // Transparent scroll area (QSS viewport gotcha — see CLAUDE.md)
-    ui->scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
-    ui->scrollContent->setStyleSheet("background-color:transparent;");
+    // Transparent scroll area — use QPalette approach (not inline setStyleSheet)
+    // so the global QSS cascade reaches child widgets cleanly
+    ui->scrollArea->viewport()->setAutoFillBackground(false);
+    ui->scrollContent->setAutoFillBackground(false);
 
     auto updateCreditLink = [this]() {
         QSettings *sv = apm->getStyleValues();

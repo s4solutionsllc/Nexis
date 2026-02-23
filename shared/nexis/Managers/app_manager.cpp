@@ -2,6 +2,7 @@
 #include "setting_manager.h"
 #include "dpi.h"
 #include <QDebug>
+#include <QPalette>
 #include <QRegularExpression>
 #include <algorithm>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
@@ -188,6 +189,38 @@ void AppManager::updateStylesheet()
     }
 
     qApp->setStyleSheet(mStylesheetFileContent);
+
+    // Sync QPalette with theme tokens so Fusion style renders
+    // QComboBox popups and other native-fallback widgets correctly
+    {
+        auto col = [this](const char *token) {
+            return QColor(mStyleValues->value(QLatin1String(token)).toString());
+        };
+
+        QColor window    = col("@color01");
+        QColor base      = col("@color02");
+        QColor text      = col("@color05");
+        QColor highlight = col("@accentColor");
+        QColor hlText    = col("@color07");
+        QColor border    = col("@borderColor");
+
+        QPalette pal;
+        pal.setColor(QPalette::Window,          window);
+        pal.setColor(QPalette::WindowText,      text);
+        pal.setColor(QPalette::Base,            base);
+        pal.setColor(QPalette::AlternateBase,   base.lighter(110));
+        pal.setColor(QPalette::Text,            text);
+        pal.setColor(QPalette::Button,          base);
+        pal.setColor(QPalette::ButtonText,      text);
+        pal.setColor(QPalette::Highlight,       highlight);
+        pal.setColor(QPalette::HighlightedText, hlText);
+        pal.setColor(QPalette::ToolTipBase,     window);
+        pal.setColor(QPalette::ToolTipText,     text);
+        pal.setColor(QPalette::PlaceholderText, QColor(text.red(), text.green(), text.blue(), 128));
+        pal.setColor(QPalette::Mid,             border);
+
+        qApp->setPalette(pal);
+    }
 
     emit SignalMapper::ins()->sigChangedAppTheme();
 }
