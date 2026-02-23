@@ -93,21 +93,21 @@ Pre-built binaries are available on the [Releases page](https://github.com/lsimp
 
 | Page | Screenshot |
 |---|---|
-| Hardware Info | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-02.png" width="500"> |
-| Startup Apps | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-03.png" width="500"> |
-| Search | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-05.png" width="500"> |
-| Services | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-06.png" width="500"> |
-| Processes | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-07.png" width="500"> |
-| Uninstaller | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-08.png" width="500"> |
-| Docker | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-09.png" width="500"> |
-| Resources (cont.) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-11.png" width="500"> |
-| Helpers | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-12.png" width="500"> |
-| APT Repository Manager | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-13.png" width="500"> |
-| GNOME Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-14.png" width="500"> |
-| GNOME Settings (Window Manager) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-15.png" width="500"> |
-| GNOME Settings (Mouse/Touchpad) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-16.png" width="500"> |
-| Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-17.png" width="500"> |
-| Feedback | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-18.png" width="500"> |
+| Hardware Info | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/screenshots/hardware-info.png" width="500"> |
+| Startup Apps | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/startup-apps.png" width="500"> |
+| Search | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/search.png" width="500"> |
+| Services | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/services.png" width="500"> |
+| Processes | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/processes.png" width="500"> |
+| Uninstaller | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/uninstaller.png" width="500"> |
+| Docker | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/" width="500"> |
+| Resources | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/resources-overview.png" width="500"> |
+| Helpers | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/helpers-hosts.png" width="500"> |
+| APT Repository Manager | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/" width="500"> |
+| GNOME Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings.png" width="500"> |
+| GNOME Settings (Window Manager) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings-windowmanager.png" width="500"> |
+| GNOME Settings (Mouse/Touchpad) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings-mouse.png" width="500"> |
+| Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/settings.png" width="500"> |
+| Feedback | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/feedback.png" width="500"> |
 
 </details>
 
