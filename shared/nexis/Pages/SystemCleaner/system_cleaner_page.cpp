@@ -482,16 +482,16 @@ void SystemCleanerPage::on_cbSortBy_currentIndexChanged(int idx)
 
 void SystemCleanerPage::initScheduleIndicator()
 {
-    // Overlay indicator on page 0 — parented but NOT added to the grid layout
-    QWidget *page0 = ui->stackedWidget->widget(0);
-
-    mScheduleIndicator = new QFrame(page0);
+    // Floating overlay parented to SystemCleanerPage — not in any layout.
+    // Visibility managed manually: shown only when on page 0 with enabled schedules.
+    mScheduleIndicator = new QFrame(this);
     mScheduleIndicator->setObjectName("scheduleIndicator");
 
     QHBoxLayout *indicatorLayout = new QHBoxLayout(mScheduleIndicator);
     indicatorLayout->setContentsMargins(12, 6, 12, 6);
 
     mLblNextSchedule = new QLabel;
+    mLblNextSchedule->setObjectName("lblNextSchedule");
     mLblLastSchedule = new QLabel;
     mLblLastSchedule->setObjectName("lblLastSchedule");
 
@@ -502,6 +502,14 @@ void SystemCleanerPage::initScheduleIndicator()
     indicatorLayout->addLayout(textLayout, 1);
 
     mScheduleIndicator->raise();
+
+    // Hide indicator when navigating away from the categories page (page 0)
+    connect(ui->stackedWidget, &QStackedWidget::currentChanged, this, [this](int index) {
+        if (index != 0)
+            mScheduleIndicator->hide();
+        else
+            updateScheduleIndicator();  // re-evaluate and show if schedules exist
+    });
 
     connect(mScheduleManager, &ScheduleManager::schedulesChanged,
             this, &SystemCleanerPage::updateScheduleIndicator);
@@ -514,12 +522,13 @@ void SystemCleanerPage::repositionScheduleIndicator()
     if (!mScheduleIndicator || !mScheduleIndicator->isVisible())
         return;
 
-    QWidget *page0 = ui->stackedWidget->widget(0);
-    int margin = 12;
+    // Position at the bottom of the page, inset by the outer layout margins (15px L/R, 15px bottom)
+    int outerMarginLR = 15;
+    int outerMarginBottom = 15;
     int indicatorH = mScheduleIndicator->sizeHint().height();
-    int w = page0->width() - margin * 2;
-    int x = margin;
-    int y = page0->height() - indicatorH - margin;
+    int w = width() - outerMarginLR * 2;
+    int x = outerMarginLR;
+    int y = height() - indicatorH - outerMarginBottom;
 
     mScheduleIndicator->setGeometry(x, y, w, indicatorH);
     mScheduleIndicator->raise();
