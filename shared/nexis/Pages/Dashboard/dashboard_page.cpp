@@ -801,6 +801,8 @@ void DashboardPage::exitEditMode()
     mEditMode = false;
     mEditToolbar->hide();
     mKioskButton->show();
+    mKioskButton->raise();
+    mEditButton->raise();
     mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
     mEditButton->setToolTip(tr("Customize Layout (Ctrl+E)"));
     for (DashboardTileWrapper *w : mTileWrappers)
@@ -830,6 +832,8 @@ void DashboardPage::onKioskModeChanged(bool enabled)
         mKioskButton->setToolTip(tr("Exit Kiosk Mode (ESC)"));
     } else {
         mEditButton->show();
+        mEditButton->raise();
+        mKioskButton->raise();
         mEditShortcut->setEnabled(true);
         mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
         mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
@@ -980,6 +984,10 @@ void DashboardPage::buildGrid()
         ui->bentoGrid->setColumnStretch(c, 1);
     for (int r = 0; r < GRID_ROWS; ++r)
         ui->bentoGrid->setRowStretch(r, 1);
+
+    // Re-raise floating buttons above reparented tile wrappers (BUG-63)
+    mEditButton->raise();
+    mKioskButton->raise();
 }
 
 void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)

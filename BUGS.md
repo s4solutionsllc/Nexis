@@ -64,10 +64,11 @@
 
 ## LOW Severity
 
-- [ ] **BUG-63: Mouse cursor not activating consistently over Edit Dashboard and Kiosk Mode icons** (LOW)
-  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp` (floating button positioning in `resizeEvent`)
-  - **Description:** The mouse cursor does not consistently change to a pointer or activate hover state when moving over the Edit Dashboard icon (`mEditButton`) or the Kiosk Mode icon (`mKioskButton`). Both are floating `QToolButton` widgets positioned absolutely via `resizeEvent` and raised above the layout. The inconsistency may be caused by z-order conflicts with tile wrappers, hit-test area mismatches, or the buttons not being re-raised after `buildGrid()` reparents widgets.
-  - **Fix complexity:** Needs research
+- [x] **BUG-63: Mouse cursor not activating consistently over Edit Dashboard and Kiosk Mode icons** (LOW)
+  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp` (`buildGrid()`, `exitEditMode()`, `onKioskModeChanged()`)
+  - **Description:** The floating `QPushButton` icons (`mEditButton`, `mKioskButton`) are `raise()`-ed once at init, but `buildGrid()` reparents tile wrappers with `setParent(this)` + `show()`, pushing them above the buttons in z-order. `buildGrid()` is called 6 times post-init (reset, rebuild, drag, resize) without re-raising the buttons. Additionally, `exitEditMode()` and `onKioskModeChanged()` call `show()` without `raise()`.
+  - **Fix complexity:** Trivial (add `raise()` calls after `buildGrid()` and show/hide transitions)
+  - **Resolved:** Added `mEditButton->raise()` and `mKioskButton->raise()` at end of `buildGrid()`, in `exitEditMode()` after `mKioskButton->show()`, and in `onKioskModeChanged()` after `mEditButton->show()`.
 
 - [x] **BUG-07: HiDPI / 4K scaling issues** (LOW)
   - **Scope:** UI-wide (QWidget-based)
