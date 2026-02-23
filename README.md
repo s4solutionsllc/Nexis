@@ -73,17 +73,17 @@ Pre-built binaries are available on the [Releases page](https://github.com/lsimp
 ## Screenshots
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-01.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/screenshots/dashboard.png" width="700">
     <br><em>Dashboard -- real-time system monitoring</em>
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-04.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/screenshots/system-cleaner.png" width="700">
     <br><em>System Cleaner -- remove caches, logs, and crash reports</em>
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/Nexis-10.png" width="700">
+    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/screenshots/resource-monitor.png" width="700">
     <br><em>Resources -- historical CPU, memory, GPU, network, and disk I/O charts</em>
 </p>
 
