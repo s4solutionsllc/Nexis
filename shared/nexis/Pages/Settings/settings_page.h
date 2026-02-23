@@ -3,10 +3,6 @@
 
 #include <QWidget>
 #include <QMapIterator>
-#include <QCheckBox>
-#include <QSpinBox>
-#include <QPushButton>
-#include <QLabel>
 
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
@@ -73,15 +69,6 @@ private:
     QString mStartupAppPath;
 
     SettingManager *mSettingManager;
-
-    // Scheduled cleaning widgets (created programmatically)
-    QCheckBox *mChkQuickSetup = nullptr;
-    QLabel *mLblQuickSetupSummary = nullptr;
-    QPushButton *mBtnManageSchedules = nullptr;
-    QCheckBox *mChkThresholdAlert = nullptr;
-    QSpinBox *mSpnThresholdGB = nullptr;
-    QPushButton *mBtnViewHistory = nullptr;
-    QCheckBox *mChkCleaningNotifications = nullptr;
 };
 
 #endif // SETTINGS_PAGE_H

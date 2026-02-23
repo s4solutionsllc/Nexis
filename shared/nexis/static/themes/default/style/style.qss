@@ -1354,6 +1354,28 @@ QLabel[accessibleName="dialog-title"] {
     SETTINGS
 ****************/
 
+#SettingsPage #scrollArea,
+#SettingsPage #scrollContent {
+    background-color: transparent;
+}
+
+#SettingsPage QGroupBox {
+    border: 1px solid @borderColor;
+    border-radius: 12;
+    margin-top: 12;
+    padding: 12 12 6 12;
+    background-color: @cardBg;
+}
+
+#SettingsPage QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 6;
+    color: @color05;
+    font-size: 11pt;
+    font-weight: bold;
+}
+
 #SettingsPage QLabel {
     font-size: 10pt;
     color: @color12;
@@ -1362,13 +1384,6 @@ QLabel[accessibleName="dialog-title"] {
 #lblCreatedBy {
     font-size: 9pt;
     color: @color06;
-}
-
-#SettingsPage QLabel[accessibleName="title"] {
-    font-size: 11pt;
-    font-weight: bold;
-    color: @color05;
-    padding-top: 8;
 }
 
 #lblQuickSetupSummary {
