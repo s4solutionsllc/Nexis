@@ -1,5 +1,6 @@
 
 #include <QApplication>
+#include <QStyleFactory>
 #include <QSplashScreen>
 #include <QDebug>
 #include <QFontDatabase>
@@ -85,6 +86,7 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(static);
 
     QApplication app(argc, argv);
+    app.setStyle(QStyleFactory::create("Fusion"));
     app.setQuitOnLastWindowClosed(false);
 
     qApp->setApplicationName("nexis");
