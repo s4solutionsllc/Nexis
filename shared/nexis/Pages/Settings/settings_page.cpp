@@ -137,6 +137,14 @@ void SettingsPage::init()
     ui->cmbFont->setCurrentIndex(
         ui->cmbFont->findData(mSettingManager->getAppFont()));
 
+    // tray icon style
+    ui->cmbTrayIconStyle->addItem(tr("Color (Default)"), "color");
+    ui->cmbTrayIconStyle->addItem(tr("Symbolic"), "symbolic");
+    ui->cmbTrayIconStyle->addItem(tr("Outline"), "outline");
+    ui->cmbTrayIconStyle->addItem(tr("Accent"), "accent");
+    ui->cmbTrayIconStyle->setCurrentIndex(
+        ui->cmbTrayIconStyle->findData(mSettingManager->getTrayIconStyle()));
+
     // load resource percents
     ui->spinCpuPercent->setValue(mSettingManager->getCpuAlertPercent());
     ui->spinMemoryPercent->setValue(mSettingManager->getMemoryAlertPercent());
@@ -162,8 +170,8 @@ void SettingsPage::init()
     // effects
     QList<QWidget*> widgets = {
         ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme,
-        ui->cmbFont, ui->spinCpuPercent, ui->spinMemoryPercent, ui->spinDiskPercent,
-        ui->cmbDiskAnalyzer
+        ui->cmbFont, ui->cmbTrayIconStyle, ui->spinCpuPercent, ui->spinMemoryPercent,
+        ui->spinDiskPercent, ui->cmbDiskAnalyzer
     };
 
     Utilities::addDropShadow(widgets, 50);
@@ -174,6 +182,7 @@ void SettingsPage::init()
     connect(ui->cmbStartPage, &QComboBox::currentTextChanged, this, &SettingsPage::cmbStartPageChanged);
     connect(ui->cmbColorScheme, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbColorSchemeChanged);
     connect(ui->cmbFont, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbFontChanged);
+    connect(ui->cmbTrayIconStyle, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbTrayIconStyleChanged);
     connect(ui->cmbDiskAnalyzer, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskAnalyzerChanged);
 
     // scheduled cleaning
@@ -273,6 +282,13 @@ void SettingsPage::cmbFontChanged(int index)
     QString fontFamily = ui->cmbFont->itemData(index).toString();
     mSettingManager->setAppFont(fontFamily);
     apm->updateStylesheet();
+}
+
+void SettingsPage::cmbTrayIconStyleChanged(int index)
+{
+    QString style = ui->cmbTrayIconStyle->itemData(index).toString();
+    mSettingManager->setTrayIconStyle(style);
+    apm->updateTrayIcon();
 }
 
 void SettingsPage::initDiskAnalyzerCombo()
