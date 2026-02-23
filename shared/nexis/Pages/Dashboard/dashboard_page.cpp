@@ -787,8 +787,7 @@ void DashboardPage::toggleEditMode()
         mEditMode = true;
         mEditToolbar->show();
         mKioskButton->hide();
-        mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit-done.svg"));
-        mEditButton->setToolTip(tr("Finish Editing (Ctrl+E)"));
+        mEditButton->hide();
         for (DashboardTileWrapper *w : mTileWrappers)
             w->setEditMode(true);
         for (QWidget *ph : mPlaceholders)
@@ -801,10 +800,9 @@ void DashboardPage::exitEditMode()
     mEditMode = false;
     mEditToolbar->hide();
     mKioskButton->show();
+    mEditButton->show();
     mKioskButton->raise();
     mEditButton->raise();
-    mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
-    mEditButton->setToolTip(tr("Customize Layout (Ctrl+E)"));
     for (DashboardTileWrapper *w : mTileWrappers)
         w->setEditMode(false);
     for (QWidget *ph : mPlaceholders)
