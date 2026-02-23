@@ -52,7 +52,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 31 features implemented, 42 bugs fixed since fork
+- 33 features implemented, 42 bugs fixed since fork
 
 ---
 
@@ -98,24 +98,32 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 ### 1. Dashboard
 
-Real-time system monitoring at a glance in a **bento grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. `MetricTile` supports three `DisplayMode` values — **Normal**, **Hero**, and **Large** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling.
+Real-time system monitoring at a glance in a **customizable bento grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. `MetricTile` supports three `DisplayMode` values — **Normal**, **Hero**, and **Large** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling. Tiles can be rearranged and resized via edit mode.
 
-**Row 0 — Hero row:**
-- **HeroCard** (column span 2) — Combined CPU + Memory tile with vertical divider. Each half is a `MetricTile` in Hero display mode with sparkline history.
+**Default tile layout:**
+- **CPU** — Independent `MetricTile` with sparkline history (1s refresh)
+- **Memory** — Independent `MetricTile` with sparkline history (1s refresh)
 - **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health badge with verdict and numeric percentage (e.g., "Apple SSD: Good (92%)") via `setDriveHealth()` (5s refresh). Gear icon in top-right corner (visible when 2+ disks detected) opens a dropdown menu to switch the displayed disk; selection is persisted.
 - **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
-
-**Row 1 — Metric tiles (conditional — hidden if hardware absent):**
-- **GPU** — Utilization percentage with multi-GPU selector, sparkline history (1s refresh)
-- **Temperature** — Selectable sensor via gear icon menu (2+ sensors), sparkline history (1s refresh)
-- **Battery** — Charge level percentage (5s refresh)
+- **GPU** — Utilization percentage with multi-GPU selector, sparkline history (1s refresh; hidden if no GPU detected)
+- **Temperature** — Selectable sensor via gear icon menu (2+ sensors), sparkline history (1s refresh; hidden if no sensors)
+- **Battery** — Charge level percentage (5s refresh; hidden if no battery)
 
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
 
 **Footer status bar** — Displays app version and refresh interval at the bottom edge.
 
+**Edit mode** (pencil icon next to kiosk button, or **Ctrl+E**):
+- Activates drag-and-drop reordering of dashboard tiles with visual feedback
+- Snap-to-grid resizing via corner handles — tiles support 1x1, 1x2, 2x1, and 2x2 grid cell sizes
+- Edit toolbar with **Reset Layout** button to restore default tile arrangement
+- Layout persisted as JSON in `settings.ini` across sessions (tile positions and sizes)
+- Edit mode and kiosk mode are mutually exclusive — entering one exits the other
+- Implemented via `DashboardTileWrapper` (decorator pattern providing edit-mode mouse handling around each tile widget)
+
 **Additional features:**
 - Update checker — compares installed version against GitHub releases
+- Reset Layout also available on the Settings page
 - Kiosk mode — fullscreen dashboard-only view (hides sidebar + title bar), state persisted across sessions. Three entry/exit methods:
   - **Keyboard:** F11 to toggle, ESC to exit
   - **System tray:** Checkable "Kiosk Mode (F11)" action in tray context menu
@@ -316,6 +324,7 @@ Configure Nexis application preferences.
 - **Tray Icon Style** — Choose system tray icon appearance (Color, Symbolic, Outline, Accent); applied live via `AppManager::updateTrayIcon()`
 - **Disk Analyzer** — Preferred disk usage tool (platform-specific list + custom path)
 - **Disk Health Alert** — Toggle tray alerts for failing drives
+- **Dashboard Layout** — Reset Layout button to restore default tile arrangement (mirrors edit toolbar action)
 - **Scheduled Cleaning** — Quick-setup toggle, schedule manager dialog, threshold alerts, cleaning notifications, history viewer
 - **Version Display** — Current version from `APP_VERSION` compile definition
 - **GitHub Profile Link** — Opens developer profile
@@ -409,7 +418,7 @@ Seven singleton managers mediate between UI pages and the core library.
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 | `DataRefreshService` | Centralized polling service with 4 QTimers (1s/5s/30s/configurable). Polls InfoManager once per interval, emits 10 typed data-change signals. Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
-**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 9 global signals:
+**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 10 global signals:
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
 - `sigUninstallStarted()` / `sigUninstallFinished()` — progress feedback
 - `sigScheduledCleanStarted/Finished()` — tray notification system
@@ -417,6 +426,7 @@ Seven singleton managers mediate between UI pages and the core library.
 - `sigKioskModeChanged(bool)` — App broadcasts kiosk state to Dashboard button and tray menu
 - `sigAppVisibilityChanged(bool)` — App broadcasts visibility state for DataRefreshService pause/resume
 - `sigCleanableSizeChanged(quint64)` — System Cleaner broadcasts total cleanable size for cross-tile data flow
+- `sigDashboardLayoutReset()` — Settings page triggers dashboard layout reset to default arrangement
 
 ---
 
@@ -579,7 +589,7 @@ QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at st
 ### Settings Keys (30+)
 
 **Appearance:** ThemeName, Language, ColorScheme, AppFont
-**Behavior:** StartPage, KioskMode, AppQuitDialogDontAsk/Choice
+**Behavior:** StartPage, KioskMode, DashboardLayout (JSON), AppQuitDialogDontAsk/Choice
 **Thresholds:** CPUAlertPercent, MemoryAlertPercent, DiskAlertPercent, BatteryAlertPercent
 **Tools:** DiskAnalyzerTool, DiskAnalyzerCustomPath, DiskName, TempSensorId, GpuDeviceId
 **Cleaning:** Schedules (JSON), CleaningNotificationsEnabled, ThresholdAlertEnabled, ThresholdGB

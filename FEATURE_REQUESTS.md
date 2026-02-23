@@ -105,6 +105,13 @@
 
 - [ ] **FR-49: Customizable dashboard (widget visibility and colors)** — Allow users to select which dashboard widgets/tiles are visible and which are hidden, plus optional color customization for visual elements like bars and charts. Primary motivation is better use of space on small monitors — users should be able to hide tiles they don't need (e.g., battery on a desktop, GPU on a headless box) so remaining tiles can expand. Secondary: per-tile accent color overrides. Add a dashboard settings panel (accessible via gear icon or Settings page section) with toggle switches for each tile and optional color pickers. Persist selections via SettingManager. Issue [#6](https://github.com/lsimpsonsfdc/Nexis/issues/6) by @Vai0Lou.
 
+## Dashboard Redesign
+
+- [x] **FR-50: Split CPU/Memory hero tile into independent tiles** — Replaced the combined HeroCard (CPU + Memory side-by-side with vertical divider) with two independent MetricTile widgets for CPU and Memory. Each tile can now be repositioned and resized independently in the dashboard grid.
+  **Resolved:** Commits 133c5d9 through 034ba36
+- [x] **FR-51: Customizable drag-and-drop dashboard tile layout with persistence** — Added an edit mode toggle (pencil icon next to kiosk button, Ctrl+E shortcut) that enables drag-and-drop reordering and snap-to-grid resizing of dashboard tiles. Tiles can be resized to 1x1, 1x2, 2x1, or 2x2 grid cells via corner resize handles. Layout is persisted as JSON in settings.ini across sessions. Reset Layout button available in edit toolbar and Settings page. Edit mode and kiosk mode are mutually exclusive. Implemented via DashboardTileWrapper decorator pattern for edit-mode mouse handling.
+  **Resolved:** Commits 034ba36, 325f0fb
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
