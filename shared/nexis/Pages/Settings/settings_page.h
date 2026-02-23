@@ -53,7 +53,6 @@ private slots:
     void onViewCleaningHistory();
     void onCleaningNotificationsToggled(bool checked);
     void updateScheduleSummary();
-    void onResetDashboardLayout();
     void refreshThemeColors();
 
 private:

@@ -188,28 +188,6 @@ void SettingsPage::init()
 
     // scheduled cleaning
     initScheduledCleaning();
-
-    // Dashboard layout reset
-    {
-        auto *grpDashboard = new QGroupBox(tr("Dashboard"), ui->scrollContent);
-        grpDashboard->setObjectName("settingsGroup");
-        auto *dashLayout = new QVBoxLayout(grpDashboard);
-
-        auto *lblDesc = new QLabel(tr("Restore the default tile arrangement"), grpDashboard);
-        lblDesc->setObjectName("settingsDescription");
-        dashLayout->addWidget(lblDesc);
-
-        auto *btnReset = new QPushButton(tr("Reset Dashboard Layout"), grpDashboard);
-        btnReset->setObjectName("btnResetDashboardLayout");
-        btnReset->setCursor(Qt::PointingHandCursor);
-        btnReset->setFocusPolicy(Qt::NoFocus);
-        btnReset->setEnabled(!SettingManager::ins()->getDashboardLayout().isEmpty());
-        dashLayout->addWidget(btnReset);
-
-        connect(btnReset, &QPushButton::clicked, this, &SettingsPage::onResetDashboardLayout);
-
-        ui->scrollLayout->addWidget(grpDashboard);
-    }
 }
 
 void SettingsPage::cmbLanguagesChanged(const int &index)
@@ -642,16 +620,6 @@ void SettingsPage::updateScheduleSummary()
     } else {
         ui->lblQuickSetupSummary->setText(tr("%1 schedule(s) configured").arg(schedules.size()));
     }
-}
-
-void SettingsPage::onResetDashboardLayout()
-{
-    mSettingManager->clearDashboardLayout();
-    emit SignalMapper::ins()->sigDashboardLayoutReset();
-
-    auto *btn = findChild<QPushButton*>("btnResetDashboardLayout");
-    if (btn)
-        btn->setEnabled(false);
 }
 
 void SettingsPage::refreshThemeColors()

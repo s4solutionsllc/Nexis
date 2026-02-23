@@ -304,10 +304,6 @@ void DashboardPage::init()
     mDragIndicator->hide();
     mDragIndicator->setAttribute(Qt::WA_TransparentForMouseEvents);
     mDragSource = nullptr;
-
-    // Layout reset signal from Settings page
-    connect(mSignalMapper, &SignalMapper::sigDashboardLayoutReset,
-            this, &DashboardPage::rebuildLayout);
 }
 
 void DashboardPage::buildSystemSummary()
