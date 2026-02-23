@@ -313,6 +313,7 @@ Configure Nexis application preferences.
 - **Autostart** — Launch Nexis at login (creates `.desktop` or `.plist`)
 - **Disk Partition** — Select partition to monitor on Dashboard
 - **Alert Thresholds** — CPU%, memory%, disk%, battery health% triggers for tray notifications
+- **Tray Icon Style** — Choose system tray icon appearance (Color, Symbolic, Outline, Accent); applied live via `AppManager::updateTrayIcon()`
 - **Disk Analyzer** — Preferred disk usage tool (platform-specific list + custom path)
 - **Disk Health Alert** — Toggle tray alerts for failing drives
 - **Scheduled Cleaning** — Quick-setup toggle, schedule manager dialog, threshold alerts, cleaning notifications, history viewer
