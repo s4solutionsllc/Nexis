@@ -482,12 +482,10 @@ void SystemCleanerPage::on_cbSortBy_currentIndexChanged(int idx)
 
 void SystemCleanerPage::initScheduleIndicator()
 {
-    // Add a schedule indicator panel below the categories on page 0
+    // Overlay indicator on page 0 — parented but NOT added to the grid layout
     QWidget *page0 = ui->stackedWidget->widget(0);
-    QLayout *pageLayout = page0->layout();
-    if (!pageLayout) return;
 
-    mScheduleIndicator = new QFrame;
+    mScheduleIndicator = new QFrame(page0);
     mScheduleIndicator->setObjectName("scheduleIndicator");
 
     QHBoxLayout *indicatorLayout = new QHBoxLayout(mScheduleIndicator);
@@ -503,12 +501,34 @@ void SystemCleanerPage::initScheduleIndicator()
     textLayout->addWidget(mLblLastSchedule);
     indicatorLayout->addLayout(textLayout, 1);
 
-    pageLayout->addWidget(mScheduleIndicator);
+    mScheduleIndicator->raise();
 
     connect(mScheduleManager, &ScheduleManager::schedulesChanged,
             this, &SystemCleanerPage::updateScheduleIndicator);
 
     updateScheduleIndicator();
+}
+
+void SystemCleanerPage::repositionScheduleIndicator()
+{
+    if (!mScheduleIndicator || !mScheduleIndicator->isVisible())
+        return;
+
+    QWidget *page0 = ui->stackedWidget->widget(0);
+    int margin = 12;
+    int indicatorH = mScheduleIndicator->sizeHint().height();
+    int w = page0->width() - margin * 2;
+    int x = margin;
+    int y = page0->height() - indicatorH - margin;
+
+    mScheduleIndicator->setGeometry(x, y, w, indicatorH);
+    mScheduleIndicator->raise();
+}
+
+void SystemCleanerPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    repositionScheduleIndicator();
 }
 
 void SystemCleanerPage::updateScheduleIndicator()
@@ -557,4 +577,6 @@ void SystemCleanerPage::updateScheduleIndicator()
     } else {
         mLblLastSchedule->setText(tr("No previous scheduled cleans"));
     }
+
+    repositionScheduleIndicator();
 }

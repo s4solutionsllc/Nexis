@@ -2,6 +2,7 @@
 #define SYSTEMCLEANERPAGE_H
 
 #include <QWidget>
+#include <QResizeEvent>
 #include <QTreeWidgetItem>
 #include <QMap>
 #include <QMovie>
@@ -69,9 +70,12 @@ private slots:
     void on_cbSortBy_currentIndexChanged(int idx);
     void updateScheduleIndicator();
 
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
     void init();
     void initScheduleIndicator();
+    void repositionScheduleIndicator();
 
 private:
     Ui::SystemCleanerPage *ui;

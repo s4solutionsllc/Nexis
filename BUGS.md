@@ -441,6 +441,13 @@
   - **Fix complexity:** Moderate (add occupancy grid, placeholder widgets for empty cells, pixel-to-cell resolution, drag-to-empty support, tile displacement or manual-clear-first resize policy)
   - **Resolved:** Added fixed 4x4 occupancy grid (`mOccupancy[4][4]`) with `rebuildOccupancy()` and `regionIsFree()` helpers. `buildGrid()` fills empty cells with invisible placeholder widgets (dashed border in edit mode via `#dashPlaceholder` QSS). Rewrote `gridCellAtPos()` as arithmetic cell resolution (works on empty cells). `onTileDragFinished()` supports drag-to-empty (move) and swap (via occupancy grid tileId lookup for multi-cell tiles). `onTileResizeRequested()` simplified to single `regionIsFree()` call. Added bounds clamping to `deserializeLayout()`. Swap validity uses `regionIsFree()` for full row+col overflow checking.
 
+- [x] **BUG-65: Schedule indicator displaces System Cleaner category grid layout** (MEDIUM)
+  - **Scope:** System Cleaner page → scheduled cleanup indicator panel
+  - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp` (`initScheduleIndicator()`)
+  - **Description:** The schedule indicator (`mScheduleIndicator` QFrame) is appended to page 0's `QGridLayout` via `pageLayout->addWidget()`. Since the page uses a `QGridLayout`, the indicator becomes a grid cell participant at row 12, pushing other rows and altering the vertical distribution of spacers and category icons. The indicator should overlay the page as a floating panel anchored to the bottom edge, without participating in the grid layout.
+  - **Fix complexity:** Moderate (reparent indicator as overlay with manual geometry management or restructure page layout)
+  - **Resolved:** Converted indicator to floating overlay parented to page 0 but not added to its grid layout. Positioned via `repositionScheduleIndicator()` called from `resizeEvent()` and `updateScheduleIndicator()`. Uses `raise()` for z-order. Auto-hides when stackedWidget switches to scan results page (child of page 0).
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
