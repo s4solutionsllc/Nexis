@@ -57,6 +57,11 @@
   - **Fix complexity:** Moderate (audit and restructure grid layout, fix column consistency, adjust minimum size policies)
   - **Resolved:** Complete layout redesign. Replaced flat 6-column QGridLayout with QScrollArea containing 5 QGroupBox card sections (General, Appearance, Alerts, Tools, Scheduled Cleaning). Each group uses a consistent 2-column label/control grid. Moved 7 programmatically-created Scheduled Cleaning widgets into the `.ui` file, eliminating fragile grid manipulation code from `initScheduledCleaning()`. Added QGroupBox QSS rules matching HardwareInfo/GnomeSettings card pattern (`@cardBg` background, `@borderColor` border, 12px radius). Checkboxes now use inline text labels. Minimum width reduced from ~1100px to ~450px. Page scrolls on small screens.
 
+- [ ] **BUG-64: Settings page combo boxes, buttons, and modals not respecting dark/light theme consistently** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/Pages/Settings/settings_page.ui`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** Combo boxes, buttons, and modal/dialog windows on the Settings page do not consistently adopt the current dark or light theme. Users switching themes see mismatched colors — e.g., light-colored dropdowns or button text on a dark background, or dark modal content on a light theme. Likely caused by missing QSS selectors for Settings-specific widgets, QPalette inheritance issues on programmatic dialogs, or widgets not being re-polished after theme changes.
+  - **Fix complexity:** Needs research
+
 ## LOW Severity
 
 - [ ] **BUG-63: Mouse cursor not activating consistently over Edit Dashboard and Kiosk Mode icons** (LOW)
