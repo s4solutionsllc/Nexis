@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: February 2026 | Version 2.0.0
+> Last updated: February 2026 | Version 2.0.2
 
 ---
 
@@ -43,7 +43,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 **Origin:** Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), the popular Linux system optimizer that went inactive in 2020 with 38+ known bugs. After porting to Qt 6, adding native macOS support, fixing those inherited bugs, and adding GPU monitoring, hardware health tracking, scheduled cleaning, Docker management, and more, the project was rebranded as **Nexis** to reflect that it had become something distinct.
 
 **By the numbers:**
-- ~6,000–7,000 lines of C++ code
+- ~25,000 lines of C++ code across 255 source files
 - 14 application pages
 - 13 system info providers (11 Info + 2 platform-specific: StartupInfo, FileSearchTool)
 - 7 tool classes (package management, services, Docker, APT sources, GNOME settings, file search, startup info)
@@ -52,7 +52,8 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 33 features implemented, 42 bugs fixed since fork
+- 7 test suites with 63 test methods (Qt Test + CTest)
+- 47 features implemented, 61 bugs fixed since fork
 
 ---
 

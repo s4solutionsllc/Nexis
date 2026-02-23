@@ -4,10 +4,28 @@
     "allow": [
       "Bash(cmake *)",
       "Bash(cmake --build *)",
-      "Bash(cmake --build build -j$(sysctl -n hw.ncpu) 2>&1)",
+      "Bash(ctest *)",
       "Bash(rm -rf build && cmake *)",
       "Bash(make *)",
+      "Bash(git *)",
+      "Bash(gh *)",
       "WebSearch"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": {
+          "toolName": "edit",
+          "filePaths": ["**/CMakeLists.txt"]
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '⚠️  CMakeLists.txt modified — clean rebuild recommended: /build-verify clean'"
+          }
+        ]
+      }
     ]
   }
 }
