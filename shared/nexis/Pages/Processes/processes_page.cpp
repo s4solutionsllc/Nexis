@@ -33,7 +33,9 @@ void ProcessesPage::init()
     mHeaders = QStringList {
         "PID", tr("Resident Memory"), tr("%Memory"), tr("Virtual Memory"),
         tr("User"), "%CPU", tr("Start Time"), tr("State"), tr("Group"),
-        tr("Nice"), tr("CPU Time"), tr("Session"), tr("Process")
+        tr("Nice"), tr("CPU Time"), tr("Session"),
+        tr("Disk Read/s"), tr("Disk Write/s"), tr("Net Down/s"), tr("Net Up/s"),
+        tr("Process")
     };
 
     // slider settings
@@ -86,7 +88,7 @@ void ProcessesPage::loadHeaderMenu()
     }
     mHeaderMenu.addActions(actionList);
     // exclude headers
-    QList<int> hiddenHeaders = { 3, 6, 7, 8, 9, 10, 11 };
+    QList<int> hiddenHeaders = { 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 
     QList<QAction*> actions = mHeaderMenu.actions();
     for (const int i : hiddenHeaders) {
@@ -185,13 +187,46 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     session_i->setData(proc.getSession(), data);
     session_i->setData(proc.getSession(), Qt::ToolTipRole);
 
+    // Disk Read/s
+    QString diskReadText = proc.getDiskReadRate() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getDiskReadRate())) + "/s";
+    QStandardItem *diskRead_i = new QStandardItem(diskReadText);
+    diskRead_i->setData(proc.getDiskReadRate(), data);
+    diskRead_i->setData(diskReadText, Qt::ToolTipRole);
+
+    // Disk Write/s
+    QString diskWriteText = proc.getDiskWriteRate() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getDiskWriteRate())) + "/s";
+    QStandardItem *diskWrite_i = new QStandardItem(diskWriteText);
+    diskWrite_i->setData(proc.getDiskWriteRate(), data);
+    diskWrite_i->setData(diskWriteText, Qt::ToolTipRole);
+
+    // Net Down/s
+    QString netDownText = proc.getNetDownRate() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getNetDownRate())) + "/s";
+    QStandardItem *netDown_i = new QStandardItem(netDownText);
+    netDown_i->setData(proc.getNetDownRate(), data);
+    netDown_i->setData(netDownText, Qt::ToolTipRole);
+
+    // Net Up/s
+    QString netUpText = proc.getNetUpRate() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getNetUpRate())) + "/s";
+    QStandardItem *netUp_i = new QStandardItem(netUpText);
+    netUp_i->setData(proc.getNetUpRate(), data);
+    netUp_i->setData(netUpText, Qt::ToolTipRole);
+
     QStandardItem *cmd_i = new QStandardItem(proc.getCmd());
     cmd_i->setData(proc.getCmd(), data);
     cmd_i->setData(QString("<p>%1</p>").arg(proc.getCmd()), Qt::ToolTipRole);
 
     row << pid_i << rss_i << pmem_i << vsize_i << uname_i << pcpu_i
         << starttime_i << state_i << group_i << nice_i << cpuTime_i
-        << session_i << cmd_i;
+        << session_i << diskRead_i << diskWrite_i << netDown_i << netUp_i
+        << cmd_i;
 
     return row;
 }
