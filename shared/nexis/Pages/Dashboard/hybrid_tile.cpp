@@ -274,22 +274,39 @@ void HybridTile::drawGaugeArc(QPainter &painter)
     percentFont.setPixelSize(qMax(12, side / 4));
     percentFont.setBold(true);
     painter.setFont(percentFont);
-    painter.setPen(mTextColor);
 
     QString displayText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
-    QRect textRect = arcRect.adjusted(0, -side / 8, 0, 0);
-    painter.drawText(textRect, Qt::AlignCenter, displayText);
+    QRectF innerRect = arcRect.adjusted(ARC_PEN_WIDTH, ARC_PEN_WIDTH,
+                                        -ARC_PEN_WIDTH, -ARC_PEN_WIDTH);
 
-    // Secondary value below percentage
     if (!mSecondaryText.isEmpty()) {
+        QFontMetrics pctFm(percentFont);
+        int pctH = pctFm.height();
+
         QFont secondaryFont = painter.font();
-        secondaryFont.setPixelSize(qMax(9, side / 7));
+        int secSize = qMin(qMax(9, side / 7), 13);
+        secondaryFont.setPixelSize(secSize);
         secondaryFont.setBold(false);
+        QFontMetrics secFm(secondaryFont);
+        int secH = secFm.height();
+
+        int gap = 2;
+        int totalH = pctH + gap + secH;
+        double textTop = cy - totalH / 2.0;
+
+        QRectF pctRect(innerRect.left(), textTop, innerRect.width(), pctH);
+        painter.setPen(mTextColor);
+        painter.drawText(pctRect, Qt::AlignHCenter | Qt::AlignVCenter, displayText);
+
+        QString elidedSec = secFm.elidedText(mSecondaryText, Qt::ElideRight,
+                                              static_cast<int>(innerRect.width()));
+        QRectF secRect(innerRect.left(), textTop + pctH + gap, innerRect.width(), secH);
         painter.setFont(secondaryFont);
         painter.setPen(mSecondaryTextColor);
-
-        QRect secondaryRect = arcRect.adjusted(0, side / 6, 0, 0);
-        painter.drawText(secondaryRect, Qt::AlignCenter, mSecondaryText);
+        painter.drawText(secRect, Qt::AlignHCenter | Qt::AlignVCenter, elidedSec);
+    } else {
+        painter.setPen(mTextColor);
+        painter.drawText(innerRect, Qt::AlignCenter, displayText);
     }
 }
 

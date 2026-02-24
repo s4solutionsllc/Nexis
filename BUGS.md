@@ -448,6 +448,20 @@
   - **Fix complexity:** Moderate (reparent indicator as overlay with manual geometry management or restructure page layout)
   - **Resolved:** Converted indicator to floating overlay parented to page 0 but not added to its grid layout. Positioned via `repositionScheduleIndicator()` called from `resizeEvent()` and `updateScheduleIndicator()`. Uses `raise()` for z-order. Auto-hides when stackedWidget switches to scan results page (child of page 0).
 
+- [x] **BUG-66: CPU widget percentage text renders too low — hard to read** (LOW)
+  - **Scope:** Dashboard page → CPU SpeedometerTile
+  - **Description:** On the CPU dashboard widget (speedometer style), the percentage text (e.g., "23%") was positioned as a QLabel below the dial rather than inside it. The text appeared cramped at the bottom of the tile, making it difficult to read.
+  - **Files:** `shared/nexis/Pages/Dashboard/speedometer_tile.cpp`, `speedometer_tile.h`
+  - **Fix complexity:** Moderate (refactor from QLabel layout to QPainter rendering inside dial)
+  - **Resolved:** Moved percentage and secondary text from QLabel-below-dial to QPainter-inside-dial rendering. Text now draws centered below the needle pivot point in the arc's bottom opening area. Hidden QLabels kept for text storage. Added display-mode-scaled font sizes with secondary font capped at 13px. Used `footerTop` from actual subtitle geometry instead of hardcoded `footerHeight=50`.
+
+- [x] **BUG-67: Memory widget percentage text too low and subtext font too large** (LOW)
+  - **Scope:** Dashboard page → Memory GaugeTile
+  - **Description:** Two issues on the Memory dashboard widget (gauge style): (1) The percentage text was positioned at ~65% from top of inner arc (10% offset + 55% height rect + AlignBottom), well below visual center. (2) The subtext font scaled linearly with diameter (`diameter/12`), producing fonts up to 25px at large tile sizes — too large for strings like "10.2 GiB / 16 GiB".
+  - **Files:** `shared/nexis/Pages/Dashboard/gauge_tile.cpp`, `shared/nexis/Pages/Dashboard/hybrid_tile.cpp`
+  - **Fix complexity:** Moderate (rewrite text centering math + font capping)
+  - **Resolved:** Replaced the 55%/45% split + 10% offset with QFontMetrics-based centering (calculate total text block height, center vertically within inner rect). Capped secondary font at 13px max. Added `QFontMetrics::elidedText()` safety net for overflow. Same fixes applied opportunistically to HybridTile which had similar asymmetric offset (`side/8` up, `side/6` down) and unbounded secondary font scaling (`side/7`).
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

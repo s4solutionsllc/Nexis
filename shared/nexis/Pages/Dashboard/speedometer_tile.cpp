@@ -40,16 +40,11 @@ void SpeedometerTile::buildLayout()
 
     mLblValue = new QLabel("--", this);
     mLblValue->setObjectName("metricTileValue");
-    mLblValue->setAlignment(Qt::AlignHCenter);
-    mainLayout->addWidget(mLblValue);
+    mLblValue->hide();
 
     mLblSecondaryValue = new QLabel(this);
     mLblSecondaryValue->setObjectName("metricTileSubtitle");
-    mLblSecondaryValue->setAlignment(Qt::AlignHCenter);
     mLblSecondaryValue->hide();
-    mainLayout->addWidget(mLblSecondaryValue);
-
-    mainLayout->addSpacing(2);
 
     auto *footerLayout = new QHBoxLayout();
     footerLayout->setContentsMargins(0, 0, 0, 0);
@@ -90,7 +85,6 @@ void SpeedometerTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
     mValueText = valueText;
-    mLblValue->setText(valueText);
     update();
 }
 
@@ -116,22 +110,13 @@ void SpeedometerTile::setTrendDirection(TrendDirection dir)
 
 void SpeedometerTile::setSecondaryValue(const QString &text)
 {
-    mLblSecondaryValue->setText(text);
-    mLblSecondaryValue->setVisible(!text.isEmpty());
+    mSecondaryText = text;
+    update();
 }
 
 void SpeedometerTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
-
-    mLblValue->setProperty("heroMode", mode == Hero ? "true" : "false");
-    mLblValue->setProperty("largeMode", mode == Large ? "true" : "false");
-    mLblValue->style()->unpolish(mLblValue);
-    mLblValue->style()->polish(mLblValue);
-
-    bool showTicks = (mode != Normal);
-    Q_UNUSED(showTicks)
-
     update();
 }
 
@@ -256,8 +241,8 @@ void SpeedometerTile::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     int titleHeight = mLblTitle->sizeHint().height() + 10;
-    int footerHeight = 50;
-    int availableHeight = height() - titleHeight - footerHeight;
+    int footerTop = mLblSubtitle->geometry().top() - 6;
+    int availableHeight = footerTop - titleHeight;
     int availableWidth = width() - 24;
 
     int dialSize = qMin(availableWidth, availableHeight);
@@ -368,6 +353,55 @@ void SpeedometerTile::paintEvent(QPaintEvent *event)
 
     painter.setBrush(mCardBgColor);
     painter.drawEllipse(QPointF(centerX, centerY), pivotInner, pivotInner);
+
+    // Percentage text inside the dial, below the pivot
+    int pctFontDivisor;
+    int secFontDivisor;
+    switch (mDisplayMode) {
+    case Hero:  pctFontDivisor = 5; secFontDivisor = 9; break;
+    case Large: pctFontDivisor = 6; secFontDivisor = 10; break;
+    default:    pctFontDivisor = 7; secFontDivisor = 11; break;
+    }
+
+    QString pctText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
+
+    QFont pctFont = font();
+    int pctFontSize = qMax(12, dialSize / pctFontDivisor);
+    pctFont.setPixelSize(pctFontSize);
+    pctFont.setBold(true);
+    QFontMetrics pctFm(pctFont);
+    int pctH = pctFm.height();
+
+    int innerRadius = radius - arcThickness / 2;
+    int textWidth = innerRadius * 2 - 8;
+
+    if (!mSecondaryText.isEmpty()) {
+        QFont secFont = font();
+        int secFontSize = qMin(qMax(9, dialSize / secFontDivisor), 13);
+        secFont.setPixelSize(secFontSize);
+        QFontMetrics secFm(secFont);
+        int secH = secFm.height();
+
+        int totalH = pctH + 2 + secH;
+        int textTop = centerY + pivotOuter + 4;
+
+        QRectF pctRect(centerX - textWidth / 2.0, textTop, textWidth, pctH);
+        painter.setPen(mSecondaryTextColor);
+        painter.setFont(pctFont);
+        painter.drawText(pctRect, Qt::AlignHCenter | Qt::AlignVCenter, pctText);
+
+        QString elidedSec = secFm.elidedText(mSecondaryText, Qt::ElideRight, textWidth);
+        QRectF secRect(centerX - textWidth / 2.0, textTop + pctH + 2, textWidth, secH);
+        painter.setPen(mTextColor);
+        painter.setFont(secFont);
+        painter.drawText(secRect, Qt::AlignHCenter | Qt::AlignVCenter, elidedSec);
+    } else {
+        int textTop = centerY + pivotOuter + 4;
+        QRectF pctRect(centerX - textWidth / 2.0, textTop, textWidth, pctH);
+        painter.setPen(mSecondaryTextColor);
+        painter.setFont(pctFont);
+        painter.drawText(pctRect, Qt::AlignHCenter | Qt::AlignVCenter, pctText);
+    }
 }
 
 void SpeedometerTile::resizeEvent(QResizeEvent *event)

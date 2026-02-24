@@ -38,6 +38,7 @@ private:
 
     int mPercent;
     QString mValueText;
+    QString mSecondaryText;
 
     QColor mMetricColor;
     QColor mCardBgColor;

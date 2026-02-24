@@ -286,32 +286,40 @@ void GaugeTile::paintEvent(QPaintEvent *event)
     int percentSize = qMax(12, diameter / percentFontDivisor);
     percentFont.setPixelSize(percentSize);
     percentFont.setBold(true);
-    painter.setPen(mTextColor);
     painter.setFont(percentFont);
 
     QString percentText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
 
     QRectF innerRect = arcRect.adjusted(penWidth, penWidth, -penWidth, -penWidth);
+    double cx = innerRect.center().x();
+    double cy = innerRect.center().y();
 
     if (!mSecondaryText.isEmpty()) {
-        // Split the inner area: upper 55% for percentage, lower 45% for secondary
-        QRectF percentRect(innerRect.left(), innerRect.top(),
-                           innerRect.width(), innerRect.height() * 0.55);
-        percentRect.moveTop(innerRect.top() + innerRect.height() * 0.1);
-        painter.drawText(percentRect, Qt::AlignHCenter | Qt::AlignBottom, percentText);
+        QFontMetrics pctFm(percentFont);
+        int pctH = pctFm.height();
 
         QFont valueFont = font();
-        int valueSize = qMax(9, diameter / valueFontDivisor);
+        int valueSize = qMin(qMax(9, diameter / valueFontDivisor), 13);
         valueFont.setPixelSize(valueSize);
+        QFontMetrics secFm(valueFont);
+        int secH = secFm.height();
+
+        int gap = 2;
+        int totalH = pctH + gap + secH;
+        double textTop = cy - totalH / 2.0;
+
+        QRectF pctRect(innerRect.left(), textTop, innerRect.width(), pctH);
+        painter.setPen(mTextColor);
+        painter.drawText(pctRect, Qt::AlignHCenter | Qt::AlignVCenter, percentText);
+
+        QString elidedSec = secFm.elidedText(mSecondaryText, Qt::ElideRight,
+                                              static_cast<int>(innerRect.width()));
+        QRectF secRect(innerRect.left(), textTop + pctH + gap, innerRect.width(), secH);
         painter.setFont(valueFont);
         painter.setPen(mSecondaryTextColor);
-
-        QRectF valueRect(innerRect.left(),
-                         percentRect.bottom() + 2,
-                         innerRect.width(),
-                         innerRect.bottom() - percentRect.bottom() - 2);
-        painter.drawText(valueRect, Qt::AlignHCenter | Qt::AlignTop, mSecondaryText);
+        painter.drawText(secRect, Qt::AlignHCenter | Qt::AlignVCenter, elidedSec);
     } else {
+        painter.setPen(mTextColor);
         painter.drawText(innerRect, Qt::AlignCenter, percentText);
     }
 }
