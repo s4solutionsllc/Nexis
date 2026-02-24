@@ -161,6 +161,16 @@ QString SettingManager::getTempSensorId() const
     return mSettings->value(SettingKeys::TempSensorId, "").toString();
 }
 
+void SettingManager::setFanSensorId(const QString &value)
+{
+    mSettings->setValue(SettingKeys::FanSensorId, value);
+}
+
+QString SettingManager::getFanSensorId() const
+{
+    return mSettings->value(SettingKeys::FanSensorId).toString();
+}
+
 void SettingManager::setGpuDeviceId(const QString &value)
 {
     mSettings->setValue(SettingKeys::GpuDeviceId, value);

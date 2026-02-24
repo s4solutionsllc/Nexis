@@ -19,6 +19,7 @@ namespace SettingKeys {
     const QString DiskAnalyzerCustomPath("DiskAnalyzerCustomPath");
     const QString KioskMode("KioskMode");
     const QString TempSensorId("TempSensorId");
+    const QString FanSensorId("FanSensorId");
     const QString GpuDeviceId("GpuDeviceId");
     const QString BatteryAlertPercent("BatteryAlertPercent");
     const QString BatteryAlertLastHealth("BatteryAlertLastHealth");
@@ -83,6 +84,9 @@ public:
 
     void setTempSensorId(const QString &value);
     QString getTempSensorId() const;
+
+    void setFanSensorId(const QString &value);
+    QString getFanSensorId() const;
 
     void setGpuDeviceId(const QString &value);
     QString getGpuDeviceId() const;
