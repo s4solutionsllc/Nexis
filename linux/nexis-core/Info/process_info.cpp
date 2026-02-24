@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QRegularExpression>
+#include <QSet>
 
 void ProcessInfoLinux::updateProcesses()
 {
@@ -45,6 +46,61 @@ void ProcessInfoLinux::updateProcesses()
 
     } catch (QString &ex) {
         qCritical() << ex;
+    }
+
+    double elapsedSecs = 0;
+    if (!mIoTimerStarted) {
+        mIoTimer.start();
+        mIoTimerStarted = true;
+    } else {
+        elapsedSecs = mIoTimer.elapsed() / 1000.0;
+        mIoTimer.restart();
+    }
+
+    QSet<pid_t> activePids;
+
+    for (Process &proc : processList) {
+        pid_t pid = proc.getPid();
+        activePids.insert(pid);
+
+        QString ioContent = FileUtil::readStringFromFile(
+            QString("/proc/%1/io").arg(pid));
+
+        if (!ioContent.isEmpty()) {
+            quint64 readBytes = 0;
+            quint64 writeBytes = 0;
+
+            const QStringList ioLines = ioContent.split('\n');
+            for (const QString &ioLine : ioLines) {
+                if (ioLine.startsWith(QLatin1String("read_bytes:")))
+                    readBytes = ioLine.mid(12).trimmed().toULongLong();
+                else if (ioLine.startsWith(QLatin1String("write_bytes:")))
+                    writeBytes = ioLine.mid(13).trimmed().toULongLong();
+            }
+
+            if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
+                auto prev = mPrevDiskIo.value(pid);
+                double readRate = (readBytes >= prev.first)
+                    ? (readBytes - prev.first) / elapsedSecs : 0;
+                double writeRate = (writeBytes >= prev.second)
+                    ? (writeBytes - prev.second) / elapsedSecs : 0;
+                proc.setDiskReadRate(readRate);
+                proc.setDiskWriteRate(writeRate);
+            } else {
+                proc.setDiskReadRate(0);
+                proc.setDiskWriteRate(0);
+            }
+
+            mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
+        }
+    }
+
+    auto it = mPrevDiskIo.begin();
+    while (it != mPrevDiskIo.end()) {
+        if (!activePids.contains(it.key()))
+            it = mPrevDiskIo.erase(it);
+        else
+            ++it;
     }
 }
 
