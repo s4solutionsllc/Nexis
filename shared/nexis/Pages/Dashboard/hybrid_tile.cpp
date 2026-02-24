@@ -203,8 +203,8 @@ void HybridTile::refreshThemeColors()
 
     mArcColor = QColor(sv->value(mColorToken).toString());
     mTrackColor = QColor(sv->value("@color02").toString());
-    mTextColor = QColor(sv->value("@color07").toString());
-    mSecondaryTextColor = QColor(sv->value("@color05").toString());
+    mTextColor = QColor(sv->value("@color05").toString());
+    mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 
     QString colorHex = mArcColor.name();
     QString hoverText = sv->value("@color07").toString();

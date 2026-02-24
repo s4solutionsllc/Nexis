@@ -163,7 +163,7 @@ void VuMeterTile::refreshThemeColors()
     mDestructiveColor = QColor(sv->value("@destructiveColor").toString());
     mTrackColor       = QColor(sv->value("@color02").toString());
     mTextColor        = QColor(sv->value(mColorToken).toString());
-    mSecondaryTextColor = QColor(sv->value("@color07").toString());
+    mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 
     QString colorHex  = mTextColor.name();
     QString hoverText = sv->value("@color07").toString();

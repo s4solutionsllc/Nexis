@@ -149,7 +149,7 @@ void RingTile::refreshThemeColors()
 
     mMetricColor = QColor(sv->value(mColorToken).toString());
     mTrackColor  = QColor(sv->value("@color02").toString());
-    mSecondaryTextColor = QColor(sv->value("@color07").toString());
+    mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 
     QString colorHex = mMetricColor.name();
     QString hoverText = sv->value("@color07").toString();

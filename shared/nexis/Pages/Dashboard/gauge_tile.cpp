@@ -132,7 +132,7 @@ void GaugeTile::refreshThemeColors()
     mArcColor = QColor(sv->value(mColorToken).toString());
     mTrackColor = QColor(sv->value("@color02").toString());
     mTextColor = QColor(sv->value("@color05").toString());
-    mSecondaryTextColor = QColor(sv->value("@color07").toString());
+    mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 
     mArcEndColor = mArcColor.lighter(140);
 

@@ -147,7 +147,7 @@ void SpeedometerTile::refreshThemeColors()
 
     mMetricColor = QColor(sv->value(mColorToken).toString());
     mCardBgColor = QColor(sv->value("@cardBg").toString());
-    mTextColor = QColor(sv->value("@color07").toString());
+    mTextColor = QColor(sv->value("@tertiaryText").toString());
     mSecondaryTextColor = QColor(sv->value("@color05").toString());
     mGreenColor = QColor(sv->value("@successColor").toString());
     mYellowColor = QColor(sv->value("@warningColor").toString());
