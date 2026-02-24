@@ -129,6 +129,9 @@ private:
 
     QMap<QString, QString> mTileStyles;
     QSet<QString> mHiddenTiles;
+    QSet<QString> mGearVisibleTiles;
+
+    QString mCpuSubtitleBase;
 
     QList<QLabel*> mSummaryLabels;
     QString mSummaryHostname;

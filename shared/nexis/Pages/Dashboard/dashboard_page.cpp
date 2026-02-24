@@ -207,10 +207,10 @@ void DashboardPage::init()
         QString cpuModel = sysInfo.getCpuModel();
         int coreCount = im->getCpuCoreCount();
         if (!cpuModel.isEmpty()) {
-            QString cpuSubtitle = cpuModel;
+            mCpuSubtitleBase = cpuModel;
             if (coreCount > 0)
-                cpuSubtitle += QString(" \u2022 %1C").arg(coreCount);
-            mCpuTile->setSubtitle(cpuSubtitle);
+                mCpuSubtitleBase += QString(" \u2022 %1C").arg(coreCount);
+            mCpuTile->setSubtitle(mCpuSubtitleBase);
         }
     }
 
@@ -436,8 +436,8 @@ void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
     mCpuTile->setValue(cpuUsedPercent, valueText);
     mCpuTile->addDataPoint(cpuUsedPercent);
 
-    if (clockGHz > 0.00001)
-        mCpuTile->setSecondaryValue(QString("%1 GHz").arg(clockGHz, 0, 'f', 2));
+    if (clockGHz > 0.00001 && !mCpuSubtitleBase.isEmpty())
+        mCpuTile->setSubtitle(mCpuSubtitleBase + QString(" \u2022 %1 GHz").arg(clockGHz, 0, 'f', 1));
 }
 
 void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
@@ -802,8 +802,15 @@ void DashboardPage::toggleEditMode()
         mEditToolbar->show();
         mKioskButton->hide();
         mEditButton->hide();
-        for (DashboardTileWrapper *w : mTileWrappers)
+        mGearVisibleTiles.clear();
+        for (DashboardTileWrapper *w : mTileWrappers) {
+            auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget());
+            if (metric && metric->gearButton()->isVisible()) {
+                mGearVisibleTiles.insert(w->tileId());
+                metric->setGearVisible(false);
+            }
             w->setEditMode(true);
+        }
         for (QWidget *ph : mPlaceholders)
             ph->setVisible(true);
     }
@@ -817,8 +824,15 @@ void DashboardPage::exitEditMode()
     mEditButton->show();
     mKioskButton->raise();
     mEditButton->raise();
-    for (DashboardTileWrapper *w : mTileWrappers)
+    for (DashboardTileWrapper *w : mTileWrappers) {
         w->setEditMode(false);
+        if (mGearVisibleTiles.contains(w->tileId())) {
+            auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget());
+            if (metric)
+                metric->setGearVisible(true);
+        }
+    }
+    mGearVisibleTiles.clear();
     for (QWidget *ph : mPlaceholders)
         ph->setVisible(false);
     QJsonDocument doc(serializeLayout());

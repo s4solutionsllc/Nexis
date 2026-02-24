@@ -243,6 +243,9 @@ void DashboardTileWrapper::paintEvent(QPaintEvent *event)
 void DashboardTileWrapper::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    mStyleButton->move(4, 4);
-    mRemoveButton->move(width() - mRemoveButton->width() - 4, 4);
+    int x = width() - 4;
+    x -= mRemoveButton->width();
+    mRemoveButton->move(x, 4);
+    x -= mStyleButton->width() + 2;
+    mStyleButton->move(x, 4);
 }
