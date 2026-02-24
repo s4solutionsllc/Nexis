@@ -827,6 +827,8 @@ void DashboardPage::exitEditMode()
 
 void DashboardPage::onResetLayout()
 {
+    mHiddenTiles.clear();
+
     // Reset styles to defaults
     mTileStyles.clear();
 
@@ -898,6 +900,8 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
             this, &DashboardPage::onTileResizeRequested);
     connect(wrapper, &DashboardTileWrapper::styleChangeRequested,
             this, &DashboardPage::onTileStyleChangeRequested);
+    connect(wrapper, &DashboardTileWrapper::removeRequested,
+            this, &DashboardPage::onTileRemoveRequested);
 
     // Set up style menu for switchable tiles
     QStringList styles = availableStyles(id);
@@ -954,6 +958,12 @@ void DashboardPage::deserializeLayout(const QString &json)
         if (!style.isEmpty())
             mTileStyles[id] = style;
 
+        bool visible = obj.contains("visible") ? obj["visible"].toBool(true) : true;
+        if (!visible)
+            mHiddenTiles.insert(id);
+        else
+            mHiddenTiles.remove(id);
+
         for (DashboardTileWrapper *w : mTileWrappers) {
             if (w->tileId() == id) {
                 w->setGridPosition(row, col, rowSpan, colSpan);
@@ -976,6 +986,8 @@ QJsonArray DashboardPage::serializeLayout() const
         obj["rowSpan"] = w->gridRowSpan();
         obj["colSpan"] = w->gridColSpan();
         obj["style"] = w->currentStyle();
+        if (mHiddenTiles.contains(w->tileId()))
+            obj["visible"] = false;
         arr.append(obj);
     }
     return arr;
@@ -988,6 +1000,8 @@ void DashboardPage::rebuildOccupancy()
             mOccupancy[r][c].clear();
 
     for (const DashboardTileWrapper *w : mTileWrappers) {
+        if (mHiddenTiles.contains(w->tileId()))
+            continue;
         for (int r = w->gridRow(); r < w->gridRow() + w->gridRowSpan(); ++r)
             for (int c = w->gridCol(); c < w->gridCol() + w->gridColSpan(); ++c)
                 if (r < GRID_ROWS && c < GRID_COLS)
@@ -1021,6 +1035,10 @@ void DashboardPage::buildGrid()
     rebuildOccupancy();
 
     for (DashboardTileWrapper *w : mTileWrappers) {
+        if (mHiddenTiles.contains(w->tileId())) {
+            w->hide();
+            continue;
+        }
         w->setParent(this);
         ui->bentoGrid->addWidget(w, w->gridRow(), w->gridCol(),
                                   w->gridRowSpan(), w->gridColSpan());
@@ -1323,4 +1341,10 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
 
     // Store style
     mTileStyles[id] = style;
+}
+
+void DashboardPage::onTileRemoveRequested(DashboardTileWrapper *wrapper)
+{
+    mHiddenTiles.insert(wrapper->tileId());
+    buildGrid();
 }

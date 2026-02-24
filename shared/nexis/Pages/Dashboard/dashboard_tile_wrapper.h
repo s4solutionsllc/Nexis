@@ -37,12 +37,14 @@ signals:
     void dragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void resizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
     void styleChangeRequested(DashboardTileWrapper *wrapper, const QString &style);
+    void removeRequested(DashboardTileWrapper *wrapper);
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     QString mTileId;
@@ -60,6 +62,7 @@ private:
 
     QString mCurrentStyle;
     QToolButton *mStyleButton;
+    QToolButton *mRemoveButton;
     QMenu *mStyleMenu;
 
     static const int DRAG_THRESHOLD = 5;

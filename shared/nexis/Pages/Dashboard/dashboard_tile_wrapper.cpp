@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QPen>
 #include <QApplication>
+#include <QResizeEvent>
 
 DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *innerWidget, QWidget *parent)
     : QWidget(parent),
@@ -17,6 +18,7 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
       mGridRowSpan(1),
       mGridColSpan(1),
       mStyleButton(nullptr),
+      mRemoveButton(nullptr),
       mStyleMenu(nullptr)
 {
     auto *layout = new QVBoxLayout(this);
@@ -46,6 +48,21 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
         if (style != mCurrentStyle)
             emit styleChangeRequested(this, style);
     });
+
+    mRemoveButton = new QToolButton(this);
+    mRemoveButton->setObjectName("btnTileRemove");
+    mRemoveButton->setFixedSize(24, 24);
+    mRemoveButton->setIconSize(QSize(14, 14));
+    mRemoveButton->setIcon(QIcon(":/static/themes/common/img/tile-remove.svg"));
+    mRemoveButton->setAutoRaise(true);
+    mRemoveButton->setCursor(Qt::PointingHandCursor);
+    mRemoveButton->setFocusPolicy(Qt::NoFocus);
+    mRemoveButton->setToolTip(tr("Remove Widget"));
+    mRemoveButton->hide();
+
+    connect(mRemoveButton, &QToolButton::clicked, this, [this]() {
+        emit removeRequested(this);
+    });
 }
 
 QString DashboardTileWrapper::tileId() const { return mTileId; }
@@ -59,6 +76,7 @@ void DashboardTileWrapper::setInnerWidget(QWidget *newWidget)
     newWidget->setParent(this);
     layout()->addWidget(newWidget);
     mStyleButton->raise();
+    mRemoveButton->raise();
 }
 
 void DashboardTileWrapper::setEditMode(bool enabled)
@@ -68,9 +86,11 @@ void DashboardTileWrapper::setEditMode(bool enabled)
         setCursor(Qt::OpenHandCursor);
         if (!mStyleMenu->isEmpty())
             mStyleButton->show();
+        mRemoveButton->show();
     } else {
         unsetCursor();
         mStyleButton->hide();
+        mRemoveButton->hide();
     }
     update();
 }
@@ -218,4 +238,11 @@ void DashboardTileWrapper::paintEvent(QPaintEvent *event)
              << QPoint(width() - s, height())
              << QPoint(width(), height() - s);
     painter.drawPolygon(triangle);
+}
+
+void DashboardTileWrapper::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    mStyleButton->move(4, 4);
+    mRemoveButton->move(width() - mRemoveButton->width() - 4, 4);
 }

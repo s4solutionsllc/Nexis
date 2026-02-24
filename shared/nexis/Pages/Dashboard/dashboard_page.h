@@ -9,6 +9,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QSet>
 #include <QDesktopServices>
 #include <QShortcut>
 #include <QtConcurrent>
@@ -77,6 +78,7 @@ private slots:
     void onTileDragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void onTileResizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
     void onTileStyleChangeRequested(DashboardTileWrapper *wrapper, const QString &style);
+    void onTileRemoveRequested(DashboardTileWrapper *wrapper);
 
 signals:
     void sigShowUpdateBar();
@@ -126,6 +128,7 @@ private:
     DashboardTileWrapper *mDragSource;
 
     QMap<QString, QString> mTileStyles;
+    QSet<QString> mHiddenTiles;
 
     QList<QLabel*> mSummaryLabels;
     QString mSummaryHostname;

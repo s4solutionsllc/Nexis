@@ -124,9 +124,10 @@
 
 ## Dashboard Customization
 
-- [ ] **FR-54: Remove/hide dashboard widgets in edit mode** — When in dashboard edit mode (Ctrl+E), allow the user to remove individual tiles from the grid (e.g., via an "X" button on the tile wrapper). Removed tiles are hidden from the dashboard but can be restored by resetting the layout (existing "Reset Layout" behavior already restores all tiles to defaults). Tile visibility state persisted in layout JSON across sessions. Related to FR-49 (general widget visibility concept), but uses in-place edit-mode removal rather than a separate settings panel.
+- [x] **FR-54: Remove/hide dashboard widgets in edit mode** — When in dashboard edit mode (Ctrl+E), allow the user to remove individual tiles from the grid (e.g., via an "X" button on the tile wrapper). Removed tiles are hidden from the dashboard but can be restored by resetting the layout (existing "Reset Layout" behavior already restores all tiles to defaults). Tile visibility state persisted in layout JSON across sessions. Related to FR-49 (general widget visibility concept), but uses in-place edit-mode removal rather than a separate settings panel.
   - **Files:** `dashboard_tile_wrapper.cpp/.h`, `dashboard_page.cpp/.h`, layout JSON serialization
   - **Complexity:** Moderate
+  - **Resolved:** Orange X remove button on each tile in edit mode. Hidden state stored as `"visible": false` in layout JSON. Reset Layout restores all tiles.
 
 - [ ] **FR-55: Per-widget color customization** — Allow users to choose custom accent colors for individual dashboard widgets, overriding the default per-metric color tokens (e.g., `@cpuColor`, `@memoryColor`). Requires research into: (a) UX for color selection (inline color picker vs preset palette vs both), (b) how to store per-tile color overrides in layout JSON alongside style/position, (c) how tile `refreshThemeColors()` methods should merge custom colors with theme tokens, (d) interaction with theme switching (should custom colors survive a theme change?), (e) reset behavior (per-tile vs global). **This story requires significant research before implementation.**
   - **Files:** All tile widgets (`metric_tile_base.h`, gauge/ring/hybrid/speedometer/vumeter/disk tiles), `dashboard_page.cpp`, layout JSON, potentially Settings page
