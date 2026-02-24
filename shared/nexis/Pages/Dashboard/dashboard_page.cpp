@@ -36,6 +36,7 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mTempTile(nullptr),
     mGpuTile(nullptr),
     mBatteryTile(nullptr),
+    mFanTile(nullptr),
     mNetworkTile(nullptr),
     mCmbGpuDevice(new QComboBox(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
@@ -45,8 +46,10 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
     mDiskMenu(new QMenu(this)),
     mTempSensorMenu(new QMenu(this)),
+    mFanSensorMenu(new QMenu(this)),
     mSelectedSensorIndex(0),
     mSelectedGpuIndex(0),
+    mSelectedFanIndex(0),
     mKioskButton(new QPushButton(this)),
     mEditButton(new QPushButton(this)),
     mEditToolbar(nullptr),
@@ -87,6 +90,7 @@ void DashboardPage::init()
     mGpuTile = createTile("gpu", mTileStyles.value("gpu", defaultStyle("gpu")));
     mTempTile = createTile("temp", mTileStyles.value("temp", defaultStyle("temp")));
     mBatteryTile = createTile("battery", mTileStyles.value("battery", defaultStyle("battery")));
+    mFanTile = createTile("fan", mTileStyles.value("fan", defaultStyle("fan")));
 
     // Wrap each tile in a DashboardTileWrapper for drag/resize support
     wrapTile("cpu", mCpuTile);
@@ -108,6 +112,11 @@ void DashboardPage::init()
         wrapTile("battery", mBatteryTile);
     else
         mBatteryTile->hide();
+
+    if (im->hasFanSensors())
+        wrapTile("fan", mFanTile);
+    else
+        mFanTile->hide();
 
     // Load saved layout or use default, then build the grid
     if (savedLayout.isEmpty())
@@ -182,6 +191,46 @@ void DashboardPage::init()
                 this, &DashboardPage::onTempSensorSelected);
         connect(mRefresh, &DataRefreshService::tempUpdated,
                 this, &DashboardPage::updateTempTile);
+    }
+
+    // Fan sensor gear menu
+    if (im->hasFanSensors()) {
+        QList<FanSensor> fans = im->getFanSensors();
+
+        mFanSensorMenu->setObjectName("fanSensorMenu");
+        for (int i = 0; i < fans.size(); ++i) {
+            QAction *action = mFanSensorMenu->addAction(fans.at(i).label);
+            action->setData(i);
+            action->setCheckable(true);
+        }
+
+        QString savedFanId = mSettingManager->getFanSensorId();
+        if (!savedFanId.isEmpty()) {
+            bool found = false;
+            for (int i = 0; i < fans.size(); ++i) {
+                if (fans.at(i).id == savedFanId) {
+                    mSelectedFanIndex = i;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                qWarning("Saved fan sensor '%s' not found, falling back to first sensor",
+                         qPrintable(savedFanId));
+        }
+
+        for (QAction *a : mFanSensorMenu->actions())
+            a->setChecked(a->data().toInt() == mSelectedFanIndex);
+
+        if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size())
+            mFanTile->setSubtitle(fans.at(mSelectedFanIndex).label);
+
+        setupTileGearMenu("fan", mFanTile);
+
+        connect(mFanSensorMenu, &QMenu::triggered,
+                this, &DashboardPage::onFanSensorSelected);
+        connect(mRefresh, &DataRefreshService::tempUpdated,
+                this, &DashboardPage::updateFanTile);
     }
 
     // GPU device combo box
@@ -672,6 +721,38 @@ void DashboardPage::onTempSensorSelected(QAction *action)
     updateTempTile();
 }
 
+void DashboardPage::updateFanTile()
+{
+    int rpm = im->getFanSpeed(mSelectedFanIndex);
+    QList<FanSensor> fans = im->getFanSensors();
+    int maxRpm = 6000;
+    if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size()) {
+        int sensorMax = fans.at(mSelectedFanIndex).maxRpm;
+        if (sensorMax > 0)
+            maxRpm = sensorMax;
+    }
+    int percent = qBound(0, static_cast<int>(rpm * 100.0 / maxRpm), 100);
+
+    mFanTile->setValue(percent, QString("%1 RPM").arg(rpm));
+    mFanTile->addDataPoint(rpm);
+}
+
+void DashboardPage::onFanSensorSelected(QAction *action)
+{
+    mSelectedFanIndex = action->data().toInt();
+
+    for (QAction *a : mFanSensorMenu->actions())
+        a->setChecked(a == action);
+
+    QList<FanSensor> fans = im->getFanSensors();
+    if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size()) {
+        mFanTile->setSubtitle(fans.at(mSelectedFanIndex).label);
+        mSettingManager->setFanSensorId(fans.at(mSelectedFanIndex).id);
+    }
+
+    updateFanTile();
+}
+
 void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 {
     if (mSelectedGpuIndex < 0 || mSelectedGpuIndex >= gpus.size())
@@ -940,6 +1021,7 @@ void DashboardPage::onResetLayout()
             else if (id == "temp") mTempTile = newTile;
             else if (id == "gpu") mGpuTile = newTile;
             else if (id == "battery") mBatteryTile = newTile;
+            else if (id == "fan") mFanTile = newTile;
 
             setupTileGearMenu(id, newTile);
 
@@ -1033,6 +1115,7 @@ QJsonArray DashboardPage::defaultLayout() const
     if (im->hasGpu()) addEntry("gpu", 1, col++, 1, 1);
     if (im->hasThermalSensors()) addEntry("temp", 1, col++, 1, 1);
     if (im->hasBattery()) addEntry("battery", 1, col++, 1, 1);
+    if (im->hasFanSensors()) addEntry("fan", 1, col++, 1, 1);
 
     return arr;
 }
@@ -1355,6 +1438,7 @@ void DashboardPage::tileTitle(const QString &id, QString &title, QString &colorT
     else if (id == "temp")    { title = tr("TEMP");    colorToken = "@tempColor"; }
     else if (id == "gpu")     { title = tr("GPU");     colorToken = "@gpuColor"; }
     else if (id == "battery") { title = tr("BATTERY"); colorToken = "@batteryColor"; }
+    else if (id == "fan")     { title = tr("FANS");    colorToken = "@fanColor"; }
 }
 
 MetricTileBase *DashboardPage::createTile(const QString &id, const QString &style)
@@ -1407,6 +1491,10 @@ void DashboardPage::setupTileGearMenu(const QString &id, MetricTileBase *tile)
         tile->gearButton()->setMenu(mTempSensorMenu);
         tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
         tile->setGearVisible(im->getThermalSensors().size() >= 2);
+    } else if (id == "fan" && im->hasFanSensors()) {
+        tile->gearButton()->setMenu(mFanSensorMenu);
+        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
+        tile->setGearVisible(im->getFanSensors().size() >= 2);
     }
 }
 
@@ -1444,6 +1532,7 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
     else if (id == "temp")    mTempTile = newTile;
     else if (id == "gpu")     mGpuTile = newTile;
     else if (id == "battery") mBatteryTile = newTile;
+    else if (id == "fan")     mFanTile = newTile;
 
     // Re-attach gear menus
     setupTileGearMenu(id, newTile);

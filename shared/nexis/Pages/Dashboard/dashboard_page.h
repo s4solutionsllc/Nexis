@@ -62,6 +62,8 @@ private slots:
     void onNetworkUpdated(quint64 rxBytes, quint64 txBytes);
     void onDiskUsageUpdated(const QList<Disk> &disks);
     void updateTempTile();
+    void updateFanTile();
+    void onFanSensorSelected(QAction *action);
     void onGpuUpdated(const QList<GpuDevice> &gpus);
     void onTempSensorSelected(QAction *action);
     void onGpuDeviceChanged(int index);
@@ -94,11 +96,13 @@ private:
     MetricTileBase *mTempTile;
     MetricTileBase *mGpuTile;
     MetricTileBase *mBatteryTile;
+    MetricTileBase *mFanTile;
     NetworkTile *mNetworkTile;
 
     QComboBox *mCmbGpuDevice;
     QMenu *mDiskMenu;
     QMenu *mTempSensorMenu;
+    QMenu *mFanSensorMenu;
     QList<Disk> mCachedDisks;
     QList<DriveHealth> mCachedDriveHealth;
 
@@ -110,6 +114,7 @@ private:
 
     int mSelectedSensorIndex;
     int mSelectedGpuIndex;
+    int mSelectedFanIndex;
 
     QPushButton *mKioskButton;
     QPushButton *mEditButton;
