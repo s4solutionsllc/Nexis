@@ -122,6 +122,16 @@
 - [x] **FR-53: Selectable dashboard tile widget style (line graph vs speed gauge)** — Allow users to choose the visual style of dashboard metric tiles. Per-tile style selector accessible via paintbrush icon button during dashboard edit mode (Ctrl+E). 6 shared styles: Sparkline (default), Gauge (¾-circle arc), Hybrid (compact arc + mini sparkline), Ring (360° activity ring), Speedometer (needle dial with tick marks), VU Meter (segmented vertical bar). Disk tile adds a 7th "Donut" style (its default). Network tile excluded (dual sparkline is unique). Style persisted per-tile in layout JSON. All rendering uses QPainter (cross-platform, no #ifdef). Implemented via `MetricTileBase` abstract class with strategy pattern — `DashboardTileWrapper::setInnerWidget()` swaps tile widgets at runtime.
   **Resolved:** Added MetricTileBase abstract base class, 5 new tile widgets (GaugeTile, RingTile, HybridTile, SpeedometerTile, VuMeterTile), tile factory in DashboardPage, per-tile style menu in edit mode, layout JSON extended with style field.
 
+## Dashboard Customization
+
+- [ ] **FR-54: Remove/hide dashboard widgets in edit mode** — When in dashboard edit mode (Ctrl+E), allow the user to remove individual tiles from the grid (e.g., via an "X" button on the tile wrapper). Removed tiles are hidden from the dashboard but can be restored by resetting the layout (existing "Reset Layout" behavior already restores all tiles to defaults). Tile visibility state persisted in layout JSON across sessions. Related to FR-49 (general widget visibility concept), but uses in-place edit-mode removal rather than a separate settings panel.
+  - **Files:** `dashboard_tile_wrapper.cpp/.h`, `dashboard_page.cpp/.h`, layout JSON serialization
+  - **Complexity:** Moderate
+
+- [ ] **FR-55: Per-widget color customization** — Allow users to choose custom accent colors for individual dashboard widgets, overriding the default per-metric color tokens (e.g., `@cpuColor`, `@memoryColor`). Requires research into: (a) UX for color selection (inline color picker vs preset palette vs both), (b) how to store per-tile color overrides in layout JSON alongside style/position, (c) how tile `refreshThemeColors()` methods should merge custom colors with theme tokens, (d) interaction with theme switching (should custom colors survive a theme change?), (e) reset behavior (per-tile vs global). **This story requires significant research before implementation.**
+  - **Files:** All tile widgets (`metric_tile_base.h`, gauge/ring/hybrid/speedometer/vumeter/disk tiles), `dashboard_page.cpp`, layout JSON, potentially Settings page
+  - **Complexity:** High (research-heavy)
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
