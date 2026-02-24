@@ -53,6 +53,7 @@ private:
 
     QColor mMetricColor;
     QColor mTrackColor;
+    QColor mSecondaryTextColor;
 };
 
 #endif // RING_TILE_H

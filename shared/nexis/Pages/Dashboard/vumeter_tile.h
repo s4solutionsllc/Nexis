@@ -38,8 +38,6 @@ private:
 
     int segmentCount() const;
     int barWidth() const;
-    int valueFontSize() const;
-    int secondaryFontSize() const;
     int scaleFontSize() const;
 
     QColor segmentColor(int segmentIndex, int totalSegments) const;

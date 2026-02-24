@@ -149,6 +149,7 @@ void RingTile::refreshThemeColors()
 
     mMetricColor = QColor(sv->value(mColorToken).toString());
     mTrackColor  = QColor(sv->value("@color02").toString());
+    mSecondaryTextColor = QColor(sv->value("@color07").toString());
 
     QString colorHex = mMetricColor.name();
     QString hoverText = sv->value("@color07").toString();
@@ -251,9 +252,7 @@ void RingTile::paintEvent(QPaintEvent *event)
         painter.drawText(pctRect, Qt::AlignHCenter | Qt::AlignVCenter, pctText);
 
         painter.setFont(secFont);
-        QSettings *sv = AppManager::ins()->getStyleValues();
-        if (sv)
-            painter.setPen(QColor(sv->value("@color07").toString()));
+        painter.setPen(mSecondaryTextColor);
 
         QRectF secRect(ringRect.left() + thickness, textTop + pctH + 2, ringRect.width() - 2 * thickness, secH);
         painter.drawText(secRect, Qt::AlignHCenter | Qt::AlignVCenter, secText);

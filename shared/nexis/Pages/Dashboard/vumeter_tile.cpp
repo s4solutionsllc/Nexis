@@ -359,24 +359,6 @@ int VuMeterTile::barWidth() const
     }
 }
 
-int VuMeterTile::valueFontSize() const
-{
-    switch (mDisplayMode) {
-    case Hero:  return 28;
-    case Large: return 22;
-    default:    return 18;
-    }
-}
-
-int VuMeterTile::secondaryFontSize() const
-{
-    switch (mDisplayMode) {
-    case Hero:  return 13;
-    case Large: return 11;
-    default:    return 10;
-    }
-}
-
 int VuMeterTile::scaleFontSize() const
 {
     switch (mDisplayMode) {

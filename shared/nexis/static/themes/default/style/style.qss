@@ -685,13 +685,13 @@ QLabel[accessibleName="dialog-title"] {
 
 /* - Metric Tile - */
 
-#metricTile {
+#metricTile, #gaugeTile, #ringTile, #hybridTile, #speedometerTile, #vuMeterTile {
     background-color: @cardBg;
     border-radius: 12;
     border: 1px solid @borderColor;
 }
 
-#metricTile:hover {
+#metricTile:hover, #gaugeTile:hover, #ringTile:hover, #hybridTile:hover, #speedometerTile:hover, #vuMeterTile:hover {
     background-color: @cardBgElevated;
     border-color: @accentColor;
 }

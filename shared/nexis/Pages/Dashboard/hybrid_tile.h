@@ -42,6 +42,8 @@ private:
 
     QColor mArcColor;
     QColor mTrackColor;
+    QColor mTextColor;
+    QColor mSecondaryTextColor;
 
     int mPercent;
     QString mValueText;

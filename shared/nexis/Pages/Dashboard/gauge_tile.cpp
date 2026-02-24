@@ -51,7 +51,7 @@ void GaugeTile::buildLayout()
     mLblTrend->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     mBtnAction = new QPushButton(this);
-    mBtnAction->setObjectName("gaugeTileAction");
+    mBtnAction->setObjectName("metricTileAction");
     mBtnAction->setCursor(Qt::PointingHandCursor);
     mBtnAction->setFocusPolicy(Qt::NoFocus);
     mBtnAction->hide();
@@ -64,7 +64,7 @@ void GaugeTile::buildLayout()
     mainLayout->addLayout(footerLayout);
 
     mGearButton = new QToolButton(this);
-    mGearButton->setObjectName("btnGaugeGear");
+    mGearButton->setObjectName("btnMetricGear");
     mGearButton->setFixedSize(24, 24);
     mGearButton->setIconSize(QSize(14, 14));
     mGearButton->setAutoRaise(true);
@@ -140,7 +140,7 @@ void GaugeTile::refreshThemeColors()
     QString hoverText = sv->value("@color07").toString();
 
     mBtnAction->setStyleSheet(
-        "QPushButton#gaugeTileAction {"
+        "QPushButton#metricTileAction {"
         "  font-size: 8pt;"
         "  padding: 2px 8px;"
         "  border-radius: 10px;"
@@ -148,7 +148,7 @@ void GaugeTile::refreshThemeColors()
         "  color: " + colorHex + ";"
         "  background: transparent;"
         "}"
-        "QPushButton#gaugeTileAction:hover {"
+        "QPushButton#metricTileAction:hover {"
         "  background-color: " + colorHex + ";"
         "  color: " + hoverText + ";"
         "}"

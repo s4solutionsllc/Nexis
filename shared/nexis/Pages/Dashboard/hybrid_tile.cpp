@@ -203,6 +203,8 @@ void HybridTile::refreshThemeColors()
 
     mArcColor = QColor(sv->value(mColorToken).toString());
     mTrackColor = QColor(sv->value("@color02").toString());
+    mTextColor = QColor(sv->value("@color07").toString());
+    mSecondaryTextColor = QColor(sv->value("@color05").toString());
 
     QString colorHex = mArcColor.name();
     QString hoverText = sv->value("@color07").toString();
@@ -268,14 +270,11 @@ void HybridTile::drawGaugeArc(QPainter &painter)
     painter.drawArc(arcRect, GAUGE_START_ANGLE * 16, valueSweep * 16);
 
     // Percentage text centered in gauge
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QColor textColor = sv ? QColor(sv->value("@color07").toString()) : mArcColor;
-
     QFont percentFont = painter.font();
     percentFont.setPixelSize(qMax(12, side / 4));
     percentFont.setBold(true);
     painter.setFont(percentFont);
-    painter.setPen(textColor);
+    painter.setPen(mTextColor);
 
     QString displayText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
     QRect textRect = arcRect.adjusted(0, -side / 8, 0, 0);
@@ -283,12 +282,11 @@ void HybridTile::drawGaugeArc(QPainter &painter)
 
     // Secondary value below percentage
     if (!mSecondaryText.isEmpty()) {
-        QColor secondaryColor = sv ? QColor(sv->value("@color05").toString()) : textColor;
         QFont secondaryFont = painter.font();
         secondaryFont.setPixelSize(qMax(9, side / 7));
         secondaryFont.setBold(false);
         painter.setFont(secondaryFont);
-        painter.setPen(secondaryColor);
+        painter.setPen(mSecondaryTextColor);
 
         QRect secondaryRect = arcRect.adjusted(0, side / 6, 0, 0);
         painter.drawText(secondaryRect, Qt::AlignCenter, mSecondaryText);
