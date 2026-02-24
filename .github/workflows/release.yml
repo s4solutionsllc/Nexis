@@ -144,7 +144,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: brew install qt@6
+        run: |
+          for i in 1 2 3; do
+            brew install qt@6 && break
+            echo "brew install attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
 
       - name: Extract version from tag
         id: version
