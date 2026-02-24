@@ -129,3 +129,43 @@ void Process::setSession(const QString &value)
 {
     session = value;
 }
+
+double Process::getDiskReadRate() const
+{
+    return diskReadRate;
+}
+
+void Process::setDiskReadRate(const double &value)
+{
+    diskReadRate = value;
+}
+
+double Process::getDiskWriteRate() const
+{
+    return diskWriteRate;
+}
+
+void Process::setDiskWriteRate(const double &value)
+{
+    diskWriteRate = value;
+}
+
+double Process::getNetDownRate() const
+{
+    return netDownRate;
+}
+
+void Process::setNetDownRate(const double &value)
+{
+    netDownRate = value;
+}
+
+double Process::getNetUpRate() const
+{
+    return netUpRate;
+}
+
+void Process::setNetUpRate(const double &value)
+{
+    netUpRate = value;
+}

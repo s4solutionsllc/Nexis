@@ -44,6 +44,18 @@ public:
     QString getSession() const;
     void setSession(const QString &value);
 
+    double getDiskReadRate() const;
+    void setDiskReadRate(const double &value);
+
+    double getDiskWriteRate() const;
+    void setDiskWriteRate(const double &value);
+
+    double getNetDownRate() const;
+    void setNetDownRate(const double &value);
+
+    double getNetUpRate() const;
+    void setNetUpRate(const double &value);
+
     QString getCmd() const;
     void setCmd(const QString &value);
 
@@ -60,6 +72,10 @@ private:
     int nice;
     QString cpuTime;
     QString session;
+    double diskReadRate = -1.0;
+    double diskWriteRate = -1.0;
+    double netDownRate = -1.0;
+    double netUpRate = -1.0;
     QString cmd;
 };
 
