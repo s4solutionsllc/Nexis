@@ -135,7 +135,11 @@ void DashboardTileWrapper::setStyleMenuItems(const QStringList &styles, const QS
 {
     mStyleMenu->clear();
     mColorActions.clear();
+    mRangeActions.clear();
     mCurrentStyle = current;
+
+    QAction *header = mStyleMenu->addAction(tr("Style"));
+    header->setEnabled(false);
 
     for (const QString &style : styles) {
         QString displayName = style;
