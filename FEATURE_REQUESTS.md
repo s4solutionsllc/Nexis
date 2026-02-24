@@ -136,6 +136,88 @@
   - **Resolved:** Per-tile color palette in edit-mode style menu with 16 presets + Default.
   - **Revised:** Speedometer and VuMeter tiles now show "Color Range" presets (Green→Red, Red→Green, Blue→Red, Teal→Orange) instead of single-color swatches, controlling the gradient arc / bar segment direction. Network tile override now derives upload sparkline color from download color via HSL shift. Menu section rebuilds dynamically when switching between range-based (speedometer/vumeter) and single-color styles. Range presets stored as `"range::green-red"` in layout JSON.
 
+## Monitoring Enhancements
+
+- [ ] **FR-56: Fan speed monitoring** — Add fan RPM readings alongside existing thermal sensors. macOS: `IOKit SMCReadKey` (same API as ThermalInfo). Linux: `/sys/class/hwmon/*/fan*_input`. Display in Hardware Info page (new "Fans" section) and optionally as a Dashboard tile. Completes the hardware sensor story alongside temperature, battery, and disk health.
+  - **Files:** New `FanInfo` class (abstract base + platform subclasses), `hardware_info_page.cpp/.h`, optional Dashboard tile
+  - **Complexity:** Low (1-2 days) — mirrors the existing ThermalInfo pattern exactly
+
+- [ ] **FR-57: Memory pressure visualization (macOS) and swap details (Linux)** — Enhance the Memory dashboard tile and Resources chart to show: macOS memory pressure state (green/yellow/red via `host_statistics64`), wired/active/inactive/compressed breakdown. Linux: show swap as a distinct metric separate from RAM. Makes memory monitoring actionable rather than just a single percentage.
+  - **Files:** `memory_info.h/.cpp` (both platforms), Resources page chart, Dashboard Memory tile
+  - **Complexity:** Medium (3-4 days) — extends existing MemoryInfo class + new chart series
+
+- [ ] **FR-58: Per-process disk I/O columns** — Add disk I/O read/write bytes per process to the Processes page as sortable columns. Linux: `/proc/<pid>/io`. macOS: `proc_pidinfo()` with `PROC_PIDTASKINFO`. Precedent: KDE System Monitor and Mission Center both surface this.
+  - **Files:** `ProcessInfo` class (both platforms), `processes_page.cpp/.h`
+  - **Complexity:** Medium (3-4 days)
+
+- [ ] **FR-59: Per-process network bandwidth** — Show which processes are consuming network bandwidth, analogous to `nethogs`. Could be implemented as additional columns on the Processes page or a dedicated detail panel. Linux: eBPF or `/proc/net/` correlation. macOS: `nettop` parsing or Network Extension framework.
+  - **Files:** `ProcessInfo` class, `processes_page.cpp/.h`, potentially new platform-specific network tracking class
+  - **Complexity:** High (7-10 days) — requires packet/socket-to-PID correlation, platform-specific approaches
+
+- [ ] **FR-60: System update status indicator** — Dashboard card or status bar indicator showing pending OS and package updates. Linux: `apt list --upgradable` / `dnf check-update`. macOS: `softwareupdate -l` + `brew outdated`. Low-frequency check (hourly or on-demand). Optional tray alert when updates are available.
+  - **Files:** New `UpdateInfo` core class with platform backends, Dashboard tile integration, Settings alert threshold
+  - **Complexity:** Medium (3-4 days)
+
+## Storage & Cleaning Enhancements
+
+- [ ] **FR-61: Broken symlink cleanup** — Add a 7th System Cleaner category that detects broken symbolic links in user directories (`~/.local/`, `~/bin/`, Homebrew prefix). Safe and reversible — broken links serve no purpose. Cross-platform.
+  - **Files:** `cleaner_service.cpp` new scan method, category UI entry in System Cleaner page
+  - **Complexity:** Low (1-2 days) — fits the existing CleanerService scan/clean pattern
+
+- [ ] **FR-62: Large and old file scanner** — Built-in "find files larger than X MB not accessed in Y days" scanner with a review-and-delete UI. Replaces the current "launch external disk analyzer" approach for quick triage. Integrates with existing FileSearchService infrastructure.
+  - **Files:** `FileSearchService` extension, new results UI with size/date filtering (Search page enhancement or new section)
+  - **Complexity:** Medium (4-5 days)
+
+- [ ] **FR-63: Duplicate file finder** — Scan user-selected directories for duplicate files using size pre-filter + hash comparison (SHA-256). Results grouped by duplicate set with selective deletion. The single most-requested feature in the system-cleaner category across competitors (CleanMyMac, Czkawka, dupeGuru).
+  - **Files:** New `DuplicateFinderService`, new page or Search page mode
+  - **Complexity:** High (7-10 days) — hash computation, progress UI, large file handling, review UX
+
+- [ ] **FR-64: Privacy / browser artifact cleaner** — New System Cleaner category that finds and removes browser caches, cookies, history, and download lists for Chrome, Firefox, Safari, and Edge. Also: recently-opened-files lists (`.local/share/recently-used.xbel` on Linux, LSSharedFileList on macOS). Precedent: BleachBit, CleanMyMac Privacy module.
+  - **Files:** `cleaner_service.cpp` new category, browser profile path detection logic
+  - **Complexity:** Medium-High (5-7 days) — many browser profile paths to discover/maintain, user confirmation critical
+
+## Networking & Diagnostics
+
+- [ ] **FR-65: DNS cache flush (one-click)** — Add a "Flush DNS Cache" button to the Helpers page alongside the Hosts editor. macOS: `dscacheutil -flushcache && sudo killall -HUP mDNSResponder`. Linux: `systemd-resolve --flush-caches` or `nscd -K`. Commonly used for troubleshooting, very low implementation cost.
+  - **Files:** Helpers page (new button/section), `CommandUtil` platform branching
+  - **Complexity:** Low (half day)
+
+- [ ] **FR-66: Open ports / active connections viewer** — New section on the Helpers page (or a new Network Tools page) showing listening ports and active connections. Parsed from `ss -tlnp` (Linux) / `lsof -iTCP -sTCP:LISTEN` (macOS). Table with: protocol, local address, port, PID, process name, state.
+  - **Files:** New `NetworkConnectionInfo` class with platform backends, new UI section/page
+  - **Complexity:** Medium (3-4 days)
+
+- [ ] **FR-67: Built-in network speed test** — Download/upload/latency test against a public endpoint (Cloudflare or similar). Single-button test with results shown inline. Uses Qt's `QNetworkAccessManager` against a known test file for a lightweight HTTP-based approach.
+  - **Files:** New network utility class, UI in Helpers or Resources page
+  - **Complexity:** Medium (4-5 days)
+
+- [ ] **FR-68: Firewall rule viewer/editor (Linux)** — GUI for `ufw` rules: list current rules, add allow/deny by port/service/IP, enable/disable firewall. Read-only view on macOS (`pfctl`). Precedent: Cockpit.
+  - **Files:** New `FirewallTool` class, new conditional page (shown when `ufw` detected)
+  - **Complexity:** High (7-10 days) — complex rule syntax, security-sensitive, needs careful validation
+
+## System Maintenance
+
+- [ ] **FR-69: macOS maintenance actions** — One-click buttons for common macOS maintenance: rebuild Spotlight index (`mdutil -E /`), rebuild Launch Services database (`lsregister -kill`), run periodic maintenance scripts (`periodic daily weekly monthly`), verify disk (`diskutil verifyVolume`). Precedent: OnyX, CleanMyMac Maintenance module.
+  - **Files:** New macOS-only section on Helpers page or new Maintenance page, `CommandUtil` calls with sudo handling
+  - **Complexity:** Medium (3-5 days, macOS only)
+
+- [ ] **FR-70: CPU governor / power profile switcher (Linux)** — Toggle between `performance`, `balanced`, and `powersave` CPU frequency governors. Read/write `/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor`. Valuable for laptop users. No macOS equivalent (handled by OS automatically).
+  - **Files:** New Settings section or Dashboard quick action, sysfs read/write with root elevation
+  - **Complexity:** Medium (3-4 days, Linux only)
+
+- [ ] **FR-71: System log viewer** — Read-only structured log viewer. Linux: `journalctl --output=json` with severity/unit/time filtering. macOS: `log show --predicate` with subsystem/level filtering. Searchable, filterable table with severity color-coding.
+  - **Files:** New page, platform-specific log parsing classes
+  - **Complexity:** Medium-High (5-7 days) — platform-specific log APIs, potentially large datasets need virtual scrolling
+
+## Information & Reporting
+
+- [ ] **FR-72: Hardware report export** — "Export System Report" button on Hardware Info page that generates a structured text/HTML summary of all hardware sections (system, CPU, GPU, memory, battery, storage, network, thermal). Useful for support tickets and documentation.
+  - **Files:** Hardware Info page export action, text/HTML formatter utility
+  - **Complexity:** Low-Medium (2-3 days) — data already collected, just needs formatting + file save dialog
+
+- [ ] **FR-73: System health score** — Composite 0-100 score aggregating: disk space free %, memory pressure, SMART health, battery cycle health, pending updates, cleanable junk size. Displayed as a prominent Dashboard card. All data sources already exist in the app. Precedent: CleanMyMac's "Mac Health Score" (2025).
+  - **Files:** New scoring service, new Dashboard card widget
+  - **Complexity:** Medium (4-5 days) — data sources exist, work is in scoring algorithm and UX
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
