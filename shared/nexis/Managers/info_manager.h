@@ -11,6 +11,7 @@
 #include <Info/system_info.h>
 #include <Info/process_info.h>
 #include <Info/thermal_info.h>
+#include <Info/fan_info.h>
 #include <Info/gpu_info.h>
 #include <Info/battery_info.h>
 #include <Info/disk_health_info.h>
@@ -63,6 +64,10 @@ public:
     double getThermalTemperature(int index) const;
     bool hasThermalSensors() const;
 
+    QList<FanSensor> getFanSensors() const;
+    int getFanSpeed(int index) const;
+    bool hasFanSensors() const;
+
     QList<GpuDevice> getGpuDevices() const;
     void updateGpuInfo();
     bool hasGpu() const;
@@ -89,6 +94,7 @@ private:
     std::unique_ptr<SystemInfo> si;
     std::unique_ptr<ProcessInfo> pi;
     std::unique_ptr<ThermalInfo> ti;
+    std::unique_ptr<FanInfo> fi;
     std::unique_ptr<GpuInfo> gi;
     std::unique_ptr<BatteryInfo> bi;
     std::unique_ptr<DiskHealthInfo> dhi;

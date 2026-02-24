@@ -8,6 +8,7 @@
 #include <Info/system_info_macos.h>
 #include <Info/process_info_macos.h>
 #include <Info/thermal_info_macos.h>
+#include <Info/fan_info_macos.h>
 #include <Info/gpu_info_macos.h>
 #include <Info/battery_info_macos.h>
 #include <Info/disk_health_info_macos.h>
@@ -19,6 +20,7 @@
 #include <Info/system_info_linux.h>
 #include <Info/process_info_linux.h>
 #include <Info/thermal_info_linux.h>
+#include <Info/fan_info_linux.h>
 #include <Info/gpu_info_linux.h>
 #include <Info/battery_info_linux.h>
 #include <Info/disk_health_info_linux.h>
@@ -36,6 +38,7 @@ InfoManager::InfoManager()
     si  = std::make_unique<SystemInfoMacOS>();
     pi  = std::make_unique<ProcessInfoMacOS>();
     ti  = std::make_unique<ThermalInfoMacOS>();
+    fi  = std::make_unique<FanInfoMacOS>();
     gi  = std::make_unique<GpuInfoMacOS>();
     bi  = std::make_unique<BatteryInfoMacOS>();
     dhi = std::make_unique<DiskHealthInfoMacOS>();
@@ -47,6 +50,7 @@ InfoManager::InfoManager()
     si  = std::make_unique<SystemInfoLinux>();
     pi  = std::make_unique<ProcessInfoLinux>();
     ti  = std::make_unique<ThermalInfoLinux>();
+    fi  = std::make_unique<FanInfoLinux>();
     gi  = std::make_unique<GpuInfoLinux>();
     bi  = std::make_unique<BatteryInfoLinux>();
     dhi = std::make_unique<DiskHealthInfoLinux>();
@@ -256,6 +260,24 @@ double InfoManager::getThermalTemperature(int index) const
 bool InfoManager::hasThermalSensors() const
 {
     return ti->hasSensors();
+}
+
+/********************
+ * Fan Provider
+ *******************/
+QList<FanSensor> InfoManager::getFanSensors() const
+{
+    return fi->getSensors();
+}
+
+int InfoManager::getFanSpeed(int index) const
+{
+    return fi->getFanSpeed(index);
+}
+
+bool InfoManager::hasFanSensors() const
+{
+    return fi->hasSensors();
 }
 
 /********************
