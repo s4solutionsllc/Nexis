@@ -412,6 +412,8 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 **Results:** 6 per-page QTimers → 4 centralized QTimers. Zero duplicate InfoManager calls. Fixed `getCpuPercents()` static-delta bug. Battery optimization via pause on minimize.
 
+**Per-process I/O delta tracking (FR-58/FR-59):** `ProcessInfoMacOS` and `ProcessInfoLinux` subclasses maintain `QHash<pid_t, QPair<quint64,quint64>>` maps for previous disk I/O counters and a `QElapsedTimer` to compute per-process byte rates (read/write per second). macOS additionally parses `nettop -x -P -L1 -J bytes_in,bytes_out` output for per-process network bandwidth. Linux reads `/proc/<pid>/io` for disk I/O; network columns show N/A on Linux (no viable non-privileged per-process network API). The 4 new fields (`diskReadRate`, `diskWriteRate`, `netDownRate`, `netUpRate`) are carried in the `Process` struct and displayed as hidden-by-default columns on the Processes page.
+
 ---
 
 #### ~~2B. Dependency Injection for Managers~~ (Done)

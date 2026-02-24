@@ -53,7 +53,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 3 themes (Dark, Light, Auto)
 - 34 languages
 - 7 test suites with 63 test methods (Qt Test + CTest)
-- 48 features implemented, 61 bugs fixed since fork
+- 50 features implemented, 61 bugs fixed since fork
 
 ---
 
@@ -220,7 +220,10 @@ Manage system services (daemons).
 
 View and manage running processes.
 
-- Process table: PID, name, user, CPU%, memory%, command line
+- Process table with 17 columns: PID, name, user, CPU%, memory%, command line, Disk Read/s, Disk Write/s, Net Down/s, Net Up/s, and more
+- Disk Read/s and Disk Write/s columns show per-process disk I/O rates via `proc_pid_rusage()` (macOS) or `/proc/<pid>/io` (Linux), using delta-based calculation with `QElapsedTimer`
+- Net Down/s and Net Up/s columns show per-process network bandwidth via `nettop` parsing (macOS only; Linux shows N/A)
+- All 4 new I/O columns are hidden by default (toggled via header context menu)
 - Real-time search filter
 - Sortable column headers
 - Refresh rate slider (1s to 10s, user-configurable)
@@ -390,7 +393,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `DiskInfo` | Partitions, usage, I/O rates | `QStorageInfo`, IOKit | `QStorageInfo`, sysfs |
 | `NetworkInfo` | Interfaces, RX/TX bytes | `QNetworkInterface` | sysfs `/sys/class/net/` |
 | `SystemInfo` | Hostname, OS, kernel, CPU model | `sysctl` | `/etc/os-release`, `lscpu` |
-| `ProcessInfo` | Process list with CPU/memory stats | `sysctl` KERN_PROC | `/proc/[pid]/stat` |
+| `ProcessInfo` | Process list with CPU/memory/disk I/O/network stats | `sysctl` KERN_PROC, `proc_pid_rusage()`, `nettop` | `/proc/[pid]/stat`, `/proc/[pid]/io` |
 | `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` |
 | `GpuInfo` | GPU devices, utilization | IOKit, Metal | sysfs, `nvidia-smi` |
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |

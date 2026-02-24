@@ -147,13 +147,15 @@
   - **Complexity:** Medium (3-4 days) — extends existing MemoryInfo class + new chart series
   - **Resolved:** Added `MemorySnapshot` struct-based signal replacing 4-param `memoryUpdated`. macOS: extracts wired/active/inactive/compressed from `vm_statistics64_data_t`, pressure via `kern.memorystatus_vm_pressure_level` sysctl. Linux: refactored `/proc/meminfo` parser from fragile positional indexing to key-value map, added MemAvailable/Active/Inactive, PSI-based pressure with heuristic fallback. Dashboard tile shows breakdown subtitle (W/A/C on macOS, Avail on Linux) and pressure-driven accent color (green/yellow/red). Resources chart expanded from 2 to 4 series (Wired+Compressed on macOS, Available+Active on Linux). Theme tokens `@memPressureNormal/Warning/Critical` added.
 
-- [ ] **FR-58: Per-process disk I/O columns** — Add disk I/O read/write bytes per process to the Processes page as sortable columns. Linux: `/proc/<pid>/io`. macOS: `proc_pidinfo()` with `PROC_PIDTASKINFO`. Precedent: KDE System Monitor and Mission Center both surface this.
+- [x] **FR-58: Per-process disk I/O columns** — Add disk I/O read/write bytes per process to the Processes page as sortable columns. Linux: `/proc/<pid>/io`. macOS: `proc_pidinfo()` with `PROC_PIDTASKINFO`. Precedent: KDE System Monitor and Mission Center both surface this.
   - **Files:** `ProcessInfo` class (both platforms), `processes_page.cpp/.h`
   - **Complexity:** Medium (3-4 days)
+  - **Resolved:** Per-process disk I/O columns added via `proc_pid_rusage()` (macOS) and `/proc/<pid>/io` (Linux). Delta-based rate calculation with QElapsedTimer.
 
-- [ ] **FR-59: Per-process network bandwidth** — Show which processes are consuming network bandwidth, analogous to `nethogs`. Could be implemented as additional columns on the Processes page or a dedicated detail panel. Linux: eBPF or `/proc/net/` correlation. macOS: `nettop` parsing or Network Extension framework.
+- [x] **FR-59: Per-process network bandwidth** — Show which processes are consuming network bandwidth, analogous to `nethogs`. Could be implemented as additional columns on the Processes page or a dedicated detail panel. Linux: eBPF or `/proc/net/` correlation. macOS: `nettop` parsing or Network Extension framework.
   - **Files:** `ProcessInfo` class, `processes_page.cpp/.h`, potentially new platform-specific network tracking class
   - **Complexity:** High (7-10 days) — requires packet/socket-to-PID correlation, platform-specific approaches
+  - **Resolved:** Per-process network columns added via `nettop` parsing (macOS). Linux shows N/A (no viable non-privileged API). Combined implementation with FR-58.
 
 - [ ] **FR-60: System update status indicator** — Dashboard card or status bar indicator showing pending OS and package updates. Linux: `apt list --upgradable` / `dnf check-update`. macOS: `softwareupdate -l` + `brew outdated`. Low-frequency check (hourly or on-demand). Optional tray alert when updates are available.
   - **Files:** New `UpdateInfo` core class with platform backends, Dashboard tile integration, Settings alert threshold
