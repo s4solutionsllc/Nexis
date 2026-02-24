@@ -23,6 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED  YES)
 
 # Platform directory: macos/ or linux/
 if(APPLE)
+  enable_language(OBJCXX)
   set(PLATFORM_DIR "${PROJECT_ROOT}/macos")
 else()
   set(PLATFORM_DIR "${PROJECT_ROOT}/linux")
@@ -317,8 +318,11 @@ set(GUI_SHARED_HDRS
 if(APPLE)
   set(GUI_PLAT_SRCS
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
+    "${GUI_PLAT_DIR}/macos_dock_helper.mm"
   )
-  set(GUI_PLAT_HDRS)
+  set(GUI_PLAT_HDRS
+    "${GUI_PLAT_DIR}/macos_dock_helper.h"
+  )
 else()
   set(GUI_PLAT_SRCS
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
@@ -434,6 +438,11 @@ target_compile_definitions(nexis-gui PUBLIC QT_DEPRECATED_WARNINGS "APP_VERSION=
 target_link_libraries(nexis-gui PUBLIC
   nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent
 )
+
+if(APPLE)
+  find_library(APPKIT_FRAMEWORK AppKit)
+  target_link_libraries(nexis-gui PUBLIC ${APPKIT_FRAMEWORK})
+endif()
 
 # Strict aliasing fix for Qt + LTO
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"

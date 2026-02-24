@@ -20,6 +20,10 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
+#ifdef Q_OS_MAC
+#include "macos_dock_helper.h"
+#endif
+
 App::~App()
 {
     delete ui;
@@ -464,6 +468,9 @@ void App::closeEvent(QCloseEvent *event)
     if (SettingManager::ins()->getMinimizeToTray()) {
         emit SignalMapper::ins()->sigAppVisibilityChanged(false);
         hide();
+#ifdef Q_OS_MAC
+        nexis_macos_hide_dock_icon();
+#endif
         event->ignore();
         return;
     }
@@ -482,6 +489,9 @@ void App::changeEvent(QEvent *event)
         if (SettingManager::ins()->getMinimizeToTray()) {
             emit SignalMapper::ins()->sigAppVisibilityChanged(false);
             hide();
+#ifdef Q_OS_MAC
+            nexis_macos_hide_dock_icon();
+#endif
             event->ignore();
             return;
         }
@@ -502,6 +512,9 @@ void App::createTrayActions()
     }
 
     connect(mTrayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason) {
+#ifdef Q_OS_MAC
+        nexis_macos_show_dock_icon();
+#endif
         setWindowState(windowState() & ~Qt::WindowMinimized);
         show();
         if (windowHandle())
@@ -535,6 +548,10 @@ void App::clickSidebarButton(QString pageTitle, bool isShow)
     } else {
         pageClick(mListPages.first());
     }
+#ifdef Q_OS_MAC
+    if (isShow)
+        nexis_macos_show_dock_icon();
+#endif
     setVisible(isShow);
     if (isShow && windowHandle())
         windowHandle()->requestActivate();
