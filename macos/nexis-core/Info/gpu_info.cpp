@@ -127,9 +127,45 @@ void GpuInfoMacOS::discoverGpus()
     IOObjectRelease(iterator);
 }
 
+static int readUtilization(io_object_t accel)
+{
+    int utilization = -1;
+
+    CFMutableDictionaryRef props = nullptr;
+    if (IORegistryEntryCreateCFProperties(accel, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS && props) {
+        CFDictionaryRef perfStats = (CFDictionaryRef)CFDictionaryGetValue(props, CFSTR("PerformanceStatistics"));
+        if (perfStats && CFGetTypeID(perfStats) == CFDictionaryGetTypeID()) {
+
+            static const CFStringRef utilKeys[] = {
+                CFSTR("Device Utilization %"),
+                CFSTR("GPU Core Utilization"),
+                CFSTR("GPU Activity(%)"),
+                CFSTR("gpuCoreUtilizationPercent"),
+            };
+
+            for (const auto &key : utilKeys) {
+                CFNumberRef val = (CFNumberRef)CFDictionaryGetValue(perfStats, key);
+                if (val && CFGetTypeID(val) == CFNumberGetTypeID()) {
+                    int64_t num = 0;
+                    CFNumberGetValue(val, kCFNumberSInt64Type, &num);
+                    if (num > 100) {
+                        utilization = static_cast<int>(num / 10000000);
+                    } else {
+                        utilization = static_cast<int>(num);
+                    }
+                    utilization = qBound(0, utilization, 100);
+                    break;
+                }
+            }
+        }
+        CFRelease(props);
+    }
+
+    return utilization;
+}
+
 void GpuInfoMacOS::updateGpuInfo()
 {
-    // Re-enumerate IOAccelerators and read PerformanceStatistics
     io_iterator_t iterator = 0;
     kern_return_t kr = IOServiceGetMatchingServices(
         kIOMainPortDefault,
@@ -140,49 +176,26 @@ void GpuInfoMacOS::updateGpuInfo()
         return;
 
     io_object_t accel;
-    int idx = 0;
     while ((accel = IOIteratorNext(iterator)) != 0) {
-        if (idx < mDevices.size()) {
-            int utilization = -1;
+        QString name = getModelName(accel);
+        int utilization = readUtilization(accel);
 
-            // Read PerformanceStatistics dictionary
-            CFMutableDictionaryRef props = nullptr;
-            if (IORegistryEntryCreateCFProperties(accel, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS && props) {
-                CFDictionaryRef perfStats = (CFDictionaryRef)CFDictionaryGetValue(props, CFSTR("PerformanceStatistics"));
-                if (perfStats && CFGetTypeID(perfStats) == CFDictionaryGetTypeID()) {
-
-                    // Try several known keys for GPU utilization
-                    static const CFStringRef utilKeys[] = {
-                        CFSTR("Device Utilization %"),
-                        CFSTR("GPU Core Utilization"),
-                        CFSTR("GPU Activity(%)"),
-                        CFSTR("gpuCoreUtilizationPercent"),
-                    };
-
-                    for (const auto &key : utilKeys) {
-                        CFNumberRef val = (CFNumberRef)CFDictionaryGetValue(perfStats, key);
-                        if (val && CFGetTypeID(val) == CFNumberGetTypeID()) {
-                            int64_t num = 0;
-                            CFNumberGetValue(val, kCFNumberSInt64Type, &num);
-                            // Some keys report 0-100, others 0-10000000 (per-million)
-                            if (num > 100) {
-                                utilization = static_cast<int>(num / 10000000);
-                            } else {
-                                utilization = static_cast<int>(num);
-                            }
-                            utilization = qBound(0, utilization, 100);
-                            break;
-                        }
-                    }
-                }
-                CFRelease(props);
+        // Match by model name to handle IOKit iteration order changes
+        bool matched = false;
+        for (int i = 0; i < mDevices.size(); ++i) {
+            if (mDevices[i].name == name) {
+                mDevices[i].utilization = utilization;
+                matched = true;
+                break;
             }
+        }
 
-            mDevices[idx].utilization = utilization;
+        if (!matched && mDevices.size() == 1) {
+            // Single-GPU fallback: assign to the only device
+            mDevices[0].utilization = utilization;
         }
 
         IOObjectRelease(accel);
-        idx++;
     }
 
     IOObjectRelease(iterator);

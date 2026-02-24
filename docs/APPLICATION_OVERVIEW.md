@@ -106,8 +106,8 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - **Memory** — Independent `MetricTile` with sparkline history (1s refresh)
 - **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health badge with verdict and numeric percentage (e.g., "Apple SSD: Good (92%)") via `setDriveHealth()` (5s refresh). Gear icon in top-right corner (visible when 2+ disks detected) opens a dropdown menu to switch the displayed disk; selection is persisted.
 - **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
-- **GPU** — Utilization percentage with multi-GPU selector, sparkline history (1s refresh; hidden if no GPU detected)
-- **Temperature** — Selectable sensor via gear icon menu (2+ sensors), sparkline history (1s refresh; hidden if no sensors)
+- **GPU** — Utilization percentage with device name subtitle, multi-GPU combo selector (1s refresh; hidden if no GPU detected)
+- **Temperature** — Selectable sensor via gear icon menu (2+ sensors) with sensor name subtitle, sparkline history (1s refresh; hidden if no sensors)
 - **Battery** — Charge level percentage (5s refresh; hidden if no battery)
 
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).

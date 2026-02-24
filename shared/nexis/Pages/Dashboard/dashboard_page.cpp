@@ -157,16 +157,24 @@ void DashboardPage::init()
 
         QString savedSensorId = mSettingManager->getTempSensorId();
         if (!savedSensorId.isEmpty()) {
+            bool found = false;
             for (int i = 0; i < sensors.size(); ++i) {
                 if (sensors.at(i).id == savedSensorId) {
                     mSelectedSensorIndex = i;
+                    found = true;
                     break;
                 }
             }
+            if (!found)
+                qWarning("Saved temperature sensor '%s' not found, falling back to first sensor",
+                         qPrintable(savedSensorId));
         }
 
         for (QAction *a : mTempSensorMenu->actions())
             a->setChecked(a->data().toInt() == mSelectedSensorIndex);
+
+        if (mSelectedSensorIndex >= 0 && mSelectedSensorIndex < sensors.size())
+            mTempTile->setSubtitle(sensors.at(mSelectedSensorIndex).label);
 
         setupTileGearMenu("temp", mTempTile);
 
@@ -184,14 +192,22 @@ void DashboardPage::init()
 
         QString savedGpuId = mSettingManager->getGpuDeviceId();
         if (!savedGpuId.isEmpty()) {
+            bool found = false;
             for (int i = 0; i < gpus.size(); ++i) {
                 if (gpus.at(i).name == savedGpuId) {
                     mCmbGpuDevice->setCurrentIndex(i);
                     mSelectedGpuIndex = i;
+                    found = true;
                     break;
                 }
             }
+            if (!found)
+                qWarning("Saved GPU device '%s' not found, falling back to first device",
+                         qPrintable(savedGpuId));
         }
+
+        if (mSelectedGpuIndex >= 0 && mSelectedGpuIndex < gpus.size())
+            mGpuTile->setSubtitle(gpus.at(mSelectedGpuIndex).name);
 
         if (gpus.size() <= 1)
             mCmbGpuDevice->hide();
@@ -618,8 +634,10 @@ void DashboardPage::onTempSensorSelected(QAction *action)
     mSelectedSensorIndex = index;
 
     QList<ThermalSensor> sensors = im->getThermalSensors();
-    if (index >= 0 && index < sensors.size())
+    if (index >= 0 && index < sensors.size()) {
         mSettingManager->setTempSensorId(sensors.at(index).id);
+        mTempTile->setSubtitle(sensors.at(index).label);
+    }
 
     for (QAction *a : mTempSensorMenu->actions())
         a->setChecked(a->data().toInt() == index);
@@ -644,8 +662,10 @@ void DashboardPage::onGpuDeviceChanged(int index)
     mSelectedGpuIndex = index;
 
     QList<GpuDevice> gpus = im->getGpuDevices();
-    if (index >= 0 && index < gpus.size())
+    if (index >= 0 && index < gpus.size()) {
         mSettingManager->setGpuDeviceId(gpus.at(index).name);
+        mGpuTile->setSubtitle(gpus.at(index).name);
+    }
 
     onGpuUpdated(gpus);
 }
