@@ -5,6 +5,22 @@
 
 #include "nexis-core_global.h"
 
+#include <QMetaType>
+
+struct MemorySnapshot {
+    quint64 used = 0;
+    quint64 total = 0;
+    quint64 swapUsed = 0;
+    quint64 swapTotal = 0;
+    quint64 wired = 0;
+    quint64 active = 0;
+    quint64 inactive = 0;
+    quint64 compressed = 0;
+    quint64 available = 0;
+    int pressureLevel = -1;  // -1=unavailable, 1=normal, 2=warning, 4=critical
+};
+Q_DECLARE_METATYPE(MemorySnapshot)
+
 class NEXISCORESHARED_EXPORT MemoryInfo
 {
 public:
@@ -21,6 +37,13 @@ public:
     quint64 getSwapFree() const;
     quint64 getSwapUsed() const;
 
+    quint64 getMemWired() const;
+    quint64 getMemActive() const;
+    quint64 getMemInactive() const;
+    quint64 getMemCompressed() const;
+    quint64 getMemAvailable() const;
+    int getPressureLevel() const;
+
 protected:
     quint64 memTotal;
     quint64 memFree;
@@ -33,6 +56,13 @@ protected:
     quint64 swapTotal;
     quint64 swapFree;
     quint64 swapUsed;
+
+    quint64 memWired;
+    quint64 memActive;
+    quint64 memInactive;
+    quint64 memCompressed;
+    quint64 memAvailable;
+    int pressureLevel;
 };
 
 #endif // MEMORYINFO_H

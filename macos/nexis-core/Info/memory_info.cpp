@@ -40,6 +40,13 @@ void MemoryInfoMacOS::updateMemoryInfo()
         // Cached approximation: inactive + purgeable pages
         cached = inactive + purgeable;
         buffers = 0; // macOS doesn't have a separate buffer concept
+
+        // FR-57: Memory breakdown fields
+        memWired = static_cast<quint64>(vmStat.wire_count) * pageSize;
+        memActive = static_cast<quint64>(vmStat.active_count) * pageSize;
+        memInactive = inactive;
+        memCompressed = static_cast<quint64>(vmStat.compressor_page_count) * pageSize;
+        memAvailable = free + inactive + purgeable;
     }
 
     // Swap usage via sysctl
@@ -49,5 +56,15 @@ void MemoryInfoMacOS::updateMemoryInfo()
         swapTotal = swapUsage.xsu_total;
         swapUsed = swapUsage.xsu_used;
         swapFree = swapUsage.xsu_avail;
+    }
+
+    // FR-57: Memory pressure level via sysctl
+    // Returns: 1 = normal (green), 2 = warning (yellow), 4 = critical (red)
+    int level = 0;
+    len = sizeof(level);
+    if (sysctlbyname("kern.memorystatus_vm_pressure_level", &level, &len, nullptr, 0) == 0) {
+        pressureLevel = level;
+    } else {
+        pressureLevel = -1;
     }
 }

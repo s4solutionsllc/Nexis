@@ -29,6 +29,12 @@ public:
     quint64 getSwapTotal() const;
     quint64 getMemUsed() const;
     quint64 getMemTotal() const;
+    quint64 getMemWired() const;
+    quint64 getMemActive() const;
+    quint64 getMemInactive() const;
+    quint64 getMemCompressed() const;
+    quint64 getMemAvailable() const;
+    int getMemPressureLevel() const;
     void updateMemoryInfo();
 
     quint64 getRXbytes() const;

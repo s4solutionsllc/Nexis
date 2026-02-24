@@ -17,7 +17,7 @@ ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
     mChartCpu(new HistoryChart(tr("History of CPU"), im->getCpuCoreCount(), nullptr, this)),
     mChartCpuLoadAvg(new HistoryChart(tr("History of CPU Load Averages"), 3, nullptr, this)),
     mChartDiskReadWrite(new HistoryChart(tr("History of Disk Read Write"), 2, new QCategoryAxis, this)),
-    mChartMemory(new HistoryChart(tr("History of Memory"), 2, nullptr, this)),
+    mChartMemory(new HistoryChart(tr("History of Memory"), 4, nullptr, this)),
     mChartNetwork(new HistoryChart(tr("History of Network"), 2, new QCategoryAxis, this)),
     mChartGpu(nullptr),
     mChartDiskHealth(nullptr),
@@ -259,14 +259,13 @@ void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
     second++;
 }
 
-void ResourcesPage::onMemoryUpdated(quint64 used, quint64 total,
-                                      quint64 swapUsed, quint64 swapTotal)
+void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
 {
     static int second = 0;
 
     QVector<QSplineSeries *> seriesList = mChartMemory->getSeriesList();
 
-    // points swap
+    // Shift existing points right for all series
     for (int j = 0; j < seriesList.count(); j++) {
         for (int i = 0; i < (second < 61 ? second : 61); i++)
             seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
@@ -275,25 +274,63 @@ void ResourcesPage::onMemoryUpdated(quint64 used, quint64 total,
             seriesList.at(j)->removePoints(61, 1);
     }
 
-    // Swap
-    double percent = 0;
-    if (swapTotal) // arithmetic exception control
-        percent = ((double) swapUsed / (double) swapTotal) * 100.0;
+    // Series 0: Swap
+    double swapPct = 0;
+    if (snap.swapTotal)
+        swapPct = ((double)snap.swapUsed / (double)snap.swapTotal) * 100.0;
 
-    seriesList.at(0)->insert(0, QPointF(0, percent));
+    seriesList.at(0)->insert(0, QPointF(0, swapPct));
     seriesList.at(0)->setName(tr("Swap: %1 (%2%) %3")
-                              .arg(FormatUtil::formatBytes(swapUsed))
-                              .arg(QString::asprintf("%.1f",percent))
-                              .arg(FormatUtil::formatBytes(swapTotal)));
+                              .arg(FormatUtil::formatBytes(snap.swapUsed))
+                              .arg(QString::asprintf("%.1f", swapPct))
+                              .arg(FormatUtil::formatBytes(snap.swapTotal)));
 
-    // Memory
-    double percent2 = ((double) used / (double) total) * 100.0;
+    // Series 1: Memory Used
+    double memPct = snap.total ? ((double)snap.used / (double)snap.total) * 100.0 : 0;
 
-    seriesList.at(1)->insert(0, QPointF(0, percent2));
+    seriesList.at(1)->insert(0, QPointF(0, memPct));
     seriesList.at(1)->setName(tr("Memory: %1 (%2%) %3")
-                              .arg(FormatUtil::formatBytes(used))
-                              .arg(QString::asprintf("%.1f",percent2))
-                              .arg(FormatUtil::formatBytes(total)));
+                              .arg(FormatUtil::formatBytes(snap.used))
+                              .arg(QString::asprintf("%.1f", memPct))
+                              .arg(FormatUtil::formatBytes(snap.total)));
+
+    // FR-57: Series 2 — Wired % (macOS) or Available % (Linux)
+    if (seriesList.count() > 2) {
+        double pct2 = 0;
+        QString name2;
+        if (snap.wired > 0) {
+            pct2 = snap.total ? ((double)snap.wired / (double)snap.total) * 100.0 : 0;
+            name2 = tr("Wired: %1 (%2%)")
+                .arg(FormatUtil::formatBytes(snap.wired))
+                .arg(QString::asprintf("%.1f", pct2));
+        } else {
+            pct2 = snap.total ? ((double)snap.available / (double)snap.total) * 100.0 : 0;
+            name2 = tr("Available: %1 (%2%)")
+                .arg(FormatUtil::formatBytes(snap.available))
+                .arg(QString::asprintf("%.1f", pct2));
+        }
+        seriesList.at(2)->insert(0, QPointF(0, pct2));
+        seriesList.at(2)->setName(name2);
+    }
+
+    // FR-57: Series 3 — Compressed % (macOS) or Active % (Linux)
+    if (seriesList.count() > 3) {
+        double pct3 = 0;
+        QString name3;
+        if (snap.compressed > 0 || snap.wired > 0) {
+            pct3 = snap.total ? ((double)snap.compressed / (double)snap.total) * 100.0 : 0;
+            name3 = tr("Compressed: %1 (%2%)")
+                .arg(FormatUtil::formatBytes(snap.compressed))
+                .arg(QString::asprintf("%.1f", pct3));
+        } else {
+            pct3 = snap.total ? ((double)snap.active / (double)snap.total) * 100.0 : 0;
+            name3 = tr("Active: %1 (%2%)")
+                .arg(FormatUtil::formatBytes(snap.active))
+                .arg(QString::asprintf("%.1f", pct3));
+        }
+        seriesList.at(3)->insert(0, QPointF(0, pct3));
+        seriesList.at(3)->setName(name3);
+    }
 
     mChartMemory->setSeriesList(seriesList);
 

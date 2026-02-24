@@ -142,9 +142,10 @@
   - **Files:** New `FanInfo` class (abstract base + platform subclasses), `hardware_info_page.cpp/.h`, optional Dashboard tile
   - **Complexity:** Low (1-2 days) — mirrors the existing ThermalInfo pattern exactly
 
-- [ ] **FR-57: Memory pressure visualization (macOS) and swap details (Linux)** — Enhance the Memory dashboard tile and Resources chart to show: macOS memory pressure state (green/yellow/red via `host_statistics64`), wired/active/inactive/compressed breakdown. Linux: show swap as a distinct metric separate from RAM. Makes memory monitoring actionable rather than just a single percentage.
+- [x] **FR-57: Memory pressure visualization (macOS) and swap details (Linux)** — Enhance the Memory dashboard tile and Resources chart to show: macOS memory pressure state (green/yellow/red via `host_statistics64`), wired/active/inactive/compressed breakdown. Linux: show swap as a distinct metric separate from RAM. Makes memory monitoring actionable rather than just a single percentage.
   - **Files:** `memory_info.h/.cpp` (both platforms), Resources page chart, Dashboard Memory tile
   - **Complexity:** Medium (3-4 days) — extends existing MemoryInfo class + new chart series
+  - **Resolved:** Added `MemorySnapshot` struct-based signal replacing 4-param `memoryUpdated`. macOS: extracts wired/active/inactive/compressed from `vm_statistics64_data_t`, pressure via `kern.memorystatus_vm_pressure_level` sysctl. Linux: refactored `/proc/meminfo` parser from fragile positional indexing to key-value map, added MemAvailable/Active/Inactive, PSI-based pressure with heuristic fallback. Dashboard tile shows breakdown subtitle (W/A/C on macOS, Avail on Linux) and pressure-driven accent color (green/yellow/red). Resources chart expanded from 2 to 4 series (Wired+Compressed on macOS, Available+Active on Linux). Theme tokens `@memPressureNormal/Warning/Critical` added.
 
 - [ ] **FR-58: Per-process disk I/O columns** — Add disk I/O read/write bytes per process to the Processes page as sortable columns. Linux: `/proc/<pid>/io`. macOS: `proc_pidinfo()` with `PROC_PIDTASKINFO`. Precedent: KDE System Monitor and Mission Center both surface this.
   - **Files:** `ProcessInfo` class (both platforms), `processes_page.cpp/.h`

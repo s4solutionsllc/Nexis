@@ -103,7 +103,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 
 **Default tile layout:**
 - **CPU** — Independent `MetricTile` with sparkline history (1s refresh)
-- **Memory** — Independent `MetricTile` with sparkline history (1s refresh)
+- **Memory** — Independent `MetricTile` with sparkline history (1s refresh). Subtitle shows swap usage plus platform-specific breakdown: wired/active/compressed on macOS, available memory on Linux. On macOS, tile accent color dynamically reflects memory pressure state (green=normal, yellow=warning, red=critical) via `kern.memorystatus_vm_pressure_level` sysctl; on Linux, pressure derived from PSI or MemAvailable heuristic. User-set custom colors (FR-55) take priority over pressure indication.
 - **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health badge with verdict and numeric percentage (e.g., "Apple SSD: Good (92%)") via `setDriveHealth()` (5s refresh). Gear icon in top-right corner (visible when 2+ disks detected) opens a dropdown menu to switch the displayed disk; selection is persisted.
 - **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
 - **GPU** — Utilization percentage with device name subtitle, multi-GPU combo selector (1s refresh; hidden if no GPU detected)
@@ -252,7 +252,7 @@ Historical time-series charts for system resource usage.
 - CPU 1/5/15-minute load averages
 - GPU per-device utilization (if GPU detected)
 - Disk read/write bytes/sec with dynamic Y-axis scaling
-- Memory used vs swap
+- Memory used, swap, plus 2 platform-specific series: Wired% and Compressed% on macOS; Available% and Active% on Linux (4 series total)
 - Network download/upload bytes/sec
 - Disk temperature per-drive (30s refresh, if SMART supported)
 
@@ -386,7 +386,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | Class | Purpose | macOS Backend | Linux Backend |
 |-------|---------|---------------|---------------|
 | `CpuInfo` | Core counts, per-core utilization, clock speeds | `sysctl`, Mach APIs | `/proc/stat`, `/proc/cpuinfo`, sysfs cpufreq |
-| `MemoryInfo` | RAM/swap total, free, used | `sysctl`, Mach `vm_statistics64` | `/proc/meminfo` |
+| `MemoryInfo` | RAM/swap total, free, used; wired, active, inactive, compressed, available; pressure level | `sysctl`, Mach `vm_statistics64`, `kern.memorystatus_vm_pressure_level` | `/proc/meminfo` (key-value map parser), `/proc/pressure/memory` (PSI) |
 | `DiskInfo` | Partitions, usage, I/O rates | `QStorageInfo`, IOKit | `QStorageInfo`, sysfs |
 | `NetworkInfo` | Interfaces, RX/TX bytes | `QNetworkInterface` | sysfs `/sys/class/net/` |
 | `SystemInfo` | Hostname, OS, kernel, CPU model | `sysctl` | `/etc/os-release`, `lscpu` |

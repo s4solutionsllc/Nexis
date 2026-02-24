@@ -480,16 +480,15 @@ void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
         mCpuTile->setSubtitle(mCpuSubtitleBase + QString(" \u2022 %1 GHz").arg(clockGHz, 0, 'f', 1));
 }
 
-void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
-                                     quint64 swapUsed, quint64 swapTotal)
+void DashboardPage::onMemoryUpdated(const MemorySnapshot &snap)
 {
     int memUsedPercent = 0;
-    if (total) {
-        memUsedPercent = ((double)used / (double)total) * 100.0;
+    if (snap.total) {
+        memUsedPercent = ((double)snap.used / (double)snap.total) * 100.0;
     }
 
-    QString f_memUsed  = FormatUtil::formatBytes(used);
-    QString f_memTotal = FormatUtil::formatBytes(total);
+    QString f_memUsed  = FormatUtil::formatBytes(snap.used);
+    QString f_memTotal = FormatUtil::formatBytes(snap.total);
 
     // alert message
     int memoryAlertPercent = mSettingManager->getMemoryAlertPercent();
@@ -509,13 +508,41 @@ void DashboardPage::onMemoryUpdated(quint64 used, quint64 total,
     mMemTile->addDataPoint(memUsedPercent);
     mMemTile->setSecondaryValue(QString("%1 / %2").arg(f_memUsed, f_memTotal));
 
-    QString swapSubtitle = QString("Swap: %1 / %2")
-        .arg(FormatUtil::formatBytes(swapUsed), FormatUtil::formatBytes(swapTotal));
-    mMemTile->setSubtitle(swapSubtitle);
+    // FR-57: Build subtitle with swap info + platform-specific breakdown
+    QString subtitle = QString("Swap: %1 / %2")
+        .arg(FormatUtil::formatBytes(snap.swapUsed), FormatUtil::formatBytes(snap.swapTotal));
+
+    if (snap.wired > 0 || snap.compressed > 0) {
+        // macOS: wired/active/compressed breakdown
+        subtitle += QString(" \u2022 W:%1 A:%2 C:%3")
+            .arg(FormatUtil::formatBytes(snap.wired),
+                 FormatUtil::formatBytes(snap.active),
+                 FormatUtil::formatBytes(snap.compressed));
+    } else if (snap.available > 0) {
+        // Linux: available memory
+        subtitle += QString(" \u2022 Avail: %1")
+            .arg(FormatUtil::formatBytes(snap.available));
+    }
+
+    mMemTile->setSubtitle(subtitle);
+
+    // FR-57: Pressure-based tile color (only when user hasn't set a custom color)
+    if (snap.pressureLevel > 0 && mTileColors.value("memory").isEmpty()) {
+        QSettings *sv = mAppManager->getStyleValues();
+        if (snap.pressureLevel >= 4) {
+            QString critColor = sv ? sv->value("@memPressureCritical").toString() : QString("#E05454");
+            mMemTile->setColorOverride(critColor);
+        } else if (snap.pressureLevel >= 2) {
+            QString warnColor = sv ? sv->value("@memPressureWarning").toString() : QString("#FFB347");
+            mMemTile->setColorOverride(warnColor);
+        } else {
+            mMemTile->setColorOverride(QString());   // normal: clear override, use default @memoryColor
+        }
+    }
 
     // Update system summary RAM if it was unavailable at init time (BUG-60)
-    if (total > 0 && mSummaryRam.startsWith("0")) {
-        mSummaryRam = FormatUtil::formatBytes(total) + " RAM";
+    if (snap.total > 0 && mSummaryRam.startsWith("0")) {
+        mSummaryRam = FormatUtil::formatBytes(snap.total) + " RAM";
         refreshSummaryColors();
     }
 }

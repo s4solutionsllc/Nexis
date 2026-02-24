@@ -27,7 +27,7 @@ public:
 
 private slots:
     void onCpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
-    void onMemoryUpdated(quint64 used, quint64 total, quint64 swapUsed, quint64 swapTotal);
+    void onMemoryUpdated(const MemorySnapshot &snap);
     void onNetworkUpdated(quint64 rxBytes, quint64 txBytes);
     void onDiskIOUpdated(const QList<quint64> &io);
     void onGpuUpdated(const QList<GpuDevice> &gpus);

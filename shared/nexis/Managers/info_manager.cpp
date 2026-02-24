@@ -128,6 +128,36 @@ quint64 InfoManager::getMemTotal() const
     return mi->getMemTotal();
 }
 
+quint64 InfoManager::getMemWired() const
+{
+    return mi->getMemWired();
+}
+
+quint64 InfoManager::getMemActive() const
+{
+    return mi->getMemActive();
+}
+
+quint64 InfoManager::getMemInactive() const
+{
+    return mi->getMemInactive();
+}
+
+quint64 InfoManager::getMemCompressed() const
+{
+    return mi->getMemCompressed();
+}
+
+quint64 InfoManager::getMemAvailable() const
+{
+    return mi->getMemAvailable();
+}
+
+int InfoManager::getMemPressureLevel() const
+{
+    return mi->getPressureLevel();
+}
+
 /*
  * Disk Provider
  */

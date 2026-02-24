@@ -14,7 +14,13 @@ MemoryInfo::MemoryInfo():
     shmem(0),
     swapTotal(0),
     swapFree(0),
-    swapUsed(0)
+    swapUsed(0),
+    memWired(0),
+    memActive(0),
+    memInactive(0),
+    memCompressed(0),
+    memAvailable(0),
+    pressureLevel(-1)
 { }
 
 quint64 MemoryInfo::getSwapUsed() const
@@ -45,4 +51,34 @@ quint64 MemoryInfo::getMemFree() const
 quint64 MemoryInfo::getMemTotal() const
 {
     return memTotal;
+}
+
+quint64 MemoryInfo::getMemWired() const
+{
+    return memWired;
+}
+
+quint64 MemoryInfo::getMemActive() const
+{
+    return memActive;
+}
+
+quint64 MemoryInfo::getMemInactive() const
+{
+    return memInactive;
+}
+
+quint64 MemoryInfo::getMemCompressed() const
+{
+    return memCompressed;
+}
+
+quint64 MemoryInfo::getMemAvailable() const
+{
+    return memAvailable;
+}
+
+int MemoryInfo::getPressureLevel() const
+{
+    return pressureLevel;
 }

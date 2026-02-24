@@ -107,8 +107,18 @@ void DataRefreshService::onFastTick()
 
     // Memory
     im->updateMemoryInfo();
-    emit memoryUpdated(im->getMemUsed(), im->getMemTotal(),
-                       im->getSwapUsed(), im->getSwapTotal());
+    MemorySnapshot snap;
+    snap.used = im->getMemUsed();
+    snap.total = im->getMemTotal();
+    snap.swapUsed = im->getSwapUsed();
+    snap.swapTotal = im->getSwapTotal();
+    snap.wired = im->getMemWired();
+    snap.active = im->getMemActive();
+    snap.inactive = im->getMemInactive();
+    snap.compressed = im->getMemCompressed();
+    snap.available = im->getMemAvailable();
+    snap.pressureLevel = im->getMemPressureLevel();
+    emit memoryUpdated(snap);
 
     // Network
     emit networkUpdated(im->getRXbytes(), im->getTXbytes());

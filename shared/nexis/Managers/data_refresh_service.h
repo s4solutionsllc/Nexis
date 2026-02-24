@@ -7,6 +7,7 @@
 
 #include <Info/disk_info.h>
 #include <Info/gpu_info.h>
+#include <Info/memory_info.h>
 #include <Info/battery_info.h>
 #include <Info/disk_health_info.h>
 #include <Info/process.h>
@@ -29,7 +30,7 @@ public:
 
 signals:
     void cpuUpdated(QList<int> percents, double clockGHz, QList<double> loadAvgs);
-    void memoryUpdated(quint64 used, quint64 total, quint64 swapUsed, quint64 swapTotal);
+    void memoryUpdated(const MemorySnapshot &snap);
     void networkUpdated(quint64 rxBytes, quint64 txBytes);
     void diskIOUpdated(QList<quint64> io);
     void gpuUpdated(QList<GpuDevice> devices);
