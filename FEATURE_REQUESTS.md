@@ -134,6 +134,7 @@
   - **Files:** `metric_tile_base.h/.cpp`, all 7 tile `.cpp` files, `network_tile.h/.cpp`, `dashboard_tile_wrapper.h/.cpp`, `dashboard_page.h/.cpp`
   - **Complexity:** High (research-heavy)
   - **Resolved:** Per-tile color palette in edit-mode style menu with 16 presets + Default.
+  - **Revised:** Speedometer and VuMeter tiles now show "Color Range" presets (Green→Red, Red→Green, Blue→Red, Teal→Orange) instead of single-color swatches, controlling the gradient arc / bar segment direction. Network tile override now derives upload sparkline color from download color via HSL shift. Menu section rebuilds dynamically when switching between range-based (speedometer/vumeter) and single-color styles. Range presets stored as `"range::green-red"` in layout JSON.
 
 ## Notes
 

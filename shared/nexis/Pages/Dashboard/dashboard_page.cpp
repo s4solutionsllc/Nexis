@@ -129,6 +129,16 @@ void DashboardPage::init()
         }
     }
 
+    for (auto it = mTileRanges.constBegin(); it != mTileRanges.constEnd(); ++it) {
+        DashboardTileWrapper *w = findWrapper(it.key());
+        if (w) {
+            auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget());
+            if (metric)
+                metric->setColorRange(it.value());
+            w->setCurrentRange(it.value());
+        }
+    }
+
     buildGrid();
 
     // Give the tile grid all available vertical space
@@ -857,6 +867,7 @@ void DashboardPage::onResetLayout()
 {
     mHiddenTiles.clear();
     mTileColors.clear();
+    mTileRanges.clear();
 
     // Reset styles to defaults
     mTileStyles.clear();
@@ -887,6 +898,9 @@ void DashboardPage::onResetLayout()
 
             if (id == "gpu" && im->hasGpu() && im->getGpuDevices().size() > 1)
                 newTile->layout()->addWidget(mCmbGpuDevice);
+
+            w->clearCustomizationSection();
+            setupCustomizationMenu(w, defStyle);
         }
     }
 
@@ -933,6 +947,8 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
             this, &DashboardPage::onTileRemoveRequested);
     connect(wrapper, &DashboardTileWrapper::colorChangeRequested,
             this, &DashboardPage::onTileColorChangeRequested);
+    connect(wrapper, &DashboardTileWrapper::rangeChangeRequested,
+            this, &DashboardPage::onTileRangeChangeRequested);
 
     // Set up style menu for switchable tiles
     QStringList styles = availableStyles(id);
@@ -941,11 +957,7 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
         wrapper->setStyleMenuItems(styles, currentStyle);
     }
 
-    static const QStringList colorPalette = {
-        "#FF6B1A", "#FFB347", "#E05454", "#26A69A", "#813D9C", "#5B9BD5", "#2EC27E",
-        "#E91E63", "#00BCD4", "#8BC34A", "#FF5722", "#607D8B", "#9C27B0", "#FFEB3B", "#795548", "#F48FB1"
-    };
-    wrapper->setColorMenuItems(colorPalette, mTileColors.value(id));
+    setupCustomizationMenu(wrapper, mTileStyles.value(id, defaultStyle(id)));
 
     mTileWrappers.append(wrapper);
     return wrapper;
@@ -1002,17 +1014,30 @@ void DashboardPage::deserializeLayout(const QString &json)
             mHiddenTiles.remove(id);
 
         QString color = obj["color"].toString();
-        if (!color.isEmpty())
-            mTileColors[id] = color;
-        else
+        if (color.startsWith("range::")) {
+            QString rangeId = color.mid(7);
+            if (!rangeId.isEmpty())
+                mTileRanges[id] = rangeId;
+            else
+                mTileRanges.remove(id);
             mTileColors.remove(id);
+        } else {
+            if (!color.isEmpty())
+                mTileColors[id] = color;
+            else
+                mTileColors.remove(id);
+            mTileRanges.remove(id);
+        }
 
         for (DashboardTileWrapper *w : mTileWrappers) {
             if (w->tileId() == id) {
                 w->setGridPosition(row, col, rowSpan, colSpan);
                 if (!style.isEmpty())
                     w->setCurrentStyle(style);
-                w->setCurrentColor(color);
+                if (color.startsWith("range::"))
+                    w->setCurrentRange(color.mid(7));
+                else
+                    w->setCurrentColor(color);
                 break;
             }
         }
@@ -1032,7 +1057,9 @@ QJsonArray DashboardPage::serializeLayout() const
         obj["style"] = w->currentStyle();
         if (mHiddenTiles.contains(w->tileId()))
             obj["visible"] = false;
-        if (mTileColors.contains(w->tileId()))
+        if (mTileRanges.contains(w->tileId()))
+            obj["color"] = QString("range::%1").arg(mTileRanges.value(w->tileId()));
+        else if (mTileColors.contains(w->tileId()))
             obj["color"] = mTileColors.value(w->tileId());
         arr.append(obj);
     }
@@ -1385,9 +1412,20 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
     if (id == "disk")
         updateDiskHealthBadge();
 
-    // Re-apply custom color override if one exists
-    if (mTileColors.contains(id))
-        newTile->setColorOverride(mTileColors[id]);
+    // Rebuild the customization menu (color swatches vs. range presets) for the new style
+    wrapper->clearCustomizationSection();
+    setupCustomizationMenu(wrapper, style);
+
+    // Re-apply saved customization
+    if (tileUsesRangeMenu(style)) {
+        if (mTileRanges.contains(id)) {
+            newTile->setColorRange(mTileRanges[id]);
+            wrapper->setCurrentRange(mTileRanges[id]);
+        }
+    } else {
+        if (mTileColors.contains(id))
+            newTile->setColorOverride(mTileColors[id]);
+    }
 
     // Store style
     mTileStyles[id] = style;
@@ -1408,17 +1446,77 @@ void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, co
     else
         mTileColors[id] = hexColor;
 
+    mTileRanges.remove(id);
+
     if (id == "network") {
         if (mNetworkTile)
             mNetworkTile->setColorOverride(hexColor);
     } else {
         auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
-        if (metric)
+        if (metric) {
+            metric->setColorRange(QString());
             metric->setColorOverride(hexColor);
+        }
     }
 
     wrapper->setCurrentColor(hexColor);
 
     mSettingManager->setDashboardLayout(
         QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
+}
+
+void DashboardPage::onTileRangeChangeRequested(DashboardTileWrapper *wrapper, const QString &rangeId)
+{
+    QString id = wrapper->tileId();
+
+    if (rangeId.isEmpty())
+        mTileRanges.remove(id);
+    else
+        mTileRanges[id] = rangeId;
+
+    mTileColors.remove(id);
+
+    auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
+    if (metric) {
+        metric->setColorOverride(QString());
+        metric->setColorRange(rangeId);
+    }
+
+    wrapper->setCurrentRange(rangeId);
+
+    mSettingManager->setDashboardLayout(
+        QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
+}
+
+bool DashboardPage::tileUsesRangeMenu(const QString &style) const
+{
+    return (style == "speedometer" || style == "vumeter");
+}
+
+void DashboardPage::setupCustomizationMenu(DashboardTileWrapper *wrapper, const QString &style)
+{
+    QString id = wrapper->tileId();
+
+    if (tileUsesRangeMenu(style)) {
+        QStringList rangeIds = MetricTileBase::availableRangeIds();
+        QStringList labels;
+        QList<QList<QColor>> swatches;
+        for (const QString &rid : rangeIds) {
+            labels.append(MetricTileBase::rangeDisplayName(rid));
+            swatches.append(MetricTileBase::rangeColors(rid));
+        }
+        wrapper->setRangeMenuItems(rangeIds, labels, swatches, mTileRanges.value(id));
+    } else if (id != "network") {
+        static const QStringList colorPalette = {
+            "#FF6B1A", "#FFB347", "#E05454", "#26A69A", "#813D9C", "#5B9BD5", "#2EC27E",
+            "#E91E63", "#00BCD4", "#8BC34A", "#FF5722", "#607D8B", "#9C27B0", "#FFEB3B", "#795548", "#F48FB1"
+        };
+        wrapper->setColorMenuItems(colorPalette, mTileColors.value(id));
+    } else {
+        static const QStringList colorPalette = {
+            "#FF6B1A", "#FFB347", "#E05454", "#26A69A", "#813D9C", "#5B9BD5", "#2EC27E",
+            "#E91E63", "#00BCD4", "#8BC34A", "#FF5722", "#607D8B", "#9C27B0", "#FFEB3B", "#795548", "#F48FB1"
+        };
+        wrapper->setColorMenuItems(colorPalette, mTileColors.value(id));
+    }
 }

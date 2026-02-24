@@ -33,6 +33,12 @@ public:
     void setColorMenuItems(const QStringList &colors, const QString &current);
     void setCurrentColor(const QString &hex);
 
+    void setRangeMenuItems(const QStringList &rangeIds, const QStringList &labels,
+                           const QList<QList<QColor>> &swatches, const QString &current);
+    void setCurrentRange(const QString &rangeId);
+    QString currentRange() const;
+    void clearCustomizationSection();
+
 signals:
     void dragStarted(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void dragMoved(DashboardTileWrapper *wrapper, const QPoint &globalPos);
@@ -40,6 +46,7 @@ signals:
     void resizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
     void styleChangeRequested(DashboardTileWrapper *wrapper, const QString &style);
     void colorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor);
+    void rangeChangeRequested(DashboardTileWrapper *wrapper, const QString &rangeId);
     void removeRequested(DashboardTileWrapper *wrapper);
 
 protected:
@@ -65,10 +72,13 @@ private:
 
     QString mCurrentStyle;
     QString mCurrentColor;
+    QString mCurrentRange;
     QToolButton *mStyleButton;
     QToolButton *mRemoveButton;
     QMenu *mStyleMenu;
     QList<QAction*> mColorActions;
+    QList<QAction*> mRangeActions;
+    QAction *mCustomSeparator;
 
     static const int DRAG_THRESHOLD = 5;
     static const int RESIZE_HANDLE_SIZE = 16;

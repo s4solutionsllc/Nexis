@@ -32,6 +32,13 @@ public:
     virtual void setColorOverride(const QString &hexColor);
     QString colorOverride() const { return mColorOverride; }
 
+    virtual void setColorRange(const QString &rangeId);
+    QString colorRange() const { return mColorRange; }
+
+    static QList<QColor> rangeColors(const QString &rangeId);
+    static QStringList availableRangeIds();
+    static QString rangeDisplayName(const QString &rangeId);
+
     // Disk-specific (optional overrides with defaults)
     virtual void setDiskInfo(int percent, const QString &usedText, const QString &totalText);
     virtual void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy);
@@ -41,6 +48,7 @@ protected:
     QString mTitle;
     QString mColorToken;
     QString mColorOverride;
+    QString mColorRange;
     DisplayMode mDisplayMode = Normal;
 
     static const int SPARKLINE_SIZE = 60;

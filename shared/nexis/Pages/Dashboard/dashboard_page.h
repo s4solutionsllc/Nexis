@@ -79,6 +79,7 @@ private slots:
     void onTileResizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
     void onTileStyleChangeRequested(DashboardTileWrapper *wrapper, const QString &style);
     void onTileColorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor);
+    void onTileRangeChangeRequested(DashboardTileWrapper *wrapper, const QString &rangeId);
     void onTileRemoveRequested(DashboardTileWrapper *wrapper);
 
 signals:
@@ -130,6 +131,7 @@ private:
 
     QMap<QString, QString> mTileStyles;
     QMap<QString, QString> mTileColors;
+    QMap<QString, QString> mTileRanges;
     QSet<QString> mHiddenTiles;
     QSet<QString> mGearVisibleTiles;
 
@@ -162,6 +164,8 @@ private:
     void tileTitle(const QString &id, QString &title, QString &colorToken) const;
     void setupTileGearMenu(const QString &id, MetricTileBase *tile);
     DashboardTileWrapper *findWrapper(const QString &tileId) const;
+    bool tileUsesRangeMenu(const QString &style) const;
+    void setupCustomizationMenu(DashboardTileWrapper *wrapper, const QString &style);
 };
 
 #endif // DASHBOARDPAGE_H

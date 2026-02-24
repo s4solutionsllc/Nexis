@@ -19,7 +19,8 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
       mGridColSpan(1),
       mStyleButton(nullptr),
       mRemoveButton(nullptr),
-      mStyleMenu(nullptr)
+      mStyleMenu(nullptr),
+      mCustomSeparator(nullptr)
 {
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -48,6 +49,9 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
         if (data.startsWith("color::")) {
             QString hex = data.mid(7);
             emit colorChangeRequested(this, hex);
+        } else if (data.startsWith("range::")) {
+            QString rangeId = data.mid(7);
+            emit rangeChangeRequested(this, rangeId);
         } else if (!data.isEmpty() && data != mCurrentStyle) {
             emit styleChangeRequested(this, data);
         }
@@ -120,8 +124,11 @@ void DashboardTileWrapper::setCurrentStyle(const QString &style)
 {
     mCurrentStyle = style;
 
-    for (QAction *a : mStyleMenu->actions())
-        a->setChecked(a->data().toString() == style);
+    for (QAction *a : mStyleMenu->actions()) {
+        QString data = a->data().toString();
+        if (!data.startsWith("color::") && !data.startsWith("range::"))
+            a->setChecked(data == style);
+    }
 }
 
 void DashboardTileWrapper::setStyleMenuItems(const QStringList &styles, const QString &current)
@@ -167,15 +174,38 @@ static QPixmap defaultSwatchPixmap(int size)
     return pm;
 }
 
+void DashboardTileWrapper::clearCustomizationSection()
+{
+    for (QAction *a : mColorActions)
+        mStyleMenu->removeAction(a);
+    qDeleteAll(mColorActions);
+    mColorActions.clear();
+
+    for (QAction *a : mRangeActions)
+        mStyleMenu->removeAction(a);
+    qDeleteAll(mRangeActions);
+    mRangeActions.clear();
+
+    if (mCustomSeparator) {
+        mStyleMenu->removeAction(mCustomSeparator);
+        delete mCustomSeparator;
+        mCustomSeparator = nullptr;
+    }
+
+    mCurrentColor.clear();
+    mCurrentRange.clear();
+}
+
 void DashboardTileWrapper::setColorMenuItems(const QStringList &colors, const QString &current)
 {
     mColorActions.clear();
     mCurrentColor = current;
 
-    mStyleMenu->addSeparator();
+    mCustomSeparator = mStyleMenu->addSeparator();
 
     QAction *header = mStyleMenu->addAction(tr("Color"));
     header->setEnabled(false);
+    mColorActions.append(header);
 
     QAction *defaultAction = mStyleMenu->addAction(QIcon(defaultSwatchPixmap(16)), tr("Default"));
     defaultAction->setData("color::");
@@ -191,6 +221,69 @@ void DashboardTileWrapper::setColorMenuItems(const QStringList &colors, const QS
         mColorActions.append(action);
     }
 }
+
+static QPixmap rangeGradientPixmap(const QList<QColor> &colors, int width, int height)
+{
+    QPixmap pm(width, height);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing);
+
+    QLinearGradient grad(0, 0, width, 0);
+    if (colors.size() >= 4) {
+        grad.setColorAt(0.0,  colors[0]);
+        grad.setColorAt(0.33, colors[1]);
+        grad.setColorAt(0.66, colors[2]);
+        grad.setColorAt(1.0,  colors[3]);
+    }
+
+    p.setPen(Qt::NoPen);
+    p.setBrush(grad);
+    p.drawRoundedRect(0, 1, width, height - 2, 3, 3);
+    return pm;
+}
+
+void DashboardTileWrapper::setRangeMenuItems(const QStringList &rangeIds, const QStringList &labels,
+                                              const QList<QList<QColor>> &swatches, const QString &current)
+{
+    mRangeActions.clear();
+    mCurrentRange = current;
+
+    mCustomSeparator = mStyleMenu->addSeparator();
+
+    QAction *header = mStyleMenu->addAction(tr("Color Range"));
+    header->setEnabled(false);
+    mRangeActions.append(header);
+
+    QAction *defaultAction = mStyleMenu->addAction(QIcon(defaultSwatchPixmap(16)), tr("Default"));
+    defaultAction->setData("range::");
+    defaultAction->setCheckable(true);
+    defaultAction->setChecked(current.isEmpty());
+    mRangeActions.append(defaultAction);
+
+    for (int i = 0; i < rangeIds.size(); ++i) {
+        QPixmap swatch = rangeGradientPixmap(swatches.value(i), 40, 16);
+        QAction *action = mStyleMenu->addAction(QIcon(swatch), labels.value(i));
+        action->setData(QString("range::%1").arg(rangeIds[i]));
+        action->setCheckable(true);
+        action->setChecked(rangeIds[i] == current);
+        mRangeActions.append(action);
+    }
+}
+
+void DashboardTileWrapper::setCurrentRange(const QString &rangeId)
+{
+    mCurrentRange = rangeId;
+    for (QAction *a : mRangeActions) {
+        QString data = a->data().toString();
+        if (data == "range::")
+            a->setChecked(rangeId.isEmpty());
+        else if (data.startsWith("range::"))
+            a->setChecked(data.mid(7) == rangeId);
+    }
+}
+
+QString DashboardTileWrapper::currentRange() const { return mCurrentRange; }
 
 void DashboardTileWrapper::setCurrentColor(const QString &hex)
 {

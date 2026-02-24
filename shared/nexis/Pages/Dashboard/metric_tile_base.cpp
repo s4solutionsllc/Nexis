@@ -30,6 +30,38 @@ void MetricTileBase::setColorOverride(const QString &hexColor)
     refreshThemeColors();
 }
 
+void MetricTileBase::setColorRange(const QString &rangeId)
+{
+    mColorRange = rangeId;
+    refreshThemeColors();
+}
+
+QList<QColor> MetricTileBase::rangeColors(const QString &rangeId)
+{
+    if (rangeId == "red-green")
+        return { QColor("#E05454"), QColor("#FF6B1A"), QColor("#FFB347"), QColor("#2EC27E") };
+    if (rangeId == "blue-red")
+        return { QColor("#5B9BD5"), QColor("#9B59B6"), QColor("#FF6B1A"), QColor("#E05454") };
+    if (rangeId == "teal-orange")
+        return { QColor("#26A69A"), QColor("#8BC34A"), QColor("#FFB347"), QColor("#FF6B1A") };
+    // Default: green-red
+    return { QColor("#2EC27E"), QColor("#FFB347"), QColor("#FF6B1A"), QColor("#E05454") };
+}
+
+QStringList MetricTileBase::availableRangeIds()
+{
+    return { "green-red", "red-green", "blue-red", "teal-orange" };
+}
+
+QString MetricTileBase::rangeDisplayName(const QString &rangeId)
+{
+    if (rangeId == "green-red")   return tr("Green \u2192 Red");
+    if (rangeId == "red-green")   return tr("Red \u2192 Green");
+    if (rangeId == "blue-red")    return tr("Blue \u2192 Red");
+    if (rangeId == "teal-orange") return tr("Teal \u2192 Orange");
+    return rangeId;
+}
+
 QColor MetricTileBase::resolvedColor() const
 {
     if (!mColorOverride.isEmpty())

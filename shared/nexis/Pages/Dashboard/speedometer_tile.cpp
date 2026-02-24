@@ -145,14 +145,23 @@ void SpeedometerTile::refreshThemeColors()
     if (!sv)
         return;
 
-    mMetricColor = resolvedColor();
+    mMetricColor = QColor(sv->value(mColorToken).toString());
     mCardBgColor = QColor(sv->value("@cardBg").toString());
     mTextColor = QColor(sv->value("@tertiaryText").toString());
     mSecondaryTextColor = QColor(sv->value("@color05").toString());
-    mGreenColor = QColor(sv->value("@successColor").toString());
-    mYellowColor = QColor(sv->value("@warningColor").toString());
-    mOrangeColor = QColor(sv->value("@accentColor").toString());
-    mRedColor = QColor(sv->value("@destructiveColor").toString());
+
+    if (!mColorRange.isEmpty()) {
+        QList<QColor> rc = rangeColors(mColorRange);
+        mGreenColor  = rc[0];
+        mYellowColor = rc[1];
+        mOrangeColor = rc[2];
+        mRedColor    = rc[3];
+    } else {
+        mGreenColor = QColor(sv->value("@successColor").toString());
+        mYellowColor = QColor(sv->value("@warningColor").toString());
+        mOrangeColor = QColor(sv->value("@accentColor").toString());
+        mRedColor = QColor(sv->value("@destructiveColor").toString());
+    }
 
     QString colorHex = mMetricColor.name();
     QString hoverText = sv->value("@color07").toString();

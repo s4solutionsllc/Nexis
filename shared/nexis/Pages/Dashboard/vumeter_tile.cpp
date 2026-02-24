@@ -157,12 +157,20 @@ void VuMeterTile::refreshThemeColors()
     if (!sv)
         return;
 
-    mSuccessColor     = QColor(sv->value("@successColor").toString());
-    mWarningColor     = QColor(sv->value("@warningColor").toString());
-    mAccentColor      = QColor(sv->value("@accentColor").toString());
-    mDestructiveColor = QColor(sv->value("@destructiveColor").toString());
+    if (!mColorRange.isEmpty()) {
+        QList<QColor> rc = rangeColors(mColorRange);
+        mSuccessColor     = rc[0];
+        mWarningColor     = rc[1];
+        mAccentColor      = rc[2];
+        mDestructiveColor = rc[3];
+    } else {
+        mSuccessColor     = QColor(sv->value("@successColor").toString());
+        mWarningColor     = QColor(sv->value("@warningColor").toString());
+        mAccentColor      = QColor(sv->value("@accentColor").toString());
+        mDestructiveColor = QColor(sv->value("@destructiveColor").toString());
+    }
     mTrackColor       = QColor(sv->value("@color02").toString());
-    mTextColor        = resolvedColor();
+    mTextColor        = QColor(sv->value(mColorToken).toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 
     QString colorHex  = mTextColor.name();

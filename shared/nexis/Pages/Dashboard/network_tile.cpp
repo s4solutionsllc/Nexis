@@ -184,7 +184,17 @@ void NetworkTile::refreshThemeColors()
     QColor dlColor = mColorOverride.isEmpty()
         ? QColor(sv->value(mColorToken).toString())
         : QColor(mColorOverride);
-    QColor ulColor(sv->value("@networkUploadColor").toString());
+
+    QColor ulColor;
+    if (!mColorOverride.isEmpty()) {
+        float h, s, l, a;
+        dlColor.getHslF(&h, &s, &l, &a);
+        l = qMin(1.0f, l + 0.15f);
+        s = qMax(0.0f, s - 0.10f);
+        ulColor.setHslF(h, s, l, a);
+    } else {
+        ulColor = QColor(sv->value("@networkUploadColor").toString());
+    }
     QString cardBg = sv->value("@cardBg").toString();
     QString hoverText = sv->value("@color07").toString();
 
