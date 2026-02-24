@@ -462,6 +462,13 @@
   - **Fix complexity:** Moderate (rewrite text centering math + font capping)
   - **Resolved:** Replaced the 55%/45% split + 10% offset with QFontMetrics-based centering (calculate total text block height, center vertically within inner rect). Capped secondary font at 13px max. Added `QFontMetrics::elidedText()` safety net for overflow. Same fixes applied opportunistically to HybridTile which had similar asymmetric offset (`side/8` up, `side/6` down) and unbounded secondary font scaling (`side/7`).
 
+- [x] **BUG-68: Speedometer tick labels (0,25,50,75,100) clip outside tile bounds at certain window sizes** (MEDIUM)
+  - **Scope:** Dashboard page → SpeedometerTile widget
+  - **Description:** The speedometer widget's tick mark labels (0, 25, 50, 75, 100) sometimes render outside the tile's visible bounds, making them unreadable. The "25" (top) and "100" (bottom) labels are worst affected. The issue is intermittent and depends on the application window size — at certain resize points the labels clip. Root cause appears to be that `dialSize` is calculated from the available space without accounting for the extra radial extent of tick marks and labels that extend beyond the arc.
+  - **Files:** `shared/nexis/Pages/Dashboard/speedometer_tile.cpp`
+  - **Fix complexity:** Moderate (adjust dial sizing to reserve space for tick labels)
+  - **Resolved:** When tick labels are shown (Large/Hero display modes), the paintEvent now computes the radial extent of tick marks + font metrics and subtracts it from dialSize before rendering. The dial shrinks to fit labels within tile bounds at all window sizes.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

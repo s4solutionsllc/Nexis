@@ -245,7 +245,19 @@ void SpeedometerTile::paintEvent(QPaintEvent *event)
     int availableHeight = footerTop - titleHeight;
     int availableWidth = width() - 24;
 
+    bool showTickLabels = (mDisplayMode != Normal);
+
     int dialSize = qMin(availableWidth, availableHeight);
+
+    if (showTickLabels && dialSize > 60) {
+        int tickLen = qMax(dialSize / 16, 4);
+        QFont tickFont = font();
+        tickFont.setPixelSize(qMax(dialSize / 20, 7));
+        int textH = QFontMetrics(tickFont).height();
+        int tickMargin = 4 + tickLen + textH;
+        dialSize -= 2 * tickMargin;
+    }
+
     if (dialSize < 40)
         return;
 
@@ -289,8 +301,6 @@ void SpeedometerTile::paintEvent(QPaintEvent *event)
                         static_cast<int>(-segmentSweep * 16));
     }
 
-    // Tick marks and numeric labels
-    bool showTickLabels = (mDisplayMode != Normal);
     int tickValues[] = { 0, 25, 50, 75, 100 };
     int tickCount = 5;
 
