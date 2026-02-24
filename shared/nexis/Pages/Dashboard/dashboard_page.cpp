@@ -30,13 +30,13 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
                              SignalMapper *signalMapper, DataRefreshService *refreshService) :
     QWidget(parent),
     ui(new Ui::DashboardPage),
-    mCpuTile(new MetricTile(tr("CPU"), "@cpuColor", this)),
-    mMemTile(new MetricTile(tr("MEMORY"), "@memoryColor", this)),
-    mDiskTile(new DiskTile("@diskColor", "@color02", this)),
-    mTempTile(new MetricTile(tr("TEMP"), "@tempColor", this)),
-    mGpuTile(new MetricTile(tr("GPU"), "@gpuColor", this)),
-    mBatteryTile(new MetricTile(tr("BATTERY"), "@batteryColor", this)),
-    mNetworkTile(new NetworkTile("@networkColor", this)),
+    mCpuTile(nullptr),
+    mMemTile(nullptr),
+    mDiskTile(nullptr),
+    mTempTile(nullptr),
+    mGpuTile(nullptr),
+    mBatteryTile(nullptr),
+    mNetworkTile(nullptr),
     mCmbGpuDevice(new QComboBox(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
     mSettingManager(settingManager ? settingManager : SettingManager::ins()),
@@ -65,6 +65,29 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
 
 void DashboardPage::init()
 {
+    // Parse saved layout to extract per-tile styles before creating tiles
+    QString savedLayout = mSettingManager->getDashboardLayout();
+    if (!savedLayout.isEmpty()) {
+        QJsonDocument doc = QJsonDocument::fromJson(savedLayout.toUtf8());
+        QJsonArray arr = doc.array();
+        for (const QJsonValue &val : arr) {
+            QJsonObject obj = val.toObject();
+            QString id = obj["id"].toString();
+            QString style = obj["style"].toString();
+            if (!style.isEmpty())
+                mTileStyles[id] = style;
+        }
+    }
+
+    // Create tiles using factory with saved styles (or defaults)
+    mCpuTile = createTile("cpu", mTileStyles.value("cpu", defaultStyle("cpu")));
+    mMemTile = createTile("memory", mTileStyles.value("memory", defaultStyle("memory")));
+    mDiskTile = createTile("disk", mTileStyles.value("disk", defaultStyle("disk")));
+    mNetworkTile = new NetworkTile("@networkColor", this);
+    mGpuTile = createTile("gpu", mTileStyles.value("gpu", defaultStyle("gpu")));
+    mTempTile = createTile("temp", mTileStyles.value("temp", defaultStyle("temp")));
+    mBatteryTile = createTile("battery", mTileStyles.value("battery", defaultStyle("battery")));
+
     // Wrap each tile in a DashboardTileWrapper for drag/resize support
     wrapTile("cpu", mCpuTile);
     wrapTile("memory", mMemTile);
@@ -87,7 +110,6 @@ void DashboardPage::init()
         mBatteryTile->hide();
 
     // Load saved layout or use default, then build the grid
-    QString savedLayout = mSettingManager->getDashboardLayout();
     if (savedLayout.isEmpty())
         deserializeLayout(QString(QJsonDocument(defaultLayout()).toJson()));
     else
@@ -122,9 +144,7 @@ void DashboardPage::init()
         for (QAction *a : mTempSensorMenu->actions())
             a->setChecked(a->data().toInt() == mSelectedSensorIndex);
 
-        mTempTile->gearButton()->setMenu(mTempSensorMenu);
-        mTempTile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        mTempTile->setGearVisible(sensors.size() >= 2);
+        setupTileGearMenu("temp", mTempTile);
 
         connect(mTempSensorMenu, &QMenu::triggered,
                 this, &DashboardPage::onTempSensorSelected);
@@ -205,9 +225,7 @@ void DashboardPage::init()
             this, &DashboardPage::onDiskUsageUpdated);
 
     // Disk selector gear menu
-    mDiskMenu->setObjectName("diskSelectorMenu");
-    mDiskTile->gearButton()->setMenu(mDiskMenu);
-    mDiskTile->gearButton()->setPopupMode(QToolButton::InstantPopup);
+    setupTileGearMenu("disk", mDiskTile);
     connect(mDiskMenu, &QMenu::triggered, this, &DashboardPage::onDiskSelected);
 
     // Set network interface name
@@ -519,7 +537,7 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
     QString sizeText = FormatUtil::formatBytes(disk->size);
     QString usedText = FormatUtil::formatBytes(disk->used);
 
-    mDiskTile->setValue(diskPercent, usedText, sizeText);
+    mDiskTile->setDiskInfo(diskPercent, usedText, sizeText);
     updateDiskHealthBadge();
 }
 
@@ -533,9 +551,9 @@ void DashboardPage::onDiskSelected(QAction *action)
             int percent = 0;
             if (d.size > 0)
                 percent = static_cast<int>((double)d.used / (double)d.size * 100.0);
-            mDiskTile->setValue(percent,
-                               FormatUtil::formatBytes(d.used),
-                               FormatUtil::formatBytes(d.size));
+            mDiskTile->setDiskInfo(percent,
+                                   FormatUtil::formatBytes(d.used),
+                                   FormatUtil::formatBytes(d.size));
 
             for (QAction *a : mDiskMenu->actions())
                 a->setChecked(a->data().toString() == diskName);
@@ -809,6 +827,38 @@ void DashboardPage::exitEditMode()
 
 void DashboardPage::onResetLayout()
 {
+    // Reset styles to defaults
+    mTileStyles.clear();
+
+    // Re-create tiles that aren't on their default style
+    for (DashboardTileWrapper *w : mTileWrappers) {
+        QString id = w->tileId();
+        QString defStyle = defaultStyle(id);
+        if (w->currentStyle() != defStyle && !availableStyles(id).isEmpty()) {
+            // Detach GPU combo box if needed
+            if (id == "gpu" && mCmbGpuDevice->parentWidget() == mGpuTile) {
+                mGpuTile->layout()->removeWidget(mCmbGpuDevice);
+                mCmbGpuDevice->setParent(this);
+            }
+
+            MetricTileBase *newTile = createTile(id, defStyle);
+            w->setInnerWidget(newTile);
+            w->setCurrentStyle(defStyle);
+
+            if (id == "cpu") mCpuTile = newTile;
+            else if (id == "memory") mMemTile = newTile;
+            else if (id == "disk") mDiskTile = newTile;
+            else if (id == "temp") mTempTile = newTile;
+            else if (id == "gpu") mGpuTile = newTile;
+            else if (id == "battery") mBatteryTile = newTile;
+
+            setupTileGearMenu(id, newTile);
+
+            if (id == "gpu" && im->hasGpu() && im->getGpuDevices().size() > 1)
+                newTile->layout()->addWidget(mCmbGpuDevice);
+        }
+    }
+
     mSettingManager->clearDashboardLayout();
     deserializeLayout(QString(QJsonDocument(defaultLayout()).toJson()));
     buildGrid();
@@ -846,6 +896,15 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
             this, &DashboardPage::onTileDragFinished);
     connect(wrapper, &DashboardTileWrapper::resizeRequested,
             this, &DashboardPage::onTileResizeRequested);
+    connect(wrapper, &DashboardTileWrapper::styleChangeRequested,
+            this, &DashboardPage::onTileStyleChangeRequested);
+
+    // Set up style menu for switchable tiles
+    QStringList styles = availableStyles(id);
+    if (!styles.isEmpty()) {
+        QString currentStyle = mTileStyles.value(id, defaultStyle(id));
+        wrapper->setStyleMenuItems(styles, currentStyle);
+    }
 
     mTileWrappers.append(wrapper);
     return wrapper;
@@ -861,6 +920,7 @@ QJsonArray DashboardPage::defaultLayout() const
         obj["col"] = col;
         obj["rowSpan"] = rs;
         obj["colSpan"] = cs;
+        obj["style"] = defaultStyle(id);
         arr.append(obj);
     };
 
@@ -890,9 +950,15 @@ void DashboardPage::deserializeLayout(const QString &json)
         int rowSpan = qBound(1, obj["rowSpan"].toInt(1), GRID_ROWS - row);
         int colSpan = qBound(1, obj["colSpan"].toInt(1), GRID_COLS - col);
 
+        QString style = obj["style"].toString();
+        if (!style.isEmpty())
+            mTileStyles[id] = style;
+
         for (DashboardTileWrapper *w : mTileWrappers) {
             if (w->tileId() == id) {
                 w->setGridPosition(row, col, rowSpan, colSpan);
+                if (!style.isEmpty())
+                    w->setCurrentStyle(style);
                 break;
             }
         }
@@ -909,6 +975,7 @@ QJsonArray DashboardPage::serializeLayout() const
         obj["col"] = w->gridCol();
         obj["rowSpan"] = w->gridRowSpan();
         obj["colSpan"] = w->gridColSpan();
+        obj["style"] = w->currentStyle();
         arr.append(obj);
     }
     return arr;
@@ -986,17 +1053,17 @@ void DashboardPage::buildGrid()
 
 void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)
 {
-    auto *metric = qobject_cast<MetricTile*>(wrapper->innerWidget());
+    auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
     if (!metric)
         return;
 
     int area = wrapper->gridRowSpan() * wrapper->gridColSpan();
     if (area >= 4)
-        metric->setDisplayMode(MetricTile::Hero);
+        metric->setDisplayMode(MetricTileBase::Hero);
     else if (area >= 2)
-        metric->setDisplayMode(MetricTile::Large);
+        metric->setDisplayMode(MetricTileBase::Large);
     else
-        metric->setDisplayMode(MetricTile::Normal);
+        metric->setDisplayMode(MetricTileBase::Normal);
 }
 
 void DashboardPage::rebuildLayout()
@@ -1138,4 +1205,122 @@ void DashboardPage::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     mKioskButton->move(width() - mKioskButton->width() - 10, 10);
     mEditButton->move(width() - mKioskButton->width() - mEditButton->width() - 18, 10);
+}
+
+// --- Tile Factory & Style Switching ---
+
+void DashboardPage::tileTitle(const QString &id, QString &title, QString &colorToken) const
+{
+    if (id == "cpu")          { title = tr("CPU");     colorToken = "@cpuColor"; }
+    else if (id == "memory")  { title = tr("MEMORY");  colorToken = "@memoryColor"; }
+    else if (id == "disk")    { title = tr("DISK");    colorToken = "@diskColor"; }
+    else if (id == "temp")    { title = tr("TEMP");    colorToken = "@tempColor"; }
+    else if (id == "gpu")     { title = tr("GPU");     colorToken = "@gpuColor"; }
+    else if (id == "battery") { title = tr("BATTERY"); colorToken = "@batteryColor"; }
+}
+
+MetricTileBase *DashboardPage::createTile(const QString &id, const QString &style)
+{
+    QString title, colorToken;
+    tileTitle(id, title, colorToken);
+
+    if (style == "gauge")
+        return new GaugeTile(title, colorToken, this);
+    if (style == "ring")
+        return new RingTile(title, colorToken, this);
+    if (style == "hybrid")
+        return new HybridTile(title, colorToken, this);
+    if (style == "speedometer")
+        return new SpeedometerTile(title, colorToken, this);
+    if (style == "vumeter")
+        return new VuMeterTile(title, colorToken, this);
+    if (style == "donut")
+        return new DiskTile(colorToken, "@color02", this);
+
+    return new MetricTile(title, colorToken, this);
+}
+
+QStringList DashboardPage::availableStyles(const QString &tileId) const
+{
+    if (tileId == "network")
+        return {};
+    if (tileId == "disk")
+        return {"donut", "sparkline", "gauge", "hybrid", "ring", "speedometer", "vumeter"};
+    return {"sparkline", "gauge", "hybrid", "ring", "speedometer", "vumeter"};
+}
+
+QString DashboardPage::defaultStyle(const QString &tileId) const
+{
+    if (tileId == "disk")
+        return "donut";
+    if (tileId == "network")
+        return "network";
+    return "sparkline";
+}
+
+void DashboardPage::setupTileGearMenu(const QString &id, MetricTileBase *tile)
+{
+    if (id == "disk") {
+        mDiskMenu->setObjectName("diskSelectorMenu");
+        tile->gearButton()->setMenu(mDiskMenu);
+        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
+        tile->setGearVisible(mCachedDisks.size() >= 2);
+    } else if (id == "temp" && im->hasThermalSensors()) {
+        tile->gearButton()->setMenu(mTempSensorMenu);
+        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
+        tile->setGearVisible(im->getThermalSensors().size() >= 2);
+    }
+}
+
+DashboardTileWrapper *DashboardPage::findWrapper(const QString &tileId) const
+{
+    for (DashboardTileWrapper *w : mTileWrappers)
+        if (w->tileId() == tileId)
+            return w;
+    return nullptr;
+}
+
+void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, const QString &style)
+{
+    QString id = wrapper->tileId();
+
+    if (wrapper->currentStyle() == style)
+        return;
+
+    // Detach GPU combo box before old tile is destroyed
+    if (id == "gpu" && mCmbGpuDevice->parentWidget() == mGpuTile) {
+        mGpuTile->layout()->removeWidget(mCmbGpuDevice);
+        mCmbGpuDevice->setParent(this);
+    }
+
+    MetricTileBase *newTile = createTile(id, style);
+
+    // Swap inner widget (old tile scheduled for deletion)
+    wrapper->setInnerWidget(newTile);
+    wrapper->setCurrentStyle(style);
+
+    // Update member pointer
+    if (id == "cpu")          mCpuTile = newTile;
+    else if (id == "memory")  mMemTile = newTile;
+    else if (id == "disk")    mDiskTile = newTile;
+    else if (id == "temp")    mTempTile = newTile;
+    else if (id == "gpu")     mGpuTile = newTile;
+    else if (id == "battery") mBatteryTile = newTile;
+
+    // Re-attach gear menus
+    setupTileGearMenu(id, newTile);
+
+    // Re-add GPU combo box to the new tile
+    if (id == "gpu" && im->hasGpu() && im->getGpuDevices().size() > 1)
+        newTile->layout()->addWidget(mCmbGpuDevice);
+
+    // Re-apply display mode
+    applyDisplayModeForSpan(wrapper);
+
+    // Re-apply disk health badges
+    if (id == "disk")
+        updateDiskHealthBadge();
+
+    // Store style
+    mTileStyles[id] = style;
 }

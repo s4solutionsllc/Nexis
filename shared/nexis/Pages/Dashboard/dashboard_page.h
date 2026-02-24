@@ -14,9 +14,15 @@
 #include <QtConcurrent>
 
 #include "Managers/info_manager.h"
+#include "metric_tile_base.h"
 #include "metric_tile.h"
 #include "network_tile.h"
 #include "disk_tile.h"
+#include "gauge_tile.h"
+#include "ring_tile.h"
+#include "hybrid_tile.h"
+#include "speedometer_tile.h"
+#include "vumeter_tile.h"
 #include "dashboard_tile_wrapper.h"
 
 #include "Managers/setting_manager.h"
@@ -70,6 +76,7 @@ private slots:
     void onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void onTileDragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void onTileResizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
+    void onTileStyleChangeRequested(DashboardTileWrapper *wrapper, const QString &style);
 
 signals:
     void sigShowUpdateBar();
@@ -77,12 +84,12 @@ signals:
 private:
     Ui::DashboardPage *ui;
 
-    MetricTile *mCpuTile;
-    MetricTile *mMemTile;
-    DiskTile *mDiskTile;
-    MetricTile *mTempTile;
-    MetricTile *mGpuTile;
-    MetricTile *mBatteryTile;
+    MetricTileBase *mCpuTile;
+    MetricTileBase *mMemTile;
+    MetricTileBase *mDiskTile;
+    MetricTileBase *mTempTile;
+    MetricTileBase *mGpuTile;
+    MetricTileBase *mBatteryTile;
     NetworkTile *mNetworkTile;
 
     QComboBox *mCmbGpuDevice;
@@ -118,6 +125,8 @@ private:
     QWidget *mDragIndicator;
     DashboardTileWrapper *mDragSource;
 
+    QMap<QString, QString> mTileStyles;
+
     QList<QLabel*> mSummaryLabels;
     QString mSummaryHostname;
     QString mSummaryOs;
@@ -138,6 +147,13 @@ private:
     void rebuildOccupancy();
     bool regionIsFree(int row, int col, int rowSpan, int colSpan,
                       const QString &ignoreTileId = QString()) const;
+
+    MetricTileBase *createTile(const QString &id, const QString &style);
+    QStringList availableStyles(const QString &tileId) const;
+    QString defaultStyle(const QString &tileId) const;
+    void tileTitle(const QString &id, QString &title, QString &colorToken) const;
+    void setupTileGearMenu(const QString &id, MetricTileBase *tile);
+    DashboardTileWrapper *findWrapper(const QString &tileId) const;
 };
 
 #endif // DASHBOARDPAGE_H

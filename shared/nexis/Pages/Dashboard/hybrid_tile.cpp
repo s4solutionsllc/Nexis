@@ -1,23 +1,29 @@
-#include "metric_tile.h"
+#include "hybrid_tile.h"
 
+#include <QPainter>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QResizeEvent>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
 
-MetricTile::MetricTile(const QString &title, const QString &colorToken, QWidget *parent)
+static constexpr double GAUGE_START_ANGLE = 225.0;
+static constexpr double GAUGE_SWEEP_ANGLE = 270.0;
+static constexpr int ARC_PEN_WIDTH = 6;
+
+HybridTile::HybridTile(const QString &title, const QString &colorToken, QWidget *parent)
     : MetricTileBase(title, colorToken, parent),
+      mPercent(0),
       mCurrentTrend(Stable)
 {
-    setObjectName("metricTile");
+    setObjectName("hybridTile");
     buildLayout();
     refreshThemeColors();
 
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &MetricTile::refreshThemeColors);
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &HybridTile::refreshThemeColors);
 }
 
-void MetricTile::buildLayout()
+void HybridTile::buildLayout()
 {
     auto *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(12, 10, 12, 8);
@@ -28,29 +34,16 @@ void MetricTile::buildLayout()
     mLblTitle->setObjectName("metricTileTitle");
     mainLayout->addWidget(mLblTitle);
 
-    // Value + Secondary value row
-    auto *valueLayout = new QHBoxLayout();
-    valueLayout->setContentsMargins(0, 0, 0, 0);
-    valueLayout->setSpacing(8);
+    // Gauge area: a transparent widget whose paintEvent draws the arc
+    mGaugeArea = new QWidget(this);
+    mGaugeArea->setAttribute(Qt::WA_TransparentForMouseEvents);
+    mGaugeArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    mainLayout->addWidget(mGaugeArea, 1);
 
-    mLblValue = new QLabel("--", this);
-    mLblValue->setObjectName("metricTileValue");
-    mLblValue->setAlignment(Qt::AlignLeft | Qt::AlignBaseline);
-
-    mLblSecondaryValue = new QLabel(this);
-    mLblSecondaryValue->setObjectName("metricTileSubtitle");
-    mLblSecondaryValue->setAlignment(Qt::AlignLeft | Qt::AlignBaseline);
-    mLblSecondaryValue->hide();
-
-    valueLayout->addWidget(mLblValue);
-    valueLayout->addWidget(mLblSecondaryValue);
-    valueLayout->addStretch();
-    mainLayout->addLayout(valueLayout);
-
-    // Sparkline chart
+    // Mini sparkline chart
     mSeries = new QLineSeries();
 
-    QLineSeries *baseline = new QLineSeries();
+    auto *baseline = new QLineSeries();
     for (int i = 0; i < SPARKLINE_SIZE; ++i)
         baseline->append(i, 0);
 
@@ -81,18 +74,8 @@ void MetricTile::buildLayout()
 
     mChartView = new QChartView(mChart, this);
     mChartView->setRenderHint(QPainter::Antialiasing);
-    mChartView->setMinimumHeight(40);
-    mChartView->setMaximumHeight(60);
+    mChartView->setFixedHeight(30);
     mainLayout->addWidget(mChartView);
-
-    // Progress bar (below sparkline per mockup)
-    mProgressBar = new QProgressBar(this);
-    mProgressBar->setObjectName("metricTileProgress");
-    mProgressBar->setRange(0, 100);
-    mProgressBar->setValue(0);
-    mProgressBar->setTextVisible(false);
-    mProgressBar->setFixedHeight(4);
-    mainLayout->addWidget(mProgressBar);
 
     mainLayout->addSpacing(2);
 
@@ -124,7 +107,7 @@ void MetricTile::buildLayout()
     for (int i = 0; i < mDataBuffer.size(); ++i)
         mSeries->append(i, 0);
 
-    // Gear button for optional selector (positioned absolutely, not in layout)
+    // Gear button (positioned absolutely, not in layout)
     mGearButton = new QToolButton(this);
     mGearButton->setObjectName("btnMetricGear");
     mGearButton->setFixedSize(24, 24);
@@ -137,13 +120,14 @@ void MetricTile::buildLayout()
     mGearButton->move(width() - mGearButton->width() - 10, 8);
 }
 
-void MetricTile::setValue(int percent, const QString &valueText)
+void HybridTile::setValue(int percent, const QString &valueText)
 {
-    mProgressBar->setValue(qBound(0, percent, 100));
-    mLblValue->setText(valueText);
+    mPercent = qBound(0, percent, 100);
+    mValueText = valueText;
+    update();
 }
 
-void MetricTile::addDataPoint(double value)
+void HybridTile::addDataPoint(double value)
 {
     if (mDataBuffer.size() >= SPARKLINE_SIZE)
         mDataBuffer.removeFirst();
@@ -151,20 +135,48 @@ void MetricTile::addDataPoint(double value)
 
     updateSparkline();
     updateTrend();
+    update();
 }
 
-void MetricTile::setSubtitle(const QString &text)
+void HybridTile::setSubtitle(const QString &text)
 {
     mLblSubtitle->setText(text);
 }
 
-void MetricTile::setTrendDirection(TrendDirection dir)
+void HybridTile::setTrendDirection(TrendDirection dir)
 {
     mCurrentTrend = dir;
     mLblTrend->setText(trendText(dir));
 }
 
-void MetricTile::setQuickAction(const QString &text, std::function<void()> callback)
+void HybridTile::setSecondaryValue(const QString &text)
+{
+    mSecondaryText = text;
+    update();
+}
+
+void HybridTile::setDisplayMode(DisplayMode mode)
+{
+    mDisplayMode = mode;
+
+    switch (mode) {
+    case Hero:
+        mGaugeArea->setMinimumHeight(100);
+        mChartView->setFixedHeight(40);
+        break;
+    case Large:
+        mGaugeArea->setMinimumHeight(80);
+        mChartView->setFixedHeight(35);
+        break;
+    case Normal:
+    default:
+        mGaugeArea->setMinimumHeight(0);
+        mChartView->setFixedHeight(30);
+        break;
+    }
+}
+
+void HybridTile::setQuickAction(const QString &text, std::function<void()> callback)
 {
     mBtnAction->setText(text);
     mBtnAction->show();
@@ -173,43 +185,35 @@ void MetricTile::setQuickAction(const QString &text, std::function<void()> callb
     connect(mBtnAction, &QPushButton::clicked, this, [callback]() { callback(); });
 }
 
-void MetricTile::setDisplayMode(DisplayMode mode)
+QToolButton *HybridTile::gearButton()
 {
-    mDisplayMode = mode;
-
-    mLblValue->setProperty("heroMode", mode == Hero ? "true" : "false");
-    mLblValue->setProperty("largeMode", mode == Large ? "true" : "false");
-
-    mLblValue->style()->unpolish(mLblValue);
-    mLblValue->style()->polish(mLblValue);
+    return mGearButton;
 }
 
-void MetricTile::setSecondaryValue(const QString &text)
+void HybridTile::setGearVisible(bool visible)
 {
-    mLblSecondaryValue->setText(text);
-    mLblSecondaryValue->setVisible(!text.isEmpty());
+    mGearButton->setVisible(visible);
 }
 
-void MetricTile::refreshThemeColors()
+void HybridTile::refreshThemeColors()
 {
     QSettings *sv = AppManager::ins()->getStyleValues();
     if (!sv)
         return;
 
-    QColor color(sv->value(mColorToken).toString());
-    QString colorHex = color.name();
+    mArcColor = QColor(sv->value(mColorToken).toString());
+    mTrackColor = QColor(sv->value("@color02").toString());
+
+    QString colorHex = mArcColor.name();
     QString hoverText = sv->value("@color07").toString();
 
-    mSeries->setPen(QPen(color, 1.5));
+    mSeries->setPen(QPen(mArcColor, 1.5));
 
-    QColor fillColor = color;
+    QColor fillColor = mArcColor;
     fillColor.setAlphaF(0.1);
     mAreaSeries->setBrush(fillColor);
 
     mChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
-
-    mProgressBar->setStyleSheet(
-        QString("QProgressBar#metricTileProgress::chunk { background-color: %1; border-radius: 2; }").arg(colorHex));
 
     mBtnAction->setStyleSheet(
         "QPushButton#metricTileAction {"
@@ -227,39 +231,98 @@ void MetricTile::refreshThemeColors()
     );
 
     updateGearIcon();
+    update();
 }
 
-void MetricTile::updateSparkline()
+void HybridTile::paintEvent(QPaintEvent *event)
+{
+    QWidget::paintEvent(event);
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    drawGaugeArc(painter);
+}
+
+void HybridTile::drawGaugeArc(QPainter &painter)
+{
+    QRect gaugeRect = mGaugeArea->geometry();
+    if (gaugeRect.isEmpty())
+        return;
+
+    int side = gaugeSize();
+    if (side < 20)
+        return;
+
+    int cx = gaugeRect.center().x();
+    int cy = gaugeRect.center().y();
+    QRect arcRect(cx - side / 2, cy - side / 2, side, side);
+
+    // Track arc (background)
+    QPen trackPen(mTrackColor, ARC_PEN_WIDTH, Qt::SolidLine, Qt::RoundCap);
+    painter.setPen(trackPen);
+    painter.drawArc(arcRect, GAUGE_START_ANGLE * 16, -GAUGE_SWEEP_ANGLE * 16);
+
+    // Value arc
+    double valueSweep = -(GAUGE_SWEEP_ANGLE * mPercent / 100.0);
+    QPen valuePen(mArcColor, ARC_PEN_WIDTH, Qt::SolidLine, Qt::RoundCap);
+    painter.setPen(valuePen);
+    painter.drawArc(arcRect, GAUGE_START_ANGLE * 16, valueSweep * 16);
+
+    // Percentage text centered in gauge
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    QColor textColor = sv ? QColor(sv->value("@color07").toString()) : mArcColor;
+
+    QFont percentFont = painter.font();
+    percentFont.setPixelSize(qMax(12, side / 4));
+    percentFont.setBold(true);
+    painter.setFont(percentFont);
+    painter.setPen(textColor);
+
+    QString displayText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
+    QRect textRect = arcRect.adjusted(0, -side / 8, 0, 0);
+    painter.drawText(textRect, Qt::AlignCenter, displayText);
+
+    // Secondary value below percentage
+    if (!mSecondaryText.isEmpty()) {
+        QColor secondaryColor = sv ? QColor(sv->value("@color05").toString()) : textColor;
+        QFont secondaryFont = painter.font();
+        secondaryFont.setPixelSize(qMax(9, side / 7));
+        secondaryFont.setBold(false);
+        painter.setFont(secondaryFont);
+        painter.setPen(secondaryColor);
+
+        QRect secondaryRect = arcRect.adjusted(0, side / 6, 0, 0);
+        painter.drawText(secondaryRect, Qt::AlignCenter, mSecondaryText);
+    }
+}
+
+int HybridTile::gaugeSize() const
+{
+    QRect gaugeRect = mGaugeArea->geometry();
+    int available = qMin(gaugeRect.width(), gaugeRect.height()) - ARC_PEN_WIDTH * 2;
+    return qMax(0, available);
+}
+
+void HybridTile::updateSparkline()
 {
     mSeries->clear();
     for (int i = 0; i < mDataBuffer.size(); ++i)
         mSeries->append(i, mDataBuffer.at(i));
 }
 
-void MetricTile::resizeEvent(QResizeEvent *event)
+void HybridTile::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     mGearButton->move(width() - mGearButton->width() - 10, 8);
 }
 
-void MetricTile::updateGearIcon()
+void HybridTile::updateGearIcon()
 {
     QString theme = AppManager::ins()->resolveThemeName();
     QString path = QString(":/static/themes/%1/img/sidebar-icons/settings.svg").arg(theme);
     mGearButton->setIcon(QIcon(path));
 }
 
-QToolButton *MetricTile::gearButton()
-{
-    return mGearButton;
-}
-
-void MetricTile::setGearVisible(bool visible)
-{
-    mGearButton->setVisible(visible);
-}
-
-void MetricTile::updateTrend()
+void HybridTile::updateTrend()
 {
     if (mDataBuffer.size() < 10) {
         setTrendDirection(Stable);

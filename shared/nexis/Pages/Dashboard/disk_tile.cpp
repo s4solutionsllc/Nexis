@@ -8,7 +8,8 @@
 #include "signal_mapper.h"
 
 DiskTile::DiskTile(const QString &arcColorToken, const QString &trackColorToken, QWidget *parent)
-    : QWidget(parent), mArcColorToken(arcColorToken), mTrackColorToken(trackColorToken),
+    : MetricTileBase(tr("DISK"), arcColorToken, parent),
+      mTrackColorToken(trackColorToken),
       mPercent(0)
 {
     setObjectName("diskTile");
@@ -25,7 +26,7 @@ void DiskTile::buildLayout()
     layout->setContentsMargins(14, 10, 14, 10);
     layout->setSpacing(4);
 
-    mLblTitle = new QLabel(tr("DISK"), this);
+    mLblTitle = new QLabel(mTitle, this);
     mLblTitle->setObjectName("diskTileTitle");
     layout->addWidget(mLblTitle);
 
@@ -58,7 +59,7 @@ void DiskTile::buildLayout()
     mGearButton->move(width() - mGearButton->width() - 10, 8);
 }
 
-void DiskTile::setValue(int percent, const QString &usedText, const QString &totalText)
+void DiskTile::setDiskInfo(int percent, const QString &usedText, const QString &totalText)
 {
     mPercent = qBound(0, percent, 100);
     mUsedText = usedText;
@@ -67,9 +68,36 @@ void DiskTile::setValue(int percent, const QString &usedText, const QString &tot
     update();
 }
 
+void DiskTile::setValue(int percent, const QString &)
+{
+    mPercent = qBound(0, percent, 100);
+    update();
+}
+
+void DiskTile::addDataPoint(double)
+{
+}
+
 void DiskTile::setSubtitle(const QString &text)
 {
     mLblSubtitle->setText(text);
+}
+
+void DiskTile::setTrendDirection(TrendDirection)
+{
+}
+
+void DiskTile::setSecondaryValue(const QString &)
+{
+}
+
+void DiskTile::setDisplayMode(DisplayMode mode)
+{
+    mDisplayMode = mode;
+}
+
+void DiskTile::setQuickAction(const QString &, std::function<void()>)
+{
 }
 
 void DiskTile::setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy)
@@ -77,7 +105,6 @@ void DiskTile::setDriveHealth(const QString &driveName, const QString &status, i
     auto *driveLabel = new QLabel(driveName + ": ", mHealthContainer);
     driveLabel->setObjectName("diskTileSubtitle");
 
-    // Format: "Good (92%)" when percent available, "Good" otherwise
     QString statusText = status;
     if (healthPercent >= 0)
         statusText += QString(" (%1%)").arg(healthPercent);
@@ -104,9 +131,6 @@ void DiskTile::clearDriveHealth()
 {
     mHealthEntries.clear();
 
-    // Remove all child layouts and widgets from the health container.
-    // QLayout inherits QLayoutItem, so for child layout items takeAt()
-    // returns the QLayout* itself — deleting both would be a double-free.
     while (QLayoutItem *item = mHealthLayout->takeAt(0)) {
         if (QLayout *childLayout = item->layout()) {
             while (QLayoutItem *sub = childLayout->takeAt(0)) {
@@ -127,7 +151,7 @@ void DiskTile::refreshThemeColors()
     if (!sv)
         return;
 
-    mArcColor = QColor(sv->value(mArcColorToken).toString());
+    mArcColor = QColor(sv->value(mColorToken).toString());
     mTrackColor = QColor(sv->value(mTrackColorToken).toString());
     mTextColor = QColor(sv->value("@color05").toString());
 
@@ -147,7 +171,7 @@ void DiskTile::updateGearIcon()
     mGearButton->setIcon(QIcon(path));
 }
 
-QToolButton *DiskTile::gearButton() const
+QToolButton *DiskTile::gearButton()
 {
     return mGearButton;
 }
@@ -170,11 +194,10 @@ void DiskTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    // Calculate donut geometry — centered in the widget, below the title
     int titleBottom = mLblTitle->geometry().bottom() + 8;
     int subtitleTop = mLblSubtitle->geometry().top() - 8;
     int availableHeight = subtitleTop - titleBottom;
-    int availableWidth = width() - 28; // 14px margin each side
+    int availableWidth = width() - 28;
 
     int diameter = qMin(availableWidth, availableHeight);
     if (diameter < 40)
@@ -195,12 +218,11 @@ void DiskTile::paintEvent(QPaintEvent *event)
     painter.setPen(trackPen);
     painter.drawArc(arcRect, 0, 360 * 16);
 
-    // Value arc (Qt draws arcs starting from 3 o'clock going CCW, in 1/16th degree units)
-    // We want to start from 12 o'clock (90°) going clockwise → negative span
+    // Value arc
     if (mPercent > 0) {
         QPen arcPen(mArcColor, penWidth, Qt::SolidLine, Qt::RoundCap);
         painter.setPen(arcPen);
-        int startAngle = 90 * 16; // 12 o'clock
+        int startAngle = 90 * 16;
         int spanAngle = -static_cast<int>(mPercent * 3.6 * 16);
         painter.drawArc(arcRect, startAngle, spanAngle);
     }

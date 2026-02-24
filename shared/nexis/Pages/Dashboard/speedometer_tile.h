@@ -1,22 +1,20 @@
-#ifndef DISK_TILE_H
-#define DISK_TILE_H
+#ifndef SPEEDOMETER_TILE_H
+#define SPEEDOMETER_TILE_H
 
 #include "metric_tile_base.h"
 
 #include <QLabel>
 #include <QColor>
 #include <QPushButton>
-#include <QHBoxLayout>
 
-class DiskTile : public MetricTileBase
+class SpeedometerTile : public MetricTileBase
 {
     Q_OBJECT
 
 public:
-    explicit DiskTile(const QString &arcColorToken, const QString &trackColorToken, QWidget *parent = nullptr);
-    ~DiskTile() = default;
+    explicit SpeedometerTile(const QString &title, const QString &colorToken, QWidget *parent = nullptr);
+    ~SpeedometerTile() = default;
 
-    // MetricTileBase overrides
     void setValue(int percent, const QString &valueText) override;
     void addDataPoint(double value) override;
     void setSubtitle(const QString &text) override;
@@ -28,11 +26,6 @@ public:
     void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
-    // Disk-specific overrides
-    void setDiskInfo(int percent, const QString &usedText, const QString &totalText) override;
-    void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy) override;
-    void clearDriveHealth() override;
-
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -40,27 +33,30 @@ protected:
 private:
     void buildLayout();
     void updateGearIcon();
-
-    QString mTrackColorToken;
-    QColor mArcColor;
-    QColor mTrackColor;
-    QColor mTextColor;
+    void updateTrend();
+    QColor gradientColorAt(double fraction) const;
 
     int mPercent;
-    QString mUsedText;
-    QString mTotalText;
+    QString mValueText;
+
+    QColor mMetricColor;
+    QColor mCardBgColor;
+    QColor mTextColor;
+    QColor mSecondaryTextColor;
+    QColor mGreenColor;
+    QColor mYellowColor;
+    QColor mOrangeColor;
+    QColor mRedColor;
 
     QLabel *mLblTitle;
+    QLabel *mLblValue;
+    QLabel *mLblSecondaryValue;
     QLabel *mLblSubtitle;
+    QLabel *mLblTrend;
+    QPushButton *mBtnAction;
     QToolButton *mGearButton;
-    QWidget *mHealthContainer;
-    QHBoxLayout *mHealthLayout;
 
-    struct HealthEntry {
-        QLabel *statusLabel;
-        bool healthy;
-    };
-    QList<HealthEntry> mHealthEntries;
+    TrendDirection mCurrentTrend;
 };
 
-#endif // DISK_TILE_H
+#endif // SPEEDOMETER_TILE_H

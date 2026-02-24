@@ -1,20 +1,19 @@
-#ifndef DISK_TILE_H
-#define DISK_TILE_H
+#ifndef GAUGE_TILE_H
+#define GAUGE_TILE_H
 
 #include "metric_tile_base.h"
 
 #include <QLabel>
 #include <QColor>
 #include <QPushButton>
-#include <QHBoxLayout>
 
-class DiskTile : public MetricTileBase
+class GaugeTile : public MetricTileBase
 {
     Q_OBJECT
 
 public:
-    explicit DiskTile(const QString &arcColorToken, const QString &trackColorToken, QWidget *parent = nullptr);
-    ~DiskTile() = default;
+    explicit GaugeTile(const QString &title, const QString &colorToken, QWidget *parent = nullptr);
+    ~GaugeTile() = default;
 
     // MetricTileBase overrides
     void setValue(int percent, const QString &valueText) override;
@@ -28,11 +27,6 @@ public:
     void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
-    // Disk-specific overrides
-    void setDiskInfo(int percent, const QString &usedText, const QString &totalText) override;
-    void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy) override;
-    void clearDriveHealth() override;
-
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -40,27 +34,25 @@ protected:
 private:
     void buildLayout();
     void updateGearIcon();
+    void updateTrend();
 
-    QString mTrackColorToken;
     QColor mArcColor;
+    QColor mArcEndColor;
     QColor mTrackColor;
     QColor mTextColor;
+    QColor mSecondaryTextColor;
 
     int mPercent;
-    QString mUsedText;
-    QString mTotalText;
+    QString mValueText;
+    QString mSecondaryText;
 
     QLabel *mLblTitle;
     QLabel *mLblSubtitle;
+    QLabel *mLblTrend;
+    QPushButton *mBtnAction;
     QToolButton *mGearButton;
-    QWidget *mHealthContainer;
-    QHBoxLayout *mHealthLayout;
 
-    struct HealthEntry {
-        QLabel *statusLabel;
-        bool healthy;
-    };
-    QList<HealthEntry> mHealthEntries;
+    TrendDirection mCurrentTrend;
 };
 
-#endif // DISK_TILE_H
+#endif // GAUGE_TILE_H

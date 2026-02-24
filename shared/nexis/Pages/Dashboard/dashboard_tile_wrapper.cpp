@@ -15,7 +15,9 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
       mGridRow(0),
       mGridCol(0),
       mGridRowSpan(1),
-      mGridColSpan(1)
+      mGridColSpan(1),
+      mStyleButton(nullptr),
+      mStyleMenu(nullptr)
 {
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -23,18 +25,53 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
 
     innerWidget->setParent(this);
     layout->addWidget(innerWidget);
+
+    mStyleButton = new QToolButton(this);
+    mStyleButton->setObjectName("btnStyleSelector");
+    mStyleButton->setFixedSize(24, 24);
+    mStyleButton->setIconSize(QSize(14, 14));
+    mStyleButton->setIcon(QIcon(":/static/themes/common/img/style-brush.svg"));
+    mStyleButton->setAutoRaise(true);
+    mStyleButton->setCursor(Qt::PointingHandCursor);
+    mStyleButton->setFocusPolicy(Qt::NoFocus);
+    mStyleButton->setToolTip(tr("Change Widget Style"));
+    mStyleButton->hide();
+
+    mStyleMenu = new QMenu(this);
+    mStyleButton->setMenu(mStyleMenu);
+    mStyleButton->setPopupMode(QToolButton::InstantPopup);
+
+    connect(mStyleMenu, &QMenu::triggered, this, [this](QAction *action) {
+        QString style = action->data().toString();
+        if (style != mCurrentStyle)
+            emit styleChangeRequested(this, style);
+    });
 }
 
 QString DashboardTileWrapper::tileId() const { return mTileId; }
 QWidget *DashboardTileWrapper::innerWidget() const { return mInnerWidget; }
 
+void DashboardTileWrapper::setInnerWidget(QWidget *newWidget)
+{
+    layout()->removeWidget(mInnerWidget);
+    mInnerWidget->deleteLater();
+    mInnerWidget = newWidget;
+    newWidget->setParent(this);
+    layout()->addWidget(newWidget);
+    mStyleButton->raise();
+}
+
 void DashboardTileWrapper::setEditMode(bool enabled)
 {
     mEditMode = enabled;
-    if (enabled)
+    if (enabled) {
         setCursor(Qt::OpenHandCursor);
-    else
+        if (!mStyleMenu->isEmpty())
+            mStyleButton->show();
+    } else {
         unsetCursor();
+        mStyleButton->hide();
+    }
     update();
 }
 
@@ -51,6 +88,32 @@ void DashboardTileWrapper::setGridPosition(int row, int col, int rowSpan, int co
     mGridCol = col;
     mGridRowSpan = rowSpan;
     mGridColSpan = colSpan;
+}
+
+QString DashboardTileWrapper::currentStyle() const { return mCurrentStyle; }
+
+void DashboardTileWrapper::setCurrentStyle(const QString &style)
+{
+    mCurrentStyle = style;
+
+    for (QAction *a : mStyleMenu->actions())
+        a->setChecked(a->data().toString() == style);
+}
+
+void DashboardTileWrapper::setStyleMenuItems(const QStringList &styles, const QString &current)
+{
+    mStyleMenu->clear();
+    mCurrentStyle = current;
+
+    for (const QString &style : styles) {
+        QString displayName = style;
+        displayName[0] = displayName[0].toUpper();
+
+        QAction *action = mStyleMenu->addAction(displayName);
+        action->setData(style);
+        action->setCheckable(true);
+        action->setChecked(style == current);
+    }
 }
 
 bool DashboardTileWrapper::isInResizeHandle(const QPoint &pos) const

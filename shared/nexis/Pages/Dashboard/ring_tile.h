@@ -1,20 +1,19 @@
-#ifndef METRIC_TILE_H
-#define METRIC_TILE_H
+#ifndef RING_TILE_H
+#define RING_TILE_H
 
 #include "metric_tile_base.h"
 
 #include <QLabel>
 #include <QProgressBar>
 #include <QPushButton>
-#include <QtCharts>
 
-class MetricTile : public MetricTileBase
+class RingTile : public MetricTileBase
 {
     Q_OBJECT
 
 public:
-    explicit MetricTile(const QString &title, const QString &colorToken, QWidget *parent = nullptr);
-    ~MetricTile() = default;
+    explicit RingTile(const QString &title, const QString &colorToken, QWidget *parent = nullptr);
+    ~RingTile() = default;
 
     void setValue(int percent, const QString &valueText) override;
     void addDataPoint(double value) override;
@@ -29,28 +28,31 @@ public:
     void refreshThemeColors() override;
 
 protected:
+    void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
 private:
     void buildLayout();
     void updateGearIcon();
-    void updateSparkline();
     void updateTrend();
+    int ringThickness() const;
+    int ringFontSize() const;
+    int secondaryFontSize() const;
 
     QLabel *mLblTitle;
-    QLabel *mLblValue;
+    QLabel *mLblPercentage;
     QLabel *mLblSecondaryValue;
     QProgressBar *mProgressBar;
-    QChartView *mChartView;
-    QLineSeries *mSeries;
-    QAreaSeries *mAreaSeries;
-    QChart *mChart;
     QLabel *mLblSubtitle;
     QLabel *mLblTrend;
     QPushButton *mBtnAction;
     QToolButton *mGearButton;
 
     TrendDirection mCurrentTrend;
+    int mPercent;
+
+    QColor mMetricColor;
+    QColor mTrackColor;
 };
 
-#endif // METRIC_TILE_H
+#endif // RING_TILE_H

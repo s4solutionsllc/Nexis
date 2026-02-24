@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QMouseEvent>
 #include <QPaintEvent>
+#include <QToolButton>
+#include <QMenu>
 
 class DashboardTileWrapper : public QWidget
 {
@@ -14,6 +16,7 @@ public:
 
     QString tileId() const;
     QWidget *innerWidget() const;
+    void setInnerWidget(QWidget *newWidget);
 
     void setEditMode(bool enabled);
     bool isEditMode() const;
@@ -24,11 +27,16 @@ public:
     int gridColSpan() const;
     void setGridPosition(int row, int col, int rowSpan = 1, int colSpan = 1);
 
+    QString currentStyle() const;
+    void setCurrentStyle(const QString &style);
+    void setStyleMenuItems(const QStringList &styles, const QString &current);
+
 signals:
     void dragStarted(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void dragMoved(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void dragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void resizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
+    void styleChangeRequested(DashboardTileWrapper *wrapper, const QString &style);
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -49,6 +57,10 @@ private:
     int mGridCol;
     int mGridRowSpan;
     int mGridColSpan;
+
+    QString mCurrentStyle;
+    QToolButton *mStyleButton;
+    QMenu *mStyleMenu;
 
     static const int DRAG_THRESHOLD = 5;
     static const int RESIZE_HANDLE_SIZE = 16;

@@ -53,7 +53,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 3 themes (Dark, Light, Auto)
 - 34 languages
 - 7 test suites with 63 test methods (Qt Test + CTest)
-- 47 features implemented, 61 bugs fixed since fork
+- 48 features implemented, 61 bugs fixed since fork
 
 ---
 
@@ -99,7 +99,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 ### 1. Dashboard
 
-Real-time system monitoring at a glance in a **customizable bento grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. `MetricTile` supports three `DisplayMode` values — **Normal**, **Hero**, and **Large** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling. Tiles can be rearranged and resized via edit mode.
+Real-time system monitoring at a glance in a **customizable bento grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. All metric tiles inherit from `MetricTileBase`, an abstract base class supporting three `DisplayMode` values — **Normal**, **Hero**, and **Large** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling. Tiles can be rearranged and resized via edit mode, and each tile's **visual style can be changed** independently.
 
 **Default tile layout:**
 - **CPU** — Independent `MetricTile` with sparkline history (1s refresh)
@@ -114,13 +114,23 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 
 **Footer status bar** — Displays app version and refresh interval at the bottom edge.
 
+**Widget styles** — Each tile (except Network) can be switched between 6 visual styles via a paintbrush icon visible during edit mode:
+- **Sparkline** (default) — line chart showing recent history with progress bar and trend indicator
+- **Gauge** — classic ¾-circle arc gauge with percentage in center, conical gradient fill
+- **Hybrid** — compact gauge arc combined with a mini sparkline chart below
+- **Ring** — full 360° activity ring (Apple Watch style) with percentage inside
+- **Speedometer** — analog dial with needle, tick marks, and green→red gradient arc
+- **VU Meter** — segmented vertical bar with bottom-up fill and stats panel
+- **Donut** (Disk tile only) — custom-painted donut chart with usage text (Disk tile default)
+
 **Edit mode** (pencil icon next to kiosk button, or **Ctrl+E**):
 - Activates drag-and-drop reordering of dashboard tiles with visual feedback
 - Snap-to-grid resizing via corner handles — tiles support 1x1, 1x2, 2x1, and 2x2 grid cell sizes
-- Edit toolbar with **Reset Layout** button to restore default tile arrangement
-- Layout persisted as JSON in `settings.ini` across sessions (tile positions and sizes)
+- **Per-tile style selector** — paintbrush icon button on each switchable tile opens a menu of available visual styles with checkmark on the current style; selecting a style immediately swaps the tile widget
+- Edit toolbar with **Reset Layout** button to restore default tile arrangement (including default styles)
+- Layout persisted as JSON in `settings.ini` across sessions (tile positions, sizes, and styles)
 - Edit mode and kiosk mode are mutually exclusive — entering one exits the other
-- Implemented via `DashboardTileWrapper` (decorator pattern providing edit-mode mouse handling around each tile widget)
+- Implemented via `DashboardTileWrapper` (decorator pattern providing edit-mode mouse handling and style switching around each tile widget)
 
 **Additional features:**
 - Update checker — compares installed version against GitHub releases

@@ -1,20 +1,19 @@
-#ifndef DISK_TILE_H
-#define DISK_TILE_H
+#ifndef VUMETER_TILE_H
+#define VUMETER_TILE_H
 
 #include "metric_tile_base.h"
 
 #include <QLabel>
 #include <QColor>
 #include <QPushButton>
-#include <QHBoxLayout>
 
-class DiskTile : public MetricTileBase
+class VuMeterTile : public MetricTileBase
 {
     Q_OBJECT
 
 public:
-    explicit DiskTile(const QString &arcColorToken, const QString &trackColorToken, QWidget *parent = nullptr);
-    ~DiskTile() = default;
+    explicit VuMeterTile(const QString &title, const QString &colorToken, QWidget *parent = nullptr);
+    ~VuMeterTile() = default;
 
     // MetricTileBase overrides
     void setValue(int percent, const QString &valueText) override;
@@ -28,11 +27,6 @@ public:
     void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
-    // Disk-specific overrides
-    void setDiskInfo(int percent, const QString &usedText, const QString &totalText) override;
-    void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy) override;
-    void clearDriveHealth() override;
-
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -40,27 +34,36 @@ protected:
 private:
     void buildLayout();
     void updateGearIcon();
+    void updateTrend();
 
-    QString mTrackColorToken;
-    QColor mArcColor;
-    QColor mTrackColor;
-    QColor mTextColor;
+    int segmentCount() const;
+    int barWidth() const;
+    int valueFontSize() const;
+    int secondaryFontSize() const;
+    int scaleFontSize() const;
+
+    QColor segmentColor(int segmentIndex, int totalSegments) const;
 
     int mPercent;
-    QString mUsedText;
-    QString mTotalText;
+    QString mValueText;
 
     QLabel *mLblTitle;
+    QLabel *mLblValue;
+    QLabel *mLblSecondaryValue;
     QLabel *mLblSubtitle;
+    QLabel *mLblTrend;
+    QPushButton *mBtnAction;
     QToolButton *mGearButton;
-    QWidget *mHealthContainer;
-    QHBoxLayout *mHealthLayout;
 
-    struct HealthEntry {
-        QLabel *statusLabel;
-        bool healthy;
-    };
-    QList<HealthEntry> mHealthEntries;
+    QColor mSuccessColor;
+    QColor mWarningColor;
+    QColor mAccentColor;
+    QColor mDestructiveColor;
+    QColor mTrackColor;
+    QColor mTextColor;
+    QColor mSecondaryTextColor;
+
+    TrendDirection mCurrentTrend;
 };
 
-#endif // DISK_TILE_H
+#endif // VUMETER_TILE_H
