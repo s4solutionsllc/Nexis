@@ -126,12 +126,12 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 **Edit mode** (pencil icon next to kiosk button, or **Ctrl+E**):
 - Activates drag-and-drop reordering of dashboard tiles with visual feedback
 - Snap-to-grid resizing via corner handles — tiles support 1x1, 1x2, 2x1, and 2x2 grid cell sizes
-- **Per-tile style selector** — paintbrush icon button (top-left) on each switchable tile opens a menu of available visual styles with checkmark on the current style; selecting a style immediately swaps the tile widget
+- **Per-tile style and color selector** — paintbrush icon button (top-right) on each switchable tile opens a menu with two sections: (1) visual styles with checkmark on the current style (selecting swaps the tile widget), and (2) color palette with 16 preset swatches plus a "Default" option to revert to the theme color; selecting a swatch immediately recolors the tile's accent elements (arcs, sparklines, needles, progress bars)
 - **Remove widget** — orange X button (top-right) on each tile hides it from the dashboard; hidden tiles are excluded from the grid and occupancy tracking
-- Edit toolbar with **Reset Layout** button to restore default tile arrangement (including default styles and all removed tiles)
-- Layout persisted as JSON in `settings.ini` across sessions (tile positions, sizes, styles, and visibility)
+- Edit toolbar with **Reset Layout** button to restore default tile arrangement (including default styles, colors, and all removed tiles)
+- Layout persisted as JSON in `settings.ini` across sessions (tile positions, sizes, styles, colors, and visibility)
 - Edit mode and kiosk mode are mutually exclusive — entering one exits the other
-- Implemented via `DashboardTileWrapper` (decorator pattern providing edit-mode mouse handling and style switching around each tile widget)
+- Implemented via `DashboardTileWrapper` (decorator pattern providing edit-mode mouse handling, style/color switching around each tile widget)
 
 **Additional features:**
 - Update checker — compares installed version against GitHub releases

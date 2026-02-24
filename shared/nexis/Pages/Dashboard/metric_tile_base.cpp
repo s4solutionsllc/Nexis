@@ -1,4 +1,5 @@
 #include "metric_tile_base.h"
+#include "Managers/app_manager.h"
 
 MetricTileBase::MetricTileBase(const QString &title, const QString &colorToken, QWidget *parent)
     : QWidget(parent),
@@ -21,6 +22,23 @@ void MetricTileBase::setDriveHealth(const QString &, const QString &, int, bool)
 
 void MetricTileBase::clearDriveHealth()
 {
+}
+
+void MetricTileBase::setColorOverride(const QString &hexColor)
+{
+    mColorOverride = hexColor;
+    refreshThemeColors();
+}
+
+QColor MetricTileBase::resolvedColor() const
+{
+    if (!mColorOverride.isEmpty())
+        return QColor(mColorOverride);
+
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    if (sv)
+        return QColor(sv->value(mColorToken).toString());
+    return QColor();
 }
 
 QString MetricTileBase::trendText(TrendDirection dir) const

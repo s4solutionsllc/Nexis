@@ -78,6 +78,7 @@ private slots:
     void onTileDragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void onTileResizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
     void onTileStyleChangeRequested(DashboardTileWrapper *wrapper, const QString &style);
+    void onTileColorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor);
     void onTileRemoveRequested(DashboardTileWrapper *wrapper);
 
 signals:
@@ -128,6 +129,7 @@ private:
     DashboardTileWrapper *mDragSource;
 
     QMap<QString, QString> mTileStyles;
+    QMap<QString, QString> mTileColors;
     QSet<QString> mHiddenTiles;
     QSet<QString> mGearVisibleTiles;
 

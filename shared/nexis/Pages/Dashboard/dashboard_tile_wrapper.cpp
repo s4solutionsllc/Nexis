@@ -44,9 +44,13 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
     mStyleButton->setPopupMode(QToolButton::InstantPopup);
 
     connect(mStyleMenu, &QMenu::triggered, this, [this](QAction *action) {
-        QString style = action->data().toString();
-        if (style != mCurrentStyle)
-            emit styleChangeRequested(this, style);
+        QString data = action->data().toString();
+        if (data.startsWith("color::")) {
+            QString hex = data.mid(7);
+            emit colorChangeRequested(this, hex);
+        } else if (!data.isEmpty() && data != mCurrentStyle) {
+            emit styleChangeRequested(this, data);
+        }
     });
 
     mRemoveButton = new QToolButton(this);
@@ -123,6 +127,7 @@ void DashboardTileWrapper::setCurrentStyle(const QString &style)
 void DashboardTileWrapper::setStyleMenuItems(const QStringList &styles, const QString &current)
 {
     mStyleMenu->clear();
+    mColorActions.clear();
     mCurrentStyle = current;
 
     for (const QString &style : styles) {
@@ -133,6 +138,69 @@ void DashboardTileWrapper::setStyleMenuItems(const QStringList &styles, const QS
         action->setData(style);
         action->setCheckable(true);
         action->setChecked(style == current);
+    }
+}
+
+static QPixmap colorSwatchPixmap(const QColor &color, int size)
+{
+    QPixmap pm(size, size);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setPen(Qt::NoPen);
+    p.setBrush(color);
+    p.drawEllipse(1, 1, size - 2, size - 2);
+    return pm;
+}
+
+static QPixmap defaultSwatchPixmap(int size)
+{
+    QPixmap pm(size, size);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing);
+    QPen pen(QColor(150, 150, 150), 1.5);
+    p.setPen(pen);
+    p.setBrush(Qt::NoBrush);
+    p.drawEllipse(2, 2, size - 4, size - 4);
+    p.drawLine(QPointF(size * 0.28, size * 0.72), QPointF(size * 0.72, size * 0.28));
+    return pm;
+}
+
+void DashboardTileWrapper::setColorMenuItems(const QStringList &colors, const QString &current)
+{
+    mColorActions.clear();
+    mCurrentColor = current;
+
+    mStyleMenu->addSeparator();
+
+    QAction *header = mStyleMenu->addAction(tr("Color"));
+    header->setEnabled(false);
+
+    QAction *defaultAction = mStyleMenu->addAction(QIcon(defaultSwatchPixmap(16)), tr("Default"));
+    defaultAction->setData("color::");
+    defaultAction->setCheckable(true);
+    defaultAction->setChecked(current.isEmpty());
+    mColorActions.append(defaultAction);
+
+    for (const QString &hex : colors) {
+        QAction *action = mStyleMenu->addAction(QIcon(colorSwatchPixmap(QColor(hex), 16)), "");
+        action->setData(QString("color::%1").arg(hex));
+        action->setCheckable(true);
+        action->setChecked(hex.compare(current, Qt::CaseInsensitive) == 0);
+        mColorActions.append(action);
+    }
+}
+
+void DashboardTileWrapper::setCurrentColor(const QString &hex)
+{
+    mCurrentColor = hex;
+    for (QAction *a : mColorActions) {
+        QString data = a->data().toString().mid(7);
+        if (data.isEmpty())
+            a->setChecked(hex.isEmpty());
+        else
+            a->setChecked(data.compare(hex, Qt::CaseInsensitive) == 0);
     }
 }
 

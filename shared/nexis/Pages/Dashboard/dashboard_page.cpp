@@ -115,6 +115,20 @@ void DashboardPage::init()
     else
         deserializeLayout(savedLayout);
 
+    for (auto it = mTileColors.constBegin(); it != mTileColors.constEnd(); ++it) {
+        if (it.key() == "network") {
+            if (mNetworkTile)
+                mNetworkTile->setColorOverride(it.value());
+        } else {
+            DashboardTileWrapper *w = findWrapper(it.key());
+            if (w) {
+                auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget());
+                if (metric)
+                    metric->setColorOverride(it.value());
+            }
+        }
+    }
+
     buildGrid();
 
     // Give the tile grid all available vertical space
@@ -842,6 +856,7 @@ void DashboardPage::exitEditMode()
 void DashboardPage::onResetLayout()
 {
     mHiddenTiles.clear();
+    mTileColors.clear();
 
     // Reset styles to defaults
     mTileStyles.clear();
@@ -916,6 +931,8 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
             this, &DashboardPage::onTileStyleChangeRequested);
     connect(wrapper, &DashboardTileWrapper::removeRequested,
             this, &DashboardPage::onTileRemoveRequested);
+    connect(wrapper, &DashboardTileWrapper::colorChangeRequested,
+            this, &DashboardPage::onTileColorChangeRequested);
 
     // Set up style menu for switchable tiles
     QStringList styles = availableStyles(id);
@@ -923,6 +940,12 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
         QString currentStyle = mTileStyles.value(id, defaultStyle(id));
         wrapper->setStyleMenuItems(styles, currentStyle);
     }
+
+    static const QStringList colorPalette = {
+        "#FF6B1A", "#FFB347", "#E05454", "#26A69A", "#813D9C", "#5B9BD5", "#2EC27E",
+        "#E91E63", "#00BCD4", "#8BC34A", "#FF5722", "#607D8B", "#9C27B0", "#FFEB3B", "#795548", "#F48FB1"
+    };
+    wrapper->setColorMenuItems(colorPalette, mTileColors.value(id));
 
     mTileWrappers.append(wrapper);
     return wrapper;
@@ -978,11 +1001,18 @@ void DashboardPage::deserializeLayout(const QString &json)
         else
             mHiddenTiles.remove(id);
 
+        QString color = obj["color"].toString();
+        if (!color.isEmpty())
+            mTileColors[id] = color;
+        else
+            mTileColors.remove(id);
+
         for (DashboardTileWrapper *w : mTileWrappers) {
             if (w->tileId() == id) {
                 w->setGridPosition(row, col, rowSpan, colSpan);
                 if (!style.isEmpty())
                     w->setCurrentStyle(style);
+                w->setCurrentColor(color);
                 break;
             }
         }
@@ -1002,6 +1032,8 @@ QJsonArray DashboardPage::serializeLayout() const
         obj["style"] = w->currentStyle();
         if (mHiddenTiles.contains(w->tileId()))
             obj["visible"] = false;
+        if (mTileColors.contains(w->tileId()))
+            obj["color"] = mTileColors.value(w->tileId());
         arr.append(obj);
     }
     return arr;
@@ -1353,6 +1385,10 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
     if (id == "disk")
         updateDiskHealthBadge();
 
+    // Re-apply custom color override if one exists
+    if (mTileColors.contains(id))
+        newTile->setColorOverride(mTileColors[id]);
+
     // Store style
     mTileStyles[id] = style;
 }
@@ -1361,4 +1397,28 @@ void DashboardPage::onTileRemoveRequested(DashboardTileWrapper *wrapper)
 {
     mHiddenTiles.insert(wrapper->tileId());
     buildGrid();
+}
+
+void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor)
+{
+    QString id = wrapper->tileId();
+
+    if (hexColor.isEmpty())
+        mTileColors.remove(id);
+    else
+        mTileColors[id] = hexColor;
+
+    if (id == "network") {
+        if (mNetworkTile)
+            mNetworkTile->setColorOverride(hexColor);
+    } else {
+        auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
+        if (metric)
+            metric->setColorOverride(hexColor);
+    }
+
+    wrapper->setCurrentColor(hexColor);
+
+    mSettingManager->setDashboardLayout(
+        QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
 }

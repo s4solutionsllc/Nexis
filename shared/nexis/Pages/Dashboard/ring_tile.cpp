@@ -147,7 +147,7 @@ void RingTile::refreshThemeColors()
     if (!sv)
         return;
 
-    mMetricColor = QColor(sv->value(mColorToken).toString());
+    mMetricColor = resolvedColor();
     mTrackColor  = QColor(sv->value("@color02").toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 

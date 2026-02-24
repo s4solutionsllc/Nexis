@@ -130,9 +130,10 @@
   - **Complexity:** Moderate
   - **Resolved:** Orange X remove button on each tile in edit mode. Hidden state stored as `"visible": false` in layout JSON. Reset Layout restores all tiles.
 
-- [ ] **FR-55: Per-widget color customization** — Allow users to choose custom accent colors for individual dashboard widgets, overriding the default per-metric color tokens (e.g., `@cpuColor`, `@memoryColor`). Requires research into: (a) UX for color selection (inline color picker vs preset palette vs both), (b) how to store per-tile color overrides in layout JSON alongside style/position, (c) how tile `refreshThemeColors()` methods should merge custom colors with theme tokens, (d) interaction with theme switching (should custom colors survive a theme change?), (e) reset behavior (per-tile vs global). **This story requires significant research before implementation.**
-  - **Files:** All tile widgets (`metric_tile_base.h`, gauge/ring/hybrid/speedometer/vumeter/disk tiles), `dashboard_page.cpp`, layout JSON, potentially Settings page
+- [x] **FR-55: Per-widget color customization** — Allow users to choose custom accent colors for individual dashboard widgets, overriding the default per-metric color tokens (e.g., `@cpuColor`, `@memoryColor`). Added `mColorOverride` + `resolvedColor()` to `MetricTileBase` (and separately to `NetworkTile`). All 7 tile subclasses updated to use `resolvedColor()` in their `refreshThemeColors()`. Color picker added to the existing style menu as a palette section with 16 preset swatches + "Default" reset option. Custom colors persisted as `"color"` field in layout JSON, cleared on Reset Layout. Custom colors survive theme switches and style changes.
+  - **Files:** `metric_tile_base.h/.cpp`, all 7 tile `.cpp` files, `network_tile.h/.cpp`, `dashboard_tile_wrapper.h/.cpp`, `dashboard_page.h/.cpp`
   - **Complexity:** High (research-heavy)
+  - **Resolved:** Per-tile color palette in edit-mode style menu with 16 presets + Default.
 
 ## Notes
 

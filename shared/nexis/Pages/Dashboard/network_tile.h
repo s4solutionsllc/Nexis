@@ -18,12 +18,15 @@ public:
     void setValues(quint64 rxDelta, quint64 txDelta, quint64 rxTotal, quint64 txTotal);
     void setQuickAction(const QString &text, std::function<void()> callback);
     void setInterfaceName(const QString &name);
+    void setColorOverride(const QString &hexColor);
+    QString colorOverride() const { return mColorOverride; }
 
 private:
     void buildLayout();
     void refreshThemeColors();
 
     QString mColorToken;
+    QString mColorOverride;
 
     QLabel *mLblTitle;
     QLabel *mLblDownLabel;

@@ -196,7 +196,7 @@ void MetricTile::refreshThemeColors()
     if (!sv)
         return;
 
-    QColor color(sv->value(mColorToken).toString());
+    QColor color = resolvedColor();
     QString colorHex = color.name();
     QString hoverText = sv->value("@color07").toString();
 

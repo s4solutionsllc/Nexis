@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QToolButton>
+#include <QColor>
 #include <functional>
 
 class MetricTileBase : public QWidget
@@ -28,6 +29,9 @@ public:
     virtual void setGearVisible(bool visible) = 0;
     virtual void refreshThemeColors() = 0;
 
+    virtual void setColorOverride(const QString &hexColor);
+    QString colorOverride() const { return mColorOverride; }
+
     // Disk-specific (optional overrides with defaults)
     virtual void setDiskInfo(int percent, const QString &usedText, const QString &totalText);
     virtual void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy);
@@ -36,12 +40,14 @@ public:
 protected:
     QString mTitle;
     QString mColorToken;
+    QString mColorOverride;
     DisplayMode mDisplayMode = Normal;
 
     static const int SPARKLINE_SIZE = 60;
     QList<double> mDataBuffer;
 
     QString trendText(TrendDirection dir) const;
+    QColor resolvedColor() const;
 };
 
 #endif // METRIC_TILE_BASE_H

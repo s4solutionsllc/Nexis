@@ -181,7 +181,9 @@ void NetworkTile::refreshThemeColors()
     if (!sv)
         return;
 
-    QColor dlColor(sv->value(mColorToken).toString());
+    QColor dlColor = mColorOverride.isEmpty()
+        ? QColor(sv->value(mColorToken).toString())
+        : QColor(mColorOverride);
     QColor ulColor(sv->value("@networkUploadColor").toString());
     QString cardBg = sv->value("@cardBg").toString();
     QString hoverText = sv->value("@color07").toString();
@@ -249,6 +251,12 @@ void NetworkTile::setValues(quint64 rxDelta, quint64 txDelta, quint64 rxTotal, q
 void NetworkTile::setInterfaceName(const QString &name)
 {
     mLblInterface->setText(tr("Interface: %1").arg(name));
+}
+
+void NetworkTile::setColorOverride(const QString &hexColor)
+{
+    mColorOverride = hexColor;
+    refreshThemeColors();
 }
 
 void NetworkTile::setQuickAction(const QString &text, std::function<void()> callback)

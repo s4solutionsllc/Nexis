@@ -30,6 +30,8 @@ public:
     QString currentStyle() const;
     void setCurrentStyle(const QString &style);
     void setStyleMenuItems(const QStringList &styles, const QString &current);
+    void setColorMenuItems(const QStringList &colors, const QString &current);
+    void setCurrentColor(const QString &hex);
 
 signals:
     void dragStarted(DashboardTileWrapper *wrapper, const QPoint &globalPos);
@@ -37,6 +39,7 @@ signals:
     void dragFinished(DashboardTileWrapper *wrapper, const QPoint &globalPos);
     void resizeRequested(DashboardTileWrapper *wrapper, int newColSpan, int newRowSpan);
     void styleChangeRequested(DashboardTileWrapper *wrapper, const QString &style);
+    void colorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor);
     void removeRequested(DashboardTileWrapper *wrapper);
 
 protected:
@@ -61,9 +64,11 @@ private:
     int mGridColSpan;
 
     QString mCurrentStyle;
+    QString mCurrentColor;
     QToolButton *mStyleButton;
     QToolButton *mRemoveButton;
     QMenu *mStyleMenu;
+    QList<QAction*> mColorActions;
 
     static const int DRAG_THRESHOLD = 5;
     static const int RESIZE_HANDLE_SIZE = 16;

@@ -151,7 +151,7 @@ void DiskTile::refreshThemeColors()
     if (!sv)
         return;
 
-    mArcColor = QColor(sv->value(mColorToken).toString());
+    mArcColor = resolvedColor();
     mTrackColor = QColor(sv->value(mTrackColorToken).toString());
     mTextColor = QColor(sv->value("@color05").toString());
 
