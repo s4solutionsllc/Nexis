@@ -28,6 +28,7 @@ private:
     void populateGraphics();
     void populateMemory();
     void populateBattery();
+    void populateFans();
     void populateStorage();
 
     void addRow(QTableWidget *table, const QString &label, const QString &value);

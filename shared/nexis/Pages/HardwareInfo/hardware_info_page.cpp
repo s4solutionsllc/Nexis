@@ -45,6 +45,7 @@ void HardwareInfoPage::init()
     populateGraphics();
     populateMemory();
     populateBattery();
+    populateFans();
     populateStorage();
 }
 
@@ -315,6 +316,28 @@ void HardwareInfoPage::populateBattery()
                .arg(bat.chargeStartThreshold)
                .arg(bat.chargeStopThreshold)
                .arg(tr("managed by TLP")));
+    }
+
+    t->resizeColumnsToContents();
+    fitTableHeight(t);
+}
+
+void HardwareInfoPage::populateFans()
+{
+    QTableWidget *t = ui->tblFans;
+    t->horizontalHeader()->setVisible(false);
+    t->verticalHeader()->setVisible(false);
+    t->horizontalHeader()->setStretchLastSection(true);
+
+    if (!im->hasFanSensors()) {
+        ui->grpFans->hide();
+        return;
+    }
+
+    QList<FanSensor> fans = im->getFanSensors();
+    for (int i = 0; i < fans.size(); ++i) {
+        int rpm = im->getFanSpeed(i);
+        addRow(t, fans.at(i).label, QString("%1 RPM").arg(rpm));
     }
 
     t->resizeColumnsToContents();
