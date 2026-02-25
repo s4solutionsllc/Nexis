@@ -573,6 +573,26 @@ QLabel[accessibleName="dialog-title"] {
     max-height: 8;
 }
 
+#updatesBadge {
+    background-color: @updatesColor;
+    color: #ffffff;
+    font-size: 7pt;
+    font-weight: 700;
+    border-radius: 8;
+    padding: 1 6;
+    min-width: 16;
+    max-height: 16;
+}
+
+#updatesBadgeDot {
+    background-color: @updatesColor;
+    border-radius: 4;
+    min-width: 8;
+    max-width: 8;
+    min-height: 8;
+    max-height: 8;
+}
+
 #sidebarSectionIndicator {
     background-color: @sidebarDivider;
     border: 0;

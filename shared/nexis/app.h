@@ -116,6 +116,8 @@ private:
     QLabel *mVersionLabel;
     QLabel *mCleanerBadge;
     QLabel *mCleanerBadgeDot;
+    QLabel *mUpdatesBadge;
+    QLabel *mUpdatesBadgeDot;
 
     // Sidebar buttons (programmatically created)
     QPushButton *btnDash;

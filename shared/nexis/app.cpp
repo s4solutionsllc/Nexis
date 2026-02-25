@@ -6,6 +6,7 @@
 #include "dpi.h"
 #include <Managers/cleaner_service.h>
 #include <Managers/data_refresh_service.h>
+#include "Info/update_info.h"
 #include <Utils/format_util.h>
 #include <QStyle>
 #include <QDebug>
@@ -226,6 +227,18 @@ void App::buildSidebar()
     mCleanerBadgeDot->setObjectName("sidebarBadgeDot");
     mCleanerBadgeDot->setFixedSize(8, 8);
     mCleanerBadgeDot->hide();
+
+    // Updates badge overlay on Homebrew/APT button
+    mUpdatesBadge = new QLabel(ui->sidebar);
+    mUpdatesBadge->setObjectName("updatesBadge");
+    mUpdatesBadge->setAlignment(Qt::AlignCenter);
+    mUpdatesBadge->setFixedSize(32, 16);
+    mUpdatesBadge->hide();
+
+    mUpdatesBadgeDot = new QLabel(ui->sidebar);
+    mUpdatesBadgeDot->setObjectName("updatesBadgeDot");
+    mUpdatesBadgeDot->setFixedSize(8, 8);
+    mUpdatesBadgeDot->hide();
 }
 
 void App::init()
@@ -302,6 +315,41 @@ void App::init()
     } else {
         btnAptSourceManager->hide();
     }
+
+    // Updates badge on Homebrew/APT sidebar button
+    connect(DataRefreshService::ins(), &DataRefreshService::systemUpdatesChecked,
+            this, [this](const UpdateCheckResult &result) {
+        int count = result.success ? result.totalCount : 0;
+        if (count > 0) {
+            mUpdatesBadge->setText(QString::number(count));
+            if (!mSidebarCollapsed) {
+                mUpdatesBadge->show();
+                mUpdatesBadgeDot->hide();
+            } else {
+                mUpdatesBadge->hide();
+                mUpdatesBadgeDot->show();
+            }
+            QPoint btnPos = btnAptSourceManager->pos();
+            int btnW = btnAptSourceManager->width();
+            mUpdatesBadge->move(btnPos.x() + btnW - mUpdatesBadge->width() - 8,
+                                btnPos.y() + 2);
+            mUpdatesBadgeDot->move(btnPos.x() + btnW - 16,
+                                   btnPos.y() + 4);
+        } else {
+            mUpdatesBadge->hide();
+            mUpdatesBadgeDot->hide();
+        }
+
+        // Tray alert when updates go from 0 to >0
+        int lastCount = SettingManager::ins()->getUpdateLastCount();
+        if (SettingManager::ins()->getUpdateAlertEnabled() && count > 0 && lastCount == 0) {
+            mTrayIcon->showMessage(
+                tr("System Updates Available"),
+                tr("%1 %2 available").arg(count).arg(count == 1 ? tr("update") : tr("updates")),
+                QSystemTrayIcon::Information);
+        }
+        SettingManager::ins()->setUpdateLastCount(count);
+    });
 
     // DOCKER
     if (ToolManager::ins()->checkDocker()) {
@@ -696,6 +744,12 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     if (mCleanerBadge && mCleanerBadge->text().length() > 0) {
         mCleanerBadge->setVisible(!collapsed);
         mCleanerBadgeDot->setVisible(collapsed);
+    }
+
+    // Toggle updates badge vs dot
+    if (mUpdatesBadge && mUpdatesBadge->text().length() > 0) {
+        mUpdatesBadge->setVisible(!collapsed);
+        mUpdatesBadgeDot->setVisible(collapsed);
     }
 
     // Toggle button text visibility
