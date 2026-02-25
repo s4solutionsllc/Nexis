@@ -229,7 +229,7 @@ void DashboardPage::init()
 
         connect(mFanSensorMenu, &QMenu::triggered,
                 this, &DashboardPage::onFanSensorSelected);
-        connect(mRefresh, &DataRefreshService::tempUpdated,
+        connect(mRefresh, &DataRefreshService::fanUpdated,
                 this, &DashboardPage::updateFanTile);
     }
 

@@ -84,7 +84,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | GPU info | sysfs (AMD), `nvidia-smi` (NVIDIA), sysfs (Intel) | IOKit IOAccelerator, Metal |
 | Battery info | `/sys/class/power_supply/` | IOKit `IOPMPowerSource` |
 | Thermal sensors | `/sys/class/hwmon/` | SMC (System Management Controller) |
-| Fan sensors | `/sys/class/hwmon/*/fan*_input` | SMC (`FNum`, `F{N}Ac` keys, fpe2 decoding) |
+| Fan sensors | `/sys/class/hwmon/*/fan*_input`, ThinkPad `/proc/acpi/ibm/fan`, Dell `/proc/i8k`, `nvidia-smi` | SMC (`FNum`, `F{N}Ac` keys, fpe2 decoding) |
 | Disk health | `smartctl` | `smartctl` + `diskutil` plist |
 | Process listing | `/proc/[pid]/` | `sysctl` KERN_PROC |
 | Network info | `/sys/class/net/` + `QNetworkInterface` | `QNetworkInterface` |
@@ -109,7 +109,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
 - **GPU** — Utilization percentage with device name subtitle, multi-GPU combo selector (1s refresh; hidden if no GPU detected)
 - **Temperature** — Selectable sensor via gear icon menu (2+ sensors) with sensor name subtitle, sparkline history (1s refresh; hidden if no sensors)
-- **Fans** — Fan RPM with selectable sensor via gear icon menu (2+ fans), percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`), piggybacked on `tempUpdated` signal (1s refresh; hidden if no fans detected)
+- **Fans** — Fan RPM with selectable sensor via gear icon menu (2+ fans), percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`), dedicated `fanUpdated` signal (1s refresh; hidden if no fans detected)
 - **Battery** — Charge level percentage (5s refresh; hidden if no battery)
 
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
@@ -154,7 +154,7 @@ Comprehensive static hardware inventory displayed in tabular sections.
 - **Graphics** — GPU name(s) and vendor(s)
 - **Memory** — Total RAM, total swap
 - **Battery** (if present) — Design capacity, current max capacity, cycle count, health percentage
-- **Fans** (if present) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys, Linux scans `/sys/class/hwmon/*/fan*_input`
+- **Fans** (if present) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys. Linux: primary hwmon scan (`/sys/class/hwmon/*/fan*_input`), with fallback detection chain for ThinkPad (`/proc/acpi/ibm/fan`), Dell (`/proc/i8k`), and NVIDIA proprietary (`nvidia-smi` fan percentage)
 - **Storage** — Per-drive: name, size, model, SMART health verdict (Good/Caution/Critical), color-coded
 - **Network** — Interface name, MAC address, IP addresses
 - **Thermal** — Sensor readings (if available)
@@ -401,7 +401,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `GpuInfo` | GPU devices, utilization | IOKit, Metal | sysfs, `nvidia-smi` |
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |
 | `DiskHealthInfo` | SMART attributes, health verdicts | `smartctl`, `diskutil` | `smartctl`, sysfs |
-| `FanInfo` | Fan RPM, sensor list | SMC (`FNum`, `F{N}Ac`, fpe2) | `/sys/class/hwmon/*/fan*_input` |
+| `FanInfo` | Fan RPM, sensor list | SMC (`FNum`, `F{N}Ac`, fpe2) | hwmon + ThinkPad/Dell procfs + nvidia-smi fallbacks |
 | (via `SystemInfo`) | Cleaner scan paths | Platform-specific paths | Platform-specific paths |
 
 ### Tool Classes (5)

@@ -35,6 +35,7 @@ signals:
     void diskIOUpdated(QList<quint64> io);
     void gpuUpdated(QList<GpuDevice> devices);
     void tempUpdated();
+    void fanUpdated();
     void batteryUpdated(BatteryData data);
     void diskUsageUpdated(QList<Disk> disks);
     void diskHealthUpdated(QList<DriveHealth> drives);

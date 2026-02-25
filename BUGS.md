@@ -476,6 +476,13 @@
   - **Fix complexity:** Moderate (add subtitles to tiles, fix macOS GPU update to match by IORegistry ID or model name)
   - **Resolved:** Three fixes: (1) Added subtitles to Temp and GPU tiles showing the selected sensor label / device name, matching the CPU/Memory/Battery tile patterns. Subtitle updates on init from saved settings and on gear menu / combo selection change. (2) Refactored `GpuInfoMacOS::updateGpuInfo()` to match IOAccelerators by model name instead of iteration position — extracted `readUtilization()` helper, iterate and find matching `mDevices` entry by name. Single-GPU fallback when name matching is redundant. (3) Added `qWarning()` when saved sensor/device ID is not found in current hardware enumeration, making the silent fallback to index 0 traceable in logs.
 
+- [x] **BUG-70: Fan monitoring broken — no refresh signal + limited detection paths** (MEDIUM)
+  - **Scope:** Dashboard fan tile, Hardware Info fans section, fan sensor detection
+  - **Description:** Two issues: (1) DataRefreshService had no `fanUpdated()` signal — the fan tile piggybacked on `tempUpdated()`, which only fires when thermal sensors exist. On systems with fans but no thermal sensors, fan RPM was never refreshed. (2) `FanInfoLinux::discoverSensors()` only scanned `/sys/class/hwmon/*/fan*_input`, missing systems where fan data is available through alternative paths (ThinkPad `/proc/acpi/ibm/fan`, Dell `/proc/i8k`, NVIDIA proprietary `nvidia-smi`).
+  - **Files:** `data_refresh_service.h/.cpp`, `fan_info.h`, `fan_info_linux.h/.cpp`, `dashboard_page.cpp`
+  - **Fix complexity:** Moderate (new signal + multi-source fan detection with dispatch)
+  - **Resolved:** Added `fanUpdated()` signal to DataRefreshService, emitted independently in `onFastTick()` gated on `hasFanSensors()`. Connected dashboard fan tile to `fanUpdated()` instead of `tempUpdated()`. Added `FanSourceType` enum (Hwmon, ThinkpadProc, DellProc, NvidiaSmi) to `FanSensor` struct. Refactored `FanInfoLinux` with fallback detection chain: hwmon (primary) → ThinkPad procfs → Dell procfs → nvidia-smi. `getFanSpeed()` dispatches to source-specific read methods.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

@@ -136,6 +136,10 @@ void DataRefreshService::onFastTick()
     if (im->hasThermalSensors())
         emit tempUpdated();
 
+    // Fan (conditional)
+    if (im->hasFanSensors())
+        emit fanUpdated();
+
     // Battery (conditional)
     if (im->hasBattery()) {
         im->updateBatteryInfo();

@@ -6,6 +6,13 @@
 #include "Utils/file_util.h"
 #include "nexis-core_global.h"
 
+enum class FanSourceType {
+    Hwmon,
+    ThinkpadProc,
+    DellProc,
+    NvidiaSmi
+};
+
 struct FanSensor {
     QString id;
     QString deviceName;
@@ -13,6 +20,8 @@ struct FanSensor {
     QString inputPath;
     int minRpm;
     int maxRpm;
+    FanSourceType sourceType = FanSourceType::Hwmon;
+    int procFieldIndex = -1;
 };
 
 class NEXISCORESHARED_EXPORT FanInfo
