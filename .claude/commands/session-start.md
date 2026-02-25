@@ -13,7 +13,7 @@ Initialize a new work session by gathering project status and presenting a summa
    - Read `BUGS.md` — count open, in-progress, and completed items by severity
 
 3. **Check active work items:**
-   - Scan `claude_definitions/` for any in-progress research or plan files (not in `Archive/`)
+   - Scan `backlog/` for any in-progress research or plan files (not in `Archive/`)
    - Identify items marked `[~]` in tracking files
 
 4. **Check build state:**

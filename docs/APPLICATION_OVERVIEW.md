@@ -758,7 +758,7 @@ All periodic polling is centralized in `DataRefreshService`, which owns 4 QTimer
 ├── FEATURE_REQUESTS.md         Feature backlog (FR-XX IDs)
 ├── CHANGELOG.md                Version history
 ├── docs/                       Project documentation
-├── claude_definitions/         Active research/plan files
+├── backlog/                    Active research/plan files
 │   └── Archive/                Completed research/plans
 ├── shared/
 │   ├── nexis-core/             Core library (shared)

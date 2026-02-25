@@ -10,7 +10,7 @@ $ARGUMENTS — Required: The item ID (e.g., "BUG-62" or "FR-52") and optionally 
 
 1. **Update tracking file:** Mark the item as `[~]` (in progress) in `BUGS.md` or `FEATURE_REQUESTS.md`.
 
-2. **Create research file:** `claude_definitions/{ID}_research.md`
+2. **Create research file:** `backlog/{ID}_research.md`
 
 3. **Deep investigation:**
    - Read ALL relevant source files, headers, `.ui` files, QSS, and CMakeLists.txt
@@ -24,7 +24,7 @@ $ARGUMENTS — Required: The item ID (e.g., "BUG-62" or "FR-52") and optionally 
 
 ## Phase 2 — Plan
 
-1. **Create plan file:** `claude_definitions/{ID}_plan.md`
+1. **Create plan file:** `backlog/{ID}_plan.md`
 
 2. **Write implementation plan:**
    - Numbered tasks/phases with specific files and changes
@@ -50,4 +50,4 @@ Only after user approves the plan:
 6. Update tracking file: mark item `[x]`, add resolution notes with commit hash.
 7. Update `docs/APPLICATION_OVERVIEW.md` and `docs/ARCHITECTURE_REVIEW.md` if the change affects documented behavior.
 8. Commit with conventional format: `type(scope): description (ID)`
-9. Move research/plan files to `claude_definitions/Archive/`.
+9. Move research/plan files to `backlog/Archive/`.

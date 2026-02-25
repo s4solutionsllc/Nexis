@@ -68,11 +68,11 @@ cmake -B build -DBUILD_TESTING=OFF ...
 
 ## Feature / Bug Resolution Workflow
 
-When the user requests a new feature or asks to fix a bug, follow this three-phase workflow **automatically**. All artifacts go in the `claude_definitions/` folder.
+When the user requests a new feature or asks to fix a bug, follow this three-phase workflow **automatically**. All artifacts go in the `backlog/` folder.
 
 ### Phase 1 — Research (`{ID}_research.md`)
 
-1. Create `claude_definitions/{ID}_research.md` (e.g., `FR-25_research.md` or `BUG-31_research.md`).
+1. Create `backlog/{ID}_research.md` (e.g., `FR-25_research.md` or `BUG-31_research.md`).
 2. Perform deep research on the request:
    - Read all relevant source files, headers, `.ui` files, QSS, and CMakeLists.txt.
    - Trace call chains, signal/slot connections, and data flow end-to-end.
@@ -83,7 +83,7 @@ When the user requests a new feature or asks to fix a bug, follow this three-pha
 
 ### Phase 2 — Plan (`{ID}_plan.md`)
 
-1. Create `claude_definitions/{ID}_plan.md`.
+1. Create `backlog/{ID}_plan.md`.
 2. Write a detailed implementation plan with:
    - Numbered tasks/phases, each with specific files and changes.
    - Checkboxes (`[ ]`) for each task to track completion.
@@ -106,7 +106,7 @@ When the user requests a new feature or asks to fix a bug, follow this three-pha
 
 ### Archiving Completed Work
 
-When a bug or feature request is marked `[x]` (done), move its associated `claude_definitions/` files (`{ID}_research.md`, `{ID}_plan.md`, and any other `{ID}_*.md` variants) to `claude_definitions/Archive/`. This keeps the active working directory clean and limited to open/in-progress items. Files for open (`[ ]`) or in-progress (`[~]`) items must remain in `claude_definitions/`.
+When a bug or feature request is marked `[x]` (done), move its associated `backlog/` files (`{ID}_research.md`, `{ID}_plan.md`, and any other `{ID}_*.md` variants) to `backlog/Archive/`. This keeps the active working directory clean and limited to open/in-progress items. Files for open (`[ ]`) or in-progress (`[~]`) items must remain in `backlog/`.
 
 ## Documentation Maintenance
 

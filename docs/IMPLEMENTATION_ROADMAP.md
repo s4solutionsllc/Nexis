@@ -115,7 +115,7 @@
 
 - [x] **2.1 Enumerate all source files currently collected by GLOB_RECURSE**
   - Enumerated into 10 categories: core shared/platform .cpp/.h, GUI shared/platform .cpp/.h, plus translations
-  - Full inventory documented in `claude_definitions/PHASE2_research.md`
+  - Full inventory documented in `backlog/PHASE2_research.md`
 
 - [x] **2.2 Replace GLOB_RECURSE with explicit `set()` lists**
   - File: `CMakeLists.txt`
@@ -370,7 +370,7 @@
   - FR-37 marked `[x]` in `FEATURE_REQUESTS.md` with resolution summary
   - Architecture Review: §2A marked done, §6 marked resolved, §5 signal count updated to 8, Architectural Vision item 4 marked done
   - Application Overview: manager count 6→7, DataRefreshService added to manager table, data flow example updated, refresh timing table rewritten, SignalMapper signal count updated to 8
-  - Research and plan files archived to `claude_definitions/Archive/`
+  - Research and plan files archived to `backlog/Archive/`
 
 **Estimated effort:** 12-16 hours (split across multiple sessions)
 **Release target:** v1.5.0
@@ -439,7 +439,7 @@ Phases 1-4 can be done in any order or even in parallel. Phases 5-8 must follow 
 ## Tracking
 
 When work begins on a phase:
-1. Create `claude_definitions/{ID}_research.md` and `{ID}_plan.md` per the standard workflow
+1. Create `backlog/{ID}_research.md` and `{ID}_plan.md` per the standard workflow
 2. Update the checkboxes in this document as tasks complete
 3. Update `BUGS.md` and `FEATURE_REQUESTS.md` with resolution notes
 4. Update `docs/APPLICATION_OVERVIEW.md` and `docs/ARCHITECTURE_REVIEW.md` per the Documentation Maintenance rules in `CLAUDE.md`
