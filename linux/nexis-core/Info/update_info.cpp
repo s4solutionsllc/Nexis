@@ -1,5 +1,6 @@
 #include "update_info_linux.h"
 
+#include <QRegularExpression>
 #include <Utils/command_util.h>
 
 UpdateCheckResult UpdateInfoLinux::checkForUpdates()
