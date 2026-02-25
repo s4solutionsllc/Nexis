@@ -146,7 +146,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 
 ### 2. Hardware Info
 
-Comprehensive static hardware inventory displayed in tabular sections.
+Comprehensive static hardware inventory displayed in tabular sections. Includes an **Export System Report** button that generates a plain text file summarizing all visible hardware tables, with aligned columns and section headers. Default filename: `nexis-report-YYYY-MM-DD.txt`.
 
 **9 sections:**
 - **System** — Hostname, OS, distribution, kernel, architecture, desktop environment
@@ -173,7 +173,7 @@ Manage applications that auto-start at login.
 
 ### 4. System Cleaner
 
-Scan and remove system junk files across 6 categories.
+Scan and remove system junk files across 7 categories.
 
 **Scan categories:**
 1. **Package Cache** — APT, DNF/YUM, Pacman, or Homebrew caches (platform-detected)
@@ -182,6 +182,7 @@ Scan and remove system junk files across 6 categories.
 4. **Application Caches** — `~/.cache` (Linux), `~/Library/Caches` (macOS)
 5. **Trash** — User trash bin contents
 6. **Dev Tool Caches** — npm, cargo, gradle, Electron app caches, pip cache
+7. **Broken Symlinks** — Detects broken symbolic links in `~/.local/`, `~/bin/`, Homebrew prefix (macOS) or `/usr/local/bin` (Linux)
 
 **UI features:**
 - Hierarchical tree view with checkboxes (category > individual files)
@@ -269,6 +270,8 @@ Historical time-series charts for system resource usage.
 ### 10. Helpers
 
 Miscellaneous utility tools.
+
+**Flush DNS Cache** — One-click button to clear the local DNS cache. macOS: `dscacheutil -flushcache` + `killall -HUP mDNSResponder` (with admin elevation). Linux: tries `resolvectl`, `systemd-resolve`, or `nscd` in order of availability. Confirmation dialog before action, success/failure feedback.
 
 **Hosts File Manager** — GUI editor for `/etc/hosts`:
 - Add, edit, delete entries (IP address, hostname, aliases)

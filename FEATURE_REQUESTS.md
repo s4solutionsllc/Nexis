@@ -162,9 +162,10 @@
 
 ## Storage & Cleaning Enhancements
 
-- [ ] **FR-61: Broken symlink cleanup** — Add a 7th System Cleaner category that detects broken symbolic links in user directories (`~/.local/`, `~/bin/`, Homebrew prefix). Safe and reversible — broken links serve no purpose. Cross-platform.
+- [x] **FR-61: Broken symlink cleanup** — Add a 7th System Cleaner category that detects broken symbolic links in user directories (`~/.local/`, `~/bin/`, Homebrew prefix). Safe and reversible — broken links serve no purpose. Cross-platform.
   - **Files:** `cleaner_service.cpp` new scan method, category UI entry in System Cleaner page
   - **Complexity:** Low (1-2 days) — fits the existing CleanerService scan/clean pattern
+  - **Resolved:** 183555e–5e1c79c (SystemInfo hierarchy, platform scanners, CleanerService, SVG icon, UI wiring)
 
 - [ ] **FR-62: Large and old file scanner** — Built-in "find files larger than X MB not accessed in Y days" scanner with a review-and-delete UI. Replaces the current "launch external disk analyzer" approach for quick triage. Integrates with existing FileSearchService infrastructure.
   - **Files:** `FileSearchService` extension, new results UI with size/date filtering (Search page enhancement or new section)
@@ -180,9 +181,10 @@
 
 ## Networking & Diagnostics
 
-- [ ] **FR-65: DNS cache flush (one-click)** — Add a "Flush DNS Cache" button to the Helpers page alongside the Hosts editor. macOS: `dscacheutil -flushcache && sudo killall -HUP mDNSResponder`. Linux: `systemd-resolve --flush-caches` or `nscd -K`. Commonly used for troubleshooting, very low implementation cost.
+- [x] **FR-65: DNS cache flush (one-click)** — Add a "Flush DNS Cache" button to the Helpers page alongside the Hosts editor. macOS: `dscacheutil -flushcache && sudo killall -HUP mDNSResponder`. Linux: `systemd-resolve --flush-caches` or `nscd -K`. Commonly used for troubleshooting, very low implementation cost.
   - **Files:** Helpers page (new button/section), `CommandUtil` platform branching
   - **Complexity:** Low (half day)
+  - **Resolved:** 1dfd6cb
 
 - [ ] **FR-66: Open ports / active connections viewer** — New section on the Helpers page (or a new Network Tools page) showing listening ports and active connections. Parsed from `ss -tlnp` (Linux) / `lsof -iTCP -sTCP:LISTEN` (macOS). Table with: protocol, local address, port, PID, process name, state.
   - **Files:** New `NetworkConnectionInfo` class with platform backends, new UI section/page
@@ -212,9 +214,10 @@
 
 ## Information & Reporting
 
-- [ ] **FR-72: Hardware report export** — "Export System Report" button on Hardware Info page that generates a structured text/HTML summary of all hardware sections (system, CPU, GPU, memory, battery, storage, network, thermal). Useful for support tickets and documentation.
+- [x] **FR-72: Hardware report export** — "Export System Report" button on Hardware Info page that generates a structured text/HTML summary of all hardware sections (system, CPU, GPU, memory, battery, storage, network, thermal). Useful for support tickets and documentation.
   - **Files:** Hardware Info page export action, text/HTML formatter utility
   - **Complexity:** Low-Medium (2-3 days) — data already collected, just needs formatting + file save dialog
+  - **Resolved:** 0594f6d
 
 - [ ] **FR-73: System health score** — Composite 0-100 score aggregating: disk space free %, memory pressure, SMART health, battery cycle health, pending updates, cleanable junk size. Displayed as a prominent Dashboard card. All data sources already exist in the app. Precedent: CleanMyMac's "Mac Health Score" (2025).
   - **Files:** New scoring service, new Dashboard card widget
