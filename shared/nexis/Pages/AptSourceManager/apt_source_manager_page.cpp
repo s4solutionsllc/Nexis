@@ -73,7 +73,9 @@ void APTSourceManagerPage::init()
     // Updates tree widget: Source | Package | Version
     mUpdatesTree = new QTreeWidget(mUpdatesSection);
     mUpdatesTree->setObjectName("treeWidgetUpdates");
+    mUpdatesTree->setHeaderHidden(false);
     mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version") });
+    mUpdatesTree->header()->setFixedHeight(Dpi::scale(30));
     mUpdatesTree->setColumnCount(3);
     mUpdatesTree->setRootIsDecorated(false);
     mUpdatesTree->setFocusPolicy(Qt::NoFocus);

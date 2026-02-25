@@ -1559,6 +1559,11 @@ QLabel[accessibleName="dimmed-small"] {
     padding: 10 0 5 12;
 }
 
+#lblUpdatesTitle {
+    color: @color11;
+    padding: 10 0 5 12;
+}
+
 #txtAptSource {
     padding: 8;
 }
