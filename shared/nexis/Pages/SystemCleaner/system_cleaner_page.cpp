@@ -62,6 +62,7 @@ void SystemCleanerPage::init()
     setPixmap(ui->lblAppCacheImg,     ":/static/themes/common/img/c_cache.svg");
     setPixmap(ui->lblTrashImg,        ":/static/themes/common/img/c_trash.svg");
     setPixmap(ui->lblDevToolCacheImg, ":/static/themes/common/img/c_devtools.svg");
+    setPixmap(ui->lblBrokenSymlinksImg, ":/static/themes/common/img/c_symlink.svg");
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
@@ -167,6 +168,7 @@ void SystemCleanerPage::systemScan()
     if (mScanAppLog)        categories << CleanerService::APPLICATION_LOGS;
     if (mScanAppCache)      categories << CleanerService::APPLICATION_CACHES;
     if (mScanDevToolCache)  categories << CleanerService::DEV_TOOL_CACHES;
+    if (mScanBrokenSymlinks) categories << CleanerService::BROKEN_SYMLINKS;
 
     CleanerService::ScanResult result = mCleanerService->scan(categories);
 
@@ -176,6 +178,7 @@ void SystemCleanerPage::systemScan()
     mAppLogs       = result.categoryFiles.value(CleanerService::APPLICATION_LOGS);
     mAppCaches     = result.categoryFiles.value(CleanerService::APPLICATION_CACHES);
     mDevToolCaches = result.categoryFiles.value(CleanerService::DEV_TOOL_CACHES);
+    mBrokenSymlinks = result.categoryFiles.value(CleanerService::BROKEN_SYMLINKS);
 
     emit scanFinishedS();
 }
@@ -223,6 +226,9 @@ void SystemCleanerPage::onScanFinished()
             }
         }
     }
+    if (mScanBrokenSymlinks) {
+        totalSize += addTreeRoot(BROKEN_SYMLINKS, mLblBrokenSymlinksText, mBrokenSymlinks);
+    }
     if (mScanTrash) {
 #ifdef Q_OS_MACOS
         totalSize += addTreeRoot(TRASH, mLblTrashText,
@@ -248,6 +254,7 @@ void SystemCleanerPage::onScanFinished()
     ui->checkAppCache->setChecked(false);
     ui->checkTrash->setChecked(false);
     ui->checkDevToolCache->setChecked(false);
+    ui->checkBrokenSymlinks->setChecked(false);
 
     // Release scan result lists — data is now in the tree widget (BUG-10)
     mPackageCaches.clear();
@@ -255,6 +262,7 @@ void SystemCleanerPage::onScanFinished()
     mAppLogs.clear();
     mAppCaches.clear();
     mDevToolCaches.clear();
+    mBrokenSymlinks.clear();
 
     mScanInProgress = false;
 }
@@ -343,8 +351,9 @@ void SystemCleanerPage::on_btnScan_clicked()
     mScanAppCache     = ui->checkAppCache->isChecked();
     mScanTrash        = ui->checkTrash->isChecked();
     mScanDevToolCache = ui->checkDevToolCache->isChecked();
+    mScanBrokenSymlinks = ui->checkBrokenSymlinks->isChecked();
 
-    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash || mScanDevToolCache)) {
+    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash || mScanDevToolCache || mScanBrokenSymlinks)) {
         return;
     }
 
@@ -355,6 +364,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mLblAppCacheText     = ui->lblAppCache->text();
     mLblTrashText        = ui->lblTrash->text();
     mLblDevToolCacheText = ui->lblDevToolCache->text();
+    mLblBrokenSymlinksText = ui->lblBrokenSymlinks->text();
 
     // Pre-scan UI updates (main thread)
     ui->btnScan->hide();
@@ -366,6 +376,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     ui->checkAppCache->setEnabled(false);
     ui->checkTrash->setEnabled(false);
     ui->checkDevToolCache->setEnabled(false);
+    ui->checkBrokenSymlinks->setEnabled(false);
     ui->checkSelectAllSystemScan->setEnabled(false);
 
     // Clear cached results
@@ -374,6 +385,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mAppLogs.clear();
     mAppCaches.clear();
     mDevToolCaches.clear();
+    mBrokenSymlinks.clear();
 
     mScanInProgress = true;
 
@@ -442,6 +454,7 @@ void SystemCleanerPage::on_btnBackToCategories_clicked()
     ui->checkAppCache->setEnabled(true);
     ui->checkTrash->setEnabled(true);
     ui->checkDevToolCache->setEnabled(true);
+    ui->checkBrokenSymlinks->setEnabled(true);
     ui->treeWidgetScanResult->clear();
     ui->stackedWidget->setCurrentIndex(0);
     ui->checkSelectAllSystemScan->setEnabled(true);
@@ -456,6 +469,7 @@ void SystemCleanerPage::on_checkSelectAllSystemScan_clicked(bool checked)
     ui->checkPackageCache->setChecked(checked);
     ui->checkTrash->setChecked(checked);
     ui->checkDevToolCache->setChecked(checked);
+    ui->checkBrokenSymlinks->setChecked(checked);
 }
 
 void SystemCleanerPage::on_checkSelectAll_clicked(bool checked)

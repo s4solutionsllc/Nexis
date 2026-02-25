@@ -120,7 +120,7 @@
          </property>
         </widget>
        </item>
-       <item row="11" column="2" colspan="6">
+       <item row="11" column="2" colspan="8">
         <spacer name="verticalSpacer_4">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -285,7 +285,7 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="2" colspan="6" alignment="Qt::AlignHCenter">
+       <item row="7" column="2" colspan="8" alignment="Qt::AlignHCenter">
         <widget class="QPushButton" name="btnScan">
          <property name="minimumSize">
           <size>
@@ -304,7 +304,7 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="2" colspan="6">
+       <item row="6" column="2" colspan="8">
         <spacer name="verticalSpacer_5">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -469,7 +469,64 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="9">
+       <item row="2" column="8" alignment="Qt::AlignHCenter">
+        <widget class="QLabel" name="lblBrokenSymlinksImg">
+         <property name="minimumSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>128</width>
+           <height>128</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="8" alignment="Qt::AlignHCenter">
+        <widget class="QLabel" name="lblBrokenSymlinks">
+         <property name="text">
+          <string>Broken Symlinks</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="8" alignment="Qt::AlignHCenter|Qt::AlignTop">
+        <widget class="QCheckBox" name="checkBrokenSymlinks">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="accessibleName">
+          <string notr="true">circle</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="10">
         <spacer name="horizontalSpacer_3">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -482,7 +539,7 @@
          </property>
         </spacer>
        </item>
-       <item row="0" column="2" colspan="6">
+       <item row="0" column="2" colspan="8">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -495,7 +552,7 @@
          </property>
         </spacer>
        </item>
-       <item row="9" column="2" colspan="6" alignment="Qt::AlignHCenter">
+       <item row="9" column="2" colspan="8" alignment="Qt::AlignHCenter">
         <widget class="QLabel" name="lblLoadingScanner">
          <property name="minimumSize">
           <size>
@@ -508,7 +565,7 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="2" colspan="6" alignment="Qt::AlignHCenter|Qt::AlignTop">
+       <item row="10" column="2" colspan="8" alignment="Qt::AlignHCenter|Qt::AlignTop">
         <widget class="QCheckBox" name="checkSelectAllSystemScan">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
