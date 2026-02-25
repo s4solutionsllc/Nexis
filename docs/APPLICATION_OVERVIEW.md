@@ -45,7 +45,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 **By the numbers:**
 - ~25,000 lines of C++ code across 255 source files
 - 14 application pages
-- 13 system info providers (11 Info + 2 platform-specific: StartupInfo, FileSearchTool)
+- 14 system info providers (12 Info + 2 platform-specific: StartupInfo, FileSearchTool)
 - 7 tool classes (package management, services, Docker, APT sources, GNOME settings, file search, startup info)
 - 7 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService)
 - 3 utility classes
@@ -84,6 +84,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | GPU info | sysfs (AMD), `nvidia-smi` (NVIDIA), sysfs (Intel) | IOKit IOAccelerator, Metal |
 | Battery info | `/sys/class/power_supply/` | IOKit `IOPMPowerSource` |
 | Thermal sensors | `/sys/class/hwmon/` | SMC (System Management Controller) |
+| Fan sensors | `/sys/class/hwmon/*/fan*_input` | SMC (`FNum`, `F{N}Ac` keys, fpe2 decoding) |
 | Disk health | `smartctl` | `smartctl` + `diskutil` plist |
 | Process listing | `/proc/[pid]/` | `sysctl` KERN_PROC |
 | Network info | `/sys/class/net/` + `QNetworkInterface` | `QNetworkInterface` |
@@ -108,6 +109,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
 - **GPU** — Utilization percentage with device name subtitle, multi-GPU combo selector (1s refresh; hidden if no GPU detected)
 - **Temperature** — Selectable sensor via gear icon menu (2+ sensors) with sensor name subtitle, sparkline history (1s refresh; hidden if no sensors)
+- **Fans** — Fan RPM with selectable sensor via gear icon menu (2+ fans), percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`), piggybacked on `tempUpdated` signal (1s refresh; hidden if no fans detected)
 - **Battery** — Charge level percentage (5s refresh; hidden if no battery)
 
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
@@ -146,12 +148,13 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 
 Comprehensive static hardware inventory displayed in tabular sections.
 
-**Sections:**
+**9 sections:**
 - **System** — Hostname, OS, distribution, kernel, architecture, desktop environment
 - **Processor** — Model name, physical/logical core count, base clock, L1/L2/L3 cache sizes
 - **Graphics** — GPU name(s) and vendor(s)
 - **Memory** — Total RAM, total swap
 - **Battery** (if present) — Design capacity, current max capacity, cycle count, health percentage
+- **Fans** (if present) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys, Linux scans `/sys/class/hwmon/*/fan*_input`
 - **Storage** — Per-drive: name, size, model, SMART health verdict (Good/Caution/Critical), color-coded
 - **Network** — Interface name, MAC address, IP addresses
 - **Thermal** — Sensor readings (if available)
@@ -367,7 +370,7 @@ Nexis follows a **three-tier architecture**:
 │                Core Library (nexis-core)                 │
 │  Info: CpuInfo, MemoryInfo, DiskInfo, NetworkInfo,      │
 │        SystemInfo, ProcessInfo, ThermalInfo, GpuInfo,   │
-│        BatteryInfo, DiskHealthInfo                       │
+│        BatteryInfo, DiskHealthInfo, FanInfo              │
 │  Tools: ServiceTool, PackageTool, AptSourceTool,        │
 │         GnomeSettingsTool, DockerTool                    │
 │  Utils: FileUtil, CommandUtil, FormatUtil                │
@@ -384,7 +387,7 @@ Nexis follows a **three-tier architecture**:
 
 The `nexis-core` static library provides platform-abstracted system information and tool APIs.
 
-### Info Providers (11 classes)
+### Info Providers (12 classes)
 
 | Class | Purpose | macOS Backend | Linux Backend |
 |-------|---------|---------------|---------------|
@@ -398,6 +401,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `GpuInfo` | GPU devices, utilization | IOKit, Metal | sysfs, `nvidia-smi` |
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |
 | `DiskHealthInfo` | SMART attributes, health verdicts | `smartctl`, `diskutil` | `smartctl`, sysfs |
+| `FanInfo` | Fan RPM, sensor list | SMC (`FNum`, `F{N}Ac`, fpe2) | `/sys/class/hwmon/*/fan*_input` |
 | (via `SystemInfo`) | Cleaner scan paths | Platform-specific paths | Platform-specific paths |
 
 ### Tool Classes (5)
@@ -426,7 +430,7 @@ Seven singleton managers mediate between UI pages and the core library.
 
 | Manager | Role |
 |---------|------|
-| `InfoManager` | Facade over all 10 Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
+| `InfoManager` | Facade over all 11 Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
 | `AppManager` | Theme/stylesheet loading, language management, system tray icon, color scheme detection. |
 | `SettingManager` | `QSettings` wrapper with 30+ typed getters/setters for persistent preferences. |
 | `ToolManager` | Facade over all 5 Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
@@ -577,7 +581,7 @@ At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all
 - **Light** — Loads `light/values.ini` overrides. The refined light theme uses a warm cream base (`#F5F0EB`) for reduced eye strain.
 - **Dark** — Loads `default/values.ini`. The refined dark theme uses a deep charcoal base (`#1A1C22`) with a warm orange accent (`#FF6B1A`).
 
-**Per-metric color tokens** (`@cpuColor`, `@memoryColor`, `@diskColor`, `@networkColor`, `@gpuColor`, `@tempColor`) are defined in `values.ini` and used by `MetricTile` sparklines and the Resources charts, giving each metric a consistent named color across all pages and themes.
+**Per-metric color tokens** (`@cpuColor`, `@memoryColor`, `@diskColor`, `@networkColor`, `@gpuColor`, `@tempColor`, `@fanColor`) are defined in `values.ini` and used by `MetricTile` sparklines and the Resources charts, giving each metric a consistent named color across all pages and themes.
 
 **Extended tokens** added for full theme coverage (24 additional tokens per theme):
 - **Network:** `@networkUploadColor` — upload sparkline/label color
@@ -607,7 +611,7 @@ QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at st
 **Appearance:** ThemeName, Language, ColorScheme, AppFont
 **Behavior:** StartPage, KioskMode, DashboardLayout (JSON), AppQuitDialogDontAsk/Choice
 **Thresholds:** CPUAlertPercent, MemoryAlertPercent, DiskAlertPercent, BatteryAlertPercent
-**Tools:** DiskAnalyzerTool, DiskAnalyzerCustomPath, DiskName, TempSensorId, GpuDeviceId
+**Tools:** DiskAnalyzerTool, DiskAnalyzerCustomPath, DiskName, TempSensorId, GpuDeviceId, FanSensorId
 **Cleaning:** Schedules (JSON), CleaningNotificationsEnabled, ThresholdAlertEnabled, ThresholdGB
 **Health:** BatteryAlertLastHealth, BatteryAlertSnoozedUntil, DiskHealthAlertEnabled
 

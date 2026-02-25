@@ -138,9 +138,8 @@
 
 ## Monitoring Enhancements
 
-- [ ] **FR-56: Fan speed monitoring** — Add fan RPM readings alongside existing thermal sensors. macOS: `IOKit SMCReadKey` (same API as ThermalInfo). Linux: `/sys/class/hwmon/*/fan*_input`. Display in Hardware Info page (new "Fans" section) and optionally as a Dashboard tile. Completes the hardware sensor story alongside temperature, battery, and disk health.
-  - **Files:** New `FanInfo` class (abstract base + platform subclasses), `hardware_info_page.cpp/.h`, optional Dashboard tile
-  - **Complexity:** Low (1-2 days) — mirrors the existing ThermalInfo pattern exactly
+- [x] **FR-56: Fan speed monitoring** — Add fan RPM readings alongside existing thermal sensors. macOS: `IOKit SMCReadKey` (same API as ThermalInfo). Linux: `/sys/class/hwmon/*/fan*_input`. Display in Hardware Info page (new "Fans" section) and optionally as a Dashboard tile. Completes the hardware sensor story alongside temperature, battery, and disk health.
+  **Resolved:** Added FanInfo abstract base class with FanSensor struct (id, deviceName, label, inputPath, minRpm, maxRpm). macOS reads SMC keys FNum/F{N}Ac (fpe2 fixed-point decoding) with min/max from F{N}Mn/F{N}Mx. Linux scans /sys/class/hwmon/*/fan*_input with friendly device name mapping. Hardware Info page shows "Fans" QGroupBox (hidden if no fans). Dashboard FANS tile with teal color (@fanColor=#00BCD4), gear menu sensor selector, RPM display, percentage gauge (rpm/maxRpm), piggybacked on tempUpdated signal. Selection persisted via FanSensorId setting. Fanless Macs (FNum=0) gracefully hidden.
 
 - [x] **FR-57: Memory pressure visualization (macOS) and swap details (Linux)** — Enhance the Memory dashboard tile and Resources chart to show: macOS memory pressure state (green/yellow/red via `host_statistics64`), wired/active/inactive/compressed breakdown. Linux: show swap as a distinct metric separate from RAM. Makes memory monitoring actionable rather than just a single percentage.
   - **Files:** `memory_info.h/.cpp` (both platforms), Resources page chart, Dashboard Memory tile
