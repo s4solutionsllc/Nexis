@@ -36,6 +36,7 @@ QString CleanerService::categoryName(CleanCategory cat)
         case APPLICATION_CACHES:return QObject::tr("Application Caches");
         case TRASH:             return QObject::tr("Trash");
         case DEV_TOOL_CACHES:   return QObject::tr("Dev Tool Caches");
+        case BROKEN_SYMLINKS:   return QObject::tr("Broken Symlinks");
     }
     return QString();
 }
@@ -43,7 +44,7 @@ QString CleanerService::categoryName(CleanCategory cat)
 QList<CleanerService::CleanCategory> CleanerService::allCategories()
 {
     return { PACKAGE_CACHE, CRASH_REPORTS, APPLICATION_LOGS,
-             APPLICATION_CACHES, TRASH, DEV_TOOL_CACHES };
+             APPLICATION_CACHES, TRASH, DEV_TOOL_CACHES, BROKEN_SYMLINKS };
 }
 
 CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &categories)
@@ -69,6 +70,9 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
                 break;
             case DEV_TOOL_CACHES:
                 files = im->getDevToolCaches();
+                break;
+            case BROKEN_SYMLINKS:
+                files = im->getBrokenSymlinks();
                 break;
             case TRASH: {
 #ifdef Q_OS_MACOS

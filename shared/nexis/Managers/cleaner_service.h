@@ -17,7 +17,8 @@ public:
         APPLICATION_LOGS,
         APPLICATION_CACHES,
         TRASH,
-        DEV_TOOL_CACHES
+        DEV_TOOL_CACHES,
+        BROKEN_SYMLINKS
     };
 
     struct ScanResult {
