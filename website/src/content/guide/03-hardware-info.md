@@ -118,6 +118,16 @@ Sensor readings from available temperature probes.
 
 > **macOS:** Reads from the System Management Controller (SMC).
 
+## Export System Report
+
+Click the **Export** button at the top of the page to save a complete text summary of all hardware information to a file. A save dialog appears with a default filename of `nexis-report-YYYY-MM-DD.txt`.
+
+The report includes every section visible on the page -- System, Processor, Graphics, Memory, Battery, Fans, and Storage -- formatted as labeled key-value pairs. The report also contains the Nexis version number and a timestamp. This is useful for:
+
+- **Sharing specs** when asking for technical support or posting to forums.
+- **Archiving** your hardware configuration before and after upgrades.
+- **Comparing** multiple machines side by side.
+
 ## What's Next
 
 Learn how to control which apps launch at login in the [Startup Apps](./04-startup-apps) guide.

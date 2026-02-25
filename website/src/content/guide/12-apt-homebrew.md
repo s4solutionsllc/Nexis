@@ -10,6 +10,34 @@ platform: 'all'
 
 This page adapts to your platform. On Linux systems with APT, it becomes a **repository manager** where you can add, edit, enable, and disable package sources. On macOS, it becomes a **Homebrew package manager** for browsing, installing, and uninstalling packages. The page only appears if the relevant package manager is detected on your system.
 
+## Available Updates
+
+At the top of the page, an **Available Updates** section appears whenever your system has pending package updates. This works on both platforms -- APT updates on Linux, Homebrew updates on macOS.
+
+### Sidebar Badge
+
+When updates are available, a small **badge** appears on the APT / Homebrew sidebar button showing the number of pending updates. When the sidebar is collapsed, the badge shrinks to a colored dot so you still know updates are waiting. The badge disappears once there are no updates to install.
+
+### Updates Table
+
+The updates section displays a table with three columns:
+
+| Column | Description |
+|--------|-------------|
+| **Source** | The repository or tap the update comes from |
+| **Package** | The name of the package with a pending update |
+| **Version** | The new version available |
+
+### Checking for Updates
+
+Click the **Check Now** button to manually trigger an update check. The button shows "Checking..." while the query runs. Nexis also checks for updates automatically in the background on a periodic schedule.
+
+### Tray Notification
+
+If you have update alerts enabled in **Settings**, Nexis sends a system tray notification the first time updates become available (i.e., the count goes from zero to one or more). This ensures you notice new updates even if you are not looking at the Nexis window.
+
+---
+
 ## Linux: APT Repository Manager
 
 If Nexis detects `apt-get` on your system, this page lets you manage the package repositories your system uses to find and install software.

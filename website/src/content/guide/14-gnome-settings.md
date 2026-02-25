@@ -10,7 +10,7 @@ platform: 'linux'
 
 The GNOME Settings page provides a convenient way to adjust your Linux desktop environment without digging through multiple GNOME settings panels or using the `gsettings` command line. All changes take effect immediately -- you can see the result as soon as you adjust a value.
 
-This page only appears when Nexis detects that `gsettings` is available, which means you are running a GNOME-based desktop environment.
+This page only appears when Nexis detects that `gsettings` is available, which means you are running a GNOME-based desktop environment. On macOS, this page is hidden entirely since macOS uses its own System Settings application.
 
 ![GNOME Settings page](/Nexis/images/guide/gnome-settings.png)
 
