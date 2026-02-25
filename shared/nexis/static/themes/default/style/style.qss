@@ -1371,6 +1371,26 @@ QLabel[accessibleName="dialog-title"] {
     border-bottom: 1px solid @borderColor;
 }
 
+/* -- Available Updates tree (FR-60) -- matching treeWidgetPackages -- */
+
+#treeWidgetUpdates {
+    border: 1px solid @borderColor;
+    background-color: transparent;
+    border-radius: 6;
+    font-size: 10pt;
+}
+
+#treeWidgetUpdates QHeaderView::section {
+    border-top: 1;
+}
+
+#treeWidgetUpdates::item {
+    border-bottom: 1px solid @borderColor;
+    padding: @dp8 @dp6;
+    font-size: 10pt;
+    color: @color11;
+}
+
 /* -- Snap package list (card style, unchanged) -- */
 
 #listWidgetSnapPackages {
