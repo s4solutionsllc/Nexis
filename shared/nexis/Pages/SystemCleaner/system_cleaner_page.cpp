@@ -63,6 +63,7 @@ void SystemCleanerPage::init()
     setPixmap(ui->lblTrashImg,        ":/static/themes/common/img/c_trash.svg");
     setPixmap(ui->lblDevToolCacheImg, ":/static/themes/common/img/c_devtools.svg");
     setPixmap(ui->lblBrokenSymlinksImg, ":/static/themes/common/img/c_symlink.svg");
+    setPixmap(ui->lblBrowserPrivacyImg, ":/static/themes/common/img/c_privacy.svg");
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
@@ -169,6 +170,7 @@ void SystemCleanerPage::systemScan()
     if (mScanAppCache)      categories << CleanerService::APPLICATION_CACHES;
     if (mScanDevToolCache)  categories << CleanerService::DEV_TOOL_CACHES;
     if (mScanBrokenSymlinks) categories << CleanerService::BROKEN_SYMLINKS;
+    if (mScanBrowserPrivacy) categories << CleanerService::BROWSER_PRIVACY;
 
     CleanerService::ScanResult result = mCleanerService->scan(categories);
 
@@ -179,6 +181,7 @@ void SystemCleanerPage::systemScan()
     mAppCaches     = result.categoryFiles.value(CleanerService::APPLICATION_CACHES);
     mDevToolCaches = result.categoryFiles.value(CleanerService::DEV_TOOL_CACHES);
     mBrokenSymlinks = result.categoryFiles.value(CleanerService::BROKEN_SYMLINKS);
+    mBrowserPrivacy = result.categoryFiles.value(CleanerService::BROWSER_PRIVACY);
 
     emit scanFinishedS();
 }
@@ -229,6 +232,9 @@ void SystemCleanerPage::onScanFinished()
     if (mScanBrokenSymlinks) {
         totalSize += addTreeRoot(BROKEN_SYMLINKS, mLblBrokenSymlinksText, mBrokenSymlinks);
     }
+    if (mScanBrowserPrivacy) {
+        totalSize += addTreeRoot(BROWSER_PRIVACY, mLblBrowserPrivacyText, mBrowserPrivacy);
+    }
     if (mScanTrash) {
 #ifdef Q_OS_MACOS
         totalSize += addTreeRoot(TRASH, mLblTrashText,
@@ -255,6 +261,7 @@ void SystemCleanerPage::onScanFinished()
     ui->checkTrash->setChecked(false);
     ui->checkDevToolCache->setChecked(false);
     ui->checkBrokenSymlinks->setChecked(false);
+    ui->checkBrowserPrivacy->setChecked(false);
 
     // Release scan result lists — data is now in the tree widget (BUG-10)
     mPackageCaches.clear();
@@ -263,6 +270,7 @@ void SystemCleanerPage::onScanFinished()
     mAppCaches.clear();
     mDevToolCaches.clear();
     mBrokenSymlinks.clear();
+    mBrowserPrivacy.clear();
 
     mScanInProgress = false;
 }
@@ -352,8 +360,9 @@ void SystemCleanerPage::on_btnScan_clicked()
     mScanTrash        = ui->checkTrash->isChecked();
     mScanDevToolCache = ui->checkDevToolCache->isChecked();
     mScanBrokenSymlinks = ui->checkBrokenSymlinks->isChecked();
+    mScanBrowserPrivacy = ui->checkBrowserPrivacy->isChecked();
 
-    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash || mScanDevToolCache || mScanBrokenSymlinks)) {
+    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash || mScanDevToolCache || mScanBrokenSymlinks || mScanBrowserPrivacy)) {
         return;
     }
 
@@ -365,6 +374,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mLblTrashText        = ui->lblTrash->text();
     mLblDevToolCacheText = ui->lblDevToolCache->text();
     mLblBrokenSymlinksText = ui->lblBrokenSymlinks->text();
+    mLblBrowserPrivacyText = ui->lblBrowserPrivacy->text();
 
     // Pre-scan UI updates (main thread)
     ui->btnScan->hide();
@@ -377,6 +387,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     ui->checkTrash->setEnabled(false);
     ui->checkDevToolCache->setEnabled(false);
     ui->checkBrokenSymlinks->setEnabled(false);
+    ui->checkBrowserPrivacy->setEnabled(false);
     ui->checkSelectAllSystemScan->setEnabled(false);
 
     // Clear cached results
@@ -386,6 +397,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mAppCaches.clear();
     mDevToolCaches.clear();
     mBrokenSymlinks.clear();
+    mBrowserPrivacy.clear();
 
     mScanInProgress = true;
 
@@ -455,6 +467,7 @@ void SystemCleanerPage::on_btnBackToCategories_clicked()
     ui->checkTrash->setEnabled(true);
     ui->checkDevToolCache->setEnabled(true);
     ui->checkBrokenSymlinks->setEnabled(true);
+    ui->checkBrowserPrivacy->setEnabled(true);
     ui->treeWidgetScanResult->clear();
     ui->stackedWidget->setCurrentIndex(0);
     ui->checkSelectAllSystemScan->setEnabled(true);
@@ -470,6 +483,7 @@ void SystemCleanerPage::on_checkSelectAllSystemScan_clicked(bool checked)
     ui->checkTrash->setChecked(checked);
     ui->checkDevToolCache->setChecked(checked);
     ui->checkBrokenSymlinks->setChecked(checked);
+    ui->checkBrowserPrivacy->setChecked(checked);
 }
 
 void SystemCleanerPage::on_checkSelectAll_clicked(bool checked)

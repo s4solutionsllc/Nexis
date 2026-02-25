@@ -526,6 +526,64 @@
          </property>
         </widget>
        </item>
+       <item row="2" column="9" alignment="Qt::AlignHCenter">
+        <widget class="QLabel" name="lblBrowserPrivacyImg">
+         <property name="minimumSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>128</width>
+           <height>128</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="9" alignment="Qt::AlignHCenter">
+        <widget class="QLabel" name="lblBrowserPrivacy">
+         <property name="text">
+          <string>Browser
+Privacy</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="9" alignment="Qt::AlignHCenter|Qt::AlignTop">
+        <widget class="QCheckBox" name="checkBrowserPrivacy">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="accessibleName">
+          <string notr="true">circle</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
        <item row="2" column="10">
         <spacer name="horizontalSpacer_3">
          <property name="orientation">

@@ -245,4 +245,77 @@ QFileInfoList SystemInfoMacOS::getBrokenSymlinks() const
     return result;
 }
 
+QFileInfoList SystemInfoMacOS::getBrowserPrivacyArtifacts() const
+{
+    QFileInfoList result;
+    QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+
+    struct ChromiumBrowser {
+        QString profileBase;
+        QString cacheBase;
+    };
+
+    QList<ChromiumBrowser> chromiumBrowsers = {
+        {home + "/Library/Application Support/Google/Chrome",
+         home + "/Library/Caches/Google/Chrome"},
+        {home + "/Library/Application Support/Microsoft Edge",
+         home + "/Library/Caches/Microsoft Edge"},
+        {home + "/Library/Application Support/BraveSoftware/Brave-Browser",
+         home + "/Library/Caches/BraveSoftware/Brave-Browser"},
+    };
+
+    for (const auto &browser : chromiumBrowsers) {
+        QDir cacheDir(browser.cacheBase);
+        if (cacheDir.exists()) {
+            QFileInfoList profiles = cacheDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+            for (const QFileInfo &profile : profiles) {
+                QFileInfo cacheData(profile.absoluteFilePath() + "/Cache/Cache_Data");
+                if (cacheData.exists())
+                    result.append(cacheData);
+            }
+        }
+
+        QDir profileBase(browser.profileBase);
+        if (profileBase.exists()) {
+            QFileInfoList profiles = profileBase.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+            for (const QFileInfo &profile : profiles) {
+                QString pName = profile.fileName();
+                if (pName == "Default" || pName.startsWith("Profile ")) {
+                    QFileInfo sessDir(profile.absoluteFilePath() + "/Sessions");
+                    if (sessDir.exists())
+                        result.append(sessDir);
+                }
+            }
+        }
+    }
+
+    QDir ffProfilesDir(home + "/Library/Application Support/Firefox/Profiles");
+    if (ffProfilesDir.exists()) {
+        QFileInfoList ffProfiles = ffProfilesDir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const QFileInfo &profile : ffProfiles) {
+            QFileInfo ffCache(home + "/Library/Caches/Firefox/Profiles/"
+                              + profile.fileName() + "/cache2");
+            if (ffCache.exists())
+                result.append(ffCache);
+
+            QFileInfo sessionStore(profile.absoluteFilePath() + "/sessionstore.jsonlz4");
+            if (sessionStore.exists())
+                result.append(sessionStore);
+            QFileInfo sessionBackups(profile.absoluteFilePath() + "/sessionstore-backups");
+            if (sessionBackups.exists())
+                result.append(sessionBackups);
+        }
+    }
+
+    QFileInfo safariCache(home + "/Library/Caches/com.apple.Safari");
+    if (safariCache.exists())
+        result.append(safariCache);
+
+    QFileInfo sharedFileList(home + "/Library/Application Support/com.apple.sharedfilelist");
+    if (sharedFileList.exists())
+        result.append(sharedFileList);
+
+    return result;
+}
+
 // Cross-platform getters are in shared/nexis-core/Info/system_info_shared.cpp

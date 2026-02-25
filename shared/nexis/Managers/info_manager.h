@@ -52,6 +52,7 @@ public:
     QFileInfoList getAppCaches() const;
     QFileInfoList getDevToolCaches() const;
     QFileInfoList getBrokenSymlinks() const;
+    QFileInfoList getBrowserPrivacyArtifacts() const;
 
     void updateProcesses();
     QList<Process> getProcesses() const;

@@ -35,7 +35,8 @@ public:
         APPLICATION_CACHES,
         TRASH,
         DEV_TOOL_CACHES,
-        BROKEN_SYMLINKS
+        BROKEN_SYMLINKS,
+        BROWSER_PRIVACY
     };
 
 public:
@@ -104,6 +105,8 @@ private:
     QString mLblDevToolCacheText;
     bool mScanBrokenSymlinks;
     QString mLblBrokenSymlinksText;
+    bool mScanBrowserPrivacy;
+    QString mLblBrowserPrivacyText;
     // Scan results (written on worker, read on main thread in onScanFinished)
     QFileInfoList mPackageCaches;
     QFileInfoList mCrashReports;
@@ -111,6 +114,7 @@ private:
     QFileInfoList mAppCaches;
     QFileInfoList mDevToolCaches;
     QFileInfoList mBrokenSymlinks;
+    QFileInfoList mBrowserPrivacy;
 
     // Thread-safe clean state (set on main thread before worker, read on worker)
     QStringList mFilesToDelete;

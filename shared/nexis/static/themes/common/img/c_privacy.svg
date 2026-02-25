@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="128px" viewBox="0 0 128 128" width="128px" xmlns="http://www.w3.org/2000/svg">
+    <!-- Shield with eye icon: browser privacy / artifact cleaner -->
+    <!-- Shield body shadow -->
+    <path d="M 64 10 L 18 32 L 18 62 C 18 92 38 114 64 122 C 90 114 110 92 110 62 L 110 32 Z" fill="#1a5fb4"/>
+    <!-- Shield body -->
+    <path d="M 64 14 L 22 34 L 22 62 C 22 89 40 110 64 118 C 88 110 106 89 106 62 L 106 34 Z" fill="#3584e4"/>
+    <!-- Shield highlight -->
+    <path d="M 64 20 L 28 38 L 28 62 C 28 85 43 104 64 112 C 85 104 100 85 100 62 L 100 38 Z" fill="#62a0ea"/>
+    <!-- Eye shape: privacy symbol -->
+    <ellipse cx="64" cy="64" rx="28" ry="18" fill="#ffffff" opacity="0.9"/>
+    <!-- Iris -->
+    <circle cx="64" cy="64" r="12" fill="#1a5fb4"/>
+    <!-- Pupil -->
+    <circle cx="64" cy="64" r="6" fill="#0d3573"/>
+    <!-- Eye highlight -->
+    <circle cx="60" cy="60" r="3" fill="#ffffff" opacity="0.7"/>
+    <!-- Slash through eye: privacy / blocked -->
+    <path d="M 40 80 L 88 48" stroke="#e01b24" stroke-width="6" stroke-linecap="round"/>
+</svg>

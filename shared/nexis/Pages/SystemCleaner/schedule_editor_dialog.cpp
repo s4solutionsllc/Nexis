@@ -140,6 +140,7 @@ void ScheduleEditorDialog::buildUI()
     mChkAppCaches = new QCheckBox(tr("Application Caches"));
     mChkTrash = new QCheckBox(tr("Trash"));
     mChkDevToolCaches = new QCheckBox(tr("Dev Tool Caches"));
+    mChkBrowserPrivacy = new QCheckBox(tr("Browser Privacy"));
 
     catGrid->addWidget(mChkPackageCache, 0, 0);
     catGrid->addWidget(mChkCrashReports, 0, 1);
@@ -147,11 +148,12 @@ void ScheduleEditorDialog::buildUI()
     catGrid->addWidget(mChkAppCaches, 1, 1);
     catGrid->addWidget(mChkTrash, 2, 0);
     catGrid->addWidget(mChkDevToolCaches, 2, 1);
+    catGrid->addWidget(mChkBrowserPrivacy, 3, 0);
 
     mLblTrashWarning = new QLabel(tr("\xe2\x9a\xa0 Trash is permanently deleted and cannot be recovered"));
     mLblTrashWarning->setObjectName("lblTrashWarning");
     mLblTrashWarning->setVisible(false);
-    catGrid->addWidget(mLblTrashWarning, 3, 0, 1, 2);
+    catGrid->addWidget(mLblTrashWarning, 4, 0, 1, 2);
 
     connect(mChkTrash, &QCheckBox::toggled, mLblTrashWarning, &QLabel::setVisible);
 
@@ -222,6 +224,7 @@ void ScheduleEditorDialog::populateFromSchedule(const ScheduleManager::CleaningS
         case CleanerService::APPLICATION_CACHES:mChkAppCaches->setChecked(true); break;
         case CleanerService::TRASH:             mChkTrash->setChecked(true); break;
         case CleanerService::DEV_TOOL_CACHES:   mChkDevToolCaches->setChecked(true); break;
+        case CleanerService::BROWSER_PRIVACY:   mChkBrowserPrivacy->setChecked(true); break;
         }
     }
 
@@ -257,7 +260,8 @@ bool ScheduleEditorDialog::validate()
 
     bool anyCat = mChkPackageCache->isChecked() || mChkCrashReports->isChecked() ||
                   mChkAppLogs->isChecked() || mChkAppCaches->isChecked() ||
-                  mChkTrash->isChecked() || mChkDevToolCaches->isChecked();
+                  mChkTrash->isChecked() || mChkDevToolCaches->isChecked() ||
+                  mChkBrowserPrivacy->isChecked();
     if (!anyCat) {
         mLblError->setText(tr("Select at least one category."));
         mLblError->setVisible(true);
@@ -293,6 +297,7 @@ ScheduleManager::CleaningSchedule ScheduleEditorDialog::getSchedule() const
     if (mChkAppCaches->isChecked())     s.categories << CleanerService::APPLICATION_CACHES;
     if (mChkTrash->isChecked())         s.categories << CleanerService::TRASH;
     if (mChkDevToolCaches->isChecked()) s.categories << CleanerService::DEV_TOOL_CACHES;
+    if (mChkBrowserPrivacy->isChecked()) s.categories << CleanerService::BROWSER_PRIVACY;
 
     s.minFileAgeSecs = mChkSkipRecent->isChecked() ? mSpnMinFileAge->value() * 3600 : 0;
 

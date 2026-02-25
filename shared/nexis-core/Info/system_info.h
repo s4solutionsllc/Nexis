@@ -26,6 +26,7 @@ public:
     virtual QFileInfoList getAppCaches() const = 0;
     virtual QFileInfoList getDevToolCaches() const = 0;
     virtual QFileInfoList getBrokenSymlinks() const = 0;
+    virtual QFileInfoList getBrowserPrivacyArtifacts() const = 0;
 
     virtual QStringList getUserList() const = 0;
     virtual QStringList getGroupList() const = 0;

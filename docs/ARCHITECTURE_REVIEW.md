@@ -324,7 +324,7 @@ quint64 InfoManager::getMemUsed() const  { return mi.getMemUsed(); }
 ```
 
 **Thick services** (real business logic):
-- `CleanerService` — 300+ lines of scan logic across 6 categories, file partitioning, min-age filtering, statistics collection
+- `CleanerService` — 300+ lines of scan logic across 8 categories (including Browser Privacy), file partitioning, min-age filtering, statistics collection
 - `ScheduleManager` — 500+ lines of CRUD operations, JSON persistence, OS-native scheduler sync (launchd plists, systemd timers, cron entries)
 
 **The problem:** There's no clear architectural principle for when logic belongs in:

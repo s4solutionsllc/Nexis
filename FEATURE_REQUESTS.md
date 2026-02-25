@@ -176,9 +176,10 @@
   - **Files:** New `DuplicateFinderService`, new page or Search page mode
   - **Complexity:** High (7-10 days) — hash computation, progress UI, large file handling, review UX
 
-- [ ] **FR-64: Privacy / browser artifact cleaner** — New System Cleaner category that finds and removes browser caches, cookies, history, and download lists for Chrome, Firefox, Safari, and Edge. Also: recently-opened-files lists (`.local/share/recently-used.xbel` on Linux, LSSharedFileList on macOS). Precedent: BleachBit, CleanMyMac Privacy module.
+- [x] **FR-64: Privacy / browser artifact cleaner** — New System Cleaner category that finds and removes browser caches, cookies, history, and download lists for Chrome, Firefox, Safari, and Edge. Also: recently-opened-files lists (`.local/share/recently-used.xbel` on Linux, LSSharedFileList on macOS). Precedent: BleachBit, CleanMyMac Privacy module.
   - **Files:** `cleaner_service.cpp` new category, browser profile path detection logic
   - **Complexity:** Medium-High (5-7 days) — many browser profile paths to discover/maintain, user confirmation critical
+  - **Resolved:** Phase 1 (browser caches, sessions, recent files) implemented. Added BROWSER_PRIVACY enum, platform-specific discovery for Chrome/Edge/Brave/Firefox/Safari caches and session data, macOS LSSharedFileList, Linux recently-used.xbel. Phase 2 (SQLite surgery for cookies/history/autofill) deferred.
 
 ## Networking & Diagnostics
 

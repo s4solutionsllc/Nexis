@@ -240,6 +240,11 @@ QFileInfoList InfoManager::getBrokenSymlinks() const
     return si->getBrokenSymlinks();
 }
 
+QFileInfoList InfoManager::getBrowserPrivacyArtifacts() const
+{
+    return si->getBrowserPrivacyArtifacts();
+}
+
 /********************
  * Process Provider
  *******************/

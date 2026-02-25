@@ -64,6 +64,7 @@ private:
     QCheckBox *mChkAppCaches;
     QCheckBox *mChkTrash;
     QCheckBox *mChkDevToolCaches;
+    QCheckBox *mChkBrowserPrivacy;
     QLabel *mLblTrashWarning;
 
     QCheckBox *mChkSkipRecent;

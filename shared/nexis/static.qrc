@@ -77,6 +77,8 @@
         <file>static/themes/common/img/c_cache.svg</file>
         <file>static/themes/common/img/c_trash.svg</file>
         <file>static/themes/common/img/c_devtools.svg</file>
+        <file>static/themes/common/img/c_symlink.svg</file>
+        <file>static/themes/common/img/c_privacy.svg</file>
         <file>static/themes/common/img/disk-baobab.svg</file>
         <file>static/themes/common/img/disk-filelight.svg</file>
         <file>static/themes/common/img/disk-qdirstat.svg</file>

@@ -18,7 +18,8 @@ public:
         APPLICATION_CACHES,
         TRASH,
         DEV_TOOL_CACHES,
-        BROKEN_SYMLINKS
+        BROKEN_SYMLINKS,
+        BROWSER_PRIVACY
     };
 
     struct ScanResult {

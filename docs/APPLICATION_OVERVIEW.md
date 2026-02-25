@@ -172,7 +172,7 @@ Manage applications that auto-start at login.
 
 ### 4. System Cleaner
 
-Scan and remove system junk files across 7 categories.
+Scan and remove system junk files across 8 categories.
 
 **Scan categories:**
 1. **Package Cache** — APT, DNF/YUM, Pacman, or Homebrew caches (platform-detected)
@@ -182,6 +182,7 @@ Scan and remove system junk files across 7 categories.
 5. **Trash** — User trash bin contents
 6. **Dev Tool Caches** — npm, cargo, gradle, Electron app caches, pip cache
 7. **Broken Symlinks** — Detects broken symbolic links in `~/.local/`, `~/bin/`, Homebrew prefix (macOS) or `/usr/local/bin` (Linux)
+8. **Browser Privacy** — Browser caches (Chrome, Edge, Brave, Firefox, Safari), session data, and OS-level recent file lists (macOS LSSharedFileList, Linux recently-used.xbel)
 
 **UI features:**
 - Hierarchical tree view with checkboxes (category > individual files)
