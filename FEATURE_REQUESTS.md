@@ -202,9 +202,7 @@
 
 ## System Maintenance
 
-- [ ] **FR-69: macOS maintenance actions** — One-click buttons for common macOS maintenance: rebuild Spotlight index (`mdutil -E /`), rebuild Launch Services database (`lsregister -kill`), run periodic maintenance scripts (`periodic daily weekly monthly`), verify disk (`diskutil verifyVolume`). Precedent: OnyX, CleanMyMac Maintenance module.
-  - **Files:** New macOS-only section on Helpers page or new Maintenance page, `CommandUtil` calls with sudo handling
-  - **Complexity:** Medium (3-5 days, macOS only)
+- [x] **FR-69: macOS maintenance actions** — One-click buttons for common macOS maintenance: rebuild Spotlight index, verify disk, rebuild Launch Services database. Added 3 macOS-only buttons to Helpers page nav bar (programmatic, `#ifdef Q_OS_MACOS`). Rebuild Spotlight uses `sudoExec("mdutil", {"-E", "/"})`. Verify Disk uses `execWithStatus("diskutil", {"verifyVolume", "/"})` with scrollable output dialog. Rebuild Launch Services uses safe `lsregister -r` (no `-kill` flag — dangerous on Sonoma/Sequoia) + `killall Finder`. Excluded: periodic scripts (removed in Sequoia), purge memory (Xcode dependency), NVRAM reset (Apple Silicon N/A).
 
 - [ ] **FR-70: CPU governor / power profile switcher (Linux)** — Toggle between `performance`, `balanced`, and `powersave` CPU frequency governors. Read/write `/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor`. Valuable for laptop users. No macOS equivalent (handled by OS automatically).
   - **Files:** New Settings section or Dashboard quick action, sysfs read/write with root elevation

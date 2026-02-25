@@ -3,6 +3,14 @@
 
 #include <Utils/command_util.h>
 #include <QMessageBox>
+#include <QPushButton>
+
+#ifdef Q_OS_MACOS
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QPlainTextEdit>
+#endif
 
 HelpersPage::~HelpersPage()
 {
@@ -22,12 +30,35 @@ HelpersPage::HelpersPage(QWidget *parent) :
 void HelpersPage::init()
 {
     ui->stackedWidget->addWidget(widgetHostManage);
-    //ui->stackedWidget->addWidget();
 
-    Utilities::addDropShadow({
+    QList<QWidget *> shadowWidgets = {
         ui->btnHostManage,
         ui->btnFlushDNS
-    }, 40);
+    };
+
+#ifdef Q_OS_MACOS
+    mBtnRebuildSpotlight = new QPushButton(tr("Rebuild Spotlight"));
+    mBtnVerifyDisk = new QPushButton(tr("Verify Disk"));
+    mBtnRebuildLaunchServices = new QPushButton(tr("Rebuild Launch Services"));
+
+    for (auto *btn : {mBtnRebuildSpotlight, mBtnVerifyDisk, mBtnRebuildLaunchServices}) {
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setFocusPolicy(Qt::NoFocus);
+    }
+
+    int spacerIndex = ui->navLayout->count() - 1;
+    ui->navLayout->insertWidget(spacerIndex, mBtnRebuildSpotlight);
+    ui->navLayout->insertWidget(spacerIndex + 1, mBtnVerifyDisk);
+    ui->navLayout->insertWidget(spacerIndex + 2, mBtnRebuildLaunchServices);
+
+    shadowWidgets << mBtnRebuildSpotlight << mBtnVerifyDisk << mBtnRebuildLaunchServices;
+
+    connect(mBtnRebuildSpotlight, &QPushButton::clicked, this, &HelpersPage::onRebuildSpotlight);
+    connect(mBtnVerifyDisk, &QPushButton::clicked, this, &HelpersPage::onVerifyDisk);
+    connect(mBtnRebuildLaunchServices, &QPushButton::clicked, this, &HelpersPage::onRebuildLaunchServices);
+#endif
+
+    Utilities::addDropShadow(shadowWidgets, 40);
 }
 
 void HelpersPage::on_btnHostManage_clicked()
@@ -81,4 +112,136 @@ void HelpersPage::on_btnFlushDNS_clicked()
         QMessageBox::warning(this, tr("DNS Flush Failed"),
             tr("Could not flush DNS cache: %1").arg(errorMsg));
     }
+}
+
+void HelpersPage::onRebuildSpotlight()
+{
+#ifdef Q_OS_MACOS
+    if (QMessageBox::question(this, tr("Rebuild Spotlight Index"),
+            tr("This will delete and rebuild the Spotlight search index.\n\n"
+               "Spotlight search will be temporarily unavailable while the index "
+               "rebuilds. This may take 30 minutes to several hours depending on "
+               "your disk size.\n\nContinue?"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
+        != QMessageBox::Yes)
+        return;
+
+    QString errorMsg;
+    bool success = false;
+
+    try {
+        CommandUtil::sudoExec("mdutil", {"-E", "/"});
+        success = true;
+    } catch (const QString &ex) {
+        errorMsg = ex;
+    }
+
+    if (success) {
+        QMessageBox::information(this, tr("Spotlight Index Rebuild Started"),
+            tr("The Spotlight index rebuild has been triggered. "
+               "Reindexing will continue in the background."));
+    } else {
+        QMessageBox::warning(this, tr("Spotlight Rebuild Failed"),
+            tr("Could not rebuild Spotlight index: %1").arg(errorMsg));
+    }
+#endif
+}
+
+void HelpersPage::onVerifyDisk()
+{
+#ifdef Q_OS_MACOS
+    if (QMessageBox::question(this, tr("Verify Disk"),
+            tr("This will verify the integrity of the startup disk.\n\n"
+               "This may take 1" "\xe2\x80\x93" "5 minutes. Continue?"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
+        != QMessageBox::Yes)
+        return;
+
+    ExecResult result = CommandUtil::execWithStatus("diskutil", {"verifyVolume", "/"}, 300000);
+
+    QDialog dlg(this);
+    dlg.setWindowTitle(tr("Disk Verification Results"));
+    dlg.setMinimumSize(500, 350);
+    dlg.setObjectName("verifyDiskDialog");
+
+    QVBoxLayout *layout = new QVBoxLayout(&dlg);
+    layout->setSpacing(10);
+    layout->setContentsMargins(15, 15, 15, 15);
+
+    QLabel *lblTitle = new QLabel(tr("Disk Verification Results"));
+    lblTitle->setProperty("accessibleName", "dialog-title");
+    layout->addWidget(lblTitle);
+
+    QPlainTextEdit *txtOutput = new QPlainTextEdit;
+    txtOutput->setReadOnly(true);
+    QString output = result.output;
+    if (!result.error.isEmpty()) {
+        if (!output.isEmpty())
+            output += "\n\n";
+        output += result.error;
+    }
+    txtOutput->setPlainText(output);
+    layout->addWidget(txtOutput);
+
+    QLabel *lblStatus = new QLabel;
+    if (result.exitCode == 0) {
+        lblStatus->setText(tr("\xe2\x9c\x93 Disk appears to be OK"));
+        lblStatus->setStyleSheet("color: #2ec27e; font-weight: bold;");
+    } else {
+        lblStatus->setText(tr("\xe2\x9c\x97 Issues detected (exit code %1)").arg(result.exitCode));
+        lblStatus->setStyleSheet("color: #e01b24; font-weight: bold;");
+    }
+    layout->addWidget(lblStatus);
+
+    QPushButton *btnClose = new QPushButton(tr("Close"));
+    btnClose->setProperty("accessibleName", "primary");
+    connect(btnClose, &QPushButton::clicked, &dlg, &QDialog::accept);
+    QHBoxLayout *btnRow = new QHBoxLayout;
+    btnRow->addStretch();
+    btnRow->addWidget(btnClose);
+    layout->addLayout(btnRow);
+
+    dlg.exec();
+#endif
+}
+
+void HelpersPage::onRebuildLaunchServices()
+{
+#ifdef Q_OS_MACOS
+    if (QMessageBox::question(this, tr("Rebuild Launch Services"),
+            tr("This will rescan the Launch Services database and restart Finder.\n\n"
+               "This can fix issues with incorrect default apps and missing "
+               "'Open With' entries.\n\nContinue?"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No)
+        != QMessageBox::Yes)
+        return;
+
+    QString lsregister = "/System/Library/Frameworks/CoreServices.framework"
+                         "/Frameworks/LaunchServices.framework/Support/lsregister";
+
+    QString errorMsg;
+    bool success = false;
+
+    ExecResult r = CommandUtil::execWithStatus(lsregister,
+        {"-r", "-domain", "local", "-domain", "system", "-domain", "user"}, 60000);
+
+    if (r.exitCode == 0) {
+        ExecResult r2 = CommandUtil::execWithStatus("killall", {"Finder"});
+        if (r2.exitCode == 0) {
+            success = true;
+        } else {
+            errorMsg = tr("Database rebuilt but Finder restart failed: %1").arg(r2.error);
+        }
+    } else {
+        errorMsg = r.error.isEmpty() ? r.output : r.error;
+    }
+
+    if (success) {
+        QMessageBox::information(this, tr("Launch Services Rebuilt"),
+            tr("The Launch Services database has been rebuilt and Finder restarted."));
+    } else {
+        QMessageBox::warning(this, tr("Launch Services Rebuild Failed"),
+            tr("Could not rebuild Launch Services: %1").arg(errorMsg));
+    }
+#endif
 }

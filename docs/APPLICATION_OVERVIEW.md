@@ -273,6 +273,11 @@ Miscellaneous utility tools.
 
 **Flush DNS Cache** — One-click button to clear the local DNS cache. macOS: `dscacheutil -flushcache` + `killall -HUP mDNSResponder` (with admin elevation). Linux: tries `resolvectl`, `systemd-resolve`, or `nscd` in order of availability. Confirmation dialog before action, success/failure feedback.
 
+**macOS Maintenance Actions** — Three macOS-only one-click buttons added programmatically to the nav bar (`#ifdef Q_OS_MACOS`):
+- **Rebuild Spotlight** — Deletes and rebuilds the Spotlight search index (`sudo mdutil -E /`). Warns that search will be temporarily unavailable during reindexing.
+- **Verify Disk** — Runs `diskutil verifyVolume /` with a 5-minute timeout. Displays full diagnostic output in a scrollable dialog with pass/fail status indicator.
+- **Rebuild Launch Services** — Rescans the Launch Services database using the safe `-r` flag (no `-kill`, which is dangerous on macOS 14+/15+) and restarts Finder. Fixes incorrect default apps and missing "Open With" entries.
+
 **Hosts File Manager** — GUI editor for `/etc/hosts`:
 - Add, edit, delete entries (IP address, hostname, aliases)
 - Input validation: IPv4/IPv6 via `QHostAddress`, hostname format per RFC 1123 (with underscore tolerance), alias validation
