@@ -18,6 +18,7 @@ public:
 
     void setValue(int percent, const QString &valueText) override;
     void addDataPoint(double value) override;
+    void clearDataPoints() override;
     void setSubtitle(const QString &text) override;
     void setTrendDirection(TrendDirection dir) override;
     void setQuickAction(const QString &text, std::function<void()> callback) override;

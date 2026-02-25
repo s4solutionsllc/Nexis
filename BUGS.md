@@ -483,6 +483,12 @@
   - **Fix complexity:** Moderate (new signal + multi-source fan detection with dispatch)
   - **Resolved:** Added `fanUpdated()` signal to DataRefreshService, emitted independently in `onFastTick()` gated on `hasFanSensors()`. Connected dashboard fan tile to `fanUpdated()` instead of `tempUpdated()`. Added `FanSourceType` enum (Hwmon, ThinkpadProc, DellProc, NvidiaSmi) to `FanSensor` struct. Refactored `FanInfoLinux` with fallback detection chain: hwmon (primary) → ThinkPad procfs → Dell procfs → nvidia-smi. `getFanSpeed()` dispatches to source-specific read methods.
 
+- [x] **BUG-71: Dashboard sparkline/trend not cleared when switching GPU, temp, or fan sensor** (MEDIUM)
+  - **Scope:** Dashboard page — GPU, Temperature, Fan tiles (all platforms)
+  - **Description:** When the user switches GPU device (combo box), temperature sensor (gear menu), or fan sensor (gear menu), the tile's `mDataBuffer` (sparkline history, up to 60 data points) is not cleared. The tile retains the previous device/sensor's historical data. The CircleBar/gauge value updates immediately to the new selection, but the sparkline graph and trend arrow continue reflecting the old device's pattern until enough new data points push it out. This makes it appear that the tile is "still showing the old device's data." Affects all tile types (MetricTile, GaugeTile, RingTile, etc.) since they all inherit `mDataBuffer` from `MetricTileBase`.
+  - **Files:** `shared/nexis/Pages/Dashboard/metric_tile_base.h/.cpp`, `metric_tile.h/.cpp`, `hybrid_tile.h/.cpp`, `dashboard_page.cpp`
+  - **Resolved:** Added virtual `clearDataPoints()` to `MetricTileBase` (resets `mDataBuffer` to zeros). Overridden in `MetricTile` and `HybridTile` to also rebuild the QLineSeries sparkline and trend indicator. Called in `onGpuDeviceChanged()`, `onTempSensorSelected()`, and `onFanSensorSelected()` before updating with new device data.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

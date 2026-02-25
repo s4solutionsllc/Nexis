@@ -153,6 +153,13 @@ void MetricTile::addDataPoint(double value)
     updateTrend();
 }
 
+void MetricTile::clearDataPoints()
+{
+    MetricTileBase::clearDataPoints();
+    updateSparkline();
+    updateTrend();
+}
+
 void MetricTile::setSubtitle(const QString &text)
 {
     mLblSubtitle->setText(text);

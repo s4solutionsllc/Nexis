@@ -138,6 +138,13 @@ void HybridTile::addDataPoint(double value)
     update();
 }
 
+void HybridTile::clearDataPoints()
+{
+    MetricTileBase::clearDataPoints();
+    updateSparkline();
+    updateTrend();
+}
+
 void HybridTile::setSubtitle(const QString &text)
 {
     mLblSubtitle->setText(text);

@@ -718,6 +718,7 @@ void DashboardPage::onTempSensorSelected(QAction *action)
     for (QAction *a : mTempSensorMenu->actions())
         a->setChecked(a->data().toInt() == index);
 
+    mTempTile->clearDataPoints();
     updateTempTile();
 }
 
@@ -750,6 +751,7 @@ void DashboardPage::onFanSensorSelected(QAction *action)
         mSettingManager->setFanSensorId(fans.at(mSelectedFanIndex).id);
     }
 
+    mFanTile->clearDataPoints();
     updateFanTile();
 }
 
@@ -775,6 +777,7 @@ void DashboardPage::onGpuDeviceChanged(int index)
         mGpuTile->setSubtitle(gpus.at(index).name);
     }
 
+    mGpuTile->clearDataPoints();
     onGpuUpdated(gpus);
 }
 

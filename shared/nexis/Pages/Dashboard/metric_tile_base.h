@@ -29,6 +29,8 @@ public:
     virtual void setGearVisible(bool visible) = 0;
     virtual void refreshThemeColors() = 0;
 
+    virtual void clearDataPoints();
+
     virtual void setColorOverride(const QString &hexColor);
     QString colorOverride() const { return mColorOverride; }
 

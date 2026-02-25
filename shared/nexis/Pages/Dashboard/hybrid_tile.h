@@ -19,6 +19,7 @@ public:
     // MetricTileBase overrides
     void setValue(int percent, const QString &valueText) override;
     void addDataPoint(double value) override;
+    void clearDataPoints() override;
     void setSubtitle(const QString &text) override;
     void setTrendDirection(TrendDirection dir) override;
     void setSecondaryValue(const QString &text) override;

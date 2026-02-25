@@ -24,6 +24,14 @@ void MetricTileBase::clearDriveHealth()
 {
 }
 
+void MetricTileBase::clearDataPoints()
+{
+    mDataBuffer.clear();
+    for (int i = 0; i < SPARKLINE_SIZE; ++i)
+        mDataBuffer.append(0.0);
+    update();
+}
+
 void MetricTileBase::setColorOverride(const QString &hexColor)
 {
     mColorOverride = hexColor;
