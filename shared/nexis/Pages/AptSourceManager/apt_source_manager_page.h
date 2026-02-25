@@ -3,13 +3,19 @@
 
 #include <QWidget>
 #include <QListWidgetItem>
+#include <QLabel>
+#include <QPushButton>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
 
 #include "apt_source_repository_item.h"
 #include "apt_source_edit.h"
 #include "Managers/info_manager.h"
+#include <Info/update_info.h>
 
 class ToolManager;
 class SignalMapper;
+class DataRefreshService;
 
 #ifdef Q_OS_MAC
 #include <QTreeWidget>
@@ -30,7 +36,8 @@ class APTSourceManagerPage : public QWidget
 public:
     explicit APTSourceManagerPage(QWidget *parent = nullptr,
                                   ToolManager *toolManager = nullptr,
-                                  SignalMapper *signalMapper = nullptr);
+                                  SignalMapper *signalMapper = nullptr,
+                                  DataRefreshService *refreshService = nullptr);
     ~APTSourceManagerPage();
 
 public:
@@ -60,6 +67,8 @@ private slots:
     void updateBrewUninstallButton();
 #endif
 
+    void onSystemUpdatesChecked(const UpdateCheckResult &result);
+
 private:
     void init();
 
@@ -74,6 +83,13 @@ private:
     QTreeWidget *mTreeWidget = nullptr;
     QList<Package> mBrewPackages;
 #endif
+
+    // Available Updates section
+    QWidget *mUpdatesSection = nullptr;
+    QLabel *mLblUpdatesTitle = nullptr;
+    QPushButton *mBtnCheckNow = nullptr;
+    QTreeWidget *mUpdatesTree = nullptr;
+    DataRefreshService *mRefresh = nullptr;
 };
 
 #endif

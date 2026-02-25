@@ -7,6 +7,12 @@
 #include "signal_mapper.h"
 #include "dpi.h"
 #include <Tools/package_tool_shared.h>
+#include "Managers/data_refresh_service.h"
+#include <Info/update_info.h>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QFont>
 
 #ifdef Q_OS_MAC
 #include <QFont>
@@ -21,11 +27,12 @@ APTSourceManagerPage::~APTSourceManagerPage()
 
 APTSourcePtr APTSourceManagerPage::selectedAptSource = nullptr;
 
-APTSourceManagerPage::APTSourceManagerPage(QWidget *parent, ToolManager *toolManager, SignalMapper *signalMapper) :
+APTSourceManagerPage::APTSourceManagerPage(QWidget *parent, ToolManager *toolManager, SignalMapper *signalMapper, DataRefreshService *refreshService) :
     QWidget(parent),
     ui(new Ui::APTSourceManagerPage),
     mToolManager(toolManager ? toolManager : ToolManager::ins()),
-    mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins())
+    mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
+    mRefresh(refreshService ? refreshService : DataRefreshService::ins())
 {
     ui->setupUi(this);
 
@@ -34,6 +41,62 @@ APTSourceManagerPage::APTSourceManagerPage(QWidget *parent, ToolManager *toolMan
 
 void APTSourceManagerPage::init()
 {
+    // --- Available Updates section ---
+    mUpdatesSection = new QWidget(this);
+    mUpdatesSection->setObjectName("updatesSection");
+    mUpdatesSection->hide();
+
+    QVBoxLayout *updLayout = new QVBoxLayout(mUpdatesSection);
+    updLayout->setContentsMargins(0, 0, 0, 10);
+    updLayout->setSpacing(5);
+
+    // Header row: title + check now button
+    QHBoxLayout *updHeader = new QHBoxLayout();
+    mLblUpdatesTitle = new QLabel(tr("Available Updates"), mUpdatesSection);
+    mLblUpdatesTitle->setObjectName("lblUpdatesTitle");
+    QFont updFont = mLblUpdatesTitle->font();
+    updFont.setPointSize(11);
+    mLblUpdatesTitle->setFont(updFont);
+    updHeader->addWidget(mLblUpdatesTitle);
+
+    updHeader->addStretch();
+
+    mBtnCheckNow = new QPushButton(tr("Check Now"), mUpdatesSection);
+    mBtnCheckNow->setObjectName("btnCheckNow");
+    mBtnCheckNow->setCursor(Qt::PointingHandCursor);
+    mBtnCheckNow->setFocusPolicy(Qt::NoFocus);
+    mBtnCheckNow->setAccessibleName("primary");
+    mBtnCheckNow->setFixedHeight(28);
+    updHeader->addWidget(mBtnCheckNow);
+    updLayout->addLayout(updHeader);
+
+    // Updates tree widget: Source | Package | Version
+    mUpdatesTree = new QTreeWidget(mUpdatesSection);
+    mUpdatesTree->setObjectName("treeWidgetUpdates");
+    mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version") });
+    mUpdatesTree->setColumnCount(3);
+    mUpdatesTree->setRootIsDecorated(false);
+    mUpdatesTree->setFocusPolicy(Qt::NoFocus);
+    mUpdatesTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    mUpdatesTree->setSelectionMode(QAbstractItemView::NoSelection);
+    mUpdatesTree->header()->setStretchLastSection(true);
+    mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    mUpdatesTree->setMaximumHeight(200);
+    updLayout->addWidget(mUpdatesTree);
+
+    // Insert updates section into page layout BEFORE the main content
+    ui->verticalLayout_2->insertWidget(0, mUpdatesSection);
+
+    // Wire signal and button
+    connect(mBtnCheckNow, &QPushButton::clicked, this, [this]() {
+        mBtnCheckNow->setEnabled(false);
+        mBtnCheckNow->setText(tr("Checking..."));
+        mRefresh->triggerUpdateCheck();
+    });
+    connect(mRefresh, &DataRefreshService::systemUpdatesChecked,
+            this, &APTSourceManagerPage::onSystemUpdatesChecked);
+
 #ifdef Q_OS_MAC
     // macOS: Homebrew packages with tree widget layout (like Uninstaller page)
 
@@ -406,4 +469,28 @@ void APTSourceManagerPage::on_btnEditAptSource_clicked()
         APTSourceEdit::selectedAptSource = selectedAptSource;
         mAptSourceEditDialog->show();
     }
+}
+
+
+void APTSourceManagerPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
+{
+    mBtnCheckNow->setEnabled(true);
+    mBtnCheckNow->setText(tr("Check Now"));
+
+    if (!result.success || result.totalCount == 0) {
+        mUpdatesSection->hide();
+        return;
+    }
+
+    mLblUpdatesTitle->setText(tr("Available Updates (%1)").arg(result.totalCount));
+    mUpdatesTree->clear();
+
+    for (const UpdateEntry &entry : result.entries) {
+        QTreeWidgetItem *item = new QTreeWidgetItem(mUpdatesTree);
+        item->setText(0, entry.source);
+        item->setText(1, entry.name);
+        item->setText(2, entry.version);
+    }
+
+    mUpdatesSection->show();
 }
