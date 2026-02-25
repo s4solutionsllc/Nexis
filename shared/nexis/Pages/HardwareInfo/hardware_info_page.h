@@ -21,6 +21,7 @@ public:
 
 private slots:
     void init();
+    void on_btnExportReport_clicked();
 
 private:
     void populateSystem();

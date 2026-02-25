@@ -17,6 +17,11 @@
 #include <QSysInfo>
 #include <QProcess>
 #include <QDir>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QTextStream>
+#include <QDateTime>
+#include <QApplication>
 #include "dpi.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
@@ -495,5 +500,78 @@ void HardwareInfoPage::refreshThemeColors()
         else if (entry.verdict == "Critical")
             entry.item->setForeground(QColor(sv->value("@destructiveColor").toString()));
     }
+}
+
+static QString tableToText(QTableWidget *table, const QString &sectionTitle)
+{
+    if (!table->isVisible() || table->rowCount() == 0)
+        return QString();
+
+    QString section;
+    section += sectionTitle.toUpper() + "\n";
+    section += QString("-").repeated(sectionTitle.length()) + "\n";
+
+    int maxLabelWidth = 0;
+    for (int row = 0; row < table->rowCount(); ++row) {
+        QTableWidgetItem *label = table->item(row, 0);
+        if (label && !label->text().isEmpty())
+            maxLabelWidth = qMax(maxLabelWidth, label->text().length());
+    }
+
+    for (int row = 0; row < table->rowCount(); ++row) {
+        QTableWidgetItem *label = table->item(row, 0);
+        QTableWidgetItem *value = table->item(row, 1);
+        QString l = label ? label->text() : QString();
+        QString v = value ? value->text() : QString();
+
+        if (l.isEmpty() && v.isEmpty())
+            continue;
+
+        section += QString("%1  %2\n").arg(l, -maxLabelWidth).arg(v);
+    }
+    section += "\n";
+    return section;
+}
+
+void HardwareInfoPage::on_btnExportReport_clicked()
+{
+    QString defaultName = QString("nexis-report-%1.txt")
+        .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd"));
+
+    QString filePath = QFileDialog::getSaveFileName(
+        this, tr("Export System Report"), defaultName,
+        tr("Text Files (*.txt);;All Files (*)"));
+
+    if (filePath.isEmpty())
+        return;
+
+    QString report;
+    report += "Nexis System Report\n";
+    report += QString("Generated: %1\n").arg(
+        QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
+    report += QString("Version:   %1\n").arg(qApp->applicationVersion());
+    report += "\n";
+
+    report += tableToText(ui->tblSystem, tr("System"));
+    report += tableToText(ui->tblProcessor, tr("Processor"));
+    report += tableToText(ui->tblGraphics, tr("Graphics"));
+    report += tableToText(ui->tblMemory, tr("Memory"));
+    report += tableToText(ui->tblBattery, tr("Battery"));
+    report += tableToText(ui->tblFans, tr("Fans"));
+    report += tableToText(ui->tblStorage, tr("Storage"));
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, tr("Export Failed"),
+            tr("Could not write to %1: %2").arg(filePath, file.errorString()));
+        return;
+    }
+
+    QTextStream stream(&file);
+    stream << report;
+    file.close();
+
+    QMessageBox::information(this, tr("Report Exported"),
+        tr("System report saved to %1").arg(filePath));
 }
 
