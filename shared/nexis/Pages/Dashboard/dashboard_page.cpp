@@ -37,7 +37,6 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mGpuTile(nullptr),
     mBatteryTile(nullptr),
     mFanTile(nullptr),
-    mUpdatesTile(nullptr),
     mNetworkTile(nullptr),
     mCmbGpuDevice(new QComboBox(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
@@ -92,7 +91,6 @@ void DashboardPage::init()
     mTempTile = createTile("temp", mTileStyles.value("temp", defaultStyle("temp")));
     mBatteryTile = createTile("battery", mTileStyles.value("battery", defaultStyle("battery")));
     mFanTile = createTile("fan", mTileStyles.value("fan", defaultStyle("fan")));
-    mUpdatesTile = createTile("updates", mTileStyles.value("updates", defaultStyle("updates")));
 
     // Wrap each tile in a DashboardTileWrapper for drag/resize support
     wrapTile("cpu", mCpuTile);
@@ -119,11 +117,6 @@ void DashboardPage::init()
         wrapTile("fan", mFanTile);
     else
         mFanTile->hide();
-
-    if (im->hasUpdateSources())
-        wrapTile("updates", mUpdatesTile);
-    else
-        mUpdatesTile->hide();
 
     // Load saved layout or use default, then build the grid
     if (savedLayout.isEmpty())
@@ -292,18 +285,6 @@ void DashboardPage::init()
     // Disk health data (populates disk tile badges + tray alerts)
     connect(mRefresh, &DataRefreshService::diskHealthUpdated,
             this, &DashboardPage::onDiskHealthUpdated);
-
-    // System updates tile
-    if (im->hasUpdateSources()) {
-        mUpdatesTile->setSubtitle(tr("Checking..."));
-        mUpdatesTile->setValue(0, tr("..."));
-        mUpdatesTile->setQuickAction(tr("Check Now"), [this]() {
-            mUpdatesTile->setSubtitle(tr("Checking..."));
-            mRefresh->triggerUpdateCheck();
-        });
-        connect(mRefresh, &DataRefreshService::systemUpdatesChecked,
-                this, &DashboardPage::onSystemUpdatesChecked);
-    }
 
     // Set CPU model + core info as subtitle
     {
@@ -961,60 +942,6 @@ void DashboardPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
     }
 }
 
-void DashboardPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
-{
-    if (!result.success) {
-        mUpdatesTile->setValue(0, tr("Check failed"));
-        mUpdatesTile->setSubtitle(result.errorMessage.isEmpty()
-            ? tr("Unable to check for updates") : result.errorMessage);
-        return;
-    }
-
-    int count = result.totalCount;
-    QString countText = (count == 0)
-        ? tr("Up to date")
-        : QString::number(count) + " " + (count == 1 ? tr("update") : tr("updates"));
-
-    mUpdatesTile->setValue(count > 0 ? 100 : 0, countText);
-    mUpdatesTile->addDataPoint(count);
-
-    // Build source breakdown subtitle
-    QMap<QString, int> sourceCounts;
-    for (const UpdateEntry &e : result.entries)
-        sourceCounts[e.source]++;
-
-    QStringList parts;
-    for (auto it = sourceCounts.constBegin(); it != sourceCounts.constEnd(); ++it)
-        parts << QString("%1 %2").arg(it.value()).arg(it.key());
-
-    if (!parts.isEmpty())
-        mUpdatesTile->setSubtitle(parts.join(", "));
-    else
-        mUpdatesTile->setSubtitle(tr("No package managers"));
-
-    mUpdatesTile->setSecondaryValue(
-        tr("Checked %1").arg(result.checkTime.toString("h:mm AP")));
-
-    // Trend direction
-    int lastCount = mSettingManager->getUpdateLastCount();
-    if (count > lastCount)
-        mUpdatesTile->setTrendDirection(MetricTileBase::Rising);
-    else if (count < lastCount)
-        mUpdatesTile->setTrendDirection(MetricTileBase::Falling);
-    else
-        mUpdatesTile->setTrendDirection(MetricTileBase::Stable);
-
-    // Tray alert when updates go from 0 to >0
-    if (mSettingManager->getUpdateAlertEnabled() && count > 0 && lastCount == 0) {
-        mAppManager->getTrayIcon()->showMessage(
-            tr("System Updates Available"),
-            tr("%1 %2 available").arg(count).arg(count == 1 ? tr("update") : tr("updates")),
-            QSystemTrayIcon::Information);
-    }
-
-    mSettingManager->setUpdateLastCount(count);
-}
-
 void DashboardPage::toggleEditMode()
 {
     if (mKioskMode)
@@ -1095,7 +1022,6 @@ void DashboardPage::onResetLayout()
             else if (id == "gpu") mGpuTile = newTile;
             else if (id == "battery") mBatteryTile = newTile;
             else if (id == "fan") mFanTile = newTile;
-            else if (id == "updates") mUpdatesTile = newTile;
 
             setupTileGearMenu(id, newTile);
 
@@ -1190,7 +1116,6 @@ QJsonArray DashboardPage::defaultLayout() const
     if (im->hasThermalSensors()) addEntry("temp", 1, col++, 1, 1);
     if (im->hasBattery()) addEntry("battery", 1, col++, 1, 1);
     if (im->hasFanSensors()) addEntry("fan", 1, col++, 1, 1);
-    if (im->hasUpdateSources()) addEntry("updates", 1, col++, 1, 1);
 
     return arr;
 }
@@ -1514,7 +1439,6 @@ void DashboardPage::tileTitle(const QString &id, QString &title, QString &colorT
     else if (id == "gpu")     { title = tr("GPU");     colorToken = "@gpuColor"; }
     else if (id == "battery") { title = tr("BATTERY"); colorToken = "@batteryColor"; }
     else if (id == "fan")     { title = tr("FANS");    colorToken = "@fanColor"; }
-    else if (id == "updates") { title = tr("UPDATES"); colorToken = "@updatesColor"; }
 }
 
 MetricTileBase *DashboardPage::createTile(const QString &id, const QString &style)
