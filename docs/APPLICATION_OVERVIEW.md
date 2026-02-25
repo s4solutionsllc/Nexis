@@ -111,8 +111,6 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - **Temperature** — Selectable sensor via gear icon menu (2+ sensors) with sensor name subtitle, sparkline history (1s refresh; hidden if no sensors)
 - **Fans** — Fan RPM with selectable sensor via gear icon menu (2+ fans), percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`), dedicated `fanUpdated` signal (1s refresh; hidden if no fans detected)
 - **Battery** — Charge level percentage (5s refresh; hidden if no battery)
-- **Updates** — Pending OS and package update count with source breakdown subtitle (e.g., "3 brew, 2 system"), last-checked timestamp, trend direction, and sparkline history. macOS: `softwareupdate -l` + `brew outdated`. Linux: apt/dnf/pacman/zypper/snap/flatpak. Hourly background check via `QtConcurrent::run()` in DataRefreshService (`mUpdateTimer`, 1h interval). "Check Now" quick action for on-demand refresh. Tray notification when count goes from 0 to >0 (toggleable in Settings). Green accent (`@updatesColor`). Hidden if no package managers detected.
-
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
 
 **Footer status bar** — Displays app version and refresh interval at the bottom edge.
@@ -302,6 +300,9 @@ Manage package repositories and sources. Conditional: shown only when the releva
 - Multi-select batch uninstall with checkboxes
 - Search with auto-expand
 - Async background loading via `brew info --json=v2`
+
+**Available Updates section (both platforms):**
+At the top of the APT Source Manager / Homebrew page, an "Available Updates" section displays outdated packages in a 3-column tree widget (Source, Package, Version). A "Check Now" button triggers an on-demand refresh. Data comes from hourly background checks via `QtConcurrent::run()` in DataRefreshService (`mUpdateTimer`, 1h interval). macOS: `softwareupdate -l` + `brew outdated`. Linux: apt/dnf/pacman/zypper/snap/flatpak. Tray notification when update count goes from 0 to >0 (toggleable in Settings). The sidebar Homebrew/APT button shows an updates badge — full count when the sidebar is expanded, a colored dot (using `@updatesColor` theme token) when collapsed.
 
 ### 12. Docker
 
@@ -673,7 +674,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 
 ### Navigation
 
-The sidebar is **collapsible**, organized into three labelled groups — **MONITOR**, **MANAGE**, and **SYSTEM** — matching the logical grouping of the 14 pages. When collapsed, it shrinks to a 64 px icon-rail showing only page icons plus section indicator dots; the collapse and expand transitions use a smooth width animation. The sidebar can be toggled with the **Ctrl+B** keyboard shortcut or the collapse button at the top of the panel. The sidebar header displays a **gradient logo** (full wordmark when expanded, lettermark when collapsed) above a **separator line**, with a **version label** below. Active page badges use a cleaner dot indicator in collapsed mode.
+The sidebar is **collapsible**, organized into three labelled groups — **MONITOR**, **MANAGE**, and **SYSTEM** — matching the logical grouping of the 14 pages. When collapsed, it shrinks to a 64 px icon-rail showing only page icons plus section indicator dots; the collapse and expand transitions use a smooth width animation. The sidebar can be toggled with the **Ctrl+B** keyboard shortcut or the collapse button at the top of the panel. The sidebar header displays a **gradient logo** (full wordmark when expanded, lettermark when collapsed) above a **separator line**, with a **version label** below. Active page badges use a cleaner dot indicator in collapsed mode. The Homebrew/APT button displays an **updates badge** showing the pending update count when the sidebar is expanded, or a colored dot (using `@updatesColor`) when collapsed.
 
 A **Command Palette** (activated with **Ctrl+K**) provides a fuzzy-search popup for navigating directly to any page and executing common actions (e.g., "run clean", "toggle kiosk") without touching the sidebar.
 

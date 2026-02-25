@@ -159,7 +159,7 @@
 - [x] **FR-60: System update status indicator** — Dashboard card or status bar indicator showing pending OS and package updates. Linux: `apt list --upgradable` / `dnf check-update`. macOS: `softwareupdate -l` + `brew outdated`. Low-frequency check (hourly or on-demand). Optional tray alert when updates are available.
   - **Files:** New `UpdateInfo` core class with platform backends, Dashboard tile integration, Settings alert threshold
   - **Complexity:** Medium (3-4 days)
-  - **Resolved:** Added UpdateInfo class hierarchy (abstract base + macOS/Linux implementations). macOS checks `softwareupdate -l` and `brew outdated --json`. Linux checks apt/dnf/pacman/zypper/snap/flatpak. Dashboard tile shows count, source breakdown, last-checked time, trend direction, and sparkline. Hourly background check via QtConcurrent in DataRefreshService. "Check Now" quick action. Tray alert when updates go from 0 to >0. Settings checkbox to toggle notifications. Theme token `@updatesColor`.
+  - **Resolved:** Redesigned from dashboard tile to sidebar badge + APT/Homebrew page updates list. Core infrastructure intact: UpdateInfo class hierarchy (abstract base + macOS/Linux implementations), DataRefreshService hourly timer, SettingManager keys, `@updatesColor` theme token. macOS checks `softwareupdate -l` and `brew outdated --json`. Linux checks apt/dnf/pacman/zypper/snap/flatpak. Sidebar badge shows update count when expanded, colored dot when collapsed. "Available Updates" section at top of APT Source Manager / Homebrew page with 3-column tree widget (Source, Package, Version) and "Check Now" button. Tray alert when updates go from 0 to >0. Settings checkbox to toggle notifications.
 
 ## Storage & Cleaning Enhancements
 
