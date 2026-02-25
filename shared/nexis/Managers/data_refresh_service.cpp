@@ -3,6 +3,8 @@
 #include "Managers/setting_manager.h"
 #include "signal_mapper.h"
 
+#include <QtConcurrent>
+
 DataRefreshService *DataRefreshService::instance = nullptr;
 
 DataRefreshService::DataRefreshService(InfoManager *infoManager,
@@ -15,12 +17,15 @@ DataRefreshService::DataRefreshService(InfoManager *infoManager,
       mMediumTimer(new QTimer(this)),
       mSlowTimer(new QTimer(this)),
       mProcessTimer(new QTimer(this)),
-      mPaused(false)
+      mUpdateTimer(new QTimer(this)),
+      mPaused(false),
+      mUpdateCheckRunning(false)
 {
     connect(mFastTimer, &QTimer::timeout, this, &DataRefreshService::onFastTick);
     connect(mMediumTimer, &QTimer::timeout, this, &DataRefreshService::onMediumTick);
     connect(mSlowTimer, &QTimer::timeout, this, &DataRefreshService::onSlowTick);
     connect(mProcessTimer, &QTimer::timeout, this, &DataRefreshService::onProcessTick);
+    connect(mUpdateTimer, &QTimer::timeout, this, &DataRefreshService::onUpdateTick);
 
     connect(SignalMapper::ins(), &SignalMapper::sigAppVisibilityChanged,
             this, [this](bool visible) {
@@ -51,6 +56,11 @@ void DataRefreshService::start()
     mMediumTimer->start(5000);
     mSlowTimer->start(30000);
     mProcessTimer->start(1000);
+
+    if (im->hasUpdateSources()) {
+        onUpdateTick();
+        mUpdateTimer->start(3600000);
+    }
 }
 
 void DataRefreshService::pause()
@@ -67,6 +77,7 @@ void DataRefreshService::pause()
     mMediumTimer->stop();
     mSlowTimer->stop();
     mProcessTimer->stop();
+    mUpdateTimer->stop();
 }
 
 void DataRefreshService::resume()
@@ -80,11 +91,14 @@ void DataRefreshService::resume()
     onFastTick();
     onMediumTick();
     // Skip onSlowTick — smartctl is expensive; let the 30s timer handle it
+    // Skip onUpdateTick — too slow; let the hourly timer handle it
 
     mFastTimer->start();
     mMediumTimer->start();
     mSlowTimer->start();
     mProcessTimer->start();
+    if (im->hasUpdateSources())
+        mUpdateTimer->start();
 }
 
 bool DataRefreshService::isPaused() const
@@ -95,6 +109,11 @@ bool DataRefreshService::isPaused() const
 void DataRefreshService::setProcessRefreshInterval(int ms)
 {
     mProcessTimer->setInterval(ms);
+}
+
+void DataRefreshService::triggerUpdateCheck()
+{
+    onUpdateTick();
 }
 
 void DataRefreshService::onFastTick()
@@ -166,4 +185,19 @@ void DataRefreshService::onProcessTick()
 {
     im->updateProcesses();
     emit processesUpdated(im->getProcesses(), im->getUserName());
+}
+
+void DataRefreshService::onUpdateTick()
+{
+    if (mUpdateCheckRunning || !im->hasUpdateSources())
+        return;
+
+    mUpdateCheckRunning = true;
+    QtConcurrent::run([this]() {
+        UpdateCheckResult result = im->checkForSystemUpdates();
+        QMetaObject::invokeMethod(this, [this, result]() {
+            mUpdateCheckRunning = false;
+            emit systemUpdatesChecked(result);
+        }, Qt::QueuedConnection);
+    });
 }

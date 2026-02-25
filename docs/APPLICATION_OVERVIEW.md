@@ -111,6 +111,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - **Temperature** — Selectable sensor via gear icon menu (2+ sensors) with sensor name subtitle, sparkline history (1s refresh; hidden if no sensors)
 - **Fans** — Fan RPM with selectable sensor via gear icon menu (2+ fans), percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`), dedicated `fanUpdated` signal (1s refresh; hidden if no fans detected)
 - **Battery** — Charge level percentage (5s refresh; hidden if no battery)
+- **Updates** — Pending OS and package update count with source breakdown subtitle (e.g., "3 brew, 2 system"), last-checked timestamp, trend direction, and sparkline history. macOS: `softwareupdate -l` + `brew outdated`. Linux: apt/dnf/pacman/zypper/snap/flatpak. Hourly background check via `QtConcurrent::run()` in DataRefreshService (`mUpdateTimer`, 1h interval). "Check Now" quick action for on-demand refresh. Tray notification when count goes from 0 to >0 (toggleable in Settings). Green accent (`@updatesColor`). Hidden if no package managers detected.
 
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
 
@@ -734,7 +735,7 @@ emit SignalMapper::ins()->sigChangedAppTheme()  ← Global event
 
 ### Refresh Timing
 
-All periodic polling is centralized in `DataRefreshService`, which owns 4 QTimers and emits typed data signals. Pages subscribe as reactive consumers — no page owns a QTimer.
+All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimers and emits typed data signals. Pages subscribe as reactive consumers — no page owns a QTimer.
 
 | Data | Refresh Rate | Timer Tier | Signal |
 |------|-------------|------------|--------|
@@ -742,6 +743,7 @@ All periodic polling is centralized in `DataRefreshService`, which owns 4 QTimer
 | Disk usage | 5 seconds | Medium (mMediumTimer) | `diskUsageUpdated` |
 | Disk health (SMART) | 30 seconds | Slow (mSlowTimer) | `diskHealthUpdated` |
 | Processes | 1–10 seconds | Configurable (mProcessTimer) | `processesUpdated` |
+| System updates | 1 hour | Update (mUpdateTimer) | `systemUpdatesChecked` |
 | Services, packages | On demand | — | Manual refresh / page navigation |
 | Hardware info | Once | — | Page construction |
 

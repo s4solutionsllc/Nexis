@@ -170,6 +170,12 @@ void SettingsPage::init()
         ui->checkDiskHealthAlert->hide();
     }
 
+    // system update alert (hide if no package managers detected)
+    ui->checkUpdateAlert->setChecked(mSettingManager->getUpdateAlertEnabled());
+    if (!mInfoManager->hasUpdateSources()) {
+        ui->checkUpdateAlert->hide();
+    }
+
     // disk analyzer preference
     initDiskAnalyzerCombo();
 
@@ -345,6 +351,11 @@ void SettingsPage::on_txtDiskAnalyzerCustomPath_editingFinished()
 void SettingsPage::on_checkDiskHealthAlert_clicked(bool checked)
 {
     mSettingManager->setDiskHealthAlertEnabled(checked);
+}
+
+void SettingsPage::on_checkUpdateAlert_clicked(bool checked)
+{
+    mSettingManager->setUpdateAlertEnabled(checked);
 }
 
 void SettingsPage::initScheduledCleaning()

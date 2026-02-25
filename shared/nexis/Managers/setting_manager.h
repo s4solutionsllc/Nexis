@@ -34,6 +34,9 @@ namespace SettingKeys {
     const QString TrayIconStyle("TrayIconStyle");
     const QString DashboardLayout("DashboardLayout");
     const QString MinimizeToTray("MinimizeToTray");
+    const QString UpdateAlertEnabled("UpdateAlertEnabled");
+    const QString UpdateCheckIntervalMinutes("UpdateCheckIntervalMinutes");
+    const QString UpdateLastCount("UpdateLastCount");
 }
 
 class SettingManager
@@ -130,6 +133,15 @@ public:
 
     void setMinimizeToTray(bool value);
     bool getMinimizeToTray() const;
+
+    void setUpdateAlertEnabled(bool value);
+    bool getUpdateAlertEnabled() const;
+
+    void setUpdateCheckIntervalMinutes(int value);
+    int getUpdateCheckIntervalMinutes() const;
+
+    void setUpdateLastCount(int value);
+    int getUpdateLastCount() const;
 
 private:
     static SettingManager *instance;

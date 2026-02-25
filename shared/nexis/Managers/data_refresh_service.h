@@ -11,6 +11,7 @@
 #include <Info/battery_info.h>
 #include <Info/disk_health_info.h>
 #include <Info/process.h>
+#include <Info/update_info.h>
 
 class InfoManager;
 class SettingManager;
@@ -27,6 +28,7 @@ public:
     void resume();
     bool isPaused() const;
     void setProcessRefreshInterval(int ms);
+    void triggerUpdateCheck();
 
 signals:
     void cpuUpdated(QList<int> percents, double clockGHz, QList<double> loadAvgs);
@@ -40,12 +42,14 @@ signals:
     void diskUsageUpdated(QList<Disk> disks);
     void diskHealthUpdated(QList<DriveHealth> drives);
     void processesUpdated(QList<Process> processes, QString userName);
+    void systemUpdatesChecked(UpdateCheckResult result);
 
 private slots:
     void onFastTick();
     void onMediumTick();
     void onSlowTick();
     void onProcessTick();
+    void onUpdateTick();
 
 private:
     explicit DataRefreshService(InfoManager *infoManager = nullptr,
@@ -61,8 +65,10 @@ private:
     QTimer *mMediumTimer;
     QTimer *mSlowTimer;
     QTimer *mProcessTimer;
+    QTimer *mUpdateTimer;
 
     bool mPaused;
+    bool mUpdateCheckRunning;
 };
 
 #endif // DATA_REFRESH_SERVICE_H

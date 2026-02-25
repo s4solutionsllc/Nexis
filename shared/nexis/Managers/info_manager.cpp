@@ -12,6 +12,7 @@
 #include <Info/gpu_info_macos.h>
 #include <Info/battery_info_macos.h>
 #include <Info/disk_health_info_macos.h>
+#include <Info/update_info_macos.h>
 #else
 #include <Info/cpu_info_linux.h>
 #include <Info/disk_info_linux.h>
@@ -24,6 +25,7 @@
 #include <Info/gpu_info_linux.h>
 #include <Info/battery_info_linux.h>
 #include <Info/disk_health_info_linux.h>
+#include <Info/update_info_linux.h>
 #endif
 
 InfoManager *InfoManager::instance = nullptr;
@@ -42,6 +44,7 @@ InfoManager::InfoManager()
     gi  = std::make_unique<GpuInfoMacOS>();
     bi  = std::make_unique<BatteryInfoMacOS>();
     dhi = std::make_unique<DiskHealthInfoMacOS>();
+    upd = std::make_unique<UpdateInfoMacOS>();
 #else
     ci  = std::make_unique<CpuInfoLinux>();
     di  = std::make_unique<DiskInfoLinux>();
@@ -54,6 +57,7 @@ InfoManager::InfoManager()
     gi  = std::make_unique<GpuInfoLinux>();
     bi  = std::make_unique<BatteryInfoLinux>();
     dhi = std::make_unique<DiskHealthInfoLinux>();
+    upd = std::make_unique<UpdateInfoLinux>();
 #endif
 }
 
@@ -347,4 +351,22 @@ bool InfoManager::hasDiskHealth() const
 bool InfoManager::hasSmartctl() const
 {
     return dhi->hasSmartctl();
+}
+
+/********************
+ * Update Provider
+ *******************/
+UpdateCheckResult InfoManager::checkForSystemUpdates()
+{
+    return upd->checkForUpdates();
+}
+
+QStringList InfoManager::updateSources() const
+{
+    return upd->availableSources();
+}
+
+bool InfoManager::hasUpdateSources() const
+{
+    return !upd->availableSources().isEmpty();
 }

@@ -70,6 +70,7 @@ private slots:
     void onDiskSelected(QAction *action);
     void onBatteryUpdated(const BatteryData &bat);
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
+    void onSystemUpdatesChecked(const UpdateCheckResult &result);
 
     void on_btnDownloadUpdate_clicked();
     void toggleEditMode();
@@ -97,6 +98,7 @@ private:
     MetricTileBase *mGpuTile;
     MetricTileBase *mBatteryTile;
     MetricTileBase *mFanTile;
+    MetricTileBase *mUpdatesTile;
     NetworkTile *mNetworkTile;
 
     QComboBox *mCmbGpuDevice;

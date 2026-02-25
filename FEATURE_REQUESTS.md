@@ -156,9 +156,10 @@
   - **Complexity:** High (7-10 days) — requires packet/socket-to-PID correlation, platform-specific approaches
   - **Resolved:** Per-process network columns added via `nettop` parsing (macOS). Linux shows N/A (no viable non-privileged API). Combined implementation with FR-58.
 
-- [ ] **FR-60: System update status indicator** — Dashboard card or status bar indicator showing pending OS and package updates. Linux: `apt list --upgradable` / `dnf check-update`. macOS: `softwareupdate -l` + `brew outdated`. Low-frequency check (hourly or on-demand). Optional tray alert when updates are available.
+- [x] **FR-60: System update status indicator** — Dashboard card or status bar indicator showing pending OS and package updates. Linux: `apt list --upgradable` / `dnf check-update`. macOS: `softwareupdate -l` + `brew outdated`. Low-frequency check (hourly or on-demand). Optional tray alert when updates are available.
   - **Files:** New `UpdateInfo` core class with platform backends, Dashboard tile integration, Settings alert threshold
   - **Complexity:** Medium (3-4 days)
+  - **Resolved:** Added UpdateInfo class hierarchy (abstract base + macOS/Linux implementations). macOS checks `softwareupdate -l` and `brew outdated --json`. Linux checks apt/dnf/pacman/zypper/snap/flatpak. Dashboard tile shows count, source breakdown, last-checked time, trend direction, and sparkline. Hourly background check via QtConcurrent in DataRefreshService. "Check Now" quick action. Tray alert when updates go from 0 to >0. Settings checkbox to toggle notifications. Theme token `@updatesColor`.
 
 ## Storage & Cleaning Enhancements
 

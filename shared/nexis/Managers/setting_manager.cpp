@@ -315,3 +315,33 @@ bool SettingManager::getMinimizeToTray() const
 {
     return mSettings->value(SettingKeys::MinimizeToTray, false).toBool();
 }
+
+void SettingManager::setUpdateAlertEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::UpdateAlertEnabled, value);
+}
+
+bool SettingManager::getUpdateAlertEnabled() const
+{
+    return mSettings->value(SettingKeys::UpdateAlertEnabled, true).toBool();
+}
+
+void SettingManager::setUpdateCheckIntervalMinutes(int value)
+{
+    mSettings->setValue(SettingKeys::UpdateCheckIntervalMinutes, value);
+}
+
+int SettingManager::getUpdateCheckIntervalMinutes() const
+{
+    return mSettings->value(SettingKeys::UpdateCheckIntervalMinutes, 60).toInt();
+}
+
+void SettingManager::setUpdateLastCount(int value)
+{
+    mSettings->setValue(SettingKeys::UpdateLastCount, value);
+}
+
+int SettingManager::getUpdateLastCount() const
+{
+    return mSettings->value(SettingKeys::UpdateLastCount, 0).toInt();
+}

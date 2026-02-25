@@ -15,6 +15,7 @@
 #include <Info/gpu_info.h>
 #include <Info/battery_info.h>
 #include <Info/disk_health_info.h>
+#include <Info/update_info.h>
 
 class InfoManager
 {
@@ -83,6 +84,10 @@ public:
     bool hasDiskHealth() const;
     bool hasSmartctl() const;
 
+    UpdateCheckResult checkForSystemUpdates();
+    QStringList updateSources() const;
+    bool hasUpdateSources() const;
+
 private:
     InfoManager();
 
@@ -99,6 +104,7 @@ private:
     std::unique_ptr<GpuInfo> gi;
     std::unique_ptr<BatteryInfo> bi;
     std::unique_ptr<DiskHealthInfo> dhi;
+    std::unique_ptr<UpdateInfo> upd;
 };
 
 #endif // INFO_MANAGER_H

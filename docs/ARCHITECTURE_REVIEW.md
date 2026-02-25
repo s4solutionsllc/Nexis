@@ -362,10 +362,10 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ### ~~6. Fragmented Timer/Polling~~ (Resolved)
 
-**Status:** Resolved in Phase 8 (FR-37). All per-page QTimers in Dashboard (3), Resources (2), and Processes (1) replaced with a centralized `DataRefreshService` singleton that owns 4 QTimers (1s fast, 5s medium, 30s slow, configurable process) and emits 10 typed data-change signals. Pages subscribe as reactive consumers — no monitoring page owns a QTimer.
+**Status:** Resolved in Phase 8 (FR-37). All per-page QTimers in Dashboard (3), Resources (2), and Processes (1) replaced with a centralized `DataRefreshService` singleton that owns 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and emits 12 typed data-change signals. Pages subscribe as reactive consumers — no monitoring page owns a QTimer. The `mUpdateTimer` (FR-60) uses `QtConcurrent::run()` because update checks (esp. `softwareupdate -l`) are too slow for the main thread; a `mUpdateCheckRunning` bool prevents overlapping async checks.
 
 **Fixes delivered:**
-- 6 per-page QTimers → 4 centralized QTimers (in one location)
+- 6 per-page QTimers → 5 centralized QTimers (in one location)
 - Eliminated duplicate `updateMemoryInfo()`, `updateGpuInfo()`, and `refreshDiskHealth()` calls
 - Fixed `getCpuPercents()` static-delta bug (two callers consuming same function-scope statics)
 - Added pause/resume via `sigAppVisibilityChanged(bool)` — all polling stops when minimized to tray (kiosk mode overrides)
@@ -406,11 +406,11 @@ Both checks emit `qWarning()` at runtime (visible in debug output) without alter
 
 #### ~~2A. Centralized DataRefreshService~~ (Done)
 
-**Status:** Completed in Phase 8 (FR-37). Created `DataRefreshService` singleton (`shared/nexis/Managers/data_refresh_service.{h,cpp}`) with 4 QTimers (1s fast, 5s medium, 30s slow, configurable process) and 11 typed data signals (`cpuUpdated`, `memoryUpdated`, `networkUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `fanUpdated`, `batteryUpdated`, `diskUsageUpdated`, `diskHealthUpdated`, `processesUpdated`). The `memoryUpdated` signal was updated in FR-57 to use a `MemorySnapshot` struct (replacing 4 separate `quint64` parameters) carrying wired/active/inactive/compressed/available/pressureLevel fields alongside the original used/total/swapUsed/swapTotal. The `fanUpdated` signal was added in BUG-70 (previously fan updates piggybacked on `tempUpdated`).
+**Status:** Completed in Phase 8 (FR-37). Created `DataRefreshService` singleton (`shared/nexis/Managers/data_refresh_service.{h,cpp}`) with 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and 12 typed data signals (`cpuUpdated`, `memoryUpdated`, `networkUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `fanUpdated`, `batteryUpdated`, `diskUsageUpdated`, `diskHealthUpdated`, `processesUpdated`, `systemUpdatesChecked`). The `memoryUpdated` signal was updated in FR-57 to use a `MemorySnapshot` struct (replacing 4 separate `quint64` parameters) carrying wired/active/inactive/compressed/available/pressureLevel fields alongside the original used/total/swapUsed/swapTotal. The `fanUpdated` signal was added in BUG-70 (previously fan updates piggybacked on `tempUpdated`). The `systemUpdatesChecked` signal was added in FR-60 for the hourly system update check, which runs via `QtConcurrent::run()` to avoid blocking the UI thread.
 
 Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Processes (removed 1 timer) to reactive signal subscribers. Added `sigAppVisibilityChanged(bool)` to SignalMapper for pause/resume (kiosk mode overrides). DI constructor parameter follows FR-35 pattern.
 
-**Results:** 6 per-page QTimers → 4 centralized QTimers. Zero duplicate InfoManager calls. Fixed `getCpuPercents()` static-delta bug. Battery optimization via pause on minimize.
+**Results:** 6 per-page QTimers → 5 centralized QTimers. Zero duplicate InfoManager calls. Fixed `getCpuPercents()` static-delta bug. Battery optimization via pause on minimize.
 
 **Per-process I/O delta tracking (FR-58/FR-59):** `ProcessInfoMacOS` and `ProcessInfoLinux` subclasses maintain `QHash<pid_t, QPair<quint64,quint64>>` maps for previous disk I/O counters and a `QElapsedTimer` to compute per-process byte rates (read/write per second). macOS additionally parses `nettop -x -P -L1 -J bytes_in,bytes_out` output for per-process network bandwidth. Linux reads `/proc/<pid>/io` for disk I/O; network columns show N/A on Linux (no viable non-privileged per-process network API). The 4 new fields (`diskReadRate`, `diskWriteRate`, `netDownRate`, `netUpRate`) are carried in the `Process` struct and displayed as hidden-by-default columns on the Processes page.
 

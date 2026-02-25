@@ -46,6 +46,7 @@ private slots:
     void cmbTrayIconStyleChanged(int index);
     void on_txtDiskAnalyzerCustomPath_editingFinished();
     void on_checkDiskHealthAlert_clicked(bool checked);
+    void on_checkUpdateAlert_clicked(bool checked);
 
     void onQuickSetupToggled(bool checked);
     void onThresholdToggled(bool checked);
