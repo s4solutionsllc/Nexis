@@ -72,6 +72,19 @@
         </attribute>
        </widget>
       </item>
+      <item alignment="Qt::AlignLeft">
+       <widget class="QPushButton" name="btnFlushDNS">
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="text">
+         <string>Flush DNS Cache</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">

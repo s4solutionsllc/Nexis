@@ -19,6 +19,7 @@ public:
 
 private slots:
     void on_btnHostManage_clicked();
+    void on_btnFlushDNS_clicked();
     void init();
 
 private:
