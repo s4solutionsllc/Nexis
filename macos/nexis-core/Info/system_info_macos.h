@@ -12,6 +12,7 @@ public:
     QFileInfoList getAppLogs() const override;
     QFileInfoList getAppCaches() const override;
     QFileInfoList getDevToolCaches() const override;
+    QFileInfoList getBrokenSymlinks() const override;
 
     QStringList getUserList() const override;
     QStringList getGroupList() const override;

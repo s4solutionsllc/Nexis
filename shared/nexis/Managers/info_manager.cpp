@@ -231,6 +231,11 @@ QFileInfoList InfoManager::getDevToolCaches() const
     return si->getDevToolCaches();
 }
 
+QFileInfoList InfoManager::getBrokenSymlinks() const
+{
+    return si->getBrokenSymlinks();
+}
+
 /********************
  * Process Provider
  *******************/

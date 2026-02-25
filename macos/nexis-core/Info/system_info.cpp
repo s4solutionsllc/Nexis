@@ -207,4 +207,42 @@ QFileInfoList SystemInfoMacOS::getDevToolCaches() const
     return result;
 }
 
+static void scanBrokenSymlinks(const QString &dirPath, QFileInfoList &result)
+{
+    QDir dir(dirPath);
+    if (!dir.exists())
+        return;
+
+    QDirIterator it(dirPath, QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot,
+                    QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        it.next();
+        QFileInfo fi = it.fileInfo();
+        if (fi.isSymLink() && !fi.exists())
+            result.append(fi);
+    }
+}
+
+QFileInfoList SystemInfoMacOS::getBrokenSymlinks() const
+{
+    QFileInfoList result;
+    QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+
+    scanBrokenSymlinks(home + "/.local", result);
+    scanBrokenSymlinks(home + "/bin", result);
+
+    // Scan Homebrew prefix (varies by Intel/Apple Silicon)
+    try {
+        QString brewPrefix = CommandUtil::exec("brew", {"--prefix"}).trimmed();
+        if (!brewPrefix.isEmpty()) {
+            scanBrokenSymlinks(brewPrefix + "/bin", result);
+            scanBrokenSymlinks(brewPrefix + "/lib", result);
+        }
+    } catch (...) {
+        // Homebrew not installed — skip
+    }
+
+    return result;
+}
+
 // Cross-platform getters are in shared/nexis-core/Info/system_info_shared.cpp

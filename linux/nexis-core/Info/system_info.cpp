@@ -170,4 +170,32 @@ QFileInfoList SystemInfoLinux::getDevToolCaches() const
     return result;
 }
 
+static void scanBrokenSymlinks(const QString &dirPath, QFileInfoList &result)
+{
+    QDir dir(dirPath);
+    if (!dir.exists())
+        return;
+
+    QDirIterator it(dirPath, QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot,
+                    QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        it.next();
+        QFileInfo fi = it.fileInfo();
+        if (fi.isSymLink() && !fi.exists())
+            result.append(fi);
+    }
+}
+
+QFileInfoList SystemInfoLinux::getBrokenSymlinks() const
+{
+    QFileInfoList result;
+    QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+
+    scanBrokenSymlinks(home + "/.local", result);
+    scanBrokenSymlinks(home + "/bin", result);
+    scanBrokenSymlinks("/usr/local/bin", result);
+
+    return result;
+}
+
 // Cross-platform getters are in shared/nexis-core/Info/system_info_shared.cpp

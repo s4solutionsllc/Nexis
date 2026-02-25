@@ -50,6 +50,7 @@ public:
     QFileInfoList getAppLogs() const;
     QFileInfoList getAppCaches() const;
     QFileInfoList getDevToolCaches() const;
+    QFileInfoList getBrokenSymlinks() const;
 
     void updateProcesses();
     QList<Process> getProcesses() const;
