@@ -163,11 +163,14 @@ jobs:
 
       - name: Deploy Qt frameworks into .app bundle
         run: |
-          $(brew --prefix qt@6)/bin/macdeployqt build/output/nexis.app
+          $(brew --prefix qt@6)/bin/macdeployqt build/output/nexis.app \
+            -no-strip
           # macdeployqt modifies the binary and frameworks, invalidating the
           # ad-hoc code signature. Re-sign so macOS doesn't kill the process
           # with "Code Signature Invalid" (SIGKILL) on launch.
           codesign --force --deep --sign - build/output/nexis.app
+          # Wait for codesign to fully release file handles before creating dmg
+          sleep 5
           # Now create the .dmg from the properly signed bundle
           hdiutil create -volname "Nexis" -srcfolder build/output/nexis.app \
             -ov -format UDZO build/output/nexis.dmg
