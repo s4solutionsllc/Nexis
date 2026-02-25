@@ -47,7 +47,7 @@ void APTSourceManagerPage::init()
     mUpdatesSection->hide();
 
     QVBoxLayout *updLayout = new QVBoxLayout(mUpdatesSection);
-    updLayout->setContentsMargins(0, 0, 0, 10);
+    updLayout->setContentsMargins(30, 5, 30, 10);
     updLayout->setSpacing(5);
 
     // Header row: title + check now button
