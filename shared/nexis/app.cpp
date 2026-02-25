@@ -189,7 +189,11 @@ void App::buildSidebar()
 #endif
     mSidebarLayout->addWidget(btnAptSourceManager);
 
+#ifdef Q_OS_MAC
+    btnGnomeSettings = createSidebarButton(tr("System Preferences"));
+#else
     btnGnomeSettings = createSidebarButton(tr("GNOME Settings"));
+#endif
     mSidebarLayout->addWidget(btnGnomeSettings);
 
     btnSettings = createSidebarButton(tr("Settings"));
@@ -279,7 +283,11 @@ void App::init()
 #else
     btnAptSourceManager->setText(tr("APT Repository Manager"));
 #endif
+#ifdef Q_OS_MAC
+    btnGnomeSettings->setText(tr("System Preferences"));
+#else
     btnGnomeSettings->setText(tr("GNOME Settings"));
+#endif
     btnSettings->setText(tr("Settings"));
     btnFeedback->setText(tr("Feedback"));
 
