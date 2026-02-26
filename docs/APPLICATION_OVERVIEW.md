@@ -24,7 +24,8 @@
    - [APT Repository Manager / Homebrew](#12-apt-repository-manager--homebrew)
    - [Docker](#13-docker)
    - [GNOME Settings](#14-gnome-settings)
-   - [Settings](#15-settings)
+   - [System Logs](#15-system-logs)
+   - [Settings](#16-settings)
 4. [Architecture Overview](#architecture-overview)
 5. [Core Library](#core-library)
 6. [Manager Layer](#manager-layer)
@@ -45,7 +46,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 
 **By the numbers:**
 - ~25,000 lines of C++ code across 255 source files
-- 15 application pages
+- 16 application pages
 - 14 system info providers (12 Info + 2 platform-specific: StartupInfo, FileSearchTool)
 - 7 tool classes (package management, services, Docker, APT sources, GNOME settings, file search, startup info)
 - 8 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService, DuplicateFinderService)
@@ -63,7 +64,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 Nexis runs natively on **Linux** and **macOS** (Intel + Apple Silicon). The codebase uses compile-time platform selection: shared code in `shared/`, with platform-specific implementations in `linux/` and `macos/`.
 
 ### Always-visible pages (both platforms)
-Dashboard, Hardware Info, Startup Apps, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Helpers, Settings
+Dashboard, Hardware Info, Startup Apps, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Helpers, System Logs, Settings
 
 ### Conditional pages
 | Page | Condition | Linux | macOS |
@@ -112,6 +113,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - **Temperature** — Selectable sensor via gear icon menu (2+ sensors) with sensor name subtitle, sparkline history (1s refresh; hidden if no sensors)
 - **Fans** — Fan RPM with selectable sensor via gear icon menu (2+ fans), percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`), dedicated `fanUpdated` signal (1s refresh; hidden if no fans detected)
 - **Battery** — Charge level percentage (5s refresh; hidden if no battery)
+- **Health Score** — `HealthScoreTile` displaying a composite 0–100 system health score computed by `HealthScoreCalculator`. Aggregates six components with weighted scoring: CPU load (15%), memory usage (20%), disk space (25%), temperature (15%), battery health (10%), SMART disk health (15%). Unavailable components (no battery, no thermal sensors, no SMART) are excluded and weights redistributed proportionally. Color-coded: green (Excellent, ≥80), amber (Good/Fair, 60–79), red (Poor, <60). In Large/Hero display modes, shows per-component breakdown bars with 3-letter labels, colored fill proportional to score, and numeric values. Always visible (not conditional), hideable via edit mode like any other tile.
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
 
 **Footer status bar** — Displays app version and refresh interval at the bottom edge.
@@ -366,7 +368,27 @@ Configure GNOME desktop environment settings. Conditional: shown only when `gset
 
 Changes apply immediately via `gsettings set`. Error feedback with inline messages if setting fails. Font fields use `QFontComboBox` with live preview; monospace combo filtered to fixed-pitch families.
 
-### 15. Settings
+### 15. System Logs
+
+Filterable, searchable table of recent system logs for quick triage. Programmatic layout (no `.ui` file).
+
+**UI layout:**
+- **Filter toolbar** — Severity dropdown (All / Error+ / Warning+ / Info+), search field, refresh button
+- **Log table** — `QTableView` with columns: Timestamp, Severity, Unit/Subsystem, Message
+- **Status bar** — Entry count and time range
+
+**Platform backends** via `LogProvider` abstraction:
+- **Linux:** `journalctl --output=json --no-pager --lines=500 --reverse`
+- **macOS:** `log show --style ndjson --last 1h`
+
+**Features:**
+- Color-coded severity cells (red for Error+, yellow for Warning, theme-token-resolved colors)
+- Text search across all columns via `QSortFilterProxyModel`
+- Severity filtering re-populates from cached entries
+- Manual refresh only (no auto-polling — logs are static history)
+- Initial load: last 500 entries (Linux) or last 1 hour (macOS)
+
+### 16. Settings
 
 Configure Nexis application preferences.
 
@@ -395,11 +417,11 @@ Nexis follows a **three-tier architecture**:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    UI Pages (15)                        │
+│                    UI Pages (16)                        │
 │  Dashboard, HardwareInfo, StartupApps, SystemCleaner,   │
 │  DiskTools, Search, Services, Processes, Uninstaller,   │
 │  Resources, Helpers, AptSourceManager, GnomeSettings,   │
-│  Docker, Settings                                       │
+│  Docker, SystemLogs, Settings                           │
 ├─────────────────────────────────────────────────────────┤
 │                  Manager Layer (8)                       │
 │  InfoManager, AppManager, SettingManager, ToolManager,  │

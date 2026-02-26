@@ -208,9 +208,10 @@
   - **Files:** New Settings section or Dashboard quick action, sysfs read/write with root elevation
   - **Complexity:** Medium (3-4 days, Linux only)
 
-- [ ] **FR-71: System log viewer** — Read-only structured log viewer. Linux: `journalctl --output=json` with severity/unit/time filtering. macOS: `log show --predicate` with subsystem/level filtering. Searchable, filterable table with severity color-coding.
+- [x] **FR-71: System log viewer** — Read-only structured log viewer. Linux: `journalctl --output=json` with severity/unit/time filtering. macOS: `log show --predicate` with subsystem/level filtering. Searchable, filterable table with severity color-coding.
   - **Files:** New page, platform-specific log parsing classes
   - **Complexity:** Medium-High (5-7 days) — platform-specific log APIs, potentially large datasets need virtual scrolling
+  - **Resolved:** 0f142f9 — Added SystemLogsPage with LogProvider abstraction (Linux journalctl + macOS log show backends), severity/text filtering, color-coded table.
 
 ## Information & Reporting
 
@@ -219,9 +220,10 @@
   - **Complexity:** Low-Medium (2-3 days) — data already collected, just needs formatting + file save dialog
   - **Resolved:** 0594f6d
 
-- [ ] **FR-73: System health score** — Composite 0-100 score aggregating: disk space free %, memory pressure, SMART health, battery cycle health, pending updates, cleanable junk size. Displayed as a prominent Dashboard card. All data sources already exist in the app. Precedent: CleanMyMac's "Mac Health Score" (2025).
+- [x] **FR-73: System health score** — Composite 0-100 score aggregating: disk space free %, memory pressure, SMART health, battery cycle health, pending updates, cleanable junk size. Displayed as a prominent Dashboard card. All data sources already exist in the app. Precedent: CleanMyMac's "Mac Health Score" (2025).
   - **Files:** New scoring service, new Dashboard card widget
   - **Complexity:** Medium (4-5 days) — data sources exist, work is in scoring algorithm and UX
+  - **Resolved:** 0f142f9 — Added HealthScoreTile with HealthScoreCalculator (weighted composite of CPU/memory/disk/temp/battery/SMART). Hideable dashboard tile with breakdown bars in large mode.
 
 ## Notes
 
