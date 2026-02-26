@@ -27,6 +27,7 @@ public:
 signals:
     void progressUpdated(int stage, int current, int total, const QString &message);
     void scanFinished(const QList<DuplicateGroup> &results);
+    void scanCancelled();
 
 private:
     explicit DuplicateFinderService(QObject *parent = nullptr);

@@ -41,7 +41,10 @@ void DuplicateFinderService::scan(const QStringList &directories,
 
     mWorkerFuture = QtConcurrent::run([this, directories, minSize, globFilter]() {
         QList<DuplicateGroup> results = runPipeline(directories, minSize, globFilter);
-        emit scanFinished(results);
+        if (mCancelled.loadRelaxed())
+            emit scanCancelled();
+        else
+            emit scanFinished(results);
     });
 }
 
@@ -55,7 +58,7 @@ static QByteArray hashFilePartial(const QString &path, qint64 bytes = 4096)
     return QCryptographicHash::hash(data, QCryptographicHash::Sha256);
 }
 
-static QByteArray hashFileFull(const QString &path)
+static QByteArray hashFileFull(const QString &path, const QAtomicInt &cancelled)
 {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly))
@@ -63,6 +66,8 @@ static QByteArray hashFileFull(const QString &path)
     QCryptographicHash hasher(QCryptographicHash::Sha256);
     const qint64 chunkSize = 65536;
     while (!f.atEnd()) {
+        if (cancelled.loadRelaxed())
+            return {};
         hasher.addData(f.read(chunkSize));
     }
     f.close();
@@ -96,6 +101,9 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
 
             it.next();
             QFileInfo info = it.fileInfo();
+
+            if (info.isSymLink())
+                continue;
 
             if (info.size() < minSize)
                 continue;
@@ -186,7 +194,7 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
             if (mCancelled.loadRelaxed())
                 return {};
 
-            QByteArray fullHash = hashFileFull(fi.absoluteFilePath());
+            QByteArray fullHash = hashFileFull(fi.absoluteFilePath(), mCancelled);
             if (!fullHash.isEmpty())
                 fullHashGroups[fullHash].append(fi);
 
