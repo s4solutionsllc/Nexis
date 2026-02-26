@@ -27,6 +27,7 @@
 #include "Pages/DiskTools/disk_tools_page.h"
 #include "Pages/Helpers/helpers_page.h"
 #include "Pages/HardwareInfo/hardware_info_page.h"
+#include "Pages/SystemLogs/system_logs_page.h"
 #include "Pages/Docker/docker_page.h"
 #include "feedback.h"
 #include "command_palette.h"
@@ -96,6 +97,7 @@ private:
     GnomeSettingsPage *gnomeSettingsPage;
     SettingsPage *settingsPage;
     HelpersPage *helpersPage;
+    SystemLogsPage *systemLogsPage;
 
     QSharedPointer<Feedback> feedback;
 
@@ -134,6 +136,7 @@ private:
     QPushButton *btnUninstaller;
     QPushButton *btnDocker;
     QPushButton *btnHelpers;
+    QPushButton *btnSystemLogs;
     QPushButton *btnAptSourceManager;
     QPushButton *btnGnomeSettings;
     QPushButton *btnSettings;

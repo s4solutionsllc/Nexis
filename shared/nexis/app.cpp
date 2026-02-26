@@ -186,6 +186,9 @@ void App::buildSidebar()
     btnHelpers = createSidebarButton(tr("Helpers"));
     mSidebarLayout->addWidget(btnHelpers);
 
+    btnSystemLogs = createSidebarButton(tr("System Logs"));
+    mSidebarLayout->addWidget(btnSystemLogs);
+
 #ifdef Q_OS_MAC
     btnAptSourceManager = createSidebarButton(tr("Homebrew"));
 #else
@@ -269,6 +272,7 @@ void App::init()
     servicesPage = new ServicesPage(mSlidingStacked);
     processPage = new ProcessesPage(mSlidingStacked);
     helpersPage = new HelpersPage(mSlidingStacked);
+    systemLogsPage = new SystemLogsPage(mSlidingStacked);
     uninstallerPage = new UninstallerPage(mSlidingStacked);
     resourcesPage = new ResourcesPage(mSlidingStacked);
     settingsPage = new SettingsPage(mSlidingStacked);
@@ -292,6 +296,7 @@ void App::init()
 #endif
     btnDocker->setText(tr("Docker"));
     btnHelpers->setText(tr("Helpers"));
+    btnSystemLogs->setText(tr("System Logs"));
 #ifdef Q_OS_MAC
     btnAptSourceManager->setText(tr("Homebrew"));
 #else
@@ -303,12 +308,12 @@ void App::init()
 
     mListPages = {
         dashboardPage, hardwareInfoPage, resourcesPage, systemCleanerPage, diskToolsPage, searchPage,
-        processPage, servicesPage, startupAppsPage, uninstallerPage, helpersPage, settingsPage
+        processPage, servicesPage, startupAppsPage, uninstallerPage, helpersPage, systemLogsPage, settingsPage
     };
 
     mListSidebarButtons = {
         btnDash, btnHardwareInfo, btnResources, btnSystemCleaner, btnDiskTools, btnSearch,
-        btnProcesses, btnServices, btnStartupApps, btnUninstaller, btnHelpers, btnSettings
+        btnProcesses, btnServices, btnStartupApps, btnUninstaller, btnHelpers, btnSystemLogs, btnSettings
     };
 
     // APT SOURCE MANAGER
@@ -392,6 +397,7 @@ void App::init()
     connect(btnStartupApps, &QPushButton::clicked, this, [this]() { pageClick(startupAppsPage); });
     connect(btnUninstaller, &QPushButton::clicked, this, [this]() { pageClick(uninstallerPage); });
     connect(btnHelpers, &QPushButton::clicked, this, [this]() { pageClick(helpersPage); });
+    connect(btnSystemLogs, &QPushButton::clicked, this, [this]() { pageClick(systemLogsPage); });
     connect(btnSettings, &QPushButton::clicked, this, [this]() { pageClick(settingsPage); });
     connect(btnFeedback, &QPushButton::clicked, this, [this]() {
         if (feedback.isNull())
@@ -680,6 +686,7 @@ void App::updateSidebarIcons()
     setIcon(btnUninstaller,      "uninstaller.svg");
     setIcon(btnDocker,           "docker.svg");
     setIcon(btnHelpers,          "helpers.svg");
+    setIcon(btnSystemLogs,       "system-logs.svg");
     setIcon(btnAptSourceManager, "ppa-manager.svg");
     setIcon(btnGnomeSettings,    "gnome-settings.svg");
     setIcon(btnSettings,         "settings.svg");
