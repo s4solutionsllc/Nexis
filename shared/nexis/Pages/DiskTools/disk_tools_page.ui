@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DiskToolsPage</class>
+ <widget class="QWidget" name="DiskToolsPage">
+  <property name="geometry">
+   <rect><x>0</x><y>0</y><width>1025</width><height>736</height></rect>
+  </property>
+  <property name="windowTitle">
+   <string>Disk Tools</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing"><number>8</number></property>
+   <property name="leftMargin"><number>15</number></property>
+   <property name="topMargin"><number>10</number></property>
+   <property name="rightMargin"><number>15</number></property>
+   <property name="bottomMargin"><number>15</number></property>
+   <item>
+    <layout class="QHBoxLayout" name="modeBarLayout">
+     <property name="spacing"><number>0</number></property>
+     <item>
+      <widget class="QPushButton" name="btnModeLargeOld">
+       <property name="text"><string>Large &amp; Old Files</string></property>
+       <property name="checkable"><bool>true</bool></property>
+       <property name="checked"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnModeDuplicates">
+       <property name="text"><string>Duplicate Finder</string></property>
+       <property name="checkable"><bool>true</bool></property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="modeBarSpacer">
+       <property name="orientation"><enum>Qt::Horizontal</enum></property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QStackedWidget" name="stackedModes">
+     <property name="currentIndex"><number>0</number></property>
+     <widget class="QWidget" name="pageLargeOld"/>
+     <widget class="QWidget" name="pageDuplicates"/>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+</ui>

@@ -24,6 +24,7 @@
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
+#include "Pages/DiskTools/disk_tools_page.h"
 #include "Pages/Helpers/helpers_page.h"
 #include "Pages/HardwareInfo/hardware_info_page.h"
 #include "Pages/Docker/docker_page.h"
@@ -84,6 +85,7 @@ private:
     HardwareInfoPage *hardwareInfoPage;
     StartupAppsPage *startupAppsPage;
     SystemCleanerPage *systemCleanerPage;
+    DiskToolsPage *diskToolsPage;
     SearchPage *searchPage;
     ServicesPage *servicesPage;
     ProcessesPage *processPage;
@@ -124,6 +126,7 @@ private:
     QPushButton *btnHardwareInfo;
     QPushButton *btnResources;
     QPushButton *btnSystemCleaner;
+    QPushButton *btnDiskTools;
     QPushButton *btnSearch;
     QPushButton *btnProcesses;
     QPushButton *btnServices;

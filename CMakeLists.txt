@@ -269,6 +269,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/byte_tree_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.cpp"
 )
 
@@ -336,6 +337,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/byte_tree_widget.h"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.h"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.h"
+  "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
 )
 
@@ -408,6 +410,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
   "${GUI_SHARED_DIR}/Pages/Settings"
   "${GUI_SHARED_DIR}/Pages/StartupApps"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  "${GUI_SHARED_DIR}/Pages/DiskTools"
   "${GUI_SHARED_DIR}/Pages/Uninstaller"
   "${GUI_SHARED_DIR}/Pages/Helpers"
   "${GUI_SHARED_DIR}/Pages/AptSourceManager"
@@ -445,6 +448,7 @@ target_include_directories(nexis-gui PUBLIC
   "${GUI_SHARED_DIR}/Pages/Settings"
   "${GUI_SHARED_DIR}/Pages/StartupApps"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  "${GUI_SHARED_DIR}/Pages/DiskTools"
   "${GUI_SHARED_DIR}/Pages/Uninstaller"
   "${GUI_SHARED_DIR}/Pages/Helpers"
   "${GUI_SHARED_DIR}/Pages/AptSourceManager"

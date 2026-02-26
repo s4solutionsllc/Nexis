@@ -146,6 +146,9 @@ void App::buildSidebar()
     btnSystemCleaner = createSidebarButton(tr("System Cleaner"));
     mSidebarLayout->addWidget(btnSystemCleaner);
 
+    btnDiskTools = createSidebarButton(tr("Disk Tools"));
+    mSidebarLayout->addWidget(btnDiskTools);
+
     btnSearch = createSidebarButton(tr("Search"));
     mSidebarLayout->addWidget(btnSearch);
 
@@ -262,6 +265,7 @@ void App::init()
     startupAppsPage = new StartupAppsPage(mSlidingStacked);
     searchPage = new SearchPage(mSlidingStacked);
     systemCleanerPage = new SystemCleanerPage(mSlidingStacked);
+    diskToolsPage = new DiskToolsPage(mSlidingStacked);
     servicesPage = new ServicesPage(mSlidingStacked);
     processPage = new ProcessesPage(mSlidingStacked);
     helpersPage = new HelpersPage(mSlidingStacked);
@@ -276,6 +280,7 @@ void App::init()
     btnHardwareInfo->setText(tr("Hardware Info"));
     btnResources->setText(tr("Resources"));
     btnSystemCleaner->setText(tr("System Cleaner"));
+    btnDiskTools->setText(tr("Disk Tools"));
     btnSearch->setText(tr("Search"));
     btnProcesses->setText(tr("Processes"));
     btnServices->setText(tr("Services"));
@@ -297,12 +302,12 @@ void App::init()
     btnFeedback->setText(tr("Feedback"));
 
     mListPages = {
-        dashboardPage, hardwareInfoPage, resourcesPage, systemCleanerPage, searchPage,
+        dashboardPage, hardwareInfoPage, resourcesPage, systemCleanerPage, diskToolsPage, searchPage,
         processPage, servicesPage, startupAppsPage, uninstallerPage, helpersPage, settingsPage
     };
 
     mListSidebarButtons = {
-        btnDash, btnHardwareInfo, btnResources, btnSystemCleaner, btnSearch,
+        btnDash, btnHardwareInfo, btnResources, btnSystemCleaner, btnDiskTools, btnSearch,
         btnProcesses, btnServices, btnStartupApps, btnUninstaller, btnHelpers, btnSettings
     };
 
@@ -380,6 +385,7 @@ void App::init()
     connect(btnHardwareInfo, &QPushButton::clicked, this, [this]() { pageClick(hardwareInfoPage); });
     connect(btnResources, &QPushButton::clicked, this, [this]() { pageClick(resourcesPage); });
     connect(btnSystemCleaner, &QPushButton::clicked, this, [this]() { pageClick(systemCleanerPage); });
+    connect(btnDiskTools, &QPushButton::clicked, this, [this]() { pageClick(diskToolsPage); });
     connect(btnSearch, &QPushButton::clicked, this, [this]() { pageClick(searchPage); });
     connect(btnProcesses, &QPushButton::clicked, this, [this]() { pageClick(processPage); });
     connect(btnServices, &QPushButton::clicked, this, [this]() { pageClick(servicesPage); });
@@ -666,6 +672,7 @@ void App::updateSidebarIcons()
     setIcon(btnHardwareInfo,     "hardware-info.svg");
     setIcon(btnResources,        "resources.svg");
     setIcon(btnSystemCleaner,    "cleaner.svg");
+    setIcon(btnDiskTools,        "disk-tools.svg");
     setIcon(btnSearch,           "search.svg");
     setIcon(btnProcesses,        "process.svg");
     setIcon(btnServices,         "services.svg");
