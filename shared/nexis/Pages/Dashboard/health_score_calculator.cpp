@@ -84,9 +84,8 @@ int HealthScoreCalculator::compositeScore() const
 QString HealthScoreCalculator::scoreLabel() const
 {
     int score = compositeScore();
-    if (score >= 80) return QStringLiteral("Excellent");
-    if (score >= 65) return QStringLiteral("Good");
-    if (score >= 50) return QStringLiteral("Fair");
+    if (score >= 75) return QStringLiteral("Excellent");
+    if (score >= 40) return QStringLiteral("Good");
     return QStringLiteral("Poor");
 }
 

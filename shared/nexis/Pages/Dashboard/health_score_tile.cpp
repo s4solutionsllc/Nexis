@@ -123,9 +123,9 @@ void HealthScoreTile::recalculate()
         return;
 
     QString colorHex;
-    if (score >= 80)
+    if (score >= 75)
         colorHex = sv->value("@successColor").toString();
-    else if (score >= 60)
+    else if (score >= 40)
         colorHex = sv->value("@warningColor").toString();
     else
         colorHex = sv->value("@destructiveColor").toString();
