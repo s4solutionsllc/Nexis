@@ -19,7 +19,7 @@
      <property name="spacing"><number>0</number></property>
      <item>
       <widget class="QPushButton" name="btnModeLargeOld">
-       <property name="text"><string>Large &amp; Old Files</string></property>
+       <property name="text"><string>Large &amp;&amp; Old Files</string></property>
        <property name="checkable"><bool>true</bool></property>
        <property name="checked"><bool>true</bool></property>
       </widget>
