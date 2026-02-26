@@ -168,11 +168,11 @@
   - **Complexity:** Low (1-2 days) — fits the existing CleanerService scan/clean pattern
   - **Resolved:** 183555e–5e1c79c (SystemInfo hierarchy, platform scanners, CleanerService, SVG icon, UI wiring)
 
-- [ ] **FR-62: Large and old file scanner** — Built-in "find files larger than X MB not accessed in Y days" scanner with a review-and-delete UI. Replaces the current "launch external disk analyzer" approach for quick triage. Integrates with existing FileSearchService infrastructure.
+- [x] **FR-62: Large and old file scanner** — Built-in "find files larger than X MB not accessed in Y days" scanner with a review-and-delete UI. Replaces the current "launch external disk analyzer" approach for quick triage. **Resolved:** Added as "Large & Old Files" mode in new Disk Tools page. QDirIterator-based recursive scan with configurable size/age thresholds and filter modes (Either/Large only/Old only). Results displayed in sortable QTreeWidget with checkboxes and Move to Trash via QFile::moveToTrash(). Cancellable via QAtomicInt. Thread-safe signal-based result delivery.
   - **Files:** `FileSearchService` extension, new results UI with size/date filtering (Search page enhancement or new section)
   - **Complexity:** Medium (4-5 days)
 
-- [ ] **FR-63: Duplicate file finder** — Scan user-selected directories for duplicate files using size pre-filter + hash comparison (SHA-256). Results grouped by duplicate set with selective deletion. The single most-requested feature in the system-cleaner category across competitors (CleanMyMac, Czkawka, dupeGuru).
+- [x] **FR-63: Duplicate file finder** — Scan user-selected directories for duplicate files using size pre-filter + hash comparison (SHA-256). Results grouped by duplicate set with selective deletion. **Resolved:** Added as "Duplicate Finder" mode in new Disk Tools page. DuplicateFinderService implements 3-stage pipeline (size grouping → partial 4KB SHA-256 → full SHA-256). Results displayed in grouped QTreeWidget with first file unchecked (kept) and duplicates pre-checked. Progress bar with stage-by-stage status. Cancellable scan. Move to Trash with confirmation dialog.
   - **Files:** New `DuplicateFinderService`, new page or Search page mode
   - **Complexity:** High (7-10 days) — hash computation, progress UI, large file handling, review UX
 

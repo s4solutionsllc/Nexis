@@ -14,16 +14,17 @@
    - [Hardware Info](#2-hardware-info)
    - [Startup Apps](#3-startup-apps)
    - [System Cleaner](#4-system-cleaner)
-   - [Search](#5-search)
-   - [Services](#6-services)
-   - [Processes](#7-processes)
-   - [Uninstaller](#8-uninstaller)
-   - [Resources](#9-resources)
-   - [Helpers](#10-helpers)
-   - [APT Repository Manager / Homebrew](#11-apt-repository-manager--homebrew)
-   - [Docker](#12-docker)
-   - [GNOME Settings](#13-gnome-settings)
-   - [Settings](#14-settings)
+   - [Disk Tools](#5-disk-tools)
+   - [Search](#6-search)
+   - [Services](#7-services)
+   - [Processes](#8-processes)
+   - [Uninstaller](#9-uninstaller)
+   - [Resources](#10-resources)
+   - [Helpers](#11-helpers)
+   - [APT Repository Manager / Homebrew](#12-apt-repository-manager--homebrew)
+   - [Docker](#13-docker)
+   - [GNOME Settings](#14-gnome-settings)
+   - [Settings](#15-settings)
 4. [Architecture Overview](#architecture-overview)
 5. [Core Library](#core-library)
 6. [Manager Layer](#manager-layer)
@@ -44,10 +45,10 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 
 **By the numbers:**
 - ~25,000 lines of C++ code across 255 source files
-- 14 application pages
+- 15 application pages
 - 14 system info providers (12 Info + 2 platform-specific: StartupInfo, FileSearchTool)
 - 7 tool classes (package management, services, Docker, APT sources, GNOME settings, file search, startup info)
-- 7 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService)
+- 8 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService, DuplicateFinderService)
 - 3 utility classes
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
@@ -62,7 +63,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 Nexis runs natively on **Linux** and **macOS** (Intel + Apple Silicon). The codebase uses compile-time platform selection: shared code in `shared/`, with platform-specific implementations in `linux/` and `macos/`.
 
 ### Always-visible pages (both platforms)
-Dashboard, Hardware Info, Startup Apps, System Cleaner, Search, Services, Processes, Uninstaller, Resources, Helpers, Settings
+Dashboard, Hardware Info, Startup Apps, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Helpers, Settings
 
 ### Conditional pages
 | Page | Condition | Linux | macOS |
@@ -196,7 +197,33 @@ Scan and remove system junk files across 8 categories.
 - Frequencies: Daily, Every N Days, Weekly, Monthly
 - Category selection, minimum file age filter, threshold alerts
 
-### 5. Search
+### 5. Disk Tools
+
+Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar section.
+
+**Mode 1 — Large & Old Files (FR-62):**
+- Directory picker with smart defaults (Home, Downloads, Documents)
+- Configurable filters: size threshold (MB/GB), age threshold (days/months/years)
+- Three match modes: Either (large OR old), Large only, Old only
+- Recursive QDirIterator scan in background thread with cancellation support
+- Results in sortable QTreeWidget with columns: Name, Path, Size, Last Accessed, Last Modified
+- Checkboxes for selective deletion via QFile::moveToTrash()
+
+**Mode 2 — Duplicate Finder (FR-63):**
+- Shared directory picker (synced with Large & Old mode)
+- Configurable minimum file size (KB/MB/GB) and optional glob pattern filter
+- DuplicateFinderService: 3-stage pipeline (size grouping → partial 4KB SHA-256 → full SHA-256)
+- Progress bar with stage-by-stage status messages
+- Results in grouped QTreeWidget: parent = duplicate group (wasted space), children = files
+- First file in each group unchecked (kept), remaining pre-checked for deletion
+- Cancellable scan with Cancel button
+
+**Shared features:**
+- Segmented control (QButtonGroup + QStackedWidget) for mode switching
+- Confirmation dialog before trashing files
+- Selection tracking label showing count and total size of checked files
+
+### 6. Search
 
 Advanced file search across the filesystem.
 
@@ -210,7 +237,7 @@ Advanced file search across the filesystem.
 - Double-click to open files in default application
 - Right-click context menu: open, open location, copy path
 
-### 6. Services
+### 7. Services
 
 Manage system services (daemons).
 
@@ -220,7 +247,7 @@ Manage system services (daemons).
 - Linux: `systemctl` for systemd services
 - macOS: `launchctl` for launchd services
 
-### 7. Processes
+### 8. Processes
 
 View and manage running processes.
 
@@ -235,7 +262,7 @@ View and manage running processes.
 - Right-click context menu with copy PID
 - Column visibility toggles via header menu
 
-### 8. Uninstaller
+### 9. Uninstaller
 
 Uninstall applications and packages. Labeled "Applications" on macOS.
 
@@ -250,7 +277,7 @@ Uninstall applications and packages. Labeled "Applications" on macOS.
 - Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`
 - macOS: `brew uninstall` for Homebrew packages; Finder AppleScript Trash for `.app` bundles
 
-### 9. Resources
+### 10. Resources
 
 Historical time-series charts for system resource usage.
 
@@ -267,7 +294,7 @@ Historical time-series charts for system resource usage.
 - Quick-launch card for platform-appropriate disk analyzer tools
 - Configurable preference in Settings (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper; or custom path)
 
-### 10. Helpers
+### 11. Helpers
 
 Miscellaneous utility tools.
 
@@ -287,7 +314,7 @@ Miscellaneous utility tools.
 - Error feedback: auth cancellation and write failures shown via `QMessageBox`; success shown in status label
 - Lazy-loaded: file parsed only when user navigates to the page
 
-### 11. APT Repository Manager / Homebrew
+### 12. APT Repository Manager / Homebrew
 
 Manage package repositories and sources. Conditional: shown only when the relevant package manager is detected.
 
@@ -310,7 +337,7 @@ Manage package repositories and sources. Conditional: shown only when the releva
 **Available Updates section (both platforms):**
 At the top of the APT Source Manager / Homebrew page, an "Available Updates" section displays outdated packages in a 3-column tree widget (Source, Package, Version). A "Check Now" button triggers an on-demand refresh. Data comes from hourly background checks via `QtConcurrent::run()` in DataRefreshService (`mUpdateTimer`, 1h interval). macOS: `softwareupdate -l` + `brew outdated`. Linux: apt/dnf/pacman/zypper/snap/flatpak. Tray notification when update count goes from 0 to >0 (toggleable in Settings). The sidebar Homebrew/APT button shows an updates badge — full count when the sidebar is expanded, a colored dot (using `@updatesColor` theme token) when collapsed.
 
-### 12. Docker
+### 13. Docker
 
 Manage Docker images, containers, and volumes. Conditional: shown only when Docker CLI is installed.
 
@@ -327,7 +354,7 @@ Manage Docker images, containers, and volumes. Conditional: shown only when Dock
 - Lazy-loaded tabs (data fetched only when tab activated)
 - Cross-platform shared implementation
 
-### 13. GNOME Settings
+### 14. GNOME Settings
 
 Configure GNOME desktop environment settings. Conditional: shown only when `gsettings` is available (Linux/GNOME only).
 
@@ -339,7 +366,7 @@ Configure GNOME desktop environment settings. Conditional: shown only when `gset
 
 Changes apply immediately via `gsettings set`. Error feedback with inline messages if setting fails. Font fields use `QFontComboBox` with live preview; monospace combo filtered to fixed-pitch families.
 
-### 14. Settings
+### 15. Settings
 
 Configure Nexis application preferences.
 
@@ -368,15 +395,16 @@ Nexis follows a **three-tier architecture**:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    UI Pages (14)                        │
+│                    UI Pages (15)                        │
 │  Dashboard, HardwareInfo, StartupApps, SystemCleaner,   │
-│  Search, Services, Processes, Uninstaller, Resources,   │
-│  Helpers, AptSourceManager, GnomeSettings, Docker,      │
-│  Settings                                               │
+│  DiskTools, Search, Services, Processes, Uninstaller,   │
+│  Resources, Helpers, AptSourceManager, GnomeSettings,   │
+│  Docker, Settings                                       │
 ├─────────────────────────────────────────────────────────┤
-│                  Manager Layer (7)                       │
+│                  Manager Layer (8)                       │
 │  InfoManager, AppManager, SettingManager, ToolManager,  │
-│  CleanerService, ScheduleManager, DataRefreshService    │
+│  CleanerService, DuplicateFinderService,                │
+│  ScheduleManager, DataRefreshService                    │
 ├─────────────────────────────────────────────────────────┤
 │                Core Library (nexis-core)                 │
 │  Info: CpuInfo, MemoryInfo, DiskInfo, NetworkInfo,      │
@@ -446,6 +474,7 @@ Seven singleton managers mediate between UI pages and the core library.
 | `SettingManager` | `QSettings` wrapper with 30+ typed getters/setters for persistent preferences. |
 | `ToolManager` | Facade over all 5 Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
 | `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. |
+| `DuplicateFinderService` | 3-stage duplicate detection pipeline (size grouping → partial 4KB SHA-256 hash → full SHA-256 hash). Background thread via QtConcurrent with QAtomicInt cancellation. |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 | `DataRefreshService` | Centralized polling service with 4 QTimers (1s/5s/30s/configurable). Polls InfoManager once per interval, emits 10 typed data-change signals. Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
@@ -782,6 +811,7 @@ All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimer
 │   │   │   ├── HardwareInfo/
 │   │   │   ├── StartupApps/
 │   │   │   ├── SystemCleaner/
+│   │   │   ├── DiskTools/
 │   │   │   ├── Search/
 │   │   │   ├── Services/
 │   │   │   ├── Processes/

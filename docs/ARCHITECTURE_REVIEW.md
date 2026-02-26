@@ -41,13 +41,14 @@ Nexis is structured as a **four-tier desktop application**:
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  UI Layer: 14 QWidget Pages                                       │
+│  UI Layer: 15 QWidget Pages                                       │
 │  Each page owns its .ui file and presentation logic               │
 │  Files: shared/nexis/Pages/*/*.cpp                                │
 ├────────────────────────────────────────────────────────────────────┤
-│  Service Layer: 7 Domain Services + NexisPage base class          │
+│  Service Layer: 8 Domain Services + NexisPage base class          │
 │  StartupService, FileSearchService, HostService, ProcessService,  │
-│  SystemServiceManager, DockerService, PackageService              │
+│  SystemServiceManager, DockerService, PackageService,             │
+│  DuplicateFinderService                                           │
 │  Files: shared/nexis/Services/*.cpp                               │
 ├────────────────────────────────────────────────────────────────────┤
 │  Manager Layer: 7 Singletons                                      │
