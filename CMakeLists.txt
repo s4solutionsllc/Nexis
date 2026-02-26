@@ -273,6 +273,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.cpp"
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
+  "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.cpp"
 )
 
@@ -344,6 +345,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.h"
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.h"
+  "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
 )
 
