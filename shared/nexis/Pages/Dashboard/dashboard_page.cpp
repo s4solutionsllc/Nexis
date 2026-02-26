@@ -1725,14 +1725,17 @@ void DashboardPage::onHealthMemoryUpdated(const MemorySnapshot &snap)
 
 void DashboardPage::onHealthDiskUpdated(const QList<Disk> &disks)
 {
-    int worstScore = 100;
+    qint64 totalSize = 0;
+    double weightedScore = 0.0;
     for (const Disk &d : disks) {
         if (d.size == 0) continue;
         int usedPercent = (int)(100.0 * d.used / d.size);
         int diskScore = qBound(0, 100 - usedPercent, 100);
-        worstScore = qMin(worstScore, diskScore);
+        weightedScore += (double)diskScore * d.size;
+        totalSize += d.size;
     }
-    mHealthTile->calculator()->setDiskScore(worstScore);
+    int score = (totalSize > 0) ? qBound(0, (int)qRound(weightedScore / totalSize), 100) : 100;
+    mHealthTile->calculator()->setDiskScore(score);
     mHealthTile->recalculate();
 }
 
