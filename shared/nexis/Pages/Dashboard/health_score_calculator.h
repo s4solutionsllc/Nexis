@@ -2,7 +2,6 @@
 #define HEALTH_SCORE_CALCULATOR_H
 
 #include <QList>
-#include <QPair>
 #include <QString>
 
 struct HealthComponent {
