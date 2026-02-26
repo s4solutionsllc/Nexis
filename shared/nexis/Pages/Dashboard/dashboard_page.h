@@ -24,6 +24,7 @@
 #include "hybrid_tile.h"
 #include "speedometer_tile.h"
 #include "vumeter_tile.h"
+#include "health_score_tile.h"
 #include "dashboard_tile_wrapper.h"
 
 #include "Managers/setting_manager.h"
@@ -71,6 +72,13 @@ private slots:
     void onBatteryUpdated(const BatteryData &bat);
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 
+    void onHealthCpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
+    void onHealthMemoryUpdated(const MemorySnapshot &snap);
+    void onHealthDiskUpdated(const QList<Disk> &disks);
+    void onHealthTempUpdated();
+    void onHealthBatteryUpdated(const BatteryData &bat);
+    void onHealthDiskHealthUpdated(const QList<DriveHealth> &drives);
+
     void on_btnDownloadUpdate_clicked();
     void toggleEditMode();
     void exitEditMode();
@@ -97,6 +105,7 @@ private:
     MetricTileBase *mGpuTile;
     MetricTileBase *mBatteryTile;
     MetricTileBase *mFanTile;
+    HealthScoreTile *mHealthTile;
     NetworkTile *mNetworkTile;
 
     QComboBox *mCmbGpuDevice;

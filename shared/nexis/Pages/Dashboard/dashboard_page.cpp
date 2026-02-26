@@ -37,6 +37,7 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mGpuTile(nullptr),
     mBatteryTile(nullptr),
     mFanTile(nullptr),
+    mHealthTile(nullptr),
     mNetworkTile(nullptr),
     mCmbGpuDevice(new QComboBox(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
@@ -91,6 +92,7 @@ void DashboardPage::init()
     mTempTile = createTile("temp", mTileStyles.value("temp", defaultStyle("temp")));
     mBatteryTile = createTile("battery", mTileStyles.value("battery", defaultStyle("battery")));
     mFanTile = createTile("fan", mTileStyles.value("fan", defaultStyle("fan")));
+    mHealthTile = new HealthScoreTile("@healthScoreColor", this);
 
     // Wrap each tile in a DashboardTileWrapper for drag/resize support
     wrapTile("cpu", mCpuTile);
@@ -117,6 +119,8 @@ void DashboardPage::init()
         wrapTile("fan", mFanTile);
     else
         mFanTile->hide();
+
+    wrapTile("health", mHealthTile);
 
     // Load saved layout or use default, then build the grid
     if (savedLayout.isEmpty())
@@ -285,6 +289,30 @@ void DashboardPage::init()
     // Disk health data (populates disk tile badges + tray alerts)
     connect(mRefresh, &DataRefreshService::diskHealthUpdated,
             this, &DashboardPage::onDiskHealthUpdated);
+
+    // Health score tile data feeds
+    auto *calc = mHealthTile->calculator();
+    calc->setComponentAvailable("cpu", true);
+    calc->setComponentAvailable("memory", true);
+    calc->setComponentAvailable("disk", true);
+    calc->setComponentAvailable("temp", im->hasThermalSensors());
+    calc->setComponentAvailable("battery", im->hasBattery());
+    calc->setComponentAvailable("smart", im->hasDiskHealth());
+
+    connect(mRefresh, &DataRefreshService::cpuUpdated,
+            this, &DashboardPage::onHealthCpuUpdated);
+    connect(mRefresh, &DataRefreshService::memoryUpdated,
+            this, &DashboardPage::onHealthMemoryUpdated);
+    connect(mRefresh, &DataRefreshService::diskUsageUpdated,
+            this, &DashboardPage::onHealthDiskUpdated);
+    if (im->hasThermalSensors())
+        connect(mRefresh, &DataRefreshService::tempUpdated,
+                this, &DashboardPage::onHealthTempUpdated);
+    if (im->hasBattery())
+        connect(mRefresh, &DataRefreshService::batteryUpdated,
+                this, &DashboardPage::onHealthBatteryUpdated);
+    connect(mRefresh, &DataRefreshService::diskHealthUpdated,
+            this, &DashboardPage::onHealthDiskHealthUpdated);
 
     // Set CPU model + core info as subtitle
     {
@@ -1025,6 +1053,7 @@ void DashboardPage::onResetLayout()
             else if (id == "gpu") mGpuTile = newTile;
             else if (id == "battery") mBatteryTile = newTile;
             else if (id == "fan") mFanTile = newTile;
+            else if (id == "health") mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
             setupTileGearMenu(id, newTile);
 
@@ -1119,6 +1148,7 @@ QJsonArray DashboardPage::defaultLayout() const
     if (im->hasThermalSensors()) addEntry("temp", 1, col++, 1, 1);
     if (im->hasBattery()) addEntry("battery", 1, col++, 1, 1);
     if (im->hasFanSensors()) addEntry("fan", 1, col++, 1, 1);
+    addEntry("health", 1, col++, 1, 1);
 
     return arr;
 }
@@ -1442,6 +1472,7 @@ void DashboardPage::tileTitle(const QString &id, QString &title, QString &colorT
     else if (id == "gpu")     { title = tr("GPU");     colorToken = "@gpuColor"; }
     else if (id == "battery") { title = tr("BATTERY"); colorToken = "@batteryColor"; }
     else if (id == "fan")     { title = tr("FANS");    colorToken = "@fanColor"; }
+    else if (id == "health")  { title = tr("HEALTH");  colorToken = "@healthScoreColor"; }
 }
 
 MetricTileBase *DashboardPage::createTile(const QString &id, const QString &style)
@@ -1461,6 +1492,8 @@ MetricTileBase *DashboardPage::createTile(const QString &id, const QString &styl
         return new VuMeterTile(title, colorToken, this);
     if (style == "donut")
         return new DiskTile(colorToken, "@color02", this);
+    if (style == "health")
+        return new HealthScoreTile(colorToken, this);
 
     return new MetricTile(title, colorToken, this);
 }
@@ -1468,6 +1501,8 @@ MetricTileBase *DashboardPage::createTile(const QString &id, const QString &styl
 QStringList DashboardPage::availableStyles(const QString &tileId) const
 {
     if (tileId == "network")
+        return {};
+    if (tileId == "health")
         return {};
     if (tileId == "disk")
         return {"donut", "sparkline", "gauge", "hybrid", "ring", "speedometer", "vumeter"};
@@ -1480,6 +1515,8 @@ QString DashboardPage::defaultStyle(const QString &tileId) const
         return "donut";
     if (tileId == "network")
         return "network";
+    if (tileId == "health")
+        return "health";
     return "sparkline";
 }
 
@@ -1536,6 +1573,7 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
     else if (id == "gpu")     mGpuTile = newTile;
     else if (id == "battery") mBatteryTile = newTile;
     else if (id == "fan")     mFanTile = newTile;
+    else if (id == "health")  mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
     // Re-attach gear menus
     setupTileGearMenu(id, newTile);
@@ -1658,4 +1696,70 @@ void DashboardPage::setupCustomizationMenu(DashboardTileWrapper *wrapper, const 
         };
         wrapper->setColorMenuItems(colorPalette, mTileColors.value(id));
     }
+}
+
+void DashboardPage::onHealthCpuUpdated(const QList<int> &percents, double clockGHz,
+                                        const QList<double> &loadAvgs)
+{
+    Q_UNUSED(percents)
+    Q_UNUSED(clockGHz)
+    int coreCount = im->getCpuCoreCount();
+    double load1m = loadAvgs.isEmpty() ? 0.0 : loadAvgs.first();
+    int score = 100;
+    if (coreCount > 0 && load1m > 0) {
+        double ratio = load1m / coreCount;
+        score = qBound(0, qRound(100.0 * (1.0 - ratio)), 100);
+    }
+    mHealthTile->calculator()->setCpuScore(score);
+    mHealthTile->recalculate();
+}
+
+void DashboardPage::onHealthMemoryUpdated(const MemorySnapshot &snap)
+{
+    int score = 100;
+    if (snap.total > 0)
+        score = qBound(0, 100 - (int)(100.0 * snap.used / snap.total), 100);
+    mHealthTile->calculator()->setMemoryScore(score);
+    mHealthTile->recalculate();
+}
+
+void DashboardPage::onHealthDiskUpdated(const QList<Disk> &disks)
+{
+    int worstScore = 100;
+    for (const Disk &d : disks) {
+        if (d.size == 0) continue;
+        int usedPercent = (int)(100.0 * d.used / d.size);
+        int diskScore = qBound(0, 100 - usedPercent, 100);
+        worstScore = qMin(worstScore, diskScore);
+    }
+    mHealthTile->calculator()->setDiskScore(worstScore);
+    mHealthTile->recalculate();
+}
+
+void DashboardPage::onHealthTempUpdated()
+{
+    double tempC = im->getThermalTemperature(mSelectedSensorIndex);
+    int score = 100;
+    if (tempC >= 100.0) score = 0;
+    else if (tempC > 60.0) score = qRound(100.0 * (100.0 - tempC) / 40.0);
+    mHealthTile->calculator()->setTempScore(score);
+    mHealthTile->recalculate();
+}
+
+void DashboardPage::onHealthBatteryUpdated(const BatteryData &bat)
+{
+    mHealthTile->calculator()->setBatteryScore(qBound(0, bat.healthPercent, 100));
+    mHealthTile->recalculate();
+}
+
+void DashboardPage::onHealthDiskHealthUpdated(const QList<DriveHealth> &drives)
+{
+    int worstScore = 100;
+    for (const DriveHealth &d : drives) {
+        if (!d.smartPassed) worstScore = qMin(worstScore, 0);
+        else if (d.healthPercent >= 0 && d.healthPercent < 50) worstScore = qMin(worstScore, 50);
+        else if (d.healthPercent >= 0) worstScore = qMin(worstScore, d.healthPercent);
+    }
+    mHealthTile->calculator()->setSmartScore(worstScore);
+    mHealthTile->recalculate();
 }
