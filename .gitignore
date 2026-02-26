@@ -1,6 +1,7 @@
 dist/
 build/
 output/
+.worktrees/
 *.AppImage
 .vscode
 Release/
