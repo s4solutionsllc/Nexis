@@ -2,6 +2,7 @@
 #define DISK_TOOLS_PAGE_H
 
 #include <QWidget>
+#include <QAtomicInt>
 #include <QFuture>
 #include <QTreeWidget>
 
@@ -17,7 +18,6 @@ class QProgressBar;
 class QPushButton;
 class AppManager;
 class SignalMapper;
-class FileSearchService;
 
 namespace Ui {
     class DiskToolsPage;
@@ -32,14 +32,14 @@ public:
     ~DiskToolsPage();
 
 signals:
-    void largeOldScanFinishedS();
+    void largeOldScanFinishedS(const QList<QFileInfo> &results);
 
 private slots:
     void switchMode(int index);
     void addDirectory();
     void removeDirectory();
     void onLargeOldScan();
-    void onLargeOldScanFinished();
+    void onLargeOldScanFinished(const QList<QFileInfo> &results);
     void onLargeOldTrash();
     void onDupScan();
     void onDupProgress(int stage, int current, int total, const QString &message);
@@ -54,7 +54,6 @@ private:
     void buildLargeOldPage();
     void buildDuplicatePage();
     void refreshThemeColors();
-    void populateDefaultDirectories();
 
 private:
     Ui::DiskToolsPage *ui;
@@ -75,6 +74,7 @@ private:
     QComboBox *mCbAgeUnit;
     QComboBox *mCbFilterMode;
     QPushButton *mBtnLargeOldScan;
+    QPushButton *mBtnLargeOldCancel;
     QTreeWidget *mTreeLargeOld;
     QLabel *mLblLargeOldStatus;
     QLabel *mLblLargeOldSelection;
@@ -93,7 +93,7 @@ private:
     QPushButton *mBtnDupTrash;
 
     // State
-    bool mLargeOldScanInProgress = false;
+    QAtomicInt mLargeOldCancelled{0};
     QFuture<void> mLargeOldFuture;
     QList<QFileInfo> mLargeOldResults;
 };

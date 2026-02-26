@@ -40,6 +40,9 @@ DiskToolsPage::DiskToolsPage(QWidget *parent)
 
 DiskToolsPage::~DiskToolsPage()
 {
+    mLargeOldCancelled.storeRelaxed(1);
+    mDupService->cancel();
+    disconnect(mDupService, nullptr, this, nullptr);
     mLargeOldFuture.waitForFinished();
     delete ui;
 }
@@ -79,10 +82,6 @@ void DiskToolsPage::init()
 void DiskToolsPage::switchMode(int index)
 {
     ui->stackedModes->setCurrentIndex(index);
-}
-
-void DiskToolsPage::populateDefaultDirectories()
-{
 }
 
 static void populateDirList(QListWidget *list)
@@ -201,6 +200,14 @@ void DiskToolsPage::buildLargeOldPage()
 
     filterLayout->addStretch();
 
+    mBtnLargeOldCancel = new QPushButton(tr("Cancel"), this);
+    mBtnLargeOldCancel->setCursor(Qt::PointingHandCursor);
+    mBtnLargeOldCancel->hide();
+    connect(mBtnLargeOldCancel, &QPushButton::clicked, this, [this]() {
+        mLargeOldCancelled.storeRelaxed(1);
+    });
+    filterLayout->addWidget(mBtnLargeOldCancel);
+
     mBtnLargeOldScan = new QPushButton(tr("Scan"), this);
     mBtnLargeOldScan->setObjectName("btnScan");
     mBtnLargeOldScan->setCursor(Qt::PointingHandCursor);
@@ -254,18 +261,18 @@ void DiskToolsPage::buildLargeOldPage()
 
 void DiskToolsPage::onLargeOldScan()
 {
-    if (mLargeOldScanInProgress || mDirListLargeOld->count() == 0)
+    if (mLargeOldFuture.isRunning() || mDirListLargeOld->count() == 0)
         return;
 
-    mLargeOldScanInProgress = true;
-    mBtnLargeOldScan->setEnabled(false);
+    mLargeOldCancelled.storeRelaxed(0);
+    mBtnLargeOldScan->hide();
+    mBtnLargeOldCancel->show();
     mTreeLargeOld->clear();
     mLblLargeOldStatus->setText(tr("Scanning..."));
-    mLargeOldResults.clear();
 
     qint64 sizeThreshold = mSpinSize->value();
     if (mCbSizeUnit->currentIndex() == 0)
-        sizeThreshold *= 1024 * 1024;
+        sizeThreshold *= 1024LL * 1024;
     else
         sizeThreshold *= 1024LL * 1024 * 1024;
 
@@ -286,9 +293,15 @@ void DiskToolsPage::onLargeOldScan()
         QList<QFileInfo> results;
 
         for (const QString &dir : dirs) {
+            if (mLargeOldCancelled.loadRelaxed())
+                break;
+
             QDirIterator it(dir, QDir::Files | QDir::NoDotAndDotDot,
                             QDirIterator::Subdirectories);
             while (it.hasNext()) {
+                if (mLargeOldCancelled.loadRelaxed())
+                    break;
+
                 it.next();
                 QFileInfo info = it.fileInfo();
 
@@ -311,17 +324,23 @@ void DiskToolsPage::onLargeOldScan()
             }
         }
 
+        if (mLargeOldCancelled.loadRelaxed())
+            return;
+
         std::sort(results.begin(), results.end(), [](const QFileInfo &a, const QFileInfo &b) {
             return a.size() > b.size();
         });
 
-        mLargeOldResults = results;
-        emit largeOldScanFinishedS();
+        emit largeOldScanFinishedS(results);
     });
 }
 
-void DiskToolsPage::onLargeOldScanFinished()
+void DiskToolsPage::onLargeOldScanFinished(const QList<QFileInfo> &results)
 {
+    mBtnLargeOldCancel->hide();
+    mBtnLargeOldScan->show();
+    mLargeOldResults = results;
+
     mTreeLargeOld->setUpdatesEnabled(false);
 
     for (const QFileInfo &fi : mLargeOldResults) {
@@ -338,8 +357,6 @@ void DiskToolsPage::onLargeOldScanFinished()
 
     mTreeLargeOld->setUpdatesEnabled(true);
     mLblLargeOldStatus->setText(tr("%1 files found").arg(mLargeOldResults.size()));
-    mBtnLargeOldScan->setEnabled(true);
-    mLargeOldScanInProgress = false;
     updateLargeOldSelection();
 }
 
@@ -537,8 +554,8 @@ void DiskToolsPage::onDupScan()
 
     qint64 minSize = mSpinMinDupSize->value();
     int unitIdx = mCbMinDupUnit->currentIndex();
-    if (unitIdx == 0) minSize *= 1024;
-    else if (unitIdx == 1) minSize *= 1024 * 1024;
+    if (unitIdx == 0) minSize *= 1024LL;
+    else if (unitIdx == 1) minSize *= 1024LL * 1024;
     else minSize *= 1024LL * 1024 * 1024;
 
     QString glob = mEditGlob->text().trimmed();
@@ -690,4 +707,6 @@ void DiskToolsPage::updateDupSelection()
 
 void DiskToolsPage::refreshThemeColors()
 {
+    // TODO: Apply theme tokens from AppManager::getStyleValues() to
+    // dynamically-created widgets (tree alternating rows, action bar, etc.)
 }
