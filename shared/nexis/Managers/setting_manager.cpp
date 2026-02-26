@@ -271,6 +271,16 @@ bool SettingManager::getSidebarCollapsed() const
     return mSettings->value(SettingKeys::SidebarCollapsed, false).toBool();
 }
 
+void SettingManager::setSidebarSectionsCollapsed(const QString &json)
+{
+    mSettings->setValue(SettingKeys::SidebarSectionsCollapsed, json);
+}
+
+QString SettingManager::getSidebarSectionsCollapsed() const
+{
+    return mSettings->value(SettingKeys::SidebarSectionsCollapsed, "").toString();
+}
+
 void SettingManager::setAppFont(const QString &value)
 {
     mSettings->setValue(SettingKeys::AppFont, value);

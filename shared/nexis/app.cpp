@@ -20,6 +20,8 @@
 #include <QPropertyAnimation>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #ifdef Q_OS_MAC
 #include "macos_dock_helper.h"
@@ -62,12 +64,16 @@ QPushButton *App::createSidebarButton(const QString &tooltip)
     return btn;
 }
 
-QLabel *App::createSectionHeader(const QString &text)
+QPushButton *App::createSectionToggle(const QString &text)
 {
-    auto *label = new QLabel(text, ui->sidebar);
-    label->setObjectName("sectionHeader");
-    mSectionHeaders.append(label);
-    return label;
+    auto *btn = new QPushButton(text, ui->sidebar);
+    btn->setObjectName("sectionToggle");
+    btn->setCursor(Qt::PointingHandCursor);
+    btn->setFocusPolicy(Qt::NoFocus);
+    btn->setCheckable(false);
+    btn->setIconSize(Dpi::scale(12, 12));
+    btn->setLayoutDirection(Qt::RightToLeft);
+    return btn;
 }
 
 void App::buildSidebar()
@@ -109,9 +115,15 @@ void App::buildSidebar()
     mSidebarLayout->addWidget(mLogoSeparator);
     mSidebarLayout->addSpacing(4);
 
-    // ---- MONITOR section ----
-    mSidebarLayout->addWidget(createSectionHeader(tr("MONITOR")));
-    {
+    // Helper lambda to create a section with header, indicator, and container
+    auto addSection = [&](const QString &name) -> SidebarSection & {
+        SidebarSection section;
+        section.name = name;
+        section.collapsed = false;
+
+        section.header = createSectionToggle(name);
+        mSidebarLayout->addWidget(section.header);
+
         auto *indicator = new QFrame(ui->sidebar);
         indicator->setObjectName("sidebarSectionIndicator");
         indicator->setFrameShape(QFrame::HLine);
@@ -119,88 +131,111 @@ void App::buildSidebar()
         indicator->hide();
         mSectionIndicators.append(indicator);
         mSidebarLayout->addWidget(indicator);
+
+        section.container = new QWidget(ui->sidebar);
+        section.containerLayout = new QVBoxLayout(section.container);
+        section.containerLayout->setContentsMargins(0, 0, 0, 0);
+        section.containerLayout->setSpacing(0);
+        mSidebarLayout->addWidget(section.container);
+
+        mSections.append(section);
+        return mSections.last();
+    };
+
+    // ---- MONITOR section ----
+    {
+        auto &sec = addSection(tr("MONITOR"));
+        btnDash = createSidebarButton(tr("Dashboard"));
+        btnDash->setChecked(true);
+        sec.containerLayout->addWidget(btnDash);
+        sec.buttons.append(btnDash);
+
+        btnHardwareInfo = createSidebarButton(tr("Hardware Info"));
+        sec.containerLayout->addWidget(btnHardwareInfo);
+        sec.buttons.append(btnHardwareInfo);
+
+        btnResources = createSidebarButton(tr("Resources"));
+        sec.containerLayout->addWidget(btnResources);
+        sec.buttons.append(btnResources);
     }
-
-    btnDash = createSidebarButton(tr("Dashboard"));
-    btnDash->setChecked(true);
-    mSidebarLayout->addWidget(btnDash);
-
-    btnHardwareInfo = createSidebarButton(tr("Hardware Info"));
-    mSidebarLayout->addWidget(btnHardwareInfo);
-
-    btnResources = createSidebarButton(tr("Resources"));
-    mSidebarLayout->addWidget(btnResources);
 
     // ---- MANAGE section ----
-    mSidebarLayout->addWidget(createSectionHeader(tr("MANAGE")));
     {
-        auto *indicator = new QFrame(ui->sidebar);
-        indicator->setObjectName("sidebarSectionIndicator");
-        indicator->setFrameShape(QFrame::HLine);
-        indicator->setFixedHeight(1);
-        indicator->hide();
-        mSectionIndicators.append(indicator);
-        mSidebarLayout->addWidget(indicator);
-    }
+        auto &sec = addSection(tr("MANAGE"));
+        btnSystemCleaner = createSidebarButton(tr("System Cleaner"));
+        sec.containerLayout->addWidget(btnSystemCleaner);
+        sec.buttons.append(btnSystemCleaner);
 
-    btnSystemCleaner = createSidebarButton(tr("System Cleaner"));
-    mSidebarLayout->addWidget(btnSystemCleaner);
+        btnDiskTools = createSidebarButton(tr("Disk Tools"));
+        sec.containerLayout->addWidget(btnDiskTools);
+        sec.buttons.append(btnDiskTools);
 
-    btnDiskTools = createSidebarButton(tr("Disk Tools"));
-    mSidebarLayout->addWidget(btnDiskTools);
+        btnSearch = createSidebarButton(tr("Search"));
+        sec.containerLayout->addWidget(btnSearch);
+        sec.buttons.append(btnSearch);
 
-    btnSearch = createSidebarButton(tr("Search"));
-    mSidebarLayout->addWidget(btnSearch);
+        btnProcesses = createSidebarButton(tr("Processes"));
+        sec.containerLayout->addWidget(btnProcesses);
+        sec.buttons.append(btnProcesses);
 
-    btnProcesses = createSidebarButton(tr("Processes"));
-    mSidebarLayout->addWidget(btnProcesses);
+        btnServices = createSidebarButton(tr("Services"));
+        sec.containerLayout->addWidget(btnServices);
+        sec.buttons.append(btnServices);
 
-    btnServices = createSidebarButton(tr("Services"));
-    mSidebarLayout->addWidget(btnServices);
-
-    btnStartupApps = createSidebarButton(tr("Startup Apps"));
-    mSidebarLayout->addWidget(btnStartupApps);
+        btnStartupApps = createSidebarButton(tr("Startup Apps"));
+        sec.containerLayout->addWidget(btnStartupApps);
+        sec.buttons.append(btnStartupApps);
 
 #ifdef Q_OS_MAC
-    btnUninstaller = createSidebarButton(tr("Applications"));
+        btnUninstaller = createSidebarButton(tr("Applications"));
 #else
-    btnUninstaller = createSidebarButton(tr("Uninstaller"));
+        btnUninstaller = createSidebarButton(tr("Uninstaller"));
 #endif
-    mSidebarLayout->addWidget(btnUninstaller);
+        sec.containerLayout->addWidget(btnUninstaller);
+        sec.buttons.append(btnUninstaller);
+    }
 
     // ---- SYSTEM section ----
-    mSidebarLayout->addWidget(createSectionHeader(tr("SYSTEM")));
     {
-        auto *indicator = new QFrame(ui->sidebar);
-        indicator->setObjectName("sidebarSectionIndicator");
-        indicator->setFrameShape(QFrame::HLine);
-        indicator->setFixedHeight(1);
-        indicator->hide();
-        mSectionIndicators.append(indicator);
-        mSidebarLayout->addWidget(indicator);
-    }
+        auto &sec = addSection(tr("SYSTEM"));
+        btnDocker = createSidebarButton(tr("Docker"));
+        sec.containerLayout->addWidget(btnDocker);
+        sec.buttons.append(btnDocker);
 
-    btnDocker = createSidebarButton(tr("Docker"));
-    mSidebarLayout->addWidget(btnDocker);
+        btnHelpers = createSidebarButton(tr("Helpers"));
+        sec.containerLayout->addWidget(btnHelpers);
+        sec.buttons.append(btnHelpers);
 
-    btnHelpers = createSidebarButton(tr("Helpers"));
-    mSidebarLayout->addWidget(btnHelpers);
-
-    btnSystemLogs = createSidebarButton(tr("System Logs"));
-    mSidebarLayout->addWidget(btnSystemLogs);
+        btnSystemLogs = createSidebarButton(tr("System Logs"));
+        sec.containerLayout->addWidget(btnSystemLogs);
+        sec.buttons.append(btnSystemLogs);
 
 #ifdef Q_OS_MAC
-    btnAptSourceManager = createSidebarButton(tr("Homebrew"));
+        btnAptSourceManager = createSidebarButton(tr("Homebrew"));
 #else
-    btnAptSourceManager = createSidebarButton(tr("APT Repository Manager"));
+        btnAptSourceManager = createSidebarButton(tr("APT Repository Manager"));
 #endif
-    mSidebarLayout->addWidget(btnAptSourceManager);
+        sec.containerLayout->addWidget(btnAptSourceManager);
+        sec.buttons.append(btnAptSourceManager);
 
-    btnGnomeSettings = createSidebarButton(tr("GNOME Settings"));
-    mSidebarLayout->addWidget(btnGnomeSettings);
+        btnGnomeSettings = createSidebarButton(tr("GNOME Settings"));
+        sec.containerLayout->addWidget(btnGnomeSettings);
+        sec.buttons.append(btnGnomeSettings);
 
-    btnSettings = createSidebarButton(tr("Settings"));
-    mSidebarLayout->addWidget(btnSettings);
+        btnSettings = createSidebarButton(tr("Settings"));
+        sec.containerLayout->addWidget(btnSettings);
+        sec.buttons.append(btnSettings);
+    }
+
+    // Connect section header clicks
+    for (int i = 0; i < mSections.size(); ++i) {
+        connect(mSections[i].header, &QPushButton::clicked, this, [this, i]() {
+            toggleSection(i);
+        });
+    }
+
+    // Set initial chevron icons (will be refreshed on theme change via updateSidebarIcons)
+    updateSectionChevrons();
 
     // Spacer pushes feedback/version to bottom
     mSidebarLayout->addStretch();
@@ -480,6 +515,9 @@ void App::init()
     if (SettingManager::ins()->getSidebarCollapsed())
         applySidebarCollapse(true, false);
 
+    // Restore section collapsed states
+    restoreSectionStates();
+
     // Dashboard kiosk toggle button -> App::toggleKioskMode
     connect(SignalMapper::ins(), &SignalMapper::sigKioskToggleRequested,
             this, &App::toggleKioskMode);
@@ -629,6 +667,7 @@ void App::checkSidebarButtonByTooltip(const QString &text)
 {
     for (QPushButton *button : mListSidebarButtons) {
         if (button->toolTip() == text) {
+            expandSectionForButton(button);
             button->setChecked(true);
         }
     }
@@ -706,6 +745,9 @@ void App::updateSidebarIcons()
     QPixmap logoPix(logoPath);
     if (!logoPix.isNull())
         mLogoLabel->setPixmap(logoPix.scaledToHeight(Dpi::scale(20), Qt::SmoothTransformation));
+
+    // Section chevron icons
+    updateSectionChevrons();
 }
 
 void App::toggleSidebarCollapse()
@@ -742,9 +784,15 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
         ui->sidebar->setMaximumWidth(targetWidth);
     }
 
-    // Toggle section headers visibility
-    for (QLabel *header : mSectionHeaders)
-        header->setVisible(!collapsed);
+    // Toggle section headers and containers visibility
+    for (int i = 0; i < mSections.size(); ++i) {
+        mSections[i].header->setVisible(!collapsed);
+        if (collapsed) {
+            mSections[i].container->setVisible(false);
+        } else {
+            mSections[i].container->setVisible(!mSections[i].collapsed);
+        }
+    }
 
     // Toggle section indicators (visible only when collapsed)
     for (QFrame *indicator : mSectionIndicators)
@@ -816,10 +864,136 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
         btn->style()->unpolish(btn);
         btn->style()->polish(btn);
     }
+    for (auto &sec : mSections) {
+        sec.header->style()->unpolish(sec.header);
+        sec.header->style()->polish(sec.header);
+    }
     btnFeedback->style()->unpolish(btnFeedback);
     btnFeedback->style()->polish(btnFeedback);
     mBtnSidebarToggle->style()->unpolish(mBtnSidebarToggle);
     mBtnSidebarToggle->style()->polish(mBtnSidebarToggle);
+}
+
+void App::toggleSection(int sectionIndex)
+{
+    if (sectionIndex < 0 || sectionIndex >= mSections.size())
+        return;
+    mSections[sectionIndex].collapsed = !mSections[sectionIndex].collapsed;
+    applySectionCollapse(sectionIndex, mSections[sectionIndex].collapsed, true);
+    saveSectionStates();
+}
+
+void App::applySectionCollapse(int sectionIndex, bool collapsed, bool animate)
+{
+    if (sectionIndex < 0 || sectionIndex >= mSections.size())
+        return;
+
+    auto &sec = mSections[sectionIndex];
+    sec.collapsed = collapsed;
+
+    // Hide badges when their section collapses
+    if (sec.buttons.contains(btnSystemCleaner)) {
+        if (collapsed) {
+            mCleanerBadge->hide();
+            mCleanerBadgeDot->hide();
+        } else if (mCleanerBadge->text().length() > 0 && !mSidebarCollapsed) {
+            mCleanerBadge->setVisible(!mSidebarCollapsed);
+            mCleanerBadgeDot->setVisible(mSidebarCollapsed);
+        }
+    }
+    if (sec.buttons.contains(btnAptSourceManager)) {
+        if (collapsed) {
+            mUpdatesBadge->hide();
+            mUpdatesBadgeDot->hide();
+        } else if (mUpdatesBadge->text().length() > 0 && !mSidebarCollapsed) {
+            mUpdatesBadge->setVisible(!mSidebarCollapsed);
+            mUpdatesBadgeDot->setVisible(mSidebarCollapsed);
+        }
+    }
+
+    if (mSidebarCollapsed)
+        return;
+
+    QWidget *container = sec.container;
+
+    if (!animate) {
+        container->setVisible(!collapsed);
+        container->setMaximumHeight(collapsed ? 0 : 16777215);
+        updateSectionChevrons();
+        return;
+    }
+
+    if (collapsed) {
+        int startHeight = container->height();
+        auto *anim = new QPropertyAnimation(container, "maximumHeight", this);
+        anim->setDuration(200);
+        anim->setStartValue(startHeight);
+        anim->setEndValue(0);
+        anim->setEasingCurve(QEasingCurve::OutCubic);
+        connect(anim, &QPropertyAnimation::finished, this, [container]() {
+            container->setVisible(false);
+        });
+        anim->start(QAbstractAnimation::DeleteWhenStopped);
+    } else {
+        container->setMaximumHeight(0);
+        container->setVisible(true);
+        container->adjustSize();
+        int targetHeight = container->sizeHint().height();
+        auto *anim = new QPropertyAnimation(container, "maximumHeight", this);
+        anim->setDuration(200);
+        anim->setStartValue(0);
+        anim->setEndValue(targetHeight);
+        anim->setEasingCurve(QEasingCurve::OutCubic);
+        connect(anim, &QPropertyAnimation::finished, this, [container]() {
+            container->setMaximumHeight(16777215);
+        });
+        anim->start(QAbstractAnimation::DeleteWhenStopped);
+    }
+
+    updateSectionChevrons();
+}
+
+void App::expandSectionForButton(QPushButton *btn)
+{
+    for (int i = 0; i < mSections.size(); ++i) {
+        if (mSections[i].buttons.contains(btn) && mSections[i].collapsed) {
+            applySectionCollapse(i, false, false);
+            saveSectionStates();
+            return;
+        }
+    }
+}
+
+void App::saveSectionStates()
+{
+    QJsonObject obj;
+    for (const auto &sec : mSections)
+        obj[sec.name] = sec.collapsed;
+    SettingManager::ins()->setSidebarSectionsCollapsed(
+        QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
+}
+
+void App::restoreSectionStates()
+{
+    QString json = SettingManager::ins()->getSidebarSectionsCollapsed();
+    if (json.isEmpty())
+        return;
+    QJsonObject obj = QJsonDocument::fromJson(json.toUtf8()).object();
+    for (int i = 0; i < mSections.size(); ++i) {
+        if (obj.contains(mSections[i].name)) {
+            applySectionCollapse(i, obj[mSections[i].name].toBool(), false);
+        }
+    }
+}
+
+void App::updateSectionChevrons()
+{
+    QString theme = AppManager::ins()->resolveThemeName();
+    for (auto &sec : mSections) {
+        QString chevronName = sec.collapsed ? "section-expand.svg" : "section-collapse.svg";
+        QString chevronPath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, chevronName);
+        sec.header->setIcon(QIcon(chevronPath));
+    }
 }
 
 void App::toggleKioskMode()

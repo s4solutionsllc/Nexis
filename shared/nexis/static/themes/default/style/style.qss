@@ -482,8 +482,8 @@ QLabel[accessibleName="dialog-title"] {
     border-left: 3px solid @borderColor;
 }
 
-/* Section headers */
-#sectionHeader {
+/* Section toggle headers (collapsible groups) */
+#sectionToggle {
     font-size: 8pt;
     font-weight: 600;
     color: @tertiaryText;
@@ -493,6 +493,11 @@ QLabel[accessibleName="dialog-title"] {
     border-top: 1px solid @borderColor;
     margin-top: 6px;
     background: transparent;
+    text-align: left;
+}
+
+#sectionToggle:hover {
+    color: @color05;
 }
 
 /* Sidebar logo */
@@ -538,6 +543,13 @@ QLabel[accessibleName="dialog-title"] {
     padding: 0;
     border-left: 0;
     border-bottom: 0;
+}
+
+#sidebar[collapsed="true"] #sectionToggle {
+    border-top: 0;
+    margin-top: 0;
+    padding: 0;
+    max-height: 0;
 }
 
 #sidebarDividerLine {

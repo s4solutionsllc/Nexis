@@ -30,6 +30,7 @@ namespace SettingKeys {
     const QString ThresholdAlertEnabled("ThresholdAlertEnabled");
     const QString ThresholdGB("ThresholdGB");
     const QString SidebarCollapsed("SidebarCollapsed");
+    const QString SidebarSectionsCollapsed("SidebarSectionsCollapsed");
     const QString AppFont("AppFont");
     const QString TrayIconStyle("TrayIconStyle");
     const QString DashboardLayout("DashboardLayout");
@@ -120,6 +121,9 @@ public:
 
     void setSidebarCollapsed(bool value);
     bool getSidebarCollapsed() const;
+
+    void setSidebarSectionsCollapsed(const QString &json);
+    QString getSidebarSectionsCollapsed() const;
 
     void setAppFont(const QString &value);
     QString getAppFont() const;

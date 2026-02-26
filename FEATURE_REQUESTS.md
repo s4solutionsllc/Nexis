@@ -225,6 +225,11 @@
   - **Complexity:** Medium (4-5 days) — data sources exist, work is in scoring algorithm and UX
   - **Resolved:** 0f142f9 — Added HealthScoreTile with HealthScoreCalculator (weighted composite of CPU/memory/disk/temp/battery/SMART). Hideable dashboard tile with breakdown bars in large mode.
 
+## Navigation
+
+- [x] **FR-74: Collapsible sidebar navigation groups** — The sidebar has grown to 14+ pages across multiple category groups (System, Monitoring, Tools, etc.). Navigation is becoming crowded. Add collapsible/expandable group headers so users can collapse categories they don't actively use, reducing visual clutter. Groups remember their collapsed/expanded state across sessions. Clicking a group header toggles collapse; clicking a page entry within an expanded group navigates as usual.
+  - **Resolved:** Replaced QLabel section headers with clickable QPushButton `#sectionToggle` widgets. Each section's buttons wrapped in a container QWidget with animated collapse/expand (200ms QPropertyAnimation on maximumHeight). Chevron icons indicate state. Collapsed/expanded state persisted as JSON via `SidebarSectionsCollapsed` QSettings key. Auto-expand on navigation (sidebar click, tray menu, command palette, sigNavigateToPage). Badges hidden when parent section collapses. Full sidebar collapse (Ctrl+B) orthogonal to section state.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

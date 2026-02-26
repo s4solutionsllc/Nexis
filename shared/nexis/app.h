@@ -7,10 +7,21 @@
 #include <QPropertyAnimation>
 #include <QFrame>
 #include <QToolButton>
+#include <QVBoxLayout>
+#include <QPushButton>
 
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
+
+struct SidebarSection {
+    QString name;
+    QPushButton *header = nullptr;
+    QWidget *container = nullptr;
+    QVBoxLayout *containerLayout = nullptr;
+    QList<QPushButton*> buttons;
+    bool collapsed = false;
+};
 
 // Pages
 #include "Pages/Dashboard/dashboard_page.h"
@@ -33,7 +44,6 @@
 #include "command_palette.h"
 
 class QLabel;
-class QVBoxLayout;
 
 namespace Ui {
     class App;
@@ -70,8 +80,14 @@ private:
 
     void buildSidebar();
     QPushButton *createSidebarButton(const QString &tooltip);
-    QLabel *createSectionHeader(const QString &text);
+    QPushButton *createSectionToggle(const QString &text);
     void applySidebarCollapse(bool collapsed, bool animate = true);
+    void toggleSection(int sectionIndex);
+    void applySectionCollapse(int sectionIndex, bool collapsed, bool animate = true);
+    void expandSectionForButton(QPushButton *btn);
+    void saveSectionStates();
+    void restoreSectionStates();
+    void updateSectionChevrons();
 
 private:
     Ui::App *ui;
@@ -115,7 +131,7 @@ private:
     QFrame *mLogoSeparator;
     QToolButton *mBtnSidebarToggle;
     QButtonGroup *mSidebarBtnGroup;
-    QList<QLabel*> mSectionHeaders;
+    QList<SidebarSection> mSections;
     QList<QFrame*> mSectionIndicators;
     QLabel *mVersionLabel;
     QLabel *mCleanerBadge;
