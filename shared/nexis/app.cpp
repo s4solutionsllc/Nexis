@@ -18,6 +18,7 @@
 #include <QLabel>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
+#include <QTimer>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QJsonDocument>
@@ -367,20 +368,9 @@ void App::init()
         int count = result.success ? result.totalCount : 0;
         if (count > 0) {
             mUpdatesBadge->setText(QString::number(count));
-            if (!mSidebarCollapsed) {
-                mUpdatesBadge->show();
-                mUpdatesBadgeDot->hide();
-            } else {
-                mUpdatesBadge->hide();
-                mUpdatesBadgeDot->show();
-            }
-            QPoint btnPos = btnAptSourceManager->pos();
-            int btnW = btnAptSourceManager->width();
-            mUpdatesBadge->move(btnPos.x() + btnW - mUpdatesBadge->width() - 8,
-                                btnPos.y() + 2);
-            mUpdatesBadgeDot->move(btnPos.x() + btnW - 16,
-                                   btnPos.y() + 4);
+            repositionBadges();
         } else {
+            mUpdatesBadge->setText(QString());
             mUpdatesBadge->hide();
             mUpdatesBadgeDot->hide();
         }
@@ -526,23 +516,10 @@ void App::init()
     connect(SignalMapper::ins(), &SignalMapper::sigCleanableSizeChanged,
             this, [this](quint64 bytes) {
         if (bytes > 0) {
-            QString text = FormatUtil::formatBytes(bytes);
-            mCleanerBadge->setText(text);
-            if (!mSidebarCollapsed) {
-                mCleanerBadge->show();
-                mCleanerBadgeDot->hide();
-            } else {
-                mCleanerBadge->hide();
-                mCleanerBadgeDot->show();
-            }
-            // Position badge relative to btnSystemCleaner
-            QPoint btnPos = btnSystemCleaner->pos();
-            int btnW = btnSystemCleaner->width();
-            mCleanerBadge->move(btnPos.x() + btnW - mCleanerBadge->width() - 8,
-                                btnPos.y() + 2);
-            mCleanerBadgeDot->move(btnPos.x() + btnW - 16,
-                                   btnPos.y() + 4);
+            mCleanerBadge->setText(FormatUtil::formatBytes(bytes));
+            repositionBadges();
         } else {
+            mCleanerBadge->setText(QString());
             mCleanerBadge->hide();
             mCleanerBadgeDot->hide();
         }
@@ -802,17 +779,8 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     if (mVersionLabel)
         mVersionLabel->setVisible(!collapsed);
 
-    // Toggle badge vs dot
-    if (mCleanerBadge && mCleanerBadge->text().length() > 0) {
-        mCleanerBadge->setVisible(!collapsed);
-        mCleanerBadgeDot->setVisible(collapsed);
-    }
-
-    // Toggle updates badge vs dot
-    if (mUpdatesBadge && mUpdatesBadge->text().length() > 0) {
-        mUpdatesBadge->setVisible(!collapsed);
-        mUpdatesBadgeDot->setVisible(collapsed);
-    }
+    // Reposition badges after layout settles
+    QTimer::singleShot(0, this, &App::repositionBadges);
 
     // Toggle button text visibility
     for (QPushButton *btn : mListSidebarButtons) {
@@ -891,25 +859,8 @@ void App::applySectionCollapse(int sectionIndex, bool collapsed, bool animate)
     auto &sec = mSections[sectionIndex];
     sec.collapsed = collapsed;
 
-    // Hide badges when their section collapses
-    if (sec.buttons.contains(btnSystemCleaner)) {
-        if (collapsed) {
-            mCleanerBadge->hide();
-            mCleanerBadgeDot->hide();
-        } else if (mCleanerBadge->text().length() > 0 && !mSidebarCollapsed) {
-            mCleanerBadge->setVisible(!mSidebarCollapsed);
-            mCleanerBadgeDot->setVisible(mSidebarCollapsed);
-        }
-    }
-    if (sec.buttons.contains(btnAptSourceManager)) {
-        if (collapsed) {
-            mUpdatesBadge->hide();
-            mUpdatesBadgeDot->hide();
-        } else if (mUpdatesBadge->text().length() > 0 && !mSidebarCollapsed) {
-            mUpdatesBadge->setVisible(!mSidebarCollapsed);
-            mUpdatesBadgeDot->setVisible(mSidebarCollapsed);
-        }
-    }
+    // Reposition badges after layout settles (handles hide/show + coordinates)
+    QTimer::singleShot(0, this, &App::repositionBadges);
 
     if (mSidebarCollapsed)
         return;
@@ -994,6 +945,34 @@ void App::updateSectionChevrons()
         QString chevronPath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, chevronName);
         sec.header->setIcon(QIcon(chevronPath));
     }
+}
+
+void App::repositionBadges()
+{
+    auto positionBadge = [this](QPushButton *btn, QLabel *badge, QLabel *dot) {
+        bool hasBadge = badge && badge->text().length() > 0;
+        if (!hasBadge)
+            return;
+
+        if (!btn->isVisible() || btn->height() == 0) {
+            badge->hide();
+            dot->hide();
+            return;
+        }
+
+        QPoint btnPos = btn->mapTo(ui->sidebar, QPoint(0, 0));
+        int btnW = btn->width();
+        badge->move(btnPos.x() + btnW - badge->width() - 8,
+                    btnPos.y() + 2);
+        dot->move(btnPos.x() + btnW - 16,
+                  btnPos.y() + 4);
+
+        badge->setVisible(!mSidebarCollapsed);
+        dot->setVisible(mSidebarCollapsed);
+    };
+
+    positionBadge(btnSystemCleaner, mCleanerBadge, mCleanerBadgeDot);
+    positionBadge(btnAptSourceManager, mUpdatesBadge, mUpdatesBadgeDot);
 }
 
 void App::toggleKioskMode()

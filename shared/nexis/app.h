@@ -88,6 +88,7 @@ private:
     void saveSectionStates();
     void restoreSectionStates();
     void updateSectionChevrons();
+    void repositionBadges();
 
 private:
     Ui::App *ui;

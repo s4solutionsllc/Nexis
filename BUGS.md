@@ -497,6 +497,11 @@
   - **Resolved (Tier 1):** Dashboard, Resources, and Processes pages now inherit `NexisPage` and gate slot handlers on visibility. Process timer starts paused and only runs while Processes page is visible. Delta-tracking statics maintained when hidden to prevent data spikes.
   - **Resolved (Tier 2/3):** `4acadeb` — Seven performance fixes: (P0) Replaced `iostat` subprocess with IOKit `IOBlockStorageDriver` API — eliminated ~1000ms/tick main-thread blocking and fixed incorrect read==write data. (P1) Cached `getAvgClock()` — eliminated 2 subprocess calls/tick on Apple Silicon. (P2) Moved `discoverDrives()` to `QtConcurrent::run()` — 300-1000ms off main thread. (P3) In-place `QStandardItemModel` updates in ProcessesPage — eliminated 6,800 item allocations/tick. (P4) Changed signal signatures to `const&` — eliminated deep copies at emission. (P5) Merged duplicate `getifaddrs()` into single walk. (P6) Cached `hw.memsize`, `host_page_size()`, and GPU registry entry IDs.
 
+- [x] **BUG-73: Update indicator badge appears on Dashboard navbar instead of Homebrew/Apt** (LOW)
+  - **Description:** When the Homebrew/Apt update checker finds available updates, the notification indicator is displayed on the Dashboard sidebar nav item instead of the Homebrew/Apt sidebar nav item. Same bug affected the System Cleaner badge.
+  - **Fix complexity:** Low (coordinate system mismatch)
+  - **Resolved:** `99c0f4c` — Replaced `button->pos()` (relative to section container) with `button->mapTo(ui->sidebar, QPoint(0,0))` for correct coordinate conversion. Centralised positioning into `repositionBadges()` helper, called from signal handlers and sidebar/section collapse handlers.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
