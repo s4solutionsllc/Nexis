@@ -102,30 +102,59 @@ void ProcessesPage::loadHeaderMenu()
 void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QString &userName)
 {
     QModelIndexList selecteds = ui->tableProcess->selectionModel()->selectedRows();
+    pid_t selectedPid = 0;
+    if (!selecteds.isEmpty())
+        selectedPid = selecteds.first().data(SortRole).toInt();
 
-    mItemModel->removeRows(0, mItemModel->rowCount());
+    bool showAll = ui->checkAllProcesses->isChecked();
+    QSet<pid_t> incomingPids;
 
-    if (ui->checkAllProcesses->isChecked()) {
-        for (const Process &proc : processes) {
+    for (const Process &proc : processes) {
+        if (!showAll && userName != proc.getUname())
+            continue;
+
+        pid_t pid = proc.getPid();
+        incomingPids.insert(pid);
+
+        auto it = mPidToRow.find(pid);
+        if (it != mPidToRow.end()) {
+            updateRow(it.value(), proc);
+        } else {
+            int newRow = mItemModel->rowCount();
             mItemModel->appendRow(createRow(proc));
+            mPidToRow.insert(pid, newRow);
         }
-    } else  {
-        for (const Process &proc : processes) {
-            if (userName == proc.getUname()) {
-                mItemModel->appendRow(createRow(proc));
-            }
-        }
+    }
+
+    // Remove exited processes (iterate in reverse to keep row indices valid)
+    QList<int> rowsToRemove;
+    for (auto it = mPidToRow.begin(); it != mPidToRow.end(); ++it) {
+        if (!incomingPids.contains(it.key()))
+            rowsToRemove.append(it.value());
+    }
+    std::sort(rowsToRemove.begin(), rowsToRemove.end(), std::greater<int>());
+    for (int row : rowsToRemove) {
+        pid_t pid = mItemModel->item(row, 0)->data(SortRole).toLongLong();
+        mItemModel->removeRow(row);
+        mPidToRow.remove(pid);
+    }
+
+    // Rebuild PID→row map after removals (row indices shifted)
+    mPidToRow.clear();
+    for (int i = 0; i < mItemModel->rowCount(); ++i) {
+        pid_t pid = mItemModel->item(i, 0)->data(SortRole).toLongLong();
+        mPidToRow.insert(pid, i);
     }
 
     ui->lblProcessTitle->setText(tr("Processes (%1)").arg(mItemModel->rowCount()));
 
-    // selected item
-    if (! selecteds.isEmpty()) {
-        mSelectedRowModel = selecteds.first();
-
+    // Restore selection
+    if (selectedPid) {
         for (int i = 0; i < mSortFilterModel->rowCount(); ++i) {
-            if (mSortFilterModel->index(i, 0).data(SortRole).toInt() == mSelectedRowModel.data(SortRole).toInt()) {
+            if (mSortFilterModel->index(i, 0).data(SortRole).toInt() == selectedPid) {
                 ui->tableProcess->selectRow(i);
+                mSelectedRowModel = mSortFilterModel->index(i, 0);
+                break;
             }
         }
     } else {
@@ -229,6 +258,54 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
         << cmd_i;
 
     return row;
+}
+
+void ProcessesPage::updateRow(int row, const Process &proc)
+{
+    int d = SortRole;
+    auto setCell = [&](int col, const QString &display, const QVariant &sort, const QVariant &tip) {
+        QStandardItem *item = mItemModel->item(row, col);
+        if (item) {
+            item->setText(display);
+            item->setData(sort, d);
+            item->setData(tip, Qt::ToolTipRole);
+        }
+    };
+
+    setCell(0,  QString::number(proc.getPid()), proc.getPid(), proc.getPid());
+    setCell(1,  FormatUtil::formatBytes(proc.getRss()), proc.getRss(), FormatUtil::formatBytes(proc.getRss()));
+    setCell(2,  QString::number(proc.getPmem()), proc.getPmem(), proc.getPmem());
+    setCell(3,  FormatUtil::formatBytes(proc.getVsize()), proc.getVsize(), FormatUtil::formatBytes(proc.getVsize()));
+    setCell(4,  proc.getUname(), proc.getUname(), proc.getUname());
+    setCell(5,  QString::number(proc.getPcpu()), proc.getPcpu(), proc.getPcpu());
+    setCell(6,  proc.getStartTime(), proc.getStartTime(), proc.getStartTime());
+    setCell(7,  proc.getState(), proc.getState(), proc.getState());
+    setCell(8,  proc.getGroup(), proc.getGroup(), proc.getGroup());
+    setCell(9,  QString::number(proc.getNice()), proc.getNice(), proc.getNice());
+    setCell(10, proc.getCpuTime(), proc.getCpuTime(), proc.getCpuTime());
+    setCell(11, proc.getSession(), proc.getSession(), proc.getSession());
+
+    QString diskReadText = proc.getDiskReadRate() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getDiskReadRate())) + "/s";
+    setCell(12, diskReadText, proc.getDiskReadRate(), diskReadText);
+
+    QString diskWriteText = proc.getDiskWriteRate() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getDiskWriteRate())) + "/s";
+    setCell(13, diskWriteText, proc.getDiskWriteRate(), diskWriteText);
+
+    QString netDownText = proc.getNetDownRate() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getNetDownRate())) + "/s";
+    setCell(14, netDownText, proc.getNetDownRate(), netDownText);
+
+    QString netUpText = proc.getNetUpRate() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getNetUpRate())) + "/s";
+    setCell(15, netUpText, proc.getNetUpRate(), netUpText);
+
+    setCell(16, proc.getCmd(), proc.getCmd(), QString("<p>%1</p>").arg(proc.getCmd()));
 }
 
 void ProcessesPage::on_txtProcessSearch_textChanged(const QString &val)

@@ -11,16 +11,16 @@
 
 void MemoryInfoMacOS::updateMemoryInfo()
 {
-    // Total physical memory via sysctl
-    int64_t physMem = 0;
-    size_t len = sizeof(physMem);
-    if (sysctlbyname("hw.memsize", &physMem, &len, nullptr, 0) == 0) {
-        memTotal = static_cast<quint64>(physMem);
+    if (!mConstantsCached) {
+        int64_t physMem = 0;
+        size_t len = sizeof(physMem);
+        if (sysctlbyname("hw.memsize", &physMem, &len, nullptr, 0) == 0)
+            mPhysicalMemory = static_cast<quint64>(physMem);
+        host_page_size(mach_host_self(), &mPageSize);
+        mConstantsCached = true;
     }
-
-    // VM statistics via Mach
-    vm_size_t pageSize;
-    host_page_size(mach_host_self(), &pageSize);
+    memTotal = mPhysicalMemory;
+    vm_size_t pageSize = mPageSize;
 
     vm_statistics64_data_t vmStat;
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
@@ -51,18 +51,17 @@ void MemoryInfoMacOS::updateMemoryInfo()
 
     // Swap usage via sysctl
     struct xsw_usage swapUsage;
-    len = sizeof(swapUsage);
-    if (sysctlbyname("vm.swapusage", &swapUsage, &len, nullptr, 0) == 0) {
+    size_t swapLen = sizeof(swapUsage);
+    if (sysctlbyname("vm.swapusage", &swapUsage, &swapLen, nullptr, 0) == 0) {
         swapTotal = swapUsage.xsu_total;
         swapUsed = swapUsage.xsu_used;
         swapFree = swapUsage.xsu_avail;
     }
 
     // FR-57: Memory pressure level via sysctl
-    // Returns: 1 = normal (green), 2 = warning (yellow), 4 = critical (red)
     int level = 0;
-    len = sizeof(level);
-    if (sysctlbyname("kern.memorystatus_vm_pressure_level", &level, &len, nullptr, 0) == 0) {
+    size_t levelLen = sizeof(level);
+    if (sysctlbyname("kern.memorystatus_vm_pressure_level", &level, &levelLen, nullptr, 0) == 0) {
         pressureLevel = level;
     } else {
         pressureLevel = -1;

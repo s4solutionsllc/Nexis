@@ -37,9 +37,8 @@ NetworkInfoMacOS::NetworkInfoMacOS()
     }
 }
 
-quint64 NetworkInfoMacOS::getRXbytes() const
+void NetworkInfoMacOS::updateNetworkBytes()
 {
-    quint64 rx = 0;
     struct ifaddrs *ifap, *ifa;
 
     if (getifaddrs(&ifap) == 0) {
@@ -49,36 +48,14 @@ quint64 NetworkInfoMacOS::getRXbytes() const
             {
                 struct if_data *ifData = static_cast<struct if_data *>(ifa->ifa_data);
                 if (ifData) {
-                    rx = ifData->ifi_ibytes;
+                    mRxBytes = ifData->ifi_ibytes;
+                    mTxBytes = ifData->ifi_obytes;
                 }
                 break;
             }
         }
         freeifaddrs(ifap);
     }
-    return rx;
-}
-
-quint64 NetworkInfoMacOS::getTXbytes() const
-{
-    quint64 tx = 0;
-    struct ifaddrs *ifap, *ifa;
-
-    if (getifaddrs(&ifap) == 0) {
-        for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-            if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_LINK &&
-                QString(ifa->ifa_name) == defaultNetworkInterface)
-            {
-                struct if_data *ifData = static_cast<struct if_data *>(ifa->ifa_data);
-                if (ifData) {
-                    tx = ifData->ifi_obytes;
-                }
-                break;
-            }
-        }
-        freeifaddrs(ifap);
-    }
-    return tx;
 }
 
 QList<QNetworkInterface> NetworkInfoMacOS::getAllInterfaces()

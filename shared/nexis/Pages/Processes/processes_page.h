@@ -37,6 +37,7 @@ private slots:
     void onProcessesUpdated(const QList<Process> &processes, const QString &userName);
     void loadHeaderMenu();
     QList<QStandardItem *> createRow(const Process &proc);
+    void updateRow(int row, const Process &proc);
     void on_txtProcessSearch_textChanged(const QString &val);
     void on_sliderRefresh_valueChanged(const int &i);
     void on_btnEndProcess_clicked();
@@ -50,6 +51,7 @@ private:
     QModelIndex mSelectedRowModel;
     QStringList mHeaders;
     QMenu mHeaderMenu;
+    QHash<pid_t, int> mPidToRow;
     InfoManager *im;
     DataRefreshService *mRefresh;
     ProcessService *mProcessService;

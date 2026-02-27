@@ -12,6 +12,9 @@ public:
     QList<double> getLoadAvgs() const override;
     double getAvgClock() const override;
     QList<double> getClocks() const override;
+
+private:
+    mutable double mCachedClockMHz = -1;
 };
 
 #endif // CPUINFO_MACOS_H

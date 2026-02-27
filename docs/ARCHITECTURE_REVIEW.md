@@ -372,6 +372,14 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 - Added pause/resume via `sigAppVisibilityChanged(bool)` — all polling stops when minimized to tray (kiosk mode overrides)
 - Pages are simpler — receive typed data payloads, don't manage polling or call InfoManager directly
 - Process timer independently pauseable via `pauseProcessTimer()`/`resumeProcessTimer()` — starts paused, only runs while Processes page is visible (BUG-72)
+- **BUG-72 Tier 2/3:** Eliminated remaining performance hotspots:
+  - Replaced `iostat` subprocess (1s main-thread block per tick) with IOKit `IOBlockStorageDriver` API (~0.5ms, correct read/write separation)
+  - Cached `getAvgClock()` result (eliminated 2 subprocess calls per tick on Apple Silicon)
+  - Moved `discoverDrives()` to `QtConcurrent::run()` (300-1000ms off main thread every 30s)
+  - In-place `QStandardItemModel` updates in ProcessesPage (eliminated 6,800 item allocations per tick)
+  - Changed signal signatures to `const&` (eliminated ~2,800 deep string copies per emission)
+  - Merged duplicate `getifaddrs()` walks into single `updateNetworkBytes()` method
+  - Cached `hw.memsize`, `host_page_size()`, and GPU registry entry IDs (read once, not per tick)
 
 ---
 
@@ -412,7 +420,7 @@ Both checks emit `qWarning()` at runtime (visible in debug output) without alter
 
 Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Processes (removed 1 timer) to reactive signal subscribers. Added `sigAppVisibilityChanged(bool)` to SignalMapper for pause/resume (kiosk mode overrides). DI constructor parameter follows FR-35 pattern.
 
-**Results:** 6 per-page QTimers → 5 centralized QTimers. Zero duplicate InfoManager calls. Fixed `getCpuPercents()` static-delta bug. Battery optimization via pause on minimize. Page-aware data gating (BUG-72): Dashboard, Resources, and Processes pages inherit `NexisPage` and gate slot handlers on visibility — tile repaints, chart updates, and process polling stop when the page is hidden. Delta-tracking statics (network/disk I/O) are maintained even when hidden to prevent data spikes on reactivation.
+**Results:** 6 per-page QTimers → 5 centralized QTimers. Zero duplicate InfoManager calls. Fixed `getCpuPercents()` static-delta bug. Battery optimization via pause on minimize. Page-aware data gating (BUG-72 Tier 1): Dashboard, Resources, and Processes pages inherit `NexisPage` and gate slot handlers on visibility — tile repaints, chart updates, and process polling stop when the page is hidden. Delta-tracking statics (network/disk I/O) are maintained even when hidden to prevent data spikes on reactivation. BUG-72 Tier 2/3: All signal signatures use `const&` to avoid deep copies on emission. `getDiskIO()` replaced `iostat` subprocess with IOKit API. `getAvgClock()` result cached (constant on Apple Silicon). `discoverDrives()` runs async via `QtConcurrent::run()`. ProcessesPage updates model rows in-place instead of nuke-and-rebuild. Network bytes collected in single `getifaddrs()` walk. Memory constants and GPU registry IDs cached on first call.
 
 **Per-process I/O delta tracking (FR-58/FR-59):** `ProcessInfoMacOS` and `ProcessInfoLinux` subclasses maintain `QHash<pid_t, QPair<quint64,quint64>>` maps for previous disk I/O counters and a `QElapsedTimer` to compute per-process byte rates (read/write per second). macOS additionally parses `nettop -x -P -L1 -J bytes_in,bytes_out` output for per-process network bandwidth. Linux reads `/proc/<pid>/io` for disk I/O; network columns show N/A on Linux (no viable non-privileged per-process network API). The 4 new fields (`diskReadRate`, `diskWriteRate`, `netDownRate`, `netUpRate`) are carried in the `Process` struct and displayed as hidden-by-default columns on the Processes page.
 

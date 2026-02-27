@@ -15,6 +15,7 @@ struct GpuDevice {
     QString sysfsLoadPath;  // Linux: path to gpu_busy_percent or similar
     QString queryCommand;   // Linux: nvidia-smi command for this GPU (if NVIDIA)
     int     deviceIndex;    // index within vendor's enumeration
+    quint64 registryEntryID = 0; // macOS: IOKit registry entry ID for matching
 };
 
 class NEXISCORESHARED_EXPORT GpuInfo

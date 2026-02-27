@@ -21,22 +21,10 @@ NetworkInfoLinux::NetworkInfoLinux()
             .arg(defaultNetworkInterface);
 }
 
-quint64 NetworkInfoLinux::getRXbytes() const
+void NetworkInfoLinux::updateNetworkBytes()
 {
-    quint64 rx = FileUtil::readStringFromFile(rxPath)
-            .trimmed()
-            .toLongLong();
-
-    return rx;
-}
-
-quint64 NetworkInfoLinux::getTXbytes() const
-{
-    quint64 tx = FileUtil::readStringFromFile(txPath)
-            .trimmed()
-            .toLongLong();
-
-    return tx;
+    mRxBytes = FileUtil::readStringFromFile(rxPath).trimmed().toLongLong();
+    mTxBytes = FileUtil::readStringFromFile(txPath).trimmed().toLongLong();
 }
 
 QList<QNetworkInterface> NetworkInfoLinux::getAllInterfaces()

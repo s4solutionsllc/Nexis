@@ -159,6 +159,7 @@ void DataRefreshService::onFastTick()
     emit memoryUpdated(snap);
 
     // Network
+    im->updateNetworkBytes();
     emit networkUpdated(im->getRXbytes(), im->getTXbytes());
 
     // Disk I/O
@@ -193,11 +194,18 @@ void DataRefreshService::onMediumTick()
 
 void DataRefreshService::onSlowTick()
 {
-    if (!im->hasDiskHealth())
+    if (!im->hasDiskHealth() || mDiskHealthRunning)
         return;
 
-    im->refreshDiskHealth();
-    emit diskHealthUpdated(im->getDriveHealth());
+    mDiskHealthRunning = true;
+    QtConcurrent::run([this]() {
+        im->refreshDiskHealth();
+        QList<DriveHealth> drives = im->getDriveHealth();
+        QMetaObject::invokeMethod(this, [this, drives]() {
+            mDiskHealthRunning = false;
+            emit diskHealthUpdated(drives);
+        }, Qt::QueuedConnection);
+    });
 }
 
 void DataRefreshService::onProcessTick()

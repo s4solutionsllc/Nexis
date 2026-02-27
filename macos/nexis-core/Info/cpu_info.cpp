@@ -46,21 +46,24 @@ QList<double> CpuInfoMacOS::getLoadAvgs() const
 
 double CpuInfoMacOS::getAvgClock() const
 {
-    // On macOS, use sysctl to get CPU frequency
+    if (mCachedClockMHz >= 0)
+        return mCachedClockMHz;
+
     uint64_t freq = 0;
     size_t len = sizeof(freq);
 
     // Try hw.cpufrequency (Intel Macs)
     if (sysctlbyname("hw.cpufrequency", &freq, &len, nullptr, 0) == 0 && freq > 0) {
-        return freq / 1e6; // Convert Hz to MHz
+        mCachedClockMHz = freq / 1e6;
+        return mCachedClockMHz;
     }
 
     // Apple Silicon: real-time frequency requires root (powermetrics).
-    // Return the max P-core frequency from hw.cpufrequency_max if available.
     freq = 0;
     len = sizeof(freq);
     if (sysctlbyname("hw.cpufrequency_max", &freq, &len, nullptr, 0) == 0 && freq > 0) {
-        return freq / 1e6;
+        mCachedClockMHz = freq / 1e6;
+        return mCachedClockMHz;
     }
 
     // Last resort: look up known max frequencies by chip name.
@@ -69,7 +72,6 @@ double CpuInfoMacOS::getAvgClock() const
         if (brand.isEmpty())
             brand = CommandUtil::exec("sysctl", {"-n", "hw.model"}).trimmed();
 
-        // Known Apple Silicon max P-core frequencies (MHz)
         static const QMap<QString, double> knownFreqs = {
             {"Apple M1",       3200}, {"Apple M1 Pro",   3200},
             {"Apple M1 Max",   3200}, {"Apple M1 Ultra", 3200},
@@ -82,12 +84,15 @@ double CpuInfoMacOS::getAvgClock() const
         };
 
         for (auto it = knownFreqs.constBegin(); it != knownFreqs.constEnd(); ++it) {
-            if (brand.contains(it.key(), Qt::CaseInsensitive))
-                return it.value();
+            if (brand.contains(it.key(), Qt::CaseInsensitive)) {
+                mCachedClockMHz = it.value();
+                return mCachedClockMHz;
+            }
         }
     } catch (...) {}
 
-    return 0.0;  // truly unknown — dashboard will omit GHz label
+    mCachedClockMHz = 0.0;
+    return mCachedClockMHz;
 }
 
 QList<double> CpuInfoMacOS::getClocks() const

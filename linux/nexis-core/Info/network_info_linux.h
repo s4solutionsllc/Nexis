@@ -11,8 +11,7 @@ public:
     QString getDefaultNetworkInterface() const override;
     QList<QNetworkInterface> getAllInterfaces() override;
 
-    quint64 getRXbytes() const override;
-    quint64 getTXbytes() const override;
+    void updateNetworkBytes() override;
 
 private:
     QString rxPath;

@@ -39,6 +39,7 @@ public:
     int getMemPressureLevel() const;
     void updateMemoryInfo();
 
+    void updateNetworkBytes();
     quint64 getRXbytes() const;
     quint64 getTXbytes() const;
     QString getDefaultNetworkInterface() const;

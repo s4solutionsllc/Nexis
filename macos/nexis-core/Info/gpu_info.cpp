@@ -120,6 +120,10 @@ void GpuInfoMacOS::discoverGpus()
 
         dev.vendor = detectVendor(accel, dev.name);
 
+        uint64_t entryID = 0;
+        IORegistryEntryGetRegistryEntryID(accel, &entryID);
+        dev.registryEntryID = entryID;
+
         mDevices.append(dev);
         IOObjectRelease(accel);
     }
@@ -177,13 +181,13 @@ void GpuInfoMacOS::updateGpuInfo()
 
     io_object_t accel;
     while ((accel = IOIteratorNext(iterator)) != 0) {
-        QString name = getModelName(accel);
+        uint64_t entryID = 0;
+        IORegistryEntryGetRegistryEntryID(accel, &entryID);
         int utilization = readUtilization(accel);
 
-        // Match by model name to handle IOKit iteration order changes
         bool matched = false;
         for (int i = 0; i < mDevices.size(); ++i) {
-            if (mDevices[i].name == name) {
+            if (mDevices[i].registryEntryID == entryID) {
                 mDevices[i].utilization = utilization;
                 matched = true;
                 break;
@@ -191,7 +195,6 @@ void GpuInfoMacOS::updateGpuInfo()
         }
 
         if (!matched && mDevices.size() == 1) {
-            // Single-GPU fallback: assign to the only device
             mDevices[0].utilization = utilization;
         }
 

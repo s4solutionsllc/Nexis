@@ -197,6 +197,11 @@ QList<QString> InfoManager::getDevices()
 /********************
  * Network Provider
  *******************/
+void InfoManager::updateNetworkBytes()
+{
+    ni->updateNetworkBytes();
+}
+
 quint64 InfoManager::getRXbytes() const
 {
     return ni->getRXbytes();

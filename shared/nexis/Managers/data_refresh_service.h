@@ -33,18 +33,18 @@ public:
     void triggerUpdateCheck();
 
 signals:
-    void cpuUpdated(QList<int> percents, double clockGHz, QList<double> loadAvgs);
+    void cpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
     void memoryUpdated(const MemorySnapshot &snap);
     void networkUpdated(quint64 rxBytes, quint64 txBytes);
-    void diskIOUpdated(QList<quint64> io);
-    void gpuUpdated(QList<GpuDevice> devices);
+    void diskIOUpdated(const QList<quint64> &io);
+    void gpuUpdated(const QList<GpuDevice> &devices);
     void tempUpdated();
     void fanUpdated();
-    void batteryUpdated(BatteryData data);
-    void diskUsageUpdated(QList<Disk> disks);
-    void diskHealthUpdated(QList<DriveHealth> drives);
-    void processesUpdated(QList<Process> processes, QString userName);
-    void systemUpdatesChecked(UpdateCheckResult result);
+    void batteryUpdated(const BatteryData &data);
+    void diskUsageUpdated(const QList<Disk> &disks);
+    void diskHealthUpdated(const QList<DriveHealth> &drives);
+    void processesUpdated(const QList<Process> &processes, const QString &userName);
+    void systemUpdatesChecked(const UpdateCheckResult &result);
 
 private slots:
     void onFastTick();
@@ -72,6 +72,7 @@ private:
     bool mPaused;
     bool mProcessPaused;
     bool mUpdateCheckRunning;
+    bool mDiskHealthRunning = false;
 };
 
 #endif // DATA_REFRESH_SERVICE_H
