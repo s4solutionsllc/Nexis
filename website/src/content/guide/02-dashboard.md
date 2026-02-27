@@ -21,7 +21,11 @@ Displays overall CPU usage as a percentage with a history visualization. The sub
 
 ### Memory
 
-Shows memory usage as a percentage along with the used/total breakdown. The subtitle displays swap usage.
+Shows memory usage as a percentage along with the used/total breakdown.
+
+On **macOS**, the subtitle shows a breakdown of Wired, Active, and Compressed memory. The tile's accent color changes based on memory pressure: green when pressure is normal, yellow when elevated, and red when critical — giving you an instant visual cue about whether your system needs more RAM.
+
+On **Linux**, the subtitle shows Available memory and swap usage. Memory pressure is derived from PSI (Pressure Stall Information) when available, with a heuristic fallback on older kernels.
 
 ### Disk
 
@@ -41,13 +45,27 @@ Shows the current GPU utilization as a percentage with a history visualization. 
 
 Displays the reading from a selected thermal sensor. When two or more sensors are detected, a gear icon menu appears so you can pick which sensor to track.
 
+### Fans (conditional)
+
+Displays fan speed in RPM with a percentage gauge based on the fan's maximum rated speed. Only appears when your system has detectable fans. If multiple fans are present, a gear icon menu lets you choose which fan to monitor.
+
+> **Note:** Fanless machines (such as passively cooled MacBooks) hide this tile automatically.
+
 ### Battery (conditional)
 
 Shows battery health as a percentage with cycle count. Only appears on laptops and other battery-powered devices.
 
-> **Linux:** GPU data comes from sysfs (AMD/Intel) or `nvidia-smi` (NVIDIA). Temperature data comes from `/sys/class/hwmon/`.
+### Health Score
 
-> **macOS:** GPU info is read through IOKit and Metal. Temperature data comes from the System Management Controller (SMC).
+A composite **0–100 health score** that aggregates multiple system metrics into a single number: CPU load, memory pressure, disk space, drive temperature, battery cycle health, and SMART disk health. The score gives you a quick overall verdict on your system's condition.
+
+When displayed at a larger size (2×1 or 2×2), the tile shows breakdown bars for each contributing factor so you can see which areas are dragging the score down.
+
+> **Tip:** A score above 80 generally means your system is in good shape. If the score drops, check the breakdown bars to identify the specific factor — low disk space and high memory pressure are the most common culprits.
+
+> **Linux:** GPU data comes from sysfs (AMD/Intel) or `nvidia-smi` (NVIDIA). Temperature and fan data comes from `/sys/class/hwmon/`.
+
+> **macOS:** GPU info is read through IOKit and Metal. Temperature and fan data comes from the System Management Controller (SMC).
 
 ## Edit Mode
 

@@ -84,4 +84,4 @@ A search bar at the top of the page filters across all three tabs. Type a name o
 
 ## What's Next
 
-If you are running GNOME on Linux, the next page covers how Nexis can help you tweak your desktop settings. See [GNOME Settings](./14-gnome-settings). Otherwise, skip ahead to [Settings](./15-settings) to configure Nexis itself.
+Browse and filter your system's log stream on the [System Logs](./19-system-logs) page. If you are running GNOME on Linux, see [GNOME Settings](./14-gnome-settings). Otherwise, skip ahead to [Settings](./15-settings) to configure Nexis itself.

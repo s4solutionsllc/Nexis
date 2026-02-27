@@ -46,7 +46,11 @@ This chart tracks **read and write throughput** in bytes per second, with one li
 
 ## Memory
 
-Two lines on a single chart: **used memory** and **swap usage**. Watching how these change over time helps you understand whether your system has enough RAM for your workload. If the swap line climbs steadily while you work, your applications are being paged out to disk, which slows everything down.
+The memory chart displays four data series to give you a detailed picture of how RAM is being used:
+
+> **macOS:** The four series are **Wired** (memory locked by the kernel), **Active** (recently used), **Inactive** (available for reclaim), and **Compressed** (memory compressed to save space). Watching Compressed climb while Active stays high means your system is under memory pressure.
+
+> **Linux:** The four series are **Used**, **Available** (free + reclaimable), **Active** (recently accessed), and **Inactive** (eligible for reclaim). If Available drops while Used climbs and swap starts growing, your workload is exceeding physical RAM.
 
 ## Network
 

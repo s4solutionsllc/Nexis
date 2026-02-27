@@ -76,6 +76,7 @@ The left-hand sidebar is your main navigation. It is organized into three groups
 
 - **Startup Apps** -- Control which apps launch at login.
 - **System Cleaner** -- Scan for and remove junk files.
+- **Disk Tools** -- Find large/old files and detect duplicates to reclaim disk space.
 - **Search** -- Find files across your filesystem by name, size, date, and more.
 - **Services** -- Start, stop, and configure system daemons.
 - **Processes** -- View and end running processes.
@@ -83,9 +84,10 @@ The left-hand sidebar is your main navigation. It is organized into three groups
 
 ### SYSTEM
 
-- **Helpers** -- Utility tools such as the Hosts File Manager.
+- **Helpers** -- Utility tools such as the Hosts File Manager and DNS cache flushing.
 - **APT Repositories** (Linux) / **Homebrew** (macOS) -- Manage package sources.
 - **Docker** -- Manage Docker images, containers, and volumes (shown only when Docker is installed).
+- **System Logs** -- Browse and filter system log entries with severity color-coding.
 - **GNOME Settings** (Linux/GNOME) -- Tweak desktop appearance, mouse, and window behavior.
 - **Settings** -- Configure Nexis itself (theme, language, alerts, scheduled cleaning, and more).
 
@@ -96,6 +98,12 @@ The left-hand sidebar is your main navigation. It is organized into three groups
 Press <kbd>Ctrl</kbd>+<kbd>B</kbd> (or click the collapse button at the top of the sidebar) to shrink the sidebar into a narrow icon rail. This gives more room to the main content area while still letting you switch pages with a single click. Press <kbd>Ctrl</kbd>+<kbd>B</kbd> again to expand it.
 
 ![Sidebar in collapsed and expanded states](/Nexis/images/guide/sidebar-collapsed.png)
+
+### Collapsible Section Groups
+
+Each section header (MONITOR, MANAGE, SYSTEM) is clickable. Click a section header to **collapse** its group, hiding the page buttons underneath. Click again to expand. A small chevron icon indicates whether the section is expanded or collapsed.
+
+This is useful when you only work with a subset of pages — collapse the sections you don't use to reduce visual clutter. Nexis remembers which sections are collapsed across sessions.
 
 ## Command Palette
 

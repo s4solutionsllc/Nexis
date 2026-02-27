@@ -17,6 +17,7 @@ These shortcuts work from any page in the application.
 |----------|--------|
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> | Open the **Command Palette** -- a fuzzy-search popup for jumping to any page or running common actions |
 | <kbd>Ctrl</kbd>+<kbd>B</kbd> | Toggle the **sidebar** between expanded and collapsed states |
+| <kbd>Ctrl</kbd>+<kbd>E</kbd> | Toggle **dashboard edit mode** (drag, resize, restyle, and recolor tiles) |
 | <kbd>F11</kbd> | Toggle **kiosk mode** (fullscreen Dashboard with no sidebar or title bar) |
 | <kbd>Escape</kbd> | Exit **kiosk mode** (when kiosk mode is active) |
 
@@ -38,6 +39,16 @@ Select a result with the arrow keys and press <kbd>Enter</kbd>, or click it dire
 | <kbd>Ctrl</kbd>+<kbd>B</kbd> | Collapse or expand the sidebar |
 
 When the sidebar is collapsed, it shrinks to a narrow icon rail. Page icons remain visible and clickable. Section headings are replaced by small dot indicators. Press <kbd>Ctrl</kbd>+<kbd>B</kbd> again to expand back to the full sidebar with labels.
+
+## Dashboard Edit Mode
+
+| Shortcut | Action |
+|----------|--------|
+| <kbd>Ctrl</kbd>+<kbd>E</kbd> | Enter or exit dashboard edit mode |
+
+Dashboard edit mode lets you drag tiles to new positions, resize them, change their visual style, customize colors, and hide tiles you don't need. See the [Dashboard](./02-dashboard) guide for full details on what you can do in edit mode.
+
+> **Note:** Edit mode and kiosk mode are mutually exclusive -- entering one exits the other.
 
 ## Kiosk Mode
 

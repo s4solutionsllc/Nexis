@@ -188,15 +188,15 @@
   - **Complexity:** Low (half day)
   - **Resolved:** 1dfd6cb
 
-- [ ] **FR-66: Open ports / active connections viewer** — New section on the Helpers page (or a new Network Tools page) showing listening ports and active connections. Parsed from `ss -tlnp` (Linux) / `lsof -iTCP -sTCP:LISTEN` (macOS). Table with: protocol, local address, port, PID, process name, state.
+- [ ] **FR-66: Open ports / active connections viewer** — New section on the Helpers page (or a new Network Tools page) showing listening ports and active connections. Parsed from `ss -tlnp` (Linux) / `lsof -iTCP -sTCP:LISTEN` (macOS). Table with: protocol, local address, port, PID, process name, state. *Deferred — not to be considered at this time.*
   - **Files:** New `NetworkConnectionInfo` class with platform backends, new UI section/page
   - **Complexity:** Medium (3-4 days)
 
-- [ ] **FR-67: Built-in network speed test** — Download/upload/latency test against a public endpoint (Cloudflare or similar). Single-button test with results shown inline. Uses Qt's `QNetworkAccessManager` against a known test file for a lightweight HTTP-based approach.
+- [ ] **FR-67: Built-in network speed test** — Download/upload/latency test against a public endpoint (Cloudflare or similar). Single-button test with results shown inline. Uses Qt's `QNetworkAccessManager` against a known test file for a lightweight HTTP-based approach. *Deferred — not to be considered at this time.*
   - **Files:** New network utility class, UI in Helpers or Resources page
   - **Complexity:** Medium (4-5 days)
 
-- [ ] **FR-68: Firewall rule viewer/editor (Linux)** — GUI for `ufw` rules: list current rules, add allow/deny by port/service/IP, enable/disable firewall. Read-only view on macOS (`pfctl`). Precedent: Cockpit.
+- [ ] **FR-68: Firewall rule viewer/editor (Linux)** — GUI for `ufw` rules: list current rules, add allow/deny by port/service/IP, enable/disable firewall. Read-only view on macOS (`pfctl`). Precedent: Cockpit. *Deferred — not to be considered at this time.*
   - **Files:** New `FirewallTool` class, new conditional page (shown when `ufw` detected)
   - **Complexity:** High (7-10 days) — complex rule syntax, security-sensitive, needs careful validation
 
@@ -204,7 +204,7 @@
 
 - [x] **FR-69: macOS maintenance actions** — One-click buttons for common macOS maintenance: rebuild Spotlight index, verify disk, rebuild Launch Services database. Added 3 macOS-only buttons to Helpers page nav bar (programmatic, `#ifdef Q_OS_MACOS`). Rebuild Spotlight uses `sudoExec("mdutil", {"-E", "/"})`. Verify Disk uses `execWithStatus("diskutil", {"verifyVolume", "/"})` with scrollable output dialog. Rebuild Launch Services uses safe `lsregister -r` (no `-kill` flag — dangerous on Sonoma/Sequoia) + `killall Finder`. Excluded: periodic scripts (removed in Sequoia), purge memory (Xcode dependency), NVRAM reset (Apple Silicon N/A).
 
-- [ ] **FR-70: CPU governor / power profile switcher (Linux)** — Toggle between `performance`, `balanced`, and `powersave` CPU frequency governors. Read/write `/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor`. Valuable for laptop users. No macOS equivalent (handled by OS automatically).
+- [ ] **FR-70: CPU governor / power profile switcher (Linux)** — Toggle between `performance`, `balanced`, and `powersave` CPU frequency governors. Read/write `/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor`. Valuable for laptop users. No macOS equivalent (handled by OS automatically). *Deferred — not to be considered at this time.*
   - **Files:** New Settings section or Dashboard quick action, sysfs read/write with root elevation
   - **Complexity:** Medium (3-4 days, Linux only)
 

@@ -104,4 +104,4 @@ This means cleaning can happen even if you are not logged into a desktop session
 
 ## What's Next
 
-Learn how to search for files across your filesystem in the [Search](./06-search) guide.
+Find large files and duplicates with the built-in [Disk Tools](./18-disk-tools), or search for files across your filesystem in the [Search](./06-search) guide.

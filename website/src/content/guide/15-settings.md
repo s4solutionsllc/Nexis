@@ -56,6 +56,12 @@ Toggle whether Nexis launches automatically when you log in to your computer.
 
 > **macOS:** This creates or removes a `.plist` file in `~/Library/LaunchAgents/`.
 
+### Minimize to Tray
+
+When enabled, closing or minimizing the Nexis window hides it from the taskbar/Dock instead of quitting. The system tray icon remains visible, and clicking it restores the window. This is useful if you want Nexis running in the background for alerts and scheduled cleaning without taking up space in your taskbar.
+
+When disabled (the default), closing the window quits the application normally.
+
 ## Dashboard Configuration
 
 ### Disk Partition
@@ -78,6 +84,10 @@ Set each slider to the level that matters to you. For example, setting the disk 
 ### Disk Health Alert
 
 A separate toggle enables tray notifications specifically for **failing drives**. When enabled, Nexis checks SMART health verdicts periodically and alerts you if any drive reports a Caution or Critical status.
+
+### Update Notifications
+
+Toggle whether Nexis sends a tray notification when new package updates become available. When enabled, a notification fires the first time the update count goes from zero to one or more -- so you are alerted once, not repeatedly. The pending update count is also shown as a badge on the APT / Homebrew sidebar button.
 
 ## Tools
 

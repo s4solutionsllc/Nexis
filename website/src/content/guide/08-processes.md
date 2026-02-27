@@ -22,13 +22,23 @@ Each row in the table represents a running process. The default columns are:
 | User | The user account that owns the process |
 | CPU % | Current CPU usage as a percentage of one core |
 | Memory % | Current memory usage as a percentage of total RAM |
+| Disk Read | Disk read rate in bytes per second for this process |
+| Disk Write | Disk write rate in bytes per second for this process |
+| Net Down | Network download rate for this process |
+| Net Up | Network upload rate for this process |
 | Command | The full command line that started the process |
+
+The Disk I/O columns show delta-based rates -- the difference in cumulative bytes between refresh intervals -- so you see the current activity rather than lifetime totals.
+
+> **macOS:** All columns are fully supported. Disk I/O is read via `proc_pid_rusage()` and network data via `nettop`.
+
+> **Linux:** Disk I/O is read from `/proc/<pid>/io`. Network columns show N/A because Linux lacks a non-privileged API for per-process network attribution.
 
 ## Sorting
 
 Click any column header to sort the table by that column. Click the same header again to reverse the sort order.
 
-Sorting by **CPU %** (descending) puts the most CPU-hungry processes at the top -- the quickest way to find out why your fans are spinning. Sorting by **Memory %** does the same for RAM usage.
+Sorting by **CPU %** (descending) puts the most CPU-hungry processes at the top -- the quickest way to find out why your fans are spinning. Sorting by **Memory %** does the same for RAM usage. You can also sort by **Disk Read** or **Disk Write** to find processes generating heavy I/O, or by **Net Down** / **Net Up** to find network-intensive processes.
 
 ## Searching
 
