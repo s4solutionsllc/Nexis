@@ -10,7 +10,7 @@ ResourcesPage::~ResourcesPage()
 
 ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
                                DataRefreshService *refreshService) :
-    QWidget(parent),
+    NexisPage(parent),
     ui(new Ui::ResourcesPage),
     im(infoManager ? infoManager : InfoManager::ins()),
     mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
@@ -21,7 +21,8 @@ ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
     mChartNetwork(new HistoryChart(tr("History of Network"), 2, new QCategoryAxis, this)),
     mChartGpu(nullptr),
     mChartDiskHealth(nullptr),
-    mDiskLauncher(nullptr)
+    mDiskLauncher(nullptr),
+    mActive(false)
 {
     ui->setupUi(this);
 
@@ -96,7 +97,17 @@ void ResourcesPage::init()
 
 void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
 {
+    static quint64 l_readBytes  = io.at(0);
+    static quint64 l_writeBytes = io.at(1);
+
+    if (!mActive) {
+        l_readBytes  = io.at(0);
+        l_writeBytes = io.at(1);
+        return;
+    }
+
     static int second = 0;
+    static quint64 maxY = (1L << 10) * 100; // 100 KIBI
 
     QVector<QSplineSeries*> seriesList = mChartDiskReadWrite->getSeriesList();
 
@@ -107,10 +118,6 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
 
         if(second > 61) seriesList.at(j)->removePoints(61, 1);
     }
-
-    static quint64 l_readBytes  = io.at(0); // last
-    static quint64 l_writeBytes = io.at(1); // last
-    static quint64 maxY = (1L << 10) * 100; // 100 KIBI
 
     quint64 readBytes  = io.at(0);
     quint64 writeBytes = io.at(1);
@@ -147,6 +154,7 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
                                    const QList<double> &loadAvgs)
 {
     Q_UNUSED(clockGHz)
+    if (!mActive) return;
 
     // --- CPU per-core chart ---
     {
@@ -208,6 +216,15 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
 
 void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 {
+    static quint64 l_RXbytes = rxBytes;
+    static quint64 l_TXbytes = txBytes;
+
+    if (!mActive) {
+        l_RXbytes = rxBytes;
+        l_TXbytes = txBytes;
+        return;
+    }
+
     static int second = 0;
 
     QVector<QSplineSeries *> seriesList = mChartNetwork->getSeriesList();
@@ -219,9 +236,6 @@ void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 
         if(second > 61) seriesList.at(j)->removePoints(61, 1);
     }
-
-    static quint64 l_RXbytes = rxBytes;
-    static quint64 l_TXbytes = txBytes;
     static quint64 max_RXbytes = 1L << 20; // 1 MEBI
     static quint64 max_TXbytes = 1L << 20; // 1 MEBI
 
@@ -261,6 +275,8 @@ void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 
 void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
 {
+    if (!mActive) return;
+
     static int second = 0;
 
     QVector<QSplineSeries *> seriesList = mChartMemory->getSeriesList();
@@ -339,7 +355,7 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
 
 void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 {
-    if (!mChartGpu)
+    if (!mChartGpu || !mActive)
         return;
 
     static int second = 0;
@@ -368,7 +384,7 @@ void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 
 void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 {
-    if (!mChartDiskHealth)
+    if (!mChartDiskHealth || !mActive)
         return;
 
     static int tick = 0;
@@ -402,4 +418,14 @@ void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
     mChartDiskHealth->setSeriesList(seriesList);
 
     tick++;
+}
+
+void ResourcesPage::onPageActivated()
+{
+    mActive = true;
+}
+
+void ResourcesPage::onPageDeactivated()
+{
+    mActive = false;
 }

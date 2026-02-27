@@ -28,6 +28,8 @@ public:
     void resume();
     bool isPaused() const;
     void setProcessRefreshInterval(int ms);
+    void pauseProcessTimer();
+    void resumeProcessTimer();
     void triggerUpdateCheck();
 
 signals:
@@ -68,6 +70,7 @@ private:
     QTimer *mUpdateTimer;
 
     bool mPaused;
+    bool mProcessPaused;
     bool mUpdateCheckRunning;
 };
 

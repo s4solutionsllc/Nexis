@@ -19,6 +19,7 @@ DataRefreshService::DataRefreshService(InfoManager *infoManager,
       mProcessTimer(new QTimer(this)),
       mUpdateTimer(new QTimer(this)),
       mPaused(false),
+      mProcessPaused(true),
       mUpdateCheckRunning(false)
 {
     connect(mFastTimer, &QTimer::timeout, this, &DataRefreshService::onFastTick);
@@ -50,12 +51,10 @@ void DataRefreshService::start()
     onMediumTick();
     if (im->hasDiskHealth())
         onSlowTick();
-    onProcessTick();
 
     mFastTimer->start(1000);
     mMediumTimer->start(5000);
     mSlowTimer->start(30000);
-    mProcessTimer->start(1000);
 
     if (im->hasUpdateSources()) {
         onUpdateTick();
@@ -96,7 +95,8 @@ void DataRefreshService::resume()
     mFastTimer->start();
     mMediumTimer->start();
     mSlowTimer->start();
-    mProcessTimer->start();
+    if (!mProcessPaused)
+        mProcessTimer->start();
     if (im->hasUpdateSources())
         mUpdateTimer->start();
 }
@@ -109,6 +109,25 @@ bool DataRefreshService::isPaused() const
 void DataRefreshService::setProcessRefreshInterval(int ms)
 {
     mProcessTimer->setInterval(ms);
+}
+
+void DataRefreshService::pauseProcessTimer()
+{
+    if (mProcessPaused)
+        return;
+    mProcessPaused = true;
+    mProcessTimer->stop();
+}
+
+void DataRefreshService::resumeProcessTimer()
+{
+    if (!mProcessPaused)
+        return;
+    mProcessPaused = false;
+    if (!mPaused) {
+        onProcessTick();
+        mProcessTimer->start(mProcessTimer->interval() > 0 ? mProcessTimer->interval() : 1000);
+    }
 }
 
 void DataRefreshService::triggerUpdateCheck()

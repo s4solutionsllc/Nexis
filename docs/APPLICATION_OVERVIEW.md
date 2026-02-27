@@ -805,7 +805,12 @@ All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimer
 | Services, packages | On demand | — | Manual refresh / page navigation |
 | Hardware info | Once | — | Page construction |
 
-**Battery optimization:** When the app is minimized to tray, `DataRefreshService::pause()` stops all 4 timers (unless kiosk mode is active). On restore, `resume()` fires immediate ticks then restarts timers.
+**Battery optimization:** When the app is minimized to tray, `DataRefreshService::pause()` stops all timers (unless kiosk mode is active). On restore, `resume()` fires immediate ticks then restarts timers.
+
+**Page-aware polling (BUG-72):** Three data-heavy pages (`DashboardPage`, `ResourcesPage`, `ProcessesPage`) inherit from `NexisPage` and use `onPageActivated()`/`onPageDeactivated()` lifecycle hooks to reduce CPU usage when hidden:
+- **ProcessesPage:** Calls `DataRefreshService::pauseProcessTimer()` / `resumeProcessTimer()`. The process timer (which spawns `ps ax`, `nettop`, and per-PID `proc_pid_rusage()`) only runs when the Processes page is active. It starts paused by default.
+- **ResourcesPage:** Gates all HistoryChart update slots behind an `mActive` flag. QSplineSeries manipulation and chart repaints are skipped when the page is hidden. Delta-tracking statics for network/disk I/O are maintained to prevent spikes on re-activation.
+- **DashboardPage:** Gates tile update slots (`setValue`, `addDataPoint`, `paintEvent` triggers) behind an `mActive` flag. Tray alert logic (CPU, memory, disk usage thresholds) continues to fire regardless of visibility.
 
 ---
 
