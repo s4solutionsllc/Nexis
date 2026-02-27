@@ -28,7 +28,7 @@ DashboardPage::~DashboardPage()
 DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
                              SettingManager *settingManager, AppManager *appManager,
                              SignalMapper *signalMapper, DataRefreshService *refreshService) :
-    QWidget(parent),
+    NexisPage(parent),
     ui(new Ui::DashboardPage),
     mCpuTile(nullptr),
     mMemTile(nullptr),
@@ -60,7 +60,8 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mEditMode(false),
     mKioskMode(false),
     mDragIndicator(nullptr),
-    mDragSource(nullptr)
+    mDragSource(nullptr),
+    mActive(true)
 {
     ui->setupUi(this);
 
@@ -548,6 +549,8 @@ void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
         }
     }
 
+    if (!mActive) return;
+
     QString valueText = QString("%1%").arg(cpuUsedPercent);
 
     mCpuTile->setValue(cpuUsedPercent, valueText);
@@ -580,6 +583,8 @@ void DashboardPage::onMemoryUpdated(const MemorySnapshot &snap)
             isShow = true;
         }
     }
+
+    if (!mActive) return;
 
     mMemTile->setValue(memUsedPercent, QString("%1%").arg(memUsedPercent));
     mMemTile->addDataPoint(memUsedPercent);
@@ -678,6 +683,8 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
         }
     }
 
+    if (!mActive) return;
+
     QString sizeText = FormatUtil::formatBytes(disk->size);
     QString usedText = FormatUtil::formatBytes(disk->used);
 
@@ -713,6 +720,12 @@ void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
     static quint64 l_RXbytes = rxBytes;
     static quint64 l_TXbytes = txBytes;
 
+    if (!mActive) {
+        l_RXbytes = rxBytes;
+        l_TXbytes = txBytes;
+        return;
+    }
+
     quint64 d_RXbytes = (rxBytes - l_RXbytes);
     quint64 d_TXbytes = (txBytes - l_TXbytes);
 
@@ -724,6 +737,7 @@ void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 
 void DashboardPage::updateTempTile()
 {
+    if (!mActive) return;
     double temp = im->getThermalTemperature(mSelectedSensorIndex);
     int percent = qBound(0, static_cast<int>(temp), 100);
 
@@ -752,6 +766,7 @@ void DashboardPage::onTempSensorSelected(QAction *action)
 
 void DashboardPage::updateFanTile()
 {
+    if (!mActive) return;
     int rpm = im->getFanSpeed(mSelectedFanIndex);
     QList<FanSensor> fans = im->getFanSensors();
     int maxRpm = 6000;
@@ -785,7 +800,7 @@ void DashboardPage::onFanSensorSelected(QAction *action)
 
 void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 {
-    if (mSelectedGpuIndex < 0 || mSelectedGpuIndex >= gpus.size())
+    if (!mActive || mSelectedGpuIndex < 0 || mSelectedGpuIndex >= gpus.size())
         return;
 
     const GpuDevice &gpu = gpus.at(mSelectedGpuIndex);
@@ -811,7 +826,7 @@ void DashboardPage::onGpuDeviceChanged(int index)
 
 void DashboardPage::onBatteryUpdated(const BatteryData &bat)
 {
-    if (!bat.hasBattery)
+    if (!mActive || !bat.hasBattery)
         return;
 
     int displayValue = (bat.healthPercent >= 0) ? bat.healthPercent : bat.chargePercent;
@@ -1701,6 +1716,7 @@ void DashboardPage::setupCustomizationMenu(DashboardTileWrapper *wrapper, const 
 void DashboardPage::onHealthCpuUpdated(const QList<int> &percents, double clockGHz,
                                         const QList<double> &loadAvgs)
 {
+    if (!mActive) return;
     Q_UNUSED(percents)
     Q_UNUSED(clockGHz)
     int coreCount = im->getCpuCoreCount();
@@ -1716,6 +1732,7 @@ void DashboardPage::onHealthCpuUpdated(const QList<int> &percents, double clockG
 
 void DashboardPage::onHealthMemoryUpdated(const MemorySnapshot &snap)
 {
+    if (!mActive) return;
     int score = 100;
     if (snap.total > 0)
         score = qBound(0, 100 - (int)(100.0 * snap.used / snap.total), 100);
@@ -1725,6 +1742,7 @@ void DashboardPage::onHealthMemoryUpdated(const MemorySnapshot &snap)
 
 void DashboardPage::onHealthDiskUpdated(const QList<Disk> &disks)
 {
+    if (!mActive) return;
     qint64 totalSize = 0;
     double weightedScore = 0.0;
     for (const Disk &d : disks) {
@@ -1741,6 +1759,7 @@ void DashboardPage::onHealthDiskUpdated(const QList<Disk> &disks)
 
 void DashboardPage::onHealthTempUpdated()
 {
+    if (!mActive) return;
     double tempC = im->getThermalTemperature(mSelectedSensorIndex);
     int score = 100;
     if (tempC >= 100.0) score = 0;
@@ -1751,12 +1770,14 @@ void DashboardPage::onHealthTempUpdated()
 
 void DashboardPage::onHealthBatteryUpdated(const BatteryData &bat)
 {
+    if (!mActive) return;
     mHealthTile->calculator()->setBatteryScore(qBound(0, bat.healthPercent, 100));
     mHealthTile->recalculate();
 }
 
 void DashboardPage::onHealthDiskHealthUpdated(const QList<DriveHealth> &drives)
 {
+    if (!mActive) return;
     int worstScore = 100;
     for (const DriveHealth &d : drives) {
         if (!d.smartPassed) worstScore = qMin(worstScore, 0);
@@ -1765,4 +1786,14 @@ void DashboardPage::onHealthDiskHealthUpdated(const QList<DriveHealth> &drives)
     }
     mHealthTile->calculator()->setSmartScore(worstScore);
     mHealthTile->recalculate();
+}
+
+void DashboardPage::onPageActivated()
+{
+    mActive = true;
+}
+
+void DashboardPage::onPageDeactivated()
+{
+    mActive = false;
 }

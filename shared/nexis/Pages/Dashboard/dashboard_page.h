@@ -1,7 +1,6 @@
 #ifndef DASHBOARDPAGE_H
 #define DASHBOARDPAGE_H
 
-#include <QWidget>
 #include <QComboBox>
 #include <QMenu>
 #include <QPushButton>
@@ -14,6 +13,7 @@
 #include <QShortcut>
 #include <QtConcurrent>
 
+#include "nexis_page.h"
 #include "Managers/info_manager.h"
 #include "metric_tile_base.h"
 #include "metric_tile.h"
@@ -37,7 +37,7 @@ namespace Ui {
     class DashboardPage;
 }
 
-class DashboardPage : public QWidget
+class DashboardPage : public NexisPage
 {
     Q_OBJECT
 
@@ -49,6 +49,9 @@ public:
                            SignalMapper *signalMapper = nullptr,
                            DataRefreshService *refreshService = nullptr);
     ~DashboardPage();
+
+    void onPageActivated() override;
+    void onPageDeactivated() override;
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -148,6 +151,8 @@ private:
     QMap<QString, QString> mTileRanges;
     QSet<QString> mHiddenTiles;
     QSet<QString> mGearVisibleTiles;
+
+    bool mActive;
 
     QString mCpuSubtitleBase;
 

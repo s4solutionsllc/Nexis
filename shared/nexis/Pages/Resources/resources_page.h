@@ -1,8 +1,7 @@
 #ifndef RESOURCESPAGE_H
 #define RESOURCESPAGE_H
 
-#include <QWidget>
-
+#include "nexis_page.h"
 #include "history_chart.h"
 #include "disk_usage_launcher_widget.h"
 #include "Managers/info_manager.h"
@@ -15,7 +14,7 @@ namespace Ui {
     class ResourcesPage;
 }
 
-class ResourcesPage : public QWidget
+class ResourcesPage : public NexisPage
 {
     Q_OBJECT
 
@@ -24,6 +23,9 @@ public:
                            InfoManager *infoManager = nullptr,
                            DataRefreshService *refreshService = nullptr);
     ~ResourcesPage();
+
+    void onPageActivated() override;
+    void onPageDeactivated() override;
 
 private slots:
     void onCpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
@@ -51,6 +53,8 @@ private:
     HistoryChart *mChartDiskHealth;
 
     DiskUsageLauncherWidget *mDiskLauncher;
+
+    bool mActive;
 };
 
 #endif // RESOURCESPAGE_H

@@ -15,7 +15,7 @@ ProcessesPage::~ProcessesPage()
 ProcessesPage::ProcessesPage(QWidget *parent, InfoManager *infoManager,
                                DataRefreshService *refreshService,
                                ProcessService *processService) :
-  QWidget(parent),
+  NexisPage(parent),
   ui(new Ui::ProcessesPage),
   mItemModel(new QStandardItemModel(this)),
   mSortFilterModel(new QSortFilterProxyModel(this)),
@@ -265,4 +265,14 @@ void ProcessesPage::on_tableProcess_customContextMenuRequested(const QPoint &pos
     if (action) {
         ui->tableProcess->horizontalHeader()->setSectionHidden(action->data().toInt(), ! action->isChecked());
     }
+}
+
+void ProcessesPage::onPageActivated()
+{
+    mRefresh->resumeProcessTimer();
+}
+
+void ProcessesPage::onPageDeactivated()
+{
+    mRefresh->pauseProcessTimer();
 }

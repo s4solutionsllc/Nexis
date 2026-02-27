@@ -1,7 +1,6 @@
 #ifndef PROCESSESPAGE_H
 #define PROCESSESPAGE_H
 
-#include <QWidget>
 #include <QStandardItemModel>
 #include <QSortFilterProxyModel>
 #include <QDebug>
@@ -9,6 +8,7 @@
 #include <QMenu>
 #include <QAction>
 
+#include "nexis_page.h"
 #include "Managers/info_manager.h"
 
 class DataRefreshService;
@@ -18,7 +18,7 @@ namespace Ui {
     class ProcessesPage;
 }
 
-class ProcessesPage : public QWidget
+class ProcessesPage : public NexisPage
 {
     Q_OBJECT
 
@@ -28,6 +28,9 @@ public:
                            DataRefreshService *refreshService = nullptr,
                            ProcessService *processService = nullptr);
     ~ProcessesPage();
+
+    void onPageActivated() override;
+    void onPageDeactivated() override;
 
 private slots:
     void init();
