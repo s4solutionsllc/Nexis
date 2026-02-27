@@ -489,6 +489,13 @@
   - **Files:** `shared/nexis/Pages/Dashboard/metric_tile_base.h/.cpp`, `metric_tile.h/.cpp`, `hybrid_tile.h/.cpp`, `dashboard_page.cpp`
   - **Resolved:** Added virtual `clearDataPoints()` to `MetricTileBase` (resets `mDataBuffer` to zeros). Overridden in `MetricTile` and `HybridTile` to also rebuild the QLineSeries sparkline and trend indicator. Called in `onGpuDeviceChanged()`, `onTempSensorSelected()`, and `onFanSensorSelected()` before updating with new device data.
 
+- [x] **BUG-72: Excessive CPU and memory consumption at idle** (MEDIUM)
+  - **Scope:** DataRefreshService, all pages, process polling
+  - **Description:** Nexis consumes significant CPU and memory during normal operation. Root causes: (1) Process polling spawns `ps ax`, `nettop`, and per-PID `proc_pid_rusage()` every 1 second regardless of whether the Processes page is visible. (2) All pages receive all data signals and repaint even when not visible — the `NexisPage` lifecycle hooks exist but no pages inherit from `NexisPage`. (3) Dashboard tiles with custom `paintEvent()` rendering and Resources HistoryCharts update every tick even when hidden.
+  - **Files:** `shared/nexis/Managers/data_refresh_service.cpp`, `macos/nexis-core/Info/process_info.cpp`, `shared/nexis/nexis_page.h`, `shared/nexis/Pages/Resources/resources_page.cpp`, `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/Pages/Processes/processes_page.cpp`
+  - **Fix complexity:** Moderate-High (tiered approach — page-aware polling, visibility gating, interval tuning)
+  - **Resolved (Tier 1):** Dashboard, Resources, and Processes pages now inherit `NexisPage` and gate slot handlers on visibility. Process timer starts paused and only runs while Processes page is visible. Delta-tracking statics maintained when hidden to prevent data spikes. Tiers 2-3 documented for future optimization.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
