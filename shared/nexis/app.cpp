@@ -761,19 +761,14 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
         ui->sidebar->setMaximumWidth(targetWidth);
     }
 
-    // Toggle section headers and containers visibility
+    // Toggle section headers, containers, and indicators
     for (int i = 0; i < mSections.size(); ++i) {
         mSections[i].header->setVisible(!collapsed);
-        if (collapsed) {
-            mSections[i].container->setVisible(false);
-        } else {
-            mSections[i].container->setVisible(!mSections[i].collapsed);
-        }
+        mSections[i].container->setVisible(!mSections[i].collapsed);
     }
 
-    // Toggle section indicators (visible only when collapsed)
     for (QFrame *indicator : mSectionIndicators)
-        indicator->setVisible(collapsed);
+        indicator->setVisible(false);
 
     // Toggle version label
     if (mVersionLabel)
