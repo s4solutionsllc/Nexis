@@ -24,6 +24,7 @@ public:
     static DataRefreshService *ins();
 
     void start();
+    void stop();
     void pause();
     void resume();
     bool isPaused() const;

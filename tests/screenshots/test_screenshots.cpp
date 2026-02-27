@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QStackedWidget>
 #include <QScreen>
+#include <QStyleFactory>
 
 #include "app.h"
 #include "Managers/app_manager.h"
@@ -249,8 +250,11 @@ private slots:
 
     void cleanupTestCase()
     {
-        delete mApp;
-        mApp = nullptr;
+        DataRefreshService::ins()->stop();
+        if (mApp) {
+            mApp->hide();
+            mApp = nullptr;
+        }
     }
 
     void screenshotDarkTheme()
@@ -264,5 +268,13 @@ private slots:
     }
 };
 
-QTEST_MAIN(ScreenshotTests)
+int main(int argc, char *argv[])
+{
+    Q_INIT_RESOURCE(static);
+    QApplication app(argc, argv);
+    app.setStyle(QStyleFactory::create("Fusion"));
+    ScreenshotTests tc;
+    return QTest::qExec(&tc, argc, argv);
+}
+
 #include "test_screenshots.moc"

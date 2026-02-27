@@ -502,6 +502,12 @@
   - **Fix complexity:** Low (coordinate system mismatch)
   - **Resolved:** `99c0f4c` — Replaced `button->pos()` (relative to section container) with `button->mapTo(ui->sidebar, QPoint(0,0))` for correct coordinate conversion. Centralised positioning into `repositionBadges()` helper, called from signal handlers and sidebar/section collapse handlers.
 
+- [x] **BUG-74: ScreenshotTests SEGFAULT — missing Qt resources and broken references** (MEDIUM)
+  - **File:** `tests/screenshots/test_screenshots.cpp`, `tests/CMakeLists.txt`
+  - **Description:** The `ScreenshotTests` test binary crashes with SIGSEGV. Three compounding issues: (1) `Q_INIT_RESOURCE(static)` is not called in the test binary, so all `:/static/...` Qt resource paths fail and the app renders as a black window; (2) the reference screenshots were generated with the same broken binary, so they also show black windows; (3) the reference images are 2048x1536 but the current capture is 2584x1536 (display-dependent), causing immediate 100% size-mismatch failure. The SEGFAULT occurs during `cleanupTestCase()` when `delete mApp` tears down partially-initialized widgets.
+  - **Fix complexity:** Moderate (resource init fix, reference regeneration, size-mismatch handling)
+  - **Resolved:** Added `Q_INIT_RESOURCE(static)` via custom `main()`, forced `QT_SCALE_FACTOR=1` in CTest, regenerated all 22 reference images, fixed SEGFAULT by stopping DataRefreshService and avoiding `delete mApp` (singleton-widget teardown ordering issue), added proper `App::~App()` cleanup. 7/7 tests pass.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

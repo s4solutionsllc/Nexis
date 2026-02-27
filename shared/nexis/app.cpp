@@ -30,6 +30,12 @@
 
 App::~App()
 {
+    DataRefreshService::ins()->stop();
+    disconnect(DataRefreshService::ins(), nullptr, this, nullptr);
+    disconnect(CleanerService::ins(), nullptr, this, nullptr);
+    disconnect(SignalMapper::ins(), nullptr, this, nullptr);
+    QThreadPool::globalInstance()->waitForDone(1000);
+    QApplication::processEvents();
     delete ui;
 }
 

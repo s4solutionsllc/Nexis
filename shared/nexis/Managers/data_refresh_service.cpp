@@ -62,6 +62,16 @@ void DataRefreshService::start()
     }
 }
 
+void DataRefreshService::stop()
+{
+    mFastTimer->stop();
+    mMediumTimer->stop();
+    mSlowTimer->stop();
+    mProcessTimer->stop();
+    mUpdateTimer->stop();
+    mPaused = true;
+}
+
 void DataRefreshService::pause()
 {
     if (mPaused)

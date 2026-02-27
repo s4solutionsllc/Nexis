@@ -51,3 +51,4 @@ target_compile_definitions(test-ScreenshotTests PRIVATE
   PROJECT_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
 )
 add_test(NAME ScreenshotTests COMMAND test-ScreenshotTests)
+set_tests_properties(ScreenshotTests PROPERTIES ENVIRONMENT "QT_SCALE_FACTOR=1")
