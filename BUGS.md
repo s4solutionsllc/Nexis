@@ -508,6 +508,13 @@
   - **Fix complexity:** Moderate (resource init fix, reference regeneration, size-mismatch handling)
   - **Resolved:** Added `Q_INIT_RESOURCE(static)` via custom `main()`, forced `QT_SCALE_FACTOR=1` in CTest, regenerated all 22 reference images, fixed SEGFAULT by stopping DataRefreshService and avoiding `delete mApp` (singleton-widget teardown ordering issue), added proper `App::~App()` cleanup. 7/7 tests pass.
 
+- [x] **BUG-75: .deb package uninstallable on Ubuntu 25.04+ — t64 dependency names** (MEDIUM)
+  - **File:** `.github/workflows/release.yml`, `linux/debian/control`
+  - **Description:** The `.deb` is built on Ubuntu 24.04 (Noble), where `dpkg-shlibdeps` auto-generates Qt6 dependencies with the `t64` suffix (e.g., `libqt6gui6t64 >= 6.4.0`). Ubuntu 25.04+ dropped the `t64` suffix after Qt6's soversion bump, so `libqt6gui6t64` doesn't exist on those systems. The package fails to install with "Dependency not satisfiable" even though the correct Qt6 libraries are present under their non-t64 names.
+  - **Reported by:** Reddit user on Ubuntu 25.10 (installed Qt version: `6.9.2+dfsg-1ubuntu1`)
+  - **Fix complexity:** Moderate (CI matrix expansion + artifact naming)
+  - **Resolved:** Added `build-linux-deb-plucky` job to release workflow that builds .deb inside `ubuntu:25.04` Docker container, producing correct non-t64 dependency names. Noble .deb renamed with `_ubuntu2404` suffix, Plucky .deb with `_ubuntu2504` suffix. Release now publishes 4 .deb files: `{amd64,arm64} × {ubuntu2404,ubuntu2504}`.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
