@@ -230,6 +230,14 @@
 - [x] **FR-74: Collapsible sidebar navigation groups** — The sidebar has grown to 14+ pages across multiple category groups (System, Monitoring, Tools, etc.). Navigation is becoming crowded. Add collapsible/expandable group headers so users can collapse categories they don't actively use, reducing visual clutter. Groups remember their collapsed/expanded state across sessions. Clicking a group header toggles collapse; clicking a page entry within an expanded group navigates as usual.
   - **Resolved:** Replaced QLabel section headers with clickable QPushButton `#sectionToggle` widgets. Each section's buttons wrapped in a container QWidget with animated collapse/expand (200ms QPropertyAnimation on maximumHeight). Chevron icons indicate state. Collapsed/expanded state persisted as JSON via `SidebarSectionsCollapsed` QSettings key. Auto-expand on navigation (sidebar click, tray menu, command palette, sigNavigateToPage). Badges hidden when parent section collapses. Full sidebar collapse (Ctrl+B) orthogonal to section state.
 
+## UI / UX
+
+- [ ] **FR-75: Option to hide Dashboard footer info** — Add a setting or toggle to hide/remove the system summary footer at the bottom of the Dashboard (hostname, OS version, Nexis version). Useful on small monitors where vertical space is limited. The same information is available elsewhere (Hardware Info, Settings page).
+  - **GitHub Issue:** [#11](https://github.com/lsimpsonsfdc/Nexis/issues/11)
+  - **Requested by:** @Vai0Lou
+  - **Files:** Dashboard page, Settings/preferences
+  - **Complexity:** Low (1-2 days) — toggle visibility of existing widget, persist preference
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

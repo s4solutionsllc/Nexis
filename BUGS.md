@@ -515,6 +515,19 @@
   - **Fix complexity:** Moderate (CI matrix expansion + artifact naming)
   - **Resolved:** Added `build-linux-deb-plucky` job to release workflow that builds .deb inside `ubuntu:25.04` Docker container, producing correct non-t64 dependency names. Noble .deb renamed with `_ubuntu2404` suffix, Plucky .deb with `_ubuntu2504` suffix. Release now publishes 4 .deb files: `{amd64,arm64} × {ubuntu2404,ubuntu2504}`.
 
+- [ ] **BUG-76: GPU workload shown for wrong GPU index** (MEDIUM)
+  - **GitHub Issue:** [#9](https://github.com/lsimpsonsfdc/Nexis/issues/9)
+  - **Reported by:** @Vai0Lou (PikaOS 4, Debian-based, kernel 6.19.2, GNOME 50)
+  - **Description:** Since version 2.1, GPU0's workload is displayed in the GPU1 tile and vice versa. The GPU utilization values are swapped between the two GPU selections on the Dashboard.
+  - **Steps to reproduce:** Open Nexis → Dashboard → Click GPU0, note workload → Click GPU1, compare — values are swapped.
+  - **Fix complexity:** Likely trivial (index mapping bug in GPU tile selection or data provider)
+
+- [ ] **BUG-77: Hardware Info page text truncated** (LOW)
+  - **GitHub Issue:** [#10](https://github.com/lsimpsonsfdc/Nexis/issues/10)
+  - **Reported by:** @Vai0Lou (PikaOS 4, Debian-based)
+  - **Description:** Text labels on the Hardware Info page are truncated/clipped. The issue persists regardless of window size — stretching or maximizing the window does not fix it. See screenshot in issue.
+  - **Fix complexity:** Low-Medium (likely a layout/sizing issue with QLabel word wrap, minimum width, or elide mode)
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
