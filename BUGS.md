@@ -522,11 +522,12 @@
   - **Steps to reproduce:** Open Nexis → Dashboard → Click GPU0, note workload → Click GPU1, compare — values are swapped.
   - **Fix complexity:** Likely trivial (index mapping bug in GPU tile selection or data provider)
 
-- [ ] **BUG-77: Hardware Info page text truncated** (LOW)
+- [x] **BUG-77: Hardware Info page text truncated** (LOW)
   - **GitHub Issue:** [#10](https://github.com/lsimpsonsfdc/Nexis/issues/10)
   - **Reported by:** @Vai0Lou (PikaOS 4, Debian-based)
   - **Description:** Text labels on the Hardware Info page are truncated/clipped. The issue persists regardless of window size — stretching or maximizing the window does not fix it. See screenshot in issue.
   - **Fix complexity:** Low-Medium (likely a layout/sizing issue with QLabel word wrap, minimum width, or elide mode)
+  - **Resolved:** `fitTableHeight()` now compensates for QSS `::item` padding (2×@dp6) that `resizeColumnsToContents()` ignores, and sets explicit row heights to prevent vertical clipping
 
 ## Notes
 

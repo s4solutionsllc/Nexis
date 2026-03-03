@@ -73,9 +73,18 @@ void HardwareInfoPage::fitTableHeight(QTableWidget *table)
 {
     const int rowHeight = Dpi::scale(30);
     const int headerHeight = table->horizontalHeader()->isVisible() ? Dpi::scale(36) : 0;
+
+    for (int i = 0; i < table->rowCount(); ++i)
+        table->setRowHeight(i, rowHeight);
+
     int height = headerHeight + table->rowCount() * rowHeight;
     table->setFixedHeight(height);
     table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+    // QSS ::item padding (@dp6 per side) is not included in
+    // resizeColumnsToContents() size hints — add it to prevent clipping
+    const int paddingCompensation = Dpi::scale(6) * 2;
+    table->setColumnWidth(0, table->columnWidth(0) + paddingCompensation);
 }
 
 void HardwareInfoPage::populateSystem()
