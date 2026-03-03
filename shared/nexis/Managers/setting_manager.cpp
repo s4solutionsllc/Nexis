@@ -355,3 +355,13 @@ int SettingManager::getUpdateLastCount() const
 {
     return mSettings->value(SettingKeys::UpdateLastCount, 0).toInt();
 }
+
+void SettingManager::setDashboardFooterVisible(bool value)
+{
+    mSettings->setValue(SettingKeys::DashboardFooterVisible, value);
+}
+
+bool SettingManager::getDashboardFooterVisible() const
+{
+    return mSettings->value(SettingKeys::DashboardFooterVisible, true).toBool();
+}

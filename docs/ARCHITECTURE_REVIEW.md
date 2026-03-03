@@ -69,7 +69,7 @@ Nexis is structured as a **four-tier desktop application**:
 - **Centralized polling** — `DataRefreshService` singleton owns 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and emits typed data signals; pages subscribe as reactive consumers. The process timer starts paused and is only active while the Processes page is visible (BUG-72).
 - **Page lifecycle hooks** — `NexisPage` base class with virtual `onPageActivated()`/`onPageDeactivated()` called by `App::pageClick()`. Three heavyweight pages (Dashboard, Resources, Processes) inherit from `NexisPage` and gate their slot handlers on visibility — tile repaints, chart updates, and process polling stop when the page is hidden (BUG-72).
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
-- **Qt signals** — `SignalMapper` singleton as a lightweight global event bus (12 signals after FR-51)
+- **Qt signals** — `SignalMapper` singleton as a lightweight global event bus (13 signals after FR-75)
 - **Dashboard widgets** — Dashboard gauges replaced with a family of interchangeable tile widgets inheriting from `MetricTileBase` (abstract base class, FR-53). 7 widget styles available: `MetricTile` (sparkline), `GaugeTile` (¾-arc), `HybridTile` (arc + mini sparkline), `RingTile` (360° ring), `SpeedometerTile` (needle dial), `VuMeterTile` (segmented bar), and `DiskTile` (donut chart). All styles support three `DisplayMode` values (Normal/Hero/Large) via QSS dynamic properties — mode changes trigger `unpolish()`/`polish()` to re-evaluate QSS selectors for per-mode font sizing. CPU and Memory are independent tile instances (the combined `HeroCard` was removed in FR-50). `NetworkTile` uses dual `QChart` instances (separate RX/TX sparklines) and is excluded from style switching. `DiskTile` uses custom `QPainter` donut chart and exposes `setDriveHealth()` for cross-tile data flow. `DashboardTileWrapper` (FR-51) uses the decorator pattern to add edit-mode mouse handling (drag-and-drop, snap-to-grid resizing) and style switching (`setInnerWidget()` swaps the inner tile at runtime, FR-53). Per-tile style persisted in layout JSON via SettingManager. `DashboardPage::createTile()` factory method instantiates the correct tile class by style string. `HealthScoreTile` (FR-73) is a specialized tile showing a composite 0–100 health score aggregated from 6 components (CPU, memory, disk, temperature, battery, SMART) via `HealthScoreCalculator` helper; unavailable components have their weights redistributed proportionally. In Large/Hero mode, per-component breakdown bars are drawn in `paintEvent`
 - **Sidebar** — Sidebar navigation buttons are built programmatically in `app.cpp` (not defined in `.ui`) with grouped sections and collapse animation driven by `sigSidebarCollapseToggled`
 - **CommandPalette** — `Ctrl+K` global command palette widget (`command_palette.h/.cpp`) for keyboard-driven navigation and actions
@@ -246,6 +246,7 @@ signals:
     void sigAppVisibilityChanged(bool visible);
     void sigCleanableSizeChanged(quint64 totalBytes);
     void sigDashboardLayoutReset();
+    void sigDashboardFooterChanged(bool visible);
 };
 ```
 
@@ -256,7 +257,7 @@ signals:
 - App minimized/restored → emits `sigAppVisibilityChanged(bool)` → DataRefreshService pauses/resumes polling
 - No page needs a pointer to any other page — complete decoupling
 
-**Assessment:** With 12 signals (after FR-51 added `sigDashboardLayoutReset`), this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), UI redesign signals `sigSidebarCollapseToggled` and `sigNavigateToPage` (FR-42), cleanable-size signal (FR-44), and dashboard layout reset signal (FR-51) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, SystemCleanerPage, SettingsPage, and the CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
+**Assessment:** With 13 signals (after FR-75 added `sigDashboardFooterChanged(bool)`), this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), UI redesign signals `sigSidebarCollapseToggled` and `sigNavigateToPage` (FR-42), cleanable-size signal (FR-44), dashboard layout reset signal (FR-51), and dashboard footer visibility signal (FR-75) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, SystemCleanerPage, SettingsPage, and the CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
 
 ---
 
@@ -487,7 +488,7 @@ public:
 
 **What:** Replace `SignalMapper` with a typed event bus library if the signal count grows beyond ~15.
 
-**When:** Currently 12 signals (SignalMapper) + 11 signals (DataRefreshService) — well within comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
+**When:** Currently 13 signals (SignalMapper) + 11 signals (DataRefreshService) — well within comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
 
 **Candidate:** [eventpp](https://github.com/wqking/eventpp) (header-only, C++11+, well-tested).
 
@@ -591,7 +592,7 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Managers/app_manager.cpp` | ~~Add QSS token validation (§2C)~~ Done — token + color format validation added |
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | ~~Primary refactor target for DataRefreshService (§2A)~~ Done — subscribes to DataRefreshService signals, zero timers |
 | `shared/nexis/Pages/Resources/resources_page.cpp` | ~~Secondary refactor target~~ Done — subscribes to DataRefreshService signals, zero timers |
-| `shared/nexis/signal_mapper.h` | Global event bus (12 signals after FR-51) — monitor signal count growth |
+| `shared/nexis/signal_mapper.h` | Global event bus (13 signals after FR-75) — monitor signal count growth |
 | `shared/nexis/Pages/Dashboard/metric_tile_base.h/.cpp` | Abstract base class for all dashboard tile styles; defines common interface (setValue, addDataPoint, setDisplayMode, etc.) and optional disk methods (FR-53) |
 | `shared/nexis/Pages/Dashboard/metric_tile.h/.cpp` | Sparkline style: QtCharts sparkline + progress bar + trend indicator; DisplayMode (Normal/Hero/Large) via QSS dynamic properties |
 | `shared/nexis/Pages/Dashboard/gauge_tile.h/.cpp` | Gauge style: ¾-circle arc with conical gradient, percentage centered, QPainter-based (FR-53) |

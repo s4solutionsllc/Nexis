@@ -22,6 +22,7 @@ signals:
     void sigSidebarCollapseToggled(bool collapsed);
     void sigNavigateToPage(const QString &pageTitle);
     void sigCleanableSizeChanged(quint64 bytes);
+    void sigDashboardFooterChanged(bool visible);
 
 private:
     static SignalMapper *instance;

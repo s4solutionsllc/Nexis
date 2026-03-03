@@ -121,6 +121,9 @@ void SettingsPage::init()
     // minimize to tray
     ui->checkMinimizeToTray->setChecked(mSettingManager->getMinimizeToTray());
 
+    // dashboard footer visibility
+    ui->checkDashboardFooter->setChecked(mSettingManager->getDashboardFooterVisible());
+
     // load pages
     ui->cmbStartPage->addItems({
         tr("Dashboard"), tr("Startup Apps"), tr("System Cleaner"), tr("Search"),
@@ -280,6 +283,12 @@ void SettingsPage::on_checkAppQuitDontAsk_clicked(bool checked)
 void SettingsPage::on_checkMinimizeToTray_clicked(bool checked)
 {
     mSettingManager->setMinimizeToTray(checked);
+}
+
+void SettingsPage::on_checkDashboardFooter_clicked(bool checked)
+{
+    mSettingManager->setDashboardFooterVisible(checked);
+    emit SignalMapper::ins()->sigDashboardFooterChanged(checked);
 }
 
 void SettingsPage::cmbColorSchemeChanged(int index)

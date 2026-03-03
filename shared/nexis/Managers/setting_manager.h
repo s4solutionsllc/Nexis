@@ -38,6 +38,7 @@ namespace SettingKeys {
     const QString UpdateAlertEnabled("UpdateAlertEnabled");
     const QString UpdateCheckIntervalMinutes("UpdateCheckIntervalMinutes");
     const QString UpdateLastCount("UpdateLastCount");
+    const QString DashboardFooterVisible("DashboardFooterVisible");
 }
 
 class SettingManager
@@ -146,6 +147,9 @@ public:
 
     void setUpdateLastCount(int value);
     int getUpdateLastCount() const;
+
+    void setDashboardFooterVisible(bool value);
+    bool getDashboardFooterVisible() const;
 
 private:
     static SettingManager *instance;

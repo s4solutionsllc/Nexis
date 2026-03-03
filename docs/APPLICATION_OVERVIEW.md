@@ -116,7 +116,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - **Health Score** — `HealthScoreTile` displaying a composite 0–100 system health score computed by `HealthScoreCalculator`. Aggregates six components with weighted scoring: CPU load (15%), memory usage (20%), disk space (25%), temperature (15%), battery health (10%), SMART disk health (15%). Unavailable components (no battery, no thermal sensors, no SMART) are excluded and weights redistributed proportionally. Color-coded: green (Excellent, ≥80), amber (Good/Fair, 60–79), red (Poor, <60). In Large/Hero display modes, shows per-component breakdown bars with 3-letter labels, colored fill proportional to score, and numeric values. Always visible (not conditional), hideable via edit mode like any other tile.
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).
 
-**Footer status bar** — Displays app version and refresh interval at the bottom edge.
+**Footer status bar** — Displays app version and refresh interval at the bottom edge. The system summary bar and footer status bar can be hidden via a toggle in Settings (FR-75); kiosk mode also hides them automatically.
 
 **Widget styles** — Each tile (except Network) can be switched between 6 visual styles via a paintbrush icon visible during edit mode:
 - **Sparkline** (default) — line chart showing recent history with progress bar and trend indicator
@@ -403,6 +403,7 @@ Configure Nexis application preferences.
 - **Tray Icon Style** — Choose system tray icon appearance (Color, Symbolic, Outline, Accent); applied live via `AppManager::updateTrayIcon()`
 - **Disk Analyzer** — Preferred disk usage tool (platform-specific list + custom path)
 - **Disk Health Alert** — Toggle tray alerts for failing drives
+- **Show Dashboard Footer** — Toggle visibility of the system summary bar and status footer on the Dashboard (default: visible; FR-75)
 - **Dashboard Layout** — Reset Layout button to restore default tile arrangement (mirrors edit toolbar action)
 - **Scheduled Cleaning** — Quick-setup toggle, schedule manager dialog, threshold alerts, cleaning notifications, history viewer
 - **Version Display** — Current version from `APP_VERSION` compile definition

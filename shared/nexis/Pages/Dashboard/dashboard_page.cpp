@@ -370,6 +370,11 @@ void DashboardPage::init()
         QString("Nexis v%1 \u2022 Refreshing every 1s")
             .arg(qApp->applicationVersion()));
 
+    // Apply dashboard footer visibility from settings
+    applyFooterVisibility();
+    connect(mSignalMapper, &SignalMapper::sigDashboardFooterChanged,
+            this, &DashboardPage::applyFooterVisibility);
+
     // Kiosk mode toggle button (floating, top-right)
     mKioskButton->setFixedSize(32, 32);
     mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
@@ -1095,6 +1100,8 @@ void DashboardPage::onKioskModeChanged(bool enabled)
         mEditShortcut->setEnabled(false);
         mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen-exit.svg"));
         mKioskButton->setToolTip(tr("Exit Kiosk Mode (ESC)"));
+        ui->systemSummary->hide();
+        ui->statusFooter->hide();
     } else {
         mEditButton->show();
         mEditButton->raise();
@@ -1102,7 +1109,15 @@ void DashboardPage::onKioskModeChanged(bool enabled)
         mEditShortcut->setEnabled(true);
         mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
         mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
+        applyFooterVisibility();
     }
+}
+
+void DashboardPage::applyFooterVisibility()
+{
+    bool visible = mSettingManager->getDashboardFooterVisible() && !mKioskMode;
+    ui->systemSummary->setVisible(visible);
+    ui->statusFooter->setVisible(visible);
 }
 
 DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)

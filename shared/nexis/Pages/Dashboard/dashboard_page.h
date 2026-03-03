@@ -162,6 +162,7 @@ private:
     QString mSummaryCpu;
     QString mSummaryRam;
 
+    void applyFooterVisibility();
     void buildSystemSummary();
     void refreshSummaryColors();
     void updateDiskHealthBadge();

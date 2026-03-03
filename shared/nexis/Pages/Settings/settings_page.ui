@@ -122,6 +122,14 @@
            </widget>
           </item>
 
+          <item row="6" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkDashboardFooter">
+            <property name="text"><string>Show Dashboard system summary and status bar</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
          </layout>
         </widget>
        </item>

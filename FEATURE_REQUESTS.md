@@ -232,7 +232,7 @@
 
 ## UI / UX
 
-- [ ] **FR-75: Option to hide Dashboard footer info** — Add a setting or toggle to hide/remove the system summary footer at the bottom of the Dashboard (hostname, OS version, Nexis version). Useful on small monitors where vertical space is limited. The same information is available elsewhere (Hardware Info, Settings page).
+- [x] **FR-75: Option to hide Dashboard footer info** — Add a setting or toggle to hide/remove the system summary footer at the bottom of the Dashboard (hostname, OS version, Nexis version). Useful on small monitors where vertical space is limited. The same information is available elsewhere (Hardware Info, Settings page). **Resolved:** Added `DashboardFooterVisible` setting with checkbox in Settings → General. Hides both `systemSummary` card and `statusFooter` bar. Live toggle via `sigDashboardFooterChanged` signal. Also hides footer in kiosk mode.
   - **GitHub Issue:** [#11](https://github.com/lsimpsonsfdc/Nexis/issues/11)
   - **Requested by:** @Vai0Lou
   - **Files:** Dashboard page, Settings/preferences
