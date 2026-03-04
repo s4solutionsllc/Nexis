@@ -529,6 +529,12 @@
   - **Fix complexity:** Low-Medium (likely a layout/sizing issue with QLabel word wrap, minimum width, or elide mode)
   - **Resolved:** `fitTableHeight()` now compensates for QSS `::item` padding (2×@dp6) that `resizeColumnsToContents()` ignores, and sets explicit row heights to prevent vertical clipping
 
+- [x] **BUG-78: Sidebar update badge misaligned after collapsing/expanding nav groups** (MEDIUM)
+  - **Reported by:** User observation
+  - **Description:** The indicator badge showing available Homebrew/APT updates does not stay aligned with the correct NavItem when sidebar navigation groups are collapsed and expanded. The badge position becomes stale after group toggle animations.
+  - **Fix complexity:** Low-Medium
+  - **Resolved:** Replaced `QTimer::singleShot(0, ...)` with animation `finished` signal connections so badges reposition after animations complete, not before
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

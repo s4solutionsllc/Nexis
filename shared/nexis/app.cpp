@@ -760,11 +760,13 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
         maxAnim->setEndValue(targetWidth);
         maxAnim->setEasingCurve(QEasingCurve::OutCubic);
 
+        connect(maxAnim, &QPropertyAnimation::finished, this, &App::repositionBadges);
         minAnim->start(QAbstractAnimation::DeleteWhenStopped);
         maxAnim->start(QAbstractAnimation::DeleteWhenStopped);
     } else {
         ui->sidebar->setMinimumWidth(targetWidth);
         ui->sidebar->setMaximumWidth(targetWidth);
+        repositionBadges();
     }
 
     // Toggle section headers, containers, and indicators
@@ -779,9 +781,6 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     // Toggle version label
     if (mVersionLabel)
         mVersionLabel->setVisible(!collapsed);
-
-    // Reposition badges after layout settles
-    QTimer::singleShot(0, this, &App::repositionBadges);
 
     // Toggle button text visibility
     for (QPushButton *btn : mListSidebarButtons) {
@@ -860,11 +859,10 @@ void App::applySectionCollapse(int sectionIndex, bool collapsed, bool animate)
     auto &sec = mSections[sectionIndex];
     sec.collapsed = collapsed;
 
-    // Reposition badges after layout settles (handles hide/show + coordinates)
-    QTimer::singleShot(0, this, &App::repositionBadges);
-
-    if (mSidebarCollapsed)
+    if (mSidebarCollapsed) {
+        repositionBadges();
         return;
+    }
 
     QWidget *container = sec.container;
 
@@ -872,6 +870,7 @@ void App::applySectionCollapse(int sectionIndex, bool collapsed, bool animate)
         container->setVisible(!collapsed);
         container->setMaximumHeight(collapsed ? 0 : 16777215);
         updateSectionChevrons();
+        repositionBadges();
         return;
     }
 
@@ -882,8 +881,9 @@ void App::applySectionCollapse(int sectionIndex, bool collapsed, bool animate)
         anim->setStartValue(startHeight);
         anim->setEndValue(0);
         anim->setEasingCurve(QEasingCurve::OutCubic);
-        connect(anim, &QPropertyAnimation::finished, this, [container]() {
+        connect(anim, &QPropertyAnimation::finished, this, [this, container]() {
             container->setVisible(false);
+            repositionBadges();
         });
         anim->start(QAbstractAnimation::DeleteWhenStopped);
     } else {
@@ -896,8 +896,9 @@ void App::applySectionCollapse(int sectionIndex, bool collapsed, bool animate)
         anim->setStartValue(0);
         anim->setEndValue(targetHeight);
         anim->setEasingCurve(QEasingCurve::OutCubic);
-        connect(anim, &QPropertyAnimation::finished, this, [container]() {
+        connect(anim, &QPropertyAnimation::finished, this, [this, container]() {
             container->setMaximumHeight(16777215);
+            repositionBadges();
         });
         anim->start(QAbstractAnimation::DeleteWhenStopped);
     }
