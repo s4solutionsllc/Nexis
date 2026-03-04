@@ -183,7 +183,8 @@ jobs:
             devscripts \
             debhelper \
             debhelper-compat \
-            fakeroot
+            fakeroot \
+            xvfb
 
       - name: Symlink debian packaging directory
         run: ln -s linux/debian debian
