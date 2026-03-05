@@ -543,6 +543,13 @@
   - **Fix complexity:** Moderate (add QSS rules and/or programmatic theme color application to all dynamically-created widgets)
   - **Resolved:** Added object names to all 4 display widgets (2 QListWidget, 2 QTreeWidget) and a complete DISK TOOLS PAGE QSS section with `background-color: transparent` containers, themed item colors, border/radius styling, checkbox indicators, branch chevrons for the duplicate tree, action bar, accent-colored scan button, and destructive-colored trash button — matching the established patterns from treeWidgetPackages/treeWidgetScanResult.
 
+- [x] **BUG-80: Update notification bar never shown — version regex only matches single-digit components** (MEDIUM)
+  - **Reported by:** User observation
+  - **Description:** The `checkUpdate()` regex `([0-9]\.[0-9]\.[0-9])` matches exactly one digit per version component. Starting at v2.1.10 (two-digit patch), the regex extracts `2.1.1` from the GitHub tag `v2.1.11`, causing `QVersionNumber::fromString` to produce `2.1.1`. Since every local version ≥ 2.1.10 is greater than `2.1.1`, the `local < remote` check always fails and the update bar is never shown.
+  - **File:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp:513`
+  - **Fix complexity:** Trivial (change `[0-9]` to `[0-9]+` in the regex)
+  - **Resolved:** Changed regex to `([0-9]+\.[0-9]+\.[0-9]+)` to support multi-digit version components.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

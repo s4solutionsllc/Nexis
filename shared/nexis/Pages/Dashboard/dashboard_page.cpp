@@ -510,7 +510,7 @@ void DashboardPage::checkUpdate()
         {
             const QString requestResult= reply->readAll();
             const QJsonDocument result = QJsonDocument::fromJson(requestResult.toUtf8());
-            const QRegularExpression ex("([0-9]\\.[0-9]\\.[0-9])");
+            const QRegularExpression ex("([0-9]+\\.[0-9]+\\.[0-9]+)");
             QRegularExpressionMatch match = ex.match(result.object().value("tag_name").toString());
 
             if (match.hasMatch())
