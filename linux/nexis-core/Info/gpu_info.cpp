@@ -3,6 +3,7 @@
 
 #include <QDir>
 #include <QRegularExpression>
+#include <algorithm>
 
 // PCI vendor IDs
 static constexpr const char *PCI_VENDOR_AMD    = "0x1002";
@@ -82,9 +83,16 @@ void GpuInfoLinux::discoverGpus()
         // Read PCI vendor ID
         QString vendorId = FileUtil::readStringFromFile(cardPath + "/device/vendor").trimmed();
 
+        // Extract PCI bus address from device symlink (e.g. "0000:03:00.0")
+        QFileInfo deviceLink(cardPath + "/device");
+        QString pciBusId;
+        if (deviceLink.isSymLink())
+            pciBusId = deviceLink.symLinkTarget().section('/', -1);
+
         GpuDevice dev;
         dev.utilization = -1;
         dev.deviceIndex = cardIndex;
+        dev.pciBusId = pciBusId;
 
         if (vendorId == PCI_VENDOR_AMD) {
             dev.vendor = "AMD";
@@ -103,13 +111,8 @@ void GpuInfoLinux::discoverGpus()
 
             // NVIDIA: use nvidia-smi for utilization, addressed by PCI bus ID
             // (DRM card index != nvidia-smi device index when other cards exist)
-            if (CommandUtil::isExecutable("nvidia-smi")) {
-                QFileInfo devLink(cardPath + "/device");
-                if (devLink.isSymLink()) {
-                    // e.g. "0000:07:00.0" from the symlink target
-                    dev.queryCommand = devLink.symLinkTarget().section('/', -1);
-                }
-            }
+            if (!pciBusId.isEmpty() && CommandUtil::isExecutable("nvidia-smi"))
+                dev.queryCommand = pciBusId;
 
             mDevices.append(dev);
 
@@ -130,6 +133,12 @@ void GpuInfoLinux::discoverGpus()
         }
         // Skip unknown vendors
     }
+
+    // Sort by PCI bus address so ordering matches lspci / Mission Center / glxinfo
+    std::sort(mDevices.begin(), mDevices.end(),
+              [](const GpuDevice &a, const GpuDevice &b) {
+                  return a.pciBusId < b.pciBusId;
+              });
 }
 
 void GpuInfoLinux::updateGpuInfo()

@@ -515,12 +515,13 @@
   - **Fix complexity:** Moderate (CI matrix expansion + artifact naming)
   - **Resolved:** Added `build-linux-deb-plucky` job to release workflow that builds .deb inside `ubuntu:25.04` Docker container, producing correct non-t64 dependency names. Noble .deb renamed with `_ubuntu2404` suffix, Plucky .deb with `_ubuntu2504` suffix. Release now publishes 4 .deb files: `{amd64,arm64} × {ubuntu2404,ubuntu2504}`.
 
-- [ ] **BUG-76: GPU workload shown for wrong GPU index** (MEDIUM)
+- [x] **BUG-76: GPU workload shown for wrong GPU index** (MEDIUM)
   - **GitHub Issue:** [#9](https://github.com/lsimpsonsfdc/Nexis/issues/9)
   - **Reported by:** @Vai0Lou (PikaOS 4, Debian-based, kernel 6.19.2, GNOME 50)
   - **Description:** Since version 2.1, GPU0's workload is displayed in the GPU1 tile and vice versa. The GPU utilization values are swapped between the two GPU selections on the Dashboard.
   - **Steps to reproduce:** Open Nexis → Dashboard → Click GPU0, note workload → Click GPU1, compare — values are swapped.
-  - **Fix complexity:** Likely trivial (index mapping bug in GPU tile selection or data provider)
+  - **Fix complexity:** Trivial (GPU enumeration order mismatch)
+  - **Resolved:** GPUs were enumerated by DRM card number (kernel driver probe order), which can differ from PCI bus address order used by lspci/glxinfo/Mission Center. Added `pciBusId` field to `GpuDevice` and sort `mDevices` by PCI bus address after discovery, ensuring consistent ordering with other system tools.
 
 - [x] **BUG-77: Hardware Info page text truncated** (LOW)
   - **GitHub Issue:** [#10](https://github.com/lsimpsonsfdc/Nexis/issues/10)

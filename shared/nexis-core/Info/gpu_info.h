@@ -14,6 +14,7 @@ struct GpuDevice {
     // Platform-specific fields used internally for re-reading utilization
     QString sysfsLoadPath;  // Linux: path to gpu_busy_percent or similar
     QString queryCommand;   // Linux: nvidia-smi command for this GPU (if NVIDIA)
+    QString pciBusId;       // PCI bus address (e.g. "0000:03:00.0") for consistent ordering
     int     deviceIndex;    // index within vendor's enumeration
     quint64 registryEntryID = 0; // macOS: IOKit registry entry ID for matching
 };
