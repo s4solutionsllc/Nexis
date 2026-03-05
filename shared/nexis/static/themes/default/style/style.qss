@@ -1445,6 +1445,159 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @color02;
 }
 
+/**************************
+    DISK TOOLS PAGE
+***************************/
+
+/* Directory picker lists */
+
+#diskToolsDirList {
+    border: 1px solid @borderColor;
+    background-color: transparent;
+    border-radius: 6;
+    font-size: 10pt;
+    color: @color05;
+}
+
+#diskToolsDirList::item {
+    padding: @dp4 @dp6;
+    color: @color05;
+}
+
+#diskToolsDirList::item:selected {
+    background-color: @color02;
+}
+
+/* Large & Old results tree */
+
+#treeWidgetLargeOld {
+    border: 1px solid @borderColor;
+    background-color: transparent;
+    border-radius: 6;
+    font-size: 10pt;
+}
+
+#treeWidgetLargeOld QHeaderView::section {
+    border-top: 1;
+}
+
+#treeWidgetLargeOld::item {
+    border-bottom: 1px solid @borderColor;
+    padding: @dp8 @dp6;
+    font-size: 10pt;
+    color: @color11;
+}
+
+#treeWidgetLargeOld::indicator {
+    width: @dp14;
+    height: @dp14;
+}
+
+#treeWidgetLargeOld::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#treeWidgetLargeOld::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+/* Duplicate Finder results tree */
+
+#treeWidgetDuplicates {
+    border: 1px solid @borderColor;
+    background-color: transparent;
+    border-radius: 6;
+    font-size: 10pt;
+}
+
+#treeWidgetDuplicates QHeaderView::section {
+    border-top: 1;
+}
+
+#treeWidgetDuplicates::item {
+    border-bottom: 1px solid @borderColor;
+    padding: @dp8 @dp6;
+    font-size: 10pt;
+    color: @color11;
+}
+
+#treeWidgetDuplicates::indicator {
+    width: @dp14;
+    height: @dp14;
+}
+
+#treeWidgetDuplicates::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#treeWidgetDuplicates::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+#treeWidgetDuplicates::branch:has-children:!has-siblings:closed,
+#treeWidgetDuplicates::branch:closed:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-right.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetDuplicates::branch:open:has-children:!has-siblings,
+#treeWidgetDuplicates::branch:open:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-down.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetDuplicates::branch {
+    border-bottom: 1px solid @borderColor;
+}
+
+/* Action bar and buttons */
+
+#DiskToolsPage #actionBarFrame {
+    background-color: @color01;
+    border: 1px solid @borderColor;
+    border-radius: 6;
+}
+
+#DiskToolsPage #btnScan {
+    border: 0;
+    border-radius: @dp6;
+    background-color: @accentColor;
+    color: #ffffff;
+    font-size: 10pt;
+    font-weight: bold;
+    padding: @dp8 @dp24;
+}
+
+#DiskToolsPage #btnScan:hover {
+    background-color: @accentHover;
+}
+
+#DiskToolsPage #btnTrash {
+    border: 0;
+    border-radius: @dp6;
+    background-color: @destructiveColor;
+    color: #ffffff;
+    font-size: 10pt;
+    font-weight: bold;
+    padding: @dp8 @dp16;
+}
+
+#DiskToolsPage #btnTrash:hover {
+    opacity: 0.9;
+}
+
+#DiskToolsPage #btnTrash:disabled {
+    background-color: @color02;
+    color: @color04;
+}
+
+#DiskToolsPage #lblStatus {
+    font-size: 10pt;
+    color: @color06;
+}
+
 /****************
     HISTORIES
 *****************/

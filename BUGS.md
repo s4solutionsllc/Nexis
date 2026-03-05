@@ -536,6 +536,13 @@
   - **Fix complexity:** Low-Medium
   - **Resolved:** Replaced `QTimer::singleShot(0, ...)` with animation `finished` signal connections so badges reposition after animations complete, not before
 
+- [x] **BUG-79: Disk Tools page background colors inverted between Light and Dark themes** (MEDIUM)
+  - **Reported by:** User observation (screenshots provided)
+  - **Description:** The Disk Tools page's two display windows (directory list widgets and scan results tree widgets) show inverted background colors relative to the selected theme. When Light Theme is selected, these widgets render with dark backgrounds; when Dark Theme is selected, they render with light backgrounds. The `refreshThemeColors()` method is an empty TODO stub.
+  - **Files:** `shared/nexis/Pages/DiskTools/disk_tools_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Fix complexity:** Moderate (add QSS rules and/or programmatic theme color application to all dynamically-created widgets)
+  - **Resolved:** Added object names to all 4 display widgets (2 QListWidget, 2 QTreeWidget) and a complete DISK TOOLS PAGE QSS section with `background-color: transparent` containers, themed item colors, border/radius styling, checkbox indicators, branch chevrons for the duplicate tree, action bar, accent-colored scan button, and destructive-colored trash button — matching the established patterns from treeWidgetPackages/treeWidgetScanResult.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

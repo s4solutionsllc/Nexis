@@ -147,6 +147,7 @@ void DiskToolsPage::buildLargeOldPage()
     dirLayout->setSpacing(8);
 
     mDirListLargeOld = new QListWidget(dirFrame);
+    mDirListLargeOld->setObjectName("diskToolsDirList");
     mDirListLargeOld->setMaximumHeight(80);
     populateDirList(mDirListLargeOld);
     dirLayout->addWidget(mDirListLargeOld, 1);
@@ -223,6 +224,7 @@ void DiskToolsPage::buildLargeOldPage()
 
     // Results tree
     mTreeLargeOld = new QTreeWidget(this);
+    mTreeLargeOld->setObjectName("treeWidgetLargeOld");
     mTreeLargeOld->setHeaderLabels({tr("Name"), tr("Path"), tr("Size"),
                                      tr("Last Accessed"), tr("Last Modified")});
     mTreeLargeOld->setRootIsDecorated(false);
@@ -437,6 +439,7 @@ void DiskToolsPage::buildDuplicatePage()
     dirLayout->setSpacing(8);
 
     mDirListDup = new QListWidget(dirFrame);
+    mDirListDup->setObjectName("diskToolsDirList");
     mDirListDup->setMaximumHeight(80);
     populateDirList(mDirListDup);
     dirLayout->addWidget(mDirListDup, 1);
@@ -508,6 +511,7 @@ void DiskToolsPage::buildDuplicatePage()
 
     // Results tree (grouped)
     mTreeDuplicates = new QTreeWidget(this);
+    mTreeDuplicates->setObjectName("treeWidgetDuplicates");
     mTreeDuplicates->setHeaderLabels({tr("Name / Group"), tr("Path"), tr("Size"), tr("Last Modified")});
     mTreeDuplicates->setRootIsDecorated(true);
     mTreeDuplicates->setSortingEnabled(false);
@@ -707,6 +711,4 @@ void DiskToolsPage::updateDupSelection()
 
 void DiskToolsPage::refreshThemeColors()
 {
-    // TODO: Apply theme tokens from AppManager::getStyleValues() to
-    // dynamically-created widgets (tree alternating rows, action bar, etc.)
 }
