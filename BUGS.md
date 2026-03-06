@@ -88,10 +88,11 @@
   - **Description:** Both documents reference v2.0.2 and state "61 bugs fixed" but the project is at v2.1.12 with 80 bugs fixed and 68 features completed. Feature counts, page descriptions, and architecture stats are stale (last updated February 2026).
   - **Fix complexity:** Needs research — audit both docs against current codebase to identify all outdated sections
 
-- [ ] **BUG-86: 417 untranslated strings in translation files** (MEDIUM)
-  - **File:** `shared/translations/nexis_en.ts` (and likely other `.ts` files)
-  - **Description:** The English translation file has 417 entries marked `type="unfinished"`, indicating the translation pipeline is not fully synced with recent code changes. CMakeLists.txt calls `qt_create_translation()` without `LUPDATE_INCLUDE_CDIRS`, which may cause `lupdate` to miss new translatable strings.
-  - **Fix complexity:** Needs research — determine if this is a `lupdate` configuration issue or if strings were added without `tr()` wrappers
+- [x] **BUG-86: qt_create_translation() omits Core library sources** (MEDIUM)
+  - **File:** `CMakeLists.txt:405`
+  - **Description:** Original report of "417 untranslated strings" was mischaracterized — `type="unfinished"` in the English source file is normal `lupdate` behavior. The actual issue was that `qt_create_translation()` only passed GUI sources (`GUI_SHARED_SRCS`, `GUI_PLAT_SRCS`), omitting Core library sources. The CI `lupdate` workflow compensated via `-recursive`, but local builds couldn't regenerate `.ts` files with Core strings.
+  - **Fix complexity:** Trivial (add Core sources to qt_create_translation call)
+  - **Resolved:** Added `${CORE_SHARED_SRCS} ${CORE_PLAT_SRCS}` to the `qt_create_translation()` call so local builds match CI coverage.
 
 - [ ] **BUG-87: ~135+ unused resources bundled in static.qrc** (MEDIUM)
   - **File:** `shared/nexis/static.qrc`

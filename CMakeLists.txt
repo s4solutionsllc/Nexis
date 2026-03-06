@@ -402,7 +402,9 @@ set(NEXIS_TRANSLATIONS
   "${SHARED_DIR}/translations/nexis_zh-tw.ts"
 )
 find_package(Qt6 COMPONENTS LinguistTools)
-qt_create_translation(QM_FILES NEXIS_TRANSLATIONS ${GUI_SHARED_SRCS} ${GUI_PLAT_SRCS})
+qt_create_translation(QM_FILES NEXIS_TRANSLATIONS
+    ${GUI_SHARED_SRCS} ${GUI_PLAT_SRCS}
+    ${CORE_SHARED_SRCS} ${CORE_PLAT_SRCS})
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${QM_FILES}")
 
 set(CMAKE_AUTOUIC ON)
