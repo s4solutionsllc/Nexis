@@ -42,7 +42,7 @@ SettingsPage::SettingsPage(QWidget *parent, AppManager *appManager,
 
     auto updateCreditLink = [this]() {
         QSettings *sv = apm->getStyleValues();
-        QString accent = sv ? sv->value("@accentColor").toString() : "#E95420";
+        QString accent = sv ? sv->value("@accentColor").toString() : "#FF6B1A";
         ui->lblCreatedBy->setText(
             QString("<html><head/><body><p>Nexis v%1 "
                     "<a href=\"https://github.com/lsimpsonsfdc\">"

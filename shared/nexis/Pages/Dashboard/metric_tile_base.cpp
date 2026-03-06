@@ -46,14 +46,28 @@ void MetricTileBase::setColorRange(const QString &rangeId)
 
 QList<QColor> MetricTileBase::rangeColors(const QString &rangeId)
 {
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    auto c = [&](const QString &token, const QString &fallback) {
+        return QColor(sv ? sv->value(token).toString() : fallback);
+    };
+
+    QColor disk    = c("@diskColor",    "#E05454");
+    QColor cpu     = c("@cpuColor",     "#FF6B1A");
+    QColor memory  = c("@memoryColor",  "#FFB347");
+    QColor battery = c("@batteryColor", "#2EC27E");
+    QColor temp    = c("@tempColor",    "#5B9BD5");
+    QColor network = c("@networkColor", "#26A69A");
+    QColor purple("#9B59B6");
+    QColor lime("#8BC34A");
+
     if (rangeId == "red-green")
-        return { QColor("#E05454"), QColor("#FF6B1A"), QColor("#FFB347"), QColor("#2EC27E") };
+        return { disk, cpu, memory, battery };
     if (rangeId == "blue-red")
-        return { QColor("#5B9BD5"), QColor("#9B59B6"), QColor("#FF6B1A"), QColor("#E05454") };
+        return { temp, purple, cpu, disk };
     if (rangeId == "teal-orange")
-        return { QColor("#26A69A"), QColor("#8BC34A"), QColor("#FFB347"), QColor("#FF6B1A") };
+        return { network, lime, memory, cpu };
     // Default: green-red
-    return { QColor("#2EC27E"), QColor("#FFB347"), QColor("#FF6B1A"), QColor("#E05454") };
+    return { battery, memory, cpu, disk };
 }
 
 QStringList MetricTileBase::availableRangeIds()

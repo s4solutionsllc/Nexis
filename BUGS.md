@@ -37,10 +37,10 @@
   - **Description:** 12 signals are declared but never emitted or connected anywhere: `sigCleanableSizeChanged`, `sigDashboardFooterChanged`, `sigUninstallStarted`, `sigUninstallFinished`, `sigScheduledCleanStarted`, `sigScheduledCleanFinished`, `sigKioskToggleRequested`, `sigKioskModeChanged`, `sigAppVisibilityChanged`, `sigSidebarCollapseToggled`, `sigNavigateToPage`. These inflate the SignalMapper API surface and can mislead future development.
   - **Fix complexity:** Needs research — verify none are connected dynamically or via string-based connections before removing
 
-- [ ] **BUG-83: Hardcoded hex colors in C++ violating theme token system** (HIGH)
-  - **Files:** `shared/nexis/Pages/Dashboard/metric_tile_base.cpp:47-56`, `dashboard_page.cpp:620-623,1717-1727`, `helpers_page.cpp:189-192`, `settings_page.cpp:45`, `system_logs_page.cpp:173-175`
-  - **Description:** 15+ instances of hardcoded hex colors across 7 files. These bypass the `values.ini` theme token system established by BUG-47, meaning they won't respond to theme changes and break visual consistency between Light and Dark themes. Includes range color palettes, memory pressure colors, status colors, accent fallbacks, and log level colors.
-  - **Fix complexity:** Needs research — each instance needs a corresponding theme token defined in both light and dark `values.ini` files
+- [x] **BUG-83: Hardcoded hex colors in C++ violating theme token system** (HIGH)
+  - **Files:** `metric_tile_base.cpp:47-56`, `dashboard_page.cpp:1714-1723`, `helpers_page.cpp:189-192`, `disk_tile.cpp:115`, `settings_page.cpp:45`
+  - **Description:** 41 hardcoded hex color values across 5 files bypassed the `values.ini` theme token system. Category A: 34 completely hardcoded colors (no token lookup) in helpers_page, metric_tile_base, and dashboard_page color palettes. Category B: 2 inconsistent fallbacks in disk_tile and settings_page.
+  - **Resolved:** Connected all hardcoded colors to existing theme tokens via `getStyleValues()`. helpers_page now uses `@successColor`/`@destructiveColor`. metric_tile_base `rangeColors()` resolves from metric tokens. dashboard_page color picker palette built from tokens and deduplicated. Fixed 2 inconsistent fallbacks in disk_tile and settings_page.
 
 - [ ] **BUG-84: ~1,500 lines of duplicated layout code across Dashboard tile classes** (HIGH)
   - **Files:** `shared/nexis/Pages/Dashboard/metric_tile.cpp`, `hybrid_tile.cpp`, `speedometer_tile.cpp`, `vumeter_tile.cpp`

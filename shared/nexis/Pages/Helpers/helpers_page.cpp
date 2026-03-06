@@ -2,6 +2,7 @@
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
+#include <Managers/app_manager.h>
 #include <QMessageBox>
 #include <QPushButton>
 
@@ -183,13 +184,16 @@ void HelpersPage::onVerifyDisk()
     txtOutput->setPlainText(output);
     layout->addWidget(txtOutput);
 
+    QSettings *sv = AppManager::ins()->getStyleValues();
     QLabel *lblStatus = new QLabel;
     if (result.exitCode == 0) {
         lblStatus->setText(tr("\xe2\x9c\x93 Disk appears to be OK"));
-        lblStatus->setStyleSheet("color: #2ec27e; font-weight: bold;");
+        QString c = sv ? sv->value("@successColor").toString() : "#2ec27e";
+        lblStatus->setStyleSheet(QString("color: %1; font-weight: bold;").arg(c));
     } else {
         lblStatus->setText(tr("\xe2\x9c\x97 Issues detected (exit code %1)").arg(result.exitCode));
-        lblStatus->setStyleSheet("color: #e01b24; font-weight: bold;");
+        QString c = sv ? sv->value("@destructiveColor").toString() : "#E05454";
+        lblStatus->setStyleSheet(QString("color: %1; font-weight: bold;").arg(c));
     }
     layout->addWidget(lblStatus);
 

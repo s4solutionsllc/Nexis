@@ -1710,17 +1710,19 @@ void DashboardPage::setupCustomizationMenu(DashboardTileWrapper *wrapper, const 
             swatches.append(MetricTileBase::rangeColors(rid));
         }
         wrapper->setRangeMenuItems(rangeIds, labels, swatches, mTileRanges.value(id));
-    } else if (id != "network") {
-        static const QStringList colorPalette = {
-            "#FF6B1A", "#FFB347", "#E05454", "#26A69A", "#813D9C", "#5B9BD5", "#2EC27E",
-            "#E91E63", "#00BCD4", "#8BC34A", "#FF5722", "#607D8B", "#9C27B0", "#FFEB3B", "#795548", "#F48FB1"
-        };
-        wrapper->setColorMenuItems(colorPalette, mTileColors.value(id));
     } else {
-        static const QStringList colorPalette = {
-            "#FF6B1A", "#FFB347", "#E05454", "#26A69A", "#813D9C", "#5B9BD5", "#2EC27E",
-            "#E91E63", "#00BCD4", "#8BC34A", "#FF5722", "#607D8B", "#9C27B0", "#FFEB3B", "#795548", "#F48FB1"
-        };
+        QSettings *sv = mAppManager->getStyleValues();
+        QStringList colorPalette;
+        if (sv) {
+            for (const QString &t : {"@cpuColor", "@memoryColor", "@diskColor", "@networkColor",
+                                      "@gpuColor", "@tempColor", "@batteryColor"})
+                colorPalette << sv->value(t).toString();
+        } else {
+            colorPalette << "#FF6B1A" << "#FFB347" << "#E05454" << "#26A69A"
+                         << "#813D9C" << "#5B9BD5" << "#2EC27E";
+        }
+        colorPalette << "#E91E63" << "#00BCD4" << "#8BC34A" << "#FF5722"
+                     << "#607D8B" << "#9C27B0" << "#FFEB3B" << "#795548" << "#F48FB1";
         wrapper->setColorMenuItems(colorPalette, mTileColors.value(id));
     }
 }

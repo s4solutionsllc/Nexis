@@ -112,7 +112,7 @@ void DiskTile::setDriveHealth(const QString &driveName, const QString &status, i
     auto *statusLabel = new QLabel(statusText, mHealthContainer);
 
     QSettings *sv = AppManager::ins()->getStyleValues();
-    QString healthColor = sv ? sv->value(healthy ? "@successColor" : "@destructiveColor").toString() : (healthy ? "#2ec27e" : "#c01c28");
+    QString healthColor = sv ? sv->value(healthy ? "@successColor" : "@destructiveColor").toString() : (healthy ? "#2ec27e" : "#E05454");
     statusLabel->setStyleSheet(QString("color: %1; font-size: 9pt; font-weight: 600;").arg(healthColor));
 
     mHealthEntries.append({statusLabel, healthy});
