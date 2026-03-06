@@ -605,10 +605,10 @@
   - **Fix complexity:** Moderate (standardize across 8 files)
   - **Resolved:** Converted 3 printf-style qWarning to stream-style. Added logging to all 14 empty catch blocks. Added exit code checks to 8 QProcess::execute calls and return value checks to 4 QFile::remove calls in schedule_manager.cpp.
 
-- [ ] **BUG-91: 15 Q_UNUSED macros indicating unused slot parameters** (LOW)
-  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/Pages/DiskTools/disk_tools_page.cpp`, `shared/nexis/Pages/Uninstaller/uninstaller_page.cpp`, `shared/nexis/Pages/Resources/resources_page.cpp`, `shared/nexis/Pages/Services/services_page.cpp`, `shared/nexis/main.cpp`
-  - **Description:** 15 instances of `Q_UNUSED` macros across 6 files indicate slot methods receiving parameters they don't use. These suggest either the signal-slot signatures could be tightened or the methods could be refactored to use the data they receive.
-  - **Fix complexity:** Needs research — determine if each unused parameter is due to an incomplete implementation or an overly broad signal signature
+- [x] **BUG-91: Q_UNUSED macros — mostly legitimate, 1 dead code block removed** (LOW)
+  - **Files:** 20 Q_UNUSED instances across 9 files. 19 are legitimate (Qt API requirements, auto-connected slots, signal signature constraints, platform stubs, drag signal symmetry). 1 was dead code in `macos/nexis-core/Info/system_info.cpp`.
+  - **Description:** Research found all Q_UNUSED macros are correct usage of the pattern except an abandoned `ioreg` try block that executed a subprocess and discarded the result.
+  - **Resolved:** Removed dead ioreg try-catch block from system_info.cpp (eliminated wasted subprocess call on every CPU info refresh).
 
 - [x] **BUG-92: QSystemTrayIcon created without parent ownership** (LOW)
   - **File:** `shared/nexis/Managers/app_manager.cpp:28`

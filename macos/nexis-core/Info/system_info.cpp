@@ -41,18 +41,6 @@ SystemInfoMacOS::SystemInfoMacOS()
             // the IODeviceTree if available, otherwise try sysctl hw.tbfrequency
             // as a rough indicator (it's the timebase, not the CPU clock, but
             // better than nothing).
-            // For Apple Silicon we can read from sysctl kern.clockrate or
-            // use IORegistry to get P-core nominal frequency.
-            try {
-                QString ioreg = CommandUtil::exec("ioreg", {"-r", "-d1", "-c", "IOPlatformDevice", "-n", "pmgr"});
-                // Look for "voltage-states5-sram" or "voltage-states1-sram" which
-                // contain P-cluster frequency entries.  The last tuple is the max freq.
-                // However this is not always available or parseable.
-                // Simpler: use sysctl hw.perflevel0.logicalcpu and the performance
-                // cluster name, or just report the chip name (M1/M2/M3 etc.)
-                Q_UNUSED(ioreg);
-            } catch (...) { qWarning() << "Failed to read CPU frequency from IORegistry"; }
-
             // Use sysctl to get the P-core frequency on Apple Silicon
             // macOS 13+ exposes hw.perflevel0.* but not the frequency directly.
             // As a practical solution, extract the chip name and use known freqs.
