@@ -10,8 +10,7 @@
 
 VuMeterTile::VuMeterTile(const QString &title, const QString &colorToken, QWidget *parent)
     : MetricTileBase(title, colorToken, parent),
-      mPercent(0),
-      mCurrentTrend(Stable)
+      mPercent(0)
 {
     setObjectName("vuMeterTile");
     buildLayout();
@@ -84,17 +83,7 @@ void VuMeterTile::buildLayout()
     mBtnAction->setFixedHeight(22);
     mainLayout->addWidget(mBtnAction);
 
-    // Gear button (positioned absolutely, not in layout)
-    mGearButton = new QToolButton(this);
-    mGearButton->setObjectName("btnMetricGear");
-    mGearButton->setFixedSize(24, 24);
-    mGearButton->setIconSize(QSize(14, 14));
-    mGearButton->setAutoRaise(true);
-    mGearButton->setCursor(Qt::PointingHandCursor);
-    mGearButton->setFocusPolicy(Qt::NoFocus);
-    mGearButton->hide();
-    mGearButton->raise();
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
+    createGearButton();
 }
 
 void VuMeterTile::setValue(int percent, const QString &valueText)
@@ -173,23 +162,7 @@ void VuMeterTile::refreshThemeColors()
     mTextColor        = QColor(sv->value(mColorToken).toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 
-    QString colorHex  = mTextColor.name();
-    QString hoverText = sv->value("@color07").toString();
-
-    mBtnAction->setStyleSheet(
-        "QPushButton#metricTileAction {"
-        "  font-size: 8pt;"
-        "  padding: 2px 8px;"
-        "  border-radius: 10px;"
-        "  border: 1px solid " + colorHex + ";"
-        "  color: " + colorHex + ";"
-        "  background: transparent;"
-        "}"
-        "QPushButton#metricTileAction:hover {"
-        "  background-color: " + colorHex + ";"
-        "  color: " + hoverText + ";"
-        "}"
-    );
+    applyActionButtonStyle(mTextColor, QColor(sv->value("@color07").toString()));
 
     updateGearIcon();
     update();
@@ -273,53 +246,7 @@ void VuMeterTile::paintEvent(QPaintEvent *event)
 void VuMeterTile::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
-}
-
-void VuMeterTile::updateGearIcon()
-{
-    QString theme = AppManager::ins()->resolveThemeName();
-    QString path = QString(":/static/themes/%1/img/sidebar-icons/settings.svg").arg(theme);
-    mGearButton->setIcon(QIcon(path));
-}
-
-QToolButton *VuMeterTile::gearButton()
-{
-    return mGearButton;
-}
-
-void VuMeterTile::setGearVisible(bool visible)
-{
-    mGearButton->setVisible(visible);
-}
-
-void VuMeterTile::updateTrend()
-{
-    if (mDataBuffer.size() < 10) {
-        setTrendDirection(Stable);
-        return;
-    }
-
-    int size = mDataBuffer.size();
-    double recentAvg = 0, oldAvg = 0;
-    for (int i = size - 5; i < size; ++i)
-        recentAvg += mDataBuffer.at(i);
-    for (int i = size - 10; i < size - 5; ++i)
-        oldAvg += mDataBuffer.at(i);
-    recentAvg /= 5.0;
-    oldAvg /= 5.0;
-
-    if (oldAvg > 0.001) {
-        double diff = (recentAvg - oldAvg) / oldAvg;
-        if (diff > 0.05)
-            setTrendDirection(Rising);
-        else if (diff < -0.05)
-            setTrendDirection(Falling);
-        else
-            setTrendDirection(Stable);
-    } else {
-        setTrendDirection(recentAvg > 0.5 ? Rising : Stable);
-    }
+    repositionGearButton();
 }
 
 QColor VuMeterTile::segmentColor(int segmentIndex, int totalSegments) const

@@ -51,16 +51,7 @@ void HealthScoreTile::buildLayout()
 
     mainLayout->addStretch();
 
-    mGearButton = new QToolButton(this);
-    mGearButton->setObjectName("btnMetricGear");
-    mGearButton->setFixedSize(24, 24);
-    mGearButton->setIconSize(QSize(14, 14));
-    mGearButton->setAutoRaise(true);
-    mGearButton->setCursor(Qt::PointingHandCursor);
-    mGearButton->setFocusPolicy(Qt::NoFocus);
-    mGearButton->hide();
-    mGearButton->raise();
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
+    createGearButton();
 }
 
 void HealthScoreTile::setValue(int percent, const QString &valueText)
@@ -98,16 +89,6 @@ void HealthScoreTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
     update();
-}
-
-QToolButton *HealthScoreTile::gearButton()
-{
-    return mGearButton;
-}
-
-void HealthScoreTile::setGearVisible(bool visible)
-{
-    mGearButton->setVisible(visible);
 }
 
 void HealthScoreTile::recalculate()
@@ -210,6 +191,6 @@ void HealthScoreTile::paintBreakdownBars(QPainter &painter)
 void HealthScoreTile::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
+    repositionGearButton();
     update();
 }

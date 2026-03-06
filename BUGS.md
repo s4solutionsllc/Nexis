@@ -42,10 +42,10 @@
   - **Description:** 41 hardcoded hex color values across 5 files bypassed the `values.ini` theme token system. Category A: 34 completely hardcoded colors (no token lookup) in helpers_page, metric_tile_base, and dashboard_page color palettes. Category B: 2 inconsistent fallbacks in disk_tile and settings_page.
   - **Resolved:** Connected all hardcoded colors to existing theme tokens via `getStyleValues()`. helpers_page now uses `@successColor`/`@destructiveColor`. metric_tile_base `rangeColors()` resolves from metric tokens. dashboard_page color picker palette built from tokens and deduplicated. Fixed 2 inconsistent fallbacks in disk_tile and settings_page.
 
-- [ ] **BUG-84: ~1,500 lines of duplicated layout code across Dashboard tile classes** (HIGH)
-  - **Files:** `shared/nexis/Pages/Dashboard/metric_tile.cpp`, `hybrid_tile.cpp`, `speedometer_tile.cpp`, `vumeter_tile.cpp`
-  - **Description:** Four tile classes have 85-95% identical `buildLayout()` implementations: title label setup, sparkline chart creation (QLineSeries/QAreaSeries/QChart), footer layout (subtitle, trend, action button), and gear button positioning. This duplication makes maintenance error-prone — a fix in one tile must be replicated in all others.
-  - **Fix complexity:** Needs research — determine best refactoring approach (base class extraction, factory pattern, or shared builder method)
+- [x] **BUG-84: ~500 lines of duplicated code across 8 Dashboard tile subclasses** (HIGH)
+  - **Files:** All 8 `MetricTileBase` subclasses in `shared/nexis/Pages/Dashboard/`
+  - **Description:** 6 patterns are copy-pasted across 8 tile classes: gear button setup (8×12=96 lines), footer layout (5×20=100), `updateTrend()` (6×28=168), `updateGearIcon()` (8×8=64), `resizeEvent()` gear reposition (8×5=40), action button stylesheet (6×6=36). Total ~504 duplicated lines. Each tile's truly unique code is only its `paintEvent()` rendering.
+  - **Reclassified:** Not a bug — code quality / refactoring initiative. Moved to **FR-77**.
 
 ## MEDIUM Severity
 

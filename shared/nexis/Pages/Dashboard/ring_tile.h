@@ -5,7 +5,6 @@
 
 #include <QLabel>
 #include <QProgressBar>
-#include <QPushButton>
 
 class RingTile : public MetricTileBase
 {
@@ -23,8 +22,6 @@ public:
     void setDisplayMode(DisplayMode mode) override;
     void setSecondaryValue(const QString &text) override;
 
-    QToolButton *gearButton() override;
-    void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
 protected:
@@ -33,8 +30,6 @@ protected:
 
 private:
     void buildLayout();
-    void updateGearIcon();
-    void updateTrend();
     int ringThickness() const;
     int ringFontSize() const;
     int secondaryFontSize() const;
@@ -43,12 +38,7 @@ private:
     QLabel *mLblPercentage;
     QLabel *mLblSecondaryValue;
     QProgressBar *mProgressBar;
-    QLabel *mLblSubtitle;
-    QLabel *mLblTrend;
-    QPushButton *mBtnAction;
-    QToolButton *mGearButton;
 
-    TrendDirection mCurrentTrend;
     int mPercent;
 
     QColor mMetricColor;

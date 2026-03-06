@@ -1,4 +1,7 @@
 #include "metric_tile_base.h"
+
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 #include "Managers/app_manager.h"
 
 MetricTileBase::MetricTileBase(const QString &title, const QString &colorToken, QWidget *parent)
@@ -103,4 +106,120 @@ QString MetricTileBase::trendText(TrendDirection dir) const
     case Stable:  return QStringLiteral("\u2192 stable");
     }
     return {};
+}
+
+void MetricTileBase::createGearButton()
+{
+    mGearButton = new QToolButton(this);
+    mGearButton->setObjectName("btnMetricGear");
+    mGearButton->setFixedSize(24, 24);
+    mGearButton->setIconSize(QSize(14, 14));
+    mGearButton->setAutoRaise(true);
+    mGearButton->setCursor(Qt::PointingHandCursor);
+    mGearButton->setFocusPolicy(Qt::NoFocus);
+    mGearButton->hide();
+    mGearButton->raise();
+    repositionGearButton();
+}
+
+void MetricTileBase::repositionGearButton()
+{
+    if (mGearButton)
+        mGearButton->move(width() - mGearButton->width() - 10, 8);
+}
+
+QToolButton *MetricTileBase::gearButton()
+{
+    return mGearButton;
+}
+
+void MetricTileBase::setGearVisible(bool visible)
+{
+    if (mGearButton)
+        mGearButton->setVisible(visible);
+}
+
+void MetricTileBase::updateGearIcon()
+{
+    if (!mGearButton)
+        return;
+    QString theme = AppManager::ins()->resolveThemeName();
+    mGearButton->setIcon(QIcon(
+        QString(":/static/themes/%1/img/sidebar-icons/settings.svg").arg(theme)));
+}
+
+void MetricTileBase::createFooterLayout(QVBoxLayout *parent)
+{
+    auto *footerLayout = new QHBoxLayout();
+    footerLayout->setContentsMargins(0, 0, 0, 0);
+
+    mLblSubtitle = new QLabel(this);
+    mLblSubtitle->setObjectName("metricTileSubtitle");
+
+    mLblTrend = new QLabel(this);
+    mLblTrend->setObjectName("metricTileSubtitle");
+    mLblTrend->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+    mBtnAction = new QPushButton(this);
+    mBtnAction->setObjectName("metricTileAction");
+    mBtnAction->setCursor(Qt::PointingHandCursor);
+    mBtnAction->setFocusPolicy(Qt::NoFocus);
+    mBtnAction->hide();
+    mBtnAction->setFixedHeight(22);
+
+    footerLayout->addWidget(mLblSubtitle);
+    footerLayout->addStretch();
+    footerLayout->addWidget(mLblTrend);
+    footerLayout->addWidget(mBtnAction);
+    parent->addLayout(footerLayout);
+}
+
+void MetricTileBase::updateTrend()
+{
+    if (mDataBuffer.size() < 10) {
+        setTrendDirection(Stable);
+        return;
+    }
+
+    int size = mDataBuffer.size();
+    double recentAvg = 0, oldAvg = 0;
+    for (int i = size - 5; i < size; ++i)
+        recentAvg += mDataBuffer.at(i);
+    for (int i = size - 10; i < size - 5; ++i)
+        oldAvg += mDataBuffer.at(i);
+    recentAvg /= 5.0;
+    oldAvg /= 5.0;
+
+    if (oldAvg > 0.001) {
+        double diff = (recentAvg - oldAvg) / oldAvg;
+        if (diff > 0.05)
+            setTrendDirection(Rising);
+        else if (diff < -0.05)
+            setTrendDirection(Falling);
+        else
+            setTrendDirection(Stable);
+    } else {
+        setTrendDirection(recentAvg > 0.5 ? Rising : Stable);
+    }
+}
+
+void MetricTileBase::applyActionButtonStyle(const QColor &metricColor, const QColor &hoverTextColor)
+{
+    if (!mBtnAction)
+        return;
+    QString colorHex = metricColor.name();
+    mBtnAction->setStyleSheet(
+        "QPushButton#metricTileAction {"
+        "  font-size: 8pt;"
+        "  padding: 2px 8px;"
+        "  border-radius: 10px;"
+        "  border: 1px solid " + colorHex + ";"
+        "  color: " + colorHex + ";"
+        "  background: transparent;"
+        "}"
+        "QPushButton#metricTileAction:hover {"
+        "  background-color: " + colorHex + ";"
+        "  color: " + hoverTextColor.name() + ";"
+        "}"
+    );
 }

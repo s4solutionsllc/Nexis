@@ -5,7 +5,6 @@
 
 #include <QLabel>
 #include <QColor>
-#include <QPushButton>
 
 class GaugeTile : public MetricTileBase
 {
@@ -23,8 +22,6 @@ public:
     void setSecondaryValue(const QString &text) override;
     void setDisplayMode(DisplayMode mode) override;
     void setQuickAction(const QString &text, std::function<void()> callback) override;
-    QToolButton *gearButton() override;
-    void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
 protected:
@@ -33,8 +30,6 @@ protected:
 
 private:
     void buildLayout();
-    void updateGearIcon();
-    void updateTrend();
 
     QColor mArcColor;
     QColor mArcEndColor;
@@ -47,12 +42,6 @@ private:
     QString mSecondaryText;
 
     QLabel *mLblTitle;
-    QLabel *mLblSubtitle;
-    QLabel *mLblTrend;
-    QPushButton *mBtnAction;
-    QToolButton *mGearButton;
-
-    TrendDirection mCurrentTrend;
 };
 
 #endif // GAUGE_TILE_H

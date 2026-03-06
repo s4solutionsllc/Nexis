@@ -5,7 +5,6 @@
 
 #include <QLabel>
 #include <QColor>
-#include <QPushButton>
 #include <QHBoxLayout>
 
 class DiskTile : public MetricTileBase
@@ -24,8 +23,6 @@ public:
     void setSecondaryValue(const QString &text) override;
     void setDisplayMode(DisplayMode mode) override;
     void setQuickAction(const QString &text, std::function<void()> callback) override;
-    QToolButton *gearButton() override;
-    void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
     // Disk-specific overrides
@@ -39,7 +36,6 @@ protected:
 
 private:
     void buildLayout();
-    void updateGearIcon();
 
     QString mTrackColorToken;
     QColor mArcColor;
@@ -51,8 +47,6 @@ private:
     QString mTotalText;
 
     QLabel *mLblTitle;
-    QLabel *mLblSubtitle;
-    QToolButton *mGearButton;
     QWidget *mHealthContainer;
     QHBoxLayout *mHealthLayout;
 

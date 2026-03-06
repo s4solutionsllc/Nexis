@@ -46,17 +46,8 @@ void DiskTile::buildLayout()
     mHealthContainer->hide();
     layout->addWidget(mHealthContainer);
 
-    // Gear button for disk selection (positioned absolutely, not in layout)
-    mGearButton = new QToolButton(this);
+    createGearButton();
     mGearButton->setObjectName("btnDiskGear");
-    mGearButton->setFixedSize(24, 24);
-    mGearButton->setIconSize(QSize(14, 14));
-    mGearButton->setAutoRaise(true);
-    mGearButton->setCursor(Qt::PointingHandCursor);
-    mGearButton->setFocusPolicy(Qt::NoFocus);
-    mGearButton->hide();
-    mGearButton->raise();
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
 }
 
 void DiskTile::setDiskInfo(int percent, const QString &usedText, const QString &totalText)
@@ -164,27 +155,10 @@ void DiskTile::refreshThemeColors()
     update();
 }
 
-void DiskTile::updateGearIcon()
-{
-    QString theme = AppManager::ins()->resolveThemeName();
-    QString path = QString(":/static/themes/%1/img/sidebar-icons/settings.svg").arg(theme);
-    mGearButton->setIcon(QIcon(path));
-}
-
-QToolButton *DiskTile::gearButton()
-{
-    return mGearButton;
-}
-
-void DiskTile::setGearVisible(bool visible)
-{
-    mGearButton->setVisible(visible);
-}
-
 void DiskTile::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
+    repositionGearButton();
 }
 
 void DiskTile::paintEvent(QPaintEvent *event)

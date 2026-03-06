@@ -3,8 +3,12 @@
 
 #include <QWidget>
 #include <QToolButton>
+#include <QLabel>
+#include <QPushButton>
 #include <QColor>
 #include <functional>
+
+class QVBoxLayout;
 
 class MetricTileBase : public QWidget
 {
@@ -25,9 +29,10 @@ public:
     virtual void setSecondaryValue(const QString &text) = 0;
     virtual void setDisplayMode(DisplayMode mode) = 0;
     virtual void setQuickAction(const QString &text, std::function<void()> callback) = 0;
-    virtual QToolButton *gearButton() = 0;
-    virtual void setGearVisible(bool visible) = 0;
     virtual void refreshThemeColors() = 0;
+
+    QToolButton *gearButton();
+    void setGearVisible(bool visible);
 
     virtual void clearDataPoints();
 
@@ -55,6 +60,23 @@ protected:
 
     static const int SPARKLINE_SIZE = 60;
     QList<double> mDataBuffer;
+
+    // Shared UI members (created by helper methods below)
+    QToolButton *mGearButton = nullptr;
+    QLabel *mLblSubtitle = nullptr;
+    QLabel *mLblTrend = nullptr;
+    QPushButton *mBtnAction = nullptr;
+    TrendDirection mCurrentTrend = Stable;
+
+    // Shared helpers for subclass buildLayout()
+    void createGearButton();
+    void repositionGearButton();
+    void createFooterLayout(QVBoxLayout *parent);
+
+    // Shared behavior
+    virtual void updateTrend();
+    void updateGearIcon();
+    void applyActionButtonStyle(const QColor &metricColor, const QColor &hoverTextColor);
 
     QString trendText(TrendDirection dir) const;
     QColor resolvedColor() const;

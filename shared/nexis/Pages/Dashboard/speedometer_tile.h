@@ -5,7 +5,6 @@
 
 #include <QLabel>
 #include <QColor>
-#include <QPushButton>
 
 class SpeedometerTile : public MetricTileBase
 {
@@ -22,8 +21,6 @@ public:
     void setSecondaryValue(const QString &text) override;
     void setDisplayMode(DisplayMode mode) override;
     void setQuickAction(const QString &text, std::function<void()> callback) override;
-    QToolButton *gearButton() override;
-    void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
 protected:
@@ -32,8 +29,6 @@ protected:
 
 private:
     void buildLayout();
-    void updateGearIcon();
-    void updateTrend();
     QColor gradientColorAt(double fraction) const;
 
     int mPercent;
@@ -52,12 +47,6 @@ private:
     QLabel *mLblTitle;
     QLabel *mLblValue;
     QLabel *mLblSecondaryValue;
-    QLabel *mLblSubtitle;
-    QLabel *mLblTrend;
-    QPushButton *mBtnAction;
-    QToolButton *mGearButton;
-
-    TrendDirection mCurrentTrend;
 };
 
 #endif // SPEEDOMETER_TILE_H

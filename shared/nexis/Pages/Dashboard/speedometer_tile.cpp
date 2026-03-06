@@ -15,8 +15,7 @@ static constexpr double kPi = 3.14159265358979323846;
 
 SpeedometerTile::SpeedometerTile(const QString &title, const QString &colorToken, QWidget *parent)
     : MetricTileBase(title, colorToken, parent),
-      mPercent(0),
-      mCurrentTrend(Stable)
+      mPercent(0)
 {
     setObjectName("speedometerTile");
     buildLayout();
@@ -46,39 +45,9 @@ void SpeedometerTile::buildLayout()
     mLblSecondaryValue->setObjectName("metricTileSubtitle");
     mLblSecondaryValue->hide();
 
-    auto *footerLayout = new QHBoxLayout();
-    footerLayout->setContentsMargins(0, 0, 0, 0);
+    createFooterLayout(mainLayout);
 
-    mLblSubtitle = new QLabel(this);
-    mLblSubtitle->setObjectName("metricTileSubtitle");
-
-    mLblTrend = new QLabel(this);
-    mLblTrend->setObjectName("metricTileSubtitle");
-    mLblTrend->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-
-    mBtnAction = new QPushButton(this);
-    mBtnAction->setObjectName("metricTileAction");
-    mBtnAction->setCursor(Qt::PointingHandCursor);
-    mBtnAction->setFocusPolicy(Qt::NoFocus);
-    mBtnAction->hide();
-    mBtnAction->setFixedHeight(22);
-
-    footerLayout->addWidget(mLblSubtitle);
-    footerLayout->addStretch();
-    footerLayout->addWidget(mLblTrend);
-    footerLayout->addWidget(mBtnAction);
-    mainLayout->addLayout(footerLayout);
-
-    mGearButton = new QToolButton(this);
-    mGearButton->setObjectName("btnMetricGear");
-    mGearButton->setFixedSize(24, 24);
-    mGearButton->setIconSize(QSize(14, 14));
-    mGearButton->setAutoRaise(true);
-    mGearButton->setCursor(Qt::PointingHandCursor);
-    mGearButton->setFocusPolicy(Qt::NoFocus);
-    mGearButton->hide();
-    mGearButton->raise();
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
+    createGearButton();
 }
 
 void SpeedometerTile::setValue(int percent, const QString &valueText)
@@ -129,16 +98,6 @@ void SpeedometerTile::setQuickAction(const QString &text, std::function<void()> 
     connect(mBtnAction, &QPushButton::clicked, this, [callback]() { callback(); });
 }
 
-QToolButton *SpeedometerTile::gearButton()
-{
-    return mGearButton;
-}
-
-void SpeedometerTile::setGearVisible(bool visible)
-{
-    mGearButton->setVisible(visible);
-}
-
 void SpeedometerTile::refreshThemeColors()
 {
     QSettings *sv = AppManager::ins()->getStyleValues();
@@ -163,62 +122,10 @@ void SpeedometerTile::refreshThemeColors()
         mRedColor = QColor(sv->value("@destructiveColor").toString());
     }
 
-    QString colorHex = mMetricColor.name();
-    QString hoverText = sv->value("@color07").toString();
-
-    mBtnAction->setStyleSheet(
-        "QPushButton#metricTileAction {"
-        "  font-size: 8pt;"
-        "  padding: 2px 8px;"
-        "  border-radius: 10px;"
-        "  border: 1px solid " + colorHex + ";"
-        "  color: " + colorHex + ";"
-        "  background: transparent;"
-        "}"
-        "QPushButton#metricTileAction:hover {"
-        "  background-color: " + colorHex + ";"
-        "  color: " + hoverText + ";"
-        "}"
-    );
+    applyActionButtonStyle(mMetricColor, QColor(sv->value("@color07").toString()));
 
     updateGearIcon();
     update();
-}
-
-void SpeedometerTile::updateGearIcon()
-{
-    QString theme = AppManager::ins()->resolveThemeName();
-    QString path = QString(":/static/themes/%1/img/sidebar-icons/settings.svg").arg(theme);
-    mGearButton->setIcon(QIcon(path));
-}
-
-void SpeedometerTile::updateTrend()
-{
-    if (mDataBuffer.size() < 10) {
-        setTrendDirection(Stable);
-        return;
-    }
-
-    int size = mDataBuffer.size();
-    double recentAvg = 0, oldAvg = 0;
-    for (int i = size - 5; i < size; ++i)
-        recentAvg += mDataBuffer.at(i);
-    for (int i = size - 10; i < size - 5; ++i)
-        oldAvg += mDataBuffer.at(i);
-    recentAvg /= 5.0;
-    oldAvg /= 5.0;
-
-    if (oldAvg > 0.001) {
-        double diff = (recentAvg - oldAvg) / oldAvg;
-        if (diff > 0.05)
-            setTrendDirection(Rising);
-        else if (diff < -0.05)
-            setTrendDirection(Falling);
-        else
-            setTrendDirection(Stable);
-    } else {
-        setTrendDirection(recentAvg > 0.5 ? Rising : Stable);
-    }
 }
 
 static QColor interpolateColor(const QColor &a, const QColor &b, double t)
@@ -426,5 +333,5 @@ void SpeedometerTile::paintEvent(QPaintEvent *event)
 void SpeedometerTile::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
+    repositionGearButton();
 }

@@ -5,7 +5,6 @@
 
 #include <QLabel>
 #include <QColor>
-#include <QPushButton>
 #include <QtCharts>
 
 class HybridTile : public MetricTileBase
@@ -25,8 +24,6 @@ public:
     void setSecondaryValue(const QString &text) override;
     void setDisplayMode(DisplayMode mode) override;
     void setQuickAction(const QString &text, std::function<void()> callback) override;
-    QToolButton *gearButton() override;
-    void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
 protected:
@@ -35,9 +32,7 @@ protected:
 
 private:
     void buildLayout();
-    void updateGearIcon();
     void updateSparkline();
-    void updateTrend();
     void drawGaugeArc(QPainter &painter);
     int gaugeSize() const;
 
@@ -56,12 +51,6 @@ private:
     QLineSeries *mSeries;
     QAreaSeries *mAreaSeries;
     QChart *mChart;
-    QLabel *mLblSubtitle;
-    QLabel *mLblTrend;
-    QPushButton *mBtnAction;
-    QToolButton *mGearButton;
-
-    TrendDirection mCurrentTrend;
 };
 
 #endif // HYBRID_TILE_H

@@ -5,7 +5,6 @@
 
 #include <QLabel>
 #include <QProgressBar>
-#include <QPushButton>
 #include <QtCharts>
 
 class MetricTile : public MetricTileBase
@@ -25,8 +24,6 @@ public:
     void setDisplayMode(DisplayMode mode) override;
     void setSecondaryValue(const QString &text) override;
 
-    QToolButton *gearButton() override;
-    void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
 protected:
@@ -34,9 +31,7 @@ protected:
 
 private:
     void buildLayout();
-    void updateGearIcon();
     void updateSparkline();
-    void updateTrend();
 
     QLabel *mLblTitle;
     QLabel *mLblValue;
@@ -46,12 +41,6 @@ private:
     QLineSeries *mSeries;
     QAreaSeries *mAreaSeries;
     QChart *mChart;
-    QLabel *mLblSubtitle;
-    QLabel *mLblTrend;
-    QPushButton *mBtnAction;
-    QToolButton *mGearButton;
-
-    TrendDirection mCurrentTrend;
 };
 
 #endif // METRIC_TILE_H

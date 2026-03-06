@@ -13,8 +13,7 @@ static constexpr int ARC_PEN_WIDTH = 6;
 
 HybridTile::HybridTile(const QString &title, const QString &colorToken, QWidget *parent)
     : MetricTileBase(title, colorToken, parent),
-      mPercent(0),
-      mCurrentTrend(Stable)
+      mPercent(0)
 {
     setObjectName("hybridTile");
     buildLayout();
@@ -79,45 +78,13 @@ void HybridTile::buildLayout()
 
     mainLayout->addSpacing(2);
 
-    // Footer row: subtitle + trend + action
-    auto *footerLayout = new QHBoxLayout();
-    footerLayout->setContentsMargins(0, 0, 0, 0);
-
-    mLblSubtitle = new QLabel(this);
-    mLblSubtitle->setObjectName("metricTileSubtitle");
-
-    mLblTrend = new QLabel(this);
-    mLblTrend->setObjectName("metricTileSubtitle");
-    mLblTrend->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-
-    mBtnAction = new QPushButton(this);
-    mBtnAction->setObjectName("metricTileAction");
-    mBtnAction->setCursor(Qt::PointingHandCursor);
-    mBtnAction->setFocusPolicy(Qt::NoFocus);
-    mBtnAction->hide();
-    mBtnAction->setFixedHeight(22);
-
-    footerLayout->addWidget(mLblSubtitle);
-    footerLayout->addStretch();
-    footerLayout->addWidget(mLblTrend);
-    footerLayout->addWidget(mBtnAction);
-    mainLayout->addLayout(footerLayout);
+    createFooterLayout(mainLayout);
 
     // Initialize sparkline series from data buffer (pre-filled with zeros by base)
     for (int i = 0; i < mDataBuffer.size(); ++i)
         mSeries->append(i, 0);
 
-    // Gear button (positioned absolutely, not in layout)
-    mGearButton = new QToolButton(this);
-    mGearButton->setObjectName("btnMetricGear");
-    mGearButton->setFixedSize(24, 24);
-    mGearButton->setIconSize(QSize(14, 14));
-    mGearButton->setAutoRaise(true);
-    mGearButton->setCursor(Qt::PointingHandCursor);
-    mGearButton->setFocusPolicy(Qt::NoFocus);
-    mGearButton->hide();
-    mGearButton->raise();
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
+    createGearButton();
 }
 
 void HybridTile::setValue(int percent, const QString &valueText)
@@ -192,16 +159,6 @@ void HybridTile::setQuickAction(const QString &text, std::function<void()> callb
     connect(mBtnAction, &QPushButton::clicked, this, [callback]() { callback(); });
 }
 
-QToolButton *HybridTile::gearButton()
-{
-    return mGearButton;
-}
-
-void HybridTile::setGearVisible(bool visible)
-{
-    mGearButton->setVisible(visible);
-}
-
 void HybridTile::refreshThemeColors()
 {
     QSettings *sv = AppManager::ins()->getStyleValues();
@@ -213,9 +170,6 @@ void HybridTile::refreshThemeColors()
     mTextColor = QColor(sv->value("@color05").toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 
-    QString colorHex = mArcColor.name();
-    QString hoverText = sv->value("@color07").toString();
-
     mSeries->setPen(QPen(mArcColor, 1.5));
 
     QColor fillColor = mArcColor;
@@ -224,20 +178,7 @@ void HybridTile::refreshThemeColors()
 
     mChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
 
-    mBtnAction->setStyleSheet(
-        "QPushButton#metricTileAction {"
-        "  font-size: 8pt;"
-        "  padding: 2px 8px;"
-        "  border-radius: 10px;"
-        "  border: 1px solid " + colorHex + ";"
-        "  color: " + colorHex + ";"
-        "  background: transparent;"
-        "}"
-        "QPushButton#metricTileAction:hover {"
-        "  background-color: " + colorHex + ";"
-        "  color: " + hoverText + ";"
-        "}"
-    );
+    applyActionButtonStyle(mArcColor, QColor(sv->value("@color07").toString()));
 
     updateGearIcon();
     update();
@@ -334,41 +275,5 @@ void HybridTile::updateSparkline()
 void HybridTile::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    mGearButton->move(width() - mGearButton->width() - 10, 8);
-}
-
-void HybridTile::updateGearIcon()
-{
-    QString theme = AppManager::ins()->resolveThemeName();
-    QString path = QString(":/static/themes/%1/img/sidebar-icons/settings.svg").arg(theme);
-    mGearButton->setIcon(QIcon(path));
-}
-
-void HybridTile::updateTrend()
-{
-    if (mDataBuffer.size() < 10) {
-        setTrendDirection(Stable);
-        return;
-    }
-
-    int size = mDataBuffer.size();
-    double recentAvg = 0, oldAvg = 0;
-    for (int i = size - 5; i < size; ++i)
-        recentAvg += mDataBuffer.at(i);
-    for (int i = size - 10; i < size - 5; ++i)
-        oldAvg += mDataBuffer.at(i);
-    recentAvg /= 5.0;
-    oldAvg /= 5.0;
-
-    if (oldAvg > 0.001) {
-        double diff = (recentAvg - oldAvg) / oldAvg;
-        if (diff > 0.05)
-            setTrendDirection(Rising);
-        else if (diff < -0.05)
-            setTrendDirection(Falling);
-        else
-            setTrendDirection(Stable);
-    } else {
-        setTrendDirection(recentAvg > 0.5 ? Rising : Stable);
-    }
+    repositionGearButton();
 }

@@ -5,7 +5,6 @@
 #include "health_score_calculator.h"
 
 #include <QLabel>
-#include <QToolButton>
 
 class HealthScoreTile : public MetricTileBase
 {
@@ -21,8 +20,6 @@ public:
     void setSecondaryValue(const QString &text) override;
     void setDisplayMode(DisplayMode mode) override;
     void setQuickAction(const QString &text, std::function<void()> callback) override;
-    QToolButton *gearButton() override;
-    void setGearVisible(bool visible) override;
     void refreshThemeColors() override;
 
     HealthScoreCalculator *calculator() { return &mCalculator; }
@@ -41,7 +38,6 @@ private:
     QLabel *mLblTitle;
     QLabel *mLblScore;
     QLabel *mLblScoreLabel;
-    QToolButton *mGearButton;
 
     int mCurrentScore;
     QString mCurrentLabel;
