@@ -25,7 +25,7 @@ AppManager::AppManager()
 {
     mSettingManager = SettingManager::ins();
 
-    mTrayIcon = new QSystemTrayIcon();
+    mTrayIcon = new QSystemTrayIcon(qApp);
     updateTrayIcon();
 
     loadLanguageList();

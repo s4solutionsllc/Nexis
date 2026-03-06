@@ -27,6 +27,26 @@
   - **Fix complexity:** Moderate (standard Qt single-instance pattern)
   - **Resolved:** Added QLockFile in main.cpp with warning dialog on duplicate launch
 
+- [ ] **BUG-81: Unused Service classes compiled into binary** (HIGH)
+  - **Files:** `shared/nexis/Services/docker_service.{h,cpp}`, `file_search_service.{h,cpp}`, `duplicate_finder_service.{h,cpp}`, `host_service.{h,cpp}`, `package_service.{h,cpp}`, `process_service.{h,cpp}`, `startup_service.{h,cpp}`, `system_service_manager.{h,cpp}`
+  - **Description:** 8 Service classes (16 files) are compiled into the binary via CMakeLists.txt but are never instantiated or referenced anywhere in the codebase. They add unnecessary compile time and binary size (~16KB+) with zero functionality.
+  - **Fix complexity:** Needs research — determine if these are planned features or dead code to remove
+
+- [ ] **BUG-82: 12 unused signals declared in SignalMapper** (HIGH)
+  - **File:** `shared/nexis/signal_mapper.h`
+  - **Description:** 12 signals are declared but never emitted or connected anywhere: `sigCleanableSizeChanged`, `sigDashboardFooterChanged`, `sigUninstallStarted`, `sigUninstallFinished`, `sigScheduledCleanStarted`, `sigScheduledCleanFinished`, `sigKioskToggleRequested`, `sigKioskModeChanged`, `sigAppVisibilityChanged`, `sigSidebarCollapseToggled`, `sigNavigateToPage`. These inflate the SignalMapper API surface and can mislead future development.
+  - **Fix complexity:** Needs research — verify none are connected dynamically or via string-based connections before removing
+
+- [ ] **BUG-83: Hardcoded hex colors in C++ violating theme token system** (HIGH)
+  - **Files:** `shared/nexis/Pages/Dashboard/metric_tile_base.cpp:47-56`, `dashboard_page.cpp:620-623,1717-1727`, `helpers_page.cpp:189-192`, `settings_page.cpp:45`, `system_logs_page.cpp:173-175`
+  - **Description:** 15+ instances of hardcoded hex colors across 7 files. These bypass the `values.ini` theme token system established by BUG-47, meaning they won't respond to theme changes and break visual consistency between Light and Dark themes. Includes range color palettes, memory pressure colors, status colors, accent fallbacks, and log level colors.
+  - **Fix complexity:** Needs research — each instance needs a corresponding theme token defined in both light and dark `values.ini` files
+
+- [ ] **BUG-84: ~1,500 lines of duplicated layout code across Dashboard tile classes** (HIGH)
+  - **Files:** `shared/nexis/Pages/Dashboard/metric_tile.cpp`, `hybrid_tile.cpp`, `speedometer_tile.cpp`, `vumeter_tile.cpp`
+  - **Description:** Four tile classes have 85-95% identical `buildLayout()` implementations: title label setup, sparkline chart creation (QLineSeries/QAreaSeries/QChart), footer layout (subtitle, trend, action button), and gear button positioning. This duplication makes maintenance error-prone — a fix in one tile must be replicated in all others.
+  - **Fix complexity:** Needs research — determine best refactoring approach (base class extraction, factory pattern, or shared builder method)
+
 ## MEDIUM Severity
 
 - [x] **BUG-04: CPU speed shows 0 GHz on modern kernels** (MEDIUM)
@@ -62,6 +82,26 @@
   - **Description:** Multiple theming deficiencies: (1) SettingsPage has no `sigChangedAppTheme` listener beyond a credit-link lambda — no `refreshThemeColors()` method exists, (2) QComboBox dropdown popups may use macOS native Cocoa rendering that ignores QSS `QAbstractItemView` rules (no `setStyle("Fusion")` in app), (3) programmatic widgets (`settingsGroup`, `btnResetDashboardLayout`) lack QSS-matchable selectors, (4) modal dialogs (`manageSchedulesDialog`, `cleaningHistoryDialog`) rely on generic `QDialog` QSS but child QGroupBox/QPlainTextEdit widgets have no dialog-specific rules.
   - **Fix complexity:** Moderate (add dialog-specific QSS rules + theme listener; macOS combo popup may need platform-specific fix)
   - **Resolved:** Added `QDialog QGroupBox` and `QDialog QGroupBox::title` QSS rules for themed card styling in all dialogs. Added `setObjectName("scheduleEditorDialog")` to ScheduleEditorDialog. Added `refreshThemeColors()` method to SettingsPage connected to `sigChangedAppTheme` to refresh drop shadows on theme change. Note: macOS native QComboBox popup rendering may still require `setStyle("Fusion")` as a future enhancement.
+
+- [ ] **BUG-85: Documentation out of date — version and stats mismatch** (MEDIUM)
+  - **Files:** `docs/APPLICATION_OVERVIEW.md`, `docs/ARCHITECTURE_REVIEW.md`
+  - **Description:** Both documents reference v2.0.2 and state "61 bugs fixed" but the project is at v2.1.12 with 80 bugs fixed and 68 features completed. Feature counts, page descriptions, and architecture stats are stale (last updated February 2026).
+  - **Fix complexity:** Needs research — audit both docs against current codebase to identify all outdated sections
+
+- [ ] **BUG-86: 417 untranslated strings in translation files** (MEDIUM)
+  - **File:** `shared/translations/nexis_en.ts` (and likely other `.ts` files)
+  - **Description:** The English translation file has 417 entries marked `type="unfinished"`, indicating the translation pipeline is not fully synced with recent code changes. CMakeLists.txt calls `qt_create_translation()` without `LUPDATE_INCLUDE_CDIRS`, which may cause `lupdate` to miss new translatable strings.
+  - **Fix complexity:** Needs research — determine if this is a `lupdate` configuration issue or if strings were added without `tr()` wrappers
+
+- [ ] **BUG-87: ~135+ unused resources bundled in static.qrc** (MEDIUM)
+  - **File:** `shared/nexis/static.qrc`
+  - **Description:** The QRC file bundles ~135+ resource entries (PNGs, SVGs) that are not referenced in any `.cpp`, `.h`, or `.qss` file. Includes old PNG sidebar icons (replaced by SVGs), `themes.json`, `donate.png`, various check/arrow/spin images, and legacy theme variants. Adds ~500KB+ to the binary unnecessarily.
+  - **Fix complexity:** Needs research — verify each resource isn't loaded dynamically (string-formatted paths, theme-based lookups) before removing
+
+- [ ] **BUG-88: Low test coverage (~5-10% of codebase)** (MEDIUM)
+  - **Files:** `tests/` directory — 7 test suites vs 255+ source files
+  - **Description:** Test coverage is minimal. No tests exist for: any of the 14 page classes, AppManager/SettingManager/ToolManager/DataRefreshService, Info classes (BatteryInfo, GPUInfo, MemoryInfo, SystemInfo), or the Service layer. Only utils (FormatUtil, FileUtil, CommandUtil), DiskHealthInfo, ScheduleManager, ThemeTokens, and screenshot regression are tested.
+  - **Fix complexity:** Needs research — prioritize which classes benefit most from testing and determine how to test Qt GUI components
 
 ## LOW Severity
 
@@ -549,6 +589,27 @@
   - **File:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp:513`
   - **Fix complexity:** Trivial (change `[0-9]` to `[0-9]+` in the regex)
   - **Resolved:** Changed regex to `([0-9]+\.[0-9]+\.[0-9]+)` to support multi-digit version components.
+
+- [ ] **BUG-89: Orphaned resource files on disk** (LOW)
+  - **Files:** `shared/nexis/static/themes/default/img/filter.png`, `shared/nexis/static/themes/default/img/loadings.gif`
+  - **Description:** Two resource files exist on disk but are not listed in `static.qrc` and not referenced in any source code. They are leftover artifacts from the upstream Stacer project.
+  - **Fix complexity:** Needs research — confirm no dynamic loading path references them before deleting
+
+- [ ] **BUG-90: Inconsistent error handling patterns** (LOW)
+  - **Files:** `shared/nexis/Managers/app_manager.cpp`, `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/Services/process_service.cpp`, `shared/nexis/Services/host_service.cpp`
+  - **Description:** Error reporting mixes `qWarning()` stream-style (`qWarning() << "msg"`) and printf-style (`qWarning("msg")`) within the same files. Theme token fallback colors are scattered with inconsistent defaults across `app.cpp`, `disk_tile.cpp`, `system_logs_page.cpp`, and others. No centralized fallback color strategy.
+  - **Fix complexity:** Needs research — catalog all instances and establish a consistent pattern
+
+- [ ] **BUG-91: 15 Q_UNUSED macros indicating unused slot parameters** (LOW)
+  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/Pages/DiskTools/disk_tools_page.cpp`, `shared/nexis/Pages/Uninstaller/uninstaller_page.cpp`, `shared/nexis/Pages/Resources/resources_page.cpp`, `shared/nexis/Pages/Services/services_page.cpp`, `shared/nexis/main.cpp`
+  - **Description:** 15 instances of `Q_UNUSED` macros across 6 files indicate slot methods receiving parameters they don't use. These suggest either the signal-slot signatures could be tightened or the methods could be refactored to use the data they receive.
+  - **Fix complexity:** Needs research — determine if each unused parameter is due to an incomplete implementation or an overly broad signal signature
+
+- [x] **BUG-92: QSystemTrayIcon created without parent ownership** (LOW)
+  - **File:** `shared/nexis/Managers/app_manager.cpp:28`
+  - **Description:** `mTrayIcon = new QSystemTrayIcon();` is created without a parent and is never explicitly deleted in the destructor. While the singleton pattern means it lives for the app's lifetime, it lacks proper ownership and cleanup — inconsistent with the Qt parent-child ownership model used elsewhere.
+  - **Fix complexity:** Trivial (parent to qApp)
+  - **Resolved:** Changed to `new QSystemTrayIcon(qApp)` so QApplication destructor handles cleanup automatically. Matches the correct pattern already used in main.cpp:73.
 
 ## Notes
 
