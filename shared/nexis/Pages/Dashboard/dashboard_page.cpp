@@ -239,8 +239,13 @@ void DashboardPage::init()
     // GPU device combo box
     if (im->hasGpu()) {
         QList<GpuDevice> gpus = im->getGpuDevices();
-        for (const GpuDevice &g : gpus)
-            mCmbGpuDevice->addItem(g.name);
+        bool multiGpu = gpus.size() > 1;
+        for (const GpuDevice &g : gpus) {
+            QString label = multiGpu
+                ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
+                : g.name;
+            mCmbGpuDevice->addItem(label);
+        }
 
         QString savedGpuId = mSettingManager->getGpuDeviceId();
         if (!savedGpuId.isEmpty()) {
@@ -257,16 +262,20 @@ void DashboardPage::init()
                 qWarning() << "Saved GPU device" << savedGpuId << "not found, falling back to first device";
         }
 
-        if (mSelectedGpuIndex >= 0 && mSelectedGpuIndex < gpus.size())
-            mGpuTile->setSubtitle(gpus.at(mSelectedGpuIndex).name);
+        if (mSelectedGpuIndex >= 0 && mSelectedGpuIndex < gpus.size()) {
+            const GpuDevice &g = gpus.at(mSelectedGpuIndex);
+            mGpuTile->setSubtitle(multiGpu
+                ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
+                : g.name);
+        }
 
-        if (gpus.size() <= 1)
+        if (!multiGpu)
             mCmbGpuDevice->hide();
         else {
             mCmbGpuDevice->setObjectName("cmbGpuDevice");
             mCmbGpuDevice->setCursor(Qt::PointingHandCursor);
             mCmbGpuDevice->setFocusPolicy(Qt::NoFocus);
-            mCmbGpuDevice->setMaximumWidth(140);
+            mCmbGpuDevice->setMaximumWidth(200);
             mGpuTile->layout()->addWidget(mCmbGpuDevice);
         }
 
@@ -806,10 +815,14 @@ void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
         return;
 
     const GpuDevice &gpu = gpus.at(mSelectedGpuIndex);
-    int util = qMax(0, gpu.utilization);
 
-    mGpuTile->setValue(util, QString("%1%").arg(util));
-    mGpuTile->addDataPoint(util);
+    if (gpu.utilization < 0) {
+        mGpuTile->setValue(0, tr("N/A"));
+    } else {
+        int util = qBound(0, gpu.utilization, 100);
+        mGpuTile->setValue(util, QString("%1%").arg(util));
+        mGpuTile->addDataPoint(util);
+    }
 }
 
 void DashboardPage::onGpuDeviceChanged(int index)
@@ -817,9 +830,13 @@ void DashboardPage::onGpuDeviceChanged(int index)
     mSelectedGpuIndex = index;
 
     QList<GpuDevice> gpus = im->getGpuDevices();
+    bool multiGpu = gpus.size() > 1;
     if (index >= 0 && index < gpus.size()) {
-        mSettingManager->setGpuDeviceId(gpus.at(index).name);
-        mGpuTile->setSubtitle(gpus.at(index).name);
+        const GpuDevice &g = gpus.at(index);
+        mSettingManager->setGpuDeviceId(g.name);
+        mGpuTile->setSubtitle(multiGpu
+            ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
+            : g.name);
     }
 
     mGpuTile->clearDataPoints();

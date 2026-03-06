@@ -4,7 +4,6 @@
 #include <QDebug>
 #include <QDir>
 #include <QRegularExpression>
-#include <algorithm>
 
 // PCI vendor IDs
 static constexpr const char *PCI_VENDOR_AMD    = "0x1002";
@@ -135,11 +134,19 @@ void GpuInfoLinux::discoverGpus()
         // Skip unknown vendors
     }
 
-    // Sort by PCI bus address so ordering matches lspci / Mission Center / glxinfo
-    std::sort(mDevices.begin(), mDevices.end(),
-              [](const GpuDevice &a, const GpuDevice &b) {
-                  return a.pciBusId < b.pciBusId;
-              });
+    // DRM card order (card0, card1, ...) is the kernel's native GPU ordering.
+    // This matches libdrm-based tools (Mission Center, nvtop) and is the most
+    // widely used convention on Linux. No explicit sort needed — QDir::Name
+    // already yields card0 before card1.
+
+    if (!mDevices.isEmpty()) {
+        qDebug() << "Discovered" << mDevices.size() << "GPU(s):";
+        for (const GpuDevice &d : mDevices)
+            qDebug() << "  card" << d.deviceIndex
+                     << "| PCI" << d.pciBusId
+                     << "|" << d.vendor << "|" << d.name
+                     << "| sysfs:" << (d.sysfsLoadPath.isEmpty() ? "(none)" : d.sysfsLoadPath);
+    }
 }
 
 void GpuInfoLinux::updateGpuInfo()

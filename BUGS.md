@@ -563,8 +563,9 @@
   - **Reported by:** @Vai0Lou (PikaOS 4, Debian-based, kernel 6.19.2, GNOME 50)
   - **Description:** Since version 2.1, GPU0's workload is displayed in the GPU1 tile and vice versa. The GPU utilization values are swapped between the two GPU selections on the Dashboard.
   - **Steps to reproduce:** Open Nexis → Dashboard → Click GPU0, note workload → Click GPU1, compare — values are swapped.
-  - **Fix complexity:** Trivial (GPU enumeration order mismatch)
-  - **Resolved:** GPUs were enumerated by DRM card number (kernel driver probe order), which can differ from PCI bus address order used by lspci/glxinfo/Mission Center. Added `pciBusId` field to `GpuDevice` and sort `mDevices` by PCI bus address after discovery, ensuring consistent ordering with other system tools.
+  - **Fix complexity:** Moderate (GPU enumeration order + display improvements)
+  - **Resolved (attempt 1, commit 95038fa):** Sorted GPUs by PCI bus address. Reporter confirmed this changed the dropdown order but did NOT fix the data mismatch — the ordering still didn't match Mission Center.
+  - **Resolved (attempt 2):** Root cause was that Nexis sorted by PCI bus address while Mission Center (via nvtop/libdrm) uses DRM card order. Reverted PCI bus sort to use DRM card order (kernel's native ordering). Added "GPU N:" prefix to dropdown labels for multi-GPU systems so users can correlate with other tools. Fixed misleading "0%" display for GPUs with unavailable utilization (now shows "N/A"). Added diagnostic debug logging to GPU discovery.
 
 - [x] **BUG-77: Hardware Info page text truncated** (LOW)
   - **GitHub Issue:** [#10](https://github.com/lsimpsonsfdc/Nexis/issues/10)

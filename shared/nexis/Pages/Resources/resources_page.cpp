@@ -363,16 +363,18 @@ void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
     QVector<QSplineSeries *> seriesList = mChartGpu->getSeriesList();
 
     for (int j = 0; j < seriesList.count() && j < gpus.size(); j++) {
-        int util = qMax(0, gpus.at(j).utilization);  // -1 → 0
+        const GpuDevice &gpu = gpus.at(j);
+        int util = qMax(0, gpu.utilization);  // -1 → 0 for chart data point
 
         for (int i = 0; i < (second < 61 ? second : 61); i++)
             seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
 
         seriesList.at(j)->insert(0, QPointF(0, util));
 
-        seriesList.at(j)->setName(QString("%1: %2%")
-                                  .arg(gpus.at(j).name)
-                                  .arg(util));
+        QString label = (gpu.utilization < 0)
+            ? QString("%1: N/A").arg(gpu.name)
+            : QString("%1: %2%").arg(gpu.name).arg(util);
+        seriesList.at(j)->setName(label);
 
         if (second > 61) seriesList.at(j)->removePoints(61, 1);
     }
