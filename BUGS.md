@@ -591,10 +591,11 @@
   - **Fix complexity:** Trivial (change `[0-9]` to `[0-9]+` in the regex)
   - **Resolved:** Changed regex to `([0-9]+\.[0-9]+\.[0-9]+)` to support multi-digit version components.
 
-- [ ] **BUG-89: Orphaned resource files on disk** (LOW)
+- [x] **BUG-89: Orphaned resource files on disk** (LOW)
   - **Files:** `shared/nexis/static/themes/default/img/filter.png`, `shared/nexis/static/themes/default/img/loadings.gif`
   - **Description:** Two resource files exist on disk but are not listed in `static.qrc` and not referenced in any source code. They are leftover artifacts from the upstream Stacer project.
-  - **Fix complexity:** Needs research — confirm no dynamic loading path references them before deleting
+  - **Fix complexity:** Trivial (delete files)
+  - **Resolved:** Deleted both files (~202KB). Confirmed zero references in code, QRC, QSS, or UI files.
 
 - [ ] **BUG-90: Inconsistent error handling patterns** (LOW)
   - **Files:** `shared/nexis/Managers/app_manager.cpp`, `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/Services/process_service.cpp`, `shared/nexis/Services/host_service.cpp`
