@@ -94,10 +94,11 @@
   - **Fix complexity:** Trivial (add Core sources to qt_create_translation call)
   - **Resolved:** Added `${CORE_SHARED_SRCS} ${CORE_PLAT_SRCS}` to the `qt_create_translation()` call so local builds match CI coverage.
 
-- [ ] **BUG-87: ~135+ unused resources bundled in static.qrc** (MEDIUM)
+- [x] **BUG-87: Unused legacy resources bundled in static.qrc** (MEDIUM)
   - **File:** `shared/nexis/static.qrc`
-  - **Description:** The QRC file bundles ~135+ resource entries (PNGs, SVGs) that are not referenced in any `.cpp`, `.h`, or `.qss` file. Includes old PNG sidebar icons (replaced by SVGs), `themes.json`, `donate.png`, various check/arrow/spin images, and legacy theme variants. Adds ~500KB+ to the binary unnecessarily.
-  - **Fix complexity:** Needs research — verify each resource isn't loaded dynamically (string-formatted paths, theme-based lookups) before removing
+  - **Description:** Original estimate of "~135+ unused" was incorrect — most resources are loaded dynamically via theme-based path construction or QSS `url()` references. Actual unused count: 9 files (donate.png, spinup/spindown PNGs superseded by SVGs, grid-edit-done.svg, down-arrow/right-arrow PNGs superseded by chevron SVGs, search.png superseded by sidebar SVG).
+  - **Fix complexity:** Trivial (remove 9 QRC entries and delete files)
+  - **Resolved:** Removed 9 unused resource entries from static.qrc and deleted the physical files. All were upstream Stacer artifacts superseded by SVG replacements or removed features.
 
 - [ ] **BUG-88: Low test coverage (~5-10% of codebase)** (MEDIUM)
   - **Files:** `tests/` directory — 7 test suites vs 255+ source files

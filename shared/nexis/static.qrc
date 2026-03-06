@@ -8,7 +8,6 @@
         <file>static/themes/common/img/not-found.png</file>
         <file>static/themes/default/img/edit.png</file>
         <file>static/themes/default/img/service.png</file>
-        <file>static/themes/default/img/search.png</file>
         <file>static/themes/common/img/check.png</file>
         <file>static/themes/common/img/un-check.png</file>
         <file>static/themes/default/img/loading.gif</file>
@@ -19,8 +18,6 @@
         <file>static/themes/default/img/scan-active.png</file>
         <file>static/themes/default/img/clean.png</file>
         <file>static/themes/default/img/clean-active.png</file>
-        <file>static/themes/default/img/down-arrow.png</file>
-        <file>static/themes/default/img/right-arrow.png</file>
         <file>static/font/Ubuntu-R.ttf</file>
         <file>static/font/Inter-Regular.ttf</file>
         <file>static/font/Inter-Bold.ttf</file>
@@ -30,9 +27,7 @@
         <file>static/themes/light/img/app.png</file>
         <file>static/themes/light/img/clean-active.png</file>
         <file>static/themes/light/img/clean.png</file>
-        <file>static/themes/light/img/down-arrow.png</file>
         <file>static/themes/light/img/edit.png</file>
-        <file>static/themes/light/img/right-arrow.png</file>
         <file>static/themes/light/img/scan-active.png</file>
         <file>static/themes/light/img/scan.png</file>
         <file>static/themes/light/img/scanLoading.gif</file>
@@ -48,9 +43,6 @@
         <file>static/themes/default/img/power.svg</file>
         <file>static/themes/default/img/ppa-repository.png</file>
         <file>static/splashscreen.png</file>
-        <file>static/themes/common/img/donate.png</file>
-        <file>static/themes/common/img/spinup.png</file>
-        <file>static/themes/common/img/spindown.png</file>
         <file>static/themes/common/img/spinup.svg</file>
         <file>static/themes/common/img/spindown.svg</file>
         <file>static/themes/light/img/ppa-repository.png</file>
@@ -86,7 +78,6 @@
         <file>static/themes/common/img/fullscreen.svg</file>
         <file>static/themes/common/img/fullscreen-exit.svg</file>
         <file>static/themes/common/img/grid-edit.svg</file>
-        <file>static/themes/common/img/grid-edit-done.svg</file>
         <file>static/themes/common/img/style-brush.svg</file>
         <file>static/themes/common/img/tile-remove.svg</file>
         <file>static/themes/default/img/sidebar-icons/dash.svg</file>
