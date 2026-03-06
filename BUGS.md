@@ -27,10 +27,10 @@
   - **Fix complexity:** Moderate (standard Qt single-instance pattern)
   - **Resolved:** Added QLockFile in main.cpp with warning dialog on duplicate launch
 
-- [ ] **BUG-81: Unused Service classes compiled into binary** (HIGH)
+- [x] **BUG-81: Unused Service classes compiled into binary** (HIGH)
   - **Files:** `shared/nexis/Services/docker_service.{h,cpp}`, `file_search_service.{h,cpp}`, `duplicate_finder_service.{h,cpp}`, `host_service.{h,cpp}`, `package_service.{h,cpp}`, `process_service.{h,cpp}`, `startup_service.{h,cpp}`, `system_service_manager.{h,cpp}`
   - **Description:** 8 Service classes (16 files) are compiled into the binary via CMakeLists.txt but are never instantiated or referenced anywhere in the codebase. They add unnecessary compile time and binary size (~16KB+) with zero functionality.
-  - **Fix complexity:** Needs research — determine if these are planned features or dead code to remove
+  - **Resolved:** False positive. All 8 Service classes ARE actively used by their corresponding Page classes (DockerPage, SearchPage, DiskToolsPage, HostManage, UninstallerPage, ProcessesPage, StartupAppsPage, ServicesPage). They implement a Service Layer pattern — wrapping Tool calls in background threads and emitting signals for UI updates. No code changes needed.
 
 - [x] **BUG-82: 3 unused signals in SignalMapper with dead code** (HIGH)
   - **Files:** `shared/nexis/signal_mapper.h`, `shared/nexis/app.cpp`
