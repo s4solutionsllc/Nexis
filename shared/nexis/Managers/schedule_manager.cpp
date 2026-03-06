@@ -247,8 +247,10 @@ void ScheduleManager::syncToOS()
         QString id = f;
         id.remove("com.nexis.clean.").remove(".plist");
 
-        QProcess::execute("launchctl", {"unload", dir.absoluteFilePath(f)});
-        QFile::remove(dir.absoluteFilePath(f));
+        if (QProcess::execute("launchctl", {"unload", dir.absoluteFilePath(f)}) != 0)
+            qWarning() << "launchctl unload failed for" << dir.absoluteFilePath(f);
+        if (!QFile::remove(dir.absoluteFilePath(f)))
+            qWarning() << "Failed to remove" << dir.absoluteFilePath(f);
     }
 
     for (const CleaningSchedule &s : mSchedules) {
@@ -418,7 +420,8 @@ void ScheduleManager::createLaunchdPlist(const CleaningSchedule &schedule)
         file.close();
     }
 
-    QProcess::execute("launchctl", {"load", plistPath});
+    if (QProcess::execute("launchctl", {"load", plistPath}) != 0)
+        qWarning() << "launchctl load failed for" << plistPath;
 }
 
 void ScheduleManager::deleteLaunchdPlist(const QString &id)
@@ -427,8 +430,10 @@ void ScheduleManager::deleteLaunchdPlist(const QString &id)
     QString label = QString("com.nexis.clean.%1").arg(id);
     QString plistPath = agentsDir + "/" + label + ".plist";
 
-    QProcess::execute("launchctl", {"unload", plistPath});
-    QFile::remove(plistPath);
+    if (QProcess::execute("launchctl", {"unload", plistPath}) != 0)
+        qWarning() << "launchctl unload failed for" << plistPath;
+    if (!QFile::remove(plistPath))
+        qWarning() << "Failed to remove" << plistPath;
 }
 
 #else // Linux
@@ -517,8 +522,10 @@ void ScheduleManager::createSystemdTimer(const CleaningSchedule &schedule)
         timerFile.close();
     }
 
-    QProcess::execute("systemctl", {"--user", "daemon-reload"});
-    QProcess::execute("systemctl", {"--user", "enable", "--now", baseName + ".timer"});
+    if (QProcess::execute("systemctl", {"--user", "daemon-reload"}) != 0)
+        qWarning() << "systemctl daemon-reload failed";
+    if (QProcess::execute("systemctl", {"--user", "enable", "--now", baseName + ".timer"}) != 0)
+        qWarning() << "systemctl enable failed for" << baseName + ".timer";
 }
 
 void ScheduleManager::deleteSystemdTimer(const QString &id)
@@ -526,10 +533,14 @@ void ScheduleManager::deleteSystemdTimer(const QString &id)
     QString baseName = QString("nexis-clean-%1").arg(id);
     QString unitDir = QDir::homePath() + "/.config/systemd/user";
 
-    QProcess::execute("systemctl", {"--user", "disable", "--now", baseName + ".timer"});
-    QFile::remove(unitDir + "/" + baseName + ".timer");
-    QFile::remove(unitDir + "/" + baseName + ".service");
-    QProcess::execute("systemctl", {"--user", "daemon-reload"});
+    if (QProcess::execute("systemctl", {"--user", "disable", "--now", baseName + ".timer"}) != 0)
+        qWarning() << "systemctl disable failed for" << baseName + ".timer";
+    if (!QFile::remove(unitDir + "/" + baseName + ".timer"))
+        qWarning() << "Failed to remove" << unitDir + "/" + baseName + ".timer";
+    if (!QFile::remove(unitDir + "/" + baseName + ".service"))
+        qWarning() << "Failed to remove" << unitDir + "/" + baseName + ".service";
+    if (QProcess::execute("systemctl", {"--user", "daemon-reload"}) != 0)
+        qWarning() << "systemctl daemon-reload failed";
 }
 
 void ScheduleManager::createCronEntry(const CleaningSchedule &schedule)

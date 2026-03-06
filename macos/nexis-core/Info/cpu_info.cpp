@@ -1,5 +1,6 @@
 #include "cpu_info_macos.h"
 
+#include <QDebug>
 #include <QRegularExpression>
 #include "command_util.h"
 
@@ -89,7 +90,7 @@ double CpuInfoMacOS::getAvgClock() const
                 return mCachedClockMHz;
             }
         }
-    } catch (...) {}
+    } catch (...) { qWarning() << "Failed to read CPU clock frequency"; }
 
     mCachedClockMHz = 0.0;
     return mCachedClockMHz;

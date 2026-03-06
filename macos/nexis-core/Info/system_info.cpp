@@ -1,6 +1,7 @@
 #include "system_info_macos.h"
 #include "cpu_info_macos.h"
 
+#include <QDebug>
 #include <QObject>
 #include <QRegularExpression>
 #include <iostream>
@@ -50,7 +51,7 @@ SystemInfoMacOS::SystemInfoMacOS()
                 // Simpler: use sysctl hw.perflevel0.logicalcpu and the performance
                 // cluster name, or just report the chip name (M1/M2/M3 etc.)
                 Q_UNUSED(ioreg);
-            } catch (...) {}
+            } catch (...) { qWarning() << "Failed to read CPU frequency from IORegistry"; }
 
             // Use sysctl to get the P-core frequency on Apple Silicon
             // macOS 13+ exposes hw.perflevel0.* but not the frequency directly.
@@ -78,7 +79,7 @@ SystemInfoMacOS::SystemInfoMacOS()
     if (name.isEmpty()) {
         try {
             name = CommandUtil::exec("whoami").trimmed();
-        } catch (...) {}
+        } catch (...) { qWarning() << "Failed to get username"; }
     }
     this->username = name;
 }
@@ -96,7 +97,7 @@ QStringList SystemInfoMacOS::getUserList() const
             if (!trimmed.isEmpty() && !trimmed.startsWith('_'))
                 users.append(trimmed);
         }
-    } catch (...) {}
+    } catch (...) { qWarning() << "Failed to list system users"; }
     return users;
 }
 
@@ -111,7 +112,7 @@ QStringList SystemInfoMacOS::getGroupList() const
             if (!trimmed.isEmpty() && !trimmed.startsWith('_'))
                 groups.append(trimmed);
         }
-    } catch (...) {}
+    } catch (...) { qWarning() << "Failed to list system groups"; }
     return groups;
 }
 

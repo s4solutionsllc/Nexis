@@ -1,5 +1,6 @@
 #include "cpu_info_linux.h"
 
+#include <QDebug>
 #include <QRegularExpression>
 #include "command_util.h"
 
@@ -82,7 +83,7 @@ double CpuInfoLinux::getAvgClock() const
             if (mhz > 0.0)
                 return mhz;
         }
-    } catch (...) {}
+    } catch (...) { qWarning() << "Failed to read CPU clock frequency"; }
 
     // Fallback: per-core clocks from /proc/cpuinfo
     const QList<double> clocks = getClocks();

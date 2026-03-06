@@ -1,6 +1,7 @@
 #include "disk_health_info_macos.h"
 #include "Utils/command_util.h"
 
+#include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -174,7 +175,7 @@ void DiskHealthInfoMacOS::discoverDrives()
                 } else {
                     drive.needsElevation = true;
                 }
-            } catch (...) {}
+            } catch (...) { qWarning() << "Failed to read disk info for" << drive.devicePath; }
         }
 
         // Filter out virtual disks and disk images
@@ -215,7 +216,7 @@ void DiskHealthInfoMacOS::refreshHealthElevated(const QString &device)
                 DiskHealthInfo::parseSmartctlJsonInto(output.toUtf8(), mDrives[i]);
                 mDrives[i].needsElevation = false;
                 deriveHealthVerdict(mDrives[i]);
-            } catch (...) {}
+            } catch (...) { qWarning() << "Failed to read SMART data for" << device; }
             break;
         }
     }

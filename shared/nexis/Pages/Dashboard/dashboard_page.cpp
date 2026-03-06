@@ -180,8 +180,7 @@ void DashboardPage::init()
                 }
             }
             if (!found)
-                qWarning("Saved temperature sensor '%s' not found, falling back to first sensor",
-                         qPrintable(savedSensorId));
+                qWarning() << "Saved temperature sensor" << savedSensorId << "not found, falling back to first sensor";
         }
 
         for (QAction *a : mTempSensorMenu->actions())
@@ -220,8 +219,7 @@ void DashboardPage::init()
                 }
             }
             if (!found)
-                qWarning("Saved fan sensor '%s' not found, falling back to first sensor",
-                         qPrintable(savedFanId));
+                qWarning() << "Saved fan sensor" << savedFanId << "not found, falling back to first sensor";
         }
 
         for (QAction *a : mFanSensorMenu->actions())
@@ -256,8 +254,7 @@ void DashboardPage::init()
                 }
             }
             if (!found)
-                qWarning("Saved GPU device '%s' not found, falling back to first device",
-                         qPrintable(savedGpuId));
+                qWarning() << "Saved GPU device" << savedGpuId << "not found, falling back to first device";
         }
 
         if (mSelectedGpuIndex >= 0 && mSelectedGpuIndex < gpus.size())

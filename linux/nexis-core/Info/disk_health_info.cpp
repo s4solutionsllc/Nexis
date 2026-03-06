@@ -2,6 +2,7 @@
 #include "Utils/command_util.h"
 #include "Utils/file_util.h"
 
+#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
 DiskHealthInfoLinux::DiskHealthInfoLinux()
@@ -104,7 +105,7 @@ void DiskHealthInfoLinux::refreshHealthElevated(const QString &device)
                 DiskHealthInfo::parseSmartctlJsonInto(output.toUtf8(), mDrives[i]);
                 mDrives[i].needsElevation = false;
                 deriveHealthVerdict(mDrives[i]);
-            } catch (...) {}
+            } catch (...) { qWarning() << "Failed to read SMART data for" << device; }
             break;
         }
     }

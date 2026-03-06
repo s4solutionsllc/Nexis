@@ -149,7 +149,7 @@ QStringList PackageToolMacOS::homebrewDryRunRemove(const QStringList &packages)
             if (!deps.isEmpty()) {
                 wouldRemove << deps.split('\n');
             }
-        } catch (...) {}
+        } catch (...) { qWarning() << "Failed to check brew dependencies for" << pkg; }
     }
     return wouldRemove;
 }
@@ -186,7 +186,7 @@ static QList<Package> scanAppDirectory(const QString &dirPath, const QString &se
                     displayName = obj.value("CFBundleName").toString();
                 version = obj.value("CFBundleShortVersionString").toString();
             }
-        } catch (...) {}
+        } catch (...) { qWarning() << "Failed to parse Info.plist for" << appPath; }
 
         if (bundleId.startsWith("com.apple."))
             continue;

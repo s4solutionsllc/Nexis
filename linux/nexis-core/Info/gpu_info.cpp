@@ -1,6 +1,7 @@
 #include "gpu_info_linux.h"
 #include "Utils/command_util.h"
 
+#include <QDebug>
 #include <QDir>
 #include <QRegularExpression>
 #include <algorithm>
@@ -51,7 +52,7 @@ static QString readDeviceName(const QString &cardPath, int cardIndex, const QStr
                     if (!name.isEmpty())
                         return name;
                 }
-            } catch (...) {}
+            } catch (...) { qWarning() << "Failed to resolve GPU name via lspci"; }
         }
     }
 
@@ -172,6 +173,7 @@ void GpuInfoLinux::updateGpuInfo()
                     int pct = val.toInt(&ok);
                     dev.utilization = ok ? qBound(0, pct, 100) : -1;
                 } catch (...) {
+                    qWarning() << "Failed to parse GPU utilization";
                     dev.utilization = -1;
                 }
             }

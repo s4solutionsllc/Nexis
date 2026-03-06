@@ -20,7 +20,7 @@ NetworkInfoMacOS::NetworkInfoMacOS()
         if (m.hasMatch()) {
             defaultNetworkInterface = m.captured(1);   // e.g. "en0"
         }
-    } catch (...) {}
+    } catch (...) { qWarning() << "Failed to detect default network interface"; }
 
     // Fallback: first interface with an IPv4/IPv6 address that isn't loopback
     if (defaultNetworkInterface.isEmpty()) {

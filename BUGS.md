@@ -597,10 +597,11 @@
   - **Fix complexity:** Trivial (delete files)
   - **Resolved:** Deleted both files (~202KB). Confirmed zero references in code, QRC, QSS, or UI files.
 
-- [ ] **BUG-90: Inconsistent error handling patterns** (LOW)
-  - **Files:** `shared/nexis/Managers/app_manager.cpp`, `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/Services/process_service.cpp`, `shared/nexis/Services/host_service.cpp`
-  - **Description:** Error reporting mixes `qWarning()` stream-style (`qWarning() << "msg"`) and printf-style (`qWarning("msg")`) within the same files. Theme token fallback colors are scattered with inconsistent defaults across `app.cpp`, `disk_tile.cpp`, `system_logs_page.cpp`, and others. No centralized fallback color strategy.
-  - **Fix complexity:** Needs research — catalog all instances and establish a consistent pattern
+- [x] **BUG-90: Inconsistent error handling patterns** (LOW)
+  - **Files:** `dashboard_page.cpp`, `gpu_info.cpp`, `cpu_info.cpp`, `disk_health_info.cpp`, `system_info.cpp`, `network_info.cpp`, `package_tool.cpp`, `schedule_manager.cpp`
+  - **Description:** Error reporting mixed `qWarning()` stream-style and printf-style. 14 empty `catch (...)` blocks silently swallowed exceptions. 12 `QProcess::execute()` and `QFile::remove()` calls ignored return values. Theme token fallback inconsistencies deferred to BUG-83.
+  - **Fix complexity:** Moderate (standardize across 8 files)
+  - **Resolved:** Converted 3 printf-style qWarning to stream-style. Added logging to all 14 empty catch blocks. Added exit code checks to 8 QProcess::execute calls and return value checks to 4 QFile::remove calls in schedule_manager.cpp.
 
 - [ ] **BUG-91: 15 Q_UNUSED macros indicating unused slot parameters** (LOW)
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/Pages/DiskTools/disk_tools_page.cpp`, `shared/nexis/Pages/Uninstaller/uninstaller_page.cpp`, `shared/nexis/Pages/Resources/resources_page.cpp`, `shared/nexis/Pages/Services/services_page.cpp`, `shared/nexis/main.cpp`
