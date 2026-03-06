@@ -32,10 +32,10 @@
   - **Description:** 8 Service classes (16 files) are compiled into the binary via CMakeLists.txt but are never instantiated or referenced anywhere in the codebase. They add unnecessary compile time and binary size (~16KB+) with zero functionality.
   - **Fix complexity:** Needs research — determine if these are planned features or dead code to remove
 
-- [ ] **BUG-82: 12 unused signals declared in SignalMapper** (HIGH)
-  - **File:** `shared/nexis/signal_mapper.h`
-  - **Description:** 12 signals are declared but never emitted or connected anywhere: `sigCleanableSizeChanged`, `sigDashboardFooterChanged`, `sigUninstallStarted`, `sigUninstallFinished`, `sigScheduledCleanStarted`, `sigScheduledCleanFinished`, `sigKioskToggleRequested`, `sigKioskModeChanged`, `sigAppVisibilityChanged`, `sigSidebarCollapseToggled`, `sigNavigateToPage`. These inflate the SignalMapper API surface and can mislead future development.
-  - **Fix complexity:** Needs research — verify none are connected dynamically or via string-based connections before removing
+- [x] **BUG-82: 3 unused signals in SignalMapper with dead code** (HIGH)
+  - **Files:** `shared/nexis/signal_mapper.h`, `shared/nexis/app.cpp`
+  - **Description:** 3 of 12 SignalMapper signals were unused: `sigScheduledCleanStarted` (relayed but no receiver), `sigScheduledCleanFinished` (emitted but no receiver), `sigSidebarCollapseToggled` (emitted but no receiver). `sigNavigateToPage` was kept — its handler is fully wired and useful for future features (command palette, tray menu navigation).
+  - **Resolved:** Removed 3 dead signal declarations from signal_mapper.h. Removed relay connect and dead emit from app.cpp. SignalMapper now has 9 signals, all actively used or ready for use.
 
 - [x] **BUG-83: Hardcoded hex colors in C++ violating theme token system** (HIGH)
   - **Files:** `metric_tile_base.cpp:47-56`, `dashboard_page.cpp:1714-1723`, `helpers_page.cpp:189-192`, `disk_tile.cpp:115`, `settings_page.cpp:45`

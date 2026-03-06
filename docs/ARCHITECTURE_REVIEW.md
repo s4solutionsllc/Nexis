@@ -69,9 +69,9 @@ Nexis is structured as a **four-tier desktop application**:
 - **Centralized polling** — `DataRefreshService` singleton owns 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and emits typed data signals; pages subscribe as reactive consumers. The process timer starts paused and is only active while the Processes page is visible (BUG-72).
 - **Page lifecycle hooks** — `NexisPage` base class with virtual `onPageActivated()`/`onPageDeactivated()` called by `App::pageClick()`. Three heavyweight pages (Dashboard, Resources, Processes) inherit from `NexisPage` and gate their slot handlers on visibility — tile repaints, chart updates, and process polling stop when the page is hidden (BUG-72).
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
-- **Qt signals** — `SignalMapper` singleton as a lightweight global event bus (13 signals after FR-75)
+- **Qt signals** — `SignalMapper` singleton as a lightweight global event bus (9 signals after BUG-82 cleanup)
 - **Dashboard widgets** — Dashboard gauges replaced with a family of interchangeable tile widgets inheriting from `MetricTileBase` (abstract base class, FR-53). 7 widget styles available: `MetricTile` (sparkline), `GaugeTile` (¾-arc), `HybridTile` (arc + mini sparkline), `RingTile` (360° ring), `SpeedometerTile` (needle dial), `VuMeterTile` (segmented bar), and `DiskTile` (donut chart). All styles support three `DisplayMode` values (Normal/Hero/Large) via QSS dynamic properties — mode changes trigger `unpolish()`/`polish()` to re-evaluate QSS selectors for per-mode font sizing. CPU and Memory are independent tile instances (the combined `HeroCard` was removed in FR-50). `NetworkTile` uses dual `QChart` instances (separate RX/TX sparklines) and is excluded from style switching. `DiskTile` uses custom `QPainter` donut chart and exposes `setDriveHealth()` for cross-tile data flow. `DashboardTileWrapper` (FR-51) uses the decorator pattern to add edit-mode mouse handling (drag-and-drop, snap-to-grid resizing) and style switching (`setInnerWidget()` swaps the inner tile at runtime, FR-53). Per-tile style persisted in layout JSON via SettingManager. `DashboardPage::createTile()` factory method instantiates the correct tile class by style string. `HealthScoreTile` (FR-73) is a specialized tile showing a composite 0–100 health score aggregated from 6 components (CPU, memory, disk, temperature, battery, SMART) via `HealthScoreCalculator` helper; unavailable components have their weights redistributed proportionally. In Large/Hero mode, per-component breakdown bars are drawn in `paintEvent`
-- **Sidebar** — Sidebar navigation buttons are built programmatically in `app.cpp` (not defined in `.ui`) with grouped sections and collapse animation driven by `sigSidebarCollapseToggled`
+- **Sidebar** — Sidebar navigation buttons are built programmatically in `app.cpp` (not defined in `.ui`) with grouped sections and collapse animation driven by sidebar collapse animation
 - **CommandPalette** — `Ctrl+K` global command palette widget (`command_palette.h/.cpp`) for keyboard-driven navigation and actions
 
 **Scale:** ~6,000–7,000 lines of C++ across core library + services + GUI, 14 pages, 34 translations, 3 themes.
@@ -239,8 +239,6 @@ signals:
     void sigChangedAppTheme();
     void sigUninstallStarted();
     void sigUninstallFinished();
-    void sigScheduledCleanStarted(QString scheduleName);
-    void sigScheduledCleanFinished(quint64 bytesFreed, int fileCount);
     void sigKioskToggleRequested();
     void sigKioskModeChanged(bool enabled);
     void sigAppVisibilityChanged(bool visible);
@@ -488,7 +486,7 @@ public:
 
 **What:** Replace `SignalMapper` with a typed event bus library if the signal count grows beyond ~15.
 
-**When:** Currently 13 signals (SignalMapper) + 11 signals (DataRefreshService) — well within comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
+**When:** Currently 9 signals (SignalMapper) + 11 signals (DataRefreshService) — well within comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
 
 **Candidate:** [eventpp](https://github.com/wqking/eventpp) (header-only, C++11+, well-tested).
 

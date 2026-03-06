@@ -531,14 +531,8 @@ void App::init()
         }
     });
 
-    // Relay CleanerService signals through SignalMapper
-    connect(CleanerService::ins(), &CleanerService::cleaningStarted,
-            SignalMapper::ins(), &SignalMapper::sigScheduledCleanStarted);
     connect(CleanerService::ins(), &CleanerService::cleaningFinished,
             this, [this](CleanerService::CleanResult result) {
-        emit SignalMapper::ins()->sigScheduledCleanFinished(
-            result.totalBytesFreed, result.totalFilesRemoved);
-
         if (SettingManager::ins()->getCleaningNotificationsEnabled()) {
             mTrayIcon->showMessage(
                 tr("Scheduled Clean Complete"),
@@ -738,7 +732,6 @@ void App::toggleSidebarCollapse()
     mSidebarCollapsed = !mSidebarCollapsed;
     SettingManager::ins()->setSidebarCollapsed(mSidebarCollapsed);
     applySidebarCollapse(mSidebarCollapsed, true);
-    emit SignalMapper::ins()->sigSidebarCollapseToggled(mSidebarCollapsed);
 }
 
 void App::applySidebarCollapse(bool collapsed, bool animate)

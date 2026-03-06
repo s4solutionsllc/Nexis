@@ -14,12 +14,9 @@ signals:
     void sigChangedAppTheme();
     void sigUninstallStarted();
     void sigUninstallFinished();
-    void sigScheduledCleanStarted(QString scheduleName);
-    void sigScheduledCleanFinished(quint64 bytesFreed, int fileCount);
     void sigKioskToggleRequested();
     void sigKioskModeChanged(bool enabled);
     void sigAppVisibilityChanged(bool visible);
-    void sigSidebarCollapseToggled(bool collapsed);
     void sigNavigateToPage(const QString &pageTitle);
     void sigCleanableSizeChanged(quint64 bytes);
     void sigDashboardFooterChanged(bool visible);
