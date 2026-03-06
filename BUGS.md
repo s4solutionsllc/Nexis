@@ -100,10 +100,11 @@
   - **Fix complexity:** Trivial (remove 9 QRC entries and delete files)
   - **Resolved:** Removed 9 unused resource entries from static.qrc and deleted the physical files. All were upstream Stacer artifacts superseded by SVG replacements or removed features.
 
-- [ ] **BUG-88: Low test coverage (~5-10% of codebase)** (MEDIUM)
-  - **Files:** `tests/` directory — 7 test suites vs 255+ source files
-  - **Description:** Test coverage is minimal. No tests exist for: any of the 14 page classes, AppManager/SettingManager/ToolManager/DataRefreshService, Info classes (BatteryInfo, GPUInfo, MemoryInfo, SystemInfo), or the Service layer. Only utils (FormatUtil, FileUtil, CommandUtil), DiskHealthInfo, ScheduleManager, ThemeTokens, and screenshot regression are tested.
-  - **Fix complexity:** Needs research — prioritize which classes benefit most from testing and determine how to test Qt GUI components
+- [x] **BUG-88: Low test coverage (~5-10% of codebase)** (MEDIUM)
+  - **Files:** `tests/` directory — 7 test suites vs 120+ source files
+  - **Description:** Test coverage is ~5.3% (1,301 lines of tests, ~210 assertions). No tests for Info parsers, Tool classes, Pages, or most Managers. Past bugs concentrated in untested Info classes.
+  - **Fix complexity:** Large initiative — reclassified as feature request
+  - **Resolved:** Researched and filed as FR-76 with 3-phase implementation plan. See `backlog/BUG-88_research.md` for full analysis.
 
 ## LOW Severity
 
