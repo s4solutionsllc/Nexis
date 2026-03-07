@@ -33,6 +33,7 @@ private slots:
     void parse_mixedContent();
     void parse_lineWithAliases();
     void parse_lineIndices();
+    void parse_inlineComments();
 };
 
 void TestHostService::validIP_ipv4()
@@ -210,6 +211,23 @@ void TestHostService::parse_lineIndices()
     // Line 3 should be the second entry
     QVERIFY(entries.contains(3));
     QCOMPARE(entries[3].ip, QString("10.0.0.1"));
+}
+
+void TestHostService::parse_inlineComments()
+{
+    QStringList content = {
+        "127.0.0.1 localhost # loopback",
+        "192.168.1.1  myhost.local  myhost # office server",
+        "10.0.0.1 onlycomment #nothing"
+    };
+    QMap<int, HostEntry> entries = HostService::parseHostEntries(content);
+    QCOMPARE(entries.size(), 3);
+    QCOMPARE(entries[0].ip, QString("127.0.0.1"));
+    QCOMPARE(entries[0].fullQualified, QString("localhost"));
+    QCOMPARE(entries[0].aliases, QString(""));
+    QCOMPARE(entries[1].aliases, QString("myhost"));
+    QCOMPARE(entries[2].fullQualified, QString("onlycomment"));
+    QCOMPARE(entries[2].aliases, QString(""));
 }
 
 QTEST_MAIN(TestHostService)

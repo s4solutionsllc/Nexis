@@ -629,10 +629,11 @@
   - **Fix complexity:** Trivial (empty contents instead of removeRecursively, or recreate dirs after removal)
   - **Resolved:** Replaced `removeRecursively()` with an `emptyDir` lambda that iterates directory entries and removes each one individually (with BUG-93 symlink guards), preserving the `files/` and `info/` directories themselves.
 
-- [ ] **BUG-95: HostService parseHostEntries() doesn't handle inline comments** (LOW)
+- [x] **BUG-95: HostService parseHostEntries() doesn't handle inline comments** (LOW)
   - **File:** `shared/nexis/Services/host_service.cpp` — `parseHostEntries()` method
   - **Description:** The `/etc/hosts` spec allows inline `#` comments (e.g., `127.0.0.1 localhost # loopback`), but `parseHostEntries()` does not strip them. The `# loopback` text is included in the `aliases` field of the parsed `HostEntry`.
   - **Fix complexity:** Trivial (strip text after `#` before splitting fields)
+  - **Resolved:** Strip inline `#` comments before splitting fields; added `parse_inlineComments` test
 
 - [x] **BUG-96: MemoryInfo cached calculation can underflow quint64** (LOW)
   - **File:** `linux/nexis-core/Info/memory_info.cpp`

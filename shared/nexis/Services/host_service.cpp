@@ -33,8 +33,15 @@ QMap<int, HostEntry> HostService::parseHostEntries(const QStringList &fileConten
     {
         if (!line.trimmed().startsWith("#") && !line.trimmed().isEmpty())
         {
+            QString effective = line.trimmed();
+            int commentIdx = effective.indexOf('#');
+            if (commentIdx >= 0)
+                effective.truncate(commentIdx);
+            effective = effective.trimmed();
+            if (effective.isEmpty()) { i++; continue; }
+
             static const QRegularExpression whitespace("\\s+");
-            QStringList lineItems = line.trimmed().split(whitespace);
+            QStringList lineItems = effective.split(whitespace);
 
             if (lineItems.count() > 1) {
                 HostEntry entry;
