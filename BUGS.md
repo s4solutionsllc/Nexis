@@ -623,10 +623,11 @@
   - **Fix complexity:** Trivial (parent to qApp)
   - **Resolved:** Changed to `new QSystemTrayIcon(qApp)` so QApplication destructor handles cleanup automatically. Matches the correct pattern already used in main.cpp:73.
 
-- [ ] **BUG-94: Linux trash cleanup deletes XDG directories instead of emptying them** (LOW)
+- [x] **BUG-94: Linux trash cleanup deletes XDG directories instead of emptying them** (LOW)
   - **File:** `shared/nexis/Managers/cleaner_service.cpp` — `cleanTrash()` method
   - **Description:** On Linux, `cleanTrash()` calls `QDir::removeRecursively()` on `~/.local/share/Trash/files` and `~/.local/share/Trash/info`, which deletes the directories themselves rather than just their contents. The XDG Trash spec requires these directories to exist for subsequent trash operations by the desktop environment.
   - **Fix complexity:** Trivial (empty contents instead of removeRecursively, or recreate dirs after removal)
+  - **Resolved:** Replaced `removeRecursively()` with an `emptyDir` lambda that iterates directory entries and removes each one individually (with BUG-93 symlink guards), preserving the `files/` and `info/` directories themselves.
 
 - [ ] **BUG-95: HostService parseHostEntries() doesn't handle inline comments** (LOW)
   - **File:** `shared/nexis/Services/host_service.cpp` — `parseHostEntries()` method

@@ -148,8 +148,20 @@ quint64 CleanerService::cleanTrash()
         }
     }
 #else
-    QDir(trashPath + "/files").removeRecursively();
-    QDir(trashPath + "/info").removeRecursively();
+    auto emptyDir = [](const QString &dirPath) {
+        QDir dir(dirPath);
+        for (const QFileInfo &entry : dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+            if (entry.isSymLink()) {
+                QFile::remove(entry.absoluteFilePath());
+            } else if (entry.isDir()) {
+                QDir(entry.absoluteFilePath()).removeRecursively();
+            } else {
+                QFile::remove(entry.absoluteFilePath());
+            }
+        }
+    };
+    emptyDir(trashPath + "/files");
+    emptyDir(trashPath + "/info");
 #endif
 
     return sizeBefore;
