@@ -242,7 +242,7 @@
 
 ## Testing & Quality
 
-- [ ] **FR-76: Expand unit test coverage for critical-risk code paths** — Current test coverage is ~5.3% (7 suites, 1,301 lines, ~210 assertions). Zero tests exist for Info parsers, Tool classes, Page classes, or most Managers. Past bugs (BUG-01, BUG-02, BUG-09, BUG-11, BUG-14, BUG-27) concentrated in untested Info classes. Implement in 3 phases:
+- [~] **FR-76: Expand unit test coverage for critical-risk code paths** — Current test coverage is ~5.3% (7 suites, 1,301 lines, ~210 assertions). Zero tests exist for Info parsers, Tool classes, Page classes, or most Managers. Past bugs (BUG-01, BUG-02, BUG-09, BUG-11, BUG-14, BUG-27) concentrated in untested Info classes. Implement in 3 phases:
   - **Phase 1 (Critical risk — data loss / privilege escalation):** MemoryInfo (`/proc/meminfo` parsing with missing/reordered fields), CpuInfo (localized `lscpu`, multi-socket, ARM), GpuInfo (nvidia-smi device matching, DRM discovery), AptSourceTool (`.list`/`.sources` roundtrip, malformed entries), System Cleaner deletion logic (symlink safety, directory emptying). ~20 tests.
   - **Phase 2 (High risk — incorrect system info):** FanInfo (PWM mode transitions, stall detection), ThermalInfo (multi-zone, missing sensors), BatteryInfo (no battery, dual battery), PackageTool (apt/dnf/pacman/brew JSON/text parsing), UpdateInfo (version comparison regex). ~20 tests.
   - **Phase 3 (Medium risk — UI state / settings):** AppManager (token replacement, substring collision ordering), SettingManager (save/load roundtrip), HostService (`/etc/hosts` roundtrip integrity, duplicate detection), DiskInfo (device enumeration). ~15 tests.
