@@ -634,10 +634,11 @@
   - **Description:** The `/etc/hosts` spec allows inline `#` comments (e.g., `127.0.0.1 localhost # loopback`), but `parseHostEntries()` does not strip them. The `# loopback` text is included in the `aliases` field of the parsed `HostEntry`.
   - **Fix complexity:** Trivial (strip text after `#` before splitting fields)
 
-- [ ] **BUG-96: MemoryInfo cached calculation can underflow quint64** (LOW)
+- [x] **BUG-96: MemoryInfo cached calculation can underflow quint64** (LOW)
   - **File:** `linux/nexis-core/Info/memory_info.cpp`
   - **Description:** The calculation `cached = (cached + sreclaimable - shmem)` uses `quint64` (unsigned). If `shmem > cached + sreclaimable` (unusual but possible), the subtraction wraps to a very large value, causing `memUsed` to also underflow. The macOS implementation guards against this with `memTotal > memFree ? memTotal - memFree : 0`, but the Linux version has no equivalent guard.
   - **Fix complexity:** Trivial (add underflow guard)
+  - **Resolved:** Closed as false positive — already fixed. `deriveMemoryValues()` in `memory_info_shared.cpp` has ternary underflow guards on all three subtractions, and `derive_underflowGuard()` test covers the scenario.
 
 ## Notes
 
