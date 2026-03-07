@@ -209,7 +209,7 @@
 - [x] **FR-70: CPU governor / power profile switcher (Linux)** — Toggle between `performance`, `balanced`, and `powersave` CPU frequency governors. Read/write `/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor`. Valuable for laptop users — battery life and power management are top recurring concerns on [r/linux4noobs](https://reddit.com/r/linux4noobs). TLP is the most-recommended tool ([TLP docs](https://linrunner.de/tlp/index.html), [TLP vs Power Modes — Linux Mint Forums](https://forums.linuxmint.com/viewtopic.php?t=438136)) but requires CLI configuration. A GUI toggle in Nexis would fill the gap for users who want quick profile switching without terminal commands. No macOS equivalent (handled by OS automatically).
   - **Files:** New Settings section or Dashboard quick action, sysfs read/write with root elevation
   - **Complexity:** Medium (3-4 days, Linux only)
-  - **Resolved:** Added PowerProfileInfo with `power-profiles-daemon` (PPD) primary backend + sysfs governor fallback. 3-button segmented control on Helpers page (Linux only). Detects TLP/auto-cpufreq conflicts. 24 unit tests.
+  - **Resolved:** d748ae7 — Added PowerProfileInfo with `power-profiles-daemon` (PPD) primary backend + sysfs governor fallback. 3-button segmented control on Helpers page (Linux only). Detects TLP/auto-cpufreq conflicts. 24 unit tests.
 
 - [x] **FR-71: System log viewer** — Read-only structured log viewer. Linux: `journalctl --output=json` with severity/unit/time filtering. macOS: `log show --predicate` with subsystem/level filtering. Searchable, filterable table with severity color-coding.
   - **Files:** New page, platform-specific log parsing classes
