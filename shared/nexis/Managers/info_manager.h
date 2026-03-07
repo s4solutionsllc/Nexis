@@ -16,6 +16,7 @@
 #include <Info/battery_info.h>
 #include <Info/disk_health_info.h>
 #include <Info/update_info.h>
+#include <Info/power_profile_info.h>
 
 class InfoManager
 {
@@ -90,6 +91,11 @@ public:
     QStringList updateSources() const;
     bool hasUpdateSources() const;
 
+    PowerProfileData getPowerProfileData() const;
+    bool setPowerProfile(const QString &profile);
+    bool hasPowerProfiles() const;
+    void refreshPowerProfile();
+
 private:
     InfoManager();
 
@@ -107,6 +113,7 @@ private:
     std::unique_ptr<BatteryInfo> bi;
     std::unique_ptr<DiskHealthInfo> dhi;
     std::unique_ptr<UpdateInfo> upd;
+    std::unique_ptr<PowerProfileInfo> ppi;
 };
 
 #endif // INFO_MANAGER_H

@@ -6,6 +6,7 @@
 #include "utilities.h"
 
 class QPushButton;
+class QLabel;
 
 namespace Ui {
 class HelpersPage;
@@ -25,6 +26,7 @@ private slots:
     void onRebuildSpotlight();
     void onVerifyDisk();
     void onRebuildLaunchServices();
+    void onPowerProfileClicked();
     void init();
 
 private:
@@ -36,6 +38,16 @@ private:
     QPushButton *mBtnRebuildSpotlight = nullptr;
     QPushButton *mBtnVerifyDisk = nullptr;
     QPushButton *mBtnRebuildLaunchServices = nullptr;
+#else
+    QWidget *mPowerProfileWidget = nullptr;
+    QPushButton *mBtnPowerSaver = nullptr;
+    QPushButton *mBtnBalanced = nullptr;
+    QPushButton *mBtnPerformance = nullptr;
+    QLabel *mLblConflictWarning = nullptr;
+
+    void initPowerProfileUI();
+    void updatePowerProfileButtons();
+    void applyPowerProfileStyle();
 #endif
 };
 

@@ -47,14 +47,14 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 **By the numbers:**
 - ~36,000 lines of C++ code across 281 source files
 - 16 application pages
-- 13 system info providers (BatteryInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo)
+- 15 system info providers (BatteryInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo) — 13 wired through InfoManager, StartupInfo standalone, PowerProfileInfo added in v2.1.14
 - 6 tool classes (package management, services, Docker, APT sources, GNOME settings, file search)
 - 8 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService, DuplicateFinderService)
 - 3 utility classes
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 16 test suites with ~218 test methods (Qt Test + CTest)
+- 17 test suites with ~242 test methods (Qt Test + CTest)
 - 71 features implemented, 95 bugs fixed since fork
 
 ---
@@ -302,6 +302,8 @@ Miscellaneous utility tools.
 
 **Flush DNS Cache** — One-click button to clear the local DNS cache. macOS: `dscacheutil -flushcache` + `killall -HUP mDNSResponder` (with admin elevation). Linux: tries `resolvectl`, `systemd-resolve`, or `nscd` in order of availability. Confirmation dialog before action, success/failure feedback.
 
+**Power Profile Switcher (Linux only)** — Segmented control with three buttons (Power Saver / Balanced / Performance) for switching CPU power profiles. Uses `power-profiles-daemon` (`powerprofilesctl`) as the primary backend (no root needed). Falls back to raw sysfs governor writes via `pkexec` on systems without PPD. Automatically detects available profiles, hides Balanced if the driver only supports two governors (e.g., `intel_pstate`). Warns if TLP or auto-cpufreq is active. Hidden on macOS and systems without cpufreq support.
+
 **macOS Maintenance Actions** — Three macOS-only one-click buttons added programmatically to the nav bar (`#ifdef Q_OS_MACOS`):
 - **Rebuild Spotlight** — Deletes and rebuilds the Spotlight search index (`sudo mdutil -E /`). Warns that search will be temporarily unavailable during reindexing.
 - **Verify Disk** — Runs `diskutil verifyVolume /` with a 5-minute timeout. Displays full diagnostic output in a scrollable dialog with pass/fail status indicator.
@@ -464,6 +466,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |
 | `DiskHealthInfo` | SMART attributes, health verdicts | `smartctl`, `diskutil` | `smartctl`, sysfs |
 | `FanInfo` | Fan RPM, sensor list | SMC (`FNum`, `F{N}Ac`, fpe2) | hwmon + ThinkPad/Dell procfs + nvidia-smi fallbacks |
+| `PowerProfileInfo` | CPU power profile (Performance/Balanced/Power Saver) | Stub (not supported) | `powerprofilesctl` (PPD) + sysfs governor fallback |
 | (via `SystemInfo`) | Cleaner scan paths | Platform-specific paths | Platform-specific paths |
 
 ### Tool Classes (5)
@@ -492,7 +495,7 @@ Seven singleton managers mediate between UI pages and the core library.
 
 | Manager | Role |
 |---------|------|
-| `InfoManager` | Facade over all 13 Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
+| `InfoManager` | Facade over all 15 Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
 | `AppManager` | Theme/stylesheet loading, language management, system tray icon, color scheme detection. |
 | `SettingManager` | `QSettings` wrapper with 30+ typed getters/setters for persistent preferences. |
 | `ToolManager` | Facade over all 5 Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
@@ -563,7 +566,7 @@ tests/
 - 1 screenshot regression test executable linked against `nexis-gui`
 - ~214 unit test methods across 15 suites:
   - Utilities: FormatUtil (10), FileUtil (10), CommandUtil (9)
-  - Core parsers (FR-76): MemoryInfo (14), CpuInfo (19), GpuInfo (23), AptSource (14), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17), DiskHealth (20)
+  - Core parsers (FR-76): MemoryInfo (14), CpuInfo (19), GpuInfo (23), AptSource (14), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17), DiskHealth (20), PowerProfile (24)
   - Services: HostService (25)
   - Managers: ScheduleManager (15)
   - Theme: ThemeTokens (7)
@@ -835,7 +838,7 @@ All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimer
 │   └── Archive/                Completed research/plans
 ├── shared/
 │   ├── nexis-core/             Core library (shared)
-│   │   ├── Info/               13 system info providers (incl. StartupInfo)
+│   │   ├── Info/               15 system info providers (incl. StartupInfo)
 │   │   ├── Tools/              7 tool classes (incl. FileSearchTool)
 │   │   └── Utils/              3 utility classes
 │   ├── nexis/                  GUI application (shared)

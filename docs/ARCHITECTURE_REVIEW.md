@@ -57,7 +57,7 @@ Nexis is structured as a **four-tier desktop application**:
 │  Files: shared/nexis/Managers/*.cpp                               │
 ├────────────────────────────────────────────────────────────────────┤
 │  Core Library: nexis-core (static lib)                            │
-│  14 Info providers + 7 Tools + 3 Utils                            │
+│  15 Info providers + 7 Tools + 3 Utils                            │
 │  Files: shared/nexis-core/**/*.cpp + {platform}/nexis-core/**     │
 └────────────────────────────────────────────────────────────────────┘
 ```
@@ -116,7 +116,7 @@ class CpuInfoMacOS : public CpuInfo {
 - **Negligible overhead** — virtual dispatch at 1-30 Hz polling rates adds no measurable cost
 - **Future-proof** — adding a new platform (e.g., Windows) requires creating new subclasses; the compiler guides what to implement
 
-**Assessment:** This pattern provides **compiler-enforced platform contracts** while maintaining the pragmatic simplicity of the original include-path architecture. The 15 abstract base classes (11 Info + 4 Tool) cover all platform-specific code. `FanInfo` (FR-56) is the latest addition, following the same ThermalInfo pattern exactly (abstract base with `FanSensor` struct, macOS SMC subclass, Linux hwmon sysfs subclass). No new DataRefreshService signal was added — fan data piggybacks on the existing `tempUpdated` signal since both are read at 1s intervals from the same hardware monitoring subsystem. `LogProvider` (FR-71) follows the same two-tier pattern for system log reading: abstract base with `LogProviderLinux` (journalctl JSON) and `LogProviderMacOS` (log show ndjson) subclasses, selected via `createForPlatform()` factory.
+**Assessment:** This pattern provides **compiler-enforced platform contracts** while maintaining the pragmatic simplicity of the original include-path architecture. The 16 abstract base classes (12 Info + 4 Tool) cover all platform-specific code. `PowerProfileInfo` (FR-70) is the latest addition: abstract base with PPD + sysfs dual-backend Linux subclass and macOS stub. It does not poll via DataRefreshService — the profile is read on demand when the Helpers page is activated. `LogProvider` (FR-71) follows the same two-tier pattern for system log reading: abstract base with `LogProviderLinux` (journalctl JSON) and `LogProviderMacOS` (log show ndjson) subclasses, selected via `createForPlatform()` factory.
 
 ---
 
@@ -125,7 +125,7 @@ class CpuInfoMacOS : public CpuInfo {
 Six manager singletons act as **stable API surfaces** over the core library:
 
 ```cpp
-// shared/nexis/Managers/info_manager.h — facade over 11 Info classes
+// shared/nexis/Managers/info_manager.h — facade over 13 Info classes
 class InfoManager {
 public:
     static InfoManager *ins();
@@ -138,13 +138,13 @@ public:
     void updateMemoryInfo();
     quint64 getMemUsed() const;
     quint64 getMemTotal() const;
-    // ... 50+ methods across 11 info providers
+    // ... 50+ methods across 13 info providers
 
 private:
     std::unique_ptr<CpuInfo> ci;     // Platform subclass via factory
     std::unique_ptr<MemoryInfo> mi;
     std::unique_ptr<DiskInfo> di;
-    // ... 11 total — #ifdef Q_OS_MACOS in constructor
+    // ... 13 total — #ifdef Q_OS_MACOS in constructor
 };
 ```
 
@@ -408,7 +408,7 @@ Both checks emit `qWarning()` at runtime (visible in debug output) without alter
 
 #### ~~1B. Add Abstract Base Classes for Platform Code~~ (Done)
 
-**Status:** Completed in Phase 5 (FR-34). All 11 Info classes (including FanInfo, FR-56) and 4 Tool classes converted to abstract base + platform subclass pattern. 29 new platform subclass headers created. InfoManager and ToolManager use `std::unique_ptr<Interface>` with `#ifdef Q_OS_MACOS` factory construction. PackageTool unified from divergent platform APIs (dpkg/rpm/pacman vs Homebrew) into a single abstract interface. ToolManager consolidated from 2 platform `.cpp` files to 1 shared file with `#ifdef` only in the constructor.
+**Status:** Completed in Phase 5 (FR-34). All 12 Info classes (including FanInfo FR-56, PowerProfileInfo FR-70) and 4 Tool classes converted to abstract base + platform subclass pattern. 31 new platform subclass headers created. InfoManager and ToolManager use `std::unique_ptr<Interface>` with `#ifdef Q_OS_MACOS` factory construction. PackageTool unified from divergent platform APIs (dpkg/rpm/pacman vs Homebrew) into a single abstract interface. ToolManager consolidated from 2 platform `.cpp` files to 1 shared file with `#ifdef` only in the constructor.
 
 ---
 

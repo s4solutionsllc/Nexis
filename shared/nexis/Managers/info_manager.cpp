@@ -13,6 +13,7 @@
 #include <Info/battery_info_macos.h>
 #include <Info/disk_health_info_macos.h>
 #include <Info/update_info_macos.h>
+#include <Info/power_profile_info_macos.h>
 #else
 #include <Info/cpu_info_linux.h>
 #include <Info/disk_info_linux.h>
@@ -26,6 +27,7 @@
 #include <Info/battery_info_linux.h>
 #include <Info/disk_health_info_linux.h>
 #include <Info/update_info_linux.h>
+#include <Info/power_profile_info_linux.h>
 #endif
 
 InfoManager *InfoManager::instance = nullptr;
@@ -45,6 +47,7 @@ InfoManager::InfoManager()
     bi  = std::make_unique<BatteryInfoMacOS>();
     dhi = std::make_unique<DiskHealthInfoMacOS>();
     upd = std::make_unique<UpdateInfoMacOS>();
+    ppi = std::make_unique<PowerProfileInfoMacOS>();
 #else
     ci  = std::make_unique<CpuInfoLinux>();
     di  = std::make_unique<DiskInfoLinux>();
@@ -58,6 +61,7 @@ InfoManager::InfoManager()
     bi  = std::make_unique<BatteryInfoLinux>();
     dhi = std::make_unique<DiskHealthInfoLinux>();
     upd = std::make_unique<UpdateInfoLinux>();
+    ppi = std::make_unique<PowerProfileInfoLinux>();
 #endif
 }
 
@@ -379,4 +383,27 @@ QStringList InfoManager::updateSources() const
 bool InfoManager::hasUpdateSources() const
 {
     return !upd->availableSources().isEmpty();
+}
+
+/********************
+ * Power Profile Provider
+ *******************/
+PowerProfileData InfoManager::getPowerProfileData() const
+{
+    return ppi->getData();
+}
+
+bool InfoManager::setPowerProfile(const QString &profile)
+{
+    return ppi->setProfile(profile);
+}
+
+bool InfoManager::hasPowerProfiles() const
+{
+    return ppi->hasProfiles();
+}
+
+void InfoManager::refreshPowerProfile()
+{
+    ppi->refresh();
 }

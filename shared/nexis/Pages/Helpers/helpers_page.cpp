@@ -11,6 +11,11 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
+#else
+#include <QHBoxLayout>
+#include <QLabel>
+#include <Managers/info_manager.h>
+#include <Info/power_profile_info.h>
 #endif
 
 HelpersPage::~HelpersPage()
@@ -57,6 +62,10 @@ void HelpersPage::init()
     connect(mBtnRebuildSpotlight, &QPushButton::clicked, this, &HelpersPage::onRebuildSpotlight);
     connect(mBtnVerifyDisk, &QPushButton::clicked, this, &HelpersPage::onVerifyDisk);
     connect(mBtnRebuildLaunchServices, &QPushButton::clicked, this, &HelpersPage::onRebuildLaunchServices);
+#else
+    initPowerProfileUI();
+    if (mPowerProfileWidget)
+        shadowWidgets << mPowerProfileWidget;
 #endif
 
     Utilities::addDropShadow(shadowWidgets, 40);
@@ -249,3 +258,145 @@ void HelpersPage::onRebuildLaunchServices()
     }
 #endif
 }
+
+void HelpersPage::onPowerProfileClicked()
+{
+#ifndef Q_OS_MACOS
+    auto *btn = qobject_cast<QPushButton *>(sender());
+    if (!btn)
+        return;
+
+    QString label = btn->text();
+    PowerProfileData data = InfoManager::ins()->getPowerProfileData();
+    QString backendVal = PowerProfileInfo::userLabelToBackendValue(label, data.backend);
+
+    if (backendVal == data.activeProfile)
+        return;
+
+    bool ok = InfoManager::ins()->setPowerProfile(backendVal);
+    if (ok) {
+        InfoManager::ins()->refreshPowerProfile();
+        updatePowerProfileButtons();
+    } else {
+        QMessageBox::warning(this, tr("Power Profile"),
+            tr("Failed to set power profile to \"%1\".").arg(label));
+        updatePowerProfileButtons();
+    }
+#endif
+}
+
+#ifndef Q_OS_MACOS
+void HelpersPage::initPowerProfileUI()
+{
+    if (!InfoManager::ins()->hasPowerProfiles())
+        return;
+
+    InfoManager::ins()->refreshPowerProfile();
+    PowerProfileData data = InfoManager::ins()->getPowerProfileData();
+
+    mPowerProfileWidget = new QWidget;
+    mPowerProfileWidget->setObjectName("powerProfileWidget");
+    QHBoxLayout *layout = new QHBoxLayout(mPowerProfileWidget);
+    layout->setContentsMargins(12, 8, 12, 8);
+    layout->setSpacing(6);
+
+    QLabel *lbl = new QLabel(tr("Power Profile:"));
+    lbl->setObjectName("powerProfileLabel");
+    layout->addWidget(lbl);
+
+    mBtnPowerSaver = new QPushButton(tr("Power Saver"));
+    mBtnBalanced = new QPushButton(tr("Balanced"));
+    mBtnPerformance = new QPushButton(tr("Performance"));
+
+    for (auto *btn : {mBtnPowerSaver, mBtnBalanced, mBtnPerformance}) {
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setFocusPolicy(Qt::NoFocus);
+        btn->setCheckable(true);
+        layout->addWidget(btn);
+        connect(btn, &QPushButton::clicked, this, &HelpersPage::onPowerProfileClicked);
+    }
+
+    bool hasBalanced = false;
+    for (const QString &p : data.availableProfiles) {
+        QString userLabel = PowerProfileInfo::backendValueToUserLabel(p, data.backend);
+        if (userLabel == "Balanced") {
+            hasBalanced = true;
+            break;
+        }
+    }
+    if (!hasBalanced)
+        mBtnBalanced->hide();
+
+    int spacerIndex = ui->navLayout->count() - 1;
+    ui->navLayout->insertWidget(spacerIndex, mPowerProfileWidget);
+
+    if (!data.conflictWarning.isEmpty()) {
+        mLblConflictWarning = new QLabel(data.conflictWarning);
+        mLblConflictWarning->setObjectName("powerProfileWarning");
+        QSettings *sv = AppManager::ins()->getStyleValues();
+        QString warnColor = sv ? sv->value("@warningColor").toString() : "#FFB347";
+        mLblConflictWarning->setStyleSheet(
+            QString("color: %1; font-size: 11px; padding: 2px 0;").arg(warnColor));
+        ui->gridLayout->addWidget(mLblConflictWarning, 1, 0, 1, 3);
+    }
+
+    applyPowerProfileStyle();
+    updatePowerProfileButtons();
+}
+
+void HelpersPage::updatePowerProfileButtons()
+{
+    PowerProfileData data = InfoManager::ins()->getPowerProfileData();
+    QString activeLabel = PowerProfileInfo::backendValueToUserLabel(
+        data.activeProfile, data.backend);
+
+    for (auto *btn : {mBtnPowerSaver, mBtnBalanced, mBtnPerformance}) {
+        if (!btn)
+            continue;
+        btn->setChecked(btn->text() == activeLabel);
+    }
+
+    applyPowerProfileStyle();
+}
+
+void HelpersPage::applyPowerProfileStyle()
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    QString accent   = sv ? sv->value("@accentColor").toString() : "#FF6B1A";
+    QString cardBg   = sv ? sv->value("@cardBg").toString() : "#2A2C32";
+    QString textPri  = sv ? sv->value("@color05").toString() : "#F0F2F5";
+    QString textSec  = sv ? sv->value("@color04").toString() : "#9A9DA6";
+    QString border   = sv ? sv->value("@borderColor").toString() : "#4A4D5A";
+
+    QString btnStyle = QString(
+        "QPushButton {"
+        "  background-color: %1;"
+        "  color: %2;"
+        "  border: 1px solid %3;"
+        "  border-radius: 4px;"
+        "  padding: 6px 14px;"
+        "  font-size: 12px;"
+        "}"
+        "QPushButton:checked {"
+        "  background-color: %4;"
+        "  color: #ffffff;"
+        "  border-color: %4;"
+        "}"
+        "QPushButton:hover:!checked {"
+        "  border-color: %4;"
+        "}"
+    ).arg(cardBg, textSec, border, accent);
+
+    for (auto *btn : {mBtnPowerSaver, mBtnBalanced, mBtnPerformance}) {
+        if (btn)
+            btn->setStyleSheet(btnStyle);
+    }
+
+    if (mPowerProfileWidget) {
+        mPowerProfileWidget->setStyleSheet(
+            QString("#powerProfileWidget { background-color: %1; border-radius: 6px; }"
+                    "#powerProfileLabel { color: %2; font-size: 12px; }")
+                .arg(cardBg, textPri));
+    }
+}
+#endif
