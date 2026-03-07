@@ -718,7 +718,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 5. macOS icon theme setup: add Homebrew icon paths to `QIcon::themeSearchPaths()`
 6. Set fallback icon theme to "Adwaita"
 7. Load Ubuntu font from embedded resources
-8. Show splash screen (unless `--nosplash`)
+8. Show theme-aware splash screen matching Color Scheme setting (unless `--nosplash`)
 9. Create `App` main window
 10. Show window (unless `--hide`)
 11. Enter Qt event loop: `app.exec()`

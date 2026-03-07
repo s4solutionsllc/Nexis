@@ -211,8 +211,27 @@ int main(int argc, char *argv[])
     QFontDatabase::addApplicationFont(":/static/font/Inter-Bold.ttf");
     QFontDatabase::addApplicationFont(":/static/font/JetBrainsMono-Regular.ttf");
 
-    QPixmap pixSplash(":/static/splashscreen.png");
+    // Resolve splashscreen variant from the user's color scheme preference.
+    // SettingManager/AppManager are not yet constructed, so read QSettings directly.
+    QString splashPath;
+    {
+        QString configPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+        QSettings settings(configPath + "/settings.ini", QSettings::IniFormat);
+        QString scheme = settings.value("ColorScheme", "auto").toString();
 
+        bool useLight = false;
+        if (scheme == "light") {
+            useLight = true;
+        } else if (scheme == "auto") {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+            useLight = (QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Light);
+#endif
+        }
+        splashPath = useLight ? ":/static/splashscreen_light.png"
+                              : ":/static/splashscreen_dark.png";
+    }
+
+    QPixmap pixSplash(splashPath);
     QSplashScreen *splash = new QSplashScreen(pixSplash);
 
     if (!isNoSplash) splash->show();
