@@ -47,10 +47,11 @@
   - **Description:** 6 patterns are copy-pasted across 8 tile classes: gear button setup (8×12=96 lines), footer layout (5×20=100), `updateTrend()` (6×28=168), `updateGearIcon()` (8×8=64), `resizeEvent()` gear reposition (8×5=40), action button stylesheet (6×6=36). Total ~504 duplicated lines. Each tile's truly unique code is only its `paintEvent()` rendering.
   - **Reclassified:** Not a bug — code quality / refactoring initiative. Moved to **FR-77**.
 
-- [ ] **BUG-93: System Cleaner follows symlinks during directory emptying — potential data loss** (HIGH)
+- [x] **BUG-93: System Cleaner follows symlinks during directory emptying — potential data loss** (HIGH)
   - **File:** `shared/nexis/Managers/cleaner_service.cpp` — `cleanFiles()` method
   - **Description:** `cleanFiles()` checks `QFileInfo::isDir()` to decide whether to empty a directory, but `isDir()` follows symlinks. A symlink to a directory (e.g., `~/.cache/link → /home/user/data`) enters the directory-emptying branch, causing the code to iterate and delete the **symlink target's real contents** instead of just removing the symlink. There is no `isSymLink()` check anywhere in the deletion logic.
   - **Fix complexity:** Low (add `fi.isSymLink()` check before the `isDir()` branch)
+  - **Resolved:** Added `isSymLink()` guards before all 3 `isDir()` checks in `cleanFiles()` (outer + inner loop) and `cleanTrash()` (macOS branch). Symlinks are now removed via `QFile::remove()` which deletes only the link, never the target.
 
 ## MEDIUM Severity
 

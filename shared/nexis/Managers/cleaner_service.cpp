@@ -139,7 +139,9 @@ quint64 CleanerService::cleanTrash()
 #ifdef Q_OS_MACOS
     QDir trashDir(trashPath);
     for (const QFileInfo &entry : trashDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
-        if (entry.isDir()) {
+        if (entry.isSymLink()) {
+            QFile::remove(entry.absoluteFilePath());
+        } else if (entry.isDir()) {
             QDir(entry.absoluteFilePath()).removeRecursively();
         } else {
             QFile::remove(entry.absoluteFilePath());
@@ -172,13 +174,17 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs)
 
         quint64 size = FileUtil::getFileSize(path);
 
-        if (fi.isDir()) {
+        if (fi.isSymLink()) {
+            QFile::remove(path);
+        } else if (fi.isDir()) {
             QDir dir(path);
             for (const QFileInfo &entry : dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
                 if (minFileAgeSecs > 0 && entry.lastModified() > cutoff) {
                     continue;
                 }
-                if (entry.isDir()) {
+                if (entry.isSymLink()) {
+                    QFile::remove(entry.absoluteFilePath());
+                } else if (entry.isDir()) {
                     QDir(entry.absoluteFilePath()).removeRecursively();
                 } else {
                     QFile::remove(entry.absoluteFilePath());
