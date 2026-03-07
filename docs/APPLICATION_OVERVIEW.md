@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: February 2026 | Version 2.0.2
+> Last updated: March 2026 | Version 2.1.12
 
 ---
 
@@ -45,17 +45,17 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 **Origin:** Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), the popular Linux system optimizer that went inactive in 2020 with 38+ known bugs. After porting to Qt 6, adding native macOS support, fixing those inherited bugs, and adding GPU monitoring, hardware health tracking, scheduled cleaning, Docker management, and more, the project was rebranded as **Nexis** to reflect that it had become something distinct.
 
 **By the numbers:**
-- ~25,000 lines of C++ code across 255 source files
+- ~36,000 lines of C++ code across 281 source files
 - 16 application pages
-- 14 system info providers (12 Info + 2 platform-specific: StartupInfo, FileSearchTool)
-- 7 tool classes (package management, services, Docker, APT sources, GNOME settings, file search, startup info)
+- 13 system info providers (BatteryInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo)
+- 6 tool classes (package management, services, Docker, APT sources, GNOME settings, file search)
 - 8 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService, DuplicateFinderService)
 - 3 utility classes
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 15 test suites with ~214 test methods (Qt Test + CTest)
-- 50 features implemented, 61 bugs fixed since fork
+- 16 test suites with ~218 test methods (Qt Test + CTest)
+- 71 features implemented, 95 bugs fixed since fork
 
 ---
 
@@ -492,7 +492,7 @@ Seven singleton managers mediate between UI pages and the core library.
 
 | Manager | Role |
 |---------|------|
-| `InfoManager` | Facade over all 11 Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
+| `InfoManager` | Facade over all 13 Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
 | `AppManager` | Theme/stylesheet loading, language management, system tray icon, color scheme detection. |
 | `SettingManager` | `QSettings` wrapper with 30+ typed getters/setters for persistent preferences. |
 | `ToolManager` | Facade over all 5 Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
@@ -501,15 +501,15 @@ Seven singleton managers mediate between UI pages and the core library.
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 | `DataRefreshService` | Centralized polling service with 4 QTimers (1s/5s/30s/configurable). Polls InfoManager once per interval, emits 10 typed data-change signals. Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
-**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 10 global signals:
+**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 9 global signals:
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
 - `sigUninstallStarted()` / `sigUninstallFinished()` — progress feedback
-- `sigScheduledCleanStarted/Finished()` — tray notification system
 - `sigKioskToggleRequested()` — Dashboard button requests kiosk toggle from App
 - `sigKioskModeChanged(bool)` — App broadcasts kiosk state to Dashboard button and tray menu
 - `sigAppVisibilityChanged(bool)` — App broadcasts visibility state for DataRefreshService pause/resume
+- `sigNavigateToPage(QString)` — CommandPalette triggers page navigation
 - `sigCleanableSizeChanged(quint64)` — System Cleaner broadcasts total cleanable size for cross-tile data flow
-- `sigDashboardLayoutReset()` — Settings page triggers dashboard layout reset to default arrangement
+- `sigDashboardFooterChanged(bool)` — Settings page broadcasts dashboard footer visibility preference
 
 ---
 
@@ -726,7 +726,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 ### Main Window Initialization (`App`)
 
 1. Create `SlidingStackedWidget` (animated page container)
-2. Instantiate all 14 pages
+2. Instantiate all 16 pages
 3. Conditionally show/hide pages based on platform and tool availability:
    - APT Source Manager: only if `ToolManager::checkSourceRepository()` returns true
    - Docker: only if `ToolManager::checkDocker()` returns true
@@ -739,7 +739,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 
 ### Navigation
 
-The sidebar is **collapsible**, organized into three labelled groups — **MONITOR**, **MANAGE**, and **SYSTEM** — matching the logical grouping of the 14 pages. Each group has a **clickable section header** with a chevron indicator that toggles the group's visibility. Collapsed groups hide their child buttons with a smooth 200ms height animation; the collapsed/expanded state is persisted per-section across sessions as JSON in QSettings. Navigating to a page in a collapsed group (via tray menu, command palette, or `sigNavigateToPage`) auto-expands that group. The full sidebar can also collapse to a 64 px icon-rail showing only page icons plus section indicator dots; the collapse and expand transitions use a smooth width animation. The sidebar can be toggled with the **Ctrl+B** keyboard shortcut or the collapse button at the top of the panel. The sidebar header displays a **gradient logo** (full wordmark when expanded, lettermark when collapsed) above a **separator line**, with a **version label** below. Active page badges use a cleaner dot indicator in collapsed mode and are hidden when their section is collapsed. The Homebrew/APT button displays an **updates badge** showing the pending update count when the sidebar is expanded, or a colored dot (using `@updatesColor`) when collapsed.
+The sidebar is **collapsible**, organized into three labelled groups — **MONITOR**, **MANAGE**, and **SYSTEM** — matching the logical grouping of the 16 pages. Each group has a **clickable section header** with a chevron indicator that toggles the group's visibility. Collapsed groups hide their child buttons with a smooth 200ms height animation; the collapsed/expanded state is persisted per-section across sessions as JSON in QSettings. Navigating to a page in a collapsed group (via tray menu, command palette, or `sigNavigateToPage`) auto-expands that group. The full sidebar can also collapse to a 64 px icon-rail showing only page icons plus section indicator dots; the collapse and expand transitions use a smooth width animation. The sidebar can be toggled with the **Ctrl+B** keyboard shortcut or the collapse button at the top of the panel. The sidebar header displays a **gradient logo** (full wordmark when expanded, lettermark when collapsed) above a **separator line**, with a **version label** below. Active page badges use a cleaner dot indicator in collapsed mode and are hidden when their section is collapsed. The Homebrew/APT button displays an **updates badge** showing the pending update count when the sidebar is expanded, or a colored dot (using `@updatesColor`) when collapsed.
 
 A **Command Palette** (activated with **Ctrl+K**) provides a fuzzy-search popup for navigating directly to any page and executing common actions (e.g., "run clean", "toggle kiosk") without touching the sidebar.
 
@@ -796,7 +796,7 @@ qApp->setStyleSheet(processedQSS)     ← All widgets update immediately
     ↓
 emit SignalMapper::ins()->sigChangedAppTheme()  ← Global event
     ↓
-[All 14 pages reload theme-dependent assets (icons, GIF loaders, etc.)]
+[All 16 pages reload theme-dependent assets (icons, GIF loaders, etc.)]
 ```
 
 ### Refresh Timing

@@ -2,41 +2,28 @@
 
 ## Project Overview
 
-Nexis is a Linux & macOS System Optimizer and Monitoring tool (C++/Qt). Originally forked from [oguzhaninan/Stacer](https://github.com/oguzhaninan/Stacer), now rebranded and independently developed.
+Nexis is a Linux & macOS System Optimizer and Monitoring tool (C++17, Qt6). Originally forked from [oguzhaninan/Stacer](https://github.com/oguzhaninan/Stacer), now rebranded and independently developed.
 
 ## Tracking Files
 
-Two tracking files live at the project root. Claude Code must keep them up to date as work progresses:
-
-- **`FEATURE_REQUESTS.md`** — Feature request backlog with `FR-XX` IDs.
+- **`FEATURE_REQUESTS.md`** — Feature request backlog with `FR-XX` IDs, organized by category.
 - **`BUGS.md`** — Bug backlog with `BUG-XX` IDs, sorted by severity (HIGH > MEDIUM > LOW).
 
-### Conventions
-
-- Each item has a checkbox status: `[ ]` open/planned, `[~]` in progress, `[x]` done.
-- When starting work on an item, change its status to `[~]`.
-- When finishing work on an item, change its status to `[x]` and add a line: `**Resolved:** <commit hash or brief note>`.
-- New items go at the end of their severity section (bugs) or category section (features), using the next sequential ID.
-- Never remove items — mark them `[x]` when done so history is preserved.
-- If a bug or feature is discovered during a session, add it to the appropriate file immediately.
-
-### Referencing Items
-
-When committing code that addresses a tracked item, include the ID in the commit message. Example:
-```
-Fix swapped memory variables (BUG-01)
-```
+Conventions for these files are defined in the global CLAUDE.md.
 
 ## Build
 
-**EXECUTE WITHOUT ASKING:** Run `cmake` and `make` commands automatically when the user asks for a build or rebuild. Do not prompt for confirmation.
+**EXECUTE WITHOUT ASKING:** Run `cmake` and `make` commands automatically. Do not prompt for confirmation.
 
 ```bash
-# Clean rebuild (from project root)
+# Clean rebuild — macOS (from project root)
 rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) && cmake --build build -j$(sysctl -n hw.ncpu)
 
-# Incremental rebuild
-cmake --build build -j$(sysctl -n hw.ncpu)
+# Clean rebuild — Linux
+rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j$(nproc)
+
+# Incremental rebuild (either platform)
+cmake --build build -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
 ```
 
 ## Testing
@@ -59,114 +46,66 @@ cmake -B build -DBUILD_TESTING=OFF ...
 
 ## Key Directories
 
-- `nexis-core/` — Core library (system info, utilities)
-- `nexis/` — Qt GUI application (pages, widgets)
-- `shared/` — Shared code between platforms
-- `linux/` — Linux-specific implementations
+The codebase splits shared and platform-specific code:
+
+- `shared/nexis-core/` — Core library: system info, utilities (cross-platform)
+- `shared/nexis/` — Qt GUI app: Pages, Managers, Services, SignalMapper (cross-platform)
+- `macos/nexis-core/` — macOS-specific core implementations (Obj-C++ bridges)
+- `macos/nexis/` — macOS-specific GUI code
+- `linux/nexis-core/` — Linux-specific core implementations
+- `linux/nexis/` — Linux-specific GUI code
+- `tests/` — Qt Test unit tests (categories: `utils/`, `core/`, `managers/`, `theme/`)
 - `translations/` — i18n `.ts` files
-- `tests/` — Qt Test unit tests (CTest integration)
-
-## Feature / Bug Resolution Workflow
-
-When the user requests a new feature or asks to fix a bug, follow this three-phase workflow **automatically**. All artifacts go in the `backlog/` folder.
-
-### Phase 1 — Research (`{ID}_research.md`)
-
-1. Create `backlog/{ID}_research.md` (e.g., `FR-25_research.md` or `BUG-31_research.md`).
-2. Perform deep research on the request:
-   - Read all relevant source files, headers, `.ui` files, QSS, and CMakeLists.txt.
-   - Trace call chains, signal/slot connections, and data flow end-to-end.
-   - Understand how the current behavior works, what it does, and all its specificities.
-   - Identify edge cases, platform differences (macOS vs Linux), and potential side effects.
-   - Review upstream Stacer and QuentiumYT forks for prior art or related fixes.
-3. Write a detailed report of all findings in the research file. Include file paths, line numbers, code snippets, and architectural context.
-
-### Phase 2 — Plan (`{ID}_plan.md`)
-
-1. Create `backlog/{ID}_plan.md`.
-2. Write a detailed implementation plan with:
-   - Numbered tasks/phases, each with specific files and changes.
-   - Checkboxes (`[ ]`) for each task to track completion.
-   - Clear acceptance criteria for each task.
-   - Build verification steps.
-3. **Wait for user approval before proceeding to Phase 3.**
-
-### Phase 3 — Implementation
-
-1. Once the user approves the plan, implement it fully. Do not stop until all tasks and phases are completed.
-2. As each task/phase is completed, mark it `[x]` in the plan document.
-3. Run incremental builds after each significant change to catch issues early.
-4. **Code quality rules during implementation:**
-   - Do not add unnecessary comments.
-   - Do not use `any` or unknown types.
-   - Continuously verify you are not introducing new issues (build checks, grep for regressions).
-5. Update `BUGS.md` or `FEATURE_REQUESTS.md` with resolution notes and commit hash.
-6. Update project documentation (see **Documentation Maintenance** below).
-7. Commit and push when complete.
-
-### Archiving Completed Work
-
-When a bug or feature request is marked `[x]` (done), move its associated `backlog/` files (`{ID}_research.md`, `{ID}_plan.md`, and any other `{ID}_*.md` variants) to `backlog/Archive/`. This keeps the active working directory clean and limited to open/in-progress items. Files for open (`[ ]`) or in-progress (`[~]`) items must remain in `backlog/`.
+- `scripts/` — Build and utility scripts
+- `docs/` — Living documentation (overview, architecture review, roadmap)
+- `backlog/` — Research and plan artifacts for in-progress work
 
 ## Documentation Maintenance
 
-Two living documents in `docs/` must be kept in sync with the codebase as features are added or bugs are fixed:
+Two living documents in `docs/` must be kept in sync **before committing** any `[x]` item:
 
-- **`docs/APPLICATION_OVERVIEW.md`** — What the app does and how it's built. Update when:
-  - A new feature is implemented (add to the relevant page section, update counts/stats)
-  - A page gains new UI elements, gauges, buttons, or modes
-  - Architecture changes (new managers, signals, build targets, themes, etc.)
-  - Platform support changes (new backends, new conditional pages)
+- **`docs/APPLICATION_OVERVIEW.md`** — What the app does. Update when features, UI elements, architecture, or platform support changes.
+- **`docs/ARCHITECTURE_REVIEW.md`** — How the architecture works. Update when signals, singletons, timer/polling patterns, or cross-component communication changes.
 
-- **`docs/ARCHITECTURE_REVIEW.md`** — How the architecture works, strengths, weaknesses, and recommendations. Update when:
-  - New architectural patterns are introduced (new signals, new singletons, new cross-component communication)
-  - Existing weaknesses are addressed or new ones are discovered
-  - Signal counts change on SignalMapper (the review tracks this)
-  - Timer/polling patterns change
-  - The recommended improvements list needs revision
+**Pre-commit checklist** (when a change affects documented behavior):
+1. Update the "Last updated" date and version in both docs if stale.
+2. Update any affected stats (page count, signal count, test count, feature/bug counts, line counts, etc.).
+3. Update the relevant feature/architecture section with the new or changed behavior.
 
-**When to update:** After completing any feature (`[x]` in FEATURE_REQUESTS.md) or bug fix (`[x]` in BUGS.md), review both documents and make targeted updates to reflect the changes. Keep updates concise — modify existing sections rather than appending paragraphs.
+Keep updates concise — modify existing sections rather than appending paragraphs.
 
 ## Qt/QSS Gotchas
 
 ### QScrollArea Viewport in Programmatic Dialogs
-
-When creating a `QScrollArea` inside a programmatically-built `QDialog`, the viewport renders with the system palette (white) instead of the dialog's QSS-themed background. `QPalette` propagation, `setAutoFillBackground(false)`, and `WA_TranslucentBackground` do **not** work due to timing/precedence conflicts between Qt's palette system and QSS.
-
-**Working pattern** (matches HardwareInfoPage):
+`QScrollArea` inside a programmatic `QDialog` renders with system palette instead of QSS theme. Fix:
 ```cpp
 scrollArea->setFrameShape(QFrame::NoFrame);
 scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
 scrollWidget->setStyleSheet("background-color:transparent;");
 ```
-This makes the scroll area and its content transparent so the dialog's QSS `background-color: @color01` shows through.
+
+### Hardcoded Colors (BUG-47)
+Never use hardcoded hex colors in C++. All colors come from `values.ini` theme tokens via `AppManager::getStyleValues()`. Widgets store token strings (e.g., `"@cpuColor"`) and implement `refreshThemeColors()` connected to `SignalMapper::sigChangedAppTheme`.
+
+### Token Name Collisions (BUG-49)
+Token names must not be substrings of other tokens. `AppManager::updateStylesheet()` sorts by descending length, but avoid pairs like `@card` / `@cardBg`.
+
+### QPushButton vs QToolButton on macOS (BUG-52)
+macOS Qt6 `QPushButton` fails SVG icon rendering for icon-only transparent buttons. Use `QToolButton` with `setAutoRaise(true)`.
+
+### Dynamic Property Re-polish (BUG-56)
+After changing a QSS dynamic property on a parent, child widgets need explicit `unpolish()`/`polish()` — Qt doesn't recursively re-evaluate property selectors.
 
 ## Custom Commands
 
-Five project-specific slash commands are available in `.claude/commands/`:
-
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `/session-start` | Initialize a work session with project status summary | Start of every new session |
-| `/build-verify` | Incremental or clean build + test cycle | After any code change; accepts `clean` or `quick` args |
-| `/bug-feature-workflow` | Three-phase Research → Plan → Implementation | When starting work on any BUG-XX or FR-XX item |
-| `/qt-ui-change` | Qt/QSS verification checklist | After any UI modification (pages, widgets, themes, QSS) |
-| `/platform-check` | Cross-platform compatibility audit | After modifying shared code that touches platform APIs |
-
-## Qt/QSS Additional Gotchas
-
-### Hardcoded Colors (BUG-47)
-Never use hardcoded hex colors in C++ code. All colors must come from `values.ini` theme tokens resolved at runtime via `AppManager::getStyleValues()`. Widgets should store token name strings (e.g., `"@cpuColor"`) and implement a `refreshThemeColors()` method connected to `SignalMapper::sigChangedAppTheme`.
-
-### Token Name Collisions (BUG-49)
-Token names must not be substrings of other token names. `AppManager::updateStylesheet()` sorts keys by descending length before replacement, but avoid creating tokens like `@card` and `@cardBg` where the shorter is a prefix of the longer.
-
-### QPushButton vs QToolButton on macOS (BUG-52)
-macOS Qt6's `QPushButton` fails to render SVG icons for icon-only buttons with `background: transparent`. Use `QToolButton` with `setAutoRaise(true)` instead.
-
-### Dynamic Property Re-polish (BUG-56)
-After changing a QSS dynamic property on a parent widget, child widgets must be explicitly re-polished with `unpolish()`/`polish()` — Qt does not recursively re-evaluate property-dependent selectors.
+| `/session-start` | Project status summary | Start of every session |
+| `/build-verify` | Build + test cycle | After code changes; args: `clean`, `quick` |
+| `/bug-feature-workflow` | Research → Plan → Implement | Starting any BUG-XX or FR-XX |
+| `/qt-ui-change` | Qt/QSS verification checklist | After UI modifications |
+| `/platform-check` | Cross-platform audit | After modifying platform-touching code |
 
 ## Notable Forks
 
-- **QuentiumYT/Stacer** — Most active fork of the original project (78 stars). Reference for fixes and features.
+- **QuentiumYT/Stacer** — Most active upstream fork (78 stars). Reference for fixes and features.

@@ -89,10 +89,11 @@
   - **Fix complexity:** Moderate (add dialog-specific QSS rules + theme listener; macOS combo popup may need platform-specific fix)
   - **Resolved:** Added `QDialog QGroupBox` and `QDialog QGroupBox::title` QSS rules for themed card styling in all dialogs. Added `setObjectName("scheduleEditorDialog")` to ScheduleEditorDialog. Added `refreshThemeColors()` method to SettingsPage connected to `sigChangedAppTheme` to refresh drop shadows on theme change. Note: macOS native QComboBox popup rendering may still require `setStyle("Fusion")` as a future enhancement.
 
-- [ ] **BUG-85: Documentation out of date — version and stats mismatch** (MEDIUM)
+- [x] **BUG-85: Documentation out of date — version and stats mismatch** (MEDIUM)
   - **Files:** `docs/APPLICATION_OVERVIEW.md`, `docs/ARCHITECTURE_REVIEW.md`
   - **Description:** Both documents reference v2.0.2 and state "61 bugs fixed" but the project is at v2.1.12 with 80 bugs fixed and 68 features completed. Feature counts, page descriptions, and architecture stats are stale (last updated February 2026).
   - **Fix complexity:** Needs research — audit both docs against current codebase to identify all outdated sections
+  - **Resolved:** Audited both docs and fixed 16 discrepancies: version (2.0.2→2.1.12), dates, line/file counts, info provider count (14→13), tool count (7→6), feature/bug counts (50/61→71/95), SignalMapper signals (10/13→9), page references (14→16), test counts (15→16). Updated CLAUDE.md to enforce doc updates as a pre-commit step.
 
 - [x] **BUG-86: qt_create_translation() omits Core library sources** (MEDIUM)
   - **File:** `CMakeLists.txt:405`

@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: February 2026
+> Last updated: March 2026
 
 ---
 
@@ -74,7 +74,7 @@ Nexis is structured as a **four-tier desktop application**:
 - **Sidebar** — Sidebar navigation buttons are built programmatically in `app.cpp` (not defined in `.ui`) with grouped sections and collapse animation driven by sidebar collapse animation
 - **CommandPalette** — `Ctrl+K` global command palette widget (`command_palette.h/.cpp`) for keyboard-driven navigation and actions
 
-**Scale:** ~6,000–7,000 lines of C++ across core library + services + GUI, 14 pages, 34 translations, 3 themes.
+**Scale:** ~6,000–7,000 lines of C++ across core library + services + GUI, 16 pages, 34 translations, 3 themes.
 
 ---
 
@@ -250,12 +250,12 @@ signals:
 
 **Usage pattern:**
 - Settings page changes theme → emits `sigChangedAppTheme()`
-- All 14 pages listen → reload theme-dependent icons, GIF loaders, and colors
+- All 16 pages listen → reload theme-dependent icons, GIF loaders, and colors
 - Dashboard kiosk button → emits `sigKioskToggleRequested()` → App toggles kiosk mode → emits `sigKioskModeChanged(bool)` → Dashboard button swaps icon, tray action syncs checkmark
 - App minimized/restored → emits `sigAppVisibilityChanged(bool)` → DataRefreshService pauses/resumes polling
 - No page needs a pointer to any other page — complete decoupling
 
-**Assessment:** With 13 signals (after FR-75 added `sigDashboardFooterChanged(bool)`), this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), UI redesign signals `sigSidebarCollapseToggled` and `sigNavigateToPage` (FR-42), cleanable-size signal (FR-44), dashboard layout reset signal (FR-51), and dashboard footer visibility signal (FR-75) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, SystemCleanerPage, SettingsPage, and the CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
+**Assessment:** With 9 signals (after BUG-82 cleanup removed unused signals), this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), `sigNavigateToPage` (FR-42), cleanable-size signal (FR-44), and dashboard footer visibility signal (FR-75) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, SystemCleanerPage, SettingsPage, and the CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
 
 ---
 
@@ -344,7 +344,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ### 5. ~~No Automated Test Suite~~ (Resolved)
 
-**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 15 CTest executables with ~214 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool), service logic (HostService), manager logic (ScheduleManager), and theme token validation.
+**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 16 CTest executables with ~218 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool), service logic (HostService), manager logic (ScheduleManager), theme token validation, and screenshot regression tests.
 
 **Refactoring for testability:**
 - `parseSmartctlJson()` deduplicated from 2 platform files into shared public static `parseSmartctlJsonInto()`
@@ -442,7 +442,7 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 #### 3A. ~~Basic Unit Test Suite~~ (Implemented + Expanded)
 
-**Completed (Phase 7, FR-36; expanded FR-76).** 15 test executables with ~214 test methods:
+**Completed (Phase 7, FR-36; expanded FR-76).** 16 test executables with ~218 test methods:
 1. **Utility classes** — FormatUtil (10), FileUtil (10), CommandUtil (9)
 2. **Info class parsing** — DiskHealthInfo (20), MemoryInfo (14), CpuInfo (19), GpuInfo (23), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17)
 3. **Tool parsing** — AptSourceTool (14)
@@ -510,7 +510,7 @@ public:
 | HiDPI | Solved via Dpi::scale() + @dpN tokens | Native support |
 | Animations | Basic (SlidingStackedWidget) | Rich, declarative |
 | Development speed | Qt Designer + QSS (familiar tooling) | QML + JavaScript (new skills) |
-| Existing investment | 14 pages, 29 .ui files, comprehensive QSS | Complete rewrite required |
+| Existing investment | 16 pages, 29 .ui files, comprehensive QSS | Complete rewrite required |
 | Migration effort | N/A | 3-6 months minimum |
 | Community contributions | C++/QSS (common skills) | QML (niche skills) |
 
@@ -596,7 +596,7 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Managers/app_manager.cpp` | ~~Add QSS token validation (§2C)~~ Done — token + color format validation added |
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | ~~Primary refactor target for DataRefreshService (§2A)~~ Done — subscribes to DataRefreshService signals, zero timers |
 | `shared/nexis/Pages/Resources/resources_page.cpp` | ~~Secondary refactor target~~ Done — subscribes to DataRefreshService signals, zero timers |
-| `shared/nexis/signal_mapper.h` | Global event bus (13 signals after FR-75) — monitor signal count growth |
+| `shared/nexis/signal_mapper.h` | Global event bus (9 signals after BUG-82 cleanup) — monitor signal count growth |
 | `shared/nexis/Pages/Dashboard/metric_tile_base.h/.cpp` | Abstract base class for all dashboard tile styles; defines common interface (setValue, addDataPoint, setDisplayMode, etc.), 6 shared helpers (gear button, footer layout, trend computation, action button styling), and 5 shared UI members (FR-53, FR-77) |
 | `shared/nexis/Pages/Dashboard/metric_tile.h/.cpp` | Sparkline style: QtCharts sparkline + progress bar + trend indicator; DisplayMode (Normal/Hero/Large) via QSS dynamic properties |
 | `shared/nexis/Pages/Dashboard/gauge_tile.h/.cpp` | Gauge style: ¾-circle arc with conical gradient, percentage centered, QPainter-based (FR-53) |
