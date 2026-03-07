@@ -18,7 +18,7 @@ public:
     static HostService *ins();
 
     QStringList readHostFile();
-    QMap<int, HostEntry> parseHostEntries(const QStringList &fileContent) const;
+    static QMap<int, HostEntry> parseHostEntries(const QStringList &fileContent);
 
     static bool isValidIP(const QString &ip);
     static bool isValidHostname(const QString &hostname);

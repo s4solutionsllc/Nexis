@@ -25,13 +25,8 @@ static QString readSysfsString(const QString &path)
     return FileUtil::readStringFromFile(path).trimmed();
 }
 
-// Helper: derive condition from health percentage
-static QString deriveCondition(int healthPercent)
-{
-    if (healthPercent >= 80) return QStringLiteral("Good");
-    if (healthPercent >= 60) return QStringLiteral("Fair");
-    return QStringLiteral("Replace");
-}
+// deriveCondition and deriveHealthPercent are now static methods on BatteryInfo
+// (see battery_info_shared.cpp)
 
 BatteryInfoLinux::BatteryInfoLinux()
 {
@@ -162,13 +157,10 @@ void BatteryInfoLinux::updateBatteryInfo()
     mData.model = readSysfsString(mBatteryPath + "/model_name");
     mData.technology = readSysfsString(mBatteryPath + "/technology");
 
-    // Derive health percentage
-    if (mData.maxCapacityMah > 0 && mData.designCapacityMah > 0)
-        mData.healthPercent = qBound(0, static_cast<int>((mData.maxCapacityMah / mData.designCapacityMah) * 100.0), 100);
-
-    // Derive condition
+    // Derive health percentage and condition
+    mData.healthPercent = BatteryInfo::deriveHealthPercent(mData.maxCapacityMah, mData.designCapacityMah);
     if (mData.healthPercent >= 0)
-        mData.condition = deriveCondition(mData.healthPercent);
+        mData.condition = BatteryInfo::deriveCondition(mData.healthPercent);
 
     // Time remaining estimate (minutes)
     if (!mData.isCharging && mData.powerWatts > 0) {

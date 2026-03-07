@@ -13,3 +13,17 @@ bool BatteryInfo::hasBattery() const
 {
     return mData.hasBattery;
 }
+
+QString BatteryInfo::deriveCondition(int healthPercent)
+{
+    if (healthPercent >= 80) return QStringLiteral("Good");
+    if (healthPercent >= 60) return QStringLiteral("Fair");
+    return QStringLiteral("Replace");
+}
+
+int BatteryInfo::deriveHealthPercent(double maxCapacityMah, double designCapacityMah)
+{
+    if (maxCapacityMah <= 0 || designCapacityMah <= 0)
+        return -1;
+    return qBound(0, static_cast<int>((maxCapacityMah / designCapacityMah) * 100.0), 100);
+}

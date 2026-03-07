@@ -24,7 +24,7 @@ QStringList HostService::readHostFile()
     return FileUtil::readListFromFile("/etc/hosts");
 }
 
-QMap<int, HostEntry> HostService::parseHostEntries(const QStringList &fileContent) const
+QMap<int, HostEntry> HostService::parseHostEntries(const QStringList &fileContent)
 {
     QMap<int, HostEntry> entries;
 

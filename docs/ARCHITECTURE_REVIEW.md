@@ -344,19 +344,20 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ### 5. ~~No Automated Test Suite~~ (Resolved)
 
-**Status:** Unit test suite implemented in Phase 7 (FR-36). 6 CTest executables with 63 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo verdict logic + smartctl JSON parsing), manager logic (ScheduleManager next-run-time + display text), and theme token validation (both themes, all tokens).
+**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 15 CTest executables with ~214 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool), service logic (HostService), manager logic (ScheduleManager), and theme token validation.
 
 **Refactoring for testability:**
 - `parseSmartctlJson()` deduplicated from 2 platform files into shared public static `parseSmartctlJsonInto()`
 - `deriveHealthVerdict()` made public static (pure struct logic)
 - `getNextRunTime()` accepts optional `now` parameter for deterministic testing
 - `PROJECT_SOURCE_DIR` compile definition enables theme tests to locate source-tree files
+- **FR-76 static parser pattern:** Parsing logic extracted from instance methods into public static methods on shared base classes (`*_shared.cpp` files). Static methods accept raw text/data and return structured results, enabling fixture-based testing without mocking CommandUtil or the filesystem. Applied to: MemoryInfo (3 methods), CpuInfo (5 methods), GpuInfo (4 methods), AptSourceTool (2 methods), FanInfo (3 methods), ThermalInfo (2 methods), BatteryInfo (2 methods), DiskInfo (1 method), HostService (promoted to static)
 
 **Remaining barriers to broader testing:**
 - ~~Singleton coupling (§2) blocks mock injection~~ — resolved in Phase 6 (FR-35)
-- ~~Info classes read real OS state — no abstraction for test data~~ — resolved in Phase 5 (FR-34)
+- ~~Info classes read real OS state — no abstraction for test data~~ — resolved in Phase 5 (FR-34) and FR-76 (static parser extraction)
 - Pages tightly bound to `.ui` files and Qt widgets (UI testing out of scope)
-- CleanerService in GUI executable target — not linkable as library for unit tests
+- CleanerService in GUI executable target — not linkable as library for unit tests (deferred to BUG-93)
 
 ---
 
@@ -439,15 +440,17 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 ### Priority 3: Medium (Testing & Quality)
 
-#### 3A. ~~Basic Unit Test Suite~~ (Implemented)
+#### 3A. ~~Basic Unit Test Suite~~ (Implemented + Expanded)
 
-**Completed (Phase 7, FR-36).** 6 test executables with 63 test methods:
-1. **Utility classes** — FormatUtil (10 methods), FileUtil (10 methods), CommandUtil (9 methods)
-2. **Info class parsing** — DiskHealthInfo verdict logic (14 methods) + smartctl JSON parsing (6 methods)
-3. **Manager logic** — ScheduleManager `getNextRunTime()` (11 methods) + `frequencyDisplayText()` (4 methods)
-4. **Theme validation** — Token resolution, color format, theme parity, full substitution (7 methods)
+**Completed (Phase 7, FR-36; expanded FR-76).** 15 test executables with ~214 test methods:
+1. **Utility classes** — FormatUtil (10), FileUtil (10), CommandUtil (9)
+2. **Info class parsing** — DiskHealthInfo (20), MemoryInfo (14), CpuInfo (19), GpuInfo (23), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17)
+3. **Tool parsing** — AptSourceTool (14)
+4. **Service logic** — HostService (25)
+5. **Manager logic** — ScheduleManager (15)
+6. **Theme validation** — ThemeTokens (7)
 
-**Key refactoring:** `parseSmartctlJsonInto()` shared static (dedup), `deriveHealthVerdict()` public static, `getNextRunTime()` injectable `now` parameter. CMake macro `add_nexis_test()` for per-file executables. MemoryInfo/CpuInfo tests deferred (Linux-only /proc parsing). CleanerService tests deferred (GUI lib dependency).
+**Key refactoring:** FR-36 established the pattern with `parseSmartctlJsonInto()` shared static (dedup), `deriveHealthVerdict()` public static, `getNextRunTime()` injectable `now` parameter. FR-76 scaled this to 10 additional classes by extracting parsing logic into public static methods on shared base classes (`*_shared.cpp` files). Fixture data files in `tests/fixtures/` provide deterministic test input. CleanerService tests deferred (GUI lib dependency, BUG-93).
 
 ---
 
@@ -525,11 +528,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 
 **Phase 2 (Done):** Unit test suite — 6 test executables, 63 test methods (FR-36). Covers utility functions (FormatUtil, FileUtil, CommandUtil), DiskHealthInfo parsing + verdict logic, ScheduleManager next-run-time calculations, and theme token validation. Refactored production code for testability without changing behavior.
 
-**Phase 3 (Future):** Expand test coverage:
-- MemoryInfo/CpuInfo parsing (requires Linux mock data or platform-specific tests)
-- CleanerService (requires extracting logic from GUI executable into library)
-- SettingManager defaults and overrides
-- Integration tests for manager CRUD operations
+**Phase 3 (Done):** Expanded test coverage (FR-76) — 8 new test suites, ~151 additional test methods. Extracted parsing logic from 10 Info/Tool/Service classes into public static methods on shared base classes, created fixture data files in `tests/fixtures/`, and wrote comprehensive parser tests. Covers MemoryInfo, CpuInfo, GpuInfo, AptSourceTool, FanInfo, ThermalInfo, BatteryInfo, DiskInfo, and HostService.
 
 **Phase 4 (Done):** UI regression testing (FR-41):
 - Screenshot comparison in CI — 11 pages × 2 themes per platform
@@ -537,7 +536,14 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 - Visual diff artifact upload on CI failure for manual review
 - Non-blocking initially (`continue-on-error`) until references stabilize
 
-**Current state:** 7 CTest executables — 63 unit test methods covering core library, utilities, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage.
+**Phase 5 (Future):** Remaining coverage gaps:
+- CleanerService (requires extracting logic from GUI executable, blocked by BUG-93)
+- PackageTool / UpdateInfo (dpkg/pacman/brew output parsing)
+- AppManager token replacement (BUG-49 regression tests)
+- SettingManager defaults and overrides
+- Integration tests for manager CRUD operations
+
+**Current state:** 16 CTest executables — ~214 unit test methods across 15 suites covering core library parsers, utilities, tool parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
 
 ---
 
@@ -572,7 +578,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 3. ~~**Dependency injection on all page constructors**~~ — Done (Phase 6, FR-35): testable without framework overhead
 4. ~~**Centralized DataRefreshService**~~ — Done (Phase 8, FR-37): 4 timers instead of 6 per-page, with pause/resume for battery optimization
 5. **QSS token validation** — Build-time warnings for theme inconsistencies
-6. ~~**20-30 unit tests**~~ — Done (Phase 7, FR-36): 63 test methods across 6 executables covering core library, utilities, managers, and theme validation
+6. ~~**20-30 unit tests**~~ — Done (Phase 7, FR-36; expanded FR-76): ~214 test methods across 15 executables covering core parsers, utilities, tools, services, managers, and theme validation
 7. **Still QWidgets** — Proven, stable, with the HiDPI problem solved
 8. **Still singletons** — But with DI constructors as escape hatches for testing
 

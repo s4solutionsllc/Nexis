@@ -47,6 +47,11 @@
   - **Description:** 6 patterns are copy-pasted across 8 tile classes: gear button setup (8×12=96 lines), footer layout (5×20=100), `updateTrend()` (6×28=168), `updateGearIcon()` (8×8=64), `resizeEvent()` gear reposition (8×5=40), action button stylesheet (6×6=36). Total ~504 duplicated lines. Each tile's truly unique code is only its `paintEvent()` rendering.
   - **Reclassified:** Not a bug — code quality / refactoring initiative. Moved to **FR-77**.
 
+- [ ] **BUG-93: System Cleaner follows symlinks during directory emptying — potential data loss** (HIGH)
+  - **File:** `shared/nexis/Managers/cleaner_service.cpp` — `cleanFiles()` method
+  - **Description:** `cleanFiles()` checks `QFileInfo::isDir()` to decide whether to empty a directory, but `isDir()` follows symlinks. A symlink to a directory (e.g., `~/.cache/link → /home/user/data`) enters the directory-emptying branch, causing the code to iterate and delete the **symlink target's real contents** instead of just removing the symlink. There is no `isSymLink()` check anywhere in the deletion logic.
+  - **Fix complexity:** Low (add `fi.isSymLink()` check before the `isDir()` branch)
+
 ## MEDIUM Severity
 
 - [x] **BUG-04: CPU speed shows 0 GHz on modern kernels** (MEDIUM)
@@ -616,6 +621,21 @@
   - **Description:** `mTrayIcon = new QSystemTrayIcon();` is created without a parent and is never explicitly deleted in the destructor. While the singleton pattern means it lives for the app's lifetime, it lacks proper ownership and cleanup — inconsistent with the Qt parent-child ownership model used elsewhere.
   - **Fix complexity:** Trivial (parent to qApp)
   - **Resolved:** Changed to `new QSystemTrayIcon(qApp)` so QApplication destructor handles cleanup automatically. Matches the correct pattern already used in main.cpp:73.
+
+- [ ] **BUG-94: Linux trash cleanup deletes XDG directories instead of emptying them** (LOW)
+  - **File:** `shared/nexis/Managers/cleaner_service.cpp` — `cleanTrash()` method
+  - **Description:** On Linux, `cleanTrash()` calls `QDir::removeRecursively()` on `~/.local/share/Trash/files` and `~/.local/share/Trash/info`, which deletes the directories themselves rather than just their contents. The XDG Trash spec requires these directories to exist for subsequent trash operations by the desktop environment.
+  - **Fix complexity:** Trivial (empty contents instead of removeRecursively, or recreate dirs after removal)
+
+- [ ] **BUG-95: HostService parseHostEntries() doesn't handle inline comments** (LOW)
+  - **File:** `shared/nexis/Services/host_service.cpp` — `parseHostEntries()` method
+  - **Description:** The `/etc/hosts` spec allows inline `#` comments (e.g., `127.0.0.1 localhost # loopback`), but `parseHostEntries()` does not strip them. The `# loopback` text is included in the `aliases` field of the parsed `HostEntry`.
+  - **Fix complexity:** Trivial (strip text after `#` before splitting fields)
+
+- [ ] **BUG-96: MemoryInfo cached calculation can underflow quint64** (LOW)
+  - **File:** `linux/nexis-core/Info/memory_info.cpp`
+  - **Description:** The calculation `cached = (cached + sreclaimable - shmem)` uses `quint64` (unsigned). If `shmem > cached + sreclaimable` (unusual but possible), the subtraction wraps to a very large value, causing `memUsed` to also underflow. The macOS implementation guards against this with `memTotal > memFree ? memTotal - memFree : 0`, but the Linux version has no equivalent guard.
+  - **Fix complexity:** Trivial (add underflow guard)
 
 ## Notes
 

@@ -40,13 +40,17 @@ set(CORE_PLAT_DIR   "${PLATFORM_DIR}/nexis-core")
 
 set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Info/battery_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/cpu_info_shared.cpp"
   "${CORE_SHARED_DIR}/Info/disk_health_info_shared.cpp"
   "${CORE_SHARED_DIR}/Info/disk_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/fan_info_shared.cpp"
   "${CORE_SHARED_DIR}/Info/gpu_info_shared.cpp"
   "${CORE_SHARED_DIR}/Info/memory_info_shared.cpp"
   "${CORE_SHARED_DIR}/Info/process.cpp"
   "${CORE_SHARED_DIR}/Info/process_info_shared.cpp"
   "${CORE_SHARED_DIR}/Info/system_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Info/thermal_info_shared.cpp"
+  "${CORE_SHARED_DIR}/Tools/apt_source_tool_shared.cpp"
   "${CORE_SHARED_DIR}/Tools/docker_tool.cpp"
   "${CORE_SHARED_DIR}/Tools/file_search_tool_shared.cpp"
   "${CORE_SHARED_DIR}/Tools/package_tool_shared.cpp"

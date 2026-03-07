@@ -28,6 +28,19 @@ public:
     virtual void updateGpuInfo() = 0;
     bool hasGpu() const;
 
+    // Static parsing methods for testability (FR-76).
+    // Parses nvidia-smi CSV utilization output. Returns 0-100, or -1 on error.
+    static int parseNvidiaSmiUtilization(const QString &nvidiaSmiOutput);
+
+    // Parses a sysfs integer (e.g. gpu_busy_percent). Returns 0-100, or -1 on error.
+    static int parseSysfsUtilization(const QString &sysfsContent);
+
+    // Computes utilization % from current/max frequency strings. Returns 0-100, or -1.
+    static int parseIntelFreqUtilization(const QString &curFreqStr, const QString &maxFreqStr);
+
+    // Extracts device name from lspci output for a given PCI bus ID.
+    static QString parseLspciDeviceName(const QString &lspciOutput, const QString &busId);
+
 protected:
     virtual void discoverGpus() = 0;
     QList<GpuDevice> mDevices;

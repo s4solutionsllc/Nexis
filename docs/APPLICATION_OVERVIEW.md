@@ -54,7 +54,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 7 test suites with 63 test methods (Qt Test + CTest)
+- 15 test suites with ~214 test methods (Qt Test + CTest)
 - 50 features implemented, 61 bugs fixed since fork
 
 ---
@@ -533,9 +533,10 @@ linux/
 tests/
   CMakeLists.txt        (test target configuration with add_nexis_test() macro)
   utils/                (FormatUtil, FileUtil, CommandUtil tests)
-  core/                 (DiskHealthInfo verdict + JSON parsing tests)
+  core/                 (DiskHealth, Memory, CPU, GPU, AptSource, Fan, Thermal, Battery, Disk, HostService tests)
   managers/             (ScheduleManager tests)
   theme/                (theme token validation tests)
+  fixtures/             (sample system output files for fixture-based testing)
   screenshots/          (FR-41 screenshot regression tests)
   reference_screenshots/  (per-platform reference PNGs: {linux,macos}/{dark,light}/)
 ```
@@ -557,10 +558,16 @@ tests/
 - macOS: `.app` bundle with icon, installs to `/Applications`
 - Linux: Binary to `/usr/bin`, `.desktop` file, hicolor icons (16x16 through 256x256)
 
-**Test executables** — 7 CTest-registered executables (Qt Test + CTest)
-- 6 unit test executables via `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable)
+**Test executables** — 16 CTest-registered executables (Qt Test + CTest)
+- 15 unit test executables via `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable)
 - 1 screenshot regression test executable linked against `nexis-gui`
-- 63 unit test methods: FormatUtil (10), FileUtil (10), CommandUtil (9), DiskHealthInfo (20), ScheduleManager (15), ThemeTokens (7)
+- ~214 unit test methods across 15 suites:
+  - Utilities: FormatUtil (10), FileUtil (10), CommandUtil (9)
+  - Core parsers (FR-76): MemoryInfo (14), CpuInfo (19), GpuInfo (23), AptSource (14), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17), DiskHealth (20)
+  - Services: HostService (25)
+  - Managers: ScheduleManager (15)
+  - Theme: ThemeTokens (7)
+- Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`
 - Screenshot test: captures 11 pages × 2 themes, compares against reference PNGs with per-page pixel tolerance
 - Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)

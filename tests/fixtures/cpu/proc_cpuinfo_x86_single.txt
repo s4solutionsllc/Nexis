@@ -1,0 +1,215 @@
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3192.000
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 0
+cpu cores	: 6
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3200.100
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 1
+cpu cores	: 6
+apicid		: 2
+initial apicid	: 2
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 2
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3150.500
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 2
+cpu cores	: 6
+apicid		: 4
+initial apicid	: 4
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 3
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3210.800
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 3
+cpu cores	: 6
+apicid		: 6
+initial apicid	: 6
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 4
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3180.200
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 4
+cpu cores	: 6
+apicid		: 8
+initial apicid	: 8
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 5
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3190.400
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 5
+cpu cores	: 6
+apicid		: 10
+initial apicid	: 10
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 6
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3205.300
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 0
+cpu cores	: 6
+apicid		: 1
+initial apicid	: 1
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 7
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3195.700
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 1
+cpu cores	: 6
+apicid		: 3
+initial apicid	: 3
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 8
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3188.600
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 2
+cpu cores	: 6
+apicid		: 5
+initial apicid	: 5
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 9
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3202.900
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 3
+cpu cores	: 6
+apicid		: 7
+initial apicid	: 7
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 10
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3198.100
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 4
+cpu cores	: 6
+apicid		: 9
+initial apicid	: 9
+fpu		: yes
+bogomips	: 6384.00
+
+processor	: 11
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 158
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+stepping	: 10
+microcode	: 0xea
+cpu MHz		: 3185.500
+cache size	: 12288 KB
+physical id	: 0
+siblings	: 12
+core id		: 5
+cpu cores	: 6
+apicid		: 11
+initial apicid	: 11
+fpu		: yes
+bogomips	: 6384.00

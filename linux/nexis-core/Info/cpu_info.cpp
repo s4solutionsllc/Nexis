@@ -13,30 +13,10 @@ int CpuInfoLinux::getCpuPhysicalCoreCount() const
 {
     static int count = 0;
 
-    if (! count) {
+    if (!count) {
         QStringList cpuinfo = FileUtil::readListFromFile(PROC_CPUINFO);
-
-        if (! cpuinfo.isEmpty()) {
-	    QSet<QPair<int, int> > physicalCoreSet;
-	    int physical = 0;
-	    int core = 0;
-	    for (int i = 0; i < cpuinfo.size(); ++i) {
-	        const QString& line = cpuinfo[i];
-		if (line.startsWith("physical id")) {
-		    QStringList fields = line.split(": ");
-		    if (fields.size() > 1)
-		        physical = fields[1].toInt();
-		}
-		if (line.startsWith("core id")) {
-		    QStringList fields = line.split(": ");
-		    if (fields.size() > 1)
-		        core = fields[1].toInt();
-		    // We assume core id appears after physical id.
-		    physicalCoreSet.insert(qMakePair(physical, core));
-		}
-	    }
-	    count = physicalCoreSet.size();
-	}
+        if (!cpuinfo.isEmpty())
+            count = parsePhysicalCoreCount(cpuinfo);
     }
 
     return count;
@@ -46,11 +26,10 @@ int CpuInfoLinux::getCpuCoreCount() const
 {
     static int count = 0;
 
-    if (! count) {
+    if (!count) {
         QStringList cpuinfo = FileUtil::readListFromFile(PROC_CPUINFO);
-
-        if (! cpuinfo.isEmpty())
-            count = cpuinfo.filter(QRegularExpression("^processor")).count();
+        if (!cpuinfo.isEmpty())
+            count = parseLogicalCoreCount(cpuinfo);
     }
 
     return count;
@@ -58,31 +37,17 @@ int CpuInfoLinux::getCpuCoreCount() const
 
 QList<double> CpuInfoLinux::getLoadAvgs() const
 {
-    QList<double> avgs = {0, 0, 0};
-
-    QStringList strListAvgs = FileUtil::readStringFromFile(PROC_LOADAVG).split(QRegularExpression("\\s+"));
-
-    if (strListAvgs.count() > 2) {
-        avgs.clear();
-        avgs << strListAvgs.takeFirst().toDouble();
-        avgs << strListAvgs.takeFirst().toDouble();
-        avgs << strListAvgs.takeFirst().toDouble();
-    }
-
-    return avgs;
+    return parseLoadAvgs(FileUtil::readStringFromFile(PROC_LOADAVG));
 }
 
 double CpuInfoLinux::getAvgClock() const
 {
     // Try lscpu first
     try {
-        const QStringList lines = CommandUtil::exec("bash",{"-c", LSCPU_COMMAND}).split('\n');
-        const QStringList filtered = lines.filter(QRegularExpression("^CPU MHz"));
-        if (!filtered.isEmpty()) {
-            double mhz = filtered.first().split(":").last().toDouble();
-            if (mhz > 0.0)
-                return mhz;
-        }
+        QString lscpuOutput = CommandUtil::exec("bash", {"-c", LSCPU_COMMAND});
+        double mhz = parseAvgClockFromLscpu(lscpuOutput);
+        if (mhz > 0.0)
+            return mhz;
     } catch (...) { qWarning() << "Failed to read CPU clock frequency"; }
 
     // Fallback: per-core clocks from /proc/cpuinfo
@@ -109,14 +74,7 @@ double CpuInfoLinux::getAvgClock() const
 
 QList<double> CpuInfoLinux::getClocks() const
 {
-    QStringList lines = FileUtil::readListFromFile(PROC_CPUINFO)
-            .filter(QRegularExpression("^cpu MHz"));
-
-    QList<double> clocks;
-    for(auto line: lines){
-        clocks.push_back(line.split(":").last().toDouble());
-    }
-    return clocks;
+    return parseClocksFromProcCpuinfo(FileUtil::readListFromFile(PROC_CPUINFO));
 }
 
 QList<int> CpuInfoLinux::getCpuPercents() const

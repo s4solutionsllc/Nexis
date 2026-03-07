@@ -42,6 +42,10 @@ public:
     bool hasBattery() const;
     virtual void updateBatteryInfo() = 0;
 
+    // Static parsing methods for testability (FR-76).
+    static QString deriveCondition(int healthPercent);
+    static int deriveHealthPercent(double maxCapacityMah, double designCapacityMah);
+
 protected:
     virtual void discoverBattery() = 0;
     BatteryData mData;

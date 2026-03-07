@@ -282,14 +282,7 @@ int FanInfoLinux::readHwmonSpeed(const FanSensor &sensor) const
 
 int FanInfoLinux::readThinkpadSpeed() const
 {
-    QString content = FileUtil::readStringFromFile(THINKPAD_FAN_PROC);
-    static QRegularExpression speedRe("speed:\\s+(\\d+)");
-    QRegularExpressionMatch match = speedRe.match(content);
-    if (!match.hasMatch())
-        return 0;
-
-    int rpm = match.captured(1).toInt();
-    return (rpm >= 0 && rpm <= MAX_SANE_RPM) ? rpm : 0;
+    return parseThinkpadFanSpeed(FileUtil::readStringFromFile(THINKPAD_FAN_PROC));
 }
 
 int FanInfoLinux::readDellSpeed(const FanSensor &sensor) const

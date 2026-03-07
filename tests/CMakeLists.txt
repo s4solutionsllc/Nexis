@@ -25,6 +25,27 @@ add_nexis_test(NAME CommandUtilTests  SOURCES utils/test_command_util.cpp)
 
 # ── Core library tests ─────────────────────────────────────────────────────────
 add_nexis_test(NAME DiskHealthTests   SOURCES core/test_disk_health_info.cpp)
+add_nexis_test(NAME MemoryInfoTests   SOURCES core/test_memory_info.cpp)
+add_nexis_test(NAME CpuInfoTests      SOURCES core/test_cpu_info.cpp)
+add_nexis_test(NAME GpuInfoTests      SOURCES core/test_gpu_info.cpp)
+add_nexis_test(NAME AptSourceTests    SOURCES core/test_apt_source_tool.cpp)
+add_nexis_test(NAME FanInfoTests      SOURCES core/test_fan_info.cpp)
+add_nexis_test(NAME ThermalInfoTests  SOURCES core/test_thermal_info.cpp)
+add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
+add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
+
+# ── Service tests ─────────────────────────────────────────────────────────────
+# HostService lives in the GUI target; compile its source directly.
+add_nexis_test(NAME HostServiceTests
+  SOURCES
+    core/test_host_service.cpp
+    "${GUI_SHARED_DIR}/Services/host_service.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+  LIBS
+    Qt6::Network
+)
 
 # ── Manager tests ──────────────────────────────────────────────────────────────
 # ScheduleManager lives in the GUI target; we compile its sources directly

@@ -28,6 +28,9 @@ public:
     QList<QString> fileSystemTypes();
     QList<QString> devices();
 
+    static bool shouldIncludeDisk(const QString &device, const QByteArray &fsType,
+                                  const QString &rootPath, qint64 bytesTotal);
+
 protected:
     QList<Disk> disks;
 };

@@ -86,24 +86,13 @@ void ThermalInfoLinux::discoverSensors()
             else
                 label = QString("%1 \u2013 Sensor %2").arg(friendly, idx);
 
-            // Read optional max/crit thresholds
-            double maxTemp = -1.0;
-            QString maxPath = QString("%1/temp%2_max").arg(hwmonPath, idx);
-            QString maxStr = FileUtil::readStringFromFile(maxPath).trimmed();
-            if (!maxStr.isEmpty()) {
-                maxTemp = maxStr.toLong() / 1000.0;
-                if (maxTemp > MAX_SANE_TEMP)
-                    maxTemp = -1.0;
-            }
+            double maxTemp = sanitizeTempThreshold(
+                FileUtil::readStringFromFile(QString("%1/temp%2_max").arg(hwmonPath, idx)),
+                MAX_SANE_TEMP);
 
-            double critTemp = -1.0;
-            QString critPath = QString("%1/temp%2_crit").arg(hwmonPath, idx);
-            QString critStr = FileUtil::readStringFromFile(critPath).trimmed();
-            if (!critStr.isEmpty()) {
-                critTemp = critStr.toLong() / 1000.0;
-                if (critTemp > MAX_SANE_TEMP)
-                    critTemp = -1.0;
-            }
+            double critTemp = sanitizeTempThreshold(
+                FileUtil::readStringFromFile(QString("%1/temp%2_crit").arg(hwmonPath, idx)),
+                MAX_SANE_TEMP);
 
             ThermalSensor sensor;
             sensor.id = QString("%1/temp%2").arg(deviceName, idx);
@@ -123,10 +112,7 @@ double ThermalInfoLinux::getTemperature(int index) const
     if (index < 0 || index >= mSensors.size())
         return 0.0;
 
-    long millideg = FileUtil::readStringFromFile(mSensors.at(index).inputPath)
-            .trimmed()
-            .toLong();
-
-    return millideg / 1000.0;
+    return parseSysfsTemperature(
+        FileUtil::readStringFromFile(mSensors.at(index).inputPath));
 }
 

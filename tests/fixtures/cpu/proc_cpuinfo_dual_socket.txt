@@ -1,0 +1,87 @@
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+cpu MHz		: 2100.000
+physical id	: 0
+core id		: 0
+cpu cores	: 4
+bogomips	: 4200.00
+
+processor	: 1
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+cpu MHz		: 2100.000
+physical id	: 0
+core id		: 1
+cpu cores	: 4
+bogomips	: 4200.00
+
+processor	: 2
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+cpu MHz		: 2100.000
+physical id	: 0
+core id		: 2
+cpu cores	: 4
+bogomips	: 4200.00
+
+processor	: 3
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+cpu MHz		: 2100.000
+physical id	: 0
+core id		: 3
+cpu cores	: 4
+bogomips	: 4200.00
+
+processor	: 4
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+cpu MHz		: 2100.000
+physical id	: 1
+core id		: 0
+cpu cores	: 4
+bogomips	: 4200.00
+
+processor	: 5
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+cpu MHz		: 2100.000
+physical id	: 1
+core id		: 1
+cpu cores	: 4
+bogomips	: 4200.00
+
+processor	: 6
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+cpu MHz		: 2100.000
+physical id	: 1
+core id		: 2
+cpu cores	: 4
+bogomips	: 4200.00
+
+processor	: 7
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 85
+model name	: Intel(R) Xeon(R) Gold 6130 CPU @ 2.10GHz
+cpu MHz		: 2100.000
+physical id	: 1
+core id		: 3
+cpu cores	: 4
+bogomips	: 4200.00

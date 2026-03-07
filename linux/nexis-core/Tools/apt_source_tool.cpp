@@ -251,40 +251,14 @@ QList<APTSourcePtr> AptSourceToolLinux::getSourceList()
 
     for (const QFileInfo &info : infoList) {
         if (info.fileName().endsWith(".sources")) {
-            // Parse deb822 format: multi-stanza key-value
             QStringList fileContent = FileUtil::readListFromFile(info.absoluteFilePath());
             QString entry;
 
             auto processEntry = [&](const QString &entry) {
-                QMap<QString, QString> fields;
-                for (const QString &entryLine : entry.split('\n')) {
-                    if (entryLine.trimmed().startsWith('#'))
-                        continue;
-                    int sep = entryLine.indexOf(':');
-                    if (sep > 0) {
-                        QString key = entryLine.left(sep).trimmed();
-                        QString value = entryLine.mid(sep + 1).trimmed();
-                        fields[key] = value;
-                    }
-                }
-
-                QString types = fields.value("Types");
-                if (types.contains(binaryType())) {
-                    APTSourcePtr aptSource(new APTSource);
-                    aptSource->filePath = info.absoluteFilePath();
-                    aptSource->isSource = types.contains(sourceType());
-                    aptSource->uri = fields.value("URIs");
-                    aptSource->suites = fields.value("Suites");
-                    aptSource->components = fields.value("Components");
-                    aptSource->options = "";
-                    aptSource->isActive = fields.value("Enabled", "yes").toLower() == "yes";
-
-                    QString typeStr = aptSource->isSource ? sourceType() : binaryType();
-                    aptSource->source = QString("%1 %2 %3 %4")
-                        .arg(typeStr).arg(aptSource->uri)
-                        .arg(aptSource->suites).arg(aptSource->components);
-
-                    aptSourceList.append(aptSource);
+                APTSourcePtr src = parseDeb822Stanza(entry, binaryType(), sourceType());
+                if (src) {
+                    src->filePath = info.absoluteFilePath();
+                    aptSourceList.append(src);
                 }
             };
 
@@ -302,38 +276,14 @@ QList<APTSourcePtr> AptSourceToolLinux::getSourceList()
                 processEntry(entry);
 
         } else if (info.fileName().endsWith(".list")) {
-            // Parse legacy one-line .list format
             QStringList fileContent = FileUtil::readListFromFile(info.absoluteFilePath())
                 .filter(QRegularExpression("^\\s{0,}#{0,}\\s{0,}" + binaryType()));
 
             for (const QString &line : fileContent) {
-                QString _line = line.trimmed();
-
-                APTSourcePtr aptSource(new APTSource);
-                aptSource->filePath = info.absoluteFilePath();
-                aptSource->isActive = !_line.startsWith(QChar('#'));
-
-                _line.remove('#');
-
-                QRegularExpression regexOption("(\\s[\\[]+.*[\\]]+)");
-                QRegularExpressionMatch optMatch = regexOption.match(_line);
-                if (optMatch.hasMatch())
-                    aptSource->options = optMatch.captured().trimmed();
-                _line.remove(regexOption);
-
-                QStringList sourceColumns = _line.trimmed().split(QRegularExpression("\\s+"));
-                bool isBinary = sourceColumns.first() == binaryType();
-                bool isSource = sourceColumns.first() == sourceType();
-
-                if ((isBinary || isSource) && sourceColumns.count() > 2) {
-                    aptSource->isSource = isSource;
-                    aptSource->uri = sourceColumns.at(1);
-                    aptSource->suites = sourceColumns.at(2);
-                    aptSource->components = sourceColumns.mid(3).join(' ');
-
-                    aptSource->source = line.trimmed().remove('#').trimmed();
-
-                    aptSourceList.append(aptSource);
+                APTSourcePtr src = parseSourceListLine(line, binaryType(), sourceType());
+                if (src) {
+                    src->filePath = info.absoluteFilePath();
+                    aptSourceList.append(src);
                 }
             }
         }

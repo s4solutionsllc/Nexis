@@ -42,15 +42,9 @@ static QString readDeviceName(const QString &cardPath, int cardIndex, const QStr
         if (!busId.isEmpty() && CommandUtil::isExecutable("lspci")) {
             try {
                 QString lspciOut = CommandUtil::exec("lspci", {"-s", busId});
-                // Output: "03:00.0 VGA compatible controller: NVIDIA Corporation GeForce ..."
-                int colonPos = lspciOut.indexOf(": ", lspciOut.indexOf(busId));
-                if (colonPos >= 0) {
-                    QString name = lspciOut.mid(colonPos + 2).trimmed();
-                    // Remove trailing newlines
-                    name = name.split('\n').first().trimmed();
-                    if (!name.isEmpty())
-                        return name;
-                }
+                QString name = GpuInfo::parseLspciDeviceName(lspciOut, busId);
+                if (!name.isEmpty())
+                    return name;
             } catch (...) { qWarning() << "Failed to resolve GPU name via lspci"; }
         }
     }
@@ -155,30 +149,18 @@ void GpuInfoLinux::updateGpuInfo()
         GpuDevice &dev = mDevices[i];
 
         if (dev.vendor == "AMD") {
-            // AMD: read gpu_busy_percent directly from sysfs
-            if (!dev.sysfsLoadPath.isEmpty()) {
-                QString val = FileUtil::readStringFromFile(dev.sysfsLoadPath).trimmed();
-                if (!val.isEmpty()) {
-                    bool ok = false;
-                    int pct = val.toInt(&ok);
-                    dev.utilization = ok ? qBound(0, pct, 100) : -1;
-                } else {
-                    dev.utilization = -1;
-                }
-            }
+            if (!dev.sysfsLoadPath.isEmpty())
+                dev.utilization = parseSysfsUtilization(
+                    FileUtil::readStringFromFile(dev.sysfsLoadPath));
 
         } else if (dev.vendor == "NVIDIA") {
-            // NVIDIA: query nvidia-smi using PCI bus ID (stored in queryCommand)
             if (!dev.queryCommand.isEmpty()) {
                 try {
                     QString output = CommandUtil::exec("nvidia-smi",
                         {"--query-gpu=utilization.gpu",
                          "--format=csv,noheader,nounits",
                          QString("--id=%1").arg(dev.queryCommand)});
-                    QString val = output.trimmed().split('\n').first().trimmed();
-                    bool ok = false;
-                    int pct = val.toInt(&ok);
-                    dev.utilization = ok ? qBound(0, pct, 100) : -1;
+                    dev.utilization = parseNvidiaSmiUtilization(output);
                 } catch (...) {
                     qWarning() << "Failed to parse GPU utilization";
                     dev.utilization = -1;
@@ -186,19 +168,10 @@ void GpuInfoLinux::updateGpuInfo()
             }
 
         } else if (dev.vendor == "Intel") {
-            // Intel: approximate utilization from frequency ratio
-            // cur_freq / max_freq * 100 (rough approximation)
             if (!dev.sysfsLoadPath.isEmpty() && !dev.queryCommand.isEmpty()) {
-                QString curStr = FileUtil::readStringFromFile(dev.sysfsLoadPath).trimmed();
-                QString maxStr = FileUtil::readStringFromFile(dev.queryCommand).trimmed();
-                bool okCur = false, okMax = false;
-                double cur = curStr.toDouble(&okCur);
-                double max = maxStr.toDouble(&okMax);
-                if (okCur && okMax && max > 0.0) {
-                    dev.utilization = qBound(0, static_cast<int>(cur / max * 100.0), 100);
-                } else {
-                    dev.utilization = -1;
-                }
+                dev.utilization = parseIntelFreqUtilization(
+                    FileUtil::readStringFromFile(dev.sysfsLoadPath),
+                    FileUtil::readStringFromFile(dev.queryCommand));
             }
         }
     }

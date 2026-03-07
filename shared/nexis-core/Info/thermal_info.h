@@ -24,6 +24,10 @@ public:
     virtual double getTemperature(int index) const = 0;
     bool hasSensors() const { return !mSensors.isEmpty(); }
 
+    // Static parsing methods for testability (FR-76).
+    static double parseSysfsTemperature(const QString &millidegStr);
+    static double sanitizeTempThreshold(const QString &millidegStr, double maxSaneTemp = 200.0);
+
 protected:
     virtual void discoverSensors() = 0;
     QList<ThermalSensor> mSensors;

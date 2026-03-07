@@ -1,9 +1,10 @@
 #include "disk_info.h"
 #include <QDebug>
 
-static bool shouldIncludeDisk(const QStorageInfo &info)
+bool DiskInfo::shouldIncludeDisk(const QString &device, const QByteArray &fsType,
+                                  const QString &rootPath, qint64 bytesTotal)
 {
-    if (info.bytesTotal() == 0)
+    if (bytesTotal == 0)
         return false;
 
     // Exclude virtual/pseudo filesystem types
@@ -13,27 +14,25 @@ static bool shouldIncludeDisk(const QStorageInfo &info)
         "fuse.snapfuse", "autofs", "nullfs", "fdescfs",
         "linprocfs", "linsysfs", "map", "rootfs"
     };
-    if (excludedFsTypes.contains(info.fileSystemType()))
+    if (excludedFsTypes.contains(fsType))
         return false;
 
     // Exclude non-block devices (device string is a FS name, not a path)
-    const QString dev = info.device();
     static const QSet<QString> pseudoDevices = {
         "tmpfs", "devtmpfs", "overlay", "none", "sysfs",
         "proc", "cgroup", "cgroup2", "devpts", "securityfs",
         "pstore", "efivarfs", "bpf", "tracefs", "debugfs",
         "fusectl", "configfs", "hugetlbfs", "mqueue"
     };
-    if (dev.isEmpty() || pseudoDevices.contains(dev))
+    if (device.isEmpty() || pseudoDevices.contains(device))
         return false;
 
     // Exclude Snap loopback devices on Linux
-    if (dev.startsWith("/dev/loop"))
+    if (device.startsWith("/dev/loop"))
         return false;
 
     // Exclude mount paths for pseudo-filesystems and runtime mounts
-    const QString path = info.rootPath();
-    if (path.startsWith("/snap/") || path.startsWith("/run/snap"))
+    if (rootPath.startsWith("/snap/") || rootPath.startsWith("/run/snap"))
         return false;
 
     // Exclude macOS hidden system APFS volumes
@@ -47,7 +46,7 @@ static bool shouldIncludeDisk(const QStorageInfo &info)
         "/System/Volumes/Hardware"
     };
     for (const QString &sysPath : macSystemPaths) {
-        if (path == sysPath || path.startsWith(sysPath + "/"))
+        if (rootPath == sysPath || rootPath.startsWith(sysPath + "/"))
             return false;
     }
 
@@ -66,7 +65,8 @@ void DiskInfo::updateDiskInfo()
     QList<QStorageInfo> storageInfoList = QStorageInfo::mountedVolumes();
 
     for (const QStorageInfo &info : storageInfoList) {
-        if (info.isValid() && shouldIncludeDisk(info)) {
+        if (info.isValid() && shouldIncludeDisk(info.device(), info.fileSystemType(),
+                                                 info.rootPath(), info.bytesTotal())) {
             Disk disk;
             disk.name = info.displayName();
             disk.device = info.device();
@@ -84,7 +84,8 @@ QList<QString> DiskInfo::devices()
 {
     QSet<QString> set;
     for (const QStorageInfo &info : QStorageInfo::mountedVolumes()) {
-        if (info.isValid() && shouldIncludeDisk(info))
+        if (info.isValid() && shouldIncludeDisk(info.device(), info.fileSystemType(),
+                                                 info.rootPath(), info.bytesTotal()))
             set.insert(info.device());
     }
 
@@ -95,7 +96,8 @@ QList<QString> DiskInfo::fileSystemTypes()
 {
     QSet<QString> set;
     for (const QStorageInfo &info : QStorageInfo::mountedVolumes()) {
-        if (info.isValid() && shouldIncludeDisk(info))
+        if (info.isValid() && shouldIncludeDisk(info.device(), info.fileSystemType(),
+                                                 info.rootPath(), info.bytesTotal()))
             set.insert(info.fileSystemType());
     }
 

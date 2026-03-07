@@ -6,6 +6,7 @@
 #include "nexis-core_global.h"
 
 #include <QMetaType>
+#include <QMap>
 
 struct MemorySnapshot {
     quint64 used = 0;
@@ -20,6 +21,22 @@ struct MemorySnapshot {
     int pressureLevel = -1;  // -1=unavailable, 1=normal, 2=warning, 4=critical
 };
 Q_DECLARE_METATYPE(MemorySnapshot)
+
+struct MemoryParseResult {
+    quint64 memTotal = 0;
+    quint64 memFree = 0;
+    quint64 memUsed = 0;
+    quint64 buffers = 0;
+    quint64 cached = 0;
+    quint64 sreclaimable = 0;
+    quint64 shmem = 0;
+    quint64 swapTotal = 0;
+    quint64 swapFree = 0;
+    quint64 swapUsed = 0;
+    quint64 memAvailable = 0;
+    quint64 memActive = 0;
+    quint64 memInactive = 0;
+};
 
 class NEXISCORESHARED_EXPORT MemoryInfo
 {
@@ -43,6 +60,19 @@ public:
     quint64 getMemCompressed() const;
     quint64 getMemAvailable() const;
     int getPressureLevel() const;
+
+    // Static parsing methods for testability (FR-76).
+    // Accepts raw /proc/meminfo lines, returns parsed fields.
+    static MemoryParseResult parseProcMeminfo(const QStringList &lines);
+
+    // Computes derived values (memUsed, swapUsed, adjusted cached)
+    // with underflow guards.
+    static void deriveMemoryValues(MemoryParseResult &r);
+
+    // Parses PSI content or uses MemAvailable heuristic to determine
+    // pressure level. Returns -1 (unavailable), 1 (normal), 2 (warning), 4 (critical).
+    static int parsePressureLevel(const QString &psiContent,
+                                  quint64 memAvailable, quint64 memTotal);
 
 protected:
     quint64 memTotal;
