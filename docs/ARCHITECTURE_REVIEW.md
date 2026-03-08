@@ -442,13 +442,14 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 #### 3A. ~~Basic Unit Test Suite~~ (Implemented + Expanded)
 
-**Completed (Phase 7, FR-36; expanded FR-76).** 16 test executables with ~218 test methods:
+**Completed (Phase 7, FR-36; expanded FR-76, FR-79/FR-80, FR-82).** 19 test executables with ~258 test methods:
 1. **Utility classes** — FormatUtil (10), FileUtil (10), CommandUtil (9)
 2. **Info class parsing** — DiskHealthInfo (20), MemoryInfo (14), CpuInfo (19), GpuInfo (23), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17)
-3. **Tool parsing** — AptSourceTool (14)
-4. **Service logic** — HostService (25)
-5. **Manager logic** — ScheduleManager (15)
-6. **Theme validation** — ThemeTokens (7)
+3. **Tool parsing** — AptSourceTool (14), PackageTool (16)
+4. **Widget parsing** — NetworkDiag (24)
+5. **Service logic** — HostService (25)
+6. **Manager logic** — ScheduleManager (15)
+7. **Theme validation** — ThemeTokens (7)
 
 **Key refactoring:** FR-36 established the pattern with `parseSmartctlJsonInto()` shared static (dedup), `deriveHealthVerdict()` public static, `getNextRunTime()` injectable `now` parameter. FR-76 scaled this to 10 additional classes by extracting parsing logic into public static methods on shared base classes (`*_shared.cpp` files). Fixture data files in `tests/fixtures/` provide deterministic test input. CleanerService tests deferred (GUI lib dependency, BUG-93).
 
@@ -543,7 +544,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 - SettingManager defaults and overrides
 - Integration tests for manager CRUD operations
 
-**Current state:** 16 CTest executables — ~214 unit test methods across 15 suites covering core library parsers, utilities, tool parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
+**Current state:** 19 CTest executables — ~258 unit test methods across 18 suites covering core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
 
 ---
 
@@ -578,7 +579,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 3. ~~**Dependency injection on all page constructors**~~ — Done (Phase 6, FR-35): testable without framework overhead
 4. ~~**Centralized DataRefreshService**~~ — Done (Phase 8, FR-37): 4 timers instead of 6 per-page, with pause/resume for battery optimization
 5. **QSS token validation** — Build-time warnings for theme inconsistencies
-6. ~~**20-30 unit tests**~~ — Done (Phase 7, FR-36; expanded FR-76): ~214 test methods across 15 executables covering core parsers, utilities, tools, services, managers, and theme validation
+6. ~~**20-30 unit tests**~~ — Done (Phase 7, FR-36; expanded FR-76, FR-79/FR-80, FR-82): ~258 test methods across 18 executables covering core parsers, utilities, tools, widget parsers, services, managers, and theme validation
 7. **Still QWidgets** — Proven, stable, with the HiDPI problem solved
 8. **Still singletons** — But with DI constructors as escape hatches for testing
 

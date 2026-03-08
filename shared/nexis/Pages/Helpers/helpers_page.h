@@ -7,6 +7,7 @@
 
 class QPushButton;
 class QLabel;
+class NetworkDiagWidget;
 
 namespace Ui {
 class HelpersPage;
@@ -23,6 +24,7 @@ public:
 private slots:
     void on_btnHostManage_clicked();
     void on_btnFlushDNS_clicked();
+    void on_btnNetDiag_clicked();
     void onRebuildSpotlight();
     void onVerifyDisk();
     void onRebuildLaunchServices();
@@ -33,6 +35,7 @@ private:
     Ui::HelpersPage *ui;
 
     HostManage *widgetHostManage;
+    NetworkDiagWidget *mNetworkDiagWidget;
 
 #ifdef Q_OS_MACOS
     QPushButton *mBtnRebuildSpotlight = nullptr;

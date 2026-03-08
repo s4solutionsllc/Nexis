@@ -320,6 +320,17 @@ Miscellaneous utility tools.
 - Error feedback: auth cancellation and write failures shown via `QMessageBox`; success shown in status label
 - Lazy-loaded: file parsed only when user navigates to the page
 
+**Network Diagnostics** — One-click connectivity checklist with four sequential tests:
+1. **Ping default gateway** — discovers gateway via `route -n get default` (macOS) or `ip route show default` (Linux), then pings it
+2. **Ping external IP (1.1.1.1)** — verifies WAN/internet connectivity
+3. **DNS resolution** — resolves `cloudflare.com` via Qt's `QHostInfo::fromName()` with latency measurement
+4. **DNS server discovery** — lists configured DNS servers from `scutil --dns` (macOS) or `resolvectl status` / `/etc/resolv.conf` (Linux)
+- Results displayed as pass/fail checklist with latency values in a themed card widget
+- Self-contained `NetworkDiagWidget` (stacked widget page, like Hosts File Manager)
+- Runs on `QThreadPool` worker thread to avoid UI blocking
+- "Re-test" button for iterative debugging; lazy-loaded on first navigation
+- Theme-aware: uses `@successColor`/`@destructiveColor` for pass/fail indicators
+
 ### 12. APT Repository Manager / Homebrew
 
 Manage package repositories and sources. Conditional: shown only when the relevant package manager is detected.
