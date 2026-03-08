@@ -6,6 +6,7 @@
 
 #include <QBoxLayout>
 #include <QFormLayout>
+#include <QFrame>
 #include <QLabel>
 #include <QMessageBox>
 #include <QPushButton>
@@ -164,7 +165,7 @@ void FirewallWidget::buildUI()
     root->addLayout(statusRow);
 
     // --- Detail rows ---
-    mDetailWidget = new QWidget;
+    mDetailWidget = new QFrame;
     mDetailWidget->setObjectName("fwDetailCard");
     QFormLayout *form = new QFormLayout(mDetailWidget);
     form->setContentsMargins(16, 12, 16, 12);
@@ -390,10 +391,10 @@ void FirewallWidget::refreshThemeColors()
 
     if (mDetailWidget)
         mDetailWidget->setStyleSheet(QString(
-            "#fwDetailCard {"
+            "QFrame#fwDetailCard {"
             "  background-color: %1;"
             "  border: 1px solid %2;"
-            "  border-radius: 6px;"
+            "  border-radius: 8px;"
             "}").arg(cardBg, border));
 
     for (QLabel *lbl : findChildren<QLabel *>("fwSecondary"))

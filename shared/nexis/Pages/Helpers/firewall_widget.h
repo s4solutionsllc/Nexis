@@ -3,6 +3,7 @@
 
 #include <QWidget>
 
+class QFrame;
 class QLabel;
 class QPushButton;
 class QToolButton;
@@ -55,7 +56,7 @@ private:
     QLabel      *mLblStealth      = nullptr;
     QLabel      *mLblBlockAll     = nullptr;
     QLabel      *mLblAppRules     = nullptr;
-    QWidget     *mDetailWidget    = nullptr;
+    QFrame      *mDetailWidget    = nullptr;
     QWidget     *mNotAvailWidget  = nullptr;
     QLabel      *mLblNotAvail     = nullptr;
     QToolButton *mBtnHelp         = nullptr;
