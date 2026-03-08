@@ -344,7 +344,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ### 5. ~~No Automated Test Suite~~ (Resolved)
 
-**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 18 CTest executables with ~230+ test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool, PackageTool), service logic (HostService), manager logic (ScheduleManager), power profile parsing (PowerProfileInfo), theme token validation, and screenshot regression tests.
+**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 20 CTest executables with ~278 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool, PackageTool), widget parsing (NetworkDiag, OpenPorts), service logic (HostService), manager logic (ScheduleManager), power profile parsing (PowerProfileInfo), theme token validation, and screenshot regression tests.
 
 **Refactoring for testability:**
 - `parseSmartctlJson()` deduplicated from 2 platform files into shared public static `parseSmartctlJsonInto()`
@@ -442,11 +442,11 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 #### 3A. ~~Basic Unit Test Suite~~ (Implemented + Expanded)
 
-**Completed (Phase 7, FR-36; expanded FR-76, FR-79/FR-80, FR-82).** 19 test executables with ~258 test methods:
+**Completed (Phase 7, FR-36; expanded FR-76, FR-79/FR-80, FR-82, FR-66).** 20 test executables with ~278 test methods:
 1. **Utility classes** — FormatUtil (10), FileUtil (10), CommandUtil (9)
 2. **Info class parsing** — DiskHealthInfo (20), MemoryInfo (14), CpuInfo (19), GpuInfo (23), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17)
 3. **Tool parsing** — AptSourceTool (14), PackageTool (16)
-4. **Widget parsing** — NetworkDiag (24)
+4. **Widget parsing** — NetworkDiag (24), OpenPorts (20)
 5. **Service logic** — HostService (25)
 6. **Manager logic** — ScheduleManager (15)
 7. **Theme validation** — ThemeTokens (7)
@@ -544,7 +544,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 - SettingManager defaults and overrides
 - Integration tests for manager CRUD operations
 
-**Current state:** 19 CTest executables — ~258 unit test methods across 18 suites covering core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
+**Current state:** 20 CTest executables — ~278 unit test methods across 19 suites covering core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
 
 ---
 

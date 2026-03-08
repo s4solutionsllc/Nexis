@@ -267,6 +267,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Helpers/helpers_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/host_manage.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/network_diag_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/open_ports_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo/hardware_info_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/processes_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Resources/disk_usage_launcher_widget.cpp"

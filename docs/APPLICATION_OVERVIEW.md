@@ -331,6 +331,15 @@ Miscellaneous utility tools.
 - "Re-test" button for iterative debugging; lazy-loaded on first navigation
 - Theme-aware: uses `@successColor`/`@destructiveColor` for pass/fail indicators
 
+**Open Ports & Connections** — Tabular view of listening ports and active network connections:
+- Parses `lsof -iTCP -P -n` (macOS) or `ss -tnp` (Linux, with `netstat` fallback)
+- 8-column table: Protocol, Local Address, Port, Remote Address, Remote Port, PID, Process, State
+- "Listening Only" toggle (default) pre-filters at the command level; "All Connections" shows established, close-wait, time-wait, etc.
+- Text search filter across all columns (process name, address, port)
+- Color-coded state column: green (LISTEN), orange (ESTABLISHED), red (CLOSE_WAIT/TIME_WAIT)
+- Sortable columns via `QSortFilterProxyModel`; runs on `QThreadPool` worker thread
+- Self-contained `OpenPortsWidget` (stacked widget page index 2); lazy-loaded on first click
+
 ### 12. APT Repository Manager / Homebrew
 
 Manage package repositories and sources. Conditional: shown only when the relevant package manager is detected.

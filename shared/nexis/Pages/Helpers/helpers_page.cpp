@@ -1,5 +1,6 @@
 #include "helpers_page.h"
 #include "network_diag_widget.h"
+#include "open_ports_widget.h"
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
@@ -28,6 +29,7 @@ HelpersPage::HelpersPage(QWidget *parent) :
     QWidget(parent),
     widgetHostManage(new HostManage),
     mNetworkDiagWidget(new NetworkDiagWidget),
+    mOpenPortsWidget(new OpenPortsWidget),
     ui(new Ui::HelpersPage)
 {
     ui->setupUi(this);
@@ -39,11 +41,13 @@ void HelpersPage::init()
 {
     ui->stackedWidget->addWidget(widgetHostManage);
     ui->stackedWidget->addWidget(mNetworkDiagWidget);
+    ui->stackedWidget->addWidget(mOpenPortsWidget);
 
     QList<QWidget *> shadowWidgets = {
         ui->btnHostManage,
         ui->btnFlushDNS,
-        ui->btnNetDiag
+        ui->btnNetDiag,
+        ui->btnOpenPorts
     };
 
 #ifdef Q_OS_MACOS
@@ -85,6 +89,12 @@ void HelpersPage::on_btnNetDiag_clicked()
 {
     mNetworkDiagWidget->runTestIfNeeded();
     ui->stackedWidget->setCurrentIndex(1);
+}
+
+void HelpersPage::on_btnOpenPorts_clicked()
+{
+    mOpenPortsWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentIndex(2);
 }
 
 void HelpersPage::on_btnFlushDNS_clicked()
