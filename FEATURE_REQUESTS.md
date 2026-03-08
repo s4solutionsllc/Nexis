@@ -193,6 +193,7 @@
 - [x] **FR-66: Open ports / active connections viewer** — New section on the Helpers page showing listening ports and active connections. Parsed from `ss -tlnp` (Linux) / `lsof -iTCP -sTCP:LISTEN` (macOS). Table with: protocol, local address, port, PID, process name, state.
   - **Files:** `open_ports_widget.h/cpp`, `helpers_page.ui/h/cpp`, `test_open_ports.cpp`
   - **Complexity:** Medium (3-4 days)
+  - **Resolved:** fe4d8f1
 
 - [ ] **FR-67: Built-in network speed test** — Download/upload/latency test against a public endpoint (Cloudflare or similar). Single-button test with results shown inline. Uses Qt's `QNetworkAccessManager` against a known test file for a lightweight HTTP-based approach. *Deferred — not to be considered at this time.*
   - **Files:** New network utility class, UI in Helpers or Resources page
