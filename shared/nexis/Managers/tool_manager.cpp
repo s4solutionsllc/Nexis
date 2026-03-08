@@ -112,6 +112,42 @@ bool ToolManager::trashApps(const QStringList &appPaths)
 }
 
 /*
+ * Snap/Flatpak revision cleanup (FR-79)
+ */
+QList<StaleSnapRevision> ToolManager::getStaleSnapRevisions() const
+{
+    return mPackageTool->getStaleSnapRevisions();
+}
+
+bool ToolManager::removeStaleSnapRevisions(const QList<StaleSnapRevision> &revisions)
+{
+    return mPackageTool->removeStaleSnapRevisions(revisions);
+}
+
+QStringList ToolManager::getUnusedFlatpakRuntimes() const
+{
+    return mPackageTool->getUnusedFlatpakRuntimes();
+}
+
+bool ToolManager::removeUnusedFlatpakRuntimes()
+{
+    return mPackageTool->removeUnusedFlatpakRuntimes();
+}
+
+/*
+ * Orphan packages (FR-80)
+ */
+QList<OrphanPackage> ToolManager::getOrphanPackages() const
+{
+    return mPackageTool->getOrphanPackages();
+}
+
+bool ToolManager::removeOrphanPackages()
+{
+    return mPackageTool->removeOrphanPackages();
+}
+
+/*
  * Docker
  */
 bool ToolManager::checkDocker() const

@@ -66,6 +66,23 @@ void PackageService::trashApps(const QStringList &appPaths)
     });
 }
 
+void PackageService::fetchOrphanPackages()
+{
+    QThreadPool::globalInstance()->start([this]() {
+        QList<OrphanPackage> packages = mToolManager->getOrphanPackages();
+        emit orphanPackagesFetched(packages);
+    });
+}
+
+void PackageService::removeOrphanPackages()
+{
+    QThreadPool::globalInstance()->start([this]() {
+        emit mSignalMapper->sigUninstallStarted();
+        mToolManager->removeOrphanPackages();
+        emit mSignalMapper->sigUninstallFinished();
+    });
+}
+
 QStringList PackageService::dryRunRemovePackages(const QStringList &packages)
 {
     return mToolManager->dryRunRemovePackages(packages);

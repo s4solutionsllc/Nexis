@@ -175,7 +175,7 @@ Manage applications that auto-start at login.
 
 ### 4. System Cleaner
 
-Scan and remove system junk files across 8 categories.
+Scan and remove system junk files across 9 categories.
 
 **Scan categories:**
 1. **Package Cache** — APT, DNF/YUM, Pacman, or Homebrew caches (platform-detected)
@@ -186,6 +186,7 @@ Scan and remove system junk files across 8 categories.
 6. **Dev Tool Caches** — npm, cargo, gradle, Electron app caches, pip cache
 7. **Broken Symlinks** — Detects broken symbolic links in `~/.local/`, `~/bin/`, Homebrew prefix (macOS) or `/usr/local/bin` (Linux)
 8. **Browser Privacy** — Browser caches (Chrome, Edge, Brave, Firefox, Safari), session data, and OS-level recent file lists (macOS LSSharedFileList, Linux recently-used.xbel)
+9. **Snap/Flatpak Revisions** *(Linux only)* — Stale disabled snap revisions and unused Flatpak runtimes; cleaned via `snap remove --revision` and `flatpak uninstall --unused`
 
 **UI features:**
 - Hierarchical tree view with checkboxes (category > individual files)
@@ -266,7 +267,7 @@ View and manage running processes.
 
 ### 9. Uninstaller
 
-Uninstall applications and packages. Labeled "Applications" on macOS.
+Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout: System Packages, Snap Packages, Orphan Packages.
 
 - Package tree view grouped by type (Formula/Cask on macOS; installed/universe on Linux)
 - Search filter with auto-expand matching sections
@@ -274,10 +275,11 @@ Uninstall applications and packages. Labeled "Applications" on macOS.
 - Purge option (Linux only) — removes config files in addition to package
 - Dry-run confirmation showing dependencies that would also be removed (APT)
 - Async background loading with progress indicator
+- **Orphan Packages tab** — Lists packages no longer required by any installed package. Removal via platform `autoremove` command (all-or-nothing). Supported on APT, DNF, Pacman, and Homebrew.
 
 **Platform backends:**
-- Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`
-- macOS: `brew uninstall` for Homebrew packages; Finder AppleScript Trash for `.app` bundles
+- Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`
+- macOS: `brew uninstall` for Homebrew packages; Finder AppleScript Trash for `.app` bundles; `brew autoremove` for orphans
 
 ### 10. Resources
 

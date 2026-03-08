@@ -21,6 +21,13 @@ public:
     QList<Package> getInstalledApps() override;
     bool trashApps(const QStringList &appPaths) override;
 
+    QList<StaleSnapRevision> getStaleSnapRevisions() override;
+    bool removeStaleSnapRevisions(const QList<StaleSnapRevision> &revisions) override;
+    QStringList getUnusedFlatpakRuntimes() override;
+    bool removeUnusedFlatpakRuntimes() override;
+    QList<OrphanPackage> getOrphanPackages() override;
+    bool removeOrphanPackages() override;
+
 private:
     QFileInfoList getDpkgPackageCaches();
     QList<Package> getDpkgPackages();
@@ -37,6 +44,10 @@ private:
     QList<Package> getPacmanPackages();
     bool pacmanRemovePackages(QStringList packages);
     QStringList pacmanDryRunRemove(const QStringList &packages);
+
+    QList<OrphanPackage> getAptOrphans();
+    QList<OrphanPackage> getDnfOrphans();
+    QList<OrphanPackage> getPacmanOrphans();
 };
 
 #endif // PACKAGE_TOOL_LINUX_H

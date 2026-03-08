@@ -19,7 +19,8 @@ public:
         TRASH,
         DEV_TOOL_CACHES,
         BROKEN_SYMLINKS,
-        BROWSER_PRIVACY
+        BROWSER_PRIVACY,
+        SNAP_FLATPAK_REVISIONS
     };
 
     struct ScanResult {

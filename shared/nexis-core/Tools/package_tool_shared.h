@@ -14,6 +14,19 @@ struct Package {
     QString path;  // Full filesystem path (macOS .app bundles; empty on Linux)
 };
 
+struct StaleSnapRevision {
+    QString name;       // snap name (e.g. "firefox")
+    QString revision;   // revision number (e.g. "4173")
+    QString filePath;   // full path to .snap file (e.g. "/var/lib/snapd/snaps/firefox_4173.snap")
+    quint64 size = 0;   // file size in bytes
+};
+
+struct OrphanPackage {
+    QString name;
+    QString description;
+    quint64 size = 0;   // installed size in bytes (0 if unavailable)
+};
+
 enum PackageTools {
     APT,        // debian
     APT_RPM,    // ALT Linux, PCLinuxOS, Vine Linux (apt-get + rpm)
@@ -41,6 +54,19 @@ public:
 
     virtual QList<Package> getInstalledApps() = 0;
     virtual bool trashApps(const QStringList &appPaths) = 0;
+
+    virtual QList<StaleSnapRevision> getStaleSnapRevisions() = 0;
+    virtual bool removeStaleSnapRevisions(const QList<StaleSnapRevision> &revisions) = 0;
+    virtual QStringList getUnusedFlatpakRuntimes() = 0;
+    virtual bool removeUnusedFlatpakRuntimes() = 0;
+    virtual QList<OrphanPackage> getOrphanPackages() = 0;
+    virtual bool removeOrphanPackages() = 0;
+
+    static QList<StaleSnapRevision> parseSnapListAll(const QString &output);
+    static QList<OrphanPackage> parseAptAutoremoveDryRun(const QString &output);
+    static QList<OrphanPackage> parsePacmanOrphans(const QString &output);
+    static QList<OrphanPackage> parseDnfAutoremoveDryRun(const QString &output);
+    static QList<OrphanPackage> parseBrewAutoremoveDryRun(const QString &output);
 
     static QString friendlySectionName(const QString &section);
 

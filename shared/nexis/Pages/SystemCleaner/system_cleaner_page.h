@@ -14,6 +14,7 @@
 
 #include <Managers/cleaner_service.h>
 
+class QCheckBox;
 class QLabel;
 class QFrame;
 class SignalMapper;
@@ -36,7 +37,8 @@ public:
         TRASH,
         DEV_TOOL_CACHES,
         BROKEN_SYMLINKS,
-        BROWSER_PRIVACY
+        BROWSER_PRIVACY,
+        SNAP_FLATPAK_REVISIONS
     };
 
 public:
@@ -107,6 +109,8 @@ private:
     QString mLblBrokenSymlinksText;
     bool mScanBrowserPrivacy;
     QString mLblBrowserPrivacyText;
+    bool mScanSnapFlatpak;
+    QString mLblSnapFlatpakText;
     // Scan results (written on worker, read on main thread in onScanFinished)
     QFileInfoList mPackageCaches;
     QFileInfoList mCrashReports;
@@ -115,10 +119,12 @@ private:
     QFileInfoList mDevToolCaches;
     QFileInfoList mBrokenSymlinks;
     QFileInfoList mBrowserPrivacy;
+    QFileInfoList mSnapFlatpakRevisions;
 
     // Thread-safe clean state (set on main thread before worker, read on worker)
     QStringList mFilesToDelete;
     bool mCleanTrash;
+    bool mCleanSnapFlatpak;
     // Clean results (written on worker, read on main thread in onCleanFinished)
     quint64 mTotalCleanedSize;
     // Children to remove from tree (indices captured on main thread before worker)
@@ -130,6 +136,11 @@ private:
 
     // Track background tasks so they can be awaited on shutdown (BUG-05)
     QFuture<void> mWorkerFuture;
+
+    // Snap/Flatpak category (added programmatically, Linux only)
+    QLabel *mLblSnapFlatpakImg = nullptr;
+    QLabel *mLblSnapFlatpakLabel = nullptr;
+    QCheckBox *mCheckSnapFlatpak = nullptr;
 
     // Schedule indicator panel
     QFrame *mScheduleIndicator = nullptr;

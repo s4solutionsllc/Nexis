@@ -32,6 +32,16 @@ public:
     QList<Package> getInstalledApps() const;
     bool trashApps(const QStringList &appPaths);
 
+    // Snap/Flatpak revision cleanup (FR-79)
+    QList<StaleSnapRevision> getStaleSnapRevisions() const;
+    bool removeStaleSnapRevisions(const QList<StaleSnapRevision> &revisions);
+    QStringList getUnusedFlatpakRuntimes() const;
+    bool removeUnusedFlatpakRuntimes();
+
+    // Orphan packages (FR-80)
+    QList<OrphanPackage> getOrphanPackages() const;
+    bool removeOrphanPackages();
+
     bool checkGnomeSettings() const;
     bool checkDocker() const;
 

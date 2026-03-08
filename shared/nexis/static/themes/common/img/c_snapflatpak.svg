@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="128px" viewBox="0 0 128 128" width="128px" xmlns="http://www.w3.org/2000/svg">
+    <!-- Box body -->
+    <path d="m 20 40 h 88 v 72 c 0 4.4 -3.6 8 -8 8 h -72 c -4.4 0 -8 -3.6 -8 -8 z m 0 0" fill="#8ff0a4"/>
+    <!-- Box lid top -->
+    <path d="m 14 24 c 0 -4.4 3.6 -8 8 -8 h 84 c 4.4 0 8 3.6 8 8 v 16 h -100 z m 0 0" fill="#57e389"/>
+    <!-- Box lid bottom -->
+    <path d="m 14 40 h 100 v 8 h -100 z m 0 0" fill="#33d17a"/>
+    <!-- Recycle arrows circle -->
+    <path d="m 64 60 c -13.254688 0 -24 10.746094 -24 24 s 10.745312 24 24 24 s 24 -10.746094 24 -24 s -10.745312 -24 -24 -24 z m 0 4 c 11.046875 0 20 8.953125 20 20 s -8.953125 20 -20 20 s -20 -8.953125 -20 -20 s 8.953125 -20 20 -20 z m 0 0" fill="#2ec27e"/>
+    <!-- Arrow 1 (top) -->
+    <path d="m 64 66 l 8 8 h -5 v 6 h -6 v -6 h -5 z m 0 0" fill="#ffffff"/>
+    <!-- Arrow 2 (bottom-left) -->
+    <path d="m 50 86 l 4 -10 l 3.5 3.5 l 4.2 -4.2 l 4.2 4.2 l -4.2 4.2 l 3.5 3.5 z m 0 0" fill="#ffffff"/>
+    <!-- Arrow 3 (bottom-right) -->
+    <path d="m 78 86 l -10 -4 l 3.5 -3.5 l -4.2 -4.2 l 4.2 -4.2 l 4.2 4.2 l 3.5 -3.5 z m 0 0" fill="#ffffff"/>
+</svg>

@@ -324,7 +324,7 @@ quint64 InfoManager::getMemUsed() const  { return mi.getMemUsed(); }
 ```
 
 **Thick services** (real business logic):
-- `CleanerService` — 300+ lines of scan logic across 8 categories (including Browser Privacy), file partitioning, min-age filtering, statistics collection
+- `CleanerService` — 300+ lines of scan logic across 9 categories (including Browser Privacy, Snap/Flatpak Revisions), file partitioning, min-age filtering, statistics collection
 - `ScheduleManager` — 500+ lines of CRUD operations, JSON persistence, OS-native scheduler sync (launchd plists, systemd timers, cron entries)
 
 **The problem:** There's no clear architectural principle for when logic belongs in:
@@ -344,7 +344,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ### 5. ~~No Automated Test Suite~~ (Resolved)
 
-**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 16 CTest executables with ~218 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool), service logic (HostService), manager logic (ScheduleManager), theme token validation, and screenshot regression tests.
+**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 18 CTest executables with ~230+ test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool, PackageTool), service logic (HostService), manager logic (ScheduleManager), power profile parsing (PowerProfileInfo), theme token validation, and screenshot regression tests.
 
 **Refactoring for testability:**
 - `parseSmartctlJson()` deduplicated from 2 platform files into shared public static `parseSmartctlJsonInto()`

@@ -4,11 +4,14 @@
 #include "nexis_roles.h"
 #include "dpi.h"
 #include <Managers/schedule_manager.h>
+#include <Managers/tool_manager.h>
 #include "signal_mapper.h"
 #include <Utils/format_util.h>
 #include <QLabel>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QCheckBox>
+#include <QGridLayout>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -64,6 +67,29 @@ void SystemCleanerPage::init()
     setPixmap(ui->lblDevToolCacheImg, ":/static/themes/common/img/c_devtools.svg");
     setPixmap(ui->lblBrokenSymlinksImg, ":/static/themes/common/img/c_symlink.svg");
     setPixmap(ui->lblBrowserPrivacyImg, ":/static/themes/common/img/c_privacy.svg");
+
+#ifndef Q_OS_MACOS
+    // Snap/Flatpak category — added programmatically (Linux only)
+    {
+        QGridLayout *grid = qobject_cast<QGridLayout *>(ui->cleanerCategories->layout());
+        if (grid) {
+            mLblSnapFlatpakImg = new QLabel;
+            setPixmap(mLblSnapFlatpakImg, ":/static/themes/common/img/c_snapflatpak.svg");
+            grid->addWidget(mLblSnapFlatpakImg, 2, 10, Qt::AlignHCenter);
+
+            mLblSnapFlatpakLabel = new QLabel(tr("Snap/Flatpak\nRevisions"));
+            mLblSnapFlatpakLabel->setAlignment(Qt::AlignCenter);
+            mLblSnapFlatpakLabel->setWordWrap(true);
+            grid->addWidget(mLblSnapFlatpakLabel, 3, 10, Qt::AlignHCenter);
+
+            mCheckSnapFlatpak = new QCheckBox;
+            mCheckSnapFlatpak->setCursor(Qt::PointingHandCursor);
+            mCheckSnapFlatpak->setFocusPolicy(Qt::NoFocus);
+            mCheckSnapFlatpak->setAccessibleName("circle");
+            grid->addWidget(mCheckSnapFlatpak, 4, 10, Qt::AlignHCenter | Qt::AlignTop);
+        }
+    }
+#endif
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
@@ -171,6 +197,7 @@ void SystemCleanerPage::systemScan()
     if (mScanDevToolCache)  categories << CleanerService::DEV_TOOL_CACHES;
     if (mScanBrokenSymlinks) categories << CleanerService::BROKEN_SYMLINKS;
     if (mScanBrowserPrivacy) categories << CleanerService::BROWSER_PRIVACY;
+    if (mScanSnapFlatpak)   categories << CleanerService::SNAP_FLATPAK_REVISIONS;
 
     CleanerService::ScanResult result = mCleanerService->scan(categories);
 
@@ -182,6 +209,7 @@ void SystemCleanerPage::systemScan()
     mDevToolCaches = result.categoryFiles.value(CleanerService::DEV_TOOL_CACHES);
     mBrokenSymlinks = result.categoryFiles.value(CleanerService::BROKEN_SYMLINKS);
     mBrowserPrivacy = result.categoryFiles.value(CleanerService::BROWSER_PRIVACY);
+    mSnapFlatpakRevisions = result.categoryFiles.value(CleanerService::SNAP_FLATPAK_REVISIONS);
 
     emit scanFinishedS();
 }
@@ -235,6 +263,9 @@ void SystemCleanerPage::onScanFinished()
     if (mScanBrowserPrivacy) {
         totalSize += addTreeRoot(BROWSER_PRIVACY, mLblBrowserPrivacyText, mBrowserPrivacy);
     }
+    if (mScanSnapFlatpak) {
+        totalSize += addTreeRoot(SNAP_FLATPAK_REVISIONS, mLblSnapFlatpakText, mSnapFlatpakRevisions);
+    }
     if (mScanTrash) {
 #ifdef Q_OS_MACOS
         totalSize += addTreeRoot(TRASH, mLblTrashText,
@@ -262,6 +293,7 @@ void SystemCleanerPage::onScanFinished()
     ui->checkDevToolCache->setChecked(false);
     ui->checkBrokenSymlinks->setChecked(false);
     ui->checkBrowserPrivacy->setChecked(false);
+    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setChecked(false);
 
     // Release scan result lists — data is now in the tree widget (BUG-10)
     mPackageCaches.clear();
@@ -271,6 +303,7 @@ void SystemCleanerPage::onScanFinished()
     mDevToolCaches.clear();
     mBrokenSymlinks.clear();
     mBrowserPrivacy.clear();
+    mSnapFlatpakRevisions.clear();
 
     mScanInProgress = false;
 }
@@ -301,6 +334,15 @@ void SystemCleanerPage::systemClean()
         mTotalCleanedSize += mCleanerService->cleanTrash();
     }
 
+    if (mCleanSnapFlatpak) {
+        ToolManager *tmr = ToolManager::ins();
+        QList<StaleSnapRevision> snapRevs = tmr->getStaleSnapRevisions();
+        for (const StaleSnapRevision &rev : snapRevs)
+            mTotalCleanedSize += rev.size;
+        tmr->removeStaleSnapRevisions(snapRevs);
+        tmr->removeUnusedFlatpakRuntimes();
+    }
+
     if (!mFilesToDelete.isEmpty()) {
         mTotalCleanedSize += mCleanerService->cleanFiles(mFilesToDelete);
     }
@@ -317,9 +359,14 @@ void SystemCleanerPage::onCleanFinished()
     for (int k = mChildrenToRemove.size() - 1; k >= 0; --k) {
         int parentIdx = mChildrenToRemove.at(k).first;
         int childIdx = mChildrenToRemove.at(k).second;
-        QTreeWidgetItem *parent = tree->topLevelItem(parentIdx);
-        if (parent) {
-            delete parent->takeChild(childIdx);
+        if (childIdx == -1) {
+            // Remove entire top-level item (e.g. Snap/Flatpak all-or-nothing clean)
+            delete tree->takeTopLevelItem(parentIdx);
+        } else {
+            QTreeWidgetItem *parent = tree->topLevelItem(parentIdx);
+            if (parent) {
+                delete parent->takeChild(childIdx);
+            }
         }
     }
 
@@ -361,8 +408,9 @@ void SystemCleanerPage::on_btnScan_clicked()
     mScanDevToolCache = ui->checkDevToolCache->isChecked();
     mScanBrokenSymlinks = ui->checkBrokenSymlinks->isChecked();
     mScanBrowserPrivacy = ui->checkBrowserPrivacy->isChecked();
+    mScanSnapFlatpak = mCheckSnapFlatpak ? mCheckSnapFlatpak->isChecked() : false;
 
-    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash || mScanDevToolCache || mScanBrokenSymlinks || mScanBrowserPrivacy)) {
+    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash || mScanDevToolCache || mScanBrokenSymlinks || mScanBrowserPrivacy || mScanSnapFlatpak)) {
         return;
     }
 
@@ -375,6 +423,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mLblDevToolCacheText = ui->lblDevToolCache->text();
     mLblBrokenSymlinksText = ui->lblBrokenSymlinks->text();
     mLblBrowserPrivacyText = ui->lblBrowserPrivacy->text();
+    mLblSnapFlatpakText = mLblSnapFlatpakLabel ? mLblSnapFlatpakLabel->text() : tr("Snap/Flatpak Revisions");
 
     // Pre-scan UI updates (main thread)
     ui->btnScan->hide();
@@ -388,6 +437,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     ui->checkDevToolCache->setEnabled(false);
     ui->checkBrokenSymlinks->setEnabled(false);
     ui->checkBrowserPrivacy->setEnabled(false);
+    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setEnabled(false);
     ui->checkSelectAllSystemScan->setEnabled(false);
 
     // Clear cached results
@@ -398,6 +448,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     mDevToolCaches.clear();
     mBrokenSymlinks.clear();
     mBrowserPrivacy.clear();
+    mSnapFlatpakRevisions.clear();
 
     mScanInProgress = true;
 
@@ -425,22 +476,28 @@ void SystemCleanerPage::on_btnClean_clicked()
     mFilesToDelete.clear();
     mChildrenToRemove.clear();
     mCleanTrash = false;
+    mCleanSnapFlatpak = false;
 
     for (int i = 0; i < tree->topLevelItemCount(); ++i) {
         QTreeWidgetItem *it = tree->topLevelItem(i);
         CleanCategories cat = (CleanCategories) it->data(2, 0).toInt();
 
-        if (cat != CleanCategories::TRASH) {
-            for (int j = 0; j < it->childCount(); ++j) {
-                if (it->child(j)->checkState(0) == Qt::Checked) {
-                    QString filePath = it->child(j)->data(2, 0).toString();
-                    mFilesToDelete << filePath;
-                    mChildrenToRemove.append(QPair<int,int>(i, j));
-                }
-            }
-        } else if (cat == CleanCategories::TRASH) {
+        if (cat == CleanCategories::TRASH) {
             if (it->checkState(0) == Qt::Checked) {
                 mCleanTrash = true;
+            }
+        } else if (cat == CleanCategories::SNAP_FLATPAK_REVISIONS) {
+            if (it->checkState(0) == Qt::Checked) {
+                mCleanSnapFlatpak = true;
+                mChildrenToRemove.append(QPair<int,int>(i, -1));
+            }
+        } else {
+            // Normal file-based category — collect checked children
+            for (int j = 0; j < it->childCount(); ++j) {
+                if (it->child(j)->checkState(0) == Qt::Checked) {
+                    mFilesToDelete << it->child(j)->data(2, 0).toString();
+                    mChildrenToRemove.append(QPair<int,int>(i, j));
+                }
             }
         }
     }
@@ -468,6 +525,7 @@ void SystemCleanerPage::on_btnBackToCategories_clicked()
     ui->checkDevToolCache->setEnabled(true);
     ui->checkBrokenSymlinks->setEnabled(true);
     ui->checkBrowserPrivacy->setEnabled(true);
+    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setEnabled(true);
     ui->treeWidgetScanResult->clear();
     ui->stackedWidget->setCurrentIndex(0);
     ui->checkSelectAllSystemScan->setEnabled(true);
@@ -484,6 +542,7 @@ void SystemCleanerPage::on_checkSelectAllSystemScan_clicked(bool checked)
     ui->checkDevToolCache->setChecked(checked);
     ui->checkBrokenSymlinks->setChecked(checked);
     ui->checkBrowserPrivacy->setChecked(checked);
+    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setChecked(checked);
 }
 
 void SystemCleanerPage::on_checkSelectAll_clicked(bool checked)

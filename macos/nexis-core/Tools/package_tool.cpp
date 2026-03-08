@@ -238,4 +238,45 @@ bool PackageToolMacOS::trashApps(const QStringList &appPaths)
     return allOk;
 }
 
+/**********
+ * STALE SNAP/FLATPAK (not applicable on macOS)
+ **********/
+QList<StaleSnapRevision> PackageToolMacOS::getStaleSnapRevisions() { return {}; }
+bool PackageToolMacOS::removeStaleSnapRevisions(const QList<StaleSnapRevision> &) { return false; }
+QStringList PackageToolMacOS::getUnusedFlatpakRuntimes() { return {}; }
+bool PackageToolMacOS::removeUnusedFlatpakRuntimes() { return false; }
+
+/**********
+ * ORPHAN PACKAGES (FR-80) — brew autoremove
+ **********/
+QList<OrphanPackage> PackageToolMacOS::getOrphanPackages()
+{
+    QString brew = findBrew();
+    if (brew.isEmpty())
+        return {};
+
+    try {
+        QString output = CommandUtil::exec(brew, {"autoremove", "--dry-run"}, {}, 60000).trimmed();
+        return PackageTool::parseBrewAutoremoveDryRun(output);
+    } catch (const QString &ex) {
+        qCritical() << "Failed to get brew orphans:" << ex;
+    }
+    return {};
+}
+
+bool PackageToolMacOS::removeOrphanPackages()
+{
+    QString brew = findBrew();
+    if (brew.isEmpty())
+        return false;
+
+    try {
+        CommandUtil::exec(brew, {"autoremove"}, {}, 120000);
+        return true;
+    } catch (const QString &ex) {
+        qCritical() << "Failed to brew autoremove:" << ex;
+    }
+    return false;
+}
+
 // friendlySectionName() is in shared/nexis-core/Tools/package_tool_shared.cpp

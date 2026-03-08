@@ -413,4 +413,179 @@ QStringList PackageToolLinux::pacmanDryRunRemove(const QStringList &packages)
     return wouldRemove;
 }
 
+/**********
+ * STALE SNAP REVISIONS (FR-79)
+ **********/
+QList<StaleSnapRevision> PackageToolLinux::getStaleSnapRevisions()
+{
+    if (!CommandUtil::isExecutable("snap"))
+        return {};
+
+    try {
+        QString output = CommandUtil::exec("snap", {"list", "--all"}).trimmed();
+        QList<StaleSnapRevision> revisions = PackageTool::parseSnapListAll(output);
+
+        for (int i = 0; i < revisions.size(); ++i) {
+            QFileInfo fi(revisions[i].filePath);
+            if (fi.exists())
+                revisions[i].size = fi.size();
+        }
+
+        return revisions;
+    } catch (const QString &ex) {
+        qCritical() << "Failed to get stale snap revisions:" << ex;
+    }
+    return {};
+}
+
+bool PackageToolLinux::removeStaleSnapRevisions(const QList<StaleSnapRevision> &revisions)
+{
+    bool allOk = true;
+    for (const StaleSnapRevision &rev : revisions) {
+        try {
+            CommandUtil::sudoExec("snap", {"remove", rev.name, "--revision=" + rev.revision});
+        } catch (const QString &ex) {
+            qCritical() << "Failed to remove snap revision:" << rev.name << rev.revision << ex;
+            allOk = false;
+        }
+    }
+    return allOk;
+}
+
+/**********
+ * UNUSED FLATPAK RUNTIMES (FR-79)
+ **********/
+QStringList PackageToolLinux::getUnusedFlatpakRuntimes()
+{
+    if (!CommandUtil::isExecutable("flatpak"))
+        return {};
+
+    try {
+        QString output = CommandUtil::exec("flatpak", {"uninstall", "--unused",
+                                                        "--noninteractive"}, {}, 30000).trimmed();
+        if (output.isEmpty())
+            return {};
+
+        QStringList refs;
+        const QStringList lines = output.split('\n');
+        for (const QString &line : lines) {
+            QString trimmed = line.trimmed();
+            if (trimmed.isEmpty() || trimmed.startsWith("ID") || trimmed.contains("---"))
+                continue;
+            // Lines may start with "1. " numbering or just be ref IDs
+            static const QRegularExpression refRe(R"((?:\d+\.\s+)?(\S+))");
+            QRegularExpressionMatch match = refRe.match(trimmed);
+            if (match.hasMatch()) {
+                QString ref = match.captured(1);
+                if (ref.contains('.'))
+                    refs.append(ref);
+            }
+        }
+        return refs;
+    } catch (const QString &ex) {
+        qCritical() << "Failed to get unused flatpak runtimes:" << ex;
+    }
+    return {};
+}
+
+bool PackageToolLinux::removeUnusedFlatpakRuntimes()
+{
+    if (!CommandUtil::isExecutable("flatpak"))
+        return false;
+
+    try {
+        CommandUtil::exec("flatpak", {"uninstall", "--unused", "-y", "--noninteractive"}, {}, 120000);
+        return true;
+    } catch (const QString &ex) {
+        qCritical() << "Failed to remove unused flatpak runtimes:" << ex;
+    }
+    return false;
+}
+
+/**********
+ * ORPHAN PACKAGES (FR-80)
+ **********/
+QList<OrphanPackage> PackageToolLinux::getOrphanPackages()
+{
+    switch (currentPackageTool) {
+    case APT:
+    case APT_RPM:
+        return getAptOrphans();
+    case DNF:
+    case YUM:
+        return getDnfOrphans();
+    case PACMAN:
+        return getPacmanOrphans();
+    default:
+        return {};
+    }
+}
+
+bool PackageToolLinux::removeOrphanPackages()
+{
+    try {
+        switch (currentPackageTool) {
+        case APT:
+        case APT_RPM:
+            CommandUtil::sudoExec("apt-get", {"autoremove", "-y"});
+            return true;
+        case DNF:
+            CommandUtil::sudoExec("dnf", {"autoremove", "-y"});
+            return true;
+        case YUM:
+            CommandUtil::sudoExec("yum", {"autoremove", "-y"});
+            return true;
+        case PACMAN: {
+            QString output = CommandUtil::exec("pacman", {"-Qdtq"}).trimmed();
+            if (output.isEmpty())
+                return true;
+            QStringList orphans = output.split('\n');
+            QStringList args = {"-Rns", "--noconfirm"};
+            args.append(orphans);
+            CommandUtil::sudoExec("pacman", args);
+            return true;
+        }
+        default:
+            return false;
+        }
+    } catch (const QString &ex) {
+        qCritical() << "Failed to remove orphan packages:" << ex;
+    }
+    return false;
+}
+
+QList<OrphanPackage> PackageToolLinux::getAptOrphans()
+{
+    try {
+        QString output = CommandUtil::exec("bash", {"-c", "apt-get autoremove --dry-run 2>&1"}).trimmed();
+        return PackageTool::parseAptAutoremoveDryRun(output);
+    } catch (const QString &ex) {
+        qCritical() << "Failed to get apt orphans:" << ex;
+    }
+    return {};
+}
+
+QList<OrphanPackage> PackageToolLinux::getDnfOrphans()
+{
+    try {
+        QString output = CommandUtil::exec("dnf", {"autoremove", "--assumeno"}).trimmed();
+        return PackageTool::parseDnfAutoremoveDryRun(output);
+    } catch (const QString &ex) {
+        qCritical() << "Failed to get dnf orphans:" << ex;
+    }
+    return {};
+}
+
+QList<OrphanPackage> PackageToolLinux::getPacmanOrphans()
+{
+    try {
+        QString output = CommandUtil::exec("pacman", {"-Qdtq"}).trimmed();
+        return PackageTool::parsePacmanOrphans(output);
+    } catch (const QString &ex) {
+        // pacman -Qdtq returns non-zero if no orphans found
+        qDebug() << "No pacman orphans or error:" << ex;
+    }
+    return {};
+}
+
 // friendlySectionName() is in shared/nexis-core/Tools/package_tool_shared.cpp

@@ -43,10 +43,13 @@ private slots:
 #endif
     void onPackagesLoaded(QList<Package> packages);
     void onSnapPackagesLoaded(QStringList packages);
+    void onOrphanPackagesLoaded(QList<OrphanPackage> packages);
     void on_btnSystemPackages_clicked();
     void on_btnSnapPackages_clicked();
+    void on_btnOrphanPackages_clicked();
 
     void on_listWidgetSnapPackages_itemClicked(QListWidgetItem *item);
+    void on_listWidgetOrphanPackages_itemClicked(QListWidgetItem *item);
     void onTreeItemChanged(QTreeWidgetItem *item, int column);
 
 private:

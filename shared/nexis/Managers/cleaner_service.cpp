@@ -38,6 +38,7 @@ QString CleanerService::categoryName(CleanCategory cat)
         case DEV_TOOL_CACHES:   return QObject::tr("Dev Tool Caches");
         case BROKEN_SYMLINKS:   return QObject::tr("Broken Symlinks");
         case BROWSER_PRIVACY:   return QObject::tr("Browser Privacy");
+        case SNAP_FLATPAK_REVISIONS: return QObject::tr("Snap/Flatpak Revisions");
     }
     return QString();
 }
@@ -46,7 +47,7 @@ QList<CleanerService::CleanCategory> CleanerService::allCategories()
 {
     return { PACKAGE_CACHE, CRASH_REPORTS, APPLICATION_LOGS,
              APPLICATION_CACHES, TRASH, DEV_TOOL_CACHES, BROKEN_SYMLINKS,
-             BROWSER_PRIVACY };
+             BROWSER_PRIVACY, SNAP_FLATPAK_REVISIONS };
 }
 
 CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &categories)
@@ -79,6 +80,26 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
             case BROWSER_PRIVACY:
                 files = im->getBrowserPrivacyArtifacts();
                 break;
+            case SNAP_FLATPAK_REVISIONS: {
+                // Stale snap revisions are real files — convert to QFileInfoList
+                QList<StaleSnapRevision> snapRevs = tmr->getStaleSnapRevisions();
+                for (const StaleSnapRevision &rev : snapRevs) {
+                    QFileInfo fi(rev.filePath);
+                    if (fi.exists())
+                        files.append(fi);
+                }
+                // Unused flatpak runtimes — attempt to find their install directories
+                QStringList flatpakRefs = tmr->getUnusedFlatpakRuntimes();
+                for (const QString &ref : flatpakRefs) {
+                    // Flatpak installs runtimes under /var/lib/flatpak/runtime/<ref-parts>
+                    // Use the ref as a display-only entry with its first component as dir
+                    QString runtimeDir = "/var/lib/flatpak/runtime/" + ref.section('/', 0, 0);
+                    QFileInfo fi(runtimeDir);
+                    if (fi.exists())
+                        files.append(fi);
+                }
+                break;
+            }
             case TRASH: {
 #ifdef Q_OS_MACOS
                 QString trashPath = QDir::homePath() + "/.Trash/";
@@ -103,6 +124,7 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
 {
     CleanResult result;
     result.timestamp = QDateTime::currentDateTime();
+    ToolManager *tmr = ToolManager::ins();
 
     ScanResult scanResult = scan(categories);
 
@@ -111,6 +133,12 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
 
         if (cat == TRASH) {
             catBytes = cleanTrash();
+        } else if (cat == SNAP_FLATPAK_REVISIONS) {
+            // Special-case: use package manager commands, not file deletion
+            for (const QFileInfo &fi : scanResult.categoryFiles[cat])
+                catBytes += FileUtil::getFileSize(fi.absoluteFilePath());
+            tmr->removeStaleSnapRevisions(tmr->getStaleSnapRevisions());
+            tmr->removeUnusedFlatpakRuntimes();
         } else {
             QStringList paths;
             for (const QFileInfo &fi : scanResult.categoryFiles[cat]) {

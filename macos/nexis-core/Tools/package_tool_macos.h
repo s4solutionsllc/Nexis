@@ -21,6 +21,13 @@ public:
     QList<Package> getInstalledApps() override;
     bool trashApps(const QStringList &appPaths) override;
 
+    QList<StaleSnapRevision> getStaleSnapRevisions() override;
+    bool removeStaleSnapRevisions(const QList<StaleSnapRevision> &revisions) override;
+    QStringList getUnusedFlatpakRuntimes() override;
+    bool removeUnusedFlatpakRuntimes() override;
+    QList<OrphanPackage> getOrphanPackages() override;
+    bool removeOrphanPackages() override;
+
 private:
     QFileInfoList getHomebrewCaches();
     QList<Package> getHomebrewPackages();

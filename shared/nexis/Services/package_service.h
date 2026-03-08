@@ -20,16 +20,19 @@ public:
 
     void fetchPackages();
     void fetchSnapPackages();
+    void fetchOrphanPackages();
 
     void uninstallPackages(const QStringList &packages, bool purge);
     void uninstallSnapPackages(const QStringList &packages);
     void trashApps(const QStringList &appPaths);
+    void removeOrphanPackages();
 
     QStringList dryRunRemovePackages(const QStringList &packages);
 
 signals:
     void packagesFetched(QList<Package> packages);
     void snapPackagesFetched(QStringList packages);
+    void orphanPackagesFetched(QList<OrphanPackage> packages);
 
 private:
     static PackageService *instance;
