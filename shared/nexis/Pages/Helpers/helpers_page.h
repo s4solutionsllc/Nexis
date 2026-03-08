@@ -9,6 +9,7 @@ class QPushButton;
 class QLabel;
 class NetworkDiagWidget;
 class OpenPortsWidget;
+class FirewallWidget;
 
 namespace Ui {
 class HelpersPage;
@@ -27,6 +28,7 @@ private slots:
     void on_btnFlushDNS_clicked();
     void on_btnNetDiag_clicked();
     void on_btnOpenPorts_clicked();
+    void on_btnFirewall_clicked();
     void onRebuildSpotlight();
     void onVerifyDisk();
     void onRebuildLaunchServices();
@@ -39,6 +41,7 @@ private:
     HostManage *widgetHostManage;
     NetworkDiagWidget *mNetworkDiagWidget;
     OpenPortsWidget *mOpenPortsWidget;
+    FirewallWidget *mFirewallWidget;
 
 #ifdef Q_OS_MACOS
     QPushButton *mBtnRebuildSpotlight = nullptr;

@@ -340,6 +340,15 @@ Miscellaneous utility tools.
 - Sortable columns via `QSortFilterProxyModel`; runs on `QThreadPool` worker thread
 - Self-contained `OpenPortsWidget` (stacked widget page index 2); lazy-loaded on first click
 
+**Firewall Status (Phase 1)** — Lightweight firewall status indicator with enable/disable toggle:
+- Detects active firewall backend: macOS Application Firewall (`socketfilterfw`), `ufw` (Debian/Ubuntu), or `firewalld` (Fedora/RHEL)
+- Status display: colored dot (green=enabled, red=disabled), backend name, toggle button
+- macOS detail rows: Stealth Mode, Block All Incoming, App Rule Count (from `--listapps`)
+- Enable/disable toggle with confirmation dialog and privilege elevation (`sudoExec`)
+- Not-available state: warning label with `?` help button (tooltip lists installation commands for `ufw` and `firewalld`)
+- Self-contained `FirewallWidget` (stacked widget page index 3); lazy-loaded on first click
+- Theme-aware: uses `@successColor`/`@destructiveColor` for status dot, `@warningColor` for not-available state
+
 ### 12. APT Repository Manager / Homebrew
 
 Manage package repositories and sources. Conditional: shown only when the relevant package manager is detected.

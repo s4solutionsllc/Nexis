@@ -70,6 +70,23 @@ add_nexis_test(NAME OpenPortsTests
     Qt6::Widgets Qt6::Network
 )
 
+# FirewallWidget lives in the GUI target; compile its source + deps directly.
+add_nexis_test(NAME FirewallTests
+  SOURCES
+    core/test_firewall.cpp
+    "${GUI_SHARED_DIR}/Pages/Helpers/firewall_widget.cpp"
+    "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+    "${GUI_SHARED_DIR}/signal_mapper.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Helpers"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets Qt6::Network
+)
+
 # ── Service tests ─────────────────────────────────────────────────────────────
 # HostService lives in the GUI target; compile its source directly.
 add_nexis_test(NAME HostServiceTests
