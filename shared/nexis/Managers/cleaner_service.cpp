@@ -50,11 +50,96 @@ QList<CleanerService::CleanCategory> CleanerService::allCategories()
              BROWSER_PRIVACY, SNAP_FLATPAK_REVISIONS };
 }
 
+QList<CleanerService::ExclusionEntry> CleanerService::loadExclusions()
+{
+    QList<ExclusionEntry> entries;
+    QString json = SettingManager::ins()->getCleanerExclusions();
+    QJsonArray arr = QJsonDocument::fromJson(json.toUtf8()).array();
+    for (const QJsonValue &v : arr) {
+        QJsonObject obj = v.toObject();
+        ExclusionEntry e;
+        e.type = (obj["type"].toString() == "folder") ? ExclusionEntry::Folder : ExclusionEntry::File;
+        e.path = obj["path"].toString();
+        if (!e.path.isEmpty())
+            entries.append(e);
+    }
+    return entries;
+}
+
+void CleanerService::saveExclusions(const QList<ExclusionEntry> &entries)
+{
+    QJsonArray arr;
+    for (const ExclusionEntry &e : entries) {
+        QJsonObject obj;
+        obj["type"] = (e.type == ExclusionEntry::Folder) ? "folder" : "file";
+        obj["path"] = e.path;
+        arr.append(obj);
+    }
+    SettingManager::ins()->setCleanerExclusions(
+        QString::fromUtf8(QJsonDocument(arr).toJson(QJsonDocument::Compact)));
+}
+
+void CleanerService::addExclusion(ExclusionEntry::Type type, const QString &path)
+{
+    QList<ExclusionEntry> entries = loadExclusions();
+    for (const ExclusionEntry &e : entries) {
+        if (e.path == path)
+            return;
+    }
+    ExclusionEntry entry;
+    entry.type = type;
+    entry.path = path;
+    entries.append(entry);
+    saveExclusions(entries);
+}
+
+void CleanerService::removeExclusion(const QString &path)
+{
+    QList<ExclusionEntry> entries = loadExclusions();
+    entries.erase(std::remove_if(entries.begin(), entries.end(),
+        [&path](const ExclusionEntry &e) { return e.path == path; }),
+        entries.end());
+    saveExclusions(entries);
+}
+
+bool CleanerService::isExcluded(const QString &filePath, const QList<ExclusionEntry> &exclusions)
+{
+    QFileInfo inputInfo(filePath);
+    QString canonicalInput = inputInfo.isSymLink() ? inputInfo.canonicalFilePath() : QString();
+
+    for (const ExclusionEntry &e : exclusions) {
+        QString ePath = e.path;
+        QString canonicalExcl = QFileInfo(ePath).canonicalFilePath();
+
+        if (e.type == ExclusionEntry::File) {
+            if (filePath == ePath)
+                return true;
+            if (!canonicalExcl.isEmpty() && !canonicalInput.isEmpty() &&
+                canonicalInput == canonicalExcl)
+                return true;
+        } else {
+            if (filePath == ePath || filePath.startsWith(ePath + '/'))
+                return true;
+            if (!canonicalExcl.isEmpty()) {
+                if (!canonicalInput.isEmpty()) {
+                    if (canonicalInput == canonicalExcl ||
+                        canonicalInput.startsWith(canonicalExcl + '/'))
+                        return true;
+                }
+                if (filePath == canonicalExcl || filePath.startsWith(canonicalExcl + '/'))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
 CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &categories)
 {
     ScanResult result;
     InfoManager *im = InfoManager::ins();
     ToolManager *tmr = ToolManager::ins();
+    QList<ExclusionEntry> exclusions = loadExclusions();
 
     for (CleanCategory cat : categories) {
         QFileInfoList files;
@@ -110,6 +195,16 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
                 break;
             }
         }
+
+        if (!exclusions.isEmpty() && cat != TRASH) {
+            QFileInfoList filtered;
+            for (const QFileInfo &fi : files) {
+                if (!isExcluded(fi.absoluteFilePath(), exclusions))
+                    filtered.append(fi);
+            }
+            files = filtered;
+        }
+
         result.categoryFiles[cat] = files;
 
         for (const QFileInfo &fi : files) {

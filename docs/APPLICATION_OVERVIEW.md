@@ -188,6 +188,13 @@ Scan and remove system junk files across 9 categories.
 8. **Browser Privacy** — Browser caches (Chrome, Edge, Brave, Firefox, Safari), session data, and OS-level recent file lists (macOS LSSharedFileList, Linux recently-used.xbel)
 9. **Snap/Flatpak Revisions** *(Linux only)* — Stale disabled snap revisions and unused Flatpak runtimes; cleaned via `snap remove --revision` and `flatpak uninstall --unused`
 
+**Exclusion rules:**
+- Manage exclusion rules via gear button on the categories page → opens ExclusionManagerDialog
+- Add file or folder exclusions via native file chooser; remove via dialog
+- Right-click any scan result item → "Always exclude this" to instantly persist an exclusion rule and remove the item from the tree
+- Excluded paths are skipped during scanning (file exact match, folder prefix match, symlink-aware)
+- Exclusions persist across app restarts via JSON in QSettings
+
 **UI features:**
 - Hierarchical tree view with checkboxes (category > individual files)
 - Sort by name (A-Z, Z-A) or size (small-large, large-small)

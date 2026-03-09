@@ -113,6 +113,19 @@ add_nexis_test(NAME ScheduleTests
     "${GUI_SHARED_DIR}/Managers"
 )
 
+# CleanerService exclusion logic — links against nexis-gui because
+# CleanerService::scan()/clean() reference InfoManager and ToolManager.
+# Tests only exercise isExcluded(), load/save/add/removeExclusion().
+add_nexis_test(NAME CleanerExclusionTests
+  SOURCES
+    managers/test_cleaner_exclusions.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # ── Theme validation tests ─────────────────────────────────────────────────────
 add_nexis_test(NAME ThemeTokenTests   SOURCES theme/test_theme_tokens.cpp)
 

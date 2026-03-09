@@ -7,11 +7,14 @@
 #include <Managers/tool_manager.h>
 #include "signal_mapper.h"
 #include <Utils/format_util.h>
+#include "exclusion_manager_dialog.h"
 #include <QLabel>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QCheckBox>
 #include <QGridLayout>
+#include <QToolButton>
+#include <QMenu>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -91,6 +94,25 @@ void SystemCleanerPage::init()
     }
 #endif
 
+    // Exclusion rules gear button (BUG-52: QToolButton for macOS SVG compat)
+    {
+        QGridLayout *grid = qobject_cast<QGridLayout *>(ui->cleanerCategories->layout());
+        if (grid) {
+            mBtnExclusions = new QToolButton;
+            mBtnExclusions->setAutoRaise(true);
+            mBtnExclusions->setIcon(QIcon(
+                QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
+                    .arg(mAppManager->resolveThemeName())));
+            mBtnExclusions->setIconSize(Dpi::scale(20, 20));
+            mBtnExclusions->setToolTip(tr("Manage exclusion rules"));
+            mBtnExclusions->setCursor(Qt::PointingHandCursor);
+            mBtnExclusions->setFocusPolicy(Qt::NoFocus);
+            grid->addWidget(mBtnExclusions, 5, 9, Qt::AlignRight);
+            connect(mBtnExclusions, &QToolButton::clicked,
+                    this, &SystemCleanerPage::onManageExclusions);
+        }
+    }
+
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
     ui->treeWidgetScanResult->setColumnWidth(0, Dpi::scale(600));
@@ -109,6 +131,12 @@ void SystemCleanerPage::init()
         mLoadingMovie_2->stop();
         mLoadingMovie_2->setFileName(
             QString(":/static/themes/%1/img/loading.gif").arg(themeName));
+
+        if (mBtnExclusions) {
+            mBtnExclusions->setIcon(QIcon(
+                QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
+                    .arg(themeName)));
+        }
     });
 
     // needed to suppress qt warnings (signal/slot <> threads)
@@ -118,6 +146,11 @@ void SystemCleanerPage::init()
 
     connect(this, &SystemCleanerPage::scanFinishedS, this, &SystemCleanerPage::onScanFinished);
     connect(this, &SystemCleanerPage::cleanFinishedS, this, &SystemCleanerPage::onCleanFinished);
+
+    // Right-click context menu for scan results
+    ui->treeWidgetScanResult->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->treeWidgetScanResult, &QTreeWidget::customContextMenuRequested,
+            this, &SystemCleanerPage::onTreeContextMenu);
 
     initScheduleIndicator();
 }
@@ -675,4 +708,49 @@ void SystemCleanerPage::updateScheduleIndicator()
     }
 
     repositionScheduleIndicator();
+}
+
+void SystemCleanerPage::onManageExclusions()
+{
+    ExclusionManagerDialog dlg(this, mAppManager);
+    dlg.exec();
+}
+
+void SystemCleanerPage::onTreeContextMenu(const QPoint &pos)
+{
+    QTreeWidgetItem *item = ui->treeWidgetScanResult->itemAt(pos);
+    if (!item)
+        return;
+
+    // Only show context menu for child items (individual files/folders), not category roots
+    if (!item->parent())
+        return;
+
+    QString path = item->data(2, 0).toString();
+    if (path.isEmpty())
+        return;
+
+    QMenu menu(this);
+    QAction *actExclude = menu.addAction(tr("Always exclude this"));
+
+    QAction *chosen = menu.exec(ui->treeWidgetScanResult->viewport()->mapToGlobal(pos));
+    if (chosen == actExclude) {
+        QFileInfo fi(path);
+        CleanerService::ExclusionEntry::Type type = fi.isDir()
+            ? CleanerService::ExclusionEntry::Folder
+            : CleanerService::ExclusionEntry::File;
+        mCleanerService->addExclusion(type, path);
+
+        QTreeWidgetItem *parent = item->parent();
+        delete parent->takeChild(parent->indexOfChild(item));
+
+        // Update parent title and size
+        quint64 remainingSize = 0;
+        for (int j = 0; j < parent->childCount(); ++j)
+            remainingSize += parent->child(j)->data(1, SortRole).toULongLong();
+        parent->setText(0, QString("%1 (%2)")
+                        .arg(parent->data(2, 1).toString())
+                        .arg(parent->childCount()));
+        parent->setText(1, FormatUtil::formatBytes(remainingSize));
+    }
 }

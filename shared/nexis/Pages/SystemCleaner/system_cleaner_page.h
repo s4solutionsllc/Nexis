@@ -17,6 +17,8 @@
 class QCheckBox;
 class QLabel;
 class QFrame;
+class QToolButton;
+class QMenu;
 class SignalMapper;
 class ScheduleManager;
 
@@ -73,6 +75,8 @@ private slots:
     void on_checkSelectAll_clicked(bool check);
     void on_cbSortBy_currentIndexChanged(int idx);
     void updateScheduleIndicator();
+    void onManageExclusions();
+    void onTreeContextMenu(const QPoint &pos);
 
     void resizeEvent(QResizeEvent *event) override;
 
@@ -141,6 +145,9 @@ private:
     QLabel *mLblSnapFlatpakImg = nullptr;
     QLabel *mLblSnapFlatpakLabel = nullptr;
     QCheckBox *mCheckSnapFlatpak = nullptr;
+
+    // Exclusion rules gear button
+    QToolButton *mBtnExclusions = nullptr;
 
     // Schedule indicator panel
     QFrame *mScheduleIndicator = nullptr;

@@ -365,3 +365,13 @@ bool SettingManager::getDashboardFooterVisible() const
 {
     return mSettings->value(SettingKeys::DashboardFooterVisible, true).toBool();
 }
+
+void SettingManager::setCleanerExclusions(const QString &json)
+{
+    mSettings->setValue(SettingKeys::CleanerExclusions, json);
+}
+
+QString SettingManager::getCleanerExclusions() const
+{
+    return mSettings->value(SettingKeys::CleanerExclusions, "[]").toString();
+}

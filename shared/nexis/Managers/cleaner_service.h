@@ -11,6 +11,12 @@ class CleanerService : public QObject
     Q_OBJECT
 
 public:
+    struct ExclusionEntry {
+        enum Type { File, Folder };
+        Type type = File;
+        QString path;
+    };
+
     enum CleanCategory {
         PACKAGE_CACHE,
         CRASH_REPORTS,
@@ -47,6 +53,12 @@ public:
 
     quint64 cleanTrash();
     quint64 cleanFiles(const QStringList &paths, int minFileAgeSecs = 0);
+
+    QList<ExclusionEntry> loadExclusions();
+    void saveExclusions(const QList<ExclusionEntry> &entries);
+    void addExclusion(ExclusionEntry::Type type, const QString &path);
+    void removeExclusion(const QString &path);
+    static bool isExcluded(const QString &filePath, const QList<ExclusionEntry> &exclusions);
 
 signals:
     void cleaningStarted(QString scheduleName);

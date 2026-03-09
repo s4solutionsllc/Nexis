@@ -324,7 +324,7 @@ quint64 InfoManager::getMemUsed() const  { return mi.getMemUsed(); }
 ```
 
 **Thick services** (real business logic):
-- `CleanerService` — 300+ lines of scan logic across 9 categories (including Browser Privacy, Snap/Flatpak Revisions), file partitioning, min-age filtering, statistics collection
+- `CleanerService` — 300+ lines of scan logic across 9 categories (including Browser Privacy, Snap/Flatpak Revisions), file partitioning, min-age filtering, statistics collection, exclusion rule management (file/folder path matching with symlink resolution)
 - `ScheduleManager` — 500+ lines of CRUD operations, JSON persistence, OS-native scheduler sync (launchd plists, systemd timers, cron entries)
 
 **The problem:** There's no clear architectural principle for when logic belongs in:
@@ -344,7 +344,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ### 5. ~~No Automated Test Suite~~ (Resolved)
 
-**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 21 CTest executables with ~293 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool, PackageTool), widget parsing (NetworkDiag, OpenPorts, Firewall), service logic (HostService), manager logic (ScheduleManager), power profile parsing (PowerProfileInfo), theme token validation, and screenshot regression tests.
+**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 22 CTest executables with ~304 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool, PackageTool), widget parsing (NetworkDiag, OpenPorts, Firewall), service logic (HostService), manager logic (ScheduleManager), power profile parsing (PowerProfileInfo), theme token validation, and screenshot regression tests.
 
 **Refactoring for testability:**
 - `parseSmartctlJson()` deduplicated from 2 platform files into shared public static `parseSmartctlJsonInto()`
@@ -442,16 +442,16 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 #### 3A. ~~Basic Unit Test Suite~~ (Implemented + Expanded)
 
-**Completed (Phase 7, FR-36; expanded FR-76, FR-79/FR-80, FR-82, FR-66, FR-68).** 21 test executables with ~293 test methods:
+**Completed (Phase 7, FR-36; expanded FR-76, FR-79/FR-80, FR-82, FR-66, FR-68).** 22 test executables with ~304 test methods:
 1. **Utility classes** — FormatUtil (10), FileUtil (10), CommandUtil (9)
 2. **Info class parsing** — DiskHealthInfo (20), MemoryInfo (14), CpuInfo (19), GpuInfo (23), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17)
 3. **Tool parsing** — AptSourceTool (14), PackageTool (16)
 4. **Widget parsing** — NetworkDiag (24), OpenPorts (20), Firewall (15)
 5. **Service logic** — HostService (25)
-6. **Manager logic** — ScheduleManager (15)
+6. **Manager logic** — ScheduleManager (15), CleanerExclusions (11)
 7. **Theme validation** — ThemeTokens (7)
 
-**Key refactoring:** FR-36 established the pattern with `parseSmartctlJsonInto()` shared static (dedup), `deriveHealthVerdict()` public static, `getNextRunTime()` injectable `now` parameter. FR-76 scaled this to 10 additional classes by extracting parsing logic into public static methods on shared base classes (`*_shared.cpp` files). Fixture data files in `tests/fixtures/` provide deterministic test input. CleanerService tests deferred (GUI lib dependency, BUG-93).
+**Key refactoring:** FR-36 established the pattern with `parseSmartctlJsonInto()` shared static (dedup), `deriveHealthVerdict()` public static, `getNextRunTime()` injectable `now` parameter. FR-76 scaled this to 10 additional classes by extracting parsing logic into public static methods on shared base classes (`*_shared.cpp` files). Fixture data files in `tests/fixtures/` provide deterministic test input. CleanerExclusions tests link against `nexis-gui` library to access CleanerService.
 
 ---
 

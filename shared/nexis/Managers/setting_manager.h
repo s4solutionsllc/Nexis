@@ -39,6 +39,7 @@ namespace SettingKeys {
     const QString UpdateCheckIntervalMinutes("UpdateCheckIntervalMinutes");
     const QString UpdateLastCount("UpdateLastCount");
     const QString DashboardFooterVisible("DashboardFooterVisible");
+    const QString CleanerExclusions("CleanerExclusions");
 }
 
 class SettingManager
@@ -150,6 +151,9 @@ public:
 
     void setDashboardFooterVisible(bool value);
     bool getDashboardFooterVisible() const;
+
+    void setCleanerExclusions(const QString &json);
+    QString getCleanerExclusions() const;
 
 private:
     static SettingManager *instance;
