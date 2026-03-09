@@ -84,6 +84,7 @@ private:
     void init();
     void initScheduleIndicator();
     void repositionScheduleIndicator();
+    void repositionExclusionsButton();
 
 private:
     Ui::SystemCleanerPage *ui;

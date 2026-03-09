@@ -94,23 +94,21 @@ void SystemCleanerPage::init()
     }
 #endif
 
-    // Exclusion rules gear button (BUG-52: QToolButton for macOS SVG compat)
+    // Exclusion rules gear button — floating overlay in top-right corner
+    // (BUG-52: QToolButton for macOS SVG compat)
     {
-        QGridLayout *grid = qobject_cast<QGridLayout *>(ui->cleanerCategories->layout());
-        if (grid) {
-            mBtnExclusions = new QToolButton;
-            mBtnExclusions->setAutoRaise(true);
-            mBtnExclusions->setIcon(QIcon(
-                QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
-                    .arg(mAppManager->resolveThemeName())));
-            mBtnExclusions->setIconSize(Dpi::scale(20, 20));
-            mBtnExclusions->setToolTip(tr("Manage exclusion rules"));
-            mBtnExclusions->setCursor(Qt::PointingHandCursor);
-            mBtnExclusions->setFocusPolicy(Qt::NoFocus);
-            grid->addWidget(mBtnExclusions, 5, 9, Qt::AlignRight);
-            connect(mBtnExclusions, &QToolButton::clicked,
-                    this, &SystemCleanerPage::onManageExclusions);
-        }
+        mBtnExclusions = new QToolButton(this);
+        mBtnExclusions->setAutoRaise(true);
+        mBtnExclusions->setIcon(QIcon(
+            QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
+                .arg(mAppManager->resolveThemeName())));
+        mBtnExclusions->setIconSize(Dpi::scale(20, 20));
+        mBtnExclusions->setToolTip(tr("Manage exclusion rules"));
+        mBtnExclusions->setCursor(Qt::PointingHandCursor);
+        mBtnExclusions->setFocusPolicy(Qt::NoFocus);
+        mBtnExclusions->raise();
+        connect(mBtnExclusions, &QToolButton::clicked,
+                this, &SystemCleanerPage::onManageExclusions);
     }
 
     // treview settings
@@ -654,10 +652,25 @@ void SystemCleanerPage::repositionScheduleIndicator()
     mScheduleIndicator->raise();
 }
 
+void SystemCleanerPage::repositionExclusionsButton()
+{
+    if (!mBtnExclusions)
+        return;
+
+    int outerMarginR = 15;
+    int outerMarginT = 8;
+    QSize btnSize = mBtnExclusions->sizeHint();
+    int x = width() - btnSize.width() - outerMarginR;
+    int y = outerMarginT;
+    mBtnExclusions->move(x, y);
+    mBtnExclusions->raise();
+}
+
 void SystemCleanerPage::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     repositionScheduleIndicator();
+    repositionExclusionsButton();
 }
 
 void SystemCleanerPage::updateScheduleIndicator()
