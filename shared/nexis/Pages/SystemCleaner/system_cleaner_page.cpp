@@ -102,7 +102,8 @@ void SystemCleanerPage::init()
         mBtnExclusions->setIcon(QIcon(
             QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
                 .arg(mAppManager->resolveThemeName())));
-        mBtnExclusions->setIconSize(Dpi::scale(20, 20));
+        mBtnExclusions->setIconSize(Dpi::scale(18, 18));
+        mBtnExclusions->setFixedSize(Dpi::scale(32, 32));
         mBtnExclusions->setToolTip(tr("Manage exclusion rules"));
         mBtnExclusions->setCursor(Qt::PointingHandCursor);
         mBtnExclusions->setFocusPolicy(Qt::NoFocus);
