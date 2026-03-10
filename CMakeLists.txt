@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
-project(Nexis VERSION 2.1.13)
+project(Nexis VERSION 2.1.14)
 
 # Adding features(build cache + faster linkers) and reasonable defaults(Debug build by default)
 include("${CMAKE_CURRENT_SOURCE_DIR}/shared/cmake/cxxbasics/CXXBasics.cmake")
