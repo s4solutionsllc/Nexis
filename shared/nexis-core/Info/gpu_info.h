@@ -10,6 +10,7 @@ struct GpuDevice {
     QString name;           // e.g. "NVIDIA GeForce RTX 3080", "AMD Radeon RX 6800"
     QString vendor;         // "NVIDIA", "AMD", "Intel", "Apple"
     int     utilization;    // 0–100 percent (-1 if unavailable)
+    QString driverName;     // kernel driver (e.g. "nvidia", "amdgpu", "simple-framebuffer")
 
     // Platform-specific fields used internally for re-reading utilization
     QString sysfsLoadPath;  // Linux: path to gpu_busy_percent or similar
@@ -40,6 +41,13 @@ public:
 
     // Extracts device name from lspci output for a given PCI bus ID.
     static QString parseLspciDeviceName(const QString &lspciOutput, const QString &busId);
+
+    // Extracts the parent PCI bus address from a simple-framebuffer DRM symlink target.
+    // e.g. ".../0000:04:00.0/simple-framebuffer.0/drm/card0" → "0000:04:00.0"
+    static QString parseFramebufferParentPciBusId(const QString &symlinkTarget);
+
+    // Returns a structured diagnostic report for GPU troubleshooting.
+    virtual QString getDiagnosticReport() const;
 
 protected:
     virtual void discoverGpus() = 0;

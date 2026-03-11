@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QTableWidget>
+#include <QToolButton>
 
 #include "Managers/info_manager.h"
 
@@ -22,6 +23,7 @@ public:
 private slots:
     void init();
     void on_btnExportReport_clicked();
+    void onCopyGpuDiagnostics();
 
 private:
     void populateSystem();

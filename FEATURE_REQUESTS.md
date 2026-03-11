@@ -269,6 +269,16 @@
   - **Files:** New `MaintenanceWizard` dialog or page, orchestrates existing services (CleanerService, UpdateInfo, HealthScoreCalculator, PackageService)
   - **Complexity:** Medium (4-5 days) — all data sources already exist; work is in orchestration UX and safe-defaults logic
 
+- [x] **FR-84: Detect simple-framebuffer GPUs in Linux GPU discovery** — The `discoverGpus()` method skips DRM cards backed by `simple-framebuffer` (platform devices without a PCI vendor file). On systems where one GPU uses a basic framebuffer driver for display output while another uses the proprietary driver, only the driver-bound GPU appears. Detect these platform-device GPUs via parent PCI device traversal or `lspci` fallback, and show them with "N/A" utilization. Related to BUG-76 (GPU index mismatch on multi-GPU systems).
+  - **Files:** `linux/nexis-core/Info/gpu_info.cpp` (discoverGpus), `shared/nexis-core/Info/gpu_info.h` (GpuDevice struct)
+  - **Complexity:** Low-Medium
+  - **Resolved:** Added simple-framebuffer detection in `discoverGpus()` by tracing parent PCI device from symlink path. New `parseFramebufferParentPciBusId()` parser extracts parent PCI bus ID. Reads parent vendor ID from `/sys/bus/pci/devices/<busId>/vendor`. Device name resolved via lspci. Framebuffer GPUs show with N/A utilization. Also fixed pre-existing lspci short-form bus ID matching bug in `readDeviceName()`. Added `driverName` field to `GpuDevice` struct, shown in Hardware Info page. 5 new unit tests for framebuffer parser.
+
+- [x] **FR-85: GPU diagnostic logging for multi-GPU troubleshooting** — Add structured diagnostic output during GPU discovery that users can capture for bug reports. Log DRM card entries (including skipped ones), driver names, vendor IDs, PCI bus addresses, nvidia-smi device list, and final enumeration result. Provide a way to trigger this from the UI (e.g., Hardware Info page "Copy GPU diagnostics" button). Related to BUG-76.
+  - **Files:** `linux/nexis-core/Info/gpu_info.cpp`, `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp`
+  - **Complexity:** Low-Medium
+  - **Resolved:** Enhanced `discoverGpus()` to log ALL DRM cards with driver name, vendor ID, PCI bus address, and status (detected/skipped with reason). Added `getDiagnosticReport()` virtual method to `GpuInfo` with Linux override that includes DRM card scan, nvidia-smi cross-reference, and final device list. "Copy GPU Diagnostics" QToolButton on Hardware Info page copies report to clipboard with tooltip feedback.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

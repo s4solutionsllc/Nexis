@@ -18,6 +18,20 @@ GpuInfoLinux::GpuInfoLinux()
 }
 
 /**
+ * Read the kernel driver name for a DRM card's device.
+ * Returns the driver basename (e.g. "nvidia", "amdgpu", "simple-framebuffer").
+ */
+static QString readDriverName(const QString &cardPath)
+{
+    QFileInfo driverLink(cardPath + "/device/driver");
+    if (driverLink.isSymLink()) {
+        QString target = driverLink.symLinkTarget();
+        return target.section('/', -1);
+    }
+    return {};
+}
+
+/**
  * Read a device name for a DRM card.
  *
  * Tries (in order):
@@ -39,10 +53,14 @@ static QString readDeviceName(const QString &cardPath, int cardIndex, const QStr
         // Extract PCI address from the symlink target, e.g. "0000:03:00.0"
         QString target = deviceLink.symLinkTarget();
         QString busId = target.section('/', -1);  // last component
+        // lspci -s accepts full "0000:04:00.0" but prints short "04:00.0"
+        QString shortBusId = busId;
+        if (shortBusId.startsWith("0000:"))
+            shortBusId = shortBusId.mid(5);
         if (!busId.isEmpty() && CommandUtil::isExecutable("lspci")) {
             try {
                 QString lspciOut = CommandUtil::exec("lspci", {"-s", busId});
-                QString name = GpuInfo::parseLspciDeviceName(lspciOut, busId);
+                QString name = GpuInfo::parseLspciDeviceName(lspciOut, shortBusId);
                 if (!name.isEmpty())
                     return name;
             } catch (...) { qWarning() << "Failed to resolve GPU name via lspci"; }
@@ -53,9 +71,44 @@ static QString readDeviceName(const QString &cardPath, int cardIndex, const QStr
     return QString("%1 GPU %2").arg(vendor).arg(cardIndex);
 }
 
+/**
+ * Resolve device name for a framebuffer GPU via its parent PCI bus address.
+ * lspci uses short-form addresses (e.g. "04:00.0") while sysfs uses the full
+ * domain-prefixed form ("0000:04:00.0"), so we pass the full form to lspci -s
+ * (which accepts both) but search in the output for the short form it prints.
+ */
+static QString readFramebufferDeviceName(const QString &pciBusId, int cardIndex)
+{
+    if (!pciBusId.isEmpty() && CommandUtil::isExecutable("lspci")) {
+        // lspci -s accepts full "0000:04:00.0" but prints short "04:00.0"
+        QString shortBusId = pciBusId;
+        if (shortBusId.startsWith("0000:"))
+            shortBusId = shortBusId.mid(5);
+        try {
+            QString lspciOut = CommandUtil::exec("lspci", {"-s", pciBusId});
+            QString name = GpuInfo::parseLspciDeviceName(lspciOut, shortBusId);
+            if (!name.isEmpty())
+                return name;
+        } catch (...) { qWarning() << "Failed to resolve framebuffer GPU name via lspci"; }
+    }
+    return QString("GPU %1").arg(cardIndex);
+}
+
+/**
+ * Map a PCI vendor ID string to a vendor name.
+ */
+static QString vendorFromPciId(const QString &vendorId)
+{
+    if (vendorId == PCI_VENDOR_AMD)    return "AMD";
+    if (vendorId == PCI_VENDOR_NVIDIA) return "NVIDIA";
+    if (vendorId == PCI_VENDOR_INTEL)  return "Intel";
+    return {};
+}
+
 void GpuInfoLinux::discoverGpus()
 {
     mDevices.clear();
+    mDiagEntries.clear();
 
     QDir drmDir(DRM_BASE);
     if (!drmDir.exists())
@@ -74,6 +127,8 @@ void GpuInfoLinux::discoverGpus()
         QString cardPath = QString("%1/%2").arg(DRM_BASE, entry);
         int cardIndex = entry.mid(4).toInt();  // "card0" → 0
 
+        QString driverName = readDriverName(cardPath);
+
         // Read PCI vendor ID
         QString vendorId = FileUtil::readStringFromFile(cardPath + "/device/vendor").trimmed();
 
@@ -87,45 +142,71 @@ void GpuInfoLinux::discoverGpus()
         dev.utilization = -1;
         dev.deviceIndex = cardIndex;
         dev.pciBusId = pciBusId;
+        dev.driverName = driverName;
 
-        if (vendorId == PCI_VENDOR_AMD) {
-            dev.vendor = "AMD";
-            dev.sysfsLoadPath = cardPath + "/device/gpu_busy_percent";
-            dev.name = readDeviceName(cardPath, cardIndex, "AMD");
+        QString vendor = vendorFromPciId(vendorId);
 
-            // Verify the sysfs file exists
-            if (!QFile::exists(dev.sysfsLoadPath))
-                dev.sysfsLoadPath.clear();
+        if (!vendor.isEmpty()) {
+            // Standard PCI GPU device with a recognized vendor
+            dev.vendor = vendor;
+            dev.name = readDeviceName(cardPath, cardIndex, vendor);
 
-            mDevices.append(dev);
-
-        } else if (vendorId == PCI_VENDOR_NVIDIA) {
-            dev.vendor = "NVIDIA";
-            dev.name = readDeviceName(cardPath, cardIndex, "NVIDIA");
-
-            // NVIDIA: use nvidia-smi for utilization, addressed by PCI bus ID
-            // (DRM card index != nvidia-smi device index when other cards exist)
-            if (!pciBusId.isEmpty() && CommandUtil::isExecutable("nvidia-smi"))
-                dev.queryCommand = pciBusId;
-
-            mDevices.append(dev);
-
-        } else if (vendorId == PCI_VENDOR_INTEL) {
-            dev.vendor = "Intel";
-            dev.name = readDeviceName(cardPath, cardIndex, "Intel");
-
-            // Intel: check for gt frequency files (i915 / Xe)
-            // /sys/class/drm/cardN/gt_cur_freq_mhz and gt_max_freq_mhz
-            QString curFreqPath = cardPath + "/gt_cur_freq_mhz";
-            QString maxFreqPath = cardPath + "/gt_max_freq_mhz";
-            if (QFile::exists(curFreqPath) && QFile::exists(maxFreqPath)) {
-                dev.sysfsLoadPath = curFreqPath;  // store cur freq path
-                dev.queryCommand = maxFreqPath;    // reuse field for max freq path
+            if (vendor == "AMD") {
+                dev.sysfsLoadPath = cardPath + "/device/gpu_busy_percent";
+                if (!QFile::exists(dev.sysfsLoadPath))
+                    dev.sysfsLoadPath.clear();
+            } else if (vendor == "NVIDIA") {
+                if (!pciBusId.isEmpty() && CommandUtil::isExecutable("nvidia-smi"))
+                    dev.queryCommand = pciBusId;
+            } else if (vendor == "Intel") {
+                QString curFreqPath = cardPath + "/gt_cur_freq_mhz";
+                QString maxFreqPath = cardPath + "/gt_max_freq_mhz";
+                if (QFile::exists(curFreqPath) && QFile::exists(maxFreqPath)) {
+                    dev.sysfsLoadPath = curFreqPath;
+                    dev.queryCommand = maxFreqPath;
+                }
             }
 
             mDevices.append(dev);
+            mDiagEntries.append({entry, driverName, vendorId, pciBusId, dev.name, "detected"});
+
+        } else if (driverName == "simple-framebuffer") {
+            // Framebuffer-only GPU: trace back to parent PCI device
+            QFileInfo cardLink(cardPath);
+            QString symlinkTarget = cardLink.isSymLink() ? cardLink.symLinkTarget() : QString();
+            QString parentPciBusId = parseFramebufferParentPciBusId(symlinkTarget);
+
+            if (parentPciBusId.isEmpty()) {
+                mDiagEntries.append({entry, driverName, vendorId, pciBusId,
+                                     QString(), "skipped (no parent PCI device)"});
+                continue;
+            }
+
+            // Read the parent PCI device's vendor ID
+            QString parentVendorId = FileUtil::readStringFromFile(
+                QString("/sys/bus/pci/devices/%1/vendor").arg(parentPciBusId)).trimmed();
+            QString parentVendor = vendorFromPciId(parentVendorId);
+
+            if (parentVendor.isEmpty()) {
+                mDiagEntries.append({entry, driverName, parentVendorId, parentPciBusId,
+                                     QString(), "skipped (unknown parent vendor)"});
+                continue;
+            }
+
+            dev.vendor = parentVendor;
+            dev.pciBusId = parentPciBusId;
+            dev.name = readFramebufferDeviceName(parentPciBusId, cardIndex);
+
+            // Framebuffer GPUs have no utilization source — leave sysfsLoadPath
+            // and queryCommand empty so utilization stays at -1 (shown as "N/A")
+
+            mDevices.append(dev);
+            mDiagEntries.append({entry, driverName, parentVendorId, parentPciBusId,
+                                 dev.name, "detected (framebuffer-only)"});
+        } else {
+            mDiagEntries.append({entry, driverName, vendorId, pciBusId,
+                                 QString(), "skipped (unknown vendor)"});
         }
-        // Skip unknown vendors
     }
 
     // DRM card order (card0, card1, ...) is the kernel's native GPU ordering.
@@ -133,14 +214,14 @@ void GpuInfoLinux::discoverGpus()
     // widely used convention on Linux. No explicit sort needed — QDir::Name
     // already yields card0 before card1.
 
-    if (!mDevices.isEmpty()) {
-        qDebug() << "Discovered" << mDevices.size() << "GPU(s):";
-        for (const GpuDevice &d : mDevices)
-            qDebug() << "  card" << d.deviceIndex
-                     << "| PCI" << d.pciBusId
-                     << "|" << d.vendor << "|" << d.name
-                     << "| sysfs:" << (d.sysfsLoadPath.isEmpty() ? "(none)" : d.sysfsLoadPath);
-    }
+    qDebug() << "GPU discovery:" << mDiagEntries.size() << "DRM card(s) found,"
+             << mDevices.size() << "GPU(s) detected:";
+    for (const DiagEntry &e : mDiagEntries)
+        qDebug() << "  " << e.cardEntry << "|" << e.status
+                 << "| driver:" << e.driverName
+                 << "| vendor:" << e.vendorId
+                 << "| PCI:" << e.pciBusId
+                 << "|" << e.deviceName;
 }
 
 void GpuInfoLinux::updateGpuInfo()
@@ -162,7 +243,7 @@ void GpuInfoLinux::updateGpuInfo()
                          QString("--id=%1").arg(dev.queryCommand)});
                     dev.utilization = parseNvidiaSmiUtilization(output);
                 } catch (...) {
-                    qWarning() << "Failed to parse GPU utilization";
+                    qWarning() << "Failed to query GPU utilization for" << dev.name;
                     dev.utilization = -1;
                 }
             }
@@ -175,6 +256,57 @@ void GpuInfoLinux::updateGpuInfo()
             }
         }
     }
+}
+
+QString GpuInfoLinux::getDiagnosticReport() const
+{
+    QString report;
+    report += "=== Nexis GPU Diagnostics (Linux) ===\n";
+    report += QString("Date: %1\n").arg(
+        QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
+    report += QString("Kernel: %1\n\n").arg(
+        FileUtil::readStringFromFile("/proc/version").trimmed().section(' ', 0, 2));
+
+    report += QString("DRM Cards Scanned: %1\n").arg(mDiagEntries.size());
+    for (const DiagEntry &e : mDiagEntries) {
+        report += QString("  %1: driver=%2, vendor=%3, pci=%4\n").arg(
+            e.cardEntry, e.driverName.isEmpty() ? "(none)" : e.driverName,
+            e.vendorId.isEmpty() ? "(none)" : e.vendorId,
+            e.pciBusId.isEmpty() ? "(none)" : e.pciBusId);
+        if (!e.deviceName.isEmpty())
+            report += QString("       name=%1\n").arg(e.deviceName);
+        report += QString("       status: %1\n").arg(e.status);
+    }
+
+    // nvidia-smi cross-reference
+    if (CommandUtil::isExecutable("nvidia-smi")) {
+        report += "\nnvidia-smi devices:\n";
+        try {
+            QString smiOut = CommandUtil::exec("nvidia-smi", {"-L"});
+            QStringList lines = smiOut.trimmed().split('\n');
+            for (const QString &line : lines) {
+                if (!line.trimmed().isEmpty())
+                    report += QString("  %1\n").arg(line.trimmed());
+            }
+        } catch (...) {
+            report += "  (failed to query nvidia-smi)\n";
+        }
+    }
+
+    report += QString("\nNexis GPU List: %1 device(s)\n").arg(mDevices.size());
+    for (int i = 0; i < mDevices.size(); ++i) {
+        const GpuDevice &d = mDevices.at(i);
+        report += QString("  [%1] card%2: %3 (%4)\n").arg(i).arg(d.deviceIndex).arg(d.name, d.vendor);
+        report += QString("       PCI: %1, Driver: %2\n").arg(
+            d.pciBusId.isEmpty() ? "N/A" : d.pciBusId,
+            d.driverName.isEmpty() ? "N/A" : d.driverName);
+        QString utilStr = d.utilization < 0 ? "N/A"
+            : (d.queryCommand.isEmpty() && d.sysfsLoadPath.isEmpty() ? "N/A (no monitoring source)"
+               : QString("%1%").arg(d.utilization));
+        report += QString("       Utilization: %1\n").arg(utilStr);
+    }
+
+    return report;
 }
 
 // Getters (getGpuDevices, hasGpu) are in shared/nexis-core/Info/gpu_info_shared.cpp

@@ -321,6 +321,11 @@ bool InfoManager::hasGpu() const
     return gi->hasGpu();
 }
 
+QString InfoManager::getGpuDiagnosticReport() const
+{
+    return gi->getDiagnosticReport();
+}
+
 /********************
  * Battery Provider
  *******************/

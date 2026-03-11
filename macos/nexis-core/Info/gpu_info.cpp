@@ -119,6 +119,7 @@ void GpuInfoMacOS::discoverGpus()
             dev.name = QString("GPU %1").arg(dev.deviceIndex);
 
         dev.vendor = detectVendor(accel, dev.name);
+        dev.driverName = "IOAccelerator";
 
         uint64_t entryID = 0;
         IORegistryEntryGetRegistryEntryID(accel, &entryID);

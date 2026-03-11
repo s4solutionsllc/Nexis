@@ -35,6 +35,13 @@ private slots:
     void lspci_amdDevice();
     void lspci_emptyOutput();
     void lspci_busIdNotFound();
+
+    // parseFramebufferParentPciBusId
+    void framebuffer_normalPath();
+    void framebuffer_multiplePciSegments();
+    void framebuffer_noPciParent();
+    void framebuffer_noFramebufferInPath();
+    void framebuffer_emptyInput();
 };
 
 // --- parseNvidiaSmiUtilization ---
@@ -162,6 +169,38 @@ void TestGpuInfo::lspci_busIdNotFound()
     QString output = "03:00.0 VGA compatible controller: NVIDIA Corporation GeForce RTX 3080";
     QString name = GpuInfo::parseLspciDeviceName(output, "99:00.0");
     QVERIFY(name.isEmpty());
+}
+
+// --- parseFramebufferParentPciBusId ---
+
+void TestGpuInfo::framebuffer_normalPath()
+{
+    QString path = "/sys/devices/pci0000:00/0000:00:01.2/0000:04:00.0/simple-framebuffer.0/drm/card0";
+    QCOMPARE(GpuInfo::parseFramebufferParentPciBusId(path), "0000:04:00.0");
+}
+
+void TestGpuInfo::framebuffer_multiplePciSegments()
+{
+    // Multiple PCI addresses in chain — should return the one immediately before simple-framebuffer
+    QString path = "/sys/devices/pci0000:00/0000:00:01.2/0000:02:00.2/0000:03:00.0/0000:04:00.0/simple-framebuffer.0/drm/card0";
+    QCOMPARE(GpuInfo::parseFramebufferParentPciBusId(path), "0000:04:00.0");
+}
+
+void TestGpuInfo::framebuffer_noPciParent()
+{
+    QString path = "/sys/devices/platform/simple-framebuffer.0/drm/card0";
+    QVERIFY(GpuInfo::parseFramebufferParentPciBusId(path).isEmpty());
+}
+
+void TestGpuInfo::framebuffer_noFramebufferInPath()
+{
+    QString path = "/sys/devices/pci0000:00/0000:07:00.0/drm/card1";
+    QVERIFY(GpuInfo::parseFramebufferParentPciBusId(path).isEmpty());
+}
+
+void TestGpuInfo::framebuffer_emptyInput()
+{
+    QVERIFY(GpuInfo::parseFramebufferParentPciBusId("").isEmpty());
 }
 
 QTEST_MAIN(TestGpuInfo)

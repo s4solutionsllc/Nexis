@@ -76,6 +76,7 @@ public:
     QList<GpuDevice> getGpuDevices() const;
     void updateGpuInfo();
     bool hasGpu() const;
+    QString getGpuDiagnosticReport() const;
 
     BatteryData getBatteryData() const;
     void updateBatteryInfo();

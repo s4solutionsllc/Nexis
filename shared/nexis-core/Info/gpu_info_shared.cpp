@@ -4,6 +4,10 @@
 
 #include "gpu_info.h"
 
+#include <QRegularExpression>
+#include <QSysInfo>
+#include <QDateTime>
+
 QList<GpuDevice> GpuInfo::getGpuDevices() const
 {
     return mDevices;
@@ -54,4 +58,46 @@ QString GpuInfo::parseLspciDeviceName(const QString &lspciOutput, const QString 
             return name;
     }
     return {};
+}
+
+QString GpuInfo::parseFramebufferParentPciBusId(const QString &symlinkTarget)
+{
+    // Find the PCI bus address immediately before "simple-framebuffer" in the path.
+    // Example: ".../0000:04:00.0/simple-framebuffer.0/drm/card0" → "0000:04:00.0"
+    int fbPos = symlinkTarget.indexOf("simple-framebuffer");
+    if (fbPos < 0)
+        return {};
+
+    // Look backwards from simple-framebuffer for a PCI address pattern
+    QString prefix = symlinkTarget.left(fbPos);
+    static QRegularExpression rePci("(\\d{4}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\\.\\d)/?$");
+    QRegularExpressionMatch m = rePci.match(prefix);
+    if (m.hasMatch())
+        return m.captured(1);
+
+    return {};
+}
+
+QString GpuInfo::getDiagnosticReport() const
+{
+    QString report;
+    report += "=== Nexis GPU Diagnostics ===\n";
+    report += QString("Date: %1\n").arg(
+        QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
+    report += QString("Platform: %1 %2\n\n").arg(
+        QSysInfo::kernelType(), QSysInfo::kernelVersion());
+
+    report += QString("Detected GPUs: %1\n").arg(mDevices.size());
+    for (int i = 0; i < mDevices.size(); ++i) {
+        const GpuDevice &d = mDevices.at(i);
+        report += QString("  [%1] card%2: %3 (%4)\n").arg(i).arg(d.deviceIndex).arg(d.name, d.vendor);
+        if (!d.pciBusId.isEmpty())
+            report += QString("       PCI: %1\n").arg(d.pciBusId);
+        if (!d.driverName.isEmpty())
+            report += QString("       Driver: %1\n").arg(d.driverName);
+        report += QString("       Utilization: %1\n").arg(
+            d.utilization < 0 ? "N/A" : QString("%1%").arg(d.utilization));
+    }
+
+    return report;
 }

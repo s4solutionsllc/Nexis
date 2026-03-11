@@ -21,7 +21,10 @@
 #include <QMessageBox>
 #include <QTextStream>
 #include <QDateTime>
+#include <QClipboard>
 #include <QApplication>
+#include <QToolButton>
+#include <QToolTip>
 #include "dpi.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
@@ -223,10 +226,20 @@ void HardwareInfoPage::populateGraphics()
         else
             addRow(t, tr("Name"), gpu.name);
         addRow(t, tr("Vendor"), gpu.vendor);
+        if (!gpu.driverName.isEmpty())
+            addRow(t, tr("Driver"), gpu.driverName);
     }
 
     t->resizeColumnsToContents();
     fitTableHeight(t);
+
+    auto *btnCopyGpu = new QToolButton(this);
+    btnCopyGpu->setText(tr("Copy GPU Diagnostics"));
+    btnCopyGpu->setAutoRaise(true);
+    btnCopyGpu->setCursor(Qt::PointingHandCursor);
+    btnCopyGpu->setToolTip(tr("Copy detailed GPU diagnostic info to clipboard"));
+    ui->grpGraphicsLayout->addWidget(btnCopyGpu);
+    connect(btnCopyGpu, &QToolButton::clicked, this, &HardwareInfoPage::onCopyGpuDiagnostics);
 }
 
 void HardwareInfoPage::populateMemory()
@@ -493,6 +506,13 @@ void HardwareInfoPage::populateStorage()
 
     t->resizeColumnsToContents();
     fitTableHeight(t);
+}
+
+void HardwareInfoPage::onCopyGpuDiagnostics()
+{
+    QString report = im->getGpuDiagnosticReport();
+    QApplication::clipboard()->setText(report);
+    QToolTip::showText(QCursor::pos(), tr("Copied to clipboard"), this);
 }
 
 void HardwareInfoPage::refreshThemeColors()
