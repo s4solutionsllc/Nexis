@@ -15,14 +15,11 @@
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": {
-          "toolName": "edit",
-          "filePaths": ["**/CMakeLists.txt"]
-        },
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "echo '⚠️  CMakeLists.txt modified — clean rebuild recommended: /build-verify clean'"
+            "command": "if echo \"$CLAUDE_FILE_PATH\" | grep -q 'CMakeLists.txt'; then echo '⚠️  CMakeLists.txt modified — clean rebuild recommended: /build-verify clean'; fi"
           }
         ]
       }
