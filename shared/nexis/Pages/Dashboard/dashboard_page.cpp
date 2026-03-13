@@ -1,8 +1,10 @@
 #include "dashboard_page.h"
 #include "ui_dashboard_page.h"
+#include "maintenance_wizard_dialog.h"
 
 #include "utilities.h"
 #include "Managers/app_manager.h"
+#include "Managers/tool_manager.h"
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
 
@@ -122,6 +124,10 @@ void DashboardPage::init()
         mFanTile->hide();
 
     wrapTile("health", mHealthTile);
+
+    mHealthTile->setQuickAction(tr("System Checkup"), [this]() {
+        launchMaintenanceWizard();
+    });
 
     // Load saved layout or use default, then build the grid
     if (savedLayout.isEmpty())
@@ -1827,4 +1833,13 @@ void DashboardPage::onPageActivated()
 void DashboardPage::onPageDeactivated()
 {
     mActive = false;
+}
+
+void DashboardPage::launchMaintenanceWizard()
+{
+    auto *wizard = new MaintenanceWizardDialog(this, mAppManager, im,
+                                                ToolManager::ins(), mSignalMapper);
+    wizard->setAttribute(Qt::WA_DeleteOnClose);
+    wizard->runChecks();
+    wizard->exec();
 }

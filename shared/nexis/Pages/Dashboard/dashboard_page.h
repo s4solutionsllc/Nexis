@@ -186,6 +186,7 @@ private:
     DashboardTileWrapper *findWrapper(const QString &tileId) const;
     bool tileUsesRangeMenu(const QString &style) const;
     void setupCustomizationMenu(DashboardTileWrapper *wrapper, const QString &style);
+    void launchMaintenanceWizard();
 };
 
 #endif // DASHBOARDPAGE_H

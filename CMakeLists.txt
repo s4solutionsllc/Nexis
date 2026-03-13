@@ -257,6 +257,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Dashboard/health_score_calculator.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/health_score_tile.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_tile_wrapper.cpp"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/maintenance_wizard_dialog.cpp"
   "${GUI_SHARED_DIR}/command_palette.cpp"
   "${GUI_SHARED_DIR}/Pages/Docker/docker_page.cpp"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_appearance_tab.cpp"
