@@ -280,6 +280,13 @@
   - **Complexity:** Low-Medium
   - **Resolved (a711bfb):** Enhanced `discoverGpus()` to log ALL DRM cards with driver name, vendor ID, PCI bus address, and status (detected/skipped with reason). Added `getDiagnosticReport()` virtual method to `GpuInfo` with Linux override that includes DRM card scan, nvidia-smi cross-reference, and final device list. "Copy GPU Diagnostics" QToolButton on Hardware Info page copies report to clipboard with tooltip feedback.
 
+## Desktop Integration
+
+- [ ] **FR-86: System theme tray icon option** — Add a 5th tray icon style ("System Theme") that uses `QIcon::fromTheme("nexis")` instead of a bundled SVG. This allows users with custom icon themes (Papirus, Numix, Tela, etc.) to have a tray icon that matches their desktop environment. Falls back to the default bundled icon if the theme doesn't provide a `nexis` icon. Requires installing a `nexis.svg` into the hicolor icon theme during packaging so theme artists have a base to override. Linux-focused (freedesktop icon themes); on macOS, falls back silently to the bundled icon since macOS doesn't use freedesktop themes.
+  - **Motivation:** User request — Papirus icon theme on GNOME, none of the 4 bundled styles fit the environment.
+  - **Files:** `shared/nexis/Managers/app_manager.cpp` (`updateTrayIcon()`), `shared/nexis/Pages/Settings/settings_page.cpp` (combo box entry), `shared/nexis/Managers/setting_manager.cpp` (new style value)
+  - **Complexity:** Low (< 1 day) — single `QIcon::fromTheme()` call with fallback, plus one combo box entry. Infrastructure already exists: `QIcon::fromTheme()` used in `startup_app.cpp`, icon theme search paths configured in `main.cpp`, Adwaita fallback set.
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
