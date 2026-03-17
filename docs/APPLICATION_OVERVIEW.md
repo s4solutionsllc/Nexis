@@ -441,7 +441,7 @@ Configure Nexis application preferences.
 - **Minimize to Tray** — When enabled, closing or minimizing the window hides it to the system tray instead of quitting or staying in the taskbar; clicking the tray icon restores the window (FR-52)
 - **Disk Partition** — Select partition to monitor on Dashboard
 - **Alert Thresholds** — CPU%, memory%, disk%, battery health% triggers for tray notifications
-- **Tray Icon Style** — Choose system tray icon appearance (Color, Symbolic, Outline, Accent); applied live via `AppManager::updateTrayIcon()`
+- **Tray Icon Style** — Choose system tray icon appearance (Color, Symbolic, Outline, Accent, System Theme); applied live via `AppManager::updateTrayIcon()`. "System Theme" uses `QIcon::fromTheme()` to load the icon from the desktop's icon theme (e.g., Papirus), falling back to the bundled color icon (FR-86)
 - **Disk Analyzer** — Preferred disk usage tool (platform-specific list + custom path)
 - **Disk Health Alert** — Toggle tray alerts for failing drives
 - **Show Dashboard Footer** — Toggle visibility of the system summary bar and status footer on the Dashboard (default: visible; FR-75)

@@ -56,6 +56,12 @@ void AppManager::updateTrayIcon()
     QString style = mSettingManager->getTrayIconStyle();
     QString path;
 
+    if (style == "system") {
+        mTrayIcon->setIcon(QIcon::fromTheme(QStringLiteral("nexis"),
+                                            QIcon(QStringLiteral(":/static/tray-icon.svg"))));
+        return;
+    }
+
     if (style == "symbolic")
         path = QStringLiteral(":/static/tray-icon-symbolic.svg");
     else if (style == "outline")

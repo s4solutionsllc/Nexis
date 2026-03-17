@@ -152,6 +152,7 @@ void SettingsPage::init()
     ui->cmbTrayIconStyle->addItem(tr("Symbolic"), "symbolic");
     ui->cmbTrayIconStyle->addItem(tr("Outline"), "outline");
     ui->cmbTrayIconStyle->addItem(tr("Accent"), "accent");
+    ui->cmbTrayIconStyle->addItem(tr("System Theme"), "system");
     ui->cmbTrayIconStyle->setCurrentIndex(
         ui->cmbTrayIconStyle->findData(mSettingManager->getTrayIconStyle()));
 
