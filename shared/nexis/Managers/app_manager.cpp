@@ -57,7 +57,7 @@ void AppManager::updateTrayIcon()
     QString path;
 
     if (style == "system") {
-        mTrayIcon->setIcon(QIcon::fromTheme(QStringLiteral("nexis"),
+        mTrayIcon->setIcon(QIcon::fromTheme(QStringLiteral("utilities-system-monitor"),
                                             QIcon(QStringLiteral(":/static/tray-icon.svg"))));
         return;
     }
