@@ -484,7 +484,11 @@ target_include_directories(nexis-gui PUBLIC
   "${CMAKE_BINARY_DIR}"
 )
 
-set(APP_VERSION "${PROJECT_VERSION}")
+if(APP_VERSION_OVERRIDE AND NOT APP_VERSION_OVERRIDE STREQUAL "")
+  set(APP_VERSION "${APP_VERSION_OVERRIDE}")
+else()
+  set(APP_VERSION "${PROJECT_VERSION}")
+endif()
 message(STATUS "App version: ${APP_VERSION}")
 
 target_compile_definitions(nexis-gui PUBLIC QT_DEPRECATED_WARNINGS "APP_VERSION=\"${APP_VERSION}\"")

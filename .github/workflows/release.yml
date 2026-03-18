@@ -62,7 +62,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DAPP_VERSION_OVERRIDE=${{ steps.version.outputs.VERSION }}
 
       - name: Build
         run: cmake --build build -j$(nproc)
@@ -198,8 +198,14 @@ jobs:
             sed -i "1s/($CURRENT_DEB_VERSION-/(${TAG_VERSION}-/" debian/changelog
           fi
 
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Build .deb package
         run: dpkg-buildpackage -us -uc -b
+        env:
+          APP_VERSION_OVERRIDE: ${{ steps.version.outputs.VERSION }}
 
       - name: Collect and rename .deb file
         id: deb
@@ -242,7 +248,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) -DAPP_VERSION_OVERRIDE=${{ steps.version.outputs.VERSION }}
 
       - name: Build
         run: cmake --build build -j$(sysctl -n hw.ncpu)
