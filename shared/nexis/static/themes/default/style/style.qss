@@ -1698,6 +1698,7 @@ QLabel[accessibleName="dimmed-small"] {
 
 #btnDownloadUpdate {
     background-color: @color01;
+    color: @color05;
     padding: @dp2 @dp10;
     border-radius: @dp4;
     font-size: 9pt;

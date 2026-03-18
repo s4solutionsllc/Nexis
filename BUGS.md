@@ -655,6 +655,11 @@
 
 ## Notes
 
+- [x] **BUG-102: Update banner "Download" button white-on-white in light mode** (LOW)
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** `#btnDownloadUpdate` sets `background-color: @color01` (= `#ffffff` in light theme) but no `color`. Text color bleeds in as white from the lower-specificity `QPushButton[accessibleName="primary"]` rule (`color: @color07` = `#ffffff` in both themes), making the button invisible in light mode.
+  - **Resolved:** Added `color: @color05` to `#btnDownloadUpdate` rule — the correct foreground token for a `@color01` surface (dark in light theme, light in dark theme).
+
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
 
 - [x] **BUG-101: Hardware Info page inline action buttons missing orange border/hover styling** (LOW)
