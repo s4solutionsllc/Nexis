@@ -57,8 +57,7 @@ public:
 
         mChkPermanent = new QCheckBox(
             tr("Also grant permanent access — no password needed on future launches\n"
-               "(runs: setcap cap_sys_rawio+ep)"));
-        mChkPermanent->setWordWrap(true);
+               "(runs: setcap cap_sys_rawio,cap_dac_override+ep)"));
         layout->addWidget(mChkPermanent);
 
         layout->addSpacing(4);
@@ -444,7 +443,7 @@ void HardwareInfoPage::populateStorage()
 
     // Remove any previous unlock bar (handles repopulate calls)
     if (QWidget *old = ui->grpStorage->findChild<QWidget*>("storageUnlockBar"))
-        delete old;
+        old->deleteLater();
 
 #ifdef Q_OS_LINUX
     {
@@ -672,11 +671,6 @@ void HardwareInfoPage::onUnlockAllDrives()
         return;
 
     im->refreshDiskHealthElevatedBatch(devices, dlg.makePermanent());
-
-    if (dlg.makePermanent()) {
-        // Re-run non-elevated discovery so needsElevation is re-evaluated with new capability
-        im->refreshDiskHealth();
-    }
 #endif
 
     repopulateStorage();

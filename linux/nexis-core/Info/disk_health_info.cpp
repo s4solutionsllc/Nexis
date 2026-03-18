@@ -101,8 +101,14 @@ void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
         return;
 
     QString cmd;
-    if (applySetcap && !smartctlPath.isEmpty())
-        cmd += QString("setcap cap_sys_rawio+ep %1; ").arg(smartctlPath);
+    if (applySetcap) {
+        // Use the provided path, or discover it inside the root shell
+        // (smartctl is often in /usr/sbin which may not be in the user's PATH)
+        if (!smartctlPath.isEmpty())
+            cmd += QString("setcap cap_sys_rawio,cap_dac_override+ep %1; ").arg(smartctlPath);
+        else
+            cmd += "SMPATH=$(which smartctl 2>/dev/null) && setcap cap_sys_rawio,cap_dac_override+ep \"$SMPATH\"; ";
+    }
 
     for (int i = 0; i < devices.size(); ++i) {
         if (i > 0) cmd += "; ";
