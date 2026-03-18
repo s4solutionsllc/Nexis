@@ -54,6 +54,8 @@ Your GPU(s) and their vendors.
 
 > **macOS:** Detected via IOKit and Metal APIs.
 
+A **Copy GPU Diagnostics** button at the bottom of the Graphics section copies a detailed diagnostic snapshot to your clipboard — GPU names, vendors, and detection method. This is useful when filing a bug report or asking for help with GPU-related issues.
+
 ### Memory
 
 System memory totals.
@@ -94,8 +96,12 @@ The health verdict uses a simple traffic-light system:
 - **Critical** (red) -- The drive is reporting failures. Back up your data immediately and plan a replacement.
 
 > **Tip:** Storage health is determined by reading SMART attributes via `smartctl`. On macOS, Nexis also uses `diskutil` for additional metadata. If `smartctl` is not installed, health data may be unavailable.
+
+> **Linux — limited permissions:** If Nexis is running as a normal user and `smartctl` requires root access to query a drive, that drive will show **"Limited data"** and an **Unlock** button inline. If more than one drive needs elevation, an **Unlock All Drives** button appears at the top of the Storage section.
 >
-> **Linux — limited permissions:** If Nexis is running as a normal user and `smartctl` requires root access to query a drive, that drive will show **"Unknown"** health and a **Unlock** button. Clicking the button triggers a one-time polkit authentication prompt. Once approved, Nexis re-reads the drive and displays full health data. For a permanent fix that avoids the prompt on every launch, see the [Troubleshooting](./17-troubleshooting) page.
+> Clicking either button opens a single authentication dialog (polkit / `pkexec`). The dialog includes a **Make Permanent** checkbox — when checked, Nexis runs `setcap cap_sys_rawio+ep` on the `smartctl` binary in the same elevated session, so future launches no longer require a password prompt. Once you approve, all locked drives are re-read in a single operation.
+>
+> For more detail, see the [Troubleshooting](./17-troubleshooting) page.
 
 ### Network
 

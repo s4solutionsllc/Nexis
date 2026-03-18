@@ -158,7 +158,7 @@ When you activate kiosk mode, a brief overlay message ("Press ESC to exit kiosk 
 
 ## Update Checker
 
-Nexis periodically checks GitHub for new releases. If a newer version is available, a notification bar appears on the Dashboard so you know when it is time to upgrade.
+Nexis periodically checks GitHub for new releases. If a newer version is available, an orange notification bar appears at the bottom of the Dashboard. Click **Download** to open the releases page in your browser.
 
 ## What's Next
 
