@@ -2,6 +2,7 @@ dist/
 build/
 output/
 .worktrees/
+.claude/worktrees/
 *.AppImage
 .vscode
 Release/
