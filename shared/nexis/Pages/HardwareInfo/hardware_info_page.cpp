@@ -23,7 +23,6 @@
 #include <QDateTime>
 #include <QClipboard>
 #include <QApplication>
-#include <QToolButton>
 #include <QToolTip>
 #include <QCheckBox>
 #include <QDialog>
@@ -281,13 +280,12 @@ void HardwareInfoPage::populateGraphics()
     t->resizeColumnsToContents();
     fitTableHeight(t);
 
-    auto *btnCopyGpu = new QToolButton(this);
+    auto *btnCopyGpu = new QPushButton(this);
     btnCopyGpu->setText(tr("Copy GPU Diagnostics"));
-    btnCopyGpu->setAutoRaise(true);
     btnCopyGpu->setCursor(Qt::PointingHandCursor);
     btnCopyGpu->setToolTip(tr("Copy detailed GPU diagnostic info to clipboard"));
     ui->grpGraphicsLayout->addWidget(btnCopyGpu);
-    connect(btnCopyGpu, &QToolButton::clicked, this, &HardwareInfoPage::onCopyGpuDiagnostics);
+    connect(btnCopyGpu, &QPushButton::clicked, this, &HardwareInfoPage::onCopyGpuDiagnostics);
 }
 
 void HardwareInfoPage::populateMemory()
@@ -458,12 +456,11 @@ void HardwareInfoPage::populateStorage()
             barLayout->setContentsMargins(0, 0, 4, 4);
             barLayout->setSpacing(8);
 
-            QToolButton *btnUnlockAll = new QToolButton;
+            QPushButton *btnUnlockAll = new QPushButton;
             btnUnlockAll->setText(tr("Unlock All Drives"));
-            btnUnlockAll->setAutoRaise(true);
             btnUnlockAll->setCursor(Qt::PointingHandCursor);
             btnUnlockAll->setToolTip(tr("Re-read SMART data for all drives with elevated permissions"));
-            connect(btnUnlockAll, &QToolButton::clicked, this, &HardwareInfoPage::onUnlockAllDrives);
+            connect(btnUnlockAll, &QPushButton::clicked, this, &HardwareInfoPage::onUnlockAllDrives);
             barLayout->addWidget(btnUnlockAll);
 
             barLayout->addStretch();
@@ -597,16 +594,15 @@ void HardwareInfoPage::populateStorage()
             noteText->setWordWrap(false);
             noteLayout->addWidget(noteText);
 
-            QToolButton *btnUnlock = new QToolButton;
+            QPushButton *btnUnlock = new QPushButton;
             btnUnlock->setText(tr("Unlock"));
-            btnUnlock->setAutoRaise(true);
             btnUnlock->setCursor(Qt::PointingHandCursor);
             btnUnlock->setToolTip(tr("Re-read SMART data with elevated permissions (pkexec)"));
             noteLayout->addWidget(btnUnlock);
             noteLayout->addStretch();
 
             const QString devicePath = d.devicePath;
-            connect(btnUnlock, &QToolButton::clicked, this, [this, devicePath]() {
+            connect(btnUnlock, &QPushButton::clicked, this, [this, devicePath]() {
                 onUnlockSmartDrive(devicePath);
             });
 

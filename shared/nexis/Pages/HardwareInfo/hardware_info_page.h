@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QTableWidget>
-#include <QToolButton>
+#include <QPushButton>
 
 #include "Managers/info_manager.h"
 #include <Info/disk_health_info.h>

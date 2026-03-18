@@ -657,6 +657,11 @@
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
 
+- [x] **BUG-101: Hardware Info page inline action buttons missing orange border/hover styling** (LOW)
+  - **Files:** `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** "Copy GPU Diagnostics" and "Unlock All Drives" are created as `QToolButton` with `setAutoRaise(true)` but no `objectName` or `accessibleName`, so no QSS rule targets them. The QSS has no generic `QToolButton` rule — only `QPushButton` has a generic hover rule (`border-color: @accentColor`). Result: both buttons render with system-default flat appearance, no orange border, no hover activation, inconsistent with the rest of the app's button styling.
+  - **Resolved:** Switched all three action buttons (Copy GPU Diagnostics, Unlock All Drives, per-drive Unlock) from `QToolButton` → `QPushButton`, removed `setAutoRaise(true)`. Generic QPushButton QSS rule now applies; no stylesheet changes required.
+
 - [x] **BUG-100: FR-86 Unlock All prompts password per drive and Make Permanent is disconnected** (MEDIUM)
   - **Files:** `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp/h`, `linux/nexis-core/Info/disk_health_info.cpp`, `shared/nexis-core/Info/disk_health_info.h`, `shared/nexis/Managers/info_manager.cpp/h`
   - **Description:** Two UX regressions in FR-86: (1) "Unlock All Drives" calls `pkexec smartctl` once per drive, triggering a separate password prompt for each. (2) "Make Permanent" (setcap) is a separate button requiring a second authentication. User wants one password prompt that unlocks all drives, with an optional "Make Permanent" checkbox to apply setcap in the same elevation. Fix: batch all smartctl calls into a single `pkexec sh -c "..."` invocation; replace the two-button layout with one "Unlock All" button that shows a confirmation dialog with a "Make Permanent" checkbox.
