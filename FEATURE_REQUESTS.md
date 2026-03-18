@@ -285,3 +285,7 @@
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
+
+- [x] **FR-86: Global "Unlock All" for drive SMART data elevation** — When multiple drives require elevated permissions to read SMART health data, users must currently click an individual "Unlock" button per drive. Add a single "Unlock All Drives" button at the top of the Storage section that elevates permissions and re-reads SMART data for all locked drives in one action. Per-drive buttons remain for granular control. Linux only (uses pkexec).
+  - **Files:** `shared/nexis/Pages/HardwareInfo/hardware_info_page.h`, `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp`
+  - **Complexity:** Low (UI-layer only; reuses existing `refreshDiskHealthElevated()` per drive)

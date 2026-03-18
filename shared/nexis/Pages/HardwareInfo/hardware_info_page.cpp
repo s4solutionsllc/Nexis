@@ -27,6 +27,7 @@
 #include <QToolTip>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QStandardPaths>
 #include "dpi.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
@@ -395,6 +396,46 @@ void HardwareInfoPage::populateStorage()
 
     mStorageDrives = drives;
 
+    // Remove any previous unlock bar (handles repopulate calls)
+    if (QWidget *old = ui->grpStorage->findChild<QWidget*>("storageUnlockBar"))
+        delete old;
+
+#ifdef Q_OS_LINUX
+    {
+        bool anyNeedsElevation = false;
+        for (const DriveHealth &d : drives) {
+            if (d.needsElevation) { anyNeedsElevation = true; break; }
+        }
+        if (anyNeedsElevation) {
+            QWidget *bar = new QWidget(ui->grpStorage);
+            bar->setObjectName("storageUnlockBar");
+            QHBoxLayout *barLayout = new QHBoxLayout(bar);
+            barLayout->setContentsMargins(0, 0, 4, 4);
+            barLayout->setSpacing(8);
+
+            QToolButton *btnUnlockAll = new QToolButton;
+            btnUnlockAll->setText(tr("Unlock All Drives"));
+            btnUnlockAll->setAutoRaise(true);
+            btnUnlockAll->setCursor(Qt::PointingHandCursor);
+            btnUnlockAll->setToolTip(tr("Re-read SMART data for all drives with elevated permissions (pkexec)"));
+            connect(btnUnlockAll, &QToolButton::clicked, this, &HardwareInfoPage::onUnlockAllDrives);
+            barLayout->addWidget(btnUnlockAll);
+
+            QToolButton *btnPermanent = new QToolButton;
+            btnPermanent->setText(tr("Make Permanent"));
+            btnPermanent->setAutoRaise(true);
+            btnPermanent->setCursor(Qt::PointingHandCursor);
+            btnPermanent->setToolTip(tr("Grant smartctl the sys_rawio capability so Nexis can always read "
+                                        "drive health without a password (runs: setcap cap_sys_rawio+ep)"));
+            connect(btnPermanent, &QToolButton::clicked, this, &HardwareInfoPage::onMakeSmartPermanent);
+            barLayout->addWidget(btnPermanent);
+
+            barLayout->addStretch();
+            ui->grpStorageLayout->insertWidget(0, bar);
+        }
+    }
+#endif
+
     for (int i = 0; i < drives.size(); ++i) {
         const DriveHealth &d = drives.at(i);
 
@@ -576,6 +617,44 @@ void HardwareInfoPage::onUnlockSmartDrive(const QString &devicePath)
     }
     // If still needs elevation (pkexec cancelled or failed), the existing
     // table state remains — button stays visible, user can try again.
+}
+
+void HardwareInfoPage::onUnlockAllDrives()
+{
+    QList<DriveHealth> drives = im->getDriveHealth();
+    for (const DriveHealth &d : drives) {
+        if (d.needsElevation)
+            im->refreshDiskHealthElevated(d.devicePath);
+    }
+    repopulateStorage();
+}
+
+void HardwareInfoPage::onMakeSmartPermanent()
+{
+#ifdef Q_OS_LINUX
+    QString smartctlPath = QStandardPaths::findExecutable("smartctl");
+    if (smartctlPath.isEmpty()) {
+        QMessageBox::warning(this, tr("smartctl Not Found"),
+            tr("Could not locate the smartctl executable. "
+               "Please install smartmontools and try again."));
+        return;
+    }
+
+    QProcess proc;
+    proc.start("pkexec", {"setcap", "cap_sys_rawio+ep", smartctlPath});
+    proc.waitForFinished(-1);
+
+    if (proc.exitCode() != 0) {
+        QMessageBox::warning(this, tr("Could Not Apply Capability"),
+            tr("The capability could not be applied. You can run this command manually:\n\n"
+               "sudo setcap cap_sys_rawio+ep %1").arg(smartctlPath));
+        return;
+    }
+
+    // setcap succeeded — re-run non-elevated discovery so needsElevation is re-evaluated
+    im->refreshDiskHealth();
+    repopulateStorage();
+#endif
 }
 
 void HardwareInfoPage::repopulateStorage()
