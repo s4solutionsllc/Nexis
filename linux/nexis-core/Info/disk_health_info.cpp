@@ -93,6 +93,40 @@ void DiskHealthInfoLinux::refreshHealth()
     discoverDrives();
 }
 
+void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
+                                                      bool applySetcap,
+                                                      const QString &smartctlPath)
+{
+    if (!mHasSmartctl || devices.isEmpty())
+        return;
+
+    QString cmd;
+    if (applySetcap && !smartctlPath.isEmpty())
+        cmd += QString("setcap cap_sys_rawio+ep %1; ").arg(smartctlPath);
+
+    for (int i = 0; i < devices.size(); ++i) {
+        if (i > 0) cmd += "; ";
+        cmd += QString("smartctl -j -a %1").arg(devices[i]);
+    }
+
+    try {
+        QString output = CommandUtil::exec("pkexec", {"sh", "-c", cmd});
+        QList<QByteArray> blocks = DiskHealthInfo::splitSmartctlOutput(output);
+        for (int i = 0; i < blocks.size() && i < devices.size(); ++i) {
+            for (int j = 0; j < mDrives.size(); ++j) {
+                if (mDrives[j].devicePath == devices[i]) {
+                    DiskHealthInfo::parseSmartctlJsonInto(blocks[i], mDrives[j]);
+                    mDrives[j].needsElevation = false;
+                    deriveHealthVerdict(mDrives[j]);
+                    break;
+                }
+            }
+        }
+    } catch (...) {
+        qWarning() << "Failed to batch-read SMART data";
+    }
+}
+
 void DiskHealthInfoLinux::refreshHealthElevated(const QString &device)
 {
     if (!mHasSmartctl)

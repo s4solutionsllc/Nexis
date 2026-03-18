@@ -25,12 +25,58 @@
 #include <QApplication>
 #include <QToolButton>
 #include <QToolTip>
+#include <QCheckBox>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QStandardPaths>
+#include <QPushButton>
+#include <QVBoxLayout>
 #include "dpi.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
+
+#ifdef Q_OS_LINUX
+class SmartPermissionDialog : public QDialog
+{
+public:
+    SmartPermissionDialog(int driveCount, QWidget *parent = nullptr)
+        : QDialog(parent)
+    {
+        setWindowTitle(tr("Unlock SMART Data"));
+        setMinimumWidth(420);
+
+        QVBoxLayout *layout = new QVBoxLayout(this);
+        layout->setSpacing(12);
+        layout->setContentsMargins(20, 16, 20, 16);
+
+        QLabel *desc = new QLabel(
+            tr("Read full health data for %n drive(s) using elevated permissions.", "", driveCount));
+        desc->setWordWrap(true);
+        layout->addWidget(desc);
+
+        mChkPermanent = new QCheckBox(
+            tr("Also grant permanent access — no password needed on future launches\n"
+               "(runs: setcap cap_sys_rawio+ep)"));
+        mChkPermanent->setWordWrap(true);
+        layout->addWidget(mChkPermanent);
+
+        layout->addSpacing(4);
+
+        QDialogButtonBox *btns = new QDialogButtonBox(
+            QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+        btns->button(QDialogButtonBox::Ok)->setText(tr("Unlock"));
+        connect(btns, &QDialogButtonBox::accepted, this, &QDialog::accept);
+        connect(btns, &QDialogButtonBox::rejected, this, &QDialog::reject);
+        layout->addWidget(btns);
+    }
+
+    bool makePermanent() const { return mChkPermanent->isChecked(); }
+
+private:
+    QCheckBox *mChkPermanent = nullptr;
+};
+#endif
 
 HardwareInfoPage::~HardwareInfoPage()
 {
@@ -417,18 +463,9 @@ void HardwareInfoPage::populateStorage()
             btnUnlockAll->setText(tr("Unlock All Drives"));
             btnUnlockAll->setAutoRaise(true);
             btnUnlockAll->setCursor(Qt::PointingHandCursor);
-            btnUnlockAll->setToolTip(tr("Re-read SMART data for all drives with elevated permissions (pkexec)"));
+            btnUnlockAll->setToolTip(tr("Re-read SMART data for all drives with elevated permissions"));
             connect(btnUnlockAll, &QToolButton::clicked, this, &HardwareInfoPage::onUnlockAllDrives);
             barLayout->addWidget(btnUnlockAll);
-
-            QToolButton *btnPermanent = new QToolButton;
-            btnPermanent->setText(tr("Make Permanent"));
-            btnPermanent->setAutoRaise(true);
-            btnPermanent->setCursor(Qt::PointingHandCursor);
-            btnPermanent->setToolTip(tr("Grant smartctl the sys_rawio capability so Nexis can always read "
-                                        "drive health without a password (runs: setcap cap_sys_rawio+ep)"));
-            connect(btnPermanent, &QToolButton::clicked, this, &HardwareInfoPage::onMakeSmartPermanent);
-            barLayout->addWidget(btnPermanent);
 
             barLayout->addStretch();
             ui->grpStorageLayout->insertWidget(0, bar);
@@ -621,40 +658,28 @@ void HardwareInfoPage::onUnlockSmartDrive(const QString &devicePath)
 
 void HardwareInfoPage::onUnlockAllDrives()
 {
-    QList<DriveHealth> drives = im->getDriveHealth();
-    for (const DriveHealth &d : drives) {
+    QStringList devices;
+    for (const DriveHealth &d : im->getDriveHealth()) {
         if (d.needsElevation)
-            im->refreshDiskHealthElevated(d.devicePath);
+            devices.append(d.devicePath);
     }
-    repopulateStorage();
-}
+    if (devices.isEmpty())
+        return;
 
-void HardwareInfoPage::onMakeSmartPermanent()
-{
 #ifdef Q_OS_LINUX
-    QString smartctlPath = QStandardPaths::findExecutable("smartctl");
-    if (smartctlPath.isEmpty()) {
-        QMessageBox::warning(this, tr("smartctl Not Found"),
-            tr("Could not locate the smartctl executable. "
-               "Please install smartmontools and try again."));
+    SmartPermissionDialog dlg(devices.size(), this);
+    if (dlg.exec() != QDialog::Accepted)
         return;
+
+    im->refreshDiskHealthElevatedBatch(devices, dlg.makePermanent());
+
+    if (dlg.makePermanent()) {
+        // Re-run non-elevated discovery so needsElevation is re-evaluated with new capability
+        im->refreshDiskHealth();
     }
-
-    QProcess proc;
-    proc.start("pkexec", {"setcap", "cap_sys_rawio+ep", smartctlPath});
-    proc.waitForFinished(-1);
-
-    if (proc.exitCode() != 0) {
-        QMessageBox::warning(this, tr("Could Not Apply Capability"),
-            tr("The capability could not be applied. You can run this command manually:\n\n"
-               "sudo setcap cap_sys_rawio+ep %1").arg(smartctlPath));
-        return;
-    }
-
-    // setcap succeeded — re-run non-elevated discovery so needsElevation is re-evaluated
-    im->refreshDiskHealth();
-    repopulateStorage();
 #endif
+
+    repopulateStorage();
 }
 
 void HardwareInfoPage::repopulateStorage()

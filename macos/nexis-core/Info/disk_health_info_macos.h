@@ -10,6 +10,9 @@ public:
 
     void refreshHealth() override;
     void refreshHealthElevated(const QString &device) override;
+    void refreshHealthElevatedBatch(const QStringList &devices,
+                                     bool applySetcap,
+                                     const QString &smartctlPath) override;
 
 protected:
     void discoverDrives() override;

@@ -85,6 +85,7 @@ public:
     QList<DriveHealth> getDriveHealth() const;
     void refreshDiskHealth();
     void refreshDiskHealthElevated(const QString &device);
+    void refreshDiskHealthElevatedBatch(const QStringList &devices, bool applySetcap);
     bool hasDiskHealth() const;
     bool hasSmartctl() const;
 

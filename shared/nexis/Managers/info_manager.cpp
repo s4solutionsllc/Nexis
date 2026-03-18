@@ -1,4 +1,5 @@
 #include "info_manager.h"
+#include <QStandardPaths>
 
 #ifdef Q_OS_MACOS
 #include <Info/cpu_info_macos.h>
@@ -360,6 +361,14 @@ void InfoManager::refreshDiskHealth()
 void InfoManager::refreshDiskHealthElevated(const QString &device)
 {
     dhi->refreshHealthElevated(device);
+}
+
+void InfoManager::refreshDiskHealthElevatedBatch(const QStringList &devices, bool applySetcap)
+{
+    QString smartctlPath;
+    if (applySetcap)
+        smartctlPath = QStandardPaths::findExecutable("smartctl");
+    dhi->refreshHealthElevatedBatch(devices, applySetcap, smartctlPath);
 }
 
 bool InfoManager::hasDiskHealth() const

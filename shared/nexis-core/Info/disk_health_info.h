@@ -3,6 +3,7 @@
 
 #include <QList>
 #include <QString>
+#include <QStringList>
 #include "nexis-core_global.h"
 
 struct SmartAttribute {
@@ -71,10 +72,14 @@ public:
     bool hasSmartctl() const;
     virtual void refreshHealth() = 0;
     virtual void refreshHealthElevated(const QString &device) = 0;
+    virtual void refreshHealthElevatedBatch(const QStringList &devices,
+                                             bool applySetcap,
+                                             const QString &smartctlPath) = 0;
 
     // Public for testability (FR-36). Operates purely on the DriveHealth struct.
     static void parseSmartctlJsonInto(const QByteArray &json, DriveHealth &drive);
     static void deriveHealthVerdict(DriveHealth &drive);
+    static QList<QByteArray> splitSmartctlOutput(const QString &output);
 
 protected:
     virtual void discoverDrives() = 0;

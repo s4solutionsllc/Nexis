@@ -204,6 +204,16 @@ void DiskHealthInfoMacOS::refreshHealth()
     discoverDrives();
 }
 
+void DiskHealthInfoMacOS::refreshHealthElevatedBatch(const QStringList &devices,
+                                                      bool applySetcap,
+                                                      const QString &smartctlPath)
+{
+    Q_UNUSED(applySetcap)
+    Q_UNUSED(smartctlPath)
+    for (const QString &device : devices)
+        refreshHealthElevated(device);
+}
+
 void DiskHealthInfoMacOS::refreshHealthElevated(const QString &device)
 {
     if (!mHasSmartctl)

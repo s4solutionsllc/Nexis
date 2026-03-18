@@ -657,6 +657,10 @@
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
 
+- [x] **BUG-100: FR-86 Unlock All prompts password per drive and Make Permanent is disconnected** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp/h`, `linux/nexis-core/Info/disk_health_info.cpp`, `shared/nexis-core/Info/disk_health_info.h`, `shared/nexis/Managers/info_manager.cpp/h`
+  - **Description:** Two UX regressions in FR-86: (1) "Unlock All Drives" calls `pkexec smartctl` once per drive, triggering a separate password prompt for each. (2) "Make Permanent" (setcap) is a separate button requiring a second authentication. User wants one password prompt that unlocks all drives, with an optional "Make Permanent" checkbox to apply setcap in the same elevation. Fix: batch all smartctl calls into a single `pkexec sh -c "..."` invocation; replace the two-button layout with one "Unlock All" button that shows a confirmation dialog with a "Make Permanent" checkbox.
+
 - [x] **BUG-99 / #15: System Theme tray icon still not working in AppImage** (MEDIUM)
   - **File:** `shared/nexis/main.cpp`
   - **Description:** BUG-97 added XDG icon search paths for AppImage, but `QIcon::fromTheme()` also needs the correct icon *theme name* to search within. AppImage bundles Qt with xcb (no GTK platform plugin), so `QIcon::themeName()` returns empty and falls back to "Adwaita" — which doesn't contain `utilities-system-monitor`. The system's actual theme (e.g., Papirus-Dark) is never consulted even though its icons are reachable on disk. GitHub issue [#15](https://github.com/lsimpsonsfdc/Nexis/issues/15).

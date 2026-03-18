@@ -27,7 +27,6 @@ private slots:
     void onCopyGpuDiagnostics();
     void onUnlockSmartDrive(const QString &devicePath);
     void onUnlockAllDrives();
-    void onMakeSmartPermanent();
 
 private:
     void populateSystem();

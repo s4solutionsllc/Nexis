@@ -92,6 +92,25 @@ void DiskHealthInfo::parseSmartctlJsonInto(const QByteArray &json, DriveHealth &
     }
 }
 
+QList<QByteArray> DiskHealthInfo::splitSmartctlOutput(const QString &output)
+{
+    QList<QByteArray> blocks;
+    int depth = 0;
+    int start = -1;
+    for (int i = 0; i < output.size(); ++i) {
+        QChar ch = output[i];
+        if (ch == '{') {
+            if (depth++ == 0) start = i;
+        } else if (ch == '}') {
+            if (--depth == 0 && start >= 0) {
+                blocks.append(output.mid(start, i - start + 1).toUtf8());
+                start = -1;
+            }
+        }
+    }
+    return blocks;
+}
+
 QList<DriveHealth> DiskHealthInfo::getDrives() const
 {
     return mDrives;
