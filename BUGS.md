@@ -648,6 +648,11 @@
   - **Fix complexity:** Trivial (add system icon paths to `QIcon::themeSearchPaths()` when `$APPIMAGE` is set)
   - **Resolved:** Added Linux AppImage detection via `$APPIMAGE` env var in `main.cpp`. When running as AppImage, appends `~/.local/share/icons`, `~/.icons`, `/usr/local/share/icons`, `/usr/share/icons`, and `/usr/share/pixmaps` to Qt's icon theme search paths.
 
+- [x] **BUG-98 / #16: Hardware disk info gives little info due to smartctl security** (MEDIUM)
+  - **File:** `linux/nexis-core/Info/disk_health_info.cpp`, `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp`
+  - **Description:** Running Nexis as a normal user results in "Note: Limited data - smartctl requires elevated permissions" on the Hardware Info disk section. The pkexec elevation path was implemented at the backend but had no UI entry point. Drives also falsely showed "Good" health when no SMART data was read. GitHub issue [#16](https://github.com/lsimpsonsfdc/Nexis/issues/16).
+  - **Resolved:** Added per-drive "Unlock" QToolButton (Linux only) wired to `InfoManager::refreshDiskHealthElevated()` + `pkexec smartctl`. Fixed `deriveHealthVerdict()` to return "Unknown" instead of "Good" when no SMART attributes were parsed. Updated troubleshooting and hardware-info guide docs. Screenshot baselines regenerated.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

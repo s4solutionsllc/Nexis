@@ -25,6 +25,8 @@
 #include <QApplication>
 #include <QToolButton>
 #include <QToolTip>
+#include <QHBoxLayout>
+#include <QLabel>
 #include "dpi.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
@@ -378,6 +380,8 @@ void HardwareInfoPage::populateStorage()
     t->verticalHeader()->setVisible(false);
     t->horizontalHeader()->setStretchLastSection(true);
 
+    mHealthItems.clear();
+
     if (!im->hasDiskHealth()) {
         ui->grpStorage->hide();
         return;
@@ -388,6 +392,8 @@ void HardwareInfoPage::populateStorage()
         ui->grpStorage->hide();
         return;
     }
+
+    mStorageDrives = drives;
 
     for (int i = 0; i < drives.size(); ++i) {
         const DriveHealth &d = drives.at(i);
@@ -436,6 +442,7 @@ void HardwareInfoPage::populateStorage()
                     valueItem->setForeground(QColor(sv->value("@warningColor").toString()));
                 else if (d.healthVerdict == "Critical")
                     valueItem->setForeground(QColor(sv->value("@destructiveColor").toString()));
+                // "Unknown" intentionally uses default text color
             }
             mHealthItems.append({valueItem, d.healthVerdict});
             t->setItem(row, 1, valueItem);
@@ -493,8 +500,44 @@ void HardwareInfoPage::populateStorage()
         if (!d.smartPassed)
             addRow(t, tr("  SMART Status"), tr("FAILING"));
 
-        if (d.needsElevation)
-            addRow(t, tr("  Note"), tr("Limited data \u2014 smartctl requires elevated permissions"));
+        if (d.needsElevation) {
+            int row = t->rowCount();
+            t->insertRow(row);
+
+            QTableWidgetItem *noteLabel = new QTableWidgetItem(tr("  Note"));
+            QFont bold = noteLabel->font();
+            bold.setBold(true);
+            noteLabel->setFont(bold);
+            t->setItem(row, 0, noteLabel);
+
+#ifdef Q_OS_LINUX
+            QWidget *noteWidget = new QWidget;
+            QHBoxLayout *noteLayout = new QHBoxLayout(noteWidget);
+            noteLayout->setContentsMargins(0, 0, 0, 0);
+            noteLayout->setSpacing(6);
+
+            QLabel *noteText = new QLabel(tr("Limited data \u2014 smartctl requires elevated permissions"));
+            noteText->setWordWrap(false);
+            noteLayout->addWidget(noteText);
+
+            QToolButton *btnUnlock = new QToolButton;
+            btnUnlock->setText(tr("Unlock"));
+            btnUnlock->setAutoRaise(true);
+            btnUnlock->setCursor(Qt::PointingHandCursor);
+            btnUnlock->setToolTip(tr("Re-read SMART data with elevated permissions (pkexec)"));
+            noteLayout->addWidget(btnUnlock);
+            noteLayout->addStretch();
+
+            const QString devicePath = d.devicePath;
+            connect(btnUnlock, &QToolButton::clicked, this, [this, devicePath]() {
+                onUnlockSmartDrive(devicePath);
+            });
+
+            t->setCellWidget(row, 1, noteWidget);
+#else
+            t->setItem(row, 1, new QTableWidgetItem(tr("Limited data \u2014 smartctl requires elevated permissions")));
+#endif
+        }
 
         if (i < drives.size() - 1) {
             int row = t->rowCount();
@@ -513,6 +556,33 @@ void HardwareInfoPage::onCopyGpuDiagnostics()
     QString report = im->getGpuDiagnosticReport();
     QApplication::clipboard()->setText(report);
     QToolTip::showText(QCursor::pos(), tr("Copied to clipboard"), this);
+}
+
+void HardwareInfoPage::onUnlockSmartDrive(const QString &devicePath)
+{
+    im->refreshDiskHealthElevated(devicePath);
+
+    QList<DriveHealth> updated = im->getDriveHealth();
+    bool stillNeedsElevation = true;
+    for (const DriveHealth &d : updated) {
+        if (d.devicePath == devicePath) {
+            stillNeedsElevation = d.needsElevation;
+            break;
+        }
+    }
+
+    if (!stillNeedsElevation) {
+        repopulateStorage();
+    }
+    // If still needs elevation (pkexec cancelled or failed), the existing
+    // table state remains — button stays visible, user can try again.
+}
+
+void HardwareInfoPage::repopulateStorage()
+{
+    ui->tblStorage->setRowCount(0);
+    populateStorage();
+    fitTableHeight(ui->tblStorage);
 }
 
 void HardwareInfoPage::refreshThemeColors()

@@ -6,6 +6,7 @@
 #include <QToolButton>
 
 #include "Managers/info_manager.h"
+#include <Info/disk_health_info.h>
 
 namespace Ui {
     class HardwareInfoPage;
@@ -24,6 +25,7 @@ private slots:
     void init();
     void on_btnExportReport_clicked();
     void onCopyGpuDiagnostics();
+    void onUnlockSmartDrive(const QString &devicePath);
 
 private:
     void populateSystem();
@@ -37,6 +39,7 @@ private:
     void addRow(QTableWidget *table, const QString &label, const QString &value);
     void fitTableHeight(QTableWidget *table);
     void refreshThemeColors();
+    void repopulateStorage();
 
     struct HealthItem {
         QTableWidgetItem *item;
@@ -47,6 +50,7 @@ private:
     Ui::HardwareInfoPage *ui;
     InfoManager *im;
     QList<HealthItem> mHealthItems;
+    QList<DriveHealth> mStorageDrives;
 };
 
 #endif // HARDWARE_INFO_PAGE_H

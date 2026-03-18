@@ -94,6 +94,8 @@ The health verdict uses a simple traffic-light system:
 - **Critical** (red) -- The drive is reporting failures. Back up your data immediately and plan a replacement.
 
 > **Tip:** Storage health is determined by reading SMART attributes via `smartctl`. On macOS, Nexis also uses `diskutil` for additional metadata. If `smartctl` is not installed, health data may be unavailable.
+>
+> **Linux — limited permissions:** If Nexis is running as a normal user and `smartctl` requires root access to query a drive, that drive will show **"Unknown"** health and a **Unlock** button. Clicking the button triggers a one-time polkit authentication prompt. Once approved, Nexis re-reads the drive and displays full health data. For a permanent fix that avoids the prompt on every launch, see the [Troubleshooting](./17-troubleshooting) page.
 
 ### Network
 

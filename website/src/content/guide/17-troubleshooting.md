@@ -57,7 +57,13 @@ sudo apt install smartmontools
 brew install smartmontools
 ```
 
-**Does it need sudo?** Some drives require root access for SMART queries. Nexis tries to run `smartctl` with elevated privileges, but if the authentication prompt was dismissed or failed, it falls back to reporting "Unknown."
+**Does it need sudo?** Some drives require root access for SMART queries. If `smartctl` cannot access a drive as a normal user, Nexis will show "Limited data" next to that drive in the Hardware Info Storage section and display an **Unlock** button. Clicking it triggers a polkit authentication prompt (`pkexec`). If you approve, Nexis re-reads the drive with full permissions and updates the health data automatically.
+
+> **Permanent fix:** To avoid the prompt on every launch, grant `smartctl` raw device access once:
+> ```bash
+> sudo setcap cap_sys_rawio+ep $(which smartctl)
+> ```
+> After this, Nexis reads SMART data silently without requiring elevation.
 
 **Does the drive support SMART?** USB-attached external drives and some NVMe enclosures do not pass through SMART commands. In these cases, health data is genuinely unavailable.
 

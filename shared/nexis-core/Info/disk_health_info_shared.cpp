@@ -109,6 +109,15 @@ bool DiskHealthInfo::hasSmartctl() const
 
 void DiskHealthInfo::deriveHealthVerdict(DriveHealth &drive)
 {
+    // No SMART data was read — don't fabricate a verdict
+    if (drive.needsElevation &&
+        drive.powerOnHours < 0 &&
+        drive.temperatureCelsius < 0 &&
+        drive.allAttributes.isEmpty()) {
+        drive.healthVerdict = QStringLiteral("Unknown");
+        return;
+    }
+
     switch (drive.driveType) {
     case DriveHealth::NVMe: {
         // Critical conditions
