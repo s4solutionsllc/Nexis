@@ -96,11 +96,39 @@ macOS Qt6 `QPushButton` fails SVG icon rendering for icon-only transparent butto
 ### Dynamic Property Re-polish (BUG-56)
 After changing a QSS dynamic property on a parent, child widgets need explicit `unpolish()`/`polish()` — Qt doesn't recursively re-evaluate property selectors.
 
+## GitHub Issues Sync (Run at Every Session Start)
+
+**EXECUTE WITHOUT ASKING.** At the start of every session, sync GitHub issues to the local tracking files.
+
+### Steps
+
+1. **Fetch open issues:**
+   ```bash
+   gh issue list --repo lsimpsonsfdc/Nexis --state open --limit 100 --json number,title,body,labels
+   ```
+
+2. **Identify untracked issues** — An issue is *untracked* if no line in `FEATURE_REQUESTS.md` or `BUGS.md` references its GitHub issue number (e.g., `#42`). Search both files for each issue number.
+
+3. **Classify each untracked issue:**
+   - **Bug** → add to `BUGS.md` if the issue title/labels contain: bug, fix, crash, error, broken, regression, incorrect, fail
+   - **Feature Request** → add to `FEATURE_REQUESTS.md` otherwise (enhancement, feature, improvement, request, add, support, etc.)
+   - When ambiguous, prefer Feature Request
+
+4. **Add to the appropriate tracking file:**
+   - Use the next sequential ID (`BUG-XX` or `FR-XX`)
+   - Format: `- [ ] **BUG-XX / #<issue>**: <issue title>` (include the GitHub `#number` so future syncs skip it)
+   - For bugs, assign severity based on labels or title keywords: `crash`/`data loss` → HIGH, `incorrect behavior` → MEDIUM, cosmetic/minor → LOW
+   - Place under the correct severity section (BUGS.md) or category section (FEATURE_REQUESTS.md); use "Uncategorized" if unclear
+
+5. **Report** — After syncing, state how many new issues were added and list them.
+
+If there are no untracked issues, state "GitHub issues up to date" and continue.
+
 ## Custom Commands
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `/session-start` | Project status summary | Start of every session |
+| `/session-start` | Project status summary + GitHub issue sync | Start of every session |
 | `/build-verify` | Build + test cycle | After code changes; args: `clean`, `quick` |
 | `/bug-feature-workflow` | Research → Plan → Implement | Starting any BUG-XX or FR-XX |
 | `/qt-ui-change` | Qt/QSS verification checklist | After UI modifications |
