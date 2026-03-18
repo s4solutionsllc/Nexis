@@ -642,6 +642,12 @@
   - **Fix complexity:** Trivial (add underflow guard)
   - **Resolved:** Closed as false positive — already fixed. `deriveMemoryValues()` in `memory_info_shared.cpp` has ternary underflow guards on all three subtractions, and `derive_underflowGuard()` test covers the scenario.
 
+- [x] **BUG-97: System Theme tray icon not working in AppImage** (MEDIUM)
+  - **File:** `shared/nexis/main.cpp`
+  - **Description:** `QIcon::fromTheme("utilities-system-monitor")` fails inside AppImage because the bundled Qt loses access to system icon theme search paths (e.g., `/usr/share/icons`, `~/.local/share/icons`). The fallback bundled icon loads instead of the user's desktop theme icon (Papirus, Breeze, etc.). Binary installs work because system Qt already has the correct paths. GitHub issue [#15](https://github.com/lsimpsonsfdc/Nexis/issues/15).
+  - **Fix complexity:** Trivial (add system icon paths to `QIcon::themeSearchPaths()` when `$APPIMAGE` is set)
+  - **Resolved:** Added Linux AppImage detection via `$APPIMAGE` env var in `main.cpp`. When running as AppImage, appends `~/.local/share/icons`, `~/.icons`, `/usr/local/share/icons`, `/usr/share/icons`, and `/usr/share/pixmaps` to Qt's icon theme search paths.
+
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->

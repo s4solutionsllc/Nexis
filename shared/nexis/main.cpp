@@ -199,6 +199,26 @@ int main(int argc, char *argv[])
         paths << "/opt/homebrew/share/icons" << "/usr/local/share/icons";
         QIcon::setThemeSearchPaths(paths);
     }
+#elif defined(Q_OS_LINUX)
+    // AppImage bundles its own Qt, which loses access to system icon theme paths.
+    // Add standard XDG icon directories so QIcon::fromTheme() finds the user's
+    // desktop theme (e.g., Papirus, Breeze) for the "System Theme" tray icon.
+    if (!qEnvironmentVariableIsEmpty("APPIMAGE")) {
+        QStringList paths = QIcon::themeSearchPaths();
+        const QString home = QDir::homePath();
+        const QStringList extra = {
+            home + "/.local/share/icons",
+            home + "/.icons",
+            "/usr/local/share/icons",
+            "/usr/share/icons",
+            "/usr/share/pixmaps",
+        };
+        for (const auto &p : extra) {
+            if (!paths.contains(p) && QDir(p).exists())
+                paths << p;
+        }
+        QIcon::setThemeSearchPaths(paths);
+    }
 #endif
 
     // Ensure Adwaita icons are available as a fallback theme
