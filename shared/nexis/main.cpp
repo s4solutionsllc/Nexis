@@ -7,7 +7,11 @@
 #include <QIcon>
 #include <QLockFile>
 #include <QDir>
+#include <QFile>
 #include <QMessageBox>
+#include <QProcess>
+#include <QRegularExpression>
+#include <QSettings>
 #include <QSystemTrayIcon>
 #include <QTimer>
 
@@ -78,6 +82,63 @@ static void showNotificationAndExit(QApplication &app, const QString &title, con
     QTimer::singleShot(5000, &app, &QApplication::quit);
     app.exec();
 }
+
+#ifdef Q_OS_LINUX
+static QString detectSystemIconTheme()
+{
+    const QString home = QDir::homePath();
+
+    // GTK4 / GTK3 settings.ini
+    const QStringList gtkIni = {
+        home + "/.config/gtk-4.0/settings.ini",
+        home + "/.config/gtk-3.0/settings.ini",
+    };
+    for (const QString &path : gtkIni) {
+        if (QFile::exists(path)) {
+            QSettings s(path, QSettings::IniFormat);
+            QString name = s.value("Settings/gtk-icon-theme-name").toString().trimmed();
+            if (!name.isEmpty() && name != "hicolor")
+                return name;
+        }
+    }
+
+    // GTK2 ~/.gtkrc-2.0
+    QFile gtkrc(home + "/.gtkrc-2.0");
+    if (gtkrc.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QRegularExpression re(R"(gtk-icon-theme-name\s*=\s*["]?([^"\n]+)["]?)");
+        while (!gtkrc.atEnd()) {
+            QString line = QString::fromUtf8(gtkrc.readLine()).trimmed();
+            QRegularExpressionMatch m = re.match(line);
+            if (m.hasMatch()) {
+                QString name = m.captured(1).trimmed();
+                if (!name.isEmpty() && name != "hicolor")
+                    return name;
+            }
+        }
+    }
+
+    // KDE / Plasma kdeglobals
+    const QString kdeglobals = home + "/.config/kdeglobals";
+    if (QFile::exists(kdeglobals)) {
+        QSettings s(kdeglobals, QSettings::IniFormat);
+        QString name = s.value("Icons/Theme").toString().trimmed();
+        if (!name.isEmpty() && name != "hicolor")
+            return name;
+    }
+
+    // gsettings fallback (GNOME/DEs that don't use GTK config files)
+    QProcess proc;
+    proc.start("gsettings", {"get", "org.gnome.desktop.interface", "icon-theme"});
+    if (proc.waitForFinished(1000)) {
+        QString out = QString::fromUtf8(proc.readAllStandardOutput()).trimmed();
+        out.remove('\'');
+        if (!out.isEmpty() && out != "hicolor")
+            return out;
+    }
+
+    return {};
+}
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -218,6 +279,16 @@ int main(int argc, char *argv[])
                 paths << p;
         }
         QIcon::setThemeSearchPaths(paths);
+
+        // The bundled Qt has no GTK platform plugin, so QIcon::themeName() returns
+        // empty. Detect the system theme from GTK/KDE config files so fromTheme()
+        // searches the correct theme directory (e.g., Papirus-Dark).
+        const QString currentTheme = QIcon::themeName();
+        if (currentTheme.isEmpty() || currentTheme == "hicolor") {
+            const QString detected = detectSystemIconTheme();
+            if (!detected.isEmpty())
+                QIcon::setThemeName(detected);
+        }
     }
 #endif
 

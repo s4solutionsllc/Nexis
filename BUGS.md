@@ -656,3 +656,7 @@
 ## Notes
 
 <!-- Claude Code: append new bugs here. Use the next available BUG-XX id. -->
+
+- [x] **BUG-99 / #15: System Theme tray icon still not working in AppImage** (MEDIUM)
+  - **File:** `shared/nexis/main.cpp`
+  - **Description:** BUG-97 added XDG icon search paths for AppImage, but `QIcon::fromTheme()` also needs the correct icon *theme name* to search within. AppImage bundles Qt with xcb (no GTK platform plugin), so `QIcon::themeName()` returns empty and falls back to "Adwaita" — which doesn't contain `utilities-system-monitor`. The system's actual theme (e.g., Papirus-Dark) is never consulted even though its icons are reachable on disk. GitHub issue [#15](https://github.com/lsimpsonsfdc/Nexis/issues/15).
