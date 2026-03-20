@@ -12,6 +12,9 @@ private slots:
     void lookup_unknownRepo_returnsEmpty();
     void lookup_partialMatch();
     void lookup_caseInsensitive();
+    void domainFromUri_validUrl();
+    void domainFromUri_noScheme();
+    void domainFromUri_emptyInput();
 };
 
 void TestRepoKnowledgeBase::lookup_ubuntuMain()
@@ -53,6 +56,24 @@ void TestRepoKnowledgeBase::lookup_caseInsensitive()
 {
     RepoKnownInfo info = RepoKnowledgeBase::lookup("http://ARCHIVE.UBUNTU.COM/ubuntu");
     QVERIFY(!info.name.isEmpty());
+}
+
+void TestRepoKnowledgeBase::domainFromUri_validUrl()
+{
+    QString domain = RepoKnowledgeBase::domainFromUri("https://packages.microsoft.com/repos/vscode");
+    QCOMPARE(domain, QString("packages.microsoft.com"));
+}
+
+void TestRepoKnowledgeBase::domainFromUri_noScheme()
+{
+    QString domain = RepoKnowledgeBase::domainFromUri("packages.microsoft.com/repos/vscode");
+    QVERIFY(domain.isEmpty());
+}
+
+void TestRepoKnowledgeBase::domainFromUri_emptyInput()
+{
+    QString domain = RepoKnowledgeBase::domainFromUri("");
+    QVERIFY(domain.isEmpty());
 }
 
 QTEST_MAIN(TestRepoKnowledgeBase)
