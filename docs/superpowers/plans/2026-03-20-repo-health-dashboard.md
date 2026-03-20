@@ -1749,14 +1749,14 @@ git commit -m "feat(repo-health): integrate health checker into DataRefreshServi
 - Modify: `shared/nexis/Pages/AptSourceManager/apt_source_repository_item.h:1-34`
 - Modify: `shared/nexis/Pages/AptSourceManager/apt_source_repository_item.cpp:1-66`
 
-- [ ] **Step 1: Update .ui minimum height**
+- [x] **Step 1: Update .ui minimum height**
 
 In `shared/nexis/Pages/AptSourceManager/apt_source_repository_item.ui`, change the height values:
 
 Line 10: `<height>45</height>` → `<height>60</height>`
 Line 22: `<height>45</height>` → `<height>60</height>`
 
-- [ ] **Step 2: Add new members to header**
+- [x] **Step 2: Add new members to header**
 
 In `shared/nexis/Pages/AptSourceManager/apt_source_repository_item.h`:
 
@@ -1785,7 +1785,7 @@ Add private members after line 31 (`APTSourcePtr mAptSource;`):
     RepoHealthResult::Status mCurrentStatus = RepoHealthResult::Unknown;
 ```
 
-- [ ] **Step 3: Implement enriched card layout**
+- [x] **Step 3: Implement enriched card layout**
 
 Replace the content of `shared/nexis/Pages/AptSourceManager/apt_source_repository_item.cpp` `init()` method. After the existing `ui->setupUi(this);` and `Utilities::addDropShadow(this, 30, 10);` lines, add the new layout code.
 
@@ -1838,7 +1838,7 @@ In `init()`, after `Utilities::addDropShadow(this, 30, 10);` and before the `#if
             this, &APTSourceRepositoryItem::refreshThemeColors);
 ```
 
-- [ ] **Step 4: Implement `setHealthResult()` and `updateStatusIndicator()`**
+- [x] **Step 4: Implement `setHealthResult()` and `updateStatusIndicator()`**
 
 Add these methods to the .cpp file (before the existing `on_checkAptSource_clicked`):
 
@@ -1897,17 +1897,17 @@ void APTSourceRepositoryItem::refreshThemeColors()
 }
 ```
 
-- [ ] **Step 5: Build and verify**
+- [x] **Step 5: Build and verify**
 
 Run: `cmake --build build -j$(nproc) 2>&1 | tail -5`
 Expected: Build succeeds
 
-- [ ] **Step 6: Run all tests**
+- [x] **Step 6: Run all tests**
 
 Run: `ctest --test-dir build --output-on-failure`
 Expected: All tests pass
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add shared/nexis/Pages/AptSourceManager/apt_source_repository_item.ui shared/nexis/Pages/AptSourceManager/apt_source_repository_item.h shared/nexis/Pages/AptSourceManager/apt_source_repository_item.cpp
