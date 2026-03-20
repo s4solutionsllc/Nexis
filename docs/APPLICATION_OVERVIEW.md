@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: March 2026 | Version 2.1.13
+> Last updated: 2026-03-20 | Version 2.1.18
 
 ---
 
@@ -379,6 +379,9 @@ Manage package repositories and sources. Conditional: shown only when the releva
 
 **Available Updates section (both platforms):**
 At the top of the APT Source Manager / Homebrew page, an "Available Updates" section displays outdated packages in a 3-column tree widget (Source, Package, Version). A "Check Now" button triggers an on-demand refresh. Data comes from hourly background checks via `QtConcurrent::run()` in DataRefreshService (`mUpdateTimer`, 1h interval). macOS: `softwareupdate -l` + `brew outdated`. Linux: apt/dnf/pacman/zypper/snap/flatpak. Tray notification when update count goes from 0 to >0 (toggleable in Settings). The sidebar Homebrew/APT button shows an updates badge — full count when the sidebar is expanded, a colored dot (using `@updatesColor` theme token) when collapsed.
+
+**Repository Health Dashboard (new):**
+Periodic background health checks via `DataRefreshService` (chained after update checks, 1h interval + manual Refresh Health button) validate repository integrity and detect common issues. Linux performs 6 checks: connection status, release file 404 errors, GPG key expiry, suite/components mismatch, duplicate sources, and deprecated format. macOS performs 4 checks: tap reachable, outdated packages, deprecated/disabled packages, and pinned versions. Each repository card displays a status dot (green/yellow/red), a colored left border, and a description line from the 30+ entry knowledge base (mapping URI patterns to friendly names and descriptions). Toggleable side detail panel (QSplitter-based) shows: repo name, status badge, full description, platform-specific metadata (file/suite/format on Linux), issue list with severity-colored severity cards, and action buttons (Edit/Open URI/Disable/Repair). Guided repair workflow presents a confirmation dialog showing the exact command before execution with pkexec elevation.
 
 ### 13. Docker
 

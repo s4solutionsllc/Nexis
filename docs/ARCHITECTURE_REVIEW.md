@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: March 2026
+> Last updated: 2026-03-20
 
 ---
 
@@ -57,7 +57,7 @@ Nexis is structured as a **four-tier desktop application**:
 │  Files: shared/nexis/Managers/*.cpp                               │
 ├────────────────────────────────────────────────────────────────────┤
 │  Core Library: nexis-core (static lib)                            │
-│  15 Info providers + 7 Tools + 3 Utils                            │
+│  15 Info providers + 8 Tools + 3 Utils                            │
 │  Files: shared/nexis-core/**/*.cpp + {platform}/nexis-core/**     │
 └────────────────────────────────────────────────────────────────────┘
 ```
@@ -117,7 +117,7 @@ class CpuInfoMacOS : public CpuInfo {
 - **Negligible overhead** — virtual dispatch at 1-30 Hz polling rates adds no measurable cost
 - **Future-proof** — adding a new platform (e.g., Windows) requires creating new subclasses; the compiler guides what to implement
 
-**Assessment:** This pattern provides **compiler-enforced platform contracts** while maintaining the pragmatic simplicity of the original include-path architecture. The 16 abstract base classes (12 Info + 4 Tool) cover all platform-specific code. `PowerProfileInfo` (FR-70) is the latest addition: abstract base with PPD + sysfs dual-backend Linux subclass and macOS stub. It does not poll via DataRefreshService — the profile is read on demand when the Helpers page is activated. `LogProvider` (FR-71) follows the same two-tier pattern for system log reading: abstract base with `LogProviderLinux` (journalctl JSON) and `LogProviderMacOS` (log show ndjson) subclasses, selected via `createForPlatform()` factory.
+**Assessment:** This pattern provides **compiler-enforced platform contracts** while maintaining the pragmatic simplicity of the original include-path architecture. The 17 abstract base classes (12 Info + 5 Tool) cover all platform-specific code. `PowerProfileInfo` (FR-70) is among the latest additions: abstract base with PPD + sysfs dual-backend Linux subclass and macOS stub. It does not poll via DataRefreshService — the profile is read on demand when the Helpers page is activated. `LogProvider` (FR-71) follows the same two-tier pattern for system log reading: abstract base with `LogProviderLinux` (journalctl JSON) and `LogProviderMacOS` (log show ndjson) subclasses, selected via `createForPlatform()` factory. `RepoHealthChecker` (repository health) adds another platform-specific tool: abstract base with 6-check Linux subclass (`RepoHealthCheckerLinux`: connection, release 404, GPG expiry, suite mismatch, duplicates, format) and 4-check macOS subclass (`RepoHealthCheckerMac`: tap reachable, outdated, deprecated, pinned), both polled by DataRefreshService after update checks.
 
 ---
 
@@ -256,7 +256,7 @@ signals:
 - App minimized/restored → emits `sigAppVisibilityChanged(bool)` → DataRefreshService pauses/resumes polling
 - No page needs a pointer to any other page — complete decoupling
 
-**Assessment:** With 9 signals (after BUG-82 cleanup removed unused signals), this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), `sigNavigateToPage` (FR-42), cleanable-size signal (FR-44), and dashboard footer visibility signal (FR-75) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, SystemCleanerPage, SettingsPage, and the CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+).
+**Assessment:** With 9 signals (after BUG-82 cleanup removed unused signals), this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), `sigNavigateToPage` (FR-42), cleanable-size signal (FR-44), and dashboard footer visibility signal (FR-75) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, SystemCleanerPage, SettingsPage, and the CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+). SignalMapper remains stable and focused on app-wide lifecycle events, while DataRefreshService handles domain-specific data delivery signals (9 core system metrics + 2 background checks + 1 background health check = 12 data signals).
 
 ---
 
@@ -417,7 +417,7 @@ Both checks emit `qWarning()` at runtime (visible in debug output) without alter
 
 #### ~~2A. Centralized DataRefreshService~~ (Done)
 
-**Status:** Completed in Phase 8 (FR-37). Created `DataRefreshService` singleton (`shared/nexis/Managers/data_refresh_service.{h,cpp}`) with 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and 12 typed data signals (`cpuUpdated`, `memoryUpdated`, `networkUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `fanUpdated`, `batteryUpdated`, `diskUsageUpdated`, `diskHealthUpdated`, `processesUpdated`, `systemUpdatesChecked`). The `memoryUpdated` signal was updated in FR-57 to use a `MemorySnapshot` struct (replacing 4 separate `quint64` parameters) carrying wired/active/inactive/compressed/available/pressureLevel fields alongside the original used/total/swapUsed/swapTotal. The `fanUpdated` signal was added in BUG-70 (previously fan updates piggybacked on `tempUpdated`). The `systemUpdatesChecked` signal was added in FR-60 for the hourly system update check, which runs via `QtConcurrent::run()` to avoid blocking the UI thread. This signal is consumed by `App` (sidebar badge update + tray notification) and `APTSourceManagerPage` (Available Updates tree widget), not by `DashboardPage` — the original dashboard tile approach was replaced with a sidebar badge + package page integration during the FR-60 redesign.
+**Status:** Completed in Phase 8 (FR-37). Created `DataRefreshService` singleton (`shared/nexis/Managers/data_refresh_service.{h,cpp}`) with 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and 13 typed data signals (`cpuUpdated`, `memoryUpdated`, `networkUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `fanUpdated`, `batteryUpdated`, `diskUsageUpdated`, `diskHealthUpdated`, `processesUpdated`, `systemUpdatesChecked`, `repoHealthChecked`). The `memoryUpdated` signal was updated in FR-57 to use a `MemorySnapshot` struct (replacing 4 separate `quint64` parameters) carrying wired/active/inactive/compressed/available/pressureLevel fields alongside the original used/total/swapUsed/swapTotal. The `fanUpdated` signal was added in BUG-70 (previously fan updates piggybacked on `tempUpdated`). The `systemUpdatesChecked` signal was added in FR-60 for the hourly system update check, which runs via `QtConcurrent::run()` to avoid blocking the UI thread. This signal is consumed by `App` (sidebar badge update + tray notification) and `APTSourceManagerPage` (Available Updates tree widget), not by `DashboardPage` — the original dashboard tile approach was replaced with a sidebar badge + package page integration during the FR-60 redesign. The `repoHealthChecked` signal was added for repository health dashboard validation (chained after update checks, emits `RepoHealthCache` with per-repo health results), consumed by `APTSourceManagerPage` for card enrichment and side panel display.
 
 Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Processes (removed 1 timer) to reactive signal subscribers. Added `sigAppVisibilityChanged(bool)` to SignalMapper for pause/resume (kiosk mode overrides). DI constructor parameter follows FR-35 pattern.
 
@@ -491,7 +491,7 @@ public:
 
 **What:** Replace `SignalMapper` with a typed event bus library if the signal count grows beyond ~15.
 
-**When:** Currently 9 signals (SignalMapper) + 11 signals (DataRefreshService) — well within comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
+**When:** Currently 9 signals (SignalMapper) + 13 signals (DataRefreshService) — well within comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
 
 **Candidate:** [eventpp](https://github.com/wqking/eventpp) (header-only, C++11+, well-tested).
 
@@ -611,5 +611,11 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Pages/Dashboard/disk_tile.h/.cpp` | Donut style (disk default): custom QPainter donut chart + setDriveHealth() cross-tile data flow (FR-43/FR-44) |
 | `shared/nexis/Pages/Dashboard/maintenance_wizard_dialog.h/.cpp` | System Checkup dialog orchestrating 4 parallel checks (FR-83) |
 | `shared/nexis/Widgets/CommandPalette/command_palette.h/.cpp` | Ctrl+K command palette for keyboard-driven navigation and actions |
+| `shared/nexis-core/Tools/repo_health_checker.h` | Abstract base class for repository health validation; pure virtuals for platform checks; emits RepoHealthCache via DataRefreshService |
+| `linux/nexis-core/Tools/repo_health_checker_linux.h/.cpp` | Platform implementation: 6 checks (connection, release 404, GPG expiry, suite mismatch, duplicates, format) with detailed issue reporting |
+| `macos/nexis-core/Tools/repo_health_checker_mac.h/.cpp` | Platform implementation: 4 checks (tap reachable, outdated, deprecated, pinned) for Homebrew taps |
+| `shared/nexis-core/Tools/repo_knowledge_base.h/.cpp` | 30+ entry knowledge base mapping repository URI patterns to display names and descriptions; Release file + domain fallback |
+| `shared/nexis-core/Tools/repo_health_types.h` | Data types: RepoHealthResult (per-check findings), RepoHealthStatus (enum: Healthy/Warning/Error), RepoHealthCache (map of repo path to results) |
+| `shared/nexis/Pages/AptSourceManager/repo_detail_panel.h/.cpp` | Side detail panel widget: repo name, status badge, description, metadata, issue list with severity colors, action buttons (Edit/Open URI/Disable/Repair) |
 | `shared/nexis/Managers/cleaner_service.cpp` | Example of thick manager with real business logic |
 | `shared/nexis/Managers/schedule_manager.cpp` | Example of OS-native integration complexity |
