@@ -79,6 +79,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Info/fan_info.h"
   "${CORE_SHARED_DIR}/Info/update_info.h"
   "${CORE_SHARED_DIR}/Tools/apt_source_tool.h"
+  "${CORE_SHARED_DIR}/Tools/repo_health_types.h"
   "${CORE_SHARED_DIR}/Tools/docker_tool.h"
   "${CORE_SHARED_DIR}/Tools/file_search_tool.h"
   "${CORE_SHARED_DIR}/Tools/gnome_settings_tool.h"
