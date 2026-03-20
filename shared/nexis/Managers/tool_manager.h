@@ -8,6 +8,7 @@
 #include <Tools/apt_source_tool.h>
 #include <Tools/gnome_settings_tool.h>
 #include <Tools/docker_tool.h>
+#include <Tools/repo_health_checker.h>
 
 class ToolManager
 {
@@ -54,6 +55,7 @@ public:
 
     GnomeSettingsTool *gnomeSettings() const { return mGnomeSettings.get(); }
     PackageTool *packageTool() const { return mPackageTool.get(); }
+    RepoHealthChecker *repoHealthChecker() const { return mRepoHealthChecker.get(); }
 
 private:
     ToolManager();
@@ -63,6 +65,7 @@ private:
     std::unique_ptr<PackageTool> mPackageTool;
     std::unique_ptr<AptSourceTool> mAptSourceTool;
     std::unique_ptr<GnomeSettingsTool> mGnomeSettings;
+    std::unique_ptr<RepoHealthChecker> mRepoHealthChecker;
 };
 
 #endif // TOOL_MANAGER_H

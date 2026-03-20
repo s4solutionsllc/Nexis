@@ -12,6 +12,7 @@
 #include <Info/disk_health_info.h>
 #include <Info/process.h>
 #include <Info/update_info.h>
+#include <Tools/repo_health_types.h>
 
 class InfoManager;
 class SettingManager;
@@ -32,6 +33,7 @@ public:
     void pauseProcessTimer();
     void resumeProcessTimer();
     void triggerUpdateCheck();
+    void triggerRepoHealthCheck();
 
 signals:
     void cpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
@@ -46,6 +48,7 @@ signals:
     void diskHealthUpdated(const QList<DriveHealth> &drives);
     void processesUpdated(const QList<Process> &processes, const QString &userName);
     void systemUpdatesChecked(const UpdateCheckResult &result);
+    void repoHealthChecked(const RepoHealthCache &cache);
 
 private slots:
     void onFastTick();
@@ -74,6 +77,7 @@ private:
     bool mProcessPaused;
     bool mUpdateCheckRunning;
     bool mDiskHealthRunning = false;
+    bool mRepoHealthRunning = false;
 };
 
 #endif // DATA_REFRESH_SERVICE_H

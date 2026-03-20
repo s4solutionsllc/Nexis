@@ -1,9 +1,14 @@
 #include "data_refresh_service.h"
 #include "Managers/info_manager.h"
 #include "Managers/setting_manager.h"
+#include "Managers/tool_manager.h"
 #include "signal_mapper.h"
 
 #include <QtConcurrent>
+
+#ifdef Q_OS_MACOS
+#include <Tools/repo_health_checker_macos.h>
+#endif
 
 DataRefreshService *DataRefreshService::instance = nullptr;
 
@@ -143,6 +148,28 @@ void DataRefreshService::resumeProcessTimer()
 void DataRefreshService::triggerUpdateCheck()
 {
     onUpdateTick();
+}
+
+void DataRefreshService::triggerRepoHealthCheck()
+{
+    if (mRepoHealthRunning)
+        return;
+
+    mRepoHealthRunning = true;
+    QtConcurrent::run([this]() {
+        RepoHealthChecker *checker = ToolManager::ins()->repoHealthChecker();
+        RepoHealthCache cache;
+#ifdef Q_OS_MACOS
+        auto *macChecker = static_cast<RepoHealthCheckerMac *>(checker);
+        cache = macChecker->checkBrewPackages(ToolManager::ins()->packageTool()->getPackages());
+#else
+        cache = checker->checkAll(ToolManager::ins()->getSourceList());
+#endif
+        QMetaObject::invokeMethod(this, [this, cache]() {
+            mRepoHealthRunning = false;
+            emit repoHealthChecked(cache);
+        }, Qt::QueuedConnection);
+    });
 }
 
 void DataRefreshService::onFastTick()

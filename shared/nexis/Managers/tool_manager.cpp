@@ -5,11 +5,13 @@
 #include <Tools/package_tool_macos.h>
 #include <Tools/apt_source_tool_macos.h>
 #include <Tools/gnome_settings_tool_macos.h>
+#include <Tools/repo_health_checker_macos.h>
 #else
 #include <Tools/service_tool_linux.h>
 #include <Tools/package_tool_linux.h>
 #include <Tools/apt_source_tool_linux.h>
 #include <Tools/gnome_settings_tool_linux.h>
+#include <Tools/repo_health_checker_linux.h>
 #endif
 
 ToolManager *ToolManager::instance = nullptr;
@@ -17,15 +19,17 @@ ToolManager *ToolManager::instance = nullptr;
 ToolManager::ToolManager()
 {
 #ifdef Q_OS_MACOS
-    mServiceTool   = std::make_unique<ServiceToolMacOS>();
-    mPackageTool   = std::make_unique<PackageToolMacOS>();
-    mAptSourceTool = std::make_unique<AptSourceToolMacOS>();
-    mGnomeSettings = std::make_unique<GnomeSettingsToolMacOS>();
+    mServiceTool       = std::make_unique<ServiceToolMacOS>();
+    mPackageTool       = std::make_unique<PackageToolMacOS>();
+    mAptSourceTool     = std::make_unique<AptSourceToolMacOS>();
+    mGnomeSettings     = std::make_unique<GnomeSettingsToolMacOS>();
+    mRepoHealthChecker = std::make_unique<RepoHealthCheckerMac>();
 #else
-    mServiceTool   = std::make_unique<ServiceToolLinux>();
-    mPackageTool   = std::make_unique<PackageToolLinux>();
-    mAptSourceTool = std::make_unique<AptSourceToolLinux>();
-    mGnomeSettings = std::make_unique<GnomeSettingsToolLinux>();
+    mServiceTool       = std::make_unique<ServiceToolLinux>();
+    mPackageTool       = std::make_unique<PackageToolLinux>();
+    mAptSourceTool     = std::make_unique<AptSourceToolLinux>();
+    mGnomeSettings     = std::make_unique<GnomeSettingsToolLinux>();
+    mRepoHealthChecker = std::make_unique<RepoHealthCheckerLinux>();
 #endif
 }
 
