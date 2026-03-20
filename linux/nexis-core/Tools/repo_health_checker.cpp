@@ -308,15 +308,12 @@ void RepoHealthCheckerLinux::checkDeprecatedFormat(const APTSourcePtr &source, R
 void RepoHealthCheckerLinux::checkDuplicates(const QList<APTSourcePtr> &sources, RepoHealthCache &cache)
 {
     QMap<QString, int> seen; // normalized key -> count
-    for (const APTSourcePtr &src : sources) {
-        QString normalized = src->uri.toLower() + " " + src->suites + " " + src->components;
-        seen[normalized]++;
-    }
+    for (const APTSourcePtr &src : sources)
+        seen[cacheKey(src)]++;
 
     for (const APTSourcePtr &src : sources) {
-        QString normalized = src->uri.toLower() + " " + src->suites + " " + src->components;
-        if (seen[normalized] > 1) {
-            QString key = cacheKey(src);
+        QString key = cacheKey(src);
+        if (seen[key] > 1) {
             if (cache.contains(key)) {
                 RepoHealthIssue issue;
                 issue.severity = RepoHealthIssue::Warning;
@@ -324,7 +321,7 @@ void RepoHealthCheckerLinux::checkDuplicates(const QList<APTSourcePtr> &sources,
                 issue.summary = QObject::tr("Duplicate source entry");
                 issue.detail = QObject::tr("This repository is defined %1 times across source files. "
                                             "Duplicate entries can cause apt warnings.")
-                    .arg(seen[normalized]);
+                    .arg(seen[key]);
                 cache[key].issues.append(issue);
                 cache[key].status = worstStatus(cache[key].issues);
             }

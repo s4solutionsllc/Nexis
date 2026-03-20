@@ -34,6 +34,7 @@ RepoHealthCache RepoHealthCheckerMac::checkBrewPackages(const QList<Package> &pa
     checkOutdated(cache);
     checkDeprecated(cache);
     checkTaps(cache);
+    checkPinned(cache);
 
     return cache;
 }
@@ -170,8 +171,68 @@ void RepoHealthCheckerMac::checkDeprecated(RepoHealthCache &cache)
     processCasks(root["casks"].toArray());
 }
 
-void RepoHealthCheckerMac::checkTaps(RepoHealthCache &)
+void RepoHealthCheckerMac::checkTaps(RepoHealthCache &cache)
 {
-    // Tap reachability check — not tied to individual packages, so we skip
-    // for now. Could be added as a separate "tap health" feature.
+    ExecResult r = CommandUtil::execWithStatus("brew", {"tap-info", "--json=v2"}, 30000);
+    if (r.exitCode != 0)
+        return;
+
+    QJsonDocument doc = QJsonDocument::fromJson(r.output.toUtf8());
+    if (!doc.isObject())
+        return;
+
+    QJsonArray taps = doc.object()["taps"].toArray();
+    for (const QJsonValue &val : taps) {
+        QJsonObject tap = val.toObject();
+        QString remote = tap["remote"].toString();
+        QString tapName = tap["name"].toString();
+        if (remote.isEmpty())
+            continue;
+
+        // Use git ls-remote to test reachability of the tap's remote URL
+        ExecResult gitResult = CommandUtil::execWithStatus(
+            "git", {"ls-remote", "--exit-code", "--heads", remote, "HEAD"}, 5000);
+
+        if (gitResult.exitCode != 0) {
+            // Annotate every cached package that belongs to this tap
+            for (auto it = cache.begin(); it != cache.end(); ++it) {
+                QString pkgTap = it->name.contains('/') ? it->name.section('/', 0, 1) : QString();
+                if (!pkgTap.isEmpty() && pkgTap != tapName)
+                    continue;
+                // Only annotate if we can associate; otherwise add a generic entry
+                RepoHealthIssue issue;
+                issue.severity = RepoHealthIssue::Warning;
+                issue.code = "tap_unreachable";
+                issue.summary = QObject::tr("Tap unreachable: %1").arg(tapName);
+                issue.detail = QObject::tr("The tap remote %1 could not be reached. "
+                                            "Updates from this tap may fail.")
+                    .arg(remote);
+                it->issues.append(issue);
+                if (it->status == RepoHealthResult::Healthy)
+                    it->status = RepoHealthResult::Warning;
+                break; // one annotation per tap is enough
+            }
+        }
+    }
+}
+
+void RepoHealthCheckerMac::checkPinned(RepoHealthCache &cache)
+{
+    ExecResult r = CommandUtil::execWithStatus("brew", {"list", "--pinned"}, 10000);
+    if (r.exitCode != 0)
+        return;
+
+    QStringList pinned = r.output.split('\n', Qt::SkipEmptyParts);
+    for (const QString &pkg : pinned) {
+        QString name = pkg.trimmed();
+        if (!cache.contains(name))
+            continue;
+
+        RepoHealthIssue issue;
+        issue.severity = RepoHealthIssue::Info;
+        issue.code = "pinned";
+        issue.summary = QObject::tr("Package pinned");
+        issue.detail = QObject::tr("This package is pinned and will not be upgraded by 'brew upgrade'.");
+        cache[name].issues.append(issue);
+    }
 }

@@ -17,6 +17,7 @@ private:
     void checkOutdated(RepoHealthCache &cache);
     void checkDeprecated(RepoHealthCache &cache);
     void checkTaps(RepoHealthCache &cache);
+    void checkPinned(RepoHealthCache &cache);
 };
 
 #endif // REPO_HEALTH_CHECKER_MACOS_H

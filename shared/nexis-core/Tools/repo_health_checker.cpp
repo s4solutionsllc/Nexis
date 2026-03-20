@@ -2,5 +2,5 @@
 
 QString RepoHealthChecker::cacheKey(const APTSourcePtr &source)
 {
-    return source->uri + " " + source->suites + " " + source->components;
+    return (source->uri + " " + source->suites + " " + source->components).toLower();
 }

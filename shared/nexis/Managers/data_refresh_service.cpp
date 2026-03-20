@@ -160,8 +160,9 @@ void DataRefreshService::triggerRepoHealthCheck()
         RepoHealthChecker *checker = ToolManager::ins()->repoHealthChecker();
         RepoHealthCache cache;
 #ifdef Q_OS_MACOS
-        auto *macChecker = static_cast<RepoHealthCheckerMac *>(checker);
-        cache = macChecker->checkBrewPackages(ToolManager::ins()->packageTool()->getPackages());
+        auto *macChecker = dynamic_cast<RepoHealthCheckerMac *>(checker);
+        if (macChecker)
+            cache = macChecker->checkBrewPackages(ToolManager::ins()->packageTool()->getPackages());
 #else
         cache = checker->checkAll(ToolManager::ins()->getSourceList());
 #endif
