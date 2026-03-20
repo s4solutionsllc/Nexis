@@ -13,6 +13,12 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QFont>
+#include "repo_detail_panel.h"
+#include <QSplitter>
+#include <Tools/repo_health_checker.h>
+#include <Tools/repo_knowledge_base.h>
+#include <QRegularExpression>
+#include "Utils/command_util.h"
 
 #ifdef Q_OS_MAC
 #include <QFont>
@@ -68,6 +74,15 @@ void APTSourceManagerPage::init()
     mBtnCheckNow->setAccessibleName("primary");
     mBtnCheckNow->setFixedHeight(28);
     updHeader->addWidget(mBtnCheckNow);
+
+    mBtnRefreshHealth = new QPushButton(tr("Refresh Health"), mUpdatesSection);
+    mBtnRefreshHealth->setObjectName("btnRefreshHealth");
+    mBtnRefreshHealth->setCursor(Qt::PointingHandCursor);
+    mBtnRefreshHealth->setFocusPolicy(Qt::NoFocus);
+    mBtnRefreshHealth->setAccessibleName("primary");
+    mBtnRefreshHealth->setFixedHeight(28);
+    updHeader->addWidget(mBtnRefreshHealth);
+
     updLayout->addLayout(updHeader);
 
     // Updates tree widget: Source | Package | Version
@@ -98,6 +113,53 @@ void APTSourceManagerPage::init()
     });
     connect(mRefresh, &DataRefreshService::systemUpdatesChecked,
             this, &APTSourceManagerPage::onSystemUpdatesChecked);
+
+    // --- Health Dashboard: QSplitter + Detail Panel ---
+    mSplitter = new QSplitter(Qt::Horizontal, this);
+    mSplitter->setChildrenCollapsible(false);
+
+    // Reparent the main content area into the splitter
+    mSplitter->addWidget(ui->verticalWidget_2);
+
+    mDetailPanel = new RepoDetailPanel(this);
+    mDetailPanel->hide();
+    mDetailPanel->setMinimumWidth(250);
+    mSplitter->addWidget(mDetailPanel);
+
+    mSplitter->setSizes({600, 400});
+    mSplitter->setStretchFactor(0, 1);
+    mSplitter->setStretchFactor(1, 0);
+
+    ui->verticalLayout_2->addWidget(mSplitter);
+
+    connect(mDetailPanel, &RepoDetailPanel::closeRequested,
+            this, &APTSourceManagerPage::onDetailPanelCloseRequested);
+    connect(mDetailPanel, &RepoDetailPanel::repairRequested,
+            this, &APTSourceManagerPage::onRepairRequested);
+    connect(mDetailPanel, &RepoDetailPanel::editRequested,
+            this, [this](const APTSourcePtr &src) {
+        selectedAptSource = src;
+        on_btnEditAptSource_clicked();
+    });
+    connect(mDetailPanel, &RepoDetailPanel::disableRequested,
+            this, [this](const APTSourcePtr &src) {
+        mToolManager->changeAPTStatus(src, !src->isActive);
+        loadAptSources();
+    });
+
+    connect(mBtnRefreshHealth, &QPushButton::clicked, this, [this]() {
+        mBtnRefreshHealth->setEnabled(false);
+        mBtnRefreshHealth->setText(tr("Checking..."));
+        mRefresh->triggerRepoHealthCheck();
+    });
+
+    connect(mRefresh, &DataRefreshService::repoHealthChecked,
+            this, &APTSourceManagerPage::onRepoHealthChecked);
+
+    connect(mRefresh, &DataRefreshService::systemUpdatesChecked,
+            this, [this](const UpdateCheckResult &) {
+        mRefresh->triggerRepoHealthCheck();
+    });
 
 #ifdef Q_OS_MAC
     // macOS: Homebrew packages with tree widget layout (like Uninstaller page)
@@ -361,13 +423,39 @@ void APTSourceManagerPage::changeElementsVisible(const bool checked)
 void APTSourceManagerPage::on_listWidgetAptSources_itemClicked(QListWidgetItem *item)
 {
     QWidget *widget = ui->listWidgetAptSources->itemWidget(item);
-    if (widget) {
-        APTSourceRepositoryItem *aptSourceItem = dynamic_cast<APTSourceRepositoryItem*>(widget);
-        if (aptSourceItem) {
-            selectedAptSource = aptSourceItem->aptSource();
-        }
-    } else {
+    if (!widget) {
         selectedAptSource.clear();
+        mDetailPanel->clear();
+        return;
+    }
+
+    APTSourceRepositoryItem *aptSourceItem = dynamic_cast<APTSourceRepositoryItem*>(widget);
+    if (!aptSourceItem) {
+        selectedAptSource.clear();
+        mDetailPanel->clear();
+        return;
+    }
+
+    APTSourcePtr clickedSource = aptSourceItem->aptSource();
+
+    // Toggle: clicking the same repo again closes the panel
+    if (selectedAptSource == clickedSource && mDetailPanel->isVisible()) {
+        mDetailPanel->clear();
+        selectedAptSource.clear();
+        return;
+    }
+
+    selectedAptSource = clickedSource;
+    QString key = RepoHealthChecker::cacheKey(selectedAptSource);
+    if (mHealthCache.contains(key)) {
+        mDetailPanel->showRepo(selectedAptSource, mHealthCache[key]);
+    } else {
+        RepoHealthResult placeholder;
+        placeholder.status = RepoHealthResult::Unknown;
+        RepoKnownInfo known = RepoKnowledgeBase::lookup(selectedAptSource->uri);
+        placeholder.name = known.name.isEmpty() ? RepoKnowledgeBase::domainFromUri(selectedAptSource->uri) : known.name;
+        placeholder.description = known.description;
+        mDetailPanel->showRepo(selectedAptSource, placeholder);
     }
 }
 
@@ -495,4 +583,88 @@ void APTSourceManagerPage::onSystemUpdatesChecked(const UpdateCheckResult &resul
     }
 
     mUpdatesSection->show();
+}
+
+void APTSourceManagerPage::onRepoHealthChecked(const RepoHealthCache &cache)
+{
+    mHealthCache = cache;
+
+    mBtnRefreshHealth->setEnabled(true);
+    mBtnRefreshHealth->setText(tr("Refresh Health"));
+
+#ifdef Q_OS_MAC
+    if (mTreeWidget) {
+        for (int i = 0; i < mTreeWidget->topLevelItemCount(); ++i) {
+            QTreeWidgetItem *section = mTreeWidget->topLevelItem(i);
+            for (int j = 0; j < section->childCount(); ++j) {
+                QTreeWidgetItem *item = section->child(j);
+                QString pkgName = item->data(0, Qt::UserRole).toString();
+                if (cache.contains(pkgName)) {
+                    const RepoHealthResult &result = cache[pkgName];
+                    QString prefix;
+                    switch (result.status) {
+                    case RepoHealthResult::Warning: prefix = "⚠ "; break;
+                    case RepoHealthResult::Error:   prefix = "✗ "; break;
+                    default: break;
+                    }
+                    QString currentText = item->text(0);
+                    currentText.remove(QRegularExpression("^[⚠✗] "));
+                    item->setText(0, prefix + currentText);
+                }
+            }
+        }
+    }
+#else
+    for (int i = 0; i < ui->listWidgetAptSources->count(); ++i) {
+        QListWidgetItem *listItem = ui->listWidgetAptSources->item(i);
+        QWidget *widget = ui->listWidgetAptSources->itemWidget(listItem);
+        if (!widget) continue;
+
+        APTSourceRepositoryItem *cardItem = dynamic_cast<APTSourceRepositoryItem*>(widget);
+        if (!cardItem) continue;
+
+        QString key = RepoHealthChecker::cacheKey(cardItem->aptSource());
+        if (cache.contains(key))
+            cardItem->setHealthResult(cache[key]);
+    }
+
+    if (mDetailPanel->isVisible() && !selectedAptSource.isNull()) {
+        QString key = RepoHealthChecker::cacheKey(selectedAptSource);
+        if (cache.contains(key))
+            mDetailPanel->showRepo(selectedAptSource, cache[key]);
+    }
+#endif
+}
+
+void APTSourceManagerPage::onDetailPanelCloseRequested()
+{
+    mDetailPanel->hide();
+    selectedAptSource.clear();
+}
+
+void APTSourceManagerPage::onRepairRequested(const QString &command, const QString &label)
+{
+    QString message = tr("The following command will be run to repair this issue:\n\n%1\n\n"
+                         "This requires administrator privileges. Proceed?").arg(command);
+
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this, tr("Confirm Repair: %1").arg(label),
+        message, QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
+    if (reply != QMessageBox::Yes)
+        return;
+
+    QStringList args = command.split(QRegularExpression("\\s+"));
+    ExecResult result = CommandUtil::execWithStatus("pkexec", args, 60000);
+
+    if (result.exitCode == 0) {
+        mRefresh->triggerRepoHealthCheck();
+    } else if (result.exitCode == 126 || result.exitCode == 127) {
+        // User cancelled pkexec or pkexec not found — no-op
+    } else {
+        QMessageBox::warning(this, tr("Repair Failed"),
+            tr("The repair command failed with exit code %1.\n\nOutput:\n%2")
+                .arg(result.exitCode)
+                .arg(result.error.isEmpty() ? result.output : result.error));
+    }
 }

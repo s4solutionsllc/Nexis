@@ -12,7 +12,10 @@
 #include "apt_source_edit.h"
 #include "Managers/info_manager.h"
 #include <Info/update_info.h>
+#include <Tools/repo_health_types.h>
 
+class RepoDetailPanel;
+class QSplitter;
 class ToolManager;
 class SignalMapper;
 class DataRefreshService;
@@ -68,6 +71,9 @@ private slots:
 #endif
 
     void onSystemUpdatesChecked(const UpdateCheckResult &result);
+    void onRepoHealthChecked(const RepoHealthCache &cache);
+    void onDetailPanelCloseRequested();
+    void onRepairRequested(const QString &command, const QString &label);
 
 private:
     void init();
@@ -90,6 +96,12 @@ private:
     QPushButton *mBtnCheckNow = nullptr;
     QTreeWidget *mUpdatesTree = nullptr;
     DataRefreshService *mRefresh = nullptr;
+
+    // Health dashboard
+    RepoDetailPanel *mDetailPanel = nullptr;
+    QSplitter *mSplitter = nullptr;
+    RepoHealthCache mHealthCache;
+    QPushButton *mBtnRefreshHealth = nullptr;
 };
 
 #endif
