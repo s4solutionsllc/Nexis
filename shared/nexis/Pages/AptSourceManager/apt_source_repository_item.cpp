@@ -5,6 +5,7 @@
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
 #include <QDebug>
+#include <QFontMetrics>
 #include <QRegularExpression>
 #include <QVBoxLayout>
 
@@ -31,15 +32,21 @@ void APTSourceRepositoryItem::init()
     // Restructure layout: wrap name label in a VBox with description underneath
     QHBoxLayout *hLayout = ui->startupAppLayout;
 
-    // Create status dot (8px colored circle)
+    // Create status indicator (shape icon + color for accessibility)
     mStatusDot = new QLabel(this);
-    mStatusDot->setFixedSize(8, 8);
+    mStatusDot->setFixedSize(14, 14);
+    mStatusDot->setAlignment(Qt::AlignCenter);
     mStatusDot->setAccessibleName("statusDot");
     updateStatusIndicator(RepoHealthResult::Unknown);
 
     // Create description label
     mLblDescription = new QLabel(this);
     mLblDescription->setObjectName("lblRepoDescription");
+    mLblDescription->setWordWrap(false);
+    mLblDescription->setTextFormat(Qt::PlainText);
+    mLblDescription->setTextInteractionFlags(Qt::NoTextInteraction);
+    mLblDescription->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    mLblDescription->setMinimumWidth(0);
     QFont descFont = mLblDescription->font();
     descFont.setPointSize(descFont.pointSize() - 1);
     mLblDescription->setFont(descFont);
@@ -104,23 +111,28 @@ APTSourcePtr APTSourceRepositoryItem::aptSource() const
 
 void APTSourceRepositoryItem::setHealthResult(const RepoHealthResult &result)
 {
-    // Update description
+    // Build full description string
+    QString desc;
     if (!result.description.isEmpty()) {
-        QString desc = result.name.isEmpty() ? result.description
-            : result.name + QString::fromUtf8(" \u2014 ") + result.description;
-        mLblDescription->setText(desc);
-        mLblDescription->setToolTip(desc);
+        desc = result.name.isEmpty() ? result.description
+             : result.name + QString::fromUtf8(" \u2014 ") + result.description;
     }
+
+    // Append inline issue summary for warnings/errors
+    if (!result.issues.isEmpty() && result.status != RepoHealthResult::Healthy) {
+        if (!desc.isEmpty())
+            desc += QString::fromUtf8(" \u2014 ");
+        desc += result.issues.first().summary;
+    }
+
+    // Store full text and apply elision
+    mFullDescription = desc;
+    mLblDescription->setToolTip(desc);
+    elideDescription();
 
     // Update status indicator
     updateStatusIndicator(result.status);
     mCurrentStatus = result.status;
-
-    // Show inline issue summary for warnings/errors
-    if (!result.issues.isEmpty() && result.status != RepoHealthResult::Healthy) {
-        QString issueSummary = result.issues.first().summary;
-        mLblDescription->setText(mLblDescription->text() + " — " + issueSummary);
-    }
 
     // Accessibility
     QString statusText;
@@ -130,21 +142,35 @@ void APTSourceRepositoryItem::setHealthResult(const RepoHealthResult &result)
     case RepoHealthResult::Error:   statusText = tr("Error"); break;
     default:                         statusText = tr("Unknown"); break;
     }
-    setAccessibleDescription(statusText + ": " + mLblDescription->text());
+    setAccessibleDescription(statusText + ": " + mFullDescription);
 }
 
 void APTSourceRepositoryItem::updateStatusIndicator(RepoHealthResult::Status status)
 {
     QSettings *sv = AppManager::ins()->getStyleValues();
     QString color;
+    QString icon;
     switch (status) {
-    case RepoHealthResult::Healthy: color = sv ? sv->value("@successColor").toString() : QString(); break;
-    case RepoHealthResult::Warning: color = sv ? sv->value("@warningColor").toString() : QString(); break;
-    case RepoHealthResult::Error:   color = sv ? sv->value("@destructiveColor").toString() : QString(); break;
-    default:                         color = sv ? sv->value("@tertiaryText").toString() : QString(); break;
+    case RepoHealthResult::Healthy:
+        color = sv ? sv->value("@successColor").toString() : QString();
+        icon  = QString::fromUtf8("\u2713"); // ✓ checkmark
+        break;
+    case RepoHealthResult::Warning:
+        color = sv ? sv->value("@warningColor").toString() : QString();
+        icon  = QString::fromUtf8("\u25B2"); // ▲ triangle
+        break;
+    case RepoHealthResult::Error:
+        color = sv ? sv->value("@destructiveColor").toString() : QString();
+        icon  = QString::fromUtf8("\u2717"); // ✗ X mark
+        break;
+    default:
+        color = sv ? sv->value("@tertiaryText").toString() : QString();
+        icon  = "?";
+        break;
     }
 
-    mStatusDot->setStyleSheet(QString("background-color: %1; border-radius: 4px;").arg(color));
+    mStatusDot->setText(icon);
+    mStatusDot->setStyleSheet(QString("color: %1; font-size: 10px; font-weight: bold;").arg(color));
     ui->aptSourceRepositoryItemWidget->setStyleSheet(
         QString("border-left: 3px solid %1;").arg(color));
 }
@@ -154,6 +180,23 @@ void APTSourceRepositoryItem::refreshThemeColors()
     updateStatusIndicator(mCurrentStatus);
     QSettings *sv = AppManager::ins()->getStyleValues();
     mLblDescription->setStyleSheet("color: " + (sv ? sv->value("@tertiaryText").toString() : QString()) + ";");
+}
+
+void APTSourceRepositoryItem::elideDescription()
+{
+    if (mFullDescription.isEmpty()) {
+        mLblDescription->clear();
+        return;
+    }
+    int availWidth = mLblDescription->width() > 0 ? mLblDescription->width() : 400;
+    QFontMetrics fm(mLblDescription->font());
+    mLblDescription->setText(fm.elidedText(mFullDescription, Qt::ElideRight, availWidth));
+}
+
+void APTSourceRepositoryItem::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    elideDescription();
 }
 
 void APTSourceRepositoryItem::on_checkAptSource_clicked(bool checked)

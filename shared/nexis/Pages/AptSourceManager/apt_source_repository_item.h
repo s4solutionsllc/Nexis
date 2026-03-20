@@ -2,6 +2,7 @@
 #define APTSourceRepositoryItem_H
 
 #include <QWidget>
+#include <QResizeEvent>
 #include "Managers/tool_manager.h"
 #include <Tools/repo_health_types.h>
 class QLabel;
@@ -29,8 +30,12 @@ private:
 private slots:
     void on_checkAptSource_clicked(bool checked);
 
+protected:
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
     void init();
+    void elideDescription();
 
 private:
     Ui::APTSourceRepositoryItem *ui;
@@ -39,6 +44,7 @@ private:
     QLabel *mStatusDot = nullptr;
     QLabel *mLblDescription = nullptr;
     RepoHealthResult::Status mCurrentStatus = RepoHealthResult::Unknown;
+    QString mFullDescription;
 };
 
 #endif
