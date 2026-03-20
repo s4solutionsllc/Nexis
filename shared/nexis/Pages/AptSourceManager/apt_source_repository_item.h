@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include "Managers/tool_manager.h"
+#include <Tools/repo_health_types.h>
+class QLabel;
 
 namespace Ui {
 class APTSourceRepositoryItem;
@@ -18,6 +20,11 @@ public:
 
 public:
     APTSourcePtr aptSource() const;
+    void setHealthResult(const RepoHealthResult &result);
+
+private:
+    void updateStatusIndicator(RepoHealthResult::Status status);
+    void refreshThemeColors();
 
 private slots:
     void on_checkAptSource_clicked(bool checked);
@@ -29,6 +36,9 @@ private:
     Ui::APTSourceRepositoryItem *ui;
 
     APTSourcePtr mAptSource;
+    QLabel *mStatusDot = nullptr;
+    QLabel *mLblDescription = nullptr;
+    RepoHealthResult::Status mCurrentStatus = RepoHealthResult::Unknown;
 };
 
 #endif
