@@ -219,6 +219,10 @@
   - **Complexity:** Medium-High (5-7 days) — platform-specific log APIs, potentially large datasets need virtual scrolling
   - **Resolved:** 0f142f9 — Added SystemLogsPage with LogProvider abstraction (Linux journalctl + macOS log show backends), severity/text filtering, color-coded table.
 
+- [~] **FR-87: APT Repository Health & Info Dashboard** — Health indicators, descriptions, and guided repair for the APT Repository Manager (Linux) and Homebrew Packages (macOS) pages. Enriched cards with status dots (healthy/warning/error), description lines from a knowledge base of 30+ common repos, toggleable side detail panel with full diagnostics and repair actions, periodic background health checks via DataRefreshService, and 6 check types (connection, release file, GPG key, suite mismatch, duplicates, deprecated format).
+  - **Spec:** `docs/superpowers/specs/2026-03-20-repo-health-dashboard-design.md`
+  - **Plan:** `docs/superpowers/plans/2026-03-20-repo-health-dashboard.md`
+
 ## Information & Reporting
 
 - [x] **FR-72: Hardware report export** — "Export System Report" button on Hardware Info page that generates a structured text/HTML summary of all hardware sections (system, CPU, GPU, memory, battery, storage, network, thermal). Useful for support tickets and documentation.
