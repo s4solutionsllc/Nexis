@@ -118,8 +118,10 @@ void APTSourceManagerPage::init()
     mSplitter = new QSplitter(Qt::Horizontal, this);
     mSplitter->setChildrenCollapsible(false);
 
-    // Reparent the main content area into the splitter
-    mSplitter->addWidget(ui->verticalWidget_2);
+    // Reparent the entire content widget (title + search + list + buttons) into the splitter.
+    // verticalWidget contains the grid with all page content; verticalWidget_2 is just the list area inside it.
+    // We must move verticalWidget so the title/search/buttons stay with the list.
+    mSplitter->addWidget(ui->verticalWidget);
 
     mDetailPanel = new RepoDetailPanel(this);
     mDetailPanel->hide();
