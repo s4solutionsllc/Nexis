@@ -23,6 +23,13 @@ private slots:
     void deb822_emptyInput();
     void deb822_wrongType();
     void deb822_noComponentsField();
+
+    // New fields: format and signedByPath
+    void listLine_setsLegacyFormat();
+    void listLine_extractsSignedByPath();
+    void listLine_noSignedBy_emptyPath();
+    void deb822_setsDeb822Format();
+    void deb822_extractsSignedByPath();
 };
 
 // --- parseSourceListLine ---
@@ -186,6 +193,60 @@ void TestAptSourceTool::deb822_noComponentsField()
     QVERIFY(src);
     QCOMPARE(src->components, QString(""));
     QCOMPARE(src->uri, QString("http://example.com/apt"));
+}
+
+// --- format and signedByPath ---
+
+void TestAptSourceTool::listLine_setsLegacyFormat()
+{
+    APTSourcePtr src = AptSourceTool::parseSourceListLine(
+        "deb http://archive.ubuntu.com/ubuntu jammy main",
+        "deb", "deb-src");
+    QVERIFY(src);
+    QCOMPARE(src->format, APTSource::Legacy);
+}
+
+void TestAptSourceTool::listLine_extractsSignedByPath()
+{
+    APTSourcePtr src = AptSourceTool::parseSourceListLine(
+        "deb [arch=amd64 signed-by=/usr/share/keyrings/example.gpg] https://repo.example.com/apt stable main",
+        "deb", "deb-src");
+    QVERIFY(src);
+    QCOMPARE(src->signedByPath, QString("/usr/share/keyrings/example.gpg"));
+}
+
+void TestAptSourceTool::listLine_noSignedBy_emptyPath()
+{
+    APTSourcePtr src = AptSourceTool::parseSourceListLine(
+        "deb [arch=amd64] https://repo.example.com/apt stable main",
+        "deb", "deb-src");
+    QVERIFY(src);
+    QCOMPARE(src->signedByPath, QString());
+}
+
+void TestAptSourceTool::deb822_setsDeb822Format()
+{
+    QString stanza =
+        "Types: deb\n"
+        "URIs: http://archive.ubuntu.com/ubuntu\n"
+        "Suites: jammy\n"
+        "Components: main\n";
+    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QVERIFY(src);
+    QCOMPARE(src->format, APTSource::Deb822);
+}
+
+void TestAptSourceTool::deb822_extractsSignedByPath()
+{
+    QString stanza =
+        "Types: deb\n"
+        "URIs: http://archive.ubuntu.com/ubuntu\n"
+        "Suites: jammy\n"
+        "Components: main\n"
+        "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n";
+    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QVERIFY(src);
+    QCOMPARE(src->signedByPath, QString("/usr/share/keyrings/ubuntu-archive-keyring.gpg"));
 }
 
 QTEST_MAIN(TestAptSourceTool)

@@ -14,6 +14,7 @@ APTSourcePtr AptSourceTool::parseSourceListLine(const QString &line,
         return nullptr;
 
     APTSourcePtr aptSource(new APTSource);
+    aptSource->format = APTSource::Legacy;
     aptSource->isActive = !_line.startsWith(QChar('#'));
 
     _line.remove('#');
@@ -22,6 +23,13 @@ APTSourcePtr AptSourceTool::parseSourceListLine(const QString &line,
     QRegularExpressionMatch optMatch = regexOption.match(_line);
     if (optMatch.hasMatch())
         aptSource->options = optMatch.captured().trimmed();
+
+    // Extract signed-by path from options
+    QRegularExpression signedByRegex("signed-by=([^\\],\\s\\]]+)");
+    QRegularExpressionMatch sbMatch = signedByRegex.match(aptSource->options);
+    if (sbMatch.hasMatch())
+        aptSource->signedByPath = sbMatch.captured(1);
+
     _line.remove(regexOption);
 
     QStringList sourceColumns = _line.trimmed().split(QRegularExpression("\\s+"));
@@ -67,6 +75,8 @@ APTSourcePtr AptSourceTool::parseDeb822Stanza(const QString &stanzaText,
         return nullptr;
 
     APTSourcePtr aptSource(new APTSource);
+    aptSource->format = APTSource::Deb822;
+    aptSource->signedByPath = fields.value("Signed-By").trimmed();
     aptSource->isSource = types.contains(sourceType);
     aptSource->uri = fields.value("URIs");
     aptSource->suites = fields.value("Suites");

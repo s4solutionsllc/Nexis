@@ -7,15 +7,18 @@
 
 class APTSource {
 public:
+    enum Format { Legacy, Deb822 };
+
     QString filePath;
-    bool isSource;
+    bool isSource = false;
     QString options;
     QString uri;
     QString suites;
     QString components;
-
     QString source;
-    bool isActive;
+    bool isActive = false;
+    Format format = Legacy;
+    QString signedByPath;
 };
 
 typedef QSharedPointer<APTSource> APTSourcePtr;
