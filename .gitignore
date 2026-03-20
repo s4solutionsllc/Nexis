@@ -3,6 +3,7 @@ build/
 output/
 .worktrees/
 .claude/worktrees/
+.superpowers/
 *.AppImage
 .vscode
 Release/
