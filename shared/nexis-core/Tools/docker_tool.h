@@ -56,10 +56,15 @@ public:
     static bool startContainer(const QString &id);
     static bool stopContainer(const QString &id);
 
+    // --- Parsing helpers (public for testability) ---
+    static qint64 parseSizeToBytes(const QString &sizeStr);
+    static DockerImage parseImageLine(const QString &pipeLine, const QStringList &usedRefs = {});
+    static DockerContainer parseContainerLine(const QString &pipeLine);
+    static DockerVolume parseVolumeLine(const QString &pipeLine, const QStringList &danglingNames = {});
+
 private:
     static QStringList getUsedImageIds();
     static QStringList getUsedVolumeNames();
-    static qint64 parseSizeToBytes(const QString &sizeStr);
 };
 
 #endif // DOCKER_TOOL_H

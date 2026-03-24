@@ -1,0 +1,4 @@
+==> Would uninstall:
+libpng
+jpeg-turbo
+pcre2

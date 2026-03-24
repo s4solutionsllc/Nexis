@@ -79,6 +79,58 @@ qint64 DockerTool::parseSizeToBytes(const QString &sizeStr)
     return 0;
 }
 
+DockerImage DockerTool::parseImageLine(const QString &pipeLine, const QStringList &usedRefs)
+{
+    DockerImage img;
+    QStringList parts = pipeLine.trimmed().split('|');
+    if (parts.size() < 5)
+        return img;
+
+    img.id = parts[0].trimmed();
+    img.repository = parts[1].trimmed();
+    img.tag = parts[2].trimmed();
+    img.size = parts[3].trimmed();
+    img.sizeBytes = parseSizeToBytes(img.size);
+    img.createdAt = parts[4].trimmed();
+    img.isDangling = (img.repository == "<none>" && img.tag == "<none>");
+
+    QString ref = img.repository + ":" + img.tag;
+    img.isUsed = usedRefs.contains(ref) || usedRefs.contains(img.id) || usedRefs.contains(img.repository);
+
+    return img;
+}
+
+DockerContainer DockerTool::parseContainerLine(const QString &pipeLine)
+{
+    DockerContainer ctr;
+    QStringList parts = pipeLine.trimmed().split('|');
+    if (parts.size() < 7)
+        return ctr;
+
+    ctr.id = parts[0].trimmed();
+    ctr.name = parts[1].trimmed();
+    ctr.status = parts[2].trimmed();
+    ctr.state = parts[3].trimmed().toLower();
+    ctr.image = parts[4].trimmed();
+    ctr.ports = parts[5].trimmed();
+    ctr.createdAt = parts[6].trimmed();
+    return ctr;
+}
+
+DockerVolume DockerTool::parseVolumeLine(const QString &pipeLine, const QStringList &danglingNames)
+{
+    DockerVolume vol;
+    QStringList parts = pipeLine.trimmed().split('|');
+    if (parts.size() < 3)
+        return vol;
+
+    vol.name = parts[0].trimmed();
+    vol.driver = parts[1].trimmed();
+    vol.mountpoint = parts[2].trimmed();
+    vol.isUsed = !danglingNames.contains(vol.name);
+    return vol;
+}
+
 QList<DockerImage> DockerTool::getImages()
 {
     QList<DockerImage> images;
@@ -97,23 +149,9 @@ QList<DockerImage> DockerTool::getImages()
     const QStringList lines = result.output.trimmed().split('\n', Qt::SkipEmptyParts);
 
     for (const QString &line : lines) {
-        QStringList parts = line.trimmed().split('|');
-        if (parts.size() < 5)
-            continue;
-
-        DockerImage img;
-        img.id = parts[0].trimmed();
-        img.repository = parts[1].trimmed();
-        img.tag = parts[2].trimmed();
-        img.size = parts[3].trimmed();
-        img.sizeBytes = parseSizeToBytes(img.size);
-        img.createdAt = parts[4].trimmed();
-        img.isDangling = (img.repository == "<none>" && img.tag == "<none>");
-
-        QString ref = img.repository + ":" + img.tag;
-        img.isUsed = usedRefs.contains(ref) || usedRefs.contains(img.id) || usedRefs.contains(img.repository);
-
-        images.append(img);
+        DockerImage img = parseImageLine(line, usedRefs);
+        if (!img.id.isEmpty())
+            images.append(img);
     }
 
     return images;
@@ -136,19 +174,9 @@ QList<DockerContainer> DockerTool::getContainers()
     const QStringList lines = result.output.trimmed().split('\n', Qt::SkipEmptyParts);
 
     for (const QString &line : lines) {
-        QStringList parts = line.trimmed().split('|');
-        if (parts.size() < 7)
-            continue;
-
-        DockerContainer ctr;
-        ctr.id = parts[0].trimmed();
-        ctr.name = parts[1].trimmed();
-        ctr.status = parts[2].trimmed();
-        ctr.state = parts[3].trimmed().toLower();
-        ctr.image = parts[4].trimmed();
-        ctr.ports = parts[5].trimmed();
-        ctr.createdAt = parts[6].trimmed();
-        containers.append(ctr);
+        DockerContainer ctr = parseContainerLine(line);
+        if (!ctr.id.isEmpty())
+            containers.append(ctr);
     }
 
     return containers;
@@ -182,16 +210,9 @@ QList<DockerVolume> DockerTool::getVolumes()
     const QStringList lines = result.output.trimmed().split('\n', Qt::SkipEmptyParts);
 
     for (const QString &line : lines) {
-        QStringList parts = line.trimmed().split('|');
-        if (parts.size() < 3)
-            continue;
-
-        DockerVolume vol;
-        vol.name = parts[0].trimmed();
-        vol.driver = parts[1].trimmed();
-        vol.mountpoint = parts[2].trimmed();
-        vol.isUsed = !danglingNames.contains(vol.name);
-        volumes.append(vol);
+        DockerVolume vol = parseVolumeLine(line, danglingNames);
+        if (!vol.name.isEmpty())
+            volumes.append(vol);
     }
 
     return volumes;

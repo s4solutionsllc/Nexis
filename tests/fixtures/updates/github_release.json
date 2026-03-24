@@ -1,0 +1,14 @@
+{
+  "tag_name": "v2.1.18",
+  "name": "Nexis v2.1.18",
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-03-20T10:00:00Z",
+  "assets": [
+    {
+      "name": "nexis-2.1.18-x86_64.AppImage",
+      "browser_download_url": "https://github.com/lsimpsonsfdc/Nexis/releases/download/v2.1.18/nexis-2.1.18-x86_64.AppImage",
+      "size": 45000000
+    }
+  ]
+}

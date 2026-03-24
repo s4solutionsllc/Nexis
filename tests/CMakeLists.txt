@@ -37,6 +37,7 @@ add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
 add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
+add_nexis_test(NAME DockerToolTests   SOURCES core/test_docker_tool.cpp)
 
 # NetworkDiagWidget lives in the GUI target; compile its source + deps directly.
 add_nexis_test(NAME NetworkDiagTests

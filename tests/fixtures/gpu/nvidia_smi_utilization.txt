@@ -1,0 +1,2 @@
+utilization.gpu [%], utilization.memory [%]
+45 %, 32 %

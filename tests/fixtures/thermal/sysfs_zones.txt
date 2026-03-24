@@ -1,0 +1,11 @@
+# Simulated /sys/class/thermal/thermal_zone*/temp values
+# zone0 (CPU Package): 52°C
+52000
+# zone1 (CPU Core 0): 48°C
+48000
+# zone2 (CPU Core 1): 50°C
+50000
+# zone3 (GPU): 45°C
+45000
+# zone4 (NVMe): 38°C
+38000

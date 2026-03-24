@@ -1,0 +1,3 @@
+status:		enabled
+speed:		3200
+level:		auto

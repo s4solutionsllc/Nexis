@@ -1,0 +1,6 @@
+Name      Version    Rev   Tracking       Publisher   Notes
+core20    20240227   2182  latest/stable  canonical✓  -
+firefox   130.0      4259  latest/stable  mozilla✓    -
+firefox   129.0.1    4173  latest/stable  mozilla✓    disabled
+gnome-42  42.9       172   latest/stable  canonical✓  -
+gnome-42  42.8       168   latest/stable  canonical✓  disabled

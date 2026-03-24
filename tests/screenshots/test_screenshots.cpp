@@ -36,7 +36,7 @@ static const QVector<PageInfo> kPageMap = {
     {"StartupAppsPage",   "startup_apps",   0.0},
     {"SystemCleanerPage", "system_cleaner", 0.0},
     {"SearchPage",        "search",         0.0},
-    {"ServicesPage",      "services",       0.0},
+    {"ServicesPage",      "services",       10.0},
     {"ProcessesPage",     "processes",      10.0},
     {"UninstallerPage",   "uninstaller",    0.0},
     {"ResourcesPage",     "resources",      5.0},

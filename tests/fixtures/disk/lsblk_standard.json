@@ -1,0 +1,25 @@
+{
+  "blockdevices": [
+    {
+      "name": "sda",
+      "type": "disk",
+      "size": "500G",
+      "model": "Samsung SSD 870",
+      "serial": "S5XXNJ0R800001",
+      "children": [
+        {"name": "sda1", "type": "part", "size": "512M", "mountpoint": "/boot/efi", "fstype": "vfat"},
+        {"name": "sda2", "type": "part", "size": "499.5G", "mountpoint": "/", "fstype": "ext4"}
+      ]
+    },
+    {
+      "name": "nvme0n1",
+      "type": "disk",
+      "size": "1T",
+      "model": "WD Black SN850X",
+      "serial": "22410X800001",
+      "children": [
+        {"name": "nvme0n1p1", "type": "part", "size": "1T", "mountpoint": "/home", "fstype": "ext4"}
+      ]
+    }
+  ]
+}
