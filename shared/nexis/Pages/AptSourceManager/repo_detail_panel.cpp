@@ -25,6 +25,7 @@ void RepoDetailPanel::setupUi()
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(15, 15, 15, 15);
     mainLayout->setSpacing(10);
+    mainLayout->setAlignment(Qt::AlignTop);
 
     // Header row: name label, status badge pill, close button
     QHBoxLayout *headerRow = new QHBoxLayout();

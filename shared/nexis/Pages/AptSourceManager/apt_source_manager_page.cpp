@@ -50,6 +50,7 @@ void APTSourceManagerPage::init()
     // --- Available Updates section ---
     mUpdatesSection = new QWidget(this);
     mUpdatesSection->setObjectName("updatesSection");
+    mUpdatesSection->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
     mUpdatesSection->hide();
 
     QVBoxLayout *updLayout = new QVBoxLayout(mUpdatesSection);
