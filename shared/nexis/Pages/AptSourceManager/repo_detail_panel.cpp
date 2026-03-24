@@ -15,6 +15,8 @@ RepoDetailPanel::RepoDetailPanel(QWidget *parent)
     : QWidget(parent),
       mSignalMapper(SignalMapper::ins())
 {
+    setObjectName("repoDetailPanel");
+    setAttribute(Qt::WA_StyledBackground, true);
     setupUi();
     connect(mSignalMapper, &SignalMapper::sigChangedAppTheme,
             this, &RepoDetailPanel::refreshThemeColors);
@@ -25,7 +27,6 @@ void RepoDetailPanel::setupUi()
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(15, 15, 15, 15);
     mainLayout->setSpacing(10);
-    mainLayout->setAlignment(Qt::AlignTop);
 
     // Header row: name label, status badge pill, close button
     QHBoxLayout *headerRow = new QHBoxLayout();
@@ -62,16 +63,17 @@ void RepoDetailPanel::setupUi()
 
     // Metadata grid
     mMetadataWidget = new QWidget(this);
+    mMetadataWidget->setObjectName("repoDetailMetadata");
     QGridLayout *metaGrid = new QGridLayout(mMetadataWidget);
     metaGrid->setContentsMargins(0, 0, 0, 0);
     metaGrid->setSpacing(8);
 
     auto addMetaField = [&](int row, int col, const QString &label, QLabel *&valueLabel) {
-        QLabel *lbl = new QLabel(label, mMetadataWidget);
-        lbl->setStyleSheet("font-size: 9px; text-transform: uppercase;");
+        QLabel *lbl = new QLabel(label.toUpper(), mMetadataWidget);
+        lbl->setObjectName("repoMetaLabel");
         metaGrid->addWidget(lbl, row * 2, col);
         valueLabel = new QLabel(mMetadataWidget);
-        valueLabel->setObjectName("metaValue");
+        valueLabel->setObjectName("repoMetaValue");
         metaGrid->addWidget(valueLabel, row * 2 + 1, col);
     };
 
@@ -238,12 +240,16 @@ void RepoDetailPanel::addIssueWidget(const RepoHealthIssue &issue)
     }
 
     QWidget *issueWidget = new QWidget(mIssuesContainer);
+    issueWidget->setObjectName("repoIssueCard");
+    issueWidget->setAttribute(Qt::WA_StyledBackground, true);
+
+    QString cardBg = sv ? sv->value("@cardBg").toString() : QString();
     issueWidget->setStyleSheet(QString(
-        "background-color: rgba(0,0,0,0.1); border-radius: 4px; border-left: 3px solid %1;"
-    ).arg(color));
+        "#repoIssueCard { background-color: %1; border-radius: 4px; border-left: 3px solid %2; }"
+    ).arg(cardBg, color));
 
     QVBoxLayout *issueLayout = new QVBoxLayout(issueWidget);
-    issueLayout->setContentsMargins(10, 8, 10, 8);
+    issueLayout->setContentsMargins(12, 8, 10, 8);
     issueLayout->setSpacing(4);
 
     QLabel *lblSummary = new QLabel(issue.summary, issueWidget);
