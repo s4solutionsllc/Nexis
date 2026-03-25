@@ -79,6 +79,7 @@ private slots:
     void onTreeContextMenu(const QPoint &pos);
 
     void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
 private:
     void init();

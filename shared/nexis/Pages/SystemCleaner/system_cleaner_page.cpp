@@ -674,6 +674,13 @@ void SystemCleanerPage::resizeEvent(QResizeEvent *event)
     repositionExclusionsButton();
 }
 
+void SystemCleanerPage::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    repositionScheduleIndicator();
+    repositionExclusionsButton();
+}
+
 void SystemCleanerPage::updateScheduleIndicator()
 {
     QList<ScheduleManager::CleaningSchedule> schedules = mScheduleManager->getAllSchedules();
