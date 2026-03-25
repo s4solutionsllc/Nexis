@@ -117,6 +117,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/package_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/repo_health_checker.cpp"
+    "${CORE_PLAT_DIR}/Tools/repo_repair_engine.cpp"
     "${CORE_PLAT_DIR}/Tools/service_tool.cpp"
     "${CORE_PLAT_DIR}/Utils/command_util_platform.cpp"
   )
@@ -141,6 +142,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool_macos.h"
     "${CORE_PLAT_DIR}/Tools/package_tool_macos.h"
     "${CORE_PLAT_DIR}/Tools/repo_health_checker_macos.h"
+    "${CORE_PLAT_DIR}/Tools/repo_repair_engine_macos.h"
     "${CORE_PLAT_DIR}/Tools/service_tool_macos.h"
     "${CORE_PLAT_DIR}/Utils/brew_util.h"
   )
@@ -162,6 +164,7 @@ else()
     "${CORE_PLAT_DIR}/Info/update_info.cpp"
     "${CORE_PLAT_DIR}/Tools/apt_source_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/repo_health_checker.cpp"
+    "${CORE_PLAT_DIR}/Tools/repo_repair_engine.cpp"
     "${CORE_PLAT_DIR}/Tools/file_search_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/package_tool.cpp"
@@ -184,6 +187,7 @@ else()
     "${CORE_PLAT_DIR}/Info/update_info_linux.h"
     "${CORE_PLAT_DIR}/Tools/apt_source_tool_linux.h"
     "${CORE_PLAT_DIR}/Tools/repo_health_checker_linux.h"
+    "${CORE_PLAT_DIR}/Tools/repo_repair_engine_linux.h"
     "${CORE_PLAT_DIR}/Tools/file_search_tool_linux.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_constants.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool_linux.h"
