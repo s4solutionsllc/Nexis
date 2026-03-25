@@ -1158,6 +1158,11 @@ QLabel[accessibleName="dialog-title"] {
     color: @color06;
 }
 
+#lblExclusionNotice {
+    color: @color05;
+    padding: 6px 0;
+}
+
 /************************
     STARTUP APPS PAGE
 *************************/
@@ -1881,6 +1886,43 @@ QLabel[accessibleName="dialog-title"] {
     color: @color04;
 }
 
+/* Power Profile Widget (Helpers page, Linux only) */
+
+#powerProfileWidget {
+    background-color: @cardBg;
+    border-radius: 6px;
+}
+
+#powerProfileLabel {
+    color: @color05;
+    font-size: 12px;
+}
+
+#powerProfileWidget QPushButton {
+    background-color: @cardBg;
+    color: @color04;
+    border: 1px solid @borderColor;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 12px;
+}
+
+#powerProfileWidget QPushButton:checked {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
+#powerProfileWidget QPushButton:hover:!checked {
+    border-color: @accentColor;
+}
+
+#powerProfileWarning {
+    color: @warningColor;
+    font-size: 11px;
+    padding: 2px 0;
+}
+
 /* Action bar and buttons */
 
 #DiskToolsPage #actionBarFrame {
@@ -2091,6 +2133,10 @@ QLabel[accessibleName="dimmed-small"] {
 #lblAptSourceName {
     font-size: 10pt;
     color: @color05;
+}
+
+#lblRepoDescription {
+    color: @tertiaryText;
 }
 
 #checkAptSource {

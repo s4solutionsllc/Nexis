@@ -363,10 +363,6 @@ void HelpersPage::initPowerProfileUI()
     if (!data.conflictWarning.isEmpty()) {
         mLblConflictWarning = new QLabel(data.conflictWarning);
         mLblConflictWarning->setObjectName("powerProfileWarning");
-        QSettings *sv = AppManager::ins()->getStyleValues();
-        QString warnColor = sv ? sv->value("@warningColor").toString() : "#FFB347";
-        mLblConflictWarning->setStyleSheet(
-            QString("color: %1; font-size: 11px; padding: 2px 0;").arg(warnColor));
         ui->gridLayout->addWidget(mLblConflictWarning, 1, 0, 1, 3);
     }
 
@@ -391,43 +387,5 @@ void HelpersPage::updatePowerProfileButtons()
 
 void HelpersPage::applyPowerProfileStyle()
 {
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QString accent   = sv ? sv->value("@accentColor").toString() : "#FF6B1A";
-    QString cardBg   = sv ? sv->value("@cardBg").toString() : "#2A2C32";
-    QString textPri  = sv ? sv->value("@color05").toString() : "#F0F2F5";
-    QString textSec  = sv ? sv->value("@color04").toString() : "#9A9DA6";
-    QString textBtn  = sv ? sv->value("@color07").toString() : "#ffffff";
-    QString border   = sv ? sv->value("@borderColor").toString() : "#4A4D5A";
-
-    QString btnStyle = QString(
-        "QPushButton {"
-        "  background-color: %1;"
-        "  color: %2;"
-        "  border: 1px solid %3;"
-        "  border-radius: 4px;"
-        "  padding: 6px 14px;"
-        "  font-size: 12px;"
-        "}"
-        "QPushButton:checked {"
-        "  background-color: %4;"
-        "  color: %5;"
-        "  border-color: %4;"
-        "}"
-        "QPushButton:hover:!checked {"
-        "  border-color: %4;"
-        "}"
-    ).arg(cardBg, textSec, border, accent, textBtn);
-
-    for (auto *btn : {mBtnPowerSaver, mBtnBalanced, mBtnPerformance}) {
-        if (btn)
-            btn->setStyleSheet(btnStyle);
-    }
-
-    if (mPowerProfileWidget) {
-        mPowerProfileWidget->setStyleSheet(
-            QString("#powerProfileWidget { background-color: %1; border-radius: 6px; }"
-                    "#powerProfileLabel { color: %2; font-size: 12px; }")
-                .arg(cardBg, textPri));
-    }
 }
 #endif

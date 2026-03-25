@@ -153,12 +153,4 @@ void ExclusionManagerDialog::onRemoveSelected()
 
 void ExclusionManagerDialog::refreshThemeColors()
 {
-    QSettings *sv = mAppManager->getStyleValues();
-    QString color05 = sv->value("@color05", "#ccc").toString();
-
-    mLblNotice->setStyleSheet(QString(
-        "QLabel#lblExclusionNotice {"
-        "  color: %1;"
-        "  padding: 6px 0;"
-        "}").arg(color05));
 }

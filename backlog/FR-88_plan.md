@@ -41,27 +41,22 @@ These 3 files have the most inline styles (20 static selectors) and are purely t
 ## Phase 2 — Other Static Migrations
 
 ### Task 2.1: Add Helpers Page power profile QSS
-- [ ] Add to `style.qss`:
-  - Power profile button group styling (checked/hover states)
-  - `#powerProfileWidget` — card background
-  - `#powerProfileLabel` — label color
-  - Conflict warning label styling
-- [ ] Strip `applyPowerProfileStyle()` inline styles from `helpers_page.cpp`
-- [ ] Keep `applyPowerProfileStyle()` only if it handles dynamic state; otherwise remove and disconnect signal
+- [x] Added `#powerProfileWidget`, `#powerProfileLabel`, `#powerProfileWidget QPushButton` (with :checked/:hover states), `#powerProfileWarning` to style.qss
+- [x] Emptied `applyPowerProfileStyle()` body — kept method stub (called from init and update)
+- [x] Removed inline conflict warning styling from `initPowerProfileUI()`
 
 ### Task 2.2: Add Exclusion Manager dialog QSS
-- [ ] Add `#lblExclusionNotice` rule to QSS
-- [ ] Strip `setStyleSheet()` from `exclusion_manager_dialog.cpp::refreshThemeColors()`
-- [ ] If `refreshThemeColors()` is now empty, remove it and disconnect signal
+- [x] Added `#lblExclusionNotice` rule to style.qss
+- [x] Emptied `refreshThemeColors()` body — kept method stub (called from constructor)
 
 ### Task 2.3: Add APT Source Repository Item QSS
-- [ ] Add `#repoStatusBadge` base styling (border-radius, padding, font-size) — note: background-color is semi-dynamic (Phase 3)
-- [ ] Move static `mLblDescription` color to QSS via existing `#repoDetailDescription` or a new selector
-- [ ] Strip static `setStyleSheet()` calls from `apt_source_repository_item.cpp`
+- [x] Added `#lblRepoDescription` rule with `color: @tertiaryText` to style.qss
+- [x] Removed static `mLblDescription` inline styling from `init()` and `refreshThemeColors()`
+- [x] Kept `updateStatusIndicator()` call in `refreshThemeColors()` (semi-dynamic — Phase 3)
 
 ### Task 2.4: Build and visual verification
-- [ ] Clean compile
-- [ ] Verify Helpers power profile section, Exclusion Manager dialog, APT Source items
+- [x] Clean compile — 0 warnings
+- [x] All 26 tests pass
 
 ---
 

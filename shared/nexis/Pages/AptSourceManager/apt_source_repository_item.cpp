@@ -50,10 +50,6 @@ void APTSourceRepositoryItem::init()
     QFont descFont = mLblDescription->font();
     descFont.setPointSize(descFont.pointSize() - 1);
     mLblDescription->setFont(descFont);
-    {
-        QSettings *sv = AppManager::ins()->getStyleValues();
-        mLblDescription->setStyleSheet("color: " + (sv ? sv->value("@tertiaryText").toString() : QString()) + ";");
-    }
 
     // Create vertical layout for name + description
     QVBoxLayout *textVBox = new QVBoxLayout();
@@ -178,8 +174,6 @@ void APTSourceRepositoryItem::updateStatusIndicator(RepoHealthResult::Status sta
 void APTSourceRepositoryItem::refreshThemeColors()
 {
     updateStatusIndicator(mCurrentStatus);
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    mLblDescription->setStyleSheet("color: " + (sv ? sv->value("@tertiaryText").toString() : QString()) + ";");
 }
 
 void APTSourceRepositoryItem::elideDescription()
