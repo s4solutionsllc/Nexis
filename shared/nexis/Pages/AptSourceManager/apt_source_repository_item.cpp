@@ -2,11 +2,11 @@
 #include "ui_apt_source_repository_item.h"
 #include "utilities.h"
 #include "Utils/command_util.h"
-#include "Managers/app_manager.h"
 #include "signal_mapper.h"
 #include <QDebug>
 #include <QFontMetrics>
 #include <QRegularExpression>
+#include <QStyle>
 #include <QVBoxLayout>
 
 APTSourceRepositoryItem::~APTSourceRepositoryItem()
@@ -34,6 +34,7 @@ void APTSourceRepositoryItem::init()
 
     // Create status indicator (shape icon + color for accessibility)
     mStatusDot = new QLabel(this);
+    mStatusDot->setObjectName("repoStatusDot");
     mStatusDot->setFixedSize(14, 14);
     mStatusDot->setAlignment(Qt::AlignCenter);
     mStatusDot->setAccessibleName("statusDot");
@@ -143,32 +144,35 @@ void APTSourceRepositoryItem::setHealthResult(const RepoHealthResult &result)
 
 void APTSourceRepositoryItem::updateStatusIndicator(RepoHealthResult::Status status)
 {
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QString color;
+    QString statusStr;
     QString icon;
     switch (status) {
     case RepoHealthResult::Healthy:
-        color = sv ? sv->value("@successColor").toString() : QString();
-        icon  = QString::fromUtf8("\u2713"); // ✓ checkmark
+        statusStr = "success";
+        icon  = QString::fromUtf8("\u2713"); // checkmark
         break;
     case RepoHealthResult::Warning:
-        color = sv ? sv->value("@warningColor").toString() : QString();
-        icon  = QString::fromUtf8("\u25B2"); // ▲ triangle
+        statusStr = "warning";
+        icon  = QString::fromUtf8("\u25B2"); // triangle
         break;
     case RepoHealthResult::Error:
-        color = sv ? sv->value("@destructiveColor").toString() : QString();
-        icon  = QString::fromUtf8("\u2717"); // ✗ X mark
+        statusStr = "error";
+        icon  = QString::fromUtf8("\u2717"); // X mark
         break;
     default:
-        color = sv ? sv->value("@tertiaryText").toString() : QString();
+        statusStr = "neutral";
         icon  = "?";
         break;
     }
 
     mStatusDot->setText(icon);
-    mStatusDot->setStyleSheet(QString("color: %1; font-size: 10px; font-weight: bold;").arg(color));
-    ui->aptSourceRepositoryItemWidget->setStyleSheet(
-        QString("border-left: 3px solid %1;").arg(color));
+    mStatusDot->setProperty("status", statusStr);
+    mStatusDot->style()->unpolish(mStatusDot);
+    mStatusDot->style()->polish(mStatusDot);
+
+    ui->aptSourceRepositoryItemWidget->setProperty("repoStatus", statusStr);
+    ui->aptSourceRepositoryItemWidget->style()->unpolish(ui->aptSourceRepositoryItemWidget);
+    ui->aptSourceRepositoryItemWidget->style()->polish(ui->aptSourceRepositoryItemWidget);
 }
 
 void APTSourceRepositoryItem::refreshThemeColors()

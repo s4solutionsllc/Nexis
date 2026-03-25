@@ -795,6 +795,11 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 9pt;
 }
 
+#diskHealthStatus {
+    font-size: 9pt;
+    font-weight: 600;
+}
+
 #btnDiskGear {
     border: 0;
     background-color: transparent;
@@ -1672,6 +1677,10 @@ QLabel[accessibleName="dialog-title"] {
 
 /* Firewall Widget */
 
+#fwStatusDot {
+    font-size: 16px;
+}
+
 #fwTitle {
     color: @color05;
     font-size: 16px;
@@ -1917,6 +1926,10 @@ QLabel[accessibleName="dialog-title"] {
     border-color: @accentColor;
 }
 
+#verifyDiskStatus {
+    font-weight: bold;
+}
+
 #powerProfileWarning {
     color: @warningColor;
     font-size: 11px;
@@ -2048,6 +2061,24 @@ QLabel[accessibleName="dimmed-small"] {
     color: @color06;
 }
 
+/* - Status property selectors (semi-dynamic: set via setProperty("status", ...)) - */
+
+[status="success"] { color: @successColor; }
+[status="warning"] { color: @warningColor; }
+[status="error"]   { color: @destructiveColor; }
+[status="info"]    { color: @color05; }
+[status="dimmed"]  { color: @color04; }
+[status="neutral"] { color: @tertiaryText; }
+
+#wizardStepIcon {
+    font-weight: bold;
+}
+
+#wizardStepIcon[status="success"] { font-size: 16px; }
+#wizardStepIcon[status="warning"] { font-size: 14px; font-weight: normal; }
+#wizardStepIcon[status="info"]    { font-size: 14px; }
+#wizardStepIcon[status="error"]   { font-size: 16px; }
+
 #lblTrashWarning {
     font-size: 9pt;
     color: @warningColor;
@@ -2138,6 +2169,16 @@ QLabel[accessibleName="dimmed-small"] {
 #lblRepoDescription {
     color: @tertiaryText;
 }
+
+#repoStatusDot {
+    font-size: 10px;
+    font-weight: bold;
+}
+
+#aptSourceRepositoryItemWidget[repoStatus="success"] { border-left: 3px solid @successColor; }
+#aptSourceRepositoryItemWidget[repoStatus="warning"] { border-left: 3px solid @warningColor; }
+#aptSourceRepositoryItemWidget[repoStatus="error"]   { border-left: 3px solid @destructiveColor; }
+#aptSourceRepositoryItemWidget[repoStatus="neutral"] { border-left: 3px solid @tertiaryText; }
 
 #checkAptSource {
     margin-top: 3;

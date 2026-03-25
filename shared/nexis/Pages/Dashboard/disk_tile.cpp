@@ -2,8 +2,9 @@
 
 #include <QPainter>
 #include <QPainterPath>
-#include <QVBoxLayout>
 #include <QResizeEvent>
+#include <QStyle>
+#include <QVBoxLayout>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
 
@@ -101,10 +102,10 @@ void DiskTile::setDriveHealth(const QString &driveName, const QString &status, i
         statusText += QString(" (%1%)").arg(healthPercent);
 
     auto *statusLabel = new QLabel(statusText, mHealthContainer);
-
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QString healthColor = sv ? sv->value(healthy ? "@successColor" : "@destructiveColor").toString() : (healthy ? "#2ec27e" : "#E05454");
-    statusLabel->setStyleSheet(QString("color: %1; font-size: 9pt; font-weight: 600;").arg(healthColor));
+    statusLabel->setObjectName("diskHealthStatus");
+    statusLabel->setProperty("status", healthy ? "success" : "error");
+    statusLabel->style()->unpolish(statusLabel);
+    statusLabel->style()->polish(statusLabel);
 
     mHealthEntries.append({statusLabel, healthy});
 
@@ -147,8 +148,9 @@ void DiskTile::refreshThemeColors()
     mTextColor = QColor(sv->value("@color05").toString());
 
     for (const HealthEntry &entry : mHealthEntries) {
-        QString healthColor = sv->value(entry.healthy ? "@successColor" : "@destructiveColor").toString();
-        entry.statusLabel->setStyleSheet(QString("color: %1; font-size: 9pt; font-weight: 600;").arg(healthColor));
+        entry.statusLabel->setProperty("status", entry.healthy ? "success" : "error");
+        entry.statusLabel->style()->unpolish(entry.statusLabel);
+        entry.statusLabel->style()->polish(entry.statusLabel);
     }
 
     updateGearIcon();

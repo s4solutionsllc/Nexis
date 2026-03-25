@@ -5,6 +5,7 @@
 #include <QScrollArea>
 #include <QGroupBox>
 #include <QSettings>
+#include <QStyle>
 #include <QtConcurrent>
 
 #include "Managers/app_manager.h"
@@ -46,6 +47,7 @@ MaintenanceWizardDialog::MaintenanceWizardDialog(QWidget *parent,
 static QLabel *makeStepIcon()
 {
     auto *lbl = new QLabel;
+    lbl->setObjectName("wizardStepIcon");
     lbl->setFixedSize(24, 24);
     lbl->setAlignment(Qt::AlignCenter);
     return lbl;
@@ -347,40 +349,28 @@ void MaintenanceWizardDialog::setStepStatus(QLabel *icon, QLabel *detail,
 {
     detail->setText(detailText);
 
-    QSettings *sv = mAppManager->getStyleValues();
-    QString successColor = sv->value("@successColor", "#2ec27e").toString();
-    QString warningColor = sv->value("@warningColor", "#e5a50a").toString();
-    QString destructiveColor = sv->value("@destructiveColor", "#e01b24").toString();
-    QString textColor = sv->value("@color05", "#ccc").toString();
-
     if (status == "running") {
         icon->setText("\u2022\u2022\u2022");
-        icon->setStyleSheet(QString("color: %1; font-weight: bold;").arg(textColor));
+        icon->setProperty("status", "info");
     } else if (status == "ok") {
         icon->setText("\u2713");
-        icon->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(successColor));
+        icon->setProperty("status", "success");
     } else if (status == "warning") {
         icon->setText("\u26A0");
-        icon->setStyleSheet(QString("color: %1; font-size: 14px;").arg(warningColor));
+        icon->setProperty("status", "warning");
     } else if (status == "info") {
         icon->setText("\u2139");
-        icon->setStyleSheet(QString("color: %1; font-size: 14px; font-weight: bold;").arg(textColor));
+        icon->setProperty("status", "info");
     } else if (status == "error") {
         icon->setText("\u2717");
-        icon->setStyleSheet(QString("color: %1; font-size: 16px; font-weight: bold;").arg(destructiveColor));
+        icon->setProperty("status", "error");
     }
+    icon->style()->unpolish(icon);
+    icon->style()->polish(icon);
 }
 
 void MaintenanceWizardDialog::refreshThemeColors()
 {
-    QSettings *sv = mAppManager->getStyleValues();
-    Q_UNUSED(sv);
-
-    // Re-apply status colors to existing step icons if checks are already complete
-    if (mChecksComplete.loadRelaxed() >= 4) {
-        // Trigger a re-render of step statuses would require storing status strings.
-        // For simplicity, the dialog's global QSS handles background/text colors.
-    }
 }
 
 void MaintenanceWizardDialog::navigateToPage(const QString &pageTitle)

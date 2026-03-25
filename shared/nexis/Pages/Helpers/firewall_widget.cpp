@@ -1,7 +1,6 @@
 #include "firewall_widget.h"
 
 #include <Utils/command_util.h>
-#include <Managers/app_manager.h>
 #include "signal_mapper.h"
 
 #include <QBoxLayout>
@@ -11,6 +10,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QStyle>
 #include <QThreadPool>
 #include <QToolButton>
 
@@ -145,6 +145,7 @@ void FirewallWidget::buildUI()
     statusRow->setSpacing(10);
 
     mLblDot = new QLabel;
+    mLblDot->setObjectName("fwStatusDot");
     mLblDot->setFixedSize(14, 14);
     mLblDot->setAlignment(Qt::AlignCenter);
     statusRow->addWidget(mLblDot);
@@ -284,18 +285,15 @@ void FirewallWidget::onStatusFetched(FirewallStatus status)
     mDetailWidget->show();
     mBtnToggle->setEnabled(true);
 
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QString successColor = sv ? sv->value("@successColor").toString() : "#2ec27e";
-    QString failColor    = sv ? sv->value("@destructiveColor").toString() : "#E05454";
+    mLblDot->setText("\xe2\x97\x8f");
+    mLblDot->setProperty("status", status.enabled ? "success" : "error");
+    mLblDot->style()->unpolish(mLblDot);
+    mLblDot->style()->polish(mLblDot);
 
     if (status.enabled) {
-        mLblDot->setText("\xe2\x97\x8f");
-        mLblDot->setStyleSheet(QString("color: %1; font-size: 16px;").arg(successColor));
         mLblStatus->setText(tr("Firewall: Enabled"));
         mBtnToggle->setText(tr("Disable"));
     } else {
-        mLblDot->setText("\xe2\x97\x8f");
-        mLblDot->setStyleSheet(QString("color: %1; font-size: 16px;").arg(failColor));
         mLblStatus->setText(tr("Firewall: Disabled"));
         mBtnToggle->setText(tr("Enable"));
     }
