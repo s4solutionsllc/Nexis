@@ -12,6 +12,9 @@ private slots:
     void lookup_unknownRepo_returnsEmpty();
     void lookup_partialMatch();
     void lookup_caseInsensitive();
+    void lookup_docker_hasKeyUrl();
+    void lookup_ubuntu_noKeyUrl();
+    void lookup_unknown_noKeyUrl();
     void domainFromUri_validUrl();
     void domainFromUri_noScheme();
     void domainFromUri_emptyInput();
@@ -56,6 +59,25 @@ void TestRepoKnowledgeBase::lookup_caseInsensitive()
 {
     RepoKnownInfo info = RepoKnowledgeBase::lookup("http://ARCHIVE.UBUNTU.COM/ubuntu");
     QVERIFY(!info.name.isEmpty());
+}
+
+void TestRepoKnowledgeBase::lookup_docker_hasKeyUrl()
+{
+    RepoKnownInfo info = RepoKnowledgeBase::lookup("https://download.docker.com/linux/ubuntu");
+    QVERIFY(!info.keyUrl.isEmpty());
+    QVERIFY(info.keyUrl.contains("docker"));
+}
+
+void TestRepoKnowledgeBase::lookup_ubuntu_noKeyUrl()
+{
+    RepoKnownInfo info = RepoKnowledgeBase::lookup("http://archive.ubuntu.com/ubuntu");
+    QVERIFY(info.keyUrl.isEmpty());
+}
+
+void TestRepoKnowledgeBase::lookup_unknown_noKeyUrl()
+{
+    RepoKnownInfo info = RepoKnowledgeBase::lookup("http://totally-unknown.example.com/apt");
+    QVERIFY(info.keyUrl.isEmpty());
 }
 
 void TestRepoKnowledgeBase::domainFromUri_validUrl()
