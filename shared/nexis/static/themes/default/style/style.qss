@@ -1552,6 +1552,79 @@ QLabel[accessibleName="dialog-title"] {
     border-bottom: 1px solid @borderColor;
 }
 
+/* -- Docker tree widgets (Images / Containers / Volumes) -- */
+
+#treeWidgetImages,
+#treeWidgetContainers,
+#treeWidgetVolumes {
+    border: 1px solid @borderColor;
+    background-color: transparent;
+    border-radius: 6;
+    font-size: 10pt;
+}
+
+#treeWidgetImages QHeaderView::section,
+#treeWidgetContainers QHeaderView::section,
+#treeWidgetVolumes QHeaderView::section {
+    border-top: 1;
+}
+
+#treeWidgetImages::item,
+#treeWidgetContainers::item,
+#treeWidgetVolumes::item {
+    border-bottom: 1px solid @borderColor;
+    padding: @dp8 @dp6;
+    font-size: 10pt;
+    color: @color11;
+}
+
+#treeWidgetImages::indicator,
+#treeWidgetContainers::indicator,
+#treeWidgetVolumes::indicator {
+    width: @dp14;
+    height: @dp14;
+}
+
+#treeWidgetImages::indicator:unchecked,
+#treeWidgetContainers::indicator:unchecked,
+#treeWidgetVolumes::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#treeWidgetImages::indicator:checked,
+#treeWidgetContainers::indicator:checked,
+#treeWidgetVolumes::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+#treeWidgetImages::branch:has-children:!has-siblings:closed,
+#treeWidgetImages::branch:closed:has-children:has-siblings,
+#treeWidgetContainers::branch:has-children:!has-siblings:closed,
+#treeWidgetContainers::branch:closed:has-children:has-siblings,
+#treeWidgetVolumes::branch:has-children:!has-siblings:closed,
+#treeWidgetVolumes::branch:closed:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-right.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetImages::branch:open:has-children:!has-siblings,
+#treeWidgetImages::branch:open:has-children:has-siblings,
+#treeWidgetContainers::branch:open:has-children:!has-siblings,
+#treeWidgetContainers::branch:open:has-children:has-siblings,
+#treeWidgetVolumes::branch:open:has-children:!has-siblings,
+#treeWidgetVolumes::branch:open:has-children:has-siblings {
+    image: url(:/static/themes/common/img/chevron-down.svg);
+    border-image: none;
+    padding: 4;
+}
+
+#treeWidgetImages::branch,
+#treeWidgetContainers::branch,
+#treeWidgetVolumes::branch {
+    border-bottom: 1px solid @borderColor;
+}
+
 /* Action bar and buttons */
 
 #DiskToolsPage #actionBarFrame {
