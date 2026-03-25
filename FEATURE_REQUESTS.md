@@ -294,6 +294,12 @@
   - **Files:** `shared/nexis/Managers/app_manager.cpp` (`updateTrayIcon()`), `shared/nexis/Pages/Settings/settings_page.cpp` (combo box entry), `shared/nexis/Managers/setting_manager.cpp` (new style value)
   - **Complexity:** Low (< 1 day) — single `QIcon::fromTheme()` call with fallback, plus one combo box entry. Infrastructure already exists: `QIcon::fromTheme()` used in `startup_app.cpp`, icon theme search paths configured in `main.cpp`, Adwaita fallback set.
 
+## Code Quality
+
+- [ ] **FR-88: Migrate inline setStyleSheet() calls to central QSS** — Move static and semi-dynamic inline styles from C++ `setStyleSheet()` calls into the central `style.qss` stylesheet. Currently ~38 static and ~9 semi-dynamic inline style calls across Helper widgets (firewall, open ports, network diagnostics), APT Source Manager (repo detail panel, repository item), Dashboard tiles (health score, disk), Maintenance Wizard, Exclusion Manager, and Settings dialogs set styles programmatically that could be expressed as QSS rules with object name selectors and dynamic property selectors. Migration improves theme maintainability, reduces C++ churn for visual changes, and ensures consistent styling patterns across the app.
+  - **Files:** `firewall_widget.cpp`, `open_ports_widget.cpp`, `network_diag_widget.cpp`, `helpers_page.cpp`, `repo_detail_panel.cpp`, `apt_source_repository_item.cpp`, `health_score_tile.cpp`, `disk_tile.cpp`, `maintenance_wizard_dialog.cpp`, `exclusion_manager_dialog.cpp`, `settings_page.cpp`, `style.qss`
+  - **Complexity:** Medium-High (multi-phase, ~38 static + ~9 semi-dynamic migrations)
+
 ## Notes
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
