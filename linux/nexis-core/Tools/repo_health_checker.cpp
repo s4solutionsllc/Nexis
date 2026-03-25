@@ -225,9 +225,14 @@ void RepoHealthCheckerLinux::checkGpgKey(const APTSourcePtr &source, RepoHealthR
                             issue.summary = QObject::tr("GPG key expired");
                             issue.detail = QObject::tr("The signing key expired on %1.")
                                 .arg(expiry.toString("yyyy-MM-dd"));
-                            issue.repairLabel = QObject::tr("Refresh signing key");
-                            issue.repairCmd = QString("gpg --no-default-keyring --keyring %1 --recv-keys --keyserver keyserver.ubuntu.com")
-                                .arg(source->signedByPath);
+                            {
+                                RepoRepairAction action;
+                                action.type = RepoRepairAction::RunCommand;
+                                action.label = QObject::tr("Refresh signing key");
+                                action.command = QString("gpg --no-default-keyring --keyring %1 --recv-keys --keyserver keyserver.ubuntu.com")
+                                    .arg(source->signedByPath);
+                                issue.actions.append(action);
+                            }
                             result.issues.append(issue);
                         } else if (daysUntil < 30) {
                             RepoHealthIssue issue;
@@ -237,9 +242,14 @@ void RepoHealthCheckerLinux::checkGpgKey(const APTSourcePtr &source, RepoHealthR
                             issue.detail = QObject::tr("The signing key expires on %1. "
                                                         "Updates will fail after this date.")
                                 .arg(expiry.toString("yyyy-MM-dd"));
-                            issue.repairLabel = QObject::tr("Refresh signing key");
-                            issue.repairCmd = QString("gpg --no-default-keyring --keyring %1 --recv-keys --keyserver keyserver.ubuntu.com")
-                                .arg(source->signedByPath);
+                            {
+                                RepoRepairAction action;
+                                action.type = RepoRepairAction::RunCommand;
+                                action.label = QObject::tr("Refresh signing key");
+                                action.command = QString("gpg --no-default-keyring --keyring %1 --recv-keys --keyserver keyserver.ubuntu.com")
+                                    .arg(source->signedByPath);
+                                issue.actions.append(action);
+                            }
                             result.issues.append(issue);
                         }
                         break; // Only check first key

@@ -69,8 +69,13 @@ void RepoHealthCheckerMac::checkOutdated(RepoHealthCache &cache)
                 issue.detail = QObject::tr("A newer version is available. "
                                             "Current: %1, Available: %2")
                     .arg(currentVer, latestVer);
-                issue.repairLabel = QObject::tr("Update package");
-                issue.repairCmd = QString("brew upgrade %1").arg(name);
+                {
+                    RepoRepairAction action;
+                    action.type = RepoRepairAction::RunCommand;
+                    action.label = QObject::tr("Update package");
+                    action.command = QString("brew upgrade %1").arg(name);
+                    issue.actions.append(action);
+                }
 
                 cache[name].issues.append(issue);
                 cache[name].status = RepoHealthResult::Warning;
@@ -123,8 +128,13 @@ void RepoHealthCheckerMac::checkDeprecated(RepoHealthCache &cache)
                 issue.detail = obj["disable_reason"].toString();
                 if (issue.detail.isEmpty())
                     issue.detail = QObject::tr("This package has been disabled and will not receive updates.");
-                issue.repairLabel = QObject::tr("Uninstall package");
-                issue.repairCmd = QString("brew uninstall %1").arg(name);
+                {
+                    RepoRepairAction action;
+                    action.type = RepoRepairAction::RunCommand;
+                    action.label = QObject::tr("Uninstall package");
+                    action.command = QString("brew uninstall %1").arg(name);
+                    issue.actions.append(action);
+                }
                 cache[name].issues.append(issue);
                 cache[name].status = RepoHealthResult::Error;
             }
@@ -159,8 +169,13 @@ void RepoHealthCheckerMac::checkDeprecated(RepoHealthCache &cache)
                 issue.detail = obj["disable_reason"].toString();
                 if (issue.detail.isEmpty())
                     issue.detail = QObject::tr("This cask has been disabled.");
-                issue.repairLabel = QObject::tr("Uninstall cask");
-                issue.repairCmd = QString("brew uninstall --cask %1").arg(token);
+                {
+                    RepoRepairAction action;
+                    action.type = RepoRepairAction::RunCommand;
+                    action.label = QObject::tr("Uninstall cask");
+                    action.command = QString("brew uninstall --cask %1").arg(token);
+                    issue.actions.append(action);
+                }
                 cache[token].issues.append(issue);
                 cache[token].status = RepoHealthResult::Error;
             }

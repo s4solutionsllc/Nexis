@@ -264,15 +264,16 @@ void RepoDetailPanel::addIssueWidget(const RepoHealthIssue &issue)
         issueLayout->addWidget(lblDetail);
     }
 
-    if (!issue.repairCmd.isEmpty()) {
+    if (!issue.actions.isEmpty()) {
+        const RepoRepairAction &action = issue.actions.first();
         QPushButton *btnRepair = new QPushButton(
-            issue.repairLabel.isEmpty() ? tr("Repair") : issue.repairLabel, issueWidget);
+            action.label.isEmpty() ? tr("Repair") : action.label, issueWidget);
         btnRepair->setAccessibleName("primary");
         btnRepair->setCursor(Qt::PointingHandCursor);
         btnRepair->setFocusPolicy(Qt::NoFocus);
         btnRepair->setFixedHeight(26);
-        QString cmd = issue.repairCmd;
-        QString label = issue.repairLabel;
+        QString cmd = action.command;
+        QString label = action.label;
         connect(btnRepair, &QPushButton::clicked, this, [this, cmd, label]() {
             emit repairRequested(cmd, label);
         });
