@@ -247,10 +247,18 @@ void RepoDetailPanel::addIssueWidget(const RepoHealthIssue &issue)
     issueWidget->setObjectName("repoIssueCard");
     issueWidget->setAttribute(Qt::WA_StyledBackground, true);
 
+    // Use ID-scoped stylesheet so it doesn't cascade to child QPushButtons.
+    // Include the global QPushButton[accessibleName="primary"] rules so buttons render correctly.
     QString cardBg = sv ? sv->value("@cardBg").toString() : QString();
+    QString accentColor = sv ? sv->value("@accentColor").toString() : QString();
+    QString accentHover = sv ? sv->value("@accentHover").toString() : QString();
+    QString destructiveColor = sv ? sv->value("@destructiveColor").toString() : QString();
     issueWidget->setStyleSheet(QString(
         "#repoIssueCard { background-color: %1; border-radius: 4px; border-left: 3px solid %2; }"
-    ).arg(cardBg, color));
+        " QPushButton[accessibleName=\"primary\"] { background-color: %3; color: white; border: 0; border-radius: 4px; padding: 2px 10px; }"
+        " QPushButton[accessibleName=\"primary\"]:hover { background-color: %4; }"
+        " #repoRemoveBtn { color: %5; background-color: transparent; border: 1px solid %5; border-radius: 4px; padding: 2px 10px; }"
+    ).arg(cardBg, color, accentColor, accentHover, destructiveColor));
 
     QVBoxLayout *issueLayout = new QVBoxLayout(issueWidget);
     issueLayout->setContentsMargins(12, 8, 10, 8);

@@ -268,6 +268,9 @@ void APTSourceManagerPage::loadAptSources()
     ui->lblAptSourceTitle->setText(tr("APT Repositories (%1)")
                                    .arg(aptSourceList.count()));
 #endif
+
+    // Refresh health after any source list change
+    mRefresh->triggerRepoHealthCheck();
 }
 
 #ifdef Q_OS_MAC
