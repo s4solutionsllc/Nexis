@@ -180,9 +180,52 @@ RepoRepairEngine::RepairResult RepoRepairEngineLinux::convertToDeb822(const APTS
     return {false, QObject::tr("Not yet implemented"), {}};
 }
 
-RepoRepairEngine::RepairResult RepoRepairEngineLinux::removeDuplicate(const APTSourcePtr &)
+RepoRepairEngine::RepairResult RepoRepairEngineLinux::removeDuplicate(const APTSourcePtr &source)
 {
-    return {false, QObject::tr("Not yet implemented"), {}};
+    QFile file(source->filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return {false, {}, QObject::tr("Cannot read %1").arg(source->filePath)};
+
+    QString content = QString::fromUtf8(file.readAll());
+    file.close();
+
+    backupFile(source->filePath);
+
+    QString pattern = buildMatchPattern(source);
+    QStringList lines = content.split('\n');
+    bool firstSeen = false;
+    bool commented = false;
+
+    for (int i = 0; i < lines.size(); ++i) {
+        if (lines[i].trimmed() == pattern) {
+            if (!firstSeen) {
+                firstSeen = true;
+            } else {
+                lines.insert(i, "# Disabled by Nexis: duplicate entry");
+                lines[i + 1] = "# " + lines[i + 1];
+                commented = true;
+                break;
+            }
+        }
+    }
+
+    if (!commented)
+        return {false, {}, QObject::tr("No duplicate entry found to remove")};
+
+    QTemporaryFile tmp;
+    tmp.setAutoRemove(false);
+    if (!tmp.open())
+        return {false, {}, QObject::tr("Cannot create temporary file")};
+    tmp.write(lines.join('\n').toUtf8());
+    tmp.close();
+
+    if (!writeFileElevated(tmp.fileName(), source->filePath)) {
+        QFile::remove(tmp.fileName());
+        return {false, {}, QObject::tr("Failed to write %1").arg(source->filePath)};
+    }
+    QFile::remove(tmp.fileName());
+
+    return {true, QObject::tr("Duplicate entry commented out"), {}};
 }
 
 void RepoRepairEngineLinux::diagnoseConnection(const APTSourcePtr &)

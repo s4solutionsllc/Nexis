@@ -70,6 +70,7 @@ private slots:
     void removeSource_activeSource_refuses();
     void removeSource_disabledLegacy_removesLine();
     void removeSource_onlyEntryInFile_deletesFile();
+    void removeDuplicate_commentsSecondOccurrence();
 #endif
 };
 
@@ -213,6 +214,30 @@ void TestRepoRepairEngine::removeSource_onlyEntryInFile_deletesFile()
     auto result = mEngine.removeSource(src);
     QVERIFY(result.success);
     QVERIFY(!QFile::exists(path));
+}
+void TestRepoRepairEngine::removeDuplicate_commentsSecondOccurrence()
+{
+    QString content = "deb http://repo.example.com/ubuntu jammy main\n"
+                      "deb http://other.example.com/ubuntu jammy main\n"
+                      "deb http://repo.example.com/ubuntu jammy main\n";
+    QString path = writeTestFile("dupes.list", content);
+
+    APTSourcePtr src(new APTSource);
+    src->uri = "http://repo.example.com/ubuntu";
+    src->suites = "jammy";
+    src->components = "main";
+    src->filePath = path;
+    src->isActive = true;
+    src->format = APTSource::Legacy;
+
+    auto result = mEngine.removeDuplicate(src);
+    QVERIFY(result.success);
+
+    QString modified = readFile(path);
+    int commentedCount = modified.count("# Disabled by Nexis: duplicate entry");
+    QCOMPARE(commentedCount, 1);
+    // First occurrence should still be active
+    QVERIFY(modified.startsWith("deb http://repo.example.com/ubuntu jammy main\n"));
 }
 #endif
 
