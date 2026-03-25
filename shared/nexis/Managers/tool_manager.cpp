@@ -6,12 +6,14 @@
 #include <Tools/apt_source_tool_macos.h>
 #include <Tools/gnome_settings_tool_macos.h>
 #include <Tools/repo_health_checker_macos.h>
+#include <Tools/repo_repair_engine_macos.h>
 #else
 #include <Tools/service_tool_linux.h>
 #include <Tools/package_tool_linux.h>
 #include <Tools/apt_source_tool_linux.h>
 #include <Tools/gnome_settings_tool_linux.h>
 #include <Tools/repo_health_checker_linux.h>
+#include <Tools/repo_repair_engine_linux.h>
 #endif
 
 ToolManager *ToolManager::instance = nullptr;
@@ -24,12 +26,14 @@ ToolManager::ToolManager()
     mAptSourceTool     = std::make_unique<AptSourceToolMacOS>();
     mGnomeSettings     = std::make_unique<GnomeSettingsToolMacOS>();
     mRepoHealthChecker = std::make_unique<RepoHealthCheckerMac>();
+    mRepoRepairEngine  = std::make_unique<RepoRepairEngineMac>();
 #else
     mServiceTool       = std::make_unique<ServiceToolLinux>();
     mPackageTool       = std::make_unique<PackageToolLinux>();
     mAptSourceTool     = std::make_unique<AptSourceToolLinux>();
     mGnomeSettings     = std::make_unique<GnomeSettingsToolLinux>();
     mRepoHealthChecker = std::make_unique<RepoHealthCheckerLinux>();
+    mRepoRepairEngine  = std::make_unique<RepoRepairEngineLinux>();
 #endif
 }
 
