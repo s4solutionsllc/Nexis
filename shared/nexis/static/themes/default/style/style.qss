@@ -717,13 +717,13 @@ QLabel[accessibleName="dialog-title"] {
 
 /* - Metric Tile - */
 
-#metricTile, #gaugeTile, #ringTile, #hybridTile, #speedometerTile, #vuMeterTile {
+#metricTile, #gaugeTile, #ringTile, #hybridTile, #speedometerTile, #vuMeterTile, #healthScoreTile {
     background-color: @cardBg;
     border-radius: 12;
     border: 1px solid @borderColor;
 }
 
-#metricTile:hover, #gaugeTile:hover, #ringTile:hover, #hybridTile:hover, #speedometerTile:hover, #vuMeterTile:hover {
+#metricTile:hover, #gaugeTile:hover, #ringTile:hover, #hybridTile:hover, #speedometerTile:hover, #vuMeterTile:hover, #healthScoreTile:hover {
     background-color: @cardBgElevated;
     border-color: @accentColor;
 }
@@ -1317,11 +1317,7 @@ QLabel[accessibleName="dialog-title"] {
     border-color: @accentColor;
 }
 
-#lblPackagesTitle {
-    color: @color11;
-    padding: 10 0;
-    font-size: 11pt;
-}
+
 
 #txtPackageSearch,
 #txtSearchAptSource {
@@ -1442,6 +1438,48 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #listWidgetSnapPackages::item:hover {
+    background-color: @color02;
+}
+
+/* -- Orphan package list (matching snap package style) -- */
+
+#listWidgetOrphanPackages {
+    border: 0;
+    background-color: transparent;
+    font-size: 10pt;
+}
+
+#listWidgetOrphanPackages::indicator {
+    width: @dp16;
+    height: @dp16;
+}
+
+#listWidgetOrphanPackages::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#listWidgetOrphanPackages::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+#listWidgetOrphanPackages::item {
+    border-radius: @dp8;
+    min-height: @dp36;
+    background-color: @cardBg;
+    margin: 1 0;
+}
+
+#listWidgetOrphanPackages::item:text {
+    color: @color05;
+    padding-left: @dp12;
+}
+
+#listWidgetOrphanPackages::item:selected {
+    background-color: @color02;
+    border: 0;
+}
+
+#listWidgetOrphanPackages::item:hover {
     background-color: @color02;
 }
 
