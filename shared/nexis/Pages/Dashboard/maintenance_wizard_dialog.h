@@ -40,7 +40,6 @@ private slots:
 
 private:
     void buildUI();
-    void refreshThemeColors();
     void setStepStatus(QLabel *icon, QLabel *detail, const QString &status, const QString &detailText);
     void navigateToPage(const QString &pageTitle);
 

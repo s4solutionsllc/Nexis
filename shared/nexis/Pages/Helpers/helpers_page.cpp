@@ -363,7 +363,6 @@ void HelpersPage::initPowerProfileUI()
         ui->gridLayout->addWidget(mLblConflictWarning, 1, 0, 1, 3);
     }
 
-    applyPowerProfileStyle();
     updatePowerProfileButtons();
 }
 
@@ -379,10 +378,5 @@ void HelpersPage::updatePowerProfileButtons()
         btn->setChecked(btn->text() == activeLabel);
     }
 
-    applyPowerProfileStyle();
-}
-
-void HelpersPage::applyPowerProfileStyle()
-{
 }
 #endif

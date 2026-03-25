@@ -56,7 +56,6 @@ private:
 
     void initPowerProfileUI();
     void updatePowerProfileButtons();
-    void applyPowerProfileStyle();
 #endif
 };
 

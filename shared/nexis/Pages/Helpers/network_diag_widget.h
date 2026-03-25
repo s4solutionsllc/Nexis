@@ -43,7 +43,6 @@ signals:
 
 private slots:
     void onDiagnosticsFinished(DiagResult result);
-    void refreshThemeColors();
 
 private:
     DiagResult runDiagnostics();

@@ -19,7 +19,6 @@ ExclusionManagerDialog::ExclusionManagerDialog(QWidget *parent, AppManager *appM
 {
     buildUI();
     refreshList();
-    refreshThemeColors();
 }
 
 void ExclusionManagerDialog::buildUI()
@@ -149,8 +148,4 @@ void ExclusionManagerDialog::onRemoveSelected()
     QString path = item->text(1);
     CleanerService::ins()->removeExclusion(path);
     refreshList();
-}
-
-void ExclusionManagerDialog::refreshThemeColors()
-{
 }

@@ -3,7 +3,6 @@
 #include <Utils/command_util.h>
 #include <Managers/app_manager.h>
 #include <Managers/info_manager.h>
-#include "signal_mapper.h"
 
 #include <QBoxLayout>
 #include <QElapsedTimer>
@@ -210,9 +209,6 @@ NetworkDiagWidget::NetworkDiagWidget(QWidget *parent)
     : QWidget(parent)
 {
     buildUI();
-    refreshThemeColors();
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
-            this, &NetworkDiagWidget::refreshThemeColors);
     connect(this, &NetworkDiagWidget::diagnosticsFinished,
             this, &NetworkDiagWidget::onDiagnosticsFinished);
 }
@@ -379,9 +375,4 @@ void NetworkDiagWidget::onDiagnosticsFinished(DiagResult result)
 }
 
 // ---------------------------------------------------------------------------
-// Theme
 // ---------------------------------------------------------------------------
-
-void NetworkDiagWidget::refreshThemeColors()
-{
-}

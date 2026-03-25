@@ -2,7 +2,6 @@
 
 #include <Utils/command_util.h>
 #include <Managers/app_manager.h>
-#include "signal_mapper.h"
 
 #include <QBoxLayout>
 #include <QFrame>
@@ -183,9 +182,6 @@ OpenPortsWidget::OpenPortsWidget(QWidget *parent)
       mProxy(new QSortFilterProxyModel(this))
 {
     buildUI();
-    refreshThemeColors();
-    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
-            this, &OpenPortsWidget::refreshThemeColors);
     connect(this, &OpenPortsWidget::connectionsFetched,
             this, &OpenPortsWidget::onConnectionsFetched);
 }
@@ -369,7 +365,3 @@ void OpenPortsWidget::onListenOnlyToggled(bool /*checked*/)
 // ---------------------------------------------------------------------------
 // Theme
 // ---------------------------------------------------------------------------
-
-void OpenPortsWidget::refreshThemeColors()
-{
-}

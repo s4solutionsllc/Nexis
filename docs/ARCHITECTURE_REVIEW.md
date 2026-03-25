@@ -195,7 +195,7 @@ void AppManager::updateStylesheet() {
 - **Theme = data, not code** — switching themes means loading a different `values.ini`
 - **DPI scaling without QML** — the `@dpN` tokens solved HiDPI scaling (BUG-07) in QSS, avoiding a costly QML migration
 - **Live switching** — Auto mode responds to `QStyleHints::colorSchemeChanged` (Qt 6.5+)
-- **Zero hardcoded colors** — all C++ widgets accept token name strings (e.g., `"@cpuColor"`) and implement `refreshThemeColors()` methods connected to `sigChangedAppTheme`. This ensures every color resolves from `values.ini` at runtime, including chart series, sparklines, progress bars, shadows, and overlays (BUG-47). 24 extended tokens cover network upload colors, overlay/shadow colors (8-digit `#AARRGGBB` hex), and a 20-color chart series palette.
+- **Zero hardcoded colors** — all C++ widgets accept token name strings (e.g., `"@cpuColor"`) and resolve colors from `values.ini` at runtime, including chart series, sparklines, progress bars, shadows, and overlays (BUG-47). 24 extended tokens cover network upload colors, overlay/shadow colors (8-digit `#AARRGGBB` hex), and a 20-color chart series palette. Static and semi-dynamic styles use central QSS selectors (including `[status="success/warning/error"]` property selectors for runtime color choices); only per-instance dynamic styles (metric tile colors, chart series) use inline `setStyleSheet()` with token-resolved values (FR-88).
 
 **User-configurable tokens** (like `@fontFamily`) are handled separately from theme tokens — they live in `SettingManager` (not `values.ini`) and are replaced after the theme token loop. This avoids polluting `values.ini` with non-color values that would fail hex validation.
 
@@ -393,7 +393,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 Both checks emit `qWarning()` at runtime (visible in debug output) without altering application behavior. This catches typos, missing tokens, and malformed color values during development and theme switching.
 
-**Remaining gap (largely resolved):** Hardcoded inline `setStyleSheet()` calls were eliminated across 12 files in BUG-47. All widgets now use `refreshThemeColors()` methods connected to `sigChangedAppTheme` to re-resolve token colors on theme switch. The only remaining inline stylesheets use dynamically-resolved token values, not hardcoded hex colors. Missing QSS rules for unstyled widgets remain a potential issue detectable by screenshot regression tests (FR-41).
+**Remaining gap (largely resolved):** Hardcoded inline `setStyleSheet()` calls were eliminated in BUG-47. FR-88 migrated 35 static and semi-dynamic inline styles to central QSS, introducing generic `[status="..."]` property selectors for runtime color choices (success/warning/error). The remaining inline stylesheets (~8 calls in FR-89) are complex cases requiring per-severity scoped button rules or dynamically-created widget styling. All remaining inline styles use dynamically-resolved token values, not hardcoded hex colors.
 
 ---
 

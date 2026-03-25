@@ -27,7 +27,6 @@ private slots:
 private:
     void buildUI();
     void refreshList();
-    void refreshThemeColors();
 
     AppManager *mAppManager;
     QLabel *mLblTitle;

@@ -41,7 +41,6 @@ private slots:
     void onConnectionsFetched(QList<ConnectionEntry> entries);
     void onFilterChanged(const QString &text);
     void onListenOnlyToggled(bool checked);
-    void refreshThemeColors();
 
 private:
     QList<ConnectionEntry> fetchConnections(bool listenOnly);

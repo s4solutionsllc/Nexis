@@ -4,7 +4,6 @@
 #include <QHBoxLayout>
 #include <QScrollArea>
 #include <QGroupBox>
-#include <QSettings>
 #include <QStyle>
 #include <QtConcurrent>
 
@@ -38,10 +37,6 @@ MaintenanceWizardDialog::MaintenanceWizardDialog(QWidget *parent,
     setMinimumSize(520, 420);
 
     buildUI();
-    refreshThemeColors();
-
-    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme,
-            this, &MaintenanceWizardDialog::refreshThemeColors);
 }
 
 static QLabel *makeStepIcon()
@@ -367,10 +362,6 @@ void MaintenanceWizardDialog::setStepStatus(QLabel *icon, QLabel *detail,
     }
     icon->style()->unpolish(icon);
     icon->style()->polish(icon);
-}
-
-void MaintenanceWizardDialog::refreshThemeColors()
-{
 }
 
 void MaintenanceWizardDialog::navigateToPage(const QString &pageTitle)
