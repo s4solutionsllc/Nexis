@@ -77,14 +77,14 @@
         <widget class="QLabel" name="lblCrashReportsImg">
          <property name="minimumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>48</width>
+           <height>48</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>128</width>
-           <height>128</height>
+           <width>96</width>
+           <height>96</height>
           </size>
          </property>
          <property name="text">
@@ -150,14 +150,14 @@
         <widget class="QLabel" name="lblAppCacheImg">
          <property name="minimumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>48</width>
+           <height>48</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>128</width>
-           <height>128</height>
+           <width>96</width>
+           <height>96</height>
           </size>
          </property>
          <property name="text">
@@ -185,14 +185,14 @@
         <widget class="QLabel" name="lblTrashImg">
          <property name="minimumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>48</width>
+           <height>48</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>128</width>
-           <height>128</height>
+           <width>96</width>
+           <height>96</height>
           </size>
          </property>
          <property name="text">
@@ -220,14 +220,14 @@
         <widget class="QLabel" name="lblPackageCacheImg">
          <property name="minimumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>48</width>
+           <height>48</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>128</width>
-           <height>128</height>
+           <width>96</width>
+           <height>96</height>
           </size>
          </property>
          <property name="textFormat">
@@ -359,14 +359,14 @@
         <widget class="QLabel" name="lblLogImage">
          <property name="minimumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>48</width>
+           <height>48</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>128</width>
-           <height>128</height>
+           <width>96</width>
+           <height>96</height>
           </size>
          </property>
          <property name="text">
@@ -416,14 +416,14 @@
         <widget class="QLabel" name="lblDevToolCacheImg">
          <property name="minimumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>48</width>
+           <height>48</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>128</width>
-           <height>128</height>
+           <width>96</width>
+           <height>96</height>
           </size>
          </property>
          <property name="text">
@@ -473,14 +473,14 @@
         <widget class="QLabel" name="lblBrokenSymlinksImg">
          <property name="minimumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>48</width>
+           <height>48</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>128</width>
-           <height>128</height>
+           <width>96</width>
+           <height>96</height>
           </size>
          </property>
          <property name="text">
@@ -530,14 +530,14 @@
         <widget class="QLabel" name="lblBrowserPrivacyImg">
          <property name="minimumSize">
           <size>
-           <width>64</width>
-           <height>64</height>
+           <width>48</width>
+           <height>48</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>128</width>
-           <height>128</height>
+           <width>96</width>
+           <height>96</height>
           </size>
          </property>
          <property name="text">

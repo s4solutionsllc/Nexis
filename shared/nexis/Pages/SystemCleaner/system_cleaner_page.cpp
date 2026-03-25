@@ -54,11 +54,11 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
 void SystemCleanerPage::init()
 {
     // Use bundled SVGs for consistent appearance across all platforms.
-    // Render at exactly 64×64 and enable scaledContents so the label
-    // always shows the full image regardless of intrinsic SVG size.
+    // Render at 48×48 (matching disk-tool launcher icons) and enable
+    // scaledContents so the label always shows the full image.
     auto setPixmap = [](QLabel *lbl, const QString &svgPath) {
-        QPixmap pm = QIcon(svgPath).pixmap(Dpi::scale(64, 64));
-        lbl->setFixedSize(Dpi::scale(64, 64));
+        QPixmap pm = QIcon(svgPath).pixmap(Dpi::scale(48, 48));
+        lbl->setFixedSize(Dpi::scale(48, 48));
         lbl->setScaledContents(true);
         lbl->setPixmap(pm);
     };
