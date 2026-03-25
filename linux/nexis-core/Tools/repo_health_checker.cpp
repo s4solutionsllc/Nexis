@@ -146,6 +146,17 @@ void RepoHealthCheckerLinux::checkConnection(const APTSourcePtr &source, RepoHea
         issue.summary = QObject::tr("Repository unreachable");
         issue.detail = QObject::tr("Could not connect to %1: %2")
             .arg(source->uri, error);
+        {
+            RepoRepairAction diagnose;
+            diagnose.type = RepoRepairAction::DiagnoseConnection;
+            diagnose.label = QObject::tr("Diagnose");
+            issue.actions.append(diagnose);
+
+            RepoRepairAction disable;
+            disable.type = RepoRepairAction::DisableSource;
+            disable.label = QObject::tr("Disable");
+            issue.actions.append(disable);
+        }
         result.issues.append(issue);
     }
 }
@@ -160,6 +171,17 @@ void RepoHealthCheckerLinux::checkReleaseFile(const APTSourcePtr &source, const 
         issue.detail = QObject::tr("No InRelease or Release file at %1/dists/%2/. "
                                     "This suite may not exist for this repository.")
             .arg(source->uri, source->suites);
+        {
+            RepoRepairAction diagnose;
+            diagnose.type = RepoRepairAction::DiagnoseConnection;
+            diagnose.label = QObject::tr("Diagnose");
+            issue.actions.append(diagnose);
+
+            RepoRepairAction disable;
+            disable.type = RepoRepairAction::DisableSource;
+            disable.label = QObject::tr("Disable");
+            issue.actions.append(disable);
+        }
         result.issues.append(issue);
     } else {
         // Parse Origin for metadata
@@ -197,6 +219,12 @@ void RepoHealthCheckerLinux::checkGpgKey(const APTSourcePtr &source, RepoHealthR
             issue.detail = QObject::tr("The keyring file %1 does not exist. "
                                         "Packages from this repository cannot be verified.")
                 .arg(source->signedByPath);
+            {
+                RepoRepairAction convert;
+                convert.type = RepoRepairAction::ConvertToDeb822;
+                convert.label = QObject::tr("Convert to deb822");
+                issue.actions.append(convert);
+            }
             result.issues.append(issue);
             return;
         }
@@ -225,9 +253,14 @@ void RepoHealthCheckerLinux::checkGpgKey(const APTSourcePtr &source, RepoHealthR
                             issue.summary = QObject::tr("GPG key expired");
                             issue.detail = QObject::tr("The signing key expired on %1.")
                                 .arg(expiry.toString("yyyy-MM-dd"));
-                            issue.repairLabel = QObject::tr("Refresh signing key");
-                            issue.repairCmd = QString("gpg --no-default-keyring --keyring %1 --recv-keys --keyserver keyserver.ubuntu.com")
-                                .arg(source->signedByPath);
+                            {
+                                RepoRepairAction action;
+                                action.type = RepoRepairAction::RunCommand;
+                                action.label = QObject::tr("Refresh signing key");
+                                action.command = QString("gpg --no-default-keyring --keyring %1 --recv-keys --keyserver keyserver.ubuntu.com")
+                                    .arg(source->signedByPath);
+                                issue.actions.append(action);
+                            }
                             result.issues.append(issue);
                         } else if (daysUntil < 30) {
                             RepoHealthIssue issue;
@@ -237,9 +270,14 @@ void RepoHealthCheckerLinux::checkGpgKey(const APTSourcePtr &source, RepoHealthR
                             issue.detail = QObject::tr("The signing key expires on %1. "
                                                         "Updates will fail after this date.")
                                 .arg(expiry.toString("yyyy-MM-dd"));
-                            issue.repairLabel = QObject::tr("Refresh signing key");
-                            issue.repairCmd = QString("gpg --no-default-keyring --keyring %1 --recv-keys --keyserver keyserver.ubuntu.com")
-                                .arg(source->signedByPath);
+                            {
+                                RepoRepairAction action;
+                                action.type = RepoRepairAction::RunCommand;
+                                action.label = QObject::tr("Refresh signing key");
+                                action.command = QString("gpg --no-default-keyring --keyring %1 --recv-keys --keyserver keyserver.ubuntu.com")
+                                    .arg(source->signedByPath);
+                                issue.actions.append(action);
+                            }
                             result.issues.append(issue);
                         }
                         break; // Only check first key
@@ -291,6 +329,12 @@ void RepoHealthCheckerLinux::checkDeprecatedFormat(const APTSourcePtr &source, R
         issue.summary = QObject::tr("Legacy .list format");
         issue.detail = QObject::tr("This source uses the legacy one-line format. "
                                     "The modern deb822 (.sources) format is recommended.");
+        {
+            RepoRepairAction convert;
+            convert.type = RepoRepairAction::ConvertToDeb822;
+            convert.label = QObject::tr("Convert to deb822");
+            issue.actions.append(convert);
+        }
         result.issues.append(issue);
     }
 
@@ -301,6 +345,7 @@ void RepoHealthCheckerLinux::checkDeprecatedFormat(const APTSourcePtr &source, R
         issue.summary = QObject::tr("No signed-by key specified");
         issue.detail = QObject::tr("This source does not use the signed-by option. "
                                     "It may rely on deprecated apt-key for signature verification.");
+        // Suppress ConvertToDeb822 button since legacy_format issue already offers it
         result.issues.append(issue);
     }
 }
@@ -322,6 +367,12 @@ void RepoHealthCheckerLinux::checkDuplicates(const QList<APTSourcePtr> &sources,
                 issue.detail = QObject::tr("This repository is defined %1 times across source files. "
                                             "Duplicate entries can cause apt warnings.")
                     .arg(seen[key]);
+                {
+                    RepoRepairAction remove;
+                    remove.type = RepoRepairAction::RemoveDuplicate;
+                    remove.label = QObject::tr("Remove duplicate");
+                    issue.actions.append(remove);
+                }
                 cache[key].issues.append(issue);
                 cache[key].status = worstStatus(cache[key].issues);
             }

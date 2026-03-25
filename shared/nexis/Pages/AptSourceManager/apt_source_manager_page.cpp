@@ -18,6 +18,8 @@
 #include <Tools/repo_health_checker.h>
 #include <Tools/repo_knowledge_base.h>
 #include <QRegularExpression>
+#include <QDesktopServices>
+#include <QtConcurrent>
 #include "Utils/command_util.h"
 
 #ifdef Q_OS_MAC
@@ -137,8 +139,8 @@ void APTSourceManagerPage::init()
 
     connect(mDetailPanel, &RepoDetailPanel::closeRequested,
             this, &APTSourceManagerPage::onDetailPanelCloseRequested);
-    connect(mDetailPanel, &RepoDetailPanel::repairRequested,
-            this, &APTSourceManagerPage::onRepairRequested);
+    connect(mDetailPanel, &RepoDetailPanel::repairActionRequested,
+            this, &APTSourceManagerPage::onRepairActionRequested);
     connect(mDetailPanel, &RepoDetailPanel::editRequested,
             this, [this](const APTSourcePtr &src) {
         selectedAptSource = src;
@@ -266,6 +268,9 @@ void APTSourceManagerPage::loadAptSources()
     ui->lblAptSourceTitle->setText(tr("APT Repositories (%1)")
                                    .arg(aptSourceList.count()));
 #endif
+
+    // Refresh health after any source list change
+    mRefresh->triggerRepoHealthCheck();
 }
 
 #ifdef Q_OS_MAC
@@ -645,29 +650,90 @@ void APTSourceManagerPage::onDetailPanelCloseRequested()
     selectedAptSource.clear();
 }
 
-void APTSourceManagerPage::onRepairRequested(const QString &command, const QString &label)
+void APTSourceManagerPage::onRepairActionRequested(const RepoRepairAction &action, const APTSourcePtr &source)
 {
-    QString message = tr("The following command will be run to repair this issue:\n\n%1\n\n"
-                         "This requires administrator privileges. Proceed?").arg(command);
+    RepoRepairEngine *engine = mToolManager->repoRepairEngine();
+
+    if (action.type == RepoRepairAction::DiagnoseConnection) {
+        if (mDiagnoseRunning) return;
+        mDiagnoseRunning = true;
+        connect(engine, &RepoRepairEngine::diagnoseFinished,
+                this, &APTSourceManagerPage::onDiagnoseFinished, Qt::UniqueConnection);
+        QtConcurrent::run([engine, source]() {
+            engine->diagnoseConnection(source);
+        });
+        return;
+    }
+
+    // "Open in Browser" and "Search Online" — no pkexec needed
+    if (action.type == RepoRepairAction::RunCommand) {
+        if (action.command.startsWith("xdg-open") || action.command.startsWith("open")) {
+            QStringList args = action.command.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+            if (args.size() >= 2)
+                QDesktopServices::openUrl(QUrl(args.mid(1).join(' ')));
+            return;
+        }
+    }
+
+    // Confirmation dialog
+    QString message;
+    if (action.type == RepoRepairAction::RemoveSource) {
+        message = tr("This will permanently delete this repository entry.\n\n"
+                     "This action cannot be undone.\n\nProceed?");
+    } else {
+        message = tr("This will modify your system's repository configuration.\n\n"
+                     "Action: %1\n\nThis requires administrator privileges. Proceed?")
+            .arg(action.label);
+    }
 
     QMessageBox::StandardButton reply = QMessageBox::question(
-        this, tr("Confirm Repair: %1").arg(label),
+        this, tr("Confirm: %1").arg(action.label),
         message, QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
     if (reply != QMessageBox::Yes)
         return;
 
-    QStringList args = command.split(QRegularExpression("\\s+"));
-    ExecResult result = CommandUtil::execWithStatus("pkexec", args, 60000);
+    RepoRepairEngine::RepairResult result;
+    switch (action.type) {
+    case RepoRepairAction::RunCommand:
+        result = engine->runCommand(action.command);
+        break;
+    case RepoRepairAction::ConvertToDeb822:
+        result = engine->convertToDeb822(source);
+        break;
+    case RepoRepairAction::RemoveDuplicate:
+        result = engine->removeDuplicate(source);
+        break;
+    case RepoRepairAction::DisableSource:
+        result = engine->disableSource(source);
+        break;
+    case RepoRepairAction::EnableSource:
+        result = engine->enableSource(source);
+        break;
+    case RepoRepairAction::RemoveSource:
+        result = engine->removeSource(source);
+        break;
+    default:
+        return;
+    }
 
-    if (result.exitCode == 0) {
+    if (result.success) {
+        loadAptSources();
         mRefresh->triggerRepoHealthCheck();
-    } else if (result.exitCode == 126 || result.exitCode == 127) {
-        // User cancelled pkexec or pkexec not found — no-op
-    } else {
-        QMessageBox::warning(this, tr("Repair Failed"),
-            tr("The repair command failed with exit code %1.\n\nOutput:\n%2")
-                .arg(result.exitCode)
-                .arg(result.error.isEmpty() ? result.output : result.error));
+    } else if (!result.errorDetail.isEmpty()) {
+        QMessageBox::warning(this, tr("Action Failed"),
+            tr("%1\n\n%2").arg(result.message, result.errorDetail));
+    }
+}
+
+void APTSourceManagerPage::onDiagnoseFinished(const DiagnoseResult &result)
+{
+    mDiagnoseRunning = false;
+    mLastDiagnoseResult = result;
+    mHasDiagnoseResult = true;
+    if (mDetailPanel->isVisible() && selectedAptSource) {
+        QString key = RepoHealthChecker::cacheKey(selectedAptSource);
+        if (mHealthCache.contains(key))
+            mDetailPanel->showRepo(selectedAptSource, mHealthCache[key], &result);
     }
 }

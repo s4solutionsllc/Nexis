@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include <QScrollArea>
 #include <Tools/repo_health_types.h>
+#include <Tools/repo_repair_engine.h>
 #include <Tools/apt_source_tool.h>
 
 class SignalMapper;
@@ -18,13 +19,15 @@ class RepoDetailPanel : public QWidget
 public:
     explicit RepoDetailPanel(QWidget *parent = nullptr);
 
-    void showRepo(const APTSourcePtr &source, const RepoHealthResult &result);
+    void showRepo(const APTSourcePtr &source, const RepoHealthResult &result,
+                  const DiagnoseResult *diagnoseResult = nullptr);
     void clear();
+    void showDiagnoseResult(const DiagnoseResult &result, QVBoxLayout *targetLayout);
 
 signals:
     void editRequested(const APTSourcePtr &source);
     void disableRequested(const APTSourcePtr &source);
-    void repairRequested(const QString &command, const QString &label);
+    void repairActionRequested(const RepoRepairAction &action, const APTSourcePtr &source);
     void closeRequested();
 
 private:

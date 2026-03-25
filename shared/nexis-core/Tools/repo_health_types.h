@@ -5,6 +5,23 @@
 #include <QList>
 #include <QDateTime>
 #include <QMap>
+#include <QVariantMap>
+
+struct RepoRepairAction {
+    enum Type {
+        RunCommand,
+        ConvertToDeb822,
+        RemoveDuplicate,
+        DiagnoseConnection,
+        DisableSource,
+        EnableSource,
+        RemoveSource
+    };
+    Type type;
+    QString label;
+    QString command;        // RunCommand only
+    QVariantMap context;
+};
 
 struct RepoHealthIssue {
     enum Severity { Info, Warning, Error };
@@ -12,8 +29,7 @@ struct RepoHealthIssue {
     QString code;
     QString summary;
     QString detail;
-    QString repairCmd;
-    QString repairLabel;
+    QList<RepoRepairAction> actions;
 };
 
 struct RepoHealthResult {
@@ -30,6 +46,7 @@ struct RepoKnownInfo {
     QString name;
     QString description;
     QString url;
+    QString keyUrl;
 };
 
 using RepoHealthCache = QMap<QString, RepoHealthResult>;

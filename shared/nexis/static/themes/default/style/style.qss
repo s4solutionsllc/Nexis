@@ -1768,6 +1768,51 @@ QLabel[accessibleName="dimmed-small"] {
     margin-top: 3;
 }
 
+/* - Repo Detail Panel - */
+
+#repoDetailPanel {
+    background-color: @pageContent;
+    border-left: 1px solid @borderColor;
+}
+
+#repoDetailName {
+    color: @color05;
+}
+
+#repoDetailDescription {
+    color: @color04;
+}
+
+#repoDetailMetadata {
+    background-color: transparent;
+}
+
+#repoMetaLabel {
+    font-size: 9px;
+    color: @tertiaryText;
+    background-color: transparent;
+}
+
+#repoMetaValue {
+    color: @color05;
+    background-color: transparent;
+}
+
+#repoIssueCard {
+    background-color: @cardBg;
+    border-radius: 4px;
+    padding-left: 4px;
+}
+
+#repoRemoveBtn {
+    color: @destructiveColor;
+}
+
+#repoDiagnoseStep {
+    color: @color05;
+    background-color: transparent;
+}
+
 /* - APT Source Repository Item Edit - */
 
 #APTSourceEdit {
