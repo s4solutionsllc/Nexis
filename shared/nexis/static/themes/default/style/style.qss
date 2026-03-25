@@ -1040,13 +1040,13 @@ QLabel[accessibleName="dialog-title"] {
 ***************************/
 
 #cleanerCategories QCheckBox[accessibleName=circle]::indicator {
-    width: @dp26;
-    height: @dp26;
+    width: @dp20;
+    height: @dp20;
 }
 
 #cleanerCategories QLabel,
 #checkSelectAllSystemScan {
-    font-size: 11pt;
+    font-size: 10pt;
     color: @color05;
 }
 
