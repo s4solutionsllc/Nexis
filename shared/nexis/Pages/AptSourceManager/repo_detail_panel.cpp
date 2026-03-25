@@ -150,7 +150,8 @@ void RepoDetailPanel::setupUi()
     mainLayout->addLayout(actionRow);
 }
 
-void RepoDetailPanel::showRepo(const APTSourcePtr &source, const RepoHealthResult &result)
+void RepoDetailPanel::showRepo(const APTSourcePtr &source, const RepoHealthResult &result,
+                               const DiagnoseResult *diagnoseResult)
 {
     mCurrentSource = source;
     mCurrentResult = result;
@@ -220,6 +221,9 @@ void RepoDetailPanel::showRepo(const APTSourcePtr &source, const RepoHealthResul
     for (const RepoHealthIssue &issue : result.issues)
         addIssueWidget(issue);
 
+    if (diagnoseResult)
+        showDiagnoseResult(*diagnoseResult, mIssuesLayout);
+
     show();
 }
 
@@ -265,19 +269,28 @@ void RepoDetailPanel::addIssueWidget(const RepoHealthIssue &issue)
     }
 
     if (!issue.actions.isEmpty()) {
-        const RepoRepairAction &action = issue.actions.first();
-        QPushButton *btnRepair = new QPushButton(
-            action.label.isEmpty() ? tr("Repair") : action.label, issueWidget);
-        btnRepair->setAccessibleName("primary");
-        btnRepair->setCursor(Qt::PointingHandCursor);
-        btnRepair->setFocusPolicy(Qt::NoFocus);
-        btnRepair->setFixedHeight(26);
-        QString cmd = action.command;
-        QString label = action.label;
-        connect(btnRepair, &QPushButton::clicked, this, [this, cmd, label]() {
-            emit repairRequested(cmd, label);
-        });
-        issueLayout->addWidget(btnRepair, 0, Qt::AlignLeft);
+        QHBoxLayout *actionRow = new QHBoxLayout();
+        actionRow->setSpacing(6);
+
+        for (const RepoRepairAction &action : issue.actions) {
+            QPushButton *btn = new QPushButton(action.label, issueWidget);
+            btn->setCursor(Qt::PointingHandCursor);
+            btn->setFocusPolicy(Qt::NoFocus);
+            btn->setFixedHeight(26);
+
+            if (action.type == RepoRepairAction::RemoveSource)
+                btn->setObjectName("repoRemoveBtn");
+            else
+                btn->setAccessibleName("primary");
+
+            RepoRepairAction capturedAction = action;
+            connect(btn, &QPushButton::clicked, this, [this, capturedAction]() {
+                emit repairActionRequested(capturedAction, mCurrentSource);
+            });
+            actionRow->addWidget(btn);
+        }
+        actionRow->addStretch();
+        issueLayout->addLayout(actionRow);
     }
 
     // Insert before the stretch
@@ -307,10 +320,78 @@ void RepoDetailPanel::clear()
     hide();
 }
 
+void RepoDetailPanel::showDiagnoseResult(const DiagnoseResult &result, QVBoxLayout *targetLayout)
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+
+    for (const DiagnoseStep &step : result.steps) {
+        QHBoxLayout *stepRow = new QHBoxLayout();
+        stepRow->setSpacing(6);
+
+        QString icon;
+        QString iconColor;
+        switch (step.status) {
+        case DiagnoseStep::Ok:
+            icon = QString::fromUtf8("\u2713");
+            iconColor = sv ? sv->value("@successColor").toString() : QString();
+            break;
+        case DiagnoseStep::Warning:
+            icon = QString::fromUtf8("\u25B2");
+            iconColor = sv ? sv->value("@warningColor").toString() : QString();
+            break;
+        case DiagnoseStep::Failed:
+            icon = QString::fromUtf8("\u2717");
+            iconColor = sv ? sv->value("@destructiveColor").toString() : QString();
+            break;
+        }
+
+        QLabel *lblIcon = new QLabel(icon);
+        lblIcon->setStyleSheet(QString("color: %1; font-weight: bold;").arg(iconColor));
+        lblIcon->setFixedWidth(16);
+        stepRow->addWidget(lblIcon);
+
+        QLabel *lblCheck = new QLabel(QString("<b>%1:</b> %2").arg(step.check, step.detail));
+        lblCheck->setObjectName("repoDiagnoseStep");
+        lblCheck->setWordWrap(true);
+        stepRow->addWidget(lblCheck, 1);
+
+        targetLayout->insertLayout(targetLayout->count() - 1, stepRow);
+    }
+
+    if (!result.suggestion.isEmpty()) {
+        QLabel *lblSuggestion = new QLabel(result.suggestion);
+        lblSuggestion->setWordWrap(true);
+        QString suggColor = sv ? sv->value("@warningColor").toString() : QString();
+        lblSuggestion->setStyleSheet(QString("color: %1; font-style: italic;").arg(suggColor));
+        targetLayout->insertWidget(targetLayout->count() - 1, lblSuggestion);
+    }
+
+    if (!result.followUpActions.isEmpty()) {
+        QHBoxLayout *actionRow = new QHBoxLayout();
+        actionRow->setSpacing(6);
+        for (const RepoRepairAction &action : result.followUpActions) {
+            QPushButton *btn = new QPushButton(action.label);
+            btn->setCursor(Qt::PointingHandCursor);
+            btn->setFocusPolicy(Qt::NoFocus);
+            btn->setFixedHeight(26);
+
+            if (action.type == RepoRepairAction::DisableSource)
+                btn->setAccessibleName("primary");
+
+            RepoRepairAction capturedAction = action;
+            connect(btn, &QPushButton::clicked, this, [this, capturedAction]() {
+                emit repairActionRequested(capturedAction, mCurrentSource);
+            });
+            actionRow->addWidget(btn);
+        }
+        actionRow->addStretch();
+        targetLayout->insertLayout(targetLayout->count() - 1, actionRow);
+    }
+}
+
 void RepoDetailPanel::refreshThemeColors()
 {
     if (mCurrentSource) {
-        // Full re-render: showRepo handles all color/style application
         showRepo(mCurrentSource, mCurrentResult);
     }
 }

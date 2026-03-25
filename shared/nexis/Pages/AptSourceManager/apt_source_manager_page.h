@@ -13,6 +13,7 @@
 #include "Managers/info_manager.h"
 #include <Info/update_info.h>
 #include <Tools/repo_health_types.h>
+#include <Tools/repo_repair_engine.h>
 
 class RepoDetailPanel;
 class QSplitter;
@@ -73,7 +74,8 @@ private slots:
     void onSystemUpdatesChecked(const UpdateCheckResult &result);
     void onRepoHealthChecked(const RepoHealthCache &cache);
     void onDetailPanelCloseRequested();
-    void onRepairRequested(const QString &command, const QString &label);
+    void onRepairActionRequested(const RepoRepairAction &action, const APTSourcePtr &source);
+    void onDiagnoseFinished(const DiagnoseResult &result);
 
 private:
     void init();
@@ -102,6 +104,9 @@ private:
     QSplitter *mSplitter = nullptr;
     RepoHealthCache mHealthCache;
     QPushButton *mBtnRefreshHealth = nullptr;
+    bool mDiagnoseRunning = false;
+    DiagnoseResult mLastDiagnoseResult;
+    bool mHasDiagnoseResult = false;
 };
 
 #endif

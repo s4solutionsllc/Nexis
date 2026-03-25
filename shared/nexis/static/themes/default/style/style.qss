@@ -1804,6 +1804,15 @@ QLabel[accessibleName="dimmed-small"] {
     padding-left: 4px;
 }
 
+#repoRemoveBtn {
+    color: @destructiveColor;
+}
+
+#repoDiagnoseStep {
+    color: @color05;
+    background-color: transparent;
+}
+
 /* - APT Source Repository Item Edit - */
 
 #APTSourceEdit {
