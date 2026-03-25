@@ -81,6 +81,57 @@ Select a repository and click **Delete** to remove it entirely. This deletes the
 
 > **Linux:** All add, edit, and delete operations on APT repositories require `sudo`. Nexis requests elevated permissions when you save changes.
 
+### Repository Health Dashboard (BETA)
+
+Below the repository list, Nexis continuously monitors the health of your configured repositories and surfaces issues directly on each card.
+
+#### Health Indicators
+
+Each repository card shows a **status dot** next to its name:
+
+| Color | Meaning |
+|-------|---------|
+| **Green** | Healthy -- no issues detected |
+| **Yellow** | Warning -- non-critical issues found (e.g., deprecated format) |
+| **Red** | Error -- critical issues that may prevent updates (e.g., connection failure, expired GPG key) |
+
+Cards also display a **description line** identifying the repository (e.g., "Ubuntu Main Archive" or "Google Chrome stable channel"), drawn from a built-in knowledge base of 30+ common repositories.
+
+#### Detail Panel
+
+Click any repository card to open a **side panel** with full diagnostics:
+
+- **Status badge** with the overall health verdict
+- **Description** of what the repository provides
+- **Metadata** including file path, suite, format, and signing key
+- **Issue list** with severity-colored cards explaining each detected problem
+
+#### Health Checks
+
+Nexis runs 6 checks on each APT repository:
+
+1. **Connection** -- Can the repository URL be reached?
+2. **Release file** -- Does the repository serve a valid Release file?
+3. **GPG key** -- Is the signing key present and not expired?
+4. **Suite mismatch** -- Does the configured suite match the distribution?
+5. **Duplicates** -- Are there duplicate entries across source files?
+6. **Deprecated format** -- Is the source using the legacy `.list` format instead of modern deb822?
+
+Health checks run automatically in the background (hourly, after update checks) and can also be triggered manually with the **Refresh Health** button.
+
+#### Repair Actions
+
+When a health check finds an issue, **action buttons** appear next to the issue card in the detail panel. Available repairs include:
+
+- **Disable / Enable / Remove** a problematic source
+- **Remove duplicates** across source files
+- **Convert to deb822** -- upgrade a legacy `.list` file to the modern `.sources` format
+- **Diagnose connection** -- run ping and curl checks with inline results
+
+Each repair shows a **confirmation dialog** with the exact command that will run before executing. Operations that need root access prompt for your administrator password. After a repair completes, health checks re-run automatically to verify the fix.
+
+> **Tip:** The health dashboard helps you catch common repository problems -- like expired PPAs, broken GPG keys, or duplicate entries -- before they cause `apt update` failures.
+
 ### APT-RPM Support
 
 If you are running ALT Linux, PCLinuxOS, or Vine Linux, Nexis also supports the APT-RPM variant of repository management.
@@ -117,6 +168,17 @@ Click the **Install** button and type the name of the package you want. Nexis ru
 Check the boxes next to the packages you want to remove, then click **Uninstall**. You can select multiple packages across both Formula and Cask groups for a batch uninstall operation. Nexis runs `brew uninstall` for each selected package.
 
 > **Tip:** If you are not sure which packages you have installed, use the search bar to check before installing something new. Homebrew will warn about duplicates, but checking first saves time.
+
+### Package Health Dashboard (BETA)
+
+On macOS, Nexis also monitors the health of your Homebrew installation. Each tap and package shows a status dot (green/yellow/red) with health indicators. Nexis performs 4 checks on macOS:
+
+1. **Tap reachable** -- Can the tap's Git remote be contacted?
+2. **Outdated packages** -- Are there packages with pending updates?
+3. **Deprecated/disabled** -- Are any installed packages deprecated or disabled upstream?
+4. **Pinned versions** -- Are any packages pinned to a specific version?
+
+Click any item to open the detail panel with full diagnostics and descriptions. Health checks run hourly in the background and can be refreshed manually.
 
 ## What's Next
 
