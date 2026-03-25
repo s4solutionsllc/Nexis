@@ -374,6 +374,141 @@ RepoRepairEngine::RepairResult RepoRepairEngineLinux::removeDuplicate(const APTS
     return {true, QObject::tr("Duplicate entry commented out"), {}};
 }
 
-void RepoRepairEngineLinux::diagnoseConnection(const APTSourcePtr &)
+static QString httpHeadCheck(const QString &url, int timeoutMs = 5000)
 {
+    QNetworkAccessManager nam;
+    QNetworkRequest req{QUrl(url)};
+    req.setTransferTimeout(timeoutMs);
+    QNetworkReply *reply = nam.head(req);
+
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    QTimer::singleShot(timeoutMs + 500, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    QString error;
+    if (reply->error() != QNetworkReply::NoError)
+        error = reply->errorString();
+
+    int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (error.isEmpty() && status >= 400)
+        error = QString("HTTP %1").arg(status);
+
+    reply->deleteLater();
+    return error;
+}
+
+void RepoRepairEngineLinux::diagnoseConnection(const APTSourcePtr &source)
+{
+    DiagnoseResult result;
+    QUrl url(source->uri);
+    QString domain = url.host();
+
+    // Step 1: DNS Resolution
+    {
+        DiagnoseStep step;
+        step.check = QObject::tr("DNS Resolution");
+        QDnsLookup dns;
+        dns.setType(QDnsLookup::A);
+        dns.setName(domain);
+        dns.lookup();
+
+        QEventLoop loop;
+        QObject::connect(&dns, &QDnsLookup::finished, &loop, &QEventLoop::quit);
+        QTimer::singleShot(5000, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        if (dns.error() == QDnsLookup::NoError && !dns.hostAddressRecords().isEmpty()) {
+            step.status = DiagnoseStep::Ok;
+            step.detail = QObject::tr("Resolves to %1").arg(dns.hostAddressRecords().first().value().toString());
+        } else if (dns.error() == QDnsLookup::NotFoundError) {
+            step.status = DiagnoseStep::Failed;
+            step.detail = QObject::tr("Domain does not exist (NXDOMAIN)");
+            result.steps.append(step);
+            result.suggestion = QObject::tr("This domain no longer exists. The repository may have been discontinued.");
+            emit diagnoseFinished(result);
+            return;
+        } else {
+            step.status = DiagnoseStep::Failed;
+            step.detail = QObject::tr("DNS lookup failed: %1").arg(dns.errorString());
+            result.steps.append(step);
+            result.suggestion = QObject::tr("DNS resolution failed. Check your network connection.");
+            emit diagnoseFinished(result);
+            return;
+        }
+        result.steps.append(step);
+    }
+
+    // Step 2: Base domain
+    {
+        DiagnoseStep step;
+        step.check = QObject::tr("Base Domain");
+        QString baseUrl = url.scheme() + "://" + domain;
+        QString err = httpHeadCheck(baseUrl);
+        if (err.isEmpty()) {
+            step.status = DiagnoseStep::Ok;
+            step.detail = QObject::tr("Base domain is reachable");
+            result.suggestion = QObject::tr("The server is up but the repository path may have changed. Try opening in a browser to check.");
+        } else {
+            step.status = DiagnoseStep::Failed;
+            step.detail = QObject::tr("Base domain unreachable: %1").arg(err);
+            result.suggestion = QObject::tr("The entire server is unreachable. It may be down or blocked.");
+        }
+        result.steps.append(step);
+    }
+
+    // Step 3: Protocol check
+    {
+        DiagnoseStep step;
+        step.check = QObject::tr("Protocol Check");
+        QString altScheme = (url.scheme() == "https") ? "http" : "https";
+        QString altUrl = altScheme + "://" + domain + url.path();
+        QString err = httpHeadCheck(altUrl);
+        if (err.isEmpty()) {
+            step.status = DiagnoseStep::Warning;
+            step.detail = QObject::tr("Available over %1 instead").arg(altScheme.toUpper());
+            result.suggestion = QObject::tr("This repository is available over %1. Consider updating the source URL.").arg(altScheme.toUpper());
+        } else {
+            step.status = DiagnoseStep::Ok;
+            step.detail = QObject::tr("Not available over %1 either").arg(altScheme.toUpper());
+        }
+        result.steps.append(step);
+    }
+
+    // Step 4: Knowledge base
+    {
+        RepoKnownInfo info = RepoKnowledgeBase::lookup(source->uri);
+        if (!info.url.isEmpty() && info.url != source->uri) {
+            DiagnoseStep step;
+            step.check = QObject::tr("Known Repository");
+            step.status = DiagnoseStep::Warning;
+            step.detail = QObject::tr("Canonical URL: %1").arg(info.url);
+            result.suggestion = QObject::tr("The canonical URL for %1 is %2. Your source may be outdated.")
+                .arg(info.name, info.url);
+            result.steps.append(step);
+        }
+    }
+
+    // Build follow-up actions
+    {
+        RepoRepairAction openBrowser;
+        openBrowser.type = RepoRepairAction::RunCommand;
+        openBrowser.label = QObject::tr("Open in Browser");
+        openBrowser.command = "xdg-open " + source->uri;
+        result.followUpActions.append(openBrowser);
+
+        RepoRepairAction search;
+        search.type = RepoRepairAction::RunCommand;
+        search.label = QObject::tr("Search Online");
+        QString query = QUrl::toPercentEncoding(domain + " apt repository");
+        search.command = "xdg-open https://www.google.com/search?q=" + query;
+        result.followUpActions.append(search);
+
+        RepoRepairAction disable;
+        disable.type = RepoRepairAction::DisableSource;
+        disable.label = QObject::tr("Disable Repository");
+        result.followUpActions.append(disable);
+    }
+
+    emit diagnoseFinished(result);
 }

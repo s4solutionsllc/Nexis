@@ -1,4 +1,5 @@
 #include <QTest>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QFile>
 #include <QDir>
@@ -73,6 +74,7 @@ private slots:
     void removeDuplicate_commentsSecondOccurrence();
     void convertToDeb822_generatesCorrectContent();
     void convertToDeb822_withoutSignedBy_stillConverts();
+    void diagnoseConnection_emitsResult();
 #endif
 };
 
@@ -276,6 +278,24 @@ void TestRepoRepairEngine::convertToDeb822_withoutSignedBy_stillConverts()
     // Should still have created a .sources file
     QStringList sourcesFiles = QDir(testSourcesDir).entryList({"*.sources"});
     QCOMPARE(sourcesFiles.size(), 1);
+}
+
+void TestRepoRepairEngine::diagnoseConnection_emitsResult()
+{
+    APTSourcePtr src(new APTSource);
+    src->uri = "http://nonexistent.invalid.test/repo";
+    src->suites = "jammy";
+    src->components = "main";
+
+    QSignalSpy spy(&mEngine, &RepoRepairEngine::diagnoseFinished);
+    mEngine.diagnoseConnection(src);
+
+    // Synchronous on Linux — signal emitted before return
+    QVERIFY(spy.count() >= 1);
+
+    DiagnoseResult result = spy.first().first().value<DiagnoseResult>();
+    QVERIFY(!result.steps.isEmpty());
+    QVERIFY(!result.suggestion.isEmpty());
 }
 
 void TestRepoRepairEngine::removeDuplicate_commentsSecondOccurrence()
