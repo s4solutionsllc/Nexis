@@ -1663,6 +1663,224 @@ QLabel[accessibleName="dialog-title"] {
     border-bottom: 1px solid @borderColor;
 }
 
+/* -- Helper Widgets (Firewall / Open Ports / Network Diagnostics) -- */
+
+/* Firewall Widget */
+
+#fwTitle {
+    color: @color05;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#fwStatusText {
+    color: @color05;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#fwToggle {
+    background-color: @accentColor;
+    color: @color07;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-size: 12px;
+}
+
+#fwToggle:hover {
+    opacity: 0.9;
+}
+
+#fwToggle:disabled {
+    background-color: @cardBg;
+    color: @color04;
+}
+
+#fwDetailCard {
+    background-color: @cardBg;
+    border: 1px solid @borderColor;
+    border-radius: 8px;
+}
+
+#fwDetailCard QLabel {
+    color: @color04;
+    font-size: 12px;
+}
+
+#fwWarning {
+    color: @warningColor;
+    font-size: 13px;
+}
+
+#fwHelpBtn {
+    color: @color04;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid @color04;
+    border-radius: 10px;
+    min-width: 20px;
+    max-width: 20px;
+    min-height: 20px;
+    max-height: 20px;
+}
+
+#fwRefresh {
+    background-color: @cardBg;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 12px;
+}
+
+#fwRefresh:hover {
+    border-color: @accentColor;
+}
+
+#fwRefresh:disabled {
+    color: @color04;
+}
+
+/* Open Ports Widget */
+
+#portsTitle {
+    color: @color05;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#portsSearch {
+    background-color: @cardBg;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+#portsSearch:focus {
+    border-color: @accentColor;
+}
+
+#portsListenToggle {
+    background-color: @cardBg;
+    color: @color04;
+    border: 1px solid @borderColor;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-size: 12px;
+}
+
+#portsListenToggle:checked {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
+#portsListenToggle:hover:!checked {
+    border-color: @accentColor;
+}
+
+#portsRefresh {
+    background-color: @accentColor;
+    color: @color07;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-size: 12px;
+}
+
+#portsRefresh:hover {
+    opacity: 0.9;
+}
+
+#portsRefresh:disabled {
+    background-color: @cardBg;
+    color: @color04;
+}
+
+#portsTable {
+    background-color: @cardBg;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: 6px;
+    gridline-color: @borderColor;
+    font-size: 12px;
+}
+
+#portsTable::item {
+    padding: 4px 8px;
+}
+
+#portsTable::item:selected {
+    background-color: @accentColor;
+    color: @color07;
+}
+
+#portsTable QHeaderView::section {
+    background-color: @cardBg;
+    color: @color04;
+    border: none;
+    border-bottom: 1px solid @borderColor;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+#portsSecondary {
+    color: @color04;
+    font-size: 12px;
+}
+
+/* Network Diagnostics Widget */
+
+#netDiagTitle {
+    color: @color05;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#netDiagCard {
+    background-color: @cardBg;
+    border: 1px solid @borderColor;
+    border-radius: 8px;
+}
+
+#netDiagSubheader {
+    color: @color05;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#netDiagSecondary {
+    color: @color04;
+    font-size: 12px;
+}
+
+#netDiagLoading {
+    color: @color04;
+    font-size: 13px;
+}
+
+#netDiagRetest {
+    background-color: @accentColor;
+    color: @color07;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-size: 12px;
+}
+
+#netDiagRetest:hover {
+    opacity: 0.9;
+}
+
+#netDiagRetest:disabled {
+    background-color: @cardBg;
+    color: @color04;
+}
+
 /* Action bar and buttons */
 
 #DiskToolsPage #actionBarFrame {

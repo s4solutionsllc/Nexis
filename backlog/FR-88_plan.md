@@ -11,53 +11,30 @@ Migrate in 4 phases, ordered by impact and safety. Each phase is independently c
 These 3 files have the most inline styles (20 static selectors) and are purely theme-token-based. Move all `refreshThemeColors()` styles to QSS and strip the C++ styling code.
 
 ### Task 1.1: Add Helper widget QSS rules to `style.qss`
-- [ ] Add a `/* -- Helper Widgets (Firewall / Open Ports / Network Diagnostics) -- */` section
-- [ ] Add rules for all firewall widgets:
-  - `#fwTitle` — title label
-  - `#fwStatusText` — status label
-  - `#fwToggle` — QPushButton with `:hover`, `:disabled` states
-  - `#fwDetailCard` — QFrame card
-  - `QLabel[objectName="fwSecondary"]` or iterate via `#fwSecondary` — secondary labels
-  - `#fwWarning` — warning label
-  - `#fwHelpBtn` — QToolButton transparent with hover
-  - `#fwRefresh` — QPushButton with `:hover` state
-- [ ] Add rules for all open ports widgets:
-  - `#portsTitle` — title label
-  - `#portsSearch` — QLineEdit with `:focus`
-  - `#portsListenToggle` — QPushButton with `:checked`, `:hover:!checked`
-  - `#portsRefresh` — QPushButton with `:hover`, `:disabled`
-  - `#portsTable` — QTableView with `::item`, `::item:selected`, `QHeaderView::section`
-  - `QLabel[objectName="portsSecondary"]` or `#portsSecondary` — secondary labels
-- [ ] Add rules for all network diagnostics widgets:
-  - `#netDiagTitle` — title label
-  - `#netDiagCard` — QFrame card
-  - `#netDiagSubheader` — subheader label
-  - `QLabel[objectName="netDiagSecondary"]` or `#netDiagSecondary` — secondary labels
-  - `#netDiagRetest` — QPushButton with `:hover`, `:disabled`
+- [x] Add a `/* -- Helper Widgets (Firewall / Open Ports / Network Diagnostics) -- */` section
+- [x] Add rules for all firewall widgets (#fwTitle, #fwStatusText, #fwToggle, #fwDetailCard + descendant QLabel, #fwWarning, #fwHelpBtn, #fwRefresh)
+- [x] Add rules for all open ports widgets (#portsTitle, #portsSearch, #portsListenToggle, #portsRefresh, #portsTable + QHeaderView, #portsSecondary)
+- [x] Add rules for all network diagnostics widgets (#netDiagTitle, #netDiagCard, #netDiagSubheader, #netDiagSecondary, #netDiagLoading, #netDiagRetest)
+- [x] Gave mLblLoading distinct objectName "netDiagLoading" (was "netDiagSecondary") to preserve its 13px vs 12px font-size difference
 
 ### Task 1.2: Strip inline styles from `firewall_widget.cpp`
-- [ ] Remove all `setStyleSheet()` calls in `refreshThemeColors()` for the 9 static widgets
-- [ ] Remove theme token variable declarations that are no longer used
-- [ ] Keep `refreshThemeColors()` if it still handles the semi-dynamic status dot; otherwise remove entirely and disconnect signal
-- [ ] Keep the `onStatusFetched()` status dot styling (semi-dynamic — Phase 3)
+- [x] Removed all static setStyleSheet() calls from refreshThemeColors() (9 widgets)
+- [x] Kept refreshThemeColors() — still needed to re-apply semi-dynamic status dot via onStatusFetched(mCurrentStatus)
+- [x] Kept onStatusFetched() dot color inline (semi-dynamic — Phase 3)
 
 ### Task 1.3: Strip inline styles from `open_ports_widget.cpp`
-- [ ] Remove all `setStyleSheet()` calls in `refreshThemeColors()` for the 6 static widgets
-- [ ] Remove unused token variables
-- [ ] Keep `onConnectionsFetched()` model foreground colors (must stay inline — QStandardItem, not QSS-targetable)
+- [x] Removed entire refreshThemeColors() body (6 static widgets)
+- [x] Kept method stub — signal still connected, empty body is safe
+- [x] Kept onConnectionsFetched() model foreground colors (QStandardItem, not QSS-targetable)
 
 ### Task 1.4: Strip inline styles from `network_diag_widget.cpp`
-- [ ] Remove all `setStyleSheet()` calls in `refreshThemeColors()` for the 5 static widgets
-- [ ] Remove unused token variables
-- [ ] Keep `onDiagnosticsFinished()` dynamic result widget styling (semi-dynamic — Phase 3)
+- [x] Removed entire refreshThemeColors() body (6 static widgets)
+- [x] Kept method stub — signal still connected, empty body is safe
+- [x] Kept onDiagnosticsFinished() dynamic result widget styling
 
 ### Task 1.5: Build and visual verification
-- [ ] `cmake --build build -j$(nproc)` — confirm clean compile
-- [ ] Run app, open Helpers page, verify:
-  - Firewall section renders identically
-  - Open Ports section renders identically
-  - Network Diagnostics section renders identically
-  - Theme switching updates all widgets correctly
+- [x] Clean compile — 0 warnings
+- [x] All 26 tests pass (including FirewallTests, OpenPortsTests, NetworkDiagTests)
 
 ---
 

@@ -264,7 +264,7 @@ void NetworkDiagWidget::buildUI()
     root->addLayout(footer);
 
     mLblLoading = new QLabel(tr("Running diagnostics..."));
-    mLblLoading->setObjectName("netDiagSecondary");
+    mLblLoading->setObjectName("netDiagLoading");
     mLblLoading->setAlignment(Qt::AlignCenter);
     mLblLoading->hide();
     root->addWidget(mLblLoading);
@@ -384,56 +384,4 @@ void NetworkDiagWidget::onDiagnosticsFinished(DiagResult result)
 
 void NetworkDiagWidget::refreshThemeColors()
 {
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QString cardBg   = sv ? sv->value("@cardBg").toString() : "#2A2C32";
-    QString textPri  = sv ? sv->value("@color05").toString() : "#F0F2F5";
-    QString textSec  = sv ? sv->value("@color04").toString() : "#9A9DA6";
-    QString textBtn  = sv ? sv->value("@color07").toString() : "#ffffff";
-    QString border   = sv ? sv->value("@borderColor").toString() : "#4A4D5A";
-    QString accent   = sv ? sv->value("@accentColor").toString() : "#FF6B1A";
-
-    if (mLblTitle)
-        mLblTitle->setStyleSheet(
-            QString("color: %1; font-size: 16px; font-weight: bold;").arg(textPri));
-
-    QString cardStyle = QString(
-        "QFrame#netDiagCard {"
-        "  background-color: %1;"
-        "  border: 1px solid %2;"
-        "  border-radius: 8px;"
-        "}").arg(cardBg, border);
-
-    for (QFrame *card : findChildren<QFrame *>("netDiagCard"))
-        card->setStyleSheet(cardStyle);
-
-    if (mLblDnsHeader)
-        mLblDnsHeader->setStyleSheet(
-            QString("color: %1; font-size: 14px; font-weight: bold;").arg(textPri));
-
-    if (mLblInterface)
-        mLblInterface->setStyleSheet(
-            QString("color: %1; font-size: 12px;").arg(textSec));
-
-    if (mLblLoading)
-        mLblLoading->setStyleSheet(
-            QString("color: %1; font-size: 13px;").arg(textSec));
-
-    if (mBtnRetest) {
-        mBtnRetest->setStyleSheet(QString(
-            "QPushButton#netDiagRetest {"
-            "  background-color: %1;"
-            "  color: %4;"
-            "  border: none;"
-            "  border-radius: 4px;"
-            "  padding: 6px 16px;"
-            "  font-size: 12px;"
-            "}"
-            "QPushButton#netDiagRetest:hover {"
-            "  opacity: 0.9;"
-            "}"
-            "QPushButton#netDiagRetest:disabled {"
-            "  background-color: %2;"
-            "  color: %3;"
-            "}").arg(accent, cardBg, textSec, textBtn));
-    }
 }
