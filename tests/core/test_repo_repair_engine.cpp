@@ -71,6 +71,8 @@ private slots:
     void removeSource_disabledLegacy_removesLine();
     void removeSource_onlyEntryInFile_deletesFile();
     void removeDuplicate_commentsSecondOccurrence();
+    void convertToDeb822_generatesCorrectContent();
+    void convertToDeb822_withoutSignedBy_stillConverts();
 #endif
 };
 
@@ -215,6 +217,67 @@ void TestRepoRepairEngine::removeSource_onlyEntryInFile_deletesFile()
     QVERIFY(result.success);
     QVERIFY(!QFile::exists(path));
 }
+void TestRepoRepairEngine::convertToDeb822_generatesCorrectContent()
+{
+    QString testSourcesDir = mTempDir.path() + "/sources.list.d/";
+    QDir().mkpath(testSourcesDir);
+    mEngine.setSourcesDir(testSourcesDir);
+
+    QString content = "deb http://example.com/repo jammy main contrib\n";
+    QString path = writeTestFile("convert.list", content);
+
+    APTSourcePtr src(new APTSource);
+    src->uri = "http://example.com/repo";
+    src->suites = "jammy";
+    src->components = "main contrib";
+    src->filePath = path;
+    src->isActive = true;
+    src->format = APTSource::Legacy;
+    src->signedByPath = "/usr/share/keyrings/example-keyring.gpg";
+
+    auto result = mEngine.convertToDeb822(src);
+    QVERIFY(result.success);
+
+    // Old .list should be commented out
+    QString modified = readFile(path);
+    QVERIFY(modified.contains("# Converted to deb822 by Nexis"));
+
+    // New .sources file should exist with correct content
+    QStringList sourcesFiles = QDir(testSourcesDir).entryList({"*.sources"});
+    QCOMPARE(sourcesFiles.size(), 1);
+    QString sourcesContent = readFile(testSourcesDir + sourcesFiles.first());
+    QVERIFY(sourcesContent.contains("Types: deb"));
+    QVERIFY(sourcesContent.contains("URIs: http://example.com/repo"));
+    QVERIFY(sourcesContent.contains("Suites: jammy"));
+    QVERIFY(sourcesContent.contains("Components: main contrib"));
+    QVERIFY(sourcesContent.contains("Signed-By: /usr/share/keyrings/example-keyring.gpg"));
+}
+
+void TestRepoRepairEngine::convertToDeb822_withoutSignedBy_stillConverts()
+{
+    QString testSourcesDir = mTempDir.path() + "/sources2.list.d/";
+    QDir().mkpath(testSourcesDir);
+    mEngine.setSourcesDir(testSourcesDir);
+
+    QString content = "deb http://unknown-repo.example.com/ubuntu jammy main\n";
+    QString path = writeTestFile("nosignedby.list", content);
+
+    APTSourcePtr src(new APTSource);
+    src->uri = "http://unknown-repo.example.com/ubuntu";
+    src->suites = "jammy";
+    src->components = "main";
+    src->filePath = path;
+    src->isActive = true;
+    src->format = APTSource::Legacy;
+
+    auto result = mEngine.convertToDeb822(src);
+    QVERIFY(result.success);
+
+    // Should still have created a .sources file
+    QStringList sourcesFiles = QDir(testSourcesDir).entryList({"*.sources"});
+    QCOMPARE(sourcesFiles.size(), 1);
+}
+
 void TestRepoRepairEngine::removeDuplicate_commentsSecondOccurrence()
 {
     QString content = "deb http://repo.example.com/ubuntu jammy main\n"
