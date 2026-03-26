@@ -58,6 +58,11 @@
 - [x] **BUG-104: Repo health checker falsely marks path-based repos as unreachable** (MEDIUM)
   - **File:** `linux/nexis-core/Tools/repo_health_checker.cpp:139-162`
   - **Description:** `checkConnection()` sends an HTTP HEAD to the bare URI (e.g., `https://repo.plex.tv/deb/`). Many servers reject HEAD on directory paths with 403/405/404, even though the actual repo files at `{uri}/dists/{suite}/InRelease` serve fine. This causes a false `connection_error` that gates all deeper checks (`fetchReleaseFile`, `checkGpgKey`, etc.) from running. Fix: test reachability against the Release file URL instead of the bare URI, matching how apt itself works.
+  - **Resolved:** 29665af, b0c3b1d
+
+- [x] **BUG-105: Suite mismatch warning fires on third-party repos** (MEDIUM)
+  - **File:** `linux/nexis-core/Tools/repo_health_checker.cpp:checkSuiteMismatch()`
+  - **Description:** `checkSuiteMismatch()` compares every repo's suite against the system codename, but third-party repos use arbitrary suite names (`public`, `stable`, `any`, `nodistro`, `apt/stable/`) that intentionally don't match. The check is only meaningful for Ubuntu/Debian distribution archives. Fix: only run the check when the URI matches known distro archive domains.
   - **Fix complexity:** Low — merge `checkConnection` logic with `fetchReleaseFile`
 
 - [x] **BUG-04: CPU speed shows 0 GHz on modern kernels** (MEDIUM)

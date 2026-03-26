@@ -319,8 +319,30 @@ void RepoHealthCheckerLinux::checkGpgKey(const APTSourcePtr &source, RepoHealthR
     // Skipped for now — deprecated format check covers this case
 }
 
+static bool isDistroArchive(const QString &uri)
+{
+    // Only Ubuntu/Debian official archives use codename-based suites.
+    // Third-party repos use arbitrary suite names (public, stable, any, etc.)
+    // and should not be checked for codename mismatch.
+    static const QStringList patterns = {
+        "archive.ubuntu.com", "security.ubuntu.com", "ports.ubuntu.com",
+        "old-releases.ubuntu.com", "archive.canonical.com",
+        "deb.debian.org", "security.debian.org", "ftp.debian.org",
+        "httpredir.debian.org", "cdn-fastly.deb.debian.org",
+        "mirror.debian.org"
+    };
+    for (const QString &p : patterns) {
+        if (uri.contains(p, Qt::CaseInsensitive))
+            return true;
+    }
+    return false;
+}
+
 void RepoHealthCheckerLinux::checkSuiteMismatch(const APTSourcePtr &source, RepoHealthResult &result)
 {
+    if (!isDistroArchive(source->uri))
+        return;
+
     QString codename = systemCodename();
     if (codename.isEmpty())
         return;

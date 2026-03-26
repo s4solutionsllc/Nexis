@@ -21,6 +21,7 @@ private slots:
     void fileUri_skipsConnectionCheck();
     void unreachableHost_connectionError();
     void flatRepo_noDistsPrefix();
+    void suiteMismatch_thirdPartyRepo_skipped();
 };
 
 void TestRepoHealthChecker::cacheKey_compositeFormat()
@@ -279,6 +280,27 @@ void TestRepoHealthChecker::unreachableHost_connectionError()
     QVERIFY(hasConnectionError);
 }
 
+void TestRepoHealthChecker::suiteMismatch_thirdPartyRepo_skipped()
+{
+    // Third-party repos with non-codename suites should not trigger suite_mismatch
+    APTSourcePtr src(new APTSource);
+    src->uri = "http://127.0.0.1:1";  // unreachable but that's fine
+    src->suites = "public";
+    src->components = "main";
+    src->format = APTSource::Deb822;
+    src->signedByPath = "/usr/share/keyrings/test.gpg";
+
+    RepoHealthCheckerLinux checker;
+    RepoHealthResult result = checker.checkOne(src);
+
+    bool hasSuiteMismatch = false;
+    for (const auto &issue : result.issues) {
+        if (issue.code == "suite_mismatch")
+            hasSuiteMismatch = true;
+    }
+    QVERIFY(!hasSuiteMismatch);
+}
+
 void TestRepoHealthChecker::flatRepo_noDistsPrefix()
 {
     // Flat repos (suite ends with '/') should use {uri}/{suite}InRelease,
@@ -316,6 +338,7 @@ void TestRepoHealthChecker::duplicates_noDuplicates() { QSKIP("Linux-only test")
 void TestRepoHealthChecker::fileUri_skipsConnectionCheck() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::unreachableHost_connectionError() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::flatRepo_noDistsPrefix() { QSKIP("Linux-only test"); }
+void TestRepoHealthChecker::suiteMismatch_thirdPartyRepo_skipped() { QSKIP("Linux-only test"); }
 #endif
 
 QTEST_MAIN(TestRepoHealthChecker)
