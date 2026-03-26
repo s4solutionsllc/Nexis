@@ -19,6 +19,11 @@
 #include <Tools/repo_knowledge_base.h>
 #include <QRegularExpression>
 #include <QDesktopServices>
+#include <QGuiApplication>
+#include <QClipboard>
+#include <QDialog>
+#include <QLabel>
+#include <QPushButton>
 #include <QtConcurrent>
 #include "Utils/command_util.h"
 
@@ -665,7 +670,60 @@ void APTSourceManagerPage::onRepairActionRequested(const RepoRepairAction &actio
         return;
     }
 
-    // "Open in Browser" and "Search Online" — no pkexec needed
+    // "Ask Claude.ai" — copy prompt to clipboard and show modal
+    if (action.type == RepoRepairAction::AskClaude) {
+        QString prompt = action.context.value("prompt").toString();
+
+        // Append health issues from the current detail panel result
+        if (mDetailPanel && mDetailPanel->isVisible()) {
+            RepoHealthResult healthResult = mDetailPanel->currentResult();
+            if (!healthResult.issues.isEmpty()) {
+                prompt += "\n\nHealth check issues:\n";
+                for (const RepoHealthIssue &issue : healthResult.issues)
+                    prompt += QString("- %1: %2\n").arg(issue.summary, issue.detail);
+            }
+        }
+
+        QGuiApplication::clipboard()->setText(prompt);
+
+        QDialog dlg(this);
+        dlg.setWindowTitle(tr("Ask Claude.ai"));
+        dlg.setMinimumWidth(420);
+        auto *layout = new QVBoxLayout(&dlg);
+        layout->setSpacing(12);
+        layout->setContentsMargins(20, 20, 20, 20);
+
+        auto *lblMessage = new QLabel(
+            tr("A question about this repository issue has been copied "
+               "to your clipboard.\n\n"
+               "Paste it into Claude to get personalized help."));
+        lblMessage->setWordWrap(true);
+        layout->addWidget(lblMessage);
+
+        auto *btnRow = new QHBoxLayout();
+        btnRow->setSpacing(8);
+
+        auto *btnOpen = new QPushButton(tr("Open Claude.ai"));
+        btnOpen->setCursor(Qt::PointingHandCursor);
+        connect(btnOpen, &QPushButton::clicked, &dlg, [&dlg]() {
+            QDesktopServices::openUrl(QUrl("https://claude.ai/new"));
+            dlg.accept();
+        });
+        btnRow->addWidget(btnOpen);
+
+        auto *btnClose = new QPushButton(tr("Close"));
+        btnClose->setCursor(Qt::PointingHandCursor);
+        connect(btnClose, &QPushButton::clicked, &dlg, &QDialog::reject);
+        btnRow->addWidget(btnClose);
+
+        btnRow->addStretch();
+        layout->addLayout(btnRow);
+
+        dlg.exec();
+        return;
+    }
+
+    // "Open in Browser" — no pkexec needed
     if (action.type == RepoRepairAction::RunCommand) {
         if (action.command.startsWith("xdg-open") || action.command.startsWith("open")) {
             QStringList args = action.command.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);

@@ -23,6 +23,7 @@ public:
                   const DiagnoseResult *diagnoseResult = nullptr);
     void clear();
     void showDiagnoseResult(const DiagnoseResult &result, QVBoxLayout *targetLayout);
+    RepoHealthResult currentResult() const { return mCurrentResult; }
 
 signals:
     void editRequested(const APTSourcePtr &source);

@@ -15,7 +15,8 @@ struct RepoRepairAction {
         DiagnoseConnection,
         DisableSource,
         EnableSource,
-        RemoveSource
+        RemoveSource,
+        AskClaude
     };
     Type type;
     QString label;

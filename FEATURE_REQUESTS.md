@@ -252,6 +252,10 @@
 - [x] **FR-78: Theme-aware splashscreen** — Display the appropriately themed splashscreen image when the app loads, based on the user's Color Scheme setting. If "Light" is selected, show `splashscreen_light.png`; if "Dark" is selected, show `splashscreen_dark.png` (renamed from current `splashscreen.png`); if "Auto" is selected, detect the system color scheme at startup and display the matching image.
   - **Resolved:** Renamed `splashscreen.png` → `splashscreen_dark.png`, added both variants to `static.qrc`. `main.cpp` reads `ColorScheme` from a temporary `QSettings` (before `App` construction) and selects the matching splashscreen. Auto mode uses `QGuiApplication::styleHints()->colorScheme()` (Qt 6.5+ guard, defaults to dark).
 
+- [x] **FR-90: Replace "Search Online" with "Ask Claude.ai" in repo diagnostics** — Replace the Google search button in the diagnose connection follow-up actions with an "Ask Claude.ai" button. The button generates a contextual prompt from the repo URI, issues, and diagnose results, copies it to the clipboard, and shows a modal explaining the user should paste it into Claude. The modal offers a button to open `claude.ai/new` in the browser.
+  - **Files:** `linux/nexis-core/Tools/repo_repair_engine.cpp`, `shared/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp`, `shared/nexis-core/Tools/repo_health_types.h`
+  - **Complexity:** Low-Medium
+
 ## Testing & Quality
 
 - [x] **FR-76: Expand unit test coverage for critical-risk code paths** — Expanded from 7 suites/63 methods to 15 suites with 8 new test suites covering MemoryInfo (14 tests), CpuInfo (19 tests), GpuInfo (23 tests), AptSourceTool (14 tests), FanInfo (16 tests), ThermalInfo (11 tests), BatteryInfo (12 tests), DiskInfo (17 tests), and HostService (25 tests). Implementation strategy: extracted parsing logic into static methods on shared base classes (following `DiskHealthInfo::parseSmartctlJsonInto()` pattern), created fixture files in `tests/fixtures/`, and wrote tests that feed fixture data to static parsers without mocking.

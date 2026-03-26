@@ -497,12 +497,41 @@ void RepoRepairEngineLinux::diagnoseConnection(const APTSourcePtr &source)
         openBrowser.command = "xdg-open " + source->uri;
         result.followUpActions.append(openBrowser);
 
-        RepoRepairAction search;
-        search.type = RepoRepairAction::RunCommand;
-        search.label = QObject::tr("Search Online");
-        QString query = QUrl::toPercentEncoding(domain + " apt repository");
-        search.command = "xdg-open https://www.google.com/search?q=" + query;
-        result.followUpActions.append(search);
+        RepoRepairAction askClaude;
+        askClaude.type = RepoRepairAction::AskClaude;
+        askClaude.label = QObject::tr("Ask Claude.ai");
+        {
+            // Build contextual prompt from diagnose results
+            ExecResult distroResult = CommandUtil::execWithStatus("lsb_release", {"-ds"});
+            QString distro = distroResult.exitCode == 0 ? distroResult.output.trimmed() : "Linux";
+
+            QString sourceLine = QString("deb %1 %2 %3").arg(source->uri, source->suites, source->components).trimmed();
+
+            QString prompt = QString("I'm running %1 and having an issue with an APT repository.\n\n"
+                                     "Repository: %2\n"
+                                     "File: %3\n\n"
+                                     "Diagnostic results:\n")
+                .arg(distro, sourceLine, source->filePath);
+
+            for (const DiagnoseStep &step : result.steps) {
+                QString status;
+                switch (step.status) {
+                case DiagnoseStep::Ok:      status = "OK"; break;
+                case DiagnoseStep::Warning: status = "Warning"; break;
+                case DiagnoseStep::Failed:  status = "FAILED"; break;
+                default:                    status = "Unknown"; break;
+                }
+                prompt += QString("- %1: %2 — %3\n").arg(step.check, status, step.detail);
+            }
+
+            if (!result.suggestion.isEmpty())
+                prompt += QString("\nSuggestion: %1\n").arg(result.suggestion);
+
+            prompt += "\nHow do I fix this?";
+
+            askClaude.context["prompt"] = prompt;
+        }
+        result.followUpActions.append(askClaude);
 
         RepoRepairAction disable;
         disable.type = RepoRepairAction::DisableSource;
