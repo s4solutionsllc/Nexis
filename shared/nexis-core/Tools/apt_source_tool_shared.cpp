@@ -51,12 +51,14 @@ APTSourcePtr AptSourceTool::parseSourceListLine(const QString &line,
     return nullptr;
 }
 
-APTSourcePtr AptSourceTool::parseDeb822Stanza(const QString &stanzaText,
-                                               const QString &binaryType,
-                                               const QString &sourceType)
+QList<APTSourcePtr> AptSourceTool::parseDeb822Stanza(const QString &stanzaText,
+                                                      const QString &binaryType,
+                                                      const QString &sourceType)
 {
+    QList<APTSourcePtr> results;
+
     if (stanzaText.trimmed().isEmpty())
-        return nullptr;
+        return results;
 
     QMap<QString, QString> fields;
     for (const QString &entryLine : stanzaText.split('\n')) {
@@ -72,22 +74,34 @@ APTSourcePtr AptSourceTool::parseDeb822Stanza(const QString &stanzaText,
 
     QString types = fields.value("Types");
     if (!types.contains(binaryType))
-        return nullptr;
+        return results;
 
-    APTSourcePtr aptSource(new APTSource);
-    aptSource->format = APTSource::Deb822;
-    aptSource->signedByPath = fields.value("Signed-By").trimmed();
-    aptSource->isSource = types.contains(sourceType);
-    aptSource->uri = fields.value("URIs");
-    aptSource->suites = fields.value("Suites");
-    aptSource->components = fields.value("Components");
-    aptSource->options = "";
-    aptSource->isActive = fields.value("Enabled", "yes").toLower() == "yes";
+    QString signedBy = fields.value("Signed-By").trimmed();
+    bool isSource = types.contains(sourceType);
+    QString uri = fields.value("URIs");
+    QString components = fields.value("Components");
+    bool isActive = fields.value("Enabled", "yes").toLower() == "yes";
+    QString typeStr = isSource ? sourceType : binaryType;
 
-    QString typeStr = aptSource->isSource ? sourceType : binaryType;
-    aptSource->source = QString("%1 %2 %3 %4")
-        .arg(typeStr).arg(aptSource->uri)
-        .arg(aptSource->suites).arg(aptSource->components);
+    // Expand multi-suite stanzas into one entry per suite
+    QStringList suites = fields.value("Suites").split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+    if (suites.isEmpty())
+        suites.append("");
 
-    return aptSource;
+    for (const QString &suite : suites) {
+        APTSourcePtr aptSource(new APTSource);
+        aptSource->format = APTSource::Deb822;
+        aptSource->signedByPath = signedBy;
+        aptSource->isSource = isSource;
+        aptSource->uri = uri;
+        aptSource->suites = suite;
+        aptSource->components = components;
+        aptSource->options = "";
+        aptSource->isActive = isActive;
+        aptSource->source = QString("%1 %2 %3 %4")
+            .arg(typeStr, uri, suite, components);
+        results.append(aptSource);
+    }
+
+    return results;
 }

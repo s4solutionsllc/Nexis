@@ -60,6 +60,10 @@
   - **Description:** `checkConnection()` sends an HTTP HEAD to the bare URI (e.g., `https://repo.plex.tv/deb/`). Many servers reject HEAD on directory paths with 403/405/404, even though the actual repo files at `{uri}/dists/{suite}/InRelease` serve fine. This causes a false `connection_error` that gates all deeper checks (`fetchReleaseFile`, `checkGpgKey`, etc.) from running. Fix: test reachability against the Release file URL instead of the bare URI, matching how apt itself works.
   - **Resolved:** 29665af, b0c3b1d
 
+- [x] **BUG-106: DEB822 multi-suite stanzas parsed as single entry** (MEDIUM)
+  - **File:** `shared/nexis-core/Tools/apt_source_tool_shared.cpp:54-93`
+  - **Description:** `parseDeb822Stanza()` stores all suites (e.g., `"noble noble-updates noble-backports"`) as a single `APTSourcePtr`. Downstream code (health checker, detail panel, cache keys) treats this as one repo with a broken suite name instead of three separate logical repos. Fix: expand multi-suite stanzas into one `APTSourcePtr` per suite at parse time.
+
 - [x] **BUG-105: Suite mismatch warning fires on third-party repos** (MEDIUM)
   - **File:** `linux/nexis-core/Tools/repo_health_checker.cpp:checkSuiteMismatch()`
   - **Description:** `checkSuiteMismatch()` compares every repo's suite against the system codename, but third-party repos use arbitrary suite names (`public`, `stable`, `any`, `nodistro`, `apt/stable/`) that intentionally don't match. The check is only meaningful for Ubuntu/Debian distribution archives. Fix: only run the check when the URI matches known distro archive domains.

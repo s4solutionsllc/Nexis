@@ -42,11 +42,12 @@ public:
                                             const QString &binaryType,
                                             const QString &sourceType);
 
-    // Parses a deb822 format stanza (key-value block) into an APTSource.
-    // Returns nullptr if stanza doesn't contain the required Types field.
-    static APTSourcePtr parseDeb822Stanza(const QString &stanzaText,
-                                          const QString &binaryType,
-                                          const QString &sourceType);
+    // Parses a deb822 format stanza (key-value block) into APTSource entries.
+    // Multi-suite stanzas are expanded into one entry per suite.
+    // Returns empty list if stanza doesn't contain the required Types field.
+    static QList<APTSourcePtr> parseDeb822Stanza(const QString &stanzaText,
+                                                  const QString &binaryType,
+                                                  const QString &sourceType);
 };
 
 #endif // AptSourceTool_H

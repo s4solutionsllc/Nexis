@@ -84,14 +84,14 @@ void AptSourceToolLinux::changeSource(const APTSourcePtr aptSource, const APTSou
                 }
             }
 
-            QString typeStr = aptSource->isSource ? sourceType() : binaryType();
-            QString currentSource = QString("%1 %2 %3 %4")
-                .arg(typeStr)
-                .arg(fields.value("URIs"))
-                .arg(fields.value("Suites"))
-                .arg(fields.value("Components"));
+            // Match expanded entries against multi-suite stanzas:
+            // check URI matches and the entry's single suite is within
+            // the stanza's Suites field
+            bool stanzaMatches = (fields.value("URIs") == aptSource->uri)
+                && fields.value("Suites").split(QRegularExpression("\\s+"), Qt::SkipEmptyParts)
+                       .contains(aptSource->suites);
 
-            if (currentSource == aptSource->source) {
+            if (stanzaMatches) {
                 if (!newSource) {
                     return; // skip = remove stanza
                 }
@@ -255,8 +255,8 @@ QList<APTSourcePtr> AptSourceToolLinux::getSourceList()
             QString entry;
 
             auto processEntry = [&](const QString &entry) {
-                APTSourcePtr src = parseDeb822Stanza(entry, binaryType(), sourceType());
-                if (src) {
+                QList<APTSourcePtr> sources = parseDeb822Stanza(entry, binaryType(), sourceType());
+                for (const APTSourcePtr &src : sources) {
                     src->filePath = info.absoluteFilePath();
                     aptSourceList.append(src);
                 }

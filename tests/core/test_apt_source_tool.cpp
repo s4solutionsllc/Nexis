@@ -30,6 +30,7 @@ private slots:
     void listLine_noSignedBy_emptyPath();
     void deb822_setsDeb822Format();
     void deb822_extractsSignedByPath();
+    void deb822_multiSuiteExpansion();
 };
 
 // --- parseSourceListLine ---
@@ -117,8 +118,9 @@ void TestAptSourceTool::deb822_standardStanza()
         "URIs: http://archive.ubuntu.com/ubuntu\n"
         "Suites: jammy\n"
         "Components: main restricted universe\n";
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
-    QVERIFY(src);
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QCOMPARE(list.size(), 1);
+    APTSourcePtr src = list.first();
     QCOMPARE(src->isActive, true);
     QCOMPARE(src->isSource, false);
     QCOMPARE(src->uri, QString("http://archive.ubuntu.com/ubuntu"));
@@ -134,9 +136,9 @@ void TestAptSourceTool::deb822_disabledStanza()
         "Suites: jammy\n"
         "Components: main\n"
         "Enabled: no\n";
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
-    QVERIFY(src);
-    QCOMPARE(src->isActive, false);
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QCOMPARE(list.size(), 1);
+    QCOMPARE(list.first()->isActive, false);
 }
 
 void TestAptSourceTool::deb822_debSrcStanza()
@@ -146,9 +148,9 @@ void TestAptSourceTool::deb822_debSrcStanza()
         "URIs: http://archive.ubuntu.com/ubuntu\n"
         "Suites: jammy\n"
         "Components: main\n";
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
-    QVERIFY(src);
-    QCOMPARE(src->isSource, true);
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QCOMPARE(list.size(), 1);
+    QCOMPARE(list.first()->isSource, true);
 }
 
 void TestAptSourceTool::deb822_commentedLines()
@@ -160,16 +162,17 @@ void TestAptSourceTool::deb822_commentedLines()
         "# Another comment\n"
         "Suites: stable\n"
         "Components: main\n";
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
-    QVERIFY(src);
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QCOMPARE(list.size(), 1);
+    APTSourcePtr src = list.first();
     QCOMPARE(src->uri, QString("http://example.com/apt"));
     QCOMPARE(src->suites, QString("stable"));
 }
 
 void TestAptSourceTool::deb822_emptyInput()
 {
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza("", "deb", "deb-src");
-    QVERIFY(!src);
+    auto list = AptSourceTool::parseDeb822Stanza("", "deb", "deb-src");
+    QVERIFY(list.isEmpty());
 }
 
 void TestAptSourceTool::deb822_wrongType()
@@ -179,8 +182,8 @@ void TestAptSourceTool::deb822_wrongType()
         "URIs: http://example.com/apt\n"
         "Suites: stable\n"
         "Components: main\n";
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
-    QVERIFY(!src);
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QVERIFY(list.isEmpty());
 }
 
 void TestAptSourceTool::deb822_noComponentsField()
@@ -189,8 +192,9 @@ void TestAptSourceTool::deb822_noComponentsField()
         "Types: deb\n"
         "URIs: http://example.com/apt\n"
         "Suites: jammy\n";
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
-    QVERIFY(src);
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QCOMPARE(list.size(), 1);
+    APTSourcePtr src = list.first();
     QCOMPARE(src->components, QString(""));
     QCOMPARE(src->uri, QString("http://example.com/apt"));
 }
@@ -231,9 +235,9 @@ void TestAptSourceTool::deb822_setsDeb822Format()
         "URIs: http://archive.ubuntu.com/ubuntu\n"
         "Suites: jammy\n"
         "Components: main\n";
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
-    QVERIFY(src);
-    QCOMPARE(src->format, APTSource::Deb822);
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QCOMPARE(list.size(), 1);
+    QCOMPARE(list.first()->format, APTSource::Deb822);
 }
 
 void TestAptSourceTool::deb822_extractsSignedByPath()
@@ -244,9 +248,33 @@ void TestAptSourceTool::deb822_extractsSignedByPath()
         "Suites: jammy\n"
         "Components: main\n"
         "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n";
-    APTSourcePtr src = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
-    QVERIFY(src);
-    QCOMPARE(src->signedByPath, QString("/usr/share/keyrings/ubuntu-archive-keyring.gpg"));
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QCOMPARE(list.size(), 1);
+    QCOMPARE(list.first()->signedByPath, QString("/usr/share/keyrings/ubuntu-archive-keyring.gpg"));
+}
+
+void TestAptSourceTool::deb822_multiSuiteExpansion()
+{
+    QString stanza =
+        "Types: deb\n"
+        "URIs: http://us.archive.ubuntu.com/ubuntu/\n"
+        "Suites: noble noble-updates noble-backports\n"
+        "Components: main restricted universe multiverse\n"
+        "Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n";
+    auto list = AptSourceTool::parseDeb822Stanza(stanza, "deb", "deb-src");
+    QCOMPARE(list.size(), 3);
+
+    QCOMPARE(list[0]->suites, QString("noble"));
+    QCOMPARE(list[1]->suites, QString("noble-updates"));
+    QCOMPARE(list[2]->suites, QString("noble-backports"));
+
+    // All share the same URI, components, signedBy, format
+    for (const APTSourcePtr &src : list) {
+        QCOMPARE(src->uri, QString("http://us.archive.ubuntu.com/ubuntu/"));
+        QCOMPARE(src->components, QString("main restricted universe multiverse"));
+        QCOMPARE(src->signedByPath, QString("/usr/share/keyrings/ubuntu-archive-keyring.gpg"));
+        QCOMPARE(src->format, APTSource::Deb822);
+    }
 }
 
 QTEST_MAIN(TestAptSourceTool)
