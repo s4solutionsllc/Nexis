@@ -1,0 +1,141 @@
+---
+let version = "";
+let date = "";
+let sections: { heading: string; items: string[] }[] = [];
+let fetchFailed = false;
+
+try {
+  const res = await fetch(
+    "https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/CHANGELOG.md",
+    { headers: { Accept: "text/plain" } }
+  );
+  if (res.ok) {
+    const text = await res.text();
+    // Find the first version section: ## [x.y.z] - YYYY-MM-DD
+    const versionMatch = text.match(
+      /## \[([^\]]+)\] - (\d{4}-\d{2}-\d{2})([\s\S]*?)(?=\n## \[|$)/
+    );
+    if (versionMatch) {
+      version = versionMatch[1];
+      date = versionMatch[2];
+      const body = versionMatch[3];
+
+      // Split into ### subsections
+      const subSections = body.split(/(?=^### )/m).filter((s) => s.trim());
+      for (const sub of subSections) {
+        const headingMatch = sub.match(/^### (.+)/);
+        if (!headingMatch) continue;
+        const heading = headingMatch[1].trim();
+        // Extract bullet items (lines starting with -)
+        const items = sub
+          .split("\n")
+          .filter((line) => line.match(/^- /))
+          .map((line) => line.replace(/^- /, "").trim());
+        if (items.length > 0) {
+          sections.push({ heading, items });
+        }
+      }
+    }
+  } else {
+    fetchFailed = true;
+  }
+} catch {
+  fetchFailed = true;
+}
+---
+
+<dialog
+  id="release-notes-modal"
+  class="m-auto max-h-[80vh] w-full max-w-2xl rounded-xl border border-nexis-border bg-nexis-dark p-0 text-nexis-light backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+>
+  <div class="flex items-center justify-between border-b border-nexis-border/50 px-6 py-4">
+    <div>
+      <h2 class="text-xl font-bold text-white">
+        Release Notes
+        {version && <span class="ml-2 text-nexis-orange">v{version}</span>}
+      </h2>
+      {date && (
+        <p class="mt-1 text-sm text-nexis-muted">{date}</p>
+      )}
+    </div>
+    <button
+      id="release-notes-close"
+      class="rounded-lg p-1.5 text-nexis-muted transition-colors hover:bg-nexis-dark-card hover:text-white"
+      aria-label="Close"
+    >
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="overflow-y-auto px-6 py-5" style="max-height: calc(80vh - 72px);">
+    {fetchFailed ? (
+      <p class="text-nexis-muted">
+        Release notes unavailable.{" "}
+        <a
+          href="https://github.com/lsimpsonsfdc/Nexis/blob/native/CHANGELOG.md"
+          class="text-nexis-orange hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View changelog on GitHub &rarr;
+        </a>
+      </p>
+    ) : sections.length === 0 ? (
+      <p class="text-nexis-muted">
+        No release notes found for this version.{" "}
+        <a
+          href="https://github.com/lsimpsonsfdc/Nexis/blob/native/CHANGELOG.md"
+          class="text-nexis-orange hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View full changelog &rarr;
+        </a>
+      </p>
+    ) : (
+      sections.map((section) => (
+        <div class="mb-6 last:mb-0">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-nexis-orange">
+            {section.heading}
+          </h3>
+          <ul class="space-y-2">
+            {section.items.map((item) => (
+              <li class="flex gap-2 text-sm text-nexis-light">
+                <span class="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-nexis-orange/60" />
+                <span set:html={
+                  item
+                    .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white">$1</strong>')
+                    .replace(/`([^`]+)`/g, '<code class="rounded bg-nexis-dark-card px-1 py-0.5 text-xs text-nexis-muted">$1</code>')
+                } />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    )}
+  </div>
+
+  <div class="border-t border-nexis-border/50 px-6 py-3 text-right">
+    <a
+      href="https://github.com/lsimpsonsfdc/Nexis/blob/native/CHANGELOG.md"
+      class="text-xs text-nexis-muted hover:text-nexis-orange"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      View full changelog &rarr;
+    </a>
+  </div>
+</dialog>
+
+<script>
+  const modal = document.getElementById("release-notes-modal") as HTMLDialogElement;
+  const closeBtn = document.getElementById("release-notes-close");
+
+  closeBtn?.addEventListener("click", () => modal?.close());
+
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) modal.close();
+  });
+</script>

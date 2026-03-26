@@ -256,6 +256,11 @@
   - **Files:** `linux/nexis-core/Tools/repo_repair_engine.cpp`, `shared/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp`, `shared/nexis-core/Tools/repo_health_types.h`
   - **Complexity:** Low-Medium
 
+- [x] **FR-91: "Release Notes" modal on website landing page** — Replace the "View on GitHub" button in the Hero section of the website with a "Release Notes" button. Clicking it opens a modal window that displays all new features and bug fixes from the latest release. The modal should parse release information from the project's CHANGELOG.md or GitHub Releases API and present it in a user-friendly format.
+  - **Files:** `website/src/components/Hero.astro`, `website/src/components/ReleaseNotesModal.astro`, `website/src/pages/index.astro`
+  - **Complexity:** Medium
+  - **Resolved:** Replaced "View on GitHub" with "Release Notes" button. New `ReleaseNotesModal.astro` component fetches CHANGELOG.md at build time, parses the latest version section, and renders features/fixes in a native `<dialog>` modal with dark theme styling.
+
 ## Testing & Quality
 
 - [x] **FR-76: Expand unit test coverage for critical-risk code paths** — Expanded from 7 suites/63 methods to 15 suites with 8 new test suites covering MemoryInfo (14 tests), CpuInfo (19 tests), GpuInfo (23 tests), AptSourceTool (14 tests), FanInfo (16 tests), ThermalInfo (11 tests), BatteryInfo (12 tests), DiskInfo (17 tests), and HostService (25 tests). Implementation strategy: extracted parsing logic into static methods on shared base classes (following `DiskHealthInfo::parseSmartctlJsonInto()` pattern), created fixture files in `tests/fixtures/`, and wrote tests that feed fixture data to static parsers without mocking.

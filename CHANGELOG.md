@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Website "Release Notes" modal (FR-91):** Replaced the "View on GitHub" button on the website landing page with a "Release Notes" button. Clicking it opens a modal that displays all new features and bug fixes from the latest release, parsed from CHANGELOG.md at build time. Uses native `<dialog>` element with dark theme styling, click-outside-to-close, and fallback message if changelog is unavailable.
+
 ## [2.0.1] - 2026-02-22
 
 ### Fixed

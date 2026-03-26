@@ -62,15 +62,17 @@ The codebase splits shared and platform-specific code:
 
 ## Documentation Maintenance
 
-Two living documents in `docs/` must be kept in sync **before committing** any `[x]` item:
+Three living documents must be kept in sync **before committing** any `[x]` item:
 
+- **`CHANGELOG.md`** — User-facing release notes. **Must be updated with every version bump.** Use [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format with `## [version] - date` headers and `### Added` / `### Fixed` / `### Changed` subsections. Every feature, bug fix, or notable change included in a release must have an entry here. This file is parsed by the website to display release notes to users.
 - **`docs/APPLICATION_OVERVIEW.md`** — What the app does. Update when features, UI elements, architecture, or platform support changes.
 - **`docs/ARCHITECTURE_REVIEW.md`** — How the architecture works. Update when signals, singletons, timer/polling patterns, or cross-component communication changes.
 
 **Pre-commit checklist** (when a change affects documented behavior):
-1. Update the "Last updated" date and version in both docs if stale.
-2. Update any affected stats (page count, signal count, test count, feature/bug counts, line counts, etc.).
-3. Update the relevant feature/architecture section with the new or changed behavior.
+1. Update `CHANGELOG.md` under the current version's section (create one if it doesn't exist).
+2. Update the "Last updated" date and version in both docs if stale.
+3. Update any affected stats (page count, signal count, test count, feature/bug counts, line counts, etc.).
+4. Update the relevant feature/architecture section with the new or changed behavior.
 
 Keep updates concise — modify existing sections rather than appending paragraphs.
 
