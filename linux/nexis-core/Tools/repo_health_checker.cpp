@@ -71,6 +71,21 @@ static QString httpGet(const QString &url, int timeoutMs = 5000)
     return body;
 }
 
+// Build the base URL for Release file fetching, matching apt's convention:
+// - Normal repos: {uri}/dists/{suite}/
+// - Flat repos (suite ends with '/'): {uri}/{suite}
+static QString releaseBaseUrl(const QString &uri, const QString &suite)
+{
+    QString base = uri;
+    if (!base.endsWith('/'))
+        base += '/';
+    if (suite.endsWith('/'))
+        base += suite;
+    else
+        base += "dists/" + suite + "/";
+    return base;
+}
+
 // --- RepoHealthCheckerLinux ---
 
 RepoHealthResult::Status RepoHealthCheckerLinux::worstStatus(const QList<RepoHealthIssue> &issues)
@@ -145,11 +160,9 @@ void RepoHealthCheckerLinux::checkConnection(const APTSourcePtr &source, RepoHea
         return;
 
     // HEAD the actual metadata file, not the bare URI — many servers reject
-    // HEAD on directory paths (403/405) even when the repo is fully functional
-    QString url = source->uri;
-    if (!url.endsWith('/'))
-        url += '/';
-    url += "dists/" + source->suites + "/InRelease";
+    // HEAD on directory paths (403/405) even when the repo is fully functional.
+    // Uses releaseBaseUrl() to handle both normal and flat repos.
+    QString url = releaseBaseUrl(source->uri, source->suites) + "InRelease";
 
     QString error = httpHead(url);
     if (!error.isEmpty()) {
@@ -187,9 +200,9 @@ void RepoHealthCheckerLinux::checkReleaseFile(const APTSourcePtr &source, const 
         issue.severity = RepoHealthIssue::Error;
         issue.code = "release_404";
         issue.summary = QObject::tr("Release file not found");
-        issue.detail = QObject::tr("No InRelease or Release file at %1/dists/%2/. "
+        issue.detail = QObject::tr("No InRelease or Release file at %1. "
                                     "This suite may not exist for this repository.")
-            .arg(source->uri, source->suites);
+            .arg(releaseBaseUrl(source->uri, source->suites));
         {
             RepoRepairAction diagnose;
             diagnose.type = RepoRepairAction::DiagnoseConnection;
@@ -214,10 +227,7 @@ void RepoHealthCheckerLinux::checkReleaseFile(const APTSourcePtr &source, const 
 QString RepoHealthCheckerLinux::fetchReleaseFile(const QString &uri, const QString &suite)
 {
     // Try InRelease first, then Release
-    QString base = uri;
-    if (!base.endsWith('/'))
-        base += '/';
-    base += "dists/" + suite + "/";
+    QString base = releaseBaseUrl(uri, suite);
 
     QString content = httpGet(base + "InRelease");
     if (content.isEmpty())

@@ -20,6 +20,7 @@ private slots:
     void duplicates_noDuplicates();
     void fileUri_skipsConnectionCheck();
     void unreachableHost_connectionError();
+    void flatRepo_noDistsPrefix();
 };
 
 void TestRepoHealthChecker::cacheKey_compositeFormat()
@@ -278,6 +279,34 @@ void TestRepoHealthChecker::unreachableHost_connectionError()
     QVERIFY(hasConnectionError);
 }
 
+void TestRepoHealthChecker::flatRepo_noDistsPrefix()
+{
+    // Flat repos (suite ends with '/') should use {uri}/{suite}InRelease,
+    // not {uri}/dists/{suite}/InRelease
+    APTSourcePtr src(new APTSource);
+    src->uri = "http://127.0.0.1:1";
+    src->suites = "apt/stable/";  // trailing '/' = flat repo
+    src->components = "";
+    src->format = APTSource::Deb822;
+    src->signedByPath = "/usr/share/keyrings/test.gpg";
+
+    RepoHealthCheckerLinux checker;
+    RepoHealthResult result = checker.checkOne(src);
+
+    // Should have connection_error (host unreachable) but NOT release_404
+    // with a wrong dists/ path in the detail message
+    for (const auto &issue : result.issues) {
+        if (issue.code == "release_404") {
+            QVERIFY2(!issue.detail.contains("/dists/"),
+                     "Flat repo release_404 should not contain /dists/ path");
+        }
+        if (issue.code == "connection_error") {
+            QVERIFY2(!issue.detail.contains("/dists/"),
+                     "Flat repo connection error should not reference /dists/ path");
+        }
+    }
+}
+
 #else
 // macOS stubs — these tests are Linux-only
 void TestRepoHealthChecker::deprecatedFormat_legacyNoSignedBy_twoIssues() { QSKIP("Linux-only test"); }
@@ -286,6 +315,7 @@ void TestRepoHealthChecker::duplicates_detected() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::duplicates_noDuplicates() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::fileUri_skipsConnectionCheck() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::unreachableHost_connectionError() { QSKIP("Linux-only test"); }
+void TestRepoHealthChecker::flatRepo_noDistsPrefix() { QSKIP("Linux-only test"); }
 #endif
 
 QTEST_MAIN(TestRepoHealthChecker)
