@@ -18,6 +18,8 @@ private slots:
     void deprecatedFormat_deb822_noIssue();
     void duplicates_detected();
     void duplicates_noDuplicates();
+    void fileUri_skipsConnectionCheck();
+    void unreachableHost_connectionError();
 };
 
 void TestRepoHealthChecker::cacheKey_compositeFormat()
@@ -234,12 +236,56 @@ void TestRepoHealthChecker::duplicates_noDuplicates()
     QVERIFY(!foundDuplicate);
 }
 
+void TestRepoHealthChecker::fileUri_skipsConnectionCheck()
+{
+    APTSourcePtr src(new APTSource);
+    src->uri = "file:///nonexistent/path";
+    src->suites = "stable";
+    src->components = "main";
+    src->format = APTSource::Deb822;
+    src->signedByPath = "/usr/share/keyrings/test.gpg";
+
+    RepoHealthCheckerLinux checker;
+    RepoHealthResult result = checker.checkOne(src);
+
+    // file:// should skip HTTP connectivity check — no connection_error
+    bool hasConnectionError = false;
+    for (const auto &issue : result.issues) {
+        if (issue.code == "connection_error")
+            hasConnectionError = true;
+    }
+    QVERIFY(!hasConnectionError);
+}
+
+void TestRepoHealthChecker::unreachableHost_connectionError()
+{
+    APTSourcePtr src(new APTSource);
+    src->uri = "http://127.0.0.1:1";
+    src->suites = "stable";
+    src->components = "main";
+    src->format = APTSource::Deb822;
+    src->signedByPath = "/usr/share/keyrings/test.gpg";
+
+    RepoHealthCheckerLinux checker;
+    RepoHealthResult result = checker.checkOne(src);
+
+    // Truly unreachable host should still produce connection_error
+    bool hasConnectionError = false;
+    for (const auto &issue : result.issues) {
+        if (issue.code == "connection_error")
+            hasConnectionError = true;
+    }
+    QVERIFY(hasConnectionError);
+}
+
 #else
 // macOS stubs — these tests are Linux-only
 void TestRepoHealthChecker::deprecatedFormat_legacyNoSignedBy_twoIssues() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::deprecatedFormat_deb822_noIssue() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::duplicates_detected() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::duplicates_noDuplicates() { QSKIP("Linux-only test"); }
+void TestRepoHealthChecker::fileUri_skipsConnectionCheck() { QSKIP("Linux-only test"); }
+void TestRepoHealthChecker::unreachableHost_connectionError() { QSKIP("Linux-only test"); }
 #endif
 
 QTEST_MAIN(TestRepoHealthChecker)

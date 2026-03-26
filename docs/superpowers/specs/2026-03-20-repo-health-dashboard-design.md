@@ -116,7 +116,7 @@ This matches the existing pattern in `APTSourceManagerPage` which already uses `
 
 | Check | Method | Severity |
 |-------|--------|----------|
-| Connection | HEAD request to repo URI (5s timeout) | Error if unreachable |
+| Connection | HEAD request to `{uri}/dists/{suite}/InRelease` (5s timeout); skips non-HTTP schemes; HTTP 4xx = reachable | Error if network failure (DNS/timeout/refused) |
 | Release file | Fetch `{uri}/dists/{suite}/InRelease` or `Release` | Error if 404 |
 | GPG key | Use `signedByPath` from APTSource to check key file, or fall back to `apt-key list`; validate expiry | Warning <30 days, Error if expired/missing |
 | Suite mismatch | Compare repo suite against `lsb_release -cs` | Warning if different codename |

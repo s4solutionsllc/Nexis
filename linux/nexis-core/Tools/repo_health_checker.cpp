@@ -138,8 +138,27 @@ RepoHealthResult RepoHealthCheckerLinux::checkOne(const APTSourcePtr &source)
 
 void RepoHealthCheckerLinux::checkConnection(const APTSourcePtr &source, RepoHealthResult &result)
 {
-    QString error = httpHead(source->uri);
+    // Skip non-network schemes — file://, cdrom://, mirror+file:// are local
+    if (!source->uri.startsWith("http://", Qt::CaseInsensitive)
+        && !source->uri.startsWith("https://", Qt::CaseInsensitive)
+        && !source->uri.startsWith("ftp://", Qt::CaseInsensitive))
+        return;
+
+    // HEAD the actual metadata file, not the bare URI — many servers reject
+    // HEAD on directory paths (403/405) even when the repo is fully functional
+    QString url = source->uri;
+    if (!url.endsWith('/'))
+        url += '/';
+    url += "dists/" + source->suites + "/InRelease";
+
+    QString error = httpHead(url);
     if (!error.isEmpty()) {
+        // Any HTTP response (even 4xx/5xx) means the server is reachable —
+        // the suite may not exist but that's handled by checkReleaseFile()
+        if (error.startsWith("HTTP "))
+            return;
+
+        // True network error (DNS failure, timeout, connection refused)
         RepoHealthIssue issue;
         issue.severity = RepoHealthIssue::Error;
         issue.code = "connection_error";

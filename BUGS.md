@@ -55,6 +55,11 @@
 
 ## MEDIUM Severity
 
+- [x] **BUG-104: Repo health checker falsely marks path-based repos as unreachable** (MEDIUM)
+  - **File:** `linux/nexis-core/Tools/repo_health_checker.cpp:139-162`
+  - **Description:** `checkConnection()` sends an HTTP HEAD to the bare URI (e.g., `https://repo.plex.tv/deb/`). Many servers reject HEAD on directory paths with 403/405/404, even though the actual repo files at `{uri}/dists/{suite}/InRelease` serve fine. This causes a false `connection_error` that gates all deeper checks (`fetchReleaseFile`, `checkGpgKey`, etc.) from running. Fix: test reachability against the Release file URL instead of the bare URI, matching how apt itself works.
+  - **Fix complexity:** Low — merge `checkConnection` logic with `fetchReleaseFile`
+
 - [x] **BUG-04: CPU speed shows 0 GHz on modern kernels** (MEDIUM)
   - **Files:** `linux/nexis-core/Info/cpu_info.cpp:74-101`, `shared/nexis/Pages/Dashboard/dashboard_page.cpp:150-176`
   - **Description:** Code reads "cpu MHz" from `/proc/cpuinfo`, which modern kernels don't populate. Falls back to `lscpu` but that can also fail. Should use `/sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq`. Dashboard degrades to showing only `%`.
