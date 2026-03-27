@@ -21,22 +21,33 @@
 
 ## Features
 
-- **Dashboard** -- Real-time CPU, memory, disk, GPU, and network monitoring with circular gauges
-- **Hardware Info** -- Detailed system, processor, graphics, and memory information at a glance
+### Monitor
+- **Dashboard** -- Real-time CPU, memory, disk, GPU, and network monitoring with customizable tile layouts, a system health score, and a one-click maintenance wizard
+- **Hardware Info** -- Detailed system, processor, graphics, memory, battery, and disk information at a glance
+- **Resource Monitor** -- Historical charts for CPU, memory, GPU, network, and disk I/O
 - **Kiosk Mode** -- F11 fullscreen dashboard-only mode for dedicated monitoring displays
 - **GPU Monitoring** -- GPU utilization tracking for NVIDIA, AMD, and Intel (Linux); Apple Silicon (macOS)
-- **System Cleaner** -- Remove package caches, crash reports, application logs, and app caches
-- **Scheduled Cleaning** -- Automated background cleaning via systemd, launchd, or cron
-- **Process Manager** -- View, sort, and manage running processes
+- **Battery & Disk Health** -- Battery cycle count and capacity degradation, SMART disk health (NVMe + SATA)
+
+### Manage
+- **System Cleaner** -- Remove package caches, crash reports, application logs, app caches, and unused Flatpak runtimes
+- **Scheduled Cleaning** -- Automated background cleaning via systemd, launchd, or cron with exclusion rules
+- **Disk Tools** -- Find large/old files and scan for duplicates across directories
+- **File Search** -- Search files by name, extension, size, and date with advanced filters
+- **Process Manager** -- View, sort, filter, and manage running processes
 - **Service Manager** -- Start, stop, and toggle system services (systemd / launchd)
 - **Startup Apps** -- Manage auto-start applications with configurable delay
 - **Package Uninstaller** -- Uninstall packages via APT, DNF, Pacman, Snap (Linux) or Homebrew (macOS)
-- **Resource Monitor** -- Historical charts for CPU, memory, GPU, network, and disk I/O
+
+### System
 - **Docker Management** -- GUI for managing Docker images, containers, and volumes
-- **Battery & Disk Health** -- Battery cycle count and capacity degradation, SMART disk health (NVMe + SATA)
-- **Hosts File Editor** -- Manage `/etc/hosts` entries
-- **APT Source Manager / Homebrew Taps** -- Manage package repositories
+- **System Logs** -- View, filter, and search journald/syslog entries by severity
+- **Hosts File Editor** -- Manage `/etc/hosts` entries with DNS cache flushing
+- **Network Diagnostics** -- Ping, traceroute, DNS lookup, open ports viewer, and firewall management
+- **Power Profiles** -- Switch between power-saver, balanced, and performance modes (Linux); Spotlight rebuild, disk verify, and LaunchServices rebuild (macOS)
+- **APT Repository Manager / Homebrew Taps** -- Manage package repositories with health checks, diagnostics, and one-click repair
 - **Desktop Settings** -- Adjust GNOME (Linux) or macOS desktop preferences
+- **Command Palette** -- Ctrl+K quick-navigation to any page or action
 - **Theme Support** -- Dark, light, and system-auto color schemes
 - **Internationalization** -- 34 languages supported
 
@@ -49,15 +60,19 @@
 | **Process/service management** | :white_check_mark: | :white_check_mark: | :x: | :x: |
 | **Package management** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: |
 | **GPU monitoring** | :white_check_mark: | :x: | :x: | :x: |
+| **Hardware info panel** | :white_check_mark: | :x: | :x: | :x: |
 | **Battery & disk health** | :white_check_mark: | :x: | :x: | :x: |
 | **Docker management** | :white_check_mark: | :x: | :x: | :x: |
+| **System log viewer** | :white_check_mark: | :x: | :x: | :x: |
+| **Disk analysis & duplicates** | :white_check_mark: | :x: | :white_check_mark: | :x: |
+| **Network diagnostics** | :white_check_mark: | :x: | :x: | :x: |
 | **Scheduled cleaning** | :white_check_mark: | :x: | :white_check_mark: | :x: |
 | **Kiosk mode** | :white_check_mark: | :x: | :x: | :x: |
 | **Linux support** | :white_check_mark: | :white_check_mark: | :x: | :white_check_mark: |
 | **macOS support** | :white_check_mark: | :x: | :white_check_mark: | :x: |
 | **Actively maintained** | :white_check_mark: | :x: (since 2020) | :white_check_mark: | :white_check_mark: |
 | **Open source** | :white_check_mark: | :white_check_mark: | :x: | :white_check_mark: |
-| **Price** | **Free** | Free | ~$50/year | Free |
+| **Price** | **Free** | Free | ~$40/year | Free |
 
 ## Background
 
@@ -100,10 +115,10 @@ Pre-built binaries are available on the [Releases page](https://github.com/lsimp
 | Services | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/services.png" width="500"> |
 | Processes | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/processes.png" width="500"> |
 | Uninstaller | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/uninstaller.png" width="500"> |
-| Docker | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/" width="500"> |
+| System Logs | *screenshot coming soon* |
 | Resources | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/resources-overview.png" width="500"> |
 | Helpers | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/helpers-hosts.png" width="500"> |
-| APT Repository Manager | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/" width="500"> |
+| APT Repository Manager | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/apt-repos.png" width="500"> |
 | GNOME Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings.png" width="500"> |
 | GNOME Settings (Window Manager) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings-windowmanager.png" width="500"> |
 | GNOME Settings (Mouse/Touchpad) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings-mouse.png" width="500"> |
@@ -118,31 +133,31 @@ Pre-built binaries are available on the [Releases page](https://github.com/lsimp
 
 #### Linux
 
-Install Qt 6 development libraries and the Adwaita icon theme:
+Install Qt 6 development libraries:
 
 **Ubuntu / Debian:**
 ```bash
-sudo apt install qt6-base-dev qt6-charts-dev qt6-svg-dev qt6-tools-dev-tools \
-  libqt6concurrent6 adwaita-icon-theme cmake g++
+sudo apt install cmake g++ qt6-base-dev qt6-charts-dev qt6-svg-dev \
+  qt6-tools-dev-tools qt6-l10n-tools
 ```
 
 **Fedora / RHEL:**
 ```bash
-sudo dnf install qt6-qtbase-devel qt6-qtcharts-devel qt6-qtsvg-devel \
-  qt6-linguist adwaita-icon-theme cmake gcc-c++
+sudo dnf install cmake gcc-c++ qt6-qtbase-devel qt6-qtcharts-devel \
+  qt6-qtsvg-devel qt6-linguist
 ```
 
 **Arch Linux:**
 ```bash
-sudo pacman -S qt6-base qt6-charts qt6-svg qt6-tools adwaita-icon-theme cmake
+sudo pacman -S cmake qt6-base qt6-charts qt6-svg qt6-tools
 ```
+
+> **Note:** On minimal or headless environments you may also need `libgl1-mesa-dev` (Debian/Ubuntu) or equivalent OpenGL headers.
 
 #### macOS
 
-Install dependencies via Homebrew. The **adwaita-icon-theme** package is required for consistent icon rendering -- without it, many UI icons will appear blank.
-
 ```bash
-brew install qt@6 cmake adwaita-icon-theme
+brew install qt@6 cmake
 ```
 
 After installing, ensure Qt is in your path:
