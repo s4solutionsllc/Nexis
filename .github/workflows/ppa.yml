@@ -71,7 +71,7 @@ jobs:
           GPG_TTY: /dev/null
         run: |
           echo "${{ secrets.PPA_GPG_PASSPHRASE }}" | \
-            debuild -S -sa \
+            debuild -S -sa -d \
               -k${{ steps.gpg.outputs.KEY_ID }} \
               -p"gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback"
 
