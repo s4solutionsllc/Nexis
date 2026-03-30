@@ -1,3 +1,12 @@
+nexis (2.2.8-1) unstable; urgency=medium
+
+  * Add PPA repository support (FR-90): automated publishing to Launchpad
+    PPA for Ubuntu Jammy, Noble, and Questing via GitHub Actions.
+  * Migrate GitHub organization from lsimpsonsfdc to s4solutionsllc.
+  * Fix Jammy build-dep compatibility (qt6-svg-dev / libqt6svg6-dev).
+
+ -- Luke Simpson <luke@s4solutionsllc.com>  Sun, 30 Mar 2026 00:00:00 +0000
+
 nexis (1.2.0-1) unstable; urgency=medium
 
   * Add scheduled/automated cleaning (FR-16): quick-setup toggle, custom
