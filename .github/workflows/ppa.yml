@@ -22,27 +22,58 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq devscripts debhelper dput
+
+      - name: Import GPG key
+        run: |
+          echo "${{ secrets.PPA_GPG_PRIVATE_KEY }}" | gpg --import --batch
+          echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
+          gpg-connect-agent reloadagent /bye
+
       - name: Extract version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
+      - name: Identify GPG key ID
+        id: gpg
+        run: |
+          KEY_ID=$(gpg --list-secret-keys --keyid-format long 2>/dev/null | grep -m1 'sec' | awk '{print $2}' | cut -d'/' -f2)
+          echo "KEY_ID=$KEY_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Symlink debian directory
+        run: ln -s linux/debian debian
+
+      - name: Update changelog for series
+        env:
+          DEBEMAIL: luke@s4solutionsllc.com
+          DEBFULLNAME: Luke Simpson
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          dch --newversion "${TAG_VERSION}-1~ppa1~${{ matrix.series }}1" \
+              --distribution ${{ matrix.series }} \
+              --force-distribution \
+              "Release ${TAG_VERSION} for ${{ matrix.series }}"
+
       - name: Create source tarball
         run: |
-          tar czf ${{ runner.temp }}/nexis-${{ steps.version.outputs.VERSION }}.tar.gz \
-            --transform "s,^,nexis-${{ steps.version.outputs.VERSION }}/," \
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          mkdir -p ../tarball
+          tar czf "../tarball/nexis_${TAG_VERSION}.orig.tar.gz" \
+            --transform "s,^\\.,nexis-${TAG_VERSION}," \
             --exclude='.git' --exclude='build' --exclude='website/dist' \
-            --exclude='website/node_modules' .
-          cp ${{ runner.temp }}/nexis-${{ steps.version.outputs.VERSION }}.tar.gz .
+            --exclude='website/node_modules' --exclude='debian' .
 
-      - name: Publish to PPA
-        uses: yuezk/publish-ppa-package@v2
-        with:
-          repository: ppa:s4solutionsllc/nexis
-          gpg_private_key: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
-          gpg_passphrase: ${{ secrets.PPA_GPG_PASSPHRASE }}
-          tarball: nexis-${{ steps.version.outputs.VERSION }}.tar.gz
-          debian_dir: linux/debian
-          series: ${{ matrix.series }}
-          revision: '1'
-          deb_email: luke@s4solutionsllc.com
-          deb_fullname: Luke Simpson
+      - name: Build source package
+        env:
+          GPG_TTY: /dev/null
+        run: |
+          echo "${{ secrets.PPA_GPG_PASSPHRASE }}" | \
+            debuild -S -sa \
+              -k${{ steps.gpg.outputs.KEY_ID }} \
+              -p"gpg --batch --yes --passphrase-fd 0 --pinentry-mode loopback"
+
+      - name: Upload to PPA
+        run: dput ppa:s4solutionsllc/nexis ../nexis_*_source.changes
