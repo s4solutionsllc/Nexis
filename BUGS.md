@@ -55,6 +55,10 @@
 
 ## MEDIUM Severity
 
+- [x] **BUG-107 / #19: Customize Layout button invisible in .deb package on Linux Mint** (MEDIUM)
+  - **Description:** The "Customize Layout" edit button (SVG icon QPushButton) is not visible when installed via `.deb` on Linux Mint 22.3, but works in AppImage. Caused by missing Qt6 SVG icon engine plugin runtime dependency.
+  - **Resolved:** Identified as dependency issue; ticket closed by user.
+
 - [x] **BUG-104: Repo health checker falsely marks path-based repos as unreachable** (MEDIUM)
   - **File:** `linux/nexis-core/Tools/repo_health_checker.cpp:139-162`
   - **Description:** `checkConnection()` sends an HTTP HEAD to the bare URI (e.g., `https://repo.plex.tv/deb/`). Many servers reject HEAD on directory paths with 403/405/404, even though the actual repo files at `{uri}/dists/{suite}/InRelease` serve fine. This causes a false `connection_error` that gates all deeper checks (`fetchReleaseFile`, `checkGpgKey`, etc.) from running. Fix: test reachability against the Release file URL instead of the bare URI, matching how apt itself works.
