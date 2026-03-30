@@ -605,7 +605,7 @@ tests/
 - Dependencies: `nexis-gui` (inherits all Qt and core dependencies)
 - macOS: `.app` bundle with icon, installs to `/Applications`
 - Linux: Binary to `/usr/bin`, `.desktop` file, hicolor icons (16x16 through 256x256)
-- Linux PPA: `ppa:lsimpsonsfdc/nexis` — Ubuntu 22.04+ (Jammy, Noble, Plucky), amd64 and arm64, automatic updates via apt
+- Linux PPA: `ppa:s4solutions/nexis` — Ubuntu 22.04+ (Jammy, Noble, Plucky), amd64 and arm64, automatic updates via apt
 
 **Test executables** — 16 CTest-registered executables (Qt Test + CTest)
 - 15 unit test executables via `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable)

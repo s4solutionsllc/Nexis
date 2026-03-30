@@ -1,7 +1,7 @@
 # FR-48: Tray Icon Style Selector — Design Document
 
 **Date:** 2026-02-22
-**Feature Request:** [FR-48](https://github.com/lsimpsonsfdc/Nexis/issues/5) by @Vai0Lou
+**Feature Request:** [FR-48](https://github.com/s4solutions/Nexis/issues/5) by @Vai0Lou
 **Status:** Approved
 
 ## Problem

@@ -1,6 +1,6 @@
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/screenshots/header.png" width="800">
+    <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/screenshots/header.png" width="800">
 </p>
 
 <p align="center">
@@ -9,14 +9,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/lsimpsonsfdc/Nexis/releases/latest"><img src="https://img.shields.io/github/v/release/lsimpsonsfdc/Nexis?label=latest%20release" alt="Latest Release"></a>
-  <a href="https://github.com/lsimpsonsfdc/Nexis/actions/workflows/build.yml"><img src="https://github.com/lsimpsonsfdc/Nexis/actions/workflows/build.yml/badge.svg?branch=native" alt="Build Status"></a>
-  <a href="https://github.com/lsimpsonsfdc/Nexis/blob/native/LICENSE"><img src="https://img.shields.io/github/license/lsimpsonsfdc/Nexis" alt="License: GPL v3"></a>
+  <a href="https://github.com/s4solutions/Nexis/releases/latest"><img src="https://img.shields.io/github/v/release/s4solutions/Nexis?label=latest%20release" alt="Latest Release"></a>
+  <a href="https://github.com/s4solutions/Nexis/actions/workflows/build.yml"><img src="https://github.com/s4solutions/Nexis/actions/workflows/build.yml/badge.svg?branch=native" alt="Build Status"></a>
+  <a href="https://github.com/s4solutions/Nexis/blob/native/LICENSE"><img src="https://img.shields.io/github/license/s4solutions/Nexis" alt="License: GPL v3"></a>
   <img src="https://img.shields.io/badge/Qt-6-41cd52?logo=qt" alt="Qt 6">
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus" alt="C++17">
   <img src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS-lightgrey" alt="Platforms: Linux | macOS">
-  <img src="https://img.shields.io/github/downloads/lsimpsonsfdc/Nexis/total" alt="Downloads">
-  <a href="https://launchpad.net/~lsimpsonsfdc/+archive/ubuntu/nexis"><img src="https://img.shields.io/badge/PPA-lsimpsonsfdc%2Fnexis-E95420?logo=ubuntu" alt="PPA: lsimpsonsfdc/nexis"></a>
+  <img src="https://img.shields.io/github/downloads/s4solutions/Nexis/total" alt="Downloads">
+  <a href="https://launchpad.net/~s4solutions/+archive/ubuntu/nexis"><img src="https://img.shields.io/badge/PPA-s4solutions%2Fnexis-E95420?logo=ubuntu" alt="PPA: s4solutions/nexis"></a>
     <!--<a href="https://crowdin.com/project/nexis"><img src="https://badges.crowdin.net/nexis/localized.svg" alt="Crowdin"></a>-->
 </p>
 
@@ -81,7 +81,7 @@ Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popu
 
 ## Downloads
 
-Install via [PPA](#install-via-ppa-ubuntu) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/lsimpsonsfdc/Nexis/releases/latest):
+Install via [PPA](#install-via-ppa-ubuntu) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutions/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
@@ -90,7 +90,7 @@ Install via [PPA](#install-via-ppa-ubuntu) for automatic updates, or download pr
 ### Install via PPA (Ubuntu)
 
 ```bash
-sudo add-apt-repository ppa:lsimpsonsfdc/nexis
+sudo add-apt-repository ppa:s4solutions/nexis
 sudo apt update
 sudo apt install nexis
 ```
@@ -100,17 +100,17 @@ Supports Ubuntu 22.04 (Jammy), 24.04 (Noble), and 25.04 (Plucky) on both x86_64 
 ## Screenshots
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/screenshots/dashboard.png" width="700">
+    <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/screenshots/dashboard.png" width="700">
     <br><em>Dashboard -- real-time system monitoring</em>
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/screenshots/system-cleaner.png" width="700">
+    <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/screenshots/system-cleaner.png" width="700">
     <br><em>System Cleaner -- remove caches, logs, and crash reports</em>
 </p>
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/screenshots/resource-monitor.png" width="700">
+    <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/screenshots/resource-monitor.png" width="700">
     <br><em>Resources -- historical CPU, memory, GPU, network, and disk I/O charts</em>
 </p>
 
@@ -120,21 +120,21 @@ Supports Ubuntu 22.04 (Jammy), 24.04 (Noble), and 25.04 (Plucky) on both x86_64 
 
 | Page | Screenshot |
 |---|---|
-| Hardware Info | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/screenshots/hardware-info.png" width="500"> |
-| Startup Apps | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/startup-apps.png" width="500"> |
-| Search | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/search.png" width="500"> |
-| Services | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/services.png" width="500"> |
-| Processes | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/processes.png" width="500"> |
-| Uninstaller | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/uninstaller.png" width="500"> |
+| Hardware Info | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/screenshots/hardware-info.png" width="500"> |
+| Startup Apps | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/startup-apps.png" width="500"> |
+| Search | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/search.png" width="500"> |
+| Services | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/services.png" width="500"> |
+| Processes | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/processes.png" width="500"> |
+| Uninstaller | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/uninstaller.png" width="500"> |
 | System Logs | *screenshot coming soon* |
-| Resources | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/resources-overview.png" width="500"> |
-| Helpers | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/helpers-hosts.png" width="500"> |
-| APT Repository Manager | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/apt-repos.png" width="500"> |
-| GNOME Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings.png" width="500"> |
-| GNOME Settings (Window Manager) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings-windowmanager.png" width="500"> |
-| GNOME Settings (Mouse/Touchpad) | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/gnome-settings-mouse.png" width="500"> |
-| Settings | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/settings.png" width="500"> |
-| Feedback | <img src="https://raw.githubusercontent.com/lsimpsonsfdc/Nexis/native/website/public/images/guide/feedback.png" width="500"> |
+| Resources | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/resources-overview.png" width="500"> |
+| Helpers | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/helpers-hosts.png" width="500"> |
+| APT Repository Manager | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/apt-repos.png" width="500"> |
+| GNOME Settings | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/gnome-settings.png" width="500"> |
+| GNOME Settings (Window Manager) | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/gnome-settings-windowmanager.png" width="500"> |
+| GNOME Settings (Mouse/Touchpad) | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/gnome-settings-mouse.png" width="500"> |
+| Settings | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/settings.png" width="500"> |
+| Feedback | <img src="https://raw.githubusercontent.com/s4solutions/Nexis/native/website/public/images/guide/feedback.png" width="500"> |
 
 </details>
 
@@ -214,4 +214,4 @@ To enable the Crowdin sync pipeline for a new fork:
 
 ## Contributing
 
-Bug reports and feature requests are welcome! Please [open an issue](https://github.com/lsimpsonsfdc/Nexis/issues) or submit a pull request. See [CHANGELOG.md](CHANGELOG.md) for release history.
+Bug reports and feature requests are welcome! Please [open an issue](https://github.com/s4solutions/Nexis/issues) or submit a pull request. See [CHANGELOG.md](CHANGELOG.md) for release history.

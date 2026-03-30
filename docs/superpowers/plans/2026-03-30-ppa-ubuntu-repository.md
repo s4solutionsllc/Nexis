@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Enable Ubuntu/Debian users to install Nexis via `sudo add-apt-repository ppa:lsimpsonsfdc/nexis && sudo apt install nexis`, with automated PPA publishing on every tagged release.
+**Goal:** Enable Ubuntu/Debian users to install Nexis via `sudo add-apt-repository ppa:s4solutions/nexis && sudo apt install nexis`, with automated PPA publishing on every tagged release.
 
 **Architecture:** A new GitHub Actions workflow (`ppa.yml`) triggers on version tags alongside the existing `release.yml`. It uses the `yuezk/publish-ppa-package` action to build GPG-signed source packages and upload them to Launchpad for each target Ubuntu series (Noble 24.04, Jammy 22.04, Plucky 25.04). Launchpad's build farm compiles from source for both amd64 and arm64.
 
@@ -19,7 +19,7 @@
 8. Add three GitHub repository secrets:
    - `PPA_GPG_PRIVATE_KEY`: `gpg --armor --export-secret-keys <KEY_ID>`
    - `PPA_GPG_PASSPHRASE`: the key's passphrase
-9. Verify the PPA exists: `https://launchpad.net/~lsimpsonsfdc/+archive/ubuntu/nexis`
+9. Verify the PPA exists: `https://launchpad.net/~s4solutions/+archive/ubuntu/nexis`
 
 ---
 
@@ -67,7 +67,7 @@ jobs:
       - name: Publish to PPA
         uses: yuezk/publish-ppa-package@v2
         with:
-          repository: ppa:lsimpsonsfdc/nexis
+          repository: ppa:s4solutions/nexis
           gpg_private_key: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
           gpg_passphrase: ${{ secrets.PPA_GPG_PASSPHRASE }}
           series: ${{ matrix.series }}
@@ -331,7 +331,7 @@ Insert a new section after the current Downloads section (after line 87, before 
 ### Install via PPA (Ubuntu)
 
 ```bash
-sudo add-apt-repository ppa:lsimpsonsfdc/nexis
+sudo add-apt-repository ppa:s4solutions/nexis
 sudo apt update
 sudo apt install nexis
 ```
@@ -344,7 +344,7 @@ Also update the Downloads intro text to mention the PPA:
 ```markdown
 ## Downloads
 
-Install via [PPA](#install-via-ppa-ubuntu) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/lsimpsonsfdc/Nexis/releases/latest):
+Install via [PPA](#install-via-ppa-ubuntu) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutions/Nexis/releases/latest):
 ```
 
 - [ ] **Step 3: Add Launchpad build status badge**
@@ -352,7 +352,7 @@ Install via [PPA](#install-via-ppa-ubuntu) for automatic updates, or download pr
 Add a badge to the badges section (around line 13), after the existing Build Status badge:
 
 ```markdown
-<a href="https://launchpad.net/~lsimpsonsfdc/+archive/ubuntu/nexis"><img src="https://img.shields.io/badge/PPA-lsimpsonsfdc%2Fnexis-E95420?logo=ubuntu" alt="PPA: lsimpsonsfdc/nexis"></a>
+<a href="https://launchpad.net/~s4solutions/+archive/ubuntu/nexis"><img src="https://img.shields.io/badge/PPA-s4solutions%2Fnexis-E95420?logo=ubuntu" alt="PPA: s4solutions/nexis"></a>
 ```
 
 - [ ] **Step 4: Verify the README renders correctly**
@@ -388,7 +388,7 @@ git commit -m "docs(readme): add PPA installation instructions and badge (FR-90)
 Add an entry under the current version's `### Added` section (or create the section if it doesn't exist):
 
 ```markdown
-- **PPA repository** -- Ubuntu users can now install via `sudo add-apt-repository ppa:lsimpsonsfdc/nexis && sudo apt install nexis` with automatic updates. Supports Ubuntu 22.04+, x86_64 and ARM64 (FR-90)
+- **PPA repository** -- Ubuntu users can now install via `sudo add-apt-repository ppa:s4solutions/nexis && sudo apt install nexis` with automatic updates. Supports Ubuntu 22.04+, x86_64 and ARM64 (FR-90)
 ```
 
 - [ ] **Step 2: Update APPLICATION_OVERVIEW.md**
@@ -396,7 +396,7 @@ Add an entry under the current version's `### Added` section (or create the sect
 Find the distribution/installation section and add PPA to the list of supported installation methods. Add a line like:
 
 ```markdown
-- **PPA (Ubuntu)** -- `ppa:lsimpsonsfdc/nexis` for Ubuntu 22.04+, automatic updates via apt
+- **PPA (Ubuntu)** -- `ppa:s4solutions/nexis` for Ubuntu 22.04+, automatic updates via apt
 ```
 
 - [ ] **Step 3: Mark FR-90 as complete in FEATURE_REQUESTS.md**
@@ -408,7 +408,7 @@ Change:
 
 To:
 ```markdown
-- [x] **FR-90: PPA (Ubuntu/Debian repository)** — Set up a Launchpad PPA so Ubuntu/Debian users can install via `sudo add-apt-repository ppa:lsimpsonsfdc/nexis && sudo apt install nexis` with automatic updates. Supports Ubuntu 22.04+, x86_64 and ARM64. **Resolved:** Added `.github/workflows/ppa.yml` with matrix publish to Jammy, Noble, and Plucky via `yuezk/publish-ppa-package`. Added `xvfb` to Build-Depends for Launchpad test execution. Updated README with PPA install instructions and badge.
+- [x] **FR-90: PPA (Ubuntu/Debian repository)** — Set up a Launchpad PPA so Ubuntu/Debian users can install via `sudo add-apt-repository ppa:s4solutions/nexis && sudo apt install nexis` with automatic updates. Supports Ubuntu 22.04+, x86_64 and ARM64. **Resolved:** Added `.github/workflows/ppa.yml` with matrix publish to Jammy, Noble, and Plucky via `yuezk/publish-ppa-package`. Added `xvfb` to Build-Depends for Launchpad test execution. Updated README with PPA install instructions and badge.
 ```
 
 - [ ] **Step 4: Commit**
@@ -448,11 +448,11 @@ After all tasks are committed and pushed, the PPA workflow must be tested with a
 1. Push the branch with the new workflow
 2. Create and push a tag: `git tag v2.2.4 && git push origin v2.2.4` (or next version)
 3. Monitor GitHub Actions: the `Publish PPA` workflow should run 3 jobs (noble, jammy, plucky)
-4. Monitor Launchpad: check `https://launchpad.net/~lsimpsonsfdc/+archive/ubuntu/nexis/+packages` for pending builds
+4. Monitor Launchpad: check `https://launchpad.net/~s4solutions/+archive/ubuntu/nexis/+packages` for pending builds
 5. Wait for Launchpad builds to complete (typically 15-60 minutes)
 6. Test on a VM or container:
    ```bash
-   sudo add-apt-repository ppa:lsimpsonsfdc/nexis
+   sudo add-apt-repository ppa:s4solutions/nexis
    sudo apt update
    sudo apt install nexis
    nexis --version  # or just launch it

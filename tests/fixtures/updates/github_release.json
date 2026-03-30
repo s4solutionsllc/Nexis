@@ -7,7 +7,7 @@
   "assets": [
     {
       "name": "nexis-2.1.18-x86_64.AppImage",
-      "browser_download_url": "https://github.com/lsimpsonsfdc/Nexis/releases/download/v2.1.18/nexis-2.1.18-x86_64.AppImage",
+      "browser_download_url": "https://github.com/s4solutions/Nexis/releases/download/v2.1.18/nexis-2.1.18-x86_64.AppImage",
       "size": 45000000
     }
   ]

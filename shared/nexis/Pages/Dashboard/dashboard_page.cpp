@@ -516,7 +516,7 @@ void DashboardPage::refreshSummaryColors()
 void DashboardPage::checkUpdate()
 {
     QNetworkAccessManager * nam = new QNetworkAccessManager(this);
-    const QNetworkRequest updateCheckRequest(QUrl("https://api.github.com/repos/lsimpsonsfdc/Nexis/releases/latest"));
+    const QNetworkRequest updateCheckRequest(QUrl("https://api.github.com/repos/s4solutions/Nexis/releases/latest"));
     connect(nam,&QNetworkAccessManager::finished,this,[this](QNetworkReply * reply){
         if(reply->error()==QNetworkReply::NoError)
         {
@@ -542,7 +542,7 @@ void DashboardPage::checkUpdate()
 
 void DashboardPage::on_btnDownloadUpdate_clicked()
 {
-    QDesktopServices::openUrl(QUrl("https://github.com/lsimpsonsfdc/Nexis/releases/latest"));
+    QDesktopServices::openUrl(QUrl("https://github.com/s4solutions/Nexis/releases/latest"));
 }
 
 void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
