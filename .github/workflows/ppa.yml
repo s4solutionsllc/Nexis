@@ -28,7 +28,7 @@ jobs:
 
       - name: Create source tarball
         run: |
-          tar czf /tmp/nexis-${{ steps.version.outputs.VERSION }}.tar.gz \
+          tar czf ${{ github.workspace }}/nexis-${{ steps.version.outputs.VERSION }}.tar.gz \
             --transform "s,^,nexis-${{ steps.version.outputs.VERSION }}/," \
             --exclude='.git' --exclude='build' --exclude='website/dist' \
             --exclude='website/node_modules' .
@@ -39,7 +39,7 @@ jobs:
           repository: ppa:s4solutionsllc/nexis
           gpg_private_key: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
           gpg_passphrase: ${{ secrets.PPA_GPG_PASSPHRASE }}
-          tarball: /tmp/nexis-${{ steps.version.outputs.VERSION }}.tar.gz
+          tarball: nexis-${{ steps.version.outputs.VERSION }}.tar.gz
           debian_dir: linux/debian
           series: ${{ matrix.series }}
           revision: '1'
