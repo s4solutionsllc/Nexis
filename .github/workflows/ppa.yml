@@ -49,7 +49,8 @@ jobs:
           tar czf "../nexis_${TAG_VERSION}.orig.tar.gz" \
             --transform "s,^\\.,nexis-${TAG_VERSION}," \
             --exclude='.git' --exclude='build' --exclude='website/dist' \
-            --exclude='website/node_modules' --exclude='linux/debian' .
+            --exclude='website/node_modules' --exclude='./linux/debian' \
+            --exclude='./debian' .
 
       - name: Symlink debian directory
         run: ln -s linux/debian debian
