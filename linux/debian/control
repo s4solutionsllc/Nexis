@@ -1,21 +1,21 @@
 Source: nexis
 Section: utils
 Priority: optional
-Maintainer: Luke Simpson <luke@lsimpsonsfdc.com>
+Maintainer: Luke Simpson <luke@s4solutionsllc.com>
 Build-Depends: debhelper-compat (= 13),
                cmake (>= 3.16),
                g++,
                qt6-base-dev,
-               qt6-charts-dev,
-               qt6-svg-dev,
+               qt6-charts-dev | libqt6charts6-dev,
+               qt6-svg-dev | libqt6svg6-dev,
                qt6-tools-dev,
                qt6-tools-dev-tools,
                qt6-l10n-tools,
                libgl1-mesa-dev,
                xvfb
 Standards-Version: 4.6.2
-Homepage: https://github.com/lsimpsonsfdc/Nexis
-Vcs-Browser: https://github.com/lsimpsonsfdc/Nexis.git
+Homepage: https://github.com/s4solutionsllc/Nexis
+Vcs-Browser: https://github.com/s4solutionsllc/Nexis.git
 
 Package: nexis
 Architecture: any

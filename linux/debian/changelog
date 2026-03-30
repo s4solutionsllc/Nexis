@@ -19,7 +19,7 @@ nexis (1.2.0-1) unstable; urgency=medium
   * Add generic QDialog dark mode theming rules.
   * Fix checkbox focus ring styling.
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Tue, 18 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Tue, 18 Feb 2026 00:00:00 +0000
 
 nexis (1.1.2-1) unstable; urgency=medium
 
@@ -35,7 +35,7 @@ nexis (1.1.2-1) unstable; urgency=medium
   * Fix System Cleaner scanLoading.gif animation and QMovie leak (BUG-37).
   * Fix Hardware Info table rows in dark mode (BUG-38).
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Sun, 16 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Sun, 16 Feb 2026 00:00:00 +0000
 
 nexis (1.1.0-1) unstable; urgency=medium
 
@@ -60,14 +60,14 @@ nexis (1.1.0-1) unstable; urgency=medium
   * Fix macOS crash from double CFRelease (BUG-11).
   * Fix numerous additional bugs (BUG-12 through BUG-32).
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Thu, 16 Jan 2025 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Thu, 16 Jan 2025 00:00:00 +0000
 
 nexis (1.0.1-1) unstable; urgency=medium
 
   * Rebrand from Stacer to Nexis.
   * Reset version numbering.
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Thu, 13 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Thu, 13 Feb 2026 00:00:00 +0000
 
 stacer (2.1.3-1) unstable; urgency=medium
 
@@ -86,7 +86,7 @@ stacer (2.1.3-1) unstable; urgency=medium
   * Fix Homebrew tree view not inheriting theme styling in APT Source
     Manager (BUG-21).
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Thu, 13 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Thu, 13 Feb 2026 00:00:00 +0000
 
 stacer (2.1.2-1) unstable; urgency=medium
 
@@ -97,7 +97,7 @@ stacer (2.1.2-1) unstable; urgency=medium
     the actual build version (BUG-18). The label now pulls dynamically from
     qApp->applicationVersion(), which is derived from cmake/git at build time.
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Wed, 11 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Wed, 11 Feb 2026 00:00:00 +0000
 
 stacer (2.1.1-1) unstable; urgency=medium
 
@@ -112,7 +112,7 @@ stacer (2.1.1-1) unstable; urgency=medium
   * Fix release workflow: copy .deb into workspace before upload step.
   * Use version-independent splashscreen filename (splashscreen.png).
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Tue, 11 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Tue, 11 Feb 2026 00:00:00 +0000
 
 stacer (2.1.0-1) unstable; urgency=medium
 
@@ -129,7 +129,7 @@ stacer (2.1.0-1) unstable; urgency=medium
   * Fix swapped memory variables in /proc/meminfo parsing.
   * Fix CPU speed showing 0 GHz on modern kernels.
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Mon, 10 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Mon, 10 Feb 2026 00:00:00 +0000
 
 stacer (2.0.1-1) unstable; urgency=medium
 
@@ -137,7 +137,7 @@ stacer (2.0.1-1) unstable; urgency=medium
     The lscpu "CPU max MHz" result was not assigned when the first
     filter matched, so speedLine kept its default "error:0.0" value.
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Sat, 07 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Sat, 07 Feb 2026 00:00:00 +0000
 
 stacer (2.0.0-1) unstable; urgency=medium
 
@@ -158,7 +158,7 @@ stacer (2.0.0-1) unstable; urgency=medium
   * Add GitHub Actions CI workflow.
   * Update attribution to Luke Simpson.
 
- -- Luke Simpson <luke@lsimpsonsfdc.com>  Fri, 07 Feb 2026 00:00:00 +0000
+ -- Luke Simpson <luke@s4solutionsllc.com>  Fri, 07 Feb 2026 00:00:00 +0000
 
 stacer (1.1.0-1) stable; urgency=medium
 

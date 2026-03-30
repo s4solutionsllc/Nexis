@@ -1,14 +1,14 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: nexis
-Source: https://github.com/lsimpsonsfdc/Nexis/
+Source: https://github.com/s4solutionsllc/Nexis/
 
 Files: *
 Copyright: 2017-2019 Oguzhan INAN <oguzhan3488@gmail.com>
-           2025-2026 Luke Simpson <luke@lsimpsonsfdc.com>
+           2025-2026 Luke Simpson <luke@s4solutionsllc.com>
 License: GPL-3.0
 
 Files: debian/*
-Copyright: 2025-2026 Luke Simpson <luke@lsimpsonsfdc.com>
+Copyright: 2025-2026 Luke Simpson <luke@s4solutionsllc.com>
 License: GPL-3.0
 
 GNU GENERAL PUBLIC LICENSE
