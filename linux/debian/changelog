@@ -1,4 +1,4 @@
-nexis (2.2.8-1) unstable; urgency=medium
+nexis (2.2.8-0) unstable; urgency=medium
 
   * Add PPA repository support (FR-90): automated publishing to Launchpad
     PPA for Ubuntu Jammy, Noble, and Questing via GitHub Actions.
