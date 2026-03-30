@@ -421,7 +421,7 @@ jobs:
             echo ""
             echo "See assets below for Linux (.deb, .AppImage) and macOS (.dmg) packages."
             echo ""
-            echo "**Full Changelog:** https://github.com/s4solutions/Nexis/compare/...${GITHUB_REF_NAME}"
+            echo "**Full Changelog:** https://github.com/s4solutionsllc/Nexis/compare/...${GITHUB_REF_NAME}"
           } > /tmp/release_body.md
 
           echo "BODY_FILE=/tmp/release_body.md" >> "$GITHUB_OUTPUT"

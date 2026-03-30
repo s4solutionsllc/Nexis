@@ -106,7 +106,7 @@ After changing a QSS dynamic property on a parent, child widgets need explicit `
 
 1. **Fetch open issues:**
    ```bash
-   gh issue list --repo s4solutions/Nexis --state open --limit 100 --json number,title,body,labels
+   gh issue list --repo s4solutionsllc/Nexis --state open --limit 100 --json number,title,body,labels
    ```
 
 2. **Identify untracked issues** — An issue is *untracked* if no line in `FEATURE_REQUESTS.md` or `BUGS.md` references its GitHub issue number (e.g., `#42`). Search both files for each issue number.

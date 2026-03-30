@@ -5,7 +5,7 @@
 #include <QUrl>
 
 const QString Feedback::ISSUES_BASE_URL =
-    QStringLiteral("https://github.com/s4solutions/Nexis/issues/new?template=");
+    QStringLiteral("https://github.com/s4solutionsllc/Nexis/issues/new?template=");
 
 Feedback::~Feedback()
 {

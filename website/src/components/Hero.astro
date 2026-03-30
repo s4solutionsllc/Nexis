@@ -1,7 +1,7 @@
 ---
 let version = "Latest";
 try {
-  const res = await fetch("https://api.github.com/repos/s4solutions/Nexis/releases/latest", {
+  const res = await fetch("https://api.github.com/repos/s4solutionsllc/Nexis/releases/latest", {
     headers: { "Accept": "application/vnd.github.v3+json" },
   });
   if (res.ok) {
@@ -32,7 +32,7 @@ try {
 
     <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
       <a
-        href="https://github.com/s4solutions/Nexis/releases/latest"
+        href="https://github.com/s4solutionsllc/Nexis/releases/latest"
         class="inline-flex items-center gap-2 rounded-lg bg-nexis-orange px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-nexis-orange-hover"
       >
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>

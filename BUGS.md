@@ -584,7 +584,7 @@
   - **Resolved:** Added `build-linux-deb-plucky` job to release workflow that builds .deb inside `ubuntu:25.04` Docker container, producing correct non-t64 dependency names. Noble .deb renamed with `_ubuntu2404` suffix, Plucky .deb with `_ubuntu2504` suffix. Release now publishes 4 .deb files: `{amd64,arm64} × {ubuntu2404,ubuntu2504}`.
 
 - [x] **BUG-76: GPU workload shown for wrong GPU index** (MEDIUM)
-  - **GitHub Issue:** [#9](https://github.com/s4solutions/Nexis/issues/9)
+  - **GitHub Issue:** [#9](https://github.com/s4solutionsllc/Nexis/issues/9)
   - **Reported by:** @Vai0Lou (PikaOS 4, Debian-based, kernel 6.19.2, GNOME 50)
   - **Description:** Since version 2.1, GPU0's workload is displayed in the GPU1 tile and vice versa. The GPU utilization values are swapped between the two GPU selections on the Dashboard.
   - **Steps to reproduce:** Open Nexis → Dashboard → Click GPU0, note workload → Click GPU1, compare — values are swapped.
@@ -593,7 +593,7 @@
   - **Resolved (attempt 2):** Root cause was that Nexis sorted by PCI bus address while Mission Center (via nvtop/libdrm) uses DRM card order. Reverted PCI bus sort to use DRM card order (kernel's native ordering). Added "GPU N:" prefix to dropdown labels for multi-GPU systems so users can correlate with other tools. Fixed misleading "0%" display for GPUs with unavailable utilization (now shows "N/A"). Added diagnostic debug logging to GPU discovery.
 
 - [x] **BUG-77: Hardware Info page text truncated** (LOW)
-  - **GitHub Issue:** [#10](https://github.com/s4solutions/Nexis/issues/10)
+  - **GitHub Issue:** [#10](https://github.com/s4solutionsllc/Nexis/issues/10)
   - **Reported by:** @Vai0Lou (PikaOS 4, Debian-based)
   - **Description:** Text labels on the Hardware Info page are truncated/clipped. The issue persists regardless of window size — stretching or maximizing the window does not fix it. See screenshot in issue.
   - **Fix complexity:** Low-Medium (likely a layout/sizing issue with QLabel word wrap, minimum width, or elide mode)
@@ -662,13 +662,13 @@
 
 - [x] **BUG-97: System Theme tray icon not working in AppImage** (MEDIUM)
   - **File:** `shared/nexis/main.cpp`
-  - **Description:** `QIcon::fromTheme("utilities-system-monitor")` fails inside AppImage because the bundled Qt loses access to system icon theme search paths (e.g., `/usr/share/icons`, `~/.local/share/icons`). The fallback bundled icon loads instead of the user's desktop theme icon (Papirus, Breeze, etc.). Binary installs work because system Qt already has the correct paths. GitHub issue [#15](https://github.com/s4solutions/Nexis/issues/15).
+  - **Description:** `QIcon::fromTheme("utilities-system-monitor")` fails inside AppImage because the bundled Qt loses access to system icon theme search paths (e.g., `/usr/share/icons`, `~/.local/share/icons`). The fallback bundled icon loads instead of the user's desktop theme icon (Papirus, Breeze, etc.). Binary installs work because system Qt already has the correct paths. GitHub issue [#15](https://github.com/s4solutionsllc/Nexis/issues/15).
   - **Fix complexity:** Trivial (add system icon paths to `QIcon::themeSearchPaths()` when `$APPIMAGE` is set)
   - **Resolved:** Added Linux AppImage detection via `$APPIMAGE` env var in `main.cpp`. When running as AppImage, appends `~/.local/share/icons`, `~/.icons`, `/usr/local/share/icons`, `/usr/share/icons`, and `/usr/share/pixmaps` to Qt's icon theme search paths.
 
 - [x] **BUG-98 / #16: Hardware disk info gives little info due to smartctl security** (MEDIUM)
   - **File:** `linux/nexis-core/Info/disk_health_info.cpp`, `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp`
-  - **Description:** Running Nexis as a normal user results in "Note: Limited data - smartctl requires elevated permissions" on the Hardware Info disk section. The pkexec elevation path was implemented at the backend but had no UI entry point. Drives also falsely showed "Good" health when no SMART data was read. GitHub issue [#16](https://github.com/s4solutions/Nexis/issues/16).
+  - **Description:** Running Nexis as a normal user results in "Note: Limited data - smartctl requires elevated permissions" on the Hardware Info disk section. The pkexec elevation path was implemented at the backend but had no UI entry point. Drives also falsely showed "Good" health when no SMART data was read. GitHub issue [#16](https://github.com/s4solutionsllc/Nexis/issues/16).
   - **Resolved:** Added per-drive "Unlock" QToolButton (Linux only) wired to `InfoManager::refreshDiskHealthElevated()` + `pkexec smartctl`. Fixed `deriveHealthVerdict()` to return "Unknown" instead of "Good" when no SMART attributes were parsed. Updated troubleshooting and hardware-info guide docs. Screenshot baselines regenerated. Commit d8a0795.
 
 ## Notes
@@ -703,5 +703,5 @@
 
 - [x] **BUG-99 / #15: System Theme tray icon still not working in AppImage** (MEDIUM)
   - **File:** `shared/nexis/main.cpp`
-  - **Description:** BUG-97 added XDG icon search paths for AppImage, but `QIcon::fromTheme()` also needs the correct icon *theme name* to search within. AppImage bundles Qt with xcb (no GTK platform plugin), so `QIcon::themeName()` returns empty and falls back to "Adwaita" — which doesn't contain `utilities-system-monitor`. The system's actual theme (e.g., Papirus-Dark) is never consulted even though its icons are reachable on disk. GitHub issue [#15](https://github.com/s4solutions/Nexis/issues/15).
+  - **Description:** BUG-97 added XDG icon search paths for AppImage, but `QIcon::fromTheme()` also needs the correct icon *theme name* to search within. AppImage bundles Qt with xcb (no GTK platform plugin), so `QIcon::themeName()` returns empty and falls back to "Adwaita" — which doesn't contain `utilities-system-monitor`. The system's actual theme (e.g., Papirus-Dark) is never consulted even though its icons are reachable on disk. GitHub issue [#15](https://github.com/s4solutionsllc/Nexis/issues/15).
   - **Resolved:** (6b21024) Added `detectSystemIconTheme()` in `main.cpp` that reads the icon theme name from GTK4/GTK3 settings.ini, ~/.gtkrc-2.0, kdeglobals, and gsettings (in order). Applied inside the AppImage block; only overrides when `QIcon::themeName()` is empty or "hicolor". No effect on binary installs or macOS.

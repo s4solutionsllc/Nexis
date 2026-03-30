@@ -32,7 +32,7 @@ jobs:
       - name: Publish to PPA
         uses: yuezk/publish-ppa-package@v2
         with:
-          repository: ppa:s4solutions/nexis
+          repository: ppa:s4solutionsllc/nexis
           gpg_private_key: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
           gpg_passphrase: ${{ secrets.PPA_GPG_PASSPHRASE }}
           series: ${{ matrix.series }}

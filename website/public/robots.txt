@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://s4solutions.github.io/Nexis/sitemap-index.xml
+Sitemap: https://s4solutionsllc.github.io/Nexis/sitemap-index.xml

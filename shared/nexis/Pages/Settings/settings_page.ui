@@ -451,7 +451,7 @@
        <item>
         <widget class="QLabel" name="lblCreatedBy">
          <property name="text">
-          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Nexis &lt;a href=&quot;https://github.com/s4solutions&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#E95420;&quot;&gt;Luke Simpson&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Nexis &lt;a href=&quot;https://github.com/s4solutionsllc&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#E95420;&quot;&gt;Luke Simpson&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="textFormat"><enum>Qt::RichText</enum></property>
          <property name="alignment"><set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set></property>

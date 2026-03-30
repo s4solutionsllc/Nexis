@@ -394,7 +394,7 @@ const links = [
   { href: '#screenshots', label: 'Screenshots' },
   { href: '/Nexis/guide/', label: 'Guide' },
   { href: '#download', label: 'Download' },
-  { href: 'https://github.com/s4solutions/Nexis', label: 'GitHub', external: true },
+  { href: 'https://github.com/s4solutionsllc/Nexis', label: 'GitHub', external: true },
 ];
 ```
 
@@ -789,4 +789,4 @@ git push
 
 **Step 4: Verify GitHub Pages deployment**
 
-Wait for CI to deploy, then verify at `https://s4solutions.github.io/Nexis/guide/`.
+Wait for CI to deploy, then verify at `https://s4solutionsllc.github.io/Nexis/guide/`.

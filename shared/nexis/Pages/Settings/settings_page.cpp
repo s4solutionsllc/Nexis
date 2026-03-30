@@ -45,7 +45,7 @@ SettingsPage::SettingsPage(QWidget *parent, AppManager *appManager,
         QString accent = sv ? sv->value("@accentColor").toString() : "#FF6B1A";
         ui->lblCreatedBy->setText(
             QString("<html><head/><body><p>Nexis v%1 "
-                    "<a href=\"https://github.com/s4solutions\">"
+                    "<a href=\"https://github.com/s4solutionsllc\">"
                     "<span style=\" text-decoration: underline; color:%2;\">"
                     "Luke Simpson</span></a></p></body></html>")
                 .arg(qApp->applicationVersion(), accent));

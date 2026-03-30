@@ -391,7 +391,7 @@ Expected: Clean build, all tests pass.
 In `FEATURE_REQUESTS.md`, change FR-48 from `[ ]` to `[x]` and add resolution note:
 
 ```markdown
-- [x] **FR-48: Monochrome app icon option** — Add an option to choose between the normal (colorful) and a monochrome app icon. Targeted at Linux users for better visual integration with system trays on GNOME and similar desktop environments where monochrome tray icons are the convention. Add a setting on the Settings page to toggle between "Color" and "Monochrome" icon styles, and update the tray icon accordingly at runtime. Requires creating a monochrome variant of the tray SVG. Issue [#5](https://github.com/s4solutions/Nexis/issues/5) by @Vai0Lou.
+- [x] **FR-48: Monochrome app icon option** — Add an option to choose between the normal (colorful) and a monochrome app icon. Targeted at Linux users for better visual integration with system trays on GNOME and similar desktop environments where monochrome tray icons are the convention. Add a setting on the Settings page to toggle between "Color" and "Monochrome" icon styles, and update the tray icon accordingly at runtime. Requires creating a monochrome variant of the tray SVG. Issue [#5](https://github.com/s4solutionsllc/Nexis/issues/5) by @Vai0Lou.
   - **Resolved:** Added "Tray Icon" QComboBox to Settings page with 4 styles (Color, Symbolic, Outline, Accent). Three simplified monochrome SVGs created. `AppManager::updateTrayIcon()` applies selection at startup and on change. Persisted via `SettingManager::TrayIconStyle`.
 ```
 
