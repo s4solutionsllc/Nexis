@@ -43,6 +43,14 @@ jobs:
           KEY_ID=$(gpg --list-secret-keys --keyid-format long 2>/dev/null | grep -m1 'sec' | awk '{print $2}' | cut -d'/' -f2)
           echo "KEY_ID=$KEY_ID" >> "$GITHUB_OUTPUT"
 
+      - name: Create upstream tarball
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          tar czf "../nexis_${TAG_VERSION}.orig.tar.gz" \
+            --transform "s,^\\.,nexis-${TAG_VERSION}," \
+            --exclude='.git' --exclude='build' --exclude='website/dist' \
+            --exclude='website/node_modules' --exclude='linux/debian' .
+
       - name: Symlink debian directory
         run: ln -s linux/debian debian
 
@@ -56,14 +64,6 @@ jobs:
               --distribution ${{ matrix.series }} \
               --force-distribution \
               "Release ${TAG_VERSION} for ${{ matrix.series }}"
-
-      - name: Create upstream tarball
-        run: |
-          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
-          tar czf "../nexis_${TAG_VERSION}.orig.tar.gz" \
-            --transform "s,^\\.,nexis-${TAG_VERSION}," \
-            --exclude='.git' --exclude='build' --exclude='website/dist' \
-            --exclude='website/node_modules' --exclude='debian' .
 
       - name: Build source package
         env:
