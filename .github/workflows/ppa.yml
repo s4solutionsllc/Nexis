@@ -48,9 +48,11 @@ jobs:
           TAG_VERSION="${{ steps.version.outputs.VERSION }}"
           tar czf "../nexis_${TAG_VERSION}.orig.tar.gz" \
             --transform "s,^\\.,nexis-${TAG_VERSION}," \
-            --exclude='.git' --exclude='build' --exclude='website/dist' \
-            --exclude='website/node_modules' --exclude='./linux/debian' \
+            --exclude='./.git' --exclude='./build' --exclude='./website/dist' \
+            --exclude='./website/node_modules' --exclude='./linux/debian' \
             --exclude='./debian' .
+          echo "Verifying tarball excludes linux/debian:"
+          tar tzf "../nexis_${TAG_VERSION}.orig.tar.gz" | grep "linux/debian" | head -5 || echo "OK: linux/debian excluded"
 
       - name: Symlink debian directory
         run: ln -s linux/debian debian
