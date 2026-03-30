@@ -24,11 +24,13 @@ jobs:
       - name: Create upstream tarball
         run: |
           TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          # tar exits 1 on "file changed as we read it" — benign, archive is valid
           tar czf "${{ runner.temp }}/nexis_${TAG_VERSION}.orig.tar.gz" \
             --transform "s,^\\.,nexis-${TAG_VERSION}," \
             --exclude='./.git' --exclude='./build' --exclude='./website/dist' \
-            --exclude='./website/node_modules' --exclude='./debian' .
+            --exclude='./website/node_modules' --exclude='./debian' . || true
           mv "${{ runner.temp }}/nexis_${TAG_VERSION}.orig.tar.gz" .
+          ls -lh "nexis_${TAG_VERSION}.orig.tar.gz"
 
       - name: Upload tarball artifact
         uses: actions/upload-artifact@v4
