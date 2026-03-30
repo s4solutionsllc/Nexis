@@ -16,6 +16,7 @@
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus" alt="C++17">
   <img src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS-lightgrey" alt="Platforms: Linux | macOS">
   <img src="https://img.shields.io/github/downloads/lsimpsonsfdc/Nexis/total" alt="Downloads">
+  <a href="https://launchpad.net/~lsimpsonsfdc/+archive/ubuntu/nexis"><img src="https://img.shields.io/badge/PPA-lsimpsonsfdc%2Fnexis-E95420?logo=ubuntu" alt="PPA: lsimpsonsfdc/nexis"></a>
     <!--<a href="https://crowdin.com/project/nexis"><img src="https://badges.crowdin.net/nexis/localized.svg" alt="Crowdin"></a>-->
 </p>
 
@@ -80,11 +81,21 @@ Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popu
 
 ## Downloads
 
-Pre-built binaries are available on the [Releases page](https://github.com/lsimpsonsfdc/Nexis/releases/latest):
+Install via [PPA](#install-via-ppa-ubuntu) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/lsimpsonsfdc/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
 - **macOS Apple Silicon**: `.dmg` disk image
+
+### Install via PPA (Ubuntu)
+
+```bash
+sudo add-apt-repository ppa:lsimpsonsfdc/nexis
+sudo apt update
+sudo apt install nexis
+```
+
+Supports Ubuntu 22.04 (Jammy), 24.04 (Noble), and 25.04 (Plucky) on both x86_64 and ARM64. Updates are delivered automatically via `apt upgrade`.
 
 ## Screenshots
 
