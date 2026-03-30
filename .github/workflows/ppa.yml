@@ -28,10 +28,11 @@ jobs:
 
       - name: Create source tarball
         run: |
-          tar czf ${{ github.workspace }}/nexis-${{ steps.version.outputs.VERSION }}.tar.gz \
+          tar czf ${{ runner.temp }}/nexis-${{ steps.version.outputs.VERSION }}.tar.gz \
             --transform "s,^,nexis-${{ steps.version.outputs.VERSION }}/," \
             --exclude='.git' --exclude='build' --exclude='website/dist' \
             --exclude='website/node_modules' .
+          cp ${{ runner.temp }}/nexis-${{ steps.version.outputs.VERSION }}.tar.gz .
 
       - name: Publish to PPA
         uses: yuezk/publish-ppa-package@v2
