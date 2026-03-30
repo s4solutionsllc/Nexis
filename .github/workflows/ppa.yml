@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        series: [noble, jammy, oracular]
+        series: [noble, jammy, questing]
 
     steps:
       - name: Checkout
