@@ -11,7 +11,8 @@ Build-Depends: debhelper-compat (= 13),
                qt6-tools-dev,
                qt6-tools-dev-tools,
                qt6-l10n-tools,
-               libgl1-mesa-dev
+               libgl1-mesa-dev,
+               xvfb
 Standards-Version: 4.6.2
 Homepage: https://github.com/lsimpsonsfdc/Nexis
 Vcs-Browser: https://github.com/lsimpsonsfdc/Nexis.git
