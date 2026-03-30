@@ -22,12 +22,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Symlink debian packaging directory
-        run: ln -s linux/debian debian
-
       - name: Extract version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create source tarball
+        run: |
+          tar czf /tmp/nexis-${{ steps.version.outputs.VERSION }}.tar.gz \
+            --transform "s,^,nexis-${{ steps.version.outputs.VERSION }}/," \
+            --exclude='.git' --exclude='build' --exclude='website/dist' \
+            --exclude='website/node_modules' .
 
       - name: Publish to PPA
         uses: yuezk/publish-ppa-package@v2
@@ -35,20 +39,9 @@ jobs:
           repository: ppa:s4solutionsllc/nexis
           gpg_private_key: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
           gpg_passphrase: ${{ secrets.PPA_GPG_PASSPHRASE }}
+          tarball: /tmp/nexis-${{ steps.version.outputs.VERSION }}.tar.gz
+          debian_dir: linux/debian
           series: ${{ matrix.series }}
-          source_name: nexis
-          version: ${{ steps.version.outputs.VERSION }}
-          version_suffix: ~ppa1~${{ matrix.series }}1
           revision: '1'
-          debian_dir: debian
-          build_depends: >-
-            debhelper-compat (= 13),
-            cmake (>= 3.16),
-            g++,
-            qt6-base-dev,
-            qt6-charts-dev,
-            qt6-svg-dev,
-            qt6-tools-dev,
-            qt6-tools-dev-tools,
-            qt6-l10n-tools,
-            libgl1-mesa-dev
+          deb_email: luke@s4solutionsllc.com
+          deb_fullname: Luke Simpson
