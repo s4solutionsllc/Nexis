@@ -1,3 +1,9 @@
+nexis (2.2.9-0) unstable; urgency=medium
+
+  * Fix Jammy PPA build: add libqt6opengl6-dev for Qt6OpenGL dependency.
+
+ -- Luke Simpson <luke@s4solutionsllc.com>  Mon, 31 Mar 2026 00:00:00 +0000
+
 nexis (2.2.8-0) unstable; urgency=medium
 
   * Add PPA repository support (FR-90): automated publishing to Launchpad

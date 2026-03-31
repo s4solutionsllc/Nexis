@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.9] - 2026-03-31
+
+### Fixed
+- **PPA (FR-90):** Fixed Jammy (22.04) PPA build failure by adding missing `libqt6opengl6-dev` build dependency. Qt6OpenGL dev headers are a separate package on Jammy but bundled in `qt6-base-dev` on Noble/Questing.
+
+## [2.2.8] - 2026-03-30
+
 ### Added
 - **Website "Release Notes" modal (FR-91):** Replaced the "View on GitHub" button on the website landing page with a "Release Notes" button. Clicking it opens a modal that displays all new features and bug fixes from the latest release, parsed from CHANGELOG.md at build time. Uses native `<dialog>` element with dark theme styling, click-outside-to-close, and fallback message if changelog is unavailable.
 - **PPA repository (FR-90):** Ubuntu users can now install via `sudo add-apt-repository ppa:s4solutionsllc/nexis && sudo apt install nexis` with automatic updates. Supports Ubuntu 22.04 (Jammy), 24.04 (Noble), and 25.04 (Plucky) on x86_64 and ARM64.
