@@ -322,7 +322,7 @@
 
 - [x] **FR-90: PPA (Ubuntu/Debian repository)** — Set up a Launchpad PPA so Ubuntu/Debian users can install via `sudo add-apt-repository ppa:s4solutionsllc/nexis && sudo apt install nexis` with automatic updates. Covers the largest Linux desktop segment (~70%). Full feature parity — no sandbox restrictions. **Resolved:** Added `.github/workflows/ppa.yml` with matrix publish to Jammy, Noble, and Plucky via `yuezk/publish-ppa-package`. Added `xvfb` to Build-Depends for Launchpad test execution. Updated README with PPA install instructions and badge.
 - [ ] **FR-91: AUR (Arch User Repository) package** — Create and maintain an AUR PKGBUILD so Arch/Manjaro users can install via `yay -S nexis` or `paru -S nexis`. Full feature parity. Community can co-maintain the package.
-- [ ] **FR-92: Homebrew Cask (macOS)** — Publish Nexis as a Homebrew Cask so macOS users can install via `brew install --cask nexis`. Major discoverability boost for macOS. Requires hosting the .dmg at a stable release URL and submitting a Cask formula to homebrew-cask.
+- [x] **FR-92: Homebrew Cask (macOS)** — Publish Nexis as a Homebrew Cask so macOS users can install via `brew install --cask nexis`. Major discoverability boost for macOS. Requires hosting the .dmg at a stable release URL and submitting a Cask formula to homebrew-cask. **Resolved:** Created `s4solutionsllc/homebrew-nexis` tap repo with `Casks/nexis.rb`. Added `.github/workflows/homebrew.yml` to auto-update the tap on new releases. Verified end-to-end: `brew tap` + `brew install --cask nexis` installs to `/Applications`.
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
 

@@ -1,0 +1,59 @@
+name: Update Homebrew Cask
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  update-cask:
+    name: Update Homebrew tap
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${{ github.event.workflow_run.head_branch }}"
+          echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download macOS DMG and compute checksum
+        id: checksum
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          URL="https://github.com/s4solutionsllc/Nexis/releases/download/v${VERSION}/Nexis-${VERSION}-macOS-arm64.dmg"
+          echo "Downloading ${URL}"
+          curl -sL "${URL}" -o nexis.dmg
+          SHA256=$(sha256sum nexis.dmg | awk '{print $1}')
+          echo "SHA256=${SHA256}" >> "$GITHUB_OUTPUT"
+          echo "Checksum: ${SHA256}"
+
+      - name: Clone tap repo
+        run: |
+          git clone https://x-access-token:${{ secrets.HOMEBREW_TAP_TOKEN }}@github.com/s4solutionsllc/homebrew-nexis.git tap
+
+      - name: Update Cask formula
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          SHA256="${{ steps.checksum.outputs.SHA256 }}"
+          sed -i "s/^  version \".*\"/  version \"${VERSION}\"/" tap/Casks/nexis.rb
+          sed -i "s/^  sha256 \".*\"/  sha256 \"${SHA256}\"/" tap/Casks/nexis.rb
+          echo "Updated Casks/nexis.rb:"
+          cat tap/Casks/nexis.rb
+
+      - name: Commit and push
+        run: |
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/nexis.rb
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "Update nexis to ${{ steps.version.outputs.VERSION }}"
+          git push
