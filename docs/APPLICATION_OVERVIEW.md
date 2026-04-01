@@ -606,6 +606,7 @@ tests/
 - macOS: `.app` bundle with icon, installs to `/Applications`
 - Linux: Binary to `/usr/bin`, `.desktop` file, hicolor icons (16x16 through 256x256)
 - Linux PPA: `ppa:s4solutionsllc/nexis` — Ubuntu 22.04+ (Jammy, Noble, Plucky), amd64 and arm64, automatic updates via apt
+- Linux AUR: `yay -S nexis` — Arch Linux, Manjaro, and Arch-based distros, auto-published on new releases
 
 **Test executables** — 16 CTest-registered executables (Qt Test + CTest)
 - 15 unit test executables via `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable)

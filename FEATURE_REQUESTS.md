@@ -321,7 +321,7 @@
 ## Distribution
 
 - [x] **FR-90: PPA (Ubuntu/Debian repository)** — Set up a Launchpad PPA so Ubuntu/Debian users can install via `sudo add-apt-repository ppa:s4solutionsllc/nexis && sudo apt install nexis` with automatic updates. Covers the largest Linux desktop segment (~70%). Full feature parity — no sandbox restrictions. **Resolved:** Added `.github/workflows/ppa.yml` with matrix publish to Jammy, Noble, and Plucky via `yuezk/publish-ppa-package`. Added `xvfb` to Build-Depends for Launchpad test execution. Updated README with PPA install instructions and badge.
-- [ ] **FR-91: AUR (Arch User Repository) package** — Create and maintain an AUR PKGBUILD so Arch/Manjaro users can install via `yay -S nexis` or `paru -S nexis`. Full feature parity. Community can co-maintain the package.
+- [x] **FR-91: AUR (Arch User Repository) package** — Create and maintain an AUR PKGBUILD so Arch/Manjaro users can install via `yay -S nexis` or `paru -S nexis`. Full feature parity. Community can co-maintain the package. **Resolved:** Added `linux/aur/PKGBUILD` and `.github/workflows/aur.yml` to auto-publish on new tags. Requires `AUR_SSH_PRIVATE_KEY` secret. README and docs updated with install instructions.
 - [ ] **FR-92: Homebrew Cask (macOS)** — Publish Nexis as a Homebrew Cask so macOS users can install via `brew install --cask nexis`. Major discoverability boost for macOS. Requires hosting the .dmg at a stable release URL and submitting a Cask formula to homebrew-cask.
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->

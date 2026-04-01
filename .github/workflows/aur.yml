@@ -1,0 +1,49 @@
+name: Publish AUR
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  aur-publish:
+    name: Update AUR package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download release tarball and compute checksum
+        id: checksum
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          curl -sL "https://github.com/s4solutionsllc/Nexis/archive/v${TAG_VERSION}.tar.gz" \
+            -o "nexis-${TAG_VERSION}.tar.gz"
+          SHA256=$(sha256sum "nexis-${TAG_VERSION}.tar.gz" | awk '{print $1}')
+          echo "SHA256=${SHA256}" >> "$GITHUB_OUTPUT"
+
+      - name: Update PKGBUILD
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          SHA256="${{ steps.checksum.outputs.SHA256 }}"
+          sed -i "s/^pkgver=.*/pkgver=${TAG_VERSION}/" linux/aur/PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/" linux/aur/PKGBUILD
+          sed -i "s/^sha256sums=.*/sha256sums=('${SHA256}')/" linux/aur/PKGBUILD
+
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
+        with:
+          pkgname: nexis
+          pkgbuild: linux/aur/PKGBUILD
+          commit_username: Luke Simpson
+          commit_email: luke@s4solutionsllc.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update to ${{ steps.version.outputs.VERSION }}"

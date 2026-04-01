@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **AUR package (FR-91):** Arch Linux users can now install via `yay -S nexis` or `paru -S nexis`. Added PKGBUILD and GitHub Actions workflow to auto-publish to AUR on new releases.
+
 ## [2.2.10] - 2026-04-01
 
 ### Fixed

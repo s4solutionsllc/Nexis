@@ -1,0 +1,32 @@
+# Maintainer: Luke Simpson <luke@s4solutionsllc.com>
+pkgname=nexis
+pkgver=2.2.10
+pkgrel=1
+pkgdesc="Linux System Optimizer and Monitoring"
+arch=('x86_64')
+url="https://github.com/s4solutionsllc/Nexis"
+license=('GPL-3.0-or-later')
+depends=('qt6-base' 'qt6-charts' 'qt6-svg' 'hicolor-icon-theme')
+makedepends=('cmake' 'qt6-tools' 'xorg-server-xvfb')
+optdepends=(
+  'systemd: service management features'
+  'curl: network features'
+)
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/s4solutionsllc/Nexis/archive/v${pkgver}.tar.gz")
+sha256sums=('99d6ca50f053a5304826d529ded65834550bc50c19942ac7694bd76df0abb45c')
+
+build() {
+  cmake -B build -S "Nexis-${pkgver}" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_TESTING=ON
+  cmake --build build -j"$(nproc)"
+}
+
+check() {
+  xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
+}
+
+package() {
+  DESTDIR="${pkgdir}" cmake --install build
+}
