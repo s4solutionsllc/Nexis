@@ -84,6 +84,11 @@ jobs:
       - name: Copy debian directory
         run: cp -r linux/debian debian
 
+      - name: Patch control for Jammy (Qt6OpenGL is a separate package)
+        if: matrix.series == 'jammy'
+        run: |
+          sed -i 's/^\(               qt6-base-dev,\)$/\1\n               libqt6opengl6-dev,/' debian/control
+
       - name: Update changelog for series
         env:
           DEBEMAIL: luke@s4solutionsllc.com

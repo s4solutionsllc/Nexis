@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.10] - 2026-04-01
+
+### Fixed
+- **PPA (FR-90):** Fixed Jammy (22.04) PPA build by injecting `libqt6opengl6-dev` via per-series workflow patch. The Debian alternatives approach didn't work because apt short-circuits when `qt6-base-dev` is already in the dep list.
+
 ## [2.2.9] - 2026-03-31
 
 ### Fixed

@@ -1,3 +1,9 @@
+nexis (2.2.10-0) unstable; urgency=medium
+
+  * Fix Jammy PPA build: inject libqt6opengl6-dev via per-series workflow patch.
+
+ -- Luke Simpson <luke@s4solutionsllc.com>  Tue, 01 Apr 2026 00:00:00 +0000
+
 nexis (2.2.9-0) unstable; urgency=medium
 
   * Fix Jammy PPA build: add libqt6opengl6-dev for Qt6OpenGL dependency.
