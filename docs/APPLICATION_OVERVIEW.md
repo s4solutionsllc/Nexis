@@ -603,7 +603,7 @@ tests/
 **`nexis`** — GUI executable
 - Sources: `main.cpp` + translations + icon
 - Dependencies: `nexis-gui` (inherits all Qt and core dependencies)
-- macOS: `.app` bundle with icon, installs to `/Applications`
+- macOS: `.app` bundle with icon, installs to `/Applications`. Signed with Developer ID and notarized by Apple (no Gatekeeper warnings)
 - Linux: Binary to `/usr/bin`, `.desktop` file, hicolor icons (16x16 through 256x256)
 - Linux PPA: `ppa:s4solutionsllc/nexis` — Ubuntu 22.04+ (Jammy, Noble, Plucky), amd64 and arm64, automatic updates via apt
 - macOS Homebrew: `brew tap s4solutionsllc/nexis && brew install --cask nexis` — Apple Silicon, auto-updated on new releases

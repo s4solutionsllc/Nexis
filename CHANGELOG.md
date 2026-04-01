@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Homebrew Cask (FR-92):** macOS users can now install via `brew tap s4solutionsllc/nexis && brew install --cask nexis`. Custom tap auto-updates on new releases via GitHub Actions.
+- **macOS code signing and notarization (FR-93):** macOS .dmg releases are now signed with a Developer ID certificate and notarized by Apple. The app opens without Gatekeeper warnings on first launch.
 
 ## [2.2.10] - 2026-04-01
 

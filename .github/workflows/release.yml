@@ -247,6 +247,34 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
+      - name: Check for signing secrets
+        id: signing
+        run: |
+          if [ -n "${{ secrets.APPLE_CERTIFICATE_P12 }}" ] && [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY }}" ]; then
+            echo "ENABLED=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ENABLED=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Signing secrets not configured — falling back to ad-hoc signing"
+          fi
+
+      - name: Import signing certificate
+        if: steps.signing.outputs.ENABLED == 'true'
+        env:
+          P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$P12_BASE64" | base64 --decode > certificate.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security import certificate.p12 -k build.keychain \
+            -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security list-keychains -d user -s build.keychain login.keychain
+          rm certificate.p12
+
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6) -DAPP_VERSION_OVERRIDE=${{ steps.version.outputs.VERSION }}
 
@@ -255,17 +283,79 @@ jobs:
 
       - name: Deploy Qt frameworks into .app bundle
         run: |
-          $(brew --prefix qt@6)/bin/macdeployqt build/output/nexis.app \
-            -no-strip
-          # macdeployqt modifies the binary and frameworks, invalidating the
-          # ad-hoc code signature. Re-sign so macOS doesn't kill the process
-          # with "Code Signature Invalid" (SIGKILL) on launch.
+          $(brew --prefix qt@6)/bin/macdeployqt build/output/nexis.app -no-strip
+
+      - name: Sign .app bundle (Developer ID)
+        if: steps.signing.outputs.ENABLED == 'true'
+        run: |
+          APP="build/output/nexis.app"
+
+          # Find the Developer ID identity dynamically (avoids hardcoding the org name)
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "Signing with: $IDENTITY"
+
+          # Sign frameworks (inside-out)
+          find "$APP/Contents/Frameworks" -name "*.framework" -type d | while read fw; do
+            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$fw"
+          done
+          find "$APP/Contents/Frameworks" -name "*.dylib" | while read lib; do
+            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$lib"
+          done
+
+          # Sign plugins
+          find "$APP/Contents/PlugIns" -name "*.dylib" 2>/dev/null | while read plugin; do
+            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$plugin"
+          done
+
+          # Sign the .app bundle with entitlements
+          codesign --force --sign "$IDENTITY" \
+            --options runtime \
+            --entitlements macos/entitlements.plist \
+            --timestamp \
+            "$APP"
+
+          # Verify
+          codesign --verify --deep --strict "$APP"
+          echo "Code signing verified successfully"
+
+      - name: Sign .app bundle (ad-hoc fallback)
+        if: steps.signing.outputs.ENABLED != 'true'
+        run: |
           codesign --force --deep --sign - build/output/nexis.app
-          # Wait for codesign to fully release file handles before creating dmg
+
+      - name: Create .dmg
+        run: |
           sleep 5
-          # Now create the .dmg from the properly signed bundle
           hdiutil create -volname "Nexis" -srcfolder build/output/nexis.app \
             -ov -format UDZO build/output/nexis.dmg
+
+      - name: Sign .dmg (Developer ID)
+        if: steps.signing.outputs.ENABLED == 'true'
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          codesign --force --sign "$IDENTITY" --timestamp build/output/nexis.dmg
+
+      - name: Notarize .dmg
+        if: steps.signing.outputs.ENABLED == 'true'
+        env:
+          API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          mkdir -p ~/.private_keys
+          echo "$API_KEY" > ~/.private_keys/AuthKey_${API_KEY_ID}.p8
+
+          xcrun notarytool submit build/output/nexis.dmg \
+            --key ~/.private_keys/AuthKey_${API_KEY_ID}.p8 \
+            --key-id "$API_KEY_ID" \
+            --issuer "$API_ISSUER_ID" \
+            --wait \
+            --timeout 30m
+
+          xcrun stapler staple build/output/nexis.dmg
+          echo "Notarization and stapling complete"
+
+          rm -rf ~/.private_keys
 
       - name: Rename .dmg with version
         id: dmg
@@ -278,6 +368,10 @@ jobs:
         with:
           name: macos-artifacts
           path: build/output/Nexis-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
+
+      - name: Cleanup keychain
+        if: always() && steps.signing.outputs.ENABLED == 'true'
+        run: security delete-keychain build.keychain
 
   # ============================================================================
   # Create GitHub Release with all artifacts
