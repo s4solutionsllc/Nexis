@@ -81,7 +81,7 @@ Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popu
 
 ## Downloads
 
-Install via [PPA](#install-via-ppa-ubuntu) or [AUR](#install-via-aur-arch-linux) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
+Install via [PPA](#install-via-ppa-ubuntu) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
@@ -96,14 +96,6 @@ sudo apt install nexis
 ```
 
 Supports Ubuntu 22.04 (Jammy), 24.04 (Noble), and 25.04 (Plucky) on both x86_64 and ARM64. Updates are delivered automatically via `apt upgrade`.
-
-### Install via AUR (Arch Linux)
-
-```bash
-yay -S nexis
-```
-
-Available on the [AUR](https://aur.archlinux.org/packages/nexis). Works with any AUR helper (`yay`, `paru`, `makepkg`). Supports Arch Linux, Manjaro, and other Arch-based distributions.
 
 ## Screenshots
 
