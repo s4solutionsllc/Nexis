@@ -345,15 +345,32 @@ jobs:
           mkdir -p ~/.private_keys
           echo "$API_KEY" > ~/.private_keys/AuthKey_${API_KEY_ID}.p8
 
-          xcrun notarytool submit build/output/nexis.dmg \
-            --key ~/.private_keys/AuthKey_${API_KEY_ID}.p8 \
-            --key-id "$API_KEY_ID" \
-            --issuer "$API_ISSUER_ID" \
-            --wait \
-            --timeout 30m
+          KEY_ARGS="--key ~/.private_keys/AuthKey_${API_KEY_ID}.p8 --key-id $API_KEY_ID --issuer $API_ISSUER_ID"
 
-          xcrun stapler staple build/output/nexis.dmg
-          echo "Notarization and stapling complete"
+          # Submit and capture the submission ID
+          SUBMIT_OUTPUT=$(xcrun notarytool submit build/output/nexis.dmg \
+            $KEY_ARGS \
+            --wait \
+            --timeout 30m 2>&1) || true
+          echo "$SUBMIT_OUTPUT"
+
+          # Extract submission ID
+          SUB_ID=$(echo "$SUBMIT_OUTPUT" | grep "id:" | head -1 | awk '{print $2}')
+          echo "Submission ID: $SUB_ID"
+
+          # Check if notarization succeeded
+          if echo "$SUBMIT_OUTPUT" | grep -q "status: Accepted"; then
+            xcrun stapler staple build/output/nexis.dmg
+            echo "Notarization and stapling complete"
+          else
+            echo "::error::Notarization did not succeed. Fetching log..."
+            if [ -n "$SUB_ID" ]; then
+              xcrun notarytool log "$SUB_ID" $KEY_ARGS 2>&1 || true
+              xcrun notarytool info "$SUB_ID" $KEY_ARGS 2>&1 || true
+            fi
+            rm -rf ~/.private_keys
+            exit 1
+          fi
 
           rm -rf ~/.private_keys
 
