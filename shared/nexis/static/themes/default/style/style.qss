@@ -1895,6 +1895,41 @@ QLabel[accessibleName="dialog-title"] {
     color: @color04;
 }
 
+#netDiagCheckIcon {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#netDiagCheckIcon[checkPassed="true"] {
+    color: @successColor;
+}
+
+#netDiagCheckIcon[checkPassed="false"] {
+    color: @destructiveColor;
+}
+
+#netDiagCheckLabel {
+    color: @color05;
+    font-size: 13px;
+}
+
+#netDiagCheckValue {
+    font-size: 13px;
+}
+
+#netDiagCheckValue[checkPassed="true"] {
+    color: @color04;
+}
+
+#netDiagCheckValue[checkPassed="false"] {
+    color: @destructiveColor;
+}
+
+#netDiagDnsServer {
+    color: @color05;
+    font-size: 13px;
+}
+
 /* Power Profile Widget (Helpers page, Linux only) */
 
 #powerProfileWidget {
@@ -2214,14 +2249,69 @@ QLabel[accessibleName="dimmed-small"] {
     background-color: transparent;
 }
 
+#repoStatusBadge {
+    color: white;
+    border-radius: 10px;
+    padding: 2px 10px;
+    font-size: 11px;
+}
+
+#repoStatusBadge[repoStatus="healthy"] { background-color: @successColor; }
+#repoStatusBadge[repoStatus="warning"] { background-color: @warningColor; }
+#repoStatusBadge[repoStatus="error"]   { background-color: @destructiveColor; }
+#repoStatusBadge[repoStatus="unknown"] { background-color: @tertiaryText; }
+
+#repoMetaValue[repoStatus="healthy"] { color: @successColor; }
+#repoMetaValue[repoStatus="warning"] { color: @warningColor; }
+#repoMetaValue[repoStatus="error"]   { color: @destructiveColor; }
+#repoMetaValue[repoStatus="unknown"] { color: @tertiaryText; }
+
 #repoIssueCard {
     background-color: @cardBg;
     border-radius: 4px;
-    padding-left: 4px;
+}
+
+#repoIssueCard[issueSeverity="error"]   { border-left: 3px solid @destructiveColor; }
+#repoIssueCard[issueSeverity="warning"] { border-left: 3px solid @warningColor; }
+#repoIssueCard[issueSeverity="info"]    { border-left: 3px solid @tertiaryText; }
+
+#repoIssueCard QPushButton[accessibleName="primary"] {
+    background-color: @accentColor;
+    color: white;
+    border: 0;
+    border-radius: 4px;
+    padding: 2px 10px;
+}
+
+#repoIssueCard QPushButton[accessibleName="primary"]:hover {
+    background-color: @accentHover;
 }
 
 #repoRemoveBtn {
     color: @destructiveColor;
+    background-color: transparent;
+    border: 1px solid @destructiveColor;
+    border-radius: 4px;
+    padding: 2px 10px;
+}
+
+#repoIssueSummary { font-weight: bold; }
+#repoIssueSummary[issueSeverity="error"]   { color: @destructiveColor; }
+#repoIssueSummary[issueSeverity="warning"] { color: @warningColor; }
+#repoIssueSummary[issueSeverity="info"]    { color: @tertiaryText; }
+
+#repoIssueDetail {
+    color: @tertiaryText;
+}
+
+#repoDiagIcon { font-weight: bold; }
+#repoDiagIcon[diagStatus="ok"]      { color: @successColor; }
+#repoDiagIcon[diagStatus="warning"] { color: @warningColor; }
+#repoDiagIcon[diagStatus="failed"]  { color: @destructiveColor; }
+
+#repoSuggestion {
+    color: @warningColor;
+    font-style: italic;
 }
 
 #repoDiagnoseStep {

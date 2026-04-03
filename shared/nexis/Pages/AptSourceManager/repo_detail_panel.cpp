@@ -10,6 +10,7 @@
 #include <QScrollArea>
 #include <QSettings>
 #include <QDateTime>
+#include <QStyle>
 
 RepoDetailPanel::RepoDetailPanel(QWidget *parent)
     : QWidget(parent),
@@ -159,35 +160,28 @@ void RepoDetailPanel::showRepo(const APTSourcePtr &source, const RepoHealthResul
     mLblName->setText(result.name.isEmpty() ? source->uri : result.name);
     mLblDescription->setText(result.description);
 
-    // Status badge — use QSettings* API
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QString statusText, statusColor;
+    // Status badge — property-driven QSS (FR-89)
+    QString statusText, statusProp;
     switch (result.status) {
     case RepoHealthResult::Healthy:
-        statusText = tr("Healthy");
-        statusColor = sv ? sv->value("@successColor").toString() : QString();
-        break;
+        statusText = tr("Healthy"); statusProp = "healthy"; break;
     case RepoHealthResult::Warning:
-        statusText = tr("Warning");
-        statusColor = sv ? sv->value("@warningColor").toString() : QString();
-        break;
+        statusText = tr("Warning"); statusProp = "warning"; break;
     case RepoHealthResult::Error:
-        statusText = tr("Error");
-        statusColor = sv ? sv->value("@destructiveColor").toString() : QString();
-        break;
+        statusText = tr("Error"); statusProp = "error"; break;
     default:
-        statusText = tr("Unknown");
-        statusColor = sv ? sv->value("@tertiaryText").toString() : QString();
-        break;
+        statusText = tr("Unknown"); statusProp = "unknown"; break;
     }
     mLblStatusBadge->setText(statusText);
-    mLblStatusBadge->setStyleSheet(QString(
-        "background-color: %1; color: white; border-radius: 10px; padding: 2px 10px; font-size: 11px;"
-    ).arg(statusColor));
+    mLblStatusBadge->setProperty("repoStatus", statusProp);
+    mLblStatusBadge->style()->unpolish(mLblStatusBadge);
+    mLblStatusBadge->style()->polish(mLblStatusBadge);
 
     // Metadata
     mLblStatus->setText(statusText);
-    mLblStatus->setStyleSheet(QString("color: %1;").arg(statusColor));
+    mLblStatus->setProperty("repoStatus", statusProp);
+    mLblStatus->style()->unpolish(mLblStatus);
+    mLblStatus->style()->polish(mLblStatus);
 
     if (result.lastChecked.isValid()) {
         qint64 secsAgo = result.lastChecked.secsTo(QDateTime::currentDateTime());
@@ -229,50 +223,31 @@ void RepoDetailPanel::showRepo(const APTSourcePtr &source, const RepoHealthResul
 
 void RepoDetailPanel::addIssueWidget(const RepoHealthIssue &issue)
 {
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QString color;
+    QString severityProp;
     switch (issue.severity) {
-    case RepoHealthIssue::Error:
-        color = sv ? sv->value("@destructiveColor").toString() : QString();
-        break;
-    case RepoHealthIssue::Warning:
-        color = sv ? sv->value("@warningColor").toString() : QString();
-        break;
-    default:
-        color = sv ? sv->value("@tertiaryText").toString() : QString();
-        break;
+    case RepoHealthIssue::Error:   severityProp = "error"; break;
+    case RepoHealthIssue::Warning: severityProp = "warning"; break;
+    default:                       severityProp = "info"; break;
     }
 
     QWidget *issueWidget = new QWidget(mIssuesContainer);
     issueWidget->setObjectName("repoIssueCard");
     issueWidget->setAttribute(Qt::WA_StyledBackground, true);
-
-    // Use ID-scoped stylesheet so it doesn't cascade to child QPushButtons.
-    // Include the global QPushButton[accessibleName="primary"] rules so buttons render correctly.
-    QString cardBg = sv ? sv->value("@cardBg").toString() : QString();
-    QString accentColor = sv ? sv->value("@accentColor").toString() : QString();
-    QString accentHover = sv ? sv->value("@accentHover").toString() : QString();
-    QString destructiveColor = sv ? sv->value("@destructiveColor").toString() : QString();
-    issueWidget->setStyleSheet(QString(
-        "#repoIssueCard { background-color: %1; border-radius: 4px; border-left: 3px solid %2; }"
-        " QPushButton[accessibleName=\"primary\"] { background-color: %3; color: white; border: 0; border-radius: 4px; padding: 2px 10px; }"
-        " QPushButton[accessibleName=\"primary\"]:hover { background-color: %4; }"
-        " #repoRemoveBtn { color: %5; background-color: transparent; border: 1px solid %5; border-radius: 4px; padding: 2px 10px; }"
-    ).arg(cardBg, color, accentColor, accentHover, destructiveColor));
+    issueWidget->setProperty("issueSeverity", severityProp);
 
     QVBoxLayout *issueLayout = new QVBoxLayout(issueWidget);
     issueLayout->setContentsMargins(12, 8, 10, 8);
     issueLayout->setSpacing(4);
 
     QLabel *lblSummary = new QLabel(issue.summary, issueWidget);
-    lblSummary->setStyleSheet(QString("color: %1; font-weight: bold;").arg(color));
+    lblSummary->setObjectName("repoIssueSummary");
+    lblSummary->setProperty("issueSeverity", severityProp);
     issueLayout->addWidget(lblSummary);
 
     if (!issue.detail.isEmpty()) {
         QLabel *lblDetail = new QLabel(issue.detail, issueWidget);
+        lblDetail->setObjectName("repoIssueDetail");
         lblDetail->setWordWrap(true);
-        QString detailColor = sv ? sv->value("@tertiaryText").toString() : QString();
-        lblDetail->setStyleSheet(QString("color: %1;").arg(detailColor));
         issueLayout->addWidget(lblDetail);
     }
 
@@ -330,31 +305,23 @@ void RepoDetailPanel::clear()
 
 void RepoDetailPanel::showDiagnoseResult(const DiagnoseResult &result, QVBoxLayout *targetLayout)
 {
-    QSettings *sv = AppManager::ins()->getStyleValues();
-
     for (const DiagnoseStep &step : result.steps) {
         QHBoxLayout *stepRow = new QHBoxLayout();
         stepRow->setSpacing(6);
 
-        QString icon;
-        QString iconColor;
+        QString icon, diagStatus;
         switch (step.status) {
         case DiagnoseStep::Ok:
-            icon = QString::fromUtf8("\u2713");
-            iconColor = sv ? sv->value("@successColor").toString() : QString();
-            break;
+            icon = QString::fromUtf8("\u2713"); diagStatus = "ok"; break;
         case DiagnoseStep::Warning:
-            icon = QString::fromUtf8("\u25B2");
-            iconColor = sv ? sv->value("@warningColor").toString() : QString();
-            break;
+            icon = QString::fromUtf8("\u25B2"); diagStatus = "warning"; break;
         case DiagnoseStep::Failed:
-            icon = QString::fromUtf8("\u2717");
-            iconColor = sv ? sv->value("@destructiveColor").toString() : QString();
-            break;
+            icon = QString::fromUtf8("\u2717"); diagStatus = "failed"; break;
         }
 
         QLabel *lblIcon = new QLabel(icon);
-        lblIcon->setStyleSheet(QString("color: %1; font-weight: bold;").arg(iconColor));
+        lblIcon->setObjectName("repoDiagIcon");
+        lblIcon->setProperty("diagStatus", diagStatus);
         lblIcon->setFixedWidth(16);
         stepRow->addWidget(lblIcon);
 
@@ -368,9 +335,8 @@ void RepoDetailPanel::showDiagnoseResult(const DiagnoseResult &result, QVBoxLayo
 
     if (!result.suggestion.isEmpty()) {
         QLabel *lblSuggestion = new QLabel(result.suggestion);
+        lblSuggestion->setObjectName("repoSuggestion");
         lblSuggestion->setWordWrap(true);
-        QString suggColor = sv ? sv->value("@warningColor").toString() : QString();
-        lblSuggestion->setStyleSheet(QString("color: %1; font-style: italic;").arg(suggColor));
         targetLayout->insertWidget(targetLayout->count() - 1, lblSuggestion);
     }
 

@@ -315,40 +315,31 @@ void NetworkDiagWidget::onDiagnosticsFinished(DiagResult result)
     mLblLoading->hide();
     mBtnRetest->setEnabled(true);
 
-    QSettings *sv = AppManager::ins()->getStyleValues();
-    QString successColor = sv ? sv->value("@successColor").toString() : "#2ec27e";
-    QString failColor    = sv ? sv->value("@destructiveColor").toString() : "#E05454";
-    QString textColor    = sv ? sv->value("@color05").toString() : "#F0F2F5";
-    QString secColor     = sv ? sv->value("@color04").toString() : "#9A9DA6";
-
     for (const DiagCheck &check : result.checks) {
         QHBoxLayout *row = new QHBoxLayout;
         row->setSpacing(8);
 
         QLabel *icon = new QLabel;
-        if (check.passed) {
-            icon->setText("\xe2\x9c\x93");
-            icon->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 14px;").arg(successColor));
-        } else {
-            icon->setText("\xe2\x9c\x97");
-            icon->setStyleSheet(QString("color: %1; font-weight: bold; font-size: 14px;").arg(failColor));
-        }
+        icon->setObjectName("netDiagCheckIcon");
+        icon->setText(check.passed ? "\xe2\x9c\x93" : "\xe2\x9c\x97");
+        icon->setProperty("checkPassed", check.passed ? "true" : "false");
         icon->setFixedWidth(20);
         icon->setAlignment(Qt::AlignCenter);
         row->addWidget(icon);
 
         QLabel *label = new QLabel(check.label);
-        label->setStyleSheet(QString("color: %1; font-size: 13px;").arg(textColor));
+        label->setObjectName("netDiagCheckLabel");
         row->addWidget(label, 1);
 
         QLabel *value = new QLabel;
+        value->setObjectName("netDiagCheckValue");
         if (check.passed && check.latencyMs >= 0) {
             value->setText(QString("%1 ms").arg(check.latencyMs, 0, 'f', 1));
-            value->setStyleSheet(QString("color: %1; font-size: 13px;").arg(secColor));
+            value->setProperty("checkPassed", "true");
         } else if (!check.passed) {
             QString msg = check.errorMsg.isEmpty() ? tr("FAILED") : check.errorMsg;
             value->setText(msg);
-            value->setStyleSheet(QString("color: %1; font-size: 13px;").arg(failColor));
+            value->setProperty("checkPassed", "false");
         }
         value->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         row->addWidget(value);
@@ -365,7 +356,7 @@ void NetworkDiagWidget::onDiagnosticsFinished(DiagResult result)
 
         for (const QString &server : result.dnsServers) {
             QLabel *lbl = new QLabel(server);
-            lbl->setStyleSheet(QString("color: %1; font-size: 13px;").arg(textColor));
+            lbl->setObjectName("netDiagDnsServer");
             mDnsLayout->addWidget(lbl);
         }
     }
