@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.2.12] - 2026-04-08
 
 ### Changed
 - **QSS migration (FR-89):** Migrated 13 remaining inline `setStyleSheet()` calls in repo detail panel and network diagnostics widget to property-driven QSS selectors. All widget colors now come from theme tokens via the global stylesheet.
+- **Attribution:** Added explicit copyright lines for Oğuzhan İnan (original Stacer, 2017-2020) and S4 Solutions, LLC (Nexis fork, 2025-2026) to `LICENSE`. Reworded the homepage footer to lead with S4 Solutions maintenance while preserving Stacer attribution.
 
 ## [2.2.11] - 2026-04-01
 
