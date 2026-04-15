@@ -47,7 +47,7 @@ SettingsPage::SettingsPage(QWidget *parent, AppManager *appManager,
             QString("<html><head/><body><p>Nexis v%1 "
                     "<a href=\"https://github.com/s4solutionsllc\">"
                     "<span style=\" text-decoration: underline; color:%2;\">"
-                    "Luke Simpson</span></a></p></body></html>")
+                    "S4 Solutions, LLC</span></a></p></body></html>")
                 .arg(qApp->applicationVersion(), accent));
     };
     updateCreditLink();
