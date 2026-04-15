@@ -299,6 +299,8 @@ void App::init()
         );
     }
 
+    setMinimumSize(700, 480);
+
     ui->horizontalLayout->setContentsMargins(0,0,0,0);
     ui->horizontalLayout->setSpacing(0);
 

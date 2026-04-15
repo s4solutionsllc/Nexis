@@ -15,6 +15,7 @@
 #include <QGridLayout>
 #include <QToolButton>
 #include <QMenu>
+#include <QHeaderView>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -114,7 +115,9 @@ void SystemCleanerPage::init()
 
     // treview settings
     ui->treeWidgetScanResult->setColumnCount(2);
-    ui->treeWidgetScanResult->setColumnWidth(0, Dpi::scale(600));
+    ui->treeWidgetScanResult->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->treeWidgetScanResult->header()->setSectionResizeMode(1, QHeaderView::Fixed);
+    ui->treeWidgetScanResult->setColumnWidth(1, Dpi::scale(100));
 
     ui->treeWidgetScanResult->header()->setFixedHeight(Dpi::scale(30));
     ui->treeWidgetScanResult->setHeaderLabels({ tr("File Name"), tr("Size") });

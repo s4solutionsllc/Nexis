@@ -458,7 +458,7 @@ QLabel[accessibleName="dialog-title"] {
 
 #sidebar QPushButton {
     border: 0;
-    height: @dp36;
+    height: @dp32;
     border-radius: @dp6;
     color: @color06;
     margin: 1 @dp8;

@@ -328,6 +328,8 @@
 
 <!-- Claude Code: append new feature requests here. Use the next available FR-XX id. -->
 
+- [~] **FR-94 / #20: Responsive / compact window layout** — Window is too large on smaller high-DPI screens (e.g., 2160×1440 12-inch laptop), causing content like the System Cleaner "Start" button to be cut off. Users must manually drag the window to reach controls. Request: minimum window size reduction, compacter column/panel sizing, or responsive layout so all controls are reachable without scrolling or resizing on common laptop resolutions.
+
 - [x] **FR-86: Global "Unlock All" for drive SMART data elevation** — When multiple drives require elevated permissions to read SMART health data, users must currently click an individual "Unlock" button per drive. Add a single "Unlock All Drives" button at the top of the Storage section that elevates permissions and re-reads SMART data for all locked drives in one action. Per-drive buttons remain for granular control. Linux only (uses pkexec).
   - **Files:** `shared/nexis/Pages/HardwareInfo/hardware_info_page.h`, `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp`
   - **Complexity:** Low (UI-layer only; reuses existing `refreshDiskHealthElevated()` per drive)
