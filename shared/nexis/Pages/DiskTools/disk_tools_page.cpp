@@ -723,6 +723,7 @@ void DiskToolsPage::applyLargeOldFilterLayout(bool compact)
         row->addWidget(mBtnLargeOldCancel);
         row->addWidget(mBtnLargeOldScan);
     } else {
+        // Three rows — one group per row to avoid crowding
         auto *col = new QVBoxLayout(mLargeOldFilterWidget);
         col->setSpacing(8);
         col->setContentsMargins(0, 0, 0, 0);
@@ -732,21 +733,25 @@ void DiskToolsPage::applyLargeOldFilterLayout(bool compact)
         row1->addWidget(mLblSize);
         row1->addWidget(mSpinSize);
         row1->addWidget(mCbSizeUnit);
-        row1->addSpacing(16);
-        row1->addWidget(mLblNotAccessed);
-        row1->addWidget(mSpinAge);
-        row1->addWidget(mCbAgeUnit);
         row1->addStretch();
         col->addLayout(row1);
 
         auto *row2 = new QHBoxLayout();
         row2->setSpacing(8);
-        row2->addWidget(mLblMatch);
-        row2->addWidget(mCbFilterMode);
+        row2->addWidget(mLblNotAccessed);
+        row2->addWidget(mSpinAge);
+        row2->addWidget(mCbAgeUnit);
         row2->addStretch();
-        row2->addWidget(mBtnLargeOldCancel);
-        row2->addWidget(mBtnLargeOldScan);
         col->addLayout(row2);
+
+        auto *row3 = new QHBoxLayout();
+        row3->setSpacing(8);
+        row3->addWidget(mLblMatch);
+        row3->addWidget(mCbFilterMode);
+        row3->addStretch();
+        row3->addWidget(mBtnLargeOldCancel);
+        row3->addWidget(mBtnLargeOldScan);
+        col->addLayout(row3);
     }
 }
 
