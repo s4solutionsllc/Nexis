@@ -5,6 +5,10 @@
 #include "Services/file_search_service.h"
 #include <qdebug.h>
 #include <QClipboard>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QResizeEvent>
+#include <QVBoxLayout>
 
 SearchPage::SearchPage(QWidget *parent, InfoManager *infoManager,
                        SettingManager *settingManager, FileSearchService *searchService) :
@@ -60,6 +64,8 @@ void SearchPage::init()
 
     rowRole = SortRole;
     mSearchResultDateFormat = "dd.MM.yyyy hh:mm:ss";
+
+    applyAdvancedSearchLayout(false);
 
     ui->advanceSearchPane->setHidden(false);
     on_btnAdvancePaneToggle_clicked();
@@ -369,4 +375,133 @@ void SearchPage::on_tableFoundResults_doubleClicked(const QModelIndex &index)
 {
     QUrl folderPath = mSortFilterModel->index(index.row(), 1).data(rowRole).toUrl();
     QDesktopServices::openUrl(folderPath);
+}
+
+void SearchPage::applyAdvancedSearchLayout(bool compact)
+{
+    delete ui->advanceSearchPane->layout();
+    mAdvancedSearchCompact = compact;
+
+    if (!compact) {
+        // Two-column QGridLayout matching the original .ui structure
+        auto *grid = new QGridLayout(ui->advanceSearchPane);
+        grid->setSpacing(12);
+        grid->setContentsMargins(0, 5, 0, 2);
+
+        // Row 0 — checkboxes spanning all 8 columns
+        grid->addWidget(ui->checkSearchAsRoot,   0, 0);
+        grid->addWidget(ui->checkRegEx,          0, 1);
+        grid->addWidget(ui->checkCaseInsensitive,0, 2);
+        grid->setColumnStretch(3, 1);
+        grid->addWidget(ui->checkInvert,         0, 4);
+        grid->addWidget(ui->lblFileOrFolder,     0, 5);
+        grid->addWidget(ui->checkEmpty,          0, 6);
+        grid->setColumnStretch(7, 1);
+
+        // Row 1 — section labels
+        grid->addWidget(ui->lblTime,        1, 0, 1, 4);
+        grid->addWidget(ui->lblPermissions, 1, 4, 1, 3);
+
+        // Row 2 — Time controls (left) | Permission checkboxes (right)
+        auto *timeRow = new QHBoxLayout();
+        timeRow->setSpacing(10);
+        timeRow->addWidget(ui->cmbTimeType);
+        timeRow->addWidget(ui->cmbTimeCriteria);
+        timeRow->addWidget(ui->spinTime);
+        grid->addLayout(timeRow, 2, 0, 1, 4);
+
+        auto *permRow = new QHBoxLayout();
+        permRow->setSpacing(5);
+        permRow->addWidget(ui->checkPermReadable);
+        permRow->addWidget(ui->checkPermWritable);
+        permRow->addWidget(ui->checkPermExecutable);
+        grid->addLayout(permRow, 2, 4, 1, 3);
+
+        // Row 3 — Size label (left) | Owner label (right)
+        grid->addWidget(ui->lblSize,  3, 0, 1, 4);
+        grid->addWidget(ui->lblOwner, 3, 4, 1, 3);
+
+        // Row 4 — Size controls (left) | Owner combos (right)
+        auto *sizeRow = new QHBoxLayout();
+        sizeRow->setSpacing(10);
+        sizeRow->addWidget(ui->cmbSizeCriteria);
+        sizeRow->addWidget(ui->spinSize);
+        sizeRow->addWidget(ui->cmbSizeUnits);
+        grid->addLayout(sizeRow, 4, 0, 1, 4);
+
+        auto *ownerRow = new QHBoxLayout();
+        ownerRow->setSpacing(10);
+        ownerRow->addWidget(ui->cmbUsers);
+        ownerRow->addWidget(ui->cmbGroups);
+        grid->addLayout(ownerRow, 4, 4, 1, 3);
+    } else {
+        // Single-column VBoxLayout — all groups stacked vertically
+        auto *col = new QVBoxLayout(ui->advanceSearchPane);
+        col->setSpacing(8);
+        col->setContentsMargins(0, 5, 0, 2);
+
+        // Checkbox rows — split into two HBox rows
+        auto *cbRow1 = new QHBoxLayout();
+        cbRow1->setSpacing(12);
+        cbRow1->addWidget(ui->checkSearchAsRoot);
+        cbRow1->addWidget(ui->checkRegEx);
+        cbRow1->addWidget(ui->checkCaseInsensitive);
+        cbRow1->addStretch();
+        col->addLayout(cbRow1);
+
+        auto *cbRow2 = new QHBoxLayout();
+        cbRow2->setSpacing(12);
+        cbRow2->addWidget(ui->checkInvert);
+        cbRow2->addWidget(ui->lblFileOrFolder);
+        cbRow2->addWidget(ui->checkEmpty);
+        cbRow2->addStretch();
+        col->addLayout(cbRow2);
+
+        // Time group
+        col->addWidget(ui->lblTime);
+        auto *timeRow = new QHBoxLayout();
+        timeRow->setSpacing(10);
+        timeRow->addWidget(ui->cmbTimeType);
+        timeRow->addWidget(ui->cmbTimeCriteria);
+        timeRow->addWidget(ui->spinTime);
+        col->addLayout(timeRow);
+
+        // Permissions group
+        col->addWidget(ui->lblPermissions);
+        auto *permRow = new QHBoxLayout();
+        permRow->setSpacing(12);
+        permRow->addWidget(ui->checkPermReadable);
+        permRow->addWidget(ui->checkPermWritable);
+        permRow->addWidget(ui->checkPermExecutable);
+        permRow->addStretch();
+        col->addLayout(permRow);
+
+        // Size group
+        col->addWidget(ui->lblSize);
+        auto *sizeRow = new QHBoxLayout();
+        sizeRow->setSpacing(10);
+        sizeRow->addWidget(ui->cmbSizeCriteria);
+        sizeRow->addWidget(ui->spinSize);
+        sizeRow->addWidget(ui->cmbSizeUnits);
+        col->addLayout(sizeRow);
+
+        // Owner group
+        col->addWidget(ui->lblOwner);
+        auto *ownerRow = new QHBoxLayout();
+        ownerRow->setSpacing(10);
+        ownerRow->addWidget(ui->cmbUsers);
+        ownerRow->addWidget(ui->cmbGroups);
+        ownerRow->addStretch();
+        col->addLayout(ownerRow);
+    }
+}
+
+void SearchPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    if (ui->advanceSearchPane->isHidden())
+        return;
+    const bool compact = event->size().width() < 560;
+    if (compact != mAdvancedSearchCompact)
+        applyAdvancedSearchLayout(compact);
 }

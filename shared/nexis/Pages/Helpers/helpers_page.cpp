@@ -5,16 +5,18 @@
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
+#include <QHBoxLayout>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QResizeEvent>
+#include <QSizePolicy>
+#include <QVBoxLayout>
 
 #ifdef Q_OS_MACOS
 #include <QDialog>
-#include <QVBoxLayout>
 #include <QLabel>
 #include <QPlainTextEdit>
 #else
-#include <QHBoxLayout>
 #include <QLabel>
 #include <Managers/info_manager.h>
 #include <Info/power_profile_info.h>
@@ -45,6 +47,12 @@ void HelpersPage::init()
     ui->stackedWidget->addWidget(mOpenPortsWidget);
     ui->stackedWidget->addWidget(mFirewallWidget);
 
+    // Prevent buttons from shrinking below their text width
+    for (auto *btn : {ui->btnHostManage, ui->btnFlushDNS, ui->btnNetDiag,
+                      ui->btnOpenPorts, ui->btnFirewall}) {
+        btn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    }
+
     QList<QWidget *> shadowWidgets = {
         ui->btnHostManage,
         ui->btnFlushDNS,
@@ -61,12 +69,8 @@ void HelpersPage::init()
     for (auto *btn : {mBtnRebuildSpotlight, mBtnVerifyDisk, mBtnRebuildLaunchServices}) {
         btn->setCursor(Qt::PointingHandCursor);
         btn->setFocusPolicy(Qt::NoFocus);
+        btn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     }
-
-    int spacerIndex = ui->navLayout->count() - 1;
-    ui->navLayout->insertWidget(spacerIndex, mBtnRebuildSpotlight);
-    ui->navLayout->insertWidget(spacerIndex + 1, mBtnVerifyDisk);
-    ui->navLayout->insertWidget(spacerIndex + 2, mBtnRebuildLaunchServices);
 
     shadowWidgets << mBtnRebuildSpotlight << mBtnVerifyDisk << mBtnRebuildLaunchServices;
 
@@ -80,6 +84,20 @@ void HelpersPage::init()
 #endif
 
     Utilities::addDropShadow(shadowWidgets, 40);
+
+    // Collect all nav items in display order
+    mNavItems << ui->btnHostManage << ui->btnFlushDNS << ui->btnNetDiag
+              << ui->btnOpenPorts << ui->btnFirewall;
+#ifdef Q_OS_MACOS
+    mNavItems << mBtnRebuildSpotlight << mBtnVerifyDisk << mBtnRebuildLaunchServices;
+#else
+    if (mPowerProfileWidget)
+        mNavItems << mPowerProfileWidget;
+#endif
+
+    // Replace the static .ui navLayout with a managed one and compute the wrap threshold
+    applyNavLayout(false);
+    computeNavMinWidth();
 }
 
 void HelpersPage::on_btnHostManage_clicked()
@@ -354,9 +372,6 @@ void HelpersPage::initPowerProfileUI()
     if (!hasBalanced)
         mBtnBalanced->hide();
 
-    int spacerIndex = ui->navLayout->count() - 1;
-    ui->navLayout->insertWidget(spacerIndex, mPowerProfileWidget);
-
     if (!data.conflictWarning.isEmpty()) {
         mLblConflictWarning = new QLabel(data.conflictWarning);
         mLblConflictWarning->setObjectName("powerProfileWarning");
@@ -380,3 +395,70 @@ void HelpersPage::updatePowerProfileButtons()
 
 }
 #endif
+
+void HelpersPage::computeNavMinWidth()
+{
+    mNavMinWidth = qMax(0, mNavItems.count() - 1) * 12;
+    for (auto *w : mNavItems)
+        mNavMinWidth += w->sizeHint().width();
+    mNavMinWidth += 20;
+}
+
+void HelpersPage::applyNavLayout(bool compact)
+{
+    delete ui->nav->layout();
+    mNavCompact = compact;
+
+    if (!compact) {
+        auto *row = new QHBoxLayout(ui->nav);
+        row->setSpacing(12);
+        row->setContentsMargins(0, 0, 0, 0);
+        for (auto *w : mNavItems) {
+            w->setParent(ui->nav);
+            row->addWidget(w, 0, Qt::AlignLeft);
+        }
+        row->addStretch();
+    } else {
+        auto *col = new QVBoxLayout(ui->nav);
+        col->setSpacing(8);
+        col->setContentsMargins(0, 0, 0, 0);
+
+        // Determine split index: macOS (8 items) = 5, Linux (5 items) = 3
+        int splitIndex;
+        if (mNavItems.count() >= 8)
+            splitIndex = 5;
+        else if (mNavItems.count() >= 5)
+            splitIndex = 3;
+        else
+            splitIndex = (mNavItems.count() + 1) / 2;
+        splitIndex = qBound(1, splitIndex, mNavItems.count() - 1);
+
+        auto *row1 = new QHBoxLayout();
+        row1->setSpacing(12);
+        for (int i = 0; i < splitIndex; ++i) {
+            mNavItems[i]->setParent(ui->nav);
+            row1->addWidget(mNavItems[i], 0, Qt::AlignLeft);
+        }
+        row1->addStretch();
+        col->addLayout(row1);
+
+        auto *row2 = new QHBoxLayout();
+        row2->setSpacing(12);
+        for (int i = splitIndex; i < mNavItems.count(); ++i) {
+            mNavItems[i]->setParent(ui->nav);
+            row2->addWidget(mNavItems[i], 0, Qt::AlignLeft);
+        }
+        row2->addStretch();
+        col->addLayout(row2);
+    }
+}
+
+void HelpersPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    if (mNavItems.isEmpty())
+        return;
+    const bool compact = width() < mNavMinWidth;
+    if (compact != mNavCompact)
+        applyNavLayout(compact);
+}

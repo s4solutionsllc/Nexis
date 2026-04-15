@@ -18,6 +18,7 @@
 #include <QSpinBox>
 #include <QStandardPaths>
 #include <QTreeWidget>
+#include <QResizeEvent>
 #include <QVBoxLayout>
 #include <QtConcurrent>
 
@@ -166,56 +167,43 @@ void DiskToolsPage::buildLargeOldPage()
     dirLayout->addLayout(dirBtnLayout);
     layout->addWidget(dirFrame);
 
-    // Filter row
-    auto *filterLayout = new QHBoxLayout();
-    filterLayout->setSpacing(8);
+    // Filter container — layout rebuilt dynamically in applyLargeOldFilterLayout()
+    mLargeOldFilterWidget = new QWidget(ui->pageLargeOld);
 
-    filterLayout->addWidget(new QLabel(tr("Size >="), this));
-    mSpinSize = new QSpinBox(this);
+    mLblSize = new QLabel(tr("Size >="), mLargeOldFilterWidget);
+    mSpinSize = new QSpinBox(mLargeOldFilterWidget);
     mSpinSize->setRange(1, 99999);
     mSpinSize->setValue(100);
-    filterLayout->addWidget(mSpinSize);
 
-    mCbSizeUnit = new QComboBox(this);
+    mCbSizeUnit = new QComboBox(mLargeOldFilterWidget);
     mCbSizeUnit->addItems({"MB", "GB"});
-    filterLayout->addWidget(mCbSizeUnit);
 
-    filterLayout->addSpacing(16);
-
-    filterLayout->addWidget(new QLabel(tr("Not accessed in >="), this));
-    mSpinAge = new QSpinBox(this);
+    mLblNotAccessed = new QLabel(tr("Not accessed in >="), mLargeOldFilterWidget);
+    mSpinAge = new QSpinBox(mLargeOldFilterWidget);
     mSpinAge->setRange(1, 99999);
     mSpinAge->setValue(180);
-    filterLayout->addWidget(mSpinAge);
 
-    mCbAgeUnit = new QComboBox(this);
+    mCbAgeUnit = new QComboBox(mLargeOldFilterWidget);
     mCbAgeUnit->addItems({tr("days"), tr("months"), tr("years")});
-    filterLayout->addWidget(mCbAgeUnit);
 
-    filterLayout->addSpacing(16);
-
-    filterLayout->addWidget(new QLabel(tr("Match:"), this));
-    mCbFilterMode = new QComboBox(this);
+    mLblMatch = new QLabel(tr("Match:"), mLargeOldFilterWidget);
+    mCbFilterMode = new QComboBox(mLargeOldFilterWidget);
     mCbFilterMode->addItems({tr("Either"), tr("Large only"), tr("Old only")});
-    filterLayout->addWidget(mCbFilterMode);
 
-    filterLayout->addStretch();
-
-    mBtnLargeOldCancel = new QPushButton(tr("Cancel"), this);
+    mBtnLargeOldCancel = new QPushButton(tr("Cancel"), mLargeOldFilterWidget);
     mBtnLargeOldCancel->setCursor(Qt::PointingHandCursor);
     mBtnLargeOldCancel->hide();
     connect(mBtnLargeOldCancel, &QPushButton::clicked, this, [this]() {
         mLargeOldCancelled.storeRelaxed(1);
     });
-    filterLayout->addWidget(mBtnLargeOldCancel);
 
-    mBtnLargeOldScan = new QPushButton(tr("Scan"), this);
+    mBtnLargeOldScan = new QPushButton(tr("Scan"), mLargeOldFilterWidget);
     mBtnLargeOldScan->setObjectName("btnScan");
     mBtnLargeOldScan->setCursor(Qt::PointingHandCursor);
     connect(mBtnLargeOldScan, &QPushButton::clicked, this, &DiskToolsPage::onLargeOldScan);
-    filterLayout->addWidget(mBtnLargeOldScan);
 
-    layout->addLayout(filterLayout);
+    applyLargeOldFilterLayout(false);
+    layout->addWidget(mLargeOldFilterWidget);
 
     // Status
     mLblLargeOldStatus = new QLabel(this);
@@ -711,4 +699,63 @@ void DiskToolsPage::updateDupSelection()
 
 void DiskToolsPage::refreshThemeColors()
 {
+}
+
+void DiskToolsPage::applyLargeOldFilterLayout(bool compact)
+{
+    delete mLargeOldFilterWidget->layout();
+    mLargeOldFilterCompact = compact;
+
+    if (!compact) {
+        auto *row = new QHBoxLayout(mLargeOldFilterWidget);
+        row->setSpacing(8);
+        row->addWidget(mLblSize);
+        row->addWidget(mSpinSize);
+        row->addWidget(mCbSizeUnit);
+        row->addSpacing(16);
+        row->addWidget(mLblNotAccessed);
+        row->addWidget(mSpinAge);
+        row->addWidget(mCbAgeUnit);
+        row->addSpacing(16);
+        row->addWidget(mLblMatch);
+        row->addWidget(mCbFilterMode);
+        row->addStretch();
+        row->addWidget(mBtnLargeOldCancel);
+        row->addWidget(mBtnLargeOldScan);
+    } else {
+        auto *col = new QVBoxLayout(mLargeOldFilterWidget);
+        col->setSpacing(8);
+        col->setContentsMargins(0, 0, 0, 0);
+
+        auto *row1 = new QHBoxLayout();
+        row1->setSpacing(8);
+        row1->addWidget(mLblSize);
+        row1->addWidget(mSpinSize);
+        row1->addWidget(mCbSizeUnit);
+        row1->addSpacing(16);
+        row1->addWidget(mLblNotAccessed);
+        row1->addWidget(mSpinAge);
+        row1->addWidget(mCbAgeUnit);
+        row1->addStretch();
+        col->addLayout(row1);
+
+        auto *row2 = new QHBoxLayout();
+        row2->setSpacing(8);
+        row2->addWidget(mLblMatch);
+        row2->addWidget(mCbFilterMode);
+        row2->addStretch();
+        row2->addWidget(mBtnLargeOldCancel);
+        row2->addWidget(mBtnLargeOldScan);
+        col->addLayout(row2);
+    }
+}
+
+void DiskToolsPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    if (!mLargeOldFilterWidget)
+        return;
+    const bool compact = event->size().width() < 720;
+    if (compact != mLargeOldFilterCompact)
+        applyLargeOldFilterLayout(compact);
 }

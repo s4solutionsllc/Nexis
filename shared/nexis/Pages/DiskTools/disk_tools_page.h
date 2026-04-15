@@ -16,6 +16,7 @@ class QLineEdit;
 class QListWidget;
 class QProgressBar;
 class QPushButton;
+class QResizeEvent;
 class AppManager;
 class SignalMapper;
 
@@ -54,6 +55,8 @@ private:
     void buildLargeOldPage();
     void buildDuplicatePage();
     void refreshThemeColors();
+    void applyLargeOldFilterLayout(bool compact);
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     Ui::DiskToolsPage *ui;
@@ -67,7 +70,12 @@ private:
     QListWidget *mDirListLargeOld;
     QListWidget *mDirListDup;
 
-    // Large & Old mode
+    // Large & Old mode — filter widgets
+    QLabel *mLblSize = nullptr;
+    QLabel *mLblNotAccessed = nullptr;
+    QLabel *mLblMatch = nullptr;
+    QWidget *mLargeOldFilterWidget = nullptr;
+    bool mLargeOldFilterCompact = false;
     QSpinBox *mSpinSize;
     QComboBox *mCbSizeUnit;
     QSpinBox *mSpinAge;

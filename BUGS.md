@@ -701,6 +701,11 @@
   - **Description:** Two UX regressions in FR-86: (1) "Unlock All Drives" calls `pkexec smartctl` once per drive, triggering a separate password prompt for each. (2) "Make Permanent" (setcap) is a separate button requiring a second authentication. User wants one password prompt that unlocks all drives, with an optional "Make Permanent" checkbox to apply setcap in the same elevation. Fix: batch all smartctl calls into a single `pkexec sh -c "..."` invocation; replace the two-button layout with one "Unlock All" button that shows a confirmation dialog with a "Make Permanent" checkbox.
   - **Resolved:** (d99557a) `refreshHealthElevatedBatch()` added to `DiskHealthInfo` base + Linux impl; `splitSmartctlOutput()` JSON splitter handles concatenated output. Single `pkexec sh -c "..."` covers all drives ± setcap. `SmartPermissionDialog` replaces two-button bar; `onMakeSmartPermanent()` removed.
 
+- [x] **BUG-108: Layout rows jam at small window widths — Disk Tools, Search, Helpers** (LOW)
+  - **Resolved:** Disk Tools filter row, Search Advanced Search pane, and Helpers nav buttons now dynamically reflow at narrow widths. Buttons enforce minimum text width via QSizePolicy::Minimum.
+  - **File:** `shared/nexis/Pages/DiskTools/disk_tools_page.cpp`
+  - **Description:** The "Large & Old Files" filter row (Size >=, Not accessed in >=, Match) is a single `QHBoxLayout` requiring ~642px minimum width. At the 700px window minimum (480px content area with expanded sidebar), all three filter groups are visually jammed together. Fix: wrap into two rows when page width < 720px.
+
 - [x] **BUG-99 / #15: System Theme tray icon still not working in AppImage** (MEDIUM)
   - **File:** `shared/nexis/main.cpp`
   - **Description:** BUG-97 added XDG icon search paths for AppImage, but `QIcon::fromTheme()` also needs the correct icon *theme name* to search within. AppImage bundles Qt with xcb (no GTK platform plugin), so `QIcon::themeName()` returns empty and falls back to "Adwaita" — which doesn't contain `utilities-system-monitor`. The system's actual theme (e.g., Papirus-Dark) is never consulted even though its icons are reachable on disk. GitHub issue [#15](https://github.com/s4solutionsllc/Nexis/issues/15).

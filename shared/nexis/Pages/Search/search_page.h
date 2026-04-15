@@ -15,6 +15,8 @@
 #include <QMovie>
 #include <QDesktopServices>
 
+class QResizeEvent;
+
 class FileSearchService;
 
 namespace Ui {
@@ -64,6 +66,10 @@ private:
     QMenu mTableRowMenu;
     QString mSearchResultDateFormat;
     int rowRole;
+
+    bool mAdvancedSearchCompact = false;
+    void applyAdvancedSearchLayout(bool compact);
+    void resizeEvent(QResizeEvent *event) override;
 };
 
 #endif // SEARCH_PAGE_H

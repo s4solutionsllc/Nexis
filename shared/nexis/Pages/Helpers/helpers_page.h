@@ -1,12 +1,14 @@
 #ifndef HELPERS_PAGE_H
 #define HELPERS_PAGE_H
 
+#include <QList>
 #include <QWidget>
 #include "host_manage.h"
 #include "utilities.h"
 
 class QPushButton;
 class QLabel;
+class QResizeEvent;
 class NetworkDiagWidget;
 class OpenPortsWidget;
 class FirewallWidget;
@@ -35,6 +37,10 @@ private slots:
     void onPowerProfileClicked();
     void init();
 
+    void applyNavLayout(bool compact);
+    void computeNavMinWidth();
+    void resizeEvent(QResizeEvent *event) override;
+
 private:
     Ui::HelpersPage *ui;
 
@@ -42,6 +48,10 @@ private:
     NetworkDiagWidget *mNetworkDiagWidget;
     OpenPortsWidget *mOpenPortsWidget;
     FirewallWidget *mFirewallWidget;
+
+    QList<QWidget*> mNavItems;
+    bool mNavCompact = false;
+    int mNavMinWidth = 0;
 
 #ifdef Q_OS_MACOS
     QPushButton *mBtnRebuildSpotlight = nullptr;

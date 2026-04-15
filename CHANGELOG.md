@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Compact window layout (FR-94):** Resolved window-too-large issues on small high-DPI screens (e.g., 2160×1440 12-inch laptops). System Cleaner Scan button is now visible without resizing or dragging. Changes: reduced System Cleaner top spacer (100 px → 20 px) and pre-scan fixed spacer (30 px → 10 px); scan results Size column is always visible via proportional column sizing (no more hard-coded 600 px filename column); empty-state placeholder height reduced from 200 px to 100 px on Startup Apps, Services, APT Repository Manager, and Uninstaller; sidebar button height reduced from 36 px to 32 px; window minimum size enforced at 700×480 px.
+- **Responsive row wrapping (BUG-108):** Three pages now dynamically reflow their controls at narrow window widths. Disk Tools "Large & Old Files" filter row splits into two rows (Size + Age / Match + Scan) when page width drops below 720 px. Search Advanced Search pane switches from a two-column grid to a stacked single-column layout below 560 px. Helpers navigation button row wraps into two rows when all buttons no longer fit on one line; navigation buttons also enforce a minimum width so text is never clipped.
 
 ## [2.2.12] - 2026-04-08
 
