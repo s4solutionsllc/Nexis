@@ -113,7 +113,7 @@ Then launch Nexis normally. The app will create a fresh lock file on startup.
 
 If you encounter an issue not covered here, please report it on GitHub:
 
-1. Go to the [Nexis Issues page](https://github.com/nicholasng-7642/Nexis/issues) on GitHub.
+1. Go to the [Nexis Issues page](https://github.com/s4solutionsllc/Nexis/issues) on GitHub.
 2. Click **New Issue** and choose the **Bug Report** template.
 3. Include as much detail as possible:
    - Your operating system and version
@@ -126,7 +126,7 @@ You can also reach the Issues page directly from within Nexis by clicking the **
 
 ## Building from Source
 
-If you need to build Nexis from source (for example, to test a fix or run on an unsupported distribution), see the installation instructions on the [Getting Started](./01-getting-started) page for a quick guide. For full build system details, visit the [Nexis GitHub repository](https://github.com/nicholasng-7642/Nexis).
+If you need to build Nexis from source (for example, to test a fix or run on an unsupported distribution), see the installation instructions on the [Getting Started](./01-getting-started) page for a quick guide. For full build system details, visit the [Nexis GitHub repository](https://github.com/s4solutionsllc/Nexis).
 
 ## What's Next
 

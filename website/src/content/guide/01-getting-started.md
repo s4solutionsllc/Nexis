@@ -17,7 +17,7 @@ This guide walks you through installation and introduces the main parts of the a
 
 **Debian / Ubuntu (.deb)**
 
-Download the latest `.deb` package from the [Releases page](https://github.com/nicholasng-7642/Nexis/releases) and install it:
+Download the latest `.deb` package from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases) and install it:
 
 ```bash
 sudo dpkg -i nexis_*.deb
@@ -37,7 +37,7 @@ chmod +x Nexis-*.AppImage
 
 ### macOS
 
-Download the `.dmg` file from the [Releases page](https://github.com/nicholasng-7642/Nexis/releases). Open it and drag **Nexis** into your **Applications** folder. On first launch, macOS may ask you to confirm you want to open an app from an identified developer.
+Download the `.dmg` file from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases). Open it and drag **Nexis** into your **Applications** folder. On first launch, macOS may ask you to confirm you want to open an app from an identified developer.
 
 > **macOS:** Nexis runs natively on both Intel and Apple Silicon Macs. No Rosetta translation is needed.
 
@@ -46,7 +46,7 @@ Download the `.dmg` file from the [Releases page](https://github.com/nicholasng-
 If you prefer to compile Nexis yourself, make sure you have **Qt 6**, **CMake 3.16+**, and a C++17-capable compiler installed.
 
 ```bash
-git clone https://github.com/nicholasng-7642/Nexis.git
+git clone https://github.com/s4solutionsllc/Nexis.git
 cd Nexis
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j$(nproc)
