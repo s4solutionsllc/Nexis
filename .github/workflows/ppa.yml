@@ -91,7 +91,7 @@ jobs:
 
       - name: Update changelog for series
         env:
-          DEBEMAIL: luke@s4solutionsllc.com
+          DEBEMAIL: luke@s4solutions.ai
           DEBFULLNAME: Luke Simpson
         run: |
           TAG_VERSION="${{ steps.version.outputs.VERSION }}"
