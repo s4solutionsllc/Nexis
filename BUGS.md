@@ -714,4 +714,4 @@
 - [x] **BUG-109: APT Repo Manager "Available Updates" indicator does not recenter/realign on window resize** (LOW)
   - **File:** `shared/nexis/app.cpp`, `shared/nexis/app.h`
   - **Description:** The small green "available updates" counter badge over the Homebrew/APT Source Manager sidebar button (and the System Cleaner size badge) lost alignment with its button when the main window was resized. Root cause: `App::repositionBadges()` (which absolute-positions the badges via `badge->move()`) was wired to count changes, sidebar collapse animations, and section toggles, but not to window resize events — `App` had no `resizeEvent()` override.
-  - **Resolved:** Added `App::resizeEvent()` override that forwards to `QMainWindow::resizeEvent()` and then calls `repositionBadges()`. Covers both `mUpdatesBadge` and `mCleanerBadge` since they share the helper.
+  - **Resolved:** (1dd9195) Added `App::resizeEvent()` override that forwards to `QMainWindow::resizeEvent()` and then calls `repositionBadges()`. Covers both `mUpdatesBadge` and `mCleanerBadge` since they share the helper.
