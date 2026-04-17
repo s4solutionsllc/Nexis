@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.14] - 2026-04-17
+
+### Changed
+- **GPU selector UX (FR-95):** The Dashboard GPU tile no longer displays a permanent dropdown below the gauge. On multi-GPU systems a gear icon appears on the tile; clicking it opens a popup menu of available GPUs, and selecting one immediately dismisses the menu. The tile's subtitle continues to show the active GPU name. Behaviour unifies with the existing disk/temp/fan selectors and preserves all persistence (`SettingManager::setGpuDeviceId`), subtitle updates, sparkline reset on switch (BUG-71 guard), kiosk mode, and tile-style-change handling.
+
 ## [2.2.13] - 2026-04-15
 
 ### Fixed

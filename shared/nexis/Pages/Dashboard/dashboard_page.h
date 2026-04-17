@@ -1,7 +1,6 @@
 #ifndef DASHBOARDPAGE_H
 #define DASHBOARDPAGE_H
 
-#include <QComboBox>
 #include <QMenu>
 #include <QPushButton>
 #include <QLabel>
@@ -70,7 +69,7 @@ private slots:
     void onFanSensorSelected(QAction *action);
     void onGpuUpdated(const QList<GpuDevice> &gpus);
     void onTempSensorSelected(QAction *action);
-    void onGpuDeviceChanged(int index);
+    void onGpuDeviceSelected(QAction *action);
     void onDiskSelected(QAction *action);
     void onBatteryUpdated(const BatteryData &bat);
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
@@ -111,7 +110,7 @@ private:
     HealthScoreTile *mHealthTile;
     NetworkTile *mNetworkTile;
 
-    QComboBox *mCmbGpuDevice;
+    QMenu *mGpuDeviceMenu;
     QMenu *mDiskMenu;
     QMenu *mTempSensorMenu;
     QMenu *mFanSensorMenu;

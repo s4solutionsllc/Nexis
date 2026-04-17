@@ -41,7 +41,7 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mFanTile(nullptr),
     mHealthTile(nullptr),
     mNetworkTile(nullptr),
-    mCmbGpuDevice(new QComboBox(this)),
+    mGpuDeviceMenu(new QMenu(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
     mSettingManager(settingManager ? settingManager : SettingManager::ins()),
     mAppManager(appManager ? appManager : AppManager::ins()),
@@ -242,23 +242,16 @@ void DashboardPage::init()
                 this, &DashboardPage::updateFanTile);
     }
 
-    // GPU device combo box
+    // GPU device selector menu (attached to tile gear button in setupTileGearMenu)
     if (im->hasGpu()) {
         QList<GpuDevice> gpus = im->getGpuDevices();
         bool multiGpu = gpus.size() > 1;
-        for (const GpuDevice &g : gpus) {
-            QString label = multiGpu
-                ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
-                : g.name;
-            mCmbGpuDevice->addItem(label);
-        }
 
         QString savedGpuId = mSettingManager->getGpuDeviceId();
         if (!savedGpuId.isEmpty()) {
             bool found = false;
             for (int i = 0; i < gpus.size(); ++i) {
                 if (gpus.at(i).name == savedGpuId) {
-                    mCmbGpuDevice->setCurrentIndex(i);
                     mSelectedGpuIndex = i;
                     found = true;
                     break;
@@ -268,6 +261,17 @@ void DashboardPage::init()
                 qWarning() << "Saved GPU device" << savedGpuId << "not found, falling back to first device";
         }
 
+        for (int i = 0; i < gpus.size(); ++i) {
+            const GpuDevice &g = gpus.at(i);
+            QString label = multiGpu
+                ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
+                : g.name;
+            QAction *a = mGpuDeviceMenu->addAction(label);
+            a->setCheckable(true);
+            a->setData(i);
+            a->setChecked(i == mSelectedGpuIndex);
+        }
+
         if (mSelectedGpuIndex >= 0 && mSelectedGpuIndex < gpus.size()) {
             const GpuDevice &g = gpus.at(mSelectedGpuIndex);
             mGpuTile->setSubtitle(multiGpu
@@ -275,22 +279,12 @@ void DashboardPage::init()
                 : g.name);
         }
 
-        if (!multiGpu)
-            mCmbGpuDevice->hide();
-        else {
-            mCmbGpuDevice->setObjectName("cmbGpuDevice");
-            mCmbGpuDevice->setCursor(Qt::PointingHandCursor);
-            mCmbGpuDevice->setFocusPolicy(Qt::NoFocus);
-            mCmbGpuDevice->setMaximumWidth(200);
-            mGpuTile->layout()->addWidget(mCmbGpuDevice);
-        }
+        setupTileGearMenu("gpu", mGpuTile);
 
-        connect(mCmbGpuDevice, &QComboBox::currentIndexChanged,
-                this, &DashboardPage::onGpuDeviceChanged);
+        connect(mGpuDeviceMenu, &QMenu::triggered,
+                this, &DashboardPage::onGpuDeviceSelected);
         connect(mRefresh, &DataRefreshService::gpuUpdated,
                 this, &DashboardPage::onGpuUpdated);
-    } else {
-        mCmbGpuDevice->hide();
     }
 
     // Battery gauge
@@ -831,9 +825,13 @@ void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
     }
 }
 
-void DashboardPage::onGpuDeviceChanged(int index)
+void DashboardPage::onGpuDeviceSelected(QAction *action)
 {
+    int index = action->data().toInt();
     mSelectedGpuIndex = index;
+
+    for (QAction *a : mGpuDeviceMenu->actions())
+        a->setChecked(a == action);
 
     QList<GpuDevice> gpus = im->getGpuDevices();
     bool multiGpu = gpus.size() > 1;
@@ -1076,12 +1074,6 @@ void DashboardPage::onResetLayout()
         QString id = w->tileId();
         QString defStyle = defaultStyle(id);
         if (w->currentStyle() != defStyle && !availableStyles(id).isEmpty()) {
-            // Detach GPU combo box if needed
-            if (id == "gpu" && mCmbGpuDevice->parentWidget() == mGpuTile) {
-                mGpuTile->layout()->removeWidget(mCmbGpuDevice);
-                mCmbGpuDevice->setParent(this);
-            }
-
             MetricTileBase *newTile = createTile(id, defStyle);
             w->setInnerWidget(newTile);
             w->setCurrentStyle(defStyle);
@@ -1096,9 +1088,6 @@ void DashboardPage::onResetLayout()
             else if (id == "health") mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
             setupTileGearMenu(id, newTile);
-
-            if (id == "gpu" && im->hasGpu() && im->getGpuDevices().size() > 1)
-                newTile->layout()->addWidget(mCmbGpuDevice);
 
             w->clearCustomizationSection();
             setupCustomizationMenu(w, defStyle);
@@ -1585,6 +1574,10 @@ void DashboardPage::setupTileGearMenu(const QString &id, MetricTileBase *tile)
         tile->gearButton()->setMenu(mFanSensorMenu);
         tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
         tile->setGearVisible(im->getFanSensors().size() >= 2);
+    } else if (id == "gpu" && im->hasGpu()) {
+        tile->gearButton()->setMenu(mGpuDeviceMenu);
+        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
+        tile->setGearVisible(im->getGpuDevices().size() >= 2);
     }
 }
 
@@ -1602,12 +1595,6 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
 
     if (wrapper->currentStyle() == style)
         return;
-
-    // Detach GPU combo box before old tile is destroyed
-    if (id == "gpu" && mCmbGpuDevice->parentWidget() == mGpuTile) {
-        mGpuTile->layout()->removeWidget(mCmbGpuDevice);
-        mCmbGpuDevice->setParent(this);
-    }
 
     MetricTileBase *newTile = createTile(id, style);
 
@@ -1627,10 +1614,6 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
 
     // Re-attach gear menus
     setupTileGearMenu(id, newTile);
-
-    // Re-add GPU combo box to the new tile
-    if (id == "gpu" && im->hasGpu() && im->getGpuDevices().size() > 1)
-        newTile->layout()->addWidget(mCmbGpuDevice);
 
     // Re-apply display mode
     applyDisplayModeForSpan(wrapper);

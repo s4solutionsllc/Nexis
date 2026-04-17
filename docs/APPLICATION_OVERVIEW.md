@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-03-25 | Version 2.2.1
+> Last updated: 2026-04-17 | Version 2.2.14
 
 ---
 
@@ -55,7 +55,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 3 themes (Dark, Light, Auto)
 - 34 languages
 - 17 test suites with ~242 test methods (Qt Test + CTest)
-- 87 features implemented, 102 bugs fixed since fork
+- 88 features implemented, 102 bugs fixed since fork
 
 ---
 
@@ -109,7 +109,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - **Memory** — Independent `MetricTile` with sparkline history (1s refresh). Subtitle shows swap usage plus platform-specific breakdown: wired/active/compressed on macOS, available memory on Linux. On macOS, tile accent color dynamically reflects memory pressure state (green=normal, yellow=warning, red=critical) via `kern.memorystatus_vm_pressure_level` sysctl; on Linux, pressure derived from PSI or MemAvailable heuristic. User-set custom colors (FR-55) take priority over pressure indication.
 - **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health badge with verdict and numeric percentage (e.g., "Apple SSD: Good (92%)") via `setDriveHealth()` (5s refresh). Gear icon in top-right corner (visible when 2+ disks detected) opens a dropdown menu to switch the displayed disk; selection is persisted.
 - **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
-- **GPU** — Utilization percentage with device name subtitle, multi-GPU combo selector (1s refresh; hidden if no GPU detected)
+- **GPU** — Utilization percentage with device name subtitle. Gear icon in the top-right corner (visible when 2+ GPUs detected) opens a dropdown menu to switch the monitored device; selection is persisted (1s refresh; tile hidden if no GPU detected)
 - **Temperature** — Selectable sensor via gear icon menu (2+ sensors) with sensor name subtitle, sparkline history (1s refresh; hidden if no sensors)
 - **Fans** — Fan RPM with selectable sensor via gear icon menu (2+ fans), percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`), dedicated `fanUpdated` signal (1s refresh; hidden if no fans detected)
 - **Battery** — Charge level percentage (5s refresh; hidden if no battery)

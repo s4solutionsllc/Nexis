@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: 2026-03-20
+> Last updated: 2026-04-17
 
 ---
 
