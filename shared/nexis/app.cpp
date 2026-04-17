@@ -944,6 +944,12 @@ void App::updateSectionChevrons()
     }
 }
 
+void App::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    repositionBadges();
+}
+
 void App::repositionBadges()
 {
     auto positionBadge = [this](QPushButton *btn, QLabel *badge, QLabel *dot) {
