@@ -5,14 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.15] - 2026-04-17
+
+### Fixed
+- **Sidebar update badge alignment (BUG-109):** The green "available updates" counter badge (and the System Cleaner size badge) now re-snap to their sidebar buttons when the main window is resized. Previously these absolutely-positioned badges only repositioned on count changes, sidebar collapse, and section toggles — a window resize left them pinned at stale coordinates until another trigger fired. `App` now overrides `resizeEvent()` to call the existing `repositionBadges()` helper.
+
 ## [2.2.14] - 2026-04-17
 
 ### Changed
 - **GPU selector UX (FR-95):** The Dashboard GPU tile no longer displays a permanent dropdown below the gauge. On multi-GPU systems a gear icon appears on the tile; clicking it opens a popup menu of available GPUs, and selecting one immediately dismisses the menu. The tile's subtitle continues to show the active GPU name. Behaviour unifies with the existing disk/temp/fan selectors and preserves all persistence (`SettingManager::setGpuDeviceId`), subtitle updates, sparkline reset on switch (BUG-71 guard), kiosk mode, and tile-style-change handling.
 - **Tile gear icon placement (FR-95):** The shared `MetricTileBase::repositionGearButton()` now anchors the gear icon to the top-left, immediately to the right of the tile's title label, on all tiles with selectors (GPU, Disk, Temp, Fan) instead of the top-right corner. Position is measured via `QFontMetrics::horizontalAdvance()` on the title text so it stays tight to the label regardless of tile width.
-
-### Fixed
-- **Sidebar update badge alignment (BUG-109):** The green "available updates" counter badge (and the System Cleaner size badge) now re-snap to their sidebar buttons when the main window is resized. Previously these absolutely-positioned badges only repositioned on count changes, sidebar collapse, and section toggles — a window resize left them pinned at stale coordinates until another trigger fired. `App` now overrides `resizeEvent()` to call the existing `repositionBadges()` helper.
 
 ## [2.2.13] - 2026-04-15
 
