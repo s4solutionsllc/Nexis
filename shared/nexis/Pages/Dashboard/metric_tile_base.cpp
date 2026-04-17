@@ -124,8 +124,24 @@ void MetricTileBase::createGearButton()
 
 void MetricTileBase::repositionGearButton()
 {
-    if (mGearButton)
-        mGearButton->move(width() - mGearButton->width() - 10, 8);
+    if (!mGearButton)
+        return;
+
+    QLabel *titleLabel = findChild<QLabel*>("metricTileTitle");
+    if (!titleLabel)
+        titleLabel = findChild<QLabel*>("diskTileTitle");
+    if (!titleLabel)
+        titleLabel = findChild<QLabel*>("networkTileTitle");
+
+    if (titleLabel && titleLabel->width() > 0) {
+        const QRect titleRect = titleLabel->geometry();
+        const int textWidth = titleLabel->fontMetrics().horizontalAdvance(titleLabel->text());
+        const int x = titleRect.left() + textWidth + 6;
+        const int y = titleRect.top() + (titleRect.height() - mGearButton->height()) / 2;
+        mGearButton->move(x, y);
+    } else {
+        mGearButton->move(8, 8);
+    }
 }
 
 QToolButton *MetricTileBase::gearButton()

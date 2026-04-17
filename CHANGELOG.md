@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **GPU selector UX (FR-95):** The Dashboard GPU tile no longer displays a permanent dropdown below the gauge. On multi-GPU systems a gear icon appears on the tile; clicking it opens a popup menu of available GPUs, and selecting one immediately dismisses the menu. The tile's subtitle continues to show the active GPU name. Behaviour unifies with the existing disk/temp/fan selectors and preserves all persistence (`SettingManager::setGpuDeviceId`), subtitle updates, sparkline reset on switch (BUG-71 guard), kiosk mode, and tile-style-change handling.
+- **Tile gear icon placement (FR-95):** The shared `MetricTileBase::repositionGearButton()` now anchors the gear icon to the top-left, immediately to the right of the tile's title label, on all tiles with selectors (GPU, Disk, Temp, Fan) instead of the top-right corner. Position is measured via `QFontMetrics::horizontalAdvance()` on the title text so it stays tight to the label regardless of tile width.
 
 ## [2.2.13] - 2026-04-15
 
