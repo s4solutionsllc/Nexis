@@ -340,3 +340,263 @@
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.h`, `shared/nexis/Pages/Dashboard/dashboard_page.cpp`
   - **Complexity:** Low-Medium (UI-layer only; reuse existing `mCmbGpuDevice` as a popup widget triggered by a QToolButton, or substitute a QMenu populated from the device list).
   - **Resolved:** (b592412 + follow-up) GPU tile now uses the shared `MetricTileBase` gear button wired to `mGpuDeviceMenu` via `setupTileGearMenu("gpu", ...)`. Gear is only shown when `getGpuDevices().size() >= 2`; subtitle continues to display the active GPU name. Post-UAT refinement: `MetricTileBase::repositionGearButton()` now anchors the gear to the right of the title label text (top-left) across all tiles with selectors (GPU, Disk, Temp, Fan) instead of the top-right corner.
+
+## Performance & Efficiency (Apr 2026 audit)
+
+> Feature requests derived from the April 2026 codebase efficiency audit. Items tagged **Bundle** should be implemented together as a coherent sprint — shared files, shared testing, compound user-visible impact.
+
+### Bundle A — Cold Launch Sprint
+
+*Goal: cut time-to-interactive on app launch by ~1 second and reduce idle RAM footprint. Implement together — lazy page construction exposes follow-on blocking I/O opportunities.*
+
+- [ ] **FR-96: Defer disk health discovery off the main thread** — `InfoManager::ins()` constructor synchronously runs `diskutil list`, then `diskutil info -plist` per disk, then `smartctl -j -a` per non-Apple-Fabric drive during app startup before the first frame paints. On macOS this costs 300-1500 ms (much worse with spinning rust waking from sleep). Move `DiskHealthInfo*::discoverDrives()` to `QtConcurrent::run` triggered right after `App::show()`. Readers (Dashboard DiskTile, HardwareInfoPage) already handle "not yet populated" via `diskHealthUpdated` signal — guard remaining call sites against empty initial state.
+  - **User Description:** When you double-click Nexis, the splash screen disappears about a second faster. Today the app silently waits for every hard drive (especially slow external or spinning-rust drives) to report its health before showing you anything; this FR pushes that work to happen in the background so the window appears immediately and drive health fills in once ready.
+  - **Bundle:** A (with FR-97, FR-98). Compound impact is "perceived instant launch."
+  - **Files:** `shared/nexis/Managers/info_manager.cpp`, `macos/nexis-core/Info/disk_health_info.cpp`, `linux/nexis-core/Info/disk_health_info.cpp`
+  - **Complexity:** Small-Medium
+
+- [ ] **FR-97: Lazy page construction** — All 16 sidebar pages are instantiated eagerly in `App::init()` before the first frame paints (including `HardwareInfoPage` which does SMART / fan / battery I/O in its constructor, plus `SystemCleanerPage`, `DiskToolsPage`, `APTSourceManagerPage`). Most users visit 2-3 pages per session. Refactor `mListPages` to store factory lambdas and instantiate pages on first `pageClick()`. Keep Dashboard eagerly constructed (default landing page); defer everything else. Rewire cross-page signal connections to occur on first construction.
+  - **User Description:** Nexis starts faster and uses less memory when you're not using it fully. Right now, the app builds all 16 pages the moment you launch it, even if you only use Dashboard and Settings. This FR builds each page only when you first click it — so launching Nexis is faster, and pages you never visit don't take up memory.
+  - **Bundle:** A (with FR-96, FR-98). Uncovers follow-on deferrals.
+  - **Files:** `shared/nexis/app.cpp`, `shared/nexis/app.h`, page cross-references throughout `shared/nexis/Pages/`
+  - **Complexity:** Medium
+
+- [ ] **FR-98: Defer HardwareInfoPage initial population to first `showEvent`** — `HardwareInfoPage::init()` calls `populateStorage`, `populateFans`, `populateBattery` in the constructor, driving SMART lookups, sysfs fan reads, and battery queries on the main thread at app startup. Once FR-97 lazily constructs pages, move this work to a one-shot `showEvent` handler so drive/fan/battery panels populate only when the user navigates to Hardware Info.
+  - **User Description:** Once Nexis launches faster (FR-96, FR-97), the Hardware Info page shouldn't block startup by scanning drives and fans up front. This FR makes Hardware Info lazily gather its data the first time you open it — users who never visit Hardware Info pay nothing for its existence.
+  - **Bundle:** A (with FR-96, FR-97). Depends on FR-97 landing first.
+  - **Files:** `shared/nexis/Pages/HardwareInfo/hardware_info_page.cpp`, `.h`
+  - **Complexity:** Small (once FR-97 is in place)
+
+### Bundle B — Async Foundation Sprint
+
+*Goal: eliminate UI-thread blocking on shell commands and slow filesystem scans. One helper plus several callers — implement together so the debug assert doesn't flag partial migration.*
+
+- [ ] **FR-99: `CommandUtil::execAsync()` helper with UI-thread audit assert** — `CommandUtil::exec()` only offers a synchronous API; 167 call sites across 45 files opt into `QtConcurrent::run` piecemeal (or, often, don't). Add `CommandUtil::execAsync(cmd, args) -> QFuture<ExecResult>` returning a future that resolves with stdout/stderr/exitCode on the caller's thread via `QFutureWatcher`. Under `QT_DEBUG`, wire `Q_ASSERT(QThread::currentThread() != qApp->thread())` inside the sync `exec()` to catch regressions; gate behind a `NEXIS_ASSERT_ASYNC_EXEC` env var so release builds are unaffected.
+  - **User Description:** This is plumbing that makes other features possible. Today, any time Nexis asks the system something (run `diskutil`, `lscpu`, `nvidia-smi`…), the whole app can briefly freeze. This FR adds a standard "ask the system without freezing" helper and a safety net that catches the mistake before it ships. Users won't see it directly, but every subsequent performance fix builds on it.
+  - **Bundle:** B (with FR-100, FR-101, FR-102). Land FR-99 first — the others depend on the helper.
+  - **Files:** `shared/nexis-core/Utils/command_util_shared.cpp`, `.h`
+  - **Complexity:** Small
+
+- [ ] **FR-100: Replace `lscpu` fork with sysfs CPU frequency read on Linux** — `CpuInfoLinux::getAvgClock()` forks `bash -c "lscpu | grep 'CPU MHz'"` every fast tick (1 s), even when `/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq` is readable on modern kernels. Invert the fallback: read sysfs first, fall back to `lscpu` only when sysfs is unavailable. Cache the capability decision after first call (mirrors `CpuInfoMacOS::getAvgClock` pattern).
+  - **User Description:** The Dashboard's CPU tile updates every second. Today that update launches a shell command every single time — a small but constant tax. This FR reads the same number from a kernel file that costs almost nothing, smoothing out CPU usage especially on low-power laptops.
+  - **Bundle:** B.
+  - **Files:** `linux/nexis-core/Info/cpu_info.cpp`
+  - **Complexity:** Small
+
+- [ ] **FR-101: Run `QStorageInfo::mountedVolumes()` off the UI thread** — `DataRefreshService::onMediumTick` iterates `QStorageInfo::mountedVolumes()` every 5 s on the main thread; each iteration stats every mount including sleeping external drives and NFS/SMB mounts. With a slow NAS mounted, each tick can block for seconds. Move `DiskInfo::updateDiskInfo()` to `QtConcurrent::run` via the FR-99 helper and marshal results back through an existing signal.
+  - **User Description:** If you have a network drive mounted that's slow or asleep, Nexis currently stutters every five seconds while it waits for the drive to respond. This FR moves the disk-listing work to the background so the window stays smooth regardless of what's attached.
+  - **Bundle:** B. Depends on FR-99.
+  - **Files:** `shared/nexis/Managers/data_refresh_service.cpp`, `shared/nexis-core/Info/disk_info_shared.cpp`
+  - **Complexity:** Small
+
+- [ ] **FR-102: Persistent `nettop` / `/proc` process scan instead of per-tick forks** — `ProcessInfoMacOS::updateProcesses` spawns `nettop -P -d -L 1 -J bytes_in,bytes_out -t external` once per refresh on the main thread (`nettop` init cost ~50-150 ms per invocation). On Linux, `ProcessInfoLinux::updateProcesses` forks `ps ax -weo ...` each tick. Start a single long-lived `nettop -P -d -s<interval>` `QProcess` on first Processes-page activation, stream stdout, tear down on `pauseProcessTimer()`. On Linux, replace the `ps` fork with a direct `/proc` walk.
+  - **User Description:** The Processes page shows what's running on your computer. Today, every refresh restarts an underlying system tool from scratch — which is slow and causes the list to visibly stutter when it updates. This FR keeps the tool running continuously in the background, so the Processes page scrolls smoothly and updates feel instant.
+  - **Bundle:** B. Depends on FR-99.
+  - **Files:** `macos/nexis-core/Info/process_info.cpp`, `linux/nexis-core/Info/process_info.cpp`
+  - **Complexity:** Medium
+
+### Bundle C — Smart Polling Sprint
+
+*Goal: make Nexis cheap to leave open all day. Items compound — subscriber gating is most effective once cadence slowdown and occlusion detection are in place.*
+
+- [ ] **FR-103: Gate `DataRefreshService` work on active subscribers** — Every 1 s, `DataRefreshService::onFastTick` unconditionally runs `updateMemoryInfo()`, `updateNetworkBytes()`, `getDiskIO()`, `updateGpuInfo()`, `updateBatteryInfo()`, `getCpuPercents()`. Consumers gate on `mActive` in slots, but the expensive samples (notably `nvidia-smi`, `diskutil`) still run whether or not any visible widget cares. Track active subscribers per signal (or a simpler "any monitoring page active" flag set by `NexisPage::onPageActivated/Deactivated`); skip updates with zero listeners. CPU/memory/network must keep accumulating delta baselines regardless; GPU/battery/disk-I/O/fan can be fully gated.
+  - **User Description:** When you have Nexis open but you're sitting on the Settings page, the app shouldn't be probing your GPU and battery every second "just in case" — nothing on screen is using that data. This FR makes Nexis only do monitoring work that's actually being displayed, which lowers CPU use and extends battery life when you leave the app open in the background.
+  - **Bundle:** C (with FR-104, FR-105).
+  - **Files:** `shared/nexis/Managers/data_refresh_service.cpp`, `shared/nexis/Pages/nexis_page.h`
+  - **Complexity:** Medium
+
+- [ ] **FR-104: Slow temperature & fan polling to 3 s cadence** — `DataRefreshService` emits `tempUpdated` and `fanUpdated` at 1 Hz. Thermal readings and fan RPM change over seconds-to-minutes; 1 Hz buys almost nothing over 0.33 Hz but pays the sysfs/IOKit cost every tick. Move these onto a new 3 s cadence or piggyback on `mMediumTimer` (5 s). Shrink sparkline buffer sizes proportionally.
+  - **User Description:** Nexis reads your laptop's fan speed and temperature every second, but fans and temperatures don't actually change that fast. This FR reads them every three seconds instead — you won't notice any difference in the displayed values, but the app does measurably less background work.
+  - **Bundle:** C.
+  - **Files:** `shared/nexis/Managers/data_refresh_service.cpp`, temperature/fan tile sparkline buffers
+  - **Complexity:** Small
+
+- [ ] **FR-105: Low-power cadence when window is occluded or on battery** — `DataRefreshService::pause()` is all-or-nothing, only triggered by `sigAppVisibilityChanged(false)` (minimized to tray). If the window is visible but fully occluded by another app, or the laptop is on battery and idle, full 1 Hz polling continues. Hook `QEvent::WindowStateChange` and `QWindow::isExposed()` to detect occlusion; drop to 5 s fast / 30 s medium cadence when occluded. Optionally drop a further tier on battery (`BatteryInfo::isOnBattery`).
+  - **User Description:** When you're doing focused work and Nexis is hidden behind another window, or when you're running on battery trying to stretch the charge, Nexis shouldn't be polling your system at full speed. This FR slows Nexis down when it's out of sight — and slows it down further on battery — saving both CPU and battery life. It speeds right back up the moment you bring Nexis to the front.
+  - **Bundle:** C. Builds on FR-103.
+  - **Files:** `shared/nexis/Managers/data_refresh_service.cpp`, `shared/nexis/app.cpp`
+  - **Complexity:** Medium
+
+### Bundle D — NVIDIA Polling Consolidation
+
+*Standalone sprint; most visible on multi-GPU NVIDIA workstations.*
+
+- [ ] **FR-106: Batch & async `nvidia-smi` for GPU and fan queries** — `GpuInfoLinux::updateGpuInfo()` forks `nvidia-smi --query-gpu=utilization.gpu ... --id=<busId>` **once per NVIDIA device every 1 s** on the main thread (~30-80 ms per fork). `FanInfoLinux::readNvidiaSpeed()` repeats the same antipattern per fan. Replace with a single combined `nvidia-smi --query-gpu=index,utilization.gpu,fan.speed,memory.used,memory.total --format=csv,noheader,nounits` call covering all devices, run via FR-99 `CommandUtil::execAsync()`. Optionally follow up with a persistent `nvidia-smi -l 1` child process (zero fork overhead per tick).
+  - **User Description:** On a PC with NVIDIA graphics cards — especially two or more — the Dashboard's GPU tile currently causes a visible hitch every second because Nexis asks NVIDIA's driver for each card separately. This FR asks once and gets everything back at once, so multi-GPU workstations feel dramatically smoother.
+  - **Bundle:** D (standalone). Depends on FR-99.
+  - **Files:** `linux/nexis-core/Info/gpu_info.cpp`, `linux/nexis-core/Info/fan_info.cpp`
+  - **Complexity:** Small (batch + async); Medium (persistent child process)
+
+### Bundle E — Dashboard Render Polish
+
+*Standalone; nice-to-have but visible when many tiles are shown.*
+
+- [ ] **FR-107: Sparkline `replace()` instead of `clear()`+`append()` per tick** — `MetricTile::updateSparkline` does `mSeries->clear(); for (i...) mSeries->append(...)` every 1 s, triggering a chart relayout/redraw on every point. Maintain a fixed-size `std::array<double, 60>` + ring index (or pre-allocated `QList<QPointF>`), call `mSeries->replace(points)` once per tick for a single notification.
+  - **User Description:** The small line graphs under each Dashboard tile currently redraw from scratch every second. This FR updates them incrementally instead — visually identical result, but smoother animation and lighter CPU use when many tiles are visible.
+  - **Bundle:** E.
+  - **Files:** `shared/nexis/Pages/Dashboard/metric_tile.cpp`
+  - **Complexity:** Small
+
+- [ ] **FR-108: Skip `/proc/<pid>/io` reads when disk I/O columns are hidden** — `ProcessInfoLinux::updateProcesses` opens 300-800 `/proc/<pid>/io` files every refresh even though the four disk-I/O columns on the Processes page are hidden by default and most users sort by CPU. Query `horizontalHeader()->isSectionHidden()` for the I/O columns; skip per-PID io reads when all four are hidden. Optionally: only collect I/O for the top-N visible rows.
+  - **User Description:** The Processes page has four disk-I/O columns hidden by default. Even when hidden, Nexis still opens hundreds of system files every refresh to compute numbers nobody is looking at. This FR skips that work when the columns aren't shown — faster Processes page refreshes and less disk noise, especially on systems with lots of running programs.
+  - **Bundle:** E.
+  - **Files:** `linux/nexis-core/Info/process_info.cpp`, `shared/nexis/Pages/Processes/processes_page.cpp`
+  - **Complexity:** Small
+
+- [ ] **FR-109: Micro-optimizations — cached `isExecutable`, dedupe `diskutil`, persistent log file handle** — Three small independent wins: (a) `CommandUtil::isExecutable()` re-walks `PATH` on every call in `fan_info.cpp`, `gpu_info.cpp` — cache results in a static `QHash<QString,bool>`; (b) `DiskHealthInfoMacOS::discoverDrives` issues `diskutil info -plist` per whole-disk then dedupes by model name — dedupe *before* the info fork; (c) `main.cpp` `messageHandler` opens/closes the log file on every message — keep a static `QFile*` open for the process lifetime (mutex-guarded).
+  - **User Description:** A handful of small paper-cut inefficiencies that together make Nexis quieter and slightly faster. No single one of these is visible, but stacked they remove tens of unnecessary system calls per minute.
+  - **Bundle:** E (group of small items).
+  - **Files:** `shared/nexis-core/Utils/command_util_shared.cpp`, `macos/nexis-core/Info/disk_health_info.cpp`, `shared/nexis/main.cpp`
+  - **Complexity:** Small
+
+## Community-Sourced (Apr 2026 survey)
+
+> Feature candidates identified by a community survey of Stacer upstream, active forks (QuentiumYT), Reddit, HackerNews, and competitors (Mission Center, Stats.app, CleanMyMac, iStat Menus, BleachBit, Pearcleaner). Grouped into bundles that tell a coherent user story when shipped together.
+
+### Bundle F — Startup Transparency Sprint
+
+*Goal: make Nexis the best tool for understanding "what runs when my computer boots, and what's making it slow." Ship together for a single big Startup Apps page upgrade story.*
+
+- [ ] **FR-110: Boot-time analyzer** — Parse `systemd-analyze blame` + `systemd-analyze critical-chain` on Linux; `log show --predicate 'subsystem == "com.apple.SystemStarter"'` + `sysctl kern.boottime` on macOS. Display a ranked list with individual service load times and a "Startup Impact" column (High / Medium / Low) analogous to Windows Task Manager's Startup Impact. Pair visually with the existing Startup Apps page via a new "Boot Analysis" tab or linked sub-page. Source: [systemd-analyze guide](https://linuxmind.dev/2025/09/02/optimize-your-boot-analysis-with-systemd-analyze/), [Windows Startup Impact reference](https://www.winhelponline.com/blog/task-manager-startup-impact-calculated-bootckcl/).
+  - **User Description:** Ever wonder why your computer takes 30 seconds to become usable after login? This FR adds a ranked list of which system services and apps are actually taking the time — the same way Windows Task Manager's "Startup Impact" column does. Combined with the existing Startup Apps page, it's the one-stop shop for "what do I need to disable to boot faster?"
+  - **Bundle:** F (with FR-111). Both extend the Startup Apps page into a full "startup story."
+  - **Files:** `shared/nexis/Pages/StartupApps/` (new sub-page or tab), `shared/nexis-core/Info/boot_analysis_info.*` (new)
+  - **Platform:** Both
+  - **Complexity:** Medium
+
+- [ ] **FR-111: macOS Login Items & Background Tasks manager** — A macOS-only view that enumerates third-party LaunchAgents, LaunchDaemons, and SMAppService background items — the same data Apple exposes in System Settings > Login Items & Extensions on Ventura+. Show path, signing identity, developer team ID, and one-click disable (move plist to a `.disabled` folder or use `launchctl disable`). Nexis currently lists only `~/Library/LaunchAgents` in Startup Apps; this FR covers `/Library/LaunchAgents`, `/Library/LaunchDaemons`, and SMAppService items. Source: [Apple — Manage login items and background tasks](https://support.apple.com/guide/deployment/manage-login-items-background-tasks-mac-depdca572563/web), [Eclectic Light Co.](https://eclecticlight.co/2023/07/04/how-to-diagnose-and-control-login-and-background-items/).
+  - **User Description:** On macOS, random apps install invisible helpers that run in the background forever — even after you delete the app. System Settings shows them now (Ventura+), but editing/disabling them there is clumsy. This FR gives you a clean, searchable, signing-identity-aware list of every background item on your Mac, and lets you disable any of them with one click. Closes the biggest gap vs. commercial macOS cleaners.
+  - **Bundle:** F (with FR-110). Both make Nexis the definitive "what runs on my system" tool. Also pairs thematically with Bundle L.
+  - **Files:** `macos/nexis-core/Info/launch_items_info.*` (new), `shared/nexis/Pages/StartupApps/`
+  - **Platform:** macOS only
+  - **Complexity:** Medium
+
+### Bundle G — Cleaner Safety & Trust Sprint
+
+*Goal: make Nexis the trusted cleaner. The recurring criticism of Stacer/BleachBit in Reddit threads is "what if it breaks something?" These three items collectively change the story from "cleaner you hope works" to "cleaner you can watch and roll back."*
+
+- [ ] **FR-112: Timeshift / APFS snapshot before risky cleans** — Before the Maintenance Wizard "Clean Safe Items" button (and optionally before scheduled cleans), offer an opt-in "Create restore point first" checkbox. On Linux, if Timeshift is installed, invoke `timeshift --create --comments 'Nexis pre-clean'`. On macOS, use `tmutil localsnapshot`. Surface a read-only list of existing snapshots with age. Source: [Timeshift](https://github.com/linuxmint/timeshift).
+  - **User Description:** Before Nexis removes anything, you can tell it "take a snapshot first" so if something breaks, you can roll back. On Linux this ties into Timeshift (the standard Linux Mint tool); on macOS it uses APFS's built-in snapshot feature. Directly addresses the #1 concern people raise about cleaner tools — "will it brick my system?"
+  - **Bundle:** G (with FR-113, FR-114). Together: safe, smart, observable cleaning.
+  - **Files:** `shared/nexis/Pages/MaintenanceWizard/`, `shared/nexis-core/Info/snapshot_info.*` (new)
+  - **Platform:** Both
+  - **Complexity:** Medium
+
+- [ ] **FR-113: Downloads folder auto-cleanup rule** — Optional scheduled cleaner rule that moves files from `~/Downloads` (or any folder the user picks) to Trash after N days (default 30, configurable). Respects the existing exclusion system. Most-upvoted open Stacer issue: [#286](https://github.com/oguzhaninan/Stacer/issues/286).
+  - **User Description:** Your Downloads folder is a graveyard of installer files, PDFs, and "I'll use this later" images. This FR lets Nexis auto-move anything older than a month (or whatever you pick) to the Trash on a schedule. You can always pull items back from Trash before it empties. It's the #1 most-requested feature on the original Stacer project and takes about a day to ship here.
+  - **Bundle:** G.
+  - **Files:** `shared/nexis/Pages/SystemCleaner/`, `shared/nexis/Managers/cleaner_scheduler.*`
+  - **Platform:** Both
+  - **Complexity:** Small
+
+- [ ] **FR-114: Per-category scan size trend** — After each System Cleaner scan (manual or scheduled), persist the total size by category. Display a tiny sparkline next to each category label and a delta ("Package Cache: 1.2 GB, +400 MB this week") so users can see which categories are worth actually cleaning.
+  - **User Description:** Today the System Cleaner shows you "how much can I free right now." This FR adds a tiny trend line next to each category showing "how fast is this growing?" — so you can tell whether Application Caches is worth cleaning (growing 500 MB/week) or not (barely moving). It turns one-shot cleans into informed decisions.
+  - **Bundle:** G.
+  - **Files:** `shared/nexis/Pages/SystemCleaner/`, `shared/nexis-core/Info/cleaner_history.*` (new or extend existing persistence)
+  - **Platform:** Both
+  - **Complexity:** Small-Medium
+
+### Bundle H — Process Observability Sprint
+
+*Goal: make the Processes page the best free alternative to btop/Mission Center. Ship together — pinning is most useful once per-process GPU exists.*
+
+- [ ] **FR-115: Per-process GPU usage & VRAM columns on the Processes page** — Add GPU% and VRAM columns to the Processes table. On Linux: DRM fdinfo (`/proc/<pid>/fdinfo/*` with `drm-*` keys) for Intel/AMD; `nvidia-smi pmon` for NVIDIA. On macOS: IOKit `IOAccelerator` statistics / `ioreg` on Apple Silicon. Columns hidden by default (like disk I/O); user opts in via column picker. Mission Center 1.0 shipped this in 2025. Source: [Mission Center 1.0 coverage](https://ubuntuhandbook.org/index.php/2025/05/mission-center-1-0-smart-data-per-app-network/).
+  - **User Description:** Today the Processes page tells you which app is using your CPU or RAM. This FR adds the equivalent for your graphics card — answering "why is my GPU at 100%?" when no game is running. Particularly useful on laptops where a runaway Electron app can silently drain the battery via GPU compositing.
+  - **Bundle:** H (with FR-116).
+  - **Files:** `shared/nexis/Pages/Processes/`, `linux/nexis-core/Info/process_gpu_info.*` (new), `macos/nexis-core/Info/process_gpu_info.*` (new)
+  - **Platform:** Both
+  - **Complexity:** Large
+
+- [ ] **FR-116: Pin processes & per-process threshold alerts** — Right-click any process → "Pin" to keep it sticky at the top of the list (survives re-sort and filter) and optionally set a per-process CPU/memory threshold that fires a tray notification when breached (e.g., "chrome exceeded 4 GB"). Pinned list persists across sessions. Recurring ask in btop ([issue #501](https://github.com/aristocratos/btop/issues/501)) and Mission Center threads.
+  - **User Description:** You probably have 2-3 apps you care about ("is Chrome bloating again?", "is Slack eating RAM?") and 400 you don't. This FR lets you right-click those apps → "Pin" so they're always visible at the top of the list, and optionally set a threshold ("ping me when Chrome exceeds 4 GB") that pops a tray notification. Turns the Processes page from reactive debugging into background peace of mind.
+  - **Bundle:** H.
+  - **Files:** `shared/nexis/Pages/Processes/`, `shared/nexis/Managers/setting_manager.*`
+  - **Platform:** Both
+  - **Complexity:** Small-Medium
+
+### Bundle I — Linux System Tuning Sprint
+
+*Goal: consolidate the Linux power-user controls currently scattered across GNOME extensions, CLI tools, and forum posts. Pairs thematically with existing FR-81 (swappiness).*
+
+- [ ] **FR-117: CPU turbo boost and frequency-range controls** — Extend the existing Power Profile Switcher (Helpers page) with: turbo boost on/off toggle (`/sys/devices/system/cpu/cpufreq/boost` or `/sys/devices/system/cpu/intel_pstate/no_turbo`), min/max frequency sliders (`cpufreq`), and per-core governor override. Persist the user's preference (optional `/etc/systemd/system/nexis-cpufreq.service` for reboot-survival). Source: [auto-cpufreq 3.0 turbo GUI](https://ubuntuhandbook.org/index.php/2026/01/auto-cpufreq-3-0-0-added-gui-cli-options-to-override-turbo-boost/), [Power Options](https://github.com/thealexdev23/power-options).
+  - **User Description:** On Linux laptops, the single biggest knob for "quiet and cool" vs. "fast and hot" is CPU turbo boost — and it's buried behind obscure kernel files. This FR gives you a simple toggle plus min/max frequency sliders on the Helpers page, so you can say "keep this laptop quiet while I'm in a meeting" with one click. Pairs with the existing Power Profile Switcher.
+  - **Bundle:** I (standalone; thematically adjacent to FR-81 swappiness).
+  - **Files:** `shared/nexis/Pages/Helpers/`, `linux/nexis-core/Info/cpu_tuning_info.*` (new)
+  - **Platform:** Linux only
+  - **Complexity:** Medium
+
+- [ ] **FR-118: SSD TRIM / fstrim scheduler integration** — Surface the status of `fstrim.timer` / `fstrim.service` (Linux) or APFS TRIM configuration (macOS) in Disk Tools or Hardware Info. Provide a "Run TRIM now" button (`fstrim -av`) and a toggle for the weekly timer (`systemctl enable --now fstrim.timer`). On macOS: status-only display — `trimforce` is dangerous and the system handles TRIM automatically. Source: [fstrim systemd-timer guide](https://opensource.com/article/20/2/trim-solid-state-storage-linux).
+  - **User Description:** SSDs need periodic "trim" maintenance to stay fast. Linux has a built-in weekly task for this but it's off by default on many distros, and most users never know. This FR shows you whether it's running, lets you turn it on with a click, or triggers a manual trim right now. On macOS it just confirms TRIM is working (the OS handles it automatically).
+  - **Bundle:** I (standalone).
+  - **Files:** `shared/nexis/Pages/DiskTools/`, `linux/nexis-core/Info/trim_info.*` (new)
+  - **Platform:** Both (Linux full, macOS read-only)
+  - **Complexity:** Small
+
+### Bundle J — Network Awareness Sprint
+
+*Goal: broaden the Network page from "is it connected?" to "what's it doing and who can I wake?"*
+
+- [ ] **FR-119: Network data-cap / monthly usage tracker** — Track cumulative daily/weekly/monthly RX+TX per interface, persist across reboots (in `~/.nexis/net_history.db` SQLite or plain JSON), show a progress bar vs. a user-set monthly cap, fire tray alerts at configurable thresholds (75% / 90% / 100%). Useful for metered connections, hotspots, and capped home ISPs. Inspired by Windows 11's built-in data limit and macOS [Bandwidth+](https://apps.apple.com/us/app/system-monitor/id423368786).
+  - **User Description:** If you're tethering off a phone, on a capped home internet plan, or traveling with a data-limited hotspot, you need to know how close you are to your monthly cap. This FR tracks your data use per network interface, remembers it across reboots, and can ping you when you're at 75%, 90%, or 100% of your budget. Like the built-in feature on Windows 11 and on mobile phones, but for your computer.
+  - **Bundle:** J (with FR-120).
+  - **Files:** `shared/nexis/Pages/Network/`, `shared/nexis-core/Info/net_history.*` (new)
+  - **Platform:** Both
+  - **Complexity:** Medium
+
+- [ ] **FR-120: Wake-on-LAN helper** — A small Helpers-page section that scans the local network (ARP cache + optional ping sweep), remembers MAC addresses with friendly names, and sends a magic packet on demand. Source: [gWakeOnLAN](https://gwakeonlan.sourceforge.io/), [Techno Tim WOL guide](https://technotim.com/posts/wake-on-lan/).
+  - **User Description:** If you have a desktop or server on your home network that you want to power on from the couch, Wake-on-LAN does it — but the tools to send the magic packet are all command-line. This FR gives you a list of machines on your network (auto-detected), lets you name them ("Office PC", "NAS"), and wakes them with a click. Fits the existing Helpers page's "small useful sysadmin gadgets" vibe.
+  - **Bundle:** J.
+  - **Files:** `shared/nexis/Pages/Helpers/`, `shared/nexis-core/Info/wol_info.*` (new)
+  - **Platform:** Both
+  - **Complexity:** Small
+
+### Bundle K — Trust & Security Sprint
+
+*Goal: give Nexis a credible "security-adjacent checks" story without turning it into a security product.*
+
+- [ ] **FR-121: Listening-port audit with unexpected-process highlights** — Extend the existing Open Ports & Connections viewer (FR-66) with a "flag unexpected binders" mode: any process listening on a port whose binary path is not under `/usr/bin`, `/usr/sbin`, `/System/Library`, `/opt/homebrew/*`, or `/Library/Apple/*` gets highlighted amber; unsigned macOS binaries get a red badge (via `codesign -dv`). Educational, not definitive — catches the "why is there a listener on 4444?" case.
+  - **User Description:** When your computer has a listening network port, it's usually system services or apps you installed — but occasionally it's something that shouldn't be there. This FR color-codes the Open Ports list so unusual listeners stand out (amber for unexpected paths, red for unsigned macOS binaries). Not an antivirus; more like "eyes on the normal stuff you'd never normally look at."
+  - **Bundle:** K (with FR-122).
+  - **Files:** `shared/nexis/Pages/Network/open_ports_widget.*`
+  - **Platform:** Both
+  - **Complexity:** Small
+
+- [ ] **FR-122: Optional chkrootkit / rkhunter frontend** — Follow the existing Disk Usage Launcher pattern: if `chkrootkit` or `rkhunter` is installed, show a Helpers-page card with a "Run scan" button and a results viewer. Do not bundle the scanners themselves. Source: [Linux rootkit scanners roundup](https://linuxsecurity.com/features/the-three-best-tools-you-need-to-scan-your-linux-system-for-malware).
+  - **User Description:** Linux has two long-standing rootkit scanners (`chkrootkit` and `rkhunter`) that are powerful but intimidating to use from the terminal. This FR gives you a one-click "Run rootkit scan" button on the Helpers page when either tool is installed, with readable results. Zero bloat added to Nexis (we don't bundle them); just a friendly face on tools that are already on many systems.
+  - **Bundle:** K.
+  - **Files:** `shared/nexis/Pages/Helpers/`
+  - **Platform:** Linux only
+  - **Complexity:** Small
+
+### Bundle L — macOS Cleaning Completeness
+
+*Goal: close the remaining "CleanMyMac alternative" gaps on macOS. Pairs thematically with FR-111 — both are core macOS-story items.*
+
+- [ ] **FR-123: App leftover / "crumbs" scanner on macOS** — After a `.app` or Homebrew cask uninstall (via the existing Uninstaller page), scan known locations (`~/Library/Preferences`, `~/Library/Application Support`, `~/Library/Caches`, `~/Library/Saved Application State`, `~/Library/Containers`, `~/Library/Logs`) for residual files matching the app's bundle identifier. Offer review-then-delete UI. Source: [Pearcleaner](https://github.com/alienator88/Pearcleaner), [Mole](https://github.com/tw93/mole).
+  - **User Description:** On macOS, dragging an app to the Trash removes the app but leaves behind settings, caches, and saved state files scattered across your Library folder — sometimes hundreds of MB per app. This FR runs a post-uninstall scan that finds these leftovers and offers them for review/removal. It's the #1 feature that keeps people paying for CleanMyMac.
+  - **Bundle:** L (pairs with FR-111 for a full macOS story).
+  - **Files:** `macos/nexis/Pages/Uninstaller/`, `macos/nexis-core/Info/app_leftovers_info.*` (new)
+  - **Platform:** macOS only
+  - **Complexity:** Medium
+
+### Bundle M — Small Standalones
+
+*Unbundled quality-of-life additions.*
+
+- [ ] **FR-124: Pressure Stall Information (PSI) graphs on Resources page** — Add `/proc/pressure/{cpu,memory,io}` time-series charts on the Resources page so users can distinguish "100% CPU with no contention" from "40% CPU with heavy stall." Nexis already reads PSI for memory pressure; this is wiring it through to visible charts. Source: [PSI kernel docs](https://docs.kernel.org/accounting/psi.html).
+  - **User Description:** Sometimes your computer feels slow even though CPU usage looks fine. The Linux kernel tracks "how much things are waiting" (called Pressure Stall Information) — a much better indicator of actual sluggishness than raw CPU %. This FR graphs it on the Resources page so you can see the real cause of your system feeling laggy.
+  - **Files:** `shared/nexis/Pages/Resources/`
+  - **Platform:** Linux only
+  - **Complexity:** Small
+
+- [ ] **FR-125: Quick Actions tray submenu** — Expand the tray context menu with a "Quick Actions" submenu exposing Power Profile switch (Linux), "Run System Cleaner scan," and "Open Command Palette" — so common actions don't require opening the window.
+  - **User Description:** Today, to run a cleaner scan or switch power profile, you have to open Nexis's main window, click around, etc. This FR adds those actions straight to the tray-icon right-click menu so the most common tasks are always one click away, even when Nexis is minimized.
+  - **Files:** `shared/nexis/Managers/tray_manager.*` (or wherever the tray menu lives)
+  - **Platform:** Both
+  - **Complexity:** Small
+
+- [ ] **FR-126: Self-contained HTML system report export** — Upgrade the Hardware Info "Export System Report" (currently plain text — see FR-72) with a second option to generate a self-contained HTML file containing all hardware tables, a Dashboard snapshot, top 10 processes at moment of export, recent log errors, and pending updates. Useful for support tickets and documenting a system state before changes.
+  - **User Description:** Today, the "Export System Report" button generates a plain-text file. That's fine for terminal use but ugly to paste into a support forum or share with a helper friend. This FR adds an HTML export option that produces a single shareable file with tables, charts, and the moment's system snapshot — perfect for troubleshooting threads.
+  - **Files:** `shared/nexis/Pages/HardwareInfo/`
+  - **Platform:** Both
+  - **Complexity:** Small
