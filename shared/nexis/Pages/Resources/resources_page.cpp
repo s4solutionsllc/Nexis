@@ -41,19 +41,11 @@ void ResourcesPage::init()
         mChartGpu->setYMax(100);
     }
 
-    // Disk health temperature chart — only if drives with temperature data exist
-    if (im->hasDiskHealth()) {
-        QList<DriveHealth> drives = im->getDriveHealth();
-        int tempDriveCount = 0;
-        for (const DriveHealth &d : drives) {
-            if (d.temperatureCelsius >= 0)
-                tempDriveCount++;
-        }
-        if (tempDriveCount > 0) {
-            mChartDiskHealth = new HistoryChart(tr("History of Disk Temperature"), tempDriveCount, nullptr, this);
-            mChartDiskHealth->setYMax(100);
-        }
-    }
+    // Disk health temperature chart is created lazily on first
+    // diskHealthUpdated signal — drive discovery is async (FR-96) so drive
+    // data may not be available at construction time.
+    if (im->hasDiskHealth())
+        ensureDiskHealthChart(im->getDriveHealth());
 
     QList<QWidget*> widgets = { mChartCpu, mChartCpuLoadAvg, mChartDiskReadWrite, mChartMemory, mChartNetwork };
 
@@ -85,9 +77,11 @@ void ResourcesPage::init()
         connect(mRefresh, &DataRefreshService::gpuUpdated,
                 this, &ResourcesPage::onGpuUpdated);
 
-    if (mChartDiskHealth)
-        connect(mRefresh, &DataRefreshService::diskHealthUpdated,
-                this, &ResourcesPage::onDiskHealthUpdated);
+    // Always subscribe to diskHealthUpdated: even if no drives were present
+    // at construction, the first async discovery (FR-96) will fire this and
+    // we can build the chart then.
+    connect(mRefresh, &DataRefreshService::diskHealthUpdated,
+            this, &ResourcesPage::onDiskHealthUpdated);
 
     // Disk Usage Analyzer launcher (FR-23)
     mDiskLauncher = new DiskUsageLauncherWidget(this);
@@ -384,8 +378,45 @@ void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
     second++;
 }
 
+void ResourcesPage::ensureDiskHealthChart(const QList<DriveHealth> &drives)
+{
+    if (mChartDiskHealth)
+        return;
+
+    int tempDriveCount = 0;
+    for (const DriveHealth &d : drives) {
+        if (d.temperatureCelsius >= 0)
+            tempDriveCount++;
+    }
+    if (tempDriveCount == 0)
+        return;
+
+    mChartDiskHealth = new HistoryChart(tr("History of Disk Temperature"),
+                                        tempDriveCount, nullptr, this);
+    mChartDiskHealth->setYMax(100);
+
+    // Insert at the end of the charts layout (after Network), before
+    // the DiskUsageLauncher if it already exists.
+    if (mDiskLauncher) {
+        int idx = ui->chartsLayout->indexOf(mDiskLauncher);
+        if (idx >= 0) {
+            ui->chartsLayout->insertWidget(idx, mChartDiskHealth);
+        } else {
+            ui->chartsLayout->addWidget(mChartDiskHealth);
+        }
+    } else {
+        ui->chartsLayout->addWidget(mChartDiskHealth);
+    }
+    Utilities::addDropShadow(mChartDiskHealth, 40);
+}
+
 void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 {
+    // FR-96: create the chart on first data arrival if it wasn't built
+    // during construction (discovery was still running then).
+    if (!mChartDiskHealth)
+        ensureDiskHealthChart(drives);
+
     if (!mChartDiskHealth || !mActive)
         return;
 

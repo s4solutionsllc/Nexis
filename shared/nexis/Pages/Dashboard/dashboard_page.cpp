@@ -1797,6 +1797,11 @@ void DashboardPage::onHealthBatteryUpdated(const BatteryData &bat)
 
 void DashboardPage::onHealthDiskHealthUpdated(const QList<DriveHealth> &drives)
 {
+    // FR-96: disk discovery is now async, so hasDiskHealth() is false at
+    // construction and smart-component availability was wrong. Re-set here
+    // on first data arrival — idempotent on subsequent ticks.
+    mHealthTile->calculator()->setComponentAvailable("smart", !drives.isEmpty());
+
     if (!mActive) return;
     int worstScore = 100;
     for (const DriveHealth &d : drives) {

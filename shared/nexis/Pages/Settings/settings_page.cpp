@@ -3,6 +3,7 @@
 #include "Managers/info_manager.h"
 #include "Managers/schedule_manager.h"
 #include "Managers/cleaner_service.h"
+#include "Managers/data_refresh_service.h"
 #include "Pages/SystemCleaner/schedule_editor_dialog.h"
 #include "utilities.h"
 #include <QApplication>
@@ -168,11 +169,18 @@ void SettingsPage::init()
         ui->spinBatteryHealthPercent->hide();
     }
 
-    // disk health alert (hide if no SMART data)
+    // disk health alert (hide if no SMART data). FR-96: disk discovery is
+    // now async — if drives haven't been discovered at SettingsPage
+    // construction time, the checkbox is initially hidden but unhidden on
+    // the first diskHealthUpdated signal that reports any drives.
     ui->checkDiskHealthAlert->setChecked(mSettingManager->getDiskHealthAlertEnabled());
     if (!mInfoManager->hasDiskHealth()) {
         ui->checkDiskHealthAlert->hide();
     }
+    connect(DataRefreshService::ins(), &DataRefreshService::diskHealthUpdated,
+            this, [this](const QList<DriveHealth> &drives) {
+        ui->checkDiskHealthAlert->setVisible(!drives.isEmpty());
+    });
 
     // system update alert (hide if no package managers detected)
     ui->checkUpdateAlert->setChecked(mSettingManager->getUpdateAlertEnabled());

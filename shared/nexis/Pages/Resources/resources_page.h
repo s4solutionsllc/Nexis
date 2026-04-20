@@ -37,6 +37,10 @@ private slots:
 
 private:
     void init();
+    // FR-96 fix-up: disk temp chart is created lazily on first
+    // diskHealthUpdated signal when drives weren't discovered at
+    // construction time.
+    void ensureDiskHealthChart(const QList<DriveHealth> &drives);
 
 private:
     Ui::ResourcesPage *ui;
