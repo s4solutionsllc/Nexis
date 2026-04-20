@@ -9,6 +9,7 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <functional>
 
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
@@ -21,6 +22,17 @@ struct SidebarSection {
     QVBoxLayout *containerLayout = nullptr;
     QList<QPushButton*> buttons;
     bool collapsed = false;
+};
+
+// Page registry entry. factory constructs the page lazily; widget caches the
+// result once built. onConstructed runs after the widget is created and
+// attached to the stacked widget. In the FR-97 scaffold (Commit A) every slot
+// is still eagerly constructed; Commit B flips non-Dashboard slots to lazy.
+struct PageSlot {
+    QString title;
+    std::function<QWidget*()> factory;
+    QWidget *widget = nullptr;
+    std::function<void(QWidget*)> onConstructed;
 };
 
 // Pages
@@ -73,6 +85,8 @@ private slots:
 
 private:
     QWidget *getPageByTitle(const QString &title);
+    QWidget *ensurePage(int index);
+    QWidget *ensurePageByTitle(const QString &title);
     void checkSidebarButtonByTooltip(const QString &text);
     void createTrayActions();
     void updateSidebarIcons();
@@ -95,7 +109,7 @@ private:
     Ui::App *ui;
 
     // Pages
-    QList<QWidget*> mListPages;
+    QList<PageSlot> mPageSlots;
     QList<QPushButton*> mListSidebarButtons;
 
     SlidingStackedWidget *mSlidingStacked;

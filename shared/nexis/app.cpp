@@ -307,20 +307,6 @@ void App::init()
     // Build sidebar programmatically with section headers
     buildSidebar();
 
-    dashboardPage = new DashboardPage(mSlidingStacked);
-    hardwareInfoPage = new HardwareInfoPage(mSlidingStacked);
-    startupAppsPage = new StartupAppsPage(mSlidingStacked);
-    searchPage = new SearchPage(mSlidingStacked);
-    systemCleanerPage = new SystemCleanerPage(mSlidingStacked);
-    diskToolsPage = new DiskToolsPage(mSlidingStacked);
-    servicesPage = new ServicesPage(mSlidingStacked);
-    processPage = new ProcessesPage(mSlidingStacked);
-    helpersPage = new HelpersPage(mSlidingStacked);
-    systemLogsPage = new SystemLogsPage(mSlidingStacked);
-    uninstallerPage = new UninstallerPage(mSlidingStacked);
-    resourcesPage = new ResourcesPage(mSlidingStacked);
-    settingsPage = new SettingsPage(mSlidingStacked);
-
     ui->pageContentLayout->addWidget(mSlidingStacked);
 
     // Set button labels
@@ -350,10 +336,79 @@ void App::init()
     btnSettings->setText(tr("Settings"));
     btnFeedback->setText(tr("Feedback"));
 
-    mListPages = {
-        dashboardPage, hardwareInfoPage, resourcesPage, systemCleanerPage, diskToolsPage, searchPage,
-        processPage, servicesPage, startupAppsPage, uninstallerPage, helpersPage, systemLogsPage, settingsPage
-    };
+    // Populate page slots with factory lambdas. Construction is driven by
+    // ensurePage() — this commit still constructs all slots eagerly below
+    // (zero behavior change). Commit B will drop the eager loop for
+    // non-Dashboard slots.
+    mPageSlots.append({
+        tr("Dashboard"),
+        [this]() -> QWidget* { dashboardPage = new DashboardPage(mSlidingStacked); return dashboardPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Hardware Info"),
+        [this]() -> QWidget* { hardwareInfoPage = new HardwareInfoPage(mSlidingStacked); return hardwareInfoPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Resources"),
+        [this]() -> QWidget* { resourcesPage = new ResourcesPage(mSlidingStacked); return resourcesPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("System Cleaner"),
+        [this]() -> QWidget* { systemCleanerPage = new SystemCleanerPage(mSlidingStacked); return systemCleanerPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Disk Tools"),
+        [this]() -> QWidget* { diskToolsPage = new DiskToolsPage(mSlidingStacked); return diskToolsPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Search"),
+        [this]() -> QWidget* { searchPage = new SearchPage(mSlidingStacked); return searchPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Processes"),
+        [this]() -> QWidget* { processPage = new ProcessesPage(mSlidingStacked); return processPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Services"),
+        [this]() -> QWidget* { servicesPage = new ServicesPage(mSlidingStacked); return servicesPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Startup Apps"),
+        [this]() -> QWidget* { startupAppsPage = new StartupAppsPage(mSlidingStacked); return startupAppsPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+#ifdef Q_OS_MAC
+        tr("Applications"),
+#else
+        tr("Uninstaller"),
+#endif
+        [this]() -> QWidget* { uninstallerPage = new UninstallerPage(mSlidingStacked); return uninstallerPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Helpers"),
+        [this]() -> QWidget* { helpersPage = new HelpersPage(mSlidingStacked); return helpersPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("System Logs"),
+        [this]() -> QWidget* { systemLogsPage = new SystemLogsPage(mSlidingStacked); return systemLogsPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Settings"),
+        [this]() -> QWidget* { settingsPage = new SettingsPage(mSlidingStacked); return settingsPage; },
+        nullptr, {}
+    });
 
     mListSidebarButtons = {
         btnDash, btnHardwareInfo, btnResources, btnSystemCleaner, btnDiskTools, btnSearch,
@@ -362,9 +417,16 @@ void App::init()
 
     // APT SOURCE MANAGER
     if (ToolManager::ins()->checkSourceRepository()) {
-        aptSourceManagerPage = new APTSourceManagerPage(mSlidingStacked);
         int idx = mListSidebarButtons.indexOf(btnSettings);
-        mListPages.insert(idx, aptSourceManagerPage);
+        mPageSlots.insert(idx, {
+#ifdef Q_OS_MAC
+            tr("Homebrew"),
+#else
+            tr("APT Repository Manager"),
+#endif
+            [this]() -> QWidget* { aptSourceManagerPage = new APTSourceManagerPage(mSlidingStacked); return aptSourceManagerPage; },
+            nullptr, {}
+        });
         mListSidebarButtons.insert(idx, btnAptSourceManager);
     } else {
         btnAptSourceManager->hide();
@@ -396,9 +458,12 @@ void App::init()
 
     // DOCKER
     if (ToolManager::ins()->checkDocker()) {
-        dockerPage = new DockerPage(mSlidingStacked);
         int dockerIdx = mListSidebarButtons.indexOf(btnHelpers);
-        mListPages.insert(dockerIdx, dockerPage);
+        mPageSlots.insert(dockerIdx, {
+            tr("Docker"),
+            [this]() -> QWidget* { dockerPage = new DockerPage(mSlidingStacked); return dockerPage; },
+            nullptr, {}
+        });
         mListSidebarButtons.insert(dockerIdx, btnDocker);
     } else {
         btnDocker->hide();
@@ -409,9 +474,12 @@ void App::init()
     btnGnomeSettings->hide();
 #else
     if (ToolManager::ins()->checkGnomeSettings()) {
-        gnomeSettingsPage = new GnomeSettingsPage(mSlidingStacked);
         int settingsIdx = mListSidebarButtons.indexOf(btnSettings);
-        mListPages.insert(settingsIdx, gnomeSettingsPage);
+        mPageSlots.insert(settingsIdx, {
+            tr("GNOME Settings"),
+            [this]() -> QWidget* { gnomeSettingsPage = new GnomeSettingsPage(mSlidingStacked); return gnomeSettingsPage; },
+            nullptr, {}
+        });
         mListSidebarButtons.insert(settingsIdx, btnGnomeSettings);
     } else {
         btnGnomeSettings->hide();
@@ -462,9 +530,10 @@ void App::init()
         }
     });
 
-    // Add pages to stacked widget
-    for (QWidget *page : mListPages)
-        mSlidingStacked->addWidget(page);
+    // Construct all pages eagerly (Commit B flips non-Dashboard slots to
+    // lazy construction triggered by first navigation).
+    for (int i = 0; i < mPageSlots.size(); ++i)
+        ensurePage(i);
 
     DataRefreshService::ins()->start();
 
@@ -629,7 +698,7 @@ void App::clickSidebarButton(QString pageTitle, bool isShow)
         pageClick(selectedWidget, !isShow);
         checkSidebarButtonByTooltip(pageTitle);
     } else {
-        pageClick(mListPages.first());
+        pageClick(ensurePage(0));
     }
 #ifdef Q_OS_MAC
     if (isShow)
@@ -654,10 +723,33 @@ void App::checkSidebarButtonByTooltip(const QString &text)
 
 QWidget* App::getPageByTitle(const QString &title)
 {
-    for (QWidget *page : mListPages) {
-        if (page->windowTitle() == title) {
-            return page;
-        }
+    return ensurePageByTitle(title);
+}
+
+QWidget* App::ensurePage(int index)
+{
+    if (index < 0 || index >= mPageSlots.size())
+        return nullptr;
+    PageSlot &slot = mPageSlots[index];
+    if (slot.widget)
+        return slot.widget;
+    if (!slot.factory)
+        return nullptr;
+    QWidget *w = slot.factory();
+    if (!w)
+        return nullptr;
+    slot.widget = w;
+    mSlidingStacked->addWidget(w);
+    if (slot.onConstructed)
+        slot.onConstructed(w);
+    return w;
+}
+
+QWidget* App::ensurePageByTitle(const QString &title)
+{
+    for (int i = 0; i < mPageSlots.size(); ++i) {
+        if (mPageSlots[i].title == title)
+            return ensurePage(i);
     }
     return nullptr;
 }
@@ -1062,9 +1154,10 @@ void App::setupCommandPalette()
 {
     mCommandPalette = new CommandPalette(this);
 
-    // Navigation commands
-    for (QWidget *page : mListPages) {
-        QString title = page->windowTitle();
+    // Navigation commands — iterate slots so titles are available even if
+    // pages are not yet constructed (Commit B).
+    for (const PageSlot &slot : mPageSlots) {
+        QString title = slot.title;
         mCommandPalette->addCommand(title, tr("Navigate"), [this, title]() {
             clickSidebarButton(title, true);
         });
