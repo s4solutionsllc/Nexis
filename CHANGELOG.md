@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.16] - 2026-04-20
+
+### Changed
+- **Cold launch performance (FR-96, FR-97, FR-98 — Bundle A):** App launches faster and uses less idle RAM, especially on systems with external/spinning drives. Three coordinated changes:
+  - **Lazy page construction (FR-97):** Only the Dashboard is built at launch. The 12 other sidebar pages (Hardware Info, Resources, System Cleaner, Disk Tools, Search, Processes, Services, Startup Apps, Uninstaller/Applications, Helpers, System Logs, Settings, plus conditional APT/Homebrew, Docker, GNOME Settings) now build on first navigation via a new `PageSlot` factory registry. Pages you never visit don't consume memory or run their initialization work. `App::ensureAllPages()` helper added for the screenshot test harness.
+  - **Async disk-health discovery (FR-96):** `DiskHealthInfo::discoverDrives()` no longer runs synchronously inside the `InfoManager` singleton constructor. Discovery is driven off the main thread by `DataRefreshService::onSlowTick()` — `diskutil`, `smartctl`, and sysfs reads happen on a `QtConcurrent` worker while the main window paints. Removes 300-1500 ms of blocking I/O from the critical path on macOS (much more with spinning rust). Three one-shot `hasDiskHealth()` readers now re-evaluate on the first `diskHealthUpdated` emission: `ResourcesPage` creates the disk-temperature chart lazily, `SettingsPage` unhides the disk-health-alert checkbox, and `DashboardPage` updates the Health-Score `smart` component availability.
+  - **Deferred Hardware Info populate (FR-98):** `HardwareInfoPage::init()` (sysctl, SMART, fan, battery I/O) now runs on first `showEvent()` rather than at page construction — zero cost until the user navigates to the page.
+
 ## [2.2.15] - 2026-04-17
 
 ### Fixed
