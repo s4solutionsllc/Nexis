@@ -69,6 +69,12 @@ public:
     explicit App(QWidget *parent = 0);
     ~App();
 
+    // Force-construct every registered page slot. Primarily used by test
+    // harnesses (ScreenshotTests) that need all pages present in the
+    // stacked widget regardless of user navigation. Production code should
+    // prefer lazy construction via sidebar navigation.
+    void ensureAllPages();
+
 protected:
     void closeEvent(QCloseEvent *event) override;
     void changeEvent(QEvent *event) override;
@@ -136,6 +142,10 @@ private:
     bool mKioskMode;
     bool mSidebarCollapsed;
     bool mPreKioskCollapsed;
+    // True once AppManager::updateStylesheet() has been called during init().
+    // After this flag flips, any lazily-constructed page missed the initial
+    // sigChangedAppTheme emission, so ensurePage() re-emits to catch it up.
+    bool mInitialThemeApplied = false;
 
     QSystemTrayIcon *mTrayIcon;
     QMenu *mTrayMenu;

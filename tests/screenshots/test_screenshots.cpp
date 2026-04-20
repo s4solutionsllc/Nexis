@@ -237,6 +237,13 @@ private slots:
         QApplication::processEvents();
         QTest::qWait(500);
 
+        // FR-97: pages are constructed lazily on first navigation. The
+        // screenshot suite needs every page present in the stacked widget,
+        // so force-construct here.
+        mApp->ensureAllPages();
+        QApplication::processEvents();
+        QTest::qWait(200);
+
         mStacked = mApp->findChild<QStackedWidget *>();
         QVERIFY2(mStacked, "Could not find QStackedWidget in App");
 

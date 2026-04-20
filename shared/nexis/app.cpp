@@ -486,21 +486,33 @@ void App::init()
     }
 #endif
 
-    // Connect sidebar button clicks to page navigation
-    connect(btnDash, &QPushButton::clicked, this, [this]() { pageClick(dashboardPage); });
-    connect(btnHardwareInfo, &QPushButton::clicked, this, [this]() { pageClick(hardwareInfoPage); });
-    connect(btnResources, &QPushButton::clicked, this, [this]() { pageClick(resourcesPage); });
-    connect(btnSystemCleaner, &QPushButton::clicked, this, [this]() { pageClick(systemCleanerPage); });
-    connect(btnDiskTools, &QPushButton::clicked, this, [this]() { pageClick(diskToolsPage); });
-    connect(btnSearch, &QPushButton::clicked, this, [this]() { pageClick(searchPage); });
-    connect(btnProcesses, &QPushButton::clicked, this, [this]() { pageClick(processPage); });
-    connect(btnServices, &QPushButton::clicked, this, [this]() { pageClick(servicesPage); });
-    connect(btnStartupApps, &QPushButton::clicked, this, [this]() { pageClick(startupAppsPage); });
-    connect(btnUninstaller, &QPushButton::clicked, this, [this]() { pageClick(uninstallerPage); });
-    connect(btnHelpers, &QPushButton::clicked, this, [this]() { pageClick(helpersPage); });
-    connect(btnSystemLogs, &QPushButton::clicked, this, [this]() { pageClick(systemLogsPage); });
-    connect(btnSettings, &QPushButton::clicked, this, [this]() { pageClick(settingsPage); });
-    connect(btnFeedback, &QPushButton::clicked, this, [this]() {
+    // Connect sidebar button clicks to page navigation. Click handlers route
+    // through ensurePageByTitle() so they work when the target page has not
+    // yet been constructed (FR-97 lazy construction).
+    auto navByTitle = [this](const QString &title) {
+        if (QWidget *w = ensurePageByTitle(title))
+            pageClick(w);
+    };
+    connect(btnDash,             &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Dashboard")); });
+    connect(btnHardwareInfo,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Hardware Info")); });
+    connect(btnResources,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Resources")); });
+    connect(btnSystemCleaner,    &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Cleaner")); });
+    connect(btnDiskTools,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Disk Tools")); });
+    connect(btnSearch,           &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Search")); });
+    connect(btnProcesses,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Processes")); });
+    connect(btnServices,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Services")); });
+    connect(btnStartupApps,      &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Startup Apps")); });
+    connect(btnUninstaller,      &QPushButton::clicked, this, [this, navByTitle]() {
+#ifdef Q_OS_MAC
+        navByTitle(tr("Applications"));
+#else
+        navByTitle(tr("Uninstaller"));
+#endif
+    });
+    connect(btnHelpers,          &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Helpers")); });
+    connect(btnSystemLogs,       &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Logs")); });
+    connect(btnSettings,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Settings")); });
+    connect(btnFeedback,         &QPushButton::clicked, this, [this]() {
         if (feedback.isNull())
             feedback = QSharedPointer<Feedback>(new Feedback(this));
         feedback->show();
@@ -508,12 +520,18 @@ void App::init()
 
     // Conditional page button clicks
     if (ToolManager::ins()->checkDocker())
-        connect(btnDocker, &QPushButton::clicked, this, [this]() { pageClick(dockerPage); });
+        connect(btnDocker, &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Docker")); });
     if (ToolManager::ins()->checkSourceRepository())
-        connect(btnAptSourceManager, &QPushButton::clicked, this, [this]() { pageClick(aptSourceManagerPage); });
+        connect(btnAptSourceManager, &QPushButton::clicked, this, [this, navByTitle]() {
+#ifdef Q_OS_MAC
+            navByTitle(tr("Homebrew"));
+#else
+            navByTitle(tr("APT Repository Manager"));
+#endif
+        });
 #ifndef Q_OS_MAC
     if (ToolManager::ins()->checkGnomeSettings())
-        connect(btnGnomeSettings, &QPushButton::clicked, this, [this]() { pageClick(gnomeSettingsPage); });
+        connect(btnGnomeSettings, &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("GNOME Settings")); });
 #endif
 
     // Refresh sidebar icons when theme changes
@@ -530,14 +548,15 @@ void App::init()
         }
     });
 
-    // Construct all pages eagerly (Commit B flips non-Dashboard slots to
-    // lazy construction triggered by first navigation).
-    for (int i = 0; i < mPageSlots.size(); ++i)
-        ensurePage(i);
+    // Construct Dashboard eagerly (it is the default landing page and owns
+    // most of the DataRefreshService signal subscriptions). Other pages are
+    // built lazily on first navigation — see ensurePage().
+    ensurePage(0);
 
     DataRefreshService::ins()->start();
 
     AppManager::ins()->updateStylesheet();
+    mInitialThemeApplied = true;
 
     Utilities::addDropShadow(ui->sidebar, 60);
 
@@ -742,6 +761,14 @@ QWidget* App::ensurePage(int index)
     mSlidingStacked->addWidget(w);
     if (slot.onConstructed)
         slot.onConstructed(w);
+    // If the initial stylesheet was already applied before this page was
+    // constructed, the page missed the sigChangedAppTheme emission fired
+    // from updateStylesheet(). Emit once so the new page runs its
+    // refreshThemeColors() slot and picks up any cached color tokens
+    // (chart series colors, etc.). Global QSS already cascades to new
+    // widgets automatically; this signal is for per-page color caches.
+    if (mInitialThemeApplied)
+        emit SignalMapper::ins()->sigChangedAppTheme();
     return w;
 }
 
@@ -752,6 +779,14 @@ QWidget* App::ensurePageByTitle(const QString &title)
             return ensurePage(i);
     }
     return nullptr;
+}
+
+void App::ensureAllPages()
+{
+    for (int i = 0; i < mPageSlots.size(); ++i) {
+        if (!mPageSlots[i].widget)
+            ensurePage(i);
+    }
 }
 
 void App::pageClick(QWidget *widget, bool slide)
