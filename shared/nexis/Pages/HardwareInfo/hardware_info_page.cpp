@@ -88,9 +88,18 @@ HardwareInfoPage::HardwareInfoPage(QWidget *parent, InfoManager *infoManager) :
 {
     ui->setupUi(this);
 
-    init();
-
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &HardwareInfoPage::refreshThemeColors);
+    // FR-98: defer populate*() work to first showEvent so sysctl, SMART,
+    // battery, and fan I/O only run when the user actually visits this page.
+}
+
+void HardwareInfoPage::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    if (!mPopulated) {
+        mPopulated = true;
+        init();
+    }
 }
 
 void HardwareInfoPage::init()

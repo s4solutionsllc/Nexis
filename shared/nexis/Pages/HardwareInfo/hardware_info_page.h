@@ -21,6 +21,9 @@ public:
                               InfoManager *infoManager = nullptr);
     ~HardwareInfoPage();
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private slots:
     void init();
     void on_btnExportReport_clicked();
@@ -52,6 +55,9 @@ private:
     InfoManager *im;
     QList<HealthItem> mHealthItems;
     QList<DriveHealth> mStorageDrives;
+    // FR-98: populate work (SMART / sysctl / battery / fan I/O) runs on
+    // first showEvent rather than at construction time.
+    bool mPopulated = false;
 };
 
 #endif // HARDWARE_INFO_PAGE_H
