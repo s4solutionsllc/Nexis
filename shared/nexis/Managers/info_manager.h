@@ -83,6 +83,7 @@ public:
     bool hasBattery() const;
 
     QList<DriveHealth> getDriveHealth() const;
+    void discoverDiskHealth();
     void refreshDiskHealth();
     void refreshDiskHealthElevated(const QString &device);
     void refreshDiskHealthElevatedBatch(const QStringList &devices, bool applySetcap);

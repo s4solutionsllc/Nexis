@@ -76,14 +76,17 @@ public:
                                              bool applySetcap,
                                              const QString &smartctlPath) = 0;
 
+    // FR-96: discovery is now public so it can be driven off-thread from
+    // DataRefreshService after the main window has painted (rather than
+    // synchronously from the constructor during app launch).
+    virtual void discoverDrives() = 0;
+
     // Public for testability (FR-36). Operates purely on the DriveHealth struct.
     static void parseSmartctlJsonInto(const QByteArray &json, DriveHealth &drive);
     static void deriveHealthVerdict(DriveHealth &drive);
     static QList<QByteArray> splitSmartctlOutput(const QString &output);
 
 protected:
-    virtual void discoverDrives() = 0;
-
     QList<DriveHealth> mDrives;
     bool mHasSmartctl = false;
 };

@@ -54,8 +54,10 @@ void DataRefreshService::start()
     // Fire immediate ticks so pages have data before first paint
     onFastTick();
     onMediumTick();
-    if (im->hasDiskHealth())
-        onSlowTick();
+    // Always kick off the slow tick — onSlowTick() handles the
+    // not-yet-discovered case by running discoverDrives() on a worker
+    // thread (FR-96). This is async; the main thread is not blocked.
+    onSlowTick();
 
     mFastTimer->start(1000);
     mMediumTimer->start(5000);
@@ -232,12 +234,19 @@ void DataRefreshService::onMediumTick()
 
 void DataRefreshService::onSlowTick()
 {
-    if (!im->hasDiskHealth() || mDiskHealthRunning)
+    if (mDiskHealthRunning)
         return;
 
     mDiskHealthRunning = true;
     QtConcurrent::run([this]() {
-        im->refreshDiskHealth();
+        // FR-96: on the very first tick, drives may not have been
+        // discovered yet (initial discovery is deferred out of the
+        // InfoManager/DiskHealthInfo constructors). Run discovery then;
+        // subsequent ticks go through the cheaper refresh path.
+        if (!im->hasDiskHealth())
+            im->discoverDiskHealth();
+        else
+            im->refreshDiskHealth();
         QList<DriveHealth> drives = im->getDriveHealth();
         QMetaObject::invokeMethod(this, [this, drives]() {
             mDiskHealthRunning = false;

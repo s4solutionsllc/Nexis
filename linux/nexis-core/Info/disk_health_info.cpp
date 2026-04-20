@@ -8,7 +8,8 @@
 DiskHealthInfoLinux::DiskHealthInfoLinux()
 {
     mHasSmartctl = CommandUtil::isExecutable("smartctl");
-    discoverDrives();
+    // FR-96: discovery is deferred off-thread and triggered after the main
+    // window paints (via DataRefreshService::onSlowTick on first start).
 }
 
 void DiskHealthInfoLinux::discoverDrives()

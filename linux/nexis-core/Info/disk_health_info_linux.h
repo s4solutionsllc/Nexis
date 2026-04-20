@@ -13,8 +13,6 @@ public:
     void refreshHealthElevatedBatch(const QStringList &devices,
                                      bool applySetcap,
                                      const QString &smartctlPath) override;
-
-protected:
     void discoverDrives() override;
 };
 

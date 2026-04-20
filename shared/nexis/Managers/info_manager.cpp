@@ -353,6 +353,11 @@ QList<DriveHealth> InfoManager::getDriveHealth() const
     return dhi->getDrives();
 }
 
+void InfoManager::discoverDiskHealth()
+{
+    dhi->discoverDrives();
+}
+
 void InfoManager::refreshDiskHealth()
 {
     dhi->refreshHealth();
