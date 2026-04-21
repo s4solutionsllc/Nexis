@@ -460,19 +460,12 @@
 
 *Goal: make the Processes page the best free alternative to btop/Mission Center. Ship together — pinning is most useful once per-process GPU exists.*
 
-- [ ] **FR-115: Per-process GPU usage & VRAM columns on the Processes page** — Add GPU% and VRAM columns to the Processes table. On Linux: DRM fdinfo (`/proc/<pid>/fdinfo/*` with `drm-*` keys) for Intel/AMD; `nvidia-smi pmon` for NVIDIA. On macOS: IOKit `IOAccelerator` statistics / `ioreg` on Apple Silicon. Columns hidden by default (like disk I/O); user opts in via column picker. Mission Center 1.0 shipped this in 2025. Source: [Mission Center 1.0 coverage](https://ubuntuhandbook.org/index.php/2025/05/mission-center-1-0-smart-data-per-app-network/).
-  - **User Description:** Today the Processes page tells you which app is using your CPU or RAM. This FR adds the equivalent for your graphics card — answering "why is my GPU at 100%?" when no game is running. Particularly useful on laptops where a runaway Electron app can silently drain the battery via GPU compositing.
-  - **Bundle:** H (with FR-116).
-  - **Files:** `shared/nexis/Pages/Processes/`, `linux/nexis-core/Info/process_gpu_info.*` (new), `macos/nexis-core/Info/process_gpu_info.*` (new)
-  - **Platform:** Both
-  - **Complexity:** Large
+- [x] **FR-115: Per-process GPU usage & VRAM columns on the Processes page** — Add GPU% and VRAM columns to the Processes table. On Linux: DRM fdinfo (`/proc/<pid>/fdinfo/*` with `drm-*` keys) for Intel/AMD; `nvidia-smi pmon` for NVIDIA. On macOS: IOKit `IOAccelerator` statistics / `ioreg` on Apple Silicon. Columns hidden by default (like disk I/O); user opts in via column picker. Mission Center 1.0 shipped this in 2025. Source: [Mission Center 1.0 coverage](https://ubuntuhandbook.org/index.php/2025/05/mission-center-1-0-smart-data-per-app-network/).
+  - **Resolved (Linux):** Two new columns (idx 16, 17) hidden by default, populated via the FR-108 gating pattern. `Process` gains `gpuPercent`/`gpuVramBytes` sentinel fields. Intel/AMD path walks `/proc/<pid>/fdinfo/*` via a new pure `ProcInfoParser::parseDrmFdinfo` (fixture-backed tests cover multi-engine aggregation, client-id dedupe, MiB suffix). Engine-ns deltas maintain `mPrevGpuEngineNs` baselines matching the `mPrevCpuTotal` pattern. NVIDIA fallback via a persistent `NvidiaSmiPmonStreamer` running `nvidia-smi pmon -d 1 -s u -c 0` + `nvidia-smi --query-compute-apps=pid,used_memory -l 1` (two streams, one cache; zero forks per tick once running — mirrors Bundle C-perf's `NvidiaSmiStreamer`).
+  - **macOS deferred to FR-128:** Per-process GPU on macOS has no supported public API. Device-global macOS GPU% continues to work on the Dashboard; per-process columns render em-dash on macOS. Filed as a follow-up for IOAccelerator client-tree walk.
 
-- [ ] **FR-116: Pin processes & per-process threshold alerts** — Right-click any process → "Pin" to keep it sticky at the top of the list (survives re-sort and filter) and optionally set a per-process CPU/memory threshold that fires a tray notification when breached (e.g., "chrome exceeded 4 GB"). Pinned list persists across sessions. Recurring ask in btop ([issue #501](https://github.com/aristocratos/btop/issues/501)) and Mission Center threads.
-  - **User Description:** You probably have 2-3 apps you care about ("is Chrome bloating again?", "is Slack eating RAM?") and 400 you don't. This FR lets you right-click those apps → "Pin" so they're always visible at the top of the list, and optionally set a threshold ("ping me when Chrome exceeds 4 GB") that pops a tray notification. Turns the Processes page from reactive debugging into background peace of mind.
-  - **Bundle:** H.
-  - **Files:** `shared/nexis/Pages/Processes/`, `shared/nexis/Managers/setting_manager.*`
-  - **Platform:** Both
-  - **Complexity:** Small-Medium
+- [x] **FR-116: Pin processes & per-process threshold alerts** — Right-click any process → "Pin" to keep it sticky at the top of the list (survives re-sort and filter) and optionally set a per-process CPU/memory threshold that fires a tray notification when breached (e.g., "chrome exceeded 4 GB"). Pinned list persists across sessions. Recurring ask in btop ([issue #501](https://github.com/aristocratos/btop/issues/501)) and Mission Center threads.
+  - **Resolved:** New row-level context menu on the Processes table (distinct from the existing header menu) exposes "Pin/Unpin", "Set Alert…", and "End Process". `PinSortFilterProxyModel` subclasses `QSortFilterProxyModel` and overrides `lessThan` to keep pinned rows at the top regardless of the user's chosen sort column or direction. Pin/threshold state is persisted by a new `ProcessPrefsManager` singleton — JSON-in-QSettings via two new keys (`ProcessPinnedNames`, `ProcessThresholds`). `ProcessAlertDialog` provides CPU% + memory + MB/GB inputs. Per-tick `evaluateThresholdAlerts` aggregates RSS/CPU% by process name and fires tray notifications with per-(name, metric) hysteresis so each breach fires exactly once until the reading falls back below threshold.
 
 ### Bundle I — Linux System Tuning Sprint
 
@@ -514,12 +507,8 @@
 
 *Goal: give Nexis a credible "security-adjacent checks" story without turning it into a security product.*
 
-- [ ] **FR-121: Listening-port audit with unexpected-process highlights** — Extend the existing Open Ports & Connections viewer (FR-66) with a "flag unexpected binders" mode: any process listening on a port whose binary path is not under `/usr/bin`, `/usr/sbin`, `/System/Library`, `/opt/homebrew/*`, or `/Library/Apple/*` gets highlighted amber; unsigned macOS binaries get a red badge (via `codesign -dv`). Educational, not definitive — catches the "why is there a listener on 4444?" case.
-  - **User Description:** When your computer has a listening network port, it's usually system services or apps you installed — but occasionally it's something that shouldn't be there. This FR color-codes the Open Ports list so unusual listeners stand out (amber for unexpected paths, red for unsigned macOS binaries). Not an antivirus; more like "eyes on the normal stuff you'd never normally look at."
-  - **Bundle:** K (with FR-122).
-  - **Files:** `shared/nexis/Pages/Network/open_ports_widget.*`
-  - **Platform:** Both
-  - **Complexity:** Small
+- [x] **FR-121: Listening-port audit with unexpected-process highlights** — Extend the existing Open Ports & Connections viewer (FR-66) with a "flag unexpected binders" mode: any process listening on a port whose binary path is not under `/usr/bin`, `/usr/sbin`, `/System/Library`, `/opt/homebrew/*`, or `/Library/Apple/*` gets highlighted amber; unsigned macOS binaries get a red badge (via `codesign -dv`). Educational, not definitive — catches the "why is there a listener on 4444?" case.
+  - **Resolved:** `ConnectionEntry` gains `binaryPath`, `isUnexpected`, and `isUnsigned`. Path resolution via `QFile::symLinkTarget("/proc/<pid>/exe")` on Linux, `proc_pidpath` on macOS — silent on permission errors. `isTrustedBinderPath` checks against a platform-default prefix list plus user extras from the new `SettingKeys::TrustedBinderPrefixes`. Unexpected rows show a ⚠ glyph + warning-color foreground + tooltip on Process and Path cells. New "Verify Signatures" button on the widget (macOS only) lazily runs `codesign -dv` per unique path via `QThreadPool`; results cached for the widget's lifetime; unsigned binaries re-rendered with destructive color.
 
 - [ ] **FR-122: Optional chkrootkit / rkhunter frontend** — Follow the existing Disk Usage Launcher pattern: if `chkrootkit` or `rkhunter` is installed, show a Helpers-page card with a "Run scan" button and a results viewer. Do not bundle the scanners themselves. Source: [Linux rootkit scanners roundup](https://linuxsecurity.com/features/the-three-best-tools-you-need-to-scan-your-linux-system-for-malware).
   - **User Description:** Linux has two long-standing rootkit scanners (`chkrootkit` and `rkhunter`) that are powerful but intimidating to use from the terminal. This FR gives you a one-click "Run rootkit scan" button on the Helpers page when either tool is installed, with readable results. Zero bloat added to Nexis (we don't bundle them); just a friendly face on tools that are already on many systems.
@@ -562,3 +551,8 @@
   - **Files:** `linux/nexis-core/Info/process_info.cpp`, `linux/nexis-core/Info/process_info_linux.h`, `linux/nexis-core/Info/proc_info_parser.{cpp,h}`
   - **Platform:** Linux only
   - **Complexity:** Medium
+
+- [ ] **FR-128: macOS per-process GPU utilization** — Spill from FR-115. Per-process GPU% and VRAM are populated on Linux (DRM fdinfo for Intel/AMD, `nvidia-smi pmon` for NVIDIA) but render em-dash on macOS because there is no supported public API. Candidate approaches: `task_info(TASK_POWER_INFO_V2)` → `gpu_energy` (proxy, stable SPI-ish), the `IOAccelerator` client-tree walk Activity Monitor uses (private and changes between macOS versions), or `powermetrics --samplers gpu_power` (requires root). Recommend the client-tree walk for accuracy + audit-token → PID resolution, with `TASK_POWER_INFO_V2` as a fallback. Needs dedicated research + testing across macOS versions.
+  - **Files:** `macos/nexis-core/Info/process_info.cpp` (or new `process_gpu_info_macos.mm` for Objective-C bridging)
+  - **Platform:** macOS only
+  - **Complexity:** Medium-Large
