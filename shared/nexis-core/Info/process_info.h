@@ -22,10 +22,13 @@ public:
     // /proc/<pid>/io reads and macOS nettop forks are skipped when the
     // matching columns are all hidden on the Processes page. Defaults
     // mirror the page's initial hidden-column state (both off).
+    // FR-115 added mCollectGpu for /proc/<pid>/fdinfo and nvidia-smi pmon.
     void setCollectDiskIO(bool enabled) { mCollectDiskIO = enabled; }
     void setCollectNetIO(bool enabled)  { mCollectNetIO  = enabled; }
+    void setCollectGpu(bool enabled)    { mCollectGpu    = enabled; }
     bool collectsDiskIO() const { return mCollectDiskIO; }
     bool collectsNetIO() const  { return mCollectNetIO; }
+    bool collectsGpu() const    { return mCollectGpu; }
 
 public slots:
     virtual void updateProcesses() = 0;
@@ -34,6 +37,7 @@ protected:
     QList<Process> processList;
     bool mCollectDiskIO = false;
     bool mCollectNetIO  = false;
+    bool mCollectGpu    = false;
 };
 
 #endif // PROCESS_INFO_H

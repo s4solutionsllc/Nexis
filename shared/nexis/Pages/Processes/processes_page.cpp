@@ -35,7 +35,8 @@ void ProcessesPage::init()
         tr("User"), "%CPU", tr("Start Time"), tr("State"), tr("Group"),
         tr("Nice"), tr("CPU Time"), tr("Session"),
         tr("Disk Read/s"), tr("Disk Write/s"), tr("Net Down/s"), tr("Net Up/s"),
-        tr("Process")
+        tr("GPU %"), tr("GPU VRAM"),            // FR-115 (indices 16, 17)
+        tr("Process")                            // now index 18
     };
 
     // slider settings
@@ -81,11 +82,14 @@ void ProcessesPage::init()
 void ProcessesPage::updateProcessIoCollection()
 {
     const auto *header = ui->tableProcess->horizontalHeader();
-    // Columns: 12=Disk Read/s, 13=Disk Write/s, 14=Net Down/s, 15=Net Up/s.
+    // Columns: 12=Disk Read/s, 13=Disk Write/s, 14=Net Down/s, 15=Net Up/s,
+    //          16=GPU %, 17=GPU VRAM.
     const bool diskVisible = !header->isSectionHidden(12) || !header->isSectionHidden(13);
     const bool netVisible  = !header->isSectionHidden(14) || !header->isSectionHidden(15);
+    const bool gpuVisible  = !header->isSectionHidden(16) || !header->isSectionHidden(17);
     im->setCollectProcessDiskIO(diskVisible);
     im->setCollectProcessNetIO(netVisible);
+    im->setCollectProcessGpu(gpuVisible);
 }
 
 void ProcessesPage::loadHeaderMenu()
@@ -102,8 +106,8 @@ void ProcessesPage::loadHeaderMenu()
 
     }
     mHeaderMenu.addActions(actionList);
-    // exclude headers
-    QList<int> hiddenHeaders = { 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+    // exclude headers — GPU %/VRAM (16,17) hidden by default, same pattern as disk/net I/O.
+    QList<int> hiddenHeaders = { 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
 
     QList<QAction*> actions = mHeaderMenu.actions();
     for (const int i : hiddenHeaders) {
@@ -263,6 +267,22 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     netUp_i->setData(proc.getNetUpRate(), data);
     netUp_i->setData(netUpText, Qt::ToolTipRole);
 
+    // FR-115: GPU %
+    QString gpuPctText = proc.getGpuPercent() < 0
+        ? QString::fromUtf8("\u2014")
+        : QString::number(proc.getGpuPercent(), 'f', 0) + "%";
+    QStandardItem *gpuPct_i = new QStandardItem(gpuPctText);
+    gpuPct_i->setData(proc.getGpuPercent(), data);
+    gpuPct_i->setData(gpuPctText, Qt::ToolTipRole);
+
+    // FR-115: GPU VRAM
+    QString gpuVramText = proc.getGpuVramBytes() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getGpuVramBytes()));
+    QStandardItem *gpuVram_i = new QStandardItem(gpuVramText);
+    gpuVram_i->setData(proc.getGpuVramBytes(), data);
+    gpuVram_i->setData(gpuVramText, Qt::ToolTipRole);
+
     QStandardItem *cmd_i = new QStandardItem(proc.getCmd());
     cmd_i->setData(proc.getCmd(), data);
     cmd_i->setData(QString("<p>%1</p>").arg(proc.getCmd()), Qt::ToolTipRole);
@@ -270,6 +290,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     row << pid_i << rss_i << pmem_i << vsize_i << uname_i << pcpu_i
         << starttime_i << state_i << group_i << nice_i << cpuTime_i
         << session_i << diskRead_i << diskWrite_i << netDown_i << netUp_i
+        << gpuPct_i << gpuVram_i
         << cmd_i;
 
     return row;
@@ -320,7 +341,17 @@ void ProcessesPage::updateRow(int row, const Process &proc)
         : FormatUtil::formatBytes(static_cast<quint64>(proc.getNetUpRate())) + "/s";
     setCell(15, netUpText, proc.getNetUpRate(), netUpText);
 
-    setCell(16, proc.getCmd(), proc.getCmd(), QString("<p>%1</p>").arg(proc.getCmd()));
+    QString gpuPctText = proc.getGpuPercent() < 0
+        ? QString::fromUtf8("\u2014")
+        : QString::number(proc.getGpuPercent(), 'f', 0) + "%";
+    setCell(16, gpuPctText, proc.getGpuPercent(), gpuPctText);
+
+    QString gpuVramText = proc.getGpuVramBytes() < 0
+        ? QString::fromUtf8("\u2014")
+        : FormatUtil::formatBytes(static_cast<quint64>(proc.getGpuVramBytes()));
+    setCell(17, gpuVramText, proc.getGpuVramBytes(), gpuVramText);
+
+    setCell(18, proc.getCmd(), proc.getCmd(), QString("<p>%1</p>").arg(proc.getCmd()));
 }
 
 void ProcessesPage::on_txtProcessSearch_textChanged(const QString &val)

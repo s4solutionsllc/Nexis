@@ -288,6 +288,11 @@ void InfoManager::setCollectProcessNetIO(bool enabled)
     pi->setCollectNetIO(enabled);
 }
 
+void InfoManager::setCollectProcessGpu(bool enabled)
+{
+    pi->setCollectGpu(enabled);
+}
+
 /********************
  * Thermal Provider
  *******************/

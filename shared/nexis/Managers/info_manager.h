@@ -68,11 +68,13 @@ public:
     QStringList getUserList() const;
     QStringList getGroupList() const;
 
-    // FR-108: toggle per-PID I/O collection based on Processes-page column
-    // visibility. Skips /proc/<pid>/io reads (Linux) and the nettop fork
-    // (macOS) when the matching columns are hidden.
+    // FR-108 / FR-115: toggle per-PID I/O and GPU collection based on
+    // Processes-page column visibility. Skips /proc/<pid>/io reads (Linux),
+    // the nettop fork (macOS), and /proc/<pid>/fdinfo + nvidia-smi pmon
+    // (Linux) when the matching columns are all hidden.
     void setCollectProcessDiskIO(bool enabled);
     void setCollectProcessNetIO(bool enabled);
+    void setCollectProcessGpu(bool enabled);
 
     QList<QString> getDevices();
     QList<QString> getFileSystemTypes();

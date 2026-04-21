@@ -169,3 +169,23 @@ void Process::setNetUpRate(const double &value)
 {
     netUpRate = value;
 }
+
+double Process::getGpuPercent() const
+{
+    return gpuPercent;
+}
+
+void Process::setGpuPercent(const double &value)
+{
+    gpuPercent = value;
+}
+
+qint64 Process::getGpuVramBytes() const
+{
+    return gpuVramBytes;
+}
+
+void Process::setGpuVramBytes(const qint64 &value)
+{
+    gpuVramBytes = value;
+}

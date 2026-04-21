@@ -56,6 +56,14 @@ public:
     double getNetUpRate() const;
     void setNetUpRate(const double &value);
 
+    // FR-115: per-process GPU utilization (%) and VRAM (bytes).
+    // Sentinel -1 means "unknown" — the view renders an em-dash.
+    double getGpuPercent() const;
+    void setGpuPercent(const double &value);
+
+    qint64 getGpuVramBytes() const;
+    void setGpuVramBytes(const qint64 &value);
+
     QString getCmd() const;
     void setCmd(const QString &value);
 
@@ -76,6 +84,8 @@ private:
     double diskWriteRate = -1.0;
     double netDownRate = -1.0;
     double netUpRate = -1.0;
+    double gpuPercent = -1.0;
+    qint64 gpuVramBytes = -1;
     QString cmd;
 };
 
