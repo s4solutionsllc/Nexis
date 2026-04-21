@@ -40,6 +40,17 @@ namespace SettingKeys {
     const QString UpdateLastCount("UpdateLastCount");
     const QString DashboardFooterVisible("DashboardFooterVisible");
     const QString CleanerExclusions("CleanerExclusions");
+
+    // FR-112
+    const QString PreCleanSnapshotEnabled("PreCleanSnapshotEnabled");
+
+    // FR-113
+    const QString DownloadsAutoCleanEnabled("DownloadsAutoCleanEnabled");
+    const QString DownloadsAutoCleanPath("DownloadsAutoCleanPath");
+    const QString DownloadsAutoCleanDays("DownloadsAutoCleanDays");
+
+    // FR-114
+    const QString CleanerCategoryTrends("CleanerCategoryTrends");
 }
 
 class SettingManager
@@ -154,6 +165,22 @@ public:
 
     void setCleanerExclusions(const QString &json);
     QString getCleanerExclusions() const;
+
+    // FR-112
+    void setPreCleanSnapshotEnabled(bool value);
+    bool getPreCleanSnapshotEnabled() const;
+
+    // FR-113
+    void setDownloadsAutoCleanEnabled(bool value);
+    bool getDownloadsAutoCleanEnabled() const;
+    void setDownloadsAutoCleanPath(const QString &path);
+    QString getDownloadsAutoCleanPath() const;
+    void setDownloadsAutoCleanDays(int days);
+    int getDownloadsAutoCleanDays() const;
+
+    // FR-114
+    void setCleanerCategoryTrends(const QString &json);
+    QString getCleanerCategoryTrends() const;
 
 private:
     static SettingManager *instance;

@@ -375,3 +375,57 @@ QString SettingManager::getCleanerExclusions() const
 {
     return mSettings->value(SettingKeys::CleanerExclusions, "[]").toString();
 }
+
+// FR-112
+void SettingManager::setPreCleanSnapshotEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::PreCleanSnapshotEnabled, value);
+}
+
+bool SettingManager::getPreCleanSnapshotEnabled() const
+{
+    return mSettings->value(SettingKeys::PreCleanSnapshotEnabled, false).toBool();
+}
+
+// FR-113
+void SettingManager::setDownloadsAutoCleanEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::DownloadsAutoCleanEnabled, value);
+}
+
+bool SettingManager::getDownloadsAutoCleanEnabled() const
+{
+    return mSettings->value(SettingKeys::DownloadsAutoCleanEnabled, false).toBool();
+}
+
+void SettingManager::setDownloadsAutoCleanPath(const QString &path)
+{
+    mSettings->setValue(SettingKeys::DownloadsAutoCleanPath, path);
+}
+
+QString SettingManager::getDownloadsAutoCleanPath() const
+{
+    const QString fallback = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    return mSettings->value(SettingKeys::DownloadsAutoCleanPath, fallback).toString();
+}
+
+void SettingManager::setDownloadsAutoCleanDays(int days)
+{
+    mSettings->setValue(SettingKeys::DownloadsAutoCleanDays, days);
+}
+
+int SettingManager::getDownloadsAutoCleanDays() const
+{
+    return mSettings->value(SettingKeys::DownloadsAutoCleanDays, 30).toInt();
+}
+
+// FR-114
+void SettingManager::setCleanerCategoryTrends(const QString &json)
+{
+    mSettings->setValue(SettingKeys::CleanerCategoryTrends, json);
+}
+
+QString SettingManager::getCleanerCategoryTrends() const
+{
+    return mSettings->value(SettingKeys::CleanerCategoryTrends, "{}").toString();
+}

@@ -373,6 +373,23 @@ void SystemCleanerPage::systemClean()
     // Worker thread: delegate I/O to CleanerService
     mTotalCleanedSize = 0;
 
+    // FR-112: take a snapshot before deleting, if the user opted in.
+    // systemClean bypasses CleanerService::clean (historical divergence), so
+    // the hook here is what covers interactive page-initiated cleans. The
+    // category list is best-effort — the page doesn't track per-category
+    // checkboxes at clean time, only the aggregated mFilesToDelete list.
+    QList<CleanerService::CleanCategory> cats;
+    if (mCleanTrash)       cats << CleanerService::TRASH;
+    if (mCleanSnapFlatpak) cats << CleanerService::SNAP_FLATPAK_REVISIONS;
+    if (!mFilesToDelete.isEmpty()) {
+        // Stand-in: represent the file-cleaning bucket as "application
+        // caches" for the snapshot annotation. The snapshot captures the
+        // whole filesystem regardless.
+        cats << CleanerService::APPLICATION_CACHES;
+    }
+    if (!cats.isEmpty())
+        mCleanerService->maybeTakeSnapshot(cats);
+
     if (mCleanTrash) {
         mTotalCleanedSize += mCleanerService->cleanTrash();
     }

@@ -436,6 +436,16 @@
            </widget>
           </item>
 
+          <!-- FR-112: pre-clean snapshot toggle -->
+          <item>
+           <widget class="QCheckBox" name="chkPreCleanSnapshot">
+            <property name="text"><string>Create restore point before cleaning</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+            <property name="toolTip"><string>Runs Timeshift (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back.</string></property>
+           </widget>
+          </item>
+
          </layout>
         </widget>
        </item>

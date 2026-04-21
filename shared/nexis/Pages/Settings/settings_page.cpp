@@ -4,6 +4,7 @@
 #include "Managers/schedule_manager.h"
 #include "Managers/cleaner_service.h"
 #include "Managers/data_refresh_service.h"
+#include "Services/snapshot_service.h"
 #include "Pages/SystemCleaner/schedule_editor_dialog.h"
 #include "utilities.h"
 #include <QApplication>
@@ -384,6 +385,17 @@ void SettingsPage::initScheduledCleaning()
     ui->spnThresholdGB->setEnabled(mSettingManager->getThresholdAlertEnabled());
     ui->chkCleaningNotifications->setChecked(mSettingManager->getCleaningNotificationsEnabled());
 
+    // FR-112: hide the snapshot toggle when the platform tool (Timeshift /
+    // tmutil) isn't available. Show a per-platform tool name in the label.
+    SnapshotService *snap = SnapshotService::ins();
+    if (snap->isAvailable()) {
+        ui->chkPreCleanSnapshot->setText(
+            tr("Create restore point before cleaning (%1)").arg(snap->toolDisplayName()));
+        ui->chkPreCleanSnapshot->setChecked(mSettingManager->getPreCleanSnapshotEnabled());
+    } else {
+        ui->chkPreCleanSnapshot->hide();
+    }
+
     // Check if quick setup schedule exists
     bool hasQuickSetup = false;
     for (const auto &s : mScheduleManager->getAllSchedules()) {
@@ -402,6 +414,7 @@ void SettingsPage::initScheduledCleaning()
     connect(ui->btnManageSchedules, &QPushButton::clicked, this, &SettingsPage::onManageSchedules);
     connect(ui->btnViewHistory, &QPushButton::clicked, this, &SettingsPage::onViewCleaningHistory);
     connect(ui->chkCleaningNotifications, &QCheckBox::toggled, this, &SettingsPage::onCleaningNotificationsToggled);
+    connect(ui->chkPreCleanSnapshot, &QCheckBox::toggled, this, &SettingsPage::onPreCleanSnapshotToggled);
     connect(mScheduleManager, &ScheduleManager::schedulesChanged, this, &SettingsPage::updateScheduleSummary);
 }
 
@@ -444,6 +457,11 @@ void SettingsPage::onThresholdToggled(bool checked)
 void SettingsPage::onThresholdGBChanged(int value)
 {
     mSettingManager->setThresholdGB(value);
+}
+
+void SettingsPage::onPreCleanSnapshotToggled(bool checked)
+{
+    mSettingManager->setPreCleanSnapshotEnabled(checked);
 }
 
 void SettingsPage::onCleaningNotificationsToggled(bool checked)

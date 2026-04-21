@@ -55,6 +55,7 @@ private slots:
     void onManageSchedules();
     void onViewCleaningHistory();
     void onCleaningNotificationsToggled(bool checked);
+    void onPreCleanSnapshotToggled(bool checked);
     void updateScheduleSummary();
     void refreshThemeColors();
 

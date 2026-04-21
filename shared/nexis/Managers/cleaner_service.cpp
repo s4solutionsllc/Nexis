@@ -2,6 +2,7 @@
 #include "setting_manager.h"
 #include <Managers/info_manager.h>
 #include <Managers/tool_manager.h>
+#include <Services/snapshot_service.h>
 #include <Utils/command_util.h>
 #include <Utils/file_util.h>
 #include <Utils/format_util.h>
@@ -223,6 +224,9 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
 
     ScanResult scanResult = scan(categories);
 
+    // FR-112: take a snapshot before we start deleting, if the user opted in.
+    maybeTakeSnapshot(categories);
+
     for (CleanCategory cat : categories) {
         quint64 catBytes = 0;
 
@@ -337,6 +341,26 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs)
     }
 
     return totalFreed;
+}
+
+void CleanerService::maybeTakeSnapshot(const QList<CleanCategory> &categories)
+{
+    if (!SettingManager::ins()->getPreCleanSnapshotEnabled())
+        return;
+
+    SnapshotService *svc = SnapshotService::ins();
+    if (!svc->isAvailable()) {
+        qWarning() << "CleanerService: snapshot enabled but tool unavailable — skipping";
+        return;
+    }
+
+    QStringList catNames;
+    catNames.reserve(categories.size());
+    for (CleanCategory cat : categories)
+        catNames << categoryName(cat);
+
+    const QString reason = QStringLiteral("Nexis pre-clean: %1").arg(catNames.join(", "));
+    svc->takeSnapshot(reason);   // silently logs on failure; we don't block the clean.
 }
 
 CleanerService::CleanResult CleanerService::cleanSchedule(const QString &scheduleId)

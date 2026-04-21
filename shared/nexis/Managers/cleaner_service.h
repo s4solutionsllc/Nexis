@@ -54,6 +54,12 @@ public:
     quint64 cleanTrash();
     quint64 cleanFiles(const QStringList &paths, int minFileAgeSecs = 0);
 
+    // FR-112: take a Timeshift / APFS snapshot before a clean if the user
+    // has opted in via SettingKeys::PreCleanSnapshotEnabled. Silent no-op
+    // when disabled or when the platform tool is unavailable. Always
+    // returns (never throws) so the clean itself is never blocked.
+    void maybeTakeSnapshot(const QList<CleanCategory> &categories);
+
     QList<ExclusionEntry> loadExclusions();
     void saveExclusions(const QList<ExclusionEntry> &entries);
     void addExclusion(ExclusionEntry::Type type, const QString &path);
