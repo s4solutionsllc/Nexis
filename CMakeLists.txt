@@ -215,7 +215,7 @@ target_include_directories(nexis-core PUBLIC
 )
 
 target_compile_definitions(nexis-core PRIVATE NEXISCORE_LIBRARY QT_DEPRECATED_WARNINGS)
-target_link_libraries(nexis-core Qt6::Core Qt6::Network)
+target_link_libraries(nexis-core Qt6::Core Qt6::Network Qt6::Concurrent)
 
 # macOS-specific frameworks needed for system info APIs (IOKit, CoreFoundation)
 if(APPLE)

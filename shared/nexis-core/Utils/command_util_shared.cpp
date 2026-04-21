@@ -1,14 +1,41 @@
 #include "command_util.h"
 
-#include <QProcess>
-#include <QTextStream>
-#include <QStandardPaths>
+#include <QCoreApplication>
 #include <QDebug>
+#include <QProcess>
+#include <QStandardPaths>
+#include <QTextStream>
+#include <QThread>
+#include <QtConcurrent>
 
 #include <memory>
 
+namespace {
+
+// UI-thread audit: in debug builds, warn (and assert) when a synchronous exec
+// runs on the GUI thread. Gated on NEXIS_ASSERT_ASYNC_EXEC so it stays silent
+// by default and does not disrupt existing callers during the Bundle B
+// migration.
+void auditUiThread(const QString &cmd, const QStringList &args)
+{
+#ifndef QT_NO_DEBUG
+    static const bool assertAsync = qEnvironmentVariableIsSet("NEXIS_ASSERT_ASYNC_EXEC");
+    if (assertAsync && qApp && QThread::currentThread() == qApp->thread()) {
+        qWarning() << "CommandUtil: synchronous exec on UI thread:" << cmd << args;
+        Q_ASSERT(false);
+    }
+#else
+    Q_UNUSED(cmd)
+    Q_UNUSED(args)
+#endif
+}
+
+} // namespace
+
 QString CommandUtil::exec(const QString &cmd, QStringList args, QByteArray data, int timeoutMs)
 {
+    auditUiThread(cmd, args);
+
     std::unique_ptr<QProcess> process(new QProcess());
     process->start(cmd, args);
 
@@ -35,6 +62,8 @@ QString CommandUtil::exec(const QString &cmd, QStringList args, QByteArray data,
 
 ExecResult CommandUtil::execWithStatus(const QString &cmd, QStringList args, int timeoutMs)
 {
+    auditUiThread(cmd, args);
+
     ExecResult result;
     result.exitCode = -1;
 
@@ -56,6 +85,13 @@ ExecResult CommandUtil::execWithStatus(const QString &cmd, QStringList args, int
     process->close();
 
     return result;
+}
+
+QFuture<ExecResult> CommandUtil::execAsync(const QString &cmd, QStringList args, int timeoutMs)
+{
+    return QtConcurrent::run([cmd, args, timeoutMs] {
+        return CommandUtil::execWithStatus(cmd, args, timeoutMs);
+    });
 }
 
 bool CommandUtil::isExecutable(const QString &cmd)
