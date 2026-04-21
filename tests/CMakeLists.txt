@@ -41,6 +41,17 @@ add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 add_nexis_test(NAME DockerToolTests   SOURCES core/test_docker_tool.cpp)
 
+# FR-127: pure parser for /proc/<pid>/*. Compiled directly here so the test
+# runs on any platform, even though the parser is only wired into the real
+# nexis-core build on Linux.
+add_nexis_test(NAME ProcInfoParserTests
+  SOURCES
+    core/test_proc_info_parser.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info/proc_info_parser.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
+)
+
 # NetworkDiagWidget lives in the GUI target; compile its source + deps directly.
 add_nexis_test(NAME NetworkDiagTests
   SOURCES
