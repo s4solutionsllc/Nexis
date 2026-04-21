@@ -2,6 +2,9 @@
 #include "network_diag_widget.h"
 #include "open_ports_widget.h"
 #include "firewall_widget.h"
+#ifdef Q_OS_LINUX
+#include "swappiness_widget.h"
+#endif
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
@@ -46,6 +49,10 @@ void HelpersPage::init()
     ui->stackedWidget->addWidget(mNetworkDiagWidget);
     ui->stackedWidget->addWidget(mOpenPortsWidget);
     ui->stackedWidget->addWidget(mFirewallWidget);
+#ifdef Q_OS_LINUX
+    mSwappinessWidget = new SwappinessWidget;
+    ui->stackedWidget->addWidget(mSwappinessWidget);
+#endif
 
     // Prevent buttons from shrinking below their text width
     for (auto *btn : {ui->btnHostManage, ui->btnFlushDNS, ui->btnNetDiag,
@@ -78,6 +85,18 @@ void HelpersPage::init()
     connect(mBtnVerifyDisk, &QPushButton::clicked, this, &HelpersPage::onVerifyDisk);
     connect(mBtnRebuildLaunchServices, &QPushButton::clicked, this, &HelpersPage::onRebuildLaunchServices);
 #else
+    // FR-81: Swappiness button. Always visible on Linux — the widget itself
+    // handles the "not supported" state if /proc/sys/vm/swappiness isn't
+    // readable (extreme corner cases like hardened LSM profiles).
+    mBtnSwappiness = new QPushButton(tr("Swappiness"));
+    mBtnSwappiness->setCheckable(true);
+    mBtnSwappiness->setCursor(Qt::PointingHandCursor);
+    mBtnSwappiness->setFocusPolicy(Qt::NoFocus);
+    mBtnSwappiness->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnSwappiness);
+    shadowWidgets << mBtnSwappiness;
+    connect(mBtnSwappiness, &QPushButton::clicked, this, &HelpersPage::onSwappinessClicked);
+
     initPowerProfileUI();
     if (mPowerProfileWidget)
         shadowWidgets << mPowerProfileWidget;
@@ -91,6 +110,8 @@ void HelpersPage::init()
 #ifdef Q_OS_MACOS
     mNavItems << mBtnRebuildSpotlight << mBtnVerifyDisk << mBtnRebuildLaunchServices;
 #else
+    if (mBtnSwappiness)
+        mNavItems << mBtnSwappiness;
     if (mPowerProfileWidget)
         mNavItems << mPowerProfileWidget;
 #endif
@@ -122,6 +143,16 @@ void HelpersPage::on_btnFirewall_clicked()
 {
     mFirewallWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentIndex(3);
+}
+
+void HelpersPage::onSwappinessClicked()
+{
+#ifdef Q_OS_LINUX
+    if (!mSwappinessWidget)
+        return;
+    mSwappinessWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mSwappinessWidget);
+#endif
 }
 
 void HelpersPage::on_btnFlushDNS_clicked()

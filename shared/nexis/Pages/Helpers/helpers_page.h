@@ -12,6 +12,7 @@ class QResizeEvent;
 class NetworkDiagWidget;
 class OpenPortsWidget;
 class FirewallWidget;
+class SwappinessWidget;
 
 namespace Ui {
 class HelpersPage;
@@ -31,6 +32,7 @@ private slots:
     void on_btnNetDiag_clicked();
     void on_btnOpenPorts_clicked();
     void on_btnFirewall_clicked();
+    void onSwappinessClicked();      // FR-81
     void onRebuildSpotlight();
     void onVerifyDisk();
     void onRebuildLaunchServices();
@@ -48,6 +50,10 @@ private:
     NetworkDiagWidget *mNetworkDiagWidget;
     OpenPortsWidget *mOpenPortsWidget;
     FirewallWidget *mFirewallWidget;
+#ifdef Q_OS_LINUX
+    SwappinessWidget *mSwappinessWidget = nullptr;
+    QPushButton      *mBtnSwappiness    = nullptr;
+#endif
 
     QList<QWidget*> mNavItems;
     bool mNavCompact = false;

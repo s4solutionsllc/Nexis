@@ -302,6 +302,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Helpers/network_diag_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/open_ports_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/firewall_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/swappiness_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo/hardware_info_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/pin_sort_filter_proxy_model.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/process_alert_dialog.cpp"
