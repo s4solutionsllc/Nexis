@@ -4,10 +4,14 @@
 #include "nexis_roles.h"
 #include "dpi.h"
 #include "pin_sort_filter_proxy_model.h"
+#include "process_alert_dialog.h"
+#include "Managers/app_manager.h"
 #include "Managers/data_refresh_service.h"
 #include "Managers/process_prefs_manager.h"
 #include "Services/process_service.h"
 #include <QRegularExpression>
+#include <QSystemTrayIcon>
+#include <Utils/format_util.h>
 
 ProcessesPage::~ProcessesPage()
 {
@@ -192,6 +196,9 @@ void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QS
     } else {
         mSelectedRowModel = QModelIndex();
     }
+
+    // FR-116: fire tray notifications on threshold breach.
+    evaluateThresholdAlerts(processes);
 }
 
 QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
@@ -446,6 +453,8 @@ void ProcessesPage::onRowContextMenu(const QPoint &pos)
     QMenu menu(this);
     QAction *pinAction = menu.addAction(pinned ? tr("Unpin %1").arg(name)
                                                 : tr("Pin %1").arg(name));
+    QAction *alertAction = menu.addAction(
+        prefs->hasThreshold(name) ? tr("Edit Alert…") : tr("Set Alert…"));
     menu.addSeparator();
     QAction *endAction = menu.addAction(tr("End Process"));
 
@@ -455,6 +464,10 @@ void ProcessesPage::onRowContextMenu(const QPoint &pos)
 
     if (chosen == pinAction) {
         prefs->setPinned(name, !pinned);
+    } else if (chosen == alertAction) {
+        auto *dlg = new ProcessAlertDialog(name, this);
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->open();
     } else if (chosen == endAction) {
         mSelectedRowModel = mSortFilterModel->index(idx.row(), 0);
         on_btnEndProcess_clicked();
@@ -480,4 +493,69 @@ void ProcessesPage::refreshPinnedRoles()
     }
     // Nudge the proxy to re-sort.
     mSortFilterModel->invalidate();
+}
+
+void ProcessesPage::evaluateThresholdAlerts(const QList<Process> &processes)
+{
+    const auto thresholds = ProcessPrefsManager::ins()->thresholds();
+    if (thresholds.isEmpty())
+        return;
+
+    // Aggregate RSS + CPU% by process name across all PIDs, plus a count.
+    struct Agg {
+        quint64 rss = 0;
+        double  cpu = 0.0;
+        int     count = 0;
+    };
+    QHash<QString, Agg> agg;
+    for (const Process &proc : processes) {
+        Agg &a = agg[proc.getCmd()];
+        a.rss   += proc.getRss();
+        a.cpu   += proc.getPcpu();
+        a.count += 1;
+    }
+
+    QSystemTrayIcon *tray = AppManager::ins()->getTrayIcon();
+    if (!tray)
+        return;
+
+    auto fire = [tray, this](const QString &key, const QString &title, const QString &body) {
+        if (mAlertArmed.value(key, true)) {   // armed by default
+            tray->showMessage(title, body, QSystemTrayIcon::Warning);
+            mAlertArmed[key] = false;
+        }
+    };
+    auto disarm = [this](const QString &key) {
+        mAlertArmed[key] = true;
+    };
+
+    for (const auto &t : thresholds) {
+        const Agg &a = agg.value(t.name);
+        const QString cpuKey = t.name + QStringLiteral("::cpu");
+        const QString memKey = t.name + QStringLiteral("::mem");
+
+        if (t.cpuPercent > 0) {
+            if (a.cpu > t.cpuPercent) {
+                const QString body = a.count > 1
+                    ? tr("%1 (%2 processes) exceeded %3% CPU").arg(t.name).arg(a.count).arg(t.cpuPercent)
+                    : tr("%1 exceeded %2% CPU").arg(t.name).arg(t.cpuPercent);
+                fire(cpuKey, tr("Process Threshold Alert"), body);
+            } else {
+                disarm(cpuKey);
+            }
+        }
+
+        if (t.memoryBytes > 0) {
+            if (static_cast<qint64>(a.rss) > t.memoryBytes) {
+                const QString body = a.count > 1
+                    ? tr("%1 (%2 processes) exceeded %3").arg(t.name).arg(a.count)
+                        .arg(FormatUtil::formatBytes(t.memoryBytes))
+                    : tr("%1 exceeded %2").arg(t.name,
+                        FormatUtil::formatBytes(t.memoryBytes));
+                fire(memKey, tr("Process Threshold Alert"), body);
+            } else {
+                disarm(memKey);
+            }
+        }
+    }
 }

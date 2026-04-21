@@ -58,6 +58,10 @@ private:
     // FR-116: refresh the pinned-role on every row from ProcessPrefsManager.
     void refreshPinnedRoles();
 
+    // FR-116: evaluate thresholds and fire tray notifications with per-
+    // (name, metric) hysteresis.
+    void evaluateThresholdAlerts(const QList<Process> &processes);
+
 private:
     Ui::ProcessesPage *ui;
 
@@ -68,6 +72,7 @@ private:
     QMenu mHeaderMenu;
     QHash<pid_t, int> mPidToRow;
     QHash<pid_t, QString> mPidToName;   // FR-116
+    QHash<QString, bool> mAlertArmed;   // FR-116: "<name>::cpu" / "<name>::mem"
     InfoManager *im;
     DataRefreshService *mRefresh;
     ProcessService *mProcessService;
