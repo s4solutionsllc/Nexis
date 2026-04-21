@@ -56,6 +56,9 @@ private slots:
     void onViewCleaningHistory();
     void onCleaningNotificationsToggled(bool checked);
     void onPreCleanSnapshotToggled(bool checked);
+    void onDownloadsAutoCleanToggled(bool checked);
+    void onDownloadsPathBrowse();
+    void onDownloadsDaysChanged(int value);
     void updateScheduleSummary();
     void refreshThemeColors();
 

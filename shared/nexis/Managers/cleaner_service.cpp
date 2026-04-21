@@ -40,6 +40,7 @@ QString CleanerService::categoryName(CleanCategory cat)
         case BROKEN_SYMLINKS:   return QObject::tr("Broken Symlinks");
         case BROWSER_PRIVACY:   return QObject::tr("Browser Privacy");
         case SNAP_FLATPAK_REVISIONS: return QObject::tr("Snap/Flatpak Revisions");
+        case DOWNLOADS_AGED:    return QObject::tr("Old Downloads");
     }
     return QString();
 }
@@ -48,7 +49,7 @@ QList<CleanerService::CleanCategory> CleanerService::allCategories()
 {
     return { PACKAGE_CACHE, CRASH_REPORTS, APPLICATION_LOGS,
              APPLICATION_CACHES, TRASH, DEV_TOOL_CACHES, BROKEN_SYMLINKS,
-             BROWSER_PRIVACY, SNAP_FLATPAK_REVISIONS };
+             BROWSER_PRIVACY, SNAP_FLATPAK_REVISIONS, DOWNLOADS_AGED };
 }
 
 QList<CleanerService::ExclusionEntry> CleanerService::loadExclusions()
@@ -195,6 +196,26 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
                 files = { QFileInfo(trashPath) };
                 break;
             }
+            case DOWNLOADS_AGED: {
+                // FR-113: walk the user's configured Downloads folder and
+                // keep only entries older than N days. Respects the same
+                // CleanerExclusions filter below.
+                SettingManager *sm = SettingManager::ins();
+                if (!sm->getDownloadsAutoCleanEnabled())
+                    break;
+                const QString dir = sm->getDownloadsAutoCleanPath();
+                const int days = sm->getDownloadsAutoCleanDays();
+                if (dir.isEmpty() || days <= 0)
+                    break;
+                const QDateTime cutoff = QDateTime::currentDateTime().addDays(-days);
+                const QFileInfoList entries = QDir(dir).entryInfoList(
+                    QDir::Files | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+                for (const QFileInfo &fi : entries) {
+                    if (fi.lastModified() < cutoff)
+                        files.append(fi);
+                }
+                break;
+            }
         }
 
         if (!exclusions.isEmpty() && cat != TRASH) {
@@ -243,7 +264,11 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
             for (const QFileInfo &fi : scanResult.categoryFiles[cat]) {
                 paths << fi.absoluteFilePath();
             }
-            catBytes = cleanFiles(paths, minFileAgeSecs);
+            // FR-113: DOWNLOADS_AGED moves files to Trash rather than rm -rf
+            // so the user can recover them if they were wrong about the age
+            // threshold.
+            const bool moveToTrashInstead = (cat == DOWNLOADS_AGED);
+            catBytes = cleanFiles(paths, minFileAgeSecs, moveToTrashInstead);
         }
 
         result.categoryBreakdown[cat] = catBytes;
@@ -294,7 +319,8 @@ quint64 CleanerService::cleanTrash()
     return sizeBefore;
 }
 
-quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs)
+quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
+                                     bool moveToTrashInstead)
 {
     quint64 totalFreed = 0;
     QDateTime cutoff;
@@ -313,7 +339,16 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs)
 
         quint64 size = FileUtil::getFileSize(path);
 
-        if (fi.isSymLink()) {
+        if (moveToTrashInstead) {
+            // FR-113: DOWNLOADS_AGED path. QFile::moveToTrash preserves
+            // the filesystem's "Put Back" metadata on both macOS
+            // (NSFileManager trashItemAtURL:) and Linux (XDG trash spec).
+            QString trashedPath;
+            if (!QFile::moveToTrash(path, &trashedPath)) {
+                qWarning() << "cleanFiles: moveToTrash failed for" << path;
+                continue;   // don't count bytes we didn't actually move.
+            }
+        } else if (fi.isSymLink()) {
             QFile::remove(path);
         } else if (fi.isDir()) {
             QDir dir(path);
@@ -336,7 +371,7 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs)
         totalFreed += size;
     }
 
-    if (!filesToRemove.isEmpty()) {
+    if (!filesToRemove.isEmpty() && !moveToTrashInstead) {
         CommandUtil::sudoExec("rm", QStringList() << "-rf" << filesToRemove);
     }
 

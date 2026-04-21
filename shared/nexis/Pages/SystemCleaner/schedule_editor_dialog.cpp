@@ -141,6 +141,10 @@ void ScheduleEditorDialog::buildUI()
     mChkTrash = new QCheckBox(tr("Trash"));
     mChkDevToolCaches = new QCheckBox(tr("Dev Tool Caches"));
     mChkBrowserPrivacy = new QCheckBox(tr("Browser Privacy"));
+    mChkDownloadsAged = new QCheckBox(tr("Old Downloads"));
+    mChkDownloadsAged->setToolTip(
+        tr("Moves files older than the configured age from your Downloads folder to the Trash. "
+           "Path and age threshold are set on the Settings page."));
 
     catGrid->addWidget(mChkPackageCache, 0, 0);
     catGrid->addWidget(mChkCrashReports, 0, 1);
@@ -149,6 +153,7 @@ void ScheduleEditorDialog::buildUI()
     catGrid->addWidget(mChkTrash, 2, 0);
     catGrid->addWidget(mChkDevToolCaches, 2, 1);
     catGrid->addWidget(mChkBrowserPrivacy, 3, 0);
+    catGrid->addWidget(mChkDownloadsAged, 3, 1);
 
     mLblTrashWarning = new QLabel(tr("\xe2\x9a\xa0 Trash is permanently deleted and cannot be recovered"));
     mLblTrashWarning->setObjectName("lblTrashWarning");
@@ -225,6 +230,7 @@ void ScheduleEditorDialog::populateFromSchedule(const ScheduleManager::CleaningS
         case CleanerService::TRASH:             mChkTrash->setChecked(true); break;
         case CleanerService::DEV_TOOL_CACHES:   mChkDevToolCaches->setChecked(true); break;
         case CleanerService::BROWSER_PRIVACY:   mChkBrowserPrivacy->setChecked(true); break;
+        case CleanerService::DOWNLOADS_AGED:    mChkDownloadsAged->setChecked(true); break;
         }
     }
 
@@ -261,7 +267,7 @@ bool ScheduleEditorDialog::validate()
     bool anyCat = mChkPackageCache->isChecked() || mChkCrashReports->isChecked() ||
                   mChkAppLogs->isChecked() || mChkAppCaches->isChecked() ||
                   mChkTrash->isChecked() || mChkDevToolCaches->isChecked() ||
-                  mChkBrowserPrivacy->isChecked();
+                  mChkBrowserPrivacy->isChecked() || mChkDownloadsAged->isChecked();
     if (!anyCat) {
         mLblError->setText(tr("Select at least one category."));
         mLblError->setVisible(true);
@@ -298,6 +304,7 @@ ScheduleManager::CleaningSchedule ScheduleEditorDialog::getSchedule() const
     if (mChkTrash->isChecked())         s.categories << CleanerService::TRASH;
     if (mChkDevToolCaches->isChecked()) s.categories << CleanerService::DEV_TOOL_CACHES;
     if (mChkBrowserPrivacy->isChecked()) s.categories << CleanerService::BROWSER_PRIVACY;
+    if (mChkDownloadsAged->isChecked())  s.categories << CleanerService::DOWNLOADS_AGED;
 
     s.minFileAgeSecs = mChkSkipRecent->isChecked() ? mSpnMinFileAge->value() * 3600 : 0;
 

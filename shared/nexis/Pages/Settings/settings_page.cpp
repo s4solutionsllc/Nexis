@@ -8,6 +8,7 @@
 #include "Pages/SystemCleaner/schedule_editor_dialog.h"
 #include "utilities.h"
 #include <QApplication>
+#include <QFileDialog>
 #include <QRegularExpression>
 #include <QLineEdit>
 #include <QGridLayout>
@@ -396,6 +397,17 @@ void SettingsPage::initScheduledCleaning()
         ui->chkPreCleanSnapshot->hide();
     }
 
+    // FR-113: Downloads auto-cleanup — checkbox gates the path/days sub-controls.
+    const bool dlEnabled = mSettingManager->getDownloadsAutoCleanEnabled();
+    ui->chkDownloadsAutoClean->setChecked(dlEnabled);
+    ui->txtDownloadsPath->setText(mSettingManager->getDownloadsAutoCleanPath());
+    ui->spnDownloadsDays->setValue(mSettingManager->getDownloadsAutoCleanDays());
+    ui->txtDownloadsPath->setEnabled(dlEnabled);
+    ui->btnDownloadsBrowse->setEnabled(dlEnabled);
+    ui->spnDownloadsDays->setEnabled(dlEnabled);
+    ui->lblDownloadsPath->setEnabled(dlEnabled);
+    ui->lblDownloadsDays->setEnabled(dlEnabled);
+
     // Check if quick setup schedule exists
     bool hasQuickSetup = false;
     for (const auto &s : mScheduleManager->getAllSchedules()) {
@@ -415,6 +427,9 @@ void SettingsPage::initScheduledCleaning()
     connect(ui->btnViewHistory, &QPushButton::clicked, this, &SettingsPage::onViewCleaningHistory);
     connect(ui->chkCleaningNotifications, &QCheckBox::toggled, this, &SettingsPage::onCleaningNotificationsToggled);
     connect(ui->chkPreCleanSnapshot, &QCheckBox::toggled, this, &SettingsPage::onPreCleanSnapshotToggled);
+    connect(ui->chkDownloadsAutoClean, &QCheckBox::toggled, this, &SettingsPage::onDownloadsAutoCleanToggled);
+    connect(ui->btnDownloadsBrowse, &QPushButton::clicked, this, &SettingsPage::onDownloadsPathBrowse);
+    connect(ui->spnDownloadsDays, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsPage::onDownloadsDaysChanged);
     connect(mScheduleManager, &ScheduleManager::schedulesChanged, this, &SettingsPage::updateScheduleSummary);
 }
 
@@ -462,6 +477,32 @@ void SettingsPage::onThresholdGBChanged(int value)
 void SettingsPage::onPreCleanSnapshotToggled(bool checked)
 {
     mSettingManager->setPreCleanSnapshotEnabled(checked);
+}
+
+void SettingsPage::onDownloadsAutoCleanToggled(bool checked)
+{
+    mSettingManager->setDownloadsAutoCleanEnabled(checked);
+    ui->txtDownloadsPath->setEnabled(checked);
+    ui->btnDownloadsBrowse->setEnabled(checked);
+    ui->spnDownloadsDays->setEnabled(checked);
+    ui->lblDownloadsPath->setEnabled(checked);
+    ui->lblDownloadsDays->setEnabled(checked);
+}
+
+void SettingsPage::onDownloadsPathBrowse()
+{
+    const QString current = ui->txtDownloadsPath->text();
+    const QString chosen = QFileDialog::getExistingDirectory(
+        this, tr("Select Downloads folder"), current);
+    if (chosen.isEmpty())
+        return;
+    ui->txtDownloadsPath->setText(chosen);
+    mSettingManager->setDownloadsAutoCleanPath(chosen);
+}
+
+void SettingsPage::onDownloadsDaysChanged(int value)
+{
+    mSettingManager->setDownloadsAutoCleanDays(value);
 }
 
 void SettingsPage::onCleaningNotificationsToggled(bool checked)

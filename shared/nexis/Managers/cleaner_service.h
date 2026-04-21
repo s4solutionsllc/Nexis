@@ -26,7 +26,8 @@ public:
         DEV_TOOL_CACHES,
         BROKEN_SYMLINKS,
         BROWSER_PRIVACY,
-        SNAP_FLATPAK_REVISIONS
+        SNAP_FLATPAK_REVISIONS,
+        DOWNLOADS_AGED       // FR-113: aged files in the user's Downloads folder
     };
 
     struct ScanResult {
@@ -52,7 +53,8 @@ public:
     static QList<CleanCategory> allCategories();
 
     quint64 cleanTrash();
-    quint64 cleanFiles(const QStringList &paths, int minFileAgeSecs = 0);
+    quint64 cleanFiles(const QStringList &paths, int minFileAgeSecs = 0,
+                       bool moveToTrashInstead = false);
 
     // FR-112: take a Timeshift / APFS snapshot before a clean if the user
     // has opted in via SettingKeys::PreCleanSnapshotEnabled. Silent no-op
