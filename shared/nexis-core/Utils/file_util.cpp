@@ -1,5 +1,7 @@
 #include "file_util.h"
 
+#include "command_util.h"
+
 FileUtil::FileUtil()
 {
 
@@ -55,6 +57,23 @@ QStringList FileUtil::directoryList(const QString &path)
         list << info.fileName();
 
     return list;
+}
+
+bool FileUtil::writeRootFile(const QString &path, const QByteArray &content)
+{
+#ifdef Q_OS_LINUX
+    // Pipe `content` through pkexec tee <path>. sudoExec swallows errors and
+    // returns empty on cancel, so the only reliable success check is a
+    // read-back byte compare.
+    CommandUtil::sudoExec("tee", {path}, content);
+    const QString onDisk = FileUtil::readStringFromFile(path);
+    return onDisk.toUtf8() == content;
+#else
+    Q_UNUSED(path)
+    Q_UNUSED(content)
+    return false;   // macOS/other platforms have no pkexec — caller should
+                    // gate calls to writeRootFile() on platform anyway.
+#endif
 }
 
 quint64 FileUtil::getFileSize(const QString &path)

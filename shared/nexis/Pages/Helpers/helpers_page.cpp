@@ -423,14 +423,10 @@ void HelpersPage::applyNavLayout(bool compact)
         col->setSpacing(8);
         col->setContentsMargins(0, 0, 0, 0);
 
-        // Determine split index: macOS (8 items) = 5, Linux (5 items) = 3
-        int splitIndex;
-        if (mNavItems.count() >= 8)
-            splitIndex = 5;
-        else if (mNavItems.count() >= 5)
-            splitIndex = 3;
-        else
-            splitIndex = (mNavItems.count() + 1) / 2;
+        // Split roughly in half when we wrap. Previously hardcoded for 5
+        // (Linux) and 8 (macOS); Bundle F adds 3 Linux cards so we just
+        // balance the two rows dynamically.
+        int splitIndex = (mNavItems.count() + 1) / 2;
         splitIndex = qBound(1, splitIndex, mNavItems.count() - 1);
 
         auto *row1 = new QHBoxLayout();

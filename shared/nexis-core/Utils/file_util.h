@@ -22,6 +22,15 @@ public:
   static QStringList directoryList(const QString &path);
   static quint64 getFileSize(const QString &path);
 
+  // FR-81 / FR-117: write a root-owned file by piping `content` through
+  // `tee <path>` via pkexec/sudoExec. On Linux only — the macOS build is
+  // a compile-time no-op returning false. Re-reads the file after the
+  // write and returns true iff the on-disk bytes match `content` exactly.
+  //
+  // `path` must be absolute. Typical uses: /etc/sysctl.d/*.conf,
+  // /etc/systemd/system/*.service.
+  static bool writeRootFile(const QString &path, const QByteArray &content);
+
 private:
   FileUtil();
 };
