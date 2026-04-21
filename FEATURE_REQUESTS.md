@@ -447,26 +447,14 @@
 
 *Goal: make Nexis the trusted cleaner. The recurring criticism of Stacer/BleachBit in Reddit threads is "what if it breaks something?" These three items collectively change the story from "cleaner you hope works" to "cleaner you can watch and roll back."*
 
-- [ ] **FR-112: Timeshift / APFS snapshot before risky cleans** — Before the Maintenance Wizard "Clean Safe Items" button (and optionally before scheduled cleans), offer an opt-in "Create restore point first" checkbox. On Linux, if Timeshift is installed, invoke `timeshift --create --comments 'Nexis pre-clean'`. On macOS, use `tmutil localsnapshot`. Surface a read-only list of existing snapshots with age. Source: [Timeshift](https://github.com/linuxmint/timeshift).
-  - **User Description:** Before Nexis removes anything, you can tell it "take a snapshot first" so if something breaks, you can roll back. On Linux this ties into Timeshift (the standard Linux Mint tool); on macOS it uses APFS's built-in snapshot feature. Directly addresses the #1 concern people raise about cleaner tools — "will it brick my system?"
-  - **Bundle:** G (with FR-113, FR-114). Together: safe, smart, observable cleaning.
-  - **Files:** `shared/nexis/Pages/MaintenanceWizard/`, `shared/nexis-core/Info/snapshot_info.*` (new)
-  - **Platform:** Both
-  - **Complexity:** Medium
+- [x] **FR-112: Timeshift / APFS snapshot before risky cleans** — Before the Maintenance Wizard "Clean Safe Items" button (and optionally before scheduled cleans), offer an opt-in "Create restore point first" checkbox. On Linux, if Timeshift is installed, invoke `timeshift --create --comments 'Nexis pre-clean'`. On macOS, use `tmutil localsnapshot`. Surface a read-only list of existing snapshots with age. Source: [Timeshift](https://github.com/linuxmint/timeshift).
+  - **Resolved:** New `SnapshotService` wraps the platform tool (`timeshift --create` on Linux via `pkexec`, `tmutil localsnapshot` on macOS). Gated on a new `PreCleanSnapshotEnabled` setting (default off — users opt in). Settings page surfaces a checkbox under Scheduled Cleaning, hidden entirely when the tool isn't installed. `CleanerService::maybeTakeSnapshot` is called from both `CleanerService::clean()` (wizard + scheduled paths) and `SystemCleanerPage::systemClean()` (direct-page path). Snapshot failure never blocks the clean. Snapshot-listing and in-app rollback deferred to a follow-up.
 
-- [ ] **FR-113: Downloads folder auto-cleanup rule** — Optional scheduled cleaner rule that moves files from `~/Downloads` (or any folder the user picks) to Trash after N days (default 30, configurable). Respects the existing exclusion system. Most-upvoted open Stacer issue: [#286](https://github.com/oguzhaninan/Stacer/issues/286).
-  - **User Description:** Your Downloads folder is a graveyard of installer files, PDFs, and "I'll use this later" images. This FR lets Nexis auto-move anything older than a month (or whatever you pick) to the Trash on a schedule. You can always pull items back from Trash before it empties. It's the #1 most-requested feature on the original Stacer project and takes about a day to ship here.
-  - **Bundle:** G.
-  - **Files:** `shared/nexis/Pages/SystemCleaner/`, `shared/nexis/Managers/cleaner_scheduler.*`
-  - **Platform:** Both
-  - **Complexity:** Small
+- [x] **FR-113: Downloads folder auto-cleanup rule** — Optional scheduled cleaner rule that moves files from `~/Downloads` (or any folder the user picks) to Trash after N days (default 30, configurable). Respects the existing exclusion system. Most-upvoted open Stacer issue: [#286](https://github.com/oguzhaninan/Stacer/issues/286).
+  - **Resolved:** New `CleanCategory::DOWNLOADS_AGED` piggybacks on the existing cleaner-schedule pipeline (no new CLI verb, no new scheduler surface). `cleanFiles()` grew a `bool moveToTrashInstead` parameter wired to `QFile::moveToTrash` — the only category that moves to Trash rather than `rm -rf`. Settings page adds path + age controls (defaults: `QStandardPaths::DownloadLocation`, 30 days). Schedule Editor gets a new "Old Downloads" checkbox. Existing `CleanerExclusions` apply automatically.
 
-- [ ] **FR-114: Per-category scan size trend** — After each System Cleaner scan (manual or scheduled), persist the total size by category. Display a tiny sparkline next to each category label and a delta ("Package Cache: 1.2 GB, +400 MB this week") so users can see which categories are worth actually cleaning.
-  - **User Description:** Today the System Cleaner shows you "how much can I free right now." This FR adds a tiny trend line next to each category showing "how fast is this growing?" — so you can tell whether Application Caches is worth cleaning (growing 500 MB/week) or not (barely moving). It turns one-shot cleans into informed decisions.
-  - **Bundle:** G.
-  - **Files:** `shared/nexis/Pages/SystemCleaner/`, `shared/nexis-core/Info/cleaner_history.*` (new or extend existing persistence)
-  - **Platform:** Both
-  - **Complexity:** Small-Medium
+- [x] **FR-114: Per-category scan size trend** — After each System Cleaner scan (manual or scheduled), persist the total size by category. Display a tiny sparkline next to each category label and a delta ("Package Cache: 1.2 GB, +400 MB this week") so users can see which categories are worth actually cleaning.
+  - **Resolved:** `CleanerService::scan()` now writes per-category sample `(timestamp, bytes)` pairs into a new `CleanerCategoryTrends` JSON blob in QSettings — 20-sample rolling window per category. New `CategorySparkline` widget (flat-QPainter polyline, 60×16) and a current-size label are placed at grid row 5 of each category column on the System Cleaner page. Tooltip shows delta vs last scan. Refreshed after every scan via the existing `scanFinishedS` path.
 
 ### Bundle H — Process Observability Sprint
 
@@ -544,12 +532,8 @@
 
 *Goal: close the remaining "CleanMyMac alternative" gaps on macOS. Pairs thematically with FR-111 — both are core macOS-story items.*
 
-- [ ] **FR-123: App leftover / "crumbs" scanner on macOS** — After a `.app` or Homebrew cask uninstall (via the existing Uninstaller page), scan known locations (`~/Library/Preferences`, `~/Library/Application Support`, `~/Library/Caches`, `~/Library/Saved Application State`, `~/Library/Containers`, `~/Library/Logs`) for residual files matching the app's bundle identifier. Offer review-then-delete UI. Source: [Pearcleaner](https://github.com/alienator88/Pearcleaner), [Mole](https://github.com/tw93/mole).
-  - **User Description:** On macOS, dragging an app to the Trash removes the app but leaves behind settings, caches, and saved state files scattered across your Library folder — sometimes hundreds of MB per app. This FR runs a post-uninstall scan that finds these leftovers and offers them for review/removal. It's the #1 feature that keeps people paying for CleanMyMac.
-  - **Bundle:** L (pairs with FR-111 for a full macOS story).
-  - **Files:** `macos/nexis/Pages/Uninstaller/`, `macos/nexis-core/Info/app_leftovers_info.*` (new)
-  - **Platform:** macOS only
-  - **Complexity:** Medium
+- [x] **FR-123: App leftover / "crumbs" scanner on macOS** — After a `.app` or Homebrew cask uninstall (via the existing Uninstaller page), scan known locations (`~/Library/Preferences`, `~/Library/Application Support`, `~/Library/Caches`, `~/Library/Saved Application State`, `~/Library/Containers`, `~/Library/Logs`) for residual files matching the app's bundle identifier. Offer review-then-delete UI. Source: [Pearcleaner](https://github.com/alienator88/Pearcleaner), [Mole](https://github.com/tw93/mole).
+  - **Resolved:** New `CrumbsScanner` walks the six `~/Library/*` roots with conservative bundle-id-prefix matching. `PlistUtil::readAppBundleInfo` extracted from the existing `scanAppDirectory` flow; `Package` struct gained a `bundleId` field populated by macOS app discovery. `CrumbsReviewDialog` is a programmatic modal table (Check / Path / Size) — Delete Selected moves entries via `QFile::moveToTrash`. `UninstallerPage` captures the selected apps' bundle ids before dispatching `trashApps` (so brew cask uninstalls still have access to the ids after the .app is removed) and opens the dialog on `sigUninstallFinished`.
 
 ### Bundle M — Small Standalones
 
