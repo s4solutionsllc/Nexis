@@ -1,6 +1,8 @@
 #include "process_info_linux.h"
 
+#include "nvidia_smi_pmon_streamer.h"
 #include "proc_info_parser.h"
+#include "Utils/command_util.h"
 
 #include <QByteArray>
 #include <QDateTime>
@@ -12,6 +14,18 @@
 #include <grp.h>
 #include <pwd.h>
 #include <unistd.h>
+
+namespace {
+
+// Lazy-constructed singleton. Started the first time we see mCollectGpu
+// true and nvidia-smi is present; stays alive for the app lifetime.
+NvidiaSmiPmonStreamer *pmonStreamer()
+{
+    static NvidiaSmiPmonStreamer *s = new NvidiaSmiPmonStreamer();
+    return s;
+}
+
+} // namespace
 
 using ProcInfoParser::StatFields;
 using ProcInfoParser::StatusFields;
@@ -298,62 +312,83 @@ void ProcessInfoLinux::collectGpuForPid(pid_t pid, Process &proc, double elapsed
     // user's PIDs isn't readable, so those rows just show em-dash.
     const QString fdinfoDir = QStringLiteral("/proc/%1/fdinfo").arg(pid);
     QDir dir(fdinfoDir);
-    if (!dir.exists())
-        return;
-
-    const QFileInfoList entries =
-        dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 
     QSet<qint64> seenClients;
     quint64 engineNsSum = 0;
     quint64 vramBytesSum = 0;
     bool anyDrmFound = false;
 
-    for (const QFileInfo &fi : entries) {
-        const QByteArray content = readAll(fi.absoluteFilePath());
-        if (content.isEmpty())
-            continue;
-
-        ProcInfoParser::DrmFdinfo f;
-        if (!ProcInfoParser::parseDrmFdinfo(content, f))
-            continue;
-
-        anyDrmFound = true;
-
-        // Dedupe by drm-client-id. If the driver doesn't emit an id,
-        // count unconditionally — better to over-count than miss.
-        if (f.clientId != -1) {
-            if (seenClients.contains(f.clientId))
+    if (dir.exists()) {
+        const QFileInfoList entries =
+            dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+        for (const QFileInfo &fi : entries) {
+            const QByteArray content = readAll(fi.absoluteFilePath());
+            if (content.isEmpty())
                 continue;
-            seenClients.insert(f.clientId);
-        }
 
-        engineNsSum += f.engineNs;
-        vramBytesSum += f.memVramB;
+            ProcInfoParser::DrmFdinfo f;
+            if (!ProcInfoParser::parseDrmFdinfo(content, f))
+                continue;
+
+            anyDrmFound = true;
+
+            // Dedupe by drm-client-id. If the driver doesn't emit an id,
+            // count unconditionally — better to over-count than miss.
+            if (f.clientId != -1) {
+                if (seenClients.contains(f.clientId))
+                    continue;
+                seenClients.insert(f.clientId);
+            }
+
+            engineNsSum += f.engineNs;
+            vramBytesSum += f.memVramB;
+        }
     }
 
-    if (!anyDrmFound)
+    if (anyDrmFound) {
+        // %GPU via delta against last tick.
+        const auto prev = mPrevGpuEngineNs.constFind(pid);
+        const bool havePrev = (prev != mPrevGpuEngineNs.constEnd());
+        const quint64 prevNs = havePrev ? prev.value() : 0;
+        mPrevGpuEngineNs.insert(pid, engineNsSum);
+
+        // Only show a non-sentinel percent once we've seen two ticks —
+        // avoids a spurious 0% reading on the first tick after activation.
+        if (havePrev && elapsedSecs > 0.0) {
+            double pct = 0.0;
+            if (engineNsSum >= prevNs) {
+                const double deltaNs = static_cast<double>(engineNsSum - prevNs);
+                const double elapsedNs = elapsedSecs * 1e9;
+                if (elapsedNs > 0)
+                    pct = qBound(0.0, (deltaNs / elapsedNs) * 100.0, 100.0);
+            }
+            proc.setGpuPercent(pct);
+        }
+        proc.setGpuVramBytes(static_cast<qint64>(vramBytesSum));
+        return;
+    }
+
+    // FR-115: NVIDIA proprietary driver doesn't populate DRM fdinfo
+    // reliably. Fall through to the pmon streamer's cache if nvidia-smi
+    // is installed. Start it lazily on first reach.
+    static bool probed = false;
+    static bool nvidiaPresent = false;
+    if (!probed) {
+        probed = true;
+        nvidiaPresent = CommandUtil::isExecutable("nvidia-smi");
+    }
+    if (!nvidiaPresent)
         return;
 
-    // %GPU via delta against last tick.
-    const auto prev = mPrevGpuEngineNs.constFind(pid);
-    const bool havePrev = (prev != mPrevGpuEngineNs.constEnd());
-    const quint64 prevNs = havePrev ? prev.value() : 0;
-    mPrevGpuEngineNs.insert(pid, engineNsSum);
+    NvidiaSmiPmonStreamer *s = pmonStreamer();
+    if (!s->isRunning())
+        s->start();
 
-    // Only show a non-sentinel percent once we've seen two ticks — avoids a
-    // spurious 0% reading on the first tick after the column is unhidden.
-    if (havePrev && elapsedSecs > 0.0) {
-        double pct = 0.0;
-        if (engineNsSum >= prevNs) {
-            const double deltaNs = static_cast<double>(engineNsSum - prevNs);
-            const double elapsedNs = elapsedSecs * 1e9;
-            if (elapsedNs > 0)
-                pct = qBound(0.0, (deltaNs / elapsedNs) * 100.0, 100.0);
-        }
-        proc.setGpuPercent(pct);
-    }
-    proc.setGpuVramBytes(static_cast<qint64>(vramBytesSum));
+    const auto sample = s->get(pid);
+    if (sample.gpuPercent >= 0)
+        proc.setGpuPercent(static_cast<double>(sample.gpuPercent));
+    if (sample.vramBytes >= 0)
+        proc.setGpuVramBytes(sample.vramBytes);
 }
 
 // getProcessList() is in shared/nexis-core/Info/process_info_shared.cpp
