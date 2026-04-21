@@ -1,5 +1,6 @@
 #include "package_tool_macos.h"
 #include "Utils/brew_util.h"
+#include "Utils/plist_util.h"
 
 #include <QDebug>
 #include <QStandardPaths>
@@ -167,37 +168,20 @@ static QList<Package> scanAppDirectory(const QString &dirPath, const QString &se
 
     const QFileInfoList entries = dir.entryInfoList({"*.app"}, QDir::Dirs | QDir::NoDotAndDotDot);
     for (const QFileInfo &entry : entries) {
-        QString appPath = entry.absoluteFilePath();
-        QString plistPath = appPath + "/Contents/Info.plist";
+        const QString appPath = entry.absoluteFilePath();
+        const PlistUtil::AppBundleInfo info = PlistUtil::readAppBundleInfo(appPath);
 
-        if (!QFileInfo::exists(plistPath))
-            continue;
-
-        QString bundleId, displayName, version;
-        try {
-            QString json = CommandUtil::exec("/usr/bin/plutil",
-                {"-convert", "json", "-o", "-", plistPath}).trimmed();
-            QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
-            if (!doc.isNull()) {
-                QJsonObject obj = doc.object();
-                bundleId    = obj.value("CFBundleIdentifier").toString();
-                displayName = obj.value("CFBundleDisplayName").toString();
-                if (displayName.isEmpty())
-                    displayName = obj.value("CFBundleName").toString();
-                version = obj.value("CFBundleShortVersionString").toString();
-            }
-        } catch (...) { qWarning() << "Failed to parse Info.plist for" << appPath; }
-
-        if (bundleId.startsWith("com.apple."))
+        if (info.bundleId.startsWith("com.apple."))
             continue;
 
         Package pkg;
-        pkg.name = displayName.isEmpty()
+        pkg.name = info.displayName.isEmpty()
                        ? entry.completeBaseName()
-                       : displayName;
-        pkg.description = version;
+                       : info.displayName;
+        pkg.description = info.version;
         pkg.section = section;
         pkg.path = appPath;
+        pkg.bundleId = info.bundleId;   // FR-123: plumbed through for crumbs scanner.
 
         if (!pkg.name.isEmpty())
             apps.append(pkg);

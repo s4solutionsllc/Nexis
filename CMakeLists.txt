@@ -121,6 +121,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Tools/repo_repair_engine.cpp"
     "${CORE_PLAT_DIR}/Tools/service_tool.cpp"
     "${CORE_PLAT_DIR}/Utils/command_util_platform.cpp"
+    "${CORE_PLAT_DIR}/Utils/plist_util.cpp"
   )
   set(CORE_PLAT_HDRS
     "${CORE_PLAT_DIR}/Info/battery_info_macos.h"
@@ -147,6 +148,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Tools/repo_repair_engine_macos.h"
     "${CORE_PLAT_DIR}/Tools/service_tool_macos.h"
     "${CORE_PLAT_DIR}/Utils/brew_util.h"
+    "${CORE_PLAT_DIR}/Utils/plist_util.h"
   )
 else()
   set(CORE_PLAT_SRCS

@@ -11,7 +11,8 @@ struct Package {
     QString name;
     QString description;
     QString section;
-    QString path;  // Full filesystem path (macOS .app bundles; empty on Linux)
+    QString path;       // Full filesystem path (macOS .app bundles; empty on Linux)
+    QString bundleId;   // macOS CFBundleIdentifier (empty on Linux / when unknown)
 };
 
 struct StaleSnapRevision {
