@@ -2,10 +2,15 @@
 
 #include <Utils/command_util.h>
 #include <Managers/app_manager.h>
+#include <Managers/setting_manager.h>
 
 #include <QBoxLayout>
+#include <QFile>
 #include <QFrame>
 #include <QHeaderView>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonValue>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -14,6 +19,10 @@
 #include <QStandardItemModel>
 #include <QTableView>
 #include <QThreadPool>
+
+#ifdef Q_OS_MAC
+#include <libproc.h>
+#endif
 
 // ---------------------------------------------------------------------------
 // Static parsers
@@ -144,15 +153,84 @@ QList<ConnectionEntry> OpenPortsWidget::parseSsOutput(const QString &output, con
 // Data fetching (runs on worker thread)
 // ---------------------------------------------------------------------------
 
+// FR-121: resolve the binary path that opened this PID.
+QString OpenPortsWidget::resolveBinaryPath(int pid)
+{
+    if (pid <= 0)
+        return QString();
+
+#ifdef Q_OS_MAC
+    char buf[PROC_PIDPATHINFO_MAXSIZE] = {0};
+    int rc = proc_pidpath(pid, buf, sizeof(buf));
+    if (rc <= 0)
+        return QString();
+    return QString::fromUtf8(buf, rc);
+#else
+    const QString link = QString("/proc/%1/exe").arg(pid);
+    const QString target = QFile::symLinkTarget(link);
+    return target;   // empty on EACCES / ENOENT — caller treats as "not assessed"
+#endif
+}
+
+// FR-121: a path counts as trusted if it begins with any platform-default
+// prefix OR any user-configured extra (TrustedBinderPrefixes setting).
+bool OpenPortsWidget::isTrustedBinderPath(const QString &path)
+{
+    if (path.isEmpty())
+        return true;   // unresolved → don't flag
+
+    QStringList prefixes;
+#ifdef Q_OS_MAC
+    prefixes << "/usr/bin/"
+             << "/usr/sbin/"
+             << "/usr/libexec/"
+             << "/System/"
+             << "/Library/Apple/"
+             << "/opt/homebrew/"
+             << "/usr/local/bin/"
+             << "/usr/local/sbin/"
+             << "/Applications/";
+#else
+    prefixes << "/usr/bin/"
+             << "/usr/sbin/"
+             << "/bin/"
+             << "/sbin/"
+             << "/lib/"
+             << "/lib64/"
+             << "/usr/lib/"
+             << "/usr/libexec/"
+             << "/usr/local/bin/"
+             << "/usr/local/sbin/"
+             << "/snap/"
+             << "/opt/";
+#endif
+
+    // User-configured extras — any non-empty string appended.
+    const QJsonArray extras = QJsonDocument::fromJson(
+        SettingManager::ins()->getTrustedBinderPrefixes().toUtf8()).array();
+    for (const QJsonValue &v : extras) {
+        const QString p = v.toString().trimmed();
+        if (!p.isEmpty())
+            prefixes << p;
+    }
+
+    for (const QString &prefix : prefixes) {
+        if (path.startsWith(prefix))
+            return true;
+    }
+    return false;
+}
+
 QList<ConnectionEntry> OpenPortsWidget::fetchConnections(bool listenOnly)
 {
+    QList<ConnectionEntry> entries;
 #ifdef Q_OS_MACOS
     QStringList args = {"-iTCP", "-P", "-n"};
     if (listenOnly)
         args << "-sTCP:LISTEN";
     ExecResult r = CommandUtil::execWithStatus("lsof", args, 10000);
     if (r.exitCode == 0 || !r.output.isEmpty())
-        return parseLsofOutput(r.output);
+        entries = parseLsofOutput(r.output);
 #else
     QStringList args = {"-tnp"};
     if (listenOnly)
@@ -160,16 +238,28 @@ QList<ConnectionEntry> OpenPortsWidget::fetchConnections(bool listenOnly)
     if (CommandUtil::isExecutable("ss")) {
         ExecResult r = CommandUtil::execWithStatus("ss", args, 10000);
         if (r.exitCode == 0 || !r.output.isEmpty())
-            return parseSsOutput(r.output, "TCP");
+            entries = parseSsOutput(r.output, "TCP");
     }
-    QStringList netArgs = {"-tnp"};
-    if (listenOnly)
-        netArgs = {"-tlnp"};
-    ExecResult r = CommandUtil::execWithStatus("netstat", netArgs, 10000);
-    if (r.exitCode == 0 || !r.output.isEmpty())
-        return parseSsOutput(r.output, "TCP");
+    if (entries.isEmpty()) {
+        QStringList netArgs = {"-tnp"};
+        if (listenOnly)
+            netArgs = {"-tlnp"};
+        ExecResult r = CommandUtil::execWithStatus("netstat", netArgs, 10000);
+        if (r.exitCode == 0 || !r.output.isEmpty())
+            entries = parseSsOutput(r.output, "TCP");
+    }
 #endif
-    return {};
+
+    // FR-121: resolve binary path and flag unexpected binders.
+    for (ConnectionEntry &e : entries) {
+        if (e.pid <= 0)
+            continue;
+        e.binaryPath = resolveBinaryPath(e.pid);
+        if (!e.binaryPath.isEmpty())
+            e.isUnexpected = !isTrustedBinderPath(e.binaryPath);
+    }
+
+    return entries;
 }
 
 // ---------------------------------------------------------------------------
@@ -222,12 +312,26 @@ void OpenPortsWidget::buildUI()
     connect(mBtnRefresh, &QPushButton::clicked, this, &OpenPortsWidget::refresh);
     filterBar->addWidget(mBtnRefresh);
 
+#ifdef Q_OS_MAC
+    // FR-121: lazy codesign check. Fork-per-row is expensive, so don't run
+    // on every refresh — require an explicit click.
+    mBtnVerifySigs = new QPushButton(tr("Verify Signatures"));
+    mBtnVerifySigs->setCursor(Qt::PointingHandCursor);
+    mBtnVerifySigs->setFocusPolicy(Qt::NoFocus);
+    mBtnVerifySigs->setToolTip(
+        tr("Run codesign on each binary to flag unsigned ones. "
+           "Results are cached by path."));
+    connect(mBtnVerifySigs, &QPushButton::clicked,
+            this, &OpenPortsWidget::onVerifySignatures);
+    filterBar->addWidget(mBtnVerifySigs);
+#endif
+
     root->addLayout(filterBar);
 
     QStringList headers = {
         tr("Protocol"), tr("Local Address"), tr("Port"),
         tr("Remote Address"), tr("Remote Port"),
-        tr("PID"), tr("Process"), tr("State")
+        tr("PID"), tr("Process"), tr("State"), tr("Path")   // FR-121
     };
     mModel->setHorizontalHeaderLabels(headers);
 
@@ -291,6 +395,8 @@ void OpenPortsWidget::onConnectionsFetched(QList<ConnectionEntry> entries)
     mLblLoading->hide();
     mBtnRefresh->setEnabled(true);
 
+    mEntries = entries;   // cached for lazy Verify Signatures (FR-121).
+
     mModel->blockSignals(true);
     mModel->removeRows(0, mModel->rowCount());
 
@@ -316,8 +422,11 @@ void OpenPortsWidget::onConnectionsFetched(QList<ConnectionEntry> entries)
         row << rPortItem;
 
         row << new QStandardItem(e.pid >= 0 ? QString::number(e.pid) : "—");
-        row << new QStandardItem(e.processName);
 
+        // FR-121: Process + Path columns carry the unexpected/unsigned flag
+        // via theme-color foreground + tooltip. Warning glyph on the Process
+        // cell for at-a-glance visibility.
+        auto *procItem = new QStandardItem(e.processName);
         auto *stateItem = new QStandardItem(e.state);
         if (e.state == "LISTEN")
             stateItem->setForeground(QColor(successColor));
@@ -326,7 +435,28 @@ void OpenPortsWidget::onConnectionsFetched(QList<ConnectionEntry> entries)
         else if (e.state == "CLOSE_WAIT" || e.state == "CLOSE-WAIT" ||
                  e.state == "TIME_WAIT" || e.state == "TIME-WAIT")
             stateItem->setForeground(QColor(failColor));
+
+        auto *pathItem = new QStandardItem(
+            e.binaryPath.isEmpty() ? QStringLiteral("—") : e.binaryPath);
+        pathItem->setToolTip(e.binaryPath);
+
+        if (e.isUnsigned) {
+            procItem->setText(QStringLiteral("⚠ %1").arg(e.processName));
+            procItem->setForeground(QColor(failColor));
+            procItem->setToolTip(tr("Unsigned binary."));
+            pathItem->setForeground(QColor(failColor));
+        } else if (e.isUnexpected) {
+            procItem->setText(QStringLiteral("⚠ %1").arg(e.processName));
+            procItem->setForeground(QColor(warningColor));
+            procItem->setToolTip(tr("Binary path not in trusted prefixes."));
+            pathItem->setForeground(QColor(warningColor));
+            pathItem->setToolTip(
+                tr("%1\n\nNot under a trusted system prefix.").arg(e.binaryPath));
+        }
+
+        row << procItem;
         row << stateItem;
+        row << pathItem;
 
         for (auto *item : row)
             item->setFlags(item->flags() & ~Qt::ItemIsEditable);
@@ -361,6 +491,56 @@ void OpenPortsWidget::onListenOnlyToggled(bool /*checked*/)
     if (mLoaded)
         refresh();
 }
+
+#ifdef Q_OS_MAC
+void OpenPortsWidget::onVerifySignatures()
+{
+    // FR-121: run codesign on the binary of each visible row. Cache results
+    // by path — the cache survives for the widget's lifetime. "Signed" means
+    // `codesign -dv` returned exit code 0.
+    mBtnVerifySigs->setEnabled(false);
+    mBtnVerifySigs->setText(tr("Verifying…"));
+
+    // Collect unique paths that aren't already cached.
+    QStringList needed;
+    QSet<QString> seen;
+    for (const ConnectionEntry &e : mEntries) {
+        if (e.binaryPath.isEmpty())
+            continue;
+        if (mCodesignCache.contains(e.binaryPath))
+            continue;
+        if (seen.contains(e.binaryPath))
+            continue;
+        seen.insert(e.binaryPath);
+        needed << e.binaryPath;
+    }
+
+    QThreadPool::globalInstance()->start([this, needed]() {
+        QHash<QString, bool> results;
+        for (const QString &path : needed) {
+            ExecResult r = CommandUtil::execWithStatus(
+                "codesign", {"-dv", "--verbose=0", path}, 3000);
+            results.insert(path, r.exitCode == 0);
+        }
+        QMetaObject::invokeMethod(this, [this, results]() {
+            for (auto it = results.constBegin(); it != results.constEnd(); ++it)
+                mCodesignCache.insert(it.key(), it.value());
+
+            // Apply isUnsigned to mEntries from the merged cache.
+            for (ConnectionEntry &e : mEntries) {
+                if (e.binaryPath.isEmpty())
+                    continue;
+                if (mCodesignCache.contains(e.binaryPath))
+                    e.isUnsigned = !mCodesignCache.value(e.binaryPath);
+            }
+            onConnectionsFetched(mEntries);   // re-render with new flags.
+
+            mBtnVerifySigs->setEnabled(true);
+            mBtnVerifySigs->setText(tr("Verify Signatures"));
+        }, Qt::QueuedConnection);
+    });
+}
+#endif
 
 // ---------------------------------------------------------------------------
 // Theme
