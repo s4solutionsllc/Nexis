@@ -44,6 +44,12 @@ private slots:
     void on_tableProcess_customContextMenuRequested(const QPoint &pos);
 
 private:
+    // FR-108: tell InfoManager whether to collect per-PID disk/net I/O based
+    // on the current column visibility. Called from init() and after the
+    // header context menu toggles a column.
+    void updateProcessIoCollection();
+
+private:
     Ui::ProcessesPage *ui;
 
     QStandardItemModel *mItemModel;

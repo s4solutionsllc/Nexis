@@ -48,6 +48,17 @@ void ProcessInfoLinux::updateProcesses()
         qCritical() << ex;
     }
 
+    // FR-108: skip the per-PID /proc/<pid>/io reads entirely when both disk
+    // I/O columns are hidden. Hundreds of file opens per tick on a loaded
+    // system otherwise. Reset the baseline cache when collection is off so
+    // we don't display stale rates if the user re-enables the column later.
+    if (!mCollectDiskIO) {
+        if (!mPrevDiskIo.isEmpty())
+            mPrevDiskIo.clear();
+        mIoTimerStarted = false;
+        return;
+    }
+
     double elapsedSecs = 0;
     if (!mIoTimerStarted) {
         mIoTimer.start();

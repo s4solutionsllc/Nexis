@@ -69,8 +69,23 @@ void ProcessesPage::init()
 
     loadHeaderMenu();
 
+    // FR-108: apply the initial column-visibility state to ProcessInfo
+    // before the first tick so we don't pay the /proc/<pid>/io walk or the
+    // nettop fork when their columns are hidden (which is the default).
+    updateProcessIoCollection();
+
     Utilities::addDropShadow(ui->btnEndProcess, 60);
     Utilities::addDropShadow(ui->tableProcess, 55);
+}
+
+void ProcessesPage::updateProcessIoCollection()
+{
+    const auto *header = ui->tableProcess->horizontalHeader();
+    // Columns: 12=Disk Read/s, 13=Disk Write/s, 14=Net Down/s, 15=Net Up/s.
+    const bool diskVisible = !header->isSectionHidden(12) || !header->isSectionHidden(13);
+    const bool netVisible  = !header->isSectionHidden(14) || !header->isSectionHidden(15);
+    im->setCollectProcessDiskIO(diskVisible);
+    im->setCollectProcessNetIO(netVisible);
 }
 
 void ProcessesPage::loadHeaderMenu()
@@ -341,6 +356,7 @@ void ProcessesPage::on_tableProcess_customContextMenuRequested(const QPoint &pos
 
     if (action) {
         ui->tableProcess->horizontalHeader()->setSectionHidden(action->data().toInt(), ! action->isChecked());
+        updateProcessIoCollection();
     }
 }
 

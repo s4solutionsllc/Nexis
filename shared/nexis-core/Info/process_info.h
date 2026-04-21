@@ -18,11 +18,22 @@ public:
 
     QList<Process> getProcessList() const;
 
+    // FR-108: toggles for expensive per-PID data collection. Linux
+    // /proc/<pid>/io reads and macOS nettop forks are skipped when the
+    // matching columns are all hidden on the Processes page. Defaults
+    // mirror the page's initial hidden-column state (both off).
+    void setCollectDiskIO(bool enabled) { mCollectDiskIO = enabled; }
+    void setCollectNetIO(bool enabled)  { mCollectNetIO  = enabled; }
+    bool collectsDiskIO() const { return mCollectDiskIO; }
+    bool collectsNetIO() const  { return mCollectNetIO; }
+
 public slots:
     virtual void updateProcesses() = 0;
 
 protected:
     QList<Process> processList;
+    bool mCollectDiskIO = false;
+    bool mCollectNetIO  = false;
 };
 
 #endif // PROCESS_INFO_H

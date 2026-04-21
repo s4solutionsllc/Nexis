@@ -278,6 +278,16 @@ QList<Process> InfoManager::getProcesses() const
     return pi->getProcessList();
 }
 
+void InfoManager::setCollectProcessDiskIO(bool enabled)
+{
+    pi->setCollectDiskIO(enabled);
+}
+
+void InfoManager::setCollectProcessNetIO(bool enabled)
+{
+    pi->setCollectNetIO(enabled);
+}
+
 /********************
  * Thermal Provider
  *******************/

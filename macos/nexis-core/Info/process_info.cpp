@@ -54,56 +54,83 @@ void ProcessInfoMacOS::updateProcesses()
         qCritical() << ex;
     }
 
-    // --- Per-process disk I/O via proc_pid_rusage() ---
+    // --- Shared elapsed-time bookkeeping for disk and net rate deltas ---
     double elapsedSecs = 0;
-    if (!mIoTimerStarted) {
-        mIoTimer.start();
-        mIoTimerStarted = true;
-    } else {
-        elapsedSecs = mIoTimer.elapsed() / 1000.0;
-        mIoTimer.restart();
-    }
-
     QSet<pid_t> activePids;
 
-    for (Process &proc : processList) {
-        pid_t pid = proc.getPid();
-        activePids.insert(pid);
-
-        struct rusage_info_v4 rusage;
-        int ret = proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&rusage);
-
-        if (ret == 0) {
-            quint64 readBytes = rusage.ri_diskio_bytesread;
-            quint64 writeBytes = rusage.ri_diskio_byteswritten;
-
-            if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
-                auto prev = mPrevDiskIo.value(pid);
-                double readRate = (readBytes >= prev.first)
-                    ? (readBytes - prev.first) / elapsedSecs : 0;
-                double writeRate = (writeBytes >= prev.second)
-                    ? (writeBytes - prev.second) / elapsedSecs : 0;
-                proc.setDiskReadRate(readRate);
-                proc.setDiskWriteRate(writeRate);
-            } else {
-                proc.setDiskReadRate(0);
-                proc.setDiskWriteRate(0);
-            }
-
-            mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
+    if (mCollectDiskIO || mCollectNetIO) {
+        if (!mIoTimerStarted) {
+            mIoTimer.start();
+            mIoTimerStarted = true;
+        } else {
+            elapsedSecs = mIoTimer.elapsed() / 1000.0;
+            mIoTimer.restart();
         }
+    } else {
+        mIoTimerStarted = false;
     }
 
-    // Prune stale PIDs from disk I/O map
-    auto it = mPrevDiskIo.begin();
-    while (it != mPrevDiskIo.end()) {
-        if (!activePids.contains(it.key()))
-            it = mPrevDiskIo.erase(it);
-        else
-            ++it;
+    // --- Per-process disk I/O via proc_pid_rusage() ---
+    // FR-108: only collect if the Processes-page disk columns are visible.
+    // proc_pid_rusage() is a cheap in-process syscall so this mostly saves
+    // the downstream map maintenance. Clear state on disable so stale rates
+    // don't linger.
+    if (mCollectDiskIO) {
+        for (Process &proc : processList) {
+            pid_t pid = proc.getPid();
+            activePids.insert(pid);
+
+            struct rusage_info_v4 rusage;
+            int ret = proc_pid_rusage(pid, RUSAGE_INFO_V4, (rusage_info_t *)&rusage);
+
+            if (ret == 0) {
+                quint64 readBytes = rusage.ri_diskio_bytesread;
+                quint64 writeBytes = rusage.ri_diskio_byteswritten;
+
+                if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
+                    auto prev = mPrevDiskIo.value(pid);
+                    double readRate = (readBytes >= prev.first)
+                        ? (readBytes - prev.first) / elapsedSecs : 0;
+                    double writeRate = (writeBytes >= prev.second)
+                        ? (writeBytes - prev.second) / elapsedSecs : 0;
+                    proc.setDiskReadRate(readRate);
+                    proc.setDiskWriteRate(writeRate);
+                } else {
+                    proc.setDiskReadRate(0);
+                    proc.setDiskWriteRate(0);
+                }
+
+                mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
+            }
+        }
+
+        // Prune stale PIDs from disk I/O map
+        auto it = mPrevDiskIo.begin();
+        while (it != mPrevDiskIo.end()) {
+            if (!activePids.contains(it.key()))
+                it = mPrevDiskIo.erase(it);
+            else
+                ++it;
+        }
+    } else if (!mPrevDiskIo.isEmpty()) {
+        mPrevDiskIo.clear();
     }
 
     // --- Per-process network I/O via nettop ---
+    // FR-108: nettop is expensive (50-150 ms init per fork) — skip entirely
+    // when both network columns are hidden, which is the default on first run.
+    if (!mCollectNetIO) {
+        if (!mPrevNetIo.isEmpty())
+            mPrevNetIo.clear();
+        return;
+    }
+
+    // Rebuild activePids if disk collection skipped it.
+    if (activePids.isEmpty()) {
+        for (const Process &proc : processList)
+            activePids.insert(proc.getPid());
+    }
+
     QHash<pid_t, QPair<quint64, quint64>> nettopData;
 
     QString nettopOutput = CommandUtil::exec("nettop",
