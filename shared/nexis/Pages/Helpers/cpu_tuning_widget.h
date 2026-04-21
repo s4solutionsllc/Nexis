@@ -1,6 +1,8 @@
 #ifndef CPU_TUNING_WIDGET_H
 #define CPU_TUNING_WIDGET_H
 
+#include <QtGlobal>
+
 // FR-117: Linux-only Helpers-page card. Turbo boost, min/max frequency
 // sliders (whole-CPU), and a per-core governor grid ("Advanced" expandable).
 // Reads sysfs for state; writes via pkexec. Persists optionally on app
