@@ -1,6 +1,7 @@
 #ifndef UNINSTALLERPAGE_H
 #define UNINSTALLERPAGE_H
 
+#include <QStringList>
 #include <QWidget>
 #include <QListWidgetItem>
 #include <QTreeWidgetItem>
@@ -40,6 +41,7 @@ private slots:
     QStringList getSelectedSnapPackages();
 #ifdef Q_OS_MAC
     QStringList getSelectedAppPaths();
+    QStringList getSelectedAppBundleIds();   // FR-123
 #endif
     void onPackagesLoaded(QList<Package> packages);
     void onSnapPackagesLoaded(QStringList packages);
@@ -58,6 +60,11 @@ private:
     PackageService *mPackageService;
     AppManager *mAppManager;
     SignalMapper *mSignalMapper;
+
+    // FR-123: bundle ids captured at on_btnUninstall_clicked for the
+    // macOS path, consumed when sigUninstallFinished fires. Cleared
+    // after the review dialog runs.
+    QStringList mPendingCrumbBundleIds;
 };
 
 #endif // UNINSTALLERPAGE_H

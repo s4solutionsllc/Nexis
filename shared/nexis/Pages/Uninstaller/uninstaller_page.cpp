@@ -1,5 +1,6 @@
 #include "uninstaller_page.h"
 #include "ui_uninstallerpage.h"
+#include "crumbs_review_dialog.h"
 #include <QHeaderView>
 #include <QMovie>
 #include <QMessageBox>
@@ -75,6 +76,20 @@ void UninstallerPage::init()
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         mPackageService->fetchOrphanPackages();
     });
+
+#ifdef Q_OS_MAC
+    // FR-123: after a macOS uninstall, scan for residual files in ~/Library
+    // that match the uninstalled apps' bundle identifiers and offer review.
+    connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
+        if (mPendingCrumbBundleIds.isEmpty())
+            return;
+        const QStringList ids = mPendingCrumbBundleIds;
+        mPendingCrumbBundleIds.clear();
+        auto *dlg = new CrumbsReviewDialog(ids, this);
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->open();
+    });
+#endif
 }
 
 void UninstallerPage::onPackagesLoaded(QList<Package> packages)
@@ -115,6 +130,7 @@ void UninstallerPage::onPackagesLoaded(QList<Package> packages)
                 ? pkg.name
                 : QString("%1 %2").arg(pkg.name, pkg.description);
             item->setData(0, Qt::UserRole + 1, pkg.path);
+            item->setData(0, Qt::UserRole + 2, pkg.bundleId);   // FR-123
 #else
             QString displayText = pkg.description.isEmpty()
                 ? pkg.name
@@ -257,6 +273,23 @@ QStringList UninstallerPage::getSelectedAppPaths()
     }
     return paths;
 }
+
+QStringList UninstallerPage::getSelectedAppBundleIds()
+{
+    QStringList ids;
+    for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *section = ui->treeWidgetPackages->topLevelItem(i);
+        for (int j = 0; j < section->childCount(); ++j) {
+            QTreeWidgetItem *item = section->child(j);
+            if (item->checkState(0) != Qt::Checked)
+                continue;
+            const QString bid = item->data(0, Qt::UserRole + 2).toString();
+            if (!bid.isEmpty())
+                ids << bid;
+        }
+    }
+    return ids;
+}
 #endif
 
 void UninstallerPage::on_btnUninstall_clicked()
@@ -307,6 +340,11 @@ void UninstallerPage::on_btnUninstall_clicked()
 
     if (reply != QMessageBox::Ok)
         return;
+
+    // FR-123: capture bundle ids now — brew cask uninstalls would remove the
+    // .app before we could read its Info.plist, and the review dialog needs
+    // them to scan residual files once the uninstall finishes.
+    mPendingCrumbBundleIds = getSelectedAppBundleIds();
 
     mPackageService->trashApps(selectedPaths);
 #else

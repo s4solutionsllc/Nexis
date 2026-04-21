@@ -114,6 +114,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/fan_info.cpp"
     "${CORE_PLAT_DIR}/Info/update_info.cpp"
     "${CORE_PLAT_DIR}/Tools/apt_source_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/crumbs_scanner.cpp"
     "${CORE_PLAT_DIR}/Tools/file_search_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/package_tool.cpp"
@@ -140,6 +141,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/fan_info_macos.h"
     "${CORE_PLAT_DIR}/Info/update_info_macos.h"
     "${CORE_PLAT_DIR}/Tools/apt_source_tool_macos.h"
+    "${CORE_PLAT_DIR}/Tools/crumbs_scanner.h"
     "${CORE_PLAT_DIR}/Tools/file_search_tool_macos.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_constants.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool_macos.h"
@@ -316,6 +318,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.cpp"
 )
 
@@ -392,6 +395,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"
+  "${GUI_SHARED_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
 )
 
