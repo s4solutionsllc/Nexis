@@ -471,7 +471,7 @@
             </item>
             <item>
              <widget class="QPushButton" name="btnDownloadsBrowse">
-              <property name="text"><string>Browse\xe2\x80\xa6</string></property>
+              <property name="text"><string>Browse…</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
               <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
              </widget>
