@@ -41,10 +41,16 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
     QString themeName = mAppManager->resolveThemeName();
     mLoadingMovie = new QMovie(
         QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName), {}, this);
+    // BUG-112: the light-theme scanLoading.gif is 512×512 (vs 100×100 on
+    // the dark/default theme), so without setScaledSize the radar fills
+    // the page on light theme. Lock render size to the label's 100×100
+    // minimumSize from the .ui.
+    mLoadingMovie->setScaledSize(Dpi::scale(100, 100));
     ui->lblLoadingScanner->setMovie(mLoadingMovie);
 
     mLoadingMovie_2 = new QMovie(
         QString(":/static/themes/%1/img/loading.gif").arg(themeName), {}, this);
+    mLoadingMovie_2->setScaledSize(Dpi::scale(160, 20));
     ui->lblLoadingCleaner->setMovie(mLoadingMovie_2);
 
     init();
@@ -129,10 +135,12 @@ void SystemCleanerPage::init()
         mLoadingMovie->stop();
         mLoadingMovie->setFileName(
             QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName));
+        mLoadingMovie->setScaledSize(Dpi::scale(100, 100));   // BUG-112
 
         mLoadingMovie_2->stop();
         mLoadingMovie_2->setFileName(
             QString(":/static/themes/%1/img/loading.gif").arg(themeName));
+        mLoadingMovie_2->setScaledSize(Dpi::scale(160, 20));
 
         if (mBtnExclusions) {
             mBtnExclusions->setIcon(QIcon(

@@ -55,6 +55,11 @@
 
 ## MEDIUM Severity
 
+- [x] **BUG-112: System Cleaner scan radar GIF renders 5× too large on light theme** (MEDIUM)
+  - **File:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp` (QMovie setup); assets at `shared/nexis/static/themes/{default,light}/img/scanLoading.gif`
+  - **Description:** Clicking Scan on the System Cleaner page shows a "radar" loading GIF via `QMovie` attached to `lblLoadingScanner`. The default/dark theme's `scanLoading.gif` is 100×100 (the label's `minimumSize`), but the light theme's file is **512×512**. `QMovie` plays at native frame size, so on light theme the radar takes over the page.
+  - **Resolved:** `QMovie::setScaledSize(Dpi::scale(100, 100))` applied on both the initial setup and the theme-change handler. Same fix applied to the cleaner progress bar (`loading.gif`, 160×20) for consistency. The widget is now bounded regardless of future asset resolution changes.
+
 - [ ] **BUG-111: ScreenshotTests leaks user QSettings** (LOW)
   - **File:** `tests/screenshots/test_screenshots.cpp` — `initTestCase()`
   - **Description:** The test calls `qApp->setApplicationName("nexis")` and then instantiates `App()`, which means `QSettings` and everything downstream of it reads from the developer's real Nexis preferences (sidebar collapse state, selected theme, etc.). If the developer has the sidebar expanded in their actual Nexis install, ScreenshotTests captures an expanded-sidebar dashboard and fails against the collapsed-sidebar reference image. Discovered while verifying BUG-110 — flaky failures on Luke's macOS machine with an expanded sidebar.
