@@ -58,11 +58,10 @@ QList<Disk> DiskInfo::getDisks() const
     return disks;
 }
 
-void DiskInfo::updateDiskInfo()
+QList<Disk> DiskInfo::collectDiskInfo() const
 {
-    disks.clear();
-
-    QList<QStorageInfo> storageInfoList = QStorageInfo::mountedVolumes();
+    QList<Disk> result;
+    const QList<QStorageInfo> storageInfoList = QStorageInfo::mountedVolumes();
 
     for (const QStorageInfo &info : storageInfoList) {
         if (info.isValid() && shouldIncludeDisk(info.device(), info.fileSystemType(),
@@ -75,9 +74,16 @@ void DiskInfo::updateDiskInfo()
             disk.free = info.bytesFree();
             disk.fileSystemType = info.fileSystemType();
 
-            disks << disk;
+            result << disk;
         }
     }
+
+    return result;
+}
+
+void DiskInfo::updateDiskInfo()
+{
+    disks = collectDiskInfo();
 }
 
 QList<QString> DiskInfo::devices()

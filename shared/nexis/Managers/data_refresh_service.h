@@ -77,6 +77,7 @@ private:
     bool mProcessPaused;
     bool mUpdateCheckRunning;
     bool mDiskHealthRunning = false;
+    bool mDiskUsageRunning = false;
     bool mRepoHealthRunning = false;
 };
 

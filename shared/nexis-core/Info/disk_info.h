@@ -23,6 +23,12 @@ public:
 
     QList<Disk> getDisks() const;
     void updateDiskInfo();
+
+    // Thread-safe: computes a fresh list without touching the cached `disks`
+    // member. FR-101 calls this from a worker thread and assigns the result
+    // to the cache on the UI thread via setDisks().
+    QList<Disk> collectDiskInfo() const;
+    void setDisks(QList<Disk> newDisks) { disks = std::move(newDisks); }
     virtual QList<quint64> getDiskIO() const = 0;
     virtual QStringList getDiskNames() const = 0;
     QList<QString> fileSystemTypes();

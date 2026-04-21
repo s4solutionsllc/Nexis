@@ -49,6 +49,12 @@ public:
     QList<quint64> getDiskIO();
     void updateDiskInfo();
 
+    // FR-101: thread-safe pair. collectDiskInfo() walks QStorageInfo without
+    // mutating the cache (safe to call from a worker); setDisks() assigns
+    // the result (must be called on the UI thread).
+    QList<Disk> collectDiskInfo() const;
+    void setDisks(QList<Disk> disks);
+
     QFileInfoList getCrashReports() const;
     QFileInfoList getAppLogs() const;
     QFileInfoList getAppCaches() const;

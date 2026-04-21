@@ -184,6 +184,16 @@ void InfoManager::updateDiskInfo()
     di->updateDiskInfo();
 }
 
+QList<Disk> InfoManager::collectDiskInfo() const
+{
+    return di->collectDiskInfo();
+}
+
+void InfoManager::setDisks(QList<Disk> disks)
+{
+    di->setDisks(std::move(disks));
+}
+
 QList<quint64> InfoManager::getDiskIO()
 {
     return di->getDiskIO();

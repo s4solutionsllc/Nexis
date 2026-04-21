@@ -224,8 +224,21 @@ void DataRefreshService::onFastTick()
 
 void DataRefreshService::onMediumTick()
 {
-    im->updateDiskInfo();
-    emit diskUsageUpdated(im->getDisks());
+    // FR-101: QStorageInfo::mountedVolumes() can block for seconds on slow
+    // NFS/SMB mounts. Collect off the UI thread and assign the cache back
+    // on the UI thread via QueuedConnection. Skip the tick if the previous
+    // one is still in flight (mirrors onSlowTick/triggerRepoHealthCheck).
+    if (!mDiskUsageRunning) {
+        mDiskUsageRunning = true;
+        QtConcurrent::run([this] {
+            QList<Disk> disks = im->collectDiskInfo();
+            QMetaObject::invokeMethod(this, [this, disks] {
+                im->setDisks(disks);
+                mDiskUsageRunning = false;
+                emit diskUsageUpdated(disks);
+            }, Qt::QueuedConnection);
+        });
+    }
 
     // FR-104: temp/fan sampling piggybacks on the 5 s medium tick.
     if (im->hasThermalSensors())
