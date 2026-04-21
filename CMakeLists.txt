@@ -328,7 +328,6 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.cpp"
-  "${GUI_SHARED_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.cpp"
 )
 
@@ -408,16 +407,17 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"
-  "${GUI_SHARED_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
 )
 
 if(APPLE)
   set(GUI_PLAT_SRCS
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
+    "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
   )
   set(GUI_PLAT_HDRS
+    "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"
   )
 else()
@@ -511,6 +511,7 @@ target_include_directories(nexis-gui PUBLIC
   "${GUI_PLAT_DIR}/Pages/SystemCleaner"
   "${GUI_PLAT_DIR}/Pages/Search"
   "${GUI_PLAT_DIR}/Pages/Settings"
+  "${GUI_PLAT_DIR}/Pages/Uninstaller"
   "${GUI_SHARED_DIR}"
   "${GUI_SHARED_DIR}/Managers"
   "${GUI_SHARED_DIR}/Services"
