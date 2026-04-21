@@ -1,10 +1,15 @@
 #include "process_info_macos.h"
 
+#include "nettop_streamer.h"
+
 #include <QDebug>
 #include <QRegularExpression>
 #include <QSet>
 #include <libproc.h>
 #include <sys/resource.h>
+
+ProcessInfoMacOS::ProcessInfoMacOS() = default;
+ProcessInfoMacOS::~ProcessInfoMacOS() = default;
 
 void ProcessInfoMacOS::updateProcesses()
 {
@@ -116,13 +121,23 @@ void ProcessInfoMacOS::updateProcesses()
         mPrevDiskIo.clear();
     }
 
-    // --- Per-process network I/O via nettop ---
-    // FR-108: nettop is expensive (50-150 ms init per fork) — skip entirely
-    // when both network columns are hidden, which is the default on first run.
+    // --- Per-process network I/O ---
+    // FR-102: read from the persistent NettopStreamer instead of forking
+    // nettop every tick. The streamer starts on demand the first time
+    // mCollectNetIO is true and stops when it flips off.
     if (!mCollectNetIO) {
+        if (mNettopStreamer) {
+            mNettopStreamer->stop();
+            mNettopStreamer.reset();
+        }
         if (!mPrevNetIo.isEmpty())
             mPrevNetIo.clear();
         return;
+    }
+
+    if (!mNettopStreamer) {
+        mNettopStreamer = std::make_unique<NettopStreamer>();
+        mNettopStreamer->start(1);
     }
 
     // Rebuild activePids if disk collection skipped it.
@@ -131,31 +146,7 @@ void ProcessInfoMacOS::updateProcesses()
             activePids.insert(proc.getPid());
     }
 
-    QHash<pid_t, QPair<quint64, quint64>> nettopData;
-
-    QString nettopOutput = CommandUtil::exec("nettop",
-        {"-P", "-d", "-L", "1", "-J", "bytes_in,bytes_out", "-t", "external"});
-
-    if (!nettopOutput.isEmpty()) {
-        QStringList lines = nettopOutput.trimmed().split('\n');
-        for (int i = 1; i < lines.size(); ++i) {
-            const QString &line = lines.at(i);
-            QStringList parts = line.split(',');
-            if (parts.size() >= 3) {
-                QString procField = parts.at(0);
-                int lastDot = procField.lastIndexOf('.');
-                if (lastDot > 0) {
-                    bool ok = false;
-                    pid_t pid = procField.mid(lastDot + 1).toLongLong(&ok);
-                    if (ok && pid > 0) {
-                        quint64 bytesIn = parts.at(1).trimmed().toULongLong();
-                        quint64 bytesOut = parts.at(2).trimmed().toULongLong();
-                        nettopData.insert(pid, qMakePair(bytesIn, bytesOut));
-                    }
-                }
-            }
-        }
-    }
+    const QHash<pid_t, QPair<quint64, quint64>> nettopData = mNettopStreamer->snapshot();
 
     for (Process &proc : processList) {
         pid_t pid = proc.getPid();
