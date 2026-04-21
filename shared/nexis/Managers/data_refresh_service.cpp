@@ -211,25 +211,28 @@ void DataRefreshService::onFastTick()
         emit gpuUpdated(im->getGpuDevices());
     }
 
-    // Temperature (conditional)
-    if (im->hasThermalSensors())
-        emit tempUpdated();
-
-    // Fan (conditional)
-    if (im->hasFanSensors())
-        emit fanUpdated();
-
     // Battery (conditional)
     if (im->hasBattery()) {
         im->updateBatteryInfo();
         emit batteryUpdated(im->getBatteryData());
     }
+
+    // Temperature and fan have been moved to onMediumTick (FR-104) — they
+    // change on minute scales, so 1 Hz polling wastes syscalls/forks for
+    // barely-visible detail in the sparkline.
 }
 
 void DataRefreshService::onMediumTick()
 {
     im->updateDiskInfo();
     emit diskUsageUpdated(im->getDisks());
+
+    // FR-104: temp/fan sampling piggybacks on the 5 s medium tick.
+    if (im->hasThermalSensors())
+        emit tempUpdated();
+
+    if (im->hasFanSensors())
+        emit fanUpdated();
 }
 
 void DataRefreshService::onSlowTick()
