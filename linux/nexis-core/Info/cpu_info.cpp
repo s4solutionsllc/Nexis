@@ -1,6 +1,8 @@
 #include "cpu_info_linux.h"
 
 #include <QDebug>
+#include <QDir>
+#include <QFileInfoList>
 #include <QRegularExpression>
 #include "command_util.h"
 
@@ -40,15 +42,48 @@ QList<double> CpuInfoLinux::getLoadAvgs() const
     return parseLoadAvgs(FileUtil::readStringFromFile(PROC_LOADAVG));
 }
 
+double CpuInfoLinux::readSysfsAvgClockMhz() const
+{
+    // Iterate /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq for a true
+    // per-core average rather than just cpu0.
+    QDir cpuDir("/sys/devices/system/cpu");
+    const QStringList coreDirs = cpuDir.entryList(
+        QStringList() << "cpu[0-9]*", QDir::Dirs | QDir::NoDotAndDotDot);
+
+    double sumKhz = 0.0;
+    int samples = 0;
+    for (const QString &name : coreDirs) {
+        const QString path = cpuDir.absoluteFilePath(name) + "/cpufreq/scaling_cur_freq";
+        const QString raw = FileUtil::readStringFromFile(path).trimmed();
+        if (raw.isEmpty())
+            continue;
+        bool ok = false;
+        double khz = raw.toDouble(&ok);
+        if (ok && khz > 0.0) {
+            sumKhz += khz;
+            ++samples;
+        }
+    }
+
+    if (samples == 0)
+        return 0.0;
+    return (sumKhz / samples) / 1000.0;   // kHz -> MHz
+}
+
 double CpuInfoLinux::getAvgClock() const
 {
-    // Try lscpu first
-    try {
-        QString lscpuOutput = CommandUtil::exec("bash", {"-c", LSCPU_COMMAND});
-        double mhz = parseAvgClockFromLscpu(lscpuOutput);
-        if (mhz > 0.0)
+    // FR-100: sysfs first on every tick once we've confirmed it works — avoids
+    // a bash+lscpu fork per second. Fall through to /proc/cpuinfo and then
+    // lscpu only when sysfs is unavailable.
+    if (mSysfsCpufreqAvailable != 0) {
+        double mhz = readSysfsAvgClockMhz();
+        if (mhz > 0.0) {
+            mSysfsCpufreqAvailable = 1;
             return mhz;
-    } catch (...) { qWarning() << "Failed to read CPU clock frequency"; }
+        }
+        if (mSysfsCpufreqAvailable == -1)
+            mSysfsCpufreqAvailable = 0;   // don't keep probing a dead path
+    }
 
     // Fallback: per-core clocks from /proc/cpuinfo
     const QList<double> clocks = getClocks();
@@ -61,12 +96,19 @@ double CpuInfoLinux::getAvgClock() const
             return avg;
     }
 
-    // Fallback: sysfs cpufreq (works on modern kernels where /proc/cpuinfo lacks MHz)
-    QString freqStr = FileUtil::readStringFromFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq").trimmed();
-    if (!freqStr.isEmpty()) {
-        double khz = freqStr.toDouble();
-        if (khz > 0.0)
-            return khz / 1000.0; // kHz to MHz
+    // Last resort: lscpu. Cache the "useless" verdict so we stop forking bash
+    // every second on systems where lscpu returns 0.
+    if (mLscpuUseful) {
+        try {
+            QString lscpuOutput = CommandUtil::exec("bash", {"-c", LSCPU_COMMAND});
+            double mhz = parseAvgClockFromLscpu(lscpuOutput);
+            if (mhz > 0.0)
+                return mhz;
+            mLscpuUseful = false;
+        } catch (...) {
+            qWarning() << "Failed to read CPU clock frequency";
+            mLscpuUseful = false;
+        }
     }
 
     return 0.0;
