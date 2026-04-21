@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Linux process-info overhaul (FR-127):** Replaced the per-tick `ps ax -weo ...` fork in `ProcessInfoLinux::updateProcesses` with a direct `/proc` walk. Eliminates ~10–20 ms of subprocess overhead per Processes-page refresh. Constructor caches `sysconf(_SC_CLK_TCK)`, `_SC_PAGESIZE`, `/proc/stat btime`, and `/proc/meminfo MemTotal`. Username/group lookups memoise `getpwuid_r`/`getgrgid_r` results. Parsing was extracted into a pure `ProcInfoParser` module with 22 fixture-backed tests covering `comm`-with-parens, kernel threads, and the boot-time/meminfo/uptime readers.
+- **Linux GPU polling goes fork-free (FR-106 Step C):** Replaced Bundle B's per-tick `nvidia-smi` fork with a persistent `nvidia-smi -l 1` child via `NvidiaSmiStreamer`. Zero forks per tick in steady state. Mirrors the macOS `NettopStreamer` pattern introduced in FR-102. `NvidiaSmiCache` namespace API is unchanged so `GpuInfoLinux` and `FanInfoLinux` call sites didn't move.
+
 ## [2.2.17] - 2026-04-21
 
 ### Changed
