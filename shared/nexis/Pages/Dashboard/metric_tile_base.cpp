@@ -9,8 +9,12 @@ MetricTileBase::MetricTileBase(const QString &title, const QString &colorToken, 
       mTitle(title),
       mColorToken(colorToken)
 {
-    for (int i = 0; i < SPARKLINE_SIZE; ++i)
+    mDataBuffer.reserve(SPARKLINE_SIZE);
+    mPointsCache.reserve(SPARKLINE_SIZE);
+    for (int i = 0; i < SPARKLINE_SIZE; ++i) {
         mDataBuffer.append(0.0);
+        mPointsCache.append(QPointF(i, 0.0));
+    }
 }
 
 void MetricTileBase::setDiskInfo(int percent, const QString &usedText, const QString &totalText)
@@ -30,9 +34,31 @@ void MetricTileBase::clearDriveHealth()
 void MetricTileBase::clearDataPoints()
 {
     mDataBuffer.clear();
-    for (int i = 0; i < SPARKLINE_SIZE; ++i)
+    mPointsCache.clear();
+    for (int i = 0; i < SPARKLINE_SIZE; ++i) {
         mDataBuffer.append(0.0);
+        mPointsCache.append(QPointF(i, 0.0));
+    }
     update();
+}
+
+void MetricTileBase::shiftDataPoint(double value)
+{
+    if (mDataBuffer.size() >= SPARKLINE_SIZE)
+        mDataBuffer.removeFirst();
+    mDataBuffer.append(value);
+
+    // Shift y-values in the cache; x coords 0..SPARKLINE_SIZE-1 stay fixed.
+    const int n = mDataBuffer.size();
+    if (mPointsCache.size() != n) {
+        mPointsCache.clear();
+        mPointsCache.reserve(n);
+        for (int i = 0; i < n; ++i)
+            mPointsCache.append(QPointF(i, mDataBuffer.at(i)));
+        return;
+    }
+    for (int i = 0; i < n; ++i)
+        mPointsCache[i].setY(mDataBuffer.at(i));
 }
 
 void MetricTileBase::setColorOverride(const QString &hexColor)

@@ -81,8 +81,7 @@ void HybridTile::buildLayout()
     createFooterLayout(mainLayout);
 
     // Initialize sparkline series from data buffer (pre-filled with zeros by base)
-    for (int i = 0; i < mDataBuffer.size(); ++i)
-        mSeries->append(i, 0);
+    mSeries->replace(mPointsCache);
 
     createGearButton();
 }
@@ -96,9 +95,7 @@ void HybridTile::setValue(int percent, const QString &valueText)
 
 void HybridTile::addDataPoint(double value)
 {
-    if (mDataBuffer.size() >= SPARKLINE_SIZE)
-        mDataBuffer.removeFirst();
-    mDataBuffer.append(value);
+    shiftDataPoint(value);
 
     updateSparkline();
     updateTrend();
@@ -267,9 +264,7 @@ int HybridTile::gaugeSize() const
 
 void HybridTile::updateSparkline()
 {
-    mSeries->clear();
-    for (int i = 0; i < mDataBuffer.size(); ++i)
-        mSeries->append(i, mDataBuffer.at(i));
+    mSeries->replace(mPointsCache);
 }
 
 void HybridTile::resizeEvent(QResizeEvent *event)

@@ -98,8 +98,7 @@ void MetricTile::buildLayout()
     createFooterLayout(mainLayout);
 
     // Initialize sparkline series from data buffer (pre-filled with zeros by base)
-    for (int i = 0; i < mDataBuffer.size(); ++i)
-        mSeries->append(i, 0);
+    mSeries->replace(mPointsCache);
 
     createGearButton();
 }
@@ -112,9 +111,7 @@ void MetricTile::setValue(int percent, const QString &valueText)
 
 void MetricTile::addDataPoint(double value)
 {
-    if (mDataBuffer.size() >= SPARKLINE_SIZE)
-        mDataBuffer.removeFirst();
-    mDataBuffer.append(value);
+    shiftDataPoint(value);
 
     updateSparkline();
     updateTrend();
@@ -191,9 +188,7 @@ void MetricTile::refreshThemeColors()
 
 void MetricTile::updateSparkline()
 {
-    mSeries->clear();
-    for (int i = 0; i < mDataBuffer.size(); ++i)
-        mSeries->append(i, mDataBuffer.at(i));
+    mSeries->replace(mPointsCache);
 }
 
 void MetricTile::resizeEvent(QResizeEvent *event)

@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QToolButton>
 #include <QLabel>
+#include <QPointF>
 #include <QPushButton>
 #include <QColor>
 #include <functional>
@@ -60,6 +61,7 @@ protected:
 
     static const int SPARKLINE_SIZE = 60;
     QList<double> mDataBuffer;
+    QList<QPointF> mPointsCache;   // mirrors mDataBuffer for QLineSeries::replace()
 
     // Shared UI members (created by helper methods below)
     QToolButton *mGearButton = nullptr;
@@ -75,6 +77,7 @@ protected:
 
     // Shared behavior
     virtual void updateTrend();
+    void shiftDataPoint(double value);   // advances mDataBuffer and mPointsCache together
     void updateGearIcon();
     void applyActionButtonStyle(const QColor &metricColor, const QColor &hoverTextColor);
 
