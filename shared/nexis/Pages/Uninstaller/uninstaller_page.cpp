@@ -1,6 +1,8 @@
 #include "uninstaller_page.h"
 #include "ui_uninstallerpage.h"
+#ifdef Q_OS_MAC
 #include "crumbs_review_dialog.h"
+#endif
 #include <QHeaderView>
 #include <QMovie>
 #include <QMessageBox>
