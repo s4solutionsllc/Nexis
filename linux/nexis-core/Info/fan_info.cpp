@@ -4,6 +4,8 @@
 #include <QRegularExpression>
 #include <Utils/command_util.h>
 
+#include "nvidia_smi_cache.h"
+
 static constexpr const char *HWMON_BASE = "/sys/class/hwmon";
 static constexpr int MAX_SANE_RPM = 30000;
 
@@ -299,19 +301,17 @@ int FanInfoLinux::readDellSpeed(const FanSensor &sensor) const
 
 int FanInfoLinux::readNvidiaSpeed(const FanSensor &sensor) const
 {
-    int gpuIndex = sensor.inputPath.toInt();
+    // FR-106: read from the shared NvidiaSmiCache — GpuInfoLinux::updateGpuInfo()
+    // runs one combined nvidia-smi per tick, so we don't re-fork here. If the
+    // cache is stale (e.g. fan tile rendered before first gpu tick) fall back
+    // to a local refresh.
+    const int gpuIndex = sensor.inputPath.toInt();
 
-    ExecResult result = CommandUtil::execWithStatus(
-        "nvidia-smi",
-        {QString("--id=%1").arg(gpuIndex),
-         "--query-gpu=fan.speed",
-         "--format=csv,noheader,nounits"},
-        3000);
+    if (NvidiaSmiCache::ageMs() > 5000)
+        NvidiaSmiCache::refresh();
 
-    if (result.exitCode != 0)
+    NvidiaSmiCache::Sample s = NvidiaSmiCache::get(gpuIndex);
+    if (s.fanPercent < 0 || s.fanPercent > 100)
         return 0;
-
-    bool ok;
-    int percent = result.output.trimmed().toInt(&ok);
-    return (ok && percent >= 0 && percent <= 100) ? percent : 0;
+    return s.fanPercent;
 }

@@ -1,5 +1,6 @@
 #include "gpu_info_linux.h"
 #include "Utils/command_util.h"
+#include "nvidia_smi_cache.h"
 
 #include <QDebug>
 #include <QDir>
@@ -226,6 +227,19 @@ void GpuInfoLinux::discoverGpus()
 
 void GpuInfoLinux::updateGpuInfo()
 {
+    // FR-106: one nvidia-smi fork per tick covering all devices, shared with
+    // FanInfoLinux::readNvidiaSpeed. Previously each NVIDIA device paid a
+    // per-tick fork for utilization and a second for fan speed.
+    bool anyNvidia = false;
+    for (const GpuDevice &dev : mDevices) {
+        if (dev.vendor == "NVIDIA" && !dev.queryCommand.isEmpty()) {
+            anyNvidia = true;
+            break;
+        }
+    }
+    if (anyNvidia)
+        NvidiaSmiCache::refresh();
+
     for (int i = 0; i < mDevices.size(); ++i) {
         GpuDevice &dev = mDevices[i];
 
@@ -236,15 +250,11 @@ void GpuInfoLinux::updateGpuInfo()
 
         } else if (dev.vendor == "NVIDIA") {
             if (!dev.queryCommand.isEmpty()) {
-                try {
-                    QString output = CommandUtil::exec("nvidia-smi",
-                        {"--query-gpu=utilization.gpu",
-                         "--format=csv,noheader,nounits",
-                         QString("--id=%1").arg(dev.queryCommand)});
-                    dev.utilization = parseNvidiaSmiUtilization(output);
-                } catch (...) {
-                    qWarning() << "Failed to query GPU utilization for" << dev.name;
-                    dev.utilization = -1;
+                bool ok = false;
+                const int idx = dev.queryCommand.toInt(&ok);
+                if (ok) {
+                    NvidiaSmiCache::Sample s = NvidiaSmiCache::get(idx);
+                    dev.utilization = s.utilization;
                 }
             }
 
