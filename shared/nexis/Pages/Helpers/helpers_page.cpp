@@ -4,6 +4,7 @@
 #include "firewall_widget.h"
 #ifdef Q_OS_LINUX
 #include "swappiness_widget.h"
+#include "cpu_tuning_widget.h"
 #endif
 #include "ui_helpers_page.h"
 
@@ -52,6 +53,9 @@ void HelpersPage::init()
 #ifdef Q_OS_LINUX
     mSwappinessWidget = new SwappinessWidget;
     ui->stackedWidget->addWidget(mSwappinessWidget);
+
+    mCpuTuningWidget = new CpuTuningWidget;
+    ui->stackedWidget->addWidget(mCpuTuningWidget);
 #endif
 
     // Prevent buttons from shrinking below their text width
@@ -97,6 +101,16 @@ void HelpersPage::init()
     shadowWidgets << mBtnSwappiness;
     connect(mBtnSwappiness, &QPushButton::clicked, this, &HelpersPage::onSwappinessClicked);
 
+    // FR-117: CPU tuning button.
+    mBtnCpuTuning = new QPushButton(tr("CPU Tuning"));
+    mBtnCpuTuning->setCheckable(true);
+    mBtnCpuTuning->setCursor(Qt::PointingHandCursor);
+    mBtnCpuTuning->setFocusPolicy(Qt::NoFocus);
+    mBtnCpuTuning->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnCpuTuning);
+    shadowWidgets << mBtnCpuTuning;
+    connect(mBtnCpuTuning, &QPushButton::clicked, this, &HelpersPage::onCpuTuningClicked);
+
     initPowerProfileUI();
     if (mPowerProfileWidget)
         shadowWidgets << mPowerProfileWidget;
@@ -112,6 +126,8 @@ void HelpersPage::init()
 #else
     if (mBtnSwappiness)
         mNavItems << mBtnSwappiness;
+    if (mBtnCpuTuning)
+        mNavItems << mBtnCpuTuning;
     if (mPowerProfileWidget)
         mNavItems << mPowerProfileWidget;
 #endif
@@ -152,6 +168,16 @@ void HelpersPage::onSwappinessClicked()
         return;
     mSwappinessWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mSwappinessWidget);
+#endif
+}
+
+void HelpersPage::onCpuTuningClicked()
+{
+#ifdef Q_OS_LINUX
+    if (!mCpuTuningWidget)
+        return;
+    mCpuTuningWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mCpuTuningWidget);
 #endif
 }
 

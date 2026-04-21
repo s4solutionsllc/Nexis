@@ -8,6 +8,9 @@
 #include <Managers/data_refresh_service.h>
 #include "Info/update_info.h"
 #include <Utils/format_util.h>
+#ifdef Q_OS_LINUX
+#include "Pages/Helpers/cpu_tuning_widget.h"
+#endif
 #include <QStyle>
 #include <QDebug>
 #include <QScreen>
@@ -564,6 +567,12 @@ void App::init()
     clickSidebarButton(SettingManager::ins()->getStartPage());
 
     DataRefreshService::ins()->start();
+
+#ifdef Q_OS_LINUX
+    // FR-117: if the user asked us to persist CPU tuning, re-apply their
+    // saved turbo / freq range in the background on launch.
+    CpuTuningWidget::applyPersistedSettings();
+#endif
 
     createTrayActions();
 

@@ -58,6 +58,12 @@ namespace SettingKeys {
 
     // FR-121
     const QString TrustedBinderPrefixes("TrustedBinderPrefixes");
+
+    // FR-117
+    const QString CpuTuningPersist("CpuTuningPersist");
+    const QString CpuTuningTurboOn("CpuTuningTurboOn");
+    const QString CpuTuningMinFreqKHz("CpuTuningMinFreqKHz");
+    const QString CpuTuningMaxFreqKHz("CpuTuningMaxFreqKHz");
 }
 
 class SettingManager
@@ -198,6 +204,16 @@ public:
     // FR-121
     void setTrustedBinderPrefixes(const QString &json);
     QString getTrustedBinderPrefixes() const;
+
+    // FR-117
+    void setCpuTuningPersist(bool value);
+    bool getCpuTuningPersist() const;
+    void setCpuTuningTurboOn(bool value);
+    bool getCpuTuningTurboOn() const;
+    void setCpuTuningMinFreqKHz(int value);
+    int getCpuTuningMinFreqKHz() const;
+    void setCpuTuningMaxFreqKHz(int value);
+    int getCpuTuningMaxFreqKHz() const;
 
 private:
     static SettingManager *instance;

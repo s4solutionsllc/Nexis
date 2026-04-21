@@ -156,6 +156,7 @@ else()
   set(CORE_PLAT_SRCS
     "${CORE_PLAT_DIR}/Info/battery_info.cpp"
     "${CORE_PLAT_DIR}/Info/cpu_info.cpp"
+    "${CORE_PLAT_DIR}/Info/cpu_tuning.cpp"
     "${CORE_PLAT_DIR}/Info/disk_health_info.cpp"
     "${CORE_PLAT_DIR}/Info/disk_info_platform.cpp"
     "${CORE_PLAT_DIR}/Info/gpu_info.cpp"
@@ -184,6 +185,7 @@ else()
   set(CORE_PLAT_HDRS
     "${CORE_PLAT_DIR}/Info/battery_info_linux.h"
     "${CORE_PLAT_DIR}/Info/cpu_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/cpu_tuning.h"
     "${CORE_PLAT_DIR}/Info/disk_health_info_linux.h"
     "${CORE_PLAT_DIR}/Info/disk_info_linux.h"
     "${CORE_PLAT_DIR}/Info/gpu_info_linux.h"
@@ -303,6 +305,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Helpers/open_ports_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/firewall_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/swappiness_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/cpu_tuning_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo/hardware_info_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/pin_sort_filter_proxy_model.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/process_alert_dialog.cpp"

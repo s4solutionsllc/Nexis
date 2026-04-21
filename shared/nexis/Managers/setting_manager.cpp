@@ -461,3 +461,44 @@ QString SettingManager::getTrustedBinderPrefixes() const
 {
     return mSettings->value(SettingKeys::TrustedBinderPrefixes, "[]").toString();
 }
+
+// FR-117
+void SettingManager::setCpuTuningPersist(bool value)
+{
+    mSettings->setValue(SettingKeys::CpuTuningPersist, value);
+}
+
+bool SettingManager::getCpuTuningPersist() const
+{
+    return mSettings->value(SettingKeys::CpuTuningPersist, false).toBool();
+}
+
+void SettingManager::setCpuTuningTurboOn(bool value)
+{
+    mSettings->setValue(SettingKeys::CpuTuningTurboOn, value);
+}
+
+bool SettingManager::getCpuTuningTurboOn() const
+{
+    return mSettings->value(SettingKeys::CpuTuningTurboOn, true).toBool();
+}
+
+void SettingManager::setCpuTuningMinFreqKHz(int value)
+{
+    mSettings->setValue(SettingKeys::CpuTuningMinFreqKHz, value);
+}
+
+int SettingManager::getCpuTuningMinFreqKHz() const
+{
+    return mSettings->value(SettingKeys::CpuTuningMinFreqKHz, 0).toInt();
+}
+
+void SettingManager::setCpuTuningMaxFreqKHz(int value)
+{
+    mSettings->setValue(SettingKeys::CpuTuningMaxFreqKHz, value);
+}
+
+int SettingManager::getCpuTuningMaxFreqKHz() const
+{
+    return mSettings->value(SettingKeys::CpuTuningMaxFreqKHz, 0).toInt();
+}
