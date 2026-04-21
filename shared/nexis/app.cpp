@@ -553,15 +553,17 @@ void App::init()
     // built lazily on first navigation — see ensurePage().
     ensurePage(0);
 
-    DataRefreshService::ins()->start();
-
     AppManager::ins()->updateStylesheet();
     mInitialThemeApplied = true;
 
     Utilities::addDropShadow(ui->sidebar, 60);
 
-    // Set start page
+    // Set start page. Must run before DataRefreshService::start() so the
+    // landing page's onPageActivated() can register subscribers (FR-103)
+    // before the service fires its initial immediate ticks.
     clickSidebarButton(SettingManager::ins()->getStartPage());
+
+    DataRefreshService::ins()->start();
 
     createTrayActions();
 

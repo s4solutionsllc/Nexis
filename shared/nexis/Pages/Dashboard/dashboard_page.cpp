@@ -1816,11 +1816,32 @@ void DashboardPage::onHealthDiskHealthUpdated(const QList<DriveHealth> &drives)
 void DashboardPage::onPageActivated()
 {
     mActive = true;
+
+    // FR-103: subscribe to the signals the dashboard renders. When the
+    // dashboard isn't the current page, DataRefreshService stops sampling
+    // these (notably nvidia-smi and QStorageInfo walks).
+    mRefresh->subscribe(DataRefreshService::Signal::Cpu);
+    mRefresh->subscribe(DataRefreshService::Signal::Memory);
+    mRefresh->subscribe(DataRefreshService::Signal::Network);
+    mRefresh->subscribe(DataRefreshService::Signal::DiskUsage);
+    mRefresh->subscribe(DataRefreshService::Signal::Gpu);
+    mRefresh->subscribe(DataRefreshService::Signal::Temp);
+    mRefresh->subscribe(DataRefreshService::Signal::Fan);
+    mRefresh->subscribe(DataRefreshService::Signal::Battery);
 }
 
 void DashboardPage::onPageDeactivated()
 {
     mActive = false;
+
+    mRefresh->unsubscribe(DataRefreshService::Signal::Cpu);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Memory);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Network);
+    mRefresh->unsubscribe(DataRefreshService::Signal::DiskUsage);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Gpu);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Temp);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Fan);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Battery);
 }
 
 void DashboardPage::launchMaintenanceWizard()

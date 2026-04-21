@@ -79,6 +79,28 @@ void DataRefreshService::stop()
     mPaused = true;
 }
 
+void DataRefreshService::subscribe(Signal s)
+{
+    const int idx = static_cast<int>(s);
+    if (idx >= 0 && idx < static_cast<int>(Signal::_Count))
+        ++mSubscriberCounts[idx];
+}
+
+void DataRefreshService::unsubscribe(Signal s)
+{
+    const int idx = static_cast<int>(s);
+    if (idx >= 0 && idx < static_cast<int>(Signal::_Count) && mSubscriberCounts[idx] > 0)
+        --mSubscriberCounts[idx];
+}
+
+bool DataRefreshService::hasSubscribers(Signal s) const
+{
+    const int idx = static_cast<int>(s);
+    if (idx < 0 || idx >= static_cast<int>(Signal::_Count))
+        return false;
+    return mSubscriberCounts[idx] > 0;
+}
+
 void DataRefreshService::pause()
 {
     if (mPaused)
@@ -177,58 +199,63 @@ void DataRefreshService::triggerRepoHealthCheck()
 
 void DataRefreshService::onFastTick()
 {
-    // CPU
-    QList<int> percents = im->getCpuPercents();
-    double clockGHz = im->getCpuClock() / 1000.0;
-    QList<double> loadAvgs = im->getCpuLoadAvgs();
-    emit cpuUpdated(percents, clockGHz, loadAvgs);
+    // FR-103: gate each block on at least one subscribed page. When both
+    // Dashboard and Resources are deactivated (or haven't been constructed
+    // yet under lazy-page construction / FR-97), these samples do nothing.
+    //
+    // Accepted tradeoff: CPU/network rate deltas skip a beat on first
+    // reactivation because their baseline state is stale. UI pages tolerate
+    // the one-tick blip without visible artifacts.
 
-    // Memory
-    im->updateMemoryInfo();
-    MemorySnapshot snap;
-    snap.used = im->getMemUsed();
-    snap.total = im->getMemTotal();
-    snap.swapUsed = im->getSwapUsed();
-    snap.swapTotal = im->getSwapTotal();
-    snap.wired = im->getMemWired();
-    snap.active = im->getMemActive();
-    snap.inactive = im->getMemInactive();
-    snap.compressed = im->getMemCompressed();
-    snap.available = im->getMemAvailable();
-    snap.pressureLevel = im->getMemPressureLevel();
-    emit memoryUpdated(snap);
+    if (hasSubscribers(Signal::Cpu)) {
+        QList<int> percents = im->getCpuPercents();
+        double clockGHz = im->getCpuClock() / 1000.0;
+        QList<double> loadAvgs = im->getCpuLoadAvgs();
+        emit cpuUpdated(percents, clockGHz, loadAvgs);
+    }
 
-    // Network
-    im->updateNetworkBytes();
-    emit networkUpdated(im->getRXbytes(), im->getTXbytes());
+    if (hasSubscribers(Signal::Memory)) {
+        im->updateMemoryInfo();
+        MemorySnapshot snap;
+        snap.used = im->getMemUsed();
+        snap.total = im->getMemTotal();
+        snap.swapUsed = im->getSwapUsed();
+        snap.swapTotal = im->getSwapTotal();
+        snap.wired = im->getMemWired();
+        snap.active = im->getMemActive();
+        snap.inactive = im->getMemInactive();
+        snap.compressed = im->getMemCompressed();
+        snap.available = im->getMemAvailable();
+        snap.pressureLevel = im->getMemPressureLevel();
+        emit memoryUpdated(snap);
+    }
 
-    // Disk I/O
-    emit diskIOUpdated(im->getDiskIO());
+    if (hasSubscribers(Signal::Network)) {
+        im->updateNetworkBytes();
+        emit networkUpdated(im->getRXbytes(), im->getTXbytes());
+    }
 
-    // GPU (conditional)
-    if (im->hasGpu()) {
+    if (hasSubscribers(Signal::DiskIO))
+        emit diskIOUpdated(im->getDiskIO());
+
+    if (hasSubscribers(Signal::Gpu) && im->hasGpu()) {
         im->updateGpuInfo();
         emit gpuUpdated(im->getGpuDevices());
     }
 
-    // Battery (conditional)
-    if (im->hasBattery()) {
+    if (hasSubscribers(Signal::Battery) && im->hasBattery()) {
         im->updateBatteryInfo();
         emit batteryUpdated(im->getBatteryData());
     }
 
-    // Temperature and fan have been moved to onMediumTick (FR-104) — they
-    // change on minute scales, so 1 Hz polling wastes syscalls/forks for
-    // barely-visible detail in the sparkline.
+    // Temperature and fan have been moved to onMediumTick (FR-104).
 }
 
 void DataRefreshService::onMediumTick()
 {
-    // FR-101: QStorageInfo::mountedVolumes() can block for seconds on slow
-    // NFS/SMB mounts. Collect off the UI thread and assign the cache back
-    // on the UI thread via QueuedConnection. Skip the tick if the previous
-    // one is still in flight (mirrors onSlowTick/triggerRepoHealthCheck).
-    if (!mDiskUsageRunning) {
+    // FR-101 + FR-103: QStorageInfo::mountedVolumes() goes off-thread, and
+    // we only run it when a page is subscribed to diskUsage (Dashboard).
+    if (hasSubscribers(Signal::DiskUsage) && !mDiskUsageRunning) {
         mDiskUsageRunning = true;
         QtConcurrent::run([this] {
             QList<Disk> disks = im->collectDiskInfo();
@@ -241,10 +268,10 @@ void DataRefreshService::onMediumTick()
     }
 
     // FR-104: temp/fan sampling piggybacks on the 5 s medium tick.
-    if (im->hasThermalSensors())
+    if (hasSubscribers(Signal::Temp) && im->hasThermalSensors())
         emit tempUpdated();
 
-    if (im->hasFanSensors())
+    if (hasSubscribers(Signal::Fan) && im->hasFanSensors())
         emit fanUpdated();
 }
 

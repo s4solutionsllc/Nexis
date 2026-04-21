@@ -456,9 +456,24 @@ void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 void ResourcesPage::onPageActivated()
 {
     mActive = true;
+
+    // FR-103: subscribe to the signals the resources view renders. Combined
+    // with Dashboard subscriptions, these are the only consumers of CPU /
+    // memory / network / disk-IO / GPU samples on the fast tick.
+    mRefresh->subscribe(DataRefreshService::Signal::Cpu);
+    mRefresh->subscribe(DataRefreshService::Signal::Memory);
+    mRefresh->subscribe(DataRefreshService::Signal::Network);
+    mRefresh->subscribe(DataRefreshService::Signal::DiskIO);
+    mRefresh->subscribe(DataRefreshService::Signal::Gpu);
 }
 
 void ResourcesPage::onPageDeactivated()
 {
     mActive = false;
+
+    mRefresh->unsubscribe(DataRefreshService::Signal::Cpu);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Memory);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Network);
+    mRefresh->unsubscribe(DataRefreshService::Signal::DiskIO);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Gpu);
 }

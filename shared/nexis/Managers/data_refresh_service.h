@@ -22,6 +22,22 @@ class DataRefreshService : public QObject
     Q_OBJECT
 
 public:
+    // FR-103: pages subscribe to the signals they render so DataRefreshService
+    // can skip the expensive sample (notably nvidia-smi, QStorageInfo walks)
+    // when no page is interested. Counters are keyed by enum index.
+    enum class Signal : int {
+        Cpu = 0,
+        Memory,
+        Network,
+        DiskIO,
+        DiskUsage,
+        Gpu,
+        Temp,
+        Fan,
+        Battery,
+        _Count
+    };
+
     static DataRefreshService *ins();
 
     void start();
@@ -34,6 +50,12 @@ public:
     void resumeProcessTimer();
     void triggerUpdateCheck();
     void triggerRepoHealthCheck();
+
+    // Subscriber counting — pages call these from onPageActivated /
+    // onPageDeactivated. Idempotent across many pages.
+    void subscribe(Signal s);
+    void unsubscribe(Signal s);
+    bool hasSubscribers(Signal s) const;
 
 signals:
     void cpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
@@ -79,6 +101,9 @@ private:
     bool mDiskHealthRunning = false;
     bool mDiskUsageRunning = false;
     bool mRepoHealthRunning = false;
+
+    // Subscriber counters, one per Signal enum value.
+    int mSubscriberCounts[static_cast<int>(Signal::_Count)] = {0};
 };
 
 #endif // DATA_REFRESH_SERVICE_H
