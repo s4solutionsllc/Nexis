@@ -3,7 +3,9 @@
 #include "utilities.h"
 #include "nexis_roles.h"
 #include "dpi.h"
+#include "pin_sort_filter_proxy_model.h"
 #include "Managers/data_refresh_service.h"
+#include "Managers/process_prefs_manager.h"
 #include "Services/process_service.h"
 #include <QRegularExpression>
 
@@ -18,7 +20,7 @@ ProcessesPage::ProcessesPage(QWidget *parent, InfoManager *infoManager,
   NexisPage(parent),
   ui(new Ui::ProcessesPage),
   mItemModel(new QStandardItemModel(this)),
-  mSortFilterModel(new QSortFilterProxyModel(this)),
+  mSortFilterModel(new PinSortFilterProxyModel(this)),
   im(infoManager ? infoManager : InfoManager::ins()),
   mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
   mProcessService(processService ? processService : ProcessService::ins())
@@ -67,6 +69,15 @@ void ProcessesPage::init()
 
     connect(ui->tableProcess->horizontalHeader(), &QHeaderView::customContextMenuRequested,
         this, &ProcessesPage::on_tableProcess_customContextMenuRequested);
+
+    // FR-116: row-level context menu (distinct from the header menu above).
+    ui->tableProcess->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tableProcess, &QWidget::customContextMenuRequested,
+            this, &ProcessesPage::onRowContextMenu);
+
+    // FR-116: re-render when pins/thresholds change from elsewhere.
+    connect(ProcessPrefsManager::ins(), &ProcessPrefsManager::changed,
+            this, &ProcessesPage::onPinPrefsChanged);
 
     loadHeaderMenu();
 
@@ -134,6 +145,7 @@ void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QS
 
         pid_t pid = proc.getPid();
         incomingPids.insert(pid);
+        mPidToName.insert(pid, proc.getCmd());   // FR-116
 
         auto it = mPidToRow.find(pid);
         if (it != mPidToRow.end()) {
@@ -156,6 +168,7 @@ void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QS
         pid_t pid = mItemModel->item(row, 0)->data(SortRole).toLongLong();
         mItemModel->removeRow(row);
         mPidToRow.remove(pid);
+        mPidToName.remove(pid);   // FR-116
     }
 
     // Rebuild PID→row map after removals (row indices shifted)
@@ -190,6 +203,9 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *pid_i = new QStandardItem(QString::number(proc.getPid()));
     pid_i->setData(proc.getPid(), data);
     pid_i->setData(proc.getPid(), Qt::ToolTipRole);
+    // FR-116: pin role used by PinSortFilterProxyModel::lessThan.
+    pid_i->setData(ProcessPrefsManager::ins()->isPinned(proc.getCmd()),
+                   PinSortFilterProxyModel::PinnedRole);
 
     QStandardItem *rss_i = new QStandardItem(FormatUtil::formatBytes(proc.getRss()));
     rss_i->setData(proc.getRss(), data);
@@ -309,6 +325,10 @@ void ProcessesPage::updateRow(int row, const Process &proc)
     };
 
     setCell(0,  QString::number(proc.getPid()), proc.getPid(), proc.getPid());
+    // FR-116: refresh pinned role on the updated row.
+    if (auto *pidItem = mItemModel->item(row, 0))
+        pidItem->setData(ProcessPrefsManager::ins()->isPinned(proc.getCmd()),
+                         PinSortFilterProxyModel::PinnedRole);
     setCell(1,  FormatUtil::formatBytes(proc.getRss()), proc.getRss(), FormatUtil::formatBytes(proc.getRss()));
     setCell(2,  QString::number(proc.getPmem()), proc.getPmem(), proc.getPmem());
     setCell(3,  FormatUtil::formatBytes(proc.getVsize()), proc.getVsize(), FormatUtil::formatBytes(proc.getVsize()));
@@ -399,4 +419,65 @@ void ProcessesPage::onPageActivated()
 void ProcessesPage::onPageDeactivated()
 {
     mRefresh->pauseProcessTimer();
+}
+
+// ───────── FR-116: row context menu + pin prefs ─────────
+
+void ProcessesPage::onRowContextMenu(const QPoint &pos)
+{
+    const QModelIndex idx = ui->tableProcess->indexAt(pos);
+    if (!idx.isValid())
+        return;
+
+    // Grab the source-model row so we can read the PID directly.
+    const int sourceRow = mSortFilterModel->mapToSource(idx).row();
+    QStandardItem *pidItem = mItemModel->item(sourceRow, 0);
+    if (!pidItem)
+        return;
+
+    const pid_t pid = pidItem->data(SortRole).toLongLong();
+    const QString name = mPidToName.value(pid);
+    if (name.isEmpty())
+        return;
+
+    auto *prefs = ProcessPrefsManager::ins();
+    const bool pinned = prefs->isPinned(name);
+
+    QMenu menu(this);
+    QAction *pinAction = menu.addAction(pinned ? tr("Unpin %1").arg(name)
+                                                : tr("Pin %1").arg(name));
+    menu.addSeparator();
+    QAction *endAction = menu.addAction(tr("End Process"));
+
+    QAction *chosen = menu.exec(ui->tableProcess->viewport()->mapToGlobal(pos));
+    if (!chosen)
+        return;
+
+    if (chosen == pinAction) {
+        prefs->setPinned(name, !pinned);
+    } else if (chosen == endAction) {
+        mSelectedRowModel = mSortFilterModel->index(idx.row(), 0);
+        on_btnEndProcess_clicked();
+    }
+}
+
+void ProcessesPage::onPinPrefsChanged()
+{
+    refreshPinnedRoles();
+}
+
+void ProcessesPage::refreshPinnedRoles()
+{
+    auto *prefs = ProcessPrefsManager::ins();
+    for (int row = 0; row < mItemModel->rowCount(); ++row) {
+        QStandardItem *pidItem = mItemModel->item(row, 0);
+        if (!pidItem)
+            continue;
+        const pid_t pid = pidItem->data(SortRole).toLongLong();
+        const QString name = mPidToName.value(pid);
+        pidItem->setData(prefs->isPinned(name),
+                         PinSortFilterProxyModel::PinnedRole);
+    }
+    // Nudge the proxy to re-sort.
+    mSortFilterModel->invalidate();
 }

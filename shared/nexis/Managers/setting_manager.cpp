@@ -429,3 +429,35 @@ QString SettingManager::getCleanerCategoryTrends() const
 {
     return mSettings->value(SettingKeys::CleanerCategoryTrends, "{}").toString();
 }
+
+// FR-116
+void SettingManager::setProcessPinnedNames(const QString &json)
+{
+    mSettings->setValue(SettingKeys::ProcessPinnedNames, json);
+}
+
+QString SettingManager::getProcessPinnedNames() const
+{
+    return mSettings->value(SettingKeys::ProcessPinnedNames, "[]").toString();
+}
+
+void SettingManager::setProcessThresholds(const QString &json)
+{
+    mSettings->setValue(SettingKeys::ProcessThresholds, json);
+}
+
+QString SettingManager::getProcessThresholds() const
+{
+    return mSettings->value(SettingKeys::ProcessThresholds, "[]").toString();
+}
+
+// FR-121
+void SettingManager::setTrustedBinderPrefixes(const QString &json)
+{
+    mSettings->setValue(SettingKeys::TrustedBinderPrefixes, json);
+}
+
+QString SettingManager::getTrustedBinderPrefixes() const
+{
+    return mSettings->value(SettingKeys::TrustedBinderPrefixes, "[]").toString();
+}

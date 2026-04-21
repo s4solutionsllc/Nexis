@@ -7,12 +7,14 @@
 #include <QScrollBar>
 #include <QMenu>
 #include <QAction>
+#include <QHash>
 
 #include "nexis_page.h"
 #include "Managers/info_manager.h"
 
 class DataRefreshService;
 class ProcessService;
+class PinSortFilterProxyModel;
 
 namespace Ui {
     class ProcessesPage;
@@ -43,21 +45,29 @@ private slots:
     void on_btnEndProcess_clicked();
     void on_tableProcess_customContextMenuRequested(const QPoint &pos);
 
+    // FR-116
+    void onRowContextMenu(const QPoint &pos);
+    void onPinPrefsChanged();
+
 private:
     // FR-108: tell InfoManager whether to collect per-PID disk/net I/O based
     // on the current column visibility. Called from init() and after the
     // header context menu toggles a column.
     void updateProcessIoCollection();
 
+    // FR-116: refresh the pinned-role on every row from ProcessPrefsManager.
+    void refreshPinnedRoles();
+
 private:
     Ui::ProcessesPage *ui;
 
     QStandardItemModel *mItemModel;
-    QSortFilterProxyModel *mSortFilterModel;
+    PinSortFilterProxyModel *mSortFilterModel;
     QModelIndex mSelectedRowModel;
     QStringList mHeaders;
     QMenu mHeaderMenu;
     QHash<pid_t, int> mPidToRow;
+    QHash<pid_t, QString> mPidToName;   // FR-116
     InfoManager *im;
     DataRefreshService *mRefresh;
     ProcessService *mProcessService;
