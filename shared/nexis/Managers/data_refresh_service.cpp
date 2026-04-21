@@ -40,6 +40,24 @@ DataRefreshService::DataRefreshService(InfoManager *infoManager,
         else
             pause();
     });
+
+    // FR-105: downshift cadence when the main window loses focus. Full rate
+    // resumes on focus restore. Battery transitions feed off the existing
+    // batteryUpdated signal — no extra polling.
+    connect(SignalMapper::ins(), &SignalMapper::sigAppFocusChanged,
+            this, [this](bool focused) {
+        mFocused = focused;
+        recomputePowerMode();
+    });
+
+    connect(this, &DataRefreshService::batteryUpdated,
+            this, [this](const BatteryData &data) {
+        const bool onBattery = !data.isPluggedIn;
+        if (onBattery != mOnBattery) {
+            mOnBattery = onBattery;
+            recomputePowerMode();
+        }
+    });
 }
 
 DataRefreshService *DataRefreshService::ins()
@@ -77,6 +95,46 @@ void DataRefreshService::stop()
     mProcessTimer->stop();
     mUpdateTimer->stop();
     mPaused = true;
+}
+
+void DataRefreshService::setPowerMode(PowerMode mode)
+{
+    if (mode == mPowerMode)
+        return;
+
+    mPowerMode = mode;
+
+    // Cadence intervals, in ms. Values are first-pass guesses intended to be
+    // tuned empirically. Kiosk and minimized paths are intentionally excluded
+    // — kiosk overrides pause(), minimized fully pauses via pause().
+    int fastMs = 1000;
+    int mediumMs = 5000;
+    int slowMs = 30000;
+
+    switch (mode) {
+    case PowerMode::Normal:
+        fastMs = 1000;  mediumMs = 5000;   slowMs = 30000;  break;
+    case PowerMode::Battery:
+        fastMs = 2000;  mediumMs = 10000;  slowMs = 60000;  break;
+    case PowerMode::Unfocused:
+        fastMs = 5000;  mediumMs = 30000;  slowMs = 60000;  break;
+    }
+
+    // Only restart timers that were already running; leave the process and
+    // update timers alone (they have their own cadence rules).
+    if (mFastTimer->isActive())    mFastTimer->start(fastMs);
+    if (mMediumTimer->isActive())  mMediumTimer->start(mediumMs);
+    if (mSlowTimer->isActive())    mSlowTimer->start(slowMs);
+}
+
+void DataRefreshService::recomputePowerMode()
+{
+    PowerMode target = PowerMode::Normal;
+    if (!mFocused)
+        target = PowerMode::Unfocused;   // unfocused dominates — most aggressive
+    else if (mOnBattery)
+        target = PowerMode::Battery;
+    setPowerMode(target);
 }
 
 void DataRefreshService::subscribe(Signal s)

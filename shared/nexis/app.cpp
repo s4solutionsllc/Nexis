@@ -669,6 +669,13 @@ void App::changeEvent(QEvent *event)
             return;
         }
     }
+    // FR-105: surface focus transitions so DataRefreshService can downshift
+    // cadence when the user switches to another app but leaves Nexis visible.
+    if (event->type() == QEvent::WindowActivate)
+        emit SignalMapper::ins()->sigAppFocusChanged(true);
+    else if (event->type() == QEvent::WindowDeactivate)
+        emit SignalMapper::ins()->sigAppFocusChanged(false);
+
     QMainWindow::changeEvent(event);
 }
 

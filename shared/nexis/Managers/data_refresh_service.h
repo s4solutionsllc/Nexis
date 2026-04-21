@@ -57,6 +57,13 @@ public:
     void unsubscribe(Signal s);
     bool hasSubscribers(Signal s) const;
 
+    // FR-105: cadence tiers. The service picks one based on focus state
+    // (sigAppFocusChanged) and whether the laptop is on battery. Minimized
+    // to tray keeps the existing pause() behaviour separate.
+    enum class PowerMode { Normal, Battery, Unfocused };
+    void setPowerMode(PowerMode mode);
+    PowerMode powerMode() const { return mPowerMode; }
+
 signals:
     void cpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
     void memoryUpdated(const MemorySnapshot &snap);
@@ -104,6 +111,12 @@ private:
 
     // Subscriber counters, one per Signal enum value.
     int mSubscriberCounts[static_cast<int>(Signal::_Count)] = {0};
+
+    PowerMode mPowerMode = PowerMode::Normal;
+    bool mFocused = true;
+    bool mOnBattery = false;
+
+    void recomputePowerMode();
 };
 
 #endif // DATA_REFRESH_SERVICE_H

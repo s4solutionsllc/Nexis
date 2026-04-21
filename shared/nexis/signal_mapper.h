@@ -17,6 +17,10 @@ signals:
     void sigKioskToggleRequested();
     void sigKioskModeChanged(bool enabled);
     void sigAppVisibilityChanged(bool visible);
+    // FR-105: emitted when the main window gains/loses focus (QEvent::WindowActivate
+    // / WindowDeactivate). Used by DataRefreshService to downshift cadence when
+    // the user is working in another app.
+    void sigAppFocusChanged(bool focused);
     void sigNavigateToPage(const QString &pageTitle);
     void sigCleanableSizeChanged(quint64 bytes);
     void sigDashboardFooterChanged(bool visible);
