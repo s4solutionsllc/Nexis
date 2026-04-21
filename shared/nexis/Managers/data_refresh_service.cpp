@@ -250,6 +250,8 @@ void DataRefreshService::triggerRepoHealthCheck()
 #endif
         QMetaObject::invokeMethod(this, [this, cache]() {
             mRepoHealthRunning = false;
+            mLastRepoHealthCache = cache;
+            mHasLastRepoHealthCache = true;
             emit repoHealthChecked(cache);
         }, Qt::QueuedConnection);
     });
@@ -372,6 +374,8 @@ void DataRefreshService::onUpdateTick()
         UpdateCheckResult result = im->checkForSystemUpdates();
         QMetaObject::invokeMethod(this, [this, result]() {
             mUpdateCheckRunning = false;
+            mLastUpdateCheckResult = result;
+            mHasLastUpdateCheckResult = true;
             emit systemUpdatesChecked(result);
         }, Qt::QueuedConnection);
     });

@@ -55,6 +55,16 @@
 
 ## MEDIUM Severity
 
+- [ ] **BUG-111: ScreenshotTests leaks user QSettings** (LOW)
+  - **File:** `tests/screenshots/test_screenshots.cpp` — `initTestCase()`
+  - **Description:** The test calls `qApp->setApplicationName("nexis")` and then instantiates `App()`, which means `QSettings` and everything downstream of it reads from the developer's real Nexis preferences (sidebar collapse state, selected theme, etc.). If the developer has the sidebar expanded in their actual Nexis install, ScreenshotTests captures an expanded-sidebar dashboard and fails against the collapsed-sidebar reference image. Discovered while verifying BUG-110 — flaky failures on Luke's macOS machine with an expanded sidebar.
+  - **Fix:** Use a unique application name for tests (e.g. `"nexis-screenshot-tests"`), or set `QSETTINGS_INI_FORMAT` to a temp dir via `QStandardPaths::setTestModeEnabled(true)` in `initTestCase()`, so the test reads an isolated empty settings store. Qt has first-class support for this.
+
+- [x] **BUG-110: Homebrew/APT page "Available Updates" table empty on first visit** (MEDIUM)
+  - **Files:** `shared/nexis/Managers/data_refresh_service.{h,cpp}`, `shared/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp`
+  - **Description:** With FR-97 (lazy page construction), the APT/Homebrew page is only built when the user first navigates to it. By that time, `DataRefreshService::onUpdateTick()` has already fired once at startup and emitted `systemUpdatesChecked`. The persistent `App` (which owns the sidebar badge) receives the emit and shows the updates-available count, but the lazily-constructed page subscribes too late and displays an empty updates table until the next hourly tick or a manual "Check Now". Reported by user after Bundle B UAT.
+  - **Resolved:** `DataRefreshService` now caches `lastUpdateCheckResult()` / `lastRepoHealthCache()` with matching `hasLastXxx()` guards. `APTSourceManagerPage` calls `onSystemUpdatesChecked` / `onRepoHealthChecked` with the cached values right after wiring its signal connections, so late-arriving subscribers backfill instead of waiting for the next hourly tick.
+
 - [x] **BUG-107 / #19: Customize Layout button invisible in .deb package on Linux Mint** (MEDIUM)
   - **Description:** The "Customize Layout" edit button (SVG icon QPushButton) is not visible when installed via `.deb` on Linux Mint 22.3, but works in AppImage. Caused by missing Qt6 SVG icon engine plugin runtime dependency.
   - **Resolved:** Identified as dependency issue; ticket closed by user.

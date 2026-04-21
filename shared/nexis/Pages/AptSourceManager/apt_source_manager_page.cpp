@@ -171,6 +171,16 @@ void APTSourceManagerPage::init()
         mRefresh->triggerRepoHealthCheck();
     });
 
+    // BUG-110: this page is constructed lazily (FR-97) after DataRefreshService
+    // has already fired its startup systemUpdatesChecked and, downstream of it,
+    // repoHealthChecked. Backfill from the cached results so the updates table
+    // and health dashboard populate immediately instead of waiting for the next
+    // hourly tick or a manual Check Now.
+    if (mRefresh->hasLastUpdateCheckResult())
+        onSystemUpdatesChecked(mRefresh->lastUpdateCheckResult());
+    if (mRefresh->hasLastRepoHealthCache())
+        onRepoHealthChecked(mRefresh->lastRepoHealthCache());
+
 #ifdef Q_OS_MAC
     // macOS: Homebrew packages with tree widget layout (like Uninstaller page)
 

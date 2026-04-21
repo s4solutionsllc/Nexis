@@ -64,6 +64,16 @@ public:
     void setPowerMode(PowerMode mode);
     PowerMode powerMode() const { return mPowerMode; }
 
+    // BUG-110: cached copy of the last result emitted by systemUpdatesChecked /
+    // repoHealthChecked. Pages constructed lazily (FR-97) connect too late to
+    // catch the startup emission; they query these on activation to backfill
+    // the initial state. hasLastUpdateCheckResult() distinguishes "never ran"
+    // from "ran and found zero updates".
+    bool hasLastUpdateCheckResult() const { return mHasLastUpdateCheckResult; }
+    const UpdateCheckResult &lastUpdateCheckResult() const { return mLastUpdateCheckResult; }
+    bool hasLastRepoHealthCache() const { return mHasLastRepoHealthCache; }
+    const RepoHealthCache &lastRepoHealthCache() const { return mLastRepoHealthCache; }
+
 signals:
     void cpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
     void memoryUpdated(const MemorySnapshot &snap);
@@ -108,6 +118,12 @@ private:
     bool mDiskHealthRunning = false;
     bool mDiskUsageRunning = false;
     bool mRepoHealthRunning = false;
+
+    // BUG-110: cache of last emissions so late subscribers can backfill.
+    UpdateCheckResult mLastUpdateCheckResult;
+    bool mHasLastUpdateCheckResult = false;
+    RepoHealthCache mLastRepoHealthCache;
+    bool mHasLastRepoHealthCache = false;
 
     // Subscriber counters, one per Signal enum value.
     int mSubscriberCounts[static_cast<int>(Signal::_Count)] = {0};
