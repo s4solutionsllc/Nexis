@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QResizeEvent>
 #include <QTreeWidgetItem>
+#include <QHash>
 #include <QMap>
 #include <QMovie>
 #include <QDebug>
@@ -147,6 +148,16 @@ private:
     QLabel *mLblSnapFlatpakImg = nullptr;
     QLabel *mLblSnapFlatpakLabel = nullptr;
     QCheckBox *mCheckSnapFlatpak = nullptr;
+
+    // FR-114: per-category scan-size trend row (programmatically placed at
+    // grid row 5 for each category column). Refreshed after every scan.
+    struct TrendCell {
+        QLabel *sizeLabel = nullptr;
+        class CategorySparkline *sparkline = nullptr;
+    };
+    QHash<int, TrendCell> mTrendCells;
+    void buildTrendRow();
+    void refreshTrendCells();
 
     // Exclusion rules gear button
     QToolButton *mBtnExclusions = nullptr;

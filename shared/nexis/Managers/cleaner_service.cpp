@@ -234,7 +234,64 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
         }
     }
 
+    // FR-114: record per-category sizes for the trend sparkline on the
+    // System Cleaner page. Done once per scan.
+    persistScanTotals(result);
+
     return result;
+}
+
+void CleanerService::persistScanTotals(const ScanResult &result)
+{
+    constexpr int MAX_SAMPLES = 20;
+    SettingManager *sm = SettingManager::ins();
+    QJsonObject root = QJsonDocument::fromJson(
+        sm->getCleanerCategoryTrends().toUtf8()).object();
+
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+
+    for (auto it = result.categoryFiles.constBegin();
+         it != result.categoryFiles.constEnd(); ++it) {
+        const CleanCategory cat = it.key();
+
+        // Sum bytes for this category.
+        quint64 catBytes = 0;
+        for (const QFileInfo &fi : it.value())
+            catBytes += FileUtil::getFileSize(fi.absoluteFilePath());
+
+        const QString key = QString::number(static_cast<int>(cat));
+        QJsonArray samples = root.value(key).toArray();
+        QJsonObject point;
+        point.insert("t", QJsonValue(now));
+        point.insert("b", QJsonValue(static_cast<qint64>(catBytes)));
+        samples.append(point);
+
+        while (samples.size() > MAX_SAMPLES)
+            samples.removeFirst();
+
+        root.insert(key, samples);
+    }
+
+    sm->setCleanerCategoryTrends(
+        QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact)));
+}
+
+QList<CleanerService::TrendPoint> CleanerService::getCategoryTrend(CleanCategory cat) const
+{
+    QList<TrendPoint> out;
+    SettingManager *sm = SettingManager::ins();
+    const QJsonObject root = QJsonDocument::fromJson(
+        sm->getCleanerCategoryTrends().toUtf8()).object();
+    const QJsonArray samples = root.value(QString::number(static_cast<int>(cat))).toArray();
+    out.reserve(samples.size());
+    for (const QJsonValue &v : samples) {
+        const QJsonObject obj = v.toObject();
+        TrendPoint p;
+        p.timestampSecs = obj.value("t").toVariant().toLongLong();
+        p.bytes = static_cast<quint64>(obj.value("b").toVariant().toLongLong());
+        out.append(p);
+    }
+    return out;
 }
 
 CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &categories, int minFileAgeSecs)

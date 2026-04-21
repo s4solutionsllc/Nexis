@@ -1,6 +1,9 @@
 #include "system_cleaner_page.h"
 #include "ui_system_cleaner_page.h"
 #include "byte_tree_widget.h"
+#include "category_sparkline.h"
+
+#include <cstdlib>
 #include "nexis_roles.h"
 #include "dpi.h"
 #include <Managers/schedule_manager.h>
@@ -100,6 +103,10 @@ void SystemCleanerPage::init()
         }
     }
 #endif
+
+    // FR-114: per-category scan-size trend row (one cell per category column)
+    buildTrendRow();
+    refreshTrendCells();
 
     // Exclusion rules gear button — floating overlay in top-right corner
     // (BUG-52: QToolButton for macOS SVG compat)
@@ -323,6 +330,9 @@ void SystemCleanerPage::onScanFinished()
 
     ui->treeWidgetScanResult->setSortingEnabled(true);
     on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
+
+    // FR-114: the scan just persisted new samples — pull them into the trend row.
+    refreshTrendCells();
 
     // scan results page
     mLoadingMovie->stop();
@@ -801,5 +811,100 @@ void SystemCleanerPage::onTreeContextMenu(const QPoint &pos)
                         .arg(parent->data(2, 1).toString())
                         .arg(parent->childCount()));
         parent->setText(1, FormatUtil::formatBytes(remainingSize));
+    }
+}
+
+// ───────── FR-114: per-category scan-size trend row ─────────
+
+void SystemCleanerPage::buildTrendRow()
+{
+    QGridLayout *grid = qobject_cast<QGridLayout *>(ui->cleanerCategories->layout());
+    if (!grid)
+        return;
+
+    // Column map for each CleanerService category — must match the .ui grid
+    // placement of the title labels on row 3.
+    struct Entry { CleanerService::CleanCategory cat; int col; };
+    static const Entry kEntries[] = {
+        { CleanerService::PACKAGE_CACHE,         2 },
+        { CleanerService::CRASH_REPORTS,         3 },
+        { CleanerService::APPLICATION_LOGS,      4 },
+        { CleanerService::APPLICATION_CACHES,    5 },
+        { CleanerService::TRASH,                 6 },
+        { CleanerService::DEV_TOOL_CACHES,       7 },
+        { CleanerService::BROKEN_SYMLINKS,       8 },
+        { CleanerService::BROWSER_PRIVACY,       9 },
+#ifndef Q_OS_MACOS
+        { CleanerService::SNAP_FLATPAK_REVISIONS, 10 },
+#endif
+    };
+
+    for (const Entry &e : kEntries) {
+        auto *cell = new QWidget(ui->cleanerCategories);
+        auto *layout = new QVBoxLayout(cell);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setSpacing(2);
+
+        auto *sizeLbl = new QLabel(QStringLiteral("—"), cell);
+        sizeLbl->setObjectName("categoryTrendLabel");
+        sizeLbl->setAlignment(Qt::AlignCenter);
+        QFont f = sizeLbl->font();
+        f.setPointSize(qMax(7, f.pointSize() - 2));
+        sizeLbl->setFont(f);
+
+        auto *spark = new CategorySparkline(cell);
+        spark->setFixedSize(Dpi::scale(60, 16));
+
+        layout->addWidget(sizeLbl, 0, Qt::AlignHCenter);
+        layout->addWidget(spark,   0, Qt::AlignHCenter);
+
+        grid->addWidget(cell, 5, e.col, Qt::AlignHCenter | Qt::AlignTop);
+
+        TrendCell tc;
+        tc.sizeLabel = sizeLbl;
+        tc.sparkline = spark;
+        mTrendCells.insert(static_cast<int>(e.cat), tc);
+    }
+}
+
+void SystemCleanerPage::refreshTrendCells()
+{
+    if (mTrendCells.isEmpty())
+        return;
+
+    for (auto it = mTrendCells.begin(); it != mTrendCells.end(); ++it) {
+        const auto cat = static_cast<CleanerService::CleanCategory>(it.key());
+        const auto samples = mCleanerService->getCategoryTrend(cat);
+
+        if (samples.isEmpty()) {
+            it.value().sizeLabel->setText(QStringLiteral("—"));
+            it.value().sizeLabel->setToolTip(tr("No scan history yet."));
+            it.value().sparkline->setSamples({});
+            continue;
+        }
+
+        const auto latest = samples.last();
+        it.value().sizeLabel->setText(FormatUtil::formatBytes(latest.bytes));
+
+        QString tip;
+        if (samples.size() >= 2) {
+            const auto prev = samples.at(samples.size() - 2);
+            const qint64 delta = static_cast<qint64>(latest.bytes)
+                               - static_cast<qint64>(prev.bytes);
+            const QString arrow = delta > 0 ? QStringLiteral("↑")
+                                : delta < 0 ? QStringLiteral("↓")
+                                             : QStringLiteral("→");
+            tip = tr("%1 %2 vs last scan").arg(arrow,
+                FormatUtil::formatBytes(static_cast<quint64>(std::llabs(delta))));
+        } else {
+            tip = tr("First scan recorded.");
+        }
+        it.value().sizeLabel->setToolTip(tip);
+
+        QList<quint64> values;
+        values.reserve(samples.size());
+        for (const auto &s : samples)
+            values.append(s.bytes);
+        it.value().sparkline->setSamples(values);
     }
 }

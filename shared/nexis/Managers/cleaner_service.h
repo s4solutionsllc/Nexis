@@ -52,6 +52,12 @@ public:
     static QString categoryName(CleanCategory cat);
     static QList<CleanCategory> allCategories();
 
+    // FR-114: rolling history of (scan timestamp, size in bytes) per category.
+    // Up to 20 samples kept per category in a JSON blob on disk. Written
+    // automatically at the end of scan(); consumers read via the getter.
+    struct TrendPoint { qint64 timestampSecs = 0; quint64 bytes = 0; };
+    QList<TrendPoint> getCategoryTrend(CleanCategory cat) const;
+
     quint64 cleanTrash();
     quint64 cleanFiles(const QStringList &paths, int minFileAgeSecs = 0,
                        bool moveToTrashInstead = false);
@@ -77,6 +83,7 @@ private:
     static CleanerService *instance;
 
     void logCleanResult(const CleanResult &result);
+    void persistScanTotals(const ScanResult &result);   // FR-114
 };
 
 #endif // CLEANER_SERVICE_H
