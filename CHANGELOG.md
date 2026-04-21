@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.17] - 2026-04-21
+
+### Changed
+- **Runtime performance (Bundle B — FR-99 through FR-109):** 11 coordinated changes that make Nexis measurably lighter to leave open all day and smoother while navigating. Headline wins: no more per-tick `nvidia-smi` / `nettop` / `lscpu` forks, no `/proc/<pid>/io` or `QStorageInfo` work on the UI thread, no sampling at all for pages that aren't visible.
+  - **`CommandUtil::execAsync()` + UI-thread audit (FR-99):** New `QFuture<ExecResult> execAsync(...)` helper so future work can run subprocess calls off the main thread. Debug-build assert gated on `NEXIS_ASSERT_ASYNC_EXEC` catches regressions.
+  - **Sparkline `replace()` (FR-107):** Dashboard tiles now update their sparkline series in one call per tick instead of 60 append calls — eliminates ~300 chart relayouts/sec across the 5 MetricTile/HybridTile instances.
+  - **Temp & fan at 5 s cadence (FR-104):** Thermal and fan readings moved from the 1 Hz fast tick to the 5 Hz medium tick. Thermals move on minute scales; the high-frequency polling was wasted work.
+  - **sysfs-first CPU freq on Linux (FR-100):** `CpuInfoLinux::getAvgClock()` now reads `/sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq` first, falls through to `/proc/cpuinfo` then `lscpu`. Capability flags cached so dead paths aren't re-probed. Replaces a bash+lscpu fork per second on Linux.
+  - **Three micro-optimisations (FR-109):** `CommandUtil::isExecutable()` now memoises PATH lookups in a thread-safe `QHash`. `DiskHealthInfoMacOS::discoverDrives()` dedupes by (model, size) *before* the `smartctl` fork — three out of four wasted forks eliminated on Apple Silicon. `main.cpp`'s `messageHandler` keeps a single log file handle open (mutex-guarded) instead of opening/closing per message; also now installed for the GUI path so normal runs actually produce a log file.
+  - **`mountedVolumes()` off the UI thread (FR-101):** The 5 s disk-usage tick now runs `QStorageInfo::mountedVolumes()` on a QtConcurrent worker with a re-entrancy guard. No more stutter when a slow NFS/SMB mount is asleep.
+  - **Batched `nvidia-smi` (FR-106):** New `NvidiaSmiCache` runs one combined `nvidia-smi --query-gpu=index,utilization.gpu,fan.speed` per tick covering every device. `GpuInfoLinux::updateGpuInfo` and `FanInfoLinux::readNvidiaSpeed` both read from the shared snapshot. Collapses 2-4 forks/sec to 1 on Linux+NVIDIA.
+  - **Skip disk/net I/O when cols hidden (FR-108):** `ProcessInfo::setCollectDiskIO()` / `setCollectNetIO()` gate the per-PID I/O collection. `ProcessesPage` drives them from the current column visibility. By default all four I/O columns are hidden, so out-of-the-box users pay no cost: no `/proc/<pid>/io` walk on Linux, no `nettop` fork on macOS.
+  - **Subscriber-gated DataRefreshService (FR-103):** New `Signal` enum + `subscribe/unsubscribe/hasSubscribers` API. Dashboard and Resources register for the signals they render in `onPageActivated` and release in `onPageDeactivated`. `onFastTick` / `onMediumTick` skip entire sample blocks when nothing is interested — the `nvidia-smi`, `QStorageInfo` walk, and GPU/memory/network samples all silence when the user is on Settings or Processes.
+  - **Low-power cadence tiers (FR-105):** New `PowerMode { Normal, Battery, Unfocused }` on `DataRefreshService`. `App::changeEvent` emits `sigAppFocusChanged` on `QEvent::WindowActivate/WindowDeactivate`. Intervals: Normal 1/5/30 s, Battery 2/10/60 s, Unfocused 5/30/60 s. Unfocused wins over Battery when both apply.
+  - **Persistent `nettop` streamer on macOS (FR-102, macOS half):** New `NettopStreamer` owns one long-lived `nettop -P -d -s1` `QProcess` and harvests deltas from its streaming stdout. Starts only when Net Down/s or Net Up/s columns are visible; tears down otherwise. Eliminates the 50-150 ms per-tick fork cost on macOS. The Linux half (replacing `ps ax` with a direct `/proc` walk) is split out as FR-127 for a follow-up — FR-108 already killed the expensive `/proc/<pid>/io` loop on Linux, so most of that side's savings have already landed.
+
 ## [2.2.16] - 2026-04-20
 
 ### Changed
