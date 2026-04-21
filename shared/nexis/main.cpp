@@ -9,6 +9,8 @@
 #include <QDir>
 #include <QFile>
 #include <QMessageBox>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QSettings>
@@ -24,6 +26,13 @@
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
     Q_UNUSED(context)
+
+    // In release builds, suppress Qt warnings (noisy but harmless).
+    // In debug builds, let them through — they often indicate real problems.
+#ifdef QT_NO_DEBUG
+    if (type == QtWarningMsg)
+        return;
+#endif
 
     QString level;
 
@@ -42,30 +51,51 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
         level = "UNDEFINED"; break;
     }
 
-    // In release builds, suppress Qt warnings (noisy but harmless).
-    // In debug builds, let them through — they often indicate real problems.
-#ifdef QT_NO_DEBUG
-    if (type == QtWarningMsg)
-        return;
-#endif
-
-    QString text = QString("[%1] [%2] %3")
+    const QString text = QString("[%1] [%2] %3")
                             .arg(QDateTime::currentDateTime().toString("dd-MM-yyyy hh:mm:ss"))
                             .arg(level)
                             .arg(message);
 
-    static QString logPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    // FR-109: persistent log file handle. Previously every message opened,
+    // size-checked, wrote, and closed the file — a full stat+open+close cycle
+    // per qDebug/qWarning. Now we open once lazily and keep the handle for
+    // the process lifetime, rotating periodically. Mutex-guarded because
+    // qDebug can be called from any thread (notably QtConcurrent workers).
+    static QMutex mutex;
+    static QFile *logFile = nullptr;
+    static int writesSinceSizeCheck = 0;
 
-    QFile file(logPath + "/nexis.log");
+    QMutexLocker lock(&mutex);
 
-    QIODevice::OpenMode openMode = file.size() > (1L << 20) ? QIODevice::Truncate : QIODevice::Append;
-
-    if (file.open(QIODevice::WriteOnly | openMode)) {
-        QTextStream stream(&file);
-        stream << text << Qt::endl;
-
-        file.close();
+    if (!logFile) {
+        const QString logPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+        QDir().mkpath(logPath);
+        logFile = new QFile(logPath + "/nexis.log");
+        if (!logFile->open(QIODevice::WriteOnly | QIODevice::Append)) {
+            delete logFile;
+            logFile = nullptr;
+            return;
+        }
     }
+
+    // Rotate when the file exceeds 1 MB. stat() isn't free, so only check
+    // occasionally — at roughly 1 MB of log the file will have > 10 000
+    // lines, so checking every 500 writes is cheap enough.
+    if (++writesSinceSizeCheck >= 500) {
+        writesSinceSizeCheck = 0;
+        if (logFile->size() > (1L << 20)) {
+            logFile->close();
+            if (!logFile->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                delete logFile;
+                logFile = nullptr;
+                return;
+            }
+        }
+    }
+
+    QTextStream stream(logFile);
+    stream << text << Qt::endl;
+    logFile->flush();
 }
 
 static void showNotificationAndExit(QApplication &app, const QString &title, const QString &message)
@@ -216,6 +246,12 @@ int main(int argc, char *argv[])
     }
 
     // ── GUI mode ────────────────────────────────────────────────────────
+
+    // FR-109: capture qDebug/qWarning/qCritical to ~/.config/nexis/nexis.log
+    // for the interactive path too. Previously this was only installed for
+    // the two headless entry points above, so normal app runs produced no
+    // logs at all.
+    qInstallMessageHandler(messageHandler);
 
     // Single-instance enforcement (BUG-03 / FR-02)
     QString lockPath = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/nexis.lock";

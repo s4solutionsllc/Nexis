@@ -2,6 +2,9 @@
 
 #include <QCoreApplication>
 #include <QDebug>
+#include <QHash>
+#include <QMutex>
+#include <QMutexLocker>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -96,5 +99,19 @@ QFuture<ExecResult> CommandUtil::execAsync(const QString &cmd, QStringList args,
 
 bool CommandUtil::isExecutable(const QString &cmd)
 {
-    return !QStandardPaths::findExecutable(cmd).isEmpty();
+    // FR-109: cache the PATH walk. update_info.cpp and package_tool.cpp call
+    // this 5-12 times per discovery pass — each call stat()s every PATH
+    // candidate otherwise. Thread-safe: callers span the UI thread and
+    // QtConcurrent workers.
+    static QMutex mutex;
+    static QHash<QString, bool> cache;
+
+    QMutexLocker lock(&mutex);
+    auto it = cache.constFind(cmd);
+    if (it != cache.constEnd())
+        return it.value();
+
+    const bool ok = !QStandardPaths::findExecutable(cmd).isEmpty();
+    cache.insert(cmd, ok);
+    return ok;
 }

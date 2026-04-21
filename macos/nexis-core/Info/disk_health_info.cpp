@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QSet>
 #include <QXmlStreamReader>
 
 // Parse a simple plist XML into a flat key→value map.
@@ -94,6 +95,12 @@ void DiskHealthInfoMacOS::discoverDrives()
         return;
     }
 
+    // FR-109: dedupe by (model, size) before the smartctl fork. On Apple
+    // Silicon, WholeDisks commonly contains disk0–disk3 as synthetic
+    // virtualizations of the same physical drive — running smartctl (and
+    // a plist parse) on each one is 3x wasted per tick.
+    QSet<QString> seenKeys;
+
     for (const QString &diskId : wholeDisks) {
         DriveHealth drive;
         drive.deviceName = diskId;
@@ -109,6 +116,11 @@ void DiskHealthInfoMacOS::discoverDrives()
 
         QMap<QString, QVariant> info = parsePlist(infoOutput.toUtf8());
 
+        // Protocol — check early so we can skip the smartctl fork on disk images.
+        drive.protocol = info.value("BusProtocol").toString();
+        if (drive.protocol.isEmpty() || drive.protocol == "Disk Image")
+            continue;
+
         // Model
         drive.model = info.value("MediaName").toString();
         if (drive.model.isEmpty())
@@ -119,8 +131,13 @@ void DiskHealthInfoMacOS::discoverDrives()
         if (drive.sizeBytes == 0)
             drive.sizeBytes = info.value("IOKitSize").toLongLong();
 
-        // Protocol
-        drive.protocol = info.value("BusProtocol").toString();
+        // Dedupe now — before the smartctl fork.
+        if (!drive.model.isEmpty()) {
+            const QString key = drive.model + "|" + QString::number(drive.sizeBytes);
+            if (seenKeys.contains(key))
+                continue;
+            seenKeys.insert(key);
+        }
 
         // SSD detection
         bool isSolid = info.contains("SolidState") && info.value("SolidState").toBool();
@@ -178,22 +195,6 @@ void DiskHealthInfoMacOS::discoverDrives()
                 }
             } catch (...) { qWarning() << "Failed to read disk info for" << drive.devicePath; }
         }
-
-        // Filter out virtual disks and disk images
-        if (drive.protocol.isEmpty() || drive.protocol == "Disk Image")
-            continue;
-
-        // Deduplicate by model name — macOS exposes the same physical SSD
-        // as multiple device nodes (e.g. disk0–disk3 all via Apple Fabric)
-        bool duplicate = false;
-        for (const DriveHealth &existing : mDrives) {
-            if (!drive.model.isEmpty() && existing.model == drive.model) {
-                duplicate = true;
-                break;
-            }
-        }
-        if (duplicate)
-            continue;
 
         deriveHealthVerdict(drive);
         mDrives.append(drive);
