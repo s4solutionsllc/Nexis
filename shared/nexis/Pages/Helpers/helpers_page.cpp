@@ -6,6 +6,7 @@
 #include "swappiness_widget.h"
 #include "cpu_tuning_widget.h"
 #endif
+#include "trim_widget.h"
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
@@ -58,6 +59,11 @@ void HelpersPage::init()
     ui->stackedWidget->addWidget(mCpuTuningWidget);
 #endif
 
+    // FR-118: TRIM widget — cross-platform. Hide the button if fstrim isn't
+    // installed on Linux.
+    mTrimWidget = new TrimWidget;
+    ui->stackedWidget->addWidget(mTrimWidget);
+
     // Prevent buttons from shrinking below their text width
     for (auto *btn : {ui->btnHostManage, ui->btnFlushDNS, ui->btnNetDiag,
                       ui->btnOpenPorts, ui->btnFirewall}) {
@@ -88,6 +94,16 @@ void HelpersPage::init()
     connect(mBtnRebuildSpotlight, &QPushButton::clicked, this, &HelpersPage::onRebuildSpotlight);
     connect(mBtnVerifyDisk, &QPushButton::clicked, this, &HelpersPage::onVerifyDisk);
     connect(mBtnRebuildLaunchServices, &QPushButton::clicked, this, &HelpersPage::onRebuildLaunchServices);
+
+    // FR-118: TRIM button (macOS — status-only).
+    mBtnTrim = new QPushButton(tr("SSD TRIM"));
+    mBtnTrim->setCheckable(true);
+    mBtnTrim->setCursor(Qt::PointingHandCursor);
+    mBtnTrim->setFocusPolicy(Qt::NoFocus);
+    mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnTrim);
+    shadowWidgets << mBtnTrim;
+    connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
 #else
     // FR-81: Swappiness button. Always visible on Linux — the widget itself
     // handles the "not supported" state if /proc/sys/vm/swappiness isn't
@@ -111,6 +127,18 @@ void HelpersPage::init()
     shadowWidgets << mBtnCpuTuning;
     connect(mBtnCpuTuning, &QPushButton::clicked, this, &HelpersPage::onCpuTuningClicked);
 
+    // FR-118: TRIM button (Linux — gated on fstrim being installed).
+    if (CommandUtil::isExecutable("fstrim")) {
+        mBtnTrim = new QPushButton(tr("SSD TRIM"));
+        mBtnTrim->setCheckable(true);
+        mBtnTrim->setCursor(Qt::PointingHandCursor);
+        mBtnTrim->setFocusPolicy(Qt::NoFocus);
+        mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+        ui->buttonGroup->addButton(mBtnTrim);
+        shadowWidgets << mBtnTrim;
+        connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
+    }
+
     initPowerProfileUI();
     if (mPowerProfileWidget)
         shadowWidgets << mPowerProfileWidget;
@@ -123,11 +151,15 @@ void HelpersPage::init()
               << ui->btnOpenPorts << ui->btnFirewall;
 #ifdef Q_OS_MACOS
     mNavItems << mBtnRebuildSpotlight << mBtnVerifyDisk << mBtnRebuildLaunchServices;
+    if (mBtnTrim)
+        mNavItems << mBtnTrim;
 #else
     if (mBtnSwappiness)
         mNavItems << mBtnSwappiness;
     if (mBtnCpuTuning)
         mNavItems << mBtnCpuTuning;
+    if (mBtnTrim)
+        mNavItems << mBtnTrim;
     if (mPowerProfileWidget)
         mNavItems << mPowerProfileWidget;
 #endif
@@ -179,6 +211,14 @@ void HelpersPage::onCpuTuningClicked()
     mCpuTuningWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mCpuTuningWidget);
 #endif
+}
+
+void HelpersPage::onTrimClicked()
+{
+    if (!mTrimWidget)
+        return;
+    mTrimWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mTrimWidget);
 }
 
 void HelpersPage::on_btnFlushDNS_clicked()

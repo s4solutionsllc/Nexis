@@ -14,6 +14,7 @@ class OpenPortsWidget;
 class FirewallWidget;
 class SwappinessWidget;
 class CpuTuningWidget;
+class TrimWidget;
 
 namespace Ui {
 class HelpersPage;
@@ -35,6 +36,7 @@ private slots:
     void on_btnFirewall_clicked();
     void onSwappinessClicked();      // FR-81
     void onCpuTuningClicked();       // FR-117
+    void onTrimClicked();            // FR-118
     void onRebuildSpotlight();
     void onVerifyDisk();
     void onRebuildLaunchServices();
@@ -52,6 +54,8 @@ private:
     NetworkDiagWidget *mNetworkDiagWidget;
     OpenPortsWidget *mOpenPortsWidget;
     FirewallWidget *mFirewallWidget;
+    TrimWidget *mTrimWidget = nullptr;           // FR-118 — both platforms
+    QPushButton *mBtnTrim = nullptr;
 #ifdef Q_OS_LINUX
     SwappinessWidget *mSwappinessWidget = nullptr;
     QPushButton      *mBtnSwappiness    = nullptr;
