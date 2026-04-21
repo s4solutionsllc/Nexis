@@ -37,8 +37,15 @@ private:
     QElapsedTimer                         mIoTimer;
     bool                                  mIoTimerStarted = false;
 
+    // FR-115: per-PID engine-ns baseline for GPU% delta + wall-clock timer.
+    QHash<pid_t, quint64> mPrevGpuEngineNs;
+    QElapsedTimer         mGpuTimer;
+    bool                  mGpuTimerStarted = false;
+
     QString lookupUid(uid_t uid);
     QString lookupGid(gid_t gid);
+
+    void collectGpuForPid(pid_t pid, Process &proc, double elapsedSecs);
 };
 
 #endif // PROCESS_INFO_LINUX_H

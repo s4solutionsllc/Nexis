@@ -65,6 +65,19 @@ QString formatStartTime(quint64 bootTimeSec, quint64 starttimeTicks,
 // Format total CPU time (utime + stime in clock ticks) as [DD-]HH:MM:SS.
 QString formatCpuTime(quint64 totalTicks, long clkTck);
 
+// FR-115: /proc/<pid>/fdinfo/<fd> contents for a DRM file descriptor.
+// Non-DRM fdinfo files (e.g. for sockets, pipes) return false with
+// everything zero-filled — caller should skip.
+struct DrmFdinfo {
+    QString driver;          // e.g. "i915", "amdgpu", "xe"
+    qint64  clientId   = -1; // -1 means no drm-client-id present
+    quint64 engineNs   = 0;  // sum of all drm-engine-* nanosecond counters
+    quint64 memVramB   = 0;  // drm-memory-vram (bytes; converted from "KiB"/"MiB")
+    quint64 memTotalB  = 0;  // sum across vram/gtt/cpu if only -total-* keys present
+};
+
+bool parseDrmFdinfo(const QByteArray &content, DrmFdinfo &out);
+
 } // namespace ProcInfoParser
 
 #endif // PROC_INFO_PARSER_H

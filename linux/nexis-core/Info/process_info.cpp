@@ -109,7 +109,23 @@ void ProcessInfoLinux::updateProcesses()
         mCpuTimer.restart();
     }
 
+    // FR-115: GPU collection timer + baseline-clear on disable.
+    double gpuElapsedSec = 0.0;
+    if (mCollectGpu) {
+        if (!mGpuTimerStarted) {
+            mGpuTimer.start();
+            mGpuTimerStarted = true;
+        } else {
+            gpuElapsedSec = mGpuTimer.elapsed() / 1000.0;
+            mGpuTimer.restart();
+        }
+    } else if (!mPrevGpuEngineNs.isEmpty()) {
+        mPrevGpuEngineNs.clear();
+        mGpuTimerStarted = false;
+    }
+
     QSet<pid_t> activeCpuPids;
+    QSet<pid_t> activeGpuPids;
 
     QDir procDir("/proc");
     const QStringList entries = procDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
@@ -178,6 +194,12 @@ void ProcessInfoLinux::updateProcesses()
 
         proc.setCmd(ProcInfoParser::formatCmdline(cmdlineBytes, sf.comm));
 
+        // FR-115: walk /proc/<pid>/fdinfo/* and fold DRM stats into proc.
+        if (mCollectGpu) {
+            collectGpuForPid(pid, proc, gpuElapsedSec);
+            activeGpuPids.insert(pid);
+        }
+
         processList << proc;
     }
 
@@ -188,6 +210,17 @@ void ProcessInfoLinux::updateProcesses()
             cpuIt = mPrevCpuTotal.erase(cpuIt);
         else
             ++cpuIt;
+    }
+
+    // Prune GPU baseline similarly.
+    if (mCollectGpu) {
+        auto gpuIt = mPrevGpuEngineNs.begin();
+        while (gpuIt != mPrevGpuEngineNs.end()) {
+            if (!activeGpuPids.contains(gpuIt.key()))
+                gpuIt = mPrevGpuEngineNs.erase(gpuIt);
+            else
+                ++gpuIt;
+        }
     }
 
     // FR-108: skip the per-PID /proc/<pid>/io reads entirely when both disk
@@ -255,6 +288,72 @@ void ProcessInfoLinux::updateProcesses()
         else
             ++it;
     }
+}
+
+void ProcessInfoLinux::collectGpuForPid(pid_t pid, Process &proc, double elapsedSecs)
+{
+    // FR-115: walk /proc/<pid>/fdinfo/* looking for DRM fds. Aggregate engine
+    // nanoseconds and vram bytes across dedupe-survivors (one entry per
+    // drm-client-id). Permission errors are silent — fdinfo of a foreign
+    // user's PIDs isn't readable, so those rows just show em-dash.
+    const QString fdinfoDir = QStringLiteral("/proc/%1/fdinfo").arg(pid);
+    QDir dir(fdinfoDir);
+    if (!dir.exists())
+        return;
+
+    const QFileInfoList entries =
+        dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+
+    QSet<qint64> seenClients;
+    quint64 engineNsSum = 0;
+    quint64 vramBytesSum = 0;
+    bool anyDrmFound = false;
+
+    for (const QFileInfo &fi : entries) {
+        const QByteArray content = readAll(fi.absoluteFilePath());
+        if (content.isEmpty())
+            continue;
+
+        ProcInfoParser::DrmFdinfo f;
+        if (!ProcInfoParser::parseDrmFdinfo(content, f))
+            continue;
+
+        anyDrmFound = true;
+
+        // Dedupe by drm-client-id. If the driver doesn't emit an id,
+        // count unconditionally — better to over-count than miss.
+        if (f.clientId != -1) {
+            if (seenClients.contains(f.clientId))
+                continue;
+            seenClients.insert(f.clientId);
+        }
+
+        engineNsSum += f.engineNs;
+        vramBytesSum += f.memVramB;
+    }
+
+    if (!anyDrmFound)
+        return;
+
+    // %GPU via delta against last tick.
+    const auto prev = mPrevGpuEngineNs.constFind(pid);
+    const bool havePrev = (prev != mPrevGpuEngineNs.constEnd());
+    const quint64 prevNs = havePrev ? prev.value() : 0;
+    mPrevGpuEngineNs.insert(pid, engineNsSum);
+
+    // Only show a non-sentinel percent once we've seen two ticks — avoids a
+    // spurious 0% reading on the first tick after the column is unhidden.
+    if (havePrev && elapsedSecs > 0.0) {
+        double pct = 0.0;
+        if (engineNsSum >= prevNs) {
+            const double deltaNs = static_cast<double>(engineNsSum - prevNs);
+            const double elapsedNs = elapsedSecs * 1e9;
+            if (elapsedNs > 0)
+                pct = qBound(0.0, (deltaNs / elapsedNs) * 100.0, 100.0);
+        }
+        proc.setGpuPercent(pct);
+    }
+    proc.setGpuVramBytes(static_cast<qint64>(vramBytesSum));
 }
 
 // getProcessList() is in shared/nexis-core/Info/process_info_shared.cpp

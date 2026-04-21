@@ -1,0 +1,4 @@
+pos:	0
+flags:	02
+mnt_id:	10
+ino:	1234

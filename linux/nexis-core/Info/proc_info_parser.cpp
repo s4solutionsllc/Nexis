@@ -190,4 +190,84 @@ QString formatCpuTime(quint64 totalTicks, long clkTck)
         .arg(seconds, 2, 10, QChar('0'));
 }
 
+namespace {
+
+// Parse an fdinfo memory-value suffix: "12345 KiB" or "7 MiB" etc. Returns
+// the byte value, or 0 on parse failure.
+quint64 parseMemoryValue(const QByteArray &v)
+{
+    const QByteArray trimmed = v.trimmed();
+    int sp = trimmed.indexOf(' ');
+    const QByteArray num = (sp < 0) ? trimmed : trimmed.left(sp);
+    const QByteArray unit = (sp < 0) ? QByteArray() : trimmed.mid(sp + 1).trimmed();
+
+    bool ok = false;
+    const quint64 n = num.toULongLong(&ok);
+    if (!ok)
+        return 0;
+
+    if (unit == "KiB" || unit == "kiB" || unit == "kB" || unit == "KB")
+        return n * 1024ULL;
+    if (unit == "MiB" || unit == "MB")
+        return n * 1024ULL * 1024ULL;
+    if (unit == "GiB" || unit == "GB")
+        return n * 1024ULL * 1024ULL * 1024ULL;
+    if (unit == "B" || unit.isEmpty())
+        return n;
+    // Unknown unit — assume KiB (the most common kernel emit).
+    return n * 1024ULL;
+}
+
+// Parse an fdinfo nanosecond engine value: "12345 ns" or plain "12345".
+quint64 parseNsValue(const QByteArray &v)
+{
+    const QByteArray trimmed = v.trimmed();
+    int sp = trimmed.indexOf(' ');
+    const QByteArray num = (sp < 0) ? trimmed : trimmed.left(sp);
+    bool ok = false;
+    const quint64 n = num.toULongLong(&ok);
+    return ok ? n : 0;
+}
+
+} // namespace
+
+bool parseDrmFdinfo(const QByteArray &content, DrmFdinfo &out)
+{
+    out = DrmFdinfo{};
+
+    const QList<QByteArray> lines = content.split('\n');
+    bool isDrm = false;
+
+    for (const QByteArray &rawLine : lines) {
+        const QByteArray line = rawLine.trimmed();
+        if (line.isEmpty())
+            continue;
+
+        const int colon = line.indexOf(':');
+        if (colon <= 0)
+            continue;
+
+        const QByteArray key = line.left(colon).trimmed();
+        const QByteArray val = line.mid(colon + 1).trimmed();
+
+        if (key == "drm-driver") {
+            isDrm = true;
+            out.driver = QString::fromLatin1(val);
+        } else if (key == "drm-client-id") {
+            bool ok = false;
+            const qint64 id = val.toLongLong(&ok);
+            if (ok)
+                out.clientId = id;
+        } else if (key.startsWith("drm-engine-")) {
+            out.engineNs += parseNsValue(val);
+        } else if (key == "drm-memory-vram") {
+            out.memVramB += parseMemoryValue(val);
+        } else if (key.startsWith("drm-total-")) {
+            out.memTotalB += parseMemoryValue(val);
+        }
+    }
+
+    return isDrm;
+}
+
 } // namespace ProcInfoParser

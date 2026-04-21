@@ -49,6 +49,12 @@ private slots:
     void cpuTime_subDay();
     void cpuTime_multiDay();
     void cpuTime_zeroClkTck();
+
+    // parseDrmFdinfo
+    void drm_intelPopulatesAllFields();
+    void drm_amdSumsMultipleEngines();
+    void drm_nonDrmReturnsFalse();
+    void drm_handlesMiBSuffix();
 };
 
 // -------- parseStat --------
@@ -252,6 +258,59 @@ void TestProcInfoParser::cpuTime_multiDay()
 void TestProcInfoParser::cpuTime_zeroClkTck()
 {
     QCOMPARE(ProcInfoParser::formatCpuTime(12345, 0), QString("00:00:00"));
+}
+
+// -------- parseDrmFdinfo --------
+
+void TestProcInfoParser::drm_intelPopulatesAllFields()
+{
+    const QByteArray content = loadFixture("fdinfo_drm_intel.txt");
+    QVERIFY(!content.isEmpty());
+
+    ProcInfoParser::DrmFdinfo f;
+    QVERIFY(ProcInfoParser::parseDrmFdinfo(content, f));
+
+    QCOMPARE(f.driver, QString("i915"));
+    QCOMPARE(f.clientId, qint64(12345));
+    QCOMPARE(f.engineNs, quint64(1234567890));        // render + video (0)
+    QCOMPARE(f.memVramB, quint64(524288) * 1024ULL);  // KiB → bytes
+}
+
+void TestProcInfoParser::drm_amdSumsMultipleEngines()
+{
+    const QByteArray content = loadFixture("fdinfo_drm_amd.txt");
+    QVERIFY(!content.isEmpty());
+
+    ProcInfoParser::DrmFdinfo f;
+    QVERIFY(ProcInfoParser::parseDrmFdinfo(content, f));
+
+    QCOMPARE(f.driver, QString("amdgpu"));
+    // gfx + compute + dma
+    QCOMPARE(f.engineNs, quint64(5000000000) + 2000000000 + 100000000);
+    QCOMPARE(f.memVramB, quint64(2097152) * 1024ULL);
+}
+
+void TestProcInfoParser::drm_nonDrmReturnsFalse()
+{
+    const QByteArray content = loadFixture("fdinfo_non_drm.txt");
+    QVERIFY(!content.isEmpty());
+
+    ProcInfoParser::DrmFdinfo f;
+    QVERIFY(!ProcInfoParser::parseDrmFdinfo(content, f));
+    QCOMPARE(f.engineNs, quint64(0));
+    QCOMPARE(f.memVramB, quint64(0));
+}
+
+void TestProcInfoParser::drm_handlesMiBSuffix()
+{
+    const QByteArray content =
+        "drm-driver:\txe\n"
+        "drm-engine-render:\t100 ns\n"
+        "drm-memory-vram:\t512 MiB\n";
+
+    ProcInfoParser::DrmFdinfo f;
+    QVERIFY(ProcInfoParser::parseDrmFdinfo(content, f));
+    QCOMPARE(f.memVramB, quint64(512) * 1024ULL * 1024ULL);
 }
 
 QTEST_MAIN(TestProcInfoParser)
