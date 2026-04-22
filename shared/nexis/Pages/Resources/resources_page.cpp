@@ -3,6 +3,7 @@
 #include "utilities.h"
 #include "Managers/data_refresh_service.h"
 #include <QFile>
+#include <algorithm>
 
 ResourcesPage::~ResourcesPage()
 {
@@ -497,7 +498,7 @@ void ResourcesPage::onPsiUpdated(const PsiSnapshot &snap)
 
     // Auto-scale Y: expand when data exceeds the current ceiling, floor at 1%.
     static double maxPsi = 1.0;
-    double tickMax = qMax({snap.someAvg10, snap.someAvg60, snap.someAvg300});
+    double tickMax = std::max({snap.someAvg10, snap.someAvg60, snap.someAvg300});
     if (tickMax * 1.25 > maxPsi) {
         maxPsi = tickMax * 1.25;
         mChartPsiCpu->setYMax(maxPsi);
