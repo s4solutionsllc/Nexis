@@ -141,7 +141,7 @@ void WolWidget::buildUI()
     mTable->horizontalHeader()->setSectionResizeMode(ColMac,  QHeaderView::ResizeToContents);
     mTable->horizontalHeader()->setSectionResizeMode(ColName, QHeaderView::Stretch);
     mTable->horizontalHeader()->setSectionResizeMode(ColWake, QHeaderView::Fixed);
-    mTable->setColumnWidth(ColWake, 36);
+    mTable->setColumnWidth(ColWake, 64);
     mTable->verticalHeader()->setVisible(false);
     mTable->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     mTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
