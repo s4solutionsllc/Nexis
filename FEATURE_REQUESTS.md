@@ -503,11 +503,7 @@
 - [x] **FR-121: Listening-port audit with unexpected-process highlights** — Extend the existing Open Ports & Connections viewer (FR-66) with a "flag unexpected binders" mode: any process listening on a port whose binary path is not under `/usr/bin`, `/usr/sbin`, `/System/Library`, `/opt/homebrew/*`, or `/Library/Apple/*` gets highlighted amber; unsigned macOS binaries get a red badge (via `codesign -dv`). Educational, not definitive — catches the "why is there a listener on 4444?" case.
   - **Resolved:** `ConnectionEntry` gains `binaryPath`, `isUnexpected`, and `isUnsigned`. Path resolution via `QFile::symLinkTarget("/proc/<pid>/exe")` on Linux, `proc_pidpath` on macOS — silent on permission errors. `isTrustedBinderPath` checks against a platform-default prefix list plus user extras from the new `SettingKeys::TrustedBinderPrefixes`. Unexpected rows show a ⚠ glyph + warning-color foreground + tooltip on Process and Path cells. New "Verify Signatures" button on the widget (macOS only) lazily runs `codesign -dv` per unique path via `QThreadPool`; results cached for the widget's lifetime; unsigned binaries re-rendered with destructive color.
 
-- [x] **FR-122: Optional chkrootkit / rkhunter frontend** — Follow the existing Disk Usage Launcher pattern: if `chkrootkit` or `rkhunter` is installed, show a Helpers-page card with a "Run scan" button and a results viewer. Do not bundle the scanners themselves. Source: [Linux rootkit scanners roundup](https://linuxsecurity.com/features/the-three-best-tools-you-need-to-scan-your-linux-system-for-malware).
-  - **User Description:** Linux has two long-standing rootkit scanners (`chkrootkit` and `rkhunter`) that are powerful but intimidating to use from the terminal. This FR gives you a one-click "Run rootkit scan" button on the Helpers page when either tool is installed, with readable results. Zero bloat added to Nexis (we don't bundle them); just a friendly face on tools that are already on many systems.
-  - **Bundle:** K.
-  - **Files:** `shared/nexis/Pages/Helpers/`
-  - **Platform:** Linux only
+- [~] **FR-122: Optional chkrootkit / rkhunter frontend** — Removed. Rootkit scanning is out of scope for a system optimizer; the feature was implemented and then reverted.
   - **Complexity:** Small
 
 ### Bundle L — macOS Cleaning Completeness

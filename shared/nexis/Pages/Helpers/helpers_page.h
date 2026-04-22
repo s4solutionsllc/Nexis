@@ -15,9 +15,6 @@ class FirewallWidget;
 class SwappinessWidget;
 class CpuTuningWidget;
 class TrimWidget;
-#ifdef Q_OS_LINUX
-class RootKitScannerWidget;
-#endif
 class WolWidget;
 
 namespace Ui {
@@ -41,9 +38,6 @@ private slots:
     void onSwappinessClicked();      // FR-81
     void onCpuTuningClicked();       // FR-117
     void onTrimClicked();            // FR-118
-#ifdef Q_OS_LINUX
-    void onRootKitScannerClicked();  // FR-122
-#endif
     void onWolClicked();             // FR-120
     void onRebuildSpotlight();
     void onVerifyDisk();
@@ -69,8 +63,6 @@ private:
     QPushButton         *mBtnSwappiness         = nullptr;
     CpuTuningWidget     *mCpuTuningWidget       = nullptr;
     QPushButton         *mBtnCpuTuning          = nullptr;
-    RootKitScannerWidget *mRootKitScannerWidget = nullptr;
-    QPushButton          *mBtnRootKit           = nullptr;
 #endif
     WolWidget   *mWolWidget = nullptr;
     QPushButton *mBtnWol    = nullptr;

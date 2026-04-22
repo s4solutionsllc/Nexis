@@ -5,7 +5,6 @@
 #ifdef Q_OS_LINUX
 #include "swappiness_widget.h"
 #include "cpu_tuning_widget.h"
-#include "rootkit_scanner_widget.h"
 #endif
 #include "trim_widget.h"
 #include "wol_widget.h"
@@ -60,10 +59,6 @@ void HelpersPage::init()
     mCpuTuningWidget = new CpuTuningWidget;
     ui->stackedWidget->addWidget(mCpuTuningWidget);
 
-    if (CommandUtil::isExecutable("chkrootkit") || CommandUtil::isExecutable("rkhunter")) {
-        mRootKitScannerWidget = new RootKitScannerWidget;
-        ui->stackedWidget->addWidget(mRootKitScannerWidget);
-    }
 #endif
 
     // FR-118: TRIM widget — cross-platform. Hide the button if fstrim isn't
@@ -150,17 +145,6 @@ void HelpersPage::init()
         connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
     }
 
-    if (mRootKitScannerWidget) {
-        mBtnRootKit = new QPushButton(tr("Rootkit Scanner"));
-        mBtnRootKit->setCheckable(true);
-        mBtnRootKit->setCursor(Qt::PointingHandCursor);
-        mBtnRootKit->setFocusPolicy(Qt::NoFocus);
-        mBtnRootKit->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
-        ui->buttonGroup->addButton(mBtnRootKit);
-        shadowWidgets << mBtnRootKit;
-        connect(mBtnRootKit, &QPushButton::clicked, this, &HelpersPage::onRootKitScannerClicked);
-    }
-
     initPowerProfileUI();
     if (mPowerProfileWidget)
         shadowWidgets << mPowerProfileWidget;
@@ -192,8 +176,6 @@ void HelpersPage::init()
         mNavItems << mBtnCpuTuning;
     if (mBtnTrim)
         mNavItems << mBtnTrim;
-    if (mBtnRootKit)
-        mNavItems << mBtnRootKit;
     if (mPowerProfileWidget)
         mNavItems << mPowerProfileWidget;
 #endif
@@ -256,16 +238,6 @@ void HelpersPage::onTrimClicked()
     mTrimWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mTrimWidget);
 }
-
-#ifdef Q_OS_LINUX
-void HelpersPage::onRootKitScannerClicked()
-{
-    if (!mRootKitScannerWidget)
-        return;
-    mRootKitScannerWidget->loadIfNeeded();
-    ui->stackedWidget->setCurrentWidget(mRootKitScannerWidget);
-}
-#endif
 
 void HelpersPage::onWolClicked()
 {

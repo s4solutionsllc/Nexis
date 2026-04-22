@@ -365,10 +365,6 @@ Miscellaneous utility tools.
 - Friendly names persist across sessions in `SettingManager` (JSON map keyed by MAC)
 - Warning shown if no hosts are found (tip: ping the device first to populate the ARP cache)
 
-**Rootkit Scanner (FR-122, Linux only)** — Frontend for `chkrootkit` or `rkhunter`:
-- Card and nav button appear only when at least one scanner binary is present (detected via `CommandUtil::isExecutable`)
-- "Run Scan" launches the scanner via `pkexec` (root required) and streams stdout/stderr live to a `QPlainTextEdit`
-- Post-scan summary: "✓ No issues found" or "⚠ Issues detected" determined by grepping output for `INFECTED` (chkrootkit) or the Warnings count (rkhunter); `@successColor`/`@warningColor` theme tokens applied
 - "Cancel" button kills the running process; "Run Again" available after completion
 - Does not bundle the scanner — works with whatever is installed on the system
 
