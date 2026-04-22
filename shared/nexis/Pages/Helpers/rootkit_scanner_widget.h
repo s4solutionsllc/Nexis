@@ -1,6 +1,8 @@
 #ifndef ROOTKIT_SCANNER_WIDGET_H
 #define ROOTKIT_SCANNER_WIDGET_H
 
+#include <QtGlobal>
+
 #ifdef Q_OS_LINUX
 
 #include <QWidget>

@@ -1,6 +1,6 @@
-#ifdef Q_OS_LINUX
-
 #include "rootkit_scanner_widget.h"
+
+#ifdef Q_OS_LINUX
 
 #include "signal_mapper.h"
 #include <Managers/app_manager.h>
