@@ -15,6 +15,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QRegularExpression>
+#include <QToolButton>
 #include <QSettings>
 #include <QTableWidget>
 #include <QTableWidgetItem>
@@ -140,7 +141,7 @@ void WolWidget::buildUI()
     mTable->horizontalHeader()->setSectionResizeMode(ColMac,  QHeaderView::ResizeToContents);
     mTable->horizontalHeader()->setSectionResizeMode(ColName, QHeaderView::Stretch);
     mTable->horizontalHeader()->setSectionResizeMode(ColWake, QHeaderView::Fixed);
-    mTable->setColumnWidth(ColWake, 70);
+    mTable->setColumnWidth(ColWake, 36);
     mTable->verticalHeader()->setVisible(false);
     mTable->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     mTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -227,17 +228,19 @@ void WolWidget::populateTable(const QList<WolHost> &hosts)
         nameItem->setData(Qt::UserRole, h.mac);
         mTable->setItem(row, ColName, nameItem);
 
-        auto *wakeBtn = new QPushButton(tr("Wake"), mTable);
+        auto *wakeBtn = new QToolButton(mTable);
+        wakeBtn->setText(QStringLiteral("⚡"));
+        wakeBtn->setToolTip(tr("Send magic packet to %1").arg(h.mac));
+        wakeBtn->setAutoRaise(true);
         wakeBtn->setCursor(Qt::PointingHandCursor);
         const QString mac = h.mac;
-        connect(wakeBtn, &QPushButton::clicked, this, [this, mac, row] {
+        connect(wakeBtn, &QToolButton::clicked, this, [this, mac] {
             sendMagicPacket(mac);
             QSettings *sv = AppManager::ins()->getStyleValues();
             const QString ok = sv->value("@successColor", "#27ae60").toString();
             mLblStatus->setStyleSheet(QStringLiteral("color:%1;").arg(ok));
             mLblStatus->setText(tr("Magic packet sent to %1.").arg(mac));
             mLblStatus->show();
-            Q_UNUSED(row)
         });
         mTable->setCellWidget(row, ColWake, wakeBtn);
     }
