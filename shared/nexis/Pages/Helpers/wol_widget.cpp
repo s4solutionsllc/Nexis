@@ -133,19 +133,20 @@ void WolWidget::buildUI()
     cardLayout->setContentsMargins(16, 14, 16, 14);
     cardLayout->setSpacing(10);
 
-    mTable = new QTableWidget(0, 5, mCard);
-    mTable->setHorizontalHeaderLabels({tr("IP"), tr("MAC"), tr("Hostname"), tr("Friendly Name"), tr("Action")});
+    mTable = new QTableWidget(0, 4, mCard);
+    mTable->setHorizontalHeaderLabels({tr("IP"), tr("MAC"), tr("Friendly Name"), tr("Action")});
     mTable->horizontalHeader()->setStretchLastSection(false);
     mTable->horizontalHeader()->setSectionResizeMode(ColIp,   QHeaderView::ResizeToContents);
     mTable->horizontalHeader()->setSectionResizeMode(ColMac,  QHeaderView::ResizeToContents);
-    mTable->horizontalHeader()->setSectionResizeMode(ColHost, QHeaderView::Stretch);
     mTable->horizontalHeader()->setSectionResizeMode(ColName, QHeaderView::Stretch);
-    mTable->horizontalHeader()->setSectionResizeMode(ColWake, QHeaderView::ResizeToContents);
+    mTable->horizontalHeader()->setSectionResizeMode(ColWake, QHeaderView::Fixed);
+    mTable->setColumnWidth(ColWake, 70);
     mTable->verticalHeader()->setVisible(false);
+    mTable->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    mTable->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     mTable->setSelectionMode(QAbstractItemView::NoSelection);
     mTable->setEditTriggers(QAbstractItemView::DoubleClicked | QAbstractItemView::AnyKeyPressed);
     mTable->setMinimumHeight(120);
-    mTable->setMaximumHeight(300);
     connect(mTable, &QTableWidget::itemChanged,
             this,   &WolWidget::onItemChanged);
     cardLayout->addWidget(mTable);
@@ -219,9 +220,8 @@ void WolWidget::populateTable(const QList<WolHost> &hosts)
             return item;
         };
 
-        mTable->setItem(row, ColIp,   makeReadOnly(h.ip));
-        mTable->setItem(row, ColMac,  makeReadOnly(h.mac));
-        mTable->setItem(row, ColHost, makeReadOnly(h.hostname));
+        mTable->setItem(row, ColIp,  makeReadOnly(h.ip));
+        mTable->setItem(row, ColMac, makeReadOnly(h.mac));
 
         auto *nameItem = new QTableWidgetItem(h.friendlyName);
         nameItem->setData(Qt::UserRole, h.mac);

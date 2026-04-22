@@ -17,7 +17,6 @@ class QTableWidgetItem;
 struct WolHost {
     QString ip;
     QString mac;
-    QString hostname;
     QString friendlyName;
 };
 
@@ -58,9 +57,8 @@ private:
 
     static constexpr int ColIp   = 0;
     static constexpr int ColMac  = 1;
-    static constexpr int ColHost = 2;
-    static constexpr int ColName = 3;
-    static constexpr int ColWake = 4;
+    static constexpr int ColName = 2;
+    static constexpr int ColWake = 3;
 };
 
 #endif // WOL_WIDGET_H
