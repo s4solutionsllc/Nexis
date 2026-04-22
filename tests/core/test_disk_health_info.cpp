@@ -229,6 +229,9 @@ void TestDiskHealthInfo::parseJson_nvmeAllFields()
 
 void TestDiskHealthInfo::parseJson_sataHdd()
 {
+    // Attribute 194 raw.value is a realistic packed 48-bit value (current=30, min=19, max=43).
+    // The top-level "temperature.current" must win; without it, temperatureCelsius would be
+    // 184684838942 — the bug this test guards against.
     QByteArray json = R"({
         "model_name": "WDC WD10EZEX",
         "serial_number": "WD-WMC3T0123456",
@@ -236,12 +239,13 @@ void TestDiskHealthInfo::parseJson_sataHdd()
         "device": { "type": "sat" },
         "rotation_rate": 7200,
         "smart_status": { "passed": true },
+        "temperature": { "current": 35 },
         "ata_smart_attributes": {
             "table": [
                 { "id": 5,   "name": "Reallocated_Sector_Ct", "value": 100, "worst": 100, "thresh": 10, "raw": { "value": 2 } },
                 { "id": 9,   "name": "Power_On_Hours",        "value": 90,  "worst": 90,  "thresh": 0,  "raw": { "value": 5000 } },
                 { "id": 12,  "name": "Power_Cycle_Count",     "value": 100, "worst": 100, "thresh": 0,  "raw": { "value": 300 } },
-                { "id": 194, "name": "Temperature_Celsius",   "value": 30,  "worst": 40,  "thresh": 0,  "raw": { "value": 35 } },
+                { "id": 194, "name": "Temperature_Celsius",   "value": 30,  "worst": 40,  "thresh": 0,  "raw": { "value": 184684838942 } },
                 { "id": 197, "name": "Current_Pending_Sector","value": 100, "worst": 100, "thresh": 0,  "raw": { "value": 0 } },
                 { "id": 198, "name": "Offline_Uncorrectable", "value": 100, "worst": 100, "thresh": 0,  "raw": { "value": 0 } }
             ]
@@ -260,6 +264,7 @@ void TestDiskHealthInfo::parseJson_sataHdd()
     QCOMPARE(d.pendingSectors, 0);
     QCOMPARE(d.uncorrectableSectors, 0);
     QVERIFY(d.allAttributes.size() == 6);
+    QCOMPARE(d.temperatureCelsius, 35.0);  // must come from temperature.current, not packed raw
 }
 
 void TestDiskHealthInfo::parseJson_sataSsd()

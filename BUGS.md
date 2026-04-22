@@ -55,6 +55,11 @@
 
 ## MEDIUM Severity
 
+- [x] **BUG-113: SATA/HDD drive temperature displays garbage value on Linux** (MEDIUM)
+  - **File:** `shared/nexis-core/Info/disk_health_info_shared.cpp:85`
+  - **Description:** SMART attribute 194 (`Temperature_Celsius`) raw value is a packed 48-bit integer encoding current/min/max temperatures. Assigning it directly to `temperatureCelsius` (a double) produces astronomically wrong values (e.g. 184684838942 °C). macOS is unaffected because diskutil returns a clean Kelvin value for its primary drives. Fix: prefer `root["temperature"]["current"]` from smartctl's top-level JSON object, which smartctl already decodes correctly.
+  - **Resolved:** Pending commit — read `root["temperature"]["current"]` after attribute loop; test updated with packed raw value + assertion.
+
 - [x] **BUG-112: System Cleaner scan radar GIF renders 5× too large on light theme** (MEDIUM)
   - **File:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp` (QMovie setup); assets at `shared/nexis/static/themes/{default,light}/img/scanLoading.gif`
   - **Description:** Clicking Scan on the System Cleaner page shows a "radar" loading GIF via `QMovie` attached to `lblLoadingScanner`. The default/dark theme's `scanLoading.gif` is 100×100 (the label's `minimumSize`), but the light theme's file is **512×512**. `QMovie` plays at native frame size, so on light theme the radar takes over the page.

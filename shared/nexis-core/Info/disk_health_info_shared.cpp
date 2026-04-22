@@ -90,6 +90,16 @@ void DiskHealthInfo::parseSmartctlJsonInto(const QByteArray &json, DriveHealth &
             }
         }
     }
+
+    // Prefer smartctl's decoded temperature over the packed raw attribute value.
+    // The top-level "temperature.current" field is populated by smartctl for both
+    // NVMe and ATA drives and always contains the correct Celsius value.
+    QJsonObject tempObj = root["temperature"].toObject();
+    if (tempObj.contains("current")) {
+        int t = tempObj["current"].toInt(-999);
+        if (t > -273 && t < 200)
+            drive.temperatureCelsius = t;
+    }
 }
 
 QList<QByteArray> DiskHealthInfo::splitSmartctlOutput(const QString &output)
