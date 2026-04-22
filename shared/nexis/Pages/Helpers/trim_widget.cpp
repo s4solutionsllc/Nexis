@@ -166,6 +166,14 @@ void TrimWidget::buildUI()
     mLblTitle->setFont(titleFont);
     root->addWidget(mLblTitle);
 
+    auto *intro = new QLabel(
+        tr("TRIM tells your SSD which blocks are no longer in use, allowing the "
+           "drive to erase them in the background. This improves long-term write "
+           "performance and extends drive longevity."),
+        this);
+    intro->setWordWrap(true);
+    root->addWidget(intro);
+
     mCard = new QFrame(this);
     mCard->setObjectName("trimCard");
     auto *card = new QVBoxLayout(mCard);

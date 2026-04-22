@@ -495,6 +495,7 @@
   - **Files:** `shared/nexis/Pages/Helpers/`, `shared/nexis-core/Info/wol_info.*` (new)
   - **Platform:** Both
   - **Complexity:** Small
+  - **Resolved:** UAT passed (a12df45). `WolWidget` cross-platform; ARP discovery via `/proc/net/arp` (Linux) / `arp -a` (macOS); UDP magic packet on port 9; friendly names persisted as JSON in `SettingManager`.
 
 ### Bundle K — Trust & Security Sprint
 
@@ -528,6 +529,7 @@
   - **Files:** `shared/nexis/Managers/tray_manager.*` (or wherever the tray menu lives)
   - **Platform:** Both
   - **Complexity:** Small
+  - **Resolved:** UAT passed (a12df45). "Quick Actions" submenu in tray with Open Command Palette, Run System Cleaner Scan, and Power Profile submenu (Linux only, refreshed on `aboutToShow`).
 
 - [ ] **FR-126: Self-contained HTML system report export** — Upgrade the Hardware Info "Export System Report" (currently plain text — see FR-72) with a second option to generate a self-contained HTML file containing all hardware tables, a Dashboard snapshot, top 10 processes at moment of export, recent log errors, and pending updates. Useful for support tickets and documenting a system state before changes.
   - **User Description:** Today, the "Export System Report" button generates a plain-text file. That's fine for terminal use but ugly to paste into a support forum or share with a helper friend. This FR adds an HTML export option that produces a single shareable file with tables, charts, and the moment's system snapshot — perfect for troubleshooting threads.
