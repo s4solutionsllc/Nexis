@@ -1,7 +1,6 @@
 #include "system_cleaner_page.h"
 #include "ui_system_cleaner_page.h"
 #include "byte_tree_widget.h"
-#include "category_sparkline.h"
 
 #include <cstdlib>
 #include "nexis_roles.h"
@@ -892,29 +891,17 @@ void SystemCleanerPage::buildTrendRow()
     };
 
     for (const Entry &e : kEntries) {
-        auto *cell = new QWidget(ui->cleanerCategories);
-        auto *layout = new QVBoxLayout(cell);
-        layout->setContentsMargins(0, 0, 0, 0);
-        layout->setSpacing(2);
-
-        auto *sizeLbl = new QLabel(QStringLiteral("—"), cell);
+        auto *sizeLbl = new QLabel(QStringLiteral("—"), ui->cleanerCategories);
         sizeLbl->setObjectName("categoryTrendLabel");
         sizeLbl->setAlignment(Qt::AlignCenter);
         QFont f = sizeLbl->font();
         f.setPointSize(qMax(7, f.pointSize() - 2));
         sizeLbl->setFont(f);
 
-        auto *spark = new CategorySparkline(cell);
-        spark->setFixedSize(Dpi::scale(60, 16));
-
-        layout->addWidget(sizeLbl, 0, Qt::AlignHCenter);
-        layout->addWidget(spark,   0, Qt::AlignHCenter);
-
-        grid->addWidget(cell, 5, e.col, Qt::AlignHCenter | Qt::AlignTop);
+        grid->addWidget(sizeLbl, 5, e.col, Qt::AlignHCenter | Qt::AlignTop);
 
         TrendCell tc;
         tc.sizeLabel = sizeLbl;
-        tc.sparkline = spark;
         mTrendCells.insert(static_cast<int>(e.cat), tc);
     }
 }
@@ -931,7 +918,6 @@ void SystemCleanerPage::refreshTrendCells()
         if (samples.isEmpty()) {
             it.value().sizeLabel->setText(QStringLiteral("—"));
             it.value().sizeLabel->setToolTip(tr("No scan history yet."));
-            it.value().sparkline->setSamples({});
             continue;
         }
 
@@ -952,11 +938,5 @@ void SystemCleanerPage::refreshTrendCells()
             tip = tr("First scan recorded.");
         }
         it.value().sizeLabel->setToolTip(tip);
-
-        QList<quint64> values;
-        values.reserve(samples.size());
-        for (const auto &s : samples)
-            values.append(s.bytes);
-        it.value().sparkline->setSamples(values);
     }
 }

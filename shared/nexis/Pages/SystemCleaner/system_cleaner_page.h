@@ -155,7 +155,6 @@ private:
     // grid row 5 for each category column). Refreshed after every scan.
     struct TrendCell {
         QLabel *sizeLabel = nullptr;
-        class CategorySparkline *sparkline = nullptr;
     };
     QHash<int, TrendCell> mTrendCells;
     void buildTrendRow();
