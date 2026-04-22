@@ -27,6 +27,7 @@ protected:
 private slots:
     void init();
     void on_btnExportReport_clicked();
+    void on_btnExportHtmlReport_clicked();
     void onCopyGpuDiagnostics();
     void onUnlockSmartDrive(const QString &devicePath);
     void onUnlockAllDrives();
@@ -44,6 +45,8 @@ private:
     void fitTableHeight(QTableWidget *table);
     void refreshThemeColors();
     void repopulateStorage();
+    QString buildHtmlReport() const;
+    static QString tableToHtml(QTableWidget *table, const QString &title);
 
     struct HealthItem {
         QTableWidgetItem *item;

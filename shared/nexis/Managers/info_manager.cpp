@@ -29,6 +29,7 @@
 #include <Info/disk_health_info_linux.h>
 #include <Info/update_info_linux.h>
 #include <Info/power_profile_info_linux.h>
+#include <Info/psi_info.h>
 #endif
 
 InfoManager *InfoManager::instance = nullptr;
@@ -60,9 +61,10 @@ InfoManager::InfoManager()
     fi  = std::make_unique<FanInfoLinux>();
     gi  = std::make_unique<GpuInfoLinux>();
     bi  = std::make_unique<BatteryInfoLinux>();
-    dhi = std::make_unique<DiskHealthInfoLinux>();
-    upd = std::make_unique<UpdateInfoLinux>();
-    ppi = std::make_unique<PowerProfileInfoLinux>();
+    dhi  = std::make_unique<DiskHealthInfoLinux>();
+    upd  = std::make_unique<UpdateInfoLinux>();
+    ppi  = std::make_unique<PowerProfileInfoLinux>();
+    psii = std::make_unique<PsiInfo>();
 #endif
 }
 
@@ -451,3 +453,15 @@ void InfoManager::refreshPowerProfile()
 {
     ppi->refresh();
 }
+
+#ifdef Q_OS_LINUX
+void InfoManager::updateCpuPsi()
+{
+    psii->updateCpuPsi();
+}
+
+PsiSnapshot InfoManager::getCpuPsi() const
+{
+    return psii->getCpuSnapshot();
+}
+#endif

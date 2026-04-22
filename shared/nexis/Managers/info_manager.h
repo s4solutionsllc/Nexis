@@ -17,6 +17,9 @@
 #include <Info/disk_health_info.h>
 #include <Info/update_info.h>
 #include <Info/power_profile_info.h>
+#ifdef Q_OS_LINUX
+#include <Info/psi_info.h>
+#endif
 
 class InfoManager
 {
@@ -113,6 +116,11 @@ public:
     bool hasPowerProfiles() const;
     void refreshPowerProfile();
 
+#ifdef Q_OS_LINUX
+    void updateCpuPsi();
+    PsiSnapshot getCpuPsi() const;
+#endif
+
 private:
     InfoManager();
 
@@ -131,6 +139,9 @@ private:
     std::unique_ptr<DiskHealthInfo> dhi;
     std::unique_ptr<UpdateInfo> upd;
     std::unique_ptr<PowerProfileInfo> ppi;
+#ifdef Q_OS_LINUX
+    std::unique_ptr<PsiInfo> psii;
+#endif
 };
 
 #endif // INFO_MANAGER_H

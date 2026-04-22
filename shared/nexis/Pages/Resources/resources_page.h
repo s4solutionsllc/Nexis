@@ -7,6 +7,9 @@
 #include "Managers/info_manager.h"
 #include <QChart>
 #include <QSpacerItem>
+#ifdef Q_OS_LINUX
+#include <Info/psi_info.h>
+#endif
 
 class DataRefreshService;
 
@@ -34,6 +37,9 @@ private slots:
     void onDiskIOUpdated(const QList<quint64> &io);
     void onGpuUpdated(const QList<GpuDevice> &gpus);
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
+#ifdef Q_OS_LINUX
+    void onPsiUpdated(const PsiSnapshot &snap);
+#endif
 
 private:
     void init();
@@ -55,6 +61,9 @@ private:
     HistoryChart *mChartNetwork;
     HistoryChart *mChartGpu;
     HistoryChart *mChartDiskHealth;
+#ifdef Q_OS_LINUX
+    HistoryChart *mChartPsiCpu = nullptr;
+#endif
 
     DiskUsageLauncherWidget *mDiskLauncher;
 

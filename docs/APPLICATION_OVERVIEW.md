@@ -150,7 +150,9 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 
 ### 2. Hardware Info
 
-Comprehensive static hardware inventory displayed in tabular sections. Includes an **Export System Report** button that generates a plain text file summarizing all visible hardware tables, with aligned columns and section headers. Default filename: `nexis-report-YYYY-MM-DD.txt`.
+Comprehensive static hardware inventory displayed in tabular sections. Two export options:
+- **Export System Report** — plain text file with aligned columns. Default: `nexis-report-YYYY-MM-DD.txt`.
+- **Export as HTML (FR-126)** — self-contained HTML file (inline CSS, no external dependencies) containing a system snapshot (CPU %, memory, GPU, battery), all hardware tables, top-10 processes by CPU at export time, and pending update count. Default: `nexis-report-YYYY-MM-DD.html`.
 
 **9 sections:**
 - **System** — Hostname, OS, distribution, kernel, architecture, desktop environment
@@ -302,6 +304,7 @@ Historical time-series charts for system resource usage.
 - Memory used, swap, plus 2 platform-specific series: Wired% and Compressed% on macOS; Available% and Active% on Linux (4 series total)
 - Network download/upload bytes/sec
 - Disk temperature per-drive (30s refresh, if SMART supported)
+- **CPU Pressure Stall (FR-124, Linux only)** — 3-series chart (avg10, avg60, avg300) sourced from `/proc/pressure/cpu`. Shows the percentage of time at least one task was stalled waiting for CPU. Only created when the PSI file is present (kernel 4.20+, `CONFIG_PSI=y`). Zero cost when hidden (uses DataRefreshService subscription gating).
 
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools

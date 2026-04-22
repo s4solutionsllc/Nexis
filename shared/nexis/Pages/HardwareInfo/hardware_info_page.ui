@@ -223,7 +223,7 @@
         </widget>
        </item>
 
-       <!-- Export button -->
+       <!-- Export buttons -->
        <item alignment="Qt::AlignLeft">
         <widget class="QPushButton" name="btnExportReport">
          <property name="cursor">
@@ -237,6 +237,20 @@
          </property>
          <property name="text">
           <string>Export System Report...</string>
+         </property>
+        </widget>
+       </item>
+
+       <item alignment="Qt::AlignLeft">
+        <widget class="QPushButton" name="btnExportHtmlReport">
+         <property name="cursor">
+          <cursorShape>PointingHandCursor</cursorShape>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::NoFocus</enum>
+         </property>
+         <property name="text">
+          <string>Export as HTML...</string>
          </property>
         </widget>
        </item>

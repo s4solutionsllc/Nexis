@@ -13,6 +13,9 @@
 #include <Info/process.h>
 #include <Info/update_info.h>
 #include <Tools/repo_health_types.h>
+#ifdef Q_OS_LINUX
+#include <Info/psi_info.h>
+#endif
 
 class InfoManager;
 class SettingManager;
@@ -35,6 +38,7 @@ public:
         Temp,
         Fan,
         Battery,
+        Psi,
         _Count
     };
 
@@ -84,6 +88,9 @@ signals:
     void fanUpdated();
     void batteryUpdated(const BatteryData &data);
     void diskUsageUpdated(const QList<Disk> &disks);
+#ifdef Q_OS_LINUX
+    void psiUpdated(const PsiSnapshot &cpu);
+#endif
     void diskHealthUpdated(const QList<DriveHealth> &drives);
     void processesUpdated(const QList<Process> &processes, const QString &userName);
     void systemUpdatesChecked(const UpdateCheckResult &result);

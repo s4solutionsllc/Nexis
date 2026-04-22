@@ -308,6 +308,13 @@ void DataRefreshService::onFastTick()
         emit batteryUpdated(im->getBatteryData());
     }
 
+#ifdef Q_OS_LINUX
+    if (hasSubscribers(Signal::Psi)) {
+        im->updateCpuPsi();
+        emit psiUpdated(im->getCpuPsi());
+    }
+#endif
+
     // Temperature and fan have been moved to onMediumTick (FR-104).
 }
 

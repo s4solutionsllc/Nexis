@@ -2,6 +2,7 @@
 #include "ui_resources_page.h"
 #include "utilities.h"
 #include "Managers/data_refresh_service.h"
+#include <QFile>
 
 ResourcesPage::~ResourcesPage()
 {
@@ -57,6 +58,14 @@ void ResourcesPage::init()
     if (mChartDiskHealth)
         widgets.append(mChartDiskHealth);
 
+#ifdef Q_OS_LINUX
+    if (QFile::exists(QStringLiteral("/proc/pressure/cpu"))) {
+        mChartPsiCpu = new HistoryChart(tr("CPU Pressure Stall (some)"), 3, nullptr, this);
+        mChartPsiCpu->setYMax(100);
+        widgets.append(mChartPsiCpu);
+    }
+#endif
+
     for (QWidget *widget : widgets) {
         ui->chartsLayout->addWidget(widget);
     }
@@ -82,6 +91,12 @@ void ResourcesPage::init()
     // we can build the chart then.
     connect(mRefresh, &DataRefreshService::diskHealthUpdated,
             this, &ResourcesPage::onDiskHealthUpdated);
+
+#ifdef Q_OS_LINUX
+    if (mChartPsiCpu)
+        connect(mRefresh, &DataRefreshService::psiUpdated,
+                this, &ResourcesPage::onPsiUpdated);
+#endif
 
     // Disk Usage Analyzer launcher (FR-23)
     mDiskLauncher = new DiskUsageLauncherWidget(this);
@@ -453,6 +468,38 @@ void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
     tick++;
 }
 
+#ifdef Q_OS_LINUX
+void ResourcesPage::onPsiUpdated(const PsiSnapshot &snap)
+{
+    if (!mChartPsiCpu || !mActive || !snap.available)
+        return;
+
+    static int second = 0;
+
+    QVector<QSplineSeries*> seriesList = mChartPsiCpu->getSeriesList();
+
+    for (int j = 0; j < seriesList.count(); ++j) {
+        for (int i = 0; i < (second < 61 ? second : 61); ++i)
+            seriesList.at(j)->replace(i, i + 1, seriesList.at(j)->at(i).y());
+        if (second > 61)
+            seriesList.at(j)->removePoints(61, 1);
+    }
+
+    const double values[3] = { snap.someAvg10, snap.someAvg60, snap.someAvg300 };
+    const char  *labels[3] = { "avg10", "avg60", "avg300" };
+
+    for (int i = 0; i < 3; ++i) {
+        seriesList.at(i)->insert(0, QPointF(0, values[i]));
+        seriesList.at(i)->setName(
+            tr("CPU %1: %2%").arg(QLatin1String(labels[i]))
+                             .arg(values[i], 0, 'f', 1));
+    }
+
+    mChartPsiCpu->setSeriesList(seriesList);
+    second++;
+}
+#endif
+
 void ResourcesPage::onPageActivated()
 {
     mActive = true;
@@ -465,6 +512,10 @@ void ResourcesPage::onPageActivated()
     mRefresh->subscribe(DataRefreshService::Signal::Network);
     mRefresh->subscribe(DataRefreshService::Signal::DiskIO);
     mRefresh->subscribe(DataRefreshService::Signal::Gpu);
+#ifdef Q_OS_LINUX
+    if (mChartPsiCpu)
+        mRefresh->subscribe(DataRefreshService::Signal::Psi);
+#endif
 }
 
 void ResourcesPage::onPageDeactivated()
@@ -476,4 +527,8 @@ void ResourcesPage::onPageDeactivated()
     mRefresh->unsubscribe(DataRefreshService::Signal::Network);
     mRefresh->unsubscribe(DataRefreshService::Signal::DiskIO);
     mRefresh->unsubscribe(DataRefreshService::Signal::Gpu);
+#ifdef Q_OS_LINUX
+    if (mChartPsiCpu)
+        mRefresh->unsubscribe(DataRefreshService::Signal::Psi);
+#endif
 }

@@ -777,3 +777,186 @@ void HardwareInfoPage::on_btnExportReport_clicked()
         tr("System report saved to %1").arg(filePath));
 }
 
+QString HardwareInfoPage::tableToHtml(QTableWidget *table, const QString &title)
+{
+    if (!table->isVisible() || table->rowCount() == 0)
+        return QString();
+
+    QString html;
+    html += QStringLiteral("<h2>%1</h2>\n<table>\n<tbody>\n").arg(title.toHtmlEscaped());
+
+    for (int row = 0; row < table->rowCount(); ++row) {
+        QTableWidgetItem *label = table->item(row, 0);
+        QTableWidgetItem *value = table->item(row, 1);
+        const QString l = label ? label->text().toHtmlEscaped() : QString();
+        const QString v = value ? value->text().toHtmlEscaped() : QString();
+        if (l.isEmpty() && v.isEmpty())
+            continue;
+        html += QStringLiteral("<tr><td class=\"label\">%1</td><td>%2</td></tr>\n").arg(l, v);
+    }
+
+    html += QStringLiteral("</tbody>\n</table>\n");
+    return html;
+}
+
+QString HardwareInfoPage::buildHtmlReport() const
+{
+    // Collect live data
+    im->updateMemoryInfo();
+    im->updateProcesses();
+
+    // Top-10 processes by CPU
+    QList<Process> procs = im->getProcesses();
+    std::sort(procs.begin(), procs.end(), [](const Process &a, const Process &b) {
+        return a.getPcpu() > b.getPcpu();
+    });
+    if (procs.size() > 10)
+        procs = procs.mid(0, 10);
+
+    // Pending updates
+    QString updatesHtml;
+    UpdateCheckResult upd = im->checkForSystemUpdates();
+    if (!upd.success) {
+        updatesHtml = QStringLiteral("<p>%1</p>").arg(tr("Update check unavailable.").toHtmlEscaped());
+    } else if (upd.totalCount == 0) {
+        updatesHtml = QStringLiteral("<p>%1</p>").arg(tr("No pending updates.").toHtmlEscaped());
+    } else {
+        updatesHtml += QStringLiteral("<p>%1</p>\n<table>\n<tbody>\n")
+            .arg(tr("%n update(s) available", "", upd.totalCount).toHtmlEscaped());
+        for (const UpdateEntry &e : upd.entries)
+            updatesHtml += QStringLiteral("<tr><td class=\"label\">%1</td><td>%2</td></tr>\n")
+                .arg(e.name.toHtmlEscaped(), e.version.toHtmlEscaped());
+        updatesHtml += QStringLiteral("</tbody>\n</table>\n");
+    }
+
+    // System snapshot
+    const QList<int> cpuPcts = im->getCpuPercents();
+    int cpuAvg = 0;
+    if (!cpuPcts.isEmpty()) {
+        for (int p : cpuPcts) cpuAvg += p;
+        cpuAvg /= cpuPcts.size();
+    }
+    const quint64 memUsed  = im->getMemUsed();
+    const quint64 memTotal = im->getMemTotal();
+
+    QString snapshotHtml;
+    snapshotHtml += QStringLiteral("<div class=\"metrics\">\n");
+    snapshotHtml += QStringLiteral("<div class=\"metric\"><div class=\"val\">%1%</div><div class=\"key\">CPU</div></div>\n")
+        .arg(cpuAvg);
+    snapshotHtml += QStringLiteral("<div class=\"metric\"><div class=\"val\">%1</div><div class=\"key\">Memory Used</div></div>\n")
+        .arg(FormatUtil::formatBytes(memUsed).toHtmlEscaped());
+    snapshotHtml += QStringLiteral("<div class=\"metric\"><div class=\"val\">%1</div><div class=\"key\">Memory Total</div></div>\n")
+        .arg(FormatUtil::formatBytes(memTotal).toHtmlEscaped());
+    if (im->hasGpu()) {
+        for (const GpuDevice &g : im->getGpuDevices()) {
+            snapshotHtml += QStringLiteral("<div class=\"metric\"><div class=\"val\">%1%</div><div class=\"key\">GPU (%2)</div></div>\n")
+                .arg(g.utilization).arg(g.name.toHtmlEscaped());
+        }
+    }
+    if (im->hasBattery()) {
+        const BatteryData bat = im->getBatteryData();
+        snapshotHtml += QStringLiteral("<div class=\"metric\"><div class=\"val\">%1%</div><div class=\"key\">Battery</div></div>\n")
+            .arg(bat.chargePercent);
+    }
+    snapshotHtml += QStringLiteral("</div>\n");
+
+    // Processes table
+    QString procsHtml;
+    procsHtml += QStringLiteral("<h2>%1</h2>\n<table>\n<thead><tr><th>%2</th><th>%3</th><th>%4</th><th>%5</th></tr></thead>\n<tbody>\n")
+        .arg(tr("Top Processes (by CPU)").toHtmlEscaped(),
+             tr("Name").toHtmlEscaped(),
+             tr("User").toHtmlEscaped(),
+             tr("CPU %").toHtmlEscaped(),
+             tr("Memory").toHtmlEscaped());
+    for (const Process &p : procs) {
+        procsHtml += QStringLiteral("<tr><td>%1</td><td>%2</td><td>%3%</td><td>%4</td></tr>\n")
+            .arg(p.getCmd().toHtmlEscaped(),
+                 p.getUname().toHtmlEscaped(),
+                 QString::number(p.getPcpu(), 'f', 1),
+                 FormatUtil::formatBytes(p.getRss()).toHtmlEscaped());
+    }
+    procsHtml += QStringLiteral("</tbody>\n</table>\n");
+
+    // Inline CSS
+    static const QString css = QStringLiteral(
+        "body{font-family:system-ui,sans-serif;max-width:960px;margin:40px auto;padding:0 20px;color:#222;background:#fff}"
+        "h1{font-size:1.6em;border-bottom:2px solid #0066cc;padding-bottom:8px;color:#0066cc}"
+        "h2{font-size:1.1em;margin-top:2em;color:#0066cc;border-bottom:1px solid #ddd;padding-bottom:4px}"
+        "table{width:100%;border-collapse:collapse;margin-bottom:1em;font-size:.9em}"
+        "th,td{text-align:left;padding:6px 10px;border-bottom:1px solid #eee}"
+        "th{background:#f5f5f5;font-weight:600}"
+        "tr:hover td{background:#fafafa}"
+        "td.label{color:#555;width:40%;font-weight:500}"
+        ".metrics{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:1.5em}"
+        ".metric{background:#f0f5ff;border:1px solid #ccd9f0;border-radius:6px;padding:12px 18px;min-width:130px}"
+        ".metric .val{font-size:1.4em;font-weight:700;color:#0066cc}"
+        ".metric .key{font-size:.8em;color:#666;margin-top:4px}"
+        "p.meta{color:#666;font-size:.85em}"
+    );
+
+    const QString ts = QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"));
+
+    QString html;
+    html += QStringLiteral("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n"
+                           "<meta charset=\"UTF-8\">\n"
+                           "<title>Nexis System Report</title>\n"
+                           "<style>%1</style>\n</head>\n<body>\n").arg(css);
+    html += QStringLiteral("<h1>Nexis System Report</h1>\n");
+    html += QStringLiteral("<p class=\"meta\">Generated: %1 &nbsp;|&nbsp; Version: %2</p>\n")
+        .arg(ts.toHtmlEscaped(), qApp->applicationVersion().toHtmlEscaped());
+
+    html += QStringLiteral("<h2>%1</h2>\n").arg(tr("System Overview").toHtmlEscaped());
+    html += snapshotHtml;
+
+    html += tableToHtml(ui->tblSystem,    tr("System"));
+    html += tableToHtml(ui->tblProcessor, tr("Processor"));
+    html += tableToHtml(ui->tblGraphics,  tr("Graphics"));
+    html += tableToHtml(ui->tblMemory,    tr("Memory"));
+    html += tableToHtml(ui->tblBattery,   tr("Battery"));
+    html += tableToHtml(ui->tblFans,      tr("Fans"));
+    html += tableToHtml(ui->tblStorage,   tr("Storage"));
+
+    html += procsHtml;
+
+    html += QStringLiteral("<h2>%1</h2>\n").arg(tr("Pending Updates").toHtmlEscaped());
+    html += updatesHtml;
+
+    html += QStringLiteral("</body>\n</html>\n");
+    return html;
+}
+
+void HardwareInfoPage::on_btnExportHtmlReport_clicked()
+{
+    const QString defaultName = QString("nexis-report-%1.html")
+        .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd"));
+
+    const QString filePath = QFileDialog::getSaveFileName(
+        this, tr("Export as HTML"), defaultName,
+        tr("HTML Files (*.html);;All Files (*)"));
+
+    if (filePath.isEmpty())
+        return;
+
+    ui->btnExportHtmlReport->setEnabled(false);
+    ui->btnExportHtmlReport->setText(tr("Generating…"));
+    QApplication::processEvents();
+
+    const QString html = buildHtmlReport();
+
+    ui->btnExportHtmlReport->setEnabled(true);
+    ui->btnExportHtmlReport->setText(tr("Export as HTML..."));
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, tr("Export Failed"),
+            tr("Could not write to %1: %2").arg(filePath, file.errorString()));
+        return;
+    }
+
+    QTextStream(&file) << html;
+    file.close();
+
+    QMessageBox::information(this, tr("Report Exported"),
+        tr("HTML report saved to %1").arg(filePath));
+}
+
