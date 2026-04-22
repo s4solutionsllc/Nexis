@@ -61,7 +61,7 @@ void ResourcesPage::init()
 #ifdef Q_OS_LINUX
     if (QFile::exists(QStringLiteral("/proc/pressure/cpu"))) {
         mChartPsiCpu = new HistoryChart(tr("CPU Pressure Stall (some)"), 3, nullptr, this);
-        mChartPsiCpu->setYMax(100);
+        mChartPsiCpu->setYMax(1.0);
         widgets.append(mChartPsiCpu);
     }
 #endif
@@ -495,6 +495,14 @@ void ResourcesPage::onPsiUpdated(const PsiSnapshot &snap)
                              .arg(values[i], 0, 'f', 1));
     }
 
+    // Auto-scale Y: expand when data exceeds the current ceiling, floor at 1%.
+    static double maxPsi = 1.0;
+    double tickMax = qMax({snap.someAvg10, snap.someAvg60, snap.someAvg300});
+    if (tickMax * 1.25 > maxPsi) {
+        maxPsi = tickMax * 1.25;
+        mChartPsiCpu->setYMax(maxPsi);
+    }
+
     mChartPsiCpu->setSeriesList(seriesList);
     second++;
 }
@@ -516,6 +524,10 @@ void ResourcesPage::onPageActivated()
     if (mChartPsiCpu)
         mRefresh->subscribe(DataRefreshService::Signal::Psi);
 #endif
+
+    // Kick an immediate disk health refresh so the temperature chart populates
+    // on first open rather than waiting up to 30 s for the slow tick.
+    mRefresh->triggerDiskHealthCheck();
 }
 
 void ResourcesPage::onPageDeactivated()

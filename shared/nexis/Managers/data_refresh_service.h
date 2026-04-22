@@ -54,6 +54,7 @@ public:
     void resumeProcessTimer();
     void triggerUpdateCheck();
     void triggerRepoHealthCheck();
+    void triggerDiskHealthCheck();
 
     // Subscriber counting — pages call these from onPageActivated /
     // onPageDeactivated. Idempotent across many pages.

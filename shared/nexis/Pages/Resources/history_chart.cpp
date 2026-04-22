@@ -94,7 +94,7 @@ void HistoryChart::init()
     });
 }
 
-void HistoryChart::setYMax(const int &value)
+void HistoryChart::setYMax(double value)
 {
     mChart->axes(Qt::Vertical).first()->setRange(0, value);
 }
