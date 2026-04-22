@@ -37,6 +37,7 @@ struct PageSlot {
 
 // Pages
 #include "Pages/Dashboard/dashboard_page.h"
+#include "Pages/BootAnalysis/boot_analysis_page.h"
 #include "Pages/StartupApps/startup_apps_page.h"
 #include "Pages/SystemCleaner/system_cleaner_page.h"
 #include "Pages/Services/services_page.h"
@@ -122,6 +123,7 @@ private:
 
     DashboardPage *dashboardPage;
     HardwareInfoPage *hardwareInfoPage;
+    BootAnalysisPage *bootAnalysisPage;
     StartupAppsPage *startupAppsPage;
     SystemCleanerPage *systemCleanerPage;
     DiskToolsPage *diskToolsPage;
@@ -175,6 +177,7 @@ private:
     QPushButton *btnProcesses;
     QPushButton *btnServices;
     QPushButton *btnStartupApps;
+    QPushButton *btnBootAnalysis;
     QPushButton *btnUninstaller;
     QPushButton *btnDocker;
     QPushButton *btnHelpers;

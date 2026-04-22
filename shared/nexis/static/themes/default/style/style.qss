@@ -1180,6 +1180,16 @@ QLabel[accessibleName="dialog-title"] {
     padding: 10 0 10 12;
 }
 
+#lblBootAnalysisTitle {
+    color: @color11;
+    padding: 10 0 4 0;
+}
+
+#lblBootAnalysisSubtitle {
+    color: @color11;
+    padding: 0 0 4 0;
+}
+
 /* - Startup App - */
 
 #widgetStartupApp {

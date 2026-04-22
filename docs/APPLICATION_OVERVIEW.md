@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-04-21 (Bundle F) | Version 2.2.17 (unreleased changes pending)
+> Last updated: 2026-04-22 (FR-110) | Version 2.2.17 (unreleased changes pending)
 
 ---
 
@@ -45,9 +45,9 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 **Origin:** Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), the popular Linux system optimizer that went inactive in 2020 with 38+ known bugs. After porting to Qt 6, adding native macOS support, fixing those inherited bugs, and adding GPU monitoring, hardware health tracking, scheduled cleaning, Docker management, and more, the project was rebranded as **Nexis** to reflect that it had become something distinct.
 
 **By the numbers:**
-- ~36,000 lines of C++ code across 281 source files
-- 16 application pages
-- 15 system info providers (BatteryInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo) — 13 wired through InfoManager, StartupInfo standalone, PowerProfileInfo added in v2.1.16
+- ~37,000 lines of C++ code across 288 source files
+- 17 application pages
+- 16 system info providers (BatteryInfo, BootAnalysisInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo) — 13 wired through InfoManager, BootAnalysisInfo/StartupInfo standalone, PowerProfileInfo added in v2.1.16
 - 6 tool classes (package management, services, Docker, APT sources, GNOME settings, file search)
 - 8 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService, DuplicateFinderService)
 - 3 utility classes
@@ -64,7 +64,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 Nexis runs natively on **Linux** and **macOS** (Intel + Apple Silicon). The codebase uses compile-time platform selection: shared code in `shared/`, with platform-specific implementations in `linux/` and `macos/`.
 
 ### Always-visible pages (both platforms)
-Dashboard, Hardware Info, Startup Apps, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Helpers, System Logs, Settings
+Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Helpers, System Logs, Settings
 
 ### Conditional pages
 | Page | Condition | Linux | macOS |
@@ -176,6 +176,15 @@ Manage applications that auto-start at login.
 - Delete autostart entries
 - Real app icons via `QIcon::fromTheme()` (Linux) or `QFileIconProvider` (macOS)
 - macOS automatically filters out `com.apple.*` system agents
+
+### 3a. Boot Analysis
+
+Ranked breakdown of which services and processes slow down system startup.
+
+- **Linux**: Runs `systemd-analyze blame` to enumerate per-service startup times; `systemd-analyze` for total boot time. Entries ranked descending by duration, labeled High (≥ 5 s) / Medium (1–5 s) / Low (< 1 s). Shows "not available" if systemd-analyze is absent.
+- **macOS**: Shows total uptime since last boot via `sysctl kern.boottime`. Per-service timing is not available without elevated privileges.
+- Async analysis (QtConcurrent) — UI stays responsive; Refresh button triggers a new analysis on demand.
+- Data class: `BootAnalysisInfo` (platform-specific subclasses `BootAnalysisInfoLinux` / `BootAnalysisInfoMacOS`).
 
 ### 4. System Cleaner
 

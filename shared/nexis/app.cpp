@@ -198,6 +198,10 @@ void App::buildSidebar()
         sec.containerLayout->addWidget(btnStartupApps);
         sec.buttons.append(btnStartupApps);
 
+        btnBootAnalysis = createSidebarButton(tr("Boot Analysis"));
+        sec.containerLayout->addWidget(btnBootAnalysis);
+        sec.buttons.append(btnBootAnalysis);
+
 #ifdef Q_OS_MAC
         btnUninstaller = createSidebarButton(tr("Applications"));
 #else
@@ -391,6 +395,11 @@ void App::init()
         nullptr, {}
     });
     mPageSlots.append({
+        tr("Boot Analysis"),
+        [this]() -> QWidget* { bootAnalysisPage = new BootAnalysisPage(mSlidingStacked); return bootAnalysisPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
 #ifdef Q_OS_MAC
         tr("Applications"),
 #else
@@ -417,7 +426,7 @@ void App::init()
 
     mListSidebarButtons = {
         btnDash, btnHardwareInfo, btnResources, btnSystemCleaner, btnDiskTools, btnSearch,
-        btnProcesses, btnServices, btnStartupApps, btnUninstaller, btnHelpers, btnSystemLogs, btnSettings
+        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnHelpers, btnSystemLogs, btnSettings
     };
 
     // APT SOURCE MANAGER
@@ -507,6 +516,7 @@ void App::init()
     connect(btnProcesses,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Processes")); });
     connect(btnServices,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Services")); });
     connect(btnStartupApps,      &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Startup Apps")); });
+    connect(btnBootAnalysis,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Boot Analysis")); });
     connect(btnUninstaller,      &QPushButton::clicked, this, [this, navByTitle]() {
 #ifdef Q_OS_MAC
         navByTitle(tr("Applications"));
@@ -897,6 +907,7 @@ void App::updateSidebarIcons()
     setIcon(btnProcesses,        "process.svg");
     setIcon(btnServices,         "services.svg");
     setIcon(btnStartupApps,      "startup-apps.svg");
+    setIcon(btnBootAnalysis,     "boot-analysis.svg");
     setIcon(btnUninstaller,      "uninstaller.svg");
     setIcon(btnDocker,           "docker.svg");
     setIcon(btnHelpers,          "helpers.svg");
