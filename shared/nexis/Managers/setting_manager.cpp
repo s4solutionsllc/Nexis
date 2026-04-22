@@ -502,3 +502,13 @@ int SettingManager::getCpuTuningMaxFreqKHz() const
 {
     return mSettings->value(SettingKeys::CpuTuningMaxFreqKHz, 0).toInt();
 }
+
+void SettingManager::setWolHostNames(const QString &json)
+{
+    mSettings->setValue(SettingKeys::WolHostNames, json);
+}
+
+QString SettingManager::getWolHostNames() const
+{
+    return mSettings->value(SettingKeys::WolHostNames, QStringLiteral("{}")).toString();
+}

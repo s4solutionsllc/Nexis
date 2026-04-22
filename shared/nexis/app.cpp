@@ -11,6 +11,8 @@
 #ifdef Q_OS_LINUX
 #include "Pages/Helpers/cpu_tuning_widget.h"
 #endif
+#include <Managers/info_manager.h>
+#include <Info/power_profile_info.h>
 #include <QStyle>
 #include <QDebug>
 #include <QScreen>
@@ -710,6 +712,55 @@ void App::createTrayActions()
             windowHandle()->requestActivate();
         emit SignalMapper::ins()->sigAppVisibilityChanged(true);
     });
+
+    // FR-125: Quick Actions submenu
+    QMenu *quickMenu = mTrayMenu->addMenu(tr("Quick Actions"));
+
+    QAction *paletteAction = quickMenu->addAction(tr("Open Command Palette"));
+    connect(paletteAction, &QAction::triggered, this, [this] {
+        show();
+        mCommandPalette->show();
+    });
+
+    QAction *scanAction = quickMenu->addAction(tr("Run System Cleaner Scan"));
+    connect(scanAction, &QAction::triggered, this, [this] {
+        clickSidebarButton(btnSystemCleaner->toolTip(), true);
+        if (systemCleanerPage)
+            systemCleanerPage->quickScan();
+    });
+
+#ifndef Q_OS_MACOS
+    if (InfoManager::ins()->hasPowerProfiles()) {
+        quickMenu->addSeparator();
+        QMenu *profileMenu = quickMenu->addMenu(tr("Power Profile"));
+        auto *profileGroup = new QActionGroup(profileMenu);
+        profileGroup->setExclusive(true);
+
+        auto refreshProfiles = [this, profileMenu, profileGroup]() {
+            const PowerProfileData data = InfoManager::ins()->getPowerProfileData();
+            const QString activeLabel   = PowerProfileInfo::backendValueToUserLabel(data.activeProfile, data.backend);
+            for (QAction *a : profileGroup->actions()) {
+                a->setChecked(a->text() == activeLabel);
+            }
+            Q_UNUSED(profileMenu)
+        };
+
+        const PowerProfileData data = InfoManager::ins()->getPowerProfileData();
+        for (const QString &backendVal : data.availableProfiles) {
+            const QString label  = PowerProfileInfo::backendValueToUserLabel(backendVal, data.backend);
+            QAction *profileAction = profileMenu->addAction(label);
+            profileAction->setCheckable(true);
+            profileAction->setChecked(backendVal == data.activeProfile);
+            profileGroup->addAction(profileAction);
+            connect(profileAction, &QAction::triggered, this, [this, backendVal] {
+                InfoManager::ins()->setPowerProfile(backendVal);
+                InfoManager::ins()->refreshPowerProfile();
+            });
+        }
+
+        connect(profileMenu, &QMenu::aboutToShow, this, refreshProfiles);
+    }
+#endif
 
     mTrayMenu->addSeparator();
 

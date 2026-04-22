@@ -15,6 +15,10 @@ class FirewallWidget;
 class SwappinessWidget;
 class CpuTuningWidget;
 class TrimWidget;
+#ifdef Q_OS_LINUX
+class RootKitScannerWidget;
+#endif
+class WolWidget;
 
 namespace Ui {
 class HelpersPage;
@@ -37,6 +41,10 @@ private slots:
     void onSwappinessClicked();      // FR-81
     void onCpuTuningClicked();       // FR-117
     void onTrimClicked();            // FR-118
+#ifdef Q_OS_LINUX
+    void onRootKitScannerClicked();  // FR-122
+#endif
+    void onWolClicked();             // FR-120
     void onRebuildSpotlight();
     void onVerifyDisk();
     void onRebuildLaunchServices();
@@ -57,11 +65,15 @@ private:
     TrimWidget *mTrimWidget = nullptr;           // FR-118 — both platforms
     QPushButton *mBtnTrim = nullptr;
 #ifdef Q_OS_LINUX
-    SwappinessWidget *mSwappinessWidget = nullptr;
-    QPushButton      *mBtnSwappiness    = nullptr;
-    CpuTuningWidget  *mCpuTuningWidget  = nullptr;
-    QPushButton      *mBtnCpuTuning     = nullptr;
+    SwappinessWidget    *mSwappinessWidget      = nullptr;
+    QPushButton         *mBtnSwappiness         = nullptr;
+    CpuTuningWidget     *mCpuTuningWidget       = nullptr;
+    QPushButton         *mBtnCpuTuning          = nullptr;
+    RootKitScannerWidget *mRootKitScannerWidget = nullptr;
+    QPushButton          *mBtnRootKit           = nullptr;
 #endif
+    WolWidget   *mWolWidget = nullptr;
+    QPushButton *mBtnWol    = nullptr;
 
     QList<QWidget*> mNavItems;
     bool mNavCompact = false;

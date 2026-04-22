@@ -489,7 +489,7 @@
   - **Platform:** Both
   - **Complexity:** Medium
 
-- [ ] **FR-120: Wake-on-LAN helper** — A small Helpers-page section that scans the local network (ARP cache + optional ping sweep), remembers MAC addresses with friendly names, and sends a magic packet on demand. Source: [gWakeOnLAN](https://gwakeonlan.sourceforge.io/), [Techno Tim WOL guide](https://technotim.com/posts/wake-on-lan/).
+- [x] **FR-120: Wake-on-LAN helper** — A small Helpers-page section that scans the local network (ARP cache + optional ping sweep), remembers MAC addresses with friendly names, and sends a magic packet on demand. Source: [gWakeOnLAN](https://gwakeonlan.sourceforge.io/), [Techno Tim WOL guide](https://technotim.com/posts/wake-on-lan/).
   - **User Description:** If you have a desktop or server on your home network that you want to power on from the couch, Wake-on-LAN does it — but the tools to send the magic packet are all command-line. This FR gives you a list of machines on your network (auto-detected), lets you name them ("Office PC", "NAS"), and wakes them with a click. Fits the existing Helpers page's "small useful sysadmin gadgets" vibe.
   - **Bundle:** J.
   - **Files:** `shared/nexis/Pages/Helpers/`, `shared/nexis-core/Info/wol_info.*` (new)
@@ -503,7 +503,7 @@
 - [x] **FR-121: Listening-port audit with unexpected-process highlights** — Extend the existing Open Ports & Connections viewer (FR-66) with a "flag unexpected binders" mode: any process listening on a port whose binary path is not under `/usr/bin`, `/usr/sbin`, `/System/Library`, `/opt/homebrew/*`, or `/Library/Apple/*` gets highlighted amber; unsigned macOS binaries get a red badge (via `codesign -dv`). Educational, not definitive — catches the "why is there a listener on 4444?" case.
   - **Resolved:** `ConnectionEntry` gains `binaryPath`, `isUnexpected`, and `isUnsigned`. Path resolution via `QFile::symLinkTarget("/proc/<pid>/exe")` on Linux, `proc_pidpath` on macOS — silent on permission errors. `isTrustedBinderPath` checks against a platform-default prefix list plus user extras from the new `SettingKeys::TrustedBinderPrefixes`. Unexpected rows show a ⚠ glyph + warning-color foreground + tooltip on Process and Path cells. New "Verify Signatures" button on the widget (macOS only) lazily runs `codesign -dv` per unique path via `QThreadPool`; results cached for the widget's lifetime; unsigned binaries re-rendered with destructive color.
 
-- [ ] **FR-122: Optional chkrootkit / rkhunter frontend** — Follow the existing Disk Usage Launcher pattern: if `chkrootkit` or `rkhunter` is installed, show a Helpers-page card with a "Run scan" button and a results viewer. Do not bundle the scanners themselves. Source: [Linux rootkit scanners roundup](https://linuxsecurity.com/features/the-three-best-tools-you-need-to-scan-your-linux-system-for-malware).
+- [x] **FR-122: Optional chkrootkit / rkhunter frontend** — Follow the existing Disk Usage Launcher pattern: if `chkrootkit` or `rkhunter` is installed, show a Helpers-page card with a "Run scan" button and a results viewer. Do not bundle the scanners themselves. Source: [Linux rootkit scanners roundup](https://linuxsecurity.com/features/the-three-best-tools-you-need-to-scan-your-linux-system-for-malware).
   - **User Description:** Linux has two long-standing rootkit scanners (`chkrootkit` and `rkhunter`) that are powerful but intimidating to use from the terminal. This FR gives you a one-click "Run rootkit scan" button on the Helpers page when either tool is installed, with readable results. Zero bloat added to Nexis (we don't bundle them); just a friendly face on tools that are already on many systems.
   - **Bundle:** K.
   - **Files:** `shared/nexis/Pages/Helpers/`
@@ -527,7 +527,7 @@
   - **Platform:** Linux only
   - **Complexity:** Small
 
-- [ ] **FR-125: Quick Actions tray submenu** — Expand the tray context menu with a "Quick Actions" submenu exposing Power Profile switch (Linux), "Run System Cleaner scan," and "Open Command Palette" — so common actions don't require opening the window.
+- [x] **FR-125: Quick Actions tray submenu** — Expand the tray context menu with a "Quick Actions" submenu exposing Power Profile switch (Linux), "Run System Cleaner scan," and "Open Command Palette" — so common actions don't require opening the window.
   - **User Description:** Today, to run a cleaner scan or switch power profile, you have to open Nexis's main window, click around, etc. This FR adds those actions straight to the tray-icon right-click menu so the most common tasks are always one click away, even when Nexis is minimized.
   - **Files:** `shared/nexis/Managers/tray_manager.*` (or wherever the tray menu lives)
   - **Platform:** Both

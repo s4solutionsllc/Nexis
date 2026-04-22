@@ -52,6 +52,8 @@ public:
                                ScheduleManager *scheduleManager = nullptr);
     ~SystemCleanerPage();
 
+    void quickScan();
+
 signals:
     void scanFinishedS();
     void cleanFinishedS();

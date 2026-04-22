@@ -64,6 +64,9 @@ namespace SettingKeys {
     const QString CpuTuningTurboOn("CpuTuningTurboOn");
     const QString CpuTuningMinFreqKHz("CpuTuningMinFreqKHz");
     const QString CpuTuningMaxFreqKHz("CpuTuningMaxFreqKHz");
+
+    // FR-120
+    const QString WolHostNames("WolHostNames");
 }
 
 class SettingManager
@@ -214,6 +217,9 @@ public:
     int getCpuTuningMinFreqKHz() const;
     void setCpuTuningMaxFreqKHz(int value);
     int getCpuTuningMaxFreqKHz() const;
+
+    void setWolHostNames(const QString &json);
+    QString getWolHostNames() const;
 
 private:
     static SettingManager *instance;

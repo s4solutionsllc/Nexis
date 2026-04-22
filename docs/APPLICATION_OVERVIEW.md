@@ -141,6 +141,7 @@ Real-time system monitoring at a glance in a **customizable bento grid layout** 
 - Update checker — compares installed version against GitHub releases
 - **Maintenance Wizard** (FR-83) — "System Checkup" modal dialog launched from Health Score tile quick action. Runs 4 checks in parallel via `QtConcurrent::run()`: (1) cleanable junk scan, (2) orphan package detection, (3) pending system updates, (4) health score calculation. Each check shows a running/complete/warning/error icon with detailed results. "Clean Safe Items" button auto-cleans low-risk categories (package cache, crash reports, app logs/caches, dev tool caches, broken symlinks, snap/flatpak revisions on Linux). Theme-aware with step status colors from `@successColor`/`@warningColor`/`@destructiveColor` tokens.
 - Reset Layout also available on the Settings page
+- **Quick Actions tray submenu (FR-125)** — "Quick Actions" submenu in the system tray right-click menu providing one-click access to: Open Command Palette, Run System Cleaner Scan (navigates to the cleaner page and starts a full scan), and Power Profile switch (Linux only — shows available profiles from the detected backend as a checkable submenu; checked state refreshes on every open).
 - Kiosk mode — fullscreen dashboard-only view (hides sidebar + title bar), state persisted across sessions. Three entry/exit methods:
   - **Keyboard:** F11 to toggle, ESC to exit
   - **System tray:** Checkable "Kiosk Mode (F11)" action in tray context menu
@@ -356,6 +357,20 @@ Miscellaneous utility tools.
 - Not-available state: warning label with `?` help button (tooltip lists installation commands for `ufw` and `firewalld`)
 - Self-contained `FirewallWidget` (stacked widget page index 3); lazy-loaded on first click
 - Theme-aware: uses `@successColor`/`@destructiveColor` for status dot, `@warningColor` for not-available state
+
+**Wake-on-LAN (FR-120, cross-platform)** — Send magic packets to wake sleeping devices on the local network:
+- "Discover Hosts" button reads the system ARP cache (Linux: `/proc/net/arp`; macOS: `arp -a`) on a `QThreadPool` worker thread
+- Results shown in a 5-column table: IP, MAC, Hostname, Friendly Name (editable inline), Wake button
+- "Wake" sends a standard 102-byte UDP magic packet (6×0xFF + 16×MAC) to the broadcast address on port 9; no root required
+- Friendly names persist across sessions in `SettingManager` (JSON map keyed by MAC)
+- Warning shown if no hosts are found (tip: ping the device first to populate the ARP cache)
+
+**Rootkit Scanner (FR-122, Linux only)** — Frontend for `chkrootkit` or `rkhunter`:
+- Card and nav button appear only when at least one scanner binary is present (detected via `CommandUtil::isExecutable`)
+- "Run Scan" launches the scanner via `pkexec` (root required) and streams stdout/stderr live to a `QPlainTextEdit`
+- Post-scan summary: "✓ No issues found" or "⚠ Issues detected" determined by grepping output for `INFECTED` (chkrootkit) or the Warnings count (rkhunter); `@successColor`/`@warningColor` theme tokens applied
+- "Cancel" button kills the running process; "Run Again" available after completion
+- Does not bundle the scanner — works with whatever is installed on the system
 
 ### 12. APT Repository Manager / Homebrew
 

@@ -464,6 +464,58 @@ void SystemCleanerPage::onCleanFinished()
     mCleanInProgress = false;
 }
 
+void SystemCleanerPage::quickScan()
+{
+    if (mScanInProgress || mCleanInProgress)
+        return;
+
+    mScanPackageCache   = true;
+    mScanCrashReports   = true;
+    mScanAppLog         = true;
+    mScanAppCache       = true;
+    mScanTrash          = true;
+    mScanDevToolCache   = true;
+    mScanBrokenSymlinks = true;
+    mScanBrowserPrivacy = true;
+    mScanSnapFlatpak    = (mCheckSnapFlatpak != nullptr);
+
+    mLblPackageCacheText   = tr("Package Caches");
+    mLblCrashReportsText   = tr("Crash Reports");
+    mLblAppLogText         = tr("Application Logs");
+    mLblAppCacheText       = tr("Application Caches");
+    mLblTrashText          = tr("Trash");
+    mLblDevToolCacheText   = tr("Dev Tool Caches");
+    mLblBrokenSymlinksText = tr("Broken Symlinks");
+    mLblBrowserPrivacyText = tr("Browser Privacy");
+    mLblSnapFlatpakText    = tr("Snap/Flatpak Revisions");
+
+    ui->btnScan->hide();
+    mLoadingMovie->start();
+    ui->lblLoadingScanner->show();
+    ui->checkPackageCache->setEnabled(false);
+    ui->checkCrashReports->setEnabled(false);
+    ui->checkAppLog->setEnabled(false);
+    ui->checkAppCache->setEnabled(false);
+    ui->checkTrash->setEnabled(false);
+    ui->checkDevToolCache->setEnabled(false);
+    ui->checkBrokenSymlinks->setEnabled(false);
+    ui->checkBrowserPrivacy->setEnabled(false);
+    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setEnabled(false);
+    ui->checkSelectAllSystemScan->setEnabled(false);
+
+    mPackageCaches.clear();
+    mCrashReports.clear();
+    mAppLogs.clear();
+    mAppCaches.clear();
+    mDevToolCaches.clear();
+    mBrokenSymlinks.clear();
+    mBrowserPrivacy.clear();
+    mSnapFlatpakRevisions.clear();
+
+    mScanInProgress = true;
+    mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
+}
+
 void SystemCleanerPage::on_btnScan_clicked()
 {
     if (mScanInProgress || mCleanInProgress)

@@ -5,8 +5,10 @@
 #ifdef Q_OS_LINUX
 #include "swappiness_widget.h"
 #include "cpu_tuning_widget.h"
+#include "rootkit_scanner_widget.h"
 #endif
 #include "trim_widget.h"
+#include "wol_widget.h"
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
@@ -57,12 +59,21 @@ void HelpersPage::init()
 
     mCpuTuningWidget = new CpuTuningWidget;
     ui->stackedWidget->addWidget(mCpuTuningWidget);
+
+    if (CommandUtil::isExecutable("chkrootkit") || CommandUtil::isExecutable("rkhunter")) {
+        mRootKitScannerWidget = new RootKitScannerWidget;
+        ui->stackedWidget->addWidget(mRootKitScannerWidget);
+    }
 #endif
 
     // FR-118: TRIM widget — cross-platform. Hide the button if fstrim isn't
     // installed on Linux.
     mTrimWidget = new TrimWidget;
     ui->stackedWidget->addWidget(mTrimWidget);
+
+    // FR-120: Wake-on-LAN — cross-platform.
+    mWolWidget = new WolWidget;
+    ui->stackedWidget->addWidget(mWolWidget);
 
     // Prevent buttons from shrinking below their text width
     for (auto *btn : {ui->btnHostManage, ui->btnFlushDNS, ui->btnNetDiag,
@@ -139,10 +150,31 @@ void HelpersPage::init()
         connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
     }
 
+    if (mRootKitScannerWidget) {
+        mBtnRootKit = new QPushButton(tr("Rootkit Scanner"));
+        mBtnRootKit->setCheckable(true);
+        mBtnRootKit->setCursor(Qt::PointingHandCursor);
+        mBtnRootKit->setFocusPolicy(Qt::NoFocus);
+        mBtnRootKit->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+        ui->buttonGroup->addButton(mBtnRootKit);
+        shadowWidgets << mBtnRootKit;
+        connect(mBtnRootKit, &QPushButton::clicked, this, &HelpersPage::onRootKitScannerClicked);
+    }
+
     initPowerProfileUI();
     if (mPowerProfileWidget)
         shadowWidgets << mPowerProfileWidget;
 #endif
+
+    // FR-120: Wake-on-LAN button — cross-platform.
+    mBtnWol = new QPushButton(tr("Wake-on-LAN"));
+    mBtnWol->setCheckable(true);
+    mBtnWol->setCursor(Qt::PointingHandCursor);
+    mBtnWol->setFocusPolicy(Qt::NoFocus);
+    mBtnWol->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnWol);
+    shadowWidgets << mBtnWol;
+    connect(mBtnWol, &QPushButton::clicked, this, &HelpersPage::onWolClicked);
 
     Utilities::addDropShadow(shadowWidgets, 40);
 
@@ -160,9 +192,13 @@ void HelpersPage::init()
         mNavItems << mBtnCpuTuning;
     if (mBtnTrim)
         mNavItems << mBtnTrim;
+    if (mBtnRootKit)
+        mNavItems << mBtnRootKit;
     if (mPowerProfileWidget)
         mNavItems << mPowerProfileWidget;
 #endif
+    if (mBtnWol)
+        mNavItems << mBtnWol;
 
     // Replace the static .ui navLayout with a managed one and compute the wrap threshold
     applyNavLayout(false);
@@ -219,6 +255,24 @@ void HelpersPage::onTrimClicked()
         return;
     mTrimWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mTrimWidget);
+}
+
+#ifdef Q_OS_LINUX
+void HelpersPage::onRootKitScannerClicked()
+{
+    if (!mRootKitScannerWidget)
+        return;
+    mRootKitScannerWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mRootKitScannerWidget);
+}
+#endif
+
+void HelpersPage::onWolClicked()
+{
+    if (!mWolWidget)
+        return;
+    mWolWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mWolWidget);
 }
 
 void HelpersPage::on_btnFlushDNS_clicked()
