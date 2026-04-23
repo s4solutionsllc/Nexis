@@ -1213,16 +1213,17 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
     background-color: transparent;
     border-radius: 8;
+    font-family: @fontFamily;
 }
 
 #treeWidgetScanResult QHeaderView::section {
     border-top: 1;
+    font-size: 9pt;
 }
 
 #treeWidgetScanResult::item {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
-    font-size: 10pt;
     color: @color11;
 }
 

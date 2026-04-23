@@ -883,6 +883,12 @@ quint64 SystemCleanerPage::addTreeRoot(const CleanCategories &cat, const QString
         root->setData(3, 0, infos.at(0).absoluteDir().path());
     root->setCheckState(0, Qt::Unchecked);
 
+    QFont rootFont = root->font(0);
+    rootFont.setPointSize(10);
+    rootFont.setWeight(QFont::DemiBold);
+    root->setFont(0, rootFont);
+    root->setFont(1, rootFont);
+
     quint64 totalSize = 0;
     if (!noChild) {
         for (const QFileInfo &i : infos) {
@@ -907,6 +913,12 @@ void SystemCleanerPage::addTreeChild(const QString &data, const QString &text,
     ByteTreeWidget *item = new ByteTreeWidget(parent);
     item->setValues(text, size, data);
     item->setIcon(0, mDefaultIcon);
+
+    QFont childFont = item->font(0);
+    childFont.setPointSize(9);
+    childFont.setWeight(QFont::Normal);
+    item->setFont(0, childFont);
+    item->setFont(1, childFont);
 }
 
 void SystemCleanerPage::addTreeChild(const CleanCategories &cat, const QString &text,
