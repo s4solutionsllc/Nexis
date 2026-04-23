@@ -214,7 +214,7 @@
             <enum>QListView::Adjust</enum>
            </property>
            <property name="layoutMode">
-            <enum>QListView::Batched</enum>
+            <enum>QListView::SinglePass</enum>
            </property>
            <property name="spacing">
             <number>5</number>
