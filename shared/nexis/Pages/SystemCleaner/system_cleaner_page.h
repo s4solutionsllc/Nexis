@@ -6,7 +6,6 @@
 #include <QTreeWidgetItem>
 #include <QHash>
 #include <QMap>
-#include <QMovie>
 #include <QDebug>
 #include <QDir>
 #include <QtConcurrent>
@@ -115,7 +114,6 @@ private:
 
     QIcon mDefaultIcon;
     QProgressBar *mScanProgress = nullptr;
-    QMovie *mLoadingMovie_2;
 
     // New card-based category widgets
     QVector<CategoryCard> mCards;        // indexed by CleanCategories enum value

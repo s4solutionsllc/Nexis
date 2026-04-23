@@ -40,20 +40,10 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mCleanerService(cleanerService ? cleanerService : CleanerService::ins()),
     mScheduleManager(scheduleManager ? scheduleManager : ScheduleManager::ins()),
-    mDefaultIcon(QIcon(":/static/themes/common/img/package.png")),
-    mLoadingMovie_2(nullptr)
+    mDefaultIcon(QIcon(":/static/themes/common/img/package.png"))
 {
     ui->setupUi(this);
-
-    QString themeName = mAppManager->resolveThemeName();
-
-    mLoadingMovie_2 = new QMovie(
-        QString(":/static/themes/%1/img/loading.gif").arg(themeName), {}, this);
-    mLoadingMovie_2->setScaledSize(Dpi::scale(160, 20));
-    ui->lblLoadingCleaner->setMovie(mLoadingMovie_2);
-
     init();
-
     ui->stackedWidget->setCurrentIndex(0);
 }
 
@@ -66,13 +56,6 @@ void SystemCleanerPage::init()
                 QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
                     .arg(themeName)));
         }
-        if (mLoadingMovie_2) {
-            mLoadingMovie_2->stop();
-            mLoadingMovie_2->setFileName(
-                QString(":/static/themes/%1/img/loading.gif").arg(themeName));
-            mLoadingMovie_2->setScaledSize(Dpi::scale(160, 20));
-        }
-        // Re-polish scan progress bar so QSS theme tokens apply
         if (mScanProgress) {
             mScanProgress->style()->unpolish(mScanProgress);
             mScanProgress->style()->polish(mScanProgress);
@@ -314,6 +297,9 @@ void SystemCleanerPage::buildCategoryCards()
     addCard(snapDef);
     mCheckSnapFlatpak = mCards[SNAP_FLATPAK_REVISIONS].check;
 #endif
+
+    // Push cards to top — empty stretch row below the last card row absorbs extra space
+    grid->setRowStretch((index + 1) / 2, 1);
 
     scrollArea->setWidget(container);
 
@@ -660,7 +646,6 @@ void SystemCleanerPage::onScanFinished()
         totalSize += sz; updateCard(TRASH, sz);
     }
 
-    ui->lblTotalBytes->setText(tr("Total size: %1").arg(FormatUtil::formatBytes(totalSize)));
     ui->treeWidgetScanResult->setSortingEnabled(true);
     on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
 
@@ -714,9 +699,6 @@ void SystemCleanerPage::on_btnClean_clicked()
     if (mScanInProgress || mCleanInProgress) return;
     if (!cleanValid()) return;
 
-    ui->btnClean->hide();
-    mLoadingMovie_2->start();
-    ui->lblLoadingCleaner->show();
     ui->treeWidgetScanResult->setEnabled(false);
 
     QTreeWidget *tree = ui->treeWidgetScanResult;
@@ -874,11 +856,6 @@ void SystemCleanerPage::onCleanFinished()
             it->setText(1, FormatUtil::formatBytes(remaining));
         }
 
-        ui->lblRemovedTotalSize->setText(tr("%1 size files cleaned.")
-                                         .arg(FormatUtil::formatBytes(mTotalCleanedSize)));
-        ui->btnClean->show();
-        mLoadingMovie_2->stop();
-        ui->lblLoadingCleaner->hide();
         ui->treeWidgetScanResult->setEnabled(true);
     }
 

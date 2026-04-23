@@ -62,7 +62,7 @@
         <number>0</number>
        </property>
        <property name="topMargin">
-        <number>5</number>
+        <number>8</number>
        </property>
        <property name="rightMargin">
         <number>0</number>
@@ -89,110 +89,8 @@
            <number>0</number>
           </property>
           <property name="verticalSpacing">
-           <number>10</number>
+           <number>8</number>
           </property>
-          <item row="0" column="1" alignment="Qt::AlignHCenter">
-           <widget class="QLabel" name="lblRemovedTotalSize">
-            <property name="minimumSize">
-             <size>
-              <width>20</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true"/>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <widget class="QLabel" name="lblLoadingCleaner">
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>20</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>20</height>
-             </size>
-            </property>
-            <property name="accessibleName">
-             <string>circle</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1">
-           <widget class="QPushButton" name="btnClean">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>100</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>200</width>
-              <height>200</height>
-             </size>
-            </property>
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::NoFocus</enum>
-            </property>
-            <property name="styleSheet">
-             <string notr="true"/>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QCheckBox" name="checkSelectAll">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::RightToLeft</enum>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::NoFocus</enum>
-            </property>
-            <property name="accessibleName">
-             <string>circle</string>
-            </property>
-            <property name="text">
-             <string>Select All</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="0" alignment="Qt::AlignLeft">
            <widget class="QPushButton" name="btnBackToCategories">
             <property name="cursor">
@@ -214,95 +112,6 @@
               <height>12</height>
              </size>
             </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <spacer name="horizontalSpacer_4">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="4" column="3">
-           <widget class="QLabel" name="lblTotalBytes">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="3">
-           <spacer name="horizontalSpacer_5">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="1" column="0" rowspan="2" colspan="4">
-           <widget class="QTreeWidget" name="treeWidgetScanResult">
-            <property name="font">
-             <font>
-              <stylestrategy>PreferAntialias</stylestrategy>
-             </font>
-            </property>
-            <property name="cursor" stdset="0">
-             <cursorShape>ArrowCursor</cursorShape>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::NoFocus</enum>
-            </property>
-            <property name="styleSheet">
-             <string notr="true"/>
-            </property>
-            <property name="editTriggers">
-             <set>QAbstractItemView::NoEditTriggers</set>
-            </property>
-            <property name="selectionMode">
-             <enum>QAbstractItemView::NoSelection</enum>
-            </property>
-            <property name="textElideMode">
-             <enum>Qt::ElideMiddle</enum>
-            </property>
-            <property name="horizontalScrollMode">
-             <enum>QAbstractItemView::ScrollPerItem</enum>
-            </property>
-            <property name="sortingEnabled">
-             <bool>true</bool>
-            </property>
-            <property name="animated">
-             <bool>true</bool>
-            </property>
-            <attribute name="headerVisible">
-             <bool>true</bool>
-            </attribute>
-            <attribute name="headerShowSortIndicator" stdset="0">
-             <bool>true</bool>
-            </attribute>
-            <column>
-             <property name="text">
-              <string notr="true">1</string>
-             </property>
-            </column>
            </widget>
           </item>
           <item row="0" column="3">
@@ -361,6 +170,53 @@
              </widget>
             </item>
            </layout>
+          </item>
+          <item row="1" column="0" rowspan="2" colspan="4">
+           <widget class="QTreeWidget" name="treeWidgetScanResult">
+            <property name="font">
+             <font>
+              <stylestrategy>PreferAntialias</stylestrategy>
+             </font>
+            </property>
+            <property name="cursor" stdset="0">
+             <cursorShape>ArrowCursor</cursorShape>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::NoFocus</enum>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::NoSelection</enum>
+            </property>
+            <property name="textElideMode">
+             <enum>Qt::ElideMiddle</enum>
+            </property>
+            <property name="horizontalScrollMode">
+             <enum>QAbstractItemView::ScrollPerItem</enum>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="animated">
+             <bool>true</bool>
+            </property>
+            <attribute name="headerVisible">
+             <bool>true</bool>
+            </attribute>
+            <attribute name="headerShowSortIndicator" stdset="0">
+             <bool>true</bool>
+            </attribute>
+            <column>
+             <property name="text">
+              <string notr="true">1</string>
+             </property>
+            </column>
+           </widget>
           </item>
          </layout>
         </widget>
