@@ -176,11 +176,11 @@ QCheckBox::indicator {
 }
 
 QCheckBox::indicator:checked {
-    image: url(:/static/themes/common/img/checkbox.png);
+    image: url(:/static/themes/common/img/checkbox.svg);
 }
 
 QCheckBox::indicator:unchecked {
-    image: url(:/static/themes/common/img/un-checkbox.png);
+    image: url(:/static/themes/common/img/un-checkbox.svg);
 }
 
 QCheckBox:focus {

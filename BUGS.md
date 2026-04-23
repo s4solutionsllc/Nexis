@@ -736,9 +736,10 @@
   - **Description:** The small green "available updates" counter badge over the Homebrew/APT Source Manager sidebar button (and the System Cleaner size badge) lost alignment with its button when the main window was resized. Root cause: `App::repositionBadges()` (which absolute-positions the badges via `badge->move()`) was wired to count changes, sidebar collapse animations, and section toggles, but not to window resize events — `App` had no `resizeEvent()` override.
   - **Resolved:** (1dd9195) Added `App::resizeEvent()` override that forwards to `QMainWindow::resizeEvent()` and then calls `repositionBadges()`. Covers both `mUpdatesBadge` and `mCleanerBadge` since they share the helper.
 
-- [ ] **BUG-114: Toggle off-state uses destructive red/orange instead of neutral gray** (HIGH)
-  - **Files:** `shared/nexis/static/themes/default/style/style.qss`
+- [x] **BUG-114: Toggle off-state uses destructive red/orange instead of neutral gray** (HIGH)
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`, `shared/nexis/static.qrc`, `shared/nexis/static/themes/common/img/un-checkbox.svg`, `shared/nexis/static/themes/common/img/checkbox.svg`
   - **Description:** Design system specifies toggle switches use a neutral gray background in the off state. Currently the off-state track color uses the accent/destructive color (orange-red), making it visually read as "danger" or "error" rather than simply "inactive". All toggle switches across the app are affected (Services, Startup Apps, Settings, etc.).
+  - **Resolved:** Replaced hardcoded-red `un-checkbox.png` with `un-checkbox.svg` (neutral gray `#9A9DA6` track, white knob). Replaced `checkbox.png` with `checkbox.svg` (green track) for consistency. Updated QSS and QRC references.
 
 - [ ] **BUG-115: Services page uses interactive toggle for running/stopped status instead of read-only badge** (HIGH)
   - **Files:** `shared/nexis/Pages/Services/services_page.cpp`, `shared/nexis/Pages/Services/services_page.h`
