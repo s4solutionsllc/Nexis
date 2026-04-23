@@ -825,9 +825,10 @@
   - **Description:** The Uninstall action in the Homebrew packages list uses a circle-X (close/delete) icon button. Design system uses a text button or a trash icon for destructive remove actions. The circle-X icon is associated with dismissal/close actions elsewhere in the app, creating inconsistency.
   - **Resolved:** Removed icon and iconSize from `btnDeleteAptSource` in `apt_source_manager_page.ui`. The red `accessibleName="danger"` text button is self-sufficient.
 
-- [ ] **BUG-132: Settings page section headers use QGroupBox chrome (border box) instead of plain section label style** (LOW)
+- [x] **BUG-132: Settings page section headers use QGroupBox chrome (border box) instead of plain section label style** (LOW)
   - **Files:** `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** Settings categories/sections are grouped using `QGroupBox` widgets which render with a visible border frame and inset title. Design system specifies section headers as plain bold labels with a separator line, no box border. The QGroupBox chrome adds visual weight inconsistent with the design system's settings layout.
+  - **Resolved:** QSS-only fix — removed border, border-radius, and cardBg background from `#SettingsPage QGroupBox`; kept bold title styling.
 
 - [ ] **BUG-133: Card elevation and hover states not implemented — design specifies lighter fill, drop shadow, and accent border on hover** (LOW)
   - **Files:** `shared/nexis/static/themes/default/style/style.qss`

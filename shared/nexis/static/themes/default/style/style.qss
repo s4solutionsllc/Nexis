@@ -2140,17 +2140,17 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #SettingsPage QGroupBox {
-    border: 1px solid @borderColor;
-    border-radius: 12;
-    margin-top: 12;
-    padding: 12 12 6 12;
-    background-color: @cardBg;
+    border: none;
+    border-radius: 0;
+    margin-top: 24;
+    padding: 8 0 0 0;
+    background-color: transparent;
 }
 
 #SettingsPage QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    padding: 0 6;
+    padding: 0 0;
     color: @color05;
     font-size: 11pt;
     font-weight: bold;
