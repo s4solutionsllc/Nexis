@@ -91,8 +91,21 @@
           <property name="verticalSpacing">
            <number>8</number>
           </property>
-          <item row="0" column="0" alignment="Qt::AlignRight">
+          <item row="0" column="0" colspan="4">
            <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <spacer name="horizontalSpacerSort">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
             <item>
              <widget class="QLabel" name="lblSortBy">
               <property name="text">

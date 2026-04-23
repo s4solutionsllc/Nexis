@@ -1079,7 +1079,7 @@ QLabel[accessibleName="dialog-title"] {
 /* - Category cards - */
 
 #cleanerCategoryCard {
-    background-color: @cardBg;
+    background-color: @cardBgElevated;
     border: 1px solid @borderColor;
     border-radius: 8;
 }

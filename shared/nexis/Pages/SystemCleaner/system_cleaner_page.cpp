@@ -272,6 +272,7 @@ void SystemCleanerPage::buildCategoryCards()
             card->setProperty("checked", on);
             card->style()->unpolish(card);
             card->style()->polish(card);
+            if (mHasScanned) refreshInlineTree();
             updateFooterTotal();
             updateCleanerCheckBadge();
         });
@@ -576,11 +577,13 @@ void SystemCleanerPage::onScanFinished()
 {
     if (mScanProgress) mScanProgress->hide();
 
-    // ── Populate tree (page 1) ──────────────────────────────────────────────
-    ui->treeWidgetScanResult->setSortingEnabled(false);
-    ui->treeWidgetScanResult->clear();
-
-    quint64 totalSize = 0;
+    // ── Update card size labels ─────────────────────────────────────────────
+    auto computeSize = [](const QFileInfoList &files) -> quint64 {
+        quint64 total = 0;
+        for (const QFileInfo &f : files)
+            total += FileUtil::getFileSize(f.absoluteFilePath());
+        return total;
+    };
     auto updateCard = [this](CleanCategories cat, quint64 sz) {
         if (cat < mCards.size() && mCards[cat].lblSize) {
             mCards[cat].lblSize->setText(FormatUtil::formatBytes(sz));
@@ -588,70 +591,23 @@ void SystemCleanerPage::onScanFinished()
         }
     };
 
-    if (mScanPackageCache) {
-        quint64 sz = addTreeRoot(PACKAGE_CACHE, mLblPackageCacheText, mPackageCaches);
-        totalSize += sz; updateCard(PACKAGE_CACHE, sz);
-    }
-    if (mScanCrashReports) {
-        quint64 sz = addTreeRoot(CRASH_REPORTS, mLblCrashReportsText, mCrashReports);
-        totalSize += sz; updateCard(CRASH_REPORTS, sz);
-    }
-    if (mScanAppLog) {
-        quint64 sz = addTreeRoot(APPLICATION_LOGS, mLblAppLogText, mAppLogs);
-        totalSize += sz; updateCard(APPLICATION_LOGS, sz);
-    }
-    if (mScanAppCache) {
-        quint64 sz = addTreeRoot(APPLICATION_CACHES, mLblAppCacheText, mAppCaches);
-        totalSize += sz; updateCard(APPLICATION_CACHES, sz);
-    }
-    if (mScanDevToolCache) {
-        quint64 sz = addTreeRoot(DEV_TOOL_CACHES, mLblDevToolCacheText, mDevToolCaches);
-        totalSize += sz; updateCard(DEV_TOOL_CACHES, sz);
-
-        for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *root = ui->treeWidgetScanResult->topLevelItem(i);
-            if (root->data(2, 0).toInt() == DEV_TOOL_CACHES) {
-                for (int j = 0; j < root->childCount(); ++j) {
-                    QTreeWidgetItem *child = root->child(j);
-                    QString name = child->text(0);
-                    if (name == "Cache" || name == "GPUCache") {
-                        QString absPath = child->data(2, 0).toString();
-                        QDir dir(absPath);
-                        dir.cdUp();
-                        child->setText(0, dir.dirName() + "/" + name);
-                    }
-                }
-                break;
-            }
-        }
-    }
-    if (mScanBrokenSymlinks) {
-        quint64 sz = addTreeRoot(BROKEN_SYMLINKS, mLblBrokenSymlinksText, mBrokenSymlinks);
-        totalSize += sz; updateCard(BROKEN_SYMLINKS, sz);
-    }
-    if (mScanBrowserPrivacy) {
-        quint64 sz = addTreeRoot(BROWSER_PRIVACY, mLblBrowserPrivacyText, mBrowserPrivacy);
-        totalSize += sz; updateCard(BROWSER_PRIVACY, sz);
-    }
-    if (mScanSnapFlatpak) {
-        quint64 sz = addTreeRoot(SNAP_FLATPAK_REVISIONS, mLblSnapFlatpakText, mSnapFlatpakRevisions);
-        totalSize += sz; updateCard(SNAP_FLATPAK_REVISIONS, sz);
-    }
+    if (mScanPackageCache)   updateCard(PACKAGE_CACHE,          computeSize(mPackageCaches));
+    if (mScanCrashReports)   updateCard(CRASH_REPORTS,          computeSize(mCrashReports));
+    if (mScanAppLog)         updateCard(APPLICATION_LOGS,       computeSize(mAppLogs));
+    if (mScanAppCache)       updateCard(APPLICATION_CACHES,     computeSize(mAppCaches));
+    if (mScanDevToolCache)   updateCard(DEV_TOOL_CACHES,        computeSize(mDevToolCaches));
+    if (mScanBrokenSymlinks) updateCard(BROKEN_SYMLINKS,        computeSize(mBrokenSymlinks));
+    if (mScanBrowserPrivacy) updateCard(BROWSER_PRIVACY,        computeSize(mBrowserPrivacy));
+    if (mScanSnapFlatpak)    updateCard(SNAP_FLATPAK_REVISIONS, computeSize(mSnapFlatpakRevisions));
     if (mScanTrash) {
 #ifdef Q_OS_MACOS
-        quint64 sz = addTreeRoot(TRASH, mLblTrashText,
-                    { QFileInfo(QDir::homePath() + "/.Trash/") }, true);
+        updateCard(TRASH, FileUtil::getFileSize(QDir::homePath() + "/.Trash/"));
 #else
-        quint64 sz = addTreeRoot(TRASH, mLblTrashText,
-                    { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
+        updateCard(TRASH, FileUtil::getFileSize(QDir::homePath() + "/.local/share/Trash/"));
 #endif
-        totalSize += sz; updateCard(TRASH, sz);
     }
 
-    ui->treeWidgetScanResult->setSortingEnabled(true);
-    on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
-
-    // Retain scan results for page-0 "Clean selected"
+    // Retain scan results for inline tree and "Clean selected"
     mRetainedPackageCaches  = mPackageCaches;
     mRetainedCrashReports   = mCrashReports;
     mRetainedAppLogs        = mAppLogs;
@@ -677,9 +633,72 @@ void SystemCleanerPage::onScanFinished()
     mBtnScanSystem->setEnabled(true);
     mBtnSchedule->setEnabled(true);
 
-    // Show results inline and update footer total
-    ui->cleanerPage->show();
+    // Show details only for currently checked categories
+    refreshInlineTree();
     updateFooterTotal();
+}
+
+void SystemCleanerPage::refreshInlineTree()
+{
+    ui->treeWidgetScanResult->setSortingEnabled(false);
+    ui->treeWidgetScanResult->clear();
+
+    auto catChecked = [this](CleanCategories cat) -> bool {
+        return cat < (int)mCards.size() && mCards[cat].check && mCards[cat].check->isChecked();
+    };
+
+    bool anyAdded = false;
+    auto addIfChecked = [&](CleanCategories cat, const QString &label, const QFileInfoList &files) {
+        if (!catChecked(cat)) return;
+        addTreeRoot(cat, label, files);
+        anyAdded = true;
+    };
+
+    addIfChecked(PACKAGE_CACHE,        mLblPackageCacheText,   mRetainedPackageCaches);
+    addIfChecked(CRASH_REPORTS,        mLblCrashReportsText,   mRetainedCrashReports);
+    addIfChecked(APPLICATION_LOGS,     mLblAppLogText,         mRetainedAppLogs);
+    addIfChecked(APPLICATION_CACHES,   mLblAppCacheText,       mRetainedAppCaches);
+    addIfChecked(DEV_TOOL_CACHES,      mLblDevToolCacheText,   mRetainedDevToolCaches);
+    addIfChecked(BROKEN_SYMLINKS,      mLblBrokenSymlinksText, mRetainedBrokenSymlinks);
+    addIfChecked(BROWSER_PRIVACY,      mLblBrowserPrivacyText, mRetainedBrowserPrivacy);
+    addIfChecked(SNAP_FLATPAK_REVISIONS, mLblSnapFlatpakText,  mRetainedSnapFlatpak);
+
+    if (catChecked(TRASH)) {
+#ifdef Q_OS_MACOS
+        addTreeRoot(TRASH, mLblTrashText, { QFileInfo(QDir::homePath() + "/.Trash/") }, true);
+#else
+        addTreeRoot(TRASH, mLblTrashText, { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
+#endif
+        anyAdded = true;
+    }
+
+    // Dev tool cache: prefix ambiguous child names with their parent app folder
+    if (catChecked(DEV_TOOL_CACHES)) {
+        for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
+            QTreeWidgetItem *root = ui->treeWidgetScanResult->topLevelItem(i);
+            if (root->data(2, 0).toInt() == DEV_TOOL_CACHES) {
+                for (int j = 0; j < root->childCount(); ++j) {
+                    QTreeWidgetItem *child = root->child(j);
+                    QString name = child->text(0);
+                    if (name == "Cache" || name == "GPUCache") {
+                        QDir dir(child->data(2, 0).toString());
+                        dir.cdUp();
+                        child->setText(0, dir.dirName() + "/" + name);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    ui->treeWidgetScanResult->setSortingEnabled(true);
+    on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
+
+    if (anyAdded) {
+        ui->cleanerPage->show();
+    } else {
+        ui->cleanerPage->hide();
+    }
     updateScheduleIndicator();
 }
 

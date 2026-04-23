@@ -101,6 +101,7 @@ private:
     void quickCleanByCategory();
     void startBackgroundSizeScan();
     void buildInlineResults();
+    void refreshInlineTree();
     void initScheduleIndicator();
     void repositionScheduleIndicator();
 
