@@ -40,51 +40,103 @@ void StartupAppsPage::init()
     Utilities::addDropShadow({ui->btnAddStartupApp, ui->txtSearchStartup}, 60);
 }
 
+void StartupAppsPage::addSectionHeader(const QString &title)
+{
+    auto *label = new QLabel(title, this);
+    label->setObjectName(QStringLiteral("startupSectionHeader"));
+
+    auto *item = new QListWidgetItem(ui->listWidgetStartup);
+    item->setFlags(Qt::NoItemFlags);
+    item->setSizeHint(label->sizeHint());
+    ui->listWidgetStartup->setItemWidget(item, label);
+
+    SectionGroup group;
+    group.headerItem = item;
+    mSectionGroups.append(group);
+}
+
 void StartupAppsPage::loadApps()
 {
     ui->txtSearchStartup->clear();
     ui->listWidgetStartup->clear();
+    mSectionGroups.clear();
 
-    QList<StartupAppData> apps = mStartupService->getApps();
+#ifdef Q_OS_MACOS
+    QList<StartupAppData> all = mStartupService->getAllLoginItems();
+#else
+    QList<StartupAppData> all = mStartupService->getApps();
+#endif
 
-    for (const StartupAppData &appData : apps) {
-        QListWidgetItem *item = new QListWidgetItem(ui->listWidgetStartup);
-
-        StartupApp *app = new StartupApp(appData.name, appData.enabled,
-                                          appData.filePath, appData.iconPath, this);
-
-        connect(app, &StartupApp::deleteAppS, this, &StartupAppsPage::loadApps);
-        connect(app, &StartupApp::editStartupAppS, this, &StartupAppsPage::openStartupAppEdit);
-
-        item->setSizeHint(app->sizeHint());
-
-        ui->listWidgetStartup->setItemWidget(item, app);
+    // Partition into buckets
+    QList<StartupAppData> userAgents, systemAgents, systemDaemons;
+    for (const StartupAppData &d : all) {
+        switch (d.category) {
+        case LoginItemCategory::UserAgent:   userAgents   << d; break;
+        case LoginItemCategory::SystemAgent:  systemAgents  << d; break;
+        case LoginItemCategory::SystemDaemon: systemDaemons << d; break;
+        }
     }
+
+    auto addGroup = [&](const QString &title, const QList<StartupAppData> &items) {
+        if (items.isEmpty())
+            return;
+
+        addSectionHeader(title);
+        SectionGroup &group = mSectionGroups.last();
+
+        for (const StartupAppData &appData : items) {
+            auto *item = new QListWidgetItem(ui->listWidgetStartup);
+
+            auto *app = new StartupApp(appData.name, appData.enabled, appData.filePath,
+                                       appData.iconPath, appData.readOnly, this);
+
+            if (!appData.readOnly) {
+                connect(app, &StartupApp::deleteAppS, this, &StartupAppsPage::loadApps);
+                connect(app, &StartupApp::editStartupAppS, this, &StartupAppsPage::openStartupAppEdit);
+            }
+
+            item->setSizeHint(app->sizeHint());
+            ui->listWidgetStartup->setItemWidget(item, app);
+            group.appItems.append(item);
+        }
+    };
+
+    addGroup(tr("User Agents"), userAgents);
+    addGroup(tr("System Agents"), systemAgents);
+    addGroup(tr("System Daemons"), systemDaemons);
 
     setAppCount();
 }
 
 void StartupAppsPage::setAppCount()
 {
-    int count = ui->listWidgetStartup->count();
+    int count = 0;
+    for (const SectionGroup &g : mSectionGroups)
+        count += g.appItems.size();
 
     ui->lblStartupAppsTitle->setText(
         tr("Startup Applications (%1)")
         .arg(QString::number(count)));
 
-    ui->notFoundWidget->setVisible(! count);
+    ui->notFoundWidget->setVisible(!count);
     ui->listWidgetStartup->setVisible(count);
 }
 
 void StartupAppsPage::filterStartupApps(const QString &text)
 {
-    for (int i = 0; i < ui->listWidgetStartup->count(); ++i) {
-        QListWidgetItem *item = ui->listWidgetStartup->item(i);
-        StartupApp *app = qobject_cast<StartupApp*>(ui->listWidgetStartup->itemWidget(item));
-        if (app) {
-            bool matches = text.isEmpty() || app->getAppName().contains(text, Qt::CaseInsensitive);
+    for (const SectionGroup &group : mSectionGroups) {
+        bool anyVisible = false;
+
+        for (QListWidgetItem *item : group.appItems) {
+            StartupApp *app = qobject_cast<StartupApp*>(ui->listWidgetStartup->itemWidget(item));
+            bool matches = text.isEmpty() || (app && app->getAppName().contains(text, Qt::CaseInsensitive));
             item->setHidden(!matches);
+            if (matches)
+                anyVisible = true;
         }
+
+        if (group.headerItem)
+            group.headerItem->setHidden(!anyVisible);
     }
 }
 

@@ -3,6 +3,9 @@
 
 #include <QWidget>
 #include <QDebug>
+#include <QLabel>
+#include <QList>
+#include <QListWidgetItem>
 #include <QSharedPointer>
 #include <QAbstractItemModel>
 
@@ -36,9 +39,16 @@ private slots:
 private:
     Ui::StartupAppsPage *ui;
 
-private:
     QSharedPointer<StartupAppEdit> mStartupAppEdit;
     StartupService *mStartupService;
+
+    struct SectionGroup {
+        QListWidgetItem *headerItem = nullptr;
+        QList<QListWidgetItem *> appItems;
+    };
+    QList<SectionGroup> mSectionGroups;
+
+    void addSectionHeader(const QString &title);
 };
 
 #endif // STARTUPAPPSPAGE_H

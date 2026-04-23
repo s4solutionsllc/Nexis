@@ -15,6 +15,7 @@ public:
     static StartupService *ins();
 
     QList<StartupAppData> getApps() const;
+    QList<StartupAppData> getAllLoginItems() const;
     QString autostartPath() const;
     bool isAutostartDisabled() const;
 

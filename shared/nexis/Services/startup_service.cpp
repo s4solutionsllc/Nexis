@@ -34,6 +34,19 @@ StartupService::StartupService(QObject *parent)
     }
 
     mWatcher.addPath(path);
+
+#ifdef Q_OS_MACOS
+    // Watch system-level directories too (read-only items)
+    const QStringList sysDirs = {
+        QStringLiteral("/Library/LaunchAgents"),
+        QStringLiteral("/Library/LaunchDaemons")
+    };
+    for (const QString &d : sysDirs) {
+        if (QDir(d).exists())
+            mWatcher.addPath(d);
+    }
+#endif
+
     connect(&mWatcher, &QFileSystemWatcher::directoryChanged,
             this, &StartupService::appsChanged);
 }
@@ -41,6 +54,11 @@ StartupService::StartupService(QObject *parent)
 QList<StartupAppData> StartupService::getApps() const
 {
     return mInfo->getStartupApps();
+}
+
+QList<StartupAppData> StartupService::getAllLoginItems() const
+{
+    return mInfo->getAllLoginItems();
 }
 
 QString StartupService::autostartPath() const

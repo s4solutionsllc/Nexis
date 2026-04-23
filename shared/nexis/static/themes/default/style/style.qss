@@ -1250,6 +1250,19 @@ QLabel[accessibleName="dialog-title"] {
     margin-bottom: 2;
 }
 
+#startupSectionHeader {
+    color: @tertiaryText;
+    font-size: 9pt;
+    font-weight: 600;
+    padding: @dp4 @dp8;
+    background-color: transparent;
+}
+
+#widgetStartupApp #lblStartupAppPath {
+    color: @tertiaryText;
+    font-size: 9pt;
+}
+
 /* - Startup App Edit - */
 
 #StartupAppEdit {

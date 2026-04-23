@@ -2,79 +2,129 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QProcess>
 #include <QRegularExpression>
+#include <QSet>
 #include <Utils/file_util.h>
+#include <unistd.h>
 
-QList<StartupAppData> StartupInfoMacOS::getStartupApps() const
+static QString deriveDisplayName(const QString &identifier)
+{
+    QStringList parts = identifier.split('.');
+    if (parts.size() >= 3) {
+        QStringList nameParts;
+        for (int i = 1; i < parts.size(); ++i) {
+            if (!nameParts.isEmpty()
+                && nameParts.last().compare(parts.at(i), Qt::CaseInsensitive) == 0)
+                continue;
+            QString p = parts.at(i);
+            if (!p.isEmpty())
+                p[0] = p[0].toUpper();
+            nameParts << p;
+        }
+        return nameParts.join(' ');
+    } else if (parts.size() == 2) {
+        QString name = parts.last();
+        if (!name.isEmpty())
+            name[0] = name[0].toUpper();
+        return name;
+    }
+    return identifier;
+}
+
+QSet<QString> StartupInfoMacOS::queryLaunchctlDisabled() const
+{
+    QSet<QString> disabled;
+    QProcess proc;
+    proc.start(QStringLiteral("launchctl"),
+               {QStringLiteral("print-disabled"),
+                QStringLiteral("user/%1").arg(getuid())});
+    if (!proc.waitForFinished(3000))
+        return disabled;
+
+    static const QRegularExpression lineRx(
+        QStringLiteral("\"([^\"]+)\"\\s*=>\\s*disabled"));
+    const QString output = QString::fromUtf8(proc.readAllStandardOutput());
+    QRegularExpressionMatchIterator it = lineRx.globalMatch(output);
+    while (it.hasNext())
+        disabled.insert(it.next().captured(1));
+    return disabled;
+}
+
+QList<StartupAppData> StartupInfoMacOS::loadPlistDir(const QString &dirPath,
+                                                      LoginItemCategory category,
+                                                      bool readOnly) const
 {
     QList<StartupAppData> apps;
-    QDir autostartDir(autostartPath(), "*.plist");
+    QDir dir(dirPath, QStringLiteral("*.plist"));
+    if (!dir.exists())
+        return apps;
 
-    for (const QFileInfo &f : autostartDir.entryInfoList())
-    {
+    for (const QFileInfo &f : dir.entryInfoList()) {
         QString identifier = f.completeBaseName();
 
-        // Skip Apple internal agents
-        if (identifier.startsWith("com.apple."))
+        if (identifier.startsWith(QStringLiteral("com.apple.")))
             continue;
 
-        // Check if the plist has a Disabled key
-        bool enabled = true;
         QStringList lines = FileUtil::readListFromFile(f.absoluteFilePath());
+        const QString content = lines.join('\n');
+
+        bool enabled = true;
         for (int i = 0; i < lines.size(); ++i) {
-            if (lines.at(i).contains("Disabled") && i + 1 < lines.size()) {
-                enabled = !lines.at(i + 1).contains("true");
+            if (lines.at(i).contains(QStringLiteral("Disabled")) && i + 1 < lines.size()) {
+                enabled = !lines.at(i + 1).contains(QStringLiteral("true"));
                 break;
             }
         }
 
-        // Derive a human-friendly display name from the reverse-DNS identifier.
-        // e.g. "com.jetbrains.toolbox" -> "Jetbrains Toolbox"
-        //      "com.Tautulli.Tautulli" -> "Tautulli"
-        //      "homebrew.mxcl.redis"   -> "Redis"
-        QString appName = identifier;
-        QStringList parts = identifier.split('.');
-        if (parts.size() >= 3) {
-            QStringList nameParts;
-            for (int i = 1; i < parts.size(); ++i) {
-                if (!nameParts.isEmpty()
-                    && nameParts.last().compare(parts.at(i), Qt::CaseInsensitive) == 0)
-                    continue;
-                QString p = parts.at(i);
-                if (!p.isEmpty())
-                    p[0] = p[0].toUpper();
-                nameParts << p;
-            }
-            appName = nameParts.join(' ');
-        } else if (parts.size() == 2) {
-            appName = parts.last();
-            if (!appName.isEmpty())
-                appName[0] = appName[0].toUpper();
-        }
-
-        // Try to derive an icon from ProgramArguments if it points to a .app bundle
         QString iconPath;
-        QString content = lines.join("\n");
-        QRegularExpression progArgReg("<string>(/[^<]*\\.app)[^<]*</string>");
+        QRegularExpression progArgReg(QStringLiteral("<string>(/[^<]*\\.app)[^<]*</string>"));
         QRegularExpressionMatch appMatch = progArgReg.match(content);
-        if (appMatch.hasMatch()) {
+        if (appMatch.hasMatch())
             iconPath = appMatch.captured(1);
-        }
 
         StartupAppData data;
-        data.name = appName;
+        data.name = deriveDisplayName(identifier);
+        data.identifier = identifier;
         data.filePath = f.absoluteFilePath();
         data.iconPath = iconPath;
         data.enabled = enabled;
+        data.readOnly = readOnly;
+        data.category = category;
         apps.append(data);
     }
 
     return apps;
 }
 
+QList<StartupAppData> StartupInfoMacOS::getStartupApps() const
+{
+    QSet<QString> disabledByLaunchctl = queryLaunchctlDisabled();
+
+    QList<StartupAppData> apps = loadPlistDir(autostartPath(),
+                                              LoginItemCategory::UserAgent, false);
+    for (StartupAppData &d : apps) {
+        if (!d.identifier.isEmpty() && disabledByLaunchctl.contains(d.identifier))
+            d.enabled = false;
+    }
+    return apps;
+}
+
+QList<StartupAppData> StartupInfoMacOS::getAllLoginItems() const
+{
+    QList<StartupAppData> all = getStartupApps();
+
+    all += loadPlistDir(QStringLiteral("/Library/LaunchAgents"),
+                        LoginItemCategory::SystemAgent, true);
+    all += loadPlistDir(QStringLiteral("/Library/LaunchDaemons"),
+                        LoginItemCategory::SystemDaemon, true);
+
+    return all;
+}
+
 QString StartupInfoMacOS::autostartPath() const
 {
-    return QDir::homePath() + "/Library/LaunchAgents";
+    return QDir::homePath() + QStringLiteral("/Library/LaunchAgents");
 }
 
 bool StartupInfoMacOS::isAutostartDisabled() const

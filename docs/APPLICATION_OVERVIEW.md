@@ -177,6 +177,11 @@ Manage applications that auto-start at login.
 - Delete autostart entries
 - Real app icons via `QIcon::fromTheme()` (Linux) or `QFileIconProvider` (macOS)
 - macOS automatically filters out `com.apple.*` system agents
+- **macOS:** Items grouped into three categories with section headers:
+  - **User Agents** (`~/Library/LaunchAgents`) — full edit/toggle/delete control; enabled state sourced from `launchctl print-disabled user/<uid>`
+  - **System Agents** (`/Library/LaunchAgents`) — read-only; shows plist path
+  - **System Daemons** (`/Library/LaunchDaemons`) — read-only; shows plist path
+- File path shown as subtitle on every row
 
 ### 3a. Boot Analysis
 

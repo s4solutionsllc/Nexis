@@ -12,7 +12,8 @@ StartupApp::~StartupApp()
     delete ui;
 }
 
-StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QString &filePath, const QString &iconName, QWidget *parent) :
+StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QString &filePath,
+                       const QString &iconName, bool readOnly, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::StartupApp),
     mStartupAppName(startupAppName),
@@ -51,6 +52,17 @@ StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QStrin
         ui->lblStartupAppIcon->setPixmap(appIcon.pixmap(iconSize));
     } else {
         ui->lblStartupAppIcon->hide();
+    }
+
+    if (readOnly) {
+        ui->checkStartup->setEnabled(false);
+        ui->btnEditStartupApp->hide();
+        ui->btnDeleteStartupApp->hide();
+    }
+
+    if (!filePath.isEmpty()) {
+        ui->lblStartupAppPath->setText(filePath);
+        ui->lblStartupAppPath->setVisible(true);
     }
 
     Utilities::addDropShadow(this, 50);
