@@ -1063,6 +1063,12 @@ QLabel[accessibleName="dialog-title"] {
     SYSTEM CLEANER PAGE
 ***************************/
 
+#lblCleanerTitle {
+    color: @color11;
+    padding: 10 0;
+    font-size: 11pt;
+}
+
 #cleanerCategories QCheckBox[accessibleName=circle]::indicator {
     width: @dp20;
     height: @dp20;

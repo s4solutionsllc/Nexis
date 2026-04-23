@@ -750,9 +750,10 @@
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** Design system specifies Dashboard metric tiles (CPU, Memory, Disk, Network, etc.) as distinct cards with a background fill and subtle border to visually separate them from the page background. Currently tiles render without card styling — no distinct background, no border — making the layout feel flat and unstructured.
 
-- [ ] **BUG-117: System Cleaner page missing page title / section header** (MEDIUM)
-  - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp`
+- [x] **BUG-117: System Cleaner page missing page title / section header** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.ui`, `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** Design system shows a "System Cleaner" page title/header at the top of the content area, consistent with other pages (Dashboard, Processes, etc.). The System Cleaner page omits this header, making navigation context less clear and inconsistent with the rest of the app.
+  - **Resolved:** Added `QLabel lblCleanerTitle` to the outer `QVBoxLayout` in the `.ui` file above the stacked widget. Styled with `#lblCleanerTitle` QSS rule matching the `#lblProcessTitle` pattern. Updated reference screenshots.
 
 - [ ] **BUG-118: Startup Apps "Add" button placed at bottom of list instead of top-right** (MEDIUM)
   - **Files:** `shared/nexis/Pages/StartupApps/startup_apps_page.cpp`
