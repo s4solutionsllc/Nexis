@@ -1,5 +1,6 @@
 #include "dashboard_page.h"
 #include "ui_dashboard_page.h"
+#include <QToolButton>
 #include "maintenance_wizard_dialog.h"
 
 #include "utilities.h"
@@ -53,8 +54,8 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mSelectedSensorIndex(0),
     mSelectedGpuIndex(0),
     mSelectedFanIndex(0),
-    mKioskButton(new QPushButton(this)),
-    mEditButton(new QPushButton(this)),
+    mKioskButton(new QToolButton(this)),
+    mEditButton(new QToolButton(this)),
     mEditToolbar(nullptr),
     mBtnResetLayout(nullptr),
     mBtnDone(nullptr),
@@ -389,9 +390,10 @@ void DashboardPage::init()
     mKioskButton->setCursor(Qt::PointingHandCursor);
     mKioskButton->setFocusPolicy(Qt::NoFocus);
     mKioskButton->setObjectName("btnKioskToggle");
+    mKioskButton->setAutoRaise(true);
     mKioskButton->raise();
 
-    connect(mKioskButton, &QPushButton::clicked, this, [this]() {
+    connect(mKioskButton, &QToolButton::clicked, this, [this]() {
         emit mSignalMapper->sigKioskToggleRequested();
     });
     connect(mSignalMapper, &SignalMapper::sigKioskModeChanged,
@@ -405,9 +407,10 @@ void DashboardPage::init()
     mEditButton->setCursor(Qt::PointingHandCursor);
     mEditButton->setFocusPolicy(Qt::NoFocus);
     mEditButton->setObjectName("btnEditToggle");
+    mEditButton->setAutoRaise(true);
     mEditButton->raise();
 
-    connect(mEditButton, &QPushButton::clicked, this, &DashboardPage::toggleEditMode);
+    connect(mEditButton, &QToolButton::clicked, this, &DashboardPage::toggleEditMode);
 
     // Ctrl+E shortcut
     mEditShortcut = new QShortcut(QKeySequence("Ctrl+E"), this);

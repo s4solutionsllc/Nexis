@@ -3,6 +3,7 @@
 
 #include <QMenu>
 #include <QPushButton>
+#include <QToolButton>
 #include <QLabel>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -127,8 +128,8 @@ private:
     int mSelectedGpuIndex;
     int mSelectedFanIndex;
 
-    QPushButton *mKioskButton;
-    QPushButton *mEditButton;
+    QToolButton *mKioskButton;
+    QToolButton *mEditButton;
     QWidget *mEditToolbar;
     QPushButton *mBtnResetLayout;
     QPushButton *mBtnDone;
