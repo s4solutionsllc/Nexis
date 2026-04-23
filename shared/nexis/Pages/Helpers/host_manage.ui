@@ -104,16 +104,10 @@
         <enum>Qt::NoFocus</enum>
        </property>
        <property name="accessibleName">
-        <string/>
+        <string>primary</string>
        </property>
        <property name="text">
         <string>New Host</string>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-       <property name="flat">
-        <bool>true</bool>
        </property>
       </widget>
      </item>

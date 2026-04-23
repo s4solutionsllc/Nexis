@@ -792,9 +792,10 @@
   - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp`
   - **Description:** Design system places the "Select All" label to the left of the toggle switch. The current implementation places the label on the right side, inconsistent with the design system's toggle label positioning convention.
 
-- [ ] **BUG-126: Disk Tools "Move to Trash" button renders unstyled (no primary/secondary button styling)** (LOW)
+- [x] **BUG-126: Disk Tools "Move to Trash" button renders unstyled (no primary/secondary button styling)** (LOW)
   - **Files:** `shared/nexis/Pages/DiskTools/disk_tools_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** The "Move to Trash" action button in the Disk Tools large-files results does not receive the standard button QSS styling (no border, no hover state, no accent color). It renders as a plain unstyled system button, inconsistent with all other action buttons in the app.
+  - **Resolved:** Fixed two broken QSS sub-rules: replaced no-op `opacity: 0.9` hover with `background-color: @color09`, and replaced `@color02` disabled background (near-invisible) with `@borderColor` (clearly visible in both themes).
 
 - [ ] **BUG-127: Processes page "End Process" button is always visible instead of appearing only on row selection** (LOW)
   - **Files:** `shared/nexis/Pages/Processes/processes_page.cpp`
@@ -808,9 +809,10 @@
   - **Files:** `shared/nexis/Pages/StartupApps/startup_apps_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** Application names in the Startup Apps list are displayed in a monospace typeface (as if they were command strings). Design system uses the standard body font for application display names. Only the command/executable path column should use monospace.
 
-- [ ] **BUG-130: Hosts Manager "New Host" button not styled as primary action button** (LOW)
+- [x] **BUG-130: Hosts Manager "New Host" button not styled as primary action button** (LOW)
   - **Files:** `shared/nexis/Pages/HostsManager/hosts_manager_page.cpp`
   - **Description:** The "New Host" button in the Hosts Manager toolbar does not receive the primary button style (filled accent background). It renders as a secondary/outline or plain button. Design system specifies the primary add/create action on a page uses the filled primary button style.
+  - **Resolved:** Fixed `host_manage.ui` btnNewHost: set `accessibleName="primary"`, removed `flat=true` and `checkable=true`.
 
 - [ ] **BUG-131: Homebrew page "Uninstall" button uses a circle-X icon inconsistent with design system** (LOW)
   - **Files:** `shared/nexis/Pages/Homebrew/homebrew_page.cpp`

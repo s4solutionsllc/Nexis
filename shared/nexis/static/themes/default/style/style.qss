@@ -2092,11 +2092,11 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #DiskToolsPage #btnTrash:hover {
-    opacity: 0.9;
+    background-color: @color09;
 }
 
 #DiskToolsPage #btnTrash:disabled {
-    background-color: @color02;
+    background-color: @borderColor;
     color: @color04;
 }
 
