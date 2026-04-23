@@ -382,7 +382,23 @@ void App::init()
     });
     mPageSlots.append({
         tr("System Cleaner"),
-        [this]() -> QWidget* { systemCleanerPage = new SystemCleanerPage(mSlidingStacked); return systemCleanerPage; },
+        [this]() -> QWidget* {
+            systemCleanerPage = new SystemCleanerPage(mSlidingStacked);
+            connect(systemCleanerPage, &SystemCleanerPage::checkedCategoryCountChanged,
+                    this, [this](int count) {
+                if (count > 0) {
+                    mCleanerBadge->setText(QString::number(count));
+                    repositionBadges();
+                    mCleanerBadge->show();
+                    mCleanerBadgeDot->show();
+                } else {
+                    mCleanerBadge->clear();
+                    mCleanerBadge->hide();
+                    mCleanerBadgeDot->hide();
+                }
+            });
+            return systemCleanerPage;
+        },
         nullptr, {}
     });
     mPageSlots.append({

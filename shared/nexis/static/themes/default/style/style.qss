@@ -1066,38 +1066,117 @@ QLabel[accessibleName="dialog-title"] {
 
 #lblCleanerTitle {
     color: @color11;
-    padding: 10 0;
     font-size: 11pt;
+    font-weight: 700;
 }
 
-#cleanerCategories QCheckBox[accessibleName=circle]::indicator {
-    width: @dp20;
-    height: @dp20;
+#lblCleanerSubtitle {
+    font-size: 9pt;
+    color: @color06;
+    padding-bottom: 4;
 }
 
-#cleanerCategories QLabel,
-#checkSelectAllSystemScan {
+/* - Category cards - */
+
+#cleanerCategoryCard {
+    background-color: @cardBg;
+    border: 1px solid @borderColor;
+    border-radius: 8;
+}
+
+#cleanerCategoryCard[checked="true"] {
+    border: 2px solid @accentColor;
+}
+
+#cleanerCategoryCard #lblCatName {
     font-size: 10pt;
+    font-weight: 600;
     color: @color05;
 }
 
-/* - System Scan Button - */
+#cleanerCategoryCard #lblCatSubtitle {
+    font-size: 8pt;
+    color: @color06;
+    font-family: @monoFontFamily;
+}
 
-#SystemCleanerPage #btnScan {
+#cleanerCategoryCard #lblCatSize {
+    font-size: 9pt;
+    color: @color06;
+}
+
+/* - Header action buttons - */
+
+#btnScheduleCleaner {
+    border: 1px solid @borderColor;
+    border-radius: @dp6;
+    background-color: transparent;
+    color: @color05;
+    padding: @dp6 @dp14;
+}
+
+#btnScheduleCleaner:hover {
+    background-color: @cardBg;
+}
+
+#btnScanSystem {
     border: 0;
     border-radius: @dp6;
     background-color: @accentColor;
     color: @color07;
-    font-size: 12pt;
-    font-weight: bold;
-    padding: @dp8 @dp24;
+    font-weight: 700;
+    padding: @dp6 @dp16;
 }
 
-#SystemCleanerPage #btnScan:hover {
+#btnScanSystem:hover {
     background-color: @accentHover;
 }
 
-/* - System Clean Button - */
+/* - Footer bar - */
+
+#cleanerFooter {
+    background-color: @cardBgElevated;
+    border: 1px solid @borderColor;
+    border-radius: 8;
+}
+
+#lblEstimatedLabel {
+    font-size: 7pt;
+    color: @color06;
+}
+
+#lblEstimatedSize {
+    font-size: 13pt;
+    font-weight: 700;
+    color: @successColor;
+}
+
+#btnCleanSelected {
+    border: 0;
+    border-radius: @dp6;
+    background-color: @destructiveColor;
+    color: @color07;
+    font-weight: 700;
+    padding: @dp6 @dp16;
+}
+
+#btnCleanSelected:disabled {
+    background-color: @color14;
+    color: @color06;
+}
+
+#btnViewResults {
+    border: 0;
+    background: transparent;
+    color: @accentColor;
+    font-size: 9pt;
+}
+
+#btnViewResults:hover {
+    color: @accentHover;
+}
+
+/* - System Clean Button (page 1 tree results) - */
 
 #SystemCleanerPage #btnClean {
     border: 0;

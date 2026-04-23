@@ -583,7 +583,7 @@
   - **Complexity:** Low–Medium per sub-item
   - **Resolved:** All 12 sub-items implemented across two commits. ffb4c8c (quick wins: gradient removal, border-radius fixes, hardcoded color, `@monoFontFamily` token on service/startup/APT names). Follow-up commit: Inter SemiBold bundled; process name column set to JetBrains Mono via Qt::FontRole; service description in mono; all 4 sidebar logo SVGs updated to Inter; process table items 9pt; command palette keyboard hint footer added with bordered mono kbd glyphs.
 
-- [~] **FR-130: System Cleaner — redesign to match design system UI/UX** — The current System Cleaner page uses an icon-grid layout (decorative macOS-style icons, circular radio-button selectors, a single centered Scan button) that does not match the design system. The Nexis UI Kit spec calls for a list-card layout with square checkboxes, source-path subtitles, an estimated-recoverable footer bar, and a two-button action header. Full gap analysis against the UI Kit mockup:
+- [x] **FR-130: System Cleaner — redesign to match design system UI/UX** — The current System Cleaner page uses an icon-grid layout (decorative macOS-style icons, circular radio-button selectors, a single centered Scan button) that does not match the design system. The Nexis UI Kit spec calls for a list-card layout with square checkboxes, source-path subtitles, an estimated-recoverable footer bar, and a two-button action header. Full gap analysis against the UI Kit mockup:
 
   **Layout — icon grid → two-column list-card grid:**
   - Replace the current `QListWidget`/icon-grid approach with a scrollable two-column grid of horizontal list-item cards (each card spans roughly half the content width).
@@ -634,4 +634,5 @@
   - **Platform:** Both (subtitle paths will differ per platform — define per-category via `#ifdef Q_OS_MACOS`)
   - **Complexity:** Large
   - **Priority:** Medium
+  - **Resolved:** Full card-layout redesign implemented. Two-column `QFrame`-based card grid with per-card name, mono subtitle, and post-scan size label. QSS dynamic property `checked` drives accent border. Footer bar with estimated recoverable size and "Clean selected" button. `mRetained*` lists enable page-0 cleaning without navigating to the tree. Sidebar badge wired via `checkedCategoryCountChanged` signal. See commit for full diff.
 

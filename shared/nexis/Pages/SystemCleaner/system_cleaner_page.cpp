@@ -10,14 +10,19 @@
 #include "signal_mapper.h"
 #include <Utils/format_util.h>
 #include "exclusion_manager_dialog.h"
+#include "schedule_editor_dialog.h"
 #include <QLabel>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QCheckBox>
 #include <QGridLayout>
 #include <QToolButton>
+#include <QPushButton>
+#include <QScrollArea>
 #include <QMenu>
 #include <QHeaderView>
+#include <QScrollBar>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -41,14 +46,6 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
     ui->setupUi(this);
 
     QString themeName = mAppManager->resolveThemeName();
-    mLoadingMovie = new QMovie(
-        QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName), {}, this);
-    // BUG-112: the light-theme scanLoading.gif is 512×512 (vs 100×100 on
-    // the dark/default theme), so without setScaledSize the radar fills
-    // the page on light theme. Lock render size to the label's 100×100
-    // minimumSize from the .ui.
-    mLoadingMovie->setScaledSize(Dpi::scale(100, 100));
-    ui->lblLoadingScanner->setMovie(mLoadingMovie);
 
     mLoadingMovie_2 = new QMovie(
         QString(":/static/themes/%1/img/loading.gif").arg(themeName), {}, this);
@@ -62,100 +59,21 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
 
 void SystemCleanerPage::init()
 {
-    // Use bundled SVGs for consistent appearance across all platforms.
-    // Render at 48×48 (matching disk-tool launcher icons) and enable
-    // scaledContents so the label always shows the full image.
-    auto setPixmap = [](QLabel *lbl, const QString &svgPath) {
-        QPixmap pm = QIcon(svgPath).pixmap(Dpi::scale(48, 48));
-        lbl->setFixedSize(Dpi::scale(48, 48));
-        lbl->setScaledContents(true);
-        lbl->setPixmap(pm);
-    };
-    setPixmap(ui->lblPackageCacheImg, ":/static/themes/common/img/c_package.svg");
-    setPixmap(ui->lblCrashReportsImg, ":/static/themes/common/img/c_crash.svg");
-    setPixmap(ui->lblLogImage,        ":/static/themes/common/img/c_logs.svg");
-    setPixmap(ui->lblAppCacheImg,     ":/static/themes/common/img/c_cache.svg");
-    setPixmap(ui->lblTrashImg,        ":/static/themes/common/img/c_trash.svg");
-    setPixmap(ui->lblDevToolCacheImg, ":/static/themes/common/img/c_devtools.svg");
-    setPixmap(ui->lblBrokenSymlinksImg, ":/static/themes/common/img/c_symlink.svg");
-    setPixmap(ui->lblBrowserPrivacyImg, ":/static/themes/common/img/c_privacy.svg");
-
-#ifndef Q_OS_MACOS
-    // Snap/Flatpak category — added programmatically (Linux only)
-    {
-        QGridLayout *grid = qobject_cast<QGridLayout *>(ui->cleanerCategories->layout());
-        if (grid) {
-            mLblSnapFlatpakImg = new QLabel;
-            setPixmap(mLblSnapFlatpakImg, ":/static/themes/common/img/c_snapflatpak.svg");
-            grid->addWidget(mLblSnapFlatpakImg, 2, 10, Qt::AlignHCenter);
-
-            mLblSnapFlatpakLabel = new QLabel(tr("Snap/Flatpak\nRevisions"));
-            mLblSnapFlatpakLabel->setAlignment(Qt::AlignCenter);
-            mLblSnapFlatpakLabel->setWordWrap(true);
-            grid->addWidget(mLblSnapFlatpakLabel, 3, 10, Qt::AlignHCenter);
-
-            mCheckSnapFlatpak = new QCheckBox;
-            mCheckSnapFlatpak->setCursor(Qt::PointingHandCursor);
-            mCheckSnapFlatpak->setFocusPolicy(Qt::NoFocus);
-            mCheckSnapFlatpak->setAccessibleName("circle");
-            grid->addWidget(mCheckSnapFlatpak, 4, 10, Qt::AlignHCenter | Qt::AlignTop);
-        }
-    }
-#endif
-
-    // FR-114: per-category scan-size trend row (one cell per category column)
-    buildTrendRow();
-    refreshTrendCells();
-
-    // Exclusion rules gear button — floating overlay in top-right corner
-    // (BUG-52: QToolButton for macOS SVG compat)
-    {
-        mBtnExclusions = new QToolButton(this);
-        mBtnExclusions->setAutoRaise(true);
-        mBtnExclusions->setIcon(QIcon(
-            QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
-                .arg(mAppManager->resolveThemeName())));
-        mBtnExclusions->setIconSize(Dpi::scale(18, 18));
-        mBtnExclusions->setFixedSize(Dpi::scale(32, 32));
-        mBtnExclusions->setToolTip(tr("Manage exclusion rules"));
-        mBtnExclusions->setCursor(Qt::PointingHandCursor);
-        mBtnExclusions->setFocusPolicy(Qt::NoFocus);
-        mBtnExclusions->raise();
-        connect(mBtnExclusions, &QToolButton::clicked,
-                this, &SystemCleanerPage::onManageExclusions);
-    }
-
-    // treview settings
-    ui->treeWidgetScanResult->setColumnCount(2);
-    ui->treeWidgetScanResult->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    ui->treeWidgetScanResult->header()->setSectionResizeMode(1, QHeaderView::Fixed);
-    ui->treeWidgetScanResult->setColumnWidth(1, Dpi::scale(100));
-
-    ui->treeWidgetScanResult->header()->setFixedHeight(Dpi::scale(30));
-    ui->treeWidgetScanResult->setHeaderLabels({ tr("File Name"), tr("Size") });
-
-    // loaders — update GIF source on theme change (reuse existing QMovie objects)
     connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, [this] {
         QString themeName = mAppManager->resolveThemeName();
-
-        mLoadingMovie->stop();
-        mLoadingMovie->setFileName(
-            QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName));
-        mLoadingMovie->setScaledSize(Dpi::scale(100, 100));   // BUG-112
-
-        mLoadingMovie_2->stop();
-        mLoadingMovie_2->setFileName(
-            QString(":/static/themes/%1/img/loading.gif").arg(themeName));
-        mLoadingMovie_2->setScaledSize(Dpi::scale(160, 20));
-
         if (mBtnExclusions) {
             mBtnExclusions->setIcon(QIcon(
                 QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
                     .arg(themeName)));
         }
+        if (mLoadingMovie_2) {
+            mLoadingMovie_2->stop();
+            mLoadingMovie_2->setFileName(
+                QString(":/static/themes/%1/img/loading.gif").arg(themeName));
+            mLoadingMovie_2->setScaledSize(Dpi::scale(160, 20));
+        }
     });
 
-    // needed to suppress qt warnings (signal/slot <> threads)
     qRegisterMetaType<QList<QPersistentModelIndex>>();
     qRegisterMetaType<QAbstractItemModel::LayoutChangeHint>();
     qRegisterMetaType<Qt::SortOrder>();
@@ -163,304 +81,399 @@ void SystemCleanerPage::init()
     connect(this, &SystemCleanerPage::scanFinishedS, this, &SystemCleanerPage::onScanFinished);
     connect(this, &SystemCleanerPage::cleanFinishedS, this, &SystemCleanerPage::onCleanFinished);
 
-    // Right-click context menu for scan results
     ui->treeWidgetScanResult->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->treeWidgetScanResult, &QTreeWidget::customContextMenuRequested,
             this, &SystemCleanerPage::onTreeContextMenu);
 
+    ui->treeWidgetScanResult->setColumnCount(2);
+    ui->treeWidgetScanResult->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->treeWidgetScanResult->header()->setSectionResizeMode(1, QHeaderView::Fixed);
+    ui->treeWidgetScanResult->setColumnWidth(1, Dpi::scale(100));
+    ui->treeWidgetScanResult->header()->setFixedHeight(Dpi::scale(30));
+    ui->treeWidgetScanResult->setHeaderLabels({ tr("File Name"), tr("Size") });
+
+    buildCategoryHeader();
+    buildCategoryCards();
+    buildCleanerFooter();
     initScheduleIndicator();
 }
 
-quint64 SystemCleanerPage::addTreeRoot(const CleanCategories &cat, const QString &title, const QFileInfoList &infos, bool noChild)
+// ─── Page header: title + subtitle + Schedule… + Scan system + Exclusions ────
+
+void SystemCleanerPage::buildCategoryHeader()
 {
-    QTreeWidgetItem *root = new QTreeWidgetItem(ui->treeWidgetScanResult);
-    root->setData(2, 0, cat);
-    root->setData(2, 1, title);
-    if (! infos.isEmpty())
-        root->setData(3, 0, infos.at(0).absoluteDir().path());
-    root->setCheckState(0, Qt::Unchecked);
+    QVBoxLayout *catLayout = qobject_cast<QVBoxLayout *>(ui->cleanerCategories->layout());
+    Q_ASSERT(catLayout);
 
-    // add children
-    quint64 totalSize = 0;
+    // Title row
+    QWidget *headerWidget = new QWidget(ui->cleanerCategories);
+    headerWidget->setObjectName("cleanerHeaderWidget");
+    QHBoxLayout *headerRow = new QHBoxLayout(headerWidget);
+    headerRow->setContentsMargins(0, 10, 0, 8);
+    headerRow->setSpacing(8);
 
-    if(! noChild) {
-        for (const QFileInfo &i : infos) {
-            QString path = i.absoluteFilePath();
-            quint64 size = FileUtil::getFileSize(path);
+    // Left: title + subtitle
+    mLblCleanerTitle = new QLabel(tr("System Cleaner"), headerWidget);
+    mLblCleanerTitle->setObjectName("lblCleanerTitle");
 
-            addTreeChild(path, i.fileName(), size, root);
+    QLabel *lblSubtitle = new QLabel(tr("Reclaim disk space by removing caches, logs, and crash reports."), headerWidget);
+    lblSubtitle->setObjectName("lblCleanerSubtitle");
 
-            totalSize += size;
-        }
+    QVBoxLayout *titleCol = new QVBoxLayout;
+    titleCol->setSpacing(2);
+    titleCol->addWidget(mLblCleanerTitle);
+    titleCol->addWidget(lblSubtitle);
+    headerRow->addLayout(titleCol, 1);
 
-        root->setText(0, QString("%1 (%2)")
-                      .arg(title)
-                      .arg(infos.count()));
+    // Right: Exclusions gear, Schedule…, Scan system
+    mBtnExclusions = new QToolButton(headerWidget);
+    mBtnExclusions->setAutoRaise(true);
+    mBtnExclusions->setIcon(QIcon(
+        QString(":/static/themes/%1/img/sidebar-icons/settings.svg")
+            .arg(mAppManager->resolveThemeName())));
+    mBtnExclusions->setIconSize(Dpi::scale(16, 16));
+    mBtnExclusions->setFixedSize(Dpi::scale(28, 28));
+    mBtnExclusions->setToolTip(tr("Manage exclusion rules"));
+    mBtnExclusions->setCursor(Qt::PointingHandCursor);
+    mBtnExclusions->setFocusPolicy(Qt::NoFocus);
+    connect(mBtnExclusions, &QToolButton::clicked, this, &SystemCleanerPage::onManageExclusions);
 
-    } else {
-        if (! infos.isEmpty())
-            totalSize += FileUtil::getFileSize(infos.first().absoluteFilePath());
+    mBtnSchedule = new QPushButton(tr("Schedule\u2026"), headerWidget);
+    mBtnSchedule->setObjectName("btnScheduleCleaner");
+    mBtnSchedule->setCursor(Qt::PointingHandCursor);
+    mBtnSchedule->setFocusPolicy(Qt::NoFocus);
+    connect(mBtnSchedule, &QPushButton::clicked, this, [this] {
+        ScheduleEditorDialog *dlg = new ScheduleEditorDialog(this);
+        connect(dlg, &ScheduleEditorDialog::scheduleCreated, this, [this](const ScheduleManager::CleaningSchedule &s) {
+            mScheduleManager->createSchedule(s);
+            updateScheduleIndicator();
+        });
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->exec();
+    });
 
-        root->setText(0, QString("%1")
-                      .arg(title));
-    }
+    mBtnScanSystem = new QPushButton(tr("Scan system"), headerWidget);
+    mBtnScanSystem->setObjectName("btnScanSystem");
+    mBtnScanSystem->setCursor(Qt::PointingHandCursor);
+    mBtnScanSystem->setFocusPolicy(Qt::NoFocus);
+    connect(mBtnScanSystem, &QPushButton::clicked, this, &SystemCleanerPage::on_btnScan_clicked);
 
-    root->setText(1, QString("%1").arg(FormatUtil::formatBytes(totalSize)));
+    headerRow->addWidget(mBtnExclusions);
+    headerRow->addWidget(mBtnSchedule);
+    headerRow->addWidget(mBtnScanSystem);
 
-    return totalSize;
+    catLayout->addWidget(headerWidget);
 }
 
-void SystemCleanerPage::addTreeChild(const QString &data, const QString &text, const quint64 &size, QTreeWidgetItem *parent)
+// ─── Two-column card grid ─────────────────────────────────────────────────────
+
+void SystemCleanerPage::buildCategoryCards()
 {
-    ByteTreeWidget *item = new ByteTreeWidget(parent);
-    item->setValues(text, size, data);
-    item->setIcon(0, mDefaultIcon);
-}
+    QVBoxLayout *catLayout = qobject_cast<QVBoxLayout *>(ui->cleanerCategories->layout());
+    Q_ASSERT(catLayout);
 
-void SystemCleanerPage::addTreeChild(const CleanCategories &cat, const QString &text, const quint64 &size)
-{
-    ByteTreeWidget *item = new ByteTreeWidget(ui->treeWidgetScanResult);
-    item->setValues(text, size, cat);
-}
+    struct CatDef {
+        CleanCategories cat;
+        QString name;
+        QString subtitle;
+    };
 
-void SystemCleanerPage::on_treeWidgetScanResult_itemClicked(QTreeWidgetItem *item, const int &column)
-{
-    if(column == 0) {
-      // new check state
-      Qt::CheckState cs = (item->checkState(column) == Qt::Checked ? Qt::Checked : Qt::Unchecked);
-
-      // change check state if has children
-      for (int i = 0; i < item->childCount(); ++i)
-        item->child(i)->setCheckState(column, cs);
-    }
-}
-
-void SystemCleanerPage::systemScan()
-{
-    // Worker thread: delegate I/O to CleanerService
-    QList<CleanerService::CleanCategory> categories;
-    if (mScanPackageCache)  categories << CleanerService::PACKAGE_CACHE;
-    if (mScanCrashReports)  categories << CleanerService::CRASH_REPORTS;
-    if (mScanAppLog)        categories << CleanerService::APPLICATION_LOGS;
-    if (mScanAppCache)      categories << CleanerService::APPLICATION_CACHES;
-    if (mScanDevToolCache)  categories << CleanerService::DEV_TOOL_CACHES;
-    if (mScanBrokenSymlinks) categories << CleanerService::BROKEN_SYMLINKS;
-    if (mScanBrowserPrivacy) categories << CleanerService::BROWSER_PRIVACY;
-    if (mScanSnapFlatpak)   categories << CleanerService::SNAP_FLATPAK_REVISIONS;
-
-    CleanerService::ScanResult result = mCleanerService->scan(categories);
-
-    // Distribute results back to member variables for onScanFinished()
-    mPackageCaches = result.categoryFiles.value(CleanerService::PACKAGE_CACHE);
-    mCrashReports  = result.categoryFiles.value(CleanerService::CRASH_REPORTS);
-    mAppLogs       = result.categoryFiles.value(CleanerService::APPLICATION_LOGS);
-    mAppCaches     = result.categoryFiles.value(CleanerService::APPLICATION_CACHES);
-    mDevToolCaches = result.categoryFiles.value(CleanerService::DEV_TOOL_CACHES);
-    mBrokenSymlinks = result.categoryFiles.value(CleanerService::BROKEN_SYMLINKS);
-    mBrowserPrivacy = result.categoryFiles.value(CleanerService::BROWSER_PRIVACY);
-    mSnapFlatpakRevisions = result.categoryFiles.value(CleanerService::SNAP_FLATPAK_REVISIONS);
-
-    emit scanFinishedS();
-}
-
-void SystemCleanerPage::onScanFinished()
-{
-    // Main thread: all UI updates
-    ui->treeWidgetScanResult->setSortingEnabled(false);
-    ui->treeWidgetScanResult->clear();
-
-    quint64 totalSize = 0;
-
-    if (mScanPackageCache) {
-        totalSize += addTreeRoot(PACKAGE_CACHE, mLblPackageCacheText, mPackageCaches);
-    }
-    if (mScanCrashReports) {
-        totalSize += addTreeRoot(CRASH_REPORTS, mLblCrashReportsText, mCrashReports);
-    }
-    if (mScanAppLog) {
-        totalSize += addTreeRoot(APPLICATION_LOGS, mLblAppLogText, mAppLogs);
-    }
-    if (mScanAppCache) {
-        totalSize += addTreeRoot(APPLICATION_CACHES, mLblAppCacheText, mAppCaches);
-    }
-    if (mScanDevToolCache) {
-        totalSize += addTreeRoot(DEV_TOOL_CACHES, mLblDevToolCacheText, mDevToolCaches);
-
-        // Post-process: rename ambiguous "Cache"/"GPUCache" entries to "appName/Cache"
-        // so users can distinguish which Electron app each cache belongs to.
-        for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *root = ui->treeWidgetScanResult->topLevelItem(i);
-            if (root->data(2, 0).toInt() == DEV_TOOL_CACHES) {
-                for (int j = 0; j < root->childCount(); ++j) {
-                    QTreeWidgetItem *child = root->child(j);
-                    QString name = child->text(0);
-                    if (name == "Cache" || name == "GPUCache") {
-                        // Extract parent dir name from the absolute path
-                        QString absPath = child->data(2, 0).toString();
-                        QDir dir(absPath);
-                        dir.cdUp();
-                        child->setText(0, dir.dirName() + "/" + name);
-                    }
-                }
-                break;
-            }
-        }
-    }
-    if (mScanBrokenSymlinks) {
-        totalSize += addTreeRoot(BROKEN_SYMLINKS, mLblBrokenSymlinksText, mBrokenSymlinks);
-    }
-    if (mScanBrowserPrivacy) {
-        totalSize += addTreeRoot(BROWSER_PRIVACY, mLblBrowserPrivacyText, mBrowserPrivacy);
-    }
-    if (mScanSnapFlatpak) {
-        totalSize += addTreeRoot(SNAP_FLATPAK_REVISIONS, mLblSnapFlatpakText, mSnapFlatpakRevisions);
-    }
-    if (mScanTrash) {
+    const QList<CatDef> defs = {
+        { PACKAGE_CACHE,
 #ifdef Q_OS_MACOS
-        totalSize += addTreeRoot(TRASH, mLblTrashText,
-                    { QFileInfo(QDir::homePath() + "/.Trash/") }, true);
+          tr("Package Caches"), QStringLiteral("brew \xc2\xb7 ~/Library/Caches (brew)")
 #else
-        totalSize += addTreeRoot(TRASH, mLblTrashText,
-                    { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
+          tr("Package Caches"), QStringLiteral("apt \xc2\xb7 dnf \xc2\xb7 pacman \xc2\xb7 zypper")
 #endif
-    }
+        },
+        { CRASH_REPORTS,
+#ifdef Q_OS_MACOS
+          tr("Crash Reports"), QStringLiteral("~/Library/Logs/DiagnosticReports")
+#else
+          tr("Crash Reports"), QStringLiteral("/var/crash \xc2\xb7 ~/.xsession-errors")
+#endif
+        },
+        { APPLICATION_LOGS,
+#ifdef Q_OS_MACOS
+          tr("Application Logs"), QStringLiteral("~/Library/Logs \xc2\xb7 /var/log")
+#else
+          tr("Application Logs"), QStringLiteral("journald \xc2\xb7 ~/.cache/*.log")
+#endif
+        },
+        { APPLICATION_CACHES,
+#ifdef Q_OS_MACOS
+          tr("Application Caches"), QStringLiteral("~/Library/Caches")
+#else
+          tr("Application Caches"), QStringLiteral("~/.cache/*")
+#endif
+        },
+        { TRASH,
+#ifdef Q_OS_MACOS
+          tr("Trash"), QStringLiteral("~/.Trash")
+#else
+          tr("Trash"), QStringLiteral("~/.local/share/Trash")
+#endif
+        },
+        { DEV_TOOL_CACHES,
+          tr("Dev Tool Caches"), QStringLiteral("~/.electron \xc2\xb7 ~/.cache/vscode*")
+        },
+        { BROKEN_SYMLINKS,
+          tr("Broken Symlinks"), QStringLiteral("~/ recursive symlink scan")
+        },
+        { BROWSER_PRIVACY,
+          tr("Browser Privacy"), QStringLiteral("Chrome \xc2\xb7 Firefox \xc2\xb7 Chromium \xc2\xb7 Safari")
+        },
+    };
 
-    ui->lblTotalBytes->setText(tr("Total size: %1").arg(FormatUtil::formatBytes(totalSize)));
+    // Pre-size mCards so enum-indexed access is safe
+    mCards.resize(SNAP_FLATPAK_REVISIONS + 1);
 
-    ui->treeWidgetScanResult->setSortingEnabled(true);
-    on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
+    QScrollArea *scrollArea = new QScrollArea(ui->cleanerCategories);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    // FR-114: the scan just persisted new samples — pull them into the trend row.
-    refreshTrendCells();
+    QWidget *container = new QWidget;
+    container->setObjectName("cleanerCardsContainer");
+    QGridLayout *grid = new QGridLayout(container);
+    grid->setContentsMargins(0, 0, 0, 10);
+    grid->setHorizontalSpacing(10);
+    grid->setVerticalSpacing(10);
+    grid->setColumnStretch(0, 1);
+    grid->setColumnStretch(1, 1);
 
-    // scan results page
-    mLoadingMovie->stop();
-    ui->stackedWidget->setCurrentIndex(1);
+    int index = 0;
+    auto addCard = [&](const CatDef &def) {
+        QFrame *card = new QFrame(container);
+        card->setObjectName("cleanerCategoryCard");
+        card->setProperty("checked", false);
 
-    ui->checkPackageCache->setChecked(false);
-    ui->checkCrashReports->setChecked(false);
-    ui->checkAppLog->setChecked(false);
-    ui->checkAppCache->setChecked(false);
-    ui->checkTrash->setChecked(false);
-    ui->checkDevToolCache->setChecked(false);
-    ui->checkBrokenSymlinks->setChecked(false);
-    ui->checkBrowserPrivacy->setChecked(false);
-    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setChecked(false);
+        QCheckBox *check = new QCheckBox(card);
+        check->setCursor(Qt::PointingHandCursor);
+        check->setFocusPolicy(Qt::NoFocus);
 
-    // Release scan result lists — data is now in the tree widget (BUG-10)
-    mPackageCaches.clear();
-    mCrashReports.clear();
-    mAppLogs.clear();
-    mAppCaches.clear();
-    mDevToolCaches.clear();
-    mBrokenSymlinks.clear();
-    mBrowserPrivacy.clear();
-    mSnapFlatpakRevisions.clear();
+        QLabel *lblName = new QLabel(def.name, card);
+        lblName->setObjectName("lblCatName");
 
-    mScanInProgress = false;
-}
+        QLabel *lblSubtitle = new QLabel(def.subtitle, card);
+        lblSubtitle->setObjectName("lblCatSubtitle");
+        lblSubtitle->setWordWrap(true);
 
-bool SystemCleanerPage::cleanValid()
-{
-    for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
+        QLabel *lblSize = new QLabel(QStringLiteral("\xe2\x80\x94"), card);
+        lblSize->setObjectName("lblCatSize");
+        lblSize->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        lblSize->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
-        QTreeWidgetItem *it = ui->treeWidgetScanResult->topLevelItem(i);
+        QVBoxLayout *textCol = new QVBoxLayout;
+        textCol->setSpacing(2);
+        textCol->addWidget(lblName);
+        textCol->addWidget(lblSubtitle);
 
-        if (it->checkState(0) == Qt::Checked)
-            return true;
+        QHBoxLayout *cardRow = new QHBoxLayout(card);
+        cardRow->setContentsMargins(12, 10, 12, 10);
+        cardRow->setSpacing(10);
+        cardRow->addWidget(check, 0, Qt::AlignTop);
+        cardRow->addLayout(textCol, 1);
+        cardRow->addWidget(lblSize, 0, Qt::AlignVCenter);
 
-        for (int j = 0; j < it->childCount(); ++j)
-            if (it->child(j)->checkState(0) == Qt::Checked)
-                return true;
-    }
+        connect(check, &QCheckBox::toggled, this, [this, card, def](bool on) {
+            card->setProperty("checked", on);
+            card->style()->unpolish(card);
+            card->style()->polish(card);
+            updateFooterTotal();
+            updateCleanerCheckBadge();
+        });
 
-    return false;
-}
+        CategoryCard cc;
+        cc.frame   = card;
+        cc.check   = check;
+        cc.lblSize = lblSize;
+        mCards[def.cat] = cc;
 
-void SystemCleanerPage::systemClean()
-{
-    // Worker thread: delegate I/O to CleanerService
-    mTotalCleanedSize = 0;
+        int row = index / 2;
+        int col = index % 2;
+        grid->addWidget(card, row, col);
+        ++index;
+    };
 
-    // FR-112: take a snapshot before deleting, if the user opted in.
-    // systemClean bypasses CleanerService::clean (historical divergence), so
-    // the hook here is what covers interactive page-initiated cleans. The
-    // category list is best-effort — the page doesn't track per-category
-    // checkboxes at clean time, only the aggregated mFilesToDelete list.
-    QList<CleanerService::CleanCategory> cats;
-    if (mCleanTrash)       cats << CleanerService::TRASH;
-    if (mCleanSnapFlatpak) cats << CleanerService::SNAP_FLATPAK_REVISIONS;
-    if (!mFilesToDelete.isEmpty()) {
-        // Stand-in: represent the file-cleaning bucket as "application
-        // caches" for the snapshot annotation. The snapshot captures the
-        // whole filesystem regardless.
-        cats << CleanerService::APPLICATION_CACHES;
-    }
-    if (!cats.isEmpty())
-        mCleanerService->maybeTakeSnapshot(cats);
+    for (const CatDef &def : defs)
+        addCard(def);
 
-    if (mCleanTrash) {
-        mTotalCleanedSize += mCleanerService->cleanTrash();
-    }
+#ifndef Q_OS_MACOS
+    // Snap/Flatpak — Linux only
+    CatDef snapDef { SNAP_FLATPAK_REVISIONS,
+                     tr("Snap/Flatpak Revisions"),
+                     QStringLiteral("snap revisions \xc2\xb7 flatpak unused runtimes") };
+    addCard(snapDef);
+    mCheckSnapFlatpak = mCards[SNAP_FLATPAK_REVISIONS].check;
+#endif
 
-    if (mCleanSnapFlatpak) {
-        ToolManager *tmr = ToolManager::ins();
-        QList<StaleSnapRevision> snapRevs = tmr->getStaleSnapRevisions();
-        for (const StaleSnapRevision &rev : snapRevs)
-            mTotalCleanedSize += rev.size;
-        tmr->removeStaleSnapRevisions(snapRevs);
-        tmr->removeUnusedFlatpakRuntimes();
-    }
+    // Loading spinner overlay (shown during scan, centered in cards area)
+    mLblLoadingScanner = new QLabel(container);
+    mLblLoadingScanner->setObjectName("lblLoadingScanner");
+    mLblLoadingScanner->setFixedSize(Dpi::scale(100, 100));
+    mLblLoadingScanner->hide();
 
-    if (!mFilesToDelete.isEmpty()) {
-        mTotalCleanedSize += mCleanerService->cleanFiles(mFilesToDelete);
-    }
+    QString themeName = mAppManager->resolveThemeName();
+    mLoadingMovie = new QMovie(
+        QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName), {}, this);
+    mLoadingMovie->setScaledSize(Dpi::scale(100, 100));
+    mLblLoadingScanner->setMovie(mLoadingMovie);
 
-    emit cleanFinishedS();
-}
-
-void SystemCleanerPage::onCleanFinished()
-{
-    // Main thread: all UI updates
-    QTreeWidget *tree = ui->treeWidgetScanResult;
-
-    // Remove children in reverse order to preserve indices
-    for (int k = mChildrenToRemove.size() - 1; k >= 0; --k) {
-        int parentIdx = mChildrenToRemove.at(k).first;
-        int childIdx = mChildrenToRemove.at(k).second;
-        if (childIdx == -1) {
-            // Remove entire top-level item (e.g. Snap/Flatpak all-or-nothing clean)
-            delete tree->takeTopLevelItem(parentIdx);
-        } else {
-            QTreeWidgetItem *parent = tree->topLevelItem(parentIdx);
-            if (parent) {
-                delete parent->takeChild(childIdx);
-            }
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, [this] {
+        QString themeName = mAppManager->resolveThemeName();
+        if (mLoadingMovie) {
+            mLoadingMovie->stop();
+            mLoadingMovie->setFileName(
+                QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName));
+            mLoadingMovie->setScaledSize(Dpi::scale(100, 100));
         }
+    });
+
+    scrollArea->setWidget(container);
+    catLayout->addWidget(scrollArea, 1);
+}
+
+// ─── Footer bar ──────────────────────────────────────────────────────────────
+
+void SystemCleanerPage::buildCleanerFooter()
+{
+    QVBoxLayout *catLayout = qobject_cast<QVBoxLayout *>(ui->cleanerCategories->layout());
+    Q_ASSERT(catLayout);
+
+    mCleanerFooter = new QFrame(ui->cleanerCategories);
+    mCleanerFooter->setObjectName("cleanerFooter");
+    mCleanerFooter->hide();
+
+    QHBoxLayout *footerRow = new QHBoxLayout(mCleanerFooter);
+    footerRow->setContentsMargins(14, 10, 14, 10);
+    footerRow->setSpacing(12);
+
+    // Left: label + size
+    QLabel *lblEstimatedLabel = new QLabel(tr("ESTIMATED RECOVERABLE"), mCleanerFooter);
+    lblEstimatedLabel->setObjectName("lblEstimatedLabel");
+
+    mLblEstimated = new QLabel(QStringLiteral("0 B"), mCleanerFooter);
+    mLblEstimated->setObjectName("lblEstimatedSize");
+
+    QVBoxLayout *leftCol = new QVBoxLayout;
+    leftCol->setSpacing(2);
+    leftCol->addWidget(lblEstimatedLabel);
+    leftCol->addWidget(mLblEstimated);
+
+    footerRow->addLayout(leftCol, 1);
+
+    // Right: view results link + clean selected button
+    mBtnViewResults = new QPushButton(tr("View scan results \xe2\x86\x92"), mCleanerFooter);
+    mBtnViewResults->setObjectName("btnViewResults");
+    mBtnViewResults->setCursor(Qt::PointingHandCursor);
+    mBtnViewResults->setFocusPolicy(Qt::NoFocus);
+    connect(mBtnViewResults, &QPushButton::clicked, this, [this] {
+        ui->stackedWidget->setCurrentIndex(1);
+    });
+
+    mBtnCleanSelected = new QPushButton(tr("Clean selected"), mCleanerFooter);
+    mBtnCleanSelected->setObjectName("btnCleanSelected");
+    mBtnCleanSelected->setCursor(Qt::PointingHandCursor);
+    mBtnCleanSelected->setFocusPolicy(Qt::NoFocus);
+    mBtnCleanSelected->setEnabled(false);
+    connect(mBtnCleanSelected, &QPushButton::clicked,
+            this, &SystemCleanerPage::quickCleanByCategory);
+
+    footerRow->addWidget(mBtnViewResults);
+    footerRow->addWidget(mBtnCleanSelected);
+
+    catLayout->addWidget(mCleanerFooter);
+}
+
+// ─── Footer total calculation ─────────────────────────────────────────────────
+
+void SystemCleanerPage::updateFooterTotal()
+{
+    quint64 total = 0;
+    for (const CategoryCard &c : mCards) {
+        if (c.check && c.check->isChecked())
+            total += c.lastSize;
     }
+    if (mLblEstimated)
+        mLblEstimated->setText(FormatUtil::formatBytes(total));
+    if (mBtnCleanSelected)
+        mBtnCleanSelected->setEnabled(total > 0 && mHasScanned);
+}
 
-    // Update titles — sum remaining children's stored sizes instead of
-    // re-traversing the filesystem (BUG-10)
-    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *it = tree->topLevelItem(i);
-        quint64 remainingSize = 0;
-        for (int j = 0; j < it->childCount(); ++j)
-            remainingSize += it->child(j)->data(1, SortRole).toULongLong();
-        it->setText(0, QString("%1 (%2)")
-                    .arg(it->data(2, 1).toString())
-                    .arg(it->childCount()));
-        it->setText(1, FormatUtil::formatBytes(remainingSize));
+// ─── Badge signal ────────────────────────────────────────────────────────────
+
+void SystemCleanerPage::updateCleanerCheckBadge()
+{
+    int count = 0;
+    for (const CategoryCard &c : mCards) {
+        if (c.check && c.check->isChecked())
+            ++count;
     }
+    emit checkedCategoryCountChanged(count);
+}
 
-    ui->lblRemovedTotalSize->setText(tr("%1 size files cleaned.")
-                                     .arg(FormatUtil::formatBytes(mTotalCleanedSize)));
+// ─── Scan ─────────────────────────────────────────────────────────────────────
 
-    ui->btnClean->show();
-    mLoadingMovie_2->stop();
-    ui->lblLoadingCleaner->hide();
-    ui->treeWidgetScanResult->setEnabled(true);
+void SystemCleanerPage::on_btnScan_clicked()
+{
+    if (mScanInProgress || mCleanInProgress)
+        return;
 
-    mCleanInProgress = false;
+    // Read which categories are selected
+    auto cardChecked = [this](CleanCategories cat) -> bool {
+        return (cat < mCards.size() && mCards[cat].check)
+                   ? mCards[cat].check->isChecked()
+                   : false;
+    };
+
+    mScanPackageCache   = cardChecked(PACKAGE_CACHE);
+    mScanCrashReports   = cardChecked(CRASH_REPORTS);
+    mScanAppLog         = cardChecked(APPLICATION_LOGS);
+    mScanAppCache       = cardChecked(APPLICATION_CACHES);
+    mScanTrash          = cardChecked(TRASH);
+    mScanDevToolCache   = cardChecked(DEV_TOOL_CACHES);
+    mScanBrokenSymlinks = cardChecked(BROKEN_SYMLINKS);
+    mScanBrowserPrivacy = cardChecked(BROWSER_PRIVACY);
+    mScanSnapFlatpak    = cardChecked(SNAP_FLATPAK_REVISIONS);
+
+    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache ||
+          mScanTrash || mScanDevToolCache || mScanBrokenSymlinks ||
+          mScanBrowserPrivacy || mScanSnapFlatpak))
+        return;
+
+    mLblPackageCacheText   = tr("Package Caches");
+    mLblCrashReportsText   = tr("Crash Reports");
+    mLblAppLogText         = tr("Application Logs");
+    mLblAppCacheText       = tr("Application Caches");
+    mLblTrashText          = tr("Trash");
+    mLblDevToolCacheText   = tr("Dev Tool Caches");
+    mLblBrokenSymlinksText = tr("Broken Symlinks");
+    mLblBrowserPrivacyText = tr("Browser Privacy");
+    mLblSnapFlatpakText    = tr("Snap/Flatpak Revisions");
+
+    // Disable UI during scan
+    mBtnScanSystem->setEnabled(false);
+    mBtnSchedule->setEnabled(false);
+    if (mCleanerFooter) mCleanerFooter->hide();
+    for (const CategoryCard &c : mCards)
+        if (c.check) c.check->setEnabled(false);
+
+    mLoadingMovie->start();
+    if (mLblLoadingScanner) mLblLoadingScanner->show();
+
+    mPackageCaches.clear(); mCrashReports.clear();
+    mAppLogs.clear();       mAppCaches.clear();
+    mDevToolCaches.clear(); mBrokenSymlinks.clear();
+    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
+
+    mRetainedPackageCaches.clear(); mRetainedCrashReports.clear();
+    mRetainedAppLogs.clear();       mRetainedAppCaches.clear();
+    mRetainedDevToolCaches.clear(); mRetainedBrokenSymlinks.clear();
+    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
+
+    mScanInProgress = true;
+    mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
 }
 
 void SystemCleanerPage::quickScan()
@@ -488,132 +501,215 @@ void SystemCleanerPage::quickScan()
     mLblBrowserPrivacyText = tr("Browser Privacy");
     mLblSnapFlatpakText    = tr("Snap/Flatpak Revisions");
 
-    ui->btnScan->hide();
-    mLoadingMovie->start();
-    ui->lblLoadingScanner->show();
-    ui->checkPackageCache->setEnabled(false);
-    ui->checkCrashReports->setEnabled(false);
-    ui->checkAppLog->setEnabled(false);
-    ui->checkAppCache->setEnabled(false);
-    ui->checkTrash->setEnabled(false);
-    ui->checkDevToolCache->setEnabled(false);
-    ui->checkBrokenSymlinks->setEnabled(false);
-    ui->checkBrowserPrivacy->setEnabled(false);
-    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setEnabled(false);
-    ui->checkSelectAllSystemScan->setEnabled(false);
+    // Check all cards
+    for (const CategoryCard &c : mCards)
+        if (c.check) c.check->setChecked(true);
 
-    mPackageCaches.clear();
-    mCrashReports.clear();
-    mAppLogs.clear();
-    mAppCaches.clear();
-    mDevToolCaches.clear();
-    mBrokenSymlinks.clear();
-    mBrowserPrivacy.clear();
-    mSnapFlatpakRevisions.clear();
+    mBtnScanSystem->setEnabled(false);
+    mBtnSchedule->setEnabled(false);
+    if (mCleanerFooter) mCleanerFooter->hide();
+    for (const CategoryCard &c : mCards)
+        if (c.check) c.check->setEnabled(false);
+
+    mLoadingMovie->start();
+    if (mLblLoadingScanner) mLblLoadingScanner->show();
+
+    mPackageCaches.clear(); mCrashReports.clear();
+    mAppLogs.clear();       mAppCaches.clear();
+    mDevToolCaches.clear(); mBrokenSymlinks.clear();
+    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
+
+    mRetainedPackageCaches.clear(); mRetainedCrashReports.clear();
+    mRetainedAppLogs.clear();       mRetainedAppCaches.clear();
+    mRetainedDevToolCaches.clear(); mRetainedBrokenSymlinks.clear();
+    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
 
     mScanInProgress = true;
     mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
 }
 
-void SystemCleanerPage::on_btnScan_clicked()
+void SystemCleanerPage::systemScan()
 {
-    if (mScanInProgress || mCleanInProgress)
-        return;
+    QList<CleanerService::CleanCategory> categories;
+    if (mScanPackageCache)   categories << CleanerService::PACKAGE_CACHE;
+    if (mScanCrashReports)   categories << CleanerService::CRASH_REPORTS;
+    if (mScanAppLog)         categories << CleanerService::APPLICATION_LOGS;
+    if (mScanAppCache)       categories << CleanerService::APPLICATION_CACHES;
+    if (mScanDevToolCache)   categories << CleanerService::DEV_TOOL_CACHES;
+    if (mScanBrokenSymlinks) categories << CleanerService::BROKEN_SYMLINKS;
+    if (mScanBrowserPrivacy) categories << CleanerService::BROWSER_PRIVACY;
+    if (mScanSnapFlatpak)    categories << CleanerService::SNAP_FLATPAK_REVISIONS;
 
-    // Read checkbox states on main thread
-    mScanPackageCache = ui->checkPackageCache->isChecked();
-    mScanCrashReports = ui->checkCrashReports->isChecked();
-    mScanAppLog       = ui->checkAppLog->isChecked();
-    mScanAppCache     = ui->checkAppCache->isChecked();
-    mScanTrash        = ui->checkTrash->isChecked();
-    mScanDevToolCache = ui->checkDevToolCache->isChecked();
-    mScanBrokenSymlinks = ui->checkBrokenSymlinks->isChecked();
-    mScanBrowserPrivacy = ui->checkBrowserPrivacy->isChecked();
-    mScanSnapFlatpak = mCheckSnapFlatpak ? mCheckSnapFlatpak->isChecked() : false;
+    CleanerService::ScanResult result = mCleanerService->scan(categories);
 
-    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache || mScanTrash || mScanDevToolCache || mScanBrokenSymlinks || mScanBrowserPrivacy || mScanSnapFlatpak)) {
-        return;
+    mPackageCaches        = result.categoryFiles.value(CleanerService::PACKAGE_CACHE);
+    mCrashReports         = result.categoryFiles.value(CleanerService::CRASH_REPORTS);
+    mAppLogs              = result.categoryFiles.value(CleanerService::APPLICATION_LOGS);
+    mAppCaches            = result.categoryFiles.value(CleanerService::APPLICATION_CACHES);
+    mDevToolCaches        = result.categoryFiles.value(CleanerService::DEV_TOOL_CACHES);
+    mBrokenSymlinks       = result.categoryFiles.value(CleanerService::BROKEN_SYMLINKS);
+    mBrowserPrivacy       = result.categoryFiles.value(CleanerService::BROWSER_PRIVACY);
+    mSnapFlatpakRevisions = result.categoryFiles.value(CleanerService::SNAP_FLATPAK_REVISIONS);
+
+    emit scanFinishedS();
+}
+
+void SystemCleanerPage::onScanFinished()
+{
+    if (mLblLoadingScanner) {
+        mLoadingMovie->stop();
+        mLblLoadingScanner->hide();
     }
 
-    // Read label texts on main thread (for tree root titles)
-    mLblPackageCacheText = ui->lblPackageCache->text();
-    mLblCrashReportsText = ui->lblCrashReports->text();
-    mLblAppLogText       = ui->lblAppLog->text();
-    mLblAppCacheText     = ui->lblAppCache->text();
-    mLblTrashText        = ui->lblTrash->text();
-    mLblDevToolCacheText = ui->lblDevToolCache->text();
-    mLblBrokenSymlinksText = ui->lblBrokenSymlinks->text();
-    mLblBrowserPrivacyText = ui->lblBrowserPrivacy->text();
-    mLblSnapFlatpakText = mLblSnapFlatpakLabel ? mLblSnapFlatpakLabel->text() : tr("Snap/Flatpak Revisions");
+    // ── Populate tree (page 1) ──────────────────────────────────────────────
+    ui->treeWidgetScanResult->setSortingEnabled(false);
+    ui->treeWidgetScanResult->clear();
 
-    // Pre-scan UI updates (main thread)
-    ui->btnScan->hide();
-    mLoadingMovie->start();
-    ui->lblLoadingScanner->show();
-    ui->checkPackageCache->setEnabled(false);
-    ui->checkCrashReports->setEnabled(false);
-    ui->checkAppLog->setEnabled(false);
-    ui->checkAppCache->setEnabled(false);
-    ui->checkTrash->setEnabled(false);
-    ui->checkDevToolCache->setEnabled(false);
-    ui->checkBrokenSymlinks->setEnabled(false);
-    ui->checkBrowserPrivacy->setEnabled(false);
-    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setEnabled(false);
-    ui->checkSelectAllSystemScan->setEnabled(false);
+    quint64 totalSize = 0;
+    auto updateCard = [this](CleanCategories cat, quint64 sz) {
+        if (cat < mCards.size() && mCards[cat].lblSize) {
+            mCards[cat].lblSize->setText(FormatUtil::formatBytes(sz));
+            mCards[cat].lastSize = sz;
+        }
+    };
 
-    // Clear cached results
-    mPackageCaches.clear();
-    mCrashReports.clear();
-    mAppLogs.clear();
-    mAppCaches.clear();
-    mDevToolCaches.clear();
-    mBrokenSymlinks.clear();
-    mBrowserPrivacy.clear();
-    mSnapFlatpakRevisions.clear();
+    if (mScanPackageCache) {
+        quint64 sz = addTreeRoot(PACKAGE_CACHE, mLblPackageCacheText, mPackageCaches);
+        totalSize += sz; updateCard(PACKAGE_CACHE, sz);
+    }
+    if (mScanCrashReports) {
+        quint64 sz = addTreeRoot(CRASH_REPORTS, mLblCrashReportsText, mCrashReports);
+        totalSize += sz; updateCard(CRASH_REPORTS, sz);
+    }
+    if (mScanAppLog) {
+        quint64 sz = addTreeRoot(APPLICATION_LOGS, mLblAppLogText, mAppLogs);
+        totalSize += sz; updateCard(APPLICATION_LOGS, sz);
+    }
+    if (mScanAppCache) {
+        quint64 sz = addTreeRoot(APPLICATION_CACHES, mLblAppCacheText, mAppCaches);
+        totalSize += sz; updateCard(APPLICATION_CACHES, sz);
+    }
+    if (mScanDevToolCache) {
+        quint64 sz = addTreeRoot(DEV_TOOL_CACHES, mLblDevToolCacheText, mDevToolCaches);
+        totalSize += sz; updateCard(DEV_TOOL_CACHES, sz);
 
-    mScanInProgress = true;
+        for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
+            QTreeWidgetItem *root = ui->treeWidgetScanResult->topLevelItem(i);
+            if (root->data(2, 0).toInt() == DEV_TOOL_CACHES) {
+                for (int j = 0; j < root->childCount(); ++j) {
+                    QTreeWidgetItem *child = root->child(j);
+                    QString name = child->text(0);
+                    if (name == "Cache" || name == "GPUCache") {
+                        QString absPath = child->data(2, 0).toString();
+                        QDir dir(absPath);
+                        dir.cdUp();
+                        child->setText(0, dir.dirName() + "/" + name);
+                    }
+                }
+                break;
+            }
+        }
+    }
+    if (mScanBrokenSymlinks) {
+        quint64 sz = addTreeRoot(BROKEN_SYMLINKS, mLblBrokenSymlinksText, mBrokenSymlinks);
+        totalSize += sz; updateCard(BROKEN_SYMLINKS, sz);
+    }
+    if (mScanBrowserPrivacy) {
+        quint64 sz = addTreeRoot(BROWSER_PRIVACY, mLblBrowserPrivacyText, mBrowserPrivacy);
+        totalSize += sz; updateCard(BROWSER_PRIVACY, sz);
+    }
+    if (mScanSnapFlatpak) {
+        quint64 sz = addTreeRoot(SNAP_FLATPAK_REVISIONS, mLblSnapFlatpakText, mSnapFlatpakRevisions);
+        totalSize += sz; updateCard(SNAP_FLATPAK_REVISIONS, sz);
+    }
+    if (mScanTrash) {
+#ifdef Q_OS_MACOS
+        quint64 sz = addTreeRoot(TRASH, mLblTrashText,
+                    { QFileInfo(QDir::homePath() + "/.Trash/") }, true);
+#else
+        quint64 sz = addTreeRoot(TRASH, mLblTrashText,
+                    { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
+#endif
+        totalSize += sz; updateCard(TRASH, sz);
+    }
 
-    // Launch worker thread (I/O only)
-    mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
+    ui->lblTotalBytes->setText(tr("Total size: %1").arg(FormatUtil::formatBytes(totalSize)));
+    ui->treeWidgetScanResult->setSortingEnabled(true);
+    on_cbSortBy_currentIndexChanged(ui->cbSortBy->currentIndex());
+
+    // Retain scan results for page-0 "Clean selected"
+    mRetainedPackageCaches  = mPackageCaches;
+    mRetainedCrashReports   = mCrashReports;
+    mRetainedAppLogs        = mAppLogs;
+    mRetainedAppCaches      = mAppCaches;
+    mRetainedDevToolCaches  = mDevToolCaches;
+    mRetainedBrokenSymlinks = mBrokenSymlinks;
+    mRetainedBrowserPrivacy = mBrowserPrivacy;
+    mRetainedSnapFlatpak    = mSnapFlatpakRevisions;
+
+    // Clear worker copies (BUG-10)
+    mPackageCaches.clear(); mCrashReports.clear();
+    mAppLogs.clear();       mAppCaches.clear();
+    mDevToolCaches.clear(); mBrokenSymlinks.clear();
+    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
+
+    mHasScanned = true;
+    mScanInProgress = false;
+
+    // Re-enable UI
+    for (const CategoryCard &c : mCards)
+        if (c.check) c.check->setEnabled(true);
+    mBtnScanSystem->setEnabled(true);
+    mBtnSchedule->setEnabled(true);
+
+    // Show footer with updated total
+    updateFooterTotal();
+    if (mCleanerFooter) mCleanerFooter->show();
+
+    repositionScheduleIndicator();
+}
+
+// ─── Clean (from tree results, page 1) ───────────────────────────────────────
+
+bool SystemCleanerPage::cleanValid()
+{
+    for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *it = ui->treeWidgetScanResult->topLevelItem(i);
+        if (it->checkState(0) == Qt::Checked) return true;
+        for (int j = 0; j < it->childCount(); ++j)
+            if (it->child(j)->checkState(0) == Qt::Checked) return true;
+    }
+    return false;
 }
 
 void SystemCleanerPage::on_btnClean_clicked()
 {
-    if (mScanInProgress || mCleanInProgress)
-        return;
+    if (mScanInProgress || mCleanInProgress) return;
+    if (!cleanValid()) return;
 
-    if (!cleanValid()) {
-        return;
-    }
-
-    // Pre-clean UI updates (main thread)
     ui->btnClean->hide();
     mLoadingMovie_2->start();
     ui->lblLoadingCleaner->show();
     ui->treeWidgetScanResult->setEnabled(false);
 
-    // Read tree widget state on main thread to build work lists
     QTreeWidget *tree = ui->treeWidgetScanResult;
     mFilesToDelete.clear();
     mChildrenToRemove.clear();
     mCleanTrash = false;
     mCleanSnapFlatpak = false;
+    mCleaningFromCard = false;
 
     for (int i = 0; i < tree->topLevelItemCount(); ++i) {
         QTreeWidgetItem *it = tree->topLevelItem(i);
         CleanCategories cat = (CleanCategories) it->data(2, 0).toInt();
-
         if (cat == CleanCategories::TRASH) {
-            if (it->checkState(0) == Qt::Checked) {
-                mCleanTrash = true;
-            }
+            if (it->checkState(0) == Qt::Checked) mCleanTrash = true;
         } else if (cat == CleanCategories::SNAP_FLATPAK_REVISIONS) {
             if (it->checkState(0) == Qt::Checked) {
                 mCleanSnapFlatpak = true;
                 mChildrenToRemove.append(QPair<int,int>(i, -1));
             }
         } else {
-            // Normal file-based category — collect checked children
             for (int j = 0; j < it->childCount(); ++j) {
                 if (it->child(j)->checkState(0) == Qt::Checked) {
                     mFilesToDelete << it->child(j)->data(2, 0).toString();
@@ -624,55 +720,214 @@ void SystemCleanerPage::on_btnClean_clicked()
     }
 
     mCleanInProgress = true;
-
-    // Launch worker thread (I/O only)
     mWorkerFuture = QtConcurrent::run([this]() { systemClean(); });
+}
+
+// ─── Clean selected (from page 0 footer) ─────────────────────────────────────
+
+void SystemCleanerPage::quickCleanByCategory()
+{
+    if (mScanInProgress || mCleanInProgress || !mHasScanned) return;
+
+    mFilesToDelete.clear();
+    mChildrenToRemove.clear();
+    mCleanTrash = false;
+    mCleanSnapFlatpak = false;
+    mCleaningFromCard = true;
+
+    auto collectFiles = [this](CleanCategories cat, const QFileInfoList &files) {
+        if (cat < mCards.size() && mCards[cat].check && mCards[cat].check->isChecked()) {
+            for (const QFileInfo &fi : files)
+                mFilesToDelete << fi.absoluteFilePath();
+        }
+    };
+
+    collectFiles(PACKAGE_CACHE,      mRetainedPackageCaches);
+    collectFiles(CRASH_REPORTS,      mRetainedCrashReports);
+    collectFiles(APPLICATION_LOGS,   mRetainedAppLogs);
+    collectFiles(APPLICATION_CACHES, mRetainedAppCaches);
+    collectFiles(DEV_TOOL_CACHES,    mRetainedDevToolCaches);
+    collectFiles(BROKEN_SYMLINKS,    mRetainedBrokenSymlinks);
+    collectFiles(BROWSER_PRIVACY,    mRetainedBrowserPrivacy);
+
+    if (TRASH < mCards.size() && mCards[TRASH].check && mCards[TRASH].check->isChecked())
+        mCleanTrash = true;
+
+    if (mCheckSnapFlatpak && mCheckSnapFlatpak->isChecked())
+        mCleanSnapFlatpak = true;
+
+    if (mFilesToDelete.isEmpty() && !mCleanTrash && !mCleanSnapFlatpak) return;
+
+    mBtnCleanSelected->setEnabled(false);
+    mBtnScanSystem->setEnabled(false);
+    for (const CategoryCard &c : mCards)
+        if (c.check) c.check->setEnabled(false);
+
+    mCleanInProgress = true;
+    mWorkerFuture = QtConcurrent::run([this]() { systemClean(); });
+}
+
+void SystemCleanerPage::systemClean()
+{
+    mTotalCleanedSize = 0;
+
+    QList<CleanerService::CleanCategory> cats;
+    if (mCleanTrash)                         cats << CleanerService::TRASH;
+    if (mCleanSnapFlatpak)                   cats << CleanerService::SNAP_FLATPAK_REVISIONS;
+    if (!mFilesToDelete.isEmpty())           cats << CleanerService::APPLICATION_CACHES;
+    if (!cats.isEmpty())
+        mCleanerService->maybeTakeSnapshot(cats);
+
+    if (mCleanTrash)
+        mTotalCleanedSize += mCleanerService->cleanTrash();
+
+    if (mCleanSnapFlatpak) {
+        ToolManager *tmr = ToolManager::ins();
+        QList<StaleSnapRevision> snapRevs = tmr->getStaleSnapRevisions();
+        for (const StaleSnapRevision &rev : snapRevs)
+            mTotalCleanedSize += rev.size;
+        tmr->removeStaleSnapRevisions(snapRevs);
+        tmr->removeUnusedFlatpakRuntimes();
+    }
+
+    if (!mFilesToDelete.isEmpty())
+        mTotalCleanedSize += mCleanerService->cleanFiles(mFilesToDelete);
+
+    emit cleanFinishedS();
+}
+
+void SystemCleanerPage::onCleanFinished()
+{
+    if (mCleaningFromCard) {
+        // Clean was initiated from page-0 footer — reset cards
+        for (CategoryCard &c : mCards) {
+            if (c.check && c.check->isChecked() && c.lastSize > 0) {
+                c.lblSize->setText(QStringLiteral("\xe2\x80\x94"));
+                c.lastSize = 0;
+            }
+        }
+        mRetainedPackageCaches.clear(); mRetainedCrashReports.clear();
+        mRetainedAppLogs.clear();       mRetainedAppCaches.clear();
+        mRetainedDevToolCaches.clear(); mRetainedBrokenSymlinks.clear();
+        mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
+
+        mHasScanned = false;
+        if (mCleanerFooter) mCleanerFooter->hide();
+        updateFooterTotal();
+
+        for (const CategoryCard &c : mCards)
+            if (c.check) c.check->setEnabled(true);
+        mBtnScanSystem->setEnabled(true);
+        mBtnSchedule->setEnabled(true);
+
+    } else {
+        // Clean from tree results page (page 1)
+        QTreeWidget *tree = ui->treeWidgetScanResult;
+
+        for (int k = mChildrenToRemove.size() - 1; k >= 0; --k) {
+            int parentIdx = mChildrenToRemove.at(k).first;
+            int childIdx  = mChildrenToRemove.at(k).second;
+            if (childIdx == -1) {
+                delete tree->takeTopLevelItem(parentIdx);
+            } else {
+                QTreeWidgetItem *parent = tree->topLevelItem(parentIdx);
+                if (parent) delete parent->takeChild(childIdx);
+            }
+        }
+
+        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+            QTreeWidgetItem *it = tree->topLevelItem(i);
+            quint64 remaining = 0;
+            for (int j = 0; j < it->childCount(); ++j)
+                remaining += it->child(j)->data(1, SortRole).toULongLong();
+            it->setText(0, QString("%1 (%2)")
+                        .arg(it->data(2, 1).toString())
+                        .arg(it->childCount()));
+            it->setText(1, FormatUtil::formatBytes(remaining));
+        }
+
+        ui->lblRemovedTotalSize->setText(tr("%1 size files cleaned.")
+                                         .arg(FormatUtil::formatBytes(mTotalCleanedSize)));
+        ui->btnClean->show();
+        mLoadingMovie_2->stop();
+        ui->lblLoadingCleaner->hide();
+        ui->treeWidgetScanResult->setEnabled(true);
+    }
+
+    mCleanInProgress = false;
+    mCleaningFromCard = false;
 }
 
 void SystemCleanerPage::on_btnBackToCategories_clicked()
 {
-    if (mScanInProgress || mCleanInProgress)
-        return;
+    if (mScanInProgress || mCleanInProgress) return;
 
-    ui->btnScan->show();
-    ui->lblRemovedTotalSize->clear();
     mLoadingMovie->stop();
-    ui->lblLoadingScanner->hide();
-    ui->checkPackageCache->setEnabled(true);
-    ui->checkCrashReports->setEnabled(true);
-    ui->checkAppLog->setEnabled(true);
-    ui->checkAppCache->setEnabled(true);
-    ui->checkTrash->setEnabled(true);
-    ui->checkDevToolCache->setEnabled(true);
-    ui->checkBrokenSymlinks->setEnabled(true);
-    ui->checkBrowserPrivacy->setEnabled(true);
-    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setEnabled(true);
+    if (mLblLoadingScanner) mLblLoadingScanner->hide();
     ui->treeWidgetScanResult->clear();
     ui->stackedWidget->setCurrentIndex(0);
-    ui->checkSelectAllSystemScan->setEnabled(true);
-    ui->checkSelectAllSystemScan->setChecked(false);
+    updateScheduleIndicator();
 }
 
-void SystemCleanerPage::on_checkSelectAllSystemScan_clicked(bool checked)
+// ─── Tree widget helpers ──────────────────────────────────────────────────────
+
+quint64 SystemCleanerPage::addTreeRoot(const CleanCategories &cat, const QString &title,
+                                        const QFileInfoList &infos, bool noChild)
 {
-    ui->checkAppCache->setChecked(checked);
-    ui->checkAppLog->setChecked(checked);
-    ui->checkCrashReports->setChecked(checked);
-    ui->checkPackageCache->setChecked(checked);
-    ui->checkTrash->setChecked(checked);
-    ui->checkDevToolCache->setChecked(checked);
-    ui->checkBrokenSymlinks->setChecked(checked);
-    ui->checkBrowserPrivacy->setChecked(checked);
-    if (mCheckSnapFlatpak) mCheckSnapFlatpak->setChecked(checked);
+    QTreeWidgetItem *root = new QTreeWidgetItem(ui->treeWidgetScanResult);
+    root->setData(2, 0, cat);
+    root->setData(2, 1, title);
+    if (!infos.isEmpty())
+        root->setData(3, 0, infos.at(0).absoluteDir().path());
+    root->setCheckState(0, Qt::Unchecked);
+
+    quint64 totalSize = 0;
+    if (!noChild) {
+        for (const QFileInfo &i : infos) {
+            QString path = i.absoluteFilePath();
+            quint64 size = FileUtil::getFileSize(path);
+            addTreeChild(path, i.fileName(), size, root);
+            totalSize += size;
+        }
+        root->setText(0, QString("%1 (%2)").arg(title).arg(infos.count()));
+    } else {
+        if (!infos.isEmpty())
+            totalSize += FileUtil::getFileSize(infos.first().absoluteFilePath());
+        root->setText(0, title);
+    }
+    root->setText(1, FormatUtil::formatBytes(totalSize));
+    return totalSize;
+}
+
+void SystemCleanerPage::addTreeChild(const QString &data, const QString &text,
+                                      const quint64 &size, QTreeWidgetItem *parent)
+{
+    ByteTreeWidget *item = new ByteTreeWidget(parent);
+    item->setValues(text, size, data);
+    item->setIcon(0, mDefaultIcon);
+}
+
+void SystemCleanerPage::addTreeChild(const CleanCategories &cat, const QString &text,
+                                      const quint64 &size)
+{
+    ByteTreeWidget *item = new ByteTreeWidget(ui->treeWidgetScanResult);
+    item->setValues(text, size, cat);
+}
+
+void SystemCleanerPage::on_treeWidgetScanResult_itemClicked(QTreeWidgetItem *item, const int &column)
+{
+    if (column == 0) {
+        Qt::CheckState cs = (item->checkState(column) == Qt::Checked ? Qt::Checked : Qt::Unchecked);
+        for (int i = 0; i < item->childCount(); ++i)
+            item->child(i)->setCheckState(column, cs);
+    }
 }
 
 void SystemCleanerPage::on_checkSelectAll_clicked(bool checked)
 {
-    for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i)
-    {
+    for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
         QTreeWidgetItem *it = ui->treeWidgetScanResult->topLevelItem(i);
         it->setCheckState(0, (checked ? Qt::Checked : Qt::Unchecked));
-
         for (int j = 0; j < it->childCount(); ++j)
             it->child(j)->setCheckState(0, (checked ? Qt::Checked : Qt::Unchecked));
     }
@@ -681,17 +936,56 @@ void SystemCleanerPage::on_checkSelectAll_clicked(bool checked)
 void SystemCleanerPage::on_cbSortBy_currentIndexChanged(int idx)
 {
     switch (idx) {
-        case 0: ui->treeWidgetScanResult->sortItems(0, Qt::AscendingOrder); break;
+        case 0: ui->treeWidgetScanResult->sortItems(0, Qt::AscendingOrder);  break;
         case 1: ui->treeWidgetScanResult->sortItems(0, Qt::DescendingOrder); break;
-        case 2: ui->treeWidgetScanResult->sortItems(1, Qt::AscendingOrder); break;
+        case 2: ui->treeWidgetScanResult->sortItems(1, Qt::AscendingOrder);  break;
         case 3: ui->treeWidgetScanResult->sortItems(1, Qt::DescendingOrder); break;
     }
 }
 
+// ─── Context menu ─────────────────────────────────────────────────────────────
+
+void SystemCleanerPage::onTreeContextMenu(const QPoint &pos)
+{
+    QTreeWidgetItem *item = ui->treeWidgetScanResult->itemAt(pos);
+    if (!item || !item->parent()) return;
+
+    QString path = item->data(2, 0).toString();
+    if (path.isEmpty()) return;
+
+    QMenu menu(this);
+    QAction *actExclude = menu.addAction(tr("Always exclude this"));
+    QAction *chosen = menu.exec(ui->treeWidgetScanResult->viewport()->mapToGlobal(pos));
+    if (chosen == actExclude) {
+        QFileInfo fi(path);
+        CleanerService::ExclusionEntry::Type type = fi.isDir()
+            ? CleanerService::ExclusionEntry::Folder
+            : CleanerService::ExclusionEntry::File;
+        mCleanerService->addExclusion(type, path);
+
+        QTreeWidgetItem *parent = item->parent();
+        delete parent->takeChild(parent->indexOfChild(item));
+
+        quint64 remaining = 0;
+        for (int j = 0; j < parent->childCount(); ++j)
+            remaining += parent->child(j)->data(1, SortRole).toULongLong();
+        parent->setText(0, QString("%1 (%2)")
+                        .arg(parent->data(2, 1).toString())
+                        .arg(parent->childCount()));
+        parent->setText(1, FormatUtil::formatBytes(remaining));
+    }
+}
+
+void SystemCleanerPage::onManageExclusions()
+{
+    ExclusionManagerDialog dlg(this, mAppManager);
+    dlg.exec();
+}
+
+// ─── Schedule indicator ───────────────────────────────────────────────────────
+
 void SystemCleanerPage::initScheduleIndicator()
 {
-    // Floating overlay parented to SystemCleanerPage — not in any layout.
-    // Visibility managed manually: shown only when on page 0 with enabled schedules.
     mScheduleIndicator = new QFrame(this);
     mScheduleIndicator->setObjectName("scheduleIndicator");
 
@@ -711,12 +1005,11 @@ void SystemCleanerPage::initScheduleIndicator()
 
     mScheduleIndicator->raise();
 
-    // Hide indicator when navigating away from the categories page (page 0)
     connect(ui->stackedWidget, &QStackedWidget::currentChanged, this, [this](int index) {
         if (index != 0)
             mScheduleIndicator->hide();
         else
-            updateScheduleIndicator();  // re-evaluate and show if schedules exist
+            updateScheduleIndicator();
     });
 
     connect(mScheduleManager, &ScheduleManager::schedulesChanged,
@@ -727,47 +1020,27 @@ void SystemCleanerPage::initScheduleIndicator()
 
 void SystemCleanerPage::repositionScheduleIndicator()
 {
-    if (!mScheduleIndicator || !mScheduleIndicator->isVisible())
-        return;
+    if (!mScheduleIndicator || !mScheduleIndicator->isVisible()) return;
 
-    // Position at the bottom of the page, inset by the outer layout margins (15px L/R, 15px bottom)
-    int outerMarginLR = 15;
+    int outerMarginLR     = 15;
     int outerMarginBottom = 15;
+    // If footer is visible, position schedule indicator above it
+    int footerH = (mCleanerFooter && mCleanerFooter->isVisible())
+                      ? mCleanerFooter->sizeHint().height() + 6
+                      : 0;
     int indicatorH = mScheduleIndicator->sizeHint().height();
     int w = width() - outerMarginLR * 2;
     int x = outerMarginLR;
-    int y = height() - indicatorH - outerMarginBottom;
+    int y = height() - indicatorH - outerMarginBottom - footerH;
 
     mScheduleIndicator->setGeometry(x, y, w, indicatorH);
     mScheduleIndicator->raise();
-}
-
-void SystemCleanerPage::repositionExclusionsButton()
-{
-    if (!mBtnExclusions)
-        return;
-
-    int outerMarginR = 15;
-    int outerMarginT = 8;
-    QSize btnSize = mBtnExclusions->sizeHint();
-    int x = width() - btnSize.width() - outerMarginR;
-    int y = outerMarginT;
-    mBtnExclusions->move(x, y);
-    mBtnExclusions->raise();
-}
-
-void SystemCleanerPage::resizeEvent(QResizeEvent *event)
-{
-    QWidget::resizeEvent(event);
-    repositionScheduleIndicator();
-    repositionExclusionsButton();
 }
 
 void SystemCleanerPage::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     repositionScheduleIndicator();
-    repositionExclusionsButton();
 }
 
 void SystemCleanerPage::updateScheduleIndicator()
@@ -789,10 +1062,9 @@ void SystemCleanerPage::updateScheduleIndicator()
             earliest = next;
             nextName = s.name;
         }
-
         if (s.lastRun.isValid() && (!lastRun.isValid() || s.lastRun > lastRun)) {
-            lastRun = s.lastRun;
-            lastBytes = s.lastBytesFreed;
+            lastRun    = s.lastRun;
+            lastBytes  = s.lastBytesFreed;
         }
     }
 
@@ -803,140 +1075,17 @@ void SystemCleanerPage::updateScheduleIndicator()
 
     mScheduleIndicator->show();
 
-    if (earliest.isValid()) {
+    if (earliest.isValid())
         mLblNextSchedule->setText(
             tr("Next: %1 \xe2\x80\x94 %2").arg(nextName, earliest.toString("ddd, MMM d h:mm AP")));
-    }
 
-    if (lastRun.isValid()) {
+    if (lastRun.isValid())
         mLblLastSchedule->setText(
             tr("Last: %1 \xe2\x80\x94 cleaned %2")
                 .arg(lastRun.toString("MMM d"))
                 .arg(FormatUtil::formatBytes(lastBytes)));
-    } else {
+    else
         mLblLastSchedule->setText(tr("No previous scheduled cleans"));
-    }
 
     repositionScheduleIndicator();
-}
-
-void SystemCleanerPage::onManageExclusions()
-{
-    ExclusionManagerDialog dlg(this, mAppManager);
-    dlg.exec();
-}
-
-void SystemCleanerPage::onTreeContextMenu(const QPoint &pos)
-{
-    QTreeWidgetItem *item = ui->treeWidgetScanResult->itemAt(pos);
-    if (!item)
-        return;
-
-    // Only show context menu for child items (individual files/folders), not category roots
-    if (!item->parent())
-        return;
-
-    QString path = item->data(2, 0).toString();
-    if (path.isEmpty())
-        return;
-
-    QMenu menu(this);
-    QAction *actExclude = menu.addAction(tr("Always exclude this"));
-
-    QAction *chosen = menu.exec(ui->treeWidgetScanResult->viewport()->mapToGlobal(pos));
-    if (chosen == actExclude) {
-        QFileInfo fi(path);
-        CleanerService::ExclusionEntry::Type type = fi.isDir()
-            ? CleanerService::ExclusionEntry::Folder
-            : CleanerService::ExclusionEntry::File;
-        mCleanerService->addExclusion(type, path);
-
-        QTreeWidgetItem *parent = item->parent();
-        delete parent->takeChild(parent->indexOfChild(item));
-
-        // Update parent title and size
-        quint64 remainingSize = 0;
-        for (int j = 0; j < parent->childCount(); ++j)
-            remainingSize += parent->child(j)->data(1, SortRole).toULongLong();
-        parent->setText(0, QString("%1 (%2)")
-                        .arg(parent->data(2, 1).toString())
-                        .arg(parent->childCount()));
-        parent->setText(1, FormatUtil::formatBytes(remainingSize));
-    }
-}
-
-// ───────── FR-114: per-category scan-size trend row ─────────
-
-void SystemCleanerPage::buildTrendRow()
-{
-    QGridLayout *grid = qobject_cast<QGridLayout *>(ui->cleanerCategories->layout());
-    if (!grid)
-        return;
-
-    // Column map for each CleanerService category — must match the .ui grid
-    // placement of the title labels on row 3.
-    struct Entry { CleanerService::CleanCategory cat; int col; };
-    static const Entry kEntries[] = {
-        { CleanerService::PACKAGE_CACHE,         2 },
-        { CleanerService::CRASH_REPORTS,         3 },
-        { CleanerService::APPLICATION_LOGS,      4 },
-        { CleanerService::APPLICATION_CACHES,    5 },
-        { CleanerService::TRASH,                 6 },
-        { CleanerService::DEV_TOOL_CACHES,       7 },
-        { CleanerService::BROKEN_SYMLINKS,       8 },
-        { CleanerService::BROWSER_PRIVACY,       9 },
-#ifndef Q_OS_MACOS
-        { CleanerService::SNAP_FLATPAK_REVISIONS, 10 },
-#endif
-    };
-
-    for (const Entry &e : kEntries) {
-        auto *sizeLbl = new QLabel(QStringLiteral("—"), ui->cleanerCategories);
-        sizeLbl->setObjectName("categoryTrendLabel");
-        sizeLbl->setAlignment(Qt::AlignCenter);
-        QFont f = sizeLbl->font();
-        f.setPointSize(qMax(7, f.pointSize() - 2));
-        sizeLbl->setFont(f);
-
-        grid->addWidget(sizeLbl, 5, e.col, Qt::AlignHCenter | Qt::AlignTop);
-
-        TrendCell tc;
-        tc.sizeLabel = sizeLbl;
-        mTrendCells.insert(static_cast<int>(e.cat), tc);
-    }
-}
-
-void SystemCleanerPage::refreshTrendCells()
-{
-    if (mTrendCells.isEmpty())
-        return;
-
-    for (auto it = mTrendCells.begin(); it != mTrendCells.end(); ++it) {
-        const auto cat = static_cast<CleanerService::CleanCategory>(it.key());
-        const auto samples = mCleanerService->getCategoryTrend(cat);
-
-        if (samples.isEmpty()) {
-            it.value().sizeLabel->setText(QStringLiteral("—"));
-            it.value().sizeLabel->setToolTip(tr("No scan history yet."));
-            continue;
-        }
-
-        const auto latest = samples.last();
-        it.value().sizeLabel->setText(FormatUtil::formatBytes(latest.bytes));
-
-        QString tip;
-        if (samples.size() >= 2) {
-            const auto prev = samples.at(samples.size() - 2);
-            const qint64 delta = static_cast<qint64>(latest.bytes)
-                               - static_cast<qint64>(prev.bytes);
-            const QString arrow = delta > 0 ? QStringLiteral("↑")
-                                : delta < 0 ? QStringLiteral("↓")
-                                             : QStringLiteral("→");
-            tip = tr("%1 %2 vs last scan").arg(arrow,
-                FormatUtil::formatBytes(static_cast<quint64>(std::llabs(delta))));
-        } else {
-            tip = tr("First scan recorded.");
-        }
-        it.value().sizeLabel->setToolTip(tip);
-    }
 }

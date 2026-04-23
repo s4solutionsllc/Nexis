@@ -20,6 +20,8 @@ class QLabel;
 class QFrame;
 class QToolButton;
 class QMenu;
+class QPushButton;
+class QScrollArea;
 class SignalMapper;
 class ScheduleManager;
 
@@ -44,6 +46,13 @@ public:
         SNAP_FLATPAK_REVISIONS
     };
 
+    struct CategoryCard {
+        QFrame    *frame    = nullptr;
+        QCheckBox *check    = nullptr;
+        QLabel    *lblSize  = nullptr;
+        quint64    lastSize = 0;
+    };
+
 public:
     explicit SystemCleanerPage(QWidget *parent = nullptr,
                                AppManager *appManager = nullptr,
@@ -57,6 +66,7 @@ public:
 signals:
     void scanFinishedS();
     void cleanFinishedS();
+    void checkedCategoryCountChanged(int count);
 
 private slots:
     quint64 addTreeRoot(const CleanCategories &cat, const QString &title, const QFileInfoList &infos, bool noChild = false);
@@ -74,21 +84,24 @@ private slots:
     void onCleanFinished();
     bool cleanValid();
 
-    void on_checkSelectAllSystemScan_clicked(bool checked);
     void on_checkSelectAll_clicked(bool check);
     void on_cbSortBy_currentIndexChanged(int idx);
     void updateScheduleIndicator();
     void onManageExclusions();
     void onTreeContextMenu(const QPoint &pos);
 
-    void resizeEvent(QResizeEvent *event) override;
     void showEvent(QShowEvent *event) override;
 
 private:
     void init();
+    void buildCategoryHeader();
+    void buildCategoryCards();
+    void buildCleanerFooter();
+    void updateFooterTotal();
+    void updateCleanerCheckBadge();
+    void quickCleanByCategory();
     void initScheduleIndicator();
     void repositionScheduleIndicator();
-    void repositionExclusionsButton();
 
 private:
     Ui::SystemCleanerPage *ui;
@@ -100,6 +113,21 @@ private:
     QIcon mDefaultIcon;
     QMovie *mLoadingMovie;
     QMovie *mLoadingMovie_2;
+
+    // New card-based category widgets
+    QVector<CategoryCard> mCards;        // indexed by CleanCategories enum value
+    QLabel      *mLblCleanerTitle    = nullptr;
+    QPushButton *mBtnScanSystem      = nullptr;
+    QPushButton *mBtnSchedule        = nullptr;
+    QPushButton *mBtnCleanSelected   = nullptr;
+    QPushButton *mBtnViewResults     = nullptr;
+    QLabel      *mLblEstimated       = nullptr;
+    QFrame      *mCleanerFooter      = nullptr;
+    QLabel      *mLblLoadingScanner  = nullptr;
+    bool         mHasScanned         = false;
+
+    // Snap/Flatpak card (Linux only, added programmatically)
+    QCheckBox *mCheckSnapFlatpak = nullptr;
 
     // Thread-safe scan state (set on main thread before worker, read on worker)
     bool mScanPackageCache;
@@ -120,6 +148,7 @@ private:
     QString mLblBrowserPrivacyText;
     bool mScanSnapFlatpak;
     QString mLblSnapFlatpakText;
+
     // Scan results (written on worker, read on main thread in onScanFinished)
     QFileInfoList mPackageCaches;
     QFileInfoList mCrashReports;
@@ -129,6 +158,16 @@ private:
     QFileInfoList mBrokenSymlinks;
     QFileInfoList mBrowserPrivacy;
     QFileInfoList mSnapFlatpakRevisions;
+
+    // Retained scan results for "Clean selected" on page 0
+    QFileInfoList mRetainedPackageCaches;
+    QFileInfoList mRetainedCrashReports;
+    QFileInfoList mRetainedAppLogs;
+    QFileInfoList mRetainedAppCaches;
+    QFileInfoList mRetainedDevToolCaches;
+    QFileInfoList mRetainedBrokenSymlinks;
+    QFileInfoList mRetainedBrowserPrivacy;
+    QFileInfoList mRetainedSnapFlatpak;
 
     // Thread-safe clean state (set on main thread before worker, read on worker)
     QStringList mFilesToDelete;
@@ -142,28 +181,15 @@ private:
     // Prevent overlapping scan/clean workers (BUG-10)
     bool mScanInProgress = false;
     bool mCleanInProgress = false;
+    bool mCleaningFromCard = false;   // true when clean was initiated from page-0 footer
 
     // Track background tasks so they can be awaited on shutdown (BUG-05)
     QFuture<void> mWorkerFuture;
 
-    // Snap/Flatpak category (added programmatically, Linux only)
-    QLabel *mLblSnapFlatpakImg = nullptr;
-    QLabel *mLblSnapFlatpakLabel = nullptr;
-    QCheckBox *mCheckSnapFlatpak = nullptr;
-
-    // FR-114: per-category scan-size trend row (programmatically placed at
-    // grid row 5 for each category column). Refreshed after every scan.
-    struct TrendCell {
-        QLabel *sizeLabel = nullptr;
-    };
-    QHash<int, TrendCell> mTrendCells;
-    void buildTrendRow();
-    void refreshTrendCells();
-
-    // Exclusion rules gear button
+    // Exclusion rules gear button (in header row)
     QToolButton *mBtnExclusions = nullptr;
 
-    // Schedule indicator panel
+    // Schedule indicator panel (floating overlay, bottom of page 0)
     QFrame *mScheduleIndicator = nullptr;
     QLabel *mLblNextSchedule = nullptr;
     QLabel *mLblLastSchedule = nullptr;

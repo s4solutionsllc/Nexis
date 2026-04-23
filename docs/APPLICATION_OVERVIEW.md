@@ -215,10 +215,12 @@ Scan and remove system junk files across 9 categories.
 - Exclusions persist across app restarts via JSON in QSettings
 
 **UI features:**
-- Hierarchical tree view with checkboxes (category > individual files)
+- **Page 0 — Category Cards (FR-130):** Two-column card grid with per-card name, path subtitle, post-scan size label, and checkbox. Checked cards gain a highlighted border. A persistent footer shows estimated total recoverable space and a "Clean selected" button (enabled after scanning). "View scan results →" navigates to the detailed tree view.
+- **Page 1 — Scan Results tree:** Hierarchical tree view with checkboxes (category > individual files)
 - Sort by name (A-Z, Z-A) or size (small-large, large-small)
 - Total size display of selected items
 - Schedule indicator showing next/last automated clean time
+- Sidebar badge counts checked categories (shown on the System Cleaner nav button)
 
 **Scheduled cleaning integration:**
 - Automated background scans/cleans via OS-native scheduler (launchd, systemd, cron)
