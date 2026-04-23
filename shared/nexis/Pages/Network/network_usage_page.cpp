@@ -16,6 +16,7 @@
 #include <QScrollArea>
 #include <QSizePolicy>
 #include <QFont>
+#include <QNetworkInterface>
 #include <algorithm>
 
 // ── BarChartWidget ────────────────────────────────────────────────────────────
@@ -375,6 +376,35 @@ void NetworkUsagePage::onAlertToggled(bool enabled)
 
 // ── Refresh helpers ───────────────────────────────────────────────────────────
 
+static QString friendlyIfaceName(const QString &name)
+{
+    // macOS: Qt reads the display name via SystemConfiguration (e.g. "Wi-Fi", "Ethernet").
+    const QNetworkInterface iface = QNetworkInterface::interfaceFromName(name);
+    if (iface.isValid()) {
+        const QString human = iface.humanReadableName();
+        if (!human.isEmpty() && human != name)
+            return QString("%1 (%2)").arg(human, name);
+    }
+
+    // Linux fallback: classify by naming convention.
+    const QString lower = name.toLower();
+    QString type;
+    if (lower.startsWith("wl") || lower.startsWith("wifi") || lower.startsWith("ath"))
+        type = QObject::tr("Wi-Fi");
+    else if (lower.startsWith("en") || lower.startsWith("eth") || lower.startsWith("eno")
+             || lower.startsWith("enp") || lower.startsWith("ens"))
+        type = QObject::tr("Ethernet");
+    else if (lower.startsWith("wwan") || lower.startsWith("rmnet") || lower.startsWith("ppp"))
+        type = QObject::tr("Cellular");
+    else if (lower.startsWith("tun") || lower.startsWith("utun") || lower.startsWith("tap")
+             || lower.startsWith("vpn") || lower.startsWith("wg"))
+        type = QObject::tr("VPN");
+    else if (lower.startsWith("bridge") || lower.startsWith("br"))
+        type = QObject::tr("Bridge");
+
+    return type.isEmpty() ? name : QString("%1 (%2)").arg(type, name);
+}
+
 void NetworkUsagePage::populateIfaceCombo()
 {
     const QString current = mIfaceCombo->currentData().toString();
@@ -382,7 +412,7 @@ void NetworkUsagePage::populateIfaceCombo()
     mIfaceCombo->clear();
     mIfaceCombo->addItem(tr("All Interfaces"), NetUsageTracker::kAllInterfaces);
     for (const QString &iface : NetUsageTracker::ins()->trackedInterfaces())
-        mIfaceCombo->addItem(iface, iface);
+        mIfaceCombo->addItem(friendlyIfaceName(iface), iface);
 
     int idx = mIfaceCombo->findData(current);
     mIfaceCombo->setCurrentIndex(idx >= 0 ? idx : 0);
