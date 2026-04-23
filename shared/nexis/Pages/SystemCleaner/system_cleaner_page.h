@@ -18,6 +18,7 @@
 class QCheckBox;
 class QLabel;
 class QFrame;
+class QProgressBar;
 class QToolButton;
 class QMenu;
 class QPushButton;
@@ -112,7 +113,7 @@ private:
     ScheduleManager *mScheduleManager;
 
     QIcon mDefaultIcon;
-    QMovie *mLoadingMovie;
+    QProgressBar *mScanProgress = nullptr;
     QMovie *mLoadingMovie_2;
 
     // New card-based category widgets

@@ -1105,6 +1105,19 @@ QLabel[accessibleName="dialog-title"] {
     color: @color06;
 }
 
+/* - Scan progress bar - */
+
+#cleanerScanProgress {
+    background-color: @borderColor;
+    border: none;
+    border-radius: 2;
+}
+
+#cleanerScanProgress::chunk {
+    background-color: @accentColor;
+    border-radius: 2;
+}
+
 /* - Header action buttons - */
 
 #btnScheduleCleaner {

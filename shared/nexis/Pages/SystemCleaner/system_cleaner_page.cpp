@@ -20,6 +20,7 @@
 #include <QToolButton>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QProgressBar>
 #include <QMenu>
 #include <QHeaderView>
 #include <QScrollBar>
@@ -40,7 +41,6 @@ SystemCleanerPage::SystemCleanerPage(QWidget *parent, AppManager *appManager,
     mCleanerService(cleanerService ? cleanerService : CleanerService::ins()),
     mScheduleManager(scheduleManager ? scheduleManager : ScheduleManager::ins()),
     mDefaultIcon(QIcon(":/static/themes/common/img/package.png")),
-    mLoadingMovie(nullptr),
     mLoadingMovie_2(nullptr)
 {
     ui->setupUi(this);
@@ -71,6 +71,11 @@ void SystemCleanerPage::init()
             mLoadingMovie_2->setFileName(
                 QString(":/static/themes/%1/img/loading.gif").arg(themeName));
             mLoadingMovie_2->setScaledSize(Dpi::scale(160, 20));
+        }
+        // Re-polish scan progress bar so QSS theme tokens apply
+        if (mScanProgress) {
+            mScanProgress->style()->unpolish(mScanProgress);
+            mScanProgress->style()->polish(mScanProgress);
         }
     });
 
@@ -308,29 +313,16 @@ void SystemCleanerPage::buildCategoryCards()
     mCheckSnapFlatpak = mCards[SNAP_FLATPAK_REVISIONS].check;
 #endif
 
-    // Loading spinner overlay (shown during scan, centered in cards area)
-    mLblLoadingScanner = new QLabel(container);
-    mLblLoadingScanner->setObjectName("lblLoadingScanner");
-    mLblLoadingScanner->setFixedSize(Dpi::scale(100, 100));
-    mLblLoadingScanner->hide();
-
-    QString themeName = mAppManager->resolveThemeName();
-    mLoadingMovie = new QMovie(
-        QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName), {}, this);
-    mLoadingMovie->setScaledSize(Dpi::scale(100, 100));
-    mLblLoadingScanner->setMovie(mLoadingMovie);
-
-    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, [this] {
-        QString themeName = mAppManager->resolveThemeName();
-        if (mLoadingMovie) {
-            mLoadingMovie->stop();
-            mLoadingMovie->setFileName(
-                QString(":/static/themes/%1/img/scanLoading.gif").arg(themeName));
-            mLoadingMovie->setScaledSize(Dpi::scale(100, 100));
-        }
-    });
-
     scrollArea->setWidget(container);
+
+    // Indeterminate progress bar shown during scan (matches duplicate finder pattern)
+    mScanProgress = new QProgressBar(ui->cleanerCategories);
+    mScanProgress->setObjectName("cleanerScanProgress");
+    mScanProgress->setTextVisible(false);
+    mScanProgress->setFixedHeight(Dpi::scale(4));
+    mScanProgress->hide();
+
+    catLayout->addWidget(mScanProgress);
     catLayout->addWidget(scrollArea, 1);
 }
 
@@ -448,8 +440,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     for (const CategoryCard &c : mCards)
         if (c.check) c.check->setEnabled(false);
 
-    mLoadingMovie->start();
-    if (mLblLoadingScanner) mLblLoadingScanner->show();
+    if (mScanProgress) { mScanProgress->setRange(0, 0); mScanProgress->show(); }
 
     mPackageCaches.clear();  mCrashReports.clear();
     mAppLogs.clear();        mAppCaches.clear();
@@ -493,8 +484,7 @@ void SystemCleanerPage::startBackgroundSizeScan()
     mBtnScanSystem->setEnabled(false);
     mBtnSchedule->setEnabled(false);
 
-    mLoadingMovie->start();
-    if (mLblLoadingScanner) mLblLoadingScanner->show();
+    if (mScanProgress) { mScanProgress->setRange(0, 0); mScanProgress->show(); }
 
     mPackageCaches.clear();  mCrashReports.clear();
     mAppLogs.clear();        mAppCaches.clear();
@@ -545,8 +535,7 @@ void SystemCleanerPage::quickScan()
     for (const CategoryCard &c : mCards)
         if (c.check) c.check->setEnabled(false);
 
-    mLoadingMovie->start();
-    if (mLblLoadingScanner) mLblLoadingScanner->show();
+    if (mScanProgress) { mScanProgress->setRange(0, 0); mScanProgress->show(); }
 
     mPackageCaches.clear(); mCrashReports.clear();
     mAppLogs.clear();       mAppCaches.clear();
@@ -590,10 +579,7 @@ void SystemCleanerPage::systemScan()
 
 void SystemCleanerPage::onScanFinished()
 {
-    if (mLblLoadingScanner) {
-        mLoadingMovie->stop();
-        mLblLoadingScanner->hide();
-    }
+    if (mScanProgress) mScanProgress->hide();
 
     // ── Populate tree (page 1) ──────────────────────────────────────────────
     ui->treeWidgetScanResult->setSortingEnabled(false);
@@ -900,8 +886,7 @@ void SystemCleanerPage::on_btnBackToCategories_clicked()
 {
     if (mScanInProgress || mCleanInProgress) return;
 
-    mLoadingMovie->stop();
-    if (mLblLoadingScanner) mLblLoadingScanner->hide();
+    if (mScanProgress) mScanProgress->hide();
     ui->treeWidgetScanResult->clear();
     ui->stackedWidget->setCurrentIndex(0);
     updateScheduleIndicator();
