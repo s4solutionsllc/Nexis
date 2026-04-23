@@ -22,6 +22,7 @@ struct SidebarSection {
     QVBoxLayout *containerLayout = nullptr;
     QList<QPushButton*> buttons;
     bool collapsed = false;
+    bool headerless = false;
 };
 
 // Page registry entry. factory constructs the page lazily; widget caches the

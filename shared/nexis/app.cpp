@@ -128,22 +128,26 @@ void App::buildSidebar()
     mSidebarLayout->addWidget(mLogoSeparator);
     mSidebarLayout->addSpacing(4);
 
-    // Helper lambda to create a section with header, indicator, and container
-    auto addSection = [&](const QString &name) -> SidebarSection & {
+    // Helper lambda to create a section with header, indicator, and container.
+    // Pass headerless=true to omit the toggle header and separator (always-visible section).
+    auto addSection = [&](const QString &name, bool headerless = false) -> SidebarSection & {
         SidebarSection section;
         section.name = name;
         section.collapsed = false;
+        section.headerless = headerless;
 
-        section.header = createSectionToggle(name);
-        mSidebarLayout->addWidget(section.header);
+        if (!headerless) {
+            section.header = createSectionToggle(name);
+            mSidebarLayout->addWidget(section.header);
 
-        auto *indicator = new QFrame(ui->sidebar);
-        indicator->setObjectName("sidebarSectionIndicator");
-        indicator->setFrameShape(QFrame::HLine);
-        indicator->setFixedHeight(1);
-        indicator->hide();
-        mSectionIndicators.append(indicator);
-        mSidebarLayout->addWidget(indicator);
+            auto *indicator = new QFrame(ui->sidebar);
+            indicator->setObjectName("sidebarSectionIndicator");
+            indicator->setFrameShape(QFrame::HLine);
+            indicator->setFixedHeight(1);
+            indicator->hide();
+            mSectionIndicators.append(indicator);
+            mSidebarLayout->addWidget(indicator);
+        }
 
         section.container = new QWidget(ui->sidebar);
         section.containerLayout = new QVBoxLayout(section.container);
@@ -155,9 +159,9 @@ void App::buildSidebar()
         return mSections.last();
     };
 
-    // ---- MONITOR section ----
+    // ---- MONITOR section (headerless — always visible, no toggle) ----
     {
-        auto &sec = addSection(tr("MONITOR"));
+        auto &sec = addSection(tr("MONITOR"), true);
         btnDash = createSidebarButton(tr("Dashboard"));
         btnDash->setChecked(true);
         sec.containerLayout->addWidget(btnDash);
@@ -998,7 +1002,8 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
 
     // Toggle section headers, containers, and indicators
     for (int i = 0; i < mSections.size(); ++i) {
-        mSections[i].header->setVisible(!collapsed);
+        if (mSections[i].header)
+            mSections[i].header->setVisible(!collapsed);
         mSections[i].container->setVisible(!mSections[i].collapsed);
     }
 
@@ -1060,8 +1065,10 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
         btn->style()->polish(btn);
     }
     for (auto &sec : mSections) {
-        sec.header->style()->unpolish(sec.header);
-        sec.header->style()->polish(sec.header);
+        if (sec.header) {
+            sec.header->style()->unpolish(sec.header);
+            sec.header->style()->polish(sec.header);
+        }
     }
     btnFeedback->style()->unpolish(btnFeedback);
     btnFeedback->style()->polish(btnFeedback);
@@ -1072,6 +1079,8 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
 void App::toggleSection(int sectionIndex)
 {
     if (sectionIndex < 0 || sectionIndex >= mSections.size())
+        return;
+    if (mSections[sectionIndex].headerless)
         return;
     mSections[sectionIndex].collapsed = !mSections[sectionIndex].collapsed;
     applySectionCollapse(sectionIndex, mSections[sectionIndex].collapsed, true);
@@ -1147,8 +1156,10 @@ void App::expandSectionForButton(QPushButton *btn)
 void App::saveSectionStates()
 {
     QJsonObject obj;
-    for (const auto &sec : mSections)
-        obj[sec.name] = sec.collapsed;
+    for (const auto &sec : mSections) {
+        if (!sec.headerless)
+            obj[sec.name] = sec.collapsed;
+    }
     SettingManager::ins()->setSidebarSectionsCollapsed(
         QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
 }
@@ -1170,6 +1181,8 @@ void App::updateSectionChevrons()
 {
     QString theme = AppManager::ins()->resolveThemeName();
     for (auto &sec : mSections) {
+        if (!sec.header)
+            continue;
         QString chevronName = sec.collapsed ? "section-expand.svg" : "section-collapse.svg";
         QString chevronPath = QString(":/static/themes/%1/img/sidebar-icons/%2").arg(theme, chevronName);
         sec.header->setIcon(QIcon(chevronPath));
