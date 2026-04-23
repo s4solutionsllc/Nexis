@@ -766,9 +766,10 @@
   - **Description:** On macOS, `systemd-analyze` is unavailable so the Boot Analysis page shows no data. The empty state provides no explanation or guidance to the user. Design system patterns call for an informative empty state message indicating the feature is Linux-only, with a descriptive icon or illustration, rather than a blank/broken layout.
   - **Resolved:** Added `mLblEmpty` QLabel empty-state widget with centered, muted styling; hides table and shows informative message on macOS when entries list is empty.
 
-- [ ] **BUG-120: Table and tree column headers render in accent orange instead of neutral foreground** (LOW)
+- [x] **BUG-120: Table and tree column headers render in accent orange instead of neutral foreground** (LOW)
   - **Files:** `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** `QHeaderView::section` QSS rule uses `@accentColor` (orange) for column header text/background. Design system specifies neutral muted foreground for table column headers. The orange headers are visually noisy and inconsistent with the design system's table component spec.
+  - **Resolved:** Changed `color: @accentColor` → `color: @color04` in global `QHeaderView::section` rule.
 
 - [ ] **BUG-121: Active sidebar section (MONITOR/TOOLS/etc.) collapses when navigating between its child pages** (LOW)
   - **Files:** `shared/nexis/app.cpp`, `shared/nexis/Pages/` (sidebar management)

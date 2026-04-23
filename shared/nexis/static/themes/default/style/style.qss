@@ -360,7 +360,7 @@ QHeaderView::section {
     border-style: solid;
     border-color: @borderColor;
     font-size: 10pt;
-    color: @accentColor;
+    color: @color04;
     padding: @dp8 @dp12;
 }
 
