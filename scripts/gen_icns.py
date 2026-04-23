@@ -19,12 +19,12 @@ from PIL import Image
 import numpy as np
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCE = os.path.join(REPO, "shared/nexis/static/nexis.iconset/icon_512x512.png")
+SOURCE = os.path.join(REPO, "shared/nexis/static/nexis_source.png")
 OUT_ICONSET = os.path.join(REPO, "macos/nexis.iconset")
 OUT_ICNS = os.path.join(REPO, "macos/nexis.icns")
 
 # Background color: white to match existing icon_1024.png design direction
-BG_COLOR = (255, 255, 255, 255)
+BG_COLOR = (0, 0, 0, 255)
 
 # Superellipse exponent — n=5 matches macOS Big Sur squircle
 SQUIRCLE_N = 5
