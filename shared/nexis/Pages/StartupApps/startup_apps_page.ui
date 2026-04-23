@@ -220,7 +220,7 @@
             <number>5</number>
            </property>
            <property name="uniformItemSizes">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
           </widget>
          </item>
