@@ -328,6 +328,7 @@ void App::init()
     btnProcesses->setText(tr("Processes"));
     btnServices->setText(tr("Services"));
     btnStartupApps->setText(tr("Startup Apps"));
+    btnBootAnalysis->setText(tr("Boot Analysis"));
 #ifdef Q_OS_MAC
     btnUninstaller->setText(tr("Applications"));
 #else
