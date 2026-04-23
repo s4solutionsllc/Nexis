@@ -790,9 +790,10 @@
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`
   - **Description:** The spacing between rows of metric tiles on the Dashboard is significantly larger than the design system specifies, wasting vertical space and making the layout feel sparse. Gap between tile rows should match the design system's standard card-grid spacing.
 
-- [ ] **BUG-125: System Cleaner "Select All" toggle label appears on the wrong side of the toggle** (LOW)
+- [x] **BUG-125: System Cleaner "Select All" toggle label appears on the wrong side of the toggle** (LOW)
   - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp`
   - **Description:** Design system places the "Select All" label to the left of the toggle switch. The current implementation places the label on the right side, inconsistent with the design system's toggle label positioning convention.
+  - **Resolved:** Set `layoutDirection = Qt::RightToLeft` on both `checkSelectAll` and `checkSelectAllSystemScan` in `system_cleaner_page.ui`.
 
 - [x] **BUG-126: Disk Tools "Move to Trash" button renders unstyled (no primary/secondary button styling)** (LOW)
   - **Files:** `shared/nexis/Pages/DiskTools/disk_tools_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
