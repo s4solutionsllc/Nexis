@@ -551,3 +551,31 @@
   - **Files:** `macos/nexis-core/Info/process_info.cpp` (or new `process_gpu_info_macos.mm` for Objective-C bridging)
   - **Platform:** macOS only
   - **Complexity:** Medium-Large
+
+- [ ] **FR-129: Design system alignment audit** — Full audit of the UI against the Nexis design system spec (sourced from `values.ini` / `style.qss` and the Claude Design handoff bundle). The following gaps were identified in April 2026. Several quick wins were already implemented (FR-129a–e below); the remaining items require code changes beyond QSS.
+
+  **Already implemented (2026-04-23):**
+  - **FR-129a** — Removed gradient fill from `#lineChartProgress::chunk`; replaced with flat `@accentColor` solid fill. Design spec: "no gradients anywhere except the splash art."
+  - **FR-129b** — Fixed `#systemSummaryCard border-radius: 10` → `12`. Design spec: 12px for all card-level surfaces.
+  - **FR-129c** — Fixed seven tree-widget table containers (`#treeWidgetScanResult`, `#treeWidgetPackages`, `#treeWidgetUpdates`, `#treeWidgetLargeOld`, `#treeWidgetDuplicates`, `#treeWidgetImages/Containers/Volumes`, `#diskToolsDirList`) from `border-radius: 6` → `8`. Design spec: 8px for toolbars and table containers.
+  - **FR-129d** — Fixed `#scheduleIndicator border-radius: 6` → `8` (card-like info strip; 8px per toolbar/indicator spec).
+  - **FR-129e** — Replaced hardcoded `#d32f2f` / `rgba(211,47,47,...)` in `#GnomeSettingsPage #lblStatus` with `@destructiveColor` and `@cardBg` tokens.
+  - **FR-129f** — Added `@monoFontFamily` QSS token ("JetBrains Mono, SF Mono, Menlo, Consolas, monospace") and applied it to `#ServiceItem #lblServiceName`, `#widgetStartupApp #lblStartupAppName`, and `#lblAptSourceName`. Design spec: JetBrains Mono for process names, service names, paths, and numeric-heavy labels.
+
+  **Remaining gaps (proposed updates):**
+
+  - **FR-129g — Inter SemiBold (600) not bundled:** The app bundles Inter-Regular (400) and Inter-Bold (700). The design uses weight 600 for nav-active labels, section labels, and tile labels. Without Inter-SemiBold.ttf, Qt falls back to Bold (700), making those labels visually heavier than specified. **Proposed:** Bundle `Inter-SemiBold.ttf` and register it via `QFontDatabase::addApplicationFont` in `main.cpp`. No QSS changes needed — `font-weight: 600` will resolve correctly once the font file is present.
+
+  - **FR-129h — Process name column not in mono font:** The Processes page renders process names in `QTableView` cells using the global `@fontFamily`. QSS cannot target individual columns of a `QTableView`. The design spec calls for monospace type for all process-name contexts (`.nx-mono-name`). **Proposed:** Implement a `QStyledItemDelegate` for the process name column (column 0) in `ProcessesPage` that returns a `QFont("JetBrains Mono")` from `initStyleOption`. Apply the same pattern to the Process Name column of Open Ports (`#portsTable`) if it uses a `QTableWidget`.
+
+  - **FR-129i — Keyboard shortcut hints not styled in mono:** The command palette footer shows keyboard hints (⌘K, ↵, esc) as plain `QLabel` text in the global sans font. Design spec: `.nx-kbd` is `font-family: mono, 11px, 2px/6px padding, 1px border, 4px radius`. **Proposed:** Wrap keyboard hint labels in a small helper widget or add a `#kbdHint` QSS rule with `font-family: @monoFontFamily; font-size: 8pt; padding: 2 6; border: 1px solid @borderColor; border-radius: 4; background-color: @color02;`.
+
+  - **FR-129j — Service description label not in mono font:** `#ServiceItem #lblServiceDescription` (the secondary line under the service name) renders in the global font. Design spec aligns with `.nx-list-desc { font-family: mono }`. **Proposed:** Add `font-family: @monoFontFamily` to the `#ServiceItem #lblServiceDescription` QSS rule. (Simpler than 129h — it's already a `QLabel` with a known ID.)
+
+  - **FR-129k — Logo SVG uses wrong font family:** `shared/nexis/static/branding/nexis_logo.svg` and its dark/light variants declare `font-family="'SF Pro Display', 'Helvetica Neue', 'Segoe UI', sans-serif"`. Design spec specifies Inter as the brand typeface. The sidebar logo SVGs use Helvetica Neue. **Proposed:** Update all logo SVGs to use `font-family="'Inter', 'Helvetica Neue', sans-serif"` and the sidebar-logo SVGs to match.
+
+  - **FR-129l — `QTableView` font size inconsistency:** `QTableView::item` is styled at `font-size: 10pt` (13.3px) but the design spec's table rows (`.nx-table-row`) use `font-size: 12px` (9pt). The design intent is slightly tighter table density. **Proposed:** Evaluate reducing `QTableView::item` font-size to `9pt` for tables that display dense data (Processes, Ports); keep 10pt for broader tables (Hardware Info) where readability at distance matters.
+
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`, `shared/nexis/main.cpp`, `shared/nexis/Pages/Processes/processes_page.cpp`, `shared/nexis/Pages/SystemServices/system_services_page.cpp`
+  - **Platform:** Both
+  - **Complexity:** Low–Medium per sub-item

@@ -142,8 +142,8 @@ void AppManager::updateStylesheet()
             if (dpTokenRx.match(tokenName).hasMatch())
                 continue;
 
-            // Font token is user-configurable, not in values.ini
-            if (tokenName == QStringLiteral("fontFamily"))
+            // Font tokens are not in values.ini (fontFamily is user-configurable; monoFontFamily is fixed)
+            if (tokenName == QStringLiteral("fontFamily") || tokenName == QStringLiteral("monoFontFamily"))
                 continue;
 
             if (!knownTokens.contains(fullToken))
@@ -182,6 +182,10 @@ void AppManager::updateStylesheet()
             mStylesheetFileContent.replace(QStringLiteral("@fontFamily"),
                 QString("\"%1\", system-ui, sans-serif").arg(fontFamily));
     }
+
+    // Monospace font (fixed — always JetBrains Mono with monospace fallback)
+    mStylesheetFileContent.replace(QStringLiteral("@monoFontFamily"),
+        QStringLiteral("\"JetBrains Mono\", \"SF Mono\", Menlo, Consolas, monospace"));
 
     // Replace @dpN tokens with DPI-scaled pixel values (e.g. @dp12 → "24" at 2× DPR)
     static const QRegularExpression dpRx(QStringLiteral("@dp(\\d+)"));

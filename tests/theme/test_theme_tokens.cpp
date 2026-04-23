@@ -48,7 +48,7 @@ private:
             // user-configurable tokens not stored in values.ini
             if (QRegularExpression("^dp\\d+").match(token).hasMatch())
                 continue;
-            if (token == "fontFamily")
+            if (token == "fontFamily" || token == "monoFontFamily")
                 continue;
             tokens.insert("@" + token);
         }
