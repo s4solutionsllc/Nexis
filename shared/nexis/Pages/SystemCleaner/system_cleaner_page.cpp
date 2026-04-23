@@ -221,8 +221,10 @@ void SystemCleanerPage::buildCategoryCards()
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
 
     QWidget *container = new QWidget;
+    container->setStyleSheet("background-color:transparent;");
     container->setObjectName("cleanerCardsContainer");
     QGridLayout *grid = new QGridLayout(container);
     grid->setContentsMargins(0, 0, 0, 8);
@@ -861,14 +863,6 @@ void SystemCleanerPage::onCleanFinished()
 
     mCleanInProgress = false;
     mCleaningFromCard = false;
-}
-
-void SystemCleanerPage::on_btnBackToCategories_clicked()
-{
-    if (mScanInProgress || mCleanInProgress) return;
-
-    ui->cleanerPage->hide();
-    updateScheduleIndicator();
 }
 
 // ─── Tree widget helpers ──────────────────────────────────────────────────────

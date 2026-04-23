@@ -76,7 +76,6 @@ private slots:
     void on_treeWidgetScanResult_itemClicked(QTreeWidgetItem *item, const int &column);
     void on_btnClean_clicked();
     void on_btnScan_clicked();
-    void on_btnBackToCategories_clicked();
 
     void systemScan();
     void systemClean();

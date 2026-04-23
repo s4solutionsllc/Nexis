@@ -91,30 +91,7 @@
           <property name="verticalSpacing">
            <number>8</number>
           </property>
-          <item row="0" column="0" alignment="Qt::AlignLeft">
-           <widget class="QPushButton" name="btnBackToCategories">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::NoFocus</enum>
-            </property>
-            <property name="text">
-             <string> Back</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../../static.qrc">
-              <normaloff>:/static/themes/common/img/chevron-left.svg</normaloff>:/static/themes/common/img/chevron-left.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>12</width>
-              <height>12</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
+          <item row="0" column="0" alignment="Qt::AlignRight">
            <layout class="QHBoxLayout" name="horizontalLayout">
             <item>
              <widget class="QLabel" name="lblSortBy">

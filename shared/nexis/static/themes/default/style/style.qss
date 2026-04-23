@@ -1209,6 +1209,16 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @accentBgTint;
 }
 
+#lblSortBy {
+    font-size: 9pt;
+    color: @color06;
+}
+
+#cbSortBy {
+    font-size: 9pt;
+    min-width: 0;
+}
+
 #treeWidgetScanResult {
     border: 1px solid @borderColor;
     background-color: transparent;
