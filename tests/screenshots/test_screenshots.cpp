@@ -41,6 +41,7 @@ static const QVector<PageInfo> kPageMap = {
     {"UninstallerPage",   "uninstaller",    0.0},
     {"ResourcesPage",     "resources",      5.0},
     {"HelpersPage",       "helpers",        0.0},
+    {"NetworkUsagePage",  "network_usage",  0.0},
     {"SettingsPage",      "settings",       0.0},
 };
 

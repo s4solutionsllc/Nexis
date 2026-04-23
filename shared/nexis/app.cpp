@@ -1,5 +1,6 @@
 #include "app.h"
 #include "ui_app.h"
+#include "Pages/Network/net_usage_tracker.h"
 #include "utilities.h"
 #include "signal_mapper.h"
 #include "nexis_page.h"
@@ -169,6 +170,10 @@ void App::buildSidebar()
         btnResources = createSidebarButton(tr("Resources"));
         sec.containerLayout->addWidget(btnResources);
         sec.buttons.append(btnResources);
+
+        btnNetworkUsage = createSidebarButton(tr("Network Usage"));
+        sec.containerLayout->addWidget(btnNetworkUsage);
+        sec.buttons.append(btnNetworkUsage);
     }
 
     // ---- MANAGE section ----
@@ -322,6 +327,7 @@ void App::init()
     btnDash->setText(tr("Dashboard"));
     btnHardwareInfo->setText(tr("Hardware Info"));
     btnResources->setText(tr("Resources"));
+    btnNetworkUsage->setText(tr("Network Usage"));
     btnSystemCleaner->setText(tr("System Cleaner"));
     btnDiskTools->setText(tr("Disk Tools"));
     btnSearch->setText(tr("Search"));
@@ -363,6 +369,11 @@ void App::init()
     mPageSlots.append({
         tr("Resources"),
         [this]() -> QWidget* { resourcesPage = new ResourcesPage(mSlidingStacked); return resourcesPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
+        tr("Network Usage"),
+        [this]() -> QWidget* { networkUsagePage = new NetworkUsagePage(mSlidingStacked); return networkUsagePage; },
         nullptr, {}
     });
     mPageSlots.append({
@@ -426,7 +437,7 @@ void App::init()
     });
 
     mListSidebarButtons = {
-        btnDash, btnHardwareInfo, btnResources, btnSystemCleaner, btnDiskTools, btnSearch,
+        btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnSearch,
         btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnHelpers, btnSystemLogs, btnSettings
     };
 
@@ -471,6 +482,16 @@ void App::init()
         SettingManager::ins()->setUpdateLastCount(count);
     });
 
+    connect(NetUsageTracker::ins(), &NetUsageTracker::thresholdBreached,
+            this, [this](int pct) {
+        if (!SettingManager::ins()->getNetCapAlertEnabled())
+            return;
+        mTrayIcon->showMessage(
+            tr("Network Cap Alert"),
+            tr("You've used %1% of your monthly data cap.").arg(pct),
+            QSystemTrayIcon::Warning);
+    });
+
     // DOCKER
     if (ToolManager::ins()->checkDocker()) {
         int dockerIdx = mListSidebarButtons.indexOf(btnHelpers);
@@ -511,6 +532,7 @@ void App::init()
     connect(btnDash,             &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Dashboard")); });
     connect(btnHardwareInfo,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Hardware Info")); });
     connect(btnResources,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Resources")); });
+    connect(btnNetworkUsage,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Network Usage")); });
     connect(btnSystemCleaner,    &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Cleaner")); });
     connect(btnDiskTools,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Disk Tools")); });
     connect(btnSearch,           &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Search")); });
@@ -580,6 +602,7 @@ void App::init()
     clickSidebarButton(SettingManager::ins()->getStartPage());
 
     DataRefreshService::ins()->start();
+    NetUsageTracker::ins()->start(DataRefreshService::ins());
 
 #ifdef Q_OS_LINUX
     // FR-117: if the user asked us to persist CPU tuning, re-apply their
@@ -902,6 +925,7 @@ void App::updateSidebarIcons()
     setIcon(btnDash,             "dash.svg");
     setIcon(btnHardwareInfo,     "hardware-info.svg");
     setIcon(btnResources,        "resources.svg");
+    setIcon(btnNetworkUsage,     "network-usage.svg");
     setIcon(btnSystemCleaner,    "cleaner.svg");
     setIcon(btnDiskTools,        "disk-tools.svg");
     setIcon(btnSearch,           "search.svg");

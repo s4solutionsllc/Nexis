@@ -67,6 +67,13 @@ namespace SettingKeys {
 
     // FR-120
     const QString WolHostNames("WolHostNames");
+
+    // FR-119
+    const QString NetUsageHistory("NetUsageHistory");
+    const QString NetCapGB("NetCapGB");
+    const QString NetCapAlertEnabled("NetCapAlertEnabled");
+    const QString NetCapResetDay("NetCapResetDay");
+    const QString NetCapAlertLastPercent("NetCapAlertLastPercent");
 }
 
 class SettingManager
@@ -220,6 +227,18 @@ public:
 
     void setWolHostNames(const QString &json);
     QString getWolHostNames() const;
+
+    // FR-119
+    void setNetUsageHistory(const QString &json);
+    QString getNetUsageHistory() const;
+    void setNetCapGB(int gb);
+    int getNetCapGB() const;
+    void setNetCapAlertEnabled(bool v);
+    bool getNetCapAlertEnabled() const;
+    void setNetCapResetDay(int day);
+    int getNetCapResetDay() const;
+    void setNetCapAlertLastPercent(int pct);
+    int getNetCapAlertLastPercent() const;
 
 private:
     static SettingManager *instance;

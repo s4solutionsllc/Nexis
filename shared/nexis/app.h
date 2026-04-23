@@ -44,6 +44,7 @@ struct PageSlot {
 #include "Pages/Processes/processes_page.h"
 #include "Pages/Uninstaller/uninstaller_page.h"
 #include "Pages/Resources/resources_page.h"
+#include "Pages/Network/network_usage_page.h"
 #include "Pages/Settings/settings_page.h"
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
 #include "Pages/GnomeSettings/gnome_settings_page.h"
@@ -132,6 +133,7 @@ private:
     ProcessesPage *processPage;
     UninstallerPage *uninstallerPage;
     ResourcesPage *resourcesPage;
+    NetworkUsagePage *networkUsagePage;
     APTSourceManagerPage *aptSourceManagerPage;
     DockerPage *dockerPage;
     GnomeSettingsPage *gnomeSettingsPage;
@@ -171,6 +173,7 @@ private:
     QPushButton *btnDash;
     QPushButton *btnHardwareInfo;
     QPushButton *btnResources;
+    QPushButton *btnNetworkUsage;
     QPushButton *btnSystemCleaner;
     QPushButton *btnDiskTools;
     QPushButton *btnSearch;

@@ -20,6 +20,7 @@
    - [Processes](#8-processes)
    - [Uninstaller](#9-uninstaller)
    - [Resources](#10-resources)
+   - [Network Usage](#10a-network-usage)
    - [Helpers](#11-helpers)
    - [APT Repository Manager / Homebrew](#12-apt-repository-manager--homebrew)
    - [Docker](#13-docker)
@@ -64,7 +65,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 Nexis runs natively on **Linux** and **macOS** (Intel + Apple Silicon). The codebase uses compile-time platform selection: shared code in `shared/`, with platform-specific implementations in `linux/` and `macos/`.
 
 ### Always-visible pages (both platforms)
-Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Helpers, System Logs, Settings
+Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Network Usage, Helpers, System Logs, Settings
 
 ### Conditional pages
 | Page | Condition | Linux | macOS |
@@ -318,6 +319,24 @@ Historical time-series charts for system resource usage.
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
 - Configurable preference in Settings (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper; or custom path)
+
+### 10a. Network Usage
+
+Continuous per-interface network data usage tracker with monthly cap management. Located in the MONITOR sidebar section between Resources and Helpers.
+
+**Usage Tracking:** A `NetUsageTracker` singleton subscribes to `DataRefreshService::networkUpdated` (1s fast tick) at startup — always accumulating even when the page is not open. On each tick it computes the delta from the previous absolute byte counter, adds it to today's bucket, and debounces a 60-second write to `SettingManager` as a JSON blob. The accumulator handles reboot counter resets by detecting when a new absolute value is less than the previous one (skip the delta, update the baseline).
+
+**History:** 90-day rolling window of daily RX+TX buckets, stored as compact JSON in `~/.config/nexis/nexis.conf`.
+
+**Page UI:**
+- Interface selector (All Interfaces or individual adapter)
+- Live rate display (↓ download / ↑ upload bytes/sec)
+- Summary cards: Today / This Week / This Month totals
+- 30-day bar chart (stacked RX+TX per day, auto-scaled)
+- Monthly cap progress bar (hidden when cap = 0 GB); color-coded green/amber/red at 0%/75%/90%
+- Settings card: cap in GB (0 = disabled), billing cycle reset day (1–28), alert toggle
+
+**Tray Alerts:** When cap is set and usage crosses 75%, 90%, or 100% of the cap within the current billing period, a system tray notification fires once per tier. The last-alerted tier persists across restarts in `SettingManager`.
 
 ### 11. Helpers
 

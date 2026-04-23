@@ -483,12 +483,13 @@
 
 *Goal: broaden the Network page from "is it connected?" to "what's it doing and who can I wake?"*
 
-- [ ] **FR-119: Network data-cap / monthly usage tracker** — Track cumulative daily/weekly/monthly RX+TX per interface, persist across reboots (in `~/.nexis/net_history.db` SQLite or plain JSON), show a progress bar vs. a user-set monthly cap, fire tray alerts at configurable thresholds (75% / 90% / 100%). Useful for metered connections, hotspots, and capped home ISPs. Inspired by Windows 11's built-in data limit and macOS [Bandwidth+](https://apps.apple.com/us/app/system-monitor/id423368786).
+- [x] **FR-119: Network data-cap / monthly usage tracker** — Track cumulative daily/weekly/monthly RX+TX per interface, persist across reboots (in `~/.nexis/net_history.db` SQLite or plain JSON), show a progress bar vs. a user-set monthly cap, fire tray alerts at configurable thresholds (75% / 90% / 100%). Useful for metered connections, hotspots, and capped home ISPs. Inspired by Windows 11's built-in data limit and macOS [Bandwidth+](https://apps.apple.com/us/app/system-monitor/id423368786).
   - **User Description:** If you're tethering off a phone, on a capped home internet plan, or traveling with a data-limited hotspot, you need to know how close you are to your monthly cap. This FR tracks your data use per network interface, remembers it across reboots, and can ping you when you're at 75%, 90%, or 100% of your budget. Like the built-in feature on Windows 11 and on mobile phones, but for your computer.
   - **Bundle:** J (with FR-120).
   - **Files:** `shared/nexis/Pages/Network/`, `shared/nexis-core/Info/net_history.*` (new)
   - **Platform:** Both
   - **Complexity:** Medium
+  - **Resolved:** UAT pending. `NetUsageTracker` singleton accumulates deltas from `DataRefreshService::networkUpdated`; persists 90-day daily buckets as JSON via `SettingManager`; `NetworkUsagePage` in MONITOR sidebar shows today/week/month totals, 30-day bar chart, cap progress bar, and threshold tray alerts.
 
 - [x] **FR-120: Wake-on-LAN helper** — A small Helpers-page section that scans the local network (ARP cache + optional ping sweep), remembers MAC addresses with friendly names, and sends a magic packet on demand. Source: [gWakeOnLAN](https://gwakeonlan.sourceforge.io/), [Techno Tim WOL guide](https://technotim.com/posts/wake-on-lan/).
   - **User Description:** If you have a desktop or server on your home network that you want to power on from the couch, Wake-on-LAN does it — but the tools to send the magic packet are all command-line. This FR gives you a list of machines on your network (auto-detected), lets you name them ("Office PC", "NAS"), and wakes them with a click. Fits the existing Helpers page's "small useful sysadmin gadgets" vibe.

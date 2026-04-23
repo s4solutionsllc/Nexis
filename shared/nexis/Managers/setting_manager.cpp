@@ -512,3 +512,54 @@ QString SettingManager::getWolHostNames() const
 {
     return mSettings->value(SettingKeys::WolHostNames, QStringLiteral("{}")).toString();
 }
+
+// FR-119
+void SettingManager::setNetUsageHistory(const QString &json)
+{
+    mSettings->setValue(SettingKeys::NetUsageHistory, json);
+}
+
+QString SettingManager::getNetUsageHistory() const
+{
+    return mSettings->value(SettingKeys::NetUsageHistory, QStringLiteral("{}")).toString();
+}
+
+void SettingManager::setNetCapGB(int gb)
+{
+    mSettings->setValue(SettingKeys::NetCapGB, gb);
+}
+
+int SettingManager::getNetCapGB() const
+{
+    return mSettings->value(SettingKeys::NetCapGB, 0).toInt();
+}
+
+void SettingManager::setNetCapAlertEnabled(bool v)
+{
+    mSettings->setValue(SettingKeys::NetCapAlertEnabled, v);
+}
+
+bool SettingManager::getNetCapAlertEnabled() const
+{
+    return mSettings->value(SettingKeys::NetCapAlertEnabled, true).toBool();
+}
+
+void SettingManager::setNetCapResetDay(int day)
+{
+    mSettings->setValue(SettingKeys::NetCapResetDay, day);
+}
+
+int SettingManager::getNetCapResetDay() const
+{
+    return mSettings->value(SettingKeys::NetCapResetDay, 1).toInt();
+}
+
+void SettingManager::setNetCapAlertLastPercent(int pct)
+{
+    mSettings->setValue(SettingKeys::NetCapAlertLastPercent, pct);
+}
+
+int SettingManager::getNetCapAlertLastPercent() const
+{
+    return mSettings->value(SettingKeys::NetCapAlertLastPercent, 0).toInt();
+}
