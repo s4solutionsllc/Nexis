@@ -1232,6 +1232,7 @@ QLabel[accessibleName="dialog-title"] {
 #widgetStartupApp {
     border-radius: 12;
     background-color: @cardBg;
+    border: 1px solid transparent;
 }
 
 #lblStartupAppIcon {
@@ -1239,7 +1240,8 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #widgetStartupApp:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
+    border-color: @accentColor;
 }
 
 #widgetStartupApp #lblStartupAppName {
@@ -1301,10 +1303,12 @@ QLabel[accessibleName="dialog-title"] {
 #serviceItemWidget {
     border-radius: 12;
     background-color: @cardBg;
+    border: 1px solid transparent;
 }
 
 #serviceItemWidget:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
+    border-color: @accentColor;
 }
 
 
@@ -2272,6 +2276,7 @@ QLabel[accessibleName="dimmed-small"] {
 #aptSourceRepositoryItemWidget {
     border-radius: 12;
     background-color: @cardBg;
+    border: 1px solid transparent;
 }
 
 #lblAptSourceIcon {
@@ -2279,7 +2284,8 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #aptSourceRepositoryItemWidget:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
+    border-color: @accentColor;
 }
 
 #lblAptSourceName {

@@ -830,6 +830,7 @@
   - **Description:** Settings categories/sections are grouped using `QGroupBox` widgets which render with a visible border frame and inset title. Design system specifies section headers as plain bold labels with a separator line, no box border. The QGroupBox chrome adds visual weight inconsistent with the design system's settings layout.
   - **Resolved:** QSS-only fix — removed border, border-radius, and cardBg background from `#SettingsPage QGroupBox`; kept bold title styling.
 
-- [ ] **BUG-133: Card elevation and hover states not implemented — design specifies lighter fill, drop shadow, and accent border on hover** (LOW)
+- [x] **BUG-133: Card elevation and hover states not implemented — design specifies lighter fill, drop shadow, and accent border on hover** (LOW)
   - **Files:** `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** Design system defines two card states: (1) Elevated — lighter surface fill with a drop shadow and a 2px lift effect; (2) Hover — same Y position as normal but with an accent-colored border. Currently all cards are flat with no elevation differentiation and no hover border. Qt QSS does not support `box-shadow`, so elevation must be approximated with border/background changes; a drop shadow would require `QGraphicsDropShadowEffect` applied programmatically.
+  - **Resolved:** QSS-only — added `border: 1px solid transparent` base state and `@cardBgElevated` bg + `@accentColor` border on hover for `#widgetStartupApp`, `#serviceItemWidget`, and `#aptSourceRepositoryItemWidget`, matching the existing tile card pattern.
