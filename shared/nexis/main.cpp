@@ -336,6 +336,7 @@ int main(int argc, char *argv[])
     QFontDatabase::addApplicationFont(":/static/font/Ubuntu-R.ttf");
     QFontDatabase::addApplicationFont(":/static/font/Inter-Regular.ttf");
     QFontDatabase::addApplicationFont(":/static/font/Inter-Bold.ttf");
+    QFontDatabase::addApplicationFont(":/static/font/Inter-SemiBold.ttf");
     QFontDatabase::addApplicationFont(":/static/font/JetBrainsMono-Regular.ttf");
 
     // Resolve splashscreen variant from the user's color scheme preference.

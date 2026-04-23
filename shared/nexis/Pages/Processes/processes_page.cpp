@@ -309,6 +309,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *cmd_i = new QStandardItem(proc.getCmd());
     cmd_i->setData(proc.getCmd(), data);
     cmd_i->setData(QString("<p>%1</p>").arg(proc.getCmd()), Qt::ToolTipRole);
+    cmd_i->setFont(QFont(QStringLiteral("JetBrains Mono")));
 
     row << pid_i << rss_i << pmem_i << vsize_i << uname_i << pcpu_i
         << starttime_i << state_i << group_i << nice_i << cpuTime_i
@@ -379,6 +380,8 @@ void ProcessesPage::updateRow(int row, const Process &proc)
     setCell(17, gpuVramText, proc.getGpuVramBytes(), gpuVramText);
 
     setCell(18, proc.getCmd(), proc.getCmd(), QString("<p>%1</p>").arg(proc.getCmd()));
+    if (auto *item = mItemModel->item(row, 18))
+        item->setFont(QFont(QStringLiteral("JetBrains Mono")));
 }
 
 void ProcessesPage::on_txtProcessSearch_textChanged(const QString &val)

@@ -350,6 +350,10 @@ QTableView::item:selected {
     background-color: @color02;
 }
 
+#tableProcess::item {
+    font-size: 9pt;
+}
+
 QHeaderView::section {
     background-color: @color02;
     border-width: 0 0 1 0;
@@ -657,6 +661,26 @@ QLabel[accessibleName="dialog-title"] {
 
 #commandPaletteResults::item:hover:!selected {
     background-color: @color02;
+}
+
+#commandPaletteFooter {
+    border-top: 1px solid @borderColor;
+    background-color: @color01;
+}
+
+#commandPaletteKey {
+    font-family: @monoFontFamily;
+    font-size: 8pt;
+    color: @tertiaryText;
+    padding: 1 4;
+    border: 1px solid @borderColor;
+    border-radius: 4;
+    background-color: @color02;
+}
+
+#commandPaletteHintLabel {
+    font-size: 8pt;
+    color: @tertiaryText;
 }
 
 #pageContent {
@@ -1270,6 +1294,7 @@ QLabel[accessibleName="dialog-title"] {
 #ServiceItem #lblServiceDescription {
     font-size: 9pt;
     color: @color06;
+    font-family: @monoFontFamily;
 }
 
 #lblServiceStartupImg {

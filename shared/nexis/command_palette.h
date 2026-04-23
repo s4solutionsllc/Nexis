@@ -2,9 +2,11 @@
 #define COMMAND_PALETTE_H
 
 #include <QWidget>
+#include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QGraphicsDropShadowEffect>
 #include <functional>
@@ -37,6 +39,7 @@ private:
 
     QLineEdit *mSearchBox;
     QListWidget *mResultsList;
+    QWidget *mFooter = nullptr;
     QList<CommandItem> mCommands;
     QGraphicsDropShadowEffect *mShadowEffect;
 };

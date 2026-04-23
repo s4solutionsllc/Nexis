@@ -40,8 +40,33 @@ void CommandPalette::buildLayout()
     mResultsList->setFocusPolicy(Qt::NoFocus);
     mResultsList->setMaximumHeight(320);
 
+    mFooter = new QWidget(container);
+    mFooter->setObjectName("commandPaletteFooter");
+    auto *footLayout = new QHBoxLayout(mFooter);
+    footLayout->setContentsMargins(16, 6, 16, 6);
+    footLayout->setSpacing(16);
+
+    auto makeHint = [&](const QString &keys, const QString &label) {
+        auto *w = new QWidget(mFooter);
+        auto *h = new QHBoxLayout(w);
+        h->setContentsMargins(0, 0, 0, 0);
+        h->setSpacing(4);
+        auto *k = new QLabel(keys, w);
+        k->setObjectName("commandPaletteKey");
+        auto *l = new QLabel(label, w);
+        l->setObjectName("commandPaletteHintLabel");
+        h->addWidget(k);
+        h->addWidget(l);
+        return w;
+    };
+    footLayout->addWidget(makeHint(QStringLiteral("\u2191\u2193"), tr("navigate")));
+    footLayout->addWidget(makeHint(QStringLiteral("\u21b5"), tr("select")));
+    footLayout->addWidget(makeHint(QStringLiteral("esc"), tr("close")));
+    footLayout->addStretch();
+
     innerLayout->addWidget(mSearchBox);
     innerLayout->addWidget(mResultsList);
+    innerLayout->addWidget(mFooter);
     mainLayout->addWidget(container);
 
     mShadowEffect = new QGraphicsDropShadowEffect(container);

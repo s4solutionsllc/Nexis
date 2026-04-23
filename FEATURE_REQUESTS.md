@@ -552,7 +552,7 @@
   - **Platform:** macOS only
   - **Complexity:** Medium-Large
 
-- [ ] **FR-129: Design system alignment audit** — Full audit of the UI against the Nexis design system spec (sourced from `values.ini` / `style.qss` and the Claude Design handoff bundle). The following gaps were identified in April 2026. Several quick wins were already implemented (FR-129a–e below); the remaining items require code changes beyond QSS.
+- [x] **FR-129: Design system alignment audit** — Full audit of the UI against the Nexis design system spec (sourced from `values.ini` / `style.qss` and the Claude Design handoff bundle). The following gaps were identified in April 2026. Several quick wins were already implemented (FR-129a–e below); the remaining items require code changes beyond QSS.
 
   **Already implemented (2026-04-23):**
   - **FR-129a** — Removed gradient fill from `#lineChartProgress::chunk`; replaced with flat `@accentColor` solid fill. Design spec: "no gradients anywhere except the splash art."
@@ -579,3 +579,4 @@
   - **Files:** `shared/nexis/static/themes/default/style/style.qss`, `shared/nexis/main.cpp`, `shared/nexis/Pages/Processes/processes_page.cpp`, `shared/nexis/Pages/SystemServices/system_services_page.cpp`
   - **Platform:** Both
   - **Complexity:** Low–Medium per sub-item
+  - **Resolved:** All 12 sub-items implemented across two commits. ffb4c8c (quick wins: gradient removal, border-radius fixes, hardcoded color, `@monoFontFamily` token on service/startup/APT names). Follow-up commit: Inter SemiBold bundled; process name column set to JetBrains Mono via Qt::FontRole; service description in mono; all 4 sidebar logo SVGs updated to Inter; process table items 9pt; command palette keyboard hint footer added with bordered mono kbd glyphs.

@@ -21,6 +21,7 @@
         <file>static/font/Ubuntu-R.ttf</file>
         <file>static/font/Inter-Regular.ttf</file>
         <file>static/font/Inter-Bold.ttf</file>
+        <file>static/font/Inter-SemiBold.ttf</file>
         <file>static/font/JetBrainsMono-Regular.ttf</file>
         <file>static/languages.json</file>
         <file>static/themes.json</file>
