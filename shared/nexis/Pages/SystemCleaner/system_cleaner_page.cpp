@@ -186,23 +186,23 @@ void SystemCleanerPage::buildCategoryCards()
     const QList<CatDef> defs = {
         { PACKAGE_CACHE,
 #ifdef Q_OS_MACOS
-          tr("Package Caches"), QStringLiteral("brew \xc2\xb7 ~/Library/Caches (brew)")
+          tr("Package Caches"), QStringLiteral("brew \u00b7 ~/Library/Caches (brew)")
 #else
-          tr("Package Caches"), QStringLiteral("apt \xc2\xb7 dnf \xc2\xb7 pacman \xc2\xb7 zypper")
+          tr("Package Caches"), QStringLiteral("apt \u00b7 dnf \u00b7 pacman \u00b7 zypper")
 #endif
         },
         { CRASH_REPORTS,
 #ifdef Q_OS_MACOS
           tr("Crash Reports"), QStringLiteral("~/Library/Logs/DiagnosticReports")
 #else
-          tr("Crash Reports"), QStringLiteral("/var/crash \xc2\xb7 ~/.xsession-errors")
+          tr("Crash Reports"), QStringLiteral("/var/crash \u00b7 ~/.xsession-errors")
 #endif
         },
         { APPLICATION_LOGS,
 #ifdef Q_OS_MACOS
-          tr("Application Logs"), QStringLiteral("~/Library/Logs \xc2\xb7 /var/log")
+          tr("Application Logs"), QStringLiteral("~/Library/Logs \u00b7 /var/log")
 #else
-          tr("Application Logs"), QStringLiteral("journald \xc2\xb7 ~/.cache/*.log")
+          tr("Application Logs"), QStringLiteral("journald \u00b7 ~/.cache/*.log")
 #endif
         },
         { APPLICATION_CACHES,
@@ -220,13 +220,13 @@ void SystemCleanerPage::buildCategoryCards()
 #endif
         },
         { DEV_TOOL_CACHES,
-          tr("Dev Tool Caches"), QStringLiteral("~/.electron \xc2\xb7 ~/.cache/vscode*")
+          tr("Dev Tool Caches"), QStringLiteral("~/.electron \u00b7 ~/.cache/vscode*")
         },
         { BROKEN_SYMLINKS,
           tr("Broken Symlinks"), QStringLiteral("~/ recursive symlink scan")
         },
         { BROWSER_PRIVACY,
-          tr("Browser Privacy"), QStringLiteral("Chrome \xc2\xb7 Firefox \xc2\xb7 Chromium \xc2\xb7 Safari")
+          tr("Browser Privacy"), QStringLiteral("Chrome \u00b7 Firefox \u00b7 Chromium \u00b7 Safari")
         },
     };
 
@@ -241,9 +241,9 @@ void SystemCleanerPage::buildCategoryCards()
     QWidget *container = new QWidget;
     container->setObjectName("cleanerCardsContainer");
     QGridLayout *grid = new QGridLayout(container);
-    grid->setContentsMargins(0, 0, 0, 10);
-    grid->setHorizontalSpacing(10);
-    grid->setVerticalSpacing(10);
+    grid->setContentsMargins(0, 0, 0, 8);
+    grid->setHorizontalSpacing(8);
+    grid->setVerticalSpacing(8);
     grid->setColumnStretch(0, 1);
     grid->setColumnStretch(1, 1);
 
@@ -262,24 +262,25 @@ void SystemCleanerPage::buildCategoryCards()
 
         QLabel *lblSubtitle = new QLabel(def.subtitle, card);
         lblSubtitle->setObjectName("lblCatSubtitle");
-        lblSubtitle->setWordWrap(true);
 
-        QLabel *lblSize = new QLabel(QStringLiteral("\xe2\x80\x94"), card);
+        QLabel *lblSize = new QLabel(QStringLiteral("\u2014"), card);
         lblSize->setObjectName("lblCatSize");
         lblSize->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         lblSize->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
         QVBoxLayout *textCol = new QVBoxLayout;
-        textCol->setSpacing(2);
+        textCol->setSpacing(1);
         textCol->addWidget(lblName);
         textCol->addWidget(lblSubtitle);
 
         QHBoxLayout *cardRow = new QHBoxLayout(card);
-        cardRow->setContentsMargins(12, 10, 12, 10);
+        cardRow->setContentsMargins(12, 8, 12, 8);
         cardRow->setSpacing(10);
-        cardRow->addWidget(check, 0, Qt::AlignTop);
+        cardRow->addWidget(check, 0, Qt::AlignVCenter);
         cardRow->addLayout(textCol, 1);
         cardRow->addWidget(lblSize, 0, Qt::AlignVCenter);
+
+        card->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
         connect(check, &QCheckBox::toggled, this, [this, card, def](bool on) {
             card->setProperty("checked", on);
@@ -308,7 +309,7 @@ void SystemCleanerPage::buildCategoryCards()
     // Snap/Flatpak — Linux only
     CatDef snapDef { SNAP_FLATPAK_REVISIONS,
                      tr("Snap/Flatpak Revisions"),
-                     QStringLiteral("snap revisions \xc2\xb7 flatpak unused runtimes") };
+                     QStringLiteral("snap revisions \u00b7 flatpak unused runtimes") };
     addCard(snapDef);
     mCheckSnapFlatpak = mCards[SNAP_FLATPAK_REVISIONS].check;
 #endif
