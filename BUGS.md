@@ -800,9 +800,10 @@
   - **Description:** The "Move to Trash" action button in the Disk Tools large-files results does not receive the standard button QSS styling (no border, no hover state, no accent color). It renders as a plain unstyled system button, inconsistent with all other action buttons in the app.
   - **Resolved:** Fixed two broken QSS sub-rules: replaced no-op `opacity: 0.9` hover with `background-color: @color09`, and replaced `@color02` disabled background (near-invisible) with `@borderColor` (clearly visible in both themes).
 
-- [ ] **BUG-127: Processes page "End Process" button is always visible instead of appearing only on row selection** (LOW)
+- [x] **BUG-127: Processes page "End Process" button is always visible instead of appearing only on row selection** (LOW)
   - **Files:** `shared/nexis/Pages/Processes/processes_page.cpp`
   - **Description:** Design system shows the "End Process" (kill) button only when a process row is selected. Currently the button is always visible regardless of selection state, cluttering the toolbar and potentially inviting accidental kills. Button should be hidden or disabled when no row is selected.
+  - **Resolved:** Hidden by default; connected `QItemSelectionModel::selectionChanged` in `init()` to show/hide on selection state.
 
 - [ ] **BUG-128: Services page displays identical orange gear icon on every service row, obscuring service identity** (LOW)
   - **Files:** `shared/nexis/Pages/Services/services_page.cpp`

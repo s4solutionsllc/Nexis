@@ -9,6 +9,7 @@
 #include "Managers/data_refresh_service.h"
 #include "Managers/process_prefs_manager.h"
 #include "Services/process_service.h"
+#include <QItemSelectionModel>
 #include <QRegularExpression>
 #include <QSystemTrayIcon>
 #include <Utils/format_util.h>
@@ -56,6 +57,13 @@ void ProcessesPage::init()
     mItemModel->setHorizontalHeaderLabels(mHeaders);
 
     ui->tableProcess->setModel(mSortFilterModel);
+
+    ui->btnEndProcess->setVisible(false);
+    connect(ui->tableProcess->selectionModel(), &QItemSelectionModel::selectionChanged,
+            this, [this](const QItemSelection &selected, const QItemSelection &) {
+        ui->btnEndProcess->setVisible(!selected.isEmpty());
+    });
+
     mSortFilterModel->setSortRole(SortRole);
     mSortFilterModel->setDynamicSortFilter(true);
     mSortFilterModel->sort(5, Qt::SortOrder::DescendingOrder);
