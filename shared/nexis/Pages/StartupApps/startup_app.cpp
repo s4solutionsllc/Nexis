@@ -55,7 +55,7 @@ StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QStrin
     }
 
     if (readOnly) {
-        ui->checkStartup->setEnabled(false);
+        ui->checkStartup->hide();
         ui->btnEditStartupApp->hide();
         ui->btnDeleteStartupApp->hide();
     }
