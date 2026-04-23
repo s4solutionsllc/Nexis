@@ -571,7 +571,7 @@ QLabel[accessibleName="dialog-title"] {
 
 #sidebarBadge {
     background-color: @accentColor;
-    color: #ffffff;
+    color: @color07;
     font-size: 7pt;
     font-weight: 700;
     border-radius: 8;
@@ -591,7 +591,7 @@ QLabel[accessibleName="dialog-title"] {
 
 #updatesBadge {
     background-color: @updatesColor;
-    color: #ffffff;
+    color: @color07;
     font-size: 7pt;
     font-weight: 700;
     border-radius: 8;
@@ -1078,12 +1078,12 @@ QLabel[accessibleName="dialog-title"] {
 
 #SystemCleanerPage #btnScan {
     border: 0;
-    border-radius: @dp6px;
+    border-radius: @dp6;
     background-color: @accentColor;
-    color: #ffffff;
+    color: @color07;
     font-size: 12pt;
     font-weight: bold;
-    padding: @dp8px @dp24px;
+    padding: @dp8 @dp24;
 }
 
 #SystemCleanerPage #btnScan:hover {
@@ -2020,7 +2020,7 @@ QLabel[accessibleName="dialog-title"] {
     border: 0;
     border-radius: @dp6;
     background-color: @accentColor;
-    color: #ffffff;
+    color: @color07;
     font-size: 10pt;
     font-weight: bold;
     padding: @dp8 @dp24;
@@ -2034,7 +2034,7 @@ QLabel[accessibleName="dialog-title"] {
     border: 0;
     border-radius: @dp6;
     background-color: @destructiveColor;
-    color: #ffffff;
+    color: @color07;
     font-size: 10pt;
     font-weight: bold;
     padding: @dp8 @dp16;
@@ -2288,7 +2288,7 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #repoStatusBadge {
-    color: white;
+    color: @color07;
     border-radius: 10px;
     padding: 2px 10px;
     font-size: 11px;
@@ -2315,10 +2315,10 @@ QLabel[accessibleName="dimmed-small"] {
 
 #repoIssueCard QPushButton[accessibleName="primary"] {
     background-color: @accentColor;
-    color: white;
+    color: @color07;
     border: 0;
-    border-radius: 4px;
-    padding: 2px 10px;
+    border-radius: @dp4;
+    padding: @dp2 @dp10;
 }
 
 #repoIssueCard QPushButton[accessibleName="primary"]:hover {
@@ -2329,8 +2329,8 @@ QLabel[accessibleName="dimmed-small"] {
     color: @destructiveColor;
     background-color: transparent;
     border: 1px solid @destructiveColor;
-    border-radius: 4px;
-    padding: 2px 10px;
+    border-radius: @dp4;
+    padding: @dp2 @dp10;
 }
 
 #repoIssueSummary { font-weight: bold; }
