@@ -548,10 +548,11 @@
   - **Platform:** Linux only
   - **Complexity:** Medium
 
-- [ ] **FR-128: macOS per-process GPU utilization** — Spill from FR-115. Per-process GPU% and VRAM are populated on Linux (DRM fdinfo for Intel/AMD, `nvidia-smi pmon` for NVIDIA) but render em-dash on macOS because there is no supported public API. Candidate approaches: `task_info(TASK_POWER_INFO_V2)` → `gpu_energy` (proxy, stable SPI-ish), the `IOAccelerator` client-tree walk Activity Monitor uses (private and changes between macOS versions), or `powermetrics --samplers gpu_power` (requires root). Recommend the client-tree walk for accuracy + audit-token → PID resolution, with `TASK_POWER_INFO_V2` as a fallback. Needs dedicated research + testing across macOS versions.
+- [x] **FR-128: macOS per-process GPU utilization** — Spill from FR-115. Per-process GPU% and VRAM are populated on Linux (DRM fdinfo for Intel/AMD, `nvidia-smi pmon` for NVIDIA) but render em-dash on macOS because there is no supported public API. Candidate approaches: `task_info(TASK_POWER_INFO_V2)` → `gpu_energy` (proxy, stable SPI-ish), the `IOAccelerator` client-tree walk Activity Monitor uses (private and changes between macOS versions), or `powermetrics --samplers gpu_power` (requires root). Recommend the client-tree walk for accuracy + audit-token → PID resolution, with `TASK_POWER_INFO_V2` as a fallback. Needs dedicated research + testing across macOS versions.
   - **Files:** `macos/nexis-core/Info/process_info.cpp` (or new `process_gpu_info_macos.mm` for Objective-C bridging)
   - **Platform:** macOS only
   - **Complexity:** Medium-Large
+  - **Resolved:** AGXDeviceUserClient IOKit tree walk provides per-process GPU% on Apple Silicon (same approach as Activity Monitor). `accumulatedGPUTime` delta / elapsed wall time = GPU%. VRAM stays em-dash (no public API). Intel Mac falls back to em-dash safely. 28/28 tests pass.
 
 - [x] **FR-129: Design system alignment audit** — Full audit of the UI against the Nexis design system spec (sourced from `values.ini` / `style.qss` and the Claude Design handoff bundle). The following gaps were identified in April 2026. Several quick wins were already implemented (FR-129a–e below); the remaining items require code changes beyond QSS.
 
