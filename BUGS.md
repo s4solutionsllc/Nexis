@@ -771,9 +771,10 @@
   - **Description:** `QHeaderView::section` QSS rule uses `@accentColor` (orange) for column header text/background. Design system specifies neutral muted foreground for table column headers. The orange headers are visually noisy and inconsistent with the design system's table component spec.
   - **Resolved:** Changed `color: @accentColor` → `color: @color04` in global `QHeaderView::section` rule.
 
-- [ ] **BUG-121: Active sidebar section (MONITOR/TOOLS/etc.) collapses when navigating between its child pages** (LOW)
+- [x] **BUG-121: Active sidebar section (MONITOR/TOOLS/etc.) collapses when navigating between its child pages** (LOW)
   - **Files:** `shared/nexis/app.cpp`, `shared/nexis/Pages/` (sidebar management)
   - **Description:** Clicking a sidebar item within an already-expanded section sometimes triggers the section header's toggle, collapsing the section. This requires the user to re-expand the section to continue navigating. Expected behavior per design: the active section stays expanded; only other sections collapse.
+  - **Resolved:** Fixed QSS specificity conflict — `#sidebar #sectionToggle` (spec 200) now overrides `#sidebar QPushButton` (spec 101), restoring section header visual distinction (border-top separator, muted color, smaller font, transparent background).
 
 - [x] **BUG-122: Services sidebar entry uses sparkle/diamond icon instead of a services-appropriate icon** (LOW)
   - **Files:** `shared/nexis/static/icons/` or sidebar icon assignment in `app.cpp`/`sidebar_widget.cpp`

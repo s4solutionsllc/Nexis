@@ -487,7 +487,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 /* Section toggle headers (collapsible groups) */
-#sectionToggle {
+#sidebar #sectionToggle {
     font-size: 8pt;
     font-weight: 600;
     color: @tertiaryText;
@@ -500,8 +500,9 @@ QLabel[accessibleName="dialog-title"] {
     text-align: left;
 }
 
-#sectionToggle:hover {
+#sidebar #sectionToggle:hover {
     color: @color05;
+    background-color: transparent;
 }
 
 /* Sidebar logo */
