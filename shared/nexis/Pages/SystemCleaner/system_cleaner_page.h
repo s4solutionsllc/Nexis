@@ -102,6 +102,7 @@ private:
     void updateCleanerCheckBadge();
     void quickCleanByCategory();
     void startBackgroundSizeScan();
+    void buildInlineResults();
     void initScheduleIndicator();
     void repositionScheduleIndicator();
 
@@ -122,7 +123,6 @@ private:
     QPushButton *mBtnScanSystem      = nullptr;
     QPushButton *mBtnSchedule        = nullptr;
     QPushButton *mBtnCleanSelected   = nullptr;
-    QPushButton *mBtnViewResults     = nullptr;
     QLabel      *mLblEstimated       = nullptr;
     QFrame      *mCleanerFooter      = nullptr;
     QLabel      *mLblLoadingScanner  = nullptr;

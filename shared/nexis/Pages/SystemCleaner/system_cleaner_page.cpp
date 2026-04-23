@@ -99,6 +99,7 @@ void SystemCleanerPage::init()
 
     buildCategoryHeader();
     buildCategoryCards();
+    buildInlineResults();
     buildCleanerFooter();
     initScheduleIndicator();
 }
@@ -324,7 +325,21 @@ void SystemCleanerPage::buildCategoryCards()
     mScanProgress->hide();
 
     catLayout->addWidget(mScanProgress);
-    catLayout->addWidget(scrollArea, 1);
+    catLayout->addWidget(scrollArea);
+}
+
+// ─── Inline results (reparented from stacked widget page 1) ──────────────────
+
+void SystemCleanerPage::buildInlineResults()
+{
+    QVBoxLayout *catLayout = qobject_cast<QVBoxLayout *>(ui->cleanerCategories->layout());
+    Q_ASSERT(catLayout);
+
+    // Reparent cleanerPage out of the stacked widget so it lives inline in
+    // catLayout, below the cards. The stacked widget retains only cleanerCategories.
+    ui->cleanerPage->setParent(ui->cleanerCategories);
+    ui->cleanerPage->hide();
+    catLayout->addWidget(ui->cleanerPage, 1); // stretch 1 — fills remaining space when visible
 }
 
 // ─── Footer bar ──────────────────────────────────────────────────────────────
@@ -336,7 +351,6 @@ void SystemCleanerPage::buildCleanerFooter()
 
     mCleanerFooter = new QFrame(ui->cleanerCategories);
     mCleanerFooter->setObjectName("cleanerFooter");
-    mCleanerFooter->hide();
 
     QHBoxLayout *footerRow = new QHBoxLayout(mCleanerFooter);
     footerRow->setContentsMargins(14, 10, 14, 10);
@@ -346,7 +360,7 @@ void SystemCleanerPage::buildCleanerFooter()
     QLabel *lblEstimatedLabel = new QLabel(tr("ESTIMATED RECOVERABLE"), mCleanerFooter);
     lblEstimatedLabel->setObjectName("lblEstimatedLabel");
 
-    mLblEstimated = new QLabel(QStringLiteral("0 B"), mCleanerFooter);
+    mLblEstimated = new QLabel(QStringLiteral("\u2014"), mCleanerFooter);
     mLblEstimated->setObjectName("lblEstimatedSize");
 
     QVBoxLayout *leftCol = new QVBoxLayout;
@@ -356,15 +370,7 @@ void SystemCleanerPage::buildCleanerFooter()
 
     footerRow->addLayout(leftCol, 1);
 
-    // Right: view results link + clean selected button
-    mBtnViewResults = new QPushButton(tr("View scan results \xe2\x86\x92"), mCleanerFooter);
-    mBtnViewResults->setObjectName("btnViewResults");
-    mBtnViewResults->setCursor(Qt::PointingHandCursor);
-    mBtnViewResults->setFocusPolicy(Qt::NoFocus);
-    connect(mBtnViewResults, &QPushButton::clicked, this, [this] {
-        ui->stackedWidget->setCurrentIndex(1);
-    });
-
+    // Right: clean selected button (always visible, enabled only after scan + selection)
     mBtnCleanSelected = new QPushButton(tr("Clean selected"), mCleanerFooter);
     mBtnCleanSelected->setObjectName("btnCleanSelected");
     mBtnCleanSelected->setCursor(Qt::PointingHandCursor);
@@ -373,7 +379,6 @@ void SystemCleanerPage::buildCleanerFooter()
     connect(mBtnCleanSelected, &QPushButton::clicked,
             this, &SystemCleanerPage::quickCleanByCategory);
 
-    footerRow->addWidget(mBtnViewResults);
     footerRow->addWidget(mBtnCleanSelected);
 
     catLayout->addWidget(mCleanerFooter);
@@ -389,9 +394,11 @@ void SystemCleanerPage::updateFooterTotal()
             total += c.lastSize;
     }
     if (mLblEstimated)
-        mLblEstimated->setText(FormatUtil::formatBytes(total));
+        mLblEstimated->setText((mHasScanned && total > 0)
+            ? FormatUtil::formatBytes(total)
+            : QStringLiteral("\u2014"));
     if (mBtnCleanSelected)
-        mBtnCleanSelected->setEnabled(total > 0 && mHasScanned);
+        mBtnCleanSelected->setEnabled(mHasScanned && total > 0);
 }
 
 // ─── Badge signal ────────────────────────────────────────────────────────────
@@ -437,7 +444,6 @@ void SystemCleanerPage::on_btnScan_clicked()
     // Disable UI during scan
     mBtnScanSystem->setEnabled(false);
     mBtnSchedule->setEnabled(false);
-    if (mCleanerFooter) mCleanerFooter->hide();
     for (const CategoryCard &c : mCards)
         if (c.check) c.check->setEnabled(false);
 
@@ -684,14 +690,10 @@ void SystemCleanerPage::onScanFinished()
     mBtnScanSystem->setEnabled(true);
     mBtnSchedule->setEnabled(true);
 
-    // Show footer only when at least one card is checked
+    // Show results inline and update footer total
+    ui->cleanerPage->show();
     updateFooterTotal();
-    bool anyChecked = false;
-    for (const CategoryCard &c : mCards)
-        if (c.check && c.check->isChecked()) { anyChecked = true; break; }
-    if (mCleanerFooter && anyChecked) mCleanerFooter->show();
-
-    repositionScheduleIndicator();
+    updateScheduleIndicator();
 }
 
 // ─── Clean (from tree results, page 1) ───────────────────────────────────────
@@ -824,10 +826,10 @@ void SystemCleanerPage::systemClean()
 void SystemCleanerPage::onCleanFinished()
 {
     if (mCleaningFromCard) {
-        // Clean was initiated from page-0 footer — reset cards
+        // Clean was initiated from footer — reset cards and hide inline results
         for (CategoryCard &c : mCards) {
             if (c.check && c.check->isChecked() && c.lastSize > 0) {
-                c.lblSize->setText(QStringLiteral("\xe2\x80\x94"));
+                c.lblSize->setText(QStringLiteral("\u2014"));
                 c.lastSize = 0;
             }
         }
@@ -837,7 +839,8 @@ void SystemCleanerPage::onCleanFinished()
         mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
 
         mHasScanned = false;
-        if (mCleanerFooter) mCleanerFooter->hide();
+        ui->cleanerPage->hide();
+        ui->treeWidgetScanResult->clear();
         updateFooterTotal();
 
         for (const CategoryCard &c : mCards)
@@ -887,9 +890,7 @@ void SystemCleanerPage::on_btnBackToCategories_clicked()
 {
     if (mScanInProgress || mCleanInProgress) return;
 
-    if (mScanProgress) mScanProgress->hide();
-    ui->treeWidgetScanResult->clear();
-    ui->stackedWidget->setCurrentIndex(0);
+    ui->cleanerPage->hide();
     updateScheduleIndicator();
 }
 
@@ -1029,13 +1030,6 @@ void SystemCleanerPage::initScheduleIndicator()
 
     mScheduleIndicator->raise();
 
-    connect(ui->stackedWidget, &QStackedWidget::currentChanged, this, [this](int index) {
-        if (index != 0)
-            mScheduleIndicator->hide();
-        else
-            updateScheduleIndicator();
-    });
-
     connect(mScheduleManager, &ScheduleManager::schedulesChanged,
             this, &SystemCleanerPage::updateScheduleIndicator);
 
@@ -1048,10 +1042,8 @@ void SystemCleanerPage::repositionScheduleIndicator()
 
     int outerMarginLR     = 15;
     int outerMarginBottom = 15;
-    // If footer is visible, position schedule indicator above it
-    int footerH = (mCleanerFooter && mCleanerFooter->isVisible())
-                      ? mCleanerFooter->sizeHint().height() + 6
-                      : 0;
+    // Footer is always visible — always offset above it
+    int footerH = mCleanerFooter ? mCleanerFooter->sizeHint().height() + 6 : 0;
     int indicatorH = mScheduleIndicator->sizeHint().height();
     int w = width() - outerMarginLR * 2;
     int x = outerMarginLR;
@@ -1094,7 +1086,8 @@ void SystemCleanerPage::updateScheduleIndicator()
         }
     }
 
-    if (!hasEnabled) {
+    // Hide indicator while inline results are showing (avoid overlap)
+    if (!hasEnabled || (ui->cleanerPage && ui->cleanerPage->isVisible())) {
         mScheduleIndicator->hide();
         return;
     }
