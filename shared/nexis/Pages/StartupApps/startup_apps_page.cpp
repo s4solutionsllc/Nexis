@@ -95,7 +95,9 @@ void StartupAppsPage::loadApps()
                 connect(app, &StartupApp::editStartupAppS, this, &StartupAppsPage::openStartupAppEdit);
             }
 
-            item->setSizeHint(app->sizeHint());
+            QSize hint = app->sizeHint();
+            hint.setHeight(qMax(hint.height(), app->minimumHeight()));
+            item->setSizeHint(hint);
             ui->listWidgetStartup->setItemWidget(item, app);
             group.appItems.append(item);
         }
