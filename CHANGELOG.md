@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-04-23
+
 ### Added
 - **CPU Pressure Stall chart (FR-124, Linux):** New "CPU Pressure Stall (some)" HistoryChart on the Resources page — three series tracking avg10, avg60, and avg300 stall percentages sourced from `/proc/pressure/cpu`. Created only when the PSI file is present (kernel 4.20+); zero cost when hidden via DataRefreshService subscription gating.
 - **HTML system report export (FR-126):** New "Export as HTML…" button on the Hardware Info page. Generates a self-contained HTML file (inline CSS) containing a live system snapshot (CPU %, memory, GPU, battery), all hardware tables, top-10 processes by CPU at export time, and pending update count. Default filename: `nexis-report-YYYY-MM-DD.html`.
