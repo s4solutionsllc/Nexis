@@ -1244,7 +1244,6 @@ QLabel[accessibleName="dialog-title"] {
 #widgetStartupApp #lblStartupAppName {
     font-size: 10pt;
     color: @color05;
-    font-family: @monoFontFamily;
 }
 
 #checkStartup {
@@ -1273,6 +1272,7 @@ QLabel[accessibleName="dialog-title"] {
 #widgetStartupApp #lblStartupAppPath {
     color: @tertiaryText;
     font-size: 9pt;
+    font-family: @monoFontFamily;
 }
 
 /* - Startup App Edit - */

@@ -258,16 +258,6 @@
           <property name="text">
            <string>Delete</string>
           </property>
-          <property name="icon">
-           <iconset resource="../../static.qrc">
-            <normaloff>:/static/themes/default/img/trash.png</normaloff>:/static/themes/default/img/trash.png</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>16</width>
-            <height>16</height>
-           </size>
-          </property>
           <property name="checkable">
            <bool>false</bool>
           </property>

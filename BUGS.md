@@ -805,18 +805,20 @@
   - **Files:** `shared/nexis/Pages/Services/services_page.cpp`
   - **Description:** Every row in the Services table shows the same orange gear icon as a row icon. Design system either omits per-row icons or uses the service's actual icon. The uniform identical icon adds visual noise without conveying information and is inconsistent with the design system's table row spec.
 
-- [ ] **BUG-129: Startup App names render in monospace font instead of body font** (LOW)
+- [x] **BUG-129: Startup App names render in monospace font instead of body font** (LOW)
   - **Files:** `shared/nexis/Pages/StartupApps/startup_apps_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** Application names in the Startup Apps list are displayed in a monospace typeface (as if they were command strings). Design system uses the standard body font for application display names. Only the command/executable path column should use monospace.
+  - **Resolved:** Moved `font-family: @monoFontFamily` from `#lblStartupAppName` to `#lblStartupAppPath` in style.qss.
 
 - [x] **BUG-130: Hosts Manager "New Host" button not styled as primary action button** (LOW)
   - **Files:** `shared/nexis/Pages/HostsManager/hosts_manager_page.cpp`
   - **Description:** The "New Host" button in the Hosts Manager toolbar does not receive the primary button style (filled accent background). It renders as a secondary/outline or plain button. Design system specifies the primary add/create action on a page uses the filled primary button style.
   - **Resolved:** Fixed `host_manage.ui` btnNewHost: set `accessibleName="primary"`, removed `flat=true` and `checkable=true`.
 
-- [ ] **BUG-131: Homebrew page "Uninstall" button uses a circle-X icon inconsistent with design system** (LOW)
+- [x] **BUG-131: Homebrew page "Uninstall" button uses a circle-X icon inconsistent with design system** (LOW)
   - **Files:** `shared/nexis/Pages/Homebrew/homebrew_page.cpp`
   - **Description:** The Uninstall action in the Homebrew packages list uses a circle-X (close/delete) icon button. Design system uses a text button or a trash icon for destructive remove actions. The circle-X icon is associated with dismissal/close actions elsewhere in the app, creating inconsistency.
+  - **Resolved:** Removed icon and iconSize from `btnDeleteAptSource` in `apt_source_manager_page.ui`. The red `accessibleName="danger"` text button is self-sufficient.
 
 - [ ] **BUG-132: Settings page section headers use QGroupBox chrome (border box) instead of plain section label style** (LOW)
   - **Files:** `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
