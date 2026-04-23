@@ -183,7 +183,9 @@ int main(int argc, char *argv[])
     qApp->setApplicationName("nexis");
     qApp->setApplicationDisplayName("Nexis");
     qApp->setApplicationVersion(APP_VERSION);
+#ifndef Q_OS_MAC
     qApp->setWindowIcon(QIcon(":/static/logo.svg"));
+#endif
     qApp->setDesktopFileName("nexis");
 
     // ── Headless mode detection (before QLockFile) ──────────────────────
