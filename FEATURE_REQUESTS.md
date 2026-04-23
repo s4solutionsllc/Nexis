@@ -634,5 +634,5 @@
   - **Platform:** Both (subtitle paths will differ per platform — define per-category via `#ifdef Q_OS_MACOS`)
   - **Complexity:** Large
   - **Priority:** Medium
-  - **Resolved:** Full card-layout redesign implemented. Two-column `QFrame`-based card grid with per-card name, mono subtitle, and post-scan size label. QSS dynamic property `checked` drives accent border. Footer bar with estimated recoverable size and "Clean selected" button. `mRetained*` lists enable page-0 cleaning without navigating to the tree. Sidebar badge wired via `checkedCategoryCountChanged` signal. See commit for full diff.
+  - **Resolved:** Full card-layout redesign implemented. Two-column `QFrame`-based card grid with per-card name, mono subtitle, and post-scan size label. QSS dynamic property `checked` drives accent border. Footer bar with estimated recoverable size and "Clean selected" button. `mRetained*` lists enable page-0 cleaning without navigating to the tree. Sidebar badge wired via `checkedCategoryCountChanged` signal. See commit b8f3bf7.
 
