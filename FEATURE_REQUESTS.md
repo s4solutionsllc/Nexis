@@ -582,3 +582,56 @@
   - **Platform:** Both
   - **Complexity:** Low–Medium per sub-item
   - **Resolved:** All 12 sub-items implemented across two commits. ffb4c8c (quick wins: gradient removal, border-radius fixes, hardcoded color, `@monoFontFamily` token on service/startup/APT names). Follow-up commit: Inter SemiBold bundled; process name column set to JetBrains Mono via Qt::FontRole; service description in mono; all 4 sidebar logo SVGs updated to Inter; process table items 9pt; command palette keyboard hint footer added with bordered mono kbd glyphs.
+
+- [ ] **FR-130: System Cleaner — redesign to match design system UI/UX** — The current System Cleaner page uses an icon-grid layout (decorative macOS-style icons, circular radio-button selectors, a single centered Scan button) that does not match the design system. The Nexis UI Kit spec calls for a list-card layout with square checkboxes, source-path subtitles, an estimated-recoverable footer bar, and a two-button action header. Full gap analysis against the UI Kit mockup:
+
+  **Layout — icon grid → two-column list-card grid:**
+  - Replace the current `QListWidget`/icon-grid approach with a scrollable two-column grid of horizontal list-item cards (each card spans roughly half the content width).
+  - Cards use 8px border-radius (`@cardBg` background, `@borderColor` 1px border). When the category's checkbox is checked, the card's border switches to `@accentColor` (orange) at 2px to give immediate visual feedback.
+  - Remove the large decorative category icons entirely. The design replaces them with plain text cards; visual identity comes from the checkbox accent and card border, not illustrations.
+
+  **Category cards — add source-path subtitle:**
+  - Each card shows the category name in bold (`font-weight: 600`, `@textPrimary`) on line 1.
+  - Line 2 shows a muted subtitle (`@textSecondary`, `@monoFontFamily`) listing the actual paths or package managers scanned (e.g., "apt · dnf · pacman" for Package Caches; "journald · ~/.cache/*.log" for Application Logs; "~/Library/Logs/DiagnosticReports" on macOS for Crash Reports). These should be defined per-category as static strings in the cleaner model.
+  - The category size is right-aligned on line 1 in `@textSecondary`. Currently shown below the icon; move it inline to the card's trailing edge.
+
+  **Checkboxes — circular → square with orange fill:**
+  - Replace the current circular radio-button-style indicators (`QRadioButton` or custom circle widget) with standard square `QCheckBox` widgets.
+  - When checked: checkbox background `@accentColor`, checkmark white. When unchecked: background `@cardBg`, border `@borderColor`. Style via QSS `#categoryCheckbox`.
+  - The card border color change (unchecked → `@borderColor`, checked → `@accentColor` 2px) requires a dynamic property (`setProperty("checked", true/false)`) with `style()->unpolish/polish()` on the card widget.
+
+  **Page header — add title + subtitle:**
+  - Add a `QLabel` page title ("System Cleaner", `font-size: 16pt`, `font-weight: 700`, `@textPrimary`) to the left of the existing top toolbar.
+  - Add a subtitle `QLabel` beneath ("Reclaim disk space by removing caches, logs, and crash reports.", `font-size: 9pt`, `@textSecondary`) below the title.
+  - Move the existing gear/settings icon to remain in the top-right corner.
+
+  **Action buttons — single Scan → Schedule + Scan system:**
+  - Replace the single centered "Scan" `QPushButton` with two buttons right-aligned in the page header row:
+    1. **"Schedule…"** — outlined style (`@borderColor` border, `@cardBg` background, `@textPrimary` text). Opens the existing schedule editor dialog.
+    2. **"Scan system"** — filled orange (`@accentColor` background, white text). Triggers the existing scan. This is the primary CTA; it should use the existing `btnScan` signal/slot connection.
+  - Remove the existing centered standalone Scan button widget.
+
+  **Estimated-recoverable footer bar:**
+  - Add a full-width footer strip (pinned to the bottom of the content area, above any status bar) that shows:
+    - Left: "ESTIMATED RECOVERABLE" label in `@textSecondary`, `font-size: 8pt`, uppercase/tracking; followed by the summed size of all checked categories in `@successColor` (green), `font-size: 14pt`, `font-weight: 700`.
+    - Right: **"Clean selected"** `QPushButton` in `@destructiveColor` (red/coral) with white text. This triggers the actual clean operation on checked categories only. Connect to the existing clean slot.
+  - The footer is hidden (or shows 0 bytes) until at least one category is checked and a scan has been run.
+  - This replaces the current pattern where clean is initiated via "Select All" toggle + re-scan.
+
+  **Select All — replace toggle with implicit behavior:**
+  - Remove the `Select All` `QToggle`. The footer's "Clean selected" button provides the clean action. If users want all selected, they check each card (or we can keep Select All as a text button/link in the footer left region rather than a prominent toggle).
+
+  **Sidebar badge — selected category count:**
+  - The System Cleaner sidebar button should show an orange badge with the count of currently-checked categories (mirrors the UI Kit mockup showing "3"). Wire this to the existing badge infrastructure (`AppManager::updateSidebarBadge` or equivalent) and update it whenever a checkbox changes state.
+
+  **Files:**
+  - `shared/nexis/Pages/SystemCleaner/system_cleaner_page.h/.cpp`
+  - `shared/nexis/Pages/SystemCleaner/system_cleaner_page.ui`
+  - `shared/nexis/Pages/SystemCleaner/` — any category item widget files
+  - `shared/nexis/static/themes/default/style/style.qss` — new `#categoryCard`, `#categoryCheckbox`, `#cleanerFooter`, `#btnCleanSelected`, `#btnScheduleCleaner`, `#btnScanSystem` rules
+  - `shared/nexis/app.cpp` / sidebar badge wiring
+
+  - **Platform:** Both (subtitle paths will differ per platform — define per-category via `#ifdef Q_OS_MACOS`)
+  - **Complexity:** Large
+  - **Priority:** Medium
+
