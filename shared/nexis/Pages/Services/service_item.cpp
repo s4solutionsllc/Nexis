@@ -21,6 +21,7 @@ ServiceItem::ServiceItem(const QString &name,
     ui->lblServiceName->setText(name);
     ui->lblServiceDescription->setText("- " + description);
     ui->checkServiceRunning->setChecked(active);
+    ui->checkServiceRunning->setText(active ? tr("Running") : tr("Stopped"));
     ui->checkServiceStartup->setChecked(status);
 
     ui->lblServiceName->setToolTip(name);
@@ -44,5 +45,7 @@ void ServiceItem::on_checkServiceRunning_clicked(bool status)
 
     tm->changeServiceActive(name, status);
 
-    ui->checkServiceRunning->setChecked(tm->serviceIsActive(name));
+    bool nowActive = tm->serviceIsActive(name);
+    ui->checkServiceRunning->setChecked(nowActive);
+    ui->checkServiceRunning->setText(nowActive ? tr("Running") : tr("Stopped"));
 }

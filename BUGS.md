@@ -741,9 +741,10 @@
   - **Description:** Design system specifies toggle switches use a neutral gray background in the off state. Currently the off-state track color uses the accent/destructive color (orange-red), making it visually read as "danger" or "error" rather than simply "inactive". All toggle switches across the app are affected (Services, Startup Apps, Settings, etc.).
   - **Resolved:** Replaced hardcoded-red `un-checkbox.png` with `un-checkbox.svg` (neutral gray `#9A9DA6` track, white knob). Replaced `checkbox.png` with `checkbox.svg` (green track) for consistency. Updated QSS and QRC references.
 
-- [ ] **BUG-115: Services page uses interactive toggle for running/stopped status instead of read-only badge** (HIGH)
-  - **Files:** `shared/nexis/Pages/Services/services_page.cpp`, `shared/nexis/Pages/Services/services_page.h`
+- [x] **BUG-115: Services page uses interactive toggle for running/stopped status instead of read-only badge** (HIGH)
+  - **Files:** `shared/nexis/Pages/Services/service_item.cpp`, `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** Design system shows service status (Running/Stopped) as a read-only colored badge/pill. The current implementation uses a `QCheckBox` or toggle control for status display, which implies interactivity and is inconsistent with the design. Status indication should be a non-interactive label styled as a badge.
+  - **Resolved:** Kept `checkServiceRunning` as a functional QCheckBox (start/stop preserved). Hid the toggle indicator via QSS (`width: 0; height: 0`), styled the widget body as a green/gray pill badge using `:checked`/`:!checked` pseudo-states with theme tokens. Set "Running"/"Stopped" text in constructor and click handler.
 
 - [ ] **BUG-116: Dashboard metric tiles missing card background and border** (MEDIUM)
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
