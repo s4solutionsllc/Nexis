@@ -805,9 +805,10 @@
   - **Description:** Design system shows the "End Process" (kill) button only when a process row is selected. Currently the button is always visible regardless of selection state, cluttering the toolbar and potentially inviting accidental kills. Button should be hidden or disabled when no row is selected.
   - **Resolved:** Hidden by default; connected `QItemSelectionModel::selectionChanged` in `init()` to show/hide on selection state.
 
-- [ ] **BUG-128: Services page displays identical orange gear icon on every service row, obscuring service identity** (LOW)
+- [x] **BUG-128: Services page displays identical orange gear icon on every service row, obscuring service identity** (LOW)
   - **Files:** `shared/nexis/Pages/Services/services_page.cpp`
   - **Description:** Every row in the Services table shows the same orange gear icon as a row icon. Design system either omits per-row icons or uses the service's actual icon. The uniform identical icon adds visual noise without conveying information and is inconsistent with the design system's table row spec.
+  - **Resolved:** Removed `lblServiceIcon` from `service_item.ui` and the `#lblServiceIcon` QSS rule; service name is now the leftmost element per design spec.
 
 - [x] **BUG-129: Startup App names render in monospace font instead of body font** (LOW)
   - **Files:** `shared/nexis/Pages/StartupApps/startup_apps_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`

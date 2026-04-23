@@ -1307,9 +1307,6 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @color02;
 }
 
-#lblServiceIcon {
-    image: url(:/static/themes/@themeName/img/service.png);
-}
 
 #ServiceItem #lblServiceName {
     font-size: 10pt;
