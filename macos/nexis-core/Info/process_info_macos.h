@@ -25,9 +25,13 @@ private:
     bool mIoTimerStarted = false;
 
     // FR-102: one long-lived nettop child instead of forking per tick.
-    // Started lazily when mCollectNetIO first flips on; torn down when it
-    // flips off.
     std::unique_ptr<NettopStreamer> mNettopStreamer;
+
+    // FR-128: per-process GPU% via AGXDeviceUserClient tree walk
+    QHash<pid_t, quint64> mPrevGpuNs;
+    QElapsedTimer mGpuTimer;
+    bool mGpuTimerStarted = false;
+    static QHash<pid_t, quint64> collectGpuNs();
 };
 
 #endif // PROCESS_INFO_MACOS_H

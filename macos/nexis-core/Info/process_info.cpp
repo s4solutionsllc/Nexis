@@ -7,6 +7,8 @@
 #include <QSet>
 #include <libproc.h>
 #include <sys/resource.h>
+#include <IOKit/IOKitLib.h>
+#include <CoreFoundation/CoreFoundation.h>
 
 ProcessInfoMacOS::ProcessInfoMacOS() = default;
 ProcessInfoMacOS::~ProcessInfoMacOS() = default;
@@ -132,55 +134,157 @@ void ProcessInfoMacOS::updateProcesses()
         }
         if (!mPrevNetIo.isEmpty())
             mPrevNetIo.clear();
-        return;
-    }
+    } else {
+        if (!mNettopStreamer) {
+            mNettopStreamer = std::make_unique<NettopStreamer>();
+            mNettopStreamer->start(1);
+        }
 
-    if (!mNettopStreamer) {
-        mNettopStreamer = std::make_unique<NettopStreamer>();
-        mNettopStreamer->start(1);
-    }
+        // Rebuild activePids if disk collection skipped it.
+        if (activePids.isEmpty()) {
+            for (const Process &proc : processList)
+                activePids.insert(proc.getPid());
+        }
 
-    // Rebuild activePids if disk collection skipped it.
-    if (activePids.isEmpty()) {
-        for (const Process &proc : processList)
-            activePids.insert(proc.getPid());
-    }
+        const QHash<pid_t, QPair<quint64, quint64>> nettopData = mNettopStreamer->snapshot();
 
-    const QHash<pid_t, QPair<quint64, quint64>> nettopData = mNettopStreamer->snapshot();
+        for (Process &proc : processList) {
+            pid_t pid = proc.getPid();
 
-    for (Process &proc : processList) {
-        pid_t pid = proc.getPid();
+            if (nettopData.contains(pid)) {
+                auto net = nettopData.value(pid);
+                quint64 rxBytes = net.first;
+                quint64 txBytes = net.second;
 
-        if (nettopData.contains(pid)) {
-            auto net = nettopData.value(pid);
-            quint64 rxBytes = net.first;
-            quint64 txBytes = net.second;
+                if (elapsedSecs > 0 && mPrevNetIo.contains(pid)) {
+                    auto prev = mPrevNetIo.value(pid);
+                    double downRate = (rxBytes >= prev.first)
+                        ? (rxBytes - prev.first) / elapsedSecs : 0;
+                    double upRate = (txBytes >= prev.second)
+                        ? (txBytes - prev.second) / elapsedSecs : 0;
+                    proc.setNetDownRate(downRate);
+                    proc.setNetUpRate(upRate);
+                } else {
+                    proc.setNetDownRate(0);
+                    proc.setNetUpRate(0);
+                }
 
-            if (elapsedSecs > 0 && mPrevNetIo.contains(pid)) {
-                auto prev = mPrevNetIo.value(pid);
-                double downRate = (rxBytes >= prev.first)
-                    ? (rxBytes - prev.first) / elapsedSecs : 0;
-                double upRate = (txBytes >= prev.second)
-                    ? (txBytes - prev.second) / elapsedSecs : 0;
-                proc.setNetDownRate(downRate);
-                proc.setNetUpRate(upRate);
-            } else {
-                proc.setNetDownRate(0);
-                proc.setNetUpRate(0);
+                mPrevNetIo.insert(pid, qMakePair(rxBytes, txBytes));
             }
+        }
 
-            mPrevNetIo.insert(pid, qMakePair(rxBytes, txBytes));
+        // Prune stale net PIDs
+        auto netIt = mPrevNetIo.begin();
+        while (netIt != mPrevNetIo.end()) {
+            if (!activePids.contains(netIt.key()))
+                netIt = mPrevNetIo.erase(netIt);
+            else
+                ++netIt;
         }
     }
 
-    // Prune stale net PIDs
-    auto netIt = mPrevNetIo.begin();
-    while (netIt != mPrevNetIo.end()) {
-        if (!activePids.contains(netIt.key()))
-            netIt = mPrevNetIo.erase(netIt);
-        else
-            ++netIt;
+    // --- Per-process GPU utilization (FR-128) ---
+    // Walk AGXDeviceUserClient children of IOAccelerator (Apple Silicon).
+    // accumulatedGPUTime is a monotonically increasing nanosecond counter;
+    // delta / elapsed wall time = GPU%.
+    if (!mCollectGpu) {
+        if (!mPrevGpuNs.isEmpty())
+            mPrevGpuNs.clear();
+        mGpuTimerStarted = false;
+        return;
     }
+
+    double gpuElapsedNs = 0.0;
+    if (!mGpuTimerStarted) {
+        mGpuTimer.start();
+        mGpuTimerStarted = true;
+    } else {
+        gpuElapsedNs = static_cast<double>(mGpuTimer.nsecsElapsed());
+        mGpuTimer.restart();
+    }
+
+    QHash<pid_t, quint64> currentGpuNs = collectGpuNs();
+
+    for (Process &proc : processList) {
+        pid_t pid = proc.getPid();
+        if (currentGpuNs.contains(pid) && gpuElapsedNs > 0 && mPrevGpuNs.contains(pid)) {
+            quint64 cur = currentGpuNs.value(pid);
+            quint64 prev = mPrevGpuNs.value(pid);
+            double pct = (cur >= prev) ? (cur - prev) / gpuElapsedNs * 100.0 : 0.0;
+            proc.setGpuPercent(qBound(0.0, pct, 100.0));
+        } else {
+            proc.setGpuPercent(-1.0);
+        }
+    }
+
+    // Prune stale GPU PIDs
+    auto gpuIt = mPrevGpuNs.begin();
+    while (gpuIt != mPrevGpuNs.end()) {
+        if (!currentGpuNs.contains(gpuIt.key()))
+            gpuIt = mPrevGpuNs.erase(gpuIt);
+        else
+            ++gpuIt;
+    }
+
+    mPrevGpuNs = currentGpuNs;
+}
+
+QHash<pid_t, quint64> ProcessInfoMacOS::collectGpuNs()
+{
+    QHash<pid_t, quint64> result;
+
+    io_iterator_t accelIt = 0;
+    if (IOServiceGetMatchingServices(kIOMainPortDefault,
+                                     IOServiceMatching("IOAccelerator"),
+                                     &accelIt) != KERN_SUCCESS || !accelIt)
+        return result;
+
+    io_object_t accel;
+    while ((accel = IOIteratorNext(accelIt))) {
+        io_iterator_t childIt = 0;
+        if (IORegistryEntryGetChildIterator(accel, kIOServicePlane, &childIt) == KERN_SUCCESS) {
+            io_object_t child;
+            while ((child = IOIteratorNext(childIt))) {
+                CFMutableDictionaryRef props = nullptr;
+                if (IORegistryEntryCreateCFProperties(child, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS && props) {
+                    CFStringRef creatorRef = (CFStringRef)CFDictionaryGetValue(props, CFSTR("IOUserClientCreator"));
+                    CFArrayRef usageRef    = (CFArrayRef)CFDictionaryGetValue(props, CFSTR("AppUsage"));
+
+                    if (creatorRef && CFGetTypeID(creatorRef) == CFStringGetTypeID() &&
+                        usageRef   && CFGetTypeID(usageRef)   == CFArrayGetTypeID()) {
+
+                        char buf[128] = {};
+                        CFStringGetCString(creatorRef, buf, sizeof(buf), kCFStringEncodingUTF8);
+
+                        int pid = 0;
+                        if (sscanf(buf, "pid %d,", &pid) == 1 && pid > 0) {
+                            quint64 totalNs = 0;
+                            CFIndex count = CFArrayGetCount(usageRef);
+                            for (CFIndex i = 0; i < count; ++i) {
+                                CFDictionaryRef entry = (CFDictionaryRef)CFArrayGetValueAtIndex(usageRef, i);
+                                if (entry && CFGetTypeID(entry) == CFDictionaryGetTypeID()) {
+                                    CFNumberRef nsRef = (CFNumberRef)CFDictionaryGetValue(entry, CFSTR("accumulatedGPUTime"));
+                                    if (nsRef && CFGetTypeID(nsRef) == CFNumberGetTypeID()) {
+                                        uint64_t ns = 0;
+                                        CFNumberGetValue(nsRef, kCFNumberSInt64Type, &ns);
+                                        totalNs += ns;
+                                    }
+                                }
+                            }
+                            result[static_cast<pid_t>(pid)] += totalNs;
+                        }
+                    }
+                    CFRelease(props);
+                }
+                IOObjectRelease(child);
+            }
+            IOObjectRelease(childIt);
+        }
+        IOObjectRelease(accel);
+    }
+    IOObjectRelease(accelIt);
+
+    return result;
 }
 
 // getProcessList() is in shared/nexis-core/Info/process_info_shared.cpp
