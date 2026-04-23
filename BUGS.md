@@ -760,9 +760,10 @@
   - **Description:** Design system places the "Add" action button in the top-right of the content area (toolbar region), consistent with the design pattern for list pages (Hosts Manager, Services, etc.). Currently the Add button appears at the bottom of the startup apps list, inconsistent with the design system's placement convention.
   - **Resolved:** Moved `btnAddStartupApp` from row 5, col 2 to row 0, col 3 (header row, right of search field). Expanded list widget colspan 3→4. Removed now-redundant vertical spacer. Updated reference screenshots.
 
-- [ ] **BUG-119: Boot Analysis page shows poor empty state on macOS** (MEDIUM)
+- [x] **BUG-119: Boot Analysis page shows poor empty state on macOS** (MEDIUM)
   - **Files:** `shared/nexis/Pages/BootAnalysis/boot_analysis_page.cpp`
   - **Description:** On macOS, `systemd-analyze` is unavailable so the Boot Analysis page shows no data. The empty state provides no explanation or guidance to the user. Design system patterns call for an informative empty state message indicating the feature is Linux-only, with a descriptive icon or illustration, rather than a blank/broken layout.
+  - **Resolved:** Added `mLblEmpty` QLabel empty-state widget with centered, muted styling; hides table and shows informative message on macOS when entries list is empty.
 
 - [ ] **BUG-120: Table and tree column headers render in accent orange instead of neutral foreground** (LOW)
   - **Files:** `shared/nexis/static/themes/default/style/style.qss`

@@ -81,6 +81,14 @@ void BootAnalysisPage::buildUi()
     mTable->setShowGrid(false);
     outer->addWidget(mTable, 1);
 
+    // ---- Empty state ----
+    mLblEmpty = new QLabel(this);
+    mLblEmpty->setObjectName("lblBootEmptyState");
+    mLblEmpty->setAlignment(Qt::AlignCenter);
+    mLblEmpty->setWordWrap(true);
+    mLblEmpty->setVisible(false);
+    outer->addWidget(mLblEmpty, 1);
+
     // ---- Status ----
     mLblStatus = new QLabel(this);
     mLblStatus->setObjectName("lblBootAnalysisStatus");
@@ -116,6 +124,8 @@ void BootAnalysisPage::populate(const BootAnalysisData &data)
     mBtnRefresh->setEnabled(true);
     mBtnRefresh->setText(tr("Refresh"));
 
+    mTable->setVisible(true);
+    mLblEmpty->setVisible(false);
     mTable->setRowCount(0);
 
     if (!data.available) {
@@ -138,7 +148,10 @@ void BootAnalysisPage::populate(const BootAnalysisData &data)
 
 #ifdef Q_OS_MACOS
     if (data.entries.isEmpty()) {
-        mLblStatus->setText(tr("Per-service boot timing is not available on macOS."));
+        mTable->setVisible(false);
+        mLblEmpty->setVisible(true);
+        mLblEmpty->setText(tr("Per-service boot timing is not available on macOS.\n\nSystem uptime since last boot is shown above."));
+        mLblStatus->clear();
         return;
     }
 #endif

@@ -30,6 +30,7 @@ private:
     QLabel        *mLblTitle    = nullptr;
     QLabel        *mLblSubtitle = nullptr;
     QTableWidget  *mTable       = nullptr;
+    QLabel        *mLblEmpty    = nullptr;
     QPushButton   *mBtnRefresh  = nullptr;
     QLabel        *mLblStatus   = nullptr;
 

@@ -1220,6 +1220,12 @@ QLabel[accessibleName="dialog-title"] {
     padding: 0 0 4 0;
 }
 
+#lblBootEmptyState {
+    color: @color04;
+    font-size: 11pt;
+    qproperty-alignment: AlignCenter;
+}
+
 /* - Startup App - */
 
 #widgetStartupApp {
