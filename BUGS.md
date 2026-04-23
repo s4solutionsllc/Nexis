@@ -65,10 +65,10 @@
   - **Description:** Clicking Scan on the System Cleaner page shows a "radar" loading GIF via `QMovie` attached to `lblLoadingScanner`. The default/dark theme's `scanLoading.gif` is 100×100 (the label's `minimumSize`), but the light theme's file is **512×512**. `QMovie` plays at native frame size, so on light theme the radar takes over the page.
   - **Resolved:** `QMovie::setScaledSize(Dpi::scale(100, 100))` applied on both the initial setup and the theme-change handler. Same fix applied to the cleaner progress bar (`loading.gif`, 160×20) for consistency. The widget is now bounded regardless of future asset resolution changes.
 
-- [ ] **BUG-111: ScreenshotTests leaks user QSettings** (LOW)
+- [x] **BUG-111: ScreenshotTests leaks user QSettings** (LOW)
   - **File:** `tests/screenshots/test_screenshots.cpp` — `initTestCase()`
   - **Description:** The test calls `qApp->setApplicationName("nexis")` and then instantiates `App()`, which means `QSettings` and everything downstream of it reads from the developer's real Nexis preferences (sidebar collapse state, selected theme, etc.). If the developer has the sidebar expanded in their actual Nexis install, ScreenshotTests captures an expanded-sidebar dashboard and fails against the collapsed-sidebar reference image. Discovered while verifying BUG-110 — flaky failures on Luke's macOS machine with an expanded sidebar.
-  - **Fix:** Use a unique application name for tests (e.g. `"nexis-screenshot-tests"`), or set `QSETTINGS_INI_FORMAT` to a temp dir via `QStandardPaths::setTestModeEnabled(true)` in `initTestCase()`, so the test reads an isolated empty settings store. Qt has first-class support for this.
+  - **Resolved:** Added `QStandardPaths::setTestModeEnabled(true)` in `main()` before `qExec()` and cleanup of temp config dir in `cleanupTestCase()`. Baselines regenerated against clean config. Real `settings.ini` mtime confirmed unchanged after test run.
 
 - [x] **BUG-110: Homebrew/APT page "Available Updates" table empty on first visit** (MEDIUM)
   - **Files:** `shared/nexis/Managers/data_refresh_service.{h,cpp}`, `shared/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp`

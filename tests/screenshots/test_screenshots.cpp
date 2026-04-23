@@ -6,6 +6,7 @@
 #include <QStackedWidget>
 #include <QScreen>
 #include <QStyleFactory>
+#include <QStandardPaths>
 
 #include "app.h"
 #include "Managers/app_manager.h"
@@ -263,6 +264,8 @@ private slots:
             mApp->hide();
             mApp = nullptr;
         }
+        QString testConfig = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+        QDir(testConfig).removeRecursively();
     }
 
     void screenshotDarkTheme()
@@ -281,6 +284,7 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(static);
     QApplication app(argc, argv);
     app.setStyle(QStyleFactory::create("Fusion"));
+    QStandardPaths::setTestModeEnabled(true);
     ScreenshotTests tc;
     return QTest::qExec(&tc, argc, argv);
 }
