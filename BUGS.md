@@ -786,7 +786,8 @@
   - **Description:** The Startup Apps sidebar item displays a play/triangle icon (suggesting media playback). Design system uses an icon that communicates application startup (e.g., rocket, power, or list icon). The current icon is semantically misleading.
   - **Resolved:** Replaced `startup-apps.svg` with a rocket icon (body + fins + porthole cutout via evenodd fill-rule).
 
-- [ ] **BUG-124: Dashboard has excessive vertical whitespace between metric tile rows** (LOW)
+- [x] **BUG-124: Dashboard has excessive vertical whitespace between metric tile rows** (LOW)
+  - **Resolved:** Not a code defect — whitespace was caused by the user's own tile configuration (tiles only in rows 0–1, rows 2–3 intentionally empty). No fix needed.
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`
   - **Description:** The spacing between rows of metric tiles on the Dashboard is significantly larger than the design system specifies, wasting vertical space and making the layout feel sparse. Gap between tile rows should match the design system's standard card-grid spacing.
 
