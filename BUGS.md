@@ -755,9 +755,10 @@
   - **Description:** Design system shows a "System Cleaner" page title/header at the top of the content area, consistent with other pages (Dashboard, Processes, etc.). The System Cleaner page omits this header, making navigation context less clear and inconsistent with the rest of the app.
   - **Resolved:** Added `QLabel lblCleanerTitle` to the outer `QVBoxLayout` in the `.ui` file above the stacked widget. Styled with `#lblCleanerTitle` QSS rule matching the `#lblProcessTitle` pattern. Updated reference screenshots.
 
-- [ ] **BUG-118: Startup Apps "Add" button placed at bottom of list instead of top-right** (MEDIUM)
-  - **Files:** `shared/nexis/Pages/StartupApps/startup_apps_page.cpp`
+- [x] **BUG-118: Startup Apps "Add" button placed at bottom of list instead of top-right** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/StartupApps/startup_apps_page.ui`
   - **Description:** Design system places the "Add" action button in the top-right of the content area (toolbar region), consistent with the design pattern for list pages (Hosts Manager, Services, etc.). Currently the Add button appears at the bottom of the startup apps list, inconsistent with the design system's placement convention.
+  - **Resolved:** Moved `btnAddStartupApp` from row 5, col 2 to row 0, col 3 (header row, right of search field). Expanded list widget colspan 3→4. Removed now-redundant vertical spacer. Updated reference screenshots.
 
 - [ ] **BUG-119: Boot Analysis page shows poor empty state on macOS** (MEDIUM)
   - **Files:** `shared/nexis/Pages/BootAnalysis/boot_analysis_page.cpp`
