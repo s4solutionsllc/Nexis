@@ -10,6 +10,7 @@ MetricTile::MetricTile(const QString &title, const QString &colorToken, QWidget 
     : MetricTileBase(title, colorToken, parent)
 {
     setObjectName("metricTile");
+    setAttribute(Qt::WA_StyledBackground, true);
     buildLayout();
     refreshThemeColors();
 
@@ -79,6 +80,7 @@ void MetricTile::buildLayout()
     mAreaSeries->attachAxis(axisY);
 
     mChartView = new QChartView(mChart, this);
+    mChartView->setFrameShape(QFrame::NoFrame);
     mChartView->setRenderHint(QPainter::Antialiasing);
     mChartView->setMinimumHeight(40);
     mChartView->setMaximumHeight(60);

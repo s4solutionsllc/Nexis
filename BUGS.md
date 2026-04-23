@@ -746,9 +746,10 @@
   - **Description:** Design system shows service status (Running/Stopped) as a read-only colored badge/pill. The current implementation uses a `QCheckBox` or toggle control for status display, which implies interactivity and is inconsistent with the design. Status indication should be a non-interactive label styled as a badge.
   - **Resolved:** Kept `checkServiceRunning` as a functional QCheckBox (start/stop preserved). Hid the toggle indicator via QSS (`width: 0; height: 0`), styled the widget body as a green/gray pill badge using `:checked`/`:!checked` pseudo-states with theme tokens. Set "Running"/"Stopped" text in constructor and click handler.
 
-- [ ] **BUG-116: Dashboard metric tiles missing card background and border** (MEDIUM)
+- [x] **BUG-116: Dashboard metric tiles missing card background and border** (MEDIUM)
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
   - **Description:** Design system specifies Dashboard metric tiles (CPU, Memory, Disk, Network, etc.) as distinct cards with a background fill and subtle border to visually separate them from the page background. Currently tiles render without card styling — no distinct background, no border — making the layout feel flat and unstructured.
+  - **Resolved:** QSS card rules were already correct. Fixed two MetricTile issues: added `WA_StyledBackground` attribute for reliable QSS background rendering, and `setFrameShape(QFrame::NoFrame)` on QChartView to remove inner frame border.
 
 - [x] **BUG-117: System Cleaner page missing page title / section header** (MEDIUM)
   - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.ui`, `shared/nexis/static/themes/default/style/style.qss`
