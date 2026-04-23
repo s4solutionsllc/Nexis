@@ -774,13 +774,15 @@
   - **Files:** `shared/nexis/app.cpp`, `shared/nexis/Pages/` (sidebar management)
   - **Description:** Clicking a sidebar item within an already-expanded section sometimes triggers the section header's toggle, collapsing the section. This requires the user to re-expand the section to continue navigating. Expected behavior per design: the active section stays expanded; only other sections collapse.
 
-- [ ] **BUG-122: Services sidebar entry uses sparkle/diamond icon instead of a services-appropriate icon** (LOW)
+- [x] **BUG-122: Services sidebar entry uses sparkle/diamond icon instead of a services-appropriate icon** (LOW)
   - **Files:** `shared/nexis/static/icons/` or sidebar icon assignment in `app.cpp`/`sidebar_widget.cpp`
   - **Description:** The Services sidebar item displays a sparkle or diamond-shaped icon. Design system uses a more contextually appropriate icon (e.g., gear/cog or list-with-toggle). The current icon does not visually communicate "services".
+  - **Resolved:** Replaced `services.svg` with a 3-row status-dot list icon (filled circle + bar per row).
 
-- [ ] **BUG-123: Startup Apps sidebar entry uses a play-triangle icon instead of a launch/startup icon** (LOW)
+- [x] **BUG-123: Startup Apps sidebar entry uses a play-triangle icon instead of a launch/startup icon** (LOW)
   - **Files:** `shared/nexis/static/icons/` or sidebar icon assignment
   - **Description:** The Startup Apps sidebar item displays a play/triangle icon (suggesting media playback). Design system uses an icon that communicates application startup (e.g., rocket, power, or list icon). The current icon is semantically misleading.
+  - **Resolved:** Replaced `startup-apps.svg` with a rocket icon (body + fins + porthole cutout via evenodd fill-rule).
 
 - [ ] **BUG-124: Dashboard has excessive vertical whitespace between metric tile rows** (LOW)
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`
