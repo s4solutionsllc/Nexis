@@ -735,3 +735,83 @@
   - **File:** `shared/nexis/app.cpp`, `shared/nexis/app.h`
   - **Description:** The small green "available updates" counter badge over the Homebrew/APT Source Manager sidebar button (and the System Cleaner size badge) lost alignment with its button when the main window was resized. Root cause: `App::repositionBadges()` (which absolute-positions the badges via `badge->move()`) was wired to count changes, sidebar collapse animations, and section toggles, but not to window resize events — `App` had no `resizeEvent()` override.
   - **Resolved:** (1dd9195) Added `App::resizeEvent()` override that forwards to `QMainWindow::resizeEvent()` and then calls `repositionBadges()`. Covers both `mUpdatesBadge` and `mCleanerBadge` since they share the helper.
+
+- [ ] **BUG-114: Toggle off-state uses destructive red/orange instead of neutral gray** (HIGH)
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** Design system specifies toggle switches use a neutral gray background in the off state. Currently the off-state track color uses the accent/destructive color (orange-red), making it visually read as "danger" or "error" rather than simply "inactive". All toggle switches across the app are affected (Services, Startup Apps, Settings, etc.).
+
+- [ ] **BUG-115: Services page uses interactive toggle for running/stopped status instead of read-only badge** (HIGH)
+  - **Files:** `shared/nexis/Pages/Services/services_page.cpp`, `shared/nexis/Pages/Services/services_page.h`
+  - **Description:** Design system shows service status (Running/Stopped) as a read-only colored badge/pill. The current implementation uses a `QCheckBox` or toggle control for status display, which implies interactivity and is inconsistent with the design. Status indication should be a non-interactive label styled as a badge.
+
+- [ ] **BUG-116: Dashboard metric tiles missing card background and border** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** Design system specifies Dashboard metric tiles (CPU, Memory, Disk, Network, etc.) as distinct cards with a background fill and subtle border to visually separate them from the page background. Currently tiles render without card styling — no distinct background, no border — making the layout feel flat and unstructured.
+
+- [ ] **BUG-117: System Cleaner page missing page title / section header** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp`
+  - **Description:** Design system shows a "System Cleaner" page title/header at the top of the content area, consistent with other pages (Dashboard, Processes, etc.). The System Cleaner page omits this header, making navigation context less clear and inconsistent with the rest of the app.
+
+- [ ] **BUG-118: Startup Apps "Add" button placed at bottom of list instead of top-right** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/StartupApps/startup_apps_page.cpp`
+  - **Description:** Design system places the "Add" action button in the top-right of the content area (toolbar region), consistent with the design pattern for list pages (Hosts Manager, Services, etc.). Currently the Add button appears at the bottom of the startup apps list, inconsistent with the design system's placement convention.
+
+- [ ] **BUG-119: Boot Analysis page shows poor empty state on macOS** (MEDIUM)
+  - **Files:** `shared/nexis/Pages/BootAnalysis/boot_analysis_page.cpp`
+  - **Description:** On macOS, `systemd-analyze` is unavailable so the Boot Analysis page shows no data. The empty state provides no explanation or guidance to the user. Design system patterns call for an informative empty state message indicating the feature is Linux-only, with a descriptive icon or illustration, rather than a blank/broken layout.
+
+- [ ] **BUG-120: Table and tree column headers render in accent orange instead of neutral foreground** (LOW)
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** `QHeaderView::section` QSS rule uses `@accentColor` (orange) for column header text/background. Design system specifies neutral muted foreground for table column headers. The orange headers are visually noisy and inconsistent with the design system's table component spec.
+
+- [ ] **BUG-121: Active sidebar section (MONITOR/TOOLS/etc.) collapses when navigating between its child pages** (LOW)
+  - **Files:** `shared/nexis/app.cpp`, `shared/nexis/Pages/` (sidebar management)
+  - **Description:** Clicking a sidebar item within an already-expanded section sometimes triggers the section header's toggle, collapsing the section. This requires the user to re-expand the section to continue navigating. Expected behavior per design: the active section stays expanded; only other sections collapse.
+
+- [ ] **BUG-122: Services sidebar entry uses sparkle/diamond icon instead of a services-appropriate icon** (LOW)
+  - **Files:** `shared/nexis/static/icons/` or sidebar icon assignment in `app.cpp`/`sidebar_widget.cpp`
+  - **Description:** The Services sidebar item displays a sparkle or diamond-shaped icon. Design system uses a more contextually appropriate icon (e.g., gear/cog or list-with-toggle). The current icon does not visually communicate "services".
+
+- [ ] **BUG-123: Startup Apps sidebar entry uses a play-triangle icon instead of a launch/startup icon** (LOW)
+  - **Files:** `shared/nexis/static/icons/` or sidebar icon assignment
+  - **Description:** The Startup Apps sidebar item displays a play/triangle icon (suggesting media playback). Design system uses an icon that communicates application startup (e.g., rocket, power, or list icon). The current icon is semantically misleading.
+
+- [ ] **BUG-124: Dashboard has excessive vertical whitespace between metric tile rows** (LOW)
+  - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp`
+  - **Description:** The spacing between rows of metric tiles on the Dashboard is significantly larger than the design system specifies, wasting vertical space and making the layout feel sparse. Gap between tile rows should match the design system's standard card-grid spacing.
+
+- [ ] **BUG-125: System Cleaner "Select All" toggle label appears on the wrong side of the toggle** (LOW)
+  - **Files:** `shared/nexis/Pages/SystemCleaner/system_cleaner_page.cpp`
+  - **Description:** Design system places the "Select All" label to the left of the toggle switch. The current implementation places the label on the right side, inconsistent with the design system's toggle label positioning convention.
+
+- [ ] **BUG-126: Disk Tools "Move to Trash" button renders unstyled (no primary/secondary button styling)** (LOW)
+  - **Files:** `shared/nexis/Pages/DiskTools/disk_tools_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** The "Move to Trash" action button in the Disk Tools large-files results does not receive the standard button QSS styling (no border, no hover state, no accent color). It renders as a plain unstyled system button, inconsistent with all other action buttons in the app.
+
+- [ ] **BUG-127: Processes page "End Process" button is always visible instead of appearing only on row selection** (LOW)
+  - **Files:** `shared/nexis/Pages/Processes/processes_page.cpp`
+  - **Description:** Design system shows the "End Process" (kill) button only when a process row is selected. Currently the button is always visible regardless of selection state, cluttering the toolbar and potentially inviting accidental kills. Button should be hidden or disabled when no row is selected.
+
+- [ ] **BUG-128: Services page displays identical orange gear icon on every service row, obscuring service identity** (LOW)
+  - **Files:** `shared/nexis/Pages/Services/services_page.cpp`
+  - **Description:** Every row in the Services table shows the same orange gear icon as a row icon. Design system either omits per-row icons or uses the service's actual icon. The uniform identical icon adds visual noise without conveying information and is inconsistent with the design system's table row spec.
+
+- [ ] **BUG-129: Startup App names render in monospace font instead of body font** (LOW)
+  - **Files:** `shared/nexis/Pages/StartupApps/startup_apps_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** Application names in the Startup Apps list are displayed in a monospace typeface (as if they were command strings). Design system uses the standard body font for application display names. Only the command/executable path column should use monospace.
+
+- [ ] **BUG-130: Hosts Manager "New Host" button not styled as primary action button** (LOW)
+  - **Files:** `shared/nexis/Pages/HostsManager/hosts_manager_page.cpp`
+  - **Description:** The "New Host" button in the Hosts Manager toolbar does not receive the primary button style (filled accent background). It renders as a secondary/outline or plain button. Design system specifies the primary add/create action on a page uses the filled primary button style.
+
+- [ ] **BUG-131: Homebrew page "Uninstall" button uses a circle-X icon inconsistent with design system** (LOW)
+  - **Files:** `shared/nexis/Pages/Homebrew/homebrew_page.cpp`
+  - **Description:** The Uninstall action in the Homebrew packages list uses a circle-X (close/delete) icon button. Design system uses a text button or a trash icon for destructive remove actions. The circle-X icon is associated with dismissal/close actions elsewhere in the app, creating inconsistency.
+
+- [ ] **BUG-132: Settings page section headers use QGroupBox chrome (border box) instead of plain section label style** (LOW)
+  - **Files:** `shared/nexis/Pages/Settings/settings_page.cpp`, `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** Settings categories/sections are grouped using `QGroupBox` widgets which render with a visible border frame and inset title. Design system specifies section headers as plain bold labels with a separator line, no box border. The QGroupBox chrome adds visual weight inconsistent with the design system's settings layout.
+
+- [ ] **BUG-133: Card elevation and hover states not implemented — design specifies lighter fill, drop shadow, and accent border on hover** (LOW)
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** Design system defines two card states: (1) Elevated — lighter surface fill with a drop shadow and a 2px lift effect; (2) Hover — same Y position as normal but with an accent-colored border. Currently all cards are flat with no elevation differentiation and no hover border. Qt QSS does not support `box-shadow`, so elevation must be approximated with border/background changes; a drop shadow would require `QGraphicsDropShadowEffect` applied programmatically.
