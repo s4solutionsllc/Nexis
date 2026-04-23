@@ -420,27 +420,16 @@ void SystemCleanerPage::on_btnScan_clicked()
     if (mScanInProgress || mCleanInProgress)
         return;
 
-    // Read which categories are selected
-    auto cardChecked = [this](CleanCategories cat) -> bool {
-        return (cat < mCards.size() && mCards[cat].check)
-                   ? mCards[cat].check->isChecked()
-                   : false;
-    };
-
-    mScanPackageCache   = cardChecked(PACKAGE_CACHE);
-    mScanCrashReports   = cardChecked(CRASH_REPORTS);
-    mScanAppLog         = cardChecked(APPLICATION_LOGS);
-    mScanAppCache       = cardChecked(APPLICATION_CACHES);
-    mScanTrash          = cardChecked(TRASH);
-    mScanDevToolCache   = cardChecked(DEV_TOOL_CACHES);
-    mScanBrokenSymlinks = cardChecked(BROKEN_SYMLINKS);
-    mScanBrowserPrivacy = cardChecked(BROWSER_PRIVACY);
-    mScanSnapFlatpak    = cardChecked(SNAP_FLATPAK_REVISIONS);
-
-    if (!(mScanPackageCache || mScanCrashReports || mScanAppLog || mScanAppCache ||
-          mScanTrash || mScanDevToolCache || mScanBrokenSymlinks ||
-          mScanBrowserPrivacy || mScanSnapFlatpak))
-        return;
+    // Always scan all categories — checkboxes control cleaning, not scanning
+    mScanPackageCache   = true;
+    mScanCrashReports   = true;
+    mScanAppLog         = true;
+    mScanAppCache       = true;
+    mScanTrash          = true;
+    mScanDevToolCache   = true;
+    mScanBrokenSymlinks = true;
+    mScanBrowserPrivacy = true;
+    mScanSnapFlatpak    = (mCheckSnapFlatpak != nullptr);
 
     mLblPackageCacheText   = tr("Package Caches");
     mLblCrashReportsText   = tr("Crash Reports");
@@ -462,14 +451,59 @@ void SystemCleanerPage::on_btnScan_clicked()
     mLoadingMovie->start();
     if (mLblLoadingScanner) mLblLoadingScanner->show();
 
-    mPackageCaches.clear(); mCrashReports.clear();
-    mAppLogs.clear();       mAppCaches.clear();
-    mDevToolCaches.clear(); mBrokenSymlinks.clear();
+    mPackageCaches.clear();  mCrashReports.clear();
+    mAppLogs.clear();        mAppCaches.clear();
+    mDevToolCaches.clear();  mBrokenSymlinks.clear();
     mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
 
-    mRetainedPackageCaches.clear(); mRetainedCrashReports.clear();
-    mRetainedAppLogs.clear();       mRetainedAppCaches.clear();
-    mRetainedDevToolCaches.clear(); mRetainedBrokenSymlinks.clear();
+    mRetainedPackageCaches.clear();  mRetainedCrashReports.clear();
+    mRetainedAppLogs.clear();        mRetainedAppCaches.clear();
+    mRetainedDevToolCaches.clear();  mRetainedBrokenSymlinks.clear();
+    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
+
+    mScanInProgress = true;
+    mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
+}
+
+void SystemCleanerPage::startBackgroundSizeScan()
+{
+    mScanPackageCache   = true;
+    mScanCrashReports   = true;
+    mScanAppLog         = true;
+    mScanAppCache       = true;
+    mScanTrash          = true;
+    mScanDevToolCache   = true;
+    mScanBrokenSymlinks = true;
+    mScanBrowserPrivacy = true;
+    mScanSnapFlatpak    = (mCheckSnapFlatpak != nullptr);
+
+    mLblPackageCacheText   = tr("Package Caches");
+    mLblCrashReportsText   = tr("Crash Reports");
+    mLblAppLogText         = tr("Application Logs");
+    mLblAppCacheText       = tr("Application Caches");
+    mLblTrashText          = tr("Trash");
+    mLblDevToolCacheText   = tr("Dev Tool Caches");
+    mLblBrokenSymlinksText = tr("Broken Symlinks");
+    mLblBrowserPrivacyText = tr("Browser Privacy");
+    mLblSnapFlatpakText    = tr("Snap/Flatpak Revisions");
+
+    mInitialScan = true;
+
+    // Disable action buttons but leave checkboxes interactive
+    mBtnScanSystem->setEnabled(false);
+    mBtnSchedule->setEnabled(false);
+
+    mLoadingMovie->start();
+    if (mLblLoadingScanner) mLblLoadingScanner->show();
+
+    mPackageCaches.clear();  mCrashReports.clear();
+    mAppLogs.clear();        mAppCaches.clear();
+    mDevToolCaches.clear();  mBrokenSymlinks.clear();
+    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
+
+    mRetainedPackageCaches.clear();  mRetainedCrashReports.clear();
+    mRetainedAppLogs.clear();        mRetainedAppCaches.clear();
+    mRetainedDevToolCaches.clear();  mRetainedBrokenSymlinks.clear();
     mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
 
     mScanInProgress = true;
@@ -655,6 +689,7 @@ void SystemCleanerPage::onScanFinished()
 
     mHasScanned = true;
     mScanInProgress = false;
+    mInitialScan = false;
 
     // Re-enable UI
     for (const CategoryCard &c : mCards)
@@ -662,9 +697,12 @@ void SystemCleanerPage::onScanFinished()
     mBtnScanSystem->setEnabled(true);
     mBtnSchedule->setEnabled(true);
 
-    // Show footer with updated total
+    // Show footer only when at least one card is checked
     updateFooterTotal();
-    if (mCleanerFooter) mCleanerFooter->show();
+    bool anyChecked = false;
+    for (const CategoryCard &c : mCards)
+        if (c.check && c.check->isChecked()) { anyChecked = true; break; }
+    if (mCleanerFooter && anyChecked) mCleanerFooter->show();
 
     repositionScheduleIndicator();
 }
@@ -1041,6 +1079,8 @@ void SystemCleanerPage::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     repositionScheduleIndicator();
+    if (!mHasScanned && !mScanInProgress && !mCleanInProgress)
+        startBackgroundSizeScan();
 }
 
 void SystemCleanerPage::updateScheduleIndicator()

@@ -100,6 +100,7 @@ private:
     void updateFooterTotal();
     void updateCleanerCheckBadge();
     void quickCleanByCategory();
+    void startBackgroundSizeScan();
     void initScheduleIndicator();
     void repositionScheduleIndicator();
 
@@ -182,6 +183,7 @@ private:
     bool mScanInProgress = false;
     bool mCleanInProgress = false;
     bool mCleaningFromCard = false;   // true when clean was initiated from page-0 footer
+    bool mInitialScan = false;        // true during the auto-scan fired on first show
 
     // Track background tasks so they can be awaited on shutdown (BUG-05)
     QFuture<void> mWorkerFuture;
