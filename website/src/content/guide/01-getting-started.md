@@ -64,13 +64,16 @@ When Nexis opens for the first time, you land on the **Dashboard** -- a live ove
 
 ## The Sidebar
 
-The left-hand sidebar is your main navigation. It is organized into three groups that match the type of task you want to do:
+The left-hand sidebar is your main navigation. It is organized into groups that match the type of task you want to do:
 
-### MONITOR
+### Monitoring Pages
+
+The top of the sidebar shows the monitoring pages directly, without a section header:
 
 - **Dashboard** -- Real-time gauges and sparklines for CPU, memory, disk, network, GPU, temperature, and battery.
 - **Hardware Info** -- A detailed inventory of your hardware components.
 - **Resources** -- Historical charts showing the last 60 seconds of system activity.
+- **Network Usage** -- Detailed per-interface network activity breakdown.
 
 ### MANAGE
 
@@ -101,7 +104,7 @@ Press <kbd>Ctrl</kbd>+<kbd>B</kbd> (or click the collapse button at the top of t
 
 ### Collapsible Section Groups
 
-Each section header (MONITOR, MANAGE, SYSTEM) is clickable. Click a section header to **collapse** its group, hiding the page buttons underneath. Click again to expand. A small chevron icon indicates whether the section is expanded or collapsed.
+The **MANAGE** and **SYSTEM** section headers are clickable. Click a section header to **collapse** its group, hiding the page buttons underneath. Click again to expand. A small chevron icon indicates whether the section is expanded or collapsed.
 
 This is useful when you only work with a subset of pages — collapse the sections you don't use to reduce visual clutter. Nexis remembers which sections are collapsed across sessions.
 

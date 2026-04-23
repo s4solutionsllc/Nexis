@@ -135,7 +135,7 @@ Requires macOS 11+ (Big Sur) on Apple Silicon. Updates are delivered via `brew u
 | Services | <img src="https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/website/public/images/guide/services.png" width="500"> |
 | Processes | <img src="https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/website/public/images/guide/processes.png" width="500"> |
 | Uninstaller | <img src="https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/website/public/images/guide/uninstaller.png" width="500"> |
-| System Logs | *screenshot coming soon* |
+| System Logs | <img src="https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/website/public/images/guide/system-logs.png" width="500"> |
 | Resources | <img src="https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/website/public/images/guide/resources-overview.png" width="500"> |
 | Helpers | <img src="https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/website/public/images/guide/helpers-hosts.png" width="500"> |
 | APT Repository Manager | <img src="https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/website/public/images/guide/apt-repos.png" width="500"> |

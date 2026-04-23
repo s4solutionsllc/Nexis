@@ -65,7 +65,7 @@ You can also toggle kiosk mode from the system tray icon's context menu or the f
 
 > **Tip:** Combine <kbd>Ctrl</kbd>+<kbd>B</kbd> with the Command Palette for a minimal-chrome workflow: collapse the sidebar to maximize content space, then use <kbd>Ctrl</kbd>+<kbd>K</kbd> whenever you need to switch pages.
 
-> **Tip:** On macOS, these shortcuts use the <kbd>Ctrl</kbd> key (not <kbd>Cmd</kbd>), matching Qt's cross-platform conventions.
+> **macOS:** Qt maps <kbd>Ctrl</kbd>-labeled shortcuts to the <kbd>Cmd</kbd> (⌘) key on macOS. So <kbd>Ctrl</kbd>+<kbd>K</kbd> becomes <kbd>Cmd</kbd>+<kbd>K</kbd>, <kbd>Ctrl</kbd>+<kbd>B</kbd> becomes <kbd>Cmd</kbd>+<kbd>B</kbd>, and so on. The key labeled <kbd>Ctrl</kbd> on a Mac keyboard is not used.
 
 ## What's Next
 
