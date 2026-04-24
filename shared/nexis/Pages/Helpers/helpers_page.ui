@@ -50,6 +50,13 @@
       <property name="bottomMargin">
        <number>0</number>
       </property>
+      <item alignment="Qt::AlignVCenter">
+       <widget class="QLabel" name="lblToolsSection">
+        <property name="text">
+         <string>TOOLS</string>
+        </property>
+       </widget>
+      </item>
       <item alignment="Qt::AlignLeft">
        <widget class="QPushButton" name="btnHostManage">
         <property name="cursor">
@@ -82,6 +89,9 @@
         </property>
         <property name="text">
          <string>Flush DNS Cache</string>
+        </property>
+        <property name="visible">
+         <bool>false</bool>
         </property>
        </widget>
       </item>

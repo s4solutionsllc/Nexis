@@ -11,12 +11,29 @@
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
+#include <QEvent>
+#include <QFrame>
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSizePolicy>
 #include <QVBoxLayout>
+#include <functional>
+
+namespace {
+class CardFilter : public QObject {
+public:
+    CardFilter(QObject *parent, std::function<void()> fn) : QObject(parent), mFn(std::move(fn)) {}
+    bool eventFilter(QObject *, QEvent *e) override {
+        if (e->type() == QEvent::MouseButtonRelease) { mFn(); return false; }
+        return false;
+    }
+private:
+    std::function<void()> mFn;
+};
+} // namespace
 
 #ifdef Q_OS_MACOS
 #include <QDialog>
@@ -71,36 +88,19 @@ void HelpersPage::init()
     ui->stackedWidget->addWidget(mWolWidget);
 
     // Prevent buttons from shrinking below their text width
-    for (auto *btn : {ui->btnHostManage, ui->btnFlushDNS, ui->btnNetDiag,
+    for (auto *btn : {ui->btnHostManage, ui->btnNetDiag,
                       ui->btnOpenPorts, ui->btnFirewall}) {
         btn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     }
 
     QList<QWidget *> shadowWidgets = {
         ui->btnHostManage,
-        ui->btnFlushDNS,
         ui->btnNetDiag,
         ui->btnOpenPorts,
         ui->btnFirewall
     };
 
 #ifdef Q_OS_MACOS
-    mBtnRebuildSpotlight = new QPushButton(tr("Rebuild Spotlight"));
-    mBtnVerifyDisk = new QPushButton(tr("Verify Disk"));
-    mBtnRebuildLaunchServices = new QPushButton(tr("Rebuild Launch Services"));
-
-    for (auto *btn : {mBtnRebuildSpotlight, mBtnVerifyDisk, mBtnRebuildLaunchServices}) {
-        btn->setCursor(Qt::PointingHandCursor);
-        btn->setFocusPolicy(Qt::NoFocus);
-        btn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
-    }
-
-    shadowWidgets << mBtnRebuildSpotlight << mBtnVerifyDisk << mBtnRebuildLaunchServices;
-
-    connect(mBtnRebuildSpotlight, &QPushButton::clicked, this, &HelpersPage::onRebuildSpotlight);
-    connect(mBtnVerifyDisk, &QPushButton::clicked, this, &HelpersPage::onVerifyDisk);
-    connect(mBtnRebuildLaunchServices, &QPushButton::clicked, this, &HelpersPage::onRebuildLaunchServices);
-
     // FR-118: TRIM button (macOS — status-only).
     mBtnTrim = new QPushButton(tr("SSD TRIM"));
     mBtnTrim->setCheckable(true);
@@ -162,27 +162,37 @@ void HelpersPage::init()
 
     Utilities::addDropShadow(shadowWidgets, 40);
 
-    // Collect all nav items in display order
-    mNavItems << ui->btnHostManage << ui->btnFlushDNS << ui->btnNetDiag
-              << ui->btnOpenPorts << ui->btnFirewall;
+    // Collect tool nav items in display order (action buttons go to maintenance cards)
+    mToolItems << ui->btnHostManage << ui->btnNetDiag
+               << ui->btnOpenPorts << ui->btnFirewall;
 #ifdef Q_OS_MACOS
-    mNavItems << mBtnRebuildSpotlight << mBtnVerifyDisk << mBtnRebuildLaunchServices;
     if (mBtnTrim)
-        mNavItems << mBtnTrim;
+        mToolItems << mBtnTrim;
 #else
     if (mBtnSwappiness)
-        mNavItems << mBtnSwappiness;
+        mToolItems << mBtnSwappiness;
     if (mBtnCpuTuning)
-        mNavItems << mBtnCpuTuning;
+        mToolItems << mBtnCpuTuning;
     if (mBtnTrim)
-        mNavItems << mBtnTrim;
+        mToolItems << mBtnTrim;
     if (mPowerProfileWidget)
-        mNavItems << mPowerProfileWidget;
+        mToolItems << mPowerProfileWidget;
 #endif
     if (mBtnWol)
-        mNavItems << mBtnWol;
+        mToolItems << mBtnWol;
 
-    // Replace the static .ui navLayout with a managed one and compute the wrap threshold
+    // Set up ui->nav as a VBox containing tools container + maintenance section
+    auto *navVbox = new QVBoxLayout(ui->nav);
+    navVbox->setSpacing(8);
+    navVbox->setContentsMargins(0, 0, 0, 0);
+
+    mToolsContainer = new QWidget;
+    mToolsContainer->setObjectName("toolsContainer");
+    navVbox->addWidget(mToolsContainer);
+
+    buildMaintenanceSection();
+    navVbox->addWidget(mMaintenanceSection);
+
     applyNavLayout(false);
     computeNavMinWidth();
 }
@@ -521,51 +531,54 @@ void HelpersPage::updatePowerProfileButtons()
 
 void HelpersPage::computeNavMinWidth()
 {
-    mNavMinWidth = qMax(0, mNavItems.count() - 1) * 12;
-    for (auto *w : mNavItems)
+    mNavMinWidth = qMax(0, mToolItems.count() - 1) * 12;
+    for (auto *w : mToolItems)
         mNavMinWidth += w->sizeHint().width();
     mNavMinWidth += 20;
 }
 
 void HelpersPage::applyNavLayout(bool compact)
 {
-    delete ui->nav->layout();
+    delete mToolsContainer->layout();
     mNavCompact = compact;
 
     if (!compact) {
-        auto *row = new QHBoxLayout(ui->nav);
+        auto *row = new QHBoxLayout(mToolsContainer);
         row->setSpacing(12);
         row->setContentsMargins(0, 0, 0, 0);
-        for (auto *w : mNavItems) {
-            w->setParent(ui->nav);
+        ui->lblToolsSection->setParent(mToolsContainer);
+        row->addWidget(ui->lblToolsSection, 0, Qt::AlignVCenter);
+        row->addSpacing(4);
+        for (auto *w : mToolItems) {
+            w->setParent(mToolsContainer);
             row->addWidget(w, 0, Qt::AlignLeft);
         }
         row->addStretch();
     } else {
-        auto *col = new QVBoxLayout(ui->nav);
+        auto *col = new QVBoxLayout(mToolsContainer);
         col->setSpacing(8);
         col->setContentsMargins(0, 0, 0, 0);
 
-        // Split roughly in half when we wrap. Previously hardcoded for 5
-        // (Linux) and 8 (macOS); Bundle F adds 3 Linux cards so we just
-        // balance the two rows dynamically.
-        int splitIndex = (mNavItems.count() + 1) / 2;
-        splitIndex = qBound(1, splitIndex, mNavItems.count() - 1);
+        int splitIndex = (mToolItems.count() + 1) / 2;
+        splitIndex = qBound(1, splitIndex, mToolItems.count() - 1);
 
         auto *row1 = new QHBoxLayout();
         row1->setSpacing(12);
+        ui->lblToolsSection->setParent(mToolsContainer);
+        row1->addWidget(ui->lblToolsSection, 0, Qt::AlignVCenter);
+        row1->addSpacing(4);
         for (int i = 0; i < splitIndex; ++i) {
-            mNavItems[i]->setParent(ui->nav);
-            row1->addWidget(mNavItems[i], 0, Qt::AlignLeft);
+            mToolItems[i]->setParent(mToolsContainer);
+            row1->addWidget(mToolItems[i], 0, Qt::AlignLeft);
         }
         row1->addStretch();
         col->addLayout(row1);
 
         auto *row2 = new QHBoxLayout();
         row2->setSpacing(12);
-        for (int i = splitIndex; i < mNavItems.count(); ++i) {
-            mNavItems[i]->setParent(ui->nav);
-            row2->addWidget(mNavItems[i], 0, Qt::AlignLeft);
+        for (int i = splitIndex; i < mToolItems.count(); ++i) {
+            mToolItems[i]->setParent(mToolsContainer);
+            row2->addWidget(mToolItems[i], 0, Qt::AlignLeft);
         }
         row2->addStretch();
         col->addLayout(row2);
@@ -575,9 +588,73 @@ void HelpersPage::applyNavLayout(bool compact)
 void HelpersPage::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    if (mNavItems.isEmpty())
+    if (mToolItems.isEmpty())
         return;
     const bool compact = width() < mNavMinWidth;
     if (compact != mNavCompact)
         applyNavLayout(compact);
+}
+
+void HelpersPage::buildMaintenanceSection()
+{
+    mMaintenanceSection = new QWidget;
+    mMaintenanceSection->setObjectName("maintenanceSection");
+
+    auto *outer = new QVBoxLayout(mMaintenanceSection);
+    outer->setSpacing(6);
+    outer->setContentsMargins(0, 0, 0, 0);
+
+    auto *lblHeader = new QLabel(tr("MAINTENANCE"), mMaintenanceSection);
+    lblHeader->setObjectName("lblMaintenanceSectionHeader");
+    outer->addWidget(lblHeader);
+
+    auto *cardRow = new QHBoxLayout;
+    cardRow->setSpacing(10);
+    cardRow->setContentsMargins(0, 0, 0, 0);
+
+    auto makeCard = [&](const QString &title, const QString &desc,
+                        std::function<void()> action) -> QFrame * {
+        auto *card = new QFrame(mMaintenanceSection);
+        card->setObjectName("maintenanceCard");
+        card->setCursor(Qt::PointingHandCursor);
+        auto *vbox = new QVBoxLayout(card);
+        vbox->setSpacing(2);
+        vbox->setContentsMargins(10, 8, 10, 8);
+        auto *lblTitle = new QLabel(title, card);
+        lblTitle->setObjectName("lblCardTitle");
+        auto *lblDesc = new QLabel(desc, card);
+        lblDesc->setObjectName("lblCardDesc");
+        lblDesc->setWordWrap(true);
+        vbox->addWidget(lblTitle);
+        vbox->addWidget(lblDesc);
+        card->installEventFilter(new CardFilter(card, std::move(action)));
+        return card;
+    };
+
+    cardRow->addWidget(makeCard(
+        tr("Flush DNS Cache"),
+        tr("Clear the system DNS resolver cache"),
+        [this] { on_btnFlushDNS_clicked(); }
+    ));
+
+#ifdef Q_OS_MACOS
+    cardRow->addWidget(makeCard(
+        tr("Rebuild Spotlight"),
+        tr("Delete and rebuild the Spotlight search index"),
+        [this] { onRebuildSpotlight(); }
+    ));
+    cardRow->addWidget(makeCard(
+        tr("Verify Disk"),
+        tr("Verify the integrity of the startup disk"),
+        [this] { onVerifyDisk(); }
+    ));
+    cardRow->addWidget(makeCard(
+        tr("Rebuild Launch Services"),
+        tr("Rescan app database and restart Finder"),
+        [this] { onRebuildLaunchServices(); }
+    ));
+#endif
+
+    cardRow->addStretch();
+    outer->addLayout(cardRow);
 }

@@ -347,16 +347,17 @@ Continuous per-interface network data usage tracker with monthly cap management.
 
 ### 11. Helpers
 
-Miscellaneous utility tools.
+Miscellaneous utility tools, organized into two clearly labelled header sections:
 
-**Flush DNS Cache** — One-click button to clear the local DNS cache. macOS: `dscacheutil -flushcache` + `killall -HUP mDNSResponder` (with admin elevation). Linux: tries `resolvectl`, `systemd-resolve`, or `nscd` in order of availability. Confirmation dialog before action, success/failure feedback.
+**TOOLS section** — Tab-style checkable buttons that navigate a `QStackedWidget` below. One tool is active at a time. Buttons adapt to a two-row compact layout when the window is narrow (`resizeEvent` + `applyNavLayout()`).
+
+**MAINTENANCE section** — Horizontal row of clickable `QFrame` cards (`#maintenanceCard`). Each card shows a title and plain-English description. Clicking triggers the corresponding confirmation dialog and system action. Cards are built dynamically in `buildMaintenanceSection()`:
+- **Flush DNS Cache** (both platforms) — clears the local DNS cache. macOS: `dscacheutil -flushcache` + `killall -HUP mDNSResponder`. Linux: tries `resolvectl`, `systemd-resolve`, or `nscd` in order.
+- **Rebuild Spotlight** (macOS only) — deletes and rebuilds the Spotlight search index (`sudo mdutil -E /`).
+- **Verify Disk** (macOS only) — runs `diskutil verifyVolume /` with a 5-minute timeout, shows output in a scrollable result dialog.
+- **Rebuild Launch Services** (macOS only) — rescans the app database (`lsregister -r`) and restarts Finder.
 
 **Power Profile Switcher (Linux only)** — Segmented control with three buttons (Power Saver / Balanced / Performance) for switching CPU power profiles. Uses `power-profiles-daemon` (`powerprofilesctl`) as the primary backend (no root needed). Falls back to raw sysfs governor writes via `pkexec` on systems without PPD. Automatically detects available profiles, hides Balanced if the driver only supports two governors (e.g., `intel_pstate`). Warns if TLP or auto-cpufreq is active. Hidden on macOS and systems without cpufreq support.
-
-**macOS Maintenance Actions** — Three macOS-only one-click buttons added programmatically to the nav bar (`#ifdef Q_OS_MACOS`):
-- **Rebuild Spotlight** — Deletes and rebuilds the Spotlight search index (`sudo mdutil -E /`). Warns that search will be temporarily unavailable during reindexing.
-- **Verify Disk** — Runs `diskutil verifyVolume /` with a 5-minute timeout. Displays full diagnostic output in a scrollable dialog with pass/fail status indicator.
-- **Rebuild Launch Services** — Rescans the Launch Services database using the safe `-r` flag (no `-kill`, which is dangerous on macOS 14+/15+) and restarts Finder. Fixes incorrect default apps and missing "Open With" entries.
 
 **Hosts File Manager** — GUI editor for `/etc/hosts`:
 - Add, edit, delete entries (IP address, hostname, aliases)

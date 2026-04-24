@@ -67,15 +67,15 @@ private:
     WolWidget   *mWolWidget = nullptr;
     QPushButton *mBtnWol    = nullptr;
 
-    QList<QWidget*> mNavItems;
+    QList<QWidget*> mToolItems;
     bool mNavCompact = false;
     int mNavMinWidth = 0;
 
-#ifdef Q_OS_MACOS
-    QPushButton *mBtnRebuildSpotlight = nullptr;
-    QPushButton *mBtnVerifyDisk = nullptr;
-    QPushButton *mBtnRebuildLaunchServices = nullptr;
-#else
+    QWidget *mToolsContainer = nullptr;
+    QWidget *mMaintenanceSection = nullptr;
+    void buildMaintenanceSection();
+
+#ifndef Q_OS_MACOS
     QWidget *mPowerProfileWidget = nullptr;
     QPushButton *mBtnPowerSaver = nullptr;
     QPushButton *mBtnBalanced = nullptr;

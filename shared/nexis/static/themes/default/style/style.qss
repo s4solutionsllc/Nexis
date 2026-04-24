@@ -1520,7 +1520,33 @@ QLabel[accessibleName="dialog-title"] {
     border-color: @accentColor;
 }
 
+#lblToolsSection, #lblMaintenanceSectionHeader {
+    font-size: 8pt;
+    font-weight: 600;
+    color: @color04;
+}
 
+#maintenanceCard {
+    background-color: @cardBg;
+    border: 1px solid @borderColor;
+    border-radius: 8;
+    padding: 8 12;
+}
+
+#maintenanceCard:hover {
+    background-color: @cardBgElevated;
+    border-color: @accentColor;
+}
+
+#maintenanceCard #lblCardTitle {
+    font-size: 10pt;
+    font-weight: 600;
+}
+
+#maintenanceCard #lblCardDesc {
+    font-size: 8pt;
+    color: @color06;
+}
 
 #txtPackageSearch,
 #txtSearchAptSource {
