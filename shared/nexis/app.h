@@ -8,6 +8,7 @@
 #include <QFrame>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QScrollArea>
 #include <QPushButton>
 #include <functional>
 
@@ -158,6 +159,7 @@ private:
 
     // Sidebar widgets
     QVBoxLayout *mSidebarLayout;
+    QScrollArea *mNavScrollArea = nullptr;
     QLabel *mLogoLabel;
     QFrame *mLogoSeparator;
     QToolButton *mBtnSidebarToggle;

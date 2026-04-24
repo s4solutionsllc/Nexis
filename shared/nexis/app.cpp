@@ -26,6 +26,8 @@
 #include <QPropertyAnimation>
 #include <QTimer>
 #include <QHBoxLayout>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QVBoxLayout>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -126,7 +128,25 @@ void App::buildSidebar()
     mLogoSeparator->setFrameShape(QFrame::HLine);
     mLogoSeparator->setFixedHeight(1);
     mSidebarLayout->addWidget(mLogoSeparator);
-    mSidebarLayout->addSpacing(4);
+
+    // Scrollable nav area — contains all section headers and buttons.
+    // Logo row and footer (version + feedback) remain pinned outside the scroll area.
+    mNavScrollArea = new QScrollArea(ui->sidebar);
+    mNavScrollArea->setObjectName("sidebarScrollArea");
+    mNavScrollArea->setFrameShape(QFrame::NoFrame);
+    mNavScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    mNavScrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    mNavScrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    auto *navContainer = new QWidget();
+    navContainer->setObjectName("sidebarNavContainer");
+    auto *navLayout = new QVBoxLayout(navContainer);
+    navLayout->setContentsMargins(0, 4, 0, 0);
+    navLayout->setSpacing(0);
+
+    mNavScrollArea->setWidget(navContainer);
+    mNavScrollArea->setWidgetResizable(true);
+    mSidebarLayout->addWidget(mNavScrollArea);
 
     // Helper lambda to create a section with header, indicator, and container.
     // Pass headerless=true to omit the toggle header and separator (always-visible section).
@@ -138,22 +158,22 @@ void App::buildSidebar()
 
         if (!headerless) {
             section.header = createSectionToggle(name);
-            mSidebarLayout->addWidget(section.header);
+            navLayout->addWidget(section.header);
 
-            auto *indicator = new QFrame(ui->sidebar);
+            auto *indicator = new QFrame(navContainer);
             indicator->setObjectName("sidebarSectionIndicator");
             indicator->setFrameShape(QFrame::HLine);
             indicator->setFixedHeight(1);
             indicator->hide();
             mSectionIndicators.append(indicator);
-            mSidebarLayout->addWidget(indicator);
+            navLayout->addWidget(indicator);
         }
 
-        section.container = new QWidget(ui->sidebar);
+        section.container = new QWidget(navContainer);
         section.containerLayout = new QVBoxLayout(section.container);
         section.containerLayout->setContentsMargins(0, 0, 0, 0);
         section.containerLayout->setSpacing(0);
-        mSidebarLayout->addWidget(section.container);
+        navLayout->addWidget(section.container);
 
         mSections.append(section);
         return mSections.last();
@@ -262,8 +282,8 @@ void App::buildSidebar()
     // Set initial chevron icons (will be refreshed on theme change via updateSidebarIcons)
     updateSectionChevrons();
 
-    // Spacer pushes feedback/version to bottom
-    mSidebarLayout->addStretch();
+    // Keep sections top-aligned within the scroll container
+    navLayout->addStretch();
 
     // Version label (#3)
     mVersionLabel = new QLabel(QString("v%1").arg(qApp->applicationVersion()), ui->sidebar);
@@ -591,6 +611,10 @@ void App::init()
     if (ToolManager::ins()->checkGnomeSettings())
         connect(btnGnomeSettings, &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("GNOME Settings")); });
 #endif
+
+    // Reposition badges when the nav scroll position changes
+    connect(mNavScrollArea->verticalScrollBar(), &QScrollBar::valueChanged,
+            this, &App::repositionBadges);
 
     // Refresh sidebar icons when theme changes
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
@@ -1222,6 +1246,17 @@ void App::repositionBadges()
             badge->hide();
             dot->hide();
             return;
+        }
+
+        // Hide badge when the button has been scrolled out of the nav viewport
+        if (mNavScrollArea) {
+            QRect viewportRect = mNavScrollArea->viewport()->rect();
+            QPoint btnInViewport = btn->mapTo(mNavScrollArea->viewport(), QPoint(0, 0));
+            if (!viewportRect.intersects(QRect(btnInViewport, btn->size()))) {
+                badge->hide();
+                dot->hide();
+                return;
+            }
         }
 
         QPoint btnPos = btn->mapTo(ui->sidebar, QPoint(0, 0));

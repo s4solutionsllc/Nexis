@@ -564,6 +564,31 @@ QLabel[accessibleName="dialog-title"] {
     margin: 4 12;
 }
 
+/* Sidebar scroll area — transparent so sidebar background shows through */
+#sidebarScrollArea, #sidebarScrollArea > QWidget, #sidebarNavContainer {
+    background: transparent;
+    border: 0;
+}
+
+/* Thin scrollbar rail, only visible when nav content overflows */
+#sidebarScrollArea QScrollBar:vertical {
+    background: transparent;
+    width: 4px;
+    margin: 0;
+}
+#sidebarScrollArea QScrollBar::handle:vertical {
+    background: @color04;
+    border-radius: 2px;
+    min-height: 20px;
+}
+#sidebarScrollArea QScrollBar::handle:vertical:hover {
+    background: @color05;
+}
+#sidebarScrollArea QScrollBar::add-line:vertical,
+#sidebarScrollArea QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
 #sidebarVersionLabel {
     color: @tertiaryText;
     font-size: 8pt;
