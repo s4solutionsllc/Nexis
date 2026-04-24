@@ -1,0 +1,81 @@
+---
+const tabs = [
+  {
+    id: 'apt',
+    label: 'APT (Ubuntu / Debian)',
+    platform: 'linux',
+    install: `sudo add-apt-repository ppa:s4solutionsllc/nexis
+sudo apt update
+sudo apt install nexis`,
+    upgrade: `sudo apt update && sudo apt upgrade nexis`,
+    note: 'Supports Ubuntu 22.04 (Jammy), 24.04 (Noble), and 25.04 (Plucky) on x86_64 and ARM64.',
+  },
+  {
+    id: 'brew',
+    label: 'Homebrew (macOS)',
+    platform: 'macos',
+    install: `brew tap s4solutionsllc/nexis
+brew install --cask nexis`,
+    upgrade: `brew upgrade --cask nexis`,
+    note: 'Requires macOS 12+ on Apple Silicon. The tap is updated automatically on each release.',
+  },
+];
+---
+
+<section id="package-managers" class="py-20 md:py-28">
+  <div class="mx-auto max-w-3xl px-6">
+    <h2 class="text-center text-3xl font-bold text-white md:text-4xl">Install via Package Manager</h2>
+    <p class="mx-auto mt-4 max-w-2xl text-center text-nexis-muted">
+      Get automatic updates delivered through your system's package manager.
+    </p>
+
+    <div class="mt-10">
+      <!-- Tab buttons -->
+      <div class="flex flex-wrap gap-1 rounded-t-lg border border-b-0 border-nexis-border bg-nexis-dark p-1">
+        {tabs.map((tab, i) => (
+          <button
+            data-pm-tab={tab.id}
+            class:list={[
+              'pm-tab rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+              i === 0 ? 'bg-nexis-dark-surface text-nexis-orange' : 'text-nexis-muted hover:text-nexis-light',
+            ]}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <!-- Tab content -->
+      {tabs.map((tab, i) => (
+        <div
+          data-pm-content={tab.id}
+          class:list={['pm-content rounded-b-lg border border-nexis-border bg-nexis-dark p-6', i !== 0 && 'hidden']}
+        >
+          <p class="mb-4 text-xs text-nexis-muted">{tab.note}</p>
+
+          <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-nexis-muted">Install</p>
+          <pre class="mb-5 overflow-x-auto rounded-md bg-nexis-dark-surface p-4 text-sm leading-relaxed text-nexis-light"><code>{tab.install}</code></pre>
+
+          <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-nexis-muted">Upgrade</p>
+          <pre class="overflow-x-auto rounded-md bg-nexis-dark-surface p-4 text-sm leading-relaxed text-nexis-light"><code>{tab.upgrade}</code></pre>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.pm-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-pm-tab');
+      document.querySelectorAll('.pm-tab').forEach(b => {
+        b.classList.remove('bg-nexis-dark-surface', 'text-nexis-orange');
+        b.classList.add('text-nexis-muted');
+      });
+      btn.classList.add('bg-nexis-dark-surface', 'text-nexis-orange');
+      btn.classList.remove('text-nexis-muted');
+      document.querySelectorAll('.pm-content').forEach(c => c.classList.add('hidden'));
+      document.querySelector(`[data-pm-content="${id}"]`)?.classList.remove('hidden');
+    });
+  });
+</script>
