@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.3] - 2026-04-24
+
 ### Added
 - **Restore individual dashboard tiles (FR-132):** "Add Tile ▾" button appears in the Edit Mode toolbar whenever at least one tile has been hidden. Clicking it opens a dropdown listing each hidden tile by name; selecting one restores it to the first available grid cell. All other tile customizations (colors, styles, sizes) are preserved. The button hides once all tiles are visible.
 
