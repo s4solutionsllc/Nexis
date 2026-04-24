@@ -158,6 +158,11 @@
 
 ## LOW Severity
 
+- [x] **BUG-135: Dashboard tiles show unintended hover border on mouse-over** (LOW)
+  - **Files:** `shared/nexis/static/themes/default/style/style.qss`
+  - **Description:** Dashboard metric/ring/gauge tiles display an accent-colored border when the mouse hovers over them. This hover state is not part of the dashboard tile design — tiles are non-interactive display widgets and should not respond visually to hover.
+  - **Resolved:** Removed `:hover` blocks from `#metricTile`, `#gaugeTile`, `#ringTile`, `#hybridTile`, `#speedometerTile`, `#vuMeterTile`, `#healthScoreTile`, `#diskTile`, and `#networkTile` selectors in `style.qss`. QSS-only change.
+
 - [x] **BUG-63: Mouse cursor not activating consistently over Edit Dashboard and Kiosk Mode icons** (LOW)
   - **Files:** `shared/nexis/Pages/Dashboard/dashboard_page.cpp` (`buildGrid()`, `exitEditMode()`, `onKioskModeChanged()`)
   - **Description:** The floating `QPushButton` icons (`mEditButton`, `mKioskButton`) are `raise()`-ed once at init, but `buildGrid()` reparents tile wrappers with `setParent(this)` + `show()`, pushing them above the buttons in z-order. `buildGrid()` is called 6 times post-init (reset, rebuild, drag, resize) without re-raising the buttons. Additionally, `exitEditMode()` and `onKioskModeChanged()` call `show()` without `raise()`.

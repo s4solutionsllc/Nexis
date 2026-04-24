@@ -773,10 +773,6 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
 }
 
-#metricTile:hover, #gaugeTile:hover, #ringTile:hover, #hybridTile:hover, #speedometerTile:hover, #vuMeterTile:hover, #healthScoreTile:hover {
-    background-color: @cardBgElevated;
-    border-color: @accentColor;
-}
 
 #metricTileTitle {
     color: @color06;
@@ -829,10 +825,6 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
 }
 
-#diskTile:hover {
-    background-color: @cardBgElevated;
-    border-color: @accentColor;
-}
 
 #diskTileTitle {
     color: @color06;
@@ -874,10 +866,6 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
 }
 
-#networkTile:hover {
-    background-color: @cardBgElevated;
-    border-color: @accentColor;
-}
 
 #networkTileTitle {
     color: @color06;
