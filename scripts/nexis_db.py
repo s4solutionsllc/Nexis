@@ -194,9 +194,11 @@ def cmd_sync(conn: sqlite3.Connection, _args) -> None:
         else:
             conn.execute(
                 "UPDATE items SET "
-                "  title=:title, status=:status, severity=:severity, "
+                "  title=:title, severity=:severity, "
                 "  category=:category, github_issue=:github_issue, "
-                "  resolution=:resolution, commit_hash=:commit_hash "
+                "  status=CASE WHEN status='open' THEN :status ELSE status END, "
+                "  resolution=COALESCE(resolution, :resolution), "
+                "  commit_hash=COALESCE(commit_hash, :commit_hash) "
                 "WHERE id=:id",
                 item
             )

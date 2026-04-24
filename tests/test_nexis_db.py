@@ -351,13 +351,49 @@ def test_sync_populates_from_real_files(db, monkeypatch):
     monkeypatch.setattr(nexis_db, 'BUG_PATH', Path(__file__).parent.parent / 'BUGS.md')
     cmd_sync(db, None)
     total = db.execute("SELECT COUNT(*) FROM items").fetchone()[0]
-    assert total > 200  # 136 bugs + 137+ FRs
+    assert total > 260  # real files have 267 rows; this catches >3% loss
     open_count = db.execute(
         "SELECT COUNT(*) FROM items WHERE status='open'"
     ).fetchone()[0]
-    assert open_count >= 1  # at least some open items exist
+    assert open_count >= 3  # known: FR-39, FR-40, FR-67 are open
     bug134 = db.execute(
         "SELECT github_issue FROM items WHERE id='BUG-134'"
     ).fetchone()
     assert bug134 is not None
     assert bug134['github_issue'] == 21
+    # Verify a known feature item
+    fr04 = db.execute("SELECT status FROM items WHERE id='FR-04'").fetchone()
+    assert fr04 is not None
+    assert fr04['status'] == 'done'
+
+
+def test_sync_is_idempotent(db, monkeypatch):
+    """Running sync twice should produce the same total row count."""
+    import nexis_db
+    monkeypatch.setattr(nexis_db, 'FR_PATH', Path(__file__).parent.parent / 'FEATURE_REQUESTS.md')
+    monkeypatch.setattr(nexis_db, 'BUG_PATH', Path(__file__).parent.parent / 'BUGS.md')
+    cmd_sync(db, None)
+    total_first = db.execute("SELECT COUNT(*) FROM items").fetchone()[0]
+    cmd_sync(db, None)
+    total_second = db.execute("SELECT COUNT(*) FROM items").fetchone()[0]
+    assert total_first == total_second
+
+
+def test_sync_preserves_lifecycle_state(db, monkeypatch):
+    """A row set in_progress by cmd_start should remain in_progress after re-sync."""
+    import nexis_db
+    monkeypatch.setattr(nexis_db, 'FR_PATH', Path(__file__).parent.parent / 'FEATURE_REQUESTS.md')
+    monkeypatch.setattr(nexis_db, 'BUG_PATH', Path(__file__).parent.parent / 'BUGS.md')
+    # First sync: populate from real files
+    cmd_sync(db, None)
+    # Manually set a known open item to in_progress (simulating cmd_start)
+    # FR-39 is known to be open in the real markdown
+    db.execute(
+        "UPDATE items SET status='in_progress', started_at='2026-04-24T00:00:00Z' WHERE id='FR-39'"
+    )
+    db.commit()
+    # Re-sync: markdown still shows FR-39 as open, but DB should preserve in_progress
+    cmd_sync(db, None)
+    row = db.execute("SELECT status, started_at FROM items WHERE id='FR-39'").fetchone()
+    assert row['status'] == 'in_progress'
+    assert row['started_at'] == '2026-04-24T00:00:00Z'
