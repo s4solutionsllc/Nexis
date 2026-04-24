@@ -122,6 +122,43 @@ def cmd_tracked(conn: sqlite3.Connection, args) -> None:
     print(row['id'] if row else '')
 
 
+def cmd_add(conn: sqlite3.Connection, args) -> None:
+    conn.execute(
+        "INSERT INTO items "
+        "(id, type, title, status, severity, category, github_issue, opened_at) "
+        "VALUES (?, ?, ?, 'open', ?, ?, ?, ?)",
+        (args.id, args.type, args.title,
+         args.severity, args.category, args.issue, now_iso())
+    )
+    conn.commit()
+    print(f"Added {args.id}.")
+
+
+def cmd_start(conn: sqlite3.Connection, args) -> None:
+    conn.execute(
+        "UPDATE items SET status='in_progress', started_at=? WHERE id=?",
+        (now_iso(), args.id)
+    )
+    if conn.execute("SELECT changes()").fetchone()[0] == 0:
+        print(f"Error: {args.id} not found.", file=sys.stderr)
+        sys.exit(1)
+    conn.commit()
+    print(f"Started {args.id}.")
+
+
+def cmd_close(conn: sqlite3.Connection, args) -> None:
+    status = 'declined' if args.declined else 'done'
+    conn.execute(
+        "UPDATE items SET status=?, resolution=?, commit_hash=?, closed_at=? WHERE id=?",
+        (status, args.resolution, args.commit, now_iso(), args.id)
+    )
+    if conn.execute("SELECT changes()").fetchone()[0] == 0:
+        print(f"Error: {args.id} not found.", file=sys.stderr)
+        sys.exit(1)
+    conn.commit()
+    print(f"Closed {args.id} as {status}.")
+
+
 def _sync_stub(_conn, _args):
     import sys
     print("Error: sync not yet implemented.", file=sys.stderr)
@@ -142,7 +179,24 @@ def main():
     p = sub.add_parser('tracked')
     p.add_argument('--issue', type=int, required=True)
 
-    sub.add_parser('sync')  # implemented in Task 5
+    p = sub.add_parser('add')
+    p.add_argument('--id', required=True)
+    p.add_argument('--type', required=True, choices=['feature', 'bug'])
+    p.add_argument('--title', required=True)
+    p.add_argument('--category', default=None)
+    p.add_argument('--severity', choices=['high', 'medium', 'low'], default=None)
+    p.add_argument('--issue', type=int, default=None)
+
+    p = sub.add_parser('start')
+    p.add_argument('--id', required=True)
+
+    p = sub.add_parser('close')
+    p.add_argument('--id', required=True)
+    p.add_argument('--resolution', default=None)
+    p.add_argument('--commit', default=None)
+    p.add_argument('--declined', action='store_true')
+
+    sub.add_parser('sync')
 
     args = parser.parse_args()
     conn = get_db()
@@ -152,6 +206,9 @@ def main():
         'open':        cmd_open,
         'in-progress': cmd_in_progress,
         'tracked':     cmd_tracked,
+        'add':         cmd_add,
+        'start':       cmd_start,
+        'close':       cmd_close,
         'sync':        _sync_stub,
     }
     dispatch[args.cmd](conn, args)

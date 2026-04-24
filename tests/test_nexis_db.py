@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
 from parse_tracking import parse_features, parse_bugs
 from nexis_db import init_db, cmd_summary, cmd_open, cmd_in_progress, cmd_tracked
+from nexis_db import cmd_add, cmd_start, cmd_close
 
 
 # ── Parser tests ────────────────────────────────────────────────────────────
@@ -242,3 +243,78 @@ def test_tracked_not_found(db, capsys):
     class A: issue = 999
     cmd_tracked(db, A())
     assert capsys.readouterr().out.strip() == ''
+
+
+# ── add ───────────────────────────────────────────────────────────────────────
+
+def test_add_feature(db, capsys):
+    class A:
+        id = 'FR-200'; type = 'feature'; title = 'Test feature'
+        category = 'Testing'; severity = None; issue = None
+    cmd_add(db, A())
+    row = db.execute("SELECT * FROM items WHERE id='FR-200'").fetchone()
+    assert row['status'] == 'open'
+    assert row['type'] == 'feature'
+    assert row['title'] == 'Test feature'
+    assert row['opened_at'] is not None
+
+
+def test_add_bug_with_severity_and_issue(db, capsys):
+    class A:
+        id = 'BUG-200'; type = 'bug'; title = 'Test bug'
+        category = 'MEDIUM Severity'; severity = 'medium'; issue = 42
+    cmd_add(db, A())
+    row = db.execute("SELECT * FROM items WHERE id='BUG-200'").fetchone()
+    assert row['severity'] == 'medium'
+    assert row['github_issue'] == 42
+
+
+# ── start ─────────────────────────────────────────────────────────────────────
+
+def test_start_sets_in_progress(db):
+    _insert(db, id='FR-201', type='feature', status='open')
+    class A: id = 'FR-201'
+    cmd_start(db, A())
+    row = db.execute(
+        "SELECT status, started_at FROM items WHERE id='FR-201'"
+    ).fetchone()
+    assert row['status'] == 'in_progress'
+    assert row['started_at'] is not None
+
+
+def test_start_nonexistent_exits(db):
+    class A: id = 'FR-999'
+    with pytest.raises(SystemExit):
+        cmd_start(db, A())
+
+
+# ── close ─────────────────────────────────────────────────────────────────────
+
+def test_close_done(db):
+    _insert(db, id='FR-202', type='feature', status='in_progress')
+    class A:
+        id = 'FR-202'; resolution = 'Implemented it'; commit = 'abc1234'; declined = False
+    cmd_close(db, A())
+    row = db.execute(
+        "SELECT status, resolution, commit_hash, closed_at FROM items WHERE id='FR-202'"
+    ).fetchone()
+    assert row['status'] == 'done'
+    assert row['resolution'] == 'Implemented it'
+    assert row['commit_hash'] == 'abc1234'
+    assert row['closed_at'] is not None
+
+
+def test_close_declined(db):
+    _insert(db, id='FR-203', type='feature', status='open')
+    class A:
+        id = 'FR-203'; resolution = 'Out of scope'; commit = None; declined = True
+    cmd_close(db, A())
+    row = db.execute("SELECT status FROM items WHERE id='FR-203'").fetchone()
+    assert row['status'] == 'declined'
+
+
+def test_close_nonexistent_exits(db):
+    class A:
+        id = 'FR-998'; resolution = None; commit = None; declined = False
+    with pytest.raises(SystemExit):
+        cmd_close(db, A())
