@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.3.1] - 2026-04-23
+## [2.3.2] - 2026-04-24
 
 ### Fixed
 - **Scrollable sidebar nav (BUG-134):** The sidebar navigation no longer squishes or clips buttons on short windows or small screens (e.g. 1366×768 with fractional DPI). Nav sections are now wrapped in a `QScrollArea` between the pinned logo row and pinned version/feedback footer. A thin 4px scrollbar appears only when content overflows. Badges (System Cleaner, APT updates) correctly hide when their button is scrolled out of view.
+
+## [2.3.1] - 2026-04-23
 
 ### Changed
 - **Helpers page two-section layout (FR-131):** The Helpers header bar is now split into a **TOOLS** section (tab-style nav buttons) and a **MAINTENANCE** section (clickable cards with title + description). Maintenance cards trigger existing confirm-dialog actions. macOS shows 4 cards (Flush DNS, Rebuild Spotlight, Verify Disk, Rebuild Launch Services); Linux shows 1 (Flush DNS).
