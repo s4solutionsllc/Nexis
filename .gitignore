@@ -16,6 +16,8 @@ FEATURES.md
 CLAUDE.md
 market_research.md
 backlog/
+backlog/nexis.db-shm
+backlog/nexis.db-wal
 archive/
 test_screenshots/
 
