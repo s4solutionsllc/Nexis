@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # --- Linux dependencies ---
       - name: Install dependencies (Linux)
@@ -91,7 +91,7 @@ jobs:
 
       - name: Upload screenshot diffs
         if: failure() || success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshot-diffs-${{ matrix.artifact-name }}
           path: build/test_screenshots/failures/
@@ -100,7 +100,7 @@ jobs:
 
       - name: Upload build artifact
         if: success()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact-name }}
           path: ${{ matrix.artifact-path }}
