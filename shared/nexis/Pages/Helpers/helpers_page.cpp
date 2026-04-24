@@ -182,6 +182,8 @@ void HelpersPage::init()
         mToolItems << mBtnWol;
 
     // Set up ui->nav as a VBox containing tools container + maintenance section
+    delete ui->nav->layout();
+
     auto *navVbox = new QVBoxLayout(ui->nav);
     navVbox->setSpacing(8);
     navVbox->setContentsMargins(0, 0, 0, 0);
