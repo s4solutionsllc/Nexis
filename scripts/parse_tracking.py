@@ -29,6 +29,11 @@ _RESOLVED_RE = re.compile(
     re.IGNORECASE | re.DOTALL
 )
 _COMMIT_TRAILING_RE = re.compile(r'\(([a-f0-9]{7,10})\)')
+# Last-resort bare hash patterns: "Commit <hash>" or first bare hex word
+_COMMIT_KEYWORD_RE = re.compile(r'\bCommit\s+([a-f0-9]{7,10})\b', re.IGNORECASE)
+_COMMIT_BARE_RE = re.compile(r'\b([a-f0-9]{7,10})\b')
+# Strip leading [Bug], [Feature], etc. GitHub prefixes from titles
+_GITHUB_PREFIX_RE = re.compile(r'^\[Bug\]\s*', re.IGNORECASE)
 # GitHub issue linked in body: Issue [#2](...) or standalone #2
 _ISSUE_BODY_RE = re.compile(r'Issue \[#(\d+)\]|\[#(\d+)\]')
 _DECLINED_RE = re.compile(r'Will not implement|Declined:', re.IGNORECASE)
@@ -71,6 +76,8 @@ def _parse_file(path: Path, item_type: str) -> Iterator[dict]:
         raw_title = _SEVERITY_INLINE_RE.sub('', raw_title).strip().strip('*').strip()
         # Remove trailing colon left by BUG-134 / #21 format
         title = raw_title.rstrip(':').strip()
+        # Strip leading [Bug] GitHub prefix (case-insensitive)
+        title = _GITHUB_PREFIX_RE.sub('', title).strip()
 
         # ── status
         status = _STATUS_MAP[status_char]
@@ -113,6 +120,15 @@ def _parse_file(path: Path, item_type: str) -> Iterator[dict]:
                     ch_m = _COMMIT_TRAILING_RE.search(resolution)
                     if ch_m:
                         commit_hash = ch_m.group(1)
+                # Last-resort bare hash scan: "Commit <hash>" then first bare hex word
+                if not commit_hash and resolution:
+                    kw_m = _COMMIT_KEYWORD_RE.search(resolution)
+                    if kw_m:
+                        commit_hash = kw_m.group(1)
+                    else:
+                        bare_m = _COMMIT_BARE_RE.search(resolution)
+                        if bare_m:
+                            commit_hash = bare_m.group(1)
 
         # ── declined: done items whose resolution indicates rejection
         if status == 'done' and _DECLINED_RE.search(block):

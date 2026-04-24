@@ -90,6 +90,7 @@ def test_parse_bugs_github_issue_inline(tmp_path):
     assert items[0]['github_issue'] == 21
     assert items[0]['id'] == 'BUG-134'
     assert items[0]['severity'] == 'medium'
+    assert items[0]['title'] == 'Cramped UI'
 
 
 def test_parse_bugs_commit_hash_in_resolved(tmp_path):
@@ -101,6 +102,17 @@ def test_parse_bugs_commit_hash_in_resolved(tmp_path):
     )
     items = list(parse_bugs(md))
     assert items[0]['commit_hash'] == 'baee04a'
+
+
+def test_parse_bugs_bare_commit_hash(tmp_path):
+    md = tmp_path / 'BUGS.md'
+    md.write_text(
+        "## MEDIUM Severity\n\n"
+        "- [x] **BUG-104: GPU bug** (MEDIUM)\n"
+        "  - **Resolved:** 29665af, b0c3b1d Fixed it.\n"
+    )
+    items = list(parse_bugs(md))
+    assert items[0]['commit_hash'] == '29665af'
 
 
 def test_parse_multiple_sections(tmp_path):
