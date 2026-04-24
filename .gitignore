@@ -15,7 +15,10 @@ FEATURE_REQUESTS.md
 FEATURES.md
 CLAUDE.md
 market_research.md
-backlog/
+backlog/*
+!backlog/nexis.db
+backlog/nexis.db-shm
+backlog/nexis.db-wal
 archive/
 test_screenshots/
 
