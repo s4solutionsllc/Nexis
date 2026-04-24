@@ -123,25 +123,35 @@ def cmd_tracked(conn: sqlite3.Connection, args) -> None:
 
 
 def cmd_add(conn: sqlite3.Connection, args) -> None:
-    conn.execute(
-        "INSERT INTO items "
-        "(id, type, title, status, severity, category, github_issue, opened_at) "
-        "VALUES (?, ?, ?, 'open', ?, ?, ?, ?)",
-        (args.id, args.type, args.title,
-         args.severity, args.category, args.issue, now_iso())
-    )
+    try:
+        conn.execute(
+            "INSERT INTO items "
+            "(id, type, title, status, severity, category, github_issue, opened_at) "
+            "VALUES (?, ?, ?, 'open', ?, ?, ?, ?)",
+            (args.id, args.type, args.title,
+             args.severity, args.category, args.issue, now_iso())
+        )
+    except sqlite3.IntegrityError:
+        print(f"Error: {args.id} already exists.", file=sys.stderr)
+        sys.exit(1)
     conn.commit()
     print(f"Added {args.id}.")
 
 
 def cmd_start(conn: sqlite3.Connection, args) -> None:
+    existing = conn.execute(
+        "SELECT status FROM items WHERE id=?", (args.id,)
+    ).fetchone()
+    if existing is None:
+        print(f"Error: {args.id} not found.", file=sys.stderr)
+        sys.exit(1)
+    if existing['status'] in ('done', 'declined'):
+        print(f"Error: {args.id} is already closed (status={existing['status']}).", file=sys.stderr)
+        sys.exit(1)
     conn.execute(
         "UPDATE items SET status='in_progress', started_at=? WHERE id=?",
         (now_iso(), args.id)
     )
-    if conn.execute("SELECT changes()").fetchone()[0] == 0:
-        print(f"Error: {args.id} not found.", file=sys.stderr)
-        sys.exit(1)
     conn.commit()
     print(f"Started {args.id}.")
 
@@ -153,6 +163,7 @@ def cmd_close(conn: sqlite3.Connection, args) -> None:
         (status, args.resolution, args.commit, now_iso(), args.id)
     )
     if conn.execute("SELECT changes()").fetchone()[0] == 0:
+        conn.rollback()
         print(f"Error: {args.id} not found.", file=sys.stderr)
         sys.exit(1)
     conn.commit()

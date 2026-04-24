@@ -284,8 +284,9 @@ def test_start_sets_in_progress(db):
 
 def test_start_nonexistent_exits(db):
     class A: id = 'FR-999'
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as exc_info:
         cmd_start(db, A())
+    assert exc_info.value.code == 1
 
 
 # ── close ─────────────────────────────────────────────────────────────────────
@@ -316,5 +317,23 @@ def test_close_declined(db):
 def test_close_nonexistent_exits(db):
     class A:
         id = 'FR-998'; resolution = None; commit = None; declined = False
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as exc_info:
         cmd_close(db, A())
+    assert exc_info.value.code == 1
+
+
+def test_add_duplicate_exits(db):
+    _insert(db, id='FR-300', type='feature', status='open')
+    class A:
+        id = 'FR-300'; type = 'feature'; title = 'Dup'; category = None; severity = None; issue = None
+    with pytest.raises(SystemExit) as exc_info:
+        cmd_add(db, A())
+    assert exc_info.value.code == 1
+
+
+def test_start_already_closed_exits(db):
+    _insert(db, id='FR-301', type='feature', status='done')
+    class A: id = 'FR-301'
+    with pytest.raises(SystemExit) as exc_info:
+        cmd_start(db, A())
+    assert exc_info.value.code == 1
