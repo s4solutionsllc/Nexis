@@ -170,10 +170,40 @@ def cmd_close(conn: sqlite3.Connection, args) -> None:
     print(f"Closed {args.id} as {status}.")
 
 
-def _sync_stub(_conn, _args):
-    import sys
-    print("Error: sync not yet implemented.", file=sys.stderr)
-    sys.exit(1)
+def cmd_sync(conn: sqlite3.Connection, _args) -> None:
+    """Re-parse both markdown files and INSERT OR REPLACE all items."""
+    from parse_tracking import parse_features, parse_bugs
+
+    inserted = updated = 0
+    all_items = [*parse_features(FR_PATH), *parse_bugs(BUG_PATH)]
+
+    for item in all_items:
+        existing = conn.execute(
+            "SELECT id FROM items WHERE id=?", (item['id'],)
+        ).fetchone()
+        if existing is None:
+            conn.execute(
+                "INSERT INTO items "
+                "(id, type, title, status, severity, category, "
+                " github_issue, resolution, commit_hash) "
+                "VALUES (:id, :type, :title, :status, :severity, :category, "
+                "        :github_issue, :resolution, :commit_hash)",
+                item
+            )
+            inserted += 1
+        else:
+            conn.execute(
+                "UPDATE items SET "
+                "  title=:title, status=:status, severity=:severity, "
+                "  category=:category, github_issue=:github_issue, "
+                "  resolution=:resolution, commit_hash=:commit_hash "
+                "WHERE id=:id",
+                item
+            )
+            updated += 1
+
+    conn.commit()
+    print(f"Sync complete: {inserted} inserted, {updated} updated.")
 
 
 def main():
@@ -220,7 +250,7 @@ def main():
         'add':         cmd_add,
         'start':       cmd_start,
         'close':       cmd_close,
-        'sync':        _sync_stub,
+        'sync':        cmd_sync,
     }
     dispatch[args.cmd](conn, args)
 

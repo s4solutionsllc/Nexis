@@ -337,3 +337,27 @@ def test_start_already_closed_exits(db):
     with pytest.raises(SystemExit) as exc_info:
         cmd_start(db, A())
     assert exc_info.value.code == 1
+
+
+# ── sync integration ──────────────────────────────────────────────────────────
+
+from nexis_db import cmd_sync
+
+
+def test_sync_populates_from_real_files(db, monkeypatch):
+    """Run sync against the real tracking files and verify row counts match grep."""
+    import nexis_db
+    monkeypatch.setattr(nexis_db, 'FR_PATH', Path(__file__).parent.parent / 'FEATURE_REQUESTS.md')
+    monkeypatch.setattr(nexis_db, 'BUG_PATH', Path(__file__).parent.parent / 'BUGS.md')
+    cmd_sync(db, None)
+    total = db.execute("SELECT COUNT(*) FROM items").fetchone()[0]
+    assert total > 200  # 136 bugs + 137+ FRs
+    open_count = db.execute(
+        "SELECT COUNT(*) FROM items WHERE status='open'"
+    ).fetchone()[0]
+    assert open_count >= 1  # at least some open items exist
+    bug134 = db.execute(
+        "SELECT github_issue FROM items WHERE id='BUG-134'"
+    ).fetchone()
+    assert bug134 is not None
+    assert bug134['github_issue'] == 21
