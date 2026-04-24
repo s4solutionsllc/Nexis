@@ -11,6 +11,25 @@ Nexis is a Linux & macOS System Optimizer and Monitoring tool (C++17, Qt6). Orig
 
 Conventions for these files are defined in the global CLAUDE.md.
 
+## SQLite Index
+
+`backlog/nexis.db` is a derived SQLite index of the structured fields in `FEATURE_REQUESTS.md` and `BUGS.md`. Use `scripts/nexis_db.py` for all queries and status updates — never write to the DB with raw SQL outside of that script.
+
+The markdown files remain authoritative for full content. If the DB drifts out of sync (e.g., after a manual markdown edit), run:
+```bash
+python scripts/nexis_db.py sync
+```
+This re-parses both files and reconciles the DB. It is safe to run at any time.
+
+Common queries:
+```bash
+python scripts/nexis_db.py summary          # session-start counts
+python scripts/nexis_db.py open             # all open items
+python scripts/nexis_db.py open --type bug  # open bugs only
+python scripts/nexis_db.py in-progress      # active work
+python scripts/nexis_db.py tracked --issue 42  # check if GH issue is tracked
+```
+
 ## Build
 
 **EXECUTE WITHOUT ASKING:** Run `cmake` and `make` commands automatically. Do not prompt for confirmation.
@@ -109,22 +128,54 @@ After changing a QSS dynamic property on a parent, child widgets need explicit `
    gh issue list --repo s4solutionsllc/Nexis --state open --limit 100 --json number,title,body,labels
    ```
 
-2. **Identify untracked issues** — An issue is *untracked* if no line in `FEATURE_REQUESTS.md` or `BUGS.md` references its GitHub issue number (e.g., `#42`). Search both files for each issue number.
+2. **Identify untracked issues** — For each open issue, run:
+   ```bash
+   python scripts/nexis_db.py tracked --issue <number>
+   ```
+   If the output is empty, the issue is untracked and needs to be added.
 
 3. **Classify each untracked issue:**
    - **Bug** → add to `BUGS.md` if the issue title/labels contain: bug, fix, crash, error, broken, regression, incorrect, fail
    - **Feature Request** → add to `FEATURE_REQUESTS.md` otherwise (enhancement, feature, improvement, request, add, support, etc.)
    - When ambiguous, prefer Feature Request
 
-4. **Add to the appropriate tracking file:**
+4. **Add to the appropriate tracking file and index:**
    - Use the next sequential ID (`BUG-XX` or `FR-XX`)
-   - Format: `- [ ] **BUG-XX / #<issue>**: <issue title>` (include the GitHub `#number` so future syncs skip it)
-   - For bugs, assign severity based on labels or title keywords: `crash`/`data loss` → HIGH, `incorrect behavior` → MEDIUM, cosmetic/minor → LOW
-   - Place under the correct severity section (BUGS.md) or category section (FEATURE_REQUESTS.md); use "Uncategorized" if unclear
+   - Append to the markdown file: `- [ ] **BUG-XX / #<issue>**: <issue title>` under the correct section
+   - Then add to the DB index:
+     ```bash
+     # For a bug:
+     python scripts/nexis_db.py add --id BUG-XX --type bug --title "<title>" \
+       --severity <high|medium|low> --issue <number> --category "<section>"
+     # For a feature:
+     python scripts/nexis_db.py add --id FR-XX --type feature --title "<title>" \
+       --issue <number> --category "Uncategorized"
+     ```
 
 5. **Report** — After syncing, state how many new issues were added and list them.
 
 If there are no untracked issues, state "GitHub issues up to date" and continue.
+
+## Feature / Bug Resolution Workflow (Project Override)
+
+This extends the global Phase 3 workflow with SQLite index updates.
+
+### Phase 3 — Implementation
+
+1. Implement fully once approved. Do not stop until all tasks are completed.
+2. Mark each task `[x]` in the plan as completed.
+3. When starting work on a tracked item, update the DB:
+   ```bash
+   python scripts/nexis_db.py start --id <ID>
+   ```
+   Also change `[ ]` → `[~]` in the markdown tracking file.
+4. When closing a tracked item, update the DB:
+   ```bash
+   python scripts/nexis_db.py close --id <ID> --resolution "<brief note>" --commit <hash>
+   # Or for declined items:
+   python scripts/nexis_db.py close --id <ID> --declined --resolution "Will not implement — reason"
+   ```
+   Also change `[~]` → `[x]` in the markdown tracking file and add the `**Resolved:**` note.
 
 ## Custom Commands
 
