@@ -129,6 +129,12 @@
 
 ## Dashboard Customization
 
+- [x] **FR-132: Restore individual hidden dashboard tiles without full reset** — When a tile is removed in Edit Mode it is marked `visible: false` in the layout JSON but there is no way to make it visible again short of Reset Layout, which discards all other customizations (positions, sizes, styles, colors). Add a per-tile restore path in Edit Mode — e.g., a hidden-tiles panel or "Add tile" menu that lists currently hidden tiles and lets the user re-add them to the grid individually, preserving all other tile customizations.
+  - **Platform:** Both
+  - **Complexity:** Moderate
+  - **Priority:** Medium
+  - **Resolved:** Added "Add Tile ▾" QToolButton to the edit toolbar. The button appears only when at least one tile is hidden; clicking opens a dropdown listing hidden tiles by display name. Selecting a tile restores it to the first free 1×1 grid cell and persists the change. Button disappears once all tiles are visible.
+
 - [x] **FR-54: Remove/hide dashboard widgets in edit mode** — When in dashboard edit mode (Ctrl+E), allow the user to remove individual tiles from the grid (e.g., via an "X" button on the tile wrapper). Removed tiles are hidden from the dashboard but can be restored by resetting the layout (existing "Reset Layout" behavior already restores all tiles to defaults). Tile visibility state persisted in layout JSON across sessions. Related to FR-49 (general widget visibility concept), but uses in-place edit-mode removal rather than a separate settings panel.
   - **Files:** `dashboard_tile_wrapper.cpp/.h`, `dashboard_page.cpp/.h`, layout JSON serialization
   - **Complexity:** Moderate

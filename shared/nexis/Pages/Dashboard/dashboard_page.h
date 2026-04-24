@@ -94,6 +94,7 @@ private slots:
     void onTileColorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor);
     void onTileRangeChangeRequested(DashboardTileWrapper *wrapper, const QString &rangeId);
     void onTileRemoveRequested(DashboardTileWrapper *wrapper);
+    void onAddTileClicked();
 
 signals:
     void sigShowUpdateBar();
@@ -130,6 +131,7 @@ private:
 
     QToolButton *mKioskButton;
     QToolButton *mEditButton;
+    QToolButton *mAddTileButton = nullptr;
     QWidget *mEditToolbar;
     QPushButton *mBtnResetLayout;
     QPushButton *mBtnDone;
@@ -187,6 +189,7 @@ private:
     bool tileUsesRangeMenu(const QString &style) const;
     void setupCustomizationMenu(DashboardTileWrapper *wrapper, const QString &style);
     void launchMaintenanceWizard();
+    void updateAddTileButton();
 };
 
 #endif // DASHBOARDPAGE_H

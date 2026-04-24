@@ -436,6 +436,16 @@ void DashboardPage::init()
     mBtnResetLayout->setFocusPolicy(Qt::NoFocus);
     toolbarLayout->addWidget(mBtnResetLayout);
 
+    mAddTileButton = new QToolButton(mEditToolbar);
+    mAddTileButton->setObjectName("btnAddTile");
+    mAddTileButton->setText(tr("Add Tile \u25be"));
+    mAddTileButton->setPopupMode(QToolButton::InstantPopup);
+    mAddTileButton->setCursor(Qt::PointingHandCursor);
+    mAddTileButton->setFocusPolicy(Qt::NoFocus);
+    mAddTileButton->hide();
+    toolbarLayout->addWidget(mAddTileButton);
+    connect(mAddTileButton, &QToolButton::clicked, this, &DashboardPage::onAddTileClicked);
+
     mBtnDone = new QPushButton(tr("Done"), mEditToolbar);
     mBtnDone->setObjectName("btnEditDone");
     mBtnDone->setCursor(Qt::PointingHandCursor);
@@ -1037,6 +1047,7 @@ void DashboardPage::toggleEditMode()
         }
         for (QWidget *ph : mPlaceholders)
             ph->setVisible(true);
+        updateAddTileButton();
     }
 }
 
@@ -1100,6 +1111,7 @@ void DashboardPage::onResetLayout()
     mSettingManager->clearDashboardLayout();
     deserializeLayout(QString(QJsonDocument(defaultLayout()).toJson()));
     buildGrid();
+    updateAddTileButton();
 }
 
 void DashboardPage::onKioskModeChanged(bool enabled)
@@ -1648,6 +1660,65 @@ void DashboardPage::onTileRemoveRequested(DashboardTileWrapper *wrapper)
 {
     mHiddenTiles.insert(wrapper->tileId());
     buildGrid();
+    updateAddTileButton();
+}
+
+void DashboardPage::updateAddTileButton()
+{
+    if (mAddTileButton)
+        mAddTileButton->setVisible(mEditMode && !mHiddenTiles.isEmpty());
+}
+
+void DashboardPage::onAddTileClicked()
+{
+    static const QHash<QString, QString> kTileDisplayNames = {
+        {"cpu",     tr("CPU Usage")},
+        {"memory",  tr("Memory Usage")},
+        {"disk",    tr("Disk Usage")},
+        {"network", tr("Network Speed")},
+        {"gpu",     tr("GPU Usage")},
+        {"temp",    tr("Temperature")},
+        {"battery", tr("Battery")},
+        {"fan",     tr("Fan Speed")},
+        {"health",  tr("Health Score")},
+    };
+
+    rebuildOccupancy();
+
+    QMenu menu(this);
+
+    QStringList sortedIds = QStringList(mHiddenTiles.begin(), mHiddenTiles.end());
+    std::sort(sortedIds.begin(), sortedIds.end(), [&](const QString &a, const QString &b) {
+        return kTileDisplayNames.value(a, a) < kTileDisplayNames.value(b, b);
+    });
+
+    for (const QString &id : sortedIds) {
+        int freeRow = -1, freeCol = -1;
+        for (int r = 0; r < GRID_ROWS && freeRow == -1; ++r)
+            for (int c = 0; c < GRID_COLS && freeRow == -1; ++c)
+                if (regionIsFree(r, c, 1, 1))
+                    { freeRow = r; freeCol = c; }
+
+        QString label = kTileDisplayNames.value(id, id);
+        if (freeRow == -1) {
+            QAction *act = menu.addAction(label + tr(" (grid full)"));
+            act->setEnabled(false);
+        } else {
+            QAction *act = menu.addAction(label);
+            connect(act, &QAction::triggered, this, [this, id, freeRow, freeCol]() {
+                mHiddenTiles.remove(id);
+                DashboardTileWrapper *w = findWrapper(id);
+                if (w)
+                    w->setGridPosition(freeRow, freeCol, 1, 1);
+                buildGrid();
+                updateAddTileButton();
+                mSettingManager->setDashboardLayout(
+                    QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
+            });
+        }
+    }
+
+    menu.exec(mAddTileButton->mapToGlobal(QPoint(0, mAddTileButton->height())));
 }
 
 void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor)
