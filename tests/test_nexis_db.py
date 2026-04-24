@@ -137,8 +137,7 @@ def db(tmp_path, monkeypatch):
     db_path = tmp_path / 'nexis.db'
     import nexis_db
     monkeypatch.setattr(nexis_db, 'DB_PATH', db_path)
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
+    conn = nexis_db.get_db()
     init_db(conn)
     return conn
 

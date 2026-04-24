@@ -122,6 +122,12 @@ def cmd_tracked(conn: sqlite3.Connection, args) -> None:
     print(row['id'] if row else '')
 
 
+def _sync_stub(_conn, _args):
+    import sys
+    print("Error: sync not yet implemented.", file=sys.stderr)
+    sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest='cmd', required=True)
@@ -146,6 +152,7 @@ def main():
         'open':        cmd_open,
         'in-progress': cmd_in_progress,
         'tracked':     cmd_tracked,
+        'sync':        _sync_stub,
     }
     dispatch[args.cmd](conn, args)
 
