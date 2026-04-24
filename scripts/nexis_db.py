@@ -68,14 +68,86 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def cmd_summary(conn: sqlite3.Connection, _args) -> None:
+    rows = conn.execute(
+        "SELECT type, status, COUNT(*) AS n FROM items GROUP BY type, status"
+    ).fetchall()
+    counts = {(r['type'], r['status']): r['n'] for r in rows}
+
+    def c(t, s):
+        return counts.get((t, s), 0)
+
+    print(
+        f"Features: {c('feature','open')} open, {c('feature','in_progress')} in-progress, "
+        f"{c('feature','done')} done, {c('feature','declined')} declined"
+    )
+    print(
+        f"Bugs:     {c('bug','open')} open, {c('bug','in_progress')} in-progress, "
+        f"{c('bug','done')} done"
+    )
+
+
+def cmd_open(conn: sqlite3.Connection, args) -> None:
+    sql = "SELECT id, type, severity, title FROM items WHERE status='open'"
+    params: list = []
+    if args.type:
+        sql += " AND type=?"
+        params.append(args.type)
+    sql += " ORDER BY type, id"
+    rows = conn.execute(sql, params).fetchall()
+    if not rows:
+        print("No open items.")
+        return
+    for r in rows:
+        sev = f" [{r['severity'].upper()}]" if r['severity'] else ''
+        print(f"  {r['id']}{sev}: {r['title']}")
+
+
+def cmd_in_progress(conn: sqlite3.Connection, _args) -> None:
+    rows = conn.execute(
+        "SELECT id, type, title, started_at FROM items "
+        "WHERE status='in_progress' ORDER BY started_at"
+    ).fetchall()
+    if not rows:
+        print("No in-progress items.")
+        return
+    for r in rows:
+        print(f"  {r['id']} ({r['type']}): {r['title']}  [started {r['started_at'] or '?'}]")
+
+
+def cmd_tracked(conn: sqlite3.Connection, args) -> None:
+    row = conn.execute(
+        "SELECT id FROM items WHERE github_issue=?", (args.issue,)
+    ).fetchone()
+    print(row['id'] if row else '')
+
+
 def main():
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest='cmd', required=True)
+
     sub.add_parser('summary')
+
+    p = sub.add_parser('open')
+    p.add_argument('--type', choices=['feature', 'bug'])
+
+    sub.add_parser('in-progress')
+
+    p = sub.add_parser('tracked')
+    p.add_argument('--issue', type=int, required=True)
+
+    sub.add_parser('sync')  # implemented in Task 5
+
     args = parser.parse_args()
     conn = get_db()
     init_db(conn)
-    print(f"DB initialised at {DB_PATH}")
+    dispatch = {
+        'summary':     cmd_summary,
+        'open':        cmd_open,
+        'in-progress': cmd_in_progress,
+        'tracked':     cmd_tracked,
+    }
+    dispatch[args.cmd](conn, args)
 
 
 if __name__ == '__main__':

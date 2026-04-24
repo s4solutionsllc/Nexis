@@ -7,6 +7,7 @@ import pytest
 # Allow importing from scripts/
 sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts'))
 from parse_tracking import parse_features, parse_bugs
+from nexis_db import init_db, cmd_summary, cmd_open, cmd_in_progress, cmd_tracked
 
 
 # ── Parser tests ────────────────────────────────────────────────────────────
@@ -127,3 +128,118 @@ def test_parse_multiple_sections(tmp_path):
     assert items[0]['category'] == 'Section A'
     assert items[1]['category'] == 'Section B'
     assert items[1]['status'] == 'open'
+
+
+# ── DB fixture ───────────────────────────────────────────────────────────────
+
+@pytest.fixture
+def db(tmp_path, monkeypatch):
+    db_path = tmp_path / 'nexis.db'
+    import nexis_db
+    monkeypatch.setattr(nexis_db, 'DB_PATH', db_path)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    init_db(conn)
+    return conn
+
+
+def _insert(conn, **kw):
+    defaults = dict(
+        id='FR-001', type='feature', title='T', status='open',
+        severity=None, category=None, github_issue=None,
+        opened_at='2026-01-01T00:00:00Z'
+    )
+    defaults.update(kw)
+    conn.execute(
+        "INSERT INTO items(id,type,title,status,severity,category,github_issue,opened_at) "
+        "VALUES(:id,:type,:title,:status,:severity,:category,:github_issue,:opened_at)",
+        defaults
+    )
+    conn.commit()
+
+
+# ── init ─────────────────────────────────────────────────────────────────────
+
+def test_init_creates_table(db):
+    tables = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+    ).fetchall()
+    assert any(t['name'] == 'items' for t in tables)
+
+
+def test_init_creates_indexes(db):
+    idxs = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='index'"
+    ).fetchall()
+    names = {r['name'] for r in idxs}
+    assert {'idx_status', 'idx_type_status', 'idx_github_issue'} <= names
+
+
+# ── summary ──────────────────────────────────────────────────────────────────
+
+def test_summary_empty(db, capsys):
+    cmd_summary(db, None)
+    out = capsys.readouterr().out
+    assert 'Features: 0 open' in out
+    assert 'Bugs:' in out
+
+
+def test_summary_counts(db, capsys):
+    _insert(db, id='FR-001', type='feature', status='open')
+    _insert(db, id='FR-002', type='feature', status='done')
+    _insert(db, id='BUG-001', type='bug', status='open', severity='high')
+    cmd_summary(db, None)
+    out = capsys.readouterr().out
+    assert 'Features: 1 open' in out
+    assert 'Bugs:     1 open' in out
+
+
+# ── open ─────────────────────────────────────────────────────────────────────
+
+def test_open_lists_open_items(db, capsys):
+    _insert(db, id='FR-010', type='feature', status='open', title='Alpha feature')
+    _insert(db, id='FR-011', type='feature', status='done', title='Done feature')
+    class A: type = None
+    cmd_open(db, A())
+    out = capsys.readouterr().out
+    assert 'FR-010' in out
+    assert 'FR-011' not in out
+
+
+def test_open_filter_by_type(db, capsys):
+    _insert(db, id='FR-020', type='feature', status='open', title='Feature')
+    _insert(db, id='BUG-020', type='bug', status='open', title='Bug', severity='low')
+    class A: type = 'bug'
+    cmd_open(db, A())
+    out = capsys.readouterr().out
+    assert 'BUG-020' in out
+    assert 'FR-020' not in out
+
+
+# ── in-progress ───────────────────────────────────────────────────────────────
+
+def test_in_progress_shows_started(db, capsys):
+    _insert(db, id='FR-030', type='feature', status='in_progress', title='WIP')
+    db.execute(
+        "UPDATE items SET started_at='2026-04-01T10:00:00Z' WHERE id='FR-030'"
+    )
+    db.commit()
+    cmd_in_progress(db, None)
+    out = capsys.readouterr().out
+    assert 'FR-030' in out
+    assert '2026-04-01' in out
+
+
+# ── tracked ───────────────────────────────────────────────────────────────────
+
+def test_tracked_found(db, capsys):
+    _insert(db, id='FR-040', type='feature', status='open', github_issue=55)
+    class A: issue = 55
+    cmd_tracked(db, A())
+    assert capsys.readouterr().out.strip() == 'FR-040'
+
+
+def test_tracked_not_found(db, capsys):
+    class A: issue = 999
+    cmd_tracked(db, A())
+    assert capsys.readouterr().out.strip() == ''
