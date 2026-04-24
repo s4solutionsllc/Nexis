@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.1] - 2026-04-23
+
+### Changed
+- **Helpers page two-section layout (FR-131):** The Helpers header bar is now split into a **TOOLS** section (tab-style nav buttons) and a **MAINTENANCE** section (clickable cards with title + description). Maintenance cards trigger existing confirm-dialog actions. macOS shows 4 cards (Flush DNS, Rebuild Spotlight, Verify Disk, Rebuild Launch Services); Linux shows 1 (Flush DNS).
+
 ## [2.3.0] - 2026-04-23
 
 ### Added
@@ -26,7 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **macOS app crumbs scanner (FR-123):** After uninstalling a `.app` or Homebrew cask via the Uninstaller, Nexis scans `~/Library/{Preferences,Application Support,Caches,Saved Application State,Containers,Logs}` for files matching the app's bundle identifier and offers a review-then-delete dialog. All rows pre-selected; user unchecks what they want to keep, then Delete Selected moves the rest to the Trash via `QFile::moveToTrash`.
 
 ### Changed
-- **Helpers page two-section layout (FR-131):** The Helpers header bar is now split into a **TOOLS** section (tab-style nav buttons) and a **MAINTENANCE** section (clickable cards with title + description). Maintenance cards trigger existing confirm-dialog actions. macOS shows 4 cards (Flush DNS, Rebuild Spotlight, Verify Disk, Rebuild Launch Services); Linux shows 1 (Flush DNS). Layout adapts to narrow windows in the TOOLS section only.
 - **System Cleaner redesign (FR-130):** Replaced the icon-grid category selector with a two-column card layout matching the Nexis design system. Each category is now a titled card with a subtitle showing relevant paths, a size label populated after scanning, and a checkbox with a highlighted border when selected. A persistent footer shows the estimated total recoverable space and a "Clean selected" button — no need to navigate away from the category view. "View scan results →" still provides access to the detailed file tree for power users. Scan/clean state is maintained on page 0 via retained result lists, so cleaning from the card view works without visiting the tree.
 - **Linux process-info overhaul (FR-127):** Replaced the per-tick `ps ax -weo ...` fork in `ProcessInfoLinux::updateProcesses` with a direct `/proc` walk. Eliminates ~10–20 ms of subprocess overhead per Processes-page refresh. Constructor caches `sysconf(_SC_CLK_TCK)`, `_SC_PAGESIZE`, `/proc/stat btime`, and `/proc/meminfo MemTotal`. Username/group lookups memoise `getpwuid_r`/`getgrgid_r` results. Parsing was extracted into a pure `ProcInfoParser` module with 22 fixture-backed tests covering `comm`-with-parens, kernel threads, and the boot-time/meminfo/uptime readers.
 - **Linux GPU polling goes fork-free (FR-106 Step C):** Replaced Bundle B's per-tick `nvidia-smi` fork with a persistent `nvidia-smi -l 1` child via `NvidiaSmiStreamer`. Zero forks per tick in steady state. Mirrors the macOS `NettopStreamer` pattern introduced in FR-102. `NvidiaSmiCache` namespace API is unchanged so `GpuInfoLinux` and `FanInfoLinux` call sites didn't move.
