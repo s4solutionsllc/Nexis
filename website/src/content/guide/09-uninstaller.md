@@ -75,6 +75,23 @@ Behind the scenes, Nexis calls the appropriate package manager for each selected
 
 > **Tip:** If you are unsure whether you still need a package, try disabling or removing it and then testing your workflow for a few days before cleaning up completely.
 
+## Leftover File Cleanup (macOS)
+
+After uninstalling a `.app` bundle or Homebrew Cask, Nexis automatically scans common library locations for files that belong to the removed application. This catches the preference files, caches, and support data that most uninstallers leave behind.
+
+Nexis searches these locations using the app's bundle identifier:
+
+- `~/Library/Preferences/`
+- `~/Library/Application Support/`
+- `~/Library/Caches/`
+- `~/Library/Saved Application State/`
+- `~/Library/Containers/`
+- `~/Library/Logs/`
+
+A **Review leftover files** dialog appears listing every match. All rows are pre-selected. Uncheck any file you want to keep, then click **Delete Selected** to move the rest to the Trash -- not permanently deleted, so you can recover them if needed.
+
+If no leftover files are found, the dialog does not appear.
+
 ## What's Next
 
 The remaining pages of the guide cover Resources, Helpers, package repository management, Docker, GNOME Settings, and application Settings. Continue exploring the guide to learn about every feature Nexis has to offer.

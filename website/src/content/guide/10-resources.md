@@ -32,6 +32,18 @@ Three lines showing the classic Unix load average over one-minute, five-minute, 
 
 > **Tip:** Comparing the 1-minute line to the 15-minute line tells you whether load is trending up (recent spike) or down (recovering from a past event).
 
+### CPU Pressure Stall (Linux)
+
+On kernels 4.20 and later, a **CPU Pressure Stall** chart tracks how much time the system is spending waiting for CPU -- reported as three lines from `/proc/pressure/cpu`:
+
+| Series | Description |
+|--------|-------------|
+| **avg10** | 10-second average stall percentage |
+| **avg60** | 60-second average stall percentage |
+| **avg300** | 5-minute average stall percentage |
+
+A pressure stall occurs when one or more runnable tasks are delayed waiting for a CPU. Unlike load average, pressure stall is normalized to 0--100% regardless of core count, making it a more direct indicator of CPU saturation. This chart only appears when the PSI file is present on your system.
+
 ## GPU Utilization
 
 If one or more GPUs are detected, a chart displays **per-device utilization** over time. Each GPU gets its own line. This is useful for monitoring machine learning workloads, video encoding, or games.

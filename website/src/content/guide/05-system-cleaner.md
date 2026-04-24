@@ -7,13 +7,13 @@ icon: "trash-2"
 
 # System Cleaner
 
-The System Cleaner helps you reclaim disk space by finding and removing files you no longer need -- old package caches, crash dumps, application logs, and more. You can run a scan manually, pick exactly which files to delete, and even set up automated schedules so cleaning happens in the background without you thinking about it.
+The System Cleaner helps you reclaim disk space by finding and removing files you no longer need -- old package caches, crash dumps, application logs, and more. You can run a scan manually, pick exactly which categories to clean, and even set up automated schedules so cleaning happens in the background without you thinking about it.
 
 ![System Cleaner page](/Nexis/images/guide/system-cleaner.png)
 
 ## Scan Categories
 
-Nexis scans eight categories of cleanable files. Each category targets a different type of system clutter:
+Nexis scans eight categories of cleanable files. Each category is displayed as a **card** with a title, a description of what it targets, and a size estimate populated after a scan.
 
 | Category | What It Finds |
 |----------|---------------|
@@ -32,36 +32,25 @@ Nexis scans eight categories of cleanable files. Each category targets a differe
 
 ## Running a Scan
 
-Click the **Scan** button to search all eight categories. Nexis displays a progress indicator while it works. When the scan completes, you see a hierarchical tree view of the results -- categories at the top level, individual files nested underneath.
-
-The total size of all discovered files is shown prominently so you can see at a glance how much space you could recover.
+Click the **Scan** button to search all eight categories. Nexis displays a progress indicator while it works. When the scan completes, each category card updates to show the total size found. A persistent footer at the bottom of the page shows the estimated total recoverable space across all selected categories.
 
 ## Reviewing Results
 
-The results tree lets you drill into each category to see every file that was found. Each item shows its file path and size.
+### Selecting Categories
 
-### Selecting Files to Clean
+Each category card has a checkbox. Check the categories you want to clean. The footer total updates live as you change your selection. Uncheck any category you want to skip.
 
-- **Check a category** to select all files within it.
-- **Expand a category** and check individual files if you only want to remove some of them.
-- **Uncheck** anything you want to keep.
+For a detailed look at what was found in a specific category, click **View scan results →** to open a file tree showing every file discovered in that category. This is useful when you want to verify the contents before cleaning.
 
-The total size updates as you change your selection, so you always know exactly how much space you are about to free.
+### Scan Trend Sparklines
 
-### Sorting
-
-Use the sort options to organize results by:
-
-- **Name** (A-Z or Z-A)
-- **Size** (smallest first or largest first)
-
-Sorting by size (largest first) is a great way to find the biggest offenders quickly.
+Below each category checkbox, a small sparkline chart shows how the category's size has trended across your last 20 scans. Hover over the sparkline to see the delta compared to the previous scan (e.g., "+120 MB since last scan"). This helps you spot which categories are actually growing and worth cleaning regularly versus those that stay small.
 
 ## Cleaning
 
-Once you are happy with your selection, click **Clean** to delete the checked files. Nexis removes them permanently -- they do not go back into the trash.
+Once you are happy with your selection, click **Clean selected** in the footer to delete the files in all checked categories. Nexis removes them permanently -- they do not go to the trash.
 
-> **Tip:** If you are unsure about a file, uncheck it and clean everything else first. You can always run another scan later to catch it.
+> **Tip:** If you are unsure about a category, uncheck it and clean everything else first. You can always run another scan later.
 
 ## Scheduled Cleaning
 
@@ -72,13 +61,27 @@ Instead of remembering to clean manually, you can set up automated schedules tha
 Open the schedule manager from the System Cleaner page (or from **Settings > Scheduled Cleaning**). For each schedule, you can configure:
 
 - **Frequency** -- Daily, every N days, weekly, or monthly
-- **Categories** -- Which of the eight scan categories to include
+- **Categories** -- Which of the eight scan categories to include, plus **Old Downloads** (see below)
 - **Minimum file age** -- Only clean files older than a certain number of days
 - **Threshold alerts** -- Get a tray notification when cleanable files exceed a size threshold (e.g., alert me when there is more than 5 GB to clean)
 
 The schedule indicator on the System Cleaner page shows when the next automated clean will run and when the last one completed.
 
 > **Tip:** Browser Privacy is unchecked by default in new schedules. Since browser cleaning can remove active session data, enable it only if you are comfortable clearing caches and session files on a schedule.
+
+### Old Downloads
+
+Schedules can include an **Old Downloads** category that moves files older than a configurable age from a configurable folder (default: your platform's Downloads directory) to the Trash -- recoverable, not permanently deleted. The age threshold and folder path are configured under **Settings > Scheduled Cleaning**.
+
+### Pre-Clean Snapshots
+
+Before any clean runs -- manual or scheduled -- Nexis can automatically create a system restore point. Enable **Create restore point before cleaning** under **Settings > Scheduled Cleaning**:
+
+> **Linux:** Creates a Timeshift snapshot via `pkexec timeshift --create`. The toggle is hidden if Timeshift is not installed.
+
+> **macOS:** Creates a local Time Machine snapshot via `tmutil localsnapshot`. No elevation prompt is needed.
+
+If snapshot creation fails, the clean proceeds anyway -- the snapshot is a safety net, not a prerequisite.
 
 ### How Scheduling Works
 

@@ -120,6 +120,10 @@ Click the **paintbrush icon** on any tile to open the style menu. The menu has t
 
 Click the **orange X button** on any tile to hide it from the dashboard. Hidden tiles are excluded from the grid layout.
 
+### Restore Tiles
+
+When one or more tiles have been hidden, an **Add Tile ▾** button appears in the Edit Mode toolbar. Click it to open a dropdown listing every hidden tile by name. Select a tile to restore it — it will be placed in the first available grid cell with all of its previous customizations (color, style, size) intact. The button disappears once all tiles are visible again.
+
 ### Reset Layout
 
 Click **Reset Layout** in the toolbar to restore all tiles to their default positions, styles, colors, and visibility. This undoes all customizations.

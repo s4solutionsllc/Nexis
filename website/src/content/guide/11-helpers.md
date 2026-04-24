@@ -1,67 +1,28 @@
 ---
 title: "Helpers"
-description: "Quick-access utility tools: DNS cache flush, hosts file editor, and macOS maintenance actions."
+description: "System utility tools: Hosts File Manager, Wake-on-LAN, swappiness tuning, CPU frequency tuning, SSD TRIM scheduler, DNS flush, and macOS maintenance actions."
 order: 11
 icon: "wrench"
 ---
 
 # Helpers
 
-The Helpers page is a collection of utility tools that don't fit neatly into the other categories. A navigation bar across the top lets you switch between tools. Click any button to open that tool or perform its action.
+The Helpers page is a collection of utility tools organized into two sections:
 
-![Helpers page with Hosts File Manager](/Nexis/images/guide/helpers-hosts.png)
+- **TOOLS** -- Tab-style buttons across the top that open interactive tools: Hosts File Manager, Wake-on-LAN, Swappiness (Linux), CPU Frequency (Linux), and SSD TRIM.
+- **MAINTENANCE** -- Clickable cards that trigger one-shot system actions with a confirmation dialog.
 
-## Flush DNS Cache
-
-Click the **Flush DNS Cache** button to clear your system's local DNS cache. This forces your computer to re-query DNS servers for domain name lookups, which is useful when:
-
-- A website has changed its server address but your machine still remembers the old one.
-- You have edited the hosts file and want changes to take effect immediately.
-- DNS-related issues are causing websites to fail to load.
-
-A confirmation dialog appears before the flush runs. After completion, a success or failure message tells you the result.
-
-> **macOS:** Nexis clears the local cache with `dscacheutil -flushcache` and restarts the mDNSResponder service. This requires administrator authentication.
-
-> **Linux:** Nexis tries `resolvectl`, `systemd-resolve`, or `nscd` in order, using whichever DNS cache service is available on your system.
-
-## macOS Maintenance Actions
-
-On macOS, three additional one-click maintenance buttons appear in the navigation bar. These perform common system maintenance tasks that would otherwise require typing Terminal commands.
-
-### Rebuild Spotlight
-
-Deletes and rebuilds the Spotlight search index. This can fix issues where Spotlight returns incomplete or incorrect results, or fails to find files you know exist.
-
-A confirmation dialog warns that Spotlight search will be temporarily unavailable while the index rebuilds. Depending on your disk size, reindexing may take 30 minutes to several hours and runs in the background.
-
-> **Note:** This action requires administrator authentication because it runs `mdutil -E /`.
-
-### Verify Disk
-
-Runs a read-only integrity check on your startup disk. This is the same check that Disk Utility performs when you click "First Aid" -- it verifies the file system structure without modifying anything.
-
-After the check completes (typically 1--5 minutes), Nexis displays the full diagnostic output in a scrollable dialog with a clear pass or fail verdict.
-
-> **Note:** No administrator password is needed -- this is a read-only operation.
-
-### Rebuild Launch Services
-
-Rescans the Launch Services database and restarts Finder. This fixes common macOS annoyances like:
-
-- The wrong application opens when you double-click a file.
-- The "Open With" right-click menu is missing entries or shows duplicates.
-- Application icons appear as generic white documents.
-
-> **Note:** Nexis uses the safe rescan mode (`lsregister -r`). Finder will briefly disappear and reappear as it restarts.
+![Helpers page](/Nexis/images/guide/helpers-hosts.png)
 
 ---
 
-## Hosts File Manager
+## TOOLS
 
-The Hosts File Manager is a graphical editor for the `/etc/hosts` file that saves you from editing a sensitive system file by hand in a terminal. Click the **Host Manage** button in the navigation bar to open it.
+### Hosts File Manager
 
-### What is the Hosts File?
+A graphical editor for the `/etc/hosts` file. Click **Host Manage** in the TOOLS navigation to open it.
+
+#### What is the Hosts File?
 
 The hosts file (`/etc/hosts`) maps hostnames to IP addresses on your local machine. When your computer tries to reach a hostname, it checks this file before querying DNS. Common uses include:
 
@@ -69,63 +30,157 @@ The hosts file (`/etc/hosts`) maps hostnames to IP addresses on your local machi
 - **Setting up local development** aliases (e.g., mapping `myapp.local` to `127.0.0.1`)
 - **Overriding DNS** for testing or debugging
 
-Editing this file manually can be error-prone. A misplaced character can break name resolution for your entire system. The Hosts File Manager gives you a structured, validated interface for making changes safely.
+#### Viewing Entries
 
-### Viewing Entries
+Nexis reads and parses your current hosts file when you navigate to the tool. Each entry appears as a row showing the **IP address**, **hostname**, and any **aliases**.
 
-When you navigate to the Helpers page, Nexis reads and parses your current hosts file. Each entry appears as a row showing the **IP address**, **hostname**, and any **aliases**.
+#### Adding an Entry
 
-> **Tip:** The hosts file is lazy-loaded -- Nexis only reads it when you actually visit this page, so it does not add overhead during normal use.
+Click **Add** to create a new entry. Provide:
 
-### Adding an Entry
+- **IP Address** -- An IPv4 (e.g. `127.0.0.1`) or IPv6 (e.g. `::1`) address
+- **Hostname** -- The domain name to associate (e.g. `myapp.local`)
+- **Aliases** (optional) -- Additional hostnames resolving to the same address
 
-Click the **Add** button to create a new entry. You need to provide:
+Nexis validates each field as you type and shows a clear error message if anything is malformed.
 
-- **IP Address** -- An IPv4 address (like `127.0.0.1`) or an IPv6 address (like `::1`).
-- **Hostname** -- The domain name to associate with that IP address (e.g., `myapp.local`).
-- **Aliases** (optional) -- Additional hostnames that should resolve to the same address.
+#### Editing and Deleting Entries
 
-Nexis validates each field as you type:
+Select an entry and click **Edit** to modify it, or **Delete** to mark it for removal. Changes are not written to disk until you click **Save**.
 
-- IP addresses are validated using standard IPv4 and IPv6 rules.
-- Hostnames are checked against RFC 1123 formatting rules (letters, digits, hyphens, and dots; underscores are tolerated for compatibility).
-- Each alias is validated individually using the same hostname rules.
+#### Saving Changes
 
-If any field has an error, you will see a clear message explaining what needs to be fixed before you can save.
+Clicking **Save** shows a confirmation dialog summarizing exactly what will change. Before writing, Nexis creates a backup of your current hosts file at `/etc/hosts.nexis-backup`.
 
-### Editing an Entry
+Because the hosts file is owned by root, administrator privileges are required to save. You will be prompted for your password (or Touch ID on macOS).
 
-Select an existing entry and click **Edit** to modify its IP address, hostname, or aliases. The same validation rules apply. This is safer than hand-editing the file because the validation catches common mistakes like malformed IP addresses or invalid characters in hostnames.
+---
 
-### Deleting an Entry
+### Wake-on-LAN
 
-Select one or more entries and click **Delete** to remove them. The entries are not removed from disk until you save.
+Discover machines on your local network and send Wake-on-LAN magic packets to power them on remotely -- no root required.
 
-### Saving Changes
+#### Discovering Hosts
 
-When you click **Save**, Nexis shows a **confirmation dialog** that summarizes exactly what will change -- how many entries are being added, modified, and deleted. Review this summary before confirming.
+Click **Discover Hosts** to read the ARP cache (`/proc/net/arp` on Linux, `arp -a` on macOS) on a background thread. The table populates with:
 
-#### Automatic Backup
+| Column | Description |
+|--------|-------------|
+| IP Address | The device's current IP |
+| MAC Address | Hardware address used to send the magic packet |
+| Hostname | Resolved hostname (if available) |
+| Friendly Name | Editable label you can set to identify the device |
 
-Before writing any changes, Nexis creates a backup of your current hosts file at:
+Friendly names are saved in settings as a JSON map keyed by MAC address, so they persist across sessions.
 
-```
-/etc/hosts.nexis-backup
-```
+#### Waking a Device
 
-The backup preserves the original file's permissions. If something goes wrong, you can restore it from this path.
+Select a device in the table and click **Wake** to send a standard 102-byte UDP magic packet to the broadcast address on port 9. The device must have Wake-on-LAN enabled in its BIOS/UEFI and the network must support directed broadcast for this to work.
 
-#### How Writes Work
+---
 
-Because the hosts file is owned by root, Nexis needs administrator privileges to save changes. It writes the new content securely using `sudo tee`, piping the data through stdin rather than using a temporary file. You will be prompted for your password (or Touch ID on macOS) when saving.
+### Swappiness (Linux)
 
-> **macOS:** The administrator prompt appears as a native macOS dialog asking for your password.
+Controls how aggressively the kernel moves data from RAM to the swap partition. Surfaces the value of `/proc/sys/vm/swappiness` alongside your current swap usage.
 
-> **Linux:** The prompt uses `pkexec` or a terminal-based `sudo` prompt, depending on your desktop environment.
+#### Presets
 
-#### Error Handling
+| Preset | Value | Best for |
+|--------|-------|----------|
+| Desktop | 60 | General use -- default Linux value |
+| Performance | 10 | Prefer RAM; minimize swapping |
+| Low-RAM | 80 | Systems with little RAM; swap early |
 
-If you cancel the authentication prompt, Nexis tells you the save was cancelled -- no changes are written. If the write fails for any other reason (permissions, disk error), an error dialog explains what happened. A success message appears in the status area when the save completes normally.
+You can also drag the **Custom** slider to any value from 0 to 100.
+
+#### Persisting Across Reboots
+
+Enable **Persist across reboots** to write the chosen value to `/etc/sysctl.d/99-nexis-swappiness.conf`. Without this toggle, the value reverts to the kernel default on the next boot. Nexis reads the file back after writing to confirm the change was applied.
+
+---
+
+### CPU Frequency (Linux)
+
+Fine-grained control over CPU turbo boost and clock frequency scaling. Reads and writes the cpufreq kernel interface (`/sys/devices/system/cpu/cpuN/cpufreq/*`).
+
+> **Note:** This tool is disabled with an explanatory notice when `power-profiles-daemon` is managing the CPU backend, since the two systems would conflict.
+
+#### Controls
+
+- **Turbo Boost toggle** -- Enable or disable Intel turbo boost (`intel_pstate/no_turbo`) or AMD boost (`cpufreq/boost`)
+- **Min / Max frequency sliders** -- Set the minimum and maximum clock frequency. The sliders are linked so the minimum can never exceed the maximum
+- **Governor selector** -- Apply a cpufreq governor (powersave, ondemand, performance, schedutil, etc.) across all cores at once
+- **Per-core governor grid** -- Expand **Show per-core governors** to override the governor on individual cores independently
+
+#### Persisting Settings
+
+Enable **Persist on launch** to have Nexis re-apply your frequency settings each time it starts. Settings that already match the current kernel state are skipped, so the re-apply is a no-op when nothing has changed.
+
+---
+
+### SSD TRIM
+
+Monitors and manages TRIM, the mechanism that tells SSDs which blocks are no longer in use so they can be erased in advance for faster future writes.
+
+#### Linux
+
+| Control | Description |
+|---------|-------------|
+| **TRIM Timer toggle** | Enable or disable `fstrim.timer` (systemd) |
+| **Last run / Next run** | Timestamps parsed from `systemctl list-timers` |
+| **Run TRIM now** | Fires `fstrim -av` and shows per-mount output in a scrollable dialog |
+
+The **Run TRIM now** button is hidden if `fstrim` is not installed.
+
+#### macOS
+
+On macOS, APFS manages TRIM automatically and no manual intervention is needed. This section displays a read-only status panel showing whether TRIM is enabled for your SSD, parsed from `diskutil info -plist /` (with a `system_profiler SPNVMeDataType` fallback).
+
+---
+
+## MAINTENANCE
+
+Maintenance actions appear as cards. Click a card to confirm and run the action. macOS shows four cards; Linux shows one.
+
+### Flush DNS Cache
+
+Clears your system's local DNS cache, forcing your computer to re-query DNS servers for hostname lookups. Useful when:
+
+- A website has changed its address but your machine remembers the old one
+- You have edited the hosts file and want changes to take effect immediately
+- DNS-related issues are causing websites to fail to load
+
+A confirmation dialog appears before the flush runs. A success or failure message is displayed after completion.
+
+> **macOS:** Clears the cache with `dscacheutil -flushcache` and restarts `mDNSResponder`. Requires administrator authentication.
+
+> **Linux:** Tries `resolvectl`, `systemd-resolve`, or `nscd` in order, using whichever DNS cache service is available.
+
+### Rebuild Spotlight (macOS)
+
+Deletes and rebuilds the Spotlight search index. Fixes issues where Spotlight returns incomplete or incorrect results, or fails to find files you know exist.
+
+A confirmation dialog warns that Spotlight search will be temporarily unavailable while the index rebuilds. Depending on your disk size, reindexing may take 30 minutes to several hours and runs in the background.
+
+> Requires administrator authentication because it runs `mdutil -E /`.
+
+### Verify Disk (macOS)
+
+Runs a read-only integrity check on your startup disk -- the same check Disk Utility performs when you click "First Aid". After the check completes (typically 1--5 minutes), Nexis displays the full diagnostic output in a scrollable dialog with a clear pass or fail verdict.
+
+> No administrator password is needed -- this is a read-only operation.
+
+### Rebuild Launch Services (macOS)
+
+Rescans the Launch Services database and restarts Finder. Fixes common macOS annoyances like:
+
+- The wrong application opens when you double-click a file
+- The "Open With" right-click menu is missing entries or shows duplicates
+- Application icons appear as generic white documents
+
+> Uses the safe rescan mode (`lsregister -r`). Finder will briefly disappear and reappear as it restarts.
+
+---
 
 ## What's Next
 

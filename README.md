@@ -77,7 +77,7 @@
 
 ## Background
 
-Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popular Linux system optimizer created by oguzhaninan. After the original project went inactive in 2020, development continued here -- porting to Qt 6 and C++17, adding native macOS support, GPU monitoring, a hardware info panel, kiosk mode, and fixing 38+ bugs inherited from the upstream codebase. As the feature-set diverged, the project was rebranded as Nexis to reflect that it had become something new. Stacer laid the foundation; Nexis is where it goes from here.
+Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popular Linux system optimizer created by oguzhaninan. After the original project went inactive in 2020, development continued here -- porting to Qt 6 and C++17, adding native macOS support, GPU monitoring, a hardware info panel, kiosk mode, and fixing hundreds of bugs and regressions inherited from the upstream codebase. As the feature-set diverged, the project was rebranded as Nexis to reflect that it had become something new. Stacer laid the foundation; Nexis is where it goes from here.
 
 ## Downloads
 
@@ -104,7 +104,7 @@ brew tap s4solutionsllc/nexis
 brew install --cask nexis
 ```
 
-Requires macOS 11+ (Big Sur) on Apple Silicon. Updates are delivered via `brew upgrade --cask nexis`.
+Requires macOS 12+ (Monterey) on Apple Silicon. Updates are delivered via `brew upgrade --cask nexis`.
 
 ## Screenshots
 
@@ -177,7 +177,7 @@ sudo pacman -S cmake qt6-base qt6-charts qt6-svg qt6-tools
 #### macOS
 
 ```bash
-brew install qt@6 cmake
+brew install qt@6 cmake adwaita-icon-theme
 ```
 
 After installing, ensure Qt is in your path:
@@ -189,8 +189,8 @@ export PATH="$(brew --prefix qt@6)/bin:$PATH"
 
 ```bash
 mkdir -p build && cd build
-cmake ..
-make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
+cmake .. -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6)
+make -j$(sysctl -n hw.ncpu)
 ```
 
 ## Development

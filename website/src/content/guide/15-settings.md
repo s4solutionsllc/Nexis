@@ -116,8 +116,20 @@ A toggle that creates a sensible default cleaning schedule with one click. This 
 Open the full schedule manager to create, edit, and delete cleaning schedules. Each schedule lets you configure:
 
 - **Frequency** -- Daily, every N days, weekly, or monthly
-- **Categories** -- Which types of junk files to include (package cache, crash reports, logs, app caches, trash, dev tool caches)
+- **Categories** -- Which types of junk files to include (package cache, crash reports, logs, app caches, trash, dev tool caches, browser privacy, and **Old Downloads**)
 - **Minimum file age** -- Only clean files older than a certain number of days
+
+**Old Downloads** is a special category that moves files older than a configurable age from a configurable folder (default: your platform's Downloads directory) to the Trash -- recoverable, not permanently deleted. The age threshold and target folder are set directly on the schedule.
+
+### Pre-Clean Snapshots
+
+A **Create restore point before cleaning** toggle causes Nexis to take a system snapshot before every clean -- manual or scheduled. This gives you a safety net to roll back if a clean removes something important.
+
+> **Linux:** Uses `pkexec timeshift --create`. The toggle is hidden if Timeshift is not installed.
+
+> **macOS:** Uses `tmutil localsnapshot`. No elevation prompt is needed.
+
+Snapshot failure never blocks the clean -- it is logged and the clean proceeds.
 
 ### Threshold Alerts
 

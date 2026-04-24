@@ -26,13 +26,15 @@ Each row in the table represents a running process. The default columns are:
 | Disk Write | Disk write rate in bytes per second for this process |
 | Net Down | Network download rate for this process |
 | Net Up | Network upload rate for this process |
+| GPU % | Current GPU utilization attributed to this process (hidden by default) |
+| VRAM | GPU memory used by this process (hidden by default) |
 | Command | The full command line that started the process |
 
 The Disk I/O columns show delta-based rates -- the difference in cumulative bytes between refresh intervals -- so you see the current activity rather than lifetime totals.
 
-> **macOS:** All columns are fully supported. Disk I/O is read via `proc_pid_rusage()` and network data via `nettop`.
+> **macOS:** All columns are fully supported except GPU % and VRAM, which show — (no supported public API). Disk I/O is read via `proc_pid_rusage()` and network data via `nettop`.
 
-> **Linux:** Disk I/O is read from `/proc/<pid>/io`. Network columns show N/A because Linux lacks a non-privileged API for per-process network attribution.
+> **Linux:** Disk I/O is read from `/proc/<pid>/io`. Network columns show N/A because Linux lacks a non-privileged API for per-process network attribution. GPU % and VRAM are supported: AMD/Intel paths walk `/proc/<pid>/fdinfo/` directly; NVIDIA uses a persistent `nvidia-smi pmon` stream (zero forks per tick).
 
 ## Sorting
 
@@ -66,7 +68,27 @@ Select a process from the table and click the **End Process** button to terminat
 
 Right-click any row in the process table to access additional options:
 
+- **Pin / Unpin** -- Keeps the process pinned to the top of the table regardless of sort order (see [Pinning Processes](#pinning-processes))
+- **Set Alert…** -- Opens a threshold dialog to trigger tray notifications when this process exceeds a CPU or memory threshold (see [Threshold Alerts](#threshold-alerts))
+- **End Process** -- Terminates the selected process
 - **Copy PID** -- Copies the process ID to your clipboard, useful for pasting into terminal commands
+
+## Pinning Processes
+
+Right-click a process and choose **Pin** to keep it anchored at the top of the table. Pinned rows stay at the top regardless of the current sort column or sort direction, making them easy to watch while scrolling through the rest of the list.
+
+To unpin, right-click the pinned row and choose **Unpin**. Pinned process preferences are saved across sessions.
+
+## Threshold Alerts
+
+Right-click any process and choose **Set Alert…** to open the threshold dialog. You can configure:
+
+- **CPU %** -- Fire a tray notification when this process's CPU usage exceeds a given percentage
+- **Memory (MB/GB)** -- Fire a tray notification when this process's memory usage exceeds a given amount
+
+Alerts aggregate across all processes sharing the same name. For example, if you set an alert on "chrome" and multiple Chrome processes are running, the combined memory is compared to the threshold and the notification reads "chrome (12 processes) exceeded 4.0 GB".
+
+Alerts use per-metric hysteresis to avoid repeated notifications once the threshold is crossed. Threshold settings persist across sessions.
 
 ## Customizing Visible Columns
 
