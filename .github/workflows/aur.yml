@@ -1,0 +1,40 @@
+name: Publish AUR Package
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  publish-aur:
+    name: Update AUR package
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${{ github.event.workflow_run.head_branch }}"
+          echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
+        with:
+          pkgname: nexis
+          pkgbuild_dir: linux/aur
+          pkgver: ${{ steps.version.outputs.VERSION }}
+          commit_username: github-actions[bot]
+          commit_email: github-actions[bot]@users.noreply.github.com
+          ssh_private_key: ${{ secrets.AUR_SSH_KEY }}
+          commit_message: "upgpkg: nexis ${{ steps.version.outputs.VERSION }}"
+          updpkgsums: true
