@@ -17,6 +17,7 @@
   <img src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS-lightgrey" alt="Platforms: Linux | macOS">
   <img src="https://img.shields.io/github/downloads/s4solutionsllc/Nexis/total" alt="Downloads">
   <a href="https://launchpad.net/~s4solutionsllc/+archive/ubuntu/nexis"><img src="https://img.shields.io/badge/PPA-s4solutionsllc%2Fnexis-E95420?logo=ubuntu" alt="PPA: s4solutionsllc/nexis"></a>
+  <a href="https://aur.archlinux.org/packages/nexis"><img src="https://img.shields.io/aur/version/nexis" alt="AUR version"></a>
     <!--<a href="https://crowdin.com/project/nexis"><img src="https://badges.crowdin.net/nexis/localized.svg" alt="Crowdin"></a>-->
 </p>
 
@@ -81,7 +82,7 @@ Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popu
 
 ## Downloads
 
-Install via [PPA](#install-via-ppa-ubuntu) or [Homebrew](#install-via-homebrew-macos) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
+Install via [PPA](#install-via-ppa-ubuntu), [AUR](#install-via-aur-arch-linux), or [Homebrew](#install-via-homebrew-macos) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
@@ -96,6 +97,14 @@ sudo apt install nexis
 ```
 
 Supports Ubuntu 22.04 (Jammy), 24.04 (Noble), and 25.04 (Plucky) on both x86_64 and ARM64. Updates are delivered automatically via `apt upgrade`.
+
+### Install via AUR (Arch Linux)
+
+```bash
+yay -S nexis
+```
+
+Also works with `paru` or any other AUR helper. Builds from source — requires Qt6 development packages which are pulled in automatically. Updates are delivered via `yay -Syu`.
 
 ### Install via Homebrew (macOS)
 
