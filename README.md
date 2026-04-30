@@ -233,3 +233,10 @@ To enable the Crowdin sync pipeline for a new fork:
 ## Contributing
 
 Bug reports and feature requests are welcome! Please [open an issue](https://github.com/s4solutionsllc/Nexis/issues) or submit a pull request. See [CHANGELOG.md](CHANGELOG.md) for release history.
+
+## Maintenance & Releases
+
+Nexis is a free, GPL-3.0 reference product with a single named maintainer and a strict capacity time-box. If you are a future maintainer (human or agent) inheriting the project, read these in order:
+
+- [`docs/MAINTAINER_SOP.md`](docs/MAINTAINER_SOP.md) — ownership, time-box, on-call cadence, decision rights.
+- [`RELEASE.md`](RELEASE.md) — end-to-end release runbook (tag, build matrix, code signing, Homebrew/AUR/PPA bumps, CVE expedited path, post-release verification, dry-run procedure).
