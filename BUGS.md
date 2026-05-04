@@ -53,6 +53,13 @@
   - **Fix complexity:** Low (add `fi.isSymLink()` check before the `isDir()` branch)
   - **Resolved:** Added `isSymLink()` guards before all 3 `isDir()` checks in `cleanFiles()` (outer + inner loop) and `cleanTrash()` (macOS branch). Symlinks are now removed via `QFile::remove()` which deletes only the link, never the target.
 
+- [x] **BUG-136 / #27: System Cleaner clears all app caches instead of selected one** (HIGH)
+  - **Platform:** Linux (Ubuntu/Debian, AppImage 2.3.3)
+  - **Description:** When the user selects only a single application cache in System Cleaner and runs the cleaning process, all application caches are cleared rather than just the selected category. Reported against AppImage 2.3.3 on Linux.
+  - **Steps to reproduce:** Launch Nexis → System Cleaner → select only one app cache (e.g. Firefox) → clean → observe all caches wiped.
+  - **Fix complexity:** Medium
+  - **Resolved:** `quickCleanByCategory()` now reads per-item tree-widget check states when the inline tree is visible (post-scan), instead of blindly cleaning all files from checked category cards. Tree items now start `Qt::Checked` by default so the default behavior (clean everything in a checked category) is preserved; users can uncheck individual entries to exclude them. Footer estimated-recoverable total now tracks tree-item selections in real time. Dead slots `on_btnClean_clicked` and `on_checkSelectAll_clicked` (orphaned by FR-130 redesign) removed.
+
 ## MEDIUM Severity
 
 - [x] **BUG-134 / #21**: [Bug] Cramped UI since 2.2.13 (MEDIUM)

@@ -74,16 +74,13 @@ private slots:
     void addTreeChild(const QString &data, const QString &text, const quint64 &size, QTreeWidgetItem *parent);
 
     void on_treeWidgetScanResult_itemClicked(QTreeWidgetItem *item, const int &column);
-    void on_btnClean_clicked();
     void on_btnScan_clicked();
 
     void systemScan();
     void systemClean();
     void onScanFinished();
     void onCleanFinished();
-    bool cleanValid();
 
-    void on_checkSelectAll_clicked(bool check);
     void on_cbSortBy_currentIndexChanged(int idx);
     void updateScheduleIndicator();
     void onManageExclusions();
