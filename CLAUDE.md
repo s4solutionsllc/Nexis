@@ -4,6 +4,19 @@
 
 Nexis is a Linux & macOS System Optimizer and Monitoring tool (C++17, Qt6). Originally forked from [oguzhaninan/Stacer](https://github.com/oguzhaninan/Stacer), now rebranded and independently developed.
 
+## Maintenance Time-Box (read before doing work here)
+
+Nexis is a **reference product**, not a revenue line. Hard rules — see [`docs/MAINTAINER_SOP.md`](docs/MAINTAINER_SOP.md) for the full SOP and rationale:
+
+- **Always free.** GPL-3.0-or-later, no monetization, ever. The release runbook ([`RELEASE.md`](RELEASE.md) §0) checks this on every release.
+- **Maintainer of record:** EngineeringLead. **Escalation owner:** CEO (security/legal only).
+- **Time-box:** ≤10% of EngineeringLead capacity per quarter. Hard ceiling 15% **with prior CEO approval only.** Surface a projected overage in advance, not after the fact.
+- **On-call cadence:** only **CVE / security reports** and **critical bugs** (data loss, app refuses to launch on a fresh install of a supported platform, system-level harm caused by a Nexis action) trigger an out-of-cadence wake. Everything else batches into the **quarterly maintenance pass**.
+- **Releases:** see [`RELEASE.md`](RELEASE.md). Tag-driven (`vX.Y.Z`). Do not edit GitHub Release prose by hand — edit `CHANGELOG.md` and re-tag.
+- **CVE SLA:** patch out within **7 calendar days** of credible disclosure (`RELEASE.md` §6).
+
+If a request would push past the time-box, refuse politely and surface it to the CEO with a budget impact summary; do not silently grow the surface area.
+
 ## Tracking Files
 
 - **`FEATURE_REQUESTS.md`** — Feature request backlog with `FR-XX` IDs, organized by category.
