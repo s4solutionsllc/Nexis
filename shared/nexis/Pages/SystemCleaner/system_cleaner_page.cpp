@@ -378,10 +378,29 @@ void SystemCleanerPage::buildCleanerFooter()
 void SystemCleanerPage::updateFooterTotal()
 {
     quint64 total = 0;
-    for (const CategoryCard &c : mCards) {
-        if (c.check && c.check->isChecked())
-            total += c.lastSize;
+
+    if (mHasScanned && ui->cleanerPage->isVisible()) {
+        QTreeWidget *tree = ui->treeWidgetScanResult;
+        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+            QTreeWidgetItem *root = tree->topLevelItem(i);
+            CleanCategories cat = (CleanCategories) root->data(2, 0).toInt();
+            if (cat == TRASH || cat == SNAP_FLATPAK_REVISIONS) {
+                if (root->checkState(0) == Qt::Checked)
+                    total += root->data(1, SortRole).toULongLong();
+            } else {
+                for (int j = 0; j < root->childCount(); ++j) {
+                    if (root->child(j)->checkState(0) == Qt::Checked)
+                        total += root->child(j)->data(1, SortRole).toULongLong();
+                }
+            }
+        }
+    } else {
+        for (const CategoryCard &c : mCards) {
+            if (c.check && c.check->isChecked())
+                total += c.lastSize;
+        }
     }
+
     if (mLblEstimated)
         mLblEstimated->setText((mHasScanned && total > 0)
             ? FormatUtil::formatBytes(total)
@@ -702,57 +721,6 @@ void SystemCleanerPage::refreshInlineTree()
     updateScheduleIndicator();
 }
 
-// ─── Clean (from tree results, page 1) ───────────────────────────────────────
-
-bool SystemCleanerPage::cleanValid()
-{
-    for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *it = ui->treeWidgetScanResult->topLevelItem(i);
-        if (it->checkState(0) == Qt::Checked) return true;
-        for (int j = 0; j < it->childCount(); ++j)
-            if (it->child(j)->checkState(0) == Qt::Checked) return true;
-    }
-    return false;
-}
-
-void SystemCleanerPage::on_btnClean_clicked()
-{
-    if (mScanInProgress || mCleanInProgress) return;
-    if (!cleanValid()) return;
-
-    ui->treeWidgetScanResult->setEnabled(false);
-
-    QTreeWidget *tree = ui->treeWidgetScanResult;
-    mFilesToDelete.clear();
-    mChildrenToRemove.clear();
-    mCleanTrash = false;
-    mCleanSnapFlatpak = false;
-    mCleaningFromCard = false;
-
-    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *it = tree->topLevelItem(i);
-        CleanCategories cat = (CleanCategories) it->data(2, 0).toInt();
-        if (cat == CleanCategories::TRASH) {
-            if (it->checkState(0) == Qt::Checked) mCleanTrash = true;
-        } else if (cat == CleanCategories::SNAP_FLATPAK_REVISIONS) {
-            if (it->checkState(0) == Qt::Checked) {
-                mCleanSnapFlatpak = true;
-                mChildrenToRemove.append(QPair<int,int>(i, -1));
-            }
-        } else {
-            for (int j = 0; j < it->childCount(); ++j) {
-                if (it->child(j)->checkState(0) == Qt::Checked) {
-                    mFilesToDelete << it->child(j)->data(2, 0).toString();
-                    mChildrenToRemove.append(QPair<int,int>(i, j));
-                }
-            }
-        }
-    }
-
-    mCleanInProgress = true;
-    mWorkerFuture = QtConcurrent::run([this]() { systemClean(); });
-}
-
 // ─── Clean selected (from page 0 footer) ─────────────────────────────────────
 
 void SystemCleanerPage::quickCleanByCategory()
@@ -765,26 +733,44 @@ void SystemCleanerPage::quickCleanByCategory()
     mCleanSnapFlatpak = false;
     mCleaningFromCard = true;
 
-    auto collectFiles = [this](CleanCategories cat, const QFileInfoList &files) {
-        if (cat < mCards.size() && mCards[cat].check && mCards[cat].check->isChecked()) {
-            for (const QFileInfo &fi : files)
-                mFilesToDelete << fi.absoluteFilePath();
+    if (ui->cleanerPage->isVisible()) {
+        // Tree is visible — honor per-item checkbox selections
+        QTreeWidget *tree = ui->treeWidgetScanResult;
+        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+            QTreeWidgetItem *it = tree->topLevelItem(i);
+            CleanCategories cat = (CleanCategories) it->data(2, 0).toInt();
+            if (cat == TRASH) {
+                if (it->checkState(0) == Qt::Checked) mCleanTrash = true;
+            } else if (cat == SNAP_FLATPAK_REVISIONS) {
+                if (it->checkState(0) == Qt::Checked) mCleanSnapFlatpak = true;
+            } else {
+                for (int j = 0; j < it->childCount(); ++j) {
+                    if (it->child(j)->checkState(0) == Qt::Checked)
+                        mFilesToDelete << it->child(j)->data(2, 0).toString();
+                }
+            }
         }
-    };
+    } else {
+        // No tree yet — category-level fallback
+        auto collectFiles = [this](CleanCategories cat, const QFileInfoList &files) {
+            if (cat < mCards.size() && mCards[cat].check && mCards[cat].check->isChecked()) {
+                for (const QFileInfo &fi : files)
+                    mFilesToDelete << fi.absoluteFilePath();
+            }
+        };
+        collectFiles(PACKAGE_CACHE,      mRetainedPackageCaches);
+        collectFiles(CRASH_REPORTS,      mRetainedCrashReports);
+        collectFiles(APPLICATION_LOGS,   mRetainedAppLogs);
+        collectFiles(APPLICATION_CACHES, mRetainedAppCaches);
+        collectFiles(DEV_TOOL_CACHES,    mRetainedDevToolCaches);
+        collectFiles(BROKEN_SYMLINKS,    mRetainedBrokenSymlinks);
+        collectFiles(BROWSER_PRIVACY,    mRetainedBrowserPrivacy);
 
-    collectFiles(PACKAGE_CACHE,      mRetainedPackageCaches);
-    collectFiles(CRASH_REPORTS,      mRetainedCrashReports);
-    collectFiles(APPLICATION_LOGS,   mRetainedAppLogs);
-    collectFiles(APPLICATION_CACHES, mRetainedAppCaches);
-    collectFiles(DEV_TOOL_CACHES,    mRetainedDevToolCaches);
-    collectFiles(BROKEN_SYMLINKS,    mRetainedBrokenSymlinks);
-    collectFiles(BROWSER_PRIVACY,    mRetainedBrowserPrivacy);
-
-    if (TRASH < mCards.size() && mCards[TRASH].check && mCards[TRASH].check->isChecked())
-        mCleanTrash = true;
-
-    if (mCheckSnapFlatpak && mCheckSnapFlatpak->isChecked())
-        mCleanSnapFlatpak = true;
+        if (TRASH < mCards.size() && mCards[TRASH].check && mCards[TRASH].check->isChecked())
+            mCleanTrash = true;
+        if (mCheckSnapFlatpak && mCheckSnapFlatpak->isChecked())
+            mCleanSnapFlatpak = true;
+    }
 
     if (mFilesToDelete.isEmpty() && !mCleanTrash && !mCleanSnapFlatpak) return;
 
@@ -894,7 +880,7 @@ quint64 SystemCleanerPage::addTreeRoot(const CleanCategories &cat, const QString
     root->setData(2, 1, title);
     if (!infos.isEmpty())
         root->setData(3, 0, infos.at(0).absoluteDir().path());
-    root->setCheckState(0, Qt::Unchecked);
+    root->setCheckState(0, Qt::Checked);
 
     QFont rootFont = root->font(0);
     rootFont.setPointSize(10);
@@ -911,6 +897,8 @@ quint64 SystemCleanerPage::addTreeRoot(const CleanCategories &cat, const QString
             totalSize += size;
         }
         root->setText(0, QString("%1 (%2)").arg(title).arg(infos.count()));
+        for (int i = 0; i < root->childCount(); ++i)
+            root->child(i)->setCheckState(0, Qt::Checked);
     } else {
         if (!infos.isEmpty())
             totalSize += FileUtil::getFileSize(infos.first().absoluteFilePath());
@@ -947,16 +935,7 @@ void SystemCleanerPage::on_treeWidgetScanResult_itemClicked(QTreeWidgetItem *ite
         Qt::CheckState cs = (item->checkState(column) == Qt::Checked ? Qt::Checked : Qt::Unchecked);
         for (int i = 0; i < item->childCount(); ++i)
             item->child(i)->setCheckState(column, cs);
-    }
-}
-
-void SystemCleanerPage::on_checkSelectAll_clicked(bool checked)
-{
-    for (int i = 0; i < ui->treeWidgetScanResult->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *it = ui->treeWidgetScanResult->topLevelItem(i);
-        it->setCheckState(0, (checked ? Qt::Checked : Qt::Unchecked));
-        for (int j = 0; j < it->childCount(); ++j)
-            it->child(j)->setCheckState(0, (checked ? Qt::Checked : Qt::Unchecked));
+        updateFooterTotal();
     }
 }
 

@@ -648,3 +648,8 @@
   - **Complexity:** Large
   - **Priority:** Medium
   - **Resolved:** Separated toolbar into TOOLS section (tab-style nav buttons) and MAINTENANCE section (clickable QFrame cards with title + description). `buildMaintenanceSection()` builds cards dynamically — 4 on macOS, 1 on Linux. `mNavItems` renamed `mToolItems`. `applyNavLayout()` now operates on inner `mToolsContainer` widget, preserving maintenance section across layout rebuilds. QSS rules added for `#maintenanceCard`, `#lblToolsSection`, `#lblMaintenanceSectionHeader`.
+
+- [ ] **FR-133 / #26: Support low screen resolutions** — The Nexis UI does not fit within older or lower-resolution displays (e.g. 1366×762). Content is clipped or scrollable areas are not provided, making the app unusable at sub-1080p resolutions. Add responsive layout handling or minimum-scroll behavior so all pages remain functional at resolutions as low as 1366×768.
+  - **Platform:** Both
+  - **Complexity:** Medium
+  - **Priority:** Low
