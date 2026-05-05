@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.4] - 2026-05-04
+
+### Fixed
+- **Dashboard Memory tile white background (BUG-137):** `MetricTile` was the only tile type with `WA_StyledBackground` enabled, causing the QSS `background-color: @cardBg` rule to paint a solid card behind the Memory tile in both themes. Removed the attribute so the tile widget is transparent (matching RingTile/HybridTile/GaugeTile). Disabled `viewport()->autoFillBackground` on the embedded `QChartView` to prevent a black pre-fill, and restored `@cardBg` as the chart background brush to match NetworkTile's sparkline container treatment.
+
 ## [2.3.3] - 2026-04-24
 
 ### Added
