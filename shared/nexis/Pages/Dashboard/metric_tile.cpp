@@ -179,7 +179,7 @@ void MetricTile::refreshThemeColors()
     fillColor.setAlphaF(0.1);
     mAreaSeries->setBrush(fillColor);
 
-    mChart->setBackgroundBrush(Qt::transparent);
+    mChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
 
     mProgressBar->setStyleSheet(
         QString("QProgressBar#metricTileProgress::chunk { background-color: %1; border-radius: 2; }").arg(colorHex));
