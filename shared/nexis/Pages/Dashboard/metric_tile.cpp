@@ -81,6 +81,7 @@ void MetricTile::buildLayout()
     mChartView = new QChartView(mChart, this);
     mChartView->setFrameShape(QFrame::NoFrame);
     mChartView->setBackgroundBrush(Qt::NoBrush);
+    mChartView->viewport()->setAutoFillBackground(false);
     mChartView->setRenderHint(QPainter::Antialiasing);
     mChartView->setMinimumHeight(40);
     mChartView->setMaximumHeight(60);
