@@ -10,7 +10,6 @@ MetricTile::MetricTile(const QString &title, const QString &colorToken, QWidget 
     : MetricTileBase(title, colorToken, parent)
 {
     setObjectName("metricTile");
-    setAttribute(Qt::WA_StyledBackground, true);
     buildLayout();
     refreshThemeColors();
 
@@ -81,6 +80,7 @@ void MetricTile::buildLayout()
 
     mChartView = new QChartView(mChart, this);
     mChartView->setFrameShape(QFrame::NoFrame);
+    mChartView->setBackgroundBrush(Qt::NoBrush);
     mChartView->setRenderHint(QPainter::Antialiasing);
     mChartView->setMinimumHeight(40);
     mChartView->setMaximumHeight(60);
@@ -178,7 +178,7 @@ void MetricTile::refreshThemeColors()
     fillColor.setAlphaF(0.1);
     mAreaSeries->setBrush(fillColor);
 
-    mChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
+    mChart->setBackgroundBrush(Qt::transparent);
 
     mProgressBar->setStyleSheet(
         QString("QProgressBar#metricTileProgress::chunk { background-color: %1; border-radius: 2; }").arg(colorHex));
