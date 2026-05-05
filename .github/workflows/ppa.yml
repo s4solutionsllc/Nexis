@@ -57,8 +57,9 @@ jobs:
 
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
-        series: [noble, jammy, questing]
+        series: [noble, questing, jammy]
 
     steps:
       - name: Checkout

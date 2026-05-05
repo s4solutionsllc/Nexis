@@ -5,6 +5,11 @@ on:
     workflows: ["Release"]
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 2.3.4)'
+        required: true
 
 permissions:
   contents: read
@@ -14,8 +19,9 @@ jobs:
     name: Update AUR package
     runs-on: ubuntu-latest
     if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      startsWith(github.event.workflow_run.head_branch, 'v')
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
 
     steps:
       - name: Checkout
@@ -24,15 +30,24 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          TAG="${{ github.event.workflow_run.head_branch }}"
-          echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            TAG="${{ github.event.workflow_run.head_branch }}"
+            echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update PKGBUILD version
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          sed -i "s/^pkgver=.*/pkgver=${VERSION}/" linux/aur/PKGBUILD
+          sed -i "s/^pkgrel=.*/pkgrel=1/" linux/aur/PKGBUILD
 
       - name: Publish to AUR
         uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
         with:
           pkgname: nexis
-          pkgbuild_dir: linux/aur
-          pkgver: ${{ steps.version.outputs.VERSION }}
+          pkgbuild: linux/aur/PKGBUILD
           commit_username: github-actions[bot]
           commit_email: github-actions[bot]@users.noreply.github.com
           ssh_private_key: ${{ secrets.AUR_SSH_KEY }}
