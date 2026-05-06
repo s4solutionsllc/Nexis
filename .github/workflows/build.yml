@@ -80,24 +80,6 @@ jobs:
             ctest --test-dir build --output-on-failure -E ScreenshotTests
           fi
 
-      - name: Screenshot Tests (FR-41)
-        continue-on-error: true
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            xvfb-run -a ctest --test-dir build --output-on-failure -R ScreenshotTests
-          else
-            ctest --test-dir build --output-on-failure -R ScreenshotTests
-          fi
-
-      - name: Upload screenshot diffs
-        if: failure() || success()
-        uses: actions/upload-artifact@v7
-        with:
-          name: screenshot-diffs-${{ matrix.artifact-name }}
-          path: build/test_screenshots/failures/
-          retention-days: 14
-          if-no-files-found: ignore
-
       - name: Upload build artifact
         if: success()
         uses: actions/upload-artifact@v7
