@@ -44,7 +44,7 @@ jobs:
           sed -i "s/^pkgrel=.*/pkgrel=1/" linux/aur/PKGBUILD
 
       - name: Publish to AUR
-        uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
+        uses: KSXGitHub/github-actions-deploy-aur@v4.1.3
         with:
           pkgname: nexis
           pkgbuild: linux/aur/PKGBUILD
