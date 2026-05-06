@@ -38,13 +38,15 @@ static QString httpHead(const QString &url, int timeoutMs = 5000)
     QTimer::singleShot(timeoutMs + 500, &loop, &QEventLoop::quit);
     loop.exec();
 
-    QString error;
-    if (reply->error() != QNetworkReply::NoError)
-        error = reply->errorString();
-
     int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (error.isEmpty() && status >= 400)
-        error = QString("HTTP %1").arg(status);
+    QString error;
+    if (status > 0) {
+        if (status >= 400)
+            error = QString("HTTP %1").arg(status);
+        // 2xx/3xx: error stays empty
+    } else if (reply->error() != QNetworkReply::NoError) {
+        error = reply->errorString(); // true network failure: DNS, timeout, refused
+    }
 
     reply->deleteLater();
     return error;
