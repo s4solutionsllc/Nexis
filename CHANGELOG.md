@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.5] - 2026-05-06
+
+### Fixed
+- **APT Repository Manager: false "unreachable" for Release-only repos (NEX-276):** Repositories that serve `Release`/`Release.gpg` but not `InRelease` (e.g. Vivaldi) were incorrectly flagged as "Repository unreachable." APT itself handles this format without issue. The root cause was that Qt's network layer returns a typed error for HTTP 404 rather than an HTTP status code, and Nexis was not checking the status code first. Fixed by prioritising the HTTP status — any response from the server is now correctly treated as reachable regardless of the status code.
+
 ## [2.3.3] - 2026-04-24
 
 ### Added
