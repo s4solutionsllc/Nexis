@@ -17,32 +17,6 @@ Nexis is a **reference product**, not a revenue line. Hard rules — see [`docs/
 
 If a request would push past the time-box, refuse politely and surface it to the CEO with a budget impact summary; do not silently grow the surface area.
 
-## Tracking Files
-
-- **`FEATURE_REQUESTS.md`** — Feature request backlog with `FR-XX` IDs, organized by category.
-- **`BUGS.md`** — Bug backlog with `BUG-XX` IDs, sorted by severity (HIGH > MEDIUM > LOW).
-
-Conventions for these files are defined in the global CLAUDE.md.
-
-## SQLite Index
-
-`backlog/nexis.db` is a derived SQLite index of the structured fields in `FEATURE_REQUESTS.md` and `BUGS.md`. Use `scripts/nexis_db.py` for all queries and status updates — never write to the DB with raw SQL outside of that script.
-
-The markdown files remain authoritative for full content. If the DB drifts out of sync (e.g., after a manual markdown edit), run:
-```bash
-python scripts/nexis_db.py sync
-```
-This re-parses both files and reconciles the DB. It is safe to run at any time.
-
-Common queries:
-```bash
-python scripts/nexis_db.py summary          # session-start counts
-python scripts/nexis_db.py open             # all open items
-python scripts/nexis_db.py open --type bug  # open bugs only
-python scripts/nexis_db.py in-progress      # active work
-python scripts/nexis_db.py tracked --issue 42  # check if GH issue is tracked
-```
-
 ## Build
 
 **EXECUTE WITHOUT ASKING:** Run `cmake` and `make` commands automatically. Do not prompt for confirmation.
@@ -90,11 +64,10 @@ The codebase splits shared and platform-specific code:
 - `translations/` — i18n `.ts` files
 - `scripts/` — Build and utility scripts
 - `docs/` — Living documentation (overview, architecture review, roadmap)
-- `backlog/` — Research and plan artifacts for in-progress work
 
 ## Documentation Maintenance
 
-Three living documents must be kept in sync **before committing** any `[x]` item:
+Three living documents must be kept in sync **before committing** any completed work:
 
 - **`CHANGELOG.md`** — User-facing release notes. **Must be updated with every version bump.** Use [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format with `## [version] - date` headers and `### Added` / `### Fixed` / `### Changed` subsections. Every feature, bug fix, or notable change included in a release must have an entry here. This file is parsed by the website to display release notes to users.
 - **`docs/APPLICATION_OVERVIEW.md`** — What the app does. Update when features, UI elements, architecture, or platform support changes.
@@ -132,7 +105,7 @@ After changing a QSS dynamic property on a parent, child widgets need explicit `
 
 ## GitHub Issues Sync (Run at Every Session Start)
 
-**EXECUTE WITHOUT ASKING.** At the start of every session, sync GitHub issues to the local tracking files.
+**EXECUTE WITHOUT ASKING.** At the start of every session, sync GitHub issues to Plane.
 
 ### Steps
 
@@ -141,54 +114,51 @@ After changing a QSS dynamic property on a parent, child widgets need explicit `
    gh issue list --repo s4solutionsllc/Nexis --state open --limit 100 --json number,title,body,labels
    ```
 
-2. **Identify untracked issues** — For each open issue, run:
-   ```bash
-   python scripts/nexis_db.py tracked --issue <number>
+2. **Identify untracked issues** — For each open issue, search Plane:
    ```
-   If the output is empty, the issue is untracked and needs to be added.
+   search_work_items(project_identifier="NEX", query="#<number> <issue title keywords>")
+   ```
+   If no match is found, the issue is untracked and needs to be created.
 
 3. **Classify each untracked issue:**
-   - **Bug** → add to `BUGS.md` if the issue title/labels contain: bug, fix, crash, error, broken, regression, incorrect, fail
-   - **Feature Request** → add to `FEATURE_REQUESTS.md` otherwise (enhancement, feature, improvement, request, add, support, etc.)
+   - **Bug** → label `bug` if the issue title/labels contain: bug, fix, crash, error, broken, regression, incorrect, fail
+   - **Feature Request** → otherwise (enhancement, feature, improvement, request, add, support, etc.)
    - When ambiguous, prefer Feature Request
 
-4. **Add to the appropriate tracking file and index:**
-   - Use the next sequential ID (`BUG-XX` or `FR-XX`)
-   - Append to the markdown file: `- [ ] **BUG-XX / #<issue>**: <issue title>` under the correct section
-   - Then add to the DB index:
-     ```bash
-     # For a bug:
-     python scripts/nexis_db.py add --id BUG-XX --type bug --title "<title>" \
-       --severity <high|medium|low> --issue <number> --category "<section>"
-     # For a feature:
-     python scripts/nexis_db.py add --id FR-XX --type feature --title "<title>" \
-       --issue <number> --category "Uncategorized"
-     ```
+4. **Create the work item in Plane:**
+   ```
+   create_work_item(
+     project_identifier="NEX",
+     title="<issue title>",
+     description="GitHub: s4solutionsllc/Nexis#<number>\n\n<issue body>",
+     label=<"bug" or "feature">,
+     priority=<"medium" | "high" depending on severity>
+   )
+   ```
 
-5. **Report** — After syncing, state how many new issues were added and list them.
+5. **Report** — After syncing, state how many new work items were created and list them.
 
 If there are no untracked issues, state "GitHub issues up to date" and continue.
 
 ## Feature / Bug Resolution Workflow (Project Override)
 
-This extends the global Phase 3 workflow with SQLite index updates.
+This extends the global Phase 3 workflow with Plane state updates.
 
 ### Phase 3 — Implementation
 
 1. Implement fully once approved. Do not stop until all tasks are completed.
 2. Mark each task `[x]` in the plan as completed.
-3. When starting work on a tracked item, update the DB:
-   ```bash
-   python scripts/nexis_db.py start --id <ID>
+3. When starting work on a tracked item, update Plane:
    ```
-   Also change `[ ]` → `[~]` in the markdown tracking file.
-4. When closing a tracked item, update the DB:
-   ```bash
-   python scripts/nexis_db.py close --id <ID> --resolution "<brief note>" --commit <hash>
-   # Or for declined items:
-   python scripts/nexis_db.py close --id <ID> --declined --resolution "Will not implement — reason"
+   update_work_item(project_identifier="NEX", id=<id>, state="In Progress")
    ```
-   Also change `[~]` → `[x]` in the markdown tracking file and add the `**Resolved:**` note.
+4. When closing a tracked item, update Plane:
+   ```
+   update_work_item(project_identifier="NEX", id=<id>, state="Done")
+   create_work_item_comment(project_identifier="NEX", id=<id>,
+     comment="Resolved in <commit SHA / PR URL>. <brief summary of what changed>.")
+   ```
+   For declined items, set state to `Cancelled` and add a comment explaining why.
 
 ## Custom Commands
 
