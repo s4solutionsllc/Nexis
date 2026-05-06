@@ -31,8 +31,7 @@ jobs:
         uses: KSXGitHub/github-actions-deploy-aur@v4.1.1
         with:
           pkgname: nexis
-          pkgbuild_dir: linux/aur
-          pkgver: ${{ steps.version.outputs.VERSION }}
+          pkgbuild: linux/aur/PKGBUILD
           commit_username: github-actions[bot]
           commit_email: github-actions[bot]@users.noreply.github.com
           ssh_private_key: ${{ secrets.AUR_SSH_KEY }}
