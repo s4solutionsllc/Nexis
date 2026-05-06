@@ -1,4 +1,8 @@
 #include <QTest>
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QSemaphore>
+#include <atomic>
 #include "Tools/repo_health_types.h"
 #include "Tools/repo_health_checker.h"
 #include "Tools/apt_source_tool.h"
@@ -20,6 +24,7 @@ private slots:
     void duplicates_noDuplicates();
     void fileUri_skipsConnectionCheck();
     void unreachableHost_connectionError();
+    void http404OnInRelease_noConnectionError();
     void flatRepo_noDistsPrefix();
     void suiteMismatch_thirdPartyRepo_skipped();
 };
@@ -122,6 +127,71 @@ void TestRepoHealthChecker::worstStatus_errorOverridesWarning()
 
 #ifndef Q_OS_MACOS
 #include "Tools/repo_health_checker_linux.h"
+
+// Minimal single-threaded HTTP server for testing.
+// Handles sequential connections; returns 404 for InRelease, 200 for Release.
+class MockHttpServer : public QThread
+{
+public:
+    void startListening() {
+        QThread::start();
+        m_ready.acquire();
+    }
+
+    int port() const { return m_port.load(); }
+
+    void stop() {
+        m_running.store(false);
+        wait();
+    }
+
+protected:
+    void run() override {
+        QTcpServer server;
+        server.listen(QHostAddress::LocalHost, 0);
+        m_port.store(server.serverPort());
+        m_ready.release();
+
+        while (m_running.load()) {
+            if (!server.waitForNewConnection(200))
+                continue;
+            QTcpSocket *sock = server.nextPendingConnection();
+            if (!sock) continue;
+
+            sock->waitForReadyRead(2000);
+            QString req = QString::fromUtf8(sock->readAll());
+
+            bool isHead = req.startsWith("HEAD");
+            QByteArray body;
+            int statusCode = 200;
+
+            if (req.contains("InRelease")) {
+                statusCode = 404;
+            } else if (req.contains("Release")) {
+                body = "Origin: MockRepo\nSuite: stable\n";
+            }
+
+            QByteArray header = "HTTP/1.1 " + QByteArray::number(statusCode) +
+                                (statusCode == 200 ? " OK" : " Not Found") +
+                                "\r\nContent-Length: " +
+                                QByteArray::number(isHead ? 0 : body.size()) +
+                                "\r\nConnection: close\r\n\r\n";
+
+            sock->write(header);
+            if (!isHead && !body.isEmpty())
+                sock->write(body);
+            sock->waitForBytesWritten(2000);
+            sock->disconnectFromHost();
+            sock->waitForDisconnected(2000);
+            delete sock;
+        }
+    }
+
+private:
+    std::atomic<int>  m_port{0};
+    std::atomic<bool> m_running{true};
+    QSemaphore        m_ready;
+};
 
 void TestRepoHealthChecker::deprecatedFormat_legacyNoSignedBy_twoIssues()
 {
@@ -301,6 +371,37 @@ void TestRepoHealthChecker::suiteMismatch_thirdPartyRepo_skipped()
     QVERIFY(!hasSuiteMismatch);
 }
 
+void TestRepoHealthChecker::http404OnInRelease_noConnectionError()
+{
+    // Regression test for NEX-276 / GitHub #33:
+    // Repos that return HTTP 404 for InRelease but serve Release normally
+    // (e.g. Vivaldi) were falsely flagged as "Repository unreachable".
+    // httpHead() was setting error from reply->errorString() before checking
+    // the HTTP status code; Qt's error string doesn't start with "HTTP ",
+    // so checkConnection()'s guard failed and added a spurious connection_error.
+    MockHttpServer server;
+    server.startListening();
+
+    APTSourcePtr src(new APTSource);
+    src->uri      = QString("http://127.0.0.1:%1").arg(server.port());
+    src->suites   = "stable";
+    src->format   = APTSource::Deb822;
+    src->signedByPath = "/usr/share/keyrings/nonexistent.gpg";
+
+    RepoHealthCheckerLinux checker;
+    RepoHealthResult result = checker.checkOne(src);
+
+    server.stop();
+
+    bool hasConnectionError = false;
+    for (const auto &issue : result.issues)
+        if (issue.code == "connection_error")
+            hasConnectionError = true;
+
+    QVERIFY2(!hasConnectionError,
+             "HTTP 404 on InRelease should not produce connection_error — server is reachable");
+}
+
 void TestRepoHealthChecker::flatRepo_noDistsPrefix()
 {
     // Flat repos (suite ends with '/') should use {uri}/{suite}InRelease,
@@ -337,6 +438,7 @@ void TestRepoHealthChecker::duplicates_detected() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::duplicates_noDuplicates() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::fileUri_skipsConnectionCheck() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::unreachableHost_connectionError() { QSKIP("Linux-only test"); }
+void TestRepoHealthChecker::http404OnInRelease_noConnectionError() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::flatRepo_noDistsPrefix() { QSKIP("Linux-only test"); }
 void TestRepoHealthChecker::suiteMismatch_thirdPartyRepo_skipped() { QSKIP("Linux-only test"); }
 #endif
