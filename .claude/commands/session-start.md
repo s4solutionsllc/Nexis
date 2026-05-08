@@ -8,12 +8,14 @@ Initialize a new work session by gathering project status and presenting a summa
    - Run `git status` to see if there are staged/unstaged changes or untracked files from a previous session
    - If uncommitted work exists, summarize it and ask if it should be committed or stashed
 
-2. **Read open work items — Plane first, MD files as fallback:**
-   - Call `list_work_items` for the NEX project filtered to `state_groups=["unstarted","started","backlog"]`, ordered by `-priority`, limit 50
-   - You will need to resolve state UUIDs via `list_states` on first use; cache the mapping for the session
-   - If the call succeeds and returns results, use those as the authoritative list of open/in-progress items
-   - If the call fails (any error) or returns zero results, fall back to the MD files (BUGS.md / FEATURE_REQUESTS.md) if they exist
-   - Note in the summary which source was used (Plane or MD files)
+2. **Validate Plane project management:**
+   - Read `CLAUDE.md` and confirm the Plane project identifier is `NEX` (workspace `s4`)
+   - Call `mcp__plane__list_projects` and confirm project `NEX` exists
+   - If the project is not found, warn: *"CLAUDE.md references Plane project `NEX` but it wasn't found in the workspace."*
+   - Check whether `FEATURE_REQUESTS.md` or `BUGS.md` still exist in the project root; if either exists, note it and ask if the user wants to migrate the remaining items to Plane
+
+3. **Read open work items from Plane:**
+   - Call `list_work_items` for the `NEX` project filtered to `state_groups=["unstarted","started","backlog"]`, ordered by `-priority`, limit 50
 
 3. **Sync GitHub issues to Plane:**
    - Run: `gh issue list --repo s4solutionsllc/Nexis --state open --limit 100 --json number,title,body,labels`
