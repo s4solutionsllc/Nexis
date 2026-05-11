@@ -2,6 +2,11 @@
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
+# Derive version from debian/changelog so the binary always matches the package.
+# APP_VERSION_OVERRIDE in the environment takes precedence (e.g. manual rebuilds).
+DEB_PKG_VERSION := $(shell dpkg-parsechangelog -SVersion | cut -d- -f1)
+_APP_VERSION := $(or $(APP_VERSION_OVERRIDE),$(DEB_PKG_VERSION))
+
 %:
 	dh $@
 
@@ -9,7 +14,7 @@ override_dh_auto_configure:
 	dh_auto_configure -- \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_PREFIX=/usr \
-		$(if $(APP_VERSION_OVERRIDE),-DAPP_VERSION_OVERRIDE=$(APP_VERSION_OVERRIDE))
+		-DAPP_VERSION_OVERRIDE=$(_APP_VERSION)
 
 override_dh_auto_test:
 	xvfb-run -a ctest --test-dir obj-* --output-on-failure -E ScreenshotTests

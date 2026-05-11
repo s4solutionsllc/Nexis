@@ -1,3 +1,10 @@
+nexis (2.3.6-0) unstable; urgency=medium
+
+  * Fix Process page search returning no results and not refreshing on clear (NEX-279).
+  * Fix app displaying wrong version number due to CMakeLists.txt not being bumped at release time; debian/rules now auto-derives version from debian/changelog (NEX-280).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Sun, 11 May 2026 00:00:00 +0000
+
 nexis (2.3.5-0) unstable; urgency=medium
 
   * Fix APT Repository Manager false "unreachable" error for repos serving Release/Release.gpg without InRelease (NEX-276).
