@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.6] - 2026-05-11
+
 ### Fixed
 - **Process page search returns no results (NEX-279):** Typing in the Search field on the Processes page now correctly shows matching processes. The previous implementation converted user input through `QRegularExpression::wildcardToRegularExpression()`, which anchors plain text into an exact-match pattern (e.g. `chrome` → `^(?:chrome)$`), so nothing ever matched. Replaced with `setFilterFixedString()` for case-insensitive substring matching. Clearing the field now restores the full process list automatically.
+- **App shows wrong version number (NEX-280):** The application title and Settings page could display a version two patch releases behind the installed package (e.g. 2.3.3 when 2.3.5 was installed). The root cause was that `CMakeLists.txt` was not updated during the 2.3.5 release, and the `debian/rules` override mechanism was only active when an environment variable was explicitly set — which Launchpad PPA builds do not do. `CMakeLists.txt` is now kept in sync with the release version, and `debian/rules` auto-derives the version from `debian/changelog` so the two can never drift again.
 
 ## [2.3.5] - 2026-05-06
 
