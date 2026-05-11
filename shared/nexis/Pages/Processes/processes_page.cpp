@@ -66,6 +66,7 @@ void ProcessesPage::init()
 
     mSortFilterModel->setSortRole(SortRole);
     mSortFilterModel->setDynamicSortFilter(true);
+    mSortFilterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
     mSortFilterModel->sort(5, Qt::SortOrder::DescendingOrder);
 
     ui->tableProcess->horizontalHeader()->setSectionsMovable(true);
@@ -394,11 +395,8 @@ void ProcessesPage::updateRow(int row, const Process &proc)
 
 void ProcessesPage::on_txtProcessSearch_textChanged(const QString &val)
 {
-    QString pattern = QRegularExpression::wildcardToRegularExpression(val);
-    QRegularExpression query(pattern, QRegularExpression::CaseInsensitiveOption);
-
-    mSortFilterModel->setFilterKeyColumn(mHeaders.count() - 1); // process name
-    mSortFilterModel->setFilterRegularExpression(query);
+    mSortFilterModel->setFilterKeyColumn(mHeaders.count() - 1);
+    mSortFilterModel->setFilterFixedString(val);
 }
 
 void ProcessesPage::on_sliderRefresh_valueChanged(const int &i)

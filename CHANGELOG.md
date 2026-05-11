@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Process page search returns no results (NEX-279):** Typing in the Search field on the Processes page now correctly shows matching processes. The previous implementation converted user input through `QRegularExpression::wildcardToRegularExpression()`, which anchors plain text into an exact-match pattern (e.g. `chrome` → `^(?:chrome)$`), so nothing ever matched. Replaced with `setFilterFixedString()` for case-insensitive substring matching. Clearing the field now restores the full process list automatically.
+
 ## [2.3.5] - 2026-05-06
 
 ### Fixed
