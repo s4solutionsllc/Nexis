@@ -70,3 +70,9 @@ modules:
         url: https://github.com/s4solutionsllc/Nexis.git
         tag: v2.3.6
         commit: 697f8fa486609b935b43b2f3fe80c4da6995540e
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/s4solutionsllc/Nexis/releases/latest
+          tag-query: .tag_name
+          version-query: .tag_name | ltrimstr("v")
+          timestamp-query: .published_at
