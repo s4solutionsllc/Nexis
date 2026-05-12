@@ -1,0 +1,172 @@
+---
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Base
+  title="Nexis vs Stacer — Free Open-Source Stacer Alternative"
+  description="Stacer is no longer maintained. Nexis is the free, open-source Stacer alternative for Linux and macOS — actively developed, with Qt 6 and GPU monitoring."
+>
+  <Nav />
+  <main class="mx-auto max-w-3xl px-6 py-24 md:py-32">
+
+    <h1 class="text-4xl font-bold tracking-tight text-white md:text-5xl">
+      Nexis: The Free, Maintained<br />
+      <span class="text-nexis-orange">Stacer Alternative</span>
+    </h1>
+
+    <p class="mt-6 text-lg text-nexis-muted leading-relaxed">
+      If you've searched for a Stacer alternative, you've already noticed the problem:
+      Stacer's development stopped in 2022. No updates, no security patches, no Qt 6, and
+      no support for any Linux distribution released in the last two years.
+    </p>
+    <p class="mt-4 text-lg text-nexis-muted leading-relaxed">
+      <strong class="text-white">Nexis is the maintained successor.</strong> It does everything
+      Stacer did, runs on both Linux and macOS, and ships regular releases with active bug fixes
+      and new features.
+    </p>
+
+    <h2 class="mt-16 text-2xl font-bold text-white">What Happened to Stacer?</h2>
+    <p class="mt-4 text-nexis-muted leading-relaxed">
+      Stacer was a popular open-source Linux system optimizer that accumulated over 16,000 GitHub
+      stars. But after 2022, commits slowed and then stopped entirely. Issues pile up unanswered,
+      and the last release doesn't install cleanly on Ubuntu 24.04, Fedora 40, or other current
+      distributions. If you're running a modern system, Stacer simply doesn't work reliably anymore.
+    </p>
+
+    <h2 class="mt-12 text-2xl font-bold text-white">Why Choose Nexis as Your Stacer Alternative?</h2>
+    <p class="mt-4 text-nexis-muted leading-relaxed">
+      Nexis was built to fill exactly the gap Stacer left:
+    </p>
+    <ul class="mt-4 space-y-2 text-nexis-muted">
+      <li><span class="text-nexis-orange font-semibold">Actively maintained</span> — releases every 4–6 weeks, critical bugs fixed within days</li>
+      <li><span class="text-nexis-orange font-semibold">Qt 6 native</span> — not Electron; lower memory, better HiDPI, faster startup</li>
+      <li><span class="text-nexis-orange font-semibold">Linux and macOS</span> — one tool for mixed-platform teams or dual-boot setups</li>
+      <li><span class="text-nexis-orange font-semibold">GPU monitoring</span> — NVIDIA and AMD GPU stats, something Stacer never supported</li>
+      <li><span class="text-nexis-orange font-semibold">GPL-3.0 licensed</span> — free to use, modify, and redistribute, forever</li>
+    </ul>
+
+    <h2 class="mt-12 text-2xl font-bold text-white">Nexis vs Stacer: Feature Comparison</h2>
+    <div class="mt-6 overflow-x-auto">
+      <table class="w-full text-sm border-collapse">
+        <thead>
+          <tr class="border-b border-nexis-border">
+            <th class="py-3 pr-6 text-left text-nexis-muted font-semibold">Feature</th>
+            <th class="py-3 px-4 text-center text-nexis-muted font-semibold">Stacer</th>
+            <th class="py-3 px-4 text-center text-nexis-orange font-semibold">Nexis</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-nexis-border/50">
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">Actively maintained</td>
+            <td class="py-3 px-4 text-center text-red-400">✗</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">Qt 6 (native app)</td>
+            <td class="py-3 px-4 text-center text-red-400">✗</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">macOS support</td>
+            <td class="py-3 px-4 text-center text-red-400">✗</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">GPU monitoring</td>
+            <td class="py-3 px-4 text-center text-red-400">✗</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">System cleaner</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">Startup manager</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">Services manager</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">Process manager</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">Open source</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-6 text-nexis-muted">Free</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+            <td class="py-3 px-4 text-center text-green-400">✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-12 text-2xl font-bold text-white">What Does Nexis Include?</h2>
+    <dl class="mt-6 space-y-4">
+      <div>
+        <dt class="font-semibold text-white">Dashboard</dt>
+        <dd class="mt-1 text-nexis-muted">Real-time CPU, memory, swap, disk I/O, GPU, and network charts — everything you need for at-a-glance system health.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-white">System Cleaner</dt>
+        <dd class="mt-1 text-nexis-muted">Scan for application caches, package manager leftovers, and log files taking up disk space.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-white">Startup Manager</dt>
+        <dd class="mt-1 text-nexis-muted">Enable or disable startup applications without touching a config file.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-white">Services Manager</dt>
+        <dd class="mt-1 text-nexis-muted">Start, stop, enable, and disable systemd services from a GUI.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-white">Process Manager</dt>
+        <dd class="mt-1 text-nexis-muted">Sort processes by CPU or memory; kill runaway processes in one click.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-white">GPU Monitor</dt>
+        <dd class="mt-1 text-nexis-muted">View NVIDIA and AMD GPU load, VRAM usage, and temperature in real time. Stacer never supported this.</dd>
+      </div>
+    </dl>
+
+    <h2 class="mt-12 text-2xl font-bold text-white">Does Nexis Work on macOS?</h2>
+    <p class="mt-4 text-nexis-muted leading-relaxed">
+      Yes. Nexis runs natively on macOS (Apple Silicon and Intel). It provides CPU, memory, disk,
+      and GPU monitoring, plus a system cleaner for application caches. Stacer was Linux-only;
+      Nexis works on both, making it the only free, open-source Stacer-class optimizer that
+      covers mixed-platform teams.
+    </p>
+
+    <h2 class="mt-12 text-2xl font-bold text-white">Is Nexis Free?</h2>
+    <p class="mt-4 text-nexis-muted leading-relaxed">
+      Yes. Nexis is GPL-3.0 licensed and will remain free forever. There is no paid tier,
+      no premium features, and no subscription. It is maintained by open-source contributors —
+      not by selling access.
+    </p>
+
+    <div class="mt-16 rounded-xl border border-nexis-border/50 bg-nexis-dark/50 p-8 text-center">
+      <h2 class="text-2xl font-bold text-white">Replace Stacer Today</h2>
+      <p class="mt-3 text-nexis-muted">Download the latest release and get the maintained Linux system optimizer you've been missing.</p>
+      <a
+        href="https://github.com/s4solutionsllc/Nexis/releases/latest"
+        class="mt-6 inline-flex items-center gap-2 rounded-lg bg-nexis-orange px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-nexis-orange-hover"
+      >
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        Download Nexis Free
+      </a>
+    </div>
+
+  </main>
+  <Footer />
+</Base>
