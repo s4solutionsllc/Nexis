@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to Nexis! Nexis is a free, open-source Linux & macOS system optimizer and monitor, and community contributions help keep it useful for everyone. Whether you are fixing a bug, improving translations, adding tests, or proposing new features, your work is appreciated.
 
-We aim to review external pull requests within **14 days** of submission. Please open an issue first for anything beyond a small fix so we can discuss scope before you invest time in implementation.
+We aim to review external pull requests within **7 days** of submission and to acknowledge new issues within **7 days** of filing. Please open an issue first for anything beyond a small fix so we can discuss scope before you invest time in implementation.
 
 ---
 
