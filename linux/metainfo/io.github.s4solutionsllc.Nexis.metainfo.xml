@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.s4solutionsllc.Nexis</id>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Nexis</name>
+  <summary>Linux system optimizer and monitoring tool</summary>
+
+  <description>
+    <p>
+      Nexis is a comprehensive system optimizer and monitoring tool for Linux.
+      It provides real-time visibility into your system's health alongside
+      practical tools for cleaning, tuning, and maintaining your machine — all
+      from a unified graphical interface.
+    </p>
+    <p>Key features include:</p>
+    <ul>
+      <li>Live dashboard with CPU, memory, swap, disk, GPU, and network tiles</li>
+      <li>Hardware info page with detailed CPU, GPU, memory, disk, and battery data</li>
+      <li>System Cleaner — scan and remove cache, logs, package leftovers, and old downloads</li>
+      <li>Process manager with GPU %, VRAM, pinned rows, and per-process CPU/memory alerts</li>
+      <li>Resource charts: CPU, memory, swap, disk I/O, network, GPU, temperature, fan speed,
+          and CPU pressure stall (PSI)</li>
+      <li>Services manager to start, stop, enable, and disable systemd units</li>
+      <li>Startup Apps manager for systemd user services and XDG autostart entries</li>
+      <li>Disk Tools: S.M.A.R.T. health, partition viewer, and benchmark</li>
+      <li>Uninstaller with post-removal app-crumbs scanner</li>
+      <li>APT Repository Manager for viewing, adding, and removing sources</li>
+      <li>Docker container and image manager</li>
+      <li>Helpers: swappiness, CPU turbo/frequency, SSD TRIM, Wake-on-LAN, and more</li>
+      <li>System Logs viewer with live filtering</li>
+      <li>HTML system report export</li>
+      <li>Scheduled cleaning with optional restore-point creation</li>
+      <li>Multiple colour themes with per-widget colour customisation</li>
+    </ul>
+  </description>
+
+  <developer id="io.github.s4solutionsllc">
+    <name>S4 Solutions LLC</name>
+  </developer>
+
+  <url type="homepage">https://github.com/s4solutionsllc/Nexis</url>
+  <url type="bugtracker">https://github.com/s4solutionsllc/Nexis/issues</url>
+
+  <launchable type="desktop-id">nexis.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Dashboard with live system metrics</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-01.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Hardware information overview</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-02.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>System Cleaner with category cards</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-03.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Processes page with GPU and VRAM columns</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-04.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Resources page with live charts</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-05.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>APT Repository Manager</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-06.png</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="2.3.6" date="2026-05-11">
+      <description>
+        <p>Bug fixes:</p>
+        <ul>
+          <li>Process page search now correctly filters by substring; clearing the field restores the full list.</li>
+          <li>Application title and Settings page now always display the correct installed version.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.3.5" date="2026-05-06">
+      <description>
+        <p>Bug fixes:</p>
+        <ul>
+          <li>APT Repository Manager no longer incorrectly flags Release-only repositories as unreachable.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.3.3" date="2026-04-24">
+      <description>
+        <p>New features:</p>
+        <ul>
+          <li>Restore individual dashboard tiles: an "Add Tile" button appears in Edit Mode when any tile is hidden.</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+
+  <categories>
+    <category>Utility</category>
+    <category>System</category>
+  </categories>
+
+  <keywords>
+    <keyword>system</keyword>
+    <keyword>monitor</keyword>
+    <keyword>optimizer</keyword>
+    <keyword>cleaner</keyword>
+    <keyword>performance</keyword>
+    <keyword>process</keyword>
+    <keyword>disk</keyword>
+    <keyword>hardware</keyword>
+    <keyword>resources</keyword>
+    <keyword>services</keyword>
+    <keyword>docker</keyword>
+    <keyword>apt</keyword>
+  </keywords>
+</component>
