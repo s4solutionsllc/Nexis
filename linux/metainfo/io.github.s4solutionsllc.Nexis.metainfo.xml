@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.s4solutionsllc.Nexis</id>
+
+  <name>Nexis</name>
+  <summary>System optimizer and monitor for Linux and macOS</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <description>
+    <p>
+      Nexis is a free, open-source system optimizer and monitoring tool for Linux
+      and macOS. It provides a real-time dashboard alongside targeted tools for
+      cleaning, managing processes, services, startup applications, and more.
+    </p>
+    <p>Key features:</p>
+    <ul>
+      <li>Real-time dashboard with CPU, memory, disk, GPU, network, fan, and battery tiles</li>
+      <li>System Cleaner — scan and remove temporary files, package caches, and old logs</li>
+      <li>Process Manager with GPU% and VRAM columns, pinning, and threshold alerts</li>
+      <li>Services and Startup Applications managers</li>
+      <li>APT Repository Manager (Linux) and Homebrew integration (macOS)</li>
+      <li>Disk Tools including large/old-file scanner and TRIM scheduler</li>
+      <li>Hardware Info with HTML export</li>
+      <li>System Logs viewer</li>
+      <li>Listening-port audit with code-signing verification on macOS</li>
+      <li>Wake-on-LAN helper</li>
+      <li>Swappiness, CPU frequency, and turbo tuning (Linux)</li>
+    </ul>
+    <p>
+      Nexis is a fork of the discontinued Stacer project, independently maintained
+      by S4 Solutions, LLC under the GPL-3.0-or-later licence. It is always free
+      with no paid tiers, no telemetry, and no email walls.
+    </p>
+  </description>
+
+  <developer id="io.github.s4solutionsllc">
+    <name>S4 Solutions, LLC</name>
+  </developer>
+
+  <url type="homepage">https://s4solutionsllc.github.io/Nexis/</url>
+  <url type="bugtracker">https://github.com/s4solutionsllc/Nexis/issues</url>
+  <url type="vcs-browser">https://github.com/s4solutionsllc/Nexis</url>
+
+  <!-- Renamed to io.github.s4solutionsllc.Nexis.desktop in the Flatpak manifest (SSO-93) -->
+  <launchable type="desktop-id">nexis.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Real-time system dashboard</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-01.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Process Manager with GPU and VRAM columns</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-02.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>System Cleaner</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-03.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Hardware Info</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-04.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>APT Repository Manager</caption>
+      <image>https://raw.githubusercontent.com/s4solutionsllc/Nexis/native/screenshots/Nexis-05.png</image>
+    </screenshot>
+  </screenshots>
+
+  <categories>
+    <category>Utility</category>
+    <category>System</category>
+  </categories>
+
+  <keywords>
+    <keyword>system</keyword>
+    <keyword>monitor</keyword>
+    <keyword>optimizer</keyword>
+    <keyword>cleaner</keyword>
+    <keyword>process</keyword>
+    <keyword>cpu</keyword>
+    <keyword>memory</keyword>
+    <keyword>disk</keyword>
+    <keyword>gpu</keyword>
+    <keyword>stacer</keyword>
+  </keywords>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="2.3.6" date="2026-05-11">
+      <description>
+        <ul>
+          <li>Fixed: process page search now correctly matches substrings (case-insensitive)</li>
+          <li>Fixed: app version number in title and Settings now always matches the installed package</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.3.5" date="2026-05-06">
+      <description>
+        <ul>
+          <li>Fixed: APT Repository Manager no longer falsely flags Release-only repos as unreachable</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.3.3" date="2026-04-24">
+      <description>
+        <ul>
+          <li>Added: "Add Tile" button in Edit Mode restores individually hidden dashboard tiles</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+</component>

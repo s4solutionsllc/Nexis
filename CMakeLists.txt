@@ -633,6 +633,12 @@ else()
     CONFIGURATIONS Release RelWithDebInfo MinSizeRel
   )
 
+  install(
+    FILES "${PLATFORM_DIR}/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml"
+    DESTINATION share/metainfo
+    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+  )
+
   foreach(_size 16x16 32x32 48x48 64x64 128x128 256x256)
     install(
       FILES "${CMAKE_SOURCE_DIR}/icons/hicolor/${_size}/apps/nexis.png"
