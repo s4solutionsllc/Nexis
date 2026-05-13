@@ -1,6 +1,6 @@
 app-id: io.github.s4solutionsllc.Nexis
 runtime: org.kde.Platform
-runtime-version: '6.7'
+runtime-version: '6.9'
 sdk: org.kde.Sdk
 command: nexis
 
@@ -69,7 +69,7 @@ modules:
       - type: git
         url: https://github.com/s4solutionsllc/Nexis.git
         tag: v2.3.6
-        commit: 697f8fa486609b935b43b2f3fe80c4da6995540e
+        commit: 85824742b832a6988af28024eb3ed21109a5da74
         x-checker-data:
           type: json
           url: https://api.github.com/repos/s4solutionsllc/Nexis/releases/latest
