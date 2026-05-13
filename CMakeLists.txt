@@ -640,4 +640,10 @@ else()
       CONFIGURATIONS Release RelWithDebInfo MinSizeRel
     )
   endforeach()
+
+  install(
+    FILES "${PLATFORM_DIR}/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml"
+    DESTINATION share/metainfo
+    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+  )
 endif()
