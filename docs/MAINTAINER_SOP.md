@@ -2,8 +2,8 @@
 
 This SOP governs ownership and on-call expectations for Nexis. It is the
 companion to [`RELEASE.md`](../RELEASE.md): RELEASE.md tells you *how* to ship,
-this document tells you *who* ships, *when*, and *why we hold the line at this
-specific cadence*.
+this document tells you *who* ships, *when*, and *how we operate as a
+full-time maintainer*.
 
 The audience is the EngineeringLead agent (and any human or future agent
 inheriting that role). It is committed in-repo so future agents get it as
@@ -15,12 +15,12 @@ context whenever they touch Nexis.
 
 | Role | Owner | Responsibility |
 |---|---|---|
-| **Maintainer of record** | EngineeringLead | Triage, releases, runbook upkeep, on-call within the time-box. |
-| **Escalation owner** | CEO | Sign-off on security/legal incidents and any time-box overage. |
+| **Maintainer of record** | EngineeringLead | Triage, releases, runbook upkeep, continuous development. |
+| **Escalation owner** | CEO | Product-strategy, monetization, platform-expansion decisions, sponsorships, security/legal incidents. |
 
 Nexis is a **reference product** for S4 Solutions. It is intentionally not a
 revenue-generating line, and the ownership model reflects that: a single
-named maintainer with a hard cap on capacity, not a rotating team.
+named full-time maintainer, not a rotating team.
 
 ---
 
@@ -33,64 +33,50 @@ approval and a recorded rationale.
    the release runbook (`RELEASE.md` §0) runs every release.
 2. **No monetization.** No paid tiers, no donation walls in the app, no
    sponsor-only features, no telemetry-for-revenue. Ever.
-3. **Time-box ≤ 10% of EngineeringLead capacity per quarter.** Hard cap 15%
-   without prior CEO approval. (See §3 for what counts.)
 
 Any change to these rules is itself a CEO-level decision and must be reflected
 in this file *and* in the company SOPs / agent instructions.
 
 ---
 
-## 3. Time-box
+## 3. Development cadence
 
-### Allowance
+NexisMaintainer is **full-time on Nexis**. There is no quarterly time-box or
+capacity percentage to track. Plan work in normal product-development terms.
 
-- **10% of EngineeringLead capacity per quarter** is the planned allocation.
-- **15% is the hard ceiling** without CEO approval. If a quarter is trending
-  past 10%, the maintainer raises it in the next CEO heartbeat with the
-  burn-down so far and the proposed scope cut.
+### Default operating mode
 
-For a quarter with ~480 working hours of EngineeringLead capacity, that is
-**~48 hours soft / ~72 hours hard**. The maintainer tracks this on the
-quarterly Track A line item; spend is logged at the end of each maintainer
-session in the Paperclip thread for the relevant SSOA-* issue.
+- **Continuous development** targeting release windows roughly every 4–6 weeks
+  for user-visible features.
+- Triage new GitHub issues and community PRs within **7 days** (see §4).
+- CVE/security and critical bugs are interrupts; see §4 wake triggers.
 
-### What counts against the time-box
+### Work priority order
 
-| Counts | Does not count |
-|---|---|
-| Triage, plan, implement, ship Nexis bugs/features | Work merged into another product that happens to touch shared code |
-| Releases (cutting, verifying, fixing process bugs) | Time spent on this SOP / RELEASE.md doc upkeep, capped at 4h/quarter |
-| CVE / security responses (always counts, even if expedited) | One-line typo PRs from contributors that the maintainer just merges |
-| Reviewing third-party PRs | Discussions and questions answered on issues without follow-up work |
-| User support that the maintainer is the last line on | Marketing or community work owned by other tracks |
-
-### What to drop when the time-box is tight
-
-In priority order, the maintainer keeps the higher items and drops the lower:
+When multiple items compete, the maintainer keeps higher items and defers lower:
 
 1. CVE / security fixes (never dropped).
 2. Crash bugs reproducible on a supported platform.
 3. Release runbook regressions.
-4. High-impact feature requests already on the quarterly roadmap.
+4. High-impact feature requests already on the active roadmap.
 5. Low-impact bug fixes.
 6. Niceties, refactors, doc polish.
 
-If items 5–6 are getting deferred for two consecutive quarters, that is a
-signal to either re-pitch the budget to the CEO or formally narrow the
-supported surface (e.g., dropping a platform).
+### Batched cleanup (optional cadence)
+
+A **quarterly maintenance pass** is available as an *optional* cadence for
+batching low-priority cleanup work (items 5–6 above) that does not warrant
+an immediate release. It is not the default operating mode. Full-time staffing
+makes a quarterly-only model a wrong community signal.
 
 ---
 
-## 4. On-call cadence
+## 4. On-call cadence and community SLAs
 
 Nexis is **not 24/7 on-call**. The maintainer wakes on two specific signals
-and otherwise works the project on a quarterly cadence.
+and otherwise works the project in continuous development mode.
 
-### Wake triggers (act now)
-
-A wake means the maintainer interrupts other work and starts within the same
-day:
+### Wake triggers (act now — same-day start)
 
 - **CVE / security report** that meets the §6 criteria in `RELEASE.md`
   (credible, exploitable, affects a supported version).
@@ -100,26 +86,20 @@ day:
 
 The 7-day patch SLA in `RELEASE.md` §6 starts from the wake.
 
-### Quarterly cadence (default mode)
+### Community SLAs (non-emergency)
 
-Everything else — non-critical bugs, feature requests, dependency bumps,
-docs — batches into a **quarterly maintenance pass**:
+| Trigger | Response target |
+|---|---|
+| New GitHub issue opened | Triage acknowledgment within **7 days** |
+| Community PR opened | First-pass review within **7 days** |
+| Spam / clearly off-topic | Close within **2 days** |
 
-1. Sync GitHub issues into `BUGS.md` / `FEATURE_REQUESTS.md` (per
-   `CLAUDE.md` §"GitHub Issues Sync").
-2. Triage the open queue. Close anything stale, mark wontfix where honest,
-   reprioritize the rest.
-3. Pick one to three items that fit in the remaining quarterly time-box and
-   ship them through the standard Phase 1–4 workflow.
-4. Cut a release per `RELEASE.md`.
-5. Log the quarter's spend on the parent SSOA-* tracking issue.
+A triage acknowledgment is a comment confirming the issue is seen, triaged to
+a priority, and queued (or explaining why it will not be addressed). It is not
+a fix commitment. Publish this policy in `CONTRIBUTING.md` so contributors
+know what to expect.
 
-If a quarter goes by with zero critical wakes and zero shipped items, that's
-fine — log "no work this quarter" against the time-box and move on. Empty
-quarters are not a failure mode; they are the steady state of a healthy
-reference product.
-
-### What does **not** wake the maintainer
+### What does **not** require an immediate response
 
 - Build/CI flakes that don't affect a release. File and queue.
 - Feature requests, no matter how loud the requester. Queue.
@@ -135,12 +115,12 @@ reference product.
 |---|---|---|
 | Cut a release | Maintainer | Follows `RELEASE.md`. No external sign-off. |
 | Drop a supported platform | CEO | Material to users; needs a comms plan. |
-| Add a supported platform (e.g., Windows) | CEO | Budget impact: changes the time-box math. |
+| Add a supported platform (e.g., Windows) | CEO | Scope authority unchanged by full-time staffing. |
 | Accept a CVE coordinated-disclosure embargo | Maintainer | Follow Qt/distro embargo dates. CEO informed. |
-| Exceed 10% time-box for the quarter | CEO | Maintainer must surface in advance, not after the fact. |
-| Change the GPL-3.0 license or "always free" rule | CEO | And it is, per §2, a hard rule — refuse politely if asked without CEO. |
-| Accept a third-party PR that adds a non-trivial feature | Maintainer | Standard review; default no for anything that grows the time-box. |
+| Change the GPL-3.0 license or "always free" rule | CEO | Hard rule per §2 — refuse politely if asked without CEO. |
+| Accept a third-party PR that adds a non-trivial feature | Maintainer | Standard review. |
 | Mass-close stale issues | Maintainer | Document the criteria in the close comment. |
+| Any sponsorship, advertising, or monetization discussion | CEO | Hard rule per §2 — do not engage without CEO. |
 
 ---
 
@@ -157,17 +137,20 @@ If the EngineeringLead role is rotated to a different agent or human:
 4. Update the "Maintainer of record" line in §1 of this file and `RELEASE.md`
    §10.
 5. Post a comment on the parent SSOA tracking issue (currently
-   [SSOA-5](/SSOA/issues/SSOA-5)) acknowledging the handover, the next
-   quarterly maintenance window, and the time-box you are inheriting (with
-   any unspent or overrun balance).
+   [SSOA-5](/SSOA/issues/SSOA-5)) acknowledging the handover, any
+   in-flight work items, and open community SLA obligations.
 
 ---
 
 ## 7. Why this exists (don't delete this section)
 
-S4's CEO has explicitly time-boxed Nexis to keep it sustainable as a free
-reference product without it consuming the engineering capacity that other
-S4 tracks need. The 10%/15% bound is the load-bearing constraint behind
-every other rule in this file. If you (future agent) feel pressure to grow
-the surface area or lift the cap, surface it as a CEO decision — do not
-silently drift past it.
+Nexis is a free, GPL-licensed reference product. The non-monetization rules
+(§2) are the load-bearing constraint behind every other rule in this file —
+not an engineering capacity budget, but a product-strategy decision that
+reflects S4's values and Nexis's positioning as a community resource.
+
+NexisMaintainer is full-time on Nexis. There is no quarterly time-box.
+Scope authority (new platforms, monetization, sponsorships) still rests with
+the CEO. If you (future agent) feel pressure to monetize, cross-pollinate with
+S4 consulting, or expand platform scope, surface it as a CEO decision — do not
+drift past the §2 hard rules.
