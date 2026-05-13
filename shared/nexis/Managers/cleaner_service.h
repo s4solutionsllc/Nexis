@@ -77,6 +77,7 @@ public:
 signals:
     void cleaningStarted(QString scheduleName);
     void cleaningFinished(CleanResult result);
+    void snapshotTaken(QString toolName);   // emitted on worker thread after a successful pre-clean snapshot
 
 private:
     CleanerService();

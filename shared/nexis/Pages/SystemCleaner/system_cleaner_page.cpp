@@ -24,6 +24,7 @@
 #include <QMenu>
 #include <QHeaderView>
 #include <QScrollBar>
+#include <QTimer>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -68,6 +69,9 @@ void SystemCleanerPage::init()
 
     connect(this, &SystemCleanerPage::scanFinishedS, this, &SystemCleanerPage::onScanFinished);
     connect(this, &SystemCleanerPage::cleanFinishedS, this, &SystemCleanerPage::onCleanFinished);
+    connect(mCleanerService, &CleanerService::snapshotTaken,
+            this, &SystemCleanerPage::onSnapshotTaken,
+            Qt::QueuedConnection);
 
     ui->treeWidgetScanResult->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->treeWidgetScanResult, &QTreeWidget::customContextMenuRequested,
@@ -341,11 +345,15 @@ void SystemCleanerPage::buildCleanerFooter()
     mCleanerFooter = new QFrame(ui->cleanerCategories);
     mCleanerFooter->setObjectName("cleanerFooter");
 
-    QHBoxLayout *footerRow = new QHBoxLayout(mCleanerFooter);
-    footerRow->setContentsMargins(14, 10, 14, 10);
+    QVBoxLayout *outerLayout = new QVBoxLayout(mCleanerFooter);
+    outerLayout->setContentsMargins(14, 10, 14, 10);
+    outerLayout->setSpacing(8);
+
+    // Main row: estimated size + clean button
+    QHBoxLayout *footerRow = new QHBoxLayout;
+    footerRow->setContentsMargins(0, 0, 0, 0);
     footerRow->setSpacing(12);
 
-    // Left: label + size
     QLabel *lblEstimatedLabel = new QLabel(tr("ESTIMATED RECOVERABLE"), mCleanerFooter);
     lblEstimatedLabel->setObjectName("lblEstimatedLabel");
 
@@ -359,7 +367,6 @@ void SystemCleanerPage::buildCleanerFooter()
 
     footerRow->addLayout(leftCol, 1);
 
-    // Right: clean selected button (always visible, enabled only after scan + selection)
     mBtnCleanSelected = new QPushButton(tr("Clean selected"), mCleanerFooter);
     mBtnCleanSelected->setObjectName("btnCleanSelected");
     mBtnCleanSelected->setCursor(Qt::PointingHandCursor);
@@ -369,6 +376,14 @@ void SystemCleanerPage::buildCleanerFooter()
             this, &SystemCleanerPage::quickCleanByCategory);
 
     footerRow->addWidget(mBtnCleanSelected);
+    outerLayout->addLayout(footerRow);
+
+    // Toast: appears briefly after a successful pre-clean snapshot (NEX-281)
+    mLblSnapshotToast = new QLabel(mCleanerFooter);
+    mLblSnapshotToast->setObjectName("lblSnapshotToast");
+    mLblSnapshotToast->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    mLblSnapshotToast->hide();
+    outerLayout->addWidget(mLblSnapshotToast);
 
     catLayout->addWidget(mCleanerFooter);
 }
@@ -868,6 +883,13 @@ void SystemCleanerPage::onCleanFinished()
 
     mCleanInProgress = false;
     mCleaningFromCard = false;
+}
+
+void SystemCleanerPage::onSnapshotTaken(const QString &toolName)
+{
+    mLblSnapshotToast->setText(tr("✓ Restore point created via %1. Disable in Settings.").arg(toolName));
+    mLblSnapshotToast->show();
+    QTimer::singleShot(5000, mLblSnapshotToast, &QLabel::hide);
 }
 
 // ─── Tree widget helpers ──────────────────────────────────────────────────────

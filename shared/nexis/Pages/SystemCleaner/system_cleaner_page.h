@@ -85,6 +85,7 @@ private slots:
     void updateScheduleIndicator();
     void onManageExclusions();
     void onTreeContextMenu(const QPoint &pos);
+    void onSnapshotTaken(const QString &toolName);
 
     void showEvent(QShowEvent *event) override;
 
@@ -183,6 +184,8 @@ private:
 
     // Track background tasks so they can be awaited on shutdown (BUG-05)
     QFuture<void> mWorkerFuture;
+
+    QLabel      *mLblSnapshotToast = nullptr;
 
     // Exclusion rules gear button (in header row)
     QToolButton *mBtnExclusions = nullptr;

@@ -452,7 +452,8 @@ void CleanerService::maybeTakeSnapshot(const QList<CleanCategory> &categories)
         catNames << categoryName(cat);
 
     const QString reason = QStringLiteral("Nexis pre-clean: %1").arg(catNames.join(", "));
-    svc->takeSnapshot(reason);   // silently logs on failure; we don't block the clean.
+    if (svc->takeSnapshot(reason))
+        emit snapshotTaken(svc->toolDisplayName());
 }
 
 CleanerService::CleanResult CleanerService::cleanSchedule(const QString &scheduleId)

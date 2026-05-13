@@ -1310,6 +1310,13 @@ QLabel[accessibleName="dialog-title"] {
     color: @color06;
 }
 
+#lblSnapshotToast {
+    color: @successColor;
+    border-left: 3px solid @successColor;
+    padding: 4px 10px;
+    font-size: 9pt;
+}
+
 #lblExclusionNotice {
     color: @color05;
     padding: 6px 0;
