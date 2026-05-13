@@ -5,5 +5,5 @@ Comment=Linux System Optimizer and Monitoring
 Icon=nexis
 Type=Application
 Terminal=false
-Categories=Utility;
+Categories=Utility;System;
 StartupWMClass=nexis
