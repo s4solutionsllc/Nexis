@@ -2,7 +2,7 @@
 
 App ID: `io.github.s4solutionsllc.Nexis`  
 Manifest: `io.github.s4solutionsllc.Nexis.yml`  
-Runtime: `org.kde.Platform//6.7` (KDE Qt6 SDK)
+Runtime: `org.kde.Platform//6.9` (KDE Qt6 SDK)
 
 ---
 
@@ -17,7 +17,7 @@ sudo dnf install flatpak-builder     # Fedora
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
 # Install KDE runtime and SDK (~2-3 GB)
-flatpak install flathub org.kde.Platform//6.7 org.kde.Sdk//6.7
+flatpak install flathub org.kde.Platform//6.9 org.kde.Sdk//6.9
 ```
 
 ---
