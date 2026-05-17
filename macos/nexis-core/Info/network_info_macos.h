@@ -12,6 +12,9 @@ public:
     QList<QNetworkInterface> getAllInterfaces() override;
 
     void updateNetworkBytes() override;
+
+private:
+    void refreshDefaultInterface();
 };
 
 #endif // NETWORK_INFO_MACOS_H

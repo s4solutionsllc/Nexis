@@ -329,15 +329,26 @@ void App::buildSidebar()
 
 void App::init()
 {
-    QScreen *screen = qApp->primaryScreen();
-    if (screen) {
-        setGeometry(
-            QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter,
-                size(), screen->availableGeometry())
-        );
-    }
-
     setMinimumSize(700, 480);
+
+    // GH#55 / SSO-355: restore saved window geometry & state, otherwise center
+    // on the primary screen at the design size.
+    const QByteArray savedGeometry = SettingManager::ins()->getWindowGeometry();
+    const QByteArray savedState    = SettingManager::ins()->getWindowState();
+    bool restored = false;
+    if (!savedGeometry.isEmpty())
+        restored = restoreGeometry(savedGeometry);
+    if (!savedState.isEmpty())
+        restoreState(savedState);
+    if (!restored) {
+        QScreen *screen = qApp->primaryScreen();
+        if (screen) {
+            setGeometry(
+                QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter,
+                    size(), screen->availableGeometry())
+            );
+        }
+    }
 
     ui->horizontalLayout->setContentsMargins(0,0,0,0);
     ui->horizontalLayout->setSpacing(0);
@@ -727,6 +738,14 @@ void App::init()
 
 void App::closeEvent(QCloseEvent *event)
 {
+    // GH#55 / SSO-355: persist window size & position on every close path,
+    // including the minimize-to-tray "ignored close" — the user can quit from
+    // the tray later, after which Qt does not deliver another closeEvent.
+    // saveGeometry() captures maximized/fullscreen state alongside the
+    // underlying normal geometry, so always call it.
+    SettingManager::ins()->setWindowGeometry(saveGeometry());
+    SettingManager::ins()->setWindowState(saveState());
+
     if (SettingManager::ins()->getMinimizeToTray()) {
         emit SignalMapper::ins()->sigAppVisibilityChanged(false);
         hide();

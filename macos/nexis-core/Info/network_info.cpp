@@ -9,52 +9,83 @@
 
 NetworkInfoMacOS::NetworkInfoMacOS()
 {
+    refreshDefaultInterface();
+}
+
+void NetworkInfoMacOS::refreshDefaultInterface()
+{
     // On macOS many virtual interfaces (anpi, bridge, awdl, utun) are
     // Up+Running but carry no real traffic.  Ask the routing table for
     // the interface that owns the default route – that's the one whose
     // bandwidth the user actually cares about.
+    QString chosen;
     try {
         QString out = CommandUtil::exec("route", {"-n", "get", "default"});
         QRegularExpression re(R"(interface:\s*(\S+))");
         QRegularExpressionMatch m = re.match(out);
-        if (m.hasMatch()) {
-            defaultNetworkInterface = m.captured(1);   // e.g. "en0"
-        }
+        if (m.hasMatch())
+            chosen = m.captured(1); // e.g. "en0"
     } catch (...) { qWarning() << "Failed to detect default network interface"; }
 
     // Fallback: first interface with an IPv4/IPv6 address that isn't loopback
-    if (defaultNetworkInterface.isEmpty()) {
+    if (chosen.isEmpty()) {
         for (const QNetworkInterface &net : QNetworkInterface::allInterfaces()) {
             if ((net.flags()  & QNetworkInterface::IsUp) &&
                 (net.flags()  & QNetworkInterface::IsRunning) &&
                 !(net.flags() & QNetworkInterface::IsLoopBack) &&
                 !net.addressEntries().isEmpty())
             {
-                defaultNetworkInterface = net.name();
+                chosen = net.name();
                 break;
             }
         }
     }
+
+    defaultNetworkInterface = chosen;
 }
 
 void NetworkInfoMacOS::updateNetworkBytes()
 {
-    struct ifaddrs *ifap, *ifa;
+    // SSO-351: re-enumerate every tick and populate per-iface stats so
+    // NetUsageTracker can record every active interface, not just the
+    // default one cached at construction.
+    refreshDefaultInterface();
+    mInterfaceStats.clear();
 
-    if (getifaddrs(&ifap) == 0) {
-        for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-            if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_LINK &&
-                QString(ifa->ifa_name) == defaultNetworkInterface)
-            {
-                struct if_data *ifData = static_cast<struct if_data *>(ifa->ifa_data);
-                if (ifData) {
-                    mRxBytes = ifData->ifi_ibytes;
-                    mTxBytes = ifData->ifi_obytes;
-                }
-                break;
-            }
-        }
-        freeifaddrs(ifap);
+    struct ifaddrs *ifap = nullptr;
+    if (getifaddrs(&ifap) != 0) {
+        mRxBytes = 0;
+        mTxBytes = 0;
+        return;
+    }
+
+    for (struct ifaddrs *ifa = ifap; ifa; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_LINK)
+            continue;
+        if ((ifa->ifa_flags & IFF_LOOPBACK)
+            || !(ifa->ifa_flags & IFF_UP)
+            || !(ifa->ifa_flags & IFF_RUNNING))
+            continue;
+
+        struct if_data *ifData = static_cast<struct if_data *>(ifa->ifa_data);
+        if (!ifData)
+            continue;
+
+        NetInterfaceStats s;
+        s.rx = ifData->ifi_ibytes;
+        s.tx = ifData->ifi_obytes;
+        mInterfaceStats.insert(QString::fromUtf8(ifa->ifa_name), s);
+    }
+
+    freeifaddrs(ifap);
+
+    const auto it = mInterfaceStats.constFind(defaultNetworkInterface);
+    if (it != mInterfaceStats.constEnd()) {
+        mRxBytes = it->rx;
+        mTxBytes = it->tx;
+    } else {
+        mRxBytes = 0;
+        mTxBytes = 0;
     }
 }
 
