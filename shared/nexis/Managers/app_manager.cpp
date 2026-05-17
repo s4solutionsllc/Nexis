@@ -2,6 +2,7 @@
 #include "setting_manager.h"
 #include "dpi.h"
 #include <QDebug>
+#include <QImageReader>
 #include <QPalette>
 #include <QRegularExpression>
 #include <algorithm>
@@ -126,6 +127,17 @@ void AppManager::updateStylesheet()
     mStylesheetFileContent = FileUtil::readStringFromFile(
         QStringLiteral(":/static/themes/default/style/style.qss"));
 
+    // SSO-381: on Ubuntu-24.04 derivatives (Linux Mint 22 "Zena", elementary
+    // OS 8, etc.) the default seed omits the Qt6 SVG imageformats plugin even
+    // when libQt6Svg is linked. QCheckBox::indicator then renders 0×0 and the
+    // toggles disappear. Detect plugin availability once and swap the four
+    // indicator URLs for their PNG siblings before the stylesheet is applied.
+    if (!QImageReader::supportedImageFormats().contains("svg")) {
+        qWarning() << "Qt SVG image plugin missing — falling back to PNG "
+                      "indicators (install libqt6svg6 to restore SVG).";
+        mStylesheetFileContent = applyIndicatorPngFallback(mStylesheetFileContent);
+    }
+
     // --- Token validation: check QSS @tokens against values.ini ---
     {
         static const QRegularExpression tokenRx(QStringLiteral("@([a-zA-Z][a-zA-Z0-9_]*)"));
@@ -238,4 +250,20 @@ void AppManager::updateStylesheet()
 QString AppManager::getStylesheetFileContent() const
 {
     return mStylesheetFileContent;
+}
+
+QString AppManager::applyIndicatorPngFallback(const QString &qss)
+{
+    // Order matters: longer keys must come first because `un-checkbox.svg`
+    // contains `checkbox.svg` as a suffix.
+    static const struct { const char *from; const char *to; } kSwaps[] = {
+        { "circle-unchecked.svg", "circle-unchecked.png" },
+        { "circle-checked.svg",   "circle-checked.png" },
+        { "un-checkbox.svg",      "un-checkbox.png" },
+        { "checkbox.svg",         "checkbox.png" },
+    };
+    QString out = qss;
+    for (const auto &s : kSwaps)
+        out.replace(QLatin1String(s.from), QLatin1String(s.to));
+    return out;
 }

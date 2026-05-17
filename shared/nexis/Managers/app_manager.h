@@ -29,6 +29,12 @@ public:
     void updateStylesheet();
     QString getStylesheetFileContent() const;
 
+    // SSO-381: swap the four SVG indicator URLs in a QSS string for their
+    // PNG siblings. Called from updateStylesheet() only when the Qt SVG
+    // image plugin is missing (e.g. Linux Mint 22's default seed). Exposed
+    // here so the substitution can be unit-tested without a QApplication.
+    static QString applyIndicatorPngFallback(const QString &qss);
+
     QSettings *getStyleValues() const;
 
     QSystemTrayIcon *getTrayIcon();

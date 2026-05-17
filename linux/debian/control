@@ -19,7 +19,10 @@ Vcs-Browser: https://github.com/s4solutionsllc/Nexis.git
 
 Package: nexis
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         libqt6svg6,
+         qt6-qpa-plugins,
+         qt6-gtk-platformtheme | qt6ct
 Recommends: systemd, curl, adwaita-icon-theme | yaru-theme-icon
 Description: Linux System Optimizer and Monitoring
  Nexis is an open-source system optimizer and application monitor
