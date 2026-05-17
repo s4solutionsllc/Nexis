@@ -1,7 +1,9 @@
 #include <QTest>
 #include <QTemporaryDir>
 #include <QDir>
+#include <QFileInfo>
 #include "file_util.h"
+#include "command_util.h"
 
 class TestFileUtil : public QObject
 {
@@ -18,6 +20,8 @@ private slots:
     void getFileSize_recursiveDir();
     void getFileSize_nonexistent();
     void directoryList_withFiles();
+    void writeRootFile_returnsFalseOnNonLinux();
+    void writeRootFile_invalidPath();
 };
 
 void TestFileUtil::readStringFromFile_validFile()
@@ -150,6 +154,39 @@ void TestFileUtil::directoryList_withFiles()
 
     QStringList listing = FileUtil::directoryList(tmp.path());
     QVERIFY(listing.contains("file1.txt") || listing.contains(tmp.path() + "/file1.txt"));
+}
+
+void TestFileUtil::writeRootFile_returnsFalseOnNonLinux()
+{
+#ifdef Q_OS_LINUX
+    QSKIP("Non-Linux behavior test; the Linux branch is exercised by writeRootFile_invalidPath.");
+#else
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString path = tmp.path() + "/should_not_be_written.conf";
+
+    const bool ok = FileUtil::writeRootFile(path, QByteArray("payload"));
+
+    QVERIFY(!ok);
+    QVERIFY2(!QFileInfo::exists(path),
+             "writeRootFile() must be a no-op on non-Linux platforms");
+#endif
+}
+
+void TestFileUtil::writeRootFile_invalidPath()
+{
+#ifndef Q_OS_LINUX
+    QSKIP("Linux-only test (requires pkexec/sudoExec).");
+#else
+    if (!CommandUtil::isExecutable("pkexec"))
+        QSKIP("pkexec not available in this environment.");
+
+    // Path under a directory that does not exist — `tee` will fail and the
+    // read-back comparison must return false without crashing.
+    const QString invalid = "/nonexistent/dir/nexis-writeRootFile-test.conf";
+    const bool ok = FileUtil::writeRootFile(invalid, QByteArray("payload"));
+    QVERIFY(!ok);
+#endif
 }
 
 QTEST_MAIN(TestFileUtil)
