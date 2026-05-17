@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Flatpak packaging (SSO-93):** Flatpak manifest added at `linux/flatpak/io.github.s4solutionsllc.Nexis.yml` for Flathub submission. Uses the KDE Qt6 SDK (`org.kde.Platform//6.7`), `--filesystem=host` for broad system access (required for /proc, /sys, hardware sensors, APT sources, and host tool invocations), and `org.freedesktop.PolicyKit1` D-Bus access for privileged operations. Reviewer justification at `docs/flatpak-reviewer-justification.md`.
+- **Unit tests for `FileUtil::writeRootFile()` (SSO-353 / GH#50):** Two new test cases in `tests/utils/test_file_util.cpp` close the coverage gap on the privileged-write helper — `writeRootFile_returnsFalseOnNonLinux` verifies the macOS/non-Linux branch is a no-op returning `false`, and `writeRootFile_invalidPath` verifies the Linux branch fails gracefully (returns `false`, does not crash) when handed a path under a non-existent directory. Both tests `QSKIP` on the wrong platform so `ctest -R FileUtil` passes on Linux and macOS without root.
 
 ## [2.3.6] - 2026-05-11
 
