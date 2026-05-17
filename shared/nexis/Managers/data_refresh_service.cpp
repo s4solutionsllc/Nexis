@@ -27,6 +27,16 @@ DataRefreshService::DataRefreshService(InfoManager *infoManager,
       mProcessPaused(true),
       mUpdateCheckRunning(false)
 {
+    // SSO-351: networkPerInterfaceUpdated crosses threads via a queued
+    // connection (NetUsageTracker lives on the UI thread, DRS samples on a
+    // worker tick). Qt cannot marshal a custom type across threads without a
+    // registered metatype — without these calls the slot is silently never
+    // invoked, exactly the symptom the SSO-351 fix is meant to resolve.
+    // Register before the first connect() below so the queue is wired up
+    // correctly from the start.
+    qRegisterMetaType<NetInterfaceStats>("NetInterfaceStats");
+    qRegisterMetaType<NetInterfaceStatsMap>("NetInterfaceStatsMap");
+
     connect(mFastTimer, &QTimer::timeout, this, &DataRefreshService::onFastTick);
     connect(mMediumTimer, &QTimer::timeout, this, &DataRefreshService::onMediumTick);
     connect(mSlowTimer, &QTimer::timeout, this, &DataRefreshService::onSlowTick);
@@ -298,6 +308,7 @@ void DataRefreshService::onFastTick()
     if (hasSubscribers(Signal::Network)) {
         im->updateNetworkBytes();
         emit networkUpdated(im->getRXbytes(), im->getTXbytes());
+        emit networkPerInterfaceUpdated(im->getInterfaceStats());
     }
 
     if (hasSubscribers(Signal::DiskIO))

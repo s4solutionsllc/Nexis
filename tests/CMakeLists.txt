@@ -52,6 +52,20 @@ add_nexis_test(NAME ProcInfoParserTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
 )
 
+# SSO-351: pure parser for /proc/net/route — compiled directly so the test
+# runs on any platform.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME NetworkInfoTests
+    SOURCES
+      core/test_network_info.cpp
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info/network_info.cpp"
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
+    LIBS
+      Qt6::Network
+  )
+endif()
+
 # NetworkDiagWidget lives in the GUI target; compile its source + deps directly.
 add_nexis_test(NAME NetworkDiagTests
   SOURCES

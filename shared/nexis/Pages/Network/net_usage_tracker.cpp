@@ -5,7 +5,6 @@
 #include <QJsonArray>
 
 #include "Managers/setting_manager.h"
-#include "Managers/info_manager.h"
 #include "Managers/data_refresh_service.h"
 
 NetUsageTracker *NetUsageTracker::instance = nullptr;
@@ -35,47 +34,64 @@ NetUsageTracker *NetUsageTracker::ins()
 void NetUsageTracker::start(DataRefreshService *drs)
 {
     drs->subscribe(DataRefreshService::Signal::Network);
-    connect(drs, &DataRefreshService::networkUpdated,
-            this, &NetUsageTracker::onNetworkTick);
+    connect(drs, &DataRefreshService::networkPerInterfaceUpdated,
+            this, &NetUsageTracker::onPerInterfaceTick);
 }
 
-void NetUsageTracker::onNetworkTick(quint64 rxAbs, quint64 txAbs)
+void NetUsageTracker::onPerInterfaceTick(const NetInterfaceStatsMap &stats)
 {
-    const QString iface = InfoManager::ins()->getDefaultNetworkInterface();
-    if (iface.isEmpty())
+    if (stats.isEmpty())
         return;
-
-    mDefaultIface = iface;
 
     // Day rollover
     const QDate today = QDate::currentDate();
     if (today != mCurrentDate)
         mCurrentDate = today;
 
-    // Reboot / interface restart detection: counter went backwards
-    if (mLastRx.contains(iface) && rxAbs < mLastRx[iface]) {
+    bool anyDelta = false;
+
+    for (auto it = stats.constBegin(); it != stats.constEnd(); ++it) {
+        const QString &iface = it.key();
+        const quint64 rxAbs = it->rx;
+        const quint64 txAbs = it->tx;
+
+        // Reboot / interface restart detection: counter went backwards.
+        // Re-baseline silently so we don't double-count the next delta.
+        if (mLastRx.contains(iface) && rxAbs < mLastRx[iface]) {
+            mLastRx[iface] = rxAbs;
+            mLastTx[iface] = txAbs;
+            continue;
+        }
+
+        if (mLastRx.contains(iface)) {
+            const quint64 dRx = rxAbs - mLastRx[iface];
+            const quint64 dTx = txAbs - mLastTx[iface];
+
+            if (dRx > 0 || dTx > 0) {
+                mBuckets[iface][today].date = today;
+                mBuckets[iface][today].rx += dRx;
+                mBuckets[iface][today].tx += dTx;
+                anyDelta = true;
+            }
+        } else {
+            // First time seeing this iface — make sure it shows up in
+            // trackedInterfaces() even before any traffic accrues so the
+            // UI selector lists it (SSO-351: Wi-Fi was missing from the
+            // selector). An empty DailyBucket sums to zero in queries.
+            if (!mBuckets.contains(iface))
+                mBuckets[iface] = {};
+            anyDelta = true;
+        }
+
         mLastRx[iface] = rxAbs;
         mLastTx[iface] = txAbs;
-        return;
     }
 
-    if (mLastRx.contains(iface)) {
-        const quint64 dRx = rxAbs - mLastRx[iface];
-        const quint64 dTx = txAbs - mLastTx[iface];
-
-        if (dRx > 0 || dTx > 0) {
-            mBuckets[iface][today].date = today;
-            mBuckets[iface][today].rx += dRx;
-            mBuckets[iface][today].tx += dTx;
-
-            scheduleSave();
-            checkCapThresholds();
-            emit dataChanged();
-        }
+    if (anyDelta) {
+        scheduleSave();
+        checkCapThresholds();
+        emit dataChanged();
     }
-
-    mLastRx[iface] = rxAbs;
-    mLastTx[iface] = txAbs;
 }
 
 void NetUsageTracker::scheduleSave()

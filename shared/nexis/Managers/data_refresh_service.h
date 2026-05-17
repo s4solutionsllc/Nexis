@@ -8,6 +8,7 @@
 #include <Info/disk_info.h>
 #include <Info/gpu_info.h>
 #include <Info/memory_info.h>
+#include <Info/network_info.h>
 #include <Info/battery_info.h>
 #include <Info/disk_health_info.h>
 #include <Info/process.h>
@@ -83,6 +84,10 @@ signals:
     void cpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);
     void memoryUpdated(const MemorySnapshot &snap);
     void networkUpdated(quint64 rxBytes, quint64 txBytes);
+    // SSO-351: per-interface RX/TX snapshot. Emitted alongside
+    // networkUpdated so NetUsageTracker can record stats for every
+    // up+running interface, not just the default one.
+    void networkPerInterfaceUpdated(const NetInterfaceStatsMap &stats);
     void diskIOUpdated(const QList<quint64> &io);
     void gpuUpdated(const QList<GpuDevice> &devices);
     void tempUpdated();
