@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Flatpak packaging (SSO-93):** Flatpak manifest added at `linux/flatpak/io.github.s4solutionsllc.Nexis.yml` for Flathub submission. Uses the KDE Qt6 SDK (`org.kde.Platform//6.7`), `--filesystem=host` for broad system access (required for /proc, /sys, hardware sensors, APT sources, and host tool invocations), and `org.freedesktop.PolicyKit1` D-Bus access for privileged operations. Reviewer justification at `docs/flatpak-reviewer-justification.md`.
+- **Select All / Clear All on System Cleaner (GH#55 / SSO-355):** Restored the bulk-toggle affordance that was dropped in the FR-130 card redesign. New button in the System Cleaner footer flips every category checkbox in one click and switches its label to **Clear All** once everything is selected.
+
+### Fixed
+- **System Cleaner cards overflowed in small windows (GH#55 / SSO-355):** The FR-130 card grid was added to a `QScrollArea` but the layout gave it no stretch and no minimum height, so the page fought for its 1025×736 design size and clipped at smaller resolutions. The scroll area now stretches to fill the available vertical space and compresses to a small minimum, engaging its vertical scrollbar instead of overflowing the page.
+- **Window size & position not remembered (GH#55 / SSO-355):** Nexis re-centered itself at the default 1025×736 on every relaunch because no `saveGeometry()` / `restoreGeometry()` calls existed for the main window. `App::closeEvent` now persists `QMainWindow::saveGeometry()` and `saveState()` to `SettingManager`, and `App::init` restores them on launch (including from the minimize-to-tray "ignored close" path, where Qt does not deliver a second `closeEvent` if the user later quits from the tray).
 
 ## [2.3.6] - 2026-05-11
 

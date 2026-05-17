@@ -74,6 +74,10 @@ namespace SettingKeys {
     const QString NetCapAlertEnabled("NetCapAlertEnabled");
     const QString NetCapResetDay("NetCapResetDay");
     const QString NetCapAlertLastPercent("NetCapAlertLastPercent");
+
+    // GH#55 / SSO-355
+    const QString WindowGeometry("WindowGeometry");
+    const QString WindowState("WindowState");
 }
 
 class SettingManager
@@ -239,6 +243,12 @@ public:
     int getNetCapResetDay() const;
     void setNetCapAlertLastPercent(int pct);
     int getNetCapAlertLastPercent() const;
+
+    // GH#55 / SSO-355 — persist main window size/position
+    void setWindowGeometry(const QByteArray &value);
+    QByteArray getWindowGeometry() const;
+    void setWindowState(const QByteArray &value);
+    QByteArray getWindowState() const;
 
 private:
     static SettingManager *instance;

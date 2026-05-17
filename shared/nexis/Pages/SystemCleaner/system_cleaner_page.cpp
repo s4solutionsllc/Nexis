@@ -221,11 +221,17 @@ void SystemCleanerPage::buildCategoryCards()
     // Pre-size mCards so enum-indexed access is safe
     mCards.resize(SNAP_FLATPAK_REVISIONS + 1);
 
+    // GH#55 / SSO-355: cards must scroll inside their own region so the page
+    // fits in windows smaller than the FR-130 design size (1025×736). Give the
+    // scroll area a small minimum height — the parent layout can then shrink
+    // it and the vertical scrollbar engages instead of the page overflowing.
     QScrollArea *scrollArea = new QScrollArea(ui->cleanerCategories);
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
+    scrollArea->setMinimumHeight(Dpi::scale(160));
+    scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     QWidget *container = new QWidget;
     container->setStyleSheet("background-color:transparent;");
@@ -318,7 +324,9 @@ void SystemCleanerPage::buildCategoryCards()
     mScanProgress->hide();
 
     catLayout->addWidget(mScanProgress);
-    catLayout->addWidget(scrollArea);
+    // Stretch 1 so the scroll area absorbs available vertical space and
+    // compresses (rather than overflowing) when the window is small.
+    catLayout->addWidget(scrollArea, 1);
 }
 
 // ─── Inline results (reparented from stacked widget page 1) ──────────────────
@@ -366,6 +374,17 @@ void SystemCleanerPage::buildCleanerFooter()
     leftCol->addWidget(mLblEstimated);
 
     footerRow->addLayout(leftCol, 1);
+
+    // GH#55 / SSO-355: restore the "Select All" affordance dropped in the
+    // FR-130 redesign. Toggles every category card's checkbox in one click;
+    // label flips to "Clear All" when every card is already checked.
+    mBtnSelectAll = new QPushButton(tr("Select All"), mCleanerFooter);
+    mBtnSelectAll->setObjectName("btnSelectAll");
+    mBtnSelectAll->setCursor(Qt::PointingHandCursor);
+    mBtnSelectAll->setFocusPolicy(Qt::NoFocus);
+    connect(mBtnSelectAll, &QPushButton::clicked,
+            this, &SystemCleanerPage::onSelectAllClicked);
+    footerRow->addWidget(mBtnSelectAll);
 
     mBtnCleanSelected = new QPushButton(tr("Clean selected"), mCleanerFooter);
     mBtnCleanSelected->setObjectName("btnCleanSelected");
@@ -429,11 +448,34 @@ void SystemCleanerPage::updateFooterTotal()
 void SystemCleanerPage::updateCleanerCheckBadge()
 {
     int count = 0;
+    int total = 0;
     for (const CategoryCard &c : mCards) {
-        if (c.check && c.check->isChecked())
-            ++count;
+        if (!c.check) continue;
+        ++total;
+        if (c.check->isChecked()) ++count;
     }
     emit checkedCategoryCountChanged(count);
+
+    // GH#55 / SSO-355: when every card is already checked, the affordance
+    // becomes "Clear All" so the user has a one-click escape hatch.
+    if (mBtnSelectAll)
+        mBtnSelectAll->setText((total > 0 && count == total) ? tr("Clear All") : tr("Select All"));
+}
+
+void SystemCleanerPage::onSelectAllClicked()
+{
+    bool allChecked = true;
+    int total = 0;
+    for (const CategoryCard &c : mCards) {
+        if (!c.check) continue;
+        ++total;
+        if (!c.check->isChecked()) { allChecked = false; break; }
+    }
+    const bool target = !(total > 0 && allChecked); // false ⇒ clear, true ⇒ select
+    for (const CategoryCard &c : mCards) {
+        if (c.check && c.check->isEnabled())
+            c.check->setChecked(target);
+    }
 }
 
 // ─── Scan ─────────────────────────────────────────────────────────────────────
@@ -467,6 +509,7 @@ void SystemCleanerPage::on_btnScan_clicked()
     // Disable UI during scan
     mBtnScanSystem->setEnabled(false);
     mBtnSchedule->setEnabled(false);
+    if (mBtnSelectAll) mBtnSelectAll->setEnabled(false);
     for (const CategoryCard &c : mCards)
         if (c.check) c.check->setEnabled(false);
 
@@ -666,6 +709,7 @@ void SystemCleanerPage::onScanFinished()
         if (c.check) c.check->setEnabled(true);
     mBtnScanSystem->setEnabled(true);
     mBtnSchedule->setEnabled(true);
+    if (mBtnSelectAll) mBtnSelectAll->setEnabled(true);
 
     // Show details only for currently checked categories
     refreshInlineTree();
@@ -791,6 +835,7 @@ void SystemCleanerPage::quickCleanByCategory()
 
     mBtnCleanSelected->setEnabled(false);
     mBtnScanSystem->setEnabled(false);
+    if (mBtnSelectAll) mBtnSelectAll->setEnabled(false);
     for (const CategoryCard &c : mCards)
         if (c.check) c.check->setEnabled(false);
 
@@ -851,6 +896,7 @@ void SystemCleanerPage::onCleanFinished()
             if (c.check) c.check->setEnabled(true);
         mBtnScanSystem->setEnabled(true);
         mBtnSchedule->setEnabled(true);
+        if (mBtnSelectAll) mBtnSelectAll->setEnabled(true);
 
     } else {
         // Clean from tree results page (page 1)

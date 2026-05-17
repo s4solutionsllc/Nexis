@@ -86,6 +86,7 @@ private slots:
     void onManageExclusions();
     void onTreeContextMenu(const QPoint &pos);
     void onSnapshotTaken(const QString &toolName);
+    void onSelectAllClicked();
 
     void showEvent(QShowEvent *event) override;
 
@@ -118,6 +119,7 @@ private:
     QLabel      *mLblCleanerTitle    = nullptr;
     QPushButton *mBtnScanSystem      = nullptr;
     QPushButton *mBtnSchedule        = nullptr;
+    QPushButton *mBtnSelectAll       = nullptr;
     QPushButton *mBtnCleanSelected   = nullptr;
     QLabel      *mLblEstimated       = nullptr;
     QFrame      *mCleanerFooter      = nullptr;
