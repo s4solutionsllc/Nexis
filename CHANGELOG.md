@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Start minimized in system tray (SSO-354 / GH#54):** New "Start minimized in system tray" toggle under Settings → General. When enabled, Nexis launches with no main window — only the tray icon is visible — regardless of how it was started (autostart entry, launcher click, terminal). The tray icon's activate handler restores the window as usual. Equivalent to passing `--hide` on every launch; useful when Nexis is in your login autostart list and you don't want it to pop on top of other apps. Off by default.
 - **Flatpak packaging (SSO-93):** Flatpak manifest added at `linux/flatpak/io.github.s4solutionsllc.Nexis.yml` for Flathub submission. Uses the KDE Qt6 SDK (`org.kde.Platform//6.7`), `--filesystem=host` for broad system access (required for /proc, /sys, hardware sensors, APT sources, and host tool invocations), and `org.freedesktop.PolicyKit1` D-Bus access for privileged operations. Reviewer justification at `docs/flatpak-reviewer-justification.md`.
 
 ### Fixed

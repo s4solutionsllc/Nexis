@@ -124,6 +124,9 @@ void SettingsPage::init()
     // minimize to tray
     ui->checkMinimizeToTray->setChecked(mSettingManager->getMinimizeToTray());
 
+    // start minimized to tray (SSO-354)
+    ui->checkStartMinimizedToTray->setChecked(mSettingManager->getStartMinimizedToTray());
+
     // dashboard footer visibility
     ui->checkDashboardFooter->setChecked(mSettingManager->getDashboardFooterVisible());
 
@@ -294,6 +297,11 @@ void SettingsPage::on_checkAppQuitDontAsk_clicked(bool checked)
 void SettingsPage::on_checkMinimizeToTray_clicked(bool checked)
 {
     mSettingManager->setMinimizeToTray(checked);
+}
+
+void SettingsPage::on_checkStartMinimizedToTray_clicked(bool checked)
+{
+    mSettingManager->setStartMinimizedToTray(checked);
 }
 
 void SettingsPage::on_checkDashboardFooter_clicked(bool checked)
