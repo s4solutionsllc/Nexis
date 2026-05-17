@@ -234,6 +234,11 @@ QString InfoManager::getDefaultNetworkInterface() const
     return ni->getDefaultNetworkInterface();
 }
 
+QHash<QString, NetInterfaceStats> InfoManager::getInterfaceStats() const
+{
+    return ni->getInterfaceStats();
+}
+
 /********************
  * System Provider
  *******************/

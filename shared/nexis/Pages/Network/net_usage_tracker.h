@@ -5,7 +5,10 @@
 #include <QDate>
 #include <QHash>
 #include <QList>
+#include <QString>
 #include <QTimer>
+
+#include <Info/network_info.h>
 
 class DataRefreshService;
 
@@ -41,7 +44,7 @@ signals:
     void dataChanged();
 
 private slots:
-    void onNetworkTick(quint64 rxAbs, quint64 txAbs);
+    void onPerInterfaceTick(const QHash<QString, NetInterfaceStats> &stats);
     void persist();
 
 private:
@@ -64,8 +67,6 @@ private:
 
     QTimer *mSaveTimer = nullptr;
     int mLastAlertedPercent = 0;
-
-    QString mDefaultIface;
 };
 
 #endif // NET_USAGE_TRACKER_H

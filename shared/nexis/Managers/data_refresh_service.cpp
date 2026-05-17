@@ -298,6 +298,7 @@ void DataRefreshService::onFastTick()
     if (hasSubscribers(Signal::Network)) {
         im->updateNetworkBytes();
         emit networkUpdated(im->getRXbytes(), im->getTXbytes());
+        emit networkPerInterfaceUpdated(im->getInterfaceStats());
     }
 
     if (hasSubscribers(Signal::DiskIO))

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Flatpak packaging (SSO-93):** Flatpak manifest added at `linux/flatpak/io.github.s4solutionsllc.Nexis.yml` for Flathub submission. Uses the KDE Qt6 SDK (`org.kde.Platform//6.7`), `--filesystem=host` for broad system access (required for /proc, /sys, hardware sensors, APT sources, and host tool invocations), and `org.freedesktop.PolicyKit1` D-Bus access for privileged operations. Reviewer justification at `docs/flatpak-reviewer-justification.md`.
 
+### Fixed
+- **Linux Wi-Fi not detected in Network Usage (SSO-351 / GH#43):** Wi-Fi interfaces (`wlp*`, `wlan0`) were missing from the Network Usage interface selector and never accrued RX/TX stats, even when they were the only active connection. The Linux `NetworkInfo` constructor cached the first non-loopback up+running interface exactly once at startup, which let docker0 / virbr0 / a stale ethernet entry shadow the real default. The implementation now re-enumerates active interfaces on every sample tick, picks the default from `/proc/net/route` (with a flag-based fallback), and emits a per-interface RX/TX snapshot so `NetUsageTracker` records traffic for every up+running interface. macOS uses the same per-interface enumeration via `getifaddrs()` for parity.
+
 ## [2.3.6] - 2026-05-11
 
 ### Fixed

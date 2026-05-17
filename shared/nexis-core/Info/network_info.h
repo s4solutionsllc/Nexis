@@ -2,10 +2,22 @@
 #define NETWORK_INFO_H
 
 #include <QtNetwork/QNetworkInterface>
+#include <QHash>
+#include <QString>
 #include "Utils/file_util.h"
 #include "Utils/command_util.h"
 
 #include "nexis-core_global.h"
+
+// SSO-351 / GH#43: NetworkInfo now exposes a per-interface snapshot so
+// NetUsageTracker can record stats for every up+running iface (Wi-Fi
+// interfaces like wlp* were lost when only the first-scanned default was
+// cached at construction). The default-iface fields (mRxBytes / mTxBytes /
+// defaultNetworkInterface) remain for live-rate displays.
+struct NetInterfaceStats {
+    quint64 rx = 0;
+    quint64 tx = 0;
+};
 
 class NEXISCORESHARED_EXPORT NetworkInfo
 {
@@ -19,10 +31,18 @@ public:
     quint64 getRXbytes() const { return mRxBytes; }
     quint64 getTXbytes() const { return mTxBytes; }
 
+    // Snapshot populated by updateNetworkBytes() — keyed by interface name,
+    // restricted to non-loopback up+running interfaces.
+    const QHash<QString, NetInterfaceStats> &getInterfaceStats() const { return mInterfaceStats; }
+
 protected:
     QString defaultNetworkInterface;
     quint64 mRxBytes = 0;
     quint64 mTxBytes = 0;
+    QHash<QString, NetInterfaceStats> mInterfaceStats;
 };
+
+Q_DECLARE_METATYPE(NetInterfaceStats)
+Q_DECLARE_METATYPE(QHash<QString, NetInterfaceStats>)
 
 #endif // NETWORK_INFO_H

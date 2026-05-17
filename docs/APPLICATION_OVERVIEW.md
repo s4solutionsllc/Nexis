@@ -331,7 +331,7 @@ Historical time-series charts for system resource usage.
 
 Continuous per-interface network data usage tracker with monthly cap management. Located in the MONITOR sidebar section between Resources and Helpers.
 
-**Usage Tracking:** A `NetUsageTracker` singleton subscribes to `DataRefreshService::networkUpdated` (1s fast tick) at startup — always accumulating even when the page is not open. On each tick it computes the delta from the previous absolute byte counter, adds it to today's bucket, and debounces a 60-second write to `SettingManager` as a JSON blob. The accumulator handles reboot counter resets by detecting when a new absolute value is less than the previous one (skip the delta, update the baseline).
+**Usage Tracking:** A `NetUsageTracker` singleton subscribes to `DataRefreshService::networkPerInterfaceUpdated` (1s fast tick) at startup — always accumulating even when the page is not open. Each tick carries a `QHash<QString, NetInterfaceStats>` snapshot of every non-loopback up+running interface; the tracker computes per-interface deltas, adds them to each interface's today bucket, and debounces a 60-second write to `SettingManager` as a JSON blob. The accumulator handles reboot/iface restart counter resets by detecting when a new absolute value is less than the previous one (skip the delta, update the baseline). Tracking the full snapshot (rather than just the default interface) means Wi-Fi (`wlp*`, `wlan0`) is recorded even when it isn't the system default route, and a newly-connected interface is picked up on the next tick (SSO-351).
 
 **History:** 90-day rolling window of daily RX+TX buckets, stored as compact JSON in `~/.config/nexis/nexis.conf`.
 
