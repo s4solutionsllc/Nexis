@@ -563,3 +563,23 @@ int SettingManager::getNetCapAlertLastPercent() const
 {
     return mSettings->value(SettingKeys::NetCapAlertLastPercent, 0).toInt();
 }
+
+void SettingManager::setWindowGeometry(const QByteArray &value)
+{
+    mSettings->setValue(SettingKeys::WindowGeometry, value);
+}
+
+QByteArray SettingManager::getWindowGeometry() const
+{
+    return mSettings->value(SettingKeys::WindowGeometry).toByteArray();
+}
+
+void SettingManager::setWindowState(const QByteArray &value)
+{
+    mSettings->setValue(SettingKeys::WindowState, value);
+}
+
+QByteArray SettingManager::getWindowState() const
+{
+    return mSettings->value(SettingKeys::WindowState).toByteArray();
+}
