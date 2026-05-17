@@ -87,7 +87,7 @@ signals:
     // SSO-351: per-interface RX/TX snapshot. Emitted alongside
     // networkUpdated so NetUsageTracker can record stats for every
     // up+running interface, not just the default one.
-    void networkPerInterfaceUpdated(const QHash<QString, NetInterfaceStats> &stats);
+    void networkPerInterfaceUpdated(const NetInterfaceStatsMap &stats);
     void diskIOUpdated(const QList<quint64> &io);
     void gpuUpdated(const QList<GpuDevice> &devices);
     void tempUpdated();

@@ -38,7 +38,7 @@ void NetUsageTracker::start(DataRefreshService *drs)
             this, &NetUsageTracker::onPerInterfaceTick);
 }
 
-void NetUsageTracker::onPerInterfaceTick(const QHash<QString, NetInterfaceStats> &stats)
+void NetUsageTracker::onPerInterfaceTick(const NetInterfaceStatsMap &stats)
 {
     if (stats.isEmpty())
         return;

@@ -234,7 +234,7 @@ QString InfoManager::getDefaultNetworkInterface() const
     return ni->getDefaultNetworkInterface();
 }
 
-QHash<QString, NetInterfaceStats> InfoManager::getInterfaceStats() const
+NetInterfaceStatsMap InfoManager::getInterfaceStats() const
 {
     return ni->getInterfaceStats();
 }

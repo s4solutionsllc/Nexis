@@ -19,6 +19,13 @@ struct NetInterfaceStats {
     quint64 tx = 0;
 };
 
+// The bare QHash<QString, NetInterfaceStats> token cannot be passed straight
+// into Q_DECLARE_METATYPE / signal signatures — the C preprocessor splits the
+// comma into two macro arguments and the build breaks. Use this alias every
+// time we need to refer to the per-interface map type so the metatype string
+// matches end-to-end (declaration, signal, slot, qRegisterMetaType).
+using NetInterfaceStatsMap = QHash<QString, NetInterfaceStats>;
+
 class NEXISCORESHARED_EXPORT NetworkInfo
 {
 public:
@@ -33,16 +40,16 @@ public:
 
     // Snapshot populated by updateNetworkBytes() — keyed by interface name,
     // restricted to non-loopback up+running interfaces.
-    const QHash<QString, NetInterfaceStats> &getInterfaceStats() const { return mInterfaceStats; }
+    const NetInterfaceStatsMap &getInterfaceStats() const { return mInterfaceStats; }
 
 protected:
     QString defaultNetworkInterface;
     quint64 mRxBytes = 0;
     quint64 mTxBytes = 0;
-    QHash<QString, NetInterfaceStats> mInterfaceStats;
+    NetInterfaceStatsMap mInterfaceStats;
 };
 
 Q_DECLARE_METATYPE(NetInterfaceStats)
-Q_DECLARE_METATYPE(QHash<QString, NetInterfaceStats>)
+Q_DECLARE_METATYPE(NetInterfaceStatsMap)
 
 #endif // NETWORK_INFO_H

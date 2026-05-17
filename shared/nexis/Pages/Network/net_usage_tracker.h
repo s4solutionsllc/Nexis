@@ -44,7 +44,7 @@ signals:
     void dataChanged();
 
 private slots:
-    void onPerInterfaceTick(const QHash<QString, NetInterfaceStats> &stats);
+    void onPerInterfaceTick(const NetInterfaceStatsMap &stats);
     void persist();
 
 private:
