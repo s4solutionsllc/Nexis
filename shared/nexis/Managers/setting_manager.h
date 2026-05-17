@@ -35,6 +35,7 @@ namespace SettingKeys {
     const QString TrayIconStyle("TrayIconStyle");
     const QString DashboardLayout("DashboardLayout");
     const QString MinimizeToTray("MinimizeToTray");
+    const QString StartMinimizedToTray("StartMinimizedToTray");
     const QString UpdateAlertEnabled("UpdateAlertEnabled");
     const QString UpdateCheckIntervalMinutes("UpdateCheckIntervalMinutes");
     const QString UpdateLastCount("UpdateLastCount");
@@ -177,6 +178,9 @@ public:
 
     void setMinimizeToTray(bool value);
     bool getMinimizeToTray() const;
+
+    void setStartMinimizedToTray(bool value);
+    bool getStartMinimizedToTray() const;
 
     void setUpdateAlertEnabled(bool value);
     bool getUpdateAlertEnabled() const;

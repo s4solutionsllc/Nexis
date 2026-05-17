@@ -326,6 +326,16 @@ bool SettingManager::getMinimizeToTray() const
     return mSettings->value(SettingKeys::MinimizeToTray, false).toBool();
 }
 
+void SettingManager::setStartMinimizedToTray(bool value)
+{
+    mSettings->setValue(SettingKeys::StartMinimizedToTray, value);
+}
+
+bool SettingManager::getStartMinimizedToTray() const
+{
+    return mSettings->value(SettingKeys::StartMinimizedToTray, false).toBool();
+}
+
 void SettingManager::setUpdateAlertEnabled(bool value)
 {
     mSettings->setValue(SettingKeys::UpdateAlertEnabled, value);

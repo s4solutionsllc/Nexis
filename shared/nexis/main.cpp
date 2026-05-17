@@ -370,7 +370,10 @@ int main(int argc, char *argv[])
 
     App w;
 
-    if (argc < 2 || !isHide) {
+    // SSO-354: setting-based equivalent of --hide for any launch path.
+    const bool startMinimizedToTray = SettingManager::ins()->getStartMinimizedToTray();
+
+    if (!isHide && !startMinimizedToTray) {
         w.show();
     }
 
