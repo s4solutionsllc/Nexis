@@ -1,3 +1,18 @@
+nexis (2.3.7-0) unstable; urgency=medium
+
+  * Fix toggle indicators disappearing on Linux Mint 22 ("Zena") and other
+    Ubuntu-24.04 derivatives whose default seed omits the Qt6 SVG imageformats
+    plugin. The package now explicitly depends on libqt6svg6, qt6-qpa-plugins,
+    and a Qt platform theme (qt6-gtk-platformtheme | qt6ct), and the binary
+    falls back to PNG indicators at runtime when the SVG image plugin is
+    unavailable (SSO-381 / GH#42).
+  * Include the new Flatpak manifest at linux/flatpak/ for Flathub submission
+    (SSO-93).
+  * Fix Linux Wi-Fi interfaces (wlp*, wlan0) being absent from the Network
+    Usage interface selector and never accruing RX/TX stats (SSO-351 / GH#43).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Sun, 17 May 2026 00:00:00 +0000
+
 nexis (2.3.6-0) unstable; urgency=medium
 
   * Fix Process page search returning no results and not refreshing on clear (NEX-279).

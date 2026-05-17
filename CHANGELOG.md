@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.7] - 2026-05-17
+
 ### Added
 - **Flatpak packaging (SSO-93):** Flatpak manifest added at `linux/flatpak/io.github.s4solutionsllc.Nexis.yml` for Flathub submission. Uses the KDE Qt6 SDK (`org.kde.Platform//6.7`), `--filesystem=host` for broad system access (required for /proc, /sys, hardware sensors, APT sources, and host tool invocations), and `org.freedesktop.PolicyKit1` D-Bus access for privileged operations. Reviewer justification at `docs/flatpak-reviewer-justification.md`.
 
 ### Fixed
+- **Toggle indicators invisible on Linux Mint 22 and other Ubuntu 24.04 derivatives (SSO-381 / GH#42):** Toggle indicators no longer disappear on Linux Mint 22 ("Zena") and other Ubuntu-24.04 derivatives that omit Qt6 SVG plugins from their default seed. The `.deb` now explicitly depends on `libqt6svg6` (which pulls the `imageformats/libqsvg.so` plugin), `qt6-qpa-plugins`, and a Qt platform theme (`qt6-gtk-platformtheme | qt6ct`). As a runtime safety net, the binary detects whether the SVG image plugin is loadable via `QImageReader::supportedImageFormats()` and falls back to PNG siblings for the `QCheckBox::indicator` images (`checkbox`, `un-checkbox`, `circle-checked`, `circle-unchecked`) when it is not, logging a single warning. PNG indicator assets are now bundled in `static.qrc` so the fallback works without any optional Qt6 packages installed.
 - **Linux Wi-Fi not detected in Network Usage (SSO-351 / GH#43):** Wi-Fi interfaces (`wlp*`, `wlan0`) were missing from the Network Usage interface selector and never accrued RX/TX stats, even when they were the only active connection. The Linux `NetworkInfo` constructor cached the first non-loopback up+running interface exactly once at startup, which let docker0 / virbr0 / a stale ethernet entry shadow the real default. The implementation now re-enumerates active interfaces on every sample tick, picks the default from `/proc/net/route` (with a flag-based fallback), and emits a per-interface RX/TX snapshot so `NetUsageTracker` records traffic for every up+running interface. macOS uses the same per-interface enumeration via `getifaddrs()` for parity.
 
 ## [2.3.6] - 2026-05-11

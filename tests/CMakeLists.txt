@@ -156,6 +156,21 @@ add_nexis_test(NAME CleanerExclusionTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
+# substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
+# "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui
+# both for the AppManager symbol and to pull in the static.qrc resources so we
+# can assert the PNG siblings ship inside the binary.
+add_nexis_test(NAME IndicatorFallbackTests
+  SOURCES
+    managers/test_indicator_fallback.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # ── Theme validation tests ─────────────────────────────────────────────────────
 add_nexis_test(NAME ThemeTokenTests   SOURCES theme/test_theme_tokens.cpp)
 
