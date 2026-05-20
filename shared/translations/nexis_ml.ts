@@ -254,7 +254,7 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="321"/>
         <source>Mounted Volumes Icon</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">മൗണ്ട് ചെയ്ത വോള്യങ്ങളുടെ ഐക്കൺ</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/appearance_settings.ui" line="347"/>
@@ -299,7 +299,7 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/appearance_settings.cpp" line="72"/>
         <source>Spanned</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">വ്യാപിച്ച</translation>
     </message>
 </context>
 <context>
@@ -559,7 +559,7 @@
     <message>
         <location filename="../nexis/Pages/Processes/processes_page.cpp" line="27"/>
         <source>Start Time</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ആരംഭ സമയം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Processes/processes_page.cpp" line="27"/>
@@ -574,7 +574,7 @@
     <message>
         <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
         <source>Nice</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">നൈസ്</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
@@ -584,7 +584,7 @@
     <message>
         <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
         <source>Session</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">സെഷൻ</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Processes/processes_page.cpp" line="28"/>
@@ -640,22 +640,22 @@
     <message>
         <location filename="../nexis/Pages/Resources/resources_page.cpp" line="75"/>
         <source>Read: %1/s Total: %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">വായന: %1/s ആകെ: %2</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Resources/resources_page.cpp" line="81"/>
         <source>Write: %1/s Total: %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">എഴുത്ത്: %1/s ആകെ: %2</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Resources/resources_page.cpp" line="118"/>
         <source>%1 Minute Average: %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 മിനിറ്റ് ശരാശരി: %2</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Resources/resources_page.cpp" line="164"/>
         <source>Download: %1/s Total: %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ഡൗൺലോഡ്: %1/s ആകെ: %2</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Resources/resources_page.cpp" line="169"/>
@@ -665,7 +665,7 @@
     <message>
         <location filename="../nexis/Pages/Resources/resources_page.cpp" line="213"/>
         <source>Swap: %1 (%2%) %3</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">സ്വാപ്പ്: %1 (%2%) %3</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/Resources/resources_page.cpp" line="222"/>
@@ -1041,32 +1041,32 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="323"/>
         <source>Auto Hide</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">സ്വയം മറയ്ക്കുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="339"/>
         <source>Left Side</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ഇടത് വശം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="380"/>
         <source>Minimize applications with clicking</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ക്ലിക്ക് ചെയ്ത് അപ്ലിക്കേഷനുകൾ ചെറുതാക്കുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="396"/>
         <source>Top-Left Corner</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">മുകളിൽ ഇടത് മൂല</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="412"/>
         <source>Reveal Sensitivity</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">വെളിപ്പെടുത്തൽ സംവേദനക്ഷമത</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="438"/>
         <source>Reveal Location</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">വെളിപ്പെടുത്തൽ സ്ഥാനം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="464"/>
@@ -1076,27 +1076,27 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="474"/>
         <source>Appearance</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">രൂപഭാവം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="507"/>
         <source>Left</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ഇടത്</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="526"/>
         <source>Bottom</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">താഴെ</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="542"/>
         <source>Visibility</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ദൃശ്യത</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="558"/>
         <source>Primary Desktop</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">പ്രാഥമിക ഡെസ്ക്ടോപ്പ്</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="612"/>
@@ -1106,27 +1106,27 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="628"/>
         <source>All Desktops</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">എല്ലാ ഡെസ്ക്ടോപ്പുകളും</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="644"/>
         <source>Position</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">സ്ഥാനം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="726"/>
         <source>Search online sources</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ഓൺലൈൻ ഉറവിടങ്ങൾ തിരയുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="752"/>
         <source>Background Blur</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">പശ്ചാത്തല മങ്ങൽ</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="778"/>
         <source>Panel</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">പാനൽ</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="801"/>
@@ -1136,27 +1136,27 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="840"/>
         <source>Date</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">തീയതി</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="862"/>
         <source>Calendar</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">കലണ്ടർ</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="875"/>
         <source>Date &amp; Time</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">തീയതിയും സമയവും</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="888"/>
         <source>24-Hour Time</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">24-മണിക്കൂർ സമയം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="910"/>
         <source>Weekday</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ആഴ്ചയിലെ ദിവസം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="923"/>
@@ -1166,17 +1166,17 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="945"/>
         <source>Seconds</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">സെക്കൻഡുകൾ</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="958"/>
         <source>Volume</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">വോള്യം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/unity_settings.ui" line="971"/>
         <source>Show my name</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">എന്റെ പേര് കാണിക്കുക</translation>
     </message>
 </context>
 <context>
@@ -1189,12 +1189,12 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="100"/>
         <source>Titlebar Actions</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ടൈറ്റിൽബാർ പ്രവർത്തനങ്ങൾ</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="155"/>
         <source>Right click</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">വലത് ക്ലിക്ക്</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="168"/>
@@ -1204,7 +1204,7 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="181"/>
         <source>Middle click</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">നടുവിലെ ക്ലിക്ക്</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="257"/>
@@ -1234,17 +1234,17 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="379"/>
         <source>Focus Behaviour</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ഫോക്കസ് സ്വഭാവം</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="409"/>
         <source>Focus mode</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ഫോക്കസ് മോഡ്</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="460"/>
         <source>Raise on click</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ക്ലിക്ക് ചെയ്യുമ്പോൾ ഉയർത്തുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.ui" line="483"/>
@@ -1279,47 +1279,47 @@
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="68"/>
         <source>Sloppy</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">സ്ലോപ്പി</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="68"/>
         <source>Mouse</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">മൗസ്</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="80"/>
         <source>Toggle Shade</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ഷെയ്ഡ് മാറ്റുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="80"/>
         <source>Maximize</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">വലുതാക്കുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="80"/>
         <source>Maximize Horizontally</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">തിരശ്ചീനമായി വലുതാക്കുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="81"/>
         <source>Maximize Vertically</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ലംബമായി വലുതാക്കുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="81"/>
         <source>Minimize</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ചെറുതാക്കുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="82"/>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">ഒന്നുമില്ല</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="82"/>
         <source>Lower</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">താഴ്ത്തുക</translation>
     </message>
     <message>
         <location filename="../nexis/Pages/GnomeSettings/window_manager_settings.cpp" line="82"/>
