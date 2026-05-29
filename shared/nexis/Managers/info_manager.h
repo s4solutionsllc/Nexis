@@ -97,6 +97,8 @@ public:
     QString getGpuDiagnosticReport() const;
 
     BatteryData getBatteryData() const;
+    BatteryData getBatteryData(int index) const;
+    int batteryCount() const;
     void updateBatteryInfo();
     bool hasBattery() const;
 

@@ -9,6 +9,16 @@ BatteryData BatteryInfo::getBatteryData() const
     return mData;
 }
 
+BatteryData BatteryInfo::getBatteryData(int /*index*/) const
+{
+    return mData;
+}
+
+int BatteryInfo::batteryCount() const
+{
+    return mData.hasBattery ? 1 : 0;
+}
+
 bool BatteryInfo::hasBattery() const
 {
     return mData.hasBattery;
