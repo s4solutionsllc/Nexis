@@ -124,7 +124,7 @@ void SystemLogsPage::onRefreshClicked()
 
     mBtnRefresh->setEnabled(false);
     mLblStatus->setText(tr("Loading logs..."));
-    mProvider->fetchLogs(500);
+    mProvider->fetchLogs(500, mSeverityFilter);
 }
 
 void SystemLogsPage::onLogsReady(const QList<LogEntry> &entries)
@@ -144,7 +144,14 @@ void SystemLogsPage::onSeverityFilterChanged(int index)
 {
     static const int severityMap[] = { 7, 3, 4, 6 };
     mSeverityFilter = severityMap[index];
-    applyFilters();
+
+    if (!mProvider->isBusy()) {
+        mBtnRefresh->setEnabled(false);
+        mLblStatus->setText(tr("Loading logs..."));
+        mProvider->fetchLogs(500, mSeverityFilter);
+    } else {
+        applyFilters();
+    }
 }
 
 void SystemLogsPage::onSearchTextChanged(const QString &text)

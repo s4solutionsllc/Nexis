@@ -50,7 +50,7 @@ QStringList UpdateInfoLinux::availableSources() const
 void UpdateInfoLinux::checkApt(UpdateCheckResult &result) const
 {
     ExecResult r = CommandUtil::execWithStatus(
-        "bash", {"-c", "apt list --upgradable 2>/dev/null"}, 30000);
+        "bash", {"-c", "LANG=C apt list --upgradable 2>/dev/null"}, 30000);
 
     if (r.exitCode != 0)
         return;
@@ -135,7 +135,8 @@ void UpdateInfoLinux::checkZypper(UpdateCheckResult &result) const
 
 void UpdateInfoLinux::checkSnap(UpdateCheckResult &result) const
 {
-    ExecResult r = CommandUtil::execWithStatus("snap", {"refresh", "--list"}, 30000);
+    ExecResult r = CommandUtil::execWithStatus(
+        "bash", {"-c", "LANG=C snap refresh --list 2>/dev/null"}, 30000);
 
     if (r.exitCode != 0)
         return;
@@ -150,12 +151,13 @@ void UpdateInfoLinux::checkSnap(UpdateCheckResult &result) const
             headerSkipped = true;
             continue;
         }
+        QStringList parts = trimmed.split(QRegularExpression("\\s+"));
+        if (parts.size() < 2)
+            continue;
         UpdateEntry entry;
         entry.source = "snap";
-        QStringList parts = trimmed.split(QRegularExpression("\\s+"));
-        entry.name = parts.isEmpty() ? trimmed : parts.first();
-        if (parts.size() >= 2)
-            entry.version = parts.at(1);
+        entry.name = parts.first();
+        entry.version = parts.at(1);
         result.entries.append(entry);
     }
 }
@@ -163,7 +165,9 @@ void UpdateInfoLinux::checkSnap(UpdateCheckResult &result) const
 void UpdateInfoLinux::checkFlatpak(UpdateCheckResult &result) const
 {
     ExecResult r = CommandUtil::execWithStatus(
-        "flatpak", {"remote-ls", "--updates"}, 30000);
+        "bash",
+        {"-c", "LANG=C flatpak remote-ls --updates --columns=application,version 2>/dev/null"},
+        30000);
 
     if (r.exitCode != 0)
         return;
@@ -177,8 +181,8 @@ void UpdateInfoLinux::checkFlatpak(UpdateCheckResult &result) const
         entry.source = "flatpak";
         QStringList parts = trimmed.split('\t');
         entry.name = parts.isEmpty() ? trimmed : parts.first();
-        if (parts.size() >= 3)
-            entry.version = parts.at(2);
+        if (parts.size() >= 2)
+            entry.version = parts.at(1);
         result.entries.append(entry);
     }
 }

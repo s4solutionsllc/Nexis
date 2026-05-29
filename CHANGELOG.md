@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Disk analyzer tools now detected when installed via Flatpak (GH#64):** Baobab, Filelight, and QDirStat are now correctly detected whether installed natively (apt/dnf/pacman) or via Flatpak. A `findDesktopApp()` helper tries the native binary name, then the Flatpak app-ID wrapper in `$PATH`, then a direct filesystem probe of the standard Flatpak export paths — fixing detection when Nexis is launched as an AppImage in a non-login shell where Flatpak's exports directory is absent from `$PATH`. When a Flatpak-installed tool is detected, it is launched via `flatpak run <app-id>` rather than the missing native binary name.
+- **System Logs severity filter now re-fetches from journalctl (GH#62):** Selecting "Error && Above" (or any non-All filter) now passes `--priority=0..N` to journalctl so the returned entries are guaranteed to match the chosen level. Previously the filter operated client-side on a truncated dataset, meaning no errors appeared if the last N journal lines happened to be INFO/DEBUG.
+- **Update checker locale-safe on non-English systems (GH#61):** `checkApt`, `checkSnap`, and `checkFlatpak` now force `LANG=C` when invoking package-manager commands, preventing localized output from breaking string-based parsing. `checkSnap` also guards against malformed lines with fewer than 2 columns. `checkFlatpak` uses `--columns=application,version` for a stable tab-separated format and reads the version from column index 1 (was 2).
+
 ## [2.3.7] - 2026-05-17
 
 ### Added

@@ -23,7 +23,7 @@ public:
     explicit LogProvider(QObject *parent = nullptr);
     virtual ~LogProvider() = default;
 
-    virtual void fetchLogs(int maxEntries = 500) = 0;
+    virtual void fetchLogs(int maxEntries = 500, int maxSeverity = 7) = 0;
     virtual void cancel();
     bool isBusy() const { return mBusy; }
 
@@ -43,7 +43,7 @@ class LogProviderLinux : public LogProvider
     Q_OBJECT
 public:
     explicit LogProviderLinux(QObject *parent = nullptr);
-    void fetchLogs(int maxEntries = 500) override;
+    void fetchLogs(int maxEntries = 500, int maxSeverity = 7) override;
 
 private slots:
     void onProcessFinished(int exitCode, QProcess::ExitStatus status);
@@ -54,7 +54,7 @@ class LogProviderMacOS : public LogProvider
     Q_OBJECT
 public:
     explicit LogProviderMacOS(QObject *parent = nullptr);
-    void fetchLogs(int maxEntries = 500) override;
+    void fetchLogs(int maxEntries = 500, int maxSeverity = 7) override;
 
 private slots:
     void onProcessFinished(int exitCode, QProcess::ExitStatus status);

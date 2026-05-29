@@ -102,62 +102,31 @@ macOS Qt6 `QPushButton` fails SVG icon rendering for icon-only transparent butto
 ### Dynamic Property Re-polish (BUG-56)
 After changing a QSS dynamic property on a parent, child widgets need explicit `unpolish()`/`polish()` — Qt doesn't recursively re-evaluate property selectors.
 
+## Work Item Tracking
+
+**Plane is frozen (read-only as of 2026-05-24).** All work management has moved to **Paperclip** at `https://paperclip.s4solutions.ai`. The Plane `NEX` project is a historical archive only — do not create or update Plane work items.
+
+Use Paperclip for all new issues, features, and tracking. Reference issues as `GH#<number>` in commit messages.
+
 ## GitHub Issues Sync (Run at Every Session Start)
 
-**EXECUTE WITHOUT ASKING.** At the start of every session, sync GitHub issues to Plane.
+**EXECUTE WITHOUT ASKING.** At the start of every session, fetch open GitHub issues and report them. No automated sync to Paperclip (its MCP is not yet connected).
 
-### Steps
+```bash
+gh issue list --repo s4solutionsllc/Nexis --state open --limit 100 --json number,title,body,labels
+```
 
-1. **Fetch open issues:**
-   ```bash
-   gh issue list --repo s4solutionsllc/Nexis --state open --limit 100 --json number,title,body,labels
-   ```
-
-2. **Identify untracked issues** — For each open issue, search Plane:
-   ```
-   search_work_items(project_identifier="NEX", query="#<number> <issue title keywords>")
-   ```
-   If no match is found, the issue is untracked and needs to be created.
-
-3. **Classify each untracked issue:**
-   - **Bug** → label `bug` if the issue title/labels contain: bug, fix, crash, error, broken, regression, incorrect, fail
-   - **Feature Request** → otherwise (enhancement, feature, improvement, request, add, support, etc.)
-   - When ambiguous, prefer Feature Request
-
-4. **Create the work item in Plane:**
-   ```
-   create_work_item(
-     project_identifier="NEX",
-     title="<issue title>",
-     description="GitHub: s4solutionsllc/Nexis#<number>\n\n<issue body>",
-     label=<"bug" or "feature">,
-     priority=<"medium" | "high" depending on severity>
-   )
-   ```
-
-5. **Report** — After syncing, state how many new work items were created and list them.
-
-If there are no untracked issues, state "GitHub issues up to date" and continue.
+Report open issues grouped by label (bugs vs enhancements). Note any that look actionable for the current session.
 
 ## Feature / Bug Resolution Workflow (Project Override)
 
-This extends the global Phase 3 workflow with Plane state updates.
+This extends the global Phase 3 workflow.
 
 ### Phase 3 — Implementation
 
 1. Implement fully once approved. Do not stop until all tasks are completed.
 2. Mark each task `[x]` in the plan as completed.
-3. When starting work on a tracked item, update Plane:
-   ```
-   update_work_item(project_identifier="NEX", id=<id>, state="In Progress")
-   ```
-4. When closing a tracked item, update Plane:
-   ```
-   update_work_item(project_identifier="NEX", id=<id>, state="Done")
-   create_work_item_comment(project_identifier="NEX", id=<id>,
-     comment="Resolved in <commit SHA / PR URL>. <brief summary of what changed>.")
-   ```
-   For declined items, set state to `Cancelled` and add a comment explaining why.
+3. Reference the GitHub issue number in commit messages (`GH#NN`).
 
 ## Custom Commands
 
