@@ -63,7 +63,7 @@ LogProviderLinux::LogProviderLinux(QObject *parent)
 {
 }
 
-void LogProviderLinux::fetchLogs(int maxEntries)
+void LogProviderLinux::fetchLogs(int maxEntries, int maxSeverity)
 {
     if (mBusy)
         return;
@@ -74,11 +74,16 @@ void LogProviderLinux::fetchLogs(int maxEntries)
     connect(mProcess, &QProcess::finished,
             this, &LogProviderLinux::onProcessFinished);
 
-    mProcess->start(QStringLiteral("journalctl"),
-                    {QStringLiteral("--output=json"),
-                     QStringLiteral("--no-pager"),
-                     QStringLiteral("--lines=%1").arg(maxEntries),
-                     QStringLiteral("--reverse")});
+    QStringList args = {
+        QStringLiteral("--output=json"),
+        QStringLiteral("--no-pager"),
+        QStringLiteral("--lines=%1").arg(maxEntries),
+        QStringLiteral("--reverse"),
+    };
+    if (maxSeverity < 7)
+        args << QStringLiteral("--priority=0..%1").arg(maxSeverity);
+
+    mProcess->start(QStringLiteral("journalctl"), args);
 
     if (!mProcess->waitForStarted(3000)) {
         emit errorOccurred(tr("Failed to start journalctl: %1")
@@ -158,7 +163,7 @@ LogProviderMacOS::LogProviderMacOS(QObject *parent)
 {
 }
 
-void LogProviderMacOS::fetchLogs(int maxEntries)
+void LogProviderMacOS::fetchLogs(int maxEntries, int /*maxSeverity*/)
 {
     if (mBusy)
         return;
