@@ -7,6 +7,8 @@
 #include <QMovie>
 #include <QMessageBox>
 #include <QMap>
+#include <QSettings>
+#include <QTableWidgetItem>
 #include "utilities.h"
 #include "dpi.h"
 #include "Managers/app_manager.h"
@@ -14,6 +16,10 @@
 #include "Services/package_service.h"
 #include <Utils/command_util.h>
 #include <Utils/format_util.h>
+
+// Safety levels stored in Qt::UserRole + 1 on the Reverse Deps cell
+// so colors can be re-applied after a theme change without re-fetching.
+enum class OrphanSafety { Safe = 0, Manual = 1, Dangerous = 2, Unknown = 3 };
 
 UninstallerPage::~UninstallerPage()
 {
@@ -68,6 +74,8 @@ void UninstallerPage::init()
     mPackageService->fetchSnapPackages();
     mPackageService->fetchOrphanPackages();
 
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme,
+            this, &UninstallerPage::refreshOrphanThemeColors);
     connect(mSignalMapper, &SignalMapper::sigUninstallStarted, this, &UninstallerPage::uninstallStarted);
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         mPackageService->fetchPackages();
@@ -176,27 +184,110 @@ void UninstallerPage::onSnapPackagesLoaded(QStringList packages)
 
 void UninstallerPage::onOrphanPackagesLoaded(QList<OrphanPackage> packages)
 {
-    ui->listWidgetOrphanPackages->clear();
+    QTableWidget *tbl = ui->tableWidgetOrphanPackages;
+    tbl->setSortingEnabled(false);
+    tbl->setRowCount(0);
 
-    QIcon icon(":/static/themes/common/img/package.png");
+    tbl->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    tbl->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    tbl->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    tbl->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    tbl->verticalHeader()->setDefaultSectionSize(Dpi::scale(28));
+
+    QSettings *sv = mAppManager->getStyleValues();
+    QString successColor  = sv ? sv->value("@successColor").toString()  : "#46A758";
+    QString warningColor  = sv ? sv->value("@warningColor").toString()  : "#FFB347";
+    QString dangerColor   = sv ? sv->value("@destructiveColor").toString() : "#E05454";
+    QString mutedColor    = sv ? sv->value("@tertiaryText").toString()  : "#888888";
+
     for (const OrphanPackage &pkg : packages) {
-        QString displayText = pkg.description.isEmpty()
-            ? QString("  %1").arg(pkg.name)
-            : QString("  %1 — %2").arg(pkg.name, pkg.description);
-        if (pkg.size > 0)
-            displayText += QString(" (%1)").arg(FormatUtil::formatBytes(pkg.size));
+        int row = tbl->rowCount();
+        tbl->insertRow(row);
 
-        QListWidgetItem *item = new QListWidgetItem(icon, displayText);
-        item->setCheckState(Qt::Unchecked);
-        item->setData(Qt::UserRole, pkg.name);
-        ui->listWidgetOrphanPackages->addItem(item);
+        // Col 0 — Package name + description as tooltip
+        auto *nameItem = new QTableWidgetItem(pkg.name);
+        nameItem->setData(Qt::UserRole, pkg.name);
+        if (!pkg.description.isEmpty())
+            nameItem->setToolTip(pkg.description);
+        tbl->setItem(row, 0, nameItem);
+
+        // Col 1 — Size
+        QString sizeStr = pkg.size > 0 ? FormatUtil::formatBytes(pkg.size) : QString("—");
+        auto *sizeItem = new QTableWidgetItem(sizeStr);
+        sizeItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        tbl->setItem(row, 1, sizeItem);
+
+        // Col 2 — Install type
+        QString installStr = (pkg.reverseDepsCount == -1)
+            ? QString("—")
+            : (pkg.autoInstalled ? tr("Auto") : tr("Manual"));
+        auto *installItem = new QTableWidgetItem(installStr);
+        installItem->setTextAlignment(Qt::AlignCenter);
+        if (!pkg.autoInstalled && pkg.reverseDepsCount != -1) {
+            QFont f = installItem->font();
+            f.setBold(true);
+            installItem->setFont(f);
+        }
+        tbl->setItem(row, 2, installItem);
+
+        // Col 3 — Reverse deps count + color
+        OrphanSafety safety;
+        QString rdStr;
+        if (pkg.reverseDepsCount == -1) {
+            safety = OrphanSafety::Unknown;
+            rdStr = QString("—");
+        } else if (pkg.reverseDepsCount > 0) {
+            safety = OrphanSafety::Dangerous;
+            rdStr = tr("%n dependent(s)", "", pkg.reverseDepsCount);
+        } else if (!pkg.autoInstalled) {
+            safety = OrphanSafety::Manual;
+            rdStr = tr("None");
+        } else {
+            safety = OrphanSafety::Safe;
+            rdStr = tr("None");
+        }
+        auto *rdItem = new QTableWidgetItem(rdStr);
+        rdItem->setTextAlignment(Qt::AlignCenter);
+        rdItem->setData(Qt::UserRole + 1, static_cast<int>(safety));
+        switch (safety) {
+        case OrphanSafety::Safe:      rdItem->setForeground(QColor(successColor)); break;
+        case OrphanSafety::Manual:    rdItem->setForeground(QColor(warningColor)); break;
+        case OrphanSafety::Dangerous: rdItem->setForeground(QColor(dangerColor));  break;
+        default:        rdItem->setForeground(QColor(mutedColor));   break;
+        }
+        tbl->setItem(row, 3, rdItem);
     }
+
+    tbl->setSortingEnabled(true);
     setAppCount();
 
-    ui->listWidgetOrphanPackages->setEnabled(true);
+    tbl->setEnabled(true);
     ui->txtPackageSearch->setEnabled(true);
-
     ui->lblLoadingUninstaller->hide();
+}
+
+void UninstallerPage::refreshOrphanThemeColors()
+{
+    QTableWidget *tbl = ui->tableWidgetOrphanPackages;
+    QSettings *sv = mAppManager->getStyleValues();
+    if (!sv) return;
+
+    QString successColor = sv->value("@successColor").toString();
+    QString warningColor = sv->value("@warningColor").toString();
+    QString dangerColor  = sv->value("@destructiveColor").toString();
+    QString mutedColor   = sv->value("@tertiaryText").toString();
+
+    for (int row = 0; row < tbl->rowCount(); ++row) {
+        QTableWidgetItem *rdItem = tbl->item(row, 3);
+        if (!rdItem) continue;
+        OrphanSafety safety = static_cast<OrphanSafety>(rdItem->data(Qt::UserRole + 1).toInt());
+        switch (safety) {
+        case OrphanSafety::Safe:      rdItem->setForeground(QColor(successColor)); break;
+        case OrphanSafety::Manual:    rdItem->setForeground(QColor(warningColor)); break;
+        case OrphanSafety::Dangerous: rdItem->setForeground(QColor(dangerColor));  break;
+        default:        rdItem->setForeground(QColor(mutedColor));   break;
+        }
+    }
 }
 
 void UninstallerPage::setAppCount()
@@ -222,10 +313,10 @@ void UninstallerPage::setAppCount()
     ui->btnSnapPackages->setVisible(CommandUtil::isExecutable("snap"));
 #endif
 
-    int orphanCount = ui->listWidgetOrphanPackages->count();
+    int orphanCount = ui->tableWidgetOrphanPackages->rowCount();
     ui->btnOrphanPackages->setText(tr("Orphan Packages (%1)").arg(orphanCount));
     ui->notFoundWidget_3->setVisible(! orphanCount);
-    ui->listWidgetOrphanPackages->setVisible(orphanCount);
+    ui->tableWidgetOrphanPackages->setVisible(orphanCount);
 
     ui->btnUninstall->setVisible(count || snapCount || orphanCount);
 }
@@ -298,13 +389,16 @@ void UninstallerPage::on_btnUninstall_clicked()
 {
     // Orphan packages tab — all-or-nothing autoremove
     if (ui->stackedWidget->currentIndex() == 2) {
-        int orphanCount = ui->listWidgetOrphanPackages->count();
+        QTableWidget *tbl = ui->tableWidgetOrphanPackages;
+        int orphanCount = tbl->rowCount();
         if (orphanCount == 0)
             return;
 
         QStringList names;
-        for (int i = 0; i < ui->listWidgetOrphanPackages->count(); ++i)
-            names << ui->listWidgetOrphanPackages->item(i)->data(Qt::UserRole).toString();
+        for (int i = 0; i < tbl->rowCount(); ++i) {
+            QTableWidgetItem *item = tbl->item(i, 0);
+            if (item) names << item->data(Qt::UserRole).toString();
+        }
 
         QString message = tr("The following orphan packages will be removed via autoremove:\n\n");
         message += names.join(", ");
@@ -398,7 +492,7 @@ void UninstallerPage::uninstallStarted()
 {
     ui->treeWidgetPackages->setEnabled(false);
     ui->listWidgetSnapPackages->setEnabled(false);
-    ui->listWidgetOrphanPackages->setEnabled(false);
+    ui->tableWidgetOrphanPackages->setEnabled(false);
     ui->txtPackageSearch->setEnabled(false);
     ui->btnUninstall->hide();
     ui->lblLoadingUninstaller->show();
@@ -430,11 +524,12 @@ void UninstallerPage::on_txtPackageSearch_textChanged(const QString &val)
         for (QListWidgetItem* item : matches)
             item->setHidden(false);
     } else if (ui->stackedWidget->currentIndex() == 2) {
-        QList<QListWidgetItem*> matches = ui->listWidgetOrphanPackages->findItems(val, Qt::MatchFlag::MatchContains);
-        for (int i = 0; i < ui->listWidgetOrphanPackages->count(); ++i)
-            ui->listWidgetOrphanPackages->item(i)->setHidden(true);
-        for (QListWidgetItem* item : matches)
-            item->setHidden(false);
+        QTableWidget *tbl = ui->tableWidgetOrphanPackages;
+        for (int i = 0; i < tbl->rowCount(); ++i) {
+            QTableWidgetItem *nameItem = tbl->item(i, 0);
+            bool matches = val.isEmpty() || (nameItem && nameItem->text().contains(val, Qt::CaseInsensitive));
+            tbl->setRowHidden(i, !matches);
+        }
     }
 }
 
@@ -458,16 +553,6 @@ void UninstallerPage::on_listWidgetSnapPackages_itemClicked(QListWidgetItem *ite
     Q_UNUSED(item);
     ui->btnUninstall->setText(tr("Uninstall Selected (%1)")
                               .arg(getSelectedSnapPackages().count() + getSelectedPackages().count()));
-}
-
-void UninstallerPage::on_listWidgetOrphanPackages_itemClicked(QListWidgetItem *item)
-{
-    Q_UNUSED(item);
-    int count = 0;
-    for (int i = 0; i < ui->listWidgetOrphanPackages->count(); ++i)
-        if (ui->listWidgetOrphanPackages->item(i)->checkState() == Qt::Checked)
-            ++count;
-    ui->btnUninstall->setText(tr("Uninstall Selected (%1)").arg(count));
 }
 
 void UninstallerPage::onTreeItemChanged(QTreeWidgetItem *item, int column)

@@ -557,8 +557,49 @@ bool PackageToolLinux::removeOrphanPackages()
 QList<OrphanPackage> PackageToolLinux::getAptOrphans()
 {
     try {
-        QString output = CommandUtil::exec("bash", {"-c", "apt-get autoremove --dry-run 2>&1"}).trimmed();
-        return PackageTool::parseAptAutoremoveDryRun(output);
+        QString output = CommandUtil::exec("bash", {"-c", "LANG=C apt-get autoremove --dry-run 2>&1"}).trimmed();
+        QList<OrphanPackage> orphans = PackageTool::parseAptAutoremoveDryRun(output);
+
+        if (orphans.isEmpty())
+            return orphans;
+
+        // Bulk auto-install flag — one call for all packages
+        try {
+            QString autoOut = CommandUtil::exec("bash", {"-c", "LANG=C apt-mark showauto 2>/dev/null"}).trimmed();
+            QSet<QString> autoSet;
+            for (const QString &line : autoOut.split('\n')) {
+                QString pkg = line.trimmed();
+                if (!pkg.isEmpty())
+                    autoSet.insert(pkg);
+            }
+            for (OrphanPackage &pkg : orphans)
+                pkg.autoInstalled = autoSet.contains(pkg.name);
+        } catch (...) {}
+
+        // Per-package reverse dependency count
+        for (OrphanPackage &pkg : orphans) {
+            try {
+                QString rdOut = CommandUtil::exec(
+                    "bash",
+                    {"-c", QString("LANG=C apt-cache rdepends --installed %1 2>/dev/null").arg(pkg.name)}
+                ).trimmed();
+                int count = 0;
+                bool inSection = false;
+                for (const QString &line : rdOut.split('\n')) {
+                    if (line.trimmed() == QLatin1String("Reverse Depends:")) {
+                        inSection = true;
+                        continue;
+                    }
+                    if (inSection && line.startsWith(QLatin1String("  ")) && !line.trimmed().isEmpty())
+                        ++count;
+                }
+                pkg.reverseDepsCount = count;
+            } catch (...) {
+                pkg.reverseDepsCount = 0;
+            }
+        }
+
+        return orphans;
     } catch (const QString &ex) {
         qCritical() << "Failed to get apt orphans:" << ex;
     }

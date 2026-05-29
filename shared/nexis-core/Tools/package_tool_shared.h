@@ -25,7 +25,9 @@ struct StaleSnapRevision {
 struct OrphanPackage {
     QString name;
     QString description;
-    quint64 size = 0;   // installed size in bytes (0 if unavailable)
+    quint64 size = 0;        // installed size in bytes (0 if unavailable)
+    bool autoInstalled = false;
+    int reverseDepsCount = -1; // -1 = unknown (non-APT systems)
 };
 
 enum PackageTools {
