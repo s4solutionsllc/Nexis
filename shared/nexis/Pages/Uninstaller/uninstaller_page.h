@@ -4,6 +4,7 @@
 #include <QStringList>
 #include <QWidget>
 #include <QListWidgetItem>
+#include <QTableWidget>
 #include <QTreeWidgetItem>
 
 #include <Tools/package_tool_shared.h>
@@ -51,7 +52,7 @@ private slots:
     void on_btnOrphanPackages_clicked();
 
     void on_listWidgetSnapPackages_itemClicked(QListWidgetItem *item);
-    void on_listWidgetOrphanPackages_itemClicked(QListWidgetItem *item);
+    void refreshOrphanThemeColors();
     void onTreeItemChanged(QTreeWidgetItem *item, int column);
 
 private:
