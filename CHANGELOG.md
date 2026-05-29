@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.8] - 2026-05-29
+
 ### Fixed
 - **Multi-battery support (GH#65):** Nexis now detects and displays all batteries on systems with more than one (e.g. Dell Rugged 14 with BAT0 + BAT1). The Hardware Info page shows each battery in its own labeled section with full individual data. The Dashboard tile and live battery signal show an aggregated view: capacities are summed, charge% is weighted by max capacity, and the system is shown as charging if any battery is charging. Single-battery systems are unaffected.
 - **Orphaned Packages view shows safety information (GH#67):** The Orphaned Packages tab now displays a 4-column table (Package, Size, Installed, Reverse Deps) instead of a flat list. On APT systems, each package shows whether it was manually or automatically installed (`apt-mark showauto`) and how many installed packages depend on it (`apt-cache rdepends --installed`). The Reverse Deps column is color-coded: green = safe to remove, amber = manually installed (review first), red = has dependents (do not remove). Pacman and DNF systems show "—" in the new columns; enrichment for those package managers is a future follow-up.

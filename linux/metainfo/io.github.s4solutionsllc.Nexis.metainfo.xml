@@ -74,6 +74,31 @@
   </screenshots>
 
   <releases>
+    <release version="2.3.8" date="2026-05-29">
+      <description>
+        <p>New features and bug fixes:</p>
+        <ul>
+          <li>Multi-battery support: dual-battery systems (e.g. Dell Rugged 14) now show both batteries in Hardware Info with individual stats; Dashboard shows aggregated charge.</li>
+          <li>Orphaned Packages view now shows Install Type (Auto/Manual) and Reverse Deps count with color-coded safety indicators on APT systems.</li>
+          <li>Baobab, Filelight, and QDirStat are now correctly detected and launched when installed via Flatpak, including when running as an AppImage.</li>
+          <li>System Logs severity filter now correctly fetches matching entries from journalctl instead of filtering a truncated cache.</li>
+          <li>Update checker no longer fails on non-English system locales.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.3.7" date="2026-05-17">
+      <description>
+        <p>New features and bug fixes:</p>
+        <ul>
+          <li>New "Start minimized in system tray" option in Settings → General.</li>
+          <li>Flatpak packaging added for Flathub submission.</li>
+          <li>Toggle indicators no longer disappear on Linux Mint 22 and Ubuntu 24.04 derivatives.</li>
+          <li>Wi-Fi interfaces now correctly appear in Network Usage.</li>
+          <li>Window size and position are now remembered across launches.</li>
+          <li>Select All / Clear All buttons restored in System Cleaner.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.3.6" date="2026-05-11">
       <description>
         <p>Bug fixes:</p>
