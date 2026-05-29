@@ -10,11 +10,51 @@
 #include <QIcon>
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QDir>
 #include <QtConcurrent>
 
 #ifdef Q_OS_MACOS
 #include <QDir>
 #endif
+
+// ---------------------------------------------------------------------------
+// findDesktopApp — locate a GUI app installed natively or via Flatpak.
+//
+// Tries in order:
+//   1. Native binary in PATH (e.g. "baobab")
+//   2. Flatpak app-ID wrapper in PATH (e.g. "org.gnome.baobab")
+//   3. Flatpak app-ID wrapper on disk but not in PATH (AppImage non-login shell)
+//
+// Returns {launchCmd, launchArgs} ready to pass to QProcess::startDetached(),
+// or an empty launchCmd if not found.
+// ---------------------------------------------------------------------------
+namespace {
+struct AppLocation {
+    QString launchCmd;
+    QStringList launchArgs;
+    bool isFound() const { return !launchCmd.isEmpty(); }
+};
+
+AppLocation findDesktopApp(const QString &nativeBin, const QString &flatpakId)
+{
+    if (!QStandardPaths::findExecutable(nativeBin).isEmpty())
+        return {nativeBin, {}};
+
+    if (!QStandardPaths::findExecutable(flatpakId).isEmpty())
+        return {QStringLiteral("flatpak"), {QStringLiteral("run"), flatpakId}};
+
+    const QStringList exportPaths = {
+        QDir::homePath() + "/.local/share/flatpak/exports/bin/" + flatpakId,
+        "/var/lib/flatpak/exports/bin/" + flatpakId,
+    };
+    for (const QString &p : exportPaths) {
+        if (QFileInfo(p).isExecutable())
+            return {QStringLiteral("flatpak"), {QStringLiteral("run"), flatpakId}};
+    }
+
+    return {};
+}
+} // namespace
 
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
@@ -152,26 +192,35 @@ bool DiskUsageLauncherWidget::resolveNamedTool(const QString &toolKey)
 
     // --- Known Linux tools ---
     if (toolKey == "baobab") {
-        if (!QStandardPaths::findExecutable("baobab").isEmpty())
+        AppLocation loc = findDesktopApp("baobab", "org.gnome.baobab");
+        if (loc.isFound()) {
+            mLaunchCmd = loc.launchCmd; mLaunchArgs = loc.launchArgs;
             mState = LAUNCH_BAOBAB;
-        else
+        } else {
             mState = INSTALL_BAOBAB;
+        }
         return true;
     }
     if (toolKey == "filelight") {
-        if (!QStandardPaths::findExecutable("filelight").isEmpty())
+        AppLocation loc = findDesktopApp("filelight", "org.kde.filelight");
+        if (loc.isFound()) {
+            mLaunchCmd = loc.launchCmd; mLaunchArgs = loc.launchArgs;
             mState = LAUNCH_FILELIGHT;
-        else if (!QStandardPaths::findExecutable("flatpak").isEmpty())
+        } else if (!QStandardPaths::findExecutable("flatpak").isEmpty()) {
             mState = INSTALL_FILELIGHT_FLATPAK;
-        else
+        } else {
             mState = NO_FLATPAK;
+        }
         return true;
     }
     if (toolKey == "qdirstat") {
-        if (!QStandardPaths::findExecutable("qdirstat").isEmpty())
+        AppLocation loc = findDesktopApp("qdirstat", "io.github.jeena.qdirstat");
+        if (loc.isFound()) {
+            mLaunchCmd = loc.launchCmd; mLaunchArgs = loc.launchArgs;
             mState = LAUNCH_QDIRSTAT;
-        else
+        } else {
             mState = NOT_FOUND;
+        }
         return true;
     }
     if (toolKey == "ncdu") {
@@ -220,17 +269,23 @@ void DiskUsageLauncherWidget::autoDetect()
     bool isGnome = desktop.contains("GNOME");
 
     if (isGnome) {
-        if (!QStandardPaths::findExecutable("baobab").isEmpty())
+        AppLocation loc = findDesktopApp("baobab", "org.gnome.baobab");
+        if (loc.isFound()) {
+            mLaunchCmd = loc.launchCmd; mLaunchArgs = loc.launchArgs;
             mState = LAUNCH_BAOBAB;
-        else
+        } else {
             mState = INSTALL_BAOBAB;
+        }
     } else {
-        if (!QStandardPaths::findExecutable("filelight").isEmpty())
+        AppLocation loc = findDesktopApp("filelight", "org.kde.filelight");
+        if (loc.isFound()) {
+            mLaunchCmd = loc.launchCmd; mLaunchArgs = loc.launchArgs;
             mState = LAUNCH_FILELIGHT;
-        else if (!QStandardPaths::findExecutable("flatpak").isEmpty())
+        } else if (!QStandardPaths::findExecutable("flatpak").isEmpty()) {
             mState = INSTALL_FILELIGHT_FLATPAK;
-        else
+        } else {
             mState = NO_FLATPAK;
+        }
     }
 #elif defined(Q_OS_MACOS)
     if (QFileInfo("/Applications/GrandPerspective.app").exists() ||
@@ -377,7 +432,7 @@ void DiskUsageLauncherWidget::onActionClicked()
 {
     switch (mState) {
     case LAUNCH_BAOBAB:
-        QProcess::startDetached("baobab", {});
+        QProcess::startDetached(mLaunchCmd, mLaunchArgs);
         break;
 
     case INSTALL_BAOBAB: {
@@ -391,7 +446,7 @@ void DiskUsageLauncherWidget::onActionClicked()
     }
 
     case LAUNCH_FILELIGHT:
-        QProcess::startDetached("filelight", {});
+        QProcess::startDetached(mLaunchCmd, mLaunchArgs);
         break;
 
     case INSTALL_FILELIGHT_FLATPAK: {
@@ -440,7 +495,7 @@ void DiskUsageLauncherWidget::onActionClicked()
     }
 
     case LAUNCH_QDIRSTAT:
-        QProcess::startDetached("qdirstat", {});
+        QProcess::startDetached(mLaunchCmd, mLaunchArgs);
         break;
 
     case LAUNCH_NCDU: {

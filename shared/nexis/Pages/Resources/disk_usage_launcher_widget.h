@@ -60,6 +60,8 @@ private:
 
     State mState;
     QString mCustomDisplayName;
+    QString mLaunchCmd;
+    QStringList mLaunchArgs;
 
     AppManager *mAppManager;
     SignalMapper *mSignalMapper;
