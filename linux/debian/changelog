@@ -1,3 +1,21 @@
+nexis (2.3.8-0) unstable; urgency=medium
+
+  * Multi-battery support: detect and display all batteries on dual-battery
+    systems. Hardware Info shows each battery in its own section; Dashboard
+    shows aggregated charge% (GH#65).
+  * Orphaned Packages view now shows Install Type (Auto/Manual) and Reverse
+    Deps count with color-coded safety indicators. APT only in this release
+    (GH#67).
+  * Fix Baobab, Filelight, and QDirStat not detected when installed via
+    Flatpak; also fixes detection when running as AppImage in a non-login
+    shell (GH#64).
+  * Fix System Logs severity filter ("Error && Above") showing no entries
+    when the last N journal lines were all INFO/DEBUG (GH#62).
+  * Fix apt/snap/flatpak update checker failing on non-English system
+    locales (GH#61).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Thu, 29 May 2026 00:00:00 +0000
+
 nexis (2.3.7-0) unstable; urgency=medium
 
   * Fix toggle indicators disappearing on Linux Mint 22 ("Zena") and other

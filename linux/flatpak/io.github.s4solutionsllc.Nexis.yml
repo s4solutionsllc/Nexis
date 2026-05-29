@@ -68,8 +68,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/s4solutionsllc/Nexis.git
-        tag: v2.3.7
-        commit: da814255d56c8db4235fae33a02ee2a465a1772d
+        tag: v2.3.8
+        commit: f9891604c2221427d27e4b3d31df7f14226067fb
         x-checker-data:
           type: json
           url: https://api.github.com/repos/s4solutionsllc/Nexis/releases/latest
