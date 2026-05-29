@@ -25,6 +25,7 @@ struct BatteryData {
     int     timeRemainingMinutes = -1;      // -1 if calculating/unavailable
     QString status;                         // "Charging", "Discharging", "Full", "Not charging"
     QString condition;                      // "Good", "Fair", "Replace"
+    QString batteryName;                    // "BAT0", "BAT1", etc. Empty on macOS.
     QString manufacturer;
     QString model;
     QString technology;                     // "Li-ion", "Li-poly", etc.
@@ -39,6 +40,8 @@ public:
     virtual ~BatteryInfo() = default;
 
     BatteryData getBatteryData() const;
+    virtual BatteryData getBatteryData(int index) const;
+    virtual int batteryCount() const;
     bool hasBattery() const;
     virtual void updateBatteryInfo() = 0;
 

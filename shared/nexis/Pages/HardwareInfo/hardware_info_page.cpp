@@ -18,6 +18,7 @@
 #include <QProcess>
 #include <QDir>
 #include <QFileDialog>
+#include <functional>
 #include <QMessageBox>
 #include <QTextStream>
 #include <QDateTime>
@@ -313,6 +314,70 @@ void HardwareInfoPage::populateMemory()
     fitTableHeight(t);
 }
 
+static void addBatteryRows(QTableWidget *t, const BatteryData &bat,
+                           const std::function<void(QTableWidget*, const QString&, const QString&)> &addRow)
+{
+    addRow(t, QObject::tr("Status"), bat.status);
+
+    if (bat.healthPercent >= 0)
+        addRow(t, QObject::tr("Health"), QString("%1% (%2)").arg(bat.healthPercent).arg(bat.condition));
+
+    if (bat.chargePercent >= 0)
+        addRow(t, QObject::tr("Charge"), QString("%1%").arg(bat.chargePercent));
+
+    if (bat.cycleCount >= 0) {
+        QString cycleStr = (bat.designCycleCount > 0)
+            ? QString("%1 / %2").arg(bat.cycleCount).arg(bat.designCycleCount)
+            : QString::number(bat.cycleCount);
+        addRow(t, QObject::tr("Cycle Count"), cycleStr);
+    }
+
+    if (bat.currentCapacityMah >= 0)
+        addRow(t, QObject::tr("Current Capacity"), QString("%1 mAh").arg(bat.currentCapacityMah, 0, 'f', 0));
+    if (bat.maxCapacityMah >= 0)
+        addRow(t, QObject::tr("Maximum Capacity"), QString("%1 mAh").arg(bat.maxCapacityMah, 0, 'f', 0));
+    if (bat.designCapacityMah >= 0)
+        addRow(t, QObject::tr("Design Capacity"), QString("%1 mAh").arg(bat.designCapacityMah, 0, 'f', 0));
+
+    if (bat.temperatureCelsius >= 0) {
+        double tempF = bat.temperatureCelsius * 9.0 / 5.0 + 32.0;
+        addRow(t, QObject::tr("Temperature"), QString("%1 \u00B0C / %2 \u00B0F")
+               .arg(bat.temperatureCelsius, 0, 'f', 1).arg(tempF, 0, 'f', 1));
+    }
+
+    if (bat.voltageMv > 0)
+        addRow(t, QObject::tr("Voltage"), QString("%1 V").arg(bat.voltageMv / 1000.0, 0, 'f', 3));
+
+    if (bat.powerWatts > 0)
+        addRow(t, QObject::tr("Power"), QString("%1 W (%2)")
+               .arg(bat.powerWatts, 0, 'f', 1)
+               .arg(bat.isCharging ? QObject::tr("charging") : QObject::tr("discharging")));
+
+    if (bat.timeRemainingMinutes >= 0) {
+        int h = bat.timeRemainingMinutes / 60;
+        int m = bat.timeRemainingMinutes % 60;
+        QString timeStr = bat.isCharging
+            ? QString("%1h %2m %3").arg(h).arg(m).arg(QObject::tr("to full"))
+            : QString("%1h %2m %3").arg(h).arg(m).arg(QObject::tr("remaining"));
+        addRow(t, QObject::tr("Time Remaining"), timeStr);
+    }
+
+    if (!bat.manufacturer.isEmpty()) addRow(t, QObject::tr("Manufacturer"), bat.manufacturer);
+    if (!bat.model.isEmpty())        addRow(t, QObject::tr("Model"),        bat.model);
+    if (!bat.technology.isEmpty())   addRow(t, QObject::tr("Technology"),   bat.technology);
+
+    if (bat.manufactureDate.isValid())
+        addRow(t, QObject::tr("Manufacture Date"), bat.manufactureDate.toString("yyyy-MM-dd"));
+
+    if (bat.chargeStartThreshold >= 0 && bat.chargeStopThreshold >= 0) {
+        addRow(t, QObject::tr("Charge Limit"),
+               QString("%1% \u2013 %2% (%3)")
+               .arg(bat.chargeStartThreshold)
+               .arg(bat.chargeStopThreshold)
+               .arg(QObject::tr("managed by TLP")));
+    }
+}
+
 void HardwareInfoPage::populateBattery()
 {
     QTableWidget *t = ui->tblBattery;
@@ -326,78 +391,33 @@ void HardwareInfoPage::populateBattery()
     }
 
     im->updateBatteryInfo();
-    BatteryData bat = im->getBatteryData();
 
-    addRow(t, tr("Status"), bat.status);
+    auto rowAdder = [this](QTableWidget *tbl, const QString &label, const QString &value) {
+        addRow(tbl, label, value);
+    };
 
-    if (bat.healthPercent >= 0)
-        addRow(t, tr("Health"), QString("%1% (%2)").arg(bat.healthPercent).arg(bat.condition));
+    int count = im->batteryCount();
+    if (count <= 1) {
+        addBatteryRows(t, im->getBatteryData(0), rowAdder);
+    } else {
+        for (int i = 0; i < count; ++i) {
+            // Section header row spanning both columns
+            int headerRow = t->rowCount();
+            t->insertRow(headerRow);
+            BatteryData bat = im->getBatteryData(i);
+            QString label = bat.batteryName.isEmpty()
+                ? tr("Battery %1").arg(i + 1)
+                : tr("Battery %1 \u2014 %2").arg(i + 1).arg(bat.batteryName);
+            auto *headerItem = new QTableWidgetItem(label);
+            QFont f = headerItem->font();
+            f.setBold(true);
+            headerItem->setFont(f);
+            t->setItem(headerRow, 0, headerItem);
+            t->setSpan(headerRow, 0, 1, 2);
+            t->setRowHeight(headerRow, Dpi::scale(30));
 
-    if (bat.chargePercent >= 0)
-        addRow(t, tr("Charge"), QString("%1%").arg(bat.chargePercent));
-
-    if (bat.cycleCount >= 0) {
-        QString cycleStr;
-        if (bat.designCycleCount > 0)
-            cycleStr = QString("%1 / %2").arg(bat.cycleCount).arg(bat.designCycleCount);
-        else
-            cycleStr = QString::number(bat.cycleCount);
-        addRow(t, tr("Cycle Count"), cycleStr);
-    }
-
-    if (bat.currentCapacityMah >= 0)
-        addRow(t, tr("Current Capacity"), QString("%1 mAh").arg(bat.currentCapacityMah, 0, 'f', 0));
-
-    if (bat.maxCapacityMah >= 0)
-        addRow(t, tr("Maximum Capacity"), QString("%1 mAh").arg(bat.maxCapacityMah, 0, 'f', 0));
-
-    if (bat.designCapacityMah >= 0)
-        addRow(t, tr("Design Capacity"), QString("%1 mAh").arg(bat.designCapacityMah, 0, 'f', 0));
-
-    if (bat.temperatureCelsius >= 0) {
-        double tempF = bat.temperatureCelsius * 9.0 / 5.0 + 32.0;
-        addRow(t, tr("Temperature"), QString("%1 \u00B0C / %2 \u00B0F")
-               .arg(bat.temperatureCelsius, 0, 'f', 1)
-               .arg(tempF, 0, 'f', 1));
-    }
-
-    if (bat.voltageMv > 0)
-        addRow(t, tr("Voltage"), QString("%1 V").arg(bat.voltageMv / 1000.0, 0, 'f', 3));
-
-    if (bat.powerWatts > 0)
-        addRow(t, tr("Power"), QString("%1 W (%2)")
-               .arg(bat.powerWatts, 0, 'f', 1)
-               .arg(bat.isCharging ? tr("charging") : tr("discharging")));
-
-    if (bat.timeRemainingMinutes >= 0) {
-        int h = bat.timeRemainingMinutes / 60;
-        int m = bat.timeRemainingMinutes % 60;
-        QString timeStr;
-        if (bat.isCharging)
-            timeStr = QString("%1h %2m %3").arg(h).arg(m).arg(tr("to full"));
-        else
-            timeStr = QString("%1h %2m %3").arg(h).arg(m).arg(tr("remaining"));
-        addRow(t, tr("Time Remaining"), timeStr);
-    }
-
-    if (!bat.manufacturer.isEmpty())
-        addRow(t, tr("Manufacturer"), bat.manufacturer);
-
-    if (!bat.model.isEmpty())
-        addRow(t, tr("Model"), bat.model);
-
-    if (!bat.technology.isEmpty())
-        addRow(t, tr("Technology"), bat.technology);
-
-    if (bat.manufactureDate.isValid())
-        addRow(t, tr("Manufacture Date"), bat.manufactureDate.toString("yyyy-MM-dd"));
-
-    if (bat.chargeStartThreshold >= 0 && bat.chargeStopThreshold >= 0) {
-        addRow(t, tr("Charge Limit"),
-               QString("%1% \u2013 %2% (%3)")
-               .arg(bat.chargeStartThreshold)
-               .arg(bat.chargeStopThreshold)
-               .arg(tr("managed by TLP")));
+            addBatteryRows(t, bat, rowAdder);
+        }
     }
 
     t->resizeColumnsToContents();

@@ -367,6 +367,16 @@ BatteryData InfoManager::getBatteryData() const
     return bi->getBatteryData();
 }
 
+BatteryData InfoManager::getBatteryData(int index) const
+{
+    return bi->getBatteryData(index);
+}
+
+int InfoManager::batteryCount() const
+{
+    return bi->batteryCount();
+}
+
 void InfoManager::updateBatteryInfo()
 {
     bi->updateBatteryInfo();
