@@ -78,6 +78,14 @@ QString GpuInfo::parseFramebufferParentPciBusId(const QString &symlinkTarget)
     return {};
 }
 
+QString GpuInfo::normalizePciBusId(const QString &rawBusId)
+{
+    QStringList segs = rawBusId.split(':');
+    if (segs.size() < 2)
+        return rawBusId.toLower();
+    return (segs.at(segs.size() - 2) + ":" + segs.last()).toLower();
+}
+
 QString GpuInfo::getDiagnosticReport() const
 {
     QString report;

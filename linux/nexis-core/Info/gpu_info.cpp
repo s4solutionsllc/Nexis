@@ -96,6 +96,37 @@ static QString readFramebufferDeviceName(const QString &pciBusId, int cardIndex)
 }
 
 /**
+ * Query nvidia-smi once at startup to build a map from normalized PCI bus ID
+ * to nvidia-smi device index.  Returns empty map if nvidia-smi is unavailable.
+ */
+static QHash<QString, int> buildNvidiaIndexMap()
+{
+    QHash<QString, int> map;
+    if (!CommandUtil::isExecutable("nvidia-smi"))
+        return map;
+
+    ExecResult result = CommandUtil::execWithStatus(
+        "nvidia-smi",
+        {"--query-gpu=index,pci.bus_id", "--format=csv,noheader,nounits"},
+        5000);
+
+    if (result.exitCode != 0)
+        return map;
+
+    for (const QString &line : result.output.trimmed().split('\n', Qt::SkipEmptyParts)) {
+        QStringList parts = line.split(',');
+        if (parts.size() < 2)
+            continue;
+        bool ok = false;
+        int idx = parts.at(0).trimmed().toInt(&ok);
+        if (!ok)
+            continue;
+        map.insert(GpuInfo::normalizePciBusId(parts.at(1).trimmed()), idx);
+    }
+    return map;
+}
+
+/**
  * Map a PCI vendor ID string to a vendor name.
  */
 static QString vendorFromPciId(const QString &vendorId)
@@ -110,6 +141,8 @@ void GpuInfoLinux::discoverGpus()
 {
     mDevices.clear();
     mDiagEntries.clear();
+
+    const QHash<QString, int> nvidiaIndexMap = buildNvidiaIndexMap();
 
     QDir drmDir(DRM_BASE);
     if (!drmDir.exists())
@@ -157,8 +190,9 @@ void GpuInfoLinux::discoverGpus()
                 if (!QFile::exists(dev.sysfsLoadPath))
                     dev.sysfsLoadPath.clear();
             } else if (vendor == "NVIDIA") {
-                if (!pciBusId.isEmpty() && CommandUtil::isExecutable("nvidia-smi"))
-                    dev.queryCommand = pciBusId;
+                const QString normId = GpuInfo::normalizePciBusId(pciBusId);
+                if (nvidiaIndexMap.contains(normId))
+                    dev.queryCommand = QString::number(nvidiaIndexMap.value(normId));
             } else if (vendor == "Intel") {
                 QString curFreqPath = cardPath + "/gt_cur_freq_mhz";
                 QString maxFreqPath = cardPath + "/gt_max_freq_mhz";

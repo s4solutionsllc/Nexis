@@ -42,6 +42,13 @@ private slots:
     void framebuffer_noPciParent();
     void framebuffer_noFramebufferInPath();
     void framebuffer_emptyInput();
+
+    // normalizePciBusId
+    void normPci_sysfsFormat();
+    void normPci_nvidiaSmiFormat();
+    void normPci_uppercase();
+    void normPci_shortForm();
+    void normPci_empty();
 };
 
 // --- parseNvidiaSmiUtilization ---
@@ -201,6 +208,33 @@ void TestGpuInfo::framebuffer_noFramebufferInPath()
 void TestGpuInfo::framebuffer_emptyInput()
 {
     QVERIFY(GpuInfo::parseFramebufferParentPciBusId("").isEmpty());
+}
+
+// --- normalizePciBusId ---
+
+void TestGpuInfo::normPci_sysfsFormat()
+{
+    QCOMPARE(GpuInfo::normalizePciBusId("0000:07:00.0"), "07:00.0");
+}
+
+void TestGpuInfo::normPci_nvidiaSmiFormat()
+{
+    QCOMPARE(GpuInfo::normalizePciBusId("00000000:07:00.0"), "07:00.0");
+}
+
+void TestGpuInfo::normPci_uppercase()
+{
+    QCOMPARE(GpuInfo::normalizePciBusId("00000000:0A:00.0"), "0a:00.0");
+}
+
+void TestGpuInfo::normPci_shortForm()
+{
+    QCOMPARE(GpuInfo::normalizePciBusId("07:00.0"), "07:00.0");
+}
+
+void TestGpuInfo::normPci_empty()
+{
+    QCOMPARE(GpuInfo::normalizePciBusId(""), "");
 }
 
 QTEST_MAIN(TestGpuInfo)
