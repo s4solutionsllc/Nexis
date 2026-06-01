@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.9] - 2026-06-01
+
+### Fixed
+- **GPU gauge shows N/A on NVIDIA cards (GH#72):** `discoverGpus()` was storing the sysfs PCI bus ID (`"0000:07:00.0"`) in the utilization query field, but the update path called `.toInt()` on it expecting a numeric nvidia-smi device index — always failing, leaving utilization at -1 (N/A) indefinitely. Fixed by querying `nvidia-smi --query-gpu=index,pci.bus_id` once at startup to map each GPU's PCI address to its nvidia-smi index, with normalization to reconcile sysfs (`0000:07:00.0`) and nvidia-smi (`00000000:07:00.0`) formats. GPU name detection was unaffected.
+
 ## [2.3.8] - 2026-05-29
 
 ### Fixed
