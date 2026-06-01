@@ -14,7 +14,8 @@ struct GpuDevice {
 
     // Platform-specific fields used internally for re-reading utilization
     QString sysfsLoadPath;  // Linux: path to gpu_busy_percent or similar
-    QString queryCommand;   // Linux: nvidia-smi command for this GPU (if NVIDIA)
+    QString queryCommand;   // Linux/NVIDIA: nvidia-smi device index as decimal string ("0","1",…)
+                            // Linux/Intel:  sysfs path to gt_max_freq_mhz
     QString pciBusId;       // PCI bus address (e.g. "0000:03:00.0") for consistent ordering
     int     deviceIndex;    // index within vendor's enumeration
     quint64 registryEntryID = 0; // macOS: IOKit registry entry ID for matching
@@ -45,6 +46,10 @@ public:
     // Extracts the parent PCI bus address from a simple-framebuffer DRM symlink target.
     // e.g. ".../0000:04:00.0/simple-framebuffer.0/drm/card0" → "0000:04:00.0"
     static QString parseFramebufferParentPciBusId(const QString &symlinkTarget);
+
+    // Normalizes a PCI bus ID from any tool format to "bus:device.function" lowercase.
+    // e.g. "0000:07:00.0" and "00000000:07:00.0" both become "07:00.0"
+    static QString normalizePciBusId(const QString &rawBusId);
 
     // Returns a structured diagnostic report for GPU troubleshooting.
     virtual QString getDiagnosticReport() const;
