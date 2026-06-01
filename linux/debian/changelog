@@ -1,3 +1,10 @@
+nexis (2.3.9-0) unstable; urgency=medium
+
+  * Fix GPU utilization gauge showing N/A on NVIDIA cards even when
+    nvidia-smi is available. GPU name detection was unaffected (GH#72).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Sun, 01 Jun 2026 00:00:00 +0000
+
 nexis (2.3.8-0) unstable; urgency=medium
 
   * Multi-battery support: detect and display all batteries on dual-battery
