@@ -47,6 +47,19 @@ QStringList UpdateInfoLinux::availableSources() const
     return sources;
 }
 
+void UpdateInfoLinux::parseAptLines(const QStringList &lines, UpdateCheckResult &result)
+{
+    for (const QString &line : lines) {
+        if (line.contains("upgradable") && !line.contains("[phased")) {
+            UpdateEntry entry;
+            entry.source = "apt";
+            int slashIdx = line.indexOf('/');
+            entry.name = (slashIdx > 0) ? line.left(slashIdx) : line.trimmed();
+            result.entries.append(entry);
+        }
+    }
+}
+
 void UpdateInfoLinux::checkApt(UpdateCheckResult &result) const
 {
     ExecResult r = CommandUtil::execWithStatus(
@@ -55,16 +68,7 @@ void UpdateInfoLinux::checkApt(UpdateCheckResult &result) const
     if (r.exitCode != 0)
         return;
 
-    const QStringList lines = r.output.split('\n');
-    for (const QString &line : lines) {
-        if (line.contains("upgradable")) {
-            UpdateEntry entry;
-            entry.source = "apt";
-            int slashIdx = line.indexOf('/');
-            entry.name = (slashIdx > 0) ? line.left(slashIdx) : line.trimmed();
-            result.entries.append(entry);
-        }
-    }
+    parseAptLines(r.output.split('\n'), result);
 }
 
 void UpdateInfoLinux::checkDnf(UpdateCheckResult &result) const

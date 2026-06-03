@@ -29,6 +29,14 @@ add_nexis_test(NAME DiskHealthTests   SOURCES core/test_disk_health_info.cpp)
 add_nexis_test(NAME MemoryInfoTests   SOURCES core/test_memory_info.cpp)
 add_nexis_test(NAME CpuInfoTests      SOURCES core/test_cpu_info.cpp)
 add_nexis_test(NAME GpuInfoTests      SOURCES core/test_gpu_info.cpp)
+add_nexis_test(NAME UpdateInfoTests
+  SOURCES
+    core/test_update_info.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info/update_info.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
+)
 add_nexis_test(NAME AptSourceTests    SOURCES core/test_apt_source_tool.cpp)
 add_nexis_test(NAME RepoKnowledgeBaseTests SOURCES core/test_repo_knowledge_base.cpp)
 add_nexis_test(NAME RepoHealthCheckerTests SOURCES core/test_repo_health_checker.cpp LIBS Qt6::Network)
