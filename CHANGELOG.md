@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.10] - 2026-06-03
+
 ### Fixed
 - **Incorrect update count due to phased APT packages (GH#76):** Nexis was counting packages that APT has deferred via phased rollout as available updates, causing the count to disagree with Update Manager and `apt` itself. Phased packages appear in `apt list --upgradable` output annotated with `[phased X%]`; these lines are now excluded from the count. Also resolves the related symptom where the update notification banner appeared only once: with phased packages no longer inflating the count, it correctly drops to zero when no real updates exist, restoring the 0→N transition that triggers the notification.
 - **Dashboard default layout overlap in bottom-right corner (GH#77):** On new installations with all four sensor types present (GPU, thermal, battery, fan), the default layout generator placed the health tile at column 4 — past the grid boundary — causing it to be clamped to column 3 and overlap the fan tile. The health tile is now anchored to a fixed position (row 1, col 3) and sensor tiles fill columns 0–2, wrapping to the next row if all four are present.

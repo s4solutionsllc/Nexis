@@ -1,3 +1,11 @@
+nexis (2.3.10-0) unstable; urgency=medium
+
+  * Fix incorrect update count due to phased APT packages (GH#76)
+  * Fix dashboard default layout overlap in bottom-right corner (GH#77)
+  * Fix translation files missing from AppImage and .deb packages (GH#75)
+
+ -- Luke Simpson <luke@s4solutions.ai>  Tue, 03 Jun 2026 00:00:00 +0000
+
 nexis (2.3.9-0) unstable; urgency=medium
 
   * Fix GPU utilization gauge showing N/A on NVIDIA cards even when
