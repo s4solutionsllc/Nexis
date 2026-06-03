@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Dashboard default layout overlap in bottom-right corner (GH#77):** On new installations with all four sensor types present (GPU, thermal, battery, fan), the default layout generator placed the health tile at column 4 — past the grid boundary — causing it to be clamped to column 3 and overlap the fan tile. The health tile is now anchored to a fixed position (row 1, col 3) and sensor tiles fill columns 0–2, wrapping to the next row if all four are present.
 - **Translation files missing from AppImage and .deb packages (GH#75):** All non-English locales were silently broken in distributed packages — the compiled `.qm` files were generated during the build but never included in the install step, so `cmake --install` (used by both the AppImage and .deb workflows) left them behind. Added a CMake install rule that stages all `nexis_*.qm` files into `share/nexis/translations/`. Also fixed the runtime translation load path in `AppManager`: the app was searching `<binaryDir>/translations/` (correct for dev builds only), but installed layouts place the files at `<binaryDir>/../share/nexis/translations/`. The loader now tries the FHS-installed path first, with the beside-binary path as a fallback for development builds.
 
 ## [2.3.9] - 2026-06-01
