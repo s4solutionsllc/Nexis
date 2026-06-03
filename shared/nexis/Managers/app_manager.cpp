@@ -2,6 +2,7 @@
 #include "setting_manager.h"
 #include "dpi.h"
 #include <QDebug>
+#include <QDir>
 #include <QImageReader>
 #include <QPalette>
 #include <QRegularExpression>
@@ -31,9 +32,17 @@ AppManager::AppManager()
 
     loadLanguageList();
 
-    if (mTranslator.load(QString("nexis_%1").arg(mSettingManager->getLanguage()), qApp->applicationDirPath() + "/translations")) {
-        qApp->installTranslator(&mTranslator);
-        (mSettingManager->getLanguage() == "ar") ? qApp->setLayoutDirection(Qt::RightToLeft) : qApp->setLayoutDirection(Qt::LeftToRight);
+    const QString lang = mSettingManager->getLanguage();
+    const QStringList searchDirs = {
+        QDir::cleanPath(qApp->applicationDirPath() + "/../share/nexis/translations"),
+        qApp->applicationDirPath() + "/translations",
+    };
+    for (const QString &dir : searchDirs) {
+        if (mTranslator.load("nexis_" + lang, dir)) {
+            qApp->installTranslator(&mTranslator);
+            qApp->setLayoutDirection(lang == "ar" ? Qt::RightToLeft : Qt::LeftToRight);
+            break;
+        }
     }
 
     // Live-switch when the system color scheme changes (Qt 6.5+)
