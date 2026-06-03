@@ -9,6 +9,8 @@ public:
     UpdateCheckResult checkForUpdates() override;
     QStringList availableSources() const override;
 
+    static void parseAptLines(const QStringList &lines, UpdateCheckResult &result);
+
 private:
     void checkApt(UpdateCheckResult &result) const;
     void checkDnf(UpdateCheckResult &result) const;
