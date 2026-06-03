@@ -1197,12 +1197,17 @@ QJsonArray DashboardPage::defaultLayout() const
     addEntry("disk", 0, 2, 1, 1);
     addEntry("network", 0, 3, 1, 1);
 
-    int col = 0;
-    if (im->hasGpu()) addEntry("gpu", 1, col++, 1, 1);
-    if (im->hasThermalSensors()) addEntry("temp", 1, col++, 1, 1);
-    if (im->hasBattery()) addEntry("battery", 1, col++, 1, 1);
-    if (im->hasFanSensors()) addEntry("fan", 1, col++, 1, 1);
-    addEntry("health", 1, col++, 1, 1);
+    addEntry("health", 1, 3, 1, 1);
+
+    int sRow = 1, sCol = 0;
+    auto addSensor = [&](const QString &id) {
+        if (sCol >= 3) { sRow = 2; sCol = 0; }
+        addEntry(id, sRow, sCol++, 1, 1);
+    };
+    if (im->hasGpu())            addSensor("gpu");
+    if (im->hasThermalSensors()) addSensor("temp");
+    if (im->hasBattery())        addSensor("battery");
+    if (im->hasFanSensors())     addSensor("fan");
 
     return arr;
 }
