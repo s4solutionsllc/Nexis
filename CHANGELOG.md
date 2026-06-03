@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Translation files missing from AppImage and .deb packages (GH#75):** All non-English locales were silently broken in distributed packages — the compiled `.qm` files were generated during the build but never included in the install step, so `cmake --install` (used by both the AppImage and .deb workflows) left them behind. Added a CMake install rule that stages all `nexis_*.qm` files into `share/nexis/translations/`. Also fixed the runtime translation load path in `AppManager`: the app was searching `<binaryDir>/translations/` (correct for dev builds only), but installed layouts place the files at `<binaryDir>/../share/nexis/translations/`. The loader now tries the FHS-installed path first, with the beside-binary path as a fallback for development builds.
+
 ## [2.3.9] - 2026-06-01
 
 ### Fixed

@@ -483,6 +483,12 @@ qt_create_translation(QM_FILES NEXIS_TRANSLATIONS
     ${CORE_SHARED_SRCS} ${CORE_PLAT_SRCS})
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${QM_FILES}")
 
+install(
+  FILES ${QM_FILES}
+  DESTINATION share/nexis/translations
+  CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
