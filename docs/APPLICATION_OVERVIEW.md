@@ -685,7 +685,7 @@ tests/
 | Concurrent | `QtConcurrent::run` for async operations |
 | Network | `QNetworkInterface` for network info |
 | Test | Qt Test framework for unit tests (CTest integration) |
-| LinguistTools | `qt_create_translation` for i18n |
+| LinguistTools | `qt_add_translation` (lrelease) for i18n |
 
 ### Build Commands
 
@@ -801,8 +801,8 @@ OS-native scheduling:
 
 Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dutch, English, Finnish, French, Galician, German, Greek, Hebrew, Hindi, Italian, Japanese, Kannada, Korean, Malayalam, Norwegian, Occitan, Polish, Portuguese, Romanian, Russian, Serbian, Spanish, Swedish, Turkish, Ukrainian, Vietnamese
 
-**Build:** `qt_create_translation()` generates binary `.qm` files embedded in the executable.
-**Runtime:** `AppManager` loads the selected language via `QTranslator::load()`.
+**Build:** `qt_add_translation()` compiles the committed `.ts` files into binary `.qm` files via `lrelease` (source-string extraction with `lupdate` is handled separately by the `lupdate.yml` workflow). The `.qm` files are installed to `share/nexis/translations/` so they ship in the AppImage and `.deb` packages.
+**Runtime:** `AppManager` loads the selected language via `QTranslator::load()` once at startup, searching the FHS install path (`../share/nexis/translations`) first, then beside the binary for dev builds. Changing the language in Settings requires a restart — Nexis prompts the user and offers to relaunch (there is no live `retranslateUi()`).
 **Management:** Crowdin integration with automated PR workflows for community translations.
 
 ---

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Changing the interface language had no visible effect:** Selecting a different language in Settings only saved the preference — the translator is installed once at startup and was never swapped, and no page implements live `retranslateUi()`, so the UI stayed in the previous language with no indication why. Nexis now tells the user the change takes effect after a restart and offers to relaunch immediately. (The relaunch uses `$APPIMAGE` when running from an AppImage so it re-launches the bundle rather than the transient mount path.)
+
 ## [2.3.11] - 2026-06-04
 
 ### Fixed
