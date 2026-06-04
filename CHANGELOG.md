@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Translations still missing from all packages — the actual root cause (GH#75):** The 2.3.10 fix added a CMake install rule and corrected the runtime load path, but translations remained broken because no `.qm` files were ever compiled in the first place. The `qt_create_translation` call was passing the bare token `NEXIS_TRANSLATIONS` instead of the expanded `${NEXIS_TRANSLATIONS}` list, so none of the arguments ended in `.ts` and lrelease was never invoked — `QM_FILES` came out empty, leaving the install rule with nothing to stage. Switched to `qt_add_translation(QM_FILES ${NEXIS_TRANSLATIONS})`, which compiles the committed `.ts` files into `.qm` via lrelease only. (Using `qt_add_translation` rather than `qt_create_translation` also keeps the build from running lupdate over the sources and rewriting the tracked `.ts` files — source-string extraction is owned by the separate `lupdate.yml` workflow.) All 34 locales now compile and install to `share/nexis/translations/`.
+
 ## [2.3.10] - 2026-06-03
 
 ### Fixed

@@ -477,10 +477,15 @@ set(NEXIS_TRANSLATIONS
   "${SHARED_DIR}/translations/nexis_zh-cn.ts"
   "${SHARED_DIR}/translations/nexis_zh-tw.ts"
 )
-find_package(Qt6 COMPONENTS LinguistTools)
-qt_create_translation(QM_FILES NEXIS_TRANSLATIONS
-    ${GUI_SHARED_SRCS} ${GUI_PLAT_SRCS}
-    ${CORE_SHARED_SRCS} ${CORE_PLAT_SRCS})
+find_package(Qt6 COMPONENTS LinguistTools REQUIRED)
+# Compile the committed .ts files into .qm. Use qt_add_translation (lrelease
+# only) rather than qt_create_translation: source-string extraction via lupdate
+# is handled by the dedicated lupdate.yml workflow, so the build must not
+# regenerate the tracked .ts files. (Also note: qt_create_translation only
+# emits .qm for arguments ending in .ts — passing the bare variable name
+# NEXIS_TRANSLATIONS instead of ${NEXIS_TRANSLATIONS} silently produced zero
+# .qm files, which is why translations were missing from every package.)
+qt_add_translation(QM_FILES ${NEXIS_TRANSLATIONS})
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${QM_FILES}")
 
 install(
