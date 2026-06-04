@@ -160,10 +160,10 @@ void SearchPage::initComboboxValues()
     ui->cmbSizeCriteria->addItem(tr("Equal (=)"), "");
     ui->cmbSizeCriteria->addItem(tr("Greater (>)"), "+");
 
-    ui->cmbSizeUnits->addItem("Bytes", "c");
-    ui->cmbSizeUnits->addItem("Kibibytes", "k");
-    ui->cmbSizeUnits->addItem("Mebibytes", "M");
-    ui->cmbSizeUnits->addItem("Gibibytes", "G");
+    ui->cmbSizeUnits->addItem(tr("Bytes"), "c");
+    ui->cmbSizeUnits->addItem(tr("Kibibytes"), "k");
+    ui->cmbSizeUnits->addItem(tr("Mebibytes"), "M");
+    ui->cmbSizeUnits->addItem(tr("Gibibytes"), "G");
 }
 
 void SearchPage::on_btnBrowseSearchDir_clicked()

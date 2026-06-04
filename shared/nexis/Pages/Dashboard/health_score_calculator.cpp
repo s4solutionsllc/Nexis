@@ -1,5 +1,6 @@
 #include "health_score_calculator.h"
 
+#include <QCoreApplication>
 #include <QtGlobal>
 
 HealthScoreCalculator::HealthScoreCalculator()
@@ -84,9 +85,9 @@ int HealthScoreCalculator::compositeScore() const
 QString HealthScoreCalculator::scoreLabel() const
 {
     int score = compositeScore();
-    if (score >= 75) return QStringLiteral("Excellent");
-    if (score >= 40) return QStringLiteral("Good");
-    return QStringLiteral("Poor");
+    if (score >= 75) return QCoreApplication::translate("HealthScoreCalculator", "Excellent");
+    if (score >= 40) return QCoreApplication::translate("HealthScoreCalculator", "Good");
+    return QCoreApplication::translate("HealthScoreCalculator", "Poor");
 }
 
 QList<HealthComponent> HealthScoreCalculator::components() const
