@@ -601,6 +601,15 @@ add_executable(nexis
 
 target_link_libraries(nexis nexis-gui)
 
+# Stage .qm files next to the binary for dev/in-tree runs.
+# cmake --install handles packages; this covers build-tree execution where
+# applicationDirPath()/translations would otherwise never exist.
+add_custom_command(TARGET nexis POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${EXECUTABLE_OUTPUT_PATH}translations"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${QM_FILES} "${EXECUTABLE_OUTPUT_PATH}translations/"
+    COMMENT "Staging .qm files for in-tree runs"
+)
+
 # ============================================================================
 # Tests (Qt Test + CTest)
 # ============================================================================
