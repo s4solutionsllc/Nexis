@@ -9,6 +9,8 @@
 #include "utilities.h"
 #include <QApplication>
 #include <QFileDialog>
+#include <QMessageBox>
+#include <QProcess>
 #include <QRegularExpression>
 #include <QLineEdit>
 #include <QGridLayout>
@@ -220,7 +222,31 @@ void SettingsPage::init()
 void SettingsPage::cmbLanguagesChanged(const int &index)
 {
     QString langCode = ui->cmbLanguages->itemData(index).toString();
+
+    // Ignore programmatic re-selection that doesn't actually change the language
+    // (e.g. the combo being repopulated) so we don't prompt spuriously.
+    if (langCode == mSettingManager->getLanguage())
+        return;
+
     mSettingManager->setLanguage(langCode);
+
+    // Translations are installed once at startup (see AppManager), so a new
+    // language only takes effect after a relaunch. Tell the user and offer to
+    // restart now rather than leaving the UI silently unchanged.
+    const auto choice = QMessageBox::question(
+        this, tr("Language Changed"),
+        tr("The language change will take effect after Nexis is restarted.\n\n"
+           "Restart now?"),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+
+    if (choice == QMessageBox::Yes) {
+        // Inside an AppImage the executable lives on a transient mount that
+        // disappears on exit; relaunch the .AppImage itself via $APPIMAGE.
+        const QString target =
+            qEnvironmentVariable("APPIMAGE", qApp->applicationFilePath());
+        QProcess::startDetached(target, qApp->arguments().mid(1));
+        qApp->quit();
+    }
 }
 
 void SettingsPage::cmbDiskChanged(const int &index)
