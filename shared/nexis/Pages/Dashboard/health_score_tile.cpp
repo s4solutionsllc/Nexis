@@ -17,8 +17,7 @@ static const QMap<QString, QString> kComponentColorTokens = {
 
 HealthScoreTile::HealthScoreTile(const QString &colorToken, QWidget *parent)
     : MetricTileBase("Health Score", colorToken, parent),
-      mCurrentScore(100),
-      mCurrentLabel("Excellent")
+      mCurrentScore(100)
 {
     setObjectName("healthScoreTile");
     buildLayout();

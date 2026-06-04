@@ -40,7 +40,6 @@ private:
     QLabel *mLblScoreLabel;
 
     int mCurrentScore;
-    QString mCurrentLabel;
 };
 
 #endif // HEALTH_SCORE_TILE_H

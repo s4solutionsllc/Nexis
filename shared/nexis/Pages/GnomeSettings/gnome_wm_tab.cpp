@@ -194,12 +194,12 @@ void GnomeWmTab::loadSettings()
 {
     mLoading = true;
 
-    auto addTitlebarActions = [](QComboBox *combo) {
-        combo->addItem("Toggle Maximize", "toggle-maximize");
-        combo->addItem("Minimize",        "minimize");
-        combo->addItem("Lower",           "lower");
-        combo->addItem("Menu",            "menu");
-        combo->addItem("None",            "none");
+    auto addTitlebarActions = [this](QComboBox *combo) {
+        combo->addItem(tr("Toggle Maximize"), "toggle-maximize");
+        combo->addItem(tr("Minimize"),        "minimize");
+        combo->addItem(tr("Lower"),           "lower");
+        combo->addItem(tr("Menu"),            "menu");
+        combo->addItem(tr("None"),            "none");
     };
 
     // WM Preferences
