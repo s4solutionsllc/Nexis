@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.12] - 2026-06-04
+
 ### Fixed
 - **Changing the interface language had no visible effect:** Selecting a different language in Settings only saved the preference — the translator is installed once at startup and was never swapped, and no page implements live `retranslateUi()`, so the UI stayed in the previous language with no indication why. Nexis now tells the user the change takes effect after a restart and offers to relaunch immediately. (The relaunch uses `$APPIMAGE` when running from an AppImage so it re-launches the bundle rather than the transient mount path.)
+- **Several UI strings were not translated in non-English locales (GH#87):** Size unit labels in the Search page (Bytes / Kibibytes / Mebibytes / Gibibytes), titlebar action names in GNOME Settings, and health score labels (Excellent / Good / Poor) were bypassing the translation system. These strings now go through `tr()` and will be picked up by lupdate on the next translation update cycle.
+- **Translations did not load in development builds (GH#85):** Running `build/output/nexis` in a non-English locale always showed English because `.qm` files compiled to `build/` rather than `build/output/translations/` where the binary searches. A `POST_BUILD` step now copies the compiled `.qm` files next to the binary so in-tree runs respect the selected language. Installed packages (AppImage, `.deb`, AUR) were unaffected.
+- **AUR build failed on Arch Linux / CachyOS and other Arch derivatives (GH#82):** `paru -S nexis` and `yay -S nexis` aborted with `undefined symbol: main` when building the test suite on GCC 16 + LLD toolchains. The PKGBUILD now passes `-DBUILD_TESTING=OFF` so tests are not compiled during install. The underlying GCC 16 + LLD linker incompatibility is tracked in GH#88.
 
 ## [2.3.11] - 2026-06-04
 
