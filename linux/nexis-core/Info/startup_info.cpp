@@ -86,6 +86,7 @@ bool StartupInfoLinux::isAutostartDisabled() const
     // Check if X-GNOME-Autostart-enabled=false is present
     const QByteArray disabled_str("X-GNOME-Autostart-enabled=false");
     QFile autostart_file(path);
-    autostart_file.open(QIODevice::ReadOnly | QIODevice::Text);
+    if (!autostart_file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
     return autostart_file.readAll().indexOf(disabled_str, 0) != -1;
 }
