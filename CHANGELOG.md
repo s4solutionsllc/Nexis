@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.13] - 2026-06-05
+
+### Fixed
+- **AUR install still failed on CachyOS / Arch with `undefined symbol: main` (GH#82):** The v2.3.12 fix only disabled the test suite, which moved the same link failure from the test binaries onto the `nexis` executable itself. The real cause is GCC LTO objects being linked by LLD: on distros that enable LTO by default (CachyOS), GCC emits slim LTO objects, and LLD cannot resolve symbols defined inside them — the lone real-object reference into LTO code (`Scrt1.o`'s `_start → main`) surfaces as an undefined `main`, which is why *every* executable failed and only on `main`. The build also force-selected LLD via the in-tree `CXXBASICS_USE_FASTER_LINKERS` helper, so the LLD half was self-inflicted. The PKGBUILD now sets `options=('!lto')` (no `-flto` injection) and builds with `-DCXXBASICS_USE_FASTER_LINKERS=OFF` (system default linker), making the packaged build a reproducible default-toolchain build that links cleanly. The underlying GCC 16 + LLD + LTO toolchain incompatibility remains tracked in GH#88.
+
 ## [2.3.12] - 2026-06-04
 
 ### Fixed

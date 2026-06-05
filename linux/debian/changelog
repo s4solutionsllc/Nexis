@@ -1,3 +1,10 @@
+nexis (2.3.13-0) unstable; urgency=medium
+
+  * Fix AUR install failing on CachyOS/Arch with "undefined symbol: main" —
+    disable LTO and LLD force-selection in the packaged build (GH#82)
+
+ -- Luke Simpson <luke@s4solutions.ai>  Fri, 05 Jun 2026 00:00:00 +0000
+
 nexis (2.3.12-0) unstable; urgency=medium
 
   * Fix language change requiring restart now prompts and offers to relaunch
