@@ -104,9 +104,11 @@ After changing a QSS dynamic property on a parent, child widgets need explicit `
 
 ## Work Item Tracking
 
-**Plane is frozen (read-only as of 2026-05-24).** All work management has moved to **Paperclip** at `https://paperclip.s4solutions.ai`. The Plane `NEX` project is a historical archive only — do not create or update Plane work items.
+**Paperclip is the system of record** for all issues, features, and tracking. The issue-ID prefix is `NEX` — reference issues as `NEX-<number>` in commit messages and PRs.
 
-Use Paperclip for all new issues, features, and tracking. Reference issues as `GH#<number>` in commit messages.
+There is **no Paperclip MCP server** — it is human-driven. Reference issues by their `NEX-<number>` ID; when you need an issue's scope or details, ask the user rather than looking it up programmatically.
+
+**The old self-hosted Plane instance has been decommissioned.** Do **not** call any `mcp__plane__*` tools — the `plane` MCP server is gone and those calls will fail.
 
 ## GitHub Issues Sync (Run at Every Session Start)
 
