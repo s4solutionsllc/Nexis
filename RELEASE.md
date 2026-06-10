@@ -66,17 +66,23 @@ CVE / security patches: see §6.
 ```bash
 # 1. Update CHANGELOG.md: rename "## [Unreleased]" to "## [X.Y.Z] - YYYY-MM-DD"
 #    and add a fresh empty "## [Unreleased]" section above it.
-# 2. Bump the AUR PKGBUILD version (linux/aur/PKGBUILD: pkgver=X.Y.Z, pkgrel=1)
-# 3. Add a new debian/changelog entry for X.Y.Z (Linux maintainer email).
+# 2. Bump the CMakeLists.txt project() version (`project(Nexis VERSION X.Y.Z)`
+#    at the top of CMakeLists.txt). The tag-driven release pipeline passes
+#    -DAPP_VERSION_OVERRIDE=<tag> so published artifacts always match the tag,
+#    but non-override builds (untagged developer builds, distro-side rebuilds
+#    that don't pass the override, the macOS Info.plist short-version baseline)
+#    fall back to PROJECT_VERSION — keep it in sync with the tag.
+# 3. Bump the AUR PKGBUILD version (linux/aur/PKGBUILD: pkgver=X.Y.Z, pkgrel=1)
+# 4. Add a new debian/changelog entry for X.Y.Z (Linux maintainer email).
 #    Note: release.yml's "Sync debian changelog version from tag" step
 #    auto-rewrites the top entry's version to match the tag if they differ,
 #    so a stale top version is recoverable — but for a clean PPA upload, add
 #    a real entry with notes.
-git add CHANGELOG.md linux/aur/PKGBUILD linux/debian/changelog
+git add CHANGELOG.md CMakeLists.txt linux/aur/PKGBUILD linux/debian/changelog
 git commit -m "chore(release): X.Y.Z"
 git push origin native
 
-# 4. Tag and push (this is the trigger for the entire pipeline)
+# 5. Tag and push (this is the trigger for the entire pipeline)
 git tag -a vX.Y.Z -m "Nexis X.Y.Z"
 git push origin vX.Y.Z
 ```
