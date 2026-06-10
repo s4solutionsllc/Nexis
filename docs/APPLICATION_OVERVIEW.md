@@ -492,6 +492,8 @@ Configure GNOME desktop environment settings. Conditional: shown only when `gset
 
 Changes apply immediately via `gsettings set`. Error feedback with inline messages if setting fails. Font fields use `QFontComboBox` with live preview; monospace combo filtered to fixed-pitch families.
 
+> **macOS:** the GNOME Settings page is hidden in the sidebar and `ToolManager::checkGnomeSettings()` returns false. The macOS `GnomeSettingsTool` adapter is a hard no-op stub (`isAvailable()` returns false; setters never invoke `defaults write`) so no code path can write GNOME-mapped values into Apple preference domains, even if the sidebar guard were to regress (audit WI-29).
+
 ### 15. System Logs
 
 Filterable, searchable table of recent system logs for quick triage. Programmatic layout (no `.ui` file).
@@ -608,7 +610,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `PackageTool` | List/remove packages | APT, DNF, Pacman, Snap (Linux); Homebrew, `.app` bundles (macOS) |
 | `ServiceTool` | List/start/stop/enable services | `systemctl` (Linux); `launchctl` (macOS, partial) |
 | `AptSourceTool` | Manage APT repositories | `/etc/apt/sources.list.d/` parsing |
-| `GnomeSettingsTool` | Read/write GNOME settings | `gsettings` CLI |
+| `GnomeSettingsTool` | Read/write GNOME settings (Linux only — macOS implementation is a hard no-op stub, see GNOME Settings section) | `gsettings` CLI |
 | `DockerTool` | Manage Docker resources | `docker` CLI (shared implementation) |
 
 ### Utility Classes (3)

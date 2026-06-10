@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: 2026-06-11 (SSO-3497, SSO-3383) | Version 2.3.14
+> Last updated: 2026-06-11 (SSO-3497, SSO-3383, SSO-3391 / WI-29) | Version 2.3.14
 
 ---
 
@@ -246,6 +246,8 @@ if (ToolManager::ins()->checkDocker()) {
 3. **Feature level** — macOS filters Apple system agents from startup apps; purge option hidden on non-APT systems
 
 **Why this matters:** Cross-platform apps often show all features with "not available on this platform" messages, which clutters the UI. Nexis's approach presents a **clean, relevant interface** tailored to each system's actual capabilities.
+
+**Defense-in-depth on hidden tools (audit WI-29).** Hiding a sidebar page is a UI gesture; if the platform abstraction underneath the page still answers `isAvailable() == true`, a future regression to the visibility guard can re-expose dangerous behavior. The macOS `GnomeSettingsTool` adapter previously did exactly that — its mapping table collapsed GNOME interface keys onto `AppleInterfaceStyle` and dock `orientation`, so the page being hidden was the only thing preventing `defaults write NSGlobalDomain …`. The adapter is now a hard no-op stub (`isAvailable()` returns false, every setter returns false without invoking `defaults`), `ToolManager::checkGnomeSettings()` short-circuits to false on macOS, and the constants header is wiped to empty strings. **Rule:** when a tool is hidden on a platform because its semantics don't translate, the platform-specific adapter should also refuse — graceful degradation needs to hold even if a guard regresses.
 
 ---
 
