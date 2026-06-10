@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Scheduled cleans silently never ran on display-less sessions (SSO-3368, audit H6):** Cron-launched and boot-catch-up systemd-user `--clean` invocations aborted during `QApplication` construction because cron unsets `DISPLAY`/`WAYLAND_DISPLAY` and the generated unit files set no QPA platform. The binary now detects the `--clean` / `--check-threshold` flags before constructing `QApplication` and `qputenv`s `QT_QPA_PLATFORM=offscreen` when the user has not pinned a platform themselves. As belt-and-suspenders, the generated cron entry and systemd user-unit `ExecStart`/`Environment=` lines also set `QT_QPA_PLATFORM=offscreen` so scheduled cleans run to completion with no display present.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
