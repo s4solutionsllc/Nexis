@@ -1,4 +1,5 @@
 #include "cleaner_service.h"
+#include "schedule_manager.h"
 #include "setting_manager.h"
 #include <Managers/info_manager.h>
 #include <Managers/tool_manager.h>
@@ -533,6 +534,26 @@ CleanerService::CleanResult CleanerService::cleanSchedule(const QString &schedul
     if (foundIdx == -1) {
         qWarning() << "CleanerService: schedule not found:" << scheduleId;
         return CleanResult();
+    }
+
+    // SSO-3369 / A2: systemd schedules trigger daily; enforce the
+    // every-N-days cadence in-process so cron/launchd and systemd agree.
+    {
+        auto freq = static_cast<ScheduleManager::Frequency>(
+            found.value("frequency").toInt(ScheduleManager::Weekly));
+        int everyNDays = found.value("everyNDays").toInt(0);
+        QDateTime lastRun;
+        const QString lastRunStr = found.value("lastRun").toString();
+        if (!lastRunStr.isEmpty())
+            lastRun = QDateTime::fromString(lastRunStr, Qt::ISODate);
+
+        if (ScheduleManager::isEveryNDaysGateBlocked(
+                freq, everyNDays, lastRun, QDateTime::currentDateTime())) {
+            qInfo().nospace() << "CleanerService: every-N-days gate skipped clean for "
+                              << scheduleId << " (lastRun=" << lastRunStr
+                              << ", everyNDays=" << everyNDays << ")";
+            return CleanResult();
+        }
     }
 
     QList<CleanCategory> categories;
