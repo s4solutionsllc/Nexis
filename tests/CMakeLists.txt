@@ -164,6 +164,19 @@ add_nexis_test(NAME CleanerExclusionTests
     nexis-gui Qt6::Widgets
 )
 
+# WI-08 / audit H9: CleanerService destructive paths (cleanFiles, cleanTrash,
+# elevated branch via virtual seam). Pinned to nexis-gui like the exclusion
+# tests because the implementation lives in the GUI library.
+add_nexis_test(NAME CleanerServiceTests
+  SOURCES
+    managers/test_cleaner_service.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
 # substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
 # "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui

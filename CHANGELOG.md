@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **System Cleaner could delete excluded files inside a scanned directory (NEX-3370 / audit H9):** `CleanerService::scan()` filtered the exclusion list only against top-level entries, but `cleanFiles()` then recursively removed each scanned directory's contents without re-checking the predicate. A file or sub-folder the user added to their exclusion list — e.g. `~/.cache/JetBrains/important.db` underneath a scanned `~/.cache` folder — was deleted anyway. Both `cleanFiles()` and the new recursive walker now apply `isExcluded()` and the `minFileAgeSecs` cutoff at every depth, so protected children survive even when their parent directory is the scan target. The elevated `rm` branch also now passes `-rf --` (end-of-options guard) so a file literally named `-rf` cannot be reparsed as a flag, and routes through an overridable `removeElevated()` seam so the privileged branch is testable without root.
+
+### Added
+- **Unit coverage for `CleanerService` destructive paths (NEX-3370):** New `tests/managers/test_cleaner_service.cpp` exercises `cleanFiles()` against a `QTemporaryDir` tree — excluded files **and excluded children of scanned directories** survive, `minFileAgeSecs` is honored at every depth, symlinks are removed-not-followed, bytes-freed accounting matches actual deletions, and the elevated branch routes through the test seam instead of real `rm`. `cleanTrash()` is covered via a `trashRoot()` seam pointed at a temp dir.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
