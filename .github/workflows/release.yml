@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Install build dependencies
         run: |
@@ -127,7 +127,7 @@ jobs:
         run: cp build/output/nexis build/output/nexis-${{ matrix.arch }}
 
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: linux-artifacts-${{ matrix.arch }}
           path: |
@@ -163,7 +163,7 @@ jobs:
           apt-get install -y -qq git
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Install build dependencies
         run: |
@@ -219,7 +219,7 @@ jobs:
           echo "DEB_NAME=$DEST" >> "$GITHUB_OUTPUT"
 
       - name: Upload .deb artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: linux-deb-plucky-${{ matrix.arch }}
           path: ${{ steps.deb.outputs.DEB_PATH }}
@@ -233,7 +233,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Install dependencies
         run: |
@@ -381,7 +381,7 @@ jobs:
           echo "DMG_NAME=Nexis-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg" >> "$GITHUB_OUTPUT"
 
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: macos-artifacts
           path: build/output/Nexis-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
@@ -400,34 +400,34 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Download Linux x86_64 artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: linux-artifacts-x86_64
           path: artifacts/linux-x86_64
 
       - name: Download Linux ARM64 artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: linux-artifacts-arm64
           path: artifacts/linux-arm64
 
       - name: Download Linux x86_64 Plucky .deb
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: linux-deb-plucky-x86_64
           path: artifacts/linux-deb-plucky-x86_64
 
       - name: Download Linux ARM64 Plucky .deb
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: linux-deb-plucky-arm64
           path: artifacts/linux-deb-plucky-arm64
 
       - name: Download macOS artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: macos-artifacts
           path: artifacts/macos
@@ -538,7 +538,7 @@ jobs:
           echo "BODY_FILE=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           name: Nexis ${{ github.ref_name }}
           make_latest: true

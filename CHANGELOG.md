@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **CI: all GitHub Actions pinned to commit SHAs (SSO-3371 / WI-09):** Every third-party action used in `.github/workflows/` (and the `actions/*` first-party actions) is now referenced by full 40-character commit SHA with a trailing `# vX.Y.Z` comment, replacing the previous mutable `@v6` / `@v3` tag refs. Closes the `tj-actions/changed-files`-style supply-chain hole where a re-pointed upstream tag could exfiltrate the AUR signing key, Crowdin token, or Homebrew tap PAT held by these workflows. Added `.github/dependabot.yml` with the `github-actions` ecosystem so the pinned SHAs are kept fresh via weekly Dependabot PRs.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
