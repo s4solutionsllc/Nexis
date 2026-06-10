@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **macOS: AppleScript injection in app uninstaller (SSO-3366, audit S1):** `PackageToolMacOS::trashApps` interpolated each `.app` bundle path into a `tell application "Finder" to delete POSIX file "%1"` AppleScript source string and ran it through `osascript -e`. Bundle names containing a double quote (legal on macOS — anything downloaded from the web can ship one) terminated the string literal and let attacker-controlled AppleScript run when the user clicked Uninstall, including `do shell script` for arbitrary code execution. The trashing path now uses `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:` on macOS), which takes an `NSURL` and has no shell or AppleScript parsing surface — bundle-name metacharacters are treated as path data, not code.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
