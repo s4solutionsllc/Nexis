@@ -469,10 +469,12 @@ void NetworkUsagePage::refreshCapBar()
     else
         color = sv->value("@successColor", "#27ae60").toString();
 
+    const QString border = sv->value("@borderColor", "#e0e0e0").toString();
+
     mCapBar->setStyleSheet(QString(
-        "QProgressBar { border-radius: 7px; background: @borderColor; }"
-        "QProgressBar::chunk { border-radius: 7px; background-color: %1; }"
-    ).arg(color));
+        "QProgressBar { border-radius: 7px; background: %1; }"
+        "QProgressBar::chunk { border-radius: 7px; background-color: %2; }"
+    ).arg(border, color));
 }
 
 void NetworkUsagePage::refreshBarChart()
