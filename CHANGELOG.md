@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **License SPDX identifier reconciled to `GPL-3.0-only` across packaging and docs (SSO-3373):** The repository previously claimed `GPL-3.0-or-later` in `linux/aur/PKGBUILD`, `linux/aur/.SRCINFO`, `linux/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml`, `docs/MAINTAINER_SOP.md`, `RELEASE.md`, and `CLAUDE.md`, while the `LICENSE` preamble used GPL-3.0-only wording ("version 3 of the License", no "or any later version") and `debian/copyright` used the ambiguous short form `GPL-3.0`. Upstream Stacer ships the verbatim FSF GPL-3.0 text with no author-elected "or later" application notice, so a fork cannot enlarge that grant. All five packaging/doc locations and `debian/copyright` are now `GPL-3.0-only`; the `LICENSE` preamble was already correct and is unchanged.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed

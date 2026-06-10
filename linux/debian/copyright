@@ -5,11 +5,11 @@ Source: https://github.com/s4solutionsllc/Nexis/
 Files: *
 Copyright: 2017-2019 Oguzhan INAN <oguzhan3488@gmail.com>
            2025-2026 Luke Simpson <luke@s4solutions.ai>
-License: GPL-3.0
+License: GPL-3.0-only
 
 Files: debian/*
 Copyright: 2025-2026 Luke Simpson <luke@s4solutions.ai>
-License: GPL-3.0
+License: GPL-3.0-only
 
 GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

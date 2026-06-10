@@ -13,7 +13,7 @@ often*, see [`docs/MAINTAINER_SOP.md`](docs/MAINTAINER_SOP.md).
 
 Every release must satisfy these — fail closed if any check fails.
 
-1. **GPL-3.0 compliance.** `LICENSE` must remain GPL-3.0-or-later, unmodified
+1. **GPL-3.0 compliance.** `LICENSE` must remain GPL-3.0-only, unmodified
    from upstream Stacer attribution + S4 Solutions copyright lines. Nexis is and
    always will be free software; no monetization, ever.
    ```bash
