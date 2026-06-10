@@ -557,6 +557,10 @@ void DashboardPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
 {
     Q_UNUSED(loadAvgs)
 
+    // SSO-3380 / WI-18: DataRefreshService already gates the emit on a
+    // non-empty list, but keep this bounds check as a belt-and-braces
+    // guard for any future direct caller — `.at(0)` is UB on empty.
+    if (percents.isEmpty()) return;
     int cpuUsedPercent = percents.at(0);
 
     // alert message
