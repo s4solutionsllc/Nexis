@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: 2026-04-21 (Bundle F)
+> Last updated: 2026-06-10 (SSO-3364 / audit H3)
 
 ---
 
@@ -390,7 +390,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 - **BUG-72 Tier 2/3:** Eliminated remaining performance hotspots:
   - Replaced `iostat` subprocess (1s main-thread block per tick) with IOKit `IOBlockStorageDriver` API (~0.5ms, correct read/write separation)
   - Cached `getAvgClock()` result (eliminated 2 subprocess calls per tick on Apple Silicon)
-  - Moved `discoverDrives()` to `QtConcurrent::run()` (300-1000ms off main thread every 30s)
+  - Moved disk-health discovery to `QtConcurrent::run()` (300-1000ms off main thread every 30s). Worker now builds a fresh `QList<DriveHealth>` via `DiskHealthInfo::collectDriveHealth()` (no shared-state mutation) and publishes via `InfoManager::setDriveHealth()` inside the `QMetaObject::invokeMethod` hop — mirrors the `DiskInfo::collectDiskInfo()`/`setDisks()` pattern. A `QMutex` on the base class additionally guards every `mDrives` read/write (`getDrives`, `hasDrives`, `setDrives`, both `refreshHealthElevated*` paths). pkexec/sudo invocations run outside the lock to keep UI snapshots responsive (SSO-3364 / audit H3).
   - In-place `QStandardItemModel` updates in ProcessesPage (eliminated 6,800 item allocations per tick)
   - Changed signal signatures to `const&` (eliminated ~2,800 deep string copies per emission)
   - Merged duplicate `getifaddrs()` walks into single `updateNetworkBytes()` method

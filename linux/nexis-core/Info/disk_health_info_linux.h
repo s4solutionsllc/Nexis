@@ -8,12 +8,11 @@ class DiskHealthInfoLinux : public DiskHealthInfo
 public:
     DiskHealthInfoLinux();
 
-    void refreshHealth() override;
+    QList<DriveHealth> collectDriveHealth() override;
     void refreshHealthElevated(const QString &device) override;
     void refreshHealthElevatedBatch(const QStringList &devices,
                                      bool applySetcap,
                                      const QString &smartctlPath) override;
-    void discoverDrives() override;
 };
 
 #endif // DISK_HEALTH_INFO_LINUX_H

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Data race on disk-health cache (SSO-3364 / audit H3):** `DataRefreshService::onSlowTick()` ran `DiskHealthInfo::discoverDrives()` on a `QtConcurrent` worker every 30 s; the worker did `mDrives.clear()` + per-drive `smartctl` append for several seconds, while the UI thread concurrently copied `mDrives` via `getDrives()` (Hardware Info, Resources, Dashboard, Settings) and wrote `mDrives[i]` from `refreshHealthElevated()` on user "Unlock Drive" clicks. Concurrent `QList<DriveHealth>` clear/copy/index-write is undefined behaviour. Adopted the publish pattern (mirrors `DiskInfo::collectDiskInfo()`/`setDisks()`): the worker now builds a fresh `QList<DriveHealth>` into a local via the new `collectDriveHealth()` virtual and returns it; the UI thread publishes via the new `InfoManager::setDriveHealth()` from inside the `QMetaObject::invokeMethod` hop. As a defence-in-depth a `QMutex` also guards every `mDrives` read/write (`getDrives`, `hasDrives`, `setDrives`, both `refreshHealthElevated*` paths). pkexec/sudo invocations run outside the lock so a slow elevation prompt does not block UI snapshots. Applied symmetrically on Linux and macOS.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
