@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Quitting Nexis right after opening System Logs could crash (SSO-3363 / audit H2):** `LogProvider::cancel()` did `mProcess->kill(); mProcess->waitForFinished(3000); mProcess->deleteLater();`, but `waitForFinished()` processes events on the calling thread, so `kill()`'s CrashExit delivered `finished()` synchronously. The connected error path nulled `mProcess` and called `deleteLater()` on it, and the next line in `cancel()` then dereferenced null. The macOS path was the easiest to hit because `log show --last 1h` runs for several seconds, so closing the window while the fetch was still in flight reproduced the segfault reliably. `cancel()` now disconnects the slot, copies the pointer to a local, and nulls the member before touching the QProcess, so the QProcess is destroyed exactly once and `cancel()` is safe whether the process is running, finished, or already cleaned up. Covered by `tests/managers/test_log_provider.cpp`.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed

@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-04-23 | Version 2.3.1
+> Last updated: 2026-06-10 | Version 2.3.13
 
 ---
 
@@ -55,8 +55,8 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 17 test suites with ~242 test methods (Qt Test + CTest)
-- 88 features implemented, 102 bugs fixed since fork
+- 18 test suites with ~246 test methods (Qt Test + CTest)
+- 88 features implemented, 103 bugs fixed since fork
 
 ---
 
@@ -484,6 +484,7 @@ Filterable, searchable table of recent system logs for quick triage. Programmati
 - Severity filtering re-populates from cached entries
 - Manual refresh only (no auto-polling — logs are static history)
 - Initial load: last 500 entries (Linux) or last 1 hour (macOS)
+- `LogProvider::cancel()` is safe to call from `~SystemLogsPage()` mid-fetch — disconnects the finished slot, takes ownership of the QProcess locally, and nulls the member before kill/waitForFinished, so the synchronous CrashExit signal from `kill()` cannot drive a double-delete or null deref (SSO-3363 / audit H2)
 
 ### 16. Settings
 
