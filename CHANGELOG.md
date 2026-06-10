@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Docs:** Reconciled `docs/ARCHITECTURE_REVIEW.md` and `docs/APPLICATION_OVERVIEW.md` against the live tree (SSO-3392 / WI-30). Consolidated by-the-numbers counts (LOC, page/service/signal/timer/test totals) into a single canonical table in `APPLICATION_OVERVIEW.md` and removed the duplicated hard counts that had drifted (notably the "~6,000–7,000 LOC" Scale line, the stale `sigDashboardLayoutReset` mention and "9 signals" / "13 info classes" / "4 timers / 10 signals" claims, the wrong `~/Library/Preferences/com.nexis.plist` / `~/.config/nexis/nexis.conf` settings paths, and the "CI runs screenshot tests" claim already invalidated by WI-19). Refreshed both `Last updated` / `Version` headers to match `PROJECT_VERSION`.
+- **CI:** New `scripts/check_doc_versions.sh` runs on every build matrix leg and fails the workflow if the doc version header drifts from `CMakeLists.txt`'s `project(... VERSION ...)`.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
