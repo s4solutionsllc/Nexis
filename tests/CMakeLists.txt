@@ -272,7 +272,8 @@ add_nexis_test(NAME IndicatorFallbackTests
     nexis-gui Qt6::Widgets
 )
 
-# SSO-3363 / audit H2: LogProvider::cancel() null-deref defence.
+# SSO-3363 / audit H2: LogProvider::cancel() null-deref defence and
+# SSO-3384 / WI-22: MacOsLogStreamParser incremental ndjson parsing.
 # Compiles log_provider.cpp directly so the test runs cross-platform without
 # pulling in nexis-gui or the platform-specific log backends.
 add_nexis_test(NAME LogProviderTests
