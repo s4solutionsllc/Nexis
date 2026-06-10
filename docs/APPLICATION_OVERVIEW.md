@@ -800,7 +800,7 @@ At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all
 **Per-metric color tokens** (`@cpuColor`, `@memoryColor`, `@diskColor`, `@networkColor`, `@gpuColor`, `@tempColor`, `@fanColor`) are defined in `values.ini` and used by `MetricTile` sparklines and the Resources charts, giving each metric a consistent named color across all pages and themes.
 
 **Extended tokens** added for full theme coverage (24 additional tokens per theme):
-- **Network:** `@networkUploadColor` — upload sparkline/label color
+- **Network:** `@networkDownloadColor` — download (RX) sparkline/bar color; `@networkUploadColor` — upload (TX) sparkline/label color
 - **Overlay/Shadow:** `@overlayBackground`, `@overlayText`, `@shadowColor` — kiosk overlay and drop shadow colors (8-digit hex `#AARRGGBB` for alpha support)
 - **Chart Series Palette:** `@chartSeries01` through `@chartSeries20` — 20 colors for `HistoryChart` data lines, with light-theme variants optimized for white backgrounds
 

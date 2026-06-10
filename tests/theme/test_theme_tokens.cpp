@@ -172,6 +172,32 @@ private:
         return offenders;
     }
 
+    // WI-24 (Q1): collect every @token literal passed to QSettings::value() inside
+    // shared/ C++ so getStyleValues() reads are guarded the same way QSS tokens are.
+    // Matches `value("@foo"` and `sv->value("@foo"` plus the default-arg form
+    // `value("@foo", "#deadbeef"`.
+    QSet<QString> extractCppTokens() const
+    {
+        QSet<QString> tokens;
+        QRegularExpression re("value\\(\"(@[a-zA-Z][a-zA-Z0-9_]*)\"");
+        const QString sharedDir = projectDir() + "/shared";
+
+        QDirIterator it(sharedDir,
+                        {"*.cpp", "*.h", "*.mm"},
+                        QDir::Files,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            QFile f(it.next());
+            if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+                continue;
+            QString src = QTextStream(&f).readAll();
+            auto m = re.globalMatch(src);
+            while (m.hasNext())
+                tokens.insert(m.next().captured(1));
+        }
+        return tokens;
+    }
+
 private slots:
     void darkTheme_allTokensResolved();
     void lightTheme_allTokensResolved();
@@ -181,6 +207,8 @@ private slots:
     void noUnresolvedTokens_dark();
     void noUnresolvedTokens_light();
     void noRawTokensInPerWidgetStyleSheet();
+    void darkTheme_allCppTokensResolved();
+    void lightTheme_allCppTokensResolved();
 };
 
 void TestThemeTokens::darkTheme_allTokensResolved()
@@ -299,6 +327,38 @@ void TestThemeTokens::noRawTokensInPerWidgetStyleSheet()
                  "sv->value(\"@token\", fallback).toString() and .arg(...) it "
                  "into the stylesheet string. Offenders:\n  %1")
                  .arg(offenders.join("\n  "))));
+}
+
+void TestThemeTokens::darkTheme_allCppTokensResolved()
+{
+    QSet<QString> cppTokens = extractCppTokens();
+    QVERIFY2(!cppTokens.isEmpty(),
+             "Failed to extract any @token literals from shared/ C++ — "
+             "the regex or the source tree moved");
+
+    QMap<QString, QString> values = loadValuesIni(darkValuesPath());
+    QVERIFY2(!values.isEmpty(), "Failed to load dark theme values.ini");
+
+    for (const QString &token : cppTokens) {
+        QVERIFY2(values.contains(token),
+                 qPrintable(QString("Dark theme missing C++-referenced token: %1").arg(token)));
+    }
+}
+
+void TestThemeTokens::lightTheme_allCppTokensResolved()
+{
+    QSet<QString> cppTokens = extractCppTokens();
+    QVERIFY2(!cppTokens.isEmpty(),
+             "Failed to extract any @token literals from shared/ C++ — "
+             "the regex or the source tree moved");
+
+    QMap<QString, QString> values = loadValuesIni(lightValuesPath());
+    QVERIFY2(!values.isEmpty(), "Failed to load light theme values.ini");
+
+    for (const QString &token : cppTokens) {
+        QVERIFY2(values.contains(token),
+                 qPrintable(QString("Light theme missing C++-referenced token: %1").arg(token)));
+    }
 }
 
 QTEST_MAIN(TestThemeTokens)
