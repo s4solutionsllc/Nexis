@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Default `CXXBASICS_USE_FASTER_LINKERS` to OFF in-tree, fixing GH#82 at the root (SSO-3377 / GH#82 / GH#88):** The in-tree linker accelerator (`shared/cmake/cxxbasics/accelerators/UseFasterLinkers.cmake`) defaulted **ON** and appended `-fuse-ld=lld` whenever LLD was present. Any environment with LLD and `-flto` in `CXXFLAGS` (Fedora/openSUSE defaults, CachyOS, downstreams not using our PKGBUILD) reproduced GH#82's "undefined symbol: main" — GCC emits slim LTO objects that LLD cannot resolve. A dev-speed accelerator should never be on for release or packaged builds. The default is now **OFF**; developers who want the LLD/gold speedup opt in with `-DCXXBASICS_USE_FASTER_LINKERS=ON`. The redundant `-DCXXBASICS_USE_FASTER_LINKERS=OFF` workaround was removed from `linux/aur/PKGBUILD` (the `options=('!lto')` decision stays with the maintainer per GH#82). The underlying GCC + LLD + LTO incompatibility tracked in GH#88 is unchanged; this change makes sure the default config can never recur it.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
