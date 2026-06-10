@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- **`.github/FUNDING.yml` (GitHub Sponsors button) removed (audit D4 / WI-31b):** The repo carried a `github: s4solutionsllc` Sponsors entry, which contradicted the public `docs/MAINTAINER_SOP.md` §2 "No monetization. Ever." rule. Per the CEO decision recorded in this work item, the Sponsors button is removed rather than carving out an exception, and §2 is amended to make explicit that repo-level donation surfaces (FUNDING.yml, "Buy me a coffee" links, Open Collective banners, etc.) are also out of scope. Nexis remains an intentionally non-revenue-generating reference product.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed

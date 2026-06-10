@@ -32,7 +32,10 @@ approval and a recorded rationale.
 1. **Always free.** Distributed under GPL-3.0-or-later. The license check in
    the release runbook (`RELEASE.md` §0) runs every release.
 2. **No monetization.** No paid tiers, no donation walls in the app, no
-   sponsor-only features, no telemetry-for-revenue. Ever.
+   sponsor-only features, no telemetry-for-revenue. **No repo-level donation
+   surfaces either** — that includes `.github/FUNDING.yml` (GitHub Sponsors
+   button), README "Buy me a coffee" links, Open Collective banners, and any
+   other inbound-money funnel attached to the repository. Ever.
 
 Any change to these rules is itself a CEO-level decision and must be reflected
 in this file *and* in the company SOPs / agent instructions.
