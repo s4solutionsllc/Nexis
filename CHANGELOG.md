@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Crash when closing the System Checkup dialog mid-scan (SSO-3362):** Closing the Maintenance Wizard while its four parallel `QtConcurrent::run` checks were still running could trigger a use-after-free — the dialog uses `WA_DeleteOnClose`, so pressing Esc or **Close** before the workers finished freed the dialog while detached lambdas were still about to call `QMetaObject::invokeMethod(this, …)` against deleted memory. Each worker now captures a `QPointer<MaintenanceWizardDialog>` instead of a raw `this`, dispatches results through the context-object + functor overload of `invokeMethod` (so queued slots are dropped when the dialog dies), and the dialog stores every `QFuture` as a member and `waitForFinished()`s them in a new destructor as a backstop against any worker that already passed the guard check.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
