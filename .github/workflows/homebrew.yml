@@ -24,22 +24,69 @@ jobs:
           TAG="${{ github.event.workflow_run.head_branch }}"
           echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUT"
 
+      - name: Compare against currently published cask version
+        id: gate
+        # Skip the bump if this is a backport — e.g. a v2.3.x security patch
+        # released after v2.4.0. Without this gate, the cask would be
+        # downgraded for every brew user (B2/C2 in the audit).
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.VERSION }}"
+          CURRENT_VERSION=$(curl -fsSL --retry 3 \
+            https://raw.githubusercontent.com/s4solutionsllc/homebrew-nexis/main/Casks/nexis.rb \
+            2>/dev/null \
+            | awk '/^[[:space:]]*version "/{ match($0, /"[^"]+"/); print substr($0, RSTART+1, RLENGTH-2); exit }')
+          if [ -z "$CURRENT_VERSION" ]; then
+            echo "Could not read current cask version — proceeding with bump"
+            echo "SHOULD_BUMP=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          HIGHEST=$(printf '%s\n%s\n' "$NEW_VERSION" "$CURRENT_VERSION" | sort -V | tail -1)
+          if [ "$NEW_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "Cask is already at $CURRENT_VERSION — nothing to do"
+            echo "SHOULD_BUMP=false" >> "$GITHUB_OUTPUT"
+          elif [ "$HIGHEST" = "$NEW_VERSION" ]; then
+            echo "New tag $NEW_VERSION > current cask $CURRENT_VERSION — will bump"
+            echo "SHOULD_BUMP=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Tag $NEW_VERSION is a backport (current cask is $CURRENT_VERSION) — skipping bump to avoid downgrading users"
+            echo "SHOULD_BUMP=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Download macOS DMG and compute checksum
         id: checksum
+        if: steps.gate.outputs.SHOULD_BUMP == 'true'
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           URL="https://github.com/s4solutionsllc/Nexis/releases/download/v${VERSION}/Nexis-${VERSION}-macOS-arm64.dmg"
           echo "Downloading ${URL}"
-          curl -sL "${URL}" -o nexis.dmg
+          # --fail makes curl exit non-zero on HTTP errors instead of writing
+          # the error body to disk (a 404 page would otherwise be hashed and
+          # committed to the tap — see audit B2).
+          curl -fsSL --retry 3 "${URL}" -o nexis.dmg
+
+          # Sanity-check: a UDZO .dmg is far larger than any error page and
+          # should not be detected as text/HTML.
+          SIZE=$(stat -c%s nexis.dmg)
+          if [ "$SIZE" -lt 1048576 ]; then
+            echo "::error::Downloaded DMG is suspiciously small ($SIZE bytes) — refusing to checksum"
+            exit 1
+          fi
+          if file nexis.dmg | grep -Eqi 'html|ascii|empty'; then
+            echo "::error::Downloaded file does not look like a binary DMG ($(file nexis.dmg))"
+            exit 1
+          fi
+
           SHA256=$(sha256sum nexis.dmg | awk '{print $1}')
           echo "SHA256=${SHA256}" >> "$GITHUB_OUTPUT"
-          echo "Checksum: ${SHA256}"
+          echo "Checksum: ${SHA256} (size: ${SIZE} bytes)"
 
       - name: Clone tap repo
+        if: steps.gate.outputs.SHOULD_BUMP == 'true'
         run: |
           git clone https://x-access-token:${{ secrets.HOMEBREW_TAP_TOKEN }}@github.com/s4solutionsllc/homebrew-nexis.git tap
 
       - name: Update Cask formula
+        if: steps.gate.outputs.SHOULD_BUMP == 'true'
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           SHA256="${{ steps.checksum.outputs.SHA256 }}"
@@ -49,6 +96,7 @@ jobs:
           cat tap/Casks/nexis.rb
 
       - name: Commit and push
+        if: steps.gate.outputs.SHOULD_BUMP == 'true'
         run: |
           cd tap
           git config user.name "github-actions[bot]"

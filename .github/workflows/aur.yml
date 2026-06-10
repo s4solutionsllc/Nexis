@@ -10,6 +10,11 @@ on:
       version:
         description: 'Version to publish (e.g. 2.3.4)'
         required: true
+      force:
+        description: 'Publish even if version is older than current AUR pkgver (use for resyncs only)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -37,13 +42,49 @@ jobs:
             echo "VERSION=${TAG#v}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Compare against currently published AUR version
+        id: gate
+        # Skip the bump if this is a backport — e.g. a v2.3.x security patch
+        # released after v2.4.0. Without this gate, AUR users would be
+        # downgraded on every install (audit C2).
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.VERSION }}"
+          FORCE="${{ github.event.inputs.force }}"
+          CURRENT_VERSION=$(curl -fsSL --retry 3 \
+            "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=nexis" \
+            2>/dev/null \
+            | awk -F= '/^pkgver=/{print $2; exit}')
+          if [ -z "$CURRENT_VERSION" ]; then
+            echo "Could not read current AUR pkgver — proceeding with bump"
+            echo "SHOULD_BUMP=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$FORCE" = "true" ]; then
+            echo "::notice::workflow_dispatch with force=true — bypassing version gate"
+            echo "SHOULD_BUMP=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          HIGHEST=$(printf '%s\n%s\n' "$NEW_VERSION" "$CURRENT_VERSION" | sort -V | tail -1)
+          if [ "$NEW_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "AUR is already at $CURRENT_VERSION — nothing to do"
+            echo "SHOULD_BUMP=false" >> "$GITHUB_OUTPUT"
+          elif [ "$HIGHEST" = "$NEW_VERSION" ]; then
+            echo "New tag $NEW_VERSION > current AUR $CURRENT_VERSION — will bump"
+            echo "SHOULD_BUMP=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Tag $NEW_VERSION is a backport (current AUR is $CURRENT_VERSION) — skipping bump to avoid downgrading users"
+            echo "SHOULD_BUMP=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Update PKGBUILD version
+        if: steps.gate.outputs.SHOULD_BUMP == 'true'
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           sed -i "s/^pkgver=.*/pkgver=${VERSION}/" linux/aur/PKGBUILD
           sed -i "s/^pkgrel=.*/pkgrel=1/" linux/aur/PKGBUILD
 
       - name: Publish to AUR
+        if: steps.gate.outputs.SHOULD_BUMP == 'true'
         uses: KSXGitHub/github-actions-deploy-aur@da03e160361ce01bf087e790b6ffd196d7dccff7 # v4.1.3
         with:
           pkgname: nexis

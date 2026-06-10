@@ -193,13 +193,27 @@ git clone git@github.com:s4solutionsllc/homebrew-nexis.git
 cd homebrew-nexis
 VERSION=2.3.4
 URL="https://github.com/s4solutionsllc/Nexis/releases/download/v${VERSION}/Nexis-${VERSION}-macOS-arm64.dmg"
-curl -sL "$URL" -o /tmp/nexis.dmg
+# -f makes curl exit non-zero on 4xx/5xx instead of writing the error body
+# to disk; --retry 3 handles transient GitHub CDN blips. Without these, a
+# 404 page would be hashed and committed to the tap, breaking
+# `brew install nexis` for everyone.
+curl -fsSL --retry 3 "$URL" -o /tmp/nexis.dmg
+# Sanity-check the download before hashing.
+SIZE=$(stat -c%s /tmp/nexis.dmg 2>/dev/null || stat -f%z /tmp/nexis.dmg)
+[ "$SIZE" -ge 1048576 ] || { echo "DMG too small ($SIZE bytes) — aborting"; exit 1; }
+file /tmp/nexis.dmg | grep -Eqi 'html|ascii|empty' && { echo "DMG looks like text/HTML — aborting"; exit 1; }
 SHA=$(sha256sum /tmp/nexis.dmg | awk '{print $1}')
 sed -i "s/^  version \".*\"/  version \"${VERSION}\"/" Casks/nexis.rb
 sed -i "s/^  sha256 \".*\"/  sha256 \"${SHA}\"/" Casks/nexis.rb
 git commit -am "Bump Nexis to ${VERSION}"
 git push origin main
 ```
+
+> **Backport caveat:** if you are bumping the cask manually for a backport
+> (e.g. `v2.3.5` cut after `v2.4.0` is already published), **do not push** —
+> the tap should stay on whatever is currently the latest GA line. The
+> automated `homebrew.yml` already refuses to downgrade; mirror that
+> behavior here.
 
 Verify with `brew install --cask s4solutionsllc/nexis/nexis` on a clean machine.
 
@@ -277,7 +291,7 @@ out of the quarterly cadence — see SOP):
 | 0–2 | Reproduce. Decide affected versions and whether a patch backport is needed (last 2 minor lines). |
 | 2–4 | Land the fix on `native`. Add a regression test where feasible. |
 | 4–5 | Cherry-pick to any supported maintenance branch. Cut a patch tag (e.g., `v2.3.4` for a 2.3.x security release). |
-| 5–6 | Verify all release-pipeline jobs pass and notarization completes (macOS). Manually sanity-check the AUR + Homebrew bumps. |
+| 5–6 | Verify all release-pipeline jobs pass and notarization completes (macOS). Manually sanity-check the AUR + Homebrew bumps. For backports, confirm the new release was **not** marked "Latest" and the Cask/AUR were **not** bumped (see "Backport-safe tagging" below). |
 | 6–7 | Publish the GHSA, credit the reporter (with their permission), update `SECURITY.md` and `CHANGELOG.md` `### Security` section, and announce on the website + repo discussions. |
 
 ### Severity dial
@@ -291,6 +305,40 @@ next heartbeat.
 
 For multi-party issues (Qt upstream, distro packagers), follow the Qt
 embargo timeline. Tag and publish on the embargo release date, not before.
+
+### Backport-safe tagging
+
+A backport is any patch tag for an *older* minor line than the currently
+published GA — e.g. cutting `v2.3.5` after `v2.4.0` is already out. Without
+care, a backport will silently downgrade everyone on Homebrew, AUR, and
+any installer that follows GitHub's "Latest" pointer.
+
+The release pipeline now defends against this automatically:
+
+- `release.yml` compares the new tag to the current "Latest" release and
+  publishes the backport with `make_latest: legacy`, which leaves the
+  existing Latest pointer alone. The backport release is still created and
+  its artifacts are still attached — it just isn't promoted to Latest.
+- `homebrew.yml` reads the cask's currently published `version` and skips
+  the bump when the new tag is older.
+- `aur.yml` reads the current `pkgver` from AUR and skips the bump when
+  the new tag is older. The `workflow_dispatch` form accepts a `force`
+  input for the rare manual resync.
+
+**Operator checklist after pushing a backport tag:**
+
+1. Wait for the `release` job to finish, then confirm on the Releases page
+   that the new release is **not** the one labelled "Latest".
+2. Confirm `homebrew.yml` and `aur.yml` either skipped the bump (notice
+   in the job log) or did not run.
+3. If you actually want the backport to become Latest (rare — only if the
+   newer line has been retracted), edit the release on GitHub and tick
+   "Set as the latest release" by hand. Do **not** re-tag.
+
+If you discover a backport already polluted Homebrew/AUR, the recovery is
+a manual republish of the *current GA* version through the same channels
+(`workflow_dispatch` on `aur.yml` with `force: true`; manual fallback in
+§4 for Homebrew) — do not retag the GA.
 
 ---
 
