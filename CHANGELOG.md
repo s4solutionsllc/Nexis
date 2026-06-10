@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`MAINTAINER_SOP.md` §2 contradicted `.github/FUNDING.yml`:** The SOP's "no monetization, ever" rule was being read as a blanket ban that also covered the repo-level GitHub Sponsors button enabled in `.github/FUNDING.yml`, even though that file had been live since the start of the project as a CEO-approved external donation surface. §2 rule 2 now states the scope explicitly: in-app monetization (paid tiers, donation walls in the app, sponsor-only features, telemetry-for-revenue) remains prohibited *Ever*, while passive external donation links at the repo level (`FUNDING.yml`, GitHub Sponsors, Open Collective, etc.) are permitted, with the active `.github/FUNDING.yml` itself serving as the CEO-approved record for this exception. No code or runtime behavior changes — governance documentation only.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
