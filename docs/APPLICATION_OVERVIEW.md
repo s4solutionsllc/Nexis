@@ -48,14 +48,14 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 **By the numbers:**
 - ~37,000 lines of C++ code across 288 source files
 - 17 application pages
-- 16 system info providers (BatteryInfo, BootAnalysisInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo) — 13 wired through InfoManager, BootAnalysisInfo/StartupInfo standalone, PowerProfileInfo added in v2.1.16
+- 16 system info providers (BatteryInfo, BootAnalysisInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo) — all 15 now wired through InfoManager (BootAnalysisInfo + StartupInfo added in WI-27 / SSO-3389), PowerProfileInfo added in v2.1.16
 - 6 tool classes (package management, services, Docker, APT sources, GNOME settings, file search)
 - 8 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService, DuplicateFinderService)
 - 3 utility classes
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 17 test suites with ~242 test methods (Qt Test + CTest)
+- 18 test suites with ~245 test methods (Qt Test + CTest)
 - 88 features implemented, 102 bugs fixed since fork
 
 ---

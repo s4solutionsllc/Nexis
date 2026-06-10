@@ -164,6 +164,19 @@ add_nexis_test(NAME CleanerExclusionTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3389 / WI-27: InfoManager facade wiring for BootAnalysisInfo +
+# StartupInfo. Links against nexis-gui because InfoManager and the providers
+# it owns are compiled into the GUI target.
+add_nexis_test(NAME InfoManagerWiringTests
+  SOURCES
+    managers/test_info_manager_wiring.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
 # substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
 # "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui

@@ -15,6 +15,8 @@
 #include <Info/disk_health_info_macos.h>
 #include <Info/update_info_macos.h>
 #include <Info/power_profile_info_macos.h>
+#include <Info/boot_analysis_info_macos.h>
+#include <Info/startup_info_macos.h>
 #else
 #include <Info/cpu_info_linux.h>
 #include <Info/disk_info_linux.h>
@@ -29,6 +31,8 @@
 #include <Info/disk_health_info_linux.h>
 #include <Info/update_info_linux.h>
 #include <Info/power_profile_info_linux.h>
+#include <Info/boot_analysis_info_linux.h>
+#include <Info/startup_info_linux.h>
 #include <Info/psi_info.h>
 #endif
 
@@ -50,6 +54,8 @@ InfoManager::InfoManager()
     dhi = std::make_unique<DiskHealthInfoMacOS>();
     upd = std::make_unique<UpdateInfoMacOS>();
     ppi = std::make_unique<PowerProfileInfoMacOS>();
+    bai = std::make_unique<BootAnalysisInfoMacOS>();
+    sui = std::make_unique<StartupInfoMacOS>();
 #else
     ci  = std::make_unique<CpuInfoLinux>();
     di  = std::make_unique<DiskInfoLinux>();
@@ -64,6 +70,8 @@ InfoManager::InfoManager()
     dhi  = std::make_unique<DiskHealthInfoLinux>();
     upd  = std::make_unique<UpdateInfoLinux>();
     ppi  = std::make_unique<PowerProfileInfoLinux>();
+    bai  = std::make_unique<BootAnalysisInfoLinux>();
+    sui  = std::make_unique<StartupInfoLinux>();
     psii = std::make_unique<PsiInfo>();
 #endif
 }
@@ -90,6 +98,50 @@ QStringList InfoManager::getUserList() const
 QStringList InfoManager::getGroupList() const
 {
     return si->getGroupList();
+}
+
+/*
+ * System / CPU descriptive strings — facade over SystemInfo / CpuInfo so
+ * `shared/nexis/Pages` doesn't have to stack-construct platform subclasses.
+ */
+QString InfoManager::getHostname() const
+{
+    return si->getHostname();
+}
+
+QString InfoManager::getPlatform() const
+{
+    return si->getPlatform();
+}
+
+QString InfoManager::getDistribution() const
+{
+    return si->getDistribution();
+}
+
+QString InfoManager::getKernel() const
+{
+    return si->getKernel();
+}
+
+QString InfoManager::getCpuModel() const
+{
+    return si->getCpuModel();
+}
+
+QString InfoManager::getCpuSpeed() const
+{
+    return si->getCpuSpeed();
+}
+
+QString InfoManager::getCpuCoreLabel() const
+{
+    return si->getCpuCore();
+}
+
+int InfoManager::getCpuPhysicalCoreCount() const
+{
+    return ci->getCpuPhysicalCoreCount();
 }
 
 /*
@@ -467,6 +519,19 @@ bool InfoManager::hasPowerProfiles() const
 void InfoManager::refreshPowerProfile()
 {
     ppi->refresh();
+}
+
+/********************
+ * Boot Analysis / Startup Items
+ *******************/
+BootAnalysisInfo *InfoManager::bootAnalysisInfo() const
+{
+    return bai.get();
+}
+
+StartupInfo *InfoManager::startupInfo() const
+{
+    return sui.get();
 }
 
 #ifdef Q_OS_LINUX

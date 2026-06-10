@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Shared UI pages now reach platform-specific Info through `InfoManager` (SSO-3389 / WI-27, audit A3):** `HardwareInfoPage`, `DashboardPage`, and `BootAnalysisPage` previously stack-constructed `SystemInfoLinux` / `SystemInfoMacOS`, `CpuInfoLinux` / `CpuInfoMacOS`, and `BootAnalysisInfoLinux` / `BootAnalysisInfoMacOS` behind `#ifdef Q_OS_*`. They now go through `InfoManager` getters (`getHostname()`, `getDistribution()`, `getCpuModel()`, `bootAnalysisInfo()`, …). `BootAnalysisInfo` and `StartupInfo` are wired through `InfoManager` for the first time. A new CI gate (`scripts/check-pages-no-platform-headers.sh`, run from `build.yml`) blocks any future include of `*_macos.h` / `*_linux.h` from `shared/nexis/Pages`. Behavior unchanged; cuts one of the 47 `Q_OS_*` edit sites the audit flagged for the next platform port.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
