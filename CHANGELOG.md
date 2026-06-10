@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Screenshot regression tests re-enabled in CI as non-blocking (NEX-3381):** The `ScreenshotTests` suite — excluded from CI for ~4 months after commit `5c173c7` because it hangs indefinitely on ARM64 Linux runners under xvfb — now runs as a separate `continue-on-error` step in `.github/workflows/build.yml` on Linux x64 and macOS (the ARM64 Linux job is still skipped, with an inline tracking comment). The whole `build/tests/test_screenshots/` directory is uploaded as the `screenshot-diffs-*` artifact every run, so reviewers can see actual/reference/diff PNGs for any drift. A new `workflow_dispatch` workflow (`screenshot-baselines.yml`) regenerates baselines on the same platforms and uploads them as `reference-screenshots-{linux,macos}` artifacts for maintainer review before committing. `RELEASE.md` §0 now requires green baselines (or an explicit waiver) before tagging, and `docs/ARCHITECTURE_REVIEW.md` §3B has been corrected — the previous "CI runs screenshot tests" claim was stale.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed

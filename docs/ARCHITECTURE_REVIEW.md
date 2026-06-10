@@ -472,7 +472,11 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 #### 3B. CI Screenshot Regression Tests ✅
 
-**Status:** Implemented (FR-41). The `test-ScreenshotTests` executable captures all 11 always-visible pages in both Dark and Light themes (22 screenshots per platform), compares against committed reference PNGs using a Qt-native pixel diff with configurable per-page tolerance, and uploads visual diff artifacts on failure. CI runs screenshot tests as non-blocking (`continue-on-error`) until references stabilize. Linux CI uses Xvfb for headless GUI rendering.
+**Status:** Implemented (FR-41), re-enabled in CI under NEX-3381. The `test-ScreenshotTests` executable captures all 12 always-visible pages in both Dark and Light themes (24 screenshots per platform), compares against committed reference PNGs using a Qt-native pixel diff with configurable per-page tolerance, and writes actual/reference/diff PNGs to `build/tests/test_screenshots/failures/` on mismatch.
+
+**CI execution:** Runs as a separate **non-blocking** (`continue-on-error: true`) step in `.github/workflows/build.yml`, after the gating Unit Tests step (which still excludes ScreenshotTests via `-E ScreenshotTests`). The step is skipped on the `ubuntu-24.04-arm` runner — ScreenshotTests hangs indefinitely there under xvfb (see commit `5c173c7`), so it runs on Linux x64 (xvfb) and macOS only. The whole `build/tests/test_screenshots/` directory (actuals + failures) is uploaded as the `screenshot-diffs-*` artifact for maintainer review and as the input for baseline refreshes.
+
+**Baseline refresh:** Manually triggered via the `Regenerate Screenshot Baselines` workflow (`.github/workflows/screenshot-baselines.yml`, `workflow_dispatch`), which runs the test with `NEXIS_GENERATE_REFS=1` and uploads the freshly captured PNG set as an artifact. The maintainer downloads it, visually confirms the rendering is intended, and commits the contents under `tests/reference_screenshots/{platform}/{theme}/` on a baseline-refresh PR. The release runbook (`RELEASE.md` §0) requires the latest baselines to be green (or an explicit waiver) before tagging.
 
 **Architecture change:** The GUI sources were extracted into a `nexis-gui` static library so that both the `nexis` executable and the screenshot test can link against them without duplicating the source list. Reference images are stored in-repo under `tests/reference_screenshots/{platform}/{theme}/`.
 
@@ -546,11 +550,12 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 
 **Phase 3 (Done):** Expanded test coverage (FR-76) — 8 new test suites, ~151 additional test methods. Extracted parsing logic from 10 Info/Tool/Service classes into public static methods on shared base classes, created fixture data files in `tests/fixtures/`, and wrote comprehensive parser tests. Covers MemoryInfo, CpuInfo, GpuInfo, AptSourceTool, FanInfo, ThermalInfo, BatteryInfo, DiskInfo, and HostService.
 
-**Phase 4 (Done):** UI regression testing (FR-41):
-- Screenshot comparison in CI — 11 pages × 2 themes per platform
+**Phase 4 (Done):** UI regression testing (FR-41, NEX-3381):
+- Screenshot comparison in CI — 12 pages × 2 themes per platform
 - Qt-native pixel diff with configurable per-page tolerance
-- Visual diff artifact upload on CI failure for manual review
-- Non-blocking initially (`continue-on-error`) until references stabilize
+- Visual diff artifact upload on every CI run for manual review
+- Non-blocking (`continue-on-error: true`) until references stabilize
+- Skipped on ARM64 Linux runners (hangs under xvfb; commit `5c173c7`); runs on Linux x64 and macOS
 
 **Phase 5 (Future):** Remaining coverage gaps:
 - CleanerService (requires extracting logic from GUI executable, blocked by BUG-93)
@@ -559,7 +564,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 - SettingManager defaults and overrides
 - Integration tests for manager CRUD operations
 
-**Current state:** 21 CTest executables — ~293 unit test methods across 20 suites covering core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
+**Current state:** 21 CTest executables — ~293 unit test methods across 20 suites covering core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test covering 24 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
 
 ---
 

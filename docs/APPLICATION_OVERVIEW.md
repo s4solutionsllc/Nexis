@@ -668,7 +668,7 @@ tests/
   - Managers: ScheduleManager (15)
   - Theme: ThemeTokens (7)
 - Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`
-- Screenshot test: captures 11 pages × 2 themes, compares against reference PNGs with per-page pixel tolerance
+- Screenshot test: captures 12 pages × 2 themes, compares against reference PNGs with per-page pixel tolerance (NEX-3381: non-blocking in CI on Linux x64 and macOS; skipped on ARM64 Linux due to xvfb hang)
 - Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)
 - Run via: `ctest --test-dir build --output-on-failure`
