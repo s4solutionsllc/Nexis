@@ -520,7 +520,7 @@ Configure Nexis application preferences.
 - **Language** — 34+ languages via Crowdin translations
 - **Color Scheme** — Auto / Light / Dark mode
 - **Font** — Choose application font family (Inter, Ubuntu, JetBrains Mono, System Default); applied live via `@fontFamily` QSS token
-- **Start Page** — Choose which page opens on launch
+- **Start Page** — Choose which page opens on launch. Persisted as a stable untranslated id (`dashboard`, `systemCleaner`, `uninstaller`, …) via `QComboBox::itemData`, so the preference survives a UI language change and resolves consistently across platforms (SSO-3388 / audit Q3). Legacy installs that stored the localized combo text are migrated to ids by `SettingManager::migrateStartPageId()`; unrecognized values fall back to `dashboard`.
 - **Autostart** — Launch Nexis at login (creates `.desktop` or `.plist`)
 - **Minimize to Tray** — When enabled, closing or minimizing the window hides it to the system tray instead of quitting or staying in the taskbar; clicking the tray icon restores the window (FR-52)
 - **Disk Partition** — Select partition to monitor on Dashboard
