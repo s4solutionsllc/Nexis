@@ -164,6 +164,18 @@ add_nexis_test(NAME CleanerExclusionTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
+# against nexis-gui because FileSearchService lives in the GUI library.
+add_nexis_test(NAME FileSearchServiceTests
+  SOURCES
+    managers/test_file_search_service.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
 # substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
 # "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui

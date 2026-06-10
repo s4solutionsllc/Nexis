@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **App could crash when deleting or trashing large search results (SSO-3365, audit H4):** `FileSearchService::moveToTrash` and `deleteFile` ran `CommandUtil::exec("mv"/"rm")` synchronously from the UI-thread context-menu slot. `CommandUtil::exec` throws a raw `QString` on any `QProcess` error — including the 30 s timeout that fires on bulk operations — and the exception escaped the slot through the event loop, aborting the app while the UI was already frozen waiting on the call. Both methods now dispatch on a worker thread (`QtConcurrent::run`) with a `try/catch (const QString&)` around the exec, report success/failure through a new `fileOperationFinished` signal, and raise the file-op timeout to five minutes. The Search page reacts to the signal: rows are removed only after the operation completes, and failures show an inline error instead of terminating.
+
 ## [2.3.13] - 2026-06-05
 
 ### Fixed
