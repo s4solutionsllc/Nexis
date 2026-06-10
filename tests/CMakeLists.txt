@@ -158,6 +158,13 @@ add_nexis_test(NAME HostServiceTests
 # ── Manager tests ──────────────────────────────────────────────────────────────
 # ScheduleManager lives in the GUI target; we compile its sources directly
 # along with SettingManager (its only dependency beyond nexis-core).
+# SSO-3390 / WI-28: platform-neutral RepositoryTool contract — exercises
+# AptSourceToolLinux on Linux and HomebrewToolMacOS on macOS via the same
+# interface, with backend availability checks for hosts where neither is
+# installed.
+add_nexis_test(NAME RepositoryToolTests
+  SOURCES managers/test_repository_tool.cpp)
+
 add_nexis_test(NAME ScheduleTests
   SOURCES
     managers/test_schedule_manager.cpp

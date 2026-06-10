@@ -454,6 +454,7 @@ Manage package repositories and sources. Conditional: shown only when the releva
 - Multi-select batch uninstall with checkboxes
 - Search with auto-expand
 - Async background loading via `brew info --json=v2`
+- Implemented as a dedicated `HomebrewPage` (under `macos/nexis/Pages/Homebrew/`) backed by `HomebrewToolMacOS`, which implements the platform-neutral `RepositoryTool` interface. Linux's APT page lives under `linux/nexis/Pages/AptSourceManager/` and uses the extended `AptSourceTool` interface. (Prior to SSO-3390, both platforms shared a single page that branched on `Q_OS_MAC` and the macOS adapter shoehorned brew packages into the APT-source data model — that's gone.)
 
 **Available Updates section (both platforms):**
 At the top of the APT Source Manager / Homebrew page, an "Available Updates" section displays outdated packages in a 3-column tree widget (Source, Package, Version). A "Check Now" button triggers an on-demand refresh. Data comes from hourly background checks via `QtConcurrent::run()` in DataRefreshService (`mUpdateTimer`, 1h interval). macOS: `softwareupdate -l` + `brew outdated`. Linux: apt/dnf/pacman/zypper/snap/flatpak. Tray notification when update count goes from 0 to >0 (toggleable in Settings). The sidebar Homebrew/APT button shows an updates badge — full count when the sidebar is expanded, a colored dot (using `@updatesColor` theme token) when collapsed.

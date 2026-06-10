@@ -27,12 +27,6 @@
 #include <QtConcurrent>
 #include "Utils/command_util.h"
 
-#ifdef Q_OS_MAC
-#include <QFont>
-#include <QHeaderView>
-#include "Managers/app_manager.h"
-#endif
-
 APTSourceManagerPage::~APTSourceManagerPage()
 {
     delete ui;
@@ -181,57 +175,6 @@ void APTSourceManagerPage::init()
     if (mRefresh->hasLastRepoHealthCache())
         onRepoHealthChecked(mRefresh->lastRepoHealthCache());
 
-#ifdef Q_OS_MAC
-    // macOS: Homebrew packages with tree widget layout (like Uninstaller page)
-
-    ui->txtAptSource->setPlaceholderText(tr("example %1")
-                                         .arg("'package-name'"));
-    // Hide controls that don't apply to Homebrew packages
-    ui->btnEditAptSource->hide();
-    ui->checkEnableSource->hide();
-    ui->lblAptSourceSelectInfo->hide();
-
-    // Hide the flat QListWidget — we use a tree widget instead
-    ui->listWidgetAptSources->hide();
-    ui->notFoundWidget->hide();
-
-    // Create tree widget programmatically (matches System Cleaner table style)
-    mTreeWidget = new QTreeWidget(ui->verticalWidget_2);
-    mTreeWidget->setObjectName("treeWidgetPackages");
-    mTreeWidget->setHeaderHidden(false);
-    mTreeWidget->setHeaderLabels({ tr("Package") });
-    mTreeWidget->header()->setFixedHeight(Dpi::scale(30));
-    mTreeWidget->header()->setStretchLastSection(true);
-    mTreeWidget->setColumnCount(1);
-    // SSO-3502: NoSelection tree; checkbox toggling does not require focus
-    // because items are checkable via mouse only — a follow-up will rework
-    // this tree to support keyboard checkbox toggling.
-    mTreeWidget->setFocusPolicy(Qt::NoFocus);
-    mTreeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    mTreeWidget->setSelectionMode(QAbstractItemView::NoSelection);
-    mTreeWidget->setIconSize(Dpi::scale(20, 20));
-    mTreeWidget->setIndentation(Dpi::scale(20));
-
-    // Insert into the existing vertical layout
-    ui->verticalLayout->addWidget(mTreeWidget);
-
-    // Connect tree checkbox changes
-    connect(mTreeWidget, &QTreeWidget::itemChanged,
-            this, &APTSourceManagerPage::onTreeItemChanged);
-    connect(this, &APTSourceManagerPage::brewPackagesLoaded,
-            this, &APTSourceManagerPage::onBrewPackagesLoaded);
-
-    on_btnCancel_clicked();
-
-    // Fetch packages on background thread
-    (void)QtConcurrent::run([this]() { fetchBrewPackages(); });
-
-    // Re-fetch after uninstall finishes
-    connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
-        (void)QtConcurrent::run([this]() { fetchBrewPackages(); });
-    });
-
-#else
     if (mToolManager->packageTool()->currentPackageTool == APT_RPM) {
         ui->txtAptSource->setPlaceholderText(tr("example %1")
             .arg("'rpm [p10] http://mirror.yandex.ru/altlinux/ p10/branch/x86_64-i586 classic'"));
@@ -243,15 +186,11 @@ void APTSourceManagerPage::init()
     loadAptSources();
 
     on_btnCancel_clicked();
-#endif
 
     QList<QWidget*> widgets = {
         ui->btnAddAPTSourceRepository, ui->btnCancel, ui->btnDeleteAptSource,
-        ui->txtSearchAptSource, ui->txtSearchAptSource
+        ui->txtSearchAptSource, ui->txtSearchAptSource, ui->btnEditAptSource
     };
-#ifndef Q_OS_MAC
-    widgets.append(ui->btnEditAptSource);
-#endif
     Utilities::addDropShadow(widgets, 40);
 }
 
@@ -277,116 +216,12 @@ void APTSourceManagerPage::loadAptSources()
 
     ui->notFoundWidget->setVisible(aptSourceList.isEmpty());
 
-#ifdef Q_OS_MAC
-    ui->lblAptSourceTitle->setText(tr("Homebrew Packages (%1)")
-                                   .arg(aptSourceList.count()));
-    if (aptSourceList.isEmpty())
-        ui->lblNotFound->setText(tr("No Homebrew Packages Found"));
-#else
     ui->lblAptSourceTitle->setText(tr("APT Repositories (%1)")
                                    .arg(aptSourceList.count()));
-#endif
 
     // Refresh health after any source list change
     mRefresh->triggerRepoHealthCheck();
 }
-
-#ifdef Q_OS_MAC
-void APTSourceManagerPage::fetchBrewPackages()
-{
-    // Worker thread: I/O only, no UI access
-    mBrewPackages = mToolManager->getPackages();
-    emit brewPackagesLoaded();
-}
-
-void APTSourceManagerPage::onBrewPackagesLoaded()
-{
-    // Main thread: populate tree widget
-    mTreeWidget->clear();
-    mTreeWidget->blockSignals(true);
-
-    // Group packages by section (formula / cask)
-    QMap<QString, QList<Package>> grouped;
-    for (const Package &pkg : mBrewPackages) {
-        grouped[pkg.section].append(pkg);
-    }
-
-    QIcon fallbackIcon(":/static/themes/common/img/package.png");
-    QStringList sections = grouped.keys();
-    sections.sort();
-
-    for (const QString &section : sections) {
-        const QList<Package> &pkgs = grouped[section];
-        QString friendlyName = PackageTool::friendlySectionName(section);
-
-        QTreeWidgetItem *sectionItem = new QTreeWidgetItem(mTreeWidget);
-        sectionItem->setText(0, QString("%1 (%2)").arg(friendlyName).arg(pkgs.size()));
-        sectionItem->setFlags(Qt::ItemIsEnabled);
-
-        QFont sectionFont = sectionItem->font(0);
-        sectionFont.setBold(true);
-        sectionItem->setFont(0, sectionFont);
-
-        for (const Package &pkg : pkgs) {
-            QTreeWidgetItem *item = new QTreeWidgetItem(sectionItem);
-            QString displayText = pkg.description.isEmpty()
-                ? pkg.name
-                : QString("%1 (%2)").arg(pkg.description, pkg.name);
-            item->setText(0, displayText);
-            item->setIcon(0, fallbackIcon);
-            item->setCheckState(0, Qt::Unchecked);
-            item->setData(0, Qt::UserRole, pkg.name);
-            // Store section (formula/cask) for potential future use
-            item->setData(0, Qt::UserRole + 1, pkg.section);
-        }
-    }
-
-    mTreeWidget->blockSignals(false);
-
-    // Update title with count
-    int count = 0;
-    for (int i = 0; i < mTreeWidget->topLevelItemCount(); ++i)
-        count += mTreeWidget->topLevelItem(i)->childCount();
-
-    ui->lblAptSourceTitle->setText(tr("Homebrew Packages (%1)").arg(count));
-    mTreeWidget->setVisible(count > 0);
-    updateBrewUninstallButton();
-
-    mTreeWidget->setEnabled(true);
-    ui->txtSearchAptSource->setEnabled(true);
-    ui->txtSearchAptSource->clear();
-}
-
-void APTSourceManagerPage::onTreeItemChanged(QTreeWidgetItem *, int)
-{
-    updateBrewUninstallButton();
-}
-
-QStringList APTSourceManagerPage::getSelectedBrewPackages()
-{
-    QStringList selected;
-    if (!mTreeWidget)
-        return selected;
-    for (int i = 0; i < mTreeWidget->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *section = mTreeWidget->topLevelItem(i);
-        for (int j = 0; j < section->childCount(); ++j) {
-            QTreeWidgetItem *item = section->child(j);
-            if (item->checkState(0) == Qt::Checked)
-                selected << item->data(0, Qt::UserRole).toString();
-        }
-    }
-    return selected;
-}
-
-void APTSourceManagerPage::updateBrewUninstallButton()
-{
-    int count = getSelectedBrewPackages().count();
-    if (count > 0)
-        ui->btnDeleteAptSource->setText(tr("Uninstall Selected (%1)").arg(count));
-    else
-        ui->btnDeleteAptSource->setText(tr("Uninstall"));
-}
-#endif
 
 void APTSourceManagerPage::on_btnAddAPTSourceRepository_clicked(bool checked)
 {
@@ -400,19 +235,15 @@ void APTSourceManagerPage::on_btnAddAPTSourceRepository_clicked(bool checked)
             ui->btnAddAPTSourceRepository->setText(tr("Adding..."));
             ui->btnAddAPTSourceRepository->setEnabled(false);
 
-            mToolManager->addAPTRepository(aptSourceRepository, ui->checkEnableSource->isChecked());
+            mToolManager->addRepository(aptSourceRepository, ui->checkEnableSource->isChecked());
 
             ui->txtAptSource->clear();
             ui->checkEnableSource->setChecked(false);
             ui->btnAddAPTSourceRepository->setEnabled(true);
             on_btnCancel_clicked();
             selectedAptSource.clear();
-#ifdef Q_OS_MAC
-            (void)QtConcurrent::run([this]() { fetchBrewPackages(); });
-#else
             loadAptSources();
             on_txtSearchAptSource_textChanged(ui->txtSearchAptSource->text());
-#endif
         }
     }
 }
@@ -421,11 +252,7 @@ void APTSourceManagerPage::on_btnCancel_clicked()
 {
     ui->btnAddAPTSourceRepository->setChecked(false);
     changeElementsVisible(false);
-#ifdef Q_OS_MAC
-    ui->btnAddAPTSourceRepository->setText(tr("Install"));
-#else
     ui->btnAddAPTSourceRepository->setText(tr("Add Repository"));
-#endif
 }
 
 void APTSourceManagerPage::changeElementsVisible(const bool checked)
@@ -434,16 +261,8 @@ void APTSourceManagerPage::changeElementsVisible(const bool checked)
     ui->btnCancel->setVisible(checked);
     ui->btnDeleteAptSource->setVisible(!checked);
     ui->bottomSectionHorizontalSpacer->changeSize(0, 0, checked ? QSizePolicy::Minimum : QSizePolicy::Expanding);
-#ifdef Q_OS_MAC
-    // Homebrew packages can't be edited or toggled — keep these hidden
-    ui->checkEnableSource->setVisible(false);
-    ui->btnEditAptSource->setVisible(false);
-    if (!checked)
-        updateBrewUninstallButton();
-#else
     ui->checkEnableSource->setVisible(checked);
     ui->btnEditAptSource->setVisible(!checked);
-#endif
 }
 
 void APTSourceManagerPage::on_listWidgetAptSources_itemClicked(QListWidgetItem *item)
@@ -488,79 +307,21 @@ void APTSourceManagerPage::on_listWidgetAptSources_itemClicked(QListWidgetItem *
 void APTSourceManagerPage::on_listWidgetAptSources_itemDoubleClicked(QListWidgetItem *item)
 {
     on_listWidgetAptSources_itemClicked(item);
-#ifndef Q_OS_MAC
-    // Edit is not applicable for Homebrew packages
     on_btnEditAptSource_clicked();
-#endif
 }
 
 void APTSourceManagerPage::on_btnDeleteAptSource_clicked()
 {
-#ifdef Q_OS_MAC
-    QStringList selected = getSelectedBrewPackages();
-    if (selected.isEmpty())
-        return;
-
-    // Dry-run to show dependencies
-    QStringList allWouldRemove = mToolManager->dryRunRemovePackages(selected);
-    QStringList additional;
-    for (const QString &pkg : allWouldRemove) {
-        if (!selected.contains(pkg))
-            additional << pkg;
-    }
-
-    QString message = tr("The following packages will be uninstalled:\n\n") + selected.join("\n");
-    if (!additional.isEmpty())
-        message += "\n\n" + tr("Packages that also depend on these:\n\n") + additional.join("\n");
-
-    QMessageBox::StandardButton reply = QMessageBox::warning(
-        this,
-        tr("Confirm Uninstall"),
-        message,
-        QMessageBox::Ok | QMessageBox::Cancel,
-        QMessageBox::Cancel);
-
-    if (reply != QMessageBox::Ok)
-        return;
-
-    QStringList packagesToRemove = selected;
-    (void)QtConcurrent::run([this, packagesToRemove]() {
-        emit mSignalMapper->sigUninstallStarted();
-        mToolManager->uninstallPackages(packagesToRemove);
-        emit mSignalMapper->sigUninstallFinished();
-    });
-#else
     if (! selectedAptSource.isNull()) {
         mToolManager->removeAPTSource(selectedAptSource);
         selectedAptSource.clear();
         loadAptSources();
         on_txtSearchAptSource_textChanged(ui->txtSearchAptSource->text());
     }
-#endif
 }
 
 void APTSourceManagerPage::on_txtSearchAptSource_textChanged(const QString &val)
 {
-#ifdef Q_OS_MAC
-    if (!mTreeWidget)
-        return;
-    for (int i = 0; i < mTreeWidget->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *section = mTreeWidget->topLevelItem(i);
-        int visibleChildren = 0;
-        for (int j = 0; j < section->childCount(); ++j) {
-            QTreeWidgetItem *item = section->child(j);
-            bool matches = val.isEmpty()
-                || item->text(0).contains(val, Qt::CaseInsensitive)
-                || item->data(0, Qt::UserRole).toString().contains(val, Qt::CaseInsensitive);
-            item->setHidden(!matches);
-            if (matches)
-                visibleChildren++;
-        }
-        section->setHidden(visibleChildren == 0);
-        if (visibleChildren > 0 && !val.isEmpty())
-            section->setExpanded(true);
-    }
-#else
     for (int i = 0; i < ui->listWidgetAptSources->count(); ++i) {
         QListWidgetItem *item = ui->listWidgetAptSources->item(i);
         if (item) {
@@ -568,7 +329,6 @@ void APTSourceManagerPage::on_txtSearchAptSource_textChanged(const QString &val)
             item->setHidden(! isContain);
         }
     }
-#endif
 }
 
 void APTSourceManagerPage::on_btnEditAptSource_clicked()
@@ -618,29 +378,6 @@ void APTSourceManagerPage::onRepoHealthChecked(const RepoHealthCache &cache)
     mBtnRefreshHealth->setEnabled(true);
     mBtnRefreshHealth->setText(tr("Refresh Health"));
 
-#ifdef Q_OS_MAC
-    if (mTreeWidget) {
-        for (int i = 0; i < mTreeWidget->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *section = mTreeWidget->topLevelItem(i);
-            for (int j = 0; j < section->childCount(); ++j) {
-                QTreeWidgetItem *item = section->child(j);
-                QString pkgName = item->data(0, Qt::UserRole).toString();
-                if (cache.contains(pkgName)) {
-                    const RepoHealthResult &result = cache[pkgName];
-                    QString prefix;
-                    switch (result.status) {
-                    case RepoHealthResult::Warning: prefix = "⚠ "; break;
-                    case RepoHealthResult::Error:   prefix = "✗ "; break;
-                    default: break;
-                    }
-                    QString currentText = item->text(0);
-                    currentText.remove(QRegularExpression("^[⚠✗] "));
-                    item->setText(0, prefix + currentText);
-                }
-            }
-        }
-    }
-#else
     for (int i = 0; i < ui->listWidgetAptSources->count(); ++i) {
         QListWidgetItem *listItem = ui->listWidgetAptSources->item(i);
         QWidget *widget = ui->listWidgetAptSources->itemWidget(listItem);
@@ -659,7 +396,6 @@ void APTSourceManagerPage::onRepoHealthChecked(const RepoHealthCache &cache)
         if (cache.contains(key))
             mDetailPanel->showRepo(selectedAptSource, cache[key]);
     }
-#endif
 }
 
 void APTSourceManagerPage::onDetailPanelCloseRequested()

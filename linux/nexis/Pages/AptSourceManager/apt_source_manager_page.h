@@ -21,14 +21,6 @@ class ToolManager;
 class SignalMapper;
 class DataRefreshService;
 
-#ifdef Q_OS_MAC
-#include <QTreeWidget>
-#include <QTreeWidgetItem>
-#include <QtConcurrent>
-#include "Managers/tool_manager.h"
-#include "signal_mapper.h"
-#endif
-
 namespace Ui {
 class APTSourceManagerPage;
 }
@@ -47,11 +39,6 @@ public:
 public:
     static APTSourcePtr selectedAptSource;
 
-#ifdef Q_OS_MAC
-signals:
-    void brewPackagesLoaded();
-#endif
-
 private slots:
     void loadAptSources();
     void changeElementsVisible(const bool checked);
@@ -62,14 +49,6 @@ private slots:
     void on_btnDeleteAptSource_clicked();
     void on_btnEditAptSource_clicked();
     void on_btnCancel_clicked();
-
-#ifdef Q_OS_MAC
-    void fetchBrewPackages();
-    void onBrewPackagesLoaded();
-    void onTreeItemChanged(QTreeWidgetItem *item, int column);
-    QStringList getSelectedBrewPackages();
-    void updateBrewUninstallButton();
-#endif
 
     void onSystemUpdatesChecked(const UpdateCheckResult &result);
     void onRepoHealthChecked(const RepoHealthCache &cache);
@@ -86,11 +65,6 @@ private:
     SignalMapper *mSignalMapper;
 
     QSharedPointer<APTSourceEdit> mAptSourceEditDialog;
-
-#ifdef Q_OS_MAC
-    QTreeWidget *mTreeWidget = nullptr;
-    QList<Package> mBrewPackages;
-#endif
 
     // Available Updates section
     QWidget *mUpdatesSection = nullptr;
