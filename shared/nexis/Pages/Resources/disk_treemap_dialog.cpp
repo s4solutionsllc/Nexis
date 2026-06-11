@@ -314,9 +314,9 @@ void DiskTreemapDialog::applyThemeColors()
         return;
     const QColor text   = QColor(sv->value("@color12").toString());
     const QColor border = QColor(sv->value("@chartBorderColor",
-                                            sv->value("@color3")).toString());
+                                            sv->value("@color03")).toString());
     const QColor bg     = QColor(sv->value("@chartBackgroundColor",
-                                            sv->value("@color1")).toString());
+                                            sv->value("@color01")).toString());
     mView->applyTheme(text, border, bg);
     if (text.isValid())
         mStatusLabel->setStyleSheet(QString("color: %1;").arg(text.name()));
