@@ -244,6 +244,7 @@ Scan and remove system junk files across 9 categories.
 - Excluded paths are skipped during scanning (file exact match, folder prefix match, symlink-aware)
 - Exclusions are enforced at **every depth** of the recursive deletion walk, not just on the top-level scan entry — a protected child or sub-folder inside a scanned cache directory is preserved even when the cache directory itself is the cleanup target (NEX-3370)
 - Exclusions persist across app restarts via JSON in QSettings
+- **macOS 27 Privacy & Security awareness (SSO-3732 / FW-05):** macOS 27 silently denies cross-team app-container reads/deletes without Full Disk Access. The cleaner detects `EPERM` / `EACCES` outcomes through a `removeFile()` seam that classifies them as `AccessDeniedByPolicy` (vs. generic I/O errors), refuses to credit un-cleanable bytes as freed, and exposes the count via `CleanResult::accessDeniedPaths`. On detection (cleaning or the scan-time `~/Library/Containers` "exists but empty" probe) the page posts a persistent banner with an "Open Privacy & Security…" link that drops the user directly into the Full Disk Access pane — cache cleaning is never a silent no-op on macOS 27
 
 **UI features:**
 - **Page 0 — Category Cards (FR-130):** Two-column card grid with per-card name, path subtitle, post-scan size label, and checkbox. Checked cards gain a highlighted border. A persistent footer shows estimated total recoverable space and a "Clean selected" button (enabled after scanning). "View scan results →" navigates to the detailed tree view.
@@ -641,7 +642,7 @@ Eight singleton managers mediate between UI pages and the core library (count: s
 | `AppManager` | Theme/stylesheet loading, language management, system tray icon, color scheme detection. |
 | `SettingManager` | `QSettings` wrapper with 30+ typed getters/setters for persistent preferences. |
 | `ToolManager` | Facade over the cross-platform Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
-| `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. |
+| `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. On macOS 27, classifies a removal failure as `AccessDeniedByPolicy` when TCC denies cross-team app-container access, emits `accessNeededDetected(message, deepLink)` for the Privacy & Security banner, and surfaces the count via `CleanResult::accessDeniedPaths` (SSO-3732 / FW-05). |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 | `ProcessPrefsManager` | Persistent per-process state (pin flags, alert thresholds) used by `ProcessesPage`. JSON-in-QSettings, same shape as `ScheduleManager` / `CleanerExclusions`. |
 | `DataRefreshService` | Centralized polling service with 5 QTimers (fast/medium/slow/process/update). Polls InfoManager once per interval, emits 15 typed data-change signals (14 cross-platform + Linux-only `psiUpdated`). Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |

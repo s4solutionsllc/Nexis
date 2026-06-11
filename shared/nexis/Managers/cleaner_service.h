@@ -30,6 +30,16 @@ public:
         DOWNLOADS_AGED       // FR-113: aged files in the user's Downloads folder
     };
 
+    // SSO-3732 / FW-05: outcome of an individual deletion. Lets callers tell a
+    // policy-level denial (macOS 27 cross-team app-container access blocked by
+    // TCC / Privacy & Security) apart from a generic I/O failure so the UI can
+    // tell the user how to grant Full Disk Access instead of silently skipping.
+    enum class FileRemoval {
+        Removed,                 // file is gone
+        NotRemoved,              // generic I/O failure
+        AccessDeniedByPolicy,    // platform sandbox/permission policy refused the op
+    };
+
     struct ScanResult {
         QMap<CleanCategory, QFileInfoList> categoryFiles;
         quint64 totalSize = 0;
@@ -41,6 +51,11 @@ public:
         QMap<CleanCategory, quint64> categoryBreakdown;
         QDateTime timestamp;
         QString scheduleName;
+        // SSO-3732 / FW-05: count of deletions refused by a platform sandbox
+        // policy (macOS 27 cross-team app-container TCC denial) during this
+        // clean. Non-zero means the user needs to grant Full Disk Access for
+        // the cleaner to make further progress on those paths.
+        int accessDeniedPaths = 0;
     };
 
     static CleanerService *ins();
@@ -62,6 +77,22 @@ public:
     quint64 cleanFiles(const QStringList &paths, int minFileAgeSecs = 0,
                        bool moveToTrashInstead = false);
 
+    // SSO-3732 / FW-05: number of deletions refused by a sandbox policy in the
+    // most recent cleanFiles() call. Reset on entry to cleanFiles(). Read by
+    // clean() to populate CleanResult::accessDeniedPaths and by tests via the
+    // accessNeededDetected() signal or this getter.
+    int lastAccessDeniedCount() const { return mLastAccessDeniedCount; }
+
+    // SSO-3732 / FW-05: deep link the UI passes to QDesktopServices::openUrl()
+    // to drop the user directly into the Privacy & Security pane where Full
+    // Disk Access is granted. Returns an empty string on non-macOS platforms.
+    static QString accessNeededDeepLink();
+
+    // SSO-3732 / FW-05: translatable user-facing message paired with the
+    // deep link above. Same wording for the UI banner and for any other
+    // surface that wants to explain why cleaning regressed.
+    static QString accessNeededMessage();
+
     // FR-112: take a Timeshift / APFS snapshot before a clean if the user
     // has opted in via SettingKeys::PreCleanSnapshotEnabled. Silent no-op
     // when disabled or when the platform tool is unavailable. Always
@@ -78,6 +109,13 @@ signals:
     void cleaningStarted(QString scheduleName);
     void cleaningFinished(CleanResult result);
     void snapshotTaken(QString toolName);   // emitted on worker thread after a successful pre-clean snapshot
+
+    // SSO-3732 / FW-05: emitted when scanning or cleaning detects that a
+    // platform policy refused access — concretely, macOS 27 denying
+    // cross-team app-container reads/deletes without Full Disk Access.
+    // The cleaner page surfaces this as a persistent banner with a button
+    // that opens the deep link.
+    void accessNeededDetected(QString message, QString deepLink);
 
 protected:
     CleanerService();
@@ -100,6 +138,21 @@ protected:
     // branch) without needing root or specific filesystem ownership.
     virtual bool currentUserOwns(const QString &path) const;
 
+    // SSO-3732 / FW-05: test seam for individual file/symlink removal in the
+    // user-branch and the recursive directory walk. Production uses
+    // QFile::remove() and maps an EPERM / EACCES error to
+    // FileRemoval::AccessDeniedByPolicy so the cleaner can tally "access
+    // needed" rather than silently skipping. Tests override to inject the
+    // outcome without depending on the host's TCC layer.
+    virtual FileRemoval removeFile(const QString &path);
+
+    // SSO-3732 / FW-05: test seam for the scan-side container access probe.
+    // Production checks whether `~/Library/Containers` exists but is empty
+    // (the silent-denial fingerprint macOS 27 leaves when Full Disk Access
+    // is withheld). Tests override to inject the outcome without touching
+    // the real home directory.
+    virtual bool macOSContainerAccessProbablyDenied() const;
+
 private:
     static CleanerService *instance;
 
@@ -114,6 +167,11 @@ private:
         const QList<ExclusionEntry> &exclusions,
         int minFileAgeSecs,
         const QDateTime &cutoff);
+
+    // SSO-3732: bumped by removeFile()'s AccessDeniedByPolicy return inside the
+    // cleanFiles()/removeDirContentsRespectingExclusions() recursion. Reset at
+    // the top of cleanFiles() so the value reflects the most recent call.
+    int mLastAccessDeniedCount = 0;
 };
 
 #endif // CLEANER_SERVICE_H
