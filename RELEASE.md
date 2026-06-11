@@ -91,6 +91,16 @@ Downstream-triggered (run on success of `Release`):
 - `aur.yml` — publishes the AUR `nexis` package via `KSXGitHub/github-actions-deploy-aur`.
 - `ppa.yml` — uploads source packages to the Launchpad PPA for `noble`, `jammy`, `questing`.
 
+> **Action pins (WI-09 / SSO-3371).** Every `uses:` in `.github/workflows/` is
+> pinned to a full commit SHA with a trailing `# vX.Y.Z` comment — *never* a
+> bare `@v3` / `@v6` tag. This blocks the `tj-actions/changed-files`-style
+> supply-chain attack where a re-pointed upstream tag would otherwise execute
+> in a context that holds `AUR_SSH_KEY`, `HOMEBREW_TAP_TOKEN`,
+> `CROWDIN_PERSONAL_TOKEN`, or `PPA_GPG_PRIVATE_KEY`. Dependabot
+> (`.github/dependabot.yml`, `github-actions` ecosystem, weekly) opens PRs to
+> roll the SHAs forward when upstreams cut new releases; review the diff
+> before merging.
+
 ### Currently supported targets
 
 - Linux x86_64 (Ubuntu 24.04 / 24.10 / Debian 12+ / Mint 22)

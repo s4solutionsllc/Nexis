@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **CI: all GitHub Actions pinned to commit SHAs (SSO-3371 / WI-09):** Every third-party action used in `.github/workflows/` (and the `actions/*` first-party actions) is now referenced by full 40-character commit SHA with a trailing `# vX.Y.Z` comment, replacing the previous mutable `@v6` / `@v3` tag refs. Closes the `tj-actions/changed-files`-style supply-chain hole where a re-pointed upstream tag could exfiltrate the AUR signing key, Crowdin token, or Homebrew tap PAT held by these workflows. Added `.github/dependabot.yml` with the `github-actions` ecosystem so the pinned SHAs are kept fresh via weekly Dependabot PRs.
 ### Fixed
 - **Scheduled cleans silently never ran on display-less sessions (SSO-3368, audit H6):** Cron-launched and boot-catch-up systemd-user `--clean` invocations aborted during `QApplication` construction because cron unsets `DISPLAY`/`WAYLAND_DISPLAY` and the generated unit files set no QPA platform. The binary now detects the `--clean` / `--check-threshold` flags before constructing `QApplication` and `qputenv`s `QT_QPA_PLATFORM=offscreen` when the user has not pinned a platform themselves. As belt-and-suspenders, the generated cron entry and systemd user-unit `ExecStart`/`Environment=` lines also set `QT_QPA_PLATFORM=offscreen` so scheduled cleans run to completion with no display present.
 ### Security
