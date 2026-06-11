@@ -33,12 +33,23 @@ jobs:
 
       - name: Create upstream tarball
         run: |
+          set -o pipefail
           TAG_VERSION="${{ steps.version.outputs.VERSION }}"
-          # tar exits 1 on "file changed as we read it" — benign, archive is valid
+          # SSO-3399: previously `… || true`, which swallowed every tar failure.
+          # tar exit 1 = "file changed as we read it" — benign and the archive
+          # is still valid. Exit 2+ = real failure (missing files, syntax
+          # error, fatal I/O) — we want CI to fail loudly on those.
+          set +e
           tar czf "${{ runner.temp }}/nexis_${TAG_VERSION}.orig.tar.gz" \
             --transform "s,^\\.,nexis-${TAG_VERSION}," \
             --exclude='./.git' --exclude='./build' --exclude='./website/dist' \
-            --exclude='./website/node_modules' --exclude='./debian' . || true
+            --exclude='./website/node_modules' --exclude='./debian' .
+          rc=$?
+          set -e
+          if [ "$rc" -gt 1 ]; then
+            echo "tar failed with exit code $rc — failing job" >&2
+            exit "$rc"
+          fi
           mv "${{ runner.temp }}/nexis_${TAG_VERSION}.orig.tar.gz" .
           ls -lh "nexis_${TAG_VERSION}.orig.tar.gz"
 

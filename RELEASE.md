@@ -26,9 +26,12 @@ Every release must satisfy these — fail closed if any check fails.
    sections produce a degraded "Release X.Y.Z" body.
 3. **Working tree clean on `native`.** All work is merged; no in-flight PRs that
    should be in this release.
-4. **Tracking files reconciled.** `python scripts/nexis_db.py sync` has been
-   run; closed items for this release are `[x]` in `BUGS.md` /
-   `FEATURE_REQUESTS.md`.
+4. **Issue tracker reconciled.** Paperclip is the system of record (see
+   `CLAUDE.md` — the `SSO-NNNN` prefix). All issues that should ship in this
+   release are closed in Paperclip; any still-open work is either deferred to
+   the next release or has a documented carve-out. The retired
+   `scripts/nexis_db.py` / `BUGS.md` / `FEATURE_REQUESTS.md` flow no longer
+   applies.
 5. **Screenshot baselines green (or explicit waiver).** Per NEX-3381, the
    `ScreenshotTests` suite runs non-blocking in `build.yml` on every push to
    `native` (Linux x64 + macOS; ARM64 Linux is skipped due to a known xvfb

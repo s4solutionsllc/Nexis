@@ -86,8 +86,11 @@ QList<QColor> MetricTileBase::rangeColors(const QString &rangeId)
     QColor battery = c("@batteryColor", "#2EC27E");
     QColor temp    = c("@tempColor",    "#5B9BD5");
     QColor network = c("@networkColor", "#26A69A");
-    QColor purple("#9B59B6");
-    QColor lime("#8BC34A");
+    // SSO-3399 / BUG-47: route through values.ini theme tokens (with the
+    // previous hardcoded hex as a build-time fallback) so swatches respect
+    // light/dark themes like every other metric color.
+    QColor purple  = c("@rangePurpleColor", "#9B59B6");
+    QColor lime    = c("@rangeLimeColor",   "#8BC34A");
 
     if (rangeId == "red-green")
         return { disk, cpu, memory, battery };

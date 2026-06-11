@@ -502,7 +502,7 @@ void DashboardPage::checkUpdate()
 {
     QNetworkAccessManager * nam = new QNetworkAccessManager(this);
     const QNetworkRequest updateCheckRequest(QUrl("https://api.github.com/repos/s4solutionsllc/Nexis/releases/latest"));
-    connect(nam,&QNetworkAccessManager::finished,this,[this](QNetworkReply * reply){
+    connect(nam,&QNetworkAccessManager::finished,this,[this,nam](QNetworkReply * reply){
         if(reply->error()==QNetworkReply::NoError)
         {
             const QString requestResult= reply->readAll();
@@ -521,6 +521,10 @@ void DashboardPage::checkUpdate()
             }
         }
 
+        // SSO-3399: free the QNetworkReply and the NAM after the one-shot
+        // check completes — both used to leak for the lifetime of the page.
+        reply->deleteLater();
+        nam->deleteLater();
     });
     nam->get(updateCheckRequest);
 }

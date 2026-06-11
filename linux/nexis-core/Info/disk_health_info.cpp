@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QMutexLocker>
+#include <QRegularExpression>
 
 namespace {
 // WI-21 (SSO-3383, audit M2): pkexec opens a polkit password prompt that
@@ -14,6 +15,15 @@ namespace {
 // minutes is plenty for any human-driven prompt while still bounding a
 // wedged polkit agent.
 constexpr int kSmartElevatedTimeoutMs = 5 * 60 * 1000;
+
+// SSO-3399: device paths come from /sys/block listings, but we still gate the
+// pkexec/sh -c batch on a strict allow-list to keep the shell-eval path safe
+// against future callers that might pass externally-sourced strings.
+bool isSafeDevicePath(const QString &device)
+{
+    static const QRegularExpression kAllowed(QStringLiteral("^/dev/[A-Za-z0-9]+$"));
+    return kAllowed.match(device).hasMatch();
+}
 } // namespace
 DiskHealthInfoLinux::DiskHealthInfoLinux()
 {
@@ -111,6 +121,21 @@ void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
     if (!mHasSmartctl || devices.isEmpty())
         return;
 
+    // SSO-3399: drop any device path that does not match /dev/[A-Za-z0-9]+ before
+    // interpolating it into the pkexec/sh -c batch — devices currently originate
+    // from sysfs, but the allow-list keeps this path safe if a future caller
+    // passes externally-sourced strings.
+    QStringList safeDevices;
+    safeDevices.reserve(devices.size());
+    for (const QString &dev : devices) {
+        if (isSafeDevicePath(dev))
+            safeDevices << dev;
+        else
+            qWarning() << "disk_health_info: refusing unsafe device path:" << dev;
+    }
+    if (safeDevices.isEmpty())
+        return;
+
     QString cmd;
     if (applySetcap) {
         // Use the provided path, or discover it inside the root shell
@@ -121,9 +146,9 @@ void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
             cmd += "SMPATH=$(which smartctl 2>/dev/null) && setcap cap_sys_rawio,cap_dac_override+ep \"$SMPATH\"; ";
     }
 
-    for (int i = 0; i < devices.size(); ++i) {
+    for (int i = 0; i < safeDevices.size(); ++i) {
         if (i > 0) cmd += "; ";
-        cmd += QString("smartctl -j -a %1").arg(devices[i]);
+        cmd += QString("smartctl -j -a %1").arg(safeDevices[i]);
     }
 
     try {
@@ -135,9 +160,9 @@ void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
                                            QByteArray(), kSmartElevatedTimeoutMs);
         QList<QByteArray> blocks = DiskHealthInfo::splitSmartctlOutput(output);
         QMutexLocker locker(&mDrivesMutex);
-        for (int i = 0; i < blocks.size() && i < devices.size(); ++i) {
+        for (int i = 0; i < blocks.size() && i < safeDevices.size(); ++i) {
             for (int j = 0; j < mDrives.size(); ++j) {
-                if (mDrives[j].devicePath == devices[i]) {
+                if (mDrives[j].devicePath == safeDevices[i]) {
                     DiskHealthInfo::parseSmartctlJsonInto(blocks[i], mDrives[j]);
                     mDrives[j].needsElevation = false;
                     deriveHealthVerdict(mDrives[j]);

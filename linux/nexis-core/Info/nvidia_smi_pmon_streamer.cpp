@@ -86,6 +86,17 @@ NvidiaSmiPmonStreamer::Sample NvidiaSmiPmonStreamer::get(pid_t pid) const
     return mLatest.value(pid, Sample{});
 }
 
+void NvidiaSmiPmonStreamer::pruneDeadPids(const QSet<pid_t> &alivePids)
+{
+    QMutexLocker lock(&mMutex);
+    for (auto it = mLatest.begin(); it != mLatest.end(); ) {
+        if (!alivePids.contains(it.key()))
+            it = mLatest.erase(it);
+        else
+            ++it;
+    }
+}
+
 void NvidiaSmiPmonStreamer::drainToLines(QProcess *proc, QString &buffer,
     void (NvidiaSmiPmonStreamer::*handler)(const QString &))
 {

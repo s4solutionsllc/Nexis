@@ -74,7 +74,11 @@ private slots:
     void addTreeChild(const QString &data, const QString &text, const quint64 &size, QTreeWidgetItem *parent);
 
     void on_treeWidgetScanResult_itemClicked(QTreeWidgetItem *item, const int &column);
-    void on_btnScan_clicked();
+    // SSO-3399: explicit slot name avoids Qt's "on_<objectName>_<signal>"
+    // auto-connect lookup matching `btnScan` (no such widget) and emitting a
+    // test-log warning. The actual button is `btnScanSystem`, wired
+    // explicitly via connect().
+    void onBtnScanSystemClicked();
 
     void systemScan();
     void systemClean();

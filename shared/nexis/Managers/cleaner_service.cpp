@@ -15,6 +15,8 @@
 #include <QTextStream>
 #include <QDebug>
 
+#include <unistd.h>
+
 CleanerService *CleanerService::instance = nullptr;
 
 CleanerService::CleanerService() : QObject(nullptr)
@@ -435,7 +437,27 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
     }
 
     if (!filesToRemove.isEmpty() && !moveToTrashInstead) {
-        removeElevated(filesToRemove);
+        // SSO-3399: split user-owned files (we can remove them as the current
+        // user) from system files that genuinely need root, so a clean operation
+        // on cache directories does not pop a pkexec prompt for paths the user
+        // can delete themselves. Root-owned paths are routed through the
+        // overridable removeElevated() seam (SSO-3370) so the privileged branch
+        // remains testable without root and keeps the `--` end-of-options guard.
+        QStringList userPaths;
+        QStringList rootPaths;
+        for (const QString &path : std::as_const(filesToRemove)) {
+            if (currentUserOwns(path)) {
+                userPaths << path;
+            } else {
+                rootPaths << path;
+            }
+        }
+        for (const QString &p : std::as_const(userPaths)) {
+            if (!QFile::remove(p))
+                qWarning() << "cleanFiles: QFile::remove failed for" << p;
+        }
+        if (!rootPaths.isEmpty())
+            removeElevated(rootPaths);
     }
 
     return totalFreed;
@@ -482,6 +504,11 @@ quint64 CleanerService::removeDirContentsRespectingExclusions(
     }
 
     return freed;
+}
+
+bool CleanerService::currentUserOwns(const QString &path) const
+{
+    return QFileInfo(path).ownerId() == static_cast<uint>(geteuid());
 }
 
 void CleanerService::removeElevated(const QStringList &paths)

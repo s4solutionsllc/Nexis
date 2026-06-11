@@ -189,6 +189,10 @@ QList<Process> ProcessInfoMacOS::collectProcesses()
             else
                 ++netIt;
         }
+
+        // SSO-3399: also prune the streamer's own mLatest so long-lived
+        // streaming sessions don't accumulate entries for exited processes.
+        mNettopStreamer->pruneDeadPids(activePids);
     }
 
     // --- Per-process GPU utilization (FR-128) ---

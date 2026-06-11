@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QPair>
 #include <QProcess>
+#include <QSet>
 
 #include <sys/types.h>
 
@@ -35,6 +36,11 @@ public:
     // Thread-safe snapshot of the current {pid -> (bytes_in, bytes_out)} map.
     // Returns cumulative byte counts; consumers compute rate deltas.
     QHash<pid_t, QPair<quint64, quint64>> snapshot() const;
+
+    // SSO-3399: callers pass the set of pids that are still alive at the most
+    // recent tick — entries for any other pid are dropped from mLatest so the
+    // hash doesn't grow without bound across the streamer's lifetime.
+    void pruneDeadPids(const QSet<pid_t> &alivePids);
 
 private slots:
     void onReadyRead();
