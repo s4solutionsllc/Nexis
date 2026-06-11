@@ -8,7 +8,7 @@ Nexis is a Linux & macOS System Optimizer and Monitoring tool (C++17, Qt6). Orig
 
 Nexis is a **reference product**, not a revenue line. Hard rules — see [`docs/MAINTAINER_SOP.md`](docs/MAINTAINER_SOP.md) for the full SOP and rationale:
 
-- **Always free.** GPL-3.0-or-later, no monetization, ever. The release runbook ([`RELEASE.md`](RELEASE.md) §0) checks this on every release.
+- **Always free.** GPL-3.0-only, no monetization, ever. The release runbook ([`RELEASE.md`](RELEASE.md) §0) checks this on every release.
 - **Staffing:** NexisMaintainer is full-time on Nexis. Plan work in normal product-development terms; do not treat engineering hours as a constrained budget.
 - **Maintainer of record:** EngineeringLead. **Escalation owner:** CEO (product-strategy, monetization, platform-expansion decisions, sponsorships, anything in `RELEASE.md` §0).
 - **Cadence:** continuous development, with release windows roughly every 4–6 weeks for user-visible features. CVE/security and critical bugs (data loss, app refuses to launch on a fresh install of a supported platform, system-level harm caused by a Nexis action) are still treated as interrupts and patched out within the SLA in `RELEASE.md`.

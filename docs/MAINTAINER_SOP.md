@@ -29,10 +29,11 @@ named full-time maintainer, not a rotating team.
 These hold for the lifetime of the project. Any deviation requires written CEO
 approval and a recorded rationale.
 
-1. **Always free.** Distributed under GPL-3.0-or-later. The license check in
+1. **Always free.** Distributed under GPL-3.0-only. The license check in
    the release runbook (`RELEASE.md` §0) runs every release.
 2. **No monetization.** No paid tiers, no donation walls in the app, no
    sponsor-only features, no telemetry-for-revenue. Ever.
+   - *Scope:* this rule targets **in-app** monetization. Passive external donation links at the repo level (`.github/FUNDING.yml`, GitHub Sponsors, Open Collective, etc.) are permitted; the active `.github/FUNDING.yml` constitutes the CEO-approved record for this exception, and any change to that file is itself a CEO-level decision.
 
 Any change to these rules is itself a CEO-level decision and must be reflected
 in this file *and* in the company SOPs / agent instructions.

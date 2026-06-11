@@ -191,6 +191,17 @@ add_nexis_test(NAME IndicatorFallbackTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3363 / audit H2: LogProvider::cancel() null-deref defence.
+# Compiles log_provider.cpp directly so the test runs cross-platform without
+# pulling in nexis-gui or the platform-specific log backends.
+add_nexis_test(NAME LogProviderTests
+  SOURCES
+    managers/test_log_provider.cpp
+    "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+)
+
 # ── Theme validation tests ─────────────────────────────────────────────────────
 add_nexis_test(NAME ThemeTokenTests   SOURCES theme/test_theme_tokens.cpp)
 

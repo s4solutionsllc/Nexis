@@ -37,28 +37,29 @@
 
 ## Architecture at a Glance
 
-Nexis is structured as a **four-tier desktop application**:
+Nexis is structured as a **four-tier desktop application**. Tier sizes (page/service/manager/info/tool/util counts) come from the canonical table in [`APPLICATION_OVERVIEW.md`](APPLICATION_OVERVIEW.md#project-identity); the diagram below names the modules at each tier.
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  UI Layer: 16 QWidget Pages                                       │
-│  Each page owns its .ui file and presentation logic               │
-│  Files: shared/nexis/Pages/*/*.cpp                                │
+│  UI Layer: 15 always-visible QWidget pages + 3 conditional         │
+│  Each page owns its .ui file and presentation logic                │
+│  Files: shared/nexis/Pages/*/*.cpp                                 │
 ├────────────────────────────────────────────────────────────────────┤
-│  Service Layer: 8 Domain Services + NexisPage base class          │
-│  StartupService, FileSearchService, HostService, ProcessService,  │
-│  SystemServiceManager, DockerService, PackageService,             │
-│  DuplicateFinderService                                           │
-│  Files: shared/nexis/Services/*.cpp                               │
+│  Service Layer: 9 Domain Services + NexisPage base class           │
+│  StartupService, FileSearchService, HostService, ProcessService,   │
+│  SystemServiceManager, DockerService, PackageService,              │
+│  DuplicateFinderService, SnapshotService                           │
+│  Files: shared/nexis/Services/*.cpp                                │
 ├────────────────────────────────────────────────────────────────────┤
-│  Manager Layer: 7 Singletons                                      │
-│  InfoManager, AppManager, SettingManager, ToolManager,            │
-│  CleanerService, ScheduleManager, DataRefreshService              │
-│  Files: shared/nexis/Managers/*.cpp                               │
+│  Manager Layer: 8 Singletons                                       │
+│  AppManager, InfoManager, ToolManager, SettingManager,             │
+│  CleanerService, ScheduleManager, ProcessPrefsManager,             │
+│  DataRefreshService                                                │
+│  Files: shared/nexis/Managers/*.cpp                                │
 ├────────────────────────────────────────────────────────────────────┤
-│  Core Library: nexis-core (static lib)                            │
-│  15 Info providers + 8 Tools + 3 Utils                            │
-│  Files: shared/nexis-core/**/*.cpp + {platform}/nexis-core/**     │
+│  Core Library: nexis-core (static lib)                             │
+│  Info providers + Tool classes + Utils (see canonical table)       │
+│  Files: shared/nexis-core/**/*.cpp + {platform}/nexis-core/**      │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -69,6 +70,7 @@ Nexis is structured as a **four-tier desktop application**:
 - **Centralized polling** — `DataRefreshService` singleton owns 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and emits typed data signals; pages subscribe as reactive consumers. The process timer starts paused and is only active while the Processes page is visible (BUG-72). Bundle B (FR-103) added **subscriber gating**: pages call `subscribe(Signal::Cpu)` etc. in `onPageActivated`, and `onFastTick`/`onMediumTick` skip entire sample blocks when no page has subscribed to the matching signal — so a user sitting on Settings or Processes pays zero cost for CPU/memory/network/GPU/disk samples. Bundle B (FR-105) also introduced **PowerMode tiers** (Normal 1/5/30 s, Battery 2/10/60 s, Unfocused 5/30/60 s) driven by the new `sigAppFocusChanged` from `QEvent::WindowActivate/WindowDeactivate` plus the existing battery signal's `isPluggedIn` bit.
 - **Page lifecycle hooks** — `NexisPage` base class with virtual `onPageActivated()`/`onPageDeactivated()` called by `App::pageClick()`. Three heavyweight pages (Dashboard, Resources, Processes) inherit from `NexisPage` and gate their slot handlers on visibility — tile repaints, chart updates, and process polling stop when the page is hidden (BUG-72). Dashboard and Resources additionally `subscribe/unsubscribe` to `DataRefreshService::Signal` values in their lifecycle hooks (FR-103).
 - **Async subprocess helper** — `CommandUtil::execAsync(cmd, args) -> QFuture<ExecResult>` (FR-99) wraps `execWithStatus` in `QtConcurrent::run`. A debug-build UI-thread audit, gated on `NEXIS_ASSERT_ASYNC_EXEC`, catches new synchronous exec calls added on the main thread.
+- **QProcess cancel pattern** — Any helper that owns a `QProcess*` member and exposes a `cancel()` must disconnect the finished slot, copy the member into a local, and null the member *before* calling `kill()` / `waitForFinished()`. `waitForFinished()` runs the event loop on the calling thread, so a connected slot that clears the member would otherwise fire synchronously and leave `cancel()` dereferencing null on the next line. `LogProvider::cancel()` is the reference implementation (SSO-3363 / audit H2); reuse the same shape in any new background-fetch helper.
 - **Streaming subprocess pattern** — two long-lived `QProcess` children using `readyReadStandardOutput`: `NettopStreamer` (FR-102, macOS) streams per-process network deltas from a single `nettop -P -d -s1` child (lifecycle tied to the `ProcessInfo::mCollectNetIO` toggle — FR-108 — so it only runs while the Processes page's network columns are visible); `NvidiaSmiStreamer` (FR-106 Step C, Linux) streams GPU utilization and fan speed from a single `nvidia-smi -l 1` child (app-lifetime). Both publish into a mutex-guarded `QHash` that the synchronous `ProcessInfo*::updateProcesses` / `GpuInfoLinux::updateGpuInfo` / `FanInfoLinux::readNvidiaSpeed` callers read from. `NvidiaSmiCache` is a thin facade namespace over `NvidiaSmiStreamer` so call sites don't change.
 - **Linux /proc walk** — `ProcessInfoLinux::updateProcesses` (FR-127) reads `/proc/<pid>/{stat,status,cmdline}` directly every tick instead of forking `ps ax`. Parsing lives in a pure `ProcInfoParser` module — no Linux-specific includes — so fixture-based tests run on every platform. `sysconf` values, `/proc/stat btime`, and `/proc/meminfo MemTotal` are cached in the constructor; uid/gid → name lookups memoise `getpwuid_r`/`getgrgid_r` results.
 - **Pre-clean snapshots (FR-112)** — `SnapshotService` wraps the platform system-restore tool. `CleanerService::maybeTakeSnapshot()` is called from both `clean()` and `SystemCleanerPage::systemClean()` (the direct path that bypasses `clean`), gated on the `PreCleanSnapshotEnabled` setting and `SnapshotService::isAvailable()`. Snapshot failure is non-fatal.
@@ -84,13 +86,13 @@ Nexis is structured as a **four-tier desktop application**:
 - **Root-file writer (FR-81)** — New `FileUtil::writeRootFile(path, content)` wraps `sudoExec("tee", {path}, content)` with a read-back byte compare. Linux-only; the macOS build compiles to a no-op returning false. Shared by FR-81's sysctl.d persistence.
 - **CPU tuning sysfs helper (FR-117)** — New `CpuTuning` namespace in `linux/nexis-core/Info/cpu_tuning.{h,cpp}` centralises sysfs reads/writes for scaling_{min,max}_freq, scaling_governor, intel_pstate/no_turbo, and cpufreq/boost. Handles both per-core and glob-write shell idioms with injection-safe governor validation. Used by `CpuTuningWidget` and by `App::init`'s persist-on-launch re-apply.
 - **QSS theming** — Single stylesheet template with `@token` replacement at runtime
-- **Qt signals** — `SignalMapper` singleton as a lightweight global event bus (9 signals after BUG-82 cleanup)
+- **Qt signals** — `SignalMapper` singleton as a lightweight global event bus (10 signals after BUG-82 cleanup + FR-105's `sigAppFocusChanged` — see canonical "By the numbers" table)
 - **Dashboard widgets** — Dashboard gauges replaced with a family of interchangeable tile widgets inheriting from `MetricTileBase` (abstract base class, FR-53). 8 widget styles available: `MetricTile` (sparkline), `GaugeTile` (¾-arc), `HybridTile` (arc + mini sparkline), `RingTile` (360° ring), `SpeedometerTile` (needle dial), `VuMeterTile` (segmented bar), `DiskTile` (donut chart), and `HealthScoreTile` (composite score). The base class provides 6 shared protected helpers — `createGearButton()`, `repositionGearButton()`, `createFooterLayout()`, `updateTrend()`, `updateGearIcon()`, `applyActionButtonStyle()` — and 5 shared UI members (`mGearButton`, `mLblSubtitle`, `mLblTrend`, `mBtnAction`, `mCurrentTrend`) so each subclass contains only its unique visualization code (FR-77). All styles support three `DisplayMode` values (Normal/Hero/Large) via QSS dynamic properties — mode changes trigger `unpolish()`/`polish()` to re-evaluate QSS selectors for per-mode font sizing. CPU and Memory are independent tile instances (the combined `HeroCard` was removed in FR-50). `NetworkTile` uses dual `QChart` instances (separate RX/TX sparklines) and is excluded from style switching. `DiskTile` uses custom `QPainter` donut chart and exposes `setDriveHealth()` for cross-tile data flow. `DashboardTileWrapper` (FR-51) uses the decorator pattern to add edit-mode mouse handling (drag-and-drop, snap-to-grid resizing) and style switching (`setInnerWidget()` swaps the inner tile at runtime, FR-53). Per-tile style persisted in layout JSON via SettingManager. `DashboardPage::createTile()` factory method instantiates the correct tile class by style string. `HealthScoreTile` (FR-73) is a specialized tile showing a composite 0–100 health score aggregated from 6 components (CPU, memory, disk, temperature, battery, SMART) via `HealthScoreCalculator` helper; unavailable components have their weights redistributed proportionally. In Large/Hero mode, per-component breakdown bars are drawn in `paintEvent`
-- **Maintenance Wizard** — `MaintenanceWizardDialog` (FR-83) is a modal QDialog launched from the Health Score tile's quick action button. It orchestrates 4 existing services (CleanerService, ToolManager, InfoManager, HealthScoreCalculator) via `QtConcurrent::run()` with `QMetaObject::invokeMethod()` for cross-thread result marshaling. Thread-safe completion counting via `QAtomicInt`. Custom types (`CleanerService::ScanResult`, `QList<OrphanPackage>`, `UpdateCheckResult`) registered with `qRegisterMetaType` for cross-thread signals. Follows the `ExclusionManagerDialog` pattern (programmatic QDialog, no .ui file, DI constructor with singleton fallbacks).
+- **Maintenance Wizard** — `MaintenanceWizardDialog` (FR-83) is a modal QDialog launched from the Health Score tile's quick action button. It orchestrates 4 existing services (CleanerService, ToolManager, InfoManager, HealthScoreCalculator) via `QtConcurrent::run()` with `QMetaObject::invokeMethod()` for cross-thread result marshaling. Thread-safe completion counting via `QAtomicInt`. Custom types (`CleanerService::ScanResult`, `QList<OrphanPackage>`, `UpdateCheckResult`) registered with `qRegisterMetaType` for cross-thread signals. Follows the `ExclusionManagerDialog` pattern (programmatic QDialog, no .ui file, DI constructor with singleton fallbacks). **Worker lifetime (SSO-3362):** the dialog uses `WA_DeleteOnClose`, so detached workers outliving the dialog would dereference deleted memory. Each lambda captures a `QPointer<MaintenanceWizardDialog>` (no raw `this`) and singleton manager pointers by value, marshals results through the context-object + functor overload of `QMetaObject::invokeMethod` (Qt drops queued calls when the context dies), and the dialog stores every `QFuture<void>` as a member and `waitForFinished()`s them all in its destructor as a hard backstop.
 - **Sidebar** — Sidebar navigation buttons are built programmatically in `app.cpp` (not defined in `.ui`) with grouped sections and collapse animation driven by sidebar collapse animation
 - **CommandPalette** — `Ctrl+K` global command palette widget (`command_palette.h/.cpp`) for keyboard-driven navigation and actions
 
-**Scale:** ~6,000–7,000 lines of C++ across core library + services + GUI, 16 pages, 34 translations, 3 themes.
+**Scale:** see the canonical "By the numbers" table in [`APPLICATION_OVERVIEW.md`](APPLICATION_OVERVIEW.md#project-identity) for LOC, page/service/manager counts, themes, translations, and tests.
 
 ---
 
@@ -138,10 +140,10 @@ class CpuInfoMacOS : public CpuInfo {
 
 ### 2. Singleton Manager Facades
 
-Six manager singletons act as **stable API surfaces** over the core library:
+Eight manager singletons (see canonical "By the numbers" table) act as **stable API surfaces** over the core library:
 
 ```cpp
-// shared/nexis/Managers/info_manager.h — facade over 13 Info classes
+// shared/nexis/Managers/info_manager.h — facade over the Info classes
 class InfoManager {
 public:
     static InfoManager *ins();
@@ -154,13 +156,13 @@ public:
     void updateMemoryInfo();
     quint64 getMemUsed() const;
     quint64 getMemTotal() const;
-    // ... 50+ methods across 13 info providers
+    // ... 50+ methods across the info providers
 
 private:
     std::unique_ptr<CpuInfo> ci;     // Platform subclass via factory
     std::unique_ptr<MemoryInfo> mi;
     std::unique_ptr<DiskInfo> di;
-    // ... 13 total — #ifdef Q_OS_MACOS in constructor
+    // ... one unique_ptr per Info class — #ifdef Q_OS_MACOS in constructor
 };
 ```
 
@@ -170,7 +172,7 @@ private:
 - **Centralized refresh** — `updateMemoryInfo()` ensures a single refresh call feeds all consumers
 - **Minimal boilerplate** — no DI frameworks, no factories, no configuration files
 
-**Assessment:** For a ~5,000-line desktop app with no unit tests, singletons are **pragmatically correct**. The anti-pattern critique of singletons assumes multi-threaded systems or test-heavy codebases. Nexis is single-threaded GUI with a single user. The managers are effectively namespaced globals — and that's fine at this scale.
+**Assessment:** For a single-process Qt desktop app with the test coverage tracked in the canonical "By the numbers" table, singletons are **pragmatically correct**. The anti-pattern critique of singletons assumes multi-threaded systems or test-heavy codebases. Nexis is single-threaded GUI with a single user. The managers are effectively namespaced globals — and that's fine at this scale.
 
 ---
 
@@ -248,7 +250,7 @@ if (ToolManager::ins()->checkDocker()) {
 A lightweight singleton event bus handles app-wide notifications:
 
 ```cpp
-// shared/nexis/Managers/signal_mapper.h
+// shared/nexis/signal_mapper.h
 class SignalMapper : public QObject {
     Q_OBJECT
 signals:
@@ -258,20 +260,21 @@ signals:
     void sigKioskToggleRequested();
     void sigKioskModeChanged(bool enabled);
     void sigAppVisibilityChanged(bool visible);
-    void sigCleanableSizeChanged(quint64 totalBytes);
-    void sigDashboardLayoutReset();
+    void sigAppFocusChanged(bool focused);         // FR-105: drives PowerMode cadence
+    void sigNavigateToPage(const QString &pageTitle);
+    void sigCleanableSizeChanged(quint64 bytes);
     void sigDashboardFooterChanged(bool visible);
 };
 ```
 
 **Usage pattern:**
 - Settings page changes theme → emits `sigChangedAppTheme()`
-- All 16 pages listen → reload theme-dependent icons, GIF loaders, and colors
+- Every page listens → reloads theme-dependent icons, GIF loaders, and colors
 - Dashboard kiosk button → emits `sigKioskToggleRequested()` → App toggles kiosk mode → emits `sigKioskModeChanged(bool)` → Dashboard button swaps icon, tray action syncs checkmark
 - App minimized/restored → emits `sigAppVisibilityChanged(bool)` → DataRefreshService pauses/resumes polling
 - No page needs a pointer to any other page — complete decoupling
 
-**Assessment:** With 9 signals (after BUG-82 cleanup removed unused signals), this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), `sigNavigateToPage` (FR-42), cleanable-size signal (FR-44), and dashboard footer visibility signal (FR-75) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, SystemCleanerPage, SettingsPage, and the CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+). SignalMapper remains stable and focused on app-wide lifecycle events, while DataRefreshService handles domain-specific data delivery signals (9 core system metrics + 1 per-interface network snapshot + 2 background checks + 1 background health check = 13 data signals).
+**Assessment:** With 10 signals today (BUG-82 cleanup removed unused signals; FR-105 added `sigAppFocusChanged`; the unused `sigDashboardLayoutReset` was removed when Reset Layout switched to a direct method call), this is still **appropriately simple**. The kiosk mode signals (FR-30), visibility signal (FR-37), focus signal (FR-105), `sigNavigateToPage` (FR-42), cleanable-size signal (FR-44), and dashboard footer visibility signal (FR-75) demonstrate the pattern working well for decoupled communication between App, DashboardPage, DataRefreshService, SystemCleanerPage, SettingsPage, and the CommandPalette. A full event bus library (like eventpp) would be overkill until the signal count grows significantly (15+). SignalMapper remains stable and focused on app-wide lifecycle events, while DataRefreshService handles domain-specific data delivery signals (see the canonical "By the numbers" table for the current `DataRefreshService` signal count).
 
 ---
 
@@ -391,7 +394,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 - **BUG-72 Tier 2/3:** Eliminated remaining performance hotspots:
   - Replaced `iostat` subprocess (1s main-thread block per tick) with IOKit `IOBlockStorageDriver` API (~0.5ms, correct read/write separation)
   - Cached `getAvgClock()` result (eliminated 2 subprocess calls per tick on Apple Silicon)
-  - Moved `discoverDrives()` to `QtConcurrent::run()` (300-1000ms off main thread every 30s)
+  - Moved disk-health discovery to `QtConcurrent::run()` (300-1000ms off main thread every 30s). Worker now builds a fresh `QList<DriveHealth>` via `DiskHealthInfo::collectDriveHealth()` (no shared-state mutation) and publishes via `InfoManager::setDriveHealth()` inside the `QMetaObject::invokeMethod` hop — mirrors the `DiskInfo::collectDiskInfo()`/`setDisks()` pattern. A `QMutex` on the base class additionally guards every `mDrives` read/write (`getDrives`, `hasDrives`, `setDrives`, both `refreshHealthElevated*` paths). pkexec/sudo invocations run outside the lock to keep UI snapshots responsive (SSO-3364 / audit H3).
   - In-place `QStandardItemModel` updates in ProcessesPage (eliminated 6,800 item allocations per tick)
   - Changed signal signatures to `const&` (eliminated ~2,800 deep string copies per emission)
   - Merged duplicate `getifaddrs()` walks into single `updateNetworkBytes()` method
@@ -432,7 +435,7 @@ Both checks emit `qWarning()` at runtime (visible in debug output) without alter
 
 #### ~~2A. Centralized DataRefreshService~~ (Done)
 
-**Status:** Completed in Phase 8 (FR-37). Created `DataRefreshService` singleton (`shared/nexis/Managers/data_refresh_service.{h,cpp}`) with 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and 14 typed data signals (`cpuUpdated`, `memoryUpdated`, `networkUpdated`, `networkPerInterfaceUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `fanUpdated`, `batteryUpdated`, `diskUsageUpdated`, `diskHealthUpdated`, `processesUpdated`, `systemUpdatesChecked`, `repoHealthChecked`). `networkPerInterfaceUpdated` (SSO-351) carries a `QHash<QString, NetInterfaceStats>` snapshot so `NetUsageTracker` can record traffic for every up+running interface; the legacy `networkUpdated(rx, tx)` is retained for the live-rate displays which only need default-iface totals. The `memoryUpdated` signal was updated in FR-57 to use a `MemorySnapshot` struct (replacing 4 separate `quint64` parameters) carrying wired/active/inactive/compressed/available/pressureLevel fields alongside the original used/total/swapUsed/swapTotal. The `fanUpdated` signal was added in BUG-70 (previously fan updates piggybacked on `tempUpdated`). The `systemUpdatesChecked` signal was added in FR-60 for the hourly system update check, which runs via `QtConcurrent::run()` to avoid blocking the UI thread. This signal is consumed by `App` (sidebar badge update + tray notification) and `APTSourceManagerPage` (Available Updates tree widget), not by `DashboardPage` — the original dashboard tile approach was replaced with a sidebar badge + package page integration during the FR-60 redesign. The `repoHealthChecked` signal was added for repository health dashboard validation (chained after update checks, emits `RepoHealthCache` with per-repo health results), consumed by `APTSourceManagerPage` for card enrichment and side panel display.
+**Status:** Completed in Phase 8 (FR-37). Created `DataRefreshService` singleton (`shared/nexis/Managers/data_refresh_service.{h,cpp}`) with 5 QTimers (1s fast, 5s medium, 30s slow, configurable process, 1h update) and 15 typed data signals — `cpuUpdated`, `memoryUpdated`, `networkUpdated`, `networkPerInterfaceUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `fanUpdated`, `batteryUpdated`, `diskUsageUpdated`, `diskHealthUpdated`, `processesUpdated`, `systemUpdatesChecked`, `repoHealthChecked`, plus Linux-only `psiUpdated` (FR-124). `networkPerInterfaceUpdated` (SSO-351) carries a `QHash<QString, NetInterfaceStats>` snapshot so `NetUsageTracker` can record traffic for every up+running interface; the legacy `networkUpdated(rx, tx)` is retained for the live-rate displays which only need default-iface totals. The `memoryUpdated` signal was updated in FR-57 to use a `MemorySnapshot` struct (replacing 4 separate `quint64` parameters) carrying wired/active/inactive/compressed/available/pressureLevel fields alongside the original used/total/swapUsed/swapTotal. The `fanUpdated` signal was added in BUG-70 (previously fan updates piggybacked on `tempUpdated`). The `systemUpdatesChecked` signal was added in FR-60 for the hourly system update check, which runs via `QtConcurrent::run()` to avoid blocking the UI thread. This signal is consumed by `App` (sidebar badge update + tray notification) and `APTSourceManagerPage` (Available Updates tree widget), not by `DashboardPage` — the original dashboard tile approach was replaced with a sidebar badge + package page integration during the FR-60 redesign. The `repoHealthChecked` signal was added for repository health dashboard validation (chained after update checks, emits `RepoHealthCache` with per-repo health results), consumed by `APTSourceManagerPage` for card enrichment and side panel display.
 
 Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Processes (removed 1 timer) to reactive signal subscribers. Added `sigAppVisibilityChanged(bool)` to SignalMapper for pause/resume (kiosk mode overrides). DI constructor parameter follows FR-35 pattern.
 
@@ -471,9 +474,9 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 ---
 
-#### 3B. CI Screenshot Regression Tests ✅
+#### 3B. CI Screenshot Regression Tests (local-only)
 
-**Status:** Implemented (FR-41). The `test-ScreenshotTests` executable captures all 11 always-visible pages in both Dark and Light themes (22 screenshots per platform), compares against committed reference PNGs using a Qt-native pixel diff with configurable per-page tolerance, and uploads visual diff artifacts on failure. CI runs screenshot tests as non-blocking (`continue-on-error`) until references stabilize. Linux CI uses Xvfb for headless GUI rendering.
+**Status:** Implemented (FR-41), then **descoped from CI** in WI-19. The `test-ScreenshotTests` executable captures the always-visible pages in both Dark and Light themes, compares against committed reference PNGs using a Qt-native pixel diff with configurable per-page tolerance, and produces visual diff artifacts on failure. The build workflow now explicitly excludes the suite from `ctest` runs via `-E ScreenshotTests` (see `.github/workflows/build.yml`) — environment-dependent rendering on hosted runners produced too many false positives. Screenshot diffs are run locally via `scripts/update_screenshots.sh`; CI continues to assert the always-visible pages compile and link by building `test-ScreenshotTests` itself.
 
 **Architecture change:** The GUI sources were extracted into a `nexis-gui` static library so that both the `nexis` executable and the screenshot test can link against them without duplicating the source list. Reference images are stored in-repo under `tests/reference_screenshots/{platform}/{theme}/`.
 
@@ -506,7 +509,7 @@ public:
 
 **What:** Replace `SignalMapper` with a typed event bus library if the signal count grows beyond ~15.
 
-**When:** Currently 9 signals (SignalMapper) + 14 signals (DataRefreshService) — well within comfort zone. Only consider migration if the signal count grows significantly, or if events need filtering/prioritization.
+**When:** SignalMapper + DataRefreshService signal counts are tracked in the canonical "By the numbers" table — well within comfort zone. Only consider migration if those counts grow significantly, or if events need filtering/prioritization.
 
 **Candidate:** [eventpp](https://github.com/wqking/eventpp) (header-only, C++11+, well-tested).
 
@@ -527,7 +530,7 @@ public:
 | HiDPI | Solved via Dpi::scale() + @dpN tokens | Native support |
 | Animations | Basic (SlidingStackedWidget) | Rich, declarative |
 | Development speed | Qt Designer + QSS (familiar tooling) | QML + JavaScript (new skills) |
-| Existing investment | 16 pages, 29 .ui files, comprehensive QSS | Complete rewrite required |
+| Existing investment | All Pages (see canonical table), 29 .ui files, comprehensive QSS | Complete rewrite required |
 | Migration effort | N/A | 3-6 months minimum |
 | Community contributions | C++/QSS (common skills) | QML (niche skills) |
 
@@ -548,7 +551,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 **Phase 3 (Done):** Expanded test coverage (FR-76) — 8 new test suites, ~151 additional test methods. Extracted parsing logic from 10 Info/Tool/Service classes into public static methods on shared base classes, created fixture data files in `tests/fixtures/`, and wrote comprehensive parser tests. Covers MemoryInfo, CpuInfo, GpuInfo, AptSourceTool, FanInfo, ThermalInfo, BatteryInfo, DiskInfo, and HostService.
 
 **Phase 4 (Done):** UI regression testing (FR-41):
-- Screenshot comparison in CI — 11 pages × 2 themes per platform
+- Screenshot comparison (local-only since WI-19) — always-visible pages × Dark/Light per platform
 - Qt-native pixel diff with configurable per-page tolerance
 - Visual diff artifact upload on CI failure for manual review
 - Non-blocking initially (`continue-on-error`) until references stabilize
@@ -560,7 +563,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 - SettingManager defaults and overrides
 - Integration tests for manager CRUD operations
 
-**Current state:** 21 CTest executables — ~293 unit test methods across 20 suites covering core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test covering 22 page/theme combinations. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
+**Current state:** see the canonical "By the numbers" table in [`APPLICATION_OVERVIEW.md`](APPLICATION_OVERVIEW.md#project-identity) for the live CTest executable / test-method counts. The suites cover core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
 
 ---
 
@@ -593,9 +596,9 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 1. ~~**Explicit source lists in CMake**~~ — Done (Phase 2)
 2. **Abstract base classes for all platform code** — Compile-time enforcement of platform parity
 3. ~~**Dependency injection on all page constructors**~~ — Done (Phase 6, FR-35): testable without framework overhead
-4. ~~**Centralized DataRefreshService**~~ — Done (Phase 8, FR-37): 4 timers instead of 6 per-page, with pause/resume for battery optimization
+4. ~~**Centralized DataRefreshService**~~ — Done (Phase 8, FR-37): 5 centralized timers (fast/medium/slow/process/update) instead of 6 per-page QTimers, with pause/resume for battery optimization
 5. **QSS token validation** — Build-time warnings for theme inconsistencies
-6. ~~**20-30 unit tests**~~ — Done (Phase 7, FR-36; expanded FR-76, FR-79/FR-80, FR-82, FR-66, FR-68): ~293 test methods across 21 executables covering core parsers, utilities, tools, widget parsers, services, managers, and theme validation
+6. ~~**20-30 unit tests**~~ — Done (Phase 7, FR-36; expanded FR-76, FR-79/FR-80, FR-82, FR-66, FR-68): see the canonical "By the numbers" table in [`APPLICATION_OVERVIEW.md`](APPLICATION_OVERVIEW.md#project-identity) for the live test-method count; coverage spans core parsers, utilities, tools, widget parsers, services, managers, and theme validation
 7. **Still QWidgets** — Proven, stable, with the HiDPI problem solved
 8. **Still singletons** — But with DI constructors as escape hatches for testing
 
@@ -613,7 +616,7 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Managers/app_manager.cpp` | ~~Add QSS token validation (§2C)~~ Done — token + color format validation added |
 | `shared/nexis/Pages/Dashboard/dashboard_page.cpp` | ~~Primary refactor target for DataRefreshService (§2A)~~ Done — subscribes to DataRefreshService signals, zero timers |
 | `shared/nexis/Pages/Resources/resources_page.cpp` | ~~Secondary refactor target~~ Done — subscribes to DataRefreshService signals, zero timers |
-| `shared/nexis/signal_mapper.h` | Global event bus (9 signals after BUG-82 cleanup) — monitor signal count growth |
+| `shared/nexis/signal_mapper.h` | Global event bus (10 signals — see canonical "By the numbers" table) — monitor signal count growth |
 | `shared/nexis/Pages/Dashboard/metric_tile_base.h/.cpp` | Abstract base class for all dashboard tile styles; defines common interface (setValue, addDataPoint, setDisplayMode, etc.), 6 shared helpers (gear button, footer layout, trend computation, action button styling), and 5 shared UI members (FR-53, FR-77) |
 | `shared/nexis/Pages/Dashboard/metric_tile.h/.cpp` | Sparkline style: QtCharts sparkline + progress bar + trend indicator; DisplayMode (Normal/Hero/Large) via QSS dynamic properties |
 | `shared/nexis/Pages/Dashboard/gauge_tile.h/.cpp` | Gauge style: ¾-circle arc with conical gradient, percentage centered, QPainter-based (FR-53) |

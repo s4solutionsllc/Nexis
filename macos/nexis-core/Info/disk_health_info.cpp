@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QMutexLocker>
 #include <QSet>
 #include <QXmlStreamReader>
 
@@ -81,9 +82,12 @@ DiskHealthInfoMacOS::DiskHealthInfoMacOS()
     // window paints (via DataRefreshService::onSlowTick on first start).
 }
 
-void DiskHealthInfoMacOS::discoverDrives()
+QList<DriveHealth> DiskHealthInfoMacOS::collectDriveHealth()
 {
-    mDrives.clear();
+    // WI-03: builds into a local list; the UI thread publishes via setDrives().
+    // Never touch mDrives here — discovery runs on a QtConcurrent worker and
+    // mDrives is read/written by the UI thread (getDrives, refreshHealthElevated*).
+    QList<DriveHealth> drives;
 
     // Get list of whole disks
     QStringList wholeDisks;
@@ -92,7 +96,7 @@ void DiskHealthInfoMacOS::discoverDrives()
         QMap<QString, QVariant> listPlist = parsePlist(listOutput.toUtf8());
         wholeDisks = listPlist.value("WholeDisks").toStringList();
     } catch (...) {
-        return;
+        return drives;
     }
 
     // FR-109: dedupe by (model, size) before the smartctl fork. On Apple
@@ -197,13 +201,10 @@ void DiskHealthInfoMacOS::discoverDrives()
         }
 
         deriveHealthVerdict(drive);
-        mDrives.append(drive);
+        drives.append(drive);
     }
-}
 
-void DiskHealthInfoMacOS::refreshHealth()
-{
-    discoverDrives();
+    return drives;
 }
 
 void DiskHealthInfoMacOS::refreshHealthElevatedBatch(const QStringList &devices,
@@ -221,14 +222,22 @@ void DiskHealthInfoMacOS::refreshHealthElevated(const QString &device)
     if (!mHasSmartctl)
         return;
 
+    // Run sudo/smartctl outside the lock (may block for seconds), then take
+    // the lock only to merge the parsed result back into mDrives.
+    QString output;
+    try {
+        output = CommandUtil::sudoExec("smartctl", {"-j", "-a", device});
+    } catch (...) {
+        qWarning() << "Failed to read SMART data for" << device;
+        return;
+    }
+
+    QMutexLocker locker(&mDrivesMutex);
     for (int i = 0; i < mDrives.size(); ++i) {
         if (mDrives[i].devicePath == device) {
-            try {
-                QString output = CommandUtil::sudoExec("smartctl", {"-j", "-a", device});
-                DiskHealthInfo::parseSmartctlJsonInto(output.toUtf8(), mDrives[i]);
-                mDrives[i].needsElevation = false;
-                deriveHealthVerdict(mDrives[i]);
-            } catch (...) { qWarning() << "Failed to read SMART data for" << device; }
+            DiskHealthInfo::parseSmartctlJsonInto(output.toUtf8(), mDrives[i]);
+            mDrives[i].needsElevation = false;
+            deriveHealthVerdict(mDrives[i]);
             break;
         }
     }

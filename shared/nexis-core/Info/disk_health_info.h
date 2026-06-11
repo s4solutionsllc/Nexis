@@ -2,6 +2,7 @@
 #define DISK_HEALTH_INFO_H
 
 #include <QList>
+#include <QMutex>
 #include <QString>
 #include <QStringList>
 #include "nexis-core_global.h"
@@ -70,16 +71,23 @@ public:
     QList<DriveHealth> getDrives() const;
     bool hasDrives() const;
     bool hasSmartctl() const;
-    virtual void refreshHealth() = 0;
+
+    // WI-03: thread-safe publish pair, mirrors DiskInfo::collectDiskInfo() /
+    // setDisks(). collectDriveHealth() runs the smartctl fork into a local
+    // QList<DriveHealth> without touching mDrives — safe to call from a
+    // QtConcurrent worker. setDrives() assigns the cache; intended UI-thread
+    // (DataRefreshService hops via QMetaObject::invokeMethod), but the QMutex
+    // below makes any concurrent accessor pattern safe as a defence in depth.
+    virtual QList<DriveHealth> collectDriveHealth() = 0;
+    void setDrives(QList<DriveHealth> newDrives);
+
+    // Elevated refresh paths mutate mDrives in place. Triggered by user clicks
+    // on the Hardware Info page (UI thread); implementations must take
+    // mDrivesMutex around any mDrives access to coordinate with setDrives().
     virtual void refreshHealthElevated(const QString &device) = 0;
     virtual void refreshHealthElevatedBatch(const QStringList &devices,
                                              bool applySetcap,
                                              const QString &smartctlPath) = 0;
-
-    // FR-96: discovery is now public so it can be driven off-thread from
-    // DataRefreshService after the main window has painted (rather than
-    // synchronously from the constructor during app launch).
-    virtual void discoverDrives() = 0;
 
     // Public for testability (FR-36). Operates purely on the DriveHealth struct.
     static void parseSmartctlJsonInto(const QByteArray &json, DriveHealth &drive);
@@ -88,6 +96,10 @@ public:
 
 protected:
     QList<DriveHealth> mDrives;
+    // WI-03 (audit H3): guards every read/write of mDrives. The worker-thread
+    // race (concurrent discoverDrives() clear+append vs UI-thread getDrives()
+    // copy) was UB before this mutex was introduced.
+    mutable QMutex mDrivesMutex;
     bool mHasSmartctl = false;
 };
 
