@@ -97,7 +97,7 @@ public:
     // call. Useful for the UI to surface "skipped malformed profile foo.json".
     QList<ValidationError> lastErrors() const { return mLastErrors; }
 
-protected:
+public:
     CleaningProfilesService();
     virtual ~CleaningProfilesService() = default;
 
