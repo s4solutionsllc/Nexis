@@ -373,6 +373,12 @@ jobs:
 
           # Check if notarization succeeded
           if echo "$SUBMIT_OUTPUT" | grep -q "status: Accepted"; then
+            # Staple the .app first so the ticket travels with the bundle when
+            # extracted from the DMG (e.g. Homebrew cask, drag-to-/Applications).
+            # Notarization covers contents submitted in the DMG, so the .app
+            # hash is already on the ticket and can be stapled directly.
+            xcrun stapler staple build/output/nexis.app
+            xcrun stapler validate build/output/nexis.app
             xcrun stapler staple build/output/nexis.dmg
             echo "Notarization and stapling complete"
           else
