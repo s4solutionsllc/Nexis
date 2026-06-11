@@ -4,6 +4,8 @@
 
 #include "gpu_info.h"
 
+#include <QDir>
+#include <QFile>
 #include <QRegularExpression>
 #include <QSysInfo>
 #include <QDateTime>
@@ -84,6 +86,34 @@ QString GpuInfo::normalizePciBusId(const QString &rawBusId)
     if (segs.size() < 2)
         return rawBusId.toLower();
     return (segs.at(segs.size() - 2) + ":" + segs.last()).toLower();
+}
+
+QString GpuInfo::findIntelXeFreqDir(const QString &devicePath)
+{
+    // xe driver (kernel 6.8+) exposes per-tile, per-GT frequency files under
+    //   <devicePath>/tile<T>/gt<G>/freq0/{cur_freq,max_freq,min_freq}
+    // For integrated GPUs there is a single tile0/gt0. We scan in deterministic
+    // QDir::Name order and return the first freq0 dir that has both cur_freq
+    // and max_freq so the caller can wire utilization the same way as i915.
+    QDir devDir(devicePath);
+    if (!devDir.exists())
+        return {};
+
+    const QStringList tiles = devDir.entryList(
+        {"tile*"}, QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QString &tile : tiles) {
+        QDir tileDir(devDir.filePath(tile));
+        const QStringList gts = tileDir.entryList(
+            {"gt*"}, QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        for (const QString &gt : gts) {
+            QString freqDir = tileDir.filePath(gt) + "/freq0";
+            if (QFile::exists(freqDir + "/cur_freq")
+                && QFile::exists(freqDir + "/max_freq")) {
+                return freqDir;
+            }
+        }
+    }
+    return {};
 }
 
 QString GpuInfo::getDiagnosticReport() const

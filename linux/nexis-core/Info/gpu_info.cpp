@@ -194,11 +194,20 @@ void GpuInfoLinux::discoverGpus()
                 if (nvidiaIndexMap.contains(normId))
                     dev.queryCommand = QString::number(nvidiaIndexMap.value(normId));
             } else if (vendor == "Intel") {
-                QString curFreqPath = cardPath + "/gt_cur_freq_mhz";
-                QString maxFreqPath = cardPath + "/gt_max_freq_mhz";
-                if (QFile::exists(curFreqPath) && QFile::exists(maxFreqPath)) {
-                    dev.sysfsLoadPath = curFreqPath;
-                    dev.queryCommand = maxFreqPath;
+                // GH#91: the xe driver (kernel 6.8+) exposes freq under
+                // device/tile<T>/gt<G>/freq0/ rather than the i915 flat paths.
+                // Probe xe first; fall back to i915 so existing users don't regress.
+                QString xeFreqDir = GpuInfo::findIntelXeFreqDir(cardPath + "/device");
+                if (!xeFreqDir.isEmpty()) {
+                    dev.sysfsLoadPath = xeFreqDir + "/cur_freq";
+                    dev.queryCommand = xeFreqDir + "/max_freq";
+                } else {
+                    QString curFreqPath = cardPath + "/gt_cur_freq_mhz";
+                    QString maxFreqPath = cardPath + "/gt_max_freq_mhz";
+                    if (QFile::exists(curFreqPath) && QFile::exists(maxFreqPath)) {
+                        dev.sysfsLoadPath = curFreqPath;
+                        dev.queryCommand = maxFreqPath;
+                    }
                 }
             }
 
