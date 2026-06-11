@@ -1,6 +1,7 @@
 #include "startup_app_edit.h"
 #include "ui_startup_app_edit.h"
 #include "utilities.h"
+#include <Utils/macos_xattr_util.h>
 #include <QDebug>
 #include <QStyle>
 #include <QRegularExpression>
@@ -155,9 +156,11 @@ QString StartupAppEdit::buildPlistContent()
 void StartupAppEdit::on_btnSave_clicked()
 {
     if(isValid()) {
+        QString writtenPath;
         if(! selectedFilePath.isEmpty()) {
             QString appContent = buildPlistContent();
             FileUtil::writeFile(selectedFilePath, appContent, QIODevice::ReadWrite | QIODevice::Truncate);
+            writtenPath = selectedFilePath;
         }
         else {
             QString appContent = buildPlistContent();
@@ -173,7 +176,13 @@ void StartupAppEdit::on_btnSave_clicked()
             QString path = QString("%1/%2.plist").arg(mAutostartPath).arg(appFileName);
 
             FileUtil::writeFile(path, appContent);
+            writtenPath = path;
         }
+
+        // SSO-3731 (FW-04, MX1): macOS 27 won't load plists that inherit a
+        // `com.apple.quarantine` xattr from the parent volume. Strip it now
+        // so launchd picks the plist up on next login / `launchctl load`.
+        MacOsXattrUtil::stripQuarantine(writtenPath);
 
         emit startupAppAdded(); // signal
         close();

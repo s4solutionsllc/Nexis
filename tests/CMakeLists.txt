@@ -199,6 +199,13 @@ add_nexis_test(NAME HostServiceTests
 add_nexis_test(NAME RepositoryToolTests
   SOURCES managers/test_repository_tool.cpp)
 
+# SSO-3731 (FW-04, MX1): MacOsXattrUtil::stripQuarantine() — strips the
+# com.apple.quarantine xattr from a plist before `launchctl load` on
+# macOS 27. The helper is linked from nexis-core; the test body QSKIPs
+# off-macOS because the xattr surface is platform-specific.
+add_nexis_test(NAME MacOsXattrUtilTests
+  SOURCES managers/test_macos_xattr_util.cpp)
+
 add_nexis_test(NAME ScheduleTests
   SOURCES
     managers/test_schedule_manager.cpp

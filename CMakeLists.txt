@@ -107,6 +107,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/file_util.cpp"
   "${CORE_SHARED_DIR}/Utils/format_util.cpp"
   "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/macos_xattr_util.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -142,6 +143,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/file_util.h"
   "${CORE_SHARED_DIR}/Utils/format_util.h"
   "${CORE_SHARED_DIR}/Utils/headless_util.h"
+  "${CORE_SHARED_DIR}/Utils/macos_xattr_util.h"
 )
 
 if(APPLE)
