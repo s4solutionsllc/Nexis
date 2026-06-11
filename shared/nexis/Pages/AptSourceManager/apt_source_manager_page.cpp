@@ -78,7 +78,6 @@ void APTSourceManagerPage::init()
     mBtnCheckNow = new QPushButton(tr("Check Now"), mUpdatesSection);
     mBtnCheckNow->setObjectName("btnCheckNow");
     mBtnCheckNow->setCursor(Qt::PointingHandCursor);
-    mBtnCheckNow->setFocusPolicy(Qt::NoFocus);
     mBtnCheckNow->setAccessibleName("primary");
     mBtnCheckNow->setFixedHeight(28);
     updHeader->addWidget(mBtnCheckNow);
@@ -86,7 +85,6 @@ void APTSourceManagerPage::init()
     mBtnRefreshHealth = new QPushButton(tr("Refresh Health"), mUpdatesSection);
     mBtnRefreshHealth->setObjectName("btnRefreshHealth");
     mBtnRefreshHealth->setCursor(Qt::PointingHandCursor);
-    mBtnRefreshHealth->setFocusPolicy(Qt::NoFocus);
     mBtnRefreshHealth->setAccessibleName("primary");
     mBtnRefreshHealth->setFixedHeight(28);
     updHeader->addWidget(mBtnRefreshHealth);
@@ -101,6 +99,8 @@ void APTSourceManagerPage::init()
     mUpdatesTree->header()->setFixedHeight(Dpi::scale(30));
     mUpdatesTree->setColumnCount(3);
     mUpdatesTree->setRootIsDecorated(false);
+    // SSO-3502: read-only data display (NoSelection + NoEditTriggers); skipped
+    // by tab order because nothing focusable lives inside.
     mUpdatesTree->setFocusPolicy(Qt::NoFocus);
     mUpdatesTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mUpdatesTree->setSelectionMode(QAbstractItemView::NoSelection);
@@ -203,6 +203,9 @@ void APTSourceManagerPage::init()
     mTreeWidget->header()->setFixedHeight(Dpi::scale(30));
     mTreeWidget->header()->setStretchLastSection(true);
     mTreeWidget->setColumnCount(1);
+    // SSO-3502: NoSelection tree; checkbox toggling does not require focus
+    // because items are checkable via mouse only — a follow-up will rework
+    // this tree to support keyboard checkbox toggling.
     mTreeWidget->setFocusPolicy(Qt::NoFocus);
     mTreeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mTreeWidget->setSelectionMode(QAbstractItemView::NoSelection);

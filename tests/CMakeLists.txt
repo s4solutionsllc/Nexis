@@ -272,6 +272,7 @@ add_nexis_test(NAME LogProviderTests
 
 # ── Theme validation tests ─────────────────────────────────────────────────────
 add_nexis_test(NAME ThemeTokenTests   SOURCES theme/test_theme_tokens.cpp)
+add_nexis_test(NAME FocusVisibleTests SOURCES theme/test_focus_visible.cpp)
 
 # ── Screenshot regression tests (FR-41) ───────────────────────────────────────
 # Links against the full nexis-gui library (not just nexis-core) because it

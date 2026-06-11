@@ -37,6 +37,9 @@ void CommandPalette::buildLayout()
 
     mResultsList = new QListWidget(container);
     mResultsList->setObjectName("commandPaletteResults");
+    // SSO-3502: focus stays in mSearchBox; arrow keys are forwarded through
+    // the event filter to navigate this list. Focusing the list itself would
+    // break the typing flow that command-palette users expect.
     mResultsList->setFocusPolicy(Qt::NoFocus);
     mResultsList->setMaximumHeight(320);
 

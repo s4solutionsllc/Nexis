@@ -253,7 +253,6 @@ void NetworkDiagWidget::buildUI()
 
     mBtnRetest = new QPushButton(tr("Re-test"));
     mBtnRetest->setCursor(Qt::PointingHandCursor);
-    mBtnRetest->setFocusPolicy(Qt::NoFocus);
     mBtnRetest->setObjectName("netDiagRetest");
     connect(mBtnRetest, &QPushButton::clicked, this, &NetworkDiagWidget::runTest);
     footer->addWidget(mBtnRetest);
