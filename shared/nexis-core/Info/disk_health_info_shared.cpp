@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QMutexLocker>
 
 void DiskHealthInfo::parseSmartctlJsonInto(const QByteArray &json, DriveHealth &drive)
 {
@@ -123,12 +124,20 @@ QList<QByteArray> DiskHealthInfo::splitSmartctlOutput(const QString &output)
 
 QList<DriveHealth> DiskHealthInfo::getDrives() const
 {
+    QMutexLocker locker(&mDrivesMutex);
     return mDrives;
 }
 
 bool DiskHealthInfo::hasDrives() const
 {
+    QMutexLocker locker(&mDrivesMutex);
     return !mDrives.isEmpty();
+}
+
+void DiskHealthInfo::setDrives(QList<DriveHealth> newDrives)
+{
+    QMutexLocker locker(&mDrivesMutex);
+    mDrives = std::move(newDrives);
 }
 
 bool DiskHealthInfo::hasSmartctl() const

@@ -11,6 +11,13 @@
 #include "file_search_tool_linux.h"
 #endif
 
+namespace {
+// SSO-3365: bulk deletes can take minutes. The default 30 s exec timeout
+// killed `mv`/`rm` mid-op and surfaced as a thrown QString that aborted the
+// app. Give file operations five minutes before we give up.
+constexpr int kFileOpTimeoutMs = 5 * 60 * 1000;
+} // namespace
+
 FileSearchService *FileSearchService::instance = nullptr;
 
 FileSearchService *FileSearchService::ins()
@@ -23,6 +30,10 @@ FileSearchService *FileSearchService::ins()
 FileSearchService::FileSearchService(QObject *parent)
     : QObject(parent)
 {
+    // Required for fileOperationFinished to marshal across the worker→UI
+    // queued connection.
+    qRegisterMetaType<FileSearchService::FileOperation>("FileSearchService::FileOperation");
+
 #ifdef Q_OS_MACOS
     mTool = std::make_unique<FileSearchToolMacOS>();
 #else
@@ -63,26 +74,53 @@ void FileSearchService::moveToTrash(const QString &filePath, const QString &file
     bool isAnotherUser = QFileInfo(filePath).owner() != currentUser;
     QStringList args = mTool->buildMoveToTrashArgs(filePath, isAnotherUser);
 
-    if (isAnotherUser) {
-        CommandUtil::sudoExec("mv", args);
-    } else {
-        CommandUtil::exec("mv", args);
-    }
+    (void)QtConcurrent::run([this, filePath, fileName, args, isAnotherUser]() {
+        bool hadError = false;
+        QString errorMessage;
 
-    // Write trash metadata (Linux only; macOS no-ops)
-    if (!QFile(filePath).exists()) {
-        mTool->writeTrashMetadata(filePath, fileName);
-    }
+        try {
+            if (isAnotherUser) {
+                CommandUtil::sudoExec("mv", args);
+            } else {
+                CommandUtil::exec("mv", args, {}, kFileOpTimeoutMs);
+            }
+        } catch (const QString &ex) {
+            hadError = true;
+            errorMessage = ex;
+        }
+
+        // Write trash metadata (Linux only; macOS no-ops). Skip on failure —
+        // the file is still where it was. mTool is set in the ctor and never
+        // reassigned, so reading it from the worker is safe.
+        if (!hadError && !QFile(filePath).exists()) {
+            mTool->writeTrashMetadata(filePath, fileName);
+        }
+
+        emit fileOperationFinished(FileOperation::MoveToTrash, filePath, hadError, errorMessage);
+    });
 }
 
 void FileSearchService::deleteFile(const QString &filePath, const QString &currentUser)
 {
     bool isAnotherUser = QFileInfo(filePath).owner() != currentUser;
-    if (isAnotherUser) {
-        CommandUtil::sudoExec("rm", {"-rf", filePath});
-    } else {
-        CommandUtil::exec("rm", {"-rf", filePath});
-    }
+
+    (void)QtConcurrent::run([this, filePath, isAnotherUser]() {
+        bool hadError = false;
+        QString errorMessage;
+
+        try {
+            if (isAnotherUser) {
+                CommandUtil::sudoExec("rm", {"-rf", filePath});
+            } else {
+                CommandUtil::exec("rm", {"-rf", filePath}, {}, kFileOpTimeoutMs);
+            }
+        } catch (const QString &ex) {
+            hadError = true;
+            errorMessage = ex;
+        }
+
+        emit fileOperationFinished(FileOperation::Delete, filePath, hadError, errorMessage);
+    });
 }
 
 QString FileSearchService::trashPath() const

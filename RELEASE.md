@@ -13,7 +13,7 @@ often*, see [`docs/MAINTAINER_SOP.md`](docs/MAINTAINER_SOP.md).
 
 Every release must satisfy these — fail closed if any check fails.
 
-1. **GPL-3.0 compliance.** `LICENSE` must remain GPL-3.0-or-later, unmodified
+1. **GPL-3.0 compliance.** `LICENSE` must remain GPL-3.0-only, unmodified
    from upstream Stacer attribution + S4 Solutions copyright lines. Nexis is and
    always will be free software; no monetization, ever.
    ```bash
@@ -106,6 +106,16 @@ Downstream-triggered (run on success of `Release`):
 - `homebrew.yml` — bumps the `s4solutionsllc/homebrew-nexis` Cask to the new DMG.
 - `aur.yml` — publishes the AUR `nexis` package via `KSXGitHub/github-actions-deploy-aur`.
 - `ppa.yml` — uploads source packages to the Launchpad PPA for `noble`, `jammy`, `questing`.
+
+> **Action pins (WI-09 / SSO-3371).** Every `uses:` in `.github/workflows/` is
+> pinned to a full commit SHA with a trailing `# vX.Y.Z` comment — *never* a
+> bare `@v3` / `@v6` tag. This blocks the `tj-actions/changed-files`-style
+> supply-chain attack where a re-pointed upstream tag would otherwise execute
+> in a context that holds `AUR_SSH_KEY`, `HOMEBREW_TAP_TOKEN`,
+> `CROWDIN_PERSONAL_TOKEN`, or `PPA_GPG_PRIVATE_KEY`. Dependabot
+> (`.github/dependabot.yml`, `github-actions` ecosystem, weekly) opens PRs to
+> roll the SHAs forward when upstreams cut new releases; review the diff
+> before merging.
 
 ### Currently supported targets
 
