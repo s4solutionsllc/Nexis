@@ -49,6 +49,13 @@ add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 add_nexis_test(NAME DockerToolTests   SOURCES core/test_docker_tool.cpp)
 
+# SSO-3366: PackageToolMacOS::trashApps injection guard. PackageToolMacOS is
+# only built into nexis-core on Darwin, so the test is registered only there.
+if(APPLE)
+  add_nexis_test(NAME PackageToolMacOSTests
+    SOURCES core/test_package_tool_macos.cpp)
+endif()
+
 # FR-127: pure parser for /proc/<pid>/*. Compiled directly here so the test
 # runs on any platform, even though the parser is only wired into the real
 # nexis-core build on Linux.

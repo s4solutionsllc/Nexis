@@ -333,7 +333,7 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 
 **Platform backends:**
 - Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`
-- macOS: `brew uninstall` for Homebrew packages; Finder AppleScript Trash for `.app` bundles; `brew autoremove` for orphans
+- macOS: `brew uninstall` for Homebrew packages; `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:`) for `.app` bundles — no AppleScript/`osascript` is involved, so bundle names containing quotes or other metacharacters cannot inject arbitrary code (SSO-3366, audit S1); `brew autoremove` for orphans
 
 ### 10. Resources
 
