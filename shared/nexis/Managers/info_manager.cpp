@@ -395,14 +395,14 @@ QList<DriveHealth> InfoManager::getDriveHealth() const
     return dhi->getDrives();
 }
 
-void InfoManager::discoverDiskHealth()
+QList<DriveHealth> InfoManager::collectDriveHealth()
 {
-    dhi->discoverDrives();
+    return dhi->collectDriveHealth();
 }
 
-void InfoManager::refreshDiskHealth()
+void InfoManager::setDriveHealth(QList<DriveHealth> drives)
 {
-    dhi->refreshHealth();
+    dhi->setDrives(std::move(drives));
 }
 
 void InfoManager::refreshDiskHealthElevated(const QString &device)
