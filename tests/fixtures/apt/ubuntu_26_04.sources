@@ -1,0 +1,16 @@
+# Ubuntu mirror — multi-suite stanza with explicit Architectures.
+# Matches the shape of a stock /etc/apt/sources.list.d/ubuntu.sources on
+# Ubuntu 26.04 once APT 3.1 makes deb822 the default and apt-key is gone.
+Types: deb
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: noble noble-updates noble-backports
+Components: main restricted universe multiverse
+Architectures: amd64
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+URIs: http://security.ubuntu.com/ubuntu/
+Suites: noble-security
+Components: main restricted universe multiverse
+Architectures: amd64
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
