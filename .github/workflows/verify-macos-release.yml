@@ -1,0 +1,116 @@
+name: Verify macOS Release
+
+# One-shot verifier for macOS release artifacts (SSO-3493 / audit B3 follow-up).
+# Downloads the DMG from a published release on macos-14, mounts it, extracts the
+# .app, and runs the three notarization checks: CFBundleIdentifier, stapler
+# validate, spctl --assess. Output goes to the run summary and job log.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to verify (e.g. v2.3.14)'
+        required: true
+        type: string
+      expected_bundle_id:
+        description: 'Expected CFBundleIdentifier'
+        required: false
+        default: 'io.github.s4solutionsllc.Nexis'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify ${{ inputs.tag }} on macos-14
+    runs-on: macos-14
+    timeout-minutes: 15
+
+    steps:
+      - name: Download DMG from release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifact
+          cd artifact
+          gh release download "${{ inputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --pattern 'Nexis-*-macOS-arm64.dmg' \
+            --clobber
+          ls -la
+
+      - name: Mount DMG and stage .app
+        id: stage
+        run: |
+          set -euo pipefail
+          DMG=$(ls artifact/Nexis-*-macOS-arm64.dmg | head -1)
+          echo "DMG=$DMG"
+          MOUNT=$(hdiutil attach -nobrowse -readonly "$DMG" | tail -1 | awk '{print $3}')
+          echo "MOUNT=$MOUNT"
+          APP=$(ls -d "$MOUNT"/*.app | head -1)
+          echo "APP=$APP"
+          mkdir -p staged
+          ditto "$APP" "staged/$(basename "$APP")"
+          hdiutil detach "$MOUNT"
+          STAGED_APP="$(pwd)/staged/$(basename "$APP")"
+          echo "STAGED_APP=$STAGED_APP" >> "$GITHUB_OUTPUT"
+          echo "DMG_PATH=$(pwd)/$DMG" >> "$GITHUB_OUTPUT"
+
+      - name: 1) PlistBuddy — CFBundleIdentifier
+        id: bundle_id
+        run: |
+          set -euo pipefail
+          APP="${{ steps.stage.outputs.STAGED_APP }}"
+          ACTUAL=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$APP/Contents/Info.plist")
+          echo "actual=$ACTUAL" >> "$GITHUB_OUTPUT"
+          EXPECTED='${{ inputs.expected_bundle_id }}'
+          echo "Expected: $EXPECTED"
+          echo "Actual:   $ACTUAL"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::CFBundleIdentifier mismatch (expected $EXPECTED, got $ACTUAL)"
+            exit 1
+          fi
+
+      - name: 2) stapler validate — .app
+        id: stapler_app
+        continue-on-error: true
+        run: |
+          set +e
+          APP="${{ steps.stage.outputs.STAGED_APP }}"
+          xcrun stapler validate "$APP"
+          echo "exit_app=$?" >> "$GITHUB_OUTPUT"
+
+      - name: 2b) stapler validate — .dmg (fallback view)
+        id: stapler_dmg
+        run: |
+          set -euo pipefail
+          DMG="${{ steps.stage.outputs.DMG_PATH }}"
+          xcrun stapler validate "$DMG"
+
+      - name: 3) spctl --assess
+        id: spctl
+        run: |
+          set -euo pipefail
+          APP="${{ steps.stage.outputs.STAGED_APP }}"
+          spctl --assess --type execute -vv "$APP"
+
+      - name: 4) codesign -dvv (informational)
+        run: |
+          set -euo pipefail
+          APP="${{ steps.stage.outputs.STAGED_APP }}"
+          codesign -dvv --entitlements - "$APP" 2>&1 | head -40 || true
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## SSO-3493 verification — ${{ inputs.tag }}"
+            echo ""
+            echo "- CFBundleIdentifier (actual): \`${{ steps.bundle_id.outputs.actual }}\`"
+            echo "- Expected: \`${{ inputs.expected_bundle_id }}\`"
+            echo "- stapler validate (.app) exit: \`${{ steps.stapler_app.outputs.exit_app }}\` (0 = stapled, non-zero = not stapled directly; check DMG step)"
+            echo "- stapler validate (.dmg): see step output"
+            echo "- spctl --assess: see step output"
+          } >> "$GITHUB_STEP_SUMMARY"
