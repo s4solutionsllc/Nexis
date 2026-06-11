@@ -1,6 +1,7 @@
 #include "schedule_manager.h"
 #include "setting_manager.h"
 #include <Utils/command_util.h>
+#include <Utils/macos_xattr_util.h>
 #include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -429,6 +430,10 @@ void ScheduleManager::createLaunchdPlist(const CleaningSchedule &schedule)
         stream << plistContent;
         file.close();
     }
+
+    // SSO-3731 (FW-04, MX1): macOS 27 refuses to load plists carrying the
+    // `com.apple.quarantine` xattr. Strip it before `launchctl load`.
+    MacOsXattrUtil::stripQuarantine(plistPath);
 
     if (QProcess::execute("launchctl", {"load", plistPath}) != 0)
         qWarning() << "launchctl load failed for" << plistPath;
