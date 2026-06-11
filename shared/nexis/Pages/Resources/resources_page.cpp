@@ -172,7 +172,15 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
 
         QVector<QSplineSeries *> seriesList = mChartCpu->getSeriesList();
 
-        for (int j = 0; j < seriesList.count(); j++){
+        // SSO-3380 / WI-18: DataRefreshService gates the emit on a non-empty
+        // percents list, but guard the per-core indexing here too — `.at(j+1)`
+        // is UB in release if the producer ever returns fewer entries than
+        // chart series. The load-avg block below is safe (loadAvgs is always
+        // 3 elements) and runs regardless.
+        const int neededPercents = seriesList.count() + 1; // index 0 + per-core
+        const bool percentsOk = percents.size() >= neededPercents;
+
+        for (int j = 0; percentsOk && j < seriesList.count(); j++){
             int p = percents.at(j+1);
 
             for (int i = 0; i < (second < 61 ? second : 61); i++)

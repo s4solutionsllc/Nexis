@@ -137,6 +137,15 @@ void DataRefreshService::setPowerMode(PowerMode mode)
     if (mSlowTimer->isActive())    mSlowTimer->start(slowMs);
 }
 
+bool DataRefreshService::isCpuPayloadEmittable(const QList<int> &percents)
+{
+    // Producer convention: index 0 = overall %, indices 1..N = per-core %.
+    // CpuInfo returns an empty list on a transient host_processor_info /
+    // /proc/stat failure; the Resources page indexes .at(j+1), so an
+    // empty payload would UB on the first per-core read. Drop the tick.
+    return !percents.isEmpty();
+}
+
 void DataRefreshService::recomputePowerMode()
 {
     PowerMode target = PowerMode::Normal;
@@ -284,9 +293,11 @@ void DataRefreshService::onFastTick()
 
     if (hasSubscribers(Signal::Cpu)) {
         QList<int> percents = im->getCpuPercents();
-        double clockGHz = im->getCpuClock() / 1000.0;
-        QList<double> loadAvgs = im->getCpuLoadAvgs();
-        emit cpuUpdated(percents, clockGHz, loadAvgs);
+        if (isCpuPayloadEmittable(percents)) {
+            double clockGHz = im->getCpuClock() / 1000.0;
+            QList<double> loadAvgs = im->getCpuLoadAvgs();
+            emit cpuUpdated(percents, clockGHz, loadAvgs);
+        }
     }
 
     if (hasSubscribers(Signal::Memory)) {

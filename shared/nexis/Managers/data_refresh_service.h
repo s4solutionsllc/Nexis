@@ -70,6 +70,13 @@ public:
     void setPowerMode(PowerMode mode);
     PowerMode powerMode() const { return mPowerMode; }
 
+    // SSO-3380 / WI-18: producers (`host_processor_info` on macOS, `/proc/stat`
+    // on Linux) return an empty list on a transient read failure. Consumers
+    // index `.at(0)` (Dashboard) and `.at(j+1)` (Resources per-core), so a
+    // bare emit on failure is UB. Gate the emit on this predicate so a
+    // transient sample loss skips a tick instead of crashing.
+    static bool isCpuPayloadEmittable(const QList<int> &percents);
+
     // BUG-110: cached copy of the last result emitted by systemUpdatesChecked /
     // repoHealthChecked. Pages constructed lazily (FR-97) connect too late to
     // catch the startup emission; they query these on activation to backfill

@@ -205,6 +205,19 @@ add_nexis_test(NAME CleanerServiceTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3380 / WI-18: DataRefreshService::isCpuPayloadEmittable() guards
+# the cpuUpdated emit against an empty producer payload. Links against
+# nexis-gui because the predicate lives in the GUI-side service.
+add_nexis_test(NAME DataRefreshServiceTests
+  SOURCES
+    managers/test_data_refresh_service.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
 # against nexis-gui because FileSearchService lives in the GUI library.
 add_nexis_test(NAME FileSearchServiceTests
