@@ -2,9 +2,11 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QObject>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QSet>
+#include <Utils/command_util.h>
 #include <Utils/file_util.h>
 #include <unistd.h>
 
@@ -130,4 +132,40 @@ QString StartupInfoMacOS::autostartPath() const
 bool StartupInfoMacOS::isAutostartDisabled() const
 {
     return false;
+}
+
+QList<BtmRecord> StartupInfoMacOS::getBtmRecords(QString *error) const
+{
+    if (error)
+        error->clear();
+
+    if (!CommandUtil::isExecutable(QStringLiteral("sfltool"))) {
+        if (error)
+            *error = QObject::tr("sfltool not found on this system.");
+        return {};
+    }
+
+    // dumpbtm prints the *complete* per-user database only when run as root.
+    // Without it, the current user's section appears but system daemon
+    // sections do not. We do a non-elevated read here so the page doesn't
+    // require a privilege prompt on every refresh; the UI shows a hint when
+    // appropriate. resetbtm (the repair action) uses sudo.
+    ExecResult res = CommandUtil::execWithStatus(
+        QStringLiteral("sfltool"), {QStringLiteral("dumpbtm")}, 15000);
+
+    if (!res.ok()) {
+        if (error) {
+            *error = res.error.isEmpty()
+                ? QObject::tr("sfltool dumpbtm failed (exit %1).").arg(res.exitCode)
+                : res.error;
+        }
+        return {};
+    }
+
+    QList<BtmRecord> records = BtmParser::parse(res.output);
+    BtmParser::flagDuplicates(records);
+    BtmParser::flagOrphans(records, [](const QString &path) {
+        return QFileInfo::exists(path);
+    });
+    return records;
 }

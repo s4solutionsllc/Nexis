@@ -93,6 +93,17 @@ add_nexis_test(NAME MacosParserTests
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
 )
 
+# SSO-3738 / FW-10: sfltool dumpbtm parser. Compiled directly here per FR-127
+# so the tests run on any platform even though `sfltool` itself is macOS-only.
+add_nexis_test(NAME BtmParserTests
+  SOURCES
+    core/test_btm_parser.cpp
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/btm_parser.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+)
+
 # WI-33: PackageTool uninstall command-construction tests. Subclasses the
 # Linux + macOS package tools and overrides the runSudoCommand/runCommand
 # seam on the PackageTool base. Compiles both platform sources directly so

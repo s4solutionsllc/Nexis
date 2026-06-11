@@ -210,6 +210,7 @@ Manage applications that auto-start at login.
   - **User Agents** (`~/Library/LaunchAgents`) — full edit/toggle/delete control; enabled state sourced from `launchctl print-disabled user/<uid>`
   - **System Agents** (`/Library/LaunchAgents`) — read-only; shows plist path
   - **System Daemons** (`/Library/LaunchDaemons`) — read-only; shows plist path
+  - **BTM Records** (`sfltool dumpbtm`, SSO-3738 / FW-10) — read-only; surfaces every entry the macOS Background Task Management database knows about (Login Items, Launch Agents/Daemons, helper launchers, app extensions, MDM-managed items), not just the items resolvable from `~/Library/LaunchAgents`. Per-row badges flag orphaned records (executable + plist both missing on disk), duplicate identifiers/executable paths, Apple-managed entries under `/System/Library/Launch{Daemons,Agents,Angels}` or `/usr/libexec`, and current enabled state. A destructive-styled **Repair BTM…** header button opens a confirmation dialog and runs `sudo sfltool resetbtm` — the standard repair when the Tahoe 26.4 `backgroundtaskmanagementd` bug stalls Login Items — once the user types `RESET` to acknowledge that every background item will re-prompt on next login.
 - File path shown as subtitle on every row
 
 ### 3a. Boot Analysis
