@@ -45,29 +45,38 @@ void TestPackageToolMacOS::trashApps_pathWithAppleScriptMetacharacters_noInjecti
     QTemporaryDir workDir;
     QVERIFY(workDir.isValid());
 
-    // Marker the AppleScript injection payload would create if the path were
-    // ever fed back into an AppleScript/sh source string. The test fails if
-    // this file exists after trashApps returns.
-    const QString markerPath = workDir.filePath("sso-3366-pwned");
+    // Marker the AppleScript injection payload would create if the path
+    // were ever fed back into an AppleScript/sh source string. We use a
+    // bare filename (no `/`) so it can be embedded inside the bundle name
+    // without QDir::mkdir interpreting the slash as a path separator.
+    // The marker is resolved relative to workDir on lookup; if any shell
+    // surface fired, the `touch` would land in the test process's CWD,
+    // which on the macOS CI runner is the build dir — we also probe there
+    // as a belt-and-braces guard.
+    const QString markerName = QStringLiteral("sso-3366-pwned");
+    const QString markerPath = workDir.filePath(markerName);
+    const QString markerPathCwd = QDir::current().filePath(markerName);
 
     // Bundle name carrying the metacharacters the audit (S1) called out:
     // `"` terminates the AppleScript string literal and `;` is a statement
     // separator, so `do shell script "touch <marker>"` is what the old
     // osascript-based implementation would actually have executed if the
     // bundle path ever flowed back into an AppleScript source string.
-    // Newline is deliberately omitted — macOS rejects `\n` in directory
-    // names via QDir::mkdir, and the double-quote alone is sufficient to
-    // prove the break-out (no AppleScript surface = no break-out, no
-    // matter how many `"` the attacker concatenates).
-    const QString appName = QStringLiteral("evil\"; do shell script \"touch '")
-                                + markerPath
-                                + QStringLiteral("'\"; --.app");
+    // We avoid `/` and `\n` in the embedded payload — `/` would make
+    // QDir::mkdir treat the bundle name as nested sub-directories, and
+    // `\n` is rejected by darwin mkdir. The double-quote alone is the
+    // substantive break-out the audit called out; no AppleScript surface
+    // = no break-out, no matter how many `"` the attacker concatenates.
+    const QString appName = QStringLiteral("evil\"; do shell script \"touch ")
+                                + markerName
+                                + QStringLiteral("\"; --.app");
     const QString appPath = workDir.filePath(appName);
 
     QVERIFY2(QDir(workDir.path()).mkdir(appName),
              qPrintable(QStringLiteral("could not create bundle at ") + appPath));
     QVERIFY(QFileInfo::exists(appPath));
     QVERIFY(!QFileInfo::exists(markerPath));
+    QVERIFY(!QFileInfo::exists(markerPathCwd));
 
     PackageToolMacOS tool;
     const bool ok = tool.trashApps({appPath});
@@ -81,6 +90,9 @@ void TestPackageToolMacOS::trashApps_pathWithAppleScriptMetacharacters_noInjecti
     QVERIFY2(!QFileInfo::exists(markerPath),
              "no injected shell/AppleScript payload may run — marker file "
              "would only exist if `do shell script` was reached");
+    QVERIFY2(!QFileInfo::exists(markerPathCwd),
+             "no injected shell/AppleScript payload may run in the test "
+             "process CWD either");
 #endif
 }
 
