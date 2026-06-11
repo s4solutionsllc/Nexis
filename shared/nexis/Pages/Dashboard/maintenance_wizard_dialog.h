@@ -2,6 +2,7 @@
 #define MAINTENANCE_WIZARD_DIALOG_H
 
 #include <QDialog>
+#include <QFuture>
 #include <QLabel>
 #include <QPushButton>
 #include <QAtomicInt>
@@ -26,6 +27,7 @@ public:
                                      InfoManager *infoManager = nullptr,
                                      ToolManager *toolManager = nullptr,
                                      SignalMapper *signalMapper = nullptr);
+    ~MaintenanceWizardDialog() override;
 
     void runChecks();
 
@@ -70,6 +72,15 @@ private:
     int mHealthScore;
     QString mHealthLabel;
     bool mCleaningDone;
+
+    // Background-worker futures kept so the destructor can block until
+    // they finish, preventing use-after-free when the dialog is closed
+    // mid-scan (workers post results back via QMetaObject::invokeMethod).
+    QFuture<void> mScanFuture;
+    QFuture<void> mOrphansFuture;
+    QFuture<void> mUpdatesFuture;
+    QFuture<void> mHealthFuture;
+    QFuture<void> mCleanFuture;
 };
 
 #endif // MAINTENANCE_WIZARD_DIALOG_H

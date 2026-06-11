@@ -488,12 +488,16 @@ void ScheduleManager::createSystemdTimer(const CleaningSchedule &schedule)
         break;
     }
 
-    // Write .service file
+    // Write .service file. SSO-3368: the user systemd unit inherits no
+    // DISPLAY/WAYLAND_DISPLAY at boot catch-up time (Persistent=true), so
+    // we set QT_QPA_PLATFORM=offscreen explicitly. main() also detects the
+    // headless flag and forces offscreen as a second line of defence.
     QString serviceContent = QString(
         "[Unit]\n"
         "Description=Nexis Scheduled Clean - %1\n\n"
         "[Service]\n"
         "Type=oneshot\n"
+        "Environment=QT_QPA_PLATFORM=offscreen\n"
         "ExecStart=%2 --clean %3\n")
         .arg(schedule.name, appPath, schedule.id);
 
@@ -567,7 +571,10 @@ void ScheduleManager::createCronEntry(const CleaningSchedule &schedule)
         break;
     }
 
-    QString cronLine = QString("%1 %2 --clean %3 # nexis-schedule:%3")
+    // SSO-3368: cron never sets DISPLAY/WAYLAND_DISPLAY, so steer Qt onto the
+    // offscreen platform inline. main() will also detect the headless flag
+    // and force offscreen as a second line of defence.
+    QString cronLine = QString("%1 QT_QPA_PLATFORM=offscreen %2 --clean %3 # nexis-schedule:%3")
         .arg(cronTime, appPath, schedule.id);
 
     // Append to crontab
