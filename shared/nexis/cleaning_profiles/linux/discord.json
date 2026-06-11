@@ -1,0 +1,14 @@
+{
+  "id": "discord-cache",
+  "name": "Discord Cache",
+  "app": "Discord",
+  "description": "Discord Electron cache and GPU cache.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.config/discord/Cache",
+    "$HOME/.config/discord/Code Cache",
+    "$HOME/.config/discord/GPUCache"
+  ],
+  "minAgeDays": 0
+}

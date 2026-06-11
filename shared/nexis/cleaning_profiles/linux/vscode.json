@@ -1,0 +1,16 @@
+{
+  "id": "vscode-cache",
+  "name": "Visual Studio Code Caches",
+  "app": "Visual Studio Code",
+  "description": "Editor cache, GPU cache, code cache, and logs for VS Code.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.config/Code/Cache",
+    "$HOME/.config/Code/CachedData",
+    "$HOME/.config/Code/Code Cache",
+    "$HOME/.config/Code/GPUCache",
+    "$HOME/.config/Code/logs"
+  ],
+  "minAgeDays": 7
+}

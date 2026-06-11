@@ -1,0 +1,13 @@
+{
+  "id": "flatpak-user-cache",
+  "name": "Flatpak User Cache",
+  "app": "Flatpak",
+  "description": "Per-user Flatpak download cache and OSTree object scratch.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.var/app/*/cache",
+    "$HOME/.local/share/flatpak/repo/tmp"
+  ],
+  "minAgeDays": 0
+}

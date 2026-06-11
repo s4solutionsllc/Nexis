@@ -1,0 +1,13 @@
+{
+  "id": "spotify-cache",
+  "name": "Spotify Cache",
+  "app": "Spotify",
+  "description": "Spotify offline cache and persistent download buffer.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/com.spotify.client",
+    "$HOME/Library/Application Support/Spotify/PersistentCache"
+  ],
+  "minAgeDays": 0
+}

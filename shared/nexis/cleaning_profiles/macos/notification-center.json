@@ -1,0 +1,12 @@
+{
+  "id": "swiftpm-cache",
+  "name": "Swift Package Manager Cache",
+  "app": "Swift Package Manager",
+  "description": "Swift PM build cache and downloaded repositories.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/org.swift.swiftpm"
+  ],
+  "minAgeDays": 14
+}

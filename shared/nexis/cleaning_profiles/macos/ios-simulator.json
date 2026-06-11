@@ -1,0 +1,12 @@
+{
+  "id": "ios-simulator-caches",
+  "name": "iOS Simulator Caches",
+  "app": "Xcode iOS Simulator",
+  "description": "CoreSimulator caches and unavailable runtime payloads. Does not delete simulator devices.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Developer/CoreSimulator/Caches"
+  ],
+  "minAgeDays": 14
+}

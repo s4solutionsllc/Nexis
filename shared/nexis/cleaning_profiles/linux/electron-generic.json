@@ -1,0 +1,14 @@
+{
+  "id": "electron-generic-cache",
+  "name": "Other Electron App Caches",
+  "app": "Electron apps",
+  "description": "Generic Cache/GPUCache cleanup for any Electron app under ~/.config.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.config/*/Cache",
+    "$HOME/.config/*/Code Cache",
+    "$HOME/.config/*/GPUCache"
+  ],
+  "minAgeDays": 14
+}

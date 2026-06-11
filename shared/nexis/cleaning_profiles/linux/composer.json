@@ -1,0 +1,12 @@
+{
+  "id": "composer-cache",
+  "name": "Composer Cache",
+  "app": "Composer (PHP)",
+  "description": "Composer's downloaded package files and repository metadata.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/composer"
+  ],
+  "minAgeDays": 0
+}

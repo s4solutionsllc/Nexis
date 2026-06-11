@@ -1,0 +1,13 @@
+{
+  "id": "edge-cache",
+  "name": "Microsoft Edge Caches",
+  "app": "Microsoft Edge",
+  "description": "Browser cache, GPU cache, and service-worker cache for Microsoft Edge.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/Microsoft Edge",
+    "$HOME/Library/Application Support/Microsoft Edge/*/Service Worker/CacheStorage"
+  ],
+  "minAgeDays": 0
+}

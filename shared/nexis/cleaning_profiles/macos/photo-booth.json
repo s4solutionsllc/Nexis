@@ -1,0 +1,13 @@
+{
+  "id": "appstore-caches",
+  "name": "App Store Caches",
+  "app": "App Store",
+  "description": "Mac App Store partial downloads and asset cache.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/com.apple.appstoreagent",
+    "$HOME/Library/Caches/com.apple.commerce"
+  ],
+  "minAgeDays": 7
+}

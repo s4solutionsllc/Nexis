@@ -1,0 +1,12 @@
+{
+  "id": "xcode-archives",
+  "name": "Xcode Archives",
+  "app": "Xcode",
+  "description": "Old built archives saved by Xcode when distributing apps.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/Library/Developer/Xcode/Archives/*"
+  ],
+  "minAgeDays": 60
+}

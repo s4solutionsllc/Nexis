@@ -1,0 +1,13 @@
+{
+  "id": "opera-cache",
+  "name": "Opera Browser Caches",
+  "app": "Opera",
+  "description": "Browser cache and GPU cache for Opera.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/opera/Cache",
+    "$HOME/.cache/opera/GPUCache"
+  ],
+  "minAgeDays": 0
+}

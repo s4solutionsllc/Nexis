@@ -1,0 +1,13 @@
+{
+  "id": "jetbrains-cache",
+  "name": "JetBrains IDE Caches",
+  "app": "JetBrains IDEs",
+  "description": "Caches and logs from IntelliJ IDEA, PyCharm, GoLand, WebStorm, etc.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/JetBrains/*",
+    "$HOME/Library/Logs/JetBrains/*"
+  ],
+  "minAgeDays": 14
+}

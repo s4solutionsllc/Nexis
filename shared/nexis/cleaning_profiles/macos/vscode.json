@@ -1,0 +1,16 @@
+{
+  "id": "vscode-cache",
+  "name": "Visual Studio Code Caches",
+  "app": "Visual Studio Code",
+  "description": "Editor cache, GPU cache, and logs for VS Code on macOS.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Application Support/Code/Cache",
+    "$HOME/Library/Application Support/Code/CachedData",
+    "$HOME/Library/Application Support/Code/Code Cache",
+    "$HOME/Library/Application Support/Code/GPUCache",
+    "$HOME/Library/Application Support/Code/logs"
+  ],
+  "minAgeDays": 7
+}

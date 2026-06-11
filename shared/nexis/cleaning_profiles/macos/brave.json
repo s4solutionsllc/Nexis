@@ -1,0 +1,13 @@
+{
+  "id": "brave-cache",
+  "name": "Brave Browser Caches",
+  "app": "Brave",
+  "description": "Browser cache and GPU cache for Brave browser profiles.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/BraveSoftware/Brave-Browser",
+    "$HOME/Library/Application Support/BraveSoftware/Brave-Browser/*/Service Worker/CacheStorage"
+  ],
+  "minAgeDays": 0
+}

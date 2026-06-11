@@ -1,0 +1,13 @@
+{
+  "id": "wine-tmp",
+  "name": "Wine Temporary Files",
+  "app": "Wine",
+  "description": "Per-prefix temporary directories used by Wine applications.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.wine/drive_c/users/*/Temp",
+    "$HOME/.wine/drive_c/users/*/AppData/Local/Temp"
+  ],
+  "minAgeDays": 7
+}

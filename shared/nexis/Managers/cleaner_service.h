@@ -27,7 +27,8 @@ public:
         BROKEN_SYMLINKS,
         BROWSER_PRIVACY,
         SNAP_FLATPAK_REVISIONS,
-        DOWNLOADS_AGED       // FR-113: aged files in the user's Downloads folder
+        DOWNLOADS_AGED,      // FR-113: aged files in the user's Downloads folder
+        APP_PROFILES         // FW-12: paths discovered via data-driven cleaning profiles
     };
 
     // SSO-3732 / FW-05: outcome of an individual deletion. Lets callers tell a
@@ -104,6 +105,11 @@ public:
     void addExclusion(ExclusionEntry::Type type, const QString &path);
     void removeExclusion(const QString &path);
     static bool isExcluded(const QString &filePath, const QList<ExclusionEntry> &exclusions);
+
+    // FW-12: when true, aggressive-class cleaning profiles are included in
+    // APP_PROFILES scans. Defaults to false; persisted via SettingManager.
+    bool isAggressiveProfilesEnabled() const;
+    void setAggressiveProfilesEnabled(bool enabled);
 
 signals:
     void cleaningStarted(QString scheduleName);

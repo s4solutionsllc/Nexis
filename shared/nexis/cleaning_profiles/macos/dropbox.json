@@ -1,0 +1,12 @@
+{
+  "id": "dropbox-cache",
+  "name": "Dropbox Cache",
+  "app": "Dropbox",
+  "description": "Dropbox hidden per-user cache directory of recently deleted files.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/Dropbox/.dropbox.cache"
+  ],
+  "minAgeDays": 14
+}

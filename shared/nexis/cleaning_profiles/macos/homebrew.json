@@ -1,0 +1,14 @@
+{
+  "id": "homebrew-downloads",
+  "name": "Homebrew Downloads Cache",
+  "app": "Homebrew",
+  "description": "Cached bottle and source tarballs Homebrew keeps after installs.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/Homebrew/downloads",
+    "$HOME/Library/Caches/Homebrew/api",
+    "$HOME/Library/Logs/Homebrew"
+  ],
+  "minAgeDays": 0
+}

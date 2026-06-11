@@ -1,0 +1,15 @@
+{
+  "id": "android-studio-cache",
+  "name": "Android Studio Caches",
+  "app": "Android Studio",
+  "description": "Build, gradle, and IDE caches for Android Studio.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/Google/AndroidStudio*/caches",
+    "$HOME/.cache/Google/AndroidStudio*/log",
+    "$HOME/.gradle/caches/build-cache-*",
+    "$HOME/.android/cache"
+  ],
+  "minAgeDays": 14
+}

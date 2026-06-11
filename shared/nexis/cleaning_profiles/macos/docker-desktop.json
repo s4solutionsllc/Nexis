@@ -1,0 +1,13 @@
+{
+  "id": "docker-desktop-logs",
+  "name": "Docker Desktop Logs",
+  "app": "Docker Desktop",
+  "description": "Docker Desktop log directories. The qcow2 VM disk is intentionally left alone.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Containers/com.docker.docker/Data/log",
+    "$HOME/Library/Logs/Docker Desktop"
+  ],
+  "minAgeDays": 7
+}

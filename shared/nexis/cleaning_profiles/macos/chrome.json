@@ -1,0 +1,13 @@
+{
+  "id": "chrome-cache",
+  "name": "Google Chrome Caches",
+  "app": "Google Chrome",
+  "description": "Browser cache, code cache, GPU cache, and service-worker cache for Chrome.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/Google/Chrome",
+    "$HOME/Library/Application Support/Google/Chrome/*/Service Worker/CacheStorage"
+  ],
+  "minAgeDays": 0
+}

@@ -1,0 +1,14 @@
+{
+  "id": "cargo-cache",
+  "name": "Cargo Registry Cache",
+  "app": "Cargo (Rust)",
+  "description": "Downloaded crate sources and the registry index used by Cargo.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.cargo/registry/cache",
+    "$HOME/.cargo/registry/src",
+    "$HOME/.cargo/git/db"
+  ],
+  "minAgeDays": 30
+}

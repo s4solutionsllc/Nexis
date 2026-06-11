@@ -494,6 +494,17 @@ QString SettingManager::getCleanerCategoryTrends() const
     return mSettings->value(SettingKeys::CleanerCategoryTrends, "{}").toString();
 }
 
+// FW-12
+void SettingManager::setCleanerAggressiveProfilesEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::CleanerAggressiveProfilesEnabled, value);
+}
+
+bool SettingManager::getCleanerAggressiveProfilesEnabled() const
+{
+    return mSettings->value(SettingKeys::CleanerAggressiveProfilesEnabled, false).toBool();
+}
+
 // FR-116
 void SettingManager::setProcessPinnedNames(const QString &json)
 {

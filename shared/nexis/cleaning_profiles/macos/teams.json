@@ -1,0 +1,15 @@
+{
+  "id": "teams-cache",
+  "name": "Microsoft Teams Cache",
+  "app": "Microsoft Teams",
+  "description": "Microsoft Teams Electron cache and GPU cache.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Application Support/Microsoft/Teams/Cache",
+    "$HOME/Library/Application Support/Microsoft/Teams/Code Cache",
+    "$HOME/Library/Application Support/Microsoft/Teams/GPUCache",
+    "$HOME/Library/Application Support/Microsoft/Teams/Service Worker/CacheStorage"
+  ],
+  "minAgeDays": 0
+}

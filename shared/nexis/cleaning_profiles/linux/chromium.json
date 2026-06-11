@@ -1,0 +1,14 @@
+{
+  "id": "chromium-cache",
+  "name": "Chromium Caches",
+  "app": "Chromium",
+  "description": "Browser cache and GPU cache for the open-source Chromium browser.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/chromium/*/Cache",
+    "$HOME/.cache/chromium/*/Code Cache",
+    "$HOME/.cache/chromium/*/GPUCache"
+  ],
+  "minAgeDays": 0
+}

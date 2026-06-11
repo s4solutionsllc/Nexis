@@ -1,0 +1,13 @@
+{
+  "id": "snap-user-cache",
+  "name": "Snap User Cache",
+  "app": "Snap",
+  "description": "Per-user snap caches for installed snaps.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/snap/*/common/.cache",
+    "$HOME/snap/*/current/.cache"
+  ],
+  "minAgeDays": 0
+}

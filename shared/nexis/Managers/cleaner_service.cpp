@@ -1,4 +1,5 @@
 #include "cleaner_service.h"
+#include "cleaning_profiles_service.h"
 #include "schedule_manager.h"
 #include "setting_manager.h"
 #include <Managers/info_manager.h>
@@ -44,6 +45,7 @@ QString CleanerService::categoryName(CleanCategory cat)
         case BROWSER_PRIVACY:   return QObject::tr("Browser Privacy");
         case SNAP_FLATPAK_REVISIONS: return QObject::tr("Snap/Flatpak Revisions");
         case DOWNLOADS_AGED:    return QObject::tr("Old Downloads");
+        case APP_PROFILES:      return QObject::tr("Application Profiles");
     }
     return QString();
 }
@@ -52,7 +54,18 @@ QList<CleanerService::CleanCategory> CleanerService::allCategories()
 {
     return { PACKAGE_CACHE, CRASH_REPORTS, APPLICATION_LOGS,
              APPLICATION_CACHES, TRASH, DEV_TOOL_CACHES, BROKEN_SYMLINKS,
-             BROWSER_PRIVACY, SNAP_FLATPAK_REVISIONS, DOWNLOADS_AGED };
+             BROWSER_PRIVACY, SNAP_FLATPAK_REVISIONS, DOWNLOADS_AGED,
+             APP_PROFILES };
+}
+
+bool CleanerService::isAggressiveProfilesEnabled() const
+{
+    return SettingManager::ins()->getCleanerAggressiveProfilesEnabled();
+}
+
+void CleanerService::setAggressiveProfilesEnabled(bool enabled)
+{
+    SettingManager::ins()->setCleanerAggressiveProfilesEnabled(enabled);
 }
 
 QList<CleanerService::ExclusionEntry> CleanerService::loadExclusions()
@@ -232,6 +245,19 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
                     if (fi.lastModified() < cutoff)
                         files.append(fi);
                 }
+                break;
+            }
+            case APP_PROFILES: {
+                // FW-12: data-driven category. Combines all profile-expanded
+                // paths (gated by the aggressive toggle and the exclusions
+                // engine below) into a single QFileInfoList.
+                CleaningProfilesService *cps = CleaningProfilesService::ins();
+                const auto profiles = cps->loadAll();
+                const bool allowAggressive = isAggressiveProfilesEnabled();
+                files = cps->scan(profiles, allowAggressive,
+                                  [&](const QString &p) {
+                                      return isExcluded(p, exclusions);
+                                  });
                 break;
             }
         }
