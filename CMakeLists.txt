@@ -708,4 +708,12 @@ else()
     DESTINATION share/metainfo
     CONFIGURATIONS Release RelWithDebInfo MinSizeRel
   )
+
+  install(
+    FILES
+      "${SHARED_DIR}/nexis/static/font/LICENSE-OFL.txt"
+      "${SHARED_DIR}/nexis/static/font/LICENSE-UFL.txt"
+    DESTINATION share/doc/nexis
+    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+  )
 endif()
