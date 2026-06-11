@@ -291,7 +291,8 @@ Advanced file search across the filesystem.
 - Search as root option (sudo)
 - Results table with path, size, modified date (sortable columns)
 - Double-click to open files in default application
-- Right-click context menu: open, open location, copy path
+- Right-click context menu: open folder, Move to Trash, Delete
+- Move-to-Trash and Delete run on a worker thread and report success/failure through `FileSearchService::fileOperationFinished` — long bulk operations no longer freeze the UI or crash the app on timeout (SSO-3365, audit H4).
 
 ### 7. Services
 
