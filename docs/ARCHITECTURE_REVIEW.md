@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: 2026-06-11 (SSO-3497, SSO-3383, SSO-3391 / WI-29, SSO-3396 / WI-33) | Version 2.3.14
+> Last updated: 2026-06-11 (SSO-3497, SSO-3383, SSO-3391 / WI-29, SSO-3396 / WI-33, SSO-3738 / FW-10) | Version 2.3.14
 
 > **Packaging note (SSO-3376, 2026-06):** The Flatpak (Flathub) distribution channel was retired. There is no `flatpak-spawn`/sandbox-detection layer in the codebase — the privileged-host operations Nexis depends on (`pkexec`, `systemctl`, `smartctl`, `fstrim`, `nvidia-smi`, `/proc` and `/sys` reads) are architecturally unsuited to a bubblewrap sandbox, and adding one would require routing `CommandUtil` through `flatpak-spawn --host` plus holding the `org.freedesktop.Flatpak` portal — i.e. eliminating the sandbox benefit. Linux ships via `.deb` (PPA + GitHub releases), AppImage, and AUR.
 
@@ -181,6 +181,8 @@ private:
 **Assessment:** For a single-process Qt desktop app with the test coverage tracked in the canonical "By the numbers" table, singletons are **pragmatically correct**. The anti-pattern critique of singletons assumes multi-threaded systems or test-heavy codebases. Nexis is single-threaded GUI with a single user. The managers are effectively namespaced globals — and that's fine at this scale.
 
 **Facade-only access from `shared/nexis/Pages` (WI-27 / SSO-3389, audit A3).** All shared UI pages must reach platform-specific Info subclasses through `InfoManager` (or a `createForPlatform()` factory like `LogProvider`) — never by stack-constructing `SystemInfoLinux` / `SystemInfoMacOS`, `CpuInfoLinux` / `CpuInfoMacOS`, `BootAnalysisInfoLinux` / `BootAnalysisInfoMacOS`, etc. behind `#ifdef Q_OS_*`. As of WI-27, `BootAnalysisInfo` and `StartupInfo` are also owned by `InfoManager` and exposed via `bootAnalysisInfo()` / `startupInfo()` accessors. A CI gate (`scripts/check-pages-no-platform-headers.sh`, invoked from `.github/workflows/build.yml`) blocks any include of `*_macos.h` / `*_linux.h` from `shared/nexis/Pages/**`. Adding a new platform should not require editing any page in that tree.
+
+**Exception: macOS-only BTM view on Startup Apps (SSO-3738 / FW-10).** The `BtmRow` and `BtmResetDialog` widgets live under `shared/nexis/Pages/StartupApps/` but are wrapped in `#ifdef Q_OS_MACOS` and only registered into the macOS GUI target. They consume `BtmRecord` (defined in `macos/nexis-core/Info/btm_parser.h`) through `StartupService::getBtmRecords()` / `StartupService::resetBtm()` rather than including a platform-specific Info header directly, so the facade rule is preserved — the platform-specific type leaks through the service signature, not through page-level includes. The CI gate continues to enforce no `*_macos.h` / `*_linux.h` includes from `Pages/**`.
 
 ---
 

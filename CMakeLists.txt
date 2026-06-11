@@ -160,6 +160,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/power_profile_info.cpp"
     "${CORE_PLAT_DIR}/Info/process_info.cpp"
     "${CORE_PLAT_DIR}/Info/boot_analysis_info.cpp"
+    "${CORE_PLAT_DIR}/Info/btm_parser.cpp"
     "${CORE_PLAT_DIR}/Info/startup_info.cpp"
     "${CORE_PLAT_DIR}/Info/system_info.cpp"
     "${CORE_PLAT_DIR}/Info/thermal_info.cpp"
@@ -189,6 +190,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/power_profile_info_macos.h"
     "${CORE_PLAT_DIR}/Info/process_info_macos.h"
     "${CORE_PLAT_DIR}/Info/boot_analysis_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/btm_parser.h"
     "${CORE_PLAT_DIR}/Info/startup_info_macos.h"
     "${CORE_PLAT_DIR}/Info/system_info_macos.h"
     "${CORE_PLAT_DIR}/Info/thermal_info_macos.h"
@@ -472,11 +474,15 @@ set(GUI_SHARED_HDRS
 if(APPLE)
   set(GUI_PLAT_SRCS
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
+    "${GUI_SHARED_DIR}/Pages/StartupApps/btm_reset_dialog.cpp"
+    "${GUI_SHARED_DIR}/Pages/StartupApps/btm_row.cpp"
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
   )
   set(GUI_PLAT_HDRS
+    "${GUI_SHARED_DIR}/Pages/StartupApps/btm_reset_dialog.h"
+    "${GUI_SHARED_DIR}/Pages/StartupApps/btm_row.h"
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"

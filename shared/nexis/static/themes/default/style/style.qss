@@ -1396,6 +1396,72 @@ QLabel[accessibleName="dialog-title"] {
     font-family: @monoFontFamily;
 }
 
+/* - BTM (Background Task Management) rows — SSO-3738 - */
+
+#widgetBtmRow {
+    background-color: @cardBg;
+    border: 1px solid @borderColor;
+    border-radius: @dp6;
+}
+
+#widgetBtmRow #lblBtmRowName {
+    color: @color05;
+    font-size: 10pt;
+    font-weight: 600;
+}
+
+#widgetBtmRow #lblBtmRowSubtext {
+    color: @tertiaryText;
+    font-size: 9pt;
+    font-family: @monoFontFamily;
+}
+
+#widgetBtmRow QLabel[badge="true"] {
+    padding: @dp2 @dp6;
+    border-radius: @dp4;
+    font-size: 9pt;
+    font-weight: 600;
+    background-color: @cardBgElevated;
+    color: @tertiaryText;
+}
+
+#widgetBtmRow #btmBadgeOn {
+    background-color: @successColor;
+    color: @overlayText;
+}
+
+#widgetBtmRow #btmBadgeOff {
+    background-color: @cardBgElevated;
+    color: @tertiaryText;
+}
+
+#widgetBtmRow #btmBadgeOrphan {
+    background-color: @destructiveColor;
+    color: @overlayText;
+}
+
+#widgetBtmRow #btmBadgeDuplicate {
+    background-color: @warningColor;
+    color: @overlayText;
+}
+
+#widgetBtmRow #btmBadgeApple {
+    background-color: @infoColor;
+    color: @overlayText;
+}
+
+#btnRepairBtm {
+    background-color: @destructiveColor;
+    color: @overlayText;
+    border-radius: @dp4;
+    padding: @dp6 @dp10;
+    font-weight: 600;
+}
+
+#btnRepairBtm:hover {
+    background-color: @accentHover;
+}
+
 /* - Startup App Edit - */
 
 #StartupAppEdit {

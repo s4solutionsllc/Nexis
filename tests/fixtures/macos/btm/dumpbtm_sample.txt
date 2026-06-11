@@ -1,0 +1,71 @@
+==== Records for user A1B2C3D4-1111-2222-3333-444455556666 ====
+Record item #1
+	UUID: 11111111-aaaa-bbbb-cccc-222222222222
+	Name: Slack
+	Developer Name: Slack Technologies, Inc.
+	Team Identifier: BQR82RBBHL
+	Type: legacyLoginItem
+	Disposition: [enabled, allowed, visible, notified] (11)
+	Identifier: com.tinyspeck.slackmacgap
+	URL: file:///Applications/Slack.app/
+	Executable Path: /Applications/Slack.app/Contents/MacOS/Slack
+	Generation: 3
+	Container: com.tinyspeck.slackmacgap
+Record item #2
+	UUID: 22222222-aaaa-bbbb-cccc-333333333333
+	Name: Dropbox
+	Developer Name: Dropbox, Inc.
+	Team Identifier: G7HH3F8CAK
+	Type: loginItem
+	Disposition: [disabled, allowed, visible, notified] (10)
+	Identifier: com.dropbox.DropboxMacUpdate
+	URL: file:///Applications/Dropbox.app/
+	Executable Path: /Applications/Dropbox.app/Contents/MacOS/Dropbox
+	Generation: 1
+Record item #3
+	UUID: 33333333-aaaa-bbbb-cccc-444444444444
+	Name: com.docker.vmnetd
+	Developer Name: Docker Inc
+	Team Identifier: 9BNSXJN65R
+	Type: launchdDaemon
+	Disposition: [enabled, allowed, notVisible, notified] (9)
+	Identifier: com.docker.vmnetd
+	URL: file:///Library/LaunchDaemons/com.docker.vmnetd.plist
+	Executable Path: /Library/PrivilegedHelperTools/com.docker.vmnetd
+	Generation: 2
+	Plist Path: /Library/LaunchDaemons/com.docker.vmnetd.plist
+Record item #4
+	UUID: 44444444-aaaa-bbbb-cccc-555555555555
+	Name: ghost-installer
+	Developer Name: (null)
+	Team Identifier: (null)
+	Type: launchdAgent
+	Disposition: [enabled, allowed, notVisible, notified] (9)
+	Identifier: com.example.ghost
+	URL: file:///tmp/ghost-installer/ghost.plist
+	Executable Path: /tmp/ghost-installer/ghost
+	Generation: 1
+	Plist Path: /tmp/ghost-installer/ghost.plist
+Record item #5
+	UUID: 55555555-aaaa-bbbb-cccc-666666666666
+	Name: com.tinyspeck.slackmacgap
+	Developer Name: Slack Technologies, Inc.
+	Team Identifier: BQR82RBBHL
+	Type: legacyLoginItem
+	Disposition: [disabled, allowed, visible, notNotified] (2)
+	Identifier: com.tinyspeck.slackmacgap
+	URL: file:///Applications/Slack.app/
+	Executable Path: /Applications/Slack.app/Contents/MacOS/Slack
+	Generation: 1
+Record item #6
+	UUID: 66666666-aaaa-bbbb-cccc-777777777777
+	Name: com.apple.btmcompanion
+	Developer Name: Apple Inc.
+	Team Identifier: (null)
+	Type: launchdAgent
+	Disposition: [enabled, allowed, notVisible, notified] (9)
+	Identifier: com.apple.btmcompanion
+	URL: file:///System/Library/LaunchAngels/com.apple.btmcompanion.plist
+	Executable Path: /System/Library/LaunchAngels/com.apple.btmcompanion
+	Generation: 1
+	Plist Path: /System/Library/LaunchAngels/com.apple.btmcompanion.plist
