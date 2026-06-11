@@ -67,6 +67,13 @@ jobs:
       - name: Build
         run: cmake --build build -j$(nproc)
 
+      # WI-32: Run unit tests against the cmake build before producing the
+      # AppImage/raw-binary artifacts so a directly-tagged hotfix can't ship
+      # an untested binary. The .deb leg below runs tests separately via
+      # debian/rules override_dh_auto_test. Mirrors build.yml.
+      - name: Unit Tests
+        run: xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
+
       # --- .deb package ---
       - name: Symlink debian packaging directory
         run: ln -s linux/debian debian
@@ -280,6 +287,12 @@ jobs:
 
       - name: Build
         run: cmake --build build -j$(sysctl -n hw.ncpu)
+
+      # WI-32: Run unit tests against the macOS build before signing/notarizing
+      # the .dmg so a directly-tagged hotfix can't ship an untested binary.
+      # Mirrors build.yml.
+      - name: Unit Tests
+        run: ctest --test-dir build --output-on-failure -E ScreenshotTests
 
       - name: Deploy Qt frameworks into .app bundle
         run: |
