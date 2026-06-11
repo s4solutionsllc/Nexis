@@ -1,12 +1,14 @@
-// SSO-3365 / audit H4: FileSearchService::moveToTrash and ::deleteFile used to
-// run CommandUtil::exec directly on the UI thread. CommandUtil::exec throws a
-// raw QString on QProcess error (e.g. FailedToStart, timeout) — that exception
-// escaped through the Qt event loop and aborted the app. The service now
-// dispatches on a worker thread and reports success/failure via the
-// fileOperationFinished signal. These tests assert both:
+// SSO-3365 / audit H4 + SSO-3367 / audit A1: FileSearchService::moveToTrash
+// and ::deleteFile used to run CommandUtil::exec directly on the UI thread.
+// CommandUtil::exec used to throw a raw QString on QProcess error
+// (FailedToStart, timeout) — that exception escaped through the Qt event loop
+// and aborted the app. The service now dispatches on a worker thread and,
+// post-SSO-3367, the unified ExecResult contract guarantees no exception
+// escapes the exec layer. Success/failure is surfaced via
+// fileOperationFinished. These tests assert both:
 //   - the success path actually removes the file (proves the worker ran), and
-//   - a forced exec failure is caught (no exception escapes) and surfaced
-//     via the signal with hadError=true.
+//   - a forced exec failure is reported by ExecResult::ok() and surfaced via
+//     the signal with hadError=true, without throwing.
 
 #include <QtTest>
 #include <QFile>
@@ -80,10 +82,11 @@ void TestFileSearchService::deleteFile_success_emitsNoError()
 void TestFileSearchService::moveToTrash_execFailure_caughtAndReported()
 {
     // Point PATH at a directory that doesn't exist so QProcess can't resolve
-    // "mv" → QProcess::FailedToStart → CommandUtil::exec throws QString. The
-    // worker must catch and report via the signal; the synchronous call into
-    // moveToTrash must never throw. PATH is restored after spy.wait() to avoid
-    // racing the worker thread that hasn't called QProcess::start() yet.
+    // "mv" → QProcess::FailedToStart → execWithStatus returns ExecResult with
+    // exitCode=-1. The worker must report the failure via the signal; the
+    // synchronous call into moveToTrash must never throw. PATH is restored
+    // after spy.wait() to avoid racing the worker thread that hasn't called
+    // QProcess::start() yet.
     QTemporaryDir tmp;
     QVERIFY(tmp.isValid());
     const QString path = writeTempFile(tmp, "wont-move.txt");

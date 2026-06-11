@@ -62,12 +62,11 @@ QStringList FileUtil::directoryList(const QString &path)
 bool FileUtil::writeRootFile(const QString &path, const QByteArray &content)
 {
 #ifdef Q_OS_LINUX
-    // Pipe `content` through pkexec tee <path>. sudoExec swallows errors and
-    // returns empty on cancel, so the only reliable success check is a
-    // read-back byte compare.
-    CommandUtil::sudoExec("tee", {path}, content);
-    const QString onDisk = FileUtil::readStringFromFile(path);
-    return onDisk.toUtf8() == content;
+    // Pipe `content` through pkexec tee <path>. Post SSO-3367, sudoExec
+    // surfaces real exit status via sudoExecWithStatus — pkexec returns 0 only
+    // if both the auth and the wrapped `tee` succeeded, so the read-back byte
+    // compare the pre-SSO-3367 version did is no longer needed.
+    return CommandUtil::sudoExecWithStatus("tee", {path}, content).ok();
 #else
     Q_UNUSED(path)
     Q_UNUSED(content)

@@ -47,25 +47,19 @@ void FileSearchService::search(const FileSearchParams &params)
     bool asRoot = params.searchAsRoot;
 
     (void)QtConcurrent::run([this, args, asRoot]() {
-        bool hadError = false;
-        QString result;
-
-        try {
-            if (asRoot) {
-                result = CommandUtil::sudoExec("find", args);
-            } else {
-                result = CommandUtil::exec("find", args, {}, 120000);
-            }
-        } catch (QString) {
-            hadError = true;
-        }
+        // SSO-3367 / audit A1: CommandUtil no longer throws. The previous
+        // try/catch (SSO-3365 / audit H4) is redundant; failure is reported by
+        // ExecResult::ok().
+        const ExecResult result = asRoot
+            ? CommandUtil::sudoExecWithStatus("find", args)
+            : CommandUtil::execWithStatus("find", args, 120000);
 
         QStringList results;
-        if (!hadError && !result.trimmed().isEmpty()) {
-            results = result.split("\n");
+        if (result.ok() && !result.output.isEmpty()) {
+            results = result.output.split("\n");
         }
 
-        emit searchFinished(results, hadError);
+        emit searchFinished(results, !result.ok());
     });
 }
 
@@ -75,19 +69,14 @@ void FileSearchService::moveToTrash(const QString &filePath, const QString &file
     QStringList args = mTool->buildMoveToTrashArgs(filePath, isAnotherUser);
 
     (void)QtConcurrent::run([this, filePath, fileName, args, isAnotherUser]() {
-        bool hadError = false;
-        QString errorMessage;
+        // SSO-3367 / audit A1: unified ExecResult contract replaces the
+        // SSO-3365 try/catch around CommandUtil::exec (which used to throw a
+        // raw QString on QProcess failure).
+        const ExecResult result = isAnotherUser
+            ? CommandUtil::sudoExecWithStatus("mv", args)
+            : CommandUtil::execWithStatus("mv", args, kFileOpTimeoutMs);
 
-        try {
-            if (isAnotherUser) {
-                CommandUtil::sudoExec("mv", args);
-            } else {
-                CommandUtil::exec("mv", args, {}, kFileOpTimeoutMs);
-            }
-        } catch (const QString &ex) {
-            hadError = true;
-            errorMessage = ex;
-        }
+        const bool hadError = !result.ok();
 
         // Write trash metadata (Linux only; macOS no-ops). Skip on failure —
         // the file is still where it was. mTool is set in the ctor and never
@@ -96,7 +85,7 @@ void FileSearchService::moveToTrash(const QString &filePath, const QString &file
             mTool->writeTrashMetadata(filePath, fileName);
         }
 
-        emit fileOperationFinished(FileOperation::MoveToTrash, filePath, hadError, errorMessage);
+        emit fileOperationFinished(FileOperation::MoveToTrash, filePath, hadError, result.error);
     });
 }
 
@@ -105,21 +94,12 @@ void FileSearchService::deleteFile(const QString &filePath, const QString &curre
     bool isAnotherUser = QFileInfo(filePath).owner() != currentUser;
 
     (void)QtConcurrent::run([this, filePath, isAnotherUser]() {
-        bool hadError = false;
-        QString errorMessage;
+        // SSO-3367 / audit A1: see moveToTrash — same unified ExecResult path.
+        const ExecResult result = isAnotherUser
+            ? CommandUtil::sudoExecWithStatus("rm", {"-rf", filePath})
+            : CommandUtil::execWithStatus("rm", {"-rf", filePath}, kFileOpTimeoutMs);
 
-        try {
-            if (isAnotherUser) {
-                CommandUtil::sudoExec("rm", {"-rf", filePath});
-            } else {
-                CommandUtil::exec("rm", {"-rf", filePath}, {}, kFileOpTimeoutMs);
-            }
-        } catch (const QString &ex) {
-            hadError = true;
-            errorMessage = ex;
-        }
-
-        emit fileOperationFinished(FileOperation::Delete, filePath, hadError, errorMessage);
+        emit fileOperationFinished(FileOperation::Delete, filePath, !result.ok(), result.error);
     });
 }
 
