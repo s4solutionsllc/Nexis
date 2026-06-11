@@ -48,6 +48,16 @@ public:
     QList<OrphanPackage> getOrphanPackages() const;
     bool removeOrphanPackages();
 
+#ifndef Q_OS_MACOS
+    // APT 3.1 transaction history (FW-07 / SSO-3735)
+    bool aptHistorySupported() const;
+    QList<AptHistoryEntry> getAptHistory() const;
+    AptHistoryEntry getAptHistoryInfo(int transactionId) const;
+    QStringList aptWhy(const QString &package, bool whyNot) const;
+    bool aptHistoryUndo(int transactionId);
+    bool aptHistoryRollback(int transactionId);
+#endif
+
     bool checkGnomeSettings() const;
     bool checkDocker() const;
 

@@ -158,6 +158,47 @@ bool ToolManager::removeOrphanPackages()
     return mPackageTool->removeOrphanPackages();
 }
 
+#ifndef Q_OS_MACOS
+/*
+ * APT 3.1 transaction history (FW-07 / SSO-3735)
+ *
+ * Linux-only — APT history is an APT-specific surface, so we down-cast to
+ * the Linux platform tool through a static_cast (mPackageTool always points
+ * at a PackageToolLinux on non-macOS builds). The aptHistorySupported() gate
+ * means callers can safely no-op when apt < 3.1, which keeps the rest of the
+ * UI code free of platform/version conditionals.
+ */
+bool ToolManager::aptHistorySupported() const
+{
+    return static_cast<PackageToolLinux*>(mPackageTool.get())->aptHistorySupported();
+}
+
+QList<AptHistoryEntry> ToolManager::getAptHistory() const
+{
+    return static_cast<PackageToolLinux*>(mPackageTool.get())->getAptHistory();
+}
+
+AptHistoryEntry ToolManager::getAptHistoryInfo(int transactionId) const
+{
+    return static_cast<PackageToolLinux*>(mPackageTool.get())->getAptHistoryInfo(transactionId);
+}
+
+QStringList ToolManager::aptWhy(const QString &package, bool whyNot) const
+{
+    return static_cast<PackageToolLinux*>(mPackageTool.get())->aptWhy(package, whyNot);
+}
+
+bool ToolManager::aptHistoryUndo(int transactionId)
+{
+    return static_cast<PackageToolLinux*>(mPackageTool.get())->aptHistoryUndo(transactionId);
+}
+
+bool ToolManager::aptHistoryRollback(int transactionId)
+{
+    return static_cast<PackageToolLinux*>(mPackageTool.get())->aptHistoryRollback(transactionId);
+}
+#endif
+
 /*
  * Docker
  */

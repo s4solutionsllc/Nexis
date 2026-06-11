@@ -572,4 +572,73 @@ QList<OrphanPackage> PackageToolLinux::getPacmanOrphans()
     return {};
 }
 
+/**********
+ * APT 3.1 TRANSACTION HISTORY (FW-07 / SSO-3735)
+ **********/
+
+// All live commands flow through the runCommand / runSudoCommand seam on
+// PackageTool so the platform-tool test subclass can capture argv without
+// shelling out. Production callers should always check aptHistorySupported()
+// first — the UI is hidden on apt < 3.1 (parseAptVersion would return invalid
+// or below 3.1.0) and these methods otherwise just return empty results.
+
+AptVersion PackageToolLinux::aptVersion()
+{
+    if (currentPackageTool != APT && currentPackageTool != APT_RPM)
+        return AptVersion{};
+    const QString out = runCommand("apt", {"--version"});
+    return PackageTool::parseAptVersion(out);
+}
+
+bool PackageToolLinux::aptHistorySupported()
+{
+    return aptVersion().atLeast(3, 1, 0);
+}
+
+QList<AptHistoryEntry> PackageToolLinux::getAptHistory()
+{
+    if (!aptHistorySupported())
+        return {};
+    const QString out = runCommand("apt", {"history-list"});
+    return PackageTool::parseAptHistoryList(out);
+}
+
+AptHistoryEntry PackageToolLinux::getAptHistoryInfo(int transactionId)
+{
+    if (!aptHistorySupported() || transactionId <= 0)
+        return AptHistoryEntry{};
+    const QString out = runCommand("apt", {"history-info", QString::number(transactionId)});
+    return PackageTool::parseAptHistoryInfo(out);
+}
+
+QStringList PackageToolLinux::aptWhy(const QString &package, bool whyNot)
+{
+    if (!aptHistorySupported() || package.isEmpty())
+        return {};
+    // Use argv form to avoid any shell interpolation of the package name.
+    const QString out = runCommand("apt", {whyNot ? "why-not" : "why", package});
+    return PackageTool::parseAptWhy(out);
+}
+
+bool PackageToolLinux::aptHistoryUndo(int transactionId)
+{
+    if (!aptHistorySupported() || transactionId <= 0)
+        return false;
+    return runSudoCommand("apt", {"history-undo", "-y", QString::number(transactionId)});
+}
+
+bool PackageToolLinux::aptHistoryRedo(int transactionId)
+{
+    if (!aptHistorySupported() || transactionId <= 0)
+        return false;
+    return runSudoCommand("apt", {"history-redo", "-y", QString::number(transactionId)});
+}
+
+bool PackageToolLinux::aptHistoryRollback(int transactionId)
+{
+    if (!aptHistorySupported() || transactionId <= 0)
+        return false;
+    return runSudoCommand("apt", {"history-rollback", "-y", QString::number(transactionId)});
+}
+
 // friendlySectionName() is in shared/nexis-core/Tools/package_tool_shared.cpp

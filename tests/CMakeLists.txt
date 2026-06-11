@@ -123,6 +123,19 @@ add_nexis_test(NAME PackageToolUninstallTests
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
 )
 
+# FW-07 (SSO-3735): apt-3.1 transaction history + why parsers + the
+# PackageToolLinux argv-construction seam for history-list / -info / -undo
+# / -rollback and why / why-not. Compiles the Linux platform source directly
+# so the test is platform-agnostic — only the live commands run on Linux.
+add_nexis_test(NAME AptHistoryTests
+  SOURCES
+    core/test_apt_history.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+)
+
 # SSO-351: pure parser for /proc/net/route — compiled directly so the test
 # runs on any platform.
 if(UNIX AND NOT APPLE)
