@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`SECURITY.md` security policy (SSO-3374):** Added a top-level `SECURITY.md` declaring supported versions (2.3.x), the `security@s4solutions.ai` private contact, support for GitHub private vulnerability reporting (GHSA), and the 7-day patch SLA from `RELEASE.md` §6. The §6 day-6–7 step that says "update `SECURITY.md`" now references a real file. Reporters who land on the repo's Security tab will get a private channel instead of defaulting to a public issue once the maintainer enables Private Vulnerability Reporting in repo settings.
+
 ### Fixed
 - **Default `CXXBASICS_USE_FASTER_LINKERS` to OFF in-tree, fixing GH#82 at the root (SSO-3377 / GH#82 / GH#88):** The in-tree linker accelerator (`shared/cmake/cxxbasics/accelerators/UseFasterLinkers.cmake`) defaulted **ON** and appended `-fuse-ld=lld` whenever LLD was present. Any environment with LLD and `-flto` in `CXXFLAGS` (Fedora/openSUSE defaults, CachyOS, downstreams not using our PKGBUILD) reproduced GH#82's "undefined symbol: main" — GCC emits slim LTO objects that LLD cannot resolve. A dev-speed accelerator should never be on for release or packaged builds. The default is now **OFF**; developers who want the LLD/gold speedup opt in with `-DCXXBASICS_USE_FASTER_LINKERS=ON`. The redundant `-DCXXBASICS_USE_FASTER_LINKERS=OFF` workaround was removed from `linux/aur/PKGBUILD` (the `options=('!lto')` decision stays with the maintainer per GH#82). The underlying GCC + LLD + LTO incompatibility tracked in GH#88 is unchanged; this change makes sure the default config can never recur it.
+
 ## [2.3.14] - 2026-06-11
 
 ### Changed
