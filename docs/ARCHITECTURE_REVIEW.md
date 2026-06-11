@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: 2026-06-11 (SSO-3497, SSO-3383, SSO-3391 / WI-29) | Version 2.3.14
+> Last updated: 2026-06-11 (SSO-3497, SSO-3383, SSO-3391 / WI-29, SSO-3396 / WI-33) | Version 2.3.14
 
 > **Packaging note (SSO-3376, 2026-06):** The Flatpak (Flathub) distribution channel was retired. There is no `flatpak-spawn`/sandbox-detection layer in the codebase — the privileged-host operations Nexis depends on (`pkexec`, `systemctl`, `smartctl`, `fstrim`, `nvidia-smi`, `/proc` and `/sys` reads) are architecturally unsuited to a bubblewrap sandbox, and adding one would require routing `CommandUtil` through `flatpak-spawn --host` plus holding the `org.freedesktop.Flatpak` portal — i.e. eliminating the sandbox benefit. Linux ships via `.deb` (PPA + GitHub releases), AppImage, and AUR.
 
@@ -381,6 +381,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 - `getNextRunTime()` accepts optional `now` parameter for deterministic testing
 - `PROJECT_SOURCE_DIR` compile definition enables theme tests to locate source-tree files
 - **FR-76 static parser pattern:** Parsing logic extracted from instance methods into public static methods on shared base classes (`*_shared.cpp` files). Static methods accept raw text/data and return structured results, enabling fixture-based testing without mocking CommandUtil or the filesystem. Applied to: MemoryInfo (3 methods), CpuInfo (5 methods), GpuInfo (4 methods), AptSourceTool (2 methods), FanInfo (3 methods), ThermalInfo (2 methods), BatteryInfo (2 methods), DiskInfo (1 method), HostService (promoted to static)
+- **WI-33 macOS parser coverage:** Extended the FR-76 pattern to macOS live-tool parsers. `disk_health_info.cpp`'s anonymous `parsePlist` moved to public `MacosPlistParser::parse()`; `NettopStreamer::parseCsvLine` and `BootAnalysisInfoMacOS::parseKernBoottime` exposed as static methods. Real `nettop`/`diskutil`/`sysctl` output captured under `tests/fixtures/macos/` and parsed via the FR-127 compile-source-into-test pattern, so coverage runs on every host even though the parsers ship only on macOS. For uninstall command construction, added a `runSudoCommand`/`runCommand` virtual seam on `PackageTool` (mirroring `TestableRepairEngine`); test subclasses capture the (cmd, argv) tuple each package manager constructs (apt purge/remove, dnf/yum/pacman/snap/brew flags, snap-revision flag), and `CommandUtil::buildMacOsSudoShellCommand()` was extracted as a public helper so the macOS osascript shell escaping is unit-tested too — replacing the single `pkexec`-gated test that previously `QSKIP`-ed in CI.
 
 **Remaining barriers to broader testing:**
 - ~~Singleton coupling (§2) blocks mock injection~~ — resolved in Phase 6 (FR-35)

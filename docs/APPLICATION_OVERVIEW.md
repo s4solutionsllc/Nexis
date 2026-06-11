@@ -65,8 +65,8 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 338 | same |
 | Test LOC | ~6,050 | `tests/` |
-| Test executables | 32 (31 unit + 1 screenshot) | `tests/CMakeLists.txt` |
-| Test methods | ~443 | `private slots:` in `tests/*/test_*.cpp` |
+| Test executables | 34 (33 unit + 1 screenshot) | `tests/CMakeLists.txt` |
+| Test methods | ~474 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 16 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` Linux-only); all 16 wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389) |
@@ -704,7 +704,7 @@ tests/
 
 **Test executables** — see the canonical table at the top of this doc for counts
 - Unit test executables registered via the `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable); plus one screenshot regression test linked against `nexis-gui`
-- Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`
+- Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`. macOS live-tool output (`nettop` CSV, `diskutil` plist, `sysctl kern.boottime`) is covered by fixtures under `tests/fixtures/macos/` and exercised via the FR-127 compile-source-into-test pattern (WI-33); the parsers are exposed as pure static methods so the tests run on any host. Package-manager uninstall command construction (apt/dnf/yum/pacman/snap/brew argv + macOS osascript shell escaping) is exercised via the same seam pattern as `TestableRepairEngine`.
 - Screenshot test: captures 12 pages × 2 themes, masks declared dynamic-data regions (charts, tables, dashboard tiles, live system summary), then per-channel-fuzz compares the remaining chrome against reference PNGs under a tight 1% default unmasked-diff threshold; missing page class or reference PNG `QFAIL`s loudly, missing platform/theme baseline directory `QSKIP`s with regeneration instructions (NEX-3381: non-blocking in CI on Linux x64 and macOS, skipped on ARM64 Linux due to xvfb hang; NEX-3382 hardened the comparator and added seven self-test slots that validate the mask + fuzz contract against synthetic images on every run)
 - Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)

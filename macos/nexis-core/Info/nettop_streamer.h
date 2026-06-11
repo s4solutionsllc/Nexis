@@ -42,6 +42,14 @@ public:
     // hash doesn't grow without bound across the streamer's lifetime.
     void pruneDeadPids(const QSet<pid_t> &alivePids);
 
+    // WI-33: pure CSV-line parser. Returns true and populates the out-params
+    // when the line is a valid per-process row; returns false for headers,
+    // empty lines, or malformed input. Exposed for fixture tests.
+    static bool parseCsvLine(const QString &line,
+                             pid_t *pid,
+                             quint64 *bytesIn,
+                             quint64 *bytesOut);
+
 private slots:
     void onReadyRead();
 

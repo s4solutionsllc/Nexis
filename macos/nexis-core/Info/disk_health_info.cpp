@@ -1,4 +1,5 @@
 #include "disk_health_info_macos.h"
+#include "macos_plist_parser.h"
 #include "Utils/command_util.h"
 
 #include <QDebug>
@@ -7,80 +8,12 @@
 #include <QJsonArray>
 #include <QMutexLocker>
 #include <QSet>
-#include <QXmlStreamReader>
-
 namespace {
 // WI-21 (SSO-3383, audit M2): osascript pops an authorization prompt that
 // the user has to interact with — the default 30 s CommandUtil::exec
 // timeout races slow password entry and the unlock silently fails.
 constexpr int kSmartElevatedTimeoutMs = 5 * 60 * 1000;
 } // namespace
-
-// Parse a simple plist XML into a flat key→value map.
-// Handles <string>, <integer>, <true/>, <false/>, and nested <dict> (flattened).
-// For the nested SMARTDeviceSpecificKeys dict, keys are prefixed with "SMART.".
-static QMap<QString, QVariant> parsePlist(const QByteArray &data)
-{
-    QMap<QString, QVariant> result;
-    QXmlStreamReader xml(data);
-
-    // Track nested dict for SMART keys
-    QString currentKey;
-    bool inSmartDict = false;
-    int dictDepth = 0;
-
-    while (!xml.atEnd()) {
-        xml.readNext();
-
-        if (xml.isStartElement()) {
-            if (xml.name() == QStringLiteral("dict")) {
-                dictDepth++;
-                if (currentKey == "SMARTDeviceSpecificKeysMayVaryNotGuaranteed") {
-                    inSmartDict = true;
-                    currentKey.clear();
-                }
-            }
-            else if (xml.name() == QStringLiteral("key")) {
-                QString key = xml.readElementText();
-                if (inSmartDict)
-                    currentKey = "SMART." + key;
-                else
-                    currentKey = key;
-            }
-            else if (xml.name() == QStringLiteral("string")) {
-                result[currentKey] = xml.readElementText();
-            }
-            else if (xml.name() == QStringLiteral("integer")) {
-                result[currentKey] = xml.readElementText().toLongLong();
-            }
-            else if (xml.name() == QStringLiteral("true")) {
-                result[currentKey] = true;
-            }
-            else if (xml.name() == QStringLiteral("false")) {
-                result[currentKey] = false;
-            }
-            else if (xml.name() == QStringLiteral("array")) {
-                // For WholeDisks array, collect strings
-                QStringList items;
-                while (!xml.atEnd()) {
-                    xml.readNext();
-                    if (xml.isStartElement() && xml.name() == QStringLiteral("string"))
-                        items.append(xml.readElementText());
-                    else if (xml.isEndElement() && xml.name() == QStringLiteral("array"))
-                        break;
-                }
-                result[currentKey] = items;
-            }
-        }
-        else if (xml.isEndElement() && xml.name() == QStringLiteral("dict")) {
-            dictDepth--;
-            if (inSmartDict && dictDepth <= 1)
-                inSmartDict = false;
-        }
-    }
-
-    return result;
-}
 
 DiskHealthInfoMacOS::DiskHealthInfoMacOS()
 {
@@ -100,7 +33,7 @@ QList<DriveHealth> DiskHealthInfoMacOS::collectDriveHealth()
     QStringList wholeDisks;
     try {
         QString listOutput = CommandUtil::exec("diskutil", {"list", "-plist"});
-        QMap<QString, QVariant> listPlist = parsePlist(listOutput.toUtf8());
+        QMap<QString, QVariant> listPlist = MacosPlistParser::parse(listOutput.toUtf8());
         wholeDisks = listPlist.value("WholeDisks").toStringList();
     } catch (...) {
         return drives;
@@ -125,7 +58,7 @@ QList<DriveHealth> DiskHealthInfoMacOS::collectDriveHealth()
             continue;
         }
 
-        QMap<QString, QVariant> info = parsePlist(infoOutput.toUtf8());
+        QMap<QString, QVariant> info = MacosPlistParser::parse(infoOutput.toUtf8());
 
         // Protocol — check early so we can skip the smartctl fork on disk images.
         drive.protocol = info.value("BusProtocol").toString();

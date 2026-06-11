@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>BusProtocol</key>
+	<string>Apple Fabric</string>
+	<key>DeviceIdentifier</key>
+	<string>disk0</string>
+	<key>IORegistryEntryName</key>
+	<string>APPLE SSD AP1024Z</string>
+	<key>IOKitSize</key>
+	<integer>994662584320</integer>
+	<key>MediaName</key>
+	<string>APPLE SSD AP1024Z Media</string>
+	<key>SMARTDeviceSpecificKeysMayVaryNotGuaranteed</key>
+	<dict>
+		<key>AVAILABLE_SPARE</key>
+		<integer>100</integer>
+		<key>AVAILABLE_SPARE_THRESHOLD</key>
+		<integer>10</integer>
+		<key>DATA_UNITS_READ_0</key>
+		<integer>123456789</integer>
+		<key>DATA_UNITS_WRITTEN_0</key>
+		<integer>987654321</integer>
+		<key>NUM_ERROR_INFO_LOG_ENTRIES_0</key>
+		<integer>0</integer>
+		<key>PERCENTAGE_USED</key>
+		<integer>3</integer>
+		<key>POWER_CYCLES_0</key>
+		<integer>412</integer>
+		<key>POWER_ON_HOURS_0</key>
+		<integer>1837</integer>
+		<key>TEMPERATURE</key>
+		<integer>312</integer>
+		<key>UNSAFE_SHUTDOWNS_0</key>
+		<integer>17</integer>
+	</dict>
+	<key>SMARTStatus</key>
+	<string>Verified</string>
+	<key>SolidState</key>
+	<true/>
+	<key>TotalSize</key>
+	<integer>994662584320</integer>
+</dict>
+</plist>

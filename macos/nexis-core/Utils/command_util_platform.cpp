@@ -12,18 +12,10 @@ ExecResult CommandUtil::sudoExecWithStatus(const QString &cmd, QStringList args,
         return CommandUtil::execWithStatus(cmd, args, data);
     }
 
-    // On macOS, use osascript for privilege escalation. Build the full command
-    // string with proper shell escaping (single-quote each argument, escape
-    // single quotes inside).
-    QString fullCmd = cmd;
-    for (const QString &arg : args) {
-        QString escaped = arg;
-        escaped.replace("'", "'\\''");
-        fullCmd += " '" + escaped + "'";
-    }
-    // Escape backslashes and double quotes for the AppleScript string.
-    fullCmd.replace("\\", "\\\\");
-    fullCmd.replace("\"", "\\\"");
+    // WI-33: shell-escape via the public helper so the construction layer is
+    // covered by fixture tests; the osascript invocation itself is what we
+    // can't unit-test.
+    const QString fullCmd = CommandUtil::buildMacOsSudoShellCommand(cmd, args);
 
     return CommandUtil::execWithStatus(
         QStringLiteral("osascript"),
