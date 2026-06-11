@@ -65,13 +65,13 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 338 | same |
 | Test LOC | ~6,050 | `tests/` |
-| Test executables | 34 (33 unit + 1 screenshot) | `tests/CMakeLists.txt` |
-| Test methods | ~474 | `private slots:` in `tests/*/test_*.cpp` |
+| Test executables | 35 (34 unit + 1 screenshot) | `tests/CMakeLists.txt` |
+| Test methods | ~501 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 16 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` Linux-only); all 16 wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389) |
 | Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
-| Utility classes | 3 | `CommandUtil`, `FileUtil`, `FormatUtil` in `shared/nexis-core/Utils/` |
+| Utility classes | 5 | `CommandUtil`, `DisplayServerUtil`, `FileUtil`, `FormatUtil`, `HeadlessUtil` in `shared/nexis-core/Utils/` |
 | Manager singletons | 8 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |
 | Domain services | 9 | `shared/nexis/Services/` (`StartupService`, `FileSearchService`, `HostService`, `ProcessService`, `SystemServiceManager`, `DockerService`, `PackageService`, `DuplicateFinderService`, `SnapshotService`) |
 | `SignalMapper` signals | 10 | `shared/nexis/signal_mapper.h` |
@@ -88,6 +88,10 @@ Update the table whenever the underlying value changes — the same numbers are 
 ## Platform Support
 
 Nexis runs natively on **Linux** and **macOS** (Intel + Apple Silicon). The codebase uses compile-time platform selection: shared code in `shared/`, with platform-specific implementations in `linux/` and `macos/`.
+
+### Linux display server (Wayland / X11)
+
+Nexis is a Qt6 application and runs as a **native Wayland client** under Wayland sessions (including Ubuntu 26.04 / GNOME 50, which removes the X11 session entirely) and as a native **X11** client under X.Org. There are no `X11`/`xcb`/`QX11Info` dependencies in the codebase — windowing, screen enumeration, and screenshot capture all use Qt abstractions (`QScreen`, `QWidget::grab()`). The only path that ever forces a non-default QPA is the scheduled-clean entry point (`--clean` / `--check-threshold`), which sets `QT_QPA_PLATFORM=offscreen` so cron and systemd-user timer invocations don't need a live display server (SSO-3368). No feature requires XWayland; the optional `DisplayServerUtil` (`shared/nexis-core/Utils/display_server_util.h`) provides a single canonical detector for any future XWayland-gated feature.
 
 ### Always-visible pages (both platforms)
 Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Network Usage, Helpers, System Logs, Settings
