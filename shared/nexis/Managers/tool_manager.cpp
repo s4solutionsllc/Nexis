@@ -168,8 +168,16 @@ bool ToolManager::checkDocker() const
  */
 bool ToolManager::checkGnomeSettings() const
 {
+#ifdef Q_OS_MACOS
+    // SSO-3391 / WI-29: GNOME Settings has no valid mapping on macOS — the
+    // page is hidden in the sidebar and the macOS GnomeSettingsTool is a
+    // hard no-op stub. Short-circuit here so a stub regression can't flip
+    // availability back on.
+    return false;
+#else
     return mGnomeSettings->isAvailable()
         && mGnomeSettings->schemaExists(GnomeSchema::INTERFACE);
+#endif
 }
 
 /*

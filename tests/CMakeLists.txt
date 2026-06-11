@@ -180,6 +180,12 @@ add_nexis_test(NAME SettingManagerTests
     "${GUI_SHARED_DIR}/Managers"
 )
 
+# SSO-3391 / WI-29: pin GnomeSettingsToolMacOS down as a hard no-op stub so
+# it can never write into Apple preference domains. Linux compiles the same
+# test source but skips the platform-specific assertions.
+add_nexis_test(NAME GnomeSettingsToolTests
+  SOURCES managers/test_gnome_settings_tool.cpp)
+
 # CleanerService exclusion logic — links against nexis-gui because
 # CleanerService::scan()/clean() reference InfoManager and ToolManager.
 # Tests only exercise isExcluded(), load/save/add/removeExclusion().
