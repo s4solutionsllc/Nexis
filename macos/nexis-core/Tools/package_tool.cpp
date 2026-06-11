@@ -8,7 +8,12 @@
 
 PackageToolMacOS::PackageToolMacOS()
 {
-    currentPackageTool = !findBrew().isEmpty() ? HOMEBREW : UNKNOWN;
+    currentPackageTool = !resolveBrewPath().isEmpty() ? HOMEBREW : UNKNOWN;
+}
+
+QString PackageToolMacOS::resolveBrewPath() const
+{
+    return findBrew();
 }
 
 QList<Package> PackageToolMacOS::getPackages()
@@ -82,7 +87,7 @@ QList<Package> PackageToolMacOS::getHomebrewPackages()
 {
     QList<Package> packages;
 
-    QString brew = findBrew();
+    QString brew = resolveBrewPath();
     if (brew.isEmpty())
         return packages;
 
@@ -123,23 +128,18 @@ QList<Package> PackageToolMacOS::getHomebrewPackages()
 
 bool PackageToolMacOS::homebrewRemovePackages(QStringList packages)
 {
-    QString brew = findBrew();
+    QString brew = resolveBrewPath();
     if (brew.isEmpty())
         return false;
 
-    try {
-        packages.insert(0, "uninstall");
-        CommandUtil::exec(brew, packages, {}, 120000);
-        return true;
-    } catch (const QString &ex) {
-        qCritical() << ex;
-    }
-    return false;
+    packages.insert(0, "uninstall");
+    runCommand(brew, packages, 120000);
+    return true;
 }
 
 QStringList PackageToolMacOS::homebrewDryRunRemove(const QStringList &packages)
 {
-    QString brew = findBrew();
+    QString brew = resolveBrewPath();
     if (brew.isEmpty())
         return packages;
 
@@ -242,7 +242,7 @@ bool PackageToolMacOS::removeUnusedFlatpakRuntimes() { return false; }
  **********/
 QList<OrphanPackage> PackageToolMacOS::getOrphanPackages()
 {
-    QString brew = findBrew();
+    QString brew = resolveBrewPath();
     if (brew.isEmpty())
         return {};
 
@@ -257,17 +257,12 @@ QList<OrphanPackage> PackageToolMacOS::getOrphanPackages()
 
 bool PackageToolMacOS::removeOrphanPackages()
 {
-    QString brew = findBrew();
+    QString brew = resolveBrewPath();
     if (brew.isEmpty())
         return false;
 
-    try {
-        CommandUtil::exec(brew, {"autoremove"}, {}, 120000);
-        return true;
-    } catch (const QString &ex) {
-        qCritical() << "Failed to brew autoremove:" << ex;
-    }
-    return false;
+    runCommand(brew, {"autoremove"}, 120000);
+    return true;
 }
 
 // friendlySectionName() is in shared/nexis-core/Tools/package_tool_shared.cpp

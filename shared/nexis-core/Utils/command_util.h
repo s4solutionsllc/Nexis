@@ -58,6 +58,15 @@ public:
     static QString exec(const QString &cmd, QStringList args = QStringList(), QByteArray data = QByteArray(), int timeoutMs = 30000);
 
     static bool isExecutable(const QString &cmd);
+
+    // WI-33: builds the shell command string that the macOS `sudoExec`
+    // implementation wraps into `osascript -e 'do shell script "..." with
+    // administrator privileges'`. Single-quotes every argument, escapes
+    // embedded single quotes by the standard `'\''` close-reopen trick, and
+    // then escapes backslashes and double-quotes so the result is safe to
+    // embed in the AppleScript string literal. Exposed for fixture tests.
+    static QString buildMacOsSudoShellCommand(const QString &cmd,
+                                              const QStringList &args);
 };
 
 #endif // COMMAND_UTIL_H

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>BusProtocol</key>
+	<string>Disk Image</string>
+	<key>DeviceIdentifier</key>
+	<string>disk7</string>
+	<key>MediaName</key>
+	<string>Disk Image</string>
+	<key>SolidState</key>
+	<false/>
+	<key>TotalSize</key>
+	<integer>21474836480</integer>
+</dict>
+</plist>

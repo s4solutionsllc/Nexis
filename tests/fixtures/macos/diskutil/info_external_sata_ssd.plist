@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>BusProtocol</key>
+	<string>USB</string>
+	<key>DeviceIdentifier</key>
+	<string>disk4</string>
+	<key>IORegistryEntryName</key>
+	<string>Samsung Portable SSD T7</string>
+	<key>MediaName</key>
+	<string>Samsung Portable SSD T7 Media</string>
+	<key>SMARTStatus</key>
+	<string>Not Supported</string>
+	<key>SolidState</key>
+	<true/>
+	<key>TotalSize</key>
+	<integer>1000204886016</integer>
+</dict>
+</plist>

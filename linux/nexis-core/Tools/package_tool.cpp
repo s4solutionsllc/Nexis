@@ -110,20 +110,10 @@ QStringList PackageToolLinux::getSnapPackages()
 
 bool PackageToolLinux::uninstallSnapPackages(const QStringList &packages)
 {
-    try {
-        QStringList args = packages;
-        args.insert(0, "remove");
-        qDebug() << args;
-
-        CommandUtil::sudoExec("snap", args);
-
-        return true;
-
-    } catch(QString &ex) {
-        qCritical() << ex;
-    }
-
-    return false;
+    QStringList args = packages;
+    args.insert(0, "remove");
+    qDebug() << args;
+    return runSudoCommand("snap", args);
 }
 
 QList<Package> PackageToolLinux::getInstalledApps()
@@ -193,19 +183,9 @@ QList<Package> PackageToolLinux::getDpkgPackages()
 
 bool PackageToolLinux::dpkgRemovePackages(QStringList packages, bool purge)
 {
-    try {
-        packages.insert(0, purge ? "purge" : "remove");
-        packages.insert(1, "-y");
-
-        CommandUtil::sudoExec("apt-get", packages);
-
-        return true;
-
-    } catch(QString &ex) {
-        qCritical() << ex;
-    }
-
-    return false;
+    packages.insert(0, purge ? "purge" : "remove");
+    packages.insert(1, "-y");
+    return runSudoCommand("apt-get", packages);
 }
 
 /**********
@@ -243,36 +223,16 @@ QList<Package> PackageToolLinux::getRpmPackages()
 
 bool PackageToolLinux::dnfRemovePackages(QStringList packages)
 {
-    try {
-        packages.insert(0, "remove");
-        packages.insert(1, "-y");
-
-        CommandUtil::sudoExec("dnf", packages);
-
-        return true;
-
-    } catch(QString &ex) {
-        qCritical() << ex;
-    }
-
-    return false;
+    packages.insert(0, "remove");
+    packages.insert(1, "-y");
+    return runSudoCommand("dnf", packages);
 }
 
 bool PackageToolLinux::yumRemovePackages(QStringList packages)
 {
-    try {
-        packages.insert(0, "remove");
-        packages.insert(1, "-y");
-
-        CommandUtil::sudoExec("yum", packages);
-
-        return true;
-
-    } catch(QString &ex) {
-        qCritical() << ex;
-    }
-
-    return false;
+    packages.insert(0, "remove");
+    packages.insert(1, "-y");
+    return runSudoCommand("yum", packages);
 }
 
 /**********
@@ -325,19 +285,9 @@ QList<Package> PackageToolLinux::getPacmanPackages()
 
 bool PackageToolLinux::pacmanRemovePackages(QStringList packages)
 {
-    try {
-        packages.push_back("--noconfirm");
-        packages.push_back("-R");
-
-        CommandUtil::sudoExec("pacman", packages);
-
-        return true;
-
-    } catch(QString &ex) {
-        qCritical() << ex;
-    }
-
-    return false;
+    packages.push_back("--noconfirm");
+    packages.push_back("-R");
+    return runSudoCommand("pacman", packages);
 }
 
 /**********
@@ -447,10 +397,8 @@ bool PackageToolLinux::removeStaleSnapRevisions(const QList<StaleSnapRevision> &
 {
     bool allOk = true;
     for (const StaleSnapRevision &rev : revisions) {
-        try {
-            CommandUtil::sudoExec("snap", {"remove", rev.name, "--revision=" + rev.revision});
-        } catch (const QString &ex) {
-            qCritical() << "Failed to remove snap revision:" << rev.name << rev.revision << ex;
+        if (!runSudoCommand("snap", {"remove", rev.name, "--revision=" + rev.revision})) {
+            qCritical() << "Failed to remove snap revision:" << rev.name << rev.revision;
             allOk = false;
         }
     }
@@ -528,35 +476,25 @@ QList<OrphanPackage> PackageToolLinux::getOrphanPackages()
 
 bool PackageToolLinux::removeOrphanPackages()
 {
-    try {
-        switch (currentPackageTool) {
-        case APT:
-        case APT_RPM:
-            CommandUtil::sudoExec("apt-get", {"autoremove", "-y"});
+    switch (currentPackageTool) {
+    case APT:
+    case APT_RPM:
+        return runSudoCommand("apt-get", {"autoremove", "-y"});
+    case DNF:
+        return runSudoCommand("dnf", {"autoremove", "-y"});
+    case YUM:
+        return runSudoCommand("yum", {"autoremove", "-y"});
+    case PACMAN: {
+        const QString output = runCommand("pacman", {"-Qdtq"}).trimmed();
+        if (output.isEmpty())
             return true;
-        case DNF:
-            CommandUtil::sudoExec("dnf", {"autoremove", "-y"});
-            return true;
-        case YUM:
-            CommandUtil::sudoExec("yum", {"autoremove", "-y"});
-            return true;
-        case PACMAN: {
-            QString output = CommandUtil::exec("pacman", {"-Qdtq"}).trimmed();
-            if (output.isEmpty())
-                return true;
-            QStringList orphans = output.split('\n');
-            QStringList args = {"-Rns", "--noconfirm"};
-            args.append(orphans);
-            CommandUtil::sudoExec("pacman", args);
-            return true;
-        }
-        default:
-            return false;
-        }
-    } catch (const QString &ex) {
-        qCritical() << "Failed to remove orphan packages:" << ex;
+        QStringList args = {"-Rns", "--noconfirm"};
+        args.append(output.split('\n'));
+        return runSudoCommand("pacman", args);
     }
-    return false;
+    default:
+        return false;
+    }
 }
 
 QList<OrphanPackage> PackageToolLinux::getAptOrphans()

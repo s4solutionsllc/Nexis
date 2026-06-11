@@ -91,10 +91,13 @@ void NettopStreamer::onReadyRead()
     }
 }
 
-void NettopStreamer::parseLine(const QString &line)
+bool NettopStreamer::parseCsvLine(const QString &line,
+                                  pid_t *pid,
+                                  quint64 *bytesIn,
+                                  quint64 *bytesOut)
 {
     if (line.isEmpty())
-        return;
+        return false;
 
     // nettop line format with our options looks like:
     //   time,,bytes_in,bytes_out   (periodic header we skip)
@@ -102,17 +105,17 @@ void NettopStreamer::parseLine(const QString &line)
     // First field is "[procname].[pid]" — split on the LAST '.'.
     const QStringList parts = line.split(',');
     if (parts.size() < 4)
-        return;
+        return false;
 
     const QString procField = parts.at(0);
     const int lastDot = procField.lastIndexOf('.');
     if (lastDot <= 0)
-        return;
+        return false;
 
     bool ok = false;
-    const pid_t pid = procField.mid(lastDot + 1).toLongLong(&ok);
-    if (!ok || pid <= 0)
-        return;
+    const pid_t parsedPid = procField.mid(lastDot + 1).toLongLong(&ok);
+    if (!ok || parsedPid <= 0)
+        return false;
 
     // Bytes fields may be at index 1+2 or 2+3 depending on nettop version —
     // probe both. We want the two numeric columns that parse as ULL.
@@ -129,15 +132,29 @@ void NettopStreamer::parseLine(const QString &line)
         return false;
     };
 
-    quint64 bytesIn = 0;
-    quint64 bytesOut = 0;
+    quint64 parsedIn = 0;
+    quint64 parsedOut = 0;
     bool haveBytes = false;
     if (parts.size() >= 4)
-        haveBytes = tryParsePair(parts.at(1), parts.at(2), &bytesIn, &bytesOut);
+        haveBytes = tryParsePair(parts.at(1), parts.at(2), &parsedIn, &parsedOut);
     if (!haveBytes && parts.size() >= 5)
-        haveBytes = tryParsePair(parts.at(2), parts.at(3), &bytesIn, &bytesOut);
+        haveBytes = tryParsePair(parts.at(2), parts.at(3), &parsedIn, &parsedOut);
 
     if (!haveBytes)
+        return false;
+
+    if (pid)      *pid = parsedPid;
+    if (bytesIn)  *bytesIn = parsedIn;
+    if (bytesOut) *bytesOut = parsedOut;
+    return true;
+}
+
+void NettopStreamer::parseLine(const QString &line)
+{
+    pid_t pid = 0;
+    quint64 bytesIn = 0;
+    quint64 bytesOut = 0;
+    if (!parseCsvLine(line, &pid, &bytesIn, &bytesOut))
         return;
 
     QMutexLocker lock(&mMutex);

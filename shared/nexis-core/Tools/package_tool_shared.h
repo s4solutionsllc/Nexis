@@ -74,6 +74,17 @@ public:
     static QString friendlySectionName(const QString &section);
 
     PackageTools currentPackageTool = UNKNOWN;
+
+protected:
+    // WI-33: command-execution seam. Production code calls these so the
+    // uninstall paths funnel through one place; tests subclass the platform
+    // tool and override these to capture (cmd, args) instead of actually
+    // shelling out. Mirrors the TestableRepairEngine pattern in
+    // tests/core/test_repo_repair_engine.cpp.
+    virtual bool runSudoCommand(const QString &cmd, const QStringList &args);
+    virtual QString runCommand(const QString &cmd,
+                               const QStringList &args,
+                               int timeoutMs = 30000);
 };
 
 #endif // PACKAGE_TOOL_SHARED_H

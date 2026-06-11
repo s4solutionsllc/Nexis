@@ -28,6 +28,11 @@ public:
     QList<OrphanPackage> getOrphanPackages() override;
     bool removeOrphanPackages() override;
 
+protected:
+    // WI-33: seam for tests — overridden to return a fixed fake path so the
+    // uninstall paths reach the runCommand seam even when brew isn't installed.
+    virtual QString resolveBrewPath() const;
+
 private:
     QFileInfoList getHomebrewCaches();
     QList<Package> getHomebrewPackages();

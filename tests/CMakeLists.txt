@@ -77,6 +77,40 @@ add_nexis_test(NAME ProcInfoParserTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
 )
 
+# WI-33: macOS live-tool parsers (nettop CSV, diskutil plist, sysctl
+# kern.boottime). Compiled directly here so the tests run on any platform
+# even though the parsers are only wired into the real nexis-core build
+# on macOS.
+add_nexis_test(NAME MacosParserTests
+  SOURCES
+    core/test_macos_parsers.cpp
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/nettop_streamer.cpp"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/macos_plist_parser.cpp"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/boot_analysis_info.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+)
+
+# WI-33: PackageTool uninstall command-construction tests. Subclasses the
+# Linux + macOS package tools and overrides the runSudoCommand/runCommand
+# seam on the PackageTool base. Compiles both platform sources directly so
+# we get coverage on any host — only the live commands themselves are
+# platform-specific.
+add_nexis_test(NAME PackageToolUninstallTests
+  SOURCES
+    core/test_package_tool_uninstall.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/package_tool.cpp"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils/plist_util.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
+)
+
 # SSO-351: pure parser for /proc/net/route — compiled directly so the test
 # runs on any platform.
 if(UNIX AND NOT APPLE)

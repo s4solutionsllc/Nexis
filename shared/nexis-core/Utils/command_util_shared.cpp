@@ -1,6 +1,7 @@
 #include "command_util.h"
 
 #include <QCoreApplication>
+#include <QStringList>
 #include <QDebug>
 #include <QHash>
 #include <QMutex>
@@ -117,6 +118,25 @@ QFuture<ExecResult> CommandUtil::execAsync(const QString &cmd, QStringList args,
     return QtConcurrent::run([cmd, args, timeoutMs] {
         return CommandUtil::execWithStatus(cmd, args, timeoutMs);
     });
+}
+
+QString CommandUtil::buildMacOsSudoShellCommand(const QString &cmd,
+                                                 const QStringList &args)
+{
+    // Build the bare shell command first, single-quoting each argument to
+    // neutralise spaces and shell metacharacters. Embedded single quotes are
+    // escaped via the standard close-reopen idiom: `'\''`.
+    QString shellCmd = cmd;
+    for (const QString &arg : args) {
+        QString escaped = arg;
+        escaped.replace("'", "'\\''");
+        shellCmd += " '" + escaped + "'";
+    }
+    // Then escape backslashes and double-quotes so the result is safe to drop
+    // into an AppleScript double-quoted string literal (`do shell script "…"`).
+    shellCmd.replace("\\", "\\\\");
+    shellCmd.replace("\"", "\\\"");
+    return shellCmd;
 }
 
 bool CommandUtil::isExecutable(const QString &cmd)

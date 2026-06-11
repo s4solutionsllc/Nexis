@@ -4,8 +4,36 @@
 
 #include "package_tool_shared.h"
 
+#include <QDebug>
 #include <QHash>
 #include <QRegularExpression>
+
+#include "Utils/command_util.h"
+
+// WI-33: default impls delegate to CommandUtil. Test subclasses override
+// these to capture (cmd, args) instead of actually running anything.
+bool PackageTool::runSudoCommand(const QString &cmd, const QStringList &args)
+{
+    try {
+        CommandUtil::sudoExec(cmd, args);
+        return true;
+    } catch (const QString &ex) {
+        qCritical() << ex;
+        return false;
+    }
+}
+
+QString PackageTool::runCommand(const QString &cmd,
+                                const QStringList &args,
+                                int timeoutMs)
+{
+    try {
+        return CommandUtil::exec(cmd, args, {}, timeoutMs);
+    } catch (const QString &ex) {
+        qCritical() << ex;
+        return QString();
+    }
+}
 
 /********************
  * Section Names

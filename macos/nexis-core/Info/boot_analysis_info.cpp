@@ -4,6 +4,15 @@
 #include <QRegularExpression>
 #include <QDateTime>
 
+qint64 BootAnalysisInfoMacOS::parseKernBoottime(const QString &sysctlOutput)
+{
+    static const QRegularExpression re(QStringLiteral(R"(sec\s*=\s*(\d+))"));
+    const auto m = re.match(sysctlOutput);
+    if (!m.hasMatch())
+        return -1;
+    return m.captured(1).toLongLong();
+}
+
 BootAnalysisData BootAnalysisInfoMacOS::analyze() const
 {
     BootAnalysisData result;
@@ -16,15 +25,12 @@ BootAnalysisData BootAnalysisInfoMacOS::analyze() const
         return result;
     }
 
-    const QString out = QString::fromUtf8(p.readAllStandardOutput());
-    static const QRegularExpression re(QStringLiteral(R"(sec\s*=\s*(\d+))"));
-    const auto m = re.match(out);
-    if (!m.hasMatch()) {
+    const qint64 bootSec = parseKernBoottime(QString::fromUtf8(p.readAllStandardOutput()));
+    if (bootSec < 0) {
         result.error = QStringLiteral("Could not parse kern.boottime output.");
         return result;
     }
 
-    const qint64 bootSec = m.captured(1).toLongLong();
     const qint64 nowSec  = QDateTime::currentSecsSinceEpoch();
     result.totalBootMs = static_cast<double>(nowSec - bootSec) * 1000.0;
 
