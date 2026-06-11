@@ -5,6 +5,14 @@ on:
     branches:
       - l10n_crowdin_translations
 
+# Primary normalization path is inlined in crowdin-sync.yml because the
+# Crowdin action uses GITHUB_TOKEN, whose pushes do not fire workflow
+# triggers. This workflow is kept as a manual/edge-case backstop for
+# pushes to l10n_crowdin_translations from a non-token actor; the
+# explicit permissions block is required for its commit step.
+permissions:
+  contents: write
+
 jobs:
   lupdate:
     name: Normalize translation files
