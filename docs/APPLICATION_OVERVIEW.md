@@ -237,6 +237,7 @@ Scan and remove system junk files across 9 categories.
 - Add file or folder exclusions via native file chooser; remove via dialog
 - Right-click any scan result item → "Always exclude this" to instantly persist an exclusion rule and remove the item from the tree
 - Excluded paths are skipped during scanning (file exact match, folder prefix match, symlink-aware)
+- Exclusions are enforced at **every depth** of the recursive deletion walk, not just on the top-level scan entry — a protected child or sub-folder inside a scanned cache directory is preserved even when the cache directory itself is the cleanup target (NEX-3370)
 - Exclusions persist across app restarts via JSON in QSettings
 
 **UI features:**

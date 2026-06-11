@@ -79,12 +79,35 @@ signals:
     void cleaningFinished(CleanResult result);
     void snapshotTaken(QString toolName);   // emitted on worker thread after a successful pre-clean snapshot
 
-private:
+protected:
     CleanerService();
+    virtual ~CleanerService() = default;
+
+    // WI-08 / audit H9: test seam for the elevated `rm -rf` branch. The
+    // production implementation pipes through `sudoExec("rm", "-rf", "--", paths)`;
+    // tests override to record the call and avoid touching the real filesystem
+    // with elevated privileges. The `--` end-of-options guard prevents any path
+    // beginning with `-` from being interpreted as an rm option.
+    virtual void removeElevated(const QStringList &paths);
+
+    // WI-08: test seam for cleanTrash(). Production returns the platform's
+    // user Trash directory; tests override to point at a QTemporaryDir.
+    virtual QString trashRoot() const;
+
+private:
     static CleanerService *instance;
 
     void logCleanResult(const CleanResult &result);
     void persistScanTotals(const ScanResult &result);   // FR-114
+
+    // WI-08: walk `dirPath` and remove entries that pass the exclusion + age
+    // predicate at every depth. Returns total bytes freed (entries that were
+    // actually deleted; excluded or kept entries are not counted).
+    quint64 removeDirContentsRespectingExclusions(
+        const QString &dirPath,
+        const QList<ExclusionEntry> &exclusions,
+        int minFileAgeSecs,
+        const QDateTime &cutoff);
 };
 
 #endif // CLEANER_SERVICE_H
