@@ -15,7 +15,11 @@ struct NEXISCORESHARED_EXPORT ExecResult {
 class NEXISCORESHARED_EXPORT CommandUtil
 {
 public:
-    static QString sudoExec(const QString &cmd, QStringList args = QStringList(), QByteArray data = QByteArray());
+    // WI-21 (SSO-3383): callers that invoke a polkit/osascript prompt should
+    // pass a much larger timeoutMs (5+ minutes) so a slow password entry does
+    // not race the default 30 s waitForFinished cap. Use -1 to wait
+    // indefinitely (QProcess::waitForFinished's wait-forever semantics).
+    static QString sudoExec(const QString &cmd, QStringList args = QStringList(), QByteArray data = QByteArray(), int timeoutMs = 30000);
     static QString exec(const QString &cmd, QStringList args = QStringList(), QByteArray data = QByteArray(), int timeoutMs = 30000);
     static ExecResult execWithStatus(const QString &cmd, QStringList args = QStringList(), int timeoutMs = 30000);
     static QFuture<ExecResult> execAsync(const QString &cmd, QStringList args = QStringList(), int timeoutMs = 30000);
