@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  SSO-3399: pared back to the minimum entitlements Nexis needs under the
+  hardened runtime. The previous file granted:
+    * com.apple.security.cs.allow-unsigned-executable-memory
+        - only required for JIT (QML/V8/JSC). Nexis is pure C++/Qt Widgets
+          with no JS, QML, or JIT, so dropped.
+    * com.apple.security.cs.disable-library-validation
+        - only required for loading dylibs/plugins signed by a different
+          TeamID. release.yml re-signs every bundled Qt framework, dylib
+          and platform plugin with our Developer ID before signing the app
+          bundle, and the app does no runtime dlopen/QLibrary loading.
+          Dropped - if a future change requires loading externally-signed
+          plugins, restore this entitlement and document why.
+-->
 <plist version="1.0">
 <dict>
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
 </dict>
 </plist>

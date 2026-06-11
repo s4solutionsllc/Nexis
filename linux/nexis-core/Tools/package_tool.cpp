@@ -347,11 +347,16 @@ QStringList PackageToolLinux::dpkgDryRunRemove(const QStringList &packages)
 {
     QStringList wouldRemove;
     try {
-        QStringList args = {"-c", QString("apt-get remove --dry-run %1 2>&1").arg(packages.join(' '))};
-        QString output = CommandUtil::exec("bash", args);
+        // SSO-3399: invoke apt-get directly with argv to avoid shell interpolation
+        // of package names; merge stderr because apt prints status lines to both
+        // streams depending on locale/config.
+        QStringList args = {"remove", "--dry-run", "--"};
+        args.append(packages);
+        ExecResult result = CommandUtil::execWithStatus("apt-get", args);
+        const QString combined = result.output + QLatin1Char('\n') + result.error;
 
         static QRegularExpression re("^Remv\\s+(\\S+)");
-        const QStringList lines = output.split('\n');
+        const QStringList lines = combined.split('\n');
         for (const QString &line : lines) {
             QRegularExpressionMatch match = re.match(line);
             if (match.hasMatch())

@@ -6,6 +6,7 @@
 #include <QMutex>
 #include <QObject>
 #include <QProcess>
+#include <QSet>
 #include <QString>
 
 #include <sys/types.h>
@@ -43,6 +44,11 @@ public:
     bool isRunning() const;
 
     Sample get(pid_t pid) const;
+
+    // SSO-3399: drop entries for pids that aren't in the alive set. Caller
+    // typically passes the activeGpuPids snapshot for the most recent tick
+    // so mLatest doesn't grow unbounded across the streamer's lifetime.
+    void pruneDeadPids(const QSet<pid_t> &alivePids);
 
 private slots:
     void onPmonReadyRead();

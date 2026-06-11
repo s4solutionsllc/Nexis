@@ -153,9 +153,11 @@ If the EngineeringLead role is rotated to a different agent or human:
    notarization keys, App Store Connect API key.
 4. Update the "Maintainer of record" line in §1 of this file and `RELEASE.md`
    §10.
-5. Post a comment on the parent SSOA tracking issue (currently
-   [SSOA-5](/SSOA/issues/SSOA-5)) acknowledging the handover, any
-   in-flight work items, and open community SLA obligations.
+5. Post a comment on the active Nexis tracking parent in Paperclip (`SSO`
+   project) acknowledging the handover, any in-flight work items, and open
+   community SLA obligations. The previous `SSOA-5` link is no longer live
+   — find the current root by searching open issues in the `SSO` project
+   with no `parentId` set (or ask the CEO).
 
 ---
 

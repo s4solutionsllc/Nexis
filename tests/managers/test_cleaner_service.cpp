@@ -18,8 +18,17 @@ public:
 
     QStringList elevatedPaths;
     QString mockTrashRoot;
+    // SSO-3704: default to "not user-owned" so the elevated branch is reachable
+    // under CI (where temp files are always owned by the CI user). Individual
+    // tests can flip this to true to exercise the user-owned branch.
+    bool pretendUserOwns = false;
 
 protected:
+    bool currentUserOwns(const QString &) const override
+    {
+        return pretendUserOwns;
+    }
+
     void removeElevated(const QStringList &paths) override
     {
         elevatedPaths.append(paths);

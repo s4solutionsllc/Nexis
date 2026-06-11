@@ -63,6 +63,17 @@ QHash<pid_t, QPair<quint64, quint64>> NettopStreamer::snapshot() const
     return mLatest;
 }
 
+void NettopStreamer::pruneDeadPids(const QSet<pid_t> &alivePids)
+{
+    QMutexLocker lock(&mMutex);
+    for (auto it = mLatest.begin(); it != mLatest.end(); ) {
+        if (!alivePids.contains(it.key()))
+            it = mLatest.erase(it);
+        else
+            ++it;
+    }
+}
+
 void NettopStreamer::onReadyRead()
 {
     if (!mProcess)

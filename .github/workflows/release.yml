@@ -5,9 +5,12 @@ on:
     tags:
       - 'v*'
 
+# SSO-3399: default job permissions are read-only. Only the `release` job
+# actually needs `contents: write` (to publish the GitHub Release) and
+# `actions: write` (to dispatch the website rebuild); the build matrices
+# get the workflow default and never see a write-scoped GITHUB_TOKEN.
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 jobs:
   # ============================================================================
@@ -456,6 +459,9 @@ jobs:
     name: Create Release
     needs: [build-linux, build-linux-deb-plucky, build-macos]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
 
     steps:
       - name: Checkout
@@ -645,6 +651,40 @@ jobs:
             echo "MAKE_LATEST=legacy" >> "$GITHUB_OUTPUT"
           fi
 
+      # SSO-3399: produce a SHA256SUMS file alongside the binary artifacts so
+      # users (and downstream packagers) can verify download integrity. The
+      # GitHub Release upload itself is HTTPS, but downloaders mirror, cache,
+      # and re-host these binaries — a published checksums file removes that
+      # trust gap.
+      - name: Generate SHA256SUMS
+        id: checksums
+        run: |
+          set -euo pipefail
+          SUMS_DIR="${{ runner.temp }}/sums"
+          mkdir -p "$SUMS_DIR"
+          SUMS_FILE="$SUMS_DIR/SHA256SUMS-${GITHUB_REF_NAME}.txt"
+          : > "$SUMS_FILE"
+          for f in \
+            "${{ steps.files.outputs.DEB_X64_PATH }}" \
+            "${{ steps.files.outputs.DEB_X64_PLUCKY_PATH }}" \
+            "${{ steps.files.outputs.APPIMAGE_X64_PATH }}" \
+            "${{ steps.files.outputs.BINARY_X64_PATH }}" \
+            "${{ steps.files.outputs.DEB_ARM64_PATH }}" \
+            "${{ steps.files.outputs.DEB_ARM64_PLUCKY_PATH }}" \
+            "${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}" \
+            "${{ steps.files.outputs.BINARY_ARM64_PATH }}" \
+            "${{ steps.files.outputs.DMG_PATH }}"
+          do
+            if [ -n "$f" ] && [ -f "$f" ]; then
+              (cd "$(dirname "$f")" && sha256sum "$(basename "$f")") >> "$SUMS_FILE"
+            else
+              echo "warning: missing artifact path '$f' — skipping" >&2
+            fi
+          done
+          echo "Generated $SUMS_FILE:"
+          cat "$SUMS_FILE"
+          echo "SUMS_PATH=$SUMS_FILE" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
@@ -662,6 +702,7 @@ jobs:
             ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}
             ${{ steps.files.outputs.BINARY_ARM64_PATH }}
             ${{ steps.files.outputs.DMG_PATH }}
+            ${{ steps.checksums.outputs.SUMS_PATH }}
 
       - name: Trigger website rebuild
         env:

@@ -94,6 +94,12 @@ protected:
     // user Trash directory; tests override to point at a QTemporaryDir.
     virtual QString trashRoot() const;
 
+    // SSO-3399 / SSO-3704: test seam for the user-vs-root ownership split in
+    // cleanFiles(). Production compares ownerId() to geteuid(); tests override
+    // to force paths through the elevated branch (or keep them in the user
+    // branch) without needing root or specific filesystem ownership.
+    virtual bool currentUserOwns(const QString &path) const;
+
 private:
     static CleanerService *instance;
 

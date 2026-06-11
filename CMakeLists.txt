@@ -14,7 +14,11 @@ set(SHARED_DIR   "${PROJECT_ROOT}/shared")
 
 # Activating MOC and searching for the Qt6 dependencies
 set(CMAKE_AUTOMOC ON)
-find_package(Qt6 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network Test REQUIRED)
+# SSO-3399: Qt 6.4 is the floor — we rely on QFile::moveToTrash (6.3+),
+# std::as_const usage in 6.x signal arg sets, and the Charts theme APIs
+# present in 6.4. Pin the minimum explicitly so configure fails early on
+# older Qt rather than producing cryptic build errors deep in moc/codegen.
+find_package(Qt6 6.4 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network Test REQUIRED)
 
 # Setting the minimum C++ standard
 set(CMAKE_CXX_STANDARD           17)
@@ -664,6 +668,11 @@ endif()
 # ============================================================================
 # Install rules
 # ============================================================================
+# SSO-3399: install rules used to be CONFIGURATIONS-gated to Release/
+# RelWithDebInfo/MinSizeRel, which made `cmake --install` a silent no-op on
+# the default Debug build (CXXBasics defaults CMAKE_BUILD_TYPE to Debug).
+# Distros and the release workflow both pass an explicit Release type, so
+# we don't need that gate — drop it so Debug installs also work.
 if(APPLE)
   # macOS: Build as a .app bundle
   set_target_properties(nexis PROPERTIES
@@ -677,7 +686,6 @@ if(APPLE)
 
   install(
     TARGETS nexis
-    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
     BUNDLE DESTINATION .
     RUNTIME DESTINATION bin
   )
@@ -685,28 +693,24 @@ else()
   # Linux: Install binary, .desktop file, and icon
   install(
     TARGETS nexis
-    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
     RUNTIME DESTINATION bin
   )
 
   install(
     FILES "${PLATFORM_DIR}/applications/nexis.desktop"
     DESTINATION share/applications
-    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
   )
 
   foreach(_size 16x16 32x32 48x48 64x64 128x128 256x256)
     install(
       FILES "${CMAKE_SOURCE_DIR}/icons/hicolor/${_size}/apps/nexis.png"
       DESTINATION "share/icons/hicolor/${_size}/apps"
-      CONFIGURATIONS Release RelWithDebInfo MinSizeRel
     )
   endforeach()
 
   install(
     FILES "${PLATFORM_DIR}/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml"
     DESTINATION share/metainfo
-    CONFIGURATIONS Release RelWithDebInfo MinSizeRel
   )
 
   install(

@@ -2,6 +2,7 @@
 #include <QTemporaryDir>
 #include <QFile>
 #include <QDir>
+#include <QStandardPaths>
 #include "Managers/cleaner_service.h"
 #include "Managers/setting_manager.h"
 
@@ -25,6 +26,15 @@ private:
     }
 
 private slots:
+    // SSO-3399: redirect QSettings / QStandardPaths to a sandboxed test
+    // location so jsonRoundTrip / addDuplicate / removeEntry don't trample
+    // the developer's real settings.ini (this suite used to overwrite
+    // ~/.config/<org>/<app>/settings.ini in place every CI run).
+    void initTestCase()
+    {
+        QStandardPaths::setTestModeEnabled(true);
+    }
+
     void fileExact_match();
     void fileExact_noMatch();
     void folderExact_match();

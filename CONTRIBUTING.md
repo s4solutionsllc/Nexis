@@ -121,11 +121,13 @@ ctest --test-dir build -R FormatUtil --output-on-failure
 
 | Label | Criteria |
 |---|---|
-| `good-first-issue` | Self-contained, clear acceptance criterion, testable via `ctest`, does not require deep codebase knowledge. Examples: adding tests for a single utility function, completing a translation file, fixing a narrowly-scoped UI issue with a clear reproduction path. |
+| `good first issue` | Self-contained, clear acceptance criterion, testable via `ctest`, does not require deep codebase knowledge. Examples: adding tests for a single utility function, completing a translation file, fixing a narrowly-scoped UI issue with a clear reproduction path. |
 | `bug` | Something that worked before is broken, or behavior diverges from documented expectations. |
-| `enhancement` | A new feature or meaningful improvement to existing functionality. |
-| `translation` | Addition or correction of a `.ts` translation file under `shared/translations/`. |
+| `enhancement` | A new feature or meaningful improvement to existing functionality. Use this for translation work (correcting / completing `.ts` files under `shared/translations/`) and tag `needs-native-qa` for sign-off when applicable. |
 | `documentation` | Changes to `README.md`, `CONTRIBUTING.md`, `docs/`, or inline code comments. |
+| `needs-native-qa` | Translation PRs requiring native-speaker review/sign-off before merge. |
+| `help wanted` | We'd love an external contribution here. |
+| `question` | Open question or discussion — see §6 below. |
 
 When filing a bug report, please include: platform, Nexis version, steps to reproduce, expected behavior, and actual behavior. Screenshots or terminal output are very helpful.
 

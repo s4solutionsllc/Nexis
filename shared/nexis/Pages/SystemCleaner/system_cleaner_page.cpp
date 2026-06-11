@@ -146,7 +146,7 @@ void SystemCleanerPage::buildCategoryHeader()
     mBtnScanSystem = new QPushButton(tr("Scan system"), headerWidget);
     mBtnScanSystem->setObjectName("btnScanSystem");
     mBtnScanSystem->setCursor(Qt::PointingHandCursor);
-    connect(mBtnScanSystem, &QPushButton::clicked, this, &SystemCleanerPage::on_btnScan_clicked);
+    connect(mBtnScanSystem, &QPushButton::clicked, this, &SystemCleanerPage::onBtnScanSystemClicked);
 
     headerRow->addWidget(mBtnExclusions);
     headerRow->addWidget(mBtnSchedule);
@@ -474,7 +474,7 @@ void SystemCleanerPage::onSelectAllClicked()
 
 // ─── Scan ─────────────────────────────────────────────────────────────────────
 
-void SystemCleanerPage::on_btnScan_clicked()
+void SystemCleanerPage::onBtnScanSystemClicked()
 {
     if (mScanInProgress || mCleanInProgress)
         return;

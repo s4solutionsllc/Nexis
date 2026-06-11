@@ -242,6 +242,12 @@ QList<Process> ProcessInfoLinux::collectProcesses()
             else
                 ++gpuIt;
         }
+
+        // SSO-3399: keep the nvidia-smi pmon streamer's mLatest hash from
+        // growing across the streamer's app-lifetime singleton — drop entries
+        // for any pid we don't see in the current tick.
+        if (NvidiaSmiPmonStreamer *s = pmonStreamer(); s && s->isRunning())
+            s->pruneDeadPids(activeGpuPids);
     }
 
     // FR-108: skip the per-PID /proc/<pid>/io reads entirely when both disk
