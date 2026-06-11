@@ -6,7 +6,9 @@
 #
 # Prerequisites:
 #   - Project must already be built: cmake --build build
-#   - On headless Linux, xvfb must be installed (xvfb-run is used automatically)
+#   - Headless runs work out of the box via the Qt offscreen QPA — no Xvfb
+#     required (important on Wayland-only hosts like Ubuntu 26.04 / GNOME 50,
+#     where the X11 session is removed; SSO-3729 / FW-02).
 #
 # The script runs the screenshot test in generate mode, which captures all 11
 # pages in both Dark and Light themes and saves them as reference PNGs under
@@ -27,18 +29,22 @@ fi
 
 cd "$PROJECT_ROOT/build"
 
-# Use xvfb-run on Linux if no display is available
-RUN_CMD="$TEST_BIN"
-if [ "$(uname)" = "Linux" ] && [ -z "${DISPLAY:-}" ]; then
-    if command -v xvfb-run >/dev/null 2>&1; then
-        RUN_CMD="xvfb-run -a $TEST_BIN"
-    else
-        echo "Warning: No DISPLAY and xvfb-run not found. Screenshots may fail."
-    fi
+# SSO-3729 / FW-02: prefer Qt's offscreen QPA when no display socket is
+# present. Works on every Linux session type — Wayland-only (GNOME 50 /
+# Ubuntu 26.04, where the X11 session is removed entirely), X11, or fully
+# headless CI — and matches the offscreen seam main.cpp uses for scheduled
+# --clean runs (SSO-3368). A live DISPLAY or WAYLAND_DISPLAY is respected
+# so a developer running locally sees rendered output as usual; an
+# operator-set QT_QPA_PLATFORM (e.g. `xcb` for explicit XWayland) is also
+# respected.
+if [ "$(uname)" = "Linux" ] \
+   && [ -z "${DISPLAY:-}" ] && [ -z "${WAYLAND_DISPLAY:-}" ] \
+   && [ -z "${QT_QPA_PLATFORM:-}" ]; then
+    export QT_QPA_PLATFORM=offscreen
 fi
 
 echo "Generating reference screenshots..."
-NEXIS_GENERATE_REFS=1 $RUN_CMD
+NEXIS_GENERATE_REFS=1 "$TEST_BIN"
 
 echo ""
 echo "Done. Review changes with:"
