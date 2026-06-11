@@ -50,14 +50,18 @@ void TestPackageToolMacOS::trashApps_pathWithAppleScriptMetacharacters_noInjecti
     // this file exists after trashApps returns.
     const QString markerPath = workDir.filePath("sso-3366-pwned");
 
-    // Bundle name carrying the exact metacharacters the audit (S1) called
-    // out: `"` would terminate the AppleScript string literal, `;` is a
-    // shell statement separator, and a newline closes the `-e` arg.
-    // `do shell script "touch <marker>"` is what the old osascript-based
-    // implementation would actually have executed.
-    const QString appName = QStringLiteral("evil\";\ndo shell script \"touch '")
+    // Bundle name carrying the metacharacters the audit (S1) called out:
+    // `"` terminates the AppleScript string literal and `;` is a statement
+    // separator, so `do shell script "touch <marker>"` is what the old
+    // osascript-based implementation would actually have executed if the
+    // bundle path ever flowed back into an AppleScript source string.
+    // Newline is deliberately omitted — macOS rejects `\n` in directory
+    // names via QDir::mkdir, and the double-quote alone is sufficient to
+    // prove the break-out (no AppleScript surface = no break-out, no
+    // matter how many `"` the attacker concatenates).
+    const QString appName = QStringLiteral("evil\"; do shell script \"touch '")
                                 + markerPath
-                                + QStringLiteral("'\";--.app");
+                                + QStringLiteral("'\"; --.app");
     const QString appPath = workDir.filePath(appName);
 
     QVERIFY2(QDir(workDir.path()).mkdir(appName),
