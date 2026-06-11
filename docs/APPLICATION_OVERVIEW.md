@@ -328,7 +328,7 @@ View and manage running processes.
 
 ### 9. Uninstaller
 
-Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout: System Packages, Snap Packages, Orphan Packages.
+Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout (four on hosts with APT 3.1+): System Packages, Snap Packages, Orphan Packages, and APT History.
 
 - Package tree view grouped by type (Formula/Cask on macOS; installed/universe on Linux)
 - Search filter with auto-expand matching sections
@@ -337,9 +337,10 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 - Dry-run confirmation showing dependencies that would also be removed (APT)
 - Async background loading with progress indicator
 - **Orphan Packages tab** — Lists packages no longer required by any installed package. Removal via platform `autoremove` command (all-or-nothing). Supported on APT, DNF, Pacman, and Homebrew.
+- **APT History tab (Linux, APT 3.1+)** — Lists recent `apt` transactions parsed from `apt history-list` (id, date, operation, command). One-click **Undo Last Transaction**, and per-row **Undo Selected** / **Rollback To Selected** wired to `apt history-undo` / `apt history-rollback`. A **Why? / Why Not?** panel surfaces `apt why` / `apt why-not` output for any package the user names. The tab and its nav button are hidden when `apt --version < 3.1`, so older Debian/Ubuntu users see no broken affordance (FW-07 / SSO-3735).
 
 **Platform backends:**
-- Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`
+- Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`; on APT 3.1+ also `apt history-list/-info/-undo/-rollback` and `apt why/why-not`
 - macOS: `brew uninstall` for Homebrew packages; `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:`) for `.app` bundles — no AppleScript/`osascript` is involved, so bundle names containing quotes or other metacharacters cannot inject arbitrary code (SSO-3366, audit S1); `brew autoremove` for orphans
 
 ### 10. Resources

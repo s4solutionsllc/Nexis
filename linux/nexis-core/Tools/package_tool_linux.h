@@ -28,6 +28,16 @@ public:
     QList<OrphanPackage> getOrphanPackages() override;
     bool removeOrphanPackages() override;
 
+    // FW-07 (SSO-3735): APT 3.1 history / why surface.
+    bool aptHistorySupported();
+    AptVersion aptVersion();
+    QList<AptHistoryEntry> getAptHistory();
+    AptHistoryEntry getAptHistoryInfo(int transactionId);
+    QStringList aptWhy(const QString &package, bool whyNot = false);
+    bool aptHistoryUndo(int transactionId);
+    bool aptHistoryRedo(int transactionId);
+    bool aptHistoryRollback(int transactionId);
+
 private:
     QFileInfoList getDpkgPackageCaches();
     QList<Package> getDpkgPackages();
