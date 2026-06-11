@@ -698,8 +698,7 @@ tests/
 **Test executables** — see the canonical table at the top of this doc for counts
 - Unit test executables registered via the `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable); plus one screenshot regression test linked against `nexis-gui`
 - Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`
-- Screenshot test: captures the always-visible pages in both Dark and Light themes and compares against reference PNGs with per-page pixel tolerance
-- The CI `Unit Tests` step explicitly excludes `ScreenshotTests` (`ctest -E ScreenshotTests`) — screenshot diffs are produced locally via `scripts/update_screenshots.sh` (WI-19)
+- Screenshot test: captures 12 pages × 2 themes, compares against reference PNGs with per-page pixel tolerance (NEX-3381: non-blocking in CI on Linux x64 and macOS; skipped on ARM64 Linux due to xvfb hang)
 - Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)
 - Run via: `ctest --test-dir build --output-on-failure`
