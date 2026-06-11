@@ -30,7 +30,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # WI-30: keep the living architecture/overview docs in sync with the
+      # CMake project version. Cheap, no dependencies — runs on every matrix
+      # leg so a drift is caught on the same PR that introduces it.
+      - name: Doc version header check
+        run: bash scripts/check_doc_versions.sh
 
       # WI-27 (SSO-3389): shared/nexis/Pages must reach platform-specific Info
       # subclasses through InfoManager — never via direct *_macos.h / *_linux.h
@@ -86,9 +92,37 @@ jobs:
             ctest --test-dir build --output-on-failure -E ScreenshotTests
           fi
 
+      # ScreenshotTests are kept out of the gating "Unit Tests" step above and
+      # run here as a separate, non-blocking step (NEX-3381). They hang
+      # indefinitely on ARM64 Linux runners under xvfb (the original reason for
+      # commit 5c173c7), so we skip them on `ubuntu-24.04-arm` and run on
+      # platforms that render deterministically: Linux x64 (xvfb) and macOS.
+      # On failure the test writes actual/reference/diff PNGs to
+      # build/tests/test_screenshots/failures/; we upload that directory so the
+      # maintainer can review drift and (after visual confirmation) commit the
+      # captured actuals as the new baselines via scripts/update_screenshots.sh.
+      - name: Screenshot regression tests (non-blocking)
+        if: matrix.os != 'ubuntu-24.04-arm'
+        continue-on-error: true
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            xvfb-run -a ctest --test-dir build --output-on-failure -R ScreenshotTests
+          else
+            ctest --test-dir build --output-on-failure -R ScreenshotTests
+          fi
+
+      - name: Upload screenshot diffs
+        if: matrix.os != 'ubuntu-24.04-arm' && !cancelled()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: screenshot-diffs-${{ matrix.artifact-name }}
+          path: build/tests/test_screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Upload build artifact
         if: success()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.artifact-name }}
           path: ${{ matrix.artifact-path }}

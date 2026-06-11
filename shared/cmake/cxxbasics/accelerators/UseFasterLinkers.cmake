@@ -2,6 +2,13 @@
 # It prefers the fastest linker available(as of this writing LLD -> GNU gold -> ...)
 # The linker is handled separately per compiler, so, you can do something like this:
 # -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=clang++
+#
+# Default is OFF (developer opt-in). GH#82 / GH#88: when LLD is auto-selected on
+# an env that also enables `-flto` in CXXFLAGS (Fedora/openSUSE/CachyOS defaults,
+# any downstream not using our PKGBUILD), GCC emits slim LTO objects that LLD
+# cannot resolve and the link fails with "undefined symbol: main". Release and
+# packaged builds must use the system default linker; developers wanting the
+# dev-speed accelerator can opt in with -DCXXBASICS_USE_FASTER_LINKERS=ON.
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
@@ -11,7 +18,7 @@ if(POLICY CMP0054)
   cmake_policy(SET CMP0054 NEW)
 endif(POLICY CMP0054)
 
-opt_ifndef("Use faster linkers(LLD, GNU gold...) if supported"  BOOL  ON  CXXBASICS_USE_FASTER_LINKERS)
+opt_ifndef("Use faster linkers(LLD, GNU gold...) if supported"  BOOL  OFF  CXXBASICS_USE_FASTER_LINKERS)
 if(CXXBASICS_USE_FASTER_LINKERS)
   macro(__cxxbasics_set_linker  compiler)
     # Lets check if the default linker is not actually LLD or GNU gold(ex: a symbolic link)

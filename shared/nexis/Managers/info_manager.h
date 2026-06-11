@@ -116,8 +116,12 @@ public:
     bool hasBattery() const;
 
     QList<DriveHealth> getDriveHealth() const;
-    void discoverDiskHealth();
-    void refreshDiskHealth();
+    // WI-03: thread-safe publish pair, mirrors collectDiskInfo()/setDisks().
+    // collectDriveHealth() runs the smartctl fork into a local list (safe to
+    // call from a QtConcurrent worker); setDriveHealth() assigns the cache and
+    // must be called on the UI thread.
+    QList<DriveHealth> collectDriveHealth();
+    void setDriveHealth(QList<DriveHealth> drives);
     void refreshDiskHealthElevated(const QString &device);
     void refreshDiskHealthElevatedBatch(const QStringList &devices, bool applySetcap);
     bool hasDiskHealth() const;

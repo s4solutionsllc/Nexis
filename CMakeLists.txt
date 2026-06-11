@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
-project(Nexis VERSION 2.3.13)
+project(Nexis VERSION 2.3.14)
 
 # Adding features(build cache + faster linkers) and reasonable defaults(Debug build by default)
 include("${CMAKE_CURRENT_SOURCE_DIR}/shared/cmake/cxxbasics/CXXBasics.cmake")
@@ -20,6 +20,46 @@ find_package(Qt6 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network Test 
 set(CMAKE_CXX_STANDARD           17)
 set(CMAKE_CXX_EXTENSIONS         YES)
 set(CMAKE_CXX_STANDARD_REQUIRED  YES)
+
+# ============================================================================
+# Release build hardening (Linux + macOS) — SSO-3397 / audit WI-34
+# ============================================================================
+# Distribution packagers (e.g. the .deb channel via linux/debian/rules) layer
+# their own `DEB_BUILD_MAINT_OPTIONS = hardening=+all` on top. The AppImage,
+# raw tarball, and macOS .app otherwise inherit toolchain defaults, so we set
+# an explicit baseline here that matches what hardened distros expect:
+#   - -fstack-protector-strong   stack-canary on functions with risky frames
+#   - -D_FORTIFY_SOURCE=2        runtime checks for unsafe libc calls (needs -O>=1)
+#   - -Wl,-z,relro,-z,now        full RELRO + immediate symbol binding (Linux)
+#   - -Wl,-z,noexecstack         non-executable stack (Linux)
+#   - -pie                       position-independent executable (Linux)
+#   - -Wl,-bind_at_load          immediate symbol binding (macOS equivalent of -z,now)
+#   - CMAKE_POSITION_INDEPENDENT_CODE ON   -fPIE for the executable and -fPIC for libs
+option(NEXIS_ENABLE_HARDENING "Enable build hardening flags for Release builds" ON)
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(NEXIS_ENABLE_HARDENING
+   AND (CMAKE_BUILD_TYPE STREQUAL "Release"
+        OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
+        OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+   AND (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+        OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+        OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
+
+  # -U then -D so a distro that already injects -D_FORTIFY_SOURCE doesn't warn
+  # about redefinition (Debian's dpkg-buildflags sets =2, so this is a no-op
+  # in that channel; for AppImage/tarball/macOS it provides the floor).
+  add_compile_options(-fstack-protector-strong -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2)
+
+  if(APPLE)
+    add_link_options(-Wl,-bind_at_load)
+  elseif(UNIX)
+    add_link_options(-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -pie)
+  endif()
+
+  message(STATUS "Nexis: build hardening enabled for ${CMAKE_BUILD_TYPE} (${CMAKE_CXX_COMPILER_ID})")
+endif()
 
 # Platform directory: macos/ or linux/
 if(APPLE)
@@ -62,6 +102,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/command_util_shared.cpp"
   "${CORE_SHARED_DIR}/Utils/file_util.cpp"
   "${CORE_SHARED_DIR}/Utils/format_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -95,6 +136,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/command_util.h"
   "${CORE_SHARED_DIR}/Utils/file_util.h"
   "${CORE_SHARED_DIR}/Utils/format_util.h"
+  "${CORE_SHARED_DIR}/Utils/headless_util.h"
 )
 
 if(APPLE)
@@ -626,7 +668,7 @@ if(APPLE)
   # macOS: Build as a .app bundle
   set_target_properties(nexis PROPERTIES
     MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.nexis.app"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.s4solutionsllc.Nexis"
     MACOSX_BUNDLE_BUNDLE_NAME "Nexis"
     MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"

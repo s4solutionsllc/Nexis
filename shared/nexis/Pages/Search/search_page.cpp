@@ -81,6 +81,9 @@ void SearchPage::init()
     connect(mSearchService, &FileSearchService::searchFinished,
             this, &SearchPage::onSearchFinished);
 
+    connect(mSearchService, &FileSearchService::fileOperationFinished,
+            this, &SearchPage::onFileOperationFinished);
+
     initComboboxValues();
 
     QList<QWidget*> widgets = {
@@ -242,6 +245,32 @@ void SearchPage::onSearchFinished(const QStringList &results, bool hadError)
     ui->btnSearchAdvance->setEnabled(true);
 }
 
+void SearchPage::onFileOperationFinished(FileSearchService::FileOperation op,
+                                         QString filePath,
+                                         bool hadError,
+                                         QString errorMessage)
+{
+    Q_UNUSED(op)
+
+    if (hadError) {
+        ui->lblErrorMsg->show();
+        ui->lblErrorMsg->setText(errorMessage.isEmpty()
+                                 ? tr("File operation failed.")
+                                 : tr("File operation failed: %1").arg(errorMessage));
+        return;
+    }
+
+    // Find and remove the row whose path matches; the file is gone from disk.
+    for (int row = mSortFilterModel->rowCount() - 1; row >= 0; --row) {
+        const QString fileName = mSortFilterModel->index(row, 0).data(rowRole).toString();
+        const QString folderPath = mSortFilterModel->index(row, 1).data(rowRole).toString();
+        if (folderPath + "/" + fileName == filePath) {
+            mSortFilterModel->removeRow(row);
+            break;
+        }
+    }
+}
+
 void SearchPage::loadDataToTable(const QList<QString> &foundFiles)
 {
     mItemModel->removeRows(0, mItemModel->rowCount());
@@ -329,43 +358,34 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
                     QDesktopServices::openUrl(folderPath);
                 }
             }
-            else if (action->data().toString() == "move-trash") {
-                while (! selectionModel->selectedRows().isEmpty()) {
-                    QModelIndex index = selectionModel->selectedRows().first();
+            else if (action->data().toString() == "move-trash"
+                     || action->data().toString() == "delete") {
+                // SSO-3365: FileSearchService now dispatches on a worker thread
+                // and emits fileOperationFinished. We collect the paths up front
+                // and react to the signal — see onFileOperationFinished — so a
+                // long delete doesn't freeze the UI or crash the slot via a
+                // thrown QString from CommandUtil::exec.
+                const bool moveToTrash = action->data().toString() == "move-trash";
+                const QString currentUser = mInfoManager->getUserName();
 
+                QStringList pendingPaths;
+                for (const QModelIndex &index : selecteds) {
                     QString fileName = mSortFilterModel->index(index.row(), 0).data(rowRole).toString();
                     QString folderPath = mSortFilterModel->index(index.row(), 1).data(rowRole).toString();
-                    QString filePath = folderPath + "/" + fileName;
-
-                    mSearchService->moveToTrash(filePath, fileName, mInfoManager->getUserName());
-
-                    if (QFile(filePath).exists()) {
-                        selectionModel->select(index, QItemSelectionModel::Deselect);
-                    } else {
-                        mSortFilterModel->removeRow(index.row());
-                    }
+                    pendingPaths << (folderPath + "/" + fileName);
                 }
 
                 selectionModel->clearSelection();
-            }
-            else if (action->data().toString() == "delete") {
-                while (! selectionModel->selectedRows().isEmpty()) {
-                    QModelIndex index = selectionModel->selectedRows().first();
+                ui->lblErrorMsg->hide();
 
-                    QString fileName = mSortFilterModel->index(index.row(), 0).data(rowRole).toString();
-                    QString folderPath = mSortFilterModel->index(index.row(), 1).data(rowRole).toString();
-                    QString filePath = folderPath + "/" + fileName;
-
-                    mSearchService->deleteFile(filePath, mInfoManager->getUserName());
-
-                    if (QFile(filePath).exists()) {
-                        selectionModel->select(index, QItemSelectionModel::Deselect);
+                for (const QString &filePath : pendingPaths) {
+                    const QString fileName = QFileInfo(filePath).fileName();
+                    if (moveToTrash) {
+                        mSearchService->moveToTrash(filePath, fileName, currentUser);
                     } else {
-                        mSortFilterModel->removeRow(index.row());
+                        mSearchService->deleteFile(filePath, currentUser);
                     }
                 }
-
-                selectionModel->clearSelection();
             }
         }
     }

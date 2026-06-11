@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QFileDialog>
 #include "Managers/info_manager.h"
+#include "Services/file_search_service.h"
 #include "utilities.h"
 #include <QStandardItemModel>
 #include <QSortFilterProxyModel>
@@ -16,8 +17,6 @@
 #include <QDesktopServices>
 
 class QResizeEvent;
-
-class FileSearchService;
 
 namespace Ui {
 class SearchPage;
@@ -47,6 +46,10 @@ private slots:
     void loadHeaderMenu();
     void loadDataToTable(const QList<QString> &results);
     void onSearchFinished(const QStringList &results, bool hadError);
+    void onFileOperationFinished(FileSearchService::FileOperation op,
+                                 QString filePath,
+                                 bool hadError,
+                                 QString errorMessage);
     QList<QStandardItem *> createRow(const QString &filepath);
 
     void on_tableFoundResults_doubleClicked(const QModelIndex &index);

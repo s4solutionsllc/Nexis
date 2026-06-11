@@ -2,6 +2,7 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QPointer>
 #include <QScrollArea>
 #include <QGroupBox>
 #include <QStyle>
@@ -37,6 +38,20 @@ MaintenanceWizardDialog::MaintenanceWizardDialog(QWidget *parent,
     setMinimumSize(520, 420);
 
     buildUI();
+}
+
+MaintenanceWizardDialog::~MaintenanceWizardDialog()
+{
+    // Backstop: block destruction until every detached worker that may
+    // still hold a pointer to *this* (via the QPointer guard) has
+    // finished. The QPointer guard in each lambda also breaks the chain
+    // earlier, but this guarantees the strong invariant even if a
+    // worker was about to re-enter when the dialog was destroyed.
+    mScanFuture.waitForFinished();
+    mOrphansFuture.waitForFinished();
+    mUpdatesFuture.waitForFinished();
+    mHealthFuture.waitForFinished();
+    mCleanFuture.waitForFinished();
 }
 
 static QLabel *makeStepIcon()
@@ -138,43 +153,77 @@ void MaintenanceWizardDialog::runChecks()
     setStepStatus(mIconUpdates, mLblUpdatesDetail, "running", tr("Checking..."));
     setStepStatus(mIconHealth, mLblHealthDetail, "running", tr("Calculating..."));
 
+    // Worker-thread safety contract:
+    //   * Captures: QPointer<MaintenanceWizardDialog> for cross-thread
+    //     lifetime checks, plus the singleton manager pointers by value
+    //     so workers never dereference `this` for member reads.
+    //   * Result delivery: QMetaObject::invokeMethod with a context
+    //     object + functor overload (Qt::QueuedConnection). If the
+    //     dialog is destroyed before the slot runs on the GUI thread,
+    //     Qt drops the queued invocation.
+    //   * Backstop: the destructor waitForFinished()s each future, so
+    //     the dialog cannot be deleted while a worker is mid-execution.
+    QPointer<MaintenanceWizardDialog> self(this);
+    InfoManager *infoMgr = mInfoManager;
+    ToolManager *toolMgr = mToolManager;
+
     // Check 1: Cleanable junk scan
-    QtConcurrent::run([this]() {
+    mScanFuture = QtConcurrent::run([self]() {
         auto result = CleanerService::ins()->scan(CleanerService::allCategories());
-        QMetaObject::invokeMethod(this, "onScanFinished", Qt::QueuedConnection,
-                                  Q_ARG(CleanerService::ScanResult, result));
+        if (!self) return;
+        QMetaObject::invokeMethod(self.data(), [self, result]() {
+            if (!self) return;
+            self->onScanFinished(result);
+        }, Qt::QueuedConnection);
     });
 
     // Check 2: Orphan packages
-    QtConcurrent::run([this]() {
-        auto orphans = mToolManager->getOrphanPackages();
-        QMetaObject::invokeMethod(this, "onOrphansFinished", Qt::QueuedConnection,
-                                  Q_ARG(QList<OrphanPackage>, orphans));
+    mOrphansFuture = QtConcurrent::run([self, toolMgr]() {
+        auto orphans = toolMgr->getOrphanPackages();
+        if (!self) return;
+        QMetaObject::invokeMethod(self.data(), [self, orphans]() {
+            if (!self) return;
+            self->onOrphansFinished(orphans);
+        }, Qt::QueuedConnection);
     });
 
     // Check 3: Pending updates
-    QtConcurrent::run([this]() {
-        auto result = mInfoManager->checkForSystemUpdates();
-        QMetaObject::invokeMethod(this, "onUpdatesFinished", Qt::QueuedConnection,
-                                  Q_ARG(UpdateCheckResult, result));
+    mUpdatesFuture = QtConcurrent::run([self, infoMgr]() {
+        auto result = infoMgr->checkForSystemUpdates();
+        if (!self) return;
+        QMetaObject::invokeMethod(self.data(), [self, result]() {
+            if (!self) return;
+            self->onUpdatesFinished(result);
+        }, Qt::QueuedConnection);
     });
 
     // Check 4: Health score (computed from current data)
-    QtConcurrent::run([this]() {
+    // WI-23: snapshot provider state on the UI thread before launching the
+    // worker. DiskInfo::disks is republished on the UI thread by the medium
+    // tick (FR-101) and macOS SMC reads serialize on a single connection;
+    // calling those getters from a worker raced with the UI-thread writes.
+    // Capturing by value keeps the worker's calc pure and lock-free.
+    const int coreCount        = infoMgr->getCpuCoreCount();
+    const QList<double> loadAvgs = infoMgr->getCpuLoadAvgs();
+    const QList<Disk> disksSnap  = infoMgr->getDisks();
+    const bool hasTemp         = infoMgr->hasThermalSensors();
+    const bool hasBattery      = infoMgr->hasBattery();
+    const bool hasSmart        = infoMgr->hasDiskHealth();
+    const double tempCSnap     = hasTemp ? infoMgr->getThermalTemperature(0) : 0.0;
+
+    mHealthFuture = QtConcurrent::run([self, coreCount, loadAvgs, disksSnap,
+                                       hasTemp, hasBattery, hasSmart, tempCSnap]() {
         HealthScoreCalculator calc;
 
-        int coreCount = mInfoManager->getCpuCoreCount();
-        QList<double> loadAvgs = mInfoManager->getCpuLoadAvgs();
         if (coreCount > 0 && !loadAvgs.isEmpty()) {
             double ratio = loadAvgs.first() / coreCount;
             calc.setCpuScore(qBound(0, qRound(100.0 * (1.0 - ratio)), 100));
         }
 
-        auto disks = mInfoManager->getDisks();
-        if (!disks.isEmpty()) {
+        if (!disksSnap.isEmpty()) {
             qint64 totalSize = 0;
             double weightedScore = 0;
-            for (const Disk &d : disks) {
+            for (const Disk &d : disksSnap) {
                 if (d.size == 0) continue;
                 int usedPct = (int)(100.0 * d.used / d.size);
                 int dScore = qBound(0, 100 - usedPct, 100);
@@ -185,22 +234,24 @@ void MaintenanceWizardDialog::runChecks()
                 calc.setDiskScore(qBound(0, (int)qRound(weightedScore / totalSize), 100));
         }
 
-        calc.setComponentAvailable("temp", mInfoManager->hasThermalSensors());
-        calc.setComponentAvailable("battery", mInfoManager->hasBattery());
-        calc.setComponentAvailable("smart", mInfoManager->hasDiskHealth());
+        calc.setComponentAvailable("temp", hasTemp);
+        calc.setComponentAvailable("battery", hasBattery);
+        calc.setComponentAvailable("smart", hasSmart);
 
-        if (mInfoManager->hasThermalSensors()) {
-            double tempC = mInfoManager->getThermalTemperature(0);
+        if (hasTemp) {
             int tScore = 100;
-            if (tempC >= 100.0) tScore = 0;
-            else if (tempC > 60.0) tScore = qRound(100.0 * (100.0 - tempC) / 40.0);
+            if (tempCSnap >= 100.0) tScore = 0;
+            else if (tempCSnap > 60.0) tScore = qRound(100.0 * (100.0 - tempCSnap) / 40.0);
             calc.setTempScore(tScore);
         }
 
         int score = calc.compositeScore();
         QString label = calc.scoreLabel();
-        QMetaObject::invokeMethod(this, "onHealthScoreFinished", Qt::QueuedConnection,
-                                  Q_ARG(int, score), Q_ARG(QString, label));
+        if (!self) return;
+        QMetaObject::invokeMethod(self.data(), [self, score, label]() {
+            if (!self) return;
+            self->onHealthScoreFinished(score, label);
+        }, Qt::QueuedConnection);
     });
 }
 
@@ -321,10 +372,14 @@ void MaintenanceWizardDialog::onCleanSafeItems()
 #endif
     };
 
-    QtConcurrent::run([this, safeCategories]() {
+    QPointer<MaintenanceWizardDialog> self(this);
+    mCleanFuture = QtConcurrent::run([self, safeCategories]() {
         auto result = CleanerService::ins()->clean(safeCategories);
-        QMetaObject::invokeMethod(this, "onCleanFinished", Qt::QueuedConnection,
-                                  Q_ARG(quint64, result.totalBytesFreed));
+        if (!self) return;
+        QMetaObject::invokeMethod(self.data(), [self, bytes = result.totalBytesFreed]() {
+            if (!self) return;
+            self->onCleanFinished(bytes);
+        }, Qt::QueuedConnection);
     });
 }
 
