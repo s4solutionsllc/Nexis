@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
 
       - name: Crowdin Sync
         uses: crowdin/github-action@8868a33591d21088edfc398968173a3b98d51706 # v2.9.1
@@ -39,3 +41,35 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Install Qt6 LinguistTools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-l10n-tools qt6-tools-dev-tools
+
+      - name: Normalize translations with lupdate
+        run: |
+          set -euo pipefail
+          # Crowdin pushes new translations to l10n_crowdin_translations using
+          # GITHUB_TOKEN, which suppresses workflow_run triggers — so the
+          # standalone lupdate.yml workflow never runs on that push. Do the
+          # normalization here, in the same job, then commit it back to the
+          # localization branch so the PR Crowdin opened picks it up.
+          if ! git ls-remote --exit-code --heads origin l10n_crowdin_translations >/dev/null; then
+            echo "No l10n_crowdin_translations branch — nothing to normalize."
+            exit 0
+          fi
+          git fetch origin l10n_crowdin_translations
+          git checkout -B l10n_crowdin_translations origin/l10n_crowdin_translations
+          lupdate -recursive shared/ macos/ linux/ \
+            -ts shared/translations/nexis_en.ts \
+            -no-obsolete
+          if git diff --quiet -- 'shared/translations/*.ts'; then
+            echo "lupdate produced no changes — nothing to commit."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add shared/translations/*.ts
+          git commit -m 'chore(i18n): normalize with lupdate'
+          git push origin l10n_crowdin_translations
