@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-06-10 | Version 2.3.13
+> Last updated: 2026-06-11 | Version 2.3.14
 
 ---
 
@@ -61,7 +61,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 
 | Metric | Value | Source of truth |
 |--------|-------|-----------------|
-| Version | 2.3.13 | `project(... VERSION ...)` in `CMakeLists.txt` |
+| Version | 2.3.14 | `project(... VERSION ...)` in `CMakeLists.txt` |
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 338 | same |
 | Test LOC | ~6,050 | `tests/` |
@@ -699,8 +699,7 @@ tests/
 **Test executables** — see the canonical table at the top of this doc for counts
 - Unit test executables registered via the `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable); plus one screenshot regression test linked against `nexis-gui`
 - Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`
-- Screenshot test: captures the always-visible pages in both Dark and Light themes and compares against reference PNGs with per-page pixel tolerance
-- The CI `Unit Tests` step explicitly excludes `ScreenshotTests` (`ctest -E ScreenshotTests`) — screenshot diffs are produced locally via `scripts/update_screenshots.sh` (WI-19)
+- Screenshot test: captures 12 pages × 2 themes, compares against reference PNGs with per-page pixel tolerance (NEX-3381: non-blocking in CI on Linux x64 and macOS; skipped on ARM64 Linux due to xvfb hang)
 - Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)
 - Run via: `ctest --test-dir build --output-on-failure`
@@ -730,6 +729,15 @@ rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release \
 # Incremental rebuild
 cmake --build build -j$(sysctl -n hw.ncpu)
 ```
+
+### Release Build Hardening
+
+Release / RelWithDebInfo / MinSizeRel builds enable an explicit hardening baseline so the AppImage, raw tarball, and macOS `.app` get the same protections distros layer on top of the `.deb`:
+
+- `-fstack-protector-strong`, `-D_FORTIFY_SOURCE=2`, `CMAKE_POSITION_INDEPENDENT_CODE=ON` (both platforms)
+- Linux link: `-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -pie` (full RELRO, BIND_NOW, NX stack, PIE)
+- macOS link: `-Wl,-bind_at_load` (immediate symbol binding)
+- Distro overrides: gated behind `-DNEXIS_ENABLE_HARDENING=OFF` for packagers who want to drive flags exclusively from their toolchain.
 
 ---
 

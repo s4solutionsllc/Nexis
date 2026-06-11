@@ -55,6 +55,13 @@ add_nexis_test(NAME DockerToolTests   SOURCES core/test_docker_tool.cpp)
 if(APPLE)
   add_nexis_test(NAME PackageToolMacOSTests
     SOURCES core/test_package_tool_macos.cpp)
+
+  # SSO-3385 (WI-23): proves the AppleSMC connection is opened exactly once
+  # across the process even under concurrent callers. The test seam free
+  # functions are defined in macos/nexis-core/Info/thermal_info.cpp and
+  # only exist on macOS.
+  add_nexis_test(NAME ThermalInfoMacOSTests
+    SOURCES core/test_thermal_info_macos.cpp)
 endif()
 
 # FR-127: pure parser for /proc/<pid>/*. Compiled directly here so the test

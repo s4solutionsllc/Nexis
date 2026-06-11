@@ -29,7 +29,23 @@ Every release must satisfy these — fail closed if any check fails.
 4. **Tracking files reconciled.** `python scripts/nexis_db.py sync` has been
    run; closed items for this release are `[x]` in `BUGS.md` /
    `FEATURE_REQUESTS.md`.
-5. **Time-box not exceeded for the quarter** (see SOP).
+5. **Screenshot baselines green (or explicit waiver).** Per NEX-3381, the
+   `ScreenshotTests` suite runs non-blocking in `build.yml` on every push to
+   `native` (Linux x64 + macOS; ARM64 Linux is skipped due to a known xvfb
+   hang). Before tagging:
+   ```bash
+   # Latest Build run on the tagged SHA — screenshot step must be green on
+   # Linux x64 and macOS, OR you must download the screenshot-diffs-*
+   # artifacts, visually confirm every diff is an intended change, and either
+   # re-run `Regenerate Screenshot Baselines` (workflow_dispatch) and commit
+   # the refreshed PNGs before tagging, or note the waiver in CHANGELOG.md.
+   gh run list --workflow build.yml --branch native --limit 1
+   gh run view <run-id> --log | grep -E "Screenshot regression tests"
+   ```
+   Any open page-visual PRs in this release must regenerate the affected
+   refs in the same PR; never tag against a known-stale baseline without a
+   recorded waiver. WI-19 in the audit remediation plan is the rationale.
+6. **Time-box not exceeded for the quarter** (see SOP).
 
 ---
 

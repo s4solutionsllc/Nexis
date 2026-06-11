@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: 2026-06-10 (SSO-3366) | Version 2.3.13
+> Last updated: 2026-06-11 (SSO-3497) | Version 2.3.14
 
 ---
 
@@ -396,6 +396,8 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
   - Replaced `iostat` subprocess (1s main-thread block per tick) with IOKit `IOBlockStorageDriver` API (~0.5ms, correct read/write separation)
   - Cached `getAvgClock()` result (eliminated 2 subprocess calls per tick on Apple Silicon)
   - Moved disk-health discovery to `QtConcurrent::run()` (300-1000ms off main thread every 30s). Worker now builds a fresh `QList<DriveHealth>` via `DiskHealthInfo::collectDriveHealth()` (no shared-state mutation) and publishes via `InfoManager::setDriveHealth()` inside the `QMetaObject::invokeMethod` hop — mirrors the `DiskInfo::collectDiskInfo()`/`setDisks()` pattern. A `QMutex` on the base class additionally guards every `mDrives` read/write (`getDrives`, `hasDrives`, `setDrives`, both `refreshHealthElevated*` paths). pkexec/sudo invocations run outside the lock to keep UI snapshots responsive (SSO-3364 / audit H3).
+  - **Maintenance Wizard worker (SSO-3385 / audit M4):** the health-score `QtConcurrent::run` previously called `InfoManager::getDisks()` and `getThermalTemperature(0)` directly, racing with `DataRefreshService::onMediumTick()` (which republishes `DiskInfo::disks` via `setDisks()` on the UI thread) and with the macOS SMC IOConnect calls. The wizard now snapshots `coreCount`, load averages, the disk list, `hasThermalSensors`/`hasBattery`/`hasDiskHealth`, and the temperature on the UI thread and captures them by value into the worker lambda — no provider calls happen off-thread. This is the "preferred" snapshot path from the audit (avoids locking) and is the contract documented on `DiskInfo::collectDiskInfo`/`setDisks` since FR-101.
+  - **macOS AppleSMC connection (SSO-3385):** `smcOpen()` now uses `std::call_once` so the IOService is opened exactly once for the process lifetime — closes the double-open/leak window introduced by the previous `if (sConn) ...` check-then-`IOServiceOpen`. The whole get-info/read pair in `smcReadKey` runs under a process-wide `QMutex` so concurrent callers (UI medium tick + future workers) cannot interleave the two `IOConnectCallStructMethod` halves on the shared connection.
   - In-place `QStandardItemModel` updates in ProcessesPage (eliminated 6,800 item allocations per tick)
   - Changed signal signatures to `const&` (eliminated ~2,800 deep string copies per emission)
   - Merged duplicate `getifaddrs()` walks into single `updateNetworkBytes()` method
@@ -477,7 +479,11 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 #### 3B. CI Screenshot Regression Tests (local-only)
 
-**Status:** Implemented (FR-41), then **descoped from CI** in WI-19. The `test-ScreenshotTests` executable captures the always-visible pages in both Dark and Light themes, compares against committed reference PNGs using a Qt-native pixel diff with configurable per-page tolerance, and produces visual diff artifacts on failure. The build workflow now explicitly excludes the suite from `ctest` runs via `-E ScreenshotTests` (see `.github/workflows/build.yml`) — environment-dependent rendering on hosted runners produced too many false positives. Screenshot diffs are run locally via `scripts/update_screenshots.sh`; CI continues to assert the always-visible pages compile and link by building `test-ScreenshotTests` itself.
+**Status:** Implemented (FR-41), re-enabled in CI under NEX-3381. The `test-ScreenshotTests` executable captures all 12 always-visible pages in both Dark and Light themes (24 screenshots per platform), compares against committed reference PNGs using a Qt-native pixel diff with configurable per-page tolerance, and writes actual/reference/diff PNGs to `build/tests/test_screenshots/failures/` on mismatch.
+
+**CI execution:** Runs as a separate **non-blocking** (`continue-on-error: true`) step in `.github/workflows/build.yml`, after the gating Unit Tests step (which still excludes ScreenshotTests via `-E ScreenshotTests`). The step is skipped on the `ubuntu-24.04-arm` runner — ScreenshotTests hangs indefinitely there under xvfb (see commit `5c173c7`), so it runs on Linux x64 (xvfb) and macOS only. The whole `build/tests/test_screenshots/` directory (actuals + failures) is uploaded as the `screenshot-diffs-*` artifact for maintainer review and as the input for baseline refreshes.
+
+**Baseline refresh:** Manually triggered via the `Regenerate Screenshot Baselines` workflow (`.github/workflows/screenshot-baselines.yml`, `workflow_dispatch`), which runs the test with `NEXIS_GENERATE_REFS=1` and uploads the freshly captured PNG set as an artifact. The maintainer downloads it, visually confirms the rendering is intended, and commits the contents under `tests/reference_screenshots/{platform}/{theme}/` on a baseline-refresh PR. The release runbook (`RELEASE.md` §0) requires the latest baselines to be green (or an explicit waiver) before tagging.
 
 **Architecture change:** The GUI sources were extracted into a `nexis-gui` static library so that both the `nexis` executable and the screenshot test can link against them without duplicating the source list. Reference images are stored in-repo under `tests/reference_screenshots/{platform}/{theme}/`.
 
@@ -551,11 +557,12 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 
 **Phase 3 (Done):** Expanded test coverage (FR-76) — 8 new test suites, ~151 additional test methods. Extracted parsing logic from 10 Info/Tool/Service classes into public static methods on shared base classes, created fixture data files in `tests/fixtures/`, and wrote comprehensive parser tests. Covers MemoryInfo, CpuInfo, GpuInfo, AptSourceTool, FanInfo, ThermalInfo, BatteryInfo, DiskInfo, and HostService.
 
-**Phase 4 (Done):** UI regression testing (FR-41):
-- Screenshot comparison (local-only since WI-19) — always-visible pages × Dark/Light per platform
+**Phase 4 (Done):** UI regression testing (FR-41, NEX-3381):
+- Screenshot comparison in CI — 12 pages × 2 themes per platform
 - Qt-native pixel diff with configurable per-page tolerance
-- Visual diff artifact upload on CI failure for manual review
-- Non-blocking initially (`continue-on-error`) until references stabilize
+- Visual diff artifact upload on every CI run for manual review
+- Non-blocking (`continue-on-error: true`) until references stabilize
+- Skipped on ARM64 Linux runners (hangs under xvfb; commit `5c173c7`); runs on Linux x64 and macOS
 
 **Phase 5 (Future):** Remaining coverage gaps:
 - CleanerService (requires extracting logic from GUI executable, blocked by BUG-93)
@@ -564,7 +571,7 @@ QML should only be reconsidered if a future feature genuinely requires it (e.g.,
 - SettingManager defaults and overrides
 - Integration tests for manager CRUD operations
 
-**Current state:** see the canonical "By the numbers" table in [`APPLICATION_OVERVIEW.md`](APPLICATION_OVERVIEW.md#project-identity) for the live CTest executable / test-method counts. The suites cover core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
+**Current state:** see the canonical "By the numbers" table in [`APPLICATION_OVERVIEW.md`](APPLICATION_OVERVIEW.md#project-identity) for the live CTest executable / test-method counts. The suites cover core library parsers, utilities, tool parsing, widget parsing, service logic, manager logic, and theme validation, plus 1 screenshot regression test that covers 24 page/theme combinations per platform. Build system refactored to extract `nexis-gui` static library for test linkage. Static parser extraction pattern established for future test additions.
 
 ---
 
