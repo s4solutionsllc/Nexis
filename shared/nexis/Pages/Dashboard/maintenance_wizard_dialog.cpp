@@ -198,21 +198,32 @@ void MaintenanceWizardDialog::runChecks()
     });
 
     // Check 4: Health score (computed from current data)
-    mHealthFuture = QtConcurrent::run([self, infoMgr]() {
+    // WI-23: snapshot provider state on the UI thread before launching the
+    // worker. DiskInfo::disks is republished on the UI thread by the medium
+    // tick (FR-101) and macOS SMC reads serialize on a single connection;
+    // calling those getters from a worker raced with the UI-thread writes.
+    // Capturing by value keeps the worker's calc pure and lock-free.
+    const int coreCount        = infoMgr->getCpuCoreCount();
+    const QList<double> loadAvgs = infoMgr->getCpuLoadAvgs();
+    const QList<Disk> disksSnap  = infoMgr->getDisks();
+    const bool hasTemp         = infoMgr->hasThermalSensors();
+    const bool hasBattery      = infoMgr->hasBattery();
+    const bool hasSmart        = infoMgr->hasDiskHealth();
+    const double tempCSnap     = hasTemp ? infoMgr->getThermalTemperature(0) : 0.0;
+
+    mHealthFuture = QtConcurrent::run([self, coreCount, loadAvgs, disksSnap,
+                                       hasTemp, hasBattery, hasSmart, tempCSnap]() {
         HealthScoreCalculator calc;
 
-        int coreCount = infoMgr->getCpuCoreCount();
-        QList<double> loadAvgs = infoMgr->getCpuLoadAvgs();
         if (coreCount > 0 && !loadAvgs.isEmpty()) {
             double ratio = loadAvgs.first() / coreCount;
             calc.setCpuScore(qBound(0, qRound(100.0 * (1.0 - ratio)), 100));
         }
 
-        auto disks = infoMgr->getDisks();
-        if (!disks.isEmpty()) {
+        if (!disksSnap.isEmpty()) {
             qint64 totalSize = 0;
             double weightedScore = 0;
-            for (const Disk &d : disks) {
+            for (const Disk &d : disksSnap) {
                 if (d.size == 0) continue;
                 int usedPct = (int)(100.0 * d.used / d.size);
                 int dScore = qBound(0, 100 - usedPct, 100);
@@ -223,15 +234,14 @@ void MaintenanceWizardDialog::runChecks()
                 calc.setDiskScore(qBound(0, (int)qRound(weightedScore / totalSize), 100));
         }
 
-        calc.setComponentAvailable("temp", infoMgr->hasThermalSensors());
-        calc.setComponentAvailable("battery", infoMgr->hasBattery());
-        calc.setComponentAvailable("smart", infoMgr->hasDiskHealth());
+        calc.setComponentAvailable("temp", hasTemp);
+        calc.setComponentAvailable("battery", hasBattery);
+        calc.setComponentAvailable("smart", hasSmart);
 
-        if (infoMgr->hasThermalSensors()) {
-            double tempC = infoMgr->getThermalTemperature(0);
+        if (hasTemp) {
             int tScore = 100;
-            if (tempC >= 100.0) tScore = 0;
-            else if (tempC > 60.0) tScore = qRound(100.0 * (100.0 - tempC) / 40.0);
+            if (tempCSnap >= 100.0) tScore = 0;
+            else if (tempCSnap > 60.0) tScore = qRound(100.0 * (100.0 - tempCSnap) / 40.0);
             calc.setTempScore(tScore);
         }
 

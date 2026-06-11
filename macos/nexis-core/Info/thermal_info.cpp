@@ -1,7 +1,11 @@
 #include "thermal_info_macos.h"
 
 #include <IOKit/IOKitLib.h>
+#include <QMutex>
+#include <QMutexLocker>
+#include <atomic>
 #include <cstring>
+#include <mutex>
 
 // ── Apple SMC (System Management Controller) interface ──────────────
 // The SMC exposes thermal sensors via a key-value store.  We talk to it
@@ -48,8 +52,16 @@ struct SmcVal {
 #pragma pack(pop)
 
 // ── SMC helper functions ────────────────────────────────────────────
+// WI-23 (M4): the wizard health-score worker and the medium-tick UI thread
+// both sample temperatures, so the previous static `sConn` check-then-open
+// could double-open the IOService and the IOConnectCallStructMethod call
+// itself is not safe for concurrent use on one connection. Open exactly
+// once via std::call_once and serialize reads with a process-wide mutex.
 
 static io_connect_t sConn = 0;
+static std::once_flag sSmcOpenFlag;
+static QMutex sSmcReadMutex;
+static std::atomic<unsigned> sSmcOpenAttempts{0};   // test seam (see test_thermal_info_macos)
 
 static uint32_t fourCharToUInt(const char *s)
 {
@@ -61,21 +73,44 @@ static uint32_t fourCharToUInt(const char *s)
 
 static bool smcOpen()
 {
-    if (sConn) return true;
+    std::call_once(sSmcOpenFlag, []() {
+        sSmcOpenAttempts.fetch_add(1, std::memory_order_relaxed);
 
-    io_service_t svc = IOServiceGetMatchingService(
-        kIOMainPortDefault,                         // was kIOMasterPortDefault
-        IOServiceMatching("AppleSMC"));
-    if (!svc) return false;
+        io_service_t svc = IOServiceGetMatchingService(
+            kIOMainPortDefault,                         // was kIOMasterPortDefault
+            IOServiceMatching("AppleSMC"));
+        if (!svc) return;
 
-    kern_return_t kr = IOServiceOpen(svc, mach_task_self(), 0, &sConn);
-    IOObjectRelease(svc);
-    return kr == KERN_SUCCESS;
+        kern_return_t kr = IOServiceOpen(svc, mach_task_self(), 0, &sConn);
+        IOObjectRelease(svc);
+        if (kr != KERN_SUCCESS)
+            sConn = 0;
+    });
+    return sConn != 0;
+}
+
+// Test seams (tests/core/test_thermal_info_macos.cpp forward-declares these).
+// Keeping them as plain non-static free functions in this TU avoids leaking
+// the SMC internals into a public header just to satisfy a test.
+unsigned nexis_smcOpenAttemptsForTest()
+{
+    return sSmcOpenAttempts.load(std::memory_order_relaxed);
+}
+
+void nexis_smcForceOpenForTest()
+{
+    smcOpen();
 }
 
 static bool smcReadKey(const char *key, SmcVal &val)
 {
     if (!smcOpen()) return false;
+
+    // AppleSMC IOConnectCallStructMethod sequences a get-info then a read
+    // against a single shared connection; concurrent callers from the UI
+    // and wizard worker threads can interleave the two halves. Serialize
+    // the whole pair.
+    QMutexLocker locker(&sSmcReadMutex);
 
     SmcKeyData inData{};
     SmcKeyData outData{};
