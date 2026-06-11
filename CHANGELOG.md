@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.14] - 2026-06-11
+
 ### Changed
 - **macOS: one-time bundle identity reset to `io.github.s4solutionsllc.Nexis` (SSO-3487, audit B3):** The macOS app's `CFBundleIdentifier` migrates from the previous unowned `com.nexis.app` to the s4solutionsllc-owned `io.github.s4solutionsllc.Nexis`, matching the Flatpak app id at `linux/flatpak/io.github.s4solutionsllc.Nexis.yml`. **This is a one-time identity reset, not an in-place rename.** After upgrading, your existing installed `Nexis.app` becomes an orphaned shell that macOS still treats as a separate, older application: it will not auto-update, Login Items still pointing at it will keep launching the old binary, default-app handlers / "Open With" choices keyed to the old bundle id will no longer route to the new one, and per-app preferences keyed under the old identifier will **not** auto-migrate (your saved Settings, theme, autostart toggle, etc. will start fresh).
   **What you need to do once after upgrading:**
