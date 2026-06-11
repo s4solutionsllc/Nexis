@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QMutexLocker>
 #include <QSet>
 
 #include <grp.h>
@@ -105,9 +106,15 @@ QString ProcessInfoLinux::lookupGid(gid_t gid)
     return name;
 }
 
-void ProcessInfoLinux::updateProcesses()
+QList<Process> ProcessInfoLinux::collectProcesses()
 {
-    processList.clear();
+    // WI-21 (audit M2): build into a local list; the UI thread publishes via
+    // setProcessList(). Never touch processList here — discovery runs on a
+    // QtConcurrent worker once per second, while the UI thread copies
+    // processList via getProcessList(). mCollectMutex serialises sync vs
+    // worker callers so the per-PID delta state below stays coherent.
+    QMutexLocker collectLocker(&mCollectMutex);
+    QList<Process> processes;
 
     // FR-127: walk /proc directly instead of forking `ps ax` every tick.
     // Init-time bootTime / memTotal are captured in the constructor.
@@ -214,7 +221,7 @@ void ProcessInfoLinux::updateProcesses()
             activeGpuPids.insert(pid);
         }
 
-        processList << proc;
+        processes << proc;
     }
 
     // Prune CPU baseline map against current tick's PIDs.
@@ -245,7 +252,7 @@ void ProcessInfoLinux::updateProcesses()
         if (!mPrevDiskIo.isEmpty())
             mPrevDiskIo.clear();
         mIoTimerStarted = false;
-        return;
+        return processes;
     }
 
     double elapsedSecs = 0;
@@ -259,7 +266,7 @@ void ProcessInfoLinux::updateProcesses()
 
     QSet<pid_t> activePids;
 
-    for (Process &proc : processList) {
+    for (Process &proc : processes) {
         pid_t pid = proc.getPid();
         activePids.insert(pid);
 
@@ -302,6 +309,8 @@ void ProcessInfoLinux::updateProcesses()
         else
             ++it;
     }
+
+    return processes;
 }
 
 void ProcessInfoLinux::collectGpuForPid(pid_t pid, Process &proc, double elapsedSecs)

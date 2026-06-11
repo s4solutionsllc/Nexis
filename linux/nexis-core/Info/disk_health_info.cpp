@@ -6,6 +6,15 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QMutexLocker>
+
+namespace {
+// WI-21 (SSO-3383, audit M2): pkexec opens a polkit password prompt that
+// the user has to interact with — the default 30 s CommandUtil::exec
+// timeout races slow password entry and the unlock silently fails. Five
+// minutes is plenty for any human-driven prompt while still bounding a
+// wedged polkit agent.
+constexpr int kSmartElevatedTimeoutMs = 5 * 60 * 1000;
+} // namespace
 DiskHealthInfoLinux::DiskHealthInfoLinux()
 {
     mHasSmartctl = CommandUtil::isExecutable("smartctl");
@@ -120,7 +129,10 @@ void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
     try {
         // pkexec/smartctl can block for many seconds — run it without holding
         // the mDrives mutex, then take the lock only to merge results in.
-        QString output = CommandUtil::exec("pkexec", {"sh", "-c", cmd});
+        // WI-21: bump the timeout well past the default 30 s so a slow polkit
+        // password entry does not race the wait cap.
+        QString output = CommandUtil::exec("pkexec", {"sh", "-c", cmd},
+                                           QByteArray(), kSmartElevatedTimeoutMs);
         QList<QByteArray> blocks = DiskHealthInfo::splitSmartctlOutput(output);
         QMutexLocker locker(&mDrivesMutex);
         for (int i = 0; i < blocks.size() && i < devices.size(); ++i) {
@@ -145,9 +157,12 @@ void DiskHealthInfoLinux::refreshHealthElevated(const QString &device)
 
     // Run pkexec/smartctl outside the lock (may block for seconds), then
     // take the lock only to merge the parsed result back into mDrives.
+    // WI-21: bump the timeout well past the default 30 s so a slow polkit
+    // password entry does not race the wait cap.
     QString output;
     try {
-        output = CommandUtil::exec("pkexec", {"smartctl", "-j", "-a", device});
+        output = CommandUtil::exec("pkexec", {"smartctl", "-j", "-a", device},
+                                   QByteArray(), kSmartElevatedTimeoutMs);
     } catch (...) {
         qWarning() << "Failed to read SMART data for" << device;
         return;

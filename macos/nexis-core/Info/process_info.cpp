@@ -3,6 +3,7 @@
 #include "nettop_streamer.h"
 
 #include <QDebug>
+#include <QMutexLocker>
 #include <QRegularExpression>
 #include <QSet>
 #include <libproc.h>
@@ -13,9 +14,16 @@
 ProcessInfoMacOS::ProcessInfoMacOS() = default;
 ProcessInfoMacOS::~ProcessInfoMacOS() = default;
 
-void ProcessInfoMacOS::updateProcesses()
+QList<Process> ProcessInfoMacOS::collectProcesses()
 {
-    processList.clear();
+    // WI-21 (audit M2): build into a local list; the UI thread publishes via
+    // setProcessList(). Never touch processList here — the `ps ax -weo` fork
+    // alone can stall for seconds (M2: 30 s waitForFinished cap), and from
+    // SSO-3383 onwards we run this on a QtConcurrent worker once per second.
+    // mCollectMutex serialises sync vs worker callers so the per-PID delta
+    // state (mPrev*, timers) below stays coherent.
+    QMutexLocker collectLocker(&mCollectMutex);
+    QList<Process> processes;
 
     try {
         // macOS ps doesn't support --no-headings but supports the same columns
@@ -52,7 +60,7 @@ void ProcessInfoMacOS::updateProcesses()
                     proc.setSession(procLine.takeFirst());
                     proc.setCmd(procLine.join(" "));
 
-                    processList << proc;
+                    processes << proc;
                 }
             }
         }
@@ -83,7 +91,7 @@ void ProcessInfoMacOS::updateProcesses()
     // the downstream map maintenance. Clear state on disable so stale rates
     // don't linger.
     if (mCollectDiskIO) {
-        for (Process &proc : processList) {
+        for (Process &proc : processes) {
             pid_t pid = proc.getPid();
             activePids.insert(pid);
 
@@ -142,13 +150,13 @@ void ProcessInfoMacOS::updateProcesses()
 
         // Rebuild activePids if disk collection skipped it.
         if (activePids.isEmpty()) {
-            for (const Process &proc : processList)
+            for (const Process &proc : processes)
                 activePids.insert(proc.getPid());
         }
 
         const QHash<pid_t, QPair<quint64, quint64>> nettopData = mNettopStreamer->snapshot();
 
-        for (Process &proc : processList) {
+        for (Process &proc : processes) {
             pid_t pid = proc.getPid();
 
             if (nettopData.contains(pid)) {
@@ -191,7 +199,7 @@ void ProcessInfoMacOS::updateProcesses()
         if (!mPrevGpuNs.isEmpty())
             mPrevGpuNs.clear();
         mGpuTimerStarted = false;
-        return;
+        return processes;
     }
 
     double gpuElapsedNs = 0.0;
@@ -205,7 +213,7 @@ void ProcessInfoMacOS::updateProcesses()
 
     QHash<pid_t, quint64> currentGpuNs = collectGpuNs();
 
-    for (Process &proc : processList) {
+    for (Process &proc : processes) {
         pid_t pid = proc.getPid();
         if (currentGpuNs.contains(pid) && gpuElapsedNs > 0 && mPrevGpuNs.contains(pid)) {
             quint64 cur = currentGpuNs.value(pid);
@@ -227,6 +235,8 @@ void ProcessInfoMacOS::updateProcesses()
     }
 
     mPrevGpuNs = currentGpuNs;
+
+    return processes;
 }
 
 QHash<pid_t, quint64> ProcessInfoMacOS::collectGpuNs()

@@ -2,7 +2,7 @@
 
 #include <QDebug>
 
-QString CommandUtil::sudoExec(const QString &cmd, QStringList args, QByteArray data)
+QString CommandUtil::sudoExec(const QString &cmd, QStringList args, QByteArray data, int timeoutMs)
 {
     QString result("");
 
@@ -22,7 +22,8 @@ QString CommandUtil::sudoExec(const QString &cmd, QStringList args, QByteArray d
     try {
         result = CommandUtil::exec("osascript",
             {"-e", QString("do shell script \"%1\" with administrator privileges").arg(fullCmd)},
-            data);
+            data,
+            timeoutMs);
     } catch (QString &ex) {
         qCritical() << ex;
     }
