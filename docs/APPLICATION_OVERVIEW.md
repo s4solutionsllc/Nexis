@@ -806,6 +806,12 @@ All color-bearing widgets implement a `refreshThemeColors()` method connected to
 
 QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at stylesheet load time based on `devicePixelRatio()`. The `Dpi::scale()` utility class handles pixel scaling in C++ code. This solved HiDPI/4K display issues without requiring a QML migration.
 
+### Accessibility (Keyboard Focus)
+
+Interactive controls accept keyboard focus and render a visible focus ring under both themes (SSO-3502). The ring is token-driven via `@focusRingColor` (resolved per theme in `values.ini`) and applied through `:focus` selectors in `style.qss` covering `QPushButton`, `QToolButton`, `QCheckBox`, `QRadioButton`, `QSlider`, `QComboBox`, `QLineEdit`, `QPlainTextEdit`, `QSpinBox`, `QDoubleSpinBox`, `QTreeView/Widget`, `QTableView/Widget`, and `QListView/Widget`. The `#sidebar QPushButton:focus` selector reuses the existing 3px left-edge stripe so sidebar nav items show focus without layout shift.
+
+The pre-SSO-3502 code used `setFocusPolicy(Qt::NoFocus)` on most interactive widgets, which broke keyboard, screen-reader, and switch-control navigation. After the SSO-3502 sweep, the only `Qt::NoFocus` call sites that remain in shared/macos `.cpp` code are deliberate: read-only data displays (`NoSelection + NoEditTriggers`) and the command palette result list (whose focus is forwarded from the search box via an event filter). New interactive controls **must not** add `setFocusPolicy(Qt::NoFocus)` — see `CONTRIBUTING.md` §2 for the rule and `tests/theme/test_focus_visible.cpp` for the style-test guard. Follow-up: SSO-3502 removed the `.cpp` declarations only; `.ui` files still contain a number of `<enum>Qt::NoFocus</enum>` entries that should be swept in a follow-up issue.
+
 ---
 
 ## Configuration and Settings

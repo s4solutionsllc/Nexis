@@ -36,7 +36,6 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
     mStyleButton->setIcon(QIcon(":/static/themes/common/img/style-brush.svg"));
     mStyleButton->setAutoRaise(true);
     mStyleButton->setCursor(Qt::PointingHandCursor);
-    mStyleButton->setFocusPolicy(Qt::NoFocus);
     mStyleButton->setToolTip(tr("Change Widget Style"));
     mStyleButton->hide();
 
@@ -64,7 +63,6 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
     mRemoveButton->setIcon(QIcon(":/static/themes/common/img/tile-remove.svg"));
     mRemoveButton->setAutoRaise(true);
     mRemoveButton->setCursor(Qt::PointingHandCursor);
-    mRemoveButton->setFocusPolicy(Qt::NoFocus);
     mRemoveButton->setToolTip(tr("Remove Widget"));
     mRemoveButton->hide();
 

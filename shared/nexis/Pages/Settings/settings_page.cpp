@@ -620,9 +620,7 @@ void SettingsPage::onManageSchedules()
             cardLayout->addLayout(infoLayout, 1);
 
             QPushButton *editBtn = new QPushButton(tr("Edit"));
-            editBtn->setFocusPolicy(Qt::NoFocus);
             QPushButton *deleteBtn = new QPushButton(tr("Delete"));
-            deleteBtn->setFocusPolicy(Qt::NoFocus);
             deleteBtn->setProperty("accessibleName", "danger");
             cardLayout->addWidget(editBtn);
             cardLayout->addWidget(deleteBtn);

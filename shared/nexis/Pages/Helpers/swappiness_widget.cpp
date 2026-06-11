@@ -211,7 +211,6 @@ void SwappinessWidget::buildUI()
         auto *b = new QPushButton(text, mDetailWidget);
         b->setCheckable(true);
         b->setCursor(Qt::PointingHandCursor);
-        b->setFocusPolicy(Qt::NoFocus);
         presetRow->addWidget(b);
         return b;
     };
@@ -252,7 +251,6 @@ void SwappinessWidget::buildUI()
     mChkPersist = new QCheckBox(tr("Persist across reboots (writes %1)")
                                     .arg(kSysctlConfPath), mDetailWidget);
     mChkPersist->setCursor(Qt::PointingHandCursor);
-    mChkPersist->setFocusPolicy(Qt::NoFocus);
     card->addWidget(mChkPersist);
 
     mLblSwapUsage = new QLabel(mDetailWidget);
@@ -274,14 +272,12 @@ void SwappinessWidget::buildUI()
     mBtnApply->setObjectName("swappinessApply");
     mBtnApply->setAccessibleName("primary");
     mBtnApply->setCursor(Qt::PointingHandCursor);
-    mBtnApply->setFocusPolicy(Qt::NoFocus);
     mBtnApply->setEnabled(false);
     connect(mBtnApply, &QPushButton::clicked, this, &SwappinessWidget::onApplyClicked);
     actions->addWidget(mBtnApply);
 
     mBtnRefresh = new QPushButton(tr("Refresh"), this);
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
-    mBtnRefresh->setFocusPolicy(Qt::NoFocus);
     connect(mBtnRefresh, &QPushButton::clicked, this, &SwappinessWidget::refresh);
     actions->addWidget(mBtnRefresh);
 

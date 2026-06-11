@@ -146,7 +146,6 @@ void CpuTuningWidget::buildUI()
     auto *turboRow = new QHBoxLayout();
     mChkTurbo = new QCheckBox(tr("Turbo boost"), mCard);
     mChkTurbo->setCursor(Qt::PointingHandCursor);
-    mChkTurbo->setFocusPolicy(Qt::NoFocus);
     turboRow->addWidget(mChkTurbo);
     turboRow->addStretch();
     mLblTurbo = new QLabel(mCard);
@@ -159,7 +158,6 @@ void CpuTuningWidget::buildUI()
     govRow->setSpacing(8);
     govRow->addWidget(new QLabel(tr("Governor:")));
     mCmbGovernor = new QComboBox(mCard);
-    mCmbGovernor->setFocusPolicy(Qt::NoFocus);
     govRow->addWidget(mCmbGovernor, 1);
     card->addLayout(govRow);
 
@@ -168,7 +166,6 @@ void CpuTuningWidget::buildUI()
     minRow->setSpacing(8);
     minRow->addWidget(new QLabel(tr("Min:")));
     mSldMin = new QSlider(Qt::Horizontal, mCard);
-    mSldMin->setFocusPolicy(Qt::NoFocus);
     minRow->addWidget(mSldMin, 1);
     mLblMinVal = new QLabel(mCard);
     mLblMinVal->setMinimumWidth(90);
@@ -179,7 +176,6 @@ void CpuTuningWidget::buildUI()
     maxRow->setSpacing(8);
     maxRow->addWidget(new QLabel(tr("Max:")));
     mSldMax = new QSlider(Qt::Horizontal, mCard);
-    mSldMax->setFocusPolicy(Qt::NoFocus);
     maxRow->addWidget(mSldMax, 1);
     mLblMaxVal = new QLabel(mCard);
     mLblMaxVal->setMinimumWidth(90);
@@ -200,7 +196,6 @@ void CpuTuningWidget::buildUI()
     // Advanced (per-core governors)
     mChkAdvanced = new QCheckBox(tr("Show per-core governors"), mCard);
     mChkAdvanced->setCursor(Qt::PointingHandCursor);
-    mChkAdvanced->setFocusPolicy(Qt::NoFocus);
     connect(mChkAdvanced, &QCheckBox::toggled,
             this, &CpuTuningWidget::onAdvancedToggled);
     card->addWidget(mChkAdvanced);
@@ -219,7 +214,6 @@ void CpuTuningWidget::buildUI()
     mChkPersist = new QCheckBox(
         tr("Re-apply these settings when Nexis launches"), mCard);
     mChkPersist->setCursor(Qt::PointingHandCursor);
-    mChkPersist->setFocusPolicy(Qt::NoFocus);
     mChkPersist->setChecked(SettingManager::ins()->getCpuTuningPersist());
     card->addWidget(mChkPersist);
 
@@ -238,14 +232,12 @@ void CpuTuningWidget::buildUI()
     mBtnApply->setObjectName("cpuTuningApply");
     mBtnApply->setAccessibleName("primary");
     mBtnApply->setCursor(Qt::PointingHandCursor);
-    mBtnApply->setFocusPolicy(Qt::NoFocus);
     mBtnApply->setEnabled(false);
     connect(mBtnApply, &QPushButton::clicked, this, &CpuTuningWidget::onApplyClicked);
     actions->addWidget(mBtnApply);
 
     mBtnRefresh = new QPushButton(tr("Refresh"), this);
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
-    mBtnRefresh->setFocusPolicy(Qt::NoFocus);
     connect(mBtnRefresh, &QPushButton::clicked, this, &CpuTuningWidget::refresh);
     actions->addWidget(mBtnRefresh);
 
@@ -286,7 +278,6 @@ void CpuTuningWidget::buildPerCoreGrid(const CpuTuning::Snapshot &snap)
         const auto &c = snap.cores.at(i);
         auto *lbl = new QLabel(QStringLiteral("cpu%1").arg(c.index), mPerCoreGrid);
         auto *cmb = new QComboBox(mPerCoreGrid);
-        cmb->setFocusPolicy(Qt::NoFocus);
         cmb->addItems(snap.availableGovernors);
         if (!c.governor.isEmpty())
             cmb->setCurrentText(c.governor);
