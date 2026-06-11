@@ -49,6 +49,15 @@ public:
 
     static QString frequencyDisplayText(const CleaningSchedule &schedule);
 
+    // SSO-3369 / A2: systemd has no native "every N days" trigger, so
+    // createSystemdTimer() schedules a daily OnCalendar and relies on this gate
+    // to skip the clean when the interval has not yet elapsed. Returns true
+    // when the clean should be skipped. Always false for non-EveryNDays
+    // frequencies. The boundary (daysTo == everyNDays) runs.
+    static bool isEveryNDaysGateBlocked(Frequency frequency, int everyNDays,
+                                        const QDateTime &lastRun,
+                                        const QDateTime &now);
+
 signals:
     void schedulesChanged();
 

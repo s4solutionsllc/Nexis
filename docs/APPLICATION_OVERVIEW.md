@@ -253,6 +253,7 @@ Scan and remove system junk files across 9 categories.
 - Headless CLI mode: `./nexis --clean <schedule-id>`, `./nexis --check-threshold`
 - Frequencies: Daily, Every N Days, Weekly, Monthly
 - Category selection, minimum file age filter, threshold alerts
+- **Every-N-days cadence on systemd:** systemd has no native every-N-days trigger, so the timer fires daily and `CleanerService::cleanSchedule()` consults `ScheduleManager::isEveryNDaysGateBlocked()` to skip runs where `lastRun.daysTo(now) < everyNDays`. cron's `*/N` operator and launchd's `StartInterval` give the right cadence directly
 
 ### 5. Disk Tools
 

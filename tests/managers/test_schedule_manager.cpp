@@ -30,6 +30,15 @@ private slots:
     void nextRun_everyNDays_withLastRun();
     void nextRun_everyNDays_noLastRun();
 
+    // ── isEveryNDaysGateBlocked tests (SSO-3369) ────────────────────────────
+    void gate_everyNDays_blocksBeforeInterval();
+    void gate_everyNDays_runsAtBoundary();
+    void gate_everyNDays_runsAfterInterval();
+    void gate_everyNDays_runsWithoutLastRun();
+    void gate_everyNDays_runsForNonPositiveN();
+    void gate_dailyNeverBlocked();
+    void gate_weeklyNeverBlocked();
+
     // ── frequencyDisplayText tests ──────────────────────────────────────────
     void displayText_daily();
     void displayText_everyNDays();
@@ -145,6 +154,73 @@ void TestScheduleManager::nextRun_everyNDays_noLastRun()
     QDateTime result = ScheduleManager::ins()->getNextRunTime(s, now);
     // No lastRun: today at 08:00 is past → add 5 days = June 20 08:00
     QCOMPARE(result, QDateTime(QDate(2025, 6, 20), QTime(8, 0)));
+}
+
+// ── EveryNDays gate tests (SSO-3369) ─────────────────────────────────────────
+// On Linux, systemd timers fire daily for EveryNDays schedules; the gate keeps
+// the interval honest. Boundary: daysTo == everyNDays runs.
+
+void TestScheduleManager::gate_everyNDays_blocksBeforeInterval()
+{
+    // everyNDays=7, lastRun=3 days ago → blocked
+    QDateTime now(QDate(2025, 6, 15), QTime(15, 0));
+    QDateTime lastRun(QDate(2025, 6, 12), QTime(15, 0));
+    QVERIFY(ScheduleManager::isEveryNDaysGateBlocked(
+        ScheduleManager::EveryNDays, 7, lastRun, now));
+}
+
+void TestScheduleManager::gate_everyNDays_runsAtBoundary()
+{
+    // everyNDays=7, lastRun exactly 7 days ago → NOT blocked (boundary runs)
+    QDateTime now(QDate(2025, 6, 15), QTime(15, 0));
+    QDateTime lastRun(QDate(2025, 6, 8), QTime(15, 0));
+    QVERIFY(!ScheduleManager::isEveryNDaysGateBlocked(
+        ScheduleManager::EveryNDays, 7, lastRun, now));
+}
+
+void TestScheduleManager::gate_everyNDays_runsAfterInterval()
+{
+    // everyNDays=7, lastRun=8 days ago → not blocked
+    QDateTime now(QDate(2025, 6, 15), QTime(15, 0));
+    QDateTime lastRun(QDate(2025, 6, 7), QTime(15, 0));
+    QVERIFY(!ScheduleManager::isEveryNDaysGateBlocked(
+        ScheduleManager::EveryNDays, 7, lastRun, now));
+}
+
+void TestScheduleManager::gate_everyNDays_runsWithoutLastRun()
+{
+    // First run after schedule creation: lastRun invalid → not blocked
+    QDateTime now(QDate(2025, 6, 15), QTime(15, 0));
+    QVERIFY(!ScheduleManager::isEveryNDaysGateBlocked(
+        ScheduleManager::EveryNDays, 7, QDateTime(), now));
+}
+
+void TestScheduleManager::gate_everyNDays_runsForNonPositiveN()
+{
+    // Malformed N (0 or negative) treated as "no interval" → not blocked,
+    // so the clean still runs and we don't accidentally permanently block it.
+    QDateTime now(QDate(2025, 6, 15), QTime(15, 0));
+    QDateTime lastRun(QDate(2025, 6, 14), QTime(15, 0));
+    QVERIFY(!ScheduleManager::isEveryNDaysGateBlocked(
+        ScheduleManager::EveryNDays, 0, lastRun, now));
+    QVERIFY(!ScheduleManager::isEveryNDaysGateBlocked(
+        ScheduleManager::EveryNDays, -1, lastRun, now));
+}
+
+void TestScheduleManager::gate_dailyNeverBlocked()
+{
+    QDateTime now(QDate(2025, 6, 15), QTime(15, 0));
+    QDateTime lastRun(QDate(2025, 6, 15), QTime(3, 0)); // earlier today
+    QVERIFY(!ScheduleManager::isEveryNDaysGateBlocked(
+        ScheduleManager::Daily, 7, lastRun, now));
+}
+
+void TestScheduleManager::gate_weeklyNeverBlocked()
+{
+    QDateTime now(QDate(2025, 6, 15), QTime(15, 0));
+    QDateTime lastRun(QDate(2025, 6, 14), QTime(15, 0));
+    QVERIFY(!ScheduleManager::isEveryNDaysGateBlocked(
+        ScheduleManager::Weekly, 7, lastRun, now));
 }
 
 // ── Display Text Tests ───────────────────────────────────────────────────────

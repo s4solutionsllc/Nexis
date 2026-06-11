@@ -202,6 +202,16 @@ QDateTime ScheduleManager::getNextRunTime(const CleaningSchedule &schedule,
     return next;
 }
 
+bool ScheduleManager::isEveryNDaysGateBlocked(Frequency frequency, int everyNDays,
+                                              const QDateTime &lastRun,
+                                              const QDateTime &now)
+{
+    if (frequency != EveryNDays) return false;
+    if (!lastRun.isValid()) return false;
+    if (everyNDays <= 0) return false;
+    return lastRun.daysTo(now) < everyNDays;
+}
+
 QString ScheduleManager::frequencyDisplayText(const CleaningSchedule &schedule)
 {
     switch (schedule.frequency) {
@@ -463,9 +473,10 @@ void ScheduleManager::createSystemdTimer(const CleaningSchedule &schedule)
             .arg(schedule.minute, 2, 10, QChar('0'));
         break;
     case EveryNDays:
-        // systemd doesn't have "every N days" directly; approximate via OnUnitActiveSec
-        // We'll use OnCalendar=daily and rely on the timer's Persistent=true
-        // with a condition check inside the service. For simplicity, use daily trigger.
+        // SSO-3369: systemd has no native "every N days" trigger. We fire daily
+        // and let CleanerService::cleanSchedule() consult
+        // ScheduleManager::isEveryNDaysGateBlocked() to skip runs that fall
+        // inside the interval since the last successful clean.
         onCalendar = QString("*-*-* %1:%2:00")
             .arg(schedule.hour, 2, 10, QChar('0'))
             .arg(schedule.minute, 2, 10, QChar('0'));
