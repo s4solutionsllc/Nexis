@@ -72,7 +72,6 @@ QPushButton *App::createSidebarButton(const QString &tooltip)
     auto *btn = new QPushButton(ui->sidebar);
     btn->setToolTip(tooltip);
     btn->setCursor(Qt::PointingHandCursor);
-    btn->setFocusPolicy(Qt::NoFocus);
     btn->setCheckable(true);
     btn->setIconSize(Dpi::scale(20, 20));
     mSidebarBtnGroup->addButton(btn);
@@ -84,7 +83,6 @@ QPushButton *App::createSectionToggle(const QString &text)
     auto *btn = new QPushButton(text, ui->sidebar);
     btn->setObjectName("sectionToggle");
     btn->setCursor(Qt::PointingHandCursor);
-    btn->setFocusPolicy(Qt::NoFocus);
     btn->setCheckable(false);
     btn->setIconSize(Dpi::scale(12, 12));
     btn->setLayoutDirection(Qt::RightToLeft);
@@ -112,7 +110,6 @@ void App::buildSidebar()
     mBtnSidebarToggle = new QToolButton(ui->sidebar);
     mBtnSidebarToggle->setObjectName("btnSidebarToggle");
     mBtnSidebarToggle->setCursor(Qt::PointingHandCursor);
-    mBtnSidebarToggle->setFocusPolicy(Qt::NoFocus);
     mBtnSidebarToggle->setCheckable(false);
     mBtnSidebarToggle->setAutoRaise(true);
     mBtnSidebarToggle->setIconSize(Dpi::scale(16, 16));
@@ -296,7 +293,6 @@ void App::buildSidebar()
     btnFeedback = new QPushButton(ui->sidebar);
     btnFeedback->setToolTip(tr("Feedback"));
     btnFeedback->setCursor(Qt::PointingHandCursor);
-    btnFeedback->setFocusPolicy(Qt::NoFocus);
     btnFeedback->setCheckable(false);
     btnFeedback->setIconSize(Dpi::scale(20, 20));
     btnFeedback->setObjectName("btnFeedback");

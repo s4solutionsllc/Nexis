@@ -100,6 +100,22 @@ a priority, and queued (or explaining why it will not be addressed). It is not
 a fix commitment. Publish this policy in `CONTRIBUTING.md` so contributors
 know what to expect.
 
+### Detection subscriptions (must stay live)
+
+The 7-day wake clock only starts if someone actually receives the signal.
+Keep these channels routed to `security@s4solutions.ai` (or the active
+maintainer's pager) — see `RELEASE.md` §6 *Monitoring sources* for the
+canonical list:
+
+- Qt `announce@lists.qt-project.org` security announcements.
+- GitHub Dependabot + Code Scanning (CodeQL) alerts on
+  `s4solutionsllc/Nexis` — repo Security tab notifications.
+- `linuxdeploy` / `linuxdeploy-plugin-qt` release feeds (Atom) so a pinned
+  bump in `release.yml` does not lag a security release.
+
+Audit the subscription roster on every maintainer handover (§6 below) and
+during the quarterly release review.
+
 ### What does **not** require an immediate response
 
 - Build/CI flakes that don't affect a release. File and queue.

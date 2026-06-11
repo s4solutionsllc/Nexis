@@ -138,6 +138,9 @@ private:
     bool mDiskHealthRunning = false;
     bool mDiskUsageRunning = false;
     bool mRepoHealthRunning = false;
+    // WI-21 (SSO-3383): guards re-entry while the off-thread updateProcesses
+    // worker is in flight, mirroring mDiskHealthRunning for onSlowTick.
+    bool mProcessRunning = false;
 
     // BUG-110: cache of last emissions so late subscribers can backfill.
     UpdateCheckResult mLastUpdateCheckResult;

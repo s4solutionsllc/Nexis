@@ -158,7 +158,6 @@ void FirewallWidget::buildUI()
 
     mBtnToggle = new QPushButton;
     mBtnToggle->setCursor(Qt::PointingHandCursor);
-    mBtnToggle->setFocusPolicy(Qt::NoFocus);
     mBtnToggle->setObjectName("fwToggle");
     connect(mBtnToggle, &QPushButton::clicked, this, &FirewallWidget::onToggleClicked);
     statusRow->addWidget(mBtnToggle);
@@ -204,7 +203,6 @@ void FirewallWidget::buildUI()
     mBtnHelp = new QToolButton;
     mBtnHelp->setText("?");
     mBtnHelp->setAutoRaise(true);
-    mBtnHelp->setFocusPolicy(Qt::NoFocus);
     mBtnHelp->setCursor(Qt::WhatsThisCursor);
     mBtnHelp->setObjectName("fwHelpBtn");
     mBtnHelp->setToolTip(
@@ -223,7 +221,6 @@ void FirewallWidget::buildUI()
 
     mBtnRefresh = new QPushButton(tr("Refresh"));
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
-    mBtnRefresh->setFocusPolicy(Qt::NoFocus);
     mBtnRefresh->setObjectName("fwRefresh");
     connect(mBtnRefresh, &QPushButton::clicked, this, &FirewallWidget::refresh);
     bottomRow->addWidget(mBtnRefresh);

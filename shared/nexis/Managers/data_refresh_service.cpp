@@ -393,8 +393,24 @@ void DataRefreshService::onSlowTick()
 
 void DataRefreshService::onProcessTick()
 {
-    im->updateProcesses();
-    emit processesUpdated(im->getProcesses(), im->getUserName());
+    // WI-21 (SSO-3383, audit M2): updateProcesses() forks `ps` on macOS
+    // (waitForFinished cap of 30 s) and walks /proc on Linux — both can
+    // stall the GUI on a loaded system. Off-load the collect onto a
+    // QtConcurrent worker and publish on the UI thread, same pattern as
+    // onSlowTick().
+    if (mProcessRunning)
+        return;
+
+    mProcessRunning = true;
+    QtConcurrent::run([this]() {
+        QList<Process> processes = im->collectProcesses();
+        const QString user = im->getUserName();
+        QMetaObject::invokeMethod(this, [this, processes, user]() {
+            im->setProcessList(processes);
+            mProcessRunning = false;
+            emit processesUpdated(processes, user);
+        }, Qt::QueuedConnection);
+    });
 }
 
 void DataRefreshService::onUpdateTick()

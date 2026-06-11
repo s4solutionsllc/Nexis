@@ -80,6 +80,13 @@ public:
     QFileInfoList getBrowserPrivacyArtifacts() const;
 
     void updateProcesses();
+    // WI-21: thread-safe publish pair, mirrors collectDiskInfo()/setDisks()
+    // and collectDriveHealth()/setDriveHealth() (WI-03). collectProcesses()
+    // runs the per-PID walk + any forks (`ps` on macOS) into a local list,
+    // safe to call from a QtConcurrent worker; setProcessList() assigns the
+    // cache on the UI thread (DataRefreshService hops via invokeMethod).
+    QList<Process> collectProcesses();
+    void setProcessList(QList<Process> processes);
     QList<Process> getProcesses() const;
     QString getUserName() const;
     QStringList getUserList() const;

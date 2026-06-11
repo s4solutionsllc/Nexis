@@ -18,7 +18,8 @@ namespace {
 // UI-thread audit: in debug builds, warn (and assert) when a synchronous exec
 // runs on the GUI thread. Gated on NEXIS_ASSERT_ASYNC_EXEC so it stays silent
 // by default and does not disrupt existing callers during the Bundle B
-// migration.
+// migration. SSO-3367 also uses this hook to find sites that still need to
+// migrate to execWithStatus / execAsync.
 void auditUiThread(const QString &cmd, const QStringList &args)
 {
 #ifndef QT_NO_DEBUG
@@ -33,42 +34,13 @@ void auditUiThread(const QString &cmd, const QStringList &args)
 #endif
 }
 
-} // namespace
-
-QString CommandUtil::exec(const QString &cmd, QStringList args, QByteArray data, int timeoutMs)
-{
-    auditUiThread(cmd, args);
-
-    std::unique_ptr<QProcess> process(new QProcess());
-    process->start(cmd, args);
-
-    if (! data.isEmpty()) {
-        process->write(data);
-        process->waitForBytesWritten();
-        process->closeWriteChannel();
-    }
-
-    process->waitForFinished(timeoutMs);
-
-    QTextStream stdOut(process->readAllStandardOutput());
-
-    QString err = process->errorString();
-
-    process->kill();
-    process->close();
-
-    if (process->error() != QProcess::UnknownError)
-        throw err;
-
-    return stdOut.readAll().trimmed();
-}
-
-ExecResult CommandUtil::execWithStatus(const QString &cmd, QStringList args, int timeoutMs)
+// Core QProcess driver shared by every CommandUtil entry point. Never throws —
+// QProcess errors are reported through ExecResult.error / exitCode.
+ExecResult runProcess(const QString &cmd, const QStringList &args, const QByteArray &data, int timeoutMs)
 {
     auditUiThread(cmd, args);
 
     ExecResult result;
-    result.exitCode = -1;
 
     std::unique_ptr<QProcess> process(new QProcess());
     process->start(cmd, args);
@@ -78,16 +50,66 @@ ExecResult CommandUtil::execWithStatus(const QString &cmd, QStringList args, int
         return result;
     }
 
+    if (!data.isEmpty()) {
+        process->write(data);
+        process->waitForBytesWritten();
+        process->closeWriteChannel();
+    }
+
     process->waitForFinished(timeoutMs);
 
     result.output = QString::fromUtf8(process->readAllStandardOutput()).trimmed();
     result.error = QString::fromUtf8(process->readAllStandardError()).trimmed();
-    result.exitCode = (process->exitStatus() == QProcess::NormalExit) ? process->exitCode() : -1;
+
+    // QProcess::error() is UnknownError when nothing went wrong. Treat any
+    // start/run/timeout error as a failure: surface errorString() in
+    // result.error and force a non-zero exit code so ok() == false.
+    if (process->error() != QProcess::UnknownError) {
+        if (result.error.isEmpty()) {
+            result.error = process->errorString();
+        }
+        result.exitCode = -1;
+    } else if (process->exitStatus() == QProcess::NormalExit) {
+        result.exitCode = process->exitCode();
+    } else {
+        result.exitCode = -1;
+    }
 
     process->kill();
     process->close();
 
     return result;
+}
+
+} // namespace
+
+ExecResult CommandUtil::execWithStatus(const QString &cmd, QStringList args, int timeoutMs)
+{
+    return runProcess(cmd, args, QByteArray(), timeoutMs);
+}
+
+ExecResult CommandUtil::execWithStatus(const QString &cmd, QStringList args, QByteArray data, int timeoutMs)
+{
+    return runProcess(cmd, args, data, timeoutMs);
+}
+
+QString CommandUtil::exec(const QString &cmd, QStringList args, QByteArray data, int timeoutMs)
+{
+    // SSO-3367: exec() used to throw a raw QString on any QProcess error,
+    // including the 30 s default timeout. Now it shares the unified ExecResult
+    // contract — failure is logged here and an empty QString is returned, the
+    // same outward shape sudoExec has always had. Callers that need
+    // authoritative status should migrate to execWithStatus.
+    const ExecResult result = runProcess(cmd, args, data, timeoutMs);
+
+    if (!result.ok()) {
+        qCritical().nospace() << "CommandUtil::exec failed: " << cmd
+                              << " " << args
+                              << " (exitCode=" << result.exitCode
+                              << ", error=" << result.error << ")";
+    }
+
+    return result.output;
 }
 
 QFuture<ExecResult> CommandUtil::execAsync(const QString &cmd, QStringList args, int timeoutMs)

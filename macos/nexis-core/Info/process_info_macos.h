@@ -16,7 +16,7 @@ public:
     ProcessInfoMacOS();
     ~ProcessInfoMacOS() override;
 
-    void updateProcesses() override;
+    QList<Process> collectProcesses() override;
 
 private:
     QHash<pid_t, QPair<quint64, quint64>> mPrevDiskIo;

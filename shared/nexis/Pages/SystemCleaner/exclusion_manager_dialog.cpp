@@ -48,7 +48,6 @@ void ExclusionManagerDialog::buildUI()
     mTree->setSelectionMode(QAbstractItemView::SingleSelection);
     mTree->setRootIsDecorated(false);
     mTree->setAlternatingRowColors(true);
-    mTree->setFocusPolicy(Qt::NoFocus);
     mainLayout->addWidget(mTree, 1);
 
     QHBoxLayout *btnRow = new QHBoxLayout;

@@ -142,7 +142,6 @@ void MetricTileBase::createGearButton()
     mGearButton->setIconSize(QSize(14, 14));
     mGearButton->setAutoRaise(true);
     mGearButton->setCursor(Qt::PointingHandCursor);
-    mGearButton->setFocusPolicy(Qt::NoFocus);
     mGearButton->hide();
     mGearButton->raise();
     repositionGearButton();
@@ -205,7 +204,6 @@ void MetricTileBase::createFooterLayout(QVBoxLayout *parent)
     mBtnAction = new QPushButton(this);
     mBtnAction->setObjectName("metricTileAction");
     mBtnAction->setCursor(Qt::PointingHandCursor);
-    mBtnAction->setFocusPolicy(Qt::NoFocus);
     mBtnAction->hide();
     mBtnAction->setFixedHeight(22);
 

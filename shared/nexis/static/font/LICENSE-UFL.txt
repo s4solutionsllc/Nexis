@@ -1,0 +1,90 @@
+UBUNTU FONT LICENCE
+Version 1.0
+
+PREAMBLE
+This licence allows the licensed fonts to be used, studied, modified and
+redistributed freely. The fonts, including any derivative works, can be
+bundled, embedded, and redistributed provided the terms of this licence
+are met. The fonts and derivatives, however, cannot be released under
+any other licence. The requirement for fonts to remain under this licence
+does not apply to any document created using the Font Software.
+
+DEFINITIONS
+"Font Software" refers to the set of files released by the Copyright
+Holder(s) under this licence and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+"Original Version" refers to the collection of Font Software components as
+received under this licence.
+
+"Modified Version" refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+"Copyright Holder(s)" refers to all individuals and companies that have
+copyright ownership of the Font Software.
+
+"Substantially Changed" means one or more changes to the aesthetic and
+technical details of glyphs, spacing, kerning, hints, or other such
+elements that affect the visual appearance of the font, in addition to
+merely renaming the fonts.
+
+"Propagate" means to copy, distribute, sublicense, or otherwise make
+available to third parties, whether for a fee or not.
+
+GRANT OF RIGHTS
+1. You may use, embed, and propagate the Font Software, without
+Substantially Changing it, under the terms of the licence you received,
+provided that the following conditions are met:
+
+  a. Each copy of the Font Software must include the above copyright
+     notice and this licence. The licence must be included either as a
+     stand-alone file, readable header or in the appropriate machine-
+     readable metadata field in text or binary files as long as those
+     fields can be easily viewed by the user.
+  b. The font name used to identify the font in any application, document
+     or artifact is the Unchanged Font Name set as specified by the
+     Copyright Holder(s).
+
+2. You may Substantially Change the Font Software and propagate the
+Modified Version under a licence that satisfies the conditions in
+clauses 2a through 2e, below. If the Modified Version is propagated
+under this Ubuntu Font Licence, the conditions of clauses 1a and 1b
+above also apply.
+
+  a. The Modified Version must include prominent notices stating that you
+     have modified the Font Software.
+  b. The Modified Version must be renamed to avoid use of any Unchanged
+     Font Name(s).
+  c. The Modified Version must not claim to be the original Font Software,
+     except by acknowledgement of the Copyright Holder(s).
+  d. The terms of this licence need not apply to documents, artwork or
+     other uses that employ the Modified Version of the Font Software.
+  e. Modified Versions may be released under this licence or another
+     licence that contains conditions at least as restrictive as those
+     in clauses 2a through 2d.
+
+TERMINATION
+This licence becomes null and void if any of the above conditions are not
+met.
+
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+
+---
+
+This licence applies to the following font bundled in this distribution:
+
+  Ubuntu-R (Regular)
+  Copyright 2010,2011 Canonical Ltd.
+  Licensed under the Ubuntu Font Licence, Version 1.0
+  https://launchpad.net/ubuntu-font-licence

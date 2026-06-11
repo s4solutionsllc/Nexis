@@ -78,7 +78,6 @@ void VuMeterTile::buildLayout()
     mBtnAction = new QPushButton(this);
     mBtnAction->setObjectName("metricTileAction");
     mBtnAction->setCursor(Qt::PointingHandCursor);
-    mBtnAction->setFocusPolicy(Qt::NoFocus);
     mBtnAction->hide();
     mBtnAction->setFixedHeight(22);
     mainLayout->addWidget(mBtnAction);

@@ -49,13 +49,11 @@ void CrumbsReviewDialog::buildUI()
 
     mBtnSkip = new QPushButton(tr("Skip"), this);
     mBtnSkip->setCursor(Qt::PointingHandCursor);
-    mBtnSkip->setFocusPolicy(Qt::NoFocus);
     connect(mBtnSkip, &QPushButton::clicked, this, &QDialog::reject);
     buttons->addWidget(mBtnSkip);
 
     mBtnDelete = new QPushButton(tr("Delete Selected"), this);
     mBtnDelete->setCursor(Qt::PointingHandCursor);
-    mBtnDelete->setFocusPolicy(Qt::NoFocus);
     mBtnDelete->setAccessibleName("primary");
     connect(mBtnDelete, &QPushButton::clicked, this, &CrumbsReviewDialog::onDeleteSelected);
     buttons->addWidget(mBtnDelete);

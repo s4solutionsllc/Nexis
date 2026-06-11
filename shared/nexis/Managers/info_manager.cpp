@@ -332,6 +332,16 @@ void InfoManager::updateProcesses()
     pi->updateProcesses();
 }
 
+QList<Process> InfoManager::collectProcesses()
+{
+    return pi->collectProcesses();
+}
+
+void InfoManager::setProcessList(QList<Process> processes)
+{
+    pi->setProcessList(std::move(processes));
+}
+
 QList<Process> InfoManager::getProcesses() const
 {
     return pi->getProcessList();

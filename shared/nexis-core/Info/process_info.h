@@ -1,6 +1,7 @@
 #ifndef PROCESS_INFO_H
 #define PROCESS_INFO_H
 
+#include <QMutex>
 #include <QObject>
 
 #include <Utils/file_util.h>
@@ -30,11 +31,29 @@ public:
     bool collectsNetIO() const  { return mCollectNetIO; }
     bool collectsGpu() const    { return mCollectGpu; }
 
+    // WI-21 (audit M2): thread-safe publish pair, mirrors
+    // DiskHealthInfo::collectDriveHealth()/setDrives() (WI-03).
+    // collectProcesses() runs the per-PID walk and any forks (`ps` on
+    // macOS) into a local QList<Process> without touching processList —
+    // safe to call from a QtConcurrent worker. setProcessList() assigns
+    // the cache from the UI thread (DataRefreshService hops via
+    // QMetaObject::invokeMethod). mCollectMutex serialises concurrent
+    // collect calls so the per-PID state (mPrev* deltas, timers) in the
+    // subclasses stays coherent if a sync caller (e.g. the HTML report)
+    // races the worker tick.
+    virtual QList<Process> collectProcesses() = 0;
+    void setProcessList(QList<Process> processes);
+
 public slots:
-    virtual void updateProcesses() = 0;
+    // Legacy entry point: collects and publishes on the calling thread.
+    // Kept for the synchronous HTML-report path; the periodic tick uses
+    // collectProcesses() + setProcessList() across a worker hop.
+    virtual void updateProcesses();
 
 protected:
     QList<Process> processList;
+    mutable QMutex processListMutex;
+    QMutex mCollectMutex;
     bool mCollectDiskIO = false;
     bool mCollectNetIO  = false;
     bool mCollectGpu    = false;

@@ -49,6 +49,8 @@ add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 add_nexis_test(NAME DockerToolTests   SOURCES core/test_docker_tool.cpp)
+# SSO-3383 / WI-21 / audit M2: off-thread updateProcesses() + publish pair.
+add_nexis_test(NAME ProcessInfoTests  SOURCES core/test_process_info.cpp LIBS Qt6::Concurrent)
 
 # SSO-3366: PackageToolMacOS::trashApps injection guard. PackageToolMacOS is
 # only built into nexis-core on Darwin, so the test is registered only there.
@@ -270,6 +272,7 @@ add_nexis_test(NAME LogProviderTests
 
 # ── Theme validation tests ─────────────────────────────────────────────────────
 add_nexis_test(NAME ThemeTokenTests   SOURCES theme/test_theme_tokens.cpp)
+add_nexis_test(NAME FocusVisibleTests SOURCES theme/test_focus_visible.cpp)
 
 # ── Screenshot regression tests (FR-41) ───────────────────────────────────────
 # Links against the full nexis-gui library (not just nexis-core) because it

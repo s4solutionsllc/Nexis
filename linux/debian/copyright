@@ -11,6 +11,22 @@ Files: debian/*
 Copyright: 2025-2026 Luke Simpson <luke@s4solutions.ai>
 License: GPL-3.0-only
 
+Files: shared/nexis/static/font/Inter-Regular.ttf
+       shared/nexis/static/font/Inter-Bold.ttf
+       shared/nexis/static/font/Inter-SemiBold.ttf
+       shared/nexis/static/font/LICENSE-OFL.txt
+Copyright: 2020 The Inter Project Authors <https://github.com/rsms/inter>
+License: OFL-1.1
+
+Files: shared/nexis/static/font/JetBrainsMono-Regular.ttf
+Copyright: 2020 The JetBrains Mono Project Authors <https://github.com/JetBrains/JetBrainsMono>
+License: OFL-1.1
+
+Files: shared/nexis/static/font/Ubuntu-R.ttf
+       shared/nexis/static/font/LICENSE-UFL.txt
+Copyright: 2010, 2011 Canonical Ltd.
+License: Ubuntu-font-1.0
+
 GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
@@ -685,3 +701,171 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
+
+License: OFL-1.1
+ SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+ .
+ PREAMBLE
+ The goals of the Open Font License (OFL) are to stimulate worldwide
+ development of collaborative font projects, to support the font creation
+ efforts of academic and linguistic communities, and to provide a free and
+ open framework in which fonts may be shared and improved in partnership
+ with others.
+ .
+ The OFL allows the licensed fonts to be used, studied, modified and
+ redistributed freely as long as they are not sold by themselves. The
+ fonts, including any derivative works, can be bundled, embedded,
+ redistributed and/or sold with any software provided that any reserved
+ names are not used by derivative works. The fonts and derivatives,
+ however, cannot be released under any other type of license. The
+ requirement for fonts to remain under this license does not apply
+ to any document created using the fonts or their derivatives.
+ .
+ DEFINITIONS
+ "Font Software" refers to the set of files released by the Copyright
+ Holder(s) under this license and clearly marked as such. This may
+ include source files, build scripts and documentation.
+ .
+ "Reserved Font Name" refers to any names specified as such after the
+ copyright statement(s).
+ .
+ "Original Version" refers to the collection of Font Software components as
+ distributed by the Copyright Holder(s).
+ .
+ "Modified Version" refers to any derivative made by adding to, deleting,
+ or substituting -- in part or in whole -- any of the components of the
+ Original Version, by changing formats or by porting the Font Software to a
+ new environment.
+ .
+ "Author" refers to any designer, engineer, programmer, technical
+ writer or other person who contributed to the Font Software.
+ .
+ PERMISSION & CONDITIONS
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of the Font Software, to use, study, copy, merge, embed, modify,
+ redistribute, and sell modified and unmodified copies of the Font
+ Software, subject to the following conditions:
+ .
+ 1) Neither the Font Software nor any of its individual components,
+ in Original or Modified Versions, may be sold by itself.
+ .
+ 2) Original or Modified Versions of the Font Software may be bundled,
+ redistributed and/or sold with any software, provided that each copy
+ contains the above copyright notice and this license. These can be
+ included either as stand-alone text files, human-readable headers or
+ in the appropriate machine-readable metadata fields within text or
+ binary files as long as those fields can be easily viewed by the user.
+ .
+ 3) No Modified Version of the Font Software may use the Reserved Font
+ Name(s) unless explicit written permission is granted by the corresponding
+ Copyright Holder. This restriction only applies to the primary font name as
+ presented to the users.
+ .
+ 4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+ Software shall not be used to promote, endorse or advertise any
+ Modified Version, except to acknowledge the contribution(s) of the
+ Copyright Holder(s) and Author(s) or with their explicit written
+ permission.
+ .
+ 5) The Font Software, modified or unmodified, in part or in whole,
+ must be distributed entirely under this license, and must not be
+ distributed under any other license. The requirement for fonts to
+ remain under this license does not apply to any document created
+ using the Font Software.
+ .
+ TERMINATION
+ This license becomes null and void if any of the above conditions are
+ not met.
+ .
+ DISCLAIMER
+ THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+ OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+ COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+ DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+ OTHER DEALINGS IN THE FONT SOFTWARE.
+
+License: Ubuntu-font-1.0
+ UBUNTU FONT LICENCE Version 1.0
+ .
+ PREAMBLE
+ This licence allows the licensed fonts to be used, studied, modified and
+ redistributed freely. The fonts, including any derivative works, can be
+ bundled, embedded, and redistributed provided the terms of this licence
+ are met. The fonts and derivatives, however, cannot be released under
+ any other licence. The requirement for fonts to remain under this licence
+ does not apply to any document created using the Font Software.
+ .
+ DEFINITIONS
+ "Font Software" refers to the set of files released by the Copyright
+ Holder(s) under this licence and clearly marked as such. This may
+ include source files, build scripts and documentation.
+ .
+ "Original Version" refers to the collection of Font Software components as
+ received under this licence.
+ .
+ "Modified Version" refers to any derivative made by adding to, deleting,
+ or substituting -- in part or in whole -- any of the components of the
+ Original Version, by changing formats or by porting the Font Software to a
+ new environment.
+ .
+ "Copyright Holder(s)" refers to all individuals and companies that have
+ copyright ownership of the Font Software.
+ .
+ "Substantially Changed" means one or more changes to the aesthetic and
+ technical details of glyphs, spacing, kerning, hints, or other such
+ elements that affect the visual appearance of the font, in addition to
+ merely renaming the fonts.
+ .
+ "Propagate" means to copy, distribute, sublicense, or otherwise make
+ available to third parties, whether for a fee or not.
+ .
+ GRANT OF RIGHTS
+ 1. You may use, embed, and propagate the Font Software, without
+ Substantially Changing it, under the terms of the licence you received,
+ provided that the following conditions are met:
+ .
+  a. Each copy of the Font Software must include the above copyright
+     notice and this licence. The licence must be included either as a
+     stand-alone file, readable header or in the appropriate machine-
+     readable metadata field in text or binary files as long as those
+     fields can be easily viewed by the user.
+  b. The font name used to identify the font in any application, document
+     or artifact is the Unchanged Font Name set as specified by the
+     Copyright Holder(s).
+ .
+ 2. You may Substantially Change the Font Software and propagate the
+ Modified Version under a licence that satisfies the conditions in
+ clauses 2a through 2e, below. If the Modified Version is propagated
+ under this Ubuntu Font Licence, the conditions of clauses 1a and 1b
+ above also apply.
+ .
+  a. The Modified Version must include prominent notices stating that you
+     have modified the Font Software.
+  b. The Modified Version must be renamed to avoid use of any Unchanged
+     Font Name(s).
+  c. The Modified Version must not claim to be the original Font Software,
+     except by acknowledgement of the Copyright Holder(s).
+  d. The terms of this licence need not apply to documents, artwork or
+     other uses that employ the Modified Version of the Font Software.
+  e. Modified Versions may be released under this licence or another
+     licence that contains conditions at least as restrictive as those
+     in clauses 2a through 2d.
+ .
+ TERMINATION
+ This licence becomes null and void if any of the above conditions are not
+ met.
+ .
+ DISCLAIMER
+ THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+ OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+ COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+ DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+ OTHER DEALINGS IN THE FONT SOFTWARE.

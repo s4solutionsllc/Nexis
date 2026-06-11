@@ -1,8 +1,11 @@
 #include <QTest>
+#include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QTextStream>
 #include <QRegularExpression>
 #include <QSet>
+#include <QStringList>
 
 class TestThemeTokens : public QObject
 {
@@ -86,6 +89,89 @@ private:
         return result;
     }
 
+    // WI-25 (Q2): scan shared/ C++ for per-widget setStyleSheet(...) calls and
+    // return any that still contain a raw `@tokenName` literal. Per-widget
+    // stylesheets are NOT run through AppManager::updateStylesheet token
+    // substitution (only the global qApp->setStyleSheet() is), so any `@token`
+    // left inside the argument is dropped by Qt as an invalid declaration.
+    // Returns a list of `path:lineno  excerpt` strings, one per offending call.
+    QStringList findRawTokensInSetStyleSheet() const
+    {
+        QStringList offenders;
+        // Token names registered in values.ini look like @camelCase or @colorNN;
+        // exclude @dpN (DPI size tokens, handled by app_manager regex) and
+        // @fontFamily / @monoFontFamily (handled by literal replace).
+        QRegularExpression tokenRx("@([a-zA-Z][a-zA-Z0-9_]*)");
+        const QString sharedDir = projectDir() + "/shared";
+
+        QDirIterator it(sharedDir,
+                        {"*.cpp", "*.h", "*.mm"},
+                        QDir::Files,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString path = it.next();
+            QFile f(path);
+            if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+                continue;
+            const QString src = QTextStream(&f).readAll();
+
+            int searchFrom = 0;
+            while (true) {
+                const int call = src.indexOf("setStyleSheet(", searchFrom);
+                if (call < 0)
+                    break;
+
+                // Walk forward paren-balanced to find the end of the call.
+                int depth = 0;
+                int end = -1;
+                for (int i = call + int(qstrlen("setStyleSheet(")) - 1;
+                     i < src.size(); ++i) {
+                    const QChar c = src.at(i);
+                    if (c == '(') {
+                        ++depth;
+                    } else if (c == ')') {
+                        if (--depth == 0) { end = i; break; }
+                    }
+                }
+                if (end < 0)
+                    break;
+
+                const QString arg = src.mid(call, end - call + 1);
+                auto m = tokenRx.globalMatch(arg);
+                while (m.hasNext()) {
+                    auto match = m.next();
+                    const QString name = match.captured(1);
+                    // Skip DPI size tokens and font-family tokens — those have
+                    // their own substitution path or are not stylesheet tokens.
+                    if (QRegularExpression("^dp\\d+").match(name).hasMatch())
+                        continue;
+                    if (name == "fontFamily" || name == "monoFontFamily")
+                        continue;
+                    // A `value("@foo"` lookup inside the arg (e.g. an inline
+                    // sv->value(...) read used to build the string) is not a
+                    // raw token in the resulting stylesheet — it's a key.
+                    const int matchStart = match.capturedStart(0);
+                    const int valuePrefixStart = matchStart - int(qstrlen("value(\""));
+                    if (valuePrefixStart >= 0
+                        && arg.mid(valuePrefixStart, qstrlen("value(\""))
+                               == QStringLiteral("value(\""))
+                        continue;
+
+                    // Locate line number of the match in the original file.
+                    const int absPos = call + matchStart;
+                    const int lineNo = src.left(absPos).count('\n') + 1;
+                    offenders << QString("%1:%2  @%3")
+                                     .arg(path)
+                                     .arg(lineNo)
+                                     .arg(name);
+                }
+
+                searchFrom = end + 1;
+            }
+        }
+        return offenders;
+    }
+
 private slots:
     void darkTheme_allTokensResolved();
     void lightTheme_allTokensResolved();
@@ -94,6 +180,7 @@ private slots:
     void themes_sameTokenSets();
     void noUnresolvedTokens_dark();
     void noUnresolvedTokens_light();
+    void noRawTokensInPerWidgetStyleSheet();
 };
 
 void TestThemeTokens::darkTheme_allTokensResolved()
@@ -199,6 +286,19 @@ void TestThemeTokens::noUnresolvedTokens_light()
     QRegularExpressionMatch match = unresolvedToken.match(resolved);
     QVERIFY2(!match.hasMatch(),
              qPrintable(QString("Light theme has unresolved token: @%1").arg(match.captured(1))));
+}
+
+void TestThemeTokens::noRawTokensInPerWidgetStyleSheet()
+{
+    const QStringList offenders = findRawTokensInSetStyleSheet();
+    QVERIFY2(offenders.isEmpty(),
+             qPrintable(QString(
+                 "Per-widget setStyleSheet() calls must not contain raw "
+                 "@token literals — only the global qApp->setStyleSheet() "
+                 "goes through token substitution. Resolve via "
+                 "sv->value(\"@token\", fallback).toString() and .arg(...) it "
+                 "into the stylesheet string. Offenders:\n  %1")
+                 .arg(offenders.join("\n  "))));
 }
 
 QTEST_MAIN(TestThemeTokens)
