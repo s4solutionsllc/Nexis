@@ -5,6 +5,8 @@
 #include "signal_mapper.h"
 
 #include <QtConcurrent>
+#include <Utils/command_util.h>
+#include <Tools/upgrade_command.h>
 
 #ifdef Q_OS_MACOS
 #include <Tools/repo_health_checker_macos.h>
@@ -254,6 +256,49 @@ void DataRefreshService::triggerDiskHealthCheck()
 void DataRefreshService::triggerUpdateCheck()
 {
     onUpdateTick();
+}
+
+namespace {
+
+// SSO-3741 (FW-13): shared body for runUpgrade / runUpgradeAll. Off-thread,
+// routes through CommandUtil's privileged seam when the command demands root.
+// timeoutMs = -1 because an apt or brew upgrade can run minutes; the existing
+// pkexec/osascript prompts already gate user attention.
+void executeUpgrade(DataRefreshService *self, bool *runningFlag, const UpgradeCommand &cmd)
+{
+    if (!cmd.valid)
+        return;
+    if (*runningFlag)
+        return;
+    *runningFlag = true;
+    emit self->upgradeStarted(cmd.label);
+
+    QtConcurrent::run([self, runningFlag, cmd]() {
+        ExecResult r = cmd.requiresSudo
+            ? CommandUtil::sudoExecWithStatus(cmd.program, cmd.args, QByteArray(), -1)
+            : CommandUtil::execWithStatus(cmd.program, cmd.args, -1);
+
+        QMetaObject::invokeMethod(self, [self, runningFlag, cmd, r]() {
+            *runningFlag = false;
+            const bool ok = r.ok();
+            emit self->upgradeFinished(cmd.label, ok, ok ? QString() : r.error);
+            // Reconcile the visible list regardless of outcome — even a
+            // failed apt upgrade can leave one of the queued packages updated.
+            self->triggerUpdateCheck();
+        }, Qt::QueuedConnection);
+    });
+}
+
+} // namespace
+
+void DataRefreshService::runUpgrade(const UpdateEntry &entry)
+{
+    executeUpgrade(this, &mUpgradeRunning, UpgradeCommandBuilder::build(entry));
+}
+
+void DataRefreshService::runUpgradeAll(const QString &source)
+{
+    executeUpgrade(this, &mUpgradeRunning, UpgradeCommandBuilder::buildAll(source));
 }
 
 void DataRefreshService::triggerRepoHealthCheck()

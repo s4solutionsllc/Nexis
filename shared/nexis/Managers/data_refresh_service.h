@@ -57,6 +57,14 @@ public:
     void triggerRepoHealthCheck();
     void triggerDiskHealthCheck();
 
+    // SSO-3741 (FW-13): execute an upgrade for a single update entry, or every
+    // outdated package from one source. Both are no-ops while an upgrade is
+    // already in flight; completion always re-runs triggerUpdateCheck() so the
+    // visible list stays in sync without the user touching Check Now.
+    void runUpgrade(const UpdateEntry &entry);
+    void runUpgradeAll(const QString &source);
+    bool isUpgradeRunning() const { return mUpgradeRunning; }
+
     // Subscriber counting — pages call these from onPageActivated /
     // onPageDeactivated. Idempotent across many pages.
     void subscribe(Signal s);
@@ -108,6 +116,11 @@ signals:
     void processesUpdated(const QList<Process> &processes, const QString &userName);
     void systemUpdatesChecked(const UpdateCheckResult &result);
     void repoHealthChecked(const RepoHealthCache &cache);
+    // SSO-3741 (FW-13): upgrade lifecycle. `label` is human-readable
+    // ("apt: curl", "brew (all)") and identifies the in-flight action so the
+    // emitting page can show progress without holding a copy of the entry.
+    void upgradeStarted(const QString &label);
+    void upgradeFinished(const QString &label, bool ok, const QString &error);
 
 private slots:
     void onFastTick();
@@ -135,6 +148,7 @@ private:
     bool mPaused;
     bool mProcessPaused;
     bool mUpdateCheckRunning;
+    bool mUpgradeRunning = false;  // SSO-3741
     bool mDiskHealthRunning = false;
     bool mDiskUsageRunning = false;
     bool mRepoHealthRunning = false;

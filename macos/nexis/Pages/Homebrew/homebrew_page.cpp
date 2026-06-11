@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QRegularExpression>
 #include <QtConcurrent>
+#include <QToolButton>
 
 HomebrewPage::HomebrewPage(QWidget *parent,
                            ToolManager *toolManager,
@@ -46,6 +47,25 @@ HomebrewPage::HomebrewPage(QWidget *parent,
     });
     connect(mRefresh, &DataRefreshService::systemUpdatesChecked,
             this, &HomebrewPage::onSystemUpdatesChecked);
+
+    // SSO-3741: Upgrade All defers to brew if any brew updates are present,
+    // otherwise falls back to system (softwareupdate). The brew-vs-system split
+    // exists because brew cannot run as root, so the elevated softwareupdate
+    // path is different — Upgrade All scopes to one at a time.
+    connect(mBtnUpgradeAll, &QPushButton::clicked, this, [this]() {
+        bool hasBrew = false, hasSystem = false;
+        for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+            const QString src = mUpdatesTree->topLevelItem(i)->text(0);
+            if (src == QLatin1String("brew"))   hasBrew = true;
+            if (src == QLatin1String("system")) hasSystem = true;
+        }
+        if (hasBrew)        mRefresh->runUpgradeAll("brew");
+        else if (hasSystem) mRefresh->runUpgradeAll("system");
+    });
+    connect(mRefresh, &DataRefreshService::upgradeStarted,
+            this, &HomebrewPage::onUpgradeStarted);
+    connect(mRefresh, &DataRefreshService::upgradeFinished,
+            this, &HomebrewPage::onUpgradeFinished);
     connect(mRefresh, &DataRefreshService::repoHealthChecked,
             this, &HomebrewPage::onRepoHealthChecked);
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
@@ -89,6 +109,19 @@ void HomebrewPage::buildUI()
     updHeader->addWidget(mLblUpdatesTitle);
     updHeader->addStretch();
 
+    mLblUpgradeProgress = new QLabel(QString(), mUpdatesSection);
+    mLblUpgradeProgress->setObjectName("lblUpgradeProgress");
+    mLblUpgradeProgress->hide();
+    updHeader->addWidget(mLblUpgradeProgress);
+
+    mBtnUpgradeAll = new QPushButton(tr("Upgrade All"), mUpdatesSection);
+    mBtnUpgradeAll->setObjectName("btnUpgradeAll");
+    mBtnUpgradeAll->setCursor(Qt::PointingHandCursor);
+    mBtnUpgradeAll->setFocusPolicy(Qt::NoFocus);
+    mBtnUpgradeAll->setAccessibleName("primary");
+    mBtnUpgradeAll->setFixedHeight(28);
+    updHeader->addWidget(mBtnUpgradeAll);
+
     mBtnCheckNow = new QPushButton(tr("Check Now"), mUpdatesSection);
     mBtnCheckNow->setObjectName("btnCheckNow");
     mBtnCheckNow->setCursor(Qt::PointingHandCursor);
@@ -98,18 +131,20 @@ void HomebrewPage::buildUI()
     updHeader->addWidget(mBtnCheckNow);
     updLayout->addLayout(updHeader);
 
+    // SSO-3741: trailing Action column hosts a per-row Upgrade button.
     mUpdatesTree = new QTreeWidget(mUpdatesSection);
     mUpdatesTree->setObjectName("treeWidgetUpdates");
-    mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version") });
+    mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version"), tr("Action") });
     mUpdatesTree->header()->setFixedHeight(Dpi::scale(30));
-    mUpdatesTree->setColumnCount(3);
+    mUpdatesTree->setColumnCount(4);
     mUpdatesTree->setRootIsDecorated(false);
-    mUpdatesTree->setFocusPolicy(Qt::NoFocus);
     mUpdatesTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mUpdatesTree->setSelectionMode(QAbstractItemView::NoSelection);
-    mUpdatesTree->header()->setStretchLastSection(true);
+    mUpdatesTree->header()->setStretchLastSection(false);
     mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+    mUpdatesTree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    mUpdatesTree->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     mUpdatesTree->setMaximumHeight(200);
     updLayout->addWidget(mUpdatesTree);
 
@@ -394,9 +429,46 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
         item->setText(0, entry.source);
         item->setText(1, entry.name);
         item->setText(2, entry.version);
+
+        // BUG-52: prefer QToolButton over QPushButton for compact action
+        // buttons on macOS Qt6 — keeps icon/text rendering consistent.
+        auto *btn = new QToolButton(mUpdatesTree);
+        btn->setObjectName("btnUpgrade");
+        btn->setText(tr("Upgrade"));
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setFocusPolicy(Qt::NoFocus);
+        btn->setAutoRaise(true);
+        UpdateEntry captured = entry;
+        connect(btn, &QToolButton::clicked, this, [this, captured]() {
+            mRefresh->runUpgrade(captured);
+        });
+        mUpdatesTree->setItemWidget(item, 3, btn);
     }
 
     mUpdatesSection->show();
+}
+
+void HomebrewPage::onUpgradeStarted(const QString &label)
+{
+    mBtnUpgradeAll->setEnabled(false);
+    mBtnCheckNow->setEnabled(false);
+    for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+        if (auto *w = mUpdatesTree->itemWidget(mUpdatesTree->topLevelItem(i), 3))
+            w->setEnabled(false);
+    }
+    mLblUpgradeProgress->setText(tr("Upgrading %1…").arg(label));
+    mLblUpgradeProgress->show();
+}
+
+void HomebrewPage::onUpgradeFinished(const QString &label, bool ok, const QString &error)
+{
+    mLblUpgradeProgress->hide();
+    mBtnUpgradeAll->setEnabled(true);
+    mBtnCheckNow->setEnabled(true);
+    if (!ok && !error.isEmpty()) {
+        QMessageBox::warning(this, tr("Upgrade Failed"),
+            tr("%1 did not complete:\n\n%2").arg(label, error));
+    }
 }
 
 void HomebrewPage::onRepoHealthChecked(const RepoHealthCache &cache)

@@ -39,6 +39,20 @@ add_nexis_test(NAME UpdateInfoTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core"
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
 )
+# SSO-3741: macOS update_info parsers (brew JSON + softwareupdate labels) are
+# pure string handling, so compile them into the test target directly. This
+# keeps the parser regression-tested on Linux CI even though the real callers
+# only ship on macOS.
+add_nexis_test(NAME UpdateInfoMacOSTests
+  SOURCES
+    core/test_update_info_macos.cpp
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/update_info.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+)
+# SSO-3741: command-builder symbol lives in nexis-core which is already linked.
+add_nexis_test(NAME UpgradeCommandTests SOURCES core/test_upgrade_command.cpp)
 add_nexis_test(NAME AptSourceTests    SOURCES core/test_apt_source_tool.cpp)
 add_nexis_test(NAME RepoKnowledgeBaseTests SOURCES core/test_repo_knowledge_base.cpp)
 add_nexis_test(NAME RepoHealthCheckerTests SOURCES core/test_repo_health_checker.cpp LIBS Qt6::Network)
@@ -78,6 +92,18 @@ add_nexis_test(NAME ProcInfoParserTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
 )
 
+# FW-11 (SSO-3739): pure parsers for systemd-oomd + cgroup v2 inputs.
+# Compiled directly so the test runs cross-platform even though the producer
+# (OomdInfoLinux) is only wired into the real nexis-core build on Linux.
+add_nexis_test(NAME OomdInfoParserTests
+  SOURCES
+    core/test_oomd_info_parser.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info/oomd_info_parser.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
+    "${CMAKE_SOURCE_DIR}/shared/nexis-core/Info"
+)
+
 # WI-33: macOS live-tool parsers (nettop CSV, diskutil plist, sysctl
 # kern.boottime). Compiled directly here so the tests run on any platform
 # even though the parsers are only wired into the real nexis-core build
@@ -88,6 +114,17 @@ add_nexis_test(NAME MacosParserTests
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/nettop_streamer.cpp"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/macos_plist_parser.cpp"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/boot_analysis_info.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+)
+
+# SSO-3738 / FW-10: sfltool dumpbtm parser. Compiled directly here per FR-127
+# so the tests run on any platform even though `sfltool` itself is macOS-only.
+add_nexis_test(NAME BtmParserTests
+  SOURCES
+    core/test_btm_parser.cpp
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/btm_parser.cpp"
   INCLUDES
     "${CMAKE_SOURCE_DIR}/macos/nexis-core"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"

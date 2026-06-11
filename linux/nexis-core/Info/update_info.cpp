@@ -60,6 +60,104 @@ void UpdateInfoLinux::parseAptLines(const QStringList &lines, UpdateCheckResult 
     }
 }
 
+void UpdateInfoLinux::parseDnfCheckUpdateLines(const QStringList &lines, UpdateCheckResult &result)
+{
+    static const QRegularExpression ws("\\s+");
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.isEmpty())
+            continue;
+        // Skip lines that look like obsoletes/headers — dnf check-update can
+        // emit "Obsoleting Packages" or comment lines starting with '#'/letters
+        // outside the table. The package table always has "<name>.<arch>" in
+        // the first column, three whitespace-separated columns.
+        QStringList parts = trimmed.split(ws);
+        if (parts.size() < 3)
+            continue;
+        if (!parts.first().contains('.'))
+            continue;
+        UpdateEntry entry;
+        entry.source = "dnf";
+        entry.name = parts.first().section('.', 0, -2);  // strip ".arch"
+        entry.version = parts.at(1);
+        result.entries.append(entry);
+    }
+}
+
+void UpdateInfoLinux::parsePacmanQuLines(const QStringList &lines, UpdateCheckResult &result)
+{
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.isEmpty())
+            continue;
+        QStringList parts = trimmed.split(' ');
+        if (parts.isEmpty())
+            continue;
+        UpdateEntry entry;
+        entry.source = "pacman";
+        entry.name = parts.first();
+        if (parts.size() >= 4)
+            entry.version = parts.at(3);  // pacman -Qu: name old -> new
+        result.entries.append(entry);
+    }
+}
+
+void UpdateInfoLinux::parseZypperListUpdatesLines(const QStringList &lines, UpdateCheckResult &result)
+{
+    for (const QString &line : lines) {
+        if (!line.startsWith("v |"))
+            continue;
+        QStringList cols = line.split('|');
+        UpdateEntry entry;
+        entry.source = "zypper";
+        entry.name = (cols.size() >= 3) ? cols.at(2).trimmed() : line.trimmed();
+        if (cols.size() >= 5)
+            entry.version = cols.at(4).trimmed();
+        result.entries.append(entry);
+    }
+}
+
+void UpdateInfoLinux::parseSnapRefreshLines(const QStringList &lines, UpdateCheckResult &result)
+{
+    static const QRegularExpression ws("\\s+");
+    bool headerSkipped = false;
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.isEmpty())
+            continue;
+        if (!headerSkipped) {
+            headerSkipped = true;
+            continue;
+        }
+        // "All snaps up to date." is the only non-row line snap emits after
+        // the header on a fully patched system; it has fewer than two columns.
+        QStringList parts = trimmed.split(ws);
+        if (parts.size() < 2)
+            continue;
+        UpdateEntry entry;
+        entry.source = "snap";
+        entry.name = parts.first();
+        entry.version = parts.at(1);
+        result.entries.append(entry);
+    }
+}
+
+void UpdateInfoLinux::parseFlatpakUpdateLines(const QStringList &lines, UpdateCheckResult &result)
+{
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.isEmpty())
+            continue;
+        UpdateEntry entry;
+        entry.source = "flatpak";
+        QStringList parts = trimmed.split('\t');
+        entry.name = parts.isEmpty() ? trimmed : parts.first();
+        if (parts.size() >= 2)
+            entry.version = parts.at(1);
+        result.entries.append(entry);
+    }
+}
+
 void UpdateInfoLinux::checkApt(UpdateCheckResult &result) const
 {
     ExecResult r = CommandUtil::execWithStatus(
@@ -79,19 +177,7 @@ void UpdateInfoLinux::checkDnf(UpdateCheckResult &result) const
     if (r.exitCode != 100)
         return;
 
-    const QStringList lines = r.output.split('\n');
-    for (const QString &line : lines) {
-        QString trimmed = line.trimmed();
-        if (trimmed.isEmpty())
-            continue;
-        UpdateEntry entry;
-        entry.source = "dnf";
-        QStringList parts = trimmed.split(QRegularExpression("\\s+"));
-        entry.name = parts.isEmpty() ? trimmed : parts.first();
-        if (parts.size() >= 2)
-            entry.version = parts.at(1);
-        result.entries.append(entry);
-    }
+    parseDnfCheckUpdateLines(r.output.split('\n'), result);
 }
 
 void UpdateInfoLinux::checkPacman(UpdateCheckResult &result) const
@@ -101,19 +187,7 @@ void UpdateInfoLinux::checkPacman(UpdateCheckResult &result) const
     if (r.exitCode != 0)
         return;
 
-    const QStringList lines = r.output.split('\n');
-    for (const QString &line : lines) {
-        QString trimmed = line.trimmed();
-        if (trimmed.isEmpty())
-            continue;
-        UpdateEntry entry;
-        entry.source = "pacman";
-        QStringList parts = trimmed.split(' ');
-        entry.name = parts.isEmpty() ? trimmed : parts.first();
-        if (parts.size() >= 4)
-            entry.version = parts.at(3);
-        result.entries.append(entry);
-    }
+    parsePacmanQuLines(r.output.split('\n'), result);
 }
 
 void UpdateInfoLinux::checkZypper(UpdateCheckResult &result) const
@@ -123,18 +197,7 @@ void UpdateInfoLinux::checkZypper(UpdateCheckResult &result) const
     if (r.exitCode != 0)
         return;
 
-    const QStringList lines = r.output.split('\n');
-    for (const QString &line : lines) {
-        if (!line.startsWith("v |"))
-            continue;
-        QStringList cols = line.split('|');
-        UpdateEntry entry;
-        entry.source = "zypper";
-        entry.name = (cols.size() >= 3) ? cols.at(2).trimmed() : line.trimmed();
-        if (cols.size() >= 5)
-            entry.version = cols.at(4).trimmed();
-        result.entries.append(entry);
-    }
+    parseZypperListUpdatesLines(r.output.split('\n'), result);
 }
 
 void UpdateInfoLinux::checkSnap(UpdateCheckResult &result) const
@@ -145,25 +208,7 @@ void UpdateInfoLinux::checkSnap(UpdateCheckResult &result) const
     if (r.exitCode != 0)
         return;
 
-    const QStringList lines = r.output.split('\n');
-    bool headerSkipped = false;
-    for (const QString &line : lines) {
-        QString trimmed = line.trimmed();
-        if (trimmed.isEmpty())
-            continue;
-        if (!headerSkipped) {
-            headerSkipped = true;
-            continue;
-        }
-        QStringList parts = trimmed.split(QRegularExpression("\\s+"));
-        if (parts.size() < 2)
-            continue;
-        UpdateEntry entry;
-        entry.source = "snap";
-        entry.name = parts.first();
-        entry.version = parts.at(1);
-        result.entries.append(entry);
-    }
+    parseSnapRefreshLines(r.output.split('\n'), result);
 }
 
 void UpdateInfoLinux::checkFlatpak(UpdateCheckResult &result) const
@@ -176,17 +221,5 @@ void UpdateInfoLinux::checkFlatpak(UpdateCheckResult &result) const
     if (r.exitCode != 0)
         return;
 
-    const QStringList lines = r.output.split('\n');
-    for (const QString &line : lines) {
-        QString trimmed = line.trimmed();
-        if (trimmed.isEmpty())
-            continue;
-        UpdateEntry entry;
-        entry.source = "flatpak";
-        QStringList parts = trimmed.split('\t');
-        entry.name = parts.isEmpty() ? trimmed : parts.first();
-        if (parts.size() >= 2)
-            entry.version = parts.at(1);
-        result.entries.append(entry);
-    }
+    parseFlatpakUpdateLines(r.output.split('\n'), result);
 }

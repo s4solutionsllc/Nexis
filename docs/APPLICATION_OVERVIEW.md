@@ -69,14 +69,14 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Test methods | ~501 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
-| Info providers | 16 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` Linux-only); all 16 wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389) |
+| Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
 | Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
 | Utility classes | 5 | `CommandUtil`, `DisplayServerUtil`, `FileUtil`, `FormatUtil`, `HeadlessUtil` in `shared/nexis-core/Utils/` |
 | Manager singletons | 8 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |
 | Domain services | 9 | `shared/nexis/Services/` (`StartupService`, `FileSearchService`, `HostService`, `ProcessService`, `SystemServiceManager`, `DockerService`, `PackageService`, `DuplicateFinderService`, `SnapshotService`) |
 | `SignalMapper` signals | 10 | `shared/nexis/signal_mapper.h` |
 | `DataRefreshService` QTimers | 5 | fast (1 s) / medium (5 s) / slow (30 s) / process (configurable) / update (1 h) |
-| `DataRefreshService` signals | 15 | 14 cross-platform + Linux-only `psiUpdated` |
+| `DataRefreshService` signals | 20 | 18 cross-platform (incl. FW-13 `upgradeStarted`/`upgradeFinished`) + Linux-only `psiUpdated`/`oomdUpdated` (FW-11/SSO-3739) |
 | Themes | 2 (Dark = `default/`, Light = `light/`) | `shared/nexis/static/themes/` |
 | Color schemes | 3 (Auto / Light / Dark) | `AppManager::resolveThemeName()` |
 | Translations | 34 languages | `shared/translations/*.ts` |
@@ -210,6 +210,7 @@ Manage applications that auto-start at login.
   - **User Agents** (`~/Library/LaunchAgents`) — full edit/toggle/delete control; enabled state sourced from `launchctl print-disabled user/<uid>`
   - **System Agents** (`/Library/LaunchAgents`) — read-only; shows plist path
   - **System Daemons** (`/Library/LaunchDaemons`) — read-only; shows plist path
+  - **BTM Records** (`sfltool dumpbtm`, SSO-3738 / FW-10) — read-only; surfaces every entry the macOS Background Task Management database knows about (Login Items, Launch Agents/Daemons, helper launchers, app extensions, MDM-managed items), not just the items resolvable from `~/Library/LaunchAgents`. Per-row badges flag orphaned records (executable + plist both missing on disk), duplicate identifiers/executable paths, Apple-managed entries under `/System/Library/Launch{Daemons,Agents,Angels}` or `/usr/libexec`, and current enabled state. A destructive-styled **Repair BTM…** header button opens a confirmation dialog and runs `sudo sfltool resetbtm` — the standard repair when the Tahoe 26.4 `backgroundtaskmanagementd` bug stalls Login Items — once the user types `RESET` to acknowledge that every background item will re-prompt on next login.
 - File path shown as subtitle on every row
 
 ### 3a. Boot Analysis
@@ -355,6 +356,8 @@ Historical time-series charts for system resource usage.
 - Disk temperature per-drive (30s refresh, if SMART supported)
 - **CPU Pressure Stall (FR-124, Linux only)** — 3-series chart (avg10, avg60, avg300) sourced from `/proc/pressure/cpu`. Shows the percentage of time at least one task was stalled waiting for CPU. Only created when the PSI file is present (kernel 4.20+, `CONFIG_PSI=y`). Zero cost when hidden (uses DataRefreshService subscription gating).
 
+**OOM Kills panel (FW-11 / SSO-3739, Linux only):** systemd-oomd / cgroup v2 observability card appended after the PSI chart. Shows the oomd service state (active / inactive / masked / not installed), oomd-attributed totals (`OOMKills`, `ManagedOOMKills`), the kernel-side `oom_kill` counter from `/sys/fs/cgroup/memory.events`, and the most recent kill events (timestamp, unit, cgroup path, reason) parsed from `journalctl -u systemd-oomd.service`. Hides itself entirely when no oomd or cgroup-v2 signal is available, and shows a defensive warning on the rare host that doesn't expose the v2 unified hierarchy (systemd 259 / Ubuntu 26.04 is v2-only — v1 hosts will not boot the new systemd). Subscribes to `DataRefreshService::Signal::Oomd` on the 5 s medium tick.
+
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
 - Configurable preference in Settings (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper; or custom path)
@@ -461,7 +464,7 @@ Manage package repositories and sources. Conditional: shown only when the releva
 - Implemented as a dedicated `HomebrewPage` (under `macos/nexis/Pages/Homebrew/`) backed by `HomebrewToolMacOS`, which implements the platform-neutral `RepositoryTool` interface. Linux's APT page lives under `linux/nexis/Pages/AptSourceManager/` and uses the extended `AptSourceTool` interface. (Prior to SSO-3390, both platforms shared a single page that branched on `Q_OS_MAC` and the macOS adapter shoehorned brew packages into the APT-source data model — that's gone.)
 
 **Available Updates section (both platforms):**
-At the top of the APT Source Manager / Homebrew page, an "Available Updates" section displays outdated packages in a 3-column tree widget (Source, Package, Version). A "Check Now" button triggers an on-demand refresh. Data comes from hourly background checks via `QtConcurrent::run()` in DataRefreshService (`mUpdateTimer`, 1h interval). macOS: `softwareupdate -l` + `brew outdated`. Linux: apt/dnf/pacman/zypper/snap/flatpak. Tray notification when update count goes from 0 to >0 (toggleable in Settings). The sidebar Homebrew/APT button shows an updates badge — full count when the sidebar is expanded, a colored dot (using `@updatesColor` theme token) when collapsed.
+At the top of the APT Source Manager / Homebrew page, an "Available Updates" section displays outdated packages in a 4-column tree widget (Source, Package, Version, Action). A "Check Now" button triggers an on-demand refresh. Data comes from hourly background checks via `QtConcurrent::run()` in DataRefreshService (`mUpdateTimer`, 1h interval). macOS: `softwareupdate -l` + `brew outdated`. Linux: apt/dnf/pacman/zypper/snap/flatpak. Tray notification when update count goes from 0 to >0 (toggleable in Settings). The sidebar Homebrew/APT button shows an updates badge — full count when the sidebar is expanded, a colored dot (using `@updatesColor` theme token) when collapsed. **FW-13 (SSO-3741)** added action buttons: every row carries an `Upgrade` button, and a header `Upgrade All` button upgrades every outdated item from the dominant source on the current platform (Linux: apt/dnf/pacman/zypper; macOS: brew, then system if no brew updates remain). Single-item and source-wide upgrades both dispatch through `UpgradeCommandBuilder` (a pure command-builder under `shared/nexis-core/Tools/upgrade_command.{h,cpp}`) which returns the exact `{program, args, requiresSudo}` triple that `DataRefreshService::runUpgrade*` runs off-thread via the existing `CommandUtil::sudoExecWithStatus` seam (pkexec / osascript). Homebrew and flatpak deliberately skip the elevation wrapper — brew refuses to run as root and flatpak handles its own polkit for system-scope installs. A `lblUpgradeProgress` label in the header shows `Upgrading <label>…` while the action runs; completion re-runs `triggerUpdateCheck()` so the list reconciles, and a `QMessageBox::warning` surfaces stderr on failure. The lifecycle is exposed as `DataRefreshService::upgradeStarted(label)` / `upgradeFinished(label, ok, error)` so any future page that wants to subscribe gets the same hook.
 
 **Repository Health Dashboard (FR-87, BETA):**
 Periodic background health checks via `DataRefreshService` (chained after update checks, 1h interval + manual Refresh Health button) validate repository integrity and detect common issues. Linux performs 6 checks: connection status, release file 404 errors, GPG key expiry, suite/components mismatch, duplicate sources, and deprecated format. macOS performs 4 checks: tap reachable, outdated packages, deprecated/disabled packages, and pinned versions. Each repository card displays a status dot (green/yellow/red), a colored left border, and a description line from the 30+ entry knowledge base (mapping URI patterns to friendly names and descriptions). Toggleable side detail panel (QSplitter-based) shows: repo name, status badge, full description, platform-specific metadata (file/suite/format on Linux), issue list with severity-colored severity cards, and action buttons (Edit/Open URI/Disable/Repair).
@@ -573,7 +576,7 @@ Nexis follows a **three-tier architecture**:
 │   DiskHealthInfo, DiskInfo, FanInfo, GpuInfo,           │
 │   MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo│
 │   StartupInfo, SystemInfo, ThermalInfo, UpdateInfo,     │
-│   PsiInfo (Linux only)                                  │
+│   PsiInfo + OomdInfoLinux (Linux only)                  │
 │  Tools: AptSourceTool, DockerTool, FileSearchTool,      │
 │   GnomeSettingsTool, PackageTool, RepoHealthChecker,    │
 │   RepoRepairEngine, ServiceTool                         │
@@ -642,7 +645,7 @@ Eight singleton managers mediate between UI pages and the core library (count: s
 | `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 | `ProcessPrefsManager` | Persistent per-process state (pin flags, alert thresholds) used by `ProcessesPage`. JSON-in-QSettings, same shape as `ScheduleManager` / `CleanerExclusions`. |
-| `DataRefreshService` | Centralized polling service with 5 QTimers (fast/medium/slow/process/update). Polls InfoManager once per interval, emits 15 typed data-change signals (14 cross-platform + Linux-only `psiUpdated`). Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
+| `DataRefreshService` | Centralized polling service with 5 QTimers (fast/medium/slow/process/update). Polls InfoManager once per interval, emits 20 typed data-change signals (18 cross-platform incl. FW-13 `upgradeStarted`/`upgradeFinished` + Linux-only `psiUpdated`/`oomdUpdated`). Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
 **Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 10 global signals (see `shared/nexis/signal_mapper.h`):
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
@@ -960,7 +963,7 @@ emit SignalMapper::ins()->sigChangedAppTheme()  ← Global event
 
 ### Refresh Timing
 
-All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimers and emits 15 typed data signals (14 cross-platform + Linux-only `psiUpdated`). Pages subscribe as reactive consumers — no page owns a QTimer.
+All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimers and emits 20 typed data signals (18 cross-platform incl. FW-13 `upgradeStarted`/`upgradeFinished` + Linux-only `psiUpdated`/`oomdUpdated`). Pages subscribe as reactive consumers — no page owns a QTimer.
 
 | Data | Refresh Rate | Timer Tier | Signal |
 |------|-------------|------------|--------|

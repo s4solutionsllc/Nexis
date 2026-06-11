@@ -69,6 +69,18 @@ void APTSourceManagerPage::init()
 
     updHeader->addStretch();
 
+    mLblUpgradeProgress = new QLabel(QString(), mUpdatesSection);
+    mLblUpgradeProgress->setObjectName("lblUpgradeProgress");
+    mLblUpgradeProgress->hide();
+    updHeader->addWidget(mLblUpgradeProgress);
+
+    mBtnUpgradeAll = new QPushButton(tr("Upgrade All"), mUpdatesSection);
+    mBtnUpgradeAll->setObjectName("btnUpgradeAll");
+    mBtnUpgradeAll->setCursor(Qt::PointingHandCursor);
+    mBtnUpgradeAll->setAccessibleName("primary");
+    mBtnUpgradeAll->setFixedHeight(28);
+    updHeader->addWidget(mBtnUpgradeAll);
+
     mBtnCheckNow = new QPushButton(tr("Check Now"), mUpdatesSection);
     mBtnCheckNow->setObjectName("btnCheckNow");
     mBtnCheckNow->setCursor(Qt::PointingHandCursor);
@@ -85,22 +97,22 @@ void APTSourceManagerPage::init()
 
     updLayout->addLayout(updHeader);
 
-    // Updates tree widget: Source | Package | Version
+    // Updates tree widget: Source | Package | Version | Action
+    // SSO-3741: the trailing Action column hosts a per-row Upgrade button.
     mUpdatesTree = new QTreeWidget(mUpdatesSection);
     mUpdatesTree->setObjectName("treeWidgetUpdates");
     mUpdatesTree->setHeaderHidden(false);
-    mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version") });
+    mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version"), tr("Action") });
     mUpdatesTree->header()->setFixedHeight(Dpi::scale(30));
-    mUpdatesTree->setColumnCount(3);
+    mUpdatesTree->setColumnCount(4);
     mUpdatesTree->setRootIsDecorated(false);
-    // SSO-3502: read-only data display (NoSelection + NoEditTriggers); skipped
-    // by tab order because nothing focusable lives inside.
-    mUpdatesTree->setFocusPolicy(Qt::NoFocus);
     mUpdatesTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mUpdatesTree->setSelectionMode(QAbstractItemView::NoSelection);
-    mUpdatesTree->header()->setStretchLastSection(true);
+    mUpdatesTree->header()->setStretchLastSection(false);
     mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+    mUpdatesTree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    mUpdatesTree->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     mUpdatesTree->setMaximumHeight(200);
     updLayout->addWidget(mUpdatesTree);
 
@@ -115,6 +127,27 @@ void APTSourceManagerPage::init()
     });
     connect(mRefresh, &DataRefreshService::systemUpdatesChecked,
             this, &APTSourceManagerPage::onSystemUpdatesChecked);
+
+    // SSO-3741: upgrade lifecycle + Upgrade All. Upgrade All defers to the
+    // first detected source — apt/dnf/pacman/zypper are mutually exclusive,
+    // and snap/flatpak are addressed by their own per-row button.
+    connect(mBtnUpgradeAll, &QPushButton::clicked, this, [this]() {
+        for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+            QString src = mUpdatesTree->topLevelItem(i)->text(0);
+            if (src == QLatin1String("apt") || src == QLatin1String("dnf")
+                || src == QLatin1String("pacman") || src == QLatin1String("zypper")) {
+                mRefresh->runUpgradeAll(src);
+                return;
+            }
+        }
+        // Fallback: pick the first source seen.
+        if (mUpdatesTree->topLevelItemCount() > 0)
+            mRefresh->runUpgradeAll(mUpdatesTree->topLevelItem(0)->text(0));
+    });
+    connect(mRefresh, &DataRefreshService::upgradeStarted,
+            this, &APTSourceManagerPage::onUpgradeStarted);
+    connect(mRefresh, &DataRefreshService::upgradeFinished,
+            this, &APTSourceManagerPage::onUpgradeFinished);
 
     // --- Health Dashboard: QSplitter + Detail Panel ---
     mSplitter = new QSplitter(Qt::Horizontal, this);
@@ -366,9 +399,46 @@ void APTSourceManagerPage::onSystemUpdatesChecked(const UpdateCheckResult &resul
         item->setText(0, entry.source);
         item->setText(1, entry.name);
         item->setText(2, entry.version);
+
+        // SSO-3741: per-row Upgrade button. Captured by value so the lambda
+        // outlives the QTreeWidgetItem if the user clicks during a re-render.
+        auto *btn = new QPushButton(tr("Upgrade"), mUpdatesTree);
+        btn->setObjectName("btnUpgrade");
+        btn->setCursor(Qt::PointingHandCursor);
+        btn->setFixedHeight(24);
+        UpdateEntry captured = entry;
+        connect(btn, &QPushButton::clicked, this, [this, captured]() {
+            mRefresh->runUpgrade(captured);
+        });
+        mUpdatesTree->setItemWidget(item, 3, btn);
     }
 
     mUpdatesSection->show();
+}
+
+void APTSourceManagerPage::onUpgradeStarted(const QString &label)
+{
+    mBtnUpgradeAll->setEnabled(false);
+    mBtnCheckNow->setEnabled(false);
+    for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+        if (auto *w = mUpdatesTree->itemWidget(mUpdatesTree->topLevelItem(i), 3))
+            w->setEnabled(false);
+    }
+    mLblUpgradeProgress->setText(tr("Upgrading %1…").arg(label));
+    mLblUpgradeProgress->show();
+}
+
+void APTSourceManagerPage::onUpgradeFinished(const QString &label, bool ok, const QString &error)
+{
+    mLblUpgradeProgress->hide();
+    mBtnUpgradeAll->setEnabled(true);
+    mBtnCheckNow->setEnabled(true);
+    if (!ok && !error.isEmpty()) {
+        QMessageBox::warning(this, tr("Upgrade Failed"),
+            tr("%1 did not complete:\n\n%2").arg(label, error));
+    }
+    // The subsequent systemUpdatesChecked emit (queued by runUpgrade
+    // completion) will refresh the tree, including re-enabling row buttons.
 }
 
 void APTSourceManagerPage::onRepoHealthChecked(const RepoHealthCache &cache)

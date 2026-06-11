@@ -51,6 +51,8 @@ private slots:
     void on_btnCancel_clicked();
 
     void onSystemUpdatesChecked(const UpdateCheckResult &result);
+    void onUpgradeStarted(const QString &label);                 // SSO-3741
+    void onUpgradeFinished(const QString &label, bool ok, const QString &error);  // SSO-3741
     void onRepoHealthChecked(const RepoHealthCache &cache);
     void onDetailPanelCloseRequested();
     void onRepairActionRequested(const RepoRepairAction &action, const APTSourcePtr &source);
@@ -69,7 +71,9 @@ private:
     // Available Updates section
     QWidget *mUpdatesSection = nullptr;
     QLabel *mLblUpdatesTitle = nullptr;
+    QLabel *mLblUpgradeProgress = nullptr;  // SSO-3741
     QPushButton *mBtnCheckNow = nullptr;
+    QPushButton *mBtnUpgradeAll = nullptr;  // SSO-3741
     QTreeWidget *mUpdatesTree = nullptr;
     DataRefreshService *mRefresh = nullptr;
 
