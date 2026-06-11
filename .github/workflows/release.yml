@@ -105,11 +105,51 @@ jobs:
       - name: Install to AppDir
         run: DESTDIR=${{ github.workspace }}/AppDir cmake --install build
 
-      - name: Download linuxdeploy and Qt plugin
+      # WI-13 / SSO-3375: pin linuxdeploy to a tagged release and verify the
+      # SHA256 of the downloaded AppImage. The upstream `continuous` tag is
+      # mutable; if it ever ships a backdoored binary, we'd ship it too.
+      # Refresh the tag + sums below when bumping. Source of truth:
+      #   https://github.com/linuxdeploy/linuxdeploy/releases
+      #   https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases
+      - name: Download linuxdeploy and Qt plugin (pinned + verified)
+        env:
+          LINUXDEPLOY_TAG: "1-alpha-20251107-1"
+          LINUXDEPLOY_PLUGIN_QT_TAG: "1-alpha-20250213-1"
+          LINUXDEPLOY_SHA256_X86_64: "c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d"
+          LINUXDEPLOY_SHA256_AARCH64: "620095110d693282b8ebeb244a95b5e911cf8f65f76c88b4b47d16ae6346fcff"
+          LINUXDEPLOY_PLUGIN_QT_SHA256_X86_64: "15106be885c1c48a021198e7e1e9a48ce9d02a86dd0a1848f00bdbf3c1c92724"
+          LINUXDEPLOY_PLUGIN_QT_SHA256_AARCH64: "bf1c24aff6d749b5cf423afad6f15abd4440f81dec1aab95706b25f6667cdcf1"
+          ARCH: ${{ matrix.linuxdeploy-arch }}
         run: |
-          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${{ matrix.linuxdeploy-arch }}.AppImage
-          wget -q https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-${{ matrix.linuxdeploy-arch }}.AppImage
-          chmod +x linuxdeploy-${{ matrix.linuxdeploy-arch }}.AppImage linuxdeploy-plugin-qt-${{ matrix.linuxdeploy-arch }}.AppImage
+          set -euo pipefail
+
+          case "$ARCH" in
+            x86_64)
+              ld_sha="$LINUXDEPLOY_SHA256_X86_64"
+              ldq_sha="$LINUXDEPLOY_PLUGIN_QT_SHA256_X86_64"
+              ;;
+            aarch64)
+              ld_sha="$LINUXDEPLOY_SHA256_AARCH64"
+              ldq_sha="$LINUXDEPLOY_PLUGIN_QT_SHA256_AARCH64"
+              ;;
+            *)
+              echo "Unknown linuxdeploy arch: $ARCH" >&2
+              exit 1
+              ;;
+          esac
+
+          ld_file="linuxdeploy-${ARCH}.AppImage"
+          ldq_file="linuxdeploy-plugin-qt-${ARCH}.AppImage"
+
+          wget -q --tries=3 \
+            "https://github.com/linuxdeploy/linuxdeploy/releases/download/${LINUXDEPLOY_TAG}/${ld_file}"
+          wget -q --tries=3 \
+            "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/${LINUXDEPLOY_PLUGIN_QT_TAG}/${ldq_file}"
+
+          echo "${ld_sha}  ${ld_file}"   | sha256sum -c -
+          echo "${ldq_sha}  ${ldq_file}" | sha256sum -c -
+
+          chmod +x "${ld_file}" "${ldq_file}"
 
       - name: Build AppImage
         env:
@@ -373,6 +413,12 @@ jobs:
 
           # Check if notarization succeeded
           if echo "$SUBMIT_OUTPUT" | grep -q "status: Accepted"; then
+            # Staple the .app first so the ticket travels with the bundle when
+            # extracted from the DMG (e.g. Homebrew cask, drag-to-/Applications).
+            # Notarization covers contents submitted in the DMG, so the .app
+            # hash is already on the ticket and can be stapled directly.
+            xcrun stapler staple build/output/nexis.app
+            xcrun stapler validate build/output/nexis.app
             xcrun stapler staple build/output/nexis.dmg
             echo "Notarization and stapling complete"
           else

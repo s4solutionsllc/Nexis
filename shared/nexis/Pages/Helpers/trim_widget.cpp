@@ -214,14 +214,12 @@ void TrimWidget::buildUI()
     actionRow->setSpacing(8);
     mBtnToggle = new QPushButton(mCard);
     mBtnToggle->setCursor(Qt::PointingHandCursor);
-    mBtnToggle->setFocusPolicy(Qt::NoFocus);
     mBtnToggle->setAccessibleName("primary");
     connect(mBtnToggle, &QPushButton::clicked, this, &TrimWidget::onToggleTimer);
     actionRow->addWidget(mBtnToggle);
 
     mBtnRunNow = new QPushButton(tr("Run TRIM now"), mCard);
     mBtnRunNow->setCursor(Qt::PointingHandCursor);
-    mBtnRunNow->setFocusPolicy(Qt::NoFocus);
     connect(mBtnRunNow, &QPushButton::clicked, this, &TrimWidget::onRunNow);
     actionRow->addWidget(mBtnRunNow);
     actionRow->addStretch();
@@ -241,7 +239,6 @@ void TrimWidget::buildUI()
     controls->setSpacing(8);
     mBtnRefresh = new QPushButton(tr("Refresh"), this);
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
-    mBtnRefresh->setFocusPolicy(Qt::NoFocus);
     connect(mBtnRefresh, &QPushButton::clicked, this, &TrimWidget::refresh);
     controls->addWidget(mBtnRefresh);
 

@@ -300,14 +300,12 @@ void OpenPortsWidget::buildUI()
     mBtnListenOnly->setCheckable(true);
     mBtnListenOnly->setChecked(true);
     mBtnListenOnly->setCursor(Qt::PointingHandCursor);
-    mBtnListenOnly->setFocusPolicy(Qt::NoFocus);
     mBtnListenOnly->setObjectName("portsListenToggle");
     connect(mBtnListenOnly, &QPushButton::toggled, this, &OpenPortsWidget::onListenOnlyToggled);
     filterBar->addWidget(mBtnListenOnly);
 
     mBtnRefresh = new QPushButton(tr("Refresh"));
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
-    mBtnRefresh->setFocusPolicy(Qt::NoFocus);
     mBtnRefresh->setObjectName("portsRefresh");
     connect(mBtnRefresh, &QPushButton::clicked, this, &OpenPortsWidget::refresh);
     filterBar->addWidget(mBtnRefresh);
@@ -317,7 +315,6 @@ void OpenPortsWidget::buildUI()
     // on every refresh — require an explicit click.
     mBtnVerifySigs = new QPushButton(tr("Verify Signatures"));
     mBtnVerifySigs->setCursor(Qt::PointingHandCursor);
-    mBtnVerifySigs->setFocusPolicy(Qt::NoFocus);
     mBtnVerifySigs->setToolTip(
         tr("Run codesign on each binary to flag unsigned ones. "
            "Results are cached by path."));

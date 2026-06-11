@@ -377,7 +377,6 @@ void DashboardPage::init()
     mKioskButton->setIconSize(QSize(16, 16));
     mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
     mKioskButton->setCursor(Qt::PointingHandCursor);
-    mKioskButton->setFocusPolicy(Qt::NoFocus);
     mKioskButton->setObjectName("btnKioskToggle");
     mKioskButton->setAutoRaise(true);
     mKioskButton->raise();
@@ -394,7 +393,6 @@ void DashboardPage::init()
     mEditButton->setIconSize(QSize(16, 16));
     mEditButton->setToolTip(tr("Customize Layout (Ctrl+E)"));
     mEditButton->setCursor(Qt::PointingHandCursor);
-    mEditButton->setFocusPolicy(Qt::NoFocus);
     mEditButton->setObjectName("btnEditToggle");
     mEditButton->setAutoRaise(true);
     mEditButton->raise();
@@ -422,7 +420,6 @@ void DashboardPage::init()
     mBtnResetLayout = new QPushButton(tr("Reset Layout"), mEditToolbar);
     mBtnResetLayout->setObjectName("btnResetLayout");
     mBtnResetLayout->setCursor(Qt::PointingHandCursor);
-    mBtnResetLayout->setFocusPolicy(Qt::NoFocus);
     toolbarLayout->addWidget(mBtnResetLayout);
 
     mAddTileButton = new QToolButton(mEditToolbar);
@@ -430,7 +427,6 @@ void DashboardPage::init()
     mAddTileButton->setText(tr("Add Tile \u25be"));
     mAddTileButton->setPopupMode(QToolButton::InstantPopup);
     mAddTileButton->setCursor(Qt::PointingHandCursor);
-    mAddTileButton->setFocusPolicy(Qt::NoFocus);
     mAddTileButton->hide();
     toolbarLayout->addWidget(mAddTileButton);
     connect(mAddTileButton, &QToolButton::clicked, this, &DashboardPage::onAddTileClicked);
@@ -438,7 +434,6 @@ void DashboardPage::init()
     mBtnDone = new QPushButton(tr("Done"), mEditToolbar);
     mBtnDone->setObjectName("btnEditDone");
     mBtnDone->setCursor(Qt::PointingHandCursor);
-    mBtnDone->setFocusPolicy(Qt::NoFocus);
     toolbarLayout->addWidget(mBtnDone);
 
     // Insert toolbar at the top of the main layout (before bentoGrid)

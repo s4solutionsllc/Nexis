@@ -105,7 +105,6 @@ void HelpersPage::init()
     mBtnTrim = new QPushButton(tr("SSD TRIM"));
     mBtnTrim->setCheckable(true);
     mBtnTrim->setCursor(Qt::PointingHandCursor);
-    mBtnTrim->setFocusPolicy(Qt::NoFocus);
     mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnTrim);
     shadowWidgets << mBtnTrim;
@@ -117,7 +116,6 @@ void HelpersPage::init()
     mBtnSwappiness = new QPushButton(tr("Swappiness"));
     mBtnSwappiness->setCheckable(true);
     mBtnSwappiness->setCursor(Qt::PointingHandCursor);
-    mBtnSwappiness->setFocusPolicy(Qt::NoFocus);
     mBtnSwappiness->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnSwappiness);
     shadowWidgets << mBtnSwappiness;
@@ -127,7 +125,6 @@ void HelpersPage::init()
     mBtnCpuTuning = new QPushButton(tr("CPU Tuning"));
     mBtnCpuTuning->setCheckable(true);
     mBtnCpuTuning->setCursor(Qt::PointingHandCursor);
-    mBtnCpuTuning->setFocusPolicy(Qt::NoFocus);
     mBtnCpuTuning->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnCpuTuning);
     shadowWidgets << mBtnCpuTuning;
@@ -138,7 +135,6 @@ void HelpersPage::init()
         mBtnTrim = new QPushButton(tr("SSD TRIM"));
         mBtnTrim->setCheckable(true);
         mBtnTrim->setCursor(Qt::PointingHandCursor);
-        mBtnTrim->setFocusPolicy(Qt::NoFocus);
         mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
         ui->buttonGroup->addButton(mBtnTrim);
         shadowWidgets << mBtnTrim;
@@ -154,7 +150,6 @@ void HelpersPage::init()
     mBtnWol = new QPushButton(tr("Wake-on-LAN"));
     mBtnWol->setCheckable(true);
     mBtnWol->setCursor(Qt::PointingHandCursor);
-    mBtnWol->setFocusPolicy(Qt::NoFocus);
     mBtnWol->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnWol);
     shadowWidgets << mBtnWol;
@@ -490,7 +485,6 @@ void HelpersPage::initPowerProfileUI()
 
     for (auto *btn : {mBtnPowerSaver, mBtnBalanced, mBtnPerformance}) {
         btn->setCursor(Qt::PointingHandCursor);
-        btn->setFocusPolicy(Qt::NoFocus);
         btn->setCheckable(true);
         layout->addWidget(btn);
         connect(btn, &QPushButton::clicked, this, &HelpersPage::onPowerProfileClicked);

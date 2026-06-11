@@ -9,6 +9,8 @@
 #include <QDir>
 #include <QFileDialog>
 #include <functional>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QMessageBox>
 #include <QTextStream>
 #include <QDateTime>
@@ -22,6 +24,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QtConcurrent>
 #include "dpi.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
@@ -639,22 +642,37 @@ void HardwareInfoPage::onCopyGpuDiagnostics()
 
 void HardwareInfoPage::onUnlockSmartDrive(const QString &devicePath)
 {
-    im->refreshDiskHealthElevated(devicePath);
+    // WI-21 (SSO-3383, audit M2): refreshDiskHealthElevated() shells out to
+    // pkexec/osascript, which opens a password prompt and used to block the
+    // UI thread for up to 30 s while the user typed. Run it on a
+    // QtConcurrent worker and refresh the table from the finished signal so
+    // the GUI stays responsive and a slow password entry still completes the
+    // unlock. WI-03 added a mutex around mDrives so refreshHealthElevated*
+    // is safe to call off-thread.
+    auto *watcher = new QFutureWatcher<void>(this);
+    connect(watcher, &QFutureWatcher<void>::finished, this,
+            [this, watcher, devicePath]() {
+        watcher->deleteLater();
 
-    QList<DriveHealth> updated = im->getDriveHealth();
-    bool stillNeedsElevation = true;
-    for (const DriveHealth &d : updated) {
-        if (d.devicePath == devicePath) {
-            stillNeedsElevation = d.needsElevation;
-            break;
+        QList<DriveHealth> updated = im->getDriveHealth();
+        bool stillNeedsElevation = true;
+        for (const DriveHealth &d : updated) {
+            if (d.devicePath == devicePath) {
+                stillNeedsElevation = d.needsElevation;
+                break;
+            }
         }
-    }
 
-    if (!stillNeedsElevation) {
-        repopulateStorage();
-    }
-    // If still needs elevation (pkexec cancelled or failed), the existing
-    // table state remains — button stays visible, user can try again.
+        if (!stillNeedsElevation) {
+            repopulateStorage();
+        }
+        // If still needs elevation (pkexec cancelled or failed), the existing
+        // table state remains — button stays visible, user can try again.
+    });
+
+    watcher->setFuture(QtConcurrent::run([this, devicePath]() {
+        im->refreshDiskHealthElevated(devicePath);
+    }));
 }
 
 void HardwareInfoPage::onUnlockAllDrives()
@@ -667,15 +685,28 @@ void HardwareInfoPage::onUnlockAllDrives()
     if (devices.isEmpty())
         return;
 
+    bool applyPermanent = false;
 #ifdef Q_OS_LINUX
     SmartPermissionDialog dlg(devices.size(), this);
     if (dlg.exec() != QDialog::Accepted)
         return;
-
-    im->refreshDiskHealthElevatedBatch(devices, dlg.makePermanent());
+    applyPermanent = dlg.makePermanent();
 #endif
 
-    repopulateStorage();
+    // WI-21 (SSO-3383, audit M2): batch unlock shells out to pkexec/osascript
+    // (one prompt per drive on macOS, one prompt total on Linux). Run it on a
+    // worker so slow password entry does not race waitForFinished's 30 s cap
+    // — the table repaints from the finished signal on the UI thread.
+    auto *watcher = new QFutureWatcher<void>(this);
+    connect(watcher, &QFutureWatcher<void>::finished, this,
+            [this, watcher]() {
+        watcher->deleteLater();
+        repopulateStorage();
+    });
+
+    watcher->setFuture(QtConcurrent::run([this, devices, applyPermanent]() {
+        im->refreshDiskHealthElevatedBatch(devices, applyPermanent);
+    }));
 }
 
 void HardwareInfoPage::repopulateStorage()

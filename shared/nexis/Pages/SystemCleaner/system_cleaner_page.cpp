@@ -128,13 +128,11 @@ void SystemCleanerPage::buildCategoryHeader()
     mBtnExclusions->setFixedSize(Dpi::scale(28, 28));
     mBtnExclusions->setToolTip(tr("Manage exclusion rules"));
     mBtnExclusions->setCursor(Qt::PointingHandCursor);
-    mBtnExclusions->setFocusPolicy(Qt::NoFocus);
     connect(mBtnExclusions, &QToolButton::clicked, this, &SystemCleanerPage::onManageExclusions);
 
     mBtnSchedule = new QPushButton(tr("Schedule\u2026"), headerWidget);
     mBtnSchedule->setObjectName("btnScheduleCleaner");
     mBtnSchedule->setCursor(Qt::PointingHandCursor);
-    mBtnSchedule->setFocusPolicy(Qt::NoFocus);
     connect(mBtnSchedule, &QPushButton::clicked, this, [this] {
         ScheduleEditorDialog *dlg = new ScheduleEditorDialog(this);
         connect(dlg, &ScheduleEditorDialog::scheduleCreated, this, [this](const ScheduleManager::CleaningSchedule &s) {
@@ -148,7 +146,6 @@ void SystemCleanerPage::buildCategoryHeader()
     mBtnScanSystem = new QPushButton(tr("Scan system"), headerWidget);
     mBtnScanSystem->setObjectName("btnScanSystem");
     mBtnScanSystem->setCursor(Qt::PointingHandCursor);
-    mBtnScanSystem->setFocusPolicy(Qt::NoFocus);
     connect(mBtnScanSystem, &QPushButton::clicked, this, &SystemCleanerPage::on_btnScan_clicked);
 
     headerRow->addWidget(mBtnExclusions);
@@ -251,7 +248,6 @@ void SystemCleanerPage::buildCategoryCards()
 
         QCheckBox *check = new QCheckBox(card);
         check->setCursor(Qt::PointingHandCursor);
-        check->setFocusPolicy(Qt::NoFocus);
 
         QLabel *lblName = new QLabel(def.name, card);
         lblName->setObjectName("lblCatName");
@@ -381,7 +377,6 @@ void SystemCleanerPage::buildCleanerFooter()
     mBtnSelectAll = new QPushButton(tr("Select All"), mCleanerFooter);
     mBtnSelectAll->setObjectName("btnSelectAll");
     mBtnSelectAll->setCursor(Qt::PointingHandCursor);
-    mBtnSelectAll->setFocusPolicy(Qt::NoFocus);
     connect(mBtnSelectAll, &QPushButton::clicked,
             this, &SystemCleanerPage::onSelectAllClicked);
     footerRow->addWidget(mBtnSelectAll);
@@ -389,7 +384,6 @@ void SystemCleanerPage::buildCleanerFooter()
     mBtnCleanSelected = new QPushButton(tr("Clean selected"), mCleanerFooter);
     mBtnCleanSelected->setObjectName("btnCleanSelected");
     mBtnCleanSelected->setCursor(Qt::PointingHandCursor);
-    mBtnCleanSelected->setFocusPolicy(Qt::NoFocus);
     mBtnCleanSelected->setEnabled(false);
     connect(mBtnCleanSelected, &QPushButton::clicked,
             this, &SystemCleanerPage::quickCleanByCategory);

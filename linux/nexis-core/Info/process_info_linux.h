@@ -14,7 +14,7 @@ class ProcessInfoLinux : public ProcessInfo
 
 public:
     ProcessInfoLinux();
-    void updateProcesses() override;
+    QList<Process> collectProcesses() override;
 
 private:
     // FR-127: read once at construction — sysconf() calls aren't free per-tick.

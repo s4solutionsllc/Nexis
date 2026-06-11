@@ -46,7 +46,6 @@ void BootAnalysisPage::buildUi()
     mBtnRefresh = new QPushButton(tr("Refresh"), this);
     mBtnRefresh->setObjectName("btnBootAnalysisRefresh");
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
-    mBtnRefresh->setFocusPolicy(Qt::NoFocus);
 
     headerRow->addWidget(mLblTitle, 1);
     headerRow->addWidget(mBtnRefresh, 0);
@@ -68,6 +67,8 @@ void BootAnalysisPage::buildUi()
     mTable->verticalHeader()->setVisible(false);
     mTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mTable->setSelectionMode(QAbstractItemView::NoSelection);
+    // SSO-3502: read-only data display (NoSelection + NoEditTriggers); skipped
+    // by tab order because nothing focusable lives inside.
     mTable->setFocusPolicy(Qt::NoFocus);
     mTable->setAlternatingRowColors(true);
     mTable->setShowGrid(false);

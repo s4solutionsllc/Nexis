@@ -3,6 +3,7 @@
 
 #include <QSettings>
 #include <QStandardPaths>
+#include <QString>
 
 namespace SettingKeys {
     const QString ThemeName("ThemeName");
@@ -99,6 +100,14 @@ public:
 
     void setStartPage(const QString &value);
     QString getStartPage() const;
+
+    // SSO-3388 / audit Q3: legacy installs persisted the localized combo
+    // text and the launch path matched it against translated sidebar
+    // titles, so a language change silently reset the start page. We now
+    // store a stable untranslated id ("dashboard", "uninstaller", ...);
+    // this helper migrates whatever the user had in their settings.ini
+    // into the canonical id. Unknown values default to "dashboard".
+    static QString migrateStartPageId(const QString &storedValue);
 
     void setCpuAlertPercent(const int value);
     int getCpuAlertPercent() const;

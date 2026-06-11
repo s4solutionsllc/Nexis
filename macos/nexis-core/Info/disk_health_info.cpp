@@ -9,6 +9,13 @@
 #include <QSet>
 #include <QXmlStreamReader>
 
+namespace {
+// WI-21 (SSO-3383, audit M2): osascript pops an authorization prompt that
+// the user has to interact with — the default 30 s CommandUtil::exec
+// timeout races slow password entry and the unlock silently fails.
+constexpr int kSmartElevatedTimeoutMs = 5 * 60 * 1000;
+} // namespace
+
 // Parse a simple plist XML into a flat key→value map.
 // Handles <string>, <integer>, <true/>, <false/>, and nested <dict> (flattened).
 // For the nested SMARTDeviceSpecificKeys dict, keys are prefixed with "SMART.".
@@ -224,9 +231,12 @@ void DiskHealthInfoMacOS::refreshHealthElevated(const QString &device)
 
     // Run sudo/smartctl outside the lock (may block for seconds), then take
     // the lock only to merge the parsed result back into mDrives.
+    // WI-21: bump the osascript timeout well past the default 30 s so a slow
+    // password entry does not race the wait cap.
     QString output;
     try {
-        output = CommandUtil::sudoExec("smartctl", {"-j", "-a", device});
+        output = CommandUtil::sudoExec("smartctl", {"-j", "-a", device},
+                                       QByteArray(), kSmartElevatedTimeoutMs);
     } catch (...) {
         qWarning() << "Failed to read SMART data for" << device;
         return;

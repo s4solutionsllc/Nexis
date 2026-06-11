@@ -268,6 +268,35 @@ out of the quarterly cadence — see SOP):
   Qt6 svg, embedded OpenSSL through Qt) with a working PoC.
 - A vendor advisory (Qt, distro) marking remote code execution or local
   privilege escalation in code paths Nexis exercises.
+- A finding from the automated detection lane (WI-13): a CodeQL alert on
+  `native` flagged High/Critical, a Dependabot advisory against a
+  GitHub-Actions or runtime dependency, or a new release-time SHA256
+  mismatch on `linuxdeploy` / `linuxdeploy-plugin-qt`.
+
+### Monitoring sources (Qt + third-party)
+
+The 7-day clock starts from the first credible signal. Keep these channels
+subscribed to a monitored inbox or the maintainer's pager so a disclosure
+does not sit unread:
+
+- **Qt security announcements** — subscribe `security@s4solutions.ai` to the
+  `announce@lists.qt-project.org` list
+  (<https://lists.qt-project.org/listinfo/announce>) and to the Qt blog
+  security tag (<https://www.qt.io/blog/tag/security>). Both carry the
+  vendor advisories that feed §6 triggers.
+- **GitHub Dependabot alerts** — enabled at the repo level; alerts land in
+  the maintainer's GitHub inbox and the `security@s4solutions.ai` route.
+- **GitHub Code Scanning (CodeQL) alerts** — surfaced in the repo Security
+  tab; High/Critical findings page the maintainer via the same email route.
+- **`linuxdeploy` / `linuxdeploy-plugin-qt` releases** — watch the release
+  feeds (`https://github.com/linuxdeploy/linuxdeploy/releases.atom`,
+  `https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases.atom`).
+  When bumping the pinned tag in `.github/workflows/release.yml`, refresh
+  the `SHA256` constants alongside it.
+
+Owner: NexisMaintainer. Audit cadence: review the subscription list during
+the quarterly release review and again whenever the maintainer of record
+changes.
 
 ### 7-day clock
 

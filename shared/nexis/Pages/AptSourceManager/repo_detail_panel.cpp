@@ -48,7 +48,6 @@ void RepoDetailPanel::setupUi()
 
     mBtnClose = new QPushButton(QString::fromUtf8("\u2715"), this);
     mBtnClose->setFixedSize(24, 24);
-    mBtnClose->setFocusPolicy(Qt::NoFocus);
     mBtnClose->setCursor(Qt::PointingHandCursor);
     mBtnClose->setFlat(true);
     connect(mBtnClose, &QPushButton::clicked, this, &RepoDetailPanel::closeRequested);
@@ -110,7 +109,6 @@ void RepoDetailPanel::setupUi()
     mBtnEdit = new QPushButton(tr("Edit"), this);
     mBtnEdit->setAccessibleName("primary");
     mBtnEdit->setCursor(Qt::PointingHandCursor);
-    mBtnEdit->setFocusPolicy(Qt::NoFocus);
     connect(mBtnEdit, &QPushButton::clicked, this, [this]() {
         if (mCurrentSource)
             emit editRequested(mCurrentSource);
@@ -119,7 +117,6 @@ void RepoDetailPanel::setupUi()
 
     mBtnOpenUri = new QPushButton(tr("Open URI"), this);
     mBtnOpenUri->setCursor(Qt::PointingHandCursor);
-    mBtnOpenUri->setFocusPolicy(Qt::NoFocus);
     connect(mBtnOpenUri, &QPushButton::clicked, this, [this]() {
         if (mCurrentSource)
             QDesktopServices::openUrl(QUrl(mCurrentSource->uri));
@@ -129,7 +126,6 @@ void RepoDetailPanel::setupUi()
     mBtnDisable = new QPushButton(tr("Disable"), this);
     mBtnDisable->setAccessibleName("danger");
     mBtnDisable->setCursor(Qt::PointingHandCursor);
-    mBtnDisable->setFocusPolicy(Qt::NoFocus);
     connect(mBtnDisable, &QPushButton::clicked, this, [this]() {
         if (mCurrentSource)
             emit disableRequested(mCurrentSource);
@@ -139,7 +135,6 @@ void RepoDetailPanel::setupUi()
     // macOS actions
     mBtnOpenUri = new QPushButton(tr("Open Homepage"), this);
     mBtnOpenUri->setCursor(Qt::PointingHandCursor);
-    mBtnOpenUri->setFocusPolicy(Qt::NoFocus);
     connect(mBtnOpenUri, &QPushButton::clicked, this, [this]() {
         if (mCurrentSource)
             QDesktopServices::openUrl(QUrl(mCurrentSource->uri));
@@ -258,7 +253,6 @@ void RepoDetailPanel::addIssueWidget(const RepoHealthIssue &issue)
         for (const RepoRepairAction &action : issue.actions) {
             QPushButton *btn = new QPushButton(action.label, issueWidget);
             btn->setCursor(Qt::PointingHandCursor);
-            btn->setFocusPolicy(Qt::NoFocus);
             btn->setFixedHeight(26);
 
             if (action.type == RepoRepairAction::RemoveSource)
@@ -346,7 +340,6 @@ void RepoDetailPanel::showDiagnoseResult(const DiagnoseResult &result, QVBoxLayo
         for (const RepoRepairAction &action : result.followUpActions) {
             QPushButton *btn = new QPushButton(action.label);
             btn->setCursor(Qt::PointingHandCursor);
-            btn->setFocusPolicy(Qt::NoFocus);
             btn->setFixedHeight(26);
 
             if (action.type == RepoRepairAction::DisableSource)

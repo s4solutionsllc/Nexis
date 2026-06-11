@@ -183,11 +183,6 @@ QCheckBox::indicator:unchecked {
     image: url(:/static/themes/common/img/un-checkbox.svg);
 }
 
-QCheckBox:focus {
-    outline: none;
-    border: none;
-}
-
 QCheckBox[accessibleName="circle"] {
     font-size: 10pt;
     color: @color06;
@@ -2705,4 +2700,51 @@ SEARCH
 #lblHostTitle {
     font-size: 11pt;
     color: @color12;
+}
+
+/***************************************
+    Keyboard focus ring (SSO-3502)
+    Token-driven visible focus indicator
+    for interactive controls. Applied
+    under both default and light themes
+    via the @focusRingColor token.
+****************************************/
+
+QPushButton:focus,
+QToolButton:focus,
+QComboBox:focus,
+QLineEdit:focus,
+QPlainTextEdit:focus,
+QTextEdit:focus,
+QSpinBox:focus,
+QDoubleSpinBox:focus {
+    border: 2px solid @focusRingColor;
+}
+
+QCheckBox:focus,
+QRadioButton:focus,
+QSlider:focus {
+    outline: 2px solid @focusRingColor;
+}
+
+QTreeView:focus,
+QTreeWidget:focus,
+QTableView:focus,
+QTableWidget:focus,
+QListView:focus,
+QListWidget:focus {
+    border: 2px solid @focusRingColor;
+}
+
+QTreeView::item:focus,
+QTreeWidget::item:focus,
+QTableView::item:focus,
+QTableWidget::item:focus,
+QListView::item:focus,
+QListWidget::item:focus {
+    outline: 2px solid @focusRingColor;
+}
+
+#sidebar QPushButton:focus {
+    border-left: 3px solid @focusRingColor;
 }

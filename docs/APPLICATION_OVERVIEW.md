@@ -520,7 +520,7 @@ Configure Nexis application preferences.
 - **Language** — 34+ languages via Crowdin translations
 - **Color Scheme** — Auto / Light / Dark mode
 - **Font** — Choose application font family (Inter, Ubuntu, JetBrains Mono, System Default); applied live via `@fontFamily` QSS token
-- **Start Page** — Choose which page opens on launch
+- **Start Page** — Choose which page opens on launch. Persisted as a stable untranslated id (`dashboard`, `systemCleaner`, `uninstaller`, …) via `QComboBox::itemData`, so the preference survives a UI language change and resolves consistently across platforms (SSO-3388 / audit Q3). Legacy installs that stored the localized combo text are migrated to ids by `SettingManager::migrateStartPageId()`; unrecognized values fall back to `dashboard`.
 - **Autostart** — Launch Nexis at login (creates `.desktop` or `.plist`)
 - **Minimize to Tray** — When enabled, closing or minimizing the window hides it to the system tray instead of quitting or staying in the taskbar; clicking the tray icon restores the window (FR-52)
 - **Disk Partition** — Select partition to monitor on Dashboard
@@ -616,7 +616,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | Class | Purpose |
 |-------|---------|
 | `FileUtil` | File read/write, directory listing, file size |
-| `CommandUtil` | Process execution (`QProcess`), sudo elevation, timeout handling |
+| `CommandUtil` | Process execution (`QProcess`), sudo elevation, timeout handling — unified non-throwing `ExecResult` contract across `exec` / `sudoExec` / `execWithStatus` / `sudoExecWithStatus` / `execAsync` (SSO-3367) |
 | `FormatUtil` | Byte formatting (KB/MB/GB/TB with binary units) |
 
 ---
@@ -806,6 +806,12 @@ All color-bearing widgets implement a `refreshThemeColors()` method connected to
 
 QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at stylesheet load time based on `devicePixelRatio()`. The `Dpi::scale()` utility class handles pixel scaling in C++ code. This solved HiDPI/4K display issues without requiring a QML migration.
 
+### Accessibility (Keyboard Focus)
+
+Interactive controls accept keyboard focus and render a visible focus ring under both themes (SSO-3502). The ring is token-driven via `@focusRingColor` (resolved per theme in `values.ini`) and applied through `:focus` selectors in `style.qss` covering `QPushButton`, `QToolButton`, `QCheckBox`, `QRadioButton`, `QSlider`, `QComboBox`, `QLineEdit`, `QPlainTextEdit`, `QSpinBox`, `QDoubleSpinBox`, `QTreeView/Widget`, `QTableView/Widget`, and `QListView/Widget`. The `#sidebar QPushButton:focus` selector reuses the existing 3px left-edge stripe so sidebar nav items show focus without layout shift.
+
+The pre-SSO-3502 code used `setFocusPolicy(Qt::NoFocus)` on most interactive widgets, which broke keyboard, screen-reader, and switch-control navigation. After the SSO-3502 sweep, the only `Qt::NoFocus` call sites that remain in shared/macos `.cpp` code are deliberate: read-only data displays (`NoSelection + NoEditTriggers`) and the command palette result list (whose focus is forwarded from the search box via an event filter). New interactive controls **must not** add `setFocusPolicy(Qt::NoFocus)` — see `CONTRIBUTING.md` §2 for the rule and `tests/theme/test_focus_visible.cpp` for the style-test guard. Follow-up: SSO-3502 removed the `.cpp` declarations only; `.ui` files still contain a number of `<enum>Qt::NoFocus</enum>` entries that should be swept in a follow-up issue.
+
 ---
 
 ## Configuration and Settings
@@ -961,7 +967,7 @@ FR-105 PowerMode tiers downshift the Fast timer cadence based on focus + battery
 **Battery optimization:** When the app is minimized to tray, `DataRefreshService::pause()` stops all timers (unless kiosk mode is active). On restore, `resume()` fires immediate ticks then restarts timers.
 
 **Page-aware polling (BUG-72):** Three data-heavy pages (`DashboardPage`, `ResourcesPage`, `ProcessesPage`) inherit from `NexisPage` and use `onPageActivated()`/`onPageDeactivated()` lifecycle hooks to reduce CPU usage when hidden:
-- **ProcessesPage:** Calls `DataRefreshService::pauseProcessTimer()` / `resumeProcessTimer()`. The process timer (which spawns `ps ax`, `nettop`, and per-PID `proc_pid_rusage()`) only runs when the Processes page is active. It starts paused by default.
+- **ProcessesPage:** Calls `DataRefreshService::pauseProcessTimer()` / `resumeProcessTimer()`. The process timer (which spawns `ps ax`, `nettop`, and per-PID `proc_pid_rusage()`) only runs when the Processes page is active. It starts paused by default. The per-tick collection itself runs on a `QtConcurrent` worker (SSO-3383 / audit M2) — `ProcessInfo::collectProcesses()` builds a fresh `QList<Process>` into a local and the UI thread publishes via `setProcessList()` from a `QMetaObject::invokeMethod` hop, mirroring `onSlowTick()` for disk-health.
 - **ResourcesPage:** Gates all HistoryChart update slots behind an `mActive` flag. QSplineSeries manipulation and chart repaints are skipped when the page is hidden. Delta-tracking statics for network/disk I/O are maintained to prevent spikes on re-activation.
 - **DashboardPage:** Gates tile update slots (`setValue`, `addDataPoint`, `paintEvent` triggers) behind an `mActive` flag. Tray alert logic (CPU, memory, disk usage thresholds) continues to fire regardless of visibility.
 

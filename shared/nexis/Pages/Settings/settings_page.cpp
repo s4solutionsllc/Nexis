@@ -132,13 +132,24 @@ void SettingsPage::init()
     // dashboard footer visibility
     ui->checkDashboardFooter->setChecked(mSettingManager->getDashboardFooterVisible());
 
-    // load pages
-    ui->cmbStartPage->addItems({
-        tr("Dashboard"), tr("Startup Apps"), tr("System Cleaner"), tr("Search"),
-        tr("Services"), tr("Processes"), tr("Helpers"), tr("Uninstaller"), tr("Resources")
-    });
+    // load pages — store a stable untranslated id as item data so the
+    // saved start page survives a UI language change (SSO-3388 / audit Q3).
+    ui->cmbStartPage->addItem(tr("Dashboard"),      "dashboard");
+    ui->cmbStartPage->addItem(tr("Startup Apps"),   "startupApps");
+    ui->cmbStartPage->addItem(tr("System Cleaner"), "systemCleaner");
+    ui->cmbStartPage->addItem(tr("Search"),         "search");
+    ui->cmbStartPage->addItem(tr("Services"),       "services");
+    ui->cmbStartPage->addItem(tr("Processes"),      "processes");
+    ui->cmbStartPage->addItem(tr("Helpers"),        "helpers");
+#ifdef Q_OS_MAC
+    ui->cmbStartPage->addItem(tr("Applications"),   "uninstaller");
+#else
+    ui->cmbStartPage->addItem(tr("Uninstaller"),    "uninstaller");
+#endif
+    ui->cmbStartPage->addItem(tr("Resources"),      "resources");
 
-    ui->cmbStartPage->setCurrentText(mSettingManager->getStartPage());
+    ui->cmbStartPage->setCurrentIndex(
+        ui->cmbStartPage->findData(mSettingManager->getStartPage()));
 
     // color scheme (appearance)
     ui->cmbColorScheme->addItem(tr("Auto"), "auto");
@@ -209,7 +220,7 @@ void SettingsPage::init()
     // signal connections
     connect(ui->cmbLanguages, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbLanguagesChanged);
     connect(ui->cmbDisks, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskChanged);
-    connect(ui->cmbStartPage, &QComboBox::currentTextChanged, this, &SettingsPage::cmbStartPageChanged);
+    connect(ui->cmbStartPage, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbStartPageChanged);
     connect(ui->cmbColorScheme, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbColorSchemeChanged);
     connect(ui->cmbFont, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbFontChanged);
     connect(ui->cmbTrayIconStyle, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbTrayIconStyleChanged);
@@ -290,9 +301,10 @@ void SettingsPage::on_checkAutostart_clicked(bool checked)
     }
 }
 
-void SettingsPage::cmbStartPageChanged(const QString text)
+void SettingsPage::cmbStartPageChanged(const int index)
 {
-    mSettingManager->setStartPage(text);
+    const QString id = ui->cmbStartPage->itemData(index).toString();
+    mSettingManager->setStartPage(id);
 }
 
 void SettingsPage::on_spinCpuPercent_valueChanged(int value)
@@ -608,9 +620,7 @@ void SettingsPage::onManageSchedules()
             cardLayout->addLayout(infoLayout, 1);
 
             QPushButton *editBtn = new QPushButton(tr("Edit"));
-            editBtn->setFocusPolicy(Qt::NoFocus);
             QPushButton *deleteBtn = new QPushButton(tr("Delete"));
-            deleteBtn->setFocusPolicy(Qt::NoFocus);
             deleteBtn->setProperty("accessibleName", "danger");
             cardLayout->addWidget(editBtn);
             cardLayout->addWidget(deleteBtn);
