@@ -1,0 +1,76 @@
+# CodeQL static analysis for C/C++ (SSO-3375, audit ref C3, WI-13).
+#
+# Runs on every push and pull request that touches the `native` branch and on
+# a weekly cron so we still get coverage during quiet weeks. The 7-day CVE SLA
+# in RELEASE.md §6 depends on this scan + Dependabot to surface the bugs the
+# maintainer needs to patch.
+
+name: CodeQL
+
+on:
+  push:
+    branches: [native]
+  pull_request:
+    branches: [native]
+  schedule:
+    # Weekly heartbeat — keeps SARIF results fresh even with no merges.
+    - cron: "23 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: c-cpp
+            build-mode: manual
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      # Mirror the Linux dependency list from build.yml so CodeQL traces the
+      # real build, not a stub.
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            cmake \
+            g++ \
+            libgl1-mesa-dev \
+            qt6-base-dev \
+            qt6-charts-dev \
+            qt6-svg-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            qt6-l10n-tools \
+            libqt6charts6-dev \
+            libqt6svg6-dev
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-and-quality
+
+      - name: Build (manual)
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake --build build -j"$(nproc)"
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          category: "/language:${{ matrix.language }}"
