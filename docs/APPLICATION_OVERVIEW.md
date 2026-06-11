@@ -616,7 +616,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | Class | Purpose |
 |-------|---------|
 | `FileUtil` | File read/write, directory listing, file size |
-| `CommandUtil` | Process execution (`QProcess`), sudo elevation, timeout handling |
+| `CommandUtil` | Process execution (`QProcess`), sudo elevation, timeout handling — unified non-throwing `ExecResult` contract across `exec` / `sudoExec` / `execWithStatus` / `sudoExecWithStatus` / `execAsync` (SSO-3367) |
 | `FormatUtil` | Byte formatting (KB/MB/GB/TB with binary units) |
 
 ---
