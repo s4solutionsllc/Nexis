@@ -95,7 +95,7 @@ void SettingsPage::init()
     if (! QDir(mStartupAppPath).exists()) {
         QDir().mkdir(mStartupAppPath);
     }
-    mStartupAppPath.append("/com.nexis.app.plist");
+    mStartupAppPath.append("/io.github.s4solutionsllc.Nexis.plist");
 
     QFile startupAppFile(mStartupAppPath);
     if (startupAppFile.exists()) {
@@ -265,7 +265,7 @@ void SettingsPage::on_checkAutostart_clicked(bool checked)
             "<plist version=\"1.0\">\n"
             "<dict>\n"
             "    <key>Label</key>\n"
-            "    <string>com.nexis.app</string>\n"
+            "    <string>io.github.s4solutionsllc.Nexis</string>\n"
             "    <key>ProgramArguments</key>\n"
             "    <array>\n"
             "        <string>nexis</string>\n"

@@ -628,7 +628,7 @@ if(APPLE)
   # macOS: Build as a .app bundle
   set_target_properties(nexis PROPERTIES
     MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.nexis.app"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.s4solutionsllc.Nexis"
     MACOSX_BUNDLE_BUNDLE_NAME "Nexis"
     MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
