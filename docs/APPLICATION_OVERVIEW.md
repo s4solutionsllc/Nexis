@@ -45,6 +45,18 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 
 **Origin:** Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), the popular Linux system optimizer that went inactive in 2020 with 38+ known bugs. After porting to Qt 6, adding native macOS support, fixing those inherited bugs, and adding GPU monitoring, hardware health tracking, scheduled cleaning, Docker management, and more, the project was rebranded as **Nexis** to reflect that it had become something distinct.
 
+**By the numbers:**
+- ~37,000 lines of C++ code across 288 source files
+- 17 application pages
+- 16 system info providers (BatteryInfo, BootAnalysisInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo) — 13 wired through InfoManager, BootAnalysisInfo/StartupInfo standalone, PowerProfileInfo added in v2.1.16
+- 6 tool classes (package management, services, Docker, APT sources, GNOME settings, file search)
+- 8 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService, DuplicateFinderService)
+- 3 utility classes
+- 7 manager singletons
+- 3 themes (Dark, Light, Auto)
+- 34 languages
+- 18 test suites with ~246 test methods (Qt Test + CTest)
+- 88 features implemented, 103 bugs fixed since fork
 **By the numbers (canonical table — referenced by [`ARCHITECTURE_REVIEW.md`](ARCHITECTURE_REVIEW.md)):**
 
 | Metric | Value | Source of truth |
@@ -497,6 +509,7 @@ Filterable, searchable table of recent system logs for quick triage. Programmati
 - Severity filtering re-populates from cached entries
 - Manual refresh only (no auto-polling — logs are static history)
 - Initial load: last 500 entries (Linux) or last 1 hour (macOS)
+- `LogProvider::cancel()` is safe to call from `~SystemLogsPage()` mid-fetch — disconnects the finished slot, takes ownership of the QProcess locally, and nulls the member before kill/waitForFinished, so the synchronous CrashExit signal from `kill()` cannot drive a double-delete or null deref (SSO-3363 / audit H2)
 
 ### 16. Settings
 

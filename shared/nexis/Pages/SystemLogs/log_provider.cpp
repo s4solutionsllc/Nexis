@@ -36,13 +36,29 @@ LogProvider::LogProvider(QObject *parent)
 
 void LogProvider::cancel()
 {
-    if (mProcess && mProcess->state() != QProcess::NotRunning) {
-        mProcess->kill();
-        mProcess->waitForFinished(3000);
-        mProcess->deleteLater();
-        mProcess = nullptr;
-        mBusy = false;
+    if (!mProcess)
+        return;
+
+    // Take ownership locally and null the member first, so that even if a
+    // queued signal still drives onProcessFinished() later, it cannot
+    // dereference a stale pointer or double-delete the QProcess.
+    QProcess *p = mProcess;
+    mProcess = nullptr;
+    mBusy = false;
+
+    // Disconnect before waitForFinished(): that call processes events on the
+    // current thread, which would otherwise deliver finished() synchronously
+    // and run onProcessFinished() — whose error path nulls mProcess and calls
+    // deleteLater() while we are still mid-cancel, leading to a null deref
+    // on the next mProcess access here (H2 in the 2026-06-10 audit).
+    p->disconnect(this);
+
+    if (p->state() != QProcess::NotRunning) {
+        p->kill();
+        p->waitForFinished(3000);
     }
+
+    p->deleteLater();
 }
 
 LogProvider *LogProvider::createForPlatform(QObject *parent)
