@@ -29,7 +29,7 @@ named full-time maintainer, not a rotating team.
 These hold for the lifetime of the project. Any deviation requires written CEO
 approval and a recorded rationale.
 
-1. **Always free.** Distributed under GPL-3.0-or-later. The license check in
+1. **Always free.** Distributed under GPL-3.0-only. The license check in
    the release runbook (`RELEASE.md` §0) runs every release.
 2. **No monetization.** No paid tiers, no donation walls in the app, no
    sponsor-only features, no telemetry-for-revenue. Ever.
