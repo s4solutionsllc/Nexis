@@ -33,7 +33,7 @@ private slots:
     void cmbLanguagesChanged(const int &index);
     void cmbDiskChanged(const int &index);
     void on_checkAutostart_clicked(bool checked);
-    void cmbStartPageChanged(const QString text);
+    void cmbStartPageChanged(const int index);
     void on_spinCpuPercent_valueChanged(int value);
     void on_spinMemoryPercent_valueChanged(int value);
     void on_spinDiskPercent_valueChanged(int value);

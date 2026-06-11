@@ -1,5 +1,7 @@
 #include "setting_manager.h"
 
+#include <QHash>
+
 SettingManager::SettingManager()
 {
     mConfigPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
@@ -58,7 +60,59 @@ void SettingManager::setStartPage(const QString &value)
 
 QString SettingManager::getStartPage() const
 {
-    return mSettings->value(SettingKeys::StartPage, QObject::tr("Dashboard")).toString();
+    return migrateStartPageId(
+        mSettings->value(SettingKeys::StartPage, QStringLiteral("dashboard")).toString());
+}
+
+QString SettingManager::migrateStartPageId(const QString &storedValue)
+{
+    // Canonical id set — anything already in this set round-trips
+    // unchanged. Keep in sync with the ids assigned to App::PageSlot
+    // entries in app.cpp.
+    static const QHash<QString, bool> kKnownIds = {
+        {QStringLiteral("dashboard"), true},
+        {QStringLiteral("hardwareInfo"), true},
+        {QStringLiteral("resources"), true},
+        {QStringLiteral("networkUsage"), true},
+        {QStringLiteral("systemCleaner"), true},
+        {QStringLiteral("diskTools"), true},
+        {QStringLiteral("search"), true},
+        {QStringLiteral("processes"), true},
+        {QStringLiteral("services"), true},
+        {QStringLiteral("startupApps"), true},
+        {QStringLiteral("bootAnalysis"), true},
+        {QStringLiteral("uninstaller"), true},
+        {QStringLiteral("helpers"), true},
+        {QStringLiteral("systemLogs"), true},
+        {QStringLiteral("docker"), true},
+        {QStringLiteral("aptSourceManager"), true},
+        {QStringLiteral("gnomeSettings"), true},
+        {QStringLiteral("settings"), true},
+    };
+    if (kKnownIds.contains(storedValue))
+        return storedValue;
+
+    // Legacy mapping: the previous build saved whatever text the combo
+    // had selected (always English in the current settings page combo)
+    // plus the macOS sidebar tooltip variant "Applications" for the
+    // uninstaller page. Map known legacy localized strings back to ids.
+    static const QHash<QString, QString> kLegacyTitles = {
+        {QStringLiteral("Dashboard"),    QStringLiteral("dashboard")},
+        {QStringLiteral("Startup Apps"), QStringLiteral("startupApps")},
+        {QStringLiteral("System Cleaner"), QStringLiteral("systemCleaner")},
+        {QStringLiteral("Search"),       QStringLiteral("search")},
+        {QStringLiteral("Services"),     QStringLiteral("services")},
+        {QStringLiteral("Processes"),    QStringLiteral("processes")},
+        {QStringLiteral("Helpers"),      QStringLiteral("helpers")},
+        {QStringLiteral("Uninstaller"),  QStringLiteral("uninstaller")},
+        {QStringLiteral("Applications"), QStringLiteral("uninstaller")},
+        {QStringLiteral("Resources"),    QStringLiteral("resources")},
+    };
+    auto it = kLegacyTitles.constFind(storedValue);
+    if (it != kLegacyTitles.constEnd())
+        return it.value();
+
+    return QStringLiteral("dashboard");
 }
 
 void SettingManager::setCpuAlertPercent(const int value)

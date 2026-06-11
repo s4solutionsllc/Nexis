@@ -31,6 +31,11 @@ struct SidebarSection {
 // attached to the stacked widget. In the FR-97 scaffold (Commit A) every slot
 // is still eagerly constructed; Commit B flips non-Dashboard slots to lazy.
 struct PageSlot {
+    // Stable, untranslated identifier. Used by SettingManager::getStartPage
+    // (SSO-3388) so the persisted start page survives a language change and
+    // by command-palette / navigation callers that need a language-stable
+    // handle on a page.
+    QString id;
     QString title;
     std::function<QWidget*()> factory;
     QWidget *widget = nullptr;
@@ -97,6 +102,10 @@ private:
     QWidget *getPageByTitle(const QString &title);
     QWidget *ensurePage(int index);
     QWidget *ensurePageByTitle(const QString &title);
+    // SSO-3388: resolve a stable page id (e.g. "dashboard") to its
+    // currently-localized sidebar title, or an empty string if no page
+    // with that id is registered.
+    QString pageTitleById(const QString &id) const;
     void checkSidebarButtonByTooltip(const QString &text);
     void createTrayActions();
     void updateSidebarIcons();

@@ -392,26 +392,31 @@ void App::init()
     // (zero behavior change). Commit B will drop the eager loop for
     // non-Dashboard slots.
     mPageSlots.append({
+        "dashboard",
         tr("Dashboard"),
         [this]() -> QWidget* { dashboardPage = new DashboardPage(mSlidingStacked); return dashboardPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "hardwareInfo",
         tr("Hardware Info"),
         [this]() -> QWidget* { hardwareInfoPage = new HardwareInfoPage(mSlidingStacked); return hardwareInfoPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "resources",
         tr("Resources"),
         [this]() -> QWidget* { resourcesPage = new ResourcesPage(mSlidingStacked); return resourcesPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "networkUsage",
         tr("Network Usage"),
         [this]() -> QWidget* { networkUsagePage = new NetworkUsagePage(mSlidingStacked); return networkUsagePage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "systemCleaner",
         tr("System Cleaner"),
         [this]() -> QWidget* {
             systemCleanerPage = new SystemCleanerPage(mSlidingStacked);
@@ -433,36 +438,43 @@ void App::init()
         nullptr, {}
     });
     mPageSlots.append({
+        "diskTools",
         tr("Disk Tools"),
         [this]() -> QWidget* { diskToolsPage = new DiskToolsPage(mSlidingStacked); return diskToolsPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "search",
         tr("Search"),
         [this]() -> QWidget* { searchPage = new SearchPage(mSlidingStacked); return searchPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "processes",
         tr("Processes"),
         [this]() -> QWidget* { processPage = new ProcessesPage(mSlidingStacked); return processPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "services",
         tr("Services"),
         [this]() -> QWidget* { servicesPage = new ServicesPage(mSlidingStacked); return servicesPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "startupApps",
         tr("Startup Apps"),
         [this]() -> QWidget* { startupAppsPage = new StartupAppsPage(mSlidingStacked); return startupAppsPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "bootAnalysis",
         tr("Boot Analysis"),
         [this]() -> QWidget* { bootAnalysisPage = new BootAnalysisPage(mSlidingStacked); return bootAnalysisPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "uninstaller",
 #ifdef Q_OS_MAC
         tr("Applications"),
 #else
@@ -472,16 +484,19 @@ void App::init()
         nullptr, {}
     });
     mPageSlots.append({
+        "helpers",
         tr("Helpers"),
         [this]() -> QWidget* { helpersPage = new HelpersPage(mSlidingStacked); return helpersPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "systemLogs",
         tr("System Logs"),
         [this]() -> QWidget* { systemLogsPage = new SystemLogsPage(mSlidingStacked); return systemLogsPage; },
         nullptr, {}
     });
     mPageSlots.append({
+        "settings",
         tr("Settings"),
         [this]() -> QWidget* { settingsPage = new SettingsPage(mSlidingStacked); return settingsPage; },
         nullptr, {}
@@ -496,6 +511,7 @@ void App::init()
     if (ToolManager::ins()->checkSourceRepository()) {
         int idx = mListSidebarButtons.indexOf(btnSettings);
         mPageSlots.insert(idx, {
+            "aptSourceManager",
 #ifdef Q_OS_MAC
             tr("Homebrew"),
 #else
@@ -547,6 +563,7 @@ void App::init()
     if (ToolManager::ins()->checkDocker()) {
         int dockerIdx = mListSidebarButtons.indexOf(btnHelpers);
         mPageSlots.insert(dockerIdx, {
+            "docker",
             tr("Docker"),
             [this]() -> QWidget* { dockerPage = new DockerPage(mSlidingStacked); return dockerPage; },
             nullptr, {}
@@ -563,6 +580,7 @@ void App::init()
     if (ToolManager::ins()->checkGnomeSettings()) {
         int settingsIdx = mListSidebarButtons.indexOf(btnSettings);
         mPageSlots.insert(settingsIdx, {
+            "gnomeSettings",
             tr("GNOME Settings"),
             [this]() -> QWidget* { gnomeSettingsPage = new GnomeSettingsPage(mSlidingStacked); return gnomeSettingsPage; },
             nullptr, {}
@@ -653,8 +671,10 @@ void App::init()
 
     // Set start page. Must run before DataRefreshService::start() so the
     // landing page's onPageActivated() can register subscribers (FR-103)
-    // before the service fires its initial immediate ticks.
-    clickSidebarButton(SettingManager::ins()->getStartPage());
+    // before the service fires its initial immediate ticks. SSO-3388: the
+    // setting is now a stable id; resolve it to the currently-localized
+    // title that clickSidebarButton/checkSidebarButtonByTooltip expect.
+    clickSidebarButton(pageTitleById(SettingManager::ins()->getStartPage()));
 
     DataRefreshService::ins()->start();
     NetUsageTracker::ins()->start(DataRefreshService::ins());
@@ -945,6 +965,15 @@ QWidget* App::ensurePageByTitle(const QString &title)
             return ensurePage(i);
     }
     return nullptr;
+}
+
+QString App::pageTitleById(const QString &id) const
+{
+    for (const PageSlot &slot : mPageSlots) {
+        if (slot.id == id)
+            return slot.title;
+    }
+    return QString();
 }
 
 void App::ensureAllPages()

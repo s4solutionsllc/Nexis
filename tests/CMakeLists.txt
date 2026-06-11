@@ -166,6 +166,18 @@ add_nexis_test(NAME ScheduleTests
     "${GUI_SHARED_DIR}/Managers"
 )
 
+# SettingManager — start-page id migration (SSO-3388). Pure unit test: we
+# only need SettingManager itself; QStandardPaths is redirected to a temp
+# dir via setTestModeEnabled() in initTestCase.
+add_nexis_test(NAME SettingManagerTests
+  SOURCES
+    managers/test_setting_manager.cpp
+    "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+)
+
 # CleanerService exclusion logic — links against nexis-gui because
 # CleanerService::scan()/clean() reference InfoManager and ToolManager.
 # Tests only exercise isExcluded(), load/save/add/removeExclusion().
