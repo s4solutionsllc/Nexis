@@ -3,7 +3,7 @@
 #ifdef Q_OS_MACOS
 #include <Tools/service_tool_macos.h>
 #include <Tools/package_tool_macos.h>
-#include <Tools/apt_source_tool_macos.h>
+#include <Tools/homebrew_tool_macos.h>
 #include <Tools/gnome_settings_tool_macos.h>
 #include <Tools/repo_health_checker_macos.h>
 #include <Tools/repo_repair_engine_macos.h>
@@ -23,14 +23,17 @@ ToolManager::ToolManager()
 #ifdef Q_OS_MACOS
     mServiceTool       = std::make_unique<ServiceToolMacOS>();
     mPackageTool       = std::make_unique<PackageToolMacOS>();
-    mAptSourceTool     = std::make_unique<AptSourceToolMacOS>();
+    mRepositoryTool    = std::make_unique<HomebrewToolMacOS>();
     mGnomeSettings     = std::make_unique<GnomeSettingsToolMacOS>();
     mRepoHealthChecker = std::make_unique<RepoHealthCheckerMac>();
     mRepoRepairEngine  = std::make_unique<RepoRepairEngineMac>();
 #else
     mServiceTool       = std::make_unique<ServiceToolLinux>();
     mPackageTool       = std::make_unique<PackageToolLinux>();
-    mAptSourceTool     = std::make_unique<AptSourceToolLinux>();
+    auto aptTool       = std::make_unique<AptSourceToolLinux>();
+    // mAptSourceTool is a non-owning view of the object owned by mRepositoryTool.
+    mAptSourceTool     = aptTool.get();
+    mRepositoryTool    = std::move(aptTool);
     mGnomeSettings     = std::make_unique<GnomeSettingsToolLinux>();
     mRepoHealthChecker = std::make_unique<RepoHealthCheckerLinux>();
     mRepoRepairEngine  = std::make_unique<RepoRepairEngineLinux>();
@@ -181,13 +184,19 @@ bool ToolManager::checkGnomeSettings() const
 }
 
 /*
- * APT Source / Homebrew Taps
+ * Software sources (APT on Linux, Homebrew on macOS)
  */
 bool ToolManager::checkSourceRepository() const
 {
-    return mAptSourceTool->checkSourceRepository();
+    return mRepositoryTool->isAvailable();
 }
 
+void ToolManager::addRepository(const QString &spec, bool isSource)
+{
+    mRepositoryTool->addRepository(spec, isSource);
+}
+
+#ifndef Q_OS_MACOS
 QList<APTSourcePtr> ToolManager::getSourceList() const
 {
     return mAptSourceTool->getSourceList();
@@ -207,8 +216,4 @@ void ToolManager::changeAPTSource(const APTSourcePtr aptSource, const APTSourceP
 {
     mAptSourceTool->changeSource(aptSource, newSource);
 }
-
-void ToolManager::addAPTRepository(const QString &repository, const bool isSource)
-{
-    mAptSourceTool->addRepository(repository, isSource);
-}
+#endif

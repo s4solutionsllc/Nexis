@@ -128,6 +128,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Info/fan_info.h"
   "${CORE_SHARED_DIR}/Info/update_info.h"
   "${CORE_SHARED_DIR}/Tools/apt_source_tool.h"
+  "${CORE_SHARED_DIR}/Tools/repository_tool.h"
   "${CORE_SHARED_DIR}/Tools/repo_health_types.h"
   "${CORE_SHARED_DIR}/Tools/repo_knowledge_base.h"
   "${CORE_SHARED_DIR}/Tools/repo_health_checker.h"
@@ -161,7 +162,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/thermal_info.cpp"
     "${CORE_PLAT_DIR}/Info/fan_info.cpp"
     "${CORE_PLAT_DIR}/Info/update_info.cpp"
-    "${CORE_PLAT_DIR}/Tools/apt_source_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/homebrew_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/crumbs_scanner.cpp"
     "${CORE_PLAT_DIR}/Tools/file_search_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool.cpp"
@@ -189,7 +190,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/thermal_info_macos.h"
     "${CORE_PLAT_DIR}/Info/fan_info_macos.h"
     "${CORE_PLAT_DIR}/Info/update_info_macos.h"
-    "${CORE_PLAT_DIR}/Tools/apt_source_tool_macos.h"
+    "${CORE_PLAT_DIR}/Tools/homebrew_tool_macos.h"
     "${CORE_PLAT_DIR}/Tools/crumbs_scanner.h"
     "${CORE_PLAT_DIR}/Tools/file_search_tool_macos.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_constants.h"
@@ -325,10 +326,8 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Services/package_service.cpp"
   "${GUI_SHARED_DIR}/Services/snapshot_service.cpp"
   "${GUI_SHARED_DIR}/Managers/process_prefs_manager.cpp"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_edit.cpp"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_manager_page.cpp"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_repository_item.cpp"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager/repo_detail_panel.cpp"
+  # APT-specific GUI components live under linux/ only — they're built into
+  # GUI_PLAT_SRCS on Linux. On macOS the Homebrew page replaces them.
   "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/linebar.cpp"
@@ -413,10 +412,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Services/package_service.h"
   "${GUI_SHARED_DIR}/Services/snapshot_service.h"
   "${GUI_SHARED_DIR}/Managers/process_prefs_manager.h"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_edit.h"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_manager_page.h"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager/apt_source_repository_item.h"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager/repo_detail_panel.h"
+  # APT-specific GUI headers live under linux/ only (see GUI_PLAT_HDRS).
   "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.h"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_page.h"
   "${GUI_SHARED_DIR}/Pages/Dashboard/linebar.h"
@@ -473,17 +469,28 @@ if(APPLE)
   set(GUI_PLAT_SRCS
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
+    "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
   )
   set(GUI_PLAT_HDRS
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
+    "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"
   )
 else()
   set(GUI_PLAT_SRCS
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
+    "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_edit.cpp"
+    "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_manager_page.cpp"
+    "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_repository_item.cpp"
+    "${GUI_PLAT_DIR}/Pages/AptSourceManager/repo_detail_panel.cpp"
   )
-  set(GUI_PLAT_HDRS)
+  set(GUI_PLAT_HDRS
+    "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_edit.h"
+    "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_manager_page.h"
+    "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_repository_item.h"
+    "${GUI_PLAT_DIR}/Pages/AptSourceManager/repo_detail_panel.h"
+  )
 endif()
 
 # Translations
@@ -558,12 +565,14 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
   "${GUI_SHARED_DIR}/Pages/DiskTools"
   "${GUI_SHARED_DIR}/Pages/Uninstaller"
   "${GUI_SHARED_DIR}/Pages/Helpers"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings"
   "${GUI_SHARED_DIR}/Pages/Search"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo"
   "${GUI_SHARED_DIR}/Pages/Docker"
 )
+if(NOT APPLE)
+  list(APPEND CMAKE_AUTOUIC_SEARCH_PATHS "${GUI_PLAT_DIR}/Pages/AptSourceManager")
+endif()
 
 # --- nexis-gui static library (everything except main.cpp) ---
 add_library(nexis-gui STATIC
@@ -599,13 +608,17 @@ target_include_directories(nexis-gui PUBLIC
   "${GUI_SHARED_DIR}/Pages/DiskTools"
   "${GUI_SHARED_DIR}/Pages/Uninstaller"
   "${GUI_SHARED_DIR}/Pages/Helpers"
-  "${GUI_SHARED_DIR}/Pages/AptSourceManager"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings"
   "${GUI_SHARED_DIR}/Pages/Search"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo"
   "${GUI_SHARED_DIR}/Pages/Docker"
   "${CMAKE_BINARY_DIR}"
 )
+if(APPLE)
+  target_include_directories(nexis-gui PUBLIC "${GUI_PLAT_DIR}/Pages/Homebrew")
+else()
+  target_include_directories(nexis-gui PUBLIC "${GUI_PLAT_DIR}/Pages/AptSourceManager")
+endif()
 
 if(APP_VERSION_OVERRIDE AND NOT APP_VERSION_OVERRIDE STREQUAL "")
   set(APP_VERSION "${APP_VERSION_OVERRIDE}")

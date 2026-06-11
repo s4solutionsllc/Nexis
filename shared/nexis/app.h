@@ -53,7 +53,11 @@ struct PageSlot {
 #include "Pages/Resources/resources_page.h"
 #include "Pages/Network/network_usage_page.h"
 #include "Pages/Settings/settings_page.h"
+#ifdef Q_OS_MAC
+#include "Pages/Homebrew/homebrew_page.h"
+#else
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
+#endif
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
 #include "Pages/DiskTools/disk_tools_page.h"
@@ -145,7 +149,11 @@ private:
     UninstallerPage *uninstallerPage;
     ResourcesPage *resourcesPage;
     NetworkUsagePage *networkUsagePage;
-    APTSourceManagerPage *aptSourceManagerPage;
+#ifdef Q_OS_MAC
+    HomebrewPage *homebrewPage = nullptr;
+#else
+    APTSourceManagerPage *aptSourceManagerPage = nullptr;
+#endif
     DockerPage *dockerPage;
     GnomeSettingsPage *gnomeSettingsPage;
     SettingsPage *settingsPage;

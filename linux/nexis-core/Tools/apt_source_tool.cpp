@@ -24,10 +24,39 @@ static QString sourceType()
     return isAptRpm() ? "rpm-src" : "deb-src";
 }
 
-bool AptSourceToolLinux::checkSourceRepository()
+bool AptSourceToolLinux::isAvailable()
 {
     QDir sourceList(APT_SOURCES_LIST_D_PATH);
     return sourceList.exists();
+}
+
+QList<RepositoryPtr> AptSourceToolLinux::listRepositories()
+{
+    QList<RepositoryPtr> result;
+    for (const APTSourcePtr &src : getSourceList()) {
+        RepositoryPtr repo(new Repository);
+        repo->kind = Repository::Kind::AptSource;
+        repo->id = src->source;
+        repo->displayName = src->source;
+        repo->description = src->components;
+        repo->isActive = src->isActive;
+        result.append(repo);
+    }
+    return result;
+}
+
+void AptSourceToolLinux::removeRepository(const RepositoryPtr &repo)
+{
+    if (repo.isNull())
+        return;
+    // Resolve the matching APTSource by stable id (the raw source line)
+    // and delegate to the APT-specific implementation.
+    for (const APTSourcePtr &src : getSourceList()) {
+        if (src->source == repo->id) {
+            removeAPTSource(src);
+            return;
+        }
+    }
 }
 
 void AptSourceToolLinux::removeAPTSource(const APTSourcePtr aptSource)

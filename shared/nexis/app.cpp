@@ -1,4 +1,5 @@
 #include "app.h"
+#include "Managers/tool_manager.h"
 #include "ui_app.h"
 #include "Pages/Network/net_usage_tracker.h"
 #include "utilities.h"
@@ -503,17 +504,18 @@ void App::init()
         btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnHelpers, btnSystemLogs, btnSettings
     };
 
-    // APT SOURCE MANAGER
+    // Software sources page — Homebrew on macOS, APT on Linux
     if (ToolManager::ins()->checkSourceRepository()) {
         int idx = mListSidebarButtons.indexOf(btnSettings);
         mPageSlots.insert(idx, {
             "aptSourceManager",
 #ifdef Q_OS_MAC
             tr("Homebrew"),
+            [this]() -> QWidget* { homebrewPage = new HomebrewPage(mSlidingStacked); return homebrewPage; },
 #else
             tr("APT Repository Manager"),
-#endif
             [this]() -> QWidget* { aptSourceManagerPage = new APTSourceManagerPage(mSlidingStacked); return aptSourceManagerPage; },
+#endif
             nullptr, {}
         });
         mListSidebarButtons.insert(idx, btnAptSourceManager);

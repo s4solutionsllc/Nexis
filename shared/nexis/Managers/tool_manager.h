@@ -5,11 +5,15 @@
 
 #include <Tools/service_tool.h>
 #include <Tools/package_tool_shared.h>
-#include <Tools/apt_source_tool.h>
+#include <Tools/repository_tool.h>
 #include <Tools/gnome_settings_tool.h>
 #include <Tools/docker_tool.h>
 #include <Tools/repo_health_checker.h>
 #include <Tools/repo_repair_engine.h>
+
+#ifndef Q_OS_MACOS
+#include <Tools/apt_source_tool.h>
+#endif
 
 class ToolManager
 {
@@ -47,17 +51,26 @@ public:
     bool checkGnomeSettings() const;
     bool checkDocker() const;
 
+    // Platform-neutral software-sources surface (APT on Linux, Homebrew on macOS).
     bool checkSourceRepository() const;
+    void addRepository(const QString &spec, bool isSource);
+
+    GnomeSettingsTool *gnomeSettings() const { return mGnomeSettings.get(); }
+    PackageTool *packageTool() const { return mPackageTool.get(); }
+    RepositoryTool *repositoryTool() const { return mRepositoryTool.get(); }
+    RepoHealthChecker *repoHealthChecker() const { return mRepoHealthChecker.get(); }
+    RepoRepairEngine *repoRepairEngine() const { return mRepoRepairEngine.get(); }
+
+#ifndef Q_OS_MACOS
+    // APT-specific surface lives on Linux only — the Homebrew backend doesn't
+    // implement these operations, so callers reach them through this accessor
+    // instead of through the platform-neutral RepositoryTool.
+    AptSourceTool *aptSourceTool() const { return mAptSourceTool; }
     QList<APTSourcePtr> getSourceList() const;
     void removeAPTSource(const APTSourcePtr source);
     void changeAPTStatus(const APTSourcePtr aptSource, const bool status);
     void changeAPTSource(const APTSourcePtr aptSource, const APTSourcePtr newSource);
-    void addAPTRepository(const QString &repository, const bool isSource);
-
-    GnomeSettingsTool *gnomeSettings() const { return mGnomeSettings.get(); }
-    PackageTool *packageTool() const { return mPackageTool.get(); }
-    RepoHealthChecker *repoHealthChecker() const { return mRepoHealthChecker.get(); }
-    RepoRepairEngine *repoRepairEngine() const { return mRepoRepairEngine.get(); }
+#endif
 
 private:
     ToolManager();
@@ -65,10 +78,16 @@ private:
 
     std::unique_ptr<ServiceTool> mServiceTool;
     std::unique_ptr<PackageTool> mPackageTool;
-    std::unique_ptr<AptSourceTool> mAptSourceTool;
+    std::unique_ptr<RepositoryTool> mRepositoryTool;
     std::unique_ptr<GnomeSettingsTool> mGnomeSettings;
     std::unique_ptr<RepoHealthChecker> mRepoHealthChecker;
     std::unique_ptr<RepoRepairEngine> mRepoRepairEngine;
+
+#ifndef Q_OS_MACOS
+    // Non-owning alias for the APT-specific surface of mRepositoryTool on
+    // Linux. Always points at the same object as mRepositoryTool.
+    AptSourceTool *mAptSourceTool = nullptr;
+#endif
 };
 
 #endif // TOOL_MANAGER_H
