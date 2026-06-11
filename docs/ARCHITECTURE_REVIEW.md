@@ -660,3 +660,6 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Pages/AptSourceManager/repo_detail_panel.h/.cpp` | Side detail panel widget: repo name, status badge, description, metadata, issue list with severity colors, action buttons (Edit/Open URI/Disable/Repair) |
 | `shared/nexis/Managers/cleaner_service.cpp` | Example of thick manager with real business logic |
 | `shared/nexis/Managers/schedule_manager.cpp` | Example of OS-native integration complexity |
+| `shared/nexis/Managers/dir_size_scanner.h/.cpp` | SSO-3737 / FW-09: off-thread recursive directory-size aggregation that backs the built-in treemap visualizer. Skips symlinks; (dev,inode) dedup for hard links. Pure `scanSynchronous()` exposed for unit tests. |
+| `shared/nexis/Pages/Resources/treemap_view.h/.cpp` | SSO-3737 / FW-09: squarified treemap rendering on raw `QPainter`; hover tooltips, drill-down, context menu hooks. |
+| `shared/nexis/Pages/Resources/disk_treemap_dialog.h/.cpp` | SSO-3737 / FW-09: wraps `DirSizeScanner` + `TreemapView`. Routes "Move to trash" through `FileSearchService` to share the cleaner's trash path. |

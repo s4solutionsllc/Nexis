@@ -1,4 +1,5 @@
 #include "disk_usage_launcher_widget.h"
+#include "disk_treemap_dialog.h"
 #include "dpi.h"
 
 #include <QVBoxLayout>
@@ -112,9 +113,18 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent,
     mActionButton->setCursor(Qt::PointingHandCursor);
     connect(mActionButton, &QPushButton::clicked, this, &DiskUsageLauncherWidget::onActionClicked);
 
+    // SSO-3737 / FW-09: built-in treemap entry point. Sits next to the
+    // external-tool launcher so DaisyDisk/Baobab users can still launch
+    // their preferred tool, but we now offer something out of the box.
+    mBuiltinButton = new QPushButton(tr("Built-in Treemap"), this);
+    mBuiltinButton->setCursor(Qt::PointingHandCursor);
+    connect(mBuiltinButton, &QPushButton::clicked,
+            this, &DiskUsageLauncherWidget::onBuiltinClicked);
+
     auto *buttonLayout = new QHBoxLayout;
     buttonLayout->setContentsMargins(Dpi::scale(12), 0, Dpi::scale(12), Dpi::scale(12));
     buttonLayout->addStretch();
+    buttonLayout->addWidget(mBuiltinButton);
     buttonLayout->addWidget(mActionButton);
     buttonLayout->addStretch();
 
@@ -555,6 +565,18 @@ void DiskUsageLauncherWidget::onActionClicked()
     case NO_TOOL:
         break;
     }
+}
+
+void DiskUsageLauncherWidget::onBuiltinClicked()
+{
+    // Dialog parents to the launcher's top-level window so it raises and
+    // closes with Nexis. It owns its own scanner thread; multiple opens
+    // create independent dialogs.
+    auto *dlg = new DiskTreemapDialog(window(), mAppManager, mSignalMapper);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->show();
+    dlg->raise();
+    dlg->activateWindow();
 }
 
 void DiskUsageLauncherWidget::applyThemeColors()

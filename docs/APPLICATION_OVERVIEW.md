@@ -354,6 +354,7 @@ Historical time-series charts for system resource usage.
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
 - Configurable preference in Settings (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper; or custom path)
+- **Built-in Treemap (FW-09, SSO-3737):** secondary "Built-in Treemap" button on the same card opens a built-in `DiskTreemapDialog` that runs a `DirSizeScanner` on a `QtConcurrent` worker, then renders a squarified treemap with `TreemapView` (pure `QPainter`). Supports drill-down (double-click), hover tooltips, "Reveal in file manager", and "Move to trash" (reuses `FileSearchService` → cleaner trash path). Skips symlinks and dedups hard links so byte counts match what Baobab/DaisyDisk would report. The external-tool launcher remains as a parallel option.
 
 ### 10a. Network Usage
 
