@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFileInfo>
+#include <QMutexLocker>
 DiskHealthInfoLinux::DiskHealthInfoLinux()
 {
     mHasSmartctl = CommandUtil::isExecutable("smartctl");
@@ -12,13 +13,16 @@ DiskHealthInfoLinux::DiskHealthInfoLinux()
     // window paints (via DataRefreshService::onSlowTick on first start).
 }
 
-void DiskHealthInfoLinux::discoverDrives()
+QList<DriveHealth> DiskHealthInfoLinux::collectDriveHealth()
 {
-    mDrives.clear();
+    // WI-03: builds into a local list; the UI thread publishes via setDrives().
+    // Never touch mDrives here — discovery runs on a QtConcurrent worker and
+    // mDrives is read/written by the UI thread (getDrives, refreshHealthElevated*).
+    QList<DriveHealth> drives;
 
     QDir blocks("/sys/block");
     if (!blocks.exists())
-        return;
+        return drives;
 
     QStringList entries = blocks.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
 
@@ -85,13 +89,10 @@ void DiskHealthInfoLinux::discoverDrives()
         }
 
         deriveHealthVerdict(drive);
-        mDrives.append(drive);
+        drives.append(drive);
     }
-}
 
-void DiskHealthInfoLinux::refreshHealth()
-{
-    discoverDrives();
+    return drives;
 }
 
 void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
@@ -117,8 +118,11 @@ void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
     }
 
     try {
+        // pkexec/smartctl can block for many seconds — run it without holding
+        // the mDrives mutex, then take the lock only to merge results in.
         QString output = CommandUtil::exec("pkexec", {"sh", "-c", cmd});
         QList<QByteArray> blocks = DiskHealthInfo::splitSmartctlOutput(output);
+        QMutexLocker locker(&mDrivesMutex);
         for (int i = 0; i < blocks.size() && i < devices.size(); ++i) {
             for (int j = 0; j < mDrives.size(); ++j) {
                 if (mDrives[j].devicePath == devices[i]) {
@@ -139,14 +143,22 @@ void DiskHealthInfoLinux::refreshHealthElevated(const QString &device)
     if (!mHasSmartctl)
         return;
 
+    // Run pkexec/smartctl outside the lock (may block for seconds), then
+    // take the lock only to merge the parsed result back into mDrives.
+    QString output;
+    try {
+        output = CommandUtil::exec("pkexec", {"smartctl", "-j", "-a", device});
+    } catch (...) {
+        qWarning() << "Failed to read SMART data for" << device;
+        return;
+    }
+
+    QMutexLocker locker(&mDrivesMutex);
     for (int i = 0; i < mDrives.size(); ++i) {
         if (mDrives[i].devicePath == device) {
-            try {
-                QString output = CommandUtil::exec("pkexec", {"smartctl", "-j", "-a", device});
-                DiskHealthInfo::parseSmartctlJsonInto(output.toUtf8(), mDrives[i]);
-                mDrives[i].needsElevation = false;
-                deriveHealthVerdict(mDrives[i]);
-            } catch (...) { qWarning() << "Failed to read SMART data for" << device; }
+            DiskHealthInfo::parseSmartctlJsonInto(output.toUtf8(), mDrives[i]);
+            mDrives[i].needsElevation = false;
+            deriveHealthVerdict(mDrives[i]);
             break;
         }
     }
