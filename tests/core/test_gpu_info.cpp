@@ -1,5 +1,20 @@
 #include <QTest>
+#include <QDir>
+#include <QFile>
+#include <QTemporaryDir>
 #include "Info/gpu_info.h"
+
+namespace {
+// Helper: write a freq file with a fixed value so QFile::exists() returns true.
+void writeFreqFile(const QString &path, const QString &value = "300")
+{
+    QFile f(path);
+    QVERIFY2(f.open(QIODevice::WriteOnly | QIODevice::Text),
+             qPrintable(QString("open %1: %2").arg(path, f.errorString())));
+    f.write(value.toUtf8());
+    f.close();
+}
+}  // namespace
 
 class TestGpuInfo : public QObject
 {
@@ -49,6 +64,14 @@ private slots:
     void normPci_uppercase();
     void normPci_shortForm();
     void normPci_empty();
+
+    // findIntelXeFreqDir (GH#91)
+    void xeFreqDir_iGpuTile0Gt0();
+    void xeFreqDir_picksFirstTileFirstGt();
+    void xeFreqDir_skipsTileMissingFreqFiles();
+    void xeFreqDir_emptyWhenNoTiles();
+    void xeFreqDir_emptyWhenI915Layout();
+    void xeFreqDir_emptyWhenPathMissing();
 };
 
 // --- parseNvidiaSmiUtilization ---
@@ -235,6 +258,81 @@ void TestGpuInfo::normPci_shortForm()
 void TestGpuInfo::normPci_empty()
 {
     QCOMPARE(GpuInfo::normalizePciBusId(""), "");
+}
+
+// --- findIntelXeFreqDir (GH#91) ---
+
+void TestGpuInfo::xeFreqDir_iGpuTile0Gt0()
+{
+    // Single-tile, single-GT iGPU layout (Raptor Lake-P with the xe driver):
+    //   <device>/tile0/gt0/freq0/{cur_freq,max_freq}
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    QString freq0 = tmp.filePath("tile0/gt0/freq0");
+    QVERIFY(QDir().mkpath(freq0));
+    writeFreqFile(freq0 + "/cur_freq", "450");
+    writeFreqFile(freq0 + "/max_freq", "1300");
+
+    QString found = GpuInfo::findIntelXeFreqDir(tmp.path());
+    QCOMPARE(found, freq0);
+}
+
+void TestGpuInfo::xeFreqDir_picksFirstTileFirstGt()
+{
+    // Multi-tile / multi-GT cards: probe tile0/gt0 first (QDir::Name order).
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    for (const QString &t : {"tile0", "tile1"}) {
+        for (const QString &g : {"gt0", "gt1"}) {
+            QString freq0 = tmp.filePath(t + "/" + g + "/freq0");
+            QVERIFY(QDir().mkpath(freq0));
+            writeFreqFile(freq0 + "/cur_freq", "500");
+            writeFreqFile(freq0 + "/max_freq", "1500");
+        }
+    }
+
+    QString found = GpuInfo::findIntelXeFreqDir(tmp.path());
+    QCOMPARE(found, tmp.filePath("tile0/gt0/freq0"));
+}
+
+void TestGpuInfo::xeFreqDir_skipsTileMissingFreqFiles()
+{
+    // tile0/gt0/freq0 exists but is empty; tile0/gt1 is fully wired. The probe
+    // should advance to gt1 instead of returning a dir that lacks the files
+    // the utilization reader will need.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    QVERIFY(QDir().mkpath(tmp.filePath("tile0/gt0/freq0")));
+    QString gt1Freq = tmp.filePath("tile0/gt1/freq0");
+    QVERIFY(QDir().mkpath(gt1Freq));
+    writeFreqFile(gt1Freq + "/cur_freq", "600");
+    writeFreqFile(gt1Freq + "/max_freq", "1600");
+
+    QString found = GpuInfo::findIntelXeFreqDir(tmp.path());
+    QCOMPARE(found, gt1Freq);
+}
+
+void TestGpuInfo::xeFreqDir_emptyWhenNoTiles()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    QVERIFY(GpuInfo::findIntelXeFreqDir(tmp.path()).isEmpty());
+}
+
+void TestGpuInfo::xeFreqDir_emptyWhenI915Layout()
+{
+    // i915 puts cur/max directly under <cardN>/, not under <device>/tile*/gt*/.
+    // The xe probe must not match these and must let the caller fall back.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    writeFreqFile(tmp.filePath("gt_cur_freq_mhz"), "300");
+    writeFreqFile(tmp.filePath("gt_max_freq_mhz"), "1300");
+    QVERIFY(GpuInfo::findIntelXeFreqDir(tmp.path()).isEmpty());
+}
+
+void TestGpuInfo::xeFreqDir_emptyWhenPathMissing()
+{
+    QVERIFY(GpuInfo::findIntelXeFreqDir("/does/not/exist/nexis-test").isEmpty());
 }
 
 QTEST_MAIN(TestGpuInfo)

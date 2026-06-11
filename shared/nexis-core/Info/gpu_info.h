@@ -51,6 +51,12 @@ public:
     // e.g. "0000:07:00.0" and "00000000:07:00.0" both become "07:00.0"
     static QString normalizePciBusId(const QString &rawBusId);
 
+    // Probes the Intel xe driver per-tile, per-GT frequency layout under devicePath
+    // (typically ".../cardN/device"). Returns the path to the first
+    // "tile<T>/gt<G>/freq0" directory that contains both cur_freq and max_freq,
+    // or an empty string if no xe paths are present (e.g. the kernel is using i915).
+    static QString findIntelXeFreqDir(const QString &devicePath);
+
     // Returns a structured diagnostic report for GPU troubleshooting.
     virtual QString getDiagnosticReport() const;
 
