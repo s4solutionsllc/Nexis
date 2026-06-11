@@ -55,8 +55,33 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 17 test suites with ~242 test methods (Qt Test + CTest)
-- 88 features implemented, 102 bugs fixed since fork
+- 18 test suites with ~246 test methods (Qt Test + CTest)
+- 88 features implemented, 103 bugs fixed since fork
+**By the numbers (canonical table — referenced by [`ARCHITECTURE_REVIEW.md`](ARCHITECTURE_REVIEW.md)):**
+
+| Metric | Value | Source of truth |
+|--------|-------|-----------------|
+| Version | 2.3.13 | `project(... VERSION ...)` in `CMakeLists.txt` |
+| Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
+| Source files (C++) | 338 | same |
+| Test LOC | ~6,050 | `tests/` |
+| Test executables | 30 (29 unit + 1 screenshot) | `tests/CMakeLists.txt` |
+| Test methods | ~418 | `private slots:` in `tests/*/test_*.cpp` |
+| Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
+| Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
+| Info providers | 16 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` Linux-only); 14 wired through `InfoManager`, `BootAnalysisInfo`/`StartupInfo` standalone |
+| Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
+| Utility classes | 3 | `CommandUtil`, `FileUtil`, `FormatUtil` in `shared/nexis-core/Utils/` |
+| Manager singletons | 8 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |
+| Domain services | 9 | `shared/nexis/Services/` (`StartupService`, `FileSearchService`, `HostService`, `ProcessService`, `SystemServiceManager`, `DockerService`, `PackageService`, `DuplicateFinderService`, `SnapshotService`) |
+| `SignalMapper` signals | 10 | `shared/nexis/signal_mapper.h` |
+| `DataRefreshService` QTimers | 5 | fast (1 s) / medium (5 s) / slow (30 s) / process (configurable) / update (1 h) |
+| `DataRefreshService` signals | 15 | 14 cross-platform + Linux-only `psiUpdated` |
+| Themes | 2 (Dark = `default/`, Light = `light/`) | `shared/nexis/static/themes/` |
+| Color schemes | 3 (Auto / Light / Dark) | `AppManager::resolveThemeName()` |
+| Translations | 34 languages | `shared/translations/*.ts` |
+
+Update the table whenever the underlying value changes — the same numbers are referenced verbatim by `docs/ARCHITECTURE_REVIEW.md`, so a single edit here keeps both docs honest.
 
 ---
 
@@ -266,7 +291,8 @@ Advanced file search across the filesystem.
 - Search as root option (sudo)
 - Results table with path, size, modified date (sortable columns)
 - Double-click to open files in default application
-- Right-click context menu: open, open location, copy path
+- Right-click context menu: open folder, Move to Trash, Delete
+- Move-to-Trash and Delete run on a worker thread and report success/failure through `FileSearchService::fileOperationFinished` — long bulk operations no longer freeze the UI or crash the app on timeout (SSO-3365, audit H4).
 
 ### 7. Services
 
@@ -333,7 +359,7 @@ Continuous per-interface network data usage tracker with monthly cap management.
 
 **Usage Tracking:** A `NetUsageTracker` singleton subscribes to `DataRefreshService::networkPerInterfaceUpdated` (1s fast tick) at startup — always accumulating even when the page is not open. Each tick carries a `QHash<QString, NetInterfaceStats>` snapshot of every non-loopback up+running interface; the tracker computes per-interface deltas, adds them to each interface's today bucket, and debounces a 60-second write to `SettingManager` as a JSON blob. The accumulator handles reboot/iface restart counter resets by detecting when a new absolute value is less than the previous one (skip the delta, update the baseline). Tracking the full snapshot (rather than just the default interface) means Wi-Fi (`wlp*`, `wlan0`) is recorded even when it isn't the system default route, and a newly-connected interface is picked up on the next tick (SSO-351).
 
-**History:** 90-day rolling window of daily RX+TX buckets, stored as compact JSON in `~/.config/nexis/nexis.conf`.
+**History:** 90-day rolling window of daily RX+TX buckets, stored as compact JSON in `SettingManager`'s INI file (see [Configuration and Settings](#configuration-and-settings) for the resolved path on each platform).
 
 **Page UI:**
 - Interface selector (All Interfaces or individual adapter)
@@ -484,6 +510,7 @@ Filterable, searchable table of recent system logs for quick triage. Programmati
 - Severity filtering re-populates from cached entries
 - Manual refresh only (no auto-polling — logs are static history)
 - Initial load: last 500 entries (Linux) or last 1 hour (macOS)
+- `LogProvider::cancel()` is safe to call from `~SystemLogsPage()` mid-fetch — disconnects the finished slot, takes ownership of the QProcess locally, and nulls the member before kill/waitForFinished, so the synchronous CrashExit signal from `kill()` cannot drive a double-delete or null deref (SSO-3363 / audit H2)
 
 ### 16. Settings
 
@@ -515,24 +542,33 @@ Nexis follows a **three-tier architecture**:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    UI Pages (16)                        │
-│  Dashboard, HardwareInfo, StartupApps, SystemCleaner,   │
-│  DiskTools, Search, Services, Processes, Uninstaller,   │
-│  Resources, Helpers, AptSourceManager, GnomeSettings,   │
-│  Docker, SystemLogs, Settings                           │
+│         UI Pages (15 always-visible + 3 conditional)    │
+│  Always: Dashboard, HardwareInfo, StartupApps,          │
+│    BootAnalysis, SystemCleaner, DiskTools, Search,      │
+│    Services, Processes, Uninstaller, Resources,         │
+│    Network (Usage), Helpers, SystemLogs, Settings       │
+│  Conditional: AptSourceManager, Docker, GnomeSettings   │
 ├─────────────────────────────────────────────────────────┤
 │                  Manager Layer (8)                       │
-│  InfoManager, AppManager, SettingManager, ToolManager,  │
-│  CleanerService, DuplicateFinderService,                │
-│  ScheduleManager, DataRefreshService                    │
+│  AppManager, InfoManager, ToolManager, SettingManager,  │
+│  CleanerService, ScheduleManager, ProcessPrefsManager,  │
+│  DataRefreshService                                     │
+├─────────────────────────────────────────────────────────┤
+│              Domain Services (9)                         │
+│  StartupService, FileSearchService, HostService,        │
+│  ProcessService, SystemServiceManager, DockerService,   │
+│  PackageService, DuplicateFinderService, SnapshotService│
 ├─────────────────────────────────────────────────────────┤
 │                Core Library (nexis-core)                 │
-│  Info: CpuInfo, MemoryInfo, DiskInfo, NetworkInfo,      │
-│        SystemInfo, ProcessInfo, ThermalInfo, GpuInfo,   │
-│        BatteryInfo, DiskHealthInfo, FanInfo              │
-│  Tools: ServiceTool, PackageTool, AptSourceTool,        │
-│         GnomeSettingsTool, DockerTool                    │
-│  Utils: FileUtil, CommandUtil, FormatUtil                │
+│  Info: BatteryInfo, BootAnalysisInfo, CpuInfo,          │
+│   DiskHealthInfo, DiskInfo, FanInfo, GpuInfo,           │
+│   MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo│
+│   StartupInfo, SystemInfo, ThermalInfo, UpdateInfo,     │
+│   PsiInfo (Linux only)                                  │
+│  Tools: AptSourceTool, DockerTool, FileSearchTool,      │
+│   GnomeSettingsTool, PackageTool, RepoHealthChecker,    │
+│   RepoRepairEngine, ServiceTool                         │
+│  Utils: CommandUtil, FileUtil, FormatUtil               │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -586,25 +622,26 @@ The `nexis-core` static library provides platform-abstracted system information 
 
 ## Manager Layer
 
-Seven singleton managers mediate between UI pages and the core library.
+Eight singleton managers mediate between UI pages and the core library (count: see the canonical table above).
 
 | Manager | Role |
 |---------|------|
-| `InfoManager` | Facade over all 15 Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
+| `InfoManager` | Facade over the cross-platform Info classes via `std::unique_ptr<Interface>`. Centralized refresh methods (`updateMemoryInfo()`, `updateGpuInfo()`, etc.) ensure data consistency. |
 | `AppManager` | Theme/stylesheet loading, language management, system tray icon, color scheme detection. |
 | `SettingManager` | `QSettings` wrapper with 30+ typed getters/setters for persistent preferences. |
-| `ToolManager` | Facade over all 5 Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
+| `ToolManager` | Facade over the cross-platform Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
 | `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. |
-| `DuplicateFinderService` | 3-stage duplicate detection pipeline (size grouping → partial 4KB SHA-256 hash → full SHA-256 hash). Background thread via QtConcurrent with QAtomicInt cancellation. |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
-| `DataRefreshService` | Centralized polling service with 4 QTimers (1s/5s/30s/configurable). Polls InfoManager once per interval, emits 10 typed data-change signals. Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
+| `ProcessPrefsManager` | Persistent per-process state (pin flags, alert thresholds) used by `ProcessesPage`. JSON-in-QSettings, same shape as `ScheduleManager` / `CleanerExclusions`. |
+| `DataRefreshService` | Centralized polling service with 5 QTimers (fast/medium/slow/process/update). Polls InfoManager once per interval, emits 15 typed data-change signals (14 cross-platform + Linux-only `psiUpdated`). Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
-**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 9 global signals:
+**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 10 global signals (see `shared/nexis/signal_mapper.h`):
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
 - `sigUninstallStarted()` / `sigUninstallFinished()` — progress feedback
 - `sigKioskToggleRequested()` — Dashboard button requests kiosk toggle from App
 - `sigKioskModeChanged(bool)` — App broadcasts kiosk state to Dashboard button and tray menu
 - `sigAppVisibilityChanged(bool)` — App broadcasts visibility state for DataRefreshService pause/resume
+- `sigAppFocusChanged(bool)` — App broadcasts main-window focus state so `DataRefreshService` can downshift cadence when another app has focus (FR-105)
 - `sigNavigateToPage(QString)` — CommandPalette triggers page navigation
 - `sigCleanableSizeChanged(quint64)` — System Cleaner broadcasts total cleanable size for cross-tile data flow
 - `sigDashboardFooterChanged(bool)` — Settings page broadcasts dashboard footer visibility preference
@@ -658,17 +695,11 @@ tests/
 - Linux PPA: `ppa:s4solutionsllc/nexis` — Ubuntu 22.04+ (Jammy, Noble, Plucky), amd64 and arm64, automatic updates via apt
 - macOS Homebrew: `brew tap s4solutionsllc/nexis && brew install --cask nexis` — Apple Silicon, auto-updated on new releases
 
-**Test executables** — 16 CTest-registered executables (Qt Test + CTest)
-- 15 unit test executables via `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable)
-- 1 screenshot regression test executable linked against `nexis-gui`
-- ~214 unit test methods across 15 suites:
-  - Utilities: FormatUtil (10), FileUtil (10), CommandUtil (9)
-  - Core parsers (FR-76): MemoryInfo (14), CpuInfo (19), GpuInfo (23), AptSource (14), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17), DiskHealth (20), PowerProfile (24)
-  - Services: HostService (25)
-  - Managers: ScheduleManager (15)
-  - Theme: ThemeTokens (7)
+**Test executables** — see the canonical table at the top of this doc for counts
+- Unit test executables registered via the `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable); plus one screenshot regression test linked against `nexis-gui`
 - Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`
-- Screenshot test: captures 11 pages × 2 themes, compares against reference PNGs with per-page pixel tolerance
+- Screenshot test: captures the always-visible pages in both Dark and Light themes and compares against reference PNGs with per-page pixel tolerance
+- The CI `Unit Tests` step explicitly excludes `ScreenshotTests` (`ctest -E ScreenshotTests`) — screenshot diffs are produced locally via `scripts/update_screenshots.sh` (WI-19)
 - Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)
 - Run via: `ctest --test-dir build --output-on-failure`
@@ -772,9 +803,11 @@ QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at st
 
 ### Storage Backend
 
-`SettingManager` wraps Qt's `QSettings`:
-- **macOS:** `~/Library/Preferences/com.nexis.plist`
-- **Linux:** `~/.config/nexis/nexis.conf`
+`SettingManager` wraps Qt's `QSettings`, written explicitly as an INI file at `QStandardPaths::AppConfigLocation/settings.ini` (see `shared/nexis/Managers/setting_manager.cpp`). With `applicationName == "nexis"` (set in `main.cpp`) and no organization name, this resolves to:
+- **Linux:** `~/.config/nexis/settings.ini` (or `$XDG_CONFIG_HOME/nexis/settings.ini` if set)
+- **macOS:** `~/Library/Application Support/nexis/settings.ini`
+
+Forcing INI format on both platforms keeps the on-disk layout identical for both inspection and the headless `--clean` / `--check-threshold` codepaths. There is **no** `com.nexis.plist` and **no** `nexis.conf`; older docs that named those paths were stale.
 
 ### Settings Keys (30+)
 
@@ -826,7 +859,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 ### Main Window Initialization (`App`)
 
 1. Create `SlidingStackedWidget` (animated page container)
-2. Instantiate all 16 pages
+2. Instantiate every always-visible page (and the three conditional pages when their tools are detected)
 3. Conditionally show/hide pages based on platform and tool availability:
    - APT Source Manager: only if `ToolManager::checkSourceRepository()` returns true
    - Docker: only if `ToolManager::checkDocker()` returns true
@@ -839,7 +872,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 
 ### Navigation
 
-The sidebar is **collapsible**, organized into three labelled groups — **MONITOR**, **MANAGE**, and **SYSTEM** — matching the logical grouping of the 16 pages. Each group has a **clickable section header** with a chevron indicator that toggles the group's visibility. Collapsed groups hide their child buttons with a smooth 200ms height animation; the collapsed/expanded state is persisted per-section across sessions as JSON in QSettings. Navigating to a page in a collapsed group (via tray menu, command palette, or `sigNavigateToPage`) auto-expands that group. The full sidebar can also collapse to a 64 px icon-rail showing only page icons plus section indicator dots; the collapse and expand transitions use a smooth width animation. The sidebar can be toggled with the **Ctrl+B** keyboard shortcut or the collapse button at the top of the panel. The sidebar header displays a **gradient logo** (full wordmark when expanded, lettermark when collapsed) above a **separator line**, with a **version label** below. Active page badges use a cleaner dot indicator in collapsed mode and are hidden when their section is collapsed. The Homebrew/APT button displays an **updates badge** showing the pending update count when the sidebar is expanded, or a colored dot (using `@updatesColor`) when collapsed.
+The sidebar is **collapsible**, organized into three labelled groups — **MONITOR**, **MANAGE**, and **SYSTEM** — matching the logical grouping of the pages. Each group has a **clickable section header** with a chevron indicator that toggles the group's visibility. Collapsed groups hide their child buttons with a smooth 200ms height animation; the collapsed/expanded state is persisted per-section across sessions as JSON in QSettings. Navigating to a page in a collapsed group (via tray menu, command palette, or `sigNavigateToPage`) auto-expands that group. The full sidebar can also collapse to a 64 px icon-rail showing only page icons plus section indicator dots; the collapse and expand transitions use a smooth width animation. The sidebar can be toggled with the **Ctrl+B** keyboard shortcut or the collapse button at the top of the panel. The sidebar header displays a **gradient logo** (full wordmark when expanded, lettermark when collapsed) above a **separator line**, with a **version label** below. Active page badges use a cleaner dot indicator in collapsed mode and are hidden when their section is collapsed. The Homebrew/APT button displays an **updates badge** showing the pending update count when the sidebar is expanded, or a colored dot (using `@updatesColor`) when collapsed.
 
 A **Command Palette** (activated with **Ctrl+K**) provides a fuzzy-search popup for navigating directly to any page and executing common actions (e.g., "run clean", "toggle kiosk") without touching the sidebar.
 
@@ -896,22 +929,24 @@ qApp->setStyleSheet(processedQSS)     ← All widgets update immediately
     ↓
 emit SignalMapper::ins()->sigChangedAppTheme()  ← Global event
     ↓
-[All 16 pages reload theme-dependent assets (icons, GIF loaders, etc.)]
+[Every page reload theme-dependent assets (icons, GIF loaders, etc.)]
 ```
 
 ### Refresh Timing
 
-All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimers and emits typed data signals. Pages subscribe as reactive consumers — no page owns a QTimer.
+All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimers and emits 15 typed data signals (14 cross-platform + Linux-only `psiUpdated`). Pages subscribe as reactive consumers — no page owns a QTimer.
 
 | Data | Refresh Rate | Timer Tier | Signal |
 |------|-------------|------------|--------|
-| CPU, Memory, Network, Disk I/O, GPU, Temp, Battery | 1 second | Fast (mFastTimer) | `cpuUpdated`, `memoryUpdated`, `networkUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `batteryUpdated` |
-| Disk usage | 5 seconds | Medium (mMediumTimer) | `diskUsageUpdated` |
-| Disk health (SMART) | 30 seconds | Slow (mSlowTimer) | `diskHealthUpdated` |
-| Processes | 1–10 seconds | Configurable (mProcessTimer) | `processesUpdated` |
-| System updates | 1 hour | Update (mUpdateTimer) | `systemUpdatesChecked` |
+| CPU, Memory, Network (default + per-iface), Disk I/O, GPU, Temp, Fan, Battery, PSI (Linux) | 1 second (Normal mode) | Fast (`mFastTimer`) | `cpuUpdated`, `memoryUpdated`, `networkUpdated`, `networkPerInterfaceUpdated`, `diskIOUpdated`, `gpuUpdated`, `tempUpdated`, `fanUpdated`, `batteryUpdated`, `psiUpdated` (Linux only) |
+| Disk usage | 5 seconds | Medium (`mMediumTimer`) | `diskUsageUpdated` |
+| Disk health (SMART) | 30 seconds | Slow (`mSlowTimer`) | `diskHealthUpdated` |
+| Processes | 1–10 seconds | Configurable (`mProcessTimer`) | `processesUpdated` |
+| System updates + repo health (chained) | 1 hour | Update (`mUpdateTimer`) | `systemUpdatesChecked`, `repoHealthChecked` |
 | Services, packages | On demand | — | Manual refresh / page navigation |
 | Hardware info | Once | — | Page construction |
+
+FR-105 PowerMode tiers downshift the Fast timer cadence based on focus + battery state: Normal 1/5/30 s, Battery 2/10/60 s, Unfocused 5/30/60 s.
 
 **Battery optimization:** When the app is minimized to tray, `DataRefreshService::pause()` stops all timers (unless kiosk mode is active). On restore, `resume()` fires immediate ticks then restarts timers.
 
@@ -935,16 +970,17 @@ All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimer
 │   └── Archive/                Completed research/plans
 ├── shared/
 │   ├── nexis-core/             Core library (shared)
-│   │   ├── Info/               15 system info providers (incl. StartupInfo)
-│   │   ├── Tools/              7 tool classes (incl. FileSearchTool)
-│   │   └── Utils/              3 utility classes
+│   │   ├── Info/               System info providers (see canonical table)
+│   │   ├── Tools/              Tool classes (see canonical table)
+│   │   └── Utils/              Utility classes (CommandUtil, FileUtil, FormatUtil)
 │   ├── nexis/                  GUI application (shared)
-│   │   ├── Managers/           7 manager singletons
-│   │   ├── Services/           7 domain services
-│   │   ├── Pages/              14 page implementations
+│   │   ├── Managers/           8 manager singletons
+│   │   ├── Services/           Domain services (see canonical table)
+│   │   ├── Pages/              Page implementations (see canonical table)
 │   │   │   ├── Dashboard/
 │   │   │   ├── HardwareInfo/
 │   │   │   ├── StartupApps/
+│   │   │   ├── BootAnalysis/
 │   │   │   ├── SystemCleaner/
 │   │   │   ├── DiskTools/
 │   │   │   ├── Search/
@@ -952,11 +988,13 @@ All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimer
 │   │   │   ├── Processes/
 │   │   │   ├── Uninstaller/
 │   │   │   ├── Resources/
+│   │   │   ├── Network/             (Network Usage page)
 │   │   │   ├── Helpers/
-│   │   │   ├── AptSourceManager/
-│   │   │   ├── GnomeSettings/
-│   │   │   ├── Docker/
-│   │   │   └── Settings/ (placeholder — platform-split)
+│   │   │   ├── SystemLogs/
+│   │   │   ├── AptSourceManager/    (conditional — APT/Homebrew detected)
+│   │   │   ├── GnomeSettings/       (conditional — gsettings detected)
+│   │   │   ├── Docker/              (conditional — docker CLI detected)
+│   │   │   └── Settings/
 │   │   └── static/             Themes, icons, fonts, translations
 │   ├── translations/           34 language .ts files
 │   └── cmake/                  CMake modules

@@ -32,6 +32,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      # WI-30: keep the living architecture/overview docs in sync with the
+      # CMake project version. Cheap, no dependencies — runs on every matrix
+      # leg so a drift is caught on the same PR that introduces it.
+      - name: Doc version header check
+        run: bash scripts/check_doc_versions.sh
+
       # --- Linux dependencies ---
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
