@@ -48,15 +48,15 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 **By the numbers:**
 - ~37,000 lines of C++ code across 288 source files
 - 17 application pages
-- 16 system info providers (BatteryInfo, BootAnalysisInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo) — 13 wired through InfoManager, BootAnalysisInfo/StartupInfo standalone, PowerProfileInfo added in v2.1.16
+- 16 system info providers (BatteryInfo, BootAnalysisInfo, CpuInfo, DiskHealthInfo, DiskInfo, FanInfo, GpuInfo, MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo, StartupInfo, SystemInfo, ThermalInfo, UpdateInfo) — all 15 now wired through InfoManager (BootAnalysisInfo + StartupInfo added in WI-27 / SSO-3389), PowerProfileInfo added in v2.1.16
 - 6 tool classes (package management, services, Docker, APT sources, GNOME settings, file search)
 - 8 domain services (StartupService, FileSearchService, HostService, ProcessService, SystemServiceManager, DockerService, PackageService, DuplicateFinderService)
 - 3 utility classes
 - 7 manager singletons
 - 3 themes (Dark, Light, Auto)
 - 34 languages
-- 18 test suites with ~246 test methods (Qt Test + CTest)
 - 88 features implemented, 103 bugs fixed since fork
+
 **By the numbers (canonical table — referenced by [`ARCHITECTURE_REVIEW.md`](ARCHITECTURE_REVIEW.md)):**
 
 | Metric | Value | Source of truth |
@@ -65,11 +65,11 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 338 | same |
 | Test LOC | ~6,050 | `tests/` |
-| Test executables | 30 (29 unit + 1 screenshot) | `tests/CMakeLists.txt` |
-| Test methods | ~418 | `private slots:` in `tests/*/test_*.cpp` |
+| Test executables | 32 (31 unit + 1 screenshot) | `tests/CMakeLists.txt` |
+| Test methods | ~436 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
-| Info providers | 16 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` Linux-only); 14 wired through `InfoManager`, `BootAnalysisInfo`/`StartupInfo` standalone |
+| Info providers | 16 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` Linux-only); all 16 wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389) |
 | Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
 | Utility classes | 3 | `CommandUtil`, `FileUtil`, `FormatUtil` in `shared/nexis-core/Utils/` |
 | Manager singletons | 8 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |

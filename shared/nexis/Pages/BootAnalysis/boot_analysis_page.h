@@ -4,20 +4,21 @@
 #include <QWidget>
 #include <QAtomicInt>
 #include <QFuture>
-#include <memory>
 
 #include <Info/boot_analysis_info.h>
 
 class QLabel;
 class QTableWidget;
 class QPushButton;
+class InfoManager;
 
 class BootAnalysisPage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit BootAnalysisPage(QWidget *parent = nullptr);
+    explicit BootAnalysisPage(QWidget *parent = nullptr,
+                              InfoManager *infoManager = nullptr);
     ~BootAnalysisPage() override;
 
 private slots:
@@ -34,9 +35,9 @@ private:
     QPushButton   *mBtnRefresh  = nullptr;
     QLabel        *mLblStatus   = nullptr;
 
-    std::unique_ptr<BootAnalysisInfo> mInfo;
-    QFuture<BootAnalysisData>         mFuture;
-    QAtomicInt                        mCancelled{0};
+    InfoManager                       *mIm        = nullptr;
+    QFuture<BootAnalysisData>          mFuture;
+    QAtomicInt                         mCancelled{0};
 };
 
 #endif // BOOT_ANALYSIS_PAGE_H

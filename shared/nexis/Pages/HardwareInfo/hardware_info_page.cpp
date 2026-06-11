@@ -1,16 +1,6 @@
 #include "hardware_info_page.h"
 #include "ui_hardware_info_page.h"
 
-#include <Info/system_info.h>
-#include <Info/cpu_info.h>
-
-#ifdef Q_OS_MACOS
-#include <Info/system_info_macos.h>
-#include <Info/cpu_info_macos.h>
-#else
-#include <Info/system_info_linux.h>
-#include <Info/cpu_info_linux.h>
-#endif
 #include <Utils/format_util.h>
 
 #include <QHeaderView>
@@ -154,15 +144,10 @@ void HardwareInfoPage::populateSystem()
     t->verticalHeader()->setVisible(false);
     t->horizontalHeader()->setStretchLastSection(true);
 
-#ifdef Q_OS_MACOS
-    SystemInfoMacOS sysInfo;
-#else
-    SystemInfoLinux sysInfo;
-#endif
-    addRow(t, tr("Hostname"), sysInfo.getHostname());
-    addRow(t, tr("Platform"), sysInfo.getPlatform());
-    addRow(t, tr("Distribution"), sysInfo.getDistribution());
-    addRow(t, tr("Kernel"), sysInfo.getKernel());
+    addRow(t, tr("Hostname"), im->getHostname());
+    addRow(t, tr("Platform"), im->getPlatform());
+    addRow(t, tr("Distribution"), im->getDistribution());
+    addRow(t, tr("Kernel"), im->getKernel());
     addRow(t, tr("Architecture"), QSysInfo::currentCpuArchitecture());
 
 #ifdef Q_OS_LINUX
@@ -186,18 +171,10 @@ void HardwareInfoPage::populateProcessor()
     t->verticalHeader()->setVisible(false);
     t->horizontalHeader()->setStretchLastSection(true);
 
-#ifdef Q_OS_MACOS
-    SystemInfoMacOS sysInfo;
-    CpuInfoMacOS cpuInfo;
-#else
-    SystemInfoLinux sysInfo;
-    CpuInfoLinux cpuInfo;
-#endif
-
-    addRow(t, tr("Model"), sysInfo.getCpuModel());
-    addRow(t, tr("Physical Cores"), QString::number(cpuInfo.getCpuPhysicalCoreCount()));
-    addRow(t, tr("Logical Cores"), sysInfo.getCpuCore());
-    addRow(t, tr("Base Clock"), sysInfo.getCpuSpeed());
+    addRow(t, tr("Model"), im->getCpuModel());
+    addRow(t, tr("Physical Cores"), QString::number(im->getCpuPhysicalCoreCount()));
+    addRow(t, tr("Logical Cores"), im->getCpuCoreLabel());
+    addRow(t, tr("Base Clock"), im->getCpuSpeed());
 
 #ifdef Q_OS_MAC
     auto readSysctl = [](const char *key) -> QString {

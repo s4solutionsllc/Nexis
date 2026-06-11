@@ -10,19 +10,11 @@
 #include <QDateTime>
 #include <QtConcurrent>
 
-#ifdef Q_OS_MACOS
-#include <Info/boot_analysis_info_macos.h>
-#else
-#include <Info/boot_analysis_info_linux.h>
-#endif
+#include "Managers/info_manager.h"
 
-BootAnalysisPage::BootAnalysisPage(QWidget *parent)
+BootAnalysisPage::BootAnalysisPage(QWidget *parent, InfoManager *infoManager)
     : QWidget(parent)
-#ifdef Q_OS_MACOS
-    , mInfo(std::make_unique<BootAnalysisInfoMacOS>())
-#else
-    , mInfo(std::make_unique<BootAnalysisInfoLinux>())
-#endif
+    , mIm(infoManager ? infoManager : InfoManager::ins())
 {
     buildUi();
     onRefresh();
@@ -105,7 +97,7 @@ void BootAnalysisPage::onRefresh()
     mLblStatus->clear();
     mCancelled.storeRelaxed(0);
 
-    BootAnalysisInfo *info = mInfo.get();
+    BootAnalysisInfo *info = mIm->bootAnalysisInfo();
     mFuture = QtConcurrent::run([info]() -> BootAnalysisData {
         return info->analyze();
     });

@@ -38,6 +38,12 @@ jobs:
       - name: Doc version header check
         run: bash scripts/check_doc_versions.sh
 
+      # WI-27 (SSO-3389): shared/nexis/Pages must reach platform-specific Info
+      # subclasses through InfoManager — never via direct *_macos.h / *_linux.h
+      # includes. Run on every platform so the failure surfaces uniformly.
+      - name: Architecture gate — no platform headers in shared/Pages
+        run: bash scripts/check-pages-no-platform-headers.sh
+
       # --- Linux dependencies ---
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'

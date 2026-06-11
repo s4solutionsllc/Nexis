@@ -175,6 +175,8 @@ private:
 
 **Assessment:** For a single-process Qt desktop app with the test coverage tracked in the canonical "By the numbers" table, singletons are **pragmatically correct**. The anti-pattern critique of singletons assumes multi-threaded systems or test-heavy codebases. Nexis is single-threaded GUI with a single user. The managers are effectively namespaced globals — and that's fine at this scale.
 
+**Facade-only access from `shared/nexis/Pages` (WI-27 / SSO-3389, audit A3).** All shared UI pages must reach platform-specific Info subclasses through `InfoManager` (or a `createForPlatform()` factory like `LogProvider`) — never by stack-constructing `SystemInfoLinux` / `SystemInfoMacOS`, `CpuInfoLinux` / `CpuInfoMacOS`, `BootAnalysisInfoLinux` / `BootAnalysisInfoMacOS`, etc. behind `#ifdef Q_OS_*`. As of WI-27, `BootAnalysisInfo` and `StartupInfo` are also owned by `InfoManager` and exposed via `bootAnalysisInfo()` / `startupInfo()` accessors. A CI gate (`scripts/check-pages-no-platform-headers.sh`, invoked from `.github/workflows/build.yml`) blocks any include of `*_macos.h` / `*_linux.h` from `shared/nexis/Pages/**`. Adding a new platform should not require editing any page in that tree.
+
 ---
 
 ### 3. QSS Token System

@@ -9,12 +9,6 @@
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
 
-#ifdef Q_OS_MACOS
-#include <Info/system_info_macos.h>
-#else
-#include <Info/system_info_linux.h>
-#endif
-
 #include <QDateTime>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -324,12 +318,7 @@ void DashboardPage::init()
 
     // Set CPU model + core info as subtitle
     {
-#ifdef Q_OS_MACOS
-        SystemInfoMacOS sysInfo;
-#else
-        SystemInfoLinux sysInfo;
-#endif
-        QString cpuModel = sysInfo.getCpuModel();
+        QString cpuModel = im->getCpuModel();
         int coreCount = im->getCpuCoreCount();
         if (!cpuModel.isEmpty()) {
             mCpuSubtitleBase = cpuModel;
@@ -468,12 +457,6 @@ void DashboardPage::init()
 
 void DashboardPage::buildSystemSummary()
 {
-#ifdef Q_OS_MACOS
-    SystemInfoMacOS sysInfo;
-#else
-    SystemInfoLinux sysInfo;
-#endif
-
     ui->systemSummary->setObjectName("systemSummaryCard");
 
     while (ui->summaryLayout->count() > 0) {
@@ -490,9 +473,9 @@ void DashboardPage::buildSystemSummary()
     vbox->setContentsMargins(0, 0, 0, 0);
     vbox->setSpacing(2);
 
-    mSummaryHostname = sysInfo.getHostname();
-    mSummaryOs = sysInfo.getDistribution();
-    mSummaryCpu = sysInfo.getCpuModel();
+    mSummaryHostname = im->getHostname();
+    mSummaryOs = im->getDistribution();
+    mSummaryCpu = im->getCpuModel();
     mSummaryRam = FormatUtil::formatBytes(im->getMemTotal()) + " RAM";
 
     auto *lblLine1 = new QLabel(ui->systemSummary);

@@ -17,6 +17,8 @@
 #include <Info/disk_health_info.h>
 #include <Info/update_info.h>
 #include <Info/power_profile_info.h>
+#include <Info/boot_analysis_info.h>
+#include <Info/startup_info.h>
 #ifdef Q_OS_LINUX
 #include <Info/psi_info.h>
 #endif
@@ -25,6 +27,17 @@ class InfoManager
 {
 public:
     static InfoManager *ins();
+
+    // System / CPU descriptive strings (facade over SystemInfo / CpuInfo).
+    // Added in WI-27 so pages don't need to stack-construct platform subclasses.
+    QString getHostname() const;
+    QString getPlatform() const;
+    QString getDistribution() const;
+    QString getKernel() const;
+    QString getCpuModel() const;
+    QString getCpuSpeed() const;
+    QString getCpuCoreLabel() const;
+    int getCpuPhysicalCoreCount() const;
 
     int getCpuCoreCount() const;
     QList<int> getCpuPercents() const;
@@ -123,6 +136,12 @@ public:
     bool hasPowerProfiles() const;
     void refreshPowerProfile();
 
+    // Boot analysis / startup item providers — owned platform-specific
+    // subclasses. Pages and services should use these instead of
+    // stack-constructing `*Linux` / `*MacOS` subclasses directly.
+    BootAnalysisInfo *bootAnalysisInfo() const;
+    StartupInfo      *startupInfo() const;
+
 #ifdef Q_OS_LINUX
     void updateCpuPsi();
     PsiSnapshot getCpuPsi() const;
@@ -146,6 +165,8 @@ private:
     std::unique_ptr<DiskHealthInfo> dhi;
     std::unique_ptr<UpdateInfo> upd;
     std::unique_ptr<PowerProfileInfo> ppi;
+    std::unique_ptr<BootAnalysisInfo> bai;
+    std::unique_ptr<StartupInfo> sui;
 #ifdef Q_OS_LINUX
     std::unique_ptr<PsiInfo> psii;
 #endif

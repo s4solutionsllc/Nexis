@@ -179,6 +179,19 @@ add_nexis_test(NAME CleanerExclusionTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3389 / WI-27: InfoManager facade wiring for BootAnalysisInfo +
+# StartupInfo. Links against nexis-gui because InfoManager and the providers
+# it owns are compiled into the GUI target.
+add_nexis_test(NAME InfoManagerWiringTests
+  SOURCES
+    managers/test_info_manager_wiring.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # WI-08 / audit H9: CleanerService destructive paths (cleanFiles, cleanTrash,
 # elevated branch via virtual seam). Pinned to nexis-gui like the exclusion
 # tests because the implementation lives in the GUI library.
