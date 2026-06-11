@@ -50,6 +50,13 @@ add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 add_nexis_test(NAME DockerToolTests   SOURCES core/test_docker_tool.cpp)
 
+# SSO-3366: PackageToolMacOS::trashApps injection guard. PackageToolMacOS is
+# only built into nexis-core on Darwin, so the test is registered only there.
+if(APPLE)
+  add_nexis_test(NAME PackageToolMacOSTests
+    SOURCES core/test_package_tool_macos.cpp)
+endif()
+
 # FR-127: pure parser for /proc/<pid>/*. Compiled directly here so the test
 # runs on any platform, even though the parser is only wired into the real
 # nexis-core build on Linux.
@@ -165,6 +172,18 @@ add_nexis_test(NAME CleanerExclusionTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
+# against nexis-gui because FileSearchService lives in the GUI library.
+add_nexis_test(NAME FileSearchServiceTests
+  SOURCES
+    managers/test_file_search_service.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
 # substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
 # "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui
@@ -178,6 +197,17 @@ add_nexis_test(NAME IndicatorFallbackTests
     "${GUI_SHARED_DIR}/Managers"
   LIBS
     nexis-gui Qt6::Widgets
+)
+
+# SSO-3363 / audit H2: LogProvider::cancel() null-deref defence.
+# Compiles log_provider.cpp directly so the test runs cross-platform without
+# pulling in nexis-gui or the platform-specific log backends.
+add_nexis_test(NAME LogProviderTests
+  SOURCES
+    managers/test_log_provider.cpp
+    "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
 )
 
 # ── Theme validation tests ─────────────────────────────────────────────────────
