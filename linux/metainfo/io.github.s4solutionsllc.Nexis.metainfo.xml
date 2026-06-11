@@ -3,7 +3,7 @@
   <id>io.github.s4solutionsllc.Nexis</id>
 
   <metadata_license>MIT</metadata_license>
-  <project_license>GPL-3.0-or-later</project_license>
+  <project_license>GPL-3.0-only</project_license>
 
   <name>Nexis</name>
   <summary>Linux system optimizer and monitoring tool</summary>
