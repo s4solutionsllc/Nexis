@@ -1,4 +1,5 @@
 #include "app.h"
+#include "Managers/tool_manager.h"
 #include "ui_app.h"
 #include "Pages/Network/net_usage_tracker.h"
 #include "utilities.h"

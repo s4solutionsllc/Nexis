@@ -31,6 +31,7 @@ ToolManager::ToolManager()
     mServiceTool       = std::make_unique<ServiceToolLinux>();
     mPackageTool       = std::make_unique<PackageToolLinux>();
     auto aptTool       = std::make_unique<AptSourceToolLinux>();
+    // mAptSourceTool is a non-owning view of the object owned by mRepositoryTool.
     mAptSourceTool     = aptTool.get();
     mRepositoryTool    = std::move(aptTool);
     mGnomeSettings     = std::make_unique<GnomeSettingsToolLinux>();
