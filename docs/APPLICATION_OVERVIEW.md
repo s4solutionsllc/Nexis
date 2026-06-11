@@ -507,14 +507,14 @@ Filterable, searchable table of recent system logs for quick triage. Programmati
 
 **Platform backends** via `LogProvider` abstraction:
 - **Linux:** `journalctl --output=json --no-pager --lines=500 --reverse`
-- **macOS:** `log show --style ndjson --last 1h`
+- **macOS:** `log show --style ndjson --last 5m` (stream-parsed; child killed as soon as the entry cap is reached). `--info` / `--debug` are appended only when the active severity filter would surface those levels.
 
 **Features:**
 - Color-coded severity cells (red for Error+, yellow for Warning, theme-token-resolved colors)
 - Text search across all columns via `QSortFilterProxyModel`
 - Severity filtering re-populates from cached entries
 - Manual refresh only (no auto-polling — logs are static history)
-- Initial load: last 500 entries (Linux) or last 1 hour (macOS)
+- Initial load: last 500 entries on either platform (Linux gets them via `--lines`; macOS stream-parses up to the cap within the last 5 minutes via `MacOsLogStreamParser`, which keeps memory bounded to `mMaxEntries × sizeof(LogEntry)` instead of the previous full-hour ndjson buffer)
 - `LogProvider::cancel()` is safe to call from `~SystemLogsPage()` mid-fetch — disconnects the finished slot, takes ownership of the QProcess locally, and nulls the member before kill/waitForFinished, so the synchronous CrashExit signal from `kill()` cannot drive a double-delete or null deref (SSO-3363 / audit H2)
 
 ### 16. Settings

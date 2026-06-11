@@ -171,44 +171,8 @@ void LogProviderLinux::onProcessFinished(int exitCode, QProcess::ExitStatus stat
 }
 
 // ---------------------------------------------------------------------------
-// LogProviderMacOS
+// macOS helpers
 // ---------------------------------------------------------------------------
-
-LogProviderMacOS::LogProviderMacOS(QObject *parent)
-    : LogProvider(parent)
-{
-}
-
-void LogProviderMacOS::fetchLogs(int maxEntries, int /*maxSeverity*/)
-{
-    if (mBusy)
-        return;
-
-    mMaxEntries = maxEntries;
-
-    mBusy = true;
-    mProcess = new QProcess(this);
-
-    connect(mProcess, &QProcess::finished,
-            this, &LogProviderMacOS::onProcessFinished);
-
-    mProcess->start(QStringLiteral("log"),
-                    {QStringLiteral("show"),
-                     QStringLiteral("--style"),
-                     QStringLiteral("ndjson"),
-                     QStringLiteral("--last"),
-                     QStringLiteral("1h"),
-                     QStringLiteral("--predicate"),
-                     QStringLiteral("eventType == logEvent")});
-
-    if (!mProcess->waitForStarted(3000)) {
-        emit errorOccurred(tr("Failed to start macOS log: %1")
-                               .arg(mProcess->errorString()));
-        mProcess->deleteLater();
-        mProcess = nullptr;
-        mBusy = false;
-    }
-}
 
 static int macOsMessageTypeToSeverity(const QString &type)
 {
@@ -248,63 +212,216 @@ static QDateTime parseMacOsTimestamp(const QString &str)
     return QDateTime(); // invalid
 }
 
+// ---------------------------------------------------------------------------
+// MacOsLogStreamParser
+// ---------------------------------------------------------------------------
+
+MacOsLogStreamParser::MacOsLogStreamParser(int maxEntries)
+    : mMaxEntries(maxEntries > 0 ? maxEntries : 1)
+{
+    mEntries.reserve(mMaxEntries);
+}
+
+bool MacOsLogStreamParser::feed(const QByteArray &chunk)
+{
+    if (capReached())
+        return true;
+
+    mPartial.append(chunk);
+
+    int start = 0;
+    while (start < mPartial.size()) {
+        const int nl = mPartial.indexOf('\n', start);
+        if (nl < 0)
+            break;
+
+        // QByteArray::mid copies; cheap for a single ndjson line.
+        processLine(mPartial.mid(start, nl - start));
+        start = nl + 1;
+
+        if (capReached())
+            break;
+    }
+
+    // Drop everything we've already consumed so the buffer stays bounded
+    // to at most one in-flight (partial) line.
+    if (start > 0)
+        mPartial.remove(0, start);
+
+    // Once the cap is reached we no longer need to retain trailing bytes —
+    // the caller is expected to kill the QProcess immediately after.
+    if (capReached())
+        mPartial.clear();
+
+    return capReached();
+}
+
+bool MacOsLogStreamParser::finish()
+{
+    if (capReached()) {
+        mPartial.clear();
+        return true;
+    }
+    if (!mPartial.isEmpty()) {
+        processLine(mPartial);
+        mPartial.clear();
+    }
+    return capReached();
+}
+
+void MacOsLogStreamParser::processLine(const QByteArray &line)
+{
+    const QByteArray trimmed = line.trimmed();
+    if (trimmed.isEmpty())
+        return;
+
+    QJsonParseError parseErr;
+    const QJsonDocument doc = QJsonDocument::fromJson(trimmed, &parseErr);
+    if (parseErr.error != QJsonParseError::NoError || !doc.isObject()) {
+        ++mLinesDropped;
+        return;
+    }
+
+    const QJsonObject obj = doc.object();
+
+    LogEntry entry;
+    entry.timestamp = parseMacOsTimestamp(
+        obj.value(QStringLiteral("timestamp")).toString());
+    entry.severity = macOsMessageTypeToSeverity(
+        obj.value(QStringLiteral("messageType")).toString());
+    entry.unit = obj.value(QStringLiteral("subsystem")).toString();
+    if (entry.unit.isEmpty())
+        entry.unit = obj.value(QStringLiteral("process")).toString();
+    entry.message = obj.value(QStringLiteral("eventMessage")).toString();
+
+    mEntries.append(entry);
+    ++mLinesParsed;
+}
+
+QList<LogEntry> MacOsLogStreamParser::takeEntries()
+{
+    // Sort descending by timestamp (newest first) — matches the contract the
+    // page used to get from the post-finished sort+trim.
+    std::sort(mEntries.begin(), mEntries.end(),
+              [](const LogEntry &a, const LogEntry &b) {
+                  return a.timestamp > b.timestamp;
+              });
+    return std::move(mEntries);
+}
+
+// ---------------------------------------------------------------------------
+// LogProviderMacOS
+// ---------------------------------------------------------------------------
+
+LogProviderMacOS::LogProviderMacOS(QObject *parent)
+    : LogProvider(parent)
+{
+}
+
+LogProviderMacOS::~LogProviderMacOS()
+{
+    delete mParser;
+    mParser = nullptr;
+}
+
+void LogProviderMacOS::cancel()
+{
+    LogProvider::cancel();
+    delete mParser;
+    mParser = nullptr;
+    mCapReached = false;
+}
+
+void LogProviderMacOS::fetchLogs(int maxEntries, int maxSeverity)
+{
+    if (mBusy)
+        return;
+
+    mMaxEntries = maxEntries;
+    mCapReached = false;
+    delete mParser;
+    mParser = new MacOsLogStreamParser(maxEntries);
+
+    mBusy = true;
+    mProcess = new QProcess(this);
+
+    connect(mProcess, &QProcess::readyReadStandardOutput,
+            this, &LogProviderMacOS::onReadyRead);
+    connect(mProcess, &QProcess::finished,
+            this, &LogProviderMacOS::onProcessFinished);
+
+    // Shrink the default window from 1h to 5m: an idle Mac produces well
+    // under 500 entries in 5 minutes, and a busy Mac will cap quickly via
+    // the streaming early-stop path. The previous 1h window was hundreds
+    // of MB of ndjson — the whole reason for WI-22.
+    QStringList args = {
+        QStringLiteral("show"),
+        QStringLiteral("--style"), QStringLiteral("ndjson"),
+        QStringLiteral("--last"), QStringLiteral("5m"),
+        QStringLiteral("--predicate"), QStringLiteral("eventType == logEvent"),
+    };
+
+    // `log show` excludes Info and Debug records by default. Only ask for
+    // them when the active severity filter would actually surface them —
+    // this is the level-filtering the audit asked for.
+    if (maxSeverity >= 6)
+        args << QStringLiteral("--info");
+    if (maxSeverity >= 7)
+        args << QStringLiteral("--debug");
+
+    mProcess->start(QStringLiteral("log"), args);
+
+    if (!mProcess->waitForStarted(3000)) {
+        emit errorOccurred(tr("Failed to start macOS log: %1")
+                               .arg(mProcess->errorString()));
+        mProcess->deleteLater();
+        mProcess = nullptr;
+        delete mParser;
+        mParser = nullptr;
+        mBusy = false;
+    }
+}
+
+void LogProviderMacOS::onReadyRead()
+{
+    if (!mProcess || !mParser || mCapReached)
+        return;
+
+    // Pull whatever stdout is currently available and feed it to the
+    // parser. Each callback only sees a small chunk, so per-tick work
+    // on the main thread is bounded — no more giant end-of-process parse.
+    if (mParser->feed(mProcess->readAllStandardOutput())) {
+        mCapReached = true;
+        // We've got our `mMaxEntries`; stop log show before it produces
+        // more output we'd just throw away. onProcessFinished will run.
+        mProcess->kill();
+    }
+}
+
 void LogProviderMacOS::onProcessFinished(int exitCode, QProcess::ExitStatus status)
 {
-    QByteArray output = mProcess->readAllStandardOutput();
+    // Drain anything that arrived between the last readyRead and finished().
+    if (mProcess && mParser)
+        mParser->feed(mProcess->readAllStandardOutput());
+    if (mParser)
+        mParser->finish();
 
-    if (exitCode != 0 || status == QProcess::CrashExit) {
+    // A non-zero exit / crash is only a real error if we did NOT kill the
+    // process ourselves after hitting the entry cap.
+    if (!mCapReached && (exitCode != 0 || status == QProcess::CrashExit)) {
         QString errMsg = QString::fromUtf8(mProcess->readAllStandardError()).trimmed();
         emit errorOccurred(tr("macOS log failed (exit %1): %2").arg(exitCode).arg(errMsg));
+        delete mParser;
+        mParser = nullptr;
         mProcess->deleteLater();
         mProcess = nullptr;
         mBusy = false;
         return;
     }
 
-    QList<LogEntry> entries;
-    const QList<QByteArray> lines = output.split('\n');
-
-    for (const QByteArray &line : lines) {
-        if (line.trimmed().isEmpty())
-            continue;
-
-        QJsonParseError parseErr;
-        QJsonDocument doc = QJsonDocument::fromJson(line, &parseErr);
-        if (parseErr.error != QJsonParseError::NoError || !doc.isObject())
-            continue;
-
-        QJsonObject obj = doc.object();
-
-        LogEntry entry;
-
-        // Timestamp
-        const QString tsStr = obj.value(QStringLiteral("timestamp")).toString();
-        entry.timestamp = parseMacOsTimestamp(tsStr);
-
-        // Severity from messageType
-        const QString msgType = obj.value(QStringLiteral("messageType")).toString();
-        entry.severity = macOsMessageTypeToSeverity(msgType);
-
-        // Unit: prefer subsystem, fall back to process
-        entry.unit = obj.value(QStringLiteral("subsystem")).toString();
-        if (entry.unit.isEmpty())
-            entry.unit = obj.value(QStringLiteral("process")).toString();
-
-        // Message
-        entry.message = obj.value(QStringLiteral("eventMessage")).toString();
-
-        entries.append(entry);
-    }
-
-    // Sort descending by timestamp (newest first)
-    std::sort(entries.begin(), entries.end(),
-              [](const LogEntry &a, const LogEntry &b) {
-                  return a.timestamp > b.timestamp;
-              });
-
-    // macOS log show has no --lines flag, so trim to the requested limit
-    if (entries.size() > mMaxEntries)
-        entries = entries.mid(0, mMaxEntries);
+    QList<LogEntry> entries = mParser ? mParser->takeEntries() : QList<LogEntry>{};
+    delete mParser;
+    mParser = nullptr;
 
     emit logsReady(entries);
 
