@@ -824,7 +824,7 @@ Cleaning schedules are stored as JSON in QSettings. Each schedule includes: ID, 
 
 OS-native scheduling:
 - **macOS:** Generates `.plist` files in `~/Library/LaunchAgents/com.nexis.clean.<id>.plist`
-- **Linux:** Creates systemd timer units or cron entries (auto-detected)
+- **Linux:** Creates systemd timer units or cron entries (auto-detected). Both pin `QT_QPA_PLATFORM=offscreen` on the generated lines (cron via inline `KEY=VALUE` prefix; systemd via `Environment=`), and `main()` also forces `QT_QPA_PLATFORM=offscreen` when it sees `--clean`/`--check-threshold` and the user has not pinned a platform — without this, cron and boot-catch-up runs aborted during `QApplication` construction because no display is available, silently skipping the clean (audit H6 / SSO-3368).
 
 ---
 
@@ -844,17 +844,18 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 
 ### Startup Sequence (`main.cpp`)
 
-1. Create `QApplication`
-2. Install custom message handler (logs to `~/.config/nexis/nexis.log`)
-3. **Headless mode check:** `--clean <id>` or `--check-threshold` → run `CleanerService`, exit
-4. **Single-instance enforcement:** `QLockFile` at `/tmp/nexis.lock` — shows warning dialog if already running
-5. macOS icon theme setup: add Homebrew icon paths to `QIcon::themeSearchPaths()`
-6. Set fallback icon theme to "Adwaita"
-7. Load Ubuntu font from embedded resources
-8. Show theme-aware splash screen matching Color Scheme setting (unless `--nosplash`)
-9. Create `App` main window
-10. Show window (unless `--hide`)
-11. Enter Qt event loop: `app.exec()`
+1. **Pre-QApplication headless gate (SSO-3368):** Scan `argv` for `--clean` / `--check-threshold`. If headless and `QT_QPA_PLATFORM` is unset, `qputenv("QT_QPA_PLATFORM", "offscreen")`. Done before `QApplication` so cron/timer runs do not abort on missing QPA platforms.
+2. Create `QApplication`
+3. Install custom message handler (logs to `~/.config/nexis/nexis.log`)
+4. **Headless mode check:** `--clean <id>` or `--check-threshold` → run `CleanerService`, exit
+5. **Single-instance enforcement:** `QLockFile` at `/tmp/nexis.lock` — shows warning dialog if already running
+6. macOS icon theme setup: add Homebrew icon paths to `QIcon::themeSearchPaths()`
+7. Set fallback icon theme to "Adwaita"
+8. Load Ubuntu font from embedded resources
+9. Show theme-aware splash screen matching Color Scheme setting (unless `--nosplash`)
+10. Create `App` main window
+11. Show window (unless `--hide`)
+12. Enter Qt event loop: `app.exec()`
 
 ### Main Window Initialization (`App`)
 

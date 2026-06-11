@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Scheduled cleans silently never ran on display-less sessions (SSO-3368, audit H6):** Cron-launched and boot-catch-up systemd-user `--clean` invocations aborted during `QApplication` construction because cron unsets `DISPLAY`/`WAYLAND_DISPLAY` and the generated unit files set no QPA platform. The binary now detects the `--clean` / `--check-threshold` flags before constructing `QApplication` and `qputenv`s `QT_QPA_PLATFORM=offscreen` when the user has not pinned a platform themselves. As belt-and-suspenders, the generated cron entry and systemd user-unit `ExecStart`/`Environment=` lines also set `QT_QPA_PLATFORM=offscreen` so scheduled cleans run to completion with no display present.
 ### Security
 - **macOS: AppleScript injection in app uninstaller (SSO-3366, audit S1):** `PackageToolMacOS::trashApps` interpolated each `.app` bundle path into a `tell application "Finder" to delete POSIX file "%1"` AppleScript source string and ran it through `osascript -e`. Bundle names containing a double quote (legal on macOS — anything downloaded from the web can ship one) terminated the string literal and let attacker-controlled AppleScript run when the user clicked Uninstall, including `do shell script` for arbitrary code execution. The trashing path now uses `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:` on macOS), which takes an `NSURL` and has no shell or AppleScript parsing surface — bundle-name metacharacters are treated as path data, not code.
 ### Fixed

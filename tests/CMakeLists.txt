@@ -23,6 +23,7 @@ add_nexis_test(NAME FormatUtilTests   SOURCES utils/test_format_util.cpp)
 add_nexis_test(NAME FileUtilTests     SOURCES utils/test_file_util.cpp)
 add_nexis_test(NAME CommandUtilTests       SOURCES utils/test_command_util.cpp)
 add_nexis_test(NAME CommandUtilAsyncTests  SOURCES utils/test_command_util_async.cpp LIBS Qt6::Concurrent)
+add_nexis_test(NAME HeadlessUtilTests SOURCES utils/test_headless_util.cpp)
 
 # ── Core library tests ─────────────────────────────────────────────────────────
 add_nexis_test(NAME DiskHealthTests   SOURCES core/test_disk_health_info.cpp)

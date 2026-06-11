@@ -22,6 +22,7 @@
 #include <Managers/cleaner_service.h>
 #include <Managers/schedule_manager.h>
 #include <Utils/format_util.h>
+#include <Utils/headless_util.h>
 
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -175,6 +176,17 @@ int main(int argc, char *argv[])
     // Force-include the Qt Resource data from the nexis-gui static library.
     // Without this, the linker dead-strips qrc_static.cpp.o and all :/ paths fail.
     Q_INIT_RESOURCE(static);
+
+    // SSO-3368 / audit H6: cron and systemd-user `--clean` runs have no display.
+    // Constructing QApplication without a QPA platform aborts the process, so
+    // scheduled cleans were silently never running. Steer the headless modes
+    // to the offscreen platform before QApplication touches the display. We
+    // only override when the user has not pinned QT_QPA_PLATFORM themselves.
+    if (HeadlessUtil::shouldForceOffscreen(
+            HeadlessUtil::isHeadlessArgv(argc, argv),
+            qEnvironmentVariableIsSet("QT_QPA_PLATFORM"))) {
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+    }
 
     QApplication app(argc, argv);
     app.setStyle(QStyleFactory::create("Fusion"));
