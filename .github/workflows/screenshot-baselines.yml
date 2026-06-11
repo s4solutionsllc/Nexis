@@ -1,0 +1,102 @@
+name: Regenerate Screenshot Baselines
+
+# Manually-triggered helper for NEX-3381 (and any later WI that changes page
+# visuals). Runs the ScreenshotTests executable in NEXIS_GENERATE_REFS=1 mode
+# on the platforms that render deterministically, then uploads the freshly
+# captured PNG set as an artifact. The maintainer downloads it, visually
+# confirms the rendering is intended, and commits the contents into
+# tests/reference_screenshots/{platform}/{theme}/ on a baseline-refresh PR.
+#
+# We do NOT push commits from this workflow — committing is a maintainer step
+# so a human always eyeballs the diff before it lands.
+#
+# ARM64 Linux is skipped: ScreenshotTests hangs indefinitely on
+# ubuntu-24.04-arm under xvfb (see commit 5c173c7 and NEX-3381).
+
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: 'Which platforms to regenerate (comma-separated: linux-x64,macos)'
+        default: 'linux-x64,macos'
+        required: false
+
+jobs:
+  regenerate:
+    name: Regenerate (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            name: linux-x64
+            platform-dir: linux
+          - os: macos-14
+            name: macos
+            platform-dir: macos
+
+    steps:
+      - name: Skip if not requested
+        id: skip-check
+        run: |
+          if ! echo "${{ inputs.platforms }}" | tr ',' '\n' | grep -qx "${{ matrix.name }}"; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "Platform ${{ matrix.name }} not in requested list; skipping."
+          else
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.skip-check.outputs.skipped != 'true'
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Install dependencies (Linux)
+        if: steps.skip-check.outputs.skipped != 'true' && runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            cmake g++ libgl1-mesa-dev \
+            qt6-base-dev qt6-charts-dev qt6-svg-dev \
+            qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools \
+            libqt6charts6-dev libqt6svg6-dev \
+            xvfb
+
+      - name: Install dependencies (macOS)
+        if: steps.skip-check.outputs.skipped != 'true' && runner.os == 'macOS'
+        run: |
+          for i in 1 2 3; do
+            brew install qt@6 && break
+            echo "brew install attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
+
+      - name: Configure (Linux)
+        if: steps.skip-check.outputs.skipped != 'true' && runner.os == 'Linux'
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Configure (macOS)
+        if: steps.skip-check.outputs.skipped != 'true' && runner.os == 'macOS'
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6)
+
+      - name: Build screenshot test
+        if: steps.skip-check.outputs.skipped != 'true'
+        run: cmake --build build --target test-ScreenshotTests -j$(sysctl -n hw.ncpu 2>/dev/null || nproc)
+
+      - name: Regenerate baselines
+        if: steps.skip-check.outputs.skipped != 'true'
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            xvfb-run -a ./scripts/update_screenshots.sh
+          else
+            ./scripts/update_screenshots.sh
+          fi
+
+      - name: Upload regenerated baselines
+        if: steps.skip-check.outputs.skipped != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reference-screenshots-${{ matrix.platform-dir }}
+          path: tests/reference_screenshots/${{ matrix.platform-dir }}/
+          retention-days: 30
+          if-no-files-found: error

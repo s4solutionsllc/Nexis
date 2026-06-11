@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
-project(Nexis VERSION 2.3.13)
+project(Nexis VERSION 2.3.14)
 
 # Adding features(build cache + faster linkers) and reasonable defaults(Debug build by default)
 include("${CMAKE_CURRENT_SOURCE_DIR}/shared/cmake/cxxbasics/CXXBasics.cmake")
@@ -62,6 +62,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/command_util_shared.cpp"
   "${CORE_SHARED_DIR}/Utils/file_util.cpp"
   "${CORE_SHARED_DIR}/Utils/format_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -95,6 +96,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/command_util.h"
   "${CORE_SHARED_DIR}/Utils/file_util.h"
   "${CORE_SHARED_DIR}/Utils/format_util.h"
+  "${CORE_SHARED_DIR}/Utils/headless_util.h"
 )
 
 if(APPLE)
@@ -626,7 +628,7 @@ if(APPLE)
   # macOS: Build as a .app bundle
   set_target_properties(nexis PROPERTIES
     MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_GUI_IDENTIFIER "com.nexis.app"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "io.github.s4solutionsllc.Nexis"
     MACOSX_BUNDLE_BUNDLE_NAME "Nexis"
     MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
     MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"

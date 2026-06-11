@@ -83,8 +83,8 @@ void DataRefreshService::start()
     onFastTick();
     onMediumTick();
     // Always kick off the slow tick — onSlowTick() handles the
-    // not-yet-discovered case by running discoverDrives() on a worker
-    // thread (FR-96). This is async; the main thread is not blocked.
+    // not-yet-discovered case by running collectDriveHealth() on a worker
+    // thread (FR-96, WI-03). This is async; the main thread is not blocked.
     onSlowTick();
 
     mFastTimer->start(1000);
@@ -365,16 +365,15 @@ void DataRefreshService::onSlowTick()
 
     mDiskHealthRunning = true;
     QtConcurrent::run([this]() {
-        // FR-96: on the very first tick, drives may not have been
-        // discovered yet (initial discovery is deferred out of the
-        // InfoManager/DiskHealthInfo constructors). Run discovery then;
-        // subsequent ticks go through the cheaper refresh path.
-        if (!im->hasDiskHealth())
-            im->discoverDiskHealth();
-        else
-            im->refreshDiskHealth();
-        QList<DriveHealth> drives = im->getDriveHealth();
+        // FR-96: discovery is deferred off the main thread; this fires every
+        // 30 s once the main window has painted.
+        // WI-03: the worker builds a fresh QList<DriveHealth> locally without
+        // touching the cached mDrives, and the UI thread publishes the result
+        // via setDriveHealth(). This avoids a data race between this worker
+        // and UI-thread accessors (getDriveHealth / refreshDiskHealthElevated*).
+        QList<DriveHealth> drives = im->collectDriveHealth();
         QMetaObject::invokeMethod(this, [this, drives]() {
+            im->setDriveHealth(drives);
             mDiskHealthRunning = false;
             emit diskHealthUpdated(drives);
         }, Qt::QueuedConnection);

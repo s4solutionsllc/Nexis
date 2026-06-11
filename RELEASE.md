@@ -13,7 +13,7 @@ often*, see [`docs/MAINTAINER_SOP.md`](docs/MAINTAINER_SOP.md).
 
 Every release must satisfy these — fail closed if any check fails.
 
-1. **GPL-3.0 compliance.** `LICENSE` must remain GPL-3.0-or-later, unmodified
+1. **GPL-3.0 compliance.** `LICENSE` must remain GPL-3.0-only, unmodified
    from upstream Stacer attribution + S4 Solutions copyright lines. Nexis is and
    always will be free software; no monetization, ever.
    ```bash
@@ -29,7 +29,23 @@ Every release must satisfy these — fail closed if any check fails.
 4. **Tracking files reconciled.** `python scripts/nexis_db.py sync` has been
    run; closed items for this release are `[x]` in `BUGS.md` /
    `FEATURE_REQUESTS.md`.
-5. **Time-box not exceeded for the quarter** (see SOP).
+5. **Screenshot baselines green (or explicit waiver).** Per NEX-3381, the
+   `ScreenshotTests` suite runs non-blocking in `build.yml` on every push to
+   `native` (Linux x64 + macOS; ARM64 Linux is skipped due to a known xvfb
+   hang). Before tagging:
+   ```bash
+   # Latest Build run on the tagged SHA — screenshot step must be green on
+   # Linux x64 and macOS, OR you must download the screenshot-diffs-*
+   # artifacts, visually confirm every diff is an intended change, and either
+   # re-run `Regenerate Screenshot Baselines` (workflow_dispatch) and commit
+   # the refreshed PNGs before tagging, or note the waiver in CHANGELOG.md.
+   gh run list --workflow build.yml --branch native --limit 1
+   gh run view <run-id> --log | grep -E "Screenshot regression tests"
+   ```
+   Any open page-visual PRs in this release must regenerate the affected
+   refs in the same PR; never tag against a known-stale baseline without a
+   recorded waiver. WI-19 in the audit remediation plan is the rationale.
+6. **Time-box not exceeded for the quarter** (see SOP).
 
 ---
 
@@ -90,6 +106,16 @@ Downstream-triggered (run on success of `Release`):
 - `homebrew.yml` — bumps the `s4solutionsllc/homebrew-nexis` Cask to the new DMG.
 - `aur.yml` — publishes the AUR `nexis` package via `KSXGitHub/github-actions-deploy-aur`.
 - `ppa.yml` — uploads source packages to the Launchpad PPA for `noble`, `jammy`, `questing`.
+
+> **Action pins (WI-09 / SSO-3371).** Every `uses:` in `.github/workflows/` is
+> pinned to a full commit SHA with a trailing `# vX.Y.Z` comment — *never* a
+> bare `@v3` / `@v6` tag. This blocks the `tj-actions/changed-files`-style
+> supply-chain attack where a re-pointed upstream tag would otherwise execute
+> in a context that holds `AUR_SSH_KEY`, `HOMEBREW_TAP_TOKEN`,
+> `CROWDIN_PERSONAL_TOKEN`, or `PPA_GPG_PRIVATE_KEY`. Dependabot
+> (`.github/dependabot.yml`, `github-actions` ecosystem, weekly) opens PRs to
+> roll the SHAs forward when upstreams cut new releases; review the diff
+> before merging.
 
 ### Currently supported targets
 

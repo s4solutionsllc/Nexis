@@ -3,6 +3,7 @@
 #include "Utils/plist_util.h"
 
 #include <QDebug>
+#include <QFile>
 #include <QStandardPaths>
 
 PackageToolMacOS::PackageToolMacOS()
@@ -208,14 +209,20 @@ QList<Package> PackageToolMacOS::getInstalledApps()
 
 bool PackageToolMacOS::trashApps(const QStringList &appPaths)
 {
+    // SSO-3366 / audit S1: the previous implementation interpolated `path`
+    // into an AppleScript source string via `tell application "Finder" to
+    // delete POSIX file "%1"` and ran it through `osascript -e`. A bundle
+    // whose name contains a double quote (legal on macOS) terminates the
+    // string literal and lets attacker-controlled AppleScript follow,
+    // including `do shell script`. QFile::moveToTrash binds the path
+    // through NSFileManager::trashItemAtURL: on macOS, which takes an
+    // NSURL — no shell, no AppleScript parsing surface — so metacharacters
+    // in the bundle name are treated as path data, not code.
     bool allOk = true;
     for (const QString &path : appPaths) {
-        try {
-            QString script = QString("tell application \"Finder\" to delete POSIX file \"%1\"")
-                                 .arg(path);
-            CommandUtil::exec("/usr/bin/osascript", {"-e", script});
-        } catch (const QString &ex) {
-            qCritical() << "Failed to trash:" << path << ex;
+        QString trashedPath;
+        if (!QFile::moveToTrash(path, &trashedPath)) {
+            qCritical() << "Failed to trash:" << path;
             allOk = false;
         }
     }

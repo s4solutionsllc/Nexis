@@ -242,12 +242,25 @@ These four are isolated, small, and each can take down the app. Plus the one sec
 
 ## WI-17 — Use the tag-derived version for the macOS bundle
 - **Severity:** Medium · **Effort:** S · **Audit ref:** B3
-- **Files:** `CMakeLists.txt` (`APP_VERSION` computed ~564–571; bundle props ~631–632 use `${PROJECT_VERSION}`; bundle id `com.nexis.app` ~629), `RELEASE.md` §1 git-add step, `release.yml:~279`.
-- **Problem:** `release.yml` passes `-DAPP_VERSION_OVERRIDE=<tag>` but the `.app` Info.plist `CFBundleVersion`/`CFBundleShortVersionString` use `${PROJECT_VERSION}` (hardcoded in `project(...)`), which the override doesn't touch; and RELEASE.md §1 omits `CMakeLists.txt` from the commit step. Following the runbook ships a DMG whose version lags the release. Bundle id `com.nexis.app` is a domain the project doesn't own and inconsistent with `io.github.s4solutionsllc.Nexis`.
+- **Files:** `CMakeLists.txt` (`APP_VERSION` computed ~564–571; bundle props ~631–632 use `${PROJECT_VERSION}`; bundle id `io.github.s4solutionsllc.Nexis` ~629 — was the unowned identifier through SSO-3379), `RELEASE.md` §1 git-add step, `release.yml:~279`.
+- **Problem:** `release.yml` passes `-DAPP_VERSION_OVERRIDE=<tag>` but the `.app` Info.plist `CFBundleVersion`/`CFBundleShortVersionString` use `${PROJECT_VERSION}` (hardcoded in `project(...)`), which the override doesn't touch; and RELEASE.md §1 omits `CMakeLists.txt` from the commit step. Following the runbook ships a DMG whose version lags the release. (Resolved in SSO-3379.) Bundle id was a domain the project doesn't own and inconsistent with `io.github.s4solutionsllc.Nexis`; migrated to the owned identifier in SSO-3487 — one-time identity reset, see CHANGELOG.
 - **Fix:** Set `MACOSX_BUNDLE_BUNDLE_VERSION`/`MACOSX_BUNDLE_SHORT_VERSION_STRING` from `${APP_VERSION}` (the override-aware variable). Add `CMakeLists.txt` to the RELEASE.md §1 `git add` checklist. **Flag the bundle-id** to the maintainer (changing it after notarized releases is painful — decide deliberately; do not change unilaterally).
 - **Tests:** N/A. Verify a build with `-DAPP_VERSION_OVERRIDE=9.9.9` produces an Info.plist showing `9.9.9`.
 - **Acceptance:** macOS bundle version tracks the tag; runbook commits `CMakeLists.txt`.
 - **Platform:** macOS build.
+
+### B3 audit-clean exception — `com.nexis.clean.<id>` launchd labels (SSO-3494)
+
+`shared/nexis/Managers/schedule_manager.cpp` emits per-schedule LaunchAgent `Label` values of the form `com.nexis.clean.<id>` (one job per user-configured scheduled clean). These share the unowned-domain prefix `com.nexis.` and will continue to show up under a `grep -r 'com\.nexis\.'` audit pass even though the `.app`'s `CFBundleIdentifier` is now `io.github.s4solutionsllc.Nexis` (SSO-3487).
+
+**Decision (SSO-3494, NexisMaintainer 2026-06-11): leave as-is.**
+
+Rationale:
+- launchd `Label` is an internal job key, not signed/notarized identity material. The compliance/security argument that drove the bundle-id migration (SSO-3433/SSO-3487 — code signing, notarization, handler registration all anchor on the bundle id) does not apply here.
+- Migrating the labels would orphan every user's existing scheduled cleans on the same upgrade train that already orphaned their `.app` — a second consecutive user-visible disruption with no offsetting identity gain. Concentrated cost falls on the users who actually use the feature.
+- The hybrid route (new labels under the owned prefix, old labels untouched) adds a permanent forever-branch to `syncToOS`, `deleteLaunchdPlist`, and the `com.nexis.clean.*.plist` glob without fully resolving the grep hit (old schedules still emit `com.nexis.*` plists indefinitely).
+
+Future audit passes should treat the `com.nexis.clean.*` matches in `schedule_manager.cpp` as a known exception, not a re-open of B3. If we ever introduce a separate, deliberate launchd-label rotation (e.g. user-driven schedule reset, major version bump with a planned migration window), that's the time to revisit — not as ambient cleanup.
 
 ---
 
