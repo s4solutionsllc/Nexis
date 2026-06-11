@@ -115,7 +115,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | Disk I/O | sysfs (`/sys/block/`) | IOKit |
 | GPU info | sysfs (AMD), `nvidia-smi` (NVIDIA), sysfs (Intel) | IOKit IOAccelerator, Metal |
 | Battery info | `/sys/class/power_supply/` | IOKit `IOPMPowerSource` |
-| Thermal sensors | `/sys/class/hwmon/` | SMC (System Management Controller) |
+| Thermal sensors | `/sys/class/hwmon/` (incl. vendor WMI surfaces — `asus`, `hp`, `legion`, `ideapad`) | SMC (System Management Controller) |
 | Fan sensors | `/sys/class/hwmon/*/fan*_input`, ThinkPad `/proc/acpi/ibm/fan`, Dell `/proc/i8k`, `nvidia-smi` | SMC (`FNum`, `F{N}Ac` keys, fpe2 decoding) |
 | Disk health | `smartctl` | `smartctl` + `diskutil` plist |
 | Process listing | `/proc/[pid]/` | `sysctl` KERN_PROC |
@@ -603,7 +603,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `NetworkInfo` | Interfaces, RX/TX bytes | `QNetworkInterface` | sysfs `/sys/class/net/` |
 | `SystemInfo` | Hostname, OS, kernel, CPU model | `sysctl` | `/etc/os-release`, `lscpu` |
 | `ProcessInfo` | Process list with CPU/memory/disk I/O/network stats | `sysctl` KERN_PROC, `proc_pid_rusage()`, `nettop` | `/proc/[pid]/stat`, `/proc/[pid]/io` |
-| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` |
+| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` (vendor WMI surfaces resolved via `friendlyDeviceName`: ASUS, HP, Legion, IdeaPad) |
 | `GpuInfo` | GPU devices, utilization | IOKit, Metal | sysfs, `nvidia-smi` |
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |
 | `DiskHealthInfo` | SMART attributes, health verdicts | `smartctl`, `diskutil` | `smartctl`, sysfs |
