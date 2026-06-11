@@ -192,6 +192,19 @@ add_nexis_test(NAME InfoManagerWiringTests
     nexis-gui Qt6::Widgets
 )
 
+# WI-08 / audit H9: CleanerService destructive paths (cleanFiles, cleanTrash,
+# elevated branch via virtual seam). Pinned to nexis-gui like the exclusion
+# tests because the implementation lives in the GUI library.
+add_nexis_test(NAME CleanerServiceTests
+  SOURCES
+    managers/test_cleaner_service.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
 # against nexis-gui because FileSearchService lives in the GUI library.
 add_nexis_test(NAME FileSearchServiceTests

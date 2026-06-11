@@ -335,30 +335,24 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
     return result;
 }
 
-quint64 CleanerService::cleanTrash()
+QString CleanerService::trashRoot() const
 {
 #ifdef Q_OS_MACOS
-    QString trashPath = QDir::homePath() + "/.Trash";
+    return QDir::homePath() + "/.Trash";
 #else
-    QString trashPath = QDir::homePath() + "/.local/share/Trash";
+    return QDir::homePath() + "/.local/share/Trash";
 #endif
+}
 
-    quint64 sizeBefore = FileUtil::getFileSize(trashPath);
+quint64 CleanerService::cleanTrash()
+{
+    const QString trashPath = trashRoot();
+    const quint64 sizeBefore = FileUtil::getFileSize(trashPath);
 
-#ifdef Q_OS_MACOS
-    QDir trashDir(trashPath);
-    for (const QFileInfo &entry : trashDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
-        if (entry.isSymLink()) {
-            QFile::remove(entry.absoluteFilePath());
-        } else if (entry.isDir()) {
-            QDir(entry.absoluteFilePath()).removeRecursively();
-        } else {
-            QFile::remove(entry.absoluteFilePath());
-        }
-    }
-#else
     auto emptyDir = [](const QString &dirPath) {
         QDir dir(dirPath);
+        if (!dir.exists())
+            return;
         for (const QFileInfo &entry : dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
             if (entry.isSymLink()) {
                 QFile::remove(entry.absoluteFilePath());
@@ -369,6 +363,10 @@ quint64 CleanerService::cleanTrash()
             }
         }
     };
+
+#ifdef Q_OS_MACOS
+    emptyDir(trashPath);
+#else
     emptyDir(trashPath + "/files");
     emptyDir(trashPath + "/info");
 #endif
@@ -385,54 +383,114 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
         cutoff = QDateTime::currentDateTime().addSecs(-minFileAgeSecs);
     }
 
+    // WI-08 / audit H9: load exclusions once and re-check at every depth so
+    // an excluded child inside a scanned directory survives. scan() filters
+    // only the top level, which means without this guard a recursive directory
+    // walk would delete excluded files that the user explicitly protected.
+    const QList<ExclusionEntry> exclusions = loadExclusions();
+
     QStringList filesToRemove;
 
     for (const QString &path : paths) {
         QFileInfo fi(path);
 
-        if (minFileAgeSecs > 0 && fi.lastModified() > cutoff) {
+        if (isExcluded(fi.absoluteFilePath(), exclusions))
+            continue;
+
+        // SSO-3370: for the recursive-delete path, a directory's own mtime
+        // carries no useful signal — a cache dir we just wrote to looks
+        // "recent" even though its aged children should still be cleaned.
+        // removeDirContentsRespectingExclusions() applies the cutoff per child,
+        // so always recurse into directories regardless of their own mtime.
+        // The trash-wholesale path (moveToTrashInstead) keeps the original
+        // top-level gate because it moves the whole tree at once.
+        const bool willRecurse = fi.isDir() && !moveToTrashInstead;
+        if (minFileAgeSecs > 0 && !willRecurse && fi.lastModified() > cutoff) {
             continue;
         }
-
-        quint64 size = FileUtil::getFileSize(path);
 
         if (moveToTrashInstead) {
             // FR-113: DOWNLOADS_AGED path. QFile::moveToTrash preserves
             // the filesystem's "Put Back" metadata on both macOS
             // (NSFileManager trashItemAtURL:) and Linux (XDG trash spec).
+            const quint64 size = FileUtil::getFileSize(path);
             QString trashedPath;
             if (!QFile::moveToTrash(path, &trashedPath)) {
                 qWarning() << "cleanFiles: moveToTrash failed for" << path;
                 continue;   // don't count bytes we didn't actually move.
             }
+            totalFreed += size;
         } else if (fi.isSymLink()) {
-            QFile::remove(path);
+            const quint64 size = FileUtil::getFileSize(path);
+            if (QFile::remove(path))
+                totalFreed += size;
         } else if (fi.isDir()) {
-            QDir dir(path);
-            for (const QFileInfo &entry : dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
-                if (minFileAgeSecs > 0 && entry.lastModified() > cutoff) {
-                    continue;
-                }
-                if (entry.isSymLink()) {
-                    QFile::remove(entry.absoluteFilePath());
-                } else if (entry.isDir()) {
-                    QDir(entry.absoluteFilePath()).removeRecursively();
-                } else {
-                    QFile::remove(entry.absoluteFilePath());
-                }
-            }
+            totalFreed += removeDirContentsRespectingExclusions(
+                path, exclusions, minFileAgeSecs, cutoff);
         } else {
             filesToRemove << path;
+            totalFreed += FileUtil::getFileSize(path);
         }
-
-        totalFreed += size;
     }
 
     if (!filesToRemove.isEmpty() && !moveToTrashInstead) {
-        CommandUtil::sudoExec("rm", QStringList() << "-rf" << filesToRemove);
+        removeElevated(filesToRemove);
     }
 
     return totalFreed;
+}
+
+quint64 CleanerService::removeDirContentsRespectingExclusions(
+    const QString &dirPath,
+    const QList<ExclusionEntry> &exclusions,
+    int minFileAgeSecs,
+    const QDateTime &cutoff)
+{
+    quint64 freed = 0;
+    QDir dir(dirPath);
+    const QFileInfoList entries = dir.entryInfoList(
+        QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
+
+    for (const QFileInfo &entry : entries) {
+        const QString entryPath = entry.absoluteFilePath();
+
+        // WI-08 fix: exclusion + age cutoff must be enforced at every depth,
+        // not just on the top-level entry that scan() filtered.
+        if (isExcluded(entryPath, exclusions))
+            continue;
+        if (minFileAgeSecs > 0 && entry.lastModified() > cutoff)
+            continue;
+
+        if (entry.isSymLink()) {
+            const quint64 size = FileUtil::getFileSize(entryPath);
+            if (QFile::remove(entryPath))
+                freed += size;
+        } else if (entry.isDir()) {
+            freed += removeDirContentsRespectingExclusions(
+                entryPath, exclusions, minFileAgeSecs, cutoff);
+            // If the recursive walk emptied the directory, remove the now-empty
+            // shell so a scanned cache directory does not linger.
+            QDir sub(entryPath);
+            if (sub.isEmpty(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot))
+                sub.rmdir(".");
+        } else {
+            const quint64 size = FileUtil::getFileSize(entryPath);
+            if (QFile::remove(entryPath))
+                freed += size;
+        }
+    }
+
+    return freed;
+}
+
+void CleanerService::removeElevated(const QStringList &paths)
+{
+    // `--` is required so any pathname that begins with `-` (e.g. a maliciously
+    // named file `-rf`) is not parsed by rm as an additional option flag.
+    QStringList args;
+    args << "-rf" << "--";
+    args.append(paths);
+    CommandUtil::sudoExec("rm", args);
 }
 
 void CleanerService::maybeTakeSnapshot(const QList<CleanCategory> &categories)

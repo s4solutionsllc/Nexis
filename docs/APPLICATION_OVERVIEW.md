@@ -65,8 +65,8 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 338 | same |
 | Test LOC | ~6,050 | `tests/` |
-| Test executables | 31 (30 unit + 1 screenshot) | `tests/CMakeLists.txt` |
-| Test methods | ~421 | `private slots:` in `tests/*/test_*.cpp` |
+| Test executables | 32 (31 unit + 1 screenshot) | `tests/CMakeLists.txt` |
+| Test methods | ~436 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 16 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` Linux-only); all 16 wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389) |
@@ -237,6 +237,7 @@ Scan and remove system junk files across 9 categories.
 - Add file or folder exclusions via native file chooser; remove via dialog
 - Right-click any scan result item → "Always exclude this" to instantly persist an exclusion rule and remove the item from the tree
 - Excluded paths are skipped during scanning (file exact match, folder prefix match, symlink-aware)
+- Exclusions are enforced at **every depth** of the recursive deletion walk, not just on the top-level scan entry — a protected child or sub-folder inside a scanned cache directory is preserved even when the cache directory itself is the cleanup target (NEX-3370)
 - Exclusions persist across app restarts via JSON in QSettings
 
 **UI features:**

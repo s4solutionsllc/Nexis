@@ -379,7 +379,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 - ~~Singleton coupling (§2) blocks mock injection~~ — resolved in Phase 6 (FR-35)
 - ~~Info classes read real OS state — no abstraction for test data~~ — resolved in Phase 5 (FR-34) and FR-76 (static parser extraction)
 - Pages tightly bound to `.ui` files and Qt widgets (UI testing out of scope)
-- CleanerService in GUI executable target — not linkable as library for unit tests (deferred to BUG-93)
+- CleanerService in GUI executable target — exclusion logic and the destructive `cleanFiles` / `cleanTrash` paths are now testable by linking the test binary against `nexis-gui` (see `CleanerExclusionTests` and `CleanerServiceTests`). The deletion paths use `protected virtual` seams (`removeElevated()`, `trashRoot()`) so a `TestableCleanerService` subclass can bypass `sudoExec` and the real Trash directory — same pattern as `TestableRepairEngine`'s pkexec bypass
 
 ---
 
