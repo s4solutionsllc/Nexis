@@ -19,6 +19,7 @@
 #include <QStandardPaths>
 #include <QTreeWidget>
 #include <QResizeEvent>
+#include <QSet>
 #include <QVBoxLayout>
 #include <QtConcurrent>
 
@@ -578,6 +579,10 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
     mBtnDupCancel->hide();
     mBtnDupScan->show();
 
+    // FW-08: retain for the trash path so the service-side last-copy guard
+    // sees the full group, not just the rows the user happens to have checked.
+    mDupResults = results;
+
     mTreeDuplicates->setUpdatesEnabled(false);
 
     quint64 totalWasted = 0;
@@ -648,27 +653,36 @@ void DiskToolsPage::onDupTrash()
     if (reply != QMessageBox::Yes)
         return;
 
-    int trashed = 0;
-    for (const QString &path : filesToTrash) {
-        if (QFile::moveToTrash(path))
-            trashed++;
-    }
+    // FW-08 (SSO-3736): hand the selection to the service so the cleaner
+    // exclusion engine and the never-delete-last-copy invariant are
+    // enforced server-side; the UI's checkbox bookkeeping alone can't
+    // guarantee them once the user starts re-checking the "kept" row.
+    const QStringList trashedPaths =
+        mDupService->trashFiles(filesToTrash, mDupResults);
+    const int trashed = trashedPaths.size();
+    const QSet<QString> trashedSet(trashedPaths.constBegin(), trashedPaths.constEnd());
 
     for (int g = mTreeDuplicates->topLevelItemCount() - 1; g >= 0; --g) {
         auto *groupItem = mTreeDuplicates->topLevelItem(g);
         for (int c = groupItem->childCount() - 1; c >= 0; --c) {
             auto *child = groupItem->child(c);
-            if (child->checkState(0) == Qt::Checked) {
-                QString path = child->data(0, Qt::UserRole).toString();
-                if (!QFile::exists(path))
-                    delete groupItem->takeChild(c);
-            }
+            const QString path = child->data(0, Qt::UserRole).toString();
+            if (trashedSet.contains(path))
+                delete groupItem->takeChild(c);
         }
         if (groupItem->childCount() <= 1)
             delete mTreeDuplicates->takeTopLevelItem(g);
     }
 
-    mLblDupStatus->setText(tr("Moved %1 files to trash").arg(trashed));
+    const int skipped = filesToTrash.size() - trashed;
+    if (skipped > 0) {
+        mLblDupStatus->setText(
+            tr("Moved %1 files to trash · %2 kept to honor exclusions or "
+               "preserve at least one copy")
+                .arg(trashed).arg(skipped));
+    } else {
+        mLblDupStatus->setText(tr("Moved %1 files to trash").arg(trashed));
+    }
     updateDupSelection();
 }
 
