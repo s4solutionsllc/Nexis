@@ -397,7 +397,15 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
         if (isExcluded(fi.absoluteFilePath(), exclusions))
             continue;
 
-        if (minFileAgeSecs > 0 && fi.lastModified() > cutoff) {
+        // SSO-3370: for the recursive-delete path, a directory's own mtime
+        // carries no useful signal — a cache dir we just wrote to looks
+        // "recent" even though its aged children should still be cleaned.
+        // removeDirContentsRespectingExclusions() applies the cutoff per child,
+        // so always recurse into directories regardless of their own mtime.
+        // The trash-wholesale path (moveToTrashInstead) keeps the original
+        // top-level gate because it moves the whole tree at once.
+        const bool willRecurse = fi.isDir() && !moveToTrashInstead;
+        if (minFileAgeSecs > 0 && !willRecurse && fi.lastModified() > cutoff) {
             continue;
         }
 
