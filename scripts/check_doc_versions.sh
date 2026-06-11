@@ -14,7 +14,11 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
-cmake_version="$(sed -n 's/^project([^)]*VERSION \([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p' CMakeLists.txt | head -1)"
+# Use grep -oE (POSIX ERE) so this works under both GNU and BSD userlands;
+# `sed -E` with `\+` is GNU-only and silently fails to match on macOS.
+cmake_version="$(grep -oE 'project\([^)]*VERSION [0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt \
+  | head -1 \
+  | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
 if [[ -z "$cmake_version" ]]; then
   echo "check_doc_versions: could not parse VERSION from CMakeLists.txt project()" >&2
   exit 1
