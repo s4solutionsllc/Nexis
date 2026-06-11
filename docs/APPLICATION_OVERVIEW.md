@@ -729,6 +729,15 @@ rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release \
 cmake --build build -j$(sysctl -n hw.ncpu)
 ```
 
+### Release Build Hardening
+
+Release / RelWithDebInfo / MinSizeRel builds enable an explicit hardening baseline so the AppImage, raw tarball, and macOS `.app` get the same protections distros layer on top of the `.deb`:
+
+- `-fstack-protector-strong`, `-D_FORTIFY_SOURCE=2`, `CMAKE_POSITION_INDEPENDENT_CODE=ON` (both platforms)
+- Linux link: `-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -pie` (full RELRO, BIND_NOW, NX stack, PIE)
+- macOS link: `-Wl,-bind_at_load` (immediate symbol binding)
+- Distro overrides: gated behind `-DNEXIS_ENABLE_HARDENING=OFF` for packagers who want to drive flags exclusively from their toolchain.
+
 ---
 
 ## Theme System
