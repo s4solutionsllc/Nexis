@@ -700,6 +700,8 @@ tests/
 - Linux PPA: `ppa:s4solutionsllc/nexis` — Ubuntu 22.04+ (Jammy, Noble, Plucky), amd64 and arm64, automatic updates via apt
 - macOS Homebrew: `brew tap s4solutionsllc/nexis && brew install --cask nexis` — Apple Silicon, auto-updated on new releases
 
+**Linux distribution channels:** `.deb` (PPA + GitHub releases), AppImage, AUR. The Flatpak (Flathub) channel was retired in 2026-06; the sandbox model is incompatible with Nexis's system-maintenance feature set (privileged host operations like `systemctl`, `pkexec`, `smartctl`, `fstrim` are unavailable or no-ops inside bubblewrap). The product feature that detects and cleans unused Flatpak runtimes installed on the host is unaffected.
+
 **Test executables** — see the canonical table at the top of this doc for counts
 - Unit test executables registered via the `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable); plus one screenshot regression test linked against `nexis-gui`
 - Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`
