@@ -15,9 +15,10 @@ sudo apt install nexis`,
     label: 'Homebrew (macOS)',
     platform: 'macos',
     install: `brew tap s4solutionsllc/nexis
+brew trust s4solutionsllc/nexis
 brew install --cask nexis`,
     upgrade: `brew upgrade --cask nexis`,
-    note: 'Requires macOS 12+ on Apple Silicon. The tap is updated automatically on each release.',
+    note: 'Requires macOS 12+ on Apple Silicon. The tap is updated automatically on each release. Homebrew 6.0+ requires the one-time "brew trust" above before it will load the cask.',
   },
 ];
 ---
