@@ -404,6 +404,8 @@ Miscellaneous utility tools, organized into two clearly labelled header sections
 - **Verify Disk** (macOS only) — runs `diskutil verifyVolume /` with a 5-minute timeout, shows output in a scrollable result dialog.
 - **Rebuild Launch Services** (macOS only) — rescans the app database (`lsregister -r`) and restarts Finder.
 
+**Battery Charge Threshold (Linux only)** — Slider/preset control for limiting the maximum battery charge level, reducing long-term battery wear. Preset buttons: Maximize (100%) and Preserve (80%); a Custom preset exposes a slider from 50–100%. Writes `charge_control_end_threshold` (and `charge_control_start_threshold` when the node exists) via `pkexec`/`tee`. Performs a read-back verify after every write. Optionally persists the threshold across reboots by writing a udev rule to `/etc/udev/rules.d/99-nexis-battery-threshold.rules`. Hidden on hardware that does not expose the sysfs node. Implemented in `BatteryChargeThreshold` (`linux/nexis-core/Info/battery_charge_threshold.cpp`) and `BatteryChargeThresholdWidget`.
+
 **Power Profile Switcher (Linux only)** — Segmented control with three buttons (Power Saver / Balanced / Performance) for switching CPU power profiles. Uses `power-profiles-daemon` (`powerprofilesctl`) as the primary backend (no root needed). Falls back to raw sysfs governor writes via `pkexec` on systems without PPD. Automatically detects available profiles, hides Balanced if the driver only supports two governors (e.g., `intel_pstate`). Warns if TLP or auto-cpufreq is active. Hidden on macOS and systems without cpufreq support.
 
 **Hosts File Manager** — GUI editor for `/etc/hosts`:

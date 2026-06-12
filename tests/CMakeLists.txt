@@ -46,6 +46,7 @@ add_nexis_test(NAME RepoRepairEngineTests SOURCES core/test_repo_repair_engine.c
 add_nexis_test(NAME FanInfoTests      SOURCES core/test_fan_info.cpp)
 add_nexis_test(NAME ThermalInfoTests  SOURCES core/test_thermal_info.cpp)
 add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
+add_nexis_test(NAME BatteryChargeThresholdTests SOURCES core/test_battery_charge_threshold.cpp)
 add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)

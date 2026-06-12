@@ -214,6 +214,7 @@ if(APPLE)
 else()
   set(CORE_PLAT_SRCS
     "${CORE_PLAT_DIR}/Info/battery_info.cpp"
+    "${CORE_PLAT_DIR}/Info/battery_charge_threshold.cpp"
     "${CORE_PLAT_DIR}/Info/cpu_info.cpp"
     "${CORE_PLAT_DIR}/Info/cpu_tuning.cpp"
     "${CORE_PLAT_DIR}/Info/disk_health_info.cpp"
@@ -247,6 +248,7 @@ else()
   )
   set(CORE_PLAT_HDRS
     "${CORE_PLAT_DIR}/Info/battery_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/battery_charge_threshold.h"
     "${CORE_PLAT_DIR}/Info/cpu_info_linux.h"
     "${CORE_PLAT_DIR}/Info/cpu_tuning.h"
     "${CORE_PLAT_DIR}/Info/disk_health_info_linux.h"
@@ -373,6 +375,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Helpers/firewall_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/swappiness_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/cpu_tuning_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/battery_charge_threshold_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/oom_kills_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/trim_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/wol_widget.cpp"

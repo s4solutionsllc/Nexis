@@ -5,6 +5,8 @@
 #ifdef Q_OS_LINUX
 #include "swappiness_widget.h"
 #include "cpu_tuning_widget.h"
+#include "battery_charge_threshold_widget.h"
+#include <Info/battery_charge_threshold.h>
 #endif
 #include "trim_widget.h"
 #include "wol_widget.h"
@@ -76,6 +78,9 @@ void HelpersPage::init()
     mCpuTuningWidget = new CpuTuningWidget;
     ui->stackedWidget->addWidget(mCpuTuningWidget);
 
+    mBatteryThresholdWidget = new BatteryChargeThresholdWidget;
+    ui->stackedWidget->addWidget(mBatteryThresholdWidget);
+
 #endif
 
     // FR-118: TRIM widget — cross-platform. Hide the button if fstrim isn't
@@ -130,6 +135,21 @@ void HelpersPage::init()
     shadowWidgets << mBtnCpuTuning;
     connect(mBtnCpuTuning, &QPushButton::clicked, this, &HelpersPage::onCpuTuningClicked);
 
+    // FW-15: Battery charge threshold — gated on sysfs node existing.
+    {
+        ChargeThresholdStatus probe = BatteryChargeThreshold::readStatus();
+        if (probe.available) {
+            mBtnBatteryThreshold = new QPushButton(tr("Charge Threshold"));
+            mBtnBatteryThreshold->setCheckable(true);
+            mBtnBatteryThreshold->setCursor(Qt::PointingHandCursor);
+            mBtnBatteryThreshold->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+            ui->buttonGroup->addButton(mBtnBatteryThreshold);
+            shadowWidgets << mBtnBatteryThreshold;
+            connect(mBtnBatteryThreshold, &QPushButton::clicked,
+                    this, &HelpersPage::onBatteryThresholdClicked);
+        }
+    }
+
     // FR-118: TRIM button (Linux — gated on fstrim being installed).
     if (CommandUtil::isExecutable("fstrim")) {
         mBtnTrim = new QPushButton(tr("SSD TRIM"));
@@ -168,6 +188,8 @@ void HelpersPage::init()
         mToolItems << mBtnSwappiness;
     if (mBtnCpuTuning)
         mToolItems << mBtnCpuTuning;
+    if (mBtnBatteryThreshold)
+        mToolItems << mBtnBatteryThreshold;
     if (mBtnTrim)
         mToolItems << mBtnTrim;
     if (mPowerProfileWidget)
@@ -235,6 +257,16 @@ void HelpersPage::onCpuTuningClicked()
         return;
     mCpuTuningWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mCpuTuningWidget);
+#endif
+}
+
+void HelpersPage::onBatteryThresholdClicked()
+{
+#ifdef Q_OS_LINUX
+    if (!mBatteryThresholdWidget)
+        return;
+    mBatteryThresholdWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mBatteryThresholdWidget);
 #endif
 }
 
