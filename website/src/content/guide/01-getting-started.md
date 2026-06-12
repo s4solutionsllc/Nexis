@@ -39,7 +39,7 @@ chmod +x Nexis-*.AppImage
 
 Download the `.dmg` file from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases). Open it and drag **Nexis** into your **Applications** folder. On first launch, macOS may ask you to confirm you want to open an app from an identified developer.
 
-> **macOS:** Nexis is built natively for Apple Silicon. macOS 12 (Monterey) or later is required. Intel Macs are not currently supported.
+> **macOS:** Nexis is built natively for Apple Silicon. macOS 14 (Sonoma) or later is required. Intel Macs are not currently supported.
 
 ### Building from Source
 

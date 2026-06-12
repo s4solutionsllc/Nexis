@@ -1,4 +1,16 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
+
+# Pin the macOS deployment target so the shipped .app/.dmg floor is explicit and
+# reproducible instead of floating to whatever host builds it (an unset target
+# makes clang stamp minos = the build machine's macOS version). The real binding
+# constraint is Homebrew Qt6, whose bottles are built for minos 14.0 — dyld
+# refuses to load them below macOS 14, so Sonoma is the hard floor regardless of
+# this setting. Keep README/website/cask in sync with this value. Must be set
+# before project(); only consulted on Apple, ignored elsewhere.
+if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "Minimum macOS deployment version")
+endif()
+
 project(Nexis VERSION 2.4.0)
 
 # Adding features(build cache + faster linkers) and reasonable defaults(Debug build by default)
