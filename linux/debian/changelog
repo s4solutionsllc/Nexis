@@ -1,3 +1,21 @@
+nexis (2.5.0-0) unstable; urgency=medium
+
+  * cgroup v2 / systemd-oomd observability panel on Resources page
+    (SSO-3739 / FW-11)
+  * Data-driven app cleaning profiles — declarative JSON profiles for
+    per-application cache locations, shipped with 31 Linux / 32 macOS
+    profiles (SSO-3740 / FW-12)
+  * Linux battery charge-threshold control widget on Helpers page with
+    Maximize / Preserve / Custom presets and optional udev persistence
+    (SSO-3743 / FW-15)
+  * Documented macOS minimum raised to 14 (Sonoma) and deployment target
+    pinned to 14.0; aligns docs with the runtime floor enforced by the
+    shipped .dmg (NEX)
+  * Fix unconditional FW-15 battery-threshold test breaking the macOS
+    build (SSO-3743)
+
+ -- Luke Simpson <luke@s4solutions.ai>  Fri, 12 Jun 2026 00:00:00 +0000
+
 nexis (2.4.0-0) unstable; urgency=medium
 
   * APT 3.1 readiness: deb822 round-trip with Signed-By/Architectures editor,
