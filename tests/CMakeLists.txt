@@ -60,6 +60,7 @@ add_nexis_test(NAME RepoRepairEngineTests SOURCES core/test_repo_repair_engine.c
 add_nexis_test(NAME FanInfoTests      SOURCES core/test_fan_info.cpp)
 add_nexis_test(NAME ThermalInfoTests  SOURCES core/test_thermal_info.cpp)
 add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
+add_nexis_test(NAME BatteryChargeThresholdTests SOURCES core/test_battery_charge_threshold.cpp)
 add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
@@ -338,6 +339,19 @@ add_nexis_test(NAME FileSearchServiceTests
     "${GUI_SHARED_DIR}/Services"
   LIBS
     nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
+# FW-14 (SSO-3742): HealthReportManager — on-demand Markdown export and
+# schedule CRUD. Links against nexis-gui for InfoManager, CleanerService,
+# ScheduleManager, and SettingManager (same pattern as CleanerServiceTests).
+add_nexis_test(NAME HealthReportTests
+  SOURCES
+    managers/test_health_report.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
 )
 
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback

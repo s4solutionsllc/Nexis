@@ -214,6 +214,7 @@ if(APPLE)
 else()
   set(CORE_PLAT_SRCS
     "${CORE_PLAT_DIR}/Info/battery_info.cpp"
+    "${CORE_PLAT_DIR}/Info/battery_charge_threshold.cpp"
     "${CORE_PLAT_DIR}/Info/cpu_info.cpp"
     "${CORE_PLAT_DIR}/Info/cpu_tuning.cpp"
     "${CORE_PLAT_DIR}/Info/disk_health_info.cpp"
@@ -247,6 +248,7 @@ else()
   )
   set(CORE_PLAT_HDRS
     "${CORE_PLAT_DIR}/Info/battery_info_linux.h"
+    "${CORE_PLAT_DIR}/Info/battery_charge_threshold.h"
     "${CORE_PLAT_DIR}/Info/cpu_info_linux.h"
     "${CORE_PLAT_DIR}/Info/cpu_tuning.h"
     "${CORE_PLAT_DIR}/Info/disk_health_info_linux.h"
@@ -329,6 +331,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Managers/tool_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/schedule_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+  "${GUI_SHARED_DIR}/Managers/health_report_manager.cpp"
   "${GUI_SHARED_DIR}/Services/file_search_service.cpp"
   "${GUI_SHARED_DIR}/Services/duplicate_finder_service.cpp"
   "${GUI_SHARED_DIR}/Services/host_service.cpp"
@@ -371,6 +374,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Helpers/firewall_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/swappiness_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/cpu_tuning_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/battery_charge_threshold_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/oom_kills_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/trim_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/wol_widget.cpp"
@@ -415,6 +419,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Managers/info_manager.h"
   "${GUI_SHARED_DIR}/Managers/schedule_manager.h"
   "${GUI_SHARED_DIR}/Managers/setting_manager.h"
+  "${GUI_SHARED_DIR}/Managers/health_report_manager.h"
   "${GUI_SHARED_DIR}/Managers/tool_manager.h"
   "${GUI_SHARED_DIR}/Services/file_search_service.h"
   "${GUI_SHARED_DIR}/Services/duplicate_finder_service.h"
