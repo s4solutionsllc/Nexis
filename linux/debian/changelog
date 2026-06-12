@@ -1,3 +1,23 @@
+nexis (2.4.0-0) unstable; urgency=medium
+
+  * APT 3.1 readiness: deb822 round-trip with Signed-By/Architectures editor,
+    deb822 add-repository path, and APT 3.1 transaction history surface with
+    Undo / Rollback / Why? (SSO-3728, SSO-3735)
+  * Linux thermal: surface vendor hwmon sensors (ASUS, HP, Legion) (SSO-3744)
+  * Disk tools: built-in disk-space treemap visualizer and duplicate-finder
+    exclusion + last-copy invariant + new scan modes (SSO-3737, SSO-3736)
+  * Startup Apps (macOS): sfltool BTM view with guarded resetbtm (SSO-3738)
+  * Linux GPU: Intel xe driver utilization (GH#91)
+  * Fix macOS notarization-ticket stapling and macOS bundle version tracks
+    the git tag (SSO-3513, SSO-3379)
+  * Many UI race / threading fixes (SSO-3385, SSO-3383, SSO-3384, SSO-3387,
+    SSO-3388, SSO-3502)
+  * Build hardening: explicit Release flags on Linux + macOS, CodeQL,
+    SHA-pinned linuxdeploy (SSO-3397, SSO-3375)
+  * Retire Flatpak channel (SSO-3376)
+
+ -- Luke Simpson <luke@s4solutions.ai>  Fri, 12 Jun 2026 00:00:00 +0000
+
 nexis (2.3.13-0) unstable; urgency=medium
 
   * Fix AUR install failing on CachyOS/Arch with "undefined symbol: main" —
