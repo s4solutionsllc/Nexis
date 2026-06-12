@@ -1,0 +1,13 @@
+{
+  "id": "docker-tmp",
+  "name": "Docker Temporary Files",
+  "app": "Docker",
+  "description": "Per-user Docker CLI temporary files and buildx cache.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.docker/buildx/cache",
+    "$HOME/.docker/scout"
+  ],
+  "minAgeDays": 7
+}

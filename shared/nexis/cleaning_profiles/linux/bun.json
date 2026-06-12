@@ -1,0 +1,12 @@
+{
+  "id": "bun-cache",
+  "name": "Bun Install Cache",
+  "app": "Bun",
+  "description": "Bun's global install and download cache.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.bun/install/cache"
+  ],
+  "minAgeDays": 0
+}

@@ -54,6 +54,9 @@ namespace SettingKeys {
     // FR-114
     const QString CleanerCategoryTrends("CleanerCategoryTrends");
 
+    // FW-12
+    const QString CleanerAggressiveProfilesEnabled("CleanerAggressiveProfilesEnabled");
+
     // FR-116
     const QString ProcessPinnedNames("ProcessPinnedNames");
     const QString ProcessThresholds("ProcessThresholds");
@@ -221,6 +224,10 @@ public:
     // FR-114
     void setCleanerCategoryTrends(const QString &json);
     QString getCleanerCategoryTrends() const;
+
+    // FW-12
+    void setCleanerAggressiveProfilesEnabled(bool value);
+    bool getCleanerAggressiveProfilesEnabled() const;
 
     // FR-116
     void setProcessPinnedNames(const QString &json);

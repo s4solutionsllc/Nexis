@@ -1,0 +1,13 @@
+{
+  "id": "quicklook-thumbnails",
+  "name": "QuickLook Thumbnails",
+  "app": "macOS Quick Look",
+  "description": "Per-user QuickLook thumbnail and cloud storage cache.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/com.apple.QuickLook.thumbnailcache",
+    "$HOME/Library/Caches/com.apple.QuickLookDaemon"
+  ],
+  "minAgeDays": 30
+}

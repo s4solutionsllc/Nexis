@@ -1,0 +1,13 @@
+{
+  "id": "pnpm-cache",
+  "name": "pnpm Store",
+  "app": "pnpm",
+  "description": "Content-addressable package store and metadata for pnpm.",
+  "platforms": ["linux"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.local/share/pnpm/store",
+    "$HOME/.pnpm-store"
+  ],
+  "minAgeDays": 0
+}

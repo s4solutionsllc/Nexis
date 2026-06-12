@@ -72,7 +72,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
 | Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
 | Utility classes | 5 | `CommandUtil`, `DisplayServerUtil`, `FileUtil`, `FormatUtil`, `HeadlessUtil` in `shared/nexis-core/Utils/` |
-| Manager singletons | 8 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |
+| Manager singletons | 9 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `CleaningProfilesService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |
 | Domain services | 9 | `shared/nexis/Services/` (`StartupService`, `FileSearchService`, `HostService`, `ProcessService`, `SystemServiceManager`, `DockerService`, `PackageService`, `DuplicateFinderService`, `SnapshotService`) |
 | `SignalMapper` signals | 10 | `shared/nexis/signal_mapper.h` |
 | `DataRefreshService` QTimers | 5 | fast (1 s) / medium (5 s) / slow (30 s) / process (configurable) / update (1 h) |
@@ -224,7 +224,7 @@ Ranked breakdown of which services and processes slow down system startup.
 
 ### 4. System Cleaner
 
-Scan and remove system junk files across 9 categories.
+Scan and remove system junk files across 10 categories.
 
 **Scan categories:**
 1. **Package Cache** — APT, DNF/YUM, Pacman, or Homebrew caches (platform-detected)
@@ -236,6 +236,7 @@ Scan and remove system junk files across 9 categories.
 7. **Broken Symlinks** — Detects broken symbolic links in `~/.local/`, `~/bin/`, Homebrew prefix (macOS) or `/usr/local/bin` (Linux)
 8. **Browser Privacy** — Browser caches (Chrome, Edge, Brave, Firefox, Safari), session data, and OS-level recent file lists (macOS LSSharedFileList, Linux recently-used.xbel)
 9. **Snap/Flatpak Revisions** *(Linux only)* — Stale disabled snap revisions and unused Flatpak runtimes; cleaned via `snap remove --revision` and `flatpak uninstall --unused`
+10. **Application Profiles (FW-12)** — Data-driven category sourced from declarative JSON profiles (see `docs/CLEANING_PROFILES.md`). Bundled profiles cover 31 Linux and 32 macOS application footprints (browsers, IDEs, Xcode caches, package-manager / build-tool caches, container runtimes, comms apps). Users add their own under `~/.config/Nexis/cleaning_profiles/`; user profiles override bundled by `id`. Aggressive profiles (e.g. Maven `~/.m2`, Cargo registry, Mail Downloads) are gated behind `SettingManager::CleanerAggressiveProfilesEnabled` so the default "scan + clean" cadence never crosses the rebuild-required line without explicit opt-in.
 
 **Exclusion rules:**
 - Manage exclusion rules via gear button on the categories page → opens ExclusionManagerDialog

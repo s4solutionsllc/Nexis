@@ -1,0 +1,13 @@
+{
+  "id": "libreoffice-cache",
+  "name": "LibreOffice Cache",
+  "app": "LibreOffice",
+  "description": "Cached extension downloads and per-user build directories.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/libreoffice",
+    "$HOME/.config/libreoffice/*/user/extensions/cache"
+  ],
+  "minAgeDays": 30
+}

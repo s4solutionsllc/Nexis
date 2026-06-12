@@ -1,0 +1,13 @@
+{
+  "id": "zoom-logs",
+  "name": "Zoom Logs",
+  "app": "Zoom",
+  "description": "Zoom client log files and crash dumps.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Application Support/zoom.us/logs",
+    "$HOME/Library/Logs/zoom.us"
+  ],
+  "minAgeDays": 14
+}

@@ -1,0 +1,14 @@
+{
+  "id": "xcode-device-support",
+  "name": "Xcode Device Support",
+  "app": "Xcode",
+  "description": "iOS Device Support payloads downloaded for old iOS versions you no longer debug against.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/Library/Developer/Xcode/iOS DeviceSupport/*",
+    "$HOME/Library/Developer/Xcode/watchOS DeviceSupport/*",
+    "$HOME/Library/Developer/Xcode/tvOS DeviceSupport/*"
+  ],
+  "minAgeDays": 90
+}

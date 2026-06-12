@@ -1,0 +1,13 @@
+{
+  "id": "spotify-cache",
+  "name": "Spotify Cache",
+  "app": "Spotify",
+  "description": "Spotify offline cache and download buffer.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/spotify",
+    "$HOME/.config/spotify/Storage"
+  ],
+  "minAgeDays": 0
+}

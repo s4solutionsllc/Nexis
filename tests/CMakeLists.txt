@@ -326,6 +326,19 @@ add_nexis_test(NAME CleanerAccessNeededTests
     nexis-gui Qt6::Widgets
 )
 
+# FW-12: data-driven cleaning profiles. Loader and glob expansion are
+# pure (no InfoManager/ToolManager touch), but the service lives in the
+# GUI library alongside CleanerService, so we link nexis-gui here too.
+add_nexis_test(NAME CleaningProfilesTests
+  SOURCES
+    managers/test_cleaning_profiles.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3380 / WI-18: DataRefreshService::isCpuPayloadEmittable() guards
 # the cpuUpdated emit against an empty producer payload. Links against
 # nexis-gui because the predicate lives in the GUI-side service.

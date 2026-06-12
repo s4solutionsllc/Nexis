@@ -1,0 +1,13 @@
+{
+  "id": "podman-tmp",
+  "name": "Podman Temporary Files",
+  "app": "Podman",
+  "description": "Per-user Podman temporary build and CNI cache.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.local/share/containers/cache",
+    "$HOME/.local/share/containers/storage/tmp"
+  ],
+  "minAgeDays": 7
+}

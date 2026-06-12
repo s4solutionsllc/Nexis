@@ -1,0 +1,12 @@
+{
+  "id": "xcode-deriveddata",
+  "name": "Xcode DerivedData",
+  "app": "Xcode",
+  "description": "Per-project intermediate build products and module caches under DerivedData.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Developer/Xcode/DerivedData/*"
+  ],
+  "minAgeDays": 7
+}

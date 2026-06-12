@@ -1,0 +1,12 @@
+{
+  "id": "maven-cache",
+  "name": "Maven Local Repository",
+  "app": "Apache Maven",
+  "description": "Downloaded artifact JARs and metadata in the Maven ~/.m2 repository.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.m2/repository"
+  ],
+  "minAgeDays": 30
+}

@@ -53,10 +53,10 @@ Nexis is structured as a **four-tier desktop application**. Tier sizes (page/ser
 │  DuplicateFinderService, SnapshotService                           │
 │  Files: shared/nexis/Services/*.cpp                                │
 ├────────────────────────────────────────────────────────────────────┤
-│  Manager Layer: 8 Singletons                                       │
+│  Manager Layer: 9 Singletons                                       │
 │  AppManager, InfoManager, ToolManager, SettingManager,             │
-│  CleanerService, ScheduleManager, ProcessPrefsManager,             │
-│  DataRefreshService                                                │
+│  CleanerService, CleaningProfilesService (FW-12),                  │
+│  ScheduleManager, ProcessPrefsManager, DataRefreshService          │
 │  Files: shared/nexis/Managers/*.cpp                                │
 ├────────────────────────────────────────────────────────────────────┤
 │  Core Library: nexis-core (static lib)                             │

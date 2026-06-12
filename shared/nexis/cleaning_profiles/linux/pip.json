@@ -1,0 +1,12 @@
+{
+  "id": "pip-cache",
+  "name": "pip Cache",
+  "app": "pip",
+  "description": "Downloaded wheel/sdist files and HTTP cache from the Python package installer.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/pip"
+  ],
+  "minAgeDays": 0
+}

@@ -1,0 +1,16 @@
+{
+  "id": "gradle-cache",
+  "name": "Gradle Caches",
+  "app": "Gradle",
+  "description": "Build caches, daemons, and downloaded distributions used by Gradle.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.gradle/caches/modules-*",
+    "$HOME/.gradle/caches/transforms-*",
+    "$HOME/.gradle/caches/jars-*",
+    "$HOME/.gradle/caches/build-cache-*",
+    "$HOME/.gradle/daemon/*/daemon-*.out.log"
+  ],
+  "minAgeDays": 14
+}

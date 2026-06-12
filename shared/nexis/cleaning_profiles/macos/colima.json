@@ -1,0 +1,12 @@
+{
+  "id": "colima-cache",
+  "name": "Colima Cache",
+  "app": "Colima",
+  "description": "Colima cached downloads. The VM disk image is intentionally left alone.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.colima/_cache"
+  ],
+  "minAgeDays": 7
+}

@@ -1,0 +1,15 @@
+{
+  "id": "chrome-cache",
+  "name": "Google Chrome Caches",
+  "app": "Google Chrome",
+  "description": "Browser cache, code cache, GPU cache, and service worker cache for Chrome profiles.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/google-chrome/*/Cache",
+    "$HOME/.cache/google-chrome/*/Code Cache",
+    "$HOME/.cache/google-chrome/*/GPUCache",
+    "$HOME/.config/google-chrome/*/Service Worker/CacheStorage"
+  ],
+  "minAgeDays": 0
+}

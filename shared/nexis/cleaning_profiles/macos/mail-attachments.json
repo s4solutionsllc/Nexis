@@ -1,0 +1,12 @@
+{
+  "id": "mail-downloads",
+  "name": "Mail Downloads",
+  "app": "Apple Mail",
+  "description": "Cached attachments downloaded by Apple Mail. The mailboxes themselves are not touched.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/*"
+  ],
+  "minAgeDays": 30
+}

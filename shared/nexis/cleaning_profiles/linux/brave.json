@@ -1,0 +1,14 @@
+{
+  "id": "brave-cache",
+  "name": "Brave Browser Caches",
+  "app": "Brave",
+  "description": "Browser cache and GPU cache for Brave browser profiles.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/BraveSoftware/Brave-Browser/*/Cache",
+    "$HOME/.cache/BraveSoftware/Brave-Browser/*/Code Cache",
+    "$HOME/.cache/BraveSoftware/Brave-Browser/*/GPUCache"
+  ],
+  "minAgeDays": 0
+}

@@ -1,0 +1,12 @@
+{
+  "id": "go-build-cache",
+  "name": "Go Build Cache",
+  "app": "Go toolchain",
+  "description": "Compiled object cache produced by `go build` and the Go module cache.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.cache/go-build"
+  ],
+  "minAgeDays": 0
+}

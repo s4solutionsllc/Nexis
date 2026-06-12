@@ -1,0 +1,13 @@
+{
+  "id": "npm-cache",
+  "name": "npm Cache",
+  "app": "npm",
+  "description": "Downloaded package tarballs and metadata for the Node Package Manager.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.npm/_cacache",
+    "$HOME/.npm/_logs"
+  ],
+  "minAgeDays": 0
+}

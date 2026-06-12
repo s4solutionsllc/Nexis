@@ -1,0 +1,14 @@
+{
+  "id": "safari-cache",
+  "name": "Safari Caches",
+  "app": "Safari",
+  "description": "Safari browser cache and WebKit data caches.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/com.apple.Safari",
+    "$HOME/Library/Caches/com.apple.Safari.SafeBrowsing",
+    "$HOME/Library/Caches/com.apple.WebKit.PluginProcess"
+  ],
+  "minAgeDays": 0
+}

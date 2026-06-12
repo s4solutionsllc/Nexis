@@ -1,0 +1,15 @@
+{
+  "id": "slack-cache",
+  "name": "Slack Cache",
+  "app": "Slack",
+  "description": "Slack Electron cache, GPU cache, and service worker storage.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.config/Slack/Cache",
+    "$HOME/.config/Slack/Code Cache",
+    "$HOME/.config/Slack/GPUCache",
+    "$HOME/.config/Slack/Service Worker/CacheStorage"
+  ],
+  "minAgeDays": 0
+}

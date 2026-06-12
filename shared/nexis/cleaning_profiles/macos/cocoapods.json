@@ -1,0 +1,12 @@
+{
+  "id": "cocoapods-cache",
+  "name": "CocoaPods Cache",
+  "app": "CocoaPods",
+  "description": "CocoaPods downloaded specs and cache trunk.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/CocoaPods"
+  ],
+  "minAgeDays": 0
+}

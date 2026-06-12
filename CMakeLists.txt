@@ -324,6 +324,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/sliding_stacked_widget.cpp"
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.cpp"
+  "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.cpp"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.cpp"
   "${GUI_SHARED_DIR}/Managers/dir_size_scanner.cpp"
   "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
@@ -414,6 +415,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/utilities.h"
   "${GUI_SHARED_DIR}/Managers/app_manager.h"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.h"
+  "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.h"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.h"
   "${GUI_SHARED_DIR}/Managers/dir_size_scanner.h"
   "${GUI_SHARED_DIR}/Managers/info_manager.h"
@@ -605,6 +607,7 @@ add_library(nexis-gui STATIC
   ${GUI_PLAT_SRCS}
   ${GUI_PLAT_HDRS}
   "${GUI_SHARED_DIR}/static.qrc"
+  "${GUI_SHARED_DIR}/cleaning_profiles.qrc"
 )
 
 # Include dirs are PUBLIC so that consumers (nexis executable, screenshot tests)

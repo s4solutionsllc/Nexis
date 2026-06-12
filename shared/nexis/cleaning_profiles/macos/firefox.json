@@ -1,0 +1,14 @@
+{
+  "id": "firefox-cache",
+  "name": "Firefox Caches",
+  "app": "Mozilla Firefox",
+  "description": "Browser caches, offline storage, and crash reports for Firefox profiles.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/Firefox/Profiles/*/cache2",
+    "$HOME/Library/Caches/Firefox/Profiles/*/startupCache",
+    "$HOME/Library/Caches/Mozilla/Firefox/Crash Reports/pending"
+  ],
+  "minAgeDays": 0
+}
