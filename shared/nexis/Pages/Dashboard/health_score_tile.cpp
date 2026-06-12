@@ -50,6 +50,12 @@ void HealthScoreTile::buildLayout()
 
     mainLayout->addStretch();
 
+    mBtnAction = new QPushButton(this);
+    mBtnAction->setProperty("accessibleName", "primary");
+    mBtnAction->setObjectName("healthTileActionBtn");
+    mBtnAction->hide();
+    mainLayout->addWidget(mBtnAction);
+
     createGearButton();
 }
 
@@ -80,8 +86,14 @@ void HealthScoreTile::setSecondaryValue(const QString &)
 {
 }
 
-void HealthScoreTile::setQuickAction(const QString &, std::function<void()>)
+void HealthScoreTile::setQuickAction(const QString &text, std::function<void()> callback)
 {
+    if (!mBtnAction)
+        return;
+    mBtnAction->setText(text);
+    mBtnAction->show();
+    QObject::disconnect(mBtnAction, &QPushButton::clicked, nullptr, nullptr);
+    connect(mBtnAction, &QPushButton::clicked, this, [callback]() { callback(); });
 }
 
 void HealthScoreTile::setDisplayMode(DisplayMode mode)

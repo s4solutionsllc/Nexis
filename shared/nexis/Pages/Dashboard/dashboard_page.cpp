@@ -2,6 +2,9 @@
 #include "ui_dashboard_page.h"
 #include <QToolButton>
 #include "maintenance_wizard_dialog.h"
+#ifdef Q_OS_MACOS
+#include "macos_maintenance_panel.h"
+#endif
 
 #include "utilities.h"
 #include "Managers/app_manager.h"
@@ -120,9 +123,15 @@ void DashboardPage::init()
 
     wrapTile("health", mHealthTile);
 
+#ifdef Q_OS_MACOS
+    mHealthTile->setQuickAction(tr("macOS Maintenance"), [this]() {
+        launchMacOSMaintenancePanel();
+    });
+#else
     mHealthTile->setQuickAction(tr("System Checkup"), [this]() {
         launchMaintenanceWizard();
     });
+#endif
 
     // Load saved layout or use default, then build the grid
     if (savedLayout.isEmpty())
@@ -1917,3 +1926,12 @@ void DashboardPage::launchMaintenanceWizard()
     wizard->runChecks();
     wizard->exec();
 }
+
+#ifdef Q_OS_MACOS
+void DashboardPage::launchMacOSMaintenancePanel()
+{
+    auto *panel = new MacOSMaintenancePanel(this);
+    panel->setAttribute(Qt::WA_DeleteOnClose);
+    panel->exec();
+}
+#endif

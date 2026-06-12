@@ -5,6 +5,7 @@
 #include "health_score_calculator.h"
 
 #include <QLabel>
+#include <QPushButton>
 
 class HealthScoreTile : public MetricTileBase
 {
@@ -35,9 +36,10 @@ private:
 
     HealthScoreCalculator mCalculator;
 
-    QLabel *mLblTitle;
-    QLabel *mLblScore;
-    QLabel *mLblScoreLabel;
+    QLabel      *mLblTitle;
+    QLabel      *mLblScore;
+    QLabel      *mLblScoreLabel;
+    QPushButton *mBtnAction = nullptr;
 
     int mCurrentScore;
 };

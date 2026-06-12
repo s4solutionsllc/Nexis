@@ -189,6 +189,9 @@ private:
     bool tileUsesRangeMenu(const QString &style) const;
     void setupCustomizationMenu(DashboardTileWrapper *wrapper, const QString &style);
     void launchMaintenanceWizard();
+#ifdef Q_OS_MACOS
+    void launchMacOSMaintenancePanel();
+#endif
     void updateAddTileButton();
 };
 

@@ -91,6 +91,20 @@ if(APPLE)
   # only exist on macOS.
   add_nexis_test(NAME ThermalInfoMacOSTests
     SOURCES core/test_thermal_info_macos.cpp)
+
+  # SSO-3745 (FW-17): macOS maintenance panel — command-construction tests.
+  # Compiles the panel source directly (no manager deps beyond nexis-core).
+  # QSKIP'd off-macOS in the test body; registered only on APPLE.
+  add_nexis_test(NAME MacOSMaintenanceTests
+    SOURCES
+      core/test_macos_maintenance.cpp
+      "${GUI_SHARED_DIR}/Pages/Dashboard/macos_maintenance_panel.cpp"
+    INCLUDES
+      "${GUI_SHARED_DIR}"
+      "${GUI_SHARED_DIR}/Pages/Dashboard"
+    LIBS
+      Qt6::Widgets Qt6::Concurrent
+  )
 endif()
 
 # FR-127: pure parser for /proc/<pid>/*. Compiled directly here so the test
