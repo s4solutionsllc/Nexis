@@ -6,6 +6,8 @@
 #ifndef BTM_RESET_DIALOG_H
 #define BTM_RESET_DIALOG_H
 
+#include <QtGlobal>
+
 #ifdef Q_OS_MACOS
 
 #include <QDialog>

@@ -6,6 +6,8 @@
 #ifndef BTM_ROW_H
 #define BTM_ROW_H
 
+#include <QtGlobal>
+
 #ifdef Q_OS_MACOS
 
 #include <QWidget>
