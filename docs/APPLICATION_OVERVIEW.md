@@ -451,7 +451,8 @@ Manage package repositories and sources. Conditional: shown only when the releva
 - APT-RPM support for ALT Linux, PCLinuxOS, Vine Linux
 - Add, edit, delete repositories (requires sudo)
 - Enable/disable without deleting
-- Structured editor: type (deb/deb-src), URIs, suites, components, Signed-By
+- Structured editor: type (deb/deb-src), URIs, suites, components, **Signed-By keyring path, Architectures**
+- New repos written as deb822 `.sources` with an explicit `Signed-By` on systems where deb822 is the norm (Ubuntu 26.04+ / Debian trixie+, detected by `ubuntu.sources` or `debian.sources` presence); legacy `.list` editing kept for older distros. No `apt-key` invocation anywhere — APT 3.1 removed it, and Nexis writes the keyring path directly to `Signed-By:`. Edits round-trip byte-stable for unchanged fields and preserve unrecognised deb822 keys (`Languages:`, `Targets:`, embedded multi-line GPG keys) verbatim.
 - Search filter
 
 **macOS (Homebrew):**
