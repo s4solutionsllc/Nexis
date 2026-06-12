@@ -9,9 +9,11 @@
 #include <QSpacerItem>
 #ifdef Q_OS_LINUX
 #include <Info/psi_info.h>
+#include <Info/oomd_snapshot.h>
 #endif
 
 class DataRefreshService;
+class OomKillsWidget;
 
 namespace Ui {
     class ResourcesPage;
@@ -39,6 +41,7 @@ private slots:
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 #ifdef Q_OS_LINUX
     void onPsiUpdated(const PsiSnapshot &snap);
+    void onOomdUpdated(const OomdSnapshot &snap);
 #endif
 
 private:
@@ -63,6 +66,7 @@ private:
     HistoryChart *mChartDiskHealth;
 #ifdef Q_OS_LINUX
     HistoryChart *mChartPsiCpu = nullptr;
+    OomKillsWidget *mOomKills = nullptr;
 #endif
 
     DiskUsageLauncherWidget *mDiskLauncher;

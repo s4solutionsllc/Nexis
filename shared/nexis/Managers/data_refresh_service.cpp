@@ -36,6 +36,14 @@ DataRefreshService::DataRefreshService(InfoManager *infoManager,
     // correctly from the start.
     qRegisterMetaType<NetInterfaceStats>("NetInterfaceStats");
     qRegisterMetaType<NetInterfaceStatsMap>("NetInterfaceStatsMap");
+#ifdef Q_OS_LINUX
+    // FW-11 (SSO-3739): OomdSnapshot crosses threads via a queued connection
+    // (Resources page lives on the UI thread, the medium tick may dispatch
+    // from a worker once we offload). Register the metatypes so the queue
+    // marshals correctly even before the first connect() lands.
+    qRegisterMetaType<OomdEvent>("OomdEvent");
+    qRegisterMetaType<OomdSnapshot>("OomdSnapshot");
+#endif
 
     connect(mFastTimer, &QTimer::timeout, this, &DataRefreshService::onFastTick);
     connect(mMediumTimer, &QTimer::timeout, this, &DataRefreshService::onMediumTick);
@@ -367,6 +375,16 @@ void DataRefreshService::onMediumTick()
 
     if (hasSubscribers(Signal::Fan) && im->hasFanSensors())
         emit fanUpdated();
+
+#ifdef Q_OS_LINUX
+    // FW-11 (SSO-3739): systemd-oomd / cgroup v2 observability. Sampling on
+    // the medium tick is intentional — OOM kills are rare, the journal walk
+    // and `systemctl show` fork are noticeably heavier than a /proc read.
+    if (hasSubscribers(Signal::Oomd)) {
+        im->updateOomdInfo();
+        emit oomdUpdated(im->getOomdSnapshot());
+    }
+#endif
 }
 
 void DataRefreshService::onSlowTick()

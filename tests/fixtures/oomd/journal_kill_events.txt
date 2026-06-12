@@ -1,0 +1,4 @@
+2026-06-11T13:30:42+0000 nx-host systemd-oomd[123]: Killed 3 tasks in /user.slice/user-1000.slice/user@1000.service/app.slice/firefox.service due to memory pressure
+2026-06-11T13:35:17+0000 nx-host systemd-oomd[123]: Killed 1 task in /user.slice/user-1000.slice/session-2.scope due to swap usage
+2026-06-11T13:40:00+0000 nx-host systemd-oomd[123]: Refreshed memory.pressure for /user.slice/user-1000.slice
+2026-06-11T13:41:11+0000 nx-host systemd-oomd[123]: Killed 7 tasks in /system.slice/postgresql.service due to memory pressure

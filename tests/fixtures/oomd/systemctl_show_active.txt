@@ -1,0 +1,4 @@
+LoadState=loaded
+ActiveState=active
+OOMKills=42
+ManagedOOMKills=39

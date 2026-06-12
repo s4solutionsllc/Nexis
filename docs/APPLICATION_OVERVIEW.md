@@ -69,14 +69,14 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Test methods | ~501 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
-| Info providers | 16 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` Linux-only); all 16 wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389) |
+| Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
 | Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
 | Utility classes | 5 | `CommandUtil`, `DisplayServerUtil`, `FileUtil`, `FormatUtil`, `HeadlessUtil` in `shared/nexis-core/Utils/` |
 | Manager singletons | 8 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |
 | Domain services | 9 | `shared/nexis/Services/` (`StartupService`, `FileSearchService`, `HostService`, `ProcessService`, `SystemServiceManager`, `DockerService`, `PackageService`, `DuplicateFinderService`, `SnapshotService`) |
 | `SignalMapper` signals | 10 | `shared/nexis/signal_mapper.h` |
 | `DataRefreshService` QTimers | 5 | fast (1 s) / medium (5 s) / slow (30 s) / process (configurable) / update (1 h) |
-| `DataRefreshService` signals | 15 | 14 cross-platform + Linux-only `psiUpdated` |
+| `DataRefreshService` signals | 16 | 14 cross-platform + Linux-only `psiUpdated`/`oomdUpdated` (FW-11/SSO-3739) |
 | Themes | 2 (Dark = `default/`, Light = `light/`) | `shared/nexis/static/themes/` |
 | Color schemes | 3 (Auto / Light / Dark) | `AppManager::resolveThemeName()` |
 | Translations | 34 languages | `shared/translations/*.ts` |
@@ -366,6 +366,8 @@ Historical time-series charts for system resource usage.
 - Disk temperature per-drive (30s refresh, if SMART supported)
 - **CPU Pressure Stall (FR-124, Linux only)** — 3-series chart (avg10, avg60, avg300) sourced from `/proc/pressure/cpu`. Shows the percentage of time at least one task was stalled waiting for CPU. Only created when the PSI file is present (kernel 4.20+, `CONFIG_PSI=y`). Zero cost when hidden (uses DataRefreshService subscription gating).
 
+**OOM Kills panel (FW-11 / SSO-3739, Linux only):** systemd-oomd / cgroup v2 observability card appended after the PSI chart. Shows the oomd service state (active / inactive / masked / not installed), oomd-attributed totals (`OOMKills`, `ManagedOOMKills`), the kernel-side `oom_kill` counter from `/sys/fs/cgroup/memory.events`, and the most recent kill events (timestamp, unit, cgroup path, reason) parsed from `journalctl -u systemd-oomd.service`. Hides itself entirely when no oomd or cgroup-v2 signal is available, and shows a defensive warning on the rare host that doesn't expose the v2 unified hierarchy (systemd 259 / Ubuntu 26.04 is v2-only — v1 hosts will not boot the new systemd). Subscribes to `DataRefreshService::Signal::Oomd` on the 5 s medium tick.
+
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
 - Configurable preference in Settings (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper; or custom path)
@@ -586,7 +588,7 @@ Nexis follows a **three-tier architecture**:
 │   DiskHealthInfo, DiskInfo, FanInfo, GpuInfo,           │
 │   MemoryInfo, NetworkInfo, PowerProfileInfo, ProcessInfo│
 │   StartupInfo, SystemInfo, ThermalInfo, UpdateInfo,     │
-│   PsiInfo (Linux only)                                  │
+│   PsiInfo + OomdInfoLinux (Linux only)                  │
 │  Tools: AptSourceTool, DockerTool, FileSearchTool,      │
 │   GnomeSettingsTool, PackageTool, RepoHealthChecker,    │
 │   RepoRepairEngine, ServiceTool                         │
@@ -655,7 +657,7 @@ Eight singleton managers mediate between UI pages and the core library (count: s
 | `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. On macOS 27, classifies a removal failure as `AccessDeniedByPolicy` when TCC denies cross-team app-container access, emits `accessNeededDetected(message, deepLink)` for the Privacy & Security banner, and surfaces the count via `CleanResult::accessDeniedPaths` (SSO-3732 / FW-05). |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 | `ProcessPrefsManager` | Persistent per-process state (pin flags, alert thresholds) used by `ProcessesPage`. JSON-in-QSettings, same shape as `ScheduleManager` / `CleanerExclusions`. |
-| `DataRefreshService` | Centralized polling service with 5 QTimers (fast/medium/slow/process/update). Polls InfoManager once per interval, emits 15 typed data-change signals (14 cross-platform + Linux-only `psiUpdated`). Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
+| `DataRefreshService` | Centralized polling service with 5 QTimers (fast/medium/slow/process/update). Polls InfoManager once per interval, emits 16 typed data-change signals (14 cross-platform + Linux-only `psiUpdated`/`oomdUpdated`). Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
 **Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 10 global signals (see `shared/nexis/signal_mapper.h`):
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
@@ -973,7 +975,7 @@ emit SignalMapper::ins()->sigChangedAppTheme()  ← Global event
 
 ### Refresh Timing
 
-All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimers and emits 15 typed data signals (14 cross-platform + Linux-only `psiUpdated`). Pages subscribe as reactive consumers — no page owns a QTimer.
+All periodic polling is centralized in `DataRefreshService`, which owns 5 QTimers and emits 16 typed data signals (14 cross-platform + Linux-only `psiUpdated`/`oomdUpdated`). Pages subscribe as reactive consumers — no page owns a QTimer.
 
 | Data | Refresh Rate | Timer Tier | Signal |
 |------|-------------|------------|--------|

@@ -16,6 +16,7 @@
 #include <Tools/repo_health_types.h>
 #ifdef Q_OS_LINUX
 #include <Info/psi_info.h>
+#include <Info/oomd_snapshot.h>
 #endif
 
 class InfoManager;
@@ -40,6 +41,7 @@ public:
         Fan,
         Battery,
         Psi,
+        Oomd,
         _Count
     };
 
@@ -103,6 +105,8 @@ signals:
     void diskUsageUpdated(const QList<Disk> &disks);
 #ifdef Q_OS_LINUX
     void psiUpdated(const PsiSnapshot &cpu);
+    // FW-11 (SSO-3739): systemd-oomd / cgroup v2 observability tick.
+    void oomdUpdated(const OomdSnapshot &snap);
 #endif
     void diskHealthUpdated(const QList<DriveHealth> &drives);
     void processesUpdated(const QList<Process> &processes, const QString &userName);
