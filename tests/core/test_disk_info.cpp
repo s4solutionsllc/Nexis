@@ -76,6 +76,9 @@ private slots:
     void filter_devtmpfs();
     void filter_realNvme();
     void filter_macosDataVolume();
+    void filter_removableMediaLegacy();
+    void filter_removableMediaModern();
+    void filter_removableMediaModern_notMistakenForSnap();
 
     // WI-23: prove the publish-on-UI / snapshot-by-value pattern is race-free.
     void snapshot_isStableUnderConcurrentSetDisks();
@@ -169,6 +172,30 @@ void TestDiskInfo::filter_macosDataVolume()
 {
     // /System/Volumes/Data is NOT in the exclusion list — it's the real data volume
     QVERIFY(DiskInfo::shouldIncludeDisk("/dev/disk1s1", "apfs", "/System/Volumes/Data", 500000000000));
+}
+
+// FW-03 (SSO-3730): removable media on legacy Linux distros mounts under /media/<user>.
+// QStorageInfo enumerates the mount via /proc/mounts; shouldIncludeDisk must accept it.
+void TestDiskInfo::filter_removableMediaLegacy()
+{
+    QVERIFY(DiskInfo::shouldIncludeDisk("/dev/sdb1", "vfat", "/media/alice/USBDRIVE", 16000000000));
+    QVERIFY(DiskInfo::shouldIncludeDisk("/dev/sdc1", "exfat", "/media/bob/Backup", 1000000000000));
+}
+
+// FW-03 (SSO-3730): GNOME 50 / Ubuntu 26.04 mounts removable media under /run/media/<user>
+// instead of /media. shouldIncludeDisk must accept the new path so the drive appears in
+// disk views and the cleaner can scan it.
+void TestDiskInfo::filter_removableMediaModern()
+{
+    QVERIFY(DiskInfo::shouldIncludeDisk("/dev/sdb1", "vfat", "/run/media/alice/USBDRIVE", 16000000000));
+    QVERIFY(DiskInfo::shouldIncludeDisk("/dev/sdc1", "ntfs", "/run/media/bob/Backup", 2000000000000));
+}
+
+// Guard: the /run/snap{,d} exclusion is a prefix match. Verify it doesn't accidentally
+// swallow /run/media/... — a regression here would silently hide removable drives on 26.04.
+void TestDiskInfo::filter_removableMediaModern_notMistakenForSnap()
+{
+    QVERIFY(DiskInfo::shouldIncludeDisk("/dev/sdb1", "ext4", "/run/media/snap-tester/drive", 32000000000));
 }
 
 // ── WI-23 concurrency tests ─────────────────────────────────────────────────

@@ -31,7 +31,9 @@ bool DiskInfo::shouldIncludeDisk(const QString &device, const QByteArray &fsType
     if (device.startsWith("/dev/loop"))
         return false;
 
-    // Exclude mount paths for pseudo-filesystems and runtime mounts
+    // Exclude mount paths for pseudo-filesystems and runtime mounts.
+    // Note: /run/media/<user>/... (GNOME 50 removable-media path on Ubuntu 26.04+)
+    // is intentionally allowed — only /snap and /run/snap{,d} are filtered here.
     if (rootPath.startsWith("/snap/") || rootPath.startsWith("/run/snap"))
         return false;
 
