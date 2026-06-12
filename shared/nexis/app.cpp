@@ -236,6 +236,10 @@ void App::buildSidebar()
 #endif
         sec.containerLayout->addWidget(btnUninstaller);
         sec.buttons.append(btnUninstaller);
+
+        btnUpdates = createSidebarButton(tr("Available Updates"));
+        sec.containerLayout->addWidget(btnUpdates);
+        sec.buttons.append(btnUpdates);
     }
 
     // ---- SYSTEM section ----
@@ -481,6 +485,12 @@ void App::init()
         nullptr, {}
     });
     mPageSlots.append({
+        "updates",
+        tr("Available Updates"),
+        [this]() -> QWidget* { updatesPage = new UpdatesPage(mSlidingStacked); return updatesPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
         "helpers",
         tr("Helpers"),
         [this]() -> QWidget* { helpersPage = new HelpersPage(mSlidingStacked); return helpersPage; },
@@ -501,7 +511,7 @@ void App::init()
 
     mListSidebarButtons = {
         btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnSearch,
-        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnHelpers, btnSystemLogs, btnSettings
+        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnUpdates, btnHelpers, btnSystemLogs, btnSettings
     };
 
     // Software sources page — Homebrew on macOS, APT on Linux
@@ -523,7 +533,7 @@ void App::init()
         btnAptSourceManager->hide();
     }
 
-    // Updates badge on Homebrew/APT sidebar button
+    // Updates badge on Available Updates sidebar button
     connect(DataRefreshService::ins(), &DataRefreshService::systemUpdatesChecked,
             this, [this](const UpdateCheckResult &result) {
         int count = result.success ? result.totalCount : 0;
@@ -614,6 +624,7 @@ void App::init()
         navByTitle(tr("Uninstaller"));
 #endif
     });
+    connect(btnUpdates,          &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Available Updates")); });
     connect(btnHelpers,          &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Helpers")); });
     connect(btnSystemLogs,       &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Logs")); });
     connect(btnSettings,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Settings")); });
@@ -1024,6 +1035,7 @@ void App::updateSidebarIcons()
     setIcon(btnStartupApps,      "startup-apps.svg");
     setIcon(btnBootAnalysis,     "boot-analysis.svg");
     setIcon(btnUninstaller,      "uninstaller.svg");
+    setIcon(btnUpdates,          "updates.svg");
     setIcon(btnDocker,           "docker.svg");
     setIcon(btnHelpers,          "helpers.svg");
     setIcon(btnSystemLogs,       "system-logs.svg");
@@ -1317,7 +1329,7 @@ void App::repositionBadges()
     };
 
     positionBadge(btnSystemCleaner, mCleanerBadge, mCleanerBadgeDot);
-    positionBadge(btnAptSourceManager, mUpdatesBadge, mUpdatesBadgeDot);
+    positionBadge(btnUpdates, mUpdatesBadge, mUpdatesBadgeDot);
 }
 
 void App::toggleKioskMode()

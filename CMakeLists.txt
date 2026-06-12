@@ -402,6 +402,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Updates/updates_page.cpp"
 )
 
 set(GUI_SHARED_HDRS
@@ -482,6 +483,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
+  "${GUI_SHARED_DIR}/Pages/Updates/updates_page.h"
 )
 
 if(APPLE)
@@ -587,6 +589,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner"
   "${GUI_SHARED_DIR}/Pages/DiskTools"
   "${GUI_SHARED_DIR}/Pages/Uninstaller"
+  "${GUI_SHARED_DIR}/Pages/Updates"
   "${GUI_SHARED_DIR}/Pages/Helpers"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings"
   "${GUI_SHARED_DIR}/Pages/Search"
@@ -630,6 +633,7 @@ target_include_directories(nexis-gui PUBLIC
   "${GUI_SHARED_DIR}/Pages/SystemCleaner"
   "${GUI_SHARED_DIR}/Pages/DiskTools"
   "${GUI_SHARED_DIR}/Pages/Uninstaller"
+  "${GUI_SHARED_DIR}/Pages/Updates"
   "${GUI_SHARED_DIR}/Pages/Helpers"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings"
   "${GUI_SHARED_DIR}/Pages/Search"
