@@ -3,7 +3,10 @@
 #include "Utils/plist_util.h"
 
 #include <QDebug>
+#include <QDir>
+#include <QDirIterator>
 #include <QFile>
+#include <QFileInfo>
 #include <QStandardPaths>
 
 PackageToolMacOS::PackageToolMacOS()
@@ -223,6 +226,108 @@ bool PackageToolMacOS::trashApps(const QStringList &appPaths)
         QString trashedPath;
         if (!QFile::moveToTrash(path, &trashedPath)) {
             qCritical() << "Failed to trash:" << path;
+            allOk = false;
+        }
+    }
+    return allOk;
+}
+
+/**************************
+ * FW-18: leftover artifact scanner
+ *
+ * Safety contract: every candidate is matched against the exact bundle id
+ * (e.g. "com.example.MyApp") or the exact bundle-id-prefixed plist filename.
+ * App name is never used as a substring filter to prevent false positives on
+ * unrelated bundles that happen to share a word.
+ **************************/
+
+static quint64 pathSizeBytes(const QString &path)
+{
+    QFileInfo fi(path);
+    if (!fi.exists())
+        return 0;
+    if (fi.isFile())
+        return static_cast<quint64>(fi.size());
+
+    quint64 total = 0;
+    QDirIterator it(path, QDir::Files | QDir::Hidden | QDir::System | QDir::NoDotAndDotDot,
+                    QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        it.next();
+        total += static_cast<quint64>(it.fileInfo().size());
+    }
+    return total;
+}
+
+// Check for <base>/<bundleId> directories and <base>/<bundleId>.plist-style files.
+// `nameFilters` is a list of QDir name filters, e.g. {"com.example.App", "com.example.App.*"}.
+// Only entries whose names exactly equal bundleId or start with bundleId followed by '.' are
+// accepted — no loose substring matching.
+static void collectMatches(QList<AppLeftover> &out,
+                           const QString &baseDir,
+                           const QString &bundleId,
+                           const QString &category)
+{
+    if (bundleId.isEmpty())
+        return;
+
+    QDir dir(baseDir);
+    if (!dir.exists())
+        return;
+
+    // Match: exact name OR name starting with "<bundleId>." (for .plist, .savedState, etc.)
+    const QFileInfoList entries = dir.entryInfoList(QDir::AllEntries | QDir::Hidden
+                                                    | QDir::NoDotAndDotDot);
+    for (const QFileInfo &e : entries) {
+        const QString name = e.fileName();
+        if (name == bundleId || name.startsWith(bundleId + QLatin1Char('.'))) {
+            AppLeftover leftover;
+            leftover.path = e.absoluteFilePath();
+            leftover.category = category;
+            leftover.size = pathSizeBytes(leftover.path);
+            out.append(leftover);
+        }
+    }
+}
+
+QList<AppLeftover> PackageToolMacOS::findAppLeftovers(const Package &app)
+{
+    if (app.bundleId.isEmpty())
+        return {};
+
+    const QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    const QString lib  = home + QLatin1String("/Library");
+
+    QList<AppLeftover> leftovers;
+
+    collectMatches(leftovers, lib + QLatin1String("/Application Support"),
+                   app.bundleId, QStringLiteral("Application Support"));
+    collectMatches(leftovers, lib + QLatin1String("/Caches"),
+                   app.bundleId, QStringLiteral("Caches"));
+    collectMatches(leftovers, lib + QLatin1String("/Preferences"),
+                   app.bundleId, QStringLiteral("Preferences"));
+    collectMatches(leftovers, lib + QLatin1String("/Logs"),
+                   app.bundleId, QStringLiteral("Logs"));
+    collectMatches(leftovers, lib + QLatin1String("/Containers"),
+                   app.bundleId, QStringLiteral("Containers"));
+    collectMatches(leftovers, lib + QLatin1String("/Saved Application State"),
+                   app.bundleId, QStringLiteral("Saved Application State"));
+    collectMatches(leftovers, lib + QLatin1String("/LaunchAgents"),
+                   app.bundleId, QStringLiteral("LaunchAgents"));
+
+    return leftovers;
+}
+
+bool PackageToolMacOS::trashLeftovers(const QStringList &paths)
+{
+    // Same safe trash path as trashApps() — QFile::moveToTrash uses
+    // NSFileManager::trashItemAtURL: which takes an NSURL, not an AppleScript
+    // source string, so metacharacters in file names are data, not code.
+    bool allOk = true;
+    for (const QString &path : paths) {
+        QString trashedPath;
+        if (!QFile::moveToTrash(path, &trashedPath)) {
+            qCritical() << "Failed to trash leftover:" << path;
             allOk = false;
         }
     }

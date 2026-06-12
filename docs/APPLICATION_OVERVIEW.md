@@ -354,6 +354,7 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 **Platform backends:**
 - Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`; on APT 3.1+ also `apt history-list/-info/-undo/-rollback` and `apt why/why-not`
 - macOS: `brew uninstall` for Homebrew packages; `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:`) for `.app` bundles — no AppleScript/`osascript` is involved, so bundle names containing quotes or other metacharacters cannot inject arbitrary code (SSO-3366, audit S1); `brew autoremove` for orphans
+- **macOS leftover scanner (FW-18):** After selecting a `.app` for removal, Nexis resolves its bundle id and scans seven standard `~/Library` locations (`Application Support`, `Caches`, `Preferences`, `Logs`, `Containers`, `Saved Application State`, `LaunchAgents`) for matching artifacts. Matches are made exclusively against the exact bundle id (e.g. `com.example.MyApp`) or `<bundle-id>.<ext>` prefixed filenames — app name is never used as a substring filter to prevent false positives on unrelated bundles. Found artifacts are listed with sizes for user review and can be trashed via `QFile::moveToTrash` (the same injection-safe path as the bundle itself).
 
 ### 10. Resources
 
