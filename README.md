@@ -114,7 +114,7 @@ brew trust s4solutionsllc/nexis        # required on Homebrew 6.0+ (third-party 
 brew install --cask nexis
 ```
 
-Requires macOS 12+ (Monterey) on Apple Silicon. Updates are delivered via `brew upgrade --cask nexis`.
+Requires macOS 14+ (Sonoma) on Apple Silicon. Updates are delivered via `brew upgrade --cask nexis`.
 
 > **Homebrew 6.0+** requires third-party taps to be trusted before their casks
 > will load. Without `brew trust`, `brew install`/`upgrade`/`outdated` refuse the
