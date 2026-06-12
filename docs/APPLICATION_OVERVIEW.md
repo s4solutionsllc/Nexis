@@ -260,6 +260,20 @@ Scan and remove system junk files across 9 categories.
 - Category selection, minimum file age filter, threshold alerts
 - **Every-N-days cadence on systemd:** systemd has no native every-N-days trigger, so the timer fires daily and `CleanerService::cleanSchedule()` consults `ScheduleManager::isEveryNDaysGateBlocked()` to skip runs where `lastRun.daysTo(now) < everyNDays`. cron's `*/N` operator and launchd's `StartInterval` give the right cadence directly
 
+### 4a. Health Report Export (FW-14)
+
+On-demand and scheduled Markdown export of a full system health snapshot via `HealthReportManager` (`shared/nexis/Managers/health_report_manager.{h,cpp}`).
+
+**Report sections:** CPU (model, speed, cores, load averages, current usage), Memory (RAM + swap, usage %), Disk Usage (mount/device/total/used/free table), Drive Health / SMART (per-device verdict, health %, temperature, power-on hours, power cycles), Thermal Sensors (all sensor labels + temperatures), GPU (name, vendor, utilization, driver), Battery (charge %, health %, cycle count, condition, temperature), Cleanable Space (per-category table + total).
+
+**Output format:** Markdown (`.md`). Default filename: `nexis-health-YYYY-MM-DD_hh-mm-ss.md` in `DocumentsLocation`. An explicit file path may be passed to write to a specific location; passing a directory path produces a timestamped file inside it.
+
+**Scheduled reports:** `HealthReportManager::ReportSchedule` mirrors `ScheduleManager::CleaningSchedule` (frequency, everyNDays, dayOfWeek/Month, hour, minute, outputDir, lastRun). Schedules are persisted in `SettingManager` under key `ReportSchedules` (JSON array). `syncReportSchedulesToOS()` writes launchd plists (macOS) or crontab entries (Linux) that invoke `nexis --report <id>`.
+
+**Headless CLI:** `./nexis --report <schedule-id>` generates the report for that schedule, updates `lastRun`, and exits — mirrors the `--clean <id>` path (audit WI-06). Uses `QCoreApplication` (not `QApplication`) so it runs headless without a display server.
+
+**API:** `generateReport(path)`, `getAllReportSchedules()`, `getReportSchedule(id)`, `createReportSchedule(s)`, `updateReportSchedule(s)`, `deleteReportSchedule(id)`, `syncReportSchedulesToOS()`, `runScheduledReport(id)`.
+
 ### 5. Disk Tools
 
 Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar section.
