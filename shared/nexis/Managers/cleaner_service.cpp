@@ -146,6 +146,15 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
     ToolManager *tmr = ToolManager::ins();
     QList<ExclusionEntry> exclusions = loadExclusions();
 
+    // SSO-3732 / FW-05: macOS 27 returns an empty list silently when an app
+    // enumerates other teams' app-container directories without Full Disk
+    // Access. Probe ~/Library/Containers when application caches are part of
+    // the scan; the user-facing banner is fired once per scan if the probe
+    // flags a likely denial, so scheduled scans don't spam.
+#ifdef Q_OS_MACOS
+    bool macOSContainerProbeFired = false;
+#endif
+
     for (CleanCategory cat : categories) {
         QFileInfoList files;
         switch (cat) {
@@ -160,6 +169,12 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
                 break;
             case APPLICATION_CACHES:
                 files = im->getAppCaches();
+#ifdef Q_OS_MACOS
+                if (!macOSContainerProbeFired && macOSContainerAccessProbablyDenied()) {
+                    emit accessNeededDetected(accessNeededMessage(), accessNeededDeepLink());
+                    macOSContainerProbeFired = true;
+                }
+#endif
                 break;
             case DEV_TOOL_CACHES:
                 files = im->getDevToolCaches();
@@ -329,6 +344,11 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
             // threshold.
             const bool moveToTrashInstead = (cat == DOWNLOADS_AGED);
             catBytes = cleanFiles(paths, minFileAgeSecs, moveToTrashInstead);
+            // SSO-3732 / FW-05: roll up the per-call policy-denial count so a
+            // scheduled clean's CleanResult exposes it for the cleaning log
+            // and any downstream reporting. The signal is already emitted
+            // from cleanFiles() for live UI consumers.
+            result.accessDeniedPaths += lastAccessDeniedCount();
         }
 
         result.categoryBreakdown[cat] = catBytes;
@@ -386,6 +406,12 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
         cutoff = QDateTime::currentDateTime().addSecs(-minFileAgeSecs);
     }
 
+    // SSO-3732 / FW-05: reset the per-call counter that removeFile() and the
+    // recursive helper bump on policy denial so accessNeededDetected fires
+    // exactly once per cleanFiles() invocation and CleanResult bookkeeping
+    // (populated by clean()) reflects this call only.
+    mLastAccessDeniedCount = 0;
+
     // WI-08 / audit H9: load exclusions once and re-check at every depth so
     // an excluded child inside a scanned directory survives. scan() filters
     // only the top level, which means without this guard a recursive directory
@@ -393,6 +419,12 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
     const QList<ExclusionEntry> exclusions = loadExclusions();
 
     QStringList filesToRemove;
+    // SSO-3732: per-file size cache so we only count bytes for paths that
+    // actually got deleted. Previously the loop pre-credited every queued
+    // file's size and relied on the elevated branch to make the deletion
+    // happen — under macOS 27 TCC the user-branch QFile::remove can fail
+    // silently, so "freed" must follow successful removal calls.
+    QMap<QString, quint64> queuedSize;
 
     for (const QString &path : paths) {
         QFileInfo fi(path);
@@ -425,14 +457,17 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
             totalFreed += size;
         } else if (fi.isSymLink()) {
             const quint64 size = FileUtil::getFileSize(path);
-            if (QFile::remove(path))
+            const FileRemoval outcome = removeFile(path);
+            if (outcome == FileRemoval::Removed)
                 totalFreed += size;
+            else if (outcome == FileRemoval::AccessDeniedByPolicy)
+                ++mLastAccessDeniedCount;
         } else if (fi.isDir()) {
             totalFreed += removeDirContentsRespectingExclusions(
                 path, exclusions, minFileAgeSecs, cutoff);
         } else {
             filesToRemove << path;
-            totalFreed += FileUtil::getFileSize(path);
+            queuedSize.insert(path, FileUtil::getFileSize(path));
         }
     }
 
@@ -453,12 +488,39 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
             }
         }
         for (const QString &p : std::as_const(userPaths)) {
-            if (!QFile::remove(p))
-                qWarning() << "cleanFiles: QFile::remove failed for" << p;
+            // SSO-3732: route through removeFile() so a TCC-denied path in
+            // ~/Library/Containers is counted as access-denied rather than
+            // silently logged. Bytes only credit on a confirmed Removed.
+            const FileRemoval outcome = removeFile(p);
+            if (outcome == FileRemoval::Removed) {
+                totalFreed += queuedSize.value(p, 0);
+            } else if (outcome == FileRemoval::AccessDeniedByPolicy) {
+                ++mLastAccessDeniedCount;
+            } else {
+                qWarning() << "cleanFiles: removeFile failed for" << p;
+            }
         }
-        if (!rootPaths.isEmpty())
+        if (!rootPaths.isEmpty()) {
+            // The elevated branch runs `rm -rf --` as root and bypasses TCC,
+            // so we credit those bytes here. removeElevated() itself doesn't
+            // return per-path status; pre-credit the queued size as before.
             removeElevated(rootPaths);
+            for (const QString &p : std::as_const(rootPaths))
+                totalFreed += queuedSize.value(p, 0);
+        }
     }
+
+    // SSO-3732 / FW-05: surface the policy-denial signal once per cleanFiles
+    // call so the cleaner page can post the actionable "Grant Full Disk
+    // Access" banner instead of a silent no-op result. macOS-only because the
+    // message and the Privacy & Security deep link are Darwin-specific;
+    // Linux still tracks the count in lastAccessDeniedCount() for callers
+    // that want to react locally, but does not surface the macOS banner.
+#ifdef Q_OS_MACOS
+    if (mLastAccessDeniedCount > 0) {
+        emit accessNeededDetected(accessNeededMessage(), accessNeededDeepLink());
+    }
+#endif
 
     return totalFreed;
 }
@@ -486,8 +548,11 @@ quint64 CleanerService::removeDirContentsRespectingExclusions(
 
         if (entry.isSymLink()) {
             const quint64 size = FileUtil::getFileSize(entryPath);
-            if (QFile::remove(entryPath))
+            const FileRemoval outcome = removeFile(entryPath);
+            if (outcome == FileRemoval::Removed)
                 freed += size;
+            else if (outcome == FileRemoval::AccessDeniedByPolicy)
+                ++mLastAccessDeniedCount;
         } else if (entry.isDir()) {
             freed += removeDirContentsRespectingExclusions(
                 entryPath, exclusions, minFileAgeSecs, cutoff);
@@ -498,8 +563,11 @@ quint64 CleanerService::removeDirContentsRespectingExclusions(
                 sub.rmdir(".");
         } else {
             const quint64 size = FileUtil::getFileSize(entryPath);
-            if (QFile::remove(entryPath))
+            const FileRemoval outcome = removeFile(entryPath);
+            if (outcome == FileRemoval::Removed)
                 freed += size;
+            else if (outcome == FileRemoval::AccessDeniedByPolicy)
+                ++mLastAccessDeniedCount;
         }
     }
 
@@ -509,6 +577,73 @@ quint64 CleanerService::removeDirContentsRespectingExclusions(
 bool CleanerService::currentUserOwns(const QString &path) const
 {
     return QFileInfo(path).ownerId() == static_cast<uint>(geteuid());
+}
+
+// SSO-3732 / FW-05: see header. QFile::error() conflates "remove failed" with
+// "removal refused by the OS", so we have to look at the error string. macOS
+// surfaces TCC denial as EPERM ("Operation not permitted") and POSIX
+// permission errors as EACCES ("Permission denied"); both map to a policy
+// outcome here. Anything else (file already gone, ENOENT mid-walk, ENOSPC,
+// etc.) stays NotRemoved so we don't pop the access-needed banner on
+// generic noise.
+CleanerService::FileRemoval CleanerService::removeFile(const QString &path)
+{
+    QFile f(path);
+    if (f.remove())
+        return FileRemoval::Removed;
+
+    const QFile::FileError err = f.error();
+    if (err == QFile::PermissionsError || err == QFile::RemoveError) {
+        const QString errStr = f.errorString();
+        if (errStr.contains(QStringLiteral("Operation not permitted"), Qt::CaseInsensitive)
+            || errStr.contains(QStringLiteral("Permission denied"), Qt::CaseInsensitive)) {
+            return FileRemoval::AccessDeniedByPolicy;
+        }
+    }
+    return FileRemoval::NotRemoved;
+}
+
+bool CleanerService::macOSContainerAccessProbablyDenied() const
+{
+#ifdef Q_OS_MACOS
+    // macOS 27 silently returns an empty enumeration when TCC denies
+    // cross-team app-container access. A populated ~/Library/Containers is
+    // the normal state on any active install (Nexis itself has a container
+    // entry there), so "exists but empty" is a strong-enough fingerprint to
+    // proactively surface the access-needed banner without false positives
+    // on a brand-new account.
+    const QString containers = QDir::homePath() + QStringLiteral("/Library/Containers");
+    QDir dir(containers);
+    if (!dir.exists())
+        return false;
+    const QFileInfoList entries = dir.entryInfoList(
+        QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
+    return entries.isEmpty();
+#else
+    return false;
+#endif
+}
+
+QString CleanerService::accessNeededDeepLink()
+{
+#ifdef Q_OS_MACOS
+    // macOS 13+ System Settings deep link for Privacy & Security → Full
+    // Disk Access. Older macOS releases (12 and earlier) intentionally
+    // ignore the URI and fall back to opening System Settings at the top
+    // level, which is acceptable for a 27-targeted fix.
+    return QStringLiteral(
+        "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles");
+#else
+    return QString();
+#endif
+}
+
+QString CleanerService::accessNeededMessage()
+{
+    return QObject::tr(
+        "macOS blocked access to some app data while cleaning. To clean those "
+        "caches, grant Nexis Full Disk Access in System Settings → Privacy & "
+        "Security, then re-run the cleaner.");
 }
 
 void CleanerService::removeElevated(const QStringList &paths)

@@ -298,6 +298,22 @@ add_nexis_test(NAME CleanerServiceTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3732 / FW-05: CleanerService macOS 27 cross-team container access-denial
+# surface — pinned to nexis-gui for the same reason as CleanerServiceTests.
+# The implementation lives in the GUI library (not nexis-core) so the test
+# links against it; the Q_OS_MACOS gate inside the source file controls
+# whether the real assertions run or a single QSKIP placeholder reports the
+# platform mismatch on non-macOS hosts.
+add_nexis_test(NAME CleanerAccessNeededTests
+  SOURCES
+    managers/test_cleaner_access_needed.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3380 / WI-18: DataRefreshService::isCpuPayloadEmittable() guards
 # the cpuUpdated emit against an empty producer payload. Links against
 # nexis-gui because the predicate lives in the GUI-side service.
