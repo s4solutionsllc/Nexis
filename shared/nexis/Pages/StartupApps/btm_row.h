@@ -6,9 +6,15 @@
 #ifndef BTM_ROW_H
 #define BTM_ROW_H
 
-#ifdef Q_OS_MACOS
-
+// Q_OS_MACOS lives in <QtGlobal>; include a Qt header above the platform
+// guard so the macro is defined when the guard is evaluated. Without this,
+// the first translation unit to see this header (btm_row.cpp and AUTOMOC's
+// scan) processes it before any Qt include, skips the entire class
+// declaration, and the macOS ARM64 link fails with undefined BtmRow symbols
+// (SSO-3765). The .cpp guard relies on the same chain.
 #include <QWidget>
+
+#ifdef Q_OS_MACOS
 
 #include <Info/btm_parser.h>
 

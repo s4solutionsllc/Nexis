@@ -6,9 +6,12 @@
 #ifndef BTM_RESET_DIALOG_H
 #define BTM_RESET_DIALOG_H
 
-#ifdef Q_OS_MACOS
-
+// See sibling note in btm_row.h: Q_OS_MACOS comes from <QtGlobal>, so a Qt
+// header must be included before the platform guard or moc + the .cpp see an
+// empty header and the macOS ARM64 link fails (SSO-3765).
 #include <QDialog>
+
+#ifdef Q_OS_MACOS
 
 class QLineEdit;
 class QPushButton;
