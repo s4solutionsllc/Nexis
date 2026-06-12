@@ -14,7 +14,7 @@ make -j$(nproc)`,
     id: 'fedora',
     label: 'Fedora',
     code: `sudo dnf install qt6-qtbase-devel qt6-qtcharts-devel qt6-qtsvg-devel \\
-  qt6-linguist adwaita-icon-theme cmake gcc-c++
+  qt6-qttools-devel qt6-linguist adwaita-icon-theme cmake gcc-c++
 
 mkdir -p build && cd build
 cmake ..

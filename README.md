@@ -179,7 +179,7 @@ sudo apt install cmake g++ qt6-base-dev qt6-charts-dev qt6-svg-dev \
 **Fedora / RHEL:**
 ```bash
 sudo dnf install cmake gcc-c++ qt6-qtbase-devel qt6-qtcharts-devel \
-  qt6-qtsvg-devel qt6-linguist
+  qt6-qtsvg-devel qt6-qttools-devel qt6-linguist
 ```
 
 **Arch Linux:**
