@@ -73,6 +73,17 @@ if(APPLE)
   add_nexis_test(NAME PackageToolMacOSTests
     SOURCES core/test_package_tool_macos.cpp)
 
+  # FW-18 (SSO-3746): leftover artifact scanner — bundle-id matching logic
+  # against a synthetic ~/Library-shaped QTemporaryDir. QSKIP'd off-macOS.
+  add_nexis_test(NAME AppLeftoversMacOSTests
+    SOURCES
+      core/test_app_leftovers_macos.cpp
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
+  )
+
   # SSO-3385 (WI-23): proves the AppleSMC connection is opened exactly once
   # across the process even under concurrent callers. The test seam free
   # functions are defined in macos/nexis-core/Info/thermal_info.cpp and

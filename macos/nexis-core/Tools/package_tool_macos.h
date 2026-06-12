@@ -28,6 +28,10 @@ public:
     QList<OrphanPackage> getOrphanPackages() override;
     bool removeOrphanPackages() override;
 
+    // FW-18: leftover artifact scanner for macOS app uninstalls.
+    QList<AppLeftover> findAppLeftovers(const Package &app) override;
+    bool trashLeftovers(const QStringList &paths) override;
+
 protected:
     // WI-33: seam for tests — overridden to return a fixed fake path so the
     // uninstall paths reach the runCommand seam even when brew isn't installed.
