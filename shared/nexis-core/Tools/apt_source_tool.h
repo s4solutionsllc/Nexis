@@ -20,6 +20,9 @@ public:
     bool isActive = false;
     Format format = Legacy;
     QString signedByPath;
+    // SSO-3728 / FW-01: deb822 Architectures or legacy [arch=...]. Space-separated
+    // when multiple (e.g. "amd64 arm64"). Empty when the source applies to all.
+    QString architectures;
 };
 
 typedef QSharedPointer<APTSource> APTSourcePtr;
@@ -51,6 +54,25 @@ public:
     static QList<APTSourcePtr> parseDeb822Stanza(const QString &stanzaText,
                                                   const QString &binaryType,
                                                   const QString &sourceType);
+
+    // SSO-3728 / FW-01: rewrites a deb822 stanza preserving field order,
+    // comments, multi-line Signed-By, and any unrecognized fields (e.g.
+    // Architectures, Languages). When `newSource` is null, returns empty
+    // (caller should drop the stanza). When `matchEntry` is non-null, only
+    // stanzas matching its URI+suite are updated; non-matching stanzas pass
+    // through byte-stable. When `matchEntry` is null, the stanza is rewritten
+    // unconditionally from `newSource`. Output never has a trailing newline.
+    static QString serializeDeb822Stanza(const QString &originalStanza,
+                                         const APTSourcePtr &matchEntry,
+                                         const APTSourcePtr &newSource,
+                                         const QString &binaryType,
+                                         const QString &sourceType);
+
+    // SSO-3728 / FW-01: builds a fresh deb822 stanza for adding a new
+    // repository. Output is a single stanza ending with one trailing newline.
+    static QString buildDeb822Stanza(const APTSourcePtr &source,
+                                     const QString &binaryType,
+                                     const QString &sourceType);
 };
 
 #endif // AptSourceTool_H

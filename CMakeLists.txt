@@ -108,6 +108,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/file_util.cpp"
   "${CORE_SHARED_DIR}/Utils/format_util.cpp"
   "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/macos_xattr_util.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -145,6 +146,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/file_util.h"
   "${CORE_SHARED_DIR}/Utils/format_util.h"
   "${CORE_SHARED_DIR}/Utils/headless_util.h"
+  "${CORE_SHARED_DIR}/Utils/macos_xattr_util.h"
 )
 
 if(APPLE)
@@ -161,6 +163,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/power_profile_info.cpp"
     "${CORE_PLAT_DIR}/Info/process_info.cpp"
     "${CORE_PLAT_DIR}/Info/boot_analysis_info.cpp"
+    "${CORE_PLAT_DIR}/Info/btm_parser.cpp"
     "${CORE_PLAT_DIR}/Info/startup_info.cpp"
     "${CORE_PLAT_DIR}/Info/system_info.cpp"
     "${CORE_PLAT_DIR}/Info/thermal_info.cpp"
@@ -190,6 +193,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/power_profile_info_macos.h"
     "${CORE_PLAT_DIR}/Info/process_info_macos.h"
     "${CORE_PLAT_DIR}/Info/boot_analysis_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/btm_parser.h"
     "${CORE_PLAT_DIR}/Info/startup_info_macos.h"
     "${CORE_PLAT_DIR}/Info/system_info_macos.h"
     "${CORE_PLAT_DIR}/Info/thermal_info_macos.h"
@@ -321,6 +325,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.cpp"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.cpp"
+  "${GUI_SHARED_DIR}/Managers/dir_size_scanner.cpp"
   "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/tool_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/schedule_manager.cpp"
@@ -374,8 +379,10 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Processes/pin_sort_filter_proxy_model.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/process_alert_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/processes_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Resources/disk_treemap_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/Resources/disk_usage_launcher_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Resources/history_chart.cpp"
+  "${GUI_SHARED_DIR}/Pages/Resources/treemap_view.cpp"
   "${GUI_SHARED_DIR}/Pages/Resources/resources_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Search/search_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Services/service_item.cpp"
@@ -408,6 +415,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Managers/app_manager.h"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.h"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.h"
+  "${GUI_SHARED_DIR}/Managers/dir_size_scanner.h"
   "${GUI_SHARED_DIR}/Managers/info_manager.h"
   "${GUI_SHARED_DIR}/Managers/schedule_manager.h"
   "${GUI_SHARED_DIR}/Managers/setting_manager.h"
@@ -452,8 +460,10 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/Processes/pin_sort_filter_proxy_model.h"
   "${GUI_SHARED_DIR}/Pages/Processes/process_alert_dialog.h"
   "${GUI_SHARED_DIR}/Pages/Processes/processes_page.h"
+  "${GUI_SHARED_DIR}/Pages/Resources/disk_treemap_dialog.h"
   "${GUI_SHARED_DIR}/Pages/Resources/disk_usage_launcher_widget.h"
   "${GUI_SHARED_DIR}/Pages/Resources/history_chart.h"
+  "${GUI_SHARED_DIR}/Pages/Resources/treemap_view.h"
   "${GUI_SHARED_DIR}/Pages/Resources/resources_page.h"
   "${GUI_SHARED_DIR}/Pages/Search/search_page.h"
   "${GUI_SHARED_DIR}/Pages/Services/service_item.h"
@@ -478,11 +488,15 @@ set(GUI_SHARED_HDRS
 if(APPLE)
   set(GUI_PLAT_SRCS
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
+    "${GUI_SHARED_DIR}/Pages/StartupApps/btm_reset_dialog.cpp"
+    "${GUI_SHARED_DIR}/Pages/StartupApps/btm_row.cpp"
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
   )
   set(GUI_PLAT_HDRS
+    "${GUI_SHARED_DIR}/Pages/StartupApps/btm_reset_dialog.h"
+    "${GUI_SHARED_DIR}/Pages/StartupApps/btm_row.h"
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"

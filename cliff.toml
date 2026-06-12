@@ -1,0 +1,41 @@
+# cliff.toml — shared release config (drop one copy in each repo root)
+# Language-agnostic: same file works for C++ (Nexis), TS (KinshipRM), Swift (iOS).
+# Used read-only by the Release Manager (`--bumped-version`, `--unreleased`) and by DevOps
+# when it cuts the release (`--bump -o CHANGELOG.md`).
+
+[changelog]
+header = "# Changelog\n\nAll notable changes to this project are documented here.\n"
+body = """
+{% if version %}## {{ version }} — {{ timestamp | date(format="%Y-%m-%d") }}{% else %}## Unreleased{% endif %}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}- {{ commit.message | upper_first }}{% if commit.scope %} (*{{ commit.scope }}*){% endif %}{% endfor %}
+{% endfor %}
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = true
+tag_pattern = "v[0-9]*"
+sort_commits = "newest"
+
+# Group commits into changelog sections by conventional type.
+commit_parsers = [
+  { message = "^feat",       group = "Features" },
+  { message = "^fix",        group = "Bug Fixes" },
+  { message = "^perf",       group = "Performance" },
+  { message = "^refactor",   group = "Refactor" },
+  { message = "^docs",       group = "Documentation" },
+  { message = "^test",       group = "Tests" },
+  { message = "^chore",      skip  = true },
+  { message = "^style",      skip  = true },
+  { body = ".*security",     group = "Security" },
+]
+
+# Bump rules: BREAKING -> major, feat -> minor, fix/perf -> patch.
+[bump]
+features_always_bump_minor = true
+breaking_always_bump_major = true

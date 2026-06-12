@@ -29,10 +29,26 @@ public:
 
     QStringList dryRunRemovePackages(const QStringList &packages);
 
+#ifndef Q_OS_MACOS
+    // APT 3.1 transaction history (FW-07 / SSO-3735). All methods are no-ops
+    // on macOS — apt history is APT-specific. On Linux they no-op when apt < 3.1.
+    bool isAptHistorySupported() const;
+    void fetchAptHistory();
+    void fetchAptHistoryInfo(int transactionId);
+    void fetchAptWhy(const QString &package, bool whyNot);
+    void aptHistoryUndo(int transactionId);
+    void aptHistoryRollback(int transactionId);
+#endif
+
 signals:
     void packagesFetched(QList<Package> packages);
     void snapPackagesFetched(QStringList packages);
     void orphanPackagesFetched(QList<OrphanPackage> packages);
+#ifndef Q_OS_MACOS
+    void aptHistoryFetched(QList<AptHistoryEntry> entries);
+    void aptHistoryInfoFetched(AptHistoryEntry entry);
+    void aptWhyFetched(QString package, bool whyNot, QStringList reasons);
+#endif
 
 private:
     static PackageService *instance;

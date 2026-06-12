@@ -30,6 +30,33 @@ struct OrphanPackage {
     int reverseDepsCount = -1; // -1 = unknown (non-APT systems)
 };
 
+// FW-07 (SSO-3735): APT 3.1 added dnf-style transaction history
+// (apt history-list / history-info / history-undo / history-rollback) plus
+// apt why / why-not. We model the history-list summary plus the per-id detail
+// returned by history-info, and use AptVersion to gate UI surfaces on the
+// 3.1+ version where these commands first ship.
+struct AptHistoryEntry {
+    int id = 0;                // numeric transaction id (history-undo argument)
+    QString dateTime;          // raw "YYYY-MM-DD HH:MM:SS" or whatever apt printed
+    QString operation;         // install / upgrade / remove / purge / autoremove …
+    QString commandLine;       // requesting command line (may be empty in summary)
+    QString user;              // requesting user (may be empty in summary)
+    QStringList packages;      // populated by history-info, empty in summary view
+};
+
+struct AptVersion {
+    int major = 0;
+    int minor = 0;
+    int patch = 0;
+    bool valid = false;
+    bool atLeast(int M, int m, int p = 0) const {
+        if (!valid) return false;
+        if (major != M) return major > M;
+        if (minor != m) return minor > m;
+        return patch >= p;
+    }
+};
+
 enum PackageTools {
     APT,        // debian
     APT_RPM,    // ALT Linux, PCLinuxOS, Vine Linux (apt-get + rpm)
@@ -70,6 +97,14 @@ public:
     static QList<OrphanPackage> parsePacmanOrphans(const QString &output);
     static QList<OrphanPackage> parseDnfAutoremoveDryRun(const QString &output);
     static QList<OrphanPackage> parseBrewAutoremoveDryRun(const QString &output);
+
+    // FW-07 (SSO-3735): APT 3.1 history + why parsers + version gate.
+    // Pure functions over the textual command output so we can fixture-test
+    // them without an APT 3.1 box on the build agent.
+    static AptVersion parseAptVersion(const QString &output);
+    static QList<AptHistoryEntry> parseAptHistoryList(const QString &output);
+    static AptHistoryEntry parseAptHistoryInfo(const QString &output);
+    static QStringList parseAptWhy(const QString &output);
 
     static QString friendlySectionName(const QString &section);
 

@@ -59,7 +59,7 @@ void UninstallerPage::init()
 #endif
 
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages,
-                                ui->btnSnapPackages, ui->btnOrphanPackages };
+                                ui->btnSnapPackages, ui->btnOrphanPackages, ui->btnAptHistory };
     Utilities::addDropShadow(widgets, 40);
 
     connect(mPackageService, &PackageService::packagesFetched,
@@ -99,6 +99,46 @@ void UninstallerPage::init()
         dlg->setAttribute(Qt::WA_DeleteOnClose);
         dlg->open();
     });
+#endif
+
+#ifndef Q_OS_MACOS
+    // FW-07 (SSO-3735): APT 3.1 transaction history.
+    // The nav button is hidden until we confirm the local apt understands
+    // history-list. The feature degrades to "invisible" rather than to a
+    // "not supported" empty panel so older Debian/Ubuntu users don't see a
+    // grey tab they can't use.
+    const bool aptHistory = mPackageService->isAptHistorySupported();
+    ui->btnAptHistory->setVisible(aptHistory);
+    if (aptHistory) {
+        QTableWidget *htbl = ui->tableWidgetAptHistory;
+        htbl->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+        htbl->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+        htbl->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+        htbl->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+        htbl->verticalHeader()->setDefaultSectionSize(Dpi::scale(26));
+        ui->notFoundWidget_4->hide();
+
+        connect(mPackageService, &PackageService::aptHistoryFetched,
+                this, &UninstallerPage::onAptHistoryFetched);
+        connect(mPackageService, &PackageService::aptWhyFetched,
+                this, &UninstallerPage::onAptWhyFetched);
+        connect(htbl, &QTableWidget::itemSelectionChanged,
+                this, &UninstallerPage::onAptHistorySelectionChanged);
+
+        // Reload the history whenever an install/uninstall completes so the
+        // panel reflects the new HEAD transaction.
+        connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
+            mPackageService->fetchAptHistory();
+        });
+        mPackageService->fetchAptHistory();
+    } else {
+        ui->notFoundWidget_4->show();
+        ui->tableWidgetAptHistory->setEnabled(false);
+        ui->grpAptWhy->setEnabled(false);
+        ui->btnAptHistoryUndoLast->setEnabled(false);
+    }
+#else
+    ui->btnAptHistory->hide();
 #endif
 }
 
@@ -318,6 +358,15 @@ void UninstallerPage::setAppCount()
     ui->notFoundWidget_3->setVisible(! orphanCount);
     ui->tableWidgetOrphanPackages->setVisible(orphanCount);
 
+#ifndef Q_OS_MAC
+    int historyCount = ui->tableWidgetAptHistory->rowCount();
+    if (ui->btnAptHistory->isVisible())
+        ui->btnAptHistory->setText(tr("APT History (%1)").arg(historyCount));
+#endif
+
+    // btnUninstall drives the System/Snap/Orphan tabs only; the APT History
+    // tab has its own action bar (Undo Last / Undo Selected / Rollback) and
+    // doesn't use the primary uninstall button.
     ui->btnUninstall->setVisible(count || snapCount || orphanCount);
 }
 
@@ -388,7 +437,7 @@ QStringList UninstallerPage::getSelectedAppBundleIds()
 void UninstallerPage::on_btnUninstall_clicked()
 {
     // Orphan packages tab — all-or-nothing autoremove
-    if (ui->stackedWidget->currentIndex() == 2) {
+    if (ui->stackedWidget->currentWidget() == ui->pageOrphanPackages) {
         QTableWidget *tbl = ui->tableWidgetOrphanPackages;
         int orphanCount = tbl->rowCount();
         if (orphanCount == 0)
@@ -500,7 +549,8 @@ void UninstallerPage::uninstallStarted()
 
 void UninstallerPage::on_txtPackageSearch_textChanged(const QString &val)
 {
-    if (ui->stackedWidget->currentIndex() == 0) {
+    QWidget *current = ui->stackedWidget->currentWidget();
+    if (current == ui->pageSystemPackages) {
         for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i) {
             QTreeWidgetItem *section = ui->treeWidgetPackages->topLevelItem(i);
             int visibleChildren = 0;
@@ -517,17 +567,28 @@ void UninstallerPage::on_txtPackageSearch_textChanged(const QString &val)
             if (visibleChildren > 0 && !val.isEmpty())
                 section->setExpanded(true);
         }
-    } else if (ui->stackedWidget->currentIndex() == 1) {
+    } else if (current == ui->pageSnapPackages) {
         QList<QListWidgetItem*> matches = ui->listWidgetSnapPackages->findItems(val, Qt::MatchFlag::MatchContains);
         for (int i = 0; i < ui->listWidgetSnapPackages->count(); ++i)
             ui->listWidgetSnapPackages->item(i)->setHidden(true);
         for (QListWidgetItem* item : matches)
             item->setHidden(false);
-    } else if (ui->stackedWidget->currentIndex() == 2) {
+    } else if (current == ui->pageOrphanPackages) {
         QTableWidget *tbl = ui->tableWidgetOrphanPackages;
         for (int i = 0; i < tbl->rowCount(); ++i) {
             QTableWidgetItem *nameItem = tbl->item(i, 0);
             bool matches = val.isEmpty() || (nameItem && nameItem->text().contains(val, Qt::CaseInsensitive));
+            tbl->setRowHidden(i, !matches);
+        }
+    } else if (current == ui->pageAptHistory) {
+        QTableWidget *tbl = ui->tableWidgetAptHistory;
+        for (int i = 0; i < tbl->rowCount(); ++i) {
+            bool matches = val.isEmpty();
+            for (int c = 0; c < tbl->columnCount() && !matches; ++c) {
+                QTableWidgetItem *it = tbl->item(i, c);
+                if (it && it->text().contains(val, Qt::CaseInsensitive))
+                    matches = true;
+            }
             tbl->setRowHidden(i, !matches);
         }
     }
@@ -535,17 +596,38 @@ void UninstallerPage::on_txtPackageSearch_textChanged(const QString &val)
 
 void UninstallerPage::on_btnSystemPackages_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(0);
+    ui->stackedWidget->setCurrentWidget(ui->pageSystemPackages);
+    setAppCount();  // restores btnUninstall visibility based on contents
+#ifndef Q_OS_MAC
+    ui->chkPurge->show();
+#endif
 }
 
 void UninstallerPage::on_btnSnapPackages_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(1);
+    ui->stackedWidget->setCurrentWidget(ui->pageSnapPackages);
+    setAppCount();
+#ifndef Q_OS_MAC
+    ui->chkPurge->show();
+#endif
 }
 
 void UninstallerPage::on_btnOrphanPackages_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(2);
+    ui->stackedWidget->setCurrentWidget(ui->pageOrphanPackages);
+    setAppCount();
+#ifndef Q_OS_MAC
+    ui->chkPurge->show();
+#endif
+}
+
+void UninstallerPage::on_btnAptHistory_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageAptHistory);
+    // APT History has its own per-row action bar — the page-global Uninstall
+    // button doesn't apply on this tab.
+    ui->btnUninstall->hide();
+    ui->chkPurge->hide();
 }
 
 void UninstallerPage::on_listWidgetSnapPackages_itemClicked(QListWidgetItem *item)
@@ -562,3 +644,159 @@ void UninstallerPage::onTreeItemChanged(QTreeWidgetItem *item, int column)
     ui->btnUninstall->setText(tr("Uninstall Selected (%1)")
                               .arg(getSelectedSnapPackages().count() + getSelectedPackages().count()));
 }
+
+#ifndef Q_OS_MACOS
+// FW-07 (SSO-3735): APT 3.1 transaction-history slots.
+
+void UninstallerPage::onAptHistoryFetched(QList<AptHistoryEntry> entries)
+{
+    QTableWidget *tbl = ui->tableWidgetAptHistory;
+    tbl->setSortingEnabled(false);
+    tbl->setRowCount(0);
+
+    for (const AptHistoryEntry &e : entries) {
+        int row = tbl->rowCount();
+        tbl->insertRow(row);
+
+        auto *idItem = new QTableWidgetItem();
+        idItem->setData(Qt::DisplayRole, e.id);
+        idItem->setData(Qt::UserRole, e.id);
+        idItem->setTextAlignment(Qt::AlignCenter);
+        tbl->setItem(row, 0, idItem);
+
+        tbl->setItem(row, 1, new QTableWidgetItem(e.dateTime));
+        tbl->setItem(row, 2, new QTableWidgetItem(e.operation));
+
+        auto *cmdItem = new QTableWidgetItem(e.commandLine);
+        cmdItem->setToolTip(e.commandLine);
+        tbl->setItem(row, 3, cmdItem);
+    }
+
+    tbl->setSortingEnabled(true);
+    tbl->sortItems(0, Qt::DescendingOrder);
+
+    const bool any = tbl->rowCount() > 0;
+    ui->btnAptHistoryUndoLast->setEnabled(any);
+    ui->notFoundWidget_4->setVisible(!any);
+    if (!any) {
+        ui->lblNotFoundHistory->setText(tr("No apt transactions recorded yet."));
+    }
+
+    setAppCount();
+}
+
+void UninstallerPage::onAptHistorySelectionChanged()
+{
+    const bool hasSel = !ui->tableWidgetAptHistory->selectedItems().isEmpty();
+    ui->btnAptHistoryUndoSelected->setEnabled(hasSel);
+    ui->btnAptHistoryRollback->setEnabled(hasSel);
+}
+
+static int aptHistorySelectedId(QTableWidget *tbl)
+{
+    const QList<QTableWidgetItem*> sel = tbl->selectedItems();
+    if (sel.isEmpty())
+        return 0;
+    // The id column lives at column 0; selectedItems returns the whole row.
+    for (QTableWidgetItem *it : sel) {
+        if (it->column() == 0)
+            return it->data(Qt::UserRole).toInt();
+    }
+    return 0;
+}
+
+void UninstallerPage::on_btnAptHistoryUndoLast_clicked()
+{
+    QTableWidget *tbl = ui->tableWidgetAptHistory;
+    if (tbl->rowCount() == 0)
+        return;
+
+    // The table is sorted descending by id; row 0 holds the most recent
+    // transaction. Reading by row instead of by sort order keeps the user's
+    // current sort selection from changing the meaning of "last".
+    int maxId = 0;
+    for (int r = 0; r < tbl->rowCount(); ++r) {
+        QTableWidgetItem *it = tbl->item(r, 0);
+        if (it)
+            maxId = std::max(maxId, it->data(Qt::UserRole).toInt());
+    }
+    if (maxId <= 0)
+        return;
+
+    QMessageBox::StandardButton reply = QMessageBox::warning(
+        this,
+        tr("Confirm Undo APT Transaction"),
+        tr("This will reverse apt transaction #%1.\n\nContinue?").arg(maxId),
+        QMessageBox::Ok | QMessageBox::Cancel,
+        QMessageBox::Cancel);
+    if (reply != QMessageBox::Ok)
+        return;
+
+    mPackageService->aptHistoryUndo(maxId);
+}
+
+void UninstallerPage::on_btnAptHistoryUndoSelected_clicked()
+{
+    const int id = aptHistorySelectedId(ui->tableWidgetAptHistory);
+    if (id <= 0)
+        return;
+
+    QMessageBox::StandardButton reply = QMessageBox::warning(
+        this,
+        tr("Confirm Undo APT Transaction"),
+        tr("This will reverse apt transaction #%1.\n\nContinue?").arg(id),
+        QMessageBox::Ok | QMessageBox::Cancel,
+        QMessageBox::Cancel);
+    if (reply != QMessageBox::Ok)
+        return;
+
+    mPackageService->aptHistoryUndo(id);
+}
+
+void UninstallerPage::on_btnAptHistoryRollback_clicked()
+{
+    const int id = aptHistorySelectedId(ui->tableWidgetAptHistory);
+    if (id <= 0)
+        return;
+
+    QMessageBox::StandardButton reply = QMessageBox::warning(
+        this,
+        tr("Confirm Rollback"),
+        tr("This will reverse every apt transaction newer than #%1.\n\nContinue?").arg(id),
+        QMessageBox::Ok | QMessageBox::Cancel,
+        QMessageBox::Cancel);
+    if (reply != QMessageBox::Ok)
+        return;
+
+    mPackageService->aptHistoryRollback(id);
+}
+
+void UninstallerPage::on_btnAptWhy_clicked()
+{
+    const QString pkg = ui->txtAptWhyPackage->text().trimmed();
+    if (pkg.isEmpty())
+        return;
+    ui->txtAptWhyOutput->setPlainText(tr("Looking up…"));
+    mPackageService->fetchAptWhy(pkg, /*whyNot=*/false);
+}
+
+void UninstallerPage::on_btnAptWhyNot_clicked()
+{
+    const QString pkg = ui->txtAptWhyPackage->text().trimmed();
+    if (pkg.isEmpty())
+        return;
+    ui->txtAptWhyOutput->setPlainText(tr("Looking up…"));
+    mPackageService->fetchAptWhy(pkg, /*whyNot=*/true);
+}
+
+void UninstallerPage::onAptWhyFetched(QString package, bool whyNot, QStringList reasons)
+{
+    QString header = whyNot
+        ? tr("apt why-not %1").arg(package)
+        : tr("apt why %1").arg(package);
+    QString body = reasons.isEmpty()
+        ? tr("(no answer)")
+        : reasons.join('\n');
+    ui->txtAptWhyOutput->setPlainText(header + "\n\n" + body);
+}
+#endif // !Q_OS_MACOS

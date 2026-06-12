@@ -50,10 +50,23 @@ private slots:
     void on_btnSystemPackages_clicked();
     void on_btnSnapPackages_clicked();
     void on_btnOrphanPackages_clicked();
+    void on_btnAptHistory_clicked();
 
     void on_listWidgetSnapPackages_itemClicked(QListWidgetItem *item);
     void refreshOrphanThemeColors();
     void onTreeItemChanged(QTreeWidgetItem *item, int column);
+
+#ifndef Q_OS_MACOS
+    // FW-07 (SSO-3735): APT 3.1 transaction history.
+    void onAptHistoryFetched(QList<AptHistoryEntry> entries);
+    void onAptWhyFetched(QString package, bool whyNot, QStringList reasons);
+    void on_btnAptHistoryUndoLast_clicked();
+    void on_btnAptHistoryUndoSelected_clicked();
+    void on_btnAptHistoryRollback_clicked();
+    void on_btnAptWhy_clicked();
+    void on_btnAptWhyNot_clicked();
+    void onAptHistorySelectionChanged();
+#endif
 
 private:
     Ui::UninstallerPage *ui;

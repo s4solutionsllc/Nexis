@@ -25,6 +25,8 @@
 #include <QHeaderView>
 #include <QScrollBar>
 #include <QTimer>
+#include <QDesktopServices>
+#include <QUrl>
 
 SystemCleanerPage::~SystemCleanerPage()
 {
@@ -71,6 +73,12 @@ void SystemCleanerPage::init()
     connect(this, &SystemCleanerPage::cleanFinishedS, this, &SystemCleanerPage::onCleanFinished);
     connect(mCleanerService, &CleanerService::snapshotTaken,
             this, &SystemCleanerPage::onSnapshotTaken,
+            Qt::QueuedConnection);
+    // SSO-3732 / FW-05: queued so the signal — emitted from the cleaner's
+    // QtConcurrent worker thread when QFile::remove hits TCC denial — is
+    // marshalled back to the UI thread before the banner is shown.
+    connect(mCleanerService, &CleanerService::accessNeededDetected,
+            this, &SystemCleanerPage::onAccessNeededDetected,
             Qt::QueuedConnection);
 
     ui->treeWidgetScanResult->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -397,6 +405,23 @@ void SystemCleanerPage::buildCleanerFooter()
     mLblSnapshotToast->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     mLblSnapshotToast->hide();
     outerLayout->addWidget(mLblSnapshotToast);
+
+    // SSO-3732 / FW-05: persistent banner for macOS 27 Privacy & Security
+    // denial. Hidden by default; populated by onAccessNeededDetected() from
+    // the CleanerService::accessNeededDetected signal. Word-wrapped + rich
+    // text so the embedded link routes through QDesktopServices.
+    mLblAccessNeeded = new QLabel(mCleanerFooter);
+    mLblAccessNeeded->setObjectName("lblAccessNeeded");
+    mLblAccessNeeded->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    mLblAccessNeeded->setWordWrap(true);
+    mLblAccessNeeded->setTextFormat(Qt::RichText);
+    mLblAccessNeeded->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    mLblAccessNeeded->setOpenExternalLinks(false);
+    connect(mLblAccessNeeded, &QLabel::linkActivated, this, [](const QString &url) {
+        QDesktopServices::openUrl(QUrl(url));
+    });
+    mLblAccessNeeded->hide();
+    outerLayout->addWidget(mLblAccessNeeded);
 
     catLayout->addWidget(mCleanerFooter);
 }
@@ -930,6 +955,30 @@ void SystemCleanerPage::onSnapshotTaken(const QString &toolName)
     mLblSnapshotToast->setText(tr("✓ Restore point created via %1. Disable in Settings.").arg(toolName));
     mLblSnapshotToast->show();
     QTimer::singleShot(5000, mLblSnapshotToast, &QLabel::hide);
+}
+
+void SystemCleanerPage::onAccessNeededDetected(const QString &message,
+                                                const QString &deepLink)
+{
+    if (!mLblAccessNeeded)
+        return;
+    if (message.isEmpty()) {
+        mLblAccessNeeded->hide();
+        return;
+    }
+    // The cleaner emits a translatable message and a platform deep link. We
+    // turn the deep link into an inline rich-text anchor so the user can open
+    // the Privacy & Security pane without us pre-building a button. The
+    // QLabel::linkActivated handler (wired in buildCleanerFooter) routes the
+    // URL through QDesktopServices so the System Settings sheet appears.
+    QString body = message.toHtmlEscaped();
+    if (!deepLink.isEmpty()) {
+        body += QStringLiteral(" <a href=\"%1\">%2</a>")
+                    .arg(deepLink.toHtmlEscaped(),
+                         tr("Open Privacy & Security…").toHtmlEscaped());
+    }
+    mLblAccessNeeded->setText(body);
+    mLblAccessNeeded->show();
 }
 
 // ─── Tree widget helpers ──────────────────────────────────────────────────────

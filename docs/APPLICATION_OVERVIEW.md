@@ -115,7 +115,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | Disk I/O | sysfs (`/sys/block/`) | IOKit |
 | GPU info | sysfs (AMD), `nvidia-smi` (NVIDIA), sysfs (Intel) | IOKit IOAccelerator, Metal |
 | Battery info | `/sys/class/power_supply/` | IOKit `IOPMPowerSource` |
-| Thermal sensors | `/sys/class/hwmon/` | SMC (System Management Controller) |
+| Thermal sensors | `/sys/class/hwmon/` (incl. vendor WMI surfaces — `asus`, `hp`, `legion`, `ideapad`) | SMC (System Management Controller) |
 | Fan sensors | `/sys/class/hwmon/*/fan*_input`, ThinkPad `/proc/acpi/ibm/fan`, Dell `/proc/i8k`, `nvidia-smi` | SMC (`FNum`, `F{N}Ac` keys, fpe2 decoding) |
 | Disk health | `smartctl` | `smartctl` + `diskutil` plist |
 | Process listing | `/proc/[pid]/` | `sysctl` KERN_PROC |
@@ -210,6 +210,7 @@ Manage applications that auto-start at login.
   - **User Agents** (`~/Library/LaunchAgents`) — full edit/toggle/delete control; enabled state sourced from `launchctl print-disabled user/<uid>`
   - **System Agents** (`/Library/LaunchAgents`) — read-only; shows plist path
   - **System Daemons** (`/Library/LaunchDaemons`) — read-only; shows plist path
+  - **BTM Records** (`sfltool dumpbtm`, SSO-3738 / FW-10) — read-only; surfaces every entry the macOS Background Task Management database knows about (Login Items, Launch Agents/Daemons, helper launchers, app extensions, MDM-managed items), not just the items resolvable from `~/Library/LaunchAgents`. Per-row badges flag orphaned records (executable + plist both missing on disk), duplicate identifiers/executable paths, Apple-managed entries under `/System/Library/Launch{Daemons,Agents,Angels}` or `/usr/libexec`, and current enabled state. A destructive-styled **Repair BTM…** header button opens a confirmation dialog and runs `sudo sfltool resetbtm` — the standard repair when the Tahoe 26.4 `backgroundtaskmanagementd` bug stalls Login Items — once the user types `RESET` to acknowledge that every background item will re-prompt on next login.
 - File path shown as subtitle on every row
 
 ### 3a. Boot Analysis
@@ -243,6 +244,7 @@ Scan and remove system junk files across 9 categories.
 - Excluded paths are skipped during scanning (file exact match, folder prefix match, symlink-aware)
 - Exclusions are enforced at **every depth** of the recursive deletion walk, not just on the top-level scan entry — a protected child or sub-folder inside a scanned cache directory is preserved even when the cache directory itself is the cleanup target (NEX-3370)
 - Exclusions persist across app restarts via JSON in QSettings
+- **macOS 27 Privacy & Security awareness (SSO-3732 / FW-05):** macOS 27 silently denies cross-team app-container reads/deletes without Full Disk Access. The cleaner detects `EPERM` / `EACCES` outcomes through a `removeFile()` seam that classifies them as `AccessDeniedByPolicy` (vs. generic I/O errors), refuses to credit un-cleanable bytes as freed, and exposes the count via `CleanResult::accessDeniedPaths`. On detection (cleaning or the scan-time `~/Library/Containers` "exists but empty" probe) the page posts a persistent banner with an "Open Privacy & Security…" link that drops the user directly into the Full Disk Access pane — cache cleaning is never a silent no-op on macOS 27
 
 **UI features:**
 - **Page 0 — Category Cards (FR-130):** Two-column card grid with per-card name, path subtitle, post-scan size label, and checkbox. Checked cards gain a highlighted border. A persistent footer shows estimated total recoverable space and a "Clean selected" button (enabled after scanning). "View scan results →" navigates to the detailed tree view.
@@ -327,7 +329,7 @@ View and manage running processes.
 
 ### 9. Uninstaller
 
-Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout: System Packages, Snap Packages, Orphan Packages.
+Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout (four on hosts with APT 3.1+): System Packages, Snap Packages, Orphan Packages, and APT History.
 
 - Package tree view grouped by type (Formula/Cask on macOS; installed/universe on Linux)
 - Search filter with auto-expand matching sections
@@ -336,9 +338,10 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 - Dry-run confirmation showing dependencies that would also be removed (APT)
 - Async background loading with progress indicator
 - **Orphan Packages tab** — Lists packages no longer required by any installed package. Removal via platform `autoremove` command (all-or-nothing). Supported on APT, DNF, Pacman, and Homebrew.
+- **APT History tab (Linux, APT 3.1+)** — Lists recent `apt` transactions parsed from `apt history-list` (id, date, operation, command). One-click **Undo Last Transaction**, and per-row **Undo Selected** / **Rollback To Selected** wired to `apt history-undo` / `apt history-rollback`. A **Why? / Why Not?** panel surfaces `apt why` / `apt why-not` output for any package the user names. The tab and its nav button are hidden when `apt --version < 3.1`, so older Debian/Ubuntu users see no broken affordance (FW-07 / SSO-3735).
 
 **Platform backends:**
-- Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`
+- Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`; on APT 3.1+ also `apt history-list/-info/-undo/-rollback` and `apt why/why-not`
 - macOS: `brew uninstall` for Homebrew packages; `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:`) for `.app` bundles — no AppleScript/`osascript` is involved, so bundle names containing quotes or other metacharacters cannot inject arbitrary code (SSO-3366, audit S1); `brew autoremove` for orphans
 
 ### 10. Resources
@@ -360,6 +363,7 @@ Historical time-series charts for system resource usage.
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
 - Configurable preference in Settings (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper; or custom path)
+- **Built-in Treemap (FW-09, SSO-3737):** secondary "Built-in Treemap" button on the same card opens a built-in `DiskTreemapDialog` that runs a `DirSizeScanner` on a `QtConcurrent` worker, then renders a squarified treemap with `TreemapView` (pure `QPainter`). Supports drill-down (double-click), hover tooltips, "Reveal in file manager", and "Move to trash" (reuses `FileSearchService` → cleaner trash path). Skips symlinks and dedups hard links so byte counts match what Baobab/DaisyDisk would report. The external-tool launcher remains as a parallel option.
 
 ### 10a. Network Usage
 
@@ -451,7 +455,8 @@ Manage package repositories and sources. Conditional: shown only when the releva
 - APT-RPM support for ALT Linux, PCLinuxOS, Vine Linux
 - Add, edit, delete repositories (requires sudo)
 - Enable/disable without deleting
-- Structured editor: type (deb/deb-src), URIs, suites, components, Signed-By
+- Structured editor: type (deb/deb-src), URIs, suites, components, **Signed-By keyring path, Architectures**
+- New repos written as deb822 `.sources` with an explicit `Signed-By` on systems where deb822 is the norm (Ubuntu 26.04+ / Debian trixie+, detected by `ubuntu.sources` or `debian.sources` presence); legacy `.list` editing kept for older distros. No `apt-key` invocation anywhere — APT 3.1 removed it, and Nexis writes the keyring path directly to `Signed-By:`. Edits round-trip byte-stable for unchanged fields and preserve unrecognised deb822 keys (`Languages:`, `Targets:`, embedded multi-line GPG keys) verbatim.
 - Search filter
 
 **macOS (Homebrew):**
@@ -603,7 +608,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `NetworkInfo` | Interfaces, RX/TX bytes | `QNetworkInterface` | sysfs `/sys/class/net/` |
 | `SystemInfo` | Hostname, OS, kernel, CPU model | `sysctl` | `/etc/os-release`, `lscpu` |
 | `ProcessInfo` | Process list with CPU/memory/disk I/O/network stats | `sysctl` KERN_PROC, `proc_pid_rusage()`, `nettop` | `/proc/[pid]/stat`, `/proc/[pid]/io` |
-| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` |
+| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` (vendor WMI surfaces resolved via `friendlyDeviceName`: ASUS, HP, Legion, IdeaPad) |
 | `GpuInfo` | GPU devices, utilization | IOKit, Metal | sysfs, `nvidia-smi` |
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |
 | `DiskHealthInfo` | SMART attributes, health verdicts | `smartctl`, `diskutil` | `smartctl`, sysfs |
@@ -641,7 +646,7 @@ Eight singleton managers mediate between UI pages and the core library (count: s
 | `AppManager` | Theme/stylesheet loading, language management, system tray icon, color scheme detection. |
 | `SettingManager` | `QSettings` wrapper with 30+ typed getters/setters for persistent preferences. |
 | `ToolManager` | Facade over the cross-platform Tool classes via `std::unique_ptr<Interface>`. Platform-aware routing (e.g., `uninstallPackages()` calls Homebrew on macOS, APT on Debian). |
-| `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. |
+| `CleanerService` | Reusable scan/clean logic shared between the System Cleaner UI and headless scheduled cleaning. On macOS 27, classifies a removal failure as `AccessDeniedByPolicy` when TCC denies cross-team app-container access, emits `accessNeededDetected(message, deepLink)` for the Privacy & Security banner, and surfaces the count via `CleanResult::accessDeniedPaths` (SSO-3732 / FW-05). |
 | `ScheduleManager` | CRUD for cleaning schedules, JSON persistence via QSettings, OS-native scheduler sync (launchd/systemd/cron). |
 | `ProcessPrefsManager` | Persistent per-process state (pin flags, alert thresholds) used by `ProcessesPage`. JSON-in-QSettings, same shape as `ScheduleManager` / `CleanerExclusions`. |
 | `DataRefreshService` | Centralized polling service with 5 QTimers (fast/medium/slow/process/update). Polls InfoManager once per interval, emits 16 typed data-change signals (14 cross-platform + Linux-only `psiUpdated`/`oomdUpdated`). Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |

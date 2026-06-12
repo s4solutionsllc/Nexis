@@ -62,7 +62,12 @@ static const QVector<PageInfo> kPageMap = {
     {"ServicesPage",      "services",          {"QAbstractItemView"}, {}},
     {"ProcessesPage",     "processes",         {"QAbstractItemView"}, {}},
     {"UninstallerPage",   "uninstaller",       {"QAbstractItemView"}, {}},
-    {"ResourcesPage",     "resources",         {"HistoryChart"}, {}},
+    // SSO-3737 / FW-09: DiskUsageLauncherWidget now hosts a second
+    // entry-point button for the built-in treemap, and its labelling
+    // already depends on which disk-usage tool the host has installed —
+    // mask it the same way HistoryChart is masked.
+    {"ResourcesPage",     "resources",
+        {"HistoryChart", "DiskUsageLauncherWidget"}, {}},
     {"HelpersPage",       "helpers",           {}, {}},
     {"NetworkUsagePage",  "network_usage",     {"BarChartWidget"}, {}},
     {"SettingsPage",      "settings",          {}, {}},

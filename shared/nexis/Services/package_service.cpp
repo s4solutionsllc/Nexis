@@ -87,3 +87,55 @@ QStringList PackageService::dryRunRemovePackages(const QStringList &packages)
 {
     return mToolManager->dryRunRemovePackages(packages);
 }
+
+#ifndef Q_OS_MACOS
+/*
+ * APT 3.1 transaction history (FW-07 / SSO-3735)
+ */
+bool PackageService::isAptHistorySupported() const
+{
+    return mToolManager->aptHistorySupported();
+}
+
+void PackageService::fetchAptHistory()
+{
+    QThreadPool::globalInstance()->start([this]() {
+        QList<AptHistoryEntry> entries = mToolManager->getAptHistory();
+        emit aptHistoryFetched(entries);
+    });
+}
+
+void PackageService::fetchAptHistoryInfo(int transactionId)
+{
+    QThreadPool::globalInstance()->start([this, transactionId]() {
+        AptHistoryEntry entry = mToolManager->getAptHistoryInfo(transactionId);
+        emit aptHistoryInfoFetched(entry);
+    });
+}
+
+void PackageService::fetchAptWhy(const QString &package, bool whyNot)
+{
+    QThreadPool::globalInstance()->start([this, package, whyNot]() {
+        QStringList reasons = mToolManager->aptWhy(package, whyNot);
+        emit aptWhyFetched(package, whyNot, reasons);
+    });
+}
+
+void PackageService::aptHistoryUndo(int transactionId)
+{
+    QThreadPool::globalInstance()->start([this, transactionId]() {
+        emit mSignalMapper->sigUninstallStarted();
+        mToolManager->aptHistoryUndo(transactionId);
+        emit mSignalMapper->sigUninstallFinished();
+    });
+}
+
+void PackageService::aptHistoryRollback(int transactionId)
+{
+    QThreadPool::globalInstance()->start([this, transactionId]() {
+        emit mSignalMapper->sigUninstallStarted();
+        mToolManager->aptHistoryRollback(transactionId);
+        emit mSignalMapper->sigUninstallFinished();
+    });
+}
+#endif

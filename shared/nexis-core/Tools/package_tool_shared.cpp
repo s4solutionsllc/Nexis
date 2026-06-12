@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QHash>
 #include <QRegularExpression>
+#include <QSet>
 
 #include "Utils/command_util.h"
 
@@ -199,6 +200,190 @@ QList<OrphanPackage> PackageTool::parseDnfAutoremoveDryRun(const QString &output
     }
 
     return orphans;
+}
+
+// FW-07 (SSO-3735): APT 3.1 history + why parsers.
+//
+// APT 3.1 mirrors dnf's transaction-history surface. The textual output isn't
+// strictly machine-formatted (no --json yet), so the parsers are forgiving:
+// they skip header/separator decoration, recognise the few field labels APT
+// is documented to print, and otherwise treat each section as a list of
+// package strings. Tests in tests/core/test_apt_history.cpp lock the
+// expected outputs from a 26.04 box.
+
+AptVersion PackageTool::parseAptVersion(const QString &output)
+{
+    AptVersion v;
+    // Typical "apt --version" output:
+    //   apt 3.1.0 (amd64)
+    //   apt 2.8.5 (amd64)
+    // Some distributions prefix with "apt-get". Be flexible on the leading word.
+    static const QRegularExpression re(R"((?:^|\s)(\d+)\.(\d+)(?:\.(\d+))?)");
+    QRegularExpressionMatch m = re.match(output);
+    if (!m.hasMatch())
+        return v;
+    v.major = m.captured(1).toInt();
+    v.minor = m.captured(2).toInt();
+    v.patch = m.captured(3).isEmpty() ? 0 : m.captured(3).toInt();
+    v.valid = true;
+    return v;
+}
+
+QList<AptHistoryEntry> PackageTool::parseAptHistoryList(const QString &output)
+{
+    QList<AptHistoryEntry> entries;
+    const QStringList lines = output.split('\n');
+
+    // apt history-list prints a dnf-style table:
+    //   ID | Date and time        | Operation | Command line
+    //   ---+----------------------+-----------+--------------------------
+    //   12 | 2026-06-10 14:32:11  | install   | apt install firefox
+    //   11 | 2026-06-09 09:15:02  | upgrade   | apt upgrade
+    // The exact column count is not stable across versions, so split on '|'
+    // and require at least an integer id + a non-empty operation.
+    for (const QString &raw : lines) {
+        QString line = raw.trimmed();
+        if (line.isEmpty())
+            continue;
+        // skip separator and header rows
+        if (line.contains(QRegularExpression(R"(^[-+]+$)")))
+            continue;
+        QStringList cells = line.split('|');
+        for (QString &c : cells)
+            c = c.trimmed();
+        if (cells.size() < 3)
+            continue;
+        bool ok = false;
+        int id = cells.at(0).toInt(&ok);
+        if (!ok)
+            continue;
+        AptHistoryEntry e;
+        e.id = id;
+        e.dateTime = cells.at(1);
+        e.operation = cells.at(2);
+        if (cells.size() >= 4)
+            e.commandLine = cells.at(3);
+        entries.append(e);
+    }
+    return entries;
+}
+
+AptHistoryEntry PackageTool::parseAptHistoryInfo(const QString &output)
+{
+    AptHistoryEntry e;
+    const QStringList lines = output.split('\n');
+
+    // apt history-info <id> prints a labelled header followed by per-state
+    // sections (Installed:, Upgraded:, Removed:, Purged:, Reinstalled:,
+    // Downgraded:). Within a section each indented line begins with the
+    // package name; trailing version/arch tokens may follow.
+    static const QRegularExpression labelRe(R"(^([A-Za-z][\w\s]*?)\s*:\s*(.*)$)");
+    static const QSet<QString> sectionLabels = {
+        QStringLiteral("Installed"),
+        QStringLiteral("Upgraded"),
+        QStringLiteral("Removed"),
+        QStringLiteral("Purged"),
+        QStringLiteral("Reinstalled"),
+        QStringLiteral("Downgraded"),
+    };
+
+    QString currentSection;
+    for (const QString &raw : lines) {
+        const QString line = raw.trimmed();
+        if (line.isEmpty()) {
+            currentSection.clear();
+            continue;
+        }
+
+        // Indented continuation of a section: take the first token as pkg name.
+        if (raw.startsWith(' ') || raw.startsWith('\t')) {
+            if (!currentSection.isEmpty()) {
+                const QString name = line.split(QRegularExpression(R"(\s+)")).first();
+                // strip :arch suffix so the model holds just the source name
+                e.packages << name.section(':', 0, 0);
+                continue;
+            }
+        }
+
+        QRegularExpressionMatch m = labelRe.match(line);
+        if (!m.hasMatch()) {
+            currentSection.clear();
+            continue;
+        }
+        const QString key = m.captured(1).trimmed();
+        const QString val = m.captured(2).trimmed();
+
+        if (key.compare("Transaction ID", Qt::CaseInsensitive) == 0
+            || key.compare("ID", Qt::CaseInsensitive) == 0) {
+            e.id = val.toInt();
+            currentSection.clear();
+        } else if (key.compare("Begin time", Qt::CaseInsensitive) == 0
+                   || key.compare("Start time", Qt::CaseInsensitive) == 0
+                   || key.compare("Date", Qt::CaseInsensitive) == 0) {
+            e.dateTime = val;
+            currentSection.clear();
+        } else if (key.compare("Operation", Qt::CaseInsensitive) == 0
+                   || key.compare("Action", Qt::CaseInsensitive) == 0) {
+            e.operation = val;
+            currentSection.clear();
+        } else if (key.compare("Command line", Qt::CaseInsensitive) == 0
+                   || key.compare("Command", Qt::CaseInsensitive) == 0) {
+            e.commandLine = val;
+            currentSection.clear();
+        } else if (key.compare("User", Qt::CaseInsensitive) == 0
+                   || key.compare("Requested by", Qt::CaseInsensitive) == 0) {
+            e.user = val;
+            currentSection.clear();
+        } else if (sectionLabels.contains(key)) {
+            currentSection = key;
+            // Inline list on the same line, e.g. "Installed: firefox libfoo"
+            if (!val.isEmpty()) {
+                for (const QString &tok : val.split(QRegularExpression(R"([\s,]+)"),
+                                                    Qt::SkipEmptyParts))
+                    e.packages << tok.section(':', 0, 0);
+            }
+        } else {
+            currentSection.clear();
+        }
+    }
+
+    // Dedupe while preserving order — Installed/Upgraded sections often repeat.
+    QStringList uniq;
+    QSet<QString> seen;
+    for (const QString &p : e.packages) {
+        if (!p.isEmpty() && !seen.contains(p)) {
+            uniq << p;
+            seen.insert(p);
+        }
+    }
+    e.packages = uniq;
+    return e;
+}
+
+QStringList PackageTool::parseAptWhy(const QString &output)
+{
+    QStringList reasons;
+    const QStringList lines = output.split('\n');
+
+    // apt why / why-not output forms:
+    //   firefox  Installed by user
+    //   firefox  Required by:
+    //     thunderbird depends on firefox
+    //   No reason.
+    //
+    // We collect every non-empty, non-header line trimmed of leading whitespace
+    // and surface them verbatim — the UI just shows them as an explanation list.
+    for (const QString &raw : lines) {
+        const QString line = raw.trimmed();
+        if (line.isEmpty())
+            continue;
+        if (line.startsWith("Reading package lists")
+            || line.startsWith("Building dependency tree")
+            || line.startsWith("Reading state information"))
+            continue;
+        reasons << line;
+    }
+    return reasons;
 }
 
 QList<OrphanPackage> PackageTool::parseBrewAutoremoveDryRun(const QString &output)

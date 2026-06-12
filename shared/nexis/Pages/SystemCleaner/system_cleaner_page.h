@@ -91,6 +91,11 @@ private slots:
     void onTreeContextMenu(const QPoint &pos);
     void onSnapshotTaken(const QString &toolName);
     void onSelectAllClicked();
+    // SSO-3732 / FW-05: surface a persistent banner when CleanerService
+    // detects macOS 27 TCC denial on cross-team app-container access. The
+    // banner explains the situation and exposes a clickable link that
+    // QDesktopServices opens against the Privacy & Security pane.
+    void onAccessNeededDetected(const QString &message, const QString &deepLink);
 
     void showEvent(QShowEvent *event) override;
 
@@ -192,6 +197,11 @@ private:
     QFuture<void> mWorkerFuture;
 
     QLabel      *mLblSnapshotToast = nullptr;
+    // SSO-3732 / FW-05: macOS Privacy & Security "access needed" banner.
+    // Persistent (no auto-hide) because the resolution is user action in
+    // System Settings, not a transient event. Embedded link uses
+    // QDesktopServices to open the Privacy_AllFiles pane.
+    QLabel      *mLblAccessNeeded = nullptr;
 
     // Exclusion rules gear button (in header row)
     QToolButton *mBtnExclusions = nullptr;

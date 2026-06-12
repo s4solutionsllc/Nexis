@@ -12,6 +12,10 @@
 #include "startup_app.h"
 #include "startup_app_edit.h"
 
+#ifdef Q_OS_MACOS
+class QPushButton;
+#endif
+
 class StartupService;
 
 namespace Ui {
@@ -35,6 +39,9 @@ private slots:
     void openStartupAppEdit(const QString filePath = QString());
     void setAppCount();
     void filterStartupApps(const QString &text);
+#ifdef Q_OS_MACOS
+    void onRepairBtmClicked();
+#endif
 
 private:
     Ui::StartupAppsPage *ui;
@@ -45,10 +52,15 @@ private:
     struct SectionGroup {
         QListWidgetItem *headerItem = nullptr;
         QList<QListWidgetItem *> appItems;
+        bool isBtmGroup = false;
     };
     QList<SectionGroup> mSectionGroups;
+#ifdef Q_OS_MACOS
+    QPushButton *mBtnRepairBtm = nullptr;
+    int mBtmRowCount = 0;
+#endif
 
-    void addSectionHeader(const QString &title);
+    void addSectionHeader(const QString &title, bool isBtmGroup = false);
 };
 
 #endif // STARTUPAPPSPAGE_H

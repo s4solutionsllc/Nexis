@@ -28,6 +28,16 @@ public:
     static double parseSysfsTemperature(const QString &millidegStr);
     static double sanitizeTempThreshold(const QString &millidegStr, double maxSaneTemp = 200.0);
 
+    // Map a hwmon driver name (e.g. "k10temp", "asus", "hp") to the user-facing
+    // device label. Exposed for testing FW-16 vendor WMI surfaces (asus-wmi,
+    // hp-wmi, legion-laptop) added in kernel 7.0.
+    static QString friendlyDeviceName(const QString &driverName);
+
+    // Walk a hwmon root (sysfs-shaped: <root>/hwmon*/name + temp*_input + temp*_label)
+    // and return the discovered sensors. Linux passes /sys/class/hwmon; tests
+    // pass a QTemporaryDir.
+    static QList<ThermalSensor> enumerateHwmonSensors(const QString &hwmonRoot);
+
 protected:
     virtual void discoverSensors() = 0;
     QList<ThermalSensor> mSensors;

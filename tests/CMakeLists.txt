@@ -105,6 +105,17 @@ add_nexis_test(NAME MacosParserTests
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
 )
 
+# SSO-3738 / FW-10: sfltool dumpbtm parser. Compiled directly here per FR-127
+# so the tests run on any platform even though `sfltool` itself is macOS-only.
+add_nexis_test(NAME BtmParserTests
+  SOURCES
+    core/test_btm_parser.cpp
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/btm_parser.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+)
+
 # WI-33: PackageTool uninstall command-construction tests. Subclasses the
 # Linux + macOS package tools and overrides the runSudoCommand/runCommand
 # seam on the PackageTool base. Compiles both platform sources directly so
@@ -122,6 +133,19 @@ add_nexis_test(NAME PackageToolUninstallTests
     "${CMAKE_SOURCE_DIR}/macos/nexis-core"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
+)
+
+# FW-07 (SSO-3735): apt-3.1 transaction history + why parsers + the
+# PackageToolLinux argv-construction seam for history-list / -info / -undo
+# / -rollback and why / why-not. Compiles the Linux platform source directly
+# so the test is platform-agnostic — only the live commands run on Linux.
+add_nexis_test(NAME AptHistoryTests
+  SOURCES
+    core/test_apt_history.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
 )
 
 # SSO-351: pure parser for /proc/net/route — compiled directly so the test
@@ -212,6 +236,13 @@ add_nexis_test(NAME HostServiceTests
 add_nexis_test(NAME RepositoryToolTests
   SOURCES managers/test_repository_tool.cpp)
 
+# SSO-3731 (FW-04, MX1): MacOsXattrUtil::stripQuarantine() — strips the
+# com.apple.quarantine xattr from a plist before `launchctl load` on
+# macOS 27. The helper is linked from nexis-core; the test body QSKIPs
+# off-macOS because the xattr surface is platform-specific.
+add_nexis_test(NAME MacOsXattrUtilTests
+  SOURCES managers/test_macos_xattr_util.cpp)
+
 add_nexis_test(NAME ScheduleTests
   SOURCES
     managers/test_schedule_manager.cpp
@@ -279,6 +310,22 @@ add_nexis_test(NAME CleanerServiceTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3732 / FW-05: CleanerService macOS 27 cross-team container access-denial
+# surface — pinned to nexis-gui for the same reason as CleanerServiceTests.
+# The implementation lives in the GUI library (not nexis-core) so the test
+# links against it; the Q_OS_MACOS gate inside the source file controls
+# whether the real assertions run or a single QSKIP placeholder reports the
+# platform mismatch on non-macOS hosts.
+add_nexis_test(NAME CleanerAccessNeededTests
+  SOURCES
+    managers/test_cleaner_access_needed.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3380 / WI-18: DataRefreshService::isCpuPayloadEmittable() guards
 # the cpuUpdated emit against an empty producer payload. Links against
 # nexis-gui because the predicate lives in the GUI-side service.
@@ -317,6 +364,20 @@ add_nexis_test(NAME IndicatorFallbackTests
     "${GUI_SHARED_DIR}/Managers"
   LIBS
     nexis-gui Qt6::Widgets
+)
+
+# SSO-3737 / FW-09: DirSizeScanner — pure directory-size aggregation that
+# powers the built-in treemap visualizer. Compiled directly into the test so
+# it runs cross-platform without pulling in nexis-gui.
+add_nexis_test(NAME DirSizeScannerTests
+  SOURCES
+    managers/test_dir_size_scanner.cpp
+    "${GUI_SHARED_DIR}/Managers/dir_size_scanner.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Concurrent
 )
 
 # SSO-3363 / audit H2: LogProvider::cancel() null-deref defence and

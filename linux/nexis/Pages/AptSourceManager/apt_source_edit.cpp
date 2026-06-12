@@ -28,7 +28,9 @@ void APTSourceEdit::show()
 {
     clearElements();
 
-    // example 'deb [arch=amd64 lang=en] http://packages.microsoft.com/repos/vscode stable main'
+    // example deb822 stanza or legacy:
+    //   deb [arch=amd64 signed-by=/etc/apt/keyrings/example.asc] \
+    //       http://packages.microsoft.com/repos/vscode stable main
 
     // set values to elements
     ui->radioBinary->setChecked(! selectedAptSource->isSource);
@@ -37,6 +39,16 @@ void APTSourceEdit::show()
     ui->txtUri->setText(selectedAptSource->uri);
     ui->txtSuites->setText(selectedAptSource->suites);
     ui->txtComponents->setText(selectedAptSource->components);
+    // SSO-3728 / FW-01: surface Signed-By + Architectures so the user can
+    // edit a deb822 entry's keyring path and arch list without hand-editing
+    // /etc/apt/sources.list.d/*.sources.
+    ui->txtSignedBy->setText(selectedAptSource->signedByPath);
+    ui->txtArchitectures->setText(selectedAptSource->architectures);
+    // Options are only meaningful in legacy .list format; hide for deb822
+    // since Signed-By / Architectures replace the [arch=..., signed-by=...]
+    // brackets.
+    const bool isDeb822 = selectedAptSource->format == APTSource::Deb822;
+    ui->txtOptions->setVisible(!isDeb822);
 
     QDialog::show();
 }
@@ -48,6 +60,8 @@ void APTSourceEdit::clearElements()
     ui->txtUri->clear();
     ui->txtSuites->clear();
     ui->txtComponents->clear();
+    ui->txtSignedBy->clear();
+    ui->txtArchitectures->clear();
 }
 
 void APTSourceEdit::on_btnSave_clicked()
@@ -59,6 +73,8 @@ void APTSourceEdit::on_btnSave_clicked()
         updatedAptSource->uri = ui->txtUri->text();
         updatedAptSource->suites = ui->txtSuites->text();
         updatedAptSource->components = ui->txtComponents->text();
+        updatedAptSource->signedByPath = ui->txtSignedBy->text().trimmed();
+        updatedAptSource->architectures = ui->txtArchitectures->text().trimmed();
 
         ToolManager::ins()->changeAPTSource(selectedAptSource, updatedAptSource);
 
