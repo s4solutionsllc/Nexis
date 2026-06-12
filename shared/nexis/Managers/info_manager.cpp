@@ -34,6 +34,7 @@
 #include <Info/boot_analysis_info_linux.h>
 #include <Info/startup_info_linux.h>
 #include <Info/psi_info.h>
+#include <Info/oomd_info_linux.h>
 #endif
 
 InfoManager *InfoManager::instance = nullptr;
@@ -73,6 +74,7 @@ InfoManager::InfoManager()
     bai  = std::make_unique<BootAnalysisInfoLinux>();
     sui  = std::make_unique<StartupInfoLinux>();
     psii = std::make_unique<PsiInfo>();
+    oomd = std::make_unique<OomdInfoLinux>();
 #endif
 }
 
@@ -553,5 +555,20 @@ void InfoManager::updateCpuPsi()
 PsiSnapshot InfoManager::getCpuPsi() const
 {
     return psii->getCpuSnapshot();
+}
+
+void InfoManager::updateOomdInfo()
+{
+    oomd->update();
+}
+
+OomdSnapshot InfoManager::getOomdSnapshot() const
+{
+    return oomd->getSnapshot();
+}
+
+bool InfoManager::hasOomd() const
+{
+    return oomd->hasOomd();
 }
 #endif

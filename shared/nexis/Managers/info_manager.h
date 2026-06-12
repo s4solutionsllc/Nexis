@@ -21,6 +21,8 @@
 #include <Info/startup_info.h>
 #ifdef Q_OS_LINUX
 #include <Info/psi_info.h>
+#include <Info/oomd_snapshot.h>
+class OomdInfoLinux;
 #endif
 
 class InfoManager
@@ -152,6 +154,11 @@ public:
 #ifdef Q_OS_LINUX
     void updateCpuPsi();
     PsiSnapshot getCpuPsi() const;
+
+    // FW-11 (SSO-3739): systemd-oomd / cgroup v2 observability.
+    void updateOomdInfo();
+    OomdSnapshot getOomdSnapshot() const;
+    bool hasOomd() const;
 #endif
 
 private:
@@ -176,6 +183,7 @@ private:
     std::unique_ptr<StartupInfo> sui;
 #ifdef Q_OS_LINUX
     std::unique_ptr<PsiInfo> psii;
+    std::unique_ptr<OomdInfoLinux> oomd;
 #endif
 };
 

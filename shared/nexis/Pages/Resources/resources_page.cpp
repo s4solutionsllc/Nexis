@@ -5,6 +5,10 @@
 #include <QFile>
 #include <algorithm>
 
+#ifdef Q_OS_LINUX
+#include "Pages/Helpers/oom_kills_widget.h"
+#endif
+
 ResourcesPage::~ResourcesPage()
 {
     delete ui;
@@ -65,6 +69,12 @@ void ResourcesPage::init()
         mChartPsiCpu->setYMax(1.0);
         widgets.append(mChartPsiCpu);
     }
+
+    // FW-11 (SSO-3739): OOM-kill observability panel. Always constructed —
+    // the widget hides itself on hosts without any oomd / cgroup v2 signal,
+    // so this costs nothing on, say, a stock macOS-port build target.
+    mOomKills = new OomKillsWidget(this);
+    widgets.append(mOomKills);
 #endif
 
     for (QWidget *widget : widgets) {
@@ -97,6 +107,9 @@ void ResourcesPage::init()
     if (mChartPsiCpu)
         connect(mRefresh, &DataRefreshService::psiUpdated,
                 this, &ResourcesPage::onPsiUpdated);
+    if (mOomKills)
+        connect(mRefresh, &DataRefreshService::oomdUpdated,
+                this, &ResourcesPage::onOomdUpdated);
 #endif
 
     // Disk Usage Analyzer launcher (FR-23)
@@ -515,6 +528,12 @@ void ResourcesPage::onPsiUpdated(const PsiSnapshot &snap)
     mChartPsiCpu->setSeriesList(seriesList);
     second++;
 }
+
+void ResourcesPage::onOomdUpdated(const OomdSnapshot &snap)
+{
+    if (mOomKills)
+        mOomKills->onOomdUpdated(snap);
+}
 #endif
 
 void ResourcesPage::onPageActivated()
@@ -532,6 +551,8 @@ void ResourcesPage::onPageActivated()
 #ifdef Q_OS_LINUX
     if (mChartPsiCpu)
         mRefresh->subscribe(DataRefreshService::Signal::Psi);
+    if (mOomKills)
+        mRefresh->subscribe(DataRefreshService::Signal::Oomd);
 #endif
 
     // Kick an immediate disk health refresh so the temperature chart populates
@@ -551,5 +572,7 @@ void ResourcesPage::onPageDeactivated()
 #ifdef Q_OS_LINUX
     if (mChartPsiCpu)
         mRefresh->unsubscribe(DataRefreshService::Signal::Psi);
+    if (mOomKills)
+        mRefresh->unsubscribe(DataRefreshService::Signal::Oomd);
 #endif
 }

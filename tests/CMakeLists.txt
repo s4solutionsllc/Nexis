@@ -78,6 +78,18 @@ add_nexis_test(NAME ProcInfoParserTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
 )
 
+# FW-11 (SSO-3739): pure parsers for systemd-oomd + cgroup v2 inputs.
+# Compiled directly so the test runs cross-platform even though the producer
+# (OomdInfoLinux) is only wired into the real nexis-core build on Linux.
+add_nexis_test(NAME OomdInfoParserTests
+  SOURCES
+    core/test_oomd_info_parser.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info/oomd_info_parser.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
+    "${CMAKE_SOURCE_DIR}/shared/nexis-core/Info"
+)
+
 # WI-33: macOS live-tool parsers (nettop CSV, diskutil plist, sysctl
 # kern.boottime). Compiled directly here so the tests run on any platform
 # even though the parsers are only wired into the real nexis-core build
