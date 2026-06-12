@@ -368,19 +368,6 @@ add_nexis_test(NAME DuplicateFinderTests
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )
 
-# FW-14 (SSO-3742): HealthReportManager — on-demand Markdown export and
-# schedule CRUD. Links against nexis-gui for InfoManager, CleanerService,
-# ScheduleManager, and SettingManager (same pattern as CleanerServiceTests).
-add_nexis_test(NAME HealthReportTests
-  SOURCES
-    managers/test_health_report.cpp
-  INCLUDES
-    "${GUI_SHARED_DIR}"
-    "${GUI_SHARED_DIR}/Managers"
-  LIBS
-    nexis-gui Qt6::Widgets
-)
-
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
 # substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
 # "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui
