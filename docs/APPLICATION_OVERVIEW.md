@@ -273,7 +273,7 @@ Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar
 - Results in sortable QTreeWidget with columns: Name, Path, Size, Last Accessed, Last Modified
 - Checkboxes for selective deletion via QFile::moveToTrash()
 
-**Mode 2 — Duplicate Finder (FR-63):**
+**Mode 2 — Duplicate Finder (FR-63 / FW-08):**
 - Shared directory picker (synced with Large & Old mode)
 - Configurable minimum file size (KB/MB/GB) and optional glob pattern filter
 - DuplicateFinderService: 3-stage pipeline (size grouping → partial 4KB SHA-256 → full SHA-256)
@@ -281,6 +281,14 @@ Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar
 - Results in grouped QTreeWidget: parent = duplicate group (wasted space), children = files
 - First file in each group unchecked (kept), remaining pre-checked for deletion
 - Cancellable scan with Cancel button
+- FW-08 (SSO-3736): scans honor the CleanerService exclusion engine; trashing
+  routes through `DuplicateFinderService::trashFiles()` which enforces the
+  never-delete-last-copy invariant (retains the lexicographically smallest path
+  of any duplicate group whose entire surviving set was selected) and drops
+  excluded paths before the moveToTrash seam
+- FW-08 additional service surface (UI hookup pending): `scanLargest(topN)`
+  for explicit top-N largest-file ranking and `scanEmptyFolders()` for empty-
+  directory cleanup; both honor exclusions and share the same cancel path
 
 **Shared features:**
 - Segmented control (QButtonGroup + QStackedWidget) for mode switching

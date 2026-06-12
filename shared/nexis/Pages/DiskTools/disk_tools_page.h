@@ -104,6 +104,12 @@ private:
     QAtomicInt mLargeOldCancelled{0};
     QFuture<void> mLargeOldFuture;
     QList<QFileInfo> mLargeOldResults;
+
+    // FW-08 (SSO-3736): the latest duplicate-finder result set, retained so
+    // onDupTrash() can hand it back to DuplicateFinderService::trashFiles()
+    // and let the service enforce the never-delete-last-copy invariant
+    // plus the cleaner exclusion engine.
+    QList<DuplicateGroup> mDupResults;
 };
 
 #endif // DISK_TOOLS_PAGE_H

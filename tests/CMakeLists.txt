@@ -339,6 +339,22 @@ add_nexis_test(NAME FileSearchServiceTests
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )
 
+# SSO-3736 / FW-08: DuplicateFinderService — duplicate grouping (content-
+# verified), top-N large-file ranking, empty-folder detection, exclusion
+# engine compliance, and the never-delete-last-copy invariant. Builds on
+# the WI-08 trash/elevation seam pattern, so the destructive paths are
+# exercised without touching the user's real trash.
+add_nexis_test(NAME DuplicateFinderTests
+  SOURCES
+    managers/test_duplicate_finder.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
 # substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
 # "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui

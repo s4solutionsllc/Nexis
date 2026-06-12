@@ -487,9 +487,11 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 2. **Info class parsing** — DiskHealthInfo (20), MemoryInfo (14), CpuInfo (19), GpuInfo (23), FanInfo (16), ThermalInfo (11), BatteryInfo (12), DiskInfo (17)
 3. **Tool parsing** — AptSourceTool (14), PackageTool (16)
 4. **Widget parsing** — NetworkDiag (24), OpenPorts (20), Firewall (15)
-5. **Service logic** — HostService (25)
+5. **Service logic** — HostService (25), DuplicateFinder (19)
 6. **Manager logic** — ScheduleManager (15), CleanerExclusions (11)
 7. **Theme validation** — ThemeTokens (7)
+
+**FW-08 (SSO-3736):** `DuplicateFinderService` gained a virtual `moveToTrash()` seam plus a virtual `loadExclusions()` seam so the destructive `trashFiles()` path is exercised without touching the user's real trash or settings. The service now consults the cleaner exclusion engine across all three scan modes (duplicates, top-N largest, empty folders) and enforces the never-delete-last-copy invariant at the service layer via `filterSafeTrashCandidates()` — the UI is no longer the only line of defense.
 
 **Key refactoring:** FR-36 established the pattern with `parseSmartctlJsonInto()` shared static (dedup), `deriveHealthVerdict()` public static, `getNextRunTime()` injectable `now` parameter. FR-76 scaled this to 10 additional classes by extracting parsing logic into public static methods on shared base classes (`*_shared.cpp` files). Fixture data files in `tests/fixtures/` provide deterministic test input. CleanerExclusions tests link against `nexis-gui` library to access CleanerService.
 
