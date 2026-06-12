@@ -6,8 +6,6 @@
 #ifndef BTM_RESET_DIALOG_H
 #define BTM_RESET_DIALOG_H
 
-#ifdef Q_OS_MACOS
-
 #include <QDialog>
 
 class QLineEdit;
@@ -29,7 +27,5 @@ private:
     QLineEdit *mConfirmEdit = nullptr;
     QPushButton *mResetBtn = nullptr;
 };
-
-#endif // Q_OS_MACOS
 
 #endif // BTM_RESET_DIALOG_H

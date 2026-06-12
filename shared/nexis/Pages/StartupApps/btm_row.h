@@ -6,8 +6,6 @@
 #ifndef BTM_ROW_H
 #define BTM_ROW_H
 
-#ifdef Q_OS_MACOS
-
 #include <QWidget>
 
 #include <Info/btm_parser.h>
@@ -30,7 +28,5 @@ public:
 private:
     BtmRecord mRecord;
 };
-
-#endif // Q_OS_MACOS
 
 #endif // BTM_ROW_H

@@ -1,7 +1,5 @@
 #include "btm_row.h"
 
-#ifdef Q_OS_MACOS
-
 #include "utilities.h"
 
 #include <QHBoxLayout>
@@ -110,5 +108,3 @@ bool BtmRow::matches(const QString &needle) const
         || mRecord.identifier.contains(needle, Qt::CaseInsensitive)
         || mRecord.executablePath.contains(needle, Qt::CaseInsensitive);
 }
-
-#endif // Q_OS_MACOS

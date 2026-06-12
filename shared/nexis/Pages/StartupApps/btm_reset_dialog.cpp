@@ -1,7 +1,5 @@
 #include "btm_reset_dialog.h"
 
-#ifdef Q_OS_MACOS
-
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -70,5 +68,3 @@ void BtmResetDialog::onConfirmTextChanged(const QString &text)
 {
     mResetBtn->setEnabled(text.trimmed() == QLatin1String(kConfirmToken));
 }
-
-#endif // Q_OS_MACOS
