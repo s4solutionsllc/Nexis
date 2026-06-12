@@ -46,8 +46,17 @@ add_nexis_test(NAME RepoRepairEngineTests SOURCES core/test_repo_repair_engine.c
 add_nexis_test(NAME FanInfoTests      SOURCES core/test_fan_info.cpp)
 add_nexis_test(NAME ThermalInfoTests  SOURCES core/test_thermal_info.cpp)
 add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
-add_nexis_test(NAME BatteryChargeThresholdTests SOURCES core/test_battery_charge_threshold.cpp)
 add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
+
+# FW-15 (SSO-3743): battery charge-threshold control is Linux-only — the
+# header/source live under linux/nexis-core and are compiled into nexis-core
+# only on Linux (see CMakeLists.txt CORE_PLAT_SRCS). The test links nexis-core
+# and includes Info/battery_charge_threshold.h, so registering it on macOS
+# breaks the build (header not found). Gate it to Linux like NetworkInfoTests.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME BatteryChargeThresholdTests
+    SOURCES core/test_battery_charge_threshold.cpp)
+endif()
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 add_nexis_test(NAME DockerToolTests   SOURCES core/test_docker_tool.cpp)
