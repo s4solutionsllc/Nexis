@@ -23,6 +23,7 @@ public:
 
 private slots:
     void onActionClicked();
+    void onBuiltinClicked();
 
 private:
     /// The resolved tool the widget will display and act on.
@@ -73,6 +74,9 @@ private:
     QLabel *mDescriptionLabel;
     QLabel *mStatusLabel;
     QPushButton *mActionButton;
+    // SSO-3737 / FW-09: secondary button that opens the built-in
+    // treemap visualizer. Always available regardless of detected tool.
+    QPushButton *mBuiltinButton;
 };
 
 #endif // DISK_USAGE_LAUNCHER_WIDGET_H

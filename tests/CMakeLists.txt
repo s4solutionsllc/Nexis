@@ -354,6 +354,20 @@ add_nexis_test(NAME IndicatorFallbackTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-3737 / FW-09: DirSizeScanner — pure directory-size aggregation that
+# powers the built-in treemap visualizer. Compiled directly into the test so
+# it runs cross-platform without pulling in nexis-gui.
+add_nexis_test(NAME DirSizeScannerTests
+  SOURCES
+    managers/test_dir_size_scanner.cpp
+    "${GUI_SHARED_DIR}/Managers/dir_size_scanner.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Concurrent
+)
+
 # SSO-3363 / audit H2: LogProvider::cancel() null-deref defence and
 # SSO-3384 / WI-22: MacOsLogStreamParser incremental ndjson parsing.
 # Compiles log_provider.cpp directly so the test runs cross-platform without
