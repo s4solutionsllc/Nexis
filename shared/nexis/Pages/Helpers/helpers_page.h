@@ -14,6 +14,7 @@ class OpenPortsWidget;
 class FirewallWidget;
 class SwappinessWidget;
 class CpuTuningWidget;
+class BatteryChargeThresholdWidget;
 class TrimWidget;
 class WolWidget;
 
@@ -35,10 +36,11 @@ private slots:
     void on_btnNetDiag_clicked();
     void on_btnOpenPorts_clicked();
     void on_btnFirewall_clicked();
-    void onSwappinessClicked();      // FR-81
-    void onCpuTuningClicked();       // FR-117
-    void onTrimClicked();            // FR-118
-    void onWolClicked();             // FR-120
+    void onSwappinessClicked();             // FR-81
+    void onCpuTuningClicked();             // FR-117
+    void onBatteryThresholdClicked();      // FW-15
+    void onTrimClicked();                  // FR-118
+    void onWolClicked();                   // FR-120
     void onRebuildSpotlight();
     void onVerifyDisk();
     void onRebuildLaunchServices();
@@ -59,10 +61,12 @@ private:
     TrimWidget *mTrimWidget = nullptr;           // FR-118 — both platforms
     QPushButton *mBtnTrim = nullptr;
 #ifdef Q_OS_LINUX
-    SwappinessWidget    *mSwappinessWidget      = nullptr;
-    QPushButton         *mBtnSwappiness         = nullptr;
-    CpuTuningWidget     *mCpuTuningWidget       = nullptr;
-    QPushButton         *mBtnCpuTuning          = nullptr;
+    SwappinessWidget              *mSwappinessWidget          = nullptr;
+    QPushButton                   *mBtnSwappiness             = nullptr;
+    CpuTuningWidget               *mCpuTuningWidget           = nullptr;
+    QPushButton                   *mBtnCpuTuning              = nullptr;
+    BatteryChargeThresholdWidget  *mBatteryThresholdWidget    = nullptr;
+    QPushButton                   *mBtnBatteryThreshold       = nullptr;
 #endif
     WolWidget   *mWolWidget = nullptr;
     QPushButton *mBtnWol    = nullptr;
