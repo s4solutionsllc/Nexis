@@ -31,6 +31,13 @@ rm -rf build && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
 cmake --build build -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
 ```
 
+RELEASE_POLICY:
+  track: train
+  cadence: on-threshold:3-feats
+  artifacts: [deb, appimage, dmg]
+  hotfixFromBranch: true     # patch off the last tag; don't drag unreleased feats into a hotfix
+
+
 ## Testing
 
 Framework: Qt Test (QTest) with CTest integration. Tests build by default (`BUILD_TESTING=ON`).
