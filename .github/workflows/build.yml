@@ -7,28 +7,38 @@ on:
     branches: [native, master, main]
 
 jobs:
-  build:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+  # Linux build matrix runs inside a Plucky (25.04) container — see SSO-4093.
+  # FW-06 raised the Qt floor to 6.8 LTS (SSO-3733), which Noble's apt does
+  # not ship. Plucky is the oldest Ubuntu series whose qt6-base-dev satisfies
+  # the floor, so we drop the bare ubuntu-24.04 runner + Noble apt path. The
+  # runner itself stays on ubuntu-24.04 / ubuntu-24.04-arm because that is
+  # what GitHub provides for the matching arch — the build environment comes
+  # from the container image.
+  build-linux:
+    name: Linux (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: ubuntu:25.04
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
-            name: Linux (x64)
+          - arch: x64
+            runner: ubuntu-24.04
             artifact-name: nexis-linux-x64
-            artifact-path: build/output/nexis
-          - os: ubuntu-24.04-arm
-            name: Linux (ARM64)
+          - arch: ARM64
+            runner: ubuntu-24.04-arm
             artifact-name: nexis-linux-arm64
-            artifact-path: build/output/nexis
-          - os: macos-14
-            name: macOS (ARM64)
-            artifact-name: nexis-macos-arm64
-            artifact-path: build/output/nexis.app
 
     steps:
+      # The base ubuntu:25.04 image is minimal — install the bits actions/checkout
+      # and the architecture-gate scripts rely on before any other step runs.
+      - name: Install git and ca-certificates
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git ca-certificates
+
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -44,12 +54,10 @@ jobs:
       - name: Architecture gate — no platform headers in shared/Pages
         run: bash scripts/check-pages-no-platform-headers.sh
 
-      # --- Linux dependencies ---
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
+      - name: Install build dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
+          apt-get install -y -qq \
+            build-essential \
             cmake \
             g++ \
             libgl1-mesa-dev \
@@ -63,56 +71,31 @@ jobs:
             libqt6svg6-dev \
             xvfb
 
-      # --- macOS dependencies ---
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          for i in 1 2 3; do
-            brew install qt@6 && break
-            echo "brew install attempt $i failed, retrying in 15s..."
-            sleep 15
-          done
-
-      - name: Configure (Linux)
-        if: runner.os == 'Linux'
+      - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Configure (macOS)
-        if: runner.os == 'macOS'
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6)
-
       - name: Build
-        run: cmake --build build -j$(sysctl -n hw.ncpu 2>/dev/null || nproc)
+        run: cmake --build build -j$(nproc)
 
       - name: Unit Tests
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
-          else
-            ctest --test-dir build --output-on-failure -E ScreenshotTests
-          fi
+        run: xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
 
       # ScreenshotTests are kept out of the gating "Unit Tests" step above and
       # run here as a separate, non-blocking step (NEX-3381). They hang
       # indefinitely on ARM64 Linux runners under xvfb (the original reason for
-      # commit 5c173c7), so we skip them on `ubuntu-24.04-arm` and run on
-      # platforms that render deterministically: Linux x64 (xvfb) and macOS.
+      # commit 5c173c7), so we skip them on the ARM64 leg and run on platforms
+      # that render deterministically: Linux x64 (xvfb) and macOS.
       # On failure the test writes actual/reference/diff PNGs to
       # build/tests/test_screenshots/failures/; we upload that directory so the
       # maintainer can review drift and (after visual confirmation) commit the
       # captured actuals as the new baselines via scripts/update_screenshots.sh.
       - name: Screenshot regression tests (non-blocking)
-        if: matrix.os != 'ubuntu-24.04-arm'
+        if: matrix.arch != 'ARM64'
         continue-on-error: true
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            xvfb-run -a ctest --test-dir build --output-on-failure -R ScreenshotTests
-          else
-            ctest --test-dir build --output-on-failure -R ScreenshotTests
-          fi
+        run: xvfb-run -a ctest --test-dir build --output-on-failure -R ScreenshotTests
 
       - name: Upload screenshot diffs
-        if: matrix.os != 'ubuntu-24.04-arm' && !cancelled()
+        if: matrix.arch != 'ARM64' && !cancelled()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: screenshot-diffs-${{ matrix.artifact-name }}
@@ -125,5 +108,57 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.artifact-name }}
-          path: ${{ matrix.artifact-path }}
+          path: build/output/nexis
+          retention-days: 14
+
+  build-macos:
+    name: macOS (ARM64)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Doc version header check
+        run: bash scripts/check_doc_versions.sh
+
+      - name: Architecture gate — no platform headers in shared/Pages
+        run: bash scripts/check-pages-no-platform-headers.sh
+
+      - name: Install dependencies
+        run: |
+          for i in 1 2 3; do
+            brew install qt@6 && break
+            echo "brew install attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6)
+
+      - name: Build
+        run: cmake --build build -j$(sysctl -n hw.ncpu)
+
+      - name: Unit Tests
+        run: ctest --test-dir build --output-on-failure -E ScreenshotTests
+
+      - name: Screenshot regression tests (non-blocking)
+        continue-on-error: true
+        run: ctest --test-dir build --output-on-failure -R ScreenshotTests
+
+      - name: Upload screenshot diffs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: screenshot-diffs-nexis-macos-arm64
+          path: build/tests/test_screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: nexis-macos-arm64
+          path: build/output/nexis.app
           retention-days: 14

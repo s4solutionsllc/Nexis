@@ -22,27 +22,77 @@ on:
         required: false
 
 jobs:
-  regenerate:
-    name: Regenerate (${{ matrix.name }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            name: linux-x64
-            platform-dir: linux
-          - os: macos-14
-            name: macos
-            platform-dir: macos
-
+  # SSO-4093: split linux/macos into separate jobs so the Linux leg can run
+  # inside a Plucky (25.04) container (Qt 6.8 — the FW-06 floor) without
+  # affecting the macos-14 runner, which can't use `container:`.
+  regenerate-linux:
+    name: Regenerate (linux-x64)
+    runs-on: ubuntu-24.04
+    container:
+      image: ubuntu:25.04
     steps:
       - name: Skip if not requested
         id: skip-check
         run: |
-          if ! echo "${{ inputs.platforms }}" | tr ',' '\n' | grep -qx "${{ matrix.name }}"; then
+          if ! echo "${{ inputs.platforms }}" | tr ',' '\n' | grep -qx "linux-x64"; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
-            echo "Platform ${{ matrix.name }} not in requested list; skipping."
+            echo "Platform linux-x64 not in requested list; skipping."
+          else
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install git and ca-certificates
+        if: steps.skip-check.outputs.skipped != 'true'
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git ca-certificates
+
+      - name: Checkout
+        if: steps.skip-check.outputs.skipped != 'true'
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Install dependencies
+        if: steps.skip-check.outputs.skipped != 'true'
+        run: |
+          apt-get install -y -qq \
+            build-essential \
+            cmake g++ libgl1-mesa-dev \
+            qt6-base-dev qt6-charts-dev qt6-svg-dev \
+            qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools \
+            libqt6charts6-dev libqt6svg6-dev \
+            xvfb
+
+      - name: Configure
+        if: steps.skip-check.outputs.skipped != 'true'
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build screenshot test
+        if: steps.skip-check.outputs.skipped != 'true'
+        run: cmake --build build --target test-ScreenshotTests -j$(nproc)
+
+      - name: Regenerate baselines
+        if: steps.skip-check.outputs.skipped != 'true'
+        run: xvfb-run -a ./scripts/update_screenshots.sh
+
+      - name: Upload regenerated baselines
+        if: steps.skip-check.outputs.skipped != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: reference-screenshots-linux
+          path: tests/reference_screenshots/linux/
+          retention-days: 30
+          if-no-files-found: error
+
+  regenerate-macos:
+    name: Regenerate (macos)
+    runs-on: macos-14
+    steps:
+      - name: Skip if not requested
+        id: skip-check
+        run: |
+          if ! echo "${{ inputs.platforms }}" | tr ',' '\n' | grep -qx "macos"; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "Platform macos not in requested list; skipping."
           else
             echo "skipped=false" >> "$GITHUB_OUTPUT"
           fi
@@ -51,19 +101,8 @@ jobs:
         if: steps.skip-check.outputs.skipped != 'true'
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
-      - name: Install dependencies (Linux)
-        if: steps.skip-check.outputs.skipped != 'true' && runner.os == 'Linux'
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
-            cmake g++ libgl1-mesa-dev \
-            qt6-base-dev qt6-charts-dev qt6-svg-dev \
-            qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools \
-            libqt6charts6-dev libqt6svg6-dev \
-            xvfb
-
-      - name: Install dependencies (macOS)
-        if: steps.skip-check.outputs.skipped != 'true' && runner.os == 'macOS'
+      - name: Install dependencies
+        if: steps.skip-check.outputs.skipped != 'true'
         run: |
           for i in 1 2 3; do
             brew install qt@6 && break
@@ -71,32 +110,23 @@ jobs:
             sleep 15
           done
 
-      - name: Configure (Linux)
-        if: steps.skip-check.outputs.skipped != 'true' && runner.os == 'Linux'
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
-
-      - name: Configure (macOS)
-        if: steps.skip-check.outputs.skipped != 'true' && runner.os == 'macOS'
+      - name: Configure
+        if: steps.skip-check.outputs.skipped != 'true'
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6)
 
       - name: Build screenshot test
         if: steps.skip-check.outputs.skipped != 'true'
-        run: cmake --build build --target test-ScreenshotTests -j$(sysctl -n hw.ncpu 2>/dev/null || nproc)
+        run: cmake --build build --target test-ScreenshotTests -j$(sysctl -n hw.ncpu)
 
       - name: Regenerate baselines
         if: steps.skip-check.outputs.skipped != 'true'
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            xvfb-run -a ./scripts/update_screenshots.sh
-          else
-            ./scripts/update_screenshots.sh
-          fi
+        run: ./scripts/update_screenshots.sh
 
       - name: Upload regenerated baselines
         if: steps.skip-check.outputs.skipped != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: reference-screenshots-${{ matrix.platform-dir }}
-          path: tests/reference_screenshots/${{ matrix.platform-dir }}/
+          name: reference-screenshots-macos
+          path: tests/reference_screenshots/macos/
           retention-days: 30
           if-no-files-found: error
