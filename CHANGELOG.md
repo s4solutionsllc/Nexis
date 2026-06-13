@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **macOS Intel (x86_64) builds formally sunset; arm64-only floor codified (SSO-3733 / FW-06):** The macOS `.dmg` has been Apple Silicon (`arm64`) only since the CI matrix moved to `macos-14`; this release records that as a supported-platform decision rather than an implicit CI artifact. macOS 26 ("Tahoe") is the last macOS to boot on Intel and Rosetta 2 is being phased out; macOS 27 is Apple-silicon-only. No Intel runner is being added and no universal `.dmg` is being shipped — Intel users on macOS 26 can continue running prior builds, and macOS 27+ is Apple Silicon only. `RELEASE.md` § "Currently supported targets" and `docs/APPLICATION_OVERVIEW.md` now reflect the arm64-only macOS reality.
+- **Qt floor raised from 6.4 to 6.8 LTS (SSO-3733 / FW-06):** `find_package(Qt6 6.8 …)` in [CMakeLists.txt](CMakeLists.txt) is now the minimum. 6.8 is the current Qt LTS and backports the macOS 26 ("Tahoe") / Liquid Glass platform fixes — staying at 6.4 was no longer protective on macOS (Homebrew's `qt@6` has been past 6.4 for the entire `macos-14` runner lifetime) and excluded the LTS fix channel for Tahoe rendering. The bump applies globally (Linux + macOS); the practical Linux side-effect is that **Ubuntu 24.04 (Noble) is dropped from the supported PPA series** because Noble ships Qt 6.4 — Plucky (25.04) and Questing (26.04) carry the macOS-26-capable Qt forward. Qt 6.10 (first non-LTS with macOS 26 support) is tracked separately for a future bump once Homebrew and the supported Linux channels both ship it.
+- **`.pkg` macOS installer format explicitly out of scope (SSO-3733 / FW-06):** Recorded a "no `.pkg`" policy line in `RELEASE.md` and `docs/MAINTAINER_SOP.md`. Tahoe skips first-run XProtect for notarized `.dmg`/`.app` artifacts but not for `.pkg` installers, and Tahoe 26.3 saw `.pkg` Gatekeeper rejections in the field. Nexis is a drag-to-`/Applications` `.app`; it does no install-time launchd / scripting work that `.pkg` would justify. Changing macOS distribution format is now a maintainer-only scope decision and must be reopened explicitly.
+
 ## [2.5.0] - 2026-06-12
 
 > [!IMPORTANT]

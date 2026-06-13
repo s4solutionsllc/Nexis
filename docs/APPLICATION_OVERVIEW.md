@@ -87,7 +87,9 @@ Update the table whenever the underlying value changes — the same numbers are 
 
 ## Platform Support
 
-Nexis runs natively on **Linux** and **macOS** (Intel + Apple Silicon). The codebase uses compile-time platform selection: shared code in `shared/`, with platform-specific implementations in `linux/` and `macos/`.
+Nexis runs natively on **Linux** (`x86_64` + `arm64`) and **macOS** (**Apple Silicon `arm64` only** as of v2.6.0 / SSO-3733 / FW-06). The codebase uses compile-time platform selection: shared code in `shared/`, with platform-specific implementations in `linux/` and `macos/`.
+
+> **macOS Intel (`x86_64`) is sunset (SSO-3733 / FW-06).** The shipped `.dmg` has been `arm64`-only since the macOS CI runner moved to `macos-14`. macOS 26 ("Tahoe") is the last macOS to boot on Intel and Rosetta 2 is being phased out; macOS 27 ("Golden Gate") is Apple-silicon-only. The codebase itself remains architecture-agnostic, but the **supported release artifact** is `arm64` macOS only. See `RELEASE.md` § "Currently supported targets" and `CHANGELOG.md` v2.6.0 for details. Qt floor for the macOS build is **Qt 6.8 LTS** (`find_package(Qt6 6.8 …)` in [CMakeLists.txt](../CMakeLists.txt)), which backports macOS 26 / Liquid Glass platform fixes.
 
 ### Linux display server (Wayland / X11)
 
