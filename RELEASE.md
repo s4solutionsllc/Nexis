@@ -99,16 +99,23 @@ that tag, a holdover from the pre-rebrand Stacer artifacts; see
 
 ## 2. Build matrix
 
-Defined in `.github/workflows/release.yml`. As of v2.3.x:
+Defined in `.github/workflows/release.yml`. As of v2.6.x (SSO-4093):
 
 | Job | Runner | Output | Notes |
 |---|---|---|---|
-| `build-linux (x86_64)` | `ubuntu-24.04` | `.deb` (24.04), AppImage, raw binary `nexis-x86_64` | linuxdeploy + qt plugin |
-| `build-linux (arm64)` | `ubuntu-24.04-arm` | `.deb` (24.04), AppImage, raw binary `nexis-arm64` | linuxdeploy aarch64 |
-| `build-linux-deb-plucky (x86_64)` | `ubuntu-24.04` (container `ubuntu:25.04`) | `.deb` (Plucky / 25.04+) | non-t64 dep names (BUG-75) |
-| `build-linux-deb-plucky (arm64)` | `ubuntu-24.04-arm` (container `ubuntu:25.04`) | `.deb` (Plucky / 25.04+) | non-t64 dep names (BUG-75) |
+| `build-linux (x86_64)` | `ubuntu-24.04` (container `ubuntu:25.04`) | `.deb` (`_ubuntu2504.deb`), AppImage, raw binary `nexis-x86_64` | linuxdeploy + qt plugin (run with `APPIMAGE_EXTRACT_AND_RUN=1` — no `/dev/fuse` in container) |
+| `build-linux (arm64)` | `ubuntu-24.04-arm` (container `ubuntu:25.04`) | `.deb` (`_ubuntu2504.deb`), AppImage, raw binary `nexis-arm64` | linuxdeploy aarch64 (same FUSE workaround) |
 | `build-macos` | `macos-14` (Apple Silicon) | `nexis.app`, `.dmg` | macdeployqt + notarized |
 | `release` | `ubuntu-latest` | GitHub Release, attaches all artifacts | extracts notes from `CHANGELOG.md` |
+
+> **Why Plucky containers (SSO-4093).** FW-06 (SSO-3733) raised the Qt floor
+> to 6.8 LTS. Noble (Ubuntu 24.04) ships Qt 6.4 via `qt6-base-dev`, so the
+> previous bare-runner `build-linux` job no longer satisfies the floor. We
+> now build inside `ubuntu:25.04` (Plucky), which ships Qt 6.8.x. This also
+> collapses the prior split where a separate `build-linux-deb-plucky` job
+> produced the non-t64 25.04 `.deb` — the unified job builds **only** the
+> Plucky `.deb` (`_ubuntu2504.deb`), and there is no longer a Noble `.deb`.
+> Ubuntu 24.04 users either upgrade or use the AppImage / AUR / PPA path.
 
 Downstream-triggered (run on success of `Release`):
 

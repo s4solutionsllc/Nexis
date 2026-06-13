@@ -23,6 +23,11 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-24.04
+    # SSO-4093: run inside the same Plucky (25.04) container build.yml uses
+    # so the CodeQL build path picks up Qt 6.8 (FW-06 floor). Noble's qt6-base-dev
+    # is 6.4 and no longer satisfies CMake's minimum.
+    container:
+      image: ubuntu:25.04
     permissions:
       security-events: write
       packages: read
@@ -37,6 +42,11 @@ jobs:
             build-mode: manual
 
     steps:
+      - name: Install git and ca-certificates
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git ca-certificates
+
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -44,8 +54,8 @@ jobs:
       # real build, not a stub.
       - name: Install build dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
+          apt-get install -y -qq \
+            build-essential \
             cmake \
             g++ \
             libgl1-mesa-dev \

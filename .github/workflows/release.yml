@@ -14,11 +14,20 @@ permissions:
 
 jobs:
   # ============================================================================
-  # Linux build matrix: x86_64 + ARM64 — .deb + AppImage + raw binary
+  # Linux build matrix: x86_64 + ARM64 — .deb (Plucky-built) + AppImage + raw
+  # binary. SSO-4093 collapsed the previous Noble `build-linux` + Plucky
+  # `build-linux-deb-plucky` pair into a single Plucky-container job because
+  # FW-06 (SSO-3733) raised the Qt floor to 6.8, which Noble's apt does not
+  # ship. Plucky (Ubuntu 25.04) is the oldest series whose qt6-base-dev
+  # satisfies the floor, AND it produces the correct non-t64 dependency names
+  # required by users on 25.04+ (the original BUG-75 motivation for the split
+  # Plucky job). Result: one .deb per arch (`_ubuntu2504.deb`).
   # ============================================================================
   build-linux:
     name: Linux Build (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    container:
+      image: ubuntu:25.04
 
     strategy:
       fail-fast: false
@@ -34,18 +43,24 @@ jobs:
             deb-arch: arm64
 
     steps:
+      # The base ubuntu:25.04 image is minimal. Install git + wget + ca-certs
+      # before any action that needs them (actions/checkout uses git when
+      # available; the linuxdeploy download uses wget).
+      - name: Install git, wget, and ca-certificates
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git wget ca-certificates file
+
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq \
+          apt-get install -y -qq \
             build-essential \
             cmake \
             g++ \
             libgl1-mesa-dev \
-            libfuse2 \
             qt6-base-dev \
             qt6-charts-dev \
             qt6-svg-dev \
@@ -92,14 +107,18 @@ jobs:
 
       - name: Build .deb package
         run: dpkg-buildpackage -us -uc -b
+        env:
+          APP_VERSION_OVERRIDE: ${{ steps.version.outputs.VERSION }}
 
       - name: Collect and rename .deb file
         id: deb
         run: |
           cp ../nexis_*.deb .
           SRC=$(ls nexis_*.deb | head -1)
-          # Rename to include ubuntu2404 suffix for clarity (BUG-75)
-          DEST=$(echo "$SRC" | sed 's/\.deb$/_ubuntu2404.deb/')
+          # Plucky-built .deb — non-t64 dependency names (BUG-75); naming kept
+          # for downstream consumers that key off the suffix (release notes,
+          # PPA, downloads page).
+          DEST=$(echo "$SRC" | sed 's/\.deb$/_ubuntu2504.deb/')
           mv "$SRC" "$DEST"
           echo "DEB_PATH=$DEST" >> "$GITHUB_OUTPUT"
           echo "DEB_NAME=$DEST" >> "$GITHUB_OUTPUT"
@@ -158,6 +177,11 @@ jobs:
         env:
           QMAKE: /usr/bin/qmake6
           VERSION: ${{ steps.version.outputs.VERSION }}
+          # Non-privileged GitHub Actions containers do not expose /dev/fuse,
+          # so the linuxdeploy AppImage cannot self-mount. APPIMAGE_EXTRACT_AND_RUN
+          # extracts to a tmpdir and execs directly — the produced Nexis AppImage
+          # is still a normal AppImage that uses FUSE on the user's system.
+          APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
           ./linuxdeploy-${{ matrix.linuxdeploy-arch }}.AppImage \
             --appdir AppDir \
@@ -184,95 +208,6 @@ jobs:
             ${{ steps.deb.outputs.DEB_PATH }}
             ${{ steps.appimage.outputs.APPIMAGE_PATH }}
             build/output/nexis-${{ matrix.arch }}
-
-  # ============================================================================
-  # Linux .deb for Ubuntu 25.04+ (Plucky) — built inside container to get
-  # correct non-t64 dependency names (BUG-75)
-  # ============================================================================
-  build-linux-deb-plucky:
-    name: Linux .deb Plucky (${{ matrix.arch }})
-    runs-on: ${{ matrix.runner }}
-    container:
-      image: ubuntu:25.04
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x86_64
-            runner: ubuntu-24.04
-            deb-arch: amd64
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-            deb-arch: arm64
-
-    steps:
-      - name: Install git for checkout
-        run: |
-          apt-get update -qq
-          apt-get install -y -qq git
-
-      - name: Checkout
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - name: Install build dependencies
-        run: |
-          apt-get install -y -qq \
-            build-essential \
-            cmake \
-            g++ \
-            libgl1-mesa-dev \
-            qt6-base-dev \
-            qt6-charts-dev \
-            qt6-svg-dev \
-            qt6-tools-dev \
-            qt6-tools-dev-tools \
-            qt6-l10n-tools \
-            libqt6charts6-dev \
-            libqt6svg6-dev \
-            devscripts \
-            debhelper \
-            debhelper-compat \
-            fakeroot \
-            xvfb
-
-      - name: Symlink debian packaging directory
-        run: ln -s linux/debian debian
-
-      - name: Sync debian changelog version from tag
-        run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          CURRENT_DEB_VERSION=$(head -1 debian/changelog | grep -oP '\(\K[^)]+' | cut -d- -f1)
-          if [ "$CURRENT_DEB_VERSION" != "$TAG_VERSION" ]; then
-            echo "Updating debian/changelog from $CURRENT_DEB_VERSION to $TAG_VERSION"
-            sed -i "1s/($CURRENT_DEB_VERSION-/(${TAG_VERSION}-/" debian/changelog
-          fi
-
-      - name: Extract version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
-      - name: Build .deb package
-        run: dpkg-buildpackage -us -uc -b
-        env:
-          APP_VERSION_OVERRIDE: ${{ steps.version.outputs.VERSION }}
-
-      - name: Collect and rename .deb file
-        id: deb
-        run: |
-          cp ../nexis_*.deb .
-          SRC=$(ls nexis_*.deb | head -1)
-          # Rename to include ubuntu2504 suffix for clarity
-          DEST=$(echo "$SRC" | sed 's/\.deb$/_ubuntu2504.deb/')
-          mv "$SRC" "$DEST"
-          echo "DEB_PATH=$DEST" >> "$GITHUB_OUTPUT"
-          echo "DEB_NAME=$DEST" >> "$GITHUB_OUTPUT"
-
-      - name: Upload .deb artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: linux-deb-plucky-${{ matrix.arch }}
-          path: ${{ steps.deb.outputs.DEB_PATH }}
 
   # ============================================================================
   # macOS build: .app bundle + .dmg
@@ -457,7 +392,7 @@ jobs:
   # ============================================================================
   release:
     name: Create Release
-    needs: [build-linux, build-linux-deb-plucky, build-macos]
+    needs: [build-linux, build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -478,18 +413,6 @@ jobs:
         with:
           name: linux-artifacts-arm64
           path: artifacts/linux-arm64
-
-      - name: Download Linux x86_64 Plucky .deb
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: linux-deb-plucky-x86_64
-          path: artifacts/linux-deb-plucky-x86_64
-
-      - name: Download Linux ARM64 Plucky .deb
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: linux-deb-plucky-arm64
-          path: artifacts/linux-deb-plucky-arm64
 
       - name: Download macOS artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -522,15 +445,6 @@ jobs:
           echo "APPIMAGE_ARM64_PATH=$APPIMAGE_ARM64" >> "$GITHUB_OUTPUT"
           echo "APPIMAGE_ARM64_NAME=$(basename $APPIMAGE_ARM64)" >> "$GITHUB_OUTPUT"
           echo "BINARY_ARM64_PATH=$BINARY_ARM64" >> "$GITHUB_OUTPUT"
-
-          # Plucky .deb (Ubuntu 25.04+)
-          DEB_X64_PLUCKY=$(find artifacts/linux-deb-plucky-x86_64 -name '*.deb' | head -1)
-          echo "DEB_X64_PLUCKY_PATH=$DEB_X64_PLUCKY" >> "$GITHUB_OUTPUT"
-          echo "DEB_X64_PLUCKY_NAME=$(basename $DEB_X64_PLUCKY)" >> "$GITHUB_OUTPUT"
-
-          DEB_ARM64_PLUCKY=$(find artifacts/linux-deb-plucky-arm64 -name '*.deb' | head -1)
-          echo "DEB_ARM64_PLUCKY_PATH=$DEB_ARM64_PLUCKY" >> "$GITHUB_OUTPUT"
-          echo "DEB_ARM64_PLUCKY_NAME=$(basename $DEB_ARM64_PLUCKY)" >> "$GITHUB_OUTPUT"
 
           # macOS
           DMG=$(find artifacts/macos -name '*.dmg' | head -1)
@@ -588,18 +502,16 @@ jobs:
             echo "#### Linux (x86_64)"
             echo "| Format | File | Description |"
             echo "|--------|------|-------------|"
-            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 24.04–24.10, Debian 12+, Linux Mint 22 |"
-            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PLUCKY_PATH }})\` | For Ubuntu 25.04+ (Plucky and newer) |"
-            echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_X64_PATH }})\` | Portable — runs on any Linux distro |"
-            echo "| Binary | \`nexis\` | Standalone executable (requires Qt6 runtime) |"
+            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 25.04+ (Plucky and newer) / Debian 13+ |"
+            echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_X64_PATH }})\` | Portable — runs on any Linux distro with a recent glibc |"
+            echo "| Binary | \`nexis\` | Standalone executable (requires Qt6 ≥ 6.8 runtime) |"
             echo ""
             echo "#### Linux (ARM64 / aarch64)"
             echo "| Format | File | Description |"
             echo "|--------|------|-------------|"
-            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_ARM64_PATH }})\` | For Ubuntu 24.04–24.10 ARM64 (Raspberry Pi 5, Jetson, Graviton, etc.) |"
-            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_ARM64_PLUCKY_PATH }})\` | For Ubuntu 25.04+ ARM64 |"
+            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_ARM64_PATH }})\` | For Ubuntu 25.04+ ARM64 (Raspberry Pi 5, Jetson, Graviton) |"
             echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }})\` | Portable ARM64 — runs on any ARM64 Linux distro |"
-            echo "| Binary | \`nexis\` | Standalone ARM64 executable (requires Qt6 runtime) |"
+            echo "| Binary | \`nexis\` | Standalone ARM64 executable (requires Qt6 ≥ 6.8 runtime) |"
             echo ""
             echo "#### macOS (Apple Silicon)"
             echo "| Format | File | Description |"
@@ -666,11 +578,9 @@ jobs:
           : > "$SUMS_FILE"
           for f in \
             "${{ steps.files.outputs.DEB_X64_PATH }}" \
-            "${{ steps.files.outputs.DEB_X64_PLUCKY_PATH }}" \
             "${{ steps.files.outputs.APPIMAGE_X64_PATH }}" \
             "${{ steps.files.outputs.BINARY_X64_PATH }}" \
             "${{ steps.files.outputs.DEB_ARM64_PATH }}" \
-            "${{ steps.files.outputs.DEB_ARM64_PLUCKY_PATH }}" \
             "${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}" \
             "${{ steps.files.outputs.BINARY_ARM64_PATH }}" \
             "${{ steps.files.outputs.DMG_PATH }}"
@@ -694,11 +604,9 @@ jobs:
           body_path: /tmp/release_body.md
           files: |
             ${{ steps.files.outputs.DEB_X64_PATH }}
-            ${{ steps.files.outputs.DEB_X64_PLUCKY_PATH }}
             ${{ steps.files.outputs.APPIMAGE_X64_PATH }}
             ${{ steps.files.outputs.BINARY_X64_PATH }}
             ${{ steps.files.outputs.DEB_ARM64_PATH }}
-            ${{ steps.files.outputs.DEB_ARM64_PLUCKY_PATH }}
             ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}
             ${{ steps.files.outputs.BINARY_ARM64_PATH }}
             ${{ steps.files.outputs.DMG_PATH }}
