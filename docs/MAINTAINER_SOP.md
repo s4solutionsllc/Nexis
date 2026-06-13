@@ -133,6 +133,7 @@ during the quarterly release review.
 | Cut a release | Maintainer | Follows `RELEASE.md`. No external sign-off. |
 | Drop a supported platform | CEO | Material to users; needs a comms plan. |
 | Add a supported platform (e.g., Windows) | CEO | Scope authority unchanged by full-time staffing. |
+| Change the macOS distribution format (e.g., `.dmg` → `.pkg`) | Maintainer (re-open SSO-3733 / FW-06 decision) | **Default policy: keep `.dmg`. Do not switch to `.pkg`.** Tahoe (macOS 26) skips the first-run XProtect prompt for notarized `.dmg`/`.app` but **not** for `.pkg`, and Tahoe 26.3 had `.pkg` Gatekeeper rejections in the field. Nexis is a drag-to-`/Applications` `.app` with no install-time launchd/scripting that would justify `.pkg`. Re-opening this is a maintainer-only decision; document the change in `RELEASE.md` and `CHANGELOG.md`. |
 | Accept a CVE coordinated-disclosure embargo | Maintainer | Follow Qt/distro embargo dates. CEO informed. |
 | Change the GPL-3.0 license or "always free" rule | CEO | Hard rule per §2 — refuse politely if asked without CEO. |
 | Accept a third-party PR that adds a non-trivial feature | Maintainer | Standard review. |

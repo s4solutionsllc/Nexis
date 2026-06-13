@@ -26,11 +26,17 @@ set(SHARED_DIR   "${PROJECT_ROOT}/shared")
 
 # Activating MOC and searching for the Qt6 dependencies
 set(CMAKE_AUTOMOC ON)
-# SSO-3399: Qt 6.4 is the floor — we rely on QFile::moveToTrash (6.3+),
-# std::as_const usage in 6.x signal arg sets, and the Charts theme APIs
-# present in 6.4. Pin the minimum explicitly so configure fails early on
-# older Qt rather than producing cryptic build errors deep in moc/codegen.
-find_package(Qt6 6.4 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network Test REQUIRED)
+# SSO-3399 / SSO-3733: Qt 6.8 LTS is the floor.
+#  - 6.3+: QFile::moveToTrash; 6.x: std::as_const signal arg sets; 6.4: Charts theme APIs.
+#  - 6.8: current Qt LTS; backports macOS 26 ("Tahoe") platform fixes including
+#    Liquid Glass compatibility. macOS 27 ("Golden Gate") is Apple-silicon-only,
+#    which (with CI already running arm64-only on macos-14) is why we formally
+#    sunset Intel x86_64 macOS builds in v2.6.0 (see RELEASE.md / CHANGELOG.md).
+#  - Tracking Qt 6.10 separately; bump when Homebrew qt@6 and the Linux
+#    channels we support both ship >= 6.10. Bumping past 6.4 drops Ubuntu
+#    24.04 (Noble) from the supported PPA series; Plucky (25.04) and
+#    Questing (26.04) cover the gap.
+find_package(Qt6 6.8 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network Test REQUIRED)
 
 # Setting the minimum C++ standard
 set(CMAKE_CXX_STANDARD           17)
