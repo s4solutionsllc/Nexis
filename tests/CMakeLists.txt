@@ -294,6 +294,19 @@ add_nexis_test(NAME CleanerExclusionTests
     nexis-gui Qt6::Widgets
 )
 
+# FW-14 (SSO-3742): HealthReportManager — on-demand Markdown export and
+# schedule CRUD. Links against nexis-gui for InfoManager, CleanerService,
+# ScheduleManager, and SettingManager (same pattern as CleanerExclusionTests).
+add_nexis_test(NAME HealthReportTests
+  SOURCES
+    managers/test_health_report.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3389 / WI-27: InfoManager facade wiring for BootAnalysisInfo +
 # StartupInfo. Links against nexis-gui because InfoManager and the providers
 # it owns are compiled into the GUI target.
