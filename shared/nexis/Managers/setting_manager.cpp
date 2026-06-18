@@ -285,6 +285,16 @@ QString SettingManager::getSchedules() const
     return mSettings->value(SettingKeys::Schedules, "[]").toString();
 }
 
+void SettingManager::setReportSchedules(const QString &json)
+{
+    mSettings->setValue(SettingKeys::ReportSchedules, json);
+}
+
+QString SettingManager::getReportSchedules() const
+{
+    return mSettings->value(SettingKeys::ReportSchedules, "[]").toString();
+}
+
 void SettingManager::setCleaningNotificationsEnabled(bool value)
 {
     mSettings->setValue(SettingKeys::CleaningNotificationsEnabled, value);
