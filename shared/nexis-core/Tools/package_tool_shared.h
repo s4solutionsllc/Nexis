@@ -57,6 +57,14 @@ struct AptVersion {
     }
 };
 
+// FW-18 (SSO-3746): a single leftover artifact discovered for a macOS app
+// uninstall, matched by bundle id under the standard ~/Library locations.
+struct AppLeftover {
+    QString path;       // full filesystem path to the leftover artifact
+    QString category;   // human-readable label: "Application Support", "Caches", etc.
+    quint64 size = 0;   // size in bytes (0 when size could not be determined)
+};
+
 enum PackageTools {
     APT,        // debian
     APT_RPM,    // ALT Linux, PCLinuxOS, Vine Linux (apt-get + rpm)
@@ -91,6 +99,14 @@ public:
     virtual bool removeUnusedFlatpakRuntimes() = 0;
     virtual QList<OrphanPackage> getOrphanPackages() = 0;
     virtual bool removeOrphanPackages() = 0;
+
+    // FW-18: scan standard macOS ~/Library locations for leftover artifacts
+    // belonging to `app` (matched by bundle id — never by loose app name).
+    // Returns an empty list on non-macOS platforms.
+    virtual QList<AppLeftover> findAppLeftovers(const Package &app) { Q_UNUSED(app); return {}; }
+    // Move each path in `paths` to the macOS Trash via QFile::moveToTrash.
+    // Returns true iff every path was trashed successfully.
+    virtual bool trashLeftovers(const QStringList &paths) { Q_UNUSED(paths); return false; }
 
     static QList<StaleSnapRevision> parseSnapListAll(const QString &output);
     static QList<OrphanPackage> parseAptAutoremoveDryRun(const QString &output);
