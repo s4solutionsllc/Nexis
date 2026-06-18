@@ -115,10 +115,12 @@ void TestAppLeftoversMacOS::findAppLeftovers_matchesBundleIdArtifacts()
     // Plant artifacts that should be found.
     QVERIFY(mkdirP(tmp.filePath("Library/Application Support/" + bundleId)));
     QVERIFY(mkdirP(tmp.filePath("Library/Caches/" + bundleId)));
+    QVERIFY(mkdirP(tmp.filePath("Library/Preferences")));
     QVERIFY(QFile(tmp.filePath("Library/Preferences/" + bundleId + ".plist")).open(QIODevice::WriteOnly));
     QVERIFY(mkdirP(tmp.filePath("Library/Logs/" + bundleId)));
     QVERIFY(mkdirP(tmp.filePath("Library/Containers/" + bundleId)));
     QVERIFY(mkdirP(tmp.filePath("Library/Saved Application State/" + bundleId + ".savedState")));
+    QVERIFY(mkdirP(tmp.filePath("Library/LaunchAgents")));
     QVERIFY(QFile(tmp.filePath("Library/LaunchAgents/" + bundleId + ".plist")).open(QIODevice::WriteOnly));
 
     Package app;
