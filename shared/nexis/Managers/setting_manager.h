@@ -27,6 +27,7 @@ namespace SettingKeys {
     const QString BatteryAlertSnoozedUntil("BatteryAlertSnoozedUntil");
     const QString DiskHealthAlertEnabled("DiskHealthAlertEnabled");
     const QString Schedules("Schedules");
+    const QString ReportSchedules("ReportSchedules");
     const QString CleaningNotificationsEnabled("CleaningNotificationsEnabled");
     const QString ThresholdAlertEnabled("ThresholdAlertEnabled");
     const QString ThresholdGB("ThresholdGB");
@@ -162,6 +163,9 @@ public:
 
     void setSchedules(const QString &json);
     QString getSchedules() const;
+
+    void setReportSchedules(const QString &json);
+    QString getReportSchedules() const;
 
     void setCleaningNotificationsEnabled(bool value);
     bool getCleaningNotificationsEnabled() const;
