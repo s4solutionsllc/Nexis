@@ -11,6 +11,7 @@
 
 #include "nexis_page.h"
 #include "Managers/info_manager.h"
+#include "kill_button_delegate.h"
 
 class DataRefreshService;
 class ProcessService;
@@ -49,6 +50,9 @@ private slots:
     void onRowContextMenu(const QPoint &pos);
     void onPinPrefsChanged();
 
+    // GH#174: inline kill icon
+    void onKillColumnClicked(const QModelIndex &index);
+
 private:
     // FR-108: tell InfoManager whether to collect per-PID disk/net I/O based
     // on the current column visibility. Called from init() and after the
@@ -61,6 +65,8 @@ private:
     // FR-116: evaluate thresholds and fire tray notifications with per-
     // (name, metric) hysteresis.
     void evaluateThresholdAlerts(const QList<Process> &processes);
+
+    static constexpr int kKillCol = 19; // GH#174: per-row kill icon column
 
 private:
     Ui::ProcessesPage *ui;
@@ -76,6 +82,7 @@ private:
     InfoManager *im;
     DataRefreshService *mRefresh;
     ProcessService *mProcessService;
+    KillButtonDelegate *mKillDelegate = nullptr; // GH#174
 };
 
 #endif // PROCESSESPAGE_H

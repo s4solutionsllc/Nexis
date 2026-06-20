@@ -4,6 +4,7 @@
 #include "nexis_roles.h"
 #include "dpi.h"
 #include "pin_sort_filter_proxy_model.h"
+#include "kill_button_delegate.h"
 #include "process_alert_dialog.h"
 #include "Managers/app_manager.h"
 #include "Managers/data_refresh_service.h"
@@ -43,7 +44,7 @@ void ProcessesPage::init()
         tr("Nice"), tr("CPU Time"), tr("Session"),
         tr("Disk Read/s"), tr("Disk Write/s"), tr("Net Down/s"), tr("Net Up/s"),
         tr("GPU %"), tr("GPU VRAM"),            // FR-115 (indices 16, 17)
-        tr("Process")                            // now index 18
+        tr("Process")                            // index 18; Kill icon is 19 (kKillCol, not in mHeaders)
     };
 
     // slider settings
@@ -74,6 +75,17 @@ void ProcessesPage::init()
     ui->tableProcess->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     ui->tableProcess->horizontalHeader()->setCursor(Qt::PointingHandCursor);
     ui->tableProcess->horizontalHeader()->resizeSection(0, 70);
+
+    // GH#174: Kill column — fixed narrow width, not shown in header context menu
+    // (not in mHeaders so loadHeaderMenu() ignores it), not sortable.
+    mItemModel->setHorizontalHeaderItem(kKillCol, new QStandardItem());
+    ui->tableProcess->horizontalHeader()->setSectionResizeMode(kKillCol, QHeaderView::Fixed);
+    ui->tableProcess->horizontalHeader()->resizeSection(kKillCol, Dpi::scale(30));
+    mKillDelegate = new KillButtonDelegate(this);
+    ui->tableProcess->setItemDelegateForColumn(kKillCol, mKillDelegate);
+    ui->tableProcess->setMouseTracking(true);
+    connect(ui->tableProcess, &QTableView::clicked,
+            this, &ProcessesPage::onKillColumnClicked);
 
     connect(mRefresh, &DataRefreshService::processesUpdated,
             this, &ProcessesPage::onProcessesUpdated);
@@ -320,11 +332,17 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     cmd_i->setData(QString("<p>%1</p>").arg(proc.getCmd()), Qt::ToolTipRole);
     cmd_i->setFont(QFont(QStringLiteral("JetBrains Mono")));
 
+    // GH#174: kill icon column — enabled but not selectable so clicking it
+    // kills without selecting the row. PID is read from column 0 on click.
+    QStandardItem *kill_i = new QStandardItem();
+    kill_i->setFlags(Qt::ItemIsEnabled);
+    kill_i->setData(tr("Kill process"), Qt::ToolTipRole);
+
     row << pid_i << rss_i << pmem_i << vsize_i << uname_i << pcpu_i
         << starttime_i << state_i << group_i << nice_i << cpuTime_i
         << session_i << diskRead_i << diskWrite_i << netDown_i << netUp_i
         << gpuPct_i << gpuVram_i
-        << cmd_i;
+        << cmd_i << kill_i;
 
     return row;
 }
@@ -413,6 +431,27 @@ void ProcessesPage::on_btnEndProcess_clicked()
         QString selectedUname = mSortFilterModel->index(mSelectedRowModel.row(), 4).data(SortRole).toString();
         mProcessService->killProcess(pid, selectedUname, im->getUserName());
     }
+}
+
+// GH#174: per-row kill icon — clicking column kKillCol kills the process
+// directly without requiring the user to select the row first.
+void ProcessesPage::onKillColumnClicked(const QModelIndex &proxyIndex)
+{
+    if (!proxyIndex.isValid() || proxyIndex.column() != kKillCol)
+        return;
+
+    const QModelIndex src = mSortFilterModel->mapToSource(proxyIndex);
+    QStandardItem *pidItem = mItemModel->item(src.row(), 0);
+    if (!pidItem)
+        return;
+
+    const pid_t pid = pidItem->data(SortRole).toLongLong();
+    if (!pid)
+        return;
+
+    QStandardItem *unameItem = mItemModel->item(src.row(), 4);
+    const QString uname = unameItem ? unameItem->data(SortRole).toString() : QString();
+    mProcessService->killProcess(pid, uname, im->getUserName());
 }
 
 void ProcessesPage::on_tableProcess_customContextMenuRequested(const QPoint &pos)
