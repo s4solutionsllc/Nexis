@@ -16,8 +16,9 @@ void KillButtonDelegate::paint(QPainter *painter,
     QStyledItemDelegate::paint(painter, option, index);
 
     QSettings *sv = AppManager::ins()->getStyleValues();
-    QColor killColor(sv->value(QStringLiteral("@destructiveColor"),
-                               QStringLiteral("#E05454")).toString());
+    QColor killColor(sv ? sv->value(QStringLiteral("@destructiveColor"),
+                                    QStringLiteral("#E05454")).toString()
+                        : QStringLiteral("#E05454"));
 
     const bool hovered = (option.state & QStyle::State_MouseOver);
     if (hovered)
