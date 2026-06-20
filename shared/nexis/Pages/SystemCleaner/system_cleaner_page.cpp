@@ -1016,6 +1016,7 @@ quint64 SystemCleanerPage::addTreeRoot(const CleanCategories &cat, const QString
         root->setText(0, title);
     }
     root->setText(1, FormatUtil::formatBytes(totalSize));
+    root->setData(1, SortRole, totalSize);
     return totalSize;
 }
 
