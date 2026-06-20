@@ -341,16 +341,16 @@ Manage system services (daemons).
 
 View and manage running processes.
 
-- Process table with 17 columns: PID, name, user, CPU%, memory%, command line, Disk Read/s, Disk Write/s, Net Down/s, Net Up/s, and more
+- Process table with 19 data columns + 1 fixed kill column: PID, name, user, CPU%, memory%, command line, Disk Read/s, Disk Write/s, Net Down/s, Net Up/s, GPU %, GPU VRAM, and more
+- **Per-row kill icon (GH#174):** A fixed ✕ column at the far right lets users kill a process with a single click without selecting the row first. Rendered by `KillButtonDelegate` using `@destructiveColor` theme token; excluded from the header show/hide menu.
 - Disk Read/s and Disk Write/s columns show per-process disk I/O rates via `proc_pid_rusage()` (macOS) or `/proc/<pid>/io` (Linux), using delta-based calculation with `QElapsedTimer`
 - Net Down/s and Net Up/s columns show per-process network bandwidth via `nettop` parsing (macOS only; Linux shows N/A)
 - All 4 new I/O columns are hidden by default (toggled via header context menu)
 - Real-time search filter
 - Sortable column headers
 - Refresh rate slider (1s to 10s, user-configurable)
-- End process action (sudo if owned by another user)
-- Right-click context menu with copy PID
-- Column visibility toggles via header menu
+- End process action via: per-row kill icon (✕), row selection + "End Process" button, or right-click context menu
+- Column visibility toggles via header menu (kill column is always visible)
 
 ### 9. Uninstaller
 
