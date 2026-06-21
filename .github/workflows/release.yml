@@ -173,6 +173,19 @@ jobs:
 
           chmod +x "${ld_file}" "${ldq_file}"
 
+      # SSO-6445: debug step confirms AppDir layout and qmake path before
+      # linuxdeploy runs, so future failures have a clear evidence trail.
+      - name: Debug AppDir layout and qmake
+        run: |
+          echo "=== AppDir/usr/bin ==="
+          ls -la AppDir/usr/bin/ || echo "WARN: AppDir/usr/bin not found"
+          echo "=== nexis ELF type ==="
+          file AppDir/usr/bin/nexis || echo "WARN: nexis binary not found"
+          echo "=== qmake6 ==="
+          which qmake6 && qmake6 -v || echo "WARN: qmake6 not found in PATH"
+          echo "=== ldd AppDir/usr/bin/nexis (Qt libs) ==="
+          ldd AppDir/usr/bin/nexis 2>&1 | grep -i qt || echo "(no Qt lines in ldd output)"
+
       - name: Build AppImage
         env:
           QMAKE: /usr/bin/qmake6
@@ -183,8 +196,14 @@ jobs:
           # is still a normal AppImage that uses FUSE on the user's system.
           APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
+          # SSO-6445: pass --executable explicitly so linuxdeploy deploys the
+          # binary's Qt dependencies into AppDir before the qt plugin runs.
+          # Without this flag linuxdeploy's "Deploying dependencies" phase only
+          # processes files added in the current invocation, not pre-installed
+          # AppDir contents, leaving the Qt plugin with nothing to scan.
           ./linuxdeploy-${{ matrix.linuxdeploy-arch }}.AppImage \
             --appdir AppDir \
+            --executable AppDir/usr/bin/nexis \
             --desktop-file AppDir/usr/share/applications/nexis.desktop \
             --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/nexis.png \
             --plugin qt \
