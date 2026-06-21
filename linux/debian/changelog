@@ -1,3 +1,16 @@
+nexis (2.6.0-0) unstable; urgency=medium
+
+  * Health-report export — on-demand and scheduled Markdown snapshot (SSO-3742 / FW-14)
+  * macOS leftover artifact scanner after app uninstall (SSO-3746 / FW-18)
+  * Processes table: per-row kill icon (GH#174)
+  * Fix: "Clean Selected" stays disabled with Trash/Snap-revision roots (GH#173, #177)
+  * macOS Qt floor raised 6.4 → 6.8 LTS; Intel x86_64 builds sunset (SSO-3733 / FW-06)
+  * Ubuntu 24.04 Noble and 22.04 Jammy dropped from supported PPA series (SSO-3733)
+  * Linux CI build matrix migrated to Plucky (25.04) container (SSO-4093)
+  * CI: bump crowdin/github-action 2.16.2 → 2.16.3
+
+ -- Luke Simpson <luke@s4solutions.ai>  Sat, 21 Jun 2026 00:00:00 +0000
+
 nexis (2.5.0-0) unstable; urgency=medium
 
   * cgroup v2 / systemd-oomd observability panel on Resources page
