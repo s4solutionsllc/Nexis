@@ -201,11 +201,14 @@ jobs:
           # Without this flag linuxdeploy's "Deploying dependencies" phase only
           # processes files added in the current invocation, not pre-installed
           # AppDir contents, leaving the Qt plugin with nothing to scan.
+          # Use absolute paths: APPIMAGE_EXTRACT_AND_RUN resolves relative paths
+          # from the AppImage's extraction tmpdir, not the runner workspace.
+          APPDIR="${{ github.workspace }}/AppDir"
           ./linuxdeploy-${{ matrix.linuxdeploy-arch }}.AppImage \
-            --appdir AppDir \
-            --executable AppDir/usr/bin/nexis \
-            --desktop-file AppDir/usr/share/applications/nexis.desktop \
-            --icon-file AppDir/usr/share/icons/hicolor/256x256/apps/nexis.png \
+            --appdir "$APPDIR" \
+            --executable "$APPDIR/usr/bin/nexis" \
+            --desktop-file "$APPDIR/usr/share/applications/nexis.desktop" \
+            --icon-file "$APPDIR/usr/share/icons/hicolor/256x256/apps/nexis.png" \
             --plugin qt \
             --output appimage
 
