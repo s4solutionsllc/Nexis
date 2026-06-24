@@ -235,7 +235,7 @@ Scan and remove system junk files across 10 categories.
 2. **Crash Reports** — System crash dumps
 3. **Application Logs** — `/var/log`, `~/.local/share/**/logs`
 4. **Application Caches** — `~/.cache` (Linux), `~/Library/Caches` (macOS)
-5. **Trash** — User trash bin contents
+5. **Trash** — User trash bin contents (`~/.local/share/Trash` on Linux, `~/.Trash` on macOS) plus any `.Trash-<UID>` / `.Trash/<UID>` directories found on mounted filesystems (external drives, secondary internal drives) per the FreeDesktop Trash Specification (GH#182)
 6. **Dev Tool Caches** — npm, cargo, gradle, Electron app caches, pip cache
 7. **Broken Symlinks** — Detects broken symbolic links in `~/.local/`, `~/bin/`, Homebrew prefix (macOS) or `/usr/local/bin` (Linux)
 8. **Browser Privacy** — Browser caches (Chrome, Edge, Brave, Firefox, Safari), session data, and OS-level recent file lists (macOS LSSharedFileList, Linux recently-used.xbel)
@@ -738,7 +738,7 @@ tests/
 - Dependencies: `nexis-gui` (inherits all Qt and core dependencies)
 - macOS: `.app` bundle with icon, installs to `/Applications`. Signed with Developer ID and notarized by Apple (no Gatekeeper warnings)
 - Linux: Binary to `/usr/bin`, `.desktop` file, hicolor icons (16x16 through 256x256)
-- Linux PPA: `ppa:s4solutionsllc/nexis` — Ubuntu 22.04+ (Jammy, Noble, Plucky), amd64 and arm64, automatic updates via apt
+- Linux PPA: `ppa:s4solutionsllc/nexis` — Ubuntu 25.04+ (Plucky, Questing, Resolute), amd64 and arm64, automatic updates via apt. Requires Qt 6.8 LTS; Ubuntu 22.04 (Jammy) and 24.04 (Noble) are not supported via PPA — use AppImage instead.
 - macOS Homebrew: `brew tap s4solutionsllc/nexis && brew install --cask nexis` — Apple Silicon, auto-updated on new releases
 
 **Linux distribution channels:** `.deb` (PPA + GitHub releases), AppImage, AUR. The Flatpak (Flathub) channel was retired in 2026-06; the sandbox model is incompatible with Nexis's system-maintenance feature set (privileged host operations like `systemctl`, `pkexec`, `smartctl`, `fstrim` are unavailable or no-ops inside bubblewrap). The product feature that detects and cleans unused Flatpak runtimes installed on the host is unaffected.
