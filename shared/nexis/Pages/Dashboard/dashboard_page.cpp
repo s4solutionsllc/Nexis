@@ -1558,7 +1558,10 @@ void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoi
         return;
     }
 
-    if (mOccupancy[targetRow][targetCol].isEmpty()) {
+    bool occupantEmpty = (targetRow >= mOccupancy.size())
+                           ? true
+                           : mOccupancy[targetRow][targetCol].isEmpty();
+    if (occupantEmpty) {
         int srcRS = mDragSource->gridRowSpan();
         int srcCS = mDragSource->gridColSpan();
         if (regionIsFree(targetRow, targetCol, srcRS, srcCS, mDragSource->tileId())) {
