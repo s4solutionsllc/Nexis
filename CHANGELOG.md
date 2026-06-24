@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Trash support for mounted filesystems (GH#182):** Nexis now discovers and includes `.Trash-$UID` and `.Trash/$UID` directories on mounted volumes (USB drives, secondary drives) when scanning and emptying Trash, per the FreeDesktop Trash Specification § 1.2. Previously only `~/.local/share/Trash/` was considered. `CleanerService::trashRoots()` (virtual test seam) returns all applicable roots; `cleanTrash()` and `scan(TRASH)` iterate each discovered root. New `cleanTrash_multipleRoots_allCleaned` test covers the multi-root path.
+
 ## [2.6.0] - 2026-06-21
 
 ### Added

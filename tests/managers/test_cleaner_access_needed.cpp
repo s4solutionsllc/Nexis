@@ -58,7 +58,7 @@ protected:
         return true;
     }
 
-    QString trashRoot() const override { return QString(); }
+    QStringList trashRoots() const override { return {}; }
 };
 
 class TestCleanerAccessNeeded : public QObject
