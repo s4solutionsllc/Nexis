@@ -19,6 +19,7 @@ public:
     void setQuickAction(const QString &text, std::function<void()> callback);
     void setInterfaceName(const QString &name);
     void setColorOverride(const QString &hexColor);
+    void setCompact(bool compact);
     QString colorOverride() const { return mColorOverride; }
 
 private:

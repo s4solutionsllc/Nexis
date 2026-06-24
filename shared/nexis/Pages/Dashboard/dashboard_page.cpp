@@ -1511,11 +1511,20 @@ void DashboardPage::buildGrid()
 
 void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)
 {
+    int area = wrapper->gridRowSpan() * wrapper->gridColSpan();
+    const bool compact = (DashboardLayout::tierForArea(area) == DashboardLayout::Compact);
+
+    // NetworkTile is a plain QWidget (not a MetricTileBase), so it sits
+    // outside the DisplayMode system; toggle its sparklines directly. (GH#191)
+    if (auto *net = qobject_cast<NetworkTile*>(wrapper->innerWidget())) {
+        net->setCompact(compact);
+        return;
+    }
+
     auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
     if (!metric)
         return;
 
-    int area = wrapper->gridRowSpan() * wrapper->gridColSpan();
     switch (DashboardLayout::tierForArea(area)) {
     case DashboardLayout::Hero:
         metric->setDisplayMode(MetricTileBase::Hero);
