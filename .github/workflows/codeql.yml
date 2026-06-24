@@ -23,11 +23,12 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-24.04
-    # SSO-4093: run inside the same Plucky (25.04) container build.yml uses
-    # so the CodeQL build path picks up Qt 6.8 (FW-06 floor). Noble's qt6-base-dev
-    # is 6.4 and no longer satisfies CMake's minimum.
+    # SSO-4093 / SSO-7306: run inside the same Resolute (26.04 LTS) container
+    # build.yml uses so the CodeQL build path picks up Qt 6.8 (FW-06 floor).
+    # Noble's qt6-base-dev is 6.4 and no longer satisfies CMake's minimum;
+    # Plucky (25.04) was retired at EOL.
     container:
-      image: ubuntu:25.04
+      image: ubuntu:26.04
     permissions:
       security-events: write
       packages: read

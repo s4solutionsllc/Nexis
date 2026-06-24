@@ -122,20 +122,27 @@ jobs:
             curl -fsSL --retry 5 --retry-delay 3 \
               "https://aur.archlinux.org/cgit/aur.git/plain/$1?h=nexis"
           }
-          # cgit can lag a few seconds behind the SSH push; wait until it
-          # reflects the version we just published before trusting the bytes.
+          # The "Publish to AUR" step above has already pushed the new version;
+          # this step only mirrors the published files back into the repo. The
+          # cgit `plain/` endpoint is served from a replica that can lag the SSH
+          # push by *minutes* — far longer than the RPC metadata DB, which is
+          # why v2.6.1 failed here at 60s while the RPC `info` endpoint already
+          # showed 2.6.1-1 (SSO-7306). Poll cgit longer (up to ~5 min), but if
+          # it still hasn't caught up, emit a warning and exit 0 rather than
+          # red-failing an already-successful publish — the next release (or a
+          # manual re-run) self-heals the in-repo mirror.
           PUBLISHED_VER=""
-          for attempt in $(seq 1 10); do
+          for attempt in $(seq 1 30); do
             PUBLISHED_VER=$(fetch_aur PKGBUILD | awk -F= '/^pkgver=/{print $2; exit}')
             if [ "$PUBLISHED_VER" = "$VERSION" ]; then
               break
             fi
-            echo "AUR cgit shows '$PUBLISHED_VER', waiting for '$VERSION' (attempt $attempt/10)"
-            sleep 6
+            echo "AUR cgit shows '$PUBLISHED_VER', waiting for '$VERSION' (attempt $attempt/30)"
+            sleep 10
           done
           if [ "$PUBLISHED_VER" != "$VERSION" ]; then
-            echo "::error::AUR cgit never reflected $VERSION — refusing to commit stale files"
-            exit 1
+            echo "::warning::AUR cgit has not reflected $VERSION after ~5 min of polling. The publish itself succeeded (see the 'Publish to AUR' step and the AUR RPC info endpoint); only the in-repo linux/aur mirror was skipped this run. It will self-heal on the next release or a manual re-run. Not failing the job."
+            exit 0
           fi
           fetch_aur PKGBUILD  > linux/aur/PKGBUILD
           fetch_aur .SRCINFO  > linux/aur/.SRCINFO

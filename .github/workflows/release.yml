@@ -14,20 +14,22 @@ permissions:
 
 jobs:
   # ============================================================================
-  # Linux build matrix: x86_64 + ARM64 — .deb (Plucky-built) + AppImage + raw
+  # Linux build matrix: x86_64 + ARM64 — .deb (Resolute-built) + AppImage + raw
   # binary. SSO-4093 collapsed the previous Noble `build-linux` + Plucky
-  # `build-linux-deb-plucky` pair into a single Plucky-container job because
-  # FW-06 (SSO-3733) raised the Qt floor to 6.8, which Noble's apt does not
-  # ship. Plucky (Ubuntu 25.04) is the oldest series whose qt6-base-dev
-  # satisfies the floor, AND it produces the correct non-t64 dependency names
-  # required by users on 25.04+ (the original BUG-75 motivation for the split
-  # Plucky job). Result: one .deb per arch (`_ubuntu2504.deb`).
+  # `build-linux-deb-plucky` pair into a single container job because FW-06
+  # (SSO-3733) raised the Qt floor to 6.8, which Noble's apt does not ship.
+  # SSO-7306 moved the container off `ubuntu:25.04` (Plucky) to `ubuntu:26.04`
+  # (Resolute LTS) after Plucky reached end-of-life — its apt archive moves to
+  # old-releases and the container build would break. Resolute is an LTS
+  # (supported to 2031), ships Qt 6.8+, and uses the same post-t64 dependency
+  # names as 25.04+ (the original BUG-75 motivation). Result: one .deb per arch
+  # (`_ubuntu2604.deb`). 25.10 (Questing) users install via the PPA or AppImage.
   # ============================================================================
   build-linux:
     name: Linux Build (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     container:
-      image: ubuntu:25.04
+      image: ubuntu:26.04
 
     strategy:
       fail-fast: false
@@ -43,7 +45,7 @@ jobs:
             deb-arch: arm64
 
     steps:
-      # The base ubuntu:25.04 image is minimal. Install git + wget + ca-certs
+      # The base ubuntu:26.04 image is minimal. Install git + wget + ca-certs
       # before any action that needs them (actions/checkout uses git when
       # available; the linuxdeploy download uses wget).
       - name: Install git, wget, and ca-certificates
@@ -115,10 +117,10 @@ jobs:
         run: |
           cp ../nexis_*.deb .
           SRC=$(ls nexis_*.deb | head -1)
-          # Plucky-built .deb — non-t64 dependency names (BUG-75); naming kept
-          # for downstream consumers that key off the suffix (release notes,
-          # PPA, downloads page).
-          DEST=$(echo "$SRC" | sed 's/\.deb$/_ubuntu2504.deb/')
+          # Resolute (26.04 LTS)-built .deb — post-t64 dependency names (BUG-75);
+          # suffix is consumed downstream (release notes, downloads page) and
+          # signals the build base. SSO-7306 moved this off Plucky (25.04) at EOL.
+          DEST=$(echo "$SRC" | sed 's/\.deb$/_ubuntu2604.deb/')
           mv "$SRC" "$DEST"
           echo "DEB_PATH=$DEST" >> "$GITHUB_OUTPUT"
           echo "DEB_NAME=$DEST" >> "$GITHUB_OUTPUT"
@@ -526,14 +528,14 @@ jobs:
             echo "#### Linux (x86_64)"
             echo "| Format | File | Description |"
             echo "|--------|------|-------------|"
-            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 25.04+ (Plucky and newer) / Debian 13+ |"
+            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 26.04+ (Resolute LTS and newer) / Debian 13+. On 25.10 (Questing) use the PPA or AppImage. |"
             echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_X64_PATH }})\` | Portable — runs on any Linux distro with glibc ≥ 2.35 (Ubuntu 22.04+, all Mint) |"
             echo "| Binary | \`nexis\` | Standalone executable (requires Qt6 ≥ 6.8 runtime) |"
             echo ""
             echo "#### Linux (ARM64 / aarch64)"
             echo "| Format | File | Description |"
             echo "|--------|------|-------------|"
-            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_ARM64_PATH }})\` | For Ubuntu 25.04+ ARM64 (Raspberry Pi 5, Jetson, Graviton) |"
+            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_ARM64_PATH }})\` | For Ubuntu 26.04+ ARM64 (Resolute LTS and newer; Raspberry Pi 5, Jetson, Graviton) |"
             echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }})\` | Portable ARM64 — runs on any ARM64 Linux distro with glibc ≥ 2.35 |"
             echo "| Binary | \`nexis\` | Standalone ARM64 executable (requires Qt6 ≥ 6.8 runtime) |"
             echo ""
