@@ -10,6 +10,7 @@
 #include <Utils/format_util.h>
 #include <QDir>
 #include <QStandardPaths>
+#include <QStorageInfo>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -219,12 +220,13 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
                 break;
             }
             case TRASH: {
-#ifdef Q_OS_MACOS
-                QString trashPath = QDir::homePath() + "/.Trash/";
-#else
-                QString trashPath = QDir::homePath() + "/.local/share/Trash/";
-#endif
-                files = { QFileInfo(trashPath) };
+                // GH#182: include all trash roots — home trash plus any
+                // per-volume .Trash-$uid/.Trash/$uid dirs on mounted FSes.
+                for (const QString &trashPath : trashRoots()) {
+                    QFileInfo fi(trashPath);
+                    if (fi.exists())
+                        files.append(fi);
+                }
                 break;
             }
             case DOWNLOADS_AGED: {
@@ -384,19 +386,50 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
     return result;
 }
 
-QString CleanerService::trashRoot() const
+QStringList CleanerService::trashRoots() const
 {
+    QStringList roots;
+
 #ifdef Q_OS_MACOS
-    return QDir::homePath() + "/.Trash";
+    roots << QDir::homePath() + "/.Trash";
 #else
-    return QDir::homePath() + "/.local/share/Trash";
+    // Home trash (XDG base, always present even when empty)
+    roots << QDir::homePath() + "/.local/share/Trash";
+
+    // Per-volume trash directories — FreeDesktop Trash Specification § 1.2.
+    // Each mounted volume may have a .Trash-$uid/ sibling at its root
+    // (.Trash/$uid/ is the sticky-bit variant; both are checked).
+    const QString uidStr = QString::number(static_cast<uint>(geteuid()));
+    for (const QStorageInfo &vol : QStorageInfo::mountedVolumes()) {
+        if (!vol.isValid() || !vol.isReady())
+            continue;
+        const QString mp = vol.rootPath();
+        // Skip root (covered by home trash) and virtual/pseudo mounts.
+        if (mp.isEmpty() || mp == "/")
+            continue;
+        if (mp.startsWith("/proc") || mp.startsWith("/sys") ||
+            mp.startsWith("/dev")  || mp.startsWith("/run") ||
+            mp.startsWith("/snap") || vol.device().startsWith("/dev/loop"))
+            continue;
+
+        // $topdir/.Trash-$uid/
+        const QString trashUid = mp + "/.Trash-" + uidStr;
+        if (QDir(trashUid).exists())
+            roots << trashUid;
+
+        // $topdir/.Trash/$uid/
+        const QString trashSticky = mp + "/.Trash/" + uidStr;
+        if (QDir(trashSticky).exists())
+            roots << trashSticky;
+    }
 #endif
+
+    return roots;
 }
 
 quint64 CleanerService::cleanTrash()
 {
-    const QString trashPath = trashRoot();
-    const quint64 sizeBefore = FileUtil::getFileSize(trashPath);
+    quint64 totalSizeBefore = 0;
 
     auto emptyDir = [](const QString &dirPath) {
         QDir dir(dirPath);
@@ -413,14 +446,17 @@ quint64 CleanerService::cleanTrash()
         }
     };
 
+    for (const QString &trashPath : trashRoots()) {
+        totalSizeBefore += FileUtil::getFileSize(trashPath);
 #ifdef Q_OS_MACOS
-    emptyDir(trashPath);
+        emptyDir(trashPath);
 #else
-    emptyDir(trashPath + "/files");
-    emptyDir(trashPath + "/info");
+        emptyDir(trashPath + "/files");
+        emptyDir(trashPath + "/info");
 #endif
+    }
 
-    return sizeBefore;
+    return totalSizeBefore;
 }
 
 quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,

@@ -134,9 +134,12 @@ protected:
     // beginning with `-` from being interpreted as an rm option.
     virtual void removeElevated(const QStringList &paths);
 
-    // WI-08: test seam for cleanTrash(). Production returns the platform's
-    // user Trash directory; tests override to point at a QTemporaryDir.
-    virtual QString trashRoot() const;
+    // WI-08 / GH#182: test seam for cleanTrash() and scan(). Production
+    // returns all trash directories the current user has items in: the home
+    // trash plus, on Linux, any per-volume .Trash-$UID and .Trash/$UID
+    // directories found on mounted filesystems (FreeDesktop Trash spec §1.2).
+    // Tests override to return a controlled list of QTemporaryDir paths.
+    virtual QStringList trashRoots() const;
 
     // SSO-3399 / SSO-3704: test seam for the user-vs-root ownership split in
     // cleanFiles(). Production compares ownerId() to geteuid(); tests override
