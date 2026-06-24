@@ -15,6 +15,8 @@
 #include <QNetworkRequest>
 #include <QRegularExpression>
 #include <QResizeEvent>
+#include <QScrollBar>
+#include <QShowEvent>
 #include <QVersionNumber>
 #include <algorithm>
 
@@ -173,7 +175,10 @@ void DashboardPage::init()
     mGridScroll->setObjectName("bentoScroll");
     mGridScroll->setWidgetResizable(true);
     mGridScroll->setFrameShape(QFrame::NoFrame);
-    mGridScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    // GH#191: columns are derived from the available width, so the grid must
+    // always fit horizontally — sideways scrolling is never desirable and its
+    // appearance is purely a transient-width artifact. Force it off.
+    mGridScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     mGridScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     mGridScroll->setStyleSheet("QScrollArea{background:transparent;} QScrollArea>QWidget>QWidget{background:transparent;}");
     mGridScroll->setWidget(mGridContainer);
@@ -1065,6 +1070,12 @@ void DashboardPage::toggleEditMode()
         for (QWidget *ph : mPlaceholders)
             ph->setVisible(true);
         updateAddTileButton();
+        // GH#191: re-validate the column count now that placeholders are shown,
+        // so a stale count can't leave the grid wider/narrower than the
+        // viewport. recomputeColumns()'s no-change guard makes this a no-op when
+        // the width-derived count is unchanged (the common case), so it is not a
+        // rebuild on every toggle and cannot recurse.
+        recomputeColumns();
     }
 }
 
@@ -1087,6 +1098,9 @@ void DashboardPage::exitEditMode()
     mGearVisibleTiles.clear();
     for (QWidget *ph : mPlaceholders)
         ph->setVisible(false);
+    // GH#191: re-validate the column count after hiding placeholders. No-op via
+    // recomputeColumns()'s guard when the count is unchanged; recursion-safe.
+    recomputeColumns();
     persistLayout();
 }
 
@@ -1379,10 +1393,30 @@ bool DashboardPage::regionIsFree(int row, int col, int rowSpan, int colSpan,
 
 void DashboardPage::recomputeColumns()
 {
-    int viewportW = mGridScroll && mGridScroll->viewport()
-                      ? mGridScroll->viewport()->width()
-                      : width();
-    int cols = DashboardLayout::columnsForWidth(viewportW);
+    // GH#191: derive the column count from a STABLE available width.
+    //
+    // viewport()->width() is unreliable here: during the page's resizeEvent the
+    // scroll area's viewport may not have been re-laid-out yet (stale, too wide),
+    // and it shrinks by ~15px the moment a vertical scrollbar appears. Either
+    // makes the width-derived column count wrong and produces a scrollbar
+    // cascade.
+    //
+    // Instead compute from the scroll area's own width (a direct layout child of
+    // this page, so its width IS current in resizeEvent), minus the frame and a
+    // RESERVED vertical-scrollbar width. Reserving the v-scrollbar width makes
+    // the result identical whether or not the v-scrollbar is currently shown, so
+    // the column count never oscillates. The grid min width
+    // (mVisibleCols*kCellW + gaps) is then always <= availW <= true viewport
+    // width, so with horizontal scrolling off the grid can never clip.
+    int availW = width();
+    if (mGridScroll) {
+        int sbw = mGridScroll->verticalScrollBar()
+                    ? mGridScroll->verticalScrollBar()->sizeHint().width()
+                    : 0;
+        int frame = 2 * mGridScroll->frameWidth();
+        availW = mGridScroll->width() - frame - sbw;
+    }
+    int cols = DashboardLayout::columnsForWidth(qMax(0, availW));
     if (cols == mVisibleCols && !mOccupancy.isEmpty())
         return;
     mVisibleCols = cols;
@@ -1617,6 +1651,15 @@ void DashboardPage::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     mKioskButton->move(width() - mKioskButton->width() - 10, 10);
     mEditButton->move(width() - mKioskButton->width() - mEditButton->width() - 18, 10);
+    recomputeColumns();
+}
+
+void DashboardPage::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    // GH#191: recompute once the page has real geometry. The init()/resizeEvent
+    // calls may run before the scroll area has its settled size; this guarantees
+    // the first correct column count is applied as soon as the page is shown.
     recomputeColumns();
 }
 
