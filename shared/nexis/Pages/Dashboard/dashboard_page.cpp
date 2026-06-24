@@ -1524,9 +1524,10 @@ void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)
         metric->setDisplayMode(MetricTileBase::Large);
         break;
     case DashboardLayout::Normal:
-    case DashboardLayout::Compact:
-        // Plan B replaces the Compact arm with MetricTileBase::Compact.
         metric->setDisplayMode(MetricTileBase::Normal);
+        break;
+    case DashboardLayout::Compact:
+        metric->setDisplayMode(MetricTileBase::Compact);
         break;
     }
 }
