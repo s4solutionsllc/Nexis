@@ -16,6 +16,7 @@
 #include <QRegularExpression>
 #include <QResizeEvent>
 #include <QVersionNumber>
+#include <algorithm>
 
 DashboardPage::~DashboardPage()
 {
@@ -184,6 +185,10 @@ void DashboardPage::init()
 
     // Give the tile grid all available vertical space
     ui->mainLayout->setStretchFactor(mGridScroll, 1);
+
+    // Reflow the freshly-loaded layout to the real viewport width so the first
+    // paint uses a responsive column count instead of the kMaxCols placeholder.
+    recomputeColumns();
 
     // Temperature sensor gear menu
     if (im->hasThermalSensors()) {
@@ -1366,6 +1371,34 @@ bool DashboardPage::regionIsFree(int row, int col, int rowSpan, int colSpan,
     return true;
 }
 
+void DashboardPage::recomputeColumns()
+{
+    int viewportW = mGridScroll && mGridScroll->viewport()
+                      ? mGridScroll->viewport()->width()
+                      : width();
+    int cols = DashboardLayout::columnsForWidth(viewportW);
+    if (cols == mVisibleCols && !mOccupancy.isEmpty())
+        return;
+    mVisibleCols = cols;
+
+    // Reflow current tiles into the new column count (pure logic), then apply
+    // the repacked positions back to the wrappers.
+    QJsonArray tiles = serializeLayout();
+    QJsonArray packed = DashboardLayout::reflow(tiles, mVisibleCols);
+    for (const QJsonValue &v : packed) {
+        QJsonObject o = v.toObject();
+        QString uid = o.contains("uid") ? o["uid"].toString() : o["id"].toString();
+        for (DashboardTileWrapper *w : mTileWrappers)
+            if (w->tileId() == uid) {
+                w->setGridPosition(o["row"].toInt(), o["col"].toInt(),
+                                   o["rowSpan"].toInt(1), o["colSpan"].toInt(1));
+                break;
+            }
+    }
+    buildGrid();
+    persistLayout();
+}
+
 void DashboardPage::buildGrid()
 {
     while (ui->bentoGrid->count() > 0) {
@@ -1453,28 +1486,17 @@ void DashboardPage::rebuildLayout()
 
 bool DashboardPage::gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const
 {
-    QWidget *gridParent = ui->bentoGrid->parentWidget();
-    if (!gridParent)
-        return false;
+    if (!mGridContainer) return false;
+    QPoint local = mGridContainer->mapFromGlobal(globalPos);
+    if (local.x() < 0 || local.y() < 0) return false;
 
-    QPoint local = gridParent->mapFromGlobal(globalPos);
-    QRect gridRect = ui->bentoGrid->geometry();
-
-    if (!gridRect.contains(local))
-        return false;
-
-    int x = local.x() - gridRect.x();
-    int y = local.y() - gridRect.y();
-
-    int rows = qMax(1, mRowCount);
-    int cellW = gridRect.width() / mVisibleCols;
-    int cellH = gridRect.height() / rows;
-
-    if (cellW <= 0 || cellH <= 0)
-        return false;
-
-    outCol = qBound(0, x / cellW, mVisibleCols - 1);
-    outRow = qBound(0, y / cellH, rows - 1);
+    int pitchX = DashboardLayout::kCellW + DashboardLayout::kGap;
+    int pitchY = DashboardLayout::kCellH + DashboardLayout::kGap;
+    int col = local.x() / pitchX;
+    int row = local.y() / pitchY;
+    if (col < 0 || col >= mVisibleCols) return false;
+    outCol = col;
+    outRow = std::max(0, row);
     return true;
 }
 
@@ -1501,12 +1523,13 @@ void DashboardPage::onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint 
         return;
     }
 
-    QRect gridRect = ui->bentoGrid->geometry();
-    int cellW = gridRect.width() / mVisibleCols;
-    int cellH = gridRect.height() / qMax(1, mRowCount);
-    int x = gridRect.x() + targetCol * cellW;
-    int y = gridRect.y() + targetRow * cellH;
-    mDragIndicator->setGeometry(x, y, cellW, cellH);
+    int pitchX = DashboardLayout::kCellW + DashboardLayout::kGap;
+    int pitchY = DashboardLayout::kCellH + DashboardLayout::kGap;
+    QPoint topLeftInContainer(targetCol * pitchX, targetRow * pitchY);
+    QPoint global = mGridContainer->mapToGlobal(topLeftInContainer);
+    QPoint inPage = mapFromGlobal(global);
+    mDragIndicator->setGeometry(inPage.x(), inPage.y(),
+                                DashboardLayout::kCellW, DashboardLayout::kCellH);
     mDragIndicator->show();
     mDragIndicator->raise();
 }
@@ -1581,6 +1604,7 @@ void DashboardPage::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     mKioskButton->move(width() - mKioskButton->width() - 10, 10);
     mEditButton->move(width() - mKioskButton->width() - mEditButton->width() - 18, 10);
+    recomputeColumns();
 }
 
 // --- Tile Factory & Style Switching ---

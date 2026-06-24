@@ -174,6 +174,7 @@ private:
     void refreshSummaryColors();
     void updateDiskHealthBadge();
     void buildGrid();
+    void recomputeColumns();
     void rebuildLayout();
     DashboardTileWrapper *wrapTile(const QString &id, QWidget *tile);
     void applyDisplayModeForSpan(DashboardTileWrapper *wrapper);
