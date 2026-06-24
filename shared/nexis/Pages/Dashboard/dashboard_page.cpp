@@ -1473,6 +1473,23 @@ void DashboardPage::buildGrid()
                 mPlaceholders.append(ph);
             }
 
+    // Reset stale row/column constraints from any previous (larger) build —
+    // QGridLayout never shrinks its row/column count, and per-index minimum
+    // sizes/stretches persist, so old empty rows/cols would otherwise keep
+    // reserving space and trigger spurious scrollbars. (GH#191)
+    {
+        int prevRows = ui->bentoGrid->rowCount();
+        int prevCols = ui->bentoGrid->columnCount();
+        for (int r = 0; r < prevRows; ++r) {
+            ui->bentoGrid->setRowMinimumHeight(r, 0);
+            ui->bentoGrid->setRowStretch(r, 0);
+        }
+        for (int c = 0; c < prevCols; ++c) {
+            ui->bentoGrid->setColumnMinimumWidth(c, 0);
+            ui->bentoGrid->setColumnStretch(c, 0);
+        }
+    }
+
     // Fixed cell pitch: each used column/row gets the exact cell size; a
     // trailing stretch column/row absorbs extra space so tiles pack top-left.
     ui->bentoGrid->setHorizontalSpacing(DashboardLayout::kGap);
