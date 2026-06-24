@@ -132,19 +132,28 @@ void HybridTile::setDisplayMode(DisplayMode mode)
 
     switch (mode) {
     case Hero:
+        mChartView->show();
         mGaugeArea->setMinimumHeight(100);
         mChartView->setFixedHeight(40);
         break;
     case Large:
+        mChartView->show();
         mGaugeArea->setMinimumHeight(80);
         mChartView->setFixedHeight(35);
         break;
+    case Compact:
+        // Drop the sparkline entirely; the painted gauge + value carry the tile.
+        mChartView->hide();
+        mGaugeArea->setMinimumHeight(0);
+        break;
     case Normal:
     default:
+        mChartView->show();
         mGaugeArea->setMinimumHeight(0);
         mChartView->setFixedHeight(30);
         break;
     }
+    update();
 }
 
 void HybridTile::setQuickAction(const QString &text, std::function<void()> callback)

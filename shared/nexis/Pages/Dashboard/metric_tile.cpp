@@ -151,8 +151,12 @@ void MetricTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
 
+    const bool compact = (mode == Compact);
+    mChartView->setVisible(!compact);
+
     mLblValue->setProperty("heroMode", mode == Hero ? "true" : "false");
     mLblValue->setProperty("largeMode", mode == Large ? "true" : "false");
+    mLblValue->setProperty("compactMode", compact ? "true" : "false");
 
     mLblValue->style()->unpolish(mLblValue);
     mLblValue->style()->polish(mLblValue);
