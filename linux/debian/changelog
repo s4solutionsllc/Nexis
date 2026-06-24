@@ -1,3 +1,13 @@
+nexis (2.6.1-0) unstable; urgency=medium
+
+  * Trash support for mounted filesystems — discover .Trash-$UID / .Trash/$UID
+    on mounted volumes per FreeDesktop Trash spec (GH#182)
+  * Docs: clarify .deb minimum distro requirements; direct Ubuntu 22.04/24.04
+    and Linux Mint 21-22 users to the AppImage (GH#185 / SSO-7304)
+  * PPA: add Ubuntu 26.04 Resolute to the build matrix (SSO-7305)
+
+ -- Luke Simpson <luke@s4solutions.ai>  Tue, 24 Jun 2026 00:00:00 +0000
+
 nexis (2.6.0-0) unstable; urgency=medium
 
   * Health-report export — on-demand and scheduled Markdown snapshot (SSO-3742 / FW-14)
