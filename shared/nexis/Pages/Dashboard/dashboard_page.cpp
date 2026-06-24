@@ -1168,28 +1168,34 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
 QJsonArray DashboardPage::defaultLayout() const
 {
     QJsonArray arr;
-    auto addEntry = [&](const QString &id, int row, int col, int rs, int cs) {
+    // GH#191: the grid is now 8x8; default tiles span 2x2 so the out-of-box
+    // dashboard matches the legacy 4x4 single-cell layout. Positions are the
+    // legacy row/col multiplied by 2.
+    auto addEntry = [&](const QString &id, int row, int col) {
         QJsonObject obj;
         obj["id"] = id;
         obj["row"] = row;
         obj["col"] = col;
-        obj["rowSpan"] = rs;
-        obj["colSpan"] = cs;
+        obj["rowSpan"] = 2;
+        obj["colSpan"] = 2;
         obj["style"] = defaultStyle(id);
         arr.append(obj);
     };
 
-    addEntry("cpu", 0, 0, 1, 1);
-    addEntry("memory", 0, 1, 1, 1);
-    addEntry("disk", 0, 2, 1, 1);
-    addEntry("network", 0, 3, 1, 1);
+    addEntry("cpu",     0, 0);
+    addEntry("memory",  0, 2);
+    addEntry("disk",    0, 4);
+    addEntry("network", 0, 6);
 
-    addEntry("health", 1, 3, 1, 1);
+    addEntry("health",  2, 6);
 
-    int sRow = 1, sCol = 0;
+    // Sensor/optional tiles fill the second visual row left-to-right, wrapping
+    // to a third row, mirroring the legacy addSensor() behaviour (now ×2).
+    int sRow = 2, sCol = 0;
     auto addSensor = [&](const QString &id) {
-        if (sCol >= 3) { sRow = 2; sCol = 0; }
-        addEntry(id, sRow, sCol++, 1, 1);
+        if (sCol >= 6) { sRow = 4; sCol = 0; }
+        addEntry(id, sRow, sCol);
+        sCol += 2;
     };
     if (im->hasGpu())            addSensor("gpu");
     if (im->hasThermalSensors()) addSensor("temp");
