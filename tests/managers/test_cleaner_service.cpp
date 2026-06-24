@@ -45,9 +45,11 @@ protected:
         }
     }
 
-    QString trashRoot() const override
+    QStringList trashRoots() const override
     {
-        return mockTrashRoot;
+        if (!mockTrashRoot.isEmpty())
+            return { mockTrashRoot };
+        return CleanerService::trashRoots();
     }
 };
 
@@ -104,6 +106,7 @@ private slots:
     void cleanFiles_elevatedBranch_routesThroughSeam();
     void cleanFiles_elevatedBranch_argvHasEndOfOptionsGuard();
     void cleanTrash_removesContents_viaSeam();
+    void cleanTrash_multipleRoots_allCleaned();   // GH#182
 };
 
 void TestCleanerService::initTestCase()
@@ -334,6 +337,38 @@ void TestCleanerService::cleanTrash_removesContents_viaSeam()
 #else
     QCOMPARE(QDir(tmp.path() + "/files").entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
     QCOMPARE(QDir(tmp.path() + "/info").entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
+#endif
+}
+
+void TestCleanerService::cleanTrash_multipleRoots_allCleaned()
+{
+#ifdef Q_OS_MACOS
+    QSKIP("macOS .Trash has a flat layout; mounted-FS trash test is Linux-only");
+#else
+    // Simulate a home trash root plus a mounted-filesystem .Trash-$uid root.
+    // Both must be emptied in a single cleanTrash() call (GH#182).
+    QTemporaryDir home;
+    QTemporaryDir mount;
+    QVERIFY(home.isValid() && mount.isValid());
+
+    writeFile(home.path()  + "/files/a.txt",      "AAA");
+    writeFile(home.path()  + "/info/a.trashinfo",  "INFO");
+    writeFile(mount.path() + "/files/b.txt",       "BBB");
+    writeFile(mount.path() + "/info/b.trashinfo",  "INFO");
+
+    struct MultiRootCS : public TestableCleanerService {
+        QStringList roots;
+        QStringList trashRoots() const override { return roots; }
+    } cs;
+    cs.roots = { home.path(), mount.path() };
+
+    const quint64 before = cs.cleanTrash();
+    QVERIFY(before > 0);
+
+    QCOMPARE(QDir(home.path()  + "/files").entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
+    QCOMPARE(QDir(home.path()  + "/info" ).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
+    QCOMPARE(QDir(mount.path() + "/files").entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
+    QCOMPARE(QDir(mount.path() + "/info" ).entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
 #endif
 }
 
