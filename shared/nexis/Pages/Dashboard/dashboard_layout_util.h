@@ -2,6 +2,8 @@
 #define DASHBOARD_LAYOUT_UTIL_H
 
 #include <QJsonArray>
+#include <QString>
+#include <QStringList>
 
 // Pure, UI-free helpers for the dashboard bento layout. Kept separate from
 // DashboardPage so the grid math and persistence migration are unit-testable
@@ -46,6 +48,20 @@ QJsonArray reflow(const QJsonArray &tiles, int cols);
 // Otherwise it is treated as a legacy v1 layout: row/col/rowSpan/colSpan are
 // scaled by kLegacyScale and clamped to current bounds.
 QJsonArray migrate(const QJsonArray &tiles, int declaredVersion);
+
+// True for tile types that bind to one of several detected inputs and may
+// therefore appear multiple times on the dashboard. (GH#191)
+bool isMultiInstanceType(const QString &type);
+
+// The tile type encoded in a uid: the part before '#', or the whole uid.
+QString typeOfUid(const QString &uid);
+
+// Generates a unique instance id for a new tile of `type`: returns `type` if
+// not present in existingUids, otherwise `type#N` for the smallest free N>=1.
+QString makeUid(const QStringList &existingUids, const QString &type);
+
+// The bound input keys of every tile of `type` in a layout-tiles array.
+QStringList usedInputsForType(const QJsonArray &tiles, const QString &type);
 
 } // namespace DashboardLayout
 

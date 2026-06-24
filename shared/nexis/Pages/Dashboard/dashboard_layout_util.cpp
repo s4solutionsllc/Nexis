@@ -79,4 +79,41 @@ QJsonArray migrate(const QJsonArray &tiles, int declaredVersion)
     return out;
 }
 
+bool isMultiInstanceType(const QString &type)
+{
+    static const QSet<QString> kMulti { "temp", "fan", "disk", "gpu", "network" };
+    return kMulti.contains(type);
+}
+
+QString typeOfUid(const QString &uid)
+{
+    int hash = uid.indexOf('#');
+    return hash < 0 ? uid : uid.left(hash);
+}
+
+QString makeUid(const QStringList &existingUids, const QString &type)
+{
+    if (!existingUids.contains(type))
+        return type;
+    for (int n = 1; ; ++n) {
+        QString candidate = QString("%1#%2").arg(type).arg(n);
+        if (!existingUids.contains(candidate))
+            return candidate;
+    }
+}
+
+QStringList usedInputsForType(const QJsonArray &tiles, const QString &type)
+{
+    QStringList out;
+    for (const QJsonValue &v : tiles) {
+        QJsonObject o = v.toObject();
+        if (o.value("id").toString() == type) {
+            QString input = o.value("input").toString();
+            if (!input.isEmpty())
+                out.append(input);
+        }
+    }
+    return out;
+}
+
 } // namespace DashboardLayout

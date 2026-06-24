@@ -108,6 +108,44 @@ private slots:
         QCOMPARE(out.at(2).toObject()["row"].toInt(), 2); // wrapped to next row
         QCOMPARE(out.at(2).toObject()["col"].toInt(), 0);
     }
+
+    void isMultiInstanceType_knownTypes()
+    {
+        QVERIFY(isMultiInstanceType("temp"));
+        QVERIFY(isMultiInstanceType("fan"));
+        QVERIFY(isMultiInstanceType("disk"));
+        QVERIFY(isMultiInstanceType("gpu"));
+        QVERIFY(isMultiInstanceType("network"));
+        QVERIFY(!isMultiInstanceType("cpu"));
+        QVERIFY(!isMultiInstanceType("memory"));
+        QVERIFY(!isMultiInstanceType("health"));
+    }
+
+    void typeOfUid_splitsOnHash()
+    {
+        QCOMPARE(typeOfUid("temp"), QString("temp"));
+        QCOMPARE(typeOfUid("temp#2"), QString("temp"));
+        QCOMPARE(typeOfUid("fan#10"), QString("fan"));
+    }
+
+    void makeUid_firstUnused()
+    {
+        QStringList used { "temp", "temp#1", "cpu" };
+        QCOMPARE(makeUid(used, "fan"), QString("fan"));
+        QCOMPARE(makeUid(used, "temp"), QString("temp#2"));
+    }
+
+    void usedInputsForType_filtersByType()
+    {
+        QJsonArray tiles;
+        QJsonObject a; a["id"] = "temp"; a["input"] = "s1"; tiles.append(a);
+        QJsonObject b; b["id"] = "temp"; b["input"] = "s2"; tiles.append(b);
+        QJsonObject c; c["id"] = "fan";  c["input"] = "f1"; tiles.append(c);
+        QStringList got = usedInputsForType(tiles, "temp");
+        QCOMPARE(got.size(), 2);
+        QVERIFY(got.contains("s1"));
+        QVERIFY(got.contains("s2"));
+    }
 };
 
 QTEST_APPLESS_MAIN(TestDashboardLayoutUtil)
