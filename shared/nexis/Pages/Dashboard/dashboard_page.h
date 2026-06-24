@@ -26,6 +26,7 @@
 #include "vumeter_tile.h"
 #include "health_score_tile.h"
 #include "dashboard_tile_wrapper.h"
+#include "dashboard_layout_util.h"
 
 #include "Managers/setting_manager.h"
 
@@ -139,8 +140,8 @@ private:
     bool mEditMode;
     bool mKioskMode;
 
-    static const int GRID_ROWS = 4;
-    static const int GRID_COLS = 4;
+    static const int GRID_ROWS = DashboardLayout::kGridRows;
+    static const int GRID_COLS = DashboardLayout::kGridCols;
     QString mOccupancy[GRID_ROWS][GRID_COLS];
     QList<QWidget*> mPlaceholders;
 
@@ -174,6 +175,8 @@ private:
     void applyDisplayModeForSpan(DashboardTileWrapper *wrapper);
     QJsonArray serializeLayout() const;
     void deserializeLayout(const QString &json);
+    void persistLayout();
+    QJsonObject layoutEnvelope() const;
     QJsonArray defaultLayout() const;
     bool gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const;
     void rebuildOccupancy();

@@ -365,6 +365,7 @@ set(GUI_SHARED_SRCS
   # APT-specific GUI components live under linux/ only — they're built into
   # GUI_PLAT_SRCS on Linux. On macOS the Homebrew page replaces them.
   "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.cpp"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_layout_util.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/linebar.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/metric_tile_base.cpp"

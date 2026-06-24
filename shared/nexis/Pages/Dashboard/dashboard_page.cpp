@@ -71,7 +71,9 @@ void DashboardPage::init()
     QString savedLayout = mSettingManager->getDashboardLayout();
     if (!savedLayout.isEmpty()) {
         QJsonDocument doc = QJsonDocument::fromJson(savedLayout.toUtf8());
-        QJsonArray arr = doc.array();
+        QJsonArray arr = doc.isObject()
+            ? doc.object().value("tiles").toArray()
+            : doc.array();
         for (const QJsonValue &val : arr) {
             QJsonObject obj = val.toObject();
             QString id = obj["id"].toString();
@@ -1056,8 +1058,7 @@ void DashboardPage::exitEditMode()
     mGearVisibleTiles.clear();
     for (QWidget *ph : mPlaceholders)
         ph->setVisible(false);
-    QJsonDocument doc(serializeLayout());
-    mSettingManager->setDashboardLayout(QString(doc.toJson(QJsonDocument::Compact)));
+    persistLayout();
 }
 
 void DashboardPage::onResetLayout()
@@ -1201,7 +1202,20 @@ QJsonArray DashboardPage::defaultLayout() const
 void DashboardPage::deserializeLayout(const QString &json)
 {
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
-    QJsonArray arr = doc.array();
+
+    // Layouts persist as a v2 envelope {"version":N,"tiles":[...]}. A bare
+    // array is a legacy v1 (4x4) layout with no version field. (GH#191)
+    QJsonArray rawTiles;
+    int version = 1;
+    if (doc.isObject()) {
+        QJsonObject env = doc.object();
+        version = env.value("version").toInt(1);
+        rawTiles = env.value("tiles").toArray();
+    } else {
+        rawTiles = doc.array();
+    }
+
+    QJsonArray arr = DashboardLayout::migrate(rawTiles, version);
 
     for (const QJsonValue &val : arr) {
         QJsonObject obj = val.toObject();
@@ -1272,6 +1286,20 @@ QJsonArray DashboardPage::serializeLayout() const
         arr.append(obj);
     }
     return arr;
+}
+
+QJsonObject DashboardPage::layoutEnvelope() const
+{
+    QJsonObject env;
+    env["version"] = DashboardLayout::kSchemaVersion;
+    env["tiles"] = serializeLayout();
+    return env;
+}
+
+void DashboardPage::persistLayout()
+{
+    mSettingManager->setDashboardLayout(
+        QJsonDocument(layoutEnvelope()).toJson(QJsonDocument::Compact));
 }
 
 void DashboardPage::rebuildOccupancy()
@@ -1703,8 +1731,7 @@ void DashboardPage::onAddTileClicked()
                     w->setGridPosition(freeRow, freeCol, 1, 1);
                 buildGrid();
                 updateAddTileButton();
-                mSettingManager->setDashboardLayout(
-                    QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
+                persistLayout();
             });
         }
     }
@@ -1736,8 +1763,7 @@ void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, co
 
     wrapper->setCurrentColor(hexColor);
 
-    mSettingManager->setDashboardLayout(
-        QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
+    persistLayout();
 }
 
 void DashboardPage::onTileRangeChangeRequested(DashboardTileWrapper *wrapper, const QString &rangeId)
@@ -1759,8 +1785,7 @@ void DashboardPage::onTileRangeChangeRequested(DashboardTileWrapper *wrapper, co
 
     wrapper->setCurrentRange(rangeId);
 
-    mSettingManager->setDashboardLayout(
-        QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
+    persistLayout();
 }
 
 bool DashboardPage::tileUsesRangeMenu(const QString &style) const
