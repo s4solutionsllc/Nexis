@@ -156,10 +156,34 @@ void DashboardPage::init()
         }
     }
 
+    // GH#191: host the bento grid in a vertical scroll area so fixed-size tiles
+    // overflow downward instead of compressing.
+    mGridContainer = new QWidget;
+    mGridContainer->setObjectName("bentoGridContainer");
+    mGridContainer->setStyleSheet("#bentoGridContainer{background:transparent;}");
+    // The .ui nests bentoGrid as an item inside mainLayout, so the layout
+    // already has a parent. Detach it from mainLayout (item + QObject parent)
+    // before re-homing it on the container, otherwise setLayout() is rejected.
+    ui->mainLayout->removeItem(ui->bentoGrid);
+    ui->bentoGrid->setParent(nullptr);
+    mGridContainer->setLayout(ui->bentoGrid);          // steals the layout from the .ui parent
+
+    mGridScroll = new QScrollArea(this);
+    mGridScroll->setObjectName("bentoScroll");
+    mGridScroll->setWidgetResizable(true);
+    mGridScroll->setFrameShape(QFrame::NoFrame);
+    mGridScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    mGridScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    mGridScroll->setStyleSheet("QScrollArea{background:transparent;} QScrollArea>QWidget>QWidget{background:transparent;}");
+    mGridScroll->setWidget(mGridContainer);
+
+    // bentoGrid was item 0 in mainLayout; restore the scroll area to that slot.
+    ui->mainLayout->insertWidget(0, mGridScroll);
+
     buildGrid();
 
     // Give the tile grid all available vertical space
-    ui->mainLayout->setStretchFactor(ui->bentoGrid, 1);
+    ui->mainLayout->setStretchFactor(mGridScroll, 1);
 
     // Temperature sensor gear menu
     if (im->hasThermalSensors()) {
@@ -1226,10 +1250,10 @@ void DashboardPage::deserializeLayout(const QString &json)
     for (const QJsonValue &val : arr) {
         QJsonObject obj = val.toObject();
         QString id = obj["id"].toString();
-        int row = qBound(0, obj["row"].toInt(), GRID_ROWS - 1);
-        int col = qBound(0, obj["col"].toInt(), GRID_COLS - 1);
-        int rowSpan = qBound(1, obj["rowSpan"].toInt(1), GRID_ROWS - row);
-        int colSpan = qBound(1, obj["colSpan"].toInt(1), GRID_COLS - col);
+        int col = qBound(0, obj["col"].toInt(), mVisibleCols - 1);
+        int row = qMax(0, obj["row"].toInt());
+        int rowSpan = qMax(1, obj["rowSpan"].toInt(1));
+        int colSpan = qBound(1, obj["colSpan"].toInt(1), mVisibleCols - col);
 
         QString style = obj["style"].toString();
         if (!style.isEmpty())
@@ -1310,16 +1334,20 @@ void DashboardPage::persistLayout()
 
 void DashboardPage::rebuildOccupancy()
 {
-    for (int r = 0; r < GRID_ROWS; ++r)
-        for (int c = 0; c < GRID_COLS; ++c)
-            mOccupancy[r][c].clear();
-
+    // Row count grows to fit the lowest-reaching visible tile (min 1 row).
+    mRowCount = 0;
     for (const DashboardTileWrapper *w : mTileWrappers) {
-        if (mHiddenTiles.contains(w->tileId()))
-            continue;
+        if (mHiddenTiles.contains(w->tileId())) continue;
+        mRowCount = std::max(mRowCount, w->gridRow() + w->gridRowSpan());
+    }
+    mRowCount = std::max(mRowCount, 1);
+
+    mOccupancy.assign(mRowCount, QVector<QString>(mVisibleCols));
+    for (const DashboardTileWrapper *w : mTileWrappers) {
+        if (mHiddenTiles.contains(w->tileId())) continue;
         for (int r = w->gridRow(); r < w->gridRow() + w->gridRowSpan(); ++r)
             for (int c = w->gridCol(); c < w->gridCol() + w->gridColSpan(); ++c)
-                if (r < GRID_ROWS && c < GRID_COLS)
+                if (r < mRowCount && c < mVisibleCols)
                     mOccupancy[r][c] = w->tileId();
     }
 }
@@ -1327,12 +1355,14 @@ void DashboardPage::rebuildOccupancy()
 bool DashboardPage::regionIsFree(int row, int col, int rowSpan, int colSpan,
                                   const QString &ignoreTileId) const
 {
-    if (row + rowSpan > GRID_ROWS || col + colSpan > GRID_COLS)
+    if (col + colSpan > mVisibleCols || row < 0 || col < 0)
         return false;
     for (int r = row; r < row + rowSpan; ++r)
-        for (int c = col; c < col + colSpan; ++c)
+        for (int c = col; c < col + colSpan; ++c) {
+            if (r >= mOccupancy.size() || c >= mVisibleCols) continue; // beyond current rows is free
             if (!mOccupancy[r][c].isEmpty() && mOccupancy[r][c] != ignoreTileId)
                 return false;
+        }
     return true;
 }
 
@@ -1340,46 +1370,51 @@ void DashboardPage::buildGrid()
 {
     while (ui->bentoGrid->count() > 0) {
         QLayoutItem *item = ui->bentoGrid->takeAt(0);
-        if (item->widget())
-            item->widget()->setParent(nullptr);
+        if (item->widget()) item->widget()->setParent(nullptr);
         delete item;
     }
     qDeleteAll(mPlaceholders);
     mPlaceholders.clear();
 
-    rebuildOccupancy();
+    rebuildOccupancy();   // sizes mOccupancy to mRowCount x mVisibleCols
 
     for (DashboardTileWrapper *w : mTileWrappers) {
-        if (mHiddenTiles.contains(w->tileId())) {
-            w->hide();
-            continue;
-        }
-        w->setParent(this);
-        ui->bentoGrid->addWidget(w, w->gridRow(), w->gridCol(),
-                                  w->gridRowSpan(), w->gridColSpan());
+        if (mHiddenTiles.contains(w->tileId())) { w->hide(); continue; }
+        w->setParent(mGridContainer);
+        w->setFixedSize(w->gridColSpan() * DashboardLayout::kCellW + (w->gridColSpan() - 1) * DashboardLayout::kGap,
+                        w->gridRowSpan() * DashboardLayout::kCellH + (w->gridRowSpan() - 1) * DashboardLayout::kGap);
+        ui->bentoGrid->addWidget(w, w->gridRow(), w->gridCol(), w->gridRowSpan(), w->gridColSpan());
         applyDisplayModeForSpan(w);
         w->show();
     }
 
-    for (int r = 0; r < GRID_ROWS; ++r) {
-        for (int c = 0; c < GRID_COLS; ++c) {
+    // Edit-mode placeholders for every empty cell (fixed-size too).
+    for (int r = 0; r < mRowCount; ++r)
+        for (int c = 0; c < mVisibleCols; ++c)
             if (mOccupancy[r][c].isEmpty()) {
-                auto *ph = new QWidget(this);
+                auto *ph = new QWidget(mGridContainer);
                 ph->setObjectName("dashPlaceholder");
-                ph->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                ph->setFixedSize(DashboardLayout::kCellW, DashboardLayout::kCellH);
                 ph->setVisible(mEditMode);
                 ui->bentoGrid->addWidget(ph, r, c);
                 mPlaceholders.append(ph);
             }
-        }
+
+    // Fixed cell pitch: each used column/row gets the exact cell size; a
+    // trailing stretch column/row absorbs extra space so tiles pack top-left.
+    ui->bentoGrid->setHorizontalSpacing(DashboardLayout::kGap);
+    ui->bentoGrid->setVerticalSpacing(DashboardLayout::kGap);
+    for (int c = 0; c < mVisibleCols; ++c) {
+        ui->bentoGrid->setColumnMinimumWidth(c, DashboardLayout::kCellW);
+        ui->bentoGrid->setColumnStretch(c, 0);
     }
+    for (int r = 0; r < mRowCount; ++r) {
+        ui->bentoGrid->setRowMinimumHeight(r, DashboardLayout::kCellH);
+        ui->bentoGrid->setRowStretch(r, 0);
+    }
+    ui->bentoGrid->setColumnStretch(mVisibleCols, 1);   // trailing spacer col
+    ui->bentoGrid->setRowStretch(mRowCount, 1);          // trailing spacer row
 
-    for (int c = 0; c < GRID_COLS; ++c)
-        ui->bentoGrid->setColumnStretch(c, 1);
-    for (int r = 0; r < GRID_ROWS; ++r)
-        ui->bentoGrid->setRowStretch(r, 1);
-
-    // Re-raise floating buttons above reparented tile wrappers (BUG-63)
     mEditButton->raise();
     mKioskButton->raise();
 }
@@ -1431,14 +1466,15 @@ bool DashboardPage::gridCellAtPos(const QPoint &globalPos, int &outRow, int &out
     int x = local.x() - gridRect.x();
     int y = local.y() - gridRect.y();
 
-    int cellW = gridRect.width() / GRID_COLS;
-    int cellH = gridRect.height() / GRID_ROWS;
+    int rows = qMax(1, mRowCount);
+    int cellW = gridRect.width() / mVisibleCols;
+    int cellH = gridRect.height() / rows;
 
     if (cellW <= 0 || cellH <= 0)
         return false;
 
-    outCol = qBound(0, x / cellW, GRID_COLS - 1);
-    outRow = qBound(0, y / cellH, GRID_ROWS - 1);
+    outCol = qBound(0, x / cellW, mVisibleCols - 1);
+    outRow = qBound(0, y / cellH, rows - 1);
     return true;
 }
 
@@ -1466,8 +1502,8 @@ void DashboardPage::onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint 
     }
 
     QRect gridRect = ui->bentoGrid->geometry();
-    int cellW = gridRect.width() / GRID_COLS;
-    int cellH = gridRect.height() / GRID_ROWS;
+    int cellW = gridRect.width() / mVisibleCols;
+    int cellH = gridRect.height() / qMax(1, mRowCount);
     int x = gridRect.x() + targetCol * cellW;
     int y = gridRect.y() + targetRow * cellH;
     mDragIndicator->setGeometry(x, y, cellW, cellH);
@@ -1726,8 +1762,8 @@ void DashboardPage::onAddTileClicked()
 
     for (const QString &id : sortedIds) {
         int freeRow = -1, freeCol = -1;
-        for (int r = 0; r < GRID_ROWS && freeRow == -1; ++r)
-            for (int c = 0; c < GRID_COLS && freeRow == -1; ++c)
+        for (int r = 0; r < mRowCount && freeRow == -1; ++r)
+            for (int c = 0; c < mVisibleCols && freeRow == -1; ++c)
                 if (regionIsFree(r, c, 1, 1))
                     { freeRow = r; freeCol = c; }
 

@@ -12,6 +12,8 @@
 #include <QDesktopServices>
 #include <QShortcut>
 #include <QtConcurrent>
+#include <QScrollArea>
+#include <QVector>
 
 #include "nexis_page.h"
 #include "Managers/info_manager.h"
@@ -140,9 +142,11 @@ private:
     bool mEditMode;
     bool mKioskMode;
 
-    static const int GRID_ROWS = DashboardLayout::kGridRows;
-    static const int GRID_COLS = DashboardLayout::kGridCols;
-    QString mOccupancy[GRID_ROWS][GRID_COLS];
+    int mVisibleCols = DashboardLayout::kMaxCols;   // responsive in Task 3
+    int mRowCount = 0;                              // grows to fit placed tiles
+    QVector<QVector<QString>> mOccupancy;           // [row][col] -> tile uid/id
+    QScrollArea *mGridScroll = nullptr;
+    QWidget *mGridContainer = nullptr;              // holds bentoGrid; scrolled
     QList<QWidget*> mPlaceholders;
 
     QList<DashboardTileWrapper*> mTileWrappers;
