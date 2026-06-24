@@ -7,18 +7,19 @@ on:
     branches: [native, master, main]
 
 jobs:
-  # Linux build matrix runs inside a Plucky (25.04) container — see SSO-4093.
-  # FW-06 raised the Qt floor to 6.8 LTS (SSO-3733), which Noble's apt does
-  # not ship. Plucky is the oldest Ubuntu series whose qt6-base-dev satisfies
-  # the floor, so we drop the bare ubuntu-24.04 runner + Noble apt path. The
-  # runner itself stays on ubuntu-24.04 / ubuntu-24.04-arm because that is
-  # what GitHub provides for the matching arch — the build environment comes
-  # from the container image.
+  # Linux build matrix runs inside a Resolute (26.04 LTS) container — see
+  # SSO-4093 / SSO-7306. FW-06 raised the Qt floor to 6.8 LTS (SSO-3733), which
+  # Noble's apt does not ship. The container was Plucky (25.04) until SSO-7306
+  # moved it to Resolute (26.04 LTS) when Plucky reached end-of-life — its apt
+  # archive moves to old-releases and the container build would break. Resolute
+  # is an LTS (supported to 2031) and ships Qt 6.8+. The runner itself stays on
+  # ubuntu-24.04 / ubuntu-24.04-arm because that is what GitHub provides for the
+  # matching arch — the build environment comes from the container image.
   build-linux:
     name: Linux (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     container:
-      image: ubuntu:25.04
+      image: ubuntu:26.04
 
     strategy:
       fail-fast: false
@@ -32,7 +33,7 @@ jobs:
             artifact-name: nexis-linux-arm64
 
     steps:
-      # The base ubuntu:25.04 image is minimal — install the bits actions/checkout
+      # The base ubuntu:26.04 image is minimal — install the bits actions/checkout
       # and the architecture-gate scripts rely on before any other step runs.
       - name: Install git and ca-certificates
         run: |

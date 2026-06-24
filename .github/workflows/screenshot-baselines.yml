@@ -22,14 +22,15 @@ on:
         required: false
 
 jobs:
-  # SSO-4093: split linux/macos into separate jobs so the Linux leg can run
-  # inside a Plucky (25.04) container (Qt 6.8 — the FW-06 floor) without
-  # affecting the macos-14 runner, which can't use `container:`.
+  # SSO-4093 / SSO-7306: split linux/macos into separate jobs so the Linux leg
+  # can run inside a Resolute (26.04 LTS) container (Qt 6.8 — the FW-06 floor)
+  # without affecting the macos-14 runner, which can't use `container:`.
+  # Plucky (25.04) was retired at EOL.
   regenerate-linux:
     name: Regenerate (linux-x64)
     runs-on: ubuntu-24.04
     container:
-      image: ubuntu:25.04
+      image: ubuntu:26.04
     steps:
       - name: Skip if not requested
         id: skip-check
