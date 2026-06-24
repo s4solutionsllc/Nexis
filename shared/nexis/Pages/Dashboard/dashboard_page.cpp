@@ -1391,12 +1391,19 @@ void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)
         return;
 
     int area = wrapper->gridRowSpan() * wrapper->gridColSpan();
-    if (area >= 4)
+    switch (DashboardLayout::tierForArea(area)) {
+    case DashboardLayout::Hero:
         metric->setDisplayMode(MetricTileBase::Hero);
-    else if (area >= 2)
+        break;
+    case DashboardLayout::Large:
         metric->setDisplayMode(MetricTileBase::Large);
-    else
+        break;
+    case DashboardLayout::Normal:
+    case DashboardLayout::Compact:
+        // Plan B replaces the Compact arm with MetricTileBase::Compact.
         metric->setDisplayMode(MetricTileBase::Normal);
+        break;
+    }
 }
 
 void DashboardPage::rebuildLayout()
