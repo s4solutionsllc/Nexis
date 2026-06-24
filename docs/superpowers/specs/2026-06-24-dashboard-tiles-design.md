@@ -49,30 +49,53 @@ Investigation of the current dashboard established:
 
 ## Non-goals
 
-- No user-configurable grid density (the grid is a fixed 8×8).
-- No minimum-cell-size enforcement or scroll-area for the grid (layout stays
-  proportional and always fills the page).
+- No user-configurable cell size (fixed at 120×98px; not exposed in settings).
+- No per-width layout memory — when the visible column count changes, tiles are
+  repacked in place; a previous wider arrangement is not restored on widening
+  (YAGNI for v1).
+- No horizontal scroll in the normal case — columns are derived from width, so
+  they always fit (horizontal scroll appears only when the window is narrower
+  than the MIN-column floor).
 - No per-tile data-refresh intervals.
 - No input binding for single-input types (CPU, memory, battery, health).
 
 ## Design
 
-### 1. Grid resolution & migration
+### 1. Grid model — fixed cells, responsive columns, reflow
 
-- Change `GRID_ROWS` and `GRID_COLS` from `4` to `8`
-  (`dashboard_page.h:142-143`), yielding a 64-cell grid. All occupancy,
-  hit-test, cell-size, and placeholder loops are already parameterized on these
-  constants and scale automatically.
-- Rewrite `defaultLayout()` (`dashboard_page.cpp:1167-1199`) so the default
-  tiles each span **2×2** in the new grid, positioned to mirror today's
-  arrangement. Net visual effect: the out-of-box dashboard looks identical to
-  the current 4×4 default; the only change is finer placement granularity.
-- **Layout migration:** add a `"v": 2` version field to the serialized layout
-  JSON (`serializeLayout`, `:1255-1275`). In `deserializeLayout`
-  (`:1201-1253`), a layout with **no version field** is treated as legacy v1
-  (4×4); every `row`, `col`, `rowSpan`, `colSpan` is **multiplied by 2** and
-  clamped to the 8×8 bounds. Existing user layouts therefore survive with
-  unchanged visual proportions.
+> **Revised 2026-06-24** after first-pass review: the original proportional
+> 8×8 stretch grid produced uneven row heights (chart tiles forced their rows
+> taller) and large sparse gaps, making tiles hard to align and compare. The
+> grid now uses **fixed-size cells with a responsive column count**.
+
+- **Fixed cell size.** A 1×1 cell is **120×98px** with a **10px gap** (pitch
+  130×108). Cells no longer stretch; the grid packs top-left with a trailing
+  spacer. Every 1×1 is identical and every 2×2 (=250×206px) is identical —
+  eliminating the uneven-row problem.
+- **Responsive column count.** `visibleCols = clamp(floor((panelWidth + gap) /
+  pitchX), kMinCols, kMaxCols)` with **kMinCols = 4, kMaxCols = 16**,
+  recomputed on every window resize. A ~1680px panel → ~13 columns; a laptop →
+  ~8.
+- **Vertical scroll.** The bento grid lives in a `QScrollArea` (vertical only);
+  tiles never shrink, so overflow scrolls down rather than compressing.
+- **Dynamic occupancy.** The fixed `mOccupancy[GRID_ROWS][GRID_COLS]` array
+  becomes a dynamic structure sized `rowCount × visibleCols`. Hit-testing,
+  drag, and resize use the **fixed cell pitch** (130×108) instead of
+  `width/GRID_COLS`, and account for the scroll-area viewport offset.
+- **Persistence + reflow.** Tiles persist absolute `(row, col, rowSpan,
+  colSpan)` in a logical grid up to `kMaxCols` wide. On load — and whenever a
+  resize changes `visibleCols` — `reflow(tiles, visibleCols)` clamps each
+  tile's `colSpan`/position to fit the width and repacks tiles in order (row,
+  then col) into the first free region, removing overlaps and gaps. The
+  repacked positions are persisted.
+- **Default layout.** `defaultLayout()` keeps the **2×2** default tiles in
+  logical coordinates (cpu 0,0; memory 0,2; …); the load-time reflow fits them
+  to the current column count.
+- **Layout migration.** Persisted layouts use the v2 envelope
+  `{"version":2,"tiles":[...]}`. A bare array is legacy v1 (4×4): each tile's
+  `row`/`col`/`rowSpan`/`colSpan` is scaled ×2 (so an old 1×1 becomes a 2×2),
+  clamped to `kMaxCols`; the load-time reflow then fits it to the current
+  column count. `tierForArea` (for the compact tier) is unchanged.
 
 ### 2. Compact display tier
 
