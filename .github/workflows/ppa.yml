@@ -73,11 +73,13 @@ jobs:
         # SSO-3733 / FW-06: Qt floor raised to 6.8 in CMakeLists.txt. Ubuntu
         # 24.04 (Noble) ships Qt 6.4 and 22.04 (Jammy) ships Qt 6.2, so
         # neither series can satisfy the floor from its archive Qt. Plucky
-        # (25.04) ships Qt 6.8+; Questing (25.10) ships Qt 6.8+. Users on
-        # Noble/Jammy can install via AppImage or AUR until they upgrade.
+        # (25.04) ships Qt 6.8+; Questing (25.10) ships Qt 6.8+; Resolute
+        # (26.04 LTS) ships Qt 6.8+. Users on Noble/Jammy can install via
+        # AppImage or AUR until they upgrade.
         # See RELEASE.md "Currently supported targets" and CHANGELOG.md
         # v2.6.0 [Unreleased] for the user-facing announcement.
-        series: [plucky, questing]
+        # SSO-7305: added resolute (26.04 LTS) — ships Qt 6.8+.
+        series: [plucky, questing, resolute]
 
     steps:
       - name: Checkout

@@ -121,7 +121,7 @@ Downstream-triggered (run on success of `Release`):
 
 - `homebrew.yml` — bumps the `s4solutionsllc/homebrew-nexis` Cask to the new DMG.
 - `aur.yml` — publishes the AUR `nexis` package via `KSXGitHub/github-actions-deploy-aur`.
-- `ppa.yml` — uploads source packages to the Launchpad PPA for `plucky`, `questing` (SSO-3733 / FW-06 dropped `noble` + `jammy`; see "Ubuntu 24.04 (Noble) dropped" below).
+- `ppa.yml` — uploads source packages to the Launchpad PPA for `plucky`, `questing`, `resolute` (SSO-3733 / FW-06 dropped `noble` + `jammy`; SSO-7305 added `resolute`; see "Ubuntu 24.04 (Noble) dropped" below).
 
 > **Action pins (WI-09 / SSO-3371).** Every `uses:` in `.github/workflows/` is
 > pinned to a full commit SHA with a trailing `# vX.Y.Z` comment — *never* a
@@ -140,11 +140,11 @@ Downstream-triggered (run on success of `Release`):
 - AppImage (any glibc-recent Linux)
 - macOS Apple Silicon (`arm64`) on macOS 14+ — **macOS Intel (`x86_64`) is sunset (SSO-3733 / FW-06)**, see below
 - AUR (Arch + derivatives)
-- Launchpad PPA (`plucky`, `questing`) — see "Ubuntu 24.04 (Noble) dropped" below
+- Launchpad PPA (`plucky`, `questing`, `resolute`) — see "Ubuntu 24.04 (Noble) dropped" below
 
 > **macOS Intel (`x86_64`) is formally sunset as of v2.6.0 (SSO-3733 / FW-06).** The CI matrix has produced **only** `Nexis-${VERSION}-macOS-arm64.dmg` since the macOS runner moved to `macos-14`; v2.6.0 codifies that as a supported-platform decision rather than an implicit CI artifact. macOS 26 ("Tahoe") is the last macOS to boot on Intel and Rosetta 2 is being phased out; macOS 27 ("Golden Gate") is Apple-silicon-only. No Intel runner will be added; no universal `.dmg` is planned. Intel users on macOS 26 can continue running prior `arm64` builds via Rosetta where supported, but `arm64`-only is the published target going forward.
 
-> **Ubuntu 24.04 (Noble) is no longer a supported PPA series as of v2.6.0 (SSO-3733 / FW-06).** Noble ships Qt 6.4, and the project's Qt floor is now 6.8 LTS (see `CMakeLists.txt`). The `noble` Launchpad source upload is removed from `ppa.yml`; PPA users on 24.04 should upgrade to 25.04 (Plucky) or 26.04 (Questing) — both ship a Qt that satisfies the 6.8 floor. AppImage and the AUR continue to cover older Ubuntu hosts that build against a newer Qt sysroot.
+> **Ubuntu 24.04 (Noble) is no longer a supported PPA series as of v2.6.0 (SSO-3733 / FW-06).** Noble ships Qt 6.4, and the project's Qt floor is now 6.8 LTS (see `CMakeLists.txt`). The `noble` Launchpad source upload is removed from `ppa.yml`; PPA users on 24.04 should upgrade to 25.04 (Plucky), 25.10 (Questing), or 26.04 (Resolute) — all ship a Qt that satisfies the 6.8 floor. AppImage and the AUR continue to cover older Ubuntu hosts that build against a newer Qt sysroot.
 
 > **macOS distribution format is `.dmg`, not `.pkg` (SSO-3733 / FW-06).** Tahoe (macOS 26) skips the first-run XProtect prompt for notarized `.dmg`/`.app` artifacts but **not** for `.pkg` installers, and Tahoe 26.3 saw `.pkg` Gatekeeper rejections in the field. Nexis is a drag-to-`/Applications` `.app` with no install-time launchd / scripting that would justify `.pkg` (the `ScheduleManager` plists are written at runtime to `~/Library/LaunchAgents/`, not at install time). Changing macOS distribution format is a maintainer-only scope decision and must be reopened explicitly — do not silently add a `.pkg` job to `release.yml`. See `docs/MAINTAINER_SOP.md` for the matching policy line.
 
