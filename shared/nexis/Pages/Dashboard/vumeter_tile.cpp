@@ -174,6 +174,18 @@ void VuMeterTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
+    if (mDisplayMode == Compact) {
+        int top = mLblTitle->geometry().bottom() + 4;
+        QRect valueRect(8, top, width() - 16, qMax(1, height() - top - 6));
+        QFont vf = font();
+        vf.setPixelSize(qMax(16, valueRect.height() / 2));
+        vf.setBold(true);
+        painter.setFont(vf);
+        painter.setPen(mSecondaryTextColor);
+        painter.drawText(valueRect, Qt::AlignCenter, mLblValue->text());
+        return;
+    }
+
     // Determine the vertical region for the bar: between the title bottom and widget bottom margin
     int topY    = mLblTitle->geometry().bottom() + 8;
     int bottomY = height() - (mBtnAction->isVisible() ? mBtnAction->geometry().height() + 12 : 8);
