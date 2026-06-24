@@ -1,3 +1,12 @@
+nexis (2.6.2-0) unstable; urgency=medium
+
+  * CI: migrate Linux build container from Ubuntu 25.04 (Plucky, EOL) to
+    26.04 (Resolute LTS); release .deb renamed _ubuntu2604.deb (SSO-7306)
+  * CI: drop EOL Plucky from the Launchpad PPA series (questing, resolute)
+  * CI: harden AUR publish against cgit replication lag (SSO-7306)
+
+ -- Luke Simpson <luke@s4solutions.ai>  Wed, 24 Jun 2026 00:00:00 +0000
+
 nexis (2.6.1-0) unstable; urgency=medium
 
   * Trash support for mounted filesystems — discover .Trash-$UID / .Trash/$UID

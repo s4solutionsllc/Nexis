@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.2] - 2026-06-24
+
 ### CI / Internal
 - **Drop Ubuntu 25.04 (Plucky) from the Launchpad PPA series (SSO-7306):** Plucky reached end-of-life, so Launchpad now rejects new uploads to it (`plucky is obsolete and will not accept new uploads`). The PPA matrix in `.github/workflows/ppa.yml` now publishes only `questing` (25.10) and `resolute` (26.04 LTS). PPA users on 25.04 should upgrade to 25.10 or 26.04; AppImage continues to cover older hosts. No change to the GitHub Release `.deb`/AppImage artifacts.
 - **Migrate the Linux build container from Ubuntu 25.04 (Plucky) to 26.04 (Resolute LTS) (SSO-7306):** The shared CI container in `release.yml`, `build.yml`, `codeql.yml`, and `screenshot-baselines.yml` moved from the now-EOL `ubuntu:25.04` to `ubuntu:26.04` — Plucky's apt archive moves to `old-releases` at EOL, which would break the container build. Resolute is an LTS (supported to 2031) and ships Qt 6.8+. The release `.deb` is renamed `_ubuntu2604.deb` accordingly; it targets Ubuntu 26.04+ / Debian 13+, with 25.10 (Questing) users directed to the PPA or AppImage.
