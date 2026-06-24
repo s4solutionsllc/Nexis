@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Trash: enumerate mounted-filesystem trash directories (GH#182):** `CleanerService` now enumerates `QStorageInfo::mountedVolumes()` and includes any `.Trash-<UID>/` and `.Trash/<UID>/` directories found on non-home mounts in both the Trash scan (size accounting) and `cleanTrash()` (deletion). Implements the FreeDesktop Trash Specification for files deleted from external USB drives and secondary internal drives. Virtual `mountedFilesystemTrashDirs()` test seam added alongside the existing `trashRoot()` seam; `test_cleaner_service.cpp` covers the new path.
+
+### Fixed
+- **Ubuntu 26.04 (Resolute) added to PPA build matrix (GH#186):** The Launchpad PPA now publishes `.deb` packages for Ubuntu 26.04 LTS ("Resolute"). The `ppa.yml` `series` matrix is extended to `[plucky, questing, resolute]`.
+- **Correct supported Ubuntu versions in README and APPLICATION_OVERVIEW (GH#185 / GH#186):** The README and `APPLICATION_OVERVIEW.md` previously advertised Ubuntu 22.04 (Jammy) and 24.04 (Noble) as PPA-supported, but both were dropped in v2.6.0 when Qt was raised to the 6.8 LTS floor (neither distro ships Qt 6.8). Documentation now correctly lists Ubuntu 25.04 (Plucky), 25.10 (Questing), and 26.04 (Resolute). A note directs Jammy/Noble and Linux Mint Zena users to the AppImage.
+
+### CI / Internal
+- **PPA matrix extended to Ubuntu 26.04 Resolute (GH#186):** Added `resolute` series to `ppa.yml` alongside existing `plucky` and `questing` entries.
+
 ## [2.6.0] - 2026-06-21
 
 ### Added

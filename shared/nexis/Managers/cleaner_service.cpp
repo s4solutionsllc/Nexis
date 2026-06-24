@@ -10,6 +10,7 @@
 #include <Utils/format_util.h>
 #include <QDir>
 #include <QStandardPaths>
+#include <QStorageInfo>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -225,6 +226,12 @@ CleanerService::ScanResult CleanerService::scan(const QList<CleanCategory> &cate
                 QString trashPath = QDir::homePath() + "/.local/share/Trash/";
 #endif
                 files = { QFileInfo(trashPath) };
+#ifndef Q_OS_MACOS
+                // GH#182: include .Trash-$UID directories on mounted
+                // filesystems per the FreeDesktop Trash Specification.
+                for (const QString &mountTrash : mountedFilesystemTrashDirs())
+                    files.append(QFileInfo(mountTrash));
+#endif
                 break;
             }
             case DOWNLOADS_AGED: {
@@ -393,6 +400,35 @@ QString CleanerService::trashRoot() const
 #endif
 }
 
+QStringList CleanerService::mountedFilesystemTrashDirs() const
+{
+    QStringList result;
+#ifdef Q_OS_LINUX
+    const QString homeMount = QStorageInfo(QDir::homePath()).rootPath();
+    const QString uid = QString::number(static_cast<uint>(getuid()));
+
+    for (const QStorageInfo &vol : QStorageInfo::mountedVolumes()) {
+        if (!vol.isValid() || !vol.isReady())
+            continue;
+        const QString mountRoot = vol.rootPath();
+        // Skip the filesystem that already contains ~/.local/share/Trash
+        if (mountRoot == homeMount)
+            continue;
+
+        // FreeDesktop Trash Spec §1.1: .Trash-$UID on the volume root
+        const QString trashDash = mountRoot + "/.Trash-" + uid;
+        if (QDir(trashDash).exists())
+            result << trashDash;
+
+        // FreeDesktop Trash Spec §1.2: .Trash/$UID when .Trash is sticky+group
+        const QString trashUid = mountRoot + "/.Trash/" + uid;
+        if (QDir(trashUid).exists())
+            result << trashUid;
+    }
+#endif
+    return result;
+}
+
 quint64 CleanerService::cleanTrash()
 {
     const QString trashPath = trashRoot();
@@ -418,6 +454,13 @@ quint64 CleanerService::cleanTrash()
 #else
     emptyDir(trashPath + "/files");
     emptyDir(trashPath + "/info");
+
+    // GH#182: also empty any .Trash-$UID directories on mounted filesystems
+    // per the FreeDesktop Trash Specification.
+    for (const QString &mountTrash : mountedFilesystemTrashDirs()) {
+        emptyDir(mountTrash + "/files");
+        emptyDir(mountTrash + "/info");
+    }
 #endif
 
     return sizeBefore;

@@ -18,6 +18,7 @@ public:
 
     QStringList elevatedPaths;
     QString mockTrashRoot;
+    QStringList mockMountedTrashDirs;
     // SSO-3704: default to "not user-owned" so the elevated branch is reachable
     // under CI (where temp files are always owned by the CI user). Individual
     // tests can flip this to true to exercise the user-owned branch.
@@ -48,6 +49,12 @@ protected:
     QString trashRoot() const override
     {
         return mockTrashRoot;
+    }
+
+    // GH#182: test seam — inject synthetic mounted-filesystem trash dirs
+    QStringList mountedFilesystemTrashDirs() const override
+    {
+        return mockMountedTrashDirs;
     }
 };
 
@@ -104,6 +111,7 @@ private slots:
     void cleanFiles_elevatedBranch_routesThroughSeam();
     void cleanFiles_elevatedBranch_argvHasEndOfOptionsGuard();
     void cleanTrash_removesContents_viaSeam();
+    void cleanTrash_includesMountedFilesystemTrashDirs(); // GH#182
 };
 
 void TestCleanerService::initTestCase()
@@ -335,6 +343,43 @@ void TestCleanerService::cleanTrash_removesContents_viaSeam()
     QCOMPARE(QDir(tmp.path() + "/files").entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
     QCOMPARE(QDir(tmp.path() + "/info").entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
 #endif
+}
+
+void TestCleanerService::cleanTrash_includesMountedFilesystemTrashDirs()
+{
+    // GH#182: cleanTrash() must also empty .Trash-$UID/files and
+    // .Trash-$UID/info on mounted filesystems, not just the home trash.
+    QTemporaryDir homeTrash;
+    QVERIFY(homeTrash.isValid());
+
+    QTemporaryDir mountTrash;
+    QVERIFY(mountTrash.isValid());
+
+    // Set up the home trash structure
+    const QString homeFile = writeFile(homeTrash.path() + "/files/home.txt", "home");
+    const QString homeInfo = writeFile(homeTrash.path() + "/info/home.trashinfo", "INFO");
+
+    // Set up a mounted-filesystem trash dir (.Trash-$UID/files and /info)
+    const QString mountFile = writeFile(mountTrash.path() + "/files/mount.txt", "mounted");
+    const QString mountInfo = writeFile(mountTrash.path() + "/info/mount.trashinfo", "INFO2");
+
+    TestableCleanerService cs;
+    cs.mockTrashRoot = homeTrash.path();
+    cs.mockMountedTrashDirs = { mountTrash.path() };
+
+    cs.cleanTrash();
+
+    // Home trash must be empty
+    QCOMPARE(QDir(homeTrash.path() + "/files").entryList(
+        QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
+    QCOMPARE(QDir(homeTrash.path() + "/info").entryList(
+        QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot).size(), 0);
+
+    // Mounted-filesystem trash must also be empty
+    QVERIFY2(!QFile::exists(mountFile),
+             "cleanTrash must empty files/ in mounted-filesystem .Trash-$UID");
+    QVERIFY2(!QFile::exists(mountInfo),
+             "cleanTrash must empty info/ in mounted-filesystem .Trash-$UID");
 }
 
 QTEST_MAIN(TestCleanerService)

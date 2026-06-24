@@ -138,6 +138,12 @@ protected:
     // user Trash directory; tests override to point at a QTemporaryDir.
     virtual QString trashRoot() const;
 
+    // GH#182: test seam for mounted-filesystem trash directories. Production
+    // enumerates QStorageInfo::mountedVolumes() and returns any
+    // .Trash-<UID> / .Trash/<UID> directories found on non-home mounts.
+    // Tests override to inject synthetic mount-point trash roots.
+    virtual QStringList mountedFilesystemTrashDirs() const;
+
     // SSO-3399 / SSO-3704: test seam for the user-vs-root ownership split in
     // cleanFiles(). Production compares ownerId() to geteuid(); tests override
     // to force paths through the elevated branch (or keep them in the user
