@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### CI / Internal
+- **Drop Ubuntu 25.04 (Plucky) from the Launchpad PPA series (SSO-7306):** Plucky reached end-of-life, so Launchpad now rejects new uploads to it (`plucky is obsolete and will not accept new uploads`). The PPA matrix in `.github/workflows/ppa.yml` now publishes only `questing` (25.10) and `resolute` (26.04 LTS). PPA users on 25.04 should upgrade to 25.10 or 26.04; AppImage continues to cover older hosts. No change to the GitHub Release `.deb`/AppImage artifacts.
+
 ## [2.6.1] - 2026-06-24
 
 ### Documentation
