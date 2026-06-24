@@ -1127,6 +1127,12 @@ void DashboardPage::onResetLayout()
     mSettingManager->clearDashboardLayout();
     deserializeLayout(QString(QJsonDocument(defaultLayout()).toJson()));
     buildGrid();
+    // The default layout is authored at kMaxCols; reflow it to the current
+    // viewport width. Invalidate mVisibleCols first so recomputeColumns()'s
+    // no-change guard can't skip the reflow when the width-derived count
+    // happens to equal the pre-reset value. (GH#191)
+    mVisibleCols = -1;
+    recomputeColumns();
     updateAddTileButton();
 }
 
@@ -1482,6 +1488,10 @@ void DashboardPage::rebuildLayout()
     else
         deserializeLayout(saved);
     buildGrid();
+    // Reflow the rebuilt layout to the current viewport width. Invalidate
+    // mVisibleCols first so the no-change guard can't skip the reflow. (GH#191)
+    mVisibleCols = -1;
+    recomputeColumns();
 }
 
 bool DashboardPage::gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const
@@ -1786,10 +1796,9 @@ void DashboardPage::onAddTileClicked()
 
     for (const QString &id : sortedIds) {
         int freeRow = -1, freeCol = -1;
-        for (int r = 0; r < mRowCount && freeRow == -1; ++r)
-            for (int c = 0; c < mVisibleCols && freeRow == -1; ++c)
-                if (regionIsFree(r, c, 1, 1))
-                    { freeRow = r; freeCol = c; }
+        for (int r = 0; freeRow == -1; ++r)
+            for (int c = 0; c < mVisibleCols; ++c)
+                if (regionIsFree(r, c, 1, 1)) { freeRow = r; freeCol = c; break; }
 
         QString label = kTileDisplayNames.value(id, id);
         if (freeRow == -1) {
