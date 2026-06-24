@@ -68,6 +68,46 @@ private slots:
         QCOMPARE(o["col"].toInt(), 1);
         QCOMPARE(o["input"].toString(), QString("k10temp/fan1"));
     }
+
+    void columnsForWidth_clampsAndDivides()
+    {
+        QCOMPARE(columnsForWidth(1680), 13); // floor((1680+10)/130)=13
+        QCOMPARE(columnsForWidth(100), kMinCols);   // tiny window -> MIN(4)
+        QCOMPARE(columnsForWidth(100000), kMaxCols); // huge -> MAX(16)
+    }
+
+    void reflow_clampsColSpanToCols()
+    {
+        QJsonObject t; t["id"]="disk"; t["row"]=0; t["col"]=0; t["rowSpan"]=2; t["colSpan"]=4;
+        QJsonArray in; in.append(t);
+        QJsonArray out = reflow(in, 3);            // only 3 columns available
+        QJsonObject o = out.at(0).toObject();
+        QCOMPARE(o["colSpan"].toInt(), 3);          // clamped to cols
+        QCOMPARE(o["col"].toInt(), 0);
+        QCOMPARE(o["row"].toInt(), 0);
+    }
+
+    void reflow_repacksWithoutOverlap()
+    {
+        // Two 2x2 tiles that both claim (0,0) in a 4-col grid: second must move.
+        auto mk=[](const QString &id,int r,int c){ QJsonObject o; o["id"]=id; o["row"]=r; o["col"]=c; o["rowSpan"]=2; o["colSpan"]=2; return o; };
+        QJsonArray in; in.append(mk("a",0,0)); in.append(mk("b",0,0));
+        QJsonArray out = reflow(in, 4);
+        QJsonObject a=out.at(0).toObject(), b=out.at(1).toObject();
+        QCOMPARE(a["row"].toInt(),0); QCOMPARE(a["col"].toInt(),0);
+        QCOMPARE(b["row"].toInt(),0); QCOMPARE(b["col"].toInt(),2); // packed to the right
+    }
+
+    void reflow_wrapsToNextRowWhenWidthExhausted()
+    {
+        auto mk=[](const QString &id){ QJsonObject o; o["id"]=id; o["row"]=0; o["col"]=0; o["rowSpan"]=2; o["colSpan"]=2; return o; };
+        QJsonArray in; for (const char *id : {"a","b","c"}) in.append(mk(id));
+        QJsonArray out = reflow(in, 4); // 4 cols -> two 2x2 per row
+        QCOMPARE(out.at(0).toObject()["col"].toInt(), 0);
+        QCOMPARE(out.at(1).toObject()["col"].toInt(), 2);
+        QCOMPARE(out.at(2).toObject()["row"].toInt(), 2); // wrapped to next row
+        QCOMPARE(out.at(2).toObject()["col"].toInt(), 0);
+    }
 };
 
 QTEST_APPLESS_MAIN(TestDashboardLayoutUtil)

@@ -8,17 +8,19 @@
 // without instantiating the full page (which builds its widget tree in init()).
 namespace DashboardLayout {
 
-// Current bento grid resolution. GH#191: doubled from the legacy 4x4 so users
-// can place more, smaller tiles; default tiles span 2x2 to look unchanged.
-inline constexpr int kGridRows = 8;
-inline constexpr int kGridCols = 8;
+// Fixed bento cell geometry (GH#191 revised model — fixed cells, responsive
+// columns). A 1x1 cell is kCellW x kCellH with kGap between cells.
+inline constexpr int kCellW = 120;
+inline constexpr int kCellH = 98;
+inline constexpr int kGap = 10;
 
-// Legacy grid resolution used by persisted v1 (unversioned) layouts.
-inline constexpr int kLegacyGridRows = 4;
-inline constexpr int kLegacyGridCols = 4;
+// Responsive column clamp.
+inline constexpr int kMinCols = 4;
+inline constexpr int kMaxCols = 16;
 
-// Persisted layout schema version. v1 == bare JSON array in 4x4 coords (no
-// envelope). v2 == {"version":2,"tiles":[...]} in 8x8 coords.
+// Legacy (v1, 4x4) layouts scale by this factor so an old 1x1 becomes a 2x2.
+inline constexpr int kLegacyScale = 2;
+
 inline constexpr int kSchemaVersion = 2;
 
 // Display tier for a tile, derived from its grid span area (rowSpan*colSpan).
@@ -30,10 +32,19 @@ enum DisplayTier { Compact = 0, Normal = 1, Large = 2, Hero = 3 };
 // 1x2 small tile as Compact.
 DisplayTier tierForArea(int area);
 
-// Returns a layout-tile array in current (8x8) coordinates. If declaredVersion
+// Responsive visible column count for a given panel (viewport) width.
+int columnsForWidth(int panelWidth);
+
+// Repacks tiles row-major into the first free region of a `cols`-wide grid:
+// colSpan is clamped to <= cols, rowSpan >= 1, and row/col are rewritten so no
+// two tiles overlap and tiles fill from the top-left. Input order is preserved
+// as packing priority. Rows are unbounded.
+QJsonArray reflow(const QJsonArray &tiles, int cols);
+
+// Returns a layout-tile array in current schema coordinates. If declaredVersion
 // is already current (>= kSchemaVersion) the array is returned unchanged.
-// Otherwise it is treated as a legacy 4x4 layout: row/col/rowSpan/colSpan are
-// scaled by kGridCols/kLegacyGridCols and clamped to the 8x8 bounds.
+// Otherwise it is treated as a legacy v1 layout: row/col/rowSpan/colSpan are
+// scaled by kLegacyScale and clamped to current bounds.
 QJsonArray migrate(const QJsonArray &tiles, int declaredVersion);
 
 } // namespace DashboardLayout
