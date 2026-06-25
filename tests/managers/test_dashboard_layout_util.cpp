@@ -48,7 +48,7 @@ private slots:
 
         QJsonArray out = migrate(in, 1);
         QJsonObject o = out.at(0).toObject();
-        // 3*2 = 6, span 2 -> ends at row 8 == kGridRows, still in bounds.
+        // Cols clamp to kMaxCols; rows are unbounded.
         QCOMPARE(o["row"].toInt(), 6);
         QCOMPARE(o["col"].toInt(), 6);
         QCOMPARE(o["rowSpan"].toInt(), 2);

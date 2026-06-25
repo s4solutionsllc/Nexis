@@ -1983,15 +1983,11 @@ void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, co
 
     mTileRanges.remove(id);
 
-    if (wrapper->tileType() == "network") {
-        if (mNetworkTile)
-            mNetworkTile->setColorOverride(hexColor);
-    } else {
-        auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
-        if (metric) {
-            metric->setColorRange(QString());
-            metric->setColorOverride(hexColor);
-        }
+    if (auto *net = qobject_cast<NetworkTile*>(wrapper->innerWidget())) {
+        net->setColorOverride(hexColor);
+    } else if (auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget())) {
+        metric->setColorRange(QString());
+        metric->setColorOverride(hexColor);
     }
 
     wrapper->setCurrentColor(hexColor);

@@ -474,6 +474,8 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/Dashboard/health_score_calculator.h"
   "${GUI_SHARED_DIR}/Pages/Dashboard/health_score_tile.h"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_tile_wrapper.h"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/add_tile_dialog.h"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/maintenance_wizard_dialog.h"
   "${GUI_SHARED_DIR}/command_palette.h"
   "${GUI_SHARED_DIR}/Pages/Docker/docker_page.h"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_appearance_tab.h"
