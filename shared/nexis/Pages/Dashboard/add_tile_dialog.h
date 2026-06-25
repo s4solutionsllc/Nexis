@@ -8,6 +8,7 @@
 #include <QString>
 
 class QListWidget;
+class QPushButton;
 
 // GH#191: the "Add tile" palette. Lets the user pick a tile type and, for
 // multi-instance types (temp/fan/gpu/disk/network), bind the new tile to one of
@@ -34,8 +35,13 @@ private slots:
     void onTypeChanged();
 
 private:
+    // GH#191: OK is enabled only when the current selection can produce a tile:
+    // a singleton type, or an input-bound type with a selected available input.
+    void updateOkEnabled();
+
     QListWidget *mTypeList;
     QListWidget *mInputList;
+    QPushButton *mOkButton = nullptr;
     QHash<QString, QList<QPair<QString, QString>>> mInputsByType;
 };
 

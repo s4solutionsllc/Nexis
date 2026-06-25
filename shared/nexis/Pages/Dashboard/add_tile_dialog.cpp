@@ -5,6 +5,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QListWidget>
+#include <QPushButton>
 #include <QVBoxLayout>
 
 AddTileDialog::AddTileDialog(const QList<QPair<QString, QString>> &typeOptions,
@@ -39,6 +40,7 @@ AddTileDialog::AddTileDialog(const QList<QPair<QString, QString>> &typeOptions,
     lists->addLayout(inputCol);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    mOkButton = buttons->button(QDialogButtonBox::Ok);
     connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
@@ -47,11 +49,14 @@ AddTileDialog::AddTileDialog(const QList<QPair<QString, QString>> &typeOptions,
     root->addWidget(buttons);
 
     connect(mTypeList, &QListWidget::currentRowChanged, this, &AddTileDialog::onTypeChanged);
+    connect(mInputList, &QListWidget::currentRowChanged, this, [this] { updateOkEnabled(); });
 
     if (mTypeList->count() > 0)
         mTypeList->setCurrentRow(0);
     else
         onTypeChanged(); // hide the (empty) input column
+
+    updateOkEnabled();
 }
 
 void AddTileDialog::onTypeChanged()
@@ -76,6 +81,30 @@ void AddTileDialog::onTypeChanged()
     mInputList->show();
     if (mInputList->count() > 0)
         mInputList->setCurrentRow(0);
+
+    updateOkEnabled();
+}
+
+void AddTileDialog::updateOkEnabled()
+{
+    if (!mOkButton)
+        return;
+
+    const QString type = chosenType();
+    if (type.isEmpty()) {
+        mOkButton->setEnabled(false);
+        return;
+    }
+
+    const bool inputBound = DashboardLayout::isMultiInstanceType(type)
+                            && mInputsByType.contains(type);
+    if (!inputBound) {
+        mOkButton->setEnabled(true); // singleton: always addable
+        return;
+    }
+
+    // Input-bound: addable only when an available input is selected.
+    mOkButton->setEnabled(mInputList->count() > 0 && mInputList->currentRow() >= 0);
 }
 
 QString AddTileDialog::chosenType() const

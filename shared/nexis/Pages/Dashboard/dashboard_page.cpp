@@ -1670,7 +1670,7 @@ void DashboardPage::setupTileGearMenu(DashboardTileWrapper *wrapper)
     else if (type == "gpu")
         for (const GpuDevice &g : im->getGpuDevices()) inputs.append({g.name, g.name});
     else if (type == "disk")
-        for (const Disk &d : mCachedDisks) inputs.append({d.name, d.name});
+        for (const Disk &d : im->getDisks()) inputs.append({d.name, d.name});
     // GH#191: network per-interface enumeration arrives in a later task; its
     // gear stays hidden for now.
 
@@ -1815,11 +1815,23 @@ void DashboardPage::onAddTileClicked()
     { QList<QPair<QString, QString>> v; for (const ThermalSensor &s : im->getThermalSensors()) v.append({s.id, s.label}); addAvail("temp", v); }
     { QList<QPair<QString, QString>> v; for (const FanSensor &f : im->getFanSensors()) v.append({f.id, f.label}); addAvail("fan", v); }
     { QList<QPair<QString, QString>> v; for (const GpuDevice &g : im->getGpuDevices()) v.append({g.name, g.name}); addAvail("gpu", v); }
-    { QList<QPair<QString, QString>> v; for (const Disk &d : mCachedDisks) v.append({d.name, d.name}); addAvail("disk", v); }
+    { QList<QPair<QString, QString>> v; for (const Disk &d : im->getDisks()) v.append({d.name, d.name}); addAvail("disk", v); }
     { QList<QPair<QString, QString>> v; for (const QString &n : im->getNetworkInterfaceNames()) v.append({n, n}); addAvail("network", v); }
 
-    // Type options: multi-instance types offered when they have >=1 available
-    // input; singletons only when not currently shown (hidden or no wrapper).
+    // GH#191: a multi-instance type is offered in the type list whenever its
+    // hardware EXISTS on the system (>=1 detected input), regardless of whether
+    // inputs are already placed. The input list passed to the dialog still
+    // carries only the UNUSED (avail) inputs, so a fully-placed type shows up
+    // but with an empty input list (the dialog disables OK). Singletons are
+    // offered only when not currently shown (hidden or no wrapper).
+    auto hardwareExists = [&](const QString &type) {
+        if (type == "temp")    return !im->getThermalSensors().isEmpty();
+        if (type == "fan")     return !im->getFanSensors().isEmpty();
+        if (type == "disk")    return !im->getDisks().isEmpty();
+        if (type == "gpu")     return !im->getGpuDevices().isEmpty();
+        if (type == "network") return !im->getNetworkInterfaceNames().isEmpty();
+        return false;
+    };
     static const QList<QPair<QString, QString>> kTypes = {
         {"cpu", tr("CPU Usage")}, {"memory", tr("Memory Usage")}, {"disk", tr("Disk Usage")},
         {"network", tr("Network Speed")}, {"gpu", tr("GPU Usage")}, {"temp", tr("Temperature")},
@@ -1828,7 +1840,7 @@ void DashboardPage::onAddTileClicked()
     QList<QPair<QString, QString>> typeOptions;
     for (const auto &t : kTypes) {
         if (DashboardLayout::isMultiInstanceType(t.first)) {
-            if (!avail.value(t.first).isEmpty())
+            if (hardwareExists(t.first))
                 typeOptions.append(t);
         } else if (mHiddenTiles.contains(t.first) || wrappersOfType(t.first).isEmpty()) {
             typeOptions.append(t); // singleton not currently shown
@@ -1844,6 +1856,11 @@ void DashboardPage::onAddTileClicked()
     QString type = dlg.chosenType();
     QString input = dlg.chosenInput();
     if (type.isEmpty())
+        return;
+    // GH#191: defensive guard — input-bound types require a chosen input. OK is
+    // already disabled in the dialog when none is available, but never create a
+    // tile bound to nothing.
+    if (DashboardLayout::isMultiInstanceType(type) && input.isEmpty())
         return;
 
     // Find the first free 2x2 region in the A2 dynamic grid: columns are
