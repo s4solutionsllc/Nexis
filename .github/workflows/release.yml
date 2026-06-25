@@ -314,10 +314,10 @@ jobs:
           host: linux
           target: desktop
           arch: linux_gcc_64
-          # qtcharts + qtsvg are separate modules; LinguistTools (lrelease) ships
-          # in the base install. Adjust this list if `cmake` configure fails on a
-          # missing Qt component during the dry-run.
-          modules: 'qtcharts qtsvg'
+          # Only Qt Charts is an add-on module. Qt Svg and the Linguist tools
+          # (lrelease) ship in the base desktop install — aqt has no 'qtsvg'
+          # module, so listing it fails (GH#195 dry-run run 28185605536).
+          modules: 'qtcharts'
           cache: true
 
       - name: Configure
