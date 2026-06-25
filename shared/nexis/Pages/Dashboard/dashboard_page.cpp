@@ -658,22 +658,23 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
 
 void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 {
-    static quint64 l_RXbytes = rxBytes;
-    static quint64 l_TXbytes = txBytes;
+    Q_UNUSED(rxBytes) Q_UNUSED(txBytes)
+    if (!mActive) return;
 
-    if (!mActive) {
-        l_RXbytes = rxBytes;
-        l_TXbytes = txBytes;
-        return;
+    NetInterfaceStatsMap stats = im->getInterfaceStats();
+    for (DashboardTileWrapper *w : wrappersOfType("network")) {
+        auto *tile = qobject_cast<NetworkTile*>(w->innerWidget());
+        if (!tile) continue;
+        QString iface = w->inputKey().isEmpty() ? im->getDefaultNetworkInterface()
+                                                : w->inputKey();
+        if (!stats.contains(iface)) continue;
+        quint64 rx = stats.value(iface).rx;
+        quint64 tx = stats.value(iface).tx;
+        auto last = mNetLastBytes.value(w->tileId(), {rx, tx});
+        tile->setInterfaceName(iface);
+        tile->setValues(rx - last.first, tx - last.second, rx, tx);
+        mNetLastBytes[w->tileId()] = {rx, tx};
     }
-
-    quint64 d_RXbytes = (rxBytes - l_RXbytes);
-    quint64 d_TXbytes = (txBytes - l_TXbytes);
-
-    mNetworkTile->setValues(d_RXbytes, d_TXbytes, rxBytes, txBytes);
-
-    l_RXbytes = rxBytes;
-    l_TXbytes = txBytes;
 }
 
 void DashboardPage::updateTempTile()
@@ -1696,8 +1697,8 @@ void DashboardPage::migrateLegacyBindings()
         QStringList v; for (const GpuDevice &g : im->getGpuDevices()) v << g.name; return v; });
     bindFirst("disk", mSettingManager->getDiskName(), [&]{
         QStringList v; for (const Disk &d : im->getDisks()) v << d.name; return v; });
-    // GH#191: network interface enumeration (im->getNetworkInterfaceNames())
-    // does not exist yet; network migration arrives in a later task.
+    bindFirst("network", QString(), [&]{
+        return im->getNetworkInterfaceNames(); });
 }
 
 DashboardTileWrapper *DashboardPage::findWrapper(const QString &tileId) const

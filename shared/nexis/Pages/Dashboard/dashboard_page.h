@@ -111,6 +111,7 @@ private:
 
     QList<Disk> mCachedDisks;
     QList<DriveHealth> mCachedDriveHealth;
+    QHash<QString, QPair<quint64,quint64>> mNetLastBytes;  // uid -> {rx, tx}
 
     InfoManager *im;
     SettingManager *mSettingManager;
