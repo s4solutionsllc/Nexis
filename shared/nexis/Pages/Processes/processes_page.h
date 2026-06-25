@@ -66,7 +66,41 @@ private:
     // (name, metric) hysteresis.
     void evaluateThresholdAlerts(const QList<Process> &processes);
 
-    static constexpr int kKillCol = 19; // GH#174: per-row kill icon column
+    // Logical column indices for the process table. GH#194: the Name column
+    // (Linux /proc/<pid>/comm — a short process name distinct from the full
+    // command line) exists only on Linux; on macOS it is omitted entirely so
+    // there is no permanently-empty column. Defining it conditionally keeps
+    // every downstream index correct on both platforms — on macOS the enum
+    // collapses to the historical 0..18 layout. The Name column sits right
+    // after PID; Command stays last (it is the wide, variable-width column and
+    // the search filter target).
+    enum Col {
+        Col_Pid = 0,
+#ifdef Q_OS_LINUX
+        Col_Name,
+#endif
+        Col_Rss,
+        Col_Pmem,
+        Col_Vsize,
+        Col_User,
+        Col_Pcpu,
+        Col_StartTime,
+        Col_State,
+        Col_Group,
+        Col_Nice,
+        Col_CpuTime,
+        Col_Session,
+        Col_DiskRead,
+        Col_DiskWrite,
+        Col_NetDown,
+        Col_NetUp,
+        Col_GpuPct,
+        Col_GpuVram,
+        Col_Cmd,
+        Col_Count   // number of data columns (kill icon follows)
+    };
+
+    static constexpr int kKillCol = Col_Count; // GH#174: per-row kill icon column
 
 private:
     Ui::ProcessesPage *ui;

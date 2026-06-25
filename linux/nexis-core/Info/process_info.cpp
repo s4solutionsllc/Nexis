@@ -215,6 +215,10 @@ QList<Process> ProcessInfoLinux::collectProcesses()
 
         proc.setCmd(ProcInfoParser::formatCmdline(cmdlineBytes, sf.comm));
 
+        // GH#194: the short process name (e.g. "systemd") is already parsed
+        // from /proc/<pid>/stat into sf.comm — no extra /proc read needed.
+        proc.setName(sf.comm);
+
         // FR-115: walk /proc/<pid>/fdinfo/* and fold DRM stats into proc.
         if (mCollectGpu) {
             collectGpuForPid(pid, proc, gpuElapsedSec);

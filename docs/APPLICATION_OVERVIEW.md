@@ -349,7 +349,8 @@ Manage system services (daemons).
 
 View and manage running processes.
 
-- Process table with 19 data columns + 1 fixed kill column: PID, name, user, CPU%, memory%, command line, Disk Read/s, Disk Write/s, Net Down/s, Net Up/s, GPU %, GPU VRAM, and more
+- Process table (20 data columns on Linux / 19 on macOS) + 1 fixed kill column: PID, Name, user, CPU%, memory%, command line, Disk Read/s, Disk Write/s, Net Down/s, Net Up/s, GPU %, GPU VRAM, and more
+- **Process Name column (GH#194, Linux only):** A short process name (e.g. `systemd`) sourced from `/proc/<pid>/comm`, shown right after PID and distinct from the full command line. Omitted entirely on macOS (no permanently-empty column). Column membership is driven by a platform-conditional `Col` enum in `processes_page.h`, so every column index stays correct on both platforms.
 - **Per-row kill icon (GH#174):** A fixed ✕ column at the far right lets users kill a process with a single click without selecting the row first. Rendered by `KillButtonDelegate` using `@destructiveColor` theme token; excluded from the header show/hide menu.
 - Disk Read/s and Disk Write/s columns show per-process disk I/O rates via `proc_pid_rusage()` (macOS) or `/proc/<pid>/io` (Linux), using delta-based calculation with `QElapsedTimer`
 - Net Down/s and Net Up/s columns show per-process network bandwidth via `nettop` parsing (macOS only; Linux shows N/A)

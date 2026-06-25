@@ -38,13 +38,19 @@ ProcessesPage::ProcessesPage(QWidget *parent, InfoManager *infoManager,
 
 void ProcessesPage::init()
 {
+    // Order MUST mirror the Col enum in the header. GH#194: the Name column is
+    // Linux-only (omitted on macOS), matching the conditional Col_Name entry.
     mHeaders = QStringList {
-        "PID", tr("Resident Memory"), tr("%Memory"), tr("Virtual Memory"),
+        "PID",
+#ifdef Q_OS_LINUX
+        tr("Name"),                              // GH#194: Col_Name (Linux only)
+#endif
+        tr("Resident Memory"), tr("%Memory"), tr("Virtual Memory"),
         tr("User"), "%CPU", tr("Start Time"), tr("State"), tr("Group"),
         tr("Nice"), tr("CPU Time"), tr("Session"),
         tr("Disk Read/s"), tr("Disk Write/s"), tr("Net Down/s"), tr("Net Up/s"),
-        tr("GPU %"), tr("GPU VRAM"),            // FR-115 (indices 16, 17)
-        tr("Process")                            // index 18; Kill icon is 19 (kKillCol, not in mHeaders)
+        tr("GPU %"), tr("GPU VRAM"),             // FR-115
+        tr("Process")                            // Col_Cmd (last data column)
     };
 
     // slider settings
@@ -68,13 +74,13 @@ void ProcessesPage::init()
     mSortFilterModel->setSortRole(SortRole);
     mSortFilterModel->setDynamicSortFilter(true);
     mSortFilterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
-    mSortFilterModel->sort(5, Qt::SortOrder::DescendingOrder);
+    mSortFilterModel->sort(Col_Pcpu, Qt::SortOrder::DescendingOrder);
 
     ui->tableProcess->horizontalHeader()->setSectionsMovable(true);
     ui->tableProcess->horizontalHeader()->setFixedHeight(Dpi::scale(36));
     ui->tableProcess->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     ui->tableProcess->horizontalHeader()->setCursor(Qt::PointingHandCursor);
-    ui->tableProcess->horizontalHeader()->resizeSection(0, 70);
+    ui->tableProcess->horizontalHeader()->resizeSection(Col_Pid, 70);
 
     // GH#174: Kill column — fixed narrow width, not shown in header context menu
     // (not in mHeaders so loadHeaderMenu() ignores it), not sortable.
@@ -118,11 +124,9 @@ void ProcessesPage::init()
 void ProcessesPage::updateProcessIoCollection()
 {
     const auto *header = ui->tableProcess->horizontalHeader();
-    // Columns: 12=Disk Read/s, 13=Disk Write/s, 14=Net Down/s, 15=Net Up/s,
-    //          16=GPU %, 17=GPU VRAM.
-    const bool diskVisible = !header->isSectionHidden(12) || !header->isSectionHidden(13);
-    const bool netVisible  = !header->isSectionHidden(14) || !header->isSectionHidden(15);
-    const bool gpuVisible  = !header->isSectionHidden(16) || !header->isSectionHidden(17);
+    const bool diskVisible = !header->isSectionHidden(Col_DiskRead) || !header->isSectionHidden(Col_DiskWrite);
+    const bool netVisible  = !header->isSectionHidden(Col_NetDown) || !header->isSectionHidden(Col_NetUp);
+    const bool gpuVisible  = !header->isSectionHidden(Col_GpuPct) || !header->isSectionHidden(Col_GpuVram);
     im->setCollectProcessDiskIO(diskVisible);
     im->setCollectProcessNetIO(netVisible);
     im->setCollectProcessGpu(gpuVisible);
@@ -142,8 +146,14 @@ void ProcessesPage::loadHeaderMenu()
 
     }
     mHeaderMenu.addActions(actionList);
-    // exclude headers — GPU %/VRAM (16,17) hidden by default, same pattern as disk/net I/O.
-    QList<int> hiddenHeaders = { 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+    // Columns hidden by default (GPU %/VRAM, disk/net I/O, and the verbose
+    // columns). The Name column (GH#194) is intentionally NOT hidden — it is a
+    // primary identity column shown by default on Linux.
+    QList<int> hiddenHeaders = {
+        Col_Vsize, Col_StartTime, Col_State, Col_Group, Col_Nice,
+        Col_CpuTime, Col_Session, Col_DiskRead, Col_DiskWrite,
+        Col_NetDown, Col_NetUp, Col_GpuPct, Col_GpuVram
+    };
 
     QList<QAction*> actions = mHeaderMenu.actions();
     for (const int i : hiddenHeaders) {
@@ -234,6 +244,13 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     // FR-116: pin role used by PinSortFilterProxyModel::lessThan.
     pid_i->setData(ProcessPrefsManager::ins()->isPinned(proc.getCmd()),
                    PinSortFilterProxyModel::PinnedRole);
+
+#ifdef Q_OS_LINUX
+    // GH#194: short process name (Linux only).
+    QStandardItem *name_i = new QStandardItem(proc.getName());
+    name_i->setData(proc.getName(), data);
+    name_i->setData(proc.getName(), Qt::ToolTipRole);
+#endif
 
     QStandardItem *rss_i = new QStandardItem(FormatUtil::formatBytes(proc.getRss()));
     rss_i->setData(proc.getRss(), data);
@@ -338,7 +355,11 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     kill_i->setFlags(Qt::ItemIsEnabled);
     kill_i->setData(tr("Kill process"), Qt::ToolTipRole);
 
-    row << pid_i << rss_i << pmem_i << vsize_i << uname_i << pcpu_i
+    row << pid_i;
+#ifdef Q_OS_LINUX
+    row << name_i;   // GH#194: Col_Name, right after PID
+#endif
+    row << rss_i << pmem_i << vsize_i << uname_i << pcpu_i
         << starttime_i << state_i << group_i << nice_i << cpuTime_i
         << session_i << diskRead_i << diskWrite_i << netDown_i << netUp_i
         << gpuPct_i << gpuVram_i
@@ -359,61 +380,64 @@ void ProcessesPage::updateRow(int row, const Process &proc)
         }
     };
 
-    setCell(0,  QString::number(proc.getPid()), proc.getPid(), proc.getPid());
+    setCell(Col_Pid, QString::number(proc.getPid()), proc.getPid(), proc.getPid());
     // FR-116: refresh pinned role on the updated row.
-    if (auto *pidItem = mItemModel->item(row, 0))
+    if (auto *pidItem = mItemModel->item(row, Col_Pid))
         pidItem->setData(ProcessPrefsManager::ins()->isPinned(proc.getCmd()),
                          PinSortFilterProxyModel::PinnedRole);
-    setCell(1,  FormatUtil::formatBytes(proc.getRss()), proc.getRss(), FormatUtil::formatBytes(proc.getRss()));
-    setCell(2,  QString::number(proc.getPmem()), proc.getPmem(), proc.getPmem());
-    setCell(3,  FormatUtil::formatBytes(proc.getVsize()), proc.getVsize(), FormatUtil::formatBytes(proc.getVsize()));
-    setCell(4,  proc.getUname(), proc.getUname(), proc.getUname());
-    setCell(5,  QString::number(proc.getPcpu()), proc.getPcpu(), proc.getPcpu());
-    setCell(6,  proc.getStartTime(), proc.getStartTime(), proc.getStartTime());
-    setCell(7,  proc.getState(), proc.getState(), proc.getState());
-    setCell(8,  proc.getGroup(), proc.getGroup(), proc.getGroup());
-    setCell(9,  QString::number(proc.getNice()), proc.getNice(), proc.getNice());
-    setCell(10, proc.getCpuTime(), proc.getCpuTime(), proc.getCpuTime());
-    setCell(11, proc.getSession(), proc.getSession(), proc.getSession());
+#ifdef Q_OS_LINUX
+    setCell(Col_Name, proc.getName(), proc.getName(), proc.getName());   // GH#194
+#endif
+    setCell(Col_Rss,     FormatUtil::formatBytes(proc.getRss()), proc.getRss(), FormatUtil::formatBytes(proc.getRss()));
+    setCell(Col_Pmem,    QString::number(proc.getPmem()), proc.getPmem(), proc.getPmem());
+    setCell(Col_Vsize,   FormatUtil::formatBytes(proc.getVsize()), proc.getVsize(), FormatUtil::formatBytes(proc.getVsize()));
+    setCell(Col_User,    proc.getUname(), proc.getUname(), proc.getUname());
+    setCell(Col_Pcpu,    QString::number(proc.getPcpu()), proc.getPcpu(), proc.getPcpu());
+    setCell(Col_StartTime, proc.getStartTime(), proc.getStartTime(), proc.getStartTime());
+    setCell(Col_State,   proc.getState(), proc.getState(), proc.getState());
+    setCell(Col_Group,   proc.getGroup(), proc.getGroup(), proc.getGroup());
+    setCell(Col_Nice,    QString::number(proc.getNice()), proc.getNice(), proc.getNice());
+    setCell(Col_CpuTime, proc.getCpuTime(), proc.getCpuTime(), proc.getCpuTime());
+    setCell(Col_Session, proc.getSession(), proc.getSession(), proc.getSession());
 
     QString diskReadText = proc.getDiskReadRate() < 0
         ? QString::fromUtf8("\u2014")
         : FormatUtil::formatBytes(static_cast<quint64>(proc.getDiskReadRate())) + "/s";
-    setCell(12, diskReadText, proc.getDiskReadRate(), diskReadText);
+    setCell(Col_DiskRead, diskReadText, proc.getDiskReadRate(), diskReadText);
 
     QString diskWriteText = proc.getDiskWriteRate() < 0
         ? QString::fromUtf8("\u2014")
         : FormatUtil::formatBytes(static_cast<quint64>(proc.getDiskWriteRate())) + "/s";
-    setCell(13, diskWriteText, proc.getDiskWriteRate(), diskWriteText);
+    setCell(Col_DiskWrite, diskWriteText, proc.getDiskWriteRate(), diskWriteText);
 
     QString netDownText = proc.getNetDownRate() < 0
         ? QString::fromUtf8("\u2014")
         : FormatUtil::formatBytes(static_cast<quint64>(proc.getNetDownRate())) + "/s";
-    setCell(14, netDownText, proc.getNetDownRate(), netDownText);
+    setCell(Col_NetDown, netDownText, proc.getNetDownRate(), netDownText);
 
     QString netUpText = proc.getNetUpRate() < 0
         ? QString::fromUtf8("\u2014")
         : FormatUtil::formatBytes(static_cast<quint64>(proc.getNetUpRate())) + "/s";
-    setCell(15, netUpText, proc.getNetUpRate(), netUpText);
+    setCell(Col_NetUp, netUpText, proc.getNetUpRate(), netUpText);
 
     QString gpuPctText = proc.getGpuPercent() < 0
         ? QString::fromUtf8("\u2014")
         : QString::number(proc.getGpuPercent(), 'f', 0) + "%";
-    setCell(16, gpuPctText, proc.getGpuPercent(), gpuPctText);
+    setCell(Col_GpuPct, gpuPctText, proc.getGpuPercent(), gpuPctText);
 
     QString gpuVramText = proc.getGpuVramBytes() < 0
         ? QString::fromUtf8("\u2014")
         : FormatUtil::formatBytes(static_cast<quint64>(proc.getGpuVramBytes()));
-    setCell(17, gpuVramText, proc.getGpuVramBytes(), gpuVramText);
+    setCell(Col_GpuVram, gpuVramText, proc.getGpuVramBytes(), gpuVramText);
 
-    setCell(18, proc.getCmd(), proc.getCmd(), QString("<p>%1</p>").arg(proc.getCmd()));
-    if (auto *item = mItemModel->item(row, 18))
+    setCell(Col_Cmd, proc.getCmd(), proc.getCmd(), QString("<p>%1</p>").arg(proc.getCmd()));
+    if (auto *item = mItemModel->item(row, Col_Cmd))
         item->setFont(QFont(QStringLiteral("JetBrains Mono")));
 }
 
 void ProcessesPage::on_txtProcessSearch_textChanged(const QString &val)
 {
-    mSortFilterModel->setFilterKeyColumn(mHeaders.count() - 1);
+    mSortFilterModel->setFilterKeyColumn(Col_Cmd);
     mSortFilterModel->setFilterFixedString(val);
 }
 
@@ -428,7 +452,7 @@ void ProcessesPage::on_btnEndProcess_clicked()
     pid_t pid = mSelectedRowModel.data(SortRole).toInt();
 
     if (pid) {
-        QString selectedUname = mSortFilterModel->index(mSelectedRowModel.row(), 4).data(SortRole).toString();
+        QString selectedUname = mSortFilterModel->index(mSelectedRowModel.row(), Col_User).data(SortRole).toString();
         mProcessService->killProcess(pid, selectedUname, im->getUserName());
     }
 }
@@ -449,7 +473,7 @@ void ProcessesPage::onKillColumnClicked(const QModelIndex &proxyIndex)
     if (!pid)
         return;
 
-    QStandardItem *unameItem = mItemModel->item(src.row(), 4);
+    QStandardItem *unameItem = mItemModel->item(src.row(), Col_User);
     const QString uname = unameItem ? unameItem->data(SortRole).toString() : QString();
     mProcessService->killProcess(pid, uname, im->getUserName());
 }

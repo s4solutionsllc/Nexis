@@ -88,7 +88,25 @@ private slots:
 
     // ── concurrency stress ────────────────────────────────────────────────
     void stress_concurrentSetAndGetProcessList();
+
+    // ── GH#194: Process name vs command line ──────────────────────────────
+    void process_nameAndCmdAreIndependent();
 };
+
+void TestProcessInfo::process_nameAndCmdAreIndependent()
+{
+    // GH#194: getName() (short process name, e.g. "systemd") is a distinct
+    // field from getCmd() (full command line, e.g. "/sbin/init splash").
+    // Setting one must not affect the other, and an unset name defaults empty.
+    Process p;
+    QVERIFY(p.getName().isEmpty());
+
+    p.setCmd(QStringLiteral("/sbin/init splash"));
+    p.setName(QStringLiteral("systemd"));
+
+    QCOMPARE(p.getName(), QStringLiteral("systemd"));
+    QCOMPARE(p.getCmd(), QStringLiteral("/sbin/init splash"));
+}
 
 void TestProcessInfo::publish_collectIsLocalAndDoesNotMutateCache()
 {
