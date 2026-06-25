@@ -1,4 +1,5 @@
 #include "dashboard_tile_wrapper.h"
+#include "dashboard_layout_util.h"
 
 #include <QVBoxLayout>
 #include <QPainter>
@@ -347,8 +348,13 @@ void DashboardTileWrapper::mouseMoveEvent(QMouseEvent *event)
         int cellWidth = width() / mGridColSpan;
         int cellHeight = height() / mGridRowSpan;
         if (cellWidth > 0 && cellHeight > 0) {
-            int newColSpan = qBound(1, (event->pos().x() + cellWidth / 2) / cellWidth, 2);
-            int newRowSpan = qBound(1, (event->pos().y() + cellHeight / 2) / cellHeight, 2);
+            // GH#191: the grid is responsive (up to kMaxCols wide) and rows grow
+            // as needed, so don't hard-cap the span at 2x2 — that was a leftover
+            // from the old fixed 4x4 grid. DashboardPage::onTileResizeRequested()
+            // gates the actual resize via regionIsFree() (real column count +
+            // occupancy), so anything that doesn't fit is simply rejected.
+            int newColSpan = qBound(1, (event->pos().x() + cellWidth / 2) / cellWidth, DashboardLayout::kMaxCols);
+            int newRowSpan = qBound(1, (event->pos().y() + cellHeight / 2) / cellHeight, DashboardLayout::kMaxCols);
             if (newColSpan != mGridColSpan || newRowSpan != mGridRowSpan)
                 emit resizeRequested(this, newColSpan, newRowSpan);
         }
