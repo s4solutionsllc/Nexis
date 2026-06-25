@@ -2025,6 +2025,7 @@ void DashboardPage::onPageActivated()
 void DashboardPage::onPageDeactivated()
 {
     mActive = false;
+    mNetLastBytes.clear();
 
     mRefresh->unsubscribe(DataRefreshService::Signal::Cpu);
     mRefresh->unsubscribe(DataRefreshService::Signal::Memory);
