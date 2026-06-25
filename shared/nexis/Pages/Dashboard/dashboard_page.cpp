@@ -11,7 +11,9 @@
 #include "signal_mapper.h"
 
 #include <QDateTime>
+#include <QHostAddress>
 #include <QNetworkAccessManager>
+#include <QNetworkInterface>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QRegularExpression>
@@ -667,7 +669,11 @@ void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
         quint64 rx = stats.value(iface).rx;
         quint64 tx = stats.value(iface).tx;
         auto last = mNetLastBytes.value(w->tileId(), {rx, tx});
-        tile->setInterfaceName(iface);
+        // GH#191: show the friendly form ("Wi-Fi (en0)") on the tile subtitle.
+        // The macOS display-name cache keeps this cheap per-tick.
+        QString friendly = im->getNetworkInterfaceDisplayName(iface);
+        tile->setInterfaceName(friendly.isEmpty() ? iface
+                                                   : QStringLiteral("%1 (%2)").arg(friendly, iface));
         tile->setValues(rx - last.first, tx - last.second, rx, tx);
         mNetLastBytes[w->tileId()] = {rx, tx};
     }
@@ -1864,7 +1870,25 @@ void DashboardPage::onAddTileClicked()
     { QList<QPair<QString, QString>> v; for (const FanSensor &f : im->getFanSensors()) v.append({f.id, f.label}); addAvail("fan", v); }
     { QList<QPair<QString, QString>> v; for (const GpuDevice &g : im->getGpuDevices()) v.append({g.name, g.name}); addAvail("gpu", v); }
     { QList<QPair<QString, QString>> v; for (const Disk &d : im->getDisks()) v.append({d.name, d.name}); addAvail("disk", v); }
-    { QList<QPair<QString, QString>> v; for (const QString &n : im->getNetworkInterfaceNames()) v.append({n, n}); addAvail("network", v); }
+    {
+        // GH#191: build a friendly LABEL (display name + iface + IP) while
+        // keeping the KEY = the raw interface name (the dialog binds on the
+        // key and addAvail filters used inputs by key, so both still work).
+        QList<QPair<QString, QString>> v;
+        for (const QString &n : im->getNetworkInterfaceNames()) {
+            QString friendly = im->getNetworkInterfaceDisplayName(n);
+            QString ip;
+            const QNetworkInterface iface = QNetworkInterface::interfaceFromName(n);
+            for (const QNetworkAddressEntry &e : iface.addressEntries()) {
+                const QHostAddress a = e.ip();
+                if (!a.isNull() && !a.isLinkLocal() && !a.isLoopback()) { ip = a.toString(); break; }
+            }
+            QString label = friendly.isEmpty() ? n : QStringLiteral("%1 (%2)").arg(friendly, n);
+            if (!ip.isEmpty()) label += QStringLiteral(" — %1").arg(ip);
+            v.append({n, label});
+        }
+        addAvail("network", v);
+    }
 
     // GH#191: a multi-instance type is offered in the type list whenever its
     // hardware EXISTS on the system (>=1 detected input), regardless of whether

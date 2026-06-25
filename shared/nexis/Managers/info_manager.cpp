@@ -325,6 +325,11 @@ QStringList InfoManager::getNetworkInterfaceNames() const
     return names;
 }
 
+QString InfoManager::getNetworkInterfaceDisplayName(const QString &name) const
+{
+    return ni->interfaceDisplayName(name);
+}
+
 NetInterfaceStatsMap InfoManager::getInterfaceStats() const
 {
     return ni->getInterfaceStats();

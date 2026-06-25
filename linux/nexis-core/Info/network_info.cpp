@@ -2,6 +2,8 @@
 
 #include <QDebug>
 #include <QFile>
+#include <QFileInfo>
+#include <QObject>
 #include <QStringList>
 
 namespace {
@@ -119,4 +121,21 @@ QList<QNetworkInterface> NetworkInfoLinux::getAllInterfaces()
 QString NetworkInfoLinux::getDefaultNetworkInterface() const
 {
     return defaultNetworkInterface;
+}
+
+QString NetworkInfoLinux::interfaceDisplayName(const QString &name) const
+{
+    const QString base = QStringLiteral("/sys/class/net/%1").arg(name);
+    if (QFileInfo::exists(base + "/wireless") || QFileInfo::exists(base + "/phy80211"))
+        return QObject::tr("Wi-Fi");
+    if (QFileInfo::exists(base + "/tun_flags"))
+        return QObject::tr("VPN");
+    if (QFileInfo::exists(base + "/bridge"))
+        return QObject::tr("Bridge");
+    QFile tf(base + "/type");
+    if (tf.open(QIODevice::ReadOnly)) {
+        const QByteArray t = tf.readAll().trimmed();
+        if (t == "1") return QObject::tr("Ethernet");  // ARPHRD_ETHER
+    }
+    return {};
 }

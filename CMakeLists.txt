@@ -320,11 +320,13 @@ target_include_directories(nexis-core PUBLIC
 target_compile_definitions(nexis-core PRIVATE NEXISCORE_LIBRARY QT_DEPRECATED_WARNINGS)
 target_link_libraries(nexis-core Qt6::Core Qt6::Network Qt6::Concurrent)
 
-# macOS-specific frameworks needed for system info APIs (IOKit, CoreFoundation)
+# macOS-specific frameworks needed for system info APIs (IOKit, CoreFoundation,
+# SystemConfiguration for GH#191 localized network interface names)
 if(APPLE)
   find_library(IOKIT_FRAMEWORK IOKit)
   find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
-  target_link_libraries(nexis-core ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK})
+  find_library(SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration)
+  target_link_libraries(nexis-core ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK} ${SYSTEMCONFIGURATION_FRAMEWORK})
 endif()
 
 # ============================================================================
