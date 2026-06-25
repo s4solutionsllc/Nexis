@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Dashboard: multiple tiles per type, each bound to a specific input (GH#191).** An edit-mode "Add tile" palette lets you place several tiles of a type — e.g. CPU fan and pump fan, or two thermal sensors — each pinned to a specific detected sensor/fan/disk/GPU. Per-tile binding (a gear menu on each tile) replaces the previous single global temperature/fan/GPU/disk selection.
+- **Dashboard: multiple tiles per type, each bound to a specific input (GH#191).** An edit-mode "Add tile" palette lets you place several tiles of a type — e.g. CPU fan and pump fan, or two thermal sensors — each pinned to a specific detected sensor/fan/disk/GPU/network interface. Per-tile binding (a gear menu on each tile) replaces the previous single global temperature/fan/GPU/disk selection.
 - **Dashboard: per-interface network tiles (GH#191).** Bind a network tile to a specific interface to monitor that NIC's throughput.
 - **Dashboard: compact tile rendering (GH#191).** Small tiles drop their gauge/sparkline and show the title + a large value so they stay readable at a single cell.
 
