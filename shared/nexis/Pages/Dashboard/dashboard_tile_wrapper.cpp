@@ -6,9 +6,13 @@
 #include <QApplication>
 #include <QResizeEvent>
 
-DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *innerWidget, QWidget *parent)
+DashboardTileWrapper::DashboardTileWrapper(const QString &uid, const QString &type,
+                                           const QString &input, QWidget *innerWidget,
+                                           QWidget *parent)
     : QWidget(parent),
-      mTileId(tileId),
+      mTileId(uid),
+      mTileType(type),
+      mInputKey(input),
       mInnerWidget(innerWidget),
       mEditMode(false),
       mDragging(false),
@@ -72,6 +76,9 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &tileId, QWidget *inner
 }
 
 QString DashboardTileWrapper::tileId() const { return mTileId; }
+QString DashboardTileWrapper::tileType() const { return mTileType; }
+QString DashboardTileWrapper::inputKey() const { return mInputKey; }
+void DashboardTileWrapper::setInputKey(const QString &input) { mInputKey = input; }
 QWidget *DashboardTileWrapper::innerWidget() const { return mInnerWidget; }
 
 void DashboardTileWrapper::setInnerWidget(QWidget *newWidget)

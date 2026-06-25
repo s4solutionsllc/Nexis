@@ -79,10 +79,11 @@ void DashboardPage::init()
             : doc.array();
         for (const QJsonValue &val : arr) {
             QJsonObject obj = val.toObject();
-            QString id = obj["id"].toString();
+            QString type = obj["id"].toString();
+            QString uid = obj.contains("uid") ? obj["uid"].toString() : type;
             QString style = obj["style"].toString();
             if (!style.isEmpty())
-                mTileStyles[id] = style;
+                mTileStyles[uid] = style;
         }
     }
 
@@ -98,32 +99,32 @@ void DashboardPage::init()
     mHealthTile = new HealthScoreTile("@healthScoreColor", this);
 
     // Wrap each tile in a DashboardTileWrapper for drag/resize support
-    wrapTile("cpu", mCpuTile);
-    wrapTile("memory", mMemTile);
-    wrapTile("disk", mDiskTile);
-    wrapTile("network", mNetworkTile);
+    wrapTile("cpu", "cpu", QString(), mCpuTile);
+    wrapTile("memory", "memory", QString(), mMemTile);
+    wrapTile("disk", "disk", QString(), mDiskTile);
+    wrapTile("network", "network", QString(), mNetworkTile);
 
     if (im->hasGpu())
-        wrapTile("gpu", mGpuTile);
+        wrapTile("gpu", "gpu", QString(), mGpuTile);
     else
         mGpuTile->hide();
 
     if (im->hasThermalSensors())
-        wrapTile("temp", mTempTile);
+        wrapTile("temp", "temp", QString(), mTempTile);
     else
         mTempTile->hide();
 
     if (im->hasBattery())
-        wrapTile("battery", mBatteryTile);
+        wrapTile("battery", "battery", QString(), mBatteryTile);
     else
         mBatteryTile->hide();
 
     if (im->hasFanSensors())
-        wrapTile("fan", mFanTile);
+        wrapTile("fan", "fan", QString(), mFanTile);
     else
         mFanTile->hide();
 
-    wrapTile("health", mHealthTile);
+    wrapTile("health", "health", QString(), mHealthTile);
 
     mHealthTile->setQuickAction(tr("System Checkup"), [this]() {
         launchMaintenanceWizard();
@@ -1115,23 +1116,23 @@ void DashboardPage::onResetLayout()
 
     // Re-create tiles that aren't on their default style
     for (DashboardTileWrapper *w : mTileWrappers) {
-        QString id = w->tileId();
-        QString defStyle = defaultStyle(id);
-        if (w->currentStyle() != defStyle && !availableStyles(id).isEmpty()) {
-            MetricTileBase *newTile = createTile(id, defStyle);
+        QString type = w->tileType();
+        QString defStyle = defaultStyle(type);
+        if (w->currentStyle() != defStyle && !availableStyles(type).isEmpty()) {
+            MetricTileBase *newTile = createTile(type, defStyle);
             w->setInnerWidget(newTile);
             w->setCurrentStyle(defStyle);
 
-            if (id == "cpu") mCpuTile = newTile;
-            else if (id == "memory") mMemTile = newTile;
-            else if (id == "disk") mDiskTile = newTile;
-            else if (id == "temp") mTempTile = newTile;
-            else if (id == "gpu") mGpuTile = newTile;
-            else if (id == "battery") mBatteryTile = newTile;
-            else if (id == "fan") mFanTile = newTile;
-            else if (id == "health") mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
+            if (type == "cpu") mCpuTile = newTile;
+            else if (type == "memory") mMemTile = newTile;
+            else if (type == "disk") mDiskTile = newTile;
+            else if (type == "temp") mTempTile = newTile;
+            else if (type == "gpu") mGpuTile = newTile;
+            else if (type == "battery") mBatteryTile = newTile;
+            else if (type == "fan") mFanTile = newTile;
+            else if (type == "health") mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
-            setupTileGearMenu(id, newTile);
+            setupTileGearMenu(type, newTile);
 
             w->clearCustomizationSection();
             setupCustomizationMenu(w, defStyle);
@@ -1180,9 +1181,10 @@ void DashboardPage::applyFooterVisibility()
     ui->statusFooter->setVisible(visible);
 }
 
-DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
+DashboardTileWrapper *DashboardPage::wrapTile(const QString &uid, const QString &type,
+                                              const QString &input, QWidget *tile)
 {
-    auto *wrapper = new DashboardTileWrapper(id, tile, this);
+    auto *wrapper = new DashboardTileWrapper(uid, type, input, tile, this);
 
     connect(wrapper, &DashboardTileWrapper::dragStarted,
             this, &DashboardPage::onTileDragStarted);
@@ -1201,14 +1203,15 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
     connect(wrapper, &DashboardTileWrapper::rangeChangeRequested,
             this, &DashboardPage::onTileRangeChangeRequested);
 
-    // Set up style menu for switchable tiles
-    QStringList styles = availableStyles(id);
+    // Set up style menu for switchable tiles. Styles/customization are keyed by
+    // the unique instance id (uid) but defaults are derived from the metric type.
+    QStringList styles = availableStyles(type);
     if (!styles.isEmpty()) {
-        QString currentStyle = mTileStyles.value(id, defaultStyle(id));
+        QString currentStyle = mTileStyles.value(uid, defaultStyle(type));
         wrapper->setStyleMenuItems(styles, currentStyle);
     }
 
-    setupCustomizationMenu(wrapper, mTileStyles.value(id, defaultStyle(id)));
+    setupCustomizationMenu(wrapper, mTileStyles.value(uid, defaultStyle(type)));
 
     mTileWrappers.append(wrapper);
     return wrapper;
@@ -1274,7 +1277,9 @@ void DashboardPage::deserializeLayout(const QString &json)
 
     for (const QJsonValue &val : arr) {
         QJsonObject obj = val.toObject();
-        QString id = obj["id"].toString();
+        QString type = obj["id"].toString();
+        QString uid = obj.contains("uid") ? obj["uid"].toString() : type;
+        QString input = obj["input"].toString();
         int col = qBound(0, obj["col"].toInt(), mVisibleCols - 1);
         int row = qMax(0, obj["row"].toInt());
         int rowSpan = qMax(1, obj["rowSpan"].toInt(1));
@@ -1282,35 +1287,37 @@ void DashboardPage::deserializeLayout(const QString &json)
 
         QString style = obj["style"].toString();
         if (!style.isEmpty())
-            mTileStyles[id] = style;
+            mTileStyles[uid] = style;
 
         bool visible = obj.contains("visible") ? obj["visible"].toBool(true) : true;
         if (!visible)
-            mHiddenTiles.insert(id);
+            mHiddenTiles.insert(uid);
         else
-            mHiddenTiles.remove(id);
+            mHiddenTiles.remove(uid);
 
         QString color = obj["color"].toString();
         if (color.startsWith("range::")) {
             QString rangeId = color.mid(7);
             if (!rangeId.isEmpty())
-                mTileRanges[id] = rangeId;
+                mTileRanges[uid] = rangeId;
             else
-                mTileRanges.remove(id);
-            mTileColors.remove(id);
+                mTileRanges.remove(uid);
+            mTileColors.remove(uid);
         } else {
             if (!color.isEmpty())
-                mTileColors[id] = color;
+                mTileColors[uid] = color;
             else
-                mTileColors.remove(id);
-            mTileRanges.remove(id);
+                mTileColors.remove(uid);
+            mTileRanges.remove(uid);
         }
 
         for (DashboardTileWrapper *w : mTileWrappers) {
-            if (w->tileId() == id) {
+            if (w->tileId() == uid) {
                 w->setGridPosition(row, col, rowSpan, colSpan);
                 if (!style.isEmpty())
                     w->setCurrentStyle(style);
+                if (!input.isEmpty())
+                    w->setInputKey(input);
                 if (color.startsWith("range::"))
                     w->setCurrentRange(color.mid(7));
                 else
@@ -1326,7 +1333,10 @@ QJsonArray DashboardPage::serializeLayout() const
     QJsonArray arr;
     for (const DashboardTileWrapper *w : mTileWrappers) {
         QJsonObject obj;
-        obj["id"] = w->tileId();
+        obj["id"] = w->tileType();
+        obj["uid"] = w->tileId();
+        if (!w->inputKey().isEmpty())
+            obj["input"] = w->inputKey();
         obj["row"] = w->gridRow();
         obj["col"] = w->gridCol();
         obj["rowSpan"] = w->gridRowSpan();
@@ -1779,37 +1789,47 @@ DashboardTileWrapper *DashboardPage::findWrapper(const QString &tileId) const
     return nullptr;
 }
 
+QList<DashboardTileWrapper*> DashboardPage::wrappersOfType(const QString &type) const
+{
+    QList<DashboardTileWrapper*> out;
+    for (DashboardTileWrapper *w : mTileWrappers)
+        if (w->tileType() == type)
+            out.append(w);
+    return out;
+}
+
 void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, const QString &style)
 {
-    QString id = wrapper->tileId();
+    QString uid = wrapper->tileId();
+    QString type = wrapper->tileType();
 
     if (wrapper->currentStyle() == style)
         return;
 
-    MetricTileBase *newTile = createTile(id, style);
+    MetricTileBase *newTile = createTile(type, style);
 
     // Swap inner widget (old tile scheduled for deletion)
     wrapper->setInnerWidget(newTile);
     wrapper->setCurrentStyle(style);
 
     // Update member pointer
-    if (id == "cpu")          mCpuTile = newTile;
-    else if (id == "memory")  mMemTile = newTile;
-    else if (id == "disk")    mDiskTile = newTile;
-    else if (id == "temp")    mTempTile = newTile;
-    else if (id == "gpu")     mGpuTile = newTile;
-    else if (id == "battery") mBatteryTile = newTile;
-    else if (id == "fan")     mFanTile = newTile;
-    else if (id == "health")  mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
+    if (type == "cpu")          mCpuTile = newTile;
+    else if (type == "memory")  mMemTile = newTile;
+    else if (type == "disk")    mDiskTile = newTile;
+    else if (type == "temp")    mTempTile = newTile;
+    else if (type == "gpu")     mGpuTile = newTile;
+    else if (type == "battery") mBatteryTile = newTile;
+    else if (type == "fan")     mFanTile = newTile;
+    else if (type == "health")  mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
     // Re-attach gear menus
-    setupTileGearMenu(id, newTile);
+    setupTileGearMenu(type, newTile);
 
     // Re-apply display mode
     applyDisplayModeForSpan(wrapper);
 
     // Re-apply disk health badges
-    if (id == "disk")
+    if (type == "disk")
         updateDiskHealthBadge();
 
     // Rebuild the customization menu (color swatches vs. range presets) for the new style
@@ -1818,17 +1838,17 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
 
     // Re-apply saved customization
     if (tileUsesRangeMenu(style)) {
-        if (mTileRanges.contains(id)) {
-            newTile->setColorRange(mTileRanges[id]);
-            wrapper->setCurrentRange(mTileRanges[id]);
+        if (mTileRanges.contains(uid)) {
+            newTile->setColorRange(mTileRanges[uid]);
+            wrapper->setCurrentRange(mTileRanges[uid]);
         }
     } else {
-        if (mTileColors.contains(id))
-            newTile->setColorOverride(mTileColors[id]);
+        if (mTileColors.contains(uid))
+            newTile->setColorOverride(mTileColors[uid]);
     }
 
     // Store style
-    mTileStyles[id] = style;
+    mTileStyles[uid] = style;
 }
 
 void DashboardPage::onTileRemoveRequested(DashboardTileWrapper *wrapper)

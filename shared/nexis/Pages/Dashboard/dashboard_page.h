@@ -177,7 +177,8 @@ private:
     void buildGrid();
     void recomputeColumns();
     void rebuildLayout();
-    DashboardTileWrapper *wrapTile(const QString &id, QWidget *tile);
+    DashboardTileWrapper *wrapTile(const QString &uid, const QString &type,
+                                   const QString &input, QWidget *tile);
     void applyDisplayModeForSpan(DashboardTileWrapper *wrapper);
     QJsonArray serializeLayout() const;
     void deserializeLayout(const QString &json);
@@ -195,6 +196,7 @@ private:
     void tileTitle(const QString &id, QString &title, QString &colorToken) const;
     void setupTileGearMenu(const QString &id, MetricTileBase *tile);
     DashboardTileWrapper *findWrapper(const QString &tileId) const;
+    QList<DashboardTileWrapper*> wrappersOfType(const QString &type) const;
     bool tileUsesRangeMenu(const QString &style) const;
     void setupCustomizationMenu(DashboardTileWrapper *wrapper, const QString &style);
     void launchMaintenanceWizard();

@@ -12,9 +12,14 @@ class DashboardTileWrapper : public QWidget
     Q_OBJECT
 
 public:
-    explicit DashboardTileWrapper(const QString &tileId, QWidget *innerWidget, QWidget *parent = nullptr);
+    explicit DashboardTileWrapper(const QString &uid, const QString &type,
+                                  const QString &input, QWidget *innerWidget,
+                                  QWidget *parent = nullptr);
 
     QString tileId() const;
+    QString tileType() const;
+    QString inputKey() const;
+    void setInputKey(const QString &input);
     QWidget *innerWidget() const;
     void setInnerWidget(QWidget *newWidget);
 
@@ -58,6 +63,8 @@ protected:
 
 private:
     QString mTileId;
+    QString mTileType;
+    QString mInputKey;
     QWidget *mInnerWidget;
     bool mEditMode;
     bool mDragging;
