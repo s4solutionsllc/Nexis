@@ -1,3 +1,13 @@
+nexis (2.7.0-0) unstable; urgency=medium
+
+  * Dashboard: add multiple input-bound tiles via an "Add tile" palette, with a
+    fixed-cell responsive grid, compact tiles, per-interface network monitoring,
+    and resize / drag-preview improvements (GH#191).
+  * Fix AppImage failing to launch on glibc < 2.43 systems (e.g. Ubuntu 22.04,
+    Linux Mint 21.x) — the x86_64 AppImage is now built on glibc 2.35 (GH#195).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Thu, 25 Jun 2026 14:47:35 -0400
+
 nexis (2.6.2-0) unstable; urgency=medium
 
   * CI: migrate Linux build container from Ubuntu 25.04 (Plucky, EOL) to
