@@ -170,17 +170,12 @@ void DashboardPage::init()
         deserializeLayout(savedLayout);
 
     for (auto it = mTileColors.constBegin(); it != mTileColors.constEnd(); ++it) {
-        if (it.key() == "network") {
-            if (mNetworkTile)
-                mNetworkTile->setColorOverride(it.value());
-        } else {
-            DashboardTileWrapper *w = findWrapper(it.key());
-            if (w) {
-                auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget());
-                if (metric)
-                    metric->setColorOverride(it.value());
-            }
-        }
+        DashboardTileWrapper *w = findWrapper(it.key());
+        if (!w) continue;
+        if (auto *net = qobject_cast<NetworkTile*>(w->innerWidget()))
+            net->setColorOverride(it.value());
+        else if (auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget()))
+            metric->setColorOverride(it.value());
     }
 
     for (auto it = mTileRanges.constBegin(); it != mTileRanges.constEnd(); ++it) {
@@ -749,9 +744,11 @@ void DashboardPage::onTileInputSelected(DashboardTileWrapper *wrapper, const QSt
                 if (f.id == input) { label = f.label; break; }
         tile->setSubtitle(label);
         tile->clearDataPoints();
-        if (QMenu *m = tile->gearButton()->menu())
-            for (QAction *a : m->actions())
-                a->setChecked(a->data().toString() == input);
+        if (QToolButton *g = tile->gearButton()) {
+            if (QMenu *m = g->menu())
+                for (QAction *a : m->actions())
+                    a->setChecked(a->data().toString() == input);
+        }
     }
     // Push a fresh value immediately for the changed type.
     if (wrapper->tileType() == "temp") updateTempTile();
@@ -1707,6 +1704,9 @@ void DashboardPage::migrateLegacyBindings()
     bindFirst("disk", mSettingManager->getDiskName(), [&]{
         QStringList v; for (const Disk &d : im->getDisks()) v << d.name; return v; });
     bindFirst("network", QString(), [&]{
+        QString def = im->getDefaultNetworkInterface();
+        if (!def.isEmpty())
+            return QStringList{def};
         return im->getNetworkInterfaceNames(); });
 }
 
