@@ -2,6 +2,7 @@
 #include "ui_dashboard_page.h"
 #include <QToolButton>
 #include "maintenance_wizard_dialog.h"
+#include "add_tile_dialog.h"
 
 #include "utilities.h"
 #include "Managers/app_manager.h"
@@ -1778,57 +1779,104 @@ void DashboardPage::onTileRemoveRequested(DashboardTileWrapper *wrapper)
 void DashboardPage::updateAddTileButton()
 {
     if (mAddTileButton)
-        mAddTileButton->setVisible(mEditMode && !mHiddenTiles.isEmpty());
+        mAddTileButton->setVisible(mEditMode);
 }
 
 void DashboardPage::onAddTileClicked()
 {
-    static const QHash<QString, QString> kTileDisplayNames = {
-        {"cpu",     tr("CPU Usage")},
-        {"memory",  tr("Memory Usage")},
-        {"disk",    tr("Disk Usage")},
-        {"network", tr("Network Speed")},
-        {"gpu",     tr("GPU Usage")},
-        {"temp",    tr("Temperature")},
-        {"battery", tr("Battery")},
-        {"fan",     tr("Fan Speed")},
-        {"health",  tr("Health Score")},
-    };
-
     rebuildOccupancy();
 
-    QMenu menu(this);
+    // Build the available-inputs map (detected minus already-placed).
+    QJsonArray tiles = serializeLayout();
+    QHash<QString, QList<QPair<QString, QString>>> avail;
+    auto addAvail = [&](const QString &type, const QList<QPair<QString, QString>> &all) {
+        QStringList used = DashboardLayout::usedInputsForType(tiles, type);
+        QList<QPair<QString, QString>> free;
+        for (const auto &p : all)
+            if (!used.contains(p.first))
+                free.append(p);
+        avail[type] = free;
+    };
+    { QList<QPair<QString, QString>> v; for (const ThermalSensor &s : im->getThermalSensors()) v.append({s.id, s.label}); addAvail("temp", v); }
+    { QList<QPair<QString, QString>> v; for (const FanSensor &f : im->getFanSensors()) v.append({f.id, f.label}); addAvail("fan", v); }
+    { QList<QPair<QString, QString>> v; for (const GpuDevice &g : im->getGpuDevices()) v.append({g.name, g.name}); addAvail("gpu", v); }
+    { QList<QPair<QString, QString>> v; for (const Disk &d : mCachedDisks) v.append({d.name, d.name}); addAvail("disk", v); }
+    { QList<QPair<QString, QString>> v; for (const QString &n : im->getNetworkInterfaceNames()) v.append({n, n}); addAvail("network", v); }
 
-    QStringList sortedIds = QStringList(mHiddenTiles.begin(), mHiddenTiles.end());
-    std::sort(sortedIds.begin(), sortedIds.end(), [&](const QString &a, const QString &b) {
-        return kTileDisplayNames.value(a, a) < kTileDisplayNames.value(b, b);
-    });
-
-    for (const QString &id : sortedIds) {
-        int freeRow = -1, freeCol = -1;
-        for (int r = 0; freeRow == -1; ++r)
-            for (int c = 0; c < mVisibleCols; ++c)
-                if (regionIsFree(r, c, 1, 1)) { freeRow = r; freeCol = c; break; }
-
-        QString label = kTileDisplayNames.value(id, id);
-        if (freeRow == -1) {
-            QAction *act = menu.addAction(label + tr(" (grid full)"));
-            act->setEnabled(false);
-        } else {
-            QAction *act = menu.addAction(label);
-            connect(act, &QAction::triggered, this, [this, id, freeRow, freeCol]() {
-                mHiddenTiles.remove(id);
-                DashboardTileWrapper *w = findWrapper(id);
-                if (w)
-                    w->setGridPosition(freeRow, freeCol, 1, 1);
-                buildGrid();
-                updateAddTileButton();
-                persistLayout();
-            });
+    // Type options: multi-instance types offered when they have >=1 available
+    // input; singletons only when not currently shown (hidden or no wrapper).
+    static const QList<QPair<QString, QString>> kTypes = {
+        {"cpu", tr("CPU Usage")}, {"memory", tr("Memory Usage")}, {"disk", tr("Disk Usage")},
+        {"network", tr("Network Speed")}, {"gpu", tr("GPU Usage")}, {"temp", tr("Temperature")},
+        {"battery", tr("Battery")}, {"fan", tr("Fan Speed")}, {"health", tr("Health Score")},
+    };
+    QList<QPair<QString, QString>> typeOptions;
+    for (const auto &t : kTypes) {
+        if (DashboardLayout::isMultiInstanceType(t.first)) {
+            if (!avail.value(t.first).isEmpty())
+                typeOptions.append(t);
+        } else if (mHiddenTiles.contains(t.first) || wrappersOfType(t.first).isEmpty()) {
+            typeOptions.append(t); // singleton not currently shown
         }
     }
+    if (typeOptions.isEmpty())
+        return;
 
-    menu.exec(mAddTileButton->mapToGlobal(QPoint(0, mAddTileButton->height())));
+    AddTileDialog dlg(typeOptions, avail, this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    QString type = dlg.chosenType();
+    QString input = dlg.chosenInput();
+    if (type.isEmpty())
+        return;
+
+    // Find the first free 2x2 region in the A2 dynamic grid: columns are
+    // mVisibleCols, rows are unbounded (rows beyond the current grid count as
+    // free, so an empty row always fits and the scan always terminates).
+    int row = -1, col = -1, rs = 2, cs = 2;
+    if (mVisibleCols >= 2) {
+        for (int r = 0; row == -1; ++r)
+            for (int c = 0; c + 2 <= mVisibleCols; ++c)
+                if (regionIsFree(r, c, 2, 2)) { row = r; col = c; break; }
+    } else {
+        rs = cs = 1;
+        for (int r = 0; row == -1; ++r)
+            for (int c = 0; c < mVisibleCols; ++c)
+                if (regionIsFree(r, c, 1, 1)) { row = r; col = c; break; }
+    }
+    if (row == -1)
+        return; // unreachable (empty rows are always free), but stay defensive
+
+    if (!DashboardLayout::isMultiInstanceType(type)) {
+        // Singleton re-show: reposition its existing (hidden) wrapper.
+        mHiddenTiles.remove(type);
+        DashboardTileWrapper *w = findWrapper(type);
+        if (w)
+            w->setGridPosition(row, col, rs, cs);
+    } else {
+        // New input-bound instance.
+        QStringList uids;
+        for (DashboardTileWrapper *w : mTileWrappers)
+            uids << w->tileId();
+        QString uid = DashboardLayout::makeUid(uids, type);
+        QString style = defaultStyle(type);
+        QWidget *tile = (type == "network")
+                            ? static_cast<QWidget *>(new NetworkTile("@networkColor", this))
+                            : static_cast<QWidget *>(createTile(type, style));
+        mTileStyles[uid] = style;
+        DashboardTileWrapper *w = wrapTile(uid, type, input, tile);
+        w->setGridPosition(row, col, rs, cs);
+        w->setEditMode(mEditMode);
+        // Populate subtitle + initial value for metric-based tiles. Network
+        // tiles refresh on the next tick.
+        if (qobject_cast<MetricTileBase *>(tile))
+            onTileInputSelected(w, input);
+    }
+
+    buildGrid();
+    updateAddTileButton();
+    persistLayout();
 }
 
 void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor)
