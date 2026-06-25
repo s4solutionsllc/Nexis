@@ -1318,14 +1318,44 @@ void DashboardPage::recomputeColumns()
 
     // Reflow current tiles into the new column count (pure logic), then apply
     // the repacked positions back to the wrappers.
-    // GH#191: Reflow only VISIBLE tiles — hidden (removed) tiles must not reserve
-    // grid cells, or they'd leave gaps in the packed layout.
+    // GH#191: build the reflow input from each LIVE visible wrapper, but take
+    // its position from the CANONICAL saved layout (not the live wrapper
+    // position, which a transient narrow-width pass may have repacked). This
+    // makes reflow idempotent w.r.t. width: a wide pass always re-derives the
+    // saved arrangement instead of preserving a transient squash.
+    QHash<QString, QJsonObject> canonByUid;
+    {
+        QString canon = mSettingManager->getDashboardLayout();
+        if (!canon.isEmpty()) {
+            QJsonDocument d = QJsonDocument::fromJson(canon.toUtf8());
+            QJsonArray raw = d.isObject() ? d.object().value("tiles").toArray()
+                                          : d.array();
+            int ver = d.isObject() ? d.object().value("version").toInt(1) : 1;
+            const QJsonArray canonTiles = DashboardLayout::migrate(raw, ver);
+            for (const QJsonValue &cv : canonTiles) {
+                QJsonObject co = cv.toObject();
+                QString cuid = co.contains("uid") ? co["uid"].toString()
+                                                  : co["id"].toString();
+                canonByUid.insert(cuid, co);
+            }
+        }
+    }
+
     QJsonArray visibleTiles;
-    for (const QJsonValue &v : serializeLayout()) {
-        QJsonObject o = v.toObject();
-        QString uid = o.contains("uid") ? o["uid"].toString() : o["id"].toString();
-        if (!mHiddenTiles.contains(uid))
-            visibleTiles.append(o);
+    for (DashboardTileWrapper *w : mTileWrappers) {
+        if (mHiddenTiles.contains(w->tileId()))
+            continue;                                 // hidden tiles reserve no cell
+        QJsonObject o;
+        if (canonByUid.contains(w->tileId())) {
+            o = canonByUid.value(w->tileId());        // canonical saved position
+        } else {
+            o["uid"] = w->tileId();                   // not in saved layout: use live pos
+            o["row"] = w->gridRow();
+            o["col"] = w->gridCol();
+            o["rowSpan"] = w->gridRowSpan();
+            o["colSpan"] = w->gridColSpan();
+        }
+        visibleTiles.append(o);
     }
     QJsonArray packed = DashboardLayout::reflowPreserve(visibleTiles, mVisibleCols);
     for (const QJsonValue &v : packed) {
