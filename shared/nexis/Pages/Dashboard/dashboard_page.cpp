@@ -1841,11 +1841,19 @@ void DashboardPage::onAddTileClicked()
 {
     rebuildOccupancy();
 
-    // Build the available-inputs map (detected minus already-placed).
-    QJsonArray tiles = serializeLayout();
+    // Build the available-inputs map (detected minus already-placed). GH#191:
+    // count only VISIBLE wrappers' inputs as used — a removed (hidden) tile must
+    // NOT reserve its input, so its input becomes available to re-add again.
     QHash<QString, QList<QPair<QString, QString>>> avail;
+    auto usedInputs = [&](const QString &type) {
+        QStringList used;
+        for (DashboardTileWrapper *w : wrappersOfType(type))
+            if (!mHiddenTiles.contains(w->tileId()) && !w->inputKey().isEmpty())
+                used.append(w->inputKey());
+        return used;
+    };
     auto addAvail = [&](const QString &type, const QList<QPair<QString, QString>> &all) {
-        QStringList used = DashboardLayout::usedInputsForType(tiles, type);
+        QStringList used = usedInputs(type);
         QList<QPair<QString, QString>> free;
         for (const auto &p : all)
             if (!used.contains(p.first))
@@ -1927,23 +1935,36 @@ void DashboardPage::onAddTileClicked()
         if (w)
             w->setGridPosition(row, col, rs, cs);
     } else {
-        // New input-bound instance.
-        QStringList uids;
-        for (DashboardTileWrapper *w : mTileWrappers)
-            uids << w->tileId();
-        QString uid = DashboardLayout::makeUid(uids, type);
-        QString style = defaultStyle(type);
-        QWidget *tile = (type == "network")
-                            ? static_cast<QWidget *>(new NetworkTile("@networkColor", this))
-                            : static_cast<QWidget *>(createTile(type, style));
-        mTileStyles[uid] = style;
-        DashboardTileWrapper *w = wrapTile(uid, type, input, tile);
-        w->setGridPosition(row, col, rs, cs);
-        w->setEditMode(mEditMode);
-        // Populate subtitle + initial value for metric-based tiles. Network
-        // tiles refresh on the next tick.
-        if (qobject_cast<MetricTileBase *>(tile))
-            onTileInputSelected(w, input);
+        // GH#191: re-use a removed (hidden) tile of this type+input rather than
+        // creating a duplicate/orphan — re-adding a removed GPU/disk/etc. just
+        // brings it back.
+        DashboardTileWrapper *reuse = nullptr;
+        for (DashboardTileWrapper *w : wrappersOfType(type)) {
+            if (mHiddenTiles.contains(w->tileId()) && w->inputKey() == input) { reuse = w; break; }
+        }
+        if (reuse) {
+            mHiddenTiles.remove(reuse->tileId());
+            reuse->setGridPosition(row, col, rs, cs);
+            reuse->setEditMode(mEditMode);
+        } else {
+            // New input-bound instance.
+            QStringList uids;
+            for (DashboardTileWrapper *w : mTileWrappers)
+                uids << w->tileId();
+            QString uid = DashboardLayout::makeUid(uids, type);
+            QString style = defaultStyle(type);
+            QWidget *tile = (type == "network")
+                                ? static_cast<QWidget *>(new NetworkTile("@networkColor", this))
+                                : static_cast<QWidget *>(createTile(type, style));
+            mTileStyles[uid] = style;
+            DashboardTileWrapper *w = wrapTile(uid, type, input, tile);
+            w->setGridPosition(row, col, rs, cs);
+            w->setEditMode(mEditMode);
+            // Populate subtitle + initial value for metric-based tiles. Network
+            // tiles refresh on the next tick.
+            if (qobject_cast<MetricTileBase *>(tile))
+                onTileInputSelected(w, input);
+        }
     }
 
     buildGrid();
