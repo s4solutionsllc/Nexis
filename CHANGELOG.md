@@ -7,13 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-06-25
+
 ### Added
 - **Dashboard: multiple tiles per type, each bound to a specific input (GH#191).** An edit-mode "Add tile" palette lets you place several tiles of a type — e.g. CPU fan and pump fan, or two thermal sensors — each pinned to a specific detected sensor/fan/disk/GPU/network interface. Per-tile binding replaces the previous single global temperature/fan/GPU/disk selection — temperature, fan, disk, and GPU tiles each get a gear menu to re-bind their input.
-- **Dashboard: per-interface network tiles (GH#191).** Choose a network tile's interface when adding it from the palette to monitor that NIC's throughput (network tiles have no gear menu; remove and re-add to change the interface). A default network tile tracks the default-route interface.
+- **Dashboard: per-interface network tiles (GH#191).** Choose a network tile's interface when adding it from the palette to monitor that NIC's throughput (network tiles have no gear menu; remove and re-add to change the interface). A default network tile tracks the default-route interface. The interface list is filtered to real interfaces (link-local-only virtual ones such as `awdl0`/`anpi*` are hidden) and shown with friendly names (e.g. "Wi-Fi (en0)").
 - **Dashboard: compact tile rendering (GH#191).** Small tiles drop their gauge/sparkline and show the title + a large value so they stay readable at a single cell.
+- **Dashboard: drag preview shows the tile's full footprint (GH#191).** When repositioning a tile in edit mode, the drop highlight now covers the tile's full area (e.g. a 2×2 tile highlights four cells) instead of a single cell, so you can see exactly where it will land.
 
 ### Changed
 - **Dashboard: fixed-cell responsive grid (GH#191).** Tiles are now a fixed size (1×1 = 120×98px, 10px gap) and the column count adapts to the window width, with vertical scrolling and automatic reflow — replacing the proportional layout that produced uneven, hard-to-align tiles. Existing layouts migrate automatically.
+
+### Fixed
+- **AppImage failed to launch on most Linux distributions — `GLIBC_2.43 not found` (GH#195).** The 2.6.2 x86_64 AppImage was built inside the `ubuntu:26.04` release container (glibc 2.43); because an AppImage bundles Qt but not glibc, it required glibc 2.43 at runtime and failed immediately on Ubuntu 22.04 / Linux Mint 21.x (glibc 2.35) and other stable distributions (`version 'GLIBC_2.43' not found (required by …libQt6Gui.so.6 / libc.so.6)`). The x86_64 AppImage now builds on the `ubuntu-22.04` runner (glibc 2.35) with Qt 6.8 supplied by aqtinstall; the `.deb` continues to build on Resolute (26.04) for its system-Qt 6.8 dependency. (The arm64 AppImage still builds on 26.04 — there is no official Qt 6.8 Linux-arm64 desktop binary to bundle from an older base; arm64 users on glibc < 2.43 should use the `.deb` on 26.04+.)
+- **Dashboard: tiles can be resized beyond 2×2 (GH#191).** The resize handle was capped at a 2×2 span (a leftover from the old fixed 4×4 grid); tiles can now grow to any free area on the responsive grid.
 
 ## [2.6.2] - 2026-06-24
 
