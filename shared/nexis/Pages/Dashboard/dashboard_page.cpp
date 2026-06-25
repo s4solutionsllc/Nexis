@@ -1313,8 +1313,16 @@ void DashboardPage::recomputeColumns()
 
     // Reflow current tiles into the new column count (pure logic), then apply
     // the repacked positions back to the wrappers.
-    QJsonArray tiles = serializeLayout();
-    QJsonArray packed = DashboardLayout::reflow(tiles, mVisibleCols);
+    // GH#191: Reflow only VISIBLE tiles — hidden (removed) tiles must not reserve
+    // grid cells, or they'd leave gaps in the packed layout.
+    QJsonArray visibleTiles;
+    for (const QJsonValue &v : serializeLayout()) {
+        QJsonObject o = v.toObject();
+        QString uid = o.contains("uid") ? o["uid"].toString() : o["id"].toString();
+        if (!mHiddenTiles.contains(uid))
+            visibleTiles.append(o);
+    }
+    QJsonArray packed = DashboardLayout::reflow(visibleTiles, mVisibleCols);
     for (const QJsonValue &v : packed) {
         QJsonObject o = v.toObject();
         QString uid = o.contains("uid") ? o["uid"].toString() : o["id"].toString();
