@@ -98,9 +98,9 @@ void DashboardPage::init()
     // Singleton convenience pointers (mCpuTile/mMemTile/mBatteryTile/
     // mHealthTile/mNetworkTile) are set inside the loop as their type is created.
     auto createForType = [this](const QString &type, const QString &style) -> QWidget* {
-        return (type == "network")
-            ? static_cast<QWidget*>(new NetworkTile("@networkColor", this))
-            : static_cast<QWidget*>(createTile(type, style));
+        if (type == "network") return new NetworkTile("@networkColor", this);
+        if (type == "health")  return new HealthScoreTile("@healthScoreColor", this);
+        return createTile(type, style);
     };
 
     auto assignSingleton = [this](const QString &type, QWidget *tile) {
