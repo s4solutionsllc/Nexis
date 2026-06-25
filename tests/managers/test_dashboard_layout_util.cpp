@@ -109,6 +109,43 @@ private slots:
         QCOMPARE(out.at(2).toObject()["col"].toInt(), 0);
     }
 
+    void reflowPreserve_keepsInBoundsPositions()
+    {
+        // A tile saved at (0,4) with span 2x2 and cols=8 fits (4+2<=8): keep it.
+        QJsonObject t; t["id"]="cpu"; t["row"]=0; t["col"]=4; t["rowSpan"]=2; t["colSpan"]=2;
+        QJsonArray in; in.append(t);
+        QJsonArray out = reflowPreserve(in, 8);
+        QJsonObject o = out.at(0).toObject();
+        QCOMPARE(o["row"].toInt(), 0);
+        QCOMPARE(o["col"].toInt(), 4);
+        QCOMPARE(o["rowSpan"].toInt(), 2);
+        QCOMPARE(o["colSpan"].toInt(), 2);
+    }
+
+    void reflowPreserve_repacksOverflow()
+    {
+        // Saved at (0,7) with colSpan 2: 7+2=9 > 8, overflows -> repack to (0,0).
+        QJsonObject t; t["id"]="disk"; t["row"]=0; t["col"]=7; t["rowSpan"]=2; t["colSpan"]=2;
+        QJsonArray in; in.append(t);
+        QJsonArray out = reflowPreserve(in, 8);
+        QJsonObject o = out.at(0).toObject();
+        QCOMPARE(o["row"].toInt(), 0);
+        QCOMPARE(o["col"].toInt(), 0);
+        QCOMPARE(o["colSpan"].toInt(), 2);
+    }
+
+    void reflowPreserve_avoidsOverlap()
+    {
+        // Two tiles both saved at (0,0) 2x2, cols=8: first keeps (0,0), second
+        // repacks to the first free region row-major -> (0,2).
+        auto mk=[](const QString &id){ QJsonObject o; o["id"]=id; o["row"]=0; o["col"]=0; o["rowSpan"]=2; o["colSpan"]=2; return o; };
+        QJsonArray in; in.append(mk("a")); in.append(mk("b"));
+        QJsonArray out = reflowPreserve(in, 8);
+        QJsonObject a=out.at(0).toObject(), b=out.at(1).toObject();
+        QCOMPARE(a["row"].toInt(),0); QCOMPARE(a["col"].toInt(),0);
+        QCOMPARE(b["row"].toInt(),0); QCOMPARE(b["col"].toInt(),2);
+    }
+
     void isMultiInstanceType_knownTypes()
     {
         QVERIFY(isMultiInstanceType("temp"));

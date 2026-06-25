@@ -43,6 +43,15 @@ int columnsForWidth(int panelWidth);
 // as packing priority. Rows are unbounded.
 QJsonArray reflow(const QJsonArray &tiles, int cols);
 
+// Like reflow, but PRESERVES each tile's saved row/col when possible. For each
+// tile (in array order): colSpan is clamped to [1,cols], rowSpan >= 1; if the
+// saved region (row,col,rowSpan,colSpan) is in bounds (col+colSpan <= cols) and
+// free in the occupancy accumulated so far, the tile keeps its saved position;
+// otherwise it is repacked into the first free region row-major (like reflow).
+// Rows are unbounded; always terminates. Used for responsive column changes so
+// a width change only repacks tiles that overflow, never the whole layout.
+QJsonArray reflowPreserve(const QJsonArray &tiles, int cols);
+
 // Returns a layout-tile array in current schema coordinates. If declaredVersion
 // is already current (>= kSchemaVersion) the array is returned unchanged.
 // Otherwise it is treated as a legacy v1 layout: row/col/rowSpan/colSpan are

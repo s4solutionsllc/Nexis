@@ -54,6 +54,46 @@ QJsonArray reflow(const QJsonArray &tiles, int cols)
     return out;
 }
 
+QJsonArray reflowPreserve(const QJsonArray &tiles, int cols)
+{
+    cols = std::max(1, cols);
+    QSet<qint64> occ;
+    auto key = [cols](int r, int c) { return static_cast<qint64>(r) * cols + c; };
+    auto isFree = [&](int r, int c, int rs, int cs) {
+        for (int rr = r; rr < r + rs; ++rr)
+            for (int cc = c; cc < c + cs; ++cc)
+                if (occ.contains(key(rr, cc))) return false;
+        return true;
+    };
+    auto mark = [&](int r, int c, int rs, int cs) {
+        for (int rr = r; rr < r + rs; ++rr)
+            for (int cc = c; cc < c + cs; ++cc)
+                occ.insert(key(rr, cc));
+    };
+
+    QJsonArray out;
+    for (const QJsonValue &v : tiles) {
+        QJsonObject o = v.toObject();
+        int rs = std::max(1, o.value("rowSpan").toInt(1));
+        int cs = std::clamp(o.value("colSpan").toInt(1), 1, cols);
+        int sr = std::max(0, o.value("row").toInt(0));
+        int sc = std::max(0, o.value("col").toInt(0));
+
+        int pr = -1, pc = -1;
+        if (sc + cs <= cols && isFree(sr, sc, rs, cs)) {
+            pr = sr; pc = sc;                         // keep saved position
+        } else {
+            for (int r = 0; pr < 0; ++r)              // always terminates: an
+                for (int c = 0; c <= cols - cs; ++c)  // empty row always fits
+                    if (isFree(r, c, rs, cs)) { pr = r; pc = c; break; }
+        }
+        mark(pr, pc, rs, cs);
+        o["row"] = pr; o["col"] = pc; o["rowSpan"] = rs; o["colSpan"] = cs;
+        out.append(o);
+    }
+    return out;
+}
+
 QJsonArray migrate(const QJsonArray &tiles, int declaredVersion)
 {
     if (declaredVersion >= kSchemaVersion)

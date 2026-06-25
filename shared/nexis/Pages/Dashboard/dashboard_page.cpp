@@ -1319,7 +1319,7 @@ void DashboardPage::recomputeColumns()
         if (!mHiddenTiles.contains(uid))
             visibleTiles.append(o);
     }
-    QJsonArray packed = DashboardLayout::reflow(visibleTiles, mVisibleCols);
+    QJsonArray packed = DashboardLayout::reflowPreserve(visibleTiles, mVisibleCols);
     for (const QJsonValue &v : packed) {
         QJsonObject o = v.toObject();
         QString uid = o.contains("uid") ? o["uid"].toString() : o["id"].toString();
@@ -1331,7 +1331,11 @@ void DashboardPage::recomputeColumns()
             }
     }
     buildGrid();
-    persistLayout();
+    // GH#191: do NOT persistLayout() here. A responsive column change is a VIEW
+    // concern; reflowPreserve keeps saved positions when the width allows and
+    // repacks only overflowing tiles for display. Persisting would overwrite the
+    // user's canonical saved arrangement with this auto-packed view on every
+    // launch/resize. Saves happen only on explicit edits (drag/resize/Done).
 }
 
 void DashboardPage::buildGrid()
@@ -1523,6 +1527,7 @@ void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoi
         if (regionIsFree(targetRow, targetCol, srcRS, srcCS, mDragSource->tileId())) {
             mDragSource->setGridPosition(targetRow, targetCol, srcRS, srcCS);
             buildGrid();
+            persistLayout();   // GH#191: persist the move immediately
         }
     } else {
         // Look up the occupant by tileId from the grid (handles multi-cell tiles
@@ -1549,6 +1554,7 @@ void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoi
                 mDragSource->setGridPosition(tgtRow, tgtCol, srcRS, srcCS);
                 target->setGridPosition(srcRow, srcCol, tgtRS, tgtCS);
                 buildGrid();
+                persistLayout();   // GH#191: persist the swap immediately
             }
         }
     }
@@ -1566,6 +1572,7 @@ void DashboardPage::onTileResizeRequested(DashboardTileWrapper *wrapper, int new
 
     wrapper->setGridPosition(row, col, newRowSpan, newColSpan);
     buildGrid();
+    persistLayout();   // GH#191: persist the resize immediately
 }
 
 void DashboardPage::resizeEvent(QResizeEvent *event)
