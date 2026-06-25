@@ -1280,6 +1280,14 @@ bool DashboardPage::regionIsFree(int row, int col, int rowSpan, int colSpan,
 
 void DashboardPage::recomputeColumns()
 {
+    // Don't reflow before the grid is actually on-screen: during init()/pre-show
+    // the scroll area reports a tiny default width, which collapses the column
+    // count to kMinCols and would repack the just-restored saved layout into a
+    // few columns. Wait for a real shown size; showEvent/resizeEvent then run
+    // recomputeColumns() again with the true viewport width. (GH#191)
+    if (!mGridScroll || !mGridScroll->isVisible())
+        return;
+
     // GH#191: derive the column count from a STABLE available width.
     //
     // viewport()->width() is unreliable here: during the page's resizeEvent the
@@ -1782,6 +1790,8 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
 
     // Store style
     mTileStyles[uid] = style;
+
+    persistLayout();   // GH#191: persist the style change immediately
 }
 
 void DashboardPage::onTileRemoveRequested(DashboardTileWrapper *wrapper)
