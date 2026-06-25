@@ -62,6 +62,7 @@ public:
     quint64 getRXbytes() const;
     quint64 getTXbytes() const;
     QString getDefaultNetworkInterface() const;
+    QStringList getNetworkInterfaceNames() const;
     NetInterfaceStatsMap getInterfaceStats() const;
 
     QList<Disk> getDisks() const;

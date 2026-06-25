@@ -125,7 +125,9 @@ void HealthScoreTile::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
 
-    if (mDisplayMode != Normal) {
+    // Breakdown bars are only for the larger tiers. Normal AND Compact show
+    // just the score (Compact is a small tile — no room for bars). (GH#191)
+    if (mDisplayMode == Large || mDisplayMode == Hero) {
         QPainter painter(this);
         paintBreakdownBars(painter);
     }

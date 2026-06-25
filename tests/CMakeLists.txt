@@ -286,6 +286,18 @@ add_nexis_test(NAME SettingManagerTests
     "${GUI_SHARED_DIR}/Managers"
 )
 
+# GH#191: pure dashboard layout helper — grid constants, tier mapping, and
+# v1->v2 layout migration. Compiled directly so it runs cross-platform without
+# pulling in nexis-gui (DashboardPage builds its whole widget tree in init()).
+add_nexis_test(NAME DashboardLayoutUtilTests
+  SOURCES
+    managers/test_dashboard_layout_util.cpp
+    "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_layout_util.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Dashboard"
+)
+
 # SSO-3391 / WI-29: pin GnomeSettingsToolMacOS down as a hard no-op stub so
 # it can never write into Apple preference domains. Linux compiles the same
 # test source but skips the platform-specific assertions.

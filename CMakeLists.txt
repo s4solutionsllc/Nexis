@@ -365,6 +365,7 @@ set(GUI_SHARED_SRCS
   # APT-specific GUI components live under linux/ only — they're built into
   # GUI_PLAT_SRCS on Linux. On macOS the Homebrew page replaces them.
   "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.cpp"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_layout_util.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/linebar.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/metric_tile_base.cpp"
@@ -379,6 +380,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Dashboard/health_score_calculator.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/health_score_tile.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_tile_wrapper.cpp"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/add_tile_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/Dashboard/maintenance_wizard_dialog.cpp"
   "${GUI_SHARED_DIR}/command_palette.cpp"
   "${GUI_SHARED_DIR}/Pages/Docker/docker_page.cpp"
@@ -472,6 +474,8 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/Dashboard/health_score_calculator.h"
   "${GUI_SHARED_DIR}/Pages/Dashboard/health_score_tile.h"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_tile_wrapper.h"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/add_tile_dialog.h"
+  "${GUI_SHARED_DIR}/Pages/Dashboard/maintenance_wizard_dialog.h"
   "${GUI_SHARED_DIR}/command_palette.h"
   "${GUI_SHARED_DIR}/Pages/Docker/docker_page.h"
   "${GUI_SHARED_DIR}/Pages/GnomeSettings/gnome_appearance_tab.h"

@@ -132,19 +132,28 @@ void HybridTile::setDisplayMode(DisplayMode mode)
 
     switch (mode) {
     case Hero:
+        mChartView->show();
         mGaugeArea->setMinimumHeight(100);
         mChartView->setFixedHeight(40);
         break;
     case Large:
+        mChartView->show();
         mGaugeArea->setMinimumHeight(80);
         mChartView->setFixedHeight(35);
         break;
+    case Compact:
+        // Drop the sparkline entirely; the painted gauge + value carry the tile.
+        mChartView->hide();
+        mGaugeArea->setMinimumHeight(0);
+        break;
     case Normal:
     default:
+        mChartView->show();
         mGaugeArea->setMinimumHeight(0);
         mChartView->setFixedHeight(30);
         break;
     }
+    update();
 }
 
 void HybridTile::setQuickAction(const QString &text, std::function<void()> callback)
@@ -186,6 +195,22 @@ void HybridTile::paintEvent(QPaintEvent *event)
     QWidget::paintEvent(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
+
+    if (mDisplayMode == Compact) {
+        int top = mLblTitle->geometry().bottom() + 4;
+        int bottom = mLblSubtitle && mLblSubtitle->isVisible()
+                       ? mLblSubtitle->geometry().top() - 4 : height() - 6;
+        QRect valueRect(8, top, width() - 16, qMax(1, bottom - top));
+        QFont vf = font();
+        vf.setPixelSize(qMax(16, valueRect.height() / 2));
+        vf.setBold(true);
+        painter.setFont(vf);
+        painter.setPen(mTextColor);
+        QString text = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
+        painter.drawText(valueRect, Qt::AlignCenter, text);
+        return;
+    }
+
     drawGaugeArc(painter);
 }
 

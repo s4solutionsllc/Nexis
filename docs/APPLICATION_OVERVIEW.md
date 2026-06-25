@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-06-24 | Version 2.6.2
+> Last updated: 2026-06-24 | Version 2.6.2 (Unreleased)
 
 ---
 
@@ -136,16 +136,22 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 ### 1. Dashboard
 
-Real-time system monitoring at a glance in a **customizable bento grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. All metric tiles inherit from `MetricTileBase`, an abstract base class supporting three `DisplayMode` values — **Normal**, **Hero**, and **Large** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling. Tiles can be rearranged and resized via edit mode, and each tile's **visual style can be changed** independently.
+Real-time system monitoring at a glance in a **fixed-cell responsive grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. All metric tiles inherit from `MetricTileBase`, an abstract base class supporting three `DisplayMode` values — **Normal**, **Hero**, and **Large** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling. Tiles can be rearranged and resized via edit mode, and each tile's **visual style can be changed** independently.
+
+**Fixed-cell responsive grid (GH#191):** The dashboard uses fixed-size cells (1×1 = 120×98px, 10px gap between tiles). The grid column count adapts dynamically to the window width (clamped 4–16 columns), and tiles reflow (repack) when the column count changes. Vertical scrolling activates when tiles exceed the visible window height. This replaced the old proportional layout that produced uneven row heights and sparse gaps. Existing saved layouts migrate automatically via a versioned layout envelope (legacy bare-array layouts are scaled and reflowed on load).
+
+**Multiple tiles per type with per-tile input binding (GH#191):** Instead of a single global Temperature/Fan/GPU/Disk/Network selection, users can now add multiple tiles of the same type, each pinned to a specific detected input. An edit-mode "Add tile" palette lets you place N tiles of a type (Temperature, Fan, Disk, GPU, Network); the input is chosen at add time from the palette. Temperature, Fan, Disk, and GPU tiles also carry a per-tile gear menu to re-bind their input afterward. Network tiles have no gear menu — a placed network tile's interface is fixed at add time, so to change it, remove the tile and add a new one bound to the desired interface. This enables monitoring the CPU fan AND pump fan simultaneously, or two thermal sensors, or multiple network interfaces. The layout JSON stores each tile's unique id, type, and `input` binding.
+
+**Compact tile rendering (GH#191):** Small tiles (1×1 and 1×2 cells) drop their gauge/sparkline/chart visualization and show only the title + a large numeric value, so they remain readable at minimal cell sizes. Larger tiles (Normal/Large/Hero display tiers) retain their full visualizations.
 
 **Default tile layout:**
 - **CPU** — Independent `MetricTile` with sparkline history (1s refresh)
 - **Memory** — Independent `MetricTile` with sparkline history (1s refresh). Subtitle shows swap usage plus platform-specific breakdown: wired/active/compressed on macOS, available memory on Linux. On macOS, tile accent color dynamically reflects memory pressure state (green=normal, yellow=warning, red=critical) via `kern.memorystatus_vm_pressure_level` sysctl; on Linux, pressure derived from PSI or MemAvailable heuristic. User-set custom colors (FR-55) take priority over pressure indication.
-- **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health badge with verdict and numeric percentage (e.g., "Apple SSD: Good (92%)") via `setDriveHealth()` (5s refresh). Gear icon at the top-left next to the tile title (visible when 2+ disks detected) opens a dropdown menu to switch the displayed disk; selection is persisted.
-- **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh)
-- **GPU** — Utilization percentage with device name subtitle. Gear icon at the top-left next to the tile title (visible when 2+ GPUs detected) opens a dropdown menu to switch the monitored device; selection is persisted (1s refresh; tile hidden if no GPU detected)
-- **Temperature** — Selectable sensor via gear icon menu (2+ sensors) with sensor name subtitle, sparkline history (1s refresh; hidden if no sensors)
-- **Fans** — Fan RPM with selectable sensor via gear icon menu (2+ fans), percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`), dedicated `fanUpdated` signal (1s refresh; hidden if no fans detected)
+- **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health badge with verdict and numeric percentage (e.g., "Apple SSD: Good (92%)") via `setDriveHealth()` (5s refresh). Gear icon opens a dropdown to switch the displayed disk or add additional Disk tiles; selection is persisted per-tile.
+- **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh). The interface is chosen when adding the tile from the "Add tile" palette (network tiles have no gear menu); to change it, remove and re-add the tile. A default network tile tracks the default-route interface (GH#191).
+- **GPU** — Utilization percentage with device name subtitle. Gear icon opens a dropdown to switch the monitored device or add additional GPU tiles; selection is persisted per-tile (1s refresh; tile hidden if no GPU detected)
+- **Temperature** — Input-bound via gear icon menu, with sensor name subtitle and sparkline history (1s refresh; hidden if no sensors). Multiple Temperature tiles can monitor different sensors simultaneously (GH#191).
+- **Fans** — Input-bound via gear icon menu, showing RPM and percentage gauge based on rpm/maxRpm, teal accent (`@fanColor`). Multiple Fan tiles can monitor different fans (CPU fan, pump fan, etc.) simultaneously (1s refresh; hidden if no fans detected; GH#191).
 - **Battery** — Charge level percentage (5s refresh; hidden if no battery)
 - **Health Score** — `HealthScoreTile` displaying a composite 0–100 system health score computed by `HealthScoreCalculator`. Aggregates six components with weighted scoring: CPU load (15%), memory usage (20%), disk space (25%), temperature (15%), battery health (10%), SMART disk health (15%). Unavailable components (no battery, no thermal sensors, no SMART) are excluded and weights redistributed proportionally. Color-coded: green (Excellent, ≥80), amber (Good/Fair, 60–79), red (Poor, <60). In Large/Hero display modes, shows per-component breakdown bars with 3-letter labels, colored fill proportional to score, and numeric values. Always visible (not conditional), hideable via edit mode like any other tile. Quick action button: **"System Checkup"** launches the Maintenance Wizard dialog (FR-83).
 **System summary bar** (full width) — hostname in bold followed by OS, CPU model, and RAM total inline (single-line compact layout).

@@ -136,6 +136,19 @@ void RingTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
+    if (mDisplayMode == Compact) {
+        int top = mLblTitle->geometry().bottom() + 4;
+        int bottom = mProgressBar->isVisible() ? mProgressBar->geometry().top() - 4 : height() - 6;
+        QRect valueRect(8, top, width() - 16, qMax(1, bottom - top));
+        QFont vf = font();
+        vf.setPixelSize(qMax(16, valueRect.height() / 2));
+        vf.setBold(true);
+        painter.setFont(vf);
+        painter.setPen(mMetricColor);
+        painter.drawText(valueRect, Qt::AlignCenter, mLblPercentage->text());
+        return;
+    }
+
     // Determine the available rect for the ring, between the title and the
     // progress bar.  Title occupies roughly the first 30px, footer+bar ~40px.
     int topMargin    = mLblTitle->geometry().bottom() + 6;

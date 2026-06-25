@@ -12,6 +12,8 @@
 #include <QDesktopServices>
 #include <QShortcut>
 #include <QtConcurrent>
+#include <QScrollArea>
+#include <QVector>
 
 #include "nexis_page.h"
 #include "Managers/info_manager.h"
@@ -26,6 +28,7 @@
 #include "vumeter_tile.h"
 #include "health_score_tile.h"
 #include "dashboard_tile_wrapper.h"
+#include "dashboard_layout_util.h"
 
 #include "Managers/setting_manager.h"
 
@@ -55,6 +58,7 @@ public:
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
 private slots:
     void onKioskModeChanged(bool enabled);
@@ -67,11 +71,8 @@ private slots:
     void onDiskUsageUpdated(const QList<Disk> &disks);
     void updateTempTile();
     void updateFanTile();
-    void onFanSensorSelected(QAction *action);
     void onGpuUpdated(const QList<GpuDevice> &gpus);
-    void onTempSensorSelected(QAction *action);
-    void onGpuDeviceSelected(QAction *action);
-    void onDiskSelected(QAction *action);
+    void onTileInputSelected(DashboardTileWrapper *wrapper, const QString &input);
     void onBatteryUpdated(const BatteryData &bat);
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 
@@ -104,30 +105,19 @@ private:
 
     MetricTileBase *mCpuTile;
     MetricTileBase *mMemTile;
-    MetricTileBase *mDiskTile;
-    MetricTileBase *mTempTile;
-    MetricTileBase *mGpuTile;
     MetricTileBase *mBatteryTile;
-    MetricTileBase *mFanTile;
     HealthScoreTile *mHealthTile;
     NetworkTile *mNetworkTile;
 
-    QMenu *mGpuDeviceMenu;
-    QMenu *mDiskMenu;
-    QMenu *mTempSensorMenu;
-    QMenu *mFanSensorMenu;
     QList<Disk> mCachedDisks;
     QList<DriveHealth> mCachedDriveHealth;
+    QHash<QString, QPair<quint64,quint64>> mNetLastBytes;  // uid -> {rx, tx}
 
     InfoManager *im;
     SettingManager *mSettingManager;
     AppManager *mAppManager;
     SignalMapper *mSignalMapper;
     DataRefreshService *mRefresh;
-
-    int mSelectedSensorIndex;
-    int mSelectedGpuIndex;
-    int mSelectedFanIndex;
 
     QToolButton *mKioskButton;
     QToolButton *mEditButton;
@@ -139,9 +129,11 @@ private:
     bool mEditMode;
     bool mKioskMode;
 
-    static const int GRID_ROWS = 4;
-    static const int GRID_COLS = 4;
-    QString mOccupancy[GRID_ROWS][GRID_COLS];
+    int mVisibleCols = DashboardLayout::kMaxCols;   // responsive in Task 3
+    int mRowCount = 0;                              // grows to fit placed tiles
+    QVector<QVector<QString>> mOccupancy;           // [row][col] -> tile uid/id
+    QScrollArea *mGridScroll = nullptr;
+    QWidget *mGridContainer = nullptr;              // holds bentoGrid; scrolled
     QList<QWidget*> mPlaceholders;
 
     QList<DashboardTileWrapper*> mTileWrappers;
@@ -169,11 +161,15 @@ private:
     void refreshSummaryColors();
     void updateDiskHealthBadge();
     void buildGrid();
+    void recomputeColumns();
     void rebuildLayout();
-    DashboardTileWrapper *wrapTile(const QString &id, QWidget *tile);
+    DashboardTileWrapper *wrapTile(const QString &uid, const QString &type,
+                                   const QString &input, QWidget *tile);
     void applyDisplayModeForSpan(DashboardTileWrapper *wrapper);
     QJsonArray serializeLayout() const;
     void deserializeLayout(const QString &json);
+    void persistLayout();
+    QJsonObject layoutEnvelope() const;
     QJsonArray defaultLayout() const;
     bool gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const;
     void rebuildOccupancy();
@@ -184,8 +180,10 @@ private:
     QStringList availableStyles(const QString &tileId) const;
     QString defaultStyle(const QString &tileId) const;
     void tileTitle(const QString &id, QString &title, QString &colorToken) const;
-    void setupTileGearMenu(const QString &id, MetricTileBase *tile);
+    void setupTileGearMenu(DashboardTileWrapper *wrapper);
+    void migrateLegacyBindings();
     DashboardTileWrapper *findWrapper(const QString &tileId) const;
+    QList<DashboardTileWrapper*> wrappersOfType(const QString &type) const;
     bool tileUsesRangeMenu(const QString &style) const;
     void setupCustomizationMenu(DashboardTileWrapper *wrapper, const QString &style);
     void launchMaintenanceWizard();

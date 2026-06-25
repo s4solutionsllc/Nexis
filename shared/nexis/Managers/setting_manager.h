@@ -99,6 +99,7 @@ public:
     void setThemeName(const QString &value);
     QString getThemeName() const;
 
+    // GH#191: superseded by per-tile layout binding; getter retained for migration.
     void setDiskName(const QString &value);
     QString getDiskName() const;
 
@@ -140,12 +141,17 @@ public:
     void setKioskMode(bool value);
     bool getKioskMode() const;
 
+    // GH#191: superseded by per-tile layout binding. Setters are no longer
+    // called; getters are retained only to migrate legacy global selections
+    // into a tile's binding on first load.
     void setTempSensorId(const QString &value);
     QString getTempSensorId() const;
 
+    // GH#191: superseded by per-tile layout binding.
     void setFanSensorId(const QString &value);
     QString getFanSensorId() const;
 
+    // GH#191: superseded by per-tile layout binding.
     void setGpuDeviceId(const QString &value);
     QString getGpuDeviceId() const;
 

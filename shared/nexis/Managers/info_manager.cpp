@@ -288,6 +288,13 @@ QString InfoManager::getDefaultNetworkInterface() const
     return ni->getDefaultNetworkInterface();
 }
 
+QStringList InfoManager::getNetworkInterfaceNames() const
+{
+    QStringList names = getInterfaceStats().keys();
+    names.sort();
+    return names;
+}
+
 NetInterfaceStatsMap InfoManager::getInterfaceStats() const
 {
     return ni->getInterfaceStats();

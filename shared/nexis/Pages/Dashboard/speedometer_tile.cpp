@@ -156,12 +156,26 @@ void SpeedometerTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
+    if (mDisplayMode == Compact) {
+        int top = mLblTitle->sizeHint().height() + 6;
+        int bottom = mLblSubtitle->isVisible() ? mLblSubtitle->geometry().top() - 4 : height() - 6;
+        QRect valueRect(8, top, width() - 16, qMax(1, bottom - top));
+        QFont vf = font();
+        vf.setPixelSize(qMax(16, valueRect.height() / 2));
+        vf.setBold(true);
+        painter.setFont(vf);
+        painter.setPen(mSecondaryTextColor);
+        QString text = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
+        painter.drawText(valueRect, Qt::AlignCenter, text);
+        return;
+    }
+
     int titleHeight = mLblTitle->sizeHint().height() + 10;
     int footerTop = mLblSubtitle->geometry().top() - 6;
     int availableHeight = footerTop - titleHeight;
     int availableWidth = width() - 24;
 
-    bool showTickLabels = (mDisplayMode != Normal);
+    bool showTickLabels = (mDisplayMode == Hero || mDisplayMode == Large);
 
     int dialSize = qMin(availableWidth, availableHeight);
 

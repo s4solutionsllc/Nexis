@@ -2,6 +2,7 @@
 #include "ui_dashboard_page.h"
 #include <QToolButton>
 #include "maintenance_wizard_dialog.h"
+#include "add_tile_dialog.h"
 
 #include "utilities.h"
 #include "Managers/app_manager.h"
@@ -15,7 +16,11 @@
 #include <QNetworkRequest>
 #include <QRegularExpression>
 #include <QResizeEvent>
+#include <QScrollBar>
+#include <QShowEvent>
 #include <QVersionNumber>
+#include <algorithm>
+#include <functional>
 
 DashboardPage::~DashboardPage()
 {
@@ -29,25 +34,14 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     ui(new Ui::DashboardPage),
     mCpuTile(nullptr),
     mMemTile(nullptr),
-    mDiskTile(nullptr),
-    mTempTile(nullptr),
-    mGpuTile(nullptr),
     mBatteryTile(nullptr),
-    mFanTile(nullptr),
     mHealthTile(nullptr),
     mNetworkTile(nullptr),
-    mGpuDeviceMenu(new QMenu(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
     mSettingManager(settingManager ? settingManager : SettingManager::ins()),
     mAppManager(appManager ? appManager : AppManager::ins()),
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
-    mDiskMenu(new QMenu(this)),
-    mTempSensorMenu(new QMenu(this)),
-    mFanSensorMenu(new QMenu(this)),
-    mSelectedSensorIndex(0),
-    mSelectedGpuIndex(0),
-    mSelectedFanIndex(0),
     mKioskButton(new QToolButton(this)),
     mEditButton(new QToolButton(this)),
     mEditToolbar(nullptr),
@@ -71,58 +65,103 @@ void DashboardPage::init()
     QString savedLayout = mSettingManager->getDashboardLayout();
     if (!savedLayout.isEmpty()) {
         QJsonDocument doc = QJsonDocument::fromJson(savedLayout.toUtf8());
-        QJsonArray arr = doc.array();
+        QJsonArray arr = doc.isObject()
+            ? doc.object().value("tiles").toArray()
+            : doc.array();
         for (const QJsonValue &val : arr) {
             QJsonObject obj = val.toObject();
-            QString id = obj["id"].toString();
+            QString type = obj["id"].toString();
+            QString uid = obj.contains("uid") ? obj["uid"].toString() : type;
             QString style = obj["style"].toString();
             if (!style.isEmpty())
-                mTileStyles[id] = style;
+                mTileStyles[uid] = style;
         }
     }
 
-    // Create tiles using factory with saved styles (or defaults)
-    mCpuTile = createTile("cpu", mTileStyles.value("cpu", defaultStyle("cpu")));
-    mMemTile = createTile("memory", mTileStyles.value("memory", defaultStyle("memory")));
-    mDiskTile = createTile("disk", mTileStyles.value("disk", defaultStyle("disk")));
-    mNetworkTile = new NetworkTile("@networkColor", this);
-    mGpuTile = createTile("gpu", mTileStyles.value("gpu", defaultStyle("gpu")));
-    mTempTile = createTile("temp", mTileStyles.value("temp", defaultStyle("temp")));
-    mBatteryTile = createTile("battery", mTileStyles.value("battery", defaultStyle("battery")));
-    mFanTile = createTile("fan", mTileStyles.value("fan", defaultStyle("fan")));
-    mHealthTile = new HealthScoreTile("@healthScoreColor", this);
+    // GH#191: layout-driven tile creation. Parse the layout tiles up front
+    // (envelope-aware + migrate) so we create ONE wrapper per PERSISTED tile,
+    // including multiple instances of a type (e.g. two temp tiles). For the
+    // default/single-instance case this produces exactly one wrapper per type,
+    // in the default order — identical to the legacy fixed-create behaviour.
+    // deserializeLayout() still re-parses afterwards to apply positions/spans/
+    // colors/input by uid.
+    QJsonArray layoutTiles;
+    {
+        QString src = savedLayout.isEmpty()
+            ? QString(QJsonDocument(defaultLayout()).toJson())
+            : savedLayout;
+        QJsonDocument d = QJsonDocument::fromJson(src.toUtf8());
+        QJsonArray raw = d.isObject() ? d.object().value("tiles").toArray() : d.array();
+        int ver = d.isObject() ? d.object().value("version").toInt(1) : 1;
+        layoutTiles = DashboardLayout::migrate(raw, ver);
+    }
 
-    // Wrap each tile in a DashboardTileWrapper for drag/resize support
-    wrapTile("cpu", mCpuTile);
-    wrapTile("memory", mMemTile);
-    wrapTile("disk", mDiskTile);
-    wrapTile("network", mNetworkTile);
+    // Singleton convenience pointers (mCpuTile/mMemTile/mBatteryTile/
+    // mHealthTile/mNetworkTile) are set inside the loop as their type is created.
+    auto createForType = [this](const QString &type, const QString &style) -> QWidget* {
+        if (type == "network") return new NetworkTile("@networkColor", this);
+        if (type == "health")  return new HealthScoreTile("@healthScoreColor", this);
+        return createTile(type, style);
+    };
 
-    if (im->hasGpu())
-        wrapTile("gpu", mGpuTile);
-    else
-        mGpuTile->hide();
+    auto assignSingleton = [this](const QString &type, QWidget *tile) {
+        if (type == "cpu")          mCpuTile = qobject_cast<MetricTileBase*>(tile);
+        else if (type == "memory")  mMemTile = qobject_cast<MetricTileBase*>(tile);
+        else if (type == "battery") mBatteryTile = qobject_cast<MetricTileBase*>(tile);
+        else if (type == "health")  mHealthTile = qobject_cast<HealthScoreTile*>(tile);
+        else if (type == "network") mNetworkTile = qobject_cast<NetworkTile*>(tile);
+    };
 
-    if (im->hasThermalSensors())
-        wrapTile("temp", mTempTile);
-    else
-        mTempTile->hide();
+    for (const QJsonValue &v : layoutTiles) {
+        QJsonObject o = v.toObject();
+        QString type = o.value("id").toString();
+        if (type.isEmpty()) continue;
+        QString uid  = o.contains("uid") ? o.value("uid").toString() : type;
+        QString input = o.value("input").toString();
+        QString style = o.contains("style") ? o.value("style").toString()
+                                            : defaultStyle(type);
 
+        // Skip optional types whose hardware is absent.
+        if (type == "gpu" && !im->hasGpu()) continue;
+        if (type == "temp" && !im->hasThermalSensors()) continue;
+        if (type == "battery" && !im->hasBattery()) continue;
+        if (type == "fan" && !im->hasFanSensors()) continue;
+
+        QString tileStyle = mTileStyles.value(uid, style);
+        mTileStyles[uid] = tileStyle;
+        QWidget *tile = createForType(type, tileStyle);
+        wrapTile(uid, type, input, tile);
+        assignSingleton(type, tile);
+    }
+
+    // Singleton safety net: a malformed/old saved layout could omit a required
+    // singleton, leaving its member pointer null and crashing the singleton
+    // update routines. Guarantee cpu/memory/network/health (and battery when
+    // hardware is present) each have at least one wrapper + a non-null pointer.
+    // For a normal default/saved layout all are present, so this is a no-op.
+    auto ensureSingleton = [&](const QString &type) {
+        if (!wrappersOfType(type).isEmpty()) return;
+        QString style = mTileStyles.value(type, defaultStyle(type));
+        mTileStyles[type] = style;
+        QWidget *tile = createForType(type, style);
+        wrapTile(type, type, QString(), tile);
+        assignSingleton(type, tile);
+    };
+    ensureSingleton("cpu");
+    ensureSingleton("memory");
+    ensureSingleton("network");
+    ensureSingleton("health");
     if (im->hasBattery())
-        wrapTile("battery", mBatteryTile);
-    else
-        mBatteryTile->hide();
-
-    if (im->hasFanSensors())
-        wrapTile("fan", mFanTile);
-    else
-        mFanTile->hide();
-
-    wrapTile("health", mHealthTile);
+        ensureSingleton("battery");
 
     mHealthTile->setQuickAction(tr("System Checkup"), [this]() {
         launchMaintenanceWizard();
     });
+
+    // GH#191: seed default multi-instance tiles' bindings from legacy global
+    // selections (or the first detected input). Runs BEFORE deserializeLayout so
+    // a saved per-tile input always wins over the legacy seed.
+    migrateLegacyBindings();
 
     // Load saved layout or use default, then build the grid
     if (savedLayout.isEmpty())
@@ -131,17 +170,12 @@ void DashboardPage::init()
         deserializeLayout(savedLayout);
 
     for (auto it = mTileColors.constBegin(); it != mTileColors.constEnd(); ++it) {
-        if (it.key() == "network") {
-            if (mNetworkTile)
-                mNetworkTile->setColorOverride(it.value());
-        } else {
-            DashboardTileWrapper *w = findWrapper(it.key());
-            if (w) {
-                auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget());
-                if (metric)
-                    metric->setColorOverride(it.value());
-            }
-        }
+        DashboardTileWrapper *w = findWrapper(it.key());
+        if (!w) continue;
+        if (auto *net = qobject_cast<NetworkTile*>(w->innerWidget()))
+            net->setColorOverride(it.value());
+        else if (auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget()))
+            metric->setColorOverride(it.value());
     }
 
     for (auto it = mTileRanges.constBegin(); it != mTileRanges.constEnd(); ++it) {
@@ -154,133 +188,57 @@ void DashboardPage::init()
         }
     }
 
+    // GH#191: host the bento grid in a vertical scroll area so fixed-size tiles
+    // overflow downward instead of compressing.
+    mGridContainer = new QWidget;
+    mGridContainer->setObjectName("bentoGridContainer");
+    mGridContainer->setStyleSheet("#bentoGridContainer{background:transparent;}");
+    // The .ui nests bentoGrid as an item inside mainLayout, so the layout
+    // already has a parent. Detach it from mainLayout (item + QObject parent)
+    // before re-homing it on the container, otherwise setLayout() is rejected.
+    ui->mainLayout->removeItem(ui->bentoGrid);
+    ui->bentoGrid->setParent(nullptr);
+    mGridContainer->setLayout(ui->bentoGrid);          // steals the layout from the .ui parent
+
+    mGridScroll = new QScrollArea(this);
+    mGridScroll->setObjectName("bentoScroll");
+    mGridScroll->setWidgetResizable(true);
+    mGridScroll->setFrameShape(QFrame::NoFrame);
+    // GH#191: columns are derived from the available width, so the grid must
+    // always fit horizontally — sideways scrolling is never desirable and its
+    // appearance is purely a transient-width artifact. Force it off.
+    mGridScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    mGridScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    mGridScroll->setStyleSheet("QScrollArea{background:transparent;} QScrollArea>QWidget>QWidget{background:transparent;}");
+    mGridScroll->setWidget(mGridContainer);
+
+    // bentoGrid was item 0 in mainLayout; restore the scroll area to that slot.
+    ui->mainLayout->insertWidget(0, mGridScroll);
+
     buildGrid();
 
     // Give the tile grid all available vertical space
-    ui->mainLayout->setStretchFactor(ui->bentoGrid, 1);
+    ui->mainLayout->setStretchFactor(mGridScroll, 1);
 
-    // Temperature sensor gear menu
-    if (im->hasThermalSensors()) {
-        QList<ThermalSensor> sensors = im->getThermalSensors();
+    // Reflow the freshly-loaded layout to the real viewport width so the first
+    // paint uses a responsive column count instead of the kMaxCols placeholder.
+    recomputeColumns();
 
-        mTempSensorMenu->setObjectName("tempSensorMenu");
-        for (int i = 0; i < sensors.size(); ++i) {
-            QAction *action = mTempSensorMenu->addAction(sensors.at(i).label);
-            action->setData(i);
-            action->setCheckable(true);
-        }
-
-        QString savedSensorId = mSettingManager->getTempSensorId();
-        if (!savedSensorId.isEmpty()) {
-            bool found = false;
-            for (int i = 0; i < sensors.size(); ++i) {
-                if (sensors.at(i).id == savedSensorId) {
-                    mSelectedSensorIndex = i;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                qWarning() << "Saved temperature sensor" << savedSensorId << "not found, falling back to first sensor";
-        }
-
-        for (QAction *a : mTempSensorMenu->actions())
-            a->setChecked(a->data().toInt() == mSelectedSensorIndex);
-
-        if (mSelectedSensorIndex >= 0 && mSelectedSensorIndex < sensors.size())
-            mTempTile->setSubtitle(sensors.at(mSelectedSensorIndex).label);
-
-        setupTileGearMenu("temp", mTempTile);
-
-        connect(mTempSensorMenu, &QMenu::triggered,
-                this, &DashboardPage::onTempSensorSelected);
+    // GH#191: data-refresh wiring for the multi-instance sensor types. The gear
+    // menus and subtitles are now built per-tile in setupTileGearMenu(wrapper)
+    // (called from wrapTile) and migrateLegacyBindings(); only the live-data
+    // connections live here, still guarded by availability.
+    if (im->hasThermalSensors())
         connect(mRefresh, &DataRefreshService::tempUpdated,
                 this, &DashboardPage::updateTempTile);
-    }
 
-    // Fan sensor gear menu
-    if (im->hasFanSensors()) {
-        QList<FanSensor> fans = im->getFanSensors();
-
-        mFanSensorMenu->setObjectName("fanSensorMenu");
-        for (int i = 0; i < fans.size(); ++i) {
-            QAction *action = mFanSensorMenu->addAction(fans.at(i).label);
-            action->setData(i);
-            action->setCheckable(true);
-        }
-
-        QString savedFanId = mSettingManager->getFanSensorId();
-        if (!savedFanId.isEmpty()) {
-            bool found = false;
-            for (int i = 0; i < fans.size(); ++i) {
-                if (fans.at(i).id == savedFanId) {
-                    mSelectedFanIndex = i;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                qWarning() << "Saved fan sensor" << savedFanId << "not found, falling back to first sensor";
-        }
-
-        for (QAction *a : mFanSensorMenu->actions())
-            a->setChecked(a->data().toInt() == mSelectedFanIndex);
-
-        if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size())
-            mFanTile->setSubtitle(fans.at(mSelectedFanIndex).label);
-
-        setupTileGearMenu("fan", mFanTile);
-
-        connect(mFanSensorMenu, &QMenu::triggered,
-                this, &DashboardPage::onFanSensorSelected);
+    if (im->hasFanSensors())
         connect(mRefresh, &DataRefreshService::fanUpdated,
                 this, &DashboardPage::updateFanTile);
-    }
 
-    // GPU device selector menu (attached to tile gear button in setupTileGearMenu)
-    if (im->hasGpu()) {
-        QList<GpuDevice> gpus = im->getGpuDevices();
-        bool multiGpu = gpus.size() > 1;
-
-        QString savedGpuId = mSettingManager->getGpuDeviceId();
-        if (!savedGpuId.isEmpty()) {
-            bool found = false;
-            for (int i = 0; i < gpus.size(); ++i) {
-                if (gpus.at(i).name == savedGpuId) {
-                    mSelectedGpuIndex = i;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                qWarning() << "Saved GPU device" << savedGpuId << "not found, falling back to first device";
-        }
-
-        for (int i = 0; i < gpus.size(); ++i) {
-            const GpuDevice &g = gpus.at(i);
-            QString label = multiGpu
-                ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
-                : g.name;
-            QAction *a = mGpuDeviceMenu->addAction(label);
-            a->setCheckable(true);
-            a->setData(i);
-            a->setChecked(i == mSelectedGpuIndex);
-        }
-
-        if (mSelectedGpuIndex >= 0 && mSelectedGpuIndex < gpus.size()) {
-            const GpuDevice &g = gpus.at(mSelectedGpuIndex);
-            mGpuTile->setSubtitle(multiGpu
-                ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
-                : g.name);
-        }
-
-        setupTileGearMenu("gpu", mGpuTile);
-
-        connect(mGpuDeviceMenu, &QMenu::triggered,
-                this, &DashboardPage::onGpuDeviceSelected);
+    if (im->hasGpu())
         connect(mRefresh, &DataRefreshService::gpuUpdated,
                 this, &DashboardPage::onGpuUpdated);
-    }
 
     // Battery gauge
     if (im->hasBattery()) {
@@ -337,10 +295,6 @@ void DashboardPage::init()
             this, &DashboardPage::onNetworkUpdated);
     connect(mRefresh, &DataRefreshService::diskUsageUpdated,
             this, &DashboardPage::onDiskUsageUpdated);
-
-    // Disk selector gear menu
-    setupTileGearMenu("disk", mDiskTile);
-    connect(mDiskMenu, &QMenu::triggered, this, &DashboardPage::onDiskSelected);
 
     // Set network interface name
     QString ifName = im->getDefaultNetworkInterface();
@@ -644,82 +598,55 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
     if (disks.isEmpty())
         return;
 
+    bool firstFill = mCachedDisks.isEmpty();
     mCachedDisks = disks;
 
-    // Rebuild gear menu with current disk list
-    mDiskMenu->clear();
-    for (const Disk &d : disks) {
-        QAction *action = mDiskMenu->addAction(d.name);
-        action->setData(d.name);
-        action->setCheckable(true);
-    }
-    mDiskTile->setGearVisible(disks.size() >= 2);
+    // GH#191: the disk list became available — (re)build each disk tile's gear
+    // menu so it lists the detected disks. On the first fill the wrappers were
+    // created before mCachedDisks was populated, so their gears were empty.
+    if (firstFill)
+        for (DashboardTileWrapper *w : wrappersOfType("disk"))
+            setupTileGearMenu(w);
 
-    const Disk *disk = nullptr;
-    QString selectedDiskName = mSettingManager->getDiskName();
-    for (const Disk &d : disks) {
-        if (d.name.trimmed() == selectedDiskName.trimmed())
-            disk = &d;
-    }
-
-    if (!disk) {
-        for (const Disk &d : disks)
-            if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed())
-                disk = &d;
-        if (!disk)
-            disk = &disks.at(0);
-    }
-
-    // Mark the selected disk in the gear menu
-    for (QAction *a : mDiskMenu->actions())
-        a->setChecked(a->data().toString() == disk->name);
-
-    int diskPercent = 0;
-    if (disk->size > 0) {
-        diskPercent = ((double) disk->used / (double) disk->size) * 100.0;
-    }
-
-    // alert message
+    // alert message — fire once for the worst disk, using the same threshold
+    // logic as before but evaluated against the highest-usage disk.
     int diskAlertPercent = mSettingManager->getDiskAlertPercent();
     if (diskAlertPercent > 0) {
+        int worst = 0;
+        for (const Disk &d : disks)
+            if (d.size > 0)
+                worst = qMax(worst, static_cast<int>((double)d.used / (double)d.size * 100.0));
         static bool isShow = true;
-        if (diskPercent > diskAlertPercent && isShow) {
+        if (worst > diskAlertPercent && isShow) {
             mAppManager->getTrayIcon()->showMessage(tr("High Disk Usage"),
                                                           tr("The amount of disk used is over %1%.").arg(diskAlertPercent),
                                                           QSystemTrayIcon::Warning);
             isShow = false;
-        } else if (diskPercent < diskAlertPercent) {
+        } else if (worst < diskAlertPercent) {
             isShow = true;
         }
     }
 
     if (!mActive) return;
 
-    QString sizeText = FormatUtil::formatBytes(disk->size);
-    QString usedText = FormatUtil::formatBytes(disk->used);
+    // Drive each disk tile from its own bound disk (fallback to first if unbound
+    // or the binding no longer resolves).
+    for (DashboardTileWrapper *w : wrappersOfType("disk")) {
+        const Disk *disk = nullptr;
+        for (const Disk &d : disks)
+            if (d.name.trimmed() == w->inputKey().trimmed()) { disk = &d; break; }
+        if (!disk)
+            disk = &disks.at(0);
 
-    mDiskTile->setDiskInfo(diskPercent, usedText, sizeText);
-    updateDiskHealthBadge();
-}
+        int diskPercent = 0;
+        if (disk->size > 0)
+            diskPercent = ((double) disk->used / (double) disk->size) * 100.0;
 
-void DashboardPage::onDiskSelected(QAction *action)
-{
-    QString diskName = action->data().toString();
-    mSettingManager->setDiskName(diskName);
-
-    for (const Disk &d : mCachedDisks) {
-        if (d.name == diskName) {
-            int percent = 0;
-            if (d.size > 0)
-                percent = static_cast<int>((double)d.used / (double)d.size * 100.0);
-            mDiskTile->setDiskInfo(percent,
-                                   FormatUtil::formatBytes(d.used),
-                                   FormatUtil::formatBytes(d.size));
-
-            for (QAction *a : mDiskMenu->actions())
-                a->setChecked(a->data().toString() == diskName);
-            break;
-        }
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+        tile->setDiskInfo(diskPercent,
+                          FormatUtil::formatBytes(disk->used),
+                          FormatUtil::formatBytes(disk->size));
     }
 
     updateDiskHealthBadge();
@@ -727,123 +654,106 @@ void DashboardPage::onDiskSelected(QAction *action)
 
 void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 {
-    static quint64 l_RXbytes = rxBytes;
-    static quint64 l_TXbytes = txBytes;
+    Q_UNUSED(rxBytes) Q_UNUSED(txBytes)
+    if (!mActive) return;
 
-    if (!mActive) {
-        l_RXbytes = rxBytes;
-        l_TXbytes = txBytes;
-        return;
+    NetInterfaceStatsMap stats = im->getInterfaceStats();
+    for (DashboardTileWrapper *w : wrappersOfType("network")) {
+        auto *tile = qobject_cast<NetworkTile*>(w->innerWidget());
+        if (!tile) continue;
+        QString iface = w->inputKey().isEmpty() ? im->getDefaultNetworkInterface()
+                                                : w->inputKey();
+        if (!stats.contains(iface)) continue;
+        quint64 rx = stats.value(iface).rx;
+        quint64 tx = stats.value(iface).tx;
+        auto last = mNetLastBytes.value(w->tileId(), {rx, tx});
+        tile->setInterfaceName(iface);
+        tile->setValues(rx - last.first, tx - last.second, rx, tx);
+        mNetLastBytes[w->tileId()] = {rx, tx};
     }
-
-    quint64 d_RXbytes = (rxBytes - l_RXbytes);
-    quint64 d_TXbytes = (txBytes - l_TXbytes);
-
-    mNetworkTile->setValues(d_RXbytes, d_TXbytes, rxBytes, txBytes);
-
-    l_RXbytes = rxBytes;
-    l_TXbytes = txBytes;
 }
 
 void DashboardPage::updateTempTile()
 {
     if (!mActive) return;
-    double temp = im->getThermalTemperature(mSelectedSensorIndex);
-    int percent = qBound(0, static_cast<int>(temp), 100);
-
-    double tempF = temp * 9.0 / 5.0 + 32.0;
-    mTempTile->setValue(percent, QString("%1\u00B0C").arg(temp, 0, 'f', 1));
-    mTempTile->addDataPoint(temp);
-}
-
-void DashboardPage::onTempSensorSelected(QAction *action)
-{
-    int index = action->data().toInt();
-    mSelectedSensorIndex = index;
-
     QList<ThermalSensor> sensors = im->getThermalSensors();
-    if (index >= 0 && index < sensors.size()) {
-        mSettingManager->setTempSensorId(sensors.at(index).id);
-        mTempTile->setSubtitle(sensors.at(index).label);
+    for (DashboardTileWrapper *w : wrappersOfType("temp")) {
+        int idx = 0;
+        for (int i = 0; i < sensors.size(); ++i)
+            if (sensors.at(i).id == w->inputKey()) { idx = i; break; }
+        double temp = im->getThermalTemperature(idx);
+        int percent = qBound(0, static_cast<int>(temp), 100);
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+        tile->setValue(percent, QString("%1\u00B0C").arg(temp, 0, 'f', 1));
+        tile->addDataPoint(temp);
     }
-
-    for (QAction *a : mTempSensorMenu->actions())
-        a->setChecked(a->data().toInt() == index);
-
-    mTempTile->clearDataPoints();
-    updateTempTile();
 }
 
 void DashboardPage::updateFanTile()
 {
     if (!mActive) return;
-    int rpm = im->getFanSpeed(mSelectedFanIndex);
     QList<FanSensor> fans = im->getFanSensors();
-    int maxRpm = 6000;
-    if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size()) {
-        int sensorMax = fans.at(mSelectedFanIndex).maxRpm;
-        if (sensorMax > 0)
-            maxRpm = sensorMax;
+    for (DashboardTileWrapper *w : wrappersOfType("fan")) {
+        int idx = 0;
+        for (int i = 0; i < fans.size(); ++i)
+            if (fans.at(i).id == w->inputKey()) { idx = i; break; }
+        int rpm = im->getFanSpeed(idx);
+        int maxRpm = (idx >= 0 && idx < fans.size() && fans.at(idx).maxRpm > 0)
+                       ? fans.at(idx).maxRpm : 6000;
+        int percent = qBound(0, static_cast<int>(rpm * 100.0 / maxRpm), 100);
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+        tile->setValue(percent, QString("%1 RPM").arg(rpm));
+        tile->addDataPoint(rpm);
     }
-    int percent = qBound(0, static_cast<int>(rpm * 100.0 / maxRpm), 100);
-
-    mFanTile->setValue(percent, QString("%1 RPM").arg(rpm));
-    mFanTile->addDataPoint(rpm);
-}
-
-void DashboardPage::onFanSensorSelected(QAction *action)
-{
-    mSelectedFanIndex = action->data().toInt();
-
-    for (QAction *a : mFanSensorMenu->actions())
-        a->setChecked(a == action);
-
-    QList<FanSensor> fans = im->getFanSensors();
-    if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size()) {
-        mFanTile->setSubtitle(fans.at(mSelectedFanIndex).label);
-        mSettingManager->setFanSensorId(fans.at(mSelectedFanIndex).id);
-    }
-
-    mFanTile->clearDataPoints();
-    updateFanTile();
 }
 
 void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 {
-    if (!mActive || mSelectedGpuIndex < 0 || mSelectedGpuIndex >= gpus.size())
-        return;
-
-    const GpuDevice &gpu = gpus.at(mSelectedGpuIndex);
-
-    if (gpu.utilization < 0) {
-        mGpuTile->setValue(0, tr("N/A"));
-    } else {
-        int util = qBound(0, gpu.utilization, 100);
-        mGpuTile->setValue(util, QString("%1%").arg(util));
-        mGpuTile->addDataPoint(util);
+    if (!mActive) return;
+    for (DashboardTileWrapper *w : wrappersOfType("gpu")) {
+        int idx = 0;
+        for (int i = 0; i < gpus.size(); ++i)
+            if (gpus.at(i).name == w->inputKey()) { idx = i; break; }
+        if (idx < 0 || idx >= gpus.size()) continue;
+        const GpuDevice &gpu = gpus.at(idx);
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+        if (gpu.utilization < 0) { tile->setValue(0, tr("N/A")); }
+        else {
+            int util = qBound(0, gpu.utilization, 100);
+            tile->setValue(util, QString("%1%").arg(util));
+            tile->addDataPoint(util);
+        }
     }
 }
 
-void DashboardPage::onGpuDeviceSelected(QAction *action)
+void DashboardPage::onTileInputSelected(DashboardTileWrapper *wrapper, const QString &input)
 {
-    int index = action->data().toInt();
-    mSelectedGpuIndex = index;
-
-    for (QAction *a : mGpuDeviceMenu->actions())
-        a->setChecked(a == action);
-
-    QList<GpuDevice> gpus = im->getGpuDevices();
-    bool multiGpu = gpus.size() > 1;
-    if (index >= 0 && index < gpus.size()) {
-        const GpuDevice &g = gpus.at(index);
-        mSettingManager->setGpuDeviceId(g.name);
-        mGpuTile->setSubtitle(multiGpu
-            ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
-            : g.name);
+    wrapper->setInputKey(input);
+    auto *tile = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
+    if (tile) {
+        // Subtitle = the human label for this input.
+        QString label = input;
+        if (wrapper->tileType() == "temp")
+            for (const ThermalSensor &s : im->getThermalSensors())
+                if (s.id == input) { label = s.label; break; }
+        else if (wrapper->tileType() == "fan")
+            for (const FanSensor &f : im->getFanSensors())
+                if (f.id == input) { label = f.label; break; }
+        tile->setSubtitle(label);
+        tile->clearDataPoints();
+        if (QToolButton *g = tile->gearButton()) {
+            if (QMenu *m = g->menu())
+                for (QAction *a : m->actions())
+                    a->setChecked(a->data().toString() == input);
+        }
     }
-
-    mGpuTile->clearDataPoints();
-    onGpuUpdated(gpus);
+    // Push a fresh value immediately for the changed type.
+    if (wrapper->tileType() == "temp") updateTempTile();
+    else if (wrapper->tileType() == "fan") updateFanTile();
+    persistLayout();
 }
 
 void DashboardPage::onBatteryUpdated(const BatteryData &bat)
@@ -930,48 +840,52 @@ void DashboardPage::updateDiskHealthBadge()
     if (mCachedDriveHealth.isEmpty() || mCachedDisks.isEmpty())
         return;
 
-    // Find the currently selected disk
-    const Disk *selectedDisk = nullptr;
-    QString selectedDiskName = mSettingManager->getDiskName();
-    for (const Disk &d : mCachedDisks) {
-        if (d.name.trimmed() == selectedDiskName.trimmed()) {
-            selectedDisk = &d;
-            break;
-        }
-    }
-    if (!selectedDisk) {
+    // GH#191: each disk tile's health badge reflects ITS bound disk.
+    for (DashboardTileWrapper *w : wrappersOfType("disk")) {
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+
+        // Resolve this tile's bound disk (fallback: root volume, then first).
+        const Disk *selectedDisk = nullptr;
         for (const Disk &d : mCachedDisks) {
-            if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed()) {
+            if (d.name.trimmed() == w->inputKey().trimmed()) {
                 selectedDisk = &d;
                 break;
             }
         }
-        if (!selectedDisk)
-            selectedDisk = &mCachedDisks.first();
-    }
-
-    // Match the selected volume to its physical drive's health data
-    QString baseDev = extractBaseDevice(selectedDisk->device);
-    const DriveHealth *matched = nullptr;
-
-    for (const DriveHealth &dh : mCachedDriveHealth) {
-        if (dh.devicePath == baseDev) {
-            matched = &dh;
-            break;
+        if (!selectedDisk) {
+            for (const Disk &d : mCachedDisks) {
+                if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed()) {
+                    selectedDisk = &d;
+                    break;
+                }
+            }
+            if (!selectedDisk)
+                selectedDisk = &mCachedDisks.first();
         }
-    }
 
-    // On macOS, APFS synthesized container numbering often won't match the
-    // physical device path. If there's only one physical drive, use it.
-    if (!matched && mCachedDriveHealth.size() == 1)
-        matched = &mCachedDriveHealth.first();
+        // Match the selected volume to its physical drive's health data
+        QString baseDev = extractBaseDevice(selectedDisk->device);
+        const DriveHealth *matched = nullptr;
 
-    // Update the tile
-    mDiskTile->clearDriveHealth();
-    if (matched) {
-        QString name = matched->model.isEmpty() ? matched->deviceName : matched->model;
-        bool good = (matched->healthVerdict == "Good" || matched->smartPassed);
-        mDiskTile->setDriveHealth(name, matched->healthVerdict, matched->healthPercent, good);
+        for (const DriveHealth &dh : mCachedDriveHealth) {
+            if (dh.devicePath == baseDev) {
+                matched = &dh;
+                break;
+            }
+        }
+
+        // On macOS, APFS synthesized container numbering often won't match the
+        // physical device path. If there's only one physical drive, use it.
+        if (!matched && mCachedDriveHealth.size() == 1)
+            matched = &mCachedDriveHealth.first();
+
+        tile->clearDriveHealth();
+        if (matched) {
+            QString name = matched->model.isEmpty() ? matched->deviceName : matched->model;
+            bool good = (matched->healthVerdict == "Good" || matched->smartPassed);
+            tile->setDriveHealth(name, matched->healthVerdict, matched->healthPercent, good);
+        }
     }
 }
 
@@ -1034,6 +948,12 @@ void DashboardPage::toggleEditMode()
         for (QWidget *ph : mPlaceholders)
             ph->setVisible(true);
         updateAddTileButton();
+        // GH#191: re-validate the column count now that placeholders are shown,
+        // so a stale count can't leave the grid wider/narrower than the
+        // viewport. recomputeColumns()'s no-change guard makes this a no-op when
+        // the width-derived count is unchanged (the common case), so it is not a
+        // rebuild on every toggle and cannot recurse.
+        recomputeColumns();
     }
 }
 
@@ -1056,8 +976,10 @@ void DashboardPage::exitEditMode()
     mGearVisibleTiles.clear();
     for (QWidget *ph : mPlaceholders)
         ph->setVisible(false);
-    QJsonDocument doc(serializeLayout());
-    mSettingManager->setDashboardLayout(QString(doc.toJson(QJsonDocument::Compact)));
+    // GH#191: re-validate the column count after hiding placeholders. No-op via
+    // recomputeColumns()'s guard when the count is unchanged; recursion-safe.
+    recomputeColumns();
+    persistLayout();
 }
 
 void DashboardPage::onResetLayout()
@@ -1071,23 +993,19 @@ void DashboardPage::onResetLayout()
 
     // Re-create tiles that aren't on their default style
     for (DashboardTileWrapper *w : mTileWrappers) {
-        QString id = w->tileId();
-        QString defStyle = defaultStyle(id);
-        if (w->currentStyle() != defStyle && !availableStyles(id).isEmpty()) {
-            MetricTileBase *newTile = createTile(id, defStyle);
+        QString type = w->tileType();
+        QString defStyle = defaultStyle(type);
+        if (w->currentStyle() != defStyle && !availableStyles(type).isEmpty()) {
+            MetricTileBase *newTile = createTile(type, defStyle);
             w->setInnerWidget(newTile);
             w->setCurrentStyle(defStyle);
 
-            if (id == "cpu") mCpuTile = newTile;
-            else if (id == "memory") mMemTile = newTile;
-            else if (id == "disk") mDiskTile = newTile;
-            else if (id == "temp") mTempTile = newTile;
-            else if (id == "gpu") mGpuTile = newTile;
-            else if (id == "battery") mBatteryTile = newTile;
-            else if (id == "fan") mFanTile = newTile;
-            else if (id == "health") mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
+            if (type == "cpu") mCpuTile = newTile;
+            else if (type == "memory") mMemTile = newTile;
+            else if (type == "battery") mBatteryTile = newTile;
+            else if (type == "health") mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
-            setupTileGearMenu(id, newTile);
+            setupTileGearMenu(w);
 
             w->clearCustomizationSection();
             setupCustomizationMenu(w, defStyle);
@@ -1097,6 +1015,12 @@ void DashboardPage::onResetLayout()
     mSettingManager->clearDashboardLayout();
     deserializeLayout(QString(QJsonDocument(defaultLayout()).toJson()));
     buildGrid();
+    // The default layout is authored at kMaxCols; reflow it to the current
+    // viewport width. Invalidate mVisibleCols first so recomputeColumns()'s
+    // no-change guard can't skip the reflow when the width-derived count
+    // happens to equal the pre-reset value. (GH#191)
+    mVisibleCols = -1;
+    recomputeColumns();
     updateAddTileButton();
 }
 
@@ -1130,9 +1054,10 @@ void DashboardPage::applyFooterVisibility()
     ui->statusFooter->setVisible(visible);
 }
 
-DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
+DashboardTileWrapper *DashboardPage::wrapTile(const QString &uid, const QString &type,
+                                              const QString &input, QWidget *tile)
 {
-    auto *wrapper = new DashboardTileWrapper(id, tile, this);
+    auto *wrapper = new DashboardTileWrapper(uid, type, input, tile, this);
 
     connect(wrapper, &DashboardTileWrapper::dragStarted,
             this, &DashboardPage::onTileDragStarted);
@@ -1151,44 +1076,55 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &id, QWidget *tile)
     connect(wrapper, &DashboardTileWrapper::rangeChangeRequested,
             this, &DashboardPage::onTileRangeChangeRequested);
 
-    // Set up style menu for switchable tiles
-    QStringList styles = availableStyles(id);
+    // Set up style menu for switchable tiles. Styles/customization are keyed by
+    // the unique instance id (uid) but defaults are derived from the metric type.
+    QStringList styles = availableStyles(type);
     if (!styles.isEmpty()) {
-        QString currentStyle = mTileStyles.value(id, defaultStyle(id));
+        QString currentStyle = mTileStyles.value(uid, defaultStyle(type));
         wrapper->setStyleMenuItems(styles, currentStyle);
     }
 
-    setupCustomizationMenu(wrapper, mTileStyles.value(id, defaultStyle(id)));
+    setupCustomizationMenu(wrapper, mTileStyles.value(uid, defaultStyle(type)));
 
     mTileWrappers.append(wrapper);
+
+    // GH#191: build this tile's per-instance input-selection gear menu.
+    setupTileGearMenu(wrapper);
+
     return wrapper;
 }
 
 QJsonArray DashboardPage::defaultLayout() const
 {
     QJsonArray arr;
-    auto addEntry = [&](const QString &id, int row, int col, int rs, int cs) {
+    // GH#191: the grid is now 8x8; default tiles span 2x2 so the out-of-box
+    // dashboard matches the legacy 4x4 single-cell layout. Positions are the
+    // legacy row/col multiplied by 2.
+    auto addEntry = [&](const QString &id, int row, int col) {
         QJsonObject obj;
         obj["id"] = id;
         obj["row"] = row;
         obj["col"] = col;
-        obj["rowSpan"] = rs;
-        obj["colSpan"] = cs;
+        obj["rowSpan"] = 2;
+        obj["colSpan"] = 2;
         obj["style"] = defaultStyle(id);
         arr.append(obj);
     };
 
-    addEntry("cpu", 0, 0, 1, 1);
-    addEntry("memory", 0, 1, 1, 1);
-    addEntry("disk", 0, 2, 1, 1);
-    addEntry("network", 0, 3, 1, 1);
+    addEntry("cpu",     0, 0);
+    addEntry("memory",  0, 2);
+    addEntry("disk",    0, 4);
+    addEntry("network", 0, 6);
 
-    addEntry("health", 1, 3, 1, 1);
+    addEntry("health",  2, 6);
 
-    int sRow = 1, sCol = 0;
+    // Sensor/optional tiles fill the second visual row left-to-right, wrapping
+    // to a third row, mirroring the legacy addSensor() behaviour (now ×2).
+    int sRow = 2, sCol = 0;
     auto addSensor = [&](const QString &id) {
-        if (sCol >= 3) { sRow = 2; sCol = 0; }
-        addEntry(id, sRow, sCol++, 1, 1);
+        if (sCol >= 6) { sRow = 4; sCol = 0; }
+        addEntry(id, sRow, sCol);
+        sCol += 2;
     };
     if (im->hasGpu())            addSensor("gpu");
     if (im->hasThermalSensors()) addSensor("temp");
@@ -1201,47 +1137,64 @@ QJsonArray DashboardPage::defaultLayout() const
 void DashboardPage::deserializeLayout(const QString &json)
 {
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
-    QJsonArray arr = doc.array();
+
+    // Layouts persist as a v2 envelope {"version":N,"tiles":[...]}. A bare
+    // array is a legacy v1 (4x4) layout with no version field. (GH#191)
+    QJsonArray rawTiles;
+    int version = 1;
+    if (doc.isObject()) {
+        QJsonObject env = doc.object();
+        version = env.value("version").toInt(1);
+        rawTiles = env.value("tiles").toArray();
+    } else {
+        rawTiles = doc.array();
+    }
+
+    QJsonArray arr = DashboardLayout::migrate(rawTiles, version);
 
     for (const QJsonValue &val : arr) {
         QJsonObject obj = val.toObject();
-        QString id = obj["id"].toString();
-        int row = qBound(0, obj["row"].toInt(), GRID_ROWS - 1);
-        int col = qBound(0, obj["col"].toInt(), GRID_COLS - 1);
-        int rowSpan = qBound(1, obj["rowSpan"].toInt(1), GRID_ROWS - row);
-        int colSpan = qBound(1, obj["colSpan"].toInt(1), GRID_COLS - col);
+        QString type = obj["id"].toString();
+        QString uid = obj.contains("uid") ? obj["uid"].toString() : type;
+        QString input = obj["input"].toString();
+        int col = qBound(0, obj["col"].toInt(), mVisibleCols - 1);
+        int row = qMax(0, obj["row"].toInt());
+        int rowSpan = qMax(1, obj["rowSpan"].toInt(1));
+        int colSpan = qBound(1, obj["colSpan"].toInt(1), mVisibleCols - col);
 
         QString style = obj["style"].toString();
         if (!style.isEmpty())
-            mTileStyles[id] = style;
+            mTileStyles[uid] = style;
 
         bool visible = obj.contains("visible") ? obj["visible"].toBool(true) : true;
         if (!visible)
-            mHiddenTiles.insert(id);
+            mHiddenTiles.insert(uid);
         else
-            mHiddenTiles.remove(id);
+            mHiddenTiles.remove(uid);
 
         QString color = obj["color"].toString();
         if (color.startsWith("range::")) {
             QString rangeId = color.mid(7);
             if (!rangeId.isEmpty())
-                mTileRanges[id] = rangeId;
+                mTileRanges[uid] = rangeId;
             else
-                mTileRanges.remove(id);
-            mTileColors.remove(id);
+                mTileRanges.remove(uid);
+            mTileColors.remove(uid);
         } else {
             if (!color.isEmpty())
-                mTileColors[id] = color;
+                mTileColors[uid] = color;
             else
-                mTileColors.remove(id);
-            mTileRanges.remove(id);
+                mTileColors.remove(uid);
+            mTileRanges.remove(uid);
         }
 
         for (DashboardTileWrapper *w : mTileWrappers) {
-            if (w->tileId() == id) {
+            if (w->tileId() == uid) {
                 w->setGridPosition(row, col, rowSpan, colSpan);
                 if (!style.isEmpty())
                     w->setCurrentStyle(style);
+                if (!input.isEmpty())
+                    w->setInputKey(input);
                 if (color.startsWith("range::"))
                     w->setCurrentRange(color.mid(7));
                 else
@@ -1257,7 +1210,10 @@ QJsonArray DashboardPage::serializeLayout() const
     QJsonArray arr;
     for (const DashboardTileWrapper *w : mTileWrappers) {
         QJsonObject obj;
-        obj["id"] = w->tileId();
+        obj["id"] = w->tileType();
+        obj["uid"] = w->tileId();
+        if (!w->inputKey().isEmpty())
+            obj["input"] = w->inputKey();
         obj["row"] = w->gridRow();
         obj["col"] = w->gridCol();
         obj["rowSpan"] = w->gridRowSpan();
@@ -1274,18 +1230,36 @@ QJsonArray DashboardPage::serializeLayout() const
     return arr;
 }
 
+QJsonObject DashboardPage::layoutEnvelope() const
+{
+    QJsonObject env;
+    env["version"] = DashboardLayout::kSchemaVersion;
+    env["tiles"] = serializeLayout();
+    return env;
+}
+
+void DashboardPage::persistLayout()
+{
+    mSettingManager->setDashboardLayout(
+        QJsonDocument(layoutEnvelope()).toJson(QJsonDocument::Compact));
+}
+
 void DashboardPage::rebuildOccupancy()
 {
-    for (int r = 0; r < GRID_ROWS; ++r)
-        for (int c = 0; c < GRID_COLS; ++c)
-            mOccupancy[r][c].clear();
-
+    // Row count grows to fit the lowest-reaching visible tile (min 1 row).
+    mRowCount = 0;
     for (const DashboardTileWrapper *w : mTileWrappers) {
-        if (mHiddenTiles.contains(w->tileId()))
-            continue;
+        if (mHiddenTiles.contains(w->tileId())) continue;
+        mRowCount = std::max(mRowCount, w->gridRow() + w->gridRowSpan());
+    }
+    mRowCount = std::max(mRowCount, 1);
+
+    mOccupancy.assign(mRowCount, QVector<QString>(mVisibleCols));
+    for (const DashboardTileWrapper *w : mTileWrappers) {
+        if (mHiddenTiles.contains(w->tileId())) continue;
         for (int r = w->gridRow(); r < w->gridRow() + w->gridRowSpan(); ++r)
             for (int c = w->gridCol(); c < w->gridCol() + w->gridColSpan(); ++c)
-                if (r < GRID_ROWS && c < GRID_COLS)
+                if (r < mRowCount && c < mVisibleCols)
                     mOccupancy[r][c] = w->tileId();
     }
 }
@@ -1293,76 +1267,215 @@ void DashboardPage::rebuildOccupancy()
 bool DashboardPage::regionIsFree(int row, int col, int rowSpan, int colSpan,
                                   const QString &ignoreTileId) const
 {
-    if (row + rowSpan > GRID_ROWS || col + colSpan > GRID_COLS)
+    if (col + colSpan > mVisibleCols || row < 0 || col < 0)
         return false;
     for (int r = row; r < row + rowSpan; ++r)
-        for (int c = col; c < col + colSpan; ++c)
+        for (int c = col; c < col + colSpan; ++c) {
+            if (r >= mOccupancy.size() || c >= mVisibleCols) continue; // beyond current rows is free
             if (!mOccupancy[r][c].isEmpty() && mOccupancy[r][c] != ignoreTileId)
                 return false;
+        }
     return true;
+}
+
+void DashboardPage::recomputeColumns()
+{
+    // Don't reflow before the grid is actually on-screen: during init()/pre-show
+    // the scroll area reports a tiny default width, which collapses the column
+    // count to kMinCols and would repack the just-restored saved layout into a
+    // few columns. Wait for a real shown size; showEvent/resizeEvent then run
+    // recomputeColumns() again with the true viewport width. (GH#191)
+    if (!mGridScroll || !mGridScroll->isVisible())
+        return;
+
+    // GH#191: derive the column count from a STABLE available width.
+    //
+    // viewport()->width() is unreliable here: during the page's resizeEvent the
+    // scroll area's viewport may not have been re-laid-out yet (stale, too wide),
+    // and it shrinks by ~15px the moment a vertical scrollbar appears. Either
+    // makes the width-derived column count wrong and produces a scrollbar
+    // cascade.
+    //
+    // Instead compute from the scroll area's own width (a direct layout child of
+    // this page, so its width IS current in resizeEvent), minus the frame and a
+    // RESERVED vertical-scrollbar width. Reserving the v-scrollbar width makes
+    // the result identical whether or not the v-scrollbar is currently shown, so
+    // the column count never oscillates. The grid min width
+    // (mVisibleCols*kCellW + gaps) is then always <= availW <= true viewport
+    // width, so with horizontal scrolling off the grid can never clip.
+    int availW = width();
+    if (mGridScroll) {
+        int sbw = mGridScroll->verticalScrollBar()
+                    ? mGridScroll->verticalScrollBar()->sizeHint().width()
+                    : 0;
+        int frame = 2 * mGridScroll->frameWidth();
+        availW = mGridScroll->width() - frame - sbw;
+    }
+    int cols = DashboardLayout::columnsForWidth(qMax(0, availW));
+    if (cols == mVisibleCols && !mOccupancy.isEmpty())
+        return;
+    mVisibleCols = cols;
+
+    // Reflow current tiles into the new column count (pure logic), then apply
+    // the repacked positions back to the wrappers.
+    // GH#191: build the reflow input from each LIVE visible wrapper, but take
+    // its position from the CANONICAL saved layout (not the live wrapper
+    // position, which a transient narrow-width pass may have repacked). This
+    // makes reflow idempotent w.r.t. width: a wide pass always re-derives the
+    // saved arrangement instead of preserving a transient squash.
+    QHash<QString, QJsonObject> canonByUid;
+    {
+        QString canon = mSettingManager->getDashboardLayout();
+        if (!canon.isEmpty()) {
+            QJsonDocument d = QJsonDocument::fromJson(canon.toUtf8());
+            QJsonArray raw = d.isObject() ? d.object().value("tiles").toArray()
+                                          : d.array();
+            int ver = d.isObject() ? d.object().value("version").toInt(1) : 1;
+            const QJsonArray canonTiles = DashboardLayout::migrate(raw, ver);
+            for (const QJsonValue &cv : canonTiles) {
+                QJsonObject co = cv.toObject();
+                QString cuid = co.contains("uid") ? co["uid"].toString()
+                                                  : co["id"].toString();
+                canonByUid.insert(cuid, co);
+            }
+        }
+    }
+
+    QJsonArray visibleTiles;
+    for (DashboardTileWrapper *w : mTileWrappers) {
+        if (mHiddenTiles.contains(w->tileId()))
+            continue;                                 // hidden tiles reserve no cell
+        QJsonObject o;
+        if (canonByUid.contains(w->tileId())) {
+            o = canonByUid.value(w->tileId());        // canonical saved position
+        } else {
+            o["uid"] = w->tileId();                   // not in saved layout: use live pos
+            o["row"] = w->gridRow();
+            o["col"] = w->gridCol();
+            o["rowSpan"] = w->gridRowSpan();
+            o["colSpan"] = w->gridColSpan();
+        }
+        visibleTiles.append(o);
+    }
+    QJsonArray packed = DashboardLayout::reflowPreserve(visibleTiles, mVisibleCols);
+    for (const QJsonValue &v : packed) {
+        QJsonObject o = v.toObject();
+        QString uid = o.contains("uid") ? o["uid"].toString() : o["id"].toString();
+        for (DashboardTileWrapper *w : mTileWrappers)
+            if (w->tileId() == uid) {
+                w->setGridPosition(o["row"].toInt(), o["col"].toInt(),
+                                   o["rowSpan"].toInt(1), o["colSpan"].toInt(1));
+                break;
+            }
+    }
+    buildGrid();
+    // GH#191: do NOT persistLayout() here. A responsive column change is a VIEW
+    // concern; reflowPreserve keeps saved positions when the width allows and
+    // repacks only overflowing tiles for display. Persisting would overwrite the
+    // user's canonical saved arrangement with this auto-packed view on every
+    // launch/resize. Saves happen only on explicit edits (drag/resize/Done).
 }
 
 void DashboardPage::buildGrid()
 {
     while (ui->bentoGrid->count() > 0) {
         QLayoutItem *item = ui->bentoGrid->takeAt(0);
-        if (item->widget())
-            item->widget()->setParent(nullptr);
+        if (item->widget()) item->widget()->setParent(nullptr);
         delete item;
     }
     qDeleteAll(mPlaceholders);
     mPlaceholders.clear();
 
-    rebuildOccupancy();
+    rebuildOccupancy();   // sizes mOccupancy to mRowCount x mVisibleCols
 
     for (DashboardTileWrapper *w : mTileWrappers) {
-        if (mHiddenTiles.contains(w->tileId())) {
-            w->hide();
-            continue;
-        }
-        w->setParent(this);
-        ui->bentoGrid->addWidget(w, w->gridRow(), w->gridCol(),
-                                  w->gridRowSpan(), w->gridColSpan());
+        if (mHiddenTiles.contains(w->tileId())) { w->hide(); continue; }
+        w->setParent(mGridContainer);
+        w->setFixedSize(w->gridColSpan() * DashboardLayout::kCellW + (w->gridColSpan() - 1) * DashboardLayout::kGap,
+                        w->gridRowSpan() * DashboardLayout::kCellH + (w->gridRowSpan() - 1) * DashboardLayout::kGap);
+        ui->bentoGrid->addWidget(w, w->gridRow(), w->gridCol(), w->gridRowSpan(), w->gridColSpan());
         applyDisplayModeForSpan(w);
         w->show();
     }
 
-    for (int r = 0; r < GRID_ROWS; ++r) {
-        for (int c = 0; c < GRID_COLS; ++c) {
+    // Edit-mode placeholders for every empty cell (fixed-size too).
+    for (int r = 0; r < mRowCount; ++r)
+        for (int c = 0; c < mVisibleCols; ++c)
             if (mOccupancy[r][c].isEmpty()) {
-                auto *ph = new QWidget(this);
+                auto *ph = new QWidget(mGridContainer);
                 ph->setObjectName("dashPlaceholder");
-                ph->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                ph->setFixedSize(DashboardLayout::kCellW, DashboardLayout::kCellH);
                 ph->setVisible(mEditMode);
                 ui->bentoGrid->addWidget(ph, r, c);
                 mPlaceholders.append(ph);
             }
+
+    // Reset stale row/column constraints from any previous (larger) build —
+    // QGridLayout never shrinks its row/column count, and per-index minimum
+    // sizes/stretches persist, so old empty rows/cols would otherwise keep
+    // reserving space and trigger spurious scrollbars. (GH#191)
+    {
+        int prevRows = ui->bentoGrid->rowCount();
+        int prevCols = ui->bentoGrid->columnCount();
+        for (int r = 0; r < prevRows; ++r) {
+            ui->bentoGrid->setRowMinimumHeight(r, 0);
+            ui->bentoGrid->setRowStretch(r, 0);
+        }
+        for (int c = 0; c < prevCols; ++c) {
+            ui->bentoGrid->setColumnMinimumWidth(c, 0);
+            ui->bentoGrid->setColumnStretch(c, 0);
         }
     }
 
-    for (int c = 0; c < GRID_COLS; ++c)
-        ui->bentoGrid->setColumnStretch(c, 1);
-    for (int r = 0; r < GRID_ROWS; ++r)
-        ui->bentoGrid->setRowStretch(r, 1);
+    // Fixed cell pitch: each used column/row gets the exact cell size; a
+    // trailing stretch column/row absorbs extra space so tiles pack top-left.
+    ui->bentoGrid->setHorizontalSpacing(DashboardLayout::kGap);
+    ui->bentoGrid->setVerticalSpacing(DashboardLayout::kGap);
+    for (int c = 0; c < mVisibleCols; ++c) {
+        ui->bentoGrid->setColumnMinimumWidth(c, DashboardLayout::kCellW);
+        ui->bentoGrid->setColumnStretch(c, 0);
+    }
+    for (int r = 0; r < mRowCount; ++r) {
+        ui->bentoGrid->setRowMinimumHeight(r, DashboardLayout::kCellH);
+        ui->bentoGrid->setRowStretch(r, 0);
+    }
+    ui->bentoGrid->setColumnStretch(mVisibleCols, 1);   // trailing spacer col
+    ui->bentoGrid->setRowStretch(mRowCount, 1);          // trailing spacer row
 
-    // Re-raise floating buttons above reparented tile wrappers (BUG-63)
     mEditButton->raise();
     mKioskButton->raise();
 }
 
 void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)
 {
+    int area = wrapper->gridRowSpan() * wrapper->gridColSpan();
+    const bool compact = (DashboardLayout::tierForArea(area) == DashboardLayout::Compact);
+
+    // NetworkTile is a plain QWidget (not a MetricTileBase), so it sits
+    // outside the DisplayMode system; toggle its sparklines directly. (GH#191)
+    if (auto *net = qobject_cast<NetworkTile*>(wrapper->innerWidget())) {
+        net->setCompact(compact);
+        return;
+    }
+
     auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
     if (!metric)
         return;
 
-    int area = wrapper->gridRowSpan() * wrapper->gridColSpan();
-    if (area >= 4)
+    switch (DashboardLayout::tierForArea(area)) {
+    case DashboardLayout::Hero:
         metric->setDisplayMode(MetricTileBase::Hero);
-    else if (area >= 2)
+        break;
+    case DashboardLayout::Large:
         metric->setDisplayMode(MetricTileBase::Large);
-    else
+        break;
+    case DashboardLayout::Normal:
         metric->setDisplayMode(MetricTileBase::Normal);
+        break;
+    case DashboardLayout::Compact:
+        metric->setDisplayMode(MetricTileBase::Compact);
+        break;
+    }
 }
 
 void DashboardPage::rebuildLayout()
@@ -1373,31 +1486,25 @@ void DashboardPage::rebuildLayout()
     else
         deserializeLayout(saved);
     buildGrid();
+    // Reflow the rebuilt layout to the current viewport width. Invalidate
+    // mVisibleCols first so the no-change guard can't skip the reflow. (GH#191)
+    mVisibleCols = -1;
+    recomputeColumns();
 }
 
 bool DashboardPage::gridCellAtPos(const QPoint &globalPos, int &outRow, int &outCol) const
 {
-    QWidget *gridParent = ui->bentoGrid->parentWidget();
-    if (!gridParent)
-        return false;
+    if (!mGridContainer) return false;
+    QPoint local = mGridContainer->mapFromGlobal(globalPos);
+    if (local.x() < 0 || local.y() < 0) return false;
 
-    QPoint local = gridParent->mapFromGlobal(globalPos);
-    QRect gridRect = ui->bentoGrid->geometry();
-
-    if (!gridRect.contains(local))
-        return false;
-
-    int x = local.x() - gridRect.x();
-    int y = local.y() - gridRect.y();
-
-    int cellW = gridRect.width() / GRID_COLS;
-    int cellH = gridRect.height() / GRID_ROWS;
-
-    if (cellW <= 0 || cellH <= 0)
-        return false;
-
-    outCol = qBound(0, x / cellW, GRID_COLS - 1);
-    outRow = qBound(0, y / cellH, GRID_ROWS - 1);
+    int pitchX = DashboardLayout::kCellW + DashboardLayout::kGap;
+    int pitchY = DashboardLayout::kCellH + DashboardLayout::kGap;
+    int col = local.x() / pitchX;
+    int row = local.y() / pitchY;
+    if (col < 0 || col >= mVisibleCols) return false;
+    outCol = col;
+    outRow = std::max(0, row);
     return true;
 }
 
@@ -1424,12 +1531,13 @@ void DashboardPage::onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint 
         return;
     }
 
-    QRect gridRect = ui->bentoGrid->geometry();
-    int cellW = gridRect.width() / GRID_COLS;
-    int cellH = gridRect.height() / GRID_ROWS;
-    int x = gridRect.x() + targetCol * cellW;
-    int y = gridRect.y() + targetRow * cellH;
-    mDragIndicator->setGeometry(x, y, cellW, cellH);
+    int pitchX = DashboardLayout::kCellW + DashboardLayout::kGap;
+    int pitchY = DashboardLayout::kCellH + DashboardLayout::kGap;
+    QPoint topLeftInContainer(targetCol * pitchX, targetRow * pitchY);
+    QPoint global = mGridContainer->mapToGlobal(topLeftInContainer);
+    QPoint inPage = mapFromGlobal(global);
+    mDragIndicator->setGeometry(inPage.x(), inPage.y(),
+                                DashboardLayout::kCellW, DashboardLayout::kCellH);
     mDragIndicator->show();
     mDragIndicator->raise();
 }
@@ -1448,12 +1556,16 @@ void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoi
         return;
     }
 
-    if (mOccupancy[targetRow][targetCol].isEmpty()) {
+    bool occupantEmpty = (targetRow >= mOccupancy.size())
+                           ? true
+                           : mOccupancy[targetRow][targetCol].isEmpty();
+    if (occupantEmpty) {
         int srcRS = mDragSource->gridRowSpan();
         int srcCS = mDragSource->gridColSpan();
         if (regionIsFree(targetRow, targetCol, srcRS, srcCS, mDragSource->tileId())) {
             mDragSource->setGridPosition(targetRow, targetCol, srcRS, srcCS);
             buildGrid();
+            persistLayout();   // GH#191: persist the move immediately
         }
     } else {
         // Look up the occupant by tileId from the grid (handles multi-cell tiles
@@ -1480,6 +1592,7 @@ void DashboardPage::onTileDragFinished(DashboardTileWrapper *wrapper, const QPoi
                 mDragSource->setGridPosition(tgtRow, tgtCol, srcRS, srcCS);
                 target->setGridPosition(srcRow, srcCol, tgtRS, tgtCS);
                 buildGrid();
+                persistLayout();   // GH#191: persist the swap immediately
             }
         }
     }
@@ -1497,6 +1610,7 @@ void DashboardPage::onTileResizeRequested(DashboardTileWrapper *wrapper, int new
 
     wrapper->setGridPosition(row, col, newRowSpan, newColSpan);
     buildGrid();
+    persistLayout();   // GH#191: persist the resize immediately
 }
 
 void DashboardPage::resizeEvent(QResizeEvent *event)
@@ -1504,6 +1618,16 @@ void DashboardPage::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     mKioskButton->move(width() - mKioskButton->width() - 10, 10);
     mEditButton->move(width() - mKioskButton->width() - mEditButton->width() - 18, 10);
+    recomputeColumns();
+}
+
+void DashboardPage::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    // GH#191: recompute once the page has real geometry. The init()/resizeEvent
+    // calls may run before the scroll area has its settled size; this guarantees
+    // the first correct column count is applied as soon as the page is shown.
+    recomputeColumns();
 }
 
 // --- Tile Factory & Style Switching ---
@@ -1565,26 +1689,70 @@ QString DashboardPage::defaultStyle(const QString &tileId) const
     return "sparkline";
 }
 
-void DashboardPage::setupTileGearMenu(const QString &id, MetricTileBase *tile)
+void DashboardPage::setupTileGearMenu(DashboardTileWrapper *wrapper)
 {
-    if (id == "disk") {
-        mDiskMenu->setObjectName("diskSelectorMenu");
-        tile->gearButton()->setMenu(mDiskMenu);
-        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        tile->setGearVisible(mCachedDisks.size() >= 2);
-    } else if (id == "temp" && im->hasThermalSensors()) {
-        tile->gearButton()->setMenu(mTempSensorMenu);
-        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        tile->setGearVisible(im->getThermalSensors().size() >= 2);
-    } else if (id == "fan" && im->hasFanSensors()) {
-        tile->gearButton()->setMenu(mFanSensorMenu);
-        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        tile->setGearVisible(im->getFanSensors().size() >= 2);
-    } else if (id == "gpu" && im->hasGpu()) {
-        tile->gearButton()->setMenu(mGpuDeviceMenu);
-        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        tile->setGearVisible(im->getGpuDevices().size() >= 2);
+    auto *tile = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
+    QToolButton *gear = tile ? tile->gearButton() : nullptr;
+    QString type = wrapper->tileType();
+
+    if (!gear || !DashboardLayout::isMultiInstanceType(type)) {
+        if (tile) tile->setGearVisible(false);
+        return;
     }
+
+    QList<QPair<QString,QString>> inputs; // label, key
+    if (type == "temp")
+        for (const ThermalSensor &s : im->getThermalSensors()) inputs.append({s.label, s.id});
+    else if (type == "fan")
+        for (const FanSensor &f : im->getFanSensors()) inputs.append({f.label, f.id});
+    else if (type == "gpu")
+        for (const GpuDevice &g : im->getGpuDevices()) inputs.append({g.name, g.name});
+    else if (type == "disk")
+        for (const Disk &d : im->getDisks()) inputs.append({d.name, d.name});
+    // GH#191: network per-interface enumeration arrives in a later task; its
+    // gear stays hidden for now.
+
+    auto *menu = new QMenu(wrapper);
+    for (const auto &p : inputs) {
+        QAction *a = menu->addAction(p.first);
+        a->setCheckable(true);
+        a->setData(p.second);
+        a->setChecked(p.second == wrapper->inputKey());
+    }
+    connect(menu, &QMenu::triggered, this, [this, wrapper](QAction *a) {
+        onTileInputSelected(wrapper, a->data().toString());
+    });
+    gear->setMenu(menu);
+    gear->setPopupMode(QToolButton::InstantPopup);
+    tile->setGearVisible(inputs.size() >= 2);
+}
+
+void DashboardPage::migrateLegacyBindings()
+{
+    auto bindFirst = [&](const QString &type, const QString &savedId,
+                         std::function<QStringList()> allIds) {
+        for (DashboardTileWrapper *w : wrappersOfType(type)) {
+            if (!w->inputKey().isEmpty()) continue;
+            QStringList ids = allIds();
+            QString chosen = (!savedId.isEmpty() && ids.contains(savedId))
+                                ? savedId
+                                : (ids.isEmpty() ? QString() : ids.first());
+            w->setInputKey(chosen);
+        }
+    };
+    bindFirst("temp", mSettingManager->getTempSensorId(), [&]{
+        QStringList v; for (const ThermalSensor &s : im->getThermalSensors()) v << s.id; return v; });
+    bindFirst("fan", mSettingManager->getFanSensorId(), [&]{
+        QStringList v; for (const FanSensor &f : im->getFanSensors()) v << f.id; return v; });
+    bindFirst("gpu", mSettingManager->getGpuDeviceId(), [&]{
+        QStringList v; for (const GpuDevice &g : im->getGpuDevices()) v << g.name; return v; });
+    bindFirst("disk", mSettingManager->getDiskName(), [&]{
+        QStringList v; for (const Disk &d : im->getDisks()) v << d.name; return v; });
+    bindFirst("network", QString(), [&]{
+        QString def = im->getDefaultNetworkInterface();
+        if (!def.isEmpty())
+            return QStringList{def};
+        return im->getNetworkInterfaceNames(); });
 }
 
 DashboardTileWrapper *DashboardPage::findWrapper(const QString &tileId) const
@@ -1595,37 +1763,44 @@ DashboardTileWrapper *DashboardPage::findWrapper(const QString &tileId) const
     return nullptr;
 }
 
+QList<DashboardTileWrapper*> DashboardPage::wrappersOfType(const QString &type) const
+{
+    QList<DashboardTileWrapper*> out;
+    for (DashboardTileWrapper *w : mTileWrappers)
+        if (w->tileType() == type)
+            out.append(w);
+    return out;
+}
+
 void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, const QString &style)
 {
-    QString id = wrapper->tileId();
+    QString uid = wrapper->tileId();
+    QString type = wrapper->tileType();
 
     if (wrapper->currentStyle() == style)
         return;
 
-    MetricTileBase *newTile = createTile(id, style);
+    MetricTileBase *newTile = createTile(type, style);
 
     // Swap inner widget (old tile scheduled for deletion)
     wrapper->setInnerWidget(newTile);
     wrapper->setCurrentStyle(style);
 
-    // Update member pointer
-    if (id == "cpu")          mCpuTile = newTile;
-    else if (id == "memory")  mMemTile = newTile;
-    else if (id == "disk")    mDiskTile = newTile;
-    else if (id == "temp")    mTempTile = newTile;
-    else if (id == "gpu")     mGpuTile = newTile;
-    else if (id == "battery") mBatteryTile = newTile;
-    else if (id == "fan")     mFanTile = newTile;
-    else if (id == "health")  mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
+    // Update member pointer (singleton tiles only; multi-instance types are
+    // driven per-wrapper and have no member). (GH#191)
+    if (type == "cpu")          mCpuTile = newTile;
+    else if (type == "memory")  mMemTile = newTile;
+    else if (type == "battery") mBatteryTile = newTile;
+    else if (type == "health")  mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
-    // Re-attach gear menus
-    setupTileGearMenu(id, newTile);
+    // Re-attach gear menu (per-tile input binding)
+    setupTileGearMenu(wrapper);
 
     // Re-apply display mode
     applyDisplayModeForSpan(wrapper);
 
     // Re-apply disk health badges
-    if (id == "disk")
+    if (type == "disk")
         updateDiskHealthBadge();
 
     // Rebuild the customization menu (color swatches vs. range presets) for the new style
@@ -1634,17 +1809,19 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
 
     // Re-apply saved customization
     if (tileUsesRangeMenu(style)) {
-        if (mTileRanges.contains(id)) {
-            newTile->setColorRange(mTileRanges[id]);
-            wrapper->setCurrentRange(mTileRanges[id]);
+        if (mTileRanges.contains(uid)) {
+            newTile->setColorRange(mTileRanges[uid]);
+            wrapper->setCurrentRange(mTileRanges[uid]);
         }
     } else {
-        if (mTileColors.contains(id))
-            newTile->setColorOverride(mTileColors[id]);
+        if (mTileColors.contains(uid))
+            newTile->setColorOverride(mTileColors[uid]);
     }
 
     // Store style
-    mTileStyles[id] = style;
+    mTileStyles[uid] = style;
+
+    persistLayout();   // GH#191: persist the style change immediately
 }
 
 void DashboardPage::onTileRemoveRequested(DashboardTileWrapper *wrapper)
@@ -1657,59 +1834,142 @@ void DashboardPage::onTileRemoveRequested(DashboardTileWrapper *wrapper)
 void DashboardPage::updateAddTileButton()
 {
     if (mAddTileButton)
-        mAddTileButton->setVisible(mEditMode && !mHiddenTiles.isEmpty());
+        mAddTileButton->setVisible(mEditMode);
 }
 
 void DashboardPage::onAddTileClicked()
 {
-    static const QHash<QString, QString> kTileDisplayNames = {
-        {"cpu",     tr("CPU Usage")},
-        {"memory",  tr("Memory Usage")},
-        {"disk",    tr("Disk Usage")},
-        {"network", tr("Network Speed")},
-        {"gpu",     tr("GPU Usage")},
-        {"temp",    tr("Temperature")},
-        {"battery", tr("Battery")},
-        {"fan",     tr("Fan Speed")},
-        {"health",  tr("Health Score")},
-    };
-
     rebuildOccupancy();
 
-    QMenu menu(this);
+    // Build the available-inputs map (detected minus already-placed). GH#191:
+    // count only VISIBLE wrappers' inputs as used — a removed (hidden) tile must
+    // NOT reserve its input, so its input becomes available to re-add again.
+    QHash<QString, QList<QPair<QString, QString>>> avail;
+    auto usedInputs = [&](const QString &type) {
+        QStringList used;
+        for (DashboardTileWrapper *w : wrappersOfType(type))
+            if (!mHiddenTiles.contains(w->tileId()) && !w->inputKey().isEmpty())
+                used.append(w->inputKey());
+        return used;
+    };
+    auto addAvail = [&](const QString &type, const QList<QPair<QString, QString>> &all) {
+        QStringList used = usedInputs(type);
+        QList<QPair<QString, QString>> free;
+        for (const auto &p : all)
+            if (!used.contains(p.first))
+                free.append(p);
+        avail[type] = free;
+    };
+    { QList<QPair<QString, QString>> v; for (const ThermalSensor &s : im->getThermalSensors()) v.append({s.id, s.label}); addAvail("temp", v); }
+    { QList<QPair<QString, QString>> v; for (const FanSensor &f : im->getFanSensors()) v.append({f.id, f.label}); addAvail("fan", v); }
+    { QList<QPair<QString, QString>> v; for (const GpuDevice &g : im->getGpuDevices()) v.append({g.name, g.name}); addAvail("gpu", v); }
+    { QList<QPair<QString, QString>> v; for (const Disk &d : im->getDisks()) v.append({d.name, d.name}); addAvail("disk", v); }
+    { QList<QPair<QString, QString>> v; for (const QString &n : im->getNetworkInterfaceNames()) v.append({n, n}); addAvail("network", v); }
 
-    QStringList sortedIds = QStringList(mHiddenTiles.begin(), mHiddenTiles.end());
-    std::sort(sortedIds.begin(), sortedIds.end(), [&](const QString &a, const QString &b) {
-        return kTileDisplayNames.value(a, a) < kTileDisplayNames.value(b, b);
-    });
+    // GH#191: a multi-instance type is offered in the type list whenever its
+    // hardware EXISTS on the system (>=1 detected input), regardless of whether
+    // inputs are already placed. The input list passed to the dialog still
+    // carries only the UNUSED (avail) inputs, so a fully-placed type shows up
+    // but with an empty input list (the dialog disables OK). Singletons are
+    // offered only when not currently shown (hidden or no wrapper).
+    auto hardwareExists = [&](const QString &type) {
+        if (type == "temp")    return !im->getThermalSensors().isEmpty();
+        if (type == "fan")     return !im->getFanSensors().isEmpty();
+        if (type == "disk")    return !im->getDisks().isEmpty();
+        if (type == "gpu")     return !im->getGpuDevices().isEmpty();
+        if (type == "network") return !im->getNetworkInterfaceNames().isEmpty();
+        return false;
+    };
+    static const QList<QPair<QString, QString>> kTypes = {
+        {"cpu", tr("CPU Usage")}, {"memory", tr("Memory Usage")}, {"disk", tr("Disk Usage")},
+        {"network", tr("Network Speed")}, {"gpu", tr("GPU Usage")}, {"temp", tr("Temperature")},
+        {"battery", tr("Battery")}, {"fan", tr("Fan Speed")}, {"health", tr("Health Score")},
+    };
+    QList<QPair<QString, QString>> typeOptions;
+    for (const auto &t : kTypes) {
+        if (DashboardLayout::isMultiInstanceType(t.first)) {
+            if (hardwareExists(t.first))
+                typeOptions.append(t);
+        } else if (mHiddenTiles.contains(t.first) || wrappersOfType(t.first).isEmpty()) {
+            typeOptions.append(t); // singleton not currently shown
+        }
+    }
+    if (typeOptions.isEmpty())
+        return;
 
-    for (const QString &id : sortedIds) {
-        int freeRow = -1, freeCol = -1;
-        for (int r = 0; r < GRID_ROWS && freeRow == -1; ++r)
-            for (int c = 0; c < GRID_COLS && freeRow == -1; ++c)
-                if (regionIsFree(r, c, 1, 1))
-                    { freeRow = r; freeCol = c; }
+    AddTileDialog dlg(typeOptions, avail, this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
 
-        QString label = kTileDisplayNames.value(id, id);
-        if (freeRow == -1) {
-            QAction *act = menu.addAction(label + tr(" (grid full)"));
-            act->setEnabled(false);
+    QString type = dlg.chosenType();
+    QString input = dlg.chosenInput();
+    if (type.isEmpty())
+        return;
+    // GH#191: defensive guard — input-bound types require a chosen input. OK is
+    // already disabled in the dialog when none is available, but never create a
+    // tile bound to nothing.
+    if (DashboardLayout::isMultiInstanceType(type) && input.isEmpty())
+        return;
+
+    // Find the first free 2x2 region in the A2 dynamic grid: columns are
+    // mVisibleCols, rows are unbounded (rows beyond the current grid count as
+    // free, so an empty row always fits and the scan always terminates).
+    int row = -1, col = -1, rs = 2, cs = 2;
+    if (mVisibleCols >= 2) {
+        for (int r = 0; row == -1; ++r)
+            for (int c = 0; c + 2 <= mVisibleCols; ++c)
+                if (regionIsFree(r, c, 2, 2)) { row = r; col = c; break; }
+    } else {
+        rs = cs = 1;
+        for (int r = 0; row == -1; ++r)
+            for (int c = 0; c < mVisibleCols; ++c)
+                if (regionIsFree(r, c, 1, 1)) { row = r; col = c; break; }
+    }
+    if (row == -1)
+        return; // unreachable (empty rows are always free), but stay defensive
+
+    if (!DashboardLayout::isMultiInstanceType(type)) {
+        // Singleton re-show: reposition its existing (hidden) wrapper.
+        mHiddenTiles.remove(type);
+        DashboardTileWrapper *w = findWrapper(type);
+        if (w)
+            w->setGridPosition(row, col, rs, cs);
+    } else {
+        // GH#191: re-use a removed (hidden) tile of this type+input rather than
+        // creating a duplicate/orphan — re-adding a removed GPU/disk/etc. just
+        // brings it back.
+        DashboardTileWrapper *reuse = nullptr;
+        for (DashboardTileWrapper *w : wrappersOfType(type)) {
+            if (mHiddenTiles.contains(w->tileId()) && w->inputKey() == input) { reuse = w; break; }
+        }
+        if (reuse) {
+            mHiddenTiles.remove(reuse->tileId());
+            reuse->setGridPosition(row, col, rs, cs);
+            reuse->setEditMode(mEditMode);
         } else {
-            QAction *act = menu.addAction(label);
-            connect(act, &QAction::triggered, this, [this, id, freeRow, freeCol]() {
-                mHiddenTiles.remove(id);
-                DashboardTileWrapper *w = findWrapper(id);
-                if (w)
-                    w->setGridPosition(freeRow, freeCol, 1, 1);
-                buildGrid();
-                updateAddTileButton();
-                mSettingManager->setDashboardLayout(
-                    QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
-            });
+            // New input-bound instance.
+            QStringList uids;
+            for (DashboardTileWrapper *w : mTileWrappers)
+                uids << w->tileId();
+            QString uid = DashboardLayout::makeUid(uids, type);
+            QString style = defaultStyle(type);
+            QWidget *tile = (type == "network")
+                                ? static_cast<QWidget *>(new NetworkTile("@networkColor", this))
+                                : static_cast<QWidget *>(createTile(type, style));
+            mTileStyles[uid] = style;
+            DashboardTileWrapper *w = wrapTile(uid, type, input, tile);
+            w->setGridPosition(row, col, rs, cs);
+            w->setEditMode(mEditMode);
+            // Populate subtitle + initial value for metric-based tiles. Network
+            // tiles refresh on the next tick.
+            if (qobject_cast<MetricTileBase *>(tile))
+                onTileInputSelected(w, input);
         }
     }
 
-    menu.exec(mAddTileButton->mapToGlobal(QPoint(0, mAddTileButton->height())));
+    buildGrid();
+    updateAddTileButton();
+    persistLayout();
 }
 
 void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, const QString &hexColor)
@@ -1723,21 +1983,16 @@ void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, co
 
     mTileRanges.remove(id);
 
-    if (id == "network") {
-        if (mNetworkTile)
-            mNetworkTile->setColorOverride(hexColor);
-    } else {
-        auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
-        if (metric) {
-            metric->setColorRange(QString());
-            metric->setColorOverride(hexColor);
-        }
+    if (auto *net = qobject_cast<NetworkTile*>(wrapper->innerWidget())) {
+        net->setColorOverride(hexColor);
+    } else if (auto *metric = qobject_cast<MetricTileBase*>(wrapper->innerWidget())) {
+        metric->setColorRange(QString());
+        metric->setColorOverride(hexColor);
     }
 
     wrapper->setCurrentColor(hexColor);
 
-    mSettingManager->setDashboardLayout(
-        QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
+    persistLayout();
 }
 
 void DashboardPage::onTileRangeChangeRequested(DashboardTileWrapper *wrapper, const QString &rangeId)
@@ -1759,8 +2014,7 @@ void DashboardPage::onTileRangeChangeRequested(DashboardTileWrapper *wrapper, co
 
     wrapper->setCurrentRange(rangeId);
 
-    mSettingManager->setDashboardLayout(
-        QJsonDocument(serializeLayout()).toJson(QJsonDocument::Compact));
+    persistLayout();
 }
 
 bool DashboardPage::tileUsesRangeMenu(const QString &style) const
@@ -1845,7 +2099,17 @@ void DashboardPage::onHealthDiskUpdated(const QList<Disk> &disks)
 void DashboardPage::onHealthTempUpdated()
 {
     if (!mActive) return;
-    double tempC = im->getThermalTemperature(mSelectedSensorIndex);
+    // GH#191: the health score tracks the first temp tile's bound sensor (or the
+    // first detected sensor when unbound).
+    int sensorIdx = 0;
+    QList<DashboardTileWrapper*> tempWrappers = wrappersOfType("temp");
+    if (!tempWrappers.isEmpty()) {
+        QList<ThermalSensor> sensors = im->getThermalSensors();
+        const QString key = tempWrappers.first()->inputKey();
+        for (int i = 0; i < sensors.size(); ++i)
+            if (sensors.at(i).id == key) { sensorIdx = i; break; }
+    }
+    double tempC = im->getThermalTemperature(sensorIdx);
     int score = 100;
     if (tempC >= 100.0) score = 0;
     else if (tempC > 60.0) score = qRound(100.0 * (100.0 - tempC) / 40.0);
@@ -1898,6 +2162,7 @@ void DashboardPage::onPageActivated()
 void DashboardPage::onPageDeactivated()
 {
     mActive = false;
+    mNetLastBytes.clear();
 
     mRefresh->unsubscribe(DataRefreshService::Signal::Cpu);
     mRefresh->unsubscribe(DataRefreshService::Signal::Memory);

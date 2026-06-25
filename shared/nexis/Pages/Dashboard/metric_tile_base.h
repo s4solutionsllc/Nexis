@@ -17,7 +17,7 @@ class MetricTileBase : public QWidget
 
 public:
     enum TrendDirection { Rising, Falling, Stable };
-    enum DisplayMode { Normal, Hero, Large };
+    enum DisplayMode { Normal, Hero, Large, Compact };
 
     explicit MetricTileBase(const QString &title, const QString &colorToken, QWidget *parent = nullptr);
     virtual ~MetricTileBase() = default;

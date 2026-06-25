@@ -268,6 +268,14 @@ void NetworkTile::setColorOverride(const QString &hexColor)
     refreshThemeColors();
 }
 
+void NetworkTile::setCompact(bool compact)
+{
+    // GH#191: on a tiny tile, drop the dual rx/tx sparklines and keep the
+    // rate readouts (the QLabels remain visible).
+    if (mRxChartView) mRxChartView->setVisible(!compact);
+    if (mTxChartView) mTxChartView->setVisible(!compact);
+}
+
 void NetworkTile::setQuickAction(const QString &text, std::function<void()> callback)
 {
     mBtnAction->setText(text);

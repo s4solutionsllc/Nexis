@@ -789,6 +789,10 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 30pt;
 }
 
+#metricTileValue[compactMode="true"] {
+    font-size: 24pt;
+}
+
 #metricTileSubtitle {
     color: @tertiaryText;
     font-size: 9pt;
