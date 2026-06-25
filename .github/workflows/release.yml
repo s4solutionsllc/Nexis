@@ -4,6 +4,19 @@ on:
   push:
     tags:
       - 'v*'
+  # GH#195: manual dry-run. Builds every artifact (.deb, AppImage, .dmg) as
+  # downloadable workflow artifacts WITHOUT publishing anything. The `release`
+  # job is gated to tag pushes (see its `if:`), so a dispatch run never creates
+  # a GitHub Release — and because no tag is pushed and no release is published,
+  # the PPA (tag-triggered), Homebrew, and AUR (release-triggered) workflows
+  # never fire. Use this to validate the release builds (esp. the AppImage's
+  # glibc floor) on a branch before tagging the real release.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version for the dry-run build (e.g. 2.6.3-rc1)'
+        required: false
+        default: '0.0.0-dryrun'
 
 # SSO-3399: default job permissions are read-only. Only the `release` job
 # actually needs `contents: write` (to publish the GitHub Release) and
@@ -77,9 +90,16 @@ jobs:
             fakeroot \
             xvfb
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        run: |
+          # On a tag push, derive from the tag (vX.Y.Z -> X.Y.Z). On a manual
+          # workflow_dispatch dry-run there is no tag, so use the input. (GH#195)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DAPP_VERSION_OVERRIDE=${{ steps.version.outputs.VERSION }}
@@ -100,7 +120,7 @@ jobs:
 
       - name: Sync debian changelog version from tag
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
           CURRENT_DEB_VERSION=$(head -1 debian/changelog | grep -oP '\(\K[^)]+' | cut -d- -f1)
           if [ "$CURRENT_DEB_VERSION" != "$TAG_VERSION" ]; then
             echo "Updating debian/changelog from $CURRENT_DEB_VERSION to $TAG_VERSION"
@@ -267,9 +287,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        run: |
+          # On a tag push, derive from the tag (vX.Y.Z -> X.Y.Z). On a manual
+          # workflow_dispatch dry-run there is no tag, so use the input. (GH#195)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install build prerequisites
         run: |
@@ -368,9 +395,16 @@ jobs:
             sleep 15
           done
 
-      - name: Extract version from tag
+      - name: Extract version
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        run: |
+          # On a tag push, derive from the tag (vX.Y.Z -> X.Y.Z). On a manual
+          # workflow_dispatch dry-run there is no tag, so use the input. (GH#195)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Check for signing secrets
         id: signing
@@ -532,6 +566,10 @@ jobs:
   # ============================================================================
   release:
     name: Create Release
+    # GH#195: publish ONLY on a real tag push. A manual workflow_dispatch run is
+    # a build-only dry-run — skipping this job means no GitHub Release is created
+    # (so Homebrew/AUR never fire) and no tag exists (so the PPA never fires).
+    if: github.event_name == 'push'
     needs: [build-linux, build-appimage-x86_64, build-macos]
     runs-on: ubuntu-latest
     permissions:
