@@ -14,6 +14,10 @@ public:
 
     void updateNetworkBytes() override;
 
+    // GH#191: synthesize a type label ("Wi-Fi", "Ethernet", "VPN", "Bridge")
+    // from /sys/class/net/<name>/ — Linux has no OS-localized iface names.
+    QString interfaceDisplayName(const QString &name) const override;
+
     // Exposed for unit tests. Parses the contents of /proc/net/route and
     // returns the iface name owning the IPv4 default route (Destination
     // column == 00000000), or an empty string if none.

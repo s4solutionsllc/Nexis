@@ -320,11 +320,13 @@ target_include_directories(nexis-core PUBLIC
 target_compile_definitions(nexis-core PRIVATE NEXISCORE_LIBRARY QT_DEPRECATED_WARNINGS)
 target_link_libraries(nexis-core Qt6::Core Qt6::Network Qt6::Concurrent)
 
-# macOS-specific frameworks needed for system info APIs (IOKit, CoreFoundation)
+# macOS-specific frameworks needed for system info APIs (IOKit, CoreFoundation,
+# SystemConfiguration for GH#191 localized network interface names)
 if(APPLE)
   find_library(IOKIT_FRAMEWORK IOKit)
   find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
-  target_link_libraries(nexis-core ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK})
+  find_library(SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration)
+  target_link_libraries(nexis-core ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK} ${SYSTEMCONFIGURATION_FRAMEWORK})
 endif()
 
 # ============================================================================
@@ -685,7 +687,7 @@ message(STATUS "App version: ${APP_VERSION}")
 
 target_compile_definitions(nexis-gui PUBLIC QT_DEPRECATED_WARNINGS "APP_VERSION=\"${APP_VERSION}\"")
 target_link_libraries(nexis-gui PUBLIC
-  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent
+  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent Qt6::Network
 )
 
 if(APPLE)

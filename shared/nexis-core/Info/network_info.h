@@ -42,6 +42,11 @@ public:
     // restricted to non-loopback up+running interfaces.
     const NetInterfaceStatsMap &getInterfaceStats() const { return mInterfaceStats; }
 
+    // GH#191: human-readable name/type for an interface ("Wi-Fi", "Ethernet",
+    // "Thunderbolt Bridge", "VPN", ...). Empty when none is available; callers
+    // fall back to the raw kernel/BSD name.
+    virtual QString interfaceDisplayName(const QString &name) const { return {}; }
+
 protected:
     QString defaultNetworkInterface;
     quint64 mRxBytes = 0;

@@ -1,5 +1,7 @@
 #include "info_manager.h"
 #include <QStandardPaths>
+#include <QNetworkInterface>
+#include <QHostAddress>
 
 #ifdef Q_OS_MACOS
 #include <Info/cpu_info_macos.h>
@@ -290,9 +292,42 @@ QString InfoManager::getDefaultNetworkInterface() const
 
 QStringList InfoManager::getNetworkInterfaceNames() const
 {
-    QStringList names = getInterfaceStats().keys();
+    // GH#191: the palette should only offer interfaces a user would actually
+    // monitor. getInterfaceStats() keeps every up/running non-loopback iface,
+    // which on macOS includes Apple-internal/virtual ones (awdl0, anpi*, llw0,
+    // ap1, bridge0, idle utunN) that carry only a link-local address. Keep an
+    // interface only if it is up + running + non-loopback AND has at least one
+    // ROUTABLE address (not link-local, not loopback) — i.e. it is actually
+    // carrying usable connectivity (Wi-Fi/Ethernet, or an active VPN tunnel).
+    QStringList names;
+    const NetInterfaceStatsMap stats = getInterfaceStats();
+    for (auto it = stats.constBegin(); it != stats.constEnd(); ++it) {
+        const QNetworkInterface iface = QNetworkInterface::interfaceFromName(it.key());
+        if (!iface.isValid())
+            continue;
+        const QNetworkInterface::InterfaceFlags flags = iface.flags();
+        if (!(flags & QNetworkInterface::IsUp) ||
+            !(flags & QNetworkInterface::IsRunning) ||
+            (flags & QNetworkInterface::IsLoopBack))
+            continue;
+        bool routable = false;
+        for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
+            const QHostAddress ip = entry.ip();
+            if (!ip.isNull() && !ip.isLinkLocal() && !ip.isLoopback()) {
+                routable = true;
+                break;
+            }
+        }
+        if (routable)
+            names << it.key();
+    }
     names.sort();
     return names;
+}
+
+QString InfoManager::getNetworkInterfaceDisplayName(const QString &name) const
+{
+    return ni->interfaceDisplayName(name);
 }
 
 NetInterfaceStatsMap InfoManager::getInterfaceStats() const

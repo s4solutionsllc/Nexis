@@ -7,6 +7,8 @@
 #include <net/if_dl.h>
 #include <ifaddrs.h>
 
+#include <SystemConfiguration/SystemConfiguration.h>
+
 NetworkInfoMacOS::NetworkInfoMacOS()
 {
     refreshDefaultInterface();
@@ -97,4 +99,54 @@ QList<QNetworkInterface> NetworkInfoMacOS::getAllInterfaces()
 QString NetworkInfoMacOS::getDefaultNetworkInterface() const
 {
     return defaultNetworkInterface;
+}
+
+void NetworkInfoMacOS::rebuildDisplayNameCache() const
+{
+    // GH#191: walk every configured network interface once and map its BSD
+    // name (e.g. "en0") to the OS-localized display name (e.g. "Wi-Fi").
+    mDisplayNameCache.clear();
+
+    CFArrayRef interfaces = SCNetworkInterfaceCopyAll();
+    if (!interfaces) {
+        mDisplayNameCacheBuilt = true;
+        return;
+    }
+
+    const CFIndex count = CFArrayGetCount(interfaces);
+    for (CFIndex i = 0; i < count; ++i) {
+        SCNetworkInterfaceRef iface =
+            static_cast<SCNetworkInterfaceRef>(
+                const_cast<void *>(CFArrayGetValueAtIndex(interfaces, i)));
+        if (!iface)
+            continue;
+
+        CFStringRef bsdName = SCNetworkInterfaceGetBSDName(iface);
+        CFStringRef displayName = SCNetworkInterfaceGetLocalizedDisplayName(iface);
+        if (!bsdName || !displayName)
+            continue;
+
+        mDisplayNameCache.insert(QString::fromCFString(bsdName),
+                                 QString::fromCFString(displayName));
+    }
+
+    CFRelease(interfaces);
+    mDisplayNameCacheBuilt = true;
+}
+
+QString NetworkInfoMacOS::interfaceDisplayName(const QString &name) const
+{
+    // Called on the network tile subtitle every ~1s — keep it cheap by
+    // caching. Populate lazily on first use; if the queried name is missing
+    // (interface plugged in after the cache was built), rebuild once.
+    if (!mDisplayNameCacheBuilt)
+        rebuildDisplayNameCache();
+
+    auto it = mDisplayNameCache.constFind(name);
+    if (it == mDisplayNameCache.constEnd()) {
+        rebuildDisplayNameCache();
+        it = mDisplayNameCache.constFind(name);
+    }
+
+    return it != mDisplayNameCache.constEnd() ? it.value() : QString();
 }
