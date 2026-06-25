@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.3] - 2026-06-25
+
+### Fixed
+- **AppImage failed to launch on most Linux distros — `GLIBC_2.43 not found` (GH#195):** the 2.6.2 x86_64 AppImage was built inside the `ubuntu:26.04` release container (glibc 2.43), and since an AppImage bundles Qt but not glibc, it required glibc 2.43 at runtime — so it failed immediately on Ubuntu 22.04 / Linux Mint 21.x (glibc 2.35) and every other stable distro, with `version 'GLIBC_2.43' not found (required by ...libQt6Gui.so.6 / libc.so.6)`. The x86_64 AppImage is now built on the `ubuntu-22.04` runner (glibc 2.35, matching the documented "glibc ≥ 2.35" floor) with Qt 6.8 supplied by aqtinstall instead of the build distro's apt; the `.deb` continues to build on Resolute (26.04) for its system-Qt 6.8 dependency. (Known follow-up: the arm64 AppImage still builds on 26.04 — there is no official Qt 6.8 Linux-arm64 desktop binary to bundle from an older base; arm64 users on glibc < 2.43 should use the `.deb` on 26.04+ until that is addressed.)
+
 ## [2.6.2] - 2026-06-24
 
 ### CI / Internal

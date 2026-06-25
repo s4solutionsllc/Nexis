@@ -125,8 +125,14 @@ jobs:
           echo "DEB_PATH=$DEST" >> "$GITHUB_OUTPUT"
           echo "DEB_NAME=$DEST" >> "$GITHUB_OUTPUT"
 
-      # --- AppImage ---
+      # --- AppImage (arm64 only) ---
+      # GH#195: the x86_64 AppImage is built by the `build-appimage-x86_64` job
+      # on the ubuntu-22.04 runner (glibc 2.35) so it runs on older distros.
+      # Building it here (ubuntu:26.04, glibc 2.43) made 2.6.2 fail to launch on
+      # Linux Mint 21 / Ubuntu 22.04. arm64 stays here for now because aqt has no
+      # official Qt 6.8 Linux-arm64 desktop binary (see RELEASE.md / GH#195).
       - name: Install to AppDir
+        if: matrix.arch == 'arm64'
         run: DESTDIR=${{ github.workspace }}/AppDir cmake --install build
 
       # WI-13 / SSO-3375: pin linuxdeploy to a tagged release and verify the
@@ -136,6 +142,7 @@ jobs:
       #   https://github.com/linuxdeploy/linuxdeploy/releases
       #   https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases
       - name: Download linuxdeploy and Qt plugin (pinned + verified)
+        if: matrix.arch == 'arm64'
         env:
           LINUXDEPLOY_TAG: "1-alpha-20251107-1"
           LINUXDEPLOY_PLUGIN_QT_TAG: "1-alpha-20250213-1"
@@ -178,6 +185,7 @@ jobs:
       # SSO-6445: debug step confirms AppDir layout and qmake path before
       # linuxdeploy runs, so future failures have a clear evidence trail.
       - name: Debug AppDir layout and qmake
+        if: matrix.arch == 'arm64'
         run: |
           echo "=== AppDir/usr/bin ==="
           ls -la AppDir/usr/bin/ || echo "WARN: AppDir/usr/bin not found"
@@ -189,6 +197,7 @@ jobs:
           ldd AppDir/usr/bin/nexis 2>&1 | grep -i qt || echo "(no Qt lines in ldd output)"
 
       - name: Build AppImage
+        if: matrix.arch == 'arm64'
         env:
           QMAKE: /usr/bin/qmake6
           VERSION: ${{ steps.version.outputs.VERSION }}
@@ -215,6 +224,7 @@ jobs:
             --output appimage
 
       - name: Find AppImage file
+        if: matrix.arch == 'arm64'
         id: appimage
         run: |
           APPIMAGE=$(ls Nexis-*.AppImage | head -1)
@@ -232,6 +242,112 @@ jobs:
             ${{ steps.deb.outputs.DEB_PATH }}
             ${{ steps.appimage.outputs.APPIMAGE_PATH }}
             build/output/nexis-${{ matrix.arch }}
+
+  # ============================================================================
+  # AppImage (x86_64) — built on the ubuntu-22.04 runner (glibc 2.35) so the
+  # AppImage launches on Ubuntu 22.04+ / Linux Mint 21+ (GH#195). The `.deb`
+  # leg above builds on ubuntu:26.04 because it links that distro's system Qt
+  # 6.8; an AppImage bundles Qt but NOT glibc, so building it on 26.04 (glibc
+  # 2.43) made the 2.6.2 AppImage fail with `GLIBC_2.43 not found` on every
+  # stable distro. Here Qt 6.8 comes from aqtinstall (decoupled from the host
+  # apt, which on 22.04 only ships Qt 6.2), so the AppImage's glibc floor is the
+  # runner's 2.35. (arm64 AppImage still builds in build-linux on 26.04 — aqt
+  # has no official Qt 6.8 Linux-arm64 desktop binary; tracked as a follow-up.)
+  #
+  # NOTE: this job has not been validated end-to-end — it must be exercised via
+  # a release dry-run (rc tag) before the real v2.6.3 tag. Likely tuning points:
+  # the install-qt-action commit pin, the aqt `arch`/`modules` list (Svg/tools),
+  # and the QMAKE path env. See the PR for the validation checklist.
+  # ============================================================================
+  build-appimage-x86_64:
+    name: AppImage Build (x86_64 · glibc 2.35)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install build prerequisites
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential cmake file libgl1-mesa-dev
+
+      # Qt 6.8 from aqtinstall — NOT 22.04 apt (which only has Qt 6.2). The
+      # official Qt binaries are built for broad glibc compatibility, so the
+      # resulting AppImage's glibc floor is the ubuntu-22.04 runner's (2.35).
+      # TODO(GH#195): pin to a commit SHA per the repo's action-pinning policy.
+      - name: Install Qt 6.8
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.*'
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          # qtcharts + qtsvg are separate modules; LinguistTools (lrelease) ships
+          # in the base install. Adjust this list if `cmake` configure fails on a
+          # missing Qt component during the dry-run.
+          modules: 'qtcharts qtsvg'
+          cache: true
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DAPP_VERSION_OVERRIDE=${{ steps.version.outputs.VERSION }}
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Install to AppDir
+        run: DESTDIR=${{ github.workspace }}/AppDir cmake --install build
+
+      # Pinned + SHA-verified linuxdeploy (x86_64) — same provenance discipline
+      # as the build-linux leg (WI-13 / SSO-3375).
+      - name: Download linuxdeploy and Qt plugin (pinned + verified)
+        env:
+          LINUXDEPLOY_TAG: "1-alpha-20251107-1"
+          LINUXDEPLOY_PLUGIN_QT_TAG: "1-alpha-20250213-1"
+          LINUXDEPLOY_SHA256_X86_64: "c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d"
+          LINUXDEPLOY_PLUGIN_QT_SHA256_X86_64: "15106be885c1c48a021198e7e1e9a48ce9d02a86dd0a1848f00bdbf3c1c92724"
+        run: |
+          set -euo pipefail
+          ld_file="linuxdeploy-x86_64.AppImage"
+          ldq_file="linuxdeploy-plugin-qt-x86_64.AppImage"
+          wget -q --tries=3 \
+            "https://github.com/linuxdeploy/linuxdeploy/releases/download/${LINUXDEPLOY_TAG}/${ld_file}"
+          wget -q --tries=3 \
+            "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/${LINUXDEPLOY_PLUGIN_QT_TAG}/${ldq_file}"
+          echo "${LINUXDEPLOY_SHA256_X86_64}  ${ld_file}"   | sha256sum -c -
+          echo "${LINUXDEPLOY_PLUGIN_QT_SHA256_X86_64}  ${ldq_file}" | sha256sum -c -
+          chmod +x "${ld_file}" "${ldq_file}"
+
+      - name: Build AppImage
+        env:
+          # install-qt-action exports QT_ROOT_DIR for the selected Qt.
+          QMAKE: ${{ env.QT_ROOT_DIR }}/bin/qmake6
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: |
+          APPDIR="${{ github.workspace }}/AppDir"
+          ./linuxdeploy-x86_64.AppImage \
+            --appdir "$APPDIR" \
+            --executable "$APPDIR/usr/bin/nexis" \
+            --desktop-file "$APPDIR/usr/share/applications/nexis.desktop" \
+            --icon-file "$APPDIR/usr/share/icons/hicolor/256x256/apps/nexis.png" \
+            --plugin qt \
+            --output appimage
+
+      - name: Find AppImage file
+        id: appimage
+        run: |
+          APPIMAGE=$(ls Nexis-*.AppImage | head -1)
+          echo "APPIMAGE_PATH=$APPIMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload x86_64 AppImage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: linux-appimage-x86_64
+          path: ${{ steps.appimage.outputs.APPIMAGE_PATH }}
 
   # ============================================================================
   # macOS build: .app bundle + .dmg
@@ -416,7 +532,7 @@ jobs:
   # ============================================================================
   release:
     name: Create Release
-    needs: [build-linux, build-macos]
+    needs: [build-linux, build-appimage-x86_64, build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -430,6 +546,14 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: linux-artifacts-x86_64
+          path: artifacts/linux-x86_64
+
+      # GH#195: the x86_64 AppImage now comes from the dedicated glibc-2.35 job;
+      # land it in the same dir so the `*.AppImage` glob below picks it up.
+      - name: Download Linux x86_64 AppImage (glibc 2.35)
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: linux-appimage-x86_64
           path: artifacts/linux-x86_64
 
       - name: Download Linux ARM64 artifacts
