@@ -67,6 +67,11 @@ public:
     QString getCmd() const;
     void setCmd(const QString &value);
 
+    // GH#194: short process name (Linux: /proc/<pid>/comm), distinct from the
+    // full command line in getCmd(). Empty on platforms that don't collect it.
+    QString getName() const;
+    void setName(const QString &value);
+
 private:
     pid_t pid;
     quint64 rss;
@@ -87,6 +92,7 @@ private:
     double gpuPercent = -1.0;
     qint64 gpuVramBytes = -1;
     QString cmd;
+    QString name;
 };
 
 

@@ -70,6 +70,16 @@ void Process::setCmd(const QString &value)
     cmd = value;
 }
 
+QString Process::getName() const
+{
+    return name;
+}
+
+void Process::setName(const QString &value)
+{
+    name = value;
+}
+
 QString Process::getStartTime() const
 {
     return startTime;
