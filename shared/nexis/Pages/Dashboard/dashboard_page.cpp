@@ -1539,11 +1539,21 @@ void DashboardPage::onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint 
 
     int pitchX = DashboardLayout::kCellW + DashboardLayout::kGap;
     int pitchY = DashboardLayout::kCellH + DashboardLayout::kGap;
+
+    // GH#191: size the drop preview to the dragged tile's FULL footprint
+    // (rowSpan x colSpan), anchored at the drop cell, so the operator sees
+    // exactly how much space the tile will occupy — not just a single cell.
+    // onTileDragFinished() places the tile's top-left at (targetRow,targetCol),
+    // so the highlight matches the actual drop.
+    int rowSpan = mDragSource ? mDragSource->gridRowSpan() : 1;
+    int colSpan = mDragSource ? mDragSource->gridColSpan() : 1;
+    int indW = colSpan * DashboardLayout::kCellW + (colSpan - 1) * DashboardLayout::kGap;
+    int indH = rowSpan * DashboardLayout::kCellH + (rowSpan - 1) * DashboardLayout::kGap;
+
     QPoint topLeftInContainer(targetCol * pitchX, targetRow * pitchY);
     QPoint global = mGridContainer->mapToGlobal(topLeftInContainer);
     QPoint inPage = mapFromGlobal(global);
-    mDragIndicator->setGeometry(inPage.x(), inPage.y(),
-                                DashboardLayout::kCellW, DashboardLayout::kCellH);
+    mDragIndicator->setGeometry(inPage.x(), inPage.y(), indW, indH);
     mDragIndicator->show();
     mDragIndicator->raise();
 }
