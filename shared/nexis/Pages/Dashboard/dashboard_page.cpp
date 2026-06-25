@@ -77,47 +77,81 @@ void DashboardPage::init()
         }
     }
 
-    // Create tiles using factory with saved styles (or defaults). Singleton
-    // tiles (cpu/memory/battery/network/health) keep member pointers; the
-    // multi-instance types (disk/temp/gpu/fan) are created into locals and
-    // driven per-tile via their wrapper bindings. (GH#191)
-    mCpuTile = createTile("cpu", mTileStyles.value("cpu", defaultStyle("cpu")));
-    mMemTile = createTile("memory", mTileStyles.value("memory", defaultStyle("memory")));
-    MetricTileBase *diskTile = createTile("disk", mTileStyles.value("disk", defaultStyle("disk")));
-    mNetworkTile = new NetworkTile("@networkColor", this);
-    MetricTileBase *gpuTile = createTile("gpu", mTileStyles.value("gpu", defaultStyle("gpu")));
-    MetricTileBase *tempTile = createTile("temp", mTileStyles.value("temp", defaultStyle("temp")));
-    mBatteryTile = createTile("battery", mTileStyles.value("battery", defaultStyle("battery")));
-    MetricTileBase *fanTile = createTile("fan", mTileStyles.value("fan", defaultStyle("fan")));
-    mHealthTile = new HealthScoreTile("@healthScoreColor", this);
+    // GH#191: layout-driven tile creation. Parse the layout tiles up front
+    // (envelope-aware + migrate) so we create ONE wrapper per PERSISTED tile,
+    // including multiple instances of a type (e.g. two temp tiles). For the
+    // default/single-instance case this produces exactly one wrapper per type,
+    // in the default order — identical to the legacy fixed-create behaviour.
+    // deserializeLayout() still re-parses afterwards to apply positions/spans/
+    // colors/input by uid.
+    QJsonArray layoutTiles;
+    {
+        QString src = savedLayout.isEmpty()
+            ? QString(QJsonDocument(defaultLayout()).toJson())
+            : savedLayout;
+        QJsonDocument d = QJsonDocument::fromJson(src.toUtf8());
+        QJsonArray raw = d.isObject() ? d.object().value("tiles").toArray() : d.array();
+        int ver = d.isObject() ? d.object().value("version").toInt(1) : 1;
+        layoutTiles = DashboardLayout::migrate(raw, ver);
+    }
 
-    // Wrap each tile in a DashboardTileWrapper for drag/resize support
-    wrapTile("cpu", "cpu", QString(), mCpuTile);
-    wrapTile("memory", "memory", QString(), mMemTile);
-    wrapTile("disk", "disk", QString(), diskTile);
-    wrapTile("network", "network", QString(), mNetworkTile);
+    // Singleton convenience pointers (mCpuTile/mMemTile/mBatteryTile/
+    // mHealthTile/mNetworkTile) are set inside the loop as their type is created.
+    auto createForType = [this](const QString &type, const QString &style) -> QWidget* {
+        return (type == "network")
+            ? static_cast<QWidget*>(new NetworkTile("@networkColor", this))
+            : static_cast<QWidget*>(createTile(type, style));
+    };
 
-    if (im->hasGpu())
-        wrapTile("gpu", "gpu", QString(), gpuTile);
-    else
-        gpuTile->hide();
+    auto assignSingleton = [this](const QString &type, QWidget *tile) {
+        if (type == "cpu")          mCpuTile = qobject_cast<MetricTileBase*>(tile);
+        else if (type == "memory")  mMemTile = qobject_cast<MetricTileBase*>(tile);
+        else if (type == "battery") mBatteryTile = qobject_cast<MetricTileBase*>(tile);
+        else if (type == "health")  mHealthTile = qobject_cast<HealthScoreTile*>(tile);
+        else if (type == "network") mNetworkTile = qobject_cast<NetworkTile*>(tile);
+    };
 
-    if (im->hasThermalSensors())
-        wrapTile("temp", "temp", QString(), tempTile);
-    else
-        tempTile->hide();
+    for (const QJsonValue &v : layoutTiles) {
+        QJsonObject o = v.toObject();
+        QString type = o.value("id").toString();
+        if (type.isEmpty()) continue;
+        QString uid  = o.contains("uid") ? o.value("uid").toString() : type;
+        QString input = o.value("input").toString();
+        QString style = o.contains("style") ? o.value("style").toString()
+                                            : defaultStyle(type);
 
+        // Skip optional types whose hardware is absent.
+        if (type == "gpu" && !im->hasGpu()) continue;
+        if (type == "temp" && !im->hasThermalSensors()) continue;
+        if (type == "battery" && !im->hasBattery()) continue;
+        if (type == "fan" && !im->hasFanSensors()) continue;
+
+        QString tileStyle = mTileStyles.value(uid, style);
+        mTileStyles[uid] = tileStyle;
+        QWidget *tile = createForType(type, tileStyle);
+        wrapTile(uid, type, input, tile);
+        assignSingleton(type, tile);
+    }
+
+    // Singleton safety net: a malformed/old saved layout could omit a required
+    // singleton, leaving its member pointer null and crashing the singleton
+    // update routines. Guarantee cpu/memory/network/health (and battery when
+    // hardware is present) each have at least one wrapper + a non-null pointer.
+    // For a normal default/saved layout all are present, so this is a no-op.
+    auto ensureSingleton = [&](const QString &type) {
+        if (!wrappersOfType(type).isEmpty()) return;
+        QString style = mTileStyles.value(type, defaultStyle(type));
+        mTileStyles[type] = style;
+        QWidget *tile = createForType(type, style);
+        wrapTile(type, type, QString(), tile);
+        assignSingleton(type, tile);
+    };
+    ensureSingleton("cpu");
+    ensureSingleton("memory");
+    ensureSingleton("network");
+    ensureSingleton("health");
     if (im->hasBattery())
-        wrapTile("battery", "battery", QString(), mBatteryTile);
-    else
-        mBatteryTile->hide();
-
-    if (im->hasFanSensors())
-        wrapTile("fan", "fan", QString(), fanTile);
-    else
-        fanTile->hide();
-
-    wrapTile("health", "health", QString(), mHealthTile);
+        ensureSingleton("battery");
 
     mHealthTile->setQuickAction(tr("System Checkup"), [this]() {
         launchMaintenanceWizard();
