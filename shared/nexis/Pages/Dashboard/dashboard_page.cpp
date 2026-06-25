@@ -19,6 +19,7 @@
 #include <QShowEvent>
 #include <QVersionNumber>
 #include <algorithm>
+#include <functional>
 
 DashboardPage::~DashboardPage()
 {
@@ -32,25 +33,14 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     ui(new Ui::DashboardPage),
     mCpuTile(nullptr),
     mMemTile(nullptr),
-    mDiskTile(nullptr),
-    mTempTile(nullptr),
-    mGpuTile(nullptr),
     mBatteryTile(nullptr),
-    mFanTile(nullptr),
     mHealthTile(nullptr),
     mNetworkTile(nullptr),
-    mGpuDeviceMenu(new QMenu(this)),
     im(infoManager ? infoManager : InfoManager::ins()),
     mSettingManager(settingManager ? settingManager : SettingManager::ins()),
     mAppManager(appManager ? appManager : AppManager::ins()),
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins()),
     mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
-    mDiskMenu(new QMenu(this)),
-    mTempSensorMenu(new QMenu(this)),
-    mFanSensorMenu(new QMenu(this)),
-    mSelectedSensorIndex(0),
-    mSelectedGpuIndex(0),
-    mSelectedFanIndex(0),
     mKioskButton(new QToolButton(this)),
     mEditButton(new QToolButton(this)),
     mEditToolbar(nullptr),
@@ -87,32 +77,35 @@ void DashboardPage::init()
         }
     }
 
-    // Create tiles using factory with saved styles (or defaults)
+    // Create tiles using factory with saved styles (or defaults). Singleton
+    // tiles (cpu/memory/battery/network/health) keep member pointers; the
+    // multi-instance types (disk/temp/gpu/fan) are created into locals and
+    // driven per-tile via their wrapper bindings. (GH#191)
     mCpuTile = createTile("cpu", mTileStyles.value("cpu", defaultStyle("cpu")));
     mMemTile = createTile("memory", mTileStyles.value("memory", defaultStyle("memory")));
-    mDiskTile = createTile("disk", mTileStyles.value("disk", defaultStyle("disk")));
+    MetricTileBase *diskTile = createTile("disk", mTileStyles.value("disk", defaultStyle("disk")));
     mNetworkTile = new NetworkTile("@networkColor", this);
-    mGpuTile = createTile("gpu", mTileStyles.value("gpu", defaultStyle("gpu")));
-    mTempTile = createTile("temp", mTileStyles.value("temp", defaultStyle("temp")));
+    MetricTileBase *gpuTile = createTile("gpu", mTileStyles.value("gpu", defaultStyle("gpu")));
+    MetricTileBase *tempTile = createTile("temp", mTileStyles.value("temp", defaultStyle("temp")));
     mBatteryTile = createTile("battery", mTileStyles.value("battery", defaultStyle("battery")));
-    mFanTile = createTile("fan", mTileStyles.value("fan", defaultStyle("fan")));
+    MetricTileBase *fanTile = createTile("fan", mTileStyles.value("fan", defaultStyle("fan")));
     mHealthTile = new HealthScoreTile("@healthScoreColor", this);
 
     // Wrap each tile in a DashboardTileWrapper for drag/resize support
     wrapTile("cpu", "cpu", QString(), mCpuTile);
     wrapTile("memory", "memory", QString(), mMemTile);
-    wrapTile("disk", "disk", QString(), mDiskTile);
+    wrapTile("disk", "disk", QString(), diskTile);
     wrapTile("network", "network", QString(), mNetworkTile);
 
     if (im->hasGpu())
-        wrapTile("gpu", "gpu", QString(), mGpuTile);
+        wrapTile("gpu", "gpu", QString(), gpuTile);
     else
-        mGpuTile->hide();
+        gpuTile->hide();
 
     if (im->hasThermalSensors())
-        wrapTile("temp", "temp", QString(), mTempTile);
+        wrapTile("temp", "temp", QString(), tempTile);
     else
-        mTempTile->hide();
+        tempTile->hide();
 
     if (im->hasBattery())
         wrapTile("battery", "battery", QString(), mBatteryTile);
@@ -120,15 +113,20 @@ void DashboardPage::init()
         mBatteryTile->hide();
 
     if (im->hasFanSensors())
-        wrapTile("fan", "fan", QString(), mFanTile);
+        wrapTile("fan", "fan", QString(), fanTile);
     else
-        mFanTile->hide();
+        fanTile->hide();
 
     wrapTile("health", "health", QString(), mHealthTile);
 
     mHealthTile->setQuickAction(tr("System Checkup"), [this]() {
         launchMaintenanceWizard();
     });
+
+    // GH#191: seed default multi-instance tiles' bindings from legacy global
+    // selections (or the first detected input). Runs BEFORE deserializeLayout so
+    // a saved per-tile input always wins over the legacy seed.
+    migrateLegacyBindings();
 
     // Load saved layout or use default, then build the grid
     if (savedLayout.isEmpty())
@@ -196,128 +194,21 @@ void DashboardPage::init()
     // paint uses a responsive column count instead of the kMaxCols placeholder.
     recomputeColumns();
 
-    // Temperature sensor gear menu
-    if (im->hasThermalSensors()) {
-        QList<ThermalSensor> sensors = im->getThermalSensors();
-
-        mTempSensorMenu->setObjectName("tempSensorMenu");
-        for (int i = 0; i < sensors.size(); ++i) {
-            QAction *action = mTempSensorMenu->addAction(sensors.at(i).label);
-            action->setData(i);
-            action->setCheckable(true);
-        }
-
-        QString savedSensorId = mSettingManager->getTempSensorId();
-        if (!savedSensorId.isEmpty()) {
-            bool found = false;
-            for (int i = 0; i < sensors.size(); ++i) {
-                if (sensors.at(i).id == savedSensorId) {
-                    mSelectedSensorIndex = i;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                qWarning() << "Saved temperature sensor" << savedSensorId << "not found, falling back to first sensor";
-        }
-
-        for (QAction *a : mTempSensorMenu->actions())
-            a->setChecked(a->data().toInt() == mSelectedSensorIndex);
-
-        if (mSelectedSensorIndex >= 0 && mSelectedSensorIndex < sensors.size())
-            mTempTile->setSubtitle(sensors.at(mSelectedSensorIndex).label);
-
-        setupTileGearMenu("temp", mTempTile);
-
-        connect(mTempSensorMenu, &QMenu::triggered,
-                this, &DashboardPage::onTempSensorSelected);
+    // GH#191: data-refresh wiring for the multi-instance sensor types. The gear
+    // menus and subtitles are now built per-tile in setupTileGearMenu(wrapper)
+    // (called from wrapTile) and migrateLegacyBindings(); only the live-data
+    // connections live here, still guarded by availability.
+    if (im->hasThermalSensors())
         connect(mRefresh, &DataRefreshService::tempUpdated,
                 this, &DashboardPage::updateTempTile);
-    }
 
-    // Fan sensor gear menu
-    if (im->hasFanSensors()) {
-        QList<FanSensor> fans = im->getFanSensors();
-
-        mFanSensorMenu->setObjectName("fanSensorMenu");
-        for (int i = 0; i < fans.size(); ++i) {
-            QAction *action = mFanSensorMenu->addAction(fans.at(i).label);
-            action->setData(i);
-            action->setCheckable(true);
-        }
-
-        QString savedFanId = mSettingManager->getFanSensorId();
-        if (!savedFanId.isEmpty()) {
-            bool found = false;
-            for (int i = 0; i < fans.size(); ++i) {
-                if (fans.at(i).id == savedFanId) {
-                    mSelectedFanIndex = i;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                qWarning() << "Saved fan sensor" << savedFanId << "not found, falling back to first sensor";
-        }
-
-        for (QAction *a : mFanSensorMenu->actions())
-            a->setChecked(a->data().toInt() == mSelectedFanIndex);
-
-        if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size())
-            mFanTile->setSubtitle(fans.at(mSelectedFanIndex).label);
-
-        setupTileGearMenu("fan", mFanTile);
-
-        connect(mFanSensorMenu, &QMenu::triggered,
-                this, &DashboardPage::onFanSensorSelected);
+    if (im->hasFanSensors())
         connect(mRefresh, &DataRefreshService::fanUpdated,
                 this, &DashboardPage::updateFanTile);
-    }
 
-    // GPU device selector menu (attached to tile gear button in setupTileGearMenu)
-    if (im->hasGpu()) {
-        QList<GpuDevice> gpus = im->getGpuDevices();
-        bool multiGpu = gpus.size() > 1;
-
-        QString savedGpuId = mSettingManager->getGpuDeviceId();
-        if (!savedGpuId.isEmpty()) {
-            bool found = false;
-            for (int i = 0; i < gpus.size(); ++i) {
-                if (gpus.at(i).name == savedGpuId) {
-                    mSelectedGpuIndex = i;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                qWarning() << "Saved GPU device" << savedGpuId << "not found, falling back to first device";
-        }
-
-        for (int i = 0; i < gpus.size(); ++i) {
-            const GpuDevice &g = gpus.at(i);
-            QString label = multiGpu
-                ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
-                : g.name;
-            QAction *a = mGpuDeviceMenu->addAction(label);
-            a->setCheckable(true);
-            a->setData(i);
-            a->setChecked(i == mSelectedGpuIndex);
-        }
-
-        if (mSelectedGpuIndex >= 0 && mSelectedGpuIndex < gpus.size()) {
-            const GpuDevice &g = gpus.at(mSelectedGpuIndex);
-            mGpuTile->setSubtitle(multiGpu
-                ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
-                : g.name);
-        }
-
-        setupTileGearMenu("gpu", mGpuTile);
-
-        connect(mGpuDeviceMenu, &QMenu::triggered,
-                this, &DashboardPage::onGpuDeviceSelected);
+    if (im->hasGpu())
         connect(mRefresh, &DataRefreshService::gpuUpdated,
                 this, &DashboardPage::onGpuUpdated);
-    }
 
     // Battery gauge
     if (im->hasBattery()) {
@@ -374,10 +265,6 @@ void DashboardPage::init()
             this, &DashboardPage::onNetworkUpdated);
     connect(mRefresh, &DataRefreshService::diskUsageUpdated,
             this, &DashboardPage::onDiskUsageUpdated);
-
-    // Disk selector gear menu
-    setupTileGearMenu("disk", mDiskTile);
-    connect(mDiskMenu, &QMenu::triggered, this, &DashboardPage::onDiskSelected);
 
     // Set network interface name
     QString ifName = im->getDefaultNetworkInterface();
@@ -681,82 +568,55 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
     if (disks.isEmpty())
         return;
 
+    bool firstFill = mCachedDisks.isEmpty();
     mCachedDisks = disks;
 
-    // Rebuild gear menu with current disk list
-    mDiskMenu->clear();
-    for (const Disk &d : disks) {
-        QAction *action = mDiskMenu->addAction(d.name);
-        action->setData(d.name);
-        action->setCheckable(true);
-    }
-    mDiskTile->setGearVisible(disks.size() >= 2);
+    // GH#191: the disk list became available — (re)build each disk tile's gear
+    // menu so it lists the detected disks. On the first fill the wrappers were
+    // created before mCachedDisks was populated, so their gears were empty.
+    if (firstFill)
+        for (DashboardTileWrapper *w : wrappersOfType("disk"))
+            setupTileGearMenu(w);
 
-    const Disk *disk = nullptr;
-    QString selectedDiskName = mSettingManager->getDiskName();
-    for (const Disk &d : disks) {
-        if (d.name.trimmed() == selectedDiskName.trimmed())
-            disk = &d;
-    }
-
-    if (!disk) {
-        for (const Disk &d : disks)
-            if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed())
-                disk = &d;
-        if (!disk)
-            disk = &disks.at(0);
-    }
-
-    // Mark the selected disk in the gear menu
-    for (QAction *a : mDiskMenu->actions())
-        a->setChecked(a->data().toString() == disk->name);
-
-    int diskPercent = 0;
-    if (disk->size > 0) {
-        diskPercent = ((double) disk->used / (double) disk->size) * 100.0;
-    }
-
-    // alert message
+    // alert message — fire once for the worst disk, using the same threshold
+    // logic as before but evaluated against the highest-usage disk.
     int diskAlertPercent = mSettingManager->getDiskAlertPercent();
     if (diskAlertPercent > 0) {
+        int worst = 0;
+        for (const Disk &d : disks)
+            if (d.size > 0)
+                worst = qMax(worst, static_cast<int>((double)d.used / (double)d.size * 100.0));
         static bool isShow = true;
-        if (diskPercent > diskAlertPercent && isShow) {
+        if (worst > diskAlertPercent && isShow) {
             mAppManager->getTrayIcon()->showMessage(tr("High Disk Usage"),
                                                           tr("The amount of disk used is over %1%.").arg(diskAlertPercent),
                                                           QSystemTrayIcon::Warning);
             isShow = false;
-        } else if (diskPercent < diskAlertPercent) {
+        } else if (worst < diskAlertPercent) {
             isShow = true;
         }
     }
 
     if (!mActive) return;
 
-    QString sizeText = FormatUtil::formatBytes(disk->size);
-    QString usedText = FormatUtil::formatBytes(disk->used);
+    // Drive each disk tile from its own bound disk (fallback to first if unbound
+    // or the binding no longer resolves).
+    for (DashboardTileWrapper *w : wrappersOfType("disk")) {
+        const Disk *disk = nullptr;
+        for (const Disk &d : disks)
+            if (d.name.trimmed() == w->inputKey().trimmed()) { disk = &d; break; }
+        if (!disk)
+            disk = &disks.at(0);
 
-    mDiskTile->setDiskInfo(diskPercent, usedText, sizeText);
-    updateDiskHealthBadge();
-}
+        int diskPercent = 0;
+        if (disk->size > 0)
+            diskPercent = ((double) disk->used / (double) disk->size) * 100.0;
 
-void DashboardPage::onDiskSelected(QAction *action)
-{
-    QString diskName = action->data().toString();
-    mSettingManager->setDiskName(diskName);
-
-    for (const Disk &d : mCachedDisks) {
-        if (d.name == diskName) {
-            int percent = 0;
-            if (d.size > 0)
-                percent = static_cast<int>((double)d.used / (double)d.size * 100.0);
-            mDiskTile->setDiskInfo(percent,
-                                   FormatUtil::formatBytes(d.used),
-                                   FormatUtil::formatBytes(d.size));
-
-            for (QAction *a : mDiskMenu->actions())
-                a->setChecked(a->data().toString() == diskName);
-            break;
-        }
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+        tile->setDiskInfo(diskPercent,
+                          FormatUtil::formatBytes(disk->used),
+                          FormatUtil::formatBytes(disk->size));
     }
 
     updateDiskHealthBadge();
@@ -785,102 +645,82 @@ void DashboardPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 void DashboardPage::updateTempTile()
 {
     if (!mActive) return;
-    double temp = im->getThermalTemperature(mSelectedSensorIndex);
-    int percent = qBound(0, static_cast<int>(temp), 100);
-
-    double tempF = temp * 9.0 / 5.0 + 32.0;
-    mTempTile->setValue(percent, QString("%1\u00B0C").arg(temp, 0, 'f', 1));
-    mTempTile->addDataPoint(temp);
-}
-
-void DashboardPage::onTempSensorSelected(QAction *action)
-{
-    int index = action->data().toInt();
-    mSelectedSensorIndex = index;
-
     QList<ThermalSensor> sensors = im->getThermalSensors();
-    if (index >= 0 && index < sensors.size()) {
-        mSettingManager->setTempSensorId(sensors.at(index).id);
-        mTempTile->setSubtitle(sensors.at(index).label);
+    for (DashboardTileWrapper *w : wrappersOfType("temp")) {
+        int idx = 0;
+        for (int i = 0; i < sensors.size(); ++i)
+            if (sensors.at(i).id == w->inputKey()) { idx = i; break; }
+        double temp = im->getThermalTemperature(idx);
+        int percent = qBound(0, static_cast<int>(temp), 100);
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+        tile->setValue(percent, QString("%1\u00B0C").arg(temp, 0, 'f', 1));
+        tile->addDataPoint(temp);
     }
-
-    for (QAction *a : mTempSensorMenu->actions())
-        a->setChecked(a->data().toInt() == index);
-
-    mTempTile->clearDataPoints();
-    updateTempTile();
 }
 
 void DashboardPage::updateFanTile()
 {
     if (!mActive) return;
-    int rpm = im->getFanSpeed(mSelectedFanIndex);
     QList<FanSensor> fans = im->getFanSensors();
-    int maxRpm = 6000;
-    if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size()) {
-        int sensorMax = fans.at(mSelectedFanIndex).maxRpm;
-        if (sensorMax > 0)
-            maxRpm = sensorMax;
+    for (DashboardTileWrapper *w : wrappersOfType("fan")) {
+        int idx = 0;
+        for (int i = 0; i < fans.size(); ++i)
+            if (fans.at(i).id == w->inputKey()) { idx = i; break; }
+        int rpm = im->getFanSpeed(idx);
+        int maxRpm = (idx >= 0 && idx < fans.size() && fans.at(idx).maxRpm > 0)
+                       ? fans.at(idx).maxRpm : 6000;
+        int percent = qBound(0, static_cast<int>(rpm * 100.0 / maxRpm), 100);
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+        tile->setValue(percent, QString("%1 RPM").arg(rpm));
+        tile->addDataPoint(rpm);
     }
-    int percent = qBound(0, static_cast<int>(rpm * 100.0 / maxRpm), 100);
-
-    mFanTile->setValue(percent, QString("%1 RPM").arg(rpm));
-    mFanTile->addDataPoint(rpm);
-}
-
-void DashboardPage::onFanSensorSelected(QAction *action)
-{
-    mSelectedFanIndex = action->data().toInt();
-
-    for (QAction *a : mFanSensorMenu->actions())
-        a->setChecked(a == action);
-
-    QList<FanSensor> fans = im->getFanSensors();
-    if (mSelectedFanIndex >= 0 && mSelectedFanIndex < fans.size()) {
-        mFanTile->setSubtitle(fans.at(mSelectedFanIndex).label);
-        mSettingManager->setFanSensorId(fans.at(mSelectedFanIndex).id);
-    }
-
-    mFanTile->clearDataPoints();
-    updateFanTile();
 }
 
 void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 {
-    if (!mActive || mSelectedGpuIndex < 0 || mSelectedGpuIndex >= gpus.size())
-        return;
-
-    const GpuDevice &gpu = gpus.at(mSelectedGpuIndex);
-
-    if (gpu.utilization < 0) {
-        mGpuTile->setValue(0, tr("N/A"));
-    } else {
-        int util = qBound(0, gpu.utilization, 100);
-        mGpuTile->setValue(util, QString("%1%").arg(util));
-        mGpuTile->addDataPoint(util);
+    if (!mActive) return;
+    for (DashboardTileWrapper *w : wrappersOfType("gpu")) {
+        int idx = 0;
+        for (int i = 0; i < gpus.size(); ++i)
+            if (gpus.at(i).name == w->inputKey()) { idx = i; break; }
+        if (idx < 0 || idx >= gpus.size()) continue;
+        const GpuDevice &gpu = gpus.at(idx);
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+        if (gpu.utilization < 0) { tile->setValue(0, tr("N/A")); }
+        else {
+            int util = qBound(0, gpu.utilization, 100);
+            tile->setValue(util, QString("%1%").arg(util));
+            tile->addDataPoint(util);
+        }
     }
 }
 
-void DashboardPage::onGpuDeviceSelected(QAction *action)
+void DashboardPage::onTileInputSelected(DashboardTileWrapper *wrapper, const QString &input)
 {
-    int index = action->data().toInt();
-    mSelectedGpuIndex = index;
-
-    for (QAction *a : mGpuDeviceMenu->actions())
-        a->setChecked(a == action);
-
-    QList<GpuDevice> gpus = im->getGpuDevices();
-    bool multiGpu = gpus.size() > 1;
-    if (index >= 0 && index < gpus.size()) {
-        const GpuDevice &g = gpus.at(index);
-        mSettingManager->setGpuDeviceId(g.name);
-        mGpuTile->setSubtitle(multiGpu
-            ? QString("GPU %1: %2").arg(g.deviceIndex).arg(g.name)
-            : g.name);
+    wrapper->setInputKey(input);
+    auto *tile = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
+    if (tile) {
+        // Subtitle = the human label for this input.
+        QString label = input;
+        if (wrapper->tileType() == "temp")
+            for (const ThermalSensor &s : im->getThermalSensors())
+                if (s.id == input) { label = s.label; break; }
+        else if (wrapper->tileType() == "fan")
+            for (const FanSensor &f : im->getFanSensors())
+                if (f.id == input) { label = f.label; break; }
+        tile->setSubtitle(label);
+        tile->clearDataPoints();
+        if (QMenu *m = tile->gearButton()->menu())
+            for (QAction *a : m->actions())
+                a->setChecked(a->data().toString() == input);
     }
-
-    mGpuTile->clearDataPoints();
-    onGpuUpdated(gpus);
+    // Push a fresh value immediately for the changed type.
+    if (wrapper->tileType() == "temp") updateTempTile();
+    else if (wrapper->tileType() == "fan") updateFanTile();
+    persistLayout();
 }
 
 void DashboardPage::onBatteryUpdated(const BatteryData &bat)
@@ -967,48 +807,52 @@ void DashboardPage::updateDiskHealthBadge()
     if (mCachedDriveHealth.isEmpty() || mCachedDisks.isEmpty())
         return;
 
-    // Find the currently selected disk
-    const Disk *selectedDisk = nullptr;
-    QString selectedDiskName = mSettingManager->getDiskName();
-    for (const Disk &d : mCachedDisks) {
-        if (d.name.trimmed() == selectedDiskName.trimmed()) {
-            selectedDisk = &d;
-            break;
-        }
-    }
-    if (!selectedDisk) {
+    // GH#191: each disk tile's health badge reflects ITS bound disk.
+    for (DashboardTileWrapper *w : wrappersOfType("disk")) {
+        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+        if (!tile) continue;
+
+        // Resolve this tile's bound disk (fallback: root volume, then first).
+        const Disk *selectedDisk = nullptr;
         for (const Disk &d : mCachedDisks) {
-            if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed()) {
+            if (d.name.trimmed() == w->inputKey().trimmed()) {
                 selectedDisk = &d;
                 break;
             }
         }
-        if (!selectedDisk)
-            selectedDisk = &mCachedDisks.first();
-    }
-
-    // Match the selected volume to its physical drive's health data
-    QString baseDev = extractBaseDevice(selectedDisk->device);
-    const DriveHealth *matched = nullptr;
-
-    for (const DriveHealth &dh : mCachedDriveHealth) {
-        if (dh.devicePath == baseDev) {
-            matched = &dh;
-            break;
+        if (!selectedDisk) {
+            for (const Disk &d : mCachedDisks) {
+                if (d.name.trimmed() == QStorageInfo::root().displayName().trimmed()) {
+                    selectedDisk = &d;
+                    break;
+                }
+            }
+            if (!selectedDisk)
+                selectedDisk = &mCachedDisks.first();
         }
-    }
 
-    // On macOS, APFS synthesized container numbering often won't match the
-    // physical device path. If there's only one physical drive, use it.
-    if (!matched && mCachedDriveHealth.size() == 1)
-        matched = &mCachedDriveHealth.first();
+        // Match the selected volume to its physical drive's health data
+        QString baseDev = extractBaseDevice(selectedDisk->device);
+        const DriveHealth *matched = nullptr;
 
-    // Update the tile
-    mDiskTile->clearDriveHealth();
-    if (matched) {
-        QString name = matched->model.isEmpty() ? matched->deviceName : matched->model;
-        bool good = (matched->healthVerdict == "Good" || matched->smartPassed);
-        mDiskTile->setDriveHealth(name, matched->healthVerdict, matched->healthPercent, good);
+        for (const DriveHealth &dh : mCachedDriveHealth) {
+            if (dh.devicePath == baseDev) {
+                matched = &dh;
+                break;
+            }
+        }
+
+        // On macOS, APFS synthesized container numbering often won't match the
+        // physical device path. If there's only one physical drive, use it.
+        if (!matched && mCachedDriveHealth.size() == 1)
+            matched = &mCachedDriveHealth.first();
+
+        tile->clearDriveHealth();
+        if (matched) {
+            QString name = matched->model.isEmpty() ? matched->deviceName : matched->model;
+            bool good = (matched->healthVerdict == "Good" || matched->smartPassed);
+            tile->setDriveHealth(name, matched->healthVerdict, matched->healthPercent, good);
+        }
     }
 }
 
@@ -1125,14 +969,10 @@ void DashboardPage::onResetLayout()
 
             if (type == "cpu") mCpuTile = newTile;
             else if (type == "memory") mMemTile = newTile;
-            else if (type == "disk") mDiskTile = newTile;
-            else if (type == "temp") mTempTile = newTile;
-            else if (type == "gpu") mGpuTile = newTile;
             else if (type == "battery") mBatteryTile = newTile;
-            else if (type == "fan") mFanTile = newTile;
             else if (type == "health") mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
-            setupTileGearMenu(type, newTile);
+            setupTileGearMenu(w);
 
             w->clearCustomizationSection();
             setupCustomizationMenu(w, defStyle);
@@ -1214,6 +1054,10 @@ DashboardTileWrapper *DashboardPage::wrapTile(const QString &uid, const QString 
     setupCustomizationMenu(wrapper, mTileStyles.value(uid, defaultStyle(type)));
 
     mTileWrappers.append(wrapper);
+
+    // GH#191: build this tile's per-instance input-selection gear menu.
+    setupTileGearMenu(wrapper);
+
     return wrapper;
 }
 
@@ -1759,26 +1603,67 @@ QString DashboardPage::defaultStyle(const QString &tileId) const
     return "sparkline";
 }
 
-void DashboardPage::setupTileGearMenu(const QString &id, MetricTileBase *tile)
+void DashboardPage::setupTileGearMenu(DashboardTileWrapper *wrapper)
 {
-    if (id == "disk") {
-        mDiskMenu->setObjectName("diskSelectorMenu");
-        tile->gearButton()->setMenu(mDiskMenu);
-        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        tile->setGearVisible(mCachedDisks.size() >= 2);
-    } else if (id == "temp" && im->hasThermalSensors()) {
-        tile->gearButton()->setMenu(mTempSensorMenu);
-        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        tile->setGearVisible(im->getThermalSensors().size() >= 2);
-    } else if (id == "fan" && im->hasFanSensors()) {
-        tile->gearButton()->setMenu(mFanSensorMenu);
-        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        tile->setGearVisible(im->getFanSensors().size() >= 2);
-    } else if (id == "gpu" && im->hasGpu()) {
-        tile->gearButton()->setMenu(mGpuDeviceMenu);
-        tile->gearButton()->setPopupMode(QToolButton::InstantPopup);
-        tile->setGearVisible(im->getGpuDevices().size() >= 2);
+    auto *tile = qobject_cast<MetricTileBase*>(wrapper->innerWidget());
+    QToolButton *gear = tile ? tile->gearButton() : nullptr;
+    QString type = wrapper->tileType();
+
+    if (!gear || !DashboardLayout::isMultiInstanceType(type)) {
+        if (tile) tile->setGearVisible(false);
+        return;
     }
+
+    QList<QPair<QString,QString>> inputs; // label, key
+    if (type == "temp")
+        for (const ThermalSensor &s : im->getThermalSensors()) inputs.append({s.label, s.id});
+    else if (type == "fan")
+        for (const FanSensor &f : im->getFanSensors()) inputs.append({f.label, f.id});
+    else if (type == "gpu")
+        for (const GpuDevice &g : im->getGpuDevices()) inputs.append({g.name, g.name});
+    else if (type == "disk")
+        for (const Disk &d : mCachedDisks) inputs.append({d.name, d.name});
+    // GH#191: network per-interface enumeration arrives in a later task; its
+    // gear stays hidden for now.
+
+    auto *menu = new QMenu(wrapper);
+    for (const auto &p : inputs) {
+        QAction *a = menu->addAction(p.first);
+        a->setCheckable(true);
+        a->setData(p.second);
+        a->setChecked(p.second == wrapper->inputKey());
+    }
+    connect(menu, &QMenu::triggered, this, [this, wrapper](QAction *a) {
+        onTileInputSelected(wrapper, a->data().toString());
+    });
+    gear->setMenu(menu);
+    gear->setPopupMode(QToolButton::InstantPopup);
+    tile->setGearVisible(inputs.size() >= 2);
+}
+
+void DashboardPage::migrateLegacyBindings()
+{
+    auto bindFirst = [&](const QString &type, const QString &savedId,
+                         std::function<QStringList()> allIds) {
+        for (DashboardTileWrapper *w : wrappersOfType(type)) {
+            if (!w->inputKey().isEmpty()) continue;
+            QStringList ids = allIds();
+            QString chosen = (!savedId.isEmpty() && ids.contains(savedId))
+                                ? savedId
+                                : (ids.isEmpty() ? QString() : ids.first());
+            w->setInputKey(chosen);
+        }
+    };
+    bindFirst("temp", mSettingManager->getTempSensorId(), [&]{
+        QStringList v; for (const ThermalSensor &s : im->getThermalSensors()) v << s.id; return v; });
+    bindFirst("fan", mSettingManager->getFanSensorId(), [&]{
+        QStringList v; for (const FanSensor &f : im->getFanSensors()) v << f.id; return v; });
+    bindFirst("gpu", mSettingManager->getGpuDeviceId(), [&]{
+        QStringList v; for (const GpuDevice &g : im->getGpuDevices()) v << g.name; return v; });
+    bindFirst("disk", mSettingManager->getDiskName(), [&]{
+        QStringList v; for (const Disk &d : im->getDisks()) v << d.name; return v; });
+    // GH#191: network interface enumeration (im->getNetworkInterfaceNames())
+    // does not exist yet; network migration arrives in a later task.
 }
 
 DashboardTileWrapper *DashboardPage::findWrapper(const QString &tileId) const
@@ -1812,18 +1697,15 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
     wrapper->setInnerWidget(newTile);
     wrapper->setCurrentStyle(style);
 
-    // Update member pointer
+    // Update member pointer (singleton tiles only; multi-instance types are
+    // driven per-wrapper and have no member). (GH#191)
     if (type == "cpu")          mCpuTile = newTile;
     else if (type == "memory")  mMemTile = newTile;
-    else if (type == "disk")    mDiskTile = newTile;
-    else if (type == "temp")    mTempTile = newTile;
-    else if (type == "gpu")     mGpuTile = newTile;
     else if (type == "battery") mBatteryTile = newTile;
-    else if (type == "fan")     mFanTile = newTile;
     else if (type == "health")  mHealthTile = qobject_cast<HealthScoreTile*>(newTile);
 
-    // Re-attach gear menus
-    setupTileGearMenu(type, newTile);
+    // Re-attach gear menu (per-tile input binding)
+    setupTileGearMenu(wrapper);
 
     // Re-apply display mode
     applyDisplayModeForSpan(wrapper);
@@ -1925,7 +1807,7 @@ void DashboardPage::onTileColorChangeRequested(DashboardTileWrapper *wrapper, co
 
     mTileRanges.remove(id);
 
-    if (id == "network") {
+    if (wrapper->tileType() == "network") {
         if (mNetworkTile)
             mNetworkTile->setColorOverride(hexColor);
     } else {
@@ -2045,7 +1927,17 @@ void DashboardPage::onHealthDiskUpdated(const QList<Disk> &disks)
 void DashboardPage::onHealthTempUpdated()
 {
     if (!mActive) return;
-    double tempC = im->getThermalTemperature(mSelectedSensorIndex);
+    // GH#191: the health score tracks the first temp tile's bound sensor (or the
+    // first detected sensor when unbound).
+    int sensorIdx = 0;
+    QList<DashboardTileWrapper*> tempWrappers = wrappersOfType("temp");
+    if (!tempWrappers.isEmpty()) {
+        QList<ThermalSensor> sensors = im->getThermalSensors();
+        const QString key = tempWrappers.first()->inputKey();
+        for (int i = 0; i < sensors.size(); ++i)
+            if (sensors.at(i).id == key) { sensorIdx = i; break; }
+    }
+    double tempC = im->getThermalTemperature(sensorIdx);
     int score = 100;
     if (tempC >= 100.0) score = 0;
     else if (tempC > 60.0) score = qRound(100.0 * (100.0 - tempC) / 40.0);

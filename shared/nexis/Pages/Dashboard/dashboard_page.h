@@ -71,11 +71,8 @@ private slots:
     void onDiskUsageUpdated(const QList<Disk> &disks);
     void updateTempTile();
     void updateFanTile();
-    void onFanSensorSelected(QAction *action);
     void onGpuUpdated(const QList<GpuDevice> &gpus);
-    void onTempSensorSelected(QAction *action);
-    void onGpuDeviceSelected(QAction *action);
-    void onDiskSelected(QAction *action);
+    void onTileInputSelected(DashboardTileWrapper *wrapper, const QString &input);
     void onBatteryUpdated(const BatteryData &bat);
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 
@@ -108,18 +105,10 @@ private:
 
     MetricTileBase *mCpuTile;
     MetricTileBase *mMemTile;
-    MetricTileBase *mDiskTile;
-    MetricTileBase *mTempTile;
-    MetricTileBase *mGpuTile;
     MetricTileBase *mBatteryTile;
-    MetricTileBase *mFanTile;
     HealthScoreTile *mHealthTile;
     NetworkTile *mNetworkTile;
 
-    QMenu *mGpuDeviceMenu;
-    QMenu *mDiskMenu;
-    QMenu *mTempSensorMenu;
-    QMenu *mFanSensorMenu;
     QList<Disk> mCachedDisks;
     QList<DriveHealth> mCachedDriveHealth;
 
@@ -128,10 +117,6 @@ private:
     AppManager *mAppManager;
     SignalMapper *mSignalMapper;
     DataRefreshService *mRefresh;
-
-    int mSelectedSensorIndex;
-    int mSelectedGpuIndex;
-    int mSelectedFanIndex;
 
     QToolButton *mKioskButton;
     QToolButton *mEditButton;
@@ -194,7 +179,8 @@ private:
     QStringList availableStyles(const QString &tileId) const;
     QString defaultStyle(const QString &tileId) const;
     void tileTitle(const QString &id, QString &title, QString &colorToken) const;
-    void setupTileGearMenu(const QString &id, MetricTileBase *tile);
+    void setupTileGearMenu(DashboardTileWrapper *wrapper);
+    void migrateLegacyBindings();
     DashboardTileWrapper *findWrapper(const QString &tileId) const;
     QList<DashboardTileWrapper*> wrappersOfType(const QString &type) const;
     bool tileUsesRangeMenu(const QString &style) const;
