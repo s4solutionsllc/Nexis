@@ -685,7 +685,7 @@ message(STATUS "App version: ${APP_VERSION}")
 
 target_compile_definitions(nexis-gui PUBLIC QT_DEPRECATED_WARNINGS "APP_VERSION=\"${APP_VERSION}\"")
 target_link_libraries(nexis-gui PUBLIC
-  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent
+  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent Qt6::Network
 )
 
 if(APPLE)
