@@ -26,6 +26,7 @@ private:
     // refresh it.
     void rebuildDisplayNameCache() const;
     mutable QHash<QString, QString> mDisplayNameCache;
+    mutable bool mDisplayNameCacheBuilt = false;
 };
 
 #endif // NETWORK_INFO_MACOS_H
