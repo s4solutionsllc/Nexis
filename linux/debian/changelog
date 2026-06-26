@@ -1,3 +1,10 @@
+nexis (2.7.1-0) unstable; urgency=medium
+
+  * Processes: add a dedicated process-name column (Linux), sourced from
+    /proc/<pid>/comm and distinct from the full command line (GH#194).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Thu, 25 Jun 2026 20:09:02 -0400
+
 nexis (2.7.0-0) unstable; urgency=medium
 
   * Dashboard: add multiple input-bound tiles via an "Add tile" palette, with a

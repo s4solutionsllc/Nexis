@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-06-25
+
 ### Added
 - **Processes: dedicated process-name column (GH#194, Linux).** The Processes table now shows a short process name (e.g. `systemd`) next to PID, sourced from `/proc/<pid>/comm` and distinct from the full command line — matching `ps`/`top`/`htop` and making the table easier to scan and sort. The column is Linux-only; macOS omits it entirely (no empty column).
 
