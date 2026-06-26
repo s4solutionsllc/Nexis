@@ -58,9 +58,23 @@ Nexis follows [SemVer](https://semver.org/spec/v2.0.0.html). Tags are the single
 source of truth for the released version — `release.yml` derives the build
 version from `GITHUB_REF_NAME` (`v2.3.4` → `2.3.4`).
 
-- **PATCH** (`2.3.3 → 2.3.4`) — bug fixes, no behavior change for users.
-- **MINOR** (`2.3.x → 2.4.0`) — new features, additive.
-- **MAJOR** (`2.x.y → 3.0.0`) — breaking changes (rare; coordinate via SOP).
+- **PATCH** (`2.7.0 → 2.7.1`) — bug fixes and small, backward-compatible
+  improvements: an extra column on an existing table, copy/UI polish, a tweak to
+  behavior that already exists. No new headline capability.
+- **MINOR** (`2.7.x → 2.8.0`) — substantial new features or capabilities,
+  additive and backward-compatible: a new page, a new monitoring mode, a new
+  dashboard tile type — the kind of thing that leads the release notes.
+- **MAJOR** (`2.x.y → 3.0.0`) — breaking changes: removing or renaming a
+  public-facing API / CLI flag, changing a persisted settings or data format
+  incompatibly. Rare; coordinate via SOP.
+
+The PATCH/MINOR line is a judgment call, not a mechanical one. The test:
+**would a user scanning the changelog see this as a new thing they can now do
+(MINOR), or as a refinement to something already there (PATCH)?** When the
+additive change is incremental polish on an existing surface, PATCH is correct;
+reserve MINOR for changes that expand what Nexis does. (Note: dropping a
+supported platform is a maintainer scope decision handled via SOP, not an
+automatic MAJOR — e.g. v2.6.0 sunset macOS Intel and Ubuntu Noble as a MINOR.)
 
 CVE / security patches: see §6.
 
