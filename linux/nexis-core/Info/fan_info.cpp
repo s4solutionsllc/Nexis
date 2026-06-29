@@ -128,6 +128,51 @@ void FanInfoLinux::discoverHwmon()
 
             mSensors.append(sensor);
         }
+
+        // GPU fan detection: scan for pwm*_enable=2 (fan mode) and corresponding pwm*_input
+        QStringList pwmEnables = devDir.entryList({"pwm*_enable"}, QDir::Files, QDir::Name);
+        for (const QString &enableFile : pwmEnables) {
+            static QRegularExpression pwmRe("^pwm(\\d+)_enable$");
+            QRegularExpressionMatch match = pwmRe.match(enableFile);
+            if (!match.hasMatch())
+                continue;
+
+            QString pwmIdx = match.captured(1);
+            QString enablePath = hwmonPath + "/" + enableFile;
+            QString enableVal = FileUtil::readStringFromFile(enablePath).trimmed();
+
+            // Only detect fans where pwm*_enable == 2 (fan mode, not PWM mode)
+            if (enableVal != "2")
+                continue;
+
+            // Check if pwm*_input exists (some devices use pwm*_input, others pwm*)
+            QString pwmInputPath = hwmonPath + "/pwm" + pwmIdx + "_input";
+            QString pwmPath = hwmonPath + "/pwm" + pwmIdx;
+            QString inputPath;
+
+            if (QFile::exists(pwmInputPath)) {
+                inputPath = pwmInputPath;
+            } else if (QFile::exists(pwmPath)) {
+                inputPath = pwmPath;
+            } else {
+                continue;
+            }
+
+            // Create GPU fan sensor
+            QString friendly = friendlyFanDeviceName(deviceName);
+            QString label = QString("%1 GPU – PWM %2").arg(friendly, pwmIdx);
+
+            FanSensor sensor;
+            sensor.id = QString("%1/pwm%2").arg(deviceName, pwmIdx);
+            sensor.deviceName = deviceName;
+            sensor.label = label;
+            sensor.inputPath = inputPath;
+            sensor.minRpm = 0;
+            sensor.maxRpm = 100;  // Percentage (0-100)
+            sensor.sourceType = FanSourceType::HwmonPwm;
+
+            mSensors.append(sensor);
+        }
     }
 }
 
@@ -262,6 +307,8 @@ int FanInfoLinux::getFanSpeed(int index) const
     switch (sensor.sourceType) {
     case FanSourceType::Hwmon:
         return readHwmonSpeed(sensor);
+    case FanSourceType::HwmonPwm:
+        return readHwmonPwmSpeed(sensor);
     case FanSourceType::ThinkpadProc:
         return readThinkpadSpeed();
     case FanSourceType::DellProc:
@@ -280,6 +327,20 @@ int FanInfoLinux::readHwmonSpeed(const FanSensor &sensor) const
               .toInt();
 
     return (rpm >= 0 && rpm <= MAX_SANE_RPM) ? rpm : 0;
+}
+
+int FanInfoLinux::readHwmonPwmSpeed(const FanSensor &sensor) const
+{
+    // PWM duty cycle: read pwm*_input (0-255), convert to percentage (0-100)
+    int pwm = FileUtil::readStringFromFile(sensor.inputPath)
+              .trimmed()
+              .toInt();
+
+    if (pwm < 0 || pwm > 255)
+        return 0;
+
+    // Convert PWM (0-255) to percentage (0-100)
+    return (pwm * 100) / 255;
 }
 
 int FanInfoLinux::readThinkpadSpeed() const

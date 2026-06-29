@@ -20,6 +20,7 @@ private:
     bool hasNvidiaSmiGpuFan() const;
 
     int readHwmonSpeed(const FanSensor &sensor) const;
+    int readHwmonPwmSpeed(const FanSensor &sensor) const;
     int readThinkpadSpeed() const;
     int readDellSpeed(const FanSensor &sensor) const;
     int readNvidiaSpeed(const FanSensor &sensor) const;
