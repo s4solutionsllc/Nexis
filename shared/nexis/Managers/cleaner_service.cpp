@@ -427,6 +427,11 @@ QStringList CleanerService::trashRoots() const
     return roots;
 }
 
+QStringList CleanerService::getTrashRoots() const
+{
+    return trashRoots();
+}
+
 quint64 CleanerService::cleanTrash()
 {
     quint64 totalSizeBefore = 0;
