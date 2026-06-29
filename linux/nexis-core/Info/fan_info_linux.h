@@ -17,13 +17,16 @@ private:
     void discoverThinkpadProc();
     void discoverDellProc();
     void discoverNvidiaSmi();
+    void discoverIpmi();
     bool hasNvidiaSmiGpuFan() const;
+    bool hasIpmitool() const;
 
     int readHwmonSpeed(const FanSensor &sensor) const;
     int readHwmonPwmSpeed(const FanSensor &sensor) const;
     int readThinkpadSpeed() const;
     int readDellSpeed(const FanSensor &sensor) const;
     int readNvidiaSpeed(const FanSensor &sensor) const;
+    int readIpmiSpeed(const FanSensor &sensor) const;
 };
 
 #endif // FAN_INFO_LINUX_H

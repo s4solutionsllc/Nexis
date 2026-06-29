@@ -33,6 +33,9 @@ private slots:
     void gpu_pwm_conversion_min();
     void gpu_pwm_conversion_max();
     void gpu_pwm_conversion_typical();
+
+    // IPMI BMC fan sensor parsing (static helper would be needed for testing)
+    void ipmi_basic();
 };
 
 void TestFanInfo::thinkpad_normalSpeed()
@@ -165,6 +168,28 @@ void TestFanInfo::gpu_pwm_conversion_typical()
     int pwm = 128;
     int percent = (pwm * 100) / 255;
     QCOMPARE(percent, 50);
+}
+
+void TestFanInfo::ipmi_basic()
+{
+    // Basic sanity check: IPMI parsing regex extracts RPM correctly
+    // Format: "Sensor Reading      : 3200 (+/- 0) RPM"
+    QString ipmiLine = "Sensor Reading      : 3200 (+/- 0) RPM";
+
+    // Extract number after colon
+    int colonIdx = ipmiLine.indexOf(':');
+    QVERIFY(colonIdx >= 0);
+
+    QString readingPart = ipmiLine.mid(colonIdx + 1).trimmed();
+    QVERIFY(readingPart.startsWith("3200"));
+
+    // Parse first number (RPM)
+    QRegularExpression rpmRe("^(\\d+)");
+    QRegularExpressionMatch match = rpmRe.match(readingPart);
+    QVERIFY(match.hasMatch());
+
+    int rpm = match.captured(1).toInt();
+    QCOMPARE(rpm, 3200);
 }
 
 QTEST_MAIN(TestFanInfo)

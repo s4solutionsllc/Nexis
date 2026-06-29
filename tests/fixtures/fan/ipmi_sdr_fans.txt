@@ -1,0 +1,17 @@
+# IPMI Sensor Data Records (SDR) - Fan Sensors
+# Output from: ipmitool sdr type "Fan"
+# Typical datacenter server example
+
+CPU FAN              | 30 | Fan        | 3200     | RPM    | ok
+Chassis FAN 1        | 31 | Fan        | 4100     | RPM    | ok
+Chassis FAN 2        | 32 | Fan        | 4050     | RPM    | ok
+System FAN           | 33 | Fan        | 3800     | RPM    | ok
+
+# Expected discovery results:
+# - 4 FanSensor entries created with sourceType=IpmiSdr
+# - Labels: "BMC – CPU FAN", "BMC – Chassis FAN 1", etc.
+# - inputPath stores sensor name for re-query
+
+# Expected readIpmiSpeed() result when querying "CPU FAN":
+# Command: ipmitool sdr get "CPU FAN"
+# Response (see ipmi_sdr_get_fan.txt): Sensor Reading : 3200 RPM

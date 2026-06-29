@@ -61,6 +61,9 @@ void FanInfoLinux::discoverSensors()
 
     if (!hasNvidiaSmiGpuFan())
         discoverNvidiaSmi();
+
+    // IPMI is optional; only runs if ipmitool is installed
+    discoverIpmi();
 }
 
 void FanInfoLinux::discoverHwmon()
@@ -315,6 +318,8 @@ int FanInfoLinux::getFanSpeed(int index) const
         return readDellSpeed(sensor);
     case FanSourceType::NvidiaSmi:
         return readNvidiaSpeed(sensor);
+    case FanSourceType::IpmiSdr:
+        return readIpmiSpeed(sensor);
     }
 
     return 0;
@@ -375,4 +380,120 @@ int FanInfoLinux::readNvidiaSpeed(const FanSensor &sensor) const
     if (s.fanPercent < 0 || s.fanPercent > 100)
         return 0;
     return s.fanPercent;
+}
+
+bool FanInfoLinux::hasIpmitool() const
+{
+    return CommandUtil::isExecutable("ipmitool");
+}
+
+void FanInfoLinux::discoverIpmi()
+{
+    if (!hasIpmitool())
+        return;
+
+    // Query BMC for fan sensors via IPMI SDR (Sensor Data Record)
+    // Command: ipmitool sdr type "Fan"
+    // Output format: "Sensor Name | ID | Type | Reading | Units | Status"
+    ExecResult result = CommandUtil::execWithStatus(
+        "ipmitool",
+        {"sdr", "type", "Fan"},
+        5000);
+
+    if (result.exitCode != 0)
+        return;
+
+    // Parse each line of sensor data
+    // Expected format (tab or space separated):
+    // "Fan Name              | XX | Fan        | XXXXX    | RPM    | ok"
+    QStringList lines = result.output.split('\n', Qt::SkipEmptyParts);
+    for (int i = 0; i < lines.size(); ++i) {
+        QString line = lines.at(i).trimmed();
+        if (line.isEmpty())
+            continue;
+
+        // Split by pipe character (IPMI output format)
+        QStringList parts;
+        if (line.contains('|')) {
+            parts = line.split('|');
+        } else {
+            // Fallback: if no pipes, try splitting by multiple spaces
+            parts = line.split(QRegularExpression("\\s{2,}"));
+        }
+
+        if (parts.size() < 3)
+            continue;
+
+        QString sensorName = parts.at(0).trimmed();
+        if (sensorName.isEmpty())
+            continue;
+
+        // Extract RPM value (typically in parts[3])
+        int rpmValue = 0;
+        if (parts.size() > 3) {
+            bool ok;
+            rpmValue = parts.at(3).trimmed().toInt(&ok);
+            if (!ok || rpmValue < 0)
+                rpmValue = 0;
+        }
+
+        // Estimate max RPM (typical datacenter fans: 3000-10000 RPM)
+        // This is used for scaling; actual value from BMC is always used
+        int maxRpm = (rpmValue > 0) ? 10000 : 5000;
+
+        FanSensor sensor;
+        sensor.id = QString("ipmi/fan%1").arg(i);
+        sensor.deviceName = "ipmi-bmc";
+        sensor.label = QString("BMC – %1").arg(sensorName);
+        sensor.inputPath = sensorName;  // Store sensor name for re-query
+        sensor.minRpm = 0;
+        sensor.maxRpm = maxRpm;
+        sensor.sourceType = FanSourceType::IpmiSdr;
+
+        mSensors.append(sensor);
+    }
+}
+
+int FanInfoLinux::readIpmiSpeed(const FanSensor &sensor) const
+{
+    if (!hasIpmitool())
+        return 0;
+
+    // Query specific fan sensor: ipmitool sdr get "<sensor_name>"
+    // Output includes "Sensor Reading" with value and units
+    ExecResult result = CommandUtil::execWithStatus(
+        "ipmitool",
+        {"sdr", "get", sensor.inputPath},
+        3000);
+
+    if (result.exitCode != 0)
+        return 0;
+
+    // Parse output for "Sensor Reading" line
+    // Expected format: "Sensor Reading      : 3200 (+/- 0) RPM"
+    QStringList lines = result.output.split('\n');
+    for (const QString &line : lines) {
+        if (!line.contains("Sensor Reading"))
+            continue;
+
+        // Extract numeric value between colon and units
+        // Format: "Sensor Reading      : 3200 (+/- 0) RPM"
+        int colonIdx = line.indexOf(':');
+        if (colonIdx < 0)
+            continue;
+
+        QString readingPart = line.mid(colonIdx + 1).trimmed();
+
+        // Extract first number (RPM value)
+        static QRegularExpression rpmRe("^(\\d+)");
+        QRegularExpressionMatch match = rpmRe.match(readingPart);
+        if (!match.hasMatch())
+            continue;
+
+        int rpm = match.captured(1).toInt();
+        if (rpm >= 0 && rpm <= MAX_SANE_RPM)
+            return rpm;
+    }
+
+    return 0;
 }

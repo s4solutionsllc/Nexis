@@ -11,7 +11,8 @@ enum class FanSourceType {
     ThinkpadProc,
     DellProc,
     NvidiaSmi,
-    HwmonPwm    // GPU fan PWM duty cycle (0-255 → 0-100%)
+    HwmonPwm,   // GPU fan PWM duty cycle (0-255 → 0-100%)
+    IpmiSdr     // IPMI Sensor Data Record (BMC fan speed)
 };
 
 struct FanSensor {
