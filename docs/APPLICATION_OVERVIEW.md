@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-06-25 | Version 2.7.1
+> Last updated: 2026-06-29 | Version 2.7.2
 
 ---
 
@@ -61,7 +61,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 
 | Metric | Value | Source of truth |
 |--------|-------|-----------------|
-| Version | 2.7.1 | `project(... VERSION ...)` in `CMakeLists.txt` |
+| Version | 2.7.2 | `project(... VERSION ...)` in `CMakeLists.txt` |
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 338 | same |
 | Test LOC | ~6,050 | `tests/` |

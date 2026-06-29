@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.2] - 2026-06-29
+
+### Fixed
+- **Trash: files deleted from mounted drives are now visible (GH#182, Linux).** The Trash view was hardcoded to show only the home trash (`~/.local/share/Trash`), so files you deleted from a mounted filesystem (e.g. an external drive under `/media/...`) were invisible and unmanageable in the UI — even though emptying the trash already cleaned them per the FreeDesktop spec. The view now lists every trash root across all mounted filesystems, and the reported trash size includes them too.
+
 ## [2.7.1] - 2026-06-25
 
 ### Added
