@@ -106,6 +106,10 @@ public:
     void removeExclusion(const QString &path);
     static bool isExcluded(const QString &filePath, const QList<ExclusionEntry> &exclusions);
 
+    // GH#182: get all trash directories (home trash + mounted filesystem trash).
+    // Public accessor for the protected trashRoots() test seam.
+    QStringList getTrashRoots() const;
+
     // FW-12: when true, aggressive-class cleaning profiles are included in
     // APP_PROFILES scans. Defaults to false; persisted via SettingManager.
     bool isAggressiveProfilesEnabled() const;

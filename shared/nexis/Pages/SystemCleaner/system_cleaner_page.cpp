@@ -696,11 +696,10 @@ void SystemCleanerPage::onScanFinished()
     if (mScanBrowserPrivacy) updateCard(BROWSER_PRIVACY,        computeSize(mBrowserPrivacy));
     if (mScanSnapFlatpak)    updateCard(SNAP_FLATPAK_REVISIONS, computeSize(mSnapFlatpakRevisions));
     if (mScanTrash) {
-#ifdef Q_OS_MACOS
-        updateCard(TRASH, FileUtil::getFileSize(QDir::homePath() + "/.Trash/"));
-#else
-        updateCard(TRASH, FileUtil::getFileSize(QDir::homePath() + "/.local/share/Trash/"));
-#endif
+        quint64 trashSize = 0;
+        for (const QString &trashRoot : mCleanerService->getTrashRoots())
+            trashSize += FileUtil::getFileSize(trashRoot);
+        updateCard(TRASH, trashSize);
     }
 
     // Retain scan results for inline tree and "Clean selected"
@@ -761,11 +760,18 @@ void SystemCleanerPage::refreshInlineTree()
     addIfChecked(SNAP_FLATPAK_REVISIONS, mLblSnapFlatpakText,  mRetainedSnapFlatpak);
 
     if (catChecked(TRASH)) {
-#ifdef Q_OS_MACOS
-        addTreeRoot(TRASH, mLblTrashText, { QFileInfo(QDir::homePath() + "/.Trash/") }, true);
-#else
-        addTreeRoot(TRASH, mLblTrashText, { QFileInfo(QDir::homePath() + "/.local/share/Trash/") }, true);
-#endif
+        // GH#182: display each trash root (home + mounted FSes) separately
+        int trashCount = 0;
+        for (const QString &trashRoot : mCleanerService->getTrashRoots()) {
+            QString displayName = mLblTrashText;
+            if (trashCount > 0) {
+                // For mounted FS trash, show the mount point path
+                QFileInfo fi(trashRoot);
+                displayName = QString("%1 (%2)").arg(mLblTrashText, fi.absolutePath());
+            }
+            addTreeRoot(TRASH, displayName, { QFileInfo(trashRoot) }, true);
+            trashCount++;
+        }
         anyAdded = true;
     }
 
