@@ -18,33 +18,7 @@ MetricTile::MetricTile(const QString &title, const QString &colorToken, QWidget 
 
 void MetricTile::buildLayout()
 {
-    auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 10, 12, 8);
-    mainLayout->setSpacing(4);
-
-    // Title
-    mLblTitle = new QLabel(mTitle, this);
-    mLblTitle->setObjectName("metricTileTitle");
-    mainLayout->addWidget(mLblTitle);
-
-    // Value + Secondary value row
-    auto *valueLayout = new QHBoxLayout();
-    valueLayout->setContentsMargins(0, 0, 0, 0);
-    valueLayout->setSpacing(8);
-
-    mLblValue = new QLabel("--", this);
-    mLblValue->setObjectName("metricTileValue");
-    mLblValue->setAlignment(Qt::AlignLeft | Qt::AlignBaseline);
-
-    mLblSecondaryValue = new QLabel(this);
-    mLblSecondaryValue->setObjectName("metricTileSubtitle");
-    mLblSecondaryValue->setAlignment(Qt::AlignLeft | Qt::AlignBaseline);
-    mLblSecondaryValue->hide();
-
-    valueLayout->addWidget(mLblValue);
-    valueLayout->addWidget(mLblSecondaryValue);
-    valueLayout->addStretch();
-    mainLayout->addLayout(valueLayout);
+    auto *mainLayout = buildChrome();
 
     // Sparkline chart
     mSeries = new QLineSeries();
@@ -84,8 +58,8 @@ void MetricTile::buildLayout()
     mChartView->viewport()->setAutoFillBackground(false);
     mChartView->setRenderHint(QPainter::Antialiasing);
     mChartView->setMinimumHeight(40);
-    mChartView->setMaximumHeight(60);
-    mainLayout->addWidget(mChartView);
+    mChartView->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    mainLayout->addWidget(mChartView, 1);   // sparkline fills the body
 
     // Progress bar (below sparkline per mockup)
     mProgressBar = new QProgressBar(this);
@@ -98,18 +72,16 @@ void MetricTile::buildLayout()
 
     mainLayout->addSpacing(2);
 
-    createFooterLayout(mainLayout);
+    appendFooter(mainLayout);
 
     // Initialize sparkline series from data buffer (pre-filled with zeros by base)
     mSeries->replace(mPointsCache);
-
-    createGearButton();
 }
 
 void MetricTile::setValue(int percent, const QString &valueText)
 {
     mProgressBar->setValue(qBound(0, percent, 100));
-    mLblValue->setText(valueText);
+    setHeroValue(valueText);
 }
 
 void MetricTile::addDataPoint(double value)
@@ -129,13 +101,12 @@ void MetricTile::clearDataPoints()
 
 void MetricTile::setSubtitle(const QString &text)
 {
-    mLblSubtitle->setText(text);
+    setSource(text);
 }
 
 void MetricTile::setTrendDirection(TrendDirection dir)
 {
-    mCurrentTrend = dir;
-    mLblTrend->setText(trendText(dir));
+    setTrendLabel(dir);
 }
 
 void MetricTile::setQuickAction(const QString &text, std::function<void()> callback)
@@ -153,19 +124,15 @@ void MetricTile::setDisplayMode(DisplayMode mode)
 
     const bool compact = (mode == Compact);
     mChartView->setVisible(!compact);
+    if (mProgressBar)
+        mProgressBar->setVisible(!compact);
 
-    mLblValue->setProperty("heroMode", mode == Hero ? "true" : "false");
-    mLblValue->setProperty("largeMode", mode == Large ? "true" : "false");
-    mLblValue->setProperty("compactMode", compact ? "true" : "false");
-
-    mLblValue->style()->unpolish(mLblValue);
-    mLblValue->style()->polish(mLblValue);
+    applyChromeForMode(mode);
 }
 
 void MetricTile::setSecondaryValue(const QString &text)
 {
-    mLblSecondaryValue->setText(text);
-    mLblSecondaryValue->setVisible(!text.isEmpty());
+    setHeroSecondary(text);
 }
 
 void MetricTile::refreshThemeColors()

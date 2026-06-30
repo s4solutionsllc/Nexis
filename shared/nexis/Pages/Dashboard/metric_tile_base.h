@@ -10,6 +10,8 @@
 #include <functional>
 
 class QVBoxLayout;
+class QHBoxLayout;
+class QFrame;
 
 class MetricTileBase : public QWidget
 {
@@ -70,10 +72,37 @@ protected:
     QPushButton *mBtnAction = nullptr;
     TrendDirection mCurrentTrend = Stable;
 
+    // Unified tile chrome (GH#191 follow-up): a shared two-line header band
+    // (type + input/source) and a footer band (hero value + trend) so tiles of
+    // different body styles line up and always show what they are monitoring.
+    QWidget *mHeaderWidget = nullptr;
+    QWidget *mFooterWidget = nullptr;
+    QHBoxLayout *mTitleRow = nullptr;
+    QFrame *mAccentBar = nullptr;
+    QLabel *mLblTitle = nullptr;     // type label, e.g. "CPU"
+    QLabel *mLblSource = nullptr;    // input/source label, e.g. "AMD Ryzen 7 5700X"
+    QLabel *mLblValue = nullptr;     // hero value shown in the footer
+    QLabel *mLblValueSub = nullptr;  // muted secondary value beside the hero value
+    QString mSourceFull;             // full (un-elided) source text
+
     // Shared helpers for subclass buildLayout()
     void createGearButton();
     void repositionGearButton();
     void createFooterLayout(QVBoxLayout *parent);
+
+    // Unified chrome helpers. buildChrome() creates the root layout on `this`,
+    // adds the header band (incl. gear) and returns the root so the subclass
+    // can append its body; appendFooter() adds the shared footer band.
+    QVBoxLayout *buildChrome();
+    void appendFooter(QVBoxLayout *root);
+    void setSource(const QString &text);
+    void setHeroValue(const QString &text);
+    void setHeroSecondary(const QString &text);
+    void setTrendLabel(TrendDirection dir);   // sets text + hides the pill when empty
+    void applyAccentColor(const QColor &color);
+    void applyChromeForMode(DisplayMode mode);
+    int  bodyTop() const;     // y just below the header band
+    int  bodyBottom() const;  // y just above the footer band (or tile bottom)
 
     // Shared behavior
     virtual void updateTrend();

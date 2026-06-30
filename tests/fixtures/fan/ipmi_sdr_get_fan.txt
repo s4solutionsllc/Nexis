@@ -1,0 +1,25 @@
+# IPMI Sensor Reading - Single Fan Sensor
+# Output from: ipmitool sdr get "CPU FAN"
+# Typical response format
+
+Sensor ID              : CPU FAN (0x30)
+ Entity ID             : 7.1
+ Sensor Type (Analog)  : Fan
+ Sensor Reading        : 3200 (+/- 0) RPM
+ Status                : ok
+ Nominal Reading       : 0
+ Normal Maximum        : 10000
+ Normal Minimum        : 0
+ Upper critical        : 15000
+ Upper non-recoverable : 20000
+ Lower non-recoverable : 0
+ Positive-going Threshold : Not Readable
+ Negative-going Threshold : Not Readable
+ Assertion Events      :
+ Assertions Enabled    : Unthresholdable Sensor (analog)
+ Deassertions Enabled  : Unthresholdable Sensor (analog)
+
+# Expected parsing result:
+# - Extract "Sensor Reading" line: "Sensor Reading        : 3200 (+/- 0) RPM"
+# - Parse RPM value: 3200
+# - Return: 3200 RPM

@@ -35,7 +35,6 @@ private:
 
     HealthScoreCalculator mCalculator;
 
-    QLabel *mLblTitle;
     QLabel *mLblScore;
     QLabel *mLblScoreLabel;
 

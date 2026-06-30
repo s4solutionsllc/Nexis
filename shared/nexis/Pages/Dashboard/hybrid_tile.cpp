@@ -24,14 +24,7 @@ HybridTile::HybridTile(const QString &title, const QString &colorToken, QWidget 
 
 void HybridTile::buildLayout()
 {
-    auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 10, 12, 8);
-    mainLayout->setSpacing(4);
-
-    // Title
-    mLblTitle = new QLabel(mTitle, this);
-    mLblTitle->setObjectName("metricTileTitle");
-    mainLayout->addWidget(mLblTitle);
+    auto *mainLayout = buildChrome();
 
     // Gauge area: a transparent widget whose paintEvent draws the arc
     mGaugeArea = new QWidget(this);
@@ -78,18 +71,17 @@ void HybridTile::buildLayout()
 
     mainLayout->addSpacing(2);
 
-    createFooterLayout(mainLayout);
+    appendFooter(mainLayout);
 
     // Initialize sparkline series from data buffer (pre-filled with zeros by base)
     mSeries->replace(mPointsCache);
-
-    createGearButton();
 }
 
 void HybridTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
     mValueText = valueText;
+    setHeroValue(valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText);
     update();
 }
 
@@ -111,24 +103,25 @@ void HybridTile::clearDataPoints()
 
 void HybridTile::setSubtitle(const QString &text)
 {
-    mLblSubtitle->setText(text);
+    setSource(text);
 }
 
 void HybridTile::setTrendDirection(TrendDirection dir)
 {
-    mCurrentTrend = dir;
-    mLblTrend->setText(trendText(dir));
+    setTrendLabel(dir);
 }
 
 void HybridTile::setSecondaryValue(const QString &text)
 {
     mSecondaryText = text;
+    setHeroSecondary(text);
     update();
 }
 
 void HybridTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
+    applyChromeForMode(mode);
 
     switch (mode) {
     case Hero:
@@ -185,6 +178,7 @@ void HybridTile::refreshThemeColors()
     mChart->setBackgroundBrush(QColor(sv->value("@cardBg").toString()));
 
     applyActionButtonStyle(mArcColor, QColor(sv->value("@color07").toString()));
+    applyAccentColor(mArcColor);
 
     updateGearIcon();
     update();
@@ -195,21 +189,6 @@ void HybridTile::paintEvent(QPaintEvent *event)
     QWidget::paintEvent(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-
-    if (mDisplayMode == Compact) {
-        int top = mLblTitle->geometry().bottom() + 4;
-        int bottom = mLblSubtitle && mLblSubtitle->isVisible()
-                       ? mLblSubtitle->geometry().top() - 4 : height() - 6;
-        QRect valueRect(8, top, width() - 16, qMax(1, bottom - top));
-        QFont vf = font();
-        vf.setPixelSize(qMax(16, valueRect.height() / 2));
-        vf.setBold(true);
-        painter.setFont(vf);
-        painter.setPen(mTextColor);
-        QString text = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
-        painter.drawText(valueRect, Qt::AlignCenter, text);
-        return;
-    }
 
     drawGaugeArc(painter);
 }
@@ -233,51 +212,11 @@ void HybridTile::drawGaugeArc(QPainter &painter)
     painter.setPen(trackPen);
     painter.drawArc(arcRect, GAUGE_START_ANGLE * 16, -GAUGE_SWEEP_ANGLE * 16);
 
-    // Value arc
+    // Value arc. The numeric reading lives in the footer (stat-card layout).
     double valueSweep = -(GAUGE_SWEEP_ANGLE * mPercent / 100.0);
     QPen valuePen(mArcColor, ARC_PEN_WIDTH, Qt::SolidLine, Qt::RoundCap);
     painter.setPen(valuePen);
     painter.drawArc(arcRect, GAUGE_START_ANGLE * 16, valueSweep * 16);
-
-    // Percentage text centered in gauge
-    QFont percentFont = painter.font();
-    percentFont.setPixelSize(qMax(12, side / 4));
-    percentFont.setBold(true);
-    painter.setFont(percentFont);
-
-    QString displayText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
-    QRectF innerRect = arcRect.adjusted(ARC_PEN_WIDTH, ARC_PEN_WIDTH,
-                                        -ARC_PEN_WIDTH, -ARC_PEN_WIDTH);
-
-    if (!mSecondaryText.isEmpty()) {
-        QFontMetrics pctFm(percentFont);
-        int pctH = pctFm.height();
-
-        QFont secondaryFont = painter.font();
-        int secSize = qMin(qMax(9, side / 7), 13);
-        secondaryFont.setPixelSize(secSize);
-        secondaryFont.setBold(false);
-        QFontMetrics secFm(secondaryFont);
-        int secH = secFm.height();
-
-        int gap = 2;
-        int totalH = pctH + gap + secH;
-        double textTop = cy - totalH / 2.0;
-
-        QRectF pctRect(innerRect.left(), textTop, innerRect.width(), pctH);
-        painter.setPen(mTextColor);
-        painter.drawText(pctRect, Qt::AlignHCenter | Qt::AlignVCenter, displayText);
-
-        QString elidedSec = secFm.elidedText(mSecondaryText, Qt::ElideRight,
-                                              static_cast<int>(innerRect.width()));
-        QRectF secRect(innerRect.left(), textTop + pctH + gap, innerRect.width(), secH);
-        painter.setFont(secondaryFont);
-        painter.setPen(mSecondaryTextColor);
-        painter.drawText(secRect, Qt::AlignHCenter | Qt::AlignVCenter, elidedSec);
-    } else {
-        painter.setPen(mTextColor);
-        painter.drawText(innerRect, Qt::AlignCenter, displayText);
-    }
 }
 
 int HybridTile::gaugeSize() const

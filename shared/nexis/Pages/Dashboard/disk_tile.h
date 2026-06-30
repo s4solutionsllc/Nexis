@@ -46,7 +46,6 @@ private:
     QString mUsedText;
     QString mTotalText;
 
-    QLabel *mLblTitle;
     QWidget *mHealthContainer;
     QHBoxLayout *mHealthLayout;
 

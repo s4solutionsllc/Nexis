@@ -1,0 +1,31 @@
+# Radeon GPU Fan PWM Test Fixture
+# Simulates /sys/class/hwmon/hwmon2 for Radeon GPU
+# From homelab diagnostic: hwmon2 (radeon) with pwm1 fan control
+
+# /sys/class/hwmon/hwmon2/name
+radeon
+
+# /sys/class/hwmon/hwmon2/pwm1
+96
+
+# /sys/class/hwmon/hwmon2/pwm1_enable
+2
+
+# /sys/class/hwmon/hwmon2/pwm1_max
+255
+
+# /sys/class/hwmon/hwmon2/pwm1_min
+0
+
+# Expected result after discovery:
+# - FanSensor created with:
+#   - id: "radeon/pwm1"
+#   - deviceName: "radeon"
+#   - label: "GPU GPU – PWM 1"
+#   - inputPath: "/sys/class/hwmon/hwmon2/pwm1"
+#   - sourceType: HwmonPwm
+#   - maxRpm: 100 (percentage)
+#
+# - getFanSpeed() for this sensor should return:
+#   - PWM value: 96
+#   - Percentage: (96 * 100) / 255 = 37% (rounded down)

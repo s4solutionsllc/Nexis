@@ -45,7 +45,6 @@ private:
     QString mValueText;
     QString mSecondaryText;
 
-    QLabel *mLblTitle;
     QWidget *mGaugeArea;
     QChartView *mChartView;
     QLineSeries *mSeries;

@@ -81,28 +81,15 @@ jobs:
       - name: Unit Tests
         run: xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
 
-      # ScreenshotTests are kept out of the gating "Unit Tests" step above and
-      # run here as a separate, non-blocking step (NEX-3381). They hang
-      # indefinitely on ARM64 Linux runners under xvfb (the original reason for
-      # commit 5c173c7), so we skip them on the ARM64 leg and run on platforms
-      # that render deterministically: Linux x64 (xvfb) and macOS.
-      # On failure the test writes actual/reference/diff PNGs to
-      # build/tests/test_screenshots/failures/; we upload that directory so the
-      # maintainer can review drift and (after visual confirmation) commit the
-      # captured actuals as the new baselines via scripts/update_screenshots.sh.
-      - name: Screenshot regression tests (non-blocking)
-        if: matrix.arch != 'ARM64'
-        continue-on-error: true
-        run: xvfb-run -a ctest --test-dir build --output-on-failure -R ScreenshotTests
-
-      - name: Upload screenshot diffs
-        if: matrix.arch != 'ARM64' && !cancelled()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: screenshot-diffs-${{ matrix.artifact-name }}
-          path: build/tests/test_screenshots/
-          if-no-files-found: ignore
-          retention-days: 14
+      # ScreenshotTests are intentionally NOT run on the Linux per-PR jobs:
+      # there are no committed Linux baselines (so the comparison always QSKIPs —
+      # no regression value), and the test hangs indefinitely under xvfb while
+      # gathering live system data on both ARM64 (commit 5c173c7) and x64 (PR
+      # #209) Linux runners. Linux visual checks run on demand via the
+      # `Regenerate Screenshot Baselines` workflow (workflow_dispatch) and the
+      # local build cycle (`ctest -R ScreenshotTests`). The macOS job below keeps
+      # the per-PR screenshot guard, where baselines exist and rendering is
+      # deterministic.
 
       - name: Upload build artifact
         if: success()
@@ -145,6 +132,7 @@ jobs:
 
       - name: Screenshot regression tests (non-blocking)
         continue-on-error: true
+        timeout-minutes: 8   # a hang fails this non-blocking step fast instead of stalling the job
         run: ctest --test-dir build --output-on-failure -R ScreenshotTests
 
       - name: Upload screenshot diffs

@@ -2,6 +2,7 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QFontMetrics>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
 
@@ -20,13 +21,38 @@ NetworkTile::NetworkTile(const QString &colorToken, QWidget *parent)
 void NetworkTile::buildLayout()
 {
     auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 10, 12, 8);
+    mainLayout->setContentsMargins(14, 12, 14, 10);
     mainLayout->setSpacing(4);
 
-    // Title
-    mLblTitle = new QLabel(tr("NETWORK"), this);
-    mLblTitle->setObjectName("networkTileTitle");
-    mainLayout->addWidget(mLblTitle);
+    // Unified header band (accent bar + type + interface source) so the network
+    // tile lines up with the metric tiles and shows its interface up top.
+    auto *headerWidget = new QWidget(this);
+    headerWidget->setObjectName("metricTileHeader");
+    auto *headerLayout = new QHBoxLayout(headerWidget);
+    headerLayout->setContentsMargins(0, 0, 0, 0);
+    headerLayout->setSpacing(8);
+
+    mAccentBar = new QFrame(headerWidget);
+    mAccentBar->setObjectName("metricTileAccent");
+    mAccentBar->setFixedWidth(3);
+    mAccentBar->setMinimumHeight(26);
+    mAccentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    headerLayout->addWidget(mAccentBar);
+
+    auto *textCol = new QVBoxLayout();
+    textCol->setContentsMargins(0, 0, 0, 0);
+    textCol->setSpacing(0);
+
+    mLblTitle = new QLabel(tr("NETWORK"), headerWidget);
+    mLblTitle->setObjectName("metricTileTitle");
+    textCol->addWidget(mLblTitle);
+
+    mLblInterface = new QLabel(headerWidget);
+    mLblInterface->setObjectName("metricTileSource");
+    textCol->addWidget(mLblInterface);
+
+    headerLayout->addLayout(textCol, 1);
+    mainLayout->addWidget(headerWidget);
 
     mainLayout->addSpacing(2);
 
@@ -147,15 +173,10 @@ void NetworkTile::buildLayout()
     mDivider->setFixedHeight(1);
     mainLayout->addWidget(mDivider);
 
-    // Footer
+    // Footer (cumulative totals). The interface name now lives in the header.
     mLblFooter = new QLabel(this);
     mLblFooter->setObjectName("networkTileFooter");
     mainLayout->addWidget(mLblFooter);
-
-    // Interface name
-    mLblInterface = new QLabel(this);
-    mLblInterface->setObjectName("networkTileInterface");
-    mainLayout->addWidget(mLblInterface);
 
     // Action button (hidden by default)
     mBtnAction = new QPushButton(this);
@@ -212,6 +233,9 @@ void NetworkTile::refreshThemeColors()
     mLblDownLabel->setStyleSheet(QString("color: %1;").arg(dlColor.name()));
     mLblUpLabel->setStyleSheet(QString("color: %1;").arg(ulColor.name()));
 
+    mAccentBar->setStyleSheet(
+        QString("#metricTileAccent{background-color:%1;border-radius:1px;}").arg(dlColor.name()));
+
     mBtnAction->setStyleSheet(
         "QPushButton#metricTileAction {"
         "  font-size: 8pt;"
@@ -259,7 +283,10 @@ void NetworkTile::setValues(quint64 rxDelta, quint64 txDelta, quint64 rxTotal, q
 
 void NetworkTile::setInterfaceName(const QString &name)
 {
-    mLblInterface->setText(tr("Interface: %1").arg(name));
+    mLblInterface->setToolTip(name);
+    QFontMetrics fm(mLblInterface->font());
+    const int avail = qMax(0, mLblInterface->width() - 1);
+    mLblInterface->setText(avail > 0 ? fm.elidedText(name, Qt::ElideRight, avail) : name);
 }
 
 void NetworkTile::setColorOverride(const QString &hexColor)

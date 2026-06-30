@@ -40,10 +40,6 @@ private:
     int mPercent;
     QString mValueText;
 
-    QLabel *mLblTitle;
-    QLabel *mLblValue;
-    QLabel *mLblSecondaryValue;
-
     QColor mSuccessColor;
     QColor mWarningColor;
     QColor mAccentColor;
