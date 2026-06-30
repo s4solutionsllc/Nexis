@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Dashboard: unified tile anatomy so mixed tile types read as one set (GH#191 follow-up).** Every tile now shares the same chrome regardless of body style: a two-line header (the metric type plus the specific input it is monitoring — CPU model, GPU device, the selected thermal sensor or fan, memory total/swap, network interface) with a type-colored accent bar and a settings gear pinned to a fixed top-right slot, and a footer band with the headline value on the left and a trend pill (`↑ rising` / `→ stable` / `↓ falling`) on the right. Radial gauge, ring, speedometer, and hybrid tiles moved their numeric reading out of the dial center and into the shared footer (stat-card layout), so values line up across a row and the operator can always tell what type and input each tile is showing. Sparkline tiles now fill the body with their chart. The gear no longer jumps with the title text; the input/source line elides with a full-text tooltip.
 
+## [2.7.2] - 2026-06-29
+
+### Fixed
+- **Trash: files deleted from mounted drives are now visible (GH#182, Linux).** The Trash view was hardcoded to show only the home trash (`~/.local/share/Trash`), so files you deleted from a mounted filesystem (e.g. an external drive under `/media/...`) were invisible and unmanageable in the UI — even though emptying the trash already cleaned them per the FreeDesktop spec. The view now lists every trash root across all mounted filesystems, and the reported trash size includes them too.
+
 ## [2.7.1] - 2026-06-25
 
 ### Added

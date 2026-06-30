@@ -1,3 +1,11 @@
+nexis (2.7.2-0) unstable; urgency=medium
+
+  * Trash: show all mounted-filesystem trash directories in the Trash view, not
+    just the home trash, so files deleted from external/mounted drives are
+    visible and manageable (GH#182).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Mon, 29 Jun 2026 13:28:15 -0400
+
 nexis (2.7.1-0) unstable; urgency=medium
 
   * Processes: add a dedicated process-name column (Linux), sourced from
