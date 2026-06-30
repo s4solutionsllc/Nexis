@@ -1,3 +1,16 @@
+nexis (2.8.0-0) unstable; urgency=medium
+
+  * Dashboard: unified tile anatomy — every tile now shares a two-line header
+    (metric type + the specific input it monitors) with a type-colored accent
+    bar and a pinned gear, plus a footer with the headline value and a trend
+    pill; gauge/ring/speedometer/hybrid moved their reading into the footer so
+    mixed tile types line up (GH#191 follow-up).
+  * Dashboard: empty trend pill is hidden when a tile has no trend value, and
+    the Health Score breakdown bars are now readable in the light theme.
+  * Fans: detect NVIDIA GPU, hwmon-PWM, and IPMI/BMC fan sources (Linux).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Tue, 30 Jun 2026 11:41:12 -0400
+
 nexis (2.7.2-0) unstable; urgency=medium
 
   * Trash: show all mounted-filesystem trash directories in the Trash view, not
