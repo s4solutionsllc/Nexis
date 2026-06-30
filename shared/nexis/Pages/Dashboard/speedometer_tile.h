@@ -43,10 +43,6 @@ private:
     QColor mYellowColor;
     QColor mOrangeColor;
     QColor mRedColor;
-
-    QLabel *mLblTitle;
-    QLabel *mLblValue;
-    QLabel *mLblSecondaryValue;
 };
 
 #endif // SPEEDOMETER_TILE_H

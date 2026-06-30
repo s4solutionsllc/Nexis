@@ -136,13 +136,15 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 ### 1. Dashboard
 
-Real-time system monitoring at a glance in a **fixed-cell responsive grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. All metric tiles inherit from `MetricTileBase`, an abstract base class supporting three `DisplayMode` values — **Normal**, **Hero**, and **Large** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling. Tiles can be rearranged and resized via edit mode, and each tile's **visual style can be changed** independently.
+Real-time system monitoring at a glance in a **fixed-cell responsive grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. All metric tiles inherit from `MetricTileBase`, an abstract base class supporting four `DisplayMode` values — **Normal**, **Hero**, **Large**, and **Compact** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling. Tiles can be rearranged and resized via edit mode, and each tile's **visual style can be changed** independently.
+
+**Unified tile anatomy (GH#191 follow-up):** Regardless of body style, every tile shares the same chrome built by `MetricTileBase` so mixed tile types line up and read as one set. A **two-line header** shows the metric **type** (e.g. `CPU`) on the first line and the specific **input/source** it is monitoring on the second (CPU model + cores + clock, GPU device name, the selected thermal sensor or fan label, memory total/swap summary, network interface) — the source line elides with a full-text tooltip. A type-colored **accent bar** sits at the header's left edge and the settings **gear** is pinned to a fixed top-right slot (no longer repositioned relative to the title text). A **footer band** carries the headline value on the left (with an optional muted secondary value beside it, e.g. memory's used/total) and a **trend pill** (`↑ rising` / `→ stable` / `↓ falling`) on the right. Painted dial styles (gauge, ring, speedometer, hybrid) render only their visualization in the body — the numeric reading lives in the footer (stat-card layout) rather than centered in the dial.
 
 **Fixed-cell responsive grid (GH#191):** The dashboard uses fixed-size cells (1×1 = 120×98px, 10px gap between tiles). The grid column count adapts dynamically to the window width (clamped 4–16 columns), and tiles reflow (repack) when the column count changes. Vertical scrolling activates when tiles exceed the visible window height. This replaced the old proportional layout that produced uneven row heights and sparse gaps. Existing saved layouts migrate automatically via a versioned layout envelope (legacy bare-array layouts are scaled and reflowed on load).
 
 **Multiple tiles per type with per-tile input binding (GH#191):** Instead of a single global Temperature/Fan/GPU/Disk/Network selection, users can now add multiple tiles of the same type, each pinned to a specific detected input. An edit-mode "Add tile" palette lets you place N tiles of a type (Temperature, Fan, Disk, GPU, Network); the input is chosen at add time from the palette. Temperature, Fan, Disk, and GPU tiles also carry a per-tile gear menu to re-bind their input afterward. Network tiles have no gear menu — a placed network tile's interface is fixed at add time, so to change it, remove the tile and add a new one bound to the desired interface. This enables monitoring the CPU fan AND pump fan simultaneously, or two thermal sensors, or multiple network interfaces. The layout JSON stores each tile's unique id, type, and `input` binding.
 
-**Compact tile rendering (GH#191):** Small tiles (1×1 and 1×2 cells) drop their gauge/sparkline/chart visualization and show only the title + a large numeric value, so they remain readable at minimal cell sizes. Larger tiles (Normal/Large/Hero display tiers) retain their full visualizations.
+**Compact tile rendering (GH#191):** Small tiles (1×1 and 1×2 cells) collapse the header's source line to reclaim height and shrink the body visualization; the type label and the footer's headline value remain visible so the tile stays readable at minimal cell sizes. Larger tiles (Normal/Large/Hero display tiers) show the full two-line header and body visualization.
 
 **Default tile layout:**
 - **CPU** — Independent `MetricTile` with sparkline history (1s refresh)
@@ -160,10 +162,10 @@ Real-time system monitoring at a glance in a **fixed-cell responsive grid layout
 
 **Widget styles** — Each tile (except Network) can be switched between 6 visual styles via a paintbrush icon visible during edit mode:
 - **Sparkline** (default) — line chart showing recent history with progress bar and trend indicator
-- **Gauge** — classic ¾-circle arc gauge with percentage in center, conical gradient fill
+- **Gauge** — classic ¾-circle arc gauge with conical gradient fill (value shown in the footer)
 - **Hybrid** — compact gauge arc combined with a mini sparkline chart below
-- **Ring** — full 360° activity ring (Apple Watch style) with percentage inside
-- **Speedometer** — analog dial with needle, tick marks, and green→red gradient arc
+- **Ring** — full 360° activity ring (Apple Watch style); value shown in the footer
+- **Speedometer** — analog dial with needle, tick marks, and green→red gradient arc (value shown in the footer)
 - **VU Meter** — segmented vertical bar with bottom-up fill and stats panel
 - **Donut** (Disk tile only) — custom-painted donut chart with usage text (Disk tile default)
 

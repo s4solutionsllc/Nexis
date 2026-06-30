@@ -33,9 +33,6 @@ private:
     void buildLayout();
     void updateSparkline();
 
-    QLabel *mLblTitle;
-    QLabel *mLblValue;
-    QLabel *mLblSecondaryValue;
     QProgressBar *mProgressBar;
     QChartView *mChartView;
     QLineSeries *mSeries;

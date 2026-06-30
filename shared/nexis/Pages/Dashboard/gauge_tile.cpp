@@ -27,27 +27,16 @@ GaugeTile::GaugeTile(const QString &title, const QString &colorToken, QWidget *p
 
 void GaugeTile::buildLayout()
 {
-    auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(14, 10, 14, 8);
-    mainLayout->setSpacing(4);
-
-    mLblTitle = new QLabel(mTitle, this);
-    mLblTitle->setObjectName("metricTileTitle");
-    mainLayout->addWidget(mLblTitle);
-
-    mainLayout->addStretch(1);
-
-    mainLayout->addSpacing(2);
-
-    createFooterLayout(mainLayout);
-
-    createGearButton();
+    auto *mainLayout = buildChrome();
+    mainLayout->addStretch(1);   // body: the gauge arc is painted here
+    appendFooter(mainLayout);
 }
 
 void GaugeTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
     mValueText = valueText;
+    setHeroValue(valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText);
     update();
 }
 
@@ -62,7 +51,7 @@ void GaugeTile::addDataPoint(double value)
 
 void GaugeTile::setSubtitle(const QString &text)
 {
-    mLblSubtitle->setText(text);
+    setSource(text);
 }
 
 void GaugeTile::setTrendDirection(TrendDirection dir)
@@ -80,6 +69,7 @@ void GaugeTile::setSecondaryValue(const QString &text)
 void GaugeTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
+    applyChromeForMode(mode);
     update();
 }
 
@@ -106,6 +96,7 @@ void GaugeTile::refreshThemeColors()
     mArcEndColor = mArcColor.lighter(140);
 
     applyActionButtonStyle(mArcColor, QColor(sv->value("@color07").toString()));
+    applyAccentColor(mArcColor);
 
     updateGearIcon();
     update();
@@ -124,44 +115,16 @@ void GaugeTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    if (mDisplayMode == Compact) {
-        int top = mLblTitle->geometry().bottom() + 4;
-        int bottom = mLblSubtitle->isVisible() ? mLblSubtitle->geometry().top() - 4 : height() - 6;
-        QRect valueRect(8, top, width() - 16, qMax(1, bottom - top));
-        QFont vf = font();
-        vf.setPixelSize(qMax(16, valueRect.height() / 2));
-        vf.setBold(true);
-        painter.setFont(vf);
-        painter.setPen(mTextColor);
-        QString text = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
-        painter.drawText(valueRect, Qt::AlignCenter, text);
-        return;
-    }
-
     int thicknessBase;
-    int percentFontDivisor;
-    int valueFontDivisor;
     switch (mDisplayMode) {
-    case Hero:
-        thicknessBase = 14;
-        percentFontDivisor = 6;
-        valueFontDivisor = 10;
-        break;
-    case Large:
-        thicknessBase = 12;
-        percentFontDivisor = 7;
-        valueFontDivisor = 11;
-        break;
-    default:
-        thicknessBase = 10;
-        percentFontDivisor = 8;
-        valueFontDivisor = 12;
-        break;
+    case Hero:  thicknessBase = 14; break;
+    case Large: thicknessBase = 12; break;
+    default:    thicknessBase = 10; break;
     }
 
-    int titleBottom = mLblTitle->geometry().bottom() + 8;
-    int footerTop = mLblSubtitle->geometry().top() - 8;
-    int availableHeight = footerTop - titleBottom;
+    int top = bodyTop();
+    int bottom = bodyBottom();
+    int availableHeight = bottom - top;
     int availableWidth = width() - 28;
 
     int diameter = qMin(availableWidth, availableHeight);
@@ -169,7 +132,7 @@ void GaugeTile::paintEvent(QPaintEvent *event)
         return;
 
     int centerX = width() / 2;
-    int centerY = titleBottom + availableHeight / 2;
+    int centerY = top + availableHeight / 2;
 
     int penWidth = qMax(thicknessBase, diameter / thicknessBase);
 
@@ -185,7 +148,8 @@ void GaugeTile::paintEvent(QPaintEvent *event)
     int sweepAngle16 = static_cast<int>(-ARC_SWEEP_DEG * QT_ARC_UNIT);
     painter.drawArc(arcRect, startAngle16, sweepAngle16);
 
-    // Value arc with conical gradient fill
+    // Value arc with conical gradient fill. The numeric reading lives in the
+    // footer (stat-card layout), so the arc itself carries no centered text.
     if (mPercent > 0) {
         double valueSweepDeg = ARC_SWEEP_DEG * mPercent / 100.0;
 
@@ -200,47 +164,5 @@ void GaugeTile::paintEvent(QPaintEvent *event)
 
         int valueSweep16 = static_cast<int>(-valueSweepDeg * QT_ARC_UNIT);
         painter.drawArc(arcRect, startAngle16, valueSweep16);
-    }
-
-    // Percentage text centered in the arc
-    QFont percentFont = font();
-    int percentSize = qMax(12, diameter / percentFontDivisor);
-    percentFont.setPixelSize(percentSize);
-    percentFont.setBold(true);
-    painter.setFont(percentFont);
-
-    QString percentText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
-
-    QRectF innerRect = arcRect.adjusted(penWidth, penWidth, -penWidth, -penWidth);
-    double cx = innerRect.center().x();
-    double cy = innerRect.center().y();
-
-    if (!mSecondaryText.isEmpty()) {
-        QFontMetrics pctFm(percentFont);
-        int pctH = pctFm.height();
-
-        QFont valueFont = font();
-        int valueSize = qMin(qMax(9, diameter / valueFontDivisor), 13);
-        valueFont.setPixelSize(valueSize);
-        QFontMetrics secFm(valueFont);
-        int secH = secFm.height();
-
-        int gap = 2;
-        int totalH = pctH + gap + secH;
-        double textTop = cy - totalH / 2.0;
-
-        QRectF pctRect(innerRect.left(), textTop, innerRect.width(), pctH);
-        painter.setPen(mTextColor);
-        painter.drawText(pctRect, Qt::AlignHCenter | Qt::AlignVCenter, percentText);
-
-        QString elidedSec = secFm.elidedText(mSecondaryText, Qt::ElideRight,
-                                              static_cast<int>(innerRect.width()));
-        QRectF secRect(innerRect.left(), textTop + pctH + gap, innerRect.width(), secH);
-        painter.setFont(valueFont);
-        painter.setPen(mSecondaryTextColor);
-        painter.drawText(secRect, Qt::AlignHCenter | Qt::AlignVCenter, elidedSec);
-    } else {
-        painter.setPen(mTextColor);
-        painter.drawText(innerRect, Qt::AlignCenter, percentText);
     }
 }

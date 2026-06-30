@@ -29,6 +29,7 @@ private:
     QString mColorToken;
     QString mColorOverride;
 
+    QFrame *mAccentBar;
     QLabel *mLblTitle;
     QLabel *mLblDownLabel;
     QLabel *mLblDownValue;

@@ -23,13 +23,7 @@ DiskTile::DiskTile(const QString &arcColorToken, const QString &trackColorToken,
 
 void DiskTile::buildLayout()
 {
-    auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(14, 10, 14, 10);
-    layout->setSpacing(4);
-
-    mLblTitle = new QLabel(mTitle, this);
-    mLblTitle->setObjectName("diskTileTitle");
-    layout->addWidget(mLblTitle);
+    auto *layout = buildChrome();
 
     // Donut chart area is painted in paintEvent — reserve space
     layout->addStretch(1);
@@ -46,9 +40,6 @@ void DiskTile::buildLayout()
     mHealthLayout->setSpacing(12);
     mHealthContainer->hide();
     layout->addWidget(mHealthContainer);
-
-    createGearButton();
-    mGearButton->setObjectName("btnDiskGear");
 }
 
 void DiskTile::setDiskInfo(int percent, const QString &usedText, const QString &totalText)
@@ -86,6 +77,7 @@ void DiskTile::setSecondaryValue(const QString &)
 void DiskTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
+    applyChromeForMode(mode);
     update();
 }
 
@@ -147,6 +139,7 @@ void DiskTile::refreshThemeColors()
     mArcColor = resolvedColor();
     mTrackColor = QColor(sv->value(mTrackColorToken).toString());
     mTextColor = QColor(sv->value("@color05").toString());
+    applyAccentColor(mArcColor);
 
     for (const HealthEntry &entry : mHealthEntries) {
         entry.statusLabel->setProperty("status", entry.healthy ? "success" : "error");
@@ -172,7 +165,7 @@ void DiskTile::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing, true);
 
     if (mDisplayMode == Compact) {
-        int top = mLblTitle->geometry().bottom() + 4;
+        int top = bodyTop();
         int bottom = mLblSubtitle->isVisible() ? mLblSubtitle->geometry().top() - 4 : height() - 6;
         QRect valueRect(8, top, width() - 16, qMax(1, bottom - top));
         QFont vf = font();
@@ -184,7 +177,7 @@ void DiskTile::paintEvent(QPaintEvent *event)
         return;
     }
 
-    int titleBottom = mLblTitle->geometry().bottom() + 8;
+    int titleBottom = bodyTop();
     int subtitleTop = mLblSubtitle->geometry().top() - 8;
     int availableHeight = subtitleTop - titleBottom;
     int availableWidth = width() - 28;

@@ -31,12 +31,7 @@ protected:
 private:
     void buildLayout();
     int ringThickness() const;
-    int ringFontSize() const;
-    int secondaryFontSize() const;
 
-    QLabel *mLblTitle;
-    QLabel *mLblPercentage;
-    QLabel *mLblSecondaryValue;
     QProgressBar *mProgressBar;
 
     int mPercent;

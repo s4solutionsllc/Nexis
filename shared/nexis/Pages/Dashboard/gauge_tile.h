@@ -40,8 +40,6 @@ private:
     int mPercent;
     QString mValueText;
     QString mSecondaryText;
-
-    QLabel *mLblTitle;
 };
 
 #endif // GAUGE_TILE_H

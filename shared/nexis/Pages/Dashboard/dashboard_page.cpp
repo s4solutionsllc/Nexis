@@ -691,6 +691,8 @@ void DashboardPage::updateTempTile()
         int percent = qBound(0, static_cast<int>(temp), 100);
         auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
         if (!tile) continue;
+        if (idx >= 0 && idx < sensors.size())
+            tile->setSubtitle(sensors.at(idx).label);
         tile->setValue(percent, QString("%1\u00B0C").arg(temp, 0, 'f', 1));
         tile->addDataPoint(temp);
     }
@@ -710,6 +712,8 @@ void DashboardPage::updateFanTile()
         int percent = qBound(0, static_cast<int>(rpm * 100.0 / maxRpm), 100);
         auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
         if (!tile) continue;
+        if (idx >= 0 && idx < fans.size())
+            tile->setSubtitle(fans.at(idx).label);
         tile->setValue(percent, QString("%1 RPM").arg(rpm));
         tile->addDataPoint(rpm);
     }
@@ -726,6 +730,7 @@ void DashboardPage::onGpuUpdated(const QList<GpuDevice> &gpus)
         const GpuDevice &gpu = gpus.at(idx);
         auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
         if (!tile) continue;
+        tile->setSubtitle(gpu.name);
         if (gpu.utilization < 0) { tile->setValue(0, tr("N/A")); }
         else {
             int util = qBound(0, gpu.utilization, 100);

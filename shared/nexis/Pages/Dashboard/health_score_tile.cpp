@@ -29,13 +29,8 @@ HealthScoreTile::HealthScoreTile(const QString &colorToken, QWidget *parent)
 
 void HealthScoreTile::buildLayout()
 {
-    auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 10, 12, 8);
-    mainLayout->setSpacing(2);
-
-    mLblTitle = new QLabel(mTitle, this);
-    mLblTitle->setObjectName("metricTileTitle");
-    mainLayout->addWidget(mLblTitle);
+    auto *mainLayout = buildChrome();
+    setSource(tr("Composite score"));
 
     mLblScore = new QLabel("--", this);
     mLblScore->setObjectName("healthScoreValue");
@@ -49,8 +44,6 @@ void HealthScoreTile::buildLayout()
     mainLayout->addWidget(mLblScoreLabel);
 
     mainLayout->addStretch();
-
-    createGearButton();
 }
 
 void HealthScoreTile::setValue(int percent, const QString &valueText)
@@ -87,6 +80,7 @@ void HealthScoreTile::setQuickAction(const QString &, std::function<void()>)
 void HealthScoreTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
+    applyChromeForMode(mode);
     update();
 }
 
@@ -112,6 +106,7 @@ void HealthScoreTile::recalculate()
 
     mLblScore->setStyleSheet(
         QStringLiteral("font-size: 32px; font-weight: bold; color: %1;").arg(colorHex));
+    applyAccentColor(QColor(colorHex));
 
     update();
 }

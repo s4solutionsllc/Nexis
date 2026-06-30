@@ -21,75 +21,16 @@ VuMeterTile::VuMeterTile(const QString &title, const QString &colorToken, QWidge
 
 void VuMeterTile::buildLayout()
 {
-    auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(12, 10, 12, 8);
-    mainLayout->setSpacing(4);
-
-    // Title
-    mLblTitle = new QLabel(mTitle, this);
-    mLblTitle->setObjectName("metricTileTitle");
-    mainLayout->addWidget(mLblTitle);
-
-    // The main area between the title and footer is split into two columns:
-    //   Left:  segmented VU bar (painted in paintEvent)
-    //   Right: value, secondary, subtitle, trend (QLabels in a VBoxLayout)
-    //
-    // We use a single QHBoxLayout with a spacer on the left (bar region is
-    // painted underneath) and labels on the right.
-    auto *bodyLayout = new QHBoxLayout();
-    bodyLayout->setContentsMargins(0, 0, 0, 0);
-    bodyLayout->setSpacing(0);
-
-    // Left spacer reserves room for the painted bar + scale labels
-    bodyLayout->addSpacing(64);
-
-    // Right column: stacked labels
-    auto *statsLayout = new QVBoxLayout();
-    statsLayout->setContentsMargins(4, 8, 0, 4);
-    statsLayout->setSpacing(2);
-
-    mLblValue = new QLabel("--", this);
-    mLblValue->setObjectName("metricTileValue");
-    mLblValue->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statsLayout->addWidget(mLblValue);
-
-    mLblSecondaryValue = new QLabel(this);
-    mLblSecondaryValue->setObjectName("metricTileSubtitle");
-    mLblSecondaryValue->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    mLblSecondaryValue->hide();
-    statsLayout->addWidget(mLblSecondaryValue);
-
-    statsLayout->addStretch(1);
-
-    mLblSubtitle = new QLabel(this);
-    mLblSubtitle->setObjectName("metricTileSubtitle");
-    mLblSubtitle->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statsLayout->addWidget(mLblSubtitle);
-
-    mLblTrend = new QLabel(this);
-    mLblTrend->setObjectName("metricTileSubtitle");
-    mLblTrend->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statsLayout->addWidget(mLblTrend);
-
-    bodyLayout->addLayout(statsLayout, 1);
-    mainLayout->addLayout(bodyLayout, 1);
-
-    // Footer action button (hidden by default, shown via setQuickAction)
-    mBtnAction = new QPushButton(this);
-    mBtnAction->setObjectName("metricTileAction");
-    mBtnAction->setCursor(Qt::PointingHandCursor);
-    mBtnAction->hide();
-    mBtnAction->setFixedHeight(22);
-    mainLayout->addWidget(mBtnAction);
-
-    createGearButton();
+    auto *mainLayout = buildChrome();
+    mainLayout->addStretch(1);   // body: the segmented VU bar is painted here
+    appendFooter(mainLayout);
 }
 
 void VuMeterTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
     mValueText = valueText;
-    mLblValue->setText(valueText);
+    setHeroValue(valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText);
     update();
 }
 
@@ -104,7 +45,7 @@ void VuMeterTile::addDataPoint(double value)
 
 void VuMeterTile::setSubtitle(const QString &text)
 {
-    mLblSubtitle->setText(text);
+    setSource(text);
 }
 
 void VuMeterTile::setTrendDirection(TrendDirection dir)
@@ -115,19 +56,13 @@ void VuMeterTile::setTrendDirection(TrendDirection dir)
 
 void VuMeterTile::setSecondaryValue(const QString &text)
 {
-    mLblSecondaryValue->setText(text);
-    mLblSecondaryValue->setVisible(!text.isEmpty());
+    setHeroSecondary(text);
 }
 
 void VuMeterTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
-
-    mLblValue->setProperty("heroMode", mode == Hero ? "true" : "false");
-    mLblValue->setProperty("largeMode", mode == Large ? "true" : "false");
-    mLblValue->style()->unpolish(mLblValue);
-    mLblValue->style()->polish(mLblValue);
-
+    applyChromeForMode(mode);
     update();
 }
 
@@ -162,6 +97,7 @@ void VuMeterTile::refreshThemeColors()
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 
     applyActionButtonStyle(mTextColor, QColor(sv->value("@color07").toString()));
+    applyAccentColor(mTextColor);
 
     updateGearIcon();
     update();
@@ -174,21 +110,9 @@ void VuMeterTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    if (mDisplayMode == Compact) {
-        int top = mLblTitle->geometry().bottom() + 4;
-        QRect valueRect(8, top, width() - 16, qMax(1, height() - top - 6));
-        QFont vf = font();
-        vf.setPixelSize(qMax(16, valueRect.height() / 2));
-        vf.setBold(true);
-        painter.setFont(vf);
-        painter.setPen(mSecondaryTextColor);
-        painter.drawText(valueRect, Qt::AlignCenter, mLblValue->text());
-        return;
-    }
-
-    // Determine the vertical region for the bar: between the title bottom and widget bottom margin
-    int topY    = mLblTitle->geometry().bottom() + 8;
-    int bottomY = height() - (mBtnAction->isVisible() ? mBtnAction->geometry().height() + 12 : 8);
+    // The segmented bar sits in the body; the numeric reading is in the footer.
+    int topY    = bodyTop();
+    int bottomY = bodyBottom();
     int barH    = bottomY - topY;
     if (barH < 40)
         return;
@@ -279,9 +203,7 @@ QColor VuMeterTile::segmentColor(int segmentIndex, int totalSegments) const
 int VuMeterTile::segmentCount() const
 {
     // Adapt segment count to available height, clamped to [8, 20]
-    int topY    = mLblTitle->geometry().bottom() + 8;
-    int bottomY = height() - (mBtnAction->isVisible() ? mBtnAction->geometry().height() + 12 : 8);
-    int barH    = bottomY - topY;
+    int barH = bodyBottom() - bodyTop();
 
     int count = qBound(8, barH / 10, 20);
 

@@ -798,6 +798,28 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 9pt;
 }
 
+#metricTileHeader, #metricTileFooter {
+    background-color: transparent;
+}
+
+#metricTileSource {
+    color: @tertiaryText;
+    font-size: 8pt;
+}
+
+#metricTileAccent {
+    background-color: @borderColor;
+    border-radius: 1;
+}
+
+#metricTileTrend {
+    color: @tertiaryText;
+    font-size: 8pt;
+    padding: 1 6;
+    border-radius: 8;
+    background-color: @color02;
+}
+
 #metricTileProgress {
     background-color: @color02;
     border: 0;
