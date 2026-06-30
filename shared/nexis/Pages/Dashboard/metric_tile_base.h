@@ -98,6 +98,7 @@ protected:
     void setSource(const QString &text);
     void setHeroValue(const QString &text);
     void setHeroSecondary(const QString &text);
+    void setTrendLabel(TrendDirection dir);   // sets text + hides the pill when empty
     void applyAccentColor(const QColor &color);
     void applyChromeForMode(DisplayMode mode);
     int  bodyTop() const;     // y just below the header band

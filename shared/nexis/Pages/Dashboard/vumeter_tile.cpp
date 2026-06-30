@@ -50,8 +50,7 @@ void VuMeterTile::setSubtitle(const QString &text)
 
 void VuMeterTile::setTrendDirection(TrendDirection dir)
 {
-    mCurrentTrend = dir;
-    mLblTrend->setText(trendText(dir));
+    setTrendLabel(dir);
 }
 
 void VuMeterTile::setSecondaryValue(const QString &text)

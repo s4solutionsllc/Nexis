@@ -106,8 +106,7 @@ void MetricTile::setSubtitle(const QString &text)
 
 void MetricTile::setTrendDirection(TrendDirection dir)
 {
-    mCurrentTrend = dir;
-    mLblTrend->setText(trendText(dir));
+    setTrendLabel(dir);
 }
 
 void MetricTile::setQuickAction(const QString &text, std::function<void()> callback)

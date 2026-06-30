@@ -165,7 +165,7 @@ void HealthScoreTile::paintBreakdownBars(QPainter &painter)
         QString token = kComponentColorTokens.value(comp.id, "@cpuColor");
         QColor barColor(sv->value(token).toString());
 
-        painter.setPen(QColor(sv->value("@color07").toString()));
+        painter.setPen(QColor(sv->value("@color05").toString()));
         painter.drawText(leftMargin, y, labelWidth, barHeight, Qt::AlignLeft | Qt::AlignVCenter, comp.label);
 
         painter.setPen(Qt::NoPen);
@@ -178,7 +178,7 @@ void HealthScoreTile::paintBreakdownBars(QPainter &painter)
             painter.drawRoundedRect(barLeft, y, fillWidth, barHeight, 3, 3);
         }
 
-        painter.setPen(QColor(sv->value("@color07").toString()));
+        painter.setPen(QColor(sv->value("@color05").toString()));
         painter.drawText(barLeft + barWidth + 4, y, scoreWidth, barHeight,
                          Qt::AlignRight | Qt::AlignVCenter, QString::number(comp.score));
     }

@@ -61,8 +61,7 @@ void RingTile::setSubtitle(const QString &text)
 
 void RingTile::setTrendDirection(TrendDirection dir)
 {
-    mCurrentTrend = dir;
-    mLblTrend->setText(trendText(dir));
+    setTrendLabel(dir);
 }
 
 void RingTile::setQuickAction(const QString &text, std::function<void()> callback)

@@ -56,8 +56,7 @@ void GaugeTile::setSubtitle(const QString &text)
 
 void GaugeTile::setTrendDirection(TrendDirection dir)
 {
-    mCurrentTrend = dir;
-    mLblTrend->setText(trendText(dir));
+    setTrendLabel(dir);
 }
 
 void GaugeTile::setSecondaryValue(const QString &text)

@@ -277,6 +277,7 @@ void MetricTileBase::appendFooter(QVBoxLayout *root)
     mLblTrend = new QLabel(this);
     mLblTrend->setObjectName("metricTileTrend");
     mLblTrend->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    mLblTrend->hide();   // shown only once a trend value is set (no empty pill)
 
     mBtnAction = new QPushButton(this);
     mBtnAction->setObjectName("metricTileAction");
@@ -316,6 +317,19 @@ void MetricTileBase::setHeroSecondary(const QString &text)
         return;
     mLblValueSub->setText(text);
     mLblValueSub->setVisible(!text.isEmpty());
+}
+
+void MetricTileBase::setTrendLabel(TrendDirection dir)
+{
+    mCurrentTrend = dir;
+    if (!mLblTrend)
+        return;
+    const QString t = trendText(dir);
+    mLblTrend->setText(t);
+    // Hide an empty pill; also stay hidden while a quick-action button occupies
+    // the footer's right side.
+    const bool actionActive = mBtnAction && mBtnAction->isVisible();
+    mLblTrend->setVisible(!t.isEmpty() && !actionActive);
 }
 
 void MetricTileBase::applyAccentColor(const QColor &color)

@@ -108,8 +108,7 @@ void HybridTile::setSubtitle(const QString &text)
 
 void HybridTile::setTrendDirection(TrendDirection dir)
 {
-    mCurrentTrend = dir;
-    mLblTrend->setText(trendText(dir));
+    setTrendLabel(dir);
 }
 
 void HybridTile::setSecondaryValue(const QString &text)

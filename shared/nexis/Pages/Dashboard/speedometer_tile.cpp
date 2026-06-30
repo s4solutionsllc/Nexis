@@ -56,8 +56,7 @@ void SpeedometerTile::setSubtitle(const QString &text)
 
 void SpeedometerTile::setTrendDirection(TrendDirection dir)
 {
-    mCurrentTrend = dir;
-    mLblTrend->setText(trendText(dir));
+    setTrendLabel(dir);
 }
 
 void SpeedometerTile::setSecondaryValue(const QString &text)
