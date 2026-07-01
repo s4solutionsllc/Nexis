@@ -41,7 +41,7 @@ void RingTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
     mProgressBar->setValue(mPercent);
-    setHeroValue(valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText);
+    mValueText = valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText;
     update();
 }
 
@@ -94,6 +94,7 @@ void RingTile::refreshThemeColors()
     mMetricColor = resolvedColor();
     mTrackColor  = QColor(sv->value("@color02").toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
+    mTextColor = QColor(sv->value("@color05").toString());
 
     QString colorHex = mMetricColor.name();
 
@@ -146,6 +147,15 @@ void RingTile::paintEvent(QPaintEvent *event)
         int spanAngle  = -static_cast<int>(mPercent * 3.60) * 16;
         painter.drawArc(ringRect, startAngle, spanAngle);
     }
+
+    // Primary value centered in the ring (unified anatomy).
+    const QString valueText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
+    QFont valueFont = font();
+    valueFont.setPixelSize(qMax(14, diameter / 5));
+    valueFont.setBold(true);
+    painter.setFont(valueFont);
+    painter.setPen(mTextColor);
+    painter.drawText(ringRect, Qt::AlignCenter, valueText);
 }
 
 void RingTile::resizeEvent(QResizeEvent *event)

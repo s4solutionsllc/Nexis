@@ -80,8 +80,7 @@ void HybridTile::buildLayout()
 void HybridTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
-    mValueText = valueText;
-    setHeroValue(valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText);
+    mValueText = valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText;
     update();
 }
 
@@ -212,11 +211,20 @@ void HybridTile::drawGaugeArc(QPainter &painter)
     painter.setPen(trackPen);
     painter.drawArc(arcRect, GAUGE_START_ANGLE * 16, -GAUGE_SWEEP_ANGLE * 16);
 
-    // Value arc. The numeric reading lives in the footer (stat-card layout).
+    // Value arc (unified anatomy: primary value is centered in the gauge, not the footer).
     double valueSweep = -(GAUGE_SWEEP_ANGLE * mPercent / 100.0);
     QPen valuePen(mArcColor, ARC_PEN_WIDTH, Qt::SolidLine, Qt::RoundCap);
     painter.setPen(valuePen);
     painter.drawArc(arcRect, GAUGE_START_ANGLE * 16, valueSweep * 16);
+
+    // Primary value centered in the gauge arc (unified anatomy).
+    const QString valueText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
+    QFont valueFont = painter.font();
+    valueFont.setPixelSize(qMax(12, side / 4));
+    valueFont.setBold(true);
+    painter.setFont(valueFont);
+    painter.setPen(mTextColor);
+    painter.drawText(arcRect, Qt::AlignCenter, valueText);
 }
 
 int HybridTile::gaugeSize() const

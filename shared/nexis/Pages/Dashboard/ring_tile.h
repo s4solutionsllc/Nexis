@@ -35,9 +35,11 @@ private:
     QProgressBar *mProgressBar;
 
     int mPercent;
+    QString mValueText;
 
     QColor mMetricColor;
     QColor mTrackColor;
+    QColor mTextColor;
     QColor mSecondaryTextColor;
 };
 
