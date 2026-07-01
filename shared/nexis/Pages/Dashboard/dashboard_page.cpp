@@ -646,6 +646,7 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
 
         auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
         if (!tile) continue;
+        tile->setInputName(w->inputKey().isEmpty() ? disk->name : w->inputKey());
         tile->setDiskInfo(diskPercent,
                           FormatUtil::formatBytes(disk->used),
                           FormatUtil::formatBytes(disk->size));
@@ -891,11 +892,14 @@ void DashboardPage::updateDiskHealthBadge()
         if (!matched && mCachedDriveHealth.size() == 1)
             matched = &mCachedDriveHealth.first();
 
-        tile->clearDriveHealth();
         if (matched) {
-            QString name = matched->model.isEmpty() ? matched->deviceName : matched->model;
             bool good = (matched->healthVerdict == "Good" || matched->smartPassed);
-            tile->setDriveHealth(name, matched->healthVerdict, matched->healthPercent, good);
+            tile->setDriveHealthSegment(matched->healthVerdict, good);
+            // Req 4: identify the drive by the friendly input name; SMART model → tooltip.
+            const QString friendly = w->inputKey().isEmpty() ? selectedDisk->name : w->inputKey();
+            tile->setInputName(friendly, matched->model);
+        } else {
+            tile->setDriveHealthSegment(QString(), true);
         }
     }
 }
