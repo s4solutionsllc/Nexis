@@ -36,7 +36,7 @@
 - Modify `shared/nexis/Pages/Dashboard/disk_tile.{h,cpp}` — adopt unified chrome; drop bespoke layout.
 - Modify `shared/nexis/Pages/Dashboard/gauge_tile.cpp`, `ring_tile.{h,cpp}`, `hybrid_tile.cpp` — center value; footer trend rules.
 - Modify `shared/nexis/Pages/Dashboard/dashboard_page.cpp` — wire friendly name + health for all disk styles.
-- Modify `shared/nexis/static/themes/default/style/style.qss` and `.../light/style/style.qss` — style the new input label; health colors already exist globally.
+- Modify `shared/nexis/static/themes/default/style/style.qss` (single shared stylesheet; theme colors via values.ini tokens) — style the new input label; health colors already exist globally.
 - Modify `tests/CMakeLists.txt` — register the new test.
 - Modify `CHANGELOG.md`, `docs/APPLICATION_OVERVIEW.md`, `docs/ARCHITECTURE_REVIEW.md`.
 
@@ -788,17 +788,18 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 7: QSS — style the input-name label (both themes)
+### Task 7: QSS — style the input-name label
 
 The health verdict is already colored by the global `[status="success"|"error"]`
 rules and `#diskHealthStatus` sizing. Only the new `#metricTileInput` label needs
-a style. Add it to both themes.
+a style. There is a SINGLE stylesheet — `themes/default/style/style.qss` — shared
+by all themes; per-theme colors come from `values.ini` token substitution (so
+`@tertiaryText` resolves correctly in light and dark). One edit covers every theme.
 
 **Files:**
 - Modify: `shared/nexis/static/themes/default/style/style.qss`
-- Modify: `shared/nexis/static/themes/light/style/style.qss`
 
-- [ ] **Step 1: Add the input-label rule (default theme)**
+- [ ] **Step 1: Add the input-label rule**
 
 In `shared/nexis/static/themes/default/style/style.qss`, immediately after the
 `#metricTileTitle { ... }` block (around line 772-776), add:
@@ -811,14 +812,7 @@ In `shared/nexis/static/themes/default/style/style.qss`, immediately after the
 }
 ```
 
-- [ ] **Step 2: Add the same rule to the light theme**
-
-In `shared/nexis/static/themes/light/style/style.qss`, find the `#metricTileTitle`
-rule and add the identical `#metricTileInput { ... }` block after it. (If the light
-theme has no `#metricTileTitle` rule, add the `#metricTileInput` block near the
-other `#metricTile*` rules.)
-
-- [ ] **Step 3: Build + launch to verify visually**
+- [ ] **Step 2: Build + launch to verify visually**
 
 Run: `cmake --build build -j$(nproc)`
 Then run the app (`./build/nexis` on Linux) and, on the Dashboard, add/observe a
@@ -829,11 +823,11 @@ Disk tile in each style. Verify per `/qt-ui-change`:
 - Ring/hybrid: trend pill in the footer; gauge/donut: no footer trend/value.
 - Switch the disk tile across all 7 styles: the health verdict stays visible every time (Req 2).
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Commit**
 
 ```bash
-git add shared/nexis/static/themes/default/style/style.qss shared/nexis/static/themes/light/style/style.qss
-git commit -m "style(dashboard): style title-row input-name label in both themes (GH#191)
+git add shared/nexis/static/themes/default/style/style.qss
+git commit -m "style(dashboard): style title-row input-name label (GH#191)
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ```
