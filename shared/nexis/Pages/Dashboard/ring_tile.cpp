@@ -115,8 +115,8 @@ void RingTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    // The ring sits between the header band and the progress bar; the numeric
-    // reading is shown in the footer (stat-card layout).
+    // The ring sits between the header band and the progress bar; the primary
+    // value is drawn centered in the ring (unified anatomy).
     int topMargin    = bodyTop();
     int bottomMargin = mProgressBar->geometry().top() - 6;
     int availableH   = bottomMargin - topMargin;

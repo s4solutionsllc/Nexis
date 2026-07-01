@@ -146,8 +146,8 @@ void GaugeTile::paintEvent(QPaintEvent *event)
     int sweepAngle16 = static_cast<int>(-ARC_SWEEP_DEG * QT_ARC_UNIT);
     painter.drawArc(arcRect, startAngle16, sweepAngle16);
 
-    // Value arc with conical gradient fill. The numeric reading lives in the
-    // footer (stat-card layout), so the arc itself carries no centered text.
+    // Value arc with conical gradient fill. The primary value is drawn centered
+    // in the arc (unified anatomy).
     if (mPercent > 0) {
         double valueSweepDeg = ARC_SWEEP_DEG * mPercent / 100.0;
 

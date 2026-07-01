@@ -160,6 +160,7 @@ private:
     void buildSystemSummary();
     void refreshSummaryColors();
     void updateDiskHealthBadge();
+    void refreshDiskUsageTile(DashboardTileWrapper *w);
     void buildGrid();
     void recomputeColumns();
     void rebuildLayout();
