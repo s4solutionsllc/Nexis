@@ -6,6 +6,7 @@
 #include <QStyle>
 #include <QFontMetrics>
 #include "Managers/app_manager.h"
+#include "drive_tile_format.h"
 
 MetricTileBase::MetricTileBase(const QString &title, const QString &colorToken, QWidget *parent)
     : QWidget(parent),
@@ -23,15 +24,20 @@ MetricTileBase::MetricTileBase(const QString &title, const QString &colorToken, 
 void MetricTileBase::setDiskInfo(int percent, const QString &usedText, const QString &totalText)
 {
     setValue(percent, QString("%1%").arg(percent));
-    setSubtitle(QString("%1 / %2").arg(usedText, totalText));
+    setSubtitle(DriveTileFormat::usageText(usedText, totalText));
 }
 
-void MetricTileBase::setDriveHealth(const QString &, const QString &, int, bool)
+void MetricTileBase::setDriveHealthSegment(const QString &verdict, bool healthy)
 {
-}
-
-void MetricTileBase::clearDriveHealth()
-{
+    if (!mLblHealth || !mLblHealthSep)
+        return;
+    const bool show = !verdict.isEmpty();
+    mLblHealth->setText(verdict);
+    mLblHealth->setProperty("status", healthy ? "success" : "error");
+    mLblHealth->style()->unpolish(mLblHealth);   // BUG-56: re-evaluate property selector
+    mLblHealth->style()->polish(mLblHealth);
+    mLblHealth->setVisible(show);
+    mLblHealthSep->setVisible(show);
 }
 
 void MetricTileBase::clearDataPoints()
@@ -252,10 +258,27 @@ QVBoxLayout *MetricTileBase::buildChrome()
 
     textCol->addLayout(mTitleRow);
 
+    auto *sourceRow = new QHBoxLayout();
+    sourceRow->setContentsMargins(0, 0, 0, 0);
+    sourceRow->setSpacing(4);
+
     mLblSource = new QLabel(mHeaderWidget);
     mLblSource->setObjectName("metricTileSource");
     mLblSource->setMinimumHeight(13);
-    textCol->addWidget(mLblSource);
+    sourceRow->addWidget(mLblSource);
+
+    mLblHealthSep = new QLabel(QStringLiteral("·"), mHeaderWidget);
+    mLblHealthSep->setObjectName("metricTileSource");
+    mLblHealthSep->hide();
+    sourceRow->addWidget(mLblHealthSep);
+
+    mLblHealth = new QLabel(mHeaderWidget);
+    mLblHealth->setObjectName("diskHealthStatus");
+    mLblHealth->hide();
+    sourceRow->addWidget(mLblHealth);
+
+    sourceRow->addStretch();
+    textCol->addLayout(sourceRow);
 
     headerLayout->addLayout(textCol, 1);
 

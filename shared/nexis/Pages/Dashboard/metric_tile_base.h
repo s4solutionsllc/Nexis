@@ -52,8 +52,7 @@ public:
 
     // Disk-specific (optional overrides with defaults)
     virtual void setDiskInfo(int percent, const QString &usedText, const QString &totalText);
-    virtual void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy);
-    virtual void clearDriveHealth();
+    void setDriveHealthSegment(const QString &verdict, bool healthy);
 
 protected:
     QString mTitle;
@@ -83,6 +82,8 @@ protected:
     QLabel *mLblTitle = nullptr;     // type label, e.g. "CPU"
     QLabel *mLblInput = nullptr;     // muted input/source name in the title row (e.g. "Data-02")
     QLabel *mLblSource = nullptr;    // input/source label, e.g. "AMD Ryzen 7 5700X"
+    QLabel *mLblHealth = nullptr;     // color-coded health verdict after the sub-header
+    QLabel *mLblHealthSep = nullptr;  // "·" separator shown only with a verdict
     QLabel *mLblValue = nullptr;     // hero value shown in the footer
     QLabel *mLblValueSub = nullptr;  // muted secondary value beside the hero value
     QString mSourceFull;             // full (un-elided) source text
