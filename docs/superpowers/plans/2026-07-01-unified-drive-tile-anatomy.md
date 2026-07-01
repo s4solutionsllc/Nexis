@@ -56,8 +56,7 @@ logic into a pure, testable unit.
 
 **Interfaces:**
 - Produces:
-  - `QString DriveTileFormat::usageText(const QString &used, const QString &total);` → `"used / total"`.
-  - `QString DriveTileFormat::subheaderWithHealth(const QString &usage, const QString &verdict);` → `usage` when `verdict` empty, else `"usage · verdict"` (middle-dot `·`, U+00B7). Used for the sub-header's tooltip / accessible name; the visible verdict is a separate colored label.
+  - `QString DriveTileFormat::usageText(const QString &used, const QString &total);` → `"used / total"`. Centralizes the user-facing usage format used by `MetricTileBase::setDiskInfo`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -78,16 +77,10 @@ private slots:
                  QStringLiteral("200.2 GiB / 219.0 GiB"));
     }
 
-    void subheader_noVerdict_returnsUsageOnly()
+    void usageText_emptyTotal_stillJoins()
     {
-        QCOMPARE(DriveTileFormat::subheaderWithHealth("200 / 219", ""),
-                 QStringLiteral("200 / 219"));
-    }
-
-    void subheader_withVerdict_appendsWithMiddleDot()
-    {
-        QCOMPARE(DriveTileFormat::subheaderWithHealth("200 / 219", "Good"),
-                 QStringLiteral("200 / 219 · Good"));
+        QCOMPARE(DriveTileFormat::usageText("6.0 TiB", "9.0 TiB"),
+                 QStringLiteral("6.0 TiB / 9.0 TiB"));
     }
 };
 
@@ -133,9 +126,6 @@ namespace DriveTileFormat {
 // "used / total"
 QString usageText(const QString &used, const QString &total);
 
-// usage, or "usage · verdict" when verdict is non-empty (U+00B7 middle dot).
-QString subheaderWithHealth(const QString &usage, const QString &verdict);
-
 } // namespace DriveTileFormat
 
 #endif // DRIVE_TILE_FORMAT_H
@@ -153,20 +143,13 @@ QString usageText(const QString &used, const QString &total)
     return QStringLiteral("%1 / %2").arg(used, total);
 }
 
-QString subheaderWithHealth(const QString &usage, const QString &verdict)
-{
-    if (verdict.isEmpty())
-        return usage;
-    return QStringLiteral("%1 · %2").arg(usage, verdict);
-}
-
 } // namespace DriveTileFormat
 ```
 
 - [ ] **Step 5: Run test to verify it passes**
 
 Run: `cmake --build build -j$(nproc) --target test-DriveTileFormatTests && ctest --test-dir build -R DriveTileFormatTests --output-on-failure`
-Expected: PASS (3 tests).
+Expected: PASS (2 tests).
 
 - [ ] **Step 6: Commit**
 
@@ -959,10 +942,4 @@ Report the PR URL. Do not merge.
 
 **Placeholder scan:** none — every code step shows complete code; QSS/doc steps give exact text.
 
-**Type consistency:** `setInputName(const QString&, const QString& = {})`, `setDriveHealthSegment(const QString&, bool)`, `DriveTileFormat::usageText`, `DriveTileFormat::subheaderWithHealth`, members `mLblInput`/`mLblHealth`/`mLblHealthSep`/`mValueText`/`mTextColor` used consistently across Tasks 1-6. Removed base virtuals `setDriveHealth`/`clearDriveHealth` and their `DiskTile` overrides are cleared in the same compilable unit (Tasks 3+4) and their only call sites (dashboard_page) are updated in Task 6.
-
-**Note on `subheaderWithHealth`:** Task 1 tests it and it documents the sub-header
-semantics, but the widgets render the verdict as a separate colored label (Task 3)
-rather than one combined string, so the helper's combined output is available for
-tooltips/accessibility if needed. This is intentional (color needs a separate
-label), not a gap.
+**Type consistency:** `setInputName(const QString&, const QString& = {})`, `setDriveHealthSegment(const QString&, bool)`, `DriveTileFormat::usageText`, members `mLblInput`/`mLblHealth`/`mLblHealthSep`/`mValueText`/`mTextColor` used consistently across Tasks 1-6. Removed base virtuals `setDriveHealth`/`clearDriveHealth` and their `DiskTile` overrides are cleared in the same compilable unit (Tasks 3+4) and their only call sites (dashboard_page) are updated in Task 6.
