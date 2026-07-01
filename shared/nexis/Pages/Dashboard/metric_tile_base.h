@@ -36,6 +36,7 @@ public:
 
     QToolButton *gearButton();
     void setGearVisible(bool visible);
+    void setInputName(const QString &friendly, const QString &model = QString());
 
     virtual void clearDataPoints();
 
@@ -80,6 +81,7 @@ protected:
     QHBoxLayout *mTitleRow = nullptr;
     QFrame *mAccentBar = nullptr;
     QLabel *mLblTitle = nullptr;     // type label, e.g. "CPU"
+    QLabel *mLblInput = nullptr;     // muted input/source name in the title row (e.g. "Data-02")
     QLabel *mLblSource = nullptr;    // input/source label, e.g. "AMD Ryzen 7 5700X"
     QLabel *mLblValue = nullptr;     // hero value shown in the footer
     QLabel *mLblValueSub = nullptr;  // muted secondary value beside the hero value

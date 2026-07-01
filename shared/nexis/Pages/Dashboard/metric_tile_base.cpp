@@ -239,6 +239,12 @@ QVBoxLayout *MetricTileBase::buildChrome()
     mLblTitle = new QLabel(mTitle, mHeaderWidget);
     mLblTitle->setObjectName("metricTileTitle");
     mTitleRow->addWidget(mLblTitle);
+
+    mLblInput = new QLabel(mHeaderWidget);
+    mLblInput->setObjectName("metricTileInput");
+    mLblInput->hide();   // shown only when setInputName() is called (disk tiles)
+    mTitleRow->addWidget(mLblInput);
+
     mTitleRow->addStretch();
 
     createGearButton();
@@ -303,6 +309,18 @@ void MetricTileBase::setSource(const QString &text)
     QFontMetrics fm(mLblSource->font());
     const int avail = qMax(0, mLblSource->width() - 1);
     mLblSource->setText(avail > 0 ? fm.elidedText(text, Qt::ElideRight, avail) : text);
+}
+
+void MetricTileBase::setInputName(const QString &friendly, const QString &model)
+{
+    if (!mLblInput)
+        return;
+    mLblInput->setText(friendly);
+    mLblInput->setVisible(!friendly.isEmpty());
+    if (!model.isEmpty()) {
+        mLblInput->setToolTip(model);
+        setToolTip(model);
+    }
 }
 
 void MetricTileBase::setHeroValue(const QString &text)
