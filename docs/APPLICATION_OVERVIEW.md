@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-06-30 | Version 2.8.0
+> Last updated: 2026-07-01 | Version 2.8.0
 
 ---
 
@@ -138,7 +138,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 Real-time system monitoring at a glance in a **fixed-cell responsive grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. All metric tiles inherit from `MetricTileBase`, an abstract base class supporting four `DisplayMode` values — **Normal**, **Hero**, **Large**, and **Compact** — each with distinct font sizes for value/label/sublabel, selected via QSS dynamic properties with `unpolish()`/`polish()` cycling. Tiles can be rearranged and resized via edit mode, and each tile's **visual style can be changed** independently.
 
-**Unified tile anatomy (GH#191 follow-up):** Regardless of body style, every tile shares the same chrome built by `MetricTileBase` so mixed tile types line up and read as one set. A **two-line header** shows the metric **type** (e.g. `CPU`) on the first line and the specific **input/source** it is monitoring on the second (CPU model + cores + clock, GPU device name, the selected thermal sensor or fan label, memory total/swap summary, network interface) — the source line elides with a full-text tooltip. A type-colored **accent bar** sits at the header's left edge and the settings **gear** is pinned to a fixed top-right slot (no longer repositioned relative to the title text). A **footer band** carries the headline value on the left (with an optional muted secondary value beside it, e.g. memory's used/total) and a **trend pill** (`↑ rising` / `→ stable` / `↓ falling`) on the right. Painted dial styles (gauge, ring, speedometer, hybrid) render only their visualization in the body — the numeric reading lives in the footer (stat-card layout) rather than centered in the dial.
+**Unified tile anatomy (GH#191 follow-up):** Regardless of body style, every tile shares the same chrome built by `MetricTileBase` so mixed tile types line up and read as one set. A **two-line header** shows the metric **type** (e.g. `CPU`) on the first line and the specific **input/source** it is monitoring on the second (CPU model + cores + clock, GPU device name, the selected thermal sensor or fan label, memory total/swap summary, network interface) — the source line elides with a full-text tooltip. A type-colored **accent bar** sits at the header's left edge and the settings **gear** is pinned to a fixed top-right slot (no longer repositioned relative to the title text). A **footer band** carries the headline value on the left (with an optional muted secondary value beside it, e.g. memory's used/total) and a **trend pill** (`↑ rising` / `→ stable` / `↓ falling`) on the right. The four shape styles (donut, gauge, ring, hybrid) render their primary value centered inside the shape for all metric types; ring and hybrid additionally show the footer trend pill, while gauge and donut do not. Speedometer and VU Meter render their headline value in the footer.
 
 **Fixed-cell responsive grid (GH#191):** The dashboard uses fixed-size cells (1×1 = 120×98px, 10px gap between tiles). The grid column count adapts dynamically to the window width (clamped 4–16 columns), and tiles reflow (repack) when the column count changes. Vertical scrolling activates when tiles exceed the visible window height. This replaced the old proportional layout that produced uneven row heights and sparse gaps. Existing saved layouts migrate automatically via a versioned layout envelope (legacy bare-array layouts are scaled and reflowed on load).
 
@@ -149,7 +149,7 @@ Real-time system monitoring at a glance in a **fixed-cell responsive grid layout
 **Default tile layout:**
 - **CPU** — Independent `MetricTile` with sparkline history (1s refresh)
 - **Memory** — Independent `MetricTile` with sparkline history (1s refresh). Subtitle shows swap usage plus platform-specific breakdown: wired/active/compressed on macOS, available memory on Linux. On macOS, tile accent color dynamically reflects memory pressure state (green=normal, yellow=warning, red=critical) via `kern.memorystatus_vm_pressure_level` sysctl; on Linux, pressure derived from PSI or MemAvailable heuristic. User-set custom colors (FR-55) take priority over pressure indication.
-- **Disk** — `DiskTile` with custom-painted donut chart showing usage percentage, capacity text, and drive health badge with verdict and numeric percentage (e.g., "Apple SSD: Good (92%)") via `setDriveHealth()` (5s refresh). Gear icon opens a dropdown to switch the displayed disk or add additional Disk tiles; selection is persisted per-tile.
+- **Disk** — `DiskTile` with custom-painted donut chart (default style), using the shared tile chrome. The drive is identified by its friendly input name (e.g., `Data-02`) in a muted label in the title row; the SMART model is shown as a hover tooltip. Drive health (SMART verdict, e.g., `Good`) is color-coded and appended to the sub-header (e.g., `200.2 GiB / 219.0 GiB · Good`) for every disk style, surviving a style switch (5s refresh). Gear icon opens a dropdown to switch the displayed disk or add additional Disk tiles; selection is persisted per-tile.
 - **Network** — `NetworkTile` with two-row layout: Download and Upload labels each paired with a separate `QChart` sparkline instance (dual RX/TX charts), horizontal divider, and active interface name (1s refresh). The interface is chosen when adding the tile from the "Add tile" palette (network tiles have no gear menu); to change it, remove and re-add the tile. A default network tile tracks the default-route interface (GH#191).
 - **GPU** — Utilization percentage with device name subtitle. Gear icon opens a dropdown to switch the monitored device or add additional GPU tiles; selection is persisted per-tile (1s refresh; tile hidden if no GPU detected)
 - **Temperature** — Input-bound via gear icon menu, with sensor name subtitle and sparkline history (1s refresh; hidden if no sensors). Multiple Temperature tiles can monitor different sensors simultaneously (GH#191).
@@ -162,12 +162,12 @@ Real-time system monitoring at a glance in a **fixed-cell responsive grid layout
 
 **Widget styles** — Each tile (except Network) can be switched between 6 visual styles via a paintbrush icon visible during edit mode:
 - **Sparkline** (default) — line chart showing recent history with progress bar and trend indicator
-- **Gauge** — classic ¾-circle arc gauge with conical gradient fill (value shown in the footer)
-- **Hybrid** — compact gauge arc combined with a mini sparkline chart below
-- **Ring** — full 360° activity ring (Apple Watch style); value shown in the footer
+- **Gauge** — classic ¾-circle arc gauge with conical gradient fill; value centered in the shape
+- **Hybrid** — compact gauge arc combined with a mini sparkline chart below; value centered in the shape, trend pill in footer
+- **Ring** — full 360° activity ring (Apple Watch style); value centered in the shape, trend pill in footer
 - **Speedometer** — analog dial with needle, tick marks, and green→red gradient arc (value shown in the footer)
 - **VU Meter** — segmented vertical bar with bottom-up fill and stats panel
-- **Donut** (Disk tile only) — custom-painted donut chart with usage text (Disk tile default)
+- **Donut** (Disk tile only) — custom-painted donut chart using shared tile chrome; value centered in the shape (Disk tile default)
 
 **Edit mode** (pencil icon next to kiosk button, or **Ctrl+E**):
 - Activates drag-and-drop reordering of dashboard tiles with visual feedback
