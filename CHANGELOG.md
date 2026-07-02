@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-07-02
+
 ### Added
 - Dashboard: tiles now render as **elevated cards** — a soft drop shadow lifts each tile off the page and the surface uses the theme's warm elevated-card tone (`@cardBgElevated`), so tiles stand out from the background without edit-mode grid lines. Re-applied on theme change so light/dark both resolve correctly.
 - Dashboard: `DriveTileFormat::usageText` pure helper centralizes used/total disk usage text formatting across all disk tile styles (GH#191).

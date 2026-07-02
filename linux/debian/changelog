@@ -1,3 +1,18 @@
+nexis (2.8.1-0) unstable; urgency=medium
+
+  * Dashboard: tiles render as elevated cards with a soft drop shadow and the
+    theme's elevated-card surface tone; gauge/ring/progress/VU-meter/donut
+    tracks moved to a token that stays visible against the new surface.
+  * Dashboard: refined unified tile anatomy — primary value centered inside
+    the shape for all styles, disk donut uses the shared tile chrome, drives
+    identified by friendly input name, trend pill reduced to a direction
+    arrow with a hover tooltip (GH#191).
+  * Dashboard: consistent fixed-height tile footer that auto-hides when it
+    has no content; ring/hybrid secondary readouts moved into the footer;
+    drive health verdict shown for every disk style (GH#191).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Thu, 02 Jul 2026 19:58:46 -0400
+
 nexis (2.8.0-0) unstable; urgency=medium
 
   * Dashboard: unified tile anatomy — every tile now shares a two-line header

@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: 2026-07-01 (SSO-3497, SSO-3383, SSO-3391 / WI-29, SSO-3396 / WI-33, SSO-3738 / FW-10, SSO-3739 / FW-11, SSO-3740 / FW-12, SSO-3743 / FW-15, GH#191, GH#182) | Version 2.8.0
+> Last updated: 2026-07-02 (SSO-3497, SSO-3383, SSO-3391 / WI-29, SSO-3396 / WI-33, SSO-3738 / FW-10, SSO-3739 / FW-11, SSO-3740 / FW-12, SSO-3743 / FW-15, GH#191, GH#182) | Version 2.8.1
 
 > **Packaging note (SSO-3376, 2026-06):** The Flatpak (Flathub) distribution channel was retired. There is no `flatpak-spawn`/sandbox-detection layer in the codebase — the privileged-host operations Nexis depends on (`pkexec`, `systemctl`, `smartctl`, `fstrim`, `nvidia-smi`, `/proc` and `/sys` reads) are architecturally unsuited to a bubblewrap sandbox, and adding one would require routing `CommandUtil` through `flatpak-spawn --host` plus holding the `org.freedesktop.Flatpak` portal — i.e. eliminating the sandbox benefit. Linux ships via `.deb` (PPA + GitHub releases), AppImage, and AUR.
 
