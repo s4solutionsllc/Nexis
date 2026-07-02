@@ -554,25 +554,10 @@ void DashboardPage::onMemoryUpdated(const MemorySnapshot &snap)
 
     mMemTile->setValue(memUsedPercent, QString("%1%").arg(memUsedPercent));
     mMemTile->addDataPoint(memUsedPercent);
-    mMemTile->setSecondaryValue(QString("%1 / %2").arg(f_memUsed, f_memTotal));
 
-    // FR-57: Build subtitle with swap info + platform-specific breakdown
-    QString subtitle = QString("Swap: %1 / %2")
-        .arg(FormatUtil::formatBytes(snap.swapUsed), FormatUtil::formatBytes(snap.swapTotal));
-
-    if (snap.wired > 0 || snap.compressed > 0) {
-        // macOS: wired/active/compressed breakdown
-        subtitle += QString(" \u2022 W:%1 A:%2 C:%3")
-            .arg(FormatUtil::formatBytes(snap.wired),
-                 FormatUtil::formatBytes(snap.active),
-                 FormatUtil::formatBytes(snap.compressed));
-    } else if (snap.available > 0) {
-        // Linux: available memory
-        subtitle += QString(" \u2022 Avail: %1")
-            .arg(FormatUtil::formatBytes(snap.available));
-    }
-
-    mMemTile->setSubtitle(subtitle);
+    // Capacity (used / total) in the sub-header, consistent with the Disk
+    // tile. (Swap / platform breakdown removed per product decision.)
+    mMemTile->setSubtitle(QString("%1 / %2").arg(f_memUsed, f_memTotal));
 
     // FR-57: Pressure-based tile color (only when user hasn't set a custom color)
     if (snap.pressureLevel > 0 && mTileColors.value("memory").isEmpty()) {

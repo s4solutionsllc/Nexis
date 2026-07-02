@@ -354,13 +354,16 @@ void MetricTileBase::appendFooter(QVBoxLayout *root, QWidget *footerVisual)
     mBtnAction->hide();
     mBtnAction->setFixedHeight(22);
 
-    footerLayout->addWidget(mLblValue);
-    footerLayout->addWidget(mLblValueSub);
     if (footerVisual) {
-        // Style-specific readout (Ring's progress bar, Hybrid's sparkline) fills
-        // the footer; the trend pill sits to its right.
+        // Style-specific readout (Ring's progress bar, Hybrid's sparkline) is
+        // flush-left and fills the footer; the trend pill sits to its right. The
+        // value labels are unused here (the value is centered in the shape).
+        mLblValue->hide();
+        mLblValueSub->hide();
         footerLayout->addWidget(footerVisual, 1);
     } else {
+        footerLayout->addWidget(mLblValue);
+        footerLayout->addWidget(mLblValueSub);
         footerLayout->addStretch();
     }
     footerLayout->addWidget(mLblTrend);
