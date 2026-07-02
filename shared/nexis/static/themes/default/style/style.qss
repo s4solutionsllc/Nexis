@@ -783,20 +783,8 @@ QLabel[accessibleName="dialog-title"] {
 
 #metricTileValue {
     color: @color05;
-    font-size: 18pt;
+    font-size: 14pt;
     font-weight: 700;
-}
-
-#metricTileValue[heroMode="true"] {
-    font-size: 36pt;
-}
-
-#metricTileValue[largeMode="true"] {
-    font-size: 30pt;
-}
-
-#metricTileValue[compactMode="true"] {
-    font-size: 24pt;
 }
 
 #metricTileSubtitle {
