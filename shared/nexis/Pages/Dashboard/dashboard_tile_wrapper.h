@@ -91,6 +91,11 @@ private:
     static const int RESIZE_HANDLE_SIZE = 16;
 
     bool isInResizeHandle(const QPoint &pos) const;
+
+    // PROTOTYPE (NEXIS_TILE_DEPTH env var): give the inner tile "depth" so cards
+    // stand out from the page. "elevation" = soft drop shadow; "contrast" =
+    // gradient + stronger border (QSS). Unset = current flat look.
+    void applyDepthTreatment();
 };
 
 #endif // DASHBOARD_TILE_WRAPPER_H

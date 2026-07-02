@@ -1676,7 +1676,7 @@ MetricTileBase *DashboardPage::createTile(const QString &id, const QString &styl
     if (style == "vumeter")
         return new VuMeterTile(title, colorToken, this);
     if (style == "donut")
-        return new DiskTile(colorToken, "@color02", this);
+        return new DiskTile(colorToken, "@chartGridColor", this);
     if (style == "health")
         return new HealthScoreTile(colorToken, this);
 

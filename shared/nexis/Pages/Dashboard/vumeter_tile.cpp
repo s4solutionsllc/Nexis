@@ -91,7 +91,7 @@ void VuMeterTile::refreshThemeColors()
         mAccentColor      = QColor(sv->value("@accentColor").toString());
         mDestructiveColor = QColor(sv->value("@destructiveColor").toString());
     }
-    mTrackColor       = QColor(sv->value("@color02").toString());
+    mTrackColor       = QColor(sv->value("@chartGridColor").toString());
     mTextColor        = QColor(sv->value(mColorToken).toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 

@@ -89,7 +89,7 @@ void RingTile::refreshThemeColors()
         return;
 
     mMetricColor = resolvedColor();
-    mTrackColor  = QColor(sv->value("@color02").toString());
+    mTrackColor  = QColor(sv->value("@chartGridColor").toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
     mTextColor = QColor(sv->value("@color05").toString());
 

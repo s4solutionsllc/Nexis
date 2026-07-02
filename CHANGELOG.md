@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Dashboard: tiles now render as **elevated cards** — a soft drop shadow lifts each tile off the page and the surface uses the theme's warm elevated-card tone (`@cardBgElevated`), so tiles stand out from the background without edit-mode grid lines. Re-applied on theme change so light/dark both resolve correctly.
 - Dashboard: `DriveTileFormat::usageText` pure helper centralizes used/total disk usage text formatting across all disk tile styles (GH#191).
 
 ### Changed
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard: Ring and Hybrid styles moved their secondary readout into the footer — Ring's progress bar and Hybrid's mini sparkline now sit left-aligned in the footer (filling its width, trend pill to the right), so the ring/arc grows to fill the body (GH#191).
 - Dashboard: the Memory tile now shows used/total capacity in its sub-header (consistent with Disk) instead of swap usage; the swap / platform-memory breakdown line was removed (GH#191).
 - Dashboard: tile footers now use a consistent fixed height across all styles (the footer value is sized to fit and no longer scales per display mode), and the footer auto-hides on Gauge/Donut where it has no content so the dial fills the body (GH#191).
+- Dashboard: gauge/ring/progress/VU-meter/donut **track** color moved from `@color02` to `@chartGridColor` so the faint background track stays visible against the new elevated-card surface (the old track color had become identical to it) in both light and dark themes.
 
 ### Fixed
 - Dashboard: drive health (SMART verdict) is now tied to the disk type and appended to the sub-header for every disk style, not just the donut — it survives a style switch (GH#191).
