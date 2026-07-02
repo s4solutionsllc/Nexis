@@ -62,6 +62,7 @@ protected:
     DisplayMode mDisplayMode = Normal;
 
     static const int SPARKLINE_SIZE = 60;
+    static const int FOOTER_HEIGHT = 24;   // consistent footer band height (all styles)
     QList<double> mDataBuffer;
     QList<QPointF> mPointsCache;   // mirrors mDataBuffer for QLineSeries::replace()
 
@@ -77,6 +78,7 @@ protected:
     // different body styles line up and always show what they are monitoring.
     QWidget *mHeaderWidget = nullptr;
     QWidget *mFooterWidget = nullptr;
+    QWidget *mFooterVisual = nullptr;   // style readout in the footer (bar/sparkline), if any
     QWidget *mSourceRow = nullptr;   // sub-header row hosting mLblSource + health segment
     QHBoxLayout *mTitleRow = nullptr;
     QFrame *mAccentBar = nullptr;
@@ -106,6 +108,9 @@ protected:
     // progress bar, Hybrid's sparkline) placed in the footer, filling its width
     // with the trend pill to its right.
     void appendFooter(QVBoxLayout *root, QWidget *footerVisual = nullptr);
+    // Hide the footer band when it has no visible content (e.g. Gauge/Donut,
+    // whose value is centered in the shape) so the body expands to fill it.
+    void updateFooterVisibility();
     void setSource(const QString &text);
     void setHeroValue(const QString &text);
     void setHeroSecondary(const QString &text);
