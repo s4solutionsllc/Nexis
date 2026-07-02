@@ -36,6 +36,7 @@ public:
 
     QToolButton *gearButton();
     void setGearVisible(bool visible);
+    void setInputName(const QString &friendly, const QString &model = QString());
 
     virtual void clearDataPoints();
 
@@ -51,8 +52,7 @@ public:
 
     // Disk-specific (optional overrides with defaults)
     virtual void setDiskInfo(int percent, const QString &usedText, const QString &totalText);
-    virtual void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy);
-    virtual void clearDriveHealth();
+    void setDriveHealthSegment(const QString &verdict, bool healthy);
 
 protected:
     QString mTitle;
@@ -77,10 +77,14 @@ protected:
     // different body styles line up and always show what they are monitoring.
     QWidget *mHeaderWidget = nullptr;
     QWidget *mFooterWidget = nullptr;
+    QWidget *mSourceRow = nullptr;   // sub-header row hosting mLblSource + health segment
     QHBoxLayout *mTitleRow = nullptr;
     QFrame *mAccentBar = nullptr;
     QLabel *mLblTitle = nullptr;     // type label, e.g. "CPU"
+    QLabel *mLblInput = nullptr;     // muted input/source name in the title row (e.g. "Data-02")
     QLabel *mLblSource = nullptr;    // input/source label, e.g. "AMD Ryzen 7 5700X"
+    QLabel *mLblHealth = nullptr;     // color-coded health verdict after the sub-header
+    QLabel *mLblHealthSep = nullptr;  // "·" separator shown only with a verdict
     QLabel *mLblValue = nullptr;     // hero value shown in the footer
     QLabel *mLblValueSub = nullptr;  // muted secondary value beside the hero value
     QString mSourceFull;             // full (un-elided) source text
@@ -88,13 +92,20 @@ protected:
     // Shared helpers for subclass buildLayout()
     void createGearButton();
     void repositionGearButton();
+    // Width available to the elided source text = the sub-header row width minus
+    // the visible health segment. Stable (layout-driven), so re-eliding the full
+    // source text against it does not compound/shrink across ticks.
+    int availableSourceWidth() const;
     void createFooterLayout(QVBoxLayout *parent);
 
     // Unified chrome helpers. buildChrome() creates the root layout on `this`,
     // adds the header band (incl. gear) and returns the root so the subclass
     // can append its body; appendFooter() adds the shared footer band.
     QVBoxLayout *buildChrome();
-    void appendFooter(QVBoxLayout *root);
+    // footerVisual (optional): a style-specific readout widget (e.g. Ring's
+    // progress bar, Hybrid's sparkline) placed in the footer, filling its width
+    // with the trend pill to its right.
+    void appendFooter(QVBoxLayout *root, QWidget *footerVisual = nullptr);
     void setSource(const QString &text);
     void setHeroValue(const QString &text);
     void setHeroSecondary(const QString &text);
@@ -110,7 +121,9 @@ protected:
     void updateGearIcon();
     void applyActionButtonStyle(const QColor &metricColor, const QColor &hoverTextColor);
 
-    QString trendText(TrendDirection dir) const;
+    QString trendText(TrendDirection dir) const;   // "↑ rising" (full)
+    QString trendArrow(TrendDirection dir) const;   // "↑" only (shown in the pill)
+    QString trendWord(TrendDirection dir) const;    // "Rising" (shown in the tooltip)
     QColor resolvedColor() const;
 };
 

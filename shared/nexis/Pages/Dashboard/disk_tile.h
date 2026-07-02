@@ -3,9 +3,7 @@
 
 #include "metric_tile_base.h"
 
-#include <QLabel>
 #include <QColor>
-#include <QHBoxLayout>
 
 class DiskTile : public MetricTileBase
 {
@@ -25,11 +23,6 @@ public:
     void setQuickAction(const QString &text, std::function<void()> callback) override;
     void refreshThemeColors() override;
 
-    // Disk-specific overrides
-    void setDiskInfo(int percent, const QString &usedText, const QString &totalText) override;
-    void setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy) override;
-    void clearDriveHealth() override;
-
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -43,17 +36,7 @@ private:
     QColor mTextColor;
 
     int mPercent;
-    QString mUsedText;
-    QString mTotalText;
-
-    QWidget *mHealthContainer;
-    QHBoxLayout *mHealthLayout;
-
-    struct HealthEntry {
-        QLabel *statusLabel;
-        bool healthy;
-    };
-    QList<HealthEntry> mHealthEntries;
+    QString mValueText;
 };
 
 #endif // DISK_TILE_H

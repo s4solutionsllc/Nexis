@@ -24,36 +24,14 @@ DiskTile::DiskTile(const QString &arcColorToken, const QString &trackColorToken,
 void DiskTile::buildLayout()
 {
     auto *layout = buildChrome();
-
-    // Donut chart area is painted in paintEvent — reserve space
-    layout->addStretch(1);
-
-    mLblSubtitle = new QLabel(this);
-    mLblSubtitle->setObjectName("diskTileSubtitle");
-    mLblSubtitle->setAlignment(Qt::AlignCenter);
-    layout->addWidget(mLblSubtitle);
-
-    // Drive health container (hidden until populated)
-    mHealthContainer = new QWidget(this);
-    mHealthLayout = new QHBoxLayout(mHealthContainer);
-    mHealthLayout->setContentsMargins(0, 4, 0, 0);
-    mHealthLayout->setSpacing(12);
-    mHealthContainer->hide();
-    layout->addWidget(mHealthContainer);
+    layout->addStretch(1);    // donut is painted in the body
+    appendFooter(layout);     // unified footer band (kept minimal for the donut)
 }
 
-void DiskTile::setDiskInfo(int percent, const QString &usedText, const QString &totalText)
+void DiskTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
-    mUsedText = usedText;
-    mTotalText = totalText;
-    mLblSubtitle->setText(QString("%1 / %2").arg(usedText, totalText));
-    update();
-}
-
-void DiskTile::setValue(int percent, const QString &)
-{
-    mPercent = qBound(0, percent, 100);
+    mValueText = valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText;
     update();
 }
 
@@ -63,7 +41,7 @@ void DiskTile::addDataPoint(double)
 
 void DiskTile::setSubtitle(const QString &text)
 {
-    mLblSubtitle->setText(text);
+    setSource(text);
 }
 
 void DiskTile::setTrendDirection(TrendDirection)
@@ -85,51 +63,6 @@ void DiskTile::setQuickAction(const QString &, std::function<void()>)
 {
 }
 
-void DiskTile::setDriveHealth(const QString &driveName, const QString &status, int healthPercent, bool healthy)
-{
-    auto *driveLabel = new QLabel(driveName + ": ", mHealthContainer);
-    driveLabel->setObjectName("diskTileSubtitle");
-
-    QString statusText = status;
-    if (healthPercent >= 0)
-        statusText += QString(" (%1%)").arg(healthPercent);
-
-    auto *statusLabel = new QLabel(statusText, mHealthContainer);
-    statusLabel->setObjectName("diskHealthStatus");
-    statusLabel->setProperty("status", healthy ? "success" : "error");
-    statusLabel->style()->unpolish(statusLabel);
-    statusLabel->style()->polish(statusLabel);
-
-    mHealthEntries.append({statusLabel, healthy});
-
-    auto *pair = new QHBoxLayout();
-    pair->setContentsMargins(0, 0, 0, 0);
-    pair->setSpacing(2);
-    pair->addWidget(driveLabel);
-    pair->addWidget(statusLabel);
-    mHealthLayout->addLayout(pair);
-
-    mHealthContainer->show();
-}
-
-void DiskTile::clearDriveHealth()
-{
-    mHealthEntries.clear();
-
-    while (QLayoutItem *item = mHealthLayout->takeAt(0)) {
-        if (QLayout *childLayout = item->layout()) {
-            while (QLayoutItem *sub = childLayout->takeAt(0)) {
-                delete sub->widget();
-                delete sub;
-            }
-        }
-        delete item->widget();
-        delete item;
-    }
-
-    mHealthContainer->hide();
-}
-
 void DiskTile::refreshThemeColors()
 {
     QSettings *sv = AppManager::ins()->getStyleValues();
@@ -140,13 +73,6 @@ void DiskTile::refreshThemeColors()
     mTrackColor = QColor(sv->value(mTrackColorToken).toString());
     mTextColor = QColor(sv->value("@color05").toString());
     applyAccentColor(mArcColor);
-
-    for (const HealthEntry &entry : mHealthEntries) {
-        entry.statusLabel->setProperty("status", entry.healthy ? "success" : "error");
-        entry.statusLabel->style()->unpolish(entry.statusLabel);
-        entry.statusLabel->style()->polish(entry.statusLabel);
-    }
-
     updateGearIcon();
     update();
 }
@@ -166,19 +92,19 @@ void DiskTile::paintEvent(QPaintEvent *event)
 
     if (mDisplayMode == Compact) {
         int top = bodyTop();
-        int bottom = mLblSubtitle->isVisible() ? mLblSubtitle->geometry().top() - 4 : height() - 6;
+        int bottom = bodyBottom();
         QRect valueRect(8, top, width() - 16, qMax(1, bottom - top));
         QFont vf = font();
         vf.setPixelSize(qMax(16, valueRect.height() / 2));
         vf.setBold(true);
         painter.setFont(vf);
         painter.setPen(mTextColor);
-        painter.drawText(valueRect, Qt::AlignCenter, QString("%1%").arg(mPercent));
+        painter.drawText(valueRect, Qt::AlignCenter, mValueText);
         return;
     }
 
     int titleBottom = bodyTop();
-    int subtitleTop = mLblSubtitle->geometry().top() - 8;
+    int subtitleTop = bodyBottom();
     int availableHeight = subtitleTop - titleBottom;
     int availableWidth = width() - 28;
 
@@ -219,7 +145,7 @@ void DiskTile::paintEvent(QPaintEvent *event)
     painter.setFont(boldFont);
     painter.setPen(mTextColor);
 
-    QString percentText = QString("%1%").arg(mPercent);
+    QString percentText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
     QRectF textRect = arcRect.adjusted(penWidth, penWidth, -penWidth, -penWidth);
     painter.drawText(textRect, Qt::AlignCenter, percentText);
 }

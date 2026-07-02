@@ -298,6 +298,16 @@ add_nexis_test(NAME DashboardLayoutUtilTests
     "${GUI_SHARED_DIR}/Pages/Dashboard"
 )
 
+# GH#191 follow-up: pure Drive tile sub-header/health text helper.
+add_nexis_test(NAME DriveTileFormatTests
+  SOURCES
+    managers/test_drive_tile_format.cpp
+    "${GUI_SHARED_DIR}/Pages/Dashboard/drive_tile_format.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Dashboard"
+)
+
 # SSO-3391 / WI-29: pin GnomeSettingsToolMacOS down as a hard no-op stub so
 # it can never write into Apple preference domains. Linux compiles the same
 # test source but skips the platform-specific assertions.

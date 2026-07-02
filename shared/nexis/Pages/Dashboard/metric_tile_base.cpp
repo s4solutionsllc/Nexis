@@ -6,6 +6,7 @@
 #include <QStyle>
 #include <QFontMetrics>
 #include "Managers/app_manager.h"
+#include "drive_tile_format.h"
 
 MetricTileBase::MetricTileBase(const QString &title, const QString &colorToken, QWidget *parent)
     : QWidget(parent),
@@ -23,15 +24,22 @@ MetricTileBase::MetricTileBase(const QString &title, const QString &colorToken, 
 void MetricTileBase::setDiskInfo(int percent, const QString &usedText, const QString &totalText)
 {
     setValue(percent, QString("%1%").arg(percent));
-    setSubtitle(QString("%1 / %2").arg(usedText, totalText));
+    setSubtitle(DriveTileFormat::usageText(usedText, totalText));
 }
 
-void MetricTileBase::setDriveHealth(const QString &, const QString &, int, bool)
+void MetricTileBase::setDriveHealthSegment(const QString &verdict, bool healthy)
 {
-}
-
-void MetricTileBase::clearDriveHealth()
-{
+    if (!mLblHealth || !mLblHealthSep)
+        return;
+    const bool show = !verdict.isEmpty();
+    mLblHealth->setText(verdict);
+    mLblHealth->setProperty("status", healthy ? "success" : "error");
+    mLblHealth->style()->unpolish(mLblHealth);   // BUG-56: re-evaluate property selector
+    mLblHealth->style()->polish(mLblHealth);
+    mLblHealth->setVisible(show);
+    mLblHealthSep->setVisible(show);
+    // The health segment changes how much room the source text has — re-fit it.
+    setSource(mSourceFull);
 }
 
 void MetricTileBase::clearDataPoints()
@@ -140,6 +148,26 @@ QString MetricTileBase::trendText(TrendDirection dir) const
     return {};
 }
 
+QString MetricTileBase::trendArrow(TrendDirection dir) const
+{
+    switch (dir) {
+    case Rising:  return QStringLiteral("\u2191");
+    case Falling: return QStringLiteral("\u2193");
+    case Stable:  return QStringLiteral("\u2192");
+    }
+    return {};
+}
+
+QString MetricTileBase::trendWord(TrendDirection dir) const
+{
+    switch (dir) {
+    case Rising:  return tr("Rising");
+    case Falling: return tr("Falling");
+    case Stable:  return tr("Stable");
+    }
+    return {};
+}
+
 void MetricTileBase::createGearButton()
 {
     mGearButton = new QToolButton(this);
@@ -154,13 +182,29 @@ void MetricTileBase::createGearButton()
 // The gear now lives in the header layout (top-right), so it no longer needs
 // manual positioning. This hook still fires from each tile's resizeEvent, so we
 // reuse it to re-elide the source line to the tile's current width.
+int MetricTileBase::availableSourceWidth() const
+{
+    if (!mSourceRow || !mLblSource)
+        return 0;
+    // The source text may share its row with the health segment ("· Good"); the
+    // row width is layout-driven and stable, so subtract the visible segment to
+    // get a fixed target for elision (never mLblSource's own shrinking width).
+    int w = mSourceRow->width();
+    if (mLblHealth && mLblHealth->isVisible())
+        w -= mLblHealth->sizeHint().width() + 4;
+    if (mLblHealthSep && mLblHealthSep->isVisible())
+        w -= mLblHealthSep->sizeHint().width() + 4;
+    return qMax(0, w - 1);
+}
+
 void MetricTileBase::repositionGearButton()
 {
     if (!mLblSource)
         return;
+    const int avail = availableSourceWidth();
     QFontMetrics fm(mLblSource->font());
-    const int avail = qMax(0, mLblSource->width() - 1);
-    mLblSource->setText(fm.elidedText(mSourceFull, Qt::ElideRight, avail));
+    mLblSource->setText(avail > 0 ? fm.elidedText(mSourceFull, Qt::ElideRight, avail)
+                                  : mSourceFull);
 }
 
 QToolButton *MetricTileBase::gearButton()
@@ -239,6 +283,12 @@ QVBoxLayout *MetricTileBase::buildChrome()
     mLblTitle = new QLabel(mTitle, mHeaderWidget);
     mLblTitle->setObjectName("metricTileTitle");
     mTitleRow->addWidget(mLblTitle);
+
+    mLblInput = new QLabel(mHeaderWidget);
+    mLblInput->setObjectName("metricTileInput");
+    mLblInput->hide();   // shown only when setInputName() is called (disk tiles)
+    mTitleRow->addWidget(mLblInput);
+
     mTitleRow->addStretch();
 
     createGearButton();
@@ -246,10 +296,29 @@ QVBoxLayout *MetricTileBase::buildChrome()
 
     textCol->addLayout(mTitleRow);
 
-    mLblSource = new QLabel(mHeaderWidget);
+    mSourceRow = new QWidget(mHeaderWidget);
+    mSourceRow->setObjectName("metricTileHeader");
+    auto *sourceRow = new QHBoxLayout(mSourceRow);
+    sourceRow->setContentsMargins(0, 0, 0, 0);
+    sourceRow->setSpacing(4);
+
+    mLblSource = new QLabel(mSourceRow);
     mLblSource->setObjectName("metricTileSource");
     mLblSource->setMinimumHeight(13);
-    textCol->addWidget(mLblSource);
+    sourceRow->addWidget(mLblSource);
+
+    mLblHealthSep = new QLabel(QStringLiteral("·"), mSourceRow);
+    mLblHealthSep->setObjectName("metricTileSource");
+    mLblHealthSep->hide();
+    sourceRow->addWidget(mLblHealthSep);
+
+    mLblHealth = new QLabel(mSourceRow);
+    mLblHealth->setObjectName("diskHealthStatus");
+    mLblHealth->hide();
+    sourceRow->addWidget(mLblHealth);
+
+    sourceRow->addStretch();
+    textCol->addWidget(mSourceRow);
 
     headerLayout->addLayout(textCol, 1);
 
@@ -257,7 +326,7 @@ QVBoxLayout *MetricTileBase::buildChrome()
     return root;
 }
 
-void MetricTileBase::appendFooter(QVBoxLayout *root)
+void MetricTileBase::appendFooter(QVBoxLayout *root, QWidget *footerVisual)
 {
     mFooterWidget = new QWidget(this);
     mFooterWidget->setObjectName("metricTileFooter");
@@ -285,9 +354,18 @@ void MetricTileBase::appendFooter(QVBoxLayout *root)
     mBtnAction->hide();
     mBtnAction->setFixedHeight(22);
 
-    footerLayout->addWidget(mLblValue);
-    footerLayout->addWidget(mLblValueSub);
-    footerLayout->addStretch();
+    if (footerVisual) {
+        // Style-specific readout (Ring's progress bar, Hybrid's sparkline) is
+        // flush-left and fills the footer; the trend pill sits to its right. The
+        // value labels are unused here (the value is centered in the shape).
+        mLblValue->hide();
+        mLblValueSub->hide();
+        footerLayout->addWidget(footerVisual, 1);
+    } else {
+        footerLayout->addWidget(mLblValue);
+        footerLayout->addWidget(mLblValueSub);
+        footerLayout->addStretch();
+    }
     footerLayout->addWidget(mLblTrend);
     footerLayout->addWidget(mBtnAction);
 
@@ -300,9 +378,21 @@ void MetricTileBase::setSource(const QString &text)
     if (!mLblSource)
         return;
     mLblSource->setToolTip(text);
+    const int avail = availableSourceWidth();
     QFontMetrics fm(mLblSource->font());
-    const int avail = qMax(0, mLblSource->width() - 1);
     mLblSource->setText(avail > 0 ? fm.elidedText(text, Qt::ElideRight, avail) : text);
+}
+
+void MetricTileBase::setInputName(const QString &friendly, const QString &model)
+{
+    if (!mLblInput)
+        return;
+    mLblInput->setText(friendly);
+    mLblInput->setVisible(!friendly.isEmpty());
+    if (!model.isEmpty()) {
+        mLblInput->setToolTip(model);
+        setToolTip(model);
+    }
 }
 
 void MetricTileBase::setHeroValue(const QString &text)
@@ -324,12 +414,15 @@ void MetricTileBase::setTrendLabel(TrendDirection dir)
     mCurrentTrend = dir;
     if (!mLblTrend)
         return;
-    const QString t = trendText(dir);
-    mLblTrend->setText(t);
+    // Show only the arrow so the pill stays a stable size across rising/stable/
+    // falling; the full direction word is available on hover.
+    const QString arrow = trendArrow(dir);
+    mLblTrend->setText(arrow);
+    mLblTrend->setToolTip(trendWord(dir));
     // Hide an empty pill; also stay hidden while a quick-action button occupies
     // the footer's right side.
     const bool actionActive = mBtnAction && mBtnAction->isVisible();
-    mLblTrend->setVisible(!t.isEmpty() && !actionActive);
+    mLblTrend->setVisible(!arrow.isEmpty() && !actionActive);
 }
 
 void MetricTileBase::applyAccentColor(const QColor &color)

@@ -35,8 +35,7 @@ void GaugeTile::buildLayout()
 void GaugeTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
-    mValueText = valueText;
-    setHeroValue(valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText);
+    mValueText = valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText;
     update();
 }
 
@@ -54,9 +53,9 @@ void GaugeTile::setSubtitle(const QString &text)
     setSource(text);
 }
 
-void GaugeTile::setTrendDirection(TrendDirection dir)
+void GaugeTile::setTrendDirection(TrendDirection)
 {
-    setTrendLabel(dir);
+    // Design: gauge surfaces the value in its center, not a footer trend.
 }
 
 void GaugeTile::setSecondaryValue(const QString &text)
@@ -147,8 +146,8 @@ void GaugeTile::paintEvent(QPaintEvent *event)
     int sweepAngle16 = static_cast<int>(-ARC_SWEEP_DEG * QT_ARC_UNIT);
     painter.drawArc(arcRect, startAngle16, sweepAngle16);
 
-    // Value arc with conical gradient fill. The numeric reading lives in the
-    // footer (stat-card layout), so the arc itself carries no centered text.
+    // Value arc with conical gradient fill. The primary value is drawn centered
+    // in the arc (unified anatomy).
     if (mPercent > 0) {
         double valueSweepDeg = ARC_SWEEP_DEG * mPercent / 100.0;
 
@@ -164,4 +163,14 @@ void GaugeTile::paintEvent(QPaintEvent *event)
         int valueSweep16 = static_cast<int>(-valueSweepDeg * QT_ARC_UNIT);
         painter.drawArc(arcRect, startAngle16, valueSweep16);
     }
+
+    // Primary value centered in the arc (unified anatomy).
+    const QString valueText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
+    QFont valueFont = font();
+    valueFont.setPixelSize(qMax(14, diameter / 5));
+    valueFont.setBold(true);
+    painter.setFont(valueFont);
+    painter.setPen(mTextColor);
+    const QRectF valueRect(centerX - diameter / 2.0, centerY - diameter / 2.0, diameter, diameter);
+    painter.drawText(valueRect, Qt::AlignCenter, valueText);
 }

@@ -554,25 +554,10 @@ void DashboardPage::onMemoryUpdated(const MemorySnapshot &snap)
 
     mMemTile->setValue(memUsedPercent, QString("%1%").arg(memUsedPercent));
     mMemTile->addDataPoint(memUsedPercent);
-    mMemTile->setSecondaryValue(QString("%1 / %2").arg(f_memUsed, f_memTotal));
 
-    // FR-57: Build subtitle with swap info + platform-specific breakdown
-    QString subtitle = QString("Swap: %1 / %2")
-        .arg(FormatUtil::formatBytes(snap.swapUsed), FormatUtil::formatBytes(snap.swapTotal));
-
-    if (snap.wired > 0 || snap.compressed > 0) {
-        // macOS: wired/active/compressed breakdown
-        subtitle += QString(" \u2022 W:%1 A:%2 C:%3")
-            .arg(FormatUtil::formatBytes(snap.wired),
-                 FormatUtil::formatBytes(snap.active),
-                 FormatUtil::formatBytes(snap.compressed));
-    } else if (snap.available > 0) {
-        // Linux: available memory
-        subtitle += QString(" \u2022 Avail: %1")
-            .arg(FormatUtil::formatBytes(snap.available));
-    }
-
-    mMemTile->setSubtitle(subtitle);
+    // Capacity (used / total) in the sub-header, consistent with the Disk
+    // tile. (Swap / platform breakdown removed per product decision.)
+    mMemTile->setSubtitle(QString("%1 / %2").arg(f_memUsed, f_memTotal));
 
     // FR-57: Pressure-based tile color (only when user hasn't set a custom color)
     if (snap.pressureLevel > 0 && mTileColors.value("memory").isEmpty()) {
@@ -633,23 +618,8 @@ void DashboardPage::onDiskUsageUpdated(const QList<Disk> &disks)
 
     // Drive each disk tile from its own bound disk (fallback to first if unbound
     // or the binding no longer resolves).
-    for (DashboardTileWrapper *w : wrappersOfType("disk")) {
-        const Disk *disk = nullptr;
-        for (const Disk &d : disks)
-            if (d.name.trimmed() == w->inputKey().trimmed()) { disk = &d; break; }
-        if (!disk)
-            disk = &disks.at(0);
-
-        int diskPercent = 0;
-        if (disk->size > 0)
-            diskPercent = ((double) disk->used / (double) disk->size) * 100.0;
-
-        auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
-        if (!tile) continue;
-        tile->setDiskInfo(diskPercent,
-                          FormatUtil::formatBytes(disk->used),
-                          FormatUtil::formatBytes(disk->size));
-    }
+    for (DashboardTileWrapper *w : wrappersOfType("disk"))
+        refreshDiskUsageTile(w);
 
     updateDiskHealthBadge();
 }
@@ -846,6 +816,28 @@ static QString extractBaseDevice(const QString &devicePath)
     return devicePath;
 }
 
+void DashboardPage::refreshDiskUsageTile(DashboardTileWrapper *w)
+{
+    if (mCachedDisks.isEmpty()) return;
+
+    const Disk *disk = nullptr;
+    for (const Disk &d : mCachedDisks)
+        if (d.name.trimmed() == w->inputKey().trimmed()) { disk = &d; break; }
+    if (!disk)
+        disk = &mCachedDisks.at(0);
+
+    int diskPercent = 0;
+    if (disk->size > 0)
+        diskPercent = ((double) disk->used / (double) disk->size) * 100.0;
+
+    auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+    if (!tile) return;
+    tile->setInputName(w->inputKey().isEmpty() ? disk->name : w->inputKey());
+    tile->setDiskInfo(diskPercent,
+                      FormatUtil::formatBytes(disk->used),
+                      FormatUtil::formatBytes(disk->size));
+}
+
 void DashboardPage::updateDiskHealthBadge()
 {
     if (mCachedDriveHealth.isEmpty() || mCachedDisks.isEmpty())
@@ -891,11 +883,14 @@ void DashboardPage::updateDiskHealthBadge()
         if (!matched && mCachedDriveHealth.size() == 1)
             matched = &mCachedDriveHealth.first();
 
-        tile->clearDriveHealth();
         if (matched) {
-            QString name = matched->model.isEmpty() ? matched->deviceName : matched->model;
             bool good = (matched->healthVerdict == "Good" || matched->smartPassed);
-            tile->setDriveHealth(name, matched->healthVerdict, matched->healthPercent, good);
+            tile->setDriveHealthSegment(matched->healthVerdict, good);
+            // Req 4: identify the drive by the friendly input name; SMART model → tooltip.
+            const QString friendly = w->inputKey().isEmpty() ? selectedDisk->name : w->inputKey();
+            tile->setInputName(friendly, matched->model.isEmpty() ? matched->deviceName : matched->model);
+        } else {
+            tile->setDriveHealthSegment(QString(), true);
         }
     }
 }
@@ -1820,9 +1815,12 @@ void DashboardPage::onTileStyleChangeRequested(DashboardTileWrapper *wrapper, co
     // Re-apply display mode
     applyDisplayModeForSpan(wrapper);
 
-    // Re-apply disk health badges
-    if (type == "disk")
+    // Re-apply disk usage + health badges immediately from cache so the new
+    // tile doesn't show stale zeros until the next poll tick.
+    if (type == "disk") {
+        refreshDiskUsageTile(wrapper);
         updateDiskHealthBadge();
+    }
 
     // Rebuild the customization menu (color swatches vs. range presets) for the new style
     wrapper->clearCustomizationSection();

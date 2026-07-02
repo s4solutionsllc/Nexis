@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Dashboard: `DriveTileFormat::usageText` pure helper centralizes used/total disk usage text formatting across all disk tile styles (GH#191).
+
+### Changed
+- Dashboard: refined the unified tile anatomy — the four shape styles (donut, gauge, ring, hybrid) now render the primary value centered inside the shape for all metric types; only ring and hybrid surface a footer trend pill (GH#191).
+- Dashboard: the disk donut now uses the same shared tile chrome as every other style — used/available in the sub-header, shared footer band — instead of its own bespoke layout (GH#191).
+- Dashboard: disk tiles now identify the drive by the friendly input name (e.g. `Data-02`) in a muted label in the title row; the SMART model is shown as a hover tooltip instead of in the title (GH#191).
+- Dashboard: the footer trend pill now shows only the direction arrow (`↑` / `→` / `↓`) so it stays a stable size; the full direction (Rising / Stable / Falling) is shown as a tooltip on hover. Applies to all tile types and styles (GH#191).
+- Dashboard: Ring and Hybrid styles moved their secondary readout into the footer — Ring's progress bar and Hybrid's mini sparkline now sit left-aligned in the footer (filling its width, trend pill to the right), so the ring/arc grows to fill the body (GH#191).
+- Dashboard: the Memory tile now shows used/total capacity in its sub-header (consistent with Disk) instead of swap usage; the swap / platform-memory breakdown line was removed (GH#191).
+
+### Fixed
+- Dashboard: drive health (SMART verdict) is now tied to the disk type and appended to the sub-header for every disk style, not just the donut — it survives a style switch (GH#191).
+
 ## [2.8.0] - 2026-06-30
 
 ### Added

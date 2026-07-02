@@ -21,27 +21,24 @@ RingTile::RingTile(const QString &title, const QString &colorToken, QWidget *par
 void RingTile::buildLayout()
 {
     auto *mainLayout = buildChrome();
-    mainLayout->addStretch(1);   // body: the ring is painted here
+    mainLayout->addStretch(1);   // body: the ring fills this region
 
-    // Thin progress bar below the ring
+    // Thin progress bar — a secondary readout kept in the footer, not the body.
     mProgressBar = new QProgressBar(this);
     mProgressBar->setObjectName("metricTileProgress");
     mProgressBar->setRange(0, 100);
     mProgressBar->setValue(0);
     mProgressBar->setTextVisible(false);
     mProgressBar->setFixedHeight(4);
-    mainLayout->addWidget(mProgressBar);
 
-    mainLayout->addSpacing(2);
-
-    appendFooter(mainLayout);
+    appendFooter(mainLayout, mProgressBar);
 }
 
 void RingTile::setValue(int percent, const QString &valueText)
 {
     mPercent = qBound(0, percent, 100);
     mProgressBar->setValue(mPercent);
-    setHeroValue(valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText);
+    mValueText = valueText.isEmpty() ? QString("%1%").arg(mPercent) : valueText;
     update();
 }
 
@@ -94,6 +91,7 @@ void RingTile::refreshThemeColors()
     mMetricColor = resolvedColor();
     mTrackColor  = QColor(sv->value("@color02").toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
+    mTextColor = QColor(sv->value("@color05").toString());
 
     QString colorHex = mMetricColor.name();
 
@@ -114,10 +112,10 @@ void RingTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    // The ring sits between the header band and the progress bar; the numeric
-    // reading is shown in the footer (stat-card layout).
+    // The ring fills the body between the header and the footer (the progress
+    // bar now lives in the footer); the value is drawn centered in the ring.
     int topMargin    = bodyTop();
-    int bottomMargin = mProgressBar->geometry().top() - 6;
+    int bottomMargin = bodyBottom();
     int availableH   = bottomMargin - topMargin;
     if (availableH < 20)
         return;
@@ -146,6 +144,15 @@ void RingTile::paintEvent(QPaintEvent *event)
         int spanAngle  = -static_cast<int>(mPercent * 3.60) * 16;
         painter.drawArc(ringRect, startAngle, spanAngle);
     }
+
+    // Primary value centered in the ring (unified anatomy).
+    const QString valueText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
+    QFont valueFont = font();
+    valueFont.setPixelSize(qMax(14, diameter / 5));
+    valueFont.setBold(true);
+    painter.setFont(valueFont);
+    painter.setPen(mTextColor);
+    painter.drawText(ringRect, Qt::AlignCenter, valueText);
 }
 
 void RingTile::resizeEvent(QResizeEvent *event)
