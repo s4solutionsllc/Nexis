@@ -113,7 +113,9 @@ protected:
     void updateGearIcon();
     void applyActionButtonStyle(const QColor &metricColor, const QColor &hoverTextColor);
 
-    QString trendText(TrendDirection dir) const;
+    QString trendText(TrendDirection dir) const;   // "↑ rising" (full)
+    QString trendArrow(TrendDirection dir) const;   // "↑" only (shown in the pill)
+    QString trendWord(TrendDirection dir) const;    // "Rising" (shown in the tooltip)
     QColor resolvedColor() const;
 };
 

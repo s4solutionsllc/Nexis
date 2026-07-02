@@ -146,6 +146,26 @@ QString MetricTileBase::trendText(TrendDirection dir) const
     return {};
 }
 
+QString MetricTileBase::trendArrow(TrendDirection dir) const
+{
+    switch (dir) {
+    case Rising:  return QStringLiteral("\u2191");
+    case Falling: return QStringLiteral("\u2193");
+    case Stable:  return QStringLiteral("\u2192");
+    }
+    return {};
+}
+
+QString MetricTileBase::trendWord(TrendDirection dir) const
+{
+    switch (dir) {
+    case Rising:  return tr("Rising");
+    case Falling: return tr("Falling");
+    case Stable:  return tr("Stable");
+    }
+    return {};
+}
+
 void MetricTileBase::createGearButton()
 {
     mGearButton = new QToolButton(this);
@@ -365,12 +385,15 @@ void MetricTileBase::setTrendLabel(TrendDirection dir)
     mCurrentTrend = dir;
     if (!mLblTrend)
         return;
-    const QString t = trendText(dir);
-    mLblTrend->setText(t);
+    // Show only the arrow so the pill stays a stable size across rising/stable/
+    // falling; the full direction word is available on hover.
+    const QString arrow = trendArrow(dir);
+    mLblTrend->setText(arrow);
+    mLblTrend->setToolTip(trendWord(dir));
     // Hide an empty pill; also stay hidden while a quick-action button occupies
     // the footer's right side.
     const bool actionActive = mBtnAction && mBtnAction->isVisible();
-    mLblTrend->setVisible(!t.isEmpty() && !actionActive);
+    mLblTrend->setVisible(!arrow.isEmpty() && !actionActive);
 }
 
 void MetricTileBase::applyAccentColor(const QColor &color)
