@@ -326,7 +326,7 @@ QVBoxLayout *MetricTileBase::buildChrome()
     return root;
 }
 
-void MetricTileBase::appendFooter(QVBoxLayout *root)
+void MetricTileBase::appendFooter(QVBoxLayout *root, QWidget *footerVisual)
 {
     mFooterWidget = new QWidget(this);
     mFooterWidget->setObjectName("metricTileFooter");
@@ -356,7 +356,13 @@ void MetricTileBase::appendFooter(QVBoxLayout *root)
 
     footerLayout->addWidget(mLblValue);
     footerLayout->addWidget(mLblValueSub);
-    footerLayout->addStretch();
+    if (footerVisual) {
+        // Style-specific readout (Ring's progress bar, Hybrid's sparkline) fills
+        // the footer; the trend pill sits to its right.
+        footerLayout->addWidget(footerVisual, 1);
+    } else {
+        footerLayout->addStretch();
+    }
     footerLayout->addWidget(mLblTrend);
     footerLayout->addWidget(mBtnAction);
 

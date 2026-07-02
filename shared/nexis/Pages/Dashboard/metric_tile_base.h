@@ -102,7 +102,10 @@ protected:
     // adds the header band (incl. gear) and returns the root so the subclass
     // can append its body; appendFooter() adds the shared footer band.
     QVBoxLayout *buildChrome();
-    void appendFooter(QVBoxLayout *root);
+    // footerVisual (optional): a style-specific readout widget (e.g. Ring's
+    // progress bar, Hybrid's sparkline) placed in the footer, filling its width
+    // with the trend pill to its right.
+    void appendFooter(QVBoxLayout *root, QWidget *footerVisual = nullptr);
     void setSource(const QString &text);
     void setHeroValue(const QString &text);
     void setHeroSecondary(const QString &text);

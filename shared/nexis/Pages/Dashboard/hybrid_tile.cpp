@@ -66,12 +66,11 @@ void HybridTile::buildLayout()
 
     mChartView = new QChartView(mChart, this);
     mChartView->setRenderHint(QPainter::Antialiasing);
-    mChartView->setFixedHeight(30);
-    mainLayout->addWidget(mChartView);
+    mChartView->setFixedHeight(16);   // thin history strip in the footer
 
-    mainLayout->addSpacing(2);
-
-    appendFooter(mainLayout);
+    // The sparkline is a secondary readout: it lives in the footer (filling its
+    // width, trend pill to its right), so the arc owns the whole body.
+    appendFooter(mainLayout, mChartView);
 
     // Initialize sparkline series from data buffer (pre-filled with zeros by base)
     mSeries->replace(mPointsCache);
@@ -121,30 +120,8 @@ void HybridTile::setDisplayMode(DisplayMode mode)
 {
     mDisplayMode = mode;
     applyChromeForMode(mode);
-
-    switch (mode) {
-    case Hero:
-        mChartView->show();
-        mGaugeArea->setMinimumHeight(100);
-        mChartView->setFixedHeight(40);
-        break;
-    case Large:
-        mChartView->show();
-        mGaugeArea->setMinimumHeight(80);
-        mChartView->setFixedHeight(35);
-        break;
-    case Compact:
-        // Drop the sparkline entirely; the painted gauge + value carry the tile.
-        mChartView->hide();
-        mGaugeArea->setMinimumHeight(0);
-        break;
-    case Normal:
-    default:
-        mChartView->show();
-        mGaugeArea->setMinimumHeight(0);
-        mChartView->setFixedHeight(30);
-        break;
-    }
+    // The sparkline is a fixed-height footer strip and the arc fills the body
+    // via mGaugeArea's Expanding policy, so no per-mode resizing is needed.
     update();
 }
 

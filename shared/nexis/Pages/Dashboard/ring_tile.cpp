@@ -21,20 +21,17 @@ RingTile::RingTile(const QString &title, const QString &colorToken, QWidget *par
 void RingTile::buildLayout()
 {
     auto *mainLayout = buildChrome();
-    mainLayout->addStretch(1);   // body: the ring is painted here
+    mainLayout->addStretch(1);   // body: the ring fills this region
 
-    // Thin progress bar below the ring
+    // Thin progress bar — a secondary readout kept in the footer, not the body.
     mProgressBar = new QProgressBar(this);
     mProgressBar->setObjectName("metricTileProgress");
     mProgressBar->setRange(0, 100);
     mProgressBar->setValue(0);
     mProgressBar->setTextVisible(false);
     mProgressBar->setFixedHeight(4);
-    mainLayout->addWidget(mProgressBar);
 
-    mainLayout->addSpacing(2);
-
-    appendFooter(mainLayout);
+    appendFooter(mainLayout, mProgressBar);
 }
 
 void RingTile::setValue(int percent, const QString &valueText)
@@ -115,10 +112,10 @@ void RingTile::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
-    // The ring sits between the header band and the progress bar; the primary
-    // value is drawn centered in the ring (unified anatomy).
+    // The ring fills the body between the header and the footer (the progress
+    // bar now lives in the footer); the value is drawn centered in the ring.
     int topMargin    = bodyTop();
-    int bottomMargin = mProgressBar->geometry().top() - 6;
+    int bottomMargin = bodyBottom();
     int availableH   = bottomMargin - topMargin;
     if (availableH < 20)
         return;

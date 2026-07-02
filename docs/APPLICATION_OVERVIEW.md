@@ -163,8 +163,8 @@ Real-time system monitoring at a glance in a **fixed-cell responsive grid layout
 **Widget styles** — Each tile (except Network) can be switched between 6 visual styles via a paintbrush icon visible during edit mode:
 - **Sparkline** (default) — line chart showing recent history with progress bar and trend indicator
 - **Gauge** — classic ¾-circle arc gauge with conical gradient fill; value centered in the shape
-- **Hybrid** — compact gauge arc combined with a mini sparkline chart below; value centered in the shape, trend pill in footer
-- **Ring** — full 360° activity ring (Apple Watch style); value centered in the shape, trend pill in footer
+- **Hybrid** — gauge arc filling the body with the value centered in it; a mini sparkline history strip sits in the footer with the trend pill beside it
+- **Ring** — full 360° activity ring (Apple Watch style) filling the body with the value centered in it; a thin progress bar sits in the footer with the trend pill beside it
 - **Speedometer** — analog dial with needle, tick marks, and green→red gradient arc (value shown in the footer)
 - **VU Meter** — segmented vertical bar with bottom-up fill and stats panel
 - **Donut** (Disk tile only) — custom-painted donut chart using shared tile chrome; value centered in the shape (Disk tile default)
