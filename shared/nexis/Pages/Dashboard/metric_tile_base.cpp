@@ -328,8 +328,11 @@ QVBoxLayout *MetricTileBase::buildChrome()
 
 void MetricTileBase::appendFooter(QVBoxLayout *root, QWidget *footerVisual)
 {
+    mFooterVisual = footerVisual;
+
     mFooterWidget = new QWidget(this);
     mFooterWidget->setObjectName("metricTileFooter");
+    mFooterWidget->setFixedHeight(FOOTER_HEIGHT);   // consistent band height across styles
     auto *footerLayout = new QHBoxLayout(mFooterWidget);
     footerLayout->setContentsMargins(0, 0, 0, 0);
     footerLayout->setSpacing(6);
@@ -370,6 +373,20 @@ void MetricTileBase::appendFooter(QVBoxLayout *root, QWidget *footerVisual)
     footerLayout->addWidget(mBtnAction);
 
     root->addWidget(mFooterWidget);
+    updateFooterVisibility();
+}
+
+void MetricTileBase::updateFooterVisibility()
+{
+    if (!mFooterWidget)
+        return;
+    const bool hasContent =
+        (mFooterVisual != nullptr) ||
+        (mLblValue    && !mLblValue->text().isEmpty()) ||
+        (mLblValueSub && mLblValueSub->isVisible() && !mLblValueSub->text().isEmpty()) ||
+        (mLblTrend    && mLblTrend->isVisible()) ||
+        (mBtnAction   && mBtnAction->isVisible());
+    mFooterWidget->setVisible(hasContent);
 }
 
 void MetricTileBase::setSource(const QString &text)
@@ -399,6 +416,7 @@ void MetricTileBase::setHeroValue(const QString &text)
 {
     if (mLblValue)
         mLblValue->setText(text);
+    updateFooterVisibility();
 }
 
 void MetricTileBase::setHeroSecondary(const QString &text)
@@ -407,6 +425,7 @@ void MetricTileBase::setHeroSecondary(const QString &text)
         return;
     mLblValueSub->setText(text);
     mLblValueSub->setVisible(!text.isEmpty());
+    updateFooterVisibility();
 }
 
 void MetricTileBase::setTrendLabel(TrendDirection dir)
@@ -423,6 +442,7 @@ void MetricTileBase::setTrendLabel(TrendDirection dir)
     // the footer's right side.
     const bool actionActive = mBtnAction && mBtnAction->isVisible();
     mLblTrend->setVisible(!arrow.isEmpty() && !actionActive);
+    updateFooterVisibility();
 }
 
 void MetricTileBase::applyAccentColor(const QColor &color)
@@ -435,16 +455,11 @@ void MetricTileBase::applyAccentColor(const QColor &color)
 void MetricTileBase::applyChromeForMode(DisplayMode mode)
 {
     const bool compact = (mode == Compact);
-    // The footer carries the numeric reading in every mode, so it stays visible.
     // On a 1x1 (compact) tile we collapse the source line to reclaim height.
+    // The footer is now a fixed-height band, so the footer value no longer
+    // scales per display mode (shape styles paint their own scaled value).
     if (mLblSource)
         mLblSource->setVisible(!compact);
-    if (mLblValue) {
-        mLblValue->setProperty("heroMode", mode == Hero ? "true" : "false");
-        mLblValue->setProperty("largeMode", mode == Large ? "true" : "false");
-        mLblValue->style()->unpolish(mLblValue);
-        mLblValue->style()->polish(mLblValue);
-    }
 }
 
 int MetricTileBase::bodyTop() const

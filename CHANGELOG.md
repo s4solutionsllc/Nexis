@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dashboard: the footer trend pill now shows only the direction arrow (`↑` / `→` / `↓`) so it stays a stable size; the full direction (Rising / Stable / Falling) is shown as a tooltip on hover. Applies to all tile types and styles (GH#191).
 - Dashboard: Ring and Hybrid styles moved their secondary readout into the footer — Ring's progress bar and Hybrid's mini sparkline now sit left-aligned in the footer (filling its width, trend pill to the right), so the ring/arc grows to fill the body (GH#191).
 - Dashboard: the Memory tile now shows used/total capacity in its sub-header (consistent with Disk) instead of swap usage; the swap / platform-memory breakdown line was removed (GH#191).
+- Dashboard: tile footers now use a consistent fixed height across all styles (the footer value is sized to fit and no longer scales per display mode), and the footer auto-hides on Gauge/Donut where it has no content so the dial fills the body (GH#191).
 
 ### Fixed
 - Dashboard: drive health (SMART verdict) is now tied to the disk type and appended to the sub-header for every disk style, not just the donut — it survives a style switch (GH#191).
