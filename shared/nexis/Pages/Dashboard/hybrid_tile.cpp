@@ -141,7 +141,7 @@ void HybridTile::refreshThemeColors()
         return;
 
     mArcColor = resolvedColor();
-    mTrackColor = QColor(sv->value("@color02").toString());
+    mTrackColor = QColor(sv->value("@chartGridColor").toString());
     mTextColor = QColor(sv->value("@color05").toString());
     mSecondaryTextColor = QColor(sv->value("@tertiaryText").toString());
 

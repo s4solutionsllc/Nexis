@@ -811,11 +811,11 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 8pt;
     padding: 1 6;
     border-radius: 8;
-    background-color: @color02;
+    background-color: @chartGridColor;
 }
 
 #metricTileProgress {
-    background-color: @color02;
+    background-color: @chartGridColor;
     border: 0;
     border-radius: 2;
     max-height: 4;

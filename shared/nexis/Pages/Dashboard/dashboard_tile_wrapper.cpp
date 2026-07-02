@@ -1,11 +1,16 @@
 #include "dashboard_tile_wrapper.h"
 #include "dashboard_layout_util.h"
+#include "utilities.h"
 
 #include <QVBoxLayout>
 #include <QPainter>
 #include <QPen>
 #include <QApplication>
 #include <QResizeEvent>
+#include <QStyle>
+#include <QSettings>
+#include "Managers/app_manager.h"
+#include "signal_mapper.h"
 
 DashboardTileWrapper::DashboardTileWrapper(const QString &uid, const QString &type,
                                            const QString &input, QWidget *innerWidget,
@@ -33,6 +38,11 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &uid, const QString &ty
 
     innerWidget->setParent(this);
     layout->addWidget(innerWidget);
+    applyDepthTreatment();
+    // Tiles are built before the theme loads (style values null at ctor time),
+    // so re-apply once the theme is available and whenever it changes.
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
+            this, &DashboardTileWrapper::applyDepthTreatment);
 
     mStyleButton = new QToolButton(this);
     mStyleButton->setObjectName("btnStyleSelector");
@@ -89,8 +99,35 @@ void DashboardTileWrapper::setInnerWidget(QWidget *newWidget)
     mInnerWidget = newWidget;
     newWidget->setParent(this);
     layout()->addWidget(newWidget);
+    applyDepthTreatment();
     mStyleButton->raise();
     mRemoveButton->raise();
+}
+
+void DashboardTileWrapper::applyDepthTreatment()
+{
+    if (!mInnerWidget)
+        return;
+
+    // Give each tile depth (elevation): the theme's warm elevated-card surface +
+    // a soft drop shadow so it lifts off the page. The tile needs
+    // WA_StyledBackground for its own QSS box to paint, and inline colors
+    // (theme-resolved) because inline stylesheets don't get @token substitution.
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    QString cardBg = sv ? sv->value("@cardBgElevated").toString() : QString();
+    QString border = sv ? sv->value("@borderColor").toString()    : QString();
+    if (cardBg.isEmpty()) cardBg = "#FFF8F2";   // light-theme fallback (pre-theme-load)
+    if (border.isEmpty()) border = "#D0C9C0";
+
+    mInnerWidget->setAttribute(Qt::WA_StyledBackground, true);
+    // Scope the rule to the tile's own object name so it does NOT cascade to the
+    // child header/footer/label widgets (a selector-less sheet would box them all).
+    mInnerWidget->setStyleSheet(QString(
+        "#%1 { background-color: %2; border: 1px solid %3; border-radius: 12px; }")
+        .arg(mInnerWidget->objectName(), cardBg, border));
+
+    layout()->setContentsMargins(8, 8, 8, 8);   // room for the drop shadow
+    Utilities::addDropShadow(mInnerWidget, 90, 26);
 }
 
 void DashboardTileWrapper::setEditMode(bool enabled)

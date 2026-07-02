@@ -140,7 +140,7 @@ void HealthScoreTile::paintBreakdownBars(QPainter &painter)
 
     painter.setRenderHint(QPainter::Antialiasing);
 
-    QString bgColor = sv->value("@color02").toString();
+    QString bgColor = sv->value("@chartGridColor").toString();
 
     int startY = mLblScoreLabel->geometry().bottom() + 6;
     int leftMargin = 12;
