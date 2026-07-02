@@ -77,6 +77,7 @@ protected:
     // different body styles line up and always show what they are monitoring.
     QWidget *mHeaderWidget = nullptr;
     QWidget *mFooterWidget = nullptr;
+    QWidget *mSourceRow = nullptr;   // sub-header row hosting mLblSource + health segment
     QHBoxLayout *mTitleRow = nullptr;
     QFrame *mAccentBar = nullptr;
     QLabel *mLblTitle = nullptr;     // type label, e.g. "CPU"
@@ -91,6 +92,10 @@ protected:
     // Shared helpers for subclass buildLayout()
     void createGearButton();
     void repositionGearButton();
+    // Width available to the elided source text = the sub-header row width minus
+    // the visible health segment. Stable (layout-driven), so re-eliding the full
+    // source text against it does not compound/shrink across ticks.
+    int availableSourceWidth() const;
     void createFooterLayout(QVBoxLayout *parent);
 
     // Unified chrome helpers. buildChrome() creates the root layout on `this`,

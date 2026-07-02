@@ -38,6 +38,8 @@ void MetricTileBase::setDriveHealthSegment(const QString &verdict, bool healthy)
     mLblHealth->style()->polish(mLblHealth);
     mLblHealth->setVisible(show);
     mLblHealthSep->setVisible(show);
+    // The health segment changes how much room the source text has — re-fit it.
+    setSource(mSourceFull);
 }
 
 void MetricTileBase::clearDataPoints()
@@ -180,13 +182,29 @@ void MetricTileBase::createGearButton()
 // The gear now lives in the header layout (top-right), so it no longer needs
 // manual positioning. This hook still fires from each tile's resizeEvent, so we
 // reuse it to re-elide the source line to the tile's current width.
+int MetricTileBase::availableSourceWidth() const
+{
+    if (!mSourceRow || !mLblSource)
+        return 0;
+    // The source text may share its row with the health segment ("· Good"); the
+    // row width is layout-driven and stable, so subtract the visible segment to
+    // get a fixed target for elision (never mLblSource's own shrinking width).
+    int w = mSourceRow->width();
+    if (mLblHealth && mLblHealth->isVisible())
+        w -= mLblHealth->sizeHint().width() + 4;
+    if (mLblHealthSep && mLblHealthSep->isVisible())
+        w -= mLblHealthSep->sizeHint().width() + 4;
+    return qMax(0, w - 1);
+}
+
 void MetricTileBase::repositionGearButton()
 {
     if (!mLblSource)
         return;
+    const int avail = availableSourceWidth();
     QFontMetrics fm(mLblSource->font());
-    const int avail = qMax(0, mLblSource->width() - 1);
-    mLblSource->setText(fm.elidedText(mSourceFull, Qt::ElideRight, avail));
+    mLblSource->setText(avail > 0 ? fm.elidedText(mSourceFull, Qt::ElideRight, avail)
+                                  : mSourceFull);
 }
 
 QToolButton *MetricTileBase::gearButton()
@@ -278,27 +296,29 @@ QVBoxLayout *MetricTileBase::buildChrome()
 
     textCol->addLayout(mTitleRow);
 
-    auto *sourceRow = new QHBoxLayout();
+    mSourceRow = new QWidget(mHeaderWidget);
+    mSourceRow->setObjectName("metricTileHeader");
+    auto *sourceRow = new QHBoxLayout(mSourceRow);
     sourceRow->setContentsMargins(0, 0, 0, 0);
     sourceRow->setSpacing(4);
 
-    mLblSource = new QLabel(mHeaderWidget);
+    mLblSource = new QLabel(mSourceRow);
     mLblSource->setObjectName("metricTileSource");
     mLblSource->setMinimumHeight(13);
     sourceRow->addWidget(mLblSource);
 
-    mLblHealthSep = new QLabel(QStringLiteral("·"), mHeaderWidget);
+    mLblHealthSep = new QLabel(QStringLiteral("·"), mSourceRow);
     mLblHealthSep->setObjectName("metricTileSource");
     mLblHealthSep->hide();
     sourceRow->addWidget(mLblHealthSep);
 
-    mLblHealth = new QLabel(mHeaderWidget);
+    mLblHealth = new QLabel(mSourceRow);
     mLblHealth->setObjectName("diskHealthStatus");
     mLblHealth->hide();
     sourceRow->addWidget(mLblHealth);
 
     sourceRow->addStretch();
-    textCol->addLayout(sourceRow);
+    textCol->addWidget(mSourceRow);
 
     headerLayout->addLayout(textCol, 1);
 
@@ -349,8 +369,8 @@ void MetricTileBase::setSource(const QString &text)
     if (!mLblSource)
         return;
     mLblSource->setToolTip(text);
+    const int avail = availableSourceWidth();
     QFontMetrics fm(mLblSource->font());
-    const int avail = qMax(0, mLblSource->width() - 1);
     mLblSource->setText(avail > 0 ? fm.elidedText(text, Qt::ElideRight, avail) : text);
 }
 
