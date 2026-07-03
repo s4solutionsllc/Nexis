@@ -6,6 +6,7 @@
 #include <QResizeEvent>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
+#include "tile_value_fit.h"
 
 static constexpr double GAUGE_START_ANGLE = 225.0;
 static constexpr double GAUGE_SWEEP_ANGLE = 270.0;
@@ -194,14 +195,18 @@ void HybridTile::drawGaugeArc(QPainter &painter)
     painter.setPen(valuePen);
     painter.drawArc(arcRect, GAUGE_START_ANGLE * 16, valueSweep * 16);
 
-    // Primary value centered in the gauge arc (unified anatomy).
+    // Primary value centered in the gauge arc (unified anatomy), shrunk to fit
+    // the clear inner width; TextDontClip so glyphs degrade to visible overflow
+    // instead of disappearing at the arc rect edges (GH#214).
     const QString valueText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
     QFont valueFont = painter.font();
-    valueFont.setPixelSize(qMax(12, side / 4));
     valueFont.setBold(true);
+    const int innerWidth = side - 2 * ARC_PEN_WIDTH - 12;
+    valueFont.setPixelSize(TileValueFit::fittedPixelSize(valueFont, valueText,
+                                                         innerWidth, qMax(12, side / 4)));
     painter.setFont(valueFont);
     painter.setPen(mTextColor);
-    painter.drawText(arcRect, Qt::AlignCenter, valueText);
+    painter.drawText(arcRect, Qt::AlignCenter | Qt::TextDontClip, valueText);
 }
 
 int HybridTile::gaugeSize() const

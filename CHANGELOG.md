@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Dashboard: the primary value centered in gauge, hybrid, ring, and donut tiles now shrinks to fit inside the shape — wide values like a 4-digit fan speed (`3846 RPM`) no longer overlap the arc (gauge) or get their first digit and trailing letter clipped away (hybrid). Short values render at the same size as before (GH#214).
+
 ## [2.8.1] - 2026-07-02
 
 ### Added

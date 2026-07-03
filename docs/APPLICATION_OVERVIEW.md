@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-02 | Version 2.8.1
+> Last updated: 2026-07-03 | Version 2.8.1
 
 ---
 
@@ -64,9 +64,9 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Version | 2.7.2 | `project(... VERSION ...)` in `CMakeLists.txt` |
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 338 | same |
-| Test LOC | ~6,050 | `tests/` |
-| Test executables | 35 (34 unit + 1 screenshot) | `tests/CMakeLists.txt` |
-| Test methods | ~501 | `private slots:` in `tests/*/test_*.cpp` |
+| Test LOC | ~14,500 | `tests/` |
+| Test executables | 61 (60 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
+| Test methods | ~845 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
@@ -138,7 +138,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 
 Real-time system monitoring at a glance in a **fixed-cell responsive grid layout** of specialized widgets, replacing the earlier circular gauge (CircleBar) design. All metric tiles inherit from `MetricTileBase`, an abstract base class supporting four `DisplayMode` values — **Normal**, **Hero**, **Large**, and **Compact** — that adjust layout density (Compact collapses the sub-header line to reclaim space). The header and footer are consistent fixed-height bands so the body (and its ring/arc/chart) absorbs the remaining space; the footer auto-hides when it has no content (e.g. Gauge/Donut, whose value is centered in the shape). Each tile renders as an **elevated card** — a soft drop shadow (`DashboardTileWrapper::applyDepthTreatment`) lifts it off the page and the surface uses the theme's warm elevated-card tone (`@cardBgElevated`) so tiles stand out from the background; gauge/track colors use `@chartGridColor` to stay visible against that surface. Tiles can be rearranged and resized via edit mode, and each tile's **visual style can be changed** independently.
 
-**Unified tile anatomy (GH#191 follow-up):** Regardless of body style, every tile shares the same chrome built by `MetricTileBase` so mixed tile types line up and read as one set. A **two-line header** shows the metric **type** (e.g. `CPU`) on the first line and the specific **input/source** it is monitoring on the second (CPU model + cores + clock, GPU device name, the selected thermal sensor or fan label, memory used/total capacity, network interface) — the source line elides with a full-text tooltip. A type-colored **accent bar** sits at the header's left edge and the settings **gear** is pinned to a fixed top-right slot (no longer repositioned relative to the title text). A **footer band** carries the headline value on the left (with an optional muted secondary value beside it, e.g. memory's used/total) and a compact **trend pill** showing only a direction arrow (`↑` / `→` / `↓`) on the right — kept a stable size, with the full direction (Rising / Stable / Falling) shown on hover. The four shape styles (donut, gauge, ring, hybrid) render their primary value centered inside the shape for all metric types; ring and hybrid additionally show the footer trend pill, while gauge and donut do not. Speedometer and VU Meter render their headline value in the footer.
+**Unified tile anatomy (GH#191 follow-up):** Regardless of body style, every tile shares the same chrome built by `MetricTileBase` so mixed tile types line up and read as one set. A **two-line header** shows the metric **type** (e.g. `CPU`) on the first line and the specific **input/source** it is monitoring on the second (CPU model + cores + clock, GPU device name, the selected thermal sensor or fan label, memory used/total capacity, network interface) — the source line elides with a full-text tooltip. A type-colored **accent bar** sits at the header's left edge and the settings **gear** is pinned to a fixed top-right slot (no longer repositioned relative to the title text). A **footer band** carries the headline value on the left (with an optional muted secondary value beside it, e.g. memory's used/total) and a compact **trend pill** showing only a direction arrow (`↑` / `→` / `↓`) on the right — kept a stable size, with the full direction (Rising / Stable / Falling) shown on hover. The four shape styles (donut, gauge, ring, hybrid) render their primary value centered inside the shape for all metric types, auto-shrinking the font to fit the shape's clear inner width so wide values like a 4-digit fan RPM never overlap or clip against the arc (GH#214); ring and hybrid additionally show the footer trend pill, while gauge and donut do not. Speedometer and VU Meter render their headline value in the footer.
 
 **Fixed-cell responsive grid (GH#191):** The dashboard uses fixed-size cells (1×1 = 120×98px, 10px gap between tiles). The grid column count adapts dynamically to the window width (clamped 4–16 columns), and tiles reflow (repack) when the column count changes. Vertical scrolling activates when tiles exceed the visible window height. This replaced the old proportional layout that produced uneven row heights and sparse gaps. Existing saved layouts migrate automatically via a versioned layout envelope (legacy bare-array layouts are scaled and reflowed on load).
 

@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
+#include "tile_value_fit.h"
 
 DiskTile::DiskTile(const QString &arcColorToken, const QString &trackColorToken, QWidget *parent)
     : MetricTileBase(tr("DISK"), arcColorToken, parent),
@@ -136,16 +137,16 @@ void DiskTile::paintEvent(QPaintEvent *event)
         painter.drawArc(arcRect, startAngle, spanAngle);
     }
 
-    // Center text: percentage
-    painter.setPen(Qt::NoPen);
+    // Center text: percentage, shrunk to fit the donut hole (GH#214).
     QFont boldFont = font();
-    int fontSize = qMax(12, diameter / 5);
-    boldFont.setPixelSize(fontSize);
     boldFont.setBold(true);
-    painter.setFont(boldFont);
-    painter.setPen(mTextColor);
 
     QString percentText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
     QRectF textRect = arcRect.adjusted(penWidth, penWidth, -penWidth, -penWidth);
-    painter.drawText(textRect, Qt::AlignCenter, percentText);
+    boldFont.setPixelSize(TileValueFit::fittedPixelSize(boldFont, percentText,
+                                                        static_cast<int>(textRect.width()),
+                                                        qMax(12, diameter / 5)));
+    painter.setFont(boldFont);
+    painter.setPen(mTextColor);
+    painter.drawText(textRect, Qt::AlignCenter | Qt::TextDontClip, percentText);
 }

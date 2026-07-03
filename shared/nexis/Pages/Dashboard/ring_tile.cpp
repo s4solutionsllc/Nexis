@@ -6,6 +6,7 @@
 #include <QProgressBar>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
+#include "tile_value_fit.h"
 
 RingTile::RingTile(const QString &title, const QString &colorToken, QWidget *parent)
     : MetricTileBase(title, colorToken, parent),
@@ -145,14 +146,17 @@ void RingTile::paintEvent(QPaintEvent *event)
         painter.drawArc(ringRect, startAngle, spanAngle);
     }
 
-    // Primary value centered in the ring (unified anatomy).
+    // Primary value centered in the ring (unified anatomy), shrunk to fit the
+    // clear inner width so wide values never overlap the ring stroke (GH#214).
     const QString valueText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
     QFont valueFont = font();
-    valueFont.setPixelSize(qMax(14, diameter / 5));
     valueFont.setBold(true);
+    const int innerWidth = diameter - thickness - 12;
+    valueFont.setPixelSize(TileValueFit::fittedPixelSize(valueFont, valueText,
+                                                         innerWidth, qMax(14, diameter / 5)));
     painter.setFont(valueFont);
     painter.setPen(mTextColor);
-    painter.drawText(ringRect, Qt::AlignCenter, valueText);
+    painter.drawText(ringRect, Qt::AlignCenter | Qt::TextDontClip, valueText);
 }
 
 void RingTile::resizeEvent(QResizeEvent *event)
