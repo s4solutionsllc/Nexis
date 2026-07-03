@@ -308,6 +308,18 @@ add_nexis_test(NAME DriveTileFormatTests
     "${GUI_SHARED_DIR}/Pages/Dashboard"
 )
 
+# GH#214: fit-to-width sizing for the value centered in gauge/hybrid/ring/donut
+# tiles. Needs Qt6::Gui for QFontMetrics (QTEST_MAIN spins up QGuiApplication).
+add_nexis_test(NAME TileValueFitTests
+  SOURCES
+    managers/test_tile_value_fit.cpp
+    "${GUI_SHARED_DIR}/Pages/Dashboard/tile_value_fit.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Dashboard"
+  LIBS Qt6::Gui
+)
+
 # SSO-3391 / WI-29: pin GnomeSettingsToolMacOS down as a hard no-op stub so
 # it can never write into Apple preference domains. Linux compiles the same
 # test source but skips the platform-specific assertions.

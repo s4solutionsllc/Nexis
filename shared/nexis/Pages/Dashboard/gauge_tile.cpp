@@ -7,6 +7,7 @@
 #include <QConicalGradient>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
+#include "tile_value_fit.h"
 
 static constexpr double ARC_SWEEP_DEG = 270.0;
 static constexpr double ARC_START_DEG = 225.0;
@@ -164,13 +165,16 @@ void GaugeTile::paintEvent(QPaintEvent *event)
         painter.drawArc(arcRect, startAngle16, valueSweep16);
     }
 
-    // Primary value centered in the arc (unified anatomy).
+    // Primary value centered in the arc (unified anatomy), shrunk to fit the
+    // clear inner width so wide values like "3846 RPM" never overlap the arc (GH#214).
     const QString valueText = mValueText.isEmpty() ? QString("%1%").arg(mPercent) : mValueText;
     QFont valueFont = font();
-    valueFont.setPixelSize(qMax(14, diameter / 5));
     valueFont.setBold(true);
+    const int innerWidth = diameter - 2 * penWidth - 12;
+    valueFont.setPixelSize(TileValueFit::fittedPixelSize(valueFont, valueText,
+                                                         innerWidth, qMax(14, diameter / 5)));
     painter.setFont(valueFont);
     painter.setPen(mTextColor);
     const QRectF valueRect(centerX - diameter / 2.0, centerY - diameter / 2.0, diameter, diameter);
-    painter.drawText(valueRect, Qt::AlignCenter, valueText);
+    painter.drawText(valueRect, Qt::AlignCenter | Qt::TextDontClip, valueText);
 }
