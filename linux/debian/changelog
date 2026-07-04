@@ -1,3 +1,11 @@
+nexis (2.8.2-0) unstable; urgency=medium
+
+  * Dashboard: the primary value centered in gauge, hybrid, ring, and donut
+    tiles now shrinks to fit inside the shape — wide values like a 4-digit
+    fan speed no longer overlap the arc or get clipped (GH#214).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Sat, 04 Jul 2026 16:36:11 -0400
+
 nexis (2.8.1-0) unstable; urgency=medium
 
   * Dashboard: tiles render as elevated cards with a soft drop shadow and the

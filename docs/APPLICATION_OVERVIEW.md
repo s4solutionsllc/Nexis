@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-03 | Version 2.8.1
+> Last updated: 2026-07-04 | Version 2.8.2
 
 ---
 
