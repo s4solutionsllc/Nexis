@@ -122,6 +122,29 @@ Defined in `.github/workflows/release.yml`. As of v2.6.x (SSO-4093):
 | `build-macos` | `macos-14` (Apple Silicon) | `nexis.app`, `.dmg` | macdeployqt + notarized |
 | `release` | `ubuntu-latest` | GitHub Release, attaches all artifacts | extracts notes from `CHANGELOG.md` |
 
+> **Install-tracking assets (2026-07-05 plan).** The `release` job publishes two
+> extra assets so per-channel download counting works
+> (see `docs/plans/2026-07-05-installation-tracking-findings-and-plan.md`):
+>
+> - `Nexis-X.Y.Z-macOS-arm64.brew.dmg` — byte-identical copy of the `.dmg`
+>   under a brew-specific name. `homebrew.yml` and the tap cask fetch this
+>   copy, so GitHub's per-asset counter splits brew installs from direct
+>   `.dmg` downloads.
+> - `nexis-X.Y.Z-source.tar.gz` — `git archive` of the tag (same content and
+>   `Nexis-X.Y.Z/` prefix as the auto-generated tag tarball, which GitHub does
+>   **not** count). The AUR PKGBUILD sources this asset, making every
+>   `makepkg`/`yay`/`paru` build a counted download.
+>
+> **AUR source-URL ordering:** the PKGBUILD's `releases/download/...` source
+> URL only resolves for releases that ship the source asset (v2.8.3+). Never
+> re-point the AUR package at a tag older than the first release carrying
+> `-source.tar.gz` without also flipping its `source=` back to the
+> `archive/refs/tags/` URL.
+>
+> The nightly `install-stats.yml` workflow (cron + `workflow_dispatch`)
+> aggregates GitHub Releases, Launchpad PPA, and AUR RPC counts into
+> `website/src/data/install-stats.json`, rendered at `/Nexis/stats`.
+
 > **Why a Resolute container (SSO-4093 / SSO-7306).** FW-06 (SSO-3733) raised
 > the Qt floor to 6.8 LTS. Noble (Ubuntu 24.04) ships Qt 6.4 via `qt6-base-dev`,
 > so the previous bare-runner `build-linux` job no longer satisfies the floor.
@@ -218,11 +241,18 @@ Linux artifacts are not code-signed. Provenance comes from:
 Automatic. `homebrew.yml` triggers on successful completion of the `Release`
 workflow when the head branch starts with `v`:
 
-1. Downloads the published macOS DMG from the GitHub Release.
+1. Downloads the published brew-specific DMG copy (`.brew.dmg` — same bytes
+   as the direct `.dmg`, separate download counter) from the GitHub Release.
 2. Computes `sha256sum`.
 3. Clones `s4solutionsllc/homebrew-nexis` (token: `secrets.HOMEBREW_TAP_TOKEN`).
 4. `sed -i` updates `version` and `sha256` in `Casks/nexis.rb`.
 5. Commits and pushes to the tap's default branch.
+
+> **One-time tap change (install tracking):** the sed only rewrites
+> `version`/`sha256`, so the cask's `url` stanza must be manually re-pointed
+> at the `.brew.dmg` asset name **once**, at the same time as the first
+> release that ships it (v2.8.3+). Until both land, brew installs keep
+> counting against the direct `.dmg`.
 
 ### Manual fallback
 
@@ -232,7 +262,7 @@ If the auto-bump fails (token expired, tap permissions changed, DMG URL drift):
 git clone git@github.com:s4solutionsllc/homebrew-nexis.git
 cd homebrew-nexis
 VERSION=2.3.4
-URL="https://github.com/s4solutionsllc/Nexis/releases/download/v${VERSION}/Nexis-${VERSION}-macOS-arm64.dmg"
+URL="https://github.com/s4solutionsllc/Nexis/releases/download/v${VERSION}/Nexis-${VERSION}-macOS-arm64.brew.dmg"
 # -f makes curl exit non-zero on 4xx/5xx instead of writing the error body
 # to disk; --retry 3 handles transient GitHub CDN blips. Without these, a
 # 404 page would be hashed and committed to the tap, breaking
@@ -452,9 +482,11 @@ VERSION=2.3.4
 
 # 1. Release page exists with all expected artifacts.
 gh release view "v${VERSION}" --repo s4solutionsllc/Nexis | grep -E '(deb|AppImage|dmg|nexis-|SHA256)'
-# Expect (single Resolute .deb per arch since SSO-4093; Noble/Plucky .debs gone):
+# Expect (single Resolute .deb per arch since SSO-4093; Noble/Plucky .debs gone;
+# install-tracking assets since the 2026-07-05 plan):
 #   2 deb (`_ubuntu2604.deb` x86_64/arm64) + 2 AppImage (x86_64/arm64) +
-#   2 raw binaries (nexis-x86_64/nexis-arm64) + 1 dmg + 1 SHA256SUMS = 8 artifacts.
+#   2 raw binaries (nexis-x86_64/nexis-arm64) + 1 dmg + 1 brew.dmg +
+#   1 source tarball (nexis-X.Y.Z-source.tar.gz) + 1 SHA256SUMS = 10 artifacts.
 
 # 2. Homebrew Cask was bumped.
 curl -fsSL https://raw.githubusercontent.com/s4solutionsllc/homebrew-nexis/main/Casks/nexis.rb \

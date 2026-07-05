@@ -1,7 +1,7 @@
 # Installation Tracking — Findings & Implementation Plan
 
 **Date:** 2026-07-05
-**Status:** Proposed
+**Status:** Implemented (pending first post-merge release-cycle verification and the one-time tap `url` change)
 **Goal:** Report how many installations Nexis has — a total, plus a breakdown by
 installation type (direct `.deb`, AppImage, direct `.dmg`, apt/PPA, brew, AUR).
 
@@ -75,10 +75,10 @@ countable; Phase 3 is the collector that produces the numbers.
 
 ### Phase 1 — Disambiguate brew from direct `.dmg` (release plumbing)
 
-- [ ] `release.yml`: after building the DMG, upload a **second copy** of the
+- [x] `release.yml`: after building the DMG, upload a **second copy** of the
       same file under a brew-specific asset name, e.g.
       `Nexis-${VERSION}-macOS-arm64.brew.dmg`. Same bytes, distinct counter.
-- [ ] `homebrew.yml`: point the checksum download and the cask `url` template
+- [x] `homebrew.yml`: point the checksum download and the cask `url` template
       at the `.brew.dmg` asset name (checksum is identical, but the workflow
       should fetch the asset it references for the audit-B2 sanity checks).
 - [ ] `s4solutionsllc/homebrew-nexis` `Casks/nexis.rb`: update the `url` stanza
@@ -91,10 +91,10 @@ release onward.
 
 ### Phase 2 — Make AUR visible (release plumbing)
 
-- [ ] `release.yml`: create the source tarball (same content as the tag
+- [x] `release.yml`: create the source tarball (same content as the tag
       archive; `git archive --format=tar.gz --prefix=Nexis-${VERSION}/ v${VERSION}`)
       and upload it as a release asset, e.g. `nexis-${VERSION}-source.tar.gz`.
-- [ ] `linux/aur/PKGBUILD`: change `source=` from
+- [x] `linux/aur/PKGBUILD`: change `source=` from
       `archive/refs/tags/v$pkgver.tar.gz` to
       `releases/download/v$pkgver/nexis-$pkgver-source.tar.gz`, and adjust the
       extract dir prefix if it differs. `aur.yml`'s `updpkgsums: true` already
@@ -112,7 +112,7 @@ PKGBUILD (or land both and cut the release before the next AUR publish fires).
 
 ### Phase 3 — Nightly stats collector + dashboard
 
-- [ ] New workflow `.github/workflows/install-stats.yml`:
+- [x] New workflow `.github/workflows/install-stats.yml`:
       - `schedule: cron` (daily) + `workflow_dispatch`.
       - **Source 1 — GitHub Releases API:** all releases → per-asset
         `download_count`. Classify by filename: `_ubuntu2604.deb` → `deb-direct`,
@@ -128,17 +128,19 @@ PKGBUILD (or land both and cut the release before the next AUR publish fires).
         (running history, one entry per day) and commit with
         `[skip ci]`-safe semantics (GITHUB_TOKEN pushes don't retrigger
         workflows — same pattern as `aur.yml`'s mirror-back step).
-- [ ] Snapshot schema (per day):
+- [x] Snapshot schema (per day):
       `{ date, totals: { all, byChannel: { "deb-direct", appimage, "dmg-direct", brew, apt, aur } }, latestVersion: { version, byChannel: {...} }, aur: { votes, popularity } }`
       — `totals` = cumulative downloads; `latestVersion` = the active-install
       proxy.
-- [ ] Website: a simple stats page/section reading `install-stats.json` —
+- [x] Website: a simple stats page/section reading `install-stats.json` —
       headline total, per-channel breakdown, and a latest-version
       ("active installs") view. Follows the existing Astro site structure
       under `website/`.
-- [ ] Backfill note: GitHub only exposes *cumulative* counts, so the time
-      series starts the day the collector first runs; run `workflow_dispatch`
-      once at merge to seed day one.
+- [x] Backfill note: GitHub only exposes *cumulative* counts, so the time
+      series starts the day the collector first runs; day one (2026-07-05)
+      was seeded at implementation time by running the collector locally
+      against the live APIs, so `install-stats.json` ships with a real first
+      snapshot.
 
 ### Acceptance criteria
 
