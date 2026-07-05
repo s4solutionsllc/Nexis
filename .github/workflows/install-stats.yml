@@ -1,0 +1,65 @@
+# Install tracking (docs/plans/2026-07-05-installation-tracking-findings-and-plan.md
+# Phase 3): nightly collector that snapshots per-channel download counts from
+# the GitHub Releases API, the Launchpad PPA, and the AUR RPC into
+# website/src/data/install-stats.json (one entry per day), then triggers a
+# website rebuild. GitHub only exposes *cumulative* counts, so the time series
+# starts the day this first runs — dispatch it once at merge to seed day one.
+name: Install Stats
+
+on:
+  schedule:
+    # Daily, off the top of the hour to avoid the GitHub cron thundering herd.
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    name: Collect installation stats
+    runs-on: ubuntu-latest
+    # contents:write to commit the snapshot back to `native`; actions:write to
+    # dispatch the pages.yml rebuild (same pattern as release.yml). Scoped to
+    # this job only — the top-level default stays read-only.
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # Pin to the branch we write back to so the push below is a
+          # fast-forward (same reasoning as aur.yml's mirror-back step).
+          ref: native
+
+      - name: Collect stats
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/collect_install_stats.py
+
+      - name: Commit snapshot
+        id: commit
+        run: |
+          if git diff --quiet -- website/src/data/install-stats.json; then
+            echo "No stat changes today — nothing to commit"
+            echo "PUSHED=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add website/src/data/install-stats.json
+          git commit -m "chore(stats): daily install-stats snapshot"
+          # GITHUB_TOKEN-authored pushes do not fire other workflows (same
+          # pattern as aur.yml's mirror-back step), so this cannot loop.
+          git push origin HEAD:native
+          echo "PUSHED=true" >> "$GITHUB_OUTPUT"
+
+      # The GITHUB_TOKEN push above will NOT trigger pages.yml on its own, so
+      # rebuild the website explicitly — otherwise the stats page goes stale.
+      - name: Trigger website rebuild
+        if: steps.commit.outputs.PUSHED == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref native

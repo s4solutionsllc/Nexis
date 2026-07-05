@@ -1,0 +1,130 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import snapshots from '../data/install-stats.json';
+
+const latest = snapshots.length ? snapshots[snapshots.length - 1] : null;
+
+const channelLabels: Record<string, string> = {
+  'deb-direct': 'Direct .deb',
+  appimage: 'AppImage',
+  'dmg-direct': 'Direct .dmg (macOS)',
+  brew: 'Homebrew',
+  apt: 'apt (PPA)',
+  aur: 'AUR',
+};
+
+function channelRows(byChannel: Record<string, number>) {
+  const max = Math.max(1, ...Object.values(byChannel));
+  return Object.entries(channelLabels).map(([key, label]) => ({
+    key,
+    label,
+    count: byChannel[key] ?? 0,
+    percent: Math.round(((byChannel[key] ?? 0) / max) * 100),
+  }));
+}
+
+const totalRows = latest ? channelRows(latest.totals.byChannel) : [];
+const latestRows = latest ? channelRows(latest.latestVersion.byChannel) : [];
+---
+
+<Base
+  title="Nexis — Installation Stats"
+  description="How many installations Nexis has: total downloads and a per-channel breakdown across .deb, AppImage, .dmg, Homebrew, apt (PPA), and AUR."
+>
+  <Nav />
+  <main class="mx-auto max-w-3xl px-6 py-24 md:py-32">
+    <h1 class="text-4xl font-bold tracking-tight text-white md:text-5xl">
+      Installation <span class="text-nexis-orange">Stats</span>
+    </h1>
+
+    {
+      !latest ? (
+        <p class="mt-6 text-lg text-nexis-muted leading-relaxed">
+          Collecting data — the nightly stats collector hasn't produced its
+          first snapshot yet. Check back soon.
+        </p>
+      ) : (
+        <>
+          <p class="mt-6 text-lg text-nexis-muted leading-relaxed">
+            Nexis is free and has no telemetry, so these numbers come from
+            public download counters (GitHub Releases, the Launchpad PPA, and
+            the AUR) — downloads, not phone-home pings. Last updated{' '}
+            <span class="text-white">{latest.date}</span>.
+          </p>
+
+          <div class="mt-12 rounded-xl border border-nexis-border bg-nexis-dark-card p-8 text-center">
+            <div class="text-5xl font-bold text-nexis-orange">
+              {latest.totals.all.toLocaleString('en-US')}
+            </div>
+            <div class="mt-2 text-nexis-muted">total downloads, all versions and channels</div>
+          </div>
+
+          <h2 class="mt-16 text-2xl font-bold text-white">Downloads by channel</h2>
+          <p class="mt-2 text-sm text-nexis-muted">Cumulative across all releases.</p>
+          <div class="mt-6 space-y-3">
+            {totalRows.map((row) => (
+              <div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-nexis-light">{row.label}</span>
+                  <span class="text-nexis-muted">{row.count.toLocaleString('en-US')}</span>
+                </div>
+                <div class="mt-1 h-2 rounded-full bg-nexis-border/40">
+                  <div
+                    class="h-2 rounded-full bg-nexis-orange"
+                    style={`width: ${row.percent}%`}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <h2 class="mt-16 text-2xl font-bold text-white">
+            Active installs (latest version, v{latest.latestVersion.version})
+          </h2>
+          <p class="mt-2 text-sm text-nexis-muted">
+            Downloads of the latest version only. Because every installed
+            machine downloads each new version roughly once when it updates,
+            this is the best available proxy for the active install base —
+            strongest for apt (which re-downloads on every upgrade), weakest
+            for AppImage (users may keep old versions).
+          </p>
+          <div class="mt-6 space-y-3">
+            {latestRows.map((row) => (
+              <div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-nexis-light">{row.label}</span>
+                  <span class="text-nexis-muted">{row.count.toLocaleString('en-US')}</span>
+                </div>
+                <div class="mt-1 h-2 rounded-full bg-nexis-border/40">
+                  <div
+                    class="h-2 rounded-full bg-nexis-orange"
+                    style={`width: ${row.percent}%`}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <h2 class="mt-16 text-2xl font-bold text-white">AUR community signal</h2>
+          <p class="mt-4 text-nexis-muted">
+            The AUR doesn't count installs, but it does track community
+            engagement:
+            <span class="text-white">{latest.aur.votes}</span> votes,
+            popularity score{' '}
+            <span class="text-white">{latest.aur.popularity.toFixed(2)}</span>.
+          </p>
+
+          <p class="mt-12 text-sm text-nexis-muted">
+            Caveats: these are downloads per version, not unique machines — CI,
+            mirrors, and bots add a little noise, and one download can serve
+            several installs. Snapshots are collected nightly; history begins
+            {' '}{snapshots[0].date}.
+          </p>
+        </>
+      )
+    }
+  </main>
+  <Footer />
+</Base>

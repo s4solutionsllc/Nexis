@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Installation stats: releases now publish two extra assets so per-channel download counting works — a brew-specific DMG copy (`Nexis-X.Y.Z-macOS-arm64.brew.dmg`, splitting Homebrew installs from direct `.dmg` downloads on GitHub's per-asset counters) and a counted source tarball (`nexis-X.Y.Z-source.tar.gz`) that the AUR package now builds from, making AUR installs visible for the first time.
+- Installation stats: a nightly collector workflow aggregates download counts from GitHub Releases, the Launchpad PPA, and the AUR into a daily snapshot history, rendered on a new website stats page (total downloads, per-channel breakdown, and a latest-version "active installs" view).
+
 ## [2.8.2] - 2026-07-04
 
 ### Fixed
