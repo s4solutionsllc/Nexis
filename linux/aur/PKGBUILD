@@ -14,7 +14,13 @@ makedepends=('cmake' 'gcc' 'make' 'qt6-tools')
 # real-object reference into an LTO object). Disabling LTO keeps the packaged
 # build using plain objects that any linker handles.
 options=('!lto')
-source=("$pkgname-$pkgver.tar.gz::https://github.com/s4solutionsllc/Nexis/archive/refs/tags/v$pkgver.tar.gz")
+# Install tracking (Phase 2): source the uploaded release asset instead of the
+# auto-generated tag tarball — GitHub only counts downloads of uploaded assets,
+# so this makes AUR builds visible in per-asset download stats. Same content
+# and Nexis-$pkgver/ prefix as the old archive URL. Effective from the first
+# release that ships the asset (> 2.8.2); aur.yml's updpkgsums regenerates
+# sha256sums at publish time.
+source=("$pkgname-$pkgver.tar.gz::https://github.com/s4solutionsllc/Nexis/releases/download/v$pkgver/nexis-$pkgver-source.tar.gz")
 sha256sums=('688a58f90a609f277eed460bc69ce82ce28241822f213c378bc80410b68b5d7b')
 
 build() {

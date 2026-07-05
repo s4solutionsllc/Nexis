@@ -632,10 +632,40 @@ jobs:
           echo "APPIMAGE_ARM64_NAME=$(basename $APPIMAGE_ARM64)" >> "$GITHUB_OUTPUT"
           echo "BINARY_ARM64_PATH=$BINARY_ARM64" >> "$GITHUB_OUTPUT"
 
-          # macOS
-          DMG=$(find artifacts/macos -name '*.dmg' | head -1)
+          # macOS (exclude the brew-named copy in case it ever lands in the
+          # artifact dir — DMG_PATH must always be the direct-download DMG)
+          DMG=$(find artifacts/macos -name '*.dmg' ! -name '*.brew.dmg' | head -1)
           echo "DMG_PATH=$DMG" >> "$GITHUB_OUTPUT"
           echo "DMG_NAME=$(basename $DMG)" >> "$GITHUB_OUTPUT"
+
+      # Install tracking (docs/plans/2026-07-05-installation-tracking-findings-and-plan.md
+      # Phase 1): upload a byte-identical second copy of the DMG under a
+      # brew-specific asset name. GitHub counts downloads per asset, so this
+      # splits `brew install` traffic (homebrew.yml + the tap cask fetch the
+      # .brew.dmg) from direct .dmg downloads on the same counter-free bytes.
+      - name: Create brew-named DMG copy
+        id: brewdmg
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          DMG="${{ steps.files.outputs.DMG_PATH }}"
+          BREW_DMG="$(dirname "$DMG")/Nexis-${VERSION}-macOS-arm64.brew.dmg"
+          cp "$DMG" "$BREW_DMG"
+          echo "BREW_DMG_PATH=$BREW_DMG" >> "$GITHUB_OUTPUT"
+
+      # Install tracking (Phase 2): GitHub does NOT count downloads of the
+      # auto-generated tag tarball (archive/refs/tags/...), so AUR installs
+      # were invisible. Publish an equivalent source tarball as a real release
+      # asset — the AUR PKGBUILD sources it, making every makepkg/yay/paru
+      # build a counted download. The --prefix matches the auto-generated
+      # tarball's top-level dir (Nexis-X.Y.Z/) so the PKGBUILD build dir is
+      # unchanged.
+      - name: Create source tarball
+        id: source
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          TARBALL="${{ runner.temp }}/nexis-${VERSION}-source.tar.gz"
+          git archive --format=tar.gz --prefix="Nexis-${VERSION}/" -o "$TARBALL" HEAD
+          echo "SOURCE_PATH=$TARBALL" >> "$GITHUB_OUTPUT"
 
       - name: Delete pre-rebrand release for this tag (if any)
         env:
@@ -771,7 +801,9 @@ jobs:
             "${{ steps.files.outputs.DEB_ARM64_PATH }}" \
             "${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}" \
             "${{ steps.files.outputs.BINARY_ARM64_PATH }}" \
-            "${{ steps.files.outputs.DMG_PATH }}"
+            "${{ steps.files.outputs.DMG_PATH }}" \
+            "${{ steps.brewdmg.outputs.BREW_DMG_PATH }}" \
+            "${{ steps.source.outputs.SOURCE_PATH }}"
           do
             if [ -n "$f" ] && [ -f "$f" ]; then
               (cd "$(dirname "$f")" && sha256sum "$(basename "$f")") >> "$SUMS_FILE"
@@ -798,6 +830,8 @@ jobs:
             ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}
             ${{ steps.files.outputs.BINARY_ARM64_PATH }}
             ${{ steps.files.outputs.DMG_PATH }}
+            ${{ steps.brewdmg.outputs.BREW_DMG_PATH }}
+            ${{ steps.source.outputs.SOURCE_PATH }}
             ${{ steps.checksums.outputs.SUMS_PATH }}
 
       - name: Trigger website rebuild

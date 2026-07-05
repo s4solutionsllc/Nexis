@@ -57,7 +57,14 @@ jobs:
         if: steps.gate.outputs.SHOULD_BUMP == 'true'
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
-          URL="https://github.com/s4solutionsllc/Nexis/releases/download/v${VERSION}/Nexis-${VERSION}-macOS-arm64.dmg"
+          # Install tracking (Phase 1): fetch the brew-specific asset name —
+          # the same bytes as the direct .dmg, uploaded twice by release.yml so
+          # GitHub's per-asset download counter can split brew installs from
+          # direct downloads. The tap cask's `url` stanza must reference the
+          # same .brew.dmg name (one-time manual change in
+          # s4solutionsllc/homebrew-nexis — the sed below only rewrites
+          # version/sha256).
+          URL="https://github.com/s4solutionsllc/Nexis/releases/download/v${VERSION}/Nexis-${VERSION}-macOS-arm64.brew.dmg"
           echo "Downloading ${URL}"
           # --fail makes curl exit non-zero on HTTP errors instead of writing
           # the error body to disk (a 404 page would otherwise be hashed and
