@@ -95,7 +95,14 @@ CVE / security patches: see §6.
 #    auto-rewrites the top entry's version to match the tag if they differ,
 #    so a stale top version is recoverable — but for a clean PPA upload, add
 #    a real entry with notes.
-git add CHANGELOG.md CMakeLists.txt linux/aur/PKGBUILD linux/debian/changelog
+# 5. Add a new <release version="X.Y.Z" date="YYYY-MM-DD"> entry at the top of
+#    linux/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml (this AppStream
+#    file is bundled into the AppImage and .deb, and appimagetool reads it for
+#    the AppImage version). Note: release.yml's "Sync metainfo release version
+#    from tag" step auto-inserts a matching top entry if it differs from the
+#    tag — recoverable like debian/changelog — but add a real entry with notes.
+git add CHANGELOG.md CMakeLists.txt linux/aur/PKGBUILD linux/debian/changelog \
+        linux/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml
 git commit -m "chore(release): X.Y.Z"
 git push origin native
 

@@ -1,3 +1,12 @@
+nexis (2.8.3-0) unstable; urgency=medium
+
+  * Linux AppImage (x86_64) now reports the correct release version — the build
+    did not pass VERSION to appimagetool, so it fell back to the stale AppStream
+    metainfo version and stamped every AppImage as 2.3.8. The metainfo release
+    version is now also synced from the tag at build time (GH#222).
+
+ -- Luke Simpson <luke@s4solutions.ai>  Tue, 07 Jul 2026 12:00:00 -0400
+
 nexis (2.8.2-0) unstable; urgency=medium
 
   * Dashboard: the primary value centered in gauge, hybrid, ring, and donut

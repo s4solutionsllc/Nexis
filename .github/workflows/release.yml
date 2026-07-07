@@ -101,6 +101,23 @@ jobs:
             echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
           fi
 
+      # GH#222: keep the bundled AppStream metainfo's newest <release> in step
+      # with the tag (mirrors the "Sync debian changelog version from tag" step
+      # below). Installed into the AppDir and the .deb, this metainfo is what
+      # appimagetool reads for the AppImage version when VERSION is unset.
+      - name: Sync metainfo release version from tag
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          META="linux/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml"
+          TOP_VERSION=$(grep -oP '<release version="\K[^"]+' "$META" | head -1)
+          if [ "$TOP_VERSION" != "$TAG_VERSION" ]; then
+            echo "Inserting metainfo <release> $TAG_VERSION (top was ${TOP_VERSION:-none})"
+            DATE=$(date -u +%Y-%m-%d)
+            sed -i "s|<releases>|<releases>\n    <release version=\"${TAG_VERSION}\" date=\"${DATE}\"/>|" "$META"
+          else
+            echo "metainfo already at $TAG_VERSION — no sync needed"
+          fi
+
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DAPP_VERSION_OVERRIDE=${{ steps.version.outputs.VERSION }}
 
@@ -298,6 +315,24 @@ jobs:
             echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
           fi
 
+      # GH#222: keep the bundled AppStream metainfo's newest <release> in step
+      # with the tag, mirroring the "Sync debian changelog version from tag"
+      # step in build-linux. This metainfo is installed into the AppDir and is
+      # what appimagetool reads for the AppImage version when VERSION is unset —
+      # a stale top entry (2.3.8) is what stamped old versions onto new builds.
+      - name: Sync metainfo release version from tag
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          META="linux/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml"
+          TOP_VERSION=$(grep -oP '<release version="\K[^"]+' "$META" | head -1)
+          if [ "$TOP_VERSION" != "$TAG_VERSION" ]; then
+            echo "Inserting metainfo <release> $TAG_VERSION (top was ${TOP_VERSION:-none})"
+            DATE=$(date -u +%Y-%m-%d)
+            sed -i "s|<releases>|<releases>\n    <release version=\"${TAG_VERSION}\" date=\"${DATE}\"/>|" "$META"
+          else
+            echo "metainfo already at $TAG_VERSION — no sync needed"
+          fi
+
       - name: Install build prerequisites
         run: |
           sudo apt-get update -qq
@@ -353,6 +388,11 @@ jobs:
         env:
           # install-qt-action exports QT_ROOT_DIR for the selected Qt.
           QMAKE: ${{ env.QT_ROOT_DIR }}/bin/qmake6
+          # GH#222: without VERSION, appimagetool falls back to the newest
+          # <release> in the bundled AppStream metainfo (stale at 2.3.8), so the
+          # AppImage was stamped 2.3.8 while the binary reported the real tag.
+          # The arm64 leg in build-linux already sets this; keep the two in sync.
+          VERSION: ${{ steps.version.outputs.VERSION }}
           APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
           APPDIR="${{ github.workspace }}/AppDir"

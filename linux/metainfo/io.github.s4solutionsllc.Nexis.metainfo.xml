@@ -74,6 +74,14 @@
   </screenshots>
 
   <releases>
+    <release version="2.8.3" date="2026-07-07">
+      <description>
+        <p>Bug fixes:</p>
+        <ul>
+          <li>Linux AppImage now reports its correct version. Previously the x86_64 AppImage was stamped with an old version, so third-party AppImage update managers kept seeing an outdated release and never offered the update.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.3.8" date="2026-05-29">
       <description>
         <p>New features and bug fixes:</p>
