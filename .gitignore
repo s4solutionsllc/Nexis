@@ -25,3 +25,6 @@ test_screenshots/
 # Binary source files (kept locally)
 shared/nexis/static/nexis.icns
 shared/nexis/static/header.xcf
+
+# graphify generated knowledge graph (regenerate with `graphify update .`)
+graphify-out/
