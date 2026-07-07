@@ -7,15 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.3] - 2026-07-07
+
 ### Added
 - Installation stats: releases now publish two extra assets so per-channel download counting works — a brew-specific DMG copy (`Nexis-X.Y.Z-macOS-arm64.brew.dmg`, splitting Homebrew installs from direct `.dmg` downloads on GitHub's per-asset counters) and a counted source tarball (`nexis-X.Y.Z-source.tar.gz`) that the AUR package now builds from, making AUR installs visible for the first time.
 - Installation stats: a nightly collector workflow aggregates download counts from GitHub Releases, the Launchpad PPA, and the AUR into a daily snapshot history, rendered on a new website stats page (total downloads, per-channel breakdown, and a latest-version "active installs" view).
 
-## [2.8.3] - 2026-07-07
-
 ### Fixed
 - Linux AppImage (x86_64) now reports the correct release version. The x86_64 AppImage build did not pass `VERSION` to `appimagetool`, so it fell back to the newest `<release>` in the bundled AppStream metainfo — which was stale at 2.3.8 — stamping every new AppImage as 2.3.8 even though the app itself reported the right version. Third-party AppImage update managers relying on that version string now correctly detect new releases (GH#222).
 - Release pipeline: the AppStream metainfo `<release>` history is now synced from the release tag at build time (mirroring the existing `debian/changelog` sync), so the version bundled in the AppImage and `.deb` can no longer drift behind the tag (GH#222).
+
+### Notes
+- Screenshot-baseline waiver (RELEASE.md §0.5): the non-blocking ScreenshotTests step fails on the two macOS dashboard images because their committed baselines predate the 2.8.x dashboard redesign (GH#191, #213, #214) and were captured outside CI. The visual differences are intended; baselines will be regenerated via the CI workflow (GH#224).
 
 ## [2.8.2] - 2026-07-04
 

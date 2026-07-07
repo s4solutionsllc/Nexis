@@ -61,7 +61,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 
 | Metric | Value | Source of truth |
 |--------|-------|-----------------|
-| Version | 2.7.2 | `project(... VERSION ...)` in `CMakeLists.txt` |
+| Version | 2.8.3 | `project(... VERSION ...)` in `CMakeLists.txt` |
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 338 | same |
 | Test LOC | ~14,500 | `tests/` |
