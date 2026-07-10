@@ -192,6 +192,8 @@ private:
     bool mCleanInProgress = false;
     bool mCleaningFromCard = false;   // true when clean was initiated from page-0 footer
     bool mInitialScan = false;        // true during the auto-scan fired on first show
+    // GH-226: suppress per-checkbox tree rebuilds during onSelectAllClicked()
+    bool mBulkCategoryUpdate = false;
 
     // Track background tasks so they can be awaited on shutdown (BUG-05)
     QFuture<void> mWorkerFuture;

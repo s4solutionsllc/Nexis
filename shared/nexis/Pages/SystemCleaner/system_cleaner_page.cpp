@@ -286,6 +286,9 @@ void SystemCleanerPage::buildCategoryCards()
             card->setProperty("checked", on);
             card->style()->unpolish(card);
             card->style()->polish(card);
+            // GH-226: skip the expensive rebuild during onSelectAllClicked(); it
+            // will call these once after all checkboxes are set.
+            if (mBulkCategoryUpdate) return;
             if (mHasScanned) refreshInlineTree();
             updateFooterTotal();
             updateCleanerCheckBadge();
@@ -491,10 +494,21 @@ void SystemCleanerPage::onSelectAllClicked()
         if (!c.check->isChecked()) { allChecked = false; break; }
     }
     const bool target = !(total > 0 && allChecked); // false ⇒ clear, true ⇒ select
+
+    // GH-226: guard against N concurrent refreshInlineTree() calls (one per
+    // toggled signal). Each call clears and rebuilds the full tree — on systems
+    // with large ~/.cache trees this causes an OOM kill. Set the flag so the
+    // toggled lambda only updates card styling; do one shared rebuild after.
+    mBulkCategoryUpdate = true;
     for (const CategoryCard &c : mCards) {
         if (c.check && c.check->isEnabled())
             c.check->setChecked(target);
     }
+    mBulkCategoryUpdate = false;
+
+    if (mHasScanned) refreshInlineTree();
+    updateFooterTotal();
+    updateCleanerCheckBadge();
 }
 
 // ─── Scan ─────────────────────────────────────────────────────────────────────
