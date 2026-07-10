@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- System Cleaner: clicking "Select All" after the loading scan completes no longer crashes on Linux. The `toggled` signal fired by each checkbox was invoking `refreshInlineTree()` once per category card — up to 9 calls that each cleared and rebuilt the full tree widget (including `getFileSize()` on every retained file). On systems with large `~/.cache/` trees this caused an OOM kill. The fix batches the bulk checkbox update with a `mBulkCategoryUpdate` guard flag so `refreshInlineTree()` is called exactly once after all checkboxes are set (GH#226).
+
 ## [2.8.3] - 2026-07-07
 
 ### Added
