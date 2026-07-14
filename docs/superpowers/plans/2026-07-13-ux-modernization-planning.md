@@ -1,636 +1,222 @@
-# UX Modernization Planning Package — Implementation Plan
+# UX Modernization Prototype Package — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Produce the complete UX-modernization planning package defined in
-`docs/superpowers/specs/2026-07-13-ux-modernization-design.md` — evidence screenshots of
-every page, a normative design-system spec, sourced per-page audits, HTML+PNG target
-mockups, and ready-to-file Paperclip work-item drafts.
+**Goal:** Produce before/after image prototypes of every Nexis page restyled in the
+v2.8.x dashboard design language, get them approved page-by-page by Luke via a review
+gallery, and package approved pages into Paperclip work-item drafts — per
+`docs/superpowers/specs/2026-07-13-ux-modernization-design.md`.
 
-**Architecture:** This is a documentation/evidence effort, not an app change. The only
-compiled-code change is extending the screenshot test harness (`kPageMap`) so every page
-can be captured. Everything else lands under `docs/design/` and `scripts/design/`.
-Consistency is achieved by extracting the v2.8.x dashboard language into
-`DESIGN_SYSTEM.md` once, then auditing and mocking every page against it.
+**Architecture:** Zero app/test code changes. Current-state screenshots are harvested
+from the existing screenshot test's output directory (12 pages, no modification) and by
+running the built app for the rest. Prototypes are token-true HTML rendered to PNG. The
+maintainer approval gate sits between prototyping and work-item drafting.
 
-**Tech Stack:** Qt Test screenshot harness (C++), `gh` CLI (workflow dispatch/artifact
-download), Python 3 (token→CSS generation), Playwright via `npx` (mockup rendering),
-Markdown deliverables.
+**Tech Stack:** existing `test-ScreenshotTests` binary (run as-is), macOS `screencapture`,
+Python 3 (token→CSS), Playwright via `npx` (rendering), private Claude artifact (gallery).
 
 ## Global Constraints
 
-- Branch: `claude/ux-modernization-spec` (repo default branch is `native`; never commit or push to it).
-- The ONLY app-repo code file that may be modified: `tests/screenshots/test_screenshots.cpp`. New files are allowed only under `docs/design/`, `docs/superpowers/`, and `scripts/design/`.
-- No application source, `.ui`, QSS, or `values.ini` changes anywhere in this plan.
-- Every audit recommendation must carry a `Source:` line — a repo `file:line`, an evidence screenshot path, or a URL from `sources.md`. Zero unsourced recommendations (spec §9).
-- Mockups may use only colors from `shared/nexis/static/themes/{default,light}/style/values.ini` (79 tokens per theme), via the generated `tokens.css`.
-- Any *proposed* new tokens in audit/work-item docs must obey: non-substring names (BUG-49), defined in both themes (test `themes_sameTokenSets`), no hardcoded colors in C++ (BUG-47).
-- Performance guardrails (spec §6) are binding content for DESIGN_SYSTEM.md and every work-item draft: QSS-first, no new timers/animation, bounded shadow effects, lazy construction preserved (FR-97), re-polish discipline (BUG-56), measured cold-start/idle-CPU acceptance.
-- Conventional commits; reference `GH#224` where baselines are touched. Do not merge the PR — Luke reviews.
-- Directory layout for deliverables:
-  - `docs/design/DESIGN_SYSTEM.md`
-  - `docs/design/ux-modernization/current-state/{macos,linux}/{dark,light}/*.png`
-  - `docs/design/ux-modernization/sources.md`
-  - `docs/design/ux-modernization/audits/<snake_case_page>.md`
-  - `docs/design/ux-modernization/mockups/{tokens.css,base.css,pages/*.html,renders/*.png}`
-  - `docs/design/ux-modernization/work-items.md`
+- Branch: `claude/ux-modernization-spec` (default branch is `native`; never commit/push to it).
+- **No changes under `shared/`, `linux/`, `macos/`, or `tests/` — verify with `git status` before every commit.** New files only under `docs/design/`, `docs/superpowers/`, `scripts/design/`.
+- Committed screenshot baselines (`tests/reference_screenshots/`) must be byte-identical at the end of every task (`git diff --stat tests/` → empty).
+- Prototypes use only colors from `shared/nexis/static/themes/{default,light}/style/values.ini` via generated `tokens.css`.
+- Every rationale note claim carries a source: repo `file:line`, evidence PNG path, or `sources.md` key.
+- Performance guardrails (spec §5) are binding content for DESIGN_SYSTEM.md and all work-item drafts.
+- Conventional commits. Do not merge the PR — Luke reviews.
+- Deliverable layout: `docs/design/DESIGN_SYSTEM.md`; under `docs/design/ux-modernization/`: `current-state/`, `sources.md`, `mockups/{tokens.css,base.css,pages/,renders/,notes/}`, `review-gallery.html`, `work-items.md`.
 
 ---
 
-### Task 1: Extend the screenshot harness to cover every page
+### Task 1: Harvest current-state captures on macOS (no code changes)
 
 **Files:**
-- Modify: `tests/screenshots/test_screenshots.cpp:41-74` (PageInfo struct + kPageMap) and `:260-288` (capture loop)
-
-**Interfaces:**
-- Produces: screenshot names consumed by Tasks 2–4 and all audit tasks:
-  `boot_analysis`, `disk_tools`, `system_logs`, `docker`, `gnome_settings`,
-  `homebrew`, `apt_source_manager` (plus the existing 12).
-
-- [ ] **Step 1: Add the `optional` field to `PageInfo`**
-
-In `tests/screenshots/test_screenshots.cpp`, change the struct (lines 41–49) to:
-
-```cpp
-struct PageInfo {
-    QString className;
-    QString screenshotName;
-    // Child widget classes (matched via QObject::inherits) whose on-screen
-    // rectangles are masked out before comparison.
-    QStringList dynamicClassNames;
-    // Child widget objectNames whose rectangles are masked out.
-    QStringList dynamicObjectNames;
-    // Conditionally-registered pages (ToolManager or platform gating) are
-    // skipped when absent from the stacked widget instead of failing the run.
-    bool optional = false;
-};
-```
-
-- [ ] **Step 2: Append the seven missing pages to `kPageMap`**
-
-After the `{"SettingsPage", "settings", {}, {}},` entry (line 73), add:
-
-```cpp
-    {"BootAnalysisPage",     "boot_analysis",      {"QAbstractItemView"}, {}},
-    {"DiskToolsPage",        "disk_tools",         {"QAbstractItemView"}, {}},
-    {"SystemLogsPage",       "system_logs",        {"QAbstractItemView"}, {}},
-    // Conditionally registered (ToolManager / platform gating) — optional:
-    {"DockerPage",           "docker",             {"QAbstractItemView"}, {}, true},
-    {"GnomeSettingsPage",    "gnome_settings",     {"QAbstractItemView"}, {}, true},
-    {"HomebrewPage",         "homebrew",           {"QAbstractItemView"}, {}, true},
-    {"APTSourceManagerPage", "apt_source_manager", {"QAbstractItemView"}, {}, true},
-```
-
-(All seven mask `QAbstractItemView` because their tables/trees/lists render
-machine-dependent data — same convention as `ProcessesPage`.)
-
-- [ ] **Step 3: Skip absent optional pages in the capture loop**
-
-Replace lines 260–264:
-
-```cpp
-        for (const auto &page : kPageMap) {
-            QWidget *widget = findPageByClassName(page.className);
-            QVERIFY2(widget, qPrintable(QString("Page widget '%1' not found in stacked widget "
-                                                "— check kPageMap and App::ensureAllPages()")
-                                        .arg(page.className)));
-```
-
-with:
-
-```cpp
-        for (const auto &page : kPageMap) {
-            QWidget *widget = findPageByClassName(page.className);
-            if (!widget && page.optional) {
-                qInfo() << "Skipping optional page (not registered in this"
-                        << "build/environment):" << page.className;
-                continue;
-            }
-            QVERIFY2(widget, qPrintable(QString("Page widget '%1' not found in stacked widget "
-                                                "— check kPageMap and App::ensureAllPages()")
-                                        .arg(page.className)));
-```
-
-- [ ] **Step 4: Skip optional pages with no committed baseline in compare mode**
-
-After the existing `const QString refPath = themeRefDir + ...;` line in the
-compare branch (line 284), before the `QVERIFY2(QFile::exists(refPath), ...)`:
-
-```cpp
-            if (!QFile::exists(refPath) && page.optional) {
-                qInfo() << "Skipping optional page (no committed baseline):"
-                        << page.screenshotName;
-                continue;
-            }
-```
-
-(Optional pages appear only on machines whose environment registers them —
-e.g. Homebrew on macOS CI, APT in the Linux container. Without this, the first
-machine that *has* the page but no baseline hard-fails.)
-
-- [ ] **Step 5: Build the test target**
-
-Run: `cmake --build build --target test-ScreenshotTests -j$(sysctl -n hw.ncpu)`
-(If `build/` doesn't exist: `cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$(brew --prefix qt@6)` first.)
-Expected: compiles with no errors.
-
-- [ ] **Step 6: Verify compare mode still passes against existing baselines**
-
-Run: `ctest --test-dir build -R ScreenshotTests --output-on-failure`
-Expected: PASS. The 12 existing pages compare clean; the 3 new always-present
-pages hard-fail on "Reference missing"? **No** — they are non-optional and have
-no baselines yet, so this run is expected to FAIL with `Reference missing:
-.../boot_analysis.png`. That failure is the correct signal that Step 7 (generate
-mode, Task 2) must run before this branch's CI is green. If instead the failure
-is `Page widget 'X' not found`, the class name in Step 2 is wrong — fix before
-proceeding.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add tests/screenshots/test_screenshots.cpp
-git commit -m "test(screenshots): cover all pages in kPageMap, skip absent optional pages"
-```
-
----
-
-### Task 2: Capture macOS evidence + regenerate macOS baselines (GH#224)
-
-**Files:**
-- Modify: `tests/reference_screenshots/macos/{dark,light}/*.png` (regenerated + new)
 - Create: `docs/design/ux-modernization/current-state/macos/{dark,light}/*.png`
+- Create: `docs/design/ux-modernization/current-state/CAPTURE_NOTES.md` (started here, finished Task 2)
 
 **Interfaces:**
-- Consumes: Task 1's extended `kPageMap`.
-- Produces: the macOS half of the evidence pack used by every audit task.
+- Produces: before-PNGs for all prototype and gallery tasks. Naming: snake_case page names matching the harness (`dashboard`, `processes`, …) plus `boot_analysis`, `disk_tools`, `system_logs`, `homebrew`, `docker` for manual captures.
 
-- [ ] **Step 1: Regenerate macOS baselines (generate mode)**
-
-Run: `./scripts/update_screenshots.sh`
-Expected: `Generated: .../macos/dark/<name>.png` and `.../light/<name>.png` lines —
-15 always-present pages per theme, plus `homebrew` (this Mac has brew) and
-`docker` if Docker Desktop is registered. `gnome_settings` and
-`apt_source_manager` must be skipped with the "optional page" message.
-
-- [ ] **Step 2: Sanity-check the output set**
-
-Run: `ls tests/reference_screenshots/macos/dark/ | sort`
-Expected: the 12 previous names plus at least `boot_analysis.png`,
-`disk_tools.png`, `system_logs.png`, `homebrew.png`. Dark and light dirs contain
-identical file lists (`diff <(ls .../dark) <(ls .../light)` → empty).
-
-- [ ] **Step 3: Verify compare mode is now green**
-
-Run: `ctest --test-dir build -R ScreenshotTests --output-on-failure`
-Expected: PASS (this also clears the RELEASE.md §0.5 dashboard-baseline waiver, GH#224).
-
-- [ ] **Step 4: Copy captures into the evidence pack**
+- [ ] **Step 1: Build (if needed) and run the screenshot test once, harvesting its outputs**
 
 ```bash
-mkdir -p docs/design/ux-modernization/current-state/macos
-cp -R tests/reference_screenshots/macos/dark  docs/design/ux-modernization/current-state/macos/dark
-cp -R tests/reference_screenshots/macos/light docs/design/ux-modernization/current-state/macos/light
+cmake --build build --target test-ScreenshotTests -j$(sysctl -n hw.ncpu)
+ctest --test-dir build -R ScreenshotTests --output-on-failure || true
+ls build/test_screenshots/macos/dark/
 ```
 
-- [ ] **Step 5: Visually spot-check three PNGs**
+Expected: 12 PNGs per theme under `build/test_screenshots/macos/{dark,light}/`
+(the binary saves every capture before comparing — failures, e.g. the stale
+dashboard baselines, are irrelevant here, hence `|| true`).
 
-Open `current-state/macos/dark/dashboard.png`, `processes.png`, `settings.png`
-(Read tool). Verify: full 1024×768 window, sidebar visible, correct page shown,
-dark theme. If any capture shows a blank/partial page, re-run Step 1 (transient
-first-paint issues are masked by the 100ms wait, but verify).
+- [ ] **Step 2: Copy into the evidence pack**
+
+```bash
+mkdir -p docs/design/ux-modernization/current-state/macos/{dark,light}
+cp build/test_screenshots/macos/dark/*.png  docs/design/ux-modernization/current-state/macos/dark/
+cp build/test_screenshots/macos/light/*.png docs/design/ux-modernization/current-state/macos/light/
+```
+
+- [ ] **Step 3: Capture the pages the harness doesn't cover, by running the app**
+
+Build and launch the real app (`cmake --build build -j…`, binary under
+`build/output/`). For each of: Boot Analysis, Disk Tools, System Logs, plus
+Docker and Homebrew if their sidebar buttons are present — navigate to the page
+and capture the window:
+
+```bash
+# Window ID of the frontmost Nexis window, then capture without shadow:
+osascript -e 'tell app "Nexis" to activate'
+screencapture -o -l $(osascript -e 'tell app "System Events" to tell process "Nexis" to get value of attribute "AXWindowNumber" of window 1') \
+  docs/design/ux-modernization/current-state/macos/dark/<page>.png
+```
+
+Resize the window to ~1024×768 first so captures match the harness framing.
+Then switch the theme to Light on the Settings page and repeat the captures
+into `.../light/`. (If AppleScript window-ID lookup fails, use interactive
+`screencapture -o -w` and click the window.)
+
+- [ ] **Step 4: Verify the macOS set and confirm the repo is clean**
+
+```bash
+ls docs/design/ux-modernization/current-state/macos/dark/ | wc -l   # expected ≥ 15
+diff <(ls docs/design/ux-modernization/current-state/macos/dark) \
+     <(ls docs/design/ux-modernization/current-state/macos/light)    # expected: empty
+git status --short -- shared/ linux/ macos/ tests/                   # expected: empty
+```
+
+Spot-open three PNGs (Read tool): correct page, correct theme, full window.
+
+- [ ] **Step 5: Start `CAPTURE_NOTES.md`** — table of 19 pages (18 prototype pages + Dashboard reference) × platform: captured (path) / pending-linux / not-capturable (reason).
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add tests/reference_screenshots/macos docs/design/ux-modernization/current-state/macos
-git commit -m "test(screenshots): regenerate macOS baselines post-2.8.x redesign (GH#224)
-
-Adds first captures of boot_analysis, disk_tools, system_logs (+ optional
-homebrew/docker) and copies all captures into the UX-modernization
-evidence pack."
+git add docs/design/ux-modernization/current-state
+git commit -m "docs(design): add macOS current-state captures for UX prototypes"
 ```
 
 ---
 
-### Task 3: Capture Linux evidence via CI workflow
+### Task 2: Harvest Linux captures on the homelab (throwaway clone, nothing committed there)
 
 **Files:**
 - Create: `docs/design/ux-modernization/current-state/linux/{dark,light}/*.png`
+- Modify: `docs/design/ux-modernization/current-state/CAPTURE_NOTES.md`
 
 **Interfaces:**
-- Consumes: Task 1's harness change (must be pushed first — the workflow checks out the branch).
-- Produces: the Linux (x64, container) half of the evidence pack. Linux *baselines* are intentionally NOT committed (xvfb flakiness, PR #209 history) — that stays a future NEX item.
+- Consumes: nothing from Task 1 (parallel-safe except CAPTURE_NOTES.md).
+- Produces: Linux before-PNGs; final capture-gap log for GnomeSettings/APT.
 
-- [ ] **Step 1: Push the branch so the workflow sees Tasks 1–2**
+- [ ] **Step 1: Generate captures on the homelab in a throwaway clone**
 
-Run: `git push`
-Expected: branch updated on origin.
-
-- [ ] **Step 2: Dispatch the baseline-regeneration workflow for linux-x64**
-
-Run: `gh workflow run screenshot-baselines.yml --ref claude/ux-modernization-spec -f platforms=linux-x64`
-Then: `gh run list --workflow=screenshot-baselines.yml --limit 1` to get the run ID.
-Expected: a queued run on ref `claude/ux-modernization-spec`.
-
-- [ ] **Step 3: Wait for completion**
-
-Run: `gh run watch <RUN_ID> --exit-status` (takes several minutes; container is `ubuntu:26.04`).
-Expected: exit 0. If the Linux leg hangs >15 min, cancel and record the failure —
-fall back to capturing everything in Task 4 on the homelab instead.
-
-- [ ] **Step 4: Download and place the artifact**
+On the homelab (ssh; headless-safe via offscreen QPA, SSO-3729):
 
 ```bash
-gh run download <RUN_ID> -n reference-screenshots-linux -D /tmp/nexis-linux-shots
-mkdir -p docs/design/ux-modernization/current-state/linux
-cp -R /tmp/nexis-linux-shots/*/dark  docs/design/ux-modernization/current-state/linux/dark
-cp -R /tmp/nexis-linux-shots/*/light docs/design/ux-modernization/current-state/linux/light
-```
-
-(Inspect the artifact's internal layout with `find /tmp/nexis-linux-shots -name '*.png' | head`
-first and adjust the `cp` source paths to match.)
-
-- [ ] **Step 5: Record which pages the container produced**
-
-Run: `ls docs/design/ux-modernization/current-state/linux/dark/`
-Expected: the 15 always-present pages; `apt_source_manager.png` likely present
-(container has apt); `docker.png` and `gnome_settings.png` likely absent (no
-Docker daemon / GNOME in container). Note absences in the commit message — Task 4
-fills them.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add docs/design/ux-modernization/current-state/linux
-git commit -m "docs(design): add Linux x64 evidence captures from CI workflow"
-```
-
----
-
-### Task 4: Capture gated Linux pages on the homelab
-
-**Files:**
-- Create/Modify: `docs/design/ux-modernization/current-state/linux/{dark,light}/{docker,gnome_settings,apt_source_manager}.png` (whichever the environment supports)
-- Create: `docs/design/ux-modernization/current-state/CAPTURE_NOTES.md`
-
-**Interfaces:**
-- Consumes: pushed branch from Task 3.
-- Produces: gated-page evidence + a gap log the audit tasks must consult.
-
-- [ ] **Step 1: Build and capture on the homelab (Ryzen/Ubuntu 24.04)**
-
-On the homelab (ssh):
-
-```bash
-git clone --branch claude/ux-modernization-spec https://github.com/s4solutionsllc/Nexis.git /tmp/nexis-ux && cd /tmp/nexis-ux
+git clone --depth 1 --branch claude/ux-modernization-spec https://github.com/s4solutionsllc/Nexis.git /tmp/nexis-ux && cd /tmp/nexis-ux
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build --target test-ScreenshotTests -j$(nproc)
-./scripts/update_screenshots.sh   # auto-selects QT_QPA_PLATFORM=offscreen headless (SSO-3729)
+./scripts/update_screenshots.sh
 ls tests/reference_screenshots/linux/dark/
 ```
 
-Expected: `Generated:` lines including `docker.png` (Docker runs Coolify on this
-host) and `apt_source_manager.png`. `gnome_settings.png` will be skipped —
-headless server has no GNOME.
+Expected: 12 PNGs per theme. This writes into the **clone's** working tree only
+— it is deleted afterwards and nothing is committed from the homelab.
 
-- [ ] **Step 2: Pull the gated-page PNGs back to the Mac**
+- [ ] **Step 2: Pull the captures back and clean up**
 
 ```bash
-for theme in dark light; do
-  scp "homelab:/tmp/nexis-ux/tests/reference_screenshots/linux/$theme/{docker,apt_source_manager}.png" \
-      "docs/design/ux-modernization/current-state/linux/$theme/" || true
-done
+mkdir -p docs/design/ux-modernization/current-state/linux/{dark,light}
+scp 'homelab:/tmp/nexis-ux/tests/reference_screenshots/linux/dark/*.png'  docs/design/ux-modernization/current-state/linux/dark/
+scp 'homelab:/tmp/nexis-ux/tests/reference_screenshots/linux/light/*.png' docs/design/ux-modernization/current-state/linux/light/
+ssh homelab 'rm -rf /tmp/nexis-ux'
 ```
 
-(Adjust host alias to the actual SSH config name. `|| true` because either file
-may legitimately be absent.)
+(Adjust `homelab` to the actual SSH alias.)
 
-- [ ] **Step 3: Write the capture-gap log**
-
-Create `docs/design/ux-modernization/current-state/CAPTURE_NOTES.md` recording,
-for each of the 19 capture targets (18 audit pages + the Dashboard reference)
-× {macos, linux}: captured (with path) /
-skipped (reason) / N-A (platform). Explicitly note: `gnome_settings` has **no
-live capture** — its audit and mockup derive from
-`shared/nexis/Pages/GnomeSettings/*.ui` and are flagged "needs visual
-verification during implementation UAT" (spec §4 risk).
+- [ ] **Step 3: Finish `CAPTURE_NOTES.md`** — record: Linux pages captured; pages
+with **no live capture anywhere** (expected: `gnome_settings` — headless server
+has no GNOME; `apt_source_manager`, `boot_analysis`, `disk_tools`, `system_logs`,
+`docker` on Linux — outside the harness's 12 and not manually capturable
+headless). For each: prototype derives from macOS capture of the same shared
+page where one exists (BootAnalysis/DiskTools/SystemLogs/Docker are
+cross-platform), else from `.ui` files (GnomeSettings, APT) with an UNVERIFIED
+banner.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add docs/design/ux-modernization/current-state
-git commit -m "docs(design): add homelab captures for gated pages + capture-gap log"
+git commit -m "docs(design): add Linux current-state captures + capture-gap log"
 ```
 
 ---
 
-### Task 5: Build the external source pack (`sources.md`)
+### Task 3: Source pack (`sources.md`)
 
 **Files:**
 - Create: `docs/design/ux-modernization/sources.md`
 
 **Interfaces:**
-- Produces: citation keys (`[HIG-*]`, `[GNOME-*]`, `[QT-*]`, `[NNG-*]`) used by DESIGN_SYSTEM.md, every audit sheet, and work-items.md.
+- Produces: citation keys `[QT-QSS]`, `[QT-QSS-SYNTAX]`, `[QT-SHADOW]`, `[HIG-MACOS]`, `[GNOME-HIG]`, `[NNG-TABLES]`, `[NNG-EMPTY]` used by DESIGN_SYSTEM.md and rationale notes.
 
-- [ ] **Step 1: Fetch and verify each source (WebFetch), then write `sources.md`**
-
-For each row: fetch the URL, confirm it's live and the claim it supports is
-actually on the page, record title + access date (2026-07-13 or actual). Table
-format — one row per source:
+- [ ] **Step 1: Fetch, verify, and record each source** (WebFetch each URL; confirm the supporting content; record title + access date):
 
 ```markdown
-| Key | Claim it supports | URL | Title | Accessed |
-|---|---|---|---|---|
-| QT-QSS | QSS selector styling / re-polish semantics; prefer app-level stylesheet | https://doc.qt.io/qt-6/stylesheet.html | Qt Style Sheets | 2026-07-13 |
-| QT-QSS-SYNTAX | Property-selector re-polish requirement (BUG-56 external basis) | https://doc.qt.io/qt-6/stylesheet-syntax.html | The Style Sheet Syntax | 2026-07-13 |
-| QT-SHADOW | QGraphicsDropShadowEffect renders source into pixmap + blur = repaint cost; bounded-effects guardrail | https://doc.qt.io/qt-6/qgraphicsdropshadoweffect.html | QGraphicsDropShadowEffect | 2026-07-13 |
-| HIG-MACOS | macOS platform conventions: typography hierarchy, materials/elevation, layout margins | https://developer.apple.com/design/human-interface-guidelines | Apple Human Interface Guidelines | 2026-07-13 |
-| GNOME-HIG | Linux/GNOME conventions: boxed lists, header patterns, spacing units | https://developer.gnome.org/hig/ | GNOME Human Interface Guidelines | 2026-07-13 |
-| NNG-TABLES | Data-table legibility: row density, alignment, zebra vs whitespace | https://www.nngroup.com/articles/data-tables/ | Data Tables (NN/g) | 2026-07-13 |
-| NNG-EMPTY | Empty states must explain + offer next action | https://www.nngroup.com/articles/empty-state-interface-design/ | Empty-State Design (NN/g) | 2026-07-13 |
+| Key | Claim it supports | URL |
+|---|---|---|
+| QT-QSS | QSS selector styling; prefer app-level stylesheet | https://doc.qt.io/qt-6/stylesheet.html |
+| QT-QSS-SYNTAX | Property-selector re-polish requirement (BUG-56 basis) | https://doc.qt.io/qt-6/stylesheet-syntax.html |
+| QT-SHADOW | Drop-shadow effect = pixmap render + blur, repaint cost | https://doc.qt.io/qt-6/qgraphicsdropshadoweffect.html |
+| HIG-MACOS | macOS typography hierarchy, materials/elevation, margins | https://developer.apple.com/design/human-interface-guidelines |
+| GNOME-HIG | GNOME boxed lists, header patterns, spacing units | https://developer.gnome.org/hig/ |
+| NNG-TABLES | Data-table density, alignment, zebra vs whitespace | https://www.nngroup.com/articles/data-tables/ |
+| NNG-EMPTY | Empty states explain + offer next action | https://www.nngroup.com/articles/empty-state-interface-design/ |
 ```
 
-Add further sources ONLY if an audit task needs a claim not covered here; append,
-never delete. If a URL is dead, find the current equivalent on the same
-authority's domain and note the substitution.
+Add `Title` and `Accessed` columns from the fetches. Append further sources only
+if a rationale note needs an uncovered claim; if a URL is dead, substitute the
+current equivalent on the same authority's domain and note it.
 
-- [ ] **Step 2: Commit**
-
-```bash
-git add docs/design/ux-modernization/sources.md
-git commit -m "docs(design): add verified external source pack for UX audits"
-```
+- [ ] **Step 2: Commit** — `git add docs/design/ux-modernization/sources.md && git commit -m "docs(design): add verified external source pack"`
 
 ---
 
-### Task 6: Write `docs/design/DESIGN_SYSTEM.md`
+### Task 4: Write `docs/design/DESIGN_SYSTEM.md`
 
 **Files:**
 - Create: `docs/design/DESIGN_SYSTEM.md`
 
 **Interfaces:**
-- Consumes: citation keys from Task 5.
-- Produces: normative section numbers (`DS §n`) referenced by every audit sheet, mockup, and work-item draft.
+- Consumes: Task 3 citation keys.
+- Produces: stable section anchors `DS §1`–`DS §9` cited by every rationale note and work item.
 
-- [ ] **Step 1: Write the document with this exact structure**
+- [ ] **Step 1: Write the document** with these sections (constants pre-researched
+2026-07-13; verify each cited file:line while writing — if a line drifted, fix
+the citation, not the value):
 
-Sections (all constants below are pre-researched — verify each against the cited
-file:line while writing; if a line number drifted, fix the citation, not the value):
+- **DS §1 Surface hierarchy** — `@pageContent` → `@cardBg` → `@cardBgElevated`; elevated surfaces carry shadow (values.ini:2,29,30 both themes).
+- **DS §2 Card chrome** — radius 12px; 1px `@borderColor`; fill `@cardBgElevated`; shadow alpha 90 / blur 26 / offset (0,2) / `@shadowColor`; 8px outer margin (dashboard_tile_wrapper.cpp:107-130, utilities.h:30-32, style.qss:765-769).
+- **DS §3 Header anatomy** — 3px×≥26px accent bar r1 + title row + muted source line; actions pinned top-right 24×24; margins 14,12,14,10, spacing 6/8 (metric_tile_base.cpp:255-307, :171-177).
+- **DS §4 Typography scale** — title 9pt/600 `@color06` · meta 8pt/500 `@tertiaryText` · hero 14pt/700 `@color05` · pill 8pt (style.qss:772-815).
+- **DS §5 Status & state patterns** — pill (r8, padding 1 6, bg `@chartGridColor`); `[status="…"]` selectors; empty state = icon + explanation + action [NNG-EMPTY]; loading = static skeleton, no animation.
+- **DS §6 Tracks, bars, charts** — track/grid `@chartGridColor` (2.8.1 change); progress bar bg `@chartGridColor` r2 max-height 4 (style.qss:817-826); series `@chartSeries01–20`.
+- **DS §7 Tables & lists** — container-level cards, never per-row shadows; density/alignment [NNG-TABLES]; platform notes [HIG-MACOS][GNOME-HIG].
+- **DS §8 Theming rules** — 79×2 tokens, parity test-enforced; BUG-47; BUG-49; `refreshThemeColors()` only for painted colors; inline styles resolve tokens at runtime (tests/theme/test_theme_tokens.cpp).
+- **DS §9 Performance guardrails** — the six from spec §5, cited: QSS-first [QT-QSS], bounded shadows [QT-SHADOW], no timers/animation, FR-97, BUG-56 [QT-QSS-SYNTAX], measured cold-start/idle-CPU.
 
-```markdown
-# Nexis Design System (extracted from v2.8.x Dashboard, GH#191/#213/#214)
-
-## DS §1 Surface hierarchy
-@pageContent → @cardBg → @cardBgElevated; elevated surfaces carry shadow.
-Values: values.ini:2,29,30 both themes.
-
-## DS §2 Card chrome (the elevated-card recipe)
-radius 12px; border 1px @borderColor; fill @cardBgElevated; shadow alpha 90,
-blur 26, offset (0,2), color @shadowColor; 8px outer margin for shadow room.
-Sources: dashboard_tile_wrapper.cpp:107-130, utilities.h:30-32, style.qss:765-769.
-
-## DS §3 Header anatomy
-3px × ≥26px accent bar (radius 1) + title row + muted source line; gear/actions
-pinned top-right 24×24. Content margins 14,12,14,10; spacing 6/8.
-Sources: metric_tile_base.cpp:255-307, :171-177.
-
-## DS §4 Typography scale
-Title 9pt/600 @color06 · source/meta 8pt/500 @tertiaryText · hero value
-14pt/700 @color05 · pill text 8pt. Source: style.qss:772-815.
-
-## DS §5 Status & state patterns
-Trend/status pill (radius 8, padding 1 6, bg @chartGridColor); [status="…"]
-selectors; empty state = icon + one-line explanation + action [NNG-EMPTY];
-loading state = static skeleton, no animation (guardrail).
-
-## DS §6 Tracks, bars, charts
-Track/grid color @chartGridColor (moved off @color02 in 2.8.1 — CHANGELOG);
-progress bar bg @chartGridColor radius 2 max-height 4 (style.qss:817-826);
-chart series @chartSeries01–20.
-
-## DS §7 Tables & lists
-Container-level cards, never per-row shadows (spec §8 risk). Row density and
-alignment rules cite [NNG-TABLES]; platform variance notes cite [HIG-MACOS],
-[GNOME-HIG].
-
-## DS §8 Theming rules (binding)
-79 tokens × 2 themes, parity test-enforced; BUG-47 no hardcoded colors;
-BUG-49 non-substring token names; refreshThemeColors()+sigChangedAppTheme for
-painted colors only; inline setStyleSheet() must resolve tokens at runtime
-(tests/theme/test_theme_tokens.cpp).
-
-## DS §9 Performance guardrails (binding)
-The six guardrails from spec §6, each with citation: QSS-first [QT-QSS],
-bounded shadows [QT-SHADOW] + dashboard-proven ceiling, no timers/animation,
-FR-97 lazy construction, BUG-56 re-polish [QT-QSS-SYNTAX], measured
-cold-start/idle-CPU acceptance.
-```
-
-Every `DS §n` heading is stable — audits and work items cite them; do not
-renumber in later edits.
-
-- [ ] **Step 2: Verify every file:line citation**
-
-For each citation in the doc, open the file at that line and confirm the
-constant. Expected: all match (they were extracted 2026-07-13 from this branch).
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add docs/design/DESIGN_SYSTEM.md
-git commit -m "docs(design): add normative design system extracted from 2.8.x dashboard"
-```
+- [ ] **Step 2: Verify every file:line citation** by opening each cited location. Expected: all match.
+- [ ] **Step 3: Commit** — `git add docs/design/DESIGN_SYSTEM.md && git commit -m "docs(design): add normative design system extracted from 2.8.x dashboard"`
 
 ---
 
-### Task 7: Audit template + table-centric page audits
+### Task 5: Prototype scaffold (tokens, base styles, renderer)
 
 **Files:**
-- Create: `docs/design/ux-modernization/audits/_TEMPLATE.md`
-- Create: `docs/design/ux-modernization/audits/{processes,search,system_logs,boot_analysis,hardware_info,uninstaller}.md`
+- Create: `scripts/design/tokens_to_css.py`, `scripts/design/render_mockups.sh`
+- Create: `docs/design/ux-modernization/mockups/base.css`, `mockups/pages/_smoke.html`
 
 **Interfaces:**
-- Consumes: DESIGN_SYSTEM.md `DS §n`, evidence pack paths, `sources.md` keys.
-- Produces: `_TEMPLATE.md` consumed verbatim by Tasks 8–11; audit sheets consumed by mockup Tasks 13–17 and work-items Task 18.
-
-- [ ] **Step 1: Create `_TEMPLATE.md`**
-
-```markdown
-# <Page Name> — UX Audit
-
-**Platforms:** <macOS / Linux / both; gating condition if any>
-**Structure class:** <table-centric | list-of-rows | tree-stacked | charts | forms>
-**Source files:** <page .cpp/.h/.ui paths with LOC>
-**Evidence:** <current-state PNG paths, or CAPTURE_NOTES.md gap reference>
-**Styling today:** <global-QSS-only | has refreshThemeColors()> (per theme-system research)
-
-## Current state (2–4 sentences)
-
-## Deviations from DESIGN_SYSTEM.md
-| # | Area | Current | Target | DS § | Source |
-|---|------|---------|--------|------|--------|
-| D1 | e.g. Surfaces | flat @pageContent, no card container | section content in elevated card | §1–2 | current-state/macos/dark/<page>.png |
-
-## Recommendations
-R1. <imperative change>. Source: <file:line | screenshot path | sources.md key>
-...
-
-## Hardcoded-color / inline-stylesheet findings
-Output of: grep -n "setStyleSheet\|QColor(" <page .cpp files> — each hit judged
-against DS §8, or "none".
-
-## Performance notes
-Which guardrails (DS §9) this page's restyle must watch, e.g. shadow count for
-long scroll areas, table repaint areas.
-
-## Out of scope (explicitly not proposed)
-```
-
-- [ ] **Step 2: Write the six table-centric audits**
-
-For each of Processes (`shared/nexis/Pages/Processes/`), Search, SystemLogs,
-BootAnalysis, HardwareInfo, Uninstaller: read the page source + `.ui`, open its
-evidence PNGs (dark+light, both platforms where present), fill the template
-completely. Structure-class checklist to evaluate on every one of these pages:
-table container (card vs bare), header row treatment, toolbar/filter row
-anatomy vs DS §3, row density/alignment [NNG-TABLES], status coloring vs DS §5,
-empty-result state [NNG-EMPTY], typography vs DS §4.
-
-- [ ] **Step 3: Verify zero unsourced recommendations**
-
-Run: `grep -L "Source:" docs/design/ux-modernization/audits/*.md` → expected: empty output.
-Also `grep -rn "R[0-9]*\." docs/design/ux-modernization/audits/ | grep -v "Source:"` should show only lines whose following line carries the source — spot-check any hit.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add docs/design/ux-modernization/audits
-git commit -m "docs(design): add audit template + table-centric page audits"
-```
-
----
-
-### Task 8: List-of-rows page audits
-
-**Files:**
-- Create: `docs/design/ux-modernization/audits/{services,startup_apps,apt_source_manager}.md`
-
-**Interfaces:**
-- Consumes: `_TEMPLATE.md` (Task 7), DS §n, evidence pack, sources.md.
-
-- [ ] **Step 1: Write the three audits** using `_TEMPLATE.md`. Pages: Services
-(`shared/nexis/Pages/Services/`, 206 LOC, item rows via `service_item.ui`),
-StartupApps (871 LOC + platform edit dialogs), APT Source Manager
-(`linux/nexis/Pages/AptSourceManager/`, ~2,027 LOC, Linux-gated). Class
-checklist: row-item chrome vs DS §2 (card-per-row is a shadow-count risk — DS
-§9; recommend flat `@cardBg` rows in an elevated container), row header/label
-typography vs DS §4, toggle/action affordances, list empty state [NNG-EMPTY],
-GNOME boxed-list comparison [GNOME-HIG] for the Linux-only page.
-
-- [ ] **Step 2: Source check** — same greps as Task 7 Step 3. Expected: empty.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add docs/design/ux-modernization/audits
-git commit -m "docs(design): add list-of-rows page audits"
-```
-
----
-
-### Task 9: Tree/stacked-tool page audits
-
-**Files:**
-- Create: `docs/design/ux-modernization/audits/{system_cleaner,disk_tools,docker,helpers,homebrew}.md`
-
-**Interfaces:**
-- Consumes: `_TEMPLATE.md`, DS §n, evidence pack, sources.md.
-
-- [ ] **Step 1: Write the five audits.** Pages: SystemCleaner (2,079 LOC,
-QStackedWidget + category trees), DiskTools (895), Docker (520, tabs+trees,
-gated), Helpers (5,280 — the tool hub; audit the hub grid AND the shared tool-
-widget chrome once, not per-tool), Homebrew (`macos/nexis/Pages/Homebrew/`,
-497, macOS-gated). Class checklist: stacked-page navigation chrome, tree
-container card treatment vs DS §2, category header anatomy vs DS §3,
-scan/progress states vs DS §5–6, `QPlainTextEdit` output areas (mono font
-token), per-widget setStyleSheet audit (Helpers is the biggest offender risk —
-it has 3–8 inline styles per tool widget).
-
-- [ ] **Step 2: Source check** — same greps. Expected: empty.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add docs/design/ux-modernization/audits
-git commit -m "docs(design): add tree/stacked-tool page audits"
-```
-
----
-
-### Task 10: Chart page audits
-
-**Files:**
-- Create: `docs/design/ux-modernization/audits/{resources,network_usage}.md`
-
-**Interfaces:**
-- Consumes: `_TEMPLATE.md`, DS §n, evidence pack, sources.md.
-
-- [ ] **Step 1: Write the two audits.** Resources (2,421 LOC, QChart history
-charts + disk-usage launcher; has `refreshThemeColors`), Network (951 LOC,
-custom `BarChartWidget`). Class checklist: chart container cards vs DS §2,
-chart surface tokens vs DS §6 (`@chartBackgroundColor`, `@chartGridColor`,
-series palette), chart title/legend typography vs DS §4, launcher-widget
-chrome, no animation additions (DS §9).
-
-- [ ] **Step 2: Source check** — same greps. Expected: empty.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add docs/design/ux-modernization/audits
-git commit -m "docs(design): add chart page audits"
-```
-
----
-
-### Task 11: Form page audits
-
-**Files:**
-- Create: `docs/design/ux-modernization/audits/{settings,gnome_settings}.md`
-
-**Interfaces:**
-- Consumes: `_TEMPLATE.md`, DS §n, evidence pack, sources.md, CAPTURE_NOTES.md.
-
-- [ ] **Step 1: Write the two audits.** Settings (857 LOC, scroll-area form
-sections; has `refreshThemeColors` + `addDropShadow` at settings_page.cpp:213,768
-— compare its shadow params against the DS §2 recipe and flag drift), and
-GnomeSettings (1,228 LOC, Linux-gated, **no live capture** — derive from the
-page + 4 tab `.ui` files, mark every visual claim `Source: <file>.ui` and add
-the "needs UAT visual verification" banner per CAPTURE_NOTES.md). Class
-checklist: section grouping into cards vs DS §2–3, label/field typography vs
-DS §4, control alignment [HIG-MACOS]/[GNOME-HIG], destructive-action styling
-(`@destructiveColor`) vs DS §5.
-
-- [ ] **Step 2: Source check** — same greps. Expected: empty.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add docs/design/ux-modernization/audits
-git commit -m "docs(design): add form page audits"
-```
-
----
-
-### Task 12: Mockup scaffold (tokens, base styles, renderer)
-
-**Files:**
-- Create: `scripts/design/tokens_to_css.py`
-- Create: `scripts/design/render_mockups.sh`
-- Create: `docs/design/ux-modernization/mockups/base.css`
-- Create: `docs/design/ux-modernization/mockups/pages/_smoke.html`
-
-**Interfaces:**
-- Produces: `tokens.css` (generated), `base.css` classes (`.card`, `.section-header`, `.accent-bar`, `.pill`, `.t-title`, `.t-meta`, `.t-hero`), and `render_mockups.sh` — consumed by Tasks 13–17.
+- Produces: generated `mockups/tokens.css`; `base.css` classes `.card`, `.card--flat`, `.section-header`, `.accent-bar`, `.pill`, `.t-title`, `.t-meta`, `.t-hero`; `render_mockups.sh` — consumed by Tasks 6–10.
 
 - [ ] **Step 1: Write `scripts/design/tokens_to_css.py`**
 
@@ -672,15 +258,15 @@ OUT.write_text("\n".join(blocks))
 print(f"Wrote {OUT}")
 ```
 
-- [ ] **Step 2: Generate and verify `tokens.css`**
+- [ ] **Step 2: Generate and verify**
 
 Run: `python3 scripts/design/tokens_to_css.py && grep -c -- "--" docs/design/ux-modernization/mockups/tokens.css`
-Expected: `Wrote …/tokens.css` and a count of **158** custom properties (79 × 2 themes).
+Expected: `Wrote …/tokens.css`, count **158** (79 tokens × 2 themes).
 
-- [ ] **Step 3: Write `base.css`** (the DS recipes as CSS; Qt pt ≈ px at macOS 72dpi)
+- [ ] **Step 3: Write `base.css`** (DS recipes as CSS; Qt pt ≈ px at macOS 72dpi)
 
 ```css
-/* Nexis mockup base — encodes DESIGN_SYSTEM.md recipes. tokens.css first. */
+/* Nexis mockup base — encodes DESIGN_SYSTEM.md recipes. Load tokens.css first. */
 * { box-sizing: border-box; margin: 0; }
 body {
   background: var(--pageContent);
@@ -694,7 +280,7 @@ body {
   border-radius: 12px;
   box-shadow: 0 2px 26px rgba(0, 0, 0, 0.35); /* alpha 90/255 */
   margin: 8px;                                 /* shadow room */
-  padding: 14px 12px 10px 14px;                /* root margins, rotated to CSS order T R B L = 12,14,10,14 */
+  padding: 12px 14px 10px 14px;                /* Qt margins L,T,R,B = 14,12,14,10 → CSS T,R,B,L */
 }
 .card--flat { box-shadow: none; background: var(--cardBg); }
 /* DS §3 — header anatomy: metric_tile_base.cpp:255-307 */
@@ -711,15 +297,11 @@ body {
 }
 ```
 
-Note the padding comment: `metric_tile_base.cpp:257` sets Qt margins
-(L,T,R,B)=(14,12,14,10); CSS shorthand is T R B L. Keep both notations visible
-so implementing agents don't transpose.
-
-- [ ] **Step 4: Write `render_mockups.sh`**
+- [ ] **Step 4: Write `scripts/design/render_mockups.sh`**
 
 ```bash
 #!/usr/bin/env bash
-# Render every mockup page to dark+light PNGs at the harness capture size.
+# Render every mockup page to dark+light PNGs at the capture size.
 set -euo pipefail
 cd "$(dirname "$0")/../../docs/design/ux-modernization/mockups"
 mkdir -p renders
@@ -733,10 +315,10 @@ done
 echo "Rendered $(ls renders/*.png | wc -l | tr -d ' ') PNGs"
 ```
 
-Make executable: `chmod +x scripts/design/render_mockups.sh scripts/design/tokens_to_css.py`
-One-time browser install: `npx --yes playwright install chromium`
+Then: `chmod +x scripts/design/*.py scripts/design/*.sh` and one-time
+`npx --yes playwright install chromium`.
 
-- [ ] **Step 5: Write the smoke-test page `pages/_smoke.html`**
+- [ ] **Step 5: Write the smoke page `mockups/pages/_smoke.html`**
 
 ```html
 <!doctype html>
@@ -761,203 +343,218 @@ One-time browser install: `npx --yes playwright install chromium`
 - [ ] **Step 6: Render and verify**
 
 Run: `./scripts/design/render_mockups.sh`
-Expected: `Rendered 2 PNGs`. Open `renders/_smoke_dark.png` and
-`renders/_smoke_light.png` (Read tool): dark shows a warm-dark elevated card
-(`#32343A`) on `#1A1C22`; light shows `#FFF8F2` on `#F5F0EB`; accent bar uses
-`@cpuColor`. If both PNGs look identical, the `?theme=light` query isn't
-reaching the script — check the `<script>` block placement.
+Expected: `Rendered 2 PNGs`. Open both renders: dark card `#32343A` on `#1A1C22`;
+light card `#FFF8F2` on `#F5F0EB`; if identical, the theme query isn't applying —
+check the `<script>` placement.
 
-- [ ] **Step 7: Commit**
-
-```bash
-git add scripts/design docs/design/ux-modernization/mockups
-git commit -m "docs(design): add mockup scaffold — token CSS generator, base styles, renderer"
-```
+- [ ] **Step 7: Commit** — `git add scripts/design docs/design/ux-modernization/mockups && git commit -m "docs(design): add prototype scaffold — token CSS generator, base styles, renderer"`
 
 ---
 
-### Task 13: Table-centric page mockups
+### Task 6: Prototypes — table-centric pages (6)
 
 **Files:**
-- Create: `docs/design/ux-modernization/mockups/pages/{processes,search,system_logs,boot_analysis,hardware_info,uninstaller}.html`
-- Create: corresponding `renders/*_{dark,light}.png`
+- Create: `mockups/pages/{processes,search,system_logs,boot_analysis,hardware_info,uninstaller}.html`, matching `renders/*_{dark,light}.png`, and `mockups/notes/<page>.md` per page
 
 **Interfaces:**
-- Consumes: `tokens.css`/`base.css` classes and `render_mockups.sh` (Task 12); audit recommendations (Task 7).
+- Consumes: Task 5 scaffold classes/renderer; evidence PNGs; DS §; sources.md keys.
+- Produces: prototype pairs + rationale notes consumed by the gallery (Task 11) and work items (Task 12).
 
-- [ ] **Step 1: Build the six mockups.** Each page: reproduce the current layout
-skeleton (sidebar strip + page area, from the evidence PNG) and apply exactly
-the audit's R-numbered recommendations — nothing more (YAGNI: a mockup that
-"improves" beyond its audit is a plan violation). Use realistic data copied
-from the evidence screenshots. Annotate each region with an HTML comment naming
-the audit rec it implements: `<!-- R3: table in .card container, DS §2 -->`.
+- [ ] **Step 1: For each page, write the rationale note first** (`mockups/notes/<page>.md`):
 
-- [ ] **Step 2: Render** — `./scripts/design/render_mockups.sh`
-Expected: 2 PNGs per page added; visually compare each dark render side-by-side
-with `current-state/macos/dark/<page>.png` — layout skeleton must match, only
-chrome differs.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add docs/design/ux-modernization/mockups
-git commit -m "docs(design): add table-centric page mockups"
+```markdown
+# <Page> — prototype rationale
+**Before:** current-state/<platform>/dark/<page>.png
+**Changes:**
+1. <change>. Source: <file:line | evidence path | sources.md key>. DS §<n>.
+...
+**Explicitly unchanged:** <layout/interactions kept as-is>
 ```
 
+Keep to the change classes Luke named: shadow depth (DS §2), surface texturing
+(`@cardBg`/`@cardBgElevated` hierarchy, DS §1), layout consistency (header
+anatomy DS §3, typography DS §4, spacing). Table-specific checklist: table in an
+elevated container card (never per-row shadows, DS §7), toolbar/filter row using
+header anatomy, status colors via DS §5, empty state [NNG-EMPTY].
+
+- [ ] **Step 2: Build each HTML prototype** — reproduce the page's current layout
+skeleton from its evidence PNG (sidebar strip + content area, realistic data
+copied from the screenshot), apply exactly the note's numbered changes, nothing
+more. Annotate regions: `<!-- change 3: DS §2 card container -->`.
+
+- [ ] **Step 3: Render and compare** — `./scripts/design/render_mockups.sh`; open each
+dark render next to its before-PNG: layout skeleton must match, only chrome differs.
+
+- [ ] **Step 4: Commit** — `git add docs/design/ux-modernization/mockups && git commit -m "docs(design): add table-centric page prototypes"`
+
 ---
 
-### Task 14: List-of-rows page mockups
+### Task 7: Prototypes — list-of-rows pages (3)
+
+**Files:** `mockups/pages/{services,startup_apps,apt_source_manager}.html` + renders + notes
+
+Same steps as Task 6. Class checklist: rows as flat `.card--flat` inside one
+elevated container (shadow-count guardrail DS §9), row typography DS §4, toggle/
+action affordances unchanged, empty state [NNG-EMPTY], [GNOME-HIG] boxed-list
+comparison for APT (Linux-only; skeleton from Linux evidence or `.ui` per
+CAPTURE_NOTES.md — include `<!-- UNVERIFIED: no live capture -->` banner if so).
+
+- [ ] **Step 1: Rationale notes** (Task 6 Step 1 format)
+- [ ] **Step 2: HTML prototypes**
+- [ ] **Step 3: Render and compare**
+- [ ] **Step 4: Commit** — `git commit -m "docs(design): add list-of-rows page prototypes"`
+
+---
+
+### Task 8: Prototypes — tree/stacked-tool pages (5)
+
+**Files:** `mockups/pages/{system_cleaner,disk_tools,docker,helpers,homebrew}.html` + renders + notes
+
+Same steps as Task 6. Class checklist: tree containers in DS §2 cards, category
+headers per DS §3, scan/progress states DS §5–6, `QPlainTextEdit` output areas
+on `@cardBg` with mono font, Helpers = hub grid + ONE representative tool widget.
+
+- [ ] **Step 1: Rationale notes**
+- [ ] **Step 2: HTML prototypes**
+- [ ] **Step 3: Render and compare**
+- [ ] **Step 4: Commit** — `git commit -m "docs(design): add tree/stacked-tool page prototypes"`
+
+---
+
+### Task 9: Prototypes — chart pages (2)
+
+**Files:** `mockups/pages/{resources,network_usage}.html` + renders + notes
+
+Same steps as Task 6. Charts as static SVG/CSS using `--chartSeries01…`,
+`--chartGridColor`, `--chartBackgroundColor` (DS §6); chart containers as DS §2
+cards; no JS chart libraries; no animation (DS §9).
+
+- [ ] **Step 1: Rationale notes**
+- [ ] **Step 2: HTML prototypes**
+- [ ] **Step 3: Render and compare**
+- [ ] **Step 4: Commit** — `git commit -m "docs(design): add chart page prototypes"`
+
+---
+
+### Task 10: Prototypes — form pages (2)
+
+**Files:** `mockups/pages/{settings,gnome_settings}.html` + renders + notes
+
+Same steps as Task 6. Form sections grouped into DS §2 cards with DS §3 headers;
+label/field typography DS §4; control alignment [HIG-MACOS]/[GNOME-HIG];
+destructive actions `--destructiveColor` (DS §5). Settings: compare its existing
+`addDropShadow` params (settings_page.cpp:213,768) against DS §2 in the note.
+GnomeSettings: skeleton from its `.ui` files, UNVERIFIED banner per CAPTURE_NOTES.md.
+
+- [ ] **Step 1: Rationale notes**
+- [ ] **Step 2: HTML prototypes**
+- [ ] **Step 3: Render and compare**
+- [ ] **Step 4: Commit** — `git commit -m "docs(design): add form page prototypes"`
+
+---
+
+### Task 11: Review gallery + Luke's page-by-page approval  ⛔ APPROVAL GATE
 
 **Files:**
-- Create: `mockups/pages/{services,startup_apps,apt_source_manager}.html` + renders
+- Create: `docs/design/ux-modernization/review-gallery.html`
+- Modify: `mockups/notes/<page>.md` (approval status lines)
 
-**Interfaces:** Consumes Task 12 scaffold + Task 8 audits.
+**Interfaces:**
+- Consumes: all 18 prototype pairs, before-PNGs, notes.
+- Produces: per-page approval status (`Approved` / `Revise: <feedback>` / `Deferred`) required by Task 12.
 
-- [ ] **Step 1: Build the three mockups** (same rules as Task 13 Step 1; APT page uses the Linux evidence PNGs as its skeleton reference).
-- [ ] **Step 2: Render and compare** — same as Task 13 Step 2.
-- [ ] **Step 3: Commit** — `git add docs/design/ux-modernization/mockups && git commit -m "docs(design): add list-of-rows page mockups"`
+- [ ] **Step 1: Build `review-gallery.html`** — one section per page: page name,
+before (current-state PNG) and after (render) side-by-side for dark, then light;
+the rationale note's change list; images embedded as `data:` URIs so the page is
+self-contained. Wide rows scroll in their own container.
 
----
+- [ ] **Step 2: Publish as a private artifact** (Artifact tool; favicon 🎨, stable
+across revisions) and give Luke the link with clear instructions: reply per page
+— approve / revise (with what's wrong) / defer.
 
-### Task 15: Tree/stacked-tool page mockups
+- [ ] **Step 3: STOP. Wait for Luke's feedback.** Do not proceed to Task 12.
 
-**Files:**
-- Create: `mockups/pages/{system_cleaner,disk_tools,docker,helpers,homebrew}.html` + renders
+- [ ] **Step 4: Revision loop** — for each "revise" page: update the HTML + note,
+re-render, redeploy the same artifact URL, re-request review. Repeat until every
+page is Approved or Deferred. Record final status + date at the top of each
+page's note.
 
-**Interfaces:** Consumes Task 12 scaffold + Task 9 audits.
-
-- [ ] **Step 1: Build the five mockups** (Helpers: mock the hub grid + ONE representative tool widget, per the audit's single-chrome decision).
-- [ ] **Step 2: Render and compare** — same as Task 13 Step 2.
-- [ ] **Step 3: Commit** — `git add docs/design/ux-modernization/mockups && git commit -m "docs(design): add tree/stacked-tool page mockups"`
-
----
-
-### Task 16: Chart page mockups
-
-**Files:**
-- Create: `mockups/pages/{resources,network_usage}.html` + renders
-
-**Interfaces:** Consumes Task 12 scaffold + Task 10 audits.
-
-- [ ] **Step 1: Build the two mockups** (charts as static SVG/CSS shapes using `--chartSeries01…`, `--chartGridColor`, `--chartBackgroundColor`; no JS chart libs).
-- [ ] **Step 2: Render and compare** — same as Task 13 Step 2.
-- [ ] **Step 3: Commit** — `git add docs/design/ux-modernization/mockups && git commit -m "docs(design): add chart page mockups"`
+- [ ] **Step 5: Commit** — `git add docs/design/ux-modernization && git commit -m "docs(design): add review gallery + record prototype approval outcomes"`
 
 ---
 
-### Task 17: Form page mockups
-
-**Files:**
-- Create: `mockups/pages/{settings,gnome_settings}.html` + renders
-
-**Interfaces:** Consumes Task 12 scaffold + Task 11 audits.
-
-- [ ] **Step 1: Build the two mockups** (GnomeSettings skeleton derives from its `.ui` files — include the `<!-- UNVERIFIED: no live capture, see CAPTURE_NOTES.md -->` banner comment at the top).
-- [ ] **Step 2: Render and compare** (Settings against evidence; GnomeSettings against the `.ui` structure only).
-- [ ] **Step 3: Commit** — `git add docs/design/ux-modernization/mockups && git commit -m "docs(design): add form page mockups"`
-
----
-
-### Task 18: Paperclip work-item drafts (`work-items.md`)
+### Task 12: Paperclip work-item drafts (`work-items.md`) — approved pages only
 
 **Files:**
 - Create: `docs/design/ux-modernization/work-items.md`
 
 **Interfaces:**
-- Consumes: everything — DS §n, audits (R-numbers), mockup paths, CAPTURE_NOTES.md, spec §6/§7.
+- Consumes: approval statuses (Task 11), DS §, notes, mockup/render paths, spec §5–6.
 
-- [ ] **Step 1: Write the Phase-1 foundation items** using this skeleton for every item in the file:
+- [ ] **Step 1: Write the 4 Phase-1 foundation items** using this skeleton for every item:
 
 ```markdown
 ### <working title>  (Paperclip: create as NEX-___)
 **Phase:** 1-Foundation | 2-Page
 **Blocked by:** <item titles or "—">
 **Files:** <exact paths>
-**Design refs:** DS §<n>…; audit <page>.md R<n>…; mockup pages/<page>.html + renders/<page>_{dark,light}.png
-**Change summary:** <3–6 bullets, imperative>
+**Design refs:** DS §<n>; notes/<page>.md (approved <date>); renders/<page>_{dark,light}.png
+**Change summary:** <3–6 imperative bullets>
 **Acceptance criteria:**
-- Visual match to mockup within screenshot tolerance (fuzz 8 / 1.0%), dark + light
+- Visual match to the APPROVED render, dark + light
 - Guardrails DS §9: no new timers/animation; shadow count ≤ <n>; QSS-first; FR-97 intact
 - Cold-start and idle CPU unchanged within noise (macOS + Linux)
-- Screenshot baselines regenerated for touched pages
 - CHANGELOG.md + docs/APPLICATION_OVERVIEW.md updated
 **UAT (business-user steps):** <numbered tap/navigate/verify steps>
 ```
 
-Phase-1 items (5): F1 shared card container (widget + QSS class per DS §2);
-F2 section-header pattern (DS §3); F3 state patterns — empty/loading/status pill
-(DS §5); F4 QSS consolidation groundwork (move audit-flagged inline styles into
-the master template); F5 Linux screenshot baselines committed via CI workflow
-(the deferred half of Task 3).
+F1 shared card container (DS §2); F2 section-header pattern (DS §3); F3 state
+patterns (DS §5); F4 QSS consolidation groundwork.
 
-- [ ] **Step 2: Write the 18 Phase-2 page items** — one per audited page (all
-audits from Tasks 7–11), each blocked by F1–F4, ordered: Processes, Resources,
-SystemCleaner first (high-traffic, spec §7); BootAnalysis, GnomeSettings last.
-Every item fully self-contained per the skeleton — an agent must be able to
-implement from the item + referenced artifacts without this conversation.
+- [ ] **Step 2: Write one Phase-2 item per APPROVED page** (deferred pages get a
+one-line "Deferred by maintainer <date>" entry, no item), each blocked by F1–F4,
+ordered Processes, Resources, SystemCleaner first.
 
-- [ ] **Step 3: Cross-check completeness**
+- [ ] **Step 3: Cross-check** — every note with status `Approved` has an item:
+`grep -l "^**Status:** Approved" docs/design/ux-modernization/mockups/notes/*.md`
+names must all appear in work-items.md; count of `### ` headings = 4 + approved-page count.
 
-Run: `ls docs/design/ux-modernization/audits/*.md | grep -v _TEMPLATE | wc -l` → expected 18;
-`grep -c "^### " docs/design/ux-modernization/work-items.md` → expected 23 (5 + 18).
-Every audit file name must appear in work-items.md: verify with
-`for f in docs/design/ux-modernization/audits/*.md; do n=$(basename $f .md); [ "$n" = "_TEMPLATE" ] && continue; grep -q "$n" docs/design/ux-modernization/work-items.md || echo "MISSING: $n"; done` → no output.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add docs/design/ux-modernization/work-items.md
-git commit -m "docs(design): add Paperclip work-item drafts for UX modernization"
-```
+- [ ] **Step 4: Commit** — `git add docs/design/ux-modernization/work-items.md && git commit -m "docs(design): add Paperclip work-item drafts for approved prototypes"`
 
 ---
 
-### Task 19: Package review, spec acceptance check, PR
+### Task 13: Package check + PR
 
 **Files:**
-- Modify: `docs/superpowers/specs/2026-07-13-ux-modernization-design.md` (tick §9 acceptance boxes)
+- Modify: `docs/superpowers/specs/2026-07-13-ux-modernization-design.md` (tick §8 boxes)
 
-**Interfaces:** Consumes the whole package.
+- [ ] **Step 1: Run the spec §8 acceptance checklist** with evidence in hand:
+capture coverage vs CAPTURE_NOTES.md; 5 spot-checked DS citations; render count
+(`ls mockups/renders/*.png | wc -l` ≥ 38 = 18 pages × 2 + smoke); every note has
+a status; work-items cross-check (Task 12 Step 3); and the no-code-change proof:
+`git diff native --stat -- shared/ linux/ macos/ tests/` → **empty**.
 
-- [ ] **Step 1: Run the spec §9 acceptance checklist** against the actual tree —
-each box only ticked with the verifying command output in hand:
-constants traceable (spot-check 5 citations in DESIGN_SYSTEM.md), evidence pack
-coverage vs CAPTURE_NOTES.md, `grep -L "Source:"` audit check, mockup count
-(`ls mockups/renders/*.png | wc -l` ≥ 36 = 18 pages × 2 themes), work-items
-cross-check (Task 18 Step 3), and `git diff native --stat -- shared/ linux/ macos/`
-→ empty (no app source touched).
-
-- [ ] **Step 2: Run the full test suite once**
-
-Run: `ctest --test-dir build --output-on-failure`
-Expected: all tests pass (the only code change is the harness; theme-token tests
-prove no token/app drift).
-
-- [ ] **Step 3: Push and open the PR**
+- [ ] **Step 2: Push and open the PR**
 
 ```bash
 git push
-gh pr create --title "docs(design): UX modernization planning package + full screenshot coverage" \
+gh pr create --title "docs(design): UX modernization prototype package" \
   --body "$(cat <<'EOF'
 ## Summary
-- Extends the screenshot harness to all 19 pages (optional-page handling for gated pages) and regenerates macOS baselines (GH#224)
-- Adds the UX-modernization planning package per docs/superpowers/specs/2026-07-13-ux-modernization-design.md: DESIGN_SYSTEM.md, full evidence pack (macOS local, Linux CI + homelab), 18 sourced page audits, 18 HTML+PNG mockups, 23 Paperclip work-item drafts
+- Evidence pack: current-state captures of every page (macOS local + homelab Linux), zero code changes
+- docs/design/DESIGN_SYSTEM.md: the 2.8.x dashboard language as a cited, normative spec
+- 18 before/after page prototypes (token-true HTML → PNG, dark+light) with sourced rationale notes, reviewed and approved page-by-page by the maintainer
+- Paperclip work-item drafts for the foundation components and every approved page
 
 ## Test plan
-- [ ] ctest full suite green (incl. ScreenshotTests compare mode on macOS)
-- [ ] Spec §9 acceptance checklist ticked with evidence
+- [ ] No diffs under shared/, linux/, macos/, tests/
+- [ ] Spec §8 acceptance checklist ticked with evidence
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
 ```
 
-Expected: PR URL printed. Report it to Luke. **Do not merge.**
+Expected: PR URL printed — report it to Luke. **Do not merge.**
 
-- [ ] **Step 4: Final commit for the ticked spec checklist**
-
-```bash
-git add docs/superpowers/specs/2026-07-13-ux-modernization-design.md
-git commit -m "docs(design): tick spec acceptance criteria after package review"
-git push
-```
+- [ ] **Step 3: Commit the ticked spec** — `git add docs/superpowers/specs/2026-07-13-ux-modernization-design.md && git commit -m "docs(design): tick spec acceptance criteria after package review" && git push`
