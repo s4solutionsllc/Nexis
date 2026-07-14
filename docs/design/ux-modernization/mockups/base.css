@@ -1,0 +1,29 @@
+/* Nexis mockup base — encodes DESIGN_SYSTEM.md recipes. Load tokens.css first. */
+* { box-sizing: border-box; margin: 0; }
+body {
+  background: var(--pageContent);
+  color: var(--color05);
+  font: 500 12px/1.45 -apple-system, "Segoe UI", "Noto Sans", sans-serif;
+}
+/* DS §2 — elevated card: dashboard_tile_wrapper.cpp:107-130, addDropShadow(90,26) */
+.card {
+  background: var(--cardBgElevated);
+  border: 1px solid var(--borderColor);
+  border-radius: 12px;
+  box-shadow: 0 2px 26px rgba(0, 0, 0, 0.35); /* alpha 90/255 */
+  margin: 8px;                                 /* shadow room */
+  padding: 12px 14px 10px 14px;                /* Qt margins L,T,R,B = 14,12,14,10 → CSS T,R,B,L */
+}
+.card--flat { box-shadow: none; background: var(--cardBg); }
+/* DS §3 — header anatomy: metric_tile_base.cpp:255-307 */
+.section-header { display: flex; gap: 8px; align-items: flex-start; }
+.accent-bar { width: 3px; min-height: 26px; border-radius: 1px; background: var(--accentColor); flex: none; }
+/* DS §4 — typography scale: style.qss:772-815 */
+.t-title { font-size: 9pt; font-weight: 600; color: var(--color06); }
+.t-meta  { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); }
+.t-hero  { font-size: 14pt; font-weight: 700; color: var(--color05); }
+/* DS §5 — pill */
+.pill {
+  display: inline-block; font-size: 8pt; padding: 1px 6px;
+  border-radius: 8px; background: var(--chartGridColor); color: var(--tertiaryText);
+}

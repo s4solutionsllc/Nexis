@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>smoke</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<script>
+  const t = new URLSearchParams(location.search).get("theme");
+  if (t) document.documentElement.dataset.theme = t;
+</script>
+<div class="card" style="width:320px">
+  <div class="section-header">
+    <div class="accent-bar" style="background:var(--cpuColor)"></div>
+    <div><div class="t-title">CPU</div><div class="t-meta">Apple M2 · 8 cores</div></div>
+  </div>
+  <div class="t-hero" style="margin-top:12px">42%</div>
+  <span class="pill">→ stable</span>
+</div>
