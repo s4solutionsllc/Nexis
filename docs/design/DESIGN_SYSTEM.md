@@ -80,11 +80,14 @@ a title row (title label + optional input-name label + stretch + a top-right
   spacing `8`.
 - Action button (gear): fixed size 24×24, icon 14×14, `setAutoRaise(true)`,
   aligned `Qt::AlignTop | Qt::AlignRight` in the title row.
+- Footer band: fixed height 24px.
 
 Citations: `metric_tile_base.cpp:255-307` (`buildChrome()` — accent bar
 `setFixedWidth(3)` / `setMinimumHeight(26)`, margins/spacing, title row,
 source row) and `metric_tile_base.cpp:171-180` (`createGearButton()` — 24×24,
-14×14 icon, autoRaise). Accent-bar radius 1 and the muted source-line color
+14×14 icon, autoRaise). Footer height: `metric_tile_base.h:65` (`FOOTER_HEIGHT = 24`),
+applied at `metric_tile_base.cpp:335` with consistency shipped in 2.8.1
+(`CHANGELOG.md:31,45`). Accent-bar radius 1 and the muted source-line color
 (`@tertiaryText`) are QSS constants — see DS §4.
 
 ## DS §4 — Typography scale
@@ -222,7 +225,7 @@ The six guardrails binding every work item (spec §5,
    theme switch never grows the shadow count unboundedly.
 4. **Lazy construction preserved (FR-97)** — non-Dashboard pages build on
    first navigation via the `PageSlot` factory registry, not at launch.
-   Citations: `shared/nexis/app.h:29-32`; `CHANGELOG.md:365-366`.
+   Citations: `shared/nexis/app.cpp:660-663`; `CHANGELOG.md:365-366`.
 5. **Re-polish discipline (BUG-56)** — after changing a QSS dynamic property,
    call `unpolish()`/`polish()` on the affected widget so the property
    selector re-evaluates; Qt does not do this automatically
