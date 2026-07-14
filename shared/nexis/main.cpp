@@ -21,6 +21,7 @@
 #include <Managers/setting_manager.h>
 #include <Managers/cleaner_service.h>
 #include <Managers/schedule_manager.h>
+#include <Managers/health_report_manager.h>
 #include <Utils/format_util.h>
 #include <Utils/headless_util.h>
 
@@ -201,12 +202,13 @@ int main(int argc, char *argv[])
     qApp->setDesktopFileName("nexis");
 
     // ── Headless mode detection (before QLockFile) ──────────────────────
-    // Parse --clean <schedule-id> and --check-threshold before the
-    // single-instance lock so that OS-scheduled headless invocations
-    // don't conflict with a running GUI instance.
+    // Parse --clean <schedule-id>, --check-threshold, and --report
+    // <schedule-id> before the single-instance lock so that OS-scheduled
+    // headless invocations don't conflict with a running GUI instance.
 
     QString cleanScheduleId;
     bool checkThreshold = false;
+    QString reportScheduleId;
 
     for (int i = 1; i < argc; ++i) {
         QString arg(argv[i]);
@@ -214,10 +216,12 @@ int main(int argc, char *argv[])
             cleanScheduleId = QString(argv[++i]);
         } else if (arg == "--check-threshold") {
             checkThreshold = true;
+        } else if (arg == "--report" && i + 1 < argc) {
+            reportScheduleId = QString(argv[++i]);
         }
     }
 
-    bool headless = !cleanScheduleId.isEmpty() || checkThreshold;
+    bool headless = !cleanScheduleId.isEmpty() || checkThreshold || !reportScheduleId.isEmpty();
 
     // ── Headless --clean ────────────────────────────────────────────────
     if (!cleanScheduleId.isEmpty()) {
@@ -255,6 +259,17 @@ int main(int argc, char *argv[])
                 .arg(FormatUtil::formatBytes(result.totalSize));
             showNotificationAndExit(app, "Nexis", msg);
         }
+
+        return 0;
+    }
+
+    // ── Headless --report ────────────────────────────────────────────────
+    // Fired by the launchd/systemd/cron entries syncReportSchedulesToOS()
+    // installs (SSO-5778, follow-up to FW-14 / SSO-3742).
+    if (!reportScheduleId.isEmpty()) {
+        qInstallMessageHandler(messageHandler);
+
+        HealthReportManager::ins()->runScheduledReport(reportScheduleId);
 
         return 0;
     }

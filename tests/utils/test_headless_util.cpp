@@ -22,6 +22,7 @@ private slots:
     void isHeadlessArgv_cleanLast_true();
     void isHeadlessArgv_cleanWithoutId_stillTrue();
     void isHeadlessArgv_checkThreshold_true();
+    void isHeadlessArgv_report_true();
     void isHeadlessArgv_mixedWithHide_true();
     void isHeadlessArgv_prefixOnly_false();
     void isHeadlessArgv_nullArgv_false();
@@ -84,6 +85,11 @@ void TestHeadlessUtil::isHeadlessArgv_cleanWithoutId_stillTrue()
 void TestHeadlessUtil::isHeadlessArgv_checkThreshold_true()
 {
     QCOMPARE(callIsHeadless({"nexis", "--check-threshold"}), 1);
+}
+
+void TestHeadlessUtil::isHeadlessArgv_report_true()
+{
+    QCOMPARE(callIsHeadless({"nexis", "--report", "schedule-abc"}), 1);
 }
 
 void TestHeadlessUtil::isHeadlessArgv_mixedWithHide_true()
