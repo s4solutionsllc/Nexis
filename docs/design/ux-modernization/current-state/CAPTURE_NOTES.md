@@ -110,13 +110,25 @@ resized to ~885×785 logical points (see gotcha #3), not exactly 1024×768.
    only be used for on-screen verification/navigation, not as the PNG
    source.
 
-4. **System Logs table keeps a dark background in Light theme.** Observed,
-   not fixed: on the System Logs page, the log-entry table view still
-   renders with a dark background/row colors after switching Color Scheme
-   to Light (visible in `macos/light/system_logs.png`), while the rest of
-   the page chrome (toolbar, dropdowns) is light. Logged here as a candidate
-   real UX finding for the modernization pass, not addressed in this
-   capture-only task.
+4. **System Logs table background observation — transiently observed but not
+   reproduced.** During the manual capture session, the log-entry table view
+   appeared to have a dark background after switching to Light theme. However,
+   this was NOT reproduced in the committed capture (`macos/light/system_logs.png`);
+   pixel sampling confirms the table background is pure white. Unverified — do not act
+   on this observation without reproducing it independently; excluded from
+   prototype modernization rationale.
+
+5. **Sidebar highlight artifact in harness-generated captures.** The 11
+   harness-generated non-Dashboard macOS captures (all pages except dashboard,
+   boot_analysis, disk_tools, system_logs, homebrew) have a stale sidebar
+   highlight: it incorrectly remains on "Dashboard" because the screenshot
+   harness switches pages via `QStackedWidget::setCurrentWidget()` rather than
+   a real sidebar click. The 4 manually captured pages (boot_analysis,
+   disk_tools, system_logs, homebrew) show the correct sidebar highlight for
+   their respective pages. Consumers of these captures (prototype/mockup tasks)
+   must render the CORRECT sidebar highlight for each page when using these
+   images — do not copy the stale "Dashboard" highlight shown in the committed
+   PNGs.
 
 ## Theme switching method
 
