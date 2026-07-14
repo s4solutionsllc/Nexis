@@ -87,7 +87,7 @@ Citations: `metric_tile_base.cpp:255-307` (`buildChrome()` — accent bar
 source row) and `metric_tile_base.cpp:171-180` (`createGearButton()` — 24×24,
 14×14 icon, autoRaise). Footer height: `metric_tile_base.h:65` (`FOOTER_HEIGHT = 24`),
 applied at `metric_tile_base.cpp:335` with consistency shipped in 2.8.1
-(`CHANGELOG.md:31,45`). Accent-bar radius 1 and the muted source-line color
+(`CHANGELOG.md:31,44`). Accent-bar radius 1 and the muted source-line color
 (`@tertiaryText`) are QSS constants — see DS §4.
 
 ## DS §4 — Typography scale
