@@ -11,7 +11,8 @@ bool HeadlessUtil::isHeadlessArgv(int argc, char *const argv[])
         const char *a = argv[i];
         if (a == nullptr) continue;
         if (std::strcmp(a, "--clean") == 0 ||
-            std::strcmp(a, "--check-threshold") == 0) {
+            std::strcmp(a, "--check-threshold") == 0 ||
+            std::strcmp(a, "--report") == 0) {
             return true;
         }
     }

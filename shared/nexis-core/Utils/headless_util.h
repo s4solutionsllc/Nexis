@@ -13,8 +13,9 @@ class NEXISCORESHARED_EXPORT HeadlessUtil
 {
 public:
     // True if argv contains a CLI flag that triggers a non-interactive run
-    // (`--clean` or `--check-threshold`). Pure scan of argv; performs no
-    // env access or Qt calls so it is safe to call before QApplication.
+    // (`--clean`, `--check-threshold`, or `--report`). Pure scan of argv;
+    // performs no env access or Qt calls so it is safe to call before
+    // QApplication.
     static bool isHeadlessArgv(int argc, char *const argv[]);
 
     // True if main() should `qputenv("QT_QPA_PLATFORM", "offscreen")` before
