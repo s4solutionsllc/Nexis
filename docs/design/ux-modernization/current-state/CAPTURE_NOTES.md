@@ -10,30 +10,50 @@ pages + the Dashboard reference) × platform.
 
 | # | Page | macOS | Linux |
 |---|------|-------|-------|
-| 1 | Dashboard (reference) | captured — `macos/{dark,light}/dashboard.png` (harness) | pending-linux |
-| 2 | Processes | captured — `macos/{dark,light}/processes.png` (harness) | pending-linux |
-| 3 | Search | captured — `macos/{dark,light}/search.png` (harness) | pending-linux |
-| 4 | System Logs | captured — `macos/{dark,light}/system_logs.png` (manual) | pending-linux |
-| 5 | Boot Analysis | captured — `macos/{dark,light}/boot_analysis.png` (manual) | pending-linux |
-| 6 | Hardware Info | captured — `macos/{dark,light}/hardware_info.png` (harness) | pending-linux |
-| 7 | Uninstaller (sidebar label: "Applications") | captured — `macos/{dark,light}/uninstaller.png` (harness) | pending-linux |
-| 8 | Services | captured — `macos/{dark,light}/services.png` (harness) | pending-linux |
-| 9 | Startup Apps | captured — `macos/{dark,light}/startup_apps.png` (harness) | pending-linux |
-| 10 | APT Source Manager | not-applicable (Linux-only page; the macOS build compiles `HomebrewPage` in this sidebar slot instead — see row 15) | pending-linux |
-| 11 | System Cleaner | captured — `macos/{dark,light}/system_cleaner.png` (harness) | pending-linux |
-| 12 | Disk Tools | captured — `macos/{dark,light}/disk_tools.png` (manual) | pending-linux |
-| 13 | Docker | not-capturable (macOS): Docker is not installed on the capture machine, so `ToolManager::checkDocker()` returns false and `app.cpp` hides the sidebar button at runtime — the page is compiled but not reachable via UI. Re-capture once Docker is available, or capture on a host that has it installed. | pending-linux |
-| 14 | Helpers | captured — `macos/{dark,light}/helpers.png` (harness) | pending-linux |
+| 1 | Dashboard (reference) | captured — `macos/{dark,light}/dashboard.png` (harness) | captured — `linux/{dark,light}/dashboard.png` (harness) |
+| 2 | Processes | captured — `macos/{dark,light}/processes.png` (harness) | captured — `linux/{dark,light}/processes.png` (harness) |
+| 3 | Search | captured — `macos/{dark,light}/search.png` (harness) | captured — `linux/{dark,light}/search.png` (harness) |
+| 4 | System Logs | captured — `macos/{dark,light}/system_logs.png` (manual) | not-captured (Linux): outside the harness's 12 pages, and the capture host is headless (offscreen QPA, no interactive session) so no manual capture is possible. Page is cross-platform (`shared/nexis/Pages`); prototype derives from the macOS capture of the same shared page. |
+| 5 | Boot Analysis | captured — `macos/{dark,light}/boot_analysis.png` (manual) | not-captured (Linux): outside the harness's 12 pages; headless host, no manual capture possible. Cross-platform page; prototype derives from the macOS capture. |
+| 6 | Hardware Info | captured — `macos/{dark,light}/hardware_info.png` (harness) | captured — `linux/{dark,light}/hardware_info.png` (harness) |
+| 7 | Uninstaller (sidebar label: "Applications") | captured — `macos/{dark,light}/uninstaller.png` (harness) | captured — `linux/{dark,light}/uninstaller.png` (harness) |
+| 8 | Services | captured — `macos/{dark,light}/services.png` (harness) | captured — `linux/{dark,light}/services.png` (harness) |
+| 9 | Startup Apps | captured — `macos/{dark,light}/startup_apps.png` (harness) | captured — `linux/{dark,light}/startup_apps.png` (harness) |
+| 10 | APT Source Manager | not-applicable (Linux-only page; the macOS build compiles `HomebrewPage` in this sidebar slot instead — see row 15) | not-captured (Linux): Linux-only page, outside the harness's 12, and not manually capturable on the headless host. **No live capture exists anywhere** — prototype derives from the `.ui` files with an UNVERIFIED banner. |
+| 11 | System Cleaner | captured — `macos/{dark,light}/system_cleaner.png` (harness) | captured — `linux/{dark,light}/system_cleaner.png` (harness) |
+| 12 | Disk Tools | captured — `macos/{dark,light}/disk_tools.png` (manual) | not-captured (Linux): outside the harness's 12 pages; headless host, no manual capture possible. Cross-platform page; prototype derives from the macOS capture. |
+| 13 | Docker | not-capturable (macOS): Docker is not installed on the capture machine, so `ToolManager::checkDocker()` returns false and `app.cpp` hides the sidebar button at runtime — the page is compiled but not reachable via UI. Re-capture once Docker is available, or capture on a host that has it installed. | not-captured (Linux): outside the harness's 12 pages; headless host, no manual capture possible (Docker IS installed there, but the page can't be driven without a display). Combined with the macOS gap, **no live capture exists anywhere** — prototype derives from the `.ui` files with an UNVERIFIED banner. |
+| 14 | Helpers | captured — `macos/{dark,light}/helpers.png` (harness) | captured — `linux/{dark,light}/helpers.png` (harness) |
 | 15 | Homebrew | captured — `macos/{dark,light}/homebrew.png` (manual) | not-applicable (macOS-only page; the Linux build compiles `APTSourceManagerPage` in this sidebar slot instead — see row 10) |
-| 16 | Resources | captured — `macos/{dark,light}/resources.png` (harness) | pending-linux |
-| 17 | Network Usage | captured — `macos/{dark,light}/network_usage.png` (harness) | pending-linux |
-| 18 | Settings | captured — `macos/{dark,light}/settings.png` (harness) | pending-linux |
-| 19 | GNOME Settings | not-applicable (Linux-only page; does not exist in the macOS build) | pending-linux |
+| 16 | Resources | captured — `macos/{dark,light}/resources.png` (harness) | captured — `linux/{dark,light}/resources.png` (harness) |
+| 17 | Network Usage | captured — `macos/{dark,light}/network_usage.png` (harness) | captured — `linux/{dark,light}/network_usage.png` (harness) |
+| 18 | Settings | captured — `macos/{dark,light}/settings.png` (harness) | captured — `linux/{dark,light}/settings.png` (harness) |
+| 19 | GNOME Settings | not-applicable (Linux-only page; does not exist in the macOS build) | not-captured (Linux): the capture host is a headless server with no GNOME session, and the page is outside the harness's 12. **No live capture exists anywhere** — prototype derives from the `.ui` files with an UNVERIFIED banner. |
 
 macOS coverage: 16 of 18 prototype pages captured in both themes, plus the
 Dashboard reference (17/19 rows populated). The 2 gaps are both
 platform/runtime scoping, not capture failures: Docker (not installed on this
 machine) and GNOME Settings (Linux-only, doesn't exist on macOS).
+
+Linux coverage: 11 of 18 prototype pages captured in both themes, plus the
+Dashboard reference (12/19 rows populated). The 6 Linux gaps are all
+harness/host scoping, not capture failures: `boot_analysis`, `disk_tools`,
+`system_logs`, `docker`, `apt_source_manager`, and `gnome_settings` are
+outside the ScreenshotTests harness's 12-page `kPageMap`, and the Linux
+capture host is a headless server (offscreen QPA) where manual UI-driven
+capture is impossible.
+
+### Pages with no live capture anywhere (final capture-gap log)
+
+| Page | Why | Prototype source |
+|------|-----|------------------|
+| `docker` | Not reachable on the macOS capture machine (Docker not installed → sidebar hidden); outside the Linux harness and not manually capturable headless | `.ui` files, with UNVERIFIED banner (cross-platform page, but no live pixels exist on either platform) |
+| `apt_source_manager` | Linux-only; outside the harness; headless host | `.ui` files, with UNVERIFIED banner |
+| `gnome_settings` | Linux-only; requires a GNOME session the headless host doesn't have; outside the harness | `.ui` files, with UNVERIFIED banner |
+
+Pages with a macOS capture but no Linux capture (`boot_analysis`,
+`disk_tools`, `system_logs`) are cross-platform `shared/nexis/Pages` code —
+prototypes for these derive from the macOS capture of the same shared page.
 
 ## Capture inventory
 
@@ -53,6 +73,28 @@ harness's `App::resize(1024, 768)` (some are saved at 2x, e.g.
 Manual PNGs are cropped from full-screen `screencapture` output to the Nexis
 window's content bounds (see "Manual capture method" below); window was
 resized to ~885×785 logical points (see gotcha #3), not exactly 1024×768.
+
+`docs/design/ux-modernization/current-state/linux/{dark,light}/` — 12 PNGs
+per theme, 24 total, all from the same `ScreenshotTests` harness `kPageMap`
+(the 12 pages listed above). Capture environment:
+
+- Host: Luke's homelab (`media`, Ryzen 7 5700X, **Ubuntu 26.04 LTS** — note:
+  the machine has been upgraded past 24.04), headless.
+- Toolchain: GCC 15.2.0, CMake 4.2.3, distro Qt 6.10.2
+  (`qt6-base-dev`/`qt6-charts-dev`/`qt6-svg-dev`/`qt6-tools-dev` were already
+  installed — no packages were added).
+- Method: throwaway clone at `/tmp/nexis-ux` of branch
+  `claude/ux-modernization-spec`, `cmake --build build --target
+  test-ScreenshotTests`, then `./scripts/update_screenshots.sh` — which is
+  **generate mode** (`NEXIS_GENERATE_REFS=1`), not compare mode, so the stale
+  `dashboard` baseline gotcha (#2 below) does not apply on this path. The
+  script auto-selected `QT_QPA_PLATFORM=offscreen` (no
+  DISPLAY/WAYLAND_DISPLAY on the host; SSO-3729/FW-02). All PNGs are exactly
+  1024×768 at 1x device pixel ratio (offscreen QPA has no HiDPI scaling),
+  unlike the 2x macOS harness output.
+- The clone was deleted from the homelab after `scp`; nothing was committed
+  from that machine and no `tests/reference_screenshots/` files in THIS repo
+  were touched.
 
 ## Gotchas encountered (for whoever runs Task 2+ or re-runs this capture)
 
@@ -128,7 +170,9 @@ resized to ~885×785 logical points (see gotcha #3), not exactly 1024×768.
    their respective pages. Consumers of these captures (prototype/mockup tasks)
    must render the CORRECT sidebar highlight for each page when using these
    images — do not copy the stale "Dashboard" highlight shown in the committed
-   PNGs.
+   PNGs. **This applies equally to the 11 non-Dashboard Linux harness captures**
+   (`linux/{dark,light}/*.png` except `dashboard.png`) — same harness, same
+   `QStackedWidget::setCurrentWidget()` page-switching mechanism.
 
 ## Theme switching method
 
