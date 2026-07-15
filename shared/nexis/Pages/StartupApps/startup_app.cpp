@@ -1,6 +1,5 @@
 #include "startup_app.h"
 #include "ui_startup_app.h"
-#include "utilities.h"
 #include <QIcon>
 #include <QFileInfo>
 #ifdef Q_OS_MACOS
@@ -64,8 +63,6 @@ StartupApp::StartupApp(const QString &startupAppName, bool enabled, const QStrin
         ui->lblStartupAppPath->setText(filePath);
         ui->lblStartupAppPath->setVisible(true);
     }
-
-    Utilities::addDropShadow(this, 50);
 }
 
 void StartupApp::on_checkStartup_clicked(bool status)

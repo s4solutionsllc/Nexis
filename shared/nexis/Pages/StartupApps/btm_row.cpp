@@ -2,8 +2,6 @@
 
 #ifdef Q_OS_MACOS
 
-#include "utilities.h"
-
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -98,8 +96,6 @@ BtmRow::BtmRow(const BtmRecord &record, QWidget *parent)
     }
 
     root->addLayout(badges, 0);
-
-    Utilities::addDropShadow(this, 40);
 }
 
 bool BtmRow::matches(const QString &needle) const

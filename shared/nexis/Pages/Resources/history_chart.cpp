@@ -3,6 +3,8 @@
 #include "dpi.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
+#include "utilities.h"
+#include <QStyle>
 
 HistoryChart::~HistoryChart()
 {
@@ -42,6 +44,9 @@ HistoryChart::HistoryChart(const QString &title, const int &seriesCount,
 void HistoryChart::init()
 {
     ui->lblHistoryTitle->setText(mTitle);
+    // Width is not stylable via QSS (mirrors #metricTileAccent /
+    // #sectionHeaderAccent convention, style.qss DS §3 doc comment).
+    ui->sectionHeaderAccent->setFixedWidth(3);
 
     // add series to chart
     for (int i = 0; i < mSeriesCount; i++) {
@@ -68,14 +73,14 @@ void HistoryChart::init()
 
     mChart->setContentsMargins(-Dpi::scale(11), -Dpi::scale(11), -Dpi::scale(11), -Dpi::scale(11));
     mChart->setMargins(QMargins(Dpi::scale(20), 0, Dpi::scale(10), Dpi::scale(10)));
-    ui->layoutHistoryChart->addWidget(mChartView, 1, 0, 1, 3);
+    ui->layoutHistoryChart->addWidget(mChartView, 1, 0, 1, 4);
 
     connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, [=] {
         QSettings *sv = mAppManager->getStyleValues();
         if (!sv) return;
         QString chartLabelColor = sv->value("@chartLabelColor").toString();
         QString chartGridColor = sv->value("@chartGridColor").toString();
-        QString historyChartBackground = sv->value("@historyChartBackgroundColor").toString();
+        QString historyChartBackground = sv->value(mBackgroundToken).toString();
 
         mChart->axes(Qt::Horizontal).first()->setLabelsColor(chartLabelColor);
         mChart->axes(Qt::Horizontal).first()->setGridLineColor(chartGridColor);
@@ -133,11 +138,48 @@ void HistoryChart::setSeriesList(const QVector<QSplineSeries *> &seriesList)
 
 void HistoryChart::on_checkHistoryTitle_clicked(bool checked)
 {
-    QLayout *charts = topLevelWidget()->findChild<QWidget*>("charts")->layout();
+    QWidget *chartsContainer = topLevelWidget()->findChild<QWidget*>("charts");
+    if (!chartsContainer)
+        return;
+
+    QLayout *charts = chartsContainer->layout();
+
+    // An elevated chart (setElevated()) still IS the direct charts-layout
+    // item — no wrapper widget is introduced — so `this` already matches
+    // whatever itemAt(i)->widget() returns; walk up defensively in case a
+    // future wrapper is added around a chart.
+    QWidget *topLevelItem = this;
+    while (topLevelItem->parentWidget() && topLevelItem->parentWidget() != chartsContainer)
+        topLevelItem = topLevelItem->parentWidget();
 
     for (int i = 0; i < charts->count(); ++i) {
-        charts->itemAt(i)->widget()->setVisible(! checked);
+        if (QWidget *w = charts->itemAt(i)->widget())
+            w->setVisible(!checked || w == topLevelItem);
     }
+}
 
-    show();
+void HistoryChart::setElevated(const QString &accentToken)
+{
+    // DS §2 elevated container + DS §3 accent-bar header (style.qss
+    // [cardRole="elevated"] / #sectionHeaderAccent[accentToken=...] — NEX
+    // F1/F2 groundwork). Scoped to this instance only: ui->layoutHistoryChart
+    // and ui->sectionHeaderAccent belong to this HistoryChart's own ui, so
+    // charts that never call this (Memory, Network, ...) are unaffected.
+    setAttribute(Qt::WA_StyledBackground, true);
+    setProperty("cardRole", "elevated");
+
+    ui->sectionHeaderAccent->setProperty("compact", true);
+    ui->sectionHeaderAccent->setProperty("accentToken", accentToken);
+    ui->sectionHeaderAccent->setVisible(true);
+    style()->unpolish(ui->sectionHeaderAccent);
+    style()->polish(ui->sectionHeaderAccent);
+
+    ui->layoutHistoryChart->setContentsMargins(16, 12, 16, 14);
+
+    mBackgroundToken = QStringLiteral("@chartBackgroundColor");
+    QSettings *sv = mAppManager->getStyleValues();
+    if (sv)
+        mChart->setBackgroundBrush(QColor(sv->value(mBackgroundToken).toString()));
+
+    Utilities::addDropShadow(this, 90, 26);
 }
