@@ -3176,9 +3176,28 @@ SEARCH
    calls). */
 
 /* === System Logs ===
-   Reserved — no selectors yet. NEX Phase-2 "System Logs" page item adds
-   its #*Log* / #cmbLogSeverity selectors here (see system_logs_page.cpp
-   setObjectName calls). */
+   NEX Phase-2 "System Logs" page item (SSO-13734): container-level shadow
+   lives on #logsContainer ([cardRole="elevated"], NEX F1); the table header
+   reads as the container surface (@cardBgElevated) while rows stay flat
+   (@cardBg) with a zebra/hover recipe (DS §7) — mirrors the Processes page
+   item's #tableProcess treatment. Severity pills are painted by
+   SeverityPillDelegate (DS §5), not QSS. */
+#logTableView::item {
+    background-color: @cardBg;
+}
+
+#logTableView {
+    alternate-background-color: @cardBgElevated;
+}
+
+#logTableView::item:hover {
+    background-color: @accentBgTint;
+}
+
+#logTableView QHeaderView::section {
+    background-color: @cardBgElevated;
+    border-bottom: 1px solid @borderColor;
+}
 
 /***************************************
     Keyboard focus ring (SSO-3502)

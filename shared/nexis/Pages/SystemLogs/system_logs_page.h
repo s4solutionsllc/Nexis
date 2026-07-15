@@ -37,6 +37,7 @@ private:
     LogProvider *mProvider;
     QStandardItemModel *mModel;
     QSortFilterProxyModel *mProxy;
+    QWidget *mLogsContainer;
 
     QTableView *mTableView;
     QComboBox *mCmbSeverity;
