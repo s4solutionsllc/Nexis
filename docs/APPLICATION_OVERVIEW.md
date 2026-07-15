@@ -295,6 +295,8 @@ On-demand and scheduled Markdown export of a full system health snapshot via `He
 
 Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar section.
 
+- **UX modernization (NEX Phase-2, SSO-13739):** the scan-roots list and the results tree (per mode) each sit inside their own DS §2 elevated container (`cardRole="elevated"`, one drop shadow each via `DiskToolsPage::makeElevatedContainer()`), replacing the old bordered-widget-per-list look; scan-root rows use the fixed monospace stack (`@monoFontFamily`) with a row divider. The "Large & Old Files"/"Duplicate Finder" tabs get DS §3 header-anatomy spacing (`#sectionHeaderRow`, no title/accent bar — the capture had none) with the active tab now filled `@accentColor` instead of unstyled default buttons. Each results tree freezes its header to the container's elevated surface color and right-aligns the tabular Size column; the pre-scan empty tree is replaced with a full DS §5 empty state (disk icon, explanation, and a "Scan"/"Find Duplicates" button wired to that mode's scan action) via `DiskToolsPage::makeEmptyState()`. The bottom action bar drops its bordered box for a plain footer with a top hairline. Directory picker, filter controls and values, the Scan/Find Duplicates actions, the five result columns, and "Move to Trash" are unchanged.
+
 **Mode 1 — Large & Old Files (FR-62):**
 - Directory picker with smart defaults (Home, Downloads, Documents)
 - Configurable filters: size threshold (MB/GB), age threshold (days/months/years)
