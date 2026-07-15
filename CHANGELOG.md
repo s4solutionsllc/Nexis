@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Notes
 - Screenshot-baseline waiver (RELEASE.md §0.5): the non-blocking ScreenshotTests step is expected to flag the Resources page baselines (macOS + Linux, both themes) — the elevated-card redesign above is an intended visual change. Baselines will be regenerated via `screenshot-baselines.yml` once this lands.
 
+### Changed
+- Hardware Info page (UX modernization, NEX F1/F2/F4 consumer): the System, Processor, Graphics, and Memory sections now render as their own DS §2 elevated cards (`[cardRole="elevated"]`, 90/26 drop shadow) with a DS §3 accent-bar section-title header above each card — Graphics uses `@gpuColor`, Processor `@cpuColor`, Memory `@memoryColor`, System the neutral `@accentColor`. Key/value rows get DS §4 typography (labels 9pt/600 `@color06`, values 9pt `@color05`, `@borderColor` row divider). Battery gets the same accent-bar header (`@batteryColor`) but intentionally no card — the approved design capture cuts off before any Battery rows, so no card chrome or fabricated rows were added for it; its live battery data (when present) is unaffected. Fans and Storage, which fall outside the approved capture, keep their original `QGroupBox` chrome unchanged. Section order, all key/value content, and the full-width "Copy GPU Diagnostics" button are unchanged (SSO-13735).
+
+### Notes
+- Screenshot-baseline waiver (RELEASE.md §0.5): the non-blocking ScreenshotTests step is expected to flag the Hardware Info page baselines (macOS + Linux, both themes) — the elevated-card redesign above is an intended visual change. Baselines will be regenerated via `screenshot-baselines.yml` once this lands.
+
 ## [2.8.3] - 2026-07-07
 
 ### Added

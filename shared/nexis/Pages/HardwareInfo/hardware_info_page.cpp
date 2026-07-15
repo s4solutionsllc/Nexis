@@ -28,6 +28,7 @@
 #include "dpi.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
+#include "utilities.h"
 
 #ifdef Q_OS_LINUX
 class SmartPermissionDialog : public QDialog
@@ -82,6 +83,17 @@ HardwareInfoPage::HardwareInfoPage(QWidget *parent, InfoManager *infoManager) :
 {
     ui->setupUi(this);
 
+    // DS §2 (NEX F1): elevated-card chrome for the System/Processor/Graphics/
+    // Memory sections — structural, so it's fine to set up before the
+    // deferred populate*() pass. DS §3 accent-bar headers are pure QSS via
+    // objectName (see style.qss), no C++ wiring needed. Battery
+    // intentionally gets no card (hardware_info_page.ui, SSO-13735
+    // acceptance criteria).
+    for (QWidget *card : {ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory})
+        card->setAttribute(Qt::WA_StyledBackground, true);
+    Utilities::addDropShadow(
+        QList<QWidget *>{ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory}, 90, 26);
+
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &HardwareInfoPage::refreshThemeColors);
     // FR-98: defer populate*() work to first showEvent so sysctl, SMART,
     // battery, and fan I/O only run when the user actually visits this page.
@@ -112,10 +124,17 @@ void HardwareInfoPage::addRow(QTableWidget *table, const QString &label, const Q
     int row = table->rowCount();
     table->insertRow(row);
 
+    // DS §4 (SSO-13735): labels are 9pt/600 @color06; values keep the
+    // #HardwareInfoPage QTableWidget::item QSS default (9pt @color05).
     QTableWidgetItem *labelItem = new QTableWidgetItem(label);
-    QFont bold = labelItem->font();
-    bold.setBold(true);
-    labelItem->setFont(bold);
+    QFont labelFont = labelItem->font();
+    labelFont.setPointSize(9);
+    labelFont.setWeight(QFont::DemiBold);
+    labelItem->setFont(labelFont);
+    QSettings *labelSv = AppManager::ins()->getStyleValues();
+    if (labelSv)
+        labelItem->setForeground(QColor(labelSv->value("@color06").toString()));
+    mLabelItems.append(labelItem);
     table->setItem(row, 0, labelItem);
 
     QTableWidgetItem *valueItem = new QTableWidgetItem(value);
@@ -251,6 +270,7 @@ void HardwareInfoPage::populateGraphics()
     t->horizontalHeader()->setStretchLastSection(true);
 
     if (!im->hasGpu()) {
+        ui->sectionHeaderRowGraphics->hide();
         ui->grpGraphics->hide();
         return;
     }
@@ -366,6 +386,7 @@ void HardwareInfoPage::populateBattery()
     t->horizontalHeader()->setStretchLastSection(true);
 
     if (!im->hasBattery()) {
+        ui->sectionHeaderRowBattery->hide();
         ui->grpBattery->hide();
         return;
     }
@@ -711,6 +732,10 @@ void HardwareInfoPage::onUnlockAllDrives()
 
 void HardwareInfoPage::repopulateStorage()
 {
+    // setRowCount(0) deletes tblStorage's current items; drop their mLabelItems
+    // entries first so refreshThemeColors() never touches a freed pointer.
+    for (int row = 0; row < ui->tblStorage->rowCount(); ++row)
+        mLabelItems.removeAll(ui->tblStorage->item(row, 0));
     ui->tblStorage->setRowCount(0);
     populateStorage();
     fitTableHeight(ui->tblStorage);
@@ -730,6 +755,12 @@ void HardwareInfoPage::refreshThemeColors()
         else if (entry.verdict == "Critical")
             entry.item->setForeground(QColor(sv->value("@destructiveColor").toString()));
     }
+
+    // DS §4 (SSO-13735): label cells carry an explicit @color06 foreground
+    // (Qt QSS has no per-column ::item selector), so re-resolve it here.
+    const QColor labelColor(sv->value("@color06").toString());
+    for (QTableWidgetItem *labelItem : mLabelItems)
+        labelItem->setForeground(labelColor);
 }
 
 static QString tableToText(QTableWidget *table, const QString &sectionTitle)

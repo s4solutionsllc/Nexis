@@ -1278,6 +1278,42 @@ QLabel[accessibleName="dialog-title"] {
     background-color: transparent;
 }
 
+/* DS §3 section-title headers (SSO-13735): System/Processor/Graphics/Memory/
+   Battery each get their own accent-bar + label header (NEX F2 groundwork).
+   uic requires unique objectNames within one .ui, so — unlike the
+   single-instance #sectionHeaderAccent/#sectionHeaderTitle pages — these five
+   bars/labels are named per section and styled by name rather than through
+   the shared [accentToken] property selectors. */
+#HardwareInfoPage #sectionHeaderAccentSystem,
+#HardwareInfoPage #sectionHeaderAccentProcessor,
+#HardwareInfoPage #sectionHeaderAccentGraphics,
+#HardwareInfoPage #sectionHeaderAccentMemory,
+#HardwareInfoPage #sectionHeaderAccentBattery {
+    border-radius: 1;
+    min-height: 18;
+}
+
+#HardwareInfoPage #sectionHeaderAccentSystem    { background-color: @accentColor; }
+#HardwareInfoPage #sectionHeaderAccentProcessor { background-color: @cpuColor; }
+#HardwareInfoPage #sectionHeaderAccentGraphics  { background-color: @gpuColor; }
+#HardwareInfoPage #sectionHeaderAccentMemory    { background-color: @memoryColor; }
+#HardwareInfoPage #sectionHeaderAccentBattery   { background-color: @batteryColor; }
+
+#HardwareInfoPage #sectionHeaderTitleSystem,
+#HardwareInfoPage #sectionHeaderTitleProcessor,
+#HardwareInfoPage #sectionHeaderTitleGraphics,
+#HardwareInfoPage #sectionHeaderTitleMemory,
+#HardwareInfoPage #sectionHeaderTitleBattery {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+/* SSO-13735: System/Processor/Graphics/Memory moved to the shared
+   [cardRole="elevated"] + per-section header recipe above (DS §2/§3, NEX
+   F1/F2); these QGroupBox rules now only style the remaining native-title
+   sections (Fans, Storage) that are out of this item's approved-capture
+   scope. */
 #HardwareInfoPage QGroupBox {
     border: 1px solid @borderColor;
     border-radius: 12;
@@ -1299,11 +1335,16 @@ QLabel[accessibleName="dialog-title"] {
     border: 0;
 }
 
+/* DS §4 key/value typography (SSO-13735): 9pt base for both columns, with an
+   @borderColor divider between rows. Label-column overrides (9pt/600
+   @color06) are applied per-item in C++ (addRow()) since Qt QSS has no
+   per-column ::item selector — see hardware_info_page.cpp. */
 #HardwareInfoPage QTableWidget::item {
-    font-size: 10pt;
+    font-size: 9pt;
     color: @color05;
     padding: @dp8 @dp6;
     background-color: @color01;
+    border-top: 1px solid @borderColor;
 }
 
 /**************************

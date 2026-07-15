@@ -57,6 +57,10 @@ private:
     Ui::HardwareInfoPage *ui;
     InfoManager *im;
     QList<HealthItem> mHealthItems;
+    // DS §4 (SSO-13735): key/value label cells get an explicit @color06
+    // foreground (Qt QSS has no per-column ::item selector) — tracked here so
+    // refreshThemeColors() can re-resolve it on theme switch.
+    QList<QTableWidgetItem *> mLabelItems;
     QList<DriveHealth> mStorageDrives;
     // FR-98: populate work (SMART / sysctl / battery / fan I/O) runs on
     // first showEvent rather than at construction time.
