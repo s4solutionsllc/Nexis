@@ -9,5 +9,6 @@
 3. Toolbar chrome rebuilt on header-anatomy spacing (this page has no title in current state): the "All Severities" select, the "Search logs…" field, and the refresh icon-button (a 24-ish `setAutoRaise`-style action button) are kept and aligned. Source: DS §3 (`metric_tile_base.cpp:255-307`, gear button 24×24 autoRaise `:171-180`); DS §4 (`style.qss:772-815`).
 4. Flat rows with the DS §7 scanning kit: frozen sticky header, `@borderColor` gridlines, zebra striping realised through the DS §1 flat-row surface (`@cardBg`), and an `@accentBgTint` hover-highlight. Source: DS §7 (`style.qss:328-350`); [NNG-TABLES].
 5. Severity rendered as status pills on the neutral `@chartGridColor` track: NOTICE → `info` (`@infoColor`), INFO → `dimmed` (`@tertiaryText`). Those are the only two severities present in the capture; the same `[status]` mechanism carries `warning`/`error` (`@warningColor`/`@destructiveColor`) when present. Source: DS §5 (`style.qss:2421-2435`, pill `809-815`).
+6. Empty Unit cells render an em-dash placeholder (before: blank cells). Source: [NNG-TABLES].
 
 **Explicitly unchanged:** sidebar; the All-Severities / Search / Refresh control set; the column set (Timestamp, Severity, Unit, Message); the "Showing 500 entries" footer; the log values are copied verbatim from the capture (truncations preserved), nothing invented.
