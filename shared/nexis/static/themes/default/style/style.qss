@@ -798,6 +798,67 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
 }
 
+/* - Empty State (shared recipe, DS §5, NEX F3) - */
+/*
+ * Icon + explanation + next-action pattern for empty data states
+ * [NNG-EMPTY]. The composite widget nests inside the page's existing
+ * flat/elevated card (DS §2, [cardRole] above) — it does not draw its own
+ * card chrome, only the icon/text/action children below.
+ *
+ * Usage for a consuming page item:
+ *   - Container widget: objectName "<page>EmptyState" (e.g.
+ *     "processesEmptyState"), added to the selector group below so it
+ *     stays transparent over the surrounding card fill.
+ *   - Icon: a QLabel with objectName "emptyStateIcon".
+ *   - Explanation: a QLabel with objectName "emptyStateText" (muted
+ *     @tertiaryText, matches DS §5).
+ *   - Next action: a QPushButton — reuses the global QPushButton recipe
+ *     (style.qss:400-408) or QPushButton[accessibleName="primary"]
+ *     (style.qss:426-434) for emphasis; no new button selector needed
+ *     (DS §9 item 1, QSS-first).
+ *   - No per-frame animation on the icon or any empty-state child
+ *     (DS §9 item 2).
+ *   - Known consumers (Phase-2 page items, not yet implemented): Processes
+ *     (list icon, "Refresh now"), Search (search icon, "No results yet" +
+ *     hint), Disk Tools (disk icon, "Scan"), Boot Analysis (clock icon,
+ *     "Refresh uptime" — upgrades #lblBootEmptyState;
+ *     boot_analysis_page.cpp is not touched by this item). Extend the
+ *     selector group below with each page's actual objectName as it lands.
+ */
+
+#processesEmptyState, #searchEmptyState, #diskToolsEmptyState, #bootAnalysisEmptyState {
+    background: transparent;
+}
+
+#emptyStateIcon {
+    color: @tertiaryText;
+    font-size: 28pt;
+}
+
+#emptyStateText {
+    color: @tertiaryText;
+    font-size: 9pt;
+}
+
+/* - Loading Skeleton (shared recipe, DS §5, DS §9 item 2) - */
+/*
+ * Static placeholder block for loading states. Explicitly no animation, no
+ * QTimer-driven repaint (DS §9 item 2) — apply/remove this property when
+ * the real content is ready instead of pulsing or shimmering it. No page
+ * consumes this yet; a dynamic-property selector (mirrors [cardRole] and
+ * [status] above) rather than a per-page ID, since loading placeholders can
+ * appear anywhere a page fetches data asynchronously.
+ *
+ * Usage: setProperty("loadingState", "skeleton") on a placeholder widget
+ * standing in for not-yet-loaded content; unpolish()/polish() after
+ * clearing the property once real content is ready (BUG-56, DS §8).
+ */
+
+[loadingState="skeleton"] {
+    background-color: @chartGridColor;
+    border-radius: 4;
+}
+
 /* - Metric Tile - */
 
 #metricTile, #gaugeTile, #ringTile, #hybridTile, #speedometerTile, #vuMeterTile, #healthScoreTile {
@@ -2463,6 +2524,24 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 /* - Status property selectors (semi-dynamic: set via setProperty("status", ...)) - */
+/*
+ * NEX F3 (DS §5): confirmed this set already covers every semantic color a
+ * consuming page needs (success/warning/error/info/dimmed/neutral) — no new
+ * per-page color selectors added for the Services or System Logs status-pill
+ * consumers, they set the pill track via #metricTileTrend (style.qss:908-914)
+ * and pick a text color from these six.
+ *
+ * Open observation for whoever implements the System Logs page item:
+ * notes/system_logs.md describes NOTICE severity as "info (@infoColor)", but
+ * [status="info"] below resolves to @color05 (primary text, not the blue
+ * @infoColor token used elsewhere e.g. style.qss:1472). [status="info"] is
+ * also live on the Dashboard maintenance wizard's step icon
+ * (maintenance_wizard_dialog.cpp) — changing its value here is a
+ * cross-consumer change outside F3's groundwork-only scope, left for that
+ * item to resolve deliberately (either update the shared value with an
+ * explicit before/after check on the wizard, or use [status="dimmed"] /
+ * another existing semantic for NOTICE instead).
+ */
 
 [status="success"] { color: @successColor; }
 [status="warning"] { color: @warningColor; }
