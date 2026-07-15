@@ -1889,6 +1889,22 @@ QLabel[accessibleName="dialog-title"] {
     HELPERS PAGE
     (DS §2/§3/§4 pass, NEX SSO-13740 — consumes NEX F1/F2 shared recipes)
 ***************************/
+#nav QPushButton {
+    border-radius: @dp6;
+    padding: @dp6 @dp12;
+    font-size: 10pt;
+    background-color: @color01;
+    color: @color05;
+    border: 1px solid @borderColor;
+}
+
+#nav QPushButton:hover,
+#nav QPushButton:checked {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
 #lblToolsSection, #lblMaintenanceSectionHeader {
     font-size: 8pt;
     font-weight: 500;
