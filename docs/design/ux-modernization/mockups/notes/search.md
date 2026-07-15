@@ -1,5 +1,7 @@
 # Search — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15), including the flagged maintainer-judgment item(s).
+
 **Before:** current-state/macos/dark/search.png
 **After:** renders/search_{dark,light}.png
 

@@ -1,5 +1,7 @@
 # Startup Apps — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15).
+
 **Before:** current-state/macos/dark/startup_apps.png
 **After:** renders/startup_apps_{dark,light}.png
 

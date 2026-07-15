@@ -1,5 +1,7 @@
 # Resources — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15).
+
 **Before:** current-state/macos/dark/resources.png (and light/resources.png)
 **After:** renders/resources_{dark,light}.png
 

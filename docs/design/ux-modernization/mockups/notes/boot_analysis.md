@@ -1,5 +1,7 @@
 # Boot Analysis — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15).
+
 **Before:** current-state/macos/dark/boot_analysis.png
 **After:** renders/boot_analysis_{dark,light}.png
 

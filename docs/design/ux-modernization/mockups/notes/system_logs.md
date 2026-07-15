@@ -1,5 +1,7 @@
 # System Logs — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15).
+
 **Before:** current-state/macos/dark/system_logs.png
 **After:** renders/system_logs_{dark,light}.png
 

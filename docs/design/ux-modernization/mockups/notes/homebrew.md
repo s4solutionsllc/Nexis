@@ -1,5 +1,7 @@
 # Homebrew — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15), including the flagged maintainer-judgment item(s).
+
 **Before:** current-state/macos/dark/homebrew.png
 **After:** renders/homebrew_{dark,light}.png
 

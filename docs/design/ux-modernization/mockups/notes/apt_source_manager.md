@@ -1,5 +1,7 @@
 # APT Source Manager — prototype rationale
 
+**Status:** Deferred by maintainer (2026-07-15) — no live capture; revisit once the skeleton can be verified against screenshots from an Ubuntu machine with the page available. No work item filed this round.
+
 **Before:** UNVERIFIED — no live capture exists anywhere (Linux-only page, outside the ScreenshotTests harness, not manually capturable on the headless Linux host). Skeleton derived read-only from `linux/nexis/Pages/AptSourceManager/apt_source_manager_page.ui` and `apt_source_repository_item.ui`. See CAPTURE_NOTES.md coverage row 10 and the "no live capture anywhere" log.
 **After:** renders/apt_source_manager_{dark,light}.png
 

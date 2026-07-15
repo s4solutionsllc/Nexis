@@ -1,5 +1,7 @@
 # Services — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15).
+
 **Before:** current-state/macos/dark/services.png
 **After:** renders/services_{dark,light}.png
 

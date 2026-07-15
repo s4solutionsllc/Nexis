@@ -1,5 +1,7 @@
 # Settings — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15).
+
 **Before:** `current-state/macos/{dark,light}/settings.png` (harness, 2048×1536 @2x → 1024×768 @1x). The capture shows the top of the scrolling form: **General**, **Appearance**, and the start of **Alerts**. Sections below the capture fold (**Tools**, **Scheduled Cleaning**, credit footer) are reproduced read-only from `shared/nexis/Pages/Settings/settings_page.ui` (same shared page).
 **After:** renders/settings_{dark,light}.png
 

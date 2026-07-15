@@ -1,5 +1,7 @@
 # Processes — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15), including the flagged maintainer-judgment item(s).
+
 **Before:** current-state/macos/dark/processes.png
 **After:** renders/processes_{dark,light}.png
 

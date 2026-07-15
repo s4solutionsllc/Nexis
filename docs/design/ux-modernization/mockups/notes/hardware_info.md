@@ -1,5 +1,7 @@
 # Hardware Info — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15).
+
 **Before:** current-state/macos/dark/hardware_info.png
 **After:** renders/hardware_info_{dark,light}.png
 

@@ -1,5 +1,7 @@
 # Uninstaller (sidebar label "Applications") — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15).
+
 **Before:** current-state/macos/dark/uninstaller.png
 **After:** renders/uninstaller_{dark,light}.png
 

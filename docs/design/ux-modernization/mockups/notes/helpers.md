@@ -1,5 +1,7 @@
 # Helpers — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15), including the flagged maintainer-judgment item(s).
+
 **Before:** current-state/macos/dark/helpers.png
 **After:** renders/helpers_{dark,light}.png
 

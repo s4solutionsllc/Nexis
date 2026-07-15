@@ -1,5 +1,7 @@
 # Docker — prototype rationale
 
+**Status:** Deferred by maintainer (2026-07-15) — no live capture; revisit once the skeleton can be verified against screenshots from an Ubuntu machine with the page available. No work item filed this round.
+
 **Before:** UNVERIFIED — no live capture exists anywhere. Docker is not reachable on the macOS capture machine (Docker not installed → `ToolManager::checkDocker()` false → sidebar button hidden), and the Linux harness/headless host cannot drive it. Skeleton derived read-only from `shared/nexis/Pages/Docker/docker_page.ui`. See CAPTURE_NOTES.md coverage row 13 and the "no live capture anywhere" log.
 **After:** renders/docker_{dark,light}.png
 

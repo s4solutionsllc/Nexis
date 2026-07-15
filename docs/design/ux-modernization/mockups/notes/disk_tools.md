@@ -1,5 +1,7 @@
 # Disk Tools — prototype rationale
 
+**Status:** Approved by maintainer (2026-07-15), including the flagged maintainer-judgment item(s).
+
 **Before:** current-state/macos/dark/disk_tools.png
 **After:** renders/disk_tools_{dark,light}.png
 
