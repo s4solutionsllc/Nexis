@@ -1566,21 +1566,10 @@ QLabel[accessibleName="dialog-title"] {
 /************************
     BOOT ANALYSIS PAGE
 *************************/
-#lblBootAnalysisTitle {
-    color: @color11;
-    padding: 10 0 4 0;
-}
-
-#lblBootAnalysisSubtitle {
-    color: @color11;
-    padding: 0 0 4 0;
-}
-
-#lblBootEmptyState {
-    color: @color04;
-    font-size: 11pt;
-    qproperty-alignment: AlignCenter;
-}
+/* NEX-13744: page now consumes the shared section-header (#sectionHeaderRow
+   family), [cardRole="elevated"], #metricTileValue, and #bootAnalysisEmptyState
+   recipes below instead of page-specific selectors — #lblBootAnalysisTitle /
+   #lblBootAnalysisSubtitle / #lblBootEmptyState are retired. */
 
 /* - Startup App - */
 
