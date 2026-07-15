@@ -931,6 +931,119 @@ QLabel[accessibleName="dialog-title"] {
     background: transparent;
 }
 
+/* - Section Header (shared recipe, DS §3, NEX F2) - */
+/*
+ * Generalizes the Dashboard tile header (metric_tile_base.cpp buildChrome(),
+ * reference-only) into a reusable QSS pattern so page toolbars/section
+ * titles style through the global stylesheet instead of one-off per-widget
+ * setStyleSheet() calls (DS §9 item 1) — same approach as the Elevated/Flat
+ * Card recipe above (NEX F1).
+ *
+ * Usage for a consuming page item:
+ *   - Header row: a QWidget/QHBoxLayout holding the accent bar + text
+ *     column (title row + source row), objectName "sectionHeaderRow".
+ *   - Accent bar: a QFrame, objectName "sectionHeaderAccent",
+ *     setFixedWidth(3) at construction (width is not stylable via QSS —
+ *     mirrors #metricTileAccent, which also only sets background-color /
+ *     border-radius here). Give it a "accentToken" dynamic property set to
+ *     one of the values below to pick a type-appropriate color instead of a
+ *     hardcoded hex (BUG-47); omit the property for the neutral default.
+ *     BUG-56: if "accentToken" changes on an already-shown widget (e.g. a
+ *     theme-dependent metric type), call
+ *     style()->unpolish(widget); style()->polish(widget); to force Qt to
+ *     re-evaluate the property selector.
+ *   - Title row: title label objectName "sectionHeaderTitle", optional meta
+ *     label objectName "sectionHeaderMeta", a layout stretch, then an
+ *     optional top-right action button objectName "sectionHeaderAction"
+ *     (QToolButton, fixed size 24x24, icon size 14x14, setAutoRaise(true) —
+ *     mirrors createGearButton(), metric_tile_base.cpp:171-180).
+ *   - Source row: muted label objectName "sectionHeaderSource" beneath the
+ *     title row.
+ *   - Root layout margins (14, 12, 14, 10), root spacing 6, header-row
+ *     spacing 8, and a fixed-height 24px footer band (FOOTER_HEIGHT,
+ *     metric_tile_base.h:65) are set in the consuming page's C++ layout
+ *     code, not QSS — match those values for visual parity with the
+ *     Dashboard tile header (DS §3).
+ *   - Settings section-card variant: set a "compact" dynamic property
+ *     (true) on the accent bar for the shorter ≥18px card-header bar
+ *     instead of the ≥26px page/tile-header bar.
+ *   - Pages with no existing title in the approved capture (Search, System
+ *     Logs, Disk Tools, Uninstaller) apply this pattern as spacing/
+ *     alignment chrome only via #sectionHeaderRow — do not add
+ *     #sectionHeaderTitle/#sectionHeaderAccent where the capture had none.
+ */
+
+#sectionHeaderRow {
+    background-color: transparent;
+}
+
+#sectionHeaderAccent {
+    background-color: @borderColor;
+    border-radius: 1;
+    min-height: 26;
+}
+
+#sectionHeaderAccent[compact="true"] {
+    min-height: 18;
+}
+
+#sectionHeaderAccent[accentToken="cpu"] {
+    background-color: @cpuColor;
+}
+
+#sectionHeaderAccent[accentToken="gpu"] {
+    background-color: @gpuColor;
+}
+
+#sectionHeaderAccent[accentToken="memory"] {
+    background-color: @memoryColor;
+}
+
+#sectionHeaderAccent[accentToken="disk"] {
+    background-color: @diskColor;
+}
+
+#sectionHeaderAccent[accentToken="network"] {
+    background-color: @networkColor;
+}
+
+#sectionHeaderAccent[accentToken="accent"] {
+    background-color: @accentColor;
+}
+
+#sectionHeaderTitle {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+#sectionHeaderMeta {
+    color: @tertiaryText;
+    font-size: 8pt;
+    font-weight: 500;
+}
+
+#sectionHeaderSource {
+    color: @tertiaryText;
+    font-size: 8pt;
+}
+
+#sectionHeaderAction {
+    border: 0;
+    background-color: transparent;
+    border-radius: 4;
+    padding: 0;
+}
+
+#sectionHeaderAction:hover {
+    background-color: @color02;
+}
+
+#sectionHeaderAction::menu-indicator {
+    width: 0;
+    height: 0;
+}
+
 /* - Disk Donut Tile - */
 
 #diskTile {

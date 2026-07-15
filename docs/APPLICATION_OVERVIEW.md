@@ -877,6 +877,10 @@ Three more shared `style.qss` recipes for the UX-modernization pass, nesting ins
 
 This item defines the recipes only; `boot_analysis_page.cpp`'s existing `#lblBootEmptyState` text-only notice is untouched (its upgrade is a separate Boot Analysis Phase-2 item), and no page consumes any of these three patterns yet.
 
+### Shared Section-Header Chrome (NEX F2)
+
+The Dashboard tile header (3px accent bar + title row + muted source line, see `MetricTileBase::buildChrome()`) is generalized into a reusable `style.qss` recipe so page toolbars/section titles can opt in without inventing per-page selectors or per-widget `setStyleSheet()` calls: `#sectionHeaderRow` (container), `#sectionHeaderAccent` (3px accent bar, radius 1, min-height 26 — or 18 with a `compact="true"` property, for the smaller Settings section-card variant), `#sectionHeaderTitle` / `#sectionHeaderMeta` / `#sectionHeaderSource` (title, optional meta, and muted source labels), and `#sectionHeaderAction` (top-right 24x24 action button). The accent bar picks a type-appropriate color via an `accentToken` dynamic property (`cpu`/`gpu`/`memory`/`disk`/`network`/`accent`) instead of a hardcoded hex (BUG-47) — changing the property on an already-shown widget requires a `style()->unpolish()`/`polish()` re-evaluate (BUG-56). Root layout margins, spacing, and the action button's fixed size/icon size/`setAutoRaise(true)` are set in the consuming page's C++ layout code, matching `metric_tile_base.cpp`. This item defines the recipe only — the Dashboard tile header itself is unchanged, and no other page consumes it yet.
+
 ### DPI Scaling
 
 QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at stylesheet load time based on `devicePixelRatio()`. The `Dpi::scale()` utility class handles pixel scaling in C++ code. This solved HiDPI/4K display issues without requiring a QML migration.
