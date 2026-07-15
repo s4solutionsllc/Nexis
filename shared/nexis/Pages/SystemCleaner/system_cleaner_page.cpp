@@ -11,6 +11,7 @@
 #include <Utils/format_util.h>
 #include "exclusion_manager_dialog.h"
 #include "schedule_editor_dialog.h"
+#include "utilities.h"
 #include <QLabel>
 #include <QFrame>
 #include <QHBoxLayout>
@@ -106,27 +107,43 @@ void SystemCleanerPage::buildCategoryHeader()
     QVBoxLayout *catLayout = qobject_cast<QVBoxLayout *>(ui->cleanerCategories->layout());
     Q_ASSERT(catLayout);
 
-    // Title row
+    // DS §3 header anatomy (NEX F2 shared recipe): accent bar + [title row
+    // (title, gear/Schedule…/Scan system) / source line], mirroring
+    // MetricTileBase::buildChrome() (metric_tile_base.cpp:255-307).
     QWidget *headerWidget = new QWidget(ui->cleanerCategories);
-    headerWidget->setObjectName("cleanerHeaderWidget");
-    QHBoxLayout *headerRow = new QHBoxLayout(headerWidget);
-    headerRow->setContentsMargins(0, 10, 0, 8);
+    headerWidget->setObjectName("sectionHeaderRow");
+    QVBoxLayout *root = new QVBoxLayout(headerWidget);
+    root->setContentsMargins(14, 12, 14, 10);
+    root->setSpacing(6);
+
+    QHBoxLayout *headerRow = new QHBoxLayout;
+    headerRow->setContentsMargins(0, 0, 0, 0);
     headerRow->setSpacing(8);
 
-    // Left: title + subtitle
+    QFrame *accentBar = new QFrame(headerWidget);
+    accentBar->setObjectName("sectionHeaderAccent");
+    accentBar->setProperty("accentToken", "success");
+    accentBar->setFixedWidth(3);
+    accentBar->setMinimumHeight(26);
+    accentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    headerRow->addWidget(accentBar);
+
+    QVBoxLayout *textCol = new QVBoxLayout;
+    textCol->setContentsMargins(0, 0, 0, 0);
+    textCol->setSpacing(2);
+
+    QHBoxLayout *titleRow = new QHBoxLayout;
+    titleRow->setContentsMargins(0, 0, 0, 0);
+    titleRow->setSpacing(8);
+
     mLblCleanerTitle = new QLabel(tr("System Cleaner"), headerWidget);
-    mLblCleanerTitle->setObjectName("lblCleanerTitle");
+    mLblCleanerTitle->setObjectName("sectionHeaderTitle");
+    titleRow->addWidget(mLblCleanerTitle);
+    titleRow->addStretch();
 
-    QLabel *lblSubtitle = new QLabel(tr("Reclaim disk space by removing caches, logs, and crash reports."), headerWidget);
-    lblSubtitle->setObjectName("lblCleanerSubtitle");
-
-    QVBoxLayout *titleCol = new QVBoxLayout;
-    titleCol->setSpacing(2);
-    titleCol->addWidget(mLblCleanerTitle);
-    titleCol->addWidget(lblSubtitle);
-    headerRow->addLayout(titleCol, 1);
-
-    // Right: Exclusions gear, Schedule…, Scan system
+    // Exclusions gear, Schedule…, Scan system — kept as the page's existing
+    // trailing controls rather than the single #sectionHeaderAction slot
+    // (this page keeps three controls, per notes/system_cleaner.md).
     mBtnExclusions = new QToolButton(headerWidget);
     mBtnExclusions->setAutoRaise(true);
     mBtnExclusions->setIcon(QIcon(
@@ -156,9 +173,18 @@ void SystemCleanerPage::buildCategoryHeader()
     mBtnScanSystem->setCursor(Qt::PointingHandCursor);
     connect(mBtnScanSystem, &QPushButton::clicked, this, &SystemCleanerPage::onBtnScanSystemClicked);
 
-    headerRow->addWidget(mBtnExclusions);
-    headerRow->addWidget(mBtnSchedule);
-    headerRow->addWidget(mBtnScanSystem);
+    titleRow->addWidget(mBtnExclusions);
+    titleRow->addWidget(mBtnSchedule);
+    titleRow->addWidget(mBtnScanSystem);
+
+    textCol->addLayout(titleRow);
+
+    QLabel *lblSubtitle = new QLabel(tr("Reclaim disk space by removing caches, logs, and crash reports."), headerWidget);
+    lblSubtitle->setObjectName("sectionHeaderSource");
+    textCol->addWidget(lblSubtitle);
+
+    headerRow->addLayout(textCol, 1);
+    root->addLayout(headerRow);
 
     catLayout->addWidget(headerWidget);
 }
@@ -253,6 +279,10 @@ void SystemCleanerPage::buildCategoryCards()
         QFrame *card = new QFrame(container);
         card->setObjectName("cleanerCategoryCard");
         card->setProperty("checked", false);
+        // DS §2 elevated tile (NEX F1 shared recipe) — container-level shadow
+        // only (DS §7); rows/labels inside stay flat.
+        card->setProperty("cardRole", "elevated");
+        Utilities::addDropShadow(card, 90, 26);
 
         QCheckBox *check = new QCheckBox(card);
         check->setCursor(Qt::PointingHandCursor);
