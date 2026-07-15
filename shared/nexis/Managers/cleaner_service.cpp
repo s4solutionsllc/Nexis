@@ -720,7 +720,9 @@ void CleanerService::removeElevated(const QStringList &paths)
     QStringList args;
     args << "-rf" << "--";
     args.append(paths);
-    CommandUtil::sudoExec("rm", args);
+    const ExecResult result = CommandUtil::sudoExecWithStatus("rm", args);
+    if (!result.ok())
+        qWarning() << "CleanerService: elevated rm -rf failed:" << result.error;
 }
 
 void CleanerService::maybeTakeSnapshot(const QList<CleanCategory> &categories)

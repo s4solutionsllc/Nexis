@@ -87,32 +87,28 @@ bool HostService::isValidHostname(const QString &hostname)
 
 bool HostService::createBackup()
 {
-    try {
-        CommandUtil::sudoExec("cp", {"-p", "/etc/hosts", "/etc/hosts.nexis-backup"});
-        return true;
-    } catch (const QString &ex) {
-        qWarning() << "Backup failed:" << ex;
-        emit backupFailed(ex);
+    const ExecResult result = CommandUtil::sudoExecWithStatus("cp", {"-p", "/etc/hosts", "/etc/hosts.nexis-backup"});
+    if (!result.ok()) {
+        qWarning() << "Backup failed:" << result.error;
+        emit backupFailed(result.error);
         return false;
     }
+    return true;
 }
 
 bool HostService::saveHostFile(const QStringList &content)
 {
     QString data = content.join("\n") + "\n";
-    try {
-        QString result = CommandUtil::sudoExec("tee", {"/etc/hosts"}, data.toUtf8());
+    const ExecResult result = CommandUtil::sudoExecWithStatus("tee", {"/etc/hosts"}, data.toUtf8());
 
-        if (result.isEmpty() && !data.trimmed().isEmpty()) {
-            emit saveFailed(QObject::tr("The operation was cancelled or permission was denied."));
-            return false;
-        }
-
-        emit saveSucceeded();
-        return true;
-    } catch (const QString &ex) {
-        qCritical() << "Save failed:" << ex;
-        emit saveFailed(ex);
+    if (!result.ok()) {
+        qCritical() << "Save failed:" << result.error;
+        emit saveFailed(result.error.isEmpty()
+            ? QObject::tr("The operation was cancelled or permission was denied.")
+            : result.error);
         return false;
     }
+
+    emit saveSucceeded();
+    return true;
 }

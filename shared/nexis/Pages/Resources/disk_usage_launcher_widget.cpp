@@ -4,6 +4,7 @@
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QDebug>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QDesktopServices>
@@ -448,7 +449,9 @@ void DiskUsageLauncherWidget::onActionClicked()
     case INSTALL_BAOBAB: {
         mActionButton->setEnabled(false);
         mActionButton->setText(tr("Installing..."));
-        CommandUtil::sudoExec("apt-get", {"install", "-y", "baobab"});
+        const ExecResult result = CommandUtil::sudoExecWithStatus("apt-get", {"install", "-y", "baobab"});
+        if (!result.ok())
+            qWarning() << "DiskUsageLauncherWidget: apt-get install baobab failed:" << result.error;
         detect();
         updateUi();
         mActionButton->setEnabled(true);
@@ -463,8 +466,10 @@ void DiskUsageLauncherWidget::onActionClicked()
         mActionButton->setEnabled(false);
         mActionButton->setText(tr("Installing..."));
         (void)QtConcurrent::run([this]() {
-            CommandUtil::exec("flatpak", {"install", "--user", "-y",
+            const ExecResult result = CommandUtil::execWithStatus("flatpak", {"install", "--user", "-y",
                                           "flathub", "org.kde.filelight"}, {}, 300000);
+            if (!result.ok())
+                qWarning() << "DiskUsageLauncherWidget: flatpak install filelight failed:" << result.error;
             QMetaObject::invokeMethod(this, [this]() {
                 detect();
                 updateUi();
@@ -478,26 +483,29 @@ void DiskUsageLauncherWidget::onActionClicked()
         mActionButton->setEnabled(false);
         mActionButton->setText(tr("Installing..."));
         QString pkg = "flatpak";
+        ExecResult result;
         switch (mToolManager->packageTool()->currentPackageTool) {
         case APT_RPM:
         case APT:
-            CommandUtil::sudoExec("apt-get", {"install", "-y", pkg});
+            result = CommandUtil::sudoExecWithStatus("apt-get", {"install", "-y", pkg});
             break;
         case DNF:
         case YUM:
-            CommandUtil::sudoExec("dnf", {"install", "-y", pkg});
+            result = CommandUtil::sudoExecWithStatus("dnf", {"install", "-y", pkg});
             break;
         case PACMAN:
-            CommandUtil::sudoExec("pacman", {"-S", "--noconfirm", pkg});
+            result = CommandUtil::sudoExecWithStatus("pacman", {"-S", "--noconfirm", pkg});
             break;
         case ZYPPER:
-            CommandUtil::sudoExec("zypper", {"install", "-y", pkg});
+            result = CommandUtil::sudoExecWithStatus("zypper", {"install", "-y", pkg});
             break;
         default:
             QMessageBox::warning(this, tr("Unsupported Package Manager"),
                                  tr("Could not detect a supported package manager to install Flatpak."));
             break;
         }
+        if (!result.ok() && !result.error.isEmpty())
+            qWarning() << "DiskUsageLauncherWidget: flatpak install failed:" << result.error;
         detect();
         updateUi();
         mActionButton->setEnabled(true);

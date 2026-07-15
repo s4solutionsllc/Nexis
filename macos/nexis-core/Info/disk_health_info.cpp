@@ -31,12 +31,14 @@ QList<DriveHealth> DiskHealthInfoMacOS::collectDriveHealth()
 
     // Get list of whole disks
     QStringList wholeDisks;
-    try {
-        QString listOutput = CommandUtil::exec("diskutil", {"list", "-plist"});
-        QMap<QString, QVariant> listPlist = MacosPlistParser::parse(listOutput.toUtf8());
+    {
+        ExecResult listResult = CommandUtil::execWithStatus("diskutil", {"list", "-plist"});
+        if (!listResult.ok()) {
+            qWarning() << "disk_health_info: diskutil list -plist failed:" << listResult.error;
+            return drives;
+        }
+        QMap<QString, QVariant> listPlist = MacosPlistParser::parse(listResult.output.toUtf8());
         wholeDisks = listPlist.value("WholeDisks").toStringList();
-    } catch (...) {
-        return drives;
     }
 
     // FR-109: dedupe by (model, size) before the smartctl fork. On Apple
@@ -51,14 +53,13 @@ QList<DriveHealth> DiskHealthInfoMacOS::collectDriveHealth()
         drive.devicePath = "/dev/" + diskId;
 
         // Get detailed info for this disk
-        QString infoOutput;
-        try {
-            infoOutput = CommandUtil::exec("diskutil", {"info", "-plist", drive.devicePath});
-        } catch (...) {
+        ExecResult infoResult = CommandUtil::execWithStatus("diskutil", {"info", "-plist", drive.devicePath});
+        if (!infoResult.ok()) {
+            qWarning() << "disk_health_info: diskutil info -plist failed for" << drive.devicePath << ":" << infoResult.error;
             continue;
         }
 
-        QMap<QString, QVariant> info = MacosPlistParser::parse(infoOutput.toUtf8());
+        QMap<QString, QVariant> info = MacosPlistParser::parse(infoResult.output.toUtf8());
 
         // Protocol — check early so we can skip the smartctl fork on disk images.
         drive.protocol = info.value("BusProtocol").toString();
@@ -130,14 +131,14 @@ QList<DriveHealth> DiskHealthInfoMacOS::collectDriveHealth()
         // For non-Apple-Fabric drives, use smartctl if available for richer SATA data
         bool isAppleInternal = drive.protocol.contains("Apple Fabric", Qt::CaseInsensitive);
         if (mHasSmartctl && !isAppleInternal) {
-            try {
-                ExecResult result = CommandUtil::execWithStatus("smartctl", {"-j", "-a", drive.devicePath});
-                if (result.exitCode == 0 || !(result.exitCode & 2)) {
-                    DiskHealthInfo::parseSmartctlJsonInto(result.output.toUtf8(), drive);
-                } else {
-                    drive.needsElevation = true;
-                }
-            } catch (...) { qWarning() << "Failed to read disk info for" << drive.devicePath; }
+            ExecResult result = CommandUtil::execWithStatus("smartctl", {"-j", "-a", drive.devicePath});
+            if (result.exitCode == 0 || !(result.exitCode & 2)) {
+                DiskHealthInfo::parseSmartctlJsonInto(result.output.toUtf8(), drive);
+            } else {
+                drive.needsElevation = true;
+            }
+            if (!result.ok() && result.output.isEmpty())
+                qWarning() << "disk_health_info: smartctl failed for" << drive.devicePath << ":" << result.error;
         }
 
         deriveHealthVerdict(drive);
@@ -166,19 +167,17 @@ void DiskHealthInfoMacOS::refreshHealthElevated(const QString &device)
     // the lock only to merge the parsed result back into mDrives.
     // WI-21: bump the osascript timeout well past the default 30 s so a slow
     // password entry does not race the wait cap.
-    QString output;
-    try {
-        output = CommandUtil::sudoExec("smartctl", {"-j", "-a", device},
-                                       QByteArray(), kSmartElevatedTimeoutMs);
-    } catch (...) {
-        qWarning() << "Failed to read SMART data for" << device;
+    ExecResult result = CommandUtil::sudoExecWithStatus("smartctl", {"-j", "-a", device},
+                                                         QByteArray(), kSmartElevatedTimeoutMs);
+    if (!result.ok() && result.output.isEmpty()) {
+        qWarning() << "disk_health_info: elevated SMART read failed for" << device << ":" << result.error;
         return;
     }
 
     QMutexLocker locker(&mDrivesMutex);
     for (int i = 0; i < mDrives.size(); ++i) {
         if (mDrives[i].devicePath == device) {
-            DiskHealthInfo::parseSmartctlJsonInto(output.toUtf8(), mDrives[i]);
+            DiskHealthInfo::parseSmartctlJsonInto(result.output.toUtf8(), mDrives[i]);
             mDrives[i].needsElevation = false;
             deriveHealthVerdict(mDrives[i]);
             break;

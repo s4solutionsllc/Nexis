@@ -13,11 +13,11 @@ SystemInfoMacOS::SystemInfoMacOS()
     QString unknown(QObject::tr("Unknown"));
 
     // CPU Model via sysctl
-    try {
-        this->cpuModel = CommandUtil::exec("sysctl", {"-n", "machdep.cpu.brand_string"}).trimmed();
-        if (this->cpuModel.isEmpty())
-            this->cpuModel = unknown;
-    } catch (...) {
+    ExecResult brandResult = CommandUtil::execWithStatus("sysctl", {"-n", "machdep.cpu.brand_string"});
+    this->cpuModel = brandResult.output.trimmed();
+    if (this->cpuModel.isEmpty()) {
+        if (!brandResult.ok())
+            qWarning() << "system_info: sysctl machdep.cpu.brand_string failed:" << brandResult.error;
         this->cpuModel = unknown;
     }
 
@@ -65,9 +65,11 @@ SystemInfoMacOS::SystemInfoMacOS()
     // Username
     QString name = qgetenv("USER");
     if (name.isEmpty()) {
-        try {
-            name = CommandUtil::exec("whoami").trimmed();
-        } catch (...) { qWarning() << "Failed to get username"; }
+        ExecResult whoamiResult = CommandUtil::execWithStatus("whoami");
+        if (whoamiResult.ok())
+            name = whoamiResult.output.trimmed();
+        else
+            qWarning() << "system_info: whoami failed:" << whoamiResult.error;
     }
     this->username = name;
 }
@@ -75,32 +77,36 @@ SystemInfoMacOS::SystemInfoMacOS()
 QStringList SystemInfoMacOS::getUserList() const
 {
     QStringList users;
-    try {
-        // macOS uses Directory Services; dscl lists all users
-        QString output = CommandUtil::exec("dscl", {".", "-list", "/Users"});
-        QStringList allUsers = output.trimmed().split('\n');
-        for (const QString &user : allUsers) {
-            QString trimmed = user.trimmed();
-            // Filter out system users (those starting with _)
-            if (!trimmed.isEmpty() && !trimmed.startsWith('_'))
-                users.append(trimmed);
-        }
-    } catch (...) { qWarning() << "Failed to list system users"; }
+    // macOS uses Directory Services; dscl lists all users
+    ExecResult result = CommandUtil::execWithStatus("dscl", {".", "-list", "/Users"});
+    if (!result.ok()) {
+        qWarning() << "system_info: dscl -list /Users failed:" << result.error;
+        return users;
+    }
+    QStringList allUsers = result.output.trimmed().split('\n');
+    for (const QString &user : allUsers) {
+        QString trimmed = user.trimmed();
+        // Filter out system users (those starting with _)
+        if (!trimmed.isEmpty() && !trimmed.startsWith('_'))
+            users.append(trimmed);
+    }
     return users;
 }
 
 QStringList SystemInfoMacOS::getGroupList() const
 {
     QStringList groups;
-    try {
-        QString output = CommandUtil::exec("dscl", {".", "-list", "/Groups"});
-        QStringList allGroups = output.trimmed().split('\n');
-        for (const QString &group : allGroups) {
-            QString trimmed = group.trimmed();
-            if (!trimmed.isEmpty() && !trimmed.startsWith('_'))
-                groups.append(trimmed);
-        }
-    } catch (...) { qWarning() << "Failed to list system groups"; }
+    ExecResult result = CommandUtil::execWithStatus("dscl", {".", "-list", "/Groups"});
+    if (!result.ok()) {
+        qWarning() << "system_info: dscl -list /Groups failed:" << result.error;
+        return groups;
+    }
+    QStringList allGroups = result.output.trimmed().split('\n');
+    for (const QString &group : allGroups) {
+        QString trimmed = group.trimmed();
+        if (!trimmed.isEmpty() && !trimmed.startsWith('_'))
+            groups.append(trimmed);
+    }
     return groups;
 }
 
@@ -221,14 +227,16 @@ QFileInfoList SystemInfoMacOS::getBrokenSymlinks() const
     scanBrokenSymlinks(home + "/bin", result);
 
     // Scan Homebrew prefix (varies by Intel/Apple Silicon)
-    try {
-        QString brewPrefix = CommandUtil::exec("brew", {"--prefix"}).trimmed();
+    ExecResult brewResult = CommandUtil::execWithStatus("brew", {"--prefix"});
+    if (brewResult.ok()) {
+        QString brewPrefix = brewResult.output.trimmed();
         if (!brewPrefix.isEmpty()) {
             scanBrokenSymlinks(brewPrefix + "/bin", result);
             scanBrokenSymlinks(brewPrefix + "/lib", result);
         }
-    } catch (...) {
-        // Homebrew not installed — skip
+    } else {
+        // Homebrew not installed — expected on many systems, not an error.
+        qDebug() << "system_info: brew --prefix unavailable:" << brewResult.error;
     }
 
     return result;

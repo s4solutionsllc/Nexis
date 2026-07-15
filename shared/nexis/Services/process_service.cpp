@@ -18,17 +18,15 @@ ProcessService::ProcessService(QObject *parent)
 
 bool ProcessService::killProcess(pid_t pid, const QString &processUser, const QString &currentUser)
 {
-    try {
-        if (processUser == currentUser) {
-            CommandUtil::exec("kill", { QString::number(pid) });
-        } else {
-            CommandUtil::sudoExec("kill", { QString::number(pid) });
-        }
-        emit processKilled(pid);
-        return true;
-    } catch (QString &ex) {
-        qCritical() << ex;
-        emit processKillFailed(pid, ex);
+    const ExecResult result = (processUser == currentUser)
+        ? CommandUtil::execWithStatus("kill", { QString::number(pid) })
+        : CommandUtil::sudoExecWithStatus("kill", { QString::number(pid) });
+
+    if (!result.ok()) {
+        qCritical() << result.error;
+        emit processKillFailed(pid, result.error);
         return false;
     }
+    emit processKilled(pid);
+    return true;
 }

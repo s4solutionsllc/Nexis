@@ -1,5 +1,6 @@
 #include "power_profile_info_linux.h"
 #include <Utils/command_util.h>
+#include <QDebug>
 #include <QFile>
 #include <QDir>
 
@@ -59,8 +60,10 @@ void PowerProfileInfoLinux::refresh()
 void PowerProfileInfoLinux::refreshPPD()
 {
     ExecResult r = CommandUtil::execWithStatus("powerprofilesctl", {"list"}, 5000);
-    if (r.exitCode != 0)
+    if (r.exitCode != 0) {
+        qWarning() << "power_profile_info: powerprofilesctl list failed:" << r.error;
         return;
+    }
 
     PowerProfileData parsed = parsePowerprofilesctlList(r.output);
     parsed.conflictWarning = mData.conflictWarning;
@@ -111,6 +114,7 @@ bool PowerProfileInfoLinux::setPPD(const QString &profile)
         mData.activeProfile = profile;
         return true;
     }
+    qWarning() << "power_profile_info: powerprofilesctl set" << profile << "failed:" << r.error;
     return false;
 }
 
@@ -119,11 +123,11 @@ bool PowerProfileInfoLinux::setSysfs(const QString &governor)
     QString cmd = QString("echo %1 | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor")
                       .arg(governor);
 
-    try {
-        CommandUtil::sudoExec("sh", {"-c", cmd});
-        mData.activeProfile = governor;
-        return true;
-    } catch (const QString &) {
+    ExecResult r = CommandUtil::sudoExecWithStatus("sh", {"-c", cmd});
+    if (!r.ok()) {
+        qWarning() << "power_profile_info: failed to set sysfs governor" << governor << ":" << r.error;
         return false;
     }
+    mData.activeProfile = governor;
+    return true;
 }

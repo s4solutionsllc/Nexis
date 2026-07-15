@@ -1,4 +1,5 @@
 #include "fan_info_linux.h"
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QRegularExpression>
@@ -266,8 +267,10 @@ void FanInfoLinux::discoverNvidiaSmi()
         {"--query-gpu=fan.speed,name", "--format=csv,noheader,nounits"},
         3000);
 
-    if (result.exitCode != 0)
+    if (result.exitCode != 0) {
+        qDebug() << "fan_info: nvidia-smi fan query failed:" << result.error;
         return;
+    }
 
     QStringList lines = result.output.trimmed().split('\n', Qt::SkipEmptyParts);
     for (int i = 0; i < lines.size(); ++i) {
@@ -400,8 +403,10 @@ void FanInfoLinux::discoverIpmi()
         {"sdr", "type", "Fan"},
         5000);
 
-    if (result.exitCode != 0)
+    if (result.exitCode != 0) {
+        qDebug() << "fan_info: ipmitool sdr type Fan failed:" << result.error;
         return;
+    }
 
     // Parse each line of sensor data
     // Expected format (tab or space separated):

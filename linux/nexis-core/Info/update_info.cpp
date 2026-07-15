@@ -1,5 +1,6 @@
 #include "update_info_linux.h"
 
+#include <QDebug>
 #include <QRegularExpression>
 #include <Utils/command_util.h>
 
@@ -65,8 +66,10 @@ void UpdateInfoLinux::checkApt(UpdateCheckResult &result) const
     ExecResult r = CommandUtil::execWithStatus(
         "bash", {"-c", "LANG=C apt list --upgradable 2>/dev/null"}, 30000);
 
-    if (r.exitCode != 0)
+    if (r.exitCode != 0) {
+        qWarning() << "update_info: apt upgradable check failed:" << r.error;
         return;
+    }
 
     parseAptLines(r.output.split('\n'), result);
 }
@@ -76,8 +79,11 @@ void UpdateInfoLinux::checkDnf(UpdateCheckResult &result) const
     ExecResult r = CommandUtil::execWithStatus("dnf", {"check-update", "--quiet"}, 30000);
 
     // dnf: exit 100 = updates available, 0 = none, 1 = error
-    if (r.exitCode != 100)
+    if (r.exitCode != 100) {
+        if (r.exitCode != 0)
+            qWarning() << "update_info: dnf check-update failed:" << r.error;
         return;
+    }
 
     const QStringList lines = r.output.split('\n');
     for (const QString &line : lines) {
@@ -98,8 +104,14 @@ void UpdateInfoLinux::checkPacman(UpdateCheckResult &result) const
 {
     ExecResult r = CommandUtil::execWithStatus("pacman", {"-Qu"}, 30000);
 
-    if (r.exitCode != 0)
+    // pacman -Qu exits non-zero both on a genuine error and on "nothing to
+    // upgrade" — log at debug so real failures are still traceable without
+    // warning on the common empty-list case.
+    if (r.exitCode != 0) {
+        if (!r.error.isEmpty())
+            qDebug() << "update_info: pacman -Qu exited" << r.exitCode << ":" << r.error;
         return;
+    }
 
     const QStringList lines = r.output.split('\n');
     for (const QString &line : lines) {
@@ -120,8 +132,11 @@ void UpdateInfoLinux::checkZypper(UpdateCheckResult &result) const
 {
     ExecResult r = CommandUtil::execWithStatus("zypper", {"list-updates"}, 30000);
 
-    if (r.exitCode != 0)
+    if (r.exitCode != 0) {
+        if (!r.error.isEmpty())
+            qDebug() << "update_info: zypper list-updates exited" << r.exitCode << ":" << r.error;
         return;
+    }
 
     const QStringList lines = r.output.split('\n');
     for (const QString &line : lines) {
@@ -142,8 +157,11 @@ void UpdateInfoLinux::checkSnap(UpdateCheckResult &result) const
     ExecResult r = CommandUtil::execWithStatus(
         "bash", {"-c", "LANG=C snap refresh --list 2>/dev/null"}, 30000);
 
-    if (r.exitCode != 0)
+    if (r.exitCode != 0) {
+        if (!r.error.isEmpty())
+            qDebug() << "update_info: snap refresh --list exited" << r.exitCode << ":" << r.error;
         return;
+    }
 
     const QStringList lines = r.output.split('\n');
     bool headerSkipped = false;
@@ -173,8 +191,11 @@ void UpdateInfoLinux::checkFlatpak(UpdateCheckResult &result) const
         {"-c", "LANG=C flatpak remote-ls --updates --columns=application,version 2>/dev/null"},
         30000);
 
-    if (r.exitCode != 0)
+    if (r.exitCode != 0) {
+        if (!r.error.isEmpty())
+            qDebug() << "update_info: flatpak remote-ls --updates exited" << r.exitCode << ":" << r.error;
         return;
+    }
 
     const QStringList lines = r.output.split('\n');
     for (const QString &line : lines) {
