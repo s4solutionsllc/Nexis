@@ -69,6 +69,9 @@ private:
     void initDiskAnalyzerCombo();
     void updateCustomPathVisibility();
     void initScheduledCleaning();
+    void buildPageHeader();
+    void buildSectionHeader(QWidget *headerContainer, const QString &title);
+    void buildSectionCards();
 
 private:
     AppManager *apm;

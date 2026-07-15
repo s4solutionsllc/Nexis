@@ -25,6 +25,43 @@
    <property name="rightMargin"><number>0</number></property>
    <property name="bottomMargin"><number>0</number></property>
    <item>
+    <widget class="QWidget" name="pageHeader" native="true">
+     <layout class="QHBoxLayout" name="pageHeaderLayout">
+      <property name="leftMargin"><number>14</number></property>
+      <property name="topMargin"><number>12</number></property>
+      <property name="rightMargin"><number>14</number></property>
+      <property name="bottomMargin"><number>10</number></property>
+      <property name="spacing"><number>8</number></property>
+      <item>
+       <widget class="QFrame" name="pageHeaderAccent">
+        <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="pageHeaderTextCol">
+        <property name="spacing"><number>2</number></property>
+        <item>
+         <widget class="QLabel" name="pageHeaderTitle">
+          <property name="text"><string>Settings</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="pageHeaderSource">
+          <property name="text"><string>Preferences and alerts</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="hspacerPageHeader">
+        <property name="orientation"><enum>Qt::Horizontal</enum></property>
+        <property name="sizeHint" stdset="0"><size><width>0</width><height>0</height></size></property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QScrollArea" name="scrollArea">
      <property name="widgetResizable"><bool>true</bool></property>
      <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
@@ -34,13 +71,22 @@
        <property name="topMargin"><number>12</number></property>
        <property name="rightMargin"><number>12</number></property>
        <property name="bottomMargin"><number>12</number></property>
-       <property name="spacing"><number>8</number></property>
+       <property name="spacing"><number>24</number></property>
 
        <!-- ============ GENERAL ============ -->
        <item>
-        <widget class="QGroupBox" name="groupGeneral">
-         <property name="title"><string>General</string></property>
-         <layout class="QGridLayout" name="gridGeneral">
+        <widget class="QWidget" name="groupGeneral" native="true">
+         <layout class="QVBoxLayout" name="vboxGeneral">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerGeneral" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridGeneral">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>8</number></property>
 
@@ -140,14 +186,25 @@
           </item>
 
          </layout>
+          </item>
+         </layout>
         </widget>
        </item>
 
        <!-- ============ APPEARANCE ============ -->
        <item>
-        <widget class="QGroupBox" name="groupAppearance">
-         <property name="title"><string>Appearance</string></property>
-         <layout class="QGridLayout" name="gridAppearance">
+        <widget class="QWidget" name="groupAppearance" native="true">
+         <layout class="QVBoxLayout" name="vboxAppearance">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerAppearance" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridAppearance">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>8</number></property>
 
@@ -206,14 +263,25 @@
           </item>
 
          </layout>
+          </item>
+         </layout>
         </widget>
        </item>
 
        <!-- ============ ALERTS ============ -->
        <item>
-        <widget class="QGroupBox" name="groupAlerts">
-         <property name="title"><string>Alerts</string></property>
-         <layout class="QGridLayout" name="gridAlerts">
+        <widget class="QWidget" name="groupAlerts" native="true">
+         <layout class="QVBoxLayout" name="vboxAlerts">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerAlerts" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridAlerts">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>8</number></property>
 
@@ -303,14 +371,25 @@
           </item>
 
          </layout>
+          </item>
+         </layout>
         </widget>
        </item>
 
        <!-- ============ TOOLS ============ -->
        <item>
-        <widget class="QGroupBox" name="groupTools">
-         <property name="title"><string>Tools</string></property>
-         <layout class="QGridLayout" name="gridTools">
+        <widget class="QWidget" name="groupTools" native="true">
+         <layout class="QVBoxLayout" name="vboxTools">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerTools" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridTools">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>8</number></property>
 
@@ -350,14 +429,25 @@
           </item>
 
          </layout>
+          </item>
+         </layout>
         </widget>
        </item>
 
        <!-- ============ SCHEDULED CLEANING ============ -->
        <item>
-        <widget class="QGroupBox" name="groupScheduledCleaning">
-         <property name="title"><string>Scheduled Cleaning</string></property>
-         <layout class="QVBoxLayout" name="layoutScheduledCleaning">
+        <widget class="QWidget" name="groupScheduledCleaning" native="true">
+         <layout class="QVBoxLayout" name="vboxScheduledCleaning">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerScheduledCleaning" native="true"/>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="layoutScheduledCleaning">
           <property name="spacing"><number>8</number></property>
 
           <item>
@@ -512,6 +602,8 @@
            </layout>
           </item>
 
+         </layout>
+          </item>
          </layout>
         </widget>
        </item>

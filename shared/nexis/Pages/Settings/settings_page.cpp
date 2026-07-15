@@ -209,13 +209,17 @@ void SettingsPage::init()
     // disk analyzer preference
     initDiskAnalyzerCombo();
 
-    // drop shadows
-    Utilities::addDropShadow({
-        ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme,
-        ui->cmbFont, ui->cmbTrayIconStyle, ui->spinCpuPercent, ui->spinMemoryPercent,
-        ui->spinDiskPercent, ui->spinBatteryHealthPercent, ui->cmbDiskAnalyzer,
-        ui->btnManageSchedules, ui->btnViewHistory, ui->spnThresholdGB
-    }, 50);
+    // DS §2/§3 (NEX F1/F2): page header, section-card headers, elevated
+    // card chrome + shadow. Shadow color is theme-dependent (@shadowColor),
+    // so refreshThemeColors() re-applies it on theme change.
+    buildPageHeader();
+    buildSectionHeader(ui->headerGeneral, tr("General"));
+    buildSectionHeader(ui->headerAppearance, tr("Appearance"));
+    buildSectionHeader(ui->headerAlerts, tr("Alerts"));
+    buildSectionHeader(ui->headerTools, tr("Tools"));
+    buildSectionHeader(ui->headerScheduledCleaning, tr("Scheduled Cleaning"));
+    buildSectionCards();
+    refreshThemeColors();
 
     // signal connections
     connect(ui->cmbLanguages, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbLanguagesChanged);
@@ -765,10 +769,78 @@ void SettingsPage::updateScheduleSummary()
 
 void SettingsPage::refreshThemeColors()
 {
-    Utilities::addDropShadow({
-        ui->cmbLanguages, ui->cmbDisks, ui->cmbStartPage, ui->cmbColorScheme,
-        ui->cmbFont, ui->cmbTrayIconStyle, ui->spinCpuPercent, ui->spinMemoryPercent,
-        ui->spinDiskPercent, ui->spinBatteryHealthPercent, ui->cmbDiskAnalyzer,
-        ui->btnManageSchedules, ui->btnViewHistory, ui->spnThresholdGB
-    }, 50);
+    // DS §2 elevated-card shadow (alpha 90, blur 26) — one per section card,
+    // never per control (DS §7/§9). Re-applied on theme change because the
+    // shadow color resolves from @shadowColor at call time.
+    Utilities::addDropShadow(ui->groupGeneral, 90, 26);
+    Utilities::addDropShadow(ui->groupAppearance, 90, 26);
+    Utilities::addDropShadow(ui->groupAlerts, 90, 26);
+    Utilities::addDropShadow(ui->groupTools, 90, 26);
+    Utilities::addDropShadow(ui->groupScheduledCleaning, 90, 26);
+}
+
+void SettingsPage::buildPageHeader()
+{
+    // DS §3 page-level header (NEX F2 shared recipe): non-compact accent
+    // bar (>=26px) + title + muted source line, mirrors
+    // MetricTileBase::buildChrome() / SystemCleanerPage::buildCategoryHeader().
+    ui->pageHeader->setObjectName("sectionHeaderRow");
+
+    ui->pageHeaderAccent->setObjectName("sectionHeaderAccent");
+    ui->pageHeaderAccent->setProperty("accentToken", "accent");
+    ui->pageHeaderAccent->setFixedWidth(3);
+    ui->pageHeaderAccent->setMinimumHeight(26);
+    ui->pageHeaderAccent->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+
+    ui->pageHeaderTitle->setObjectName("sectionHeaderTitle");
+    ui->pageHeaderSource->setObjectName("sectionHeaderSource");
+}
+
+void SettingsPage::buildSectionHeader(QWidget *headerContainer, const QString &title)
+{
+    // DS §3 section-card header (NEX F2 shared recipe, "compact" variant —
+    // >=18px accent bar instead of the >=26px page/tile-header bar) built
+    // programmatically, mirroring SystemCleanerPage::buildCategoryHeader().
+    headerContainer->setObjectName("sectionHeaderRow");
+
+    QHBoxLayout *row = new QHBoxLayout(headerContainer);
+    row->setContentsMargins(14, 12, 14, 8);
+    row->setSpacing(8);
+
+    QFrame *accentBar = new QFrame(headerContainer);
+    accentBar->setObjectName("sectionHeaderAccent");
+    accentBar->setProperty("compact", true);
+    accentBar->setProperty("accentToken", "accent");
+    accentBar->setFrameShape(QFrame::NoFrame);
+    accentBar->setFixedWidth(3);
+    accentBar->setMinimumHeight(18);
+    accentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    row->addWidget(accentBar);
+
+    QLabel *lblTitle = new QLabel(title, headerContainer);
+    lblTitle->setObjectName("sectionHeaderTitle");
+    row->addWidget(lblTitle);
+    row->addStretch();
+}
+
+void SettingsPage::buildSectionCards()
+{
+    // DS §2 elevated card chrome (NEX F1 shared recipe) — background,
+    // border, radius come from [cardRole="elevated"] in style.qss.
+    const QList<QWidget *> cards = {
+        ui->groupGeneral, ui->groupAppearance, ui->groupAlerts,
+        ui->groupTools, ui->groupScheduledCleaning
+    };
+    for (QWidget *card : cards) {
+        card->setAttribute(Qt::WA_StyledBackground, true);
+        card->setProperty("cardRole", "elevated");
+    }
+
+    // Inner content padding now that the QGroupBox native title/frame is
+    // gone — the header row above supplies its own top padding.
+    ui->gridGeneral->setContentsMargins(14, 0, 14, 14);
+    ui->gridAppearance->setContentsMargins(14, 0, 14, 14);
+    ui->gridAlerts->setContentsMargins(14, 0, 14, 14);
+    ui->gridTools->setContentsMargins(14, 0, 14, 14);
+    ui->layoutScheduledCleaning->setContentsMargins(14, 0, 14, 14);
 }
