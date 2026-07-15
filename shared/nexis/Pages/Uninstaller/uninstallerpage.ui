@@ -33,10 +33,45 @@
     <number>2</number>
    </property>
    <item row="2" column="0" colspan="3">
-    <widget class="QStackedWidget" name="stackedWidget">
-     <property name="currentIndex">
+    <layout class="QVBoxLayout" name="uninstallerContainerLayout">
+     <property name="leftMargin">
+      <number>8</number>
+     </property>
+     <property name="topMargin">
+      <number>8</number>
+     </property>
+     <property name="rightMargin">
+      <number>8</number>
+     </property>
+     <property name="bottomMargin">
+      <number>8</number>
+     </property>
+     <property name="spacing">
       <number>0</number>
      </property>
+     <item>
+      <widget class="QWidget" name="uninstallerContainer" native="true">
+       <layout class="QVBoxLayout" name="uninstallerContainerInnerLayout">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QStackedWidget" name="stackedWidget">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
      <widget class="QWidget" name="pageSystemPackages">
       <layout class="QGridLayout" name="gridLayout_2">
        <property name="leftMargin">
@@ -533,6 +568,11 @@
       </layout>
      </widget>
     </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item row="6" column="0" colspan="3" alignment="Qt::AlignHCenter|Qt::AlignBottom">
     <widget class="QLabel" name="lblLoadingUninstaller">
@@ -596,22 +636,22 @@
     </widget>
    </item>
    <item row="1" column="0" colspan="3">
-    <widget class="QWidget" name="nav" native="true">
+    <widget class="QWidget" name="sectionHeaderRow" native="true">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="spacing">
-       <number>10</number>
+       <number>12</number>
       </property>
       <property name="leftMargin">
-       <number>4</number>
+       <number>16</number>
       </property>
       <property name="topMargin">
-       <number>5</number>
+       <number>14</number>
       </property>
       <property name="rightMargin">
-       <number>4</number>
+       <number>16</number>
       </property>
       <property name="bottomMargin">
-       <number>5</number>
+       <number>12</number>
       </property>
       <item>
        <widget class="QPushButton" name="btnSystemPackages">

@@ -53,6 +53,12 @@ void UninstallerPage::init()
 
     ui->stackedWidget->setCurrentIndex(0);
 
+    // DS §2/§7: single elevated container around the application list;
+    // rows inside stay flat (no per-row shadow).
+    ui->uninstallerContainer->setAttribute(Qt::WA_StyledBackground, true);
+    ui->uninstallerContainer->setProperty("cardRole", "elevated");
+    Utilities::addDropShadow(ui->uninstallerContainer, 90, 26);
+
 #ifdef Q_OS_MACOS
     ui->chkPurge->hide();
     ui->btnSnapPackages->hide();
