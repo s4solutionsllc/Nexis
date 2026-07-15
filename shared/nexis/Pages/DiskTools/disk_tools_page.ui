@@ -15,27 +15,33 @@
    <property name="rightMargin"><number>15</number></property>
    <property name="bottomMargin"><number>15</number></property>
    <item>
-    <layout class="QHBoxLayout" name="modeBarLayout">
-     <property name="spacing"><number>0</number></property>
-     <item>
-      <widget class="QPushButton" name="btnModeLargeOld">
-       <property name="text"><string>Large &amp;&amp; Old Files</string></property>
-       <property name="checkable"><bool>true</bool></property>
-       <property name="checked"><bool>true</bool></property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnModeDuplicates">
-       <property name="text"><string>Duplicate Finder</string></property>
-       <property name="checkable"><bool>true</bool></property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="modeBarSpacer">
-       <property name="orientation"><enum>Qt::Horizontal</enum></property>
-      </spacer>
-     </item>
-    </layout>
+    <widget class="QWidget" name="sectionHeaderRow" native="true">
+     <layout class="QHBoxLayout" name="modeBarLayout">
+      <property name="leftMargin"><number>0</number></property>
+      <property name="topMargin"><number>0</number></property>
+      <property name="rightMargin"><number>0</number></property>
+      <property name="bottomMargin"><number>4</number></property>
+      <property name="spacing"><number>8</number></property>
+      <item>
+       <widget class="QPushButton" name="btnModeLargeOld">
+        <property name="text"><string>Large &amp;&amp; Old Files</string></property>
+        <property name="checkable"><bool>true</bool></property>
+        <property name="checked"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnModeDuplicates">
+        <property name="text"><string>Duplicate Finder</string></property>
+        <property name="checkable"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="modeBarSpacer">
+        <property name="orientation"><enum>Qt::Horizontal</enum></property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
    </item>
    <item>
     <widget class="QStackedWidget" name="stackedModes">

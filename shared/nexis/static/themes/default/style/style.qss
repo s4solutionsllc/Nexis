@@ -2036,36 +2036,72 @@ QLabel[accessibleName="dialog-title"] {
     DISK TOOLS PAGE
 ***************************/
 
-/* Directory picker lists */
+/* NEX Phase-2 "Disk Tools" page item (SSO-13739): the scan-roots list and
+   the results tree (per mode) each sit inside their own DS §2 elevated
+   container ([cardRole="elevated"], NEX F1, shadow via
+   DiskToolsPage::makeElevatedContainer()); rows below stay flat (DS §7 —
+   shadow lives on the container, never per row). */
+
+/* Mode tabs — DS §3 header-anatomy spacing (#sectionHeaderRow); no title
+   label in the approved capture, so this page applies the pattern as
+   spacing/alignment chrome only (style.qss "Section Header" doc comment).
+   Active tab uses @accentColor. */
+
+#DiskToolsPage QPushButton#segmentedLeft,
+#DiskToolsPage QPushButton#segmentedRight {
+    background-color: @cardBg;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: @dp8;
+    padding: @dp8 @dp16;
+    font-size: 10pt;
+    font-weight: 600;
+}
+
+#DiskToolsPage QPushButton#segmentedLeft:checked,
+#DiskToolsPage QPushButton#segmentedRight:checked {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
+#DiskToolsPage QPushButton#segmentedLeft:hover:!checked,
+#DiskToolsPage QPushButton#segmentedRight:hover:!checked {
+    border-color: @accentColor;
+}
+
+/* Directory picker lists — flat rows inside their elevated container */
 
 #diskToolsDirList {
-    border: 1px solid @borderColor;
+    border: 0;
     background-color: transparent;
-    border-radius: 8;
     font-size: 10pt;
     color: @color05;
 }
 
 #diskToolsDirList::item {
-    padding: @dp4 @dp6;
+    padding: @dp10 @dp12;
     color: @color05;
+    border-bottom: 1px solid @borderColor;
+    font-family: @monoFontFamily;
 }
 
 #diskToolsDirList::item:selected {
     background-color: @color02;
 }
 
-/* Large & Old results tree */
+/* Large & Old results tree — frozen elevated-surface header, flat rows */
 
 #treeWidgetLargeOld {
-    border: 1px solid @borderColor;
+    border: 0;
     background-color: transparent;
-    border-radius: 8;
     font-size: 10pt;
 }
 
 #treeWidgetLargeOld QHeaderView::section {
-    border-top: 1;
+    background-color: @cardBgElevated;
+    border-top: 0;
+    border-bottom: 1px solid @borderColor;
 }
 
 #treeWidgetLargeOld::item {
@@ -2088,17 +2124,18 @@ QLabel[accessibleName="dialog-title"] {
     image: url(:/static/themes/common/img/check.png);
 }
 
-/* Duplicate Finder results tree */
+/* Duplicate Finder results tree — frozen elevated-surface header, flat rows */
 
 #treeWidgetDuplicates {
-    border: 1px solid @borderColor;
+    border: 0;
     background-color: transparent;
-    border-radius: 8;
     font-size: 10pt;
 }
 
 #treeWidgetDuplicates QHeaderView::section {
-    border-top: 1;
+    background-color: @cardBgElevated;
+    border-top: 0;
+    border-bottom: 1px solid @borderColor;
 }
 
 #treeWidgetDuplicates::item {
@@ -2512,10 +2549,13 @@ QLabel[accessibleName="dialog-title"] {
 
 /* Action bar and buttons */
 
+/* DS §3 spacing: plain footer band with a top hairline, not its own
+   bordered card — the two elevated containers above carry the page's
+   shadows (NEX F1). */
 #DiskToolsPage #actionBarFrame {
-    background-color: @color01;
-    border: 1px solid @borderColor;
-    border-radius: 6;
+    background-color: transparent;
+    border: 0;
+    border-top: 1px solid @borderColor;
 }
 
 #DiskToolsPage #btnScan {
