@@ -395,6 +395,8 @@ Historical time-series charts for system resource usage.
 - Disk temperature per-drive (30s refresh, if SMART supported)
 - **CPU Pressure Stall (FR-124, Linux only)** — 3-series chart (avg10, avg60, avg300) sourced from `/proc/pressure/cpu`. Shows the percentage of time at least one task was stalled waiting for CPU. Only created when the PSI file is present (kernel 4.20+, `CONFIG_PSI=y`). Zero cost when hidden (uses DataRefreshService subscription gating).
 
+**Elevated-card chrome (NEX-Resources, UX modernization):** the CPU, CPU Load Averages, GPU, and Disk Read Write bands render as DS §2 elevated cards (`HistoryChart::setElevated()`) with a DS §3 accent bar in that metric's color token (`@cpuColor`/`@gpuColor`/`@diskColor`) and a plot surface on `@chartBackgroundColor`. The remaining charts (Memory, Network, Disk Temperature, PSI) and the OOM Kills / Disk Usage Launcher cards keep the page's original flat chrome — a later item covers them.
+
 **OOM Kills panel (FW-11 / SSO-3739, Linux only):** systemd-oomd / cgroup v2 observability card appended after the PSI chart. Shows the oomd service state (active / inactive / masked / not installed), oomd-attributed totals (`OOMKills`, `ManagedOOMKills`), the kernel-side `oom_kill` counter from `/sys/fs/cgroup/memory.events`, and the most recent kill events (timestamp, unit, cgroup path, reason) parsed from `journalctl -u systemd-oomd.service`. Hides itself entirely when no oomd or cgroup-v2 signal is available, and shows a defensive warning on the rare host that doesn't expose the v2 unified hierarchy (systemd 259 / Ubuntu 26.04 is v2-only — v1 hosts will not boot the new systemd). Subscribes to `DataRefreshService::Signal::Oomd` on the 5 s medium tick.
 
 **Disk Usage Launcher:**

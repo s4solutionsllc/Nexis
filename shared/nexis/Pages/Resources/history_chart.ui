@@ -44,29 +44,26 @@
    <property name="verticalSpacing">
     <number>0</number>
    </property>
-   <item row="0" column="1">
-    <widget class="QCheckBox" name="checkHistoryTitle">
-     <property name="cursor">
-      <cursorShape>PointingHandCursor</cursorShape>
+   <item row="0" column="0" alignment="Qt::AlignLeft|Qt::AlignVCenter">
+    <widget class="QFrame" name="sectionHeaderAccent">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
+     <property name="visible">
+      <bool>false</bool>
      </property>
-     <property name="layoutDirection">
-      <enum>Qt::LeftToRight</enum>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
-     </property>
-     <property name="text">
-      <string notr="true"/>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
      </property>
     </widget>
    </item>
-   <item row="0" column="0" alignment="Qt::AlignLeft|Qt::AlignTop">
+   <item row="0" column="1" alignment="Qt::AlignLeft|Qt::AlignTop">
     <widget class="QLabel" name="lblHistoryTitle">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -91,6 +88,25 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="0" column="3">
+    <widget class="QCheckBox" name="checkHistoryTitle">
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::NoFocus</enum>
+     </property>
+     <property name="layoutDirection">
+      <enum>Qt::LeftToRight</enum>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string notr="true"/>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

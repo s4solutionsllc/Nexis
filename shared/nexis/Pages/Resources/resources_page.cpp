@@ -81,7 +81,24 @@ void ResourcesPage::init()
         ui->chartsLayout->addWidget(widget);
     }
 
-    Utilities::addDropShadow(widgets, 40);
+    // DS §2/§3 (NEX-Resources): elevated container + accent-bar header for
+    // the four history-chart bands named in the approved design (CPU, CPU
+    // Load Averages, GPU, Disk Read Write). Memory/Network/Disk Health/PSI/
+    // OOM are out of this item's scope and keep the flat shadow below.
+    mChartCpu->setElevated(QStringLiteral("cpu"));
+    mChartCpuLoadAvg->setElevated(QStringLiteral("cpu"));
+    if (mChartGpu)
+        mChartGpu->setElevated(QStringLiteral("gpu"));
+    mChartDiskReadWrite->setElevated(QStringLiteral("disk"));
+
+    QList<QWidget*> flatShadowWidgets = widgets;
+    flatShadowWidgets.removeOne(mChartCpu);
+    flatShadowWidgets.removeOne(mChartCpuLoadAvg);
+    flatShadowWidgets.removeOne(mChartDiskReadWrite);
+    if (mChartGpu)
+        flatShadowWidgets.removeOne(mChartGpu);
+
+    Utilities::addDropShadow(flatShadowWidgets, 40);
 
     // Subscribe to DataRefreshService signals
     connect(mRefresh, &DataRefreshService::cpuUpdated,

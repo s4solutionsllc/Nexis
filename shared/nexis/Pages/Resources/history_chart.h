@@ -31,6 +31,14 @@ public:
     void setSeriesList(const QVector<QSplineSeries *> &seriesList);
     void setCategoryAxisYLabels();
 
+    // DS §2/§3 (NEX-Resources): opt a chart into the elevated-card header
+    // treatment — reveals + colors the accent bar (accentToken is one of the
+    // #sectionHeaderAccent[accentToken=...] values in style.qss, e.g. "cpu",
+    // "gpu", "disk"), pads the header/body, switches the plot surface to the
+    // @chartBackgroundColor token, and applies the DS §2 drop shadow. Charts
+    // that don't call this keep today's flat, unshadowed-by-default chrome.
+    void setElevated(const QString &accentToken);
+
 private slots:
     void on_checkHistoryTitle_clicked(bool checked);
 
@@ -50,6 +58,8 @@ private:
     QVector<QSplineSeries *> mSeriesList;
 
     QCategoryAxis *mAxisY;
+
+    QString mBackgroundToken = QStringLiteral("@historyChartBackgroundColor");
 };
 
 #endif // HISTORYCHART_H
