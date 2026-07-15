@@ -236,6 +236,7 @@ Ranked breakdown of which services and processes slow down system startup.
 - **macOS**: Shows total uptime since last boot via `sysctl kern.boottime`. Per-service timing is not available without elevated privileges.
 - Async analysis (QtConcurrent) — UI stays responsive; Refresh button triggers a new analysis on demand.
 - Data class: `BootAnalysisInfo` (platform-specific subclasses `BootAnalysisInfoLinux` / `BootAnalysisInfoMacOS`).
+- UX modernization (NEX Phase-2, SSO-13744): the uptime readout renders as a DS §2 elevated card with a DS §3/§4 header (accent bar + title + 14pt/700 hero value); the toolbar follows the shared section-header recipe; and the macOS no-per-service-data notice is a full DS §5 empty state (clock icon, explanation, "Refresh uptime" action) inside its own elevated card.
 
 ### 4. System Cleaner
 

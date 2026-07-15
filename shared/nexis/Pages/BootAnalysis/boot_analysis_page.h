@@ -28,12 +28,27 @@ private:
     void buildUi();
     void populate(const BootAnalysisData &data);
 
-    QLabel        *mLblTitle    = nullptr;
-    QLabel        *mLblSubtitle = nullptr;
-    QTableWidget  *mTable       = nullptr;
-    QLabel        *mLblEmpty    = nullptr;
-    QPushButton   *mBtnRefresh  = nullptr;
-    QLabel        *mLblStatus   = nullptr;
+    QLabel        *mLblTitle       = nullptr;
+    QLabel        *mLblSource      = nullptr;
+    QTableWidget  *mTable          = nullptr;
+    QPushButton   *mBtnRefresh     = nullptr;
+    QLabel        *mLblStatus      = nullptr;
+
+    // DS §2/§3/§4 (NEX-13744): elevated card promoting the uptime metric
+    // off the bare page — accent bar + title + 14pt/700 hero value.
+    QWidget       *mUptimeContainer = nullptr;
+    QLabel        *mLblUptimeTitle  = nullptr;
+    QLabel        *mLblUptimeValue  = nullptr;
+    QLabel        *mLblUptimeMeta   = nullptr;
+
+    // DS §5 (NEX-13744): upgrades the old text-only #lblBootEmptyState into
+    // icon + explanation + "Refresh uptime" next-action, inside its own
+    // elevated card.
+    QWidget       *mEmptyContainer     = nullptr;
+    QWidget       *mEmptyState         = nullptr;
+    QLabel        *mLblEmptyHeading    = nullptr;
+    QLabel        *mLblEmptyText       = nullptr;
+    QPushButton   *mBtnRefreshUptime   = nullptr;
 
     InfoManager                       *mIm        = nullptr;
     QFuture<BootAnalysisData>          mFuture;
