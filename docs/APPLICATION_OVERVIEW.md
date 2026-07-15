@@ -864,6 +864,10 @@ At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all
 
 All color-bearing widgets implement a `refreshThemeColors()` method connected to `SignalMapper::sigChangedAppTheme`. Constructors accept token name strings (e.g., `"@cpuColor"`) instead of resolved `QColor` values. On theme switch, each widget re-resolves its tokens from `AppManager::getStyleValues()` and updates all visual properties (series pens, area fills, chart backgrounds, inline stylesheets, progress bar chunks, shadow effects). This pattern ensures zero hardcoded colors in C++ code — every color comes from `values.ini`.
 
+### Shared Card Chrome (NEX F1)
+
+The Dashboard tile chrome (elevated surface + drop shadow, see `DashboardTileWrapper::applyDepthTreatment`) is generalized into a reusable `style.qss` recipe so other pages can opt in without inventing per-page selectors or per-widget `setStyleSheet()` calls: `[cardRole="elevated"]` (fill `@cardBgElevated`, 1px `@borderColor`, 12px radius — pairs with a single `Utilities::addDropShadow(widget, 90, 26)` call and an 8px outer margin for shadow clearance) and `[cardRole="flat"]` (fill `@cardBg`, same border/radius, no shadow) for content nested inside an elevated container. A widget opts in via `setAttribute(Qt::WA_StyledBackground, true)` plus `setProperty("cardRole", "elevated"|"flat")`, following the same dynamic-property convention as the existing `[status="..."]` selectors. This item defines the recipe only — the Dashboard tile itself is unchanged, and no other page consumes it yet.
+
 ### DPI Scaling
 
 QSS tokens include `@dpN` values (e.g., `@dp8`, `@dp12`) that are computed at stylesheet load time based on `devicePixelRatio()`. The `Dpi::scale()` utility class handles pixel scaling in C++ code. This solved HiDPI/4K display issues without requiring a QML migration.

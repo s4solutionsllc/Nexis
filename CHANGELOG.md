@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Shared elevated-card / flat-card QSS recipe (`[cardRole="elevated"]` / `[cardRole="flat"]`) generalizing the Dashboard tile chrome (fill, 1px border, 12px radius) into a reusable, page-agnostic pattern for the upcoming UX modernization pass. Purely additive groundwork: no page currently consumes it, and the Dashboard tile chrome is unchanged (NEX F1).
+
 ### Changed
 - `style.qss`: added/corrected page-level section banners ahead of the UX-modernization page-by-page pass (NEX-13727) — split Boot Analysis's selectors out from under the "STARTUP APPS PAGE" banner, split the Helpers maintenance-card selectors out from under "UNINSTALLER PAGE", labeled Homebrew's "Available Updates" title selector (previously unlabeled under "APT SOURCE MANAGER PAGE"), and reserved banner placeholders for Network Usage and System Logs, which have no selectors yet. Comment-only; no selector or value changes.
 - Helpers page (Firewall, Network Diagnostics, Open Ports, Swappiness, TRIM, Wake-on-LAN, and the page's own maintenance actions): all remaining `CommandUtil::exec`/`sudoExec` call sites migrated to `execWithStatus`/`sudoExecWithStatus`, branching on `ExecResult::ok()`. The `/proc`/`systemctl is-enabled` re-read that used to double-check a privileged write on the Swappiness and TRIM cards is gone now that the pkexec'd command's own exit code is authoritative; a silent `HelpersPage::on_btnFlushDNS_clicked` bug on macOS (a stale `try`/`catch` around a call that can no longer throw, always reporting success) is also fixed as part of this migration (SSO-3469).
