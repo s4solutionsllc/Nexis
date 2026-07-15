@@ -6,6 +6,7 @@
 #include "signal_mapper.h"
 
 #include "net_usage_tracker.h"
+#include "utilities.h"
 #include <Utils/format_util.h>
 
 #include <QVBoxLayout>
@@ -44,17 +45,40 @@ public:
         update();
     }
 
+    // DS §6: static plot chrome (background fill + gridlines), painted even
+    // when there is no history yet — matches the approved empty capture.
+    void setChrome(QColor background, QColor grid)
+    {
+        mBgColor = background;
+        mGridColor = grid;
+        update();
+    }
+
 protected:
     void paintEvent(QPaintEvent *) override
     {
-        if (mBuckets.isEmpty())
-            return;
-
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing, false);
 
         const int w = width();
         const int h = height();
+        const int labelH = 18;
+        const int chartH = h - labelH;
+
+        p.fillRect(0, 0, w, chartH, mBgColor);
+        p.setPen(mGridColor);
+        for (int i = 1; i < 4; ++i) {
+            const int y = chartH * i / 4;
+            p.drawLine(0, y, w, y);
+        }
+        for (int i = 1; i < 4; ++i) {
+            const int x = w * i / 4;
+            p.drawLine(x, 0, x, chartH);
+        }
+
+        if (mBuckets.isEmpty())
+            return;
+
         const int n = mBuckets.size();
         const int barW = qMax(2, (w - (n + 1)) / n);
         const int gap = qMax(1, (w - barW * n) / (n + 1));
@@ -62,9 +86,6 @@ protected:
         quint64 maxVal = 1;
         for (const auto &b : mBuckets)
             maxVal = qMax(maxVal, b.rx + b.tx);
-
-        const int labelH = 18;
-        const int chartH = h - labelH;
 
         for (int i = 0; i < n; ++i) {
             const DailyBucket &b = mBuckets.at(i);
@@ -102,16 +123,67 @@ private:
     QList<DailyBucket> mBuckets;
     QColor mRxColor = QColor("#5294e2");
     QColor mTxColor = QColor("#5294e2").lighter(140);
+    QColor mBgColor = QColor("#2A2C32");
+    QColor mGridColor = QColor("#3A3D4A");
 };
 
 #include "network_usage_page.moc"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+// DS §2 (NEX F1): opts a container into the shared elevated-card QSS recipe
+// (style.qss [cardRole="elevated"]) and gives it the DS §7 container-level
+// drop shadow. Never call per-row/child — shadows live on the container.
+static void makeElevated(QFrame *card)
+{
+    card->setAttribute(Qt::WA_StyledBackground, true);
+    card->setProperty("cardRole", "elevated");
+    Utilities::addDropShadow(card, 90, 26);
+}
+
+// DS §3 (NEX F2): shared section-header row (style.qss #sectionHeaderRow /
+// #sectionHeaderAccent / #sectionHeaderTitle / #sectionHeaderSource) — an
+// accent bar plus a title (and optional muted source line) below it.
+// `compact` picks the shorter card-header bar instead of the page-header bar.
+static QWidget *makeSectionHeader(const QString &title, bool compact,
+                                  const QString &source, QWidget *parent)
+{
+    auto *row = new QWidget(parent);
+    row->setObjectName("sectionHeaderRow");
+    auto *rowLayout = new QHBoxLayout(row);
+    rowLayout->setContentsMargins(0, 0, 0, 0);
+    rowLayout->setSpacing(8);
+
+    auto *accent = new QFrame(row);
+    accent->setObjectName("sectionHeaderAccent");
+    accent->setFrameShape(QFrame::NoFrame);
+    accent->setFixedWidth(3);
+    accent->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    accent->setProperty("accentToken", "network");
+    if (compact)
+        accent->setProperty("compact", true);
+    rowLayout->addWidget(accent);
+
+    auto *textCol = new QVBoxLayout;
+    textCol->setSpacing(0);
+    auto *titleLbl = new QLabel(title, row);
+    titleLbl->setObjectName("sectionHeaderTitle");
+    textCol->addWidget(titleLbl);
+    if (!source.isEmpty()) {
+        auto *sourceLbl = new QLabel(source, row);
+        sourceLbl->setObjectName("sectionHeaderSource");
+        textCol->addWidget(sourceLbl);
+    }
+    rowLayout->addLayout(textCol);
+
+    return row;
+}
+
 static QFrame *makeSummaryCard(const QString &title, QLabel *&valueOut, QWidget *parent)
 {
     auto *card = new QFrame(parent);
     card->setObjectName("netUsageSummaryCard");
+    makeElevated(card);
     auto *lay = new QVBoxLayout(card);
     lay->setContentsMargins(12, 10, 12, 10);
     lay->setSpacing(2);
@@ -164,15 +236,12 @@ void NetworkUsagePage::buildUI()
     lay->setContentsMargins(20, 20, 20, 20);
     lay->setSpacing(16);
 
-    // ── Title ──
+    // ── Page header (DS §3): accent bar + "Network Usage" title + source
+    // line; interface selector stays top-right as an unchanged control. ──
     auto *titleRow = new QHBoxLayout;
-    auto *title = new QLabel(tr("Network Usage"), container);
-    title->setObjectName("lblNetworkUsageTitle");
-    QFont tf = title->font();
-    tf.setBold(true);
-    tf.setPointSize(tf.pointSize() + 4);
-    title->setFont(tf);
-    titleRow->addWidget(title);
+    titleRow->addWidget(makeSectionHeader(tr("Network Usage"), false,
+                                          tr("Per-interface throughput and data usage"),
+                                          container));
     titleRow->addStretch();
 
     mIfaceCombo = new QComboBox(container);
@@ -183,18 +252,19 @@ void NetworkUsagePage::buildUI()
     lay->addLayout(titleRow);
 
     // ── Live rates ──
-    auto *rateCard = new QFrame(container);
-    rateCard->setObjectName("netUsageRateCard");
-    auto *rateL = new QHBoxLayout(rateCard);
+    mRateCard = new QFrame(container);
+    mRateCard->setObjectName("netUsageRateCard");
+    makeElevated(mRateCard);
+    auto *rateL = new QHBoxLayout(mRateCard);
     rateL->setContentsMargins(12, 8, 12, 8);
 
-    auto *downIcon = new QLabel(QStringLiteral("↓"), rateCard);
+    auto *downIcon = new QLabel(QStringLiteral("↓"), mRateCard);
     downIcon->setObjectName("netUsageRateIcon");
-    mLblRateDown = new QLabel(QStringLiteral("— /s"), rateCard);
+    mLblRateDown = new QLabel(QStringLiteral("— /s"), mRateCard);
     mLblRateDown->setObjectName("netUsageRateVal");
-    auto *upIcon = new QLabel(QStringLiteral("↑"), rateCard);
+    auto *upIcon = new QLabel(QStringLiteral("↑"), mRateCard);
     upIcon->setObjectName("netUsageRateIcon");
-    mLblRateUp = new QLabel(QStringLiteral("— /s"), rateCard);
+    mLblRateUp = new QLabel(QStringLiteral("— /s"), mRateCard);
     mLblRateUp->setObjectName("netUsageRateVal");
 
     rateL->addWidget(downIcon);
@@ -203,7 +273,7 @@ void NetworkUsagePage::buildUI()
     rateL->addWidget(upIcon);
     rateL->addWidget(mLblRateUp);
     rateL->addStretch();
-    lay->addWidget(rateCard);
+    lay->addWidget(mRateCard);
 
     // ── Summary cards ──
     auto *summaryRow = new QHBoxLayout;
@@ -214,30 +284,29 @@ void NetworkUsagePage::buildUI()
     lay->addLayout(summaryRow);
 
     // ── 30-day bar chart ──
-    auto *chartCard = new QFrame(container);
-    chartCard->setObjectName("netUsageChartCard");
-    auto *chartL = new QVBoxLayout(chartCard);
+    mChartCard = new QFrame(container);
+    mChartCard->setObjectName("netUsageChartCard");
+    makeElevated(mChartCard);
+    auto *chartL = new QVBoxLayout(mChartCard);
     chartL->setContentsMargins(14, 12, 14, 12);
     chartL->setSpacing(8);
 
-    auto *chartTitle = new QLabel(tr("30-Day History (↓ Download  ↑ Upload)"), chartCard);
-    chartTitle->setObjectName("netUsageCardTitle");
-    chartL->addWidget(chartTitle);
+    chartL->addWidget(makeSectionHeader(tr("30-Day History (↓ Download  ↑ Upload)"),
+                                        true, QString(), mChartCard));
 
-    mBarChart = new BarChartWidget(chartCard);
+    mBarChart = new BarChartWidget(mChartCard);
     chartL->addWidget(mBarChart);
-    lay->addWidget(chartCard);
+    lay->addWidget(mChartCard);
 
     // ── Cap section ──
     mCapCard = new QFrame(container);
     mCapCard->setObjectName("netUsageCapCard");
+    makeElevated(mCapCard);
     auto *capL = new QVBoxLayout(mCapCard);
     capL->setContentsMargins(14, 12, 14, 12);
     capL->setSpacing(8);
 
-    auto *capTitle = new QLabel(tr("Monthly Data Cap"), mCapCard);
-    capTitle->setObjectName("netUsageCardTitle");
-    capL->addWidget(capTitle);
+    capL->addWidget(makeSectionHeader(tr("Monthly Data Cap"), true, QString(), mCapCard));
 
     auto *capBarRow = new QHBoxLayout;
     mCapBar = new QProgressBar(mCapCard);
@@ -261,19 +330,18 @@ void NetworkUsagePage::buildUI()
     lay->addWidget(mCapCard);
 
     // ── Settings card ──
-    auto *settCard = new QFrame(container);
-    settCard->setObjectName("netUsageSettCard");
-    auto *settL = new QGridLayout(settCard);
+    mSettCard = new QFrame(container);
+    mSettCard->setObjectName("netUsageSettCard");
+    makeElevated(mSettCard);
+    auto *settL = new QGridLayout(mSettCard);
     settL->setContentsMargins(14, 12, 14, 12);
     settL->setSpacing(10);
     settL->setColumnStretch(1, 1);
 
-    auto *settTitle = new QLabel(tr("Settings"), settCard);
-    settTitle->setObjectName("netUsageCardTitle");
-    settL->addWidget(settTitle, 0, 0, 1, 2);
+    settL->addWidget(makeSectionHeader(tr("Settings"), true, QString(), mSettCard), 0, 0, 1, 2);
 
-    settL->addWidget(new QLabel(tr("Monthly cap (GB, 0 = no cap):"), settCard), 1, 0);
-    mSpinCap = new QSpinBox(settCard);
+    settL->addWidget(new QLabel(tr("Monthly cap (GB, 0 = no cap):"), mSettCard), 1, 0);
+    mSpinCap = new QSpinBox(mSettCard);
     mSpinCap->setRange(0, 100000);
     mSpinCap->setValue(SettingManager::ins()->getNetCapGB());
     mSpinCap->setSuffix(tr(" GB"));
@@ -282,20 +350,20 @@ void NetworkUsagePage::buildUI()
             this, &NetworkUsagePage::onCapChanged);
     settL->addWidget(mSpinCap, 1, 1);
 
-    settL->addWidget(new QLabel(tr("Billing cycle resets on day:"), settCard), 2, 0);
-    mSpinResetDay = new QSpinBox(settCard);
+    settL->addWidget(new QLabel(tr("Billing cycle resets on day:"), mSettCard), 2, 0);
+    mSpinResetDay = new QSpinBox(mSettCard);
     mSpinResetDay->setRange(1, 28);
     mSpinResetDay->setValue(SettingManager::ins()->getNetCapResetDay());
     connect(mSpinResetDay, QOverload<int>::of(&QSpinBox::valueChanged),
             this, &NetworkUsagePage::onResetDayChanged);
     settL->addWidget(mSpinResetDay, 2, 1);
 
-    mChkAlert = new QCheckBox(tr("Alert at 75%, 90%, 100% of cap"), settCard);
+    mChkAlert = new QCheckBox(tr("Alert at 75%, 90%, 100% of cap"), mSettCard);
     mChkAlert->setChecked(SettingManager::ins()->getNetCapAlertEnabled());
     connect(mChkAlert, &QCheckBox::toggled, this, &NetworkUsagePage::onAlertToggled);
     settL->addWidget(mChkAlert, 3, 0, 1, 2);
 
-    lay->addWidget(settCard);
+    lay->addWidget(mSettCard);
     lay->addStretch();
 }
 
@@ -443,12 +511,24 @@ void NetworkUsagePage::refreshCapBar()
     const QString iface = mIfaceCombo->currentData().toString();
     const int resetDay = SettingManager::ins()->getNetCapResetDay();
 
+    // The Monthly Data Cap card is always one of the page's elevated bands
+    // (DS §2) — it stays visible with an empty track when no cap is set,
+    // matching the approved capture, rather than disappearing.
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    const QString track = sv->value("@chartGridColor", "#e0e0e0").toString();
+
     if (capGB <= 0) {
-        mCapCard->setVisible(false);
+        mCapBar->setValue(0);
+        mLblCapUsed->setText(tr("Used: %1").arg(FormatUtil::formatBytes(
+            NetUsageTracker::ins()->monthRx(iface, resetDay) + NetUsageTracker::ins()->monthTx(iface, resetDay))));
+        mLblCapLimit->setText(tr("No cap"));
+        mCapBar->setStyleSheet(QString(
+            "QProgressBar { border-radius: 7px; background: %1; }"
+            "QProgressBar::chunk { border-radius: 7px; background-color: %1; }"
+        ).arg(track));
         return;
     }
 
-    mCapCard->setVisible(true);
     const quint64 capBytes = static_cast<quint64>(capGB) * 1073741824ULL;
     const quint64 used = NetUsageTracker::ins()->monthRx(iface, resetDay)
                        + NetUsageTracker::ins()->monthTx(iface, resetDay);
@@ -460,7 +540,6 @@ void NetworkUsagePage::refreshCapBar()
     mLblCapLimit->setText(tr("Cap: %1 GB  (%2%)")
         .arg(capGB).arg(pct));
 
-    QSettings *sv = AppManager::ins()->getStyleValues();
     QString color;
     if (pct >= 90)
         color = sv->value("@destructiveColor", "#e74c3c").toString();
@@ -469,12 +548,10 @@ void NetworkUsagePage::refreshCapBar()
     else
         color = sv->value("@successColor", "#27ae60").toString();
 
-    const QString border = sv->value("@borderColor", "#e0e0e0").toString();
-
     mCapBar->setStyleSheet(QString(
         "QProgressBar { border-radius: 7px; background: %1; }"
         "QProgressBar::chunk { border-radius: 7px; background-color: %2; }"
-    ).arg(border, color));
+    ).arg(track, color));
 }
 
 void NetworkUsagePage::refreshBarChart()
@@ -485,33 +562,20 @@ void NetworkUsagePage::refreshBarChart()
 
 void NetworkUsagePage::refreshThemeColors()
 {
+    // Card chrome (DS §2 [cardRole="elevated"]) and section headers
+    // (DS §3 #sectionHeaderAccent) restyle themselves via the global QSS on
+    // theme change — no per-widget stylesheet needed here (BUG-47/DS §9-1).
     QSettings *sv = AppManager::ins()->getStyleValues();
     if (!sv)
         return;
 
-    const QString cardBg    = sv->value("@cardBg",      "#ffffff").toString();
-    const QString border    = sv->value("@borderColor", "#e0e0e0").toString();
-    const QString netColor  = sv->value("@networkDownloadColor", "#5294e2").toString();
-    const QString txColor   = sv->value("@networkUploadColor", "#7ec8e3").toString();
+    const QString netColor = sv->value("@networkDownloadColor", "#5294e2").toString();
+    const QString txColor  = sv->value("@networkUploadColor", "#7ec8e3").toString();
+    mBarChart->setColor(QColor(netColor), QColor(txColor));
 
-    const QString cardStyle = QStringLiteral(
-        "border: 1px solid %1; border-radius: 8px; background-color: %2;")
-        .arg(border, cardBg);
+    const QString chartBg   = sv->value("@chartBackgroundColor", "#2A2C32").toString();
+    const QString chartGrid = sv->value("@chartGridColor", "#3A3D4A").toString();
+    mBarChart->setChrome(QColor(chartBg), QColor(chartGrid));
 
-    auto applyCard = [&](QFrame *f) {
-        f->setStyleSheet(QString("QFrame#%1{%2}").arg(f->objectName(), cardStyle));
-    };
-
-    applyCard(findChild<QFrame*>("netUsageRateCard"));
-    applyCard(findChild<QFrame*>("netUsageChartCard"));
-    applyCard(mCapCard);
-    applyCard(findChild<QFrame*>("netUsageSettCard"));
-
-    QColor rxCol(netColor);
-    QColor txCol(txColor);
-    mBarChart->setColor(rxCol, txCol);
-
-    // Re-apply summary card styles
-    for (QFrame *f : findChildren<QFrame*>("netUsageSummaryCard"))
-        f->setStyleSheet(QString("QFrame#netUsageSummaryCard{%1}").arg(cardStyle));
+    refreshCapBar();
 }

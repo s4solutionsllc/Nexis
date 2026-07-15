@@ -412,12 +412,12 @@ Continuous per-interface network data usage tracker with monthly cap management.
 
 **History:** 90-day rolling window of daily RX+TX buckets, stored as compact JSON in `SettingManager`'s INI file (see [Configuration and Settings](#configuration-and-settings) for the resolved path on each platform).
 
-**Page UI:**
+**Page UI (DS §2/§3 UX-modernization pass, SSO-13742):** a DS §3 page header (accent bar + "Network Usage" title + "Per-interface throughput and data usage" source line, interface selector top-right) precedes five DS §2 elevated cards, each with its own container shadow — throughput readout, the Today/This Week/This Month stat trio (each stat its own elevated card), 30-Day History, Monthly Data Cap, and Settings:
 - Interface selector (All Interfaces or individual adapter)
 - Live rate display (↓ download / ↑ upload bytes/sec)
 - Summary cards: Today / This Week / This Month totals
-- 30-day bar chart (stacked RX+TX per day, auto-scaled)
-- Monthly cap progress bar (hidden when cap = 0 GB); color-coded green/amber/red at 0%/75%/90%
+- 30-day bar chart (stacked RX+TX per day, auto-scaled) on a static `@chartBackgroundColor`/`@chartGridColor` plot surface (DS §6)
+- Monthly cap progress bar — always shown (no longer hidden at cap = 0 GB); track uses `@chartGridColor` (DS §6), color-coded green/amber/red chunk at 0%/75%/90% once a cap is set
 - Settings card: cap in GB (0 = disabled), billing cycle reset day (1–28), alert toggle
 
 **Tray Alerts:** When cap is set and usage crosses 75%, 90%, or 100% of the cap within the current billing period, a system tray notification fires once per tier. The last-alerted tier persists across restarts in `SettingManager`.
