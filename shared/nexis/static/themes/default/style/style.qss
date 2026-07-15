@@ -1993,6 +1993,19 @@ QLabel[accessibleName="dialog-title"] {
     color: @color11;
 }
 
+/* - Homebrew page (macOS only): fixed monospace stack for the Available
+ * Updates and Homebrew Packages tree cells (source/package/version), per
+ * app_manager.cpp:208-209 @monoFontFamily. treeWidgetUpdates and
+ * treeWidgetPackages are shared object names with APT Source Manager
+ * (Linux) and Uninstaller, so these rules are scoped to Homebrew's own
+ * elevated containers rather than changed at the shared tree item level
+ * (NEX-13741).
+ */
+#homebrewUpdatesContainer #treeWidgetUpdates::item,
+#homebrewPackagesContainer #treeWidgetPackages::item {
+    font-family: @monoFontFamily;
+}
+
 /* -- Snap package list (card style, unchanged) -- */
 
 #listWidgetSnapPackages {
