@@ -203,3 +203,72 @@ body {
 /* Bottom action bar (apt_source_manager edit/delete/add/cancel row) */
 .action-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--sidebarDivider); }
 .action-bar__spacer { flex: 1; }
+
+/* ============================================================
+   Task 8 additions (append-only) — tree / stacked-tool pages
+   (system_cleaner, disk_tools, docker, helpers, homebrew).
+   Every rule is token-only and cites the DS § it encodes.
+   ============================================================ */
+
+/* Monospace output/code stack — fixed JetBrains Mono chain from
+   app_manager.cpp:208-209 (@monoFontFamily is a QSS-substituted string,
+   NOT a values.ini token). Used for path source-lines, tree cells,
+   package/version cells. */
+.mono-code { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+/* DS §6 — progress track/fill (static, no animation per DS §9-2):
+   track @chartGridColor, fill @accentColor, radius 2, height 4. */
+.progress-track { height: 4px; border-radius: 2px; background: var(--chartGridColor); margin: 0 16px 8px; overflow: hidden; }
+.progress-fill  { height: 100%; border-radius: 2px; background: var(--accentColor); }
+
+/* System Cleaner — category tiles (DS §2 elevated card, DS §7 no per-row
+   shadow: shadow lives on each tile container). Reuses .card chrome; the
+   grid gap supplies clearance so per-tile margin is dropped. */
+.category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 12px; overflow: auto; align-content: start; flex: 1; }
+.cat-card { margin: 0; padding: 14px; display: flex; align-items: flex-start; gap: 14px; }
+.cat-card__main { flex: 1; min-width: 0; }
+.cat-card__title { font-size: 9pt; font-weight: 600; color: var(--color05); }                 /* DS §4 title role */
+.cat-card__src { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }  /* DS §4 meta role */
+.cat-card__collapse { border: none; background: transparent; color: var(--tertiaryText); font-size: 15px; line-height: 1; padding: 0 2px; flex: none; }
+.recover-block { display: flex; flex-direction: column; gap: 2px; }
+.recover-label { font-size: 8pt; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--tertiaryText); }
+.recover-value { font-size: 11pt; font-weight: 700; color: var(--successColor); }              /* DS §4 hero-ish readout, success token */
+
+/* Disk Tools — scan-roots list, criteria form, results (DS §1-§7) */
+.dt-scroll { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+.dt-row { display: flex; gap: 12px; padding: 0 8px; align-items: stretch; }
+.paths-box { flex: 1; padding: 6px 0; }
+.path-row { padding: 8px 16px; font-size: 9pt; color: var(--color05); border-bottom: 1px solid var(--borderColor); }
+.path-row:last-child { border-bottom: none; }
+.paths-actions { display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 8px 0; justify-content: flex-start; }
+.form-grid { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; }
+.form-row { display: flex; align-items: center; gap: 12px; }
+.form-row__spacer { flex: 1; }
+.form-label { font-size: 9pt; font-weight: 600; color: var(--color06); min-width: 148px; }
+.stepper { display: inline-flex; align-items: center; background: var(--cardBg); border: 1px solid var(--borderColor); border-radius: 8px; overflow: hidden; }
+.stepper__val { padding: 6px 12px; font-size: 9pt; color: var(--color05); min-width: 56px; }
+.stepper__btns { display: flex; flex-direction: column; border-left: 1px solid var(--borderColor); }
+.stepper__btns svg { width: 12px; height: 12px; color: var(--tertiaryText); padding: 1px 4px; }
+.dt-results { margin: 0 8px 8px; min-height: 220px; }
+
+/* Docker — tab strip + decorated tree cells (DS §7 flat rows, tree caret) */
+.toolbar--tabs { padding-top: 0; gap: 8px; }
+.tree-caret { color: var(--tertiaryText); margin-right: 8px; display: inline-block; width: 10px; }
+.tree-child { padding-left: 32px; }
+.dt-status { display: flex; align-items: center; }
+
+/* Helpers — hub grid + representative tool widget (DS §1-§4) */
+.hub { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+.hub__label { font-size: 8pt; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--tertiaryText); padding: 14px 16px 6px; }  /* DS §4 meta role, group label */
+.tool-row { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 16px; }
+.maint-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 6px 16px 8px; }
+.maint-card { margin: 0; padding: 14px; display: flex; flex-direction: column; gap: 6px; min-height: 92px; }
+.maint-card__title { font-size: 9pt; font-weight: 600; color: var(--color05); }                /* DS §4 title role */
+.maint-card__desc { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); line-height: 1.4; }  /* DS §4 meta role */
+.hosts-head, .hb-head { display: flex; align-items: center; padding: 8px 16px 4px; }
+.hosts-head .section-title, .hb-head .section-title { margin: 0; }
+.hosts-table, .hb-updates, .hb-packages { margin: 8px; min-height: 0; }
+
+/* Homebrew — updates table, packages tree (DS §2-§7) */
+.hb-scroll { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+.tree-group td { font-weight: 600; color: var(--color05); }
