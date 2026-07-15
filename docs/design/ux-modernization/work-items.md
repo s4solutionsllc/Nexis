@@ -5,8 +5,8 @@ Source: `docs/superpowers/specs/2026-07-13-ux-modernization-design.md` §5–6,
 `docs/design/ux-modernization/mockups/notes/`. These are drafts for a
 **human-driven tracker (Paperclip, issue prefix `NEX`)** — there is no
 Paperclip API, so every item below is pasted manually and given a real
-`NEX-###` number at creation time. `NEX-___` below is a placeholder, not a
-reserved number.
+`NEX-###` number at creation time. Each `### ` heading below has since been
+updated with its assigned Paperclip identifier (see SSO-13746).
 
 **Scope of this file:** Phase 1 (foundation) + Phase 2 (one item per page the
 maintainer approved on 2026-07-15). Pages the maintainer deferred get a
@@ -26,7 +26,7 @@ reimplementing DS §2/§3/§5 chrome per page. All 15 approved pages consume at
 least F1; most also consume F2 and F3. F4 is QSS-groundwork consumed
 indirectly by every page item that touches `style.qss`.
 
-### F1 — Shared elevated-card container component (Paperclip: create as NEX-___)
+### F1 — Shared elevated-card container component (Paperclip: SSO-13726)
 **Phase:** 1-Foundation
 **Blocked by:** —
 **Files:**
@@ -92,7 +92,7 @@ Tools, Helpers, Homebrew, Network Usage, Settings, Boot Analysis.
 
 ---
 
-### F2 — Shared section-header pattern (Paperclip: create as NEX-___)
+### F2 — Shared section-header pattern (Paperclip: SSO-13728)
 **Phase:** 1-Foundation
 **Blocked by:** F1 (headers sit inside/above the card this item styles)
 **Files:**
@@ -151,7 +151,7 @@ Boot Analysis ("Boot Analysis" title + uptime-card header).
 
 ---
 
-### F3 — Shared state patterns: empty / loading / status pill (Paperclip: create as NEX-___)
+### F3 — Shared state patterns: empty / loading / status pill (Paperclip: SSO-13729)
 **Phase:** 1-Foundation
 **Blocked by:** F1 (empty-state cards use the elevated-card container)
 **Files:**
@@ -214,7 +214,7 @@ consumers).
 
 ---
 
-### F4 — QSS consolidation groundwork (Paperclip: create as NEX-___)
+### F4 — QSS consolidation groundwork (Paperclip: SSO-13727)
 **Phase:** 1-Foundation
 **Blocked by:** —
 **Files:**
@@ -307,7 +307,7 @@ All 15 items below share:
 
 ---
 
-### Processes (Paperclip: create as NEX-___)
+### Processes (Paperclip: SSO-13730)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -356,7 +356,7 @@ zebra/hover); DS §5 (empty-state upgrade); notes/processes.md (approved
 
 ---
 
-### Resources (Paperclip: create as NEX-___)
+### Resources (Paperclip: SSO-13731)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -406,7 +406,7 @@ palette); DS §9 item 2 (static SVG, no animation); notes/resources.md
 
 ---
 
-### System Cleaner (Paperclip: create as NEX-___)
+### System Cleaner (Paperclip: SSO-13732)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -461,7 +461,7 @@ renders/system_cleaner_{dark,light}.png.
 
 ---
 
-### Search (Paperclip: create as NEX-___)
+### Search (Paperclip: SSO-13733)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -504,7 +504,7 @@ tabular Size); DS §5 (empty-state upgrade); notes/search.md (approved
 
 ---
 
-### System Logs (Paperclip: create as NEX-___)
+### System Logs (Paperclip: SSO-13734)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -549,7 +549,7 @@ renders/system_logs_{dark,light}.png.
 
 ---
 
-### Hardware Info (Paperclip: create as NEX-___)
+### Hardware Info (Paperclip: SSO-13735)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -588,7 +588,7 @@ color); DS §4 (key/value typography); notes/hardware_info.md (approved
 
 ---
 
-### Uninstaller (sidebar label "Applications") (Paperclip: create as NEX-___)
+### Uninstaller (sidebar label "Applications") (Paperclip: SSO-13736)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -628,7 +628,7 @@ renders/uninstaller_{dark,light}.png.
 
 ---
 
-### Services (Paperclip: create as NEX-___)
+### Services (Paperclip: SSO-13737)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -681,7 +681,7 @@ renders/services_{dark,light}.png.
 
 ---
 
-### Startup Apps (Paperclip: create as NEX-___)
+### Startup Apps (Paperclip: SSO-13738)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -732,7 +732,7 @@ typography); [GNOME-HIG] (grouped-list convention); notes/startup_apps.md
 
 ---
 
-### Disk Tools (Paperclip: create as NEX-___)
+### Disk Tools (Paperclip: SSO-13739)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -780,7 +780,7 @@ tabular Size); DS §5 (empty-state upgrade); notes/disk_tools.md (approved
 
 ---
 
-### Helpers (Paperclip: create as NEX-___)
+### Helpers (Paperclip: SSO-13740)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -832,7 +832,7 @@ renders/helpers_{dark,light}.png.
 
 ---
 
-### Homebrew (macOS only) (Paperclip: create as NEX-___)
+### Homebrew (macOS only) (Paperclip: SSO-13741)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -878,7 +878,7 @@ tabular Version, collapsed tree state); notes/homebrew.md (approved
 
 ---
 
-### Network Usage (Paperclip: create as NEX-___)
+### Network Usage (Paperclip: SSO-13742)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -928,7 +928,7 @@ hierarchy); DS §3 (page header + per-section accent-bar headers); DS §6
 
 ---
 
-### Settings (Paperclip: create as NEX-___)
+### Settings (Paperclip: SSO-13743)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
@@ -996,7 +996,7 @@ renders/settings_dark.png + renders/settings_light.png (approved targets).
 
 ---
 
-### Boot Analysis (Paperclip: create as NEX-___)
+### Boot Analysis (Paperclip: SSO-13744)
 **Phase:** 2-Page
 **Blocked by:** F1, F2, F3, F4
 **Files:**
