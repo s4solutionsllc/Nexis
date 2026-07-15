@@ -1007,6 +1007,12 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @networkColor;
 }
 
+/* SSO-13732 (System Cleaner): "success" accent token for the page header
+   bar, matching the "Estimated recoverable" @successColor readout. */
+#sectionHeaderAccent[accentToken="success"] {
+    background-color: @successColor;
+}
+
 #sectionHeaderAccent[accentToken="accent"] {
     background-color: @accentColor;
 }
@@ -1304,25 +1310,13 @@ QLabel[accessibleName="dialog-title"] {
     SYSTEM CLEANER PAGE
 ***************************/
 
-#lblCleanerTitle {
-    color: @color11;
-    font-size: 11pt;
-    font-weight: 700;
-}
+/* Page header (title/source line) now uses the shared #sectionHeaderTitle /
+   #sectionHeaderSource recipe (DS §3, NEX F2) — see buildCategoryHeader(). */
 
-#lblCleanerSubtitle {
-    font-size: 9pt;
-    color: @color06;
-    padding-bottom: 4;
-}
-
-/* - Category cards - */
-
-#cleanerCategoryCard {
-    background-color: @cardBgElevated;
-    border: 1px solid @borderColor;
-    border-radius: 8;
-}
+/* - Category cards (DS §2 elevated tile, NEX F1 shared recipe) - */
+/* Background/border/radius come from [cardRole="elevated"]
+   (style.qss "Elevated Card / Flat Card" recipe); this block only adds the
+   checked-state accent border and the card's own child-label typography. */
 
 #cleanerCategoryCard[checked="true"] {
     border: 2px solid @accentColor;
@@ -1347,8 +1341,10 @@ QLabel[accessibleName="dialog-title"] {
 
 /* - Scan progress bar - */
 
+/* DS §6 static progress recipe: track @chartGridColor, fill @accentColor,
+   radius 2, height 4 (set via setFixedHeight() in onBtnScanSystemClicked()). */
 #cleanerScanProgress {
-    background-color: @borderColor;
+    background-color: @chartGridColor;
     border: none;
     border-radius: 2;
 }
@@ -1404,13 +1400,19 @@ QLabel[accessibleName="dialog-title"] {
     color: @successColor;
 }
 
+/* Primary action, matching #btnScanSystem — deletion is confirmed by the
+   scan results the user has already reviewed, not a bare destructive action. */
 #btnCleanSelected {
     border: 0;
     border-radius: @dp6;
-    background-color: @destructiveColor;
+    background-color: @accentColor;
     color: @color07;
     font-weight: 700;
     padding: @dp6 @dp16;
+}
+
+#btnCleanSelected:hover {
+    background-color: @accentHover;
 }
 
 #btnCleanSelected:disabled {
