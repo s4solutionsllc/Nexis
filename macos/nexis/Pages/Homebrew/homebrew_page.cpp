@@ -78,27 +78,72 @@ void HomebrewPage::buildUI()
 
     auto *updLayout = new QVBoxLayout(mUpdatesSection);
     updLayout->setContentsMargins(30, 5, 30, 10);
-    updLayout->setSpacing(5);
+    updLayout->setSpacing(8);
 
-    auto *updHeader = new QHBoxLayout();
-    mLblUpdatesTitle = new QLabel(tr("Available Updates"), mUpdatesSection);
-    mLblUpdatesTitle->setObjectName("lblUpdatesTitle");
-    QFont updFont = mLblUpdatesTitle->font();
-    updFont.setPointSize(11);
-    mLblUpdatesTitle->setFont(updFont);
-    updHeader->addWidget(mLblUpdatesTitle);
-    updHeader->addStretch();
+    // DS §3 header anatomy (NEX F2 shared recipe): accent bar + [title row
+    // (title, Check Now) / source line], mirroring
+    // MetricTileBase::buildChrome() (metric_tile_base.cpp:255-307).
+    auto *updHeaderWidget = new QWidget(mUpdatesSection);
+    updHeaderWidget->setObjectName("sectionHeaderRow");
+    auto *updHeaderRoot = new QVBoxLayout(updHeaderWidget);
+    updHeaderRoot->setContentsMargins(0, 0, 0, 0);
+    updHeaderRoot->setSpacing(2);
 
-    mBtnCheckNow = new QPushButton(tr("Check Now"), mUpdatesSection);
+    auto *updHeaderRow = new QHBoxLayout();
+    updHeaderRow->setContentsMargins(0, 0, 0, 0);
+    updHeaderRow->setSpacing(8);
+
+    auto *updAccentBar = new QFrame(updHeaderWidget);
+    updAccentBar->setObjectName("sectionHeaderAccent");
+    updAccentBar->setProperty("accentToken", "success");
+    updAccentBar->setFixedWidth(3);
+    updAccentBar->setMinimumHeight(26);
+    updAccentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    updHeaderRow->addWidget(updAccentBar);
+
+    auto *updTextCol = new QVBoxLayout();
+    updTextCol->setContentsMargins(0, 0, 0, 0);
+    updTextCol->setSpacing(2);
+
+    auto *updTitleRow = new QHBoxLayout();
+    updTitleRow->setContentsMargins(0, 0, 0, 0);
+    updTitleRow->setSpacing(8);
+
+    mLblUpdatesTitle = new QLabel(tr("Available Updates"), updHeaderWidget);
+    mLblUpdatesTitle->setObjectName("sectionHeaderTitle");
+    updTitleRow->addWidget(mLblUpdatesTitle);
+    updTitleRow->addStretch();
+
+    mBtnCheckNow = new QPushButton(tr("Check Now"), updHeaderWidget);
     mBtnCheckNow->setObjectName("btnCheckNow");
     mBtnCheckNow->setCursor(Qt::PointingHandCursor);
     mBtnCheckNow->setFocusPolicy(Qt::NoFocus);
     mBtnCheckNow->setAccessibleName("primary");
     mBtnCheckNow->setFixedHeight(28);
-    updHeader->addWidget(mBtnCheckNow);
-    updLayout->addLayout(updHeader);
+    updTitleRow->addWidget(mBtnCheckNow);
 
-    mUpdatesTree = new QTreeWidget(mUpdatesSection);
+    updTextCol->addLayout(updTitleRow);
+
+    auto *lblUpdatesSource = new QLabel(tr("Outdated Homebrew packages"), updHeaderWidget);
+    lblUpdatesSource->setObjectName("sectionHeaderSource");
+    updTextCol->addWidget(lblUpdatesSource);
+
+    updHeaderRow->addLayout(updTextCol, 1);
+    updHeaderRoot->addLayout(updHeaderRow);
+
+    updLayout->addWidget(updHeaderWidget);
+
+    // DS §2 elevated container (NEX F1 shared recipe) — single
+    // container-level shadow (DS §7); the tree rows stay flat inside it.
+    auto *updContainer = new QWidget(mUpdatesSection);
+    updContainer->setObjectName("homebrewUpdatesContainer");
+    updContainer->setAttribute(Qt::WA_StyledBackground, true);
+    updContainer->setProperty("cardRole", "elevated");
+    auto *updContainerLayout = new QVBoxLayout(updContainer);
+    updContainerLayout->setContentsMargins(0, 0, 0, 0);
+    updContainerLayout->setSpacing(0);
+
+    mUpdatesTree = new QTreeWidget(updContainer);
     mUpdatesTree->setObjectName("treeWidgetUpdates");
     mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version") });
     mUpdatesTree->header()->setFixedHeight(Dpi::scale(30));
@@ -110,8 +155,14 @@ void HomebrewPage::buildUI()
     mUpdatesTree->header()->setStretchLastSection(true);
     mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    // DS §7: right-align the tabular Version column (header + cells); the
+    // header stays frozen at the top of the tree's own viewport (QTreeWidget
+    // default — no extra code needed) as the update rows scroll under it.
+    mUpdatesTree->headerItem()->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     mUpdatesTree->setMaximumHeight(200);
-    updLayout->addWidget(mUpdatesTree);
+    updContainerLayout->addWidget(mUpdatesTree);
+
+    updLayout->addWidget(updContainer, 1);
 
     pageLayout->addWidget(mUpdatesSection);
 
@@ -121,28 +172,52 @@ void HomebrewPage::buildUI()
     contentLayout->setContentsMargins(30, 5, 30, 20);
     contentLayout->setSpacing(8);
 
+    // DS §3 header anatomy (NEX F2 shared recipe): accent bar + title row
+    // (title, Search packages) — no source line in the approved capture.
+    auto *pkgHeaderWidget = new QWidget(contentWidget);
+    pkgHeaderWidget->setObjectName("sectionHeaderRow");
+    auto *pkgHeaderRow = new QHBoxLayout(pkgHeaderWidget);
+    pkgHeaderRow->setContentsMargins(0, 0, 0, 0);
+    pkgHeaderRow->setSpacing(8);
+
+    auto *pkgAccentBar = new QFrame(pkgHeaderWidget);
+    pkgAccentBar->setObjectName("sectionHeaderAccent");
+    pkgAccentBar->setProperty("accentToken", "accent");
+    pkgAccentBar->setFixedWidth(3);
+    pkgAccentBar->setMinimumHeight(26);
+    pkgAccentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    pkgHeaderRow->addWidget(pkgAccentBar);
+
     // Title row + search
     auto *titleRow = new QHBoxLayout();
-    mLblTitle = new QLabel(tr("Homebrew Packages"), contentWidget);
-    mLblTitle->setObjectName("lblAptSourceTitle");
-    QFont titleFont = mLblTitle->font();
-    titleFont.setPointSize(13);
-    titleFont.setBold(true);
-    mLblTitle->setFont(titleFont);
+    mLblTitle = new QLabel(tr("Homebrew Packages"), pkgHeaderWidget);
+    mLblTitle->setObjectName("sectionHeaderTitle");
     titleRow->addWidget(mLblTitle);
     titleRow->addStretch();
 
-    mTxtSearch = new QLineEdit(contentWidget);
+    mTxtSearch = new QLineEdit(pkgHeaderWidget);
     mTxtSearch->setObjectName("txtSearchAptSource");
     mTxtSearch->setPlaceholderText(tr("Search packages"));
     mTxtSearch->setClearButtonEnabled(true);
     mTxtSearch->setFixedWidth(220);
     titleRow->addWidget(mTxtSearch);
 
-    contentLayout->addLayout(titleRow);
+    pkgHeaderRow->addLayout(titleRow, 1);
+    contentLayout->addWidget(pkgHeaderWidget);
+
+    // DS §2 elevated container (NEX F1 shared recipe) — single
+    // container-level shadow (DS §7); the collapsible tree-group rows stay
+    // flat inside it.
+    auto *pkgContainer = new QWidget(contentWidget);
+    pkgContainer->setObjectName("homebrewPackagesContainer");
+    pkgContainer->setAttribute(Qt::WA_StyledBackground, true);
+    pkgContainer->setProperty("cardRole", "elevated");
+    auto *pkgContainerLayout = new QVBoxLayout(pkgContainer);
+    pkgContainerLayout->setContentsMargins(0, 0, 0, 0);
+    pkgContainerLayout->setSpacing(0);
 
     // Package tree
-    mTreeWidget = new QTreeWidget(contentWidget);
+    mTreeWidget = new QTreeWidget(pkgContainer);
     mTreeWidget->setObjectName("treeWidgetPackages");
     mTreeWidget->setHeaderLabels({ tr("Package") });
     mTreeWidget->header()->setFixedHeight(Dpi::scale(30));
@@ -153,7 +228,9 @@ void HomebrewPage::buildUI()
     mTreeWidget->setSelectionMode(QAbstractItemView::NoSelection);
     mTreeWidget->setIconSize(Dpi::scale(20, 20));
     mTreeWidget->setIndentation(Dpi::scale(20));
-    contentLayout->addWidget(mTreeWidget, 1);
+    pkgContainerLayout->addWidget(mTreeWidget);
+
+    contentLayout->addWidget(pkgContainer, 1);
 
     // Bottom row: install field + uninstall button
     auto *bottomRow = new QHBoxLayout();
@@ -189,6 +266,10 @@ void HomebrewPage::buildUI()
     contentLayout->addLayout(bottomRow);
 
     pageLayout->addWidget(contentWidget, 1);
+
+    // DS §2/§7: one shadow per elevated container, never per row.
+    Utilities::addDropShadow(updContainer, 90, 26);
+    Utilities::addDropShadow(pkgContainer, 90, 26);
 
     Utilities::addDropShadow({mBtnInstall, mBtnCancel, mBtnUninstall, mTxtSearch}, 40);
 }
@@ -394,6 +475,7 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
         item->setText(0, entry.source);
         item->setText(1, entry.name);
         item->setText(2, entry.version);
+        item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     }
 
     mUpdatesSection->show();
