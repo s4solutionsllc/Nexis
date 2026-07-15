@@ -515,6 +515,8 @@ void NetworkUsagePage::refreshCapBar()
     // (DS §2) — it stays visible with an empty track when no cap is set,
     // matching the approved capture, rather than disappearing.
     QSettings *sv = AppManager::ins()->getStyleValues();
+    if (!sv)
+        return;
     const QString track = sv->value("@chartGridColor", "#e0e0e0").toString();
 
     if (capGB <= 0) {
