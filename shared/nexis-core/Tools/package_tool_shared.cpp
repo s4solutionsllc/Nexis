@@ -15,25 +15,24 @@
 // these to capture (cmd, args) instead of actually running anything.
 bool PackageTool::runSudoCommand(const QString &cmd, const QStringList &args)
 {
-    try {
-        CommandUtil::sudoExec(cmd, args);
-        return true;
-    } catch (const QString &ex) {
-        qCritical() << ex;
+    ExecResult result = CommandUtil::sudoExecWithStatus(cmd, args);
+    if (!result.ok()) {
+        qCritical() << result.error;
         return false;
     }
+    return true;
 }
 
 QString PackageTool::runCommand(const QString &cmd,
                                 const QStringList &args,
                                 int timeoutMs)
 {
-    try {
-        return CommandUtil::exec(cmd, args, {}, timeoutMs);
-    } catch (const QString &ex) {
-        qCritical() << ex;
+    ExecResult result = CommandUtil::execWithStatus(cmd, args, timeoutMs);
+    if (!result.ok()) {
+        qCritical() << result.error;
         return QString();
     }
+    return result.output;
 }
 
 /********************
