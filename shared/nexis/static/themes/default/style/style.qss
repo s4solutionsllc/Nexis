@@ -760,6 +760,44 @@ QLabel[accessibleName="dialog-title"] {
     border-radius: 3;
 }
 
+/* - Elevated Card / Flat Card (shared recipe, DS §2, NEX F1) - */
+/*
+ * Generalizes the Dashboard tile chrome (dashboard_tile_wrapper.cpp
+ * applyDepthTreatment(), reference-only) into a reusable QSS pattern so
+ * page items style through the global stylesheet instead of one-off
+ * per-widget setStyleSheet() calls (DS §9 item 1).
+ *
+ * Usage for a consuming page item:
+ *   - Give the container widget an object name of "<page>Container"
+ *     (elevated) or "<page>Card" (flat) — identifies the widget for any
+ *     page-specific child selectors; it does not itself style the card.
+ *   - setAttribute(Qt::WA_StyledBackground, true) on that widget so QSS
+ *     paints its background/border (Qt does not style plain QWidgets by
+ *     default).
+ *   - setProperty("cardRole", "elevated") or setProperty("cardRole",
+ *     "flat") on the same widget to opt into this recipe via the property
+ *     selectors below — mirrors the existing [status="..."] convention
+ *     (style.qss "Status property selectors").
+ *   - Elevated containers only: call Utilities::addDropShadow(widget, 90,
+ *     26) once per container instance (never per row/child — DS §7), and
+ *     give the container an 8px outer margin (e.g.
+ *     layout->setContentsMargins(8, 8, 8, 8) on its parent layout) for
+ *     shadow clearance.
+ *   - Flat cards nest inside an elevated container and carry no shadow.
+ */
+
+[cardRole="elevated"] {
+    background-color: @cardBgElevated;
+    border-radius: 12;
+    border: 1px solid @borderColor;
+}
+
+[cardRole="flat"] {
+    background-color: @cardBg;
+    border-radius: 12;
+    border: 1px solid @borderColor;
+}
+
 /* - Metric Tile - */
 
 #metricTile, #gaugeTile, #ringTile, #hybridTile, #speedometerTile, #vuMeterTile, #healthScoreTile {
