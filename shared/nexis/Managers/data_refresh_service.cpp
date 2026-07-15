@@ -259,6 +259,11 @@ void DataRefreshService::triggerDiskHealthCheck()
     onSlowTick();
 }
 
+void DataRefreshService::triggerProcessRefresh()
+{
+    onProcessTick();
+}
+
 void DataRefreshService::triggerUpdateCheck()
 {
     onUpdateTick();

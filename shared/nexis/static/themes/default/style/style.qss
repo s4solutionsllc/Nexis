@@ -1815,10 +1815,21 @@ QLabel[accessibleName="dialog-title"] {
     PROCESSES PAGE
 ***********************/
 
-#lblProcessTitle {
-    color: @color11;
-    padding: 10 0;
-    font-size: 11pt;
+/* NEX Phase-2 "Processes" page item (SSO-13730): container-level shadow
+   lives on #processesContainer ([cardRole="elevated"], NEX F1); the table's
+   header reads as the container surface (@cardBgElevated) while rows stay
+   flat with a zebra/hover recipe (DS §7). */
+#tableProcess {
+    alternate-background-color: @cardBgElevated;
+}
+
+#tableProcess::item:hover {
+    background-color: @accentBgTint;
+}
+
+#tableProcess QHeaderView::section {
+    background-color: @cardBgElevated;
+    border-bottom: 1px solid @borderColor;
 }
 
 #checkAllProcesses {
