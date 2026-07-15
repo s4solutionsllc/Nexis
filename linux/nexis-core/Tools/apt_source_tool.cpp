@@ -63,7 +63,9 @@ void AptSourceToolLinux::removeRepository(const RepositoryPtr &repo)
 void AptSourceToolLinux::removeAPTSource(const APTSourcePtr aptSource)
 {
     if (isAptRpm() && CommandUtil::isExecutable("apt-repo")) {
-        CommandUtil::sudoExec("apt-repo", {"rm", aptSource->source});
+        ExecResult result = CommandUtil::sudoExecWithStatus("apt-repo", {"rm", aptSource->source});
+        if (!result.ok())
+            qCritical() << "apt-repo rm failed:" << result.error;
     } else {
         changeSource(aptSource, nullptr);
     }
@@ -101,7 +103,9 @@ void AptSourceToolLinux::addRepositoryDeb822(const QString &fileStem,
     if (stanza.trimmed().isEmpty())
         return;
 
-    CommandUtil::sudoExec("tee", { filePath }, stanza.toUtf8());
+    ExecResult result = CommandUtil::sudoExecWithStatus("tee", { filePath }, stanza.toUtf8());
+    if (!result.ok())
+        qCritical() << "Failed to write deb822 source" << filePath << ":" << result.error;
 }
 
 void AptSourceToolLinux::addRepository(const QString &repository, const bool isSource)
@@ -115,7 +119,9 @@ void AptSourceToolLinux::addRepository(const QString &repository, const bool isS
             source.replace(QRegularExpression("^" + binaryType() + "\\s"),
                            sourceType() + " ");
         }
-        CommandUtil::sudoExec("apt-repo", {"add", source});
+        ExecResult result = CommandUtil::sudoExecWithStatus("apt-repo", {"add", source});
+        if (!result.ok())
+            qCritical() << "apt-repo add failed:" << result.error;
         return;
     }
 
@@ -143,7 +149,9 @@ void AptSourceToolLinux::addRepository(const QString &repository, const bool isS
     QStringList args = { "-y", repository };
     if (isSource)
         args << "-s";
-    CommandUtil::sudoExec("add-apt-repository", args);
+    ExecResult result = CommandUtil::sudoExecWithStatus("add-apt-repository", args);
+    if (!result.ok())
+        qCritical() << "add-apt-repository failed:" << result.error;
 }
 
 void AptSourceToolLinux::changeSource(const APTSourcePtr aptSource, const APTSourcePtr newSource)
@@ -183,10 +191,14 @@ void AptSourceToolLinux::changeSource(const APTSourcePtr aptSource, const APTSou
         QByteArray data = updatedContent.join('\n').append('\n').toUtf8();
 
         if (data.trimmed().isEmpty()) {
-            CommandUtil::sudoExec("rm", args);
+            ExecResult result = CommandUtil::sudoExecWithStatus("rm", args);
+            if (!result.ok())
+                qCritical() << "Failed to remove" << aptSource->filePath << ":" << result.error;
             return;
         }
-        CommandUtil::sudoExec("tee", args, data);
+        ExecResult result = CommandUtil::sudoExecWithStatus("tee", args, data);
+        if (!result.ok())
+            qCritical() << "Failed to write" << aptSource->filePath << ":" << result.error;
 
     } else if (aptSource->filePath.endsWith(".list")) {
         // Legacy .list format: line-based rewriting
@@ -219,10 +231,14 @@ void AptSourceToolLinux::changeSource(const APTSourcePtr aptSource, const APTSou
             QByteArray data = sourceFileContent.join('\n').append('\n').toUtf8();
 
             if (data.trimmed().isEmpty()) {
-                CommandUtil::sudoExec("rm", args);
+                ExecResult result = CommandUtil::sudoExecWithStatus("rm", args);
+                if (!result.ok())
+                    qCritical() << "Failed to remove" << aptSource->filePath << ":" << result.error;
                 return;
             }
-            CommandUtil::sudoExec("tee", args, data);
+            ExecResult result = CommandUtil::sudoExecWithStatus("tee", args, data);
+            if (!result.ok())
+                qCritical() << "Failed to write" << aptSource->filePath << ":" << result.error;
         }
     }
 }

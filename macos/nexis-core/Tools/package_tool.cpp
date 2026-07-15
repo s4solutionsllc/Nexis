@@ -94,36 +94,37 @@ QList<Package> PackageToolMacOS::getHomebrewPackages()
     if (brew.isEmpty())
         return packages;
 
-    try {
-        QString jsonOutput = CommandUtil::exec(brew, {"info", "--json=v2", "--installed"}, {}, 120000).trimmed();
-        QJsonDocument doc = QJsonDocument::fromJson(jsonOutput.toUtf8());
+    ExecResult result = CommandUtil::execWithStatus(brew, {"info", "--json=v2", "--installed"}, 120000);
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return packages;
+    }
 
-        if (doc.isNull()) {
-            qCritical() << "Failed to parse brew info JSON";
-            return packages;
-        }
+    QJsonDocument doc = QJsonDocument::fromJson(result.output.trimmed().toUtf8());
 
-        for (const BrewEntry &e : parseBrewJson(doc)) {
-            Package pkg;
-            pkg.name    = e.identifier;
-            pkg.section = e.isCask ? "cask" : "formula";
+    if (doc.isNull()) {
+        qCritical() << "Failed to parse brew info JSON";
+        return packages;
+    }
 
-            if (e.isCask) {
-                pkg.description = e.displayName;
-                if (!e.description.isEmpty()) {
-                    if (!pkg.description.isEmpty())
-                        pkg.description += QString::fromUtf8(" \u2014 ") + e.description;
-                    else
-                        pkg.description = e.description;
-                }
-            } else {
-                pkg.description = e.description;
+    for (const BrewEntry &e : parseBrewJson(doc)) {
+        Package pkg;
+        pkg.name    = e.identifier;
+        pkg.section = e.isCask ? "cask" : "formula";
+
+        if (e.isCask) {
+            pkg.description = e.displayName;
+            if (!e.description.isEmpty()) {
+                if (!pkg.description.isEmpty())
+                    pkg.description += QString::fromUtf8(" \u2014 ") + e.description;
+                else
+                    pkg.description = e.description;
             }
-
-            packages.append(pkg);
+        } else {
+            pkg.description = e.description;
         }
-    } catch (const QString &ex) {
-        qCritical() << ex;
+
+        packages.append(pkg);
     }
 
     return packages;
@@ -149,12 +150,14 @@ QStringList PackageToolMacOS::homebrewDryRunRemove(const QStringList &packages)
     QStringList wouldRemove;
     for (const QString &pkg : packages) {
         wouldRemove << pkg;
-        try {
-            QString deps = CommandUtil::exec(brew, {"uses", "--installed", pkg}).trimmed();
-            if (!deps.isEmpty()) {
-                wouldRemove << deps.split('\n');
-            }
-        } catch (...) { qWarning() << "Failed to check brew dependencies for" << pkg; }
+        ExecResult result = CommandUtil::execWithStatus(brew, {"uses", "--installed", pkg});
+        if (!result.ok()) {
+            qWarning() << "Failed to check brew dependencies for" << pkg << ":" << result.error;
+            continue;
+        }
+        QString deps = result.output.trimmed();
+        if (!deps.isEmpty())
+            wouldRemove << deps.split('\n');
     }
     return wouldRemove;
 }
@@ -351,13 +354,12 @@ QList<OrphanPackage> PackageToolMacOS::getOrphanPackages()
     if (brew.isEmpty())
         return {};
 
-    try {
-        QString output = CommandUtil::exec(brew, {"autoremove", "--dry-run"}, {}, 60000).trimmed();
-        return PackageTool::parseBrewAutoremoveDryRun(output);
-    } catch (const QString &ex) {
-        qCritical() << "Failed to get brew orphans:" << ex;
+    ExecResult result = CommandUtil::execWithStatus(brew, {"autoremove", "--dry-run"}, 60000);
+    if (!result.ok()) {
+        qCritical() << "Failed to get brew orphans:" << result.error;
+        return {};
     }
-    return {};
+    return PackageTool::parseBrewAutoremoveDryRun(result.output.trimmed());
 }
 
 bool PackageToolMacOS::removeOrphanPackages()

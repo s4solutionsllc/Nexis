@@ -1,4 +1,5 @@
 #include "service_tool_linux.h"
+#include "Utils/command_util.h"
 
 #include <QDebug>
 #include <QRegularExpression>
@@ -10,31 +11,31 @@ QList<Service> ServiceToolLinux::getServices()
 {
     QList<Service> services = {};
 
-    try {
+    QStringList args = { "list-unit-files", "-t", "service", "-a", "--state=enabled,disabled" };
 
-        QStringList args = { "list-unit-files", "-t", "service", "-a", "--state=enabled,disabled" };
+    ExecResult result = CommandUtil::execWithStatus("systemctl", args);
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return services;
+    }
 
-        QStringList lines = CommandUtil::exec("systemctl", args)
-                .split(QChar('\n'))
-                .filter(QRegularExpression("[^@].service"));
+    QStringList lines = result.output
+            .split(QChar('\n'))
+            .filter(QRegularExpression("[^@].service"));
 
-        QRegularExpression sep("\\s+");
-        services.reserve(lines.size());
-        for (const QString &line : lines)
-        {
-            // e.g apache2.service          [enabled|disabled]
-            QStringList s = line.trimmed().split(sep);
+    QRegularExpression sep("\\s+");
+    services.reserve(lines.size());
+    for (const QString &line : lines)
+    {
+        // e.g apache2.service          [enabled|disabled]
+        QStringList s = line.trimmed().split(sep);
 
-            QString name = s.first().trimmed().replace(".service", "");
-            QString description = getServiceDescription(s.first().trimmed());
-            bool status = ! s.last().trimmed().compare("enabled");
-            bool active = serviceIsActive(s.first().trimmed());
+        QString name = s.first().trimmed().replace(".service", "");
+        QString description = getServiceDescription(s.first().trimmed());
+        bool status = ! s.last().trimmed().compare("enabled");
+        bool active = serviceIsActive(s.first().trimmed());
 
-            services.push_back({name, description, status, active});
-        }
-
-    } catch(QString &ex) {
-        qCritical() << ex;
+        services.push_back({name, description, status, active});
     }
 
     return services;
@@ -46,18 +47,20 @@ QString ServiceToolLinux::getServiceDescription(const QString &serviceName)
 
     QString result("Unknown");
 
-    try {
-        QStringList content = CommandUtil::exec("systemctl", args)
-                .split(QChar('\n'))
-                .filter(QRegularExpression("^Description"));
+    ExecResult execResult = CommandUtil::execWithStatus("systemctl", args);
+    if (!execResult.ok()) {
+        qCritical() << execResult.error;
+        return result;
+    }
 
-        if (content.length() > 0) {
-            QStringList desc = content.first().split(QChar('='));
-            if (desc.length() > 0)
-                result = desc.last();
-        }
-    } catch (QString &ex) {
-        qCritical() << ex;
+    QStringList content = execResult.output
+            .split(QChar('\n'))
+            .filter(QRegularExpression("^Description"));
+
+    if (content.length() > 0) {
+        QStringList desc = content.first().split(QChar('='));
+        if (desc.length() > 0)
+            result = desc.last();
     }
 
     return result;
@@ -68,62 +71,40 @@ bool ServiceToolLinux::serviceIsActive(const QString &serviceName)
 {
     QStringList args = { "is-active", serviceName };
 
-    QString result("");
-
-    try {
-        result = CommandUtil::exec("systemctl", args);
-    } catch(QString &ex) {
-        qCritical() << ex;
-    }
-
-    return ! result.trimmed().compare("active");
+    ExecResult result = CommandUtil::execWithStatus("systemctl", args);
+    return ! result.output.trimmed().compare("active");
 }
 
 bool ServiceToolLinux::serviceIsEnabled(const QString &serviceName)
 {
     QStringList args = { "is-enabled", serviceName };
 
-    QString result("");
-
-    try {
-        result = CommandUtil::exec("systemctl", args);
-    } catch(QString &ex) {
-        qCritical() << ex;
-    }
-
-    return ! result.trimmed().compare("enabled");
+    ExecResult result = CommandUtil::execWithStatus("systemctl", args);
+    return ! result.output.trimmed().compare("enabled");
 }
 
 bool ServiceToolLinux::changeServiceStatus(const QString &sname, bool status)
 {
-    try {
+    QStringList args = { (status ? "enable" : "disable") , sname };
 
-        QStringList args = { (status ? "enable" : "disable") , sname };
-
-        CommandUtil::sudoExec("systemctl", args);
-
-        return true;
-
-    } catch(QString &ex) {
-        qCritical() << ex;
+    ExecResult result = CommandUtil::sudoExecWithStatus("systemctl", args);
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 bool ServiceToolLinux::changeServiceActive(const QString &sname, bool status)
 {
-    try {
+    QStringList args = { (status ? "start" : "stop") , sname };
 
-        QStringList args = { (status ? "start" : "stop") , sname };
-
-        CommandUtil::sudoExec("systemctl", args);
-
-        return true;
-
-    } catch(QString &ex) {
-        qCritical() << ex;
+    ExecResult result = CommandUtil::sudoExecWithStatus("systemctl", args);
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return false;
     }
 
-    return false;
+    return true;
 }

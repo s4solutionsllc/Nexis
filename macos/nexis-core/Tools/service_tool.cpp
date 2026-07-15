@@ -1,8 +1,10 @@
 #include "service_tool_macos.h"
+#include "Utils/command_util.h"
 
 #include <QDebug>
 #include <QRegularExpression>
 #include <QDir>
+#include <QFile>
 
 // Service constructor is in shared/nexis-core/Tools/service_tool_shared.cpp
 
@@ -16,36 +18,37 @@ QList<Service> ServiceToolMacOS::getServices()
 {
     QList<Service> services = {};
 
-    try {
-        // Use launchctl list to get running services
-        QStringList lines = CommandUtil::exec("launchctl", {"list"})
-                .split(QChar('\n'));
+    // Use launchctl list to get running services
+    ExecResult result = CommandUtil::execWithStatus("launchctl", {"list"});
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return services;
+    }
 
-        if (!lines.isEmpty())
-            lines.removeFirst(); // Remove header: PID Status Label
+    QStringList lines = result.output.split(QChar('\n'));
 
-        QRegularExpression sep("\\s+");
-        for (const QString &line : lines) {
-            QStringList parts = line.trimmed().split(sep);
-            if (parts.size() < 3) continue;
+    if (!lines.isEmpty())
+        lines.removeFirst(); // Remove header: PID Status Label
 
-            QString pid = parts.at(0);
-            QString label = parts.at(2);
+    QRegularExpression sep("\\s+");
+    for (const QString &line : lines) {
+        QStringList parts = line.trimmed().split(sep);
+        if (parts.size() < 3) continue;
 
-            // Skip Apple internal services
-            if (label.startsWith("com.apple.") || label.startsWith("["))
-                continue;
+        QString pid = parts.at(0);
+        QString label = parts.at(2);
 
-            bool active = (pid != "-" && pid != "0");
-            bool enabled = true; // If it shows in launchctl list, it's loaded
+        // Skip Apple internal services
+        if (label.startsWith("com.apple.") || label.startsWith("["))
+            continue;
 
-            // Try to get description from the plist Label
-            QString description = label;
+        bool active = (pid != "-" && pid != "0");
+        bool enabled = true; // If it shows in launchctl list, it's loaded
 
-            services.push_back({label, description, enabled, active});
-        }
-    } catch(QString &ex) {
-        qCritical() << ex;
+        // Try to get description from the plist Label
+        QString description = label;
+
+        services.push_back({label, description, enabled, active});
     }
 
     return services;
@@ -60,12 +63,11 @@ QString ServiceToolMacOS::getServiceDescription(const QString &serviceName)
 
 bool ServiceToolMacOS::serviceIsActive(const QString &serviceName)
 {
-    try {
-        QString result = CommandUtil::exec("launchctl", {"list", serviceName});
-        return !result.isEmpty();
-    } catch(...) {
-        return false;
-    }
+    // launchctl list <label> exits non-zero when the service isn't loaded —
+    // that's a normal "not active" outcome, not an error, so branch on the
+    // captured output the same way the pre-migration exec() call did.
+    ExecResult result = CommandUtil::execWithStatus("launchctl", {"list", serviceName});
+    return !result.output.isEmpty();
 }
 
 bool ServiceToolMacOS::serviceIsEnabled(const QString &serviceName)
@@ -76,43 +78,37 @@ bool ServiceToolMacOS::serviceIsEnabled(const QString &serviceName)
 
 bool ServiceToolMacOS::changeServiceStatus(const QString &sname, bool status)
 {
-    try {
-        // Find the plist file for this service
-        QStringList searchDirs = {
-            "/Library/LaunchDaemons",
-            "/Library/LaunchAgents",
-            QDir::homePath() + "/Library/LaunchAgents"
-        };
+    // Find the plist file for this service
+    QStringList searchDirs = {
+        "/Library/LaunchDaemons",
+        "/Library/LaunchAgents",
+        QDir::homePath() + "/Library/LaunchAgents"
+    };
 
-        for (const QString &dir : searchDirs) {
-            QString plistPath = QString("%1/%2.plist").arg(dir, sname);
-            if (QFile::exists(plistPath)) {
-                if (status) {
-                    CommandUtil::sudoExec("launchctl", {"load", "-w", plistPath});
-                } else {
-                    CommandUtil::sudoExec("launchctl", {"unload", "-w", plistPath});
-                }
-                return true;
+    for (const QString &dir : searchDirs) {
+        QString plistPath = QString("%1/%2.plist").arg(dir, sname);
+        if (QFile::exists(plistPath)) {
+            ExecResult result = status
+                ? CommandUtil::sudoExecWithStatus("launchctl", {"load", "-w", plistPath})
+                : CommandUtil::sudoExecWithStatus("launchctl", {"unload", "-w", plistPath});
+            if (!result.ok()) {
+                qCritical() << result.error;
+                return false;
             }
+            return true;
         }
-    } catch(QString &ex) {
-        qCritical() << ex;
     }
     return false;
 }
 
 bool ServiceToolMacOS::changeServiceActive(const QString &sname, bool status)
 {
-    try {
-        if (status) {
-            // Start: kickstart the service
-            CommandUtil::sudoExec("launchctl", {"start", sname});
-        } else {
-            CommandUtil::sudoExec("launchctl", {"stop", sname});
-        }
-        return true;
-    } catch(QString &ex) {
-        qCritical() << ex;
+    ExecResult result = status
+        ? CommandUtil::sudoExecWithStatus("launchctl", {"start", sname})
+        : CommandUtil::sudoExecWithStatus("launchctl", {"stop", sname});
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return false;
     }
-    return false;
+    return true;
 }
