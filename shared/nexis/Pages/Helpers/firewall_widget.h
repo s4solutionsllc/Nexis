@@ -7,6 +7,7 @@ class QFrame;
 class QLabel;
 class QPushButton;
 class QToolButton;
+struct ExecResult;
 
 struct FirewallStatus {
     bool    available    = false;
@@ -35,17 +36,24 @@ public:
     static FirewallStatus parseUfwOutput(const QString &output);
     static FirewallStatus parseFirewalldOutput(const QString &output);
 
+    // SSO-3469: formats a sudoExecWithStatus() failure for display. Empty
+    // string means the command succeeded (ExecResult::ok()). Exposed for
+    // testing without shelling out to a real privileged command.
+    static QString describeExecFailure(const ExecResult &r);
+
 signals:
     void statusFetched(FirewallStatus status);
+    void toggleFailed(QString error);
 
 private slots:
     void onStatusFetched(FirewallStatus status);
+    void onToggleFailed(const QString &error);
     void onToggleClicked();
     void refreshThemeColors();
 
 private:
     FirewallStatus fetchStatus();
-    void toggleFirewall(bool enable);
+    QString toggleFirewall(bool enable);
     void buildUI();
 
     QLabel      *mLblTitle        = nullptr;

@@ -46,11 +46,11 @@ QList<WolHost> discoverHosts()
         hosts << h;
     }
 #else
-    try {
-        const QString out = CommandUtil::exec(QStringLiteral("arp"), {QStringLiteral("-a")});
+    ExecResult r = CommandUtil::execWithStatus(QStringLiteral("arp"), {QStringLiteral("-a")});
+    if (r.ok()) {
         static const QRegularExpression re(
             QStringLiteral(R"(\((\d+\.\d+\.\d+\.\d+)\) at ([0-9a-fA-F:]{17}))"));
-        QRegularExpressionMatchIterator it = re.globalMatch(out);
+        QRegularExpressionMatchIterator it = re.globalMatch(r.output);
         while (it.hasNext()) {
             QRegularExpressionMatch m = it.next();
             WolHost h;
@@ -58,7 +58,7 @@ QList<WolHost> discoverHosts()
             h.mac = m.captured(2).toLower();
             hosts << h;
         }
-    } catch (...) {}
+    }
 #endif
 
     return hosts;

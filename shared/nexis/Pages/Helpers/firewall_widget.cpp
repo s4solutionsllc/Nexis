@@ -86,12 +86,12 @@ FirewallStatus FirewallWidget::fetchStatus()
 #else
     if (CommandUtil::isExecutable("ufw")) {
         ExecResult r = CommandUtil::execWithStatus("ufw", {"status"});
-        if (r.exitCode == 0 || !r.output.isEmpty())
+        if (r.ok() || !r.output.isEmpty())
             return parseUfwOutput(r.output);
     }
     if (CommandUtil::isExecutable("firewall-cmd")) {
         ExecResult r = CommandUtil::execWithStatus("firewall-cmd", {"--state"});
-        if (r.exitCode == 0 || !r.output.isEmpty())
+        if (r.ok() || !r.output.isEmpty())
             return parseFirewalldOutput(r.output);
     }
     FirewallStatus s;
@@ -100,18 +100,33 @@ FirewallStatus FirewallWidget::fetchStatus()
 #endif
 }
 
-void FirewallWidget::toggleFirewall(bool enable)
+QString FirewallWidget::describeExecFailure(const ExecResult &r)
+{
+    if (r.ok())
+        return QString();
+    return r.error.isEmpty() ? tr("Command failed (exit code %1).").arg(r.exitCode)
+                              : r.error;
+}
+
+// Returns an empty string on success, or a message describing the failure.
+// ExecResult::ok() on the privileged call is authoritative — no sysfs/status
+// re-read needed to confirm the write landed (SSO-3469 / SSO-3367).
+QString FirewallWidget::toggleFirewall(bool enable)
 {
 #ifdef Q_OS_MACOS
-    CommandUtil::sudoExec(kSocketFilterFw,
+    ExecResult r = CommandUtil::sudoExecWithStatus(kSocketFilterFw,
                           {"--setglobalstate", enable ? "on" : "off"});
+    return describeExecFailure(r);
 #else
     if (mCurrentStatus.backend == "ufw") {
-        CommandUtil::sudoExec("ufw", {enable ? "--force enable" : "disable"});
+        ExecResult r = CommandUtil::sudoExecWithStatus("ufw", {enable ? "--force enable" : "disable"});
+        return describeExecFailure(r);
     } else if (mCurrentStatus.backend == "firewalld") {
-        CommandUtil::sudoExec("systemctl",
+        ExecResult r = CommandUtil::sudoExecWithStatus("systemctl",
                               {enable ? "start" : "stop", "firewalld"});
+        return describeExecFailure(r);
     }
+    return QString();
 #endif
 }
 
@@ -128,6 +143,8 @@ FirewallWidget::FirewallWidget(QWidget *parent)
             this, &FirewallWidget::refreshThemeColors);
     connect(this, &FirewallWidget::statusFetched,
             this, &FirewallWidget::onStatusFetched);
+    connect(this, &FirewallWidget::toggleFailed,
+            this, &FirewallWidget::onToggleFailed);
 }
 
 void FirewallWidget::buildUI()
@@ -338,10 +355,18 @@ void FirewallWidget::onToggleClicked()
     mLblLoading->setText(willEnable ? tr("Enabling firewall...") : tr("Disabling firewall..."));
 
     QThreadPool::globalInstance()->start([this, willEnable]() {
-        toggleFirewall(willEnable);
+        const QString err = toggleFirewall(willEnable);
+        if (!err.isEmpty())
+            emit toggleFailed(err);
         FirewallStatus s = fetchStatus();
         emit statusFetched(s);
     });
+}
+
+void FirewallWidget::onToggleFailed(const QString &error)
+{
+    QMessageBox::warning(this, tr("Firewall"),
+        tr("Could not update firewall settings: %1").arg(error));
 }
 
 // ---------------------------------------------------------------------------

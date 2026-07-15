@@ -94,19 +94,19 @@ QString NetworkDiagWidget::discoverGateway()
 {
 #ifdef Q_OS_MACOS
     ExecResult r = CommandUtil::execWithStatus("route", {"-n", "get", "default"}, 5000);
-    if (r.exitCode == 0)
+    if (r.ok())
         return parseGatewayFromRoute(r.output);
 #else
     if (CommandUtil::isExecutable("ip")) {
         ExecResult r = CommandUtil::execWithStatus("ip", {"route", "show", "default"}, 5000);
-        if (r.exitCode == 0) {
+        if (r.ok()) {
             QString gw = parseGatewayFromIpRoute(r.output);
             if (!gw.isEmpty())
                 return gw;
         }
     }
     ExecResult r = CommandUtil::execWithStatus("route", {"-n"}, 5000);
-    if (r.exitCode == 0) {
+    if (r.ok()) {
         static const QRegularExpression re(R"(^0\.0\.0\.0\s+([\d.]+))", QRegularExpression::MultilineOption);
         QRegularExpressionMatch m = re.match(r.output);
         if (m.hasMatch())
@@ -127,7 +127,7 @@ DiagCheck NetworkDiagWidget::pingHost(const QString &label, const QString &host)
     ExecResult r = CommandUtil::execWithStatus("ping", {"-c", "1", "-W", "3", host}, 5000);
 #endif
 
-    if (r.exitCode == 0) {
+    if (r.ok()) {
         check.passed = true;
         check.latencyMs = parsePingLatency(r.output);
     } else {
@@ -141,19 +141,19 @@ QStringList NetworkDiagWidget::discoverDnsServers()
 {
 #ifdef Q_OS_MACOS
     ExecResult r = CommandUtil::execWithStatus("scutil", {"--dns"}, 5000);
-    if (r.exitCode == 0)
+    if (r.ok())
         return parseDnsFromScutilDns(r.output);
 #else
     if (CommandUtil::isExecutable("resolvectl")) {
         ExecResult r = CommandUtil::execWithStatus("resolvectl", {"status"}, 5000);
-        if (r.exitCode == 0) {
+        if (r.ok()) {
             QStringList servers = parseDnsFromResolvectl(r.output);
             if (!servers.isEmpty())
                 return servers;
         }
     }
     ExecResult r = CommandUtil::execWithStatus("cat", {"/etc/resolv.conf"}, 5000);
-    if (r.exitCode == 0)
+    if (r.ok())
         return parseDnsFromResolvConf(r.output);
 #endif
     return {};
