@@ -563,9 +563,9 @@ Changes apply immediately via `gsettings set`. Error feedback with inline messag
 
 Filterable, searchable table of recent system logs for quick triage. Programmatic layout (no `.ui` file).
 
-**UI layout:**
-- **Filter toolbar** — Severity dropdown (All / Error+ / Warning+ / Info+), search field, refresh button
-- **Log table** — `QTableView` with columns: Timestamp, Severity, Unit/Subsystem, Message
+**UI layout (UX modernization, NEX F1/F2/F3 consumer):**
+- **Filter toolbar** — `#sectionHeaderRow` (DS §3, chrome-only spacing — no title in this page): Severity dropdown (All / Error+ / Warning+ / Info+), search field, 24×24 autoRaise refresh button
+- **Log table** — `QTableView` (`#logTableView`) inside one DS §2 elevated container (`#logsContainer`, `[cardRole="elevated"]`, single drop shadow); columns: Timestamp, Severity, Unit/Subsystem, Message. Flat rows on `@cardBg` with `@cardBgElevated` zebra striping and `@accentBgTint` hover (DS §7); empty Unit cells render an em dash
 - **Status bar** — Entry count and time range
 
 **Platform backends** via `LogProvider` abstraction:
@@ -573,7 +573,7 @@ Filterable, searchable table of recent system logs for quick triage. Programmati
 - **macOS:** `log show --style ndjson --last 5m` (stream-parsed; child killed as soon as the entry cap is reached). `--info` / `--debug` are appended only when the active severity filter would surface those levels.
 
 **Features:**
-- Color-coded severity cells (red for Error+, yellow for Warning, theme-token-resolved colors)
+- Severity renders as a `SeverityPillDelegate`-painted status pill (DS §5) on the `@chartGridColor` track — NOTICE → `@infoColor`, INFO/DEBUG → `@tertiaryText`, WARN → `@warningColor`, ERR-and-below → `@destructiveColor` — resolved live from the theme at paint time, independent of the global `[status="…"]` selectors
 - Text search across all columns via `QSortFilterProxyModel`
 - Severity filtering re-populates from cached entries
 - Manual refresh only (no auto-polling — logs are static history)
@@ -891,7 +891,7 @@ The Dashboard tile chrome (elevated surface + drop shadow, see `DashboardTileWra
 Three more shared `style.qss` recipes for the UX-modernization pass, nesting inside the F1 elevated/flat card:
 - **Empty state:** icon (`#emptyStateIcon`, `@tertiaryText`) + explanation (`#emptyStateText`, `@tertiaryText`) + a next-action button that reuses the global `QPushButton`/`QPushButton[accessibleName="primary"]` chrome — no new button selector. The container selector group (`#processesEmptyState`, `#searchEmptyState`, `#diskToolsEmptyState`, `#bootAnalysisEmptyState`) reserves the anticipated Phase-2 consumer IDs (Processes, Search, Disk Tools, Boot Analysis), to be extended if a page item lands under a different `objectName`. Search (NEX-13733, `#searchEmptyState`) is the first live consumer: search icon + "No results yet" + a hint pointing at the query field / Browse…, shown before a search runs or when a search returns no results.
 - **Loading skeleton:** `[loadingState="skeleton"]` (fill `@chartGridColor`, 4px radius), a static placeholder with explicitly no animation or `QTimer`-driven repaint (DS §9 item 2) — set/cleared via `setProperty("loadingState", "skeleton")` + `unpolish()`/`polish()`, mirroring the `[cardRole]` dynamic-property convention. No page consumes this yet.
-- **Status pills:** confirmed the existing `[status="…"]` selectors (`success`/`warning`/`error`/`info`/`dimmed`/`neutral`) and the `#metricTileTrend` pill track already cover every color a consuming page needs — Services and System Logs reuse both as-is, no new per-page color selectors. One open item flagged in `style.qss` for whoever implements System Logs: `[status="info"]` currently resolves to `@color05` (primary text), while the System Logs prototype notes describe NOTICE severity as `@infoColor` (blue) — `[status="info"]` is also live on the Dashboard maintenance wizard's step icon, so reconciling the two is left to that page item rather than changed here. The Services page (NEX-13737) is the first live consumer of the pill track (`#ServiceItem #checkServiceRunning`, `checked`/`!checked` swapping `@successColor`/`@tertiaryText` text over a fixed `@chartGridColor` background), replacing its previous solid-green/bordered-grey chip.
+- **Status pills:** confirmed the existing `[status="…"]` selectors (`success`/`warning`/`error`/`info`/`dimmed`/`neutral`) and the `#metricTileTrend` pill track already cover every color a consuming page needs — Services and System Logs reuse both as-is, no new per-page color selectors. The Services page (NEX-13737) is the first live consumer of the pill track (`#ServiceItem #checkServiceRunning`, `checked`/`!checked` swapping `@successColor`/`@tertiaryText` text over a fixed `@chartGridColor` background), replacing its previous solid-green/bordered-grey chip. The open item flagged here for System Logs (`[status="info"]` resolves to `@color05`, not the `@infoColor` blue its prototype notes call for NOTICE, and is also live on the Dashboard maintenance wizard's step icon) was resolved by that page item without touching the shared selector: `SeverityPillDelegate` paints its own pill and reads `@infoColor`/`@tertiaryText`/`@warningColor`/`@destructiveColor` directly, sidestepping the `[status="info"]` cross-consumer conflict entirely (§15).
 
 `boot_analysis_page.cpp`'s existing `#lblBootEmptyState` text-only notice is untouched (its upgrade is a separate Boot Analysis Phase-2 item), and the loading-skeleton pattern has no live consumer yet.
 
