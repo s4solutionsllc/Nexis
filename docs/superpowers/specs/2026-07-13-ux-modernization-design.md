@@ -122,9 +122,9 @@ assumptions.
 
 ## 8. Acceptance criteria for this phase
 
-- [ ] Evidence pack covers every page reachable on macOS + homelab Linux; gaps logged in CAPTURE_NOTES.md.
-- [ ] DESIGN_SYSTEM.md constants all traceable to file:line; external claims cited in sources.md.
-- [ ] 18 prototype pairs (dark+light) rendered from token-true HTML, each with a sourced rationale note.
-- [ ] Review gallery delivered; every page approved, revised, or explicitly deferred by Luke.
-- [ ] work-items.md covers Phase 1 + every approved page.
-- [ ] `git diff` shows **no changes** under `shared/`, `linux/`, `macos/`, or `tests/` — documentation and design tooling (`scripts/design/`, `docs/design/`) only.
+- [x] Evidence pack covers every page reachable on macOS + homelab Linux (16 macOS + 12 Linux pages × 2 themes); gaps logged in CAPTURE_NOTES.md.
+- [x] DESIGN_SYSTEM.md constants all traceable to file:line (citation-audited in review); external claims cited in sources.md.
+- [x] 18 prototype pairs (dark+light, 38 renders incl. smoke) rendered from token-true HTML, each with a sourced rationale note (grep-verified: no note lacks Source lines).
+- [x] Review gallery delivered 2026-07-14; verdicts 2026-07-15 — 15 pages approved (incl. all 7 maintainer-judgment items), 3 deferred (docker, apt_source_manager, gnome_settings).
+- [x] work-items.md covers Phase 1 (F1–F4) + every approved page (19 items); deferred pages listed without items.
+- [x] `git diff` vs merge-base 20669f0a shows **no changes** under `shared/`, `linux/`, `macos/`, or `tests/` — documentation and design tooling (`scripts/design/`, `docs/design/`) only.
