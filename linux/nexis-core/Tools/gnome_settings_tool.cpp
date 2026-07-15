@@ -17,30 +17,31 @@ QSet<QString> GnomeSettingsToolLinux::cachedSchemas()
 {
     static QSet<QString> schemas;
     if (schemas.isEmpty()) {
-        try {
-            QString output = CommandUtil::exec("gsettings", {"list-schemas"});
-            const QStringList list = output.split('\n', Qt::SkipEmptyParts);
-            for (const QString &s : list)
-                schemas.insert(s.trimmed());
-        } catch (const QString &ex) {
-            qCritical() << "GnomeSettingsTool: failed to list schemas:" << ex;
+        ExecResult result = CommandUtil::execWithStatus("gsettings", {"list-schemas"});
+        if (!result.ok()) {
+            qCritical() << "GnomeSettingsTool: failed to list schemas:" << result.error;
+            return schemas;
         }
+        const QStringList list = result.output.split('\n', Qt::SkipEmptyParts);
+        for (const QString &s : list)
+            schemas.insert(s.trimmed());
     }
     return schemas;
 }
 
 QString GnomeSettingsToolLinux::getS(const QString &schema, const QString &key)
 {
-    try {
-        QString val = CommandUtil::exec("gsettings", {"get", schema, key});
-        // gsettings wraps string values in single quotes
-        if (val.startsWith('\'') && val.endsWith('\''))
-            val = val.mid(1, val.length() - 2);
-        return val;
-    } catch (const QString &ex) {
-        qCritical() << "GnomeSettingsToolLinux::getS failed:" << schema << key << ex;
+    ExecResult result = CommandUtil::execWithStatus("gsettings", {"get", schema, key});
+    if (!result.ok()) {
+        qCritical() << "GnomeSettingsToolLinux::getS failed:" << schema << key << result.error;
         return QString();
     }
+
+    // gsettings wraps string values in single quotes
+    QString val = result.output;
+    if (val.startsWith('\'') && val.endsWith('\''))
+        val = val.mid(1, val.length() - 2);
+    return val;
 }
 
 bool GnomeSettingsToolLinux::getB(const QString &schema, const QString &key)
