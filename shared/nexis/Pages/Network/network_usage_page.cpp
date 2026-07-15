@@ -121,10 +121,12 @@ protected:
 
 private:
     QList<DailyBucket> mBuckets;
-    QColor mRxColor = QColor("#5294e2");
-    QColor mTxColor = QColor("#5294e2").lighter(140);
-    QColor mBgColor = QColor("#2A2C32");
-    QColor mGridColor = QColor("#3A3D4A");
+    // BUG-47: no hardcoded hex — real values are set by setColor()/setChrome()
+    // via refreshThemeColors(), called before this widget's first paint.
+    QColor mRxColor;
+    QColor mTxColor;
+    QColor mBgColor;
+    QColor mGridColor;
 };
 
 #include "network_usage_page.moc"
