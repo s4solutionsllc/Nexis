@@ -319,3 +319,45 @@ body {
 .net-form { display: flex; flex-direction: column; gap: 14px; padding-top: 4px; }
 .net-form__row { display: flex; align-items: center; gap: 12px; }
 .net-form__label { font-size: 10pt; color: var(--color05); min-width: 236px; }
+
+/* ============================================================
+   Task 10 additions (append-only) — form pages (settings,
+   gnome_settings). Each form section is a DS §2 elevated card
+   with a DS §3 accent-bar header; label/field rows follow the
+   DS §4 typography scale. Right-aligned controls per
+   [HIG-MACOS] / [GNOME-HIG]. Token-only; no per-row shadow
+   (DS §7 — shadow lives on the section card). Reuses .select /
+   .stepper / .toggle / .form-row / .form-label / .tab controls.
+   ============================================================ */
+
+/* Vertical scroll of section cards (DS §1 base surface @pageContent) */
+.form-scroll { flex: 1; overflow: auto; padding: 4px 8px 8px; display: flex; flex-direction: column; }
+
+/* Section card = DS §2 elevated card; header = DS §3 accent bar + section title */
+.form-card { margin: 8px; padding: 12px 16px 14px; }
+.form-card__head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.form-card__head .accent-bar { min-height: 18px; }
+.form-card__title { font-size: 11pt; font-weight: 600; color: var(--color05); }   /* DS §4 title role, section scale */
+
+/* Dimmed helper line under a section title (Alerts "Show a tray warning…") — DS §4 meta role */
+.form-hint { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); margin: 0 0 8px; }
+
+/* Toggle + label row (macOS Settings boolean options; toggle leads the label) */
+.opt-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.opt-row__label { font-size: 9pt; color: var(--color05); }        /* DS §4 body/label */
+
+/* Label/field row: label left, control right [HIG-MACOS] / [GNOME-HIG].
+   Reuses .form-row (Task 8) for the flex row and .form-label for the label. */
+.select--wide { width: 250px; justify-content: space-between; }   /* combo sized to the capture's right column */
+.field--fixed { width: 250px; }
+/* Consistent vertical rhythm for label/field rows inside a section card
+   (scoped so the shared Task 8 .form-row on disk_tools is untouched). */
+.form-card .form-row { padding: 5px 0; }
+
+/* Sub-controls indented under a gating checkbox (Downloads auto-clean path/days) */
+.sub-row { display: flex; align-items: center; gap: 10px; padding: 4px 0 4px 28px; }
+.sub-row__label { font-size: 9pt; color: var(--color05); }
+
+/* Credit line (settings footer lblCreatedBy) — DS §4 meta role, accent link */
+.credit-row { text-align: right; padding: 12px 16px 4px; font-size: 8pt; color: var(--tertiaryText); }
+.credit-row a { color: var(--accentColor); text-decoration: underline; }
