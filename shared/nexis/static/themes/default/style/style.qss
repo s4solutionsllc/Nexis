@@ -3084,6 +3084,30 @@ QLabel[accessibleName="dimmed-small"] {
 /*******************************
 SEARCH
 *******************************/
+
+/* NEX Phase-2 "Search" page item (SSO-13733): container-level shadow lives
+   on #searchContainer ([cardRole="elevated"], NEX F1); the table's header
+   reads as the container surface (@cardBgElevated) while rows stay flat
+   with a zebra/hover recipe (DS §7), matching #tableProcess above. */
+#tableFoundResults {
+    alternate-background-color: @cardBgElevated;
+}
+
+#tableFoundResults::item:hover {
+    background-color: @accentBgTint;
+}
+
+#tableFoundResults QHeaderView::section {
+    background-color: @cardBgElevated;
+    border-bottom: 1px solid @borderColor;
+}
+
+#lblSearchEmptyHeading {
+    color: @color06;
+    font-size: 10pt;
+    font-weight: 600;
+}
+
 #txtSearchInput {
     padding: @dp6 @dp12;
     border-radius: @dp6;

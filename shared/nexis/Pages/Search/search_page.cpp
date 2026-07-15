@@ -41,10 +41,16 @@ void SearchPage::init()
     mItemModel->setHorizontalHeaderLabels(mTableHeaders);
     mSortFilterModel->setSourceModel(mItemModel);
 
+    // DS §7: right-align the tabular-numeric Size column.
+    mItemModel->setHeaderData(2, Qt::Horizontal, QVariant(Qt::AlignRight | Qt::AlignVCenter), Qt::TextAlignmentRole);
+
     ui->tableFoundResults->setModel(mSortFilterModel);
     mSortFilterModel->setSortRole(SortRole);
     mSortFilterModel->setDynamicSortFilter(true);
     mSortFilterModel->sort(1, Qt::SortOrder::DescendingOrder);
+
+    // DS §7: zebra striping for populated rows (shadow stays on the container).
+    ui->tableFoundResults->setAlternatingRowColors(true);
 
     ui->tableFoundResults->horizontalHeader()->setSectionsMovable(true);
     ui->tableFoundResults->horizontalHeader()->setFixedHeight(Dpi::scale(32));
@@ -86,13 +92,14 @@ void SearchPage::init()
 
     initComboboxValues();
 
-    QList<QWidget*> widgets = {
-        ui->btnBrowseSearchDir, ui->btnSearchAdvance, ui->txtSearchInput, ui->cmbGroups,
-        ui->cmbSizeCriteria, ui->cmbSizeUnits, ui->cmbTimeCriteria, ui->cmbTimeType,
-        ui->cmbSearchTypes, ui->tableFoundResults, ui->cmbUsers
-    };
+    // DS §2/§7: shadow lives on the elevated container alone (shadow count 1,
+    // NEX SSO-13733) — the toolbar controls and table no longer carry their
+    // own per-widget shadows.
+    ui->searchContainer->setAttribute(Qt::WA_StyledBackground, true);
+    Utilities::addDropShadow(ui->searchContainer, 90, 26);
 
-    Utilities::addDropShadow(widgets, 30);
+    ui->searchEmptyState->setVisible(mItemModel->rowCount() == 0);
+    ui->tableFoundResults->setVisible(mItemModel->rowCount() > 0);
 }
 
 void SearchPage::loadTableRowMenu()
@@ -241,6 +248,12 @@ void SearchPage::onSearchFinished(const QStringList &results, bool hadError)
         loadDataToTable(results);
     }
 
+    // DS §5: swap between the results table and the empty-state affordance
+    // based on whether any row survived the search.
+    const bool isEmpty = mItemModel->rowCount() == 0;
+    ui->tableFoundResults->setVisible(!isEmpty);
+    ui->searchEmptyState->setVisible(isEmpty);
+
     ui->lblLoadingSearching->hide();
     ui->btnSearchAdvance->setEnabled(true);
 }
@@ -269,6 +282,10 @@ void SearchPage::onFileOperationFinished(FileSearchService::FileOperation op,
             break;
         }
     }
+
+    const bool isEmpty = mItemModel->rowCount() == 0;
+    ui->tableFoundResults->setVisible(!isEmpty);
+    ui->searchEmptyState->setVisible(isEmpty);
 }
 
 void SearchPage::loadDataToTable(const QList<QString> &foundFiles)
@@ -299,6 +316,7 @@ QList<QStandardItem*> SearchPage::createRow(const QString &filepath)
     QStandardItem *i_size = new QStandardItem(FormatUtil::formatBytes(fileInfo->size()));
     i_size->setData(fileInfo->size(), rowRole);
     i_size->setData(fileInfo->size(), Qt::ToolTipRole);
+    i_size->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     QStandardItem *i_user = new QStandardItem(fileInfo->owner());
     i_user->setData(fileInfo->owner(), rowRole);
