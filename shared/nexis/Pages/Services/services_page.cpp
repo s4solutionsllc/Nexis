@@ -32,6 +32,10 @@ void ServicesPage::init()
 
     Utilities::addDropShadow(ui->cmbRunningStatus, 30);
     Utilities::addDropShadow(ui->cmbStartupStatus, 30);
+
+    ui->servicesContainer->setAttribute(Qt::WA_StyledBackground, true);
+    ui->servicesContainer->setProperty("cardRole", "elevated");
+    Utilities::addDropShadow(ui->servicesContainer, 90, 26);
 }
 
 void ServicesPage::loadServices()
@@ -71,7 +75,7 @@ void ServicesPage::loadServices()
 
 void ServicesPage::setServiceCount()
 {
-    ui->lblServicesTitle->setText(tr("System Services (%1)")
+    ui->sectionHeaderSource->setText(tr("%1 services")
                                .arg(ui->listWidgetServices->count()));
 }
 
