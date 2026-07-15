@@ -569,7 +569,12 @@ Filterable, searchable table of recent system logs for quick triage. Programmati
 
 ### 16. Settings
 
-Configure Nexis application preferences.
+Configure Nexis application preferences. General, Appearance, Alerts, Tools,
+and Scheduled Cleaning each render as a DS §2 elevated section card with a DS
+§3 accent-bar header (`[cardRole="elevated"]`, one `addDropShadow(90, 26)`
+per card — never per control), below a page-level accent-bar header
+("Settings" / "Preferences and alerts") — NEX Phase-2 UX modernization
+(SSO-13743).
 
 - **Language** — 34+ languages via Crowdin translations
 - **Color Scheme** — Auto / Light / Dark mode

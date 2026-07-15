@@ -2595,26 +2595,24 @@ QLabel[accessibleName="dialog-title"] {
     background-color: transparent;
 }
 
-#SettingsPage QGroupBox {
-    border: none;
-    border-radius: 0;
-    margin-top: 24;
-    padding: 8 0 0 0;
-    background-color: transparent;
-}
-
-#SettingsPage QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 0;
-    color: @color05;
-    font-size: 11pt;
-    font-weight: bold;
-}
-
 #SettingsPage QLabel {
     font-size: 10pt;
     color: @color12;
+}
+
+/* DS §3 (NEX F2): the shared #sectionHeaderTitle/#sectionHeaderSource
+   recipe (style.qss "Section Header" block above) must win over the
+   blanket "#SettingsPage QLabel" rule just above — an extra #SettingsPage
+   ID qualifier raises specificity above a plain ID + type selector. */
+#SettingsPage #sectionHeaderTitle {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+#SettingsPage #sectionHeaderSource {
+    color: @tertiaryText;
+    font-size: 8pt;
 }
 
 #lblCreatedBy {
