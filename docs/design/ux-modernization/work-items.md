@@ -693,6 +693,8 @@ renders/services_{dark,light}.png.
 - `shared/nexis/Pages/StartupApps/startup_app.ui`
 - `macos/nexis/Pages/StartupApps/startup_app_edit.cpp` (platform variant)
 - `linux/nexis/Pages/StartupApps/startup_app_edit.cpp` (platform variant)
+  (edit dialog: inherits shared chrome from F1–F3 only — no dedicated prototype
+  exists, so make no dialog-specific visual changes in this item)
 **Design refs:** DS §2 (elevated container); DS §7 (container-level shadow);
 DS §1 (surface hierarchy); DS §3 (header anatomy); DS §4 (two-line row
 typography); [GNOME-HIG] (grouped-list convention); notes/startup_apps.md
@@ -936,7 +938,8 @@ hierarchy); DS §3 (page header + per-section accent-bar headers); DS §6
 **Design refs:** DS §2 (elevated section cards); DS §1 (surface hierarchy);
 DS §3 (page header + per-section headers); DS §4 (label/field typography,
 [HIG-MACOS] control alignment); DS §9 item 3 (bounded-shadow correction — see
-"Fixes the documented drift" below); notes/settings.md (approved 2026-07-15).
+"Fixes the documented drift" below); notes/settings.md (approved 2026-07-15);
+renders/settings_dark.png + renders/settings_light.png (approved targets).
 **Change summary:**
 - Turn each `QGroupBox` form section (`groupGeneral`, `groupAppearance`,
   `groupAlerts`, `groupTools`, `groupScheduledCleaning`) into one DS §2
