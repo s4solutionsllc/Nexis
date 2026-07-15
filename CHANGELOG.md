@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - System Cleaner: clicking "Select All" after the loading scan completes no longer crashes on Linux. The `toggled` signal fired by each checkbox was invoking `refreshInlineTree()` once per category card — up to 9 calls that each cleared and rebuilt the full tree widget (including `getFileSize()` on every retained file). On systems with large `~/.cache/` trees this caused an OOM kill. The fix batches the bulk checkbox update with a `mBulkCategoryUpdate` guard flag so `refreshInlineTree()` is called exactly once after all checkboxes are set (GH#226).
 
+### Changed
+- Resources page (UX modernization, NEX F1/F2 consumer): the CPU, CPU Load Averages, GPU, and Disk Read Write history charts now render as DS §2 elevated cards with a DS §3 accent-bar header (`HistoryChart::setElevated()` — `[cardRole="elevated"]` fill + border, 3px `#sectionHeaderAccent` bar colored via `@cpuColor`/`@gpuColor`/`@diskColor`, 90/26 drop shadow) and their plot surface now uses the `@chartBackgroundColor` token instead of the flatter `@historyChartBackgroundColor`. The chart header's "expand" (fullscreen) button moves to the true top-right of the row (previously it sat immediately after the title). Memory, Network, Disk Temperature, PSI, OOM Kills, and the Disk Usage Launcher are unchanged and keep the page's original flat shadow.
+
+### Notes
+- Screenshot-baseline waiver (RELEASE.md §0.5): the non-blocking ScreenshotTests step is expected to flag the Resources page baselines (macOS + Linux, both themes) — the elevated-card redesign above is an intended visual change. Baselines will be regenerated via `screenshot-baselines.yml` once this lands.
+
 ## [2.8.3] - 2026-07-07
 
 ### Added
