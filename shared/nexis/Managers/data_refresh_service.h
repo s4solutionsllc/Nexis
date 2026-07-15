@@ -58,6 +58,7 @@ public:
     void triggerUpdateCheck();
     void triggerRepoHealthCheck();
     void triggerDiskHealthCheck();
+    void triggerProcessRefresh();
 
     // Subscriber counting — pages call these from onPageActivated /
     // onPageDeactivated. Idempotent across many pages.
