@@ -373,6 +373,7 @@ View and manage running processes.
 
 Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout (four on hosts with APT 3.1+): System Packages, Snap Packages, Orphan Packages, and APT History.
 
+- Package tree/list/table (whichever tab is active) sits inside one elevated container card with a frozen "Application" column header (UX modernization pass, SSO-13736)
 - Package tree view grouped by type (Formula/Cask on macOS; installed/universe on Linux)
 - Search filter with auto-expand matching sections
 - Multi-select checkboxes for batch uninstall

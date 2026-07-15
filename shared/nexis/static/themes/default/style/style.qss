@@ -1865,20 +1865,24 @@ QLabel[accessibleName="dialog-title"] {
     UNINSTALLER PAGE
 *************************/
 
-#nav QPushButton {
-    border-radius: @dp6;
-    padding: @dp6 @dp12;
-    font-size: 10pt;
-    background-color: @color01;
+/* DS §3 — segmented tabs, header-anatomy spacing/padding (toolbar-only page,
+   no invented title: #sectionHeaderRow supplies the transparent chrome). */
+#btnSystemPackages, #btnSnapPackages, #btnOrphanPackages, #btnAptHistory {
+    border-radius: 8;
+    padding: 7 14;
+    font-size: 9pt;
+    font-weight: 500;
+    background-color: @cardBg;
     color: @color05;
     border: 1px solid @borderColor;
 }
 
-#nav QPushButton:hover,
-#nav QPushButton:checked {
+#btnSystemPackages:hover, #btnSnapPackages:hover, #btnOrphanPackages:hover, #btnAptHistory:hover,
+#btnSystemPackages:checked, #btnSnapPackages:checked, #btnOrphanPackages:checked, #btnAptHistory:checked {
     background-color: @accentColor;
-    color: @color07;
+    color: @overlayText;
     border-color: @accentColor;
+    font-weight: 600;
 }
 
 /**************************
@@ -1933,17 +1937,20 @@ QLabel[accessibleName="dialog-title"] {
     color: @color05;
 }
 
-/* -- Package tree (Uninstaller + Homebrew) -- table style matching System Cleaner -- */
+/* -- Package tree (Uninstaller) -- flat content inside #uninstallerContainer,
+   the single elevated card (DS §2/§7, NEX F1) -- */
 
 #treeWidgetPackages {
-    border: 1px solid @borderColor;
-    background-color: transparent;
-    border-radius: 8;
+    border: 0;
+    background-color: @cardBg;
+    border-radius: 0;
     font-size: 10pt;
 }
 
+/* Frozen "Application" column header — DS §7. */
 #treeWidgetPackages QHeaderView::section {
-    border-top: 1;
+    background-color: @cardBgElevated;
+    border-bottom: 1px solid @borderColor;
 }
 
 #treeWidgetPackages::item {
