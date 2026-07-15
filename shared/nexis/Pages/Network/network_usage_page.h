@@ -50,11 +50,15 @@ private:
     QLabel *mLblMonthVal;
 
     // Live rate
+    QFrame *mRateCard;
     QLabel *mLblRateDown;
     QLabel *mLblRateUp;
     quint64 mLastRx = 0;
     quint64 mLastTx = 0;
     bool mHaveLastRx = false;
+
+    // 30-day bar chart
+    QFrame *mChartCard;
 
     // Cap bar
     QFrame *mCapCard;
@@ -63,6 +67,7 @@ private:
     QLabel *mLblCapLimit;
 
     // Settings
+    QFrame *mSettCard;
     QSpinBox *mSpinCap;
     QSpinBox *mSpinResetDay;
     QCheckBox *mChkAlert;
