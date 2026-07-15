@@ -90,19 +90,17 @@ QStringList PackageToolLinux::getSnapPackages()
     QStringList packageList = {};
 
     if (CommandUtil::isExecutable("snap")) {
-        try {
-            packageList = CommandUtil::exec("snap", {"list"})
-                    .trimmed()
-                    .split('\n');
-
-            packageList.removeFirst();
-
-            for (int i = 0; i < packageList.count(); ++i)
-                packageList[i] = packageList.at(i).split(QRegularExpression("\\s+")).first();
-
-        } catch (QString &ex) {
-            qCritical() << ex;
+        ExecResult result = CommandUtil::execWithStatus("snap", {"list"});
+        if (!result.ok()) {
+            qCritical() << result.error;
+            return packageList;
         }
+
+        packageList = result.output.trimmed().split('\n');
+        packageList.removeFirst();
+
+        for (int i = 0; i < packageList.count(); ++i)
+            packageList[i] = packageList.at(i).split(QRegularExpression("\\s+")).first();
     }
 
     return packageList;
@@ -155,27 +153,26 @@ QList<Package> PackageToolLinux::getDpkgPackages()
 {
     QList<Package> packages;
 
-    try {
-        QString output = CommandUtil::exec("bash", {"-c",
-            "dpkg-query -W -f '${Package}\\t${Section}\\t${binary:Summary}\\n' 2> /dev/null"}, {}, 60000)
-                .trimmed();
+    ExecResult result = CommandUtil::execWithStatus("bash", {"-c",
+        "dpkg-query -W -f '${Package}\\t${Section}\\t${binary:Summary}\\n' 2> /dev/null"}, 60000);
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return packages;
+    }
 
-        const QStringList lines = output.split('\n');
-        for (const QString &line : lines) {
-            QStringList parts = line.split('\t');
-            if (parts.size() < 3)
-                continue;
+    const QStringList lines = result.output.trimmed().split('\n');
+    for (const QString &line : lines) {
+        QStringList parts = line.split('\t');
+        if (parts.size() < 3)
+            continue;
 
-            Package pkg;
-            pkg.name = parts.at(0).trimmed();
-            pkg.section = parts.at(1).trimmed();
-            pkg.description = parts.at(2).trimmed();
+        Package pkg;
+        pkg.name = parts.at(0).trimmed();
+        pkg.section = parts.at(1).trimmed();
+        pkg.description = parts.at(2).trimmed();
 
-            if (!pkg.name.isEmpty())
-                packages.append(pkg);
-        }
-    } catch(QString &ex) {
-        qCritical() << ex;
+        if (!pkg.name.isEmpty())
+            packages.append(pkg);
     }
 
     return packages;
@@ -195,27 +192,26 @@ QList<Package> PackageToolLinux::getRpmPackages()
 {
     QList<Package> packages;
 
-    try {
-        QString output = CommandUtil::exec("bash", {"-c",
-            "rpm -qa --queryformat '%{NAME}\\t%{GROUP}\\t%{SUMMARY}\\n' 2> /dev/null"}, {}, 60000)
-                .trimmed();
+    ExecResult result = CommandUtil::execWithStatus("bash", {"-c",
+        "rpm -qa --queryformat '%{NAME}\\t%{GROUP}\\t%{SUMMARY}\\n' 2> /dev/null"}, 60000);
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return packages;
+    }
 
-        const QStringList lines = output.split('\n');
-        for (const QString &line : lines) {
-            QStringList parts = line.split('\t');
-            if (parts.size() < 3)
-                continue;
+    const QStringList lines = result.output.trimmed().split('\n');
+    for (const QString &line : lines) {
+        QStringList parts = line.split('\t');
+        if (parts.size() < 3)
+            continue;
 
-            Package pkg;
-            pkg.name = parts.at(0).trimmed();
-            pkg.section = parts.at(1).trimmed();
-            pkg.description = parts.at(2).trimmed();
+        Package pkg;
+        pkg.name = parts.at(0).trimmed();
+        pkg.section = parts.at(1).trimmed();
+        pkg.description = parts.at(2).trimmed();
 
-            if (!pkg.name.isEmpty())
-                packages.append(pkg);
-        }
-    } catch(QString &ex) {
-        qCritical() << ex;
+        if (!pkg.name.isEmpty())
+            packages.append(pkg);
     }
 
     return packages;
@@ -249,36 +245,35 @@ QList<Package> PackageToolLinux::getPacmanPackages()
 {
     QList<Package> packages;
 
-    try {
-        QString output = CommandUtil::exec("bash", {"-c", "pacman -Qi 2> /dev/null"}, {}, 60000)
-                .trimmed();
-
-        const QStringList lines = output.split('\n');
-        Package pkg;
-        for (const QString &line : lines) {
-            if (line.trimmed().isEmpty()) {
-                if (!pkg.name.isEmpty())
-                    packages.append(pkg);
-                pkg = Package();
-                continue;
-            }
-            int colonPos = line.indexOf(':');
-            if (colonPos < 0)
-                continue;
-            QString key = line.left(colonPos).trimmed();
-            QString val = line.mid(colonPos + 1).trimmed();
-            if (key == "Name")
-                pkg.name = val;
-            else if (key == "Description")
-                pkg.description = val;
-            else if (key == "Groups")
-                pkg.section = (val == "None") ? "misc" : val;
-        }
-        if (!pkg.name.isEmpty())
-            packages.append(pkg);
-    } catch(QString &ex) {
-        qCritical() << ex;
+    ExecResult result = CommandUtil::execWithStatus("bash", {"-c", "pacman -Qi 2> /dev/null"}, 60000);
+    if (!result.ok()) {
+        qCritical() << result.error;
+        return packages;
     }
+
+    const QStringList lines = result.output.trimmed().split('\n');
+    Package pkg;
+    for (const QString &line : lines) {
+        if (line.trimmed().isEmpty()) {
+            if (!pkg.name.isEmpty())
+                packages.append(pkg);
+            pkg = Package();
+            continue;
+        }
+        int colonPos = line.indexOf(':');
+        if (colonPos < 0)
+            continue;
+        QString key = line.left(colonPos).trimmed();
+        QString val = line.mid(colonPos + 1).trimmed();
+        if (key == "Name")
+            pkg.name = val;
+        else if (key == "Description")
+            pkg.description = val;
+        else if (key == "Groups")
+            pkg.section = (val == "None") ? "misc" : val;
+    }
+    if (!pkg.name.isEmpty())
+        packages.append(pkg);
 
     return packages;
 }
@@ -296,24 +291,21 @@ bool PackageToolLinux::pacmanRemovePackages(QStringList packages)
 QStringList PackageToolLinux::dpkgDryRunRemove(const QStringList &packages)
 {
     QStringList wouldRemove;
-    try {
-        // SSO-3399: invoke apt-get directly with argv to avoid shell interpolation
-        // of package names; merge stderr because apt prints status lines to both
-        // streams depending on locale/config.
-        QStringList args = {"remove", "--dry-run", "--"};
-        args.append(packages);
-        ExecResult result = CommandUtil::execWithStatus("apt-get", args);
-        const QString combined = result.output + QLatin1Char('\n') + result.error;
 
-        static QRegularExpression re("^Remv\\s+(\\S+)");
-        const QStringList lines = combined.split('\n');
-        for (const QString &line : lines) {
-            QRegularExpressionMatch match = re.match(line);
-            if (match.hasMatch())
-                wouldRemove << match.captured(1);
-        }
-    } catch (QString &ex) {
-        qCritical() << ex;
+    // SSO-3399: invoke apt-get directly with argv to avoid shell interpolation
+    // of package names; merge stderr because apt prints status lines to both
+    // streams depending on locale/config.
+    QStringList args = {"remove", "--dry-run", "--"};
+    args.append(packages);
+    ExecResult result = CommandUtil::execWithStatus("apt-get", args);
+    const QString combined = result.output + QLatin1Char('\n') + result.error;
+
+    static QRegularExpression re("^Remv\\s+(\\S+)");
+    const QStringList lines = combined.split('\n');
+    for (const QString &line : lines) {
+        QRegularExpressionMatch match = re.match(line);
+        if (match.hasMatch())
+            wouldRemove << match.captured(1);
     }
     return wouldRemove;
 }
@@ -321,28 +313,31 @@ QStringList PackageToolLinux::dpkgDryRunRemove(const QStringList &packages)
 QStringList PackageToolLinux::rpmDryRunRemove(const QStringList &packages)
 {
     QStringList wouldRemove;
-    try {
-        QStringList args = packages;
-        args.insert(0, "remove");
-        args.insert(1, "--assumeno");
-        QString output = CommandUtil::exec("dnf", args);
 
-        bool inRemoveSection = false;
-        const QStringList lines = output.split('\n');
-        for (const QString &line : lines) {
-            QString trimmed = line.trimmed();
-            if (trimmed.startsWith("Removing:") || trimmed.startsWith("Removing dependent packages:"))
-                inRemoveSection = true;
-            else if (trimmed.startsWith("Transaction Summary") || trimmed.isEmpty())
-                inRemoveSection = false;
-            else if (inRemoveSection) {
-                QString name = trimmed.split(QRegularExpression("\\s+")).first();
-                if (!name.isEmpty())
-                    wouldRemove << name;
-            }
+    // dnf --assumeno auto-declines the transaction, which makes dnf exit
+    // non-zero even though the summary we need was printed to stdout —
+    // branching on ok() here would silently break the feature, so parse the
+    // output unconditionally like the pre-migration exec() call did.
+    QStringList args = packages;
+    args.insert(0, "remove");
+    args.insert(1, "--assumeno");
+    ExecResult result = CommandUtil::execWithStatus("dnf", args);
+    if (!result.ok())
+        qDebug() << "dnf --assumeno exited non-zero (expected for an aborted dry-run):" << result.error;
+
+    bool inRemoveSection = false;
+    const QStringList lines = result.output.split('\n');
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.startsWith("Removing:") || trimmed.startsWith("Removing dependent packages:"))
+            inRemoveSection = true;
+        else if (trimmed.startsWith("Transaction Summary") || trimmed.isEmpty())
+            inRemoveSection = false;
+        else if (inRemoveSection) {
+            QString name = trimmed.split(QRegularExpression("\\s+")).first();
+            if (!name.isEmpty())
+                wouldRemove << name;
         }
-    } catch (QString &ex) {
-        qCritical() << ex;
     }
     return wouldRemove;
 }
@@ -350,20 +345,17 @@ QStringList PackageToolLinux::rpmDryRunRemove(const QStringList &packages)
 QStringList PackageToolLinux::pacmanDryRunRemove(const QStringList &packages)
 {
     QStringList wouldRemove;
-    try {
-        QStringList args = packages;
-        args.insert(0, "-Rs");
-        args.insert(1, "--print");
-        QString output = CommandUtil::exec("pacman", args);
 
-        const QStringList lines = output.trimmed().split('\n');
-        for (const QString &line : lines) {
-            QString name = line.section('/', -1).section('-', 0, 0);
-            if (!name.isEmpty())
-                wouldRemove << name;
-        }
-    } catch (QString &ex) {
-        qCritical() << ex;
+    QStringList args = packages;
+    args.insert(0, "-Rs");
+    args.insert(1, "--print");
+    ExecResult result = CommandUtil::execWithStatus("pacman", args);
+
+    const QStringList lines = result.output.trimmed().split('\n');
+    for (const QString &line : lines) {
+        QString name = line.section('/', -1).section('-', 0, 0);
+        if (!name.isEmpty())
+            wouldRemove << name;
     }
     return wouldRemove;
 }
@@ -376,21 +368,21 @@ QList<StaleSnapRevision> PackageToolLinux::getStaleSnapRevisions()
     if (!CommandUtil::isExecutable("snap"))
         return {};
 
-    try {
-        QString output = CommandUtil::exec("snap", {"list", "--all"}).trimmed();
-        QList<StaleSnapRevision> revisions = PackageTool::parseSnapListAll(output);
-
-        for (int i = 0; i < revisions.size(); ++i) {
-            QFileInfo fi(revisions[i].filePath);
-            if (fi.exists())
-                revisions[i].size = fi.size();
-        }
-
-        return revisions;
-    } catch (const QString &ex) {
-        qCritical() << "Failed to get stale snap revisions:" << ex;
+    ExecResult result = CommandUtil::execWithStatus("snap", {"list", "--all"});
+    if (!result.ok()) {
+        qCritical() << "Failed to get stale snap revisions:" << result.error;
+        return {};
     }
-    return {};
+
+    QList<StaleSnapRevision> revisions = PackageTool::parseSnapListAll(result.output.trimmed());
+
+    for (int i = 0; i < revisions.size(); ++i) {
+        QFileInfo fi(revisions[i].filePath);
+        if (fi.exists())
+            revisions[i].size = fi.size();
+    }
+
+    return revisions;
 }
 
 bool PackageToolLinux::removeStaleSnapRevisions(const QList<StaleSnapRevision> &revisions)
@@ -413,32 +405,33 @@ QStringList PackageToolLinux::getUnusedFlatpakRuntimes()
     if (!CommandUtil::isExecutable("flatpak"))
         return {};
 
-    try {
-        QString output = CommandUtil::exec("flatpak", {"uninstall", "--unused",
-                                                        "--noninteractive"}, {}, 30000).trimmed();
-        if (output.isEmpty())
-            return {};
-
-        QStringList refs;
-        const QStringList lines = output.split('\n');
-        for (const QString &line : lines) {
-            QString trimmed = line.trimmed();
-            if (trimmed.isEmpty() || trimmed.startsWith("ID") || trimmed.contains("---"))
-                continue;
-            // Lines may start with "1. " numbering or just be ref IDs
-            static const QRegularExpression refRe(R"((?:\d+\.\s+)?(\S+))");
-            QRegularExpressionMatch match = refRe.match(trimmed);
-            if (match.hasMatch()) {
-                QString ref = match.captured(1);
-                if (ref.contains('.'))
-                    refs.append(ref);
-            }
-        }
-        return refs;
-    } catch (const QString &ex) {
-        qCritical() << "Failed to get unused flatpak runtimes:" << ex;
+    ExecResult result = CommandUtil::execWithStatus("flatpak", {"uninstall", "--unused",
+                                                    "--noninteractive"}, 30000);
+    if (!result.ok()) {
+        qCritical() << "Failed to get unused flatpak runtimes:" << result.error;
+        return {};
     }
-    return {};
+
+    const QString output = result.output.trimmed();
+    if (output.isEmpty())
+        return {};
+
+    QStringList refs;
+    const QStringList lines = output.split('\n');
+    for (const QString &line : lines) {
+        QString trimmed = line.trimmed();
+        if (trimmed.isEmpty() || trimmed.startsWith("ID") || trimmed.contains("---"))
+            continue;
+        // Lines may start with "1. " numbering or just be ref IDs
+        static const QRegularExpression refRe(R"((?:\d+\.\s+)?(\S+))");
+        QRegularExpressionMatch match = refRe.match(trimmed);
+        if (match.hasMatch()) {
+            QString ref = match.captured(1);
+            if (ref.contains('.'))
+                refs.append(ref);
+        }
+    }
+    return refs;
 }
 
 bool PackageToolLinux::removeUnusedFlatpakRuntimes()
@@ -446,13 +439,12 @@ bool PackageToolLinux::removeUnusedFlatpakRuntimes()
     if (!CommandUtil::isExecutable("flatpak"))
         return false;
 
-    try {
-        CommandUtil::exec("flatpak", {"uninstall", "--unused", "-y", "--noninteractive"}, {}, 120000);
-        return true;
-    } catch (const QString &ex) {
-        qCritical() << "Failed to remove unused flatpak runtimes:" << ex;
+    ExecResult result = CommandUtil::execWithStatus("flatpak", {"uninstall", "--unused", "-y", "--noninteractive"}, 120000);
+    if (!result.ok()) {
+        qCritical() << "Failed to remove unused flatpak runtimes:" << result.error;
+        return false;
     }
-    return false;
+    return true;
 }
 
 /**********
@@ -499,77 +491,77 @@ bool PackageToolLinux::removeOrphanPackages()
 
 QList<OrphanPackage> PackageToolLinux::getAptOrphans()
 {
-    try {
-        QString output = CommandUtil::exec("bash", {"-c", "LANG=C apt-get autoremove --dry-run 2>&1"}).trimmed();
-        QList<OrphanPackage> orphans = PackageTool::parseAptAutoremoveDryRun(output);
+    // apt-get autoremove --dry-run always exits 0, so its output can be
+    // parsed unconditionally; still log if the process itself failed to run.
+    ExecResult result = CommandUtil::execWithStatus("bash", {"-c", "LANG=C apt-get autoremove --dry-run 2>&1"});
+    if (!result.ok())
+        qCritical() << "Failed to get apt orphans:" << result.error;
 
-        if (orphans.isEmpty())
-            return orphans;
+    QList<OrphanPackage> orphans = PackageTool::parseAptAutoremoveDryRun(result.output.trimmed());
+    if (orphans.isEmpty())
+        return orphans;
 
-        // Bulk auto-install flag — one call for all packages
-        try {
-            QString autoOut = CommandUtil::exec("bash", {"-c", "LANG=C apt-mark showauto 2>/dev/null"}).trimmed();
-            QSet<QString> autoSet;
-            for (const QString &line : autoOut.split('\n')) {
-                QString pkg = line.trimmed();
-                if (!pkg.isEmpty())
-                    autoSet.insert(pkg);
-            }
-            for (OrphanPackage &pkg : orphans)
-                pkg.autoInstalled = autoSet.contains(pkg.name);
-        } catch (...) {}
+    // Bulk auto-install flag — one call for all packages. Silently skip on
+    // failure, same as the pre-migration catch(...) fallback.
+    ExecResult autoResult = CommandUtil::execWithStatus("bash", {"-c", "LANG=C apt-mark showauto 2>/dev/null"});
+    if (autoResult.ok()) {
+        QSet<QString> autoSet;
+        for (const QString &line : autoResult.output.trimmed().split('\n')) {
+            QString pkg = line.trimmed();
+            if (!pkg.isEmpty())
+                autoSet.insert(pkg);
+        }
+        for (OrphanPackage &pkg : orphans)
+            pkg.autoInstalled = autoSet.contains(pkg.name);
+    }
 
-        // Per-package reverse dependency count
-        for (OrphanPackage &pkg : orphans) {
-            try {
-                QString rdOut = CommandUtil::exec(
-                    "bash",
-                    {"-c", QString("LANG=C apt-cache rdepends --installed %1 2>/dev/null").arg(pkg.name)}
-                ).trimmed();
-                int count = 0;
-                bool inSection = false;
-                for (const QString &line : rdOut.split('\n')) {
-                    if (line.trimmed() == QLatin1String("Reverse Depends:")) {
-                        inSection = true;
-                        continue;
-                    }
-                    if (inSection && line.startsWith(QLatin1String("  ")) && !line.trimmed().isEmpty())
-                        ++count;
-                }
-                pkg.reverseDepsCount = count;
-            } catch (...) {
-                pkg.reverseDepsCount = 0;
-            }
+    // Per-package reverse dependency count
+    for (OrphanPackage &pkg : orphans) {
+        ExecResult rdResult = CommandUtil::execWithStatus(
+            "bash",
+            {"-c", QString("LANG=C apt-cache rdepends --installed %1 2>/dev/null").arg(pkg.name)}
+        );
+        if (!rdResult.ok()) {
+            pkg.reverseDepsCount = 0;
+            continue;
         }
 
-        return orphans;
-    } catch (const QString &ex) {
-        qCritical() << "Failed to get apt orphans:" << ex;
+        int count = 0;
+        bool inSection = false;
+        for (const QString &line : rdResult.output.trimmed().split('\n')) {
+            if (line.trimmed() == QLatin1String("Reverse Depends:")) {
+                inSection = true;
+                continue;
+            }
+            if (inSection && line.startsWith(QLatin1String("  ")) && !line.trimmed().isEmpty())
+                ++count;
+        }
+        pkg.reverseDepsCount = count;
     }
-    return {};
+
+    return orphans;
 }
 
 QList<OrphanPackage> PackageToolLinux::getDnfOrphans()
 {
-    try {
-        QString output = CommandUtil::exec("dnf", {"autoremove", "--assumeno"}).trimmed();
-        return PackageTool::parseDnfAutoremoveDryRun(output);
-    } catch (const QString &ex) {
-        qCritical() << "Failed to get dnf orphans:" << ex;
-    }
-    return {};
+    // dnf --assumeno auto-declines and exits non-zero even when the
+    // transaction summary we need was printed — parse unconditionally.
+    ExecResult result = CommandUtil::execWithStatus("dnf", {"autoremove", "--assumeno"});
+    if (!result.ok())
+        qDebug() << "dnf --assumeno exited non-zero (expected for an aborted dry-run):" << result.error;
+    return PackageTool::parseDnfAutoremoveDryRun(result.output.trimmed());
 }
 
 QList<OrphanPackage> PackageToolLinux::getPacmanOrphans()
 {
-    try {
-        QString output = CommandUtil::exec("pacman", {"-Qdtq"}).trimmed();
-        return PackageTool::parsePacmanOrphans(output);
-    } catch (const QString &ex) {
-        // pacman -Qdtq returns non-zero if no orphans found
-        qDebug() << "No pacman orphans or error:" << ex;
+    // pacman -Qdtq returns non-zero if no orphans found — that's an empty
+    // result, not an error, so log at debug level and return {} either way.
+    ExecResult result = CommandUtil::execWithStatus("pacman", {"-Qdtq"});
+    if (!result.ok()) {
+        qDebug() << "No pacman orphans or error:" << result.error;
+        return {};
     }
-    return {};
+    return PackageTool::parsePacmanOrphans(result.output.trimmed());
 }
 
 /**********
