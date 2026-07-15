@@ -1349,6 +1349,9 @@ QLabel[accessibleName="dialog-title"] {
     padding: 10 0 10 12;
 }
 
+/************************
+    BOOT ANALYSIS PAGE
+*************************/
 #lblBootAnalysisTitle {
     color: @color11;
     padding: 10 0 4 0;
@@ -1621,6 +1624,9 @@ QLabel[accessibleName="dialog-title"] {
     border-color: @accentColor;
 }
 
+/**************************
+    HELPERS PAGE
+***************************/
 #lblToolsSection, #lblMaintenanceSectionHeader {
     font-size: 8pt;
     font-weight: 600;
@@ -1649,6 +1655,7 @@ QLabel[accessibleName="dialog-title"] {
     color: @color06;
 }
 
+/* - Search field (shared: Uninstaller / APT Source Manager / Homebrew) - */
 #txtPackageSearch,
 #txtSearchAptSource {
     padding: @dp6 @dp12;
@@ -2340,6 +2347,7 @@ QLabel[accessibleName="dialog-title"] {
 /****************
     HISTORIES
 *****************/
+/* NEX Phase-2 "Resources" page selectors (history chart bands) live here. */
 
 #charts {
     background-color: @pageContent;
@@ -2482,6 +2490,7 @@ QLabel[accessibleName="dimmed-small"] {
     padding: 10 0 5 12;
 }
 
+/* - Homebrew: "Available Updates (N)" title (mLblUpdatesTitle) - */
 #lblUpdatesTitle {
     color: @color11;
     padding: 10 0 5 12;
@@ -2787,6 +2796,16 @@ SEARCH
     font-size: 11pt;
     color: @color12;
 }
+
+/* === Network Usage ===
+   Reserved — no selectors yet. NEX Phase-2 "Network Usage" page item adds
+   its #netUsage* selectors here (see network_usage_page.cpp setObjectName
+   calls). */
+
+/* === System Logs ===
+   Reserved — no selectors yet. NEX Phase-2 "System Logs" page item adds
+   its #*Log* / #cmbLogSeverity selectors here (see system_logs_page.cpp
+   setObjectName calls). */
 
 /***************************************
     Keyboard focus ring (SSO-3502)
