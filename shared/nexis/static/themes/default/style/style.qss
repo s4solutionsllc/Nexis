@@ -1554,13 +1554,13 @@ QLabel[accessibleName="dialog-title"] {
 /************************
     STARTUP APPS PAGE
 *************************/
+/* DS §2/§7 (NEX F1, SSO-13738): #startupAppsContainer carries the single
+   elevated shadow ([cardRole="elevated"], NEX F1 recipe); the list itself
+   stays transparent so the container surface shows through, and each row
+   (#widgetStartupApp / #widgetBtmRow) is a flat @cardBg strip, never
+   shadowed on its own. */
 #listWidgetStartup {
     background-color: transparent;
-}
-
-#lblStartupAppsTitle {
-    color: @color11;
-    padding: 10 0 10 12;
 }
 
 /************************
@@ -1584,10 +1584,12 @@ QLabel[accessibleName="dialog-title"] {
 
 /* - Startup App - */
 
+/* GNOME-HIG grouped-list convention (DS §7): flush flat rows, divided by a
+   bottom border instead of the old per-row rounded card + gap. */
 #widgetStartupApp {
-    border-radius: 12;
     background-color: @cardBg;
-    border: 1px solid transparent;
+    border: 0;
+    border-bottom: 1px solid @borderColor;
 }
 
 #lblStartupAppIcon {
@@ -1595,13 +1597,14 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #widgetStartupApp:hover {
-    background-color: @cardBgElevated;
-    border-color: @accentColor;
+    background-color: @accentBgTint;
 }
 
+/* DS §4 title role */
 #widgetStartupApp #lblStartupAppName {
-    font-size: 10pt;
-    color: @color05;
+    font-size: 9pt;
+    font-weight: 600;
+    color: @color06;
 }
 
 #checkStartup {
@@ -1619,17 +1622,22 @@ QLabel[accessibleName="dialog-title"] {
     margin-bottom: 2;
 }
 
+/* Muted uppercase group label ("User Agents" / "System Agents") between
+   flat rows [GNOME-HIG]. */
 #startupSectionHeader {
     color: @tertiaryText;
-    font-size: 9pt;
+    font-size: 8pt;
     font-weight: 600;
-    padding: @dp4 @dp8;
-    background-color: transparent;
+    text-transform: uppercase;
+    padding: @dp12 @dp16 @dp6;
+    background-color: @cardBg;
 }
 
+/* DS §4 meta role */
 #widgetStartupApp #lblStartupAppPath {
     color: @tertiaryText;
-    font-size: 9pt;
+    font-size: 8pt;
+    font-weight: 500;
     font-family: @monoFontFamily;
 }
 

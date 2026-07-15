@@ -105,26 +105,92 @@
        </widget>
       </item>
       <item row="0" column="0" alignment="Qt::AlignLeft">
-       <widget class="QLabel" name="lblStartupAppsTitle">
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-          <italic>false</italic>
-         </font>
-        </property>
-        <property name="accessibleName">
-         <string/>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string notr="true">System Startup Applications</string>
-        </property>
+       <widget class="QWidget" name="sectionHeaderRow" native="true">
+        <layout class="QHBoxLayout" name="sectionHeaderRowLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <item>
+          <widget class="QFrame" name="sectionHeaderAccent">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="accentToken" stdset="0">
+            <string notr="true">accent</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="sectionHeaderTextCol">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="sectionHeaderTitle">
+             <property name="text">
+              <string notr="true">Startup Applications</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="sectionHeaderSource">
+             <property name="text">
+              <string notr="true">0 items</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </widget>
       </item>
       <item row="1" column="0" colspan="4">
-       <widget class="QWidget" name="verticalWidget" native="true">
+       <widget class="QWidget" name="startupAppsContainer" native="true">
+        <property name="cardRole" stdset="0">
+         <string notr="true">elevated</string>
+        </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
           <number>0</number>
@@ -217,7 +283,7 @@
             <enum>QListView::SinglePass</enum>
            </property>
            <property name="spacing">
-            <number>5</number>
+            <number>0</number>
            </property>
            <property name="uniformItemSizes">
             <bool>false</bool>
