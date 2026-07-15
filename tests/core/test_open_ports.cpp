@@ -258,6 +258,40 @@ private slots:
         QCOMPARE(entries[0].processName, "mysqld.safe");
         QCOMPARE(entries[0].pid, 1111);
     }
+
+    // --- isTrustedBinderPath (SSO-3469: exercises the FR-121 flag consumed
+    // by fetchConnections' execWithStatus-based binder resolution) ---
+
+    void trusted_emptyPathIsTrusted()
+    {
+        QVERIFY(OpenPortsWidget::isTrustedBinderPath(""));
+    }
+
+    void trusted_usrBinIsTrusted()
+    {
+        QVERIFY(OpenPortsWidget::isTrustedBinderPath("/usr/bin/sshd"));
+    }
+
+    void trusted_usrLibexecIsTrusted()
+    {
+        QVERIFY(OpenPortsWidget::isTrustedBinderPath("/usr/libexec/something"));
+    }
+
+    void trusted_homeDirIsNotTrusted()
+    {
+        QVERIFY(!OpenPortsWidget::isTrustedBinderPath("/home/luke/malware"));
+    }
+
+    void trusted_tmpIsNotTrusted()
+    {
+        QVERIFY(!OpenPortsWidget::isTrustedBinderPath("/tmp/payload"));
+    }
+
+    void trusted_prefixMatchIsNotSubstringMatch()
+    {
+        // "/usr/binfoo" must not match the "/usr/bin/" prefix.
+        QVERIFY(!OpenPortsWidget::isTrustedBinderPath("/usr/binfoo"));
+    }
 };
 
 QTEST_MAIN(TestOpenPorts)

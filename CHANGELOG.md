@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Helpers page (Firewall, Network Diagnostics, Open Ports, Swappiness, TRIM, Wake-on-LAN, and the page's own maintenance actions): all remaining `CommandUtil::exec`/`sudoExec` call sites migrated to `execWithStatus`/`sudoExecWithStatus`, branching on `ExecResult::ok()`. The `/proc`/`systemctl is-enabled` re-read that used to double-check a privileged write on the Swappiness and TRIM cards is gone now that the pkexec'd command's own exit code is authoritative; a silent `HelpersPage::on_btnFlushDNS_clicked` bug on macOS (a stale `try`/`catch` around a call that can no longer throw, always reporting success) is also fixed as part of this migration (SSO-3469).
+
 ### Fixed
 - System Cleaner: clicking "Select All" after the loading scan completes no longer crashes on Linux. The `toggled` signal fired by each checkbox was invoking `refreshInlineTree()` once per category card — up to 9 calls that each cleared and rebuilt the full tree widget (including `getFileSize()` on every retained file). On systems with large `~/.cache/` trees this caused an OOM kill. The fix batches the bulk checkbox update with a `mBulkCategoryUpdate` guard flag so `refreshInlineTree()` is called exactly once after all checkboxes are set (GH#226).
 

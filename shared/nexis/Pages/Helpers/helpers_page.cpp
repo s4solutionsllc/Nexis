@@ -298,26 +298,24 @@ void HelpersPage::on_btnFlushDNS_clicked()
     bool success = false;
 
 #ifdef Q_OS_MACOS
-    try {
-        CommandUtil::exec("dscacheutil", {"-flushcache"});
-        CommandUtil::sudoExec("killall", {"-HUP", "mDNSResponder"});
-        success = true;
-    } catch (const QString &ex) {
-        errorMsg = ex;
-    }
+    ExecResult r1 = CommandUtil::execWithStatus("dscacheutil", {"-flushcache"});
+    ExecResult r2 = CommandUtil::sudoExecWithStatus("killall", {"-HUP", "mDNSResponder"});
+    success = r1.ok() && r2.ok();
+    if (!success)
+        errorMsg = !r2.error.isEmpty() ? r2.error : r1.error;
 #else
     // Linux: try resolvers in order of likelihood
     if (CommandUtil::isExecutable("resolvectl")) {
         ExecResult r = CommandUtil::execWithStatus("resolvectl", {"flush-caches"});
-        success = (r.exitCode == 0);
+        success = r.ok();
         if (!success) errorMsg = r.error;
     } else if (CommandUtil::isExecutable("systemd-resolve")) {
         ExecResult r = CommandUtil::execWithStatus("systemd-resolve", {"--flush-caches"});
-        success = (r.exitCode == 0);
+        success = r.ok();
         if (!success) errorMsg = r.error;
     } else if (CommandUtil::isExecutable("nscd")) {
         ExecResult r = CommandUtil::execWithStatus("nscd", {"-i", "hosts"});
-        success = (r.exitCode == 0);
+        success = r.ok();
         if (!success) errorMsg = r.error;
     } else {
         errorMsg = tr("No DNS cache service detected (systemd-resolved, nscd).");
@@ -345,15 +343,9 @@ void HelpersPage::onRebuildSpotlight()
         != QMessageBox::Yes)
         return;
 
-    QString errorMsg;
-    bool success = false;
-
-    try {
-        CommandUtil::sudoExec("mdutil", {"-E", "/"});
-        success = true;
-    } catch (const QString &ex) {
-        errorMsg = ex;
-    }
+    ExecResult r = CommandUtil::sudoExecWithStatus("mdutil", {"-E", "/"});
+    bool success = r.ok();
+    QString errorMsg = r.error.isEmpty() ? r.output : r.error;
 
     if (success) {
         QMessageBox::information(this, tr("Spotlight Index Rebuild Started"),
@@ -404,7 +396,7 @@ void HelpersPage::onVerifyDisk()
 
     QLabel *lblStatus = new QLabel;
     lblStatus->setObjectName("verifyDiskStatus");
-    if (result.exitCode == 0) {
+    if (result.ok()) {
         lblStatus->setText(tr("\xe2\x9c\x93 Disk appears to be OK"));
         lblStatus->setProperty("status", "success");
     } else {
@@ -445,9 +437,9 @@ void HelpersPage::onRebuildLaunchServices()
     ExecResult r = CommandUtil::execWithStatus(lsregister,
         {"-r", "-domain", "local", "-domain", "system", "-domain", "user"}, 60000);
 
-    if (r.exitCode == 0) {
+    if (r.ok()) {
         ExecResult r2 = CommandUtil::execWithStatus("killall", {"Finder"});
-        if (r2.exitCode == 0) {
+        if (r2.ok()) {
             success = true;
         } else {
             errorMsg = tr("Database rebuilt but Finder restart failed: %1").arg(r2.error);

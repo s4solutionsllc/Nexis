@@ -87,7 +87,7 @@ TrimStatus TrimWidget::fetchStatus()
         ExecResult timers = CommandUtil::execWithStatus(
             "systemctl",
             {"list-timers", "fstrim.timer", "--all", "--no-legend"}, 3000);
-        if (timers.exitCode == 0) {
+        if (timers.ok()) {
             const QStringList lines =
                 timers.output.split('\n', Qt::SkipEmptyParts);
             if (!lines.isEmpty())
@@ -102,7 +102,7 @@ TrimStatus TrimWidget::fetchStatus()
     ExecResult r = CommandUtil::execWithStatus(
         "diskutil", {"info", "-plist", "/"}, 5000);
     s.available = true;
-    if (r.exitCode == 0) {
+    if (r.ok()) {
         // Cheap text search — plist XML is structured but we only want a bool.
         const QString &o = r.output;
         // TrimForce and Trim both appear in practice. If any <true/> directly
@@ -130,15 +130,11 @@ TrimStatus TrimWidget::fetchStatus()
 #ifdef Q_OS_LINUX
 bool TrimWidget::toggleTimer(bool enable)
 {
-    if (enable) {
-        CommandUtil::sudoExec("systemctl", {"enable", "--now", "fstrim.timer"});
-    } else {
-        CommandUtil::sudoExec("systemctl", {"disable", "--now", "fstrim.timer"});
-    }
-    ExecResult verify = CommandUtil::execWithStatus(
-        "systemctl", {"is-enabled", "fstrim.timer"}, 3000);
-    const bool nowEnabled = (verify.output.trimmed() == "enabled");
-    return nowEnabled == enable;
+    // ExecResult::ok() on the pkexec'd systemctl call is authoritative — no
+    // `is-enabled` re-read needed to confirm the toggle landed (SSO-3469 / SSO-3367).
+    ExecResult r = CommandUtil::sudoExecWithStatus(
+        "systemctl", {enable ? "enable" : "disable", "--now", "fstrim.timer"});
+    return r.ok();
 }
 
 QString TrimWidget::runFstrimNow()

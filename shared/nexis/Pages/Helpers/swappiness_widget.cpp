@@ -136,15 +136,11 @@ SwappinessStatus SwappinessWidget::fetchStatus()
 bool SwappinessWidget::applySwappiness(int value, bool persist)
 {
 #ifdef Q_OS_LINUX
-    // Temporary change — verify via re-read.
-    CommandUtil::sudoExec("sysctl",
+    // ExecResult::ok() on the pkexec'd sysctl call is authoritative — no
+    // /proc re-read needed to confirm the write landed (SSO-3469 / SSO-3367).
+    ExecResult r = CommandUtil::sudoExecWithStatus("sysctl",
         {QStringLiteral("-w"), QStringLiteral("vm.swappiness=%1").arg(value)});
-
-    const QString afterRaw =
-        FileUtil::readStringFromFile("/proc/sys/vm/swappiness").trimmed();
-    bool ok = false;
-    const int after = afterRaw.toInt(&ok);
-    if (!ok || after != value)
+    if (!r.ok())
         return false;
 
     // Optional persistence.
@@ -156,8 +152,8 @@ bool SwappinessWidget::applySwappiness(int value, bool persist)
             return false;
     } else if (QFileInfo::exists(kSysctlConfPath)) {
         // User turned persistence off — remove the file.
-        CommandUtil::sudoExec("rm", {kSysctlConfPath});
-        if (QFileInfo::exists(kSysctlConfPath))
+        ExecResult rmResult = CommandUtil::sudoExecWithStatus("rm", {kSysctlConfPath});
+        if (!rmResult.ok())
             return false;
     }
     return true;

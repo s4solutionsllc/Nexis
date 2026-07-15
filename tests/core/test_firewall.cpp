@@ -1,5 +1,6 @@
 #include <QtTest>
 #include <Pages/Helpers/firewall_widget.h>
+#include <Utils/command_util.h>
 
 class TestFirewall : public QObject
 {
@@ -167,6 +168,34 @@ private slots:
     {
         auto s = FirewallWidget::parseFirewalldOutput("");
         QVERIFY(!s.available);
+    }
+
+    // --- describeExecFailure (SSO-3469: toggleFirewall's sudoExecWithStatus
+    // migration — ExecResult::ok() is now authoritative, no re-read needed) ---
+
+    void describeExecFailure_emptyOnSuccess()
+    {
+        ExecResult r;
+        r.exitCode = 0;
+        QVERIFY(r.ok());
+        QVERIFY(FirewallWidget::describeExecFailure(r).isEmpty());
+    }
+
+    void describeExecFailure_usesStderrWhenPresent()
+    {
+        ExecResult r;
+        r.exitCode = 1;
+        r.error = "Operation not permitted";
+        QCOMPARE(FirewallWidget::describeExecFailure(r), QString("Operation not permitted"));
+    }
+
+    void describeExecFailure_fallsBackToExitCodeWhenNoStderr()
+    {
+        ExecResult r;
+        r.exitCode = 127;
+        const QString msg = FirewallWidget::describeExecFailure(r);
+        QVERIFY(!msg.isEmpty());
+        QVERIFY(msg.contains("127"));
     }
 };
 

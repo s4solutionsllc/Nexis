@@ -229,7 +229,7 @@ QList<ConnectionEntry> OpenPortsWidget::fetchConnections(bool listenOnly)
     if (listenOnly)
         args << "-sTCP:LISTEN";
     ExecResult r = CommandUtil::execWithStatus("lsof", args, 10000);
-    if (r.exitCode == 0 || !r.output.isEmpty())
+    if (r.ok() || !r.output.isEmpty())
         entries = parseLsofOutput(r.output);
 #else
     QStringList args = {"-tnp"};
@@ -237,7 +237,7 @@ QList<ConnectionEntry> OpenPortsWidget::fetchConnections(bool listenOnly)
         args = {"-tlnp"};
     if (CommandUtil::isExecutable("ss")) {
         ExecResult r = CommandUtil::execWithStatus("ss", args, 10000);
-        if (r.exitCode == 0 || !r.output.isEmpty())
+        if (r.ok() || !r.output.isEmpty())
             entries = parseSsOutput(r.output, "TCP");
     }
     if (entries.isEmpty()) {
@@ -245,7 +245,7 @@ QList<ConnectionEntry> OpenPortsWidget::fetchConnections(bool listenOnly)
         if (listenOnly)
             netArgs = {"-tlnp"};
         ExecResult r = CommandUtil::execWithStatus("netstat", netArgs, 10000);
-        if (r.exitCode == 0 || !r.output.isEmpty())
+        if (r.ok() || !r.output.isEmpty())
             entries = parseSsOutput(r.output, "TCP");
     }
 #endif
@@ -517,7 +517,7 @@ void OpenPortsWidget::onVerifySignatures()
         for (const QString &path : needed) {
             ExecResult r = CommandUtil::execWithStatus(
                 "codesign", {"-dv", "--verbose=0", path}, 3000);
-            results.insert(path, r.exitCode == 0);
+            results.insert(path, r.ok());
         }
         QMetaObject::invokeMethod(this, [this, results]() {
             for (auto it = results.constBegin(); it != results.constEnd(); ++it)
