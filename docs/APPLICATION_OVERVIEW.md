@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-07 | Version 2.8.3
+> Last updated: 2026-07-15 | Version 2.8.3
 
 ---
 
@@ -853,6 +853,12 @@ At runtime, `AppManager::updateStylesheet()` reads the `.ini` file, replaces all
 - **Network:** `@networkDownloadColor` — download (RX) sparkline/bar color; `@networkUploadColor` — upload (TX) sparkline/label color
 - **Overlay/Shadow:** `@overlayBackground`, `@overlayText`, `@shadowColor` — kiosk overlay and drop shadow colors (8-digit hex `#AARRGGBB` for alpha support)
 - **Chart Series Palette:** `@chartSeries01` through `@chartSeries20` — 20 colors for `HistoryChart` data lines, with light-theme variants optimized for white backgrounds
+
+### QSS Section Organization (NEX-13727)
+
+`style.qss` is a single 2,800+ line master template shared by every page (DS §8), so each page's selectors need a clearly delimited region ahead of the UX-modernization page-by-page pass. Convention: a top-level page banner (`/****...\n    PAGE NAME\n****.../`, e.g. `DASHBOARD PAGE`, `SETTINGS`) marks the start of a page's selector block; a lighter `/* - Widget Name - */` marks a sub-section within a page (e.g. `/* - Metric Tile - */`). Contributors adding a page's selectors:
+- Must not introduce a token name that is a substring of an existing one (BUG-49) — `AppManager::updateStylesheet()` (`app_manager.cpp:188-194`) substitutes tokens sorted by descending key length, so a shorter token can silently clobber part of a longer one's name if they collide.
+- Must resolve any `@token` to its concrete value (via `sv->value("@token", fallback).toString()`) before passing it to a per-widget `setStyleSheet()` call — only the global `qApp->setStyleSheet()` pass performs `@token` substitution; a raw `@token` literal in a per-widget call is caught by `noRawTokensInPerWidgetStyleSheet()` (`tests/theme/test_theme_tokens.cpp`).
 
 ### Live Theme Refresh
 
