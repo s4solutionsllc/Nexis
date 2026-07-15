@@ -42,8 +42,11 @@ add_nexis_test(NAME UpdateInfoTests
 add_nexis_test(NAME AptSourceTests    SOURCES core/test_apt_source_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real sudoExecWithStatus write paths in
 # AptSourceToolLinux::changeSource (tee/rm) against a temp file, under the
-# NEXIS_SUDO_BYPASS=1 seam.
-add_nexis_test(NAME AptSourceToolExecSeamTests SOURCES core/test_apt_source_tool_exec_seam.cpp)
+# NEXIS_SUDO_BYPASS=1 seam. Includes apt_source_tool_linux.h directly, so
+# gate to Linux like BatteryChargeThresholdTests below.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME AptSourceToolExecSeamTests SOURCES core/test_apt_source_tool_exec_seam.cpp)
+endif()
 add_nexis_test(NAME RepoKnowledgeBaseTests SOURCES core/test_repo_knowledge_base.cpp)
 add_nexis_test(NAME RepoHealthCheckerTests SOURCES core/test_repo_health_checker.cpp LIBS Qt6::Network)
 add_nexis_test(NAME RepoRepairEngineTests SOURCES core/test_repo_repair_engine.cpp LIBS Qt6::Network)
@@ -65,7 +68,11 @@ add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real (non-overridden) PackageTool
 # runCommand/runSudoCommand seam against the migrated execWithStatus contract.
-add_nexis_test(NAME PackageToolExecSeamTests SOURCES core/test_package_tool_exec_seam.cpp)
+# Includes package_tool_linux.h directly, so gate to Linux like
+# BatteryChargeThresholdTests above.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME PackageToolExecSeamTests SOURCES core/test_package_tool_exec_seam.cpp)
+endif()
 add_nexis_test(NAME DockerToolTests   SOURCES core/test_docker_tool.cpp)
 # SSO-3383 / WI-21 / audit M2: off-thread updateProcesses() + publish pair.
 add_nexis_test(NAME ProcessInfoTests  SOURCES core/test_process_info.cpp LIBS Qt6::Concurrent)
