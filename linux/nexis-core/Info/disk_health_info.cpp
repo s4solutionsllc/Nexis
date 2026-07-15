@@ -151,27 +151,28 @@ void DiskHealthInfoLinux::refreshHealthElevatedBatch(const QStringList &devices,
         cmd += QString("smartctl -j -a %1").arg(safeDevices[i]);
     }
 
-    try {
-        // pkexec/smartctl can block for many seconds — run it without holding
-        // the mDrives mutex, then take the lock only to merge results in.
-        // WI-21: bump the timeout well past the default 30 s so a slow polkit
-        // password entry does not race the wait cap.
-        QString output = CommandUtil::exec("pkexec", {"sh", "-c", cmd},
-                                           QByteArray(), kSmartElevatedTimeoutMs);
-        QList<QByteArray> blocks = DiskHealthInfo::splitSmartctlOutput(output);
-        QMutexLocker locker(&mDrivesMutex);
-        for (int i = 0; i < blocks.size() && i < safeDevices.size(); ++i) {
-            for (int j = 0; j < mDrives.size(); ++j) {
-                if (mDrives[j].devicePath == safeDevices[i]) {
-                    DiskHealthInfo::parseSmartctlJsonInto(blocks[i], mDrives[j]);
-                    mDrives[j].needsElevation = false;
-                    deriveHealthVerdict(mDrives[j]);
-                    break;
-                }
+    // pkexec/smartctl can block for many seconds — run it without holding
+    // the mDrives mutex, then take the lock only to merge results in.
+    // WI-21: bump the timeout well past the default 30 s so a slow polkit
+    // password entry does not race the wait cap.
+    ExecResult result = CommandUtil::execWithStatus("pkexec", {"sh", "-c", cmd},
+                                                     QByteArray(), kSmartElevatedTimeoutMs);
+    if (!result.ok() && result.output.isEmpty()) {
+        qWarning() << "disk_health_info: batch SMART read failed:" << result.error;
+        return;
+    }
+
+    QList<QByteArray> blocks = DiskHealthInfo::splitSmartctlOutput(result.output);
+    QMutexLocker locker(&mDrivesMutex);
+    for (int i = 0; i < blocks.size() && i < safeDevices.size(); ++i) {
+        for (int j = 0; j < mDrives.size(); ++j) {
+            if (mDrives[j].devicePath == safeDevices[i]) {
+                DiskHealthInfo::parseSmartctlJsonInto(blocks[i], mDrives[j]);
+                mDrives[j].needsElevation = false;
+                deriveHealthVerdict(mDrives[j]);
+                break;
             }
         }
-    } catch (...) {
-        qWarning() << "Failed to batch-read SMART data";
     }
 }
 
@@ -184,19 +185,17 @@ void DiskHealthInfoLinux::refreshHealthElevated(const QString &device)
     // take the lock only to merge the parsed result back into mDrives.
     // WI-21: bump the timeout well past the default 30 s so a slow polkit
     // password entry does not race the wait cap.
-    QString output;
-    try {
-        output = CommandUtil::exec("pkexec", {"smartctl", "-j", "-a", device},
-                                   QByteArray(), kSmartElevatedTimeoutMs);
-    } catch (...) {
-        qWarning() << "Failed to read SMART data for" << device;
+    ExecResult result = CommandUtil::execWithStatus("pkexec", {"smartctl", "-j", "-a", device},
+                                                     QByteArray(), kSmartElevatedTimeoutMs);
+    if (!result.ok() && result.output.isEmpty()) {
+        qWarning() << "disk_health_info: SMART read failed for" << device << ":" << result.error;
         return;
     }
 
     QMutexLocker locker(&mDrivesMutex);
     for (int i = 0; i < mDrives.size(); ++i) {
         if (mDrives[i].devicePath == device) {
-            DiskHealthInfo::parseSmartctlJsonInto(output.toUtf8(), mDrives[i]);
+            DiskHealthInfo::parseSmartctlJsonInto(result.output.toUtf8(), mDrives[i]);
             mDrives[i].needsElevation = false;
             deriveHealthVerdict(mDrives[i]);
             break;

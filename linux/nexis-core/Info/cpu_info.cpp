@@ -99,16 +99,15 @@ double CpuInfoLinux::getAvgClock() const
     // Last resort: lscpu. Cache the "useless" verdict so we stop forking bash
     // every second on systems where lscpu returns 0.
     if (mLscpuUseful) {
-        try {
-            QString lscpuOutput = CommandUtil::exec("bash", {"-c", LSCPU_COMMAND});
-            double mhz = parseAvgClockFromLscpu(lscpuOutput);
+        ExecResult result = CommandUtil::execWithStatus("bash", {"-c", LSCPU_COMMAND});
+        if (result.ok()) {
+            double mhz = parseAvgClockFromLscpu(result.output);
             if (mhz > 0.0)
                 return mhz;
-            mLscpuUseful = false;
-        } catch (...) {
-            qWarning() << "Failed to read CPU clock frequency";
-            mLscpuUseful = false;
+        } else {
+            qWarning() << "Failed to read CPU clock frequency:" << result.error;
         }
+        mLscpuUseful = false;
     }
 
     return 0.0;

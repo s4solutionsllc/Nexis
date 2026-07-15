@@ -68,29 +68,34 @@ double CpuInfoMacOS::getAvgClock() const
     }
 
     // Last resort: look up known max frequencies by chip name.
-    try {
-        QString brand = CommandUtil::exec("sysctl", {"-n", "machdep.cpu.brand_string"}).trimmed();
-        if (brand.isEmpty())
-            brand = CommandUtil::exec("sysctl", {"-n", "hw.model"}).trimmed();
+    ExecResult brandResult = CommandUtil::execWithStatus("sysctl", {"-n", "machdep.cpu.brand_string"});
+    QString brand = brandResult.output.trimmed();
+    if (brand.isEmpty()) {
+        if (!brandResult.ok())
+            qWarning() << "cpu_info: sysctl machdep.cpu.brand_string failed:" << brandResult.error;
+        ExecResult modelResult = CommandUtil::execWithStatus("sysctl", {"-n", "hw.model"});
+        brand = modelResult.output.trimmed();
+        if (brand.isEmpty() && !modelResult.ok())
+            qWarning() << "cpu_info: sysctl hw.model failed:" << modelResult.error;
+    }
 
-        static const QMap<QString, double> knownFreqs = {
-            {"Apple M1",       3200}, {"Apple M1 Pro",   3200},
-            {"Apple M1 Max",   3200}, {"Apple M1 Ultra", 3200},
-            {"Apple M2",       3500}, {"Apple M2 Pro",   3500},
-            {"Apple M2 Max",   3500}, {"Apple M2 Ultra", 3500},
-            {"Apple M3",       4050}, {"Apple M3 Pro",   4050},
-            {"Apple M3 Max",   4050}, {"Apple M3 Ultra", 4050},
-            {"Apple M4",       4400}, {"Apple M4 Pro",   4500},
-            {"Apple M4 Max",   4500}, {"Apple M4 Ultra", 4500},
-        };
+    static const QMap<QString, double> knownFreqs = {
+        {"Apple M1",       3200}, {"Apple M1 Pro",   3200},
+        {"Apple M1 Max",   3200}, {"Apple M1 Ultra", 3200},
+        {"Apple M2",       3500}, {"Apple M2 Pro",   3500},
+        {"Apple M2 Max",   3500}, {"Apple M2 Ultra", 3500},
+        {"Apple M3",       4050}, {"Apple M3 Pro",   4050},
+        {"Apple M3 Max",   4050}, {"Apple M3 Ultra", 4050},
+        {"Apple M4",       4400}, {"Apple M4 Pro",   4500},
+        {"Apple M4 Max",   4500}, {"Apple M4 Ultra", 4500},
+    };
 
-        for (auto it = knownFreqs.constBegin(); it != knownFreqs.constEnd(); ++it) {
-            if (brand.contains(it.key(), Qt::CaseInsensitive)) {
-                mCachedClockMHz = it.value();
-                return mCachedClockMHz;
-            }
+    for (auto it = knownFreqs.constBegin(); it != knownFreqs.constEnd(); ++it) {
+        if (brand.contains(it.key(), Qt::CaseInsensitive)) {
+            mCachedClockMHz = it.value();
+            return mCachedClockMHz;
         }
-    } catch (...) { qWarning() << "Failed to read CPU clock frequency"; }
+    }
 
     mCachedClockMHz = 0.0;
     return mCachedClockMHz;

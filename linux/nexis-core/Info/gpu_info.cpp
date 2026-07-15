@@ -59,12 +59,14 @@ static QString readDeviceName(const QString &cardPath, int cardIndex, const QStr
         if (shortBusId.startsWith("0000:"))
             shortBusId = shortBusId.mid(5);
         if (!busId.isEmpty() && CommandUtil::isExecutable("lspci")) {
-            try {
-                QString lspciOut = CommandUtil::exec("lspci", {"-s", busId});
-                QString name = GpuInfo::parseLspciDeviceName(lspciOut, shortBusId);
+            ExecResult result = CommandUtil::execWithStatus("lspci", {"-s", busId});
+            if (result.ok()) {
+                QString name = GpuInfo::parseLspciDeviceName(result.output, shortBusId);
                 if (!name.isEmpty())
                     return name;
-            } catch (...) { qWarning() << "Failed to resolve GPU name via lspci"; }
+            } else {
+                qWarning() << "Failed to resolve GPU name via lspci:" << result.error;
+            }
         }
     }
 
@@ -85,12 +87,14 @@ static QString readFramebufferDeviceName(const QString &pciBusId, int cardIndex)
         QString shortBusId = pciBusId;
         if (shortBusId.startsWith("0000:"))
             shortBusId = shortBusId.mid(5);
-        try {
-            QString lspciOut = CommandUtil::exec("lspci", {"-s", pciBusId});
-            QString name = GpuInfo::parseLspciDeviceName(lspciOut, shortBusId);
+        ExecResult result = CommandUtil::execWithStatus("lspci", {"-s", pciBusId});
+        if (result.ok()) {
+            QString name = GpuInfo::parseLspciDeviceName(result.output, shortBusId);
             if (!name.isEmpty())
                 return name;
-        } catch (...) { qWarning() << "Failed to resolve framebuffer GPU name via lspci"; }
+        } else {
+            qWarning() << "Failed to resolve framebuffer GPU name via lspci:" << result.error;
+        }
     }
     return QString("GPU %1").arg(cardIndex);
 }
@@ -110,8 +114,10 @@ static QHash<QString, int> buildNvidiaIndexMap()
         {"--query-gpu=index,pci.bus_id", "--format=csv,noheader,nounits"},
         5000);
 
-    if (result.exitCode != 0)
+    if (result.exitCode != 0) {
+        qWarning() << "gpu_info: nvidia-smi PCI index query failed:" << result.error;
         return map;
+    }
 
     for (const QString &line : result.output.trimmed().split('\n', Qt::SkipEmptyParts)) {
         QStringList parts = line.split(',');
@@ -334,14 +340,15 @@ QString GpuInfoLinux::getDiagnosticReport() const
     // nvidia-smi cross-reference
     if (CommandUtil::isExecutable("nvidia-smi")) {
         report += "\nnvidia-smi devices:\n";
-        try {
-            QString smiOut = CommandUtil::exec("nvidia-smi", {"-L"});
-            QStringList lines = smiOut.trimmed().split('\n');
+        ExecResult result = CommandUtil::execWithStatus("nvidia-smi", {"-L"});
+        if (result.ok()) {
+            QStringList lines = result.output.trimmed().split('\n');
             for (const QString &line : lines) {
                 if (!line.trimmed().isEmpty())
                     report += QString("  %1\n").arg(line.trimmed());
             }
-        } catch (...) {
+        } else {
+            qWarning() << "gpu_info: failed to query nvidia-smi -L:" << result.error;
             report += "  (failed to query nvidia-smi)\n";
         }
     }

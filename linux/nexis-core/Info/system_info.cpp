@@ -13,8 +13,9 @@ SystemInfoLinux::SystemInfoLinux()
     QString model = nullptr;
     QString speed = nullptr;
 
-    try{
-        QStringList lines = CommandUtil::exec("bash",{"-c", LSCPU_COMMAND}).split('\n');
+    ExecResult lscpuResult = CommandUtil::execWithStatus("bash", {"-c", LSCPU_COMMAND});
+    if (lscpuResult.ok()) {
+        QStringList lines = lscpuResult.output.split('\n');
 
         QRegularExpression regexp("\\s+");
         QString space(" ");
@@ -49,7 +50,8 @@ SystemInfoLinux::SystemInfoLinux()
 
         this->cpuModel = model.trimmed().replace(regexp, space);
         this->cpuSpeed = speed.trimmed().replace(regexp, space);
-    } catch(QString &ex) {
+    } else {
+        qCritical() << "system_info: lscpu failed:" << lscpuResult.error;
         this->cpuModel = unknown;
         this->cpuSpeed = unknown;
     }
@@ -63,11 +65,12 @@ SystemInfoLinux::SystemInfoLinux()
     if (name.isEmpty())
         name = qgetenv("USERNAME");
 
-    try {
-        if (name.isEmpty())
-            name = CommandUtil::exec("whoami").trimmed();
-    } catch (const QString &ex) {
-        qCritical() << ex;
+    if (name.isEmpty()) {
+        ExecResult whoamiResult = CommandUtil::execWithStatus("whoami");
+        if (whoamiResult.ok())
+            name = whoamiResult.output.trimmed();
+        else
+            qCritical() << "system_info: whoami failed:" << whoamiResult.error;
     }
 
    this->username = name;

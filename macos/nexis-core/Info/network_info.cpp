@@ -21,13 +21,17 @@ void NetworkInfoMacOS::refreshDefaultInterface()
     // the interface that owns the default route – that's the one whose
     // bandwidth the user actually cares about.
     QString chosen;
-    try {
-        QString out = CommandUtil::exec("route", {"-n", "get", "default"});
+    ExecResult result = CommandUtil::execWithStatus("route", {"-n", "get", "default"});
+    if (result.ok()) {
         QRegularExpression re(R"(interface:\s*(\S+))");
-        QRegularExpressionMatch m = re.match(out);
+        QRegularExpressionMatch m = re.match(result.output);
         if (m.hasMatch())
             chosen = m.captured(1); // e.g. "en0"
-    } catch (...) { qWarning() << "Failed to detect default network interface"; }
+    } else {
+        // Called every tick (SSO-351) — no default route is a normal
+        // transient state (e.g. Wi-Fi reassociating), so log at debug.
+        qDebug() << "network_info: route -n get default failed:" << result.error;
+    }
 
     // Fallback: first interface with an IPv4/IPv6 address that isn't loopback
     if (chosen.isEmpty()) {

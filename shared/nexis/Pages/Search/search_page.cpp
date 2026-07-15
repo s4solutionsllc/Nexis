@@ -363,8 +363,8 @@ void SearchPage::on_tableFoundResults_customContextMenuRequested(const QPoint &p
                 // SSO-3365: FileSearchService now dispatches on a worker thread
                 // and emits fileOperationFinished. We collect the paths up front
                 // and react to the signal — see onFileOperationFinished — so a
-                // long delete doesn't freeze the UI or crash the slot via a
-                // thrown QString from CommandUtil::exec.
+                // long delete doesn't freeze the UI while the worker branches on
+                // CommandUtil::sudoExecWithStatus's ExecResult::ok() (SSO-3367).
                 const bool moveToTrash = action->data().toString() == "move-trash";
                 const QString currentUser = mInfoManager->getUserName();
 

@@ -17,22 +17,23 @@ AppBundleInfo readAppBundleInfo(const QString &appPath)
     if (!QFileInfo::exists(plistPath))
         return info;
 
-    try {
-        const QString json = CommandUtil::exec("/usr/bin/plutil",
-            {"-convert", "json", "-o", "-", plistPath}).trimmed();
-        const QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
-        if (doc.isNull())
-            return info;
-
-        const QJsonObject obj = doc.object();
-        info.bundleId    = obj.value("CFBundleIdentifier").toString();
-        info.displayName = obj.value("CFBundleDisplayName").toString();
-        if (info.displayName.isEmpty())
-            info.displayName = obj.value("CFBundleName").toString();
-        info.version     = obj.value("CFBundleShortVersionString").toString();
-    } catch (...) {
-        qWarning() << "Failed to parse Info.plist for" << appPath;
+    const ExecResult result = CommandUtil::execWithStatus("/usr/bin/plutil",
+        {"-convert", "json", "-o", "-", plistPath});
+    if (!result.ok()) {
+        qWarning() << "plist_util: plutil failed for" << appPath << ":" << result.error;
+        return info;
     }
+
+    const QJsonDocument doc = QJsonDocument::fromJson(result.output.trimmed().toUtf8());
+    if (doc.isNull())
+        return info;
+
+    const QJsonObject obj = doc.object();
+    info.bundleId    = obj.value("CFBundleIdentifier").toString();
+    info.displayName = obj.value("CFBundleDisplayName").toString();
+    if (info.displayName.isEmpty())
+        info.displayName = obj.value("CFBundleName").toString();
+    info.version     = obj.value("CFBundleShortVersionString").toString();
 
     return info;
 }

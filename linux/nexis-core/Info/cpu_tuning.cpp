@@ -3,6 +3,7 @@
 #include "Utils/command_util.h"
 #include "Utils/file_util.h"
 
+#include <QDebug>
 #include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
@@ -102,24 +103,6 @@ Snapshot readSnapshot()
     return s;
 }
 
-namespace {
-
-bool verifyFreqWrite(quint64 expectedMinKHz, quint64 expectedMaxKHz)
-{
-    // Read back one core — write path globs all cores so verifying one is
-    // sufficient in practice. (Mixing per-core writes in the CLI pattern
-    // would subvert this assumption; we don't.)
-    const auto indices = onlineCpuIndices();
-    if (indices.isEmpty())
-        return false;
-    const int idx = indices.first();
-    const quint64 minK = readUlongLong(cpuPath(idx, "scaling_min_freq"));
-    const quint64 maxK = readUlongLong(cpuPath(idx, "scaling_max_freq"));
-    return minK == expectedMinKHz && maxK == expectedMaxKHz;
-}
-
-} // namespace
-
 bool writeFreqRange(quint64 minKHz, quint64 maxKHz)
 {
     if (minKHz == 0 || maxKHz == 0 || minKHz > maxKHz)
@@ -133,25 +116,31 @@ bool writeFreqRange(quint64 minKHz, quint64 maxKHz)
         "&& echo %2 | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq >/dev/null")
         .arg(minKHz).arg(maxKHz);
 
-    CommandUtil::sudoExec("sh", {"-c", cmd});
-    return verifyFreqWrite(minKHz, maxKHz);
+    // FR-117 (SSO-3367/SSO-3471): sudoExecWithStatus's exit code is now
+    // authoritative for the pkexec write, replacing the sysfs read-back.
+    const ExecResult result = CommandUtil::sudoExecWithStatus("sh", {"-c", cmd});
+    if (!result.ok())
+        qWarning() << "cpu_tuning: failed to write freq range" << minKHz << "-" << maxKHz << ":" << result.error;
+    return result.ok();
 }
 
 bool writeTurbo(bool on)
 {
     if (QFileInfo::exists(kPstateNoTurbo)) {
         const int wanted = on ? 0 : 1;
-        CommandUtil::sudoExec("sh", {"-c",
+        const ExecResult result = CommandUtil::sudoExecWithStatus("sh", {"-c",
             QStringLiteral("echo %1 > %2").arg(wanted).arg(kPstateNoTurbo)});
-        const QString after = FileUtil::readStringFromFile(kPstateNoTurbo).trimmed();
-        return after == QString::number(wanted);
+        if (!result.ok())
+            qWarning() << "cpu_tuning: failed to write turbo (intel_pstate) state" << wanted << ":" << result.error;
+        return result.ok();
     }
     if (QFileInfo::exists(kCpufreqBoost)) {
         const int wanted = on ? 1 : 0;
-        CommandUtil::sudoExec("sh", {"-c",
+        const ExecResult result = CommandUtil::sudoExecWithStatus("sh", {"-c",
             QStringLiteral("echo %1 > %2").arg(wanted).arg(kCpufreqBoost)});
-        const QString after = FileUtil::readStringFromFile(kCpufreqBoost).trimmed();
-        return after == QString::number(wanted);
+        if (!result.ok())
+            qWarning() << "cpu_tuning: failed to write turbo (cpufreq boost) state" << wanted << ":" << result.error;
+        return result.ok();
     }
     return false;
 }
@@ -165,22 +154,18 @@ bool writeGovernor(int cpuIndex, const QString &governor)
         const QString cmd = QStringLiteral(
             "echo %1 | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null")
             .arg(governor);
-        CommandUtil::sudoExec("sh", {"-c", cmd});
-        // Verify against the first online cpu.
-        const auto indices = onlineCpuIndices();
-        if (indices.isEmpty())
-            return false;
-        const QString after = FileUtil::readStringFromFile(
-            cpuPath(indices.first(), "scaling_governor")).trimmed();
-        return after == governor;
+        const ExecResult result = CommandUtil::sudoExecWithStatus("sh", {"-c", cmd});
+        if (!result.ok())
+            qWarning() << "cpu_tuning: failed to write governor" << governor << "(all cores):" << result.error;
+        return result.ok();
     }
 
     const QString cmd = QStringLiteral("echo %1 > %2")
         .arg(governor).arg(cpuPath(cpuIndex, "scaling_governor"));
-    CommandUtil::sudoExec("sh", {"-c", cmd});
-    const QString after = FileUtil::readStringFromFile(
-        cpuPath(cpuIndex, "scaling_governor")).trimmed();
-    return after == governor;
+    const ExecResult result = CommandUtil::sudoExecWithStatus("sh", {"-c", cmd});
+    if (!result.ok())
+        qWarning() << "cpu_tuning: failed to write governor" << governor << "for cpu" << cpuIndex << ":" << result.error;
+    return result.ok();
 }
 
 bool writePerCoreGovernors(const QList<QPair<int, QString>> &perCore)
@@ -204,16 +189,10 @@ bool writePerCoreGovernors(const QList<QPair<int, QString>> &perCore)
     }
 
     const QString cmd = stanzas.join(" && ");
-    CommandUtil::sudoExec("sh", {"-c", cmd});
-
-    // Read-back verification.
-    for (const auto &pair : perCore) {
-        const QString after = FileUtil::readStringFromFile(
-            cpuPath(pair.first, "scaling_governor")).trimmed();
-        if (after != pair.second)
-            return false;
-    }
-    return true;
+    const ExecResult result = CommandUtil::sudoExecWithStatus("sh", {"-c", cmd});
+    if (!result.ok())
+        qWarning() << "cpu_tuning: failed to write per-core governors:" << result.error;
+    return result.ok();
 }
 
 } // namespace CpuTuning
