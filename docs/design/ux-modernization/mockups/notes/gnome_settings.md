@@ -1,0 +1,20 @@
+# GNOME Settings — prototype rationale
+
+**Status:** Deferred by maintainer (2026-07-15) — no live capture; revisit once the skeleton can be verified against screenshots from an Ubuntu machine with the page available. No work item filed this round.
+
+**Before:** **UNVERIFIED — no live capture exists anywhere.** GNOME Settings is a Linux-only page (`ToolManager::checkGnomeSettings()`-gated, `app.cpp:576-586`); it does not exist in the macOS build, and the Linux capture host is a headless server with no GNOME session and is outside the ScreenshotTests harness's 12 pages. Skeleton derived read-only from `shared/nexis/Pages/GnomeSettings/gnome_settings_page.ui` (the page shell) and its four tab `.ui` files. See CAPTURE_NOTES.md coverage row 19 and the "no live capture anywhere" log (row `gnome_settings`).
+**After:** renders/gnome_settings_{dark,light}.png
+
+**UNVERIFIED:** the control *values* shown (Color Scheme "Prefer Dark", GTK Theme "Adwaita-dark", fonts "Cantarell" / "Source Code Pro", cursor size 24, toggle on/off states, etc.) are representative GNOME defaults used to populate the skeleton, not copied from a live capture. Only the page shell, the tab set, the group set, the control set per row, and every label are `.ui`-sourced. The `<!-- UNVERIFIED … -->` banner is line 1 of the HTML.
+
+**Changes** (only the three approved dimensions):
+
+1. Each Appearance-tab `QGroupBox` (`groupThemes`, `groupFonts`, `groupInterface`, `groupClock`) becomes one DS §2 elevated section card (`@cardBgElevated`, radius 12, 1px `@borderColor`, single container shadow alpha 90 / blur 26 / offset (0,2)). Source: DS §2 (`dashboard_tile_wrapper.cpp:107-130`, `utilities.h:21-32`); `.ui` group list (`gnome_appearance_tab.ui:27,103,250,285`).
+2. Three-layer surface hierarchy — `@pageContent` behind the scroll, `@cardBgElevated` group cards, flat controls. Source: DS §1 (`values.ini:2,29,30`).
+3. Every group card gets a DS §3 header (3px ≥18px `@accentColor` accent bar + group title). A page-level accent-bar header ("GNOME Settings" + "GNOME desktop preferences" source line) sits above the tab bar. Source: DS §3 (`metric_tile_base.cpp:255-307`).
+4. Rows follow the DS §4 scale and GNOME boxed-list grouping/alignment [GNOME-HIG]: label left (9pt/600 `@color06`), control right — `@cardBg` combos (Color Scheme, GTK/Icon/Cursor Theme, Font Antialiasing, Font Hinting, Clock Format), `QFontComboBox`+size-`QSpinBox` pairs in the Fonts group (UI / Document / Monospace font, each with an `11 pt` stepper), a `QDoubleSpinBox` stepper for Text Scaling Factor (1.0), a spinbox stepper for Cursor Size (24), and toggle switches for the `QCheckBox` rows (Animations / Hot Corners on; Clock Show Seconds off; Clock Show Weekday / Show Battery Percentage on). Source: DS §4 (`style.qss:772-815`); `.ui` labels/controls (`gnome_appearance_tab.ui:33-338`).
+5. The `.ui` `tabBarLayout` (`gnome_settings_page.ui:36-144`) renders as a tab strip — **Appearance** (checked, `@accentColor`) / Window Manager / Mouse & Touchpad / Desktop — above the section cards. Only the Appearance tab's content is shown (its `.ui` is the checked/default tab); the other three tabs' `stackedWidget` pages are not populated in this skeleton. Source: `.ui` (`gnome_settings_page.ui:40-130`).
+
+**Destructive controls:** none — no tab in the GNOME Settings `.ui` defines a `danger`-role or destructive control, so `@destructiveColor` (DS §5) is not used.
+
+**Explicitly unchanged:** the Linux sidebar contents/order (matches Task 7's `apt_source_manager.html` Linux sidebar — SYSTEM section Docker → Helpers → System Logs → APT Repository Manager (badge 25) → GNOME Settings → Settings, per `app.cpp:244-270`, and "Uninstaller" rather than macOS's "Applications"), here with the **GNOME Settings** row highlighted and the APT row's active state/badge unchanged as a normal row (CAPTURE_NOTES.md gotcha #5 applies to the Linux harness captures, but this page has no capture — the highlight is authored directly to the correct page); the tab set, the group set, every control type, and all labels.

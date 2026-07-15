@@ -1,0 +1,109 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Settings</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<script>
+  const t = new URLSearchParams(location.search).get("theme");
+  if (t) document.documentElement.dataset.theme = t;
+</script>
+<div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar__brand"><span class="sidebar__wordmark">NEXIS</span><svg class="sidebar__collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6M6 4v16"/></svg></div>
+  <div class="sidebar__scroll">
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>Hardware Info</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 15 8 9 12 13 16 5 21 12"/></svg><span>Resources</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V12M10 20V8M16 20V4M22 20h-20"/></svg><span>Network Usage</span></a>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label"><span>Manage</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>System Cleaner</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Disk Tools</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><span>Search</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg><span>Processes</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h7M16 18h4"/><circle cx="15" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="13" cy="18" r="2"/></svg><span>Services</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 1 5 4 5 8l-2 6H9l-2-6c0-4 2-7 5-8z"/><circle cx="12" cy="9" r="1.5"/><path d="M9 19l-1 2M15 19l1 2"/></svg><span>Startup Apps</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span>Boot Analysis</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg><span>Applications</span></a>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label"><span>System</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6a4 4 0 0 0-5 5L3 18l3 3 7-7a4 4 0 0 0 5-5l-3 3-2-2z"/></svg><span>Helpers</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>System Logs</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg><span>Homebrew</span><span class="nav-badge">3</span></a>
+    <a class="nav-item nav-item--active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1M2 12h3M19 12h3"/></svg><span>Settings</span></a>
+    <div class="sidebar__foot">v2.8.3</div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>Feedback</span></a>
+  </div>
+</aside>
+  <main class="content">
+    <!-- change 3: DS §3 header anatomy (accent bar + title + source line) added above the scrolling form -->
+    <div class="toolbar">
+      <div class="page-header">
+        <div class="accent-bar" style="background:var(--accentColor)"></div>
+        <div><div class="page-title">Settings</div><div class="page-sub">Preferences and alerts</div></div>
+      </div>
+    </div>
+    <!-- change 1+2: each QGroupBox → DS §2 elevated section card with DS §3 accent-bar header; label/field rows DS §4 [HIG-MACOS] -->
+    <div class="form-scroll">
+
+      <!-- General (settings_page.ui gridGeneral) -->
+      <div class="card form-card">
+        <div class="form-card__head"><div class="accent-bar"></div><div class="form-card__title">General</div></div>
+        <div class="form-row"><div class="form-label">Language</div><div class="form-row__spacer"></div><div class="select select--wide"><span>English</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        <div class="form-row"><div class="form-label">Start Page</div><div class="form-row__spacer"></div><div class="select select--wide"><span>Dashboard</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        <div class="form-row"><div class="form-label">Default Disk</div><div class="form-row__spacer"></div><div class="select select--wide"><span>/dev/disk3s1s1&nbsp;&nbsp;(Macintosh HD)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Start Nexis on boot</span></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Skip quit confirmation dialog</span></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Minimize to system tray on close</span></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Start minimized in system tray</span></div>
+        <div class="opt-row"><span class="toggle"></span><span class="opt-row__label">Show Dashboard system summary and status bar</span></div>
+      </div>
+
+      <!-- Appearance (settings_page.ui gridAppearance) -->
+      <div class="card form-card">
+        <div class="form-card__head"><div class="accent-bar"></div><div class="form-card__title">Appearance</div></div>
+        <div class="form-row"><div class="form-label">Color Scheme</div><div class="form-row__spacer"></div><div class="select select--wide"><span>Auto</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        <div class="form-row"><div class="form-label">Font</div><div class="form-row__spacer"></div><div class="select select--wide"><span>Inter (Recommended)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+        <div class="form-row"><div class="form-label">Tray Icon Style</div><div class="form-row__spacer"></div><div class="select select--wide"><span>Color (Default)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+      </div>
+
+      <!-- Alerts (settings_page.ui gridAlerts) -->
+      <div class="card form-card">
+        <div class="form-card__head"><div class="accent-bar"></div><div class="form-card__title">Alerts</div></div>
+        <div class="form-hint">Show a tray warning when usage exceeds the threshold</div>
+        <div class="form-row"><div class="form-label">CPU Usage</div><div class="form-row__spacer"></div><div class="stepper"><div class="stepper__val">0 %</div><div class="stepper__btns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div></div>
+        <div class="form-row"><div class="form-label">Memory Usage</div><div class="form-row__spacer"></div><div class="stepper"><div class="stepper__val">0 %</div><div class="stepper__btns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div></div>
+        <div class="form-row"><div class="form-label">Disk Usage</div><div class="form-row__spacer"></div><div class="stepper"><div class="stepper__val">0 %</div><div class="stepper__btns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div></div>
+        <div class="form-row"><div class="form-label">Battery Health</div><div class="form-row__spacer"></div><div class="stepper"><div class="stepper__val">0 %</div><div class="stepper__btns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div></div>
+        <div class="opt-row"><span class="toggle"></span><span class="opt-row__label">Enable disk health alerts</span></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Notify when system updates are available</span></div>
+      </div>
+
+      <!-- Tools (settings_page.ui gridTools) — below the capture fold, .ui-derived -->
+      <div class="card form-card">
+        <div class="form-card__head"><div class="accent-bar"></div><div class="form-card__title">Tools</div></div>
+        <div class="form-row"><div class="form-label">Disk Analyzer</div><div class="form-row__spacer"></div><div class="select select--wide"><span>Auto (Detect)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+      </div>
+
+      <!-- Scheduled Cleaning (settings_page.ui groupScheduledCleaning) — below the capture fold, .ui-derived. Manage/View buttons are accessibleName="primary" → @accentColor; no destructive control on this page. -->
+      <div class="card form-card">
+        <div class="form-card__head"><div class="accent-bar"></div><div class="form-card__title">Scheduled Cleaning</div></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Enable automatic weekly cleaning</span><span class="form-row__spacer"></span><span class="pill pill--neutral">No schedules active</span></div>
+        <div class="form-row" style="gap:10px; padding:8px 0 4px">
+          <button class="btn btn--primary">Manage Schedules…</button>
+          <button class="btn btn--primary">View Cleaning History</button>
+          <div class="form-row__spacer"></div>
+        </div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Notify when junk exceeds</span><div class="stepper"><div class="stepper__val">1 GB</div><div class="stepper__btns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Show notification after scheduled clean</span></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Create restore point before cleaning</span></div>
+        <div class="opt-row"><span class="toggle toggle--off"></span><span class="opt-row__label">Auto-clean old Downloads</span></div>
+        <div class="sub-row"><span class="sub-row__label">Folder:</span><input class="field field--grow" value="~/Downloads" readonly><button class="btn">Browse…</button></div>
+        <div class="sub-row"><span class="sub-row__label">Move files older than</span><div class="stepper"><div class="stepper__val">30 days</div><div class="stepper__btns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div></div>
+      </div>
+
+      <!-- Footer credit (settings_page.ui lblCreatedBy) -->
+      <div class="credit-row">Nexis v2.8.3 &nbsp;<a href="#">S4 Solutions, LLC</a></div>
+    </div>
+  </main>
+</div>

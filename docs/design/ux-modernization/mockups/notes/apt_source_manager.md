@@ -1,0 +1,17 @@
+# APT Source Manager — prototype rationale
+
+**Status:** Deferred by maintainer (2026-07-15) — no live capture; revisit once the skeleton can be verified against screenshots from an Ubuntu machine with the page available. No work item filed this round.
+
+**Before:** UNVERIFIED — no live capture exists anywhere (Linux-only page, outside the ScreenshotTests harness, not manually capturable on the headless Linux host). Skeleton derived read-only from `linux/nexis/Pages/AptSourceManager/apt_source_manager_page.ui` and `apt_source_repository_item.ui`. See CAPTURE_NOTES.md coverage row 10 and the "no live capture anywhere" log.
+**After:** renders/apt_source_manager_{dark,light}.png
+
+**UNVERIFIED:** the row data (repository lines) is representative standard-Ubuntu APT source content used to populate the boxed list, not copied from a live capture; only the page skeleton, control set, and labels are `.ui`-sourced.
+
+**Changes:**
+1. Rendered the `listWidgetAptSources` repository list as one elevated container card (DS §2 recipe) with flat `@cardBg` rows — a GNOME-style boxed list — replacing the per-row `Utilities::addDropShadow(this, 30, 10)` each `AptSourceRepositoryItem` currently applies. Source: DS §2 (`dashboard_tile_wrapper.cpp:107-130`) + DS §7 (container-level shadow, supersedes `apt_source_repository_item.cpp:29`); boxed-list container convention [GNOME-HIG] (sources.md). Evidence: renders/apt_source_manager_dark.png.
+2. Three-layer surface hierarchy (`@pageContent` / `@cardBgElevated` container / `@cardBg` rows). Source: DS §1 (`values.ini:2,29,30`).
+3. Toolbar rebuilt on header anatomy: 3px accent bar + "APT Repositories" title + the `.ui`'s own "Select to delete or edit." info label (`lblAptSourceSelectInfo`) folded into the muted source line, keeping the captured Search field (`txtSearchAptSource`, placeholder "Search…"). Source: DS §3 (`metric_tile_base.cpp:255-307`); DS §4 (`style.qss:772-815`).
+4. Each repository row keeps its `.ui` structure — icon + `deb …` source line (9pt/600 title role) + the enable toggle (`checkAptSource`, an iconSize 45×23 switch-style checkbox) — unchanged as an affordance; one row is shown in the disabled/off toggle state. Source: DS §4 typography (`style.qss:772-815`); DS §7 (`style.qss:328-350`).
+5. Rebuilt the bottom action bar directly from `apt_source_manager_page.ui`'s `horizontalLayout_2`: Edit + Delete on the left, then the `txtAptSource` source input, the "Enable Source" circle checkbox (`checkEnableSource`, accessibleName "circle"), "Add Repository", and Cancel. Primary buttons use `@accentColor`; the two `danger`-role buttons (Delete, Cancel) use `@destructiveColor`. Source: `.ui` (`apt_source_manager_page.ui` rows 200-353, accessibleName "primary"/"danger"/"circle"); DS §5 status colors (`style.qss:2421-2435`).
+
+**Explicitly unchanged:** Linux sidebar contents/order (SYSTEM section Docker → Helpers → System Logs → **APT Repository Manager** (highlighted, badge 25) → GNOME Settings → Settings, per `app.cpp:243-270`); the Search field; the enable toggle per row; the Edit / Delete / source-input / Enable Source / Add Repository / Cancel action set and its `.ui` order. The `.ui` also defines a "Not Found APT Repositories" empty widget (`notFoundWidget` / `lblNotFound`) for the zero-repository case — under DS §5 that would upgrade to the full icon+explanation+action empty state [NNG-EMPTY], but the prototype shows the populated boxed-list state, so it is not rendered here.

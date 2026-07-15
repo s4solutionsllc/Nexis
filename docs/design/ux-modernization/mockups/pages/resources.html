@@ -1,0 +1,174 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Resources</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<script>
+  const t = new URLSearchParams(location.search).get("theme");
+  if (t) document.documentElement.dataset.theme = t;
+</script>
+<div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar__brand"><span class="sidebar__wordmark">NEXIS</span><svg class="sidebar__collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6M6 4v16"/></svg></div>
+  <div class="sidebar__scroll">
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>Hardware Info</span></a>
+    <a class="nav-item nav-item--active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 15 8 9 12 13 16 5 21 12"/></svg><span>Resources</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V12M10 20V8M16 20V4M22 20h-20"/></svg><span>Network Usage</span></a>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label"><span>Manage</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>System Cleaner</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Disk Tools</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><span>Search</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg><span>Processes</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h7M16 18h4"/><circle cx="15" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="13" cy="18" r="2"/></svg><span>Services</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 1 5 4 5 8l-2 6H9l-2-6c0-4 2-7 5-8z"/><circle cx="12" cy="9" r="1.5"/><path d="M9 19l-1 2M15 19l1 2"/></svg><span>Startup Apps</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span>Boot Analysis</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg><span>Applications</span></a>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label"><span>System</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6a4 4 0 0 0-5 5L3 18l3 3 7-7a4 4 0 0 0 5-5l-3 3-2-2z"/></svg><span>Helpers</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>System Logs</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg><span>Homebrew</span><span class="nav-badge">3</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1M2 12h3M19 12h3"/></svg><span>Settings</span></a>
+    <div class="sidebar__foot">v2.8.3</div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>Feedback</span></a>
+  </div>
+</aside>
+  <main class="content">
+    <div class="chart-scroll">
+
+      <!-- change 1+2+3: DS §2 elevated card + DS §3 accent-bar header wrapping each history chart -->
+      <div class="card chart-card">
+        <div class="chart-head">
+          <div class="accent-bar" style="background:var(--cpuColor)"></div>
+          <div class="chart-title">History of CPU</div>
+          <div class="chart-head__spacer"></div>
+          <button class="chart-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
+        <!-- DS §6 legend: 10 series swatches @chartSeries01…10 (copied from capture) -->
+        <div class="chart-legend">
+          <span class="chart-swatch" style="background:var(--chartSeries01)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries02)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries03)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries04)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries05)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries06)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries07)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries08)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries09)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries10)"></span>
+        </div>
+        <svg class="chart-surface" viewBox="0 0 800 206" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect class="chart-bg" x="54" y="10" width="734" height="166"/>
+          <line class="chart-grid" x1="54" y1="10"  x2="788" y2="10"/>
+          <line class="chart-grid" x1="54" y1="51.5" x2="788" y2="51.5"/>
+          <line class="chart-grid" x1="54" y1="93"  x2="788" y2="93"/>
+          <line class="chart-grid" x1="54" y1="134.5" x2="788" y2="134.5"/>
+          <line class="chart-grid" x1="237.5" y1="10" x2="237.5" y2="176"/>
+          <line class="chart-grid" x1="421"   y1="10" x2="421"   y2="176"/>
+          <line class="chart-grid" x1="604.5" y1="10" x2="604.5" y2="176"/>
+          <text class="chart-axis-label" x="48" y="14"  text-anchor="end">100.0</text>
+          <text class="chart-axis-label" x="48" y="55.5" text-anchor="end">75.0</text>
+          <text class="chart-axis-label" x="48" y="97"  text-anchor="end">50.0</text>
+          <text class="chart-axis-label" x="48" y="138.5" text-anchor="end">25.0</text>
+          <text class="chart-axis-label" x="48" y="180" text-anchor="end">0.0</text>
+          <text class="chart-axis-label" x="54"  y="196" text-anchor="middle">60.0</text>
+          <text class="chart-axis-label" x="237.5" y="196" text-anchor="middle">45.0</text>
+          <text class="chart-axis-label" x="421"   y="196" text-anchor="middle">30.0</text>
+          <text class="chart-axis-label" x="604.5" y="196" text-anchor="middle">15.0</text>
+          <text class="chart-axis-label" x="788" y="196" text-anchor="middle">0.0</text>
+        </svg>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-head">
+          <div class="accent-bar" style="background:var(--cpuColor)"></div>
+          <div class="chart-title">History of CPU Load Averages</div>
+          <div class="chart-head__spacer"></div>
+          <button class="chart-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-swatch" style="background:var(--chartSeries01)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries02)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries03)"></span>
+        </div>
+        <svg class="chart-surface" viewBox="0 0 800 206" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect class="chart-bg" x="54" y="10" width="734" height="166"/>
+          <line class="chart-grid" x1="54" y1="10"  x2="788" y2="10"/>
+          <line class="chart-grid" x1="54" y1="51.5" x2="788" y2="51.5"/>
+          <line class="chart-grid" x1="54" y1="93"  x2="788" y2="93"/>
+          <line class="chart-grid" x1="54" y1="134.5" x2="788" y2="134.5"/>
+          <line class="chart-grid" x1="237.5" y1="10" x2="237.5" y2="176"/>
+          <line class="chart-grid" x1="421"   y1="10" x2="421"   y2="176"/>
+          <line class="chart-grid" x1="604.5" y1="10" x2="604.5" y2="176"/>
+          <text class="chart-axis-label" x="48" y="14"  text-anchor="end">1.00</text>
+          <text class="chart-axis-label" x="48" y="55.5" text-anchor="end">0.75</text>
+          <text class="chart-axis-label" x="48" y="97"  text-anchor="end">0.50</text>
+          <text class="chart-axis-label" x="48" y="138.5" text-anchor="end">0.25</text>
+          <text class="chart-axis-label" x="48" y="180" text-anchor="end">0.00</text>
+          <text class="chart-axis-label" x="54"  y="196" text-anchor="middle">60.0</text>
+          <text class="chart-axis-label" x="237.5" y="196" text-anchor="middle">45.0</text>
+          <text class="chart-axis-label" x="421"   y="196" text-anchor="middle">30.0</text>
+          <text class="chart-axis-label" x="604.5" y="196" text-anchor="middle">15.0</text>
+          <text class="chart-axis-label" x="788" y="196" text-anchor="middle">0.0</text>
+        </svg>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-head">
+          <div class="accent-bar" style="background:var(--gpuColor)"></div>
+          <div class="chart-title">History of GPU</div>
+          <div class="chart-head__spacer"></div>
+          <button class="chart-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-swatch" style="background:var(--chartSeries01)"></span>
+        </div>
+        <svg class="chart-surface" viewBox="0 0 800 206" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect class="chart-bg" x="54" y="10" width="734" height="166"/>
+          <line class="chart-grid" x1="54" y1="10"  x2="788" y2="10"/>
+          <line class="chart-grid" x1="54" y1="51.5" x2="788" y2="51.5"/>
+          <line class="chart-grid" x1="54" y1="93"  x2="788" y2="93"/>
+          <line class="chart-grid" x1="54" y1="134.5" x2="788" y2="134.5"/>
+          <line class="chart-grid" x1="237.5" y1="10" x2="237.5" y2="176"/>
+          <line class="chart-grid" x1="421"   y1="10" x2="421"   y2="176"/>
+          <line class="chart-grid" x1="604.5" y1="10" x2="604.5" y2="176"/>
+          <text class="chart-axis-label" x="48" y="14"  text-anchor="end">100.0</text>
+          <text class="chart-axis-label" x="48" y="55.5" text-anchor="end">75.0</text>
+          <text class="chart-axis-label" x="48" y="97"  text-anchor="end">50.0</text>
+          <text class="chart-axis-label" x="48" y="138.5" text-anchor="end">25.0</text>
+          <text class="chart-axis-label" x="48" y="180" text-anchor="end">0.0</text>
+          <text class="chart-axis-label" x="54"  y="196" text-anchor="middle">60.0</text>
+          <text class="chart-axis-label" x="237.5" y="196" text-anchor="middle">45.0</text>
+          <text class="chart-axis-label" x="421"   y="196" text-anchor="middle">30.0</text>
+          <text class="chart-axis-label" x="604.5" y="196" text-anchor="middle">15.0</text>
+          <text class="chart-axis-label" x="788" y="196" text-anchor="middle">0.0</text>
+        </svg>
+      </div>
+
+      <!-- History of Disk Read Write: axis labels were below the fold in the capture,
+           so only the visible chrome is reproduced (title + 2 series swatches +
+           empty plot surface with sibling-consistent vertical gridlines). -->
+      <div class="card chart-card">
+        <div class="chart-head">
+          <div class="accent-bar" style="background:var(--diskColor)"></div>
+          <div class="chart-title">History of Disk Read Write</div>
+          <div class="chart-head__spacer"></div>
+          <button class="chart-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-swatch" style="background:var(--chartSeries01)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries02)"></span>
+        </div>
+        <svg class="chart-surface" viewBox="0 0 800 176" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect class="chart-bg" x="54" y="10" width="734" height="156"/>
+          <line class="chart-grid" x1="237.5" y1="10" x2="237.5" y2="166"/>
+          <line class="chart-grid" x1="421"   y1="10" x2="421"   y2="166"/>
+          <line class="chart-grid" x1="604.5" y1="10" x2="604.5" y2="166"/>
+        </svg>
+      </div>
+
+    </div>
+  </main>
+</div>

@@ -1,0 +1,363 @@
+/* Nexis mockup base — encodes DESIGN_SYSTEM.md recipes. Load tokens.css first. */
+* { box-sizing: border-box; margin: 0; }
+body {
+  background: var(--pageContent);
+  color: var(--color05);
+  font: 500 12px/1.45 -apple-system, "Segoe UI", "Noto Sans", sans-serif;
+}
+/* DS §2 — elevated card: dashboard_tile_wrapper.cpp:107-130, addDropShadow(90,26) */
+.card {
+  background: var(--cardBgElevated);
+  border: 1px solid var(--borderColor);
+  border-radius: 12px;
+  box-shadow: 0 2px 26px rgba(0, 0, 0, 0.35); /* alpha 90/255 */
+  margin: 8px;                                 /* shadow room */
+  padding: 12px 14px 10px 14px;                /* Qt margins L,T,R,B = 14,12,14,10 → CSS T,R,B,L */
+}
+.card--flat { box-shadow: none; background: var(--cardBg); }
+/* DS §3 — header anatomy: metric_tile_base.cpp:255-307 */
+.section-header { display: flex; gap: 8px; align-items: flex-start; }
+.accent-bar { width: 3px; min-height: 26px; border-radius: 1px; background: var(--accentColor); flex: none; }
+/* DS §4 — typography scale: style.qss:772-815 */
+.t-title { font-size: 9pt; font-weight: 600; color: var(--color06); }
+.t-meta  { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); }
+.t-hero  { font-size: 14pt; font-weight: 700; color: var(--color05); }
+/* DS §5 — pill */
+.pill {
+  display: inline-block; font-size: 8pt; padding: 1px 6px;
+  border-radius: 8px; background: var(--chartGridColor); color: var(--tertiaryText);
+}
+
+/* ============================================================
+   Task 6 additions (append-only) — shared shell / toolbar / table
+   classes for the six table-centric pages. Every rule is
+   token-only and cites the DS § it encodes.
+   ============================================================ */
+
+/* App shell + surface layering (DS §1: @sidebar / @pageContent) */
+.app-shell { display: flex; height: 100vh; overflow: hidden; }
+.sidebar {
+  width: 206px; flex: none; background: var(--sidebar);
+  border-right: 1px solid var(--sidebarDivider);
+  display: flex; flex-direction: column; padding: 14px 12px 8px; overflow: hidden;
+}
+.sidebar__brand {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 4px 10px; border-bottom: 1px solid var(--sidebarDivider); margin-bottom: 8px;
+}
+.sidebar__wordmark { color: var(--accentColor); font-weight: 800; font-size: 15px; letter-spacing: 2px; }
+.sidebar__collapse { color: var(--color06); width: 18px; height: 18px; }
+.sidebar__scroll { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 1px; }
+.nav-group-label {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 8pt; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--tertiaryText); padding: 10px 8px 4px;
+}
+.nav-group-label svg { width: 12px; height: 12px; }
+.nav-divider { height: 1px; background: var(--sidebarDivider); margin: 8px 4px; }
+.nav-item {
+  position: relative; display: flex; align-items: center; gap: 11px;
+  padding: 6px 10px; border-radius: 8px; color: var(--color06);
+  font-size: 9pt; font-weight: 500; text-decoration: none;
+}
+.nav-item svg { width: 16px; height: 16px; flex: none; }
+.nav-item--active { background: var(--accentBgTint); color: var(--accentColor); font-weight: 600; }
+.nav-item--active::before {
+  content: ""; position: absolute; left: -4px; top: 5px; bottom: 5px;
+  width: 3px; border-radius: 1px; background: var(--accentColor);
+}
+.nav-badge {
+  margin-left: auto; background: var(--successColor); color: var(--overlayText);
+  font-size: 8pt; font-weight: 600; padding: 1px 7px; border-radius: 8px;
+}
+.sidebar__foot { font-size: 8pt; color: var(--tertiaryText); padding: 6px 8px 2px; }
+
+/* Content column (DS §1 base surface @pageContent) */
+.content { flex: 1; display: flex; flex-direction: column; background: var(--pageContent); overflow: hidden; }
+
+/* Toolbar / page-header anatomy (DS §3 margins 14,12,14,10; header spacing 8) */
+.toolbar { display: flex; align-items: center; gap: 12px; padding: 14px 16px 12px; }
+.toolbar__spacer { flex: 1; }
+.page-header { display: flex; gap: 8px; align-items: flex-start; }
+.page-header .accent-bar { min-height: 22px; }
+.page-title { font-size: 12pt; font-weight: 600; color: var(--color05); line-height: 1.15; }
+.page-sub { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); margin-top: 2px; }
+
+/* Controls */
+.field { background: var(--cardBg); border: 1px solid var(--borderColor); border-radius: 8px; padding: 6px 10px; color: var(--color05); font-size: 9pt; font-family: inherit; }
+.field::placeholder { color: var(--tertiaryText); }
+.field--grow { flex: 1; }
+.select { background: var(--cardBg); border: 1px solid var(--borderColor); border-radius: 8px; padding: 6px 10px; color: var(--color05); font-size: 9pt; display: flex; align-items: center; gap: 8px; }
+.select svg { width: 12px; height: 12px; color: var(--tertiaryText); }
+.btn { background: var(--cardBg); border: 1px solid var(--borderColor); border-radius: 8px; padding: 6px 12px; color: var(--color05); font-size: 9pt; font-weight: 500; }
+.btn--primary { background: var(--accentColor); border: 1px solid var(--accentColor); color: var(--overlayText); font-weight: 600; }
+.icon-btn { width: 28px; height: 28px; border: 1px solid var(--borderColor); border-radius: 8px; background: transparent; color: var(--color06); display: flex; align-items: center; justify-content: center; }
+.icon-btn svg { width: 15px; height: 15px; }
+.tab { background: var(--cardBg); border: 1px solid var(--borderColor); border-radius: 8px; padding: 7px 14px; color: var(--color05); font-size: 9pt; font-weight: 500; }
+.tab--active { background: var(--accentColor); border-color: var(--accentColor); color: var(--overlayText); font-weight: 600; }
+.link-toggle { color: var(--accentColor); font-size: 9pt; font-weight: 600; background: transparent; border: none; }
+.radio { display: inline-flex; align-items: center; gap: 8px; color: var(--color05); font-size: 9pt; }
+.radio__dot { width: 15px; height: 15px; border: 2px solid var(--borderColor); border-radius: 50%; flex: none; }
+
+/* Elevated table container (DS §2 chrome, DS §7 shadow on container, not rows) */
+.card-region { flex: 1; overflow: hidden; padding: 0 8px 8px; display: flex; }
+.card--table { flex: 1; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.table-scroll { flex: 1; overflow: hidden; }
+
+/* Data table — flat rows inside the one elevated card (DS §7) */
+.data-table { width: 100%; border-collapse: collapse; font-size: 9pt; table-layout: fixed; }
+.data-table thead th {
+  position: sticky; top: 0; background: var(--cardBgElevated);
+  text-align: left; font-weight: 600; color: var(--color06);
+  padding: 10px 14px; border-bottom: 1px solid var(--borderColor); white-space: nowrap;
+}
+.data-table th .sort { color: var(--tertiaryText); margin-left: 6px; }
+.data-table tbody td { padding: 9px 14px; border-bottom: 1px solid var(--borderColor); color: var(--color05); }
+.data-table tbody tr:nth-child(even) { background: var(--cardBg); }   /* zebra via DS §1 flat-row surface */
+.data-table tbody tr:hover { background: var(--accentBgTint); }        /* hover-highlight [NNG-TABLES] */
+.data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.data-table .muted { color: var(--tertiaryText); }
+.cell-clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; white-space: nowrap; }
+
+/* Status pills (DS §5 [status="…"]) — colored text on the neutral pill track */
+.pill--info    { color: var(--infoColor); }
+.pill--success { color: var(--successColor); }
+.pill--warning { color: var(--warningColor); }
+.pill--error   { color: var(--destructiveColor); }
+.pill--neutral, .pill--dimmed { color: var(--tertiaryText); }
+
+/* Footers */
+.table-footer { padding: 9px 16px; font-size: 9pt; color: var(--tertiaryText); border-top: 1px solid var(--borderColor); }
+.range-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; font-size: 9pt; color: var(--color05); }
+.range-row input[type=range] { accent-color: var(--accentColor); flex: 0 0 220px; }
+.footer-bar { display: flex; justify-content: center; padding: 14px; }
+
+/* Empty state (DS §5 / [NNG-EMPTY]) — icon + explanation + next action */
+.empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 40px 24px; }
+.empty-state svg { width: 40px; height: 40px; color: var(--tertiaryText); opacity: .75; }
+.empty-state__title { font-size: 11pt; font-weight: 600; color: var(--color06); }
+.empty-state__hint { font-size: 9pt; color: var(--tertiaryText); max-width: 380px; line-height: 1.5; }
+
+/* Info key-value cards (hardware_info) */
+.hw-scroll { flex: 1; overflow: hidden; padding: 0 8px 8px; }
+.section-title { display: flex; gap: 8px; align-items: center; margin: 12px 8px 0; }
+.section-title .accent-bar { min-height: 16px; }
+.section-title span { font-size: 11pt; font-weight: 600; color: var(--color05); }
+.kv-row { display: flex; padding: 6px 2px; font-size: 9pt; }
+.kv-row + .kv-row { border-top: 1px solid var(--borderColor); }
+.kv-label { width: 190px; flex: none; font-weight: 600; color: var(--color06); }
+.kv-val { color: var(--color05); }
+
+/* Group / tree row (uninstaller) */
+.group-head { padding: 10px 14px; font-size: 9pt; font-weight: 600; color: var(--color06); background: var(--cardBgElevated); border-bottom: 1px solid var(--borderColor); }
+.group-row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; font-size: 9pt; font-weight: 600; color: var(--color05); border-bottom: 1px solid var(--borderColor); }
+.group-row svg { width: 12px; height: 12px; color: var(--tertiaryText); }
+
+/* ============================================================
+   Task 7 additions (append-only) — list-of-rows pages
+   (services, startup_apps, apt_source_manager). Flat @cardBg
+   rows inside the one elevated container (DS §7 — the shadow
+   lives on the container, never per row, superseding the
+   per-row addDropShadow in service_item.cpp:30 /
+   apt_source_repository_item.cpp:29). Token-only.
+   ============================================================ */
+
+/* Flat row (DS §1 flat-row surface @cardBg; DS §7 no per-row shadow) */
+.list-scroll { flex: 1; overflow: hidden; }
+.list-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; border-bottom: 1px solid var(--borderColor);
+  background: var(--cardBg);
+}
+.list-row:last-child { border-bottom: none; }
+.list-row:hover { background: var(--accentBgTint); }        /* hover-highlight [NNG-TABLES] */
+.list-row__icon {
+  width: 28px; height: 28px; flex: none; border-radius: 7px;
+  background: var(--chartGridColor); color: var(--tertiaryText);
+  display: flex; align-items: center; justify-content: center;
+}
+.list-row__icon svg { width: 16px; height: 16px; }
+.list-row__main { flex: 1; min-width: 0; }
+.list-row__title { font-size: 9pt; font-weight: 600; color: var(--color05); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }  /* DS §4 title role */
+.list-row__id { font-weight: 500; color: var(--tertiaryText); }                 /* muted secondary identifier */
+.list-row__sub { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }  /* DS §4 meta role */
+.list-row__actions { display: flex; align-items: center; gap: 12px; flex: none; }
+
+/* Borderless per-row action affordance (unchanged from capture — pencil / remove) */
+.row-action { width: 26px; height: 26px; border: none; background: transparent; color: var(--color06); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.row-action svg { width: 16px; height: 16px; }
+
+/* Toggle switch affordance (unchanged from capture — green "on" @successColor) */
+.toggle { width: 42px; height: 24px; border-radius: 12px; background: var(--successColor); position: relative; flex: none; }
+.toggle::after { content: ""; position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--overlayText); }
+.toggle--off { background: var(--chartGridColor); }
+.toggle--off::after { right: auto; left: 3px; }
+
+/* Group heading between flat rows (startup_apps "User Agents" / "System Agents") */
+.list-group-label { padding: 12px 16px 6px; font-size: 8pt; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--tertiaryText); background: var(--cardBg); }
+
+/* Danger button (apt Delete / Cancel; startup "Repair BTM…") */
+.btn--danger { background: var(--destructiveColor); border-color: var(--destructiveColor); color: var(--overlayText); font-weight: 600; }
+
+/* Bottom action bar (apt_source_manager edit/delete/add/cancel row) */
+.action-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-top: 1px solid var(--sidebarDivider); }
+.action-bar__spacer { flex: 1; }
+
+/* ============================================================
+   Task 8 additions (append-only) — tree / stacked-tool pages
+   (system_cleaner, disk_tools, docker, helpers, homebrew).
+   Every rule is token-only and cites the DS § it encodes.
+   ============================================================ */
+
+/* Monospace output/code stack — fixed JetBrains Mono chain from
+   app_manager.cpp:208-209 (@monoFontFamily is a QSS-substituted string,
+   NOT a values.ini token). Used for path source-lines, tree cells,
+   package/version cells. */
+.mono-code { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+/* DS §6 — progress track/fill (static, no animation per DS §9-2):
+   track @chartGridColor, fill @accentColor, radius 2, height 4. */
+.progress-track { height: 4px; border-radius: 2px; background: var(--chartGridColor); margin: 0 16px 8px; overflow: hidden; }
+.progress-fill  { height: 100%; border-radius: 2px; background: var(--accentColor); }
+
+/* System Cleaner — category tiles (DS §2 elevated card, DS §7 no per-row
+   shadow: shadow lives on each tile container). Reuses .card chrome; the
+   grid gap supplies clearance so per-tile margin is dropped. */
+.category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px 12px; overflow: auto; align-content: start; flex: 1; }
+.cat-card { margin: 0; padding: 14px; display: flex; align-items: flex-start; gap: 14px; }
+.cat-card__main { flex: 1; min-width: 0; }
+.cat-card__title { font-size: 9pt; font-weight: 600; color: var(--color05); }                 /* DS §4 title role */
+.cat-card__src { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }  /* DS §4 meta role */
+.cat-card__collapse { border: none; background: transparent; color: var(--tertiaryText); font-size: 15px; line-height: 1; padding: 0 2px; flex: none; }
+.recover-block { display: flex; flex-direction: column; gap: 2px; }
+.recover-label { font-size: 8pt; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--tertiaryText); }
+.recover-value { font-size: 11pt; font-weight: 700; color: var(--successColor); }              /* DS §4 hero-ish readout, success token */
+
+/* Disk Tools — scan-roots list, criteria form, results (DS §1-§7) */
+.dt-scroll { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+.dt-row { display: flex; gap: 12px; padding: 0 8px; align-items: stretch; }
+.paths-box { flex: 1; padding: 6px 0; }
+.path-row { padding: 8px 16px; font-size: 9pt; color: var(--color05); border-bottom: 1px solid var(--borderColor); }
+.path-row:last-child { border-bottom: none; }
+.paths-actions { display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 8px 0; justify-content: flex-start; }
+.form-grid { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; }
+.form-row { display: flex; align-items: center; gap: 12px; }
+.form-row__spacer { flex: 1; }
+.form-label { font-size: 9pt; font-weight: 600; color: var(--color06); min-width: 148px; }
+.stepper { display: inline-flex; align-items: center; background: var(--cardBg); border: 1px solid var(--borderColor); border-radius: 8px; overflow: hidden; }
+.stepper__val { padding: 6px 12px; font-size: 9pt; color: var(--color05); min-width: 56px; }
+.stepper__btns { display: flex; flex-direction: column; border-left: 1px solid var(--borderColor); }
+.stepper__btns svg { width: 12px; height: 12px; color: var(--tertiaryText); padding: 1px 4px; }
+.dt-results { margin: 0 8px 8px; min-height: 220px; }
+
+/* Docker — tab strip + decorated tree cells (DS §7 flat rows, tree caret) */
+.toolbar--tabs { padding-top: 0; gap: 8px; }
+.tree-caret { color: var(--tertiaryText); margin-right: 8px; display: inline-block; width: 10px; }
+.tree-child { padding-left: 32px; }
+.dt-status { display: flex; align-items: center; }
+
+/* Helpers — hub grid + representative tool widget (DS §1-§4) */
+.hub { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+.hub__label { font-size: 8pt; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--tertiaryText); padding: 14px 16px 6px; }  /* DS §4 meta role, group label */
+.tool-row { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 16px; }
+.maint-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 6px 16px 8px; }
+.maint-card { margin: 0; padding: 14px; display: flex; flex-direction: column; gap: 6px; min-height: 92px; }
+.maint-card__title { font-size: 9pt; font-weight: 600; color: var(--color05); }                /* DS §4 title role */
+.maint-card__desc { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); line-height: 1.4; }  /* DS §4 meta role */
+.hosts-head, .hb-head { display: flex; align-items: center; padding: 8px 16px 4px; }
+.hosts-head .section-title, .hb-head .section-title { margin: 0; }
+.hosts-table, .hb-updates, .hb-packages { margin: 8px; min-height: 0; }
+
+/* Homebrew — updates table, packages tree (DS §2-§7) */
+.hb-scroll { flex: 1; overflow: auto; display: flex; flex-direction: column; }
+.tree-group td { font-weight: 600; color: var(--color05); }
+
+/* ============================================================
+   Task 9 additions (append-only) — chart pages (resources,
+   network_usage). Static SVG/CSS charts only (no JS libs, no
+   animation per DS §9-2). Chart surfaces use
+   @chartBackgroundColor; gridlines @chartGridColor; legend
+   swatches @chartSeries01… (DS §6). Every chart container is a
+   DS §2 elevated card with a DS §3 accent-bar header. Token-only.
+   ============================================================ */
+
+/* Vertical scroll of chart/stat cards */
+.chart-scroll { flex: 1; overflow: auto; padding: 4px 8px 8px; display: flex; flex-direction: column; }
+
+/* Chart container = DS §2 elevated card; header = DS §3 accent bar + title + expand */
+.chart-card { margin: 8px; padding: 12px 16px 14px; }
+.chart-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.chart-head .accent-bar { min-height: 18px; }
+.chart-title { font-size: 11pt; font-weight: 600; color: var(--color05); }   /* DS §4 title role, section scale */
+.chart-head__spacer { flex: 1; }
+
+/* Expand affordance (unchanged control from capture — DS §3 borderless 24×24 action btn) */
+.chart-expand { width: 24px; height: 24px; border: none; background: transparent; color: var(--color06); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.chart-expand svg { width: 15px; height: 15px; }
+
+/* Legend swatch row (DS §6 series palette @chartSeries01…) */
+.chart-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; padding: 2px 0 6px; }
+.chart-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--chartBorderColor); flex: none; }
+
+/* Static SVG chart surface (DS §6: @chartBackgroundColor fill, @chartGridColor grid) */
+.chart-surface { width: 100%; height: auto; display: block; }
+.chart-surface .chart-bg { fill: var(--chartBackgroundColor); stroke: var(--chartBorderColor); stroke-width: 1; }
+.chart-surface .chart-grid { stroke: var(--chartGridColor); stroke-width: 1; }
+.chart-surface .chart-axis-label { fill: var(--chartLabelColor); font-size: 12px; font-family: inherit; }
+
+/* Network Usage — rate readout, stat trio, cap gauge, settings form */
+.net-rate { display: flex; align-items: center; gap: 40px; padding: 12px 16px 14px; }
+.net-rate__item { display: flex; align-items: center; gap: 10px; font-size: 13pt; font-weight: 600; color: var(--color05); }
+.net-rate__dl { color: var(--networkDownloadColor); }   /* DS §6 metric token */
+.net-rate__ul { color: var(--networkUploadColor); }     /* DS §6 metric token */
+.net-stats { display: flex; }
+.net-stats .card { flex: 1; }
+.stat-label { font-size: 9pt; font-weight: 600; color: var(--color06); }   /* DS §4 title role */
+.stat-value { font-size: 14pt; font-weight: 700; color: var(--color05); margin-top: 8px; }  /* DS §4 hero value */
+.net-cap-track { height: 8px; border-radius: 4px; background: var(--chartGridColor); margin-top: 14px; overflow: hidden; }  /* DS §6 track @chartGridColor */
+.net-form { display: flex; flex-direction: column; gap: 14px; padding-top: 4px; }
+.net-form__row { display: flex; align-items: center; gap: 12px; }
+.net-form__label { font-size: 10pt; color: var(--color05); min-width: 236px; }
+
+/* ============================================================
+   Task 10 additions (append-only) — form pages (settings,
+   gnome_settings). Each form section is a DS §2 elevated card
+   with a DS §3 accent-bar header; label/field rows follow the
+   DS §4 typography scale. Right-aligned controls per
+   [HIG-MACOS] / [GNOME-HIG]. Token-only; no per-row shadow
+   (DS §7 — shadow lives on the section card). Reuses .select /
+   .stepper / .toggle / .form-row / .form-label / .tab controls.
+   ============================================================ */
+
+/* Vertical scroll of section cards (DS §1 base surface @pageContent) */
+.form-scroll { flex: 1; overflow: auto; padding: 4px 8px 8px; display: flex; flex-direction: column; }
+
+/* Section card = DS §2 elevated card; header = DS §3 accent bar + section title */
+.form-card { margin: 8px; padding: 12px 16px 14px; }
+.form-card__head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.form-card__head .accent-bar { min-height: 18px; }
+.form-card__title { font-size: 11pt; font-weight: 600; color: var(--color05); }   /* DS §4 title role, section scale */
+
+/* Dimmed helper line under a section title (Alerts "Show a tray warning…") — DS §4 meta role */
+.form-hint { font-size: 8pt; font-weight: 500; color: var(--tertiaryText); margin: 0 0 8px; }
+
+/* Toggle + label row (macOS Settings boolean options; toggle leads the label) */
+.opt-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.opt-row__label { font-size: 9pt; color: var(--color05); }        /* DS §4 body/label */
+
+/* Label/field row: label left, control right [HIG-MACOS] / [GNOME-HIG].
+   Reuses .form-row (Task 8) for the flex row and .form-label for the label. */
+.select--wide { width: 250px; justify-content: space-between; }   /* combo sized to the capture's right column */
+.field--fixed { width: 250px; }
+/* Consistent vertical rhythm for label/field rows inside a section card
+   (scoped so the shared Task 8 .form-row on disk_tools is untouched). */
+.form-card .form-row { padding: 5px 0; }
+
+/* Sub-controls indented under a gating checkbox (Downloads auto-clean path/days) */
+.sub-row { display: flex; align-items: center; gap: 10px; padding: 4px 0 4px 28px; }
+.sub-row__label { font-size: 9pt; color: var(--color05); }
+
+/* Credit line (settings footer lblCreatedBy) — DS §4 meta role, accent link */
+.credit-row { text-align: right; padding: 12px 16px 4px; font-size: 8pt; color: var(--tertiaryText); }
+.credit-row a { color: var(--accentColor); text-decoration: underline; }
