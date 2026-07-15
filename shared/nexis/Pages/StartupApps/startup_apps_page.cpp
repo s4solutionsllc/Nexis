@@ -44,6 +44,12 @@ void StartupAppsPage::init()
 
     Utilities::addDropShadow({ui->btnAddStartupApp, ui->txtSearchStartup}, 60);
 
+    // DS §2/§7 (NEX F1, SSO-13738): shadow lives on the elevated container,
+    // never per row — replaces the old per-row addDropShadow() calls in
+    // StartupApp/BtmRow.
+    ui->startupAppsContainer->setAttribute(Qt::WA_StyledBackground, true);
+    Utilities::addDropShadow(ui->startupAppsContainer, 90, 26);
+
 #ifdef Q_OS_MACOS
     // FW-10: add a "Repair BTM…" button alongside Add Startup App. The
     // parent layout of btnAddStartupApp is the page's grid; we insert the
@@ -64,12 +70,12 @@ void StartupAppsPage::init()
     // aligned with the wider header.
     if (auto *grid = qobject_cast<QGridLayout *>(ui->widgetStartupApps->layout())) {
         grid->addWidget(mBtnRepairBtm, 0, 4);
-        const int vIdx = grid->indexOf(ui->verticalWidget);
+        const int vIdx = grid->indexOf(ui->startupAppsContainer);
         if (vIdx >= 0) {
             int r = 0, c = 0, rs = 0, cs = 0;
             grid->getItemPosition(vIdx, &r, &c, &rs, &cs);
-            grid->removeWidget(ui->verticalWidget);
-            grid->addWidget(ui->verticalWidget, r, c, rs, 5);
+            grid->removeWidget(ui->startupAppsContainer);
+            grid->addWidget(ui->startupAppsContainer, r, c, rs, 5);
         }
     }
     Utilities::addDropShadow(mBtnRepairBtm, 60);
@@ -185,9 +191,7 @@ void StartupAppsPage::setAppCount()
         count += g.appItems.size();
     }
 
-    ui->lblStartupAppsTitle->setText(
-        tr("Startup Applications (%1)")
-        .arg(QString::number(count)));
+    ui->sectionHeaderSource->setText(tr("%1 items").arg(QString::number(count)));
 
     int totalRows = count;
 #ifdef Q_OS_MACOS
