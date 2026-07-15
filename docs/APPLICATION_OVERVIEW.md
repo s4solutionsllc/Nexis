@@ -434,7 +434,7 @@ Miscellaneous utility tools, organized into two clearly labelled header sections
 
 **TOOLS section** — Tab-style checkable buttons that navigate a `QStackedWidget` below. One tool is active at a time. Buttons adapt to a two-row compact layout when the window is narrow (`resizeEvent` + `applyNavLayout()`).
 
-**MAINTENANCE section** — Horizontal row of clickable `QFrame` cards (`#maintenanceCard`). Each card shows a title and plain-English description. Clicking triggers the corresponding confirmation dialog and system action. Cards are built dynamically in `buildMaintenanceSection()`:
+**MAINTENANCE section** — Horizontal row of clickable, DS §2 elevated-card `QFrame`s (`#maintenanceCard`, `[cardRole="elevated"]`, one drop shadow each). Each card shows a title and plain-English description. Clicking triggers the corresponding confirmation dialog and system action. Cards are built dynamically in `buildMaintenanceSection()`:
 - **Flush DNS Cache** (both platforms) — clears the local DNS cache. macOS: `dscacheutil -flushcache` + `killall -HUP mDNSResponder`. Linux: tries `resolvectl`, `systemd-resolve`, or `nscd` in order.
 - **Rebuild Spotlight** (macOS only) — deletes and rebuilds the Spotlight search index (`sudo mdutil -E /`).
 - **Verify Disk** (macOS only) — runs `diskutil verifyVolume /` with a 5-minute timeout, shows output in a scrollable result dialog.
@@ -444,7 +444,7 @@ Miscellaneous utility tools, organized into two clearly labelled header sections
 
 **Power Profile Switcher (Linux only)** — Segmented control with three buttons (Power Saver / Balanced / Performance) for switching CPU power profiles. Uses `power-profiles-daemon` (`powerprofilesctl`) as the primary backend (no root needed). Falls back to raw sysfs governor writes via `pkexec` on systems without PPD. Automatically detects available profiles, hides Balanced if the driver only supports two governors (e.g., `intel_pstate`). Warns if TLP or auto-cpufreq is active. Hidden on macOS and systems without cpufreq support.
 
-**Hosts File Manager** — GUI editor for `/etc/hosts`:
+**Hosts File Manager** — GUI editor for `/etc/hosts`. The "Hosts (N)" sub-section header has a 3px accent-bar (DS §3), and the table sits in its own DS §2 elevated container (`#hostsTableContainer`) with flat `@cardBg` rows:
 - Add, edit, delete entries (IP address, hostname, aliases)
 - Input validation: IPv4/IPv6 via `QHostAddress`, hostname format per RFC 1123 (with underscore tolerance), alias validation
 - Save changes with confirmation dialog showing change summary (N added, N modified, N deleted)
