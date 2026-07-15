@@ -1920,6 +1920,7 @@ QLabel[accessibleName="dialog-title"] {
 
 #tableViewHosts::item {
     background-color: @cardBg;
+    font-family: @monoFontFamily;
 }
 
 /* - Search field (shared: Uninstaller / APT Source Manager / Homebrew) - */
