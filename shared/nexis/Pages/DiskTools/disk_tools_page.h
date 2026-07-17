@@ -61,6 +61,7 @@ private:
     static QWidget *makeEmptyState(QWidget *parent, const QString &heading,
                                     const QString &text, QPushButton **outButton,
                                     const QString &buttonText);
+    static void buildSectionHeader(QWidget *headerContainer, const QString &title);
 
 private:
     Ui::DiskToolsPage *ui;

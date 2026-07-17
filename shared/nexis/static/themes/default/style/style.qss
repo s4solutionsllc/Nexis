@@ -967,11 +967,13 @@ QLabel[accessibleName="dialog-title"] {
  *   - Settings section-card variant: set a "compact" dynamic property
  *     (true) on the accent bar for the shorter ≥18px card-header bar
  *     instead of the ≥26px page/tile-header bar.
- *   - Pages with no existing title in the approved capture (Search, Disk
- *     Tools, Uninstaller) apply this pattern as spacing/alignment chrome
- *     only via #sectionHeaderRow — do not add #sectionHeaderTitle/
- *     #sectionHeaderAccent where the capture had none. System Logs gained a
- *     title block under SSO-14314 and now uses the full recipe.
+ *   - Pages with no existing title in the approved capture (Search,
+ *     Uninstaller) apply this pattern as spacing/alignment chrome only via
+ *     #sectionHeaderRow — do not add #sectionHeaderTitle/#sectionHeaderAccent
+ *     where the capture had none. System Logs gained a title block under
+ *     SSO-14314 and now uses the full recipe. Disk Tools gained a real page
+ *     header — accent + "Disk Tools" title — as a SSO-14311 follow-up
+ *     (SSO-14440), postdating its own approved capture.
  */
 
 #sectionHeaderRow {
@@ -2161,12 +2163,16 @@ QLabel[accessibleName="dialog-title"] {
    the results tree (per mode) each sit inside their own DS §2 elevated
    container ([cardRole="elevated"], NEX F1, shadow via
    DiskToolsPage::makeElevatedContainer()); rows below stay flat (DS §7 —
-   shadow lives on the container, never per row). */
+   shadow lives on the container, never per row). SSO-14440 follow-up added
+   a real page header (accent + "Disk Tools" title, #sectionHeaderRow) above
+   the mode-bar row, and a compact "Scan Locations" section-card header
+   (also #sectionHeaderRow/[compact="true"]) as the first child inside each
+   mode's scan-roots elevated container — both reuse the shared Section
+   Header recipe above with no page-specific overrides needed. */
 
-/* Mode tabs — DS §3 header-anatomy spacing (#sectionHeaderRow); no title
-   label in the approved capture, so this page applies the pattern as
-   spacing/alignment chrome only (style.qss "Section Header" doc comment).
-   Active tab uses @accentColor. */
+/* Mode tabs (#modeBarRow) — plain QHBoxLayout spacing/alignment only, no
+   #sectionHeaderRow reuse here since the real page header (above) now owns
+   that selector; active tab uses @accentColor. */
 
 #DiskToolsPage QPushButton#segmentedLeft,
 #DiskToolsPage QPushButton#segmentedRight {
