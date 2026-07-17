@@ -270,13 +270,13 @@
        <number>0</number>
       </property>
       <property name="topMargin">
-       <number>0</number>
+       <number>12</number>
       </property>
       <property name="rightMargin">
        <number>0</number>
       </property>
       <property name="bottomMargin">
-       <number>0</number>
+       <number>12</number>
       </property>
       <item alignment="Qt::AlignVCenter">
        <widget class="QWidget" name="notFoundWidget" native="true">
