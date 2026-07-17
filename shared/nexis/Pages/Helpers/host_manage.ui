@@ -78,7 +78,7 @@
      <item>
       <widget class="QFrame" name="sectionHeaderAccent">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -86,7 +86,7 @@
        <property name="minimumSize">
         <size>
          <width>3</width>
-         <height>0</height>
+         <height>26</height>
         </size>
        </property>
        <property name="maximumSize">
