@@ -361,6 +361,10 @@ void SystemCleanerPage::buildCategoryCards()
     mScanProgress->hide();
 
     catLayout->addWidget(mScanProgress);
+    // Fixed gap between the scan bar and the tile grid below it — static
+    // regardless of mScanProgress's visibility, so idle/scanning states
+    // both keep breathing room instead of the tiles sitting flush.
+    catLayout->addSpacing(Dpi::scale(8));
     // Stretch 1 so the scroll area absorbs available vertical space and
     // compresses (rather than overflowing) when the window is small.
     catLayout->addWidget(scrollArea, 1);
