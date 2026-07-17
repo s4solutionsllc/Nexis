@@ -106,6 +106,12 @@
       </item>
       <item row="0" column="0" alignment="Qt::AlignLeft">
        <widget class="QWidget" name="sectionHeaderRow" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <layout class="QHBoxLayout" name="sectionHeaderRowLayout">
          <property name="leftMargin">
           <number>0</number>
@@ -125,7 +131,7 @@
          <item>
           <widget class="QFrame" name="sectionHeaderAccent">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
