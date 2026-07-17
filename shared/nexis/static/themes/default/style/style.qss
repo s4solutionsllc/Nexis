@@ -3164,6 +3164,21 @@ SEARCH
     color: @color06;
 }
 
+/* - Advanced Search group labels (Time/Permissions/Size/Owner), SSO-14295 -
+ * Reuses the DS §4 "Title" role (9pt/600/@color06 — see #metricTileTitle,
+ * style.qss:871-875) so the four filter-group headers read as sub-section
+ * labels instead of plain body text, without introducing a new visual
+ * language. #lblFileOrFolder (the same pane's inline "File or Folder:"
+ * field label) is intentionally excluded. */
+#advanceSearchPane QLabel#lblTime,
+#advanceSearchPane QLabel#lblPermissions,
+#advanceSearchPane QLabel#lblSize,
+#advanceSearchPane QLabel#lblOwner {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
 #advanceSearchPane QLineEdit {
     padding: @dp4 @dp6;
 }
