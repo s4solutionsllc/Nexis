@@ -35,7 +35,7 @@ HostManage::HostManage(QWidget *parent, HostService *hostService):
 
 void HostManage::init()
 {
-    ui->lblHostTitle->setText(tr("Hosts (%1)").arg(1));
+    ui->sectionHeaderTitle->setText(tr("Hosts (%1)").arg(1));
 
     // DS §3 accent-bar sub-section header (NEX F2) — neutral "accent" token,
     // compact (card-header) height variant.
@@ -102,7 +102,7 @@ void HostManage::loadTableData()
     mSortFilterModel->invalidate();
     ui->tableViewHosts->reset();
 
-    ui->lblHostTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
+    ui->sectionHeaderTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
 }
 
 QList<QStandardItem*> HostManage::createRow(const QPair<int, HostEntry> &item)
@@ -223,7 +223,7 @@ void HostManage::on_btnSave_clicked()
         }
 
         updatedLine = -1;
-        ui->lblHostTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
+        ui->sectionHeaderTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
         ui->widgetAddEditHost->hide();
     }
 }
