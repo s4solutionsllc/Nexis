@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Helpers page — Hosts header row: `sectionHeaderAccent` had `vsizetype="Expanding"`, letting Qt's grid layout allocate excess vertical space to the accent bar and making the entire Hosts header row taller than its DS §3 natural height. Pinned to `Fixed×Preferred` (matching the identical fix on Startup Apps in SSO-14304) and set `minimumSize.height` to 26 px to anchor the bar's visible presence.
 - Uninstaller/"Applications" page: `#uninstallerContainer`'s DS §2 `[cardRole="elevated"]` corners (`border-radius: 12`) rendered square, not rounded — `uninstallerContainerInnerLayout` sat its `#treeWidgetPackages` content flush against the container edge (0 margin), so the tree's own opaque, square-cornered background painted directly over the parent's rounded corners. Fixed with a 4px inner margin, matching the pattern already used by Hardware Info's `grpSystem`/`tblSystem` cards. The "Application" column header itself was re-verified against a fresh build/screenshot and renders correctly in both themes — the post-close UAT report of a missing header did not reproduce (SSO-14300).
 
 ### Added
