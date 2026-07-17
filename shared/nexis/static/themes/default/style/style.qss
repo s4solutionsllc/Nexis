@@ -967,10 +967,11 @@ QLabel[accessibleName="dialog-title"] {
  *   - Settings section-card variant: set a "compact" dynamic property
  *     (true) on the accent bar for the shorter ≥18px card-header bar
  *     instead of the ≥26px page/tile-header bar.
- *   - Pages with no existing title in the approved capture (Search, System
- *     Logs, Disk Tools, Uninstaller) apply this pattern as spacing/
- *     alignment chrome only via #sectionHeaderRow — do not add
- *     #sectionHeaderTitle/#sectionHeaderAccent where the capture had none.
+ *   - Pages with no existing title in the approved capture (Search, Disk
+ *     Tools, Uninstaller) apply this pattern as spacing/alignment chrome
+ *     only via #sectionHeaderRow — do not add #sectionHeaderTitle/
+ *     #sectionHeaderAccent where the capture had none. System Logs gained a
+ *     title block under SSO-14314 and now uses the full recipe.
  */
 
 #sectionHeaderRow {

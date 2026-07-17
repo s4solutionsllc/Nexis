@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QTimer>
+#include <QFrame>
 
 #include "signal_mapper.h"
 #include "utilities.h"
@@ -21,6 +22,8 @@ SystemLogsPage::SystemLogsPage(QWidget *parent)
     , mSearchField(nullptr)
     , mBtnRefresh(nullptr)
     , mLblStatus(nullptr)
+    , mLblTitle(nullptr)
+    , mLblSource(nullptr)
     , mSeverityFilter(7)
 {
     connect(mProvider, &LogProvider::logsReady, this, &SystemLogsPage::onLogsReady);
@@ -46,14 +49,38 @@ void SystemLogsPage::buildLayout()
     mainLayout->setContentsMargins(16, 16, 16, 16);
     mainLayout->setSpacing(8);
 
-    // Toolbar chrome-only header row (DS \u00A73): this page has no title in the
-    // approved capture, so #sectionHeaderRow supplies spacing/alignment only
-    // \u2014 no accent bar or title labels (style.qss "Section Header" recipe).
+    // Toolbar header row (DS \u00A73, SSO-14314): accent bar + "System Logs" /
+    // "Live log stream" title block, structurally identical to the Processes/
+    // Boot Analysis .page-header recipe, followed by the existing filter
+    // controls (style.qss "Section Header" recipe).
     auto *headerRow = new QWidget(this);
     headerRow->setObjectName("sectionHeaderRow");
     auto *filterLayout = new QHBoxLayout(headerRow);
     filterLayout->setContentsMargins(14, 12, 14, 10);
     filterLayout->setSpacing(8);
+
+    auto *accentBar = new QFrame(headerRow);
+    accentBar->setObjectName("sectionHeaderAccent");
+    accentBar->setProperty("accentToken", "accent");
+    accentBar->setFrameShape(QFrame::NoFrame);
+    accentBar->setFixedWidth(3);
+    accentBar->setMinimumHeight(26);
+    accentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    filterLayout->addWidget(accentBar);
+
+    auto *headerTextCol = new QVBoxLayout;
+    headerTextCol->setContentsMargins(0, 0, 0, 0);
+    headerTextCol->setSpacing(0);
+
+    mLblTitle = new QLabel(tr("System Logs"), headerRow);
+    mLblTitle->setObjectName("sectionHeaderTitle");
+    headerTextCol->addWidget(mLblTitle);
+
+    mLblSource = new QLabel(tr("Live log stream"), headerRow);
+    mLblSource->setObjectName("sectionHeaderSource");
+    headerTextCol->addWidget(mLblSource);
+
+    filterLayout->addLayout(headerTextCol);
 
     mCmbSeverity = new QComboBox(headerRow);
     mCmbSeverity->addItems({
