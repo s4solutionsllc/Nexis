@@ -2040,6 +2040,20 @@ QLabel[accessibleName="dialog-title"] {
     font-family: @monoFontFamily;
 }
 
+/* Rounded-corner fix: make inner tree widgets transparent inside their
+   elevated containers so the parent border-radius shows through (same
+   pattern as ServicesPage QListWidget / listWidgetStartup). Strip the
+   inner border from treeWidgetUpdates — the container already provides it. */
+#homebrewPackagesContainer #treeWidgetPackages {
+    background-color: transparent;
+}
+
+#homebrewUpdatesContainer #treeWidgetUpdates {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
 /* -- Snap package list (card style, unchanged) -- */
 
 #listWidgetSnapPackages {
