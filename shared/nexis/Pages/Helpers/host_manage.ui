@@ -101,7 +101,7 @@
       </widget>
      </item>
      <item alignment="Qt::AlignLeft">
-      <widget class="QLabel" name="lblHostTitle">
+      <widget class="QLabel" name="sectionHeaderTitle">
        <property name="text">
         <string/>
        </property>

@@ -1931,16 +1931,30 @@ QLabel[accessibleName="dialog-title"] {
 
 /* Host Manage table: flat @cardBg rows nested inside the
    #hostsTableContainer elevated card (DS §7) — overrides the generic
-   QTableView/[::item] recipe's @color01 fill for this table only. */
+   QTableView/[::item] recipe's @color01 fill for this table only.
+   border-radius nests 1px inside the container's 12px radius
+   (hostsTableContainerLayout margin, SSO-14306) so the flat fill doesn't
+   clash against the elevated card's rounded corners. */
 #tableViewHosts {
     background-color: @cardBg;
     border: 0;
-    border-radius: 0;
+    border-radius: 11;
 }
 
 #tableViewHosts::item {
     background-color: @cardBg;
     font-family: @monoFontFamily;
+}
+
+/* QHeaderView paints its sections independently of the table's own
+   border-radius (SSO-14306) — round only the outer two sections' outer
+   top corner so interior column boundaries stay square. */
+#tableViewHosts QHeaderView::section:first {
+    border-top-left-radius: 11;
+}
+
+#tableViewHosts QHeaderView::section:last {
+    border-top-right-radius: 11;
 }
 
 /* - Search field (shared: Uninstaller / APT Source Manager / Homebrew) - */
@@ -3203,11 +3217,6 @@ SEARCH
     color: @accentColor;
     border: 0;
     background-color: @accentBgTint;
-}
-
-#lblHostTitle {
-    font-size: 11pt;
-    color: @color12;
 }
 
 /* === Network Usage ===
