@@ -832,7 +832,7 @@ void SettingsPage::buildPageHeader()
     ui->pageHeaderAccent->setProperty("accentToken", "accent");
     ui->pageHeaderAccent->setFixedWidth(3);
     ui->pageHeaderAccent->setMinimumHeight(26);
-    ui->pageHeaderAccent->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    ui->pageHeaderAccent->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
 
     ui->pageHeaderTitle->setObjectName("sectionHeaderTitle");
     ui->pageHeaderSource->setObjectName("sectionHeaderSource");

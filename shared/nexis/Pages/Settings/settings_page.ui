@@ -26,6 +26,12 @@
    <property name="bottomMargin"><number>0</number></property>
    <item>
     <widget class="QWidget" name="pageHeader" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <layout class="QHBoxLayout" name="pageHeaderLayout">
       <property name="leftMargin"><number>14</number></property>
       <property name="topMargin"><number>12</number></property>
@@ -39,7 +45,7 @@
       </item>
       <item>
        <layout class="QVBoxLayout" name="pageHeaderTextCol">
-        <property name="spacing"><number>2</number></property>
+        <property name="spacing"><number>0</number></property>
         <item>
          <widget class="QLabel" name="pageHeaderTitle">
           <property name="text"><string>Settings</string></property>
