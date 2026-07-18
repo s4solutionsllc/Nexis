@@ -52,6 +52,12 @@ DiskToolsPage::~DiskToolsPage()
 
 void DiskToolsPage::init()
 {
+    // stackedModes must claim all leftover vertical space so the mode-bar
+    // header row stays compact. Without this, Qt spreads space across all
+    // mainLayout items and inflates the header to ~250px.
+    ui->stackedModes->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    ui->mainLayout->setStretchFactor(ui->stackedModes, 1);
+
     mModeGroup = new QButtonGroup(this);
     mModeGroup->setExclusive(true);
     mModeGroup->addButton(ui->btnModeLargeOld, 0);
