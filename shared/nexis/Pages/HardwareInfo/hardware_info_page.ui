@@ -315,6 +315,7 @@
        </item>
        <item>
         <widget class="QWidget" name="grpBattery" native="true">
+         <property name="cardRole" stdset="0"><string notr="true">elevated</string></property>
          <layout class="QVBoxLayout" name="grpBatteryLayout">
           <property name="leftMargin"><number>12</number></property>
           <property name="topMargin"><number>6</number></property>

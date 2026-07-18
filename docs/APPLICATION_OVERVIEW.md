@@ -196,7 +196,7 @@ Comprehensive static hardware inventory displayed in tabular sections. Two expor
 - **Export System Report** — plain text file with aligned columns. Default: `nexis-report-YYYY-MM-DD.txt`.
 - **Export as HTML (FR-126)** — self-contained HTML file (inline CSS, no external dependencies) containing a system snapshot (CPU %, memory, GPU, battery), all hardware tables, top-10 processes by CPU at export time, and pending update count. Default: `nexis-report-YYYY-MM-DD.html`.
 
-**Elevated-card chrome (SSO-13735, UX modernization):** System, Processor, Graphics, and Memory each render as a DS §2 elevated card with a DS §3 accent-bar section header (Graphics uses `@gpuColor`; System/Processor/Memory use their type-appropriate tokens). Battery gets the same accent-bar header (`@batteryColor`) but no card — the approved design capture cut off before any Battery rows. Fans and Storage, outside that capture, keep their original chrome.
+**Elevated-card chrome (SSO-13735 + SSO-14298 round 2, UX modernization):** System, Processor, Graphics, Memory, and Battery each render as a DS §2 elevated card with a DS §3 accent-bar section header (Graphics uses `@gpuColor`; System/Processor/Memory/Battery use their type-appropriate tokens, Battery's being `@batteryColor`). Battery's card treatment landed in round 2 once a full-row capture existed — round 1 shipped it header-only because the capture available then cut off before any Battery rows. Fans and Storage, outside that capture, keep their original chrome.
 
 **9 sections:**
 - **System** — Hostname, OS, distribution, kernel, architecture, desktop environment

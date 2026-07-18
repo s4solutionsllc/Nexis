@@ -84,15 +84,16 @@ HardwareInfoPage::HardwareInfoPage(QWidget *parent, InfoManager *infoManager) :
     ui->setupUi(this);
 
     // DS §2 (NEX F1): elevated-card chrome for the System/Processor/Graphics/
-    // Memory sections — structural, so it's fine to set up before the
+    // Memory/Battery sections — structural, so it's fine to set up before the
     // deferred populate*() pass. DS §3 accent-bar headers are pure QSS via
-    // objectName (see style.qss), no C++ wiring needed. Battery
-    // intentionally gets no card (hardware_info_page.ui, SSO-13735
-    // acceptance criteria).
-    for (QWidget *card : {ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory})
+    // objectName (see style.qss), no C++ wiring needed. Battery card
+    // treatment added in round 2 (SSO-14298) once a full-row capture
+    // existed; SSO-13735 excluded it only because no capture reached those
+    // rows yet.
+    for (QWidget *card : {ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory, ui->grpBattery})
         card->setAttribute(Qt::WA_StyledBackground, true);
     Utilities::addDropShadow(
-        QList<QWidget *>{ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory}, 90, 26);
+        QList<QWidget *>{ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory, ui->grpBattery}, 90, 26);
 
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &HardwareInfoPage::refreshThemeColors);
     // FR-98: defer populate*() work to first showEvent so sysctl, SMART,
