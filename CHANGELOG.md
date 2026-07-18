@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Notes
 - Screenshot-baseline waiver (RELEASE.md §0.5): the non-blocking ScreenshotTests step is expected to flag the Hardware Info page baselines (macOS + Linux, both themes) — the elevated-card redesign above is an intended visual change. Baselines will be regenerated via `screenshot-baselines.yml` once this lands.
+- The v2.8.3 macOS dashboard screenshot-baseline waiver (RELEASE.md §0.5) is resolved: `tests/reference_screenshots/macos/{dark,light}/dashboard.png` have been regenerated via the `Regenerate Screenshot Baselines` CI workflow (macOS-14 runner) and confirmed to reflect the 2.8.x dashboard redesign (GH#191, #213, #214), replacing the stale local-M4 captures. `lblFooterRight` (the dashboard footer's `"Nexis v{version} • Refreshing every 1s"` label) is now masked alongside `systemSummary` in `kPageMap`, so a version bump alone no longer invalidates this baseline (GH#224).
 
 ## [2.8.3] - 2026-07-07
 

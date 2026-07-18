@@ -54,7 +54,7 @@ struct PageInfo {
 static const QVector<PageInfo> kPageMap = {
     {"DashboardPage",     "dashboard",
         {"DashboardTileWrapper", "MetricTileBase", "NetworkTile"},
-        {"systemSummary"}},
+        {"systemSummary", "lblFooterRight"}},
     {"HardwareInfoPage",  "hardware_info",     {}, {}},
     {"StartupAppsPage",   "startup_apps",      {"QAbstractItemView"}, {}},
     {"SystemCleanerPage", "system_cleaner",    {}, {}},
