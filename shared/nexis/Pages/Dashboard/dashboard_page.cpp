@@ -1632,6 +1632,8 @@ void DashboardPage::onTileResizeRequested(DashboardTileWrapper *wrapper, int new
 void DashboardPage::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
+    // SSO-14661: mainLayout's topMargin (dashboard_page.ui) reserves 50px so
+    // bentoGrid clears these buttons (y=10, 32px tall) — keep the two in sync.
     mKioskButton->move(width() - mKioskButton->width() - 10, 10);
     mEditButton->move(width() - mKioskButton->width() - mEditButton->width() - 18, 10);
     recomputeColumns();

@@ -353,6 +353,16 @@ void App::init()
     // Build sidebar programmatically with section headers
     buildSidebar();
 
+    // SSO-14661: align every page's top edge with the sidebar divider line
+    // (below the logo, above the nav icons) so page content no longer starts
+    // too high. Read the divider's actual geometry rather than duplicating
+    // the sidebar's margin constants here, so this stays correct if those
+    // constants change. Sidebar collapse only animates width (see
+    // applySidebarCollapse), never this vertical geometry, so the offset
+    // holds at every breakpoint including the collapsed sidebar.
+    ui->sidebar->layout()->activate();
+    ui->pageContentLayout->setContentsMargins(0, mLogoSeparator->geometry().bottom() + 1, 0, 0);
+
     ui->pageContentLayout->addWidget(mSlidingStacked);
 
     // Set button labels
