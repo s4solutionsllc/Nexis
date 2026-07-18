@@ -364,12 +364,53 @@
         </widget>
        </item>
 
-       <!-- Storage section -->
+       <!-- Storage section: DS §3 header (NEX F2) + DS §2 elevated card
+            (SSO-14757). "Storage" is the only header/accent pair on this page
+            using the bare shared objectNames (sectionHeaderRow/Accent/Title)
+            instead of a per-section suffix, so it picks up the existing
+            #sectionHeaderAccent[accentToken="disk"] / @diskColor rule in
+            style.qss that was present but unused until now — no new color
+            decision, see style.qss for the System/Processor/etc. rationale
+            on why those five use suffixed names instead. -->
        <item>
-        <widget class="QGroupBox" name="grpStorage">
-         <property name="title">
-          <string>Storage</string>
-         </property>
+        <widget class="QWidget" name="sectionHeaderRow" native="true">
+         <layout class="QHBoxLayout" name="sectionHeaderRowLayout">
+          <property name="leftMargin"><number>2</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>2</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <property name="spacing"><number>8</number></property>
+          <item>
+           <widget class="QFrame" name="sectionHeaderAccent">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize"><size><width>3</width><height>18</height></size></property>
+            <property name="maximumSize"><size><width>3</width><height>16777215</height></size></property>
+            <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+            <property name="accentToken" stdset="0"><string notr="true">disk</string></property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="sectionHeaderTitle">
+            <property name="text"><string>Storage</string></property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="sectionHeaderSpacer">
+            <property name="orientation"><enum>Qt::Horizontal</enum></property>
+            <property name="sizeHint" stdset="0"><size><width>40</width><height>16</height></size></property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="grpStorage" native="true">
+         <property name="cardRole" stdset="0"><string notr="true">elevated</string></property>
          <layout class="QVBoxLayout" name="grpStorageLayout">
           <property name="leftMargin"><number>12</number></property>
           <property name="topMargin"><number>12</number></property>
