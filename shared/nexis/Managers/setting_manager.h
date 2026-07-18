@@ -87,6 +87,10 @@ namespace SettingKeys {
 
     // FW-20 (SSO-3748)
     const QString MenuBarMonitorEnabled("MenuBarMonitorEnabled");
+
+    // GH#207 (SSO-8351)
+    const QString LaunchInKioskMode("LaunchInKioskMode");
+    const QString KioskMonitorName("KioskMonitorName");
 }
 
 class SettingManager
@@ -286,6 +290,12 @@ public:
     // FW-20 (SSO-3748) — macOS menu-bar CPU/memory monitor, off by default
     void setMenuBarMonitorEnabled(bool value);
     bool getMenuBarMonitorEnabled() const;
+
+    // GH#207 (SSO-8351) — launch directly into kiosk mode, optionally on a specific monitor
+    void setLaunchInKioskMode(bool value);
+    bool getLaunchInKioskMode() const;
+    void setKioskMonitorName(const QString &value);
+    QString getKioskMonitorName() const;
 
 private:
     static SettingManager *instance;

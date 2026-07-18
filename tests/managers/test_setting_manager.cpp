@@ -33,6 +33,12 @@ private slots:
     void getStartPage_roundTripsId();
     void getStartPage_migratesLegacyValue();
     void getStartPage_unknownLegacyDefaultsToDashboard();
+
+    // GH#207 / SSO-8351 — kiosk-at-startup + monitor targeting settings.
+    void kioskLaunch_defaultsToFalse();
+    void kioskLaunch_roundTrips();
+    void kioskMonitorName_defaultsToEmpty();
+    void kioskMonitorName_roundTrips();
 };
 
 void TestSettingManager::initTestCase()
@@ -130,6 +136,36 @@ void TestSettingManager::getStartPage_unknownLegacyDefaultsToDashboard()
     // through a no-match nullptr.
     sm->setStartPage("Some Unknown Translated String");
     QCOMPARE(sm->getStartPage(), QString("dashboard"));
+}
+
+void TestSettingManager::kioskLaunch_defaultsToFalse()
+{
+    // Fresh install: kiosk-at-startup is off unless the user opts in.
+    QCOMPARE(SettingManager::ins()->getLaunchInKioskMode(), false);
+}
+
+void TestSettingManager::kioskLaunch_roundTrips()
+{
+    SettingManager *sm = SettingManager::ins();
+    sm->setLaunchInKioskMode(true);
+    QCOMPARE(sm->getLaunchInKioskMode(), true);
+    sm->setLaunchInKioskMode(false);
+    QCOMPARE(sm->getLaunchInKioskMode(), false);
+}
+
+void TestSettingManager::kioskMonitorName_defaultsToEmpty()
+{
+    // Empty means "same screen as last time" — no forced monitor.
+    QCOMPARE(SettingManager::ins()->getKioskMonitorName(), QString(""));
+}
+
+void TestSettingManager::kioskMonitorName_roundTrips()
+{
+    SettingManager *sm = SettingManager::ins();
+    sm->setKioskMonitorName("DP-2");
+    QCOMPARE(sm->getKioskMonitorName(), QString("DP-2"));
+    sm->setKioskMonitorName("");
+    QCOMPARE(sm->getKioskMonitorName(), QString(""));
 }
 
 QTEST_MAIN(TestSettingManager)

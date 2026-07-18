@@ -190,6 +190,7 @@ Real-time system monitoring at a glance in a **fixed-cell responsive grid layout
   - **System tray:** Checkable "Kiosk Mode (F11)" action in tray context menu
   - **Dashboard button:** Floating fullscreen/collapse icon at top-right corner, swaps between enter/exit icons
   - On activation, a transient "Press ESC to exit kiosk mode" overlay fades in then out (~3.5s)
+  - **Launch straight into kiosk mode (GH#207 / SSO-8351):** Settings → General → "Launch directly into Kiosk Mode" forces kiosk on at every startup, independent of the persisted last-session state. A "Kiosk Monitor" picker (populated from `QGuiApplication::screens()`) selects which display kiosk mode opens on; this applies to any kiosk entry (startup, F11, tray, Dashboard button), not just launch.
 
 ### 2. Hardware Info
 
@@ -928,7 +929,7 @@ Forcing INI format on both platforms keeps the on-disk layout identical for both
 ### Settings Keys (30+)
 
 **Appearance:** ThemeName, Language, ColorScheme, AppFont
-**Behavior:** StartPage, KioskMode, DashboardLayout (JSON), AppQuitDialogDontAsk/Choice
+**Behavior:** StartPage, KioskMode, LaunchInKioskMode, KioskMonitorName, DashboardLayout (JSON), AppQuitDialogDontAsk/Choice
 **Thresholds:** CPUAlertPercent, MemoryAlertPercent, DiskAlertPercent, BatteryAlertPercent
 **Tools:** DiskAnalyzerTool, DiskAnalyzerCustomPath, DiskName, TempSensorId, GpuDeviceId, FanSensorId
 **Cleaning:** Schedules (JSON), CleaningNotificationsEnabled, ThresholdAlertEnabled, ThresholdGB

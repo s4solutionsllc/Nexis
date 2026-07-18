@@ -678,3 +678,23 @@ bool SettingManager::getMenuBarMonitorEnabled() const
 {
     return mSettings->value(SettingKeys::MenuBarMonitorEnabled, false).toBool();
 }
+
+void SettingManager::setLaunchInKioskMode(bool value)
+{
+    mSettings->setValue(SettingKeys::LaunchInKioskMode, value);
+}
+
+bool SettingManager::getLaunchInKioskMode() const
+{
+    return mSettings->value(SettingKeys::LaunchInKioskMode, false).toBool();
+}
+
+void SettingManager::setKioskMonitorName(const QString &value)
+{
+    mSettings->setValue(SettingKeys::KioskMonitorName, value);
+}
+
+QString SettingManager::getKioskMonitorName() const
+{
+    return mSettings->value(SettingKeys::KioskMonitorName, "").toString();
+}

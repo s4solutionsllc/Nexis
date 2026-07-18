@@ -12,6 +12,8 @@
 #include <QPushButton>
 #include <functional>
 
+class QScreen;
+
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
@@ -116,6 +118,7 @@ private:
     void updateSidebarIcons();
     void applyKioskMode(bool enable);
     void showKioskOverlay();
+    QScreen *resolveKioskScreen() const;
 
     void buildSidebar();
     QPushButton *createSidebarButton(const QString &tooltip);

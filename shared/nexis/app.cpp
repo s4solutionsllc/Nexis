@@ -18,6 +18,7 @@
 #include <QStyle>
 #include <QDebug>
 #include <QScreen>
+#include <QGuiApplication>
 #include <QIcon>
 #include <QEvent>
 #include <QWindow>
@@ -749,9 +750,13 @@ void App::init()
         mCommandPalette->show();
     });
 
-    // Restore kiosk mode from last session
-    if (SettingManager::ins()->getKioskMode())
+    // Restore kiosk mode from last session, or force it on if the user has
+    // configured Nexis to always launch straight into kiosk mode (GH#207).
+    if (SettingManager::ins()->getKioskMode() || SettingManager::ins()->getLaunchInKioskMode()) {
+        mKioskMode = true;
+        SettingManager::ins()->setKioskMode(true);
         applyKioskMode(true);
+    }
 
     // Restore sidebar collapsed state
     if (SettingManager::ins()->getSidebarCollapsed())
@@ -1382,6 +1387,15 @@ void App::applyKioskMode(bool enable)
         mPreKioskCollapsed = mSidebarCollapsed;
         ui->sidebar->hide();
         pageClick(dashboardPage, false);
+
+        // GH#207: place the kiosk window on the configured monitor, if any.
+        if (QScreen *targetScreen = resolveKioskScreen()) {
+            winId(); // force native window handle creation so setScreen() takes effect
+            if (QWindow *handle = windowHandle())
+                handle->setScreen(targetScreen);
+            setGeometry(targetScreen->geometry());
+        }
+
         showFullScreen();
         showKioskOverlay();
     } else {
@@ -1392,6 +1406,19 @@ void App::applyKioskMode(bool enable)
     }
 
     emit SignalMapper::ins()->sigKioskModeChanged(enable);
+}
+
+QScreen *App::resolveKioskScreen() const
+{
+    const QString name = SettingManager::ins()->getKioskMonitorName();
+    if (name.isEmpty())
+        return nullptr;
+
+    for (QScreen *screen : QGuiApplication::screens()) {
+        if (screen->name() == name)
+            return screen;
+    }
+    return nullptr;
 }
 
 void App::showKioskOverlay()
