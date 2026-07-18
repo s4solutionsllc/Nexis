@@ -127,6 +127,18 @@ void App::buildSidebar()
     mLogoSeparator->setFixedHeight(1);
     mSidebarLayout->addWidget(mLogoSeparator);
 
+    // Align page content's top edge with this divider line so kiosk-mode and
+    // panel-edit buttons don't overlap content. The divider sits at:
+    //   sidebar top margin (8) + logoRow top margin (4)
+    //   + logo fixed height (Dpi::scale(28)) + logoRow bottom margin (4).
+    // Using fixed values here keeps this in sync with the constants set above;
+    // it is DPI-aware via Dpi::scale and doesn't change on sidebar collapse
+    // (only width changes, not the logo row height).
+    {
+        const int dividerY = 8 + 4 + Dpi::scale(28) + 4;
+        ui->pageContentLayout->setContentsMargins(0, dividerY, 0, 0);
+    }
+
     // Scrollable nav area — contains all section headers and buttons.
     // Logo row and footer (version + feedback) remain pinned outside the scroll area.
     mNavScrollArea = new QScrollArea(ui->sidebar);
