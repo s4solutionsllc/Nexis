@@ -81,10 +81,9 @@ jobs:
       - name: Unit Tests
         run: xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
 
-      # TEMPORARY (SSO-14443): repro run to gather pass/fail evidence for the
-      # DuplicateFinderTests spy.wait(10000) flake investigation. Remove before
-      # merge once root cause is confirmed.
-      - name: SSO-14443 repro - repeat DuplicateFinderTests
+      # TEMPORARY (SSO-14443): post-fix repeat run to confirm the flake no longer
+      # reproduces. Remove after CTO review/merge.
+      - name: SSO-14443 post-fix - repeat DuplicateFinderTests 20x
         if: matrix.arch == 'x64'
         run: |
           cd build
@@ -96,7 +95,7 @@ jobs:
               fail=$((fail+1))
             fi
           done
-          echo "SSO-14443 repro (baseline 10000ms): PASS=$pass FAIL=$fail out of 20"
+          echo "SSO-14443 post-fix (30000ms + pool warmup): PASS=$pass FAIL=$fail out of 20"
 
       # ScreenshotTests are intentionally NOT run on the Linux per-PR jobs:
       # there are no committed Linux baselines (so the comparison always QSKIPs —
