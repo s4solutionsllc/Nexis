@@ -16,6 +16,65 @@
    <property name="bottomMargin"><number>15</number></property>
    <item>
     <widget class="QWidget" name="sectionHeaderRow" native="true">
+     <layout class="QHBoxLayout" name="sectionHeaderRowLayout">
+      <property name="leftMargin"><number>0</number></property>
+      <property name="topMargin"><number>0</number></property>
+      <property name="rightMargin"><number>0</number></property>
+      <property name="bottomMargin"><number>0</number></property>
+      <property name="spacing"><number>8</number></property>
+      <item>
+       <widget class="QFrame" name="sectionHeaderAccent">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>3</width>
+          <height>26</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>3</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="accentToken" stdset="0">
+         <string notr="true">accent</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="sectionHeaderTitle">
+        <property name="text">
+         <string>Disk Tools</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="sectionHeaderRowSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="modeBarRow" native="true">
      <layout class="QHBoxLayout" name="modeBarLayout">
       <property name="leftMargin"><number>0</number></property>
       <property name="topMargin"><number>0</number></property>

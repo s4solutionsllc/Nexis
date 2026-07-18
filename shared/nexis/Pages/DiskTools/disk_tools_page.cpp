@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QSizePolicy>
 #include <QSpinBox>
 #include <QStandardPaths>
 #include <QTreeWidget>
@@ -153,6 +154,10 @@ void DiskToolsPage::buildLargeOldPage()
     auto *dirListContainerLayout = new QVBoxLayout(dirListContainer);
     dirListContainerLayout->setContentsMargins(0, 0, 0, 0);
     dirListContainerLayout->setSpacing(0);
+
+    auto *scanLocationsHeader = new QWidget(dirListContainer);
+    buildSectionHeader(scanLocationsHeader, tr("Scan Locations"));
+    dirListContainerLayout->addWidget(scanLocationsHeader);
 
     mDirListLargeOld = new QListWidget(dirListContainer);
     mDirListLargeOld->setObjectName("diskToolsDirList");
@@ -466,6 +471,10 @@ void DiskToolsPage::buildDuplicatePage()
     auto *dirListContainerLayout = new QVBoxLayout(dirListContainer);
     dirListContainerLayout->setContentsMargins(0, 0, 0, 0);
     dirListContainerLayout->setSpacing(0);
+
+    auto *scanLocationsHeader = new QWidget(dirListContainer);
+    buildSectionHeader(scanLocationsHeader, tr("Scan Locations"));
+    dirListContainerLayout->addWidget(scanLocationsHeader);
 
     mDirListDup = new QListWidget(dirListContainer);
     mDirListDup->setObjectName("diskToolsDirList");
@@ -900,4 +909,33 @@ QWidget *DiskToolsPage::makeEmptyState(QWidget *parent, const QString &heading,
 
     layout->addStretch();
     return empty;
+}
+
+// DS §3 section-card header (NEX F2 shared recipe, "compact" variant —
+// >=18px accent bar instead of the >=26px page/tile-header bar) — mirrors
+// SettingsPage::buildSectionHeader(). headerContainer is an existing child
+// of the caller's DS §2 elevated container (SSO-14440); this does not add
+// or wrap a container of its own.
+void DiskToolsPage::buildSectionHeader(QWidget *headerContainer, const QString &title)
+{
+    headerContainer->setObjectName("sectionHeaderRow");
+
+    auto *row = new QHBoxLayout(headerContainer);
+    row->setContentsMargins(10, 8, 10, 6);
+    row->setSpacing(8);
+
+    auto *accentBar = new QFrame(headerContainer);
+    accentBar->setObjectName("sectionHeaderAccent");
+    accentBar->setProperty("compact", true);
+    accentBar->setProperty("accentToken", "accent");
+    accentBar->setFrameShape(QFrame::NoFrame);
+    accentBar->setFixedWidth(3);
+    accentBar->setMinimumHeight(18);
+    accentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    row->addWidget(accentBar);
+
+    auto *lblTitle = new QLabel(title, headerContainer);
+    lblTitle->setObjectName("sectionHeaderTitle");
+    row->addWidget(lblTitle);
+    row->addStretch();
 }
