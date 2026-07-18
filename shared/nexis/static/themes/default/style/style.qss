@@ -1010,6 +1010,13 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @networkColor;
 }
 
+/* SSO-14437 (Resources remaining tiles): "temp" accent token for the Disk
+   Temperature history chart — reuses the existing @tempColor value
+   (values.ini), which had no accentToken selector wired until this item. */
+#sectionHeaderAccent[accentToken="temp"] {
+    background-color: @tempColor;
+}
+
 /* SSO-13732 (System Cleaner): "success" accent token for the page header
    bar, matching the "Estimated recoverable" @successColor readout. */
 #sectionHeaderAccent[accentToken="success"] {

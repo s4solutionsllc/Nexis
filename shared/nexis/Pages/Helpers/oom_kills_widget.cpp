@@ -1,10 +1,12 @@
 #include "oom_kills_widget.h"
 
 #include "signal_mapper.h"
+#include "utilities.h"
 #include <Managers/app_manager.h>
 
 #include <QHBoxLayout>
 #include <QLocale>
+#include <QStyle>
 
 namespace {
 
@@ -51,13 +53,29 @@ void OomKillsWidget::buildUI()
     card->setContentsMargins(16, 14, 16, 14);
     card->setSpacing(8);
 
+    // DS §3 accent bar (style.qss "Section Header" recipe, NEX F2) — hidden
+    // until setElevated() reveals + colors it, mirrors HistoryChart's
+    // sectionHeaderAccent usage.
+    mAccentBar = new QFrame(mCard);
+    mAccentBar->setObjectName("sectionHeaderAccent");
+    mAccentBar->setFixedWidth(3);
+    mAccentBar->setFrameShape(QFrame::NoFrame);
+    mAccentBar->setVisible(false);
+
     mTitle = new QLabel(tr("Out-of-Memory Kills"), mCard);
     mTitle->setObjectName("oomTitle");
     QFont titleFont = mTitle->font();
     titleFont.setPointSize(titleFont.pointSize() + 3);
     titleFont.setBold(true);
     mTitle->setFont(titleFont);
-    card->addWidget(mTitle);
+
+    auto *titleRow = new QHBoxLayout;
+    titleRow->setContentsMargins(0, 0, 0, 0);
+    titleRow->setSpacing(10);
+    titleRow->addWidget(mAccentBar);
+    titleRow->addWidget(mTitle);
+    titleRow->addStretch();
+    card->addLayout(titleRow);
 
     auto *intro = new QLabel(
         tr("systemd-oomd terminates processes before the kernel does when "
@@ -196,17 +214,12 @@ void OomKillsWidget::refreshThemeColors()
     if (!sv || !mCard)
         return;
 
-    const QString cardBg    = sv->value("@cardBg").toString();
-    const QString border    = sv->value("@borderColor").toString();
     const QString secondary = sv->value("@color04").toString();
     const QString warnCol   = sv->value("@warningColor").toString();
 
-    mCard->setStyleSheet(QString(
-        "QFrame#oomCard {"
-        "  background-color: %1;"
-        "  border: 1px solid %2;"
-        "  border-radius: 8px;"
-        "}").arg(cardBg, border));
+    // mCard's background/border/radius come from the global QSS
+    // [cardRole="elevated"] recipe (set in setElevated()) — no per-widget
+    // setStyleSheet() here (DS §9 item 1, QSS-first).
 
     if (mState)
         mState->setStyleSheet(QString());
@@ -216,4 +229,19 @@ void OomKillsWidget::refreshThemeColors()
         mDefensiveTip->setStyleSheet(QString("color: %1;").arg(warnCol));
     if (mEventsEmpty)
         mEventsEmpty->setStyleSheet(QString("color: %1;").arg(secondary));
+}
+
+void OomKillsWidget::setElevated(const QString &accentToken)
+{
+    mCard->setAttribute(Qt::WA_StyledBackground, true);
+    mCard->setProperty("cardRole", "elevated");
+    mCard->style()->unpolish(mCard);
+    mCard->style()->polish(mCard);
+
+    mAccentBar->setProperty("accentToken", accentToken);
+    mAccentBar->setVisible(true);
+    mAccentBar->style()->unpolish(mAccentBar);
+    mAccentBar->style()->polish(mAccentBar);
+
+    Utilities::addDropShadow(mCard, 90, 26);
 }

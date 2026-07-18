@@ -2,6 +2,7 @@
 #define DISK_USAGE_LAUNCHER_WIDGET_H
 
 #include <QWidget>
+#include <QFrame>
 #include <QLabel>
 #include <QPushButton>
 
@@ -20,6 +21,13 @@ public:
                                      SignalMapper *signalMapper = nullptr,
                                      SettingManager *settingManager = nullptr,
                                      ToolManager *toolManager = nullptr);
+
+    // DS §2/§3 (NEX-Resources, SSO-14437): opt this card into the shared
+    // elevated-card + accent-bar header recipe (mirrors
+    // HistoryChart::setElevated() — [cardRole="elevated"] fill/border on
+    // this widget, reveals + colors #sectionHeaderAccent next to the title,
+    // 90/26 drop shadow).
+    void setElevated(const QString &accentToken);
 
 private slots:
     void onActionClicked();
@@ -70,6 +78,7 @@ private:
     ToolManager *mToolManager;
 
     QLabel *mTitleLabel;
+    QFrame *mAccentBar;
     QLabel *mToolNameLabel;
     QLabel *mDescriptionLabel;
     QLabel *mStatusLabel;

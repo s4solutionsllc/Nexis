@@ -387,7 +387,10 @@ palette); DS §9 item 2 (static SVG, no animation); notes/resources.md
 - Correct the sidebar highlight to "Resources" (harness capture has a stale
   "Dashboard" highlight — CAPTURE_NOTES.md gotcha #5).
 **Acceptance criteria (page-specific, in addition to the common list above):**
-- Shadow count: **4** (one elevated container per chart band)
+- Shadow count: **4** (one elevated container per chart band) as originally
+  approved 2026-07-15. Now **10** page-wide after the SSO-14437 addendum
+  below (4 here + 6 more) — tracked there since those 6 tiles were outside
+  this item's own approved scope (see SSO-14294).
 - Chart titles, order, legend swatch counts/colors, and the per-chart
   "expand" control are unchanged; axis labels/units copied exactly; no data
   curves/bars invented in the empty captured plots
@@ -403,6 +406,132 @@ palette); DS §9 item 2 (static SVG, no animation); notes/resources.md
 4. Switch to Light theme and verify all four chart cards remain legible with
    correct gridlines and legend colors.
 5. Confirm no chart animates or auto-refreshes in a way it didn't before.
+
+---
+
+### Resources — remaining tiles addendum (Paperclip: SSO-14294 / SSO-14436 / SSO-14437)
+
+**Not part of the original 2026-07-15 approval above** — filed after Maintainer
+UAT on the SSO-13731/#247 change found 6 more Resources tiles still on legacy
+flat chrome (see SSO-14294 for why this is new scope, not a defect in the item
+above). Phase 1 (SSO-14436) produced the design refs; this addendum records
+Phase 2 (SSO-14437), the implementation.
+**Phase:** 2-Page (post-approval addendum)
+**Blocked by:** SSO-14436 (design audit + capture)
+**Files (in addition to the four already listed above):**
+- `shared/nexis/Pages/Helpers/oom_kills_widget.cpp`
+- `shared/nexis/Pages/Helpers/oom_kills_widget.h`
+- `shared/nexis/Pages/Resources/disk_usage_launcher_widget.cpp`
+- `shared/nexis/Pages/Resources/disk_usage_launcher_widget.h`
+- `shared/nexis/static/themes/default/style/style.qss` (new `accentToken="temp"` selector)
+**Design refs:** DS §1/§2/§3/§6/§9 (same elevated-card + accent-bar recipe as
+above); `notes/resources_remaining.md` (Phase 1 audit, SSO-14436, includes the
+per-tile "no invented data" disclosure and the accent-token decisions below);
+`renders/resources_remaining_{dark,light}.png` (UNVERIFIED — code-derived
+reference, not a live capture; see the notes doc's "Capture gap" section).
+**Change summary:**
+- Wrap History of Memory, History of Network, and History of Disk Temperature
+  in their own DS §2 elevated container card, same recipe as the four charts
+  above (`HistoryChart::setElevated()`).
+- Wrap CPU Pressure Stall (some) [PSI] and Out-of-Memory Kills the same way —
+  both Linux-only and self-hiding; the card chrome only applies when the tile
+  is actually shown.
+- Wrap Disk Usage Analysis the same way. `OomKillsWidget` and
+  `DiskUsageLauncherWidget` are not `HistoryChart` instances, so each gains
+  its own `setElevated(accentToken)` entry point applying the identical
+  `[cardRole="elevated"]` + accent-bar + 90/26-drop-shadow recipe around their
+  existing content — no redesign of OOM Kills' info layout or the Disk Usage
+  launcher's tool-detection UI.
+- Accent-token decisions (flagged as open in the Phase 1 audit, resolved
+  here): Memory → `memory` (pre-existing selector); Network → `network`
+  (pre-existing selector); Disk Temperature → new `temp` selector
+  (`@tempColor`, previously a color value with nothing wired to it); PSI →
+  `cpu` (it's a CPU-pressure metric, reusing the existing selector rather than
+  adding a new one); OOM Kills → `memory` (memory-pressure-adjacent, reusing
+  the existing selector over the also-considered `@warningColor`, which stays
+  reserved for the card's internal cgroup-v2 tip); Disk Usage Analysis →
+  `disk` (matches Disk Read Write's existing accent, both disk-related).
+**Acceptance criteria (page-specific, in addition to the common list above):**
+- Shadow count: **10** total on the Resources page (4 from SSO-13731/#247 +
+  6 new here) — one elevated container per tile, no per-row/per-child shadows
+- Tile titles, order, and (where applicable) legend swatch counts/colors are
+  unchanged; axis labels/units copied exactly per `notes/resources_remaining.md`;
+  no data curves/bars/counts invented in the empty/representative captured
+  states
+- PSI and OOM Kills remain Linux-only and self-hiding exactly as before —
+  the elevated chrome does not change when/whether they appear
+- The 4 tiles converted in #247 show no regression (unchanged accent
+  colors, unchanged "expand" behavior, unchanged shadow)
+**UAT (business-user steps):**
+
+*History of Memory*
+1. Navigate to the Resources page and locate "History of Memory."
+2. Verify it now sits in its own card with a 3px accent bar colored to match
+   the Memory metric (same color as Memory's accent elsewhere in the app).
+3. Verify the 4-series legend (Swap, Memory, Wired/Available, Compressed/Active)
+   and axis still read correctly, unchanged from before.
+4. Switch to Light theme and verify the card remains legible with correct
+   gridlines and legend colors.
+5. Confirm the chart still updates live and does not animate/auto-refresh in
+   a way it didn't before.
+
+*History of Network*
+1. Navigate to the Resources page and locate "History of Network."
+2. Verify it now sits in its own card with a 3px accent bar colored to match
+   the Network metric.
+3. Verify the Download/Upload legend and the byte-formatted axis are
+   unchanged and still populate once live data arrives.
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm the chart still updates live with no new animation.
+
+*History of Disk Temperature*
+1. On a host reporting at least one drive temperature, navigate to the
+   Resources page and locate "History of Disk Temperature." (If no drive
+   reports a temperature, this tile does not exist — confirm it is simply
+   absent, not broken.)
+2. Verify it sits in its own card with a 3px accent bar in the new "temp"
+   color (`@tempColor`).
+3. Verify the per-drive legend still reflects the actual detected drive
+   count and the axis is unchanged.
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm the chart still updates on the existing refresh cadence.
+
+*CPU Pressure Stall (some) [PSI]*
+1. On Linux with `/proc/pressure/cpu` present, navigate to the Resources
+   page and locate "CPU Pressure Stall (some)." (Absent on macOS or hosts
+   without PSI — confirm it is simply absent there, not broken.)
+2. Verify it sits in its own card with a 3px accent bar in the CPU color
+   (reused from CPU/CPU Load Averages).
+3. Verify the avg10/avg60/avg300 legend and axis are unchanged.
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm the chart still updates live with no new animation.
+
+*Out-of-Memory Kills*
+1. On a Linux host with oomd/cgroup v2 signal available, navigate to the
+   Resources page and locate "Out-of-Memory Kills." (Hidden entirely on
+   hosts without that signal, and on macOS — confirm it is simply absent
+   there, not broken.)
+2. Verify the card now sits in its own elevated card with a 3px accent bar
+   (memory color) to the left of the title — same recipe as the chart tiles,
+   not a bespoke look.
+3. Verify the state line, totals line, defensive tip (if shown), and recent
+   kills list all still render exactly as before — no content changed, only
+   the surrounding chrome.
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm nothing about the card animates or auto-refreshes in a way it
+   didn't before.
+
+*Disk Usage Analysis*
+1. Navigate to the Resources page and locate "Disk Usage Analysis."
+2. Verify it now sits in its own elevated card with a 3px accent bar (disk
+   color) next to the title.
+3. Verify the tool icon/name/description/status row and the "Built-in
+   Treemap" / launch-or-install action button are all still present and
+   functional (click through to confirm the button still launches/installs
+   as before).
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm no regression to tool auto-detection or the built-in treemap
+   dialog.
 
 ---
 
