@@ -1,6 +1,7 @@
 #include "disk_usage_launcher_widget.h"
 #include "disk_treemap_dialog.h"
 #include "dpi.h"
+#include "utilities.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -13,6 +14,7 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QDir>
+#include <QStyle>
 #include <QtConcurrent>
 
 #ifdef Q_OS_MACOS
@@ -81,6 +83,22 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent,
     mTitleLabel = new QLabel(tr("Disk Usage Analysis"), this);
     mTitleLabel->setObjectName("lblHistoryTitle");
 
+    // DS §3 accent bar (style.qss "Section Header" recipe, NEX F2) — hidden
+    // until setElevated() reveals + colors it, mirrors HistoryChart's
+    // sectionHeaderAccent usage.
+    mAccentBar = new QFrame(this);
+    mAccentBar->setObjectName("sectionHeaderAccent");
+    mAccentBar->setFixedWidth(3);
+    mAccentBar->setFrameShape(QFrame::NoFrame);
+    mAccentBar->setVisible(false);
+
+    auto *titleRow = new QHBoxLayout;
+    titleRow->setContentsMargins(0, 0, 0, 0);
+    titleRow->setSpacing(10);
+    titleRow->addWidget(mAccentBar);
+    titleRow->addWidget(mTitleLabel);
+    titleRow->addStretch();
+
     // --- Icon + info area ---
     mToolNameLabel = new QLabel(this);
     QFont nameFont = mToolNameLabel->font();
@@ -133,7 +151,7 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent,
     auto *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(Dpi::scale(12), Dpi::scale(6), Dpi::scale(12), 0);
     mainLayout->setSpacing(Dpi::scale(8));
-    mainLayout->addWidget(mTitleLabel);
+    mainLayout->addLayout(titleRow);
     mainLayout->addLayout(contentLayout);
     mainLayout->addLayout(buttonLayout);
 
@@ -607,4 +625,19 @@ void DiskUsageLauncherWidget::applyThemeColors()
                       );
     QString statusColor = sv->value(installed ? "@successColor" : "@tertiaryText").toString();
     mStatusLabel->setStyleSheet(QString("color: %1; font-weight: bold;").arg(statusColor));
+}
+
+void DiskUsageLauncherWidget::setElevated(const QString &accentToken)
+{
+    setAttribute(Qt::WA_StyledBackground, true);
+    setProperty("cardRole", "elevated");
+    style()->unpolish(this);
+    style()->polish(this);
+
+    mAccentBar->setProperty("accentToken", accentToken);
+    mAccentBar->setVisible(true);
+    style()->unpolish(mAccentBar);
+    style()->polish(mAccentBar);
+
+    Utilities::addDropShadow(this, 90, 26);
 }

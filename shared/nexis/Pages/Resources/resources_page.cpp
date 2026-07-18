@@ -82,21 +82,43 @@ void ResourcesPage::init()
     }
 
     // DS §2/§3 (NEX-Resources): elevated container + accent-bar header for
-    // the four history-chart bands named in the approved design (CPU, CPU
-    // Load Averages, GPU, Disk Read Write). Memory/Network/Disk Health/PSI/
-    // OOM are out of this item's scope and keep the flat shadow below.
+    // every history-chart band. SSO-13731 (PR #247) covered CPU, CPU Load
+    // Averages, GPU, Disk Read Write; SSO-14437 extends the same treatment to
+    // the remaining tiles named in notes/resources_remaining.md (Memory,
+    // Network, Disk Temperature — elevated below; PSI and OOM Kills —
+    // elevated further down since they're conditional/Linux-only).
     mChartCpu->setElevated(QStringLiteral("cpu"));
     mChartCpuLoadAvg->setElevated(QStringLiteral("cpu"));
     if (mChartGpu)
         mChartGpu->setElevated(QStringLiteral("gpu"));
     mChartDiskReadWrite->setElevated(QStringLiteral("disk"));
+    mChartMemory->setElevated(QStringLiteral("memory"));
+    mChartNetwork->setElevated(QStringLiteral("network"));
+    // mChartDiskHealth, if already constructed at this point, was elevated
+    // inside ensureDiskHealthChart() above — that single call site also
+    // handles the lazy (FR-96) creation path from onDiskHealthUpdated().
 
     QList<QWidget*> flatShadowWidgets = widgets;
     flatShadowWidgets.removeOne(mChartCpu);
     flatShadowWidgets.removeOne(mChartCpuLoadAvg);
     flatShadowWidgets.removeOne(mChartDiskReadWrite);
+    flatShadowWidgets.removeOne(mChartMemory);
+    flatShadowWidgets.removeOne(mChartNetwork);
     if (mChartGpu)
         flatShadowWidgets.removeOne(mChartGpu);
+    if (mChartDiskHealth)
+        flatShadowWidgets.removeOne(mChartDiskHealth);
+
+#ifdef Q_OS_LINUX
+    if (mChartPsiCpu) {
+        mChartPsiCpu->setElevated(QStringLiteral("cpu"));
+        flatShadowWidgets.removeOne(mChartPsiCpu);
+    }
+    if (mOomKills) {
+        mOomKills->setElevated(QStringLiteral("memory"));
+        flatShadowWidgets.removeOne(mOomKills);
+    }
+#endif
 
     Utilities::addDropShadow(flatShadowWidgets, 40);
 
@@ -132,7 +154,7 @@ void ResourcesPage::init()
     // Disk Usage Analyzer launcher (FR-23)
     mDiskLauncher = new DiskUsageLauncherWidget(this);
     ui->chartsLayout->addWidget(mDiskLauncher);
-    Utilities::addDropShadow(mDiskLauncher, 40);
+    mDiskLauncher->setElevated(QStringLiteral("disk"));
 }
 
 void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
@@ -461,7 +483,9 @@ void ResourcesPage::ensureDiskHealthChart(const QList<DriveHealth> &drives)
     } else {
         ui->chartsLayout->addWidget(mChartDiskHealth);
     }
-    Utilities::addDropShadow(mChartDiskHealth, 40);
+    // Single call site for both the construction-time and lazy (FR-96)
+    // creation paths (see setElevated() comment in init()).
+    mChartDiskHealth->setElevated(QStringLiteral("temp"));
 }
 
 void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
