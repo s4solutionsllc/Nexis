@@ -1293,7 +1293,12 @@ QLabel[accessibleName="dialog-title"] {
    uic requires unique objectNames within one .ui, so — unlike the
    single-instance #sectionHeaderAccent/#sectionHeaderTitle pages — these five
    bars/labels are named per section and styled by name rather than through
-   the shared [accentToken] property selectors. */
+   the shared [accentToken] property selectors. Storage (SSO-14757) is the
+   sixth card but does reuse the bare shared #sectionHeaderAccent/
+   #sectionHeaderTitle objectNames below, since those names weren't already
+   claimed on this page — that lets it pick up the existing
+   #sectionHeaderAccent[accentToken="disk"] / @diskColor rule as-is instead
+   of adding a seventh named override. */
 #HardwareInfoPage #sectionHeaderAccentSystem,
 #HardwareInfoPage #sectionHeaderAccentProcessor,
 #HardwareInfoPage #sectionHeaderAccentGraphics,
@@ -1319,11 +1324,10 @@ QLabel[accessibleName="dialog-title"] {
     font-weight: 600;
 }
 
-/* SSO-13735: System/Processor/Graphics/Memory moved to the shared
-   [cardRole="elevated"] + per-section header recipe above (DS §2/§3, NEX
-   F1/F2); these QGroupBox rules now only style the remaining native-title
-   sections (Fans, Storage) that are out of this item's approved-capture
-   scope. */
+/* SSO-13735/SSO-14757: System/Processor/Graphics/Memory/Battery/Storage moved
+   to the shared [cardRole="elevated"] + per-section header recipe above (DS
+   §2/§3, NEX F1/F2); these QGroupBox rules now only style the remaining
+   native-title Fans section, which is out of approved-capture scope. */
 #HardwareInfoPage QGroupBox {
     border: 1px solid @borderColor;
     border-radius: 12;

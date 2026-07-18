@@ -42,6 +42,8 @@ private:
     void populateStorage();
 
     void addRow(QTableWidget *table, const QString &label, const QString &value);
+    void addDriveGroupHeaderRow(QTableWidget *table, const QString &label, const QString &value);
+    void addDriveDetailRow(QTableWidget *table, const QString &label, const QString &value);
     void fitTableHeight(QTableWidget *table);
     void refreshThemeColors();
     void repopulateStorage();
