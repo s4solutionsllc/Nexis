@@ -132,6 +132,13 @@ void SettingsPage::init()
     // dashboard footer visibility
     ui->checkDashboardFooter->setChecked(mSettingManager->getDashboardFooterVisible());
 
+    // FW-20 (SSO-3748): menu-bar monitor is macOS-only surface
+#ifdef Q_OS_MAC
+    ui->checkMenuBarMonitor->setChecked(mSettingManager->getMenuBarMonitorEnabled());
+#else
+    ui->checkMenuBarMonitor->hide();
+#endif
+
     // load pages — store a stable untranslated id as item data so the
     // saved start page survives a UI language change (SSO-3388 / audit Q3).
     ui->cmbStartPage->addItem(tr("Dashboard"),      "dashboard");
@@ -350,6 +357,12 @@ void SettingsPage::on_checkDashboardFooter_clicked(bool checked)
 {
     mSettingManager->setDashboardFooterVisible(checked);
     emit SignalMapper::ins()->sigDashboardFooterChanged(checked);
+}
+
+void SettingsPage::on_checkMenuBarMonitor_clicked(bool checked)
+{
+    mSettingManager->setMenuBarMonitorEnabled(checked);
+    emit SignalMapper::ins()->sigMenuBarMonitorToggled(checked);
 }
 
 void SettingsPage::cmbColorSchemeChanged(int index)

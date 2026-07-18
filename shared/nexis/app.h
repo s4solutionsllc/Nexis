@@ -55,6 +55,7 @@ struct PageSlot {
 #include "Pages/Settings/settings_page.h"
 #ifdef Q_OS_MAC
 #include "Pages/Homebrew/homebrew_page.h"
+#include "MenuBar/menu_bar_monitor.h"
 #else
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
 #endif
@@ -151,6 +152,7 @@ private:
     NetworkUsagePage *networkUsagePage;
 #ifdef Q_OS_MAC
     HomebrewPage *homebrewPage = nullptr;
+    MenuBarMonitor *mMenuBarMonitor = nullptr;
 #else
     APTSourceManagerPage *aptSourceManagerPage = nullptr;
 #endif

@@ -125,6 +125,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/display_server_util.cpp"
   "${CORE_SHARED_DIR}/Utils/file_util.cpp"
   "${CORE_SHARED_DIR}/Utils/format_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/menu_bar_format_util.cpp"
   "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.cpp"
 )
@@ -163,6 +164,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/display_server_util.h"
   "${CORE_SHARED_DIR}/Utils/file_util.h"
   "${CORE_SHARED_DIR}/Utils/format_util.h"
+  "${CORE_SHARED_DIR}/Utils/menu_bar_format_util.h"
   "${CORE_SHARED_DIR}/Utils/headless_util.h"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.h"
 )
@@ -532,6 +534,8 @@ if(APPLE)
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
+    "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.cpp"
+    "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.mm"
   )
   set(GUI_PLAT_HDRS
     "${GUI_SHARED_DIR}/Pages/StartupApps/btm_reset_dialog.h"
@@ -539,6 +543,8 @@ if(APPLE)
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"
+    "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.h"
+    "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.h"
   )
 else()
   set(GUI_PLAT_SRCS
