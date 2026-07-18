@@ -9,6 +9,8 @@ name: Verify Linux ScreenshotTests (SSO-14543, temporary)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [claude/SSO-14543-linux-screenshot-baselines]
 
 jobs:
   verify:
