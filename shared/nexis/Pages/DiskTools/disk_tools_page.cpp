@@ -63,6 +63,9 @@ void DiskToolsPage::init()
     ui->btnModeLargeOld->setObjectName("segmentedLeft");
     ui->btnModeDuplicates->setObjectName("segmentedRight");
 
+    ui->stackedModes->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    ui->mainLayout->setStretchFactor(ui->stackedModes, 1);
+
     buildLargeOldPage();
     buildDuplicatePage();
 
