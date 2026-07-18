@@ -20,6 +20,8 @@
 #include <QPlainTextEdit>
 #include <QDialog>
 #include <QScrollArea>
+#include <QGuiApplication>
+#include <QScreen>
 #include <Utils/format_util.h>
 #include <functional>
 
@@ -139,6 +141,21 @@ void SettingsPage::init()
     ui->checkMenuBarMonitor->hide();
 #endif
 
+    // launch directly into kiosk mode, on a chosen monitor (GH#207 / SSO-8351)
+    ui->checkLaunchInKioskMode->setChecked(mSettingManager->getLaunchInKioskMode());
+
+    ui->cmbKioskMonitor->addItem(tr("Same as last time"), "");
+    for (QScreen *screen : QGuiApplication::screens()) {
+        QString label = screen->model().isEmpty() ? screen->name() : screen->model();
+        if (label.isEmpty())
+            label = tr("Monitor");
+        ui->cmbKioskMonitor->addItem(
+            QString("%1 (%2x%3)").arg(label).arg(screen->geometry().width()).arg(screen->geometry().height()),
+            screen->name());
+    }
+    const int kioskMonitorIndex = ui->cmbKioskMonitor->findData(mSettingManager->getKioskMonitorName());
+    ui->cmbKioskMonitor->setCurrentIndex(kioskMonitorIndex >= 0 ? kioskMonitorIndex : 0);
+
     // load pages — store a stable untranslated id as item data so the
     // saved start page survives a UI language change (SSO-3388 / audit Q3).
     ui->cmbStartPage->addItem(tr("Dashboard"),      "dashboard");
@@ -236,6 +253,7 @@ void SettingsPage::init()
     connect(ui->cmbFont, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbFontChanged);
     connect(ui->cmbTrayIconStyle, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbTrayIconStyleChanged);
     connect(ui->cmbDiskAnalyzer, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskAnalyzerChanged);
+    connect(ui->cmbKioskMonitor, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbKioskMonitorChanged);
 
     // scheduled cleaning
     initScheduledCleaning();
@@ -363,6 +381,17 @@ void SettingsPage::on_checkMenuBarMonitor_clicked(bool checked)
 {
     mSettingManager->setMenuBarMonitorEnabled(checked);
     emit SignalMapper::ins()->sigMenuBarMonitorToggled(checked);
+}
+
+void SettingsPage::on_checkLaunchInKioskMode_clicked(bool checked)
+{
+    mSettingManager->setLaunchInKioskMode(checked);
+}
+
+void SettingsPage::cmbKioskMonitorChanged(int index)
+{
+    const QString name = ui->cmbKioskMonitor->itemData(index).toString();
+    mSettingManager->setKioskMonitorName(name);
 }
 
 void SettingsPage::cmbColorSchemeChanged(int index)

@@ -193,6 +193,34 @@
            </widget>
           </item>
 
+          <item row="9" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkLaunchInKioskMode">
+            <property name="text"><string>Launch directly into Kiosk Mode</string></property>
+            <property name="toolTip"><string>Starts Nexis in full-screen kiosk mode as soon as it launches, without needing to press F11.</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
+          <item row="10" column="0">
+           <widget class="QLabel" name="lblKioskMonitor">
+            <property name="text"><string>Kiosk Monitor</string></property>
+           </widget>
+          </item>
+          <item row="10" column="1">
+           <widget class="QComboBox" name="cmbKioskMonitor">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+            <property name="toolTip"><string>Which monitor kiosk mode moves the window to when it activates. Only used on multi-monitor setups.</string></property>
+           </widget>
+          </item>
+
          </layout>
           </item>
          </layout>
