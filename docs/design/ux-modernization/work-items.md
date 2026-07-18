@@ -558,33 +558,43 @@ renders/system_logs_{dark,light}.png.
 - `shared/nexis/Pages/HardwareInfo/hardware_info_page.ui`
 **Design refs:** DS §2 (elevated cards per section); DS §1 (surface
 hierarchy); DS §3 (per-section accent-bar headers, type-appropriate accent
-color); DS §4 (key/value typography); notes/hardware_info.md (approved
-2026-07-15); renders/hardware_info_{dark,light}.png.
+color); DS §4 (key/value typography); notes/hardware_info.md (System/
+Processor/Graphics/Memory approved 2026-07-15; Battery card added round 2,
+Paperclip: SSO-14298, pending maintainer UAT); renders/hardware_info_{dark,light}.png.
 **Change summary:**
-- Put each section body (System, Processor, Graphics, Memory) in its own DS
-  §2 elevated card.
+- Put each section body (System, Processor, Graphics, Memory, **Battery**) in
+  its own DS §2 elevated card. Battery was out of scope for the original pass
+  (see below) and was added in round 2 once a capture with real Battery rows
+  existed.
 - Apply the three-layer surface hierarchy so each card reads as raised.
 - Give each section title header anatomy — 3px accent bar + label; Graphics
-  uses the GPU metric token (`@gpuColor`), other sections use their
-  type-appropriate accent tokens.
+  uses the GPU metric token (`@gpuColor`), Battery uses `@batteryColor`
+  (already wired for the header accent bar pre-round-2), other sections use
+  their type-appropriate accent tokens.
 - Apply DS §4 typography to key/value rows: labels 9pt/600 `@color06`,
   values `@color05`, with an `@borderColor` divider between rows.
 **Acceptance criteria (page-specific, in addition to the common list above):**
-- Shadow count: **4** (System, Processor, Graphics, Memory — Battery is a
-  section title only, no card, since the capture cuts off before any Battery
-  rows)
+- Shadow count: **5** (System, Processor, Graphics, Memory, Battery — round 1
+  shipped 4 with Battery as a section-title-only stub because the only
+  available capture cut off before any Battery rows; round 2, SSO-14298, adds
+  the 5th once a full capture existed: `current-state/macos/{dark,light}/
+  hardware_info_battery.png`, manual capture 2026-07-17)
 - Section order (System → Processor → Graphics → Memory → Battery) and every
-  key/value copied verbatim; the full-width "Copy GPU Diagnostics" button
-  unchanged; no Battery rows invented
+  key/value copied verbatim from the round-2 capture; the full-width "Copy
+  GPU Diagnostics" button unchanged; no Battery rows invented — every key in
+  the Battery card must trace to a row visible in
+  `hardware_info_battery.png`
 **UAT (business-user steps):**
-1. Navigate to Hardware Info. Verify System, Processor, Graphics, and Memory
-   each appear as separate cards with borders and shadows.
+1. Navigate to Hardware Info. Verify System, Processor, Graphics, Memory, and
+   Battery each appear as separate cards with borders and shadows.
 2. Verify the Graphics card's accent bar is a different color from the other
    sections' accent bars.
 3. Verify "Copy GPU Diagnostics" still works.
-4. Scroll to Battery and confirm it shows a section title with no
-   fabricated data rows beneath it.
-5. Switch to Light theme and confirm all four cards remain legible.
+4. Scroll to Battery and confirm its card shows the same key/value rows as
+   today (Status, Health, Charge, Cycle Count, Current/Maximum/Design
+   Capacity, Temperature, Voltage, Power, Time Remaining) with no fabricated
+   rows — only styling changed, not content.
+5. Switch to Light theme and confirm all five cards remain legible.
 
 ---
 
