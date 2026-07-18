@@ -687,6 +687,20 @@ void App::init()
 
     mTrayIcon->show();
 
+#ifdef Q_OS_MAC
+    // FW-20 (SSO-3748): optional menu-bar CPU/memory monitor, off by default.
+    mMenuBarMonitor = new MenuBarMonitor(this);
+    connect(mMenuBarMonitor, &MenuBarMonitor::activationRequested, this, [this]() {
+        setWindowState(windowState() & ~Qt::WindowMinimized);
+        clickSidebarButton(tr("Dashboard"), true);
+        if (windowHandle())
+            windowHandle()->requestActivate();
+    });
+    connect(SignalMapper::ins(), &SignalMapper::sigMenuBarMonitorToggled,
+            mMenuBarMonitor, &MenuBarMonitor::setEnabled);
+    mMenuBarMonitor->setEnabled(SettingManager::ins()->getMenuBarMonitorEnabled());
+#endif
+
     // Kiosk mode shortcuts
     QAction *kioskToggle = new QAction(this);
     kioskToggle->setShortcut(Qt::Key_F11);

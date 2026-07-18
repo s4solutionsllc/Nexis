@@ -668,3 +668,13 @@ QByteArray SettingManager::getWindowState() const
 {
     return mSettings->value(SettingKeys::WindowState).toByteArray();
 }
+
+void SettingManager::setMenuBarMonitorEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::MenuBarMonitorEnabled, value);
+}
+
+bool SettingManager::getMenuBarMonitorEnabled() const
+{
+    return mSettings->value(SettingKeys::MenuBarMonitorEnabled, false).toBool();
+}

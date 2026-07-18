@@ -129,6 +129,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | Autostart | `~/.config/autostart/*.desktop` | `~/Library/LaunchAgents/*.plist` |
 | Sudo elevation | `pkexec` / `sudo` | `osascript` (AppleScript admin prompt) |
 | Scheduled cleaning | systemd timers / cron | launchd plists |
+| Menu-bar monitor | — (not offered) | `NSStatusItem` (AppKit bridge, `macos/nexis/MenuBar/`, FW-20) |
 
 ---
 
@@ -602,6 +603,7 @@ per card — never per control), below a page-level accent-bar header
 - **Disk Analyzer** — Preferred disk usage tool (platform-specific list + custom path)
 - **Disk Health Alert** — Toggle tray alerts for failing drives
 - **Show Dashboard Footer** — Toggle visibility of the system summary bar and status footer on the Dashboard (default: visible; FR-75)
+- **Show CPU & Memory in the menu bar** (macOS only, off by default) — adds an optional `NSStatusItem` (`C n%  M n%`) that subscribes to `DataRefreshService`'s Cpu/Memory signals like a page would; clicking it brings the main window forward on the Dashboard. Toggling live creates/destroys the status item without a restart (FW-20 / SSO-3748)
 - **Dashboard Layout** — Reset Layout button to restore default tile arrangement (mirrors edit toolbar action)
 - **Scheduled Cleaning** — Quick-setup toggle, schedule manager dialog, threshold alerts, cleaning notifications, history viewer
 - **Version Display** — Current version from `APP_VERSION` compile definition

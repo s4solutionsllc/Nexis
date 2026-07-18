@@ -84,6 +84,9 @@ namespace SettingKeys {
     // GH#55 / SSO-355
     const QString WindowGeometry("WindowGeometry");
     const QString WindowState("WindowState");
+
+    // FW-20 (SSO-3748)
+    const QString MenuBarMonitorEnabled("MenuBarMonitorEnabled");
 }
 
 class SettingManager
@@ -279,6 +282,10 @@ public:
     QByteArray getWindowGeometry() const;
     void setWindowState(const QByteArray &value);
     QByteArray getWindowState() const;
+
+    // FW-20 (SSO-3748) — macOS menu-bar CPU/memory monitor, off by default
+    void setMenuBarMonitorEnabled(bool value);
+    bool getMenuBarMonitorEnabled() const;
 
 private:
     static SettingManager *instance;

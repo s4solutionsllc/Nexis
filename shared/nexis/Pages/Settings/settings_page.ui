@@ -185,6 +185,14 @@
            </widget>
           </item>
 
+          <item row="8" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkMenuBarMonitor">
+            <property name="text"><string>Show CPU &amp; Memory in the menu bar</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
          </layout>
           </item>
          </layout>

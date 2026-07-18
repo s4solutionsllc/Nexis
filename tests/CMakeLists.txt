@@ -20,6 +20,7 @@ set(GUI_SHARED_DIR "${CMAKE_SOURCE_DIR}/shared/nexis")
 
 # ── Utility tests ──────────────────────────────────────────────────────────────
 add_nexis_test(NAME FormatUtilTests   SOURCES utils/test_format_util.cpp)
+add_nexis_test(NAME MenuBarFormatUtilTests SOURCES utils/test_menu_bar_format_util.cpp)
 add_nexis_test(NAME FileUtilTests     SOURCES utils/test_file_util.cpp)
 add_nexis_test(NAME CommandUtilTests       SOURCES utils/test_command_util.cpp)
 add_nexis_test(NAME CommandUtilAsyncTests  SOURCES utils/test_command_util_async.cpp LIBS Qt6::Concurrent)
