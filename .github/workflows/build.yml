@@ -81,6 +81,23 @@ jobs:
       - name: Unit Tests
         run: xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
 
+      # TEMPORARY (SSO-14443): repro run to gather pass/fail evidence for the
+      # DuplicateFinderTests spy.wait(10000) flake investigation. Remove before
+      # merge once root cause is confirmed.
+      - name: SSO-14443 repro - repeat DuplicateFinderTests
+        if: matrix.arch == 'x64'
+        run: |
+          cd build
+          pass=0; fail=0
+          for i in $(seq 1 20); do
+            if xvfb-run -a ctest -R '^DuplicateFinderTests$' --output-on-failure; then
+              pass=$((pass+1))
+            else
+              fail=$((fail+1))
+            fi
+          done
+          echo "SSO-14443 repro (baseline 10000ms): PASS=$pass FAIL=$fail out of 20"
+
       # ScreenshotTests are intentionally NOT run on the Linux per-PR jobs:
       # there are no committed Linux baselines (so the comparison always QSKIPs —
       # no regression value), and the test hangs indefinitely under xvfb while
