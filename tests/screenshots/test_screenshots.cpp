@@ -88,7 +88,7 @@ static const QVector<PageInfo> kBasePageMap = {
 // opt in per-page via NEXIS_SCREENSHOT_ONLY when driving a capture.
 #ifndef Q_OS_MACOS
 static const QVector<PageInfo> kRound2PageMap = {
-    {"AptSourceManagerPage", "apt_source_manager", {"QAbstractItemView"}, {}},
+    {"APTSourceManagerPage", "apt_source_manager", {"QAbstractItemView"}, {}},
     {"DockerPage",           "docker",             {"QAbstractItemView"}, {}},
     {"GnomeSettingsPage",    "gnome_settings",      {}, {}},
 };
