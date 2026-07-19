@@ -28,6 +28,7 @@ private slots:
 
 private:
     void init();
+    void buildPageHeader();
 
     Ui::GnomeSettingsPage *ui;
 

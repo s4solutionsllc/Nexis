@@ -21,6 +21,9 @@ public:
 signals:
     void settingFailed(const QString &message);
 
+private slots:
+    void refreshThemeColors();
+
 private:
     void loadSettings();
     QStringList discoverGtkThemes();
@@ -29,6 +32,9 @@ private:
     static void parseFontValue(const QString &value, QString &family, int &size);
     void applyFont(const QString &schema, const QString &key,
                    QFontComboBox *combo, QSpinBox *spin, const QString &label);
+
+    void buildSectionHeader(QWidget *headerContainer, const QString &title);
+    void buildSectionCards();
 
     Ui::GnomeAppearanceTab *ui;
     bool mLoading;

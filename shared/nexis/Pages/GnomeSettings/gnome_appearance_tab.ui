@@ -21,12 +21,26 @@
      <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
      <widget class="QWidget" name="scrollContents">
       <layout class="QVBoxLayout" name="scrollLayout">
+       <property name="leftMargin"><number>12</number></property>
+       <property name="topMargin"><number>6</number></property>
+       <property name="rightMargin"><number>12</number></property>
+       <property name="bottomMargin"><number>12</number></property>
+       <property name="spacing"><number>16</number></property>
 
        <!-- Themes Group -->
        <item>
-        <widget class="QGroupBox" name="groupThemes">
-         <property name="title"><string>Themes</string></property>
-         <layout class="QGridLayout" name="gridThemes">
+        <widget class="QWidget" name="groupThemes" native="true">
+         <layout class="QVBoxLayout" name="vboxThemes">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerThemes" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridThemes">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>6</number></property>
 
@@ -94,15 +108,26 @@
             <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
            </widget>
           </item>
+          </layout>
+          </item>
          </layout>
         </widget>
        </item>
 
        <!-- Fonts Group -->
        <item>
-        <widget class="QGroupBox" name="groupFonts">
-         <property name="title"><string>Fonts</string></property>
-         <layout class="QGridLayout" name="gridFonts">
+        <widget class="QWidget" name="groupFonts" native="true">
+         <layout class="QVBoxLayout" name="vboxFonts">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerFonts" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridFonts">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>6</number></property>
 
@@ -241,15 +266,26 @@
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
+          </layout>
+          </item>
          </layout>
         </widget>
        </item>
 
        <!-- Interface Group -->
        <item>
-        <widget class="QGroupBox" name="groupInterface">
-         <property name="title"><string>Interface</string></property>
-         <layout class="QGridLayout" name="gridInterface">
+        <widget class="QWidget" name="groupInterface" native="true">
+         <layout class="QVBoxLayout" name="vboxInterface">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerInterface" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridInterface">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>6</number></property>
 
@@ -276,15 +312,26 @@
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
+          </layout>
+          </item>
          </layout>
         </widget>
        </item>
 
        <!-- Clock & Status Group -->
        <item>
-        <widget class="QGroupBox" name="groupClock">
-         <property name="title"><string>Clock &amp; Status</string></property>
-         <layout class="QGridLayout" name="gridClock">
+        <widget class="QWidget" name="groupClock" native="true">
+         <layout class="QVBoxLayout" name="vboxClock">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerClock" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridClock">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>6</number></property>
 
@@ -335,6 +382,8 @@
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
+          </item>
+          </layout>
           </item>
          </layout>
         </widget>
