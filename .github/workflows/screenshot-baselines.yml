@@ -110,6 +110,10 @@ jobs:
             docker.io \
             gsettings-desktop-schemas \
             dbus-x11
+          # AptSourceToolLinux::isAvailable() checks QDir("/etc/apt/sources.list.d").exists().
+          # The minimal ubuntu:26.04 container may not have this directory even after apt-get runs,
+          # so create it explicitly so the page is registered at runtime.
+          mkdir -p /etc/apt/sources.list.d
 
       - name: Capture round-2 pages (SSO-14981)
         if: steps.skip-check.outputs.skipped != 'true' && inputs.round2_pages
@@ -125,11 +129,21 @@ jobs:
             # tests/reference_screenshots/. cwd is build/, matching
             # scripts/update_screenshots.sh, so output lands at
             # build/test_screenshots/linux/.
+            #
+            # GSETTINGS_BACKEND=keyfile: forces gsettings to use file-based
+            # storage instead of the dconf bus, preventing GnomeSettingsPage
+            # from hanging on gsettings-get calls in a headless dbus session
+            # where dconf-service is not running. The keyfile backend reads
+            # compiled schemas from /usr/share/glib-2.0/schemas/ normally.
+            #
+            # timeout 60: hard safety cap per page — guards against any future
+            # hang at the Qt/xvfb level (each page capture should finish in <5s).
             NEXIS_GENERATE_REFS=1 \
             NEXIS_GENERATE_OUTPUT_ONLY=1 \
             NEXIS_INCLUDE_ROUND2_PAGES=1 \
             NEXIS_SCREENSHOT_ONLY="$page" \
-            dbus-run-session -- xvfb-run -a ./output/test-ScreenshotTests \
+            GSETTINGS_BACKEND=keyfile \
+            timeout 60 dbus-run-session -- xvfb-run -a ./output/test-ScreenshotTests \
               || echo "::warning::round-2 capture failed for $page — see log above"
             echo "::endgroup::"
           done
