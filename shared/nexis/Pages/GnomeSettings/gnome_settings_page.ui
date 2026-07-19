@@ -33,6 +33,49 @@
     <number>12</number>
    </property>
    <item>
+    <widget class="QWidget" name="pageHeader" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <layout class="QHBoxLayout" name="pageHeaderLayout">
+      <property name="leftMargin"><number>0</number></property>
+      <property name="topMargin"><number>0</number></property>
+      <property name="rightMargin"><number>0</number></property>
+      <property name="bottomMargin"><number>10</number></property>
+      <property name="spacing"><number>8</number></property>
+      <item>
+       <widget class="QFrame" name="pageHeaderAccent">
+        <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="pageHeaderTextCol">
+        <property name="spacing"><number>0</number></property>
+        <item>
+         <widget class="QLabel" name="pageHeaderTitle">
+          <property name="text"><string>GNOME Settings</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="pageHeaderSource">
+          <property name="text"><string>GNOME desktop preferences</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="hspacerPageHeader">
+        <property name="orientation"><enum>Qt::Horizontal</enum></property>
+        <property name="sizeHint" stdset="0"><size><width>0</width><height>0</height></size></property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="tabBarLayout">
      <property name="spacing">
       <number>6</number>

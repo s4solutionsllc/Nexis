@@ -564,6 +564,8 @@ Configure GNOME desktop environment settings. Conditional: shown only when `gset
 
 Changes apply immediately via `gsettings set`. Error feedback with inline messages if setting fails. Font fields use `QFontComboBox` with live preview; monospace combo filtered to fixed-pitch families.
 
+**UI layout — Appearance tab (NEX Phase-2 round 2, SSO-15098):** a page-level DS §3 header ("GNOME Settings" / "GNOME desktop preferences") sits above the unchanged tab strip; each of the tab's four `QGroupBox` groups (Themes, Fonts, Interface, Clock & Status) is now its own DS §2 elevated section card (`[cardRole="elevated"]`, one `Utilities::addDropShadow(card, 90, 26)` per card — shadow count 4) with a DS §3 "compact" accent-bar header, per the shared `SettingsPage`-style recipe. Window Manager, Mouse & Touchpad, and Desktop tabs are out of scope for this pass and keep their original `QGroupBox` chrome.
+
 > **macOS:** the GNOME Settings page is hidden in the sidebar and `ToolManager::checkGnomeSettings()` returns false. The macOS `GnomeSettingsTool` adapter is a hard no-op stub (`isAvailable()` returns false; setters never invoke `defaults write`) so no code path can write GNOME-mapped values into Apple preference domains, even if the sidebar guard were to regress (audit WI-29).
 
 ### 15. System Logs
