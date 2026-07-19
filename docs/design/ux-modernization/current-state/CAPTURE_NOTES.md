@@ -22,7 +22,7 @@ pages + the Dashboard reference) × platform.
 | 10 | APT Source Manager | not-applicable (Linux-only page; the macOS build compiles `HomebrewPage` in this sidebar slot instead — see row 15) | captured — `linux/{dark,light}/apt_source_manager.png` (harness, round 2 — SSO-14981) |
 | 11 | System Cleaner | captured — `macos/{dark,light}/system_cleaner.png` (harness) | captured — `linux/{dark,light}/system_cleaner.png` (harness) |
 | 12 | Disk Tools | captured — `macos/{dark,light}/disk_tools.png` (manual) | not-captured (Linux): outside the harness's 12 pages; headless host, no manual capture possible. Cross-platform page; prototype derives from the macOS capture. |
-| 13 | Docker | not-capturable (macOS): Docker is not installed on the capture machine, so `ToolManager::checkDocker()` returns false and `app.cpp` hides the sidebar button at runtime — the page is compiled but not reachable via UI. Re-capture once Docker is available, or capture on a host that has it installed. | captured — `linux/{dark,light}/docker.png` (harness, round 2 — SSO-14981). **Caveat:** the CI capture container has the `docker` CLI installed to satisfy `ToolManager::checkDocker()`, but no Docker daemon running, so the page shows a real, live "daemon not running" empty state rather than populated containers/images — an honest current-state capture, not a placeholder. |
+| 13 | Docker | not-capturable (macOS): Docker is not installed on the capture machine, so `ToolManager::checkDocker()` returns false and `app.cpp` hides the sidebar button at runtime — the page is compiled but not reachable via UI. Re-capture once Docker is available, or capture on a host that has it installed. | captured — `linux/{dark,light}/docker.png` (harness, round 2 — SSO-14981). **Note:** the GitHub Actions runner already has a live Docker daemon (v28.0.4) running as part of its standard image — installing the `docker` CLI to satisfy `ToolManager::checkDocker()` connected to it, so the capture shows a fully populated, real state: 7 images (the runner's own tooling/workflow images, e.g. `ghcr.io/github/gh-aw-firewall/*`), Images/Containers/Volumes tabs, and a "Docker daemon: Running" status bar — not an empty state. |
 | 14 | Helpers | captured — `macos/{dark,light}/helpers.png` (harness) | captured — `linux/{dark,light}/helpers.png` (harness) |
 | 15 | Homebrew | captured — `macos/{dark,light}/homebrew.png` (manual) | not-applicable (macOS-only page; the Linux build compiles `APTSourceManagerPage` in this sidebar slot instead — see row 10) |
 | 16 | Resources | captured — `macos/{dark,light}/resources.png` (harness) | captured — `linux/{dark,light}/resources.png` (harness) |
@@ -146,13 +146,21 @@ committed PNGs show a stale "Dashboard" sidebar highlight. Consumers must
 render the correct highlight (APT Source Manager / Docker / GNOME Settings
 respectively) rather than copying the highlight shown in the PNG.
 
-**Known caveat — Docker daemon not running.** The CI container has the
-`docker` CLI installed (satisfies `checkDocker()`) but no Docker daemon
-running, so `docker.png` shows a real, live "daemon not running" empty state
-rather than populated containers/images. This is an honest current-state
-capture of what the page renders when Docker is installed-but-not-running —
-not a fabrication — but round-2 mockup work should account for a
-daemon-running state separately if that's a UI state worth designing for.
+**Note — Docker daemon is live, not empty.** The `docker.io` package was
+installed in the CI container only to satisfy `checkDocker()`'s CLI-presence
+check; the assumption going in was that no daemon would be running and the
+page would show an empty state. That assumption was wrong and was corrected
+after actually inspecting the committed PNGs: GitHub Actions runners already
+ship a live Docker daemon as part of the standard runner image (used by the
+runner's own containerized steps), and `checkDocker()` connects to it like
+any other client. `docker.png` therefore shows a fully populated, real
+state — Docker daemon: Running (v28.0.4), 7 images including the runner's
+own tooling/workflow images (e.g. `ghcr.io/github/gh-aw-firewall/agent`,
+`ghcr.io/dependabot/dependabot-updater`) — not an empty daemon-not-running
+placeholder. This is still an honest current-state capture (real pixels from
+a real run), just not the empty state originally assumed; it's arguably more
+useful for round-2 mockup work since it exercises the populated table/tabs
+UI rather than an empty-state placeholder.
 
 ## Gotchas encountered (for whoever runs Task 2+ or re-runs this capture)
 
