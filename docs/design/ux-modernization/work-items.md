@@ -1181,28 +1181,69 @@ renders/boot_analysis_{dark,light}.png.
 
 ---
 
-## Deferred pages (no work item this round)
+## Phase 2 — Round 2 (3 items, deferred pages unblocked 2026-07-19)
 
-- **APT Source Manager** — Deferred by maintainer 2026-07-15 — no live
-  capture; revisit once the skeleton can be verified against screenshots
-  from an Ubuntu machine with the page available.
-- **Docker** — Deferred by maintainer 2026-07-15 — no live capture; revisit
-  once the skeleton can be verified against screenshots from an Ubuntu
-  machine with the page available.
-- **GNOME Settings** — Deferred by maintainer 2026-07-15 — no live capture;
-  revisit once the skeleton can be verified against screenshots from an
-  Ubuntu machine with the page available.
+Deferred pending Ubuntu-desktop captures ([SSO-13745](https://github.com/s4solutionsllc/Nexis/issues) placeholder); captured via SSO-14981 (PR #292), mockups authored + maintainer-approved via SSO-14982 (PR #294, `request_confirmation ddd1dc45`, accepted 2026-07-19). Same F1-style contract as the round-1 15; blocked by F1-F4 like every page item.
+
+### APT Source Manager (Paperclip: SSO-15096)
+**Phase:** 2-Page (round 2)
+**Blocked by:** F1, F2, F3, F4
+**Files:**
+- `linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp`
+- `linux/nexis/Pages/AptSourceManager/apt_source_manager_page.h`
+- `linux/nexis/Pages/AptSourceManager/apt_source_manager_page.ui`
+- `linux/nexis/Pages/AptSourceManager/apt_source_repository_item.cpp`
+- `linux/nexis/Pages/AptSourceManager/apt_source_repository_item.h`
+- `linux/nexis/Pages/AptSourceManager/apt_source_repository_item.ui`
+**Design refs:** DS §2 (elevated container ×2 — Available Updates card + repository boxed-list card); DS §1 (surface hierarchy); DS §3 (header anatomy); DS §7 (container-level shadow, supersedes per-row `Utilities::addDropShadow`); DS §5 (danger-role Delete); notes/apt_source_manager.md (approved 2026-07-19); renders/apt_source_manager_{dark,light}.png.
+**Change summary:** see SSO-15096 (full contract, authored against live round-2 captures — the "Available Updates" section is built in `.cpp`, not `.ui`, and was missing entirely from the original 2026-07-15 skeleton).
+**Acceptance criteria (page-specific, in addition to the common list above):** shadow count **2**; Available Updates section required despite being absent from any `.ui` file; Version column renders `—` (unverified, not invented); bottom action bar shows its collapsed default only; sidebar badge **1**. Full list in SSO-15096.
+**UAT (business-user steps):** see SSO-15096.
+
+---
+
+### Docker (Paperclip: SSO-15097)
+**Phase:** 2-Page (round 2)
+**Blocked by:** F1, F2, F3, F4
+**Files:**
+- `shared/nexis/Pages/Docker/docker_page.cpp`
+- `shared/nexis/Pages/Docker/docker_page.h`
+- `shared/nexis/Pages/Docker/docker_page.ui`
+**Design refs:** DS §2 (elevated container around the image tree); DS §1 (surface hierarchy); DS §3 (header anatomy); DS §7 (frozen header, flat rows); DS §5 (danger-role Remove Selected); notes/docker.md (approved 2026-07-19); renders/docker_{dark,light}.png.
+**Change summary:** see SSO-15097 (full contract, authored against live round-2 captures — real 7-image inventory grouped In Use/Other, Start/Stop correctly gated to the Containers tab only).
+**Acceptance criteria (page-specific, in addition to the common list above):** shadow count **1**; Start/Stop hidden by default on the Images tab; Containers/Volumes tab content out of scope (unverified); daemon-stopped/loading pages out of scope. Full list in SSO-15097.
+**UAT (business-user steps):** see SSO-15097.
+
+---
+
+### GNOME Settings (Paperclip: SSO-15098)
+**Phase:** 2-Page (round 2)
+**Blocked by:** F1, F2, F3, F4
+**Files:**
+- `shared/nexis/Pages/GnomeSettings/gnome_settings_page.cpp`
+- `shared/nexis/Pages/GnomeSettings/gnome_settings_page.h`
+- `shared/nexis/Pages/GnomeSettings/gnome_settings_page.ui`
+- `shared/nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp`
+- `shared/nexis/Pages/GnomeSettings/gnome_appearance_tab.h`
+- `shared/nexis/Pages/GnomeSettings/gnome_appearance_tab.ui`
+**Design refs:** DS §2 (elevated section card ×4 — Themes/Fonts/Interface/Clock & Status); DS §1 (surface hierarchy); DS §3 (header anatomy); DS §4 (GNOME boxed-list alignment); notes/gnome_settings.md (approved 2026-07-19); renders/gnome_settings_{dark,light}.png.
+**Change summary:** see SSO-15098 (full contract; Appearance tab only, authored against live captures which corrected round-1's guessed dark/Cantarell theme to the real plain Adwaita/DejaVu defaults).
+**Acceptance criteria (page-specific, in addition to the common list above):** shadow count **4**; Themes/Fonts values must match the live capture, not the round-1 guess; Clock & Status group values are unverified (off-screen) and must be carried over unchanged, not invented; Window Manager/Mouse & Touchpad/Desktop tabs out of scope. Full list in SSO-15098.
+**UAT (business-user steps):** see SSO-15098.
 
 ---
 
 ## Cross-check
 
-- Count of `### ` headings in this file: **19** (4 Phase-1 + 15 Phase-2).
+- Count of `### ` headings in this file: **22** (4 Phase-1 + 15 Phase-2 round 1 + 3 Phase-2 round 2).
 - Every note with `**Status:** Approved` has a corresponding Phase-2 item
   above: boot_analysis, disk_tools, hardware_info, helpers, homebrew,
   network_usage, processes, resources, search, services, settings,
   startup_apps, system_cleaner, system_logs, uninstaller (15).
-- Every note with `**Status:** Deferred` is listed under "Deferred pages"
-  with no work item: apt_source_manager, docker, gnome_settings (3).
+- Round-2 notes (apt_source_manager, docker, gnome_settings) were rewritten
+  from `**Status:** Deferred` to `**Status:** Round-2 prototype, pending
+  maintainer/board approval` and then approved 2026-07-19 (SSO-14982); each
+  now has a corresponding round-2 Phase-2 item above (3) — no pages remain
+  deferred.
 - 15 + 3 = 18 total prototype pages, matching the spec's 18-page scope
   (Dashboard is the reference, not a prototype page).
