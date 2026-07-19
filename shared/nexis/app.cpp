@@ -128,18 +128,6 @@ void App::buildSidebar()
     mLogoSeparator->setFixedHeight(1);
     mSidebarLayout->addWidget(mLogoSeparator);
 
-    // Align page content's top edge with this divider line so kiosk-mode and
-    // panel-edit buttons don't overlap content. The divider sits at:
-    //   sidebar top margin (8) + logoRow top margin (4)
-    //   + logo fixed height (Dpi::scale(28)) + logoRow bottom margin (4).
-    // Using fixed values here keeps this in sync with the constants set above;
-    // it is DPI-aware via Dpi::scale and doesn't change on sidebar collapse
-    // (only width changes, not the logo row height).
-    {
-        const int dividerY = 8 + 4 + Dpi::scale(28) + 4;
-        ui->pageContentLayout->setContentsMargins(0, dividerY, 0, 0);
-    }
-
     // Scrollable nav area — contains all section headers and buttons.
     // Logo row and footer (version + feedback) remain pinned outside the scroll area.
     mNavScrollArea = new QScrollArea(ui->sidebar);
@@ -366,16 +354,30 @@ void App::init()
     // Build sidebar programmatically with section headers
     buildSidebar();
 
-    // SSO-14661: align every page's top edge with the sidebar divider line
-    // (below the logo, above the nav icons) so page content no longer starts
-    // too high. Read the divider's actual geometry rather than duplicating
-    // the sidebar's margin constants here, so this stays correct if those
-    // constants change. Sidebar collapse only animates width (see
-    // applySidebarCollapse), never this vertical geometry, so the offset
-    // holds at every breakpoint including the collapsed sidebar.
+    // SSO-15037 (supersedes SSO-14661 / PR #284): that earlier fix aligned
+    // every page's top edge with the sidebar divider line by giving
+    // pageContentLayout a top margin, which stopped tiles rendering under
+    // Dashboard's kiosk/edit buttons but left the buttons themselves as
+    // Dashboard-local children — so both ended up below the divider,
+    // in the same band as the tile grid. The band above the divider
+    // (next to the logo/collapse button) is real, unpopulated pageContent
+    // space; insert a persistent header-action-bar row there instead, sized
+    // to the divider's actual geometry, and let pageContentLayout itself
+    // stay flush with the window top. Sidebar collapse only animates width
+    // (see applySidebarCollapse), never this vertical geometry, so the row
+    // height holds at every breakpoint including the collapsed sidebar.
     ui->sidebar->layout()->activate();
-    ui->pageContentLayout->setContentsMargins(0, mLogoSeparator->geometry().bottom() + 1, 0, 0);
+    const int headerRowHeight = mLogoSeparator->geometry().bottom() + 1;
 
+    mHeaderActionsRow = new QWidget(ui->pageContent);
+    mHeaderActionsRow->setObjectName("pageHeaderActionsRow");
+    mHeaderActionsRow->setFixedHeight(headerRowHeight);
+    mHeaderActionsRowLayout = new QHBoxLayout(mHeaderActionsRow);
+    mHeaderActionsRowLayout->setContentsMargins(12, 4, 12, 4);
+    mHeaderActionsRowLayout->setSpacing(0);
+
+    ui->pageContentLayout->setContentsMargins(0, 0, 0, 0);
+    ui->pageContentLayout->addWidget(mHeaderActionsRow);
     ui->pageContentLayout->addWidget(mSlidingStacked);
 
     // Set button labels
@@ -415,7 +417,15 @@ void App::init()
         "dashboard",
         tr("Dashboard"),
         [this]() -> QWidget* { dashboardPage = new DashboardPage(mSlidingStacked); return dashboardPage; },
-        nullptr, {}
+        nullptr,
+        // SSO-15037: give Dashboard a way to populate/clear the shell's
+        // header-action-bar row without App hardcoding what it contains —
+        // Dashboard pushes/clears its own widget from onPageActivated()/
+        // onPageDeactivated().
+        [this](QWidget *w) {
+            static_cast<DashboardPage*>(w)->setHeaderActionsCallback(
+                [this](QWidget *actions) { setPageHeaderActions(actions); });
+        }
     });
     mPageSlots.append({
         "hardwareInfo",
@@ -1021,6 +1031,18 @@ void App::ensureAllPages()
         if (!mPageSlots[i].widget)
             ensurePage(i);
     }
+}
+
+void App::setPageHeaderActions(QWidget *widget)
+{
+    QLayoutItem *item;
+    while ((item = mHeaderActionsRowLayout->takeAt(0)) != nullptr) {
+        if (item->widget())
+            item->widget()->setParent(nullptr);
+        delete item;
+    }
+    if (widget)
+        mHeaderActionsRowLayout->addWidget(widget);
 }
 
 void App::pageClick(QWidget *widget, bool slide)

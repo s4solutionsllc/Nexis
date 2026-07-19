@@ -8,6 +8,7 @@
 #include <QFrame>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QScrollArea>
 #include <QPushButton>
 #include <functional>
@@ -121,6 +122,11 @@ private:
     QScreen *resolveKioskScreen() const;
 
     void buildSidebar();
+    // SSO-15037: replaces whatever the header-action-bar row currently
+    // holds with widget (or clears it when widget is nullptr). Pages
+    // populate/clear their own slot from onPageActivated()/onPageDeactivated()
+    // rather than App hardcoding per-page behavior here.
+    void setPageHeaderActions(QWidget *widget);
     QPushButton *createSidebarButton(const QString &tooltip);
     QPushButton *createSectionToggle(const QString &text);
     void applySidebarCollapse(bool collapsed, bool animate = true);
@@ -184,6 +190,12 @@ private:
     QScrollArea *mNavScrollArea = nullptr;
     QLabel *mLogoLabel;
     QFrame *mLogoSeparator;
+
+    // SSO-15037: shell-level header-action-bar row, occupying the band
+    // between the window top and the sidebar divider line. A generic slot —
+    // the active page can populate/clear it via setPageHeaderActions().
+    QWidget *mHeaderActionsRow = nullptr;
+    QHBoxLayout *mHeaderActionsRowLayout = nullptr;
     QToolButton *mBtnSidebarToggle;
     QButtonGroup *mSidebarBtnGroup;
     QList<SidebarSection> mSections;
