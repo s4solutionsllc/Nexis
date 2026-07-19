@@ -14,6 +14,8 @@
 #include <QtConcurrent>
 #include <QScrollArea>
 #include <QVector>
+#include <QStackedLayout>
+#include <functional>
 
 #include "nexis_page.h"
 #include "Managers/info_manager.h"
@@ -55,6 +57,15 @@ public:
 
     void onPageActivated() override;
     void onPageDeactivated() override;
+
+    // SSO-15037: container holding the kiosk/edit toggles and the edit-mode
+    // toolbar, meant to be placed in the shell's header-action-bar row
+    // (above the sidebar divider line) rather than Dashboard's own layout.
+    QWidget *headerActions() const { return mHeaderActionsContainer; }
+    // Lets the shell push/clear headerActions() from this page's own
+    // onPageActivated()/onPageDeactivated() without Dashboard depending on
+    // App's type.
+    void setHeaderActionsCallback(std::function<void(QWidget*)> callback) { mHeaderActionsCallback = callback; }
 
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -128,6 +139,14 @@ private:
     QShortcut *mEditShortcut;
     bool mEditMode;
     bool mKioskMode;
+
+    // SSO-15037: shell header-action-bar row content. mHeaderActionsStack
+    // swaps between the compact button bar (index 0) and mEditToolbar
+    // (index 1); mHeaderActionsCallback pushes/clears mHeaderActionsContainer
+    // in the shell row on activation/deactivation.
+    QWidget *mHeaderActionsContainer = nullptr;
+    QStackedLayout *mHeaderActionsStack = nullptr;
+    std::function<void(QWidget*)> mHeaderActionsCallback;
 
     int mVisibleCols = DashboardLayout::kMaxCols;   // responsive in Task 3
     int mRowCount = 0;                              // grows to fit placed tiles

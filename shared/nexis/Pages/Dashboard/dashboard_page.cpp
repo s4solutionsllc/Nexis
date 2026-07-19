@@ -327,7 +327,7 @@ void DashboardPage::init()
     connect(mSignalMapper, &SignalMapper::sigDashboardFooterChanged,
             this, &DashboardPage::applyFooterVisibility);
 
-    // Kiosk mode toggle button (floating, top-right)
+    // Kiosk mode toggle button
     mKioskButton->setFixedSize(32, 32);
     mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
     mKioskButton->setIconSize(QSize(16, 16));
@@ -335,7 +335,6 @@ void DashboardPage::init()
     mKioskButton->setCursor(Qt::PointingHandCursor);
     mKioskButton->setObjectName("btnKioskToggle");
     mKioskButton->setAutoRaise(true);
-    mKioskButton->raise();
 
     connect(mKioskButton, &QToolButton::clicked, this, [this]() {
         emit mSignalMapper->sigKioskToggleRequested();
@@ -343,7 +342,7 @@ void DashboardPage::init()
     connect(mSignalMapper, &SignalMapper::sigKioskModeChanged,
             this, &DashboardPage::onKioskModeChanged);
 
-    // Edit mode toggle button (floating, to the left of kiosk button)
+    // Edit mode toggle button (to the left of the kiosk button)
     mEditButton->setFixedSize(32, 32);
     mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
     mEditButton->setIconSize(QSize(16, 16));
@@ -351,7 +350,6 @@ void DashboardPage::init()
     mEditButton->setCursor(Qt::PointingHandCursor);
     mEditButton->setObjectName("btnEditToggle");
     mEditButton->setAutoRaise(true);
-    mEditButton->raise();
 
     connect(mEditButton, &QToolButton::clicked, this, &DashboardPage::toggleEditMode);
 
@@ -359,11 +357,10 @@ void DashboardPage::init()
     mEditShortcut = new QShortcut(QKeySequence("Ctrl+E"), this);
     connect(mEditShortcut, &QShortcut::activated, this, &DashboardPage::toggleEditMode);
 
-    // Edit mode toolbar (hidden by default, shown above bentoGrid)
-    mEditToolbar = new QWidget(this);
+    // Edit mode toolbar
+    mEditToolbar = new QWidget();
     mEditToolbar->setObjectName("editToolbar");
     mEditToolbar->setFixedHeight(40);
-    mEditToolbar->hide();
 
     auto *toolbarLayout = new QHBoxLayout(mEditToolbar);
     toolbarLayout->setContentsMargins(12, 4, 12, 4);
@@ -392,11 +389,32 @@ void DashboardPage::init()
     mBtnDone->setCursor(Qt::PointingHandCursor);
     toolbarLayout->addWidget(mBtnDone);
 
-    // Insert toolbar at the top of the main layout (before bentoGrid)
-    ui->mainLayout->insertWidget(0, mEditToolbar);
-
     connect(mBtnDone, &QPushButton::clicked, this, &DashboardPage::exitEditMode);
     connect(mBtnResetLayout, &QPushButton::clicked, this, &DashboardPage::onResetLayout);
+
+    // SSO-15037: kiosk/edit buttons and the edit-mode toolbar no longer
+    // render inside Dashboard's own layout (they'd be clipped to/rendered
+    // below its top edge, which now sits below the sidebar divider line).
+    // Instead they live in mHeaderActionsContainer, which the shell places
+    // in its header-action-bar row above the divider \u2014 see headerActions()
+    // and app.cpp's setPageHeaderActions(). mHeaderActionsStack swaps
+    // between the compact button bar and the full edit toolbar.
+    auto *buttonBar = new QWidget();
+    buttonBar->setObjectName("dashboardHeaderButtonBar");
+    auto *buttonBarLayout = new QHBoxLayout(buttonBar);
+    buttonBarLayout->setContentsMargins(0, 0, 0, 0);
+    buttonBarLayout->setSpacing(8);
+    buttonBarLayout->addStretch();
+    buttonBarLayout->addWidget(mEditButton);
+    buttonBarLayout->addWidget(mKioskButton);
+
+    mHeaderActionsContainer = new QWidget();
+    mHeaderActionsContainer->setObjectName("dashboardHeaderActions");
+    mHeaderActionsStack = new QStackedLayout(mHeaderActionsContainer);
+    mHeaderActionsStack->setContentsMargins(0, 0, 0, 0);
+    mHeaderActionsStack->addWidget(buttonBar);   // index 0: default view
+    mHeaderActionsStack->addWidget(mEditToolbar); // index 1: edit mode
+    mHeaderActionsStack->setCurrentIndex(0);
 
     // Drag indicator overlay
     mDragIndicator = new QWidget(this);
@@ -939,9 +957,7 @@ void DashboardPage::toggleEditMode()
         exitEditMode();
     else {
         mEditMode = true;
-        mEditToolbar->show();
-        mKioskButton->hide();
-        mEditButton->hide();
+        mHeaderActionsStack->setCurrentIndex(1);
         mGearVisibleTiles.clear();
         for (DashboardTileWrapper *w : mTileWrappers) {
             auto *metric = qobject_cast<MetricTileBase*>(w->innerWidget());
@@ -966,11 +982,7 @@ void DashboardPage::toggleEditMode()
 void DashboardPage::exitEditMode()
 {
     mEditMode = false;
-    mEditToolbar->hide();
-    mKioskButton->show();
-    mEditButton->show();
-    mKioskButton->raise();
-    mEditButton->raise();
+    mHeaderActionsStack->setCurrentIndex(0);
     for (DashboardTileWrapper *w : mTileWrappers) {
         w->setEditMode(false);
         if (mGearVisibleTiles.contains(w->tileId())) {
@@ -1044,8 +1056,6 @@ void DashboardPage::onKioskModeChanged(bool enabled)
         ui->statusFooter->hide();
     } else {
         mEditButton->show();
-        mEditButton->raise();
-        mKioskButton->raise();
         mEditShortcut->setEnabled(true);
         mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
         mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
@@ -1447,9 +1457,6 @@ void DashboardPage::buildGrid()
     }
     ui->bentoGrid->setColumnStretch(mVisibleCols, 1);   // trailing spacer col
     ui->bentoGrid->setRowStretch(mRowCount, 1);          // trailing spacer row
-
-    mEditButton->raise();
-    mKioskButton->raise();
 }
 
 void DashboardPage::applyDisplayModeForSpan(DashboardTileWrapper *wrapper)
@@ -1632,10 +1639,10 @@ void DashboardPage::onTileResizeRequested(DashboardTileWrapper *wrapper, int new
 void DashboardPage::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    // SSO-14661: mainLayout's topMargin (dashboard_page.ui) reserves 50px so
-    // bentoGrid clears these buttons (y=10, 32px tall) — keep the two in sync.
-    mKioskButton->move(width() - mKioskButton->width() - 10, 10);
-    mEditButton->move(width() - mKioskButton->width() - mEditButton->width() - 18, 10);
+    // SSO-15037: mKioskButton/mEditButton are no longer floating children of
+    // this page — they're laid out inside mHeaderActionsContainer, which the
+    // shell places in its own header row (see headerActions()), so no manual
+    // positioning is needed here anymore.
     recomputeColumns();
 }
 
@@ -2185,6 +2192,13 @@ void DashboardPage::onPageActivated()
 {
     mActive = true;
 
+    // SSO-15037: push our header actions (kiosk/edit toggles or the edit
+    // toolbar) into the shell's header-action-bar row while we're the
+    // active page; onPageDeactivated() clears it so another page's content
+    // doesn't sit under our controls.
+    if (mHeaderActionsCallback)
+        mHeaderActionsCallback(mHeaderActionsContainer);
+
     // FR-103: subscribe to the signals the dashboard renders. When the
     // dashboard isn't the current page, DataRefreshService stops sampling
     // these (notably nvidia-smi and QStorageInfo walks).
@@ -2202,6 +2216,9 @@ void DashboardPage::onPageDeactivated()
 {
     mActive = false;
     mNetLastBytes.clear();
+
+    if (mHeaderActionsCallback)
+        mHeaderActionsCallback(nullptr);
 
     mRefresh->unsubscribe(DataRefreshService::Signal::Cpu);
     mRefresh->unsubscribe(DataRefreshService::Signal::Memory);
