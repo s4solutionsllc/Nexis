@@ -536,6 +536,8 @@ When a health check identifies an issue, actionable repair buttons appear in the
 
 Manage Docker images, containers, and volumes. Conditional: shown only when Docker CLI is installed.
 
+- **UX modernization (NEX Phase-2, SSO-15097):** the Images tab tree sits inside a single DS §2 elevated container card (`#imagesContainer`, one drop shadow) with a frozen "Image / Size / Created" header and flat rows; the toolbar leads with the shared section-header recipe (3px accent bar + "Docker" title + "Images, containers, and volumes" source line), keeping the Search field, Refresh button, and Images/Containers/Volumes tabs unchanged. The Size column is right-aligned with tabular figures. Containers and Volumes tabs are out of scope (no live-captured content) and keep their existing self-contained tree look.
+
 **Three tabs:**
 1. **Images** — Grouped by In Use / Dangling / Other
 2. **Containers** — Grouped by Running / Exited / Paused / etc., with Start/Stop actions

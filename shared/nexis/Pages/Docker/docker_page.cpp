@@ -32,6 +32,15 @@ void DockerPage::init()
     ui->treeWidgetImages->header()->setStretchLastSection(true);
     ui->treeWidgetImages->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     ui->treeWidgetImages->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    // DS §7 / Design Anchor data-table convention: right-align the tabular Size column.
+    ui->treeWidgetImages->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+
+    // DS §2/§7: single elevated container around the Images tab tree; rows
+    // inside stay flat (no per-row shadow). Containers/Volumes tabs are out
+    // of scope (SSO-15097) and keep their existing self-contained tree look.
+    ui->imagesContainer->setAttribute(Qt::WA_StyledBackground, true);
+    ui->imagesContainer->setProperty("cardRole", "elevated");
+    Utilities::addDropShadow(ui->imagesContainer, 90, 26);
 
     ui->treeWidgetContainers->header()->setFixedHeight(Dpi::scale(30));
     ui->treeWidgetContainers->setHeaderLabels({tr("Container"), tr("Image"), tr("Status"), tr("Ports")});
@@ -177,6 +186,7 @@ void DockerPage::buildImagesTree()
             QString display = img.isDangling ? QString("<none>:<none>") : QString("%1:%2").arg(img.repository, img.tag);
             item->setText(0, display);
             item->setText(1, img.size);
+            item->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
             item->setText(2, img.createdAt);
             item->setCheckState(0, Qt::Unchecked);
             item->setData(0, Qt::UserRole, img.id);
