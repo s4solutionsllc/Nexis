@@ -1,6 +1,6 @@
 # GNOME Settings — prototype rationale (round 2)
 
-**Status:** Round-2 prototype, pending maintainer/board approval ([SSO-14982](/SSO/issues/SSO-14982)). Supersedes the round-1 UNVERIFIED skeleton from [SSO-13723](/SSO/issues/SSO-13723) (PR #235), which was deferred with no live capture.
+**Status:** Approved by maintainer/board (2026-07-19, via [SSO-14982](/SSO/issues/SSO-14982) `request_confirmation`). Supersedes the round-1 UNVERIFIED skeleton from [SSO-13723](/SSO/issues/SSO-13723) (PR #235), which was deferred with no live capture.
 
 **Before:** `docs/design/ux-modernization/current-state/linux/{dark,light}/gnome_settings.png`, captured live in round 2 ([SSO-14981](/SSO/issues/SSO-14981), PR #292) via a CI container with `libglib2.0-bin` + `gsettings-desktop-schemas` installed to satisfy `ToolManager::checkGnomeSettings()`. Per CAPTURE_NOTES.md's round-2 section, gotcha #5 applies: the committed capture PNG shows a stale "Dashboard" sidebar highlight — this mockup renders the correct "GNOME Settings" highlight instead of copying the capture's highlight.
 **After:** renders/gnome_settings_{dark,light}.png
