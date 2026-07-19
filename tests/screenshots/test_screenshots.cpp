@@ -51,7 +51,14 @@ struct PageInfo {
 // Per-page declaration of which child widgets render live data and should be
 // masked. Anything not listed here is expected to be byte-stable (modulo
 // per-channel fuzz) between the reference capture and the comparison run.
-static const QVector<PageInfo> kPageMap = {
+//
+// This is the set used by the default CI regression suite (ctest -R
+// ScreenshotTests) and by scripts/update_screenshots.sh — it must stay in
+// sync with tests/reference_screenshots/. Round-2/one-off capture pages that
+// aren't part of the maintained baseline set go in kRound2PageMap instead
+// (see buildPageMap()), so a runtime-gated page (Docker/GNOME Settings not
+// available on every host) can never abort this default suite.
+static const QVector<PageInfo> kBasePageMap = {
     {"DashboardPage",     "dashboard",
         {"DashboardTileWrapper", "MetricTileBase", "NetworkTile"},
         {"systemSummary", "lblFooterRight"}},
@@ -73,6 +80,20 @@ static const QVector<PageInfo> kPageMap = {
     {"SettingsPage",      "settings",          {}, {}},
 };
 
+// SSO-14981: Linux-only pages that are gated behind a runtime tool check
+// (App::mPageSlots only registers them when ToolManager reports the backing
+// tool available — see app.cpp) and therefore aren't guaranteed to exist in
+// mStacked on every host. Kept out of kBasePageMap so a host missing one of
+// these (e.g. no docker binary) can't abort the default regression suite;
+// opt in per-page via NEXIS_SCREENSHOT_ONLY when driving a capture.
+#ifndef Q_OS_MACOS
+static const QVector<PageInfo> kRound2PageMap = {
+    {"AptSourceManagerPage", "apt_source_manager", {"QAbstractItemView"}, {}},
+    {"DockerPage",           "docker",             {"QAbstractItemView"}, {}},
+    {"GnomeSettingsPage",    "gnome_settings",      {}, {}},
+};
+#endif
+
 class ScreenshotTests : public QObject
 {
     Q_OBJECT
@@ -87,6 +108,30 @@ private:
     double mTolerance = kDefaultTolerance;
     int mChannelFuzz = kChannelFuzz;
     bool mGenerateMode = false;
+    // SSO-14981: when set, generate mode only writes captured PNGs to
+    // mOutDir (the build-tree scratch dir) and skips the ref-tree copy —
+    // used for one-off/round-2 captures that must not touch
+    // tests/reference_screenshots/.
+    bool mGenerateOutputOnly = false;
+    QVector<PageInfo> mPages;
+    // SSO-14981: NEXIS_SCREENSHOT_ONLY restricts the capture loop to this
+    // set of screenshotName values. Filtering happens before the
+    // "widget not found" QVERIFY2 below, so a page missing from
+    // mStacked on this host (e.g. Docker/GNOME Settings absent because
+    // the backing tool isn't installed) can't abort a run driving a
+    // *different* page — each round-2 page is captured as its own
+    // isolated process invocation (CAPTURE_NOTES.md gotcha #2).
+    QSet<QString> mOnlyFilter;
+
+    static QVector<PageInfo> buildPageMap()
+    {
+        QVector<PageInfo> pages = kBasePageMap;
+#ifndef Q_OS_MACOS
+        if (qEnvironmentVariableIsSet("NEXIS_INCLUDE_ROUND2_PAGES"))
+            pages += kRound2PageMap;
+#endif
+        return pages;
+    }
 
     static QString platformDir()
     {
@@ -257,10 +302,14 @@ private:
             }
         }
 
-        for (const auto &page : kPageMap) {
+        for (const auto &page : mPages) {
+            if (!mOnlyFilter.isEmpty() && !mOnlyFilter.contains(page.screenshotName))
+                continue;
+
             QWidget *widget = findPageByClassName(page.className);
             QVERIFY2(widget, qPrintable(QString("Page widget '%1' not found in stacked widget "
-                                                "— check kPageMap and App::ensureAllPages()")
+                                                "— check kBasePageMap/kRound2PageMap and "
+                                                "App::ensureAllPages()")
                                         .arg(page.className)));
 
             mStacked->setCurrentWidget(widget);
@@ -274,6 +323,10 @@ private:
             captured.save(outPath);
 
             if (mGenerateMode) {
+                if (mGenerateOutputOnly) {
+                    qInfo() << "Generated (output-only):" << outPath;
+                    continue;
+                }
                 const QString refPath = themeRefDir + "/" + page.screenshotName + ".png";
                 QDir().mkpath(themeRefDir);
                 captured.save(refPath);
@@ -284,7 +337,7 @@ private:
             const QString refPath = themeRefDir + "/" + page.screenshotName + ".png";
             QVERIFY2(QFile::exists(refPath),
                 qPrintable(QString("Reference missing: %1 — the baseline set is out of sync "
-                                   "with kPageMap. Regenerate with scripts/update_screenshots.sh.")
+                                   "with kBasePageMap. Regenerate with scripts/update_screenshots.sh.")
                            .arg(refPath)));
 
             QImage reference(refPath);
@@ -349,6 +402,15 @@ private slots:
         }
 
         mGenerateMode = qEnvironmentVariableIsSet("NEXIS_GENERATE_REFS");
+        mGenerateOutputOnly = qEnvironmentVariableIsSet("NEXIS_GENERATE_OUTPUT_ONLY");
+        mPages = buildPageMap();
+
+        QByteArray onlyEnv = qgetenv("NEXIS_SCREENSHOT_ONLY");
+        if (!onlyEnv.isEmpty()) {
+            const QStringList names = QString::fromUtf8(onlyEnv).split(',', Qt::SkipEmptyParts);
+            for (const QString &name : names)
+                mOnlyFilter.insert(name.trimmed());
+        }
 
         qApp->setApplicationName("nexis");
         qApp->setApplicationDisplayName("Nexis");

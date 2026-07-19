@@ -20,6 +20,17 @@ on:
         description: 'Which platforms to regenerate (comma-separated: linux-x64,macos)'
         default: 'linux-x64,macos'
         required: false
+      round2_pages:
+        description: >-
+          SSO-14981: also capture the round-2 current-state pages (APT Source
+          Manager, Docker, GNOME Settings) into a separate
+          round2-current-state-linux artifact. Linux-only; each page is
+          captured in its own isolated process run so one page's runtime
+          gating (e.g. docker/gsettings unavailable) can't block the others.
+          These pages are NOT part of tests/reference_screenshots/.
+        type: boolean
+        default: false
+        required: false
 
 jobs:
   # SSO-4093 / SSO-7306: split linux/macos into separate jobs so the Linux leg
@@ -81,6 +92,56 @@ jobs:
         with:
           name: reference-screenshots-linux
           path: tests/reference_screenshots/linux/
+          retention-days: 30
+          if-no-files-found: error
+
+      # SSO-14981: round-2 current-state capture — APT Source Manager,
+      # Docker, GNOME Settings. These pages are gated at runtime by
+      # ToolManager (App only registers them when the backing tool is
+      # detected — see app.cpp), so install what each check looks for before
+      # capturing. Kept out of scripts/update_screenshots.sh and
+      # tests/reference_screenshots/ entirely (see test_screenshots.cpp
+      # kRound2PageMap) — this is a one-off design-doc capture, not a new
+      # regression baseline.
+      - name: Install round-2 page dependencies
+        if: steps.skip-check.outputs.skipped != 'true' && inputs.round2_pages
+        run: |
+          apt-get install -y -qq \
+            docker.io \
+            gsettings-desktop-schemas \
+            dbus-x11
+
+      - name: Capture round-2 pages (SSO-14981)
+        if: steps.skip-check.outputs.skipped != 'true' && inputs.round2_pages
+        working-directory: build
+        run: |
+          set -euo pipefail
+          for page in apt_source_manager docker gnome_settings; do
+            echo "::group::Capturing $page"
+            # Gotcha #2 (CAPTURE_NOTES.md): each page runs as its own
+            # process invocation so a page that can't be driven on this
+            # host (missing/failed runtime tool check) doesn't abort the
+            # others. NEXIS_GENERATE_OUTPUT_ONLY keeps this off
+            # tests/reference_screenshots/. cwd is build/, matching
+            # scripts/update_screenshots.sh, so output lands at
+            # build/test_screenshots/linux/.
+            NEXIS_GENERATE_REFS=1 \
+            NEXIS_GENERATE_OUTPUT_ONLY=1 \
+            NEXIS_INCLUDE_ROUND2_PAGES=1 \
+            NEXIS_SCREENSHOT_ONLY="$page" \
+            dbus-run-session -- xvfb-run -a ./output/test-ScreenshotTests \
+              || echo "::warning::round-2 capture failed for $page — see log above"
+            echo "::endgroup::"
+          done
+          echo "Captured pages:"
+          find test_screenshots/linux -type f -name '*.png' | sort
+
+      - name: Upload round-2 current-state captures
+        if: steps.skip-check.outputs.skipped != 'true' && inputs.round2_pages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: round2-current-state-linux
+          path: build/test_screenshots/linux/
           retention-days: 30
           if-no-files-found: error
 
