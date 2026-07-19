@@ -19,37 +19,41 @@ pages + the Dashboard reference) × platform.
 | 7 | Uninstaller (sidebar label: "Applications") | captured — `macos/{dark,light}/uninstaller.png` (harness) | captured — `linux/{dark,light}/uninstaller.png` (harness) |
 | 8 | Services | captured — `macos/{dark,light}/services.png` (harness) | captured — `linux/{dark,light}/services.png` (harness) |
 | 9 | Startup Apps | captured — `macos/{dark,light}/startup_apps.png` (harness) | captured — `linux/{dark,light}/startup_apps.png` (harness) |
-| 10 | APT Source Manager | not-applicable (Linux-only page; the macOS build compiles `HomebrewPage` in this sidebar slot instead — see row 15) | not-captured (Linux): Linux-only page, outside the harness's 12, and not manually capturable on the headless host. **No live capture exists anywhere** — prototype derives from the `.ui` files with an UNVERIFIED banner. |
+| 10 | APT Source Manager | not-applicable (Linux-only page; the macOS build compiles `HomebrewPage` in this sidebar slot instead — see row 15) | captured — `linux/{dark,light}/apt_source_manager.png` (harness, round 2 — SSO-14981) |
 | 11 | System Cleaner | captured — `macos/{dark,light}/system_cleaner.png` (harness) | captured — `linux/{dark,light}/system_cleaner.png` (harness) |
 | 12 | Disk Tools | captured — `macos/{dark,light}/disk_tools.png` (manual) | not-captured (Linux): outside the harness's 12 pages; headless host, no manual capture possible. Cross-platform page; prototype derives from the macOS capture. |
-| 13 | Docker | not-capturable (macOS): Docker is not installed on the capture machine, so `ToolManager::checkDocker()` returns false and `app.cpp` hides the sidebar button at runtime — the page is compiled but not reachable via UI. Re-capture once Docker is available, or capture on a host that has it installed. | not-captured (Linux): outside the harness's 12 pages; headless host, no manual capture possible (Docker IS installed there, but the page can't be driven without a display). Combined with the macOS gap, **no live capture exists anywhere** — prototype derives from the `.ui` files with an UNVERIFIED banner. |
+| 13 | Docker | not-capturable (macOS): Docker is not installed on the capture machine, so `ToolManager::checkDocker()` returns false and `app.cpp` hides the sidebar button at runtime — the page is compiled but not reachable via UI. Re-capture once Docker is available, or capture on a host that has it installed. | captured — `linux/{dark,light}/docker.png` (harness, round 2 — SSO-14981). **Note:** the GitHub Actions runner already has a live Docker daemon (v28.0.4) running as part of its standard image — installing the `docker` CLI to satisfy `ToolManager::checkDocker()` connected to it, so the capture shows a fully populated, real state: 7 images (the runner's own tooling/workflow images, e.g. `ghcr.io/github/gh-aw-firewall/*`), Images/Containers/Volumes tabs, and a "Docker daemon: Running" status bar — not an empty state. |
 | 14 | Helpers | captured — `macos/{dark,light}/helpers.png` (harness) | captured — `linux/{dark,light}/helpers.png` (harness) |
 | 15 | Homebrew | captured — `macos/{dark,light}/homebrew.png` (manual) | not-applicable (macOS-only page; the Linux build compiles `APTSourceManagerPage` in this sidebar slot instead — see row 10) |
 | 16 | Resources | captured — `macos/{dark,light}/resources.png` (harness) | captured — `linux/{dark,light}/resources.png` (harness) |
 | 17 | Network Usage | captured — `macos/{dark,light}/network_usage.png` (harness) | captured — `linux/{dark,light}/network_usage.png` (harness) |
 | 18 | Settings | captured — `macos/{dark,light}/settings.png` (harness) | captured — `linux/{dark,light}/settings.png` (harness) |
-| 19 | GNOME Settings | not-applicable (Linux-only page; does not exist in the macOS build) | not-captured (Linux): the capture host is a headless server with no GNOME session, and the page is outside the harness's 12. **No live capture exists anywhere** — prototype derives from the `.ui` files with an UNVERIFIED banner. |
+| 19 | GNOME Settings | not-applicable (Linux-only page; does not exist in the macOS build) | captured — `linux/{dark,light}/gnome_settings.png` (harness, round 2 — SSO-14981) |
 
 macOS coverage: 16 of 18 prototype pages captured in both themes, plus the
 Dashboard reference (17/19 rows populated). The 2 gaps are both
 platform/runtime scoping, not capture failures: Docker (not installed on this
 machine) and GNOME Settings (Linux-only, doesn't exist on macOS).
 
-Linux coverage: 11 of 18 prototype pages captured in both themes, plus the
-Dashboard reference (12/19 rows populated). The 6 Linux gaps are all
-harness/host scoping, not capture failures: `boot_analysis`, `disk_tools`,
-`system_logs`, `docker`, `apt_source_manager`, and `gnome_settings` are
-outside the ScreenshotTests harness's 12-page `kPageMap`, and the Linux
-capture host is a headless server (offscreen QPA) where manual UI-driven
-capture is impossible.
+Linux coverage: 14 of 18 prototype pages captured in both themes, plus the
+Dashboard reference (15/19 rows populated). The remaining 3 Linux gaps
+(`boot_analysis`, `disk_tools`, `system_logs`) are harness/host scoping, not
+capture failures — outside the ScreenshotTests harness's page map, and the
+Linux capture host is a headless server (offscreen QPA) where manual
+UI-driven capture is impossible. `docker`, `apt_source_manager`, and
+`gnome_settings` were added to the harness's `kPageMap` and captured in round
+2 (SSO-14981) — see "Round-2 capture: APT Source Manager, Docker, GNOME
+Settings (SSO-14981)" below.
 
 ### Pages with no live capture anywhere (final capture-gap log)
 
-| Page | Why | Prototype source |
-|------|-----|------------------|
-| `docker` | Not reachable on the macOS capture machine (Docker not installed → sidebar hidden); outside the Linux harness and not manually capturable headless | `.ui` files, with UNVERIFIED banner (cross-platform page, but no live pixels exist on either platform) |
-| `apt_source_manager` | Linux-only; outside the harness; headless host | `.ui` files, with UNVERIFIED banner |
-| `gnome_settings` | Linux-only; requires a GNOME session the headless host doesn't have; outside the harness | `.ui` files, with UNVERIFIED banner |
+All three pages that previously had no live capture on either platform
+(`docker`, `apt_source_manager`, `gnome_settings`) now have a Linux capture
+as of round 2 (SSO-14981) — see rows 10, 13, 19 in the Coverage table above
+and the dedicated section below. `docker` still has no macOS capture (Docker
+not installed on the macOS capture machine → sidebar hidden), but the Linux
+capture is a live current-state pixel source, so this row is no longer a
+"no capture anywhere" gap.
 
 Pages with a macOS capture but no Linux capture (`boot_analysis`,
 `disk_tools`, `system_logs`) are cross-platform `shared/nexis/Pages` code —
@@ -74,9 +78,11 @@ Manual PNGs are cropped from full-screen `screencapture` output to the Nexis
 window's content bounds (see "Manual capture method" below); window was
 resized to ~885×785 logical points (see gotcha #3), not exactly 1024×768.
 
-`docs/design/ux-modernization/current-state/linux/{dark,light}/` — 12 PNGs
-per theme, 24 total, all from the same `ScreenshotTests` harness `kPageMap`
-(the 12 pages listed above). Capture environment:
+`docs/design/ux-modernization/current-state/linux/{dark,light}/` — 15 PNGs
+per theme, 30 total: the same 12 from the original `ScreenshotTests` harness
+`kPageMap` (listed above), plus 3 from round 2 (SSO-14981):
+`apt_source_manager`, `docker`, `gnome_settings` — see "Round-2 capture" below
+for their capture environment. The original 12 were captured as follows:
 
 - Host: Luke's homelab (`media`, Ryzen 7 5700X, **Ubuntu 26.04 LTS** — note:
   the machine has been upgraded past 24.04), headless.
@@ -95,6 +101,66 @@ per theme, 24 total, all from the same `ScreenshotTests` harness `kPageMap`
 - The clone was deleted from the homelab after `scp`; nothing was committed
   from that machine and no `tests/reference_screenshots/` files in THIS repo
   were touched.
+
+## Round-2 capture: APT Source Manager, Docker, GNOME Settings (SSO-14981)
+
+These 3 Linux-only pages were deferred from round 1 (no live capture existed
+anywhere for them — see the now-resolved "Pages with no live capture
+anywhere" note above). Round 2 added them to the shared `kPageMap` in
+`tests/screenshots/test_screenshots.cpp` (behind `#ifdef Q_OS_LINUX`, since
+none of the three exist on macOS) and captured them via the
+`screenshot-baselines.yml` CI workflow (`ubuntu:26.04` container +
+`xvfb`/offscreen QPA), the same harness used for the original 12 Linux pages,
+run in the same `NEXIS_GENERATE_REFS=1` generate mode via
+`scripts/update_screenshots.sh`.
+
+Each page is runtime-gated by a `ToolManager` check in `app.cpp`
+(`checkSourceRepository()` / `checkDocker()` / `checkGnomeSettings()`) that
+must pass for the page to be registered in `mSlidingStacked` at all — no live
+GNOME session or running Docker daemon is required for the page itself to
+construct and render, only the relevant CLI tool / schema. The CI job
+installs `docker.io`, `libglib2.0-bin`, and `gsettings-desktop-schemas` so
+all three checks pass on the container.
+
+**Gotcha #2 accounted for.** Gotcha #2 (below) is specific to *compare mode*:
+`QVERIFY2` aborts `captureAndCompare()`'s whole loop on the first mismatch
+against a stale baseline. `scripts/update_screenshots.sh` runs in *generate*
+mode (`NEXIS_GENERATE_REFS=1`), which has no baseline comparison and no
+`QVERIFY2` abort path, so appending these 3 pages to the end of the shared
+`kPageMap` could not truncate the other 12 pages' captures the way a
+compare-mode run could. This was confirmed empirically, not just by reading
+the code: CI run
+[29695778365](https://github.com/s4solutionsllc/Nexis/actions/runs/29695778365)
+completed successfully and produced all 15 pages' PNGs (both themes) in a
+single pass — no isolated per-page run was needed for generate mode. (An
+isolated-per-page harness variant was prototyped separately on
+`claude/SSO-14981-round2-capture` for the case where a *future* page's
+runtime check might crash/hang rather than cleanly fail — see that branch's
+`NEXIS_SCREENSHOT_ONLY` gate if that scenario needs handling later — but it
+was not required to get a clean capture here.)
+
+**Gotcha #5 applies.** Same as the other 11 non-Dashboard Linux harness
+captures, all 3 of these pages are captured via
+`QStackedWidget::setCurrentWidget()`, not a real sidebar click, so their
+committed PNGs show a stale "Dashboard" sidebar highlight. Consumers must
+render the correct highlight (APT Source Manager / Docker / GNOME Settings
+respectively) rather than copying the highlight shown in the PNG.
+
+**Note — Docker daemon is live, not empty.** The `docker.io` package was
+installed in the CI container only to satisfy `checkDocker()`'s CLI-presence
+check; the assumption going in was that no daemon would be running and the
+page would show an empty state. That assumption was wrong and was corrected
+after actually inspecting the committed PNGs: GitHub Actions runners already
+ship a live Docker daemon as part of the standard runner image (used by the
+runner's own containerized steps), and `checkDocker()` connects to it like
+any other client. `docker.png` therefore shows a fully populated, real
+state — Docker daemon: Running (v28.0.4), 7 images including the runner's
+own tooling/workflow images (e.g. `ghcr.io/github/gh-aw-firewall/agent`,
+`ghcr.io/dependabot/dependabot-updater`) — not an empty daemon-not-running
+placeholder. This is still an honest current-state capture (real pixels from
+a real run), just not the empty state originally assumed; it's arguably more
+useful for round-2 mockup work since it exercises the populated table/tabs
+UI rather than an empty-state placeholder.
 
 ## Gotchas encountered (for whoever runs Task 2+ or re-runs this capture)
 
