@@ -71,6 +71,15 @@ static const QVector<PageInfo> kPageMap = {
     {"HelpersPage",       "helpers",           {}, {}},
     {"NetworkUsagePage",  "network_usage",     {"BarChartWidget"}, {}},
     {"SettingsPage",      "settings",          {}, {}},
+// SSO-13745 / SSO-14981: Linux-only pages deferred from round-1 capture.
+// All three require their runtime check to pass (APT tool, docker CLI,
+// gsettings + org.gnome.desktop.interface schema) for the page widget to
+// exist in mSlidingStacked; the capture CI installs the needed packages.
+#ifdef Q_OS_LINUX
+    {"APTSourceManagerPage", "apt_source_manager", {"QAbstractItemView"}, {}},
+    {"DockerPage",            "docker",             {"QAbstractItemView"}, {}},
+    {"GnomeSettingsPage",     "gnome_settings",     {}, {}},
+#endif
 };
 
 class ScreenshotTests : public QObject

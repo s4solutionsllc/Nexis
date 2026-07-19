@@ -61,7 +61,8 @@ jobs:
             qt6-base-dev qt6-charts-dev qt6-svg-dev \
             qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools \
             libqt6charts6-dev libqt6svg6-dev \
-            xvfb
+            xvfb \
+            docker.io libglib2.0-bin gsettings-desktop-schemas
 
       - name: Configure
         if: steps.skip-check.outputs.skipped != 'true'
@@ -75,6 +76,19 @@ jobs:
         if: steps.skip-check.outputs.skipped != 'true'
         run: xvfb-run -a ./scripts/update_screenshots.sh
 
+      - name: Stage design-doc captures (SSO-14981)
+        if: steps.skip-check.outputs.skipped != 'true'
+        run: |
+          mkdir -p design-captures-linux/dark design-captures-linux/light
+          for theme in dark light; do
+            for page in apt_source_manager docker gnome_settings; do
+              src="tests/reference_screenshots/linux/${theme}/${page}.png"
+              if [ -f "$src" ]; then
+                cp "$src" "design-captures-linux/${theme}/${page}.png"
+              fi
+            done
+          done
+
       - name: Upload regenerated baselines
         if: steps.skip-check.outputs.skipped != 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -83,6 +97,15 @@ jobs:
           path: tests/reference_screenshots/linux/
           retention-days: 30
           if-no-files-found: error
+
+      - name: Upload design-doc captures (SSO-14981)
+        if: steps.skip-check.outputs.skipped != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: design-captures-linux
+          path: design-captures-linux/
+          retention-days: 30
+          if-no-files-found: warn
 
   regenerate-macos:
     name: Regenerate (macos)
