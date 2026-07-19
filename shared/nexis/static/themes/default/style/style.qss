@@ -1027,6 +1027,12 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @accentColor;
 }
 
+/* SSO-15096 (APT Source Manager): "info" accent token for the repository
+   list's own header bar (Available Updates above it keeps "accent"). */
+#sectionHeaderAccent[accentToken="info"] {
+    background-color: @infoColor;
+}
+
 #sectionHeaderTitle {
     color: @color06;
     font-size: 9pt;
@@ -2887,41 +2893,39 @@ QLabel[accessibleName="dimmed-small"] {
 /**************************
     APT SOURCE MANAGER PAGE
 ***************************/
+/* SSO-15096: #aptSourcesContainer carries the single elevated shadow
+   ([cardRole="elevated"], NEX F1 recipe); the list itself stays transparent
+   so the container surface shows through, and each row
+   (#aptSourceRepositoryItemWidget) is a flat @cardBg strip, never shadowed
+   on its own (DS §7) — replaces the old per-row rounded card and
+   apt_source_repository_item.cpp's Utilities::addDropShadow() call. */
 #listWidgetAptSources {
     background-color: transparent;
-}
-
-#lblAptSourceTitle {
-    color: @color11;
-    padding: 10 0 5 12;
-}
-
-/* - Homebrew: "Available Updates (N)" title (mLblUpdatesTitle) - */
-#lblUpdatesTitle {
-    color: @color11;
-    padding: 10 0 5 12;
+    selection-background-color: @accentColor;
 }
 
 #txtAptSource {
     padding: 8;
 }
 
-#lblAptSourceSelectInfo {
-    margin-top: 5;
-    font-size: 10pt;
-    color: @color05;
-}
-
-#listWidgetAptSources {
-    selection-background-color: @accentColor;
+/* Available Updates tree, wrapped in its own elevated container
+   (#aptUpdatesContainer, NEX F1) — same nested-tree treatment as
+   Homebrew's #homebrewUpdatesContainer #treeWidgetUpdates. */
+#aptUpdatesContainer #treeWidgetUpdates {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
 }
 
 /* - APT Source Repository Item - */
-
+/* GNOME-HIG grouped-list convention (DS §7): flush flat rows, divided by a
+   bottom border, matching #widgetStartupApp / #serviceItemWidget. The
+   repoStatus indicator below stays a left-edge accent rather than a full
+   border so the divider remains visible. */
 #aptSourceRepositoryItemWidget {
-    border-radius: 12;
     background-color: @cardBg;
-    border: 1px solid transparent;
+    border: 0;
+    border-bottom: 1px solid @borderColor;
 }
 
 #lblAptSourceIcon {
@@ -2929,8 +2933,7 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #aptSourceRepositoryItemWidget:hover {
-    background-color: @cardBgElevated;
-    border-color: @accentColor;
+    background-color: @accentBgTint;
 }
 
 #lblAptSourceName {

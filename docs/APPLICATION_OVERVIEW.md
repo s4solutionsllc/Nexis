@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-15 | Version 2.8.3
+> Last updated: 2026-07-19 | Version 2.8.3
 
 ---
 
@@ -513,6 +513,7 @@ Manage package repositories and sources. Conditional: shown only when the releva
 - Structured editor: type (deb/deb-src), URIs, suites, components, **Signed-By keyring path, Architectures**
 - New repos written as deb822 `.sources` with an explicit `Signed-By` on systems where deb822 is the norm (Ubuntu 26.04+ / Debian trixie+, detected by `ubuntu.sources` or `debian.sources` presence); legacy `.list` editing kept for older distros. No `apt-key` invocation anywhere — APT 3.1 removed it, and Nexis writes the keyring path directly to `Signed-By:`. Edits round-trip byte-stable for unchanged fields and preserve unrecognised deb822 keys (`Languages:`, `Targets:`, embedded multi-line GPG keys) verbatim.
 - Search filter
+- UX-modernization (SSO-15096): the "Available Updates" tree (`#aptUpdatesContainer`) and the repository list (`#aptSourcesContainer`) each sit inside their own DS §2 elevated container card, one drop shadow apiece — the old per-row `Utilities::addDropShadow()` in `apt_source_repository_item.cpp` is gone (DS §7). Both sections use the shared section-header recipe (`#sectionHeaderRow`/`#sectionHeaderAccent`/`#sectionHeaderTitle`/`#sectionHeaderSource`) — `accentToken="accent"` for "Available Updates (N)", `accentToken="info"` (new token) for "APT Repositories (N)" with its "Select to delete or edit." source line folded in from the old standalone label. Repository rows become a GNOME-style boxed list: flush flat `@cardBg` rows divided by a bottom border and hover-highlighted with `@accentBgTint`, replacing the old individually-rounded per-row card; each row's icon, source line, source-name meta line, enable toggle, and health-status left-border accent are unchanged. Search field and the Edit/Delete/Add Repository action set/order are unchanged.
 
 **macOS (Homebrew):**
 - Package tree view grouped by Formula/Cask
