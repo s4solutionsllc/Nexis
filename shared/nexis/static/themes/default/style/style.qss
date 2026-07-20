@@ -1407,6 +1407,26 @@ QLabel[accessibleName="dialog-title"] {
     border-radius: 2;
 }
 
+/* - Thin progress bar (shared recipe, DS §6, SSO-15380) - */
+
+/* Same recipe as #cleanerScanProgress above, promoted to a property
+ * selector so the Trust & Safety shared preview/confirm/progress component
+ * (and anything else that wants the standard thin/anchored progress bar)
+ * gets it for free instead of re-deriving a one-off objectName rule.
+ * Usage: widget->setProperty("progressRole", "thin");
+ * widget->setFixedHeight(Dpi::scale(4-6)); widget->setTextVisible(false).
+ */
+QProgressBar[progressRole="thin"] {
+    background-color: @chartGridColor;
+    border: none;
+    border-radius: 2;
+}
+
+QProgressBar[progressRole="thin"]::chunk {
+    background-color: @accentColor;
+    border-radius: 2;
+}
+
 /* - Header action buttons - */
 
 #btnScheduleCleaner {

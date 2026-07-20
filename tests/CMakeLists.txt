@@ -552,6 +552,21 @@ add_nexis_test(NAME DirSizeScannerTests
     Qt6::Concurrent
 )
 
+# SSO-15380: Trust & Safety shared component — scan/execute orchestration.
+# Compiled directly into the test (like DirSizeScannerTests above) so it
+# runs cross-platform without pulling in nexis-gui; the dialog half of the
+# component is QWidget UI and is exercised via UAT instead.
+add_nexis_test(NAME TrustSafetyRunnerTests
+  SOURCES
+    managers/test_trust_safety_runner.cpp
+    "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Common"
+  LIBS
+    Qt6::Concurrent
+)
+
 # SSO-3363 / audit H2: LogProvider::cancel() null-deref defence and
 # SSO-3384 / WI-22: MacOsLogStreamParser incremental ndjson parsing.
 # Compiles log_provider.cpp directly so the test runs cross-platform without
