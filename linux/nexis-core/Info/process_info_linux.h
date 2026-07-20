@@ -42,10 +42,22 @@ private:
     QElapsedTimer         mGpuTimer;
     bool                  mGpuTimerStarted = false;
 
+    // SSO-15376: XDG .desktop Icon= index, keyed by lowercased Exec basename.
+    // Built once (desktop files rarely change at runtime) rather than
+    // rescanned every tick — DS §9 guardrail against new per-tick I/O.
+    QHash<QString, QString> mDesktopIconByExecBasename;
+    bool                     mDesktopIndexBuilt = false;
+
     QString lookupUid(uid_t uid);
     QString lookupGid(gid_t gid);
 
     void collectGpuForPid(pid_t pid, Process &proc, double elapsedSecs);
+
+    // SSO-15376: App vs Background classification via /proc/<pid>/cgroup.
+    bool classifyIsAppProcess(pid_t pid) const;
+
+    void buildDesktopIconIndex();
+    QString resolveIconHint(const Process &proc) const;
 };
 
 #endif // PROCESS_INFO_LINUX_H

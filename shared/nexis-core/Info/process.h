@@ -72,6 +72,20 @@ public:
     QString getName() const;
     void setName(const QString &value);
 
+    // SSO-15376: App vs Background classification — Linux: pid belongs to a
+    // systemd app-*.scope (desktop session) cgroup; macOS: binary path is
+    // inside a .app bundle's Contents/MacOS. Background is the default, so
+    // an unclassifiable process never falls through un-grouped.
+    bool getIsAppProcess() const;
+    void setIsAppProcess(bool value);
+
+    // SSO-15376: platform icon-resolution hint for App-classified processes —
+    // Linux: an XDG .desktop Icon= value (theme name or absolute path);
+    // macOS: the .app bundle path. Empty when unresolved; the GUI falls back
+    // to a generic icon rather than leaving the row blank.
+    QString getIconHint() const;
+    void setIconHint(const QString &value);
+
 private:
     pid_t pid;
     quint64 rss;
@@ -93,6 +107,8 @@ private:
     qint64 gpuVramBytes = -1;
     QString cmd;
     QString name;
+    bool isAppProcess = false;
+    QString iconHint;
 };
 
 
