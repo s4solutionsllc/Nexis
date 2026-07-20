@@ -43,14 +43,16 @@ Nexis is structured as a **four-tier desktop application**. Tier sizes (page/ser
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  UI Layer: 15 always-visible QWidget pages + 3 conditional         │
+│  UI Layer: 16 always-visible QWidget pages + 3 conditional         │
 │  Each page owns its .ui file and presentation logic                │
+│  (File Shredder is programmatic — no .ui, like Boot Analysis/      │
+│  System Logs/Uninstaller)                                          │
 │  Files: shared/nexis/Pages/*/*.cpp                                 │
 ├────────────────────────────────────────────────────────────────────┤
-│  Service Layer: 9 Domain Services + NexisPage base class           │
+│  Service Layer: 10 Domain Services + NexisPage base class          │
 │  StartupService, FileSearchService, HostService, ProcessService,   │
 │  SystemServiceManager, DockerService, PackageService,              │
-│  DuplicateFinderService, SnapshotService                           │
+│  DuplicateFinderService, SnapshotService, FileShredderService       │
 │  Files: shared/nexis/Services/*.cpp                                │
 ├────────────────────────────────────────────────────────────────────┤
 │  Manager Layer: 9 Singletons                                       │
@@ -672,3 +674,4 @@ The architecture doesn't need a revolution. It needs **targeted reinforcements**
 | `shared/nexis/Managers/dir_size_scanner.h/.cpp` | SSO-3737 / FW-09: off-thread recursive directory-size aggregation that backs the built-in treemap visualizer. Skips symlinks; (dev,inode) dedup for hard links. Pure `scanSynchronous()` exposed for unit tests. |
 | `shared/nexis/Pages/Resources/treemap_view.h/.cpp` | SSO-3737 / FW-09: squarified treemap rendering on raw `QPainter`; hover tooltips, drill-down, context menu hooks. |
 | `shared/nexis/Pages/Resources/disk_treemap_dialog.h/.cpp` | SSO-3737 / FW-09: wraps `DirSizeScanner` + `TreemapView`. Routes "Move to trash" through `FileSearchService` to share the cleaner's trash path. |
+| `shared/nexis/Common/trust_safety_runner.h/.cpp`, `trust_safety_preview_dialog.h/.cpp`, `trust_safety_types.h` | SSO-15380: shared explain-before-run / itemized-preview / cancel / dry-run component for maintenance surfaces. `TrustSafetyRunner` follows the `DirSizeScanner` off-thread + pollable-cancel-flag pattern; `TrustSafetyPreviewDialog` takes any `TrustSafetyActionProvider`. See `shared/nexis/Common/README.md` for adoption. |

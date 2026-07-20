@@ -99,6 +99,11 @@
         <property name="orientation"><enum>Qt::Horizontal</enum></property>
        </spacer>
       </item>
+      <item>
+       <widget class="QPushButton" name="btnWipeFreeSpace">
+        <property name="text"><string>Wipe Free Space…</string></property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

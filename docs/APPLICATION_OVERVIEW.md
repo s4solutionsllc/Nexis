@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-19 | Version 2.8.3
+> Last updated: 2026-07-20 | Version 2.8.3
 
 ---
 
@@ -19,6 +19,7 @@
    - [Services](#7-services)
    - [Processes](#8-processes)
    - [Uninstaller](#9-uninstaller)
+   - [File Shredder](#9a-file-shredder)
    - [Resources](#10-resources)
    - [Network Usage](#10a-network-usage)
    - [Helpers](#11-helpers)
@@ -67,7 +68,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Test LOC | ~14,500 | `tests/` |
 | Test executables | 61 (60 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
 | Test methods | ~845 | `private slots:` in `tests/*/test_*.cpp` |
-| Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
+| Always-visible pages | 16 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Shredder, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
 | Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
@@ -98,7 +99,7 @@ Nexis runs natively on **Linux** (`x86_64` + `arm64`) and **macOS** (**Apple Sil
 Nexis is a Qt6 application and runs as a **native Wayland client** under Wayland sessions (including Ubuntu 26.04 / GNOME 50, which removes the X11 session entirely) and as a native **X11** client under X.Org. There are no `X11`/`xcb`/`QX11Info` dependencies in the codebase — windowing, screen enumeration, and screenshot capture all use Qt abstractions (`QScreen`, `QWidget::grab()`). The only path that ever forces a non-default QPA is the scheduled-clean entry point (`--clean` / `--check-threshold`), which sets `QT_QPA_PLATFORM=offscreen` so cron and systemd-user timer invocations don't need a live display server (SSO-3368). No feature requires XWayland; the optional `DisplayServerUtil` (`shared/nexis-core/Utils/display_server_util.h`) provides a single canonical detector for any future XWayland-gated feature.
 
 ### Always-visible pages (both platforms)
-Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Network Usage, Helpers, System Logs, Settings
+Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, File Shredder, Resources, Network Usage, Helpers, System Logs, Settings
 
 ### Conditional pages
 | Page | Condition | Linux | macOS |
@@ -198,18 +199,17 @@ Comprehensive static hardware inventory displayed in tabular sections. Two expor
 - **Export System Report** — plain text file with aligned columns. Default: `nexis-report-YYYY-MM-DD.txt`.
 - **Export as HTML (FR-126)** — self-contained HTML file (inline CSS, no external dependencies) containing a system snapshot (CPU %, memory, GPU, battery), all hardware tables, top-10 processes by CPU at export time, and pending update count. Default: `nexis-report-YYYY-MM-DD.html`.
 
-**Elevated-card chrome (SSO-13735 + SSO-14298 round 2 + SSO-14757, UX modernization):** System, Processor, Graphics, Memory, Battery, and Storage each render as a DS §2 elevated card with a DS §3 accent-bar section header (Graphics uses `@gpuColor`; System/Processor/Memory/Battery/Storage use their type-appropriate tokens — Battery's `@batteryColor`, Storage's `@diskColor`). Battery's card treatment landed in round 2 once a full-row capture existed — round 1 shipped it header-only because the capture available then cut off before any Battery rows. Storage's card landed separately (SSO-14757), outside the original SSO-13735 capture, since it also needed the per-drive sub-header treatment below. Fans, still outside any approved capture, keeps its original `QGroupBox` chrome.
+**Elevated-card chrome (SSO-13735 + SSO-14298 round 2 + SSO-14757 + SSO-15377, UX modernization):** System, Processor, Graphics, Memory, Battery, Storage, and Fans & Sensors each render as a DS §2 elevated card with a DS §3 accent-bar section header (Graphics uses `@gpuColor`; System/Processor/Memory/Battery/Storage/Fans use their type-appropriate tokens — Battery's `@batteryColor`, Storage's `@diskColor`, Fans & Sensors' `@fanColor`). Battery's card treatment landed in round 2 once a full-row capture existed — round 1 shipped it header-only because the capture available then cut off before any Battery rows. Storage's card landed separately (SSO-14757), outside the original SSO-13735 capture, since it also needed the per-drive sub-header treatment below. Fans (renamed "Fans & Sensors", SSO-15377) was the last section on legacy `QGroupBox` chrome and picked up the same recipe when hwmon temperature sensors were added to it.
 
-**9 sections:**
+**8 sections:**
 - **System** — Hostname, OS, distribution, kernel, architecture, desktop environment
 - **Processor** — Model name, physical/logical core count, base clock, L1/L2/L3 cache sizes
 - **Graphics** — GPU name(s) and vendor(s)
 - **Memory** — Total RAM, total swap
 - **Battery** (if present) — Design capacity, current max capacity, cycle count, health percentage
-- **Fans** (if present) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys. Linux: primary hwmon scan (`/sys/class/hwmon/*/fan*_input`), with fallback detection chain for ThinkPad (`/proc/acpi/ibm/fan`), Dell (`/proc/i8k`), and NVIDIA proprietary (`nvidia-smi` fan percentage)
+- **Fans & Sensors** (if present, SSO-15377) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys, Linux primary hwmon scan (`/sys/class/hwmon/*/fan*_input`) with fallback detection chain for ThinkPad (`/proc/acpi/ibm/fan`), Dell (`/proc/i8k`), and NVIDIA proprietary (`nvidia-smi` fan percentage). Plus every labeled hwmon temperature sensor (`/sys/class/hwmon/*/temp*_input`) the platform exposes — CPU, GPU, NVMe, DIMM (`jc42`/`spd5118`), ACPI, and vendor WMI surfaces (ASUS/HP/Legion/IdeaPad) — via the same `ThermalInfo::friendlyDeviceName` mapping used by the Dashboard's Temperature tiles. Sensor classes the platform doesn't expose are simply omitted, never shown as an error or a zero reading; the whole section is hidden only when both fan and temperature sensor lists are empty.
 - **Storage** — Per-drive: name, size, model, SMART health verdict (Good/Caution/Critical/Unknown), color-coded. On Linux, if any drive requires elevated permissions for SMART data, an **Unlock All Drives** button appears at the top of the section. Clicking it shows a confirmation dialog with an optional **"Also grant permanent access"** checkbox. Confirming runs a single `pkexec sh -c "..."` call that reads all locked drives in one password prompt; if the checkbox is checked, `setcap cap_sys_rawio+ep` is applied in the same elevation so no password is needed on future launches. Per-drive Unlock buttons remain in the table as a granular fallback. **Multi-drive grouping (SSO-14757):** each drive's "Drive N" row renders as a bolder/larger sub-header (10pt/Bold `@color06`, vs. the 9pt/DemiBold used elsewhere) so it visually outranks its own Size/Type/Health/etc. rows, which drop to the plain non-bold value weight; works for any number of drives.
 - **Network** — Interface name, MAC address, IP addresses
-- **Thermal** — Sensor readings (if available)
 
 ### 3. Startup Apps
 
@@ -331,6 +331,14 @@ Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar
 - Confirmation dialog before trashing files
 - Selection tracking label showing count and total size of checked files
 
+**Wipe Free Space (SSO-15382):**
+- "Wipe Free Space…" button opens a two-step `WipeFreeSpaceDialog` alongside the two scan modes
+- Step 1 lists mounted, writable volumes (`WipeFreeSpaceService::listWipeableVolumes()`) with live free space and a TRIM-eligibility badge, then previews the selected volume: free space, safety-margin headroom kept untouched, and (for non-TRIM targets) a rough time/data estimate; a persistent one-line disclosure states the SSD/TRIM honesty point (TRIM signals blocks as reclaimable, not a cryptographic-erase guarantee)
+- Confirmation is the codebase's standard one-sentence `QMessageBox::warning` ("Wipe free space on `<Volume>` (`<X>` GB free)?") behind a destructive-accent (`accessibleName="danger"`) button
+- `WipeFreeSpaceService` detects SSD/TRIM support per volume — Linux: `/sys/block/<dev>/queue/rotational` + `fstrim` availability, then `pkexec fstrim -v <mount>`; macOS: `diskutil info -plist` `SolidState` key, with TRIM reported as automatic (APFS has no user-space "run TRIM now") — and otherwise runs a fill-and-delete pass: a 4 MiB-chunked zero-fill of a single fixed-name temp file (`.nexis-wipe-fill.tmp`) in the volume root, stopping once free space reaches a safety-margin headroom (5% of volume capacity, floored at 1 GiB, capped at 8 GiB — `WipeFreeSpaceService::headroomForVolume()`), then deleting the temp file
+- Live progress via `progressUpdated(bytesWritten, estimatedTotalBytes, message)`; a Stop button cancels the in-flight pass and removes the temp file immediately
+- Crash-safety: before the first byte is written, a JSON marker recording the temp file path is written to `AppDataLocation`; `WipeFreeSpaceService::recoverFromCrash()` runs once at app startup (`main.cpp`, before the main window is constructed) and deletes any temp file left behind by a killed/crashed previous run, then clears the marker — the volume is never left artificially full
+
 ### 6. Search
 
 Advanced file search across the filesystem.
@@ -396,6 +404,19 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 - macOS: `brew uninstall` for Homebrew packages; `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:`) for `.app` bundles — no AppleScript/`osascript` is involved, so bundle names containing quotes or other metacharacters cannot inject arbitrary code (SSO-3366, audit S1); `brew autoremove` for orphans
 - **macOS leftover scanner (FW-18):** After selecting a `.app` for removal, Nexis resolves its bundle id and scans seven standard `~/Library` locations (`Application Support`, `Caches`, `Preferences`, `Logs`, `Containers`, `Saved Application State`, `LaunchAgents`) for matching artifacts. Matches are made exclusively against the exact bundle id (e.g. `com.example.MyApp`) or `<bundle-id>.<ext>` prefixed filenames — app name is never used as a substring filter to prevent false positives on unrelated bundles. Found artifacts are listed with sizes for user review and can be trashed via `QFile::moveToTrash` (the same injection-safe path as the bundle itself).
 
+### 9a. File Shredder
+
+Secure file/folder shredder (SSO-15381) — closes the ✗ cell in Nexis's own README comparison matrix against BleachBit. Destructive-by-design: every deletion requires explicit selection and an explicit confirmation, never an auto-clean.
+
+- Drag-and-drop target for files/folders, plus a "Choose Files…"/"Choose Folder…" file-picker fallback (`ShredderDropZone`, `QFileDialog`)
+- Staged list shows each top-level item with its recursive size + file count once `FileShredderService::computePreview()` resolves (background `QtConcurrent` walk); a live footer totals selected item count + size
+- "Shred Selected" mirrors the Select-All/Clean-Selected disabled-state pattern (GH-173/GH-226 regression class) — stays disabled until at least one item is staged and its preview has resolved
+- Confirmation gated behind `ShredConfirmDialog`: one-sentence body, destructive red-accent "Shred" button (Design Anchor confirmation-dialog ceiling)
+- `FileShredderService::shred()` overwrites each file's contents with a single pass of zeroes (fsync'd before unlink), then removes emptied folders bottom-up; symlinks are unlinked without ever touching their target
+- Live per-item progress (thin progress bar + status line) while shredding; per-item failures are counted and surfaced in the final summary rather than silently dropped
+- Always-visible inline disclosure: a single-pass overwrite does not guarantee unrecoverable erasure on SSDs (wear leveling) or copy-on-write filesystems (APFS, Btrfs, ZFS) — no "military-grade"/"unrecoverable" claims
+- Cross-platform (Linux + macOS) on user-selected paths only — no elevation, no exclusion-engine interaction, since every path is explicitly chosen by the user
+
 ### 10. Resources
 
 Historical time-series charts for system resource usage.
@@ -410,9 +431,13 @@ Historical time-series charts for system resource usage.
 - Disk temperature per-drive (30s refresh, if SMART supported)
 - **CPU Pressure Stall (FR-124, Linux only)** — 3-series chart (avg10, avg60, avg300) sourced from `/proc/pressure/cpu`. Shows the percentage of time at least one task was stalled waiting for CPU. Only created when the PSI file is present (kernel 4.20+, `CONFIG_PSI=y`). Zero cost when hidden (uses DataRefreshService subscription gating).
 
-**Elevated-card chrome (NEX-Resources, UX modernization):** all ten Resources tiles render as DS §2 elevated cards with a DS §3 accent bar in a metric-appropriate color token and a plot surface on `@chartBackgroundColor`. CPU, CPU Load Averages, GPU, and Disk Read Write (SSO-13731/#247) use `HistoryChart::setElevated()` with `@cpuColor`/`@gpuColor`/`@diskColor`. Memory, Network, Disk Temperature, CPU Pressure Stall, OOM Kills, and Disk Usage Analysis (SSO-14437) get the same treatment: Memory/Network reuse `@memoryColor`/`@networkColor`; Disk Temperature uses a new `accentToken="temp"` (`@tempColor`); CPU Pressure Stall reuses `@cpuColor`; OOM Kills reuses `@memoryColor`; Disk Usage Analysis reuses `@diskColor`. `OomKillsWidget` and `DiskUsageLauncherWidget` (not `HistoryChart` subclasses) each gained their own `setElevated(accentToken)` method for the same `[cardRole="elevated"]` + accent-bar + drop-shadow recipe.
+**Elevated-card chrome (NEX-Resources, UX modernization):** all twelve Resources tiles render as DS §2 elevated cards with a DS §3 accent bar in a metric-appropriate color token and a plot surface on `@chartBackgroundColor`. CPU, CPU Load Averages, GPU, and Disk Read Write (SSO-13731/#247) use `HistoryChart::setElevated()` with `@cpuColor`/`@gpuColor`/`@diskColor`. Memory, Network, Disk Temperature, CPU Pressure Stall, OOM Kills, and Disk Usage Analysis (SSO-14437) get the same treatment: Memory/Network reuse `@memoryColor`/`@networkColor`; Disk Temperature uses a new `accentToken="temp"` (`@tempColor`); CPU Pressure Stall reuses `@cpuColor`; OOM Kills reuses `@memoryColor`; Disk Usage Analysis reuses `@diskColor`. Package Power and Per-Core Detail (SSO-15378) reuse `@cpuColor`. `OomKillsWidget`, `DiskUsageLauncherWidget`, `PowerDrawWidget`, and `CpuCoreDetailWidget` (not `HistoryChart` subclasses) each gained their own `setElevated(accentToken)` method for the same `[cardRole="elevated"]` + accent-bar + drop-shadow recipe.
 
 **OOM Kills panel (FW-11 / SSO-3739, Linux only):** systemd-oomd / cgroup v2 observability card appended after the PSI chart. Shows the oomd service state (active / inactive / masked / not installed), oomd-attributed totals (`OOMKills`, `ManagedOOMKills`), the kernel-side `oom_kill` counter from `/sys/fs/cgroup/memory.events`, and the most recent kill events (timestamp, unit, cgroup path, reason) parsed from `journalctl -u systemd-oomd.service`. Hides itself entirely when no oomd or cgroup-v2 signal is available, and shows a defensive warning on the rare host that doesn't expose the v2 unified hierarchy (systemd 259 / Ubuntu 26.04 is v2-only — v1 hosts will not boot the new systemd). Subscribes to `DataRefreshService::Signal::Oomd` on the 5 s medium tick.
+
+**Package Power panel (SSO-15378, Linux only):** reads `/sys/class/powercap/intel-rapl:*/energy_uj` (top-level package zones only, core/uncore sub-zones excluded) once a second and converts the microjoule delta into average watts, handling the counter's wraparound at `max_energy_range_uj`. AMD hosts are covered by the same code path since the kernel's RAPL powercap framework registers under the same `intel-rapl:N` naming there too. `RaplPowerInfo` caches "no RAPL zones found" after the first probe (mirrors `CpuInfoLinux`'s cpufreq-availability cache) so a host without RAPL support isn't re-globbed every tick. `PowerDrawWidget` hides entirely when unavailable, same pattern as OOM Kills.
+
+**Per-Core Detail panel (SSO-15378, all platforms):** compact live utilization + frequency per core, backed by `CpuCoreListModel` (a `QAbstractListModel`) rendered through a `QListView` with a custom `CpuCoreItemDelegate` — the delegate paints only the rows the ~8-row-tall viewport can show (internal scrollbar for the rest), rather than instantiating one row widget per core. This is the explicit leapfrog over `CpuTuningWidget::buildPerCoreGrid()`'s per-core `QComboBox` grid, which does not scale past a few dozen cores. Verified against a synthetic 64-core dataset (`CpuCoreListModelTests`); real 32+-core hardware was not available to verify against in this environment.
 
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
@@ -676,7 +701,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `NetworkInfo` | Interfaces, RX/TX bytes | `QNetworkInterface` | sysfs `/sys/class/net/` |
 | `SystemInfo` | Hostname, OS, kernel, CPU model | `sysctl` | `/etc/os-release`, `lscpu` |
 | `ProcessInfo` | Process list with CPU/memory/disk I/O/network stats | `sysctl` KERN_PROC, `proc_pid_rusage()`, `nettop` | `/proc/[pid]/stat`, `/proc/[pid]/io` |
-| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` (vendor WMI surfaces resolved via `friendlyDeviceName`: ASUS, HP, Legion, IdeaPad) |
+| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` (driver names resolved via `friendlyDeviceName`: CPU, GPU, NVMe, DIMM (`jc42`/`spd5118`), ACPI, vendor WMI surfaces ASUS/HP/Legion/IdeaPad) |
 | `GpuInfo` | GPU devices, utilization | IOKit, Metal | sysfs, `nvidia-smi` |
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |
 | `DiskHealthInfo` | SMART attributes, health verdicts | `smartctl`, `diskutil` | `smartctl`, sysfs |

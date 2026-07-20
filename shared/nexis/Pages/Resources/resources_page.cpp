@@ -7,7 +7,9 @@
 
 #ifdef Q_OS_LINUX
 #include "Pages/Helpers/oom_kills_widget.h"
+#include "Pages/Helpers/power_draw_widget.h"
 #endif
+#include "Pages/Helpers/cpu_core_detail_widget.h"
 
 ResourcesPage::~ResourcesPage()
 {
@@ -75,7 +77,17 @@ void ResourcesPage::init()
     // so this costs nothing on, say, a stock macOS-port build target.
     mOomKills = new OomKillsWidget(this);
     widgets.append(mOomKills);
+
+    // SSO-15378: package power via powercap/RAPL. Hides itself on hosts
+    // without any RAPL zones (VMs, non-x86, unsupported CPUs).
+    mPowerDraw = new PowerDrawWidget(this);
+    widgets.append(mPowerDraw);
 #endif
+
+    // SSO-15378: compact per-core utilization/frequency detail — cross
+    // platform, unlike the RAPL card above.
+    mCoreDetail = new CpuCoreDetailWidget(this);
+    widgets.append(mCoreDetail);
 
     for (QWidget *widget : widgets) {
         ui->chartsLayout->addWidget(widget);
@@ -118,7 +130,15 @@ void ResourcesPage::init()
         mOomKills->setElevated(QStringLiteral("memory"));
         flatShadowWidgets.removeOne(mOomKills);
     }
+    if (mPowerDraw) {
+        mPowerDraw->setElevated(QStringLiteral("cpu"));
+        flatShadowWidgets.removeOne(mPowerDraw);
+    }
 #endif
+    if (mCoreDetail) {
+        mCoreDetail->setElevated(QStringLiteral("cpu"));
+        flatShadowWidgets.removeOne(mCoreDetail);
+    }
 
     Utilities::addDropShadow(flatShadowWidgets, 40);
 
@@ -149,6 +169,9 @@ void ResourcesPage::init()
     if (mOomKills)
         connect(mRefresh, &DataRefreshService::oomdUpdated,
                 this, &ResourcesPage::onOomdUpdated);
+    if (mPowerDraw)
+        connect(mRefresh, &DataRefreshService::powerUpdated,
+                this, &ResourcesPage::onPowerUpdated);
 #endif
 
     // Disk Usage Analyzer launcher (FR-23)
@@ -282,6 +305,10 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
 
         second++;
     }
+
+    // --- Per-core detail list (SSO-15378) ---
+    if (mCoreDetail)
+        mCoreDetail->onCpuUpdated(percents, im->getCpuClocks());
 }
 
 void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
@@ -575,6 +602,12 @@ void ResourcesPage::onOomdUpdated(const OomdSnapshot &snap)
     if (mOomKills)
         mOomKills->onOomdUpdated(snap);
 }
+
+void ResourcesPage::onPowerUpdated(const RaplPowerSnapshot &snap)
+{
+    if (mPowerDraw)
+        mPowerDraw->onPowerUpdated(snap);
+}
 #endif
 
 void ResourcesPage::onPageActivated()
@@ -594,6 +627,8 @@ void ResourcesPage::onPageActivated()
         mRefresh->subscribe(DataRefreshService::Signal::Psi);
     if (mOomKills)
         mRefresh->subscribe(DataRefreshService::Signal::Oomd);
+    if (mPowerDraw)
+        mRefresh->subscribe(DataRefreshService::Signal::Power);
 #endif
 
     // Kick an immediate disk health refresh so the temperature chart populates
@@ -615,5 +650,7 @@ void ResourcesPage::onPageDeactivated()
         mRefresh->unsubscribe(DataRefreshService::Signal::Psi);
     if (mOomKills)
         mRefresh->unsubscribe(DataRefreshService::Signal::Oomd);
+    if (mPowerDraw)
+        mRefresh->unsubscribe(DataRefreshService::Signal::Power);
 #endif
 }

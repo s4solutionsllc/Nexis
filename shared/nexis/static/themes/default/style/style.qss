@@ -1304,12 +1304,16 @@ QLabel[accessibleName="dialog-title"] {
    #sectionHeaderTitle objectNames below, since those names weren't already
    claimed on this page — that lets it pick up the existing
    #sectionHeaderAccent[accentToken="disk"] / @diskColor rule as-is instead
-   of adding a seventh named override. */
+   of adding a seventh named override. Fans (SSO-15377), renamed "Fans &
+   Sensors", is that seventh named override — the bare names were already
+   spoken for by Storage, so it gets its own #sectionHeaderAccentFans rule
+   below instead. */
 #HardwareInfoPage #sectionHeaderAccentSystem,
 #HardwareInfoPage #sectionHeaderAccentProcessor,
 #HardwareInfoPage #sectionHeaderAccentGraphics,
 #HardwareInfoPage #sectionHeaderAccentMemory,
-#HardwareInfoPage #sectionHeaderAccentBattery {
+#HardwareInfoPage #sectionHeaderAccentBattery,
+#HardwareInfoPage #sectionHeaderAccentFans {
     border-radius: 1;
     min-height: 18;
 }
@@ -1319,35 +1323,23 @@ QLabel[accessibleName="dialog-title"] {
 #HardwareInfoPage #sectionHeaderAccentGraphics  { background-color: @gpuColor; }
 #HardwareInfoPage #sectionHeaderAccentMemory    { background-color: @memoryColor; }
 #HardwareInfoPage #sectionHeaderAccentBattery   { background-color: @batteryColor; }
+/* SSO-15377: "Fans & Sensors" — a 7th named override (same reason as
+   System/Processor/Graphics/Memory/Battery above: uic requires unique
+   objectNames within one .ui, and the bare shared #sectionHeaderAccent
+   name is already claimed by Storage on this page). Reuses @fanColor,
+   which existed in values.ini but had no accentToken/named selector
+   wired until this item. */
+#HardwareInfoPage #sectionHeaderAccentFans      { background-color: @fanColor; }
 
 #HardwareInfoPage #sectionHeaderTitleSystem,
 #HardwareInfoPage #sectionHeaderTitleProcessor,
 #HardwareInfoPage #sectionHeaderTitleGraphics,
 #HardwareInfoPage #sectionHeaderTitleMemory,
-#HardwareInfoPage #sectionHeaderTitleBattery {
+#HardwareInfoPage #sectionHeaderTitleBattery,
+#HardwareInfoPage #sectionHeaderTitleFans {
     color: @color06;
     font-size: 9pt;
     font-weight: 600;
-}
-
-/* SSO-13735/SSO-14757: System/Processor/Graphics/Memory/Battery/Storage moved
-   to the shared [cardRole="elevated"] + per-section header recipe above (DS
-   §2/§3, NEX F1/F2); these QGroupBox rules now only style the remaining
-   native-title Fans section, which is out of approved-capture scope. */
-#HardwareInfoPage QGroupBox {
-    border: 1px solid @borderColor;
-    border-radius: 12;
-    margin-top: 12;
-    background-color: @cardBg;
-}
-
-#HardwareInfoPage QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 6;
-    color: @color05;
-    font-size: 11pt;
-    font-weight: bold;
 }
 
 #HardwareInfoPage QTableWidget {
@@ -1411,6 +1403,26 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #cleanerScanProgress::chunk {
+    background-color: @accentColor;
+    border-radius: 2;
+}
+
+/* - Thin progress bar (shared recipe, DS §6, SSO-15380) - */
+
+/* Same recipe as #cleanerScanProgress above, promoted to a property
+ * selector so the Trust & Safety shared preview/confirm/progress component
+ * (and anything else that wants the standard thin/anchored progress bar)
+ * gets it for free instead of re-deriving a one-off objectName rule.
+ * Usage: widget->setProperty("progressRole", "thin");
+ * widget->setFixedHeight(Dpi::scale(4-6)); widget->setTextVisible(false).
+ */
+QProgressBar[progressRole="thin"] {
+    background-color: @chartGridColor;
+    border: none;
+    border-radius: 2;
+}
+
+QProgressBar[progressRole="thin"]::chunk {
     background-color: @accentColor;
     border-radius: 2;
 }

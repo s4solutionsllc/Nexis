@@ -53,6 +53,7 @@ struct PageSlot {
 #include "Pages/Services/services_page.h"
 #include "Pages/Processes/processes_page.h"
 #include "Pages/Uninstaller/uninstaller_page.h"
+#include "Pages/Shredder/shredder_page.h"
 #include "Pages/Resources/resources_page.h"
 #include "Pages/Network/network_usage_page.h"
 #include "Pages/Settings/settings_page.h"
@@ -158,6 +159,7 @@ private:
     ServicesPage *servicesPage;
     ProcessesPage *processPage;
     UninstallerPage *uninstallerPage;
+    ShredderPage *shredderPage;
     ResourcesPage *resourcesPage;
     NetworkUsagePage *networkUsagePage;
 #ifdef Q_OS_MAC
@@ -221,6 +223,7 @@ private:
     QPushButton *btnStartupApps;
     QPushButton *btnBootAnalysis;
     QPushButton *btnUninstaller;
+    QPushButton *btnShredder;
     QPushButton *btnDocker;
 #ifdef Q_OS_MAC
     QPushButton *btnMailCleanup = nullptr;
