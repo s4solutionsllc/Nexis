@@ -4,8 +4,7 @@
 #include "crumbs_review_dialog.h"
 #endif
 #ifdef Q_OS_LINUX
-#include "Pages/Uninstaller/leftover_review_dialog_linux.h"
-#include "Tools/leftover_scanner_linux.h"
+#include "leftover_review_hook.h"
 #endif
 #include <QHeaderView>
 #include <QMovie>
@@ -126,12 +125,7 @@ void UninstallerPage::init()
             return;
         const QStringList names = mPendingUninstallPackageNames;
         mPendingUninstallPackageNames.clear();
-        // Pre-scan so the dialog doesn't pop up just to say "nothing found".
-        if (LeftoverScannerLinux::scanLeftovers(names).isEmpty())
-            return;
-        auto *dlg = new LeftoverReviewDialogLinux(names, this);
-        dlg->setAttribute(Qt::WA_DeleteOnClose);
-        dlg->open();
+        LeftoverReviewHook::maybeShowReviewDialog(names, this);
     });
 #endif
 

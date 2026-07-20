@@ -560,6 +560,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/SystemLogs/severity_pill_delegate.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
+  "${GUI_SHARED_DIR}/Pages/Uninstaller/leftover_review_hook.h"
   "${GUI_SHARED_DIR}/Pages/Shredder/shredder_page.h"
   "${GUI_SHARED_DIR}/Pages/Shredder/shredder_drop_zone.h"
   "${GUI_SHARED_DIR}/Pages/Shredder/shred_confirm_dialog.h"

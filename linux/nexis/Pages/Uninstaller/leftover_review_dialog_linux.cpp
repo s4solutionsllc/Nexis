@@ -1,4 +1,5 @@
 #include "leftover_review_dialog_linux.h"
+#include "leftover_review_hook.h"
 
 #include "Services/package_service.h"
 #include "Tools/leftover_scanner_linux.h"
@@ -194,3 +195,18 @@ void LeftoverReviewDialogLinux::onMoveToTrash()
 
     accept();
 }
+
+namespace LeftoverReviewHook {
+
+void maybeShowReviewDialog(const QStringList &packageNames, QWidget *parent)
+{
+    // Pre-scan so the dialog doesn't pop up just to say "nothing found".
+    if (LeftoverScannerLinux::scanLeftovers(packageNames).isEmpty())
+        return;
+
+    auto *dlg = new LeftoverReviewDialogLinux(packageNames, parent);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->open();
+}
+
+} // namespace LeftoverReviewHook
