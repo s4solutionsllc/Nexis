@@ -1,5 +1,7 @@
 #include "settings_page.h"
 #include "ui_settings_page.h"
+#include "stacer_import_dialog.h"
+#include "Utils/stacer_importer.h"
 #include "Managers/info_manager.h"
 #include "Managers/schedule_manager.h"
 #include "Managers/cleaner_service.h"
@@ -242,6 +244,7 @@ void SettingsPage::init()
     buildSectionHeader(ui->headerAlerts, tr("Alerts"));
     buildSectionHeader(ui->headerTools, tr("Tools"));
     buildSectionHeader(ui->headerScheduledCleaning, tr("Scheduled Cleaning"));
+    buildSectionHeader(ui->headerMigration, tr("Migration"));
     buildSectionCards();
     refreshThemeColors();
 
@@ -254,6 +257,9 @@ void SettingsPage::init()
     connect(ui->cmbTrayIconStyle, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbTrayIconStyleChanged);
     connect(ui->cmbDiskAnalyzer, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbDiskAnalyzerChanged);
     connect(ui->cmbKioskMonitor, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbKioskMonitorChanged);
+
+    // migration
+    connect(ui->btnImportFromStacer, &QPushButton::clicked, this, &SettingsPage::onImportFromStacer);
 
     // scheduled cleaning
     initScheduledCleaning();
@@ -819,6 +825,7 @@ void SettingsPage::refreshThemeColors()
     Utilities::addDropShadow(ui->groupAlerts, 90, 26);
     Utilities::addDropShadow(ui->groupTools, 90, 26);
     Utilities::addDropShadow(ui->groupScheduledCleaning, 90, 26);
+    Utilities::addDropShadow(ui->groupMigration, 90, 26);
 }
 
 void SettingsPage::buildPageHeader()
@@ -871,7 +878,7 @@ void SettingsPage::buildSectionCards()
     // border, radius come from [cardRole="elevated"] in style.qss.
     const QList<QWidget *> cards = {
         ui->groupGeneral, ui->groupAppearance, ui->groupAlerts,
-        ui->groupTools, ui->groupScheduledCleaning
+        ui->groupTools, ui->groupScheduledCleaning, ui->groupMigration
     };
     for (QWidget *card : cards) {
         card->setAttribute(Qt::WA_StyledBackground, true);
@@ -885,4 +892,44 @@ void SettingsPage::buildSectionCards()
     ui->gridAlerts->setContentsMargins(14, 0, 14, 14);
     ui->gridTools->setContentsMargins(14, 0, 14, 14);
     ui->layoutScheduledCleaning->setContentsMargins(14, 0, 14, 14);
+    ui->layoutMigration->setContentsMargins(14, 0, 14, 14);
+}
+
+void SettingsPage::onImportFromStacer()
+{
+    // Default path; let the user browse if not found.
+    QString path = StacerImporter::defaultConfigPath();
+
+    if (!QFile::exists(path)) {
+        path = QFileDialog::getOpenFileName(
+            this,
+            tr("Locate Stacer Configuration File"),
+            QDir::homePath(),
+            tr("INI files (*.ini *.conf);;All files (*)"));
+        if (path.isEmpty())
+            return;
+    }
+
+    StacerImportResult result = StacerImporter::parse(path, mSettingManager);
+
+    if (!result.fileFound || !result.errorMessage.isEmpty()) {
+        QMessageBox::warning(this, tr("Import from Stacer"), result.errorMessage);
+        return;
+    }
+
+    StacerImportDialog dlg(result, this);
+    if (dlg.exec() != QDialog::Accepted)
+        return;
+
+    StacerImporter::apply(result, mSettingManager);
+
+    QMessageBox::information(
+        this,
+        tr("Import from Stacer"),
+        tr("%1 setting(s) imported successfully. Some changes (language, start page) "
+           "take effect after restarting Nexis.")
+            .arg(result.willChange.size()));
+
+    // Reload the UI to reflect the applied values.
+    init();
 }

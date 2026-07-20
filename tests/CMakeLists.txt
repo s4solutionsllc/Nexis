@@ -347,6 +347,16 @@ add_nexis_test(NAME SettingManagerTests
     "${GUI_SHARED_DIR}/Managers"
 )
 
+# SSO-15396: Stacer settings importer — parses a real Stacer INI fixture and
+# verifies key mapping, no-equivalent reporting, and apply().
+add_nexis_test(NAME StacerImporterTests
+  SOURCES
+    managers/test_stacer_importer.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+)
+
 # GH#191: pure dashboard layout helper — grid constants, tier mapping, and
 # v1->v2 layout migration. Compiled directly so it runs cross-platform without
 # pulling in nexis-gui (DashboardPage builds its whole widget tree in init()).

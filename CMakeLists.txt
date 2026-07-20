@@ -129,6 +129,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/menu_bar_format_util.cpp"
   "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/stacer_importer.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -170,6 +171,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/menu_bar_format_util.h"
   "${CORE_SHARED_DIR}/Utils/headless_util.h"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.h"
+  "${CORE_SHARED_DIR}/Utils/stacer_importer.h"
 )
 
 if(APPLE)
@@ -441,6 +443,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Services/service_item.cpp"
   "${GUI_SHARED_DIR}/Pages/Services/services_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Settings/settings_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Settings/stacer_import_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/BootAnalysis/boot_analysis_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Network/network_usage_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Network/net_usage_tracker.cpp"
@@ -537,6 +540,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/Services/service_item.h"
   "${GUI_SHARED_DIR}/Pages/Services/services_page.h"
   "${GUI_SHARED_DIR}/Pages/Settings/settings_page.h"
+  "${GUI_SHARED_DIR}/Pages/Settings/stacer_import_dialog.h"
   "${GUI_SHARED_DIR}/Pages/BootAnalysis/boot_analysis_page.h"
   "${GUI_SHARED_DIR}/Pages/Network/network_usage_page.h"
   "${GUI_SHARED_DIR}/Pages/Network/net_usage_tracker.h"
