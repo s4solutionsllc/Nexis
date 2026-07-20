@@ -74,6 +74,11 @@ if(UNIX AND NOT APPLE)
     SOURCES core/test_nvml_process_sampler.cpp)
 endif()
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
+# SSO-15386 / SSO-15373: centralized deny-list shared by the uninstaller and
+# the orphan-leftover scanner. Lives in shared/nexis-core so it builds and
+# runs on both platforms; platform-specific deny-list cases are #ifdef-gated
+# inside the test file itself.
+add_nexis_test(NAME LifecycleDenyListTests SOURCES core/test_lifecycle_deny_list.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real (non-overridden) PackageTool
 # runCommand/runSudoCommand seam against the migrated execWithStatus contract.
