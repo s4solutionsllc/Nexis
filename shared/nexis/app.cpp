@@ -1041,8 +1041,10 @@ void App::setPageHeaderActions(QWidget *widget)
             item->widget()->setParent(nullptr);
         delete item;
     }
-    if (widget)
+    if (widget) {
         mHeaderActionsRowLayout->addWidget(widget);
+        widget->show();
+    }
 }
 
 void App::pageClick(QWidget *widget, bool slide)
