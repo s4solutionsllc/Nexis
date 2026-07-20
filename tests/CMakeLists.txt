@@ -97,8 +97,10 @@ if(APPLE)
   add_nexis_test(NAME PackageToolMacOSTests
     SOURCES core/test_package_tool_macos.cpp)
 
-  # FW-18 (SSO-3746): leftover artifact scanner — bundle-id matching logic
-  # against a synthetic ~/Library-shaped QTemporaryDir. QSKIP'd off-macOS.
+  # SSO-15387 / FW-18 (SSO-3746): leftover artifact scanner — bundle-id
+  # matching + expanded fixture suite (product-name boundary, vendor dirs,
+  # LaunchDaemons privilege boundary, true-negative set, precision/recall
+  # harness).  QSKIP'd off-macOS.  Gate for SSO-15384 merge acceptance.
   add_nexis_test(NAME AppLeftoversMacOSTests
     SOURCES
       core/test_app_leftovers_macos.cpp
@@ -196,6 +198,20 @@ add_nexis_test(NAME AptHistoryTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core"
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
 )
+
+# SSO-15387: Linux leftover-scan heuristics fixture suite — XDG
+# config/cache/data + autostart .desktop patterns across dpkg/rpm/Flatpak/Snap
+# package types.  True-negative and precision/recall harness.  Platform-neutral
+# (all paths synthetic); gate for SSO-15385 merge acceptance.
+add_nexis_test(NAME AppLeftoversLinuxTests
+  SOURCES core/test_app_leftovers_linux.cpp)
+
+# SSO-15387: orphan-scan heuristics fixture suite — leftovers with no
+# corresponding installed package (Linux XDG + macOS Library).  Covers true
+# orphans, near-miss shared-vendor dirs, and precision/recall harness.
+# Platform-neutral.  Gate for SSO-15386 merge acceptance.
+add_nexis_test(NAME OrphanScanFixtureTests
+  SOURCES core/test_orphan_scan_fixtures.cpp)
 
 # SSO-351: pure parser for /proc/net/route — compiled directly so the test
 # runs on any platform.
