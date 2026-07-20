@@ -73,6 +73,23 @@ if(UNIX AND NOT APPLE)
   add_nexis_test(NAME NvmlProcessSamplerTests
     SOURCES core/test_nvml_process_sampler.cpp)
 endif()
+# SSO-15378: RAPL/powercap package power reader is Linux-only (see
+# CMakeLists.txt CORE_PLAT_SRCS) — gate like BatteryChargeThresholdTests.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME RaplPowerInfoTests
+    SOURCES core/test_rapl_power_info.cpp)
+endif()
+# SSO-15378: CpuCoreListModel is the virtualized backing store for the
+# per-core detail view (cross-platform, pure QAbstractListModel logic — no
+# AppManager/SignalMapper dependency, unlike the widgets that render it).
+add_nexis_test(NAME CpuCoreListModelTests
+  SOURCES
+    core/test_cpu_core_list_model.cpp
+    "${GUI_SHARED_DIR}/Pages/Helpers/cpu_core_list_model.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Helpers"
+)
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 # SSO-15386 / SSO-15373: centralized deny-list shared by the uninstaller and
 # the orphan-leftover scanner. Lives in shared/nexis-core so it builds and
