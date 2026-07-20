@@ -1,0 +1,144 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base
+  title="Migrating from Stacer to Nexis — Step-by-Step Guide"
+  description="How to move from Stacer to Nexis: install Nexis on Linux or macOS, reconfigure your settings, and uninstall Stacer. Exact commands for every platform."
+>
+  <Nav />
+  <main class="mx-auto max-w-3xl px-6 py-24 md:py-32">
+
+    <h1 class="text-4xl font-bold tracking-tight text-white md:text-5xl">
+      Migrating from Stacer<br />
+      <span class="text-nexis-orange">to Nexis</span>
+    </h1>
+
+    <p class="mt-6 text-lg text-nexis-muted leading-relaxed">
+      This page covers the mechanics of switching: installing Nexis, carrying over your
+      configuration, and removing Stacer. For the case for switching — what changed, what's
+      different, feature-by-feature — see
+      <a href="/Nexis/alternatives/stacer/" class="text-nexis-orange hover:underline">Nexis vs. Stacer</a>.
+    </p>
+
+    <p class="mt-4 text-nexis-muted leading-relaxed">
+      Nexis and Stacer can run side by side — installing one does not remove the other. The
+      order below installs Nexis first, has you reconfigure it, and uninstalls Stacer last, so
+      you have both tools available while your settings still exist in Stacer to reference.
+    </p>
+
+    <h2 class="mt-16 text-2xl font-bold text-white">1. Install Nexis</h2>
+
+    <h3 class="mt-8 text-xl font-semibold text-white">Linux</h3>
+    <div class="mt-4 space-y-6">
+      <div>
+        <p class="text-nexis-muted"><strong class="text-white">PPA (Ubuntu 25.10, 26.04 — x86_64 and ARM64):</strong></p>
+        <pre class="mt-2 overflow-x-auto rounded-lg border border-nexis-border/50 bg-nexis-dark-card p-4 text-sm text-nexis-light"><code>sudo add-apt-repository ppa:s4solutionsllc/nexis
+sudo apt update
+sudo apt install nexis</code></pre>
+        <p class="mt-2 text-sm text-nexis-muted">
+          Ubuntu 22.04, 24.04, and Linux Mint Zena aren't in the PPA's supported series — Nexis 2.6+
+          requires Qt 6.8 LTS, which isn't packaged there. Use the AppImage below instead.
+        </p>
+      </div>
+      <div>
+        <p class="text-nexis-muted"><strong class="text-white">AUR (Arch Linux):</strong></p>
+        <pre class="mt-2 overflow-x-auto rounded-lg border border-nexis-border/50 bg-nexis-dark-card p-4 text-sm text-nexis-light"><code>yay -S nexis</code></pre>
+      </div>
+      <div>
+        <p class="text-nexis-muted"><strong class="text-white">AppImage (any distro, x86_64 or ARM64):</strong></p>
+        <pre class="mt-2 overflow-x-auto rounded-lg border border-nexis-border/50 bg-nexis-dark-card p-4 text-sm text-nexis-light"><code>chmod +x Nexis-*.AppImage
+./Nexis-*.AppImage</code></pre>
+        <p class="mt-2 text-sm text-nexis-muted">
+          Download from the <a href="https://github.com/s4solutionsllc/Nexis/releases/latest" class="text-nexis-orange hover:underline" target="_blank" rel="noopener noreferrer">Releases page</a> first.
+          A <code class="text-nexis-light">.deb</code> package is also available there for distros
+          without PPA access.
+        </p>
+      </div>
+    </div>
+
+    <h3 class="mt-10 text-xl font-semibold text-white">macOS</h3>
+    <div class="mt-4 space-y-6">
+      <div>
+        <p class="text-nexis-muted"><strong class="text-white">Homebrew (Apple Silicon, macOS 14 Sonoma or later):</strong></p>
+        <pre class="mt-2 overflow-x-auto rounded-lg border border-nexis-border/50 bg-nexis-dark-card p-4 text-sm text-nexis-light"><code>brew tap s4solutionsllc/nexis
+brew trust s4solutionsllc/nexis
+brew install --cask nexis</code></pre>
+      </div>
+      <div>
+        <p class="text-nexis-muted"><strong class="text-white">Disk image:</strong></p>
+        <p class="mt-2 text-sm text-nexis-muted">
+          Download the <code class="text-nexis-light">.dmg</code> from the
+          <a href="https://github.com/s4solutionsllc/Nexis/releases/latest" class="text-nexis-orange hover:underline" target="_blank" rel="noopener noreferrer">Releases page</a>
+          and drag Nexis into Applications.
+        </p>
+      </div>
+    </div>
+    <p class="mt-4 text-sm text-nexis-muted">
+      Stacer is Linux-only — there is nothing to migrate on macOS beyond installing Nexis itself.
+    </p>
+
+    <h2 class="mt-16 text-2xl font-bold text-white">2. Reconfigure your settings</h2>
+    <p class="mt-4 text-nexis-muted leading-relaxed">
+      Nexis does not currently import Stacer's configuration automatically. A Settings Importer
+      that reads Stacer's config directly from <code class="text-nexis-light">~/.config/Stacer/Stacer.conf</code>
+      is planned but has not shipped — this section will be updated with a link to it once it does.
+      Until then, four areas need manual re-setup in Nexis:
+    </p>
+    <ul class="mt-4 space-y-3 text-nexis-muted">
+      <li><strong class="text-white">Startup Apps</strong> — re-add any applications you had toggled on in Stacer's startup list, on the Startup Apps page.</li>
+      <li><strong class="text-white">System Cleaner selections</strong> — Stacer's chosen cleaning categories don't carry over; re-check which categories (package cache, crash reports, logs, app caches) you want scanned.</li>
+      <li><strong class="text-white">Services</strong> — re-apply any systemd service enable/disable toggles you made from Stacer's Services page.</li>
+      <li><strong class="text-white">Preferences</strong> — theme, language, and any thresholds set in Stacer are not preserved; set them again on the Nexis Settings page.</li>
+    </ul>
+    <p class="mt-4 text-sm text-nexis-muted">
+      Keep Stacer installed while you do this — its Startup Apps, System Cleaner, and Services
+      pages are the easiest reference for what to re-create in Nexis.
+    </p>
+
+    <h2 class="mt-16 text-2xl font-bold text-white">3. Uninstall Stacer</h2>
+    <p class="mt-4 text-nexis-muted leading-relaxed">
+      Once Nexis is set up the way you want it, remove Stacer using whichever method you used to
+      install it:
+    </p>
+    <ul class="mt-4 space-y-3 text-nexis-muted">
+      <li>
+        <strong class="text-white">Installed via apt or the PPA</strong> (<code class="text-nexis-light">ppa:oguzhaninan/stacer</code>):
+        <pre class="mt-2 overflow-x-auto rounded-lg border border-nexis-border/50 bg-nexis-dark-card p-4 text-sm text-nexis-light"><code>sudo apt purge stacer
+sudo add-apt-repository --remove ppa:oguzhaninan/stacer</code></pre>
+        <span class="text-sm">The second line is optional — it removes the PPA itself, not just the package.</span>
+      </li>
+      <li>
+        <strong class="text-white">Installed via AppImage:</strong> delete the
+        <code class="text-nexis-light">Stacer-*.AppImage</code> file and any desktop entry you
+        created for it.
+      </li>
+      <li>
+        <strong class="text-white">Installed via another package manager</strong> (dnf, pacman, or similar):
+        use that manager's remove command for the <code class="text-nexis-light">stacer</code> package.
+      </li>
+    </ul>
+    <p class="mt-4 text-sm text-nexis-muted">
+      <code class="text-nexis-light">apt purge</code> removes the package but not your personal
+      config at <code class="text-nexis-light">~/.config/Stacer/</code> — that directory is left in
+      place. Delete it manually once you're confident you've finished reconfiguring Nexis and no
+      longer need it as a reference.
+    </p>
+
+    <div class="mt-16 rounded-xl border border-nexis-border/50 bg-nexis-dark/50 p-8 text-center">
+      <h2 class="text-2xl font-bold text-white">Get Nexis</h2>
+      <p class="mt-3 text-nexis-muted">Full release downloads and checksums are on GitHub.</p>
+      <a
+        href="https://github.com/s4solutionsllc/Nexis/releases/latest"
+        class="mt-6 inline-flex items-center gap-2 rounded-lg bg-nexis-orange px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-nexis-orange-hover"
+      >
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        Download Nexis
+      </a>
+    </div>
+
+  </main>
+  <Footer />
+</Base>
