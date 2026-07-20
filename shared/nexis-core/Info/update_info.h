@@ -11,6 +11,15 @@ struct NEXISCORESHARED_EXPORT UpdateEntry {
     QString source;
     QString name;
     QString version;
+
+    // Sparkle-only fields (empty for brew/system sources).
+    // trusted is set when the appcast carries a signature AND the app bundle
+    // contains a matching public key; untrusted entries must not be installed.
+    QString enclosureUrl;
+    QString edSignature;
+    QString dsaSignature;
+    QString publicKey;
+    bool    trusted = false;
 };
 
 struct NEXISCORESHARED_EXPORT UpdateCheckResult {

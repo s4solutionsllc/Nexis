@@ -41,12 +41,16 @@ private slots:
     void onUninstallClicked();
     void onSystemUpdatesChecked(const UpdateCheckResult &result);
     void onRepoHealthChecked(const RepoHealthCache &cache);
+    void onSparkleUpdateItemChanged(QTreeWidgetItem *item, int column);
+    void onUpdateSelectedClicked();
 
 private:
     void buildUI();
+    void buildSparkleSection(QVBoxLayout *pageLayout);
     void fetchPackages();
     QStringList getSelectedPackages() const;
     void updateUninstallButton();
+    void updateSparkleUpdateButton();
     void setInstallFieldsVisible(bool visible);
 
     ToolManager *mToolManager = nullptr;
@@ -61,11 +65,20 @@ private:
     QPushButton *mBtnUninstall = nullptr;
     QTreeWidget *mTreeWidget = nullptr;
 
-    // Available Updates section
+    // Homebrew / system Available Updates section
     QWidget *mUpdatesSection = nullptr;
     QLabel *mLblUpdatesTitle = nullptr;
     QPushButton *mBtnCheckNow = nullptr;
     QTreeWidget *mUpdatesTree = nullptr;
+
+    // Sparkle (non-Homebrew app) updates section
+    QWidget *mSparkleSection = nullptr;
+    QLabel *mLblSparkleTitle = nullptr;
+    QPushButton *mBtnUpdateSelected = nullptr;
+    QTreeWidget *mSparkleTree = nullptr;
+
+    // Cached Sparkle UpdateEntry rows (parallel to mSparkleTree items)
+    QList<UpdateEntry> mSparkleEntries;
 
     QList<Package> mPackages;
 };

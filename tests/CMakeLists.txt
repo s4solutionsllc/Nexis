@@ -83,6 +83,17 @@ if(APPLE)
   add_nexis_test(NAME PackageToolMacOSTests
     SOURCES core/test_package_tool_macos.cpp)
 
+  # SSO-15390: pure Sparkle appcast XML parser — compiled cross-platform
+  # because the parser has no macOS-only dependencies.
+  add_nexis_test(NAME SparkleAppcastTests
+    SOURCES
+      core/test_sparkle_appcast.cpp
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_appcast_parser.cpp"
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+  )
+
   # FW-18 (SSO-3746): leftover artifact scanner — bundle-id matching logic
   # against a synthetic ~/Library-shaped QTemporaryDir. QSKIP'd off-macOS.
   add_nexis_test(NAME AppLeftoversMacOSTests

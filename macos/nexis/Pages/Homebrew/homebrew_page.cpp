@@ -5,6 +5,7 @@
 #include "signal_mapper.h"
 #include "dpi.h"
 #include "utilities.h"
+#include <Info/update_info.h>
 #include <Tools/package_tool_shared.h>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -14,6 +15,8 @@
 #include <QIcon>
 #include <QMessageBox>
 #include <QRegularExpression>
+#include <QDesktopServices>
+#include <QUrl>
 #include <QtConcurrent>
 
 HomebrewPage::HomebrewPage(QWidget *parent,
@@ -48,6 +51,10 @@ HomebrewPage::HomebrewPage(QWidget *parent,
             this, &HomebrewPage::onSystemUpdatesChecked);
     connect(mRefresh, &DataRefreshService::repoHealthChecked,
             this, &HomebrewPage::onRepoHealthChecked);
+    connect(mSparkleTree, &QTreeWidget::itemChanged,
+            this, &HomebrewPage::onSparkleUpdateItemChanged);
+    connect(mBtnUpdateSelected, &QPushButton::clicked,
+            this, &HomebrewPage::onUpdateSelectedClicked);
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         (void)QtConcurrent::run([this]() { fetchPackages(); });
     });
@@ -165,6 +172,9 @@ void HomebrewPage::buildUI()
     updLayout->addWidget(updContainer, 1);
 
     pageLayout->addWidget(mUpdatesSection);
+
+    // Sparkle updates section — hidden until results arrive
+    buildSparkleSection(pageLayout);
 
     // Main content widget
     auto *contentWidget = new QWidget(this);
@@ -462,23 +472,193 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
     mBtnCheckNow->setEnabled(true);
     mBtnCheckNow->setText(tr("Check Now"));
 
-    if (!result.success || result.totalCount == 0) {
-        mUpdatesSection->hide();
-        return;
+    // Split entries: Sparkle ones go to the dedicated section; brew/system
+    // entries stay in the existing updates tree.
+    QList<UpdateEntry> brewEntries;
+    QList<UpdateEntry> sparkleEntries;
+    for (const UpdateEntry &e : result.entries) {
+        if (e.source == "sparkle")
+            sparkleEntries.append(e);
+        else
+            brewEntries.append(e);
     }
 
-    mLblUpdatesTitle->setText(tr("Available Updates (%1)").arg(result.totalCount));
-    mUpdatesTree->clear();
+    // Homebrew / system section
+    if (!result.success || brewEntries.isEmpty()) {
+        mUpdatesSection->hide();
+    } else {
+        mLblUpdatesTitle->setText(tr("Available Updates (%1)").arg(brewEntries.size()));
+        mUpdatesTree->clear();
+        for (const UpdateEntry &entry : brewEntries) {
+            auto *item = new QTreeWidgetItem(mUpdatesTree);
+            item->setText(0, entry.source);
+            item->setText(1, entry.name);
+            item->setText(2, entry.version);
+            item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+        }
+        mUpdatesSection->show();
+    }
 
-    for (const UpdateEntry &entry : result.entries) {
-        auto *item = new QTreeWidgetItem(mUpdatesTree);
-        item->setText(0, entry.source);
-        item->setText(1, entry.name);
-        item->setText(2, entry.version);
+    // Sparkle section
+    mSparkleEntries = sparkleEntries;
+    mSparkleTree->blockSignals(true);
+    mSparkleTree->clear();
+    for (const UpdateEntry &entry : sparkleEntries) {
+        auto *item = new QTreeWidgetItem(mSparkleTree);
+        item->setCheckState(0, Qt::Unchecked);
+        item->setText(0, entry.name);
+        item->setText(1, entry.version);
+        if (!entry.trusted) {
+            item->setText(2, tr("Untrusted"));
+            item->setForeground(2, QColor(0xD9, 0x53, 0x4F)); // error red
+            item->setCheckState(0, Qt::Unchecked);
+            item->setFlags(item->flags() & ~Qt::ItemIsUserCheckable);
+        } else {
+            item->setText(2, QString());
+        }
         item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     }
+    mSparkleTree->blockSignals(false);
 
-    mUpdatesSection->show();
+    if (sparkleEntries.isEmpty()) {
+        mSparkleSection->hide();
+    } else {
+        mLblSparkleTitle->setText(tr("App Updates — Sparkle (%1)").arg(sparkleEntries.size()));
+        updateSparkleUpdateButton();
+        mSparkleSection->show();
+    }
+}
+
+void HomebrewPage::buildSparkleSection(QVBoxLayout *pageLayout)
+{
+    mSparkleSection = new QWidget(this);
+    mSparkleSection->setObjectName("sparkleUpdatesSection");
+    mSparkleSection->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    mSparkleSection->hide();
+
+    auto *layout = new QVBoxLayout(mSparkleSection);
+    layout->setContentsMargins(30, 5, 30, 10);
+    layout->setSpacing(8);
+
+    auto *headerWidget = new QWidget(mSparkleSection);
+    headerWidget->setObjectName("sectionHeaderRow");
+    auto *headerRoot = new QVBoxLayout(headerWidget);
+    headerRoot->setContentsMargins(0, 0, 0, 0);
+    headerRoot->setSpacing(2);
+
+    auto *headerRow = new QHBoxLayout();
+    headerRow->setContentsMargins(0, 0, 0, 0);
+    headerRow->setSpacing(8);
+
+    auto *accentBar = new QFrame(headerWidget);
+    accentBar->setObjectName("sectionHeaderAccent");
+    accentBar->setProperty("accentToken", "warning");
+    accentBar->setFixedWidth(3);
+    accentBar->setMinimumHeight(26);
+    accentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    headerRow->addWidget(accentBar);
+
+    auto *textCol = new QVBoxLayout();
+    textCol->setContentsMargins(0, 0, 0, 0);
+    textCol->setSpacing(2);
+
+    auto *titleRow = new QHBoxLayout();
+    titleRow->setContentsMargins(0, 0, 0, 0);
+    titleRow->setSpacing(8);
+
+    mLblSparkleTitle = new QLabel(tr("App Updates — Sparkle"), headerWidget);
+    mLblSparkleTitle->setObjectName("sectionHeaderTitle");
+    titleRow->addWidget(mLblSparkleTitle);
+    titleRow->addStretch();
+
+    mBtnUpdateSelected = new QPushButton(tr("Update Selected"), headerWidget);
+    mBtnUpdateSelected->setObjectName("btnUpdateSelected");
+    mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
+    mBtnUpdateSelected->setFocusPolicy(Qt::NoFocus);
+    mBtnUpdateSelected->setAccessibleName("primary");
+    mBtnUpdateSelected->setFixedHeight(28);
+    mBtnUpdateSelected->setEnabled(false); // disabled until checkbox checked
+    titleRow->addWidget(mBtnUpdateSelected);
+
+    textCol->addLayout(titleRow);
+
+    auto *lblSource = new QLabel(
+        tr("Non-Homebrew apps with Sparkle update feeds  •  Untrusted = no verified signature"),
+        headerWidget);
+    lblSource->setObjectName("sectionHeaderSource");
+    textCol->addWidget(lblSource);
+
+    headerRow->addLayout(textCol, 1);
+    headerRoot->addLayout(headerRow);
+    layout->addWidget(headerWidget);
+
+    auto *container = new QWidget(mSparkleSection);
+    container->setObjectName("sparkleUpdatesContainer");
+    container->setAttribute(Qt::WA_StyledBackground, true);
+    container->setProperty("cardRole", "elevated");
+    auto *containerLayout = new QVBoxLayout(container);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(0);
+
+    mSparkleTree = new QTreeWidget(container);
+    mSparkleTree->setObjectName("treeWidgetSparkleUpdates");
+    mSparkleTree->setHeaderLabels({ tr("App"), tr("Available Version"), tr("") });
+    mSparkleTree->header()->setFixedHeight(Dpi::scale(30));
+    mSparkleTree->setColumnCount(3);
+    mSparkleTree->setRootIsDecorated(false);
+    mSparkleTree->setFocusPolicy(Qt::NoFocus);
+    mSparkleTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    mSparkleTree->setSelectionMode(QAbstractItemView::NoSelection);
+    mSparkleTree->header()->setStretchLastSection(true);
+    mSparkleTree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    mSparkleTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    mSparkleTree->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+    mSparkleTree->setMaximumHeight(200);
+    containerLayout->addWidget(mSparkleTree);
+
+    layout->addWidget(container, 1);
+    pageLayout->addWidget(mSparkleSection);
+}
+
+void HomebrewPage::updateSparkleUpdateButton()
+{
+    int checked = 0;
+    for (int i = 0; i < mSparkleTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = mSparkleTree->topLevelItem(i);
+        if (item->checkState(0) == Qt::Checked)
+            ++checked;
+    }
+    mBtnUpdateSelected->setEnabled(checked > 0);
+    if (checked > 0)
+        mBtnUpdateSelected->setText(tr("Update Selected (%1)").arg(checked));
+    else
+        mBtnUpdateSelected->setText(tr("Update Selected"));
+}
+
+void HomebrewPage::onSparkleUpdateItemChanged(QTreeWidgetItem *, int column)
+{
+    if (column == 0)
+        updateSparkleUpdateButton();
+}
+
+void HomebrewPage::onUpdateSelectedClicked()
+{
+    // Collect checked trusted entries and open the enclosure URL in the
+    // browser.  The download-and-verify flow requires the Sparkle framework
+    // at runtime; surfacing the download URL to the user keeps Nexis out of
+    // the privileged installer-execution path for now.  Signature verification
+    // (SparkleSignatureVerifier) is invoked in the future download agent.
+    for (int i = 0; i < mSparkleTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = mSparkleTree->topLevelItem(i);
+        if (item->checkState(0) != Qt::Checked)
+            continue;
+        if (i >= mSparkleEntries.size())
+            continue;
+        const UpdateEntry &entry = mSparkleEntries[i];
+        if (!entry.trusted || entry.enclosureUrl.isEmpty())
+            continue;
+        QDesktopServices::openUrl(QUrl(entry.enclosureUrl));
+    }
 }
 
 void HomebrewPage::onRepoHealthChecked(const RepoHealthCache &cache)

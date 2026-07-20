@@ -14,6 +14,8 @@ struct NEXISCORESHARED_EXPORT AppBundleInfo {
     QString bundleId;
     QString displayName;
     QString version;
+    QString suFeedUrl;      // SUFeedURL — empty if not a Sparkle app
+    QString suPublicEDKey;  // SUPublicEDKey — base64 Ed25519 public key
 };
 
 // Reads <appPath>/Contents/Info.plist via /usr/bin/plutil -convert json -o -.

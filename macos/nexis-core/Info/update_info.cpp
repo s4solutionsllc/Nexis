@@ -1,4 +1,5 @@
 #include "update_info_macos.h"
+#include "sparkle_update_scanner.h"
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -70,6 +71,13 @@ UpdateCheckResult UpdateInfoMacOS::checkForUpdates()
         }
     }
 
+    // Sparkle appcast updates for non-Homebrew .app bundles
+    {
+        SparkleUpdateScanner scanner;
+        const QList<UpdateEntry> sparkleEntries = scanner.scan();
+        result.entries.append(sparkleEntries);
+    }
+
     result.totalCount = result.entries.size();
     return result;
 }
@@ -80,5 +88,6 @@ QStringList UpdateInfoMacOS::availableSources() const
     sources << "system";
     if (!findBrew().isEmpty())
         sources << "brew";
+    sources << "sparkle";
     return sources;
 }

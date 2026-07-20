@@ -29,11 +29,13 @@ AppBundleInfo readAppBundleInfo(const QString &appPath)
         return info;
 
     const QJsonObject obj = doc.object();
-    info.bundleId    = obj.value("CFBundleIdentifier").toString();
-    info.displayName = obj.value("CFBundleDisplayName").toString();
+    info.bundleId      = obj.value("CFBundleIdentifier").toString();
+    info.displayName   = obj.value("CFBundleDisplayName").toString();
     if (info.displayName.isEmpty())
         info.displayName = obj.value("CFBundleName").toString();
-    info.version     = obj.value("CFBundleShortVersionString").toString();
+    info.version       = obj.value("CFBundleShortVersionString").toString();
+    info.suFeedUrl     = obj.value("SUFeedURL").toString();
+    info.suPublicEDKey = obj.value("SUPublicEDKey").toString();
 
     return info;
 }
