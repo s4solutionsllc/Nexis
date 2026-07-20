@@ -4,11 +4,15 @@ on:
   push:
     tags:
       - 'v*'
+  pull_request:
+    paths:
+      - 'linux/rpm/**'
+      - '.github/workflows/copr.yml'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to validate (e.g. 2.8.3) — builds/validates the SRPM only, never publishes'
-        required: true
+        description: 'Version to validate (e.g. 2.8.3). Defaults to the version in nexis.spec — builds/validates the SRPM only, never publishes'
+        required: false
 
 permissions:
   contents: read
@@ -35,29 +39,37 @@ jobs:
             qt6-qttools-devel \
             qt6-linguist \
             mesa-libGL-devel \
-            curl
+            curl \
+            git
 
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Extract version from tag
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Set up rpmbuild tree
         run: rpmdev-setuptree
 
-      - name: Download upstream tarball
+      # Real releases (tag push) fetch the published GitHub release tarball,
+      # matching exactly what a COPR/mock builder would fetch. Validation
+      # runs (workflow_dispatch, pull_request) have no release tarball to
+      # fetch yet, so they package the checked-out tree via `git archive`
+      # instead — same %prep/%build path, no dependency on an existing tag.
+      - name: Determine version and stage source tarball
+        id: version
         run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          curl -fsSL \
-            "https://github.com/s4solutionsllc/Nexis/archive/refs/tags/v${VERSION}.tar.gz" \
-            -o "$HOME/rpmbuild/SOURCES/nexis-${VERSION}.tar.gz"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            curl -fsSL \
+              "https://github.com/s4solutionsllc/Nexis/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz" \
+              -o "$HOME/rpmbuild/SOURCES/nexis-${VERSION}.tar.gz"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+            if [ -z "$VERSION" ]; then
+              VERSION=$(sed -n 's/^Version:[[:space:]]*//p' linux/rpm/nexis.spec | head -1)
+            fi
+            git archive --prefix="Nexis-${VERSION}/" \
+              -o "$HOME/rpmbuild/SOURCES/nexis-${VERSION}.tar.gz" HEAD
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Stamp version into spec
         run: |
