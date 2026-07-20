@@ -65,6 +65,8 @@
         <file>static/themes/common/img/chevron-down.svg</file>
         <file>static/themes/common/img/chevron-right.svg</file>
         <file>static/themes/common/img/chevron-left.svg</file>
+        <file>static/themes/common/img/branch-chevron-down.svg</file>
+        <file>static/themes/common/img/branch-chevron-right.svg</file>
         <file>static/themes/common/img/sort-asc.svg</file>
         <file>static/themes/common/img/sort-dsc.svg</file>
         <file>static/themes/common/img/circle-checked.svg</file>

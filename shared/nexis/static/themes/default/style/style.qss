@@ -1555,15 +1555,19 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetScanResult::branch:has-children:!has-siblings:closed,
 #treeWidgetScanResult::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
 #treeWidgetScanResult::branch:open:has-children:!has-siblings,
 #treeWidgetScanResult::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
@@ -2025,15 +2029,19 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetPackages::branch:has-children:!has-siblings:closed,
 #treeWidgetPackages::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
 #treeWidgetPackages::branch:open:has-children:!has-siblings,
 #treeWidgetPackages::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
@@ -2304,15 +2312,19 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetDuplicates::branch:has-children:!has-siblings:closed,
 #treeWidgetDuplicates::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
 #treeWidgetDuplicates::branch:open:has-children:!has-siblings,
 #treeWidgetDuplicates::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
@@ -2359,15 +2371,19 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetImages::branch:has-children:!has-siblings:closed,
 #treeWidgetImages::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
 #treeWidgetImages::branch:open:has-children:!has-siblings,
 #treeWidgetImages::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
@@ -2419,8 +2435,10 @@ QLabel[accessibleName="dialog-title"] {
 #treeWidgetContainers::branch:closed:has-children:has-siblings,
 #treeWidgetVolumes::branch:has-children:!has-siblings:closed,
 #treeWidgetVolumes::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
@@ -2428,8 +2446,10 @@ QLabel[accessibleName="dialog-title"] {
 #treeWidgetContainers::branch:open:has-children:has-siblings,
 #treeWidgetVolumes::branch:open:has-children:!has-siblings,
 #treeWidgetVolumes::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
