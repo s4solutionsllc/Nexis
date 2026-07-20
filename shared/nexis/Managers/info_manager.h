@@ -22,6 +22,7 @@
 #ifdef Q_OS_LINUX
 #include <Info/psi_info.h>
 #include <Info/oomd_snapshot.h>
+#include <Info/rapl_power_info.h>
 class OomdInfoLinux;
 #endif
 
@@ -45,6 +46,7 @@ public:
     QList<int> getCpuPercents() const;
     QList<double> getCpuLoadAvgs() const;
     double getCpuClock() const;
+    QList<double> getCpuClocks() const;
 
     quint64 getSwapUsed() const;
     quint64 getSwapTotal() const;
@@ -161,6 +163,11 @@ public:
     void updateOomdInfo();
     OomdSnapshot getOomdSnapshot() const;
     bool hasOomd() const;
+
+    // SSO-15378: package power draw via powercap/RAPL.
+    void updateRaplPower();
+    RaplPowerSnapshot getRaplPower() const;
+    bool hasRaplPower() const;
 #endif
 
 private:
@@ -186,6 +193,7 @@ private:
 #ifdef Q_OS_LINUX
     std::unique_ptr<PsiInfo> psii;
     std::unique_ptr<OomdInfoLinux> oomd;
+    std::unique_ptr<RaplPowerInfo> rapl;
 #endif
 };
 
