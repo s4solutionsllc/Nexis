@@ -1,6 +1,7 @@
 #ifndef LEFTOVER_DENY_LIST_H
 #define LEFTOVER_DENY_LIST_H
 
+#include <QDateTime>
 #include <QString>
 #include <QStringList>
 
@@ -27,11 +28,12 @@ struct NEXISCORESHARED_EXPORT AuditEntry {
     QString batchId;
     QString originalPath;
     QString canonicalPath;
-    QString action;       // "trash" or "delete"
+    QString action;       // "trash_pending" or "trash" (final) or "delete"
     QString trashDest;    // populated for trash operations
     QString matchRule;
     quint64 sizeBytes = 0;
     QString nexisVersion;
+    QDateTime timestamp;  // wall-clock time the entry was written (UTC)
 };
 
 NEXISCORESHARED_EXPORT void logDeletion(const AuditEntry &entry);

@@ -4,6 +4,7 @@
 #include "Tools/leftover_scanner_linux.h"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QDebug>
 #include <QFile>
 #include <QFileInfo>
@@ -119,6 +120,44 @@ bool PackageToolLinux::uninstallSnapPackages(const QStringList &packages)
     args.insert(0, "remove");
     qDebug() << args;
     return runSudoCommand("snap", args);
+}
+
+QStringList PackageToolLinux::getFlatpakPackages()
+{
+    if (!CommandUtil::isExecutable("flatpak"))
+        return {};
+
+    // `flatpak list` never requires root — refs are visible unprivileged
+    // whether installed --user or system-wide.
+    ExecResult result = CommandUtil::execWithStatus("flatpak", {"list", "--app", "--columns=application"});
+    if (!result.ok()) {
+        qCritical() << "Failed to list flatpak packages:" << result.error;
+        return {};
+    }
+
+    QStringList refs;
+    for (const QString &line : result.output.split('\n', Qt::SkipEmptyParts))
+        refs << line.trimmed();
+    return refs;
+}
+
+bool PackageToolLinux::uninstallFlatpakPackages(const QStringList &refs)
+{
+    if (refs.isEmpty() || !CommandUtil::isExecutable("flatpak"))
+        return false;
+
+    // CISO (SSO-15373): no silent privilege escalation beyond what the
+    // package manager itself requires. Flatpak elevates internally via
+    // polkit only for system-wide installs; user-scoped installs (the
+    // common desktop case) need none at all — so, like
+    // removeUnusedFlatpakRuntimes() above, this runs unprivileged rather
+    // than always going through runSudoCommand.
+    QStringList args = {"uninstall", "-y", "--noninteractive"};
+    args += refs;
+    ExecResult result = CommandUtil::execWithStatus("flatpak", args, 120000);
+    if (!result.ok())
+        qCritical() << "Failed to uninstall flatpak packages:" << result.error;
+    return result.ok();
 }
 
 QList<Package> PackageToolLinux::getInstalledApps()
@@ -694,25 +733,32 @@ bool PackageToolLinux::trashLeftovers(const QStringList &paths)
 
         const quint64 size = static_cast<quint64>(fi.size());
 
-        // CISO §3: log before the action so the record exists even on failure.
+        // CISO §3: log a "pending" record before the action so evidence of the
+        // attempt exists even if the process crashes mid-operation. Exactly one
+        // more record — success or failure — follows once the action completes,
+        // so a single deletion never appears as two entries in the audit trail.
         LeftoverDenyList::AuditEntry entry;
         entry.batchId       = batchId;
         entry.originalPath  = raw;
         entry.canonicalPath = canonical;
-        entry.action        = QStringLiteral("trash");
+        entry.action        = QStringLiteral("trash_pending");
         entry.matchRule     = QStringLiteral("user-selected");
         entry.sizeBytes     = size;
         entry.nexisVersion  = nexisVer;
+        entry.timestamp     = QDateTime::currentDateTimeUtc();
         LeftoverDenyList::logDeletion(entry);
 
         // QFile::moveToTrash() uses the freedesktop.org Trash spec on Linux.
         // CISO §1: fail securely — never silently fall back to unlink.
         QString trashDest;
+        entry.timestamp = QDateTime::currentDateTimeUtc();
         if (!QFile::moveToTrash(raw, &trashDest)) {
             qWarning() << "trashLeftovers: moveToTrash failed for" << raw;
+            entry.action = QStringLiteral("trash_failed");
+            LeftoverDenyList::logDeletion(entry);
             allOk = false;
         } else {
-            // Update the log entry with the trash destination for the audit trail.
+            entry.action    = QStringLiteral("trash");
             entry.trashDest = trashDest;
             LeftoverDenyList::logDeletion(entry);
         }

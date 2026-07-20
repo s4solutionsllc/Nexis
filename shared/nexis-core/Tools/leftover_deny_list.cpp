@@ -110,8 +110,13 @@ void logDeletion(const AuditEntry &entry)
     if (!f.open(QIODevice::Append | QIODevice::Text))
         return;
 
+    const QDateTime timestamp = entry.timestamp.isValid()
+        ? entry.timestamp
+        : QDateTime::currentDateTimeUtc();
+
     QTextStream out(&f);
-    out << "batch=" << entry.batchId
+    out << "time=" << timestamp.toString(Qt::ISODateWithMs)
+        << " batch=" << entry.batchId
         << " original=" << entry.originalPath
         << " canonical=" << entry.canonicalPath
         << " action=" << entry.action

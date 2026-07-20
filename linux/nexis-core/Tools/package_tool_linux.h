@@ -18,6 +18,11 @@ public:
     QStringList getSnapPackages() override;
     bool uninstallSnapPackages(const QStringList &packages) override;
 
+    // SSO-15385: enumerate/uninstall installed Flatpak apps (distinct from
+    // getUnusedFlatpakRuntimes(), which cleans up unreferenced runtimes).
+    QStringList getFlatpakPackages() override;
+    bool uninstallFlatpakPackages(const QStringList &refs) override;
+
     QList<Package> getInstalledApps() override;
     bool trashApps(const QStringList &appPaths) override;
 

@@ -39,6 +39,14 @@ void PackageService::fetchSnapPackages()
     });
 }
 
+void PackageService::fetchFlatpakPackages()
+{
+    QThreadPool::globalInstance()->start([this]() {
+        QStringList packages = mToolManager->getFlatpakPackages();
+        emit flatpakPackagesFetched(packages);
+    });
+}
+
 void PackageService::uninstallPackages(const QStringList &packages, bool purge)
 {
     QThreadPool::globalInstance()->start([this, packages, purge]() {
@@ -53,6 +61,15 @@ void PackageService::uninstallSnapPackages(const QStringList &packages)
     QThreadPool::globalInstance()->start([this, packages]() {
         emit mSignalMapper->sigUninstallStarted();
         mToolManager->uninstallSnapPackages(packages);
+        emit mSignalMapper->sigUninstallFinished();
+    });
+}
+
+void PackageService::uninstallFlatpakPackages(const QStringList &packages)
+{
+    QThreadPool::globalInstance()->start([this, packages]() {
+        emit mSignalMapper->sigUninstallStarted();
+        mToolManager->uninstallFlatpakPackages(packages);
         emit mSignalMapper->sigUninstallFinished();
     });
 }

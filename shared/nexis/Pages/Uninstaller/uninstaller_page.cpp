@@ -5,6 +5,7 @@
 #endif
 #ifdef Q_OS_LINUX
 #include "Pages/Uninstaller/leftover_review_dialog_linux.h"
+#include "Tools/leftover_scanner_linux.h"
 #endif
 #include <QHeaderView>
 #include <QMovie>
@@ -65,22 +66,27 @@ void UninstallerPage::init()
 #ifdef Q_OS_MACOS
     ui->chkPurge->hide();
     ui->btnSnapPackages->hide();
+    ui->btnFlatpakPackages->hide();
 #endif
 
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages,
-                                ui->btnSnapPackages, ui->btnOrphanPackages, ui->btnAptHistory };
+                                ui->btnSnapPackages, ui->btnFlatpakPackages, ui->btnOrphanPackages,
+                                ui->btnAptHistory };
     Utilities::addDropShadow(widgets, 40);
 
     connect(mPackageService, &PackageService::packagesFetched,
             this, &UninstallerPage::onPackagesLoaded);
     connect(mPackageService, &PackageService::snapPackagesFetched,
             this, &UninstallerPage::onSnapPackagesLoaded);
+    connect(mPackageService, &PackageService::flatpakPackagesFetched,
+            this, &UninstallerPage::onFlatpakPackagesLoaded);
     connect(mPackageService, &PackageService::orphanPackagesFetched,
             this, &UninstallerPage::onOrphanPackagesLoaded);
     connect(ui->treeWidgetPackages, &QTreeWidget::itemChanged, this, &UninstallerPage::onTreeItemChanged);
 
     mPackageService->fetchPackages();
     mPackageService->fetchSnapPackages();
+    mPackageService->fetchFlatpakPackages();
     mPackageService->fetchOrphanPackages();
 
     connect(mSignalMapper, &SignalMapper::sigChangedAppTheme,
@@ -91,6 +97,9 @@ void UninstallerPage::init()
     });
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         mPackageService->fetchSnapPackages();
+    });
+    connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
+        mPackageService->fetchFlatpakPackages();
     });
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         mPackageService->fetchOrphanPackages();
@@ -117,6 +126,9 @@ void UninstallerPage::init()
             return;
         const QStringList names = mPendingUninstallPackageNames;
         mPendingUninstallPackageNames.clear();
+        // Pre-scan so the dialog doesn't pop up just to say "nothing found".
+        if (LeftoverScannerLinux::scanLeftovers(names).isEmpty())
+            return;
         auto *dlg = new LeftoverReviewDialogLinux(names, this);
         dlg->setAttribute(Qt::WA_DeleteOnClose);
         dlg->open();
@@ -238,6 +250,25 @@ void UninstallerPage::onSnapPackagesLoaded(QStringList packages)
     setAppCount();
 
     ui->listWidgetSnapPackages->setEnabled(true);
+    ui->txtPackageSearch->setEnabled(true);
+    ui->txtPackageSearch->clear();
+
+    ui->lblLoadingUninstaller->hide();
+}
+
+void UninstallerPage::onFlatpakPackagesLoaded(QStringList packages)
+{
+    ui->listWidgetFlatpakPackages->clear();
+
+    QIcon icon(":/static/themes/common/img/package.png");
+    for (const QString &package : packages) {
+        QListWidgetItem *item = new QListWidgetItem(icon, QString("  %1").arg(package));
+        item->setCheckState(Qt::Unchecked);
+        ui->listWidgetFlatpakPackages->addItem(item);
+    }
+    setAppCount();
+
+    ui->listWidgetFlatpakPackages->setEnabled(true);
     ui->txtPackageSearch->setEnabled(true);
     ui->txtPackageSearch->clear();
 
@@ -375,6 +406,15 @@ void UninstallerPage::setAppCount()
     ui->btnSnapPackages->setVisible(CommandUtil::isExecutable("snap"));
 #endif
 
+    int flatpakCount = ui->listWidgetFlatpakPackages->count();
+    ui->btnFlatpakPackages->setText(tr("Flatpak Packages (%1)").arg(flatpakCount));
+    ui->notFoundWidget_5->setVisible(! flatpakCount);
+    ui->listWidgetFlatpakPackages->setVisible(flatpakCount);
+
+#ifndef Q_OS_MAC
+    ui->btnFlatpakPackages->setVisible(CommandUtil::isExecutable("flatpak"));
+#endif
+
     int orphanCount = ui->tableWidgetOrphanPackages->rowCount();
     ui->btnOrphanPackages->setText(tr("Orphan Packages (%1)").arg(orphanCount));
     ui->notFoundWidget_3->setVisible(! orphanCount);
@@ -386,10 +426,10 @@ void UninstallerPage::setAppCount()
         ui->btnAptHistory->setText(tr("APT History (%1)").arg(historyCount));
 #endif
 
-    // btnUninstall drives the System/Snap/Orphan tabs only; the APT History
-    // tab has its own action bar (Undo Last / Undo Selected / Rollback) and
-    // doesn't use the primary uninstall button.
-    ui->btnUninstall->setVisible(count || snapCount || orphanCount);
+    // btnUninstall drives the System/Snap/Flatpak/Orphan tabs only; the APT
+    // History tab has its own action bar (Undo Last / Undo Selected /
+    // Rollback) and doesn't use the primary uninstall button.
+    ui->btnUninstall->setVisible(count || snapCount || flatpakCount || orphanCount);
 }
 
 QStringList UninstallerPage::getSelectedPackages()
@@ -415,6 +455,21 @@ QStringList UninstallerPage::getSelectedSnapPackages()
     for (int i = 0; i < ui->listWidgetSnapPackages->count(); ++i)
     {
         QListWidgetItem *item = ui->listWidgetSnapPackages->item(i);
+
+        if(item->checkState() == Qt::Checked)
+            selectedPackages << item->text().trimmed();
+    }
+
+    return selectedPackages;
+}
+
+QStringList UninstallerPage::getSelectedFlatpakPackages()
+{
+    QStringList selectedPackages = {};
+
+    for (int i = 0; i < ui->listWidgetFlatpakPackages->count(); ++i)
+    {
+        QListWidgetItem *item = ui->listWidgetFlatpakPackages->item(i);
 
         if(item->checkState() == Qt::Checked)
             selectedPackages << item->text().trimmed();
@@ -517,8 +572,9 @@ void UninstallerPage::on_btnUninstall_clicked()
 #else
     QStringList selectedPackages = getSelectedPackages();
     QStringList selectedSnapPackages = getSelectedSnapPackages();
+    QStringList selectedFlatpakPackages = getSelectedFlatpakPackages();
 
-    if (selectedPackages.isEmpty() && selectedSnapPackages.isEmpty())
+    if (selectedPackages.isEmpty() && selectedSnapPackages.isEmpty() && selectedFlatpakPackages.isEmpty())
         return;
 
     QStringList allWouldRemove;
@@ -536,6 +592,10 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (!selectedSnapPackages.isEmpty()) {
         message += "\n\n" + tr("Snap packages:\n");
         message += selectedSnapPackages.join(", ");
+    }
+    if (!selectedFlatpakPackages.isEmpty()) {
+        message += "\n\n" + tr("Flatpak packages:\n");
+        message += selectedFlatpakPackages.join(", ");
     }
     if (!additionalPackages.isEmpty()) {
         message += "\n\n" + tr("The following additional packages will also be removed:\n\n");
@@ -557,11 +617,12 @@ void UninstallerPage::on_btnUninstall_clicked()
 #ifdef Q_OS_LINUX
     // SSO-15385: capture names before uninstall so the leftover-scan dialog
     // can search for residual files once the package removal finishes.
-    mPendingUninstallPackageNames = selectedPackages + selectedSnapPackages;
+    mPendingUninstallPackageNames = selectedPackages + selectedSnapPackages + selectedFlatpakPackages;
 #endif
 
     mPackageService->uninstallPackages(selectedPackages, purge);
     mPackageService->uninstallSnapPackages(selectedSnapPackages);
+    mPackageService->uninstallFlatpakPackages(selectedFlatpakPackages);
 #endif
 }
 
@@ -569,6 +630,7 @@ void UninstallerPage::uninstallStarted()
 {
     ui->treeWidgetPackages->setEnabled(false);
     ui->listWidgetSnapPackages->setEnabled(false);
+    ui->listWidgetFlatpakPackages->setEnabled(false);
     ui->tableWidgetOrphanPackages->setEnabled(false);
     ui->txtPackageSearch->setEnabled(false);
     ui->btnUninstall->hide();
@@ -599,6 +661,12 @@ void UninstallerPage::on_txtPackageSearch_textChanged(const QString &val)
         QList<QListWidgetItem*> matches = ui->listWidgetSnapPackages->findItems(val, Qt::MatchFlag::MatchContains);
         for (int i = 0; i < ui->listWidgetSnapPackages->count(); ++i)
             ui->listWidgetSnapPackages->item(i)->setHidden(true);
+        for (QListWidgetItem* item : matches)
+            item->setHidden(false);
+    } else if (current == ui->pageFlatpakPackages) {
+        QList<QListWidgetItem*> matches = ui->listWidgetFlatpakPackages->findItems(val, Qt::MatchFlag::MatchContains);
+        for (int i = 0; i < ui->listWidgetFlatpakPackages->count(); ++i)
+            ui->listWidgetFlatpakPackages->item(i)->setHidden(true);
         for (QListWidgetItem* item : matches)
             item->setHidden(false);
     } else if (current == ui->pageOrphanPackages) {
@@ -640,6 +708,15 @@ void UninstallerPage::on_btnSnapPackages_clicked()
 #endif
 }
 
+void UninstallerPage::on_btnFlatpakPackages_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->pageFlatpakPackages);
+    setAppCount();
+#ifndef Q_OS_MAC
+    ui->chkPurge->show();
+#endif
+}
+
 void UninstallerPage::on_btnOrphanPackages_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->pageOrphanPackages);
@@ -662,7 +739,16 @@ void UninstallerPage::on_listWidgetSnapPackages_itemClicked(QListWidgetItem *ite
 {
     Q_UNUSED(item);
     ui->btnUninstall->setText(tr("Uninstall Selected (%1)")
-                              .arg(getSelectedSnapPackages().count() + getSelectedPackages().count()));
+                              .arg(getSelectedSnapPackages().count() + getSelectedFlatpakPackages().count()
+                                   + getSelectedPackages().count()));
+}
+
+void UninstallerPage::on_listWidgetFlatpakPackages_itemClicked(QListWidgetItem *item)
+{
+    Q_UNUSED(item);
+    ui->btnUninstall->setText(tr("Uninstall Selected (%1)")
+                              .arg(getSelectedSnapPackages().count() + getSelectedFlatpakPackages().count()
+                                   + getSelectedPackages().count()));
 }
 
 void UninstallerPage::onTreeItemChanged(QTreeWidgetItem *item, int column)
@@ -670,7 +756,8 @@ void UninstallerPage::onTreeItemChanged(QTreeWidgetItem *item, int column)
     Q_UNUSED(item);
     Q_UNUSED(column);
     ui->btnUninstall->setText(tr("Uninstall Selected (%1)")
-                              .arg(getSelectedSnapPackages().count() + getSelectedPackages().count()));
+                              .arg(getSelectedSnapPackages().count() + getSelectedFlatpakPackages().count()
+                                   + getSelectedPackages().count()));
 }
 
 #ifndef Q_OS_MACOS
