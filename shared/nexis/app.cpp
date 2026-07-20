@@ -366,6 +366,16 @@ void App::init()
     // stay flush with the window top. Sidebar collapse only animates width
     // (see applySidebarCollapse), never this vertical geometry, so the row
     // height holds at every breakpoint including the collapsed sidebar.
+    // SSO-15303: at this point in the constructor `ui->sidebar` has only
+    // been given its size via the window's saved/default geometry, not
+    // via an actual layout pass — the outer layouts that place sidebar
+    // within centralwidget (and centralwidget within the window) haven't
+    // run yet, so sidebar (and mLogoSeparator inside it) still reports a
+    // stale, near-zero height. Activate that chain outside-in before
+    // activating sidebar's own layout, so mLogoSeparator's geometry
+    // reflects the window's real size.
+    layout()->activate();
+    ui->horizontalLayout->activate();
     ui->sidebar->layout()->activate();
     const int headerRowHeight = mLogoSeparator->geometry().bottom() + 1;
 
@@ -1041,8 +1051,10 @@ void App::setPageHeaderActions(QWidget *widget)
             item->widget()->setParent(nullptr);
         delete item;
     }
-    if (widget)
+    if (widget) {
         mHeaderActionsRowLayout->addWidget(widget);
+        widget->show();
+    }
 }
 
 void App::pageClick(QWidget *widget, bool slide)
