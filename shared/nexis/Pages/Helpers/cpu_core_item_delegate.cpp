@@ -88,7 +88,7 @@ void CpuCoreItemDelegate::paint(QPainter *painter, const QStyleOptionViewItem &o
 
     const QRect valueRect(x, rect.top(), rect.right() - x - margin, rect.height());
     painter->setPen(mValueColor);
-    painter->drawText(valueRect, Qt::AlignVCenter | Qt::AlignLeft, valueText);
+    painter->drawText(valueRect, Qt::AlignVCenter | Qt::AlignRight, valueText);
 
     // Row divider
     painter->setPen(mDividerColor);
