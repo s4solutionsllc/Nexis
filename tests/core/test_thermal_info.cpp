@@ -69,6 +69,10 @@ private slots:
     void friendly_existingDriversUnchanged();
     void friendly_unknownDriverCapitalized();
 
+    // friendlyDeviceName — DIMM temp drivers (SSO-15377)
+    void friendly_jc42Dimm();
+    void friendly_spd5118Dimm();
+
     // enumerateHwmonSensors — fixture-based discovery
     void enumerate_missingRootReturnsEmpty();
     void enumerate_skipsHwmonWithoutName();
@@ -77,6 +81,7 @@ private slots:
     void enumerate_clampsBogusThresholds();
     void enumerate_synthesizesLabelWhenAbsent();
     void enumerate_noRegressionWithoutVendorNodes();
+    void enumerate_picksUpDimmAndNvmeSensors();
 };
 
 void TestThermalInfo::temp_normalValue()
@@ -188,6 +193,18 @@ void TestThermalInfo::friendly_unknownDriverCapitalized()
 {
     QCOMPARE(ThermalInfo::friendlyDeviceName("brandnew_driver"),
              QStringLiteral("Brandnew_driver"));
+}
+
+void TestThermalInfo::friendly_jc42Dimm()
+{
+    // jc42: DDR3/DDR4 SPD thermal sensor driver.
+    QCOMPARE(ThermalInfo::friendlyDeviceName("jc42"), QStringLiteral("DIMM"));
+}
+
+void TestThermalInfo::friendly_spd5118Dimm()
+{
+    // spd5118: DDR5 SPD Hub thermal sensor driver (kernel 6.9+).
+    QCOMPARE(ThermalInfo::friendlyDeviceName("spd5118"), QStringLiteral("DIMM"));
 }
 
 // --- enumerateHwmonSensors: fixture-based discovery ---
@@ -334,6 +351,49 @@ void TestThermalInfo::enumerate_noRegressionWithoutVendorNodes()
         QVERIFY(s.deviceName != "hp");
         QVERIFY(s.deviceName != "legion");
     }
+}
+
+void TestThermalInfo::enumerate_picksUpDimmAndNvmeSensors()
+{
+    // SSO-15377 acceptance criteria: DIMM (jc42/spd5118) and NVMe temps
+    // discovered and labeled correctly when the platform's hwmon drivers
+    // expose them, alongside a CPU sensor for regression coverage.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    // hwmon0: DDR4 DIMM SPD sensor (jc42)
+    makeHwmonDevice(tmp.path(), "hwmon0", "jc42", "38500",
+                    "DIMM0", "85000", "95000");
+    // hwmon1: DDR5 DIMM SPD Hub (spd5118)
+    makeHwmonDevice(tmp.path(), "hwmon1", "spd5118", "40000",
+                    "DIMM1", QString(), QString());
+    // hwmon2: NVMe composite temp
+    makeHwmonDevice(tmp.path(), "hwmon2", "nvme", "41200",
+                    "Composite", "75000", "84850");
+    // hwmon3: existing driver — must still appear (no regression)
+    makeHwmonDevice(tmp.path(), "hwmon3", "coretemp", "42000",
+                    "Package id 0", QString(), QString());
+
+    auto sensors = ThermalInfo::enumerateHwmonSensors(tmp.path());
+    QCOMPARE(sensors.size(), 4);
+
+    QHash<QString, ThermalSensor> byDevice;
+    for (const auto &s : sensors)
+        byDevice.insert(s.deviceName, s);
+
+    QVERIFY(byDevice.contains("jc42"));
+    QCOMPARE(byDevice.value("jc42").label, QStringLiteral("DIMM – DIMM0"));
+    QCOMPARE(byDevice.value("jc42").maxTemp, 85.0);
+
+    QVERIFY(byDevice.contains("spd5118"));
+    QCOMPARE(byDevice.value("spd5118").label, QStringLiteral("DIMM – DIMM1"));
+
+    QVERIFY(byDevice.contains("nvme"));
+    QCOMPARE(byDevice.value("nvme").label, QStringLiteral("NVMe – Composite"));
+    QCOMPARE(byDevice.value("nvme").maxTemp, 75.0);
+
+    QVERIFY(byDevice.contains("coretemp"));
+    QCOMPARE(byDevice.value("coretemp").label, QStringLiteral("CPU – Package id 0"));
 }
 
 QTEST_MAIN(TestThermalInfo)

@@ -84,16 +84,18 @@ HardwareInfoPage::HardwareInfoPage(QWidget *parent, InfoManager *infoManager) :
     ui->setupUi(this);
 
     // DS §2 (NEX F1): elevated-card chrome for the System/Processor/Graphics/
-    // Memory/Battery/Storage sections — structural, so it's fine to set up
-    // before the deferred populate*() pass. DS §3 accent-bar headers are pure
-    // QSS via objectName (see style.qss), no C++ wiring needed. Battery card
-    // treatment added in round 2 (SSO-14298) once a full-row capture
+    // Memory/Battery/Storage/Fans sections — structural, so it's fine to set
+    // up before the deferred populate*() pass. DS §3 accent-bar headers are
+    // pure QSS via objectName (see style.qss), no C++ wiring needed. Battery
+    // card treatment added in round 2 (SSO-14298) once a full-row capture
     // existed; SSO-13735 excluded it (and Storage) only because no capture
     // reached those rows yet. Storage's card followed separately (SSO-14757).
-    for (QWidget *card : {ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory, ui->grpBattery, ui->grpStorage})
+    // Fans (now "Fans & Sensors") picked up the same card in SSO-15377,
+    // the last section still on legacy QGroupBox chrome.
+    for (QWidget *card : {ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory, ui->grpBattery, ui->grpStorage, ui->grpFans})
         card->setAttribute(Qt::WA_StyledBackground, true);
     Utilities::addDropShadow(
-        QList<QWidget *>{ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory, ui->grpBattery, ui->grpStorage}, 90, 26);
+        QList<QWidget *>{ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory, ui->grpBattery, ui->grpStorage, ui->grpFans}, 90, 26);
 
     // Storage's accent bar reuses the bare #sectionHeaderAccent objectName
     // (see hardware_info_page.ui) rather than a per-section suffix like its
@@ -484,7 +486,14 @@ void HardwareInfoPage::populateFans()
     t->verticalHeader()->setVisible(false);
     t->horizontalHeader()->setStretchLastSection(true);
 
-    if (!im->hasFanSensors()) {
+    // SSO-15377: "Fans & Sensors" — fan RPM rows plus every hwmon temp
+    // sensor (CPU, GPU, NVMe, DIMM/jc42-spd5118, ACPI, vendor, ...). Each
+    // list is independent: a platform with sensors but no fans (or vice
+    // versa) still gets a populated card. Only hide the whole section when
+    // both are empty — never render a zero/error row for a sensor class
+    // the platform doesn't expose.
+    if (!im->hasFanSensors() && !im->hasThermalSensors()) {
+        ui->sectionHeaderRowFans->hide();
         ui->grpFans->hide();
         return;
     }
@@ -493,6 +502,12 @@ void HardwareInfoPage::populateFans()
     for (int i = 0; i < fans.size(); ++i) {
         int rpm = im->getFanSpeed(i);
         addRow(t, fans.at(i).label, QString("%1 RPM").arg(rpm));
+    }
+
+    QList<ThermalSensor> sensors = im->getThermalSensors();
+    for (int i = 0; i < sensors.size(); ++i) {
+        double tempC = im->getThermalTemperature(i);
+        addRow(t, sensors.at(i).label, QString::number(tempC, 'f', 1) + QStringLiteral(" °C"));
     }
 
     t->resizeColumnsToContents();
