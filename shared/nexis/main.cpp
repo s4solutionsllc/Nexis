@@ -22,6 +22,7 @@
 #include <Managers/cleaner_service.h>
 #include <Managers/schedule_manager.h>
 #include <Managers/health_report_manager.h>
+#include <Services/wipe_free_space_service.h>
 #include <Utils/format_util.h>
 #include <Utils/headless_util.h>
 
@@ -394,6 +395,10 @@ int main(int argc, char *argv[])
     if (!isNoSplash) splash->show();
 
     app.processEvents();
+
+    // SSO-15382: if the previous run was killed/crashed mid-wipe, remove the
+    // leftover fill file now so the volume is never left artificially full.
+    WipeFreeSpaceService::recoverFromCrash();
 
     App w;
 

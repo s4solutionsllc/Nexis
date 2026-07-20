@@ -37,6 +37,7 @@ signals:
 
 private slots:
     void switchMode(int index);
+    void openWipeFreeSpaceDialog();
     void addDirectory();
     void removeDirectory();
     void onLargeOldScan();
