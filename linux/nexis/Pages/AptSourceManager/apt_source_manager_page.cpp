@@ -85,22 +85,35 @@ void APTSourceManagerPage::init()
 
     updLayout->addLayout(updHeader);
 
-    // Updates tree widget: Source | Package | Version
+    mBtnUpdateSelected = new QPushButton(tr("Update Selected"), mUpdatesSection);
+    mBtnUpdateSelected->setObjectName("btnUpdateSelected");
+    mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
+    mBtnUpdateSelected->setAccessibleName("primary");
+    mBtnUpdateSelected->setFixedHeight(28);
+    mBtnUpdateSelected->setEnabled(false);
+    updHeader->addWidget(mBtnUpdateSelected);
+
+    mLblUpgradeStatus = new QLabel(mUpdatesSection);
+    mLblUpgradeStatus->setObjectName("lblUpgradeStatus");
+    mLblUpgradeStatus->hide();
+    updLayout->addWidget(mLblUpgradeStatus);
+
+    // Updates tree: checkbox col 0 (flatpak/snap only), Source, Package, Version
     mUpdatesTree = new QTreeWidget(mUpdatesSection);
     mUpdatesTree->setObjectName("treeWidgetUpdates");
     mUpdatesTree->setHeaderHidden(false);
-    mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version") });
+    mUpdatesTree->setHeaderLabels({ QString(), tr("Source"), tr("Package"), tr("Version") });
     mUpdatesTree->header()->setFixedHeight(Dpi::scale(30));
-    mUpdatesTree->setColumnCount(3);
+    mUpdatesTree->setColumnCount(4);
     mUpdatesTree->setRootIsDecorated(false);
-    // SSO-3502: read-only data display (NoSelection + NoEditTriggers); skipped
-    // by tab order because nothing focusable lives inside.
-    mUpdatesTree->setFocusPolicy(Qt::NoFocus);
+    mUpdatesTree->setFocusPolicy(Qt::StrongFocus);
     mUpdatesTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mUpdatesTree->setSelectionMode(QAbstractItemView::NoSelection);
     mUpdatesTree->header()->setStretchLastSection(true);
-    mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::Fixed);
+    mUpdatesTree->header()->resizeSection(0, Dpi::scale(24));
     mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    mUpdatesTree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     mUpdatesTree->setMaximumHeight(200);
     updLayout->addWidget(mUpdatesTree);
 
@@ -113,6 +126,10 @@ void APTSourceManagerPage::init()
         mBtnCheckNow->setText(tr("Checking..."));
         mRefresh->triggerUpdateCheck();
     });
+    connect(mBtnUpdateSelected, &QPushButton::clicked,
+            this, &APTSourceManagerPage::onUpdateSelectedClicked);
+    connect(mUpdatesTree, &QTreeWidget::itemChanged,
+            this, &APTSourceManagerPage::onUpdateItemChanged);
     connect(mRefresh, &DataRefreshService::systemUpdatesChecked,
             this, &APTSourceManagerPage::onSystemUpdatesChecked);
 
@@ -348,6 +365,82 @@ void APTSourceManagerPage::on_btnEditAptSource_clicked()
 }
 
 
+bool APTSourceManagerPage::isUpgradeable(const QString &source)
+{
+    return source == QLatin1String("flatpak") || source == QLatin1String("snap");
+}
+
+int APTSourceManagerPage::countCheckedUpgradeable() const
+{
+    int count = 0;
+    for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = mUpdatesTree->topLevelItem(i);
+        if (item->checkState(0) == Qt::Checked)
+            ++count;
+    }
+    return count;
+}
+
+void APTSourceManagerPage::onUpdateItemChanged(QTreeWidgetItem * /*item*/, int column)
+{
+    if (column != 0)
+        return;
+    mBtnUpdateSelected->setEnabled(!mUpgradeRunning && countCheckedUpgradeable() > 0);
+}
+
+void APTSourceManagerPage::onUpdateSelectedClicked()
+{
+    if (mUpgradeRunning)
+        return;
+
+    // Collect checked flatpak/snap items
+    struct UpgradeTarget { QString source; QString name; };
+    QList<UpgradeTarget> targets;
+    for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = mUpdatesTree->topLevelItem(i);
+        if (item->checkState(0) != Qt::Checked)
+            continue;
+        targets.append({ item->text(1), item->text(2) });
+    }
+    if (targets.isEmpty())
+        return;
+
+    mUpgradeRunning = true;
+    mBtnUpdateSelected->setEnabled(false);
+    mBtnCheckNow->setEnabled(false);
+    mLblUpgradeStatus->setText(tr("Upgrading…"));
+    mLblUpgradeStatus->show();
+
+    QtConcurrent::run([this, targets]() {
+        QStringList errors;
+        for (const UpgradeTarget &t : targets) {
+            ExecResult r;
+            if (t.source == QLatin1String("flatpak")) {
+                r = CommandUtil::execWithStatus("flatpak", {"update", "-y", "--noninteractive", t.name}, -1);
+            } else if (t.source == QLatin1String("snap")) {
+                r = CommandUtil::execWithStatus("snap", {"refresh", t.name}, -1);
+            }
+            if (!r.ok())
+                errors.append(tr("%1: %2").arg(t.name, r.error.trimmed()));
+        }
+
+        QMetaObject::invokeMethod(this, [this, errors]() {
+            mUpgradeRunning = false;
+            mBtnCheckNow->setEnabled(true);
+            mBtnUpdateSelected->setEnabled(countCheckedUpgradeable() > 0);
+
+            if (errors.isEmpty()) {
+                mLblUpgradeStatus->setText(tr("Upgrade complete."));
+            } else {
+                mLblUpgradeStatus->setText(tr("Upgrade finished with errors:\n%1").arg(errors.join('\n')));
+            }
+
+            // Reconcile list
+            mRefresh->triggerUpdateCheck();
+        }, Qt::QueuedConnection);
+    });
+}
+
 void APTSourceManagerPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
 {
     mBtnCheckNow->setEnabled(true);
@@ -355,17 +448,37 @@ void APTSourceManagerPage::onSystemUpdatesChecked(const UpdateCheckResult &resul
 
     if (!result.success || result.totalCount == 0) {
         mUpdatesSection->hide();
+        mLblUpgradeStatus->hide();
         return;
     }
 
     mLblUpdatesTitle->setText(tr("Available Updates (%1)").arg(result.totalCount));
+
+    // Block itemChanged signals while rebuilding to avoid spurious enable/disable flicker
+    mUpdatesTree->blockSignals(true);
     mUpdatesTree->clear();
 
     for (const UpdateEntry &entry : result.entries) {
         QTreeWidgetItem *item = new QTreeWidgetItem(mUpdatesTree);
-        item->setText(0, entry.source);
-        item->setText(1, entry.name);
-        item->setText(2, entry.version);
+        if (isUpgradeable(entry.source)) {
+            item->setCheckState(0, Qt::Unchecked);
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        } else {
+            item->setFlags(item->flags() & ~Qt::ItemIsUserCheckable);
+        }
+        item->setText(1, entry.source);
+        item->setText(2, entry.name);
+        item->setText(3, entry.version);
+    }
+
+    mUpdatesTree->blockSignals(false);
+
+    // After a fresh check, reset button state
+    if (!mUpgradeRunning) {
+        mBtnUpdateSelected->setEnabled(false);
+        if (!mLblUpgradeStatus->text().isEmpty() && !mLblUpgradeStatus->isHidden()) {
+            // Keep status visible briefly after reconcile, then clear
+        }
     }
 
     mUpdatesSection->show();

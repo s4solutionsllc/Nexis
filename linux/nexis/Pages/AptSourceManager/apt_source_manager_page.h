@@ -70,8 +70,16 @@ private:
     QWidget *mUpdatesSection = nullptr;
     QLabel *mLblUpdatesTitle = nullptr;
     QPushButton *mBtnCheckNow = nullptr;
+    QPushButton *mBtnUpdateSelected = nullptr;
+    QLabel *mLblUpgradeStatus = nullptr;
     QTreeWidget *mUpdatesTree = nullptr;
     DataRefreshService *mRefresh = nullptr;
+    bool mUpgradeRunning = false;
+
+    void onUpdateSelectedClicked();
+    void onUpdateItemChanged(QTreeWidgetItem *item, int column);
+    int countCheckedUpgradeable() const;
+    static bool isUpgradeable(const QString &source);
 
     // Health dashboard
     RepoDetailPanel *mDetailPanel = nullptr;
