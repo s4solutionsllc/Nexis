@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-19 | Version 2.8.3
+> Last updated: 2026-07-20 | Version 2.8.3
 
 ---
 
@@ -19,6 +19,7 @@
    - [Services](#7-services)
    - [Processes](#8-processes)
    - [Uninstaller](#9-uninstaller)
+   - [File Shredder](#9a-file-shredder)
    - [Resources](#10-resources)
    - [Network Usage](#10a-network-usage)
    - [Helpers](#11-helpers)
@@ -67,7 +68,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Test LOC | ~14,500 | `tests/` |
 | Test executables | 61 (60 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
 | Test methods | ~845 | `private slots:` in `tests/*/test_*.cpp` |
-| Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
+| Always-visible pages | 16 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Shredder, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
 | Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
@@ -98,7 +99,7 @@ Nexis runs natively on **Linux** (`x86_64` + `arm64`) and **macOS** (**Apple Sil
 Nexis is a Qt6 application and runs as a **native Wayland client** under Wayland sessions (including Ubuntu 26.04 / GNOME 50, which removes the X11 session entirely) and as a native **X11** client under X.Org. There are no `X11`/`xcb`/`QX11Info` dependencies in the codebase — windowing, screen enumeration, and screenshot capture all use Qt abstractions (`QScreen`, `QWidget::grab()`). The only path that ever forces a non-default QPA is the scheduled-clean entry point (`--clean` / `--check-threshold`), which sets `QT_QPA_PLATFORM=offscreen` so cron and systemd-user timer invocations don't need a live display server (SSO-3368). No feature requires XWayland; the optional `DisplayServerUtil` (`shared/nexis-core/Utils/display_server_util.h`) provides a single canonical detector for any future XWayland-gated feature.
 
 ### Always-visible pages (both platforms)
-Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Network Usage, Helpers, System Logs, Settings
+Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, File Shredder, Resources, Network Usage, Helpers, System Logs, Settings
 
 ### Conditional pages
 | Page | Condition | Linux | macOS |
@@ -394,6 +395,19 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 - Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`; on APT 3.1+ also `apt history-list/-info/-undo/-rollback` and `apt why/why-not`
 - macOS: `brew uninstall` for Homebrew packages; `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:`) for `.app` bundles — no AppleScript/`osascript` is involved, so bundle names containing quotes or other metacharacters cannot inject arbitrary code (SSO-3366, audit S1); `brew autoremove` for orphans
 - **macOS leftover scanner (FW-18):** After selecting a `.app` for removal, Nexis resolves its bundle id and scans seven standard `~/Library` locations (`Application Support`, `Caches`, `Preferences`, `Logs`, `Containers`, `Saved Application State`, `LaunchAgents`) for matching artifacts. Matches are made exclusively against the exact bundle id (e.g. `com.example.MyApp`) or `<bundle-id>.<ext>` prefixed filenames — app name is never used as a substring filter to prevent false positives on unrelated bundles. Found artifacts are listed with sizes for user review and can be trashed via `QFile::moveToTrash` (the same injection-safe path as the bundle itself).
+
+### 9a. File Shredder
+
+Secure file/folder shredder (SSO-15381) — closes the ✗ cell in Nexis's own README comparison matrix against BleachBit. Destructive-by-design: every deletion requires explicit selection and an explicit confirmation, never an auto-clean.
+
+- Drag-and-drop target for files/folders, plus a "Choose Files…"/"Choose Folder…" file-picker fallback (`ShredderDropZone`, `QFileDialog`)
+- Staged list shows each top-level item with its recursive size + file count once `FileShredderService::computePreview()` resolves (background `QtConcurrent` walk); a live footer totals selected item count + size
+- "Shred Selected" mirrors the Select-All/Clean-Selected disabled-state pattern (GH-173/GH-226 regression class) — stays disabled until at least one item is staged and its preview has resolved
+- Confirmation gated behind `ShredConfirmDialog`: one-sentence body, destructive red-accent "Shred" button (Design Anchor confirmation-dialog ceiling)
+- `FileShredderService::shred()` overwrites each file's contents with a single pass of zeroes (fsync'd before unlink), then removes emptied folders bottom-up; symlinks are unlinked without ever touching their target
+- Live per-item progress (thin progress bar + status line) while shredding; per-item failures are counted and surfaced in the final summary rather than silently dropped
+- Always-visible inline disclosure: a single-pass overwrite does not guarantee unrecoverable erasure on SSDs (wear leveling) or copy-on-write filesystems (APFS, Btrfs, ZFS) — no "military-grade"/"unrecoverable" claims
+- Cross-platform (Linux + macOS) on user-selected paths only — no elevation, no exclusion-engine interaction, since every path is explicitly chosen by the user
 
 ### 10. Resources
 

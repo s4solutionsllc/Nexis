@@ -99,6 +99,7 @@
         <file>static/themes/default/img/sidebar-icons/process.svg</file>
         <file>static/themes/default/img/sidebar-icons/helpers.svg</file>
         <file>static/themes/default/img/sidebar-icons/uninstaller.svg</file>
+        <file>static/themes/default/img/sidebar-icons/shredder.svg</file>
         <file>static/themes/default/img/sidebar-icons/resources.svg</file>
         <file>static/themes/default/img/sidebar-icons/network-usage.svg</file>
         <file>static/themes/default/img/sidebar-icons/ppa-manager.svg</file>
@@ -124,6 +125,7 @@
         <file>static/themes/light/img/sidebar-icons/process.svg</file>
         <file>static/themes/light/img/sidebar-icons/helpers.svg</file>
         <file>static/themes/light/img/sidebar-icons/uninstaller.svg</file>
+        <file>static/themes/light/img/sidebar-icons/shredder.svg</file>
         <file>static/themes/light/img/sidebar-icons/resources.svg</file>
         <file>static/themes/light/img/sidebar-icons/network-usage.svg</file>
         <file>static/themes/light/img/sidebar-icons/ppa-manager.svg</file>

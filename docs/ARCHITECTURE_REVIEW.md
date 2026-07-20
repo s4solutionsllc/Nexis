@@ -43,14 +43,16 @@ Nexis is structured as a **four-tier desktop application**. Tier sizes (page/ser
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
-│  UI Layer: 15 always-visible QWidget pages + 3 conditional         │
+│  UI Layer: 16 always-visible QWidget pages + 3 conditional         │
 │  Each page owns its .ui file and presentation logic                │
+│  (File Shredder is programmatic — no .ui, like Boot Analysis/      │
+│  System Logs/Uninstaller)                                          │
 │  Files: shared/nexis/Pages/*/*.cpp                                 │
 ├────────────────────────────────────────────────────────────────────┤
-│  Service Layer: 9 Domain Services + NexisPage base class           │
+│  Service Layer: 10 Domain Services + NexisPage base class          │
 │  StartupService, FileSearchService, HostService, ProcessService,   │
 │  SystemServiceManager, DockerService, PackageService,              │
-│  DuplicateFinderService, SnapshotService                           │
+│  DuplicateFinderService, SnapshotService, FileShredderService       │
 │  Files: shared/nexis/Services/*.cpp                                │
 ├────────────────────────────────────────────────────────────────────┤
 │  Manager Layer: 9 Singletons                                       │

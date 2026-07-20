@@ -237,6 +237,10 @@ void App::buildSidebar()
 #endif
         sec.containerLayout->addWidget(btnUninstaller);
         sec.buttons.append(btnUninstaller);
+
+        btnShredder = createSidebarButton(tr("File Shredder"));
+        sec.containerLayout->addWidget(btnShredder);
+        sec.buttons.append(btnShredder);
     }
 
     // ---- SYSTEM section ----
@@ -407,6 +411,7 @@ void App::init()
 #else
     btnUninstaller->setText(tr("Uninstaller"));
 #endif
+    btnShredder->setText(tr("File Shredder"));
     btnDocker->setText(tr("Docker"));
     btnHelpers->setText(tr("Helpers"));
     btnSystemLogs->setText(tr("System Logs"));
@@ -524,6 +529,12 @@ void App::init()
         nullptr, {}
     });
     mPageSlots.append({
+        "shredder",
+        tr("File Shredder"),
+        [this]() -> QWidget* { shredderPage = new ShredderPage(mSlidingStacked); return shredderPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
         "helpers",
         tr("Helpers"),
         [this]() -> QWidget* { helpersPage = new HelpersPage(mSlidingStacked); return helpersPage; },
@@ -544,7 +555,7 @@ void App::init()
 
     mListSidebarButtons = {
         btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnSearch,
-        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnHelpers, btnSystemLogs, btnSettings
+        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnShredder, btnHelpers, btnSystemLogs, btnSettings
     };
 
     // Software sources page — Homebrew on macOS, APT on Linux
@@ -657,6 +668,7 @@ void App::init()
         navByTitle(tr("Uninstaller"));
 #endif
     });
+    connect(btnShredder,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("File Shredder")); });
     connect(btnHelpers,          &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Helpers")); });
     connect(btnSystemLogs,       &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Logs")); });
     connect(btnSettings,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Settings")); });
@@ -1099,6 +1111,7 @@ void App::updateSidebarIcons()
     setIcon(btnStartupApps,      "startup-apps.svg");
     setIcon(btnBootAnalysis,     "boot-analysis.svg");
     setIcon(btnUninstaller,      "uninstaller.svg");
+    setIcon(btnShredder,         "shredder.svg");
     setIcon(btnDocker,           "docker.svg");
     setIcon(btnHelpers,          "helpers.svg");
     setIcon(btnSystemLogs,       "system-logs.svg");
