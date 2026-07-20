@@ -5,8 +5,12 @@
 #include <QElapsedTimer>
 #include <QHash>
 #include <QString>
+#include <memory>
 
 #include <sys/types.h>   // uid_t, gid_t
+
+class NetAcctBpfLoader;
+class NetHogsStreamer;
 
 class ProcessInfoLinux : public ProcessInfo
 {
@@ -14,6 +18,11 @@ class ProcessInfoLinux : public ProcessInfo
 
 public:
     ProcessInfoLinux();
+    // Needed out-of-line (defined in process_info.cpp, where NetAcctBpfLoader
+    // and NetHogsStreamer are complete types) because of the unique_ptr
+    // members below — the implicit destructor would otherwise need their
+    // full definitions right here.
+    ~ProcessInfoLinux() override;
     QList<Process> collectProcesses() override;
 
 private:
@@ -36,6 +45,20 @@ private:
     QHash<pid_t, QPair<quint64, quint64>> mPrevDiskIo;
     QElapsedTimer                         mIoTimer;
     bool                                  mIoTimerStarted = false;
+
+    // SSO-15379: per-process network. eBPF (mBpfNet) is tried first and, if
+    // loaded, wins outright; mNetHogs is the fallback started lazily the
+    // first time eBPF isn't usable and the nethogs binary is found on PATH.
+    // mPrevNetIo holds eBPF's cumulative counters for delta-tracking (like
+    // mPrevDiskIo above) — nethogs already reports a live rate, so its path
+    // doesn't need baseline tracking.
+    std::unique_ptr<NetAcctBpfLoader>      mBpfNet;
+    std::unique_ptr<NetHogsStreamer>       mNetHogs;
+    QHash<pid_t, QPair<quint64, quint64>>  mPrevNetIo;
+    QElapsedTimer                          mNetTimer;
+    bool                                   mNetTimerStarted = false;
+    bool                                   mNetHogsPathChecked = false;
+    bool                                   mNetHogsOnPath = false;
 
     // FR-115: per-PID engine-ns baseline for GPU% delta + wall-clock timer.
     QHash<pid_t, quint64> mPrevGpuEngineNs;

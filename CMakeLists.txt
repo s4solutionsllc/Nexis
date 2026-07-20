@@ -248,6 +248,8 @@ else()
     "${CORE_PLAT_DIR}/Info/nvidia_smi_streamer.cpp"
     "${CORE_PLAT_DIR}/Info/nvml_backend.cpp"
     "${CORE_PLAT_DIR}/Info/nvml_process_sampler.cpp"
+    "${CORE_PLAT_DIR}/Info/net_acct_bpf_loader.cpp"
+    "${CORE_PLAT_DIR}/Info/net_hogs_streamer.cpp"
     "${CORE_PLAT_DIR}/Info/power_profile_info.cpp"
     "${CORE_PLAT_DIR}/Info/psi_info.cpp"
     "${CORE_PLAT_DIR}/Info/proc_info_parser.cpp"
@@ -283,6 +285,9 @@ else()
     "${CORE_PLAT_DIR}/Info/nvidia_smi_streamer.h"
     "${CORE_PLAT_DIR}/Info/nvml_backend.h"
     "${CORE_PLAT_DIR}/Info/nvml_process_sampler.h"
+    "${CORE_PLAT_DIR}/Info/net_acct_bpf_loader.h"
+    "${CORE_PLAT_DIR}/Info/net_acct_shared.h"
+    "${CORE_PLAT_DIR}/Info/net_hogs_streamer.h"
     "${CORE_PLAT_DIR}/Info/proc_info_parser.h"
     "${CORE_PLAT_DIR}/Info/psi_info.h"
     "${CORE_PLAT_DIR}/Info/process_info_linux.h"
@@ -338,6 +343,94 @@ if(APPLE)
   find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
   find_library(SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration)
   target_link_libraries(nexis-core ${IOKIT_FRAMEWORK} ${COREFOUNDATION_FRAMEWORK} ${SYSTEMCONFIGURATION_FRAMEWORK})
+endif()
+
+# ============================================================================
+# SSO-15379: optional eBPF per-process network collector (Linux only)
+# ============================================================================
+# Prefer eBPF (net_acct_bpf_loader.cpp attaches kprobes compiled from
+# linux/nexis-core/Info/ebpf/net_acct.bpf.c) over shelling out to nethogs —
+# lower overhead, no external binary required. It needs two things this
+# environment can't assume every build machine has: libbpf (to load/attach
+# the program and read its map) and a clang that can target `bpf` (to compile
+# the kernel-side .c). Detect both; if either is missing, nexis-core still
+# builds fine — net_acct_bpf_loader.cpp compiles down to a stub that always
+# reports Status::Unavailable (see NEXIS_HAVE_EBPF guards in that file), and
+# ProcessInfoLinux falls back to nethogs / explicit "unavailable" messaging
+# at runtime. Nothing here can fail the build.
+if(NOT APPLE)
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(LIBBPF QUIET libbpf)
+  endif()
+  find_program(NEXIS_BPF_CLANG NAMES clang)
+
+  if(LIBBPF_FOUND AND NEXIS_BPF_CLANG)
+    message(STATUS "SSO-15379: libbpf + clang found — building the eBPF per-process network collector")
+
+    # bpf_tracing.h's BPF_KPROBE macro (used by net_acct.bpf.c to read kprobe
+    # arguments) picks its register-to-argument mapping off __TARGET_ARCH_*,
+    # which uses libbpf-bootstrap's normalized arch names, NOT
+    # CMAKE_SYSTEM_PROCESSOR's raw uname-style strings (x86_64, aarch64, ...).
+    # Getting this wrong on the most common builder arch (x86_64) wouldn't
+    # fail the build — it would silently mis-map registers and produce wrong
+    # byte counts, so normalize explicitly rather than pass the raw value.
+    set(_nexis_bpf_arch "${CMAKE_SYSTEM_PROCESSOR}")
+    if(_nexis_bpf_arch MATCHES "^(x86_64|amd64)$")
+      set(_nexis_bpf_arch "x86")
+    elseif(_nexis_bpf_arch MATCHES "^(aarch64|arm64)$")
+      set(_nexis_bpf_arch "arm64")
+    elseif(_nexis_bpf_arch MATCHES "^(ppc64le|ppc64)$")
+      set(_nexis_bpf_arch "powerpc")
+    elseif(_nexis_bpf_arch MATCHES "^s390x$")
+      set(_nexis_bpf_arch "s390")
+    elseif(_nexis_bpf_arch MATCHES "^riscv64$")
+      set(_nexis_bpf_arch "riscv")
+    endif()
+
+    set(NEXIS_EBPF_SRC "${CORE_PLAT_DIR}/Info/ebpf/net_acct.bpf.c")
+    set(NEXIS_EBPF_OBJ "${CMAKE_BINARY_DIR}/ebpf/net_acct.bpf.o")
+
+    add_custom_command(
+      OUTPUT "${NEXIS_EBPF_OBJ}"
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/ebpf"
+      COMMAND ${NEXIS_BPF_CLANG} -O2 -g -target bpf
+              -D__TARGET_ARCH_${_nexis_bpf_arch}
+              ${LIBBPF_CFLAGS}
+              -c "${NEXIS_EBPF_SRC}" -o "${NEXIS_EBPF_OBJ}"
+      DEPENDS "${NEXIS_EBPF_SRC}" "${CORE_PLAT_DIR}/Info/net_acct_shared.h"
+      COMMENT "Compiling net_acct.bpf.c (SSO-15379 per-process network eBPF program)"
+      VERBATIM
+    )
+    add_custom_target(nexis-ebpf-obj DEPENDS "${NEXIS_EBPF_OBJ}")
+    add_dependencies(nexis-core nexis-ebpf-obj)
+
+    # PUBLIC, not PRIVATE: NEXIS_HAVE_EBPF changes NetAcctBpfLoader's member
+    # layout (see net_acct_bpf_loader.h). Any other target that includes that
+    # header — the test suite links nexis-core and does exactly that — must
+    # see the same macro state nexis-core itself was compiled with, or the
+    # two translation units disagree on sizeof/offsets for the same class.
+    target_compile_definitions(nexis-core PUBLIC NEXIS_HAVE_EBPF)
+    target_include_directories(nexis-core PRIVATE ${LIBBPF_INCLUDE_DIRS})
+    target_link_libraries(nexis-core ${LIBBPF_LIBRARIES})
+
+    # Search list read by net_acct_bpf_loader.cpp at runtime: the installed
+    # location first, then the in-build-tree path (so dev/`ctest` runs work
+    # without a full `cmake --install`).
+    target_compile_definitions(nexis-core PRIVATE
+      "NEXIS_EBPF_OBJ_PATH=\"/usr/share/nexis/ebpf/net_acct.bpf.o:${NEXIS_EBPF_OBJ}\""
+    )
+
+    install(FILES "${NEXIS_EBPF_OBJ}" DESTINATION share/nexis/ebpf)
+  else()
+    message(STATUS "SSO-15379: libbpf and/or a BPF-target clang not found — "
+                    "per-process network will fall back to nethogs (if installed) "
+                    "or show an explicit unavailable notice. See docs/plans/"
+                    "2026-07-20-sso-15379-process-network-ebpf-design.md.")
+    target_compile_definitions(nexis-core PRIVATE
+      "NEXIS_EBPF_OBJ_PATH=\"\""
+    )
+  endif()
 endif()
 
 # ============================================================================

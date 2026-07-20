@@ -70,7 +70,22 @@ jobs:
             qt6-l10n-tools \
             libqt6charts6-dev \
             libqt6svg6-dev \
-            xvfb
+            xvfb \
+            pkg-config \
+            clang \
+            libbpf-dev \
+            libelf-dev \
+            zlib1g-dev
+
+      # SSO-15379: this container almost certainly lacks CAP_BPF (unprivileged
+      # container, non-root runner user in most configurations), so this only
+      # proves the eBPF program + libbpf loader actually compile and link —
+      # it does not exercise a real attach/load. That gap is real and
+      # documented; see docs/plans/2026-07-20-sso-15379-process-network-ebpf-design.md.
+      - name: eBPF toolchain check (SSO-15379)
+        run: |
+          echo "pkg-config libbpf: $(pkg-config --modversion libbpf || echo 'not found')"
+          echo "clang bpf target: $(clang -print-targets | grep -i bpf || echo 'not found')"
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release

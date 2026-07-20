@@ -104,6 +104,12 @@ public:
     void setCollectProcessNetIO(bool enabled);
     void setCollectProcessGpu(bool enabled);
 
+    // SSO-15379: lets ProcessesPage distinguish "no network activity" from
+    // "collection isn't actually working" (missing CAP_BPF/root, no eBPF
+    // support at build time, nethogs not installed, ...).
+    ProcessInfo::NetIoStatus getProcessNetIoStatus() const;
+    QString getProcessNetIoStatusDetail() const;
+
     QList<QString> getDevices();
     QList<QString> getFileSystemTypes();
 

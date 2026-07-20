@@ -1,5 +1,7 @@
 #include "process_info_linux.h"
 
+#include "net_acct_bpf_loader.h"
+#include "net_hogs_streamer.h"
 #include "nvml_process_sampler.h"
 #include "proc_info_parser.h"
 
@@ -10,6 +12,7 @@
 #include <QFile>
 #include <QMutexLocker>
 #include <QSet>
+#include <QStandardPaths>
 
 #include <grp.h>
 #include <pwd.h>
@@ -54,6 +57,8 @@ ProcessInfoLinux::ProcessInfoLinux()
     mBootTimeSec = ProcInfoParser::parseBootTime(readAll("/proc/stat"));
     mTotalMemBytes = ProcInfoParser::parseMemTotalBytes(readAll("/proc/meminfo"));
 }
+
+ProcessInfoLinux::~ProcessInfoLinux() = default;
 
 QString ProcessInfoLinux::lookupUid(uid_t uid)
 {
@@ -263,66 +268,189 @@ QList<Process> ProcessInfoLinux::collectProcesses()
     // I/O columns are hidden. Hundreds of file opens per tick on a loaded
     // system otherwise. Reset the baseline cache when collection is off so
     // we don't display stale rates if the user re-enables the column later.
+    //
+    // SSO-15379: this used to `return processes` early here, which was
+    // harmless while disk I/O was the last thing this function did — now
+    // that per-process network collection follows, an early return would
+    // silently skip it whenever disk columns are hidden but net columns
+    // aren't. Wrap instead of returning.
     if (!mCollectDiskIO) {
         if (!mPrevDiskIo.isEmpty())
             mPrevDiskIo.clear();
         mIoTimerStarted = false;
-        return processes;
-    }
-
-    double elapsedSecs = 0;
-    if (!mIoTimerStarted) {
-        mIoTimer.start();
-        mIoTimerStarted = true;
     } else {
-        elapsedSecs = mIoTimer.elapsed() / 1000.0;
-        mIoTimer.restart();
-    }
+        double elapsedSecs = 0;
+        if (!mIoTimerStarted) {
+            mIoTimer.start();
+            mIoTimerStarted = true;
+        } else {
+            elapsedSecs = mIoTimer.elapsed() / 1000.0;
+            mIoTimer.restart();
+        }
 
-    QSet<pid_t> activePids;
+        QSet<pid_t> activePids;
 
-    for (Process &proc : processes) {
-        pid_t pid = proc.getPid();
-        activePids.insert(pid);
+        for (Process &proc : processes) {
+            pid_t pid = proc.getPid();
+            activePids.insert(pid);
 
-        QString ioContent = FileUtil::readStringFromFile(
-            QString("/proc/%1/io").arg(pid));
+            QString ioContent = FileUtil::readStringFromFile(
+                QString("/proc/%1/io").arg(pid));
 
-        if (!ioContent.isEmpty()) {
-            quint64 readBytes = 0;
-            quint64 writeBytes = 0;
+            if (!ioContent.isEmpty()) {
+                quint64 readBytes = 0;
+                quint64 writeBytes = 0;
 
-            const QStringList ioLines = ioContent.split('\n');
-            for (const QString &ioLine : ioLines) {
-                if (ioLine.startsWith(QLatin1String("read_bytes:")))
-                    readBytes = ioLine.mid(12).trimmed().toULongLong();
-                else if (ioLine.startsWith(QLatin1String("write_bytes:")))
-                    writeBytes = ioLine.mid(13).trimmed().toULongLong();
+                const QStringList ioLines = ioContent.split('\n');
+                for (const QString &ioLine : ioLines) {
+                    if (ioLine.startsWith(QLatin1String("read_bytes:")))
+                        readBytes = ioLine.mid(12).trimmed().toULongLong();
+                    else if (ioLine.startsWith(QLatin1String("write_bytes:")))
+                        writeBytes = ioLine.mid(13).trimmed().toULongLong();
+                }
+
+                if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
+                    auto prev = mPrevDiskIo.value(pid);
+                    double readRate = (readBytes >= prev.first)
+                        ? (readBytes - prev.first) / elapsedSecs : 0;
+                    double writeRate = (writeBytes >= prev.second)
+                        ? (writeBytes - prev.second) / elapsedSecs : 0;
+                    proc.setDiskReadRate(readRate);
+                    proc.setDiskWriteRate(writeRate);
+                } else {
+                    proc.setDiskReadRate(0);
+                    proc.setDiskWriteRate(0);
+                }
+
+                mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
             }
+        }
 
-            if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
-                auto prev = mPrevDiskIo.value(pid);
-                double readRate = (readBytes >= prev.first)
-                    ? (readBytes - prev.first) / elapsedSecs : 0;
-                double writeRate = (writeBytes >= prev.second)
-                    ? (writeBytes - prev.second) / elapsedSecs : 0;
-                proc.setDiskReadRate(readRate);
-                proc.setDiskWriteRate(writeRate);
-            } else {
-                proc.setDiskReadRate(0);
-                proc.setDiskWriteRate(0);
-            }
-
-            mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
+        auto it = mPrevDiskIo.begin();
+        while (it != mPrevDiskIo.end()) {
+            if (!activePids.contains(it.key()))
+                it = mPrevDiskIo.erase(it);
+            else
+                ++it;
         }
     }
 
-    auto it = mPrevDiskIo.begin();
-    while (it != mPrevDiskIo.end()) {
-        if (!activePids.contains(it.key()))
-            it = mPrevDiskIo.erase(it);
-        else
-            ++it;
+    // --- Per-process network I/O (SSO-15379) ---
+    // Preference order: eBPF (NetAcctBpfLoader — no external binary, lower
+    // overhead) first; nethogs (NetHogsStreamer) if eBPF can't load; explicit
+    // status (no silent blank/zero) if neither works. mNetIoStatus/Detail are
+    // read by ProcessesPage to show a notice instead of a bare "—" when
+    // collection is on but not actually producing data.
+    if (!mCollectNetIO) {
+        mBpfNet.reset();
+        mNetHogs.reset();
+        if (!mPrevNetIo.isEmpty())
+            mPrevNetIo.clear();
+        mNetHogsPathChecked = false;
+        mNetIoStatus = NetIoStatus::Disabled;
+        mNetIoStatusDetail.clear();
+        return processes;
+    }
+
+    QSet<pid_t> netActivePids;
+    for (const Process &proc : processes)
+        netActivePids.insert(proc.getPid());
+
+    if (!mBpfNet)
+        mBpfNet = std::make_unique<NetAcctBpfLoader>();
+    mBpfNet->ensureLoaded();
+
+    if (mBpfNet->status() == NetAcctBpfLoader::Status::Loaded) {
+        // eBPF counters are cumulative since attach — delta-track exactly
+        // like disk I/O above.
+        mNetHogs.reset();
+        mNetIoStatus = NetIoStatus::ActiveEbpf;
+        mNetIoStatusDetail.clear();
+
+        double netElapsedSecs = 0;
+        if (!mNetTimerStarted) {
+            mNetTimer.start();
+            mNetTimerStarted = true;
+        } else {
+            netElapsedSecs = mNetTimer.elapsed() / 1000.0;
+            mNetTimer.restart();
+        }
+
+        for (Process &proc : processes) {
+            pid_t pid = proc.getPid();
+            quint64 txBytes = 0, rxBytes = 0;
+            if (!mBpfNet->lookup(pid, &txBytes, &rxBytes))
+                continue;   // no TCP traffic observed for this pid yet
+
+            if (netElapsedSecs > 0 && mPrevNetIo.contains(pid)) {
+                auto prev = mPrevNetIo.value(pid);
+                double downRate = (rxBytes >= prev.first)
+                    ? (rxBytes - prev.first) / netElapsedSecs : 0;
+                double upRate = (txBytes >= prev.second)
+                    ? (txBytes - prev.second) / netElapsedSecs : 0;
+                proc.setNetDownRate(downRate);
+                proc.setNetUpRate(upRate);
+            } else {
+                proc.setNetDownRate(0);
+                proc.setNetUpRate(0);
+            }
+
+            mPrevNetIo.insert(pid, qMakePair(rxBytes, txBytes));
+        }
+
+        auto netIt = mPrevNetIo.begin();
+        while (netIt != mPrevNetIo.end()) {
+            if (!netActivePids.contains(netIt.key()))
+                netIt = mPrevNetIo.erase(netIt);
+            else
+                ++netIt;
+        }
+    } else {
+        // eBPF isn't usable (no CAP_BPF/root, unsupported kernel, or built
+        // without libbpf). Fall back to nethogs if it's installed.
+        if (!mNetHogsPathChecked) {
+            mNetHogsOnPath = !QStandardPaths::findExecutable("nethogs").isEmpty();
+            mNetHogsPathChecked = true;
+        }
+
+        if (!mPrevNetIo.isEmpty())
+            mPrevNetIo.clear();   // eBPF's baseline is meaningless once we switch source
+        mNetTimerStarted = false;
+
+        if (!mNetHogsOnPath) {
+            mNetHogs.reset();
+            mNetIoStatus = (mBpfNet->status() == NetAcctBpfLoader::Status::PermissionDenied)
+                ? NetIoStatus::PermissionDenied
+                : NetIoStatus::Unavailable;
+            mNetIoStatusDetail = mBpfNet->lastError();
+            // Rates stay at Process's -1.0 default — never fabricate 0 B/s.
+        } else {
+            if (!mNetHogs) {
+                mNetHogs = std::make_unique<NetHogsStreamer>();
+                mNetHogs->start(1);
+            }
+
+            if (mNetHogs->hasFailed()) {
+                mNetIoStatus = NetIoStatus::PermissionDenied;
+                mNetIoStatusDetail = mNetHogs->lastError();
+                // Rates stay at -1.0 here too — nethogs tried and failed
+                // (almost always the same privilege problem as eBPF).
+            } else {
+                mNetIoStatus = NetIoStatus::ActiveNetHogs;
+                mNetIoStatusDetail.clear();
+
+                const QHash<pid_t, QPair<double, double>> hogsData = mNetHogs->snapshot();
+                for (Process &proc : processes) {
+                    const auto found = hogsData.constFind(proc.getPid());
+                    if (found == hogsData.constEnd())
+                        continue;   // nethogs reports nothing for this pid this tick
+                    proc.setNetDownRate(found.value().first);
+                    proc.setNetUpRate(found.value().second);
+                }
+
+                mNetHogs->pruneDeadPids(netActivePids);
+            }
+        }
     }
 
     return processes;

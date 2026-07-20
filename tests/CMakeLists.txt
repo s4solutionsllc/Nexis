@@ -206,6 +206,26 @@ if(UNIX AND NOT APPLE)
   )
 endif()
 
+# SSO-15379: nethogs trace-mode line parser has no platform/privilege
+# dependency (only the nethogs binary itself does) — compiled directly so it
+# runs on any host, per the FR-127/WI-33 pattern above.
+add_nexis_test(NAME NetHogsStreamerTests
+  SOURCES
+    core/test_net_hogs_streamer.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info/net_hogs_streamer.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
+)
+
+# SSO-15379: NetAcctBpfLoader is only compiled into nexis-core on Linux, and
+# this test links nexis-core (rather than recompiling the source) so it sees
+# the exact NEXIS_HAVE_EBPF-dependent class layout nexis-core itself was
+# built with — gate to Linux like NetAcctBpfLoaderTests' siblings above.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME NetAcctBpfLoaderTests
+    SOURCES core/test_net_acct_bpf_loader.cpp)
+endif()
+
 # NetworkDiagWidget lives in the GUI target; compile its source + deps directly.
 add_nexis_test(NAME NetworkDiagTests
   SOURCES

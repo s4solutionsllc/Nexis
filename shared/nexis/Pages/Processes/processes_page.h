@@ -8,6 +8,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QHash>
+#include <QLabel>
 
 #include "nexis_page.h"
 #include "Managers/info_manager.h"
@@ -58,6 +59,13 @@ private:
     // on the current column visibility. Called from init() and after the
     // header context menu toggles a column.
     void updateProcessIoCollection();
+
+    // SSO-15379: DS §5 status-pattern notice shown above the table when the
+    // network columns are visible but the underlying collector (eBPF or
+    // nethogs) isn't actually producing data — e.g. missing CAP_BPF/root, or
+    // no supported mechanism found at all. Never leaves the AC silently
+    // blank: this fires alongside (not instead of) the per-row "—" cells.
+    void updateNetIoNotice();
 
     // FR-116: refresh the pinned-role on every row from ProcessPrefsManager.
     void refreshPinnedRoles();
@@ -117,6 +125,7 @@ private:
     DataRefreshService *mRefresh;
     ProcessService *mProcessService;
     KillButtonDelegate *mKillDelegate = nullptr; // GH#174
+    QLabel *mNetIoNotice = nullptr; // SSO-15379
 };
 
 #endif // PROCESSESPAGE_H

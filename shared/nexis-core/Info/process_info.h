@@ -3,6 +3,7 @@
 
 #include <QMutex>
 #include <QObject>
+#include <QString>
 
 #include <Utils/file_util.h>
 #include <Utils/command_util.h>
@@ -31,6 +32,24 @@ public:
     bool collectsNetIO() const  { return mCollectNetIO; }
     bool collectsGpu() const    { return mCollectGpu; }
 
+    // SSO-15379: per-process network collection can silently fail (missing
+    // CAP_BPF/root, no nethogs, unsupported kernel) while mCollectNetIO stays
+    // true — the UI must not read that as "zero traffic". Subclasses report
+    // which mechanism (if any) is actually feeding netUpRate/netDownRate so
+    // ProcessesPage can show an explicit notice instead of blank "—" cells.
+    enum class NetIoStatus {
+        Disabled,          // columns hidden — collection not requested
+        ActiveEbpf,        // Linux: kprobe byte counters attached and readable
+        ActiveNetHogs,      // Linux: falling back to the external nethogs binary
+        ActiveNetTop,       // macOS: NettopStreamer running
+        PermissionDenied,  // Linux: eBPF load/attach failed with EPERM/EACCES
+                            // and no nethogs fallback was available either
+        Unavailable        // no working mechanism at all (old kernel, no
+                            // libbpf at build time, nethogs not installed)
+    };
+    NetIoStatus netIoStatus() const { return mNetIoStatus; }
+    QString netIoStatusDetail() const { return mNetIoStatusDetail; }
+
     // WI-21 (audit M2): thread-safe publish pair, mirrors
     // DiskHealthInfo::collectDriveHealth()/setDrives() (WI-03).
     // collectProcesses() runs the per-PID walk and any forks (`ps` on
@@ -57,6 +76,9 @@ protected:
     bool mCollectDiskIO = false;
     bool mCollectNetIO  = false;
     bool mCollectGpu    = false;
+
+    NetIoStatus mNetIoStatus = NetIoStatus::Disabled;
+    QString mNetIoStatusDetail;
 };
 
 #endif // PROCESS_INFO_H

@@ -142,7 +142,20 @@ QList<Process> ProcessInfoMacOS::collectProcesses()
         }
         if (!mPrevNetIo.isEmpty())
             mPrevNetIo.clear();
+        // SSO-15379: keep netIoStatus() accurate cross-platform so
+        // ProcessesPage's notice logic works the same on both platforms.
+        mNetIoStatus = NetIoStatus::Disabled;
+        mNetIoStatusDetail.clear();
     } else {
+        // SSO-15379: nettop itself can still fail silently (not installed,
+        // sandboxed, TCC-denied) — this only reports "a streamer object
+        // exists", not "it is actually producing data". Distinguishing those
+        // would need NettopStreamer to surface its own failure state the way
+        // NetHogsStreamer (Linux, SSO-15379) does; left as a follow-up since
+        // this issue's scope is the Linux eBPF/nethogs path.
+        mNetIoStatus = NetIoStatus::ActiveNetTop;
+        mNetIoStatusDetail.clear();
+
         if (!mNettopStreamer) {
             mNettopStreamer = std::make_unique<NettopStreamer>();
             mNettopStreamer->start(1);

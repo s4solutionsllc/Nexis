@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-19 | Version 2.8.3
+> Last updated: 2026-07-20 | Version 2.8.3
 
 ---
 
@@ -369,7 +369,7 @@ View and manage running processes.
 - **Process Name column (GH#194, Linux only):** A short process name (e.g. `systemd`) sourced from `/proc/<pid>/comm`, shown right after PID and distinct from the full command line. Omitted entirely on macOS (no permanently-empty column). Column membership is driven by a platform-conditional `Col` enum in `processes_page.h`, so every column index stays correct on both platforms.
 - **Per-row kill icon (GH#174):** A fixed ✕ column at the far right lets users kill a process with a single click without selecting the row first. Rendered by `KillButtonDelegate` using `@destructiveColor` theme token; excluded from the header show/hide menu.
 - Disk Read/s and Disk Write/s columns show per-process disk I/O rates via `proc_pid_rusage()` (macOS) or `/proc/<pid>/io` (Linux), using delta-based calculation with `QElapsedTimer`
-- Net Down/s and Net Up/s columns show per-process network bandwidth via `nettop` parsing (macOS only; Linux shows N/A)
+- Net Down/s and Net Up/s columns show per-process network bandwidth: `nettop` parsing on macOS; on Linux (SSO-15379), an eBPF collector (kprobes on `tcp_sendmsg`/`tcp_cleanup_rbuf`, TCP only) when libbpf + a BPF-target clang were available at build time and the process has CAP_BPF/root, falling back to parsing a persistent `nethogs -t` child when eBPF can't load. When neither source works, an inline notice above the table explains why instead of leaving the cells silently blank (`ProcessInfo::NetIoStatus`) — see `docs/plans/2026-07-20-sso-15379-process-network-ebpf-design.md`.
 - All 4 new I/O columns are hidden by default (toggled via header context menu)
 - Real-time search filter
 - Sortable column headers

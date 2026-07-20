@@ -12,6 +12,7 @@
 #include "Services/process_service.h"
 #include <QItemSelectionModel>
 #include <QRegularExpression>
+#include <QStyle>
 #include <QSystemTrayIcon>
 #include <Utils/format_util.h>
 
@@ -126,6 +127,18 @@ void ProcessesPage::init()
 
     loadHeaderMenu();
 
+    // SSO-15379: DS §5 status notice — icon-less text label, hidden until
+    // updateNetIoNotice() has something to say. Lives above the table but
+    // inside the elevated processesContainer so it reads as part of the same
+    // surface, not a separate banner (DS §7: shadows/surfaces stay on the
+    // container).
+    mNetIoNotice = new QLabel(this);
+    mNetIoNotice->setObjectName("netIoNotice");
+    mNetIoNotice->setWordWrap(true);
+    mNetIoNotice->setContentsMargins(12, 8, 12, 8);
+    mNetIoNotice->setVisible(false);
+    ui->processesContainerLayout->insertWidget(0, mNetIoNotice);
+
     // FR-108: apply the initial column-visibility state to ProcessInfo
     // before the first tick so we don't pay the /proc/<pid>/io walk or the
     // nettop fork when their columns are hidden (which is the default).
@@ -152,6 +165,57 @@ void ProcessesPage::updateProcessIoCollection()
     im->setCollectProcessDiskIO(diskVisible);
     im->setCollectProcessNetIO(netVisible);
     im->setCollectProcessGpu(gpuVisible);
+
+    updateNetIoNotice();
+}
+
+void ProcessesPage::updateNetIoNotice()
+{
+    if (!mNetIoNotice)
+        return;
+
+    const auto *header = ui->tableProcess->horizontalHeader();
+    const bool netVisible = !header->isSectionHidden(Col_NetDown) || !header->isSectionHidden(Col_NetUp);
+
+    if (!netVisible) {
+        mNetIoNotice->setVisible(false);
+        return;
+    }
+
+    const ProcessInfo::NetIoStatus status = im->getProcessNetIoStatus();
+    QString text;
+    QString qssStatus;
+
+    switch (status) {
+    case ProcessInfo::NetIoStatus::PermissionDenied:
+        text = tr("Limited data — per-process network requires elevated permissions "
+                   "(CAP_BPF or root for eBPF, or run nethogs as root)");
+        qssStatus = QStringLiteral("warning");
+        break;
+    case ProcessInfo::NetIoStatus::Unavailable:
+        text = tr("Per-process network unavailable on this system — install nethogs, "
+                   "or run Nexis with CAP_BPF/root for eBPF collection");
+        qssStatus = QStringLiteral("warning");
+        break;
+    case ProcessInfo::NetIoStatus::ActiveEbpf:
+    case ProcessInfo::NetIoStatus::ActiveNetHogs:
+    case ProcessInfo::NetIoStatus::ActiveNetTop:
+    case ProcessInfo::NetIoStatus::Disabled:
+        break;
+    }
+
+    if (text.isEmpty()) {
+        mNetIoNotice->setVisible(false);
+        return;
+    }
+
+    mNetIoNotice->setText(text);
+    const QString detail = im->getProcessNetIoStatusDetail();
+    mNetIoNotice->setToolTip(detail.isEmpty() ? text : detail);
+    mNetIoNotice->setProperty("status", qssStatus);
+    mNetIoNotice->style()->unpolish(mNetIoNotice);
+    mNetIoNotice->style()->polish(mNetIoNotice);
+    mNetIoNotice->setVisible(true);
 }
 
 void ProcessesPage::loadHeaderMenu()
@@ -188,6 +252,11 @@ void ProcessesPage::loadHeaderMenu()
 
 void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QString &userName)
 {
+    // SSO-15379: re-check every tick, not just on column toggle — the
+    // underlying collector's status can change after the fact (e.g. a
+    // lazily-started nethogs child exits a few ticks in).
+    updateNetIoNotice();
+
     QModelIndexList selecteds = ui->tableProcess->selectionModel()->selectedRows();
     pid_t selectedPid = 0;
     if (!selecteds.isEmpty())

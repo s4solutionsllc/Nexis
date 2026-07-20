@@ -406,6 +406,16 @@ void InfoManager::setCollectProcessGpu(bool enabled)
     pi->setCollectGpu(enabled);
 }
 
+ProcessInfo::NetIoStatus InfoManager::getProcessNetIoStatus() const
+{
+    return pi->netIoStatus();
+}
+
+QString InfoManager::getProcessNetIoStatusDetail() const
+{
+    return pi->netIoStatusDetail();
+}
+
 /********************
  * Thermal Provider
  *******************/
