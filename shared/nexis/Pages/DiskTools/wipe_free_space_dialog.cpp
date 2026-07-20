@@ -248,7 +248,7 @@ void WipeFreeSpaceDialog::onProgress(qint64 bytesWritten, qint64 estimatedTotalB
     if (estimatedTotalBytes > 0) {
         mProgressBar->setRange(0, 100);
         mProgressBar->setValue(static_cast<int>(
-            qBound<qint64>(0, (bytesWritten * 100) / estimatedTotalBytes, 100)));
+            qBound<qint64>(qint64{0}, (bytesWritten * 100) / estimatedTotalBytes, qint64{100})));
     }
 }
 
