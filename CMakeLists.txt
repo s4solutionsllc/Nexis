@@ -358,6 +358,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
   "${GUI_SHARED_DIR}/Services/file_search_service.cpp"
   "${GUI_SHARED_DIR}/Services/duplicate_finder_service.cpp"
+  "${GUI_SHARED_DIR}/Services/file_shredder_service.cpp"
   "${GUI_SHARED_DIR}/Services/host_service.cpp"
   "${GUI_SHARED_DIR}/Services/process_service.cpp"
   "${GUI_SHARED_DIR}/Services/startup_service.cpp"
@@ -434,6 +435,9 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/SystemLogs/severity_pill_delegate.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shredder_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shredder_drop_zone.cpp"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shred_confirm_dialog.cpp"
 )
 
 set(GUI_SHARED_HDRS
@@ -457,6 +461,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Managers/tool_manager.h"
   "${GUI_SHARED_DIR}/Services/file_search_service.h"
   "${GUI_SHARED_DIR}/Services/duplicate_finder_service.h"
+  "${GUI_SHARED_DIR}/Services/file_shredder_service.h"
   "${GUI_SHARED_DIR}/Services/host_service.h"
   "${GUI_SHARED_DIR}/Services/process_service.h"
   "${GUI_SHARED_DIR}/Services/startup_service.h"
@@ -524,6 +529,9 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/SystemLogs/severity_pill_delegate.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shredder_page.h"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shredder_drop_zone.h"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shred_confirm_dialog.h"
 )
 
 if(APPLE)
