@@ -583,7 +583,7 @@ void HomebrewPage::buildSparkleSection(QVBoxLayout *pageLayout)
     textCol->addLayout(titleRow);
 
     auto *lblSource = new QLabel(
-        tr("Non-Homebrew apps with Sparkle update feeds  •  Untrusted = no verified signature"),
+        tr("Non-Homebrew apps with Sparkle update feeds  •  Nexis does not verify installer signatures  •  No Signature = appcast has no signature metadata"),
         headerWidget);
     lblSource->setObjectName("sectionHeaderSource");
     textCol->addWidget(lblSource);
@@ -643,11 +643,13 @@ void HomebrewPage::onSparkleUpdateItemChanged(QTreeWidgetItem *, int column)
 
 void HomebrewPage::onUpdateSelectedClicked()
 {
-    // Collect checked trusted entries and open the enclosure URL in the
-    // browser.  The download-and-verify flow requires the Sparkle framework
-    // at runtime; surfacing the download URL to the user keeps Nexis out of
-    // the privileged installer-execution path for now.  Signature verification
-    // (SparkleSignatureVerifier) is invoked in the future download agent.
+    // Collect checked entries with signature metadata present and open the
+    // enclosure URL in the browser. Nexis does not download the installer or
+    // cryptographically verify it — this only opens the publisher's download
+    // page. SparkleSignatureVerifier will be invoked against the downloaded
+    // bytes once a download agent exists (see SSO-15431); until then, this
+    // gate on signatureMetadataPresent is not a security control, only a
+    // signal to steer users away from feeds that don't even carry a signature.
     for (int i = 0; i < mSparkleTree->topLevelItemCount(); ++i) {
         QTreeWidgetItem *item = mSparkleTree->topLevelItem(i);
         if (item->checkState(0) != Qt::Checked)
@@ -655,7 +657,7 @@ void HomebrewPage::onUpdateSelectedClicked()
         if (i >= mSparkleEntries.size())
             continue;
         const UpdateEntry &entry = mSparkleEntries[i];
-        if (!entry.trusted || entry.enclosureUrl.isEmpty())
+        if (!entry.signatureMetadataPresent || entry.enclosureUrl.isEmpty())
             continue;
         QDesktopServices::openUrl(QUrl(entry.enclosureUrl));
     }

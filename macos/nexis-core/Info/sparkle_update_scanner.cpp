@@ -151,8 +151,11 @@ QList<UpdateEntry> SparkleUpdateScanner::scan(const QStringList &homebrewAppName
             entry.edSignature   = latest->edSignature;
             entry.dsaSignature  = latest->dsaSignature;
             entry.publicKey     = bundleInfo.suPublicEDKey;
-            entry.trusted       = latest->signaturePresent()
-                                  && !bundleInfo.suPublicEDKey.isEmpty();
+            // Metadata presence only — not a cryptographic verification.
+            // SparkleSignatureVerifier is not yet invoked on downloaded bytes
+            // (see SSO-15431); the UI must not present this as "verified".
+            entry.signatureMetadataPresent = latest->signaturePresent()
+                                             && !bundleInfo.suPublicEDKey.isEmpty();
             results.append(entry);
         }
     }

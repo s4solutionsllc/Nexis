@@ -12,8 +12,10 @@
 //   - Failures for individual apps do not block scanning of others.
 //   - Apps without SUFeedURL are silently excluded.
 //   - Feeds larger than SparkleAppcastParser::kMaxFeedBytes are rejected.
-//   - An entry is marked trusted=false when no signature is present in the
-//     appcast; the UI must surface this and block auto-install.
+//   - An entry is marked signatureMetadataPresent=false when no signature is
+//     present in the appcast. This is metadata presence only, not
+//     cryptographic verification (see SparkleSignatureVerifier / SSO-15431);
+//     the UI must not claim these entries are "verified" or "trusted".
 //   - This class is intentionally call-thread-agnostic: it performs blocking
 //     network I/O via a local QEventLoop and must be called from a worker
 //     thread, not the GUI thread.

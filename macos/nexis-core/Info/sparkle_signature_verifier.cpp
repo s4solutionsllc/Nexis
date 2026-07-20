@@ -1,13 +1,14 @@
-// SECURITY CRITICAL — CTO REVIEW REQUIRED (SSO-15390)
-// See sparkle_signature_verifier.h for threat model.
+// SECURITY CRITICAL — CTO REVIEW REQUIRED (SSO-15390, reworked SSO-15431)
+// See sparkle_signature_verifier.h for threat model and fail-closed contract.
 
 #include "sparkle_signature_verifier.h"
 
 #include <QByteArray>
 #include <QDebug>
 
-#include <CoreFoundation/CoreFoundation.h>
-#include <Security/Security.h>
+extern "C" {
+#include "vendor/ed25519/ed25519.h"
+}
 
 namespace SparkleSignatureVerifier {
 
@@ -24,16 +25,18 @@ static QByteArray decodeBase64Strict(const QString &s)
     return QByteArray{};
 }
 
-// ── Ed25519 via macOS Security.framework ────────────────────────────────────
-
-// Sparkle 2.x signs with Ed25519 (RFC 8032).  The macOS Security framework
-// exposes Ed25519 under kSecAttrKeyTypeEdDSA with the algorithm constant
-// kSecKeyAlgorithmEdDSASignatureMessageX25519SHA512.
+// ── Ed25519 (RFC 8032) ──────────────────────────────────────────────────────
 //
-// CTO NOTE: This is the primary verification path.  The signed payload is
-// the raw archive bytes; no additional hashing is applied by us because
-// the Security framework performs the required internal SHA-512 digest for
-// this algorithm constant.
+// macOS SecKey has no EdDSA support at all (SecKeyAlgorithm only covers
+// RSA/ECDSA/ECDH) — the previous implementation of this function referenced
+// kSecAttrKeyTypeEdDSA / kSecKeyAlgorithmEdDSASignatureMessageX25519SHA512,
+// neither of which exists in any Apple SDK, so it could never compile. A
+// CryptoKit Swift shim was considered per SSO-15431 but rejected: this build
+// has no existing Swift/CMake language integration, and there is no way to
+// build- or test-verify one in this environment. Verification instead uses a
+// vendored, verify-only subset of orlp/ed25519 (zlib license) — the same
+// implementation Sparkle itself uses — pinned at a specific upstream commit;
+// see vendor/ed25519/UPSTREAM.md for the manifest and checksums.
 
 static Result verifyEd25519(const QByteArray &fileData,
                             const QByteArray &signatureBytes,
@@ -50,88 +53,36 @@ static Result verifyEd25519(const QByteArray &fileData,
         return Result::DecodingError;
     }
 
-    // Build CFData for key and signature
-    CFDataRef cfKey = CFDataCreate(kCFAllocatorDefault,
-        reinterpret_cast<const UInt8 *>(publicKeyBytes.constData()),
-        static_cast<CFIndex>(publicKeyBytes.size()));
-
-    CFMutableDictionaryRef attrs = CFDictionaryCreateMutable(
-        kCFAllocatorDefault, 3,
-        &kCFTypeDictionaryKeyCallBacks,
-        &kCFTypeDictionaryValueCallBacks);
-    CFDictionarySetValue(attrs, kSecAttrKeyType,  kSecAttrKeyTypeEdDSA);
-    CFDictionarySetValue(attrs, kSecAttrKeyClass, kSecAttrKeyClassPublic);
-    int bitsVal = 256;
-    CFNumberRef bits = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &bitsVal);
-    CFDictionarySetValue(attrs, kSecAttrKeySizeInBits, bits);
-
-    CFErrorRef cfError = nullptr;
-    SecKeyRef pubKey = SecKeyCreateWithData(cfKey, attrs, &cfError);
-
-    CFRelease(bits);
-    CFRelease(attrs);
-    CFRelease(cfKey);
-
-    if (!pubKey) {
-        if (cfError) {
-            qWarning() << "sparkle_sig: SecKeyCreateWithData failed:"
-                       << QString::fromCFString(CFErrorCopyDescription(cfError));
-            CFRelease(cfError);
-        }
-        return Result::InternalError;
-    }
-
-    CFDataRef cfData = CFDataCreateWithBytesNoCopy(
-        kCFAllocatorDefault,
-        reinterpret_cast<const UInt8 *>(fileData.constData()),
-        static_cast<CFIndex>(fileData.size()),
-        kCFAllocatorNull);
-
-    CFDataRef cfSig = CFDataCreate(
-        kCFAllocatorDefault,
-        reinterpret_cast<const UInt8 *>(signatureBytes.constData()),
-        static_cast<CFIndex>(signatureBytes.size()));
-
-    CFErrorRef verifyError = nullptr;
-    bool ok = SecKeyVerifySignature(
-        pubKey,
-        kSecKeyAlgorithmEdDSASignatureMessageX25519SHA512,
-        cfData, cfSig, &verifyError);
-
-    CFRelease(cfSig);
-    CFRelease(cfData);
-    CFRelease(pubKey);
+    const int ok = ed25519_verify(
+        reinterpret_cast<const unsigned char *>(signatureBytes.constData()),
+        reinterpret_cast<const unsigned char *>(fileData.constData()),
+        static_cast<size_t>(fileData.size()),
+        reinterpret_cast<const unsigned char *>(publicKeyBytes.constData()));
 
     if (!ok) {
-        if (verifyError) {
-            qWarning() << "sparkle_sig: Ed25519 verification failed:"
-                       << QString::fromCFString(CFErrorCopyDescription(verifyError));
-            CFRelease(verifyError);
-        }
+        qWarning() << "sparkle_sig: Ed25519 verification failed";
         return Result::Invalid;
     }
     return Result::Valid;
 }
 
-// ── DSA (legacy) ─────────────────────────────────────────────────────────────
-// Sparkle 1.x used DSA-SHA1.  macOS removed DSA from SecKey in 10.15+.
-// We flag legacy-DSA-only updates as Invalid to avoid relying on a deprecated
-// code path that may be absent at runtime.  Apps that still publish only DSA
-// signatures should upgrade their appcasts to Ed25519.
+// ── DSA (legacy, unsupported) ─────────────────────────────────────────────────
+// Sparkle 1.x used DSA-SHA1. macOS removed DSA from SecKey in 10.15+, and we
+// deliberately do not vendor a DSA implementation to accept it: that would
+// require trusting a deprecated, weaker algorithm and would expand the
+// verifier's attack surface for a signature scheme we want publishers to
+// retire. DSA-only appcasts are reported as UnsupportedLegacyDsa (not
+// Invalid) so UI/telemetry can say "publisher must upgrade to Ed25519"
+// instead of implying the appcast was tampered with. The public key is not
+// passed in — this path never verifies anything, so nothing here should be
+// able to imply it checked a DSA signature against an Ed25519 key.
 
 static Result verifyDsa(const QByteArray & /*fileData*/,
-                         const QByteArray & /*signatureBytes*/,
-                         const QByteArray & /*publicKeyBytes*/)
+                         const QByteArray & /*signatureBytes*/)
 {
-    // CTO NOTE: DSA-SHA1 is intentionally not implemented.
-    // macOS removed the DSA signing/verification API in 10.15.  Accepting
-    // a DSA signature here would require linking a third-party crypto library
-    // (e.g. libssl) and introduces additional attack surface.  The decision
-    // to block DSA-only updates is a conservative security posture: callers
-    // surface these as untrusted.
-    qWarning() << "sparkle_sig: legacy DSA-only update rejected; "
+    qWarning() << "sparkle_sig: legacy DSA-only update; "
                   "app must publish an Ed25519 signature";
-    return Result::Invalid;
+    return Result::UnsupportedLegacyDsa;
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
@@ -146,33 +97,33 @@ Result verify(const QByteArray &fileData,
     if (edSignatureB64.isEmpty() && dsaSignatureB64.isEmpty())
         return Result::MissingSignature;
 
-    const QByteArray pubKeyBytes = decodeBase64Strict(publicKeyB64);
-    if (pubKeyBytes.isEmpty())
-        return Result::DecodingError;
-
     if (!edSignatureB64.isEmpty()) {
+        const QByteArray pubKeyBytes = decodeBase64Strict(publicKeyB64);
+        if (pubKeyBytes.isEmpty())
+            return Result::DecodingError;
         const QByteArray sigBytes = decodeBase64Strict(edSignatureB64);
         if (sigBytes.isEmpty())
             return Result::DecodingError;
         return verifyEd25519(fileData, sigBytes, pubKeyBytes);
     }
 
-    // Legacy DSA fallback
+    // Legacy DSA fallback — never verified, see verifyDsa() above.
     const QByteArray sigBytes = decodeBase64Strict(dsaSignatureB64);
     if (sigBytes.isEmpty())
         return Result::DecodingError;
-    return verifyDsa(fileData, sigBytes, pubKeyBytes);
+    return verifyDsa(fileData, sigBytes);
 }
 
 QString resultDescription(Result r)
 {
     switch (r) {
-    case Result::Valid:            return "signature verified";
-    case Result::Invalid:         return "signature mismatch";
-    case Result::MissingKey:      return "no public key in app bundle";
-    case Result::MissingSignature:return "no signature in appcast";
-    case Result::DecodingError:   return "key or signature could not be decoded";
-    case Result::InternalError:   return "OS security API error";
+    case Result::Valid:                return "signature verified";
+    case Result::Invalid:              return "signature mismatch";
+    case Result::MissingKey:           return "no public key in app bundle";
+    case Result::MissingSignature:     return "no signature in appcast";
+    case Result::DecodingError:        return "key or signature could not be decoded";
+    case Result::InternalError:        return "internal verifier error";
+    case Result::UnsupportedLegacyDsa: return "publisher must upgrade to EdDSA";
     }
     return "unknown";
 }
