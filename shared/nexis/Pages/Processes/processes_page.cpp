@@ -69,6 +69,10 @@ void ProcessesPage::init()
     mItemModel->setHeaderData(Col_Rss, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
     mItemModel->setHeaderData(Col_Pmem, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
     mItemModel->setHeaderData(Col_Pcpu, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    // SSO-15374: GPU % / GPU VRAM are tabular numerics too — same DS §7
+    // right-align convention as PID/Resident Memory/%Memory/%CPU above.
+    mItemModel->setHeaderData(Col_GpuPct, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_GpuVram, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
 
     ui->tableProcess->setModel(mSortFilterModel);
 
@@ -361,6 +365,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *gpuPct_i = new QStandardItem(gpuPctText);
     gpuPct_i->setData(proc.getGpuPercent(), data);
     gpuPct_i->setData(gpuPctText, Qt::ToolTipRole);
+    gpuPct_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     // FR-115: GPU VRAM
     QString gpuVramText = proc.getGpuVramBytes() < 0
@@ -369,6 +374,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *gpuVram_i = new QStandardItem(gpuVramText);
     gpuVram_i->setData(proc.getGpuVramBytes(), data);
     gpuVram_i->setData(gpuVramText, Qt::ToolTipRole);
+    gpuVram_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     QStandardItem *cmd_i = new QStandardItem(proc.getCmd());
     cmd_i->setData(proc.getCmd(), data);

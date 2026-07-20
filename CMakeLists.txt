@@ -245,8 +245,9 @@ else()
     "${CORE_PLAT_DIR}/Info/oomd_info.cpp"
     "${CORE_PLAT_DIR}/Info/oomd_info_parser.cpp"
     "${CORE_PLAT_DIR}/Info/nvidia_smi_cache.cpp"
-    "${CORE_PLAT_DIR}/Info/nvidia_smi_pmon_streamer.cpp"
     "${CORE_PLAT_DIR}/Info/nvidia_smi_streamer.cpp"
+    "${CORE_PLAT_DIR}/Info/nvml_backend.cpp"
+    "${CORE_PLAT_DIR}/Info/nvml_process_sampler.cpp"
     "${CORE_PLAT_DIR}/Info/power_profile_info.cpp"
     "${CORE_PLAT_DIR}/Info/psi_info.cpp"
     "${CORE_PLAT_DIR}/Info/proc_info_parser.cpp"
@@ -279,8 +280,9 @@ else()
     "${CORE_PLAT_DIR}/Info/oomd_info_linux.h"
     "${CORE_PLAT_DIR}/Info/oomd_info_parser.h"
     "${CORE_PLAT_DIR}/Info/nvidia_smi_cache.h"
-    "${CORE_PLAT_DIR}/Info/nvidia_smi_pmon_streamer.h"
     "${CORE_PLAT_DIR}/Info/nvidia_smi_streamer.h"
+    "${CORE_PLAT_DIR}/Info/nvml_backend.h"
+    "${CORE_PLAT_DIR}/Info/nvml_process_sampler.h"
     "${CORE_PLAT_DIR}/Info/proc_info_parser.h"
     "${CORE_PLAT_DIR}/Info/psi_info.h"
     "${CORE_PLAT_DIR}/Info/process_info_linux.h"
@@ -321,6 +323,13 @@ target_include_directories(nexis-core PUBLIC
 
 target_compile_definitions(nexis-core PRIVATE NEXISCORE_LIBRARY QT_DEPRECATED_WARNINGS)
 target_link_libraries(nexis-core Qt6::Core Qt6::Network Qt6::Concurrent)
+
+# SSO-15374: NvmlLibraryBackend dlopen's libnvidia-ml.so.1 at runtime instead
+# of linking it — no CUDA toolkit build dependency — but still needs libdl
+# itself for dlopen/dlsym/dlclose.
+if(UNIX AND NOT APPLE)
+  target_link_libraries(nexis-core ${CMAKE_DL_LIBS})
+endif()
 
 # macOS-specific frameworks needed for system info APIs (IOKit, CoreFoundation,
 # SystemConfiguration for GH#191 localized network interface names)

@@ -6,11 +6,16 @@ const repoLinks = [
   { href: 'https://github.com/s4solutionsllc/Nexis/blob/native/CHANGELOG.md', label: 'Changelog' },
   { href: 'https://crowdin.com/project/nexis', label: 'Translations' },
 ];
+
+const compareLinks = [
+  { href: '/Nexis/alternatives/stacer/', label: 'Nexis vs. Stacer' },
+  { href: '/Nexis/migrating-from-stacer/', label: 'Migrating from Stacer' },
+];
 ---
 
 <footer class="border-t border-nexis-border/50 bg-nexis-dark">
   <div class="mx-auto max-w-6xl px-6 py-12">
-    <div class="grid gap-8 md:grid-cols-3">
+    <div class="grid gap-8 md:grid-cols-4">
       <!-- Branding -->
       <div>
         <div class="flex items-center gap-3">
@@ -29,6 +34,20 @@ const repoLinks = [
           {repoLinks.map(link => (
             <li>
               <a href={link.href} class="text-sm text-nexis-muted transition-colors hover:text-nexis-orange" target="_blank" rel="noopener noreferrer">
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- Compare & migrate -->
+      <div>
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-nexis-muted">Switching from Stacer</h3>
+        <ul class="space-y-2">
+          {compareLinks.map(link => (
+            <li>
+              <a href={link.href} class="text-sm text-nexis-muted transition-colors hover:text-nexis-orange">
                 {link.label}
               </a>
             </li>

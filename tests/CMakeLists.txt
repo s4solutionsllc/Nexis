@@ -65,6 +65,14 @@ if(UNIX AND NOT APPLE)
   add_nexis_test(NAME BatteryChargeThresholdTests
     SOURCES core/test_battery_charge_threshold.cpp)
 endif()
+
+# SSO-15374: NvmlProcessSampler/NvmlBackend live under linux/nexis-core and
+# are compiled into nexis-core only on Linux (see CMakeLists.txt
+# CORE_PLAT_SRCS). Gate to Linux like BatteryChargeThresholdTests above.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME NvmlProcessSamplerTests
+    SOURCES core/test_nvml_process_sampler.cpp)
+endif()
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real (non-overridden) PackageTool
