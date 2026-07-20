@@ -27,9 +27,87 @@
     <number>10</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="topBarLayout">
-     <item>
-      <widget class="QLineEdit" name="txtSearch">
+    <widget class="QWidget" name="sectionHeaderRow" native="true">
+     <layout class="QHBoxLayout" name="sectionHeaderRowLayout">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <property name="leftMargin">
+       <number>14</number>
+      </property>
+      <property name="topMargin">
+       <number>12</number>
+      </property>
+      <property name="rightMargin">
+       <number>14</number>
+      </property>
+      <property name="bottomMargin">
+       <number>10</number>
+      </property>
+      <item>
+       <widget class="QFrame" name="sectionHeaderAccent">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>3</width>
+          <height>26</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>3</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="accentToken" stdset="0">
+         <string notr="true">accent</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="sectionHeaderTextColumn">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item alignment="Qt::AlignLeft|Qt::AlignVCenter">
+         <widget class="QLabel" name="sectionHeaderTitle">
+          <property name="text">
+           <string>Docker</string>
+          </property>
+         </widget>
+        </item>
+        <item alignment="Qt::AlignLeft|Qt::AlignVCenter">
+         <widget class="QLabel" name="sectionHeaderSource">
+          <property name="text">
+           <string>Images, containers, and volumes</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="sectionHeaderSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="txtSearch">
        <property name="placeholderText">
         <string>Search docker resources...</string>
        </property>
@@ -58,7 +136,8 @@
        </property>
       </widget>
      </item>
-    </layout>
+     </layout>
+    </widget>
    </item>
    <item>
     <widget class="QStackedWidget" name="stackedWidget">
@@ -121,46 +200,70 @@
           </attribute>
           <layout class="QVBoxLayout" name="imagesLayout">
            <property name="leftMargin">
-            <number>0</number>
+            <number>8</number>
            </property>
            <property name="topMargin">
-            <number>5</number>
+            <number>8</number>
            </property>
            <property name="rightMargin">
-            <number>0</number>
+            <number>8</number>
            </property>
            <property name="bottomMargin">
+            <number>8</number>
+           </property>
+           <property name="spacing">
             <number>0</number>
            </property>
            <item>
-            <widget class="QTreeWidget" name="treeWidgetImages">
-             <property name="objectName">
-              <string>treeWidgetImages</string>
-             </property>
-             <property name="alternatingRowColors">
-              <bool>false</bool>
-             </property>
-             <property name="selectionMode">
-              <enum>QAbstractItemView::NoSelection</enum>
-             </property>
-             <property name="rootIsDecorated">
-              <bool>true</bool>
-             </property>
-             <column>
-              <property name="text">
-               <string>Image</string>
+            <widget class="QWidget" name="imagesContainer" native="true">
+             <layout class="QVBoxLayout" name="imagesContainerLayout">
+              <property name="leftMargin">
+               <number>4</number>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Size</string>
+              <property name="topMargin">
+               <number>4</number>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Created</string>
+              <property name="rightMargin">
+               <number>4</number>
               </property>
-             </column>
+              <property name="bottomMargin">
+               <number>4</number>
+              </property>
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QTreeWidget" name="treeWidgetImages">
+                <property name="objectName">
+                 <string>treeWidgetImages</string>
+                </property>
+                <property name="alternatingRowColors">
+                 <bool>false</bool>
+                </property>
+                <property name="selectionMode">
+                 <enum>QAbstractItemView::NoSelection</enum>
+                </property>
+                <property name="rootIsDecorated">
+                 <bool>true</bool>
+                </property>
+                <column>
+                 <property name="text">
+                  <string>Image</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Size</string>
+                 </property>
+                </column>
+                <column>
+                 <property name="text">
+                  <string>Created</string>
+                 </property>
+                </column>
+               </widget>
+              </item>
+             </layout>
             </widget>
            </item>
           </layout>

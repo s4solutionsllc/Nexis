@@ -967,10 +967,13 @@ QLabel[accessibleName="dialog-title"] {
  *   - Settings section-card variant: set a "compact" dynamic property
  *     (true) on the accent bar for the shorter ≥18px card-header bar
  *     instead of the ≥26px page/tile-header bar.
- *   - Pages with no existing title in the approved capture (Search, System
- *     Logs, Disk Tools, Uninstaller) apply this pattern as spacing/
- *     alignment chrome only via #sectionHeaderRow — do not add
- *     #sectionHeaderTitle/#sectionHeaderAccent where the capture had none.
+ *   - Pages with no existing title in the approved capture (Search,
+ *     Uninstaller) apply this pattern as spacing/alignment chrome only via
+ *     #sectionHeaderRow — do not add #sectionHeaderTitle/#sectionHeaderAccent
+ *     where the capture had none. System Logs gained a title block under
+ *     SSO-14314 and now uses the full recipe. Disk Tools gained a real page
+ *     header — accent + "Disk Tools" title — as a SSO-14311 follow-up
+ *     (SSO-14440), postdating its own approved capture.
  */
 
 #sectionHeaderRow {
@@ -1007,6 +1010,13 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @networkColor;
 }
 
+/* SSO-14437 (Resources remaining tiles): "temp" accent token for the Disk
+   Temperature history chart — reuses the existing @tempColor value
+   (values.ini), which had no accentToken selector wired until this item. */
+#sectionHeaderAccent[accentToken="temp"] {
+    background-color: @tempColor;
+}
+
 /* SSO-13732 (System Cleaner): "success" accent token for the page header
    bar, matching the "Estimated recoverable" @successColor readout. */
 #sectionHeaderAccent[accentToken="success"] {
@@ -1015,6 +1025,12 @@ QLabel[accessibleName="dialog-title"] {
 
 #sectionHeaderAccent[accentToken="accent"] {
     background-color: @accentColor;
+}
+
+/* SSO-15096 (APT Source Manager): "info" accent token for the repository
+   list's own header bar (Available Updates above it keeps "accent"). */
+#sectionHeaderAccent[accentToken="info"] {
+    background-color: @infoColor;
 }
 
 #sectionHeaderTitle {
@@ -1283,12 +1299,21 @@ QLabel[accessibleName="dialog-title"] {
    uic requires unique objectNames within one .ui, so — unlike the
    single-instance #sectionHeaderAccent/#sectionHeaderTitle pages — these five
    bars/labels are named per section and styled by name rather than through
-   the shared [accentToken] property selectors. */
+   the shared [accentToken] property selectors. Storage (SSO-14757) is the
+   sixth card but does reuse the bare shared #sectionHeaderAccent/
+   #sectionHeaderTitle objectNames below, since those names weren't already
+   claimed on this page — that lets it pick up the existing
+   #sectionHeaderAccent[accentToken="disk"] / @diskColor rule as-is instead
+   of adding a seventh named override. Fans (SSO-15377), renamed "Fans &
+   Sensors", is that seventh named override — the bare names were already
+   spoken for by Storage, so it gets its own #sectionHeaderAccentFans rule
+   below instead. */
 #HardwareInfoPage #sectionHeaderAccentSystem,
 #HardwareInfoPage #sectionHeaderAccentProcessor,
 #HardwareInfoPage #sectionHeaderAccentGraphics,
 #HardwareInfoPage #sectionHeaderAccentMemory,
-#HardwareInfoPage #sectionHeaderAccentBattery {
+#HardwareInfoPage #sectionHeaderAccentBattery,
+#HardwareInfoPage #sectionHeaderAccentFans {
     border-radius: 1;
     min-height: 18;
 }
@@ -1298,36 +1323,23 @@ QLabel[accessibleName="dialog-title"] {
 #HardwareInfoPage #sectionHeaderAccentGraphics  { background-color: @gpuColor; }
 #HardwareInfoPage #sectionHeaderAccentMemory    { background-color: @memoryColor; }
 #HardwareInfoPage #sectionHeaderAccentBattery   { background-color: @batteryColor; }
+/* SSO-15377: "Fans & Sensors" — a 7th named override (same reason as
+   System/Processor/Graphics/Memory/Battery above: uic requires unique
+   objectNames within one .ui, and the bare shared #sectionHeaderAccent
+   name is already claimed by Storage on this page). Reuses @fanColor,
+   which existed in values.ini but had no accentToken/named selector
+   wired until this item. */
+#HardwareInfoPage #sectionHeaderAccentFans      { background-color: @fanColor; }
 
 #HardwareInfoPage #sectionHeaderTitleSystem,
 #HardwareInfoPage #sectionHeaderTitleProcessor,
 #HardwareInfoPage #sectionHeaderTitleGraphics,
 #HardwareInfoPage #sectionHeaderTitleMemory,
-#HardwareInfoPage #sectionHeaderTitleBattery {
+#HardwareInfoPage #sectionHeaderTitleBattery,
+#HardwareInfoPage #sectionHeaderTitleFans {
     color: @color06;
     font-size: 9pt;
     font-weight: 600;
-}
-
-/* SSO-13735: System/Processor/Graphics/Memory moved to the shared
-   [cardRole="elevated"] + per-section header recipe above (DS §2/§3, NEX
-   F1/F2); these QGroupBox rules now only style the remaining native-title
-   sections (Fans, Storage) that are out of this item's approved-capture
-   scope. */
-#HardwareInfoPage QGroupBox {
-    border: 1px solid @borderColor;
-    border-radius: 12;
-    margin-top: 12;
-    background-color: @cardBg;
-}
-
-#HardwareInfoPage QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 6;
-    color: @color05;
-    font-size: 11pt;
-    font-weight: bold;
 }
 
 #HardwareInfoPage QTableWidget {
@@ -1391,6 +1403,26 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #cleanerScanProgress::chunk {
+    background-color: @accentColor;
+    border-radius: 2;
+}
+
+/* - Thin progress bar (shared recipe, DS §6, SSO-15380) - */
+
+/* Same recipe as #cleanerScanProgress above, promoted to a property
+ * selector so the Trust & Safety shared preview/confirm/progress component
+ * (and anything else that wants the standard thin/anchored progress bar)
+ * gets it for free instead of re-deriving a one-off objectName rule.
+ * Usage: widget->setProperty("progressRole", "thin");
+ * widget->setFixedHeight(Dpi::scale(4-6)); widget->setTextVisible(false).
+ */
+QProgressBar[progressRole="thin"] {
+    background-color: @chartGridColor;
+    border: none;
+    border-radius: 2;
+}
+
+QProgressBar[progressRole="thin"]::chunk {
     background-color: @accentColor;
     border-radius: 2;
 }
@@ -1535,15 +1567,19 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetScanResult::branch:has-children:!has-siblings:closed,
 #treeWidgetScanResult::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
 #treeWidgetScanResult::branch:open:has-children:!has-siblings,
 #treeWidgetScanResult::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
@@ -1607,21 +1643,10 @@ QLabel[accessibleName="dialog-title"] {
 /************************
     BOOT ANALYSIS PAGE
 *************************/
-#lblBootAnalysisTitle {
-    color: @color11;
-    padding: 10 0 4 0;
-}
-
-#lblBootAnalysisSubtitle {
-    color: @color11;
-    padding: 0 0 4 0;
-}
-
-#lblBootEmptyState {
-    color: @color04;
-    font-size: 11pt;
-    qproperty-alignment: AlignCenter;
-}
+/* NEX-13744: page now consumes the shared section-header (#sectionHeaderRow
+   family), [cardRole="elevated"], #metricTileValue, and #bootAnalysisEmptyState
+   recipes below instead of page-specific selectors — #lblBootAnalysisTitle /
+   #lblBootAnalysisSubtitle / #lblBootEmptyState are retired. */
 
 /* - Startup App - */
 
@@ -1826,10 +1851,21 @@ QLabel[accessibleName="dialog-title"] {
     PROCESSES PAGE
 ***********************/
 
-#lblProcessTitle {
-    color: @color11;
-    padding: 10 0;
-    font-size: 11pt;
+/* NEX Phase-2 "Processes" page item (SSO-13730): container-level shadow
+   lives on #processesContainer ([cardRole="elevated"], NEX F1); the table's
+   header reads as the container surface (@cardBgElevated) while rows stay
+   flat with a zebra/hover recipe (DS §7). */
+#tableProcess {
+    alternate-background-color: @cardBgElevated;
+}
+
+#tableProcess::item:hover {
+    background-color: @accentBgTint;
+}
+
+#tableProcess QHeaderView::section {
+    background-color: @cardBgElevated;
+    border-bottom: 1px solid @borderColor;
 }
 
 #checkAllProcesses {
@@ -1865,6 +1901,30 @@ QLabel[accessibleName="dialog-title"] {
     UNINSTALLER PAGE
 *************************/
 
+/* DS §3 — segmented tabs, header-anatomy spacing/padding (toolbar-only page,
+   no invented title: #sectionHeaderRow supplies the transparent chrome). */
+#btnSystemPackages, #btnSnapPackages, #btnOrphanPackages, #btnAptHistory {
+    border-radius: 8;
+    padding: 7 14;
+    font-size: 9pt;
+    font-weight: 500;
+    background-color: @cardBg;
+    color: @color05;
+    border: 1px solid @borderColor;
+}
+
+#btnSystemPackages:hover, #btnSnapPackages:hover, #btnOrphanPackages:hover, #btnAptHistory:hover,
+#btnSystemPackages:checked, #btnSnapPackages:checked, #btnOrphanPackages:checked, #btnAptHistory:checked {
+    background-color: @accentColor;
+    color: @overlayText;
+    border-color: @accentColor;
+    font-weight: 600;
+}
+
+/**************************
+    HELPERS PAGE
+    (DS §2/§3/§4 pass, NEX SSO-13740 — consumes NEX F1/F2 shared recipes)
+***************************/
 #nav QPushButton {
     border-radius: @dp6;
     padding: @dp6 @dp12;
@@ -1881,35 +1941,56 @@ QLabel[accessibleName="dialog-title"] {
     border-color: @accentColor;
 }
 
-/**************************
-    HELPERS PAGE
-***************************/
 #lblToolsSection, #lblMaintenanceSectionHeader {
     font-size: 8pt;
-    font-weight: 600;
-    color: @color04;
+    font-weight: 500;
+    color: @tertiaryText;
 }
 
-#maintenanceCard {
-    background-color: @cardBg;
-    border: 1px solid @borderColor;
-    border-radius: 8;
-    padding: 8 12;
-}
-
+/* Base fill/border/radius/elevation come from [cardRole="elevated"] (NEX F1);
+   only the hover affordance is page-specific. */
 #maintenanceCard:hover {
-    background-color: @cardBgElevated;
     border-color: @accentColor;
 }
 
 #maintenanceCard #lblCardTitle {
-    font-size: 10pt;
+    font-size: 9pt;
     font-weight: 600;
+    color: @color05;
 }
 
 #maintenanceCard #lblCardDesc {
     font-size: 8pt;
-    color: @color06;
+    font-weight: 500;
+    color: @tertiaryText;
+}
+
+/* Host Manage table: flat @cardBg rows nested inside the
+   #hostsTableContainer elevated card (DS §7) — overrides the generic
+   QTableView/[::item] recipe's @color01 fill for this table only.
+   border-radius nests 1px inside the container's 12px radius
+   (hostsTableContainerLayout margin, SSO-14306) so the flat fill doesn't
+   clash against the elevated card's rounded corners. */
+#tableViewHosts {
+    background-color: @cardBg;
+    border: 0;
+    border-radius: 11;
+}
+
+#tableViewHosts::item {
+    background-color: @cardBg;
+    font-family: @monoFontFamily;
+}
+
+/* QHeaderView paints its sections independently of the table's own
+   border-radius (SSO-14306) — round only the outer two sections' outer
+   top corner so interior column boundaries stay square. */
+#tableViewHosts QHeaderView::section:first {
+    border-top-left-radius: 11;
+}
+
+#tableViewHosts QHeaderView::section:last {
+    border-top-right-radius: 11;
 }
 
 /* - Search field (shared: Uninstaller / APT Source Manager / Homebrew) - */
@@ -1922,17 +2003,20 @@ QLabel[accessibleName="dialog-title"] {
     color: @color05;
 }
 
-/* -- Package tree (Uninstaller + Homebrew) -- table style matching System Cleaner -- */
+/* -- Package tree (Uninstaller) -- flat content inside #uninstallerContainer,
+   the single elevated card (DS §2/§7, NEX F1) -- */
 
 #treeWidgetPackages {
-    border: 1px solid @borderColor;
-    background-color: transparent;
-    border-radius: 8;
+    border: 0;
+    background-color: @cardBg;
+    border-radius: 0;
     font-size: 10pt;
 }
 
+/* Frozen "Application" column header — DS §7. */
 #treeWidgetPackages QHeaderView::section {
-    border-top: 1;
+    background-color: @cardBgElevated;
+    border-bottom: 1px solid @borderColor;
 }
 
 #treeWidgetPackages::item {
@@ -1957,15 +2041,19 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetPackages::branch:has-children:!has-siblings:closed,
 #treeWidgetPackages::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
 #treeWidgetPackages::branch:open:has-children:!has-siblings,
 #treeWidgetPackages::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
@@ -2004,6 +2092,20 @@ QLabel[accessibleName="dialog-title"] {
 #homebrewUpdatesContainer #treeWidgetUpdates::item,
 #homebrewPackagesContainer #treeWidgetPackages::item {
     font-family: @monoFontFamily;
+}
+
+/* Rounded-corner fix: make inner tree widgets transparent inside their
+   elevated containers so the parent border-radius shows through (same
+   pattern as ServicesPage QListWidget / listWidgetStartup). Strip the
+   inner border from treeWidgetUpdates — the container already provides it. */
+#homebrewPackagesContainer #treeWidgetPackages {
+    background-color: transparent;
+}
+
+#homebrewUpdatesContainer #treeWidgetUpdates {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
 }
 
 /* -- Snap package list (card style, unchanged) -- */
@@ -2094,36 +2196,76 @@ QLabel[accessibleName="dialog-title"] {
     DISK TOOLS PAGE
 ***************************/
 
-/* Directory picker lists */
+/* NEX Phase-2 "Disk Tools" page item (SSO-13739): the scan-roots list and
+   the results tree (per mode) each sit inside their own DS §2 elevated
+   container ([cardRole="elevated"], NEX F1, shadow via
+   DiskToolsPage::makeElevatedContainer()); rows below stay flat (DS §7 —
+   shadow lives on the container, never per row). SSO-14440 follow-up added
+   a real page header (accent + "Disk Tools" title, #sectionHeaderRow) above
+   the mode-bar row, and a compact "Scan Locations" section-card header
+   (also #sectionHeaderRow/[compact="true"]) as the first child inside each
+   mode's scan-roots elevated container — both reuse the shared Section
+   Header recipe above with no page-specific overrides needed. */
+
+/* Mode tabs (#modeBarRow) — plain QHBoxLayout spacing/alignment only, no
+   #sectionHeaderRow reuse here since the real page header (above) now owns
+   that selector; active tab uses @accentColor. */
+
+#DiskToolsPage QPushButton#segmentedLeft,
+#DiskToolsPage QPushButton#segmentedRight {
+    background-color: @cardBg;
+    color: @color05;
+    border: 1px solid @borderColor;
+    border-radius: @dp8;
+    padding: @dp8 @dp16;
+    font-size: 10pt;
+    font-weight: 600;
+}
+
+#DiskToolsPage QPushButton#segmentedLeft:checked,
+#DiskToolsPage QPushButton#segmentedRight:checked {
+    background-color: @accentColor;
+    color: @color07;
+    border-color: @accentColor;
+}
+
+#DiskToolsPage QPushButton#segmentedLeft:hover:!checked,
+#DiskToolsPage QPushButton#segmentedRight:hover:!checked {
+    border-color: @accentColor;
+}
+
+/* Directory picker lists — flat rows inside their elevated container */
 
 #diskToolsDirList {
-    border: 1px solid @borderColor;
+    border: 0;
     background-color: transparent;
-    border-radius: 8;
     font-size: 10pt;
     color: @color05;
 }
 
 #diskToolsDirList::item {
-    padding: @dp4 @dp6;
+    padding: @dp10 @dp12;
     color: @color05;
+    border-bottom: 1px solid @borderColor;
+    font-family: @monoFontFamily;
 }
 
 #diskToolsDirList::item:selected {
     background-color: @color02;
 }
 
-/* Large & Old results tree */
+/* Large & Old results tree — frozen elevated-surface header, flat rows */
 
 #treeWidgetLargeOld {
-    border: 1px solid @borderColor;
+    border: 0;
     background-color: transparent;
-    border-radius: 8;
     font-size: 10pt;
 }
 
 #treeWidgetLargeOld QHeaderView::section {
-    border-top: 1;
+    background-color: @cardBgElevated;
+    border-top: 0;
+    border-bottom: 1px solid @borderColor;
 }
 
 #treeWidgetLargeOld::item {
@@ -2146,17 +2288,18 @@ QLabel[accessibleName="dialog-title"] {
     image: url(:/static/themes/common/img/check.png);
 }
 
-/* Duplicate Finder results tree */
+/* Duplicate Finder results tree — frozen elevated-surface header, flat rows */
 
 #treeWidgetDuplicates {
-    border: 1px solid @borderColor;
+    border: 0;
     background-color: transparent;
-    border-radius: 8;
     font-size: 10pt;
 }
 
 #treeWidgetDuplicates QHeaderView::section {
-    border-top: 1;
+    background-color: @cardBgElevated;
+    border-top: 0;
+    border-bottom: 1px solid @borderColor;
 }
 
 #treeWidgetDuplicates::item {
@@ -2181,15 +2324,19 @@ QLabel[accessibleName="dialog-title"] {
 
 #treeWidgetDuplicates::branch:has-children:!has-siblings:closed,
 #treeWidgetDuplicates::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
 #treeWidgetDuplicates::branch:open:has-children:!has-siblings,
 #treeWidgetDuplicates::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
@@ -2197,9 +2344,68 @@ QLabel[accessibleName="dialog-title"] {
     border-bottom: 1px solid @borderColor;
 }
 
-/* -- Docker tree widgets (Images / Containers / Volumes) -- */
+/* -- Docker Images tree -- flat content inside #imagesContainer, the single
+   elevated card (DS §2/§7, SSO-15097) -- */
 
-#treeWidgetImages,
+#treeWidgetImages {
+    border: 0;
+    background-color: @cardBg;
+    border-radius: 0;
+    font-size: 10pt;
+}
+
+/* Frozen "Image / Size / Created" header — DS §7. */
+#treeWidgetImages QHeaderView::section {
+    background-color: @cardBgElevated;
+    border-top: 0;
+    border-bottom: 1px solid @borderColor;
+}
+
+#treeWidgetImages::item {
+    border-bottom: 1px solid @borderColor;
+    padding: @dp8 @dp6;
+    font-size: 10pt;
+    color: @color11;
+}
+
+#treeWidgetImages::indicator {
+    width: @dp14;
+    height: @dp14;
+}
+
+#treeWidgetImages::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#treeWidgetImages::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
+#treeWidgetImages::branch:has-children:!has-siblings:closed,
+#treeWidgetImages::branch:closed:has-children:has-siblings {
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
+    border-image: none;
+    width: 10;
+    height: 10;
+    padding: 4;
+}
+
+#treeWidgetImages::branch:open:has-children:!has-siblings,
+#treeWidgetImages::branch:open:has-children:has-siblings {
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
+    border-image: none;
+    width: 10;
+    height: 10;
+    padding: 4;
+}
+
+#treeWidgetImages::branch {
+    border-bottom: 1px solid @borderColor;
+}
+
+/* -- Docker Containers / Volumes trees -- out of scope for SSO-15097 (no
+   live-captured content); unchanged self-contained bordered-tree look. -- */
+
 #treeWidgetContainers,
 #treeWidgetVolumes {
     border: 1px solid @borderColor;
@@ -2208,13 +2414,11 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 10pt;
 }
 
-#treeWidgetImages QHeaderView::section,
 #treeWidgetContainers QHeaderView::section,
 #treeWidgetVolumes QHeaderView::section {
     border-top: 1;
 }
 
-#treeWidgetImages::item,
 #treeWidgetContainers::item,
 #treeWidgetVolumes::item {
     border-bottom: 1px solid @borderColor;
@@ -2223,48 +2427,44 @@ QLabel[accessibleName="dialog-title"] {
     color: @color11;
 }
 
-#treeWidgetImages::indicator,
 #treeWidgetContainers::indicator,
 #treeWidgetVolumes::indicator {
     width: @dp14;
     height: @dp14;
 }
 
-#treeWidgetImages::indicator:unchecked,
 #treeWidgetContainers::indicator:unchecked,
 #treeWidgetVolumes::indicator:unchecked {
     image: url(:/static/themes/common/img/un-check.png);
 }
 
-#treeWidgetImages::indicator:checked,
 #treeWidgetContainers::indicator:checked,
 #treeWidgetVolumes::indicator:checked {
     image: url(:/static/themes/common/img/check.png);
 }
 
-#treeWidgetImages::branch:has-children:!has-siblings:closed,
-#treeWidgetImages::branch:closed:has-children:has-siblings,
 #treeWidgetContainers::branch:has-children:!has-siblings:closed,
 #treeWidgetContainers::branch:closed:has-children:has-siblings,
 #treeWidgetVolumes::branch:has-children:!has-siblings:closed,
 #treeWidgetVolumes::branch:closed:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-right.svg);
+    image: url(:/static/themes/common/img/branch-chevron-right.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
-#treeWidgetImages::branch:open:has-children:!has-siblings,
-#treeWidgetImages::branch:open:has-children:has-siblings,
 #treeWidgetContainers::branch:open:has-children:!has-siblings,
 #treeWidgetContainers::branch:open:has-children:has-siblings,
 #treeWidgetVolumes::branch:open:has-children:!has-siblings,
 #treeWidgetVolumes::branch:open:has-children:has-siblings {
-    image: url(:/static/themes/common/img/chevron-down.svg);
+    image: url(:/static/themes/common/img/branch-chevron-down.svg);
     border-image: none;
+    width: 10;
+    height: 10;
     padding: 4;
 }
 
-#treeWidgetImages::branch,
 #treeWidgetContainers::branch,
 #treeWidgetVolumes::branch {
     border-bottom: 1px solid @borderColor;
@@ -2570,10 +2770,13 @@ QLabel[accessibleName="dialog-title"] {
 
 /* Action bar and buttons */
 
+/* DS §3 spacing: plain footer band with a top hairline, not its own
+   bordered card — the two elevated containers above carry the page's
+   shadows (NEX F1). */
 #DiskToolsPage #actionBarFrame {
-    background-color: @color01;
-    border: 1px solid @borderColor;
-    border-radius: 6;
+    background-color: transparent;
+    border: 0;
+    border-top: 1px solid @borderColor;
 }
 
 #DiskToolsPage #btnScan {
@@ -2767,41 +2970,39 @@ QLabel[accessibleName="dimmed-small"] {
 /**************************
     APT SOURCE MANAGER PAGE
 ***************************/
+/* SSO-15096: #aptSourcesContainer carries the single elevated shadow
+   ([cardRole="elevated"], NEX F1 recipe); the list itself stays transparent
+   so the container surface shows through, and each row
+   (#aptSourceRepositoryItemWidget) is a flat @cardBg strip, never shadowed
+   on its own (DS §7) — replaces the old per-row rounded card and
+   apt_source_repository_item.cpp's Utilities::addDropShadow() call. */
 #listWidgetAptSources {
     background-color: transparent;
-}
-
-#lblAptSourceTitle {
-    color: @color11;
-    padding: 10 0 5 12;
-}
-
-/* - Homebrew: "Available Updates (N)" title (mLblUpdatesTitle) - */
-#lblUpdatesTitle {
-    color: @color11;
-    padding: 10 0 5 12;
+    selection-background-color: @accentColor;
 }
 
 #txtAptSource {
     padding: 8;
 }
 
-#lblAptSourceSelectInfo {
-    margin-top: 5;
-    font-size: 10pt;
-    color: @color05;
-}
-
-#listWidgetAptSources {
-    selection-background-color: @accentColor;
+/* Available Updates tree, wrapped in its own elevated container
+   (#aptUpdatesContainer, NEX F1) — same nested-tree treatment as
+   Homebrew's #homebrewUpdatesContainer #treeWidgetUpdates. */
+#aptUpdatesContainer #treeWidgetUpdates {
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
 }
 
 /* - APT Source Repository Item - */
-
+/* GNOME-HIG grouped-list convention (DS §7): flush flat rows, divided by a
+   bottom border, matching #widgetStartupApp / #serviceItemWidget. The
+   repoStatus indicator below stays a left-edge accent rather than a full
+   border so the divider remains visible. */
 #aptSourceRepositoryItemWidget {
-    border-radius: 12;
     background-color: @cardBg;
-    border: 1px solid transparent;
+    border: 0;
+    border-bottom: 1px solid @borderColor;
 }
 
 #lblAptSourceIcon {
@@ -2809,8 +3010,7 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #aptSourceRepositoryItemWidget:hover {
-    background-color: @cardBgElevated;
-    border-color: @accentColor;
+    background-color: @accentBgTint;
 }
 
 #lblAptSourceName {
@@ -2952,6 +3152,23 @@ QLabel[accessibleName="dimmed-small"] {
     color: @color12;
 }
 
+/* DS §3 (NEX F2): the shared #sectionHeaderTitle/#sectionHeaderSource
+   recipe (style.qss "Section Header" block above) must win over the
+   blanket "#GnomeSettingsPage QLabel" rule just above — an extra
+   #GnomeSettingsPage ID qualifier raises specificity above a plain ID +
+   type selector. Covers both the page-level header and the Appearance
+   tab's per-group card headers (SSO-15098). */
+#GnomeSettingsPage #sectionHeaderTitle {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
+#GnomeSettingsPage #sectionHeaderSource {
+    color: @tertiaryText;
+    font-size: 8pt;
+}
+
 #GnomeSettingsPage QGroupBox {
     border: 1px solid @borderColor;
     border-radius: 12;
@@ -3021,6 +3238,30 @@ QLabel[accessibleName="dimmed-small"] {
 /*******************************
 SEARCH
 *******************************/
+
+/* NEX Phase-2 "Search" page item (SSO-13733): container-level shadow lives
+   on #searchContainer ([cardRole="elevated"], NEX F1); the table's header
+   reads as the container surface (@cardBgElevated) while rows stay flat
+   with a zebra/hover recipe (DS §7), matching #tableProcess above. */
+#tableFoundResults {
+    alternate-background-color: @cardBgElevated;
+}
+
+#tableFoundResults::item:hover {
+    background-color: @accentBgTint;
+}
+
+#tableFoundResults QHeaderView::section {
+    background-color: @cardBgElevated;
+    border-bottom: 1px solid @borderColor;
+}
+
+#lblSearchEmptyHeading {
+    color: @color06;
+    font-size: 10pt;
+    font-weight: 600;
+}
+
 #txtSearchInput {
     padding: @dp6 @dp12;
     border-radius: @dp6;
@@ -3066,6 +3307,21 @@ SEARCH
     color: @color06;
 }
 
+/* - Advanced Search group labels (Time/Permissions/Size/Owner), SSO-14295 -
+ * Reuses the DS §4 "Title" role (9pt/600/@color06 — see #metricTileTitle,
+ * style.qss:871-875) so the four filter-group headers read as sub-section
+ * labels instead of plain body text, without introducing a new visual
+ * language. #lblFileOrFolder (the same pane's inline "File or Folder:"
+ * field label) is intentionally excluded. */
+#advanceSearchPane QLabel#lblTime,
+#advanceSearchPane QLabel#lblPermissions,
+#advanceSearchPane QLabel#lblSize,
+#advanceSearchPane QLabel#lblOwner {
+    color: @color06;
+    font-size: 9pt;
+    font-weight: 600;
+}
+
 #advanceSearchPane QLineEdit {
     padding: @dp4 @dp6;
 }
@@ -3078,20 +3334,34 @@ SEARCH
     background-color: @accentBgTint;
 }
 
-#lblHostTitle {
-    font-size: 11pt;
-    color: @color12;
-}
-
 /* === Network Usage ===
    Reserved — no selectors yet. NEX Phase-2 "Network Usage" page item adds
    its #netUsage* selectors here (see network_usage_page.cpp setObjectName
    calls). */
 
 /* === System Logs ===
-   Reserved — no selectors yet. NEX Phase-2 "System Logs" page item adds
-   its #*Log* / #cmbLogSeverity selectors here (see system_logs_page.cpp
-   setObjectName calls). */
+   NEX Phase-2 "System Logs" page item (SSO-13734): container-level shadow
+   lives on #logsContainer ([cardRole="elevated"], NEX F1); the table header
+   reads as the container surface (@cardBgElevated) while rows stay flat
+   (@cardBg) with a zebra/hover recipe (DS §7) — mirrors the Processes page
+   item's #tableProcess treatment. Severity pills are painted by
+   SeverityPillDelegate (DS §5), not QSS. */
+#logTableView::item {
+    background-color: @cardBg;
+}
+
+#logTableView {
+    alternate-background-color: @cardBgElevated;
+}
+
+#logTableView::item:hover {
+    background-color: @accentBgTint;
+}
+
+#logTableView QHeaderView::section {
+    background-color: @cardBgElevated;
+    border-bottom: 1px solid @borderColor;
+}
 
 /***************************************
     Keyboard focus ring (SSO-3502)

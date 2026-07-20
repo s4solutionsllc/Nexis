@@ -21,6 +21,14 @@ class OomKillsWidget : public QWidget
 public:
     explicit OomKillsWidget(QWidget *parent = nullptr);
 
+    // DS §2/§3 (NEX-Resources, SSO-14437): opt this card into the shared
+    // elevated-card + accent-bar header recipe (mirrors
+    // HistoryChart::setElevated() — [cardRole="elevated"] fill/border on
+    // mCard, reveals + colors #sectionHeaderAccent, 90/26 drop shadow).
+    // Card content (title/intro/state/totals/events) is unchanged; only the
+    // chrome around it is affected.
+    void setElevated(const QString &accentToken);
+
 public slots:
     void onOomdUpdated(const OomdSnapshot &snap);
 
@@ -33,6 +41,7 @@ private:
     QString formatTimestamp(const QDateTime &when) const;
 
     QFrame      *mCard         = nullptr;
+    QFrame      *mAccentBar    = nullptr;
     QLabel      *mTitle        = nullptr;
     QLabel      *mState        = nullptr;
     QLabel      *mTotals       = nullptr;

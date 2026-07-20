@@ -10,10 +10,13 @@
 #ifdef Q_OS_LINUX
 #include <Info/psi_info.h>
 #include <Info/oomd_snapshot.h>
+#include <Info/rapl_power_snapshot.h>
 #endif
 
 class DataRefreshService;
 class OomKillsWidget;
+class PowerDrawWidget;
+class CpuCoreDetailWidget;
 
 namespace Ui {
     class ResourcesPage;
@@ -42,6 +45,7 @@ private slots:
 #ifdef Q_OS_LINUX
     void onPsiUpdated(const PsiSnapshot &snap);
     void onOomdUpdated(const OomdSnapshot &snap);
+    void onPowerUpdated(const RaplPowerSnapshot &snap);
 #endif
 
 private:
@@ -67,7 +71,11 @@ private:
 #ifdef Q_OS_LINUX
     HistoryChart *mChartPsiCpu = nullptr;
     OomKillsWidget *mOomKills = nullptr;
+    PowerDrawWidget *mPowerDraw = nullptr;
 #endif
+    // Per-core utilization/frequency detail — cross-platform (CpuInfo::getClocks()
+    // has a macOS implementation too), unlike the RAPL power card above.
+    CpuCoreDetailWidget *mCoreDetail = nullptr;
 
     DiskUsageLauncherWidget *mDiskLauncher;
 

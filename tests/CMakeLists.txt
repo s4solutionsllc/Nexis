@@ -20,6 +20,7 @@ set(GUI_SHARED_DIR "${CMAKE_SOURCE_DIR}/shared/nexis")
 
 # ── Utility tests ──────────────────────────────────────────────────────────────
 add_nexis_test(NAME FormatUtilTests   SOURCES utils/test_format_util.cpp)
+add_nexis_test(NAME MenuBarFormatUtilTests SOURCES utils/test_menu_bar_format_util.cpp)
 add_nexis_test(NAME FileUtilTests     SOURCES utils/test_file_util.cpp)
 add_nexis_test(NAME CommandUtilTests       SOURCES utils/test_command_util.cpp)
 add_nexis_test(NAME CommandUtilAsyncTests  SOURCES utils/test_command_util_async.cpp LIBS Qt6::Concurrent)
@@ -64,7 +65,37 @@ if(UNIX AND NOT APPLE)
   add_nexis_test(NAME BatteryChargeThresholdTests
     SOURCES core/test_battery_charge_threshold.cpp)
 endif()
+
+# SSO-15374: NvmlProcessSampler/NvmlBackend live under linux/nexis-core and
+# are compiled into nexis-core only on Linux (see CMakeLists.txt
+# CORE_PLAT_SRCS). Gate to Linux like BatteryChargeThresholdTests above.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME NvmlProcessSamplerTests
+    SOURCES core/test_nvml_process_sampler.cpp)
+endif()
+# SSO-15378: RAPL/powercap package power reader is Linux-only (see
+# CMakeLists.txt CORE_PLAT_SRCS) — gate like BatteryChargeThresholdTests.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME RaplPowerInfoTests
+    SOURCES core/test_rapl_power_info.cpp)
+endif()
+# SSO-15378: CpuCoreListModel is the virtualized backing store for the
+# per-core detail view (cross-platform, pure QAbstractListModel logic — no
+# AppManager/SignalMapper dependency, unlike the widgets that render it).
+add_nexis_test(NAME CpuCoreListModelTests
+  SOURCES
+    core/test_cpu_core_list_model.cpp
+    "${GUI_SHARED_DIR}/Pages/Helpers/cpu_core_list_model.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Helpers"
+)
 add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
+# SSO-15386 / SSO-15373: centralized deny-list shared by the uninstaller and
+# the orphan-leftover scanner. Lives in shared/nexis-core so it builds and
+# runs on both platforms; platform-specific deny-list cases are #ifdef-gated
+# inside the test file itself.
+add_nexis_test(NAME LifecycleDenyListTests SOURCES core/test_lifecycle_deny_list.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real (non-overridden) PackageTool
 # runCommand/runSudoCommand seam against the migrated execWithStatus contract.
@@ -94,8 +125,28 @@ if(APPLE)
       "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
   )
 
-  # FW-18 (SSO-3746): leftover artifact scanner — bundle-id matching logic
-  # against a synthetic ~/Library-shaped QTemporaryDir. QSKIP'd off-macOS.
+  # SSO-15431: known-answer tests (RFC 8032 §7.1) for SparkleSignatureVerifier
+  # — compiled with the vendored verify-only ed25519 subset. macOS-only
+  # because the verifier itself is only built into nexis-core on Darwin.
+  add_nexis_test(NAME SparkleSignatureVerifierTests
+    SOURCES
+      core/test_sparkle_signature_verifier.cpp
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_signature_verifier.cpp"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/verify.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/sha512.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/ge.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/sc.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/fe.c"
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519"
+  )
+
+  # SSO-15387 / FW-18 (SSO-3746): leftover artifact scanner — bundle-id
+  # matching + expanded fixture suite (product-name boundary, vendor dirs,
+  # LaunchDaemons privilege boundary, true-negative set, precision/recall
+  # harness).  QSKIP'd off-macOS.  Gate for SSO-15384 merge acceptance.
   add_nexis_test(NAME AppLeftoversMacOSTests
     SOURCES
       core/test_app_leftovers_macos.cpp
@@ -193,6 +244,20 @@ add_nexis_test(NAME AptHistoryTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core"
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
 )
+
+# SSO-15387: Linux leftover-scan heuristics fixture suite — XDG
+# config/cache/data + autostart .desktop patterns across dpkg/rpm/Flatpak/Snap
+# package types.  True-negative and precision/recall harness.  Platform-neutral
+# (all paths synthetic); gate for SSO-15385 merge acceptance.
+add_nexis_test(NAME AppLeftoversLinuxTests
+  SOURCES core/test_app_leftovers_linux.cpp)
+
+# SSO-15387: orphan-scan heuristics fixture suite — leftovers with no
+# corresponding installed package (Linux XDG + macOS Library).  Covers true
+# orphans, near-miss shared-vendor dirs, and precision/recall harness.
+# Platform-neutral.  Gate for SSO-15386 merge acceptance.
+add_nexis_test(NAME OrphanScanFixtureTests
+  SOURCES core/test_orphan_scan_fixtures.cpp)
 
 # SSO-351: pure parser for /proc/net/route — compiled directly so the test
 # runs on any platform.
@@ -473,6 +538,32 @@ add_nexis_test(NAME DuplicateFinderTests
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )
 
+# SSO-15381: FileShredderService — overwrite-then-unlink correctness (proven
+# at the filesystem level via a hard link), recursive folder shredding +
+# empty-dir cleanup, symlink safety, per-item failure accounting, and the
+# contained/duplicate path dedup shared by preview and shred.
+add_nexis_test(NAME FileShredderServiceTests
+  SOURCES
+    managers/test_file_shredder_service.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
+# SSO-15382: WipeFreeSpaceService::headroomForVolume() safety-margin math.
+add_nexis_test(NAME WipeFreeSpaceTests
+  SOURCES
+    managers/test_wipe_free_space.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
 # substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
 # "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui
@@ -498,6 +589,21 @@ add_nexis_test(NAME DirSizeScannerTests
   INCLUDES
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Concurrent
+)
+
+# SSO-15380: Trust & Safety shared component — scan/execute orchestration.
+# Compiled directly into the test (like DirSizeScannerTests above) so it
+# runs cross-platform without pulling in nexis-gui; the dialog half of the
+# component is QWidget UI and is exercised via UAT instead.
+add_nexis_test(NAME TrustSafetyRunnerTests
+  SOURCES
+    managers/test_trust_safety_runner.cpp
+    "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Common"
   LIBS
     Qt6::Concurrent
 )

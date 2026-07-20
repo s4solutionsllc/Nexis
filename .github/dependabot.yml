@@ -13,6 +13,12 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    # CodeQL requires all its sub-actions (init, analyze, upload-sarif) to run
+    # the same version — split bumps break the Analyze job (see PR #302).
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
     commit-message:
       prefix: "chore(ci)"
       include: "scope"

@@ -63,7 +63,10 @@
        <number>5</number>
       </property>
       <item row="1" column="0" colspan="7">
-       <widget class="QWidget" name="verticalWidget_2" native="true">
+       <widget class="QWidget" name="aptSourcesContainer" native="true">
+        <property name="cardRole" stdset="0">
+         <string notr="true">elevated</string>
+        </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <property name="spacing">
           <number>0</number>
@@ -72,13 +75,13 @@
           <number>0</number>
          </property>
          <property name="topMargin">
-          <number>0</number>
+          <number>12</number>
          </property>
          <property name="rightMargin">
           <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
+          <number>12</number>
          </property>
          <item>
           <widget class="QWidget" name="notFoundWidget" native="true">
@@ -366,27 +369,92 @@
         </property>
        </spacer>
       </item>
-      <item row="0" column="0" colspan="5">
-       <widget class="QLabel" name="lblAptSourceTitle">
-        <property name="font">
-         <font>
-          <pointsize>11</pointsize>
-          <italic>false</italic>
-         </font>
+      <item row="0" column="0" colspan="5" alignment="Qt::AlignLeft">
+       <widget class="QWidget" name="sectionHeaderRow" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string notr="true"/>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0" colspan="7">
-       <widget class="QLabel" name="lblAptSourceSelectInfo">
-        <property name="text">
-         <string>Select to delete or edit.</string>
-        </property>
+        <layout class="QHBoxLayout" name="sectionHeaderRowLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <item>
+          <widget class="QFrame" name="sectionHeaderAccent">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>3</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>3</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="accentToken" stdset="0">
+            <string notr="true">info</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="sectionHeaderTextCol">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="sectionHeaderTitle">
+             <property name="text">
+              <string notr="true"/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="sectionHeaderSource">
+             <property name="text">
+              <string>Select to delete or edit.</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>

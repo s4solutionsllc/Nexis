@@ -668,3 +668,33 @@ QByteArray SettingManager::getWindowState() const
 {
     return mSettings->value(SettingKeys::WindowState).toByteArray();
 }
+
+void SettingManager::setMenuBarMonitorEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::MenuBarMonitorEnabled, value);
+}
+
+bool SettingManager::getMenuBarMonitorEnabled() const
+{
+    return mSettings->value(SettingKeys::MenuBarMonitorEnabled, false).toBool();
+}
+
+void SettingManager::setLaunchInKioskMode(bool value)
+{
+    mSettings->setValue(SettingKeys::LaunchInKioskMode, value);
+}
+
+bool SettingManager::getLaunchInKioskMode() const
+{
+    return mSettings->value(SettingKeys::LaunchInKioskMode, false).toBool();
+}
+
+void SettingManager::setKioskMonitorName(const QString &value)
+{
+    mSettings->setValue(SettingKeys::KioskMonitorName, value);
+}
+
+QString SettingManager::getKioskMonitorName() const
+{
+    return mSettings->value(SettingKeys::KioskMonitorName, "").toString();
+}

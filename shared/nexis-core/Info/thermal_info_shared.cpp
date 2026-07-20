@@ -34,6 +34,11 @@ QString ThermalInfo::friendlyDeviceName(const QString &driverName)
         {"zenpower",        "CPU"},
         {"coretemp",        "CPU"},
         {"nvme",            "NVMe"},
+        // SSO-15377: DIMM temp sensors — jc42 covers most DDR3/DDR4 SPD
+        // thermal sensors; spd5118 is the DDR5 SPD Hub successor in kernel
+        // 6.9+ (JEDEC JESD300/JESD403).
+        {"jc42",            "DIMM"},
+        {"spd5118",         "DIMM"},
         {"amdgpu",          "GPU"},
         {"nouveau",         "GPU"},
         {"radeon",          "GPU"},

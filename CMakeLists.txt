@@ -119,12 +119,14 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Tools/repo_repair_engine.cpp"
   "${CORE_SHARED_DIR}/Tools/docker_tool.cpp"
   "${CORE_SHARED_DIR}/Tools/file_search_tool_shared.cpp"
+  "${CORE_SHARED_DIR}/Tools/lifecycle_deny_list.cpp"
   "${CORE_SHARED_DIR}/Tools/package_tool_shared.cpp"
   "${CORE_SHARED_DIR}/Tools/service_tool_shared.cpp"
   "${CORE_SHARED_DIR}/Utils/command_util_shared.cpp"
   "${CORE_SHARED_DIR}/Utils/display_server_util.cpp"
   "${CORE_SHARED_DIR}/Utils/file_util.cpp"
   "${CORE_SHARED_DIR}/Utils/format_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/menu_bar_format_util.cpp"
   "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.cpp"
 )
@@ -140,6 +142,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Info/power_profile_info.h"
   "${CORE_SHARED_DIR}/Info/network_info.h"
   "${CORE_SHARED_DIR}/Info/oomd_snapshot.h"
+  "${CORE_SHARED_DIR}/Info/rapl_power_snapshot.h"
   "${CORE_SHARED_DIR}/Info/process.h"
   "${CORE_SHARED_DIR}/Info/process_info.h"
   "${CORE_SHARED_DIR}/Info/boot_analysis_info.h"
@@ -157,12 +160,14 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Tools/docker_tool.h"
   "${CORE_SHARED_DIR}/Tools/file_search_tool.h"
   "${CORE_SHARED_DIR}/Tools/gnome_settings_tool.h"
+  "${CORE_SHARED_DIR}/Tools/lifecycle_deny_list.h"
   "${CORE_SHARED_DIR}/Tools/package_tool_shared.h"
   "${CORE_SHARED_DIR}/Tools/service_tool.h"
   "${CORE_SHARED_DIR}/Utils/command_util.h"
   "${CORE_SHARED_DIR}/Utils/display_server_util.h"
   "${CORE_SHARED_DIR}/Utils/file_util.h"
   "${CORE_SHARED_DIR}/Utils/format_util.h"
+  "${CORE_SHARED_DIR}/Utils/menu_bar_format_util.h"
   "${CORE_SHARED_DIR}/Utils/headless_util.h"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.h"
 )
@@ -249,10 +254,12 @@ else()
     "${CORE_PLAT_DIR}/Info/oomd_info.cpp"
     "${CORE_PLAT_DIR}/Info/oomd_info_parser.cpp"
     "${CORE_PLAT_DIR}/Info/nvidia_smi_cache.cpp"
-    "${CORE_PLAT_DIR}/Info/nvidia_smi_pmon_streamer.cpp"
     "${CORE_PLAT_DIR}/Info/nvidia_smi_streamer.cpp"
+    "${CORE_PLAT_DIR}/Info/nvml_backend.cpp"
+    "${CORE_PLAT_DIR}/Info/nvml_process_sampler.cpp"
     "${CORE_PLAT_DIR}/Info/power_profile_info.cpp"
     "${CORE_PLAT_DIR}/Info/psi_info.cpp"
+    "${CORE_PLAT_DIR}/Info/rapl_power_info.cpp"
     "${CORE_PLAT_DIR}/Info/proc_info_parser.cpp"
     "${CORE_PLAT_DIR}/Info/process_info.cpp"
     "${CORE_PLAT_DIR}/Info/boot_analysis_info.cpp"
@@ -283,10 +290,12 @@ else()
     "${CORE_PLAT_DIR}/Info/oomd_info_linux.h"
     "${CORE_PLAT_DIR}/Info/oomd_info_parser.h"
     "${CORE_PLAT_DIR}/Info/nvidia_smi_cache.h"
-    "${CORE_PLAT_DIR}/Info/nvidia_smi_pmon_streamer.h"
     "${CORE_PLAT_DIR}/Info/nvidia_smi_streamer.h"
+    "${CORE_PLAT_DIR}/Info/nvml_backend.h"
+    "${CORE_PLAT_DIR}/Info/nvml_process_sampler.h"
     "${CORE_PLAT_DIR}/Info/proc_info_parser.h"
     "${CORE_PLAT_DIR}/Info/psi_info.h"
+    "${CORE_PLAT_DIR}/Info/rapl_power_info.h"
     "${CORE_PLAT_DIR}/Info/process_info_linux.h"
     "${CORE_PLAT_DIR}/Info/boot_analysis_info_linux.h"
     "${CORE_PLAT_DIR}/Info/startup_info_linux.h"
@@ -326,6 +335,13 @@ target_include_directories(nexis-core PUBLIC
 target_compile_definitions(nexis-core PRIVATE NEXISCORE_LIBRARY QT_DEPRECATED_WARNINGS)
 target_link_libraries(nexis-core Qt6::Core Qt6::Network Qt6::Concurrent)
 
+# SSO-15374: NvmlLibraryBackend dlopen's libnvidia-ml.so.1 at runtime instead
+# of linking it — no CUDA toolkit build dependency — but still needs libdl
+# itself for dlopen/dlsym/dlclose.
+if(UNIX AND NOT APPLE)
+  target_link_libraries(nexis-core ${CMAKE_DL_LIBS})
+endif()
+
 # macOS-specific frameworks needed for system info APIs (IOKit, CoreFoundation,
 # SystemConfiguration for GH#191 localized network interface names)
 if(APPLE)
@@ -350,6 +366,8 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/feedback.cpp"
   "${GUI_SHARED_DIR}/signal_mapper.cpp"
   "${GUI_SHARED_DIR}/sliding_stacked_widget.cpp"
+  "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
+  "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.cpp"
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.cpp"
@@ -362,6 +380,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
   "${GUI_SHARED_DIR}/Services/file_search_service.cpp"
   "${GUI_SHARED_DIR}/Services/duplicate_finder_service.cpp"
+  "${GUI_SHARED_DIR}/Services/file_shredder_service.cpp"
   "${GUI_SHARED_DIR}/Services/host_service.cpp"
   "${GUI_SHARED_DIR}/Services/process_service.cpp"
   "${GUI_SHARED_DIR}/Services/startup_service.cpp"
@@ -369,6 +388,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Services/docker_service.cpp"
   "${GUI_SHARED_DIR}/Services/package_service.cpp"
   "${GUI_SHARED_DIR}/Services/snapshot_service.cpp"
+  "${GUI_SHARED_DIR}/Services/wipe_free_space_service.cpp"
   "${GUI_SHARED_DIR}/Managers/process_prefs_manager.cpp"
   # APT-specific GUI components live under linux/ only — they're built into
   # GUI_PLAT_SRCS on Linux. On macOS the Homebrew page replaces them.
@@ -408,6 +428,10 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Helpers/cpu_tuning_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/battery_charge_threshold_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/oom_kills_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/power_draw_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/cpu_core_list_model.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/cpu_core_item_delegate.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/cpu_core_detail_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/trim_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/wol_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo/hardware_info_page.cpp"
@@ -434,9 +458,14 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.cpp"
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskTools/wipe_free_space_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
+  "${GUI_SHARED_DIR}/Pages/SystemLogs/severity_pill_delegate.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shredder_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shredder_drop_zone.cpp"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shred_confirm_dialog.cpp"
 )
 
 set(GUI_SHARED_HDRS
@@ -448,6 +477,9 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/signal_mapper.h"
   "${GUI_SHARED_DIR}/sliding_stacked_widget.h"
   "${GUI_SHARED_DIR}/utilities.h"
+  "${GUI_SHARED_DIR}/Common/trust_safety_types.h"
+  "${GUI_SHARED_DIR}/Common/trust_safety_runner.h"
+  "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.h"
   "${GUI_SHARED_DIR}/Managers/app_manager.h"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.h"
   "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.h"
@@ -460,6 +492,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Managers/tool_manager.h"
   "${GUI_SHARED_DIR}/Services/file_search_service.h"
   "${GUI_SHARED_DIR}/Services/duplicate_finder_service.h"
+  "${GUI_SHARED_DIR}/Services/file_shredder_service.h"
   "${GUI_SHARED_DIR}/Services/host_service.h"
   "${GUI_SHARED_DIR}/Services/process_service.h"
   "${GUI_SHARED_DIR}/Services/startup_service.h"
@@ -467,6 +500,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Services/docker_service.h"
   "${GUI_SHARED_DIR}/Services/package_service.h"
   "${GUI_SHARED_DIR}/Services/snapshot_service.h"
+  "${GUI_SHARED_DIR}/Services/wipe_free_space_service.h"
   "${GUI_SHARED_DIR}/Managers/process_prefs_manager.h"
   # APT-specific GUI headers live under linux/ only (see GUI_PLAT_HDRS).
   "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.h"
@@ -523,9 +557,14 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.h"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.h"
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.h"
+  "${GUI_SHARED_DIR}/Pages/DiskTools/wipe_free_space_dialog.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.h"
+  "${GUI_SHARED_DIR}/Pages/SystemLogs/severity_pill_delegate.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shredder_page.h"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shredder_drop_zone.h"
+  "${GUI_SHARED_DIR}/Pages/Shredder/shred_confirm_dialog.h"
 )
 
 if(APPLE)
@@ -536,6 +575,8 @@ if(APPLE)
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
+    "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.cpp"
+    "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.mm"
   )
   set(GUI_PLAT_HDRS
     "${GUI_SHARED_DIR}/Pages/StartupApps/btm_reset_dialog.h"
@@ -543,6 +584,8 @@ if(APPLE)
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"
+    "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.h"
+    "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.h"
   )
 else()
   set(GUI_PLAT_SRCS

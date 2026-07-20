@@ -508,8 +508,8 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
         item->setCheckState(0, Qt::Unchecked);
         item->setText(0, entry.name);
         item->setText(1, entry.version);
-        if (!entry.trusted) {
-            item->setText(2, tr("Untrusted"));
+        if (!entry.signatureMetadataPresent) {
+            item->setText(2, tr("No Signature"));
             item->setForeground(2, QColor(0xD9, 0x53, 0x4F)); // error red
             item->setCheckState(0, Qt::Unchecked);
             item->setFlags(item->flags() & ~Qt::ItemIsUserCheckable);

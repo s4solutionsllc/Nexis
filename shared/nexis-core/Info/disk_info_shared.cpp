@@ -71,6 +71,7 @@ QList<Disk> DiskInfo::collectDiskInfo() const
             Disk disk;
             disk.name = info.displayName();
             disk.device = info.device();
+            disk.rootPath = info.rootPath();
             disk.size = info.bytesTotal();
             disk.used = info.bytesTotal() - info.bytesFree();
             disk.free = info.bytesFree();

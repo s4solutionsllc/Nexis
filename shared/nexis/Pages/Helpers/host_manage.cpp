@@ -35,12 +35,19 @@ HostManage::HostManage(QWidget *parent, HostService *hostService):
 
 void HostManage::init()
 {
-    ui->lblHostTitle->setText(tr("Hosts (%1)").arg(1));
+    ui->sectionHeaderTitle->setText(tr("Hosts (%1)").arg(1));
 
-    Utilities::addDropShadow({
-        ui->btnCancel, ui->btnNewHost, ui->btnSave, ui->txtAliases, ui->txtFullyQualified,
-        ui->txtIP, ui->tableViewHosts
-    }, 40);
+    // DS §3 accent-bar sub-section header (NEX F2) — neutral "accent" token,
+    // compact (card-header) height variant.
+    ui->sectionHeaderAccent->setFixedWidth(3);
+    ui->sectionHeaderAccent->setProperty("compact", true);
+    ui->sectionHeaderAccent->setProperty("accentToken", "accent");
+
+    // DS §2 elevated container for the hosts table (NEX F1) — shadows live on
+    // the container, never per-row/per-widget (DS §7).
+    ui->hostsTableContainer->setAttribute(Qt::WA_StyledBackground, true);
+    ui->hostsTableContainer->setProperty("cardRole", "elevated");
+    Utilities::addDropShadow(ui->hostsTableContainer, 90, 26);
 
     ui->widgetAddEditHost->hide();
     ui->lblErrorMsg->hide();
@@ -95,7 +102,7 @@ void HostManage::loadTableData()
     mSortFilterModel->invalidate();
     ui->tableViewHosts->reset();
 
-    ui->lblHostTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
+    ui->sectionHeaderTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
 }
 
 QList<QStandardItem*> HostManage::createRow(const QPair<int, HostEntry> &item)
@@ -216,7 +223,7 @@ void HostManage::on_btnSave_clicked()
         }
 
         updatedLine = -1;
-        ui->lblHostTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
+        ui->sectionHeaderTitle->setText(tr("Hosts (%1)").arg(mHostItemList.count()));
         ui->widgetAddEditHost->hide();
     }
 }

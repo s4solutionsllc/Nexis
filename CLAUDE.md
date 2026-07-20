@@ -149,7 +149,7 @@ This extends the global Phase 3 workflow.
 
 ## Notable Forks
 
-- **QuentiumYT/Stacer** — Most active upstream fork (78 stars). Reference for fixes and features.
+- **QuentiumYT/Stacer** — Most active upstream fork (114 stars, v1.7.0 May 2026, now the Debian upstream for `stacer`). Reference for fixes and features.
 
 ## graphify
 

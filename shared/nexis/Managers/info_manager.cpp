@@ -37,6 +37,7 @@
 #include <Info/startup_info_linux.h>
 #include <Info/psi_info.h>
 #include <Info/oomd_info_linux.h>
+#include <Info/rapl_power_info.h>
 #endif
 
 InfoManager *InfoManager::instance = nullptr;
@@ -77,6 +78,7 @@ InfoManager::InfoManager()
     sui  = std::make_unique<StartupInfoLinux>();
     psii = std::make_unique<PsiInfo>();
     oomd = std::make_unique<OomdInfoLinux>();
+    rapl = std::make_unique<RaplPowerInfo>();
 #endif
 }
 
@@ -169,6 +171,11 @@ QList<double> InfoManager::getCpuLoadAvgs() const
 double InfoManager::getCpuClock() const
 {
     return ci->getAvgClock();
+}
+
+QList<double> InfoManager::getCpuClocks() const
+{
+    return ci->getClocks();
 }
 
 /*
@@ -612,5 +619,20 @@ OomdSnapshot InfoManager::getOomdSnapshot() const
 bool InfoManager::hasOomd() const
 {
     return oomd->hasOomd();
+}
+
+void InfoManager::updateRaplPower()
+{
+    rapl->update();
+}
+
+RaplPowerSnapshot InfoManager::getRaplPower() const
+{
+    return rapl->getSnapshot();
+}
+
+bool InfoManager::hasRaplPower() const
+{
+    return rapl->isAvailable();
 }
 #endif

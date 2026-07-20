@@ -63,6 +63,17 @@ void ProcessesPage::init()
 
     mItemModel->setHorizontalHeaderLabels(mHeaders);
 
+    // DS §7: right-align tabular numerics (PID / Resident Memory / %Memory / %CPU).
+    const auto rightAlign = QVariant(Qt::AlignRight | Qt::AlignVCenter);
+    mItemModel->setHeaderData(Col_Pid, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_Rss, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_Pmem, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_Pcpu, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    // SSO-15374: GPU % / GPU VRAM are tabular numerics too — same DS §7
+    // right-align convention as PID/Resident Memory/%Memory/%CPU above.
+    mItemModel->setHeaderData(Col_GpuPct, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_GpuVram, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+
     ui->tableProcess->setModel(mSortFilterModel);
 
     ui->btnEndProcess->setVisible(false);
@@ -75,6 +86,9 @@ void ProcessesPage::init()
     mSortFilterModel->setDynamicSortFilter(true);
     mSortFilterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
     mSortFilterModel->sort(Col_Pcpu, Qt::SortOrder::DescendingOrder);
+
+    // DS §7: zebra striping for populated rows (shadow stays on the container).
+    ui->tableProcess->setAlternatingRowColors(true);
 
     ui->tableProcess->horizontalHeader()->setSectionsMovable(true);
     ui->tableProcess->horizontalHeader()->setFixedHeight(Dpi::scale(36));
@@ -118,7 +132,15 @@ void ProcessesPage::init()
     updateProcessIoCollection();
 
     Utilities::addDropShadow(ui->btnEndProcess, 60);
-    Utilities::addDropShadow(ui->tableProcess, 55);
+
+    // DS §2/§7: shadow lives on the elevated container, never on the table itself.
+    ui->processesContainer->setAttribute(Qt::WA_StyledBackground, true);
+    Utilities::addDropShadow(ui->processesContainer, 90, 26);
+
+    ui->processesEmptyState->setVisible(false);
+    connect(ui->btnRefreshNow, &QPushButton::clicked, this, [this]() {
+        mRefresh->triggerProcessRefresh();
+    });
 }
 
 void ProcessesPage::updateProcessIoCollection()
@@ -213,7 +235,11 @@ void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QS
         mPidToRow.insert(pid, i);
     }
 
-    ui->lblProcessTitle->setText(tr("Processes (%1)").arg(mItemModel->rowCount()));
+    // DS §5: swap between the process table and the empty-state affordance
+    // based on whether any row survived the filter above.
+    const bool isEmpty = mItemModel->rowCount() == 0;
+    ui->tableProcess->setVisible(!isEmpty);
+    ui->processesEmptyState->setVisible(isEmpty);
 
     // Restore selection
     if (selectedPid) {
@@ -241,6 +267,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *pid_i = new QStandardItem(QString::number(proc.getPid()));
     pid_i->setData(proc.getPid(), data);
     pid_i->setData(proc.getPid(), Qt::ToolTipRole);
+    pid_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
     // FR-116: pin role used by PinSortFilterProxyModel::lessThan.
     pid_i->setData(ProcessPrefsManager::ins()->isPinned(proc.getCmd()),
                    PinSortFilterProxyModel::PinnedRole);
@@ -255,10 +282,12 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *rss_i = new QStandardItem(FormatUtil::formatBytes(proc.getRss()));
     rss_i->setData(proc.getRss(), data);
     rss_i->setData(FormatUtil::formatBytes(proc.getRss()), Qt::ToolTipRole);
+    rss_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     QStandardItem *pmem_i = new QStandardItem(QString::number(proc.getPmem()));
     pmem_i->setData(proc.getPmem(), data);
     pmem_i->setData(proc.getPmem(), Qt::ToolTipRole);
+    pmem_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     QStandardItem *vsize_i = new QStandardItem(FormatUtil::formatBytes(proc.getVsize()));
     vsize_i->setData(proc.getVsize(), data);
@@ -271,6 +300,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *pcpu_i = new QStandardItem(QString::number(proc.getPcpu()));
     pcpu_i->setData(proc.getPcpu(), data);
     pcpu_i->setData(proc.getPcpu(), Qt::ToolTipRole);
+    pcpu_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     QStandardItem *starttime_i = new QStandardItem(proc.getStartTime());
     starttime_i->setData(proc.getStartTime(), data);
@@ -335,6 +365,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *gpuPct_i = new QStandardItem(gpuPctText);
     gpuPct_i->setData(proc.getGpuPercent(), data);
     gpuPct_i->setData(gpuPctText, Qt::ToolTipRole);
+    gpuPct_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     // FR-115: GPU VRAM
     QString gpuVramText = proc.getGpuVramBytes() < 0
@@ -343,6 +374,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     QStandardItem *gpuVram_i = new QStandardItem(gpuVramText);
     gpuVram_i->setData(proc.getGpuVramBytes(), data);
     gpuVram_i->setData(gpuVramText, Qt::ToolTipRole);
+    gpuVram_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
     QStandardItem *cmd_i = new QStandardItem(proc.getCmd());
     cmd_i->setData(proc.getCmd(), data);

@@ -1,4 +1,4 @@
-<!-- UNVERIFIED: no live capture, see CAPTURE_NOTES.md -->
+<!-- VERIFIED against live capture: docs/design/ux-modernization/current-state/linux/{dark,light}/apt_source_manager.png (SSO-14981 / PR #292). See mockups/notes/apt_source_manager.md. -->
 <!doctype html>
 <meta charset="utf-8">
 <title>APT Repository Manager</title>
@@ -31,7 +31,7 @@
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="4" height="4"/><rect x="8" y="9" width="4" height="4"/><rect x="13" y="9" width="4" height="4"/><rect x="8" y="4" width="4" height="4"/><path d="M2 13c2 5 8 6 12 4 2-1 3-3 4-5h2a3 3 0 0 0 3-3"/></svg><span>Docker</span></a>
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6a4 4 0 0 0-5 5L3 18l3 3 7-7a4 4 0 0 0 5-5l-3 3-2-2z"/></svg><span>Helpers</span></a>
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>System Logs</span></a>
-    <a class="nav-item nav-item--active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M5 7l7 4 7-4M12 11v10"/></svg><span>APT Repository Manager</span><span class="nav-badge">25</span></a>
+    <a class="nav-item nav-item--active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M5 7l7 4 7-4M12 11v10"/></svg><span>APT Repository Manager</span><span class="nav-badge">1</span></a>
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/></svg><span>GNOME Settings</span></a>
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1M2 12h3M19 12h3"/></svg><span>Settings</span></a>
     <div class="sidebar__foot">v2.8.3</div>
@@ -39,38 +39,53 @@
   </div>
 </aside>
   <main class="content">
-    <!-- change 3: DS §3 header anatomy (accent bar + title + the .ui "Select to delete or edit." source line); keeps the captured Search field -->
-    <div class="toolbar">
+    <!-- change 0 (new vs round-1): the page-level model was wrong — mUpdatesSection (apt_source_manager_page.cpp:51-108) inserts an "Available Updates" tree ABOVE the .ui-defined repo list; round-1 missed it entirely because it isn't in the .ui. Confirmed against the live capture. -->
+    <div class="toolbar" style="padding-bottom:0">
       <div class="page-header">
         <div class="accent-bar" style="background:var(--accentColor)"></div>
-        <div><div class="page-title">APT Repositories</div><div class="page-sub">Select to delete or edit.</div></div>
+        <div><div class="page-title">Available Updates (1)</div><div class="page-sub">apt update / apt list --upgradable, on demand or hourly</div></div>
+      </div>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--primary">Check Now</button>
+      <button class="btn btn--primary">Refresh Health</button>
+    </div>
+    <div style="padding:0 8px">
+      <div class="card card--table" style="max-height:150px">
+        <table class="data-table">
+          <colgroup><col style="width:28%"><col style="width:32%"><col></colgroup>
+          <thead><tr><th>Source</th><th>Package</th><th>Version</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">apt</td><td class="mono">tar</td><td class="muted">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- change 3: DS §3 header anatomy (accent bar + title + the .ui "Select to delete or edit." source line, promoted from footer text to page-sub); keeps the captured Search field. Count "(4)" from lblAptSourceTitle, verified live. -->
+    <div class="toolbar">
+      <div class="page-header">
+        <div class="accent-bar" style="background:var(--infoColor)"></div>
+        <div><div class="page-title">APT Repositories (4)</div><div class="page-sub">Select to delete or edit.</div></div>
       </div>
       <div class="toolbar__spacer"></div>
       <input class="field" style="width:240px" placeholder="Search…">
     </div>
-    <!-- change 1+2: DS §2 elevated container as a GNOME boxed list [GNOME-HIG]; DS §7 flat @cardBg rows, single container-level shadow (supersedes per-row apt_source_repository_item.cpp:29 shadow) -->
+    <!-- change 1+2: DS §2 elevated container as a GNOME boxed list [GNOME-HIG]; DS §7 flat @cardBg rows, single container-level shadow (supersedes per-row apt_source_repository_item.cpp:29 shadow). Row content verified against the live capture — all 4 real Ubuntu archive/security sources, all enabled. -->
     <div class="card-region">
       <div class="card card--table">
         <div class="list-scroll">
-          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://archive.ubuntu.com/ubuntu noble main restricted</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
-          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://archive.ubuntu.com/ubuntu noble-updates main restricted</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
-          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://security.ubuntu.com/ubuntu noble-security main restricted</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
-          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://archive.ubuntu.com/ubuntu noble universe multiverse</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
-          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://archive.canonical.com/ubuntu noble partner</div></div><div class="list-row__actions"><span class="toggle toggle--off"></span></div></div>
-          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb https://download.docker.com/linux/ubuntu noble stable</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
-          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb https://cli.github.com/packages stable main</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
+          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://archive.ubuntu.com/ubuntu/ resolute main universe restricted multiverse</div><div class="list-row__sub">Ubuntu Main — Official Ubuntu main archive repository</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
+          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://archive.ubuntu.com/ubuntu/ resolute-updates main universe restricted multiverse</div><div class="list-row__sub">Ubuntu Main — Official Ubuntu main archive repository</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
+          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://archive.ubuntu.com/ubuntu/ resolute-backports main universe restricted multiverse</div><div class="list-row__sub">Ubuntu Main — Official Ubuntu main archive repository</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
+          <div class="list-row"><div class="list-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg></div><div class="list-row__main"><div class="list-row__title mono">deb http://security.ubuntu.com/ubuntu/ resolute-security main universe restricted multiverse</div><div class="list-row__sub">Ubuntu Security — Official Ubuntu security updates repository</div></div><div class="list-row__actions"><span class="toggle"></span></div></div>
         </div>
       </div>
     </div>
-    <!-- change 4: bottom action bar rebuilt from the .ui (Edit / Delete / source input / Enable Source / Add Repository / Cancel), primary=@accentColor, danger=@destructiveColor -->
+    <!-- change 4: action bar rebuilt from the .ui's default (btnAddAPTSourceRepository unchecked) state — apt_source_manager_page.cpp:251-265 hides txtAptSource/checkEnableSource/btnCancel until Add Repository is toggled on. Round-1 mocked the toggled-on add-form as if it were the default; the live capture confirms the collapsed default (Edit, Delete, Add Repository only). -->
     <div class="action-bar">
       <button class="btn btn--primary">Edit</button>
       <button class="btn btn--danger">Delete</button>
       <div class="action-bar__spacer"></div>
-      <input class="field field--grow" placeholder="deb https://…">
-      <span class="radio"><span class="radio__dot"></span>Enable Source</span>
       <button class="btn btn--primary">Add Repository</button>
-      <button class="btn btn--danger">Cancel</button>
     </div>
   </main>
 </div>

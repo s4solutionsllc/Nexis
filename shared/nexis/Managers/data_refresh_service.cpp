@@ -259,6 +259,11 @@ void DataRefreshService::triggerDiskHealthCheck()
     onSlowTick();
 }
 
+void DataRefreshService::triggerProcessRefresh()
+{
+    onProcessTick();
+}
+
 void DataRefreshService::triggerUpdateCheck()
 {
     onUpdateTick();
@@ -347,6 +352,13 @@ void DataRefreshService::onFastTick()
     if (hasSubscribers(Signal::Psi)) {
         im->updateCpuPsi();
         emit psiUpdated(im->getCpuPsi());
+    }
+
+    // SSO-15378: package power draw is transient, sample it at the same
+    // cadence as CPU utilization rather than the 5 s medium tick.
+    if (hasSubscribers(Signal::Power)) {
+        im->updateRaplPower();
+        emit powerUpdated(im->getRaplPower());
     }
 #endif
 

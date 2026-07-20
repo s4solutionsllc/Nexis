@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QSizePolicy>
 #include <QSpinBox>
 #include <QStandardPaths>
 #include <QTreeWidget>
@@ -25,6 +26,7 @@
 
 #include "Managers/app_manager.h"
 #include "Services/duplicate_finder_service.h"
+#include "wipe_free_space_dialog.h"
 #include "signal_mapper.h"
 #include "utilities.h"
 #include <Utils/format_util.h>
@@ -62,6 +64,13 @@ void DiskToolsPage::init()
     ui->btnModeLargeOld->setObjectName("segmentedLeft");
     ui->btnModeDuplicates->setObjectName("segmentedRight");
 
+    ui->stackedModes->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    ui->mainLayout->setStretchFactor(ui->stackedModes, 1);
+
+    ui->btnWipeFreeSpace->setCursor(Qt::PointingHandCursor);
+    connect(ui->btnWipeFreeSpace, &QPushButton::clicked,
+            this, &DiskToolsPage::openWipeFreeSpaceDialog);
+
     buildLargeOldPage();
     buildDuplicatePage();
 
@@ -84,6 +93,12 @@ void DiskToolsPage::init()
 void DiskToolsPage::switchMode(int index)
 {
     ui->stackedModes->setCurrentIndex(index);
+}
+
+void DiskToolsPage::openWipeFreeSpaceDialog()
+{
+    WipeFreeSpaceDialog dialog(this);
+    dialog.exec();
 }
 
 static void populateDirList(QListWidget *list)
@@ -142,17 +157,29 @@ void DiskToolsPage::buildLargeOldPage()
     layout->setContentsMargins(0, 8, 0, 0);
     layout->setSpacing(8);
 
-    // Directory picker
+    // Directory picker — scan-roots list sits in its own DS §2 elevated
+    // container (NEX F1); Add.../Remove stay outside the card.
     auto *dirFrame = new QFrame(this);
     auto *dirLayout = new QHBoxLayout(dirFrame);
     dirLayout->setContentsMargins(0, 0, 0, 0);
     dirLayout->setSpacing(8);
 
-    mDirListLargeOld = new QListWidget(dirFrame);
+    auto *dirListContainer = makeElevatedContainer(dirFrame);
+    auto *dirListContainerLayout = new QVBoxLayout(dirListContainer);
+    dirListContainerLayout->setContentsMargins(0, 0, 0, 0);
+    dirListContainerLayout->setSpacing(0);
+
+    auto *scanLocationsHeader = new QWidget(dirListContainer);
+    buildSectionHeader(scanLocationsHeader, tr("Scan Locations"));
+    dirListContainerLayout->addWidget(scanLocationsHeader);
+
+    mDirListLargeOld = new QListWidget(dirListContainer);
     mDirListLargeOld->setObjectName("diskToolsDirList");
+    mDirListLargeOld->setFrameShape(QFrame::NoFrame);
     mDirListLargeOld->setMaximumHeight(80);
     populateDirList(mDirListLargeOld);
-    dirLayout->addWidget(mDirListLargeOld, 1);
+    dirListContainerLayout->addWidget(mDirListLargeOld);
+    dirLayout->addWidget(dirListContainer, 1);
 
     auto *dirBtnLayout = new QVBoxLayout();
     dirBtnLayout->setSpacing(4);
@@ -211,11 +238,21 @@ void DiskToolsPage::buildLargeOldPage()
     mLblLargeOldStatus->setObjectName("lblStatus");
     layout->addWidget(mLblLargeOldStatus);
 
-    // Results tree
-    mTreeLargeOld = new QTreeWidget(this);
+    // Results — DS §2 elevated container holding the tree and its
+    // pre-scan DS §5 empty state as siblings (visibility toggled in
+    // onLargeOldScan()/onLargeOldScanFinished()).
+    auto *resultsContainer = makeElevatedContainer(this);
+    auto *resultsContainerLayout = new QVBoxLayout(resultsContainer);
+    resultsContainerLayout->setContentsMargins(0, 0, 0, 0);
+    resultsContainerLayout->setSpacing(0);
+
+    mTreeLargeOld = new QTreeWidget(resultsContainer);
     mTreeLargeOld->setObjectName("treeWidgetLargeOld");
+    mTreeLargeOld->setFrameShape(QFrame::NoFrame);
     mTreeLargeOld->setHeaderLabels({tr("Name"), tr("Path"), tr("Size"),
                                      tr("Last Accessed"), tr("Last Modified")});
+    // DS §7: right-align the tabular Size column, header and cells.
+    mTreeLargeOld->headerItem()->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     mTreeLargeOld->setRootIsDecorated(false);
     mTreeLargeOld->setSortingEnabled(true);
     mTreeLargeOld->setAlternatingRowColors(true);
@@ -227,13 +264,25 @@ void DiskToolsPage::buildLargeOldPage()
     mTreeLargeOld->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     mTreeLargeOld->header()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     connect(mTreeLargeOld, &QTreeWidget::itemChanged, this, &DiskToolsPage::updateLargeOldSelection);
-    layout->addWidget(mTreeLargeOld, 1);
+    mTreeLargeOld->hide();
+    resultsContainerLayout->addWidget(mTreeLargeOld);
+
+    QPushButton *emptyStateScanBtn = nullptr;
+    mEmptyStateLargeOld = makeEmptyState(resultsContainer, tr("No results yet"),
+        tr("Set your size and age thresholds above, then run a scan to list large or "
+           "long-untouched files across the selected folders."),
+        &emptyStateScanBtn, tr("Scan"));
+    mEmptyStateLargeOld->setObjectName("diskToolsEmptyState");
+    connect(emptyStateScanBtn, &QPushButton::clicked, this, &DiskToolsPage::onLargeOldScan);
+    resultsContainerLayout->addWidget(mEmptyStateLargeOld);
+
+    layout->addWidget(resultsContainer, 1);
 
     // Action bar
     auto *actionBar = new QFrame(this);
     actionBar->setObjectName("actionBarFrame");
     auto *actionLayout = new QHBoxLayout(actionBar);
-    actionLayout->setContentsMargins(8, 8, 8, 8);
+    actionLayout->setContentsMargins(0, 12, 0, 0);
     actionLayout->setSpacing(12);
 
     mLblLargeOldSelection = new QLabel(tr("No files selected"), actionBar);
@@ -259,6 +308,8 @@ void DiskToolsPage::onLargeOldScan()
     mBtnLargeOldScan->hide();
     mBtnLargeOldCancel->show();
     mTreeLargeOld->clear();
+    mEmptyStateLargeOld->hide();
+    mTreeLargeOld->show();
     mLblLargeOldStatus->setText(tr("Scanning..."));
 
     qint64 sizeThreshold = mSpinSize->value();
@@ -341,6 +392,7 @@ void DiskToolsPage::onLargeOldScanFinished(const QList<QFileInfo> &results)
         item->setText(1, fi.absolutePath());
         item->setText(2, FormatUtil::formatBytes(fi.size()));
         item->setData(2, Qt::UserRole, static_cast<qulonglong>(fi.size()));
+        item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
         item->setText(3, fi.lastRead().toString("yyyy-MM-dd hh:mm"));
         item->setText(4, fi.lastModified().toString("yyyy-MM-dd hh:mm"));
         item->setData(0, Qt::UserRole, fi.absoluteFilePath());
@@ -421,17 +473,30 @@ void DiskToolsPage::buildDuplicatePage()
     layout->setContentsMargins(0, 8, 0, 0);
     layout->setSpacing(8);
 
-    // Directory picker (separate widget, synced data)
+    // Directory picker (separate widget, synced data) — scan-roots list
+    // sits in its own DS §2 elevated container (NEX F1); Add.../Remove
+    // stay outside the card.
     auto *dirFrame = new QFrame(this);
     auto *dirLayout = new QHBoxLayout(dirFrame);
     dirLayout->setContentsMargins(0, 0, 0, 0);
     dirLayout->setSpacing(8);
 
-    mDirListDup = new QListWidget(dirFrame);
+    auto *dirListContainer = makeElevatedContainer(dirFrame);
+    auto *dirListContainerLayout = new QVBoxLayout(dirListContainer);
+    dirListContainerLayout->setContentsMargins(0, 0, 0, 0);
+    dirListContainerLayout->setSpacing(0);
+
+    auto *scanLocationsHeader = new QWidget(dirListContainer);
+    buildSectionHeader(scanLocationsHeader, tr("Scan Locations"));
+    dirListContainerLayout->addWidget(scanLocationsHeader);
+
+    mDirListDup = new QListWidget(dirListContainer);
     mDirListDup->setObjectName("diskToolsDirList");
+    mDirListDup->setFrameShape(QFrame::NoFrame);
     mDirListDup->setMaximumHeight(80);
     populateDirList(mDirListDup);
-    dirLayout->addWidget(mDirListDup, 1);
+    dirListContainerLayout->addWidget(mDirListDup);
+    dirLayout->addWidget(dirListContainer, 1);
 
     auto *dirBtnLayout = new QVBoxLayout();
     dirBtnLayout->setSpacing(4);
@@ -498,10 +563,20 @@ void DiskToolsPage::buildDuplicatePage()
     mLblDupStatus->setObjectName("lblStatus");
     layout->addWidget(mLblDupStatus);
 
-    // Results tree (grouped)
-    mTreeDuplicates = new QTreeWidget(this);
+    // Results — DS §2 elevated container holding the tree and its
+    // pre-scan DS §5 empty state as siblings (visibility toggled in
+    // onDupScan()/onDupScanFinished()/onDupCancelled()).
+    auto *resultsContainer = makeElevatedContainer(this);
+    auto *resultsContainerLayout = new QVBoxLayout(resultsContainer);
+    resultsContainerLayout->setContentsMargins(0, 0, 0, 0);
+    resultsContainerLayout->setSpacing(0);
+
+    mTreeDuplicates = new QTreeWidget(resultsContainer);
     mTreeDuplicates->setObjectName("treeWidgetDuplicates");
+    mTreeDuplicates->setFrameShape(QFrame::NoFrame);
     mTreeDuplicates->setHeaderLabels({tr("Name / Group"), tr("Path"), tr("Size"), tr("Last Modified")});
+    // DS §7: right-align the tabular Size column, header and cells.
+    mTreeDuplicates->headerItem()->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     mTreeDuplicates->setRootIsDecorated(true);
     mTreeDuplicates->setSortingEnabled(false);
     mTreeDuplicates->setAlternatingRowColors(true);
@@ -511,13 +586,25 @@ void DiskToolsPage::buildDuplicatePage()
     mTreeDuplicates->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     mTreeDuplicates->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     connect(mTreeDuplicates, &QTreeWidget::itemChanged, this, &DiskToolsPage::updateDupSelection);
-    layout->addWidget(mTreeDuplicates, 1);
+    mTreeDuplicates->hide();
+    resultsContainerLayout->addWidget(mTreeDuplicates);
+
+    QPushButton *emptyStateDupBtn = nullptr;
+    mEmptyStateDup = makeEmptyState(resultsContainer, tr("No results yet"),
+        tr("Set your minimum size and file pattern above, then find duplicate files "
+           "across the selected folders."),
+        &emptyStateDupBtn, tr("Find Duplicates"));
+    mEmptyStateDup->setObjectName("diskToolsEmptyState");
+    connect(emptyStateDupBtn, &QPushButton::clicked, this, &DiskToolsPage::onDupScan);
+    resultsContainerLayout->addWidget(mEmptyStateDup);
+
+    layout->addWidget(resultsContainer, 1);
 
     // Action bar
     auto *actionBar = new QFrame(this);
     actionBar->setObjectName("actionBarFrame");
     auto *actionLayout = new QHBoxLayout(actionBar);
-    actionLayout->setContentsMargins(8, 8, 8, 8);
+    actionLayout->setContentsMargins(0, 12, 0, 0);
     actionLayout->setSpacing(12);
 
     mLblDupSelection = new QLabel(tr("No files selected"), actionBar);
@@ -540,6 +627,8 @@ void DiskToolsPage::onDupScan()
         return;
 
     mTreeDuplicates->clear();
+    mEmptyStateDup->hide();
+    mTreeDuplicates->show();
     mDupProgress->show();
     mDupProgress->setRange(0, 0);
     mBtnDupScan->hide();
@@ -594,6 +683,7 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
         auto *groupItem = new QTreeWidgetItem(mTreeDuplicates);
         groupItem->setText(0, tr("%1 duplicates").arg(group.files.size()));
         groupItem->setText(2, tr("%1 wasted").arg(FormatUtil::formatBytes(wastedBytes)));
+        groupItem->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
         groupItem->setFlags(groupItem->flags() & ~Qt::ItemIsUserCheckable);
 
         for (int i = 0; i < group.files.size(); ++i) {
@@ -604,6 +694,7 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
             child->setText(1, fi.absolutePath());
             child->setText(2, FormatUtil::formatBytes(fi.size()));
             child->setData(2, Qt::UserRole, static_cast<qulonglong>(fi.size()));
+            child->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
             child->setText(3, fi.lastModified().toString("yyyy-MM-dd hh:mm"));
             child->setData(0, Qt::UserRole, fi.absoluteFilePath());
         }
@@ -777,4 +868,88 @@ void DiskToolsPage::resizeEvent(QResizeEvent *event)
     const bool compact = event->size().width() < 720;
     if (compact != mLargeOldFilterCompact)
         applyLargeOldFilterLayout(compact);
+}
+
+// DS §2 elevated container (NEX F1): fill/border/radius/shadow come from the
+// shared [cardRole="elevated"] QSS recipe; callers add exactly one flat
+// child (list or tree) so the container carries the page's single shadow.
+QWidget *DiskToolsPage::makeElevatedContainer(QWidget *parent)
+{
+    auto *container = new QWidget(parent);
+    container->setAttribute(Qt::WA_StyledBackground, true);
+    container->setProperty("cardRole", "elevated");
+    Utilities::addDropShadow(container, 90, 26);
+    return container;
+}
+
+// DS §5 empty state (NEX F3): icon + heading + explanation + next-action
+// button, nested inside the caller's elevated container — no card chrome
+// of its own.
+QWidget *DiskToolsPage::makeEmptyState(QWidget *parent, const QString &heading,
+                                        const QString &text, QPushButton **outButton,
+                                        const QString &buttonText)
+{
+    auto *empty = new QWidget(parent);
+    auto *layout = new QVBoxLayout(empty);
+    layout->setSpacing(10);
+    layout->addStretch();
+
+    auto *icon = new QLabel(QString::fromUtf8("\xF0\x9F\x96\xB4"), empty); // hard-disk glyph
+    icon->setObjectName("emptyStateIcon");
+    icon->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    layout->addWidget(icon);
+
+    auto *lblHeading = new QLabel(heading, empty);
+    lblHeading->setObjectName("lblDiskToolsEmptyHeading");
+    lblHeading->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    layout->addWidget(lblHeading);
+
+    auto *lblText = new QLabel(text, empty);
+    lblText->setObjectName("emptyStateText");
+    lblText->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    lblText->setWordWrap(true);
+    layout->addWidget(lblText);
+
+    auto *btnRow = new QHBoxLayout();
+    btnRow->addStretch();
+    auto *btn = new QPushButton(buttonText, empty);
+    btn->setObjectName("btnScan");
+    btn->setCursor(Qt::PointingHandCursor);
+    btnRow->addWidget(btn);
+    btnRow->addStretch();
+    layout->addLayout(btnRow);
+    if (outButton)
+        *outButton = btn;
+
+    layout->addStretch();
+    return empty;
+}
+
+// DS §3 section-card header (NEX F2 shared recipe, "compact" variant —
+// >=18px accent bar instead of the >=26px page/tile-header bar) — mirrors
+// SettingsPage::buildSectionHeader(). headerContainer is an existing child
+// of the caller's DS §2 elevated container (SSO-14440); this does not add
+// or wrap a container of its own.
+void DiskToolsPage::buildSectionHeader(QWidget *headerContainer, const QString &title)
+{
+    headerContainer->setObjectName("sectionHeaderRow");
+
+    auto *row = new QHBoxLayout(headerContainer);
+    row->setContentsMargins(10, 8, 10, 6);
+    row->setSpacing(8);
+
+    auto *accentBar = new QFrame(headerContainer);
+    accentBar->setObjectName("sectionHeaderAccent");
+    accentBar->setProperty("compact", true);
+    accentBar->setProperty("accentToken", "accent");
+    accentBar->setFrameShape(QFrame::NoFrame);
+    accentBar->setFixedWidth(3);
+    accentBar->setMinimumHeight(18);
+    accentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    row->addWidget(accentBar);
+
+    auto *lblTitle = new QLabel(title, headerContainer);
+    lblTitle->setObjectName("sectionHeaderTitle");
+    row->addWidget(lblTitle);
+    row->addStretch();
 }

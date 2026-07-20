@@ -24,6 +24,7 @@ signals:
     void sigNavigateToPage(const QString &pageTitle);
     void sigCleanableSizeChanged(quint64 bytes);
     void sigDashboardFooterChanged(bool visible);
+    void sigMenuBarMonitorToggled(bool enabled);
 
 private:
     static SignalMapper *instance;

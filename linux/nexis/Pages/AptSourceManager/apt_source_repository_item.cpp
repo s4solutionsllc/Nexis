@@ -1,6 +1,5 @@
 #include "apt_source_repository_item.h"
 #include "ui_apt_source_repository_item.h"
-#include "utilities.h"
 #include "Utils/command_util.h"
 #include "signal_mapper.h"
 #include <QDebug>
@@ -25,8 +24,6 @@ APTSourceRepositoryItem::APTSourceRepositoryItem(APTSourcePtr aptSource, QWidget
 void APTSourceRepositoryItem::init()
 {
     ui->setupUi(this);
-
-    Utilities::addDropShadow(this, 30, 10);
 
     // --- Enriched card: status dot + description line ---
     // Restructure layout: wrap name label in a VBox with description underneath
