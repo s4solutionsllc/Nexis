@@ -79,6 +79,11 @@ private:
     // macOS path, consumed when sigUninstallFinished fires. Cleared
     // after the review dialog runs.
     QStringList mPendingCrumbBundleIds;
+#ifdef Q_OS_LINUX
+    // SSO-15385: package names captured at on_btnUninstall_clicked for the
+    // Linux leftover-scan path, consumed when sigUninstallFinished fires.
+    QStringList mPendingUninstallPackageNames;
+#endif
 };
 
 #endif // UNINSTALLERPAGE_H

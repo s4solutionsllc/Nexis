@@ -66,6 +66,11 @@ void PackageService::trashApps(const QStringList &appPaths)
     });
 }
 
+bool PackageService::trashLeftovers(const QStringList &paths)
+{
+    return mToolManager->trashLeftovers(paths);
+}
+
 void PackageService::fetchOrphanPackages()
 {
     QThreadPool::globalInstance()->start([this]() {

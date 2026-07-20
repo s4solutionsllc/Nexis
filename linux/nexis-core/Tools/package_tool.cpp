@@ -1,7 +1,14 @@
 #include "package_tool_linux.h"
 
+#include "Tools/leftover_deny_list.h"
+#include "Tools/leftover_scanner_linux.h"
+
+#include <QCoreApplication>
 #include <QDebug>
+#include <QFile>
+#include <QFileInfo>
 #include <QRegularExpression>
+#include <QUuid>
 
 PackageToolLinux::PackageToolLinux()
 {
@@ -634,3 +641,82 @@ bool PackageToolLinux::aptHistoryRollback(int transactionId)
 }
 
 // friendlySectionName() is in shared/nexis-core/Tools/package_tool_shared.cpp
+
+// SSO-15385: Linux leftover scanner implementation.
+
+QList<AppLeftover> PackageToolLinux::findAppLeftovers(const Package &app)
+{
+    // Build the search name set: package name plus any reverse-DNS app id
+    // fragments we can derive. For Flatpak the name is usually the full
+    // reverse-DNS id (e.g. "org.mozilla.Firefox"); for dpkg/rpm it is the
+    // short package name (e.g. "firefox"). We include both forms so the
+    // scanner can match directory names in either convention.
+    QStringList names;
+    if (!app.name.isEmpty())
+        names.append(app.name);
+    // Derive last-segment shortname from reverse-DNS ids
+    // (e.g. "org.mozilla.Firefox" → "Firefox").
+    if (app.name.contains(QLatin1Char('.')) && !app.name.startsWith(QLatin1Char('.'))) {
+        names.append(app.name.section(QLatin1Char('.'), -1));
+    }
+    names.removeDuplicates();
+
+    const auto candidates = LeftoverScannerLinux::scanLeftovers(names);
+
+    QList<AppLeftover> out;
+    out.reserve(candidates.size());
+    for (const auto &c : candidates) {
+        AppLeftover lf;
+        lf.path     = c.path;
+        lf.category = c.category;
+        lf.size     = c.sizeBytes;
+        out.append(lf);
+    }
+    return out;
+}
+
+bool PackageToolLinux::trashLeftovers(const QStringList &paths)
+{
+    const QString batchId    = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString nexisVer   = QCoreApplication::applicationVersion();
+    bool allOk = true;
+
+    for (const QString &raw : paths) {
+        const QFileInfo fi(raw);
+        const QString canonical = fi.canonicalFilePath();
+
+        // CISO §2: hard deny-list check on canonicalized path.
+        if (canonical.isEmpty() || LeftoverDenyList::isDenied(canonical)) {
+            qWarning() << "trashLeftovers: deny-list blocked" << raw;
+            allOk = false;
+            continue;
+        }
+
+        const quint64 size = static_cast<quint64>(fi.size());
+
+        // CISO §3: log before the action so the record exists even on failure.
+        LeftoverDenyList::AuditEntry entry;
+        entry.batchId       = batchId;
+        entry.originalPath  = raw;
+        entry.canonicalPath = canonical;
+        entry.action        = QStringLiteral("trash");
+        entry.matchRule     = QStringLiteral("user-selected");
+        entry.sizeBytes     = size;
+        entry.nexisVersion  = nexisVer;
+        LeftoverDenyList::logDeletion(entry);
+
+        // QFile::moveToTrash() uses the freedesktop.org Trash spec on Linux.
+        // CISO §1: fail securely — never silently fall back to unlink.
+        QString trashDest;
+        if (!QFile::moveToTrash(raw, &trashDest)) {
+            qWarning() << "trashLeftovers: moveToTrash failed for" << raw;
+            allOk = false;
+        } else {
+            // Update the log entry with the trash destination for the audit trail.
+            entry.trashDest = trashDest;
+            LeftoverDenyList::logDeletion(entry);
+        }
+    }
+
+    return allOk;
+}

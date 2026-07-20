@@ -25,6 +25,10 @@ public:
     void uninstallPackages(const QStringList &packages, bool purge);
     void uninstallSnapPackages(const QStringList &packages);
     void trashApps(const QStringList &appPaths);
+    // SSO-15385: move leftover files to the platform Trash (Linux:
+    // freedesktop.org Trash; macOS: NSFileManager trashItemAtURL).
+    // CISO §1/§2/§3 (SSO-15373) enforcement is inside PackageTool::trashLeftovers.
+    bool trashLeftovers(const QStringList &paths);
     void removeOrphanPackages();
 
     QStringList dryRunRemovePackages(const QStringList &packages);

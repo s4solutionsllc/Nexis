@@ -3,6 +3,9 @@
 #ifdef Q_OS_MAC
 #include "crumbs_review_dialog.h"
 #endif
+#ifdef Q_OS_LINUX
+#include "Pages/Uninstaller/leftover_review_dialog_linux.h"
+#endif
 #include <QHeaderView>
 #include <QMovie>
 #include <QMessageBox>
@@ -102,6 +105,19 @@ void UninstallerPage::init()
         const QStringList ids = mPendingCrumbBundleIds;
         mPendingCrumbBundleIds.clear();
         auto *dlg = new CrumbsReviewDialog(ids, this);
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->open();
+    });
+#endif
+#ifdef Q_OS_LINUX
+    // SSO-15385: after a Linux package uninstall, scan XDG user dirs for
+    // leftover files matching the removed packages and offer move-to-trash review.
+    connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
+        if (mPendingUninstallPackageNames.isEmpty())
+            return;
+        const QStringList names = mPendingUninstallPackageNames;
+        mPendingUninstallPackageNames.clear();
+        auto *dlg = new LeftoverReviewDialogLinux(names, this);
         dlg->setAttribute(Qt::WA_DeleteOnClose);
         dlg->open();
     });
@@ -537,6 +553,12 @@ void UninstallerPage::on_btnUninstall_clicked()
         return;
 
     bool purge = ui->chkPurge->isChecked();
+
+#ifdef Q_OS_LINUX
+    // SSO-15385: capture names before uninstall so the leftover-scan dialog
+    // can search for residual files once the package removal finishes.
+    mPendingUninstallPackageNames = selectedPackages + selectedSnapPackages;
+#endif
 
     mPackageService->uninstallPackages(selectedPackages, purge);
     mPackageService->uninstallSnapPackages(selectedSnapPackages);

@@ -37,6 +37,7 @@ public:
     // macOS native .app bundles
     QList<Package> getInstalledApps() const;
     bool trashApps(const QStringList &appPaths);
+    bool trashLeftovers(const QStringList &paths);
 
     // Snap/Flatpak revision cleanup (FR-79)
     QList<StaleSnapRevision> getStaleSnapRevisions() const;

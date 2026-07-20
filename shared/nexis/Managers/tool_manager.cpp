@@ -122,6 +122,11 @@ bool ToolManager::trashApps(const QStringList &appPaths)
     return mPackageTool->trashApps(appPaths);
 }
 
+bool ToolManager::trashLeftovers(const QStringList &paths)
+{
+    return mPackageTool->trashLeftovers(paths);
+}
+
 /*
  * Snap/Flatpak revision cleanup (FR-79)
  */
