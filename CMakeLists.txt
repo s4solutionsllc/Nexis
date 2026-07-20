@@ -194,6 +194,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/update_info.cpp"
     "${CORE_PLAT_DIR}/Tools/homebrew_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/crumbs_scanner.cpp"
+    "${CORE_PLAT_DIR}/Tools/mail_attachment_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/file_search_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/package_tool.cpp"
@@ -224,6 +225,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/update_info_macos.h"
     "${CORE_PLAT_DIR}/Tools/homebrew_tool_macos.h"
     "${CORE_PLAT_DIR}/Tools/crumbs_scanner.h"
+    "${CORE_PLAT_DIR}/Tools/mail_attachment_tool.h"
     "${CORE_PLAT_DIR}/Tools/file_search_tool_macos.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_constants.h"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool_macos.h"
@@ -568,6 +570,7 @@ if(APPLE)
     "${GUI_SHARED_DIR}/Pages/StartupApps/btm_row.cpp"
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.cpp"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.cpp"
+    "${GUI_PLAT_DIR}/Pages/MailCleanup/mail_attachment_cleanup_page.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.cpp"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.mm"
@@ -577,6 +580,7 @@ if(APPLE)
     "${GUI_SHARED_DIR}/Pages/StartupApps/btm_row.h"
     "${GUI_PLAT_DIR}/Pages/Uninstaller/crumbs_review_dialog.h"
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.h"
+    "${GUI_PLAT_DIR}/Pages/MailCleanup/mail_attachment_cleanup_page.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.h"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.h"
@@ -721,6 +725,7 @@ target_include_directories(nexis-gui PUBLIC
 )
 if(APPLE)
   target_include_directories(nexis-gui PUBLIC "${GUI_PLAT_DIR}/Pages/Homebrew")
+  target_include_directories(nexis-gui PUBLIC "${GUI_PLAT_DIR}/Pages/MailCleanup")
 else()
   target_include_directories(nexis-gui PUBLIC "${GUI_PLAT_DIR}/Pages/AptSourceManager")
 endif()
