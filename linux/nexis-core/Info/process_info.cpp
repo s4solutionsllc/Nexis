@@ -1,8 +1,7 @@
 #include "process_info_linux.h"
 
-#include "nvidia_smi_pmon_streamer.h"
+#include "nvml_process_sampler.h"
 #include "proc_info_parser.h"
-#include "Utils/command_util.h"
 
 #include <QByteArray>
 #include <QDateTime>
@@ -18,11 +17,11 @@
 
 namespace {
 
-// Lazy-constructed singleton. Started the first time we see mCollectGpu
-// true and nvidia-smi is present; stays alive for the app lifetime.
-NvidiaSmiPmonStreamer *pmonStreamer()
+// SSO-15374: lazy-constructed singleton. isAvailable() dlopen's NVML on
+// first reach and caches the result; stays alive for the app lifetime.
+NvmlProcessSampler *nvmlSampler()
 {
-    static NvidiaSmiPmonStreamer *s = new NvidiaSmiPmonStreamer();
+    static NvmlProcessSampler *s = new NvmlProcessSampler();
     return s;
 }
 
@@ -140,6 +139,12 @@ QList<Process> ProcessInfoLinux::collectProcesses()
             gpuElapsedSec = mGpuTimer.elapsed() / 1000.0;
             mGpuTimer.restart();
         }
+
+        // SSO-15374: one synchronous NVML refresh per tick (no subprocess —
+        // library calls, unlike the old CLI streamer). isAvailable() is a
+        // cheap cached check once the driver/library has been probed once.
+        if (NvmlProcessSampler *s = nvmlSampler(); s->isAvailable())
+            s->refresh();
     } else if (!mPrevGpuEngineNs.isEmpty()) {
         mPrevGpuEngineNs.clear();
         mGpuTimerStarted = false;
@@ -247,10 +252,10 @@ QList<Process> ProcessInfoLinux::collectProcesses()
                 ++gpuIt;
         }
 
-        // SSO-3399: keep the nvidia-smi pmon streamer's mLatest hash from
-        // growing across the streamer's app-lifetime singleton — drop entries
+        // SSO-3399 / SSO-15374: keep the NVML sampler's mLatest hash from
+        // growing across the sampler's app-lifetime singleton — drop entries
         // for any pid we don't see in the current tick.
-        if (NvidiaSmiPmonStreamer *s = pmonStreamer(); s && s->isRunning())
+        if (NvmlProcessSampler *s = nvmlSampler(); s->isAvailable())
             s->pruneDeadPids(activeGpuPids);
     }
 
@@ -387,25 +392,17 @@ void ProcessInfoLinux::collectGpuForPid(pid_t pid, Process &proc, double elapsed
         return;
     }
 
-    // FR-115: NVIDIA proprietary driver doesn't populate DRM fdinfo
-    // reliably. Fall through to the pmon streamer's cache if nvidia-smi
-    // is installed. Start it lazily on first reach.
-    static bool probed = false;
-    static bool nvidiaPresent = false;
-    if (!probed) {
-        probed = true;
-        nvidiaPresent = CommandUtil::isExecutable("nvidia-smi");
-    }
-    if (!nvidiaPresent)
+    // FR-115 / SSO-15374: NVIDIA proprietary driver doesn't populate DRM
+    // fdinfo reliably. Fall through to the NVML per-PID sampler, refreshed
+    // once per tick above — this just reads its cached sample. No-ops
+    // gracefully (leaves the -1 sentinels) if NVML isn't available.
+    NvmlProcessSampler *s = nvmlSampler();
+    if (!s->isAvailable())
         return;
-
-    NvidiaSmiPmonStreamer *s = pmonStreamer();
-    if (!s->isRunning())
-        s->start();
 
     const auto sample = s->get(pid);
     if (sample.gpuPercent >= 0)
-        proc.setGpuPercent(static_cast<double>(sample.gpuPercent));
+        proc.setGpuPercent(sample.gpuPercent);
     if (sample.vramBytes >= 0)
         proc.setGpuVramBytes(sample.vramBytes);
 }
