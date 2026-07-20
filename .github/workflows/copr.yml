@@ -48,6 +48,12 @@ jobs:
       - name: Set up rpmbuild tree
         run: rpmdev-setuptree
 
+      # Container job runs as a different UID than the one that owns the
+      # checked-out tree, so `git archive` below refuses it as "dubious
+      # ownership" unless explicitly marked safe.
+      - name: Mark workspace as a safe git directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       # Real releases (tag push) fetch the published GitHub release tarball,
       # matching exactly what a COPR/mock builder would fetch. Validation
       # runs (workflow_dispatch, pull_request) have no release tarball to
