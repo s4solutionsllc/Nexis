@@ -193,6 +193,7 @@ add_nexis_test(NAME PackageToolUninstallTests
   SOURCES
     core/test_package_tool_uninstall.cpp
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/package_tool.cpp"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils/plist_util.cpp"
   INCLUDES
@@ -211,6 +212,7 @@ add_nexis_test(NAME AptHistoryTests
   SOURCES
     core/test_apt_history.cpp
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
   INCLUDES
     "${CMAKE_SOURCE_DIR}/linux/nexis-core"
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
