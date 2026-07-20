@@ -49,7 +49,9 @@ void FileShredderService::cancel()
 bool FileShredderService::overwriteAndUnlinkFile(const QString &path, quint64 fileSize)
 {
     QFile f(path);
-    if (!f.open(QIODevice::ReadWrite))
+    // ExistingOnly: plain ReadWrite creates a missing file, which would make
+    // shredding a nonexistent path "succeed" instead of reporting failure.
+    if (!f.open(QIODevice::ReadWrite | QIODevice::ExistingOnly))
         return false;
 
     constexpr qint64 chunkSize = 1 << 20; // 1 MiB
