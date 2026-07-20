@@ -2,6 +2,7 @@
 #define FILE_SHREDDER_SERVICE_H
 
 #include <QObject>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 #include <QAtomicInt>
@@ -86,7 +87,7 @@ private:
     static FileShredderService *instance;
 
     struct WalkResult {
-        QStringList files;
+        QList<QPair<QString, quint64>> files;   // path + size captured at walk time
         QStringList symlinks;
         QStringList dirs;      // not depth-sorted; caller sorts before removal
         quint64 totalBytes = 0;
