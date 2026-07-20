@@ -352,6 +352,8 @@ add_nexis_test(NAME SettingManagerTests
 add_nexis_test(NAME StacerImporterTests
   SOURCES
     managers/test_stacer_importer.cpp
+    "${GUI_SHARED_DIR}/Utils/stacer_importer.cpp"
+    "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
   INCLUDES
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Managers"

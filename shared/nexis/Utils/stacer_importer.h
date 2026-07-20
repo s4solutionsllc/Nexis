@@ -3,19 +3,17 @@
 #include <QString>
 #include <QList>
 
-#include "nexis-core_global.h"
-
 class SettingManager;
 
 // One setting that will be changed by the import.
-struct NEXISCORE_EXPORT StacerMappedEntry {
+struct StacerMappedEntry {
     QString key;        // SettingKeys constant
     QString label;      // Human-readable label shown in the preview
     QString fromValue;  // Current Nexis value
     QString toValue;    // Value read from Stacer config
 };
 
-struct NEXISCORE_EXPORT StacerImportResult {
+struct StacerImportResult {
     bool fileFound = false;
     QString filePath;
     QString errorMessage;
@@ -25,7 +23,7 @@ struct NEXISCORE_EXPORT StacerImportResult {
     QStringList noEquivalent;              // Stacer keys that have no Nexis counterpart
 };
 
-class NEXISCORE_EXPORT StacerImporter
+class StacerImporter
 {
 public:
     // Returns the canonical Stacer config path for the current user.
