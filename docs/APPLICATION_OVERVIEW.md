@@ -198,18 +198,17 @@ Comprehensive static hardware inventory displayed in tabular sections. Two expor
 - **Export System Report** — plain text file with aligned columns. Default: `nexis-report-YYYY-MM-DD.txt`.
 - **Export as HTML (FR-126)** — self-contained HTML file (inline CSS, no external dependencies) containing a system snapshot (CPU %, memory, GPU, battery), all hardware tables, top-10 processes by CPU at export time, and pending update count. Default: `nexis-report-YYYY-MM-DD.html`.
 
-**Elevated-card chrome (SSO-13735 + SSO-14298 round 2 + SSO-14757, UX modernization):** System, Processor, Graphics, Memory, Battery, and Storage each render as a DS §2 elevated card with a DS §3 accent-bar section header (Graphics uses `@gpuColor`; System/Processor/Memory/Battery/Storage use their type-appropriate tokens — Battery's `@batteryColor`, Storage's `@diskColor`). Battery's card treatment landed in round 2 once a full-row capture existed — round 1 shipped it header-only because the capture available then cut off before any Battery rows. Storage's card landed separately (SSO-14757), outside the original SSO-13735 capture, since it also needed the per-drive sub-header treatment below. Fans, still outside any approved capture, keeps its original `QGroupBox` chrome.
+**Elevated-card chrome (SSO-13735 + SSO-14298 round 2 + SSO-14757 + SSO-15377, UX modernization):** System, Processor, Graphics, Memory, Battery, Storage, and Fans & Sensors each render as a DS §2 elevated card with a DS §3 accent-bar section header (Graphics uses `@gpuColor`; System/Processor/Memory/Battery/Storage/Fans use their type-appropriate tokens — Battery's `@batteryColor`, Storage's `@diskColor`, Fans & Sensors' `@fanColor`). Battery's card treatment landed in round 2 once a full-row capture existed — round 1 shipped it header-only because the capture available then cut off before any Battery rows. Storage's card landed separately (SSO-14757), outside the original SSO-13735 capture, since it also needed the per-drive sub-header treatment below. Fans (renamed "Fans & Sensors", SSO-15377) was the last section on legacy `QGroupBox` chrome and picked up the same recipe when hwmon temperature sensors were added to it.
 
-**9 sections:**
+**8 sections:**
 - **System** — Hostname, OS, distribution, kernel, architecture, desktop environment
 - **Processor** — Model name, physical/logical core count, base clock, L1/L2/L3 cache sizes
 - **Graphics** — GPU name(s) and vendor(s)
 - **Memory** — Total RAM, total swap
 - **Battery** (if present) — Design capacity, current max capacity, cycle count, health percentage
-- **Fans** (if present) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys. Linux: primary hwmon scan (`/sys/class/hwmon/*/fan*_input`), with fallback detection chain for ThinkPad (`/proc/acpi/ibm/fan`), Dell (`/proc/i8k`), and NVIDIA proprietary (`nvidia-smi` fan percentage)
+- **Fans & Sensors** (if present, SSO-15377) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys, Linux primary hwmon scan (`/sys/class/hwmon/*/fan*_input`) with fallback detection chain for ThinkPad (`/proc/acpi/ibm/fan`), Dell (`/proc/i8k`), and NVIDIA proprietary (`nvidia-smi` fan percentage). Plus every labeled hwmon temperature sensor (`/sys/class/hwmon/*/temp*_input`) the platform exposes — CPU, GPU, NVMe, DIMM (`jc42`/`spd5118`), ACPI, and vendor WMI surfaces (ASUS/HP/Legion/IdeaPad) — via the same `ThermalInfo::friendlyDeviceName` mapping used by the Dashboard's Temperature tiles. Sensor classes the platform doesn't expose are simply omitted, never shown as an error or a zero reading; the whole section is hidden only when both fan and temperature sensor lists are empty.
 - **Storage** — Per-drive: name, size, model, SMART health verdict (Good/Caution/Critical/Unknown), color-coded. On Linux, if any drive requires elevated permissions for SMART data, an **Unlock All Drives** button appears at the top of the section. Clicking it shows a confirmation dialog with an optional **"Also grant permanent access"** checkbox. Confirming runs a single `pkexec sh -c "..."` call that reads all locked drives in one password prompt; if the checkbox is checked, `setcap cap_sys_rawio+ep` is applied in the same elevation so no password is needed on future launches. Per-drive Unlock buttons remain in the table as a granular fallback. **Multi-drive grouping (SSO-14757):** each drive's "Drive N" row renders as a bolder/larger sub-header (10pt/Bold `@color06`, vs. the 9pt/DemiBold used elsewhere) so it visually outranks its own Size/Type/Health/etc. rows, which drop to the plain non-bold value weight; works for any number of drives.
 - **Network** — Interface name, MAC address, IP addresses
-- **Thermal** — Sensor readings (if available)
 
 ### 3. Startup Apps
 
@@ -676,7 +675,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `NetworkInfo` | Interfaces, RX/TX bytes | `QNetworkInterface` | sysfs `/sys/class/net/` |
 | `SystemInfo` | Hostname, OS, kernel, CPU model | `sysctl` | `/etc/os-release`, `lscpu` |
 | `ProcessInfo` | Process list with CPU/memory/disk I/O/network stats | `sysctl` KERN_PROC, `proc_pid_rusage()`, `nettop` | `/proc/[pid]/stat`, `/proc/[pid]/io` |
-| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` (vendor WMI surfaces resolved via `friendlyDeviceName`: ASUS, HP, Legion, IdeaPad) |
+| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` (driver names resolved via `friendlyDeviceName`: CPU, GPU, NVMe, DIMM (`jc42`/`spd5118`), ACPI, vendor WMI surfaces ASUS/HP/Legion/IdeaPad) |
 | `GpuInfo` | GPU devices, utilization | IOKit, Metal | sysfs, `nvidia-smi` |
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |
 | `DiskHealthInfo` | SMART attributes, health verdicts | `smartctl`, `diskutil` | `smartctl`, sysfs |
