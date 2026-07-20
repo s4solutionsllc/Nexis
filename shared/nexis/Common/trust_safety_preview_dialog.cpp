@@ -168,7 +168,8 @@ void TrustSafetyPreviewDialog::buildUI()
 void TrustSafetyPreviewDialog::refreshThemeColors()
 {
     QSettings *sv = mAppManager->getStyleValues();
-    mWarningColor = QColor(sv->value("@warningColor", "#FFB347").toString());
+    if (sv)
+        mWarningColor = QColor(sv->value("@warningColor", "#FFB347").toString());
     applyRiskStyling();
 }
 

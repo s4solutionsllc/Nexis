@@ -102,7 +102,7 @@ private:
     QSet<QString> mRiskyConfirmedCategoryIds;         // categories the user already confirmed this session
 
     TrustSafetyRunSummary mLastSummary;
-    QColor mWarningColor;
+    QColor mWarningColor{QStringLiteral("#FFB347")};
     bool mSuppressCheckSignal = false;
 };
 
