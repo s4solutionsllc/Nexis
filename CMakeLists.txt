@@ -377,6 +377,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Services/docker_service.cpp"
   "${GUI_SHARED_DIR}/Services/package_service.cpp"
   "${GUI_SHARED_DIR}/Services/snapshot_service.cpp"
+  "${GUI_SHARED_DIR}/Services/wipe_free_space_service.cpp"
   "${GUI_SHARED_DIR}/Managers/process_prefs_manager.cpp"
   # APT-specific GUI components live under linux/ only — they're built into
   # GUI_PLAT_SRCS on Linux. On macOS the Homebrew page replaces them.
@@ -442,6 +443,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.cpp"
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskTools/wipe_free_space_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/severity_pill_delegate.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.cpp"
@@ -480,6 +482,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Services/docker_service.h"
   "${GUI_SHARED_DIR}/Services/package_service.h"
   "${GUI_SHARED_DIR}/Services/snapshot_service.h"
+  "${GUI_SHARED_DIR}/Services/wipe_free_space_service.h"
   "${GUI_SHARED_DIR}/Managers/process_prefs_manager.h"
   # APT-specific GUI headers live under linux/ only (see GUI_PLAT_HDRS).
   "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.h"
@@ -536,6 +539,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.h"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_page.h"
   "${GUI_SHARED_DIR}/Pages/DiskTools/disk_tools_page.h"
+  "${GUI_SHARED_DIR}/Pages/DiskTools/wipe_free_space_dialog.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/severity_pill_delegate.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"

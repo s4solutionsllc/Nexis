@@ -26,6 +26,7 @@
 
 #include "Managers/app_manager.h"
 #include "Services/duplicate_finder_service.h"
+#include "wipe_free_space_dialog.h"
 #include "signal_mapper.h"
 #include "utilities.h"
 #include <Utils/format_util.h>
@@ -66,6 +67,10 @@ void DiskToolsPage::init()
     ui->stackedModes->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     ui->mainLayout->setStretchFactor(ui->stackedModes, 1);
 
+    ui->btnWipeFreeSpace->setCursor(Qt::PointingHandCursor);
+    connect(ui->btnWipeFreeSpace, &QPushButton::clicked,
+            this, &DiskToolsPage::openWipeFreeSpaceDialog);
+
     buildLargeOldPage();
     buildDuplicatePage();
 
@@ -88,6 +93,12 @@ void DiskToolsPage::init()
 void DiskToolsPage::switchMode(int index)
 {
     ui->stackedModes->setCurrentIndex(index);
+}
+
+void DiskToolsPage::openWipeFreeSpaceDialog()
+{
+    WipeFreeSpaceDialog dialog(this);
+    dialog.exec();
 }
 
 static void populateDirList(QListWidget *list)

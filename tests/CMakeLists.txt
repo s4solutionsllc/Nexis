@@ -490,6 +490,18 @@ add_nexis_test(NAME FileShredderServiceTests
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )
 
+# SSO-15382: WipeFreeSpaceService::headroomForVolume() safety-margin math.
+add_nexis_test(NAME WipeFreeSpaceTests
+  SOURCES
+    managers/test_wipe_free_space.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
 # SSO-381: AppManager::applyIndicatorPngFallback() — the PNG fallback
 # substitution we run when the Qt SVG image plugin is missing (Linux Mint 22
 # "Zena" and other minimal Ubuntu-24.04 derivatives). Links against nexis-gui
