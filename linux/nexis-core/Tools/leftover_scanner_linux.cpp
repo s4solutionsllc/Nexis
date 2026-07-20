@@ -1,6 +1,6 @@
 #include "leftover_scanner_linux.h"
 
-#include "Tools/leftover_deny_list.h"
+#include "Tools/lifecycle_deny_list.h"
 #include "Utils/file_util.h"
 
 #include <QDir>
@@ -36,12 +36,19 @@ QList<SearchRoot> searchRoots()
 }
 
 // Returns true if `leaf` matches any entry in `names` via an exact or
-// separator-delimited prefix match. Also matches reverse-DNS ids by
-// checking whether any name is a suffix segment of the leaf (e.g.
-// "firefox" matches "org.mozilla.firefox").
+// dot-delimited prefix match. Also matches reverse-DNS ids by checking
+// whether any name is a suffix segment of the leaf (e.g. "firefox" matches
+// "org.mozilla.firefox").
+//
+// The prefix check only accepts '.' as the delimiter (e.g. "firefox.desktop",
+// "org.mozilla.firefox.conf") — NOT '-', '_', or ' '. Those characters are
+// how genuinely distinct sibling packages are named on Linux (firefox vs
+// firefox-esr, code vs code-insiders, gnome-terminal vs
+// gnome-terminal-server), so treating them as separators would delete an
+// unrelated package's data. See tests/core/test_app_leftovers_linux.cpp
+// true-negative fixtures.
 bool leafMatches(const QString &leaf, const QStringList &names, QString *matched)
 {
-    static const QString separators = QStringLiteral(".-_ ");
     for (const QString &name : names) {
         if (name.isEmpty())
             continue;
@@ -52,11 +59,11 @@ bool leafMatches(const QString &leaf, const QStringList &names, QString *matched
             return true;
         }
 
-        // Prefix followed by a known separator (e.g. "firefox.desktop",
+        // Prefix followed by a literal '.' (e.g. "firefox.desktop",
         // "org.mozilla.firefox.conf").
         if (leaf.startsWith(name, Qt::CaseInsensitive)) {
             const int len = name.length();
-            if (len < leaf.length() && separators.contains(leaf.at(len))) {
+            if (len < leaf.length() && leaf.at(len) == QLatin1Char('.')) {
                 if (matched) *matched = name;
                 return true;
             }
@@ -101,11 +108,13 @@ QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames)
             if (!leafMatches(fi.fileName(), packageNames, &matched))
                 continue;
 
-            // CISO §2: canonicalize before deny-list check.
+            // CISO §2: canonicalize before deny-list check. LifecycleDenyList is
+            // the single centralized deny-list (SSO-15386/SSO-15373) shared with
+            // the orphan scanner — do not reintroduce a parallel copy here.
             const QString canonical = fi.canonicalFilePath();
             if (canonical.isEmpty())
                 continue; // dangling symlink — skip
-            if (LeftoverDenyList::isDenied(canonical))
+            if (!LifecycleDenyList::isSafe(canonical))
                 continue;
 
             LeftoverCandidate c;

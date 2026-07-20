@@ -11,9 +11,13 @@
 // leftover files associated with a package name. Returns candidates sorted
 // by size descending so the review dialog shows the largest first.
 //
-// Matching policy: conservative leaf-name prefix match (packageName exact,
-// or packageName followed by a non-alphanumeric separator). Deep content
-// inspection is out of scope to avoid false positives.
+// Matching policy: conservative leaf-name match (packageName exact, or
+// packageName followed by a literal '.' — e.g. "firefox.desktop",
+// "org.mozilla.firefox.conf"). Hyphen/underscore/space are NOT treated as
+// separators: they are how distinct sibling packages are named (firefox vs
+// firefox-esr, code vs code-insiders), so a prefix match on those would
+// delete an unrelated package's data. Deep content inspection is out of
+// scope to avoid false positives.
 //
 // All returned paths have been canonicalized (QFileInfo::canonicalFilePath)
 // and checked against the CISO §2 deny-list. Deny-listed paths are silently

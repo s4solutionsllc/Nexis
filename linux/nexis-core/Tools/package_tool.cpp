@@ -2,6 +2,7 @@
 
 #include "Tools/leftover_deny_list.h"
 #include "Tools/leftover_scanner_linux.h"
+#include "Tools/lifecycle_deny_list.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -724,8 +725,10 @@ bool PackageToolLinux::trashLeftovers(const QStringList &paths)
         const QFileInfo fi(raw);
         const QString canonical = fi.canonicalFilePath();
 
-        // CISO §2: hard deny-list check on canonicalized path.
-        if (canonical.isEmpty() || LeftoverDenyList::isDenied(canonical)) {
+        // CISO §2: hard deny-list check on canonicalized path. LifecycleDenyList
+        // is the single centralized deny-list (SSO-15386/SSO-15373) shared with
+        // the orphan scanner — do not reintroduce a parallel copy here.
+        if (canonical.isEmpty() || !LifecycleDenyList::isSafe(canonical)) {
             qWarning() << "trashLeftovers: deny-list blocked" << raw;
             allOk = false;
             continue;

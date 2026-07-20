@@ -223,6 +223,20 @@ add_nexis_test(NAME AptHistoryTests
 add_nexis_test(NAME AppLeftoversLinuxTests
   SOURCES core/test_app_leftovers_linux.cpp)
 
+# SSO-15385: exercises the REAL LeftoverScannerLinux::scanLeftovers() (not a
+# duplicated contract stub) against the SSO-15387 fixture scenarios, so a
+# regression in the matching heuristic is caught even if the contract test
+# above still passes. Compiles the platform source directly so it runs on any
+# host, mirroring AptHistoryTests / PackageToolUninstallTests above.
+add_nexis_test(NAME LeftoverScannerLinuxRealTests
+  SOURCES
+    core/test_leftover_scanner_linux_real.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+)
+
 # SSO-15387: orphan-scan heuristics fixture suite — leftovers with no
 # corresponding installed package (Linux XDG + macOS Library).  Covers true
 # orphans, near-miss shared-vendor dirs, and precision/recall harness.

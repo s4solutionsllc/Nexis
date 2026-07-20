@@ -7,19 +7,16 @@
 
 #include "nexis-core_global.h"
 
-// CISO §2 (SSO-15373): centralized deny-list shared by the uninstaller and
-// orphan scanner on both platforms. Every deletion path must pass through
-// isDenied() after canonicalization — never check the raw/pre-symlink path.
-//
 // CISO §3 (SSO-15373): append-only audit log per deletion. Call logDeletion()
 // immediately before each trash/delete call so the record exists even if the
 // operation partially fails.
+//
+// The deny-list check itself (CISO §2) lives in LifecycleDenyList::isSafe()
+// (shared/nexis-core/Tools/lifecycle_deny_list.h) — that is the single
+// centralized "is this path safe to delete" check shared with the orphan
+// scanner (SSO-15386). This module only handles audit logging; do not add a
+// second deny-list implementation here.
 namespace LeftoverDenyList {
-
-// Returns true iff canonicalPath is on the CISO deny-list for the current
-// platform. The check runs on the resolved (post-symlink) absolute path.
-// When this returns true the caller MUST abort with no "delete anyway" option.
-NEXISCORESHARED_EXPORT bool isDenied(const QString &canonicalPath);
 
 // Audit-log record written per-item before each deletion (CISO §3).
 // batchId links related multi-file operations. matchRule is the heuristic
