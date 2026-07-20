@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QTreeWidget>
+#include <QVBoxLayout>
 #include <Tools/package_tool_shared.h>
 #include <Tools/repo_health_types.h>
 #include <Info/update_info.h>
