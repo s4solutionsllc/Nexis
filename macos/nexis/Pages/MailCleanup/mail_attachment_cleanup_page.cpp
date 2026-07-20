@@ -269,9 +269,11 @@ void MailAttachmentCleanupPage::populateTable(const QList<MailAttachmentEntry> &
         // Column 2 — size
         mTable->setItem(i, 2, new QTableWidgetItem(fmtSize(e.size)));
 
-        // Column 3 — date
-        const QString dateStr = e.modified.isValid()
-            ? e.modified.toLocalTime().toString(QStringLiteral("yyyy-MM-dd"))
+        // Column 3 — date (originating message date; falls back to file mtime
+        // when the .emlx envelope has no parseable Date: header)
+        const QDateTime &displayDate = e.messageDate.isValid() ? e.messageDate : e.modified;
+        const QString dateStr = displayDate.isValid()
+            ? displayDate.toLocalTime().toString(QStringLiteral("yyyy-MM-dd"))
             : QString();
         mTable->setItem(i, 3, new QTableWidgetItem(dateStr));
 
@@ -361,9 +363,8 @@ void MailAttachmentCleanupPage::onDeleteClicked()
     confirm.setWindowTitle(tr("Delete Mail Attachments"));
     confirm.setText(
         tr("Nexis will permanently remove %1 attachment%2 (%3) from this "
-           "device's Mail store. For IMAP accounts this is typically "
-           "re-downloadable from the server; for POP or local-only accounts "
-           "it may not be recoverable.")
+           "device's Mail store — typically re-downloadable from the server "
+           "for IMAP accounts, but not recoverable for POP or local-only accounts.")
             .arg(paths.size())
             .arg(paths.size() == 1 ? QString() : QStringLiteral("s"))
             .arg(fmtSize([&]() {

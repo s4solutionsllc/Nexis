@@ -11,7 +11,8 @@ struct MailAttachmentEntry {
     QString  path;          // absolute path to the attachment file
     QString  filename;      // display name (basename)
     qint64   size = 0;      // file size in bytes
-    QDateTime modified;     // last-modified timestamp (proxy for message date)
+    QDateTime modified;     // last-modified timestamp (fallback when messageDate is unavailable)
+    QDateTime messageDate;  // originating message Date: header, invalid if unparseable
     QString  sender;        // parsed from enclosing message envelope, empty if unavailable
     QString  subject;       // parsed from enclosing message envelope, empty if unavailable
 };
@@ -51,11 +52,12 @@ signals:
     void deleteFinished(qint64 freedBytes, int deletedCount, int failedCount);
 
 private:
-    // Attempt to parse sender/subject from the emlx envelope adjacent to
+    // Attempt to parse sender/subject/date from the emlx envelope adjacent to
     // the Attachments/ directory. Returns false if unavailable.
     static bool parseMessageEnvelope(const QString &attachmentDirPath,
                                      QString &outSender,
-                                     QString &outSubject);
+                                     QString &outSubject,
+                                     QDateTime &outDate);
 };
 
 #endif // MAIL_ATTACHMENT_TOOL_H

@@ -60,8 +60,8 @@ void MailAttachmentTool::scan()
             entry.size     = fi.size();
             entry.modified = fi.lastModified();
 
-            // Try to extract sender/subject from the enclosing .emlx envelope
-            parseMessageEnvelope(fi.absolutePath(), entry.sender, entry.subject);
+            // Try to extract sender/subject/date from the enclosing .emlx envelope
+            parseMessageEnvelope(fi.absolutePath(), entry.sender, entry.subject, entry.messageDate);
 
             result.entries.append(entry);
             result.totalSize += entry.size;
@@ -102,7 +102,8 @@ void MailAttachmentTool::deleteAttachments(const QStringList &paths)
 // Fallback: walk up until we find an *.emlx file.
 bool MailAttachmentTool::parseMessageEnvelope(const QString &attachmentDirPath,
                                               QString &outSender,
-                                              QString &outSubject)
+                                              QString &outSubject,
+                                              QDateTime &outDate)
 {
     // attachmentDirPath is the dir containing the attachment file,
     // which is itself typically inside <message>.emlx/Attachments/
@@ -130,9 +131,13 @@ bool MailAttachmentTool::parseMessageEnvelope(const QString &attachmentDirPath,
     static const QRegularExpression reSubject(
         "^Subject:\\s*(.+)$",
         QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression reDate(
+        "^Date:\\s*(.+)$",
+        QRegularExpression::CaseInsensitiveOption);
 
     bool gotFrom    = false;
     bool gotSubject = false;
+    bool gotDate    = false;
     int  lineCount  = 0;
 
     while (!ts.atEnd() && lineCount < 200) {
@@ -155,9 +160,19 @@ bool MailAttachmentTool::parseMessageEnvelope(const QString &attachmentDirPath,
                 gotSubject = true;
             }
         }
-        if (gotFrom && gotSubject)
+        if (!gotDate) {
+            auto m = reDate.match(line);
+            if (m.hasMatch()) {
+                const QDateTime parsed = QDateTime::fromString(m.captured(1).trimmed(), Qt::RFC2822Date);
+                if (parsed.isValid()) {
+                    outDate = parsed;
+                    gotDate = true;
+                }
+            }
+        }
+        if (gotFrom && gotSubject && gotDate)
             break;
     }
 
-    return gotFrom || gotSubject;
+    return gotFrom || gotSubject || gotDate;
 }
