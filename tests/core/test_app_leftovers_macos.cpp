@@ -20,9 +20,12 @@
 #include <QTemporaryDir>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QStandardPaths>
 
 #ifdef Q_OS_MAC
 #include "Tools/package_tool_macos.h"
+#include "Tools/lifecycle_audit_log.h"
 #endif
 
 class TestAppLeftoversMacOS : public QObject
@@ -30,6 +33,9 @@ class TestAppLeftoversMacOS : public QObject
     Q_OBJECT
 
 private slots:
+    void initTestCase();
+    void init();
+
     // — true positives —
     void findAppLeftovers_matchesBundleIdArtifacts();
     void findAppLeftovers_matchesProductNameDir();
@@ -46,7 +52,23 @@ private slots:
     void findAppLeftovers_missingLibraryReturnsEmpty();
     // — precision/recall summary —
     void precisionRecall_bundleIdPath();
+    // — SSO-15430: trashLeftovers() deny-list + audit-log wiring —
+    void trashLeftovers_denyListedPath_rejectedAndPreserved();
 };
+
+void TestAppLeftoversMacOS::initTestCase()
+{
+#ifdef Q_OS_MAC
+    QStandardPaths::setTestModeEnabled(true);
+#endif
+}
+
+void TestAppLeftoversMacOS::init()
+{
+#ifdef Q_OS_MAC
+    QFile::remove(LifecycleAuditLog::logFilePath());
+#endif
+}
 
 // ---------------------------------------------------------------------------
 // Helper: subclass PackageToolMacOS to redirect the home path to a temp dir.
@@ -504,6 +526,37 @@ void TestAppLeftoversMacOS::precisionRecall_bundleIdPath()
     QVERIFY2(precision >= 0.95,
              qPrintable(QStringLiteral("Precision %1 below 0.95 (%2 false positives)")
                         .arg(precision).arg(fp)));
+#endif
+}
+
+// ---------------------------------------------------------------------------
+// SSO-15430: trashLeftovers() must route through the same centralized
+// LifecycleDenyList / LifecycleAuditLog as the orphan scanner (T1/T6).
+// ---------------------------------------------------------------------------
+
+void TestAppLeftoversMacOS::trashLeftovers_denyListedPath_rejectedAndPreserved()
+{
+#ifndef Q_OS_MAC
+    QSKIP("trashLeftovers() is macOS-only");
+#else
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    // A leftover whose canonicalized path resolves to a "com.apple.*" leaf
+    // is unconditionally denied by LifecycleDenyList::isSafe() (SSO-15373
+    // §2), regardless of which directory it lives under — same rule the
+    // orphan scanner cross-checks in test_orphan_leftover_scanner_macos.cpp.
+    const QString path = tmp.filePath(QStringLiteral("com.apple.SomeOldHelper"));
+    QVERIFY(mkdirP(path));
+
+    PackageToolMacOS tool;
+    const bool ok = tool.trashLeftovers({path});
+
+    QVERIFY2(!ok, "trashLeftovers must report a deny-listed path as a failed item");
+    QVERIFY2(QFileInfo::exists(path),
+             "a deny-listed leftover must be skipped, not moved to trash");
+    QVERIFY2(LifecycleAuditLog::readAll().isEmpty(),
+             "no audit entry should be written for a path the deny-list blocked");
 #endif
 }
 

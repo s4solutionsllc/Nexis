@@ -1,5 +1,6 @@
 #include "package_tool_macos.h"
 #include "Tools/app_uninstall_deny_list.h"
+#include "Tools/lifecycle_audit_log.h"
 #include "Tools/lifecycle_deny_list.h"
 #include "Tools/uninstall_audit_log.h"
 #include "Utils/brew_util.h"
@@ -13,6 +14,7 @@
 #include "Tools/app_quit_helper.h"
 #endif
 
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
@@ -383,16 +385,21 @@ bool PackageToolMacOS::trashLeftovers(const QStringList &paths)
     // Same safe trash path as trashApps() — QFile::moveToTrash uses
     // NSFileManager::trashItemAtURL: which takes an NSURL, not an AppleScript
     // source string, so metacharacters in file names are data, not code.
+    //
+    // SSO-15430 / SSO-15373 §2: this call path (also reused by the
+    // orphan-leftover cleanup, see orphan_leftovers_dialog.cpp) shares the
+    // same centralized deny-list and audit log as the orphan scanner —
+    // do not reintroduce a divergent per-feature copy of either check.
     bool allOk = true;
-    const QUuid batchId = QUuid::createUuid();
+    const QString batchId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString nexisVersion = QCoreApplication::applicationVersion();
 
     for (const QString &path : paths) {
-        // SSO-15384 / CISO §2: deny-list check.
         const QFileInfo fi(path);
         const QString canonical = fi.canonicalFilePath().isEmpty()
                                   ? QDir::cleanPath(fi.absoluteFilePath())
                                   : fi.canonicalFilePath();
-        if (!AppUninstallDenyList::isSafeToDelete(canonical)) {
+        if (!LifecycleDenyList::isSafe(canonical)) {
             qCritical() << "trashLeftovers: deny-list blocked deletion of" << path;
             allOk = false;
             continue;
@@ -406,16 +413,17 @@ bool PackageToolMacOS::trashLeftovers(const QStringList &paths)
             continue;
         }
 
-        // SSO-15384 / CISO §3: audit log.
-        UninstallAuditLog::Entry entry;
-        entry.batchId       = batchId;
-        entry.originalPath  = path;
-        entry.canonicalPath = canonical;
-        entry.action        = UninstallAuditLog::Action::MovedToTrash;
-        entry.trashedPath   = trashedPath;
-        entry.matchedRule   = QStringLiteral("app_leftover");
-        entry.sizeBytes     = sz;
-        UninstallAuditLog::append(entry);
+        LifecycleAuditLog::Entry entry;
+        entry.timestamp       = QDateTime::currentDateTimeUtc();
+        entry.batchId         = batchId;
+        entry.originalPath    = path;
+        entry.canonicalPath   = canonical;
+        entry.action          = LifecycleAuditLog::Action::MovedToTrash;
+        entry.trashDestination = trashedPath;
+        entry.matchingRuleIds = {QStringLiteral("app_leftover")};
+        entry.sizeBytes       = sz;
+        entry.nexisVersion    = nexisVersion;
+        LifecycleAuditLog::append(entry);
     }
     return allOk;
 }

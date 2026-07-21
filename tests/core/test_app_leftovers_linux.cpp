@@ -24,8 +24,15 @@
 #include <QTemporaryDir>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QStandardPaths>
 #include <QString>
 #include <QStringList>
+
+#ifdef Q_OS_LINUX
+#include "Tools/package_tool_linux.h"
+#include "Tools/lifecycle_audit_log.h"
+#endif
 
 // ---------------------------------------------------------------------------
 // Minimal stub for the leftover-scan contract that SSO-15385 will implement
@@ -93,6 +100,9 @@ class TestAppLeftoversLinux : public QObject
     Q_OBJECT
 
 private slots:
+    void initTestCase();
+    void init();
+
     // — dpkg / apt package fixtures —
     void dpkgPackage_xdgLeftoversFound();
     void dpkgPackage_autostartDesktopFound();
@@ -121,7 +131,24 @@ private slots:
 
     // — precision/recall harness —
     void precisionRecall_xdgPath();
+
+    // — SSO-15430: trashLeftovers() deny-list + audit-log wiring —
+    void trashLeftovers_denyListedPath_rejectedAndPreserved();
 };
+
+void TestAppLeftoversLinux::initTestCase()
+{
+#ifdef Q_OS_LINUX
+    QStandardPaths::setTestModeEnabled(true);
+#endif
+}
+
+void TestAppLeftoversLinux::init()
+{
+#ifdef Q_OS_LINUX
+    QFile::remove(LifecycleAuditLog::logFilePath());
+#endif
+}
 
 // ---------------------------------------------------------------------------
 
@@ -445,6 +472,44 @@ void TestAppLeftoversLinux::precisionRecall_xdgPath()
     QVERIFY2(precision >= 0.95,
              qPrintable(QStringLiteral("Precision %1 below 0.95 (%2 false positives)")
                         .arg(precision).arg(fp)));
+}
+
+// ---------------------------------------------------------------------------
+// SSO-15430: PackageToolLinux::trashLeftovers() must route through the same
+// centralized LifecycleDenyList / LifecycleAuditLog as the orphan scanner
+// (T1/T6), unlike the LinuxLeftoverScanner stub above which only covers the
+// pure matching heuristic.
+// ---------------------------------------------------------------------------
+
+void TestAppLeftoversLinux::trashLeftovers_denyListedPath_rejectedAndPreserved()
+{
+#ifndef Q_OS_LINUX
+    QSKIP("PackageToolLinux::trashLeftovers() is Linux-only");
+#else
+    // LifecycleDenyList::isSafeLinux() denies any canonical path that falls
+    // outside $HOME (SSO-15373 §2) — a real system temp dir is outside $HOME
+    // on any normal CI layout, so this exercises the actual deny-list check
+    // rather than duplicating it.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString path = tmp.filePath(QStringLiteral("leftover-outside-home"));
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.close();
+
+    const QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    QVERIFY2(!QFileInfo(path).canonicalFilePath().startsWith(home + QLatin1Char('/')),
+             "test fixture must resolve outside $HOME to exercise the deny-list");
+
+    PackageToolLinux tool;
+    const bool ok = tool.trashLeftovers({path});
+
+    QVERIFY2(!ok, "trashLeftovers must report a deny-listed path as a failed item");
+    QVERIFY2(QFileInfo::exists(path),
+             "a deny-listed leftover must be skipped, not moved to trash");
+    QVERIFY2(LifecycleAuditLog::readAll().isEmpty(),
+             "no audit entry should be written for a path the deny-list blocked");
+#endif
 }
 
 QTEST_MAIN(TestAppLeftoversLinux)

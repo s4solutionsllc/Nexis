@@ -1,7 +1,7 @@
 #include "package_tool_linux.h"
 
-#include "Tools/leftover_deny_list.h"
 #include "Tools/leftover_scanner_linux.h"
+#include "Tools/lifecycle_audit_log.h"
 #include "Tools/lifecycle_deny_list.h"
 
 #include <QCoreApplication>
@@ -740,35 +740,29 @@ bool PackageToolLinux::trashLeftovers(const QStringList &paths)
 
         const quint64 size = static_cast<quint64>(fi.size());
 
-        // CISO §3: log a "pending" record before the action so evidence of the
-        // attempt exists even if the process crashes mid-operation. Exactly one
-        // more record — success or failure — follows once the action completes,
-        // so a single deletion never appears as two entries in the audit trail.
-        LeftoverDenyList::AuditEntry entry;
-        entry.batchId       = batchId;
-        entry.originalPath  = raw;
-        entry.canonicalPath = canonical;
-        entry.action        = QStringLiteral("trash_pending");
-        entry.matchRule     = QStringLiteral("user-selected");
-        entry.sizeBytes     = size;
-        entry.nexisVersion  = nexisVer;
-        entry.timestamp     = QDateTime::currentDateTimeUtc();
-        LeftoverDenyList::logDeletion(entry);
-
         // QFile::moveToTrash() uses the freedesktop.org Trash spec on Linux.
         // CISO §1: fail securely — never silently fall back to unlink.
         QString trashDest;
-        entry.timestamp = QDateTime::currentDateTimeUtc();
         if (!QFile::moveToTrash(raw, &trashDest)) {
             qWarning() << "trashLeftovers: moveToTrash failed for" << raw;
-            entry.action = QStringLiteral("trash_failed");
-            LeftoverDenyList::logDeletion(entry);
             allOk = false;
-        } else {
-            entry.action    = QStringLiteral("trash");
-            entry.trashDest = trashDest;
-            LeftoverDenyList::logDeletion(entry);
+            continue;
         }
+
+        // SSO-15430 / CISO §3: audit log via the single centralized
+        // LifecycleAuditLog (SSO-15386/SSO-15373) shared with the orphan
+        // scanner — do not reintroduce a parallel copy here.
+        LifecycleAuditLog::Entry entry;
+        entry.timestamp        = QDateTime::currentDateTimeUtc();
+        entry.batchId          = batchId;
+        entry.originalPath     = raw;
+        entry.canonicalPath    = canonical;
+        entry.action           = LifecycleAuditLog::Action::MovedToTrash;
+        entry.trashDestination = trashDest;
+        entry.matchingRuleIds  = {QStringLiteral("user-selected")};
+        entry.sizeBytes        = size;
+        entry.nexisVersion     = nexisVer;
+        LifecycleAuditLog::append(entry);
     }
 
     return allOk;

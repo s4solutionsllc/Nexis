@@ -316,8 +316,15 @@ add_nexis_test(NAME AptHistoryTests
 # config/cache/data + autostart .desktop patterns across dpkg/rpm/Flatpak/Snap
 # package types.  True-negative and precision/recall harness.  Platform-neutral
 # (all paths synthetic); gate for SSO-15385 merge acceptance.
+#
+# SSO-15430 added a Linux-only PackageToolLinux::trashLeftovers() deny-list
+# case (QSKIP'd off-Linux), hence the linux/nexis-core include dirs below.
 add_nexis_test(NAME AppLeftoversLinuxTests
-  SOURCES core/test_app_leftovers_linux.cpp)
+  SOURCES core/test_app_leftovers_linux.cpp
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+)
 
 # SSO-15385: exercises the REAL LeftoverScannerLinux::scanLeftovers() (not a
 # duplicated contract stub) against the SSO-15387 fixture scenarios, so a
