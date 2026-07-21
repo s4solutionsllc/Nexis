@@ -39,6 +39,12 @@ public:
     // iff every path was trashed successfully; aborts on deny-list hit.
     bool trashLeftovers(const QStringList &paths) override;
 
+    // SSO-15428 (SSO-15373 §5): multi-signal orphan-leftover scanner — scans
+    // ~/.config, ~/.cache, ~/.local/share and requires >= 3 of 4 independent
+    // signals before including a result. See package_tool_shared.h for the
+    // OrphanLeftover / OrphanSignal structs and the confidence-bar rationale.
+    QList<OrphanLeftover> findOrphanLeftovers() override;
+
     // FW-07 (SSO-3735): APT 3.1 history / why surface.
     bool aptHistorySupported();
     AptVersion aptVersion();

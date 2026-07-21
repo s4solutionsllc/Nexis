@@ -311,6 +311,22 @@ add_nexis_test(NAME LeftoverScannerLinuxRealTests
 add_nexis_test(NAME OrphanScanFixtureTests
   SOURCES core/test_orphan_scan_fixtures.cpp)
 
+# SSO-15428 (SSO-15373 §5): multi-signal orphan-leftover scanner — Linux.
+# Tests PackageToolLinux::findOrphanLeftovers() via a testable subclass that
+# injects a synthetic installed-name set and scans a QTemporaryDir.
+# QSKIP'd off-Linux. Gate for SSO-15428 merge acceptance.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME OrphanLeftoverScannerLinuxTests
+    SOURCES
+      core/test_orphan_leftover_scanner_linux.cpp
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+  )
+endif()
+
 # SSO-351: pure parser for /proc/net/route — compiled directly so the test
 # runs on any platform.
 if(UNIX AND NOT APPLE)
