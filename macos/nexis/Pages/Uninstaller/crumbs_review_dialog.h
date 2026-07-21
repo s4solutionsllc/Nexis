@@ -2,7 +2,10 @@
 #define CRUMBS_REVIEW_DIALOG_H
 
 #include <QDialog>
+#include <QList>
 #include <QStringList>
+
+#include "Tools/crumbs_scanner.h"
 
 class QTableWidget;
 class QTableWidgetItem;
@@ -14,6 +17,12 @@ class QPushButton;
 // User reviews unchecked items (CISO §5: orphan matches default unchecked),
 // selects items to delete, then "Move to Trash" removes them via
 // QFile::moveToTrash — no shell/osascript surface (SSO-3366).
+//
+// SSO-15567: the scan runs asynchronously via CrumbsScanRunner. The table
+// fills in as matches are discovered so the dialog never blocks the UI
+// thread on a large ~/Library tree; interaction (checkboxes, Move to Trash)
+// is held off until the scan finishes and the list has settled into its
+// final sort-by-size-desc order.
 class CrumbsReviewDialog : public QDialog
 {
     Q_OBJECT
@@ -24,13 +33,18 @@ public:
 private slots:
     void onDeleteSelected();
     void onItemChanged(QTableWidgetItem *item);
+    void onItemFound(CrumbsScanner::CrumbCandidate item);
+    void onScanFinished(QList<CrumbsScanner::CrumbCandidate> items);
 
 private:
     void buildUI();
-    void populate();
+    void startScan();
+    void addRow(int row, const CrumbsScanner::CrumbCandidate &c);
+    void populate(const QList<CrumbsScanner::CrumbCandidate> &crumbs);
     void updateDeleteButton();
 
     QStringList mBundleIds;
+    CrumbsScanRunner *mScanRunner = nullptr;
 
     QLabel       *mLblSummary  = nullptr;
     QTableWidget *mTable       = nullptr;

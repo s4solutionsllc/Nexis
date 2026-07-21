@@ -178,6 +178,19 @@ if(APPLE)
       "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
   )
 
+  # SSO-15567: incremental (async) crumbs scan — proves scanCrumbsUnderHome()
+  # streams each match via itemFoundCb in discovery order, that cancellation
+  # actually stops the walk early, and that the final result (set, sizes,
+  # sort-by-size-desc order) is unaffected by streaming. QSKIP'd off-macOS.
+  add_nexis_test(NAME CrumbsScannerMacOSTests
+    SOURCES
+      core/test_crumbs_scanner_macos.cpp
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
+  )
+
   # SSO-3385 (WI-23): proves the AppleSMC connection is opened exactly once
   # across the process even under concurrent callers. The test seam free
   # functions are defined in macos/nexis-core/Info/thermal_info.cpp and
