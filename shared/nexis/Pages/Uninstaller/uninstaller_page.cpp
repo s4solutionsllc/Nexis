@@ -2,6 +2,8 @@
 #include "ui_uninstallerpage.h"
 #ifdef Q_OS_MAC
 #include "crumbs_review_dialog.h"
+#include "running_app_warning_dialog.h"
+#include <Tools/running_app_gate.h>
 #endif
 #ifdef Q_OS_LINUX
 #include "leftover_review_hook.h"
@@ -572,12 +574,49 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (reply != QMessageBox::Ok)
         return;
 
+    // SSO-15566 / CISO §4: block on any selected app that's currently running
+    // before any deletion begins. Walk the checked items directly (rather
+    // than the getSelected*() helpers, whose bundle-id list is filtered and
+    // therefore not index-aligned with selectedPaths) so path/name/bundle id
+    // stay one-to-one per app. Cancelling the warn/quit dialog for one item
+    // just drops that item from the batch — the rest proceed.
+    QMap<QString, QString> pathToName;
+    QMap<QString, QString> pathToBundleId;
+    for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *section = ui->treeWidgetPackages->topLevelItem(i);
+        for (int j = 0; j < section->childCount(); ++j) {
+            QTreeWidgetItem *item = section->child(j);
+            if (item->checkState(0) != Qt::Checked)
+                continue;
+            const QString path = item->data(0, Qt::UserRole + 1).toString();
+            pathToName[path] = item->data(0, Qt::UserRole).toString();
+            pathToBundleId[path] = item->data(0, Qt::UserRole + 2).toString();
+        }
+    }
+
+    const QStringList finalPaths = RunningAppGate::filterRunnable(
+        selectedPaths,
+        [this](const QString &path) { return mPackageService->isAppRunning(path); },
+        [this, &pathToName](const QString &path) {
+            RunningAppWarningDialog dlg(pathToName.value(path), path, mPackageService, this);
+            return dlg.exec() == QDialog::Accepted;
+        });
+
+    if (finalPaths.isEmpty())
+        return;
+
     // FR-123: capture bundle ids now — brew cask uninstalls would remove the
     // .app before we could read its Info.plist, and the review dialog needs
     // them to scan residual files once the uninstall finishes.
-    mPendingCrumbBundleIds = getSelectedAppBundleIds();
+    QStringList finalBundleIds;
+    for (const QString &path : finalPaths) {
+        const QString bid = pathToBundleId.value(path);
+        if (!bid.isEmpty())
+            finalBundleIds << bid;
+    }
+    mPendingCrumbBundleIds = finalBundleIds;
 
-    mPackageService->trashApps(selectedPaths);
+    mPackageService->trashApps(finalPaths);
 #else
     QStringList selectedPackages = getSelectedPackages();
     QStringList selectedSnapPackages = getSelectedSnapPackages();

@@ -96,6 +96,9 @@ add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 # runs on both platforms; platform-specific deny-list cases are #ifdef-gated
 # inside the test file itself.
 add_nexis_test(NAME LifecycleDenyListTests SOURCES core/test_lifecycle_deny_list.cpp)
+# SSO-15566 / SSO-15373 CISO §4: pure decision logic for the running-process
+# warn/quit gate ahead of trashApps() — platform-neutral, runs everywhere.
+add_nexis_test(NAME RunningAppGateTests SOURCES core/test_running_app_gate.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real (non-overridden) PackageTool
 # runCommand/runSudoCommand seam against the migrated execWithStatus contract.
@@ -265,14 +268,24 @@ add_nexis_test(NAME BtmParserTests
 # seam on the PackageTool base. Compiles both platform sources directly so
 # we get coverage on any host — only the live commands themselves are
 # platform-specific.
+set(PACKAGE_TOOL_UNINSTALL_TEST_SRCS
+  core/test_package_tool_uninstall.cpp
+  "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+  "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
+  "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/package_tool.cpp"
+  "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/uninstall_audit_log.cpp"
+  "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils/plist_util.cpp"
+)
+if(APPLE)
+  # SSO-15566: PackageToolMacOS::quitApp() calls into the Objective-C++
+  # NSRunningApplication bridge under Q_OS_MAC — only reachable (and only
+  # needs linking) when this test target is actually built on Darwin. On
+  # Linux, Q_OS_MAC is undefined so quitApp() never references the symbol.
+  list(APPEND PACKAGE_TOOL_UNINSTALL_TEST_SRCS
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/app_quit_helper.mm")
+endif()
 add_nexis_test(NAME PackageToolUninstallTests
-  SOURCES
-    core/test_package_tool_uninstall.cpp
-    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
-    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
-    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/package_tool.cpp"
-    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/uninstall_audit_log.cpp"
-    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils/plist_util.cpp"
+  SOURCES ${PACKAGE_TOOL_UNINSTALL_TEST_SRCS}
   INCLUDES
     "${CMAKE_SOURCE_DIR}/linux/nexis-core"
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
@@ -322,6 +335,22 @@ add_nexis_test(NAME LeftoverScannerLinuxRealTests
 # Platform-neutral.  Gate for SSO-15386 merge acceptance.
 add_nexis_test(NAME OrphanScanFixtureTests
   SOURCES core/test_orphan_scan_fixtures.cpp)
+
+# SSO-15428 (SSO-15373 §5): multi-signal orphan-leftover scanner — Linux.
+# Tests PackageToolLinux::findOrphanLeftovers() via a testable subclass that
+# injects a synthetic installed-name set and scans a QTemporaryDir.
+# QSKIP'd off-Linux. Gate for SSO-15428 merge acceptance.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME OrphanLeftoverScannerLinuxTests
+    SOURCES
+      core/test_orphan_leftover_scanner_linux.cpp
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+      "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+  )
+endif()
 
 # SSO-351: pure parser for /proc/net/route — compiled directly so the test
 # runs on any platform.
