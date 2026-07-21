@@ -222,6 +222,18 @@ add_nexis_test(NAME OomdInfoParserTests
     "${CMAKE_SOURCE_DIR}/shared/nexis-core/Info"
 )
 
+# SSO-15379: persistent `nethogs -t` streamer for per-process network I/O.
+# Compiled directly so the parser test runs cross-platform even though
+# nethogs_streamer.cpp is only wired into the real nexis-core build on
+# Linux — mirrors the MacosParserTests / NettopStreamer pattern.
+add_nexis_test(NAME NethogsStreamerTests
+  SOURCES
+    core/test_nethogs_streamer.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info/nethogs_streamer.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
+)
+
 # WI-33: macOS live-tool parsers (nettop CSV, diskutil plist, sysctl
 # kern.boottime). Compiled directly here so the tests run on any platform
 # even though the parsers are only wired into the real nexis-core build

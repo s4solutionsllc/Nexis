@@ -5,8 +5,11 @@
 #include <QElapsedTimer>
 #include <QHash>
 #include <QString>
+#include <memory>
 
 #include <sys/types.h>   // uid_t, gid_t
+
+class NethogsStreamer;
 
 class ProcessInfoLinux : public ProcessInfo
 {
@@ -14,7 +17,9 @@ class ProcessInfoLinux : public ProcessInfo
 
 public:
     ProcessInfoLinux();
+    ~ProcessInfoLinux() override;
     QList<Process> collectProcesses() override;
+    NetIoAvailability netIoAvailability() const override;
 
 private:
     // FR-127: read once at construction — sysconf() calls aren't free per-tick.
@@ -36,6 +41,11 @@ private:
     QHash<pid_t, QPair<quint64, quint64>> mPrevDiskIo;
     QElapsedTimer                         mIoTimer;
     bool                                  mIoTimerStarted = false;
+
+    // SSO-15379: persistent nethogs streamer for per-process net I/O.
+    // nethogs already reports a rate (KB/s), not cumulative bytes, so unlike
+    // mPrevDiskIo there is no delta baseline to keep here.
+    std::unique_ptr<NethogsStreamer> mNethogsStreamer;
 
     // FR-115: per-PID engine-ns baseline for GPU% delta + wall-clock timer.
     QHash<pid_t, quint64> mPrevGpuEngineNs;

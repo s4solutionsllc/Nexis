@@ -73,6 +73,13 @@ void ProcessesPage::init()
     // right-align convention as PID/Resident Memory/%Memory/%CPU above.
     mItemModel->setHeaderData(Col_GpuPct, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
     mItemModel->setHeaderData(Col_GpuVram, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    // SSO-15379: Disk/Net rate columns are tabular numerics too — closing a
+    // pre-existing gap where these four never got the DS §7 right-align
+    // treatment the other numeric columns above already have.
+    mItemModel->setHeaderData(Col_DiskRead, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_DiskWrite, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_NetDown, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_NetUp, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
 
     ui->tableProcess->setModel(mSortFilterModel);
 
@@ -152,6 +159,35 @@ void ProcessesPage::updateProcessIoCollection()
     im->setCollectProcessDiskIO(diskVisible);
     im->setCollectProcessNetIO(netVisible);
     im->setCollectProcessGpu(gpuVisible);
+
+    updateNetIoAvailabilityMessage(netVisible);
+}
+
+void ProcessesPage::updateNetIoAvailabilityMessage(bool netVisible)
+{
+    // SSO-15379: acceptance criterion — never let missing tool/permission
+    // show up as silent blank/zero data. The em-dash sentinel already
+    // covers "unavailable", but a header tooltip explains *why* instead of
+    // leaving the user to guess.
+    QString tooltip;
+    if (netVisible) {
+        switch (im->processNetIoAvailability()) {
+        case ProcessInfo::NetIoAvailability::ToolMissing:
+            tooltip = tr("Per-process network usage requires nethogs. "
+                         "Install it (e.g. `apt install nethogs`) and reopen this page.");
+            break;
+        case ProcessInfo::NetIoAvailability::PermissionDenied:
+            tooltip = tr("Per-process network usage needs elevated permissions. "
+                         "Run Nexis as root, or grant nethogs capture rights "
+                         "(e.g. `sudo setcap cap_net_raw,cap_net_admin+ep $(which nethogs)`).");
+            break;
+        case ProcessInfo::NetIoAvailability::Available:
+            break;
+        }
+    }
+
+    mItemModel->setHeaderData(Col_NetDown, Qt::Horizontal, tooltip, Qt::ToolTipRole);
+    mItemModel->setHeaderData(Col_NetUp, Qt::Horizontal, tooltip, Qt::ToolTipRole);
 }
 
 void ProcessesPage::loadHeaderMenu()
@@ -188,6 +224,14 @@ void ProcessesPage::loadHeaderMenu()
 
 void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QString &userName)
 {
+    // SSO-15379: re-evaluate on every tick, not just on column toggle — the
+    // net-IO backend starts asynchronously on the next collection cycle
+    // after the column is shown, so ToolMissing/PermissionDenied can only
+    // be known a tick or two after updateProcessIoCollection() ran.
+    const auto *header = ui->tableProcess->horizontalHeader();
+    const bool netVisible = !header->isSectionHidden(Col_NetDown) || !header->isSectionHidden(Col_NetUp);
+    updateNetIoAvailabilityMessage(netVisible);
+
     QModelIndexList selecteds = ui->tableProcess->selectionModel()->selectedRows();
     pid_t selectedPid = 0;
     if (!selecteds.isEmpty())

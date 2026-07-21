@@ -377,7 +377,7 @@ View and manage running processes.
 - **Process Name column (GH#194, Linux only):** A short process name (e.g. `systemd`) sourced from `/proc/<pid>/comm`, shown right after PID and distinct from the full command line. Omitted entirely on macOS (no permanently-empty column). Column membership is driven by a platform-conditional `Col` enum in `processes_page.h`, so every column index stays correct on both platforms.
 - **Per-row kill icon (GH#174):** A fixed ✕ column at the far right lets users kill a process with a single click without selecting the row first. Rendered by `KillButtonDelegate` using `@destructiveColor` theme token; excluded from the header show/hide menu.
 - Disk Read/s and Disk Write/s columns show per-process disk I/O rates via `proc_pid_rusage()` (macOS) or `/proc/<pid>/io` (Linux), using delta-based calculation with `QElapsedTimer`
-- Net Down/s and Net Up/s columns show per-process network bandwidth via `nettop` parsing (macOS only; Linux shows N/A)
+- Net Down/s and Net Up/s columns show per-process network bandwidth via `nettop` parsing (macOS) or a persistent `nethogs -t` streamer (Linux, SSO-15379 — needs `CAP_NET_RAW`/`CAP_NET_ADMIN` or root; shows em-dash with an explanatory header tooltip, not 0, when the tool is missing or lacks permission)
 - All 4 new I/O columns are hidden by default (toggled via header context menu)
 - Real-time search filter
 - Sortable column headers

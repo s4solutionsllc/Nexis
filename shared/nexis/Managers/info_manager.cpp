@@ -413,6 +413,11 @@ void InfoManager::setCollectProcessGpu(bool enabled)
     pi->setCollectGpu(enabled);
 }
 
+ProcessInfo::NetIoAvailability InfoManager::processNetIoAvailability() const
+{
+    return pi->netIoAvailability();
+}
+
 /********************
  * Thermal Provider
  *******************/
