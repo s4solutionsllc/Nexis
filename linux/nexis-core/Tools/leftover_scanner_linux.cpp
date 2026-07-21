@@ -5,7 +5,6 @@
 
 #include <QDir>
 #include <QFileInfo>
-#include <QStandardPaths>
 
 #include <algorithm>
 
@@ -93,11 +92,12 @@ QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames)
     if (packageNames.isEmpty())
         return out;
 
-    // Resolved once and threaded into the deny-list check below so both use
-    // the same root — QStandardPaths::HomeLocation (used internally by
-    // LifecycleDenyList when no override is given) ignores $HOME env-var
-    // overrides on Apple platforms, unlike QDir::homePath() used here.
-    const QString home = QDir::homePath();
+    // Read $HOME directly so any env-var override (e.g. ScopedFakeHome in
+    // tests, which calls qputenv("HOME", ...)) takes effect on all platforms.
+    // QDir::homePath() on Apple uses NSHomeDirectory() which ignores $HOME,
+    // so we can't rely on it here — read the raw env var with QDir::homePath()
+    // only as a fallback when HOME is unset.
+    const QString home = qEnvironmentVariable("HOME", QDir::homePath());
 
     for (const SearchRoot &root : searchRoots(home)) {
         QDir dir(root.path);

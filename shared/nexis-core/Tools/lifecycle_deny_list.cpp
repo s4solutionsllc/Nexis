@@ -154,9 +154,14 @@ bool isSafe(const QString &path, const QString &homeRootOverride)
     if (canonical.isEmpty() || canonical == QLatin1String("/"))
         return false;
 
-    const QString homeRoot = !homeRootOverride.isEmpty()
+    // Canonicalize the home root so the prefix check below works correctly
+    // when homeRootOverride comes from a QTemporaryDir (e.g. /tmp/xxx) and
+    // the tested path resolves through a symlink (e.g. /tmp → /private/tmp on
+    // macOS), as well as when QStandardPaths returns a non-canonical path.
+    const QString rawHome = !homeRootOverride.isEmpty()
         ? homeRootOverride
         : QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    const QString homeRoot = canonicalOrAbsolute(rawHome);
 
 #if defined(Q_OS_MAC)
     return isSafeMacOS(canonical, homeRoot);
