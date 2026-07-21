@@ -24,6 +24,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QStandardPaths>
 
 #ifdef Q_OS_MAC
 #include "Tools/package_tool_macos.h"
@@ -42,7 +43,10 @@ void TestPackageToolMacOS::trashApps_pathWithAppleScriptMetacharacters_noInjecti
 #ifndef Q_OS_MAC
     QSKIP("trashApps() is the macOS uninstaller path — covered by QFile::moveToTrash on Darwin only");
 #else
-    QTemporaryDir workDir;
+    // Root the temp dir inside $HOME so AppUninstallDenyList::isSafeToDelete()
+    // allows it — the deny-list rejects all paths outside $HOME as a safety net.
+    const QString homeBase = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    QTemporaryDir workDir(QDir(homeBase).filePath(QStringLiteral("nexis-test-XXXXXX")));
     QVERIFY(workDir.isValid());
 
     // Marker the AppleScript injection payload would create if the path
