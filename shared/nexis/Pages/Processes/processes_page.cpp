@@ -345,7 +345,7 @@ void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QS
     // net-IO backend starts asynchronously on the next collection cycle
     // after the column is shown, so ToolMissing/PermissionDenied can only
     // be known a tick or two after updateProcessIoCollection() ran.
-    const auto *header = ui->tableProcess->horizontalHeader();
+    const auto *header = ui->tableProcess->header();
     const bool netVisible = !header->isSectionHidden(Col_NetDown) || !header->isSectionHidden(Col_NetUp);
     updateNetIoAvailabilityMessage(netVisible);
 
