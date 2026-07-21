@@ -2108,6 +2108,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border-radius: 0;
 }
 
+
 /* -- Snap package list (card style, unchanged) -- */
 
 #listWidgetSnapPackages {
