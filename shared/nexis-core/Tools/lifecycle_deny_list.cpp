@@ -36,7 +36,7 @@ bool isUnderAny(const QString &canonicalPath, const QStringList &deniedRoots)
 
 #if defined(Q_OS_MAC)
 
-bool isSafeMacOS(const QString &canonicalPath)
+bool isSafeMacOS(const QString &canonicalPath, const QString &homeRoot)
 {
     static const QStringList kDeniedRoots = {
         QStringLiteral("/System"),
@@ -69,6 +69,14 @@ bool isSafeMacOS(const QString &canonicalPath)
     if (info.exists() && info.ownerId() == 0)
         return false;
 
+    // Must stay inside $HOME — all current callers (findAppLeftovers,
+    // findOrphanLeftovers) source paths from ~/Library, but this rule is the
+    // code-level guarantee rather than relying solely on caller convention
+    // (Defense in Depth, CISO §2 follow-up from SSO-15771). `homeRoot` is
+    // resolved by isSafe() below (real $HOME, or a caller-supplied override).
+    if (!homeRoot.isEmpty() && !canonicalPath.startsWith(homeRoot + QLatin1Char('/')) && canonicalPath != homeRoot)
+        return false;
+
     return true;
 }
 
@@ -94,7 +102,7 @@ bool pathOwnedByPackage(const QString &canonicalPath)
     return false;
 }
 
-bool isSafeLinux(const QString &canonicalPath)
+bool isSafeLinux(const QString &canonicalPath, const QString &homeRoot)
 {
     static const QStringList kDeniedRoots = {
         QStringLiteral("/etc"),
@@ -120,9 +128,9 @@ bool isSafeLinux(const QString &canonicalPath)
 
     // Must stay inside $HOME unless explicitly allowlisted elsewhere by
     // the caller — this function only ever narrows, never widens, so
-    // "outside HOME" is a deny by default.
-    const QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    if (!home.isEmpty() && !canonicalPath.startsWith(home + QLatin1Char('/')) && canonicalPath != home)
+    // "outside HOME" is a deny by default. `homeRoot` is resolved by isSafe()
+    // below (real $HOME, or a caller-supplied override).
+    if (!homeRoot.isEmpty() && !canonicalPath.startsWith(homeRoot + QLatin1Char('/')) && canonicalPath != homeRoot)
         return false;
 
     // Any path owned by an installed package is managed by the package
@@ -137,7 +145,7 @@ bool isSafeLinux(const QString &canonicalPath)
 
 } // namespace
 
-bool isSafe(const QString &path)
+bool isSafe(const QString &path, const QString &homeRootOverride)
 {
     if (path.isEmpty())
         return false;
@@ -146,12 +154,22 @@ bool isSafe(const QString &path)
     if (canonical.isEmpty() || canonical == QLatin1String("/"))
         return false;
 
+    // Canonicalize the home root so the prefix check below works correctly
+    // when homeRootOverride comes from a QTemporaryDir (e.g. /tmp/xxx) and
+    // the tested path resolves through a symlink (e.g. /tmp → /private/tmp on
+    // macOS), as well as when QStandardPaths returns a non-canonical path.
+    const QString rawHome = !homeRootOverride.isEmpty()
+        ? homeRootOverride
+        : QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    const QString homeRoot = canonicalOrAbsolute(rawHome);
+
 #if defined(Q_OS_MAC)
-    return isSafeMacOS(canonical);
+    return isSafeMacOS(canonical, homeRoot);
 #elif defined(Q_OS_LINUX)
-    return isSafeLinux(canonical);
+    return isSafeLinux(canonical, homeRoot);
 #else
     Q_UNUSED(canonical);
+    Q_UNUSED(homeRoot);
     return false;
 #endif
 }

@@ -35,6 +35,7 @@ private slots:
     void isSafe_launchDaemons_isDenied();
     void isSafe_appleBundleId_isDenied();
     void isSafe_homebrewCellar_isDenied();
+    void isSafe_outsideHome_isDenied();
 #endif
 
 #ifdef Q_OS_LINUX
@@ -125,6 +126,24 @@ void TestLifecycleDenyList::isSafe_appleBundleId_isDenied()
 void TestLifecycleDenyList::isSafe_homebrewCellar_isDenied()
 {
     QVERIFY(!LifecycleDenyList::isSafe(QStringLiteral("/usr/local/Cellar/wget/1.21")));
+}
+
+void TestLifecycleDenyList::isSafe_outsideHome_isDenied()
+{
+    // Regression (SSO-15774 / CISO follow-up SSO-15771): isSafeMacOS() must
+    // reject any path outside $HOME even when nothing in kDeniedRoots matches.
+    // All current callers source candidate paths from ~/Library, but this test
+    // encodes that boundary as a code-level guarantee rather than caller
+    // convention alone (Defense in Depth).
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    // QTemporaryDir defaults to /var/folders/… or /tmp — both outside $HOME.
+    QVERIFY(!tmp.path().startsWith(QDir::homePath()));
+
+    const QString outsidePath = tmp.filePath("com.example.LeftoverSimulated");
+    QVERIFY(QDir().mkpath(outsidePath));
+
+    QVERIFY(!LifecycleDenyList::isSafe(outsidePath));
 }
 
 #endif // Q_OS_MAC
