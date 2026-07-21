@@ -31,3 +31,14 @@ Nexis bundles the following third-party assets. Their license texts are included
 - **License:** Ubuntu Font Licence 1.0
 - **License text:** `shared/nexis/static/font/LICENSE-UFL.txt`
 - **Installed as:** `/usr/share/doc/nexis/LICENSE-UFL.txt`
+
+---
+
+## orlp/ed25519 (verify-only subset)
+
+- **Source:** https://github.com/orlp/ed25519
+- **Copyright:** 2015 Orson Peters
+- **License:** zlib
+- **License text:** `macos/nexis-core/Info/vendor/ed25519/LICENSE.txt`
+- **Pinned commit / manifest:** `macos/nexis-core/Info/vendor/ed25519/UPSTREAM.md` (SSO-15431)
+- **Used by:** `SparkleSignatureVerifier` (macOS) to verify Ed25519 (RFC 8032) Sparkle appcast signatures — replaces a nonexistent macOS `SecKey` EdDSA path.

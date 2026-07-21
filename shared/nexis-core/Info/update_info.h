@@ -13,6 +13,18 @@ struct NEXISCORESHARED_EXPORT UpdateEntry {
     QString version;          // available (newer) version
     QString installedVersion; // currently installed version
     bool isCask = false;
+
+    // Sparkle-only fields (empty for brew/system sources).
+    // signatureMetadataPresent is set when the appcast carries a signature
+    // AND the app bundle contains a matching public key. This is metadata
+    // presence only — it does NOT mean the signature has been cryptographically
+    // verified (SparkleSignatureVerifier is not yet invoked on downloaded
+    // bytes; see SSO-15431). Do not read this as "trusted" or "safe to install".
+    QString enclosureUrl;
+    QString edSignature;
+    QString dsaSignature;
+    QString publicKey;
+    bool    signatureMetadataPresent = false;
 };
 
 struct NEXISCORESHARED_EXPORT UpdateCheckResult {

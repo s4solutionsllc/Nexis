@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QTreeWidget>
+#include <QVBoxLayout>
 #include <Tools/package_tool_shared.h>
 #include <Tools/repo_health_types.h>
 #include <Info/update_info.h>
@@ -43,16 +44,20 @@ private slots:
     void onUninstallClicked();
     void onSystemUpdatesChecked(const UpdateCheckResult &result);
     void onRepoHealthChecked(const RepoHealthCache &cache);
+    void onSparkleUpdateItemChanged(QTreeWidgetItem *item, int column);
     void onUpdatesTreeItemChanged(QTreeWidgetItem *item, int column);
     void onSelectAllToggled(bool checked);
     void onUpdateSelectedClicked();
+    void onSparkleUpdateSelectedClicked();
 
 private:
     void buildUI();
+    void buildSparkleSection(QVBoxLayout *pageLayout);
     void fetchPackages();
     QStringList getSelectedPackages() const;
     QStringList getSelectedCaskUpdates() const;
     void updateUninstallButton();
+    void updateSparkleUpdateButton();
     void updateUpdateButton();
     void setInstallFieldsVisible(bool visible);
 
@@ -68,7 +73,7 @@ private:
     QPushButton *mBtnUninstall = nullptr;
     QTreeWidget *mTreeWidget = nullptr;
 
-    // Available Updates section
+    // Homebrew / system Available Updates section
     QWidget *mUpdatesSection = nullptr;
     QProgressBar *mUpdatesProgress = nullptr;
     QLabel *mLblUpdatesTitle = nullptr;
@@ -77,6 +82,15 @@ private:
     QPushButton *mBtnUpdateSelected = nullptr;
     QTreeWidget *mUpdatesTree = nullptr;
     bool mUpdatesRunning = false;
+
+    // Sparkle (non-Homebrew app) updates section
+    QWidget *mSparkleSection = nullptr;
+    QLabel *mLblSparkleTitle = nullptr;
+    QPushButton *mBtnSparkleUpdateSelected = nullptr;
+    QTreeWidget *mSparkleTree = nullptr;
+
+    // Cached Sparkle UpdateEntry rows (parallel to mSparkleTree items)
+    QList<UpdateEntry> mSparkleEntries;
 
     QList<Package> mPackages;
 };

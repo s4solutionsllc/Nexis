@@ -114,6 +114,35 @@ if(APPLE)
   add_nexis_test(NAME PackageToolMacOSTests
     SOURCES core/test_package_tool_macos.cpp)
 
+  # SSO-15390: pure Sparkle appcast XML parser — compiled cross-platform
+  # because the parser has no macOS-only dependencies.
+  add_nexis_test(NAME SparkleAppcastTests
+    SOURCES
+      core/test_sparkle_appcast.cpp
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_appcast_parser.cpp"
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+  )
+
+  # SSO-15431: known-answer tests (RFC 8032 §7.1) for SparkleSignatureVerifier
+  # — compiled with the vendored verify-only ed25519 subset. macOS-only
+  # because the verifier itself is only built into nexis-core on Darwin.
+  add_nexis_test(NAME SparkleSignatureVerifierTests
+    SOURCES
+      core/test_sparkle_signature_verifier.cpp
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_signature_verifier.cpp"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/verify.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/sha512.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/ge.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/sc.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/fe.c"
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519"
+  )
+
   # SSO-15387 / FW-18 (SSO-3746): leftover artifact scanner — bundle-id
   # matching + expanded fixture suite (product-name boundary, vendor dirs,
   # LaunchDaemons privilege boundary, true-negative set, precision/recall
