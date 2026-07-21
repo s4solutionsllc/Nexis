@@ -651,20 +651,16 @@ add_nexis_test(NAME MaintenanceWizardTrustSafetyTests
 )
 
 # SSO-15480: SystemCleanerProvider — per-item selection and dry-run parity.
-# The test exercises a TestableSystemCleanerProvider subclass that overrides
-# performItem() to do direct QFile operations, but SystemCleanerProvider's own
-# (unused-at-runtime) performItem() still references CleanerService::cleanFiles
-# and ToolManager::removeStaleSnapRevisions/removeUnusedFlatpakRuntimes, which
-# only exist in nexis-gui (Managers/cleaner_service.cpp, Managers/tool_manager.cpp)
-# — not nexis-core. Link nexis-gui like CleanerServiceTests above instead of
-# hand-compiling those two files: tool_manager.cpp alone pulls in ~10 further
-# platform-tool translation units, so direct-compiling would just cascade into
-# more undefined symbols.
+# system_cleaner_provider.cpp and trust_safety_runner.cpp are already compiled
+# into nexis-gui (GUI_SHARED_SRCS). Adding them again to SOURCES would cause
+# AUTOMOC to generate duplicate MOC symbols (TrustSafetyRunner, etc.) — one
+# copy in the test target's mocs_compilation.cpp.o and another in
+# libnexis-gui.a(mocs_compilation.cpp.o). Link nexis-gui instead (like
+# CleanerServiceTests) so all three binaries — CleanerService, ToolManager,
+# TrustSafetyRunner, SystemCleanerProvider — come from a single archive.
 add_nexis_test(NAME SystemCleanerProviderTests
   SOURCES
     managers/test_system_cleaner_provider.cpp
-    "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_provider.cpp"
-    "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
   INCLUDES
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Common"
