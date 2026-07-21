@@ -7,9 +7,13 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDebug>
+#include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QRegularExpression>
+#include <QSet>
+#include <QStandardPaths>
 #include <QUuid>
 
 PackageToolLinux::PackageToolLinux()
@@ -768,4 +772,146 @@ bool PackageToolLinux::trashLeftovers(const QStringList &paths)
     }
 
     return allOk;
+}
+
+// SSO-15428 (SSO-15373 §5): multi-signal orphan-leftover scanner.
+
+namespace {
+
+// Returns total size in bytes for a directory tree or a regular file.
+static quint64 orphanPathSizeBytes(const QString &path)
+{
+    QFileInfo fi(path);
+    if (fi.isFile())
+        return static_cast<quint64>(fi.size());
+    quint64 total = 0;
+    QDirIterator it(path, QDir::Files | QDir::Hidden | QDir::System | QDir::NoDotAndDotDot,
+                    QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        it.next();
+        total += static_cast<quint64>(it.fileInfo().size());
+    }
+    return total;
+}
+
+// Returns true if `name` follows a reverse-DNS naming convention
+// (e.g. "org.mozilla.Firefox", "com.example.App") — the typical pattern for
+// Flatpak/Snap application ids and a strong naming signal for orphan detection.
+static bool looksLikeReverseDnsId(const QString &name)
+{
+    static const QRegularExpression re(
+        QStringLiteral("^[A-Za-z][A-Za-z0-9-]*(\\.[A-Za-z][A-Za-z0-9-]*){2,}$"));
+    return re.match(name).hasMatch();
+}
+
+static void evaluateLinuxOrphanCandidate(QList<OrphanLeftover> &out,
+                                          const QFileInfo &entry,
+                                          const QString &category,
+                                          const QSet<QString> &installedNames)
+{
+    const QString dirName = entry.fileName();
+    const bool ownedByPackage = installedNames.contains(dirName);
+
+    QList<OrphanSignal> signals;
+
+    // Signal (a): name not matched by any installed package.
+    // We check against the enumerated package-name registry (built from
+    // dpkg/rpm/flatpak/snap), which is the argv-safe equivalent of calling
+    // `dpkg -S` / `rpm -qf` for ownership — XDG dirs are never tracked in
+    // package file-lists, so a package-name match is the best available proxy.
+    if (!ownedByPackage) {
+        signals.append({QStringLiteral("no_installed_package"),
+                         QStringLiteral("No installed package matches this name")});
+    }
+
+    // Signal (b): naming convention match — reverse-DNS id with no matching
+    // package (same heuristic as macOS bundle-id check).
+    if (looksLikeReverseDnsId(dirName) && !ownedByPackage) {
+        signals.append({QStringLiteral("naming_convention"),
+                         QStringLiteral("Reverse-DNS id with no matching installed package")});
+    }
+
+    // Signal (c): last-modified >= 30 days.
+    const QDateTime modified = entry.lastModified();
+    const QDateTime accessed = entry.lastRead();
+    const QDateTime now = QDateTime::currentDateTime();
+    if (modified.isValid() && modified.daysTo(now) >= 30) {
+        signals.append({QStringLiteral("age_threshold"),
+                         QStringLiteral("Not modified in 30+ days")});
+    }
+
+    // Signal (d): last-accessed >= 7 days.
+    if (accessed.isValid() && accessed.daysTo(now) >= 7) {
+        signals.append({QStringLiteral("not_recently_accessed"),
+                         QStringLiteral("Not accessed in 7+ days")});
+    }
+
+    // CISO higher-confidence bar: require corroboration from >= 3 of 4 signals.
+    if (signals.size() < 3)
+        return;
+
+    // T1 deny-list cross-check on the canonicalized path.
+    const QString canonical = entry.canonicalFilePath();
+    const QString resolvedCanonical = canonical.isEmpty() ? entry.absoluteFilePath() : canonical;
+    if (!LifecycleDenyList::isSafe(resolvedCanonical))
+        return;
+
+    OrphanLeftover leftover;
+    leftover.path            = entry.absoluteFilePath();
+    leftover.canonicalPath   = resolvedCanonical;
+    leftover.category        = category;
+    leftover.size            = orphanPathSizeBytes(leftover.path);
+    leftover.signals         = signals;
+    leftover.confidenceScore = signals.size();
+    leftover.lastModified    = modified;
+    leftover.lastAccessed    = accessed;
+    out.append(leftover);
+}
+
+} // namespace
+
+QList<OrphanLeftover> PackageToolLinux::findOrphanLeftovers()
+{
+    // Step 1: build installed package name set across all active package managers.
+    QSet<QString> installedNames;
+
+    for (const Package &pkg : getPackages()) {
+        if (!pkg.name.isEmpty())
+            installedNames.insert(pkg.name);
+    }
+
+    for (const QString &snapName : getSnapPackages())
+        installedNames.insert(snapName);
+
+    for (const QString &ref : getFlatpakPackages()) {
+        installedNames.insert(ref);
+        // Also insert the last-segment shortname (e.g. "Firefox" from
+        // "org.mozilla.Firefox") so XDG dirs using the shortname are suppressed.
+        if (ref.contains(QLatin1Char('.')))
+            installedNames.insert(ref.section(QLatin1Char('.'), -1));
+    }
+
+    // Step 2: scan XDG user dirs.
+    const QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+
+    struct ScanTarget { QString path; QString label; };
+    const QList<ScanTarget> targets = {
+        { home + QLatin1String("/.config"),      QStringLiteral("Config") },
+        { home + QLatin1String("/.cache"),       QStringLiteral("Cache") },
+        { home + QLatin1String("/.local/share"), QStringLiteral("Local Share") },
+    };
+
+    // Steps 3–6: evaluate signals per entry, apply confidence bar and deny-list.
+    QList<OrphanLeftover> result;
+    for (const ScanTarget &target : targets) {
+        QDir dir(target.path);
+        if (!dir.exists())
+            continue;
+        const QFileInfoList entries = dir.entryInfoList(
+            QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
+        for (const QFileInfo &entry : entries)
+            evaluateLinuxOrphanCandidate(result, entry, target.label, installedNames);
+    }
+
+    return result;
 }
