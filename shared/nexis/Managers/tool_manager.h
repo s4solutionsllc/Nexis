@@ -40,6 +40,10 @@ public:
     QList<Package> getInstalledApps() const;
     bool trashApps(const QStringList &appPaths);
     bool trashLeftovers(const QStringList &paths);
+    // SSO-15386 T3/T4 / SSO-15429: multi-signal orphan-leftover scan. See
+    // PackageTool::findOrphanLeftovers() for the confidence bar. Trashing
+    // reuses trashLeftovers() above — same deny-list/audit-log/fail-secure path.
+    QList<OrphanLeftover> findOrphanLeftovers() const;
     // SSO-15566 / CISO §4: running-process warn/quit gate ahead of trashApps().
     bool isAppRunning(const QString &bundlePath) const;
     bool quitApp(const QString &bundlePath);

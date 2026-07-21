@@ -88,6 +88,11 @@ bool PackageService::trashLeftovers(const QStringList &paths)
     return mToolManager->trashLeftovers(paths);
 }
 
+QList<OrphanLeftover> PackageService::findOrphanLeftovers()
+{
+    return mToolManager->findOrphanLeftovers();
+}
+
 bool PackageService::isAppRunning(const QString &bundlePath) const
 {
     return mToolManager->isAppRunning(bundlePath);

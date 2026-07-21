@@ -31,6 +31,9 @@ public:
     // freedesktop.org Trash; macOS: NSFileManager trashItemAtURL).
     // CISO §1/§2/§3 (SSO-15373) enforcement is inside PackageTool::trashLeftovers.
     bool trashLeftovers(const QStringList &paths);
+    // SSO-15429: synchronous — callers scan off the UI thread (e.g. via
+    // QtConcurrent) since this walks the user's home directory.
+    QList<OrphanLeftover> findOrphanLeftovers();
     void removeOrphanPackages();
     // SSO-15566 / CISO §4: synchronous — called from the UI thread by the
     // pre-uninstall running-process gate and its blocking warn/quit dialog.
