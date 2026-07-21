@@ -148,6 +148,16 @@ public:
     // platforms without an implementation.
     virtual QList<OrphanLeftover> findOrphanLeftovers() { return {}; }
 
+    // SSO-15566 / SSO-15373 CISO §4: true when any process whose executable
+    // path lives inside bundlePath is currently running. Returns false on
+    // platforms without an implementation — running-process gating is scoped
+    // to the macOS uninstaller flow.
+    virtual bool isAppRunning(const QString &bundlePath) const { Q_UNUSED(bundlePath); return false; }
+    // Requests a graceful quit (AppleEvent quit / NSRunningApplication
+    // terminate — never a force-kill) of every running instance of the app
+    // at bundlePath. Returns true iff at least one quit was requested.
+    virtual bool quitApp(const QString &bundlePath) { Q_UNUSED(bundlePath); return false; }
+
     static QList<StaleSnapRevision> parseSnapListAll(const QString &output);
     static QList<OrphanPackage> parseAptAutoremoveDryRun(const QString &output);
     static QList<OrphanPackage> parsePacmanOrphans(const QString &output);

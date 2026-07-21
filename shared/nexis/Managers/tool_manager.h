@@ -40,6 +40,9 @@ public:
     QList<Package> getInstalledApps() const;
     bool trashApps(const QStringList &appPaths);
     bool trashLeftovers(const QStringList &paths);
+    // SSO-15566 / CISO §4: running-process warn/quit gate ahead of trashApps().
+    bool isAppRunning(const QString &bundlePath) const;
+    bool quitApp(const QString &bundlePath);
 
     // Snap/Flatpak revision cleanup (FR-79)
     QList<StaleSnapRevision> getStaleSnapRevisions() const;

@@ -5,6 +5,14 @@
 #include "Utils/brew_util.h"
 #include "Utils/plist_util.h"
 
+#ifdef Q_OS_MAC
+// SSO-15566: NSRunningApplication bridge (app_quit_helper.mm). Guarded so
+// this source still cross-compiles on Linux, where PackageToolUninstallTests
+// (tests/core/test_package_tool_uninstall.cpp) builds it directly for
+// command-construction coverage without an Objective-C++ toolchain.
+#include "Tools/app_quit_helper.h"
+#endif
+
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
@@ -560,6 +568,27 @@ bool PackageToolMacOS::isAppRunning(const QString &bundlePath) const
     // when the directory is completely idle.  We treat a non-empty stdout as
     // "running" to fail safely.
     return !proc.readAllStandardOutput().trimmed().isEmpty();
+}
+
+// SSO-15566 / CISO §4: graceful quit — never SIGKILL. Canonicalizes the path
+// the same way trashApps()/trashLeftovers() do before handing it to the
+// NSRunningApplication bridge, so a running app is matched by its resolved
+// on-disk location rather than a symlinked/relative path the caller passed in.
+bool PackageToolMacOS::quitApp(const QString &bundlePath)
+{
+#ifdef Q_OS_MAC
+    if (bundlePath.isEmpty())
+        return false;
+
+    const QFileInfo fi(bundlePath);
+    const QString canonical = fi.canonicalFilePath().isEmpty()
+                              ? QDir::cleanPath(fi.absoluteFilePath())
+                              : fi.canonicalFilePath();
+    return nexis_macos_quit_app_at_path(canonical.toUtf8().constData());
+#else
+    Q_UNUSED(bundlePath);
+    return false;
+#endif
 }
 
 /**********
