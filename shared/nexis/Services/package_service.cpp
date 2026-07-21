@@ -39,6 +39,14 @@ void PackageService::fetchSnapPackages()
     });
 }
 
+void PackageService::fetchFlatpakPackages()
+{
+    QThreadPool::globalInstance()->start([this]() {
+        QStringList packages = mToolManager->getFlatpakPackages();
+        emit flatpakPackagesFetched(packages);
+    });
+}
+
 void PackageService::uninstallPackages(const QStringList &packages, bool purge)
 {
     QThreadPool::globalInstance()->start([this, packages, purge]() {
@@ -57,6 +65,15 @@ void PackageService::uninstallSnapPackages(const QStringList &packages)
     });
 }
 
+void PackageService::uninstallFlatpakPackages(const QStringList &packages)
+{
+    QThreadPool::globalInstance()->start([this, packages]() {
+        emit mSignalMapper->sigUninstallStarted();
+        mToolManager->uninstallFlatpakPackages(packages);
+        emit mSignalMapper->sigUninstallFinished();
+    });
+}
+
 void PackageService::trashApps(const QStringList &appPaths)
 {
     QThreadPool::globalInstance()->start([this, appPaths]() {
@@ -64,6 +81,11 @@ void PackageService::trashApps(const QStringList &appPaths)
         mToolManager->trashApps(appPaths);
         emit mSignalMapper->sigUninstallFinished();
     });
+}
+
+bool PackageService::trashLeftovers(const QStringList &paths)
+{
+    return mToolManager->trashLeftovers(paths);
 }
 
 void PackageService::fetchOrphanPackages()

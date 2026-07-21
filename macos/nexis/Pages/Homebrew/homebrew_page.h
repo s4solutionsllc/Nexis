@@ -2,7 +2,9 @@
 #define HOMEBREW_PAGE_H
 
 #include <QWidget>
+#include <QCheckBox>
 #include <QLabel>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QTreeWidget>
@@ -43,6 +45,8 @@ private slots:
     void onSystemUpdatesChecked(const UpdateCheckResult &result);
     void onRepoHealthChecked(const RepoHealthCache &cache);
     void onSparkleUpdateItemChanged(QTreeWidgetItem *item, int column);
+    void onUpdatesTreeItemChanged(QTreeWidgetItem *item, int column);
+    void onSelectAllToggled(bool checked);
     void onUpdateSelectedClicked();
 
 private:
@@ -50,8 +54,10 @@ private:
     void buildSparkleSection(QVBoxLayout *pageLayout);
     void fetchPackages();
     QStringList getSelectedPackages() const;
+    QStringList getSelectedCaskUpdates() const;
     void updateUninstallButton();
     void updateSparkleUpdateButton();
+    void updateUpdateButton();
     void setInstallFieldsVisible(bool visible);
 
     ToolManager *mToolManager = nullptr;
@@ -68,9 +74,13 @@ private:
 
     // Homebrew / system Available Updates section
     QWidget *mUpdatesSection = nullptr;
+    QProgressBar *mUpdatesProgress = nullptr;
     QLabel *mLblUpdatesTitle = nullptr;
     QPushButton *mBtnCheckNow = nullptr;
+    QCheckBox *mChkSelectAll = nullptr;
+    QPushButton *mBtnUpdateSelected = nullptr;
     QTreeWidget *mUpdatesTree = nullptr;
+    bool mUpdatesRunning = false;
 
     // Sparkle (non-Homebrew app) updates section
     QWidget *mSparkleSection = nullptr;

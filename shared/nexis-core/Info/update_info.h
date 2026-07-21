@@ -10,7 +10,9 @@
 struct NEXISCORESHARED_EXPORT UpdateEntry {
     QString source;
     QString name;
-    QString version;
+    QString version;          // available (newer) version
+    QString installedVersion; // currently installed version
+    bool isCask = false;
 
     // Sparkle-only fields (empty for brew/system sources).
     // signatureMetadataPresent is set when the appcast carries a signature

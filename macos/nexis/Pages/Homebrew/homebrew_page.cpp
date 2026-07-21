@@ -10,14 +10,18 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QCheckBox>
 #include <QFont>
 #include <QFrame>
 #include <QIcon>
 #include <QMessageBox>
+#include <QProgressBar>
 #include <QRegularExpression>
 #include <QDesktopServices>
 #include <QUrl>
 #include <QtConcurrent>
+#include <Utils/brew_util.h>
+#include <Utils/command_util.h>
 
 HomebrewPage::HomebrewPage(QWidget *parent,
                            ToolManager *toolManager,
@@ -47,6 +51,12 @@ HomebrewPage::HomebrewPage(QWidget *parent,
         mBtnCheckNow->setText(tr("Checking..."));
         mRefresh->triggerUpdateCheck();
     });
+    connect(mUpdatesTree, &QTreeWidget::itemChanged,
+            this, &HomebrewPage::onUpdatesTreeItemChanged);
+    connect(mChkSelectAll, &QCheckBox::toggled,
+            this, &HomebrewPage::onSelectAllToggled);
+    connect(mBtnUpdateSelected, &QPushButton::clicked,
+            this, &HomebrewPage::onUpdateSelectedClicked);
     connect(mRefresh, &DataRefreshService::systemUpdatesChecked,
             this, &HomebrewPage::onSystemUpdatesChecked);
     connect(mRefresh, &DataRefreshService::repoHealthChecked,
@@ -77,20 +87,33 @@ void HomebrewPage::buildUI()
     pageLayout->setContentsMargins(0, 0, 0, 0);
     pageLayout->setSpacing(0);
 
-    // Updates section — hidden until results arrive
+    // Cask Updates section — hidden until results arrive
     mUpdatesSection = new QWidget(this);
     mUpdatesSection->setObjectName("updatesSection");
     mUpdatesSection->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
     mUpdatesSection->hide();
 
     auto *updLayout = new QVBoxLayout(mUpdatesSection);
-    updLayout->setContentsMargins(30, 5, 30, 10);
-    updLayout->setSpacing(8);
+    updLayout->setContentsMargins(0, 5, 0, 10);
+    updLayout->setSpacing(0);
 
-    // DS §3 header anatomy (NEX F2 shared recipe): accent bar + [title row
-    // (title, Check Now) / source line], mirroring
-    // MetricTileBase::buildChrome() (metric_tile_base.cpp:255-307).
-    auto *updHeaderWidget = new QWidget(mUpdatesSection);
+    // Design Anchor: thin (5px) progress bar anchored to the top of the
+    // section header, full-width, hidden when not running.
+    mUpdatesProgress = new QProgressBar(mUpdatesSection);
+    mUpdatesProgress->setObjectName("homebrewUpdatesProgress");
+    mUpdatesProgress->setProperty("progressRole", "thin");
+    mUpdatesProgress->setTextVisible(false);
+    mUpdatesProgress->setFixedHeight(Dpi::scale(5));
+    mUpdatesProgress->hide();
+    updLayout->addWidget(mUpdatesProgress);
+
+    auto *updInner = new QWidget(mUpdatesSection);
+    auto *updInnerLayout = new QVBoxLayout(updInner);
+    updInnerLayout->setContentsMargins(30, 0, 30, 0);
+    updInnerLayout->setSpacing(8);
+
+    // DS §3 header anatomy: accent bar + title row (title, Check Now) / source line
+    auto *updHeaderWidget = new QWidget(updInner);
     updHeaderWidget->setObjectName("sectionHeaderRow");
     auto *updHeaderRoot = new QVBoxLayout(updHeaderWidget);
     updHeaderRoot->setContentsMargins(0, 0, 0, 0);
@@ -116,7 +139,7 @@ void HomebrewPage::buildUI()
     updTitleRow->setContentsMargins(0, 0, 0, 0);
     updTitleRow->setSpacing(8);
 
-    mLblUpdatesTitle = new QLabel(tr("Available Updates"), updHeaderWidget);
+    mLblUpdatesTitle = new QLabel(tr("Available Cask Updates"), updHeaderWidget);
     mLblUpdatesTitle->setObjectName("sectionHeaderTitle");
     updTitleRow->addWidget(mLblUpdatesTitle);
     updTitleRow->addStretch();
@@ -131,18 +154,17 @@ void HomebrewPage::buildUI()
 
     updTextCol->addLayout(updTitleRow);
 
-    auto *lblUpdatesSource = new QLabel(tr("Outdated Homebrew packages"), updHeaderWidget);
+    auto *lblUpdatesSource = new QLabel(tr("Outdated Homebrew casks"), updHeaderWidget);
     lblUpdatesSource->setObjectName("sectionHeaderSource");
     updTextCol->addWidget(lblUpdatesSource);
 
     updHeaderRow->addLayout(updTextCol, 1);
     updHeaderRoot->addLayout(updHeaderRow);
 
-    updLayout->addWidget(updHeaderWidget);
+    updInnerLayout->addWidget(updHeaderWidget);
 
-    // DS §2 elevated container (NEX F1 shared recipe) — single
-    // container-level shadow (DS §7); the tree rows stay flat inside it.
-    auto *updContainer = new QWidget(mUpdatesSection);
+    // DS §2 elevated container — single container-level shadow; flat rows inside.
+    auto *updContainer = new QWidget(updInner);
     updContainer->setObjectName("homebrewUpdatesContainer");
     updContainer->setAttribute(Qt::WA_StyledBackground, true);
     updContainer->setProperty("cardRole", "elevated");
@@ -150,26 +172,47 @@ void HomebrewPage::buildUI()
     updContainerLayout->setContentsMargins(0, 0, 0, 0);
     updContainerLayout->setSpacing(0);
 
+    // Columns: App (with checkbox), Current Version, Available Version
     mUpdatesTree = new QTreeWidget(updContainer);
     mUpdatesTree->setObjectName("treeWidgetUpdates");
-    mUpdatesTree->setHeaderLabels({ tr("Source"), tr("Package"), tr("Version") });
+    mUpdatesTree->setHeaderLabels({ tr("App"), tr("Current"), tr("Available") });
     mUpdatesTree->header()->setFixedHeight(Dpi::scale(30));
     mUpdatesTree->setColumnCount(3);
     mUpdatesTree->setRootIsDecorated(false);
     mUpdatesTree->setFocusPolicy(Qt::NoFocus);
     mUpdatesTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mUpdatesTree->setSelectionMode(QAbstractItemView::NoSelection);
-    mUpdatesTree->header()->setStretchLastSection(true);
-    mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-    // DS §7: right-align the tabular Version column (header + cells); the
-    // header stays frozen at the top of the tree's own viewport (QTreeWidget
-    // default — no extra code needed) as the update rows scroll under it.
+    mUpdatesTree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    mUpdatesTree->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
     mUpdatesTree->headerItem()->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     mUpdatesTree->setMaximumHeight(200);
     updContainerLayout->addWidget(mUpdatesTree);
 
-    updLayout->addWidget(updContainer, 1);
+    updInnerLayout->addWidget(updContainer, 1);
+
+    // Bottom row: Select All + Update Selected (disabled until ≥1 checked)
+    auto *updBtnRow = new QHBoxLayout();
+    updBtnRow->setContentsMargins(0, 0, 0, 0);
+    updBtnRow->setSpacing(8);
+
+    mChkSelectAll = new QCheckBox(tr("Select All"), updInner);
+    mChkSelectAll->setFocusPolicy(Qt::NoFocus);
+    updBtnRow->addWidget(mChkSelectAll);
+    updBtnRow->addStretch();
+
+    mBtnUpdateSelected = new QPushButton(tr("Update Selected"), updInner);
+    mBtnUpdateSelected->setObjectName("btnUpdateSelected");
+    mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
+    mBtnUpdateSelected->setFocusPolicy(Qt::NoFocus);
+    mBtnUpdateSelected->setAccessibleName("primary");
+    mBtnUpdateSelected->setEnabled(false);
+    updBtnRow->addWidget(mBtnUpdateSelected);
+
+    updInnerLayout->addLayout(updBtnRow);
+
+    updLayout->addWidget(updInner);
 
     pageLayout->addWidget(mUpdatesSection);
 
@@ -281,7 +324,7 @@ void HomebrewPage::buildUI()
     Utilities::addDropShadow(updContainer, 90, 26);
     Utilities::addDropShadow(pkgContainer, 90, 26);
 
-    Utilities::addDropShadow({mBtnInstall, mBtnCancel, mBtnUninstall, mTxtSearch}, 40);
+    Utilities::addDropShadow({mBtnInstall, mBtnCancel, mBtnUninstall, mBtnUpdateSelected, mTxtSearch}, 40);
 }
 
 void HomebrewPage::setInstallFieldsVisible(bool visible)
@@ -473,29 +516,36 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
     mBtnCheckNow->setText(tr("Check Now"));
 
     // Split entries: Sparkle ones go to the dedicated section; brew/system
-    // entries stay in the existing updates tree.
-    QList<UpdateEntry> brewEntries;
+    // entries stay in the existing updates tree (cask-only).
+    QList<UpdateEntry> caskUpdates;
     QList<UpdateEntry> sparkleEntries;
     for (const UpdateEntry &e : result.entries) {
         if (e.source == "sparkle")
             sparkleEntries.append(e);
-        else
-            brewEntries.append(e);
+        else if (e.isCask)
+            caskUpdates.append(e);
     }
 
-    // Homebrew / system section
-    if (!result.success || brewEntries.isEmpty()) {
+    // Homebrew cask section
+    if (!result.success || caskUpdates.isEmpty()) {
         mUpdatesSection->hide();
     } else {
-        mLblUpdatesTitle->setText(tr("Available Updates (%1)").arg(brewEntries.size()));
+        mLblUpdatesTitle->setText(tr("Available Cask Updates (%1)").arg(caskUpdates.size()));
+        mUpdatesTree->blockSignals(true);
         mUpdatesTree->clear();
-        for (const UpdateEntry &entry : brewEntries) {
+        for (const UpdateEntry &entry : caskUpdates) {
             auto *item = new QTreeWidgetItem(mUpdatesTree);
-            item->setText(0, entry.source);
-            item->setText(1, entry.name);
+            item->setText(0, entry.name);
+            item->setText(1, entry.installedVersion);
             item->setText(2, entry.version);
+            item->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
             item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+            item->setCheckState(0, Qt::Unchecked);
+            item->setData(0, Qt::UserRole, entry.name); // cask token for brew upgrade
         }
+        mUpdatesTree->blockSignals(false);
+        mChkSelectAll->setChecked(false);
+        updateUpdateButton();
         mUpdatesSection->show();
     }
 
@@ -516,7 +566,6 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
         } else {
             item->setText(2, QString());
         }
-        item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     }
     mSparkleTree->blockSignals(false);
 
@@ -661,6 +710,111 @@ void HomebrewPage::onUpdateSelectedClicked()
             continue;
         QDesktopServices::openUrl(QUrl(entry.enclosureUrl));
     }
+}
+
+QStringList HomebrewPage::getSelectedCaskUpdates() const
+{
+    QStringList selected;
+    for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = mUpdatesTree->topLevelItem(i);
+        if (item->checkState(0) == Qt::Checked)
+            selected << item->data(0, Qt::UserRole).toString();
+    }
+    return selected;
+}
+
+void HomebrewPage::updateUpdateButton()
+{
+    int count = getSelectedCaskUpdates().count();
+    if (count > 0)
+        mBtnUpdateSelected->setText(tr("Update Selected (%1)").arg(count));
+    else
+        mBtnUpdateSelected->setText(tr("Update Selected"));
+    mBtnUpdateSelected->setEnabled(count > 0 && !mUpdatesRunning);
+}
+
+void HomebrewPage::onUpdatesTreeItemChanged(QTreeWidgetItem *, int)
+{
+    // Sync "Select All" state without triggering its toggled signal
+    int total = mUpdatesTree->topLevelItemCount();
+    int checked = getSelectedCaskUpdates().count();
+    mChkSelectAll->blockSignals(true);
+    mChkSelectAll->setCheckState(
+        checked == 0 ? Qt::Unchecked
+        : checked == total ? Qt::Checked
+        : Qt::PartiallyChecked);
+    mChkSelectAll->blockSignals(false);
+    updateUpdateButton();
+}
+
+void HomebrewPage::onSelectAllToggled(bool checked)
+{
+    mUpdatesTree->blockSignals(true);
+    for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i)
+        mUpdatesTree->topLevelItem(i)->setCheckState(0, checked ? Qt::Checked : Qt::Unchecked);
+    mUpdatesTree->blockSignals(false);
+    updateUpdateButton();
+}
+
+void HomebrewPage::onUpdateSelectedClicked()
+{
+    QStringList casks = getSelectedCaskUpdates();
+    if (casks.isEmpty() || mUpdatesRunning)
+        return;
+
+    mUpdatesRunning = true;
+    mBtnUpdateSelected->setEnabled(false);
+    mBtnCheckNow->setEnabled(false);
+    mChkSelectAll->setEnabled(false);
+    mUpdatesProgress->setRange(0, casks.size());
+    mUpdatesProgress->setValue(0);
+    mUpdatesProgress->show();
+
+    // Capture tree items by cask token for per-item status updates
+    QMap<QString, QTreeWidgetItem *> itemMap;
+    for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *it = mUpdatesTree->topLevelItem(i);
+        itemMap[it->data(0, Qt::UserRole).toString()] = it;
+    }
+
+    (void)QtConcurrent::run([this, casks, itemMap]() mutable {
+        QString brewPath = findBrew();
+        int done = 0;
+        for (const QString &cask : casks) {
+            ExecResult res = CommandUtil::execWithStatus(
+                brewPath, {"upgrade", "--cask", cask}, 300000);
+            done++;
+            // Update UI on the main thread
+            QMetaObject::invokeMethod(this, [this, cask, res, done, itemMap]() {
+                if (itemMap.contains(cask)) {
+                    QTreeWidgetItem *it = itemMap[cask];
+                    if (res.ok()) {
+                        // Grey out successfully updated row
+                        for (int col = 0; col < mUpdatesTree->columnCount(); ++col)
+                            it->setForeground(col, QColor(128, 128, 128));
+                        it->setText(0, it->text(0) + tr(" ✓"));
+                        it->setCheckState(0, Qt::Unchecked);
+                        it->setFlags(it->flags() & ~Qt::ItemIsUserCheckable);
+                    } else {
+                        it->setText(0, it->text(0) + tr(" ✗ (%1)").arg(res.error.left(80)));
+                        it->setForeground(0, QColor(200, 50, 50));
+                        it->setFlags(it->flags() & ~Qt::ItemIsUserCheckable);
+                    }
+                }
+                mUpdatesProgress->setValue(done);
+            }, Qt::QueuedConnection);
+        }
+
+        QMetaObject::invokeMethod(this, [this]() {
+            mUpdatesRunning = false;
+            mUpdatesProgress->hide();
+            mBtnCheckNow->setEnabled(true);
+            mChkSelectAll->setEnabled(true);
+            updateUpdateButton();
+            // Refresh package list since versions may have changed
+            (void)QtConcurrent::run([this]() { fetchPackages(); });
+        }, Qt::QueuedConnection);
+    });
 }
 
 void HomebrewPage::onRepoHealthChecked(const RepoHealthCache &cache)

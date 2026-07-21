@@ -23,6 +23,7 @@ public:
     QList<Service> getServices() const;
     QList<Package> getPackages() const;
     QStringList getSnapPackages() const;
+    QStringList getFlatpakPackages() const;
     QFileInfoList getPackageCaches() const;
 
     bool changeServiceStatus(const QString &sname, bool status) const;
@@ -32,11 +33,13 @@ public:
 
     void uninstallPackages(const QStringList &packages, bool purge = false);
     bool uninstallSnapPackages(const QStringList packages);
+    bool uninstallFlatpakPackages(const QStringList packages);
     QStringList dryRunRemovePackages(const QStringList &packages);
 
     // macOS native .app bundles
     QList<Package> getInstalledApps() const;
     bool trashApps(const QStringList &appPaths);
+    bool trashLeftovers(const QStringList &paths);
 
     // Snap/Flatpak revision cleanup (FR-79)
     QList<StaleSnapRevision> getStaleSnapRevisions() const;

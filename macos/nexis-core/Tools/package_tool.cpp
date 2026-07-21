@@ -1,12 +1,16 @@
 #include "package_tool_macos.h"
+#include "Tools/lifecycle_deny_list.h"
 #include "Utils/brew_util.h"
 #include "Utils/plist_util.h"
 
+#include <QDateTime>
 #include <QDebug>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QRegularExpression>
+#include <QSet>
 #include <QStandardPaths>
 
 PackageToolMacOS::PackageToolMacOS()
@@ -69,6 +73,17 @@ QStringList PackageToolMacOS::getSnapPackages()
 bool PackageToolMacOS::uninstallSnapPackages(const QStringList &packages)
 {
     Q_UNUSED(packages);
+    return false;
+}
+
+QStringList PackageToolMacOS::getFlatpakPackages()
+{
+    return {};
+}
+
+bool PackageToolMacOS::uninstallFlatpakPackages(const QStringList &refs)
+{
+    Q_UNUSED(refs);
     return false;
 }
 
@@ -335,6 +350,135 @@ bool PackageToolMacOS::trashLeftovers(const QStringList &paths)
         }
     }
     return allOk;
+}
+
+/**************************
+ * SSO-15386 T3 / SSO-15373 §5: orphan-leftover scanner (macOS)
+ *
+ * Unlike findAppLeftovers() (matched against a known-just-uninstalled bundle
+ * id), there is no ground truth here — the originating app may have been
+ * dragged to Trash outside Nexis. CISO set a higher confidence bar: a result
+ * is only reported when >= 3 of 4 independent signals corroborate.
+ **************************/
+
+namespace {
+
+// Reverse-DNS bundle-id shape: at least three dot-separated segments, each
+// starting with a letter. Anchors the naming-convention signal to plausible
+// bundle ids so generic folder names ("Backups", "ACME Corp") don't earn it
+// for free — they still get a chance via the other three signals.
+bool looksLikeBundleId(const QString &name)
+{
+    static const QRegularExpression re(
+        QStringLiteral("^[A-Za-z][A-Za-z0-9-]*(\\.[A-Za-z][A-Za-z0-9-]*){2,}$"));
+    return re.match(name).hasMatch();
+}
+
+QString stripKnownOrphanSuffix(const QString &name)
+{
+    if (name.endsWith(QLatin1String(".plist")))
+        return name.chopped(6);
+    if (name.endsWith(QLatin1String(".savedState")))
+        return name.chopped(11);
+    return name;
+}
+
+void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
+                              const QFileInfo &entry,
+                              const QString &category,
+                              const QSet<QString> &installedBundleIds)
+{
+    const QString baseName = stripKnownOrphanSuffix(entry.fileName());
+    const bool hasInstalledApp = installedBundleIds.contains(baseName);
+
+    QList<OrphanSignal> detectedSignals;
+    if (!hasInstalledApp) {
+        detectedSignals.append({QStringLiteral("no_installed_app"),
+                         QStringLiteral("No installed app matches this name")});
+    }
+    if (looksLikeBundleId(baseName) && !hasInstalledApp) {
+        detectedSignals.append({QStringLiteral("naming_convention"),
+                         QStringLiteral("Reverse-DNS bundle id with no matching app")});
+    }
+
+    const QDateTime modified = entry.lastModified();
+    const QDateTime accessed = entry.lastRead();
+    const QDateTime now = QDateTime::currentDateTime();
+    if (modified.isValid() && modified.daysTo(now) >= 30) {
+        detectedSignals.append({QStringLiteral("age_threshold"),
+                         QStringLiteral("Not modified in 30+ days")});
+    }
+    if (accessed.isValid() && accessed.daysTo(now) >= 7) {
+        detectedSignals.append({QStringLiteral("not_recently_accessed"),
+                         QStringLiteral("Not accessed in 7+ days")});
+    }
+
+    // CISO higher-confidence bar for orphan matches: require corroboration
+    // from at least 3 of the 4 independent signals above.
+    if (detectedSignals.size() < 3)
+        return;
+
+    // T1: cross-check the deny-list on the canonicalized path — this is what
+    // keeps /Library/LaunchDaemons entries (scanned above for read-only
+    // correlation only) from ever being offered for deletion.
+    const QString canonical = entry.canonicalFilePath();
+    const QString resolvedCanonical = canonical.isEmpty() ? entry.absoluteFilePath() : canonical;
+    if (!LifecycleDenyList::isSafe(resolvedCanonical))
+        return;
+
+    OrphanLeftover leftover;
+    leftover.path = entry.absoluteFilePath();
+    leftover.canonicalPath = resolvedCanonical;
+    leftover.category = category;
+    leftover.size = entry.isFile() ? static_cast<quint64>(entry.size())
+                                    : pathSizeBytes(leftover.path);
+    leftover.matchedSignals = detectedSignals;
+    leftover.confidenceScore = detectedSignals.size();
+    leftover.lastModified = modified;
+    leftover.lastAccessed = accessed;
+    out.append(leftover);
+}
+
+} // namespace
+
+QList<OrphanLeftover> PackageToolMacOS::findOrphanLeftovers()
+{
+    QSet<QString> installedBundleIds;
+    const QList<Package> apps = getInstalledApps();
+    for (const Package &app : apps) {
+        if (!app.bundleId.isEmpty())
+            installedBundleIds.insert(app.bundleId);
+    }
+
+    const QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    const QString lib = home + QLatin1String("/Library");
+
+    struct ScanTarget { QString path; QString label; };
+    const QList<ScanTarget> targets = {
+        { lib + QLatin1String("/Application Support"),     QStringLiteral("Application Support") },
+        { lib + QLatin1String("/Caches"),                  QStringLiteral("Caches") },
+        { lib + QLatin1String("/Preferences"),              QStringLiteral("Preferences") },
+        { lib + QLatin1String("/Containers"),               QStringLiteral("Containers") },
+        { lib + QLatin1String("/Saved Application State"), QStringLiteral("Saved Application State") },
+        { lib + QLatin1String("/Logs"),                     QStringLiteral("Logs") },
+        { lib + QLatin1String("/LaunchAgents"),             QStringLiteral("LaunchAgents") },
+        // Read-only correlation only — LifecycleDenyList blocks every result
+        // under this root, so nothing here is ever offered for deletion.
+        { QStringLiteral("/Library/LaunchDaemons"),         QStringLiteral("LaunchDaemons") },
+    };
+
+    QList<OrphanLeftover> result;
+    for (const ScanTarget &target : targets) {
+        QDir dir(target.path);
+        if (!dir.exists())
+            continue;
+        const QFileInfoList entries = dir.entryInfoList(
+            QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
+        for (const QFileInfo &entry : entries)
+            evaluateOrphanCandidate(result, entry, target.label, installedBundleIds);
+    }
+
+    return result;
 }
 
 /**********

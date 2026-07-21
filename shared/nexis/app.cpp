@@ -238,6 +238,11 @@ void App::buildSidebar()
         sec.containerLayout->addWidget(btnUninstaller);
         sec.buttons.append(btnUninstaller);
 
+#ifdef Q_OS_MAC
+        btnMailCleanup = createSidebarButton(tr("Mail Cleanup"));
+        sec.containerLayout->addWidget(btnMailCleanup);
+        sec.buttons.append(btnMailCleanup);
+#endif
         btnShredder = createSidebarButton(tr("File Shredder"));
         sec.containerLayout->addWidget(btnShredder);
         sec.buttons.append(btnShredder);
@@ -413,6 +418,9 @@ void App::init()
 #endif
     btnShredder->setText(tr("File Shredder"));
     btnDocker->setText(tr("Docker"));
+#ifdef Q_OS_MAC
+    btnMailCleanup->setText(tr("Mail Cleanup"));
+#endif
     btnHelpers->setText(tr("Helpers"));
     btnSystemLogs->setText(tr("System Logs"));
 #ifdef Q_OS_MAC
@@ -528,6 +536,14 @@ void App::init()
         [this]() -> QWidget* { uninstallerPage = new UninstallerPage(mSlidingStacked); return uninstallerPage; },
         nullptr, {}
     });
+#ifdef Q_OS_MAC
+    mPageSlots.append({
+        "mailCleanup",
+        tr("Mail Cleanup"),
+        [this]() -> QWidget* { mailAttachmentCleanupPage = new MailAttachmentCleanupPage(mSlidingStacked); return mailAttachmentCleanupPage; },
+        nullptr, {}
+    });
+#endif
     mPageSlots.append({
         "shredder",
         tr("File Shredder"),
@@ -555,7 +571,11 @@ void App::init()
 
     mListSidebarButtons = {
         btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnSearch,
-        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnShredder, btnHelpers, btnSystemLogs, btnSettings
+        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller,
+#ifdef Q_OS_MAC
+        btnMailCleanup,
+#endif
+        btnShredder, btnHelpers, btnSystemLogs, btnSettings
     };
 
     // Software sources page — Homebrew on macOS, APT on Linux
@@ -668,6 +688,9 @@ void App::init()
         navByTitle(tr("Uninstaller"));
 #endif
     });
+#ifdef Q_OS_MAC
+    connect(btnMailCleanup,      &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Mail Cleanup")); });
+#endif
     connect(btnShredder,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("File Shredder")); });
     connect(btnHelpers,          &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Helpers")); });
     connect(btnSystemLogs,       &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Logs")); });
@@ -1113,6 +1136,9 @@ void App::updateSidebarIcons()
     setIcon(btnUninstaller,      "uninstaller.svg");
     setIcon(btnShredder,         "shredder.svg");
     setIcon(btnDocker,           "docker.svg");
+#ifdef Q_OS_MAC
+    setIcon(btnMailCleanup,      "mail.svg");
+#endif
     setIcon(btnHelpers,          "helpers.svg");
     setIcon(btnSystemLogs,       "system-logs.svg");
     setIcon(btnAptSourceManager, "ppa-manager.svg");

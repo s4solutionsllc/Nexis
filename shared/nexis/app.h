@@ -60,6 +60,7 @@ struct PageSlot {
 #ifdef Q_OS_MAC
 #include "Pages/Homebrew/homebrew_page.h"
 #include "MenuBar/menu_bar_monitor.h"
+#include "Pages/MailCleanup/mail_attachment_cleanup_page.h"
 #else
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
 #endif
@@ -164,6 +165,7 @@ private:
 #ifdef Q_OS_MAC
     HomebrewPage *homebrewPage = nullptr;
     MenuBarMonitor *mMenuBarMonitor = nullptr;
+    MailAttachmentCleanupPage *mailAttachmentCleanupPage = nullptr;
 #else
     APTSourceManagerPage *aptSourceManagerPage = nullptr;
 #endif
@@ -223,6 +225,9 @@ private:
     QPushButton *btnUninstaller;
     QPushButton *btnShredder;
     QPushButton *btnDocker;
+#ifdef Q_OS_MAC
+    QPushButton *btnMailCleanup = nullptr;
+#endif
     QPushButton *btnHelpers;
     QPushButton *btnSystemLogs;
     QPushButton *btnAptSourceManager;

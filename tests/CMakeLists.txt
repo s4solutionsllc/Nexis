@@ -156,6 +156,17 @@ if(APPLE)
       "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
   )
 
+  # SSO-15386 T3 (SSO-15373 §5): multi-signal orphan-leftover scanner.
+  # QSKIP'd off-macOS. Gate for SSO-15386 T3 merge acceptance.
+  add_nexis_test(NAME OrphanLeftoverScannerMacOSTests
+    SOURCES
+      core/test_orphan_leftover_scanner_macos.cpp
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
+  )
+
   # SSO-3385 (WI-23): proves the AppleSMC connection is opened exactly once
   # across the process even under concurrent callers. The test seam free
   # functions are defined in macos/nexis-core/Info/thermal_info.cpp and
@@ -222,6 +233,7 @@ add_nexis_test(NAME PackageToolUninstallTests
   SOURCES
     core/test_package_tool_uninstall.cpp
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/package_tool.cpp"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils/plist_util.cpp"
   INCLUDES
@@ -240,6 +252,7 @@ add_nexis_test(NAME AptHistoryTests
   SOURCES
     core/test_apt_history.cpp
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
   INCLUDES
     "${CMAKE_SOURCE_DIR}/linux/nexis-core"
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
@@ -251,6 +264,20 @@ add_nexis_test(NAME AptHistoryTests
 # (all paths synthetic); gate for SSO-15385 merge acceptance.
 add_nexis_test(NAME AppLeftoversLinuxTests
   SOURCES core/test_app_leftovers_linux.cpp)
+
+# SSO-15385: exercises the REAL LeftoverScannerLinux::scanLeftovers() (not a
+# duplicated contract stub) against the SSO-15387 fixture scenarios, so a
+# regression in the matching heuristic is caught even if the contract test
+# above still passes. Compiles the platform source directly so it runs on any
+# host, mirroring AptHistoryTests / PackageToolUninstallTests above.
+add_nexis_test(NAME LeftoverScannerLinuxRealTests
+  SOURCES
+    core/test_leftover_scanner_linux_real.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+)
 
 # SSO-15387: orphan-scan heuristics fixture suite — leftovers with no
 # corresponding installed package (Linux XDG + macOS Library).  Covers true
