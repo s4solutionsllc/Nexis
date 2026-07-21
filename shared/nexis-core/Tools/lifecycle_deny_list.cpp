@@ -69,6 +69,14 @@ bool isSafeMacOS(const QString &canonicalPath)
     if (info.exists() && info.ownerId() == 0)
         return false;
 
+    // Must stay inside $HOME — all current callers (findAppLeftovers,
+    // findOrphanLeftovers) source paths from ~/Library, but this rule is the
+    // code-level guarantee rather than relying solely on caller convention
+    // (Defense in Depth, CISO §2 follow-up from SSO-15771).
+    const QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+    if (!home.isEmpty() && !canonicalPath.startsWith(home + QLatin1Char('/')) && canonicalPath != home)
+        return false;
+
     return true;
 }
 
