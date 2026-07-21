@@ -173,7 +173,8 @@ static bool mkdirP(const QString &path) { return QDir().mkpath(path); }
 
 static bool backdate(const QString &path, const QDateTime &dt, QFileDevice::FileTime which)
 {
-    return QFile::setFileTime(path, dt, which);
+    QFile f(path);
+    return f.setFileTime(dt, which);
 }
 
 static const OrphanLeftover *findByPathSuffix(const QList<OrphanLeftover> &list, const QString &suffix)
