@@ -16,6 +16,7 @@ class AppManager;
 class InfoManager;
 class ToolManager;
 class SignalMapper;
+class TrustSafetyPreviewDialog;
 
 class MaintenanceWizardDialog : public QDialog
 {

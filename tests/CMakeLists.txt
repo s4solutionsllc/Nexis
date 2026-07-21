@@ -598,6 +598,7 @@ add_nexis_test(NAME DirSizeScannerTests
 add_nexis_test(NAME TrustSafetyRunnerTests
   SOURCES
     managers/test_trust_safety_runner.cpp
+    managers/test_maintenance_wizard_trust_safety.cpp
     "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
   INCLUDES
     "${GUI_SHARED_DIR}"
