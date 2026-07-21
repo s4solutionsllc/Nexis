@@ -48,6 +48,7 @@ private slots:
     void onUpdatesTreeItemChanged(QTreeWidgetItem *item, int column);
     void onSelectAllToggled(bool checked);
     void onUpdateSelectedClicked();
+    void onSparkleUpdateSelectedClicked();
 
 private:
     void buildUI();
@@ -85,7 +86,7 @@ private:
     // Sparkle (non-Homebrew app) updates section
     QWidget *mSparkleSection = nullptr;
     QLabel *mLblSparkleTitle = nullptr;
-    QPushButton *mBtnUpdateSelected = nullptr;
+    QPushButton *mBtnSparkleUpdateSelected = nullptr;
     QTreeWidget *mSparkleTree = nullptr;
 
     // Cached Sparkle UpdateEntry rows (parallel to mSparkleTree items)

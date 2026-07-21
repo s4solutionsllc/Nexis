@@ -63,8 +63,8 @@ HomebrewPage::HomebrewPage(QWidget *parent,
             this, &HomebrewPage::onRepoHealthChecked);
     connect(mSparkleTree, &QTreeWidget::itemChanged,
             this, &HomebrewPage::onSparkleUpdateItemChanged);
-    connect(mBtnUpdateSelected, &QPushButton::clicked,
-            this, &HomebrewPage::onUpdateSelectedClicked);
+    connect(mBtnSparkleUpdateSelected, &QPushButton::clicked,
+            this, &HomebrewPage::onSparkleUpdateSelectedClicked);
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         (void)QtConcurrent::run([this]() { fetchPackages(); });
     });
@@ -620,14 +620,14 @@ void HomebrewPage::buildSparkleSection(QVBoxLayout *pageLayout)
     titleRow->addWidget(mLblSparkleTitle);
     titleRow->addStretch();
 
-    mBtnUpdateSelected = new QPushButton(tr("Update Selected"), headerWidget);
-    mBtnUpdateSelected->setObjectName("btnUpdateSelected");
-    mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
-    mBtnUpdateSelected->setFocusPolicy(Qt::NoFocus);
-    mBtnUpdateSelected->setAccessibleName("primary");
-    mBtnUpdateSelected->setFixedHeight(28);
-    mBtnUpdateSelected->setEnabled(false); // disabled until checkbox checked
-    titleRow->addWidget(mBtnUpdateSelected);
+    mBtnSparkleUpdateSelected = new QPushButton(tr("Update Selected"), headerWidget);
+    mBtnSparkleUpdateSelected->setObjectName("btnUpdateSelected");
+    mBtnSparkleUpdateSelected->setCursor(Qt::PointingHandCursor);
+    mBtnSparkleUpdateSelected->setFocusPolicy(Qt::NoFocus);
+    mBtnSparkleUpdateSelected->setAccessibleName("primary");
+    mBtnSparkleUpdateSelected->setFixedHeight(28);
+    mBtnSparkleUpdateSelected->setEnabled(false); // disabled until checkbox checked
+    titleRow->addWidget(mBtnSparkleUpdateSelected);
 
     textCol->addLayout(titleRow);
 
@@ -677,11 +677,11 @@ void HomebrewPage::updateSparkleUpdateButton()
         if (item->checkState(0) == Qt::Checked)
             ++checked;
     }
-    mBtnUpdateSelected->setEnabled(checked > 0);
+    mBtnSparkleUpdateSelected->setEnabled(checked > 0);
     if (checked > 0)
-        mBtnUpdateSelected->setText(tr("Update Selected (%1)").arg(checked));
+        mBtnSparkleUpdateSelected->setText(tr("Update Selected (%1)").arg(checked));
     else
-        mBtnUpdateSelected->setText(tr("Update Selected"));
+        mBtnSparkleUpdateSelected->setText(tr("Update Selected"));
 }
 
 void HomebrewPage::onSparkleUpdateItemChanged(QTreeWidgetItem *, int column)
@@ -690,7 +690,7 @@ void HomebrewPage::onSparkleUpdateItemChanged(QTreeWidgetItem *, int column)
         updateSparkleUpdateButton();
 }
 
-void HomebrewPage::onUpdateSelectedClicked()
+void HomebrewPage::onSparkleUpdateSelectedClicked()
 {
     // Collect checked entries with signature metadata present and open the
     // enclosure URL in the browser. Nexis does not download the installer or
