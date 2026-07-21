@@ -83,10 +83,10 @@ void TestOrphanLeftoversDialog::buildRows_defaultsEveryItemUnchecked()
 
 void TestOrphanLeftoversDialog::buildRows_carriesFullSignalSetNotJustAScore()
 {
-    const QStringList signals = { "No installed app", "Reverse-DNS naming",
-                                   "Not modified in 30+ days", "Not accessed in 7+ days" };
+    const QStringList signalLabels = { "No installed app", "Reverse-DNS naming",
+                                        "Not modified in 30+ days", "Not accessed in 7+ days" };
     QList<OrphanLeftover> items;
-    items << makeOrphan("/home/user/.local/share/org.example.Old", "Local Share", 4096, signals);
+    items << makeOrphan("/home/user/.local/share/org.example.Old", "Local Share", 4096, signalLabels);
 
     const QList<OrphanLeftoversDialog::Row> rows = OrphanLeftoversDialog::buildRows(items);
 
@@ -96,7 +96,7 @@ void TestOrphanLeftoversDialog::buildRows_carriesFullSignalSetNotJustAScore()
     QCOMPARE(row.category, QStringLiteral("Local Share"));
     QCOMPARE(row.size, quint64(4096));
     // The full matched-signal set survives, not a collapsed confidence number.
-    QCOMPARE(row.signalLabels, signals);
+    QCOMPARE(row.signalLabels, signalLabels);
 }
 
 void TestOrphanLeftoversDialog::buildRows_emptyInput()
