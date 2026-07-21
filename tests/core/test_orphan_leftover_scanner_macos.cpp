@@ -134,21 +134,21 @@ private:
         const QString baseName = stripKnownSuffix(entry.fileName());
         const bool hasInstalledApp = m_installedBundleIds.contains(baseName);
 
-        QList<OrphanSignal> signals;
+        QList<OrphanSignal> detectedSignals;
         if (!hasInstalledApp)
-            signals.append({QStringLiteral("no_installed_app"), QString()});
+            detectedSignals.append({QStringLiteral("no_installed_app"), QString()});
         if (looksLikeBundleId(baseName) && !hasInstalledApp)
-            signals.append({QStringLiteral("naming_convention"), QString()});
+            detectedSignals.append({QStringLiteral("naming_convention"), QString()});
 
         const QDateTime modified = entry.lastModified();
         const QDateTime accessed = entry.lastRead();
         const QDateTime now = QDateTime::currentDateTime();
         if (modified.isValid() && modified.daysTo(now) >= 30)
-            signals.append({QStringLiteral("age_threshold"), QString()});
+            detectedSignals.append({QStringLiteral("age_threshold"), QString()});
         if (accessed.isValid() && accessed.daysTo(now) >= 7)
-            signals.append({QStringLiteral("not_recently_accessed"), QString()});
+            detectedSignals.append({QStringLiteral("not_recently_accessed"), QString()});
 
-        if (signals.size() < 3)
+        if (detectedSignals.size() < 3)
             return;
 
         const QString canonical = entry.canonicalFilePath();
@@ -161,8 +161,8 @@ private:
         leftover.canonicalPath = resolvedCanonical;
         leftover.category = QString();
         leftover.size = 0;
-        leftover.matchedSignals = signals;
-        leftover.confidenceScore = signals.size();
+        leftover.matchedSignals = detectedSignals;
+        leftover.confidenceScore = detectedSignals.size();
         leftover.lastModified = modified;
         leftover.lastAccessed = accessed;
         out.append(leftover);

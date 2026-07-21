@@ -391,13 +391,13 @@ void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
     const QString baseName = stripKnownOrphanSuffix(entry.fileName());
     const bool hasInstalledApp = installedBundleIds.contains(baseName);
 
-    QList<OrphanSignal> signals;
+    QList<OrphanSignal> detectedSignals;
     if (!hasInstalledApp) {
-        signals.append({QStringLiteral("no_installed_app"),
+        detectedSignals.append({QStringLiteral("no_installed_app"),
                          QStringLiteral("No installed app matches this name")});
     }
     if (looksLikeBundleId(baseName) && !hasInstalledApp) {
-        signals.append({QStringLiteral("naming_convention"),
+        detectedSignals.append({QStringLiteral("naming_convention"),
                          QStringLiteral("Reverse-DNS bundle id with no matching app")});
     }
 
@@ -405,17 +405,17 @@ void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
     const QDateTime accessed = entry.lastRead();
     const QDateTime now = QDateTime::currentDateTime();
     if (modified.isValid() && modified.daysTo(now) >= 30) {
-        signals.append({QStringLiteral("age_threshold"),
+        detectedSignals.append({QStringLiteral("age_threshold"),
                          QStringLiteral("Not modified in 30+ days")});
     }
     if (accessed.isValid() && accessed.daysTo(now) >= 7) {
-        signals.append({QStringLiteral("not_recently_accessed"),
+        detectedSignals.append({QStringLiteral("not_recently_accessed"),
                          QStringLiteral("Not accessed in 7+ days")});
     }
 
     // CISO higher-confidence bar for orphan matches: require corroboration
     // from at least 3 of the 4 independent signals above.
-    if (signals.size() < 3)
+    if (detectedSignals.size() < 3)
         return;
 
     // T1: cross-check the deny-list on the canonicalized path — this is what
@@ -432,8 +432,8 @@ void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
     leftover.category = category;
     leftover.size = entry.isFile() ? static_cast<quint64>(entry.size())
                                     : pathSizeBytes(leftover.path);
-    leftover.matchedSignals = signals;
-    leftover.confidenceScore = signals.size();
+    leftover.matchedSignals = detectedSignals;
+    leftover.confidenceScore = detectedSignals.size();
     leftover.lastModified = modified;
     leftover.lastAccessed = accessed;
     out.append(leftover);
