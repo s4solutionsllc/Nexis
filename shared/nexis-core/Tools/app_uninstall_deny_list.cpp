@@ -92,6 +92,16 @@ bool isSafeToDelete(const QString &canonicalPath, const QString &bundleId)
             return false;
     }
 
+    // /Applications (and nested paths such as /Applications/Utilities) is the
+    // standard system-wide macOS app-install location — PackageToolMacOS::
+    // getInstalledApps() scans it directly, so paths there are the common
+    // case for trashApps(), not the exception. It must be allowed even
+    // though it falls outside $HOME; the hard deny-list above already
+    // covers every system path that must never be touched, and none of them
+    // nest under /Applications.
+    if (hasPrefix(path, QStringLiteral("/Applications")))
+        return true;
+
     // Deny paths outside $HOME entirely (Nexis never deletes system-wide files).
     if (!path.startsWith(home + QLatin1Char('/')) && path != home)
         return false;
