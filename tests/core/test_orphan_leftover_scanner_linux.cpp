@@ -31,6 +31,9 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 
+#include <sys/stat.h>
+#include <sys/time.h>
+
 #ifdef Q_OS_LINUX
 #include "Tools/package_tool_linux.h"
 #include "Tools/lifecycle_deny_list.h"
@@ -157,9 +160,23 @@ private:
 
 static bool mkdirP(const QString &path) { return QDir().mkpath(path); }
 
+// QFile::setFileTime() requires an open file handle and does not work on
+// directories. Use POSIX utimes() so backdate() works on both files and dirs.
 static bool backdate(const QString &path, const QDateTime &dt, QFileDevice::FileTime which)
 {
-    return QFile::setFileTime(path, dt, which);
+    const QByteArray nativePath = path.toLocal8Bit();
+    struct stat st;
+    if (::stat(nativePath.constData(), &st) != 0)
+        return false;
+    struct timeval times[2];
+    times[0].tv_sec = st.st_atime;  times[0].tv_usec = 0;
+    times[1].tv_sec = st.st_mtime;  times[1].tv_usec = 0;
+    const time_t ts = static_cast<time_t>(dt.toSecsSinceEpoch());
+    if (which == QFileDevice::FileAccessTime)
+        times[0].tv_sec = ts;
+    else
+        times[1].tv_sec = ts;
+    return ::utimes(nativePath.constData(), times) == 0;
 }
 
 static const OrphanLeftover *findByPathSuffix(const QList<OrphanLeftover> &list,
