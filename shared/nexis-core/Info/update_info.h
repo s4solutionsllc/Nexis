@@ -10,7 +10,9 @@
 struct NEXISCORESHARED_EXPORT UpdateEntry {
     QString source;
     QString name;
-    QString version;
+    QString version;          // available (newer) version
+    QString installedVersion; // currently installed version
+    bool isCask = false;
 };
 
 struct NEXISCORESHARED_EXPORT UpdateCheckResult {

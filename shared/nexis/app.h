@@ -8,9 +8,12 @@
 #include <QFrame>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QScrollArea>
 #include <QPushButton>
 #include <functional>
+
+class QScreen;
 
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
@@ -50,11 +53,14 @@ struct PageSlot {
 #include "Pages/Services/services_page.h"
 #include "Pages/Processes/processes_page.h"
 #include "Pages/Uninstaller/uninstaller_page.h"
+#include "Pages/Shredder/shredder_page.h"
 #include "Pages/Resources/resources_page.h"
 #include "Pages/Network/network_usage_page.h"
 #include "Pages/Settings/settings_page.h"
 #ifdef Q_OS_MAC
 #include "Pages/Homebrew/homebrew_page.h"
+#include "MenuBar/menu_bar_monitor.h"
+#include "Pages/MailCleanup/mail_attachment_cleanup_page.h"
 #else
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
 #endif
@@ -115,8 +121,14 @@ private:
     void updateSidebarIcons();
     void applyKioskMode(bool enable);
     void showKioskOverlay();
+    QScreen *resolveKioskScreen() const;
 
     void buildSidebar();
+    // SSO-15037: replaces whatever the header-action-bar row currently
+    // holds with widget (or clears it when widget is nullptr). Pages
+    // populate/clear their own slot from onPageActivated()/onPageDeactivated()
+    // rather than App hardcoding per-page behavior here.
+    void setPageHeaderActions(QWidget *widget);
     QPushButton *createSidebarButton(const QString &tooltip);
     QPushButton *createSectionToggle(const QString &text);
     void applySidebarCollapse(bool collapsed, bool animate = true);
@@ -147,10 +159,13 @@ private:
     ServicesPage *servicesPage;
     ProcessesPage *processPage;
     UninstallerPage *uninstallerPage;
+    ShredderPage *shredderPage;
     ResourcesPage *resourcesPage;
     NetworkUsagePage *networkUsagePage;
 #ifdef Q_OS_MAC
     HomebrewPage *homebrewPage = nullptr;
+    MenuBarMonitor *mMenuBarMonitor = nullptr;
+    MailAttachmentCleanupPage *mailAttachmentCleanupPage = nullptr;
 #else
     APTSourceManagerPage *aptSourceManagerPage = nullptr;
 #endif
@@ -179,6 +194,12 @@ private:
     QScrollArea *mNavScrollArea = nullptr;
     QLabel *mLogoLabel;
     QFrame *mLogoSeparator;
+
+    // SSO-15037: shell-level header-action-bar row, occupying the band
+    // between the window top and the sidebar divider line. A generic slot —
+    // the active page can populate/clear it via setPageHeaderActions().
+    QWidget *mHeaderActionsRow = nullptr;
+    QHBoxLayout *mHeaderActionsRowLayout = nullptr;
     QToolButton *mBtnSidebarToggle;
     QButtonGroup *mSidebarBtnGroup;
     QList<SidebarSection> mSections;
@@ -202,7 +223,11 @@ private:
     QPushButton *btnStartupApps;
     QPushButton *btnBootAnalysis;
     QPushButton *btnUninstaller;
+    QPushButton *btnShredder;
     QPushButton *btnDocker;
+#ifdef Q_OS_MAC
+    QPushButton *btnMailCleanup = nullptr;
+#endif
     QPushButton *btnHelpers;
     QPushButton *btnSystemLogs;
     QPushButton *btnAptSourceManager;

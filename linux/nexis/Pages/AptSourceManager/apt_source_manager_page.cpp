@@ -12,7 +12,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QFont>
+#include <QFrame>
 #include "repo_detail_panel.h"
 #include <QSplitter>
 #include <Tools/repo_health_checker.h>
@@ -56,42 +56,86 @@ void APTSourceManagerPage::init()
 
     QVBoxLayout *updLayout = new QVBoxLayout(mUpdatesSection);
     updLayout->setContentsMargins(30, 5, 30, 10);
-    updLayout->setSpacing(5);
+    updLayout->setSpacing(8);
 
-    // Header row: title + check now button
-    QHBoxLayout *updHeader = new QHBoxLayout();
-    mLblUpdatesTitle = new QLabel(tr("Available Updates"), mUpdatesSection);
-    mLblUpdatesTitle->setObjectName("lblUpdatesTitle");
-    QFont updFont = mLblUpdatesTitle->font();
-    updFont.setPointSize(11);
-    mLblUpdatesTitle->setFont(updFont);
-    updHeader->addWidget(mLblUpdatesTitle);
+    // DS §3 header anatomy (NEX F2 shared recipe): accent bar + title row
+    // (title, Check Now, Refresh Health) / source line — mirrors
+    // HomebrewPage::buildUI() (homebrew_page.cpp:83-134).
+    QWidget *updHeaderWidget = new QWidget(mUpdatesSection);
+    updHeaderWidget->setObjectName("sectionHeaderRow");
+    QVBoxLayout *updHeaderRoot = new QVBoxLayout(updHeaderWidget);
+    updHeaderRoot->setContentsMargins(0, 0, 0, 0);
+    updHeaderRoot->setSpacing(2);
 
-    updHeader->addStretch();
+    QHBoxLayout *updHeaderRow = new QHBoxLayout();
+    updHeaderRow->setContentsMargins(0, 0, 0, 0);
+    updHeaderRow->setSpacing(8);
 
-    mBtnCheckNow = new QPushButton(tr("Check Now"), mUpdatesSection);
+    QFrame *updAccentBar = new QFrame(updHeaderWidget);
+    updAccentBar->setObjectName("sectionHeaderAccent");
+    updAccentBar->setProperty("accentToken", "accent");
+    updAccentBar->setFixedWidth(3);
+    updAccentBar->setMinimumHeight(26);
+    updAccentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    updHeaderRow->addWidget(updAccentBar);
+
+    QVBoxLayout *updTextCol = new QVBoxLayout();
+    updTextCol->setContentsMargins(0, 0, 0, 0);
+    updTextCol->setSpacing(2);
+
+    QHBoxLayout *updTitleRow = new QHBoxLayout();
+    updTitleRow->setContentsMargins(0, 0, 0, 0);
+    updTitleRow->setSpacing(8);
+
+    mLblUpdatesTitle = new QLabel(tr("Available Updates"), updHeaderWidget);
+    mLblUpdatesTitle->setObjectName("sectionHeaderTitle");
+    updTitleRow->addWidget(mLblUpdatesTitle);
+    updTitleRow->addStretch();
+
+    mBtnCheckNow = new QPushButton(tr("Check Now"), updHeaderWidget);
     mBtnCheckNow->setObjectName("btnCheckNow");
     mBtnCheckNow->setCursor(Qt::PointingHandCursor);
+    mBtnCheckNow->setFocusPolicy(Qt::NoFocus);
     mBtnCheckNow->setAccessibleName("primary");
     mBtnCheckNow->setFixedHeight(28);
-    updHeader->addWidget(mBtnCheckNow);
+    updTitleRow->addWidget(mBtnCheckNow);
 
-    mBtnRefreshHealth = new QPushButton(tr("Refresh Health"), mUpdatesSection);
+    mBtnRefreshHealth = new QPushButton(tr("Refresh Health"), updHeaderWidget);
     mBtnRefreshHealth->setObjectName("btnRefreshHealth");
     mBtnRefreshHealth->setCursor(Qt::PointingHandCursor);
+    mBtnRefreshHealth->setFocusPolicy(Qt::NoFocus);
     mBtnRefreshHealth->setAccessibleName("primary");
     mBtnRefreshHealth->setFixedHeight(28);
-    updHeader->addWidget(mBtnRefreshHealth);
+    updTitleRow->addWidget(mBtnRefreshHealth);
 
-    updLayout->addLayout(updHeader);
+    updTextCol->addLayout(updTitleRow);
 
-    mBtnUpdateSelected = new QPushButton(tr("Update Selected"), mUpdatesSection);
+    QLabel *lblUpdatesSource = new QLabel(tr("apt update / apt list --upgradable, on demand or hourly"), updHeaderWidget);
+    lblUpdatesSource->setObjectName("sectionHeaderSource");
+    updTextCol->addWidget(lblUpdatesSource);
+
+    updHeaderRow->addLayout(updTextCol, 1);
+    updHeaderRoot->addLayout(updHeaderRow);
+
+    updLayout->addWidget(updHeaderWidget);
+
+    // DS §2 elevated container (NEX F1 shared recipe) — single
+    // container-level shadow (DS §7); the tree rows stay flat inside it.
+    QWidget *updContainer = new QWidget(mUpdatesSection);
+    updContainer->setObjectName("aptUpdatesContainer");
+    updContainer->setAttribute(Qt::WA_StyledBackground, true);
+    updContainer->setProperty("cardRole", "elevated");
+    QVBoxLayout *updContainerLayout = new QVBoxLayout(updContainer);
+    updContainerLayout->setContentsMargins(0, 0, 0, 0);
+    updContainerLayout->setSpacing(0);
+
+    mBtnUpdateSelected = new QPushButton(tr("Update Selected"), updHeaderWidget);
     mBtnUpdateSelected->setObjectName("btnUpdateSelected");
     mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
     mBtnUpdateSelected->setAccessibleName("primary");
     mBtnUpdateSelected->setFixedHeight(28);
     mBtnUpdateSelected->setEnabled(false);
-    updHeader->addWidget(mBtnUpdateSelected);
+    updTitleRow->addWidget(mBtnUpdateSelected);
 
     mLblUpgradeStatus = new QLabel(mUpdatesSection);
     mLblUpgradeStatus->setObjectName("lblUpgradeStatus");
@@ -99,7 +143,7 @@ void APTSourceManagerPage::init()
     updLayout->addWidget(mLblUpgradeStatus);
 
     // Updates tree: checkbox col 0 (flatpak/snap only), Source, Package, Version
-    mUpdatesTree = new QTreeWidget(mUpdatesSection);
+    mUpdatesTree = new QTreeWidget(updContainer);
     mUpdatesTree->setObjectName("treeWidgetUpdates");
     mUpdatesTree->setHeaderHidden(false);
     mUpdatesTree->setHeaderLabels({ QString(), tr("Source"), tr("Package"), tr("Version") });
@@ -115,10 +159,15 @@ void APTSourceManagerPage::init()
     mUpdatesTree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     mUpdatesTree->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     mUpdatesTree->setMaximumHeight(200);
-    updLayout->addWidget(mUpdatesTree);
+    updContainerLayout->addWidget(mUpdatesTree);
+
+    updLayout->addWidget(updContainer, 1);
 
     // Insert updates section into page layout BEFORE the main content
     ui->verticalLayout_2->insertWidget(0, mUpdatesSection);
+
+    // DS §2/§7: one shadow per elevated container, never per row.
+    Utilities::addDropShadow(updContainer, 90, 26);
 
     // Wire signal and button
     connect(mBtnCheckNow, &QPushButton::clicked, this, [this]() {
@@ -138,7 +187,7 @@ void APTSourceManagerPage::init()
     mSplitter->setChildrenCollapsible(false);
 
     // Reparent the entire content widget (title + search + list + buttons) into the splitter.
-    // verticalWidget contains the grid with all page content; verticalWidget_2 is just the list area inside it.
+    // verticalWidget contains the grid with all page content; aptSourcesContainer is just the list area inside it.
     // We must move verticalWidget so the title/search/buttons stay with the list.
     mSplitter->addWidget(ui->verticalWidget);
 
@@ -206,9 +255,15 @@ void APTSourceManagerPage::init()
 
     QList<QWidget*> widgets = {
         ui->btnAddAPTSourceRepository, ui->btnCancel, ui->btnDeleteAptSource,
-        ui->txtSearchAptSource, ui->txtSearchAptSource, ui->btnEditAptSource
+        ui->txtSearchAptSource, ui->btnEditAptSource
     };
     Utilities::addDropShadow(widgets, 40);
+
+    // DS §2/§7 (SSO-15096): repository list rendered as a GNOME-style boxed
+    // list (flat @cardBg rows, apt_source_repository_item.cpp) inside a
+    // single elevated container — shadow lives here, never per row.
+    ui->aptSourcesContainer->setAttribute(Qt::WA_StyledBackground, true);
+    Utilities::addDropShadow(ui->aptSourcesContainer, 90, 26);
 }
 
 void APTSourceManagerPage::loadAptSources()
@@ -233,7 +288,7 @@ void APTSourceManagerPage::loadAptSources()
 
     ui->notFoundWidget->setVisible(aptSourceList.isEmpty());
 
-    ui->lblAptSourceTitle->setText(tr("APT Repositories (%1)")
+    ui->sectionHeaderTitle->setText(tr("APT Repositories (%1)")
                                    .arg(aptSourceList.count()));
 
     // Refresh health after any source list change

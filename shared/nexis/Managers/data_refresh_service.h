@@ -17,6 +17,7 @@
 #ifdef Q_OS_LINUX
 #include <Info/psi_info.h>
 #include <Info/oomd_snapshot.h>
+#include <Info/rapl_power_info.h>
 #endif
 
 class InfoManager;
@@ -42,6 +43,7 @@ public:
         Battery,
         Psi,
         Oomd,
+        Power,
         _Count
     };
 
@@ -58,6 +60,7 @@ public:
     void triggerUpdateCheck();
     void triggerRepoHealthCheck();
     void triggerDiskHealthCheck();
+    void triggerProcessRefresh();
 
     // Subscriber counting — pages call these from onPageActivated /
     // onPageDeactivated. Idempotent across many pages.
@@ -107,6 +110,8 @@ signals:
     void psiUpdated(const PsiSnapshot &cpu);
     // FW-11 (SSO-3739): systemd-oomd / cgroup v2 observability tick.
     void oomdUpdated(const OomdSnapshot &snap);
+    // SSO-15378: powercap/RAPL package power tick.
+    void powerUpdated(const RaplPowerSnapshot &snap);
 #endif
     void diskHealthUpdated(const QList<DriveHealth> &drives);
     void processesUpdated(const QList<Process> &processes, const QString &userName);

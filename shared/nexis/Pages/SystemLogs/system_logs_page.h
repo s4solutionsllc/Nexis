@@ -37,12 +37,15 @@ private:
     LogProvider *mProvider;
     QStandardItemModel *mModel;
     QSortFilterProxyModel *mProxy;
+    QWidget *mLogsContainer;
 
     QTableView *mTableView;
     QComboBox *mCmbSeverity;
     QLineEdit *mSearchField;
     QToolButton *mBtnRefresh;
     QLabel *mLblStatus;
+    QLabel *mLblTitle;
+    QLabel *mLblSource;
 
     QList<LogEntry> mCachedEntries;
     int mSeverityFilter;   // max severity to show (7=all, 3=Error+, 4=Warning+, 6=Info+)

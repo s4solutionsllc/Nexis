@@ -1,0 +1,261 @@
+<!-- UNVERIFIED: no live capture, see CAPTURE_NOTES.md and notes/resources_remaining.md -->
+<!doctype html>
+<meta charset="utf-8">
+<title>Resources — remaining tiles</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<script>
+  const t = new URLSearchParams(location.search).get("theme");
+  if (t) document.documentElement.dataset.theme = t;
+</script>
+<style>
+  /* Flat (unconverted) chart chrome — NOT the DS §2 .card recipe. Mirrors
+     history_chart.ui (sectionHeaderAccent visible=false by default) +
+     Utilities::addDropShadow(widget, 40) (alpha 40/255, blur 15, offset 0,2)
+     applied directly to the bare widget: no card background/border/radius,
+     just a title on the page canvas + the chart's own plot-surface fill. */
+  .tile-flat {
+    margin: 8px;
+    padding: 6px 10px 10px;
+    filter: drop-shadow(0 2px 15px rgba(0,0,0,0.157));
+  }
+  .tile-flat .chart-head { margin-bottom: 6px; }
+  .tile-flat .chart-title { padding-left: 3px; } /* accent-bar column is visible:false, not removed — title keeps its column indent */
+  .tile-note {
+    font-size: 8pt; color: var(--tertiaryText); text-align: center;
+    padding: 2px 0 6px; font-style: italic;
+  }
+  /* Out-of-Memory Kills — OomKillsWidget::buildUI(): its own QFrame#oomCard
+     (background @cardBg, border 1px @borderColor, radius 8 — NOT DS §2's
+     @cardBgElevated/radius 12), wrapped by the same outer flat drop-shadow. */
+  .oom-card {
+    margin: 8px; padding: 14px 16px;
+    background: var(--cardBg);
+    border: 1px solid var(--borderColor);
+    border-radius: 8px;
+    filter: drop-shadow(0 2px 15px rgba(0,0,0,0.157));
+  }
+  .oom-title { font-size: 14pt; font-weight: 700; margin-bottom: 8px; }
+  .oom-intro { color: var(--color05); margin-bottom: 8px; line-height: 1.5; }
+  .oom-state, .oom-totals { margin-bottom: 6px; }
+  .oom-tip { color: var(--warningColor); margin-bottom: 8px; }
+  .oom-events-header { font-weight: 700; margin-bottom: 4px; }
+  .oom-events-empty { color: var(--tertiaryText); }
+  /* Disk Usage Analysis — DiskUsageLauncherWidget: title reuses #lblHistoryTitle
+     styling, then an icon+info row, then a button row. No card box. */
+  .disk-usage-tile { margin: 8px; padding: 6px 12px 12px; filter: drop-shadow(0 2px 15px rgba(0,0,0,0.157)); }
+  .disk-usage-body { display: flex; gap: 12px; padding: 8px 12px 0; }
+  .disk-usage-icon { width: 48px; height: 48px; flex: none; opacity: 0.85; }
+  .disk-usage-info { flex: 1; }
+  .disk-usage-name { font-size: 11pt; font-weight: 700; margin-bottom: 4px; }
+  .disk-usage-desc { color: var(--color05); margin-bottom: 4px; }
+  .disk-usage-status { color: var(--successColor); font-weight: 700; }
+  .disk-usage-buttons { display: flex; justify-content: center; gap: 8px; padding: 8px 12px 0; }
+  .disk-usage-buttons button {
+    font: inherit; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--borderColor); background: var(--cardBg); color: var(--color05);
+  }
+  .disk-usage-buttons button.primary { background: var(--accentColor); border-color: var(--accentColor); color: #fff; }
+</style>
+<div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar__brand"><span class="sidebar__wordmark">NEXIS</span><svg class="sidebar__collapse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6M6 4v16"/></svg></div>
+  <div class="sidebar__scroll">
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg><span>Hardware Info</span></a>
+    <a class="nav-item nav-item--active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 15 8 9 12 13 16 5 21 12"/></svg><span>Resources</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V12M10 20V8M16 20V4M22 20h-20"/></svg><span>Network Usage</span></a>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label"><span>Manage</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>System Cleaner</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg><span>Disk Tools</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><span>Search</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/></svg><span>Processes</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M18 6h2M4 12h2M11 12h9M4 18h7M16 18h4"/><circle cx="15" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="13" cy="18" r="2"/></svg><span>Services</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 1 5 4 5 8l-2 6H9l-2-6c0-4 2-7 5-8z"/><circle cx="12" cy="9" r="1.5"/><path d="M9 19l-1 2M15 19l1 2"/></svg><span>Startup Apps</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span>Boot Analysis</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg><span>Applications</span></a>
+    <div class="nav-divider"></div>
+    <div class="nav-group-label"><span>System</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6a4 4 0 0 0-5 5L3 18l3 3 7-7a4 4 0 0 0 5-5l-3 3-2-2z"/></svg><span>Helpers</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>System Logs</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/></svg><span>Homebrew</span><span class="nav-badge">3</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1M2 12h3M19 12h3"/></svg><span>Settings</span></a>
+    <div class="sidebar__foot">v2.8.3</div>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>Feedback</span></a>
+  </div>
+</aside>
+  <main class="content">
+    <div class="chart-scroll">
+
+      <!-- 1. History of Memory — HistoryChart, 4 series (Swap, Memory, Wired/Available, Compressed/Active),
+           setYMax(100). Unconverted: sectionHeaderAccent stays hidden (history_chart.ui default), no card box. -->
+      <div class="tile-flat">
+        <div class="chart-head">
+          <div class="chart-title">History of Memory</div>
+          <div class="chart-head__spacer"></div>
+          <button class="chart-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-swatch" style="background:var(--chartSeries01)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries02)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries03)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries04)"></span>
+        </div>
+        <svg class="chart-surface" viewBox="0 0 800 206" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect class="chart-bg" x="54" y="10" width="734" height="166" fill="var(--historyChartBackgroundColor)"/>
+          <line class="chart-grid" x1="54" y1="10"  x2="788" y2="10"/>
+          <line class="chart-grid" x1="54" y1="51.5" x2="788" y2="51.5"/>
+          <line class="chart-grid" x1="54" y1="93"  x2="788" y2="93"/>
+          <line class="chart-grid" x1="54" y1="134.5" x2="788" y2="134.5"/>
+          <line class="chart-grid" x1="237.5" y1="10" x2="237.5" y2="176"/>
+          <line class="chart-grid" x1="421"   y1="10" x2="421"   y2="176"/>
+          <line class="chart-grid" x1="604.5" y1="10" x2="604.5" y2="176"/>
+          <text class="chart-axis-label" x="48" y="14"  text-anchor="end">100.0</text>
+          <text class="chart-axis-label" x="48" y="55.5" text-anchor="end">75.0</text>
+          <text class="chart-axis-label" x="48" y="97"  text-anchor="end">50.0</text>
+          <text class="chart-axis-label" x="48" y="138.5" text-anchor="end">25.0</text>
+          <text class="chart-axis-label" x="48" y="180" text-anchor="end">0.0</text>
+          <text class="chart-axis-label" x="54"  y="196" text-anchor="middle">60.0</text>
+          <text class="chart-axis-label" x="237.5" y="196" text-anchor="middle">45.0</text>
+          <text class="chart-axis-label" x="421"   y="196" text-anchor="middle">30.0</text>
+          <text class="chart-axis-label" x="604.5" y="196" text-anchor="middle">15.0</text>
+          <text class="chart-axis-label" x="788" y="196" text-anchor="middle">0.0</text>
+        </svg>
+      </div>
+
+      <!-- 2. History of Network — HistoryChart, 2 series (Download, Upload), QCategoryAxis Y
+           (byte-formatted, populated only after the first onNetworkUpdated tick). Same precedent as
+           the approved "History of Disk Read Write" card: axis numerics are runtime-formatted, not
+           fixed chrome, so none are invented here — only the empty plot surface + vertical gridlines. -->
+      <div class="tile-flat">
+        <div class="chart-head">
+          <div class="chart-title">History of Network</div>
+          <div class="chart-head__spacer"></div>
+          <button class="chart-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-swatch" style="background:var(--chartSeries01)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries02)"></span>
+        </div>
+        <svg class="chart-surface" viewBox="0 0 800 176" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect class="chart-bg" x="54" y="10" width="734" height="156" fill="var(--historyChartBackgroundColor)"/>
+          <line class="chart-grid" x1="237.5" y1="10" x2="237.5" y2="166"/>
+          <line class="chart-grid" x1="421"   y1="10" x2="421"   y2="166"/>
+          <line class="chart-grid" x1="604.5" y1="10" x2="604.5" y2="166"/>
+        </svg>
+      </div>
+
+      <!-- 3. History of Disk Temperature — HistoryChart, setYMax(100); series count = number of drives
+           reporting temperatureCelsius >= 0 (DriveHealth), determined at runtime (ensureDiskHealthChart,
+           resources_page.cpp:435-465). Conditional: tile does not exist at all if hasDiskHealth() is
+           false or no drive reports a temperature. Swatch count is drive-dependent, not fixed — shown
+           here as 1 representative swatch; do not treat as authoritative. -->
+      <div class="tile-flat">
+        <div class="chart-head">
+          <div class="chart-title">History of Disk Temperature</div>
+          <div class="chart-head__spacer"></div>
+          <button class="chart-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-swatch" style="background:var(--chartSeries01)"></span>
+        </div>
+        <div class="tile-note">swatch count = 1 per temperature-reporting drive (dynamic; not fixed chrome)</div>
+        <svg class="chart-surface" viewBox="0 0 800 206" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect class="chart-bg" x="54" y="10" width="734" height="166" fill="var(--historyChartBackgroundColor)"/>
+          <line class="chart-grid" x1="54" y1="10"  x2="788" y2="10"/>
+          <line class="chart-grid" x1="54" y1="51.5" x2="788" y2="51.5"/>
+          <line class="chart-grid" x1="54" y1="93"  x2="788" y2="93"/>
+          <line class="chart-grid" x1="54" y1="134.5" x2="788" y2="134.5"/>
+          <line class="chart-grid" x1="237.5" y1="10" x2="237.5" y2="176"/>
+          <line class="chart-grid" x1="421"   y1="10" x2="421"   y2="176"/>
+          <line class="chart-grid" x1="604.5" y1="10" x2="604.5" y2="176"/>
+          <text class="chart-axis-label" x="48" y="14"  text-anchor="end">100.0</text>
+          <text class="chart-axis-label" x="48" y="55.5" text-anchor="end">75.0</text>
+          <text class="chart-axis-label" x="48" y="97"  text-anchor="end">50.0</text>
+          <text class="chart-axis-label" x="48" y="138.5" text-anchor="end">25.0</text>
+          <text class="chart-axis-label" x="48" y="180" text-anchor="end">0.0</text>
+          <text class="chart-axis-label" x="54"  y="196" text-anchor="middle">60.0</text>
+          <text class="chart-axis-label" x="237.5" y="196" text-anchor="middle">45.0</text>
+          <text class="chart-axis-label" x="421"   y="196" text-anchor="middle">30.0</text>
+          <text class="chart-axis-label" x="604.5" y="196" text-anchor="middle">15.0</text>
+          <text class="chart-axis-label" x="788" y="196" text-anchor="middle">0.0</text>
+        </svg>
+      </div>
+
+      <!-- 4. CPU Pressure Stall (some) [PSI] — HistoryChart, 3 series (avg10/avg60/avg300), default
+           Y max 1.0 (auto-scales up from there). Linux-only, gated on /proc/pressure/cpu existing
+           (resources_page.cpp:67-71). Not in either prior tracking list under this exact name in the
+           maintainer's UAT pass, but named explicitly in PR #247's scope note. -->
+      <div class="tile-flat">
+        <div class="chart-head">
+          <div class="chart-title">CPU Pressure Stall (some)</div>
+          <div class="chart-head__spacer"></div>
+          <button class="chart-expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+        </div>
+        <div class="chart-legend">
+          <span class="chart-swatch" style="background:var(--chartSeries01)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries02)"></span>
+          <span class="chart-swatch" style="background:var(--chartSeries03)"></span>
+        </div>
+        <svg class="chart-surface" viewBox="0 0 800 206" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect class="chart-bg" x="54" y="10" width="734" height="166" fill="var(--historyChartBackgroundColor)"/>
+          <line class="chart-grid" x1="54" y1="10"  x2="788" y2="10"/>
+          <line class="chart-grid" x1="54" y1="51.5" x2="788" y2="51.5"/>
+          <line class="chart-grid" x1="54" y1="93"  x2="788" y2="93"/>
+          <line class="chart-grid" x1="54" y1="134.5" x2="788" y2="134.5"/>
+          <line class="chart-grid" x1="237.5" y1="10" x2="237.5" y2="176"/>
+          <line class="chart-grid" x1="421"   y1="10" x2="421"   y2="176"/>
+          <line class="chart-grid" x1="604.5" y1="10" x2="604.5" y2="176"/>
+          <text class="chart-axis-label" x="48" y="14"  text-anchor="end">1.00</text>
+          <text class="chart-axis-label" x="48" y="55.5" text-anchor="end">0.75</text>
+          <text class="chart-axis-label" x="48" y="97"  text-anchor="end">0.50</text>
+          <text class="chart-axis-label" x="48" y="138.5" text-anchor="end">0.25</text>
+          <text class="chart-axis-label" x="48" y="180" text-anchor="end">0.00</text>
+          <text class="chart-axis-label" x="54"  y="196" text-anchor="middle">60.0</text>
+          <text class="chart-axis-label" x="237.5" y="196" text-anchor="middle">45.0</text>
+          <text class="chart-axis-label" x="421"   y="196" text-anchor="middle">30.0</text>
+          <text class="chart-axis-label" x="604.5" y="196" text-anchor="middle">15.0</text>
+          <text class="chart-axis-label" x="788" y="196" text-anchor="middle">0.0</text>
+        </svg>
+      </div>
+
+      <!-- 5. Out-of-Memory Kills [OomKillsWidget] — NOT a HistoryChart. Own QFrame#oomCard
+           (oom_kills_widget.cpp:46-105), no axis/legend. Linux-only; self-hides unless an oomd/cgroup
+           v2 snapshot is available (starts hide()'d, shown by onOomdUpdated). Text fields below are
+           representative of the widget's own hardcoded strings (buildUI()), not live host data. -->
+      <div class="oom-card">
+        <div class="oom-title">Out-of-Memory Kills</div>
+        <div class="oom-intro">systemd-oomd terminates processes before the kernel does when memory pressure spikes. This panel shows its current state and the most recent things it killed.</div>
+        <div class="oom-state">systemd-oomd: active.</div>
+        <div class="oom-totals">Total kills (oomd): <b>0</b>&nbsp;&nbsp;·&nbsp;&nbsp;Managed (oomd policy): <b>0</b>&nbsp;&nbsp;·&nbsp;&nbsp;Kernel oom_kill (cgroup v2): <b>0</b></div>
+        <div class="oom-events-header">Recent kills</div>
+        <div class="oom-events-empty">No OOM kills recorded since the last journal rotation.</div>
+      </div>
+
+      <!-- 6. Disk Usage Analysis [DiskUsageLauncherWidget] — NOT a HistoryChart. Title label reuses
+           #lblHistoryTitle (disk_usage_launcher_widget.cpp:81-82), so it visually matches chart titles,
+           but the body below is icon+text+buttons, not a chart. Cross-platform. Tool name/description/
+           status are one of several detect()-driven states (LAUNCH_BAOBAB shown here as the common
+           GNOME-desktop default state) — representative, not a live capture. -->
+      <div class="disk-usage-tile">
+        <div class="chart-head">
+          <div class="chart-title">Disk Usage Analysis</div>
+        </div>
+        <div class="disk-usage-body">
+          <svg class="disk-usage-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+          <div class="disk-usage-info">
+            <div class="disk-usage-name">Disk Usage Analyzer (Baobab)</div>
+            <div class="disk-usage-desc">Visualize disk usage as a graphical treemap.</div>
+            <div class="disk-usage-status">Status: Installed</div>
+          </div>
+        </div>
+        <div class="disk-usage-buttons">
+          <button>Built-in Treemap</button>
+          <button class="primary">Launch Disk Usage Analyzer</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>

@@ -26,6 +26,12 @@
    <property name="bottomMargin"><number>0</number></property>
    <item>
     <widget class="QWidget" name="pageHeader" native="true">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <layout class="QHBoxLayout" name="pageHeaderLayout">
       <property name="leftMargin"><number>14</number></property>
       <property name="topMargin"><number>12</number></property>
@@ -39,7 +45,7 @@
       </item>
       <item>
        <layout class="QVBoxLayout" name="pageHeaderTextCol">
-        <property name="spacing"><number>2</number></property>
+        <property name="spacing"><number>0</number></property>
         <item>
          <widget class="QLabel" name="pageHeaderTitle">
           <property name="text"><string>Settings</string></property>
@@ -182,6 +188,42 @@
             <property name="text"><string>Show Dashboard system summary and status bar</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
+          <item row="8" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkMenuBarMonitor">
+            <property name="text"><string>Show CPU &amp; Memory in the menu bar</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
+          <item row="9" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkLaunchInKioskMode">
+            <property name="text"><string>Launch directly into Kiosk Mode</string></property>
+            <property name="toolTip"><string>Starts Nexis in full-screen kiosk mode as soon as it launches, without needing to press F11.</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
+          <item row="10" column="0">
+           <widget class="QLabel" name="lblKioskMonitor">
+            <property name="text"><string>Kiosk Monitor</string></property>
+           </widget>
+          </item>
+          <item row="10" column="1">
+           <widget class="QComboBox" name="cmbKioskMonitor">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+            <property name="toolTip"><string>Which monitor kiosk mode moves the window to when it activates. Only used on multi-monitor setups.</string></property>
            </widget>
           </item>
 

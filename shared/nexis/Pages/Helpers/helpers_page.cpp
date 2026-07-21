@@ -98,13 +98,6 @@ void HelpersPage::init()
         btn->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     }
 
-    QList<QWidget *> shadowWidgets = {
-        ui->btnHostManage,
-        ui->btnNetDiag,
-        ui->btnOpenPorts,
-        ui->btnFirewall
-    };
-
 #ifdef Q_OS_MACOS
     // FR-118: TRIM button (macOS — status-only).
     mBtnTrim = new QPushButton(tr("SSD TRIM"));
@@ -112,7 +105,6 @@ void HelpersPage::init()
     mBtnTrim->setCursor(Qt::PointingHandCursor);
     mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnTrim);
-    shadowWidgets << mBtnTrim;
     connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
 #else
     // FR-81: Swappiness button. Always visible on Linux — the widget itself
@@ -123,7 +115,6 @@ void HelpersPage::init()
     mBtnSwappiness->setCursor(Qt::PointingHandCursor);
     mBtnSwappiness->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnSwappiness);
-    shadowWidgets << mBtnSwappiness;
     connect(mBtnSwappiness, &QPushButton::clicked, this, &HelpersPage::onSwappinessClicked);
 
     // FR-117: CPU tuning button.
@@ -132,7 +123,6 @@ void HelpersPage::init()
     mBtnCpuTuning->setCursor(Qt::PointingHandCursor);
     mBtnCpuTuning->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnCpuTuning);
-    shadowWidgets << mBtnCpuTuning;
     connect(mBtnCpuTuning, &QPushButton::clicked, this, &HelpersPage::onCpuTuningClicked);
 
     // FW-15: Battery charge threshold — gated on sysfs node existing.
@@ -144,7 +134,6 @@ void HelpersPage::init()
             mBtnBatteryThreshold->setCursor(Qt::PointingHandCursor);
             mBtnBatteryThreshold->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
             ui->buttonGroup->addButton(mBtnBatteryThreshold);
-            shadowWidgets << mBtnBatteryThreshold;
             connect(mBtnBatteryThreshold, &QPushButton::clicked,
                     this, &HelpersPage::onBatteryThresholdClicked);
         }
@@ -157,13 +146,10 @@ void HelpersPage::init()
         mBtnTrim->setCursor(Qt::PointingHandCursor);
         mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
         ui->buttonGroup->addButton(mBtnTrim);
-        shadowWidgets << mBtnTrim;
         connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
     }
 
     initPowerProfileUI();
-    if (mPowerProfileWidget)
-        shadowWidgets << mPowerProfileWidget;
 #endif
 
     // FR-120: Wake-on-LAN button — cross-platform.
@@ -172,10 +158,7 @@ void HelpersPage::init()
     mBtnWol->setCursor(Qt::PointingHandCursor);
     mBtnWol->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnWol);
-    shadowWidgets << mBtnWol;
     connect(mBtnWol, &QPushButton::clicked, this, &HelpersPage::onWolClicked);
-
-    Utilities::addDropShadow(shadowWidgets, 40);
 
     // Collect tool nav items in display order (action buttons go to maintenance cards)
     mToolItems << ui->btnHostManage << ui->btnNetDiag
@@ -629,14 +612,16 @@ void HelpersPage::buildMaintenanceSection()
     outer->addWidget(lblHeader);
 
     auto *cardRow = new QHBoxLayout;
-    cardRow->setSpacing(10);
-    cardRow->setContentsMargins(0, 0, 0, 0);
+    cardRow->setSpacing(12);
+    cardRow->setContentsMargins(0, 8, 0, 8);   // clearance for the card shadows (DS §2)
 
     auto makeCard = [&](const QString &title, const QString &desc,
                         std::function<void()> action) -> QFrame * {
         auto *card = new QFrame(mMaintenanceSection);
         card->setObjectName("maintenanceCard");
         card->setCursor(Qt::PointingHandCursor);
+        card->setAttribute(Qt::WA_StyledBackground, true);
+        card->setProperty("cardRole", "elevated");   // DS §2 elevated action card (NEX F1)
         auto *vbox = new QVBoxLayout(card);
         vbox->setSpacing(2);
         vbox->setContentsMargins(10, 8, 10, 8);
@@ -648,6 +633,7 @@ void HelpersPage::buildMaintenanceSection()
         vbox->addWidget(lblTitle);
         vbox->addWidget(lblDesc);
         card->installEventFilter(new CardFilter(card, std::move(action)));
+        Utilities::addDropShadow(card, 90, 26);   // DS §2 elevated-card shadow, one per card
         return card;
     };
 

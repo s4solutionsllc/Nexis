@@ -18,6 +18,7 @@
 #include <QStyle>
 #include <QDebug>
 #include <QScreen>
+#include <QGuiApplication>
 #include <QIcon>
 #include <QEvent>
 #include <QWindow>
@@ -236,6 +237,15 @@ void App::buildSidebar()
 #endif
         sec.containerLayout->addWidget(btnUninstaller);
         sec.buttons.append(btnUninstaller);
+
+#ifdef Q_OS_MAC
+        btnMailCleanup = createSidebarButton(tr("Mail Cleanup"));
+        sec.containerLayout->addWidget(btnMailCleanup);
+        sec.buttons.append(btnMailCleanup);
+#endif
+        btnShredder = createSidebarButton(tr("File Shredder"));
+        sec.containerLayout->addWidget(btnShredder);
+        sec.buttons.append(btnShredder);
     }
 
     // ---- SYSTEM section ----
@@ -353,6 +363,40 @@ void App::init()
     // Build sidebar programmatically with section headers
     buildSidebar();
 
+    // SSO-15037 (supersedes SSO-14661 / PR #284): that earlier fix aligned
+    // every page's top edge with the sidebar divider line by giving
+    // pageContentLayout a top margin, which stopped tiles rendering under
+    // Dashboard's kiosk/edit buttons but left the buttons themselves as
+    // Dashboard-local children — so both ended up below the divider,
+    // in the same band as the tile grid. The band above the divider
+    // (next to the logo/collapse button) is real, unpopulated pageContent
+    // space; insert a persistent header-action-bar row there instead, sized
+    // to the divider's actual geometry, and let pageContentLayout itself
+    // stay flush with the window top. Sidebar collapse only animates width
+    // (see applySidebarCollapse), never this vertical geometry, so the row
+    // height holds at every breakpoint including the collapsed sidebar.
+    // SSO-15303: at this point in the constructor `ui->sidebar` has only
+    // been given its size via the window's saved/default geometry, not
+    // via an actual layout pass — the outer layouts that place sidebar
+    // within centralwidget (and centralwidget within the window) haven't
+    // run yet, so sidebar (and mLogoSeparator inside it) still reports a
+    // stale, near-zero height. Activate that chain outside-in before
+    // activating sidebar's own layout, so mLogoSeparator's geometry
+    // reflects the window's real size.
+    layout()->activate();
+    ui->horizontalLayout->activate();
+    ui->sidebar->layout()->activate();
+    const int headerRowHeight = mLogoSeparator->geometry().bottom() + 1;
+
+    mHeaderActionsRow = new QWidget(ui->pageContent);
+    mHeaderActionsRow->setObjectName("pageHeaderActionsRow");
+    mHeaderActionsRow->setFixedHeight(headerRowHeight);
+    mHeaderActionsRowLayout = new QHBoxLayout(mHeaderActionsRow);
+    mHeaderActionsRowLayout->setContentsMargins(12, 4, 12, 4);
+    mHeaderActionsRowLayout->setSpacing(0);
+
+    ui->pageContentLayout->setContentsMargins(0, 0, 0, 0);
+    ui->pageContentLayout->addWidget(mHeaderActionsRow);
     ui->pageContentLayout->addWidget(mSlidingStacked);
 
     // Set button labels
@@ -372,7 +416,11 @@ void App::init()
 #else
     btnUninstaller->setText(tr("Uninstaller"));
 #endif
+    btnShredder->setText(tr("File Shredder"));
     btnDocker->setText(tr("Docker"));
+#ifdef Q_OS_MAC
+    btnMailCleanup->setText(tr("Mail Cleanup"));
+#endif
     btnHelpers->setText(tr("Helpers"));
     btnSystemLogs->setText(tr("System Logs"));
 #ifdef Q_OS_MAC
@@ -392,7 +440,15 @@ void App::init()
         "dashboard",
         tr("Dashboard"),
         [this]() -> QWidget* { dashboardPage = new DashboardPage(mSlidingStacked); return dashboardPage; },
-        nullptr, {}
+        nullptr,
+        // SSO-15037: give Dashboard a way to populate/clear the shell's
+        // header-action-bar row without App hardcoding what it contains —
+        // Dashboard pushes/clears its own widget from onPageActivated()/
+        // onPageDeactivated().
+        [this](QWidget *w) {
+            static_cast<DashboardPage*>(w)->setHeaderActionsCallback(
+                [this](QWidget *actions) { setPageHeaderActions(actions); });
+        }
     });
     mPageSlots.append({
         "hardwareInfo",
@@ -480,6 +536,20 @@ void App::init()
         [this]() -> QWidget* { uninstallerPage = new UninstallerPage(mSlidingStacked); return uninstallerPage; },
         nullptr, {}
     });
+#ifdef Q_OS_MAC
+    mPageSlots.append({
+        "mailCleanup",
+        tr("Mail Cleanup"),
+        [this]() -> QWidget* { mailAttachmentCleanupPage = new MailAttachmentCleanupPage(mSlidingStacked); return mailAttachmentCleanupPage; },
+        nullptr, {}
+    });
+#endif
+    mPageSlots.append({
+        "shredder",
+        tr("File Shredder"),
+        [this]() -> QWidget* { shredderPage = new ShredderPage(mSlidingStacked); return shredderPage; },
+        nullptr, {}
+    });
     mPageSlots.append({
         "helpers",
         tr("Helpers"),
@@ -501,7 +571,11 @@ void App::init()
 
     mListSidebarButtons = {
         btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnSearch,
-        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller, btnHelpers, btnSystemLogs, btnSettings
+        btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller,
+#ifdef Q_OS_MAC
+        btnMailCleanup,
+#endif
+        btnShredder, btnHelpers, btnSystemLogs, btnSettings
     };
 
     // Software sources page — Homebrew on macOS, APT on Linux
@@ -614,6 +688,10 @@ void App::init()
         navByTitle(tr("Uninstaller"));
 #endif
     });
+#ifdef Q_OS_MAC
+    connect(btnMailCleanup,      &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Mail Cleanup")); });
+#endif
+    connect(btnShredder,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("File Shredder")); });
     connect(btnHelpers,          &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Helpers")); });
     connect(btnSystemLogs,       &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Logs")); });
     connect(btnSettings,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Settings")); });
@@ -687,6 +765,20 @@ void App::init()
 
     mTrayIcon->show();
 
+#ifdef Q_OS_MAC
+    // FW-20 (SSO-3748): optional menu-bar CPU/memory monitor, off by default.
+    mMenuBarMonitor = new MenuBarMonitor(this);
+    connect(mMenuBarMonitor, &MenuBarMonitor::activationRequested, this, [this]() {
+        setWindowState(windowState() & ~Qt::WindowMinimized);
+        clickSidebarButton(tr("Dashboard"), true);
+        if (windowHandle())
+            windowHandle()->requestActivate();
+    });
+    connect(SignalMapper::ins(), &SignalMapper::sigMenuBarMonitorToggled,
+            mMenuBarMonitor, &MenuBarMonitor::setEnabled);
+    mMenuBarMonitor->setEnabled(SettingManager::ins()->getMenuBarMonitorEnabled());
+#endif
+
     // Kiosk mode shortcuts
     QAction *kioskToggle = new QAction(this);
     kioskToggle->setShortcut(Qt::Key_F11);
@@ -713,9 +805,13 @@ void App::init()
         mCommandPalette->show();
     });
 
-    // Restore kiosk mode from last session
-    if (SettingManager::ins()->getKioskMode())
+    // Restore kiosk mode from last session, or force it on if the user has
+    // configured Nexis to always launch straight into kiosk mode (GH#207).
+    if (SettingManager::ins()->getKioskMode() || SettingManager::ins()->getLaunchInKioskMode()) {
+        mKioskMode = true;
+        SettingManager::ins()->setKioskMode(true);
         applyKioskMode(true);
+    }
 
     // Restore sidebar collapsed state
     if (SettingManager::ins()->getSidebarCollapsed())
@@ -982,6 +1078,20 @@ void App::ensureAllPages()
     }
 }
 
+void App::setPageHeaderActions(QWidget *widget)
+{
+    QLayoutItem *item;
+    while ((item = mHeaderActionsRowLayout->takeAt(0)) != nullptr) {
+        if (item->widget())
+            item->widget()->setParent(nullptr);
+        delete item;
+    }
+    if (widget) {
+        mHeaderActionsRowLayout->addWidget(widget);
+        widget->show();
+    }
+}
+
 void App::pageClick(QWidget *widget, bool slide)
 {
     if (widget) {
@@ -1024,7 +1134,11 @@ void App::updateSidebarIcons()
     setIcon(btnStartupApps,      "startup-apps.svg");
     setIcon(btnBootAnalysis,     "boot-analysis.svg");
     setIcon(btnUninstaller,      "uninstaller.svg");
+    setIcon(btnShredder,         "shredder.svg");
     setIcon(btnDocker,           "docker.svg");
+#ifdef Q_OS_MAC
+    setIcon(btnMailCleanup,      "mail.svg");
+#endif
     setIcon(btnHelpers,          "helpers.svg");
     setIcon(btnSystemLogs,       "system-logs.svg");
     setIcon(btnAptSourceManager, "ppa-manager.svg");
@@ -1346,6 +1460,15 @@ void App::applyKioskMode(bool enable)
         mPreKioskCollapsed = mSidebarCollapsed;
         ui->sidebar->hide();
         pageClick(dashboardPage, false);
+
+        // GH#207: place the kiosk window on the configured monitor, if any.
+        if (QScreen *targetScreen = resolveKioskScreen()) {
+            winId(); // force native window handle creation so setScreen() takes effect
+            if (QWindow *handle = windowHandle())
+                handle->setScreen(targetScreen);
+            setGeometry(targetScreen->geometry());
+        }
+
         showFullScreen();
         showKioskOverlay();
     } else {
@@ -1356,6 +1479,19 @@ void App::applyKioskMode(bool enable)
     }
 
     emit SignalMapper::ins()->sigKioskModeChanged(enable);
+}
+
+QScreen *App::resolveKioskScreen() const
+{
+    const QString name = SettingManager::ins()->getKioskMonitorName();
+    if (name.isEmpty())
+        return nullptr;
+
+    for (QScreen *screen : QGuiApplication::screens()) {
+        if (screen->name() == name)
+            return screen;
+    }
+    return nullptr;
 }
 
 void App::showKioskOverlay()

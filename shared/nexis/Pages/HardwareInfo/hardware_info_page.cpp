@@ -84,15 +84,26 @@ HardwareInfoPage::HardwareInfoPage(QWidget *parent, InfoManager *infoManager) :
     ui->setupUi(this);
 
     // DS §2 (NEX F1): elevated-card chrome for the System/Processor/Graphics/
-    // Memory sections — structural, so it's fine to set up before the
-    // deferred populate*() pass. DS §3 accent-bar headers are pure QSS via
-    // objectName (see style.qss), no C++ wiring needed. Battery
-    // intentionally gets no card (hardware_info_page.ui, SSO-13735
-    // acceptance criteria).
-    for (QWidget *card : {ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory})
+    // Memory/Battery/Storage/Fans sections — structural, so it's fine to set
+    // up before the deferred populate*() pass. DS §3 accent-bar headers are
+    // pure QSS via objectName (see style.qss), no C++ wiring needed. Battery
+    // card treatment added in round 2 (SSO-14298) once a full-row capture
+    // existed; SSO-13735 excluded it (and Storage) only because no capture
+    // reached those rows yet. Storage's card followed separately (SSO-14757).
+    // Fans (now "Fans & Sensors") picked up the same card in SSO-15377,
+    // the last section still on legacy QGroupBox chrome.
+    for (QWidget *card : {ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory, ui->grpBattery, ui->grpStorage, ui->grpFans})
         card->setAttribute(Qt::WA_StyledBackground, true);
     Utilities::addDropShadow(
-        QList<QWidget *>{ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory}, 90, 26);
+        QList<QWidget *>{ui->grpSystem, ui->grpProcessor, ui->grpGraphics, ui->grpMemory, ui->grpBattery, ui->grpStorage, ui->grpFans}, 90, 26);
+
+    // Storage's accent bar reuses the bare #sectionHeaderAccent objectName
+    // (see hardware_info_page.ui) rather than a per-section suffix like its
+    // five siblings, so it needs the "compact" dynamic property to pick up
+    // the shared 18px [compact="true"] height instead of the bare rule's
+    // 26px page-header default — same mechanism Network/Helpers/Resources/
+    // DiskTools/Settings/Processes already use for their own bare accent bars.
+    ui->sectionHeaderAccent->setProperty("compact", true);
 
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &HardwareInfoPage::refreshThemeColors);
     // FR-98: defer populate*() work to first showEvent so sysctl, SMART,
@@ -139,6 +150,49 @@ void HardwareInfoPage::addRow(QTableWidget *table, const QString &label, const Q
 
     QTableWidgetItem *valueItem = new QTableWidgetItem(value);
     table->setItem(row, 1, valueItem);
+}
+
+// SSO-14757: per-drive "Drive N" sub-header row within the Storage card.
+// Bolder/larger than the standard DS §4 label (10pt/Bold vs. 9pt/DemiBold)
+// and applied to both columns so the pair reads as one group-header unit
+// that outranks its own detail rows below it.
+void HardwareInfoPage::addDriveGroupHeaderRow(QTableWidget *table, const QString &label, const QString &value)
+{
+    int row = table->rowCount();
+    table->insertRow(row);
+
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    const QColor color06 = sv ? QColor(sv->value("@color06").toString()) : QColor();
+
+    QTableWidgetItem *labelItem = new QTableWidgetItem(label);
+    QFont headerFont = labelItem->font();
+    headerFont.setPointSize(10);
+    headerFont.setWeight(QFont::Bold);
+    labelItem->setFont(headerFont);
+    if (sv)
+        labelItem->setForeground(color06);
+    mLabelItems.append(labelItem);
+    table->setItem(row, 0, labelItem);
+
+    QTableWidgetItem *valueItem = new QTableWidgetItem(value);
+    valueItem->setFont(headerFont);
+    if (sv)
+        valueItem->setForeground(color06);
+    mLabelItems.append(valueItem);
+    table->setItem(row, 1, valueItem);
+}
+
+// SSO-14757: detail rows (Size, Type, Health, ...) belonging to a drive drop
+// the bold @color06 label treatment other addRow() rows use — plain items
+// pick up the standard non-bold 9pt @color05 value styling straight from
+// #HardwareInfoPage QTableWidget::item, so the drive's own group-header row
+// above stays the visual anchor of the group.
+void HardwareInfoPage::addDriveDetailRow(QTableWidget *table, const QString &label, const QString &value)
+{
+    int row = table->rowCount();
+    table->insertRow(row);
+    table->setItem(row, 0, new QTableWidgetItem(label));
+    table->setItem(row, 1, new QTableWidgetItem(value));
 }
 
 void HardwareInfoPage::fitTableHeight(QTableWidget *table)
@@ -432,7 +486,14 @@ void HardwareInfoPage::populateFans()
     t->verticalHeader()->setVisible(false);
     t->horizontalHeader()->setStretchLastSection(true);
 
-    if (!im->hasFanSensors()) {
+    // SSO-15377: "Fans & Sensors" — fan RPM rows plus every hwmon temp
+    // sensor (CPU, GPU, NVMe, DIMM/jc42-spd5118, ACPI, vendor, ...). Each
+    // list is independent: a platform with sensors but no fans (or vice
+    // versa) still gets a populated card. Only hide the whole section when
+    // both are empty — never render a zero/error row for a sensor class
+    // the platform doesn't expose.
+    if (!im->hasFanSensors() && !im->hasThermalSensors()) {
+        ui->sectionHeaderRowFans->hide();
         ui->grpFans->hide();
         return;
     }
@@ -441,6 +502,12 @@ void HardwareInfoPage::populateFans()
     for (int i = 0; i < fans.size(); ++i) {
         int rpm = im->getFanSpeed(i);
         addRow(t, fans.at(i).label, QString("%1 RPM").arg(rpm));
+    }
+
+    QList<ThermalSensor> sensors = im->getThermalSensors();
+    for (int i = 0; i < sensors.size(); ++i) {
+        double tempC = im->getThermalTemperature(i);
+        addRow(t, sensors.at(i).label, QString::number(tempC, 'f', 1) + QStringLiteral(" °C"));
     }
 
     t->resizeColumnsToContents();
@@ -457,12 +524,14 @@ void HardwareInfoPage::populateStorage()
     mHealthItems.clear();
 
     if (!im->hasDiskHealth()) {
+        ui->sectionHeaderRow->hide();
         ui->grpStorage->hide();
         return;
     }
 
     QList<DriveHealth> drives = im->getDriveHealth();
     if (drives.isEmpty()) {
+        ui->sectionHeaderRow->hide();
         ui->grpStorage->hide();
         return;
     }
@@ -504,12 +573,12 @@ void HardwareInfoPage::populateStorage()
 
         QString driveName = d.model.isEmpty() ? d.deviceName : d.model;
         if (drives.size() > 1)
-            addRow(t, tr("Drive %1").arg(i + 1), driveName);
+            addDriveGroupHeaderRow(t, tr("Drive %1").arg(i + 1), driveName);
         else
-            addRow(t, tr("Drive"), driveName);
+            addDriveGroupHeaderRow(t, tr("Drive"), driveName);
 
         if (d.sizeBytes > 0)
-            addRow(t, tr("  Size"), FormatUtil::formatBytes(d.sizeBytes));
+            addDriveDetailRow(t, tr("  Size"), FormatUtil::formatBytes(d.sizeBytes));
 
         QString typeStr;
         switch (d.driveType) {
@@ -519,7 +588,7 @@ void HardwareInfoPage::populateStorage()
         default:                    typeStr = d.protocol; break;
         }
         if (!typeStr.isEmpty())
-            addRow(t, tr("  Type"), typeStr);
+            addDriveDetailRow(t, tr("  Type"), typeStr);
 
         if (!d.healthVerdict.isEmpty()) {
             QString healthStr;
@@ -531,11 +600,10 @@ void HardwareInfoPage::populateStorage()
             int row = t->rowCount();
             t->insertRow(row);
 
-            QTableWidgetItem *labelItem = new QTableWidgetItem(tr("  Health"));
-            QFont bold = labelItem->font();
-            bold.setBold(true);
-            labelItem->setFont(bold);
-            t->setItem(row, 0, labelItem);
+            // SSO-14757: label drops the old bold treatment (see
+            // addDriveDetailRow) so it doesn't outrank the drive's own
+            // group-header row; the value keeps its verdict-based color.
+            t->setItem(row, 0, new QTableWidgetItem(tr("  Health")));
 
             QTableWidgetItem *valueItem = new QTableWidgetItem(healthStr);
             QSettings *sv = AppManager::ins()->getStyleValues();
@@ -554,65 +622,63 @@ void HardwareInfoPage::populateStorage()
 
         if (d.temperatureCelsius >= 0) {
             double tempF = d.temperatureCelsius * 9.0 / 5.0 + 32.0;
-            addRow(t, tr("  Temperature"), QString("%1 \u00B0C / %2 \u00B0F")
+            addDriveDetailRow(t, tr("  Temperature"), QString("%1 \u00B0C / %2 \u00B0F")
                    .arg(d.temperatureCelsius, 0, 'f', 0)
                    .arg(tempF, 0, 'f', 0));
         }
 
         if (d.driveType == DriveHealth::NVMe) {
             if (d.percentageUsed >= 0)
-                addRow(t, tr("  Endurance Used"), QString("%1%").arg(d.percentageUsed));
+                addDriveDetailRow(t, tr("  Endurance Used"), QString("%1%").arg(d.percentageUsed));
             if (d.availableSpare >= 0)
-                addRow(t, tr("  Available Spare"), QString("%1%").arg(d.availableSpare));
+                addDriveDetailRow(t, tr("  Available Spare"), QString("%1%").arg(d.availableSpare));
             if (d.dataUnitsWritten >= 0) {
                 double tb = d.dataUnitsWritten * 512000.0 / (1024.0 * 1024.0 * 1024.0 * 1024.0);
-                addRow(t, tr("  Data Written"), QString("%1 TB").arg(tb, 0, 'f', 2));
+                addDriveDetailRow(t, tr("  Data Written"), QString("%1 TB").arg(tb, 0, 'f', 2));
             }
             if (d.dataUnitsRead >= 0) {
                 double tb = d.dataUnitsRead * 512000.0 / (1024.0 * 1024.0 * 1024.0 * 1024.0);
-                addRow(t, tr("  Data Read"), QString("%1 TB").arg(tb, 0, 'f', 2));
+                addDriveDetailRow(t, tr("  Data Read"), QString("%1 TB").arg(tb, 0, 'f', 2));
             }
             if (d.unsafeShutdowns >= 0)
-                addRow(t, tr("  Unsafe Shutdowns"), QString::number(d.unsafeShutdowns));
+                addDriveDetailRow(t, tr("  Unsafe Shutdowns"), QString::number(d.unsafeShutdowns));
             if (d.mediaErrors >= 0)
-                addRow(t, tr("  Media Errors"), QString::number(d.mediaErrors));
+                addDriveDetailRow(t, tr("  Media Errors"), QString::number(d.mediaErrors));
         }
 
         if (d.driveType == DriveHealth::SATA_SSD) {
             if (d.wearLevelingCount >= 0)
-                addRow(t, tr("  Wear Leveling"), QString("%1%").arg(d.wearLevelingCount));
+                addDriveDetailRow(t, tr("  Wear Leveling"), QString("%1%").arg(d.wearLevelingCount));
             if (d.reallocatedSectors >= 0)
-                addRow(t, tr("  Reallocated Sectors"), QString::number(d.reallocatedSectors));
+                addDriveDetailRow(t, tr("  Reallocated Sectors"), QString::number(d.reallocatedSectors));
         }
 
         if (d.driveType == DriveHealth::SATA_HDD) {
             if (d.reallocatedSectors >= 0)
-                addRow(t, tr("  Reallocated Sectors"), QString::number(d.reallocatedSectors));
+                addDriveDetailRow(t, tr("  Reallocated Sectors"), QString::number(d.reallocatedSectors));
             if (d.pendingSectors >= 0)
-                addRow(t, tr("  Pending Sectors"), QString::number(d.pendingSectors));
+                addDriveDetailRow(t, tr("  Pending Sectors"), QString::number(d.pendingSectors));
             if (d.uncorrectableSectors >= 0)
-                addRow(t, tr("  Uncorrectable Sectors"), QString::number(d.uncorrectableSectors));
+                addDriveDetailRow(t, tr("  Uncorrectable Sectors"), QString::number(d.uncorrectableSectors));
         }
 
         if (d.powerOnHours >= 0) {
             int days = d.powerOnHours / 24;
-            addRow(t, tr("  Power-On Time"), QString("%1 hours (%2 days)").arg(d.powerOnHours).arg(days));
+            addDriveDetailRow(t, tr("  Power-On Time"), QString("%1 hours (%2 days)").arg(d.powerOnHours).arg(days));
         }
         if (d.powerCycles >= 0)
-            addRow(t, tr("  Power Cycles"), QString::number(d.powerCycles));
+            addDriveDetailRow(t, tr("  Power Cycles"), QString::number(d.powerCycles));
 
         if (!d.smartPassed)
-            addRow(t, tr("  SMART Status"), tr("FAILING"));
+            addDriveDetailRow(t, tr("  SMART Status"), tr("FAILING"));
 
         if (d.needsElevation) {
             int row = t->rowCount();
             t->insertRow(row);
 
-            QTableWidgetItem *noteLabel = new QTableWidgetItem(tr("  Note"));
-            QFont bold = noteLabel->font();
-            bold.setBold(true);
-            noteLabel->setFont(bold);
-            t->setItem(row, 0, noteLabel);
+            // SSO-14757: label drops the old bold treatment (see
+            // addDriveDetailRow) to match the rest of this drive's rows.
+            t->setItem(row, 0, new QTableWidgetItem(tr("  Note")));
 
 #ifdef Q_OS_LINUX
             QWidget *noteWidget = new QWidget;
@@ -734,8 +800,13 @@ void HardwareInfoPage::repopulateStorage()
 {
     // setRowCount(0) deletes tblStorage's current items; drop their mLabelItems
     // entries first so refreshThemeColors() never touches a freed pointer.
-    for (int row = 0; row < ui->tblStorage->rowCount(); ++row)
+    // SSO-14757: addDriveGroupHeaderRow() tracks both columns (column 1 gets
+    // @color06 too, not just the label column addRow() uses), so both must
+    // be purged here.
+    for (int row = 0; row < ui->tblStorage->rowCount(); ++row) {
         mLabelItems.removeAll(ui->tblStorage->item(row, 0));
+        mLabelItems.removeAll(ui->tblStorage->item(row, 1));
+    }
     ui->tblStorage->setRowCount(0);
     populateStorage();
     fitTableHeight(ui->tblStorage);

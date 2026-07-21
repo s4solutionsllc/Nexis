@@ -19,6 +19,10 @@ GnomeSettingsPage::~GnomeSettingsPage()
 
 void GnomeSettingsPage::init()
 {
+    // DS §3 (NEX F2 shared recipe): page-level accent-bar header above the
+    // .ui tab strip, mirrors SettingsPage::buildPageHeader().
+    buildPageHeader();
+
     // Create sub-tabs
     mAppearanceTab = new GnomeAppearanceTab(this);
     mWmTab = new GnomeWmTab(this);
@@ -77,4 +81,21 @@ void GnomeSettingsPage::showError(const QString &message)
         ui->lblStatus->setVisible(false);
         ui->lblStatus->clear();
     });
+}
+
+void GnomeSettingsPage::buildPageHeader()
+{
+    // DS §3 page-level header (NEX F2 shared recipe): non-compact accent
+    // bar (>=26px) + title + muted source line, mirrors
+    // SettingsPage::buildPageHeader().
+    ui->pageHeader->setObjectName("sectionHeaderRow");
+
+    ui->pageHeaderAccent->setObjectName("sectionHeaderAccent");
+    ui->pageHeaderAccent->setProperty("accentToken", "accent");
+    ui->pageHeaderAccent->setFixedWidth(3);
+    ui->pageHeaderAccent->setMinimumHeight(26);
+    ui->pageHeaderAccent->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+
+    ui->pageHeaderTitle->setObjectName("sectionHeaderTitle");
+    ui->pageHeaderSource->setObjectName("sectionHeaderSource");
 }

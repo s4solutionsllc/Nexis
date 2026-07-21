@@ -1,7 +1,16 @@
 #include "package_tool_linux.h"
 
+#include "Tools/leftover_deny_list.h"
+#include "Tools/leftover_scanner_linux.h"
+#include "Tools/lifecycle_deny_list.h"
+
+#include <QCoreApplication>
+#include <QDateTime>
 #include <QDebug>
+#include <QFile>
+#include <QFileInfo>
 #include <QRegularExpression>
+#include <QUuid>
 
 PackageToolLinux::PackageToolLinux()
 {
@@ -112,6 +121,44 @@ bool PackageToolLinux::uninstallSnapPackages(const QStringList &packages)
     args.insert(0, "remove");
     qDebug() << args;
     return runSudoCommand("snap", args);
+}
+
+QStringList PackageToolLinux::getFlatpakPackages()
+{
+    if (!CommandUtil::isExecutable("flatpak"))
+        return {};
+
+    // `flatpak list` never requires root — refs are visible unprivileged
+    // whether installed --user or system-wide.
+    ExecResult result = CommandUtil::execWithStatus("flatpak", {"list", "--app", "--columns=application"});
+    if (!result.ok()) {
+        qCritical() << "Failed to list flatpak packages:" << result.error;
+        return {};
+    }
+
+    QStringList refs;
+    for (const QString &line : result.output.split('\n', Qt::SkipEmptyParts))
+        refs << line.trimmed();
+    return refs;
+}
+
+bool PackageToolLinux::uninstallFlatpakPackages(const QStringList &refs)
+{
+    if (refs.isEmpty() || !CommandUtil::isExecutable("flatpak"))
+        return false;
+
+    // CISO (SSO-15373): no silent privilege escalation beyond what the
+    // package manager itself requires. Flatpak elevates internally via
+    // polkit only for system-wide installs; user-scoped installs (the
+    // common desktop case) need none at all — so, like
+    // removeUnusedFlatpakRuntimes() above, this runs unprivileged rather
+    // than always going through runSudoCommand.
+    QStringList args = {"uninstall", "-y", "--noninteractive"};
+    args += refs;
+    ExecResult result = CommandUtil::execWithStatus("flatpak", args, 120000);
+    if (!result.ok())
+        qCritical() << "Failed to uninstall flatpak packages:" << result.error;
+    return result.ok();
 }
 
 QList<Package> PackageToolLinux::getInstalledApps()
@@ -634,3 +681,91 @@ bool PackageToolLinux::aptHistoryRollback(int transactionId)
 }
 
 // friendlySectionName() is in shared/nexis-core/Tools/package_tool_shared.cpp
+
+// SSO-15385: Linux leftover scanner implementation.
+
+QList<AppLeftover> PackageToolLinux::findAppLeftovers(const Package &app)
+{
+    // Build the search name set: package name plus any reverse-DNS app id
+    // fragments we can derive. For Flatpak the name is usually the full
+    // reverse-DNS id (e.g. "org.mozilla.Firefox"); for dpkg/rpm it is the
+    // short package name (e.g. "firefox"). We include both forms so the
+    // scanner can match directory names in either convention.
+    QStringList names;
+    if (!app.name.isEmpty())
+        names.append(app.name);
+    // Derive last-segment shortname from reverse-DNS ids
+    // (e.g. "org.mozilla.Firefox" → "Firefox").
+    if (app.name.contains(QLatin1Char('.')) && !app.name.startsWith(QLatin1Char('.'))) {
+        names.append(app.name.section(QLatin1Char('.'), -1));
+    }
+    names.removeDuplicates();
+
+    const auto candidates = LeftoverScannerLinux::scanLeftovers(names);
+
+    QList<AppLeftover> out;
+    out.reserve(candidates.size());
+    for (const auto &c : candidates) {
+        AppLeftover lf;
+        lf.path     = c.path;
+        lf.category = c.category;
+        lf.size     = c.sizeBytes;
+        out.append(lf);
+    }
+    return out;
+}
+
+bool PackageToolLinux::trashLeftovers(const QStringList &paths)
+{
+    const QString batchId    = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString nexisVer   = QCoreApplication::applicationVersion();
+    bool allOk = true;
+
+    for (const QString &raw : paths) {
+        const QFileInfo fi(raw);
+        const QString canonical = fi.canonicalFilePath();
+
+        // CISO §2: hard deny-list check on canonicalized path. LifecycleDenyList
+        // is the single centralized deny-list (SSO-15386/SSO-15373) shared with
+        // the orphan scanner — do not reintroduce a parallel copy here.
+        if (canonical.isEmpty() || !LifecycleDenyList::isSafe(canonical)) {
+            qWarning() << "trashLeftovers: deny-list blocked" << raw;
+            allOk = false;
+            continue;
+        }
+
+        const quint64 size = static_cast<quint64>(fi.size());
+
+        // CISO §3: log a "pending" record before the action so evidence of the
+        // attempt exists even if the process crashes mid-operation. Exactly one
+        // more record — success or failure — follows once the action completes,
+        // so a single deletion never appears as two entries in the audit trail.
+        LeftoverDenyList::AuditEntry entry;
+        entry.batchId       = batchId;
+        entry.originalPath  = raw;
+        entry.canonicalPath = canonical;
+        entry.action        = QStringLiteral("trash_pending");
+        entry.matchRule     = QStringLiteral("user-selected");
+        entry.sizeBytes     = size;
+        entry.nexisVersion  = nexisVer;
+        entry.timestamp     = QDateTime::currentDateTimeUtc();
+        LeftoverDenyList::logDeletion(entry);
+
+        // QFile::moveToTrash() uses the freedesktop.org Trash spec on Linux.
+        // CISO §1: fail securely — never silently fall back to unlink.
+        QString trashDest;
+        entry.timestamp = QDateTime::currentDateTimeUtc();
+        if (!QFile::moveToTrash(raw, &trashDest)) {
+            qWarning() << "trashLeftovers: moveToTrash failed for" << raw;
+            entry.action = QStringLiteral("trash_failed");
+            LeftoverDenyList::logDeletion(entry);
+            allOk = false;
+        } else {
+            entry.action    = QStringLiteral("trash");
+            entry.trashDest = trashDest;
+            LeftoverDenyList::logDeletion(entry);
+        }
+    }
+
+    return allOk;
+}

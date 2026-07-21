@@ -5,7 +5,7 @@
 
 <p align="center">
   <b>Linux & macOS System Optimizer and Monitor</b><br>
-  <sub>The only free, open-source, cross-platform all-in-one system optimizer, monitor, and manager</sub>
+  <sub>Free, open-source, all-in-one system optimizer, monitor, and manager for Linux and macOS</sub>
 </p>
 
 <p align="center">
@@ -55,30 +55,39 @@
 
 ## How Nexis Compares
 
-| | **Nexis** | Stacer | CleanMyMac X | BleachBit |
-|---|:---:|:---:|:---:|:---:|
-| **Real-time monitoring** | :white_check_mark: | :white_check_mark: | Partial | :x: |
-| **System cleaning** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| **Process/service management** | :white_check_mark: | :white_check_mark: | :x: | :x: |
-| **Package management** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: |
-| **GPU monitoring** | :white_check_mark: | :x: | :x: | :x: |
-| **Hardware info panel** | :white_check_mark: | :x: | :x: | :x: |
-| **Battery & disk health** | :white_check_mark: | :x: | :x: | :x: |
-| **Docker management** | :white_check_mark: | :x: | :x: | :x: |
-| **System log viewer** | :white_check_mark: | :x: | :x: | :x: |
-| **Disk analysis & duplicates** | :white_check_mark: | :x: | :white_check_mark: | :x: |
-| **Network diagnostics** | :white_check_mark: | :x: | :x: | :x: |
-| **Scheduled cleaning** | :white_check_mark: | :x: | :white_check_mark: | :x: |
-| **Kiosk mode** | :white_check_mark: | :x: | :x: | :x: |
-| **Linux support** | :white_check_mark: | :white_check_mark: | :x: | :white_check_mark: |
-| **macOS support** | :white_check_mark: | :x: | :white_check_mark: | :x: |
-| **Actively maintained** | :white_check_mark: | :x: (since 2020) | :white_check_mark: | :white_check_mark: |
-| **Open source** | :white_check_mark: | :white_check_mark: | :x: | :white_check_mark: |
-| **Price** | **Free** | Free | ~$40/year | Free |
+| | **Nexis** | Stacer (fork)¹ | Mission Center | BleachBit | OnyX | CleanMyMac |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Linux support** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: | :x: |
+| **macOS support** | :white_check_mark: | :x: | :x: | Experimental | :white_check_mark: | :white_check_mark: |
+| **Real-time monitoring** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: | :x: | Partial |
+| **GPU monitoring** | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: | :x: |
+| **Hardware info panel** | :white_check_mark: | :x: | Partial | :x: | :x: | :x: |
+| **Battery & disk health** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
+| **System cleaning** | :white_check_mark: | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Scheduled cleaning** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
+| **Secure file shredding** | :x: | :x: | :x: | :white_check_mark: | :x: | :white_check_mark: |
+| **Disk analysis & duplicates** | :white_check_mark: | :x: | :x: | :x: | :x: | :white_check_mark: |
+| **Process/service management** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: | :x: | Partial |
+| **Package uninstaller** | :white_check_mark: | :white_check_mark: | :x: | :x: | :white_check_mark: | :white_check_mark: |
+| **App updater** | :x: | :x: | :x: | :x: | :x: | :white_check_mark: |
+| **Malware removal** | :x: | :x: | :x: | :x: | :x: | :white_check_mark: |
+| **Docker management** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
+| **System log viewer** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
+| **Network diagnostics** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
+| **Kiosk mode** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
+| **Open source** | :white_check_mark: GPL-3.0 | :white_check_mark: GPL-3.0 | :white_check_mark: GPL-3.0 | :white_check_mark: GPL-3.0 | :x: | :x: |
+| **Price** | **Free** | Free | Free | Free | Free | $39.95/year² |
+| **Last release**³ | Jul 2026 | May 2026 | Nov 2025 | Jul 2026 | Jun 2026 | Active |
+
+¹ Upstream [Stacer](https://github.com/oguzhaninan/Stacer) was officially abandoned (last release 2019); the actively maintained community fork ([QuentiumYT/Stacer](https://github.com/QuentiumYT/Stacer), now the Debian upstream) is compared here.
+² Subscription; a one-time license is also available.
+³ As of July 2026.
+
+*Based on each project's documented features and release data, verified July 2026. Spotted an error? Corrections welcome via [issue](https://github.com/s4solutionsllc/Nexis/issues).*
 
 ## Background
 
-Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popular Linux system optimizer created by oguzhaninan. After the original project went inactive in 2020, development continued here -- porting to Qt 6 and C++17, adding native macOS support, GPU monitoring, a hardware info panel, kiosk mode, and fixing hundreds of bugs and regressions inherited from the upstream codebase. As the feature-set diverged, the project was rebranded as Nexis to reflect that it had become something new. Stacer laid the foundation; Nexis is where it goes from here.
+Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popular Linux system optimizer created by oguzhaninan. After the original project went inactive (last release 2019, officially declared abandoned), development continued here -- porting to Qt 6 and C++17, adding native macOS support, GPU monitoring, a hardware info panel, kiosk mode, and fixing hundreds of bugs and regressions inherited from the upstream codebase. As the feature-set diverged, the project was rebranded as Nexis to reflect that it had become something new. Stacer's lineage lives on in two places today: the [QuentiumYT fork](https://github.com/QuentiumYT/Stacer), which carries Stacer forward on Linux, and Nexis, which grew into a cross-platform rebuild. Stacer laid the foundation; Nexis is where it goes from here.
 
 ## Downloads
 

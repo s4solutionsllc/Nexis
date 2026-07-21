@@ -20,11 +20,17 @@ public:
 
     void fetchPackages();
     void fetchSnapPackages();
+    void fetchFlatpakPackages();
     void fetchOrphanPackages();
 
     void uninstallPackages(const QStringList &packages, bool purge);
     void uninstallSnapPackages(const QStringList &packages);
+    void uninstallFlatpakPackages(const QStringList &packages);
     void trashApps(const QStringList &appPaths);
+    // SSO-15385: move leftover files to the platform Trash (Linux:
+    // freedesktop.org Trash; macOS: NSFileManager trashItemAtURL).
+    // CISO §1/§2/§3 (SSO-15373) enforcement is inside PackageTool::trashLeftovers.
+    bool trashLeftovers(const QStringList &paths);
     void removeOrphanPackages();
 
     QStringList dryRunRemovePackages(const QStringList &packages);
@@ -43,6 +49,7 @@ public:
 signals:
     void packagesFetched(QList<Package> packages);
     void snapPackagesFetched(QStringList packages);
+    void flatpakPackagesFetched(QStringList packages);
     void orphanPackagesFetched(QList<OrphanPackage> packages);
 #ifndef Q_OS_MACOS
     void aptHistoryFetched(QList<AptHistoryEntry> entries);

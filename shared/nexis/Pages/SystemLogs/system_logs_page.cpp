@@ -1,24 +1,29 @@
 #include "system_logs_page.h"
 #include "log_provider.h"
+#include "severity_pill_delegate.h"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QTimer>
+#include <QFrame>
 
-#include "Managers/app_manager.h"
 #include "signal_mapper.h"
+#include "utilities.h"
 
 SystemLogsPage::SystemLogsPage(QWidget *parent)
     : QWidget(parent)
     , mProvider(LogProvider::createForPlatform(this))
     , mModel(nullptr)
     , mProxy(nullptr)
+    , mLogsContainer(nullptr)
     , mTableView(nullptr)
     , mCmbSeverity(nullptr)
     , mSearchField(nullptr)
     , mBtnRefresh(nullptr)
     , mLblStatus(nullptr)
+    , mLblTitle(nullptr)
+    , mLblSource(nullptr)
     , mSeverityFilter(7)
 {
     connect(mProvider, &LogProvider::logsReady, this, &SystemLogsPage::onLogsReady);
@@ -44,11 +49,40 @@ void SystemLogsPage::buildLayout()
     mainLayout->setContentsMargins(16, 16, 16, 16);
     mainLayout->setSpacing(8);
 
-    // Filter toolbar
-    auto *filterLayout = new QHBoxLayout();
+    // Toolbar header row (DS \u00A73, SSO-14314): accent bar + "System Logs" /
+    // "Live log stream" title block, structurally identical to the Processes/
+    // Boot Analysis .page-header recipe, followed by the existing filter
+    // controls (style.qss "Section Header" recipe).
+    auto *headerRow = new QWidget(this);
+    headerRow->setObjectName("sectionHeaderRow");
+    auto *filterLayout = new QHBoxLayout(headerRow);
+    filterLayout->setContentsMargins(14, 12, 14, 10);
     filterLayout->setSpacing(8);
 
-    mCmbSeverity = new QComboBox(this);
+    auto *accentBar = new QFrame(headerRow);
+    accentBar->setObjectName("sectionHeaderAccent");
+    accentBar->setProperty("accentToken", "accent");
+    accentBar->setFrameShape(QFrame::NoFrame);
+    accentBar->setFixedWidth(3);
+    accentBar->setMinimumHeight(26);
+    accentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    filterLayout->addWidget(accentBar);
+
+    auto *headerTextCol = new QVBoxLayout;
+    headerTextCol->setContentsMargins(0, 0, 0, 0);
+    headerTextCol->setSpacing(0);
+
+    mLblTitle = new QLabel(tr("System Logs"), headerRow);
+    mLblTitle->setObjectName("sectionHeaderTitle");
+    headerTextCol->addWidget(mLblTitle);
+
+    mLblSource = new QLabel(tr("Live log stream"), headerRow);
+    mLblSource->setObjectName("sectionHeaderSource");
+    headerTextCol->addWidget(mLblSource);
+
+    filterLayout->addLayout(headerTextCol);
+
+    mCmbSeverity = new QComboBox(headerRow);
     mCmbSeverity->addItems({
         tr("All Severities"),
         tr("Error && Above"),
@@ -61,25 +95,35 @@ void SystemLogsPage::buildLayout()
             this, &SystemLogsPage::onSeverityFilterChanged);
     filterLayout->addWidget(mCmbSeverity);
 
-    mSearchField = new QLineEdit(this);
+    mSearchField = new QLineEdit(headerRow);
     mSearchField->setPlaceholderText(tr("Search logs..."));
     mSearchField->setObjectName("searchLogField");
     connect(mSearchField, &QLineEdit::textChanged,
             this, &SystemLogsPage::onSearchTextChanged);
     filterLayout->addWidget(mSearchField);
 
-    mBtnRefresh = new QToolButton(this);
+    mBtnRefresh = new QToolButton(headerRow);
     mBtnRefresh->setObjectName("btnLogRefresh");
     mBtnRefresh->setText(QString::fromUtf8("\u21BB"));
     mBtnRefresh->setToolTip(tr("Refresh logs"));
-    mBtnRefresh->setFixedSize(32, 32);
+    mBtnRefresh->setFixedSize(24, 24);   // DS \u00A73 action-button convention (metric_tile_base.cpp:171-180)
     mBtnRefresh->setAutoRaise(true);
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
     connect(mBtnRefresh, &QToolButton::clicked,
             this, &SystemLogsPage::onRefreshClicked);
     filterLayout->addWidget(mBtnRefresh);
 
-    mainLayout->addLayout(filterLayout);
+    mainLayout->addWidget(headerRow);
+
+    // Elevated container (DS \u00A72): shadow lives on the container only, the
+    // log rows inside stay flat (DS \u00A77).
+    mLogsContainer = new QWidget(this);
+    mLogsContainer->setObjectName("logsContainer");
+    mLogsContainer->setAttribute(Qt::WA_StyledBackground, true);
+    mLogsContainer->setProperty("cardRole", "elevated");
+    auto *containerLayout = new QVBoxLayout(mLogsContainer);
+    containerLayout->setContentsMargins(0, 0, 0, 0);
+    containerLayout->setSpacing(0);
 
     // Table view
     mModel = new QStandardItemModel(0, 4, this);
@@ -92,7 +136,7 @@ void SystemLogsPage::buildLayout()
     mProxy->setFilterKeyColumn(-1);
     mProxy->setFilterCaseSensitivity(Qt::CaseInsensitive);
 
-    mTableView = new QTableView(this);
+    mTableView = new QTableView(mLogsContainer);
     mTableView->setObjectName("logTableView");
     mTableView->setModel(mProxy);
     mTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -105,8 +149,11 @@ void SystemLogsPage::buildLayout()
     mTableView->setColumnWidth(0, 170);
     mTableView->setColumnWidth(1, 70);
     mTableView->setColumnWidth(2, 150);
+    mTableView->setItemDelegateForColumn(1, new SeverityPillDelegate(mTableView));
 
-    mainLayout->addWidget(mTableView, 1);
+    containerLayout->addWidget(mTableView);
+    mainLayout->addWidget(mLogsContainer, 1);
+    Utilities::addDropShadow(mLogsContainer, 90, 26);
 
     // Status bar
     auto *statusLayout = new QHBoxLayout();
@@ -175,29 +222,19 @@ void SystemLogsPage::populateModel(const QList<LogEntry> &entries)
 {
     mModel->removeRows(0, mModel->rowCount());
 
-    QSettings *sv = AppManager::ins()->getStyleValues();
-
-    QColor errorColor(sv ? sv->value("@destructiveColor").toString() : "#E05454");
-    QColor warningColor(sv ? sv->value("@warningColor").toString() : "#FFB347");
-    QColor noticeColor(sv ? sv->value("@infoColor").toString() : "#5B9BD5");
-
     for (const LogEntry &entry : entries) {
         auto *timestampItem = new QStandardItem(
             entry.timestamp.toString("yyyy-MM-dd HH:mm:ss"));
         timestampItem->setData(entry.timestamp, Qt::UserRole);
 
+        // Text stays on the item (search still filters on it); SeverityPillDelegate
+        // (DS §5) paints the pill badge and picks the status color at paint time.
         auto *severityItem = new QStandardItem(
             LogEntry::severityString(entry.severity));
         severityItem->setData(entry.severity, Qt::UserRole);
-        if (entry.severity <= 3) {
-            severityItem->setForeground(errorColor);
-        } else if (entry.severity == 4) {
-            severityItem->setForeground(warningColor);
-        } else if (entry.severity == 5) {
-            severityItem->setForeground(noticeColor);
-        }
 
-        auto *unitItem = new QStandardItem(entry.unit);
+        auto *unitItem = new QStandardItem(
+            entry.unit.isEmpty() ? QString::fromUtf8("—") : entry.unit);
         auto *messageItem = new QStandardItem(entry.message);
 
         mModel->appendRow({ timestampItem, severityItem, unitItem, messageItem });
@@ -206,8 +243,10 @@ void SystemLogsPage::populateModel(const QList<LogEntry> &entries)
 
 void SystemLogsPage::refreshThemeColors()
 {
-    if (!mCachedEntries.isEmpty())
-        applyFilters();
+    // Severity pill colors are resolved live at paint time (SeverityPillDelegate);
+    // a viewport repaint is enough to pick up a theme change.
+    if (mTableView)
+        mTableView->viewport()->update();
 
     update();
 }

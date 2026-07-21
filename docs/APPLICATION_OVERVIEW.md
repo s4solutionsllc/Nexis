@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-15 | Version 2.8.3
+> Last updated: 2026-07-20 | Version 2.8.3
 
 ---
 
@@ -19,6 +19,7 @@
    - [Services](#7-services)
    - [Processes](#8-processes)
    - [Uninstaller](#9-uninstaller)
+   - [File Shredder](#9a-file-shredder)
    - [Resources](#10-resources)
    - [Network Usage](#10a-network-usage)
    - [Helpers](#11-helpers)
@@ -67,7 +68,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Test LOC | ~14,500 | `tests/` |
 | Test executables | 61 (60 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
 | Test methods | ~845 | `private slots:` in `tests/*/test_*.cpp` |
-| Always-visible pages | 15 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Resources, Network, Helpers, SystemLogs, Settings) |
+| Always-visible pages | 16 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Shredder, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
 | Tool classes | 8 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool` and `FileSearchTool` consumed directly by their services |
@@ -98,7 +99,7 @@ Nexis runs natively on **Linux** (`x86_64` + `arm64`) and **macOS** (**Apple Sil
 Nexis is a Qt6 application and runs as a **native Wayland client** under Wayland sessions (including Ubuntu 26.04 / GNOME 50, which removes the X11 session entirely) and as a native **X11** client under X.Org. There are no `X11`/`xcb`/`QX11Info` dependencies in the codebase — windowing, screen enumeration, and screenshot capture all use Qt abstractions (`QScreen`, `QWidget::grab()`). The only path that ever forces a non-default QPA is the scheduled-clean entry point (`--clean` / `--check-threshold`), which sets `QT_QPA_PLATFORM=offscreen` so cron and systemd-user timer invocations don't need a live display server (SSO-3368). No feature requires XWayland; the optional `DisplayServerUtil` (`shared/nexis-core/Utils/display_server_util.h`) provides a single canonical detector for any future XWayland-gated feature.
 
 ### Always-visible pages (both platforms)
-Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, Resources, Network Usage, Helpers, System Logs, Settings
+Dashboard, Hardware Info, Startup Apps, Boot Analysis, System Cleaner, Disk Tools, Search, Services, Processes, Uninstaller, File Shredder, Resources, Network Usage, Helpers, System Logs, Settings
 
 ### Conditional pages
 | Page | Condition | Linux | macOS |
@@ -129,6 +130,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | Autostart | `~/.config/autostart/*.desktop` | `~/Library/LaunchAgents/*.plist` |
 | Sudo elevation | `pkexec` / `sudo` | `osascript` (AppleScript admin prompt) |
 | Scheduled cleaning | systemd timers / cron | launchd plists |
+| Menu-bar monitor | — (not offered) | `NSStatusItem` (AppKit bridge, `macos/nexis/MenuBar/`, FW-20) |
 
 ---
 
@@ -189,6 +191,7 @@ Real-time system monitoring at a glance in a **fixed-cell responsive grid layout
   - **System tray:** Checkable "Kiosk Mode (F11)" action in tray context menu
   - **Dashboard button:** Floating fullscreen/collapse icon at top-right corner, swaps between enter/exit icons
   - On activation, a transient "Press ESC to exit kiosk mode" overlay fades in then out (~3.5s)
+  - **Launch straight into kiosk mode (GH#207 / SSO-8351):** Settings → General → "Launch directly into Kiosk Mode" forces kiosk on at every startup, independent of the persisted last-session state. A "Kiosk Monitor" picker (populated from `QGuiApplication::screens()`) selects which display kiosk mode opens on; this applies to any kiosk entry (startup, F11, tray, Dashboard button), not just launch.
 
 ### 2. Hardware Info
 
@@ -196,18 +199,17 @@ Comprehensive static hardware inventory displayed in tabular sections. Two expor
 - **Export System Report** — plain text file with aligned columns. Default: `nexis-report-YYYY-MM-DD.txt`.
 - **Export as HTML (FR-126)** — self-contained HTML file (inline CSS, no external dependencies) containing a system snapshot (CPU %, memory, GPU, battery), all hardware tables, top-10 processes by CPU at export time, and pending update count. Default: `nexis-report-YYYY-MM-DD.html`.
 
-**Elevated-card chrome (SSO-13735, UX modernization):** System, Processor, Graphics, and Memory each render as a DS §2 elevated card with a DS §3 accent-bar section header (Graphics uses `@gpuColor`; System/Processor/Memory use their type-appropriate tokens). Battery gets the same accent-bar header (`@batteryColor`) but no card — the approved design capture cut off before any Battery rows. Fans and Storage, outside that capture, keep their original chrome.
+**Elevated-card chrome (SSO-13735 + SSO-14298 round 2 + SSO-14757 + SSO-15377, UX modernization):** System, Processor, Graphics, Memory, Battery, Storage, and Fans & Sensors each render as a DS §2 elevated card with a DS §3 accent-bar section header (Graphics uses `@gpuColor`; System/Processor/Memory/Battery/Storage/Fans use their type-appropriate tokens — Battery's `@batteryColor`, Storage's `@diskColor`, Fans & Sensors' `@fanColor`). Battery's card treatment landed in round 2 once a full-row capture existed — round 1 shipped it header-only because the capture available then cut off before any Battery rows. Storage's card landed separately (SSO-14757), outside the original SSO-13735 capture, since it also needed the per-drive sub-header treatment below. Fans (renamed "Fans & Sensors", SSO-15377) was the last section on legacy `QGroupBox` chrome and picked up the same recipe when hwmon temperature sensors were added to it.
 
-**9 sections:**
+**8 sections:**
 - **System** — Hostname, OS, distribution, kernel, architecture, desktop environment
 - **Processor** — Model name, physical/logical core count, base clock, L1/L2/L3 cache sizes
 - **Graphics** — GPU name(s) and vendor(s)
 - **Memory** — Total RAM, total swap
 - **Battery** (if present) — Design capacity, current max capacity, cycle count, health percentage
-- **Fans** (if present) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys. Linux: primary hwmon scan (`/sys/class/hwmon/*/fan*_input`), with fallback detection chain for ThinkPad (`/proc/acpi/ibm/fan`), Dell (`/proc/i8k`), and NVIDIA proprietary (`nvidia-smi` fan percentage)
-- **Storage** — Per-drive: name, size, model, SMART health verdict (Good/Caution/Critical/Unknown), color-coded. On Linux, if any drive requires elevated permissions for SMART data, an **Unlock All Drives** button appears at the top of the section. Clicking it shows a confirmation dialog with an optional **"Also grant permanent access"** checkbox. Confirming runs a single `pkexec sh -c "..."` call that reads all locked drives in one password prompt; if the checkbox is checked, `setcap cap_sys_rawio+ep` is applied in the same elevation so no password is needed on future launches. Per-drive Unlock buttons remain in the table as a granular fallback.
+- **Fans & Sensors** (if present, SSO-15377) — Per-fan RPM, device name, label; macOS reads SMC FNum/F{N}Ac keys, Linux primary hwmon scan (`/sys/class/hwmon/*/fan*_input`) with fallback detection chain for ThinkPad (`/proc/acpi/ibm/fan`), Dell (`/proc/i8k`), and NVIDIA proprietary (`nvidia-smi` fan percentage). Plus every labeled hwmon temperature sensor (`/sys/class/hwmon/*/temp*_input`) the platform exposes — CPU, GPU, NVMe, DIMM (`jc42`/`spd5118`), ACPI, and vendor WMI surfaces (ASUS/HP/Legion/IdeaPad) — via the same `ThermalInfo::friendlyDeviceName` mapping used by the Dashboard's Temperature tiles. Sensor classes the platform doesn't expose are simply omitted, never shown as an error or a zero reading; the whole section is hidden only when both fan and temperature sensor lists are empty.
+- **Storage** — Per-drive: name, size, model, SMART health verdict (Good/Caution/Critical/Unknown), color-coded. On Linux, if any drive requires elevated permissions for SMART data, an **Unlock All Drives** button appears at the top of the section. Clicking it shows a confirmation dialog with an optional **"Also grant permanent access"** checkbox. Confirming runs a single `pkexec sh -c "..."` call that reads all locked drives in one password prompt; if the checkbox is checked, `setcap cap_sys_rawio+ep` is applied in the same elevation so no password is needed on future launches. Per-drive Unlock buttons remain in the table as a granular fallback. **Multi-drive grouping (SSO-14757):** each drive's "Drive N" row renders as a bolder/larger sub-header (10pt/Bold `@color06`, vs. the 9pt/DemiBold used elsewhere) so it visually outranks its own Size/Type/Health/etc. rows, which drop to the plain non-bold value weight; works for any number of drives.
 - **Network** — Interface name, MAC address, IP addresses
-- **Thermal** — Sensor readings (if available)
 
 ### 3. Startup Apps
 
@@ -236,6 +238,7 @@ Ranked breakdown of which services and processes slow down system startup.
 - **macOS**: Shows total uptime since last boot via `sysctl kern.boottime`. Per-service timing is not available without elevated privileges.
 - Async analysis (QtConcurrent) — UI stays responsive; Refresh button triggers a new analysis on demand.
 - Data class: `BootAnalysisInfo` (platform-specific subclasses `BootAnalysisInfoLinux` / `BootAnalysisInfoMacOS`).
+- UX modernization (NEX Phase-2, SSO-13744): the uptime readout renders as a DS §2 elevated card with a DS §3/§4 header (accent bar + title + 14pt/700 hero value); the toolbar follows the shared section-header recipe; and the macOS no-per-service-data notice is a full DS §5 empty state (clock icon, explanation, "Refresh uptime" action) inside its own elevated card.
 
 ### 4. System Cleaner
 
@@ -295,6 +298,9 @@ On-demand and scheduled Markdown export of a full system health snapshot via `He
 
 Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar section.
 
+- **UX modernization (NEX Phase-2, SSO-13739):** the scan-roots list and the results tree (per mode) each sit inside their own DS §2 elevated container (`cardRole="elevated"`, one drop shadow each via `DiskToolsPage::makeElevatedContainer()`), replacing the old bordered-widget-per-list look; scan-root rows use the fixed monospace stack (`@monoFontFamily`) with a row divider. The "Large & Old Files"/"Duplicate Finder" tabs sit in their own `#modeBarRow` with DS §3 header-anatomy spacing (plain, no title/accent bar) with the active tab now filled `@accentColor` instead of unstyled default buttons. Each results tree freezes its header to the container's elevated surface color and right-aligns the tabular Size column; the pre-scan empty tree is replaced with a full DS §5 empty state (disk icon, explanation, and a "Scan"/"Find Duplicates" button wired to that mode's scan action) via `DiskToolsPage::makeEmptyState()`. The bottom action bar drops its bordered box for a plain footer with a top hairline. Directory picker, filter controls and values, the Scan/Find Duplicates actions, the five result columns, and "Move to Trash" are unchanged.
+- **Page header + Scan Locations title bar (SSO-14311 follow-up, SSO-14440):** the page now has a real DS §3/F2 page header (3px `@accentColor` accent bar + "Disk Tools" title, `#sectionHeaderRow`/`#sectionHeaderAccent`/`#sectionHeaderTitle`) above the mode-bar row, structurally matching the Processes/System Cleaner page headers. Each mode's scan-roots elevated container also gains a compact "Scan Locations" section-card title bar (`DiskToolsPage::buildSectionHeader()`, `compact="true"` variant of the same recipe, mirroring `SettingsPage::buildSectionHeader()`) as the first child inside the existing container — no new/duplicate container.
+
 **Mode 1 — Large & Old Files (FR-62):**
 - Directory picker with smart defaults (Home, Downloads, Documents)
 - Configurable filters: size threshold (MB/GB), age threshold (days/months/years)
@@ -325,17 +331,27 @@ Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar
 - Confirmation dialog before trashing files
 - Selection tracking label showing count and total size of checked files
 
+**Wipe Free Space (SSO-15382):**
+- "Wipe Free Space…" button opens a two-step `WipeFreeSpaceDialog` alongside the two scan modes
+- Step 1 lists mounted, writable volumes (`WipeFreeSpaceService::listWipeableVolumes()`) with live free space and a TRIM-eligibility badge, then previews the selected volume: free space, safety-margin headroom kept untouched, and (for non-TRIM targets) a rough time/data estimate; a persistent one-line disclosure states the SSD/TRIM honesty point (TRIM signals blocks as reclaimable, not a cryptographic-erase guarantee)
+- Confirmation is the codebase's standard one-sentence `QMessageBox::warning` ("Wipe free space on `<Volume>` (`<X>` GB free)?") behind a destructive-accent (`accessibleName="danger"`) button
+- `WipeFreeSpaceService` detects SSD/TRIM support per volume — Linux: `/sys/block/<dev>/queue/rotational` + `fstrim` availability, then `pkexec fstrim -v <mount>`; macOS: `diskutil info -plist` `SolidState` key, with TRIM reported as automatic (APFS has no user-space "run TRIM now") — and otherwise runs a fill-and-delete pass: a 4 MiB-chunked zero-fill of a single fixed-name temp file (`.nexis-wipe-fill.tmp`) in the volume root, stopping once free space reaches a safety-margin headroom (5% of volume capacity, floored at 1 GiB, capped at 8 GiB — `WipeFreeSpaceService::headroomForVolume()`), then deleting the temp file
+- Live progress via `progressUpdated(bytesWritten, estimatedTotalBytes, message)`; a Stop button cancels the in-flight pass and removes the temp file immediately
+- Crash-safety: before the first byte is written, a JSON marker recording the temp file path is written to `AppDataLocation`; `WipeFreeSpaceService::recoverFromCrash()` runs once at app startup (`main.cpp`, before the main window is constructed) and deletes any temp file left behind by a killed/crashed previous run, then clears the marker — the volume is never left artificially full
+
 ### 6. Search
 
 Advanced file search across the filesystem.
 
+- Single elevated container card holding the results table (NEX-13733; DS §2/§7) — the toolbar's Browse…/search field/scope/search-button controls no longer carry individual drop shadows, so the page carries exactly one shadow
 - Directory path selector (browse button)
 - File name pattern filter
 - File type/extension filter
 - Size range filter (min/max)
 - Date range filter (modified date)
 - Search as root option (sudo)
-- Results table with path, size, modified date (sortable columns)
+- Results table with path, size (right-aligned tabular numeric), modified date (sortable columns); zebra striping and row hover highlight
+- Full empty state (search icon + "No results yet" + a hint pointing at the query field / Browse…) shown before a search runs or when a search returns no results (NEX-13733; DS §5)
 - Double-click to open files in default application
 - Right-click context menu: open folder, Move to Trash, Delete
 - Move-to-Trash and Delete run on a worker thread and report success/failure through `FileSearchService::fileOperationFinished` — long bulk operations no longer freeze the UI or crash the app on timeout (SSO-3365, audit H4).
@@ -355,7 +371,9 @@ Manage system services (daemons).
 
 View and manage running processes.
 
+- **UX modernization (NEX Phase-2, SSO-13730):** the process table sits inside a single DS §2 elevated container (`#processesContainer`, one drop shadow); the toolbar is rebuilt on the shared section-header recipe (3px accent bar + "Processes" title + "Live process list" source line) with the "All Processes" radio and search field unchanged; the header row reads as the container surface with right-aligned tabular numerics on PID/Resident Memory/%Memory/%CPU and a zebra/hover recipe on populated rows; an empty table now shows a full empty state (icon + explanation + "Refresh now", which calls `DataRefreshService::triggerProcessRefresh()`) instead of a bare header.
 - Process table (20 data columns on Linux / 19 on macOS) + 1 fixed kill column: PID, Name, user, CPU%, memory%, command line, Disk Read/s, Disk Write/s, Net Down/s, Net Up/s, GPU %, GPU VRAM, and more
+- **GPU % / GPU VRAM columns (Linux, FR-115/SSO-15374):** right-aligned tabular numerics, same DS §7 convention as PID/Resident Memory/%Memory/%CPU. Sourced per-PID from `/proc/<pid>/fdinfo/*` DRM engine-busy/memory stats (AMD `amdgpu`, Intel `i915`/`xe`); on the NVIDIA proprietary driver, which doesn't populate DRM fdinfo, falls through to NVML per-process accounting (`nvmlDeviceGetComputeRunningProcesses`/`GraphicsRunningProcesses` + `nvmlDeviceGetProcessUtilization`, summed across devices in index order for multi-GPU systems) via `NvmlProcessSampler`/`NvmlLibraryBackend`, which `dlopen`s `libnvidia-ml.so.1` at runtime — no CUDA toolkit build dependency. Both columns hide/no-op gracefully (em-dash, no crash) with no supported GPU/driver/NVML present.
 - **Process Name column (GH#194, Linux only):** A short process name (e.g. `systemd`) sourced from `/proc/<pid>/comm`, shown right after PID and distinct from the full command line. Omitted entirely on macOS (no permanently-empty column). Column membership is driven by a platform-conditional `Col` enum in `processes_page.h`, so every column index stays correct on both platforms.
 - **Per-row kill icon (GH#174):** A fixed ✕ column at the far right lets users kill a process with a single click without selecting the row first. Rendered by `KillButtonDelegate` using `@destructiveColor` theme token; excluded from the header show/hide menu.
 - Disk Read/s and Disk Write/s columns show per-process disk I/O rates via `proc_pid_rusage()` (macOS) or `/proc/<pid>/io` (Linux), using delta-based calculation with `QElapsedTimer`
@@ -371,6 +389,7 @@ View and manage running processes.
 
 Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout (four on hosts with APT 3.1+): System Packages, Snap Packages, Orphan Packages, and APT History.
 
+- Package tree/list/table (whichever tab is active) sits inside one elevated container card with a frozen "Application" column header (UX modernization pass, SSO-13736)
 - Package tree view grouped by type (Formula/Cask on macOS; installed/universe on Linux)
 - Search filter with auto-expand matching sections
 - Multi-select checkboxes for batch uninstall
@@ -384,6 +403,20 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 - Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`; on APT 3.1+ also `apt history-list/-info/-undo/-rollback` and `apt why/why-not`
 - macOS: `brew uninstall` for Homebrew packages; `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:`) for `.app` bundles — no AppleScript/`osascript` is involved, so bundle names containing quotes or other metacharacters cannot inject arbitrary code (SSO-3366, audit S1); `brew autoremove` for orphans
 - **macOS leftover scanner (FW-18):** After selecting a `.app` for removal, Nexis resolves its bundle id and scans seven standard `~/Library` locations (`Application Support`, `Caches`, `Preferences`, `Logs`, `Containers`, `Saved Application State`, `LaunchAgents`) for matching artifacts. Matches are made exclusively against the exact bundle id (e.g. `com.example.MyApp`) or `<bundle-id>.<ext>` prefixed filenames — app name is never used as a substring filter to prevent false positives on unrelated bundles. Found artifacts are listed with sizes for user review and can be trashed via `QFile::moveToTrash` (the same injection-safe path as the bundle itself).
+- **Linux leftover scanner (SSO-15385):** After selecting a dpkg/rpm/Flatpak/Snap package for removal, `LeftoverScannerLinux::scanLeftovers()` scans `~/.config`, `~/.cache`, `~/.local/share`, and `~/.config/autostart` for matching artifacts, keyed off the package name plus (for reverse-DNS Flatpak ids) its trailing dot-segment. Matches are exact leaf-name or `<name>.<suffix>` (e.g. `firefox.desktop`) only — hyphen/underscore/space are never treated as a match delimiter, so sibling packages sharing a name prefix (`firefox`/`firefox-esr`, `code`/`code-insiders`) never cross-match. Every candidate is re-checked against `LifecycleDenyList::isSafe()` (CISO §2, SSO-15373) at scan time and again immediately before deletion. `LeftoverReviewDialogLinux` lists candidates with per-item size and a one-sentence total/selected summary; deletion goes through `PackageToolLinux::trashLeftovers()`, which uses `QFile::moveToTrash` and writes a CISO §3 audit record per item.
+
+### 9a. File Shredder
+
+Secure file/folder shredder (SSO-15381) — closes the ✗ cell in Nexis's own README comparison matrix against BleachBit. Destructive-by-design: every deletion requires explicit selection and an explicit confirmation, never an auto-clean.
+
+- Drag-and-drop target for files/folders, plus a "Choose Files…"/"Choose Folder…" file-picker fallback (`ShredderDropZone`, `QFileDialog`)
+- Staged list shows each top-level item with its recursive size + file count once `FileShredderService::computePreview()` resolves (background `QtConcurrent` walk); a live footer totals selected item count + size
+- "Shred Selected" mirrors the Select-All/Clean-Selected disabled-state pattern (GH-173/GH-226 regression class) — stays disabled until at least one item is staged and its preview has resolved
+- Confirmation gated behind `ShredConfirmDialog`: one-sentence body, destructive red-accent "Shred" button (Design Anchor confirmation-dialog ceiling)
+- `FileShredderService::shred()` overwrites each file's contents with a single pass of zeroes (fsync'd before unlink), then removes emptied folders bottom-up; symlinks are unlinked without ever touching their target
+- Live per-item progress (thin progress bar + status line) while shredding; per-item failures are counted and surfaced in the final summary rather than silently dropped
+- Always-visible inline disclosure: a single-pass overwrite does not guarantee unrecoverable erasure on SSDs (wear leveling) or copy-on-write filesystems (APFS, Btrfs, ZFS) — no "military-grade"/"unrecoverable" claims
+- Cross-platform (Linux + macOS) on user-selected paths only — no elevation, no exclusion-engine interaction, since every path is explicitly chosen by the user
 
 ### 10. Resources
 
@@ -399,9 +432,13 @@ Historical time-series charts for system resource usage.
 - Disk temperature per-drive (30s refresh, if SMART supported)
 - **CPU Pressure Stall (FR-124, Linux only)** — 3-series chart (avg10, avg60, avg300) sourced from `/proc/pressure/cpu`. Shows the percentage of time at least one task was stalled waiting for CPU. Only created when the PSI file is present (kernel 4.20+, `CONFIG_PSI=y`). Zero cost when hidden (uses DataRefreshService subscription gating).
 
-**Elevated-card chrome (NEX-Resources, UX modernization):** the CPU, CPU Load Averages, GPU, and Disk Read Write bands render as DS §2 elevated cards (`HistoryChart::setElevated()`) with a DS §3 accent bar in that metric's color token (`@cpuColor`/`@gpuColor`/`@diskColor`) and a plot surface on `@chartBackgroundColor`. The remaining charts (Memory, Network, Disk Temperature, PSI) and the OOM Kills / Disk Usage Launcher cards keep the page's original flat chrome — a later item covers them.
+**Elevated-card chrome (NEX-Resources, UX modernization):** all twelve Resources tiles render as DS §2 elevated cards with a DS §3 accent bar in a metric-appropriate color token and a plot surface on `@chartBackgroundColor`. CPU, CPU Load Averages, GPU, and Disk Read Write (SSO-13731/#247) use `HistoryChart::setElevated()` with `@cpuColor`/`@gpuColor`/`@diskColor`. Memory, Network, Disk Temperature, CPU Pressure Stall, OOM Kills, and Disk Usage Analysis (SSO-14437) get the same treatment: Memory/Network reuse `@memoryColor`/`@networkColor`; Disk Temperature uses a new `accentToken="temp"` (`@tempColor`); CPU Pressure Stall reuses `@cpuColor`; OOM Kills reuses `@memoryColor`; Disk Usage Analysis reuses `@diskColor`. Package Power and Per-Core Detail (SSO-15378) reuse `@cpuColor`. `OomKillsWidget`, `DiskUsageLauncherWidget`, `PowerDrawWidget`, and `CpuCoreDetailWidget` (not `HistoryChart` subclasses) each gained their own `setElevated(accentToken)` method for the same `[cardRole="elevated"]` + accent-bar + drop-shadow recipe.
 
 **OOM Kills panel (FW-11 / SSO-3739, Linux only):** systemd-oomd / cgroup v2 observability card appended after the PSI chart. Shows the oomd service state (active / inactive / masked / not installed), oomd-attributed totals (`OOMKills`, `ManagedOOMKills`), the kernel-side `oom_kill` counter from `/sys/fs/cgroup/memory.events`, and the most recent kill events (timestamp, unit, cgroup path, reason) parsed from `journalctl -u systemd-oomd.service`. Hides itself entirely when no oomd or cgroup-v2 signal is available, and shows a defensive warning on the rare host that doesn't expose the v2 unified hierarchy (systemd 259 / Ubuntu 26.04 is v2-only — v1 hosts will not boot the new systemd). Subscribes to `DataRefreshService::Signal::Oomd` on the 5 s medium tick.
+
+**Package Power panel (SSO-15378, Linux only):** reads `/sys/class/powercap/intel-rapl:*/energy_uj` (top-level package zones only, core/uncore sub-zones excluded) once a second and converts the microjoule delta into average watts, handling the counter's wraparound at `max_energy_range_uj`. AMD hosts are covered by the same code path since the kernel's RAPL powercap framework registers under the same `intel-rapl:N` naming there too. `RaplPowerInfo` caches "no RAPL zones found" after the first probe (mirrors `CpuInfoLinux`'s cpufreq-availability cache) so a host without RAPL support isn't re-globbed every tick. `PowerDrawWidget` hides entirely when unavailable, same pattern as OOM Kills.
+
+**Per-Core Detail panel (SSO-15378, all platforms):** compact live utilization + frequency per core, backed by `CpuCoreListModel` (a `QAbstractListModel`) rendered through a `QListView` with a custom `CpuCoreItemDelegate` — the delegate paints only the rows the ~8-row-tall viewport can show (internal scrollbar for the rest), rather than instantiating one row widget per core. This is the explicit leapfrog over `CpuTuningWidget::buildPerCoreGrid()`'s per-core `QComboBox` grid, which does not scale past a few dozen cores. Verified against a synthetic 64-core dataset (`CpuCoreListModelTests`); real 32+-core hardware was not available to verify against in this environment.
 
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
@@ -416,12 +453,12 @@ Continuous per-interface network data usage tracker with monthly cap management.
 
 **History:** 90-day rolling window of daily RX+TX buckets, stored as compact JSON in `SettingManager`'s INI file (see [Configuration and Settings](#configuration-and-settings) for the resolved path on each platform).
 
-**Page UI:**
+**Page UI (DS §2/§3 UX-modernization pass, SSO-13742):** a DS §3 page header (accent bar + "Network Usage" title + "Per-interface throughput and data usage" source line, interface selector top-right) precedes five DS §2 elevated cards, each with its own container shadow — throughput readout, the Today/This Week/This Month stat trio (each stat its own elevated card), 30-Day History, Monthly Data Cap, and Settings:
 - Interface selector (All Interfaces or individual adapter)
 - Live rate display (↓ download / ↑ upload bytes/sec)
 - Summary cards: Today / This Week / This Month totals
-- 30-day bar chart (stacked RX+TX per day, auto-scaled)
-- Monthly cap progress bar (hidden when cap = 0 GB); color-coded green/amber/red at 0%/75%/90%
+- 30-day bar chart (stacked RX+TX per day, auto-scaled) on a static `@chartBackgroundColor`/`@chartGridColor` plot surface (DS §6)
+- Monthly cap progress bar — always shown (no longer hidden at cap = 0 GB); track uses `@chartGridColor` (DS §6), color-coded green/amber/red chunk at 0%/75%/90% once a cap is set
 - Settings card: cap in GB (0 = disabled), billing cycle reset day (1–28), alert toggle
 
 **Tray Alerts:** When cap is set and usage crosses 75%, 90%, or 100% of the cap within the current billing period, a system tray notification fires once per tier. The last-alerted tier persists across restarts in `SettingManager`.
@@ -432,7 +469,7 @@ Miscellaneous utility tools, organized into two clearly labelled header sections
 
 **TOOLS section** — Tab-style checkable buttons that navigate a `QStackedWidget` below. One tool is active at a time. Buttons adapt to a two-row compact layout when the window is narrow (`resizeEvent` + `applyNavLayout()`).
 
-**MAINTENANCE section** — Horizontal row of clickable `QFrame` cards (`#maintenanceCard`). Each card shows a title and plain-English description. Clicking triggers the corresponding confirmation dialog and system action. Cards are built dynamically in `buildMaintenanceSection()`:
+**MAINTENANCE section** — Horizontal row of clickable, DS §2 elevated-card `QFrame`s (`#maintenanceCard`, `[cardRole="elevated"]`, one drop shadow each). Each card shows a title and plain-English description. Clicking triggers the corresponding confirmation dialog and system action. Cards are built dynamically in `buildMaintenanceSection()`:
 - **Flush DNS Cache** (both platforms) — clears the local DNS cache. macOS: `dscacheutil -flushcache` + `killall -HUP mDNSResponder`. Linux: tries `resolvectl`, `systemd-resolve`, or `nscd` in order.
 - **Rebuild Spotlight** (macOS only) — deletes and rebuilds the Spotlight search index (`sudo mdutil -E /`).
 - **Verify Disk** (macOS only) — runs `diskutil verifyVolume /` with a 5-minute timeout, shows output in a scrollable result dialog.
@@ -442,7 +479,7 @@ Miscellaneous utility tools, organized into two clearly labelled header sections
 
 **Power Profile Switcher (Linux only)** — Segmented control with three buttons (Power Saver / Balanced / Performance) for switching CPU power profiles. Uses `power-profiles-daemon` (`powerprofilesctl`) as the primary backend (no root needed). Falls back to raw sysfs governor writes via `pkexec` on systems without PPD. Automatically detects available profiles, hides Balanced if the driver only supports two governors (e.g., `intel_pstate`). Warns if TLP or auto-cpufreq is active. Hidden on macOS and systems without cpufreq support.
 
-**Hosts File Manager** — GUI editor for `/etc/hosts`:
+**Hosts File Manager** — GUI editor for `/etc/hosts`. The "Hosts (N)" sub-section header has a 3px accent-bar (DS §3), and the table sits in its own DS §2 elevated container (`#hostsTableContainer`) with flat `@cardBg` rows:
 - Add, edit, delete entries (IP address, hostname, aliases)
 - Input validation: IPv4/IPv6 via `QHostAddress`, hostname format per RFC 1123 (with underscore tolerance), alias validation
 - Save changes with confirmation dialog showing change summary (N added, N modified, N deleted)
@@ -503,6 +540,7 @@ Manage package repositories and sources. Conditional: shown only when the releva
 - Structured editor: type (deb/deb-src), URIs, suites, components, **Signed-By keyring path, Architectures**
 - New repos written as deb822 `.sources` with an explicit `Signed-By` on systems where deb822 is the norm (Ubuntu 26.04+ / Debian trixie+, detected by `ubuntu.sources` or `debian.sources` presence); legacy `.list` editing kept for older distros. No `apt-key` invocation anywhere — APT 3.1 removed it, and Nexis writes the keyring path directly to `Signed-By:`. Edits round-trip byte-stable for unchanged fields and preserve unrecognised deb822 keys (`Languages:`, `Targets:`, embedded multi-line GPG keys) verbatim.
 - Search filter
+- UX-modernization (SSO-15096): the "Available Updates" tree (`#aptUpdatesContainer`) and the repository list (`#aptSourcesContainer`) each sit inside their own DS §2 elevated container card, one drop shadow apiece — the old per-row `Utilities::addDropShadow()` in `apt_source_repository_item.cpp` is gone (DS §7). Both sections use the shared section-header recipe (`#sectionHeaderRow`/`#sectionHeaderAccent`/`#sectionHeaderTitle`/`#sectionHeaderSource`) — `accentToken="accent"` for "Available Updates (N)", `accentToken="info"` (new token) for "APT Repositories (N)" with its "Select to delete or edit." source line folded in from the old standalone label. Repository rows become a GNOME-style boxed list: flush flat `@cardBg` rows divided by a bottom border and hover-highlighted with `@accentBgTint`, replacing the old individually-rounded per-row card; each row's icon, source line, source-name meta line, enable toggle, and health-status left-border accent are unchanged. Search field and the Edit/Delete/Add Repository action set/order are unchanged.
 
 **macOS (Homebrew):**
 - Package tree view grouped by Formula/Cask
@@ -525,6 +563,8 @@ When a health check identifies an issue, actionable repair buttons appear in the
 ### 13. Docker
 
 Manage Docker images, containers, and volumes. Conditional: shown only when Docker CLI is installed.
+
+- **UX modernization (NEX Phase-2, SSO-15097):** the Images tab tree sits inside a single DS §2 elevated container card (`#imagesContainer`, one drop shadow) with a frozen "Image / Size / Created" header and flat rows; the toolbar leads with the shared section-header recipe (3px accent bar + "Docker" title + "Images, containers, and volumes" source line), keeping the Search field, Refresh button, and Images/Containers/Volumes tabs unchanged. The Size column is right-aligned with tabular figures. Containers and Volumes tabs are out of scope (no live-captured content) and keep their existing self-contained tree look.
 
 **Three tabs:**
 1. **Images** — Grouped by In Use / Dangling / Other
@@ -551,15 +591,17 @@ Configure GNOME desktop environment settings. Conditional: shown only when `gset
 
 Changes apply immediately via `gsettings set`. Error feedback with inline messages if setting fails. Font fields use `QFontComboBox` with live preview; monospace combo filtered to fixed-pitch families.
 
+**UI layout — Appearance tab (NEX Phase-2 round 2, SSO-15098):** a page-level DS §3 header ("GNOME Settings" / "GNOME desktop preferences") sits above the unchanged tab strip; each of the tab's four `QGroupBox` groups (Themes, Fonts, Interface, Clock & Status) is now its own DS §2 elevated section card (`[cardRole="elevated"]`, one `Utilities::addDropShadow(card, 90, 26)` per card — shadow count 4) with a DS §3 "compact" accent-bar header, per the shared `SettingsPage`-style recipe. Window Manager, Mouse & Touchpad, and Desktop tabs are out of scope for this pass and keep their original `QGroupBox` chrome.
+
 > **macOS:** the GNOME Settings page is hidden in the sidebar and `ToolManager::checkGnomeSettings()` returns false. The macOS `GnomeSettingsTool` adapter is a hard no-op stub (`isAvailable()` returns false; setters never invoke `defaults write`) so no code path can write GNOME-mapped values into Apple preference domains, even if the sidebar guard were to regress (audit WI-29).
 
 ### 15. System Logs
 
 Filterable, searchable table of recent system logs for quick triage. Programmatic layout (no `.ui` file).
 
-**UI layout:**
-- **Filter toolbar** — Severity dropdown (All / Error+ / Warning+ / Info+), search field, refresh button
-- **Log table** — `QTableView` with columns: Timestamp, Severity, Unit/Subsystem, Message
+**UI layout (UX modernization, NEX F1/F2/F3 consumer):**
+- **Filter toolbar** — `#sectionHeaderRow` (DS §3, chrome-only spacing — no title in this page): Severity dropdown (All / Error+ / Warning+ / Info+), search field, 24×24 autoRaise refresh button
+- **Log table** — `QTableView` (`#logTableView`) inside one DS §2 elevated container (`#logsContainer`, `[cardRole="elevated"]`, single drop shadow); columns: Timestamp, Severity, Unit/Subsystem, Message. Flat rows on `@cardBg` with `@cardBgElevated` zebra striping and `@accentBgTint` hover (DS §7); empty Unit cells render an em dash
 - **Status bar** — Entry count and time range
 
 **Platform backends** via `LogProvider` abstraction:
@@ -567,7 +609,7 @@ Filterable, searchable table of recent system logs for quick triage. Programmati
 - **macOS:** `log show --style ndjson --last 5m` (stream-parsed; child killed as soon as the entry cap is reached). `--info` / `--debug` are appended only when the active severity filter would surface those levels.
 
 **Features:**
-- Color-coded severity cells (red for Error+, yellow for Warning, theme-token-resolved colors)
+- Severity renders as a `SeverityPillDelegate`-painted status pill (DS §5) on the `@chartGridColor` track — NOTICE → `@infoColor`, INFO/DEBUG → `@tertiaryText`, WARN → `@warningColor`, ERR-and-below → `@destructiveColor` — resolved live from the theme at paint time, independent of the global `[status="…"]` selectors
 - Text search across all columns via `QSortFilterProxyModel`
 - Severity filtering re-populates from cached entries
 - Manual refresh only (no auto-polling — logs are static history)
@@ -595,6 +637,7 @@ per card — never per control), below a page-level accent-bar header
 - **Disk Analyzer** — Preferred disk usage tool (platform-specific list + custom path)
 - **Disk Health Alert** — Toggle tray alerts for failing drives
 - **Show Dashboard Footer** — Toggle visibility of the system summary bar and status footer on the Dashboard (default: visible; FR-75)
+- **Show CPU & Memory in the menu bar** (macOS only, off by default) — adds an optional `NSStatusItem` (`C n%  M n%`) that subscribes to `DataRefreshService`'s Cpu/Memory signals like a page would; clicking it brings the main window forward on the Dashboard. Toggling live creates/destroys the status item without a restart (FW-20 / SSO-3748)
 - **Dashboard Layout** — Reset Layout button to restore default tile arrangement (mirrors edit toolbar action)
 - **Scheduled Cleaning** — Quick-setup toggle, schedule manager dialog, threshold alerts, cleaning notifications, history viewer
 - **Version Display** — Current version from `APP_VERSION` compile definition
@@ -659,7 +702,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `NetworkInfo` | Interfaces, RX/TX bytes | `QNetworkInterface` | sysfs `/sys/class/net/` |
 | `SystemInfo` | Hostname, OS, kernel, CPU model | `sysctl` | `/etc/os-release`, `lscpu` |
 | `ProcessInfo` | Process list with CPU/memory/disk I/O/network stats | `sysctl` KERN_PROC, `proc_pid_rusage()`, `nettop` | `/proc/[pid]/stat`, `/proc/[pid]/io` |
-| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` (vendor WMI surfaces resolved via `friendlyDeviceName`: ASUS, HP, Legion, IdeaPad) |
+| `ThermalInfo` | Temperature sensors | SMC | `/sys/class/hwmon/` (driver names resolved via `friendlyDeviceName`: CPU, GPU, NVMe, DIMM (`jc42`/`spd5118`), ACPI, vendor WMI surfaces ASUS/HP/Legion/IdeaPad) |
 | `GpuInfo` | GPU devices, utilization | IOKit, Metal | sysfs, `nvidia-smi` |
 | `BatteryInfo` | Charge, health, cycles, capacity | IOKit `IOPMPowerSource` | `/sys/class/power_supply/` |
 | `DiskHealthInfo` | SMART attributes, health verdicts | `smartctl`, `diskutil` | `smartctl`, sysfs |
@@ -878,20 +921,20 @@ All color-bearing widgets implement a `refreshThemeColors()` method connected to
 
 ### Shared Card Chrome (NEX F1)
 
-The Dashboard tile chrome (elevated surface + drop shadow, see `DashboardTileWrapper::applyDepthTreatment`) is generalized into a reusable `style.qss` recipe so other pages can opt in without inventing per-page selectors or per-widget `setStyleSheet()` calls: `[cardRole="elevated"]` (fill `@cardBgElevated`, 1px `@borderColor`, 12px radius — pairs with a single `Utilities::addDropShadow(widget, 90, 26)` call and an 8px outer margin for shadow clearance) and `[cardRole="flat"]` (fill `@cardBg`, same border/radius, no shadow) for content nested inside an elevated container. A widget opts in via `setAttribute(Qt::WA_StyledBackground, true)` plus `setProperty("cardRole", "elevated"|"flat")`, following the same dynamic-property convention as the existing `[status="..."]` selectors. This item defines the recipe only — the Dashboard tile itself is unchanged. Startup Apps (NEX Phase-2, SSO-13738) was the first page to consume it, wrapping its startup-item list in `#startupAppsContainer` (`cardRole="elevated"`); the Services page (NEX-13737) also consumes it, wrapping its service list in a single `#servicesContainer[cardRole="elevated"]` card.
+The Dashboard tile chrome (elevated surface + drop shadow, see `DashboardTileWrapper::applyDepthTreatment`) is generalized into a reusable `style.qss` recipe so other pages can opt in without inventing per-page selectors or per-widget `setStyleSheet()` calls: `[cardRole="elevated"]` (fill `@cardBgElevated`, 1px `@borderColor`, 12px radius — pairs with a single `Utilities::addDropShadow(widget, 90, 26)` call and an 8px outer margin for shadow clearance) and `[cardRole="flat"]` (fill `@cardBg`, same border/radius, no shadow) for content nested inside an elevated container. A widget opts in via `setAttribute(Qt::WA_StyledBackground, true)` plus `setProperty("cardRole", "elevated"|"flat")`, following the same dynamic-property convention as the existing `[status="..."]` selectors. The Dashboard tile itself is unchanged; System Cleaner and Resources are live consumers, as are Startup Apps (NEX Phase-2, SSO-13738), wrapping its startup-item list in `#startupAppsContainer` (`cardRole="elevated"`); the Services page (NEX-13737), wrapping its service list in a single `#servicesContainer[cardRole="elevated"]` card; Search (NEX-13733, `#searchContainer`); and Processes (NEX Phase-2, SSO-13730), wrapping its process table in `#processesContainer` (`cardRole="elevated"`).
 
 ### Shared Empty / Loading / Status-Pill Patterns (NEX F3)
 
 Three more shared `style.qss` recipes for the UX-modernization pass, nesting inside the F1 elevated/flat card:
-- **Empty state:** icon (`#emptyStateIcon`, `@tertiaryText`) + explanation (`#emptyStateText`, `@tertiaryText`) + a next-action button that reuses the global `QPushButton`/`QPushButton[accessibleName="primary"]` chrome — no new button selector. The container selector group (`#processesEmptyState`, `#searchEmptyState`, `#diskToolsEmptyState`, `#bootAnalysisEmptyState`) reserves the anticipated Phase-2 consumer IDs (Processes, Search, Disk Tools, Boot Analysis), to be extended if a page item lands under a different `objectName`.
+- **Empty state:** icon (`#emptyStateIcon`, `@tertiaryText`) + explanation (`#emptyStateText`, `@tertiaryText`) + a next-action button that reuses the global `QPushButton`/`QPushButton[accessibleName="primary"]` chrome — no new button selector. The container selector group (`#processesEmptyState`, `#searchEmptyState`, `#diskToolsEmptyState`, `#bootAnalysisEmptyState`) reserves the anticipated Phase-2 consumer IDs (Processes, Search, Disk Tools, Boot Analysis), to be extended if a page item lands under a different `objectName`. Search (NEX-13733, `#searchEmptyState`) is the first live consumer: search icon + "No results yet" + a hint pointing at the query field / Browse…, shown before a search runs or when a search returns no results.
 - **Loading skeleton:** `[loadingState="skeleton"]` (fill `@chartGridColor`, 4px radius), a static placeholder with explicitly no animation or `QTimer`-driven repaint (DS §9 item 2) — set/cleared via `setProperty("loadingState", "skeleton")` + `unpolish()`/`polish()`, mirroring the `[cardRole]` dynamic-property convention. No page consumes this yet.
-- **Status pills:** confirmed the existing `[status="…"]` selectors (`success`/`warning`/`error`/`info`/`dimmed`/`neutral`) and the `#metricTileTrend` pill track already cover every color a consuming page needs — Services and System Logs reuse both as-is, no new per-page color selectors. One open item flagged in `style.qss` for whoever implements System Logs: `[status="info"]` currently resolves to `@color05` (primary text), while the System Logs prototype notes describe NOTICE severity as `@infoColor` (blue) — `[status="info"]` is also live on the Dashboard maintenance wizard's step icon, so reconciling the two is left to that page item rather than changed here. The Services page (NEX-13737) is the first live consumer of the pill track (`#ServiceItem #checkServiceRunning`, `checked`/`!checked` swapping `@successColor`/`@tertiaryText` text over a fixed `@chartGridColor` background), replacing its previous solid-green/bordered-grey chip.
+- **Status pills:** confirmed the existing `[status="…"]` selectors (`success`/`warning`/`error`/`info`/`dimmed`/`neutral`) and the `#metricTileTrend` pill track already cover every color a consuming page needs — Services and System Logs reuse both as-is, no new per-page color selectors. The Services page (NEX-13737) is the first live consumer of the pill track (`#ServiceItem #checkServiceRunning`, `checked`/`!checked` swapping `@successColor`/`@tertiaryText` text over a fixed `@chartGridColor` background), replacing its previous solid-green/bordered-grey chip. The open item flagged here for System Logs (`[status="info"]` resolves to `@color05`, not the `@infoColor` blue its prototype notes call for NOTICE, and is also live on the Dashboard maintenance wizard's step icon) was resolved by that page item without touching the shared selector: `SeverityPillDelegate` paints its own pill and reads `@infoColor`/`@tertiaryText`/`@warningColor`/`@destructiveColor` directly, sidestepping the `[status="info"]` cross-consumer conflict entirely (§15).
 
-This item defines the recipes only; `boot_analysis_page.cpp`'s existing `#lblBootEmptyState` text-only notice is untouched (its upgrade is a separate Boot Analysis Phase-2 item), and the empty-state/loading-skeleton patterns have no live consumer yet.
+`boot_analysis_page.cpp`'s existing `#lblBootEmptyState` text-only notice is untouched (its upgrade is a separate Boot Analysis Phase-2 item), and the loading-skeleton pattern has no live consumer yet. Processes (NEX Phase-2, SSO-13730) is the first consumer of the empty-state pattern: `#processesEmptyState` shows a list-glyph icon, a "No processes to display" heading, an explanation line, and a "Refresh now" action wired to `DataRefreshService::triggerProcessRefresh()`.
 
 ### Shared Section-Header Chrome (NEX F2)
 
-The Dashboard tile header (3px accent bar + title row + muted source line, see `MetricTileBase::buildChrome()`) is generalized into a reusable `style.qss` recipe so page toolbars/section titles can opt in without inventing per-page selectors or per-widget `setStyleSheet()` calls: `#sectionHeaderRow` (container), `#sectionHeaderAccent` (3px accent bar, radius 1, min-height 26 — or 18 with a `compact="true"` property, for the smaller Settings section-card variant), `#sectionHeaderTitle` / `#sectionHeaderMeta` / `#sectionHeaderSource` (title, optional meta, and muted source labels), and `#sectionHeaderAction` (top-right 24x24 action button). The accent bar picks a type-appropriate color via an `accentToken` dynamic property (`cpu`/`gpu`/`memory`/`disk`/`network`/`accent`) instead of a hardcoded hex (BUG-47) — changing the property on an already-shown widget requires a `style()->unpolish()`/`polish()` re-evaluate (BUG-56). Root layout margins, spacing, and the action button's fixed size/icon size/`setAutoRaise(true)` are set in the consuming page's C++ layout code, matching `metric_tile_base.cpp`. This item defines the recipe only — the Dashboard tile header itself is unchanged. Startup Apps (NEX Phase-2, SSO-13738) was the first page to consume it: a static "Startup Applications" title + "N items" source line (`accentToken="accent"`), with the existing Search field, "Add Startup App," and (macOS) "Repair BTM…" actions unchanged alongside it; the Services page (NEX-13737) also consumes it, using the `accentToken="accent"` accent bar with a static title ("System Services") and a dynamic source line ("N services").
+The Dashboard tile header (3px accent bar + title row + muted source line, see `MetricTileBase::buildChrome()`) is generalized into a reusable `style.qss` recipe so page toolbars/section titles can opt in without inventing per-page selectors or per-widget `setStyleSheet()` calls: `#sectionHeaderRow` (container), `#sectionHeaderAccent` (3px accent bar, radius 1, min-height 26 — or 18 with a `compact="true"` property, for the smaller Settings section-card variant), `#sectionHeaderTitle` / `#sectionHeaderMeta` / `#sectionHeaderSource` (title, optional meta, and muted source labels), and `#sectionHeaderAction` (top-right 24x24 action button). The accent bar picks a type-appropriate color via an `accentToken` dynamic property (`cpu`/`gpu`/`memory`/`disk`/`network`/`accent`) instead of a hardcoded hex (BUG-47) — changing the property on an already-shown widget requires a `style()->unpolish()`/`polish()` re-evaluate (BUG-56). Root layout margins, spacing, and the action button's fixed size/icon size/`setAutoRaise(true)` are set in the consuming page's C++ layout code, matching `metric_tile_base.cpp`. The Dashboard tile header itself is unchanged; Startup Apps (NEX Phase-2, SSO-13738) was the first page to consume it: a static "Startup Applications" title + "N items" source line (`accentToken="accent"`), with the existing Search field, "Add Startup App," and (macOS) "Repair BTM…" actions unchanged alongside it; the Services page (NEX-13737) also consumes it, using the `accentToken="accent"` accent bar with a static title ("System Services") and a dynamic source line ("N services"); Search (NEX-13733) consumes `#sectionHeaderRow` as spacing/alignment chrome only — no `#sectionHeaderTitle`/`#sectionHeaderAccent` is added, since the captured page never had a title; and Processes (NEX Phase-2, SSO-13730) uses a static "Processes" title + "Live process list" source line (`accentToken="accent"`), with the existing "All Processes" radio and search field unchanged alongside it.
 
 ### DPI Scaling
 
@@ -918,7 +961,7 @@ Forcing INI format on both platforms keeps the on-disk layout identical for both
 ### Settings Keys (30+)
 
 **Appearance:** ThemeName, Language, ColorScheme, AppFont
-**Behavior:** StartPage, KioskMode, DashboardLayout (JSON), AppQuitDialogDontAsk/Choice
+**Behavior:** StartPage, KioskMode, LaunchInKioskMode, KioskMonitorName, DashboardLayout (JSON), AppQuitDialogDontAsk/Choice
 **Thresholds:** CPUAlertPercent, MemoryAlertPercent, DiskAlertPercent, BatteryAlertPercent
 **Tools:** DiskAnalyzerTool, DiskAnalyzerCustomPath, DiskName, TempSensorId, GpuDeviceId, FanSensorId
 **Cleaning:** Schedules (JSON), CleaningNotificationsEnabled, ThresholdAlertEnabled, ThresholdGB

@@ -11,6 +11,7 @@ struct Disk {
     QString name;
     QString device;
     QString fileSystemType;
+    QString rootPath;
     quint64 size = 0;
     quint64 free = 0;
     quint64 used = 0;

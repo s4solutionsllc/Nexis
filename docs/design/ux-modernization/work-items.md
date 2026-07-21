@@ -387,7 +387,10 @@ palette); DS §9 item 2 (static SVG, no animation); notes/resources.md
 - Correct the sidebar highlight to "Resources" (harness capture has a stale
   "Dashboard" highlight — CAPTURE_NOTES.md gotcha #5).
 **Acceptance criteria (page-specific, in addition to the common list above):**
-- Shadow count: **4** (one elevated container per chart band)
+- Shadow count: **4** (one elevated container per chart band) as originally
+  approved 2026-07-15. Now **10** page-wide after the SSO-14437 addendum
+  below (4 here + 6 more) — tracked there since those 6 tiles were outside
+  this item's own approved scope (see SSO-14294).
 - Chart titles, order, legend swatch counts/colors, and the per-chart
   "expand" control are unchanged; axis labels/units copied exactly; no data
   curves/bars invented in the empty captured plots
@@ -403,6 +406,132 @@ palette); DS §9 item 2 (static SVG, no animation); notes/resources.md
 4. Switch to Light theme and verify all four chart cards remain legible with
    correct gridlines and legend colors.
 5. Confirm no chart animates or auto-refreshes in a way it didn't before.
+
+---
+
+### Resources — remaining tiles addendum (Paperclip: SSO-14294 / SSO-14436 / SSO-14437)
+
+**Not part of the original 2026-07-15 approval above** — filed after Maintainer
+UAT on the SSO-13731/#247 change found 6 more Resources tiles still on legacy
+flat chrome (see SSO-14294 for why this is new scope, not a defect in the item
+above). Phase 1 (SSO-14436) produced the design refs; this addendum records
+Phase 2 (SSO-14437), the implementation.
+**Phase:** 2-Page (post-approval addendum)
+**Blocked by:** SSO-14436 (design audit + capture)
+**Files (in addition to the four already listed above):**
+- `shared/nexis/Pages/Helpers/oom_kills_widget.cpp`
+- `shared/nexis/Pages/Helpers/oom_kills_widget.h`
+- `shared/nexis/Pages/Resources/disk_usage_launcher_widget.cpp`
+- `shared/nexis/Pages/Resources/disk_usage_launcher_widget.h`
+- `shared/nexis/static/themes/default/style/style.qss` (new `accentToken="temp"` selector)
+**Design refs:** DS §1/§2/§3/§6/§9 (same elevated-card + accent-bar recipe as
+above); `notes/resources_remaining.md` (Phase 1 audit, SSO-14436, includes the
+per-tile "no invented data" disclosure and the accent-token decisions below);
+`renders/resources_remaining_{dark,light}.png` (UNVERIFIED — code-derived
+reference, not a live capture; see the notes doc's "Capture gap" section).
+**Change summary:**
+- Wrap History of Memory, History of Network, and History of Disk Temperature
+  in their own DS §2 elevated container card, same recipe as the four charts
+  above (`HistoryChart::setElevated()`).
+- Wrap CPU Pressure Stall (some) [PSI] and Out-of-Memory Kills the same way —
+  both Linux-only and self-hiding; the card chrome only applies when the tile
+  is actually shown.
+- Wrap Disk Usage Analysis the same way. `OomKillsWidget` and
+  `DiskUsageLauncherWidget` are not `HistoryChart` instances, so each gains
+  its own `setElevated(accentToken)` entry point applying the identical
+  `[cardRole="elevated"]` + accent-bar + 90/26-drop-shadow recipe around their
+  existing content — no redesign of OOM Kills' info layout or the Disk Usage
+  launcher's tool-detection UI.
+- Accent-token decisions (flagged as open in the Phase 1 audit, resolved
+  here): Memory → `memory` (pre-existing selector); Network → `network`
+  (pre-existing selector); Disk Temperature → new `temp` selector
+  (`@tempColor`, previously a color value with nothing wired to it); PSI →
+  `cpu` (it's a CPU-pressure metric, reusing the existing selector rather than
+  adding a new one); OOM Kills → `memory` (memory-pressure-adjacent, reusing
+  the existing selector over the also-considered `@warningColor`, which stays
+  reserved for the card's internal cgroup-v2 tip); Disk Usage Analysis →
+  `disk` (matches Disk Read Write's existing accent, both disk-related).
+**Acceptance criteria (page-specific, in addition to the common list above):**
+- Shadow count: **10** total on the Resources page (4 from SSO-13731/#247 +
+  6 new here) — one elevated container per tile, no per-row/per-child shadows
+- Tile titles, order, and (where applicable) legend swatch counts/colors are
+  unchanged; axis labels/units copied exactly per `notes/resources_remaining.md`;
+  no data curves/bars/counts invented in the empty/representative captured
+  states
+- PSI and OOM Kills remain Linux-only and self-hiding exactly as before —
+  the elevated chrome does not change when/whether they appear
+- The 4 tiles converted in #247 show no regression (unchanged accent
+  colors, unchanged "expand" behavior, unchanged shadow)
+**UAT (business-user steps):**
+
+*History of Memory*
+1. Navigate to the Resources page and locate "History of Memory."
+2. Verify it now sits in its own card with a 3px accent bar colored to match
+   the Memory metric (same color as Memory's accent elsewhere in the app).
+3. Verify the 4-series legend (Swap, Memory, Wired/Available, Compressed/Active)
+   and axis still read correctly, unchanged from before.
+4. Switch to Light theme and verify the card remains legible with correct
+   gridlines and legend colors.
+5. Confirm the chart still updates live and does not animate/auto-refresh in
+   a way it didn't before.
+
+*History of Network*
+1. Navigate to the Resources page and locate "History of Network."
+2. Verify it now sits in its own card with a 3px accent bar colored to match
+   the Network metric.
+3. Verify the Download/Upload legend and the byte-formatted axis are
+   unchanged and still populate once live data arrives.
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm the chart still updates live with no new animation.
+
+*History of Disk Temperature*
+1. On a host reporting at least one drive temperature, navigate to the
+   Resources page and locate "History of Disk Temperature." (If no drive
+   reports a temperature, this tile does not exist — confirm it is simply
+   absent, not broken.)
+2. Verify it sits in its own card with a 3px accent bar in the new "temp"
+   color (`@tempColor`).
+3. Verify the per-drive legend still reflects the actual detected drive
+   count and the axis is unchanged.
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm the chart still updates on the existing refresh cadence.
+
+*CPU Pressure Stall (some) [PSI]*
+1. On Linux with `/proc/pressure/cpu` present, navigate to the Resources
+   page and locate "CPU Pressure Stall (some)." (Absent on macOS or hosts
+   without PSI — confirm it is simply absent there, not broken.)
+2. Verify it sits in its own card with a 3px accent bar in the CPU color
+   (reused from CPU/CPU Load Averages).
+3. Verify the avg10/avg60/avg300 legend and axis are unchanged.
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm the chart still updates live with no new animation.
+
+*Out-of-Memory Kills*
+1. On a Linux host with oomd/cgroup v2 signal available, navigate to the
+   Resources page and locate "Out-of-Memory Kills." (Hidden entirely on
+   hosts without that signal, and on macOS — confirm it is simply absent
+   there, not broken.)
+2. Verify the card now sits in its own elevated card with a 3px accent bar
+   (memory color) to the left of the title — same recipe as the chart tiles,
+   not a bespoke look.
+3. Verify the state line, totals line, defensive tip (if shown), and recent
+   kills list all still render exactly as before — no content changed, only
+   the surrounding chrome.
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm nothing about the card animates or auto-refreshes in a way it
+   didn't before.
+
+*Disk Usage Analysis*
+1. Navigate to the Resources page and locate "Disk Usage Analysis."
+2. Verify it now sits in its own elevated card with a 3px accent bar (disk
+   color) next to the title.
+3. Verify the tool icon/name/description/status row and the "Built-in
+   Treemap" / launch-or-install action button are all still present and
+   functional (click through to confirm the button still launches/installs
+   as before).
+4. Switch to Light theme and verify the card remains legible.
+5. Confirm no regression to tool auto-detection or the built-in treemap
+   dialog.
 
 ---
 
@@ -558,33 +687,43 @@ renders/system_logs_{dark,light}.png.
 - `shared/nexis/Pages/HardwareInfo/hardware_info_page.ui`
 **Design refs:** DS §2 (elevated cards per section); DS §1 (surface
 hierarchy); DS §3 (per-section accent-bar headers, type-appropriate accent
-color); DS §4 (key/value typography); notes/hardware_info.md (approved
-2026-07-15); renders/hardware_info_{dark,light}.png.
+color); DS §4 (key/value typography); notes/hardware_info.md (System/
+Processor/Graphics/Memory approved 2026-07-15; Battery card added round 2,
+Paperclip: SSO-14298, pending maintainer UAT); renders/hardware_info_{dark,light}.png.
 **Change summary:**
-- Put each section body (System, Processor, Graphics, Memory) in its own DS
-  §2 elevated card.
+- Put each section body (System, Processor, Graphics, Memory, **Battery**) in
+  its own DS §2 elevated card. Battery was out of scope for the original pass
+  (see below) and was added in round 2 once a capture with real Battery rows
+  existed.
 - Apply the three-layer surface hierarchy so each card reads as raised.
 - Give each section title header anatomy — 3px accent bar + label; Graphics
-  uses the GPU metric token (`@gpuColor`), other sections use their
-  type-appropriate accent tokens.
+  uses the GPU metric token (`@gpuColor`), Battery uses `@batteryColor`
+  (already wired for the header accent bar pre-round-2), other sections use
+  their type-appropriate accent tokens.
 - Apply DS §4 typography to key/value rows: labels 9pt/600 `@color06`,
   values `@color05`, with an `@borderColor` divider between rows.
 **Acceptance criteria (page-specific, in addition to the common list above):**
-- Shadow count: **4** (System, Processor, Graphics, Memory — Battery is a
-  section title only, no card, since the capture cuts off before any Battery
-  rows)
+- Shadow count: **5** (System, Processor, Graphics, Memory, Battery — round 1
+  shipped 4 with Battery as a section-title-only stub because the only
+  available capture cut off before any Battery rows; round 2, SSO-14298, adds
+  the 5th once a full capture existed: `current-state/macos/{dark,light}/
+  hardware_info_battery.png`, manual capture 2026-07-17)
 - Section order (System → Processor → Graphics → Memory → Battery) and every
-  key/value copied verbatim; the full-width "Copy GPU Diagnostics" button
-  unchanged; no Battery rows invented
+  key/value copied verbatim from the round-2 capture; the full-width "Copy
+  GPU Diagnostics" button unchanged; no Battery rows invented — every key in
+  the Battery card must trace to a row visible in
+  `hardware_info_battery.png`
 **UAT (business-user steps):**
-1. Navigate to Hardware Info. Verify System, Processor, Graphics, and Memory
-   each appear as separate cards with borders and shadows.
+1. Navigate to Hardware Info. Verify System, Processor, Graphics, Memory, and
+   Battery each appear as separate cards with borders and shadows.
 2. Verify the Graphics card's accent bar is a different color from the other
    sections' accent bars.
 3. Verify "Copy GPU Diagnostics" still works.
-4. Scroll to Battery and confirm it shows a section title with no
-   fabricated data rows beneath it.
-5. Switch to Light theme and confirm all four cards remain legible.
+4. Scroll to Battery and confirm its card shows the same key/value rows as
+   today (Status, Health, Charge, Cycle Count, Current/Maximum/Design
+   Capacity, Temperature, Voltage, Power, Time Remaining) with no fabricated
+   rows — only styling changed, not content.
+5. Switch to Light theme and confirm all five cards remain legible.
 
 ---
 
@@ -1042,28 +1181,69 @@ renders/boot_analysis_{dark,light}.png.
 
 ---
 
-## Deferred pages (no work item this round)
+## Phase 2 — Round 2 (3 items, deferred pages unblocked 2026-07-19)
 
-- **APT Source Manager** — Deferred by maintainer 2026-07-15 — no live
-  capture; revisit once the skeleton can be verified against screenshots
-  from an Ubuntu machine with the page available.
-- **Docker** — Deferred by maintainer 2026-07-15 — no live capture; revisit
-  once the skeleton can be verified against screenshots from an Ubuntu
-  machine with the page available.
-- **GNOME Settings** — Deferred by maintainer 2026-07-15 — no live capture;
-  revisit once the skeleton can be verified against screenshots from an
-  Ubuntu machine with the page available.
+Deferred pending Ubuntu-desktop captures ([SSO-13745](https://github.com/s4solutionsllc/Nexis/issues) placeholder); captured via SSO-14981 (PR #292), mockups authored + maintainer-approved via SSO-14982 (PR #294, `request_confirmation ddd1dc45`, accepted 2026-07-19). Same F1-style contract as the round-1 15; blocked by F1-F4 like every page item.
+
+### APT Source Manager (Paperclip: SSO-15096)
+**Phase:** 2-Page (round 2)
+**Blocked by:** F1, F2, F3, F4
+**Files:**
+- `linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp`
+- `linux/nexis/Pages/AptSourceManager/apt_source_manager_page.h`
+- `linux/nexis/Pages/AptSourceManager/apt_source_manager_page.ui`
+- `linux/nexis/Pages/AptSourceManager/apt_source_repository_item.cpp`
+- `linux/nexis/Pages/AptSourceManager/apt_source_repository_item.h`
+- `linux/nexis/Pages/AptSourceManager/apt_source_repository_item.ui`
+**Design refs:** DS §2 (elevated container ×2 — Available Updates card + repository boxed-list card); DS §1 (surface hierarchy); DS §3 (header anatomy); DS §7 (container-level shadow, supersedes per-row `Utilities::addDropShadow`); DS §5 (danger-role Delete); notes/apt_source_manager.md (approved 2026-07-19); renders/apt_source_manager_{dark,light}.png.
+**Change summary:** see SSO-15096 (full contract, authored against live round-2 captures — the "Available Updates" section is built in `.cpp`, not `.ui`, and was missing entirely from the original 2026-07-15 skeleton).
+**Acceptance criteria (page-specific, in addition to the common list above):** shadow count **2**; Available Updates section required despite being absent from any `.ui` file; Version column renders `—` (unverified, not invented); bottom action bar shows its collapsed default only; sidebar badge **1**. Full list in SSO-15096.
+**UAT (business-user steps):** see SSO-15096.
+
+---
+
+### Docker (Paperclip: SSO-15097)
+**Phase:** 2-Page (round 2)
+**Blocked by:** F1, F2, F3, F4
+**Files:**
+- `shared/nexis/Pages/Docker/docker_page.cpp`
+- `shared/nexis/Pages/Docker/docker_page.h`
+- `shared/nexis/Pages/Docker/docker_page.ui`
+**Design refs:** DS §2 (elevated container around the image tree); DS §1 (surface hierarchy); DS §3 (header anatomy); DS §7 (frozen header, flat rows); DS §5 (danger-role Remove Selected); notes/docker.md (approved 2026-07-19); renders/docker_{dark,light}.png.
+**Change summary:** see SSO-15097 (full contract, authored against live round-2 captures — real 7-image inventory grouped In Use/Other, Start/Stop correctly gated to the Containers tab only).
+**Acceptance criteria (page-specific, in addition to the common list above):** shadow count **1**; Start/Stop hidden by default on the Images tab; Containers/Volumes tab content out of scope (unverified); daemon-stopped/loading pages out of scope. Full list in SSO-15097.
+**UAT (business-user steps):** see SSO-15097.
+
+---
+
+### GNOME Settings (Paperclip: SSO-15098)
+**Phase:** 2-Page (round 2)
+**Blocked by:** F1, F2, F3, F4
+**Files:**
+- `shared/nexis/Pages/GnomeSettings/gnome_settings_page.cpp`
+- `shared/nexis/Pages/GnomeSettings/gnome_settings_page.h`
+- `shared/nexis/Pages/GnomeSettings/gnome_settings_page.ui`
+- `shared/nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp`
+- `shared/nexis/Pages/GnomeSettings/gnome_appearance_tab.h`
+- `shared/nexis/Pages/GnomeSettings/gnome_appearance_tab.ui`
+**Design refs:** DS §2 (elevated section card ×4 — Themes/Fonts/Interface/Clock & Status); DS §1 (surface hierarchy); DS §3 (header anatomy); DS §4 (GNOME boxed-list alignment); notes/gnome_settings.md (approved 2026-07-19); renders/gnome_settings_{dark,light}.png.
+**Change summary:** see SSO-15098 (full contract; Appearance tab only, authored against live captures which corrected round-1's guessed dark/Cantarell theme to the real plain Adwaita/DejaVu defaults).
+**Acceptance criteria (page-specific, in addition to the common list above):** shadow count **4**; Themes/Fonts values must match the live capture, not the round-1 guess; Clock & Status group values are unverified (off-screen) and must be carried over unchanged, not invented; Window Manager/Mouse & Touchpad/Desktop tabs out of scope. Full list in SSO-15098.
+**UAT (business-user steps):** see SSO-15098.
 
 ---
 
 ## Cross-check
 
-- Count of `### ` headings in this file: **19** (4 Phase-1 + 15 Phase-2).
+- Count of `### ` headings in this file: **22** (4 Phase-1 + 15 Phase-2 round 1 + 3 Phase-2 round 2).
 - Every note with `**Status:** Approved` has a corresponding Phase-2 item
   above: boot_analysis, disk_tools, hardware_info, helpers, homebrew,
   network_usage, processes, resources, search, services, settings,
   startup_apps, system_cleaner, system_logs, uninstaller (15).
-- Every note with `**Status:** Deferred` is listed under "Deferred pages"
-  with no work item: apt_source_manager, docker, gnome_settings (3).
+- Round-2 notes (apt_source_manager, docker, gnome_settings) were rewritten
+  from `**Status:** Deferred` to `**Status:** Round-2 prototype, pending
+  maintainer/board approval` and then approved 2026-07-19 (SSO-14982); each
+  now has a corresponding round-2 Phase-2 item above (3) — no pages remain
+  deferred.
 - 15 + 3 = 18 total prototype pages, matching the spec's 18-page scope
   (Dashboard is the reference, not a prototype page).

@@ -18,6 +18,10 @@ public:
     QStringList getSnapPackages() override;
     bool uninstallSnapPackages(const QStringList &packages) override;
 
+    // Flatpak apps are Linux-only; macOS never surfaces any.
+    QStringList getFlatpakPackages() override;
+    bool uninstallFlatpakPackages(const QStringList &refs) override;
+
     QList<Package> getInstalledApps() override;
     bool trashApps(const QStringList &appPaths) override;
 
@@ -31,6 +35,9 @@ public:
     // FW-18: leftover artifact scanner for macOS app uninstalls.
     QList<AppLeftover> findAppLeftovers(const Package &app) override;
     bool trashLeftovers(const QStringList &paths) override;
+
+    // SSO-15386 T3: multi-signal orphan-leftover scanner.
+    QList<OrphanLeftover> findOrphanLeftovers() override;
 
 protected:
     // WI-33: seam for tests — overridden to return a fixed fake path so the

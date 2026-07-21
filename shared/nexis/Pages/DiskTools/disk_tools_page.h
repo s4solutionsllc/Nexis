@@ -37,6 +37,7 @@ signals:
 
 private slots:
     void switchMode(int index);
+    void openWipeFreeSpaceDialog();
     void addDirectory();
     void removeDirectory();
     void onLargeOldScan();
@@ -57,6 +58,11 @@ private:
     void refreshThemeColors();
     void applyLargeOldFilterLayout(bool compact);
     void resizeEvent(QResizeEvent *event) override;
+    static QWidget *makeElevatedContainer(QWidget *parent);
+    static QWidget *makeEmptyState(QWidget *parent, const QString &heading,
+                                    const QString &text, QPushButton **outButton,
+                                    const QString &buttonText);
+    static void buildSectionHeader(QWidget *headerContainer, const QString &title);
 
 private:
     Ui::DiskToolsPage *ui;
@@ -84,6 +90,7 @@ private:
     QPushButton *mBtnLargeOldScan;
     QPushButton *mBtnLargeOldCancel;
     QTreeWidget *mTreeLargeOld;
+    QWidget *mEmptyStateLargeOld = nullptr;
     QLabel *mLblLargeOldStatus;
     QLabel *mLblLargeOldSelection;
     QPushButton *mBtnLargeOldTrash;
@@ -95,6 +102,7 @@ private:
     QPushButton *mBtnDupScan;
     QPushButton *mBtnDupCancel;
     QTreeWidget *mTreeDuplicates;
+    QWidget *mEmptyStateDup = nullptr;
     QProgressBar *mDupProgress;
     QLabel *mLblDupStatus;
     QLabel *mLblDupSelection;

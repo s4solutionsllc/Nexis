@@ -1,4 +1,4 @@
-<!-- UNVERIFIED: no live capture, see CAPTURE_NOTES.md -->
+<!-- VERIFIED against live capture: docs/design/ux-modernization/current-state/linux/{dark,light}/docker.png (SSO-14981 / PR #292). See mockups/notes/docker.md. -->
 <!doctype html>
 <meta charset="utf-8">
 <title>Docker</title>
@@ -31,7 +31,7 @@
     <a class="nav-item nav-item--active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="4" height="4"/><rect x="8" y="9" width="4" height="4"/><rect x="13" y="9" width="4" height="4"/><rect x="8" y="4" width="4" height="4"/><path d="M2 13c2 5 8 6 12 4 2-1 3-3 4-5h2a3 3 0 0 0 3-3"/></svg><span>Docker</span></a>
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6a4 4 0 0 0-5 5L3 18l3 3 7-7a4 4 0 0 0 5-5l-3 3-2-2z"/></svg><span>Helpers</span></a>
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>System Logs</span></a>
-    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M5 7l7 4 7-4M12 11v10"/></svg><span>APT Repository Manager</span><span class="nav-badge">25</span></a>
+    <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M5 7l7 4 7-4M12 11v10"/></svg><span>APT Repository Manager</span><span class="nav-badge">1</span></a>
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h10M18 8h2M4 16h2M10 16h10"/><circle cx="16" cy="8" r="2"/><circle cx="8" cy="16" r="2"/></svg><span>GNOME Settings</span></a>
     <a class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1M2 12h3M19 12h3"/></svg><span>Settings</span></a>
     <div class="sidebar__foot">v2.8.3</div>
@@ -49,35 +49,36 @@
       <input class="field" style="width:240px" placeholder="Search docker resources…">
       <button class="btn">Refresh</button>
     </div>
-    <!-- the .ui tabWidget: Images / Containers / Volumes; Images shown active -->
+    <!-- the .ui tabWidget: Images / Containers / Volumes; Images shown active, matching the live capture -->
     <div class="toolbar toolbar--tabs">
       <span class="tab tab--active">Images</span>
       <span class="tab">Containers</span>
       <span class="tab">Volumes</span>
     </div>
-    <!-- change 1+2: DS §2 elevated tree container; DS §1 surface hierarchy; DS §7 frozen header + flat @cardBg tree rows (rootIsDecorated tree from the .ui) -->
+    <!-- change 1+2: DS §2 elevated tree container; DS §1 surface hierarchy; DS §7 frozen header + flat @cardBg tree rows. Content replaced with the live capture's real image inventory (7 images: the runner's own tooling, grouped In Use (1) / Other (6) exactly as rendered by treeWidgetImages) — round-1 invented 4 generic images (ubuntu/postgres/nginx) with no live source. Size column right-aligned per the Design Anchor's data-table convention. -->
     <div class="card-region">
       <div class="card card--table">
         <table class="data-table">
-          <colgroup><col><col style="width:16%"><col style="width:20%"></colgroup>
+          <colgroup><col><col style="width:14%"><col style="width:24%"></colgroup>
           <thead><tr><th>Image</th><th class="num">Size</th><th>Created</th></tr></thead>
           <tbody>
-            <tr><td><span class="tree-caret">▾</span><span class="mono-code">ubuntu</span></td><td class="num muted">—</td><td class="muted">—</td></tr>
-            <tr><td class="tree-child"><span class="mono-code">ubuntu:24.04</span></td><td class="num mono-code">78.1 MB</td><td class="muted">3 weeks ago</td></tr>
-            <tr><td class="tree-child"><span class="mono-code">ubuntu:22.04</span></td><td class="num mono-code">77.9 MB</td><td class="muted">2 months ago</td></tr>
-            <tr><td><span class="tree-caret">▸</span><span class="mono-code">postgres</span></td><td class="num muted">—</td><td class="muted">—</td></tr>
-            <tr><td><span class="tree-caret">▸</span><span class="mono-code">nginx</span></td><td class="num muted">—</td><td class="muted">—</td></tr>
+            <tr><td colspan="3" class="group-head" style="padding:8px 14px"><span class="tree-caret">▾</span> In Use (1)</td></tr>
+            <tr><td>ubuntu:26.04</td><td class="num mono">100MB</td><td class="muted">2026-07-13 16:05:01 +0000 UTC</td></tr>
+            <tr><td colspan="3" class="group-head" style="padding:8px 14px"><span class="tree-caret">▾</span> Other (6)</td></tr>
+            <tr><td class="cell-clip">ghcr.io/github/gh-aw-firewall/agent:latest</td><td class="num mono">503MB</td><td class="muted">2026-07-14 01:05:50 +0000 UTC</td></tr>
+            <tr><td class="cell-clip">ghcr.io/dependabot/dependabot-updater:latest</td><td class="num mono">804MB</td><td class="muted">2026-07-13 23:36:24 +0000 UTC</td></tr>
+            <tr><td class="cell-clip">ghcr.io/github/gh-aw-firewall/api-proxy:latest</td><td class="num mono">209MB</td><td class="muted">2026-07-13 04:00:42 +0000 UTC</td></tr>
+            <tr><td class="cell-clip">ghcr.io/github/gh-aw-mcpg:latest</td><td class="num mono">66.4MB</td><td class="muted">2026-07-08 18:39:42 +0000 UTC</td></tr>
+            <tr><td class="cell-clip">ghcr.io/github/github-mcp-server:latest</td><td class="num mono">44.6MB</td><td class="muted">2026-06-27 07:57:57 +0000 UTC</td></tr>
+            <tr><td class="cell-clip">ghcr.io/github/gh-aw-firewall/squid:latest</td><td class="num mono">232MB</td><td class="muted">2026-06-19 03:26:10 +0000 UTC</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-    <!-- the .ui bottom status bar: lblDockerStatus (left) + lblItemCount (right) -->
-    <div class="table-footer dt-status"><span>Docker daemon running</span><span class="action-bar__spacer"></span><span>3 images</span></div>
-    <!-- change 4: action bar from the .ui actionBarLayout — Start (primary), Stop, spacer, Prune Unused (primary), Remove Selected (danger) -->
+    <!-- the .ui bottom status bar: lblDockerStatus (left) + lblItemCount (right) — text verbatim from the live capture -->
+    <div class="table-footer dt-status"><span>Docker daemon: Running (v28.0.4)</span><span class="action-bar__spacer"></span><span>7 images</span></div>
+    <!-- change 4: action bar — docker_page.cpp:50-51,349-351 hides btnStartContainer/btnStopContainer unless the Containers tab (index 1) is active; round-1 always showed Start/Stop, which the live capture (Images tab) disproves. Prune Unused (primary) + Remove Selected (danger) per .ui actionBarLayout, gated behind explicit selection per the Design Anchor's button conventions. -->
     <div class="action-bar">
-      <button class="btn btn--primary">Start</button>
-      <button class="btn">Stop</button>
-      <div class="action-bar__spacer"></div>
       <button class="btn btn--primary">Prune Unused</button>
       <button class="btn btn--danger">Remove Selected</button>
     </div>

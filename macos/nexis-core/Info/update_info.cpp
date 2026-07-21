@@ -17,8 +17,9 @@ UpdateCheckResult UpdateInfoMacOS::checkForUpdates()
     // Homebrew outdated packages
     QString brewPath = findBrew();
     if (!brewPath.isEmpty()) {
+        // --greedy includes auto-updating casks that would otherwise be skipped
         ExecResult brewResult = CommandUtil::execWithStatus(
-            brewPath, {"outdated", "--json"}, 30000);
+            brewPath, {"outdated", "--greedy", "--json"}, 30000);
 
         if (brewResult.exitCode == 0 && !brewResult.output.trimmed().isEmpty()) {
             QJsonDocument doc = QJsonDocument::fromJson(brewResult.output.toUtf8());
@@ -33,7 +34,9 @@ UpdateCheckResult UpdateInfoMacOS::checkForUpdates()
                     entry.source = "brew";
                     entry.name = obj.value("name").toString();
                     QJsonArray versions = obj.value("installed_versions").toArray();
+                    entry.installedVersion = versions.isEmpty() ? QString() : versions.first().toString();
                     entry.version = obj.value("current_version").toString();
+                    entry.isCask = false;
                     result.entries.append(entry);
                 }
 
@@ -42,7 +45,10 @@ UpdateCheckResult UpdateInfoMacOS::checkForUpdates()
                     UpdateEntry entry;
                     entry.source = "brew";
                     entry.name = obj.value("name").toString();
+                    // cask installed_versions is a string, not an array
+                    entry.installedVersion = obj.value("installed_versions").toString();
                     entry.version = obj.value("current_version").toString();
+                    entry.isCask = true;
                     result.entries.append(entry);
                 }
             }
