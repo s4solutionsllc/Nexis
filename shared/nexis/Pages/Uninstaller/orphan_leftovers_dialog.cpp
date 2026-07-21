@@ -159,9 +159,9 @@ void OrphanLeftoversDialog::populate(const QList<OrphanLeftover> &items)
         // CISO Psychological Acceptability: the full matched-signal set,
         // not just a confidence number — the reviewing user must see *why*
         // each item was flagged.
-        const QString signals = r.signalLabels.join(QStringLiteral(", "));
-        auto *signalsItem = new QTableWidgetItem(signals);
-        signalsItem->setToolTip(signals);
+        const QString signalText = r.signalLabels.join(QStringLiteral(", "));
+        auto *signalsItem = new QTableWidgetItem(signalText);
+        signalsItem->setToolTip(signalText);
         mTable->setItem(row, COL_SIGNALS, signalsItem);
     }
     mTable->blockSignals(false);
