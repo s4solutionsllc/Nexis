@@ -650,6 +650,24 @@ add_nexis_test(NAME MaintenanceWizardTrustSafetyTests
     Qt6::Concurrent
 )
 
+# SSO-15480: SystemCleanerProvider — per-item selection and dry-run parity.
+# Compiled directly (no nexis-gui) using a testable subclass that overrides
+# performItem() to do direct QFile operations rather than routing through
+# CleanerService, keeping the test self-contained and cross-platform.
+add_nexis_test(NAME SystemCleanerProviderTests
+  SOURCES
+    managers/test_system_cleaner_provider.cpp
+    "${GUI_SHARED_DIR}/Pages/SystemCleaner/system_cleaner_provider.cpp"
+    "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Common"
+    "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  LIBS
+    Qt6::Concurrent
+    nexis-core
+)
+
 # SSO-3363 / audit H2: LogProvider::cancel() null-deref defence and
 # SSO-3384 / WI-22: MacOsLogStreamParser incremental ndjson parsing.
 # Compiles log_provider.cpp directly so the test runs cross-platform without
