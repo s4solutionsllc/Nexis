@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- App Uninstaller (macOS, SSO-15384 follow-up): `AppUninstallDenyList::isSafeToDelete()`'s final "deny anything outside $HOME" rule silently blocked `trashApps()`/`trashLeftovers()` for every app installed in `/Applications` — the standard, overwhelmingly common macOS install location that `PackageToolMacOS::getInstalledApps()` scans directly — since `/Applications` sits outside `$HOME`. Only apps in the much rarer `~/Applications` location could actually be uninstalled. Added an explicit `/Applications` (covers `/Applications/Utilities` too) allow-list check ahead of the $HOME-only catch-all; the existing hard-deny system prefixes (`/System`, `/Library/LaunchDaemons`, etc.) still take priority and none of them nest under `/Applications`, so no unsafe path becomes newly deletable.
 - macOS build: `CrumbsReviewDialog` (SSO-15384, PR #319) declared the slot `onItemChanged(QTableWidgetItem *item)` without forward-declaring `QTableWidgetItem`, only `QTableWidget` — moc's generated code needs the type name visible even for a pointer-only parameter, so every macOS build on `native` since that merge failed at the `nexis-gui` moc-compile step (`unknown type name 'QTableWidgetItem'`) before Unit Tests could run. Added the missing `class QTableWidgetItem;` forward declaration alongside the existing `QTableWidget` one; the `.cpp` already had the real `#include <QTableWidgetItem>` it needed.
 
 ### Added

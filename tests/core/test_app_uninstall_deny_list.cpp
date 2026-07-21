@@ -44,11 +44,14 @@ private slots:
     void allowUserLibraryLaunchAgents();   // ~/Library/LaunchAgents IS in scope
     void allowNonAppleBundleId();
     void allowEmptyBundleId();
+    void allowSystemApplicationsBundle();       // /Applications IS in scope, despite being outside $HOME
+    void allowSystemApplicationsUtilitiesBundle();
 
     // --- prefix boundary ---
     void denyExactMatch();
     void denyChildMatch();
     void allowSiblingNoFalsePrefix();
+    void denyApplicationsSiblingNoFalsePrefix();  // "/Applications2" must NOT match "/Applications"
 };
 
 static QString home()
@@ -161,6 +164,21 @@ void TestAppUninstallDenyList::allowEmptyBundleId()
     QVERIFY(AppUninstallDenyList::isSafeToDelete(path, {}));
 }
 
+void TestAppUninstallDenyList::allowSystemApplicationsBundle()
+{
+    // PackageToolMacOS::getInstalledApps() scans /Applications directly, so
+    // trashApps() must be able to delete bundles there even though the path
+    // is outside $HOME — this was a regression: the pre-existing $HOME-only
+    // rule silently blocked deletion of every app in the standard install
+    // location, the overwhelmingly common case.
+    QVERIFY(AppUninstallDenyList::isSafeToDelete(QStringLiteral("/Applications/Some App.app")));
+}
+
+void TestAppUninstallDenyList::allowSystemApplicationsUtilitiesBundle()
+{
+    QVERIFY(AppUninstallDenyList::isSafeToDelete(QStringLiteral("/Applications/Utilities/Some Utility.app")));
+}
+
 void TestAppUninstallDenyList::denyExactMatch()
 {
     QVERIFY(!AppUninstallDenyList::isSafeToDelete(QStringLiteral("/System")));
@@ -184,6 +202,13 @@ void TestAppUninstallDenyList::allowSiblingNoFalsePrefix()
     // We just check it doesn't falsely pass:
     // Actually home + "2/..." is outside home, so it should be denied.
     QVERIFY(!AppUninstallDenyList::isSafeToDelete(path));
+}
+
+void TestAppUninstallDenyList::denyApplicationsSiblingNoFalsePrefix()
+{
+    // "/Applications2" must NOT match the "/Applications" allow-list entry,
+    // and it's outside $HOME, so it's denied.
+    QVERIFY(!AppUninstallDenyList::isSafeToDelete(QStringLiteral("/Applications2/Fake.app")));
 }
 
 QTEST_MAIN(TestAppUninstallDenyList)
