@@ -83,7 +83,7 @@ struct OrphanLeftover {
     QString canonicalPath;
     QString category;
     quint64 size = 0;
-    QList<OrphanSignal> signals;
+    QList<OrphanSignal> matchedSignals;
     int confidenceScore = 0;
     QDateTime lastModified;
     QDateTime lastAccessed;

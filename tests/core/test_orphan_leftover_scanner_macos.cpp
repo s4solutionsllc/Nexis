@@ -161,7 +161,7 @@ private:
         leftover.canonicalPath = resolvedCanonical;
         leftover.category = QString();
         leftover.size = 0;
-        leftover.signals = signals;
+        leftover.matchedSignals = signals;
         leftover.confidenceScore = signals.size();
         leftover.lastModified = modified;
         leftover.lastAccessed = accessed;
@@ -187,7 +187,7 @@ static const OrphanLeftover *findByPathSuffix(const QList<OrphanLeftover> &list,
 
 static bool hasSignal(const OrphanLeftover &o, const QString &ruleId)
 {
-    for (const OrphanSignal &s : o.signals) {
+    for (const OrphanSignal &s : o.matchedSignals) {
         if (s.ruleId == ruleId)
             return true;
     }

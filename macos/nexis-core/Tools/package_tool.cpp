@@ -432,7 +432,7 @@ void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
     leftover.category = category;
     leftover.size = entry.isFile() ? static_cast<quint64>(entry.size())
                                     : pathSizeBytes(leftover.path);
-    leftover.signals = signals;
+    leftover.matchedSignals = signals;
     leftover.confidenceScore = signals.size();
     leftover.lastModified = modified;
     leftover.lastAccessed = accessed;
