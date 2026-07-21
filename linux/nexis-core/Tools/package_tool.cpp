@@ -812,7 +812,7 @@ static void evaluateLinuxOrphanCandidate(QList<OrphanLeftover> &out,
     const QString dirName = entry.fileName();
     const bool ownedByPackage = installedNames.contains(dirName);
 
-    QList<OrphanSignal> signals;
+    QList<OrphanSignal> detectedSignals;
 
     // Signal (a): name not matched by any installed package.
     // We check against the enumerated package-name registry (built from
@@ -820,14 +820,14 @@ static void evaluateLinuxOrphanCandidate(QList<OrphanLeftover> &out,
     // `dpkg -S` / `rpm -qf` for ownership — XDG dirs are never tracked in
     // package file-lists, so a package-name match is the best available proxy.
     if (!ownedByPackage) {
-        signals.append({QStringLiteral("no_installed_package"),
+        detectedSignals.append({QStringLiteral("no_installed_package"),
                          QStringLiteral("No installed package matches this name")});
     }
 
     // Signal (b): naming convention match — reverse-DNS id with no matching
     // package (same heuristic as macOS bundle-id check).
     if (looksLikeReverseDnsId(dirName) && !ownedByPackage) {
-        signals.append({QStringLiteral("naming_convention"),
+        detectedSignals.append({QStringLiteral("naming_convention"),
                          QStringLiteral("Reverse-DNS id with no matching installed package")});
     }
 
@@ -836,18 +836,18 @@ static void evaluateLinuxOrphanCandidate(QList<OrphanLeftover> &out,
     const QDateTime accessed = entry.lastRead();
     const QDateTime now = QDateTime::currentDateTime();
     if (modified.isValid() && modified.daysTo(now) >= 30) {
-        signals.append({QStringLiteral("age_threshold"),
+        detectedSignals.append({QStringLiteral("age_threshold"),
                          QStringLiteral("Not modified in 30+ days")});
     }
 
     // Signal (d): last-accessed >= 7 days.
     if (accessed.isValid() && accessed.daysTo(now) >= 7) {
-        signals.append({QStringLiteral("not_recently_accessed"),
+        detectedSignals.append({QStringLiteral("not_recently_accessed"),
                          QStringLiteral("Not accessed in 7+ days")});
     }
 
     // CISO higher-confidence bar: require corroboration from >= 3 of 4 signals.
-    if (signals.size() < 3)
+    if (detectedSignals.size() < 3)
         return;
 
     // T1 deny-list cross-check on the canonicalized path.
@@ -861,8 +861,8 @@ static void evaluateLinuxOrphanCandidate(QList<OrphanLeftover> &out,
     leftover.canonicalPath   = resolvedCanonical;
     leftover.category        = category;
     leftover.size            = orphanPathSizeBytes(leftover.path);
-    leftover.signals         = signals;
-    leftover.confidenceScore = signals.size();
+    leftover.matchedSignals  = detectedSignals;
+    leftover.confidenceScore = detectedSignals.size();
     leftover.lastModified    = modified;
     leftover.lastAccessed    = accessed;
     out.append(leftover);

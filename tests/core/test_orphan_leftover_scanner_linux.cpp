@@ -120,21 +120,21 @@ private:
         const QString dirName = entry.fileName();
         const bool ownedByPackage = m_installedNames.contains(dirName);
 
-        QList<OrphanSignal> signals;
+        QList<OrphanSignal> detectedSignals;
         if (!ownedByPackage)
-            signals.append({QStringLiteral("no_installed_package"), QString()});
+            detectedSignals.append({QStringLiteral("no_installed_package"), QString()});
         if (looksLikeReverseDnsIdHelper(dirName) && !ownedByPackage)
-            signals.append({QStringLiteral("naming_convention"), QString()});
+            detectedSignals.append({QStringLiteral("naming_convention"), QString()});
 
         const QDateTime modified = entry.lastModified();
         const QDateTime accessed = entry.lastRead();
         const QDateTime now = QDateTime::currentDateTime();
         if (modified.isValid() && modified.daysTo(now) >= 30)
-            signals.append({QStringLiteral("age_threshold"), QString()});
+            detectedSignals.append({QStringLiteral("age_threshold"), QString()});
         if (accessed.isValid() && accessed.daysTo(now) >= 7)
-            signals.append({QStringLiteral("not_recently_accessed"), QString()});
+            detectedSignals.append({QStringLiteral("not_recently_accessed"), QString()});
 
-        if (signals.size() < 3)
+        if (detectedSignals.size() < 3)
             return;
 
         const QString canonical = entry.canonicalFilePath();
@@ -147,8 +147,8 @@ private:
         leftover.canonicalPath   = resolvedCanonical;
         leftover.category        = category;
         leftover.size            = 0;
-        leftover.signals         = signals;
-        leftover.confidenceScore = signals.size();
+        leftover.matchedSignals  = detectedSignals;
+        leftover.confidenceScore = detectedSignals.size();
         leftover.lastModified    = modified;
         leftover.lastAccessed    = accessed;
         out.append(leftover);
@@ -174,7 +174,7 @@ static const OrphanLeftover *findByPathSuffix(const QList<OrphanLeftover> &list,
 
 static bool hasSignal(const OrphanLeftover &o, const QString &ruleId)
 {
-    for (const OrphanSignal &s : o.signals) {
+    for (const OrphanSignal &s : o.matchedSignals) {
         if (s.ruleId == ruleId)
             return true;
     }
