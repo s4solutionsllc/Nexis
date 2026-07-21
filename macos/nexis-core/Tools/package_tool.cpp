@@ -1,5 +1,7 @@
 #include "package_tool_macos.h"
+#include "Tools/app_uninstall_deny_list.h"
 #include "Tools/lifecycle_deny_list.h"
+#include "Tools/uninstall_audit_log.h"
 #include "Utils/brew_util.h"
 #include "Utils/plist_util.h"
 
@@ -9,9 +11,11 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QProcess>
 #include <QRegularExpression>
 #include <QSet>
 #include <QStandardPaths>
+#include <QUuid>
 
 PackageToolMacOS::PackageToolMacOS()
 {
@@ -181,6 +185,9 @@ QStringList PackageToolMacOS::homebrewDryRunRemove(const QStringList &packages)
  * macOS native .app bundles
  **************************/
 
+// Forward-declared here; defined in the FW-18 section below.
+static quint64 pathSizeBytes(const QString &path);
+
 static QList<Package> scanAppDirectory(const QString &dirPath, const QString &section)
 {
     QList<Package> apps;
@@ -204,6 +211,7 @@ static QList<Package> scanAppDirectory(const QString &dirPath, const QString &se
         pkg.section = section;
         pkg.path = appPath;
         pkg.bundleId = info.bundleId;   // FR-123: plumbed through for crumbs scanner.
+        pkg.size = pathSizeBytes(appPath);  // SSO-15384: shown in confirmation dialog
 
         if (!pkg.name.isEmpty())
             apps.append(pkg);
@@ -240,12 +248,38 @@ bool PackageToolMacOS::trashApps(const QStringList &appPaths)
     // NSURL — no shell, no AppleScript parsing surface — so metacharacters
     // in the bundle name are treated as path data, not code.
     bool allOk = true;
+    const QUuid batchId = QUuid::createUuid();
+
     for (const QString &path : appPaths) {
+        // SSO-15384 / CISO §2: deny-list check on canonicalized path.
+        const QFileInfo fi(path);
+        const QString canonical = fi.canonicalFilePath().isEmpty()
+                                  ? QDir::cleanPath(fi.absoluteFilePath())
+                                  : fi.canonicalFilePath();
+        if (!AppUninstallDenyList::isSafeToDelete(canonical)) {
+            qCritical() << "trashApps: deny-list blocked deletion of" << path;
+            allOk = false;
+            continue;
+        }
+
         QString trashedPath;
+        const quint64 sz = pathSizeBytes(path);
         if (!QFile::moveToTrash(path, &trashedPath)) {
             qCritical() << "Failed to trash:" << path;
             allOk = false;
+            continue;
         }
+
+        // SSO-15384 / CISO §3: write audit log entry.
+        UninstallAuditLog::Entry entry;
+        entry.batchId       = batchId;
+        entry.originalPath  = path;
+        entry.canonicalPath = canonical;
+        entry.action        = UninstallAuditLog::Action::MovedToTrash;
+        entry.trashedPath   = trashedPath;
+        entry.matchedRule   = QStringLiteral("app_bundle");
+        entry.sizeBytes     = sz;
+        UninstallAuditLog::append(entry);
     }
     return allOk;
 }
@@ -342,12 +376,38 @@ bool PackageToolMacOS::trashLeftovers(const QStringList &paths)
     // NSFileManager::trashItemAtURL: which takes an NSURL, not an AppleScript
     // source string, so metacharacters in file names are data, not code.
     bool allOk = true;
+    const QUuid batchId = QUuid::createUuid();
+
     for (const QString &path : paths) {
+        // SSO-15384 / CISO §2: deny-list check.
+        const QFileInfo fi(path);
+        const QString canonical = fi.canonicalFilePath().isEmpty()
+                                  ? QDir::cleanPath(fi.absoluteFilePath())
+                                  : fi.canonicalFilePath();
+        if (!AppUninstallDenyList::isSafeToDelete(canonical)) {
+            qCritical() << "trashLeftovers: deny-list blocked deletion of" << path;
+            allOk = false;
+            continue;
+        }
+
         QString trashedPath;
+        const quint64 sz = pathSizeBytes(path);
         if (!QFile::moveToTrash(path, &trashedPath)) {
             qCritical() << "Failed to trash leftover:" << path;
             allOk = false;
+            continue;
         }
+
+        // SSO-15384 / CISO §3: audit log.
+        UninstallAuditLog::Entry entry;
+        entry.batchId       = batchId;
+        entry.originalPath  = path;
+        entry.canonicalPath = canonical;
+        entry.action        = UninstallAuditLog::Action::MovedToTrash;
+        entry.trashedPath   = trashedPath;
+        entry.matchedRule   = QStringLiteral("app_leftover");
+        entry.sizeBytes     = sz;
+        UninstallAuditLog::append(entry);
     }
     return allOk;
 }
@@ -479,6 +539,27 @@ QList<OrphanLeftover> PackageToolMacOS::findOrphanLeftovers()
     }
 
     return result;
+}
+
+// SSO-15384 / CISO §4: check whether any process whose executable lives inside
+// bundlePath is currently running.  Uses `lsof +d <path>` which lists open
+// files under the directory without following sub-directories — fast and safe.
+bool PackageToolMacOS::isAppRunning(const QString &bundlePath) const
+{
+    if (bundlePath.isEmpty())
+        return false;
+
+    QProcess proc;
+    proc.setProgram(QStringLiteral("/usr/sbin/lsof"));
+    proc.setArguments({QStringLiteral("+d"), bundlePath, QStringLiteral("-F"), QStringLiteral("p")});
+    proc.start();
+    if (!proc.waitForFinished(5000))
+        proc.kill();
+
+    // lsof exits 0 and prints at least one line when files are open; non-zero
+    // when the directory is completely idle.  We treat a non-empty stdout as
+    // "running" to fail safely.
+    return !proc.readAllStandardOutput().trimmed().isEmpty();
 }
 
 /**********

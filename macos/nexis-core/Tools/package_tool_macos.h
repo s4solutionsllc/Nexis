@@ -39,6 +39,10 @@ public:
     // SSO-15386 T3: multi-signal orphan-leftover scanner.
     QList<OrphanLeftover> findOrphanLeftovers() override;
 
+    // SSO-15384 / CISO §4: returns true when any process whose executable path
+    // is inside bundlePath is currently running.
+    virtual bool isAppRunning(const QString &bundlePath) const;
+
 protected:
     // WI-33: seam for tests — overridden to return a fixed fake path so the
     // uninstall paths reach the runCommand seam even when brew isn't installed.

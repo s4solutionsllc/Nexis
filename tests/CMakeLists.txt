@@ -143,10 +143,21 @@ if(APPLE)
       "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519"
   )
 
+  # SSO-15384 / CISO §2: deny-list unit tests — run on macOS and also on any
+  # platform where the shared deny-list is compiled in (it is platform-agnostic
+  # code even though it lives in a macOS-gated CMake block here).
+  add_nexis_test(NAME AppUninstallDenyListTests
+    SOURCES
+      core/test_app_uninstall_deny_list.cpp
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/shared/nexis-core"
+      "${CMAKE_SOURCE_DIR}/shared/nexis-core/Tools"
+  )
+
   # SSO-15387 / FW-18 (SSO-3746): leftover artifact scanner — bundle-id
   # matching + expanded fixture suite (product-name boundary, vendor dirs,
   # LaunchDaemons privilege boundary, true-negative set, precision/recall
-  # harness).  QSKIP'd off-macOS.  Gate for SSO-15384 merge acceptance.
+  # harness).  QSKIP'd off-macOS.
   add_nexis_test(NAME AppLeftoversMacOSTests
     SOURCES
       core/test_app_leftovers_macos.cpp
@@ -235,6 +246,7 @@ add_nexis_test(NAME PackageToolUninstallTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/package_tool.cpp"
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/package_tool.cpp"
+    "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools/uninstall_audit_log.cpp"
     "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils/plist_util.cpp"
   INCLUDES
     "${CMAKE_SOURCE_DIR}/linux/nexis-core"

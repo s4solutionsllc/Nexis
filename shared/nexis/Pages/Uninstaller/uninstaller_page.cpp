@@ -209,6 +209,7 @@ void UninstallerPage::onPackagesLoaded(QList<Package> packages)
                 : QString("%1 %2").arg(pkg.name, pkg.description);
             item->setData(0, Qt::UserRole + 1, pkg.path);
             item->setData(0, Qt::UserRole + 2, pkg.bundleId);   // FR-123
+            item->setData(0, Qt::UserRole + 3, static_cast<qlonglong>(pkg.size));   // SSO-15384
 #else
             QString displayText = pkg.description.isEmpty()
                 ? pkg.name
@@ -227,6 +228,8 @@ void UninstallerPage::onPackagesLoaded(QList<Package> packages)
     ui->treeWidgetPackages->setEnabled(true);
     ui->txtPackageSearch->setEnabled(true);
     ui->txtPackageSearch->clear();
+    // SSO-15384: start with button disabled — no items checked yet.
+    ui->btnUninstall->setEnabled(false);
 
     ui->lblLoadingUninstaller->hide();
 }
@@ -544,8 +547,20 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (selectedPaths.isEmpty())
         return;
 
-    QString message = tr("The following applications will be moved to Trash:\n\n");
-    message += selectedNames.join("\n");
+    // SSO-15384 / Design Anchor: confirmation dialog is one sentence max and
+    // shows a "what will be deleted" size + item count summary.
+    quint64 totalSize = 0;
+    for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *section = ui->treeWidgetPackages->topLevelItem(i);
+        for (int j = 0; j < section->childCount(); ++j) {
+            QTreeWidgetItem *item = section->child(j);
+            if (item->checkState(0) == Qt::Checked)
+                totalSize += static_cast<quint64>(item->data(0, Qt::UserRole + 3).toLongLong());
+        }
+    }
+    const QString sizeStr = FormatUtil::formatBytes(totalSize);
+    const QString message = tr("Move %1 application(s) (%2) to Trash?")
+                                .arg(selectedPaths.count()).arg(sizeStr);
 
     QMessageBox::StandardButton reply = QMessageBox::warning(
         this,
@@ -749,9 +764,12 @@ void UninstallerPage::onTreeItemChanged(QTreeWidgetItem *item, int column)
 {
     Q_UNUSED(item);
     Q_UNUSED(column);
-    ui->btnUninstall->setText(tr("Uninstall Selected (%1)")
-                              .arg(getSelectedSnapPackages().count() + getSelectedFlatpakPackages().count()
-                                   + getSelectedPackages().count()));
+    const int count = getSelectedSnapPackages().count() + getSelectedFlatpakPackages().count()
+                     + getSelectedPackages().count();
+    ui->btnUninstall->setText(tr("Uninstall Selected (%1)").arg(count));
+    // SSO-15384 / Design Anchor: button stays disabled until at least one
+    // item is explicitly checked — never a silent no-op.
+    ui->btnUninstall->setEnabled(count > 0);
 }
 
 #ifndef Q_OS_MACOS

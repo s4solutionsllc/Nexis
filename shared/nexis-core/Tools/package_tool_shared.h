@@ -14,6 +14,7 @@ struct Package {
     QString section;
     QString path;       // Full filesystem path (macOS .app bundles; empty on Linux)
     QString bundleId;   // macOS CFBundleIdentifier (empty on Linux / when unknown)
+    quint64 size = 0;   // SSO-15384: on-disk size in bytes (populated for macOS .app bundles)
 };
 
 struct StaleSnapRevision {
