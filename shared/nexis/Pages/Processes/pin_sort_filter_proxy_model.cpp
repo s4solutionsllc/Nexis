@@ -8,6 +8,16 @@ PinSortFilterProxyModel::PinSortFilterProxyModel(QObject *parent)
 bool PinSortFilterProxyModel::lessThan(const QModelIndex &left,
                                         const QModelIndex &right) const
 {
+    // SSO-15376: root-level rows are the Apps/Background section headers —
+    // keep them in insertion order (Apps first) no matter which data column
+    // the user sorts by. Only rows *within* a group should reorder on a
+    // column-header click. Mirrors the pinned-row inversion below so the
+    // group order also survives an Ascending/Descending toggle.
+    if (!left.parent().isValid() && !right.parent().isValid()) {
+        return (sortOrder() == Qt::AscendingOrder) ? (left.row() < right.row())
+                                                     : (left.row() > right.row());
+    }
+
     // Pin state lives on the column-0 item regardless of which column the
     // user is sorting by — always look there.
     const QModelIndex leftPid  = sourceModel()->index(left.row(),  0, left.parent());

@@ -9,6 +9,10 @@
 // differs between two rows, pinned < unpinned. When they match, fall
 // back to the standard QSortFilterProxyModel comparison (which uses the
 // SortRole configured by ProcessesPage).
+//
+// SSO-15376: also keeps the two root-level Apps/Background section headers
+// in a fixed order (Apps first), independent of both pin state and the
+// chosen sort column — see lessThan()'s root-level branch.
 class PinSortFilterProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT

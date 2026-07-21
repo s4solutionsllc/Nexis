@@ -60,7 +60,38 @@ QList<Process> ProcessInfoMacOS::collectProcesses()
                         proc.setNice(procLine.takeFirst().toInt());
                         proc.setCpuTime(procLine.takeFirst());
                         proc.setSession(procLine.takeFirst());
-                        proc.setCmd(procLine.join(" "));
+                        const QString cmd = procLine.join(" ");
+                        proc.setCmd(cmd);
+
+                        // SSO-15376: App vs Background classification. GUI
+                        // apps launched from Finder/Dock run their binary
+                        // inside <name>.app/Contents/MacOS/; daemons and CLI
+                        // tools do not. This reuses the ps-derived cmd field
+                        // instead of adding an AppKit/NSWorkspace dependency
+                        // to nexis-core, which currently links only IOKit,
+                        // CoreFoundation, and SystemConfiguration.
+                        //
+                        // ps's command column is unquoted, so a bundle path
+                        // containing spaces (e.g. "Google Chrome.app") can't
+                        // be reliably split from its arguments by whitespace
+                        // alone — cmd.section(' ', 0, 0) would truncate mid
+                        // path for exactly the common apps this is meant to
+                        // classify. Match against the whole string instead,
+                        // non-greedy and unanchored at the end, so trailing
+                        // arguments (which may themselves contain '/', e.g.
+                        // --profile-directory=/Users/...) can't break the
+                        // match — only argv[0] needs to look like a bundle
+                        // path, and it always comes first in this string.
+                        static const QRegularExpression appBundleReg(
+                            QStringLiteral("^(.*?\\.app)/Contents/MacOS/"));
+                        const QRegularExpressionMatch bundleMatch = appBundleReg.match(cmd);
+                        if (bundleMatch.hasMatch()) {
+                            proc.setIsAppProcess(true);
+                            // GUI layer resolves this exactly like the
+                            // Startup Apps macOS icon path (QFileIconProvider
+                            // on the bundle) — see startup_app.cpp.
+                            proc.setIconHint(bundleMatch.captured(1));
+                        }
 
                         processes << proc;
                     }
