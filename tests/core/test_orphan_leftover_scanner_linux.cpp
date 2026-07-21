@@ -129,8 +129,16 @@ private:
         if (looksLikeReverseDnsIdHelper(dirName) && !ownedByPackage)
             detectedSignals.append({QStringLiteral("naming_convention"), QString()});
 
-        const QDateTime modified = entry.lastModified();
-        const QDateTime accessed = entry.lastRead();
+        // Use POSIX stat() directly for timestamps so backdate()/utimes() changes
+        // are visible immediately, bypassing any Qt QFileInfo metadata cache that
+        // may hold pre-backdate values after mkpath() stat'd the path.
+        struct stat st;
+        const QByteArray nativePath = entry.absoluteFilePath().toLocal8Bit();
+        QDateTime modified, accessed;
+        if (::stat(nativePath.constData(), &st) == 0) {
+            modified = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(st.st_mtime));
+            accessed = QDateTime::fromSecsSinceEpoch(static_cast<qint64>(st.st_atime));
+        }
         const QDateTime now = QDateTime::currentDateTime();
         if (modified.isValid() && modified.daysTo(now) >= 30)
             detectedSignals.append({QStringLiteral("age_threshold"), QString()});
