@@ -2,7 +2,9 @@
 #define HOMEBREW_PAGE_H
 
 #include <QWidget>
+#include <QCheckBox>
 #include <QLabel>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QTreeWidget>
@@ -41,12 +43,17 @@ private slots:
     void onUninstallClicked();
     void onSystemUpdatesChecked(const UpdateCheckResult &result);
     void onRepoHealthChecked(const RepoHealthCache &cache);
+    void onUpdatesTreeItemChanged(QTreeWidgetItem *item, int column);
+    void onSelectAllToggled(bool checked);
+    void onUpdateSelectedClicked();
 
 private:
     void buildUI();
     void fetchPackages();
     QStringList getSelectedPackages() const;
+    QStringList getSelectedCaskUpdates() const;
     void updateUninstallButton();
+    void updateUpdateButton();
     void setInstallFieldsVisible(bool visible);
 
     ToolManager *mToolManager = nullptr;
@@ -63,9 +70,13 @@ private:
 
     // Available Updates section
     QWidget *mUpdatesSection = nullptr;
+    QProgressBar *mUpdatesProgress = nullptr;
     QLabel *mLblUpdatesTitle = nullptr;
     QPushButton *mBtnCheckNow = nullptr;
+    QCheckBox *mChkSelectAll = nullptr;
+    QPushButton *mBtnUpdateSelected = nullptr;
     QTreeWidget *mUpdatesTree = nullptr;
+    bool mUpdatesRunning = false;
 
     QList<Package> mPackages;
 };
