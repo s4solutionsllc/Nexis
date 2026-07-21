@@ -36,6 +36,9 @@ public:
     QList<AppLeftover> findAppLeftovers(const Package &app) override;
     bool trashLeftovers(const QStringList &paths) override;
 
+    // SSO-15386 T3: multi-signal orphan-leftover scanner.
+    QList<OrphanLeftover> findOrphanLeftovers() override;
+
 protected:
     // WI-33: seam for tests — overridden to return a fixed fake path so the
     // uninstall paths reach the runCommand seam even when brew isn't installed.
