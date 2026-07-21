@@ -6,6 +6,7 @@
 #include <QScrollArea>
 #include <QGroupBox>
 #include <QStyle>
+#include <QObject>
 #include <QtConcurrent>
 
 #include "Managers/app_manager.h"
@@ -14,6 +15,79 @@
 #include "signal_mapper.h"
 #include "health_score_calculator.h"
 #include "Utils/format_util.h"
+#include "Common/trust_safety_preview_dialog.h"
+#include "Common/trust_safety_types.h"
+
+// SSO-15481: bridges CleanerService::ScanResult into the Trust & Safety
+// preview / confirm / cancel / dry-run framework.
+//
+// scan() replays the already-collected mScanResult as TrustSafetyActionItems
+// rather than re-hitting the filesystem — the wizard already owns a fresh
+// scan from runChecks(), so a second scan would be redundant and racy.
+//
+// performItem() delegates individual file removal to CleanerService::cleanFiles()
+// so the file-level side-effects (exclusions, access-denied tracking, etc.)
+// are handled by the shared service, not re-implemented here.
+class MaintenanceWizardCleanProvider : public TrustSafetyActionProvider
+{
+public:
+    explicit MaintenanceWizardCleanProvider(const CleanerService::ScanResult &scanResult,
+                                             const QList<CleanerService::CleanCategory> &safeCategories)
+        : mScanResult(scanResult), mSafeCategories(safeCategories)
+    {}
+
+    void scan(QAtomicInt *cancelled,
+              const std::function<void(const TrustSafetyActionItem &)> &itemFound) override
+    {
+        int idCounter = 0;
+        for (CleanerService::CleanCategory cat : mSafeCategories) {
+            const QFileInfoList &files = mScanResult.categoryFiles.value(cat);
+            if (files.isEmpty())
+                continue;
+
+            const QString catId    = QString::number(static_cast<int>(cat));
+            const QString catLabel = CleanerService::categoryName(cat);
+
+            for (const QFileInfo &fi : files) {
+                if (cancelled && cancelled->loadRelaxed())
+                    return;
+
+                TrustSafetyActionItem item;
+                item.id              = QStringLiteral("%1-%2").arg(catId).arg(idCounter++);
+                item.label           = fi.fileName();
+                item.description     = QObject::tr("Safe to remove: %1 in %2").arg(fi.fileName(), catLabel);
+                item.command         = fi.absoluteFilePath();
+                item.categoryId      = catId;
+                item.categoryLabel   = catLabel;
+                item.riskTier        = TrustSafetyActionItem::RiskTier::Standard;
+                item.estimatedSizeBytes = fi.isDir() ? 0 : fi.size();
+                itemFound(item);
+            }
+        }
+    }
+
+    TrustSafetyActionResult performItem(const TrustSafetyActionItem &item, bool dryRun) override
+    {
+        TrustSafetyActionResult result;
+        result.itemId = item.id;
+
+        if (dryRun) {
+            QFileInfo fi(item.command);
+            result.succeeded    = fi.exists();
+            result.bytesFreed   = fi.isDir() ? 0 : fi.size();
+            return result;
+        }
+
+        quint64 freed = CleanerService::ins()->cleanFiles({item.command});
+        result.succeeded  = true;
+        result.bytesFreed = static_cast<qint64>(freed);
+        return result;
+    }
+
+private:
+    CleanerService::ScanResult mScanResult;
+    QList<CleanerService::CleanCategory> mSafeCategories;
+};
 
 MaintenanceWizardDialog::MaintenanceWizardDialog(QWidget *parent,
                                                    AppManager *appManager,
@@ -357,9 +431,12 @@ void MaintenanceWizardDialog::onAllChecksComplete()
 
 void MaintenanceWizardDialog::onCleanSafeItems()
 {
-    mBtnClean->setEnabled(false);
-    mBtnClean->setText(tr("Cleaning..."));
-
+    // SSO-15481: route through TrustSafetyPreviewDialog for itemized preview,
+    // per-item deselection, cancel, and dry-run before any deletion occurs.
+    // The wizard's "safe" category set is narrower than the System Cleaner's
+    // risky set (BROWSER_PRIVACY, TRASH, DOWNLOADS_AGED are intentionally
+    // excluded), so all items are Standard risk — the risky-category gate
+    // is wired in the shared dialog but unused here by design.
     QList<CleanerService::CleanCategory> safeCategories = {
         CleanerService::PACKAGE_CACHE,
         CleanerService::CRASH_REPORTS,
@@ -372,15 +449,19 @@ void MaintenanceWizardDialog::onCleanSafeItems()
 #endif
     };
 
-    QPointer<MaintenanceWizardDialog> self(this);
-    mCleanFuture = QtConcurrent::run([self, safeCategories]() {
-        auto result = CleanerService::ins()->clean(safeCategories);
-        if (!self) return;
-        QMetaObject::invokeMethod(self.data(), [self, bytes = result.totalBytesFreed]() {
-            if (!self) return;
-            self->onCleanFinished(bytes);
-        }, Qt::QueuedConnection);
-    });
+    MaintenanceWizardCleanProvider provider(mScanResult, safeCategories);
+
+    TrustSafetyPreviewDialog::Config cfg;
+    cfg.windowTitle          = tr("Review Items to Clean");
+    cfg.primaryActionLabel   = tr("Clean Selected");
+    cfg.confirmationSentence = tr("This will permanently delete the selected items.");
+
+    TrustSafetyPreviewDialog dlg(&provider, cfg, this, mAppManager);
+    dlg.exec();
+
+    const TrustSafetyRunSummary summary = dlg.lastRunSummary();
+    if (summary.totalItemsRequested > 0 && !summary.dryRun)
+        onCleanFinished(static_cast<quint64>(summary.totalBytesFreed));
 }
 
 void MaintenanceWizardDialog::onCleanFinished(quint64 bytesFreed)
