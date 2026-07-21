@@ -748,6 +748,23 @@ add_nexis_test(NAME SystemCleanerProviderTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-15429: OrphanLeftoversDialog's pure, static, non-widget entry points —
+# buildRows() (CISO §5: every match starts unchecked, full signal set
+# carried through) and confirmationSentence() (Design Anchor SSO-1768:
+# one-sentence, size+count, trash-only copy). orphan_leftovers_dialog.cpp is
+# already compiled into nexis-gui (GUI_SHARED_SRCS); link it rather than
+# recompiling the source here, same reasoning as SystemCleanerProviderTests.
+add_nexis_test(NAME OrphanLeftoversDialogTests
+  SOURCES
+    managers/test_orphan_leftovers_dialog.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Uninstaller"
+  LIBS
+    Qt6::Concurrent
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3363 / audit H2: LogProvider::cancel() null-deref defence and
 # SSO-3384 / WI-22: MacOsLogStreamParser incremental ndjson parsing.
 # Compiles log_provider.cpp directly so the test runs cross-platform without

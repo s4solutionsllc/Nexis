@@ -8,6 +8,7 @@
 #ifdef Q_OS_LINUX
 #include "leftover_review_hook.h"
 #endif
+#include "orphan_leftovers_dialog.h"
 #include <QHeaderView>
 #include <QMovie>
 #include <QMessageBox>
@@ -72,7 +73,7 @@ void UninstallerPage::init()
 
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages,
                                 ui->btnSnapPackages, ui->btnFlatpakPackages, ui->btnOrphanPackages,
-                                ui->btnAptHistory };
+                                ui->btnOrphanLeftovers, ui->btnAptHistory };
     Utilities::addDropShadow(widgets, 40);
 
     connect(mPackageService, &PackageService::packagesFetched,
@@ -772,6 +773,16 @@ void UninstallerPage::on_btnOrphanPackages_clicked()
 #ifndef Q_OS_MAC
     ui->chkPurge->show();
 #endif
+}
+
+void UninstallerPage::on_btnOrphanLeftovers_clicked()
+{
+    // SSO-15429: on-demand scan, not a stackedWidget page — the dialog owns
+    // its own scan/preview/confirm flow.
+    auto *dlg = new OrphanLeftoversDialog(this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->open();
+    dlg->scan();
 }
 
 void UninstallerPage::on_btnAptHistory_clicked()

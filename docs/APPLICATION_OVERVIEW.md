@@ -388,7 +388,7 @@ View and manage running processes.
 
 ### 9. Uninstaller
 
-Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout (four on hosts with APT 3.1+): System Packages, Snap Packages, Orphan Packages, and APT History.
+Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab layout (four on hosts with APT 3.1+): System Packages, Snap Packages, Orphan Packages, and APT History. An additional "Orphan Leftovers…" toolbar button (not a tab) opens an on-demand filesystem scan dialog — see below.
 
 - Package tree/list/table (whichever tab is active) sits inside one elevated container card with a frozen "Application" column header (UX modernization pass, SSO-13736)
 - Package tree view grouped by type (Formula/Cask on macOS; installed/universe on Linux)
@@ -398,6 +398,7 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 - Dry-run confirmation showing dependencies that would also be removed (APT)
 - Async background loading with progress indicator
 - **Orphan Packages tab** — Lists packages no longer required by any installed package. Removal via platform `autoremove` command (all-or-nothing). Supported on APT, DNF, Pacman, and Homebrew.
+- **Orphan Leftovers scan (SSO-15429, T5 of the SSO-15373 Orphan Scanner epic):** cross-platform `OrphanLeftoversDialog`, opened via the "Orphan Leftovers…" toolbar button, scans off the UI thread via `PackageTool::findOrphanLeftovers()` (macOS: `~/Library`; Linux: `~/.config`, `~/.cache`, `~/.local/share` — see the platform leftover-scanner entries below for the 4-signal confidence bar). Unlike the post-uninstall leftover dialogs below, there is no known just-uninstalled app to correlate against, so every match is shown with its full matched-signal set (not just a confidence score), every item defaults unchecked, and there is deliberately no "Select All". A distinct one-sentence confirmation dialog ("Move {N} item(s) ({size}) to Trash?", Design Anchor SSO-1768) gates the trash call, which reuses `PackageTool::trashLeftovers()` — same deny-list, audit log, and fail-secure `QFile::moveToTrash` path as the dialogs below.
 - **APT History tab (Linux, APT 3.1+)** — Lists recent `apt` transactions parsed from `apt history-list` (id, date, operation, command). One-click **Undo Last Transaction**, and per-row **Undo Selected** / **Rollback To Selected** wired to `apt history-undo` / `apt history-rollback`. A **Why? / Why Not?** panel surfaces `apt why` / `apt why-not` output for any package the user names. The tab and its nav button are hidden when `apt --version < 3.1`, so older Debian/Ubuntu users see no broken affordance (FW-07 / SSO-3735).
 
 **Platform backends:**

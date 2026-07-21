@@ -53,6 +53,9 @@ private slots:
     void on_btnSnapPackages_clicked();
     void on_btnFlatpakPackages_clicked();
     void on_btnOrphanPackages_clicked();
+    // SSO-15429: opens OrphanLeftoversDialog, an on-demand filesystem scan —
+    // unlike the buttons above, this is not a navBtnGroup stacked-page toggle.
+    void on_btnOrphanLeftovers_clicked();
     void on_btnAptHistory_clicked();
 
     void on_listWidgetSnapPackages_itemClicked(QListWidgetItem *item);
