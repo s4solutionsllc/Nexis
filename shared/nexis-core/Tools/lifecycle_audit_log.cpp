@@ -140,12 +140,12 @@ void prune(int minRetainedCount)
         return;
 
     const QDateTime cutoff = QDateTime::currentDateTimeUtc().addDays(-90);
-    const int firstKeptByAge = [&]() {
+    const int firstKeptByAge = [&]() -> int {
         for (int i = 0; i < all.size(); ++i) {
             if (all.at(i).timestamp.toUTC() >= cutoff)
                 return i;
         }
-        return all.size();
+        return static_cast<int>(all.size());
     }();
 
     // CISO §3: retain at minimum the last N operations OR 90 days,
