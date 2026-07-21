@@ -5,15 +5,20 @@
 #include "dpi.h"
 #include "pin_sort_filter_proxy_model.h"
 #include "kill_button_delegate.h"
+#include "process_group_header_delegate.h"
 #include "process_alert_dialog.h"
 #include "Managers/app_manager.h"
 #include "Managers/data_refresh_service.h"
 #include "Managers/process_prefs_manager.h"
 #include "Services/process_service.h"
+#include <QFileInfo>
 #include <QItemSelectionModel>
 #include <QRegularExpression>
 #include <QSystemTrayIcon>
 #include <Utils/format_util.h>
+#ifdef Q_OS_MACOS
+#include <QFileIconProvider>
+#endif
 
 ProcessesPage::~ProcessesPage()
 {
@@ -83,6 +88,18 @@ void ProcessesPage::init()
 
     ui->tableProcess->setModel(mSortFilterModel);
 
+    // SSO-15376: two static section headers (Apps above Background), each
+    // holding process rows as children. No expand/collapse chrome — the
+    // sections aren't collapsible, just grouped.
+    ui->tableProcess->setRootIsDecorated(false);
+    ui->tableProcess->setItemsExpandable(false);
+    ui->tableProcess->setExpandsOnDoubleClick(false);
+    ui->tableProcess->setIndentation(0);
+    // QTreeView equivalents of the QTableView-only "horizontalHeader*"
+    // .ui attributes this page used before the SSO-15376 grouping change.
+    ui->tableProcess->header()->setCascadingSectionResizes(false);
+    ui->tableProcess->header()->setStretchLastSection(true);
+
     ui->btnEndProcess->setVisible(false);
     connect(ui->tableProcess->selectionModel(), &QItemSelectionModel::selectionChanged,
             this, [this](const QItemSelection &selected, const QItemSelection &) {
@@ -92,34 +109,65 @@ void ProcessesPage::init()
     mSortFilterModel->setSortRole(SortRole);
     mSortFilterModel->setDynamicSortFilter(true);
     mSortFilterModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    // SSO-15376: without this, a non-matching group-header row hides itself
+    // and — by default QSortFilterProxyModel behavior — every child under
+    // it too, even children whose own text matches the search. Recursive
+    // filtering keeps a group visible whenever any of its children match.
+    mSortFilterModel->setRecursiveFilteringEnabled(true);
     mSortFilterModel->sort(Col_Pcpu, Qt::SortOrder::DescendingOrder);
 
     // DS §7: zebra striping for populated rows (shadow stays on the container).
     ui->tableProcess->setAlternatingRowColors(true);
 
-    ui->tableProcess->horizontalHeader()->setSectionsMovable(true);
-    ui->tableProcess->horizontalHeader()->setFixedHeight(Dpi::scale(36));
-    ui->tableProcess->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    ui->tableProcess->horizontalHeader()->setCursor(Qt::PointingHandCursor);
-    ui->tableProcess->horizontalHeader()->resizeSection(Col_Pid, 70);
+    ui->tableProcess->header()->setSectionsMovable(true);
+    ui->tableProcess->header()->setFixedHeight(Dpi::scale(36));
+    ui->tableProcess->header()->setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    ui->tableProcess->header()->setCursor(Qt::PointingHandCursor);
+    ui->tableProcess->header()->resizeSection(Col_Pid, 70);
 
     // GH#174: Kill column — fixed narrow width, not shown in header context menu
     // (not in mHeaders so loadHeaderMenu() ignores it), not sortable.
     mItemModel->setHorizontalHeaderItem(kKillCol, new QStandardItem());
-    ui->tableProcess->horizontalHeader()->setSectionResizeMode(kKillCol, QHeaderView::Fixed);
-    ui->tableProcess->horizontalHeader()->resizeSection(kKillCol, Dpi::scale(30));
+    ui->tableProcess->header()->setSectionResizeMode(kKillCol, QHeaderView::Fixed);
+    ui->tableProcess->header()->resizeSection(kKillCol, Dpi::scale(30));
     mKillDelegate = new KillButtonDelegate(this);
     ui->tableProcess->setItemDelegateForColumn(kKillCol, mKillDelegate);
     ui->tableProcess->setMouseTracking(true);
-    connect(ui->tableProcess, &QTableView::clicked,
+    connect(ui->tableProcess, &QTreeView::clicked,
             this, &ProcessesPage::onKillColumnClicked);
+
+    // SSO-15376: Apps/Background section-header rows, DS §3 anatomy painted
+    // by ProcessGroupHeaderDelegate. Assigning it to Col_Pid (column 0) is
+    // safe for ordinary rows too — the delegate falls through to the default
+    // QStyledItemDelegate paint/sizeHint whenever GroupHeaderRole isn't set.
+    mGroupHeaderDelegate = new ProcessGroupHeaderDelegate(this);
+    ui->tableProcess->setItemDelegateForColumn(Col_Pid, mGroupHeaderDelegate);
+
+    mAppsGroupItem = createGroupHeaderItem(tr("Apps"));
+    mBackgroundGroupItem = createGroupHeaderItem(tr("Background"));
+    mItemModel->appendRow(mAppsGroupItem);
+    mItemModel->appendRow(mBackgroundGroupItem);
+    // SSO-15376: the view's model is the proxy (setModel(mSortFilterModel)
+    // above), not mItemModel directly — setFirstColumnSpanned()/setExpanded()
+    // take indices in the *view's* model, so source-model indices from
+    // QStandardItem::row()/index() must be mapped through the proxy first.
+    // Getting this wrong doesn't crash; it silently leaves every process row
+    // uncollapsed-but-never-shown, since setItemsExpandable(false) removes
+    // any user affordance to expand them manually.
+    const QModelIndex proxyAppsIdx = mSortFilterModel->mapFromSource(mAppsGroupItem->index());
+    const QModelIndex proxyBackgroundIdx = mSortFilterModel->mapFromSource(mBackgroundGroupItem->index());
+    ui->tableProcess->setFirstColumnSpanned(proxyAppsIdx.row(), proxyAppsIdx.parent(), true);
+    ui->tableProcess->setFirstColumnSpanned(proxyBackgroundIdx.row(), proxyBackgroundIdx.parent(), true);
+    ui->tableProcess->setExpanded(proxyAppsIdx, true);
+    ui->tableProcess->setExpanded(proxyBackgroundIdx, true);
+    updateGroupHeaderCounts();
 
     connect(mRefresh, &DataRefreshService::processesUpdated,
             this, &ProcessesPage::onProcessesUpdated);
 
-    ui->tableProcess->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->tableProcess->header()->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    connect(ui->tableProcess->horizontalHeader(), &QHeaderView::customContextMenuRequested,
+    connect(ui->tableProcess->header(), &QHeaderView::customContextMenuRequested,
         this, &ProcessesPage::on_tableProcess_customContextMenuRequested);
 
     // FR-116: row-level context menu (distinct from the header menu above).
@@ -150,9 +198,78 @@ void ProcessesPage::init()
     });
 }
 
+// ───────── SSO-15376: Apps/Background grouping helpers ─────────
+
+QStandardItem *ProcessesPage::createGroupHeaderItem(const QString &title)
+{
+    QStandardItem *item = new QStandardItem(title);
+    // Enabled but not selectable/editable: clicks land on it (the kill-icon
+    // and context-menu handlers already guard on column/GroupHeaderRole),
+    // but it can't be selected, dragged into "End Process", or renamed.
+    item->setFlags(Qt::ItemIsEnabled);
+    item->setData(true, GroupHeaderRole);
+    return item;
+}
+
+QStandardItem *ProcessesPage::groupItemFor(bool isAppProcess) const
+{
+    return isAppProcess ? mAppsGroupItem : mBackgroundGroupItem;
+}
+
+void ProcessesPage::updateGroupHeaderCounts()
+{
+    if (mAppsGroupItem)
+        mAppsGroupItem->setText(tr("Apps (%1)").arg(mAppsGroupItem->rowCount()));
+    if (mBackgroundGroupItem)
+        mBackgroundGroupItem->setText(tr("Background (%1)").arg(mBackgroundGroupItem->rowCount()));
+}
+
+QModelIndex ProcessesPage::proxyIndexForPid(pid_t pid) const
+{
+    for (QStandardItem *group : {mAppsGroupItem, mBackgroundGroupItem}) {
+        if (!group)
+            continue;
+        const QModelIndex proxyParent = mSortFilterModel->mapFromSource(group->index());
+        const int rows = mSortFilterModel->rowCount(proxyParent);
+        for (int i = 0; i < rows; ++i) {
+            const QModelIndex idx = mSortFilterModel->index(i, 0, proxyParent);
+            if (idx.data(SortRole).toInt() == pid)
+                return idx;
+        }
+    }
+    return QModelIndex();
+}
+
+QIcon ProcessesPage::resolveProcessIcon(const Process &proc) const
+{
+    static const QIcon genericIcon(QStringLiteral(":/static/themes/common/img/package.png"));
+
+    const QString hint = proc.getIconHint();
+    if (hint.isEmpty())
+        return genericIcon;
+
+    QIcon icon;
+#ifdef Q_OS_MACOS
+    // macOS: hint is the .app bundle path — same resolution StartupApp
+    // already uses for macOS autostart entries (startup_app.cpp).
+    if (hint.endsWith(QLatin1String(".app")) && QFileInfo::exists(hint)) {
+        QFileIconProvider iconProvider;
+        icon = iconProvider.icon(QFileInfo(hint));
+    }
+#else
+    // Linux: hint is an XDG Icon= value — a freedesktop theme name or an
+    // absolute path. Try the path first, then fall back to theme lookup.
+    if (QFileInfo::exists(hint))
+        icon = QIcon(hint);
+    if (icon.isNull())
+        icon = QIcon::fromTheme(hint, genericIcon);
+#endif
+    return icon.isNull() ? genericIcon : icon;
+}
+
 void ProcessesPage::updateProcessIoCollection()
 {
-    const auto *header = ui->tableProcess->horizontalHeader();
+    const auto *header = ui->tableProcess->header();
     const bool diskVisible = !header->isSectionHidden(Col_DiskRead) || !header->isSectionHidden(Col_DiskWrite);
     const bool netVisible  = !header->isSectionHidden(Col_NetDown) || !header->isSectionHidden(Col_NetUp);
     const bool gpuVisible  = !header->isSectionHidden(Col_GpuPct) || !header->isSectionHidden(Col_GpuVram);
@@ -216,7 +333,7 @@ void ProcessesPage::loadHeaderMenu()
     QList<QAction*> actions = mHeaderMenu.actions();
     for (const int i : hiddenHeaders) {
         if (i < mHeaders.count()) {
-            ui->tableProcess->horizontalHeader()->setSectionHidden(i, true);
+            ui->tableProcess->header()->setSectionHidden(i, true);
             actions.at(i)->setChecked(false);
         }
     }
@@ -248,51 +365,58 @@ void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QS
         incomingPids.insert(pid);
         mPidToName.insert(pid, proc.getCmd());   // FR-116
 
+        // SSO-15376: route the row to its classified group. A process can
+        // (rarely) flip classification between ticks — drop and recreate
+        // under the new parent rather than trying to reparent in place.
+        QStandardItem *targetGroup = groupItemFor(proc.getIsAppProcess());
         auto it = mPidToRow.find(pid);
-        if (it != mPidToRow.end()) {
+        if (it != mPidToRow.end() && it.value()->parent() == targetGroup) {
             updateRow(it.value(), proc);
         } else {
-            int newRow = mItemModel->rowCount();
-            mItemModel->appendRow(createRow(proc));
-            mPidToRow.insert(pid, newRow);
+            if (it != mPidToRow.end()) {
+                QStandardItem *oldParent = it.value()->parent();
+                if (oldParent)
+                    oldParent->removeRow(it.value()->row());
+            }
+            targetGroup->appendRow(createRow(proc));
+            mPidToRow.insert(pid, targetGroup->child(targetGroup->rowCount() - 1, 0));
         }
     }
 
-    // Remove exited processes (iterate in reverse to keep row indices valid)
-    QList<int> rowsToRemove;
+    // Remove exited processes. QStandardItem* pointers stay valid across
+    // sibling removals (row() is recomputed from the parent), so — unlike
+    // the old flat-index scheme — no pid->row map rebuild pass is needed.
+    QList<pid_t> exitedPids;
     for (auto it = mPidToRow.begin(); it != mPidToRow.end(); ++it) {
         if (!incomingPids.contains(it.key()))
-            rowsToRemove.append(it.value());
+            exitedPids.append(it.key());
     }
-    std::sort(rowsToRemove.begin(), rowsToRemove.end(), std::greater<int>());
-    for (int row : rowsToRemove) {
-        pid_t pid = mItemModel->item(row, 0)->data(SortRole).toLongLong();
-        mItemModel->removeRow(row);
+    for (pid_t pid : exitedPids) {
+        QStandardItem *item = mPidToRow.value(pid);
+        if (item && item->parent())
+            item->parent()->removeRow(item->row());
         mPidToRow.remove(pid);
         mPidToName.remove(pid);   // FR-116
     }
 
-    // Rebuild PID→row map after removals (row indices shifted)
-    mPidToRow.clear();
-    for (int i = 0; i < mItemModel->rowCount(); ++i) {
-        pid_t pid = mItemModel->item(i, 0)->data(SortRole).toLongLong();
-        mPidToRow.insert(pid, i);
-    }
-
-    // DS §5: swap between the process table and the empty-state affordance
+    // DS §5: swap between the process tree and the empty-state affordance
     // based on whether any row survived the filter above.
-    const bool isEmpty = mItemModel->rowCount() == 0;
+    const bool isEmpty = incomingPids.isEmpty();
     ui->tableProcess->setVisible(!isEmpty);
     ui->processesEmptyState->setVisible(isEmpty);
 
+    updateGroupHeaderCounts();
+
     // Restore selection
     if (selectedPid) {
-        for (int i = 0; i < mSortFilterModel->rowCount(); ++i) {
-            if (mSortFilterModel->index(i, 0).data(SortRole).toInt() == selectedPid) {
-                ui->tableProcess->selectRow(i);
-                mSelectedRowModel = mSortFilterModel->index(i, 0);
-                break;
-            }
+        const QModelIndex idx = proxyIndexForPid(selectedPid);
+        if (idx.isValid()) {
+            ui->tableProcess->selectionModel()->select(
+                idx, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+            ui->tableProcess->setCurrentIndex(idx);
+            mSelectedRowModel = idx;
+        } else {
+            mSelectedRowModel = QModelIndex();
         }
     } else {
         mSelectedRowModel = QModelIndex();
@@ -315,6 +439,10 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     // FR-116: pin role used by PinSortFilterProxyModel::lessThan.
     pid_i->setData(ProcessPrefsManager::ins()->isPinned(proc.getCmd()),
                    PinSortFilterProxyModel::PinnedRole);
+    // SSO-15376: PID is column 0 — the only column guaranteed visible and
+    // unhideable on both platforms — so the icon is always on-screen
+    // regardless of which columns the user has hidden or scrolled past.
+    pid_i->setIcon(resolveProcessIcon(proc));
 
 #ifdef Q_OS_LINUX
     // GH#194: short process name (Linux only).
@@ -444,11 +572,16 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     return row;
 }
 
-void ProcessesPage::updateRow(int row, const Process &proc)
+void ProcessesPage::updateRow(QStandardItem *pidItem, const Process &proc)
 {
+    QStandardItem *parentItem = pidItem ? pidItem->parent() : nullptr;
+    if (!parentItem)
+        return;   // defensive: a data row always has a group parent
+    const int row = pidItem->row();
+
     int d = SortRole;
     auto setCell = [&](int col, const QString &display, const QVariant &sort, const QVariant &tip) {
-        QStandardItem *item = mItemModel->item(row, col);
+        QStandardItem *item = parentItem->child(row, col);
         if (item) {
             item->setText(display);
             item->setData(sort, d);
@@ -458,9 +591,10 @@ void ProcessesPage::updateRow(int row, const Process &proc)
 
     setCell(Col_Pid, QString::number(proc.getPid()), proc.getPid(), proc.getPid());
     // FR-116: refresh pinned role on the updated row.
-    if (auto *pidItem = mItemModel->item(row, Col_Pid))
-        pidItem->setData(ProcessPrefsManager::ins()->isPinned(proc.getCmd()),
-                         PinSortFilterProxyModel::PinnedRole);
+    pidItem->setData(ProcessPrefsManager::ins()->isPinned(proc.getCmd()),
+                     PinSortFilterProxyModel::PinnedRole);
+    // SSO-15376: re-resolve in case classification/icon hint changed.
+    pidItem->setIcon(resolveProcessIcon(proc));
 #ifdef Q_OS_LINUX
     setCell(Col_Name, proc.getName(), proc.getName(), proc.getName());   // GH#194
 #endif
@@ -507,7 +641,7 @@ void ProcessesPage::updateRow(int row, const Process &proc)
     setCell(Col_GpuVram, gpuVramText, proc.getGpuVramBytes(), gpuVramText);
 
     setCell(Col_Cmd, proc.getCmd(), proc.getCmd(), QString("<p>%1</p>").arg(proc.getCmd()));
-    if (auto *item = mItemModel->item(row, Col_Cmd))
+    if (auto *item = parentItem->child(row, Col_Cmd))
         item->setFont(QFont(QStringLiteral("JetBrains Mono")));
 }
 
@@ -528,7 +662,11 @@ void ProcessesPage::on_btnEndProcess_clicked()
     pid_t pid = mSelectedRowModel.data(SortRole).toInt();
 
     if (pid) {
-        QString selectedUname = mSortFilterModel->index(mSelectedRowModel.row(), Col_User).data(SortRole).toString();
+        // SSO-15376: siblingAtColumn() keeps the correct parent (Apps or
+        // Background) — reconstructing via row index alone (as before this
+        // page had two group parents) would collide with the other group's
+        // row at the same index.
+        QString selectedUname = mSelectedRowModel.siblingAtColumn(Col_User).data(SortRole).toString();
         mProcessService->killProcess(pid, selectedUname, im->getUserName());
     }
 }
@@ -540,16 +678,19 @@ void ProcessesPage::onKillColumnClicked(const QModelIndex &proxyIndex)
     if (!proxyIndex.isValid() || proxyIndex.column() != kKillCol)
         return;
 
+    // SSO-15376: itemFromIndex(), not item(row, col) — the latter only
+    // resolves root-level rows, and process rows now live under one of the
+    // two group parents, not the root.
     const QModelIndex src = mSortFilterModel->mapToSource(proxyIndex);
-    QStandardItem *pidItem = mItemModel->item(src.row(), 0);
-    if (!pidItem)
+    QStandardItem *pidItem = mItemModel->itemFromIndex(src.siblingAtColumn(0));
+    if (!pidItem || pidItem->data(GroupHeaderRole).toBool())
         return;
 
     const pid_t pid = pidItem->data(SortRole).toLongLong();
     if (!pid)
         return;
 
-    QStandardItem *unameItem = mItemModel->item(src.row(), Col_User);
+    QStandardItem *unameItem = mItemModel->itemFromIndex(src.siblingAtColumn(Col_User));
     const QString uname = unameItem ? unameItem->data(SortRole).toString() : QString();
     mProcessService->killProcess(pid, uname, im->getUserName());
 }
@@ -561,7 +702,7 @@ void ProcessesPage::on_tableProcess_customContextMenuRequested(const QPoint &pos
     QAction *action = mHeaderMenu.exec(globalPos);
 
     if (action) {
-        ui->tableProcess->horizontalHeader()->setSectionHidden(action->data().toInt(), ! action->isChecked());
+        ui->tableProcess->header()->setSectionHidden(action->data().toInt(), ! action->isChecked());
         updateProcessIoCollection();
     }
 }
@@ -584,10 +725,12 @@ void ProcessesPage::onRowContextMenu(const QPoint &pos)
     if (!idx.isValid())
         return;
 
-    // Grab the source-model row so we can read the PID directly.
-    const int sourceRow = mSortFilterModel->mapToSource(idx).row();
-    QStandardItem *pidItem = mItemModel->item(sourceRow, 0);
-    if (!pidItem)
+    // SSO-15376: itemFromIndex(), not item(row, 0) — process rows live
+    // under one of the two group parents, not the root. Bail out on a
+    // section-header row (no PID, no pin/alert/end-process actions apply).
+    const QModelIndex srcIdx = mSortFilterModel->mapToSource(idx);
+    QStandardItem *pidItem = mItemModel->itemFromIndex(srcIdx.siblingAtColumn(0));
+    if (!pidItem || pidItem->data(GroupHeaderRole).toBool())
         return;
 
     const pid_t pid = pidItem->data(SortRole).toLongLong();
@@ -617,7 +760,10 @@ void ProcessesPage::onRowContextMenu(const QPoint &pos)
         dlg->setAttribute(Qt::WA_DeleteOnClose);
         dlg->open();
     } else if (chosen == endAction) {
-        mSelectedRowModel = mSortFilterModel->index(idx.row(), 0);
+        // SSO-15376: siblingAtColumn() preserves idx's actual parent group;
+        // reconstructing via mSortFilterModel->index(idx.row(), 0) would
+        // default to the root parent and could hit the other group's row.
+        mSelectedRowModel = idx.siblingAtColumn(Col_Pid);
         on_btnEndProcess_clicked();
     }
 }
@@ -629,15 +775,21 @@ void ProcessesPage::onPinPrefsChanged()
 
 void ProcessesPage::refreshPinnedRoles()
 {
+    // SSO-15376: iterate each group's children — mItemModel->rowCount() at
+    // the root now only counts the two section headers, not process rows.
     auto *prefs = ProcessPrefsManager::ins();
-    for (int row = 0; row < mItemModel->rowCount(); ++row) {
-        QStandardItem *pidItem = mItemModel->item(row, 0);
-        if (!pidItem)
+    for (QStandardItem *group : {mAppsGroupItem, mBackgroundGroupItem}) {
+        if (!group)
             continue;
-        const pid_t pid = pidItem->data(SortRole).toLongLong();
-        const QString name = mPidToName.value(pid);
-        pidItem->setData(prefs->isPinned(name),
-                         PinSortFilterProxyModel::PinnedRole);
+        for (int row = 0; row < group->rowCount(); ++row) {
+            QStandardItem *pidItem = group->child(row, 0);
+            if (!pidItem)
+                continue;
+            const pid_t pid = pidItem->data(SortRole).toLongLong();
+            const QString name = mPidToName.value(pid);
+            pidItem->setData(prefs->isPinned(name),
+                             PinSortFilterProxyModel::PinnedRole);
+        }
     }
     // Nudge the proxy to re-sort.
     mSortFilterModel->invalidate();
