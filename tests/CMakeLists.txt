@@ -99,6 +99,10 @@ add_nexis_test(NAME LifecycleDenyListTests SOURCES core/test_lifecycle_deny_list
 # SSO-15566 / SSO-15373 CISO §4: pure decision logic for the running-process
 # warn/quit gate ahead of trashApps() — platform-neutral, runs everywhere.
 add_nexis_test(NAME RunningAppGateTests SOURCES core/test_running_app_gate.cpp)
+# SSO-15386 / SSO-15373: append-only audit trail for lifecycle-manager
+# deletions (uninstaller + orphan-leftover scanner). Lives in
+# shared/nexis-core so it builds and runs on both platforms.
+add_nexis_test(NAME LifecycleAuditLogTests SOURCES core/test_lifecycle_audit_log.cpp)
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real (non-overridden) PackageTool
 # runCommand/runSudoCommand seam against the migrated execWithStatus contract.
