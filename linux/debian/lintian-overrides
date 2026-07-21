@@ -1,0 +1,3 @@
+# nexis is a GUI application; it has no command-line interface and ships no
+# man page by design. The binary in /usr/bin/nexis is a desktop launcher.
+nexis: no-manual-page [usr/bin/nexis]
