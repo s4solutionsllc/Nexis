@@ -5,6 +5,7 @@
 // absolute paths (no symlinks to resolve) so they run correctly on any host.
 
 #include <QTest>
+#include <QStandardPaths>
 
 #include "Tools/app_uninstall_deny_list.h"
 
