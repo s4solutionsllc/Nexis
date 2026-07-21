@@ -41,7 +41,12 @@ public:
 
     // SSO-15384 / CISO §4: returns true when any process whose executable path
     // is inside bundlePath is currently running.
-    virtual bool isAppRunning(const QString &bundlePath) const;
+    bool isAppRunning(const QString &bundlePath) const override;
+
+    // SSO-15566 / CISO §4: graceful quit (never SIGKILL) of every running
+    // instance of the app at bundlePath. See macos/nexis-core/Tools/
+    // app_quit_helper.mm for the NSRunningApplication::terminate call.
+    bool quitApp(const QString &bundlePath) override;
 
 protected:
     // WI-33: seam for tests — overridden to return a fixed fake path so the

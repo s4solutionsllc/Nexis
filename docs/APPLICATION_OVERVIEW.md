@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-07-20 | Version 2.8.3
+> Last updated: 2026-07-21 | Version 2.8.3
 
 ---
 
@@ -403,6 +403,7 @@ Uninstall applications and packages. Labeled "Applications" on macOS. Three-tab 
 **Platform backends:**
 - Linux: `apt-get remove/purge`, `dnf remove`, `pacman -R`, `snap remove`, `apt-get autoremove` / `dnf autoremove` / `pacman -Rns`; on APT 3.1+ also `apt history-list/-info/-undo/-rollback` and `apt why/why-not`
 - macOS: `brew uninstall` for Homebrew packages; `QFile::moveToTrash` (`NSFileManager::trashItemAtURL:`) for `.app` bundles — no AppleScript/`osascript` is involved, so bundle names containing quotes or other metacharacters cannot inject arbitrary code (SSO-3366, audit S1); `brew autoremove` for orphans
+- **macOS running-process warn/quit gate (CISO §4, SSO-15373/SSO-15566):** Before any selected `.app` is trashed, `PackageToolMacOS::isAppRunning()` (`lsof +d <bundle>`) checks whether it's currently running. A running app blocks behind a one-sentence `RunningAppWarningDialog` with a "Quit App" action; quitting is graceful only — `PackageToolMacOS::quitApp()` calls `-[NSRunningApplication terminate]` (the AppleEvent-quit equivalent, never `-forceTerminate`) via the `app_quit_helper.mm` bridge — then the dialog polls `isAppRunning()` for up to 10 seconds, letting the user retry or Cancel if the app is still open. Cancelling drops only that app from the batch; the rest proceed. The filtering decision (`RunningAppGate::filterRunnable()`) is pure/testable and independent of the dialog itself.
 - **macOS leftover scanner (FW-18):** After selecting a `.app` for removal, Nexis resolves its bundle id and scans seven standard `~/Library` locations (`Application Support`, `Caches`, `Preferences`, `Logs`, `Containers`, `Saved Application State`, `LaunchAgents`) for matching artifacts. Matches are made exclusively against the exact bundle id (e.g. `com.example.MyApp`) or `<bundle-id>.<ext>` prefixed filenames — app name is never used as a substring filter to prevent false positives on unrelated bundles. Found artifacts are listed with sizes for user review and can be trashed via `QFile::moveToTrash` (the same injection-safe path as the bundle itself).
 - **Linux leftover scanner (SSO-15385):** After selecting a dpkg/rpm/Flatpak/Snap package for removal, `LeftoverScannerLinux::scanLeftovers()` scans `~/.config`, `~/.cache`, `~/.local/share`, and `~/.config/autostart` for matching artifacts, keyed off the package name plus (for reverse-DNS Flatpak ids) its trailing dot-segment. Matches are exact leaf-name or `<name>.<suffix>` (e.g. `firefox.desktop`) only — hyphen/underscore/space are never treated as a match delimiter, so sibling packages sharing a name prefix (`firefox`/`firefox-esr`, `code`/`code-insiders`) never cross-match. Every candidate is re-checked against `LifecycleDenyList::isSafe()` (CISO §2, SSO-15373) at scan time and again immediately before deletion. `LeftoverReviewDialogLinux` lists candidates with per-item size and a one-sentence total/selected summary; deletion goes through `PackageToolLinux::trashLeftovers()`, which uses `QFile::moveToTrash` and writes a CISO §3 audit record per item.
 
