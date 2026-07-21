@@ -6,6 +6,7 @@
 #include <QScrollArea>
 #include <QGroupBox>
 #include <QStyle>
+#include <QObject>
 #include <QtConcurrent>
 
 #include "Managers/app_manager.h"
@@ -54,7 +55,7 @@ public:
                 TrustSafetyActionItem item;
                 item.id              = QStringLiteral("%1-%2").arg(catId).arg(idCounter++);
                 item.label           = fi.fileName();
-                item.description     = tr("Safe to remove: %1 in %2").arg(fi.fileName(), catLabel);
+                item.description     = QObject::tr("Safe to remove: %1 in %2").arg(fi.fileName(), catLabel);
                 item.command         = fi.absoluteFilePath();
                 item.categoryId      = catId;
                 item.categoryLabel   = catLabel;

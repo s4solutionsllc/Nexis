@@ -598,6 +598,20 @@ add_nexis_test(NAME DirSizeScannerTests
 add_nexis_test(NAME TrustSafetyRunnerTests
   SOURCES
     managers/test_trust_safety_runner.cpp
+    "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Common"
+  LIBS
+    Qt6::Concurrent
+)
+
+# SSO-15481: Maintenance Wizard's Trust & Safety adoption — scan→item mapping
+# and performItem dry-run parity, exercised in isolation (see file header).
+# Separate executable from TrustSafetyRunnerTests: QTEST_MAIN() generates
+# main(), and each test file needs its own per the convention above.
+add_nexis_test(NAME MaintenanceWizardTrustSafetyTests
+  SOURCES
     managers/test_maintenance_wizard_trust_safety.cpp
     "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
   INCLUDES
