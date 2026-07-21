@@ -5,6 +5,7 @@
 #include <QStringList>
 
 class QTableWidget;
+class QTableWidgetItem;
 class QLabel;
 class QPushButton;
 
