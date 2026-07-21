@@ -651,9 +651,15 @@ add_nexis_test(NAME MaintenanceWizardTrustSafetyTests
 )
 
 # SSO-15480: SystemCleanerProvider — per-item selection and dry-run parity.
-# Compiled directly (no nexis-gui) using a testable subclass that overrides
-# performItem() to do direct QFile operations rather than routing through
-# CleanerService, keeping the test self-contained and cross-platform.
+# The test exercises a TestableSystemCleanerProvider subclass that overrides
+# performItem() to do direct QFile operations, but SystemCleanerProvider's own
+# (unused-at-runtime) performItem() still references CleanerService::cleanFiles
+# and ToolManager::removeStaleSnapRevisions/removeUnusedFlatpakRuntimes, which
+# only exist in nexis-gui (Managers/cleaner_service.cpp, Managers/tool_manager.cpp)
+# — not nexis-core. Link nexis-gui like CleanerServiceTests above instead of
+# hand-compiling those two files: tool_manager.cpp alone pulls in ~10 further
+# platform-tool translation units, so direct-compiling would just cascade into
+# more undefined symbols.
 add_nexis_test(NAME SystemCleanerProviderTests
   SOURCES
     managers/test_system_cleaner_provider.cpp
@@ -665,7 +671,7 @@ add_nexis_test(NAME SystemCleanerProviderTests
     "${GUI_SHARED_DIR}/Pages/SystemCleaner"
   LIBS
     Qt6::Concurrent
-    nexis-core
+    nexis-gui Qt6::Widgets
 )
 
 # SSO-3363 / audit H2: LogProvider::cancel() null-deref defence and
