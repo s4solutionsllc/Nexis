@@ -1,0 +1,3 @@
+# nexis is a GUI application with no CLI interface; a manual page is not
+# applicable and would be misleading. Upstream does not provide one.
+nexis source: no-manual-page usr/bin/nexis
