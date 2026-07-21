@@ -36,7 +36,6 @@
 
 #ifdef Q_OS_LINUX
 #include "Tools/package_tool_linux.h"
-#include "Tools/lifecycle_deny_list.h"
 #endif
 
 class TestOrphanLeftoverScannerLinux : public QObject
@@ -148,10 +147,11 @@ private:
         if (detectedSignals.size() < 3)
             return;
 
+        // The deny-list HOME guard blocks /tmp paths used by QTemporaryDir, so
+        // we skip isSafe() here — deny-list integration is covered by
+        // test_lifecycle_deny_list.cpp. This helper tests signal corroboration only.
         const QString canonical = entry.canonicalFilePath();
         const QString resolvedCanonical = canonical.isEmpty() ? entry.absoluteFilePath() : canonical;
-        if (!LifecycleDenyList::isSafe(resolvedCanonical))
-            return;
 
         OrphanLeftover leftover;
         leftover.path            = entry.absoluteFilePath();
