@@ -5,6 +5,29 @@
 
 namespace SparkleAppcastParser {
 
+namespace {
+
+// The XML declaration must be the very first thing in a well-formed
+// document; QXmlStreamReader errors out immediately if anything precedes
+// it. Real-world appcast servers routinely emit a UTF-8 BOM or leading
+// whitespace before "<?xml", so strip both defensively rather than let
+// otherwise-valid feeds parse to zero enclosures.
+QByteArray stripLeadingBomAndWhitespace(const QByteArray &data)
+{
+    int start = 0;
+    if (data.size() >= 3
+        && static_cast<unsigned char>(data[0]) == 0xEF
+        && static_cast<unsigned char>(data[1]) == 0xBB
+        && static_cast<unsigned char>(data[2]) == 0xBF) {
+        start = 3;
+    }
+    while (start < data.size() && QChar(QLatin1Char(data.at(start))).isSpace())
+        ++start;
+    return data.mid(start);
+}
+
+} // namespace
+
 SparkleAppcastResult parse(const QByteArray &data)
 {
     SparkleAppcastResult result;
@@ -18,7 +41,7 @@ SparkleAppcastResult parse(const QByteArray &data)
         return result;
     }
 
-    QXmlStreamReader xml(data);
+    QXmlStreamReader xml(stripLeadingBomAndWhitespace(data));
 
     // Walk the XML.  We collect <item> entries; within each <item> we look
     // for <enclosure> elements that carry the Sparkle extension attributes.

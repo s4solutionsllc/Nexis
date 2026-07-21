@@ -19,10 +19,11 @@ private slots:
     void noSignature_signaturePresentFalse();
     void missingUrl_itemExcluded();
     void parseError_partialResultOk();
+    void leadingWhitespace_stillParses();
+    void utf8Bom_stillParses();
 };
 
-static const char *kMinimalFeed = R"xml(
-<?xml version="1.0" encoding="utf-8"?>
+static const char *kMinimalFeed = R"xml(<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0"
      xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
@@ -39,8 +40,7 @@ static const char *kMinimalFeed = R"xml(
 </rss>
 )xml";
 
-static const char *kLegacyDsaFeed = R"xml(
-<?xml version="1.0" encoding="utf-8"?>
+static const char *kLegacyDsaFeed = R"xml(<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0"
      xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
@@ -55,8 +55,7 @@ static const char *kLegacyDsaFeed = R"xml(
 </rss>
 )xml";
 
-static const char *kMultiItemFeed = R"xml(
-<?xml version="1.0" encoding="utf-8"?>
+static const char *kMultiItemFeed = R"xml(<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0"
      xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
@@ -79,8 +78,7 @@ static const char *kMultiItemFeed = R"xml(
 </rss>
 )xml";
 
-static const char *kNoSignatureFeed = R"xml(
-<?xml version="1.0" encoding="utf-8"?>
+static const char *kNoSignatureFeed = R"xml(<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0"
      xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
@@ -126,6 +124,7 @@ void TestSparkleAppcast::validFeed_parsesVersion()
 void TestSparkleAppcast::validFeed_parsesEdSignature()
 {
     const SparkleAppcastResult r = parse(QByteArray(kMinimalFeed));
+    QVERIFY(!r.enclosures.isEmpty());
     QVERIFY(!r.enclosures.first().edSignature.isEmpty());
     QVERIFY(r.enclosures.first().signaturePresent());
 }
@@ -143,6 +142,7 @@ void TestSparkleAppcast::validFeed_parsesDsaSignature_whenNoEd()
 void TestSparkleAppcast::validFeed_enclosureUrlParsed()
 {
     const SparkleAppcastResult r = parse(QByteArray(kMinimalFeed));
+    QVERIFY(!r.enclosures.isEmpty());
     QCOMPARE(r.enclosures.first().url, QString("https://example.com/MyApp-2.0.dmg"));
 }
 
@@ -194,6 +194,29 @@ void TestSparkleAppcast::parseError_partialResultOk()
     const SparkleAppcastResult r = parse(partial);
     QVERIFY(r.ok);
     QCOMPARE(r.enclosures.size(), 1);
+}
+
+void TestSparkleAppcast::leadingWhitespace_stillParses()
+{
+    // Some appcast servers emit a leading newline/whitespace before the XML
+    // declaration; a strictly-conformant reader would otherwise fault before
+    // reaching any <item>, silently finding zero updates on target hardware.
+    const QByteArray withLeadingNewline = QByteArray("\n") + QByteArray(kMinimalFeed);
+    const SparkleAppcastResult r = parse(withLeadingNewline);
+    QVERIFY(r.ok);
+    QCOMPARE(r.enclosures.size(), 1);
+    QCOMPARE(r.enclosures.first().version, QString("2.0"));
+}
+
+void TestSparkleAppcast::utf8Bom_stillParses()
+{
+    QByteArray withBom;
+    withBom.append('\xEF').append('\xBB').append('\xBF');
+    withBom += QByteArray(kMinimalFeed);
+    const SparkleAppcastResult r = parse(withBom);
+    QVERIFY(r.ok);
+    QCOMPARE(r.enclosures.size(), 1);
+    QCOMPARE(r.enclosures.first().version, QString("2.0"));
 }
 
 QTEST_MAIN(TestSparkleAppcast)
