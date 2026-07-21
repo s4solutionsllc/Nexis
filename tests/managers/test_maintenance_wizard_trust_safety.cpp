@@ -43,7 +43,7 @@ public:
                 item.description     = QStringLiteral("Safe to remove: %1").arg(fi.fileName());
                 item.command         = fi.absoluteFilePath();
                 item.categoryId      = QString::number(static_cast<int>(cat));
-                item.categoryLabel   = CleanerService::categoryName(cat);
+                item.categoryLabel   = QStringLiteral("Category %1").arg(static_cast<int>(cat));
                 item.riskTier        = TrustSafetyActionItem::RiskTier::Standard;
                 item.estimatedSizeBytes = fi.isDir() ? 0 : fi.size();
                 itemFound(item);
