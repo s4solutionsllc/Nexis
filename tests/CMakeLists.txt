@@ -662,6 +662,26 @@ add_nexis_test(NAME MaintenanceWizardTrustSafetyTests
     Qt6::Concurrent
 )
 
+# SSO-15480: SystemCleanerProvider — per-item selection and dry-run parity.
+# system_cleaner_provider.cpp and trust_safety_runner.cpp are already compiled
+# into nexis-gui (GUI_SHARED_SRCS). Adding them again to SOURCES would cause
+# AUTOMOC to generate duplicate MOC symbols (TrustSafetyRunner, etc.) — one
+# copy in the test target's mocs_compilation.cpp.o and another in
+# libnexis-gui.a(mocs_compilation.cpp.o). Link nexis-gui instead (like
+# CleanerServiceTests) so all three binaries — CleanerService, ToolManager,
+# TrustSafetyRunner, SystemCleanerProvider — come from a single archive.
+add_nexis_test(NAME SystemCleanerProviderTests
+  SOURCES
+    managers/test_system_cleaner_provider.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Common"
+    "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  LIBS
+    Qt6::Concurrent
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3363 / audit H2: LogProvider::cancel() null-deref defence and
 # SSO-3384 / WI-22: MacOsLogStreamParser incremental ndjson parsing.
 # Compiles log_provider.cpp directly so the test runs cross-platform without

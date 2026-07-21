@@ -13,6 +13,8 @@
 #include "Managers/app_manager.h"
 
 #include <Managers/cleaner_service.h>
+#include "system_cleaner_provider.h"
+#include <Common/trust_safety_preview_dialog.h>
 
 class QCheckBox;
 class QLabel;
@@ -65,7 +67,6 @@ public:
 
 signals:
     void scanFinishedS();
-    void cleanFinishedS();
     void checkedCategoryCountChanged(int count);
 
 private slots:
@@ -81,9 +82,7 @@ private slots:
     void onBtnScanSystemClicked();
 
     void systemScan();
-    void systemClean();
     void onScanFinished();
-    void onCleanFinished();
 
     void on_cbSortBy_currentIndexChanged(int idx);
     void updateScheduleIndicator();
@@ -178,20 +177,10 @@ private:
     QFileInfoList mRetainedBrowserPrivacy;
     QFileInfoList mRetainedSnapFlatpak;
 
-    // Thread-safe clean state (set on main thread before worker, read on worker)
-    QStringList mFilesToDelete;
-    bool mCleanTrash;
-    bool mCleanSnapFlatpak;
-    // Clean results (written on worker, read on main thread in onCleanFinished)
-    quint64 mTotalCleanedSize;
-    // Children to remove from tree (indices captured on main thread before worker)
-    QList<QPair<int,int>> mChildrenToRemove;
-
     // Prevent overlapping scan/clean workers (BUG-10)
     bool mScanInProgress = false;
-    bool mCleanInProgress = false;
-    bool mCleaningFromCard = false;   // true when clean was initiated from page-0 footer
-    bool mInitialScan = false;        // true during the auto-scan fired on first show
+    bool mCleanInProgress = false;   // true while TrustSafetyPreviewDialog is open
+    bool mInitialScan = false;       // true during the auto-scan fired on first show
     // GH-226: suppress per-checkbox tree rebuilds during onSelectAllClicked()
     bool mBulkCategoryUpdate = false;
 
