@@ -186,5 +186,5 @@ void TestAppUninstallDenyList::allowSiblingNoFalsePrefix()
     QVERIFY(!AppUninstallDenyList::isSafeToDelete(path));
 }
 
-#include <QStandardPaths>
+QTEST_MAIN(TestAppUninstallDenyList)
 #include "test_app_uninstall_deny_list.moc"
