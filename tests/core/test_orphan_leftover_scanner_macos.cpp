@@ -155,7 +155,7 @@ private:
 
         const QString canonical = entry.canonicalFilePath();
         const QString resolvedCanonical = canonical.isEmpty() ? entry.absoluteFilePath() : canonical;
-        if (!LifecycleDenyList::isSafe(resolvedCanonical))
+        if (!LifecycleDenyList::isSafe(resolvedCanonical, m_fakeHome))
             return;
 
         OrphanLeftover leftover;

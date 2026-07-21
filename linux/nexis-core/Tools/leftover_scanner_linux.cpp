@@ -18,10 +18,8 @@ struct SearchRoot {
     QString category;
 };
 
-QList<SearchRoot> searchRoots()
+QList<SearchRoot> searchRoots(const QString &home)
 {
-    const QString home = QDir::homePath();
-
     // XDG user directories — prefer env-var overrides then fallback defaults.
     const QString configHome = qEnvironmentVariable("XDG_CONFIG_HOME", home + "/.config");
     const QString cacheHome  = qEnvironmentVariable("XDG_CACHE_HOME",  home + "/.cache");
@@ -95,7 +93,13 @@ QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames)
     if (packageNames.isEmpty())
         return out;
 
-    for (const SearchRoot &root : searchRoots()) {
+    // Resolved once and threaded into the deny-list check below so both use
+    // the same root — QStandardPaths::HomeLocation (used internally by
+    // LifecycleDenyList when no override is given) ignores $HOME env-var
+    // overrides on Apple platforms, unlike QDir::homePath() used here.
+    const QString home = QDir::homePath();
+
+    for (const SearchRoot &root : searchRoots(home)) {
         QDir dir(root.path);
         if (!dir.exists())
             continue;
@@ -114,7 +118,7 @@ QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames)
             const QString canonical = fi.canonicalFilePath();
             if (canonical.isEmpty())
                 continue; // dangling symlink — skip
-            if (!LifecycleDenyList::isSafe(canonical))
+            if (!LifecycleDenyList::isSafe(canonical, home))
                 continue;
 
             LeftoverCandidate c;

@@ -27,7 +27,15 @@ namespace LifecycleDenyList {
 //
 // Returns true only when the canonicalized path is outside every denied
 // location for the current platform.
-NEXISCORESHARED_EXPORT bool isSafe(const QString &path);
+//
+// `homeRootOverride`: when non-empty, used as the $HOME boundary instead of
+// re-deriving it via QStandardPaths::HomeLocation. Callers that have already
+// resolved an effective home root (e.g. a dependency-injected fake root in
+// tests) should pass it here — QStandardPaths::HomeLocation ignores $HOME
+// env-var overrides on Apple platforms (unlike QDir::homePath(), which the
+// scanners use to build their scan roots), so re-deriving it independently
+// can diverge from the root the caller actually operated against.
+NEXISCORESHARED_EXPORT bool isSafe(const QString &path, const QString &homeRootOverride = QString());
 
 } // namespace LifecycleDenyList
 

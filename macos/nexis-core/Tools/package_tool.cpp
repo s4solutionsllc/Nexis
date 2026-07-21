@@ -454,7 +454,8 @@ QString stripKnownOrphanSuffix(const QString &name)
 void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
                               const QFileInfo &entry,
                               const QString &category,
-                              const QSet<QString> &installedBundleIds)
+                              const QSet<QString> &installedBundleIds,
+                              const QString &homeRoot)
 {
     const QString baseName = stripKnownOrphanSuffix(entry.fileName());
     const bool hasInstalledApp = installedBundleIds.contains(baseName);
@@ -491,7 +492,7 @@ void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
     // correlation only) from ever being offered for deletion.
     const QString canonical = entry.canonicalFilePath();
     const QString resolvedCanonical = canonical.isEmpty() ? entry.absoluteFilePath() : canonical;
-    if (!LifecycleDenyList::isSafe(resolvedCanonical))
+    if (!LifecycleDenyList::isSafe(resolvedCanonical, homeRoot))
         return;
 
     OrphanLeftover leftover;
@@ -543,7 +544,7 @@ QList<OrphanLeftover> PackageToolMacOS::findOrphanLeftovers()
         const QFileInfoList entries = dir.entryInfoList(
             QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
         for (const QFileInfo &entry : entries)
-            evaluateOrphanCandidate(result, entry, target.label, installedBundleIds);
+            evaluateOrphanCandidate(result, entry, target.label, installedBundleIds, home);
     }
 
     return result;
