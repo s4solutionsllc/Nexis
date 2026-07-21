@@ -61,6 +61,10 @@ private:
     // header context menu toggles a column.
     void updateProcessIoCollection();
 
+    // SSO-15379: header-tooltip messaging for missing tool/permission on the
+    // net-IO columns — see updateProcessIoCollection()/onProcessesUpdated().
+    void updateNetIoAvailabilityMessage(bool netVisible);
+
     // FR-116: refresh the pinned-role on every row from ProcessPrefsManager.
     void refreshPinnedRoles();
 

@@ -1,5 +1,6 @@
 #include "process_info_linux.h"
 
+#include "nethogs_streamer.h"
 #include "nvml_process_sampler.h"
 #include "proc_info_parser.h"
 
@@ -80,6 +81,25 @@ ProcessInfoLinux::ProcessInfoLinux()
 
     mBootTimeSec = ProcInfoParser::parseBootTime(readAll("/proc/stat"));
     mTotalMemBytes = ProcInfoParser::parseMemTotalBytes(readAll("/proc/meminfo"));
+}
+
+ProcessInfoLinux::~ProcessInfoLinux() = default;
+
+ProcessInfo::NetIoAvailability ProcessInfoLinux::netIoAvailability() const
+{
+    if (!mNethogsStreamer)
+        return NetIoAvailability::Available;   // not started yet — nothing to report
+
+    switch (mNethogsStreamer->status()) {
+    case NethogsStreamer::Status::ToolMissing:
+        return NetIoAvailability::ToolMissing;
+    case NethogsStreamer::Status::ExitedImmediately:
+        return NetIoAvailability::PermissionDenied;
+    case NethogsStreamer::Status::NotStarted:
+    case NethogsStreamer::Status::Running:
+    default:
+        return NetIoAvailability::Available;
+    }
 }
 
 QString ProcessInfoLinux::lookupUid(uid_t uid)
@@ -303,66 +323,120 @@ QList<Process> ProcessInfoLinux::collectProcesses()
     // I/O columns are hidden. Hundreds of file opens per tick on a loaded
     // system otherwise. Reset the baseline cache when collection is off so
     // we don't display stale rates if the user re-enables the column later.
+    //
+    // SSO-15379: this used to `return processes` here when disk I/O was off,
+    // which also skipped net I/O below (they're independent FR-108 toggles,
+    // gated by separate Processes-page columns) — folded into an if/else so
+    // disabling one doesn't disable the other.
     if (!mCollectDiskIO) {
         if (!mPrevDiskIo.isEmpty())
             mPrevDiskIo.clear();
         mIoTimerStarted = false;
-        return processes;
-    }
-
-    double elapsedSecs = 0;
-    if (!mIoTimerStarted) {
-        mIoTimer.start();
-        mIoTimerStarted = true;
     } else {
-        elapsedSecs = mIoTimer.elapsed() / 1000.0;
-        mIoTimer.restart();
-    }
+        double elapsedSecs = 0;
+        if (!mIoTimerStarted) {
+            mIoTimer.start();
+            mIoTimerStarted = true;
+        } else {
+            elapsedSecs = mIoTimer.elapsed() / 1000.0;
+            mIoTimer.restart();
+        }
 
-    QSet<pid_t> activePids;
+        QSet<pid_t> activePids;
 
-    for (Process &proc : processes) {
-        pid_t pid = proc.getPid();
-        activePids.insert(pid);
+        for (Process &proc : processes) {
+            pid_t pid = proc.getPid();
+            activePids.insert(pid);
 
-        QString ioContent = FileUtil::readStringFromFile(
-            QString("/proc/%1/io").arg(pid));
+            QString ioContent = FileUtil::readStringFromFile(
+                QString("/proc/%1/io").arg(pid));
 
-        if (!ioContent.isEmpty()) {
-            quint64 readBytes = 0;
-            quint64 writeBytes = 0;
+            if (!ioContent.isEmpty()) {
+                quint64 readBytes = 0;
+                quint64 writeBytes = 0;
 
-            const QStringList ioLines = ioContent.split('\n');
-            for (const QString &ioLine : ioLines) {
-                if (ioLine.startsWith(QLatin1String("read_bytes:")))
-                    readBytes = ioLine.mid(12).trimmed().toULongLong();
-                else if (ioLine.startsWith(QLatin1String("write_bytes:")))
-                    writeBytes = ioLine.mid(13).trimmed().toULongLong();
+                const QStringList ioLines = ioContent.split('\n');
+                for (const QString &ioLine : ioLines) {
+                    if (ioLine.startsWith(QLatin1String("read_bytes:")))
+                        readBytes = ioLine.mid(12).trimmed().toULongLong();
+                    else if (ioLine.startsWith(QLatin1String("write_bytes:")))
+                        writeBytes = ioLine.mid(13).trimmed().toULongLong();
+                }
+
+                if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
+                    auto prev = mPrevDiskIo.value(pid);
+                    double readRate = (readBytes >= prev.first)
+                        ? (readBytes - prev.first) / elapsedSecs : 0;
+                    double writeRate = (writeBytes >= prev.second)
+                        ? (writeBytes - prev.second) / elapsedSecs : 0;
+                    proc.setDiskReadRate(readRate);
+                    proc.setDiskWriteRate(writeRate);
+                } else {
+                    proc.setDiskReadRate(0);
+                    proc.setDiskWriteRate(0);
+                }
+
+                mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
             }
+        }
 
-            if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
-                auto prev = mPrevDiskIo.value(pid);
-                double readRate = (readBytes >= prev.first)
-                    ? (readBytes - prev.first) / elapsedSecs : 0;
-                double writeRate = (writeBytes >= prev.second)
-                    ? (writeBytes - prev.second) / elapsedSecs : 0;
-                proc.setDiskReadRate(readRate);
-                proc.setDiskWriteRate(writeRate);
-            } else {
-                proc.setDiskReadRate(0);
-                proc.setDiskWriteRate(0);
-            }
-
-            mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
+        auto it = mPrevDiskIo.begin();
+        while (it != mPrevDiskIo.end()) {
+            if (!activePids.contains(it.key()))
+                it = mPrevDiskIo.erase(it);
+            else
+                ++it;
         }
     }
 
-    auto it = mPrevDiskIo.begin();
-    while (it != mPrevDiskIo.end()) {
-        if (!activePids.contains(it.key()))
-            it = mPrevDiskIo.erase(it);
-        else
-            ++it;
+    // --- Per-process network I/O (SSO-15379) ---
+    // Linux has no procfs equivalent of macOS's nettop for per-process
+    // network byte counts, so this shells out to `nethogs -t` as a
+    // persistent streamer (see nethogs_streamer.h for the capability
+    // caveat). Unlike disk I/O, nethogs already reports a KB/s rate itself,
+    // so there's no elapsed-time delta to compute here — just read the
+    // latest snapshot and convert units.
+    if (!mCollectNetIO) {
+        if (mNethogsStreamer) {
+            mNethogsStreamer->stop();
+            mNethogsStreamer.reset();
+        }
+    } else {
+        if (!mNethogsStreamer)
+            mNethogsStreamer = std::make_unique<NethogsStreamer>();
+        // Only ever attempt to start once per activation (NotStarted): a
+        // ToolMissing/ExitedImmediately status won't resolve itself on the
+        // next tick, and retrying every tick would mean respawning nethogs
+        // in a busy loop when the capability is missing. Toggling the net
+        // columns off and back on creates a fresh streamer (see below),
+        // which gives a clean retry if the environment changed meanwhile.
+        if (mNethogsStreamer->status() == NethogsStreamer::Status::NotStarted)
+            mNethogsStreamer->start(1);
+
+        const QHash<pid_t, QPair<double, double>> netData = mNethogsStreamer->snapshot();
+        QSet<pid_t> activeNetPids;
+
+        for (Process &proc : processes) {
+            pid_t pid = proc.getPid();
+            activeNetPids.insert(pid);
+
+            if (netData.contains(pid)) {
+                auto net = netData.value(pid);
+                proc.setNetUpRate(net.first);
+                proc.setNetDownRate(net.second);
+            } else if (mNethogsStreamer->status() == NethogsStreamer::Status::Running) {
+                // Streamer is up but has no data yet for this pid (no
+                // traffic since the last sample) — zero, not the -1
+                // "unavailable" sentinel.
+                proc.setNetUpRate(0);
+                proc.setNetDownRate(0);
+            }
+            // else: leave the Process defaults (-1 → "—") so the UI shows
+            // "unavailable" rather than a misleading zero when the tool is
+            // missing or couldn't get a capture socket.
+        }
+
+        mNethogsStreamer->pruneDeadPids(activeNetPids);
     }
 
     return processes;

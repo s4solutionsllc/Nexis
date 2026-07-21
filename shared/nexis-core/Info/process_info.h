@@ -31,6 +31,19 @@ public:
     bool collectsNetIO() const  { return mCollectNetIO; }
     bool collectsGpu() const    { return mCollectGpu; }
 
+    // SSO-15379: lets the Processes page distinguish "no data because the
+    // column is hidden / nothing to report yet" from "no data because the
+    // required tool/permission is missing" so it can show a real message
+    // instead of silently rendering blank/zero. Platforms whose net-IO
+    // source doesn't need an external tool (e.g. macOS's built-in nettop)
+    // simply report Available always.
+    enum class NetIoAvailability {
+        Available,
+        ToolMissing,        // e.g. nethogs not installed (Linux)
+        PermissionDenied,   // tool present but couldn't get a capture socket
+    };
+    virtual NetIoAvailability netIoAvailability() const { return NetIoAvailability::Available; }
+
     // WI-21 (audit M2): thread-safe publish pair, mirrors
     // DiskHealthInfo::collectDriveHealth()/setDrives() (WI-03).
     // collectProcesses() runs the per-PID walk and any forks (`ps` on
