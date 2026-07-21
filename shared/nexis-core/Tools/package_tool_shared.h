@@ -4,6 +4,7 @@
 #include <QString>
 #include <QList>
 #include <QFileInfoList>
+#include <QDateTime>
 
 #include "nexis-core_global.h"
 
@@ -65,6 +66,29 @@ struct AppLeftover {
     quint64 size = 0;   // size in bytes (0 when size could not be determined)
 };
 
+// SSO-15386 (Orphan-Leftover Scanner) / SSO-15373 §5: one corroborating
+// signal behind an OrphanLeftover match. A single signal is never enough —
+// see PackageTool::findOrphanLeftovers() for the >= 3-of-4 confidence bar.
+struct OrphanSignal {
+    QString ruleId;       // e.g. "no_installed_app", "naming_convention", "age_threshold", "not_recently_accessed"
+    QString humanLabel;   // shown in UI
+};
+
+// A candidate leftover with no installed app to correlate against. Higher
+// risk than AppLeftover (which is matched against a known-just-uninstalled
+// bundle id), so every result carries its full signal list and a
+// confidence score for the reviewer, not just a pass/fail verdict.
+struct OrphanLeftover {
+    QString path;
+    QString canonicalPath;
+    QString category;
+    quint64 size = 0;
+    QList<OrphanSignal> matchedSignals;
+    int confidenceScore = 0;
+    QDateTime lastModified;
+    QDateTime lastAccessed;
+};
+
 enum PackageTools {
     APT,        // debian
     APT_RPM,    // ALT Linux, PCLinuxOS, Vine Linux (apt-get + rpm)
@@ -113,6 +137,15 @@ public:
     // Move each path in `paths` to the macOS Trash via QFile::moveToTrash.
     // Returns true iff every path was trashed successfully.
     virtual bool trashLeftovers(const QStringList &paths) { Q_UNUSED(paths); return false; }
+
+    // SSO-15386 T3/T4: multi-signal orphan-leftover scan — unlike
+    // findAppLeftovers(), there is no known-uninstalled app to correlate
+    // against, so a result is only included when >= 3 of the 4 independent
+    // signals in OrphanSignal corroborate (CISO higher-confidence bar per
+    // SSO-15373 §5). Every candidate is also checked against
+    // LifecycleDenyList::isSafe() before inclusion. Returns an empty list on
+    // platforms without an implementation.
+    virtual QList<OrphanLeftover> findOrphanLeftovers() { return {}; }
 
     static QList<StaleSnapRevision> parseSnapListAll(const QString &output);
     static QList<OrphanPackage> parseAptAutoremoveDryRun(const QString &output);
