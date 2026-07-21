@@ -650,6 +650,55 @@
         </widget>
        </item>
 
+       <!-- ============ MIGRATION ============ -->
+       <item>
+        <widget class="QWidget" name="groupMigration" native="true">
+         <layout class="QVBoxLayout" name="vboxMigration">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerMigration" native="true"/>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="layoutMigration">
+          <property name="spacing"><number>8</number></property>
+
+          <item>
+           <widget class="QLabel" name="lblMigrationDesc">
+            <property name="text"><string>Import settings from a Stacer configuration file.</string></property>
+            <property name="wordWrap"><bool>true</bool></property>
+            <property name="accessibleName"><string notr="true">dimmed</string></property>
+           </widget>
+          </item>
+
+          <item>
+           <layout class="QHBoxLayout" name="layoutMigrationButtons">
+            <item>
+             <widget class="QPushButton" name="btnImportFromStacer">
+              <property name="text"><string>Import from Stacer…</string></property>
+              <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+              <property name="accessibleName"><string notr="true">primary</string></property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="hspacerMigration">
+              <property name="orientation"><enum>Qt::Horizontal</enum></property>
+              <property name="sizeHint" stdset="0"><size><width>0</width><height>0</height></size></property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+
+         </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+
        <!-- ============ FOOTER ============ -->
        <item>
         <spacer name="verticalSpacer">

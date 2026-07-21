@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>StacerImportDialog</class>
+ <widget class="QDialog" name="StacerImportDialog">
+  <property name="windowTitle">
+   <string>Import from Stacer</string>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>460</width>
+    <height>420</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing"><number>12</number></property>
+   <property name="leftMargin"><number>16</number></property>
+   <property name="topMargin"><number>16</number></property>
+   <property name="rightMargin"><number>16</number></property>
+   <property name="bottomMargin"><number>16</number></property>
+
+   <item>
+    <widget class="QLabel" name="lblSummary">
+     <property name="text"><string>Review the settings that will be imported.</string></property>
+     <property name="wordWrap"><bool>true</bool></property>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QLabel" name="lblWillChangeHeader">
+     <property name="text"><string>Settings that will change:</string></property>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QListWidget" name="listWillChange">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
+     </property>
+     <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QLabel" name="lblNotImported">
+     <property name="text"><string/></property>
+     <property name="wordWrap"><bool>true</bool></property>
+     <property name="accessibleName"><string notr="true">dimmed</string></property>
+    </widget>
+   </item>
+
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel</set>
+     </property>
+     <property name="centerButtons"><bool>false</bool></property>
+    </widget>
+   </item>
+
+  </layout>
+ </widget>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>StacerImportDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel"><x>248</x><y>254</y></hint>
+    <hint type="destinationlabel"><x>157</x><y>274</y></hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
