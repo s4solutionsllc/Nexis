@@ -40,19 +40,23 @@ private slots:
     void on_btnUninstall_clicked();
     QStringList getSelectedPackages();
     QStringList getSelectedSnapPackages();
+    QStringList getSelectedFlatpakPackages();
 #ifdef Q_OS_MAC
     QStringList getSelectedAppPaths();
     QStringList getSelectedAppBundleIds();   // FR-123
 #endif
     void onPackagesLoaded(QList<Package> packages);
     void onSnapPackagesLoaded(QStringList packages);
+    void onFlatpakPackagesLoaded(QStringList packages);
     void onOrphanPackagesLoaded(QList<OrphanPackage> packages);
     void on_btnSystemPackages_clicked();
     void on_btnSnapPackages_clicked();
+    void on_btnFlatpakPackages_clicked();
     void on_btnOrphanPackages_clicked();
     void on_btnAptHistory_clicked();
 
     void on_listWidgetSnapPackages_itemClicked(QListWidgetItem *item);
+    void on_listWidgetFlatpakPackages_itemClicked(QListWidgetItem *item);
     void refreshOrphanThemeColors();
     void onTreeItemChanged(QTreeWidgetItem *item, int column);
 
@@ -79,6 +83,11 @@ private:
     // macOS path, consumed when sigUninstallFinished fires. Cleared
     // after the review dialog runs.
     QStringList mPendingCrumbBundleIds;
+#ifdef Q_OS_LINUX
+    // SSO-15385: package names captured at on_btnUninstall_clicked for the
+    // Linux leftover-scan path, consumed when sigUninstallFinished fires.
+    QStringList mPendingUninstallPackageNames;
+#endif
 };
 
 #endif // UNINSTALLERPAGE_H

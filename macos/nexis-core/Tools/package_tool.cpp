@@ -72,6 +72,17 @@ bool PackageToolMacOS::uninstallSnapPackages(const QStringList &packages)
     return false;
 }
 
+QStringList PackageToolMacOS::getFlatpakPackages()
+{
+    return {};
+}
+
+bool PackageToolMacOS::uninstallFlatpakPackages(const QStringList &refs)
+{
+    Q_UNUSED(refs);
+    return false;
+}
+
 /**********
  * HOMEBREW
  **********/

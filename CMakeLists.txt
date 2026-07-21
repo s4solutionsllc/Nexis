@@ -121,6 +121,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Tools/file_search_tool_shared.cpp"
   "${CORE_SHARED_DIR}/Tools/lifecycle_deny_list.cpp"
   "${CORE_SHARED_DIR}/Tools/package_tool_shared.cpp"
+  "${CORE_SHARED_DIR}/Tools/leftover_deny_list.cpp"
   "${CORE_SHARED_DIR}/Tools/service_tool_shared.cpp"
   "${CORE_SHARED_DIR}/Utils/command_util_shared.cpp"
   "${CORE_SHARED_DIR}/Utils/display_server_util.cpp"
@@ -162,6 +163,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Tools/gnome_settings_tool.h"
   "${CORE_SHARED_DIR}/Tools/lifecycle_deny_list.h"
   "${CORE_SHARED_DIR}/Tools/package_tool_shared.h"
+  "${CORE_SHARED_DIR}/Tools/leftover_deny_list.h"
   "${CORE_SHARED_DIR}/Tools/service_tool.h"
   "${CORE_SHARED_DIR}/Utils/command_util.h"
   "${CORE_SHARED_DIR}/Utils/display_server_util.h"
@@ -270,6 +272,7 @@ else()
     "${CORE_PLAT_DIR}/Tools/file_search_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool.cpp"
     "${CORE_PLAT_DIR}/Tools/package_tool.cpp"
+    "${CORE_PLAT_DIR}/Tools/leftover_scanner_linux.cpp"
     "${CORE_PLAT_DIR}/Tools/service_tool.cpp"
     "${CORE_PLAT_DIR}/Utils/command_util_platform.cpp"
   )
@@ -307,6 +310,7 @@ else()
     "${CORE_PLAT_DIR}/Tools/gnome_settings_tool_linux.h"
     "${CORE_PLAT_DIR}/Tools/package_tool_linux.h"
     "${CORE_PLAT_DIR}/Tools/service_tool_linux.h"
+    "${CORE_PLAT_DIR}/Tools/leftover_scanner_linux.h"
   )
 endif()
 
@@ -558,6 +562,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/SystemLogs/severity_pill_delegate.h"
   "${GUI_SHARED_DIR}/Pages/SystemLogs/system_logs_page.h"
   "${GUI_SHARED_DIR}/Pages/Uninstaller/uninstaller_page.h"
+  "${GUI_SHARED_DIR}/Pages/Uninstaller/leftover_review_hook.h"
   "${GUI_SHARED_DIR}/Pages/Shredder/shredder_page.h"
   "${GUI_SHARED_DIR}/Pages/Shredder/shredder_drop_zone.h"
   "${GUI_SHARED_DIR}/Pages/Shredder/shred_confirm_dialog.h"
@@ -588,12 +593,14 @@ if(APPLE)
 else()
   set(GUI_PLAT_SRCS
     "${GUI_PLAT_DIR}/Pages/StartupApps/startup_app_edit.cpp"
+    "${GUI_PLAT_DIR}/Pages/Uninstaller/leftover_review_dialog_linux.cpp"
     "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_edit.cpp"
     "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_manager_page.cpp"
     "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_repository_item.cpp"
     "${GUI_PLAT_DIR}/Pages/AptSourceManager/repo_detail_panel.cpp"
   )
   set(GUI_PLAT_HDRS
+    "${GUI_PLAT_DIR}/Pages/Uninstaller/leftover_review_dialog_linux.h"
     "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_edit.h"
     "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_manager_page.h"
     "${GUI_PLAT_DIR}/Pages/AptSourceManager/apt_source_repository_item.h"

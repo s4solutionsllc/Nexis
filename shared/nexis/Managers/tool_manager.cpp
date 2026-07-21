@@ -94,6 +94,16 @@ bool ToolManager::uninstallSnapPackages(const QStringList packages)
     return mPackageTool->uninstallSnapPackages(packages);
 }
 
+QStringList ToolManager::getFlatpakPackages() const
+{
+    return mPackageTool->getFlatpakPackages();
+}
+
+bool ToolManager::uninstallFlatpakPackages(const QStringList packages)
+{
+    return mPackageTool->uninstallFlatpakPackages(packages);
+}
+
 QStringList ToolManager::dryRunRemovePackages(const QStringList &packages)
 {
     return mPackageTool->dryRunRemovePackages(packages);
@@ -120,6 +130,11 @@ QList<Package> ToolManager::getInstalledApps() const
 bool ToolManager::trashApps(const QStringList &appPaths)
 {
     return mPackageTool->trashApps(appPaths);
+}
+
+bool ToolManager::trashLeftovers(const QStringList &paths)
+{
+    return mPackageTool->trashLeftovers(paths);
 }
 
 /*

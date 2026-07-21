@@ -90,6 +90,12 @@ public:
     virtual QStringList getSnapPackages() = 0;
     virtual bool uninstallSnapPackages(const QStringList &packages) = 0;
 
+    // SSO-15385: enumerate/uninstall installed Flatpak apps (distinct from
+    // getUnusedFlatpakRuntimes(), which cleans up unreferenced runtimes).
+    // Returned refs are Flatpak application ids (e.g. "org.mozilla.firefox").
+    virtual QStringList getFlatpakPackages() = 0;
+    virtual bool uninstallFlatpakPackages(const QStringList &refs) = 0;
+
     virtual QList<Package> getInstalledApps() = 0;
     virtual bool trashApps(const QStringList &appPaths) = 0;
 

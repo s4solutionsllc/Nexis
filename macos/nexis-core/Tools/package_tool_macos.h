@@ -18,6 +18,10 @@ public:
     QStringList getSnapPackages() override;
     bool uninstallSnapPackages(const QStringList &packages) override;
 
+    // Flatpak apps are Linux-only; macOS never surfaces any.
+    QStringList getFlatpakPackages() override;
+    bool uninstallFlatpakPackages(const QStringList &refs) override;
+
     QList<Package> getInstalledApps() override;
     bool trashApps(const QStringList &appPaths) override;
 
