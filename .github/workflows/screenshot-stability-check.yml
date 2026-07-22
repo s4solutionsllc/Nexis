@@ -17,6 +17,14 @@ on:
         description: 'Consecutive green runs required before stopping'
         default: '10'
         required: false
+  # A brand-new workflow_dispatch-only workflow isn't invokable via `gh
+  # workflow run` until GitHub indexes it off a push (SSO-14543 precedent) —
+  # add a push trigger scoped to this branch so the SSO-15956 stability
+  # proof can run immediately. Safe to drop once workflow_dispatch alone is
+  # confirmed to fire (see verify-linux-screenshots-sso14543.yml, removed
+  # from native after SSO-14543 landed).
+  push:
+    branches: [claude/SSO-15956-screenshottests-flake]
 
 jobs:
   stability-check-linux:
