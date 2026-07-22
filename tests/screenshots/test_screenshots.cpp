@@ -15,6 +15,7 @@
 #include "app.h"
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
+#include "Managers/tool_manager.h"
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
 
@@ -75,6 +76,9 @@ static const QVector<PageInfo> kPageMap = {
 // All three require their runtime check to pass (APT tool, docker CLI,
 // gsettings + org.gnome.desktop.interface schema) for the page widget to
 // exist in mSlidingStacked; the capture CI installs the needed packages.
+// SSO-15601: on hosts where a check fails (e.g. docker-less build
+// containers) the page is never registered — pageRuntimeAvailable() below
+// skips the entry instead of hard-failing, mirroring App's registration.
 #ifdef Q_OS_LINUX
     {"APTSourceManagerPage", "apt_source_manager", {"QAbstractItemView"}, {}},
     {"DockerPage",            "docker",             {"QAbstractItemView"}, {}},
@@ -104,6 +108,23 @@ private:
 #else
         return QStringLiteral("linux");
 #endif
+    }
+
+    // SSO-15601: App registers some pages only when the host passes a
+    // runtime tool check (see app.cpp). Mirror those exact checks here so
+    // a host without the optional tool skips the entry cleanly, while a
+    // host that passes the check but is missing the widget still fails —
+    // that combination is a real registration bug.
+    static bool pageRuntimeAvailable(const QString &className)
+    {
+        if (className == QLatin1String("APTSourceManagerPage") ||
+            className == QLatin1String("HomebrewPage"))
+            return ToolManager::ins()->checkSourceRepository();
+        if (className == QLatin1String("DockerPage"))
+            return ToolManager::ins()->checkDocker();
+        if (className == QLatin1String("GnomeSettingsPage"))
+            return ToolManager::ins()->checkGnomeSettings();
+        return true;
     }
 
     // Build a mask region (in `root` coordinates) covering every child of
@@ -267,6 +288,13 @@ private:
         }
 
         for (const auto &page : kPageMap) {
+            if (!pageRuntimeAvailable(page.className)) {
+                qInfo() << "Skipping" << page.className << "(" << theme << ")"
+                        << "— host runtime tool check failed, page not "
+                           "registered in App (SSO-15601)";
+                continue;
+            }
+
             QWidget *widget = findPageByClassName(page.className);
             QVERIFY2(widget, qPrintable(QString("Page widget '%1' not found in stacked widget "
                                                 "— check kPageMap and App::ensureAllPages()")
