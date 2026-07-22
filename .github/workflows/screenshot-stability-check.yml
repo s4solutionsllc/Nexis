@@ -1,0 +1,76 @@
+name: ScreenshotTests Stability Check
+
+# On-demand repeat-until-fail runner for ScreenshotTests. Mirrors the
+# "docker-less container, offscreen QPA" environment noted in SSO-15956
+# (no X server, no xvfb — Qt's offscreen QPA, same as scripts/update_
+# screenshots.sh falls back to on a display-less Linux host) so a bistable
+# render race that only shows up there reproduces here too.
+#
+# Not part of the per-PR gate — dispatch manually when hardening a page
+# against a suspected render race, or to re-prove stability after touching
+# kPageMap / a page's first-show behavior.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: 'Consecutive green runs required before stopping'
+        default: '10'
+        required: false
+  # A brand-new workflow_dispatch-only workflow isn't invokable via `gh
+  # workflow run` until GitHub indexes it off a push (SSO-14543 precedent) —
+  # add a push trigger scoped to this branch so the SSO-15956 stability
+  # proof can run immediately. Safe to drop once workflow_dispatch alone is
+  # confirmed to fire (see verify-linux-screenshots-sso14543.yml, removed
+  # from native after SSO-14543 landed).
+  push:
+    branches: [claude/SSO-15956-screenshottests-flake]
+
+jobs:
+  stability-check-linux:
+    name: Repeat until fail (linux-x64, docker-less)
+    runs-on: ubuntu-24.04
+    container:
+      image: ubuntu:26.04
+
+    steps:
+      - name: Install git and ca-certificates
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git ca-certificates
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install dependencies
+        run: |
+          apt-get install -y -qq \
+            build-essential \
+            cmake g++ libgl1-mesa-dev \
+            qt6-base-dev qt6-charts-dev qt6-svg-dev \
+            qt6-tools-dev qt6-tools-dev-tools qt6-l10n-tools \
+            libqt6charts6-dev libqt6svg6-dev \
+            docker.io libglib2.0-bin gsettings-desktop-schemas
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build screenshot test
+        run: cmake --build build --target test-ScreenshotTests -j$(nproc)
+
+      - name: Repeat ScreenshotTests until failure
+        env:
+          QT_QPA_PLATFORM: offscreen
+          RUNS: ${{ inputs.runs || '10' }}
+        run: |
+          ctest --test-dir build --output-on-failure -R ScreenshotTests \
+            --repeat "until-fail:${RUNS}"
+
+      - name: Upload failure diffs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: screenshot-stability-failures-linux
+          path: build/tests/test_screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
