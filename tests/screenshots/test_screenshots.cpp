@@ -55,9 +55,14 @@ struct PageInfo {
 // masked. Anything not listed here is expected to be byte-stable (modulo
 // per-channel fuzz) between the reference capture and the comparison run.
 static const QVector<PageInfo> kPageMap = {
+    // SSO-15971: DashboardPage::buildSystemSummary() renames this widget from
+    // "systemSummary" (its .ui name) to "systemSummaryCard" for the
+    // #systemSummaryCard QSS selector, before any capture — mask by the
+    // post-rename name or this silently stops masking the hostname/OS/CPU/RAM
+    // card, which is genuinely different on every CI runner.
     {"DashboardPage",     "dashboard",
         {"DashboardTileWrapper", "MetricTileBase", "NetworkTile"},
-        {"systemSummary", "lblFooterRight"}},
+        {"systemSummaryCard", "lblFooterRight"}},
     {"HardwareInfoPage",  "hardware_info",     {}, {}},
     {"StartupAppsPage",   "startup_apps",      {"QAbstractItemView"}, {}},
     // SSO-15956: showEvent() kicks off an async background disk-size scan on
@@ -139,7 +144,18 @@ private:
 
     // Build a mask region (in `root` coordinates) covering every child of
     // `page` that matches one of the declared dynamic class/object names.
-    static QRegion buildMaskRegion(QWidget *page, QWidget *root, const PageInfo &info)
+    //
+    // SSO-15971: a `dynamicObjectNames` entry that matches zero widgets
+    // (e.g. the widget was renamed or removed) degrades silently to "mask
+    // nothing there" instead of an error — that's exactly how the Dashboard
+    // systemSummary mask went stale through two baseline refreshes without
+    // anyone noticing. `unmatchedObjectNames`, when provided, is filled with
+    // any `dynamicObjectNames` entry that matched no child widget so the
+    // caller can fail loudly. Class-based masks are intentionally excluded:
+    // they can legitimately match zero widgets on conditionally-registered
+    // pages (SSO-15601).
+    static QRegion buildMaskRegion(QWidget *page, QWidget *root, const PageInfo &info,
+                                   QStringList *unmatchedObjectNames = nullptr)
     {
         QRegion mask;
         if (!page || !root) return mask;
@@ -147,6 +163,7 @@ private:
         const QList<QWidget *> allChildren = page->findChildren<QWidget *>();
         const QSet<QString> nameFilter(info.dynamicObjectNames.begin(),
                                        info.dynamicObjectNames.end());
+        QSet<QString> matchedNames;
 
         auto addWidgetRect = [&](QWidget *w) {
             if (!w || !w->isVisible()) return;
@@ -158,6 +175,7 @@ private:
 
         for (QWidget *w : allChildren) {
             if (!nameFilter.isEmpty() && nameFilter.contains(w->objectName())) {
+                matchedNames.insert(w->objectName());
                 addWidgetRect(w);
                 continue;
             }
@@ -166,6 +184,13 @@ private:
                     addWidgetRect(w);
                     break;
                 }
+            }
+        }
+
+        if (unmatchedObjectNames) {
+            for (const QString &name : info.dynamicObjectNames) {
+                if (!matchedNames.contains(name))
+                    unmatchedObjectNames->append(name);
             }
         }
         return mask;
@@ -355,7 +380,15 @@ private:
                            .arg(refPath)));
 
             QImage reference(refPath);
-            QRegion mask = buildMaskRegion(widget, mApp, page);
+            QStringList unmatchedMaskNames;
+            QRegion mask = buildMaskRegion(widget, mApp, page, &unmatchedMaskNames);
+            QVERIFY2(unmatchedMaskNames.isEmpty(),
+                qPrintable(QString("%1 (%2): dynamicObjectNames mask entries matched no child "
+                                   "widget: %3 — stale mask name (widget renamed/removed?) "
+                                   "silently stops masking that region instead of failing "
+                                   "loudly (SSO-15971)")
+                           .arg(page.className, theme, unmatchedMaskNames.join(", "))));
+
             CompareResult cmp = compareImages(captured, reference, mask,
                                               mTolerance, mChannelFuzz);
 
