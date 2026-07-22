@@ -426,6 +426,9 @@ void DashboardPage::init()
 
 void DashboardPage::buildSystemSummary()
 {
+    // SSO-15971: tests/screenshots/test_screenshots.cpp masks this widget by
+    // objectName for ScreenshotTests — keep its kPageMap entry in sync with
+    // whatever name it has after this rename.
     ui->systemSummary->setObjectName("systemSummaryCard");
 
     while (ui->summaryLayout->count() > 0) {
