@@ -1,6 +1,7 @@
 #include <QTest>
 #include <QApplication>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFontDatabase>
 #include <QImage>
 #include <QPainter>
@@ -18,6 +19,7 @@
 #include "Managers/tool_manager.h"
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
+#include "Pages/SystemCleaner/system_cleaner_page.h"
 
 // Per-channel fuzz: pixels whose R/G/B/A all differ by ≤ this value count as
 // equal. Tolerates anti-aliasing + minor font-rendering drift without letting
@@ -58,7 +60,15 @@ static const QVector<PageInfo> kPageMap = {
         {"systemSummary", "lblFooterRight"}},
     {"HardwareInfoPage",  "hardware_info",     {}, {}},
     {"StartupAppsPage",   "startup_apps",      {"QAbstractItemView"}, {}},
-    {"SystemCleanerPage", "system_cleaner",    {}, {}},
+    // SSO-15956: showEvent() kicks off an async background disk-size scan on
+    // first display, so whether it has finished by capture time is a race —
+    // captureAndCompare() waits it out explicitly (see the SystemCleanerPage
+    // special-case below) before grabbing the pixmap. lblCatSize still needs
+    // masking because the *computed* byte totals are real filesystem data
+    // (empty on a fresh CI container, but non-empty and environment-specific
+    // on a contributor's machine), same rationale as DashboardPage's
+    // systemSummary mask above.
+    {"SystemCleanerPage", "system_cleaner",    {}, {"lblCatSize"}},
     {"SearchPage",        "search",            {}, {}},
     {"ServicesPage",      "services",          {"QAbstractItemView"}, {}},
     {"ProcessesPage",     "processes",         {"QAbstractItemView"}, {}},
@@ -303,6 +313,26 @@ private:
             mStacked->setCurrentWidget(widget);
             QApplication::processEvents();
             QTest::qWait(100);
+
+            // SSO-15956: SystemCleanerPage::showEvent() fires an async
+            // background disk-size scan on first display (mHasScanned ==
+            // false). Whether it finishes inside the 100ms wait above is a
+            // real race — depending on the outcome, the scan/schedule
+            // buttons are enabled or disabled, the progress bar is shown or
+            // hidden, and it may reflow the layout beneath it. Block here
+            // until the worker settles so every run captures the same
+            // (post-scan) chrome instead of flipping between the two.
+            if (auto *cleanerPage = qobject_cast<SystemCleanerPage *>(widget)) {
+                QElapsedTimer scanTimer;
+                scanTimer.start();
+                while (cleanerPage->isScanInProgress() && scanTimer.elapsed() < 15000) {
+                    QApplication::processEvents();
+                    QTest::qWait(50);
+                }
+                QVERIFY2(!cleanerPage->isScanInProgress(),
+                    "SystemCleanerPage background scan did not settle within 15s "
+                    "— capture would race it (SSO-15956)");
+            }
 
             QPixmap pixmap = mApp->grab();
             QImage captured = pixmap.toImage();

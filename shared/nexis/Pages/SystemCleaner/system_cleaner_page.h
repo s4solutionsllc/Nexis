@@ -65,6 +65,12 @@ public:
 
     void quickScan();
 
+    // SSO-15956: showEvent() kicks off an async background disk-size scan on
+    // first display (startBackgroundSizeScan), which races the initial
+    // paint — screenshot/UI tests need a way to wait for it to settle
+    // instead of capturing whichever of the two states happens to land.
+    bool isScanInProgress() const { return mScanInProgress; }
+
 signals:
     void scanFinishedS();
     void checkedCategoryCountChanged(int count);
