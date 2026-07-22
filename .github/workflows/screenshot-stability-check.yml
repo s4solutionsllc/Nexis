@@ -61,9 +61,10 @@ jobs:
       - name: Repeat ScreenshotTests until failure
         env:
           QT_QPA_PLATFORM: offscreen
+          RUNS: ${{ inputs.runs || '10' }}
         run: |
           ctest --test-dir build --output-on-failure -R ScreenshotTests \
-            --repeat "until-fail:${{ inputs.runs }}"
+            --repeat "until-fail:${RUNS}"
 
       - name: Upload failure diffs
         if: failure()
