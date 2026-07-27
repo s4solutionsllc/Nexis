@@ -54,7 +54,9 @@ struct NEXISCORESHARED_EXPORT InstallResult {
     }
 };
 
-// Test seams. Defaults call the real OS integration (QDesktopServices);
+// Test seams. Defaults call the real OS integration (`/usr/bin/open`, the
+// same LaunchServices/NSWorkspace opener QDesktopServices::openUrl wraps —
+// nexis-core links no Qt Gui module, so it cannot call that class directly);
 // tests override these to spy on invocation without a live installer prompt.
 using Launcher = std::function<bool(const QString &artifactPath)>;
 using Revealer = std::function<bool(const QString &folderPath)>;

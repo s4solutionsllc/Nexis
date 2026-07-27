@@ -10,12 +10,10 @@
 #include <Utils/command_util.h>
 #include <Utils/macos_xattr_util.h>
 
-#include <QDesktopServices>
 #include <QDir>
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTemporaryFile>
-#include <QUrl>
 #include <QUuid>
 #include <QVersionNumber>
 #include <QDebug>
@@ -61,14 +59,20 @@ QString uniqueSubPath(const QString &prefix)
 
 } // namespace
 
+// nexis-core deliberately links no Qt Gui/Widgets module (macOS core here
+// only links IOKit/CoreFoundation/SystemConfiguration), so these cannot call
+// QDesktopServices::openUrl the way the GUI-layer browser-open fallback does.
+// `/usr/bin/open` is the same OS-mediated LaunchServices/NSWorkspace opener
+// QDesktopServices::openUrl wraps on macOS — same unprivileged execution,
+// same Installer.app admin-prompt-if-needed behavior for a .pkg.
 bool defaultLaunch(const QString &artifactPath)
 {
-    return QDesktopServices::openUrl(QUrl::fromLocalFile(artifactPath));
+    return CommandUtil::execWithStatus(QStringLiteral("/usr/bin/open"), {artifactPath}).ok();
 }
 
 bool defaultReveal(const QString &folderPath)
 {
-    return QDesktopServices::openUrl(QUrl::fromLocalFile(folderPath));
+    return CommandUtil::execWithStatus(QStringLiteral("/usr/bin/open"), {folderPath}).ok();
 }
 
 InstallResult verifyAndInstall(const UpdateEntry &entry,
