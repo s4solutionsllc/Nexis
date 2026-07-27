@@ -141,9 +141,20 @@ Recommended implementation:
    different-user local attacker cannot pre-stage or race the path (a
    same-user local attacker is the accepted T5 residual — see §7).
 5. Never mark the temp file executable/openable before step 3 completes.
-   Clean it up (`remove()`) once the installer/opener process has exited —
-   keep the Nexis process alive until then rather than `setAutoRemove(false)`
-   and hoping cleanup happens later.
+
+   **Cleanup — corrected at CTO co-sign (§10.3).** The handoff in §6 is
+   `QDesktopServices::openUrl`, which delegates to LaunchServices and returns
+   immediately with **no child-process handle to wait on**. There is no
+   "installer process exited" event available, so cleanup must not be
+   specified as waiting for one. Required behavior instead:
+   - keep the `QTemporaryFile` object alive with auto-remove ON for the life
+     of the Nexis process, so a normal quit cleans it up; and
+   - sweep stale Nexis-owned update artifacts from the private temp dir on
+     startup, covering the crash / force-quit case.
+
+   Do not use `setAutoRemove(false)` plus an unbacked promise to delete
+   later. Do not delete immediately after `openUrl` returns either — the
+   opener may not have read the file yet.
 
 If a future enclosure legitimately exceeds a size where full in-memory
 buffering is practical, the fallback is: write to the same kind of private
@@ -201,12 +212,31 @@ the **caller**, not just the verifier:
   openUrl(QUrl::fromLocalFile(path))` or equivalent), rather than Nexis
   itself parsing/mounting/copying installer internals. This keeps Nexis's own
   code surface small (no dmg-mounting, no pkg-payload execution logic to get
-  wrong) and layers the OS's own Gatekeeper/quarantine prompt for
-  downloaded, non-Nexis-signed artifacts on top of our signature check as a
-  second, independent control (defense in depth). The user still sees a
+  wrong). The user still sees a
   native installer/mount dialog — acceptable UX cost for v1 given the RCE
   stakes; that is strictly better than fully-silent unattended execution and
   is a deliberate choice, not an oversight.
+- **Quarantine must be set explicitly — corrected at CTO co-sign (§10.1).**
+  A file Nexis writes itself does **not** automatically carry
+  `com.apple.quarantine`; that xattr is applied by the *downloading* agent.
+  Bytes we fetch with `QNetworkAccessManager` and write via `QTemporaryFile`
+  therefore arrive **unquarantined**, and Gatekeeper's
+  first-launch/translocation check will not fire on them. Implementation
+  **must** explicitly set `com.apple.quarantine` on the verified artifact
+  (`setxattr`, before handing the path to the opener) if the Gatekeeper layer
+  is to exist at all. Note the codebase already has
+  `MacosXattrUtil` whose job is to *strip* quarantine
+  (`shared/nexis-core/Utils/macos_xattr_util.cpp`, used for launchd plists) —
+  it is the wrong helper here and must not be reached for. Getting this
+  backwards silently deletes a control rather than adding one.
+- **Elevation, precisely stated.** "Unprivileged only" binds *Nexis's own
+  process*: Nexis must never invoke `sudoExecWithStatus`/`osascript ... with
+  administrator privileges`. It does **not** mean no admin prompt ever
+  appears — a flat `.pkg` opened in Installer.app will request admin rights
+  itself when its payload targets system locations. That is acceptable and
+  in scope: the prompt is OS-mediated, user-consented, and attributed to
+  Apple's installer rather than silently brokered by Nexis. Gate 6 in §8 is
+  about *who asks*, and it is not violated by Installer.app prompting.
 - **Enclosure format scope, v1:** support only formats that admit a cheap,
   *non-executing* way to introspect the real embedded version (needed for
   §7's cross-check) — `.zip` containing a `.app` (read `Info.plist` directly
@@ -219,6 +249,26 @@ the **caller**, not just the verifier:
   complexity this review isn't in a position to sign off on yet. Any
   enclosure whose format isn't in the supported set falls back to today's
   browser-open behavior, same as a failed verification.
+- **`.zip` does not self-install — corrected at CTO co-sign (§10.2).**
+  Handing a `.zip` to `QDesktopServices::openUrl` invokes Archive Utility,
+  which expands a `.app` into the *private temp directory* and leaves the
+  installed copy in `/Applications` untouched. The user gets a stray app
+  bundle in a hidden folder and no update. `.pkg` genuinely installs;
+  `.zip` does not. The verify-then-execute chain is sound for both — the
+  gap is that "execute" delivers no user value in the zip case. Binding
+  resolution for v1, pick one and state it in the PR:
+  1. **Preferred — scope v1 to `.pkg` only.** `.zip` keeps today's
+     browser-open fallback. Smallest correct thing that ships.
+  2. **Acceptable — `.zip` as verified-reveal.** Download, verify, write,
+     then reveal the expanded bundle in Finder with copy-to-Applications
+     left to the user. Must not be described in the UI as an applied update.
+
+  What is **not** in scope for v1: Nexis performing the in-place bundle swap
+  itself (quit target app, replace `/Applications/Foo.app`, relaunch). That
+  is the operation Sparkle's own updater exists to do carefully, it can
+  destroy a working install on partial failure, and it needs its own design
+  review — same treatment as `.dmg`. Do not let it slip in as "just a file
+  copy."
 
 ## 7. Downgrade/rollback and replay mitigation (binding on implementation)
 
@@ -226,9 +276,11 @@ This is the concrete mechanism behind T3/T4 in §1 — restated here as an
 explicit hard gate because it's easy to under-scope:
 
 1. **Persisted per-app floor version**, keyed by the app's `CFBundleIdentifier`
-   (not display name — a name is spoofable/collidable across apps; the
-   identifier is what `PlistUtil::AppBundleInfo` should expose if it doesn't
-   already), stored in Nexis's own app-support location — not anywhere the
+   (not display name — a name is spoofable/collidable across apps). This is
+   already available as `PlistUtil::AppBundleInfo::bundleId`
+   (`macos/nexis-core/Utils/plist_util.h:14`, populated from
+   `CFBundleIdentifier` at `plist_util.cpp:32`) — no new plumbing needed.
+   Store the floor in Nexis's own app-support location — not anywhere the
    target app's own installer could reset it.
 2. Initialize the floor to the currently-installed version on first
    observation of that app, so the very first check can't be tricked into
@@ -288,8 +340,12 @@ one of the following, and where the enclosure is `.zip` or `.pkg`.
    claimed version, before execution (§7).
 6. Unprivileged execution only — no `sudoExecWithStatus`/admin-privilege path
    wired into this feature for v1 (§6).
-7. Enclosure format scope limited to `.zip` (app-in-zip) and flat `.pkg` for
-   v1; `.dmg` and anything else falls back to browser-open (§6).
+7. Enclosure format scope limited to flat `.pkg` (and, if option 2 in §6 is
+   taken, `.zip` as verified-reveal only); `.dmg`, in-place bundle swap, and
+   anything else falls back to browser-open (§6).
+8. Quarantine (`com.apple.quarantine`) explicitly set via `setxattr` on the
+   verified artifact before handoff, or the Gatekeeper defense-in-depth claim
+   dropped from the design — not assumed (§6, §10.1).
 
 **Residual risk after GO-WITH-CONDITIONS (accepted, not blocking):**
 
@@ -300,9 +356,11 @@ one of the following, and where the enclosure is `.zip` or `.pkg`.
 - **Unsigned/DSA-only third-party apps stay on manual browser-open
   indefinitely.** This is a publisher-side gap (they haven't shipped Ed25519
   signing), not something Nexis can close; no plan to change this.
-- **OS Gatekeeper/quarantine is relied on as a second, independent layer**
-  for the mount/open step — this is intentional defense-in-depth per §6, not
-  a hole being papered over.
+- **OS Gatekeeper/quarantine is a second layer _only if_ the implementation
+  explicitly sets the quarantine xattr** (§6, §10.1). It is not automatic for
+  bytes Nexis downloads and writes itself. If gate 8 is not implemented, this
+  layer does not exist and the ed25519 check is the sole control — still the
+  primary one, but the design must not claim depth it doesn't have.
 - **Local attacker already at the user's privilege level** (T5, given full
   §4 compliance) is the standard, essentially-irreducible baseline every
   comparable updater (Sparkle itself, browser auto-updaters, etc.) accepts —
@@ -318,6 +376,70 @@ one of the following, and where the enclosure is `.zip` or `.pkg`.
 - **CISO:** GO-WITH-CONDITIONS per §8, this document. — GeneralCoder-facing
   implementation spec is §§2–7; treat every "Hard gate" item as an
   acceptance criterion on SSO-15508 itself, not optional polish.
-- **CTO:** sign-off requested via comment on SSO-17775 (issue thread is
-  authoritative for the actual co-sign; this document is the artifact being
-  signed off on).
+- **CTO:** **CO-SIGNED, GO-WITH-CONDITIONS**, 2026-07-27, subject to the four
+  corrections in §10 (folded into §§4, 6, 7 and gates 7–8 of §8 in this same
+  revision). The security core — local-bundle trust anchor, fail-closed at
+  the call site, verify-then-execute with no reopen-by-path, floor-version +
+  embedded-version cross-check — is correct as written and I am not asking
+  for changes to it.
+
+## 10. CTO co-sign — corrections and rationale
+
+I re-derived the document's code claims against the tree rather than
+accepting its citations. Confirmed accurate: the verifier's fail-closed
+enum and `verify()` signature taking `const QByteArray &fileData`
+(`sparkle_signature_verifier.h`); the trust anchor reading
+`bundleInfo.suPublicEDKey` from the local bundle
+(`sparkle_update_scanner.cpp:153`); `EnclosureInfo` carrying **no** key field
+(`sparkle_appcast_parser.h:29`); `fetchFeed` already using
+`NoLessSafeRedirectPolicy` but **not** enforcing an https scheme
+(`sparkle_update_scanner.cpp:46`); and the call site being browser-open only
+(`homebrew_page.cpp:711`). §§1–5 and §7 stand.
+
+Four defects found, all now corrected in-place:
+
+**10.1 — Gatekeeper was assumed, not obtained (security).** §6 originally
+counted the OS quarantine prompt as a second independent control. Files an
+app downloads and writes itself carry no `com.apple.quarantine` xattr, so
+that control would never have fired. This is the dangerous kind of error —
+it inflates the perceived defense depth of the design while contributing
+nothing, and the repo's existing `MacosXattrUtil` *strips* quarantine, so an
+implementer pattern-matching on "quarantine helper" would find the exact
+wrong tool. Now an explicit gate (§8.8): set the xattr, or drop the claim.
+
+**10.2 — the `.zip` path verifies correctly and then does nothing useful
+(product correctness).** `openUrl` on a zip expands a `.app` into the private
+temp dir; `/Applications` is untouched. Every security property holds and the
+user is still not updated. Resolved by scoping v1 to `.pkg` (preferred) or
+`.zip`-as-verified-reveal, and by explicitly fencing off the in-place bundle
+swap — that operation is what Sparkle's updater exists to do carefully and it
+can destroy a working install on partial failure. It needs its own review,
+same as `.dmg`.
+
+**10.3 — the cleanup rule was unimplementable.** §4 said to keep Nexis alive
+until "the installer/opener process has exited," but `QDesktopServices::
+openUrl` hands off to LaunchServices and returns no waitable handle. An
+instruction that cannot be followed gets improvised at 5pm on a Friday;
+replaced with auto-remove-on-quit plus a startup sweep for the crash case.
+
+**10.4 — stale plumbing note.** §7 hedged that `AppBundleInfo` "should
+expose" `CFBundleIdentifier`; it already does (`plist_util.h:14`). Corrected
+so the implementer doesn't add a redundant field.
+
+**One thing to preserve, flagged so it isn't optimized away:** the scanner's
+`availableVer <= installedVer` filter (`sparkle_update_scanner.cpp:139`)
+compares *unsigned* appcast version strings. It is a UX filter, not a
+security control. §7's post-verification embedded-version check is the real
+downgrade gate and must not be skipped on the grounds that "the scanner
+already compares versions."
+
+**Delegation Quality Bar / lens notes.** Alternatives considered and rejected
+(T4): appcast-supplied or TOFU keys — rejected, no protection against the
+T1/T2 attacker this feature exists to stop; elevated install via
+`sudoExecWithStatus` — rejected for v1, converts any verification bug into
+root RCE instead of user-level; Nexis-owned dmg mounting and in-place bundle
+swap — rejected, large parsing/failure surface for the delivery value, and
+**Build vs Buy** says let Apple's Installer own the install. **Blast Radius**:
+unprivileged-only caps a verification bug at user-level code exec.
+**Delivery Velocity**: `.pkg`-only v1 ships the whole verified path sooner
+than blocking on the bundle-swap design.
