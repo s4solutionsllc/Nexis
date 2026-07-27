@@ -25,9 +25,18 @@ jobs:
       image: fedora:latest
 
     steps:
+      # `fedora-cisco-openh264` is a single-mirror third-party repo that
+      # regularly stalls (run 30302401024 failed there after a 2-minute
+      # curl timeout). Nothing here needs it, and it is only reached at all
+      # because the Qt6 dev packages recommend the GStreamer/PipeWire stack
+      # — so disable the repo and skip weak deps, which also cuts the
+      # install from ~562 packages / 475 MB to just what BuildRequires needs.
       - name: Install build tools
         run: |
           dnf install -y \
+            --disablerepo='fedora-cisco-openh264' \
+            --setopt=install_weak_deps=False \
+            --setopt=retries=10 \
             rpm-build \
             rpmdevtools \
             cmake \
