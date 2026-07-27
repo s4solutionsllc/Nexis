@@ -40,6 +40,14 @@ static QSet<QString> installedCaskAppNames()
 
 QByteArray SparkleUpdateScanner::fetchFeed(const QString &feedUrl)
 {
+    // SSO-17776 AC2: reject any non-https feed URL before issuing a request
+    // — no fallback, no silent downgrade. A hostile/misconfigured SUFeedURL
+    // (plain http, or any other scheme) must never reach the network layer.
+    if (QUrl(feedUrl).scheme().compare(QLatin1String("https"), Qt::CaseInsensitive) != 0) {
+        qWarning() << "sparkle_scanner: rejecting non-https feed URL:" << feedUrl;
+        return {};
+    }
+
     // Must be called from a non-GUI thread.  We spin a local event loop to
     // drive the async QNetworkAccessManager without blocking the GUI thread.
     QNetworkAccessManager nam;
@@ -147,10 +155,12 @@ QList<UpdateEntry> SparkleUpdateScanner::scan(const QStringList &homebrewAppName
             entry.name          = bundleInfo.displayName.isEmpty() ? appBaseName
                                                                     : bundleInfo.displayName;
             entry.version       = latest->version;
+            entry.installedVersion = bundleInfo.version;
             entry.enclosureUrl  = latest->url;
             entry.edSignature   = latest->edSignature;
             entry.dsaSignature  = latest->dsaSignature;
             entry.publicKey     = bundleInfo.suPublicEDKey;
+            entry.bundleId      = bundleInfo.bundleId;
             // Metadata presence only — not a cryptographic verification.
             // SparkleSignatureVerifier is not yet invoked on downloaded bytes
             // (see SSO-15431); the UI must not present this as "verified".

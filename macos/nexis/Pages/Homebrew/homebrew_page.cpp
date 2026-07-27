@@ -17,6 +17,7 @@
 #include <QIcon>
 #include <QMessageBox>
 #include <QProgressBar>
+#include <QProgressDialog>
 #include <QRegularExpression>
 #include <QDesktopServices>
 #include <QSettings>
@@ -24,6 +25,7 @@
 #include <QtConcurrent>
 #include <Utils/brew_util.h>
 #include <Utils/command_util.h>
+#include <Info/sparkle_embedded_version.h>
 
 namespace {
 // BUG-47: theme-aware replacements for the raw QColor(...) literals this
@@ -586,8 +588,17 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
             item->setData(2, kSparkleNoSignatureRole, true);
             item->setCheckState(0, Qt::Unchecked);
             item->setFlags(item->flags() & ~Qt::ItemIsUserCheckable);
+        } else if (SparkleEmbeddedVersion::formatFromUrl(entry.enclosureUrl)
+                   != SparkleEmbeddedVersion::Format::Unsupported) {
+            // SSO-17776 AC10: signed AND a supported format (.pkg/.zip) —
+            // this entry will actually go through download+verify, distinct
+            // from the browser-open-only case below.
+            item->setText(2, tr("Verified Download"));
         } else {
-            item->setText(2, QString());
+            // Has a signature but an unsupported enclosure format (e.g.
+            // .dmg) — still opens the publisher's page unverified, same as
+            // today. Distinguishable from "Verified Download" per AC10.
+            item->setText(2, tr("Browser Only"));
         }
     }
     mSparkleTree->blockSignals(false);
@@ -655,7 +666,9 @@ void HomebrewPage::buildSparkleSection(QVBoxLayout *pageLayout)
     textCol->addLayout(titleRow);
 
     auto *lblSource = new QLabel(
-        tr("Non-Homebrew apps with Sparkle update feeds  •  Nexis does not verify installer signatures  •  No Signature = appcast has no signature metadata"),
+        tr("Non-Homebrew apps with Sparkle update feeds  •  Verified Download = downloaded and "
+           "cryptographically signature-checked by Nexis before opening  •  Browser Only / No "
+           "Signature = opens the publisher's page unverified, same as before"),
         headerWidget);
     lblSource->setObjectName("sectionHeaderSource");
     textCol->addWidget(lblSource);
@@ -715,13 +728,14 @@ void HomebrewPage::onSparkleUpdateItemChanged(QTreeWidgetItem *, int column)
 
 void HomebrewPage::onSparkleUpdateSelectedClicked()
 {
-    // Collect checked entries with signature metadata present and open the
-    // enclosure URL in the browser. Nexis does not download the installer or
-    // cryptographically verify it — this only opens the publisher's download
-    // page. SparkleSignatureVerifier will be invoked against the downloaded
-    // bytes once a download agent exists (see SSO-15431); until then, this
-    // gate on signatureMetadataPresent is not a security control, only a
-    // signal to steer users away from feeds that don't even carry a signature.
+    // SSO-17776: signed entries whose enclosure is a supported format
+    // (.pkg or .zip — see SparkleEmbeddedVersion::formatFromUrl) are
+    // downloaded and cryptographically verified by SparkleUpdateInstaller
+    // before anything is written or executed (fail-closed; see
+    // sparkle_update_installer.h). Every other entry — unsigned, DSA-only,
+    // or an unsupported enclosure format — retains exactly today's
+    // behavior: QDesktopServices::openUrl(entry.enclosureUrl), unchanged.
+    QList<UpdateEntry> eligible;
     for (int i = 0; i < mSparkleTree->topLevelItemCount(); ++i) {
         QTreeWidgetItem *item = mSparkleTree->topLevelItem(i);
         if (item->checkState(0) != Qt::Checked)
@@ -729,10 +743,133 @@ void HomebrewPage::onSparkleUpdateSelectedClicked()
         if (i >= mSparkleEntries.size())
             continue;
         const UpdateEntry &entry = mSparkleEntries[i];
-        if (!entry.signatureMetadataPresent || entry.enclosureUrl.isEmpty())
+        if (entry.enclosureUrl.isEmpty())
             continue;
-        QDesktopServices::openUrl(QUrl(entry.enclosureUrl));
+
+        const bool eligibleForVerifiedInstall = entry.signatureMetadataPresent
+            && SparkleEmbeddedVersion::formatFromUrl(entry.enclosureUrl)
+                   != SparkleEmbeddedVersion::Format::Unsupported;
+        if (eligibleForVerifiedInstall)
+            eligible.append(entry);
+        else
+            QDesktopServices::openUrl(QUrl(entry.enclosureUrl));
     }
+
+    if (eligible.isEmpty())
+        return;
+
+    mSparkleUpdateQueue = eligible;
+    mSparkleUpdateQueueIndex = 0;
+    startNextSparkleDownload();
+}
+
+void HomebrewPage::startNextSparkleDownload()
+{
+    if (mSparkleUpdateQueueIndex >= mSparkleUpdateQueue.size()) {
+        mSparkleUpdateQueue.clear();
+        if (mSparkleUpdateProgress)
+            mSparkleUpdateProgress->hide();
+        return;
+    }
+
+    const UpdateEntry &entry = mSparkleUpdateQueue[mSparkleUpdateQueueIndex];
+
+    if (!mSparkleDownloader)
+        mSparkleDownloader = new SparkleUpdateDownloader(this);
+
+    if (!mSparkleUpdateProgress) {
+        // SSO-17776 §11: network work must keep the GUI responsive with
+        // cancel available throughout — QProgressDialog gives us a
+        // cancellable, modal progress surface with no custom widget work.
+        mSparkleUpdateProgress = new QProgressDialog(this);
+        mSparkleUpdateProgress->setWindowModality(Qt::WindowModal);
+        mSparkleUpdateProgress->setCancelButtonText(tr("Cancel"));
+        mSparkleUpdateProgress->setAutoClose(false);
+        mSparkleUpdateProgress->setAutoReset(false);
+        mSparkleUpdateProgress->setMinimumDuration(0);
+        // Indeterminate: the appcast's advertised enclosure length is
+        // untrusted metadata (§3) and the size cap is enforced against
+        // bytes actually received, not a promised total.
+        mSparkleUpdateProgress->setRange(0, 0);
+        connect(mSparkleUpdateProgress, &QProgressDialog::canceled, this, [this]() {
+            if (mSparkleDownloader)
+                mSparkleDownloader->cancel();
+        });
+    }
+    mSparkleUpdateProgress->setLabelText(tr("Downloading %1…").arg(entry.name));
+    mSparkleUpdateProgress->show();
+
+    // Re-wire per download so the label lambda closes over the current
+    // queue position instead of stale state from a prior entry.
+    disconnect(mSparkleDownloader, nullptr, this, nullptr);
+    connect(mSparkleDownloader, &SparkleUpdateDownloader::progress, this,
+            [this](qint64 bytesReceived) {
+        if (!mSparkleUpdateProgress || mSparkleUpdateQueueIndex >= mSparkleUpdateQueue.size())
+            return;
+        mSparkleUpdateProgress->setLabelText(
+            tr("Downloading %1… (%2 MB)")
+                .arg(mSparkleUpdateQueue[mSparkleUpdateQueueIndex].name)
+                .arg(bytesReceived / (1024.0 * 1024.0), 0, 'f', 1));
+    });
+    connect(mSparkleDownloader, &SparkleUpdateDownloader::finished,
+            this, &HomebrewPage::onSparkleDownloadFinished);
+
+    mSparkleDownloader->start(entry.enclosureUrl);
+}
+
+void HomebrewPage::onSparkleDownloadFinished(SparkleUpdateDownloader::Result result)
+{
+    if (mSparkleUpdateQueueIndex >= mSparkleUpdateQueue.size())
+        return; // defensive: queue was cleared out from under us
+
+    const UpdateEntry entry = mSparkleUpdateQueue[mSparkleUpdateQueueIndex];
+
+    if (!result.ok) {
+        // Download itself failed (network error, timeout, size cap) or was
+        // cancelled by the user. A cancel just stops; any other failure
+        // falls back to browser-open, same disposition as a verification
+        // failure below — Nexis couldn't get verifiable bytes, so the
+        // publisher's own page is the safe fallback.
+        if (!result.cancelled)
+            QDesktopServices::openUrl(QUrl(entry.enclosureUrl));
+        mSparkleUpdateQueueIndex++;
+        startNextSparkleDownload();
+        return;
+    }
+
+    if (mSparkleUpdateProgress)
+        mSparkleUpdateProgress->setLabelText(tr("Verifying %1…").arg(entry.name));
+
+    const QByteArray bytes = result.data;
+    (void)QtConcurrent::run([this, entry, bytes]() {
+        // SparkleSignatureVerifier + pkgutil/unzip/plutil are blocking calls
+        // — off the GUI thread, same QtConcurrent::run convention used by
+        // onUninstallClicked() elsewhere in this file.
+        const SparkleUpdateInstaller::InstallResult installResult =
+            SparkleUpdateInstaller::verifyAndInstall(entry, bytes);
+        QMetaObject::invokeMethod(this, [this, entry, installResult]() {
+            onSparkleInstallFinished(entry, installResult);
+        }, Qt::QueuedConnection);
+    });
+}
+
+void HomebrewPage::onSparkleInstallFinished(
+    const UpdateEntry &entry, const SparkleUpdateInstaller::InstallResult &installResult)
+{
+    // AC4 / design §5: every Blocked* outcome falls back to exactly today's
+    // browser-open behavior.
+    if (installResult.shouldFallBackToBrowserOpen())
+        QDesktopServices::openUrl(QUrl(entry.enclosureUrl));
+
+    // installResult.message is a plain, non-alarming, pre-composed string
+    // (design §5) — surfacing it is what makes "verified" vs "opened in
+    // your browser instead" distinguishable to the user (AC10).
+    if (mSparkleUpdateProgress)
+        mSparkleUpdateProgress->hide();
+    QMessageBox::information(this, tr("App Update — %1").arg(entry.name), installResult.message);
+
+    mSparkleUpdateQueueIndex++;
+    startNextSparkleDownload();
 }
 
 QStringList HomebrewPage::getSelectedCaskUpdates() const

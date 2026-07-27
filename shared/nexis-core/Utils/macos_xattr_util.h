@@ -19,6 +19,16 @@ public:
     // No-op on non-macOS builds — always returns true.
     static bool stripQuarantine(const QString &path);
 
+    // SSO-17776 (design doc §6, §10.1): sets the `com.apple.quarantine` xattr
+    // on `path`. Bytes Nexis downloads and writes itself carry NO quarantine
+    // attribute automatically — only the downloading *agent* (Finder, Safari,
+    // etc.) applies it, so a self-fetched Sparkle installer needs it set
+    // explicitly or Gatekeeper's first-launch check never fires on it. This
+    // is the opposite of stripQuarantine() above; do not confuse the two.
+    //
+    // Returns true on success. No-op on non-macOS builds — always returns true.
+    static bool setQuarantine(const QString &path);
+
 private:
     MacOsXattrUtil() = default;
 };
