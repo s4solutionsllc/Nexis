@@ -444,3 +444,49 @@ swap — rejected, large parsing/failure surface for the delivery value, and
 unprivileged-only caps a verification bug at user-level code exec.
 **Delivery Velocity**: `.pkg`-only v1 ships the whole verified path sooner
 than blocking on the bundle-swap design.
+
+## 11. Implementer constraints (binding on SSO-17776 — NexisMaintainer)
+
+Where this document and the SSO-17776 issue description differ, **this
+document wins**. Every §8 hard gate is an acceptance criterion, not polish.
+
+**Stack**
+
+- C++17, Qt6, existing Nexis structure. **No new third-party dependency** for
+  download, verification, or archive handling. The vendored ed25519 in
+  `SparkleSignatureVerifier` is the only crypto in this feature.
+- Network work **must** run off the GUI thread with a cancellable progress
+  state. The scanner's existing blocking-`QEventLoop`-around-
+  `QNetworkAccessManager` shape (`sparkle_update_scanner.cpp:44`) **must not**
+  be copied into the enclosure fetch.
+- macOS-only path. The Linux build **must** still compile and `ctest` **must**
+  stay green.
+- UI copy follows the Nexis Design Anchor and the theme-token rule — no
+  hardcoded hex colors (BUG-47).
+
+**Security** — threat model in §1, mitigations in §§2–7, gates in §8. No
+hardcoded secrets, keys, or URLs in source.
+
+**Performance / resource**
+
+- The size cap (§3) **must** be enforced against a bounded in-memory buffer as
+  bytes arrive. A hostile host **must not** be able to advertise a small
+  `EnclosureInfo::length` and then stream unbounded bytes to drive Nexis to
+  OOM — the cap is on *bytes received*, not on the advertised length.
+- Connection and overall-transfer timeouts **must** be set; no unbounded wait.
+  The GUI **must** stay responsive with cancel available throughout.
+- Verified temp artifacts: auto-remove on quit plus a startup sweep for the
+  crash case (§4). Do **not** attempt to wait on the opener process.
+
+**Testing**
+
+- A spy-launcher regression test **must** prove zero launcher invocations for
+  every non-`Valid` verifier result. This is the single most important test in
+  the change.
+- Tests **should** also cover https-scheme rejection, the size cap, and the
+  floor-version ratchet.
+
+**Conflict check.** This design deliberately *keeps* the browser-open path
+rather than removing it, which reads as dead code against the usual cleanup
+instinct. It is intentional and **must not** be refactored away — it is the
+safe fallback for every entry that cannot be cryptographically verified.
