@@ -25,9 +25,18 @@ jobs:
       image: fedora:latest
 
     steps:
+      # `fedora-cisco-openh264` is a single-mirror third-party repo that
+      # regularly stalls (run 30302401024 failed there after a 2-minute
+      # curl timeout). Nothing here needs it, and it is only reached at all
+      # because the Qt6 dev packages recommend the GStreamer/PipeWire stack
+      # — so disable the repo and skip weak deps, which also cuts the
+      # install from ~562 packages / 475 MB to just what BuildRequires needs.
       - name: Install build tools
         run: |
           dnf install -y \
+            --disablerepo='fedora-cisco-openh264' \
+            --setopt=install_weak_deps=False \
+            --setopt=retries=10 \
             rpm-build \
             rpmdevtools \
             cmake \
@@ -132,6 +141,25 @@ jobs:
             echo "token = ${{ secrets.COPR_TOKEN }}"
             echo "copr_url = https://copr.fedorainfracloud.org"
           } > ~/.config/copr
+
+      # First-run bootstrap: `copr-cli build` requires the project to
+      # already exist. `copr-cli get` exits non-zero if it doesn't, so this
+      # only creates the project once — every later tag push finds it
+      # already there and skips straight to the build.
+      - name: Ensure COPR project exists
+        run: |
+          PROJECT="${{ secrets.COPR_USERNAME }}/nexis"
+          if copr-cli get "$PROJECT" >/dev/null 2>&1; then
+            echo "COPR project $PROJECT already exists."
+          else
+            echo "COPR project $PROJECT not found, creating it."
+            copr-cli create "$PROJECT" \
+              --chroot fedora-44-x86_64 \
+              --chroot fedora-43-x86_64 \
+              --chroot fedora-rawhide-x86_64 \
+              --description "Nexis - Linux & macOS System Optimizer and Monitoring tool" \
+              --instructions "https://github.com/s4solutionsllc/Nexis"
+          fi
 
       - name: Download SRPM artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
