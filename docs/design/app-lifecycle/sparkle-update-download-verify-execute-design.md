@@ -225,8 +225,9 @@ the **caller**, not just the verifier:
   **must** explicitly set `com.apple.quarantine` on the verified artifact
   (`setxattr`, before handing the path to the opener) if the Gatekeeper layer
   is to exist at all. Note the codebase already has
-  `MacosXattrUtil` whose job is to *strip* quarantine
-  (`shared/nexis-core/Utils/macos_xattr_util.cpp`, used for launchd plists) —
+  `MacOsXattrUtil::stripQuarantine()` whose job is to *strip* quarantine
+  (`shared/nexis-core/Utils/macos_xattr_util.h`, used for launchd plists at
+  `startup_app_edit.cpp:185` and `schedule_manager.cpp:436`) —
   it is the wrong helper here and must not be reached for. Getting this
   backwards silently deletes a control rather than adding one.
 - **Elevation, precisely stated.** "Unprivileged only" binds *Nexis's own
@@ -403,7 +404,7 @@ counted the OS quarantine prompt as a second independent control. Files an
 app downloads and writes itself carry no `com.apple.quarantine` xattr, so
 that control would never have fired. This is the dangerous kind of error —
 it inflates the perceived defense depth of the design while contributing
-nothing, and the repo's existing `MacosXattrUtil` *strips* quarantine, so an
+nothing, and the repo's existing `MacOsXattrUtil` *strips* quarantine, so an
 implementer pattern-matching on "quarantine helper" would find the exact
 wrong tool. Now an explicit gate (§8.8): set the xattr, or drop the claim.
 
