@@ -25,6 +25,9 @@
 #include <Services/wipe_free_space_service.h>
 #include <Utils/format_util.h>
 #include <Utils/headless_util.h>
+#ifdef Q_OS_MAC
+#include <Info/sparkle_update_installer.h>
+#endif
 
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -326,6 +329,12 @@ int main(int argc, char *argv[])
         paths << "/opt/homebrew/share/icons" << "/usr/local/share/icons";
         QIcon::setThemeSearchPaths(paths);
     }
+
+    // SSO-17776 design doc §4 / §10.3: verified update artifacts are kept
+    // alive for the process lifetime (no waitable "installer finished"
+    // handle exists to clean up on), so a normal quit cleans them up via
+    // static destruction. This sweep covers the crash/force-quit case.
+    SparkleUpdateInstaller::sweepStaleArtifacts();
 #elif defined(Q_OS_LINUX)
     // AppImage bundles its own Qt, which loses access to system icon theme paths.
     // Add standard XDG icon directories so QIcon::fromTheme() finds the user's

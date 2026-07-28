@@ -200,6 +200,10 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/sparkle_appcast_parser.cpp"
     "${CORE_PLAT_DIR}/Info/sparkle_signature_verifier.cpp"
     "${CORE_PLAT_DIR}/Info/sparkle_update_scanner.cpp"
+    "${CORE_PLAT_DIR}/Info/sparkle_update_downloader.cpp"
+    "${CORE_PLAT_DIR}/Info/sparkle_update_floor_store.cpp"
+    "${CORE_PLAT_DIR}/Info/sparkle_embedded_version.cpp"
+    "${CORE_PLAT_DIR}/Info/sparkle_update_installer.cpp"
     # Vendored verify-only ed25519 subset (SSO-15431) — see
     # macos/nexis-core/Info/vendor/ed25519/UPSTREAM.md for provenance.
     "${CORE_PLAT_DIR}/Info/vendor/ed25519/verify.c"
@@ -243,6 +247,10 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/sparkle_appcast_parser.h"
     "${CORE_PLAT_DIR}/Info/sparkle_signature_verifier.h"
     "${CORE_PLAT_DIR}/Info/sparkle_update_scanner.h"
+    "${CORE_PLAT_DIR}/Info/sparkle_update_downloader.h"
+    "${CORE_PLAT_DIR}/Info/sparkle_update_floor_store.h"
+    "${CORE_PLAT_DIR}/Info/sparkle_embedded_version.h"
+    "${CORE_PLAT_DIR}/Info/sparkle_update_installer.h"
     "${CORE_PLAT_DIR}/Info/vendor/ed25519/ed25519.h"
     "${CORE_PLAT_DIR}/Info/vendor/ed25519/sha512.h"
     "${CORE_PLAT_DIR}/Info/vendor/ed25519/ge.h"

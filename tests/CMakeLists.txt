@@ -150,6 +150,35 @@ if(APPLE)
       "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519"
   )
 
+  # SSO-17776 AC4 hard gate: SparkleUpdateInstaller::verifyAndInstall() is
+  # the real call site wiring SparkleSignatureVerifier into an install
+  # decision — this proves fail-closed AT THAT LAYER (spy launcher/revealer
+  # invoked zero times for every non-Valid Result), not just inside the
+  # verifier itself. Also covers the §8 format-scope gate (AC7), the
+  # floor-version store (AC5), and https-only rejection (AC2). macOS-only
+  # because the installer and its dependents are only built into nexis-core
+  # on Darwin (see CORE_PLAT_SRCS above).
+  add_nexis_test(NAME SparkleUpdateInstallerTests
+    SOURCES
+      core/test_sparkle_update_installer.cpp
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_signature_verifier.cpp"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_update_installer.cpp"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_embedded_version.cpp"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_update_floor_store.cpp"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/sparkle_update_downloader.cpp"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/verify.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/sha512.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/ge.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/sc.c"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519/fe.c"
+    INCLUDES
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info"
+      "${CMAKE_SOURCE_DIR}/macos/nexis-core/Info/vendor/ed25519"
+    LIBS
+      Qt6::Network
+  )
+
   # SSO-15384 / CISO §2: deny-list unit tests — run on macOS and also on any
   # platform where the shared deny-list is compiled in (it is platform-agnostic
   # code even though it lives in a macOS-gated CMake block here).

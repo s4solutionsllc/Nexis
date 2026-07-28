@@ -12,10 +12,13 @@
 #include <Tools/package_tool_shared.h>
 #include <Tools/repo_health_types.h>
 #include <Info/update_info.h>
+#include <Info/sparkle_update_downloader.h>
+#include <Info/sparkle_update_installer.h>
 
 class ToolManager;
 class SignalMapper;
 class DataRefreshService;
+class QProgressDialog;
 
 // macOS counterpart to APTSourceManagerPage. Renders installed Homebrew
 // packages (formulae + casks) grouped by section in a tree widget, with
@@ -50,6 +53,7 @@ private slots:
     void onUpdateSelectedClicked();
     void onSparkleUpdateSelectedClicked();
     void refreshThemeColors();
+    void onSparkleDownloadFinished(SparkleUpdateDownloader::Result result);
 
 private:
     void buildUI();
@@ -61,6 +65,15 @@ private:
     void updateSparkleUpdateButton();
     void updateUpdateButton();
     void setInstallFieldsVisible(bool visible);
+
+    // SSO-17776: signed .pkg/.zip entries go through download -> verify ->
+    // install (see SparkleUpdateDownloader / SparkleUpdateInstaller); everything else
+    // retains exactly today's QDesktopServices::openUrl behavior. Entries are
+    // processed one at a time via this queue so a single progress dialog
+    // covers the whole "Update Selected" batch.
+    void startNextSparkleDownload();
+    void onSparkleInstallFinished(const UpdateEntry &entry,
+                                  const SparkleUpdateInstaller::InstallResult &installResult);
 
     ToolManager *mToolManager = nullptr;
     SignalMapper *mSignalMapper = nullptr;
@@ -92,6 +105,12 @@ private:
 
     // Cached Sparkle UpdateEntry rows (parallel to mSparkleTree items)
     QList<UpdateEntry> mSparkleEntries;
+
+    // SSO-17776 download/verify/install queue state (macOS Sparkle path).
+    SparkleUpdateDownloader *mSparkleDownloader = nullptr;
+    QProgressDialog *mSparkleUpdateProgress = nullptr;
+    QList<UpdateEntry> mSparkleUpdateQueue;
+    int mSparkleUpdateQueueIndex = 0;
 
     QList<Package> mPackages;
 };
