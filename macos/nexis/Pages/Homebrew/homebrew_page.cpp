@@ -1,5 +1,6 @@
 #include "homebrew_page.h"
 
+#include "Managers/app_manager.h"
 #include "Managers/tool_manager.h"
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
@@ -18,10 +19,26 @@
 #include <QProgressBar>
 #include <QRegularExpression>
 #include <QDesktopServices>
+#include <QSettings>
 #include <QUrl>
 #include <QtConcurrent>
 #include <Utils/brew_util.h>
 #include <Utils/command_util.h>
+
+namespace {
+// BUG-47: theme-aware replacements for the raw QColor(...) literals this
+// page used to hardcode. Row/item state is stashed in these data roles so
+// refreshThemeColors() can re-derive the right token on a theme switch
+// without re-running the update logic.
+constexpr int kSparkleNoSignatureRole = Qt::UserRole + 1;
+constexpr int kUpdateRowStatusRole = Qt::UserRole + 1;
+
+enum class UpdateRowStatus {
+    None = 0,
+    Success,
+    Failed,
+};
+}
 
 HomebrewPage::HomebrewPage(QWidget *parent,
                            ToolManager *toolManager,
@@ -68,6 +85,8 @@ HomebrewPage::HomebrewPage(QWidget *parent,
     connect(mSignalMapper, &SignalMapper::sigUninstallFinished, this, [this]() {
         (void)QtConcurrent::run([this]() { fetchPackages(); });
     });
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme,
+            this, &HomebrewPage::refreshThemeColors);
 
     onCancelClicked();
 
@@ -550,6 +569,9 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
     }
 
     // Sparkle section
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    const QColor destructiveColor(sv ? sv->value("@destructiveColor").toString() : "#E05454");
+
     mSparkleEntries = sparkleEntries;
     mSparkleTree->blockSignals(true);
     mSparkleTree->clear();
@@ -560,7 +582,8 @@ void HomebrewPage::onSystemUpdatesChecked(const UpdateCheckResult &result)
         item->setText(1, entry.version);
         if (!entry.signatureMetadataPresent) {
             item->setText(2, tr("No Signature"));
-            item->setForeground(2, QColor(0xD9, 0x53, 0x4F)); // error red
+            item->setForeground(2, destructiveColor);
+            item->setData(2, kSparkleNoSignatureRole, true);
             item->setCheckState(0, Qt::Unchecked);
             item->setFlags(item->flags() & ~Qt::ItemIsUserCheckable);
         } else {
@@ -777,7 +800,11 @@ void HomebrewPage::onUpdateSelectedClicked()
         itemMap[it->data(0, Qt::UserRole).toString()] = it;
     }
 
-    (void)QtConcurrent::run([this, casks, itemMap]() mutable {
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    const QColor mutedColor(sv ? sv->value("@tertiaryText").toString() : "#888888");
+    const QColor dangerColor(sv ? sv->value("@destructiveColor").toString() : "#E05454");
+
+    (void)QtConcurrent::run([this, casks, itemMap, mutedColor, dangerColor]() mutable {
         QString brewPath = findBrew();
         int done = 0;
         for (const QString &cask : casks) {
@@ -785,19 +812,21 @@ void HomebrewPage::onUpdateSelectedClicked()
                 brewPath, {"upgrade", "--cask", cask}, 300000);
             done++;
             // Update UI on the main thread
-            QMetaObject::invokeMethod(this, [this, cask, res, done, itemMap]() {
+            QMetaObject::invokeMethod(this, [this, cask, res, done, itemMap, mutedColor, dangerColor]() {
                 if (itemMap.contains(cask)) {
                     QTreeWidgetItem *it = itemMap[cask];
                     if (res.ok()) {
                         // Grey out successfully updated row
                         for (int col = 0; col < mUpdatesTree->columnCount(); ++col)
-                            it->setForeground(col, QColor(128, 128, 128));
+                            it->setForeground(col, mutedColor);
+                        it->setData(0, kUpdateRowStatusRole, static_cast<int>(UpdateRowStatus::Success));
                         it->setText(0, it->text(0) + tr(" ✓"));
                         it->setCheckState(0, Qt::Unchecked);
                         it->setFlags(it->flags() & ~Qt::ItemIsUserCheckable);
                     } else {
                         it->setText(0, it->text(0) + tr(" ✗ (%1)").arg(res.error.left(80)));
-                        it->setForeground(0, QColor(200, 50, 50));
+                        it->setForeground(0, dangerColor);
+                        it->setData(0, kUpdateRowStatusRole, static_cast<int>(UpdateRowStatus::Failed));
                         it->setFlags(it->flags() & ~Qt::ItemIsUserCheckable);
                     }
                 }
@@ -837,6 +866,36 @@ void HomebrewPage::onRepoHealthChecked(const RepoHealthCache &cache)
             QString currentText = item->text(0);
             currentText.remove(QRegularExpression("^[⚠✗] "));
             item->setText(0, prefix + currentText);
+        }
+    }
+}
+
+void HomebrewPage::refreshThemeColors()
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    if (!sv)
+        return;
+
+    const QColor destructiveColor(sv->value("@destructiveColor").toString());
+    for (int i = 0; i < mSparkleTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = mSparkleTree->topLevelItem(i);
+        if (item->data(2, kSparkleNoSignatureRole).toBool())
+            item->setForeground(2, destructiveColor);
+    }
+
+    const QColor mutedColor(sv->value("@tertiaryText").toString());
+    for (int i = 0; i < mUpdatesTree->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = mUpdatesTree->topLevelItem(i);
+        switch (static_cast<UpdateRowStatus>(item->data(0, kUpdateRowStatusRole).toInt())) {
+        case UpdateRowStatus::Success:
+            for (int col = 0; col < mUpdatesTree->columnCount(); ++col)
+                item->setForeground(col, mutedColor);
+            break;
+        case UpdateRowStatus::Failed:
+            item->setForeground(0, destructiveColor);
+            break;
+        case UpdateRowStatus::None:
+            break;
         }
     }
 }
