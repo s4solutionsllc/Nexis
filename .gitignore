@@ -28,3 +28,6 @@ shared/nexis/static/header.xcf
 
 # graphify generated knowledge graph (regenerate with `graphify update .`)
 graphify-out/
+
+# Paperclip design-anchor mirror (SSO-1768) — generated, never commit
+/.paperclip/
