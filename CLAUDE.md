@@ -117,6 +117,17 @@ There is **no Paperclip MCP server** — it is human-driven. Reference issues by
 
 **The old self-hosted Plane instance has been decommissioned.** Do **not** call any `mcp__plane__*` tools — the `plane` MCP server is gone and those calls will fail.
 
+## AI-Vendor Support Ticket Content (SSO-17821, SSO-17824, SSO-17825)
+
+Filing a support ticket, bug report, feedback submission, rating, or reproduction case with an AI vendor (Anthropic, Voyage AI/MongoDB, or any subprocessor) about Nexis or this repo is governed by the org-wide **AI-Vendor Submission Content Rule** — see the `standing-protocols` skill, section "AI-Vendor Submission Content Rule". It binds every agent and everyone acting on S4's behalf, including repo contributors. In brief:
+
+- **No real user or client content** — including screenshots and free-text fields — in the ticket or payload. Reproduce with synthetic or structure-only redacted data.
+- **No vendor-console feedback/rating controls** on any session that touched real data.
+- **No engineer-level exception exists.** The exception ladder lives entirely in the standing protocol.
+- **This is a failure-rate control, not an elimination control** — screenshots and free-text ticket fields are not covered by any tooling; check them by hand every time.
+- **SSO-99 (external-action Board approval) applies separately** to the act of filing the ticket. Satisfying this content rule does not waive SSO-99, and SSO-99 approval does not waive this rule.
+- **If it already happened:** do not delete or edit the ticket. File a child issue to CISO and GeneralCounsel in the same heartbeat with the ticket URL, vendor, and contents submitted.
+
 ## GitHub Issues Sync (Run at Every Session Start)
 
 **EXECUTE WITHOUT ASKING.** At the start of every session, fetch open GitHub issues and report them. No automated sync to Paperclip (its MCP is not yet connected).
