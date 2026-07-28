@@ -169,9 +169,17 @@ InstallResult verifyAndInstall(const UpdateEntry &entry,
     const QString floor = entry.bundleId.isEmpty()
                          ? entry.installedVersion
                          : SparkleUpdateFloorStore::floorVersion(entry.bundleId);
-    const QVersionNumber floorVer = QVersionNumber::fromString(floor);
+    // §7.4 / SSO-17898: an unknown/unparseable floor must NOT skip this
+    // check — that was the fail-open gap (empty entry.installedVersion means
+    // initializeIfAbsent() never seeds a floor, so floorVersion() stays
+    // empty forever). Defaulting to version 0 keeps the comparison running
+    // unconditionally; any real embedded version compares greater than 0, so
+    // this never blocks a legitimate first-ever verified install.
+    QVersionNumber floorVer = QVersionNumber::fromString(floor);
+    if (floorVer.isNull())
+        floorVer = QVersionNumber(0);
     const QVersionNumber embeddedVer = QVersionNumber::fromString(embeddedVersion);
-    if (!floorVer.isNull() && embeddedVer <= floorVer) {
+    if (embeddedVer <= floorVer) {
         result.outcome = Outcome::BlockedDowngrade;
         result.message = QStringLiteral(
             "This update's real version (%1) isn't newer than what's already "
