@@ -5,14 +5,33 @@
 // the injected launcher/revealer spies must be invoked exactly zero times,
 // and the outcome must fall back to browser-open. Also covers the format
 // scope gate (AC7) and the floor-version store (AC5).
+//
+// SSO-17899 (SSO-17776 follow-up): the fixtures above never construct a
+// genuinely valid signature, so the success path — Valid -> Installed /
+// RevealedForManualInstall, launcher/revealer called exactly once, floor
+// ratcheted — had no coverage. validSignature_pkg_installsAndRatchetsFloor()
+// and validSignature_zip_revealsAndRatchetsFloor() close that gap using a
+// real ed25519 signature over a real pkgbuild/ditto-produced fixture.
 
 #include <QTest>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QCryptographicHash>
+#include <QDir>
+#include <QFile>
+
+#include <cstring>
 
 #include "Info/sparkle_update_installer.h"
 #include "Info/sparkle_update_floor_store.h"
 #include "Info/sparkle_update_downloader.h"
+#include <Utils/command_util.h>
+
+extern "C" {
+#include "ge.h"
+#include "sc.h"
+#include "sha512.h"
+}
 
 using namespace SparkleSignatureVerifier;
 
@@ -63,6 +82,140 @@ struct RevealerSpy {
     }
 };
 
+// ── Test-only Ed25519 signing (SSO-17899) ───────────────────────────────────
+//
+// macos/nexis-core/Info/vendor/ed25519 is deliberately verify-only in
+// production (see vendor/ed25519/UPSTREAM.md: signing/keypair/seed files are
+// "intentionally not copied in, per Build vs Buy / Blast Radius") — Nexis
+// itself never signs anything. But ge_scalarmult_base(), sc_reduce(),
+// sc_muladd() and sha512() are already vendored and linked into this test
+// binary to support ed25519_verify(), and those four primitives are the
+// entire orlp/ed25519 sign.c/keypair.c algorithm. Reimplementing that
+// (zlib-licensed, RFC 8032 §5.1.5/§5.1.6) algorithm here — rather than
+// vendoring sign.c into production — lets this test produce a genuinely
+// valid signature over a synthetic fixture without expanding the
+// production verify-only boundary.
+struct TestKeyPair {
+    QByteArray publicKey;  // 32 bytes
+    QByteArray privateKey; // 64 bytes: SHA-512(seed), clamped per RFC 8032 §5.1.5
+};
+
+TestKeyPair makeTestKeyPair(const QByteArray &seed)
+{
+    Q_ASSERT(seed.size() == 32);
+    unsigned char priv[64];
+    sha512(reinterpret_cast<const unsigned char *>(seed.constData()), 32, priv);
+    priv[0] &= 248;
+    priv[31] &= 63;
+    priv[31] |= 64;
+
+    ge_p3 A;
+    ge_scalarmult_base(&A, priv);
+    unsigned char pub[32];
+    ge_p3_tobytes(pub, &A);
+
+    TestKeyPair kp;
+    kp.publicKey = QByteArray(reinterpret_cast<const char *>(pub), 32);
+    kp.privateKey = QByteArray(reinterpret_cast<const char *>(priv), 64);
+    return kp;
+}
+
+QByteArray signWithTestKeyPair(const QByteArray &message, const TestKeyPair &kp)
+{
+    const auto *priv = reinterpret_cast<const unsigned char *>(kp.privateKey.constData());
+    const auto *pub  = reinterpret_cast<const unsigned char *>(kp.publicKey.constData());
+    const auto *msg  = reinterpret_cast<const unsigned char *>(message.constData());
+    const auto msgLen = static_cast<size_t>(message.size());
+
+    sha512_context hash;
+    unsigned char r[64];
+    sha512_init(&hash);
+    sha512_update(&hash, priv + 32, 32);
+    sha512_update(&hash, msg, msgLen);
+    sha512_final(&hash, r);
+    sc_reduce(r);
+
+    ge_p3 R;
+    ge_scalarmult_base(&R, r);
+    unsigned char sigR[32];
+    ge_p3_tobytes(sigR, &R);
+
+    unsigned char hram[64];
+    sha512_init(&hash);
+    sha512_update(&hash, sigR, 32);
+    sha512_update(&hash, pub, 32);
+    sha512_update(&hash, msg, msgLen);
+    sha512_final(&hash, hram);
+    sc_reduce(hram);
+
+    unsigned char sigS[32];
+    sc_muladd(sigS, hram, priv, r);
+
+    QByteArray signature(64, '\0');
+    std::memcpy(signature.data(), sigR, 32);
+    std::memcpy(signature.data() + 32, sigS, 32);
+    return signature;
+}
+
+// Builds a genuinely valid, pkgutil-expandable component package via the
+// real macOS `pkgbuild` — verifyAndInstall() shells out to `pkgutil --expand`
+// on whatever bytes it just verified, so only a real .pkg (not a hand-rolled
+// xar) exercises that step honestly.
+QByteArray buildRealPkgFixture(const QTemporaryDir &tmp, const QString &identifier,
+                               const QString &embeddedVersion)
+{
+    const QString rootDir = tmp.path() + QStringLiteral("/payload-root");
+    if (!QDir().mkpath(rootDir))
+        return {};
+    const QString outPkg = tmp.path() + QStringLiteral("/fixture.pkg");
+    const ExecResult r = CommandUtil::execWithStatus(
+        QStringLiteral("/usr/bin/pkgbuild"),
+        {"--root", rootDir, "--identifier", identifier, "--version", embeddedVersion,
+         "--install-location", QStringLiteral("/tmp/nexis-sso-17899-placeholder"), outPkg},
+        60000);
+    if (!r.ok())
+        return {};
+    QFile f(outPkg);
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    return f.readAll();
+}
+
+// Builds a real .zip (via `ditto`, the same tool Sparkle release tooling
+// uses) containing a single top-level <appName>.app bundle with a synthetic
+// Info.plist — verifyAndInstall()'s .zip path unzips with `/usr/bin/unzip`
+// and reads CFBundleShortVersionString back out with `/usr/bin/plutil`.
+QByteArray buildRealZipFixture(const QTemporaryDir &tmp, const QString &appName,
+                               const QString &embeddedVersion)
+{
+    const QString appBundle = tmp.path() + QLatin1Char('/') + appName + QStringLiteral(".app");
+    if (!QDir().mkpath(appBundle + QStringLiteral("/Contents")))
+        return {};
+    QFile plist(appBundle + QStringLiteral("/Contents/Info.plist"));
+    if (!plist.open(QIODevice::WriteOnly))
+        return {};
+    plist.write(QStringLiteral(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" "
+        "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+        "<plist version=\"1.0\"><dict>\n"
+        "<key>CFBundleShortVersionString</key><string>%1</string>\n"
+        "</dict></plist>\n").arg(embeddedVersion).toUtf8());
+    plist.close();
+
+    const QString outZip = tmp.path() + QStringLiteral("/fixture.zip");
+    const ExecResult r = CommandUtil::execWithStatus(
+        QStringLiteral("/usr/bin/ditto"),
+        {"-c", "-k", "--sequesterRsrc", "--keepParent", appBundle, outZip},
+        60000);
+    if (!r.ok())
+        return {};
+    QFile f(outZip);
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    return f.readAll();
+}
+
 } // namespace
 
 class TestSparkleUpdateInstaller : public QObject
@@ -82,6 +235,10 @@ private slots:
 
     // AC7 format scope.
     void unsupportedFormat_blocksBeforeVerification_neverLaunches();
+
+    // SSO-17899: the success path — Valid -> Installed/RevealedForManualInstall.
+    void validSignature_pkg_installsAndRatchetsFloor();
+    void validSignature_zip_revealsAndRatchetsFloor();
 
     // AC5 floor-version store (pure logic, no subprocess calls).
     void floorStore_initializesOnlyOnce();
@@ -246,6 +403,80 @@ void TestSparkleUpdateInstaller::unsupportedFormat_blocksBeforeVerification_neve
     QVERIFY(result.shouldFallBackToBrowserOpen());
     QCOMPARE(launcher.callCount, 0);
     QCOMPARE(revealer.callCount, 0);
+}
+
+void TestSparkleUpdateInstaller::validSignature_pkg_installsAndRatchetsFloor()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const TestKeyPair kp = makeTestKeyPair(
+        QCryptographicHash::hash(QByteArrayLiteral("SSO-17899-pkg-success-seed"),
+                                  QCryptographicHash::Sha256));
+
+    const QString bundleId = QStringLiteral("com.example.spyapp.pkgsuccess");
+    const QString embeddedVersion = QStringLiteral("2.0.0");
+    const QByteArray pkgBytes = buildRealPkgFixture(tmp, bundleId, embeddedVersion);
+    QVERIFY2(!pkgBytes.isEmpty(),
+             "pkgbuild fixture failed to build — this suite requires the "
+             "macOS command line tools (pkgbuild)");
+
+    const QByteArray signature = signWithTestKeyPair(pkgBytes, kp);
+
+    UpdateEntry entry = pkgEntry();
+    entry.bundleId = bundleId;
+    entry.installedVersion = QStringLiteral("1.0.0");
+    entry.edSignature = QString::fromLatin1(signature.toBase64());
+    entry.publicKey = QString::fromLatin1(kp.publicKey.toBase64());
+
+    LauncherSpy launcher;
+    RevealerSpy revealer;
+    const auto result = SparkleUpdateInstaller::verifyAndInstall(
+        entry, pkgBytes, launcher.asLauncher(), revealer.asRevealer());
+
+    QCOMPARE(result.verifyResult, Result::Valid);
+    QCOMPARE(result.outcome, SparkleUpdateInstaller::Outcome::Installed);
+    QVERIFY(!result.shouldFallBackToBrowserOpen());
+    QCOMPARE(launcher.callCount, 1);
+    QCOMPARE(revealer.callCount, 0);
+    QCOMPARE(SparkleUpdateFloorStore::floorVersion(bundleId), embeddedVersion);
+}
+
+void TestSparkleUpdateInstaller::validSignature_zip_revealsAndRatchetsFloor()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const TestKeyPair kp = makeTestKeyPair(
+        QCryptographicHash::hash(QByteArrayLiteral("SSO-17899-zip-success-seed"),
+                                  QCryptographicHash::Sha256));
+
+    const QString bundleId = QStringLiteral("com.example.spyapp.zipsuccess");
+    const QString embeddedVersion = QStringLiteral("3.0.0");
+    const QByteArray zipBytes = buildRealZipFixture(tmp, QStringLiteral("SpyApp"), embeddedVersion);
+    QVERIFY2(!zipBytes.isEmpty(),
+             "ditto fixture failed to build — this suite requires macOS `ditto`");
+
+    const QByteArray signature = signWithTestKeyPair(zipBytes, kp);
+
+    UpdateEntry entry = pkgEntry();
+    entry.enclosureUrl = QStringLiteral("https://example.com/updates/spyapp-3.0.0.zip");
+    entry.bundleId = bundleId;
+    entry.installedVersion = QStringLiteral("1.0.0");
+    entry.edSignature = QString::fromLatin1(signature.toBase64());
+    entry.publicKey = QString::fromLatin1(kp.publicKey.toBase64());
+
+    LauncherSpy launcher;
+    RevealerSpy revealer;
+    const auto result = SparkleUpdateInstaller::verifyAndInstall(
+        entry, zipBytes, launcher.asLauncher(), revealer.asRevealer());
+
+    QCOMPARE(result.verifyResult, Result::Valid);
+    QCOMPARE(result.outcome, SparkleUpdateInstaller::Outcome::RevealedForManualInstall);
+    QVERIFY(!result.shouldFallBackToBrowserOpen());
+    QCOMPARE(launcher.callCount, 0);
+    QCOMPARE(revealer.callCount, 1);
+    QCOMPARE(SparkleUpdateFloorStore::floorVersion(bundleId), embeddedVersion);
 }
 
 void TestSparkleUpdateInstaller::floorStore_initializesOnlyOnce()
