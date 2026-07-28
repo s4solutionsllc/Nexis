@@ -60,6 +60,20 @@ static const QVector<PageInfo> kPageMap = {
     // #systemSummaryCard QSS selector, before any capture — mask by the
     // post-rename name or this silently stops masking the hostname/OS/CPU/RAM
     // card, which is genuinely different on every CI runner.
+    //
+    // SSO-17802: Dashboard is the most text-dense page (full nav sidebar +
+    // section headers), so it's also the most sensitive to font
+    // hinting/anti-aliasing drift. A binary built with a Qt distribution
+    // other than the canonical one baked into
+    // .github/workflows/screenshot-baselines.yml (apt qt6-base-dev on
+    // ubuntu:26.04 for Linux, brew qt@6 for macOS) — e.g. a conda toolchain,
+    // or Qt's offscreen QPA without the reference environment's fonts — will
+    // show a spurious whole-sidebar text diff here even though the app
+    // hasn't changed. Confirmed by diffing the committed PNGs against a
+    // fresh canonical capture (byte-identical) while a local conda +
+    // offscreen-QPA build reported ~2.3% unmasked pixel diff on both themes.
+    // Re-run via the "Regenerate Screenshot Baselines" workflow before
+    // trusting a local Dashboard-only failure as a real regression.
     {"DashboardPage",     "dashboard",
         {"DashboardTileWrapper", "MetricTileBase", "NetworkTile"},
         {"systemSummaryCard", "lblFooterRight"}},
