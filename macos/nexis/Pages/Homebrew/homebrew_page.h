@@ -49,6 +49,7 @@ private slots:
     void onSelectAllToggled(bool checked);
     void onUpdateSelectedClicked();
     void onSparkleUpdateSelectedClicked();
+    void refreshThemeColors();
 
 private:
     void buildUI();
