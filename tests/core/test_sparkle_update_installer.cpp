@@ -54,6 +54,29 @@ QString hexToBase64(const char *hex)
     return QString::fromLatin1(QByteArray::fromHex(QByteArray(hex)).toBase64());
 }
 
+// SSO-17898 regression fixture: a genuinely Ed25519-valid .zip payload
+// (generated offline — this vendored verifier is verify-only, see
+// sparkle_signature_verifier.cpp, so no in-test signing is possible). The
+// zip contains a single top-level SpyApp.app/Contents/Info.plist with
+// CFBundleShortVersionString "0.0.0", so it reaches the §7 downgrade check
+// with a real (low) embedded version instead of stopping earlier at
+// signature verification or version extraction like the other fixtures in
+// this file.
+const char *kZipFixtureBase64 =
+    "UEsDBBQAAAAAAAAAIVCUj9dtPwEAAD8BAAAeAAAAU3B5QXBwLmFwcC9Db250ZW50cy9JbmZv"
+    "LnBsaXN0PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCFET0NUWVBF"
+    "IHBsaXN0IFBVQkxJQyAiLS8vQXBwbGUvL0RURCBQTElTVCAxLjAvL0VOIiAiaHR0cDovL3d3"
+    "dy5hcHBsZS5jb20vRFREcy9Qcm9wZXJ0eUxpc3QtMS4wLmR0ZCI+CjxwbGlzdCB2ZXJzaW9u"
+    "PSIxLjAiPgo8ZGljdD4KCTxrZXk+Q0ZCdW5kbGVTaG9ydFZlcnNpb25TdHJpbmc8L2tleT4K"
+    "CTxzdHJpbmc+MC4wLjA8L3N0cmluZz4KCTxrZXk+Q0ZCdW5kbGVJZGVudGlmaWVyPC9rZXk+"
+    "Cgk8c3RyaW5nPmNvbS5leGFtcGxlLnNweWFwcDwvc3RyaW5nPgo8L2RpY3Q+CjwvcGxpc3Q+"
+    "ClBLAQIUAxQAAAAAAAAAIVCUj9dtPwEAAD8BAAAeAAAAAAAAAAAAAACkAQAAAABTcHlBcHAu"
+    "YXBwL0NvbnRlbnRzL0luZm8ucGxpc3RQSwUGAAAAAAEAAQBMAAAAewEAAAAA";
+const char *kZipFixturePublicKeyBase64 = "JbG5JzYqnK5HXvp9pbI0yg9sIRLWJruHbJqkyyi0yeM=";
+const char *kZipFixtureEdSignatureBase64 =
+    "m2UUF+WS4zgmLsRvwVNA562pw69Xes7bhijF1Ex+WZ589YNVaZoA8fHnMskAlEX2tgDCbFeb"
+    "X12oVq4UxzkjCQ==";
+
 UpdateEntry pkgEntry()
 {
     UpdateEntry e;
@@ -63,6 +86,20 @@ UpdateEntry pkgEntry()
     e.installedVersion = QStringLiteral("1.0.0");
     e.bundleId = QStringLiteral("com.example.spyapp");
     e.signatureMetadataPresent = true;
+    return e;
+}
+
+UpdateEntry zipFixtureEntry()
+{
+    UpdateEntry e;
+    e.name = QStringLiteral("Spy App");
+    e.enclosureUrl = QStringLiteral("https://example.com/updates/spyapp-0.0.0.zip");
+    e.version = QStringLiteral("0.0.0");
+    e.installedVersion.clear(); // the exact fail-open precondition: unreadable/absent local metadata
+    e.bundleId = QStringLiteral("com.example.unknownfloor");
+    e.signatureMetadataPresent = true;
+    e.edSignature = QString::fromLatin1(kZipFixtureEdSignatureBase64);
+    e.publicKey = QString::fromLatin1(kZipFixturePublicKeyBase64);
     return e;
 }
 
@@ -243,6 +280,10 @@ private slots:
     // AC5 floor-version store (pure logic, no subprocess calls).
     void floorStore_initializesOnlyOnce();
     void floorStore_ratchetsForwardOnly();
+
+    // SSO-17898: an unknown/unparseable floor must not skip the §7
+    // downgrade/replay check.
+    void unknownFloor_defaultsToZero_stillBlocksLowEmbeddedVersion();
 
     // AC2 (https-only), testable synchronously since the scheme check runs
     // before any network request is issued.
@@ -506,6 +547,36 @@ void TestSparkleUpdateInstaller::floorStore_ratchetsForwardOnly()
 
     SparkleUpdateFloorStore::ratchetAfterVerifiedInstall(bundleId, QStringLiteral("2.0.0"));
     QCOMPARE(SparkleUpdateFloorStore::floorVersion(bundleId), QStringLiteral("2.0.0"));
+}
+
+void TestSparkleUpdateInstaller::unknownFloor_defaultsToZero_stillBlocksLowEmbeddedVersion()
+{
+    // Reproduces the SSO-17898 gap: entry.installedVersion is empty (as it
+    // would be if Nexis couldn't read the installed app's
+    // CFBundleShortVersionString), so initializeIfAbsent() never seeds a
+    // floor and floorVersion() stays empty — QVersionNumber::fromString("")
+    // and QVersionNumber::fromString(<garbage>) both produce the same null
+    // QVersionNumber, so this exercises the same defaulting branch an
+    // unparseable stored floor would. Before the fix, the null floor made
+    // the downgrade check skip itself entirely (BlockedDowngrade never
+    // fired, and the .zip was revealed to the user); after the fix, the
+    // unknown floor defaults to version 0 and this low (but real, verified)
+    // embedded version ("0.0.0") is still caught.
+    UpdateEntry entry = zipFixtureEntry();
+    const QByteArray zipBytes = QByteArray::fromBase64(QByteArray(kZipFixtureBase64));
+    QVERIFY(!zipBytes.isEmpty());
+    QVERIFY(SparkleUpdateFloorStore::floorVersion(entry.bundleId).isEmpty());
+
+    LauncherSpy launcher;
+    RevealerSpy revealer;
+    const auto result = SparkleUpdateInstaller::verifyAndInstall(
+        entry, zipBytes, launcher.asLauncher(), revealer.asRevealer());
+
+    QCOMPARE(result.verifyResult, Result::Valid);
+    QCOMPARE(result.outcome, SparkleUpdateInstaller::Outcome::BlockedDowngrade);
+    QVERIFY(result.shouldFallBackToBrowserOpen());
+    QCOMPARE(launcher.callCount, 0);
+    QCOMPARE(revealer.callCount, 0);
 }
 
 void TestSparkleUpdateInstaller::downloader_rejectsNonHttpsSynchronously()
