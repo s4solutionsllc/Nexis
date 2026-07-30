@@ -1,0 +1,84 @@
+name: Debian Lintian Check
+
+# SSO-15394: verify linux/debian/ against Debian Policy ahead of the
+# official-archive ITP. Builds the package with the plain debian/changelog
+# version (no PPA series suffix — see ppa.yml for the Launchpad-specific
+# variant) and runs lintian --pedantic, distinct from ppa.yml which only
+# publishes to Launchpad.
+#
+# Uses debian:trixie as the build container so lintian recognises "unstable"
+# as a valid distribution and the Debian-policy distribution tables are current.
+
+on:
+  push:
+    branches: [native]
+    paths:
+      - 'linux/debian/**'
+      - '.github/workflows/debian-lintian.yml'
+  pull_request:
+    paths:
+      - 'linux/debian/**'
+      - '.github/workflows/debian-lintian.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lintian:
+    name: lintian --pedantic
+    runs-on: ubuntu-24.04
+    container:
+      image: debian:trixie
+
+    steps:
+      - name: Install git and ca-certificates
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git ca-certificates
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install packaging + build dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq \
+            devscripts \
+            debhelper \
+            lintian \
+            build-essential \
+            cmake \
+            g++ \
+            libgl1-mesa-dev \
+            qt6-base-dev \
+            qt6-charts-dev \
+            qt6-svg-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            qt6-l10n-tools \
+            libqt6charts6-dev \
+            libqt6svg6-dev \
+            xvfb
+
+      - name: Copy debian directory and build
+        run: |
+          cp -r linux/debian debian
+          dpkg-buildpackage -us -uc -b
+          mkdir -p lintian-input
+          find .. -maxdepth 1 \( -name '*.changes' -o -name '*.deb' -o -name '*.buildinfo' \) \
+            -exec mv {} lintian-input/ \;
+          ls -lh lintian-input/
+
+      - name: Run lintian --pedantic
+        run: |
+          set -o pipefail
+          lintian --pedantic --tag-display-limit 0 lintian-input/*.changes 2>&1 | tee lintian-report.txt
+
+      - name: Upload lintian report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lintian-report
+          path: lintian-report.txt
+          retention-days: 14

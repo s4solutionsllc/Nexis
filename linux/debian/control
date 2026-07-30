@@ -13,9 +13,11 @@ Build-Depends: debhelper-compat (= 13),
                qt6-l10n-tools,
                libgl1-mesa-dev,
                xvfb
-Standards-Version: 4.6.2
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
 Homepage: https://github.com/s4solutionsllc/Nexis
-Vcs-Browser: https://github.com/s4solutionsllc/Nexis.git
+Vcs-Browser: https://github.com/s4solutionsllc/Nexis
+Vcs-Git: https://github.com/s4solutionsllc/Nexis.git
 
 Package: nexis
 Architecture: any

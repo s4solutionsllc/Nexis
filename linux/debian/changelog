@@ -1,3 +1,9 @@
+nexis (2.8.3-1) unstable; urgency=medium
+
+  * First upload to the official Debian archive.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Tue, 21 Jul 2026 00:00:00 +0000
+
 nexis (2.8.3-0) unstable; urgency=medium
 
   * Linux AppImage (x86_64) now reports the correct release version — the build
