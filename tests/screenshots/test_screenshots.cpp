@@ -1,6 +1,7 @@
 #include <QTest>
 #include <QApplication>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFontDatabase>
 #include <QImage>
 #include <QPainter>
@@ -15,8 +16,10 @@
 #include "app.h"
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
+#include "Managers/tool_manager.h"
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
+#include "Pages/SystemCleaner/system_cleaner_page.h"
 
 // Per-channel fuzz: pixels whose R/G/B/A all differ by ≤ this value count as
 // equal. Tolerates anti-aliasing + minor font-rendering drift without letting
@@ -52,12 +55,39 @@ struct PageInfo {
 // masked. Anything not listed here is expected to be byte-stable (modulo
 // per-channel fuzz) between the reference capture and the comparison run.
 static const QVector<PageInfo> kPageMap = {
+    // SSO-15971: DashboardPage::buildSystemSummary() renames this widget from
+    // "systemSummary" (its .ui name) to "systemSummaryCard" for the
+    // #systemSummaryCard QSS selector, before any capture — mask by the
+    // post-rename name or this silently stops masking the hostname/OS/CPU/RAM
+    // card, which is genuinely different on every CI runner.
+    //
+    // SSO-17802: Dashboard is the most text-dense page (full nav sidebar +
+    // section headers), so it's also the most sensitive to font
+    // hinting/anti-aliasing drift. A binary built with a Qt distribution
+    // other than the canonical one baked into
+    // .github/workflows/screenshot-baselines.yml (apt qt6-base-dev on
+    // ubuntu:26.04 for Linux, brew qt@6 for macOS) — e.g. a conda toolchain,
+    // or Qt's offscreen QPA without the reference environment's fonts — will
+    // show a spurious whole-sidebar text diff here even though the app
+    // hasn't changed. Confirmed by diffing the committed PNGs against a
+    // fresh canonical capture (byte-identical) while a local conda +
+    // offscreen-QPA build reported ~2.3% unmasked pixel diff on both themes.
+    // Re-run via the "Regenerate Screenshot Baselines" workflow before
+    // trusting a local Dashboard-only failure as a real regression.
     {"DashboardPage",     "dashboard",
         {"DashboardTileWrapper", "MetricTileBase", "NetworkTile"},
-        {"systemSummary", "lblFooterRight"}},
+        {"systemSummaryCard", "lblFooterRight"}},
     {"HardwareInfoPage",  "hardware_info",     {}, {}},
     {"StartupAppsPage",   "startup_apps",      {"QAbstractItemView"}, {}},
-    {"SystemCleanerPage", "system_cleaner",    {}, {}},
+    // SSO-15956: showEvent() kicks off an async background disk-size scan on
+    // first display, so whether it has finished by capture time is a race —
+    // captureAndCompare() waits it out explicitly (see the SystemCleanerPage
+    // special-case below) before grabbing the pixmap. lblCatSize still needs
+    // masking because the *computed* byte totals are real filesystem data
+    // (empty on a fresh CI container, but non-empty and environment-specific
+    // on a contributor's machine), same rationale as DashboardPage's
+    // systemSummary mask above.
+    {"SystemCleanerPage", "system_cleaner",    {}, {"lblCatSize"}},
     {"SearchPage",        "search",            {}, {}},
     {"ServicesPage",      "services",          {"QAbstractItemView"}, {}},
     {"ProcessesPage",     "processes",         {"QAbstractItemView"}, {}},
@@ -75,6 +105,9 @@ static const QVector<PageInfo> kPageMap = {
 // All three require their runtime check to pass (APT tool, docker CLI,
 // gsettings + org.gnome.desktop.interface schema) for the page widget to
 // exist in mSlidingStacked; the capture CI installs the needed packages.
+// SSO-15601: on hosts where a check fails (e.g. docker-less build
+// containers) the page is never registered — pageRuntimeAvailable() below
+// skips the entry instead of hard-failing, mirroring App's registration.
 #ifdef Q_OS_LINUX
     {"APTSourceManagerPage", "apt_source_manager", {"QAbstractItemView"}, {}},
     {"DockerPage",            "docker",             {"QAbstractItemView"}, {}},
@@ -106,9 +139,37 @@ private:
 #endif
     }
 
+    // SSO-15601: App registers some pages only when the host passes a
+    // runtime tool check (see app.cpp). Mirror those exact checks here so
+    // a host without the optional tool skips the entry cleanly, while a
+    // host that passes the check but is missing the widget still fails —
+    // that combination is a real registration bug.
+    static bool pageRuntimeAvailable(const QString &className)
+    {
+        if (className == QLatin1String("APTSourceManagerPage") ||
+            className == QLatin1String("HomebrewPage"))
+            return ToolManager::ins()->checkSourceRepository();
+        if (className == QLatin1String("DockerPage"))
+            return ToolManager::ins()->checkDocker();
+        if (className == QLatin1String("GnomeSettingsPage"))
+            return ToolManager::ins()->checkGnomeSettings();
+        return true;
+    }
+
     // Build a mask region (in `root` coordinates) covering every child of
     // `page` that matches one of the declared dynamic class/object names.
-    static QRegion buildMaskRegion(QWidget *page, QWidget *root, const PageInfo &info)
+    //
+    // SSO-15971: a `dynamicObjectNames` entry that matches zero widgets
+    // (e.g. the widget was renamed or removed) degrades silently to "mask
+    // nothing there" instead of an error — that's exactly how the Dashboard
+    // systemSummary mask went stale through two baseline refreshes without
+    // anyone noticing. `unmatchedObjectNames`, when provided, is filled with
+    // any `dynamicObjectNames` entry that matched no child widget so the
+    // caller can fail loudly. Class-based masks are intentionally excluded:
+    // they can legitimately match zero widgets on conditionally-registered
+    // pages (SSO-15601).
+    static QRegion buildMaskRegion(QWidget *page, QWidget *root, const PageInfo &info,
+                                   QStringList *unmatchedObjectNames = nullptr)
     {
         QRegion mask;
         if (!page || !root) return mask;
@@ -116,6 +177,7 @@ private:
         const QList<QWidget *> allChildren = page->findChildren<QWidget *>();
         const QSet<QString> nameFilter(info.dynamicObjectNames.begin(),
                                        info.dynamicObjectNames.end());
+        QSet<QString> matchedNames;
 
         auto addWidgetRect = [&](QWidget *w) {
             if (!w || !w->isVisible()) return;
@@ -127,6 +189,7 @@ private:
 
         for (QWidget *w : allChildren) {
             if (!nameFilter.isEmpty() && nameFilter.contains(w->objectName())) {
+                matchedNames.insert(w->objectName());
                 addWidgetRect(w);
                 continue;
             }
@@ -135,6 +198,13 @@ private:
                     addWidgetRect(w);
                     break;
                 }
+            }
+        }
+
+        if (unmatchedObjectNames) {
+            for (const QString &name : info.dynamicObjectNames) {
+                if (!matchedNames.contains(name))
+                    unmatchedObjectNames->append(name);
             }
         }
         return mask;
@@ -267,6 +337,13 @@ private:
         }
 
         for (const auto &page : kPageMap) {
+            if (!pageRuntimeAvailable(page.className)) {
+                qInfo() << "Skipping" << page.className << "(" << theme << ")"
+                        << "— host runtime tool check failed, page not "
+                           "registered in App (SSO-15601)";
+                continue;
+            }
+
             QWidget *widget = findPageByClassName(page.className);
             QVERIFY2(widget, qPrintable(QString("Page widget '%1' not found in stacked widget "
                                                 "— check kPageMap and App::ensureAllPages()")
@@ -275,6 +352,26 @@ private:
             mStacked->setCurrentWidget(widget);
             QApplication::processEvents();
             QTest::qWait(100);
+
+            // SSO-15956: SystemCleanerPage::showEvent() fires an async
+            // background disk-size scan on first display (mHasScanned ==
+            // false). Whether it finishes inside the 100ms wait above is a
+            // real race — depending on the outcome, the scan/schedule
+            // buttons are enabled or disabled, the progress bar is shown or
+            // hidden, and it may reflow the layout beneath it. Block here
+            // until the worker settles so every run captures the same
+            // (post-scan) chrome instead of flipping between the two.
+            if (auto *cleanerPage = qobject_cast<SystemCleanerPage *>(widget)) {
+                QElapsedTimer scanTimer;
+                scanTimer.start();
+                while (cleanerPage->isScanInProgress() && scanTimer.elapsed() < 15000) {
+                    QApplication::processEvents();
+                    QTest::qWait(50);
+                }
+                QVERIFY2(!cleanerPage->isScanInProgress(),
+                    "SystemCleanerPage background scan did not settle within 15s "
+                    "— capture would race it (SSO-15956)");
+            }
 
             QPixmap pixmap = mApp->grab();
             QImage captured = pixmap.toImage();
@@ -297,7 +394,15 @@ private:
                            .arg(refPath)));
 
             QImage reference(refPath);
-            QRegion mask = buildMaskRegion(widget, mApp, page);
+            QStringList unmatchedMaskNames;
+            QRegion mask = buildMaskRegion(widget, mApp, page, &unmatchedMaskNames);
+            QVERIFY2(unmatchedMaskNames.isEmpty(),
+                qPrintable(QString("%1 (%2): dynamicObjectNames mask entries matched no child "
+                                   "widget: %3 — stale mask name (widget renamed/removed?) "
+                                   "silently stops masking that region instead of failing "
+                                   "loudly (SSO-15971)")
+                           .arg(page.className, theme, unmatchedMaskNames.join(", "))));
+
             CompareResult cmp = compareImages(captured, reference, mask,
                                               mTolerance, mChannelFuzz);
 

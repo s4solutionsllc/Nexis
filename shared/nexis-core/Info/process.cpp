@@ -199,3 +199,23 @@ void Process::setGpuVramBytes(const qint64 &value)
 {
     gpuVramBytes = value;
 }
+
+bool Process::getIsAppProcess() const
+{
+    return isAppProcess;
+}
+
+void Process::setIsAppProcess(bool value)
+{
+    isAppProcess = value;
+}
+
+QString Process::getIconHint() const
+{
+    return iconHint;
+}
+
+void Process::setIconHint(const QString &value)
+{
+    iconHint = value;
+}

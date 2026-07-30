@@ -1,5 +1,6 @@
 #include "process_info_linux.h"
 
+#include "nethogs_streamer.h"
 #include "nvml_process_sampler.h"
 #include "proc_info_parser.h"
 
@@ -8,8 +9,11 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QMutexLocker>
+#include <QRegularExpression>
 #include <QSet>
+#include <QStandardPaths>
 
 #include <grp.h>
 #include <pwd.h>
@@ -40,6 +44,30 @@ QByteArray readAll(const QString &path)
     return f.readAll();
 }
 
+// SSO-15376: systemd creates a per-app-launch cgroup scope named
+// "app-<launcher>-<id>.scope" under app.slice for anything started through
+// the desktop session (gnome-session, xdg-desktop-portal, etc.); services
+// and daemons live under system.slice / *.service instead. Matches on
+// either cgroup v2's single unified line or any v1 hybrid controller line.
+const QRegularExpression &appScopeRegex()
+{
+    static const QRegularExpression re(QStringLiteral("(?:^|/)app-[^/\\n]*\\.scope(?:/|$)"),
+                                        QRegularExpression::MultilineOption);
+    return re;
+}
+
+// Mirrors the line-based Key=Value reader in startup_info.cpp — kept local
+// rather than shared to avoid touching that unrelated, working file.
+QString desktopEntryValue(const QRegularExpression &key, const QStringList &lines)
+{
+    const QStringList matches = lines.filter(key);
+    if (matches.isEmpty())
+        return QString();
+    const QString line = matches.first().trimmed();
+    const int eq = line.indexOf('=');
+    return eq == -1 ? QString() : line.mid(eq + 1).trimmed();
+}
+
 } // namespace
 
 ProcessInfoLinux::ProcessInfoLinux()
@@ -53,6 +81,25 @@ ProcessInfoLinux::ProcessInfoLinux()
 
     mBootTimeSec = ProcInfoParser::parseBootTime(readAll("/proc/stat"));
     mTotalMemBytes = ProcInfoParser::parseMemTotalBytes(readAll("/proc/meminfo"));
+}
+
+ProcessInfoLinux::~ProcessInfoLinux() = default;
+
+ProcessInfo::NetIoAvailability ProcessInfoLinux::netIoAvailability() const
+{
+    if (!mNethogsStreamer)
+        return NetIoAvailability::Available;   // not started yet — nothing to report
+
+    switch (mNethogsStreamer->status()) {
+    case NethogsStreamer::Status::ToolMissing:
+        return NetIoAvailability::ToolMissing;
+    case NethogsStreamer::Status::ExitedImmediately:
+        return NetIoAvailability::PermissionDenied;
+    case NethogsStreamer::Status::NotStarted:
+    case NethogsStreamer::Status::Running:
+    default:
+        return NetIoAvailability::Available;
+    }
 }
 
 QString ProcessInfoLinux::lookupUid(uid_t uid)
@@ -224,6 +271,19 @@ QList<Process> ProcessInfoLinux::collectProcesses()
         // from /proc/<pid>/stat into sf.comm — no extra /proc read needed.
         proc.setName(sf.comm);
 
+        // SSO-15376: App vs Background classification + icon resolution.
+        // Unconditional (not column-gated like the FR-108 I/O reads below) —
+        // grouping is the page's primary structure, not a hideable column.
+        const bool isApp = classifyIsAppProcess(pid);
+        proc.setIsAppProcess(isApp);
+        if (isApp) {
+            if (!mDesktopIndexBuilt) {
+                buildDesktopIconIndex();
+                mDesktopIndexBuilt = true;
+            }
+            proc.setIconHint(resolveIconHint(proc));
+        }
+
         // FR-115: walk /proc/<pid>/fdinfo/* and fold DRM stats into proc.
         if (mCollectGpu) {
             collectGpuForPid(pid, proc, gpuElapsedSec);
@@ -263,66 +323,120 @@ QList<Process> ProcessInfoLinux::collectProcesses()
     // I/O columns are hidden. Hundreds of file opens per tick on a loaded
     // system otherwise. Reset the baseline cache when collection is off so
     // we don't display stale rates if the user re-enables the column later.
+    //
+    // SSO-15379: this used to `return processes` here when disk I/O was off,
+    // which also skipped net I/O below (they're independent FR-108 toggles,
+    // gated by separate Processes-page columns) — folded into an if/else so
+    // disabling one doesn't disable the other.
     if (!mCollectDiskIO) {
         if (!mPrevDiskIo.isEmpty())
             mPrevDiskIo.clear();
         mIoTimerStarted = false;
-        return processes;
-    }
-
-    double elapsedSecs = 0;
-    if (!mIoTimerStarted) {
-        mIoTimer.start();
-        mIoTimerStarted = true;
     } else {
-        elapsedSecs = mIoTimer.elapsed() / 1000.0;
-        mIoTimer.restart();
-    }
+        double elapsedSecs = 0;
+        if (!mIoTimerStarted) {
+            mIoTimer.start();
+            mIoTimerStarted = true;
+        } else {
+            elapsedSecs = mIoTimer.elapsed() / 1000.0;
+            mIoTimer.restart();
+        }
 
-    QSet<pid_t> activePids;
+        QSet<pid_t> activePids;
 
-    for (Process &proc : processes) {
-        pid_t pid = proc.getPid();
-        activePids.insert(pid);
+        for (Process &proc : processes) {
+            pid_t pid = proc.getPid();
+            activePids.insert(pid);
 
-        QString ioContent = FileUtil::readStringFromFile(
-            QString("/proc/%1/io").arg(pid));
+            QString ioContent = FileUtil::readStringFromFile(
+                QString("/proc/%1/io").arg(pid));
 
-        if (!ioContent.isEmpty()) {
-            quint64 readBytes = 0;
-            quint64 writeBytes = 0;
+            if (!ioContent.isEmpty()) {
+                quint64 readBytes = 0;
+                quint64 writeBytes = 0;
 
-            const QStringList ioLines = ioContent.split('\n');
-            for (const QString &ioLine : ioLines) {
-                if (ioLine.startsWith(QLatin1String("read_bytes:")))
-                    readBytes = ioLine.mid(12).trimmed().toULongLong();
-                else if (ioLine.startsWith(QLatin1String("write_bytes:")))
-                    writeBytes = ioLine.mid(13).trimmed().toULongLong();
+                const QStringList ioLines = ioContent.split('\n');
+                for (const QString &ioLine : ioLines) {
+                    if (ioLine.startsWith(QLatin1String("read_bytes:")))
+                        readBytes = ioLine.mid(12).trimmed().toULongLong();
+                    else if (ioLine.startsWith(QLatin1String("write_bytes:")))
+                        writeBytes = ioLine.mid(13).trimmed().toULongLong();
+                }
+
+                if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
+                    auto prev = mPrevDiskIo.value(pid);
+                    double readRate = (readBytes >= prev.first)
+                        ? (readBytes - prev.first) / elapsedSecs : 0;
+                    double writeRate = (writeBytes >= prev.second)
+                        ? (writeBytes - prev.second) / elapsedSecs : 0;
+                    proc.setDiskReadRate(readRate);
+                    proc.setDiskWriteRate(writeRate);
+                } else {
+                    proc.setDiskReadRate(0);
+                    proc.setDiskWriteRate(0);
+                }
+
+                mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
             }
+        }
 
-            if (elapsedSecs > 0 && mPrevDiskIo.contains(pid)) {
-                auto prev = mPrevDiskIo.value(pid);
-                double readRate = (readBytes >= prev.first)
-                    ? (readBytes - prev.first) / elapsedSecs : 0;
-                double writeRate = (writeBytes >= prev.second)
-                    ? (writeBytes - prev.second) / elapsedSecs : 0;
-                proc.setDiskReadRate(readRate);
-                proc.setDiskWriteRate(writeRate);
-            } else {
-                proc.setDiskReadRate(0);
-                proc.setDiskWriteRate(0);
-            }
-
-            mPrevDiskIo.insert(pid, qMakePair(readBytes, writeBytes));
+        auto it = mPrevDiskIo.begin();
+        while (it != mPrevDiskIo.end()) {
+            if (!activePids.contains(it.key()))
+                it = mPrevDiskIo.erase(it);
+            else
+                ++it;
         }
     }
 
-    auto it = mPrevDiskIo.begin();
-    while (it != mPrevDiskIo.end()) {
-        if (!activePids.contains(it.key()))
-            it = mPrevDiskIo.erase(it);
-        else
-            ++it;
+    // --- Per-process network I/O (SSO-15379) ---
+    // Linux has no procfs equivalent of macOS's nettop for per-process
+    // network byte counts, so this shells out to `nethogs -t` as a
+    // persistent streamer (see nethogs_streamer.h for the capability
+    // caveat). Unlike disk I/O, nethogs already reports a KB/s rate itself,
+    // so there's no elapsed-time delta to compute here — just read the
+    // latest snapshot and convert units.
+    if (!mCollectNetIO) {
+        if (mNethogsStreamer) {
+            mNethogsStreamer->stop();
+            mNethogsStreamer.reset();
+        }
+    } else {
+        if (!mNethogsStreamer)
+            mNethogsStreamer = std::make_unique<NethogsStreamer>();
+        // Only ever attempt to start once per activation (NotStarted): a
+        // ToolMissing/ExitedImmediately status won't resolve itself on the
+        // next tick, and retrying every tick would mean respawning nethogs
+        // in a busy loop when the capability is missing. Toggling the net
+        // columns off and back on creates a fresh streamer (see below),
+        // which gives a clean retry if the environment changed meanwhile.
+        if (mNethogsStreamer->status() == NethogsStreamer::Status::NotStarted)
+            mNethogsStreamer->start(1);
+
+        const QHash<pid_t, QPair<double, double>> netData = mNethogsStreamer->snapshot();
+        QSet<pid_t> activeNetPids;
+
+        for (Process &proc : processes) {
+            pid_t pid = proc.getPid();
+            activeNetPids.insert(pid);
+
+            if (netData.contains(pid)) {
+                auto net = netData.value(pid);
+                proc.setNetUpRate(net.first);
+                proc.setNetDownRate(net.second);
+            } else if (mNethogsStreamer->status() == NethogsStreamer::Status::Running) {
+                // Streamer is up but has no data yet for this pid (no
+                // traffic since the last sample) — zero, not the -1
+                // "unavailable" sentinel.
+                proc.setNetUpRate(0);
+                proc.setNetDownRate(0);
+            }
+            // else: leave the Process defaults (-1 → "—") so the UI shows
+            // "unavailable" rather than a misleading zero when the tool is
+            // missing or couldn't get a capture socket.
+        }
+
+        mNethogsStreamer->pruneDeadPids(activeNetPids);
     }
 
     return processes;
@@ -405,6 +519,64 @@ void ProcessInfoLinux::collectGpuForPid(pid_t pid, Process &proc, double elapsed
         proc.setGpuPercent(sample.gpuPercent);
     if (sample.vramBytes >= 0)
         proc.setGpuVramBytes(sample.vramBytes);
+}
+
+bool ProcessInfoLinux::classifyIsAppProcess(pid_t pid) const
+{
+    const QByteArray cgroup = readAll(QStringLiteral("/proc/%1/cgroup").arg(pid));
+    if (cgroup.isEmpty())
+        return false;
+    return appScopeRegex().match(QString::fromLocal8Bit(cgroup)).hasMatch();
+}
+
+void ProcessInfoLinux::buildDesktopIconIndex()
+{
+    static const QRegularExpression EXEC_REG(QStringLiteral("^Exec=.*"));
+    static const QRegularExpression ICON_REG(QStringLiteral("^Icon=.*"));
+    // Strip XDG Exec field codes (%f, %F, %u, %U, %d, %D, %n, %N, %i, %c, %k,
+    // %v, %m) before taking the first token as the binary.
+    static const QRegularExpression FIELD_CODE_REG(QStringLiteral("%[fFuUdDnNickvm]"));
+
+    const QStringList appDirs = QStandardPaths::locateAll(
+        QStandardPaths::ApplicationsLocation, QString(),
+        QStandardPaths::LocateDirectory);
+
+    // Priority order: QStandardPaths::locateAll returns the most local
+    // (highest-priority) directory first, so first-match-per-basename wins.
+    for (const QString &dirPath : appDirs) {
+        QDir dir(dirPath, QStringLiteral("*.desktop"));
+        const QFileInfoList files = dir.entryInfoList(QDir::Files);
+        for (const QFileInfo &fi : files) {
+            const QStringList lines = FileUtil::readListFromFile(fi.absoluteFilePath());
+
+            QString execLine = desktopEntryValue(EXEC_REG, lines);
+            if (execLine.isEmpty())
+                continue;
+            execLine.remove(FIELD_CODE_REG);
+
+            const QString execBin = execLine.trimmed().section(' ', 0, 0);
+            const QString basename = QFileInfo(execBin).fileName().toLower();
+            if (basename.isEmpty() || mDesktopIconByExecBasename.contains(basename))
+                continue;
+
+            mDesktopIconByExecBasename.insert(basename, desktopEntryValue(ICON_REG, lines));
+        }
+    }
+}
+
+QString ProcessInfoLinux::resolveIconHint(const Process &proc) const
+{
+    // /proc/<pid>/comm (proc.getName()) is kernel-truncated to 15 chars;
+    // fall back to the untruncated first cmdline token when it misses.
+    const QString commBase = proc.getName().toLower();
+    QString icon = mDesktopIconByExecBasename.value(commBase);
+    if (!icon.isEmpty())
+        return icon;
+
+    const QString cmdBase = QFileInfo(proc.getCmd().section(' ', 0, 0)).fileName().toLower();
+    if (cmdBase != commBase)
+        icon = mDesktopIconByExecBasename.value(cmdBase);
+    return icon;
 }
 
 // getProcessList() is in shared/nexis-core/Info/process_info_shared.cpp

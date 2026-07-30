@@ -855,6 +855,19 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnOrphanLeftovers">
+        <property name="cursor">
+         <cursorShape>PointingHandCursor</cursorShape>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="text">
+         <string>Orphan Leftovers…</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="btnAptHistory">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>

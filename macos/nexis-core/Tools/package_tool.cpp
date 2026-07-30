@@ -1,17 +1,31 @@
 #include "package_tool_macos.h"
+#include "Tools/app_uninstall_deny_list.h"
+#include "Tools/lifecycle_audit_log.h"
 #include "Tools/lifecycle_deny_list.h"
+#include "Tools/uninstall_audit_log.h"
 #include "Utils/brew_util.h"
 #include "Utils/plist_util.h"
 
+#ifdef Q_OS_MAC
+// SSO-15566: NSRunningApplication bridge (app_quit_helper.mm). Guarded so
+// this source still cross-compiles on Linux, where PackageToolUninstallTests
+// (tests/core/test_package_tool_uninstall.cpp) builds it directly for
+// command-construction coverage without an Objective-C++ toolchain.
+#include "Tools/app_quit_helper.h"
+#endif
+
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDebug>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QProcess>
 #include <QRegularExpression>
 #include <QSet>
 #include <QStandardPaths>
+#include <QUuid>
 
 PackageToolMacOS::PackageToolMacOS()
 {
@@ -181,6 +195,9 @@ QStringList PackageToolMacOS::homebrewDryRunRemove(const QStringList &packages)
  * macOS native .app bundles
  **************************/
 
+// Forward-declared here; defined in the FW-18 section below.
+static quint64 pathSizeBytes(const QString &path);
+
 static QList<Package> scanAppDirectory(const QString &dirPath, const QString &section)
 {
     QList<Package> apps;
@@ -204,6 +221,7 @@ static QList<Package> scanAppDirectory(const QString &dirPath, const QString &se
         pkg.section = section;
         pkg.path = appPath;
         pkg.bundleId = info.bundleId;   // FR-123: plumbed through for crumbs scanner.
+        pkg.size = pathSizeBytes(appPath);  // SSO-15384: shown in confirmation dialog
 
         if (!pkg.name.isEmpty())
             apps.append(pkg);
@@ -240,12 +258,38 @@ bool PackageToolMacOS::trashApps(const QStringList &appPaths)
     // NSURL — no shell, no AppleScript parsing surface — so metacharacters
     // in the bundle name are treated as path data, not code.
     bool allOk = true;
+    const QUuid batchId = QUuid::createUuid();
+
     for (const QString &path : appPaths) {
+        // SSO-15384 / CISO §2: deny-list check on canonicalized path.
+        const QFileInfo fi(path);
+        const QString canonical = fi.canonicalFilePath().isEmpty()
+                                  ? QDir::cleanPath(fi.absoluteFilePath())
+                                  : fi.canonicalFilePath();
+        if (!AppUninstallDenyList::isSafeToDelete(canonical)) {
+            qCritical() << "trashApps: deny-list blocked deletion of" << path;
+            allOk = false;
+            continue;
+        }
+
         QString trashedPath;
+        const quint64 sz = pathSizeBytes(path);
         if (!QFile::moveToTrash(path, &trashedPath)) {
             qCritical() << "Failed to trash:" << path;
             allOk = false;
+            continue;
         }
+
+        // SSO-15384 / CISO §3: write audit log entry.
+        UninstallAuditLog::Entry entry;
+        entry.batchId       = batchId;
+        entry.originalPath  = path;
+        entry.canonicalPath = canonical;
+        entry.action        = UninstallAuditLog::Action::MovedToTrash;
+        entry.trashedPath   = trashedPath;
+        entry.matchedRule   = QStringLiteral("app_bundle");
+        entry.sizeBytes     = sz;
+        UninstallAuditLog::append(entry);
     }
     return allOk;
 }
@@ -341,13 +385,45 @@ bool PackageToolMacOS::trashLeftovers(const QStringList &paths)
     // Same safe trash path as trashApps() — QFile::moveToTrash uses
     // NSFileManager::trashItemAtURL: which takes an NSURL, not an AppleScript
     // source string, so metacharacters in file names are data, not code.
+    //
+    // SSO-15430 / SSO-15373 §2: this call path (also reused by the
+    // orphan-leftover cleanup, see orphan_leftovers_dialog.cpp) shares the
+    // same centralized deny-list and audit log as the orphan scanner —
+    // do not reintroduce a divergent per-feature copy of either check.
     bool allOk = true;
+    const QString batchId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    const QString nexisVersion = QCoreApplication::applicationVersion();
+
     for (const QString &path : paths) {
+        const QFileInfo fi(path);
+        const QString canonical = fi.canonicalFilePath().isEmpty()
+                                  ? QDir::cleanPath(fi.absoluteFilePath())
+                                  : fi.canonicalFilePath();
+        if (!LifecycleDenyList::isSafe(canonical)) {
+            qCritical() << "trashLeftovers: deny-list blocked deletion of" << path;
+            allOk = false;
+            continue;
+        }
+
         QString trashedPath;
+        const quint64 sz = pathSizeBytes(path);
         if (!QFile::moveToTrash(path, &trashedPath)) {
             qCritical() << "Failed to trash leftover:" << path;
             allOk = false;
+            continue;
         }
+
+        LifecycleAuditLog::Entry entry;
+        entry.timestamp       = QDateTime::currentDateTimeUtc();
+        entry.batchId         = batchId;
+        entry.originalPath    = path;
+        entry.canonicalPath   = canonical;
+        entry.action          = LifecycleAuditLog::Action::MovedToTrash;
+        entry.trashDestination = trashedPath;
+        entry.matchingRuleIds = {QStringLiteral("app_leftover")};
+        entry.sizeBytes       = sz;
+        entry.nexisVersion    = nexisVersion;
+        LifecycleAuditLog::append(entry);
     }
     return allOk;
 }
@@ -386,7 +462,8 @@ QString stripKnownOrphanSuffix(const QString &name)
 void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
                               const QFileInfo &entry,
                               const QString &category,
-                              const QSet<QString> &installedBundleIds)
+                              const QSet<QString> &installedBundleIds,
+                              const QString &homeRoot)
 {
     const QString baseName = stripKnownOrphanSuffix(entry.fileName());
     const bool hasInstalledApp = installedBundleIds.contains(baseName);
@@ -423,7 +500,7 @@ void evaluateOrphanCandidate(QList<OrphanLeftover> &out,
     // correlation only) from ever being offered for deletion.
     const QString canonical = entry.canonicalFilePath();
     const QString resolvedCanonical = canonical.isEmpty() ? entry.absoluteFilePath() : canonical;
-    if (!LifecycleDenyList::isSafe(resolvedCanonical))
+    if (!LifecycleDenyList::isSafe(resolvedCanonical, homeRoot))
         return;
 
     OrphanLeftover leftover;
@@ -475,10 +552,52 @@ QList<OrphanLeftover> PackageToolMacOS::findOrphanLeftovers()
         const QFileInfoList entries = dir.entryInfoList(
             QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot);
         for (const QFileInfo &entry : entries)
-            evaluateOrphanCandidate(result, entry, target.label, installedBundleIds);
+            evaluateOrphanCandidate(result, entry, target.label, installedBundleIds, home);
     }
 
     return result;
+}
+
+// SSO-15384 / CISO §4: check whether any process whose executable lives inside
+// bundlePath is currently running.  Uses `lsof +d <path>` which lists open
+// files under the directory without following sub-directories — fast and safe.
+bool PackageToolMacOS::isAppRunning(const QString &bundlePath) const
+{
+    if (bundlePath.isEmpty())
+        return false;
+
+    QProcess proc;
+    proc.setProgram(QStringLiteral("/usr/sbin/lsof"));
+    proc.setArguments({QStringLiteral("+d"), bundlePath, QStringLiteral("-F"), QStringLiteral("p")});
+    proc.start();
+    if (!proc.waitForFinished(5000))
+        proc.kill();
+
+    // lsof exits 0 and prints at least one line when files are open; non-zero
+    // when the directory is completely idle.  We treat a non-empty stdout as
+    // "running" to fail safely.
+    return !proc.readAllStandardOutput().trimmed().isEmpty();
+}
+
+// SSO-15566 / CISO §4: graceful quit — never SIGKILL. Canonicalizes the path
+// the same way trashApps()/trashLeftovers() do before handing it to the
+// NSRunningApplication bridge, so a running app is matched by its resolved
+// on-disk location rather than a symlinked/relative path the caller passed in.
+bool PackageToolMacOS::quitApp(const QString &bundlePath)
+{
+#ifdef Q_OS_MAC
+    if (bundlePath.isEmpty())
+        return false;
+
+    const QFileInfo fi(bundlePath);
+    const QString canonical = fi.canonicalFilePath().isEmpty()
+                              ? QDir::cleanPath(fi.absoluteFilePath())
+                              : fi.canonicalFilePath();
+    return nexis_macos_quit_app_at_path(canonical.toUtf8().constData());
+#else
+    Q_UNUSED(bundlePath);
+    return false;
+#endif
 }
 
 /**********

@@ -14,6 +14,7 @@ We aim to review external pull requests within **7 days** of submission and to a
 4. [Pull request process](#4-pull-request-process)
 5. [Issue triage labels](#5-issue-triage-labels)
 6. [Where to ask questions](#6-where-to-ask-questions)
+7. [Contacting AI vendors about Nexis](#7-contacting-ai-vendors-about-nexis)
 
 ---
 
@@ -138,3 +139,16 @@ When filing a bug report, please include: platform, Nexis version, steps to repr
 Open a [GitHub Issue](https://github.com/s4solutionsllc/Nexis/issues) with the `question` label — that is the best place to ask for help, clarify expected behavior, or discuss an approach before investing time in a PR.
 
 We do not currently have a chat channel; GitHub Issues are the single discussion venue.
+
+---
+
+## 7. Contacting AI vendors about Nexis
+
+If you file a support ticket, bug report, feedback submission, or "rate this response" click with an AI vendor (e.g. Anthropic) about something you hit while working on Nexis, S4's **AI-Vendor Submission Content Rule** applies to anyone acting on S4's behalf, including repo contributors — not just S4 staff.
+
+- **Never include real user or client content** — this covers screenshots, logs, and free-text ticket fields, not just obvious payload fields. Reproduce with synthetic or structure-only data instead.
+- **This is a failure-rate control, not an elimination control** — screenshots and free-text ticket fields are not covered by any tooling, so check by hand every time.
+- Filing such a ticket is a separate, **S4-internal approval matter** from what's inside it (S4's SSO-99 protocol) — neither this rule nor that approval substitutes for the other.
+- **If real user or client content may already have been sent, do not delete or edit the ticket.** Contact your S4 point of contact immediately instead.
+
+Full policy (S4-internal): standing protocol "AI-Vendor Submission Content Rule" (SSO-17818, SSO-17821, SSO-17824, SSO-17825). If you don't have access and need the details, ask your S4 contact.

@@ -18,13 +18,18 @@ struct NEXISCORESHARED_EXPORT UpdateEntry {
     // signatureMetadataPresent is set when the appcast carries a signature
     // AND the app bundle contains a matching public key. This is metadata
     // presence only — it does NOT mean the signature has been cryptographically
-    // verified (SparkleSignatureVerifier is not yet invoked on downloaded
-    // bytes; see SSO-15431). Do not read this as "trusted" or "safe to install".
+    // verified until SparkleUpdateInstaller::verifyAndInstall() runs against
+    // the downloaded bytes (SSO-17776). Do not read this field alone as
+    // "trusted" or "safe to install".
     QString enclosureUrl;
     QString edSignature;
     QString dsaSignature;
     QString publicKey;
     bool    signatureMetadataPresent = false;
+    // CFBundleIdentifier of the target app — the floor-version downgrade
+    // gate's key (SSO-17776 design doc §7). Never the display name, which is
+    // spoofable/collidable across apps.
+    QString bundleId;
 };
 
 struct NEXISCORESHARED_EXPORT UpdateCheckResult {

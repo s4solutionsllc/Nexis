@@ -1,6 +1,7 @@
 #include "system_cleaner_page.h"
 #include "ui_system_cleaner_page.h"
 #include "byte_tree_widget.h"
+#include "system_cleaner_provider.h"
 
 #include <cstdlib>
 #include "nexis_roles.h"
@@ -71,7 +72,6 @@ void SystemCleanerPage::init()
     qRegisterMetaType<Qt::SortOrder>();
 
     connect(this, &SystemCleanerPage::scanFinishedS, this, &SystemCleanerPage::onScanFinished);
-    connect(this, &SystemCleanerPage::cleanFinishedS, this, &SystemCleanerPage::onCleanFinished);
     connect(mCleanerService, &CleanerService::snapshotTaken,
             this, &SystemCleanerPage::onSnapshotTaken,
             Qt::QueuedConnection);
@@ -853,156 +853,129 @@ void SystemCleanerPage::refreshInlineTree()
     updateScheduleIndicator();
 }
 
-// ─── Clean selected (from page 0 footer) ─────────────────────────────────────
+// ─── Clean selected (from page 0 footer) — via TrustSafetyPreviewDialog ───────
 
 void SystemCleanerPage::quickCleanByCategory()
 {
     if (mScanInProgress || mCleanInProgress || !mHasScanned) return;
 
-    mFilesToDelete.clear();
-    mChildrenToRemove.clear();
-    mCleanTrash = false;
-    mCleanSnapFlatpak = false;
-    mCleaningFromCard = true;
+    // Build the per-category file lists that the provider will present.
+    // Honor category checkboxes: only include checked categories.
+    auto checkedFiles = [this](CleanCategories cat, const QFileInfoList &files) -> QFileInfoList {
+        if (cat < mCards.size() && mCards[cat].check && mCards[cat].check->isChecked())
+            return files;
+        return {};
+    };
 
-    if (ui->cleanerPage->isVisible()) {
-        // Tree is visible — honor per-item checkbox selections
-        QTreeWidget *tree = ui->treeWidgetScanResult;
-        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *it = tree->topLevelItem(i);
-            CleanCategories cat = (CleanCategories) it->data(2, 0).toInt();
-            if (cat == TRASH) {
-                if (it->checkState(0) == Qt::Checked) mCleanTrash = true;
-            } else if (cat == SNAP_FLATPAK_REVISIONS) {
-                if (it->checkState(0) == Qt::Checked) mCleanSnapFlatpak = true;
-            } else {
-                for (int j = 0; j < it->childCount(); ++j) {
-                    if (it->child(j)->checkState(0) == Qt::Checked)
-                        mFilesToDelete << it->child(j)->data(2, 0).toString();
-                }
-            }
-        }
-    } else {
-        // No tree yet — category-level fallback
-        auto collectFiles = [this](CleanCategories cat, const QFileInfoList &files) {
-            if (cat < mCards.size() && mCards[cat].check && mCards[cat].check->isChecked()) {
-                for (const QFileInfo &fi : files)
-                    mFilesToDelete << fi.absoluteFilePath();
-            }
-        };
-        collectFiles(PACKAGE_CACHE,      mRetainedPackageCaches);
-        collectFiles(CRASH_REPORTS,      mRetainedCrashReports);
-        collectFiles(APPLICATION_LOGS,   mRetainedAppLogs);
-        collectFiles(APPLICATION_CACHES, mRetainedAppCaches);
-        collectFiles(DEV_TOOL_CACHES,    mRetainedDevToolCaches);
-        collectFiles(BROKEN_SYMLINKS,    mRetainedBrokenSymlinks);
-        collectFiles(BROWSER_PRIVACY,    mRetainedBrowserPrivacy);
+    const bool wantTrash       = (TRASH < mCards.size() && mCards[TRASH].check
+                                   && mCards[TRASH].check->isChecked());
+    const bool wantSnapFlatpak = (mCheckSnapFlatpak && mCheckSnapFlatpak->isChecked());
 
-        if (TRASH < mCards.size() && mCards[TRASH].check && mCards[TRASH].check->isChecked())
-            mCleanTrash = true;
-        if (mCheckSnapFlatpak && mCheckSnapFlatpak->isChecked())
-            mCleanSnapFlatpak = true;
+    // Pre-fetch snap revisions and flatpak refs on the main thread so the
+    // provider can use them from its worker-thread scan()/performItem().
+    QList<StaleSnapRevision> snapRevisions;
+    QStringList unusedFlatpakRefs;
+    if (wantSnapFlatpak) {
+        ToolManager *tmr = ToolManager::ins();
+        snapRevisions     = tmr->getStaleSnapRevisions();
+        unusedFlatpakRefs = tmr->getUnusedFlatpakRuntimes();
     }
 
-    if (mFilesToDelete.isEmpty() && !mCleanTrash && !mCleanSnapFlatpak) return;
+    SystemCleanerProvider::Config providerConfig;
+    providerConfig.packageCaches    = checkedFiles(PACKAGE_CACHE,        mRetainedPackageCaches);
+    providerConfig.crashReports     = checkedFiles(CRASH_REPORTS,        mRetainedCrashReports);
+    providerConfig.appLogs          = checkedFiles(APPLICATION_LOGS,     mRetainedAppLogs);
+    providerConfig.appCaches        = checkedFiles(APPLICATION_CACHES,   mRetainedAppCaches);
+    providerConfig.devToolCaches    = checkedFiles(DEV_TOOL_CACHES,      mRetainedDevToolCaches);
+    providerConfig.brokenSymlinks   = checkedFiles(BROKEN_SYMLINKS,      mRetainedBrokenSymlinks);
+    providerConfig.browserPrivacy   = checkedFiles(BROWSER_PRIVACY,      mRetainedBrowserPrivacy);
+    providerConfig.trashRoots       = wantTrash ? mCleanerService->getTrashRoots() : QStringList{};
+    providerConfig.snapRevisions    = snapRevisions;
+    providerConfig.unusedFlatpakRefs = unusedFlatpakRefs;
 
+    // If nothing is selected, bail early (Design Anchor: no silent no-op).
+    bool anyItem = !providerConfig.packageCaches.isEmpty()
+                || !providerConfig.crashReports.isEmpty()
+                || !providerConfig.appLogs.isEmpty()
+                || !providerConfig.appCaches.isEmpty()
+                || !providerConfig.devToolCaches.isEmpty()
+                || !providerConfig.brokenSymlinks.isEmpty()
+                || !providerConfig.browserPrivacy.isEmpty()
+                || !providerConfig.trashRoots.isEmpty()
+                || !providerConfig.snapRevisions.isEmpty()
+                || !providerConfig.unusedFlatpakRefs.isEmpty();
+    if (!anyItem) return;
+
+    // Take a snapshot before any files are deleted (FR-112 / SSO-281).
+    {
+        QList<CleanerService::CleanCategory> cats;
+        if (!providerConfig.packageCaches.isEmpty())  cats << CleanerService::PACKAGE_CACHE;
+        if (!providerConfig.crashReports.isEmpty())   cats << CleanerService::CRASH_REPORTS;
+        if (!providerConfig.appLogs.isEmpty())        cats << CleanerService::APPLICATION_LOGS;
+        if (!providerConfig.appCaches.isEmpty())      cats << CleanerService::APPLICATION_CACHES;
+        if (!providerConfig.devToolCaches.isEmpty())  cats << CleanerService::DEV_TOOL_CACHES;
+        if (!providerConfig.brokenSymlinks.isEmpty()) cats << CleanerService::BROKEN_SYMLINKS;
+        if (!providerConfig.browserPrivacy.isEmpty()) cats << CleanerService::BROWSER_PRIVACY;
+        if (!providerConfig.trashRoots.isEmpty())     cats << CleanerService::TRASH;
+        if (!providerConfig.snapRevisions.isEmpty() || !providerConfig.unusedFlatpakRefs.isEmpty())
+            cats << CleanerService::SNAP_FLATPAK_REVISIONS;
+        if (!cats.isEmpty())
+            mCleanerService->maybeTakeSnapshot(cats);
+    }
+
+    // Guard against re-entrant scans / cleans while the modal dialog is open
+    // (dlg.exec() runs the event loop so button signals can still fire).
+    mCleanInProgress = true;
     mBtnCleanSelected->setEnabled(false);
     mBtnScanSystem->setEnabled(false);
     if (mBtnSelectAll) mBtnSelectAll->setEnabled(false);
     for (const CategoryCard &c : mCards)
         if (c.check) c.check->setEnabled(false);
 
-    mCleanInProgress = true;
-    mWorkerFuture = QtConcurrent::run([this]() { systemClean(); });
-}
+    SystemCleanerProvider provider(providerConfig, mCleanerService, ToolManager::ins());
 
-void SystemCleanerPage::systemClean()
-{
-    mTotalCleanedSize = 0;
+    TrustSafetyPreviewDialog::Config dlgConfig;
+    dlgConfig.windowTitle          = tr("System Cleaner — Preview");
+    dlgConfig.primaryActionLabel   = tr("Clean Selected");
+    dlgConfig.confirmationSentence = tr("This will permanently delete the selected items.");
 
-    QList<CleanerService::CleanCategory> cats;
-    if (mCleanTrash)                         cats << CleanerService::TRASH;
-    if (mCleanSnapFlatpak)                   cats << CleanerService::SNAP_FLATPAK_REVISIONS;
-    if (!mFilesToDelete.isEmpty())           cats << CleanerService::APPLICATION_CACHES;
-    if (!cats.isEmpty())
-        mCleanerService->maybeTakeSnapshot(cats);
+    TrustSafetyPreviewDialog dlg(&provider, dlgConfig, this, mAppManager);
+    dlg.exec();
 
-    if (mCleanTrash)
-        mTotalCleanedSize += mCleanerService->cleanTrash();
+    mCleanInProgress = false;
+    mBtnScanSystem->setEnabled(true);
+    mBtnSchedule->setEnabled(true);
+    if (mBtnSelectAll) mBtnSelectAll->setEnabled(true);
+    for (const CategoryCard &c : mCards)
+        if (c.check) c.check->setEnabled(true);
 
-    if (mCleanSnapFlatpak) {
-        ToolManager *tmr = ToolManager::ins();
-        QList<StaleSnapRevision> snapRevs = tmr->getStaleSnapRevisions();
-        for (const StaleSnapRevision &rev : snapRevs)
-            mTotalCleanedSize += rev.size;
-        tmr->removeStaleSnapRevisions(snapRevs);
-        tmr->removeUnusedFlatpakRuntimes();
-    }
+    const TrustSafetyRunSummary summary = dlg.lastRunSummary();
 
-    if (!mFilesToDelete.isEmpty())
-        mTotalCleanedSize += mCleanerService->cleanFiles(mFilesToDelete);
+    // Nothing was executed (user closed without running) — nothing to update.
+    if (summary.totalItemsRequested == 0) return;
 
-    emit cleanFinishedS();
-}
-
-void SystemCleanerPage::onCleanFinished()
-{
-    if (mCleaningFromCard) {
-        // Clean was initiated from footer — reset cards and hide inline results
-        for (CategoryCard &c : mCards) {
-            if (c.check && c.check->isChecked() && c.lastSize > 0) {
-                c.lblSize->setText(QStringLiteral("\u2014"));
-                c.lastSize = 0;
-            }
-        }
+    // Reset UI state: clear retained results and card sizes for categories where
+    // at least one item succeeded (real or dry-run just reports; no FS changes).
+    if (!summary.dryRun) {
         mRetainedPackageCaches.clear(); mRetainedCrashReports.clear();
         mRetainedAppLogs.clear();       mRetainedAppCaches.clear();
         mRetainedDevToolCaches.clear(); mRetainedBrokenSymlinks.clear();
         mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
 
+        for (CategoryCard &c : mCards) {
+            if (c.check && c.check->isChecked() && c.lastSize > 0) {
+                c.lblSize->setText(QStringLiteral("—"));
+                c.lastSize = 0;
+            }
+        }
+
         mHasScanned = false;
         ui->cleanerPage->hide();
         ui->treeWidgetScanResult->clear();
         updateFooterTotal();
-
-        for (const CategoryCard &c : mCards)
-            if (c.check) c.check->setEnabled(true);
-        mBtnScanSystem->setEnabled(true);
-        mBtnSchedule->setEnabled(true);
-        if (mBtnSelectAll) mBtnSelectAll->setEnabled(true);
-
-    } else {
-        // Clean from tree results page (page 1)
-        QTreeWidget *tree = ui->treeWidgetScanResult;
-
-        for (int k = mChildrenToRemove.size() - 1; k >= 0; --k) {
-            int parentIdx = mChildrenToRemove.at(k).first;
-            int childIdx  = mChildrenToRemove.at(k).second;
-            if (childIdx == -1) {
-                delete tree->takeTopLevelItem(parentIdx);
-            } else {
-                QTreeWidgetItem *parent = tree->topLevelItem(parentIdx);
-                if (parent) delete parent->takeChild(childIdx);
-            }
-        }
-
-        for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-            QTreeWidgetItem *it = tree->topLevelItem(i);
-            quint64 remaining = 0;
-            for (int j = 0; j < it->childCount(); ++j)
-                remaining += it->child(j)->data(1, SortRole).toULongLong();
-            it->setText(0, QString("%1 (%2)")
-                        .arg(it->data(2, 1).toString())
-                        .arg(it->childCount()));
-            it->setText(1, FormatUtil::formatBytes(remaining));
-        }
-
-        ui->treeWidgetScanResult->setEnabled(true);
     }
-
-    mCleanInProgress = false;
-    mCleaningFromCard = false;
 }
+
 
 void SystemCleanerPage::onSnapshotTaken(const QString &toolName)
 {

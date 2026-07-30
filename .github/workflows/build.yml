@@ -41,7 +41,7 @@ jobs:
           apt-get install -y -qq git ca-certificates
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # WI-30: keep the living architecture/overview docs in sync with the
       # CMake project version. Cheap, no dependencies — runs on every matrix
@@ -70,7 +70,8 @@ jobs:
             qt6-l10n-tools \
             libqt6charts6-dev \
             libqt6svg6-dev \
-            xvfb
+            xvfb \
+            nethogs
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -105,7 +106,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Doc version header check
         run: bash scripts/check_doc_versions.sh

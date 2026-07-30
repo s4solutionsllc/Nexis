@@ -137,6 +137,21 @@ bool ToolManager::trashLeftovers(const QStringList &paths)
     return mPackageTool->trashLeftovers(paths);
 }
 
+QList<OrphanLeftover> ToolManager::findOrphanLeftovers() const
+{
+    return mPackageTool->findOrphanLeftovers();
+}
+
+bool ToolManager::isAppRunning(const QString &bundlePath) const
+{
+    return mPackageTool->isAppRunning(bundlePath);
+}
+
+bool ToolManager::quitApp(const QString &bundlePath)
+{
+    return mPackageTool->quitApp(bundlePath);
+}
+
 /*
  * Snap/Flatpak revision cleanup (FR-79)
  */

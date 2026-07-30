@@ -2,10 +2,13 @@
 #include "ui_uninstallerpage.h"
 #ifdef Q_OS_MAC
 #include "crumbs_review_dialog.h"
+#include "running_app_warning_dialog.h"
+#include <Tools/running_app_gate.h>
 #endif
 #ifdef Q_OS_LINUX
 #include "leftover_review_hook.h"
 #endif
+#include "orphan_leftovers_dialog.h"
 #include <QHeaderView>
 #include <QMovie>
 #include <QMessageBox>
@@ -70,7 +73,7 @@ void UninstallerPage::init()
 
     QList<QWidget*> widgets = { ui->txtPackageSearch, ui->btnUninstall, ui->btnSystemPackages,
                                 ui->btnSnapPackages, ui->btnFlatpakPackages, ui->btnOrphanPackages,
-                                ui->btnAptHistory };
+                                ui->btnOrphanLeftovers, ui->btnAptHistory };
     Utilities::addDropShadow(widgets, 40);
 
     connect(mPackageService, &PackageService::packagesFetched,
@@ -209,6 +212,7 @@ void UninstallerPage::onPackagesLoaded(QList<Package> packages)
                 : QString("%1 %2").arg(pkg.name, pkg.description);
             item->setData(0, Qt::UserRole + 1, pkg.path);
             item->setData(0, Qt::UserRole + 2, pkg.bundleId);   // FR-123
+            item->setData(0, Qt::UserRole + 3, static_cast<qlonglong>(pkg.size));   // SSO-15384
 #else
             QString displayText = pkg.description.isEmpty()
                 ? pkg.name
@@ -227,6 +231,8 @@ void UninstallerPage::onPackagesLoaded(QList<Package> packages)
     ui->treeWidgetPackages->setEnabled(true);
     ui->txtPackageSearch->setEnabled(true);
     ui->txtPackageSearch->clear();
+    // SSO-15384: start with button disabled — no items checked yet.
+    ui->btnUninstall->setEnabled(false);
 
     ui->lblLoadingUninstaller->hide();
 }
@@ -544,8 +550,20 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (selectedPaths.isEmpty())
         return;
 
-    QString message = tr("The following applications will be moved to Trash:\n\n");
-    message += selectedNames.join("\n");
+    // SSO-15384 / Design Anchor: confirmation dialog is one sentence max and
+    // shows a "what will be deleted" size + item count summary.
+    quint64 totalSize = 0;
+    for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *section = ui->treeWidgetPackages->topLevelItem(i);
+        for (int j = 0; j < section->childCount(); ++j) {
+            QTreeWidgetItem *item = section->child(j);
+            if (item->checkState(0) == Qt::Checked)
+                totalSize += static_cast<quint64>(item->data(0, Qt::UserRole + 3).toLongLong());
+        }
+    }
+    const QString sizeStr = FormatUtil::formatBytes(totalSize);
+    const QString message = tr("Move %1 application(s) (%2) to Trash?")
+                                .arg(selectedPaths.count()).arg(sizeStr);
 
     QMessageBox::StandardButton reply = QMessageBox::warning(
         this,
@@ -557,12 +575,49 @@ void UninstallerPage::on_btnUninstall_clicked()
     if (reply != QMessageBox::Ok)
         return;
 
+    // SSO-15566 / CISO §4: block on any selected app that's currently running
+    // before any deletion begins. Walk the checked items directly (rather
+    // than the getSelected*() helpers, whose bundle-id list is filtered and
+    // therefore not index-aligned with selectedPaths) so path/name/bundle id
+    // stay one-to-one per app. Cancelling the warn/quit dialog for one item
+    // just drops that item from the batch — the rest proceed.
+    QMap<QString, QString> pathToName;
+    QMap<QString, QString> pathToBundleId;
+    for (int i = 0; i < ui->treeWidgetPackages->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *section = ui->treeWidgetPackages->topLevelItem(i);
+        for (int j = 0; j < section->childCount(); ++j) {
+            QTreeWidgetItem *item = section->child(j);
+            if (item->checkState(0) != Qt::Checked)
+                continue;
+            const QString path = item->data(0, Qt::UserRole + 1).toString();
+            pathToName[path] = item->data(0, Qt::UserRole).toString();
+            pathToBundleId[path] = item->data(0, Qt::UserRole + 2).toString();
+        }
+    }
+
+    const QStringList finalPaths = RunningAppGate::filterRunnable(
+        selectedPaths,
+        [this](const QString &path) { return mPackageService->isAppRunning(path); },
+        [this, &pathToName](const QString &path) {
+            RunningAppWarningDialog dlg(pathToName.value(path), path, mPackageService, this);
+            return dlg.exec() == QDialog::Accepted;
+        });
+
+    if (finalPaths.isEmpty())
+        return;
+
     // FR-123: capture bundle ids now — brew cask uninstalls would remove the
     // .app before we could read its Info.plist, and the review dialog needs
     // them to scan residual files once the uninstall finishes.
-    mPendingCrumbBundleIds = getSelectedAppBundleIds();
+    QStringList finalBundleIds;
+    for (const QString &path : finalPaths) {
+        const QString bid = pathToBundleId.value(path);
+        if (!bid.isEmpty())
+            finalBundleIds << bid;
+    }
+    mPendingCrumbBundleIds = finalBundleIds;
 
-    mPackageService->trashApps(selectedPaths);
+    mPackageService->trashApps(finalPaths);
 #else
     QStringList selectedPackages = getSelectedPackages();
     QStringList selectedSnapPackages = getSelectedSnapPackages();
@@ -720,6 +775,16 @@ void UninstallerPage::on_btnOrphanPackages_clicked()
 #endif
 }
 
+void UninstallerPage::on_btnOrphanLeftovers_clicked()
+{
+    // SSO-15429: on-demand scan, not a stackedWidget page — the dialog owns
+    // its own scan/preview/confirm flow.
+    auto *dlg = new OrphanLeftoversDialog(this);
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->open();
+    dlg->scan();
+}
+
 void UninstallerPage::on_btnAptHistory_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->pageAptHistory);
@@ -749,9 +814,12 @@ void UninstallerPage::onTreeItemChanged(QTreeWidgetItem *item, int column)
 {
     Q_UNUSED(item);
     Q_UNUSED(column);
-    ui->btnUninstall->setText(tr("Uninstall Selected (%1)")
-                              .arg(getSelectedSnapPackages().count() + getSelectedFlatpakPackages().count()
-                                   + getSelectedPackages().count()));
+    const int count = getSelectedSnapPackages().count() + getSelectedFlatpakPackages().count()
+                     + getSelectedPackages().count();
+    ui->btnUninstall->setText(tr("Uninstall Selected (%1)").arg(count));
+    // SSO-15384 / Design Anchor: button stays disabled until at least one
+    // item is explicitly checked — never a silent no-op.
+    ui->btnUninstall->setEnabled(count > 0);
 }
 
 #ifndef Q_OS_MACOS

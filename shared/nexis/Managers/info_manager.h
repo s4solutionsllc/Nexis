@@ -106,6 +106,11 @@ public:
     void setCollectProcessNetIO(bool enabled);
     void setCollectProcessGpu(bool enabled);
 
+    // SSO-15379: lets the Processes page show a real message instead of
+    // silent blank/zero data when the per-process network source is
+    // missing a tool or permission.
+    ProcessInfo::NetIoAvailability processNetIoAvailability() const;
+
     QList<QString> getDevices();
     QList<QString> getFileSystemTypes();
 

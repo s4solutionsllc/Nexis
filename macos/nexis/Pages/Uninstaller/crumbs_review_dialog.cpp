@@ -15,12 +15,17 @@
 
 CrumbsReviewDialog::CrumbsReviewDialog(const QStringList &bundleIds, QWidget *parent)
     : QDialog(parent),
-      mBundleIds(bundleIds)
+      mBundleIds(bundleIds),
+      mScanRunner(new CrumbsScanRunner(this))
 {
     setWindowTitle(tr("Residual Files"));
     setMinimumSize(640, 400);
     buildUI();
-    populate();
+
+    connect(mScanRunner, &CrumbsScanRunner::itemFound, this, &CrumbsReviewDialog::onItemFound);
+    connect(mScanRunner, &CrumbsScanRunner::scanFinished, this, &CrumbsReviewDialog::onScanFinished);
+
+    startScan();
 }
 
 void CrumbsReviewDialog::buildUI()
@@ -42,6 +47,7 @@ void CrumbsReviewDialog::buildUI()
     mTable->verticalHeader()->setVisible(false);
     mTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     mTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    connect(mTable, &QTableWidget::itemChanged, this, &CrumbsReviewDialog::onItemChanged);
     layout->addWidget(mTable, 1);
 
     auto *buttons = new QHBoxLayout();
@@ -52,52 +58,142 @@ void CrumbsReviewDialog::buildUI()
     connect(mBtnSkip, &QPushButton::clicked, this, &QDialog::reject);
     buttons->addWidget(mBtnSkip);
 
-    mBtnDelete = new QPushButton(tr("Delete Selected"), this);
+    // SSO-15384 / Design Anchor: destructive action button uses the
+    // red/destructive accent.  Disabled until at least one item is checked.
+    mBtnDelete = new QPushButton(tr("Move to Trash"), this);
     mBtnDelete->setCursor(Qt::PointingHandCursor);
-    mBtnDelete->setAccessibleName("primary");
+    mBtnDelete->setEnabled(false);
+    mBtnDelete->setProperty("buttonRole", "destructive");
     connect(mBtnDelete, &QPushButton::clicked, this, &CrumbsReviewDialog::onDeleteSelected);
     buttons->addWidget(mBtnDelete);
 
     layout->addLayout(buttons);
 }
 
-void CrumbsReviewDialog::populate()
+void CrumbsReviewDialog::startScan()
 {
-    const auto crumbs = CrumbsScanner::scanCrumbs(mBundleIds);
+    mTable->setRowCount(0);
+    mTotalBytes = 0;
 
+    // SSO-15567: interaction is held off until the scan settles into its
+    // final sort-by-size-desc order — rows still stream in below so the
+    // user sees progress on a large ~/Library tree instead of a blank
+    // dialog.
+    mTable->setEnabled(false);
+    mBtnDelete->setEnabled(false);
+    mLblSummary->setText(tr("Scanning for residual files…"));
+
+    mScanRunner->startScan(mBundleIds);
+}
+
+void CrumbsReviewDialog::addRow(int row, const CrumbsScanner::CrumbCandidate &c)
+{
+    // Store size bytes in UserRole for updateDeleteButton.
+    auto *chkItem = new QTableWidgetItem();
+    chkItem->setFlags(chkItem->flags() | Qt::ItemIsUserCheckable);
+    // SSO-15384 / CISO §5: orphan/leftover matches default to UNCHECKED.
+    // The user must explicitly opt-in to deletion of each item.
+    chkItem->setCheckState(Qt::Unchecked);
+    chkItem->setData(Qt::UserRole, static_cast<qlonglong>(c.sizeBytes));
+    mTable->setItem(row, 0, chkItem);
+
+    auto *pathItem = new QTableWidgetItem(c.path);
+    pathItem->setToolTip(c.path);
+    mTable->setItem(row, 1, pathItem);
+
+    auto *sizeItem = new QTableWidgetItem(FormatUtil::formatBytes(c.sizeBytes));
+    sizeItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    mTable->setItem(row, 2, sizeItem);
+}
+
+void CrumbsReviewDialog::onItemFound(CrumbsScanner::CrumbCandidate item)
+{
+    // SSO-15567 / Design Anchor: the list updates as each match is found
+    // rather than after the whole scan completes. Rows land in discovery
+    // (per scan-location) order here; onScanFinished() below rebuilds the
+    // table in the final sort-by-size-desc order once the walk is done.
+    mTotalBytes += item.sizeBytes;
+
+    const int row = mTable->rowCount();
+    mTable->insertRow(row);
+
+    mTable->blockSignals(true);
+    addRow(row, item);
+    mTable->blockSignals(false);
+
+    mLblSummary->setText(
+        tr("Scanning… found %1 residual file(s) totalling %2 so far.")
+            .arg(row + 1)
+            .arg(FormatUtil::formatBytes(static_cast<quint64>(mTotalBytes))));
+}
+
+void CrumbsReviewDialog::onScanFinished(QList<CrumbsScanner::CrumbCandidate> items)
+{
+    populate(items);
+}
+
+void CrumbsReviewDialog::populate(const QList<CrumbsScanner::CrumbCandidate> &crumbs)
+{
+    mTable->blockSignals(true);
     mTable->setRowCount(crumbs.size());
-    qint64 total = 0;
+    mTotalBytes = 0;
+
     for (int row = 0; row < crumbs.size(); ++row) {
         const auto &c = crumbs.at(row);
-        total += c.sizeBytes;
-
-        auto *chkItem = new QTableWidgetItem();
-        chkItem->setFlags(chkItem->flags() | Qt::ItemIsUserCheckable);
-        chkItem->setCheckState(Qt::Checked);   // default: all selected for delete
-        mTable->setItem(row, 0, chkItem);
-
-        auto *pathItem = new QTableWidgetItem(c.path);
-        pathItem->setToolTip(c.path);
-        mTable->setItem(row, 1, pathItem);
-
-        auto *sizeItem = new QTableWidgetItem(FormatUtil::formatBytes(c.sizeBytes));
-        sizeItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        mTable->setItem(row, 2, sizeItem);
+        mTotalBytes += c.sizeBytes;
+        addRow(row, c);
     }
+    mTable->blockSignals(false);
+
+    mTable->setEnabled(true);
 
     if (crumbs.isEmpty()) {
         mLblSummary->setText(tr("No residual files found for the uninstalled app(s)."));
         mBtnDelete->setEnabled(false);
     } else {
-        mLblSummary->setText(tr("Found %1 residual file(s) totalling %2. Uncheck anything you want to keep.")
-                              .arg(crumbs.size())
-                              .arg(FormatUtil::formatBytes(total)));
+        // SSO-15384 / Design Anchor: summary shows item count + total size.
+        mLblSummary->setText(
+            tr("Found %1 residual file(s) totalling %2. Check the items you want to move to Trash.")
+                .arg(crumbs.size())
+                .arg(FormatUtil::formatBytes(static_cast<quint64>(mTotalBytes))));
+    }
+
+    updateDeleteButton();
+}
+
+void CrumbsReviewDialog::onItemChanged(QTableWidgetItem *item)
+{
+    Q_UNUSED(item);
+    updateDeleteButton();
+}
+
+void CrumbsReviewDialog::updateDeleteButton()
+{
+    // SSO-15384 / Design Anchor: button stays disabled until at least one
+    // checkbox is checked — never a silent no-op.
+    int checked = 0;
+    qlonglong selectedBytes = 0;
+    for (int row = 0; row < mTable->rowCount(); ++row) {
+        QTableWidgetItem *chk = mTable->item(row, 0);
+        if (chk && chk->checkState() == Qt::Checked) {
+            ++checked;
+            selectedBytes += chk->data(Qt::UserRole).toLongLong();
+        }
+    }
+    mBtnDelete->setEnabled(checked > 0);
+    if (checked > 0) {
+        mBtnDelete->setText(
+            tr("Move to Trash — %1 item(s), %2")
+                .arg(checked)
+                .arg(FormatUtil::formatBytes(static_cast<quint64>(selectedBytes))));
+    } else {
+        mBtnDelete->setText(tr("Move to Trash"));
     }
 }
 
 void CrumbsReviewDialog::onDeleteSelected()
 {
-    int moved = 0;
+    int moved  = 0;
     int failed = 0;
     for (int row = 0; row < mTable->rowCount(); ++row) {
         QTableWidgetItem *chk = mTable->item(row, 0);

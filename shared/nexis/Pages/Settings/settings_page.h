@@ -65,6 +65,7 @@ private slots:
     void onDownloadsDaysChanged(int value);
     void updateScheduleSummary();
     void refreshThemeColors();
+    void onImportFromStacer();
 
 private:
     Ui::SettingsPage *ui;
