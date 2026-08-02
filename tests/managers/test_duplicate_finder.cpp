@@ -157,7 +157,12 @@ void TestDuplicateFinder::duplicates_groupsKnownIdenticalFiles()
     QSignalSpy spy(&svc, &DuplicateFinderService::scanFinished);
     svc.scan({tmp.path()}, /*minSize=*/0);
 
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     QCOMPARE(spy.count(), 1);
 
     const auto results = spy.takeFirst().at(0).value<QList<DuplicateGroup>>();
@@ -191,7 +196,12 @@ void TestDuplicateFinder::duplicates_sameSizeDifferentContent_notGrouped()
     QSignalSpy spy(&svc, &DuplicateFinderService::scanFinished);
     svc.scan({tmp.path()}, /*minSize=*/0);
 
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).value<QList<DuplicateGroup>>();
     QVERIFY2(results.isEmpty(),
              "same-size, different-content files must not be grouped");
@@ -208,7 +218,12 @@ void TestDuplicateFinder::duplicates_singletonSize_dropped()
     QSignalSpy spy(&svc, &DuplicateFinderService::scanFinished);
     svc.scan({tmp.path()}, /*minSize=*/0);
 
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).value<QList<DuplicateGroup>>();
     QVERIFY(results.isEmpty());
 }
@@ -273,7 +288,12 @@ void TestDuplicateFinder::largest_scan_emitsResults()
     QSignalSpy spy(&svc, &DuplicateFinderService::largestScanFinished);
     svc.scanLargest({tmp.path()}, /*topN=*/2);
 
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).value<QList<LargeFileEntry>>();
     QCOMPARE(results.size(), 2);
     QCOMPARE(results.at(0).size, quint64(512));
@@ -295,7 +315,12 @@ void TestDuplicateFinder::emptyFolders_detectsLeaves()
     QSignalSpy spy(&svc, &DuplicateFinderService::emptyFoldersScanFinished);
     svc.scanEmptyFolders({tmp.path()});
 
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).toStringList();
     QCOMPARE(results.size(), 2);
     QVERIFY(results.contains(tmp.path() + "/empty_one"));
@@ -315,7 +340,12 @@ void TestDuplicateFinder::emptyFolders_ignoresNonEmpty()
     QSignalSpy spy(&svc, &DuplicateFinderService::emptyFoldersScanFinished);
     svc.scanEmptyFolders({tmp.path()});
 
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).toStringList();
     QVERIFY2(!results.contains(tmp.path() + "/has_hidden"),
              "folder with a hidden file must not be reported as empty");
@@ -336,7 +366,12 @@ void TestDuplicateFinder::emptyFolders_excludedFolder_notReported()
 
     QSignalSpy spy(&svc, &DuplicateFinderService::emptyFoldersScanFinished);
     svc.scanEmptyFolders({tmp.path()});
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).toStringList();
     QVERIFY(results.contains(tmp.path() + "/empty_visible"));
     QVERIFY(!results.contains(tmp.path() + "/empty_protected"));
@@ -362,7 +397,12 @@ void TestDuplicateFinder::exclusions_excludedFile_notFlaggedAsDuplicate()
 
     QSignalSpy spy(&svc, &DuplicateFinderService::scanFinished);
     svc.scan({tmp.path()}, /*minSize=*/0);
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).value<QList<DuplicateGroup>>();
     QCOMPARE(results.size(), 1);
     QCOMPARE(results.at(0).files.size(), 2);
@@ -393,7 +433,12 @@ void TestDuplicateFinder::exclusions_excludedFolder_membersHidden()
 
     QSignalSpy spy(&svc, &DuplicateFinderService::scanFinished);
     svc.scan({tmp.path()}, /*minSize=*/0);
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).value<QList<DuplicateGroup>>();
     QCOMPARE(results.size(), 1);
     QCOMPARE(results.at(0).files.size(), 2);
@@ -418,7 +463,12 @@ void TestDuplicateFinder::exclusions_largestScan_respected()
 
     QSignalSpy spy(&svc, &DuplicateFinderService::largestScanFinished);
     svc.scanLargest({tmp.path()}, /*topN=*/10);
-    QVERIFY(spy.wait(30000));
+    // SSO-17858: TestableDuplicateFinderService runs synchronously, so
+    // scanFinished may already be recorded by the time we get here —
+    // QSignalSpy::wait() only detects emissions *after* it's called, so
+    // it would otherwise time out waiting for a signal that already fired.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
     const auto results = spy.takeFirst().at(0).value<QList<LargeFileEntry>>();
     QCOMPARE(results.size(), 1);
     QCOMPARE(results.at(0).info.absoluteFilePath(), tmp.path() + "/keep/big.bin");
