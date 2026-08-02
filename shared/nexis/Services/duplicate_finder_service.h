@@ -91,6 +91,17 @@ protected:
     // QStandardPaths or the real settings backend.
     virtual QList<CleanerService::ExclusionEntry> loadExclusions() const;
 
+    // SSO-17858: test seam — scan()/scanLargest()/scanEmptyFolders() emit
+    // their *Finished signal from a QThreadPool worker thread by default,
+    // so QSignalSpy::wait() has to survive a cross-thread queued-connection
+    // hop. Under CPU-throttled CI runners that hop occasionally exceeds the
+    // spy's timeout (SSO-13969, SSO-14443, SSO-17858) even though the
+    // pipeline itself is correct — the flake is in the delivery latency,
+    // not the result. Tests that only care about pipeline correctness
+    // override this to run the pipeline and emit synchronously, removing
+    // the thread hop (and the flake) entirely.
+    virtual bool runsAsynchronously() const { return true; }
+
     explicit DuplicateFinderService(QObject *parent = nullptr);
     virtual ~DuplicateFinderService();
 

@@ -12,8 +12,6 @@
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTemporaryDir>
-#include <QThreadPool>
-#include <QtConcurrent>
 
 #include "Services/duplicate_finder_service.h"
 #include "Managers/cleaner_service.h"
@@ -61,6 +59,13 @@ public:
 
 protected:
     QList<Entry> loadExclusions() const override { return injectedExclusions; }
+
+    // SSO-17858: run the pipeline synchronously so *Finished fires before
+    // QSignalSpy::wait() is even called, removing this suite from the
+    // cross-thread queued-connection timing this test doesn't need to
+    // exercise (these tests assert pipeline correctness, not QtConcurrent
+    // scheduling). See duplicate_finder_service.h for the rationale.
+    bool runsAsynchronously() const override { return false; }
 
     bool moveToTrash(const QString &path) override
     {
@@ -127,10 +132,6 @@ void TestDuplicateFinder::initTestCase()
     // Match the cleaner test conventions: route QStandardPaths to a
     // sandbox in case any production code path is reached unexpectedly.
     QStandardPaths::setTestModeEnabled(true);
-    // SSO-14443: pre-warm the global QThreadPool so the first QtConcurrent::run()
-    // call doesn't pay thread-creation latency inside a spy.wait() timeout. Under
-    // GitHub Actions container CPU throttling the spawn delay can exceed 10 s.
-    QtConcurrent::run([] {}).waitForFinished();
 }
 
 // ─── Duplicate grouping ───────────────────────────────────────────────────────
