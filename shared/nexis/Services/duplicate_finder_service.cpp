@@ -69,15 +69,19 @@ void DuplicateFinderService::scan(const QStringList &directories,
     mCancelled.storeRelaxed(0);
     const auto exclusions = loadExclusions();
 
-    mWorkerFuture = QtConcurrent::run(
-        [this, directories, minSize, globFilter, exclusions]() {
+    auto job = [this, directories, minSize, globFilter, exclusions]() {
         QList<DuplicateGroup> results =
             runPipeline(directories, minSize, globFilter, exclusions);
         if (mCancelled.loadRelaxed())
             emit scanCancelled();
         else
             emit scanFinished(results);
-    });
+    };
+
+    if (runsAsynchronously())
+        mWorkerFuture = QtConcurrent::run(job);
+    else
+        job();
 }
 
 void DuplicateFinderService::scanLargest(const QStringList &directories, int topN)
@@ -88,14 +92,19 @@ void DuplicateFinderService::scanLargest(const QStringList &directories, int top
     mCancelled.storeRelaxed(0);
     const auto exclusions = loadExclusions();
 
-    mWorkerFuture = QtConcurrent::run([this, directories, topN, exclusions]() {
+    auto job = [this, directories, topN, exclusions]() {
         QList<LargeFileEntry> results =
             runLargestPipeline(directories, topN, exclusions);
         if (mCancelled.loadRelaxed())
             emit scanCancelled();
         else
             emit largestScanFinished(results);
-    });
+    };
+
+    if (runsAsynchronously())
+        mWorkerFuture = QtConcurrent::run(job);
+    else
+        job();
 }
 
 void DuplicateFinderService::scanEmptyFolders(const QStringList &directories)
@@ -106,13 +115,18 @@ void DuplicateFinderService::scanEmptyFolders(const QStringList &directories)
     mCancelled.storeRelaxed(0);
     const auto exclusions = loadExclusions();
 
-    mWorkerFuture = QtConcurrent::run([this, directories, exclusions]() {
+    auto job = [this, directories, exclusions]() {
         QStringList results = runEmptyFoldersPipeline(directories, exclusions);
         if (mCancelled.loadRelaxed())
             emit scanCancelled();
         else
             emit emptyFoldersScanFinished(results);
-    });
+    };
+
+    if (runsAsynchronously())
+        mWorkerFuture = QtConcurrent::run(job);
+    else
+        job();
 }
 
 QStringList DuplicateFinderService::trashFiles(

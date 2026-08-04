@@ -497,6 +497,8 @@ Converted Dashboard (removed 3 timers), Resources (removed 2 timers), and Proces
 
 **FW-08 (SSO-3736):** `DuplicateFinderService` gained a virtual `moveToTrash()` seam plus a virtual `loadExclusions()` seam so the destructive `trashFiles()` path is exercised without touching the user's real trash or settings. The service now consults the cleaner exclusion engine across all three scan modes (duplicates, top-N largest, empty folders) and enforces the never-delete-last-copy invariant at the service layer via `filterSafeTrashCandidates()` — the UI is no longer the only line of defense.
 
+**SSO-17858:** added a virtual `runsAsynchronously()` seam (default `true`, production unchanged). `TestDuplicateFinder` overrides it to `false` so `scan()`/`scanLargest()`/`scanEmptyFolders()` run their pipeline and emit `*Finished` synchronously instead of via `QtConcurrent::run()`. This removes the suite from a cross-thread queued-connection delivery hop that intermittently exceeded `QSignalSpy::wait()`'s timeout under CPU-throttled CI runners (SSO-13969, SSO-14443) — the earlier fixes patched symptoms (raising timeouts, pre-warming the thread pool); this removes the nondeterministic hop these tests never needed to exercise.
+
 **Key refactoring:** FR-36 established the pattern with `parseSmartctlJsonInto()` shared static (dedup), `deriveHealthVerdict()` public static, `getNextRunTime()` injectable `now` parameter. FR-76 scaled this to 10 additional classes by extracting parsing logic into public static methods on shared base classes (`*_shared.cpp` files). Fixture data files in `tests/fixtures/` provide deterministic test input. CleanerExclusions tests link against `nexis-gui` library to access CleanerService.
 
 ---
