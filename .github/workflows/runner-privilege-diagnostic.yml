@@ -1,0 +1,54 @@
+name: Runner Privilege Diagnostic
+
+# SSO-22617 (child of SSO-22616): on-demand, read-only diagnostic to compare
+# identity/group membership across named runner-fleet hosts — specifically
+# whether R2D2 has docker-group (i.e. root-equivalent) privilege that BB8/media
+# lack. Modeled on s4solutionsllc/S4Sports's runner-capability-probe.yml
+# (SSO-18012 / PR #155): workflow_dispatch only, continue-on-error per leg,
+# permissions: {}.
+#
+# This exists specifically because no agent credential has host SSH for
+# R2D2/coolify-mini/kinship-homelab (SSO-17747/17749/21469/18002/18012 all
+# stalled on that gap). A self-hosted Actions job's shell runs on the literal
+# host named in runs-on, so `id`/`groups` output in the job log gives us the
+# fact we need through a channel we already hold credentials for — no SSH,
+# no new host credential, no Board action required.
+#
+# workflow_dispatch only — this is not a fourth thing competing for fleet
+# capacity alongside push/schedule CI. Matrix legs pin to explicit named
+# hosts (not a bare `self-hosted` label) so each leg is guaranteed to land
+# on the specific host being compared, not just any online runner.
+#
+# continue-on-error is set per leg so one offline runner does not red the
+# whole run — the output is a privilege-comparison table, not a pass/fail gate.
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  probe:
+    name: Probe ${{ matrix.host }}
+    runs-on: [self-hosted, "${{ matrix.host }}"]
+    continue-on-error: true
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [R2D2, BB8, media]
+    steps:
+      - name: Report hostname
+        run: hostname
+
+      - name: Report current user
+        run: whoami
+
+      - name: Report identity (uid/gid)
+        run: id
+
+      - name: Report group membership
+        run: groups
+
+      - name: Check docker group entry
+        run: getent group docker || echo "no docker group"
