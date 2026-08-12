@@ -1,3 +1,14 @@
+nexis (2.9.0-1) unstable; urgency=medium
+
+  * New release: Sparkle auto-update install pipeline, macOS/Linux Orphan
+    Leftovers scanner, Secure File Shredder, Wipe Free Space, macOS Mail
+    Attachment Cleanup, Homebrew cask batch updater, Stacer settings
+    importer, per-process network throughput + NVIDIA GPU stats, kiosk-mode
+    at startup, macOS menu-bar monitor, and COPR/Fedora RPM packaging
+    groundwork. See CHANGELOG.md for full details.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Wed, 12 Aug 2026 00:00:00 +0000
+
 nexis (2.8.3-1) unstable; urgency=medium
 
   * First upload to the official Debian archive.

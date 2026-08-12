@@ -74,6 +74,23 @@
   </screenshots>
 
   <releases>
+    <release version="2.9.0" date="2026-08-12">
+      <description>
+        <p>New features:</p>
+        <ul>
+          <li>Sparkle auto-update install pipeline with Ed25519 signature verification (macOS).</li>
+          <li>Orphan Leftovers scanner for the App Uninstaller (macOS and Linux).</li>
+          <li>Secure File Shredder and Wipe Free Space tools.</li>
+          <li>Mail Attachment Cleanup (macOS).</li>
+          <li>Homebrew cask batch updater (macOS).</li>
+          <li>Stacer settings importer.</li>
+          <li>Per-process network throughput and NVIDIA GPU stats in the Processes page.</li>
+          <li>Launch directly into Kiosk Mode at startup, with monitor targeting.</li>
+          <li>macOS menu-bar CPU/memory monitor.</li>
+          <li>COPR/Fedora RPM packaging pipeline groundwork.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.8.3" date="2026-07-07">
       <description>
         <p>Bug fixes:</p>
