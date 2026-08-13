@@ -24,6 +24,7 @@
 #include <QScrollArea>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QSystemTrayIcon>
 #include <Utils/format_util.h>
 #include <functional>
 
@@ -127,11 +128,19 @@ void SettingsPage::init()
     // app quit dont ask
     ui->checkAppQuitDontAsk->setChecked(mSettingManager->getAppQuitDialogDontAsk());
 
-    // minimize to tray
-    ui->checkMinimizeToTray->setChecked(mSettingManager->getMinimizeToTray());
-
-    // start minimized to tray (SSO-354)
-    ui->checkStartMinimizedToTray->setChecked(mSettingManager->getStartMinimizedToTray());
+    // minimize to tray — the setting is meaningless (and unrecoverable via the
+    // UI) on desktop environments that don't provide a usable system tray, so
+    // disable both tray-dependent options when Qt reports none is available.
+    bool trayAvailable = QSystemTrayIcon::isSystemTrayAvailable();
+    ui->checkMinimizeToTray->setChecked(trayAvailable && mSettingManager->getMinimizeToTray());
+    ui->checkMinimizeToTray->setEnabled(trayAvailable);
+    ui->checkStartMinimizedToTray->setChecked(trayAvailable && mSettingManager->getStartMinimizedToTray());
+    ui->checkStartMinimizedToTray->setEnabled(trayAvailable);
+    if (! trayAvailable) {
+        QString noTrayTip = tr("No system tray is available on this desktop environment.");
+        ui->checkMinimizeToTray->setToolTip(noTrayTip);
+        ui->checkStartMinimizedToTray->setToolTip(noTrayTip);
+    }
 
     // dashboard footer visibility
     ui->checkDashboardFooter->setChecked(mSettingManager->getDashboardFooterVisible());

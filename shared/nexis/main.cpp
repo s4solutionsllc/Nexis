@@ -411,8 +411,11 @@ int main(int argc, char *argv[])
 
     App w;
 
-    // SSO-354: setting-based equivalent of --hide for any launch path.
-    const bool startMinimizedToTray = SettingManager::ins()->getStartMinimizedToTray();
+    // SSO-354: setting-based equivalent of --hide for any launch path. Never
+    // honor this without a usable tray — otherwise the app launches with no
+    // window and no way to bring it back.
+    const bool startMinimizedToTray = SettingManager::ins()->getStartMinimizedToTray()
+        && QSystemTrayIcon::isSystemTrayAvailable();
 
     if (!isHide && !startMinimizedToTray) {
         w.show();
