@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Website (SSO-22809): the install page's apt tab note still named EOL'd Ubuntu series (22.04 Jammy, 24.04 Noble, 25.04 Plucky) that had drifted from `README.md`'s PPA support statement after it moved to 25.10 Questing / 26.04 Resolute — new Linux users following the public install page were being told to add a PPA with no package for their series, or a series (Plucky) that no longer exists. `website/src/components/PackageManagerInstall.astro`'s apt note now matches README, with an adjacent caveat carrying across the Qt 6.8 LTS constraint (Nexis 2.6+) so 22.04/24.04 users are pointed at the AppImage instead of a dead end.
+
 ## [2.9.0] - 2026-08-12
 
 ### Fixed
