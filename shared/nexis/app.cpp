@@ -860,7 +860,7 @@ void App::closeEvent(QCloseEvent *event)
     SettingManager::ins()->setWindowGeometry(saveGeometry());
     SettingManager::ins()->setWindowState(saveState());
 
-    if (SettingManager::ins()->getMinimizeToTray()) {
+    if (SettingManager::ins()->getMinimizeToTray() && QSystemTrayIcon::isSystemTrayAvailable()) {
         emit SignalMapper::ins()->sigAppVisibilityChanged(false);
         hide();
 #ifdef Q_OS_MAC
@@ -881,7 +881,7 @@ void App::closeEvent(QCloseEvent *event)
 void App::changeEvent(QEvent *event)
 {
     if (event->type() == QEvent::WindowStateChange && windowState().testFlag(Qt::WindowMinimized)) {
-        if (SettingManager::ins()->getMinimizeToTray()) {
+        if (SettingManager::ins()->getMinimizeToTray() && QSystemTrayIcon::isSystemTrayAvailable()) {
             emit SignalMapper::ins()->sigAppVisibilityChanged(false);
             hide();
 #ifdef Q_OS_MAC

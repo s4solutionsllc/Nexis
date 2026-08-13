@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Settings — "Minimize to Tray" / "Start Minimized to Tray" on desktop environments with no usable system tray: the checkboxes stayed enabled and toggleable even when `QSystemTrayIcon::isSystemTrayAvailable()` is false, letting a user enable minimize-to-tray and then have the window vanish on close/minimize with no tray icon to bring it back. `SettingsPage::init()` now disables both checkboxes (with an explanatory tooltip) whenever no tray is available, and `App::closeEvent()`/`App::changeEvent()` and the `--hide`/start-minimized launch path in `main.cpp` re-check tray availability at the point of use as defense-in-depth, so a stale `true` value in an existing config (e.g. carried over from a machine/session that did have a tray) can't strand the window hidden.
 - Website (SSO-22809): the install page's apt tab note still named EOL'd Ubuntu series (22.04 Jammy, 24.04 Noble, 25.04 Plucky) that had drifted from `README.md`'s PPA support statement after it moved to 25.10 Questing / 26.04 Resolute — new Linux users following the public install page were being told to add a PPA with no package for their series, or a series (Plucky) that no longer exists. `website/src/components/PackageManagerInstall.astro`'s apt note now matches README, with an adjacent caveat carrying across the Qt 6.8 LTS constraint (Nexis 2.6+) so 22.04/24.04 users are pointed at the AppImage instead of a dead end.
 
 ## [2.9.0] - 2026-08-12
