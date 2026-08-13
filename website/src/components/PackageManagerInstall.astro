@@ -8,7 +8,8 @@ const tabs = [
 sudo apt update
 sudo apt install nexis`,
     upgrade: `sudo apt update && sudo apt upgrade nexis`,
-    note: 'Supports Ubuntu 22.04 (Jammy), 24.04 (Noble), and 25.04 (Plucky) on x86_64 and ARM64.',
+    note: 'Supports Ubuntu 25.10 (Questing) and 26.04 (Resolute) on x86_64 and ARM64.',
+    caveat: 'Ubuntu 22.04 / 24.04 (and Linux Mint Zena): Nexis 2.6+ requires Qt 6.8 LTS, which isn’t available in those repos — install via the AppImage instead.',
   },
   {
     id: 'brew',
@@ -52,7 +53,8 @@ brew install --cask nexis`,
           data-pm-content={tab.id}
           class:list={['pm-content rounded-b-lg border border-nexis-border bg-nexis-dark p-6', i !== 0 && 'hidden']}
         >
-          <p class="mb-4 text-xs text-nexis-muted">{tab.note}</p>
+          <p class:list={['text-xs text-nexis-muted', tab.caveat ? 'mb-1' : 'mb-4']}>{tab.note}</p>
+          {tab.caveat && <p class="mb-4 text-xs text-nexis-muted/80">{tab.caveat}</p>}
 
           <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-nexis-muted">Install</p>
           <pre class="mb-5 overflow-x-auto rounded-md bg-nexis-dark-surface p-4 text-sm leading-relaxed text-nexis-light"><code>{tab.install}</code></pre>
