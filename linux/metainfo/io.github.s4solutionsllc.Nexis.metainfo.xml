@@ -74,6 +74,17 @@
   </screenshots>
 
   <releases>
+    <release version="2.9.1" date="2026-08-14">
+      <description>
+        <p>Fixes:</p>
+        <ul>
+          <li>Minimize to Tray / Start Minimized to Tray settings now disable themselves on desktop environments with no usable system tray.</li>
+          <li>Website apt install instructions updated to current supported Ubuntu series.</li>
+          <li>Settings page section cards now render with the intended elevated card styling.</li>
+          <li>Mail Cleanup nav item now has an icon.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.9.0" date="2026-08-12">
       <description>
         <p>New features:</p>
