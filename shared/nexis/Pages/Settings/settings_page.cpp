@@ -25,6 +25,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QSystemTrayIcon>
+#include <QStyle>
 #include <Utils/format_util.h>
 #include <functional>
 
@@ -892,6 +893,13 @@ void SettingsPage::buildSectionCards()
     for (QWidget *card : cards) {
         card->setAttribute(Qt::WA_StyledBackground, true);
         card->setProperty("cardRole", "elevated");
+        // Dynamic properties set after setupUi() don't retroactively
+        // trigger a repolish (BUG-56) — without this, the [cardRole]
+        // fill/border/radius never paints even though the property is
+        // set correctly, because SettingsPage's parent is already part
+        // of a visible widget tree by the time init() runs.
+        card->style()->unpolish(card);
+        card->style()->polish(card);
     }
 
     // Inner content padding now that the QGroupBox native title/frame is
