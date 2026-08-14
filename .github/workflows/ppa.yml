@@ -133,7 +133,14 @@ jobs:
           DEBFULLNAME: Luke Simpson
         run: |
           TAG_VERSION="${{ steps.version.outputs.VERSION }}"
-          dch --newversion "${TAG_VERSION}-1~ppa1~${{ matrix.series }}1" \
+          # SSO-15394 follow-up: linux/debian/changelog's top entry is now
+          # Debian revision "-1" (debian-revision-is-zero is a lintian
+          # --pedantic error, so "-0" is no longer valid). dch requires the
+          # newly appended version to compare strictly greater than that
+          # entry; a PPA suffix of "-1~ppa1~<series>1" compares as *lower*
+          # than a plain "-1" (Debian version rules sort "~" before
+          # end-of-string), so the PPA revision must be at least "-2".
+          dch --newversion "${TAG_VERSION}-2~ppa1~${{ matrix.series }}1" \
               --distribution ${{ matrix.series }} \
               --force-distribution \
               "Release ${TAG_VERSION} for ${{ matrix.series }}"
