@@ -115,6 +115,7 @@
         <file>static/themes/default/img/sidebar-icons/docker.svg</file>
         <file>static/themes/default/img/sidebar-icons/disk-tools.svg</file>
         <file>static/themes/default/img/sidebar-icons/system-logs.svg</file>
+        <file>static/themes/default/img/sidebar-icons/mail.svg</file>
         <file>static/themes/light/img/sidebar-icons/dash.svg</file>
         <file>static/themes/light/img/sidebar-icons/hardware-info.svg</file>
         <file>static/themes/light/img/sidebar-icons/startup-apps.svg</file>
@@ -141,5 +142,6 @@
         <file>static/themes/light/img/sidebar-icons/docker.svg</file>
         <file>static/themes/light/img/sidebar-icons/disk-tools.svg</file>
         <file>static/themes/light/img/sidebar-icons/system-logs.svg</file>
+        <file>static/themes/light/img/sidebar-icons/mail.svg</file>
     </qresource>
 </RCC>
