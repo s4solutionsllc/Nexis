@@ -1,4 +1,4 @@
-nexis (2.9.1-0) unstable; urgency=medium
+nexis (2.9.1-1) unstable; urgency=medium
 
   * Fix Minimize to Tray / Start Minimized to Tray settings not disabling
     themselves when no system tray is available.
