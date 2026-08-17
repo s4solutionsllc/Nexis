@@ -91,7 +91,7 @@ Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popu
 
 ## Downloads
 
-Install via [PPA](#install-via-ppa-ubuntu), [AUR](#install-via-aur-arch-linux), or [Homebrew](#install-via-homebrew-macos) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
+Install via [PPA](#install-via-ppa-ubuntu), [COPR](#install-via-copr-fedora), [AUR](#install-via-aur-arch-linux), or [Homebrew](#install-via-homebrew-macos) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
@@ -108,6 +108,17 @@ sudo apt install nexis
 Supports Ubuntu 25.10 (Questing) and 26.04 (Resolute) on both x86_64 and ARM64. Updates are delivered automatically via `apt upgrade`. (Ubuntu 25.04 Plucky reached end-of-life and is no longer a PPA series.)
 
 > **Ubuntu 22.04 / 24.04 (and Linux Mint Zena):** Nexis 2.6+ requires Qt 6.8 LTS, which is not available in those repositories. Install via [AppImage](https://github.com/s4solutionsllc/Nexis/releases/latest) or upgrade to Ubuntu 25.10+.
+
+### Install via COPR (Fedora)
+
+```bash
+sudo dnf copr enable luke-s4solutions/nexis
+sudo dnf install nexis
+```
+
+Supports Fedora 43, Fedora 44, and Rawhide on x86_64. Updates are delivered automatically via `dnf upgrade`. Packages are built and signed by [COPR](https://copr.fedorainfracloud.org/coprs/luke-s4solutions/nexis/); `dnf copr enable` imports the repository's GPG key on first use.
+
+> **COPR is not an official Fedora repository.** It is Fedora's community build service — packages there are not reviewed by Fedora QA. `dnf copr enable` will ask you to confirm this before adding the repo.
 
 ### Install via AUR (Arch Linux)
 

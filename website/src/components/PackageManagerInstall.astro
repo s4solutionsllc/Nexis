@@ -12,6 +12,16 @@ sudo apt install nexis`,
     caveat: 'Ubuntu 22.04 / 24.04 (and Linux Mint Zena): Nexis 2.6+ requires Qt 6.8 LTS, which isn’t available in those repos — install via the AppImage instead.',
   },
   {
+    id: 'dnf',
+    label: 'DNF / COPR (Fedora)',
+    platform: 'linux',
+    install: `sudo dnf copr enable luke-s4solutions/nexis
+sudo dnf install nexis`,
+    upgrade: `sudo dnf upgrade nexis`,
+    note: 'Supports Fedora 43, Fedora 44 and Rawhide on x86_64. The repository GPG key is imported by "dnf copr enable" on first use.',
+    caveat: 'COPR is Fedora’s community build service, not an official Fedora repository — packages there are not reviewed by Fedora QA. dnf will ask you to confirm this before adding the repo.',
+  },
+  {
     id: 'brew',
     label: 'Homebrew (macOS)',
     platform: 'macos',
