@@ -1,0 +1,85 @@
+# Verifies that the published COPR channel actually installs on stock Fedora
+# (SSO-17801 AC3). This is a consumer-side check: it uses only the two commands
+# a user would run, against the live copr.fedorainfracloud.org project — it does
+# not build anything from this checkout.
+#
+# Scope of the evidence this produces:
+#   - `dnf copr enable` + `dnf install nexis` resolve on a clean image
+#     (repo metadata, GPG key, and RPM dependencies are all good)
+#   - the installed binary starts far enough to answer `--version` and to stay
+#     alive under a virtual X server
+# It does NOT prove the GUI renders correctly on real hardware; that still needs
+# a human on a real Fedora desktop.
+name: Verify COPR install
+
+on:
+  workflow_dispatch:
+    inputs:
+      copr_project:
+        description: "COPR project to verify (owner/project)"
+        required: true
+        default: luke-s4solutions/nexis
+      expected_version:
+        description: "Expected nexis version, e.g. 2.9.1 (blank = any)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  dnf-install:
+    name: Fedora ${{ matrix.fedora }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Chroots the COPR project builds for, minus rawhide.
+        fedora: ["43", "44"]
+    container:
+      image: fedora:${{ matrix.fedora }}
+    steps:
+      - name: Enable the COPR repository
+        run: |
+          set -euxo pipefail
+          dnf -y install dnf-plugins-core
+          dnf -y copr enable "${{ inputs.copr_project }}"
+
+      - name: Install nexis
+        run: |
+          set -euxo pipefail
+          dnf -y install nexis
+
+      - name: Record installed package
+        run: |
+          set -euxo pipefail
+          rpm -qi nexis
+          rpm -q --queryformat '%{NAME} %{VERSION}-%{RELEASE} %{ARCH}\n' nexis
+
+      - name: Check version matches expectation
+        if: inputs.expected_version != ''
+        run: |
+          set -euxo pipefail
+          installed=$(rpm -q --queryformat '%{VERSION}' nexis)
+          if [ "$installed" != "${{ inputs.expected_version }}" ]; then
+            echo "::error::expected nexis ${{ inputs.expected_version }}, got $installed"
+            exit 1
+          fi
+
+      - name: Launch smoke test under Xvfb
+        run: |
+          set -euxo pipefail
+          dnf -y install xorg-x11-server-Xvfb dbus-daemon mesa-dri-drivers
+          xvfb-run -a nexis --version
+          # `timeout` exits 124 when the process was still running at the
+          # deadline, which is the success case here: the app came up and
+          # stayed up instead of crashing on startup.
+          set +e
+          xvfb-run -a timeout -s TERM 30 nexis --nosplash
+          rc=$?
+          set -e
+          if [ "$rc" -ne 124 ]; then
+            echo "::error::nexis exited early with status $rc"
+            exit 1
+          fi
+          echo "nexis stayed alive for 30s under Xvfb"
