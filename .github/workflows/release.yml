@@ -279,6 +279,8 @@ jobs:
             ${{ steps.deb.outputs.DEB_PATH }}
             ${{ steps.appimage.outputs.APPIMAGE_PATH }}
             build/output/nexis-${{ matrix.arch }}
+          # Job-to-job handoff only; the durable copy is the GitHub Release asset.
+          retention-days: 7
 
   # ============================================================================
   # AppImage (x86_64) — built on the ubuntu-22.04 runner (glibc 2.35) so the
@@ -415,6 +417,8 @@ jobs:
         with:
           name: linux-appimage-x86_64
           path: ${{ steps.appimage.outputs.APPIMAGE_PATH }}
+          # Job-to-job handoff only; the durable copy is the GitHub Release asset.
+          retention-days: 7
 
   # ============================================================================
   # macOS build: .app bundle + .dmg
@@ -596,6 +600,8 @@ jobs:
         with:
           name: macos-artifacts
           path: build/output/Nexis-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
+          # Job-to-job handoff only; the durable copy is the GitHub Release asset.
+          retention-days: 7
 
       - name: Cleanup keychain
         if: always() && steps.signing.outputs.ENABLED == 'true'
