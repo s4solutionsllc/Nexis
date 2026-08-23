@@ -17,4 +17,11 @@ override_dh_auto_configure:
 		-DAPP_VERSION_OVERRIDE=$(_APP_VERSION)
 
 override_dh_auto_test:
-	xvfb-run -a ctest --test-dir obj-* --output-on-failure -E ScreenshotTests
+	# Buildd chroots (Launchpad/sbuild) set HOME to a deliberately
+	# non-writable path to catch builds that wrongly depend on it. Several
+	# Qt Test suites legitimately need a writable $HOME during the test run
+	# (QStandardPaths test mode, deny-list QTemporaryDir fixtures), so give
+	# them one scoped to the build tree instead of the chroot's HOME.
+	builddir="$$(ls -d obj-*)"; \
+	mkdir -p "$$builddir/dh-test-home"; \
+	HOME="$(CURDIR)/$$builddir/dh-test-home" xvfb-run -a ctest --test-dir "$$builddir" --output-on-failure -E ScreenshotTests
