@@ -144,6 +144,56 @@ private slots:
         QVERIFY(!s.available);
     }
 
+    // --- parseUfwFallback (SSO-23402: unprivileged `ufw status` fails with
+    // empty output, so detection falls back to systemctl + ufw.conf) ---
+
+    void ufwFallback_activeService()
+    {
+        auto s = FirewallWidget::parseUfwFallback("active\n", "ENABLED=no\n");
+
+        QVERIFY(s.available);
+        QVERIFY(s.enabled);
+        QCOMPARE(s.backend, "ufw");
+    }
+
+    void ufwFallback_enabledInConfOnly()
+    {
+        auto s = FirewallWidget::parseUfwFallback("inactive\n", "ENABLED=yes\n");
+
+        QVERIFY(s.available);
+        QVERIFY(s.enabled);
+    }
+
+    void ufwFallback_disabledBoth()
+    {
+        auto s = FirewallWidget::parseUfwFallback("inactive\n", "ENABLED=no\n");
+
+        QVERIFY(s.available);
+        QVERIFY(!s.enabled);
+    }
+
+    void ufwFallback_emptyInputsStillAvailable()
+    {
+        auto s = FirewallWidget::parseUfwFallback("", "");
+
+        QVERIFY(s.available);
+        QVERIFY(!s.enabled);
+        QCOMPARE(s.backend, "ufw");
+    }
+
+    void ufwFallback_confWithComments()
+    {
+        const QString conf =
+            "# /etc/ufw/ufw.conf\n"
+            "\n"
+            "IPV6=yes\n"
+            "ENABLED=yes\n"
+            "LOGLEVEL=low\n";
+
+        auto s = FirewallWidget::parseUfwFallback("inactive\n", conf);
+        QVERIFY(s.enabled);
+    }
+
     // --- parseFirewalldOutput ---
 
     void firewalld_running()

@@ -36,6 +36,15 @@ public:
     static FirewallStatus parseUfwOutput(const QString &output);
     static FirewallStatus parseFirewalldOutput(const QString &output);
 
+    // SSO-23402: `ufw status` requires root, so unprivileged callers get a
+    // permission error with empty/unusable stdout and detection silently
+    // reports "unavailable" even though ufw is installed and enabled. This
+    // fallback determines enablement without a privileged call, using
+    // `systemctl is-active ufw` output and the contents of /etc/ufw/ufw.conf
+    // (both root-readable). Exposed for testing without shelling out.
+    static FirewallStatus parseUfwFallback(const QString &systemctlIsActiveOutput,
+                                            const QString &ufwConfContents);
+
     // SSO-3469: formats a sudoExecWithStatus() failure for display. Empty
     // string means the command succeeded (ExecResult::ok()). Exposed for
     // testing without shelling out to a real privileged command.
