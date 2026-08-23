@@ -140,7 +140,11 @@ jobs:
           # entry; a PPA suffix of "-1~ppa1~<series>1" compares as *lower*
           # than a plain "-1" (Debian version rules sort "~" before
           # end-of-string), so the PPA revision must be at least "-2".
-          dch --newversion "${TAG_VERSION}-2~ppa1~${{ matrix.series }}1" \
+          # SSO-23411: Launchpad rejects re-uploading a version string it has
+          # already seen for a series, even if that prior build failed.
+          # "2.9.1-2~ppa1~<series>1" was already published (failed build,
+          # 2026-08-14), so bump to "-3" for the retry.
+          dch --newversion "${TAG_VERSION}-3~ppa1~${{ matrix.series }}1" \
               --distribution ${{ matrix.series }} \
               --force-distribution \
               "Release ${TAG_VERSION} for ${{ matrix.series }}"
