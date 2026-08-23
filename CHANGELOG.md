@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Startup Apps page (gh-383): app icons rendered stretched vertically — `startup_app.ui`'s `lblStartupAppIcon` had a non-square min/max size (22×24 / 44×48) combined with `scaledContents=true`, which stretches a square source icon to fill the taller box. Min/max size is now square (22×22 / 44×44); no C++ change needed.
 - Distribution (SSO-23401, gh-386): the Launchpad PPA build for `v2.9.1` failed on both `amd64` and `arm64` for `questing`/`resolute`, leaving apt users stuck on the last successfully-built `2.8.3` — `debian/rules`' `override_dh_auto_test` ran the full CTest suite unmodified inside the buildd chroot, where sbuild deliberately points `$HOME` at a non-writable path. `LifecycleDenyListTests`' `QTemporaryDir` fixture and `LifecycleAuditLogTests`' `QStandardPaths::setTestModeEnabled(true)` both resolve under `$HOME` on Linux, so both suites failed there (while passing fine on GitHub Actions CI, which sets a normal `$HOME`), failing `dpkg-buildpackage` before a `.deb` could ever be produced. `override_dh_auto_test` now points `$HOME` at a directory scoped to the build tree for the test run only, leaving the rest of the sandboxed build untouched. No code or public-API change; GitHub Actions/`dput` were already healthy, so no new tag is needed — the PPA recipe just needs a workflow_dispatch re-run of `ppa.yml` for `v2.9.1` once this lands.
 
 ### Added
