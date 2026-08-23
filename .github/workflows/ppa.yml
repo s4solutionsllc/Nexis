@@ -144,7 +144,12 @@ jobs:
           # already seen for a series, even if that prior build failed.
           # "2.9.1-2~ppa1~<series>1" was already published (failed build,
           # 2026-08-14), so bump to "-3" for the retry.
-          dch --newversion "${TAG_VERSION}-3~ppa1~${{ matrix.series }}1" \
+          # SSO-23417: "-3" was uploaded by dput and rejected server-side by
+          # Launchpad due to an invalid GPG signature (SSO-23408). Whether a
+          # rejected-pre-build upload "counts" as seen for version-string
+          # purposes is unconfirmed, so bump to "-4" for the next retry
+          # rather than risk burning a dispatch on an ambiguous collision.
+          dch --newversion "${TAG_VERSION}-4~ppa1~${{ matrix.series }}1" \
               --distribution ${{ matrix.series }} \
               --force-distribution \
               "Release ${TAG_VERSION} for ${{ matrix.series }}"
