@@ -4,6 +4,7 @@
 #include "signal_mapper.h"
 
 #include <QBoxLayout>
+#include <QFile>
 #include <QFormLayout>
 #include <QFrame>
 #include <QLabel>
@@ -67,6 +68,25 @@ FirewallStatus FirewallWidget::parseFirewalldOutput(const QString &output)
     return s;
 }
 
+FirewallStatus FirewallWidget::parseUfwFallback(const QString &systemctlIsActiveOutput,
+                                                 const QString &ufwConfContents)
+{
+    FirewallStatus s;
+    s.available = true;
+    s.backend = "ufw";
+
+    static const QRegularExpression reEnabled(R"(^\s*ENABLED\s*=\s*(\w+))",
+                                               QRegularExpression::MultilineOption);
+    QRegularExpressionMatch m = reEnabled.match(ufwConfContents);
+    const bool confEnabled = m.hasMatch()
+        && m.captured(1).compare("yes", Qt::CaseInsensitive) == 0;
+    const bool serviceActive =
+        systemctlIsActiveOutput.trimmed().compare("active", Qt::CaseInsensitive) == 0;
+
+    s.enabled = confEnabled || serviceActive;
+    return s;
+}
+
 // ---------------------------------------------------------------------------
 // Data fetching
 // ---------------------------------------------------------------------------
@@ -86,8 +106,18 @@ FirewallStatus FirewallWidget::fetchStatus()
 #else
     if (CommandUtil::isExecutable("ufw")) {
         ExecResult r = CommandUtil::execWithStatus("ufw", {"status"});
-        if (r.ok() || !r.output.isEmpty())
+        if (r.ok() && !r.output.isEmpty())
             return parseUfwOutput(r.output);
+
+        // `ufw status` requires root; an unprivileged call fails with empty
+        // stdout and a nonzero exit (SSO-23402). Fall back to sources that
+        // don't require elevation.
+        ExecResult rActive = CommandUtil::execWithStatus("systemctl", {"is-active", "ufw"});
+        QString confContents;
+        QFile conf("/etc/ufw/ufw.conf");
+        if (conf.open(QIODevice::ReadOnly | QIODevice::Text))
+            confContents = QString::fromUtf8(conf.readAll());
+        return parseUfwFallback(rActive.output, confContents);
     }
     if (CommandUtil::isExecutable("firewall-cmd")) {
         ExecResult r = CommandUtil::execWithStatus("firewall-cmd", {"--state"});
