@@ -5,6 +5,7 @@ on:
     branches: [native, master, main]
   pull_request:
     branches: [native, master, main]
+  workflow_dispatch:
 
 jobs:
   # Linux build matrix runs inside a Resolute (26.04 LTS) container — see
@@ -94,11 +95,13 @@ jobs:
 
       # SSO-23450: this binary has no downstream consumer in CI — it exists
       # purely for a maintainer to grab a build without waiting on a release.
-      # Uploading it on every PR (in addition to every push) doubled the copy
-      # count for a use case PRs don't serve; skip it there and keep the
-      # short 3-day floor a human actually needs to notice and download it.
+      # It was previously uploaded on every push to native/master/main,
+      # which at this repo's merge cadence (10+ pushes/day) dwarfed every
+      # other artifact category combined. Compile+test still run on every
+      # push/PR for CI signal; only the upload is gated behind a manual
+      # workflow_dispatch, so a maintainer can still grab a build on demand.
       - name: Upload build artifact
-        if: success() && github.event_name != 'pull_request'
+        if: success() && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.artifact-name }}
@@ -155,8 +158,10 @@ jobs:
           if-no-files-found: ignore
           retention-days: 1
 
+      # SSO-23450: same rationale as the Linux upload above — gated behind
+      # workflow_dispatch instead of firing on every push to native.
       - name: Upload build artifact
-        if: success() && github.event_name != 'pull_request'
+        if: success() && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nexis-macos-arm64
