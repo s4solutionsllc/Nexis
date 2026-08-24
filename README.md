@@ -105,9 +105,9 @@ sudo apt update
 sudo apt install nexis
 ```
 
-Supports Ubuntu 25.10 (Questing) and 26.04 (Resolute) on both x86_64 and ARM64. Updates are delivered automatically via `apt upgrade`. (Ubuntu 25.04 Plucky reached end-of-life and is no longer a PPA series.)
+Supports Ubuntu 26.04 (Resolute) on both x86_64 and ARM64. Updates are delivered automatically via `apt upgrade`. (Ubuntu 25.04 Plucky and 25.10 Questing both reached end-of-life and are no longer PPA series.)
 
-> **Ubuntu 22.04 / 24.04 (and Linux Mint Zena):** Nexis 2.6+ requires Qt 6.8 LTS, which is not available in those repositories. Install via [AppImage](https://github.com/s4solutionsllc/Nexis/releases/latest) or upgrade to Ubuntu 25.10+.
+> **Ubuntu 22.04 / 24.04 (and Linux Mint Zena):** Nexis 2.6+ requires Qt 6.8 LTS, which is not available in those repositories. Install via [AppImage](https://github.com/s4solutionsllc/Nexis/releases/latest) or upgrade to Ubuntu 26.04+.
 
 ### Install via COPR (Fedora)
 

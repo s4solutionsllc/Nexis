@@ -162,13 +162,14 @@ Defined in `.github/workflows/release.yml`. As of v2.6.x (SSO-4093):
 > Qt 6.8+. The same container image is shared by `build.yml`, `codeql.yml`, and
 > `screenshot-baselines.yml`. The unified job builds **only** the Resolute
 > `.deb` (`_ubuntu2604.deb`) — there is no Noble or Plucky `.deb`. Ubuntu 24.04
-> and 25.10 users use the AppImage / AUR / PPA path; 25.04 (Plucky) is EOL.
+> users use the AppImage / AUR path; 25.04 (Plucky) and 25.10 (Questing) are
+> both EOL and no longer PPA series either (SSO-23401).
 
 Downstream-triggered (run on success of `Release`):
 
 - `homebrew.yml` — bumps the `s4solutionsllc/homebrew-nexis` Cask to the new DMG.
 - `aur.yml` — publishes the AUR `nexis` package via `KSXGitHub/github-actions-deploy-aur`.
-- `ppa.yml` — uploads source packages to the Launchpad PPA for `questing`, `resolute` (SSO-3733 / FW-06 dropped `noble` + `jammy`; SSO-7305 added `resolute`; SSO-7306 dropped `plucky` after it reached end-of-life — Launchpad rejects uploads to obsolete series; see "Ubuntu 24.04 (Noble) dropped" below).
+- `ppa.yml` — uploads source packages to the Launchpad PPA for `resolute` (SSO-3733 / FW-06 dropped `noble` + `jammy`; SSO-7305 added `resolute`; SSO-7306 dropped `plucky` after it reached end-of-life; SSO-23401 dropped `questing` after it reached end-of-life — Launchpad rejects uploads to obsolete series; see "Ubuntu 24.04 (Noble) dropped" below).
 
 > **Action pins (WI-09 / SSO-3371).** Every `uses:` in `.github/workflows/` is
 > pinned to a full commit SHA with a trailing `# vX.Y.Z` comment — *never* a
@@ -182,16 +183,16 @@ Downstream-triggered (run on success of `Release`):
 
 ### Currently supported targets
 
-- Linux x86_64 (Ubuntu 26.04 Resolute and newer / Debian 13+) — `.deb` requires Qt 6.8 and is built on Resolute LTS; 25.10 (Questing) uses the PPA or AppImage; see below
+- Linux x86_64 (Ubuntu 26.04 Resolute and newer / Debian 13+) — `.deb` requires Qt 6.8 and is built on Resolute LTS; see below
 - Linux ARM64 (same matrix, for Pi 5 / Jetson / Graviton)
 - AppImage (any glibc-recent Linux, including Ubuntu 22.04/24.04 and all Linux Mint versions)
 - macOS Apple Silicon (`arm64`) on macOS 14+ — **macOS Intel (`x86_64`) is sunset (SSO-3733 / FW-06)**, see below
 - AUR (Arch + derivatives)
-- Launchpad PPA (`questing`, `resolute`; `plucky` dropped at EOL — see "Ubuntu 24.04 (Noble) dropped" below)
+- Launchpad PPA (`resolute`; `plucky` and `questing` both dropped at EOL — see "Ubuntu 24.04 (Noble) dropped" below)
 
 > **macOS Intel (`x86_64`) is formally sunset as of v2.6.0 (SSO-3733 / FW-06).** The CI matrix has produced **only** `Nexis-${VERSION}-macOS-arm64.dmg` since the macOS runner moved to `macos-14`; v2.6.0 codifies that as a supported-platform decision rather than an implicit CI artifact. macOS 26 ("Tahoe") is the last macOS to boot on Intel and Rosetta 2 is being phased out; macOS 27 ("Golden Gate") is Apple-silicon-only. No Intel runner will be added; no universal `.dmg` is planned. Intel users on macOS 26 can continue running prior `arm64` builds via Rosetta where supported, but `arm64`-only is the published target going forward.
 
-> **Ubuntu 24.04 (Noble) is no longer a supported PPA series as of v2.6.0 (SSO-3733 / FW-06).** Noble ships Qt 6.4, and the project's Qt floor is now 6.8 LTS (see `CMakeLists.txt`). The `noble` Launchpad source upload is removed from `ppa.yml`; PPA users on 24.04 should upgrade to 25.10 (Questing) or 26.04 (Resolute) — both ship a Qt that satisfies the 6.8 floor. (Ubuntu 25.04 Plucky also satisfied the floor but reached end-of-life and was dropped as a PPA series under SSO-7306.) AppImage and the AUR continue to cover older Ubuntu hosts that build against a newer Qt sysroot.
+> **Ubuntu 24.04 (Noble) is no longer a supported PPA series as of v2.6.0 (SSO-3733 / FW-06).** Noble ships Qt 6.4, and the project's Qt floor is now 6.8 LTS (see `CMakeLists.txt`). The `noble` Launchpad source upload is removed from `ppa.yml`; PPA users on 24.04 should upgrade to 26.04 (Resolute), which ships a Qt that satisfies the 6.8 floor. (Ubuntu 25.04 Plucky and 25.10 Questing also satisfied the floor but both reached end-of-life and were dropped as PPA series under SSO-7306 and SSO-23401 respectively.) AppImage and the AUR continue to cover older Ubuntu hosts that build against a newer Qt sysroot.
 
 > **Linux Mint 21.x / 22 and Ubuntu 22.04 / 24.04 users: use the AppImage (GH#185).** The `.deb` package (`_ubuntu2604.deb`) requires `libqt6charts6 ≥ 6.8`, which is not available in Ubuntu 22.04 (Qt 6.2), 24.04 (Qt 6.4), or any current Linux Mint release (Mint 22 "Wilma" is Ubuntu 24.04-based; Mint 21.x is Ubuntu 22.04-based). No `.deb` targeting these distributions is planned because their system Qt does not satisfy the Qt 6.8 floor. **The AppImage bundles Qt and runs on any Linux with glibc 2.35+, including all Ubuntu 22.04+ and Mint 21+ hosts.** Use the `.AppImage` download from the GitHub Release.
 

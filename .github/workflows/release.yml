@@ -36,7 +36,8 @@ jobs:
   # old-releases and the container build would break. Resolute is an LTS
   # (supported to 2031), ships Qt 6.8+, and uses the same post-t64 dependency
   # names as 25.04+ (the original BUG-75 motivation). Result: one .deb per arch
-  # (`_ubuntu2604.deb`). 25.10 (Questing) users install via the PPA or AppImage.
+  # (`_ubuntu2604.deb`). 25.10 (Questing) is EOL and no longer a PPA series
+  # (SSO-23401); those users install via the AppImage.
   # ============================================================================
   build-linux:
     name: Linux Build (${{ matrix.arch }})
@@ -766,7 +767,7 @@ jobs:
             echo "#### Linux (x86_64)"
             echo "| Format | File | Description |"
             echo "|--------|------|-------------|"
-            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 26.04+ (Resolute LTS and newer) / Debian 13+. On 25.10 (Questing) use the PPA or AppImage. |"
+            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 26.04+ (Resolute LTS and newer) / Debian 13+. On 25.10 (Questing, EOL) use the AppImage. |"
             echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_X64_PATH }})\` | Portable — runs on any Linux distro with glibc ≥ 2.35 (Ubuntu 22.04+, all Mint) |"
             echo "| Binary | \`nexis\` | Standalone executable (requires Qt6 ≥ 6.8 runtime) |"
             echo ""
