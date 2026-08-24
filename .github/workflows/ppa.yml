@@ -28,24 +28,93 @@ jobs:
             echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Look up already-published orig tarball
+        id: orig
+        # SSO-23422: `tar czf` over a fresh git checkout is not
+        # byte-reproducible (mtimes alone differ run to run, even when the
+        # extracted tree diffs zero lines), so "rebuild the orig locally"
+        # can never reproduce the exact bytes Launchpad already has on file
+        # once a version has published once — and Launchpad silently drops
+        # a re-upload of an orig tarball whose content doesn't match what
+        # it already holds under that filename (no error, no build
+        # record). Ask the archive itself whether this upstream version has
+        # a prior publish; if so, its orig tarball is the only one that
+        # will ever match, and it must be reused verbatim rather than
+        # rebuilt.
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          API_URL="https://api.launchpad.net/1.0/~s4solutionsllc/+archive/ubuntu/nexis?ws.op=getPublishedSources&source_name=nexis&exact_match=true"
+          REV=$(curl -fsSL "$API_URL" | jq -r --arg v "$VERSION" '
+            [.entries[] | select(.source_package_version | startswith($v + "-"))]
+            | sort_by(.date_created) | last | .source_package_version // empty')
+          echo "PUBLISHED_REV=$REV" >> "$GITHUB_OUTPUT"
+          if [ -n "$REV" ]; then
+            echo "Found existing publish $REV — will reuse its orig tarball"
+          else
+            echo "No prior publish found for $VERSION — will build the orig tarball locally"
+          fi
+
+      - name: Download archived orig tarball
+        id: download
+        if: steps.orig.outputs.PUBLISHED_REV != ''
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          REV="${{ steps.orig.outputs.PUBLISHED_REV }}"
+          URL="https://launchpad.net/~s4solutionsllc/+archive/ubuntu/nexis/+sourcefiles/nexis/${REV}/nexis_${VERSION}.orig.tar.gz"
+          HTTP_CODE=$(curl -sSL -o "nexis_${VERSION}.orig.tar.gz" -w '%{http_code}' "$URL")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "REUSED=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Archived orig fetch returned HTTP $HTTP_CODE — falling back to a local build" >&2
+            rm -f "nexis_${VERSION}.orig.tar.gz"
+            echo "REUSED=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify archived orig checksum against published .dsc
+        if: steps.download.outputs.REUSED == 'true'
+        # Security: the download above is a public HTTPS artifact from a
+        # PPA we own, but it must not be trusted by URL alone — confirm its
+        # sha256 against the value Launchpad itself already recorded in the
+        # matching publish's .dsc before it's used for anything downstream.
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          REV="${{ steps.orig.outputs.PUBLISHED_REV }}"
+          DSC_URL="https://launchpad.net/~s4solutionsllc/+archive/ubuntu/nexis/+sourcefiles/nexis/${REV}/nexis_${REV}.dsc"
+          curl -fsSL -o "nexis_${REV}.dsc" "$DSC_URL"
+          EXPECTED=$(awk -v f="nexis_${VERSION}.orig.tar.gz" '$3==f{print $1}' "nexis_${REV}.dsc")
+          if [ -z "$EXPECTED" ]; then
+            echo "nexis_${VERSION}.orig.tar.gz not listed in $DSC_URL Checksums-Sha256 — refusing to trust the download" >&2
+            exit 1
+          fi
+          ACTUAL=$(sha256sum "nexis_${VERSION}.orig.tar.gz" | awk '{print $1}')
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "Archived orig tarball checksum mismatch: .dsc says $EXPECTED, downloaded file is $ACTUAL" >&2
+            exit 1
+          fi
+          echo "Archived orig tarball sha256 verified: $ACTUAL"
+          rm -f "nexis_${REV}.dsc"
+
       - name: Checkout
+        if: steps.download.outputs.REUSED != 'true'
         # SSO-23401: pin to the immutable v<version> tag, not whatever ref
         # dispatched this workflow. A workflow_dispatch retry run against a
         # branch (native, a hotfix branch, ...) can carry commits made after
         # the tag — CHANGELOG.md entries, unrelated fixes, or even packaging
         # tweaks to this same workflow — and every one of those files ends
-        # up inside the orig tarball below. Launchpad already has
-        # nexis_<version>.orig.tar.gz on file from the first upload of this
-        # upstream version; any retry that rebuilds it with different byte
-        # content under the same filename is silently dropped server-side
-        # (never appears in +packages/+builds — no error, no build record).
-        # Pinning here guarantees every retry regenerates byte-for-byte the
-        # same upstream source tree, no matter which ref triggered the run.
+        # up inside the orig tarball below. This path only runs when no
+        # prior publish exists for this version (see "Look up already-
+        # published orig tarball" above); once one does, its tarball is
+        # downloaded verbatim instead, since a fresh build here can never
+        # reproduce Launchpad's exact bytes (see SSO-23422 CHANGELOG entry).
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: v${{ steps.version.outputs.VERSION }}
 
       - name: Create upstream tarball
+        if: steps.download.outputs.REUSED != 'true'
         run: |
           set -o pipefail
           TAG_VERSION="${{ steps.version.outputs.VERSION }}"
@@ -54,15 +123,20 @@ jobs:
           # is still valid. Exit 2+ = real failure (missing files, syntax
           # error, fatal I/O) — we want CI to fail loudly on those.
           set +e
-          # SSO-23401: the packaging directory actually lives at
-          # linux/debian/, not ./debian (that only exists after the
-          # publish-ppa job's later "Copy debian directory" step). This
-          # exclude was matching nothing, so linux/debian/rules changes were
-          # silently baked into the "upstream" orig tarball too.
+          # SSO-23422: reverted the SSO-23401 exclude of ./linux/debian.
+          # This path only runs for a version with no prior publish (see
+          # above), but the already-published 2.9.1 orig contains
+          # linux/debian, and this workflow reuses one code path across all
+          # versions — leaving the exclude in place here would make the
+          # *next* version's first-ever orig diverge in composition from
+          # every prior release for no reason. Flip it back to
+          # ./linux/debian only alongside a deliberate version bump, in the
+          # same commit, with a CHANGELOG note that orig tarball composition
+          # changes from that version forward.
           tar czf "${{ runner.temp }}/nexis_${TAG_VERSION}.orig.tar.gz" \
             --transform "s,^\\.,nexis-${TAG_VERSION}," \
             --exclude='./.git' --exclude='./build' --exclude='./website/dist' \
-            --exclude='./website/node_modules' --exclude='./linux/debian' .
+            --exclude='./website/node_modules' --exclude='./debian' .
           rc=$?
           set -e
           if [ "$rc" -gt 1 ]; then
@@ -103,8 +177,45 @@ jobs:
         series: [questing, resolute]
 
     steps:
-      - name: Checkout
+      - name: Extract version from tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout upstream (pinned to release tag)
+        # SSO-23422: match prepare's tag pin so this job's working tree is
+        # exactly what the orig tarball (fetched or freshly built) contains.
+        # linux/debian/source/format is `3.0 (quilt)`, and dpkg-source
+        # diffs the working tree against the orig at build time — anything
+        # outside debian/ that doesn't match aborts the build with
+        # "unexpected upstream changes".
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: v${{ steps.version.outputs.VERSION }}
+
+      - name: Checkout packaging overlay from dispatch ref
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: |
+            linux/debian
+          path: _dispatch-ref
+
+      - name: Overlay linux/debian from dispatch ref
+        # The packaging fix under test may live on a branch that hasn't
+        # been tagged yet (e.g. a hotfix branch retrying a dispatch); the
+        # upstream tree above is pinned to the tag, so pull in only
+        # linux/debian from whichever ref actually triggered this run. For
+        # a tag-push trigger this is a no-op — github.sha is the tag commit.
+        run: |
+          set -euo pipefail
+          rm -rf linux/debian
+          mv _dispatch-ref/linux/debian linux/debian
+          rm -rf _dispatch-ref
 
       - name: Install packaging tools
         run: |
@@ -116,15 +227,6 @@ jobs:
           echo "${{ secrets.PPA_GPG_PRIVATE_KEY }}" | gpg --import --batch
           echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
           gpg-connect-agent reloadagent /bye
-
-      - name: Extract version from tag
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "VERSION=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Identify GPG key ID
         id: gpg
