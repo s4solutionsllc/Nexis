@@ -84,7 +84,16 @@ jobs:
           REV="${{ steps.orig.outputs.PUBLISHED_REV }}"
           DSC_URL="https://launchpad.net/~s4solutionsllc/+archive/ubuntu/nexis/+sourcefiles/nexis/${REV}/nexis_${REV}.dsc"
           curl -fsSL -o "nexis_${REV}.dsc" "$DSC_URL"
-          EXPECTED=$(awk -v f="nexis_${VERSION}.orig.tar.gz" '$3==f{print $1}' "nexis_${REV}.dsc")
+          # A .dsc lists each file once per checksum section (Checksums-Sha1,
+          # Checksums-Sha256, Files/md5); matching on filename alone with no
+          # section tracking picks up all of them and concatenates SHA1+
+          # SHA256+MD5 into $EXPECTED, which then never string-equals a
+          # plain sha256sum output. Scope to the Checksums-Sha256: block only.
+          EXPECTED=$(awk -v f="nexis_${VERSION}.orig.tar.gz" '
+            /^Checksums-Sha256:/{sec=1; next}
+            /^[^ ]/{sec=0}
+            sec && $3==f{print $1; exit}
+          ' "nexis_${REV}.dsc")
           if [ -z "$EXPECTED" ]; then
             echo "nexis_${VERSION}.orig.tar.gz not listed in $DSC_URL Checksums-Sha256 — refusing to trust the download" >&2
             exit 1
