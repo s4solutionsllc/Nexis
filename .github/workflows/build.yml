@@ -92,13 +92,18 @@ jobs:
       # the per-PR screenshot guard, where baselines exist and rendering is
       # deterministic.
 
+      # SSO-23450: this binary has no downstream consumer in CI — it exists
+      # purely for a maintainer to grab a build without waiting on a release.
+      # Uploading it on every PR (in addition to every push) doubled the copy
+      # count for a use case PRs don't serve; skip it there and keep the
+      # short 3-day floor a human actually needs to notice and download it.
       - name: Upload build artifact
-        if: success()
+        if: success() && github.event_name != 'pull_request'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.artifact-name }}
           path: build/output/nexis
-          retention-days: 14
+          retention-days: 3
 
   build-macos:
     name: macOS (ARM64)
@@ -132,23 +137,28 @@ jobs:
         run: ctest --test-dir build --output-on-failure -E ScreenshotTests
 
       - name: Screenshot regression tests (non-blocking)
+        id: screenshot_tests
         continue-on-error: true
         timeout-minutes: 8   # a hang fails this non-blocking step fast instead of stalling the job
         run: ctest --test-dir build --output-on-failure -R ScreenshotTests
 
+      # SSO-23450: continue-on-error above means the job never registers as
+      # `failure()` from this step alone — check the step's own outcome
+      # instead, so 65 stored copies of diffs nobody reads on green runs
+      # stop happening.
       - name: Upload screenshot diffs
-        if: ${{ !cancelled() }}
+        if: steps.screenshot_tests.outcome == 'failure'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: screenshot-diffs-nexis-macos-arm64
           path: build/tests/test_screenshots/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 1
 
       - name: Upload build artifact
-        if: success()
+        if: success() && github.event_name != 'pull_request'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: nexis-macos-arm64
           path: build/output/nexis.app
-          retention-days: 14
+          retention-days: 3

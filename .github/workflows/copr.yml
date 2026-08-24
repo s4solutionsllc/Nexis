@@ -112,7 +112,7 @@ jobs:
         with:
           name: srpm
           path: ~/rpmbuild/SRPMS/*.src.rpm
-          retention-days: 7
+          retention-days: 1
 
   publish-copr:
     name: Publish to COPR
