@@ -109,6 +109,17 @@ Supports Ubuntu 26.04 (Resolute) on both x86_64 and ARM64. Updates are delivered
 
 > **Ubuntu 22.04 / 24.04 (and Linux Mint Zena):** Nexis 2.6+ requires Qt 6.8 LTS, which is not available in those repositories. Install via [AppImage](https://github.com/s4solutionsllc/Nexis/releases/latest) or upgrade to Ubuntu 26.04+.
 
+> **Ubuntu 26.04 with the amd64v3 architecture variant enabled:** if you opted into the [amd64v3 microarchitecture repos](https://documentation.ubuntu.com/release-notes/26.04/summary-for-lts-users/#architecture-variants-and-amd64v3), `apt` may fail to resolve the Nexis PPA because it only publishes plain `amd64` packages. Edit the PPA's deb822 `.sources` file under `/etc/apt/sources.list.d/` and add an explicit `Architectures: amd64` field:
+> ```
+> Types: deb
+> URIs: https://ppa.launchpadcontent.net/s4solutionsllc/nexis/ubuntu/
+> Suites: resolute
+> Components: main
+> Architectures: amd64
+> Signed-By: /usr/share/keyrings/s4solutionsllc-ubuntu-nexis.gpg
+> ```
+> Then run `sudo apt update` again.
+
 ### Install via COPR (Fedora)
 
 ```bash
