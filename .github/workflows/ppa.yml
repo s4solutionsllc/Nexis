@@ -19,9 +19,6 @@ jobs:
     name: Prepare source tarball
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - name: Extract version from tag
         id: version
         run: |
@@ -30,6 +27,23 @@ jobs:
           else
             echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Checkout
+        # SSO-23401: pin to the immutable v<version> tag, not whatever ref
+        # dispatched this workflow. A workflow_dispatch retry run against a
+        # branch (native, a hotfix branch, ...) can carry commits made after
+        # the tag — CHANGELOG.md entries, unrelated fixes, or even packaging
+        # tweaks to this same workflow — and every one of those files ends
+        # up inside the orig tarball below. Launchpad already has
+        # nexis_<version>.orig.tar.gz on file from the first upload of this
+        # upstream version; any retry that rebuilds it with different byte
+        # content under the same filename is silently dropped server-side
+        # (never appears in +packages/+builds — no error, no build record).
+        # Pinning here guarantees every retry regenerates byte-for-byte the
+        # same upstream source tree, no matter which ref triggered the run.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: v${{ steps.version.outputs.VERSION }}
 
       - name: Create upstream tarball
         run: |
@@ -40,10 +54,15 @@ jobs:
           # is still valid. Exit 2+ = real failure (missing files, syntax
           # error, fatal I/O) — we want CI to fail loudly on those.
           set +e
+          # SSO-23401: the packaging directory actually lives at
+          # linux/debian/, not ./debian (that only exists after the
+          # publish-ppa job's later "Copy debian directory" step). This
+          # exclude was matching nothing, so linux/debian/rules changes were
+          # silently baked into the "upstream" orig tarball too.
           tar czf "${{ runner.temp }}/nexis_${TAG_VERSION}.orig.tar.gz" \
             --transform "s,^\\.,nexis-${TAG_VERSION}," \
             --exclude='./.git' --exclude='./build' --exclude='./website/dist' \
-            --exclude='./website/node_modules' --exclude='./debian' .
+            --exclude='./website/node_modules' --exclude='./linux/debian' .
           rc=$?
           set -e
           if [ "$rc" -gt 1 ]; then
