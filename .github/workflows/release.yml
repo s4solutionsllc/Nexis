@@ -272,6 +272,9 @@ jobs:
       - name: Rename binary with architecture
         run: cp build/output/nexis build/output/nexis-${{ matrix.arch }}
 
+      # SSO-23450: the `release` job below downloads this within the same
+      # workflow run and republishes it as a GitHub Release asset — Actions
+      # storage only needs to hold it long enough to bridge the two jobs.
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -281,7 +284,7 @@ jobs:
             ${{ steps.appimage.outputs.APPIMAGE_PATH }}
             build/output/nexis-${{ matrix.arch }}
           # Job-to-job handoff only; the durable copy is the GitHub Release asset.
-          retention-days: 7
+          retention-days: 3
 
   # ============================================================================
   # AppImage (x86_64) — built on the ubuntu-22.04 runner (glibc 2.35) so the
@@ -419,7 +422,7 @@ jobs:
           name: linux-appimage-x86_64
           path: ${{ steps.appimage.outputs.APPIMAGE_PATH }}
           # Job-to-job handoff only; the durable copy is the GitHub Release asset.
-          retention-days: 7
+          retention-days: 3
 
   # ============================================================================
   # macOS build: .app bundle + .dmg
@@ -602,7 +605,7 @@ jobs:
           name: macos-artifacts
           path: build/output/Nexis-${{ steps.version.outputs.VERSION }}-macOS-arm64.dmg
           # Job-to-job handoff only; the durable copy is the GitHub Release asset.
-          retention-days: 7
+          retention-days: 3
 
       - name: Cleanup keychain
         if: always() && steps.signing.outputs.ENABLED == 'true'

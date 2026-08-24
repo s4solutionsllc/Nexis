@@ -73,4 +73,4 @@ jobs:
           name: screenshot-stability-failures-linux
           path: build/tests/test_screenshots/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 1
