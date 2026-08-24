@@ -1,0 +1,10 @@
+# SSO-23401: ppa.yml overlays linux/debian from the dispatch ref on top of
+# a tag-pinned (and, once a version has published once, byte-frozen/reused
+# per SSO-23422) orig tarball, so linux/debian/control and linux/debian/rules
+# routinely differ from whatever snapshot the orig tarball happens to hold.
+# dpkg-source's "3.0 (quilt)" format only exempts the top-level debian/ dir
+# (built from a `cp -r linux/debian debian` step) from its upstream-changes
+# check; linux/debian/ itself is still diffed as ordinary source and aborts
+# the build with "unexpected upstream changes" otherwise. It is packaging
+# metadata, never real upstream content, so tell dpkg-source to ignore it.
+extend-diff-ignore = "^linux/debian/"
