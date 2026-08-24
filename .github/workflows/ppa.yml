@@ -183,7 +183,13 @@ jobs:
         # SSO-7306: dropped plucky (25.04) — reached end-of-life, so Launchpad
         # rejects new uploads ("plucky is obsolete and will not accept new
         # uploads"). Resolute (26.04 LTS) is the forward-carrying series.
-        series: [questing, resolute]
+        # SSO-23401: dropped questing (25.10) — same EOL pattern as plucky
+        # above. Launchpad's series API confirms questing is now
+        # status=Obsolete/supported=false (26.08.24), which is why the
+        # 2.9.1 questing leg silently failed while resolute published
+        # cleanly. Resolute (26.04 LTS) remains the sole target until the
+        # next series (stonking, currently Active Development) stabilizes.
+        series: [resolute]
 
     steps:
       - name: Extract version from tag
