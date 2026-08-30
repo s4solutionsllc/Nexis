@@ -10,6 +10,9 @@
 #endif
 #include "trim_widget.h"
 #include "wol_widget.h"
+#ifdef Q_OS_MACOS
+#include "cache_rebuild_widget.h"
+#endif
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
@@ -92,6 +95,12 @@ void HelpersPage::init()
     mWolWidget = new WolWidget;
     ui->stackedWidget->addWidget(mWolWidget);
 
+#ifdef Q_OS_MACOS
+    // SSO-23866: granular cache rebuilds.
+    mCacheRebuildWidget = new CacheRebuildWidget;
+    ui->stackedWidget->addWidget(mCacheRebuildWidget);
+#endif
+
     // Prevent buttons from shrinking below their text width
     for (auto *btn : {ui->btnHostManage, ui->btnNetDiag,
                       ui->btnOpenPorts, ui->btnFirewall}) {
@@ -106,6 +115,14 @@ void HelpersPage::init()
     mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnTrim);
     connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
+
+    // SSO-23866: Cache rebuild button.
+    mBtnCacheRebuild = new QPushButton(tr("Cache Rebuild"));
+    mBtnCacheRebuild->setCheckable(true);
+    mBtnCacheRebuild->setCursor(Qt::PointingHandCursor);
+    mBtnCacheRebuild->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnCacheRebuild);
+    connect(mBtnCacheRebuild, &QPushButton::clicked, this, &HelpersPage::onCacheRebuildClicked);
 #else
     // FR-81: Swappiness button. Always visible on Linux — the widget itself
     // handles the "not supported" state if /proc/sys/vm/swappiness isn't
@@ -166,6 +183,8 @@ void HelpersPage::init()
 #ifdef Q_OS_MACOS
     if (mBtnTrim)
         mToolItems << mBtnTrim;
+    if (mBtnCacheRebuild)
+        mToolItems << mBtnCacheRebuild;
 #else
     if (mBtnSwappiness)
         mToolItems << mBtnSwappiness;
@@ -267,6 +286,15 @@ void HelpersPage::onWolClicked()
         return;
     mWolWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mWolWidget);
+}
+
+void HelpersPage::onCacheRebuildClicked()
+{
+#ifdef Q_OS_MACOS
+    if (!mCacheRebuildWidget)
+        return;
+    ui->stackedWidget->setCurrentWidget(mCacheRebuildWidget);
+#endif
 }
 
 void HelpersPage::on_btnFlushDNS_clicked()

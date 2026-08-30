@@ -64,10 +64,10 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 |--------|-------|-----------------|
 | Version | 2.8.3 | `project(... VERSION ...)` in `CMakeLists.txt` |
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
-| Source files (C++) | 341 | same |
+| Source files (C++) | 343 | same |
 | Test LOC | ~14,500 | `tests/` |
-| Test executables | 62 (61 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
-| Test methods | ~865 | `private slots:` in `tests/*/test_*.cpp` |
+| Test executables | 63 (62 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
+| Test methods | ~880 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 16 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Shredder, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
@@ -526,6 +526,14 @@ Miscellaneous utility tools, organized into two clearly labelled header sections
 - "Wake" sends a standard 102-byte UDP magic packet (6×0xFF + 16×MAC) to the broadcast address on port 9; no root required
 - Friendly names persist across sessions in `SettingManager` (JSON map keyed by MAC)
 - Warning shown if no hosts are found (tip: ping the device first to populate the ARP cache)
+
+**Cache Rebuild (macOS only, SSO-23866, part of the SSO-15367 Power Toolkit epic)** — Self-contained `CacheRebuildWidget` (stacked widget page) with one independently-runnable action per cache, each behind a confirm dialog and reporting per-step progress plus a ✓/⚠ result:
+- **Dyld Shared Cache** — `sudo update_dyld_shared_cache -force`. Unavailable on macOS 11 (Big Sur) and later — the shared cache now lives on the signed system volume and has no supported user-space rebuild path.
+- **XPC Cache** — removes `/var/db/xpcd/xpcd_cache.dylib` via `sudo rm -f`. Unavailable on macOS 10.10 (Yosemite) and later — the on-disk cache was retired and macOS resolves XPC services directly.
+- **Font Cache** — `sudo atsutil databases -remove` followed by `atsutil server -shutdown` / `-ping` to restart the font server. Supported on every macOS version Nexis targets.
+- **Launchpad Layout** — `defaults write com.apple.dock ResetLaunchPad -bool true` then `killall Dock`; macOS regenerates the default grid on next open. Supported on every macOS version Nexis targets.
+- Version/command-availability gating via `CacheRebuildWidget::supportInfo()` — actions that aren't supported show a disabled button with an explanatory label instead of failing at run time.
+- All commands run through `CommandUtil::execWithStatus`/`sudoExecWithStatus` (the same wrapper used by the rest of the Helpers page), sequentially on a `QThreadPool` worker thread with per-step progress text.
 
 - "Cancel" button kills the running process; "Run Again" available after completion
 - Does not bundle the scanner — works with whatever is installed on the system
