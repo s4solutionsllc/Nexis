@@ -531,6 +531,14 @@ Miscellaneous utility tools, organized into two clearly labelled header sections
 - "Cancel" button kills the running process; "Run Again" available after completion
 - Does not bundle the scanner — works with whatever is installed on the system
 
+**Local Snapshots (SSO-23867, macOS only)** — APFS/Time Machine local snapshot manager driven by `tmutil`, for reclaiming purgeable disk space held by local snapshots:
+- Lists local snapshots (`tmutil listlocalsnapshots /`), newest first, with the date/time parsed from each snapshot identifier
+- "Create Snapshot" (`tmutil localsnapshot`) and a per-row "Delete" action (`tmutil deletelocalsnapshots <date>`); both refresh the list on completion
+- Delete requires explicit confirmation via `QMessageBox`
+- Surfaces current available disk space (`QStorageInfo`, which already reports the purgeable-inclusive figure APFS computes) so the effect of deleting a snapshot is visible immediately after the list refreshes
+- Self-contained `SnapshotManagerWidget` (stacked widget page); lazy-loaded on first click; runs `tmutil` via `CommandUtil` on a `QThreadPool` worker thread
+- Deliberately independent of `SnapshotService` — that class is FR-112's silent pre-clean safety snapshot (a one-way `tmutil localsnapshot` write with no listing/deletion), not a management surface
+
 ### 12. APT Repository Manager / Homebrew
 
 Manage package repositories and sources. Conditional: shown only when the relevant package manager is detected.
