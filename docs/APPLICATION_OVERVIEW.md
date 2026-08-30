@@ -764,6 +764,10 @@ The `nexis-core` static library provides platform-abstracted system information 
 
 `CleanerML::parseFile`/`parseDirectory` (`shared/nexis-core/Tools/cleanerml_parser.h`) load BleachBit-compatible CleanerML XML cleaner definitions into a typed `Cleaner`/`Option`/`Action` model. Supports the `delete`/`glob`/`walk`/`regex`/`truncate`/`sqlite.vacuum` action types; `winreg` actions are recognized and silently skipped (no Windows registry on Linux/macOS). A malformed or unsupported action fails parsing for just that one cleaner (logged via `qWarning`), never the whole batch or the app. Parser and model only — no execution engine yet; that's future SSO-15366 epic work.
 
+### Cleaner Action Interpreter (SSO-23859, Deep Cleaning Engine epic SSO-15366)
+
+`SandboxedPathResolver` (`shared/nexis-core/Utils/sandboxed_path_resolver.h`) resolves glob/walk/regex matches confined to a caller-supplied base directory — a traversal segment, absolute-path pattern, or symlink hop out of the sandbox is silently dropped, never surfaced. `CleanerActionInterpreter` (`shared/nexis/Managers/cleaner_action_interpreter.h`) builds on it to execute a parsed `Cleaner`'s selected-option actions as a `TrustSafetyActionProvider` (SSO-15380), so dry-run preview, live confirm, and cancel come from the existing `TrustSafetyPreviewDialog`/`TrustSafetyRunner` with no new confirmation dialog. Only the generic `$$home$$`/`$$cache$$` CleanerML variables are expanded; an action whose path still contains an app-specific token (e.g. `$$profile$$`) is dropped at scan time (browser-profile discovery is SSO-23860 scope). `sqlite.vacuum` runs `VACUUM` on the target database and estimates reclaimable bytes via `PRAGMA freelist_count`/`page_size` — the CleanerML model carries no per-row/table delete predicate for this command, so row/table deletion is out of scope here (also SSO-23860). Not yet wired into a page.
+
 ---
 
 ## Manager Layer

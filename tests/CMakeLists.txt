@@ -891,6 +891,21 @@ add_nexis_test(NAME LogProviderTests
     "${GUI_SHARED_DIR}"
 )
 
+# SSO-23859: CleanerActionInterpreter — TrustSafetyActionProvider over parsed
+# CleanerML actions. cleaner_action_interpreter.cpp is already compiled into
+# nexis-gui (GUI_SHARED_SRCS); link it rather than recompiling here, same
+# reasoning as SystemCleanerProviderTests.
+add_nexis_test(NAME CleanerActionInterpreterTests
+  SOURCES
+    managers/test_cleaner_action_interpreter.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Common"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Sql
+)
+
 # ── Theme validation tests ─────────────────────────────────────────────────────
 add_nexis_test(NAME ThemeTokenTests   SOURCES theme/test_theme_tokens.cpp)
 add_nexis_test(NAME FocusVisibleTests SOURCES theme/test_focus_visible.cpp)
