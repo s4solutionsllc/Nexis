@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Internal CleanerML parser (SSO-23856, Deep Cleaning Engine epic SSO-15366): `CleanerML::parseFile`/`parseDirectory` load BleachBit-compatible CleanerML XML into a typed `Cleaner`/`Option`/`Action` model (`shared/nexis-core/Tools/cleanerml_parser.h`), supporting the `delete`/`glob`/`walk`/`regex`/`truncate`/`sqlite.vacuum` action types. `winreg` actions are recognized and silently skipped (no Windows registry on Linux/macOS); any other malformed or unsupported action fails parsing for just that one cleaner (logged), never the whole batch. Parser only — no execution yet. Verified against BleachBit's real 104-file `cleaners.d` corpus: 79 cleaners parse cleanly, 25 fail gracefully on out-of-scope commands, zero crashes.
+
 ### Fixed
 - Startup Apps page (gh-383): app icons rendered stretched vertically — `startup_app.ui`'s `lblStartupAppIcon` had a non-square min/max size (22×24 / 44×48) combined with `scaledContents=true`, which stretches a square source icon to fill the taller box. Min/max size is now square (22×22 / 44×44); no C++ change needed.
 - Helpers > Firewall (gh-385, SSO-23402): reported "No supported firewall detected" on systems with ufw installed and enabled (e.g. CachyOS) — `FirewallWidget::fetchStatus()` ran unprivileged `ufw status`, which requires root and fails with empty stdout/nonzero exit for a normal user, so detection silently fell through to "unavailable" even though ufw was present. When the privileged-style call doesn't produce usable output, detection now falls back to `systemctl is-active ufw` plus `/etc/ufw/ufw.conf`'s `ENABLED=` setting (both root-readable, no elevation needed) via the new `FirewallWidget::parseUfwFallback()`.

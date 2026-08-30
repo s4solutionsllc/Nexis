@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Nexis-authored fixture (SSO-23856): intentionally malformed XML (unclosed
+     <option> element) to exercise CleanerMLParser's XML-syntax-error path.
+     Not derived from BleachBit. -->
+<cleaner id="malformed_example">
+  <label>Malformed example</label>
+  <description>Exercises the parser's XML-syntax-error path</description>
+  <option id="broken">
+    <label>Broken option</label>
+    <description>Missing closing tag below</description>
+    <action command="delete" search="file" path="~/.example"/>
+</cleaner>
