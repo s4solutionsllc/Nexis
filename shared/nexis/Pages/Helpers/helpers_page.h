@@ -18,6 +18,7 @@ class BatteryChargeThresholdWidget;
 class TrimWidget;
 class WolWidget;
 class SnapshotManagerWidget;
+class MacTweaksWidget;
 
 namespace Ui {
 class HelpersPage;
@@ -47,6 +48,7 @@ private slots:
     void onVerifyDisk();
     void onRebuildLaunchServices();
     void onPowerProfileClicked();
+    void onMacTweaksClicked();             // SSO-23857
     void init();
 
     void applyNavLayout(bool compact);
@@ -69,6 +71,10 @@ private:
     QPushButton                   *mBtnCpuTuning              = nullptr;
     BatteryChargeThresholdWidget  *mBatteryThresholdWidget    = nullptr;
     QPushButton                   *mBtnBatteryThreshold       = nullptr;
+#endif
+#ifdef Q_OS_MACOS
+    MacTweaksWidget *mMacTweaksWidget = nullptr;   // SSO-23857
+    QPushButton     *mBtnMacTweaks    = nullptr;
 #endif
     WolWidget   *mWolWidget = nullptr;
     QPushButton *mBtnWol    = nullptr;
