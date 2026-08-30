@@ -1,5 +1,7 @@
 #include "disk_treemap_dialog.h"
 
+#include "bubble_map_view.h"
+#include "sunburst_view.h"
 #include "treemap_view.h"
 
 #include "Managers/app_manager.h"
@@ -22,6 +24,7 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSettings>
+#include <QStackedWidget>
 #include <QStandardPaths>
 #include <QStorageInfo>
 #include <QUrl>
@@ -82,6 +85,11 @@ DiskTreemapDialog::DiskTreemapDialog(QWidget *parent,
     mCancelButton->setEnabled(false);
     mDrillUpButton->setEnabled(false);
 
+    mVisPicker = new QComboBox(this);
+    mVisPicker->addItem(tr("Treemap"));
+    mVisPicker->addItem(tr("Bubble Map"));
+    mVisPicker->addItem(tr("Sunburst"));
+
     mBreadcrumb  = new QLabel(this);
     mBreadcrumb->setTextInteractionFlags(Qt::TextSelectableByMouse);
     mStatusLabel = new QLabel(this);
@@ -89,11 +97,17 @@ DiskTreemapDialog::DiskTreemapDialog(QWidget *parent,
     mProgress->setRange(0, 0);   // indeterminate during scan
     mProgress->setVisible(false);
 
-    mView = new TreemapView(this);
-    connect(mView, &TreemapView::tileHovered, this, &DiskTreemapDialog::onTileHovered);
-    connect(mView, &TreemapView::drillRequested, this, &DiskTreemapDialog::onDrillRequested);
-    connect(mView, &TreemapView::revealRequested, this, &DiskTreemapDialog::onRevealRequested);
-    connect(mView, &TreemapView::trashRequested, this, &DiskTreemapDialog::onTrashRequested);
+    mStack = new QStackedWidget(this);
+    mViews = { new TreemapView(this), new BubbleMapView(this), new SunburstView(this) };
+    for (DiskMapView *v : mViews) {
+        mStack->addWidget(v);
+        connect(v, &DiskMapView::tileHovered, this, &DiskTreemapDialog::onTileHovered);
+        connect(v, &DiskMapView::drillRequested, this, &DiskTreemapDialog::onDrillRequested);
+        connect(v, &DiskMapView::revealRequested, this, &DiskTreemapDialog::onRevealRequested);
+        connect(v, &DiskMapView::trashRequested, this, &DiskTreemapDialog::onTrashRequested);
+    }
+    mView = mViews.first();
+    mStack->setCurrentWidget(mView);
 
     auto *topBar = new QHBoxLayout;
     topBar->addWidget(new QLabel(tr("Folder:"), this));
@@ -102,6 +116,8 @@ DiskTreemapDialog::DiskTreemapDialog(QWidget *parent,
     topBar->addWidget(mScanButton);
     topBar->addWidget(mCancelButton);
     topBar->addWidget(mDrillUpButton);
+    topBar->addWidget(new QLabel(tr("View:"), this));
+    topBar->addWidget(mVisPicker);
 
     auto *crumbBar = new QHBoxLayout;
     crumbBar->addWidget(mBreadcrumb, 1);
@@ -112,13 +128,15 @@ DiskTreemapDialog::DiskTreemapDialog(QWidget *parent,
                               Dpi::scale(8), Dpi::scale(8));
     outer->addLayout(topBar);
     outer->addLayout(crumbBar);
-    outer->addWidget(mView, 1);
+    outer->addWidget(mStack, 1);
     outer->addWidget(mStatusLabel);
 
     connect(mChooseButton,  &QPushButton::clicked, this, &DiskTreemapDialog::onChooseFolder);
     connect(mScanButton,    &QPushButton::clicked, this, &DiskTreemapDialog::onScanClicked);
     connect(mCancelButton,  &QPushButton::clicked, this, &DiskTreemapDialog::onCancelClicked);
     connect(mDrillUpButton, &QPushButton::clicked, this, &DiskTreemapDialog::onDrillUpClicked);
+    connect(mVisPicker, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &DiskTreemapDialog::onVisualizationChanged);
 
     connect(mScanner, &DirSizeScanner::finished,
             this, &DiskTreemapDialog::onScanFinished);
@@ -188,8 +206,24 @@ void DiskTreemapDialog::onCancelClicked()
 
 void DiskTreemapDialog::onDrillUpClicked()
 {
-    if (mView && mView->drillUp())
+    // Drill every view up in lockstep, not just the visible one, so
+    // switching modes afterward doesn't need to re-derive anything.
+    bool moved = false;
+    for (DiskMapView *v : mViews) {
+        if (v->drillUp())
+            moved = true;
+    }
+    if (moved)
         updateBreadcrumb();
+}
+
+void DiskTreemapDialog::onVisualizationChanged(int index)
+{
+    if (index < 0 || index >= mViews.size())
+        return;
+    mView = mViews[index];
+    mStack->setCurrentWidget(mView);
+    updateBreadcrumb();
 }
 
 void DiskTreemapDialog::startScan(const QString &path)
@@ -207,7 +241,10 @@ void DiskTreemapDialog::onScanFinished(DirSizeNodePtr root)
         mStatusLabel->setText(tr("Scan finished but no data was returned."));
         return;
     }
-    mView->setRoot(root);
+    // Every view gets the same scan result — this is the only place any of
+    // them touch DirSizeScanner's output, so no mode ever re-scans.
+    for (DiskMapView *v : mViews)
+        v->setRoot(root);
     mStatusLabel->setText(tr("Scanned %1 — %2 across %3 files")
                               .arg(root->path)
                               .arg(formatBytes(root->size))
@@ -243,9 +280,13 @@ void DiskTreemapDialog::onTileHovered(DirSizeNode *node)
 
 void DiskTreemapDialog::onDrillRequested(DirSizeNode *node)
 {
-    if (!mView || !node)
+    if (!node)
         return;
-    mView->drillInto(node);
+    // Only the visible view can emit this (hidden ones get no mouse
+    // events), but drill every view in lockstep so they all stay on the
+    // same focus node.
+    for (DiskMapView *v : mViews)
+        v->drillInto(node);
     updateBreadcrumb();
 }
 
@@ -307,7 +348,7 @@ void DiskTreemapDialog::closeEvent(QCloseEvent *event)
 
 void DiskTreemapDialog::applyThemeColors()
 {
-    if (!mAppManager || !mView)
+    if (!mAppManager || mViews.isEmpty())
         return;
     QSettings *sv = mAppManager->getStyleValues();
     if (!sv)
@@ -317,7 +358,8 @@ void DiskTreemapDialog::applyThemeColors()
                                             sv->value("@color03")).toString());
     const QColor bg     = QColor(sv->value("@chartBackgroundColor",
                                             sv->value("@color01")).toString());
-    mView->applyTheme(text, border, bg);
+    for (DiskMapView *v : mViews)
+        v->applyTheme(text, border, bg);
     if (text.isValid())
         mStatusLabel->setStyleSheet(QString("color: %1;").arg(text.name()));
     if (text.isValid())

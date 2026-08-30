@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Disk Space Visualizer (SSO-23862): the built-in disk map now offers bubble-map (circle-packing) and sunburst (radial donut) visualization modes alongside the existing treemap, switchable live from a new picker in the dialog toolbar. All three modes render the same `DirSizeNode` scan data — switching never re-scans — and share identical hover tooltips, double-click drill-down, and the reveal/move-to-trash context menu via a new shared `DiskMapView` base class.
+
 ### Fixed
 - Startup Apps page (gh-383): app icons rendered stretched vertically — `startup_app.ui`'s `lblStartupAppIcon` had a non-square min/max size (22×24 / 44×48) combined with `scaledContents=true`, which stretches a square source icon to fill the taller box. Min/max size is now square (22×22 / 44×44); no C++ change needed.
 - Helpers > Firewall (gh-385, SSO-23402): reported "No supported firewall detected" on systems with ufw installed and enabled (e.g. CachyOS) — `FirewallWidget::fetchStatus()` ran unprivileged `ufw status`, which requires root and fails with empty stdout/nonzero exit for a normal user, so detection silently fell through to "unavailable" even though ufw was present. When the privileged-style call doesn't produce usable output, detection now falls back to `systemctl is-active ufw` plus `/etc/ufw/ufw.conf`'s `ENABLED=` setting (both root-readable, no elevation needed) via the new `FirewallWidget::parseUfwFallback()`.
