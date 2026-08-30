@@ -90,6 +90,7 @@ class TestDiskTreemapDeleteConfirm : public QObject
 
 private slots:
     void initTestCase();
+    void cleanupTestCase();
     void cancel_leavesFileInPlaceAndTriggersNoOperation();
     void confirm_movesFileToTrashAndRefreshesMap();
 };
@@ -101,11 +102,28 @@ private slots:
 // itself. Recreate that pre-existing-desktop precondition here rather than
 // changing production trash-bootstrap behavior, which is out of scope for
 // SSO-23861.
+//
+// FileSearchService::moveToTrash() compares QFileInfo::owner() of the target
+// file against QFileInfo(homePath).owner() to decide whether it needs
+// sudoExecWithStatus (pkexec) instead of a plain `mv`. In a CI/container
+// runner the UID that owns both paths often has no /etc/passwd entry, so
+// owner() can resolve inconsistently and trip the "another user" branch —
+// there is no pkexec binary/display in that environment, so the exec itself
+// fails. Use the same NEXIS_SUDO_BYPASS=1 seam AptSourceToolExecSeamTests
+// relies on (tests/core/test_apt_source_tool_exec_seam.cpp) so this test
+// exercises the real mv/trash-metadata path without depending on pkexec.
 void TestDiskTreemapDeleteConfirm::initTestCase()
 {
+    qputenv("NEXIS_SUDO_BYPASS", "1");
+
     const QString trash = FileSearchService::ins()->trashPath();
     QVERIFY(QDir().mkpath(trash + "/files"));
     QVERIFY(QDir().mkpath(trash + "/info"));
+}
+
+void TestDiskTreemapDeleteConfirm::cleanupTestCase()
+{
+    qunsetenv("NEXIS_SUDO_BYPASS");
 }
 
 void TestDiskTreemapDeleteConfirm::cancel_leavesFileInPlaceAndTriggersNoOperation()
