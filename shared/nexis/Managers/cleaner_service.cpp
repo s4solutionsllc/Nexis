@@ -59,6 +59,18 @@ QList<CleanerService::CleanCategory> CleanerService::allCategories()
              APP_PROFILES };
 }
 
+QList<CleanerService::CleanCategory> CleanerService::safeCategories()
+{
+    QList<CleanCategory> categories = {
+        PACKAGE_CACHE, CRASH_REPORTS, APPLICATION_LOGS,
+        APPLICATION_CACHES, DEV_TOOL_CACHES, BROKEN_SYMLINKS,
+    };
+#ifndef Q_OS_MACOS
+    categories.append(SNAP_FLATPAK_REVISIONS);
+#endif
+    return categories;
+}
+
 bool CleanerService::isAggressiveProfilesEnabled() const
 {
     return SettingManager::ins()->getCleanerAggressiveProfilesEnabled();

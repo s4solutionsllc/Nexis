@@ -10,9 +10,17 @@ extern "C" {
 // macos_dock_helper.h.
 typedef void (*NexisMenuBarClickCallback)(void);
 
-void nexis_menubar_create(NexisMenuBarClickCallback onClick);
+// SSO-23853: the status item now carries a dropdown NSMenu ("Open Nexis",
+// "Clean Now") instead of reacting to a bare click — onActivate fires for
+// "Open Nexis", onClean fires for "Clean Now".
+void nexis_menubar_create(NexisMenuBarClickCallback onActivate, NexisMenuBarClickCallback onClean);
 void nexis_menubar_destroy(void);
 void nexis_menubar_set_title(const char *title);
+
+// Updates the "Clean Now" menu item's label/enabled state (e.g. to
+// "Cleaning…" / disabled while a clean is running). No-op if the status
+// item hasn't been created yet.
+void nexis_menubar_set_clean_item_state(const char *title, int enabled);
 
 #ifdef __cplusplus
 }
