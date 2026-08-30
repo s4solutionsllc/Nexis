@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-License-Identifier: GPL-3.0-or-later
+Copyright (c) 2008-2026 Andrew Ziem.
+
+This work is licensed under the terms of the GNU GPL, version 3 or
+later.  See the COPYING file in the top-level directory.
+-->
+<cleaner id="deepscan">
+  <label translate="true">Deep scan</label>
+  <description>Clean files widely scattered across the disk</description>
+  <option id="angular">
+    <label translate="false">.angular</label>
+    <description>Delete the files</description>
+    <warning>This option is slow.</warning>
+    <action command="delete" search="deep" wholeregex="[/\\]\.angular"/>
+  </option>
+  <option id="backup">
+    <label>Backup files</label>
+    <description>Delete the backup files</description>
+    <warning>Inspect the preview for any files you want to keep.</warning>
+    <action command="delete" search="deep" regex="\.[Bb][Aa][Kk]$"/>
+    <action command="delete" search="deep" regex="[a-zA-Z]{1,4}~$"/>
+  </option>
+  <option id="ds_store">
+    <label translate="false">.DS_Store</label>
+    <description>Delete the files</description>
+    <warning>This option is slow.</warning>
+    <action command="delete" search="deep" regex="^\.DS_Store$"/>
+  </option>
+  <option id="node_modules">
+    <label translate="false">node_modules</label>
+    <description>Delete the files</description>
+    <warning>This option is slow. Inspect the preview for files you want to keep, like those bundled with applications.</warning>
+    <action command="delete" search="deep" wholeregex="[/\\]node_modules[/\\]" nwholeregex="[\\/]AppData[\\/]|[\\/]home[\\/][^\\/]+[\\/]\.[^\\/]+[\\/]|[\\/]Users[\\/][^\\/]+[\\/]\.[^\\/]+[\\/]"/>
+  </option>
+  <option id="venv">
+    <label translate="false">venv</label>
+    <description>Delete the files</description>
+    <warning>This option is slow.</warning>
+    <action command="delete" search="deep" wholeregex="[/\\]\.?venv[/\\]" nwholeregex="[\\/]AppData[\\/]|[\\/]home[\\/][^\\/]+[\\/]\.[^\\/]+[\\/]|[\\/]Users[\\/][^\\/]+[\\/]\.[^\\/]+[\\/]|[\\/]pipx[\\/]venvs[\\/]"/>
+  </option>
+  <option id="pycache">
+    <label translate="false">__pycache__</label>
+    <description>Delete the files</description>
+    <warning>This option is slow.</warning>
+    <action command="delete" search="deep" wholeregex="[/\\]__pycache__"/>
+  </option>
+  <option id="thumbs_db">
+    <label translate="false">Thumbs.db</label>
+    <description>Delete the files</description>
+    <warning>This option is slow.</warning>
+    <action command="delete" search="deep" regex="^Thumbs\.db$"/>
+    <action command="delete" search="deep" regex="^Thumbs\.db:encryptable$"/>
+  </option>
+  <option id="tmp">
+    <label>Temporary files</label>
+    <description>Delete the temporary files</description>
+    <warning>This option is slow.</warning>
+    <!-- http://support.microsoft.com/kb/211632 -->
+    <action command="delete" search="deep" regex="^~wr[a-z][0-9]{4}\.tmp$"/>
+    <!-- http://support.microsoft.com/kb/826810 -->
+    <action command="delete" search="deep" regex="^ppt[0-9]{4}\.tmp$"/>
+  </option>
+  <option id="vim_swap_user">
+    <label>VIM swap files under user profile</label>
+    <description>Delete the backup files</description>
+    <warning>This option is slow.</warning>
+    <!--
+Here is an example. When editing foo.txt, VIM makes a file called .foo.txt.swp
+that starts with a period.
+
+If the .swp file exists, it will cycle through the alphabet according to
+this post
+https://groups.google.com/forum/#!msg/vim_use/JBHSs3kPPJU/X9WeMsZcfWAJ
+
+The likeliness of VIM not being able to create a swap on the first three
+times is small.
+
+Be careful not to match files such as ~/.htpasswd
+https://github.com/bleachbit/bleachbit/issues/683
+
+-->
+    <action command="delete" search="deep" regex="^.*\.sw[nop]$"/>
+  </option>
+  <option id="vim_swap_root">
+    <label>VIM swap files across system</label>
+    <description>Delete the backup files</description>
+    <warning>This option is slow.</warning>
+    <action command="delete" search="deep" regex="^.*\.sw[nop]$" path="/" os="linux"/>
+  </option>
+</cleaner>

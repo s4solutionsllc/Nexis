@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-08-14 | Version 2.9.1
+> Last updated: 2026-08-30 | Version 2.9.1
 
 ---
 
@@ -64,10 +64,10 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 |--------|-------|-----------------|
 | Version | 2.8.3 | `project(... VERSION ...)` in `CMakeLists.txt` |
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
-| Source files (C++) | 338 | same |
+| Source files (C++) | 341 | same |
 | Test LOC | ~14,500 | `tests/` |
-| Test executables | 61 (60 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
-| Test methods | ~845 | `private slots:` in `tests/*/test_*.cpp` |
+| Test executables | 62 (61 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
+| Test methods | ~865 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 16 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Shredder, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
@@ -733,6 +733,10 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `FileUtil` | File read/write, directory listing, file size |
 | `CommandUtil` | Process execution (`QProcess`), sudo elevation, timeout handling — unified non-throwing `ExecResult` contract across `exec` / `sudoExec` / `execWithStatus` / `sudoExecWithStatus` / `execAsync` (SSO-3367) |
 | `FormatUtil` | Byte formatting (KB/MB/GB/TB with binary units) |
+
+### CleanerML Parser (SSO-23856, Deep Cleaning Engine epic SSO-15366)
+
+`CleanerML::parseFile`/`parseDirectory` (`shared/nexis-core/Tools/cleanerml_parser.h`) load BleachBit-compatible CleanerML XML cleaner definitions into a typed `Cleaner`/`Option`/`Action` model. Supports the `delete`/`glob`/`walk`/`regex`/`truncate`/`sqlite.vacuum` action types; `winreg` actions are recognized and silently skipped (no Windows registry on Linux/macOS). A malformed or unsupported action fails parsing for just that one cleaner (logged via `qWarning`), never the whole batch or the app. Parser and model only — no execution engine yet; that's future SSO-15366 epic work.
 
 ---
 
