@@ -100,6 +100,7 @@ private slots:
     void toggleKioskMode();
     void exitKioskMode();
     void toggleSidebarCollapse();
+    void openDiskTreemapDialog();
 
 private:
     QWidget *getPageByTitle(const QString &title);
@@ -215,6 +216,9 @@ private:
     QPushButton *btnDash;
     QPushButton *btnHardwareInfo;
     QPushButton *btnResources;
+    // SSO-23863: opens DiskTreemapDialog directly rather than a stacked
+    // page — non-checkable, same pattern as btnFeedback below.
+    QPushButton *btnDiskMap;
     QPushButton *btnNetworkUsage;
     QPushButton *btnSystemCleaner;
     QPushButton *btnDiskTools;
