@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-08-30 | Version 2.9.1
+> Last updated: 2026-08-30 (SSO-23862, SSO-23856) | Version 2.9.1
 
 ---
 
@@ -446,7 +446,8 @@ Historical time-series charts for system resource usage.
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
 - Configurable preference in Settings (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper; or custom path)
-- **Built-in Treemap (FW-09, SSO-3737):** secondary "Built-in Treemap" button on the same card opens a built-in `DiskTreemapDialog` that runs a `DirSizeScanner` on a `QtConcurrent` worker, then renders a squarified treemap with `TreemapView` (pure `QPainter`). Supports drill-down (double-click), hover tooltips, "Reveal in file manager", and "Move to trash" (reuses `FileSearchService` → cleaner trash path). Skips symlinks and dedups hard links so byte counts match what Baobab/DaisyDisk would report. The external-tool launcher remains as a parallel option.
+- **Built-in Treemap (FW-09, SSO-3737):** secondary "Built-in Treemap" button on the same card opens a built-in `DiskTreemapDialog` that runs a `DirSizeScanner` on a `QtConcurrent` worker, then renders the scan (pure `QPainter`) via one of three interchangeable visualization modes. Supports drill-down (double-click), hover tooltips, "Reveal in file manager", and "Move to trash" (reuses `FileSearchService` → cleaner trash path). Skips symlinks and dedups hard links so byte counts match what Baobab/DaisyDisk would report. The external-tool launcher remains as a parallel option.
+- **Visualization picker (SSO-23862):** a toolbar picker switches live between **Treemap** (squarified, `TreemapView`), **Bubble Map** (circle-packing, `BubbleMapView`), and **Sunburst** (radial donut, `SunburstView`) without re-scanning — all three share the same `DirSizeNode` scan data and drill-down/hover/context-menu behavior via a common `DiskMapView` base class.
 
 ### 10a. Network Usage
 
