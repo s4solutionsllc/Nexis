@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-08-31 (SSO-23896, SSO-23862, SSO-23856, SSO-23853) | Version 2.9.1
+> Last updated: 2026-08-31 (SSO-23896, SSO-23862, SSO-23856, SSO-23853, SSO-23854) | Version 2.9.1
 
 ---
 
@@ -653,6 +653,7 @@ per card — never per control), below a page-level accent-bar header
 - **Disk Health Alert** — Toggle tray alerts for failing drives
 - **Show Dashboard Footer** — Toggle visibility of the system summary bar and status footer on the Dashboard (default: visible; FR-75)
 - **Show health score and Clean Now in the menu bar** (macOS only, off by default) — adds an optional `NSStatusItem` showing the Dashboard health score (`Health n · Label`, same 0–100 composite/label as the Dashboard's Health Score tile, computed from identical CPU/memory/disk formulas — temperature/battery/SMART are left unavailable here to avoid polling those sensors from an always-on background monitor) that subscribes to `DataRefreshService`'s Cpu/Memory/DiskUsage signals like a page would. Clicking it opens a dropdown menu: "Open Nexis" brings the main window forward on the Dashboard (the prior click-to-activate behavior); "Clean Now" runs the same curated safe-category clean as the Maintenance Wizard's "Clean Safe Items" off the main thread and reports bytes/items freed in a one-sentence completion dialog. Toggling live creates/destroys the status item without a restart (FW-20 / SSO-3748, extended SSO-23853)
+- **Show health score and Clean Now in the tray menu** (Linux only, off by default, SSO-23854) — the Linux counterpart to the macOS menu-bar surface above, reusing the same existing `QSystemTrayIcon` (no second tray icon) and the same 0–100 `Health n · Label` composite score and formulas. Adds a disabled label row and a "Clean Now" action to the tray's right-click menu, alongside the existing minimize-to-tray, Quick Actions submenu (FR-125), and sidebar-derived MONITOR/Manage/System groups (SSO-23896); both stay hidden unless the setting is on. Respects whichever icon the tray icon style selector (FR-48) has picked rather than adding a new one. Toggling live shows/hides the rows and subscribes/unsubscribes from sensor updates without a restart.
 - **Dashboard Layout** — Reset Layout button to restore default tile arrangement (mirrors edit toolbar action)
 - **Scheduled Cleaning** — Quick-setup toggle, schedule manager dialog, threshold alerts, cleaning notifications, history viewer
 - **Version Display** — Current version from `APP_VERSION` compile definition

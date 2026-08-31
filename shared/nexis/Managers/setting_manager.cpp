@@ -679,6 +679,16 @@ bool SettingManager::getMenuBarMonitorEnabled() const
     return mSettings->value(SettingKeys::MenuBarMonitorEnabled, false).toBool();
 }
 
+void SettingManager::setTrayHealthScoreEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::TrayHealthScoreEnabled, value);
+}
+
+bool SettingManager::getTrayHealthScoreEnabled() const
+{
+    return mSettings->value(SettingKeys::TrayHealthScoreEnabled, false).toBool();
+}
+
 void SettingManager::setLaunchInKioskMode(bool value)
 {
     mSettings->setValue(SettingKeys::LaunchInKioskMode, value);

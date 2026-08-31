@@ -25,6 +25,7 @@ signals:
     void sigCleanableSizeChanged(quint64 bytes);
     void sigDashboardFooterChanged(bool visible);
     void sigMenuBarMonitorToggled(bool enabled);
+    void sigTrayHealthScoreToggled(bool enabled);
 
 private:
     static SignalMapper *instance;

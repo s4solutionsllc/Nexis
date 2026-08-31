@@ -54,6 +54,7 @@ struct PageSlot {
 #include "Pages/MailCleanup/mail_attachment_cleanup_page.h"
 #else
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
+#include "Managers/tray_health_monitor.h"
 #endif
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
@@ -159,6 +160,10 @@ private:
     MailAttachmentCleanupPage *mailAttachmentCleanupPage = nullptr;
 #else
     APTSourceManagerPage *aptSourceManagerPage = nullptr;
+    // SSO-23854: Linux tray counterpart of mMenuBarMonitor above.
+    TrayHealthMonitor *mTrayHealthMonitor = nullptr;
+    QAction *mTrayHealthAction = nullptr;
+    QAction *mTrayCleanAction = nullptr;
 #endif
     DockerPage *dockerPage;
     GnomeSettingsPage *gnomeSettingsPage;
