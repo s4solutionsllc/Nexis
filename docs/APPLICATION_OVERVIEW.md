@@ -58,7 +58,7 @@ conflict-prone region in the repo (SSO-23891, SSO-23951).
 
 | Metric | Value | Source of truth |
 |--------|-------|-----------------|
-| Version | 2.9.1 | `project(... VERSION ...)` in `CMakeLists.txt` |
+| Version | 2.10.0 | `project(... VERSION ...)` in `CMakeLists.txt` |
 | Source LOC (C++) | ~75,600 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
 | Source files (C++) | 502 | same |
 | Test LOC | ~21,400 | `tests/` |

@@ -8,6 +8,9 @@ on:
     branches: [native]
     tags: ['v*']
   pull_request:
+  # See build.yml — a check that may be marked required must also report on
+  # merge_group events, or the queue waits forever for a run that never starts.
+  merge_group:
   workflow_dispatch:
 
 permissions:
