@@ -30,6 +30,7 @@ add_nexis_test(NAME HeadlessUtilTests SOURCES utils/test_headless_util.cpp)
 add_nexis_test(NAME DisplayServerUtilTests SOURCES utils/test_display_server_util.cpp)
 add_nexis_test(NAME MacOsVersionUtilTests SOURCES utils/test_mac_os_version_util.cpp)
 add_nexis_test(NAME SandboxedPathResolverTests SOURCES utils/test_sandboxed_path_resolver.cpp)
+add_nexis_test(NAME BrowserProfileLocatorTests SOURCES utils/test_browser_profile_locator.cpp)
 
 # ── Core library tests ─────────────────────────────────────────────────────────
 add_nexis_test(NAME DiskHealthTests   SOURCES core/test_disk_health_info.cpp)
@@ -905,6 +906,22 @@ add_nexis_test(NAME LogProviderTests
 add_nexis_test(NAME CleanerActionInterpreterTests
   SOURCES
     managers/test_cleaner_action_interpreter.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Common"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Sql
+)
+
+# SSO-23860: BrowserSqliteCleaner — surgical Firefox/Chromium history &
+# cookie row deletion + VACUUM as a TrustSafetyActionProvider.
+# browser_sqlite_cleaner.cpp is already compiled into nexis-gui
+# (GUI_SHARED_SRCS); link it rather than recompiling here, same reasoning as
+# CleanerActionInterpreterTests.
+add_nexis_test(NAME BrowserSqliteCleanerTests
+  SOURCES
+    managers/test_browser_sqlite_cleaner.cpp
   INCLUDES
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Common"

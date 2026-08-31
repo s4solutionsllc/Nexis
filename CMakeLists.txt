@@ -139,6 +139,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.cpp"
   "${CORE_SHARED_DIR}/Utils/mac_os_version_util.cpp"
   "${CORE_SHARED_DIR}/Utils/sandboxed_path_resolver.cpp"
+  "${CORE_SHARED_DIR}/Utils/browser_profile_locator.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -191,6 +192,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.h"
   "${CORE_SHARED_DIR}/Utils/mac_os_version_util.h"
   "${CORE_SHARED_DIR}/Utils/sandboxed_path_resolver.h"
+  "${CORE_SHARED_DIR}/Utils/browser_profile_locator.h"
 )
 
 if(APPLE)
@@ -422,6 +424,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.cpp"
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_action_interpreter.cpp"
+  "${GUI_SHARED_DIR}/Managers/browser_sqlite_cleaner.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.cpp"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.cpp"
@@ -549,6 +552,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.h"
   "${GUI_SHARED_DIR}/Managers/app_manager.h"
   "${GUI_SHARED_DIR}/Managers/cleaner_action_interpreter.h"
+  "${GUI_SHARED_DIR}/Managers/browser_sqlite_cleaner.h"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.h"
   "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.h"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.h"
