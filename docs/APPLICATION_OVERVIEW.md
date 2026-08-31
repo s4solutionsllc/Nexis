@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-08-31 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23853, SSO-23854) | Version 2.9.1
+> Last updated: 2026-08-31 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23853, SSO-23854) | Version 2.10.0
 
 ---
 
