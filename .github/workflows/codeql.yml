@@ -12,6 +12,9 @@ on:
     branches: [native]
   pull_request:
     branches: [native]
+  # See build.yml — required checks must also report on merge_group events for
+  # GitHub merge queue to be able to advance an entry (SSO-23951).
+  merge_group:
   schedule:
     # Weekly heartbeat — keeps SARIF results fresh even with no merges.
     - cron: "23 6 * * 1"
