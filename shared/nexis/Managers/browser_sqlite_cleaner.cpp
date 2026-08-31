@@ -411,7 +411,7 @@ TrustSafetyActionResult BrowserSqliteCleaner::deleteCookies(const QString &dbPat
         QSqlQuery q(rw.db());
         if (!q.exec(QStringLiteral("SELECT %1, %2 FROM %3").arg(idColumn, hostColumn, cookiesTable))) {
             result.error = q.lastError().text();
-            rw.db().exec(QStringLiteral("ROLLBACK"));
+            q.exec(QStringLiteral("ROLLBACK"));
             return result;
         }
         while (q.next()) {
@@ -429,7 +429,7 @@ TrustSafetyActionResult BrowserSqliteCleaner::deleteCookies(const QString &dbPat
             del.addBindValue(rowId);
             if (!del.exec()) {
                 result.error = del.lastError().text();
-                rw.db().exec(QStringLiteral("ROLLBACK"));
+                del.exec(QStringLiteral("ROLLBACK"));
                 return result;
             }
         }
