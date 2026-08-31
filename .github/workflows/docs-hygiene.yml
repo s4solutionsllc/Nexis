@@ -1,0 +1,60 @@
+# Fast, toolchain-free checks for the docs/changelog mechanism introduced in
+# SSO-23951. Deliberately separate from build.yml so it returns in seconds and
+# a malformed changelog fragment never costs a full Qt build to discover.
+name: Docs hygiene
+
+on:
+  push:
+    branches: [native]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  changelog-fragments:
+    name: Changelog fragments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # Validates fragment filenames (<slug>.<type>.md) and bodies. Does NOT
+      # require that a PR add a fragment — dependabot and chore PRs legitimately
+      # have nothing user-visible to say, and a false failure here would block
+      # the merge queue, which is the exact problem this mechanism exists to fix.
+      - name: Lint changelog.d fragments
+        run: python3 scripts/changelog_fragments.py lint
+
+      # Guard the mechanism itself: a PR editing the shared [Unreleased] block
+      # reintroduces the collision. Release-cut commits are exempt (they are the
+      # one place the block is supposed to change).
+      - name: Warn on direct [Unreleased] edits
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ "$TITLE" == chore\(release\)* ]]; then
+            echo "Release PR — [Unreleased] edits are expected here."
+            exit 0
+          fi
+          if git diff --name-only "$BASE" "$HEAD" | grep -qx 'CHANGELOG.md'; then
+            echo "::warning file=CHANGELOG.md::This PR edits CHANGELOG.md directly. Add a fragment under changelog.d/ instead — see changelog.d/README.md (SSO-23951). Concurrent PRs all editing the shared [Unreleased] block is what live-locks the merge queue."
+          fi
+
+  generated-stats:
+    name: Generated stats block
+    # Feature PRs change source/test counts by design, so this only gates the
+    # release cut — where RELEASE.md §1 regenerates the block — not every PR.
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Verify docs/APPLICATION_OVERVIEW.md stats are regenerated
+        run: python3 scripts/gen_doc_stats.py --check
