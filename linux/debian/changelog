@@ -1,3 +1,14 @@
+nexis (2.10.0-1) unstable; urgency=medium
+
+  * New release: macOS menu-bar health score + Clean Now, Linux tray health
+    score + Clean Now, compact always-on-top mini-monitor window, disk map
+    bubble-map and sunburst visualizations, and a macOS APFS/Time Machine
+    local snapshot manager. Also regroups the tray menu into MONITOR/Manage/
+    System, and lands an internal CleanerML parser (no execution engine yet).
+    See CHANGELOG.md for full details.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Mon, 31 Aug 2026 00:00:00 +0000
+
 nexis (2.9.1-1) unstable; urgency=medium
 
   * Fix Minimize to Tray / Start Minimized to Tray settings not disabling
