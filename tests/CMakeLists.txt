@@ -29,6 +29,7 @@ add_nexis_test(NAME CommandUtilAsyncTests  SOURCES utils/test_command_util_async
 add_nexis_test(NAME HeadlessUtilTests SOURCES utils/test_headless_util.cpp)
 add_nexis_test(NAME DisplayServerUtilTests SOURCES utils/test_display_server_util.cpp)
 add_nexis_test(NAME MacOsVersionUtilTests SOURCES utils/test_mac_os_version_util.cpp)
+add_nexis_test(NAME SandboxedPathResolverTests SOURCES utils/test_sandboxed_path_resolver.cpp)
 
 # ── Core library tests ─────────────────────────────────────────────────────────
 add_nexis_test(NAME DiskHealthTests   SOURCES core/test_disk_health_info.cpp)
@@ -895,6 +896,21 @@ add_nexis_test(NAME LogProviderTests
     "${GUI_SHARED_DIR}/Pages/SystemLogs/log_provider.cpp"
   INCLUDES
     "${GUI_SHARED_DIR}"
+)
+
+# SSO-23859: CleanerActionInterpreter — TrustSafetyActionProvider over parsed
+# CleanerML actions. cleaner_action_interpreter.cpp is already compiled into
+# nexis-gui (GUI_SHARED_SRCS); link it rather than recompiling here, same
+# reasoning as SystemCleanerProviderTests.
+add_nexis_test(NAME CleanerActionInterpreterTests
+  SOURCES
+    managers/test_cleaner_action_interpreter.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Common"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Sql
 )
 
 # ── Theme validation tests ─────────────────────────────────────────────────────

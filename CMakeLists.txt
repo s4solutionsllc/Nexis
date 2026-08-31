@@ -36,7 +36,7 @@ set(CMAKE_AUTOMOC ON)
 #    channels we support both ship >= 6.10. Bumping past 6.4 drops Ubuntu
 #    24.04 (Noble) from the supported PPA series; Plucky (25.04) and
 #    Questing (26.04) cover the gap.
-find_package(Qt6 6.8 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network Test REQUIRED)
+find_package(Qt6 6.8 COMPONENTS Core Gui Widgets Charts Svg Concurrent Network Sql Test REQUIRED)
 
 # Setting the minimum C++ standard
 set(CMAKE_CXX_STANDARD           17)
@@ -138,6 +138,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.cpp"
   "${CORE_SHARED_DIR}/Utils/mac_os_version_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/sandboxed_path_resolver.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -189,6 +190,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/headless_util.h"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.h"
   "${CORE_SHARED_DIR}/Utils/mac_os_version_util.h"
+  "${CORE_SHARED_DIR}/Utils/sandboxed_path_resolver.h"
 )
 
 if(APPLE)
@@ -419,6 +421,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.cpp"
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
+  "${GUI_SHARED_DIR}/Managers/cleaner_action_interpreter.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.cpp"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.cpp"
@@ -545,6 +548,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Common/trust_safety_runner.h"
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.h"
   "${GUI_SHARED_DIR}/Managers/app_manager.h"
+  "${GUI_SHARED_DIR}/Managers/cleaner_action_interpreter.h"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.h"
   "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.h"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.h"
@@ -825,7 +829,7 @@ message(STATUS "App version: ${APP_VERSION}")
 
 target_compile_definitions(nexis-gui PUBLIC QT_DEPRECATED_WARNINGS "APP_VERSION=\"${APP_VERSION}\"")
 target_link_libraries(nexis-gui PUBLIC
-  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent Qt6::Network
+  nexis-core Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Charts Qt6::Svg Qt6::Concurrent Qt6::Network Qt6::Sql
 )
 
 if(APPLE)
