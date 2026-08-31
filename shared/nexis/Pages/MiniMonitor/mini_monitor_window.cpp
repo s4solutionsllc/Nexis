@@ -23,6 +23,12 @@
 namespace {
 // 8px base spacing unit (docs/design/DESIGN_SYSTEM.md).
 constexpr int kSpacingUnit = 8;
+
+// @monoFontFamily is not a values.ini key — AppManager substitutes it
+// directly into the global QSS text (app_manager.cpp), so it can't be
+// looked up via QSettings here. Mirror the same literal for this
+// per-widget inline stylesheet.
+const QString kMonoFontFamily = QStringLiteral("\"JetBrains Mono\", \"SF Mono\", Menlo, Consolas, monospace");
 }
 
 MiniMonitorWindow::MiniMonitorWindow(QWidget *parent)
@@ -193,7 +199,7 @@ void MiniMonitorWindow::updateScoreDisplay()
     const QString colorHex = sv->value(MiniMonitorFormatUtil::scoreColorToken(score)).toString();
     mLblScore->setStyleSheet(
         QStringLiteral("font-family: %1; font-size: 28px; font-weight: 700; color: %2;")
-            .arg(sv->value("@monoFontFamily").toString(), colorHex));
+            .arg(kMonoFontFamily, colorHex));
 }
 
 void MiniMonitorWindow::refreshThemeColors()
@@ -206,8 +212,7 @@ void MiniMonitorWindow::refreshThemeColors()
     if (auto *bar = findChild<QFrame *>("miniMonitorAccentBar"))
         bar->setStyleSheet(QStringLiteral("background-color: %1; border-radius: 1px;").arg(accent));
 
-    const QString mono = sv->value("@monoFontFamily").toString();
-    const QString metricStyle = QStringLiteral("font-family: %1;").arg(mono);
+    const QString metricStyle = QStringLiteral("font-family: %1;").arg(kMonoFontFamily);
     mLblCpu->setStyleSheet(metricStyle);
     mLblMem->setStyleSheet(metricStyle);
     mLblDisk->setStyleSheet(metricStyle);
