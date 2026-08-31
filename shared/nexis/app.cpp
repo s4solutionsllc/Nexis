@@ -14,6 +14,9 @@
 #ifdef Q_OS_LINUX
 #include "Pages/Helpers/cpu_tuning_widget.h"
 #endif
+#ifdef Q_OS_MAC
+#include <Tools/mac_tweaks_catalog.h>
+#endif
 #include <Managers/info_manager.h>
 #include <Managers/tray_menu_model.h>
 #include <Info/power_profile_info.h>
@@ -1708,4 +1711,20 @@ void App::setupCommandPalette()
     mCommandPalette->addCommand(tr("Disk Map"), tr("Action"), [this]() {
         openDiskTreemapDialog();
     });
+
+#ifdef Q_OS_MAC
+    // SSO-23857: expose individual Tweaks-pane items so they're invocable
+    // without navigating to the Helpers page first. Bool tweaks toggle;
+    // everything else resets to its documented default (palette has no
+    // input control for picking an arbitrary enum/string/int value).
+    for (const MacTweakDef &tweak : MacTweaksCatalog::all()) {
+        if (tweak.type == MacDefaultsValueType::Bool) {
+            mCommandPalette->addCommand(tr("Tweaks: Toggle %1").arg(tweak.name), tr("Tweaks"),
+                [tweak]() { MacTweaksCatalog::toggleBoolTweak(tweak); });
+        } else {
+            mCommandPalette->addCommand(tr("Tweaks: Reset %1 to Default").arg(tweak.name), tr("Tweaks"),
+                [tweak]() { MacTweaksCatalog::resetToDefault(tweak); });
+        }
+    }
+#endif
 }
