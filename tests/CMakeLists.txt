@@ -460,6 +460,26 @@ add_nexis_test(NAME FirewallTests
     Qt6::Widgets Qt6::Network
 )
 
+# SSO-23866: CacheRebuildWidget's command-construction and macOS-version
+# gating logic — pure/static, no live rebuild needed. Lives in the GUI
+# target; compile its source + deps directly like NetworkDiagTests/
+# OpenPortsTests/FirewallTests above.
+add_nexis_test(NAME CacheRebuildWidgetTests
+  SOURCES
+    core/test_cache_rebuild_widget.cpp
+    "${GUI_SHARED_DIR}/Pages/Helpers/cache_rebuild_widget.cpp"
+    "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+    "${GUI_SHARED_DIR}/signal_mapper.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Helpers"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets Qt6::Network
+)
+
 # SSO-23867: SnapshotManagerWidget's tmutil listlocalsnapshots parsing —
 # pure/static, no live filesystem needed. Lives in the GUI target; compile
 # its source + deps directly like FirewallTests above.
