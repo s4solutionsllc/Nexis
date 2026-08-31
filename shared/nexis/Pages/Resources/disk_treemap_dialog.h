@@ -25,6 +25,7 @@ class QComboBox;
 class QStackedWidget;
 
 #include "Managers/dir_size_scanner.h"
+#include "Services/file_search_service.h"
 
 class AppManager;
 class SignalMapper;
@@ -57,6 +58,9 @@ private slots:
     void onRevealRequested(DirSizeNode *node);
     void onTrashRequested(DirSizeNode *node);
     void onVisualizationChanged(int index);
+    void onFileOperationFinished(FileSearchService::FileOperation op,
+                                 QString filePath, bool hadError,
+                                 QString errorMessage);
     void applyThemeColors();
 
 private:
@@ -85,6 +89,11 @@ private:
     QStackedWidget      *mStack = nullptr;
     QVector<DiskMapView*> mViews;
     DiskMapView          *mView = nullptr;
+
+    // Root path of the current scan, kept independent of mFolderCombo's
+    // (editable) text so a post-trash refresh always re-scans what's
+    // actually on screen, not whatever the user has since typed.
+    QString mLastScannedPath;
 };
 
 #endif // DISK_TREEMAP_DIALOG_H

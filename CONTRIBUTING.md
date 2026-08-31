@@ -110,7 +110,14 @@ ctest --test-dir build -R FormatUtil --output-on-failure
 
 4. **Tests required for bug fixes** — if you fix a bug, add a regression test.
 
-5. **Update `CHANGELOG.md`** — add an entry under `## [Unreleased]` in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
+5. **Add a changelog fragment** — create `changelog.d/<slug>.<type>.md` (types:
+   `added`, `changed`, `deprecated`, `removed`, `fixed`, `security`) containing
+   your entry. Don't edit `CHANGELOG.md` directly — one file per change means
+   concurrent PRs never conflict over release notes. See
+   [`changelog.d/README.md`](changelog.d/README.md); check it with
+   `python3 scripts/changelog_fragments.py lint`. Maintainers fold the fragments
+   into `CHANGELOG.md` in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+   format at release cut.
 
 6. **Open the PR against `native`** — include a short description of what changed and why. Reference the issue number with `Closes #NN` or `Relates to #NN`.
 

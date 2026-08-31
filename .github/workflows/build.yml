@@ -5,6 +5,11 @@ on:
     branches: [native, master, main]
   pull_request:
     branches: [native, master, main]
+  # Required by GitHub merge queue (SSO-23951): a queued PR is tested as a
+  # speculative merge commit on a `merge_group` event, not a `pull_request` one.
+  # Without this trigger the required check never reports and the entry stalls in
+  # the queue forever. Harmless no-op until the queue is switched on.
+  merge_group:
   workflow_dispatch:
 
 jobs:

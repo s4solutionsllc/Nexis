@@ -73,17 +73,42 @@ The codebase splits shared and platform-specific code:
 
 ## Documentation Maintenance
 
-Three living documents must be kept in sync **before committing** any completed work:
+> **Do not edit `CHANGELOG.md` directly, and do not hand-bump the generated
+> stats table.** Both were shared single-line regions that every concurrent PR
+> was required to touch, so the first PR to merge left every other open PR
+> conflicting for no substantive reason (SSO-23951). The intent below is
+> unchanged; only the mechanism moved.
 
-- **`CHANGELOG.md`** — User-facing release notes. **Must be updated with every version bump.** Use [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format with `## [version] - date` headers and `### Added` / `### Fixed` / `### Changed` subsections. Every feature, bug fix, or notable change included in a release must have an entry here. This file is parsed by the website to display release notes to users.
-- **`docs/APPLICATION_OVERVIEW.md`** — What the app does. Update when features, UI elements, architecture, or platform support changes.
-- **`docs/ARCHITECTURE_REVIEW.md`** — How the architecture works. Update when signals, singletons, timer/polling patterns, or cross-component communication changes.
+**Release notes — add a fragment, not a `CHANGELOG.md` edit.**
+Every user-visible change (feature, bug fix, or other notable change) adds one
+new file `changelog.d/<slug>.<type>.md`, where `<type>` is one of `added`,
+`changed`, `deprecated`, `removed`, `fixed`, `security`. The body is the entry
+itself, no leading `- `. Distinct filenames never conflict. See
+[`changelog.d/README.md`](changelog.d/README.md); validate with
+`python3 scripts/changelog_fragments.py lint`. Fragments are folded into
+`CHANGELOG.md` in Keep a Changelog format at release cut (`RELEASE.md` §1) —
+which is still the file the website parses to show users release notes.
+
+**Two living documents remain hand-maintained:**
+
+- **`docs/APPLICATION_OVERVIEW.md`** — What the app does. Update the prose and
+  the *curated components* table when features, UI elements, pages, or platform
+  support change. The `NEXIS-STATS` block (version, LOC, source-file count,
+  test-executable and test-method counts, translation count) is **generated** —
+  leave it alone; `scripts/gen_doc_stats.py` owns it and the release cut runs it.
+- **`docs/ARCHITECTURE_REVIEW.md`** — How the architecture works. Update **only
+  when the architecture actually changes** — signals, singletons, timer/polling
+  patterns, or cross-component communication. A change that adds no new
+  cross-component wiring needs no edit here.
 
 **Pre-commit checklist** (when a change affects documented behavior):
-1. Update `CHANGELOG.md` under the current version's section (create one if it doesn't exist).
-2. Update the "Last updated" date and version in both docs if stale.
-3. Update any affected stats (page count, signal count, test count, feature/bug counts, line counts, etc.).
-4. Update the relevant feature/architecture section with the new or changed behavior.
+1. Add a `changelog.d/` fragment for anything user-visible.
+2. Update the relevant feature/architecture section with the new or changed behavior.
+3. Update the curated components table only if you added or removed a page,
+   provider, service, manager, or tool class.
+4. Do **not** update the "Last updated" date, the version header, or the
+   generated stats — the release cut handles all three
+   (`scripts/check_doc_versions.sh` enforces the version header at release time).
 
 Keep updates concise — modify existing sections rather than appending paragraphs.
 

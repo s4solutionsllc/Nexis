@@ -145,6 +145,9 @@ DiskTreemapDialog::DiskTreemapDialog(QWidget *parent,
     connect(mScanner, &DirSizeScanner::progress,
             this, &DiskTreemapDialog::onScanProgress);
 
+    connect(FileSearchService::ins(), &FileSearchService::fileOperationFinished,
+            this, &DiskTreemapDialog::onFileOperationFinished);
+
     if (mSignalMapper) {
         connect(mSignalMapper, &SignalMapper::sigChangedAppTheme,
                 this, &DiskTreemapDialog::applyThemeColors);
@@ -228,6 +231,7 @@ void DiskTreemapDialog::onVisualizationChanged(int index)
 
 void DiskTreemapDialog::startScan(const QString &path)
 {
+    mLastScannedPath = path;
     setBusy(true);
     mStatusLabel->setText(tr("Scanning %1...").arg(path));
     mBreadcrumb->setText(path);
@@ -313,6 +317,29 @@ void DiskTreemapDialog::onTrashRequested(DirSizeNode *node)
     const QString currentUser = QFileInfo(QDir::homePath()).owner();
     svc->moveToTrash(node->path, QFileInfo(node->path).fileName(), currentUser);
     mStatusLabel->setText(tr("Moving %1 to trash...").arg(node->path));
+}
+
+void DiskTreemapDialog::onFileOperationFinished(FileSearchService::FileOperation op,
+                                                QString filePath, bool hadError,
+                                                QString errorMessage)
+{
+    if (op != FileSearchService::FileOperation::MoveToTrash)
+        return;
+
+    if (hadError) {
+        mStatusLabel->setText(errorMessage.isEmpty()
+            ? tr("Failed to move %1 to trash.").arg(filePath)
+            : tr("Failed to move %1 to trash: %2").arg(filePath, errorMessage));
+        return;
+    }
+
+    mStatusLabel->setText(tr("Moved %1 to trash.").arg(filePath));
+
+    // Re-scan so the map reflects the removed entry. Skip if a scan is
+    // already in flight (e.g. the user started a fresh scan before this
+    // trash op settled) rather than racing DirSizeScanner::start().
+    if (!mLastScannedPath.isEmpty() && mScanner && !mScanner->isRunning())
+        startScan(mLastScannedPath);
 }
 
 void DiskTreemapDialog::setBusy(bool busy)
