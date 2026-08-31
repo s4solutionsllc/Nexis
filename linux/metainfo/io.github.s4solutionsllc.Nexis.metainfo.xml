@@ -74,6 +74,22 @@
   </screenshots>
 
   <releases>
+    <release version="2.10.0" date="2026-08-31">
+      <description>
+        <p>New features:</p>
+        <ul>
+          <li>macOS menu-bar health score with a one-click Clean Now action.</li>
+          <li>Linux tray health score with a one-click Clean Now action.</li>
+          <li>Compact always-on-top mini-monitor window (Linux and macOS).</li>
+          <li>Disk map bubble-map and sunburst visualization modes.</li>
+          <li>macOS APFS/Time Machine local snapshot manager.</li>
+        </ul>
+        <p>Changed:</p>
+        <ul>
+          <li>Tray menu regrouped into MONITOR/Manage/System sections.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.9.1" date="2026-08-14">
       <description>
         <p>Fixes:</p>
