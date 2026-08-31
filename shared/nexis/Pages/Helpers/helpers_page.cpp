@@ -14,6 +14,7 @@
 #include "trim_widget.h"
 #include "wol_widget.h"
 #ifdef Q_OS_MACOS
+#include "cache_rebuild_widget.h"
 #include "snapshot_manager_widget.h"
 #endif
 #include "ui_helpers_page.h"
@@ -99,6 +100,10 @@ void HelpersPage::init()
     ui->stackedWidget->addWidget(mWolWidget);
 
 #ifdef Q_OS_MACOS
+    // SSO-23866: granular cache rebuilds.
+    mCacheRebuildWidget = new CacheRebuildWidget;
+    ui->stackedWidget->addWidget(mCacheRebuildWidget);
+
     // SSO-23867: APFS/Time Machine local snapshot manager — macOS only.
     mSnapshotManagerWidget = new SnapshotManagerWidget;
     ui->stackedWidget->addWidget(mSnapshotManagerWidget);
@@ -118,6 +123,14 @@ void HelpersPage::init()
     mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnTrim);
     connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
+
+    // SSO-23866: Cache rebuild button.
+    mBtnCacheRebuild = new QPushButton(tr("Cache Rebuild"));
+    mBtnCacheRebuild->setCheckable(true);
+    mBtnCacheRebuild->setCursor(Qt::PointingHandCursor);
+    mBtnCacheRebuild->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnCacheRebuild);
+    connect(mBtnCacheRebuild, &QPushButton::clicked, this, &HelpersPage::onCacheRebuildClicked);
 
     // SSO-23867: Snapshot manager button (macOS only).
     mBtnSnapshotManager = new QPushButton(tr("Snapshots"));
@@ -197,6 +210,8 @@ void HelpersPage::init()
 #ifdef Q_OS_MACOS
     if (mBtnTrim)
         mToolItems << mBtnTrim;
+    if (mBtnCacheRebuild)
+        mToolItems << mBtnCacheRebuild;
     if (mBtnSnapshotManager)
         mToolItems << mBtnSnapshotManager;
     if (mBtnMacTweaks)
@@ -302,6 +317,15 @@ void HelpersPage::onWolClicked()
         return;
     mWolWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mWolWidget);
+}
+
+void HelpersPage::onCacheRebuildClicked()
+{
+#ifdef Q_OS_MACOS
+    if (!mCacheRebuildWidget)
+        return;
+    ui->stackedWidget->setCurrentWidget(mCacheRebuildWidget);
+#endif
 }
 
 void HelpersPage::onSnapshotManagerClicked()
