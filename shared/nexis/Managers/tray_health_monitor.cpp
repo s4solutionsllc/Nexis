@@ -1,5 +1,4 @@
-#include "menu_bar_monitor.h"
-#include "menu_bar_status_item.h"
+#include "tray_health_monitor.h"
 
 #include <Managers/data_refresh_service.h>
 #include <Managers/info_manager.h>
@@ -14,28 +13,21 @@
 #include <QPointer>
 #include <QMessageBox>
 
-namespace {
-MenuBarMonitor *gInstance = nullptr;
-}
-
-MenuBarMonitor::MenuBarMonitor(QObject *parent) : QObject(parent)
+TrayHealthMonitor::TrayHealthMonitor(QObject *parent) : QObject(parent)
 {
-    gInstance = this;
 }
 
-MenuBarMonitor::~MenuBarMonitor()
+TrayHealthMonitor::~TrayHealthMonitor()
 {
     setEnabled(false);
-    if (gInstance == this)
-        gInstance = nullptr;
 
     // Backstop: block destruction until a detached clean worker that may
     // still hold a QPointer to *this* has finished, mirroring
-    // MaintenanceWizardDialog's destructor contract.
+    // MenuBarMonitor's destructor contract.
     mCleanFuture.waitForFinished();
 }
 
-void MenuBarMonitor::setEnabled(bool enabled)
+void TrayHealthMonitor::setEnabled(bool enabled)
 {
     if (mEnabled == enabled)
         return;
@@ -46,91 +38,66 @@ void MenuBarMonitor::setEnabled(bool enabled)
         DataRefreshService::ins()->subscribe(DataRefreshService::Signal::Memory);
         DataRefreshService::ins()->subscribe(DataRefreshService::Signal::DiskUsage);
         connect(DataRefreshService::ins(), &DataRefreshService::cpuUpdated,
-                this, &MenuBarMonitor::onCpuUpdated);
+                this, &TrayHealthMonitor::onCpuUpdated);
         connect(DataRefreshService::ins(), &DataRefreshService::memoryUpdated,
-                this, &MenuBarMonitor::onMemoryUpdated);
+                this, &TrayHealthMonitor::onMemoryUpdated);
         connect(DataRefreshService::ins(), &DataRefreshService::diskUsageUpdated,
-                this, &MenuBarMonitor::onDiskUsageUpdated);
+                this, &TrayHealthMonitor::onDiskUsageUpdated);
 
-        nexis_menubar_create(&MenuBarMonitor::handleNativeActivate, &MenuBarMonitor::handleNativeClean);
-        updateTitle();
+        updateScoreText();
     } else {
         disconnect(DataRefreshService::ins(), nullptr, this, nullptr);
         DataRefreshService::ins()->unsubscribe(DataRefreshService::Signal::Cpu);
         DataRefreshService::ins()->unsubscribe(DataRefreshService::Signal::Memory);
         DataRefreshService::ins()->unsubscribe(DataRefreshService::Signal::DiskUsage);
-
-        nexis_menubar_destroy();
     }
 }
 
-void MenuBarMonitor::onCpuUpdated(const QList<int> &percents, double clockGHz,
-                                   const QList<double> &loadAvgs)
+void TrayHealthMonitor::onCpuUpdated(const QList<int> &percents, double clockGHz,
+                                      const QList<double> &loadAvgs)
 {
     Q_UNUSED(percents)
     Q_UNUSED(clockGHz)
 
-    // Same formula as DashboardPage::onHealthCpuUpdated (health_score's CPU
-    // component) — 1-minute load average relative to core count.
     const int coreCount = InfoManager::ins()->getCpuCoreCount();
     const double load1m = loadAvgs.isEmpty() ? 0.0 : loadAvgs.first();
     mHealthCalculator.setCpuScore(HealthScoreInputs::cpuScore(coreCount, load1m));
-    updateTitle();
+    updateScoreText();
 }
 
-void MenuBarMonitor::onMemoryUpdated(const MemorySnapshot &snap)
+void TrayHealthMonitor::onMemoryUpdated(const MemorySnapshot &snap)
 {
-    // Same formula as DashboardPage::onHealthMemoryUpdated.
     mHealthCalculator.setMemoryScore(HealthScoreInputs::memoryScore(snap));
-    updateTitle();
+    updateScoreText();
 }
 
-void MenuBarMonitor::onDiskUsageUpdated(const QList<Disk> &disks)
+void TrayHealthMonitor::onDiskUsageUpdated(const QList<Disk> &disks)
 {
-    // Same formula as DashboardPage::onHealthDiskUpdated — capacity-weighted
-    // average of per-disk free space.
     mHealthCalculator.setDiskScore(HealthScoreInputs::diskScore(disks));
-    updateTitle();
+    updateScoreText();
 }
 
-void MenuBarMonitor::updateTitle()
+void TrayHealthMonitor::updateScoreText()
 {
-    // SSO-23853: temp/battery/SMART stay unavailable here (HealthScoreCalculator
-    // defaults them to false) — polling thermal sensors and disk health from
-    // a background monitor that ticks continuously is out of scope for this
-    // issue. The CPU/memory/disk weights (60% of the Dashboard composite) are
-    // renormalized to 100%, so the score matches the Dashboard tile exactly
-    // on hardware without those sensors and closely approximates it elsewhere.
+    // SSO-23854: same composite/label + format string as the macOS menu-bar
+    // surface (MenuBarFormatUtil::formatHealthTitle) and the Dashboard tile —
+    // temp/battery/SMART stay unavailable for the same reason MenuBarMonitor
+    // leaves them unavailable (see menu_bar_monitor.cpp).
     const int score = mHealthCalculator.compositeScore();
     const QString label = mHealthCalculator.scoreLabel();
-    const QString title = MenuBarFormatUtil::formatHealthTitle(score, label);
-    nexis_menubar_set_title(title.toUtf8().constData());
+    emit scoreTextChanged(MenuBarFormatUtil::formatHealthTitle(score, label));
 }
 
-void MenuBarMonitor::handleNativeActivate()
+void TrayHealthMonitor::startClean()
 {
-    if (gInstance)
-        emit gInstance->activationRequested();
-}
-
-void MenuBarMonitor::handleNativeClean()
-{
-    if (gInstance)
-        gInstance->startClean();
-}
-
-void MenuBarMonitor::startClean()
-{
-    // SSO-23853: reuses CleanerService (same singleton/category set as the
-    // Maintenance Wizard's "Clean Safe Items") off the main thread, following
-    // MaintenanceWizardDialog::runChecks()'s QPointer + QtConcurrent pattern
-    // since MenuBarMonitor isn't a QWidget and outlives no particular dialog.
+    // SSO-23854: same CleanerService::safeCategories() set and QtConcurrent +
+    // QPointer + invokeMethod pattern as MenuBarMonitor::startClean().
     if (mCleaning)
         return;
     mCleaning = true;
-    nexis_menubar_set_clean_item_state("Cleaning…", 0);
+    emit cleanStateChanged(tr("Cleaning…"), false);
 
-    QPointer<MenuBarMonitor> self(this);
+    QPointer<TrayHealthMonitor> self(this);
     mCleanFuture = QtConcurrent::run([self]() {
         CleanerService::CleanResult result =
             CleanerService::ins()->clean(CleanerService::safeCategories());
@@ -142,10 +109,10 @@ void MenuBarMonitor::startClean()
     });
 }
 
-void MenuBarMonitor::onCleanFinished(quint64 bytesFreed, int filesRemoved)
+void TrayHealthMonitor::onCleanFinished(quint64 bytesFreed, int filesRemoved)
 {
     mCleaning = false;
-    nexis_menubar_set_clean_item_state("Clean Now", 1);
+    emit cleanStateChanged(tr("Clean Now"), true);
 
     // design.md: dialogs stay to one sentence, never a silent no-op.
     const QString message = (bytesFreed > 0)

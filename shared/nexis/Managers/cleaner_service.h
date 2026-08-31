@@ -68,6 +68,12 @@ public:
     static QString categoryName(CleanCategory cat);
     static QList<CleanCategory> allCategories();
 
+    // SSO-23853: the curated "low risk, no review needed" subset used by
+    // one-click flows (Maintenance Wizard's "Clean Safe Items", menu-bar
+    // "Clean Now") — intentionally narrower than allCategories(), excludes
+    // TRASH/BROWSER_PRIVACY/DOWNLOADS_AGED/APP_PROFILES.
+    static QList<CleanCategory> safeCategories();
+
     // FR-114: rolling history of (scan timestamp, size in bytes) per category.
     // Up to 20 samples kept per category in a JSON blob on disk. Written
     // automatically at the end of scan(); consumers read via the getter.

@@ -21,6 +21,8 @@ set(GUI_SHARED_DIR "${CMAKE_SOURCE_DIR}/shared/nexis")
 # ── Utility tests ──────────────────────────────────────────────────────────────
 add_nexis_test(NAME FormatUtilTests   SOURCES utils/test_format_util.cpp)
 add_nexis_test(NAME MenuBarFormatUtilTests SOURCES utils/test_menu_bar_format_util.cpp)
+add_nexis_test(NAME HealthScoreInputsTests SOURCES utils/test_health_score_inputs.cpp)
+add_nexis_test(NAME MiniMonitorFormatUtilTests SOURCES utils/test_mini_monitor_format_util.cpp)
 add_nexis_test(NAME FileUtilTests     SOURCES utils/test_file_util.cpp)
 add_nexis_test(NAME CommandUtilTests       SOURCES utils/test_command_util.cpp)
 add_nexis_test(NAME CommandUtilAsyncTests  SOURCES utils/test_command_util_async.cpp LIBS Qt6::Concurrent)
@@ -478,6 +480,25 @@ add_nexis_test(NAME CacheRebuildWidgetTests
     Qt6::Widgets Qt6::Network
 )
 
+# SSO-23867: SnapshotManagerWidget's tmutil listlocalsnapshots parsing —
+# pure/static, no live filesystem needed. Lives in the GUI target; compile
+# its source + deps directly like FirewallTests above.
+add_nexis_test(NAME SnapshotManagerWidgetTests
+  SOURCES
+    core/test_snapshot_manager_widget.cpp
+    "${GUI_SHARED_DIR}/Pages/Helpers/snapshot_manager_widget.cpp"
+    "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+    "${GUI_SHARED_DIR}/signal_mapper.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Helpers"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets Qt6::Network
+)
+
 # ── Service tests ─────────────────────────────────────────────────────────────
 # HostService lives in the GUI target; compile its source directly.
 add_nexis_test(NAME HostServiceTests
@@ -606,6 +627,22 @@ add_nexis_test(NAME HealthReportTests
     "${GUI_SHARED_DIR}/Managers"
   LIBS
     nexis-gui Qt6::Widgets
+)
+
+# SSO-23896: pure tray-menu grouping helper — derives the tray's MONITOR
+# (flat) / MANAGE / SYSTEM (submenus) structure from the same SidebarSection
+# model the sidebar itself uses, so the two surfaces cannot drift. Compiled
+# directly (like DashboardLayoutUtilTests) so it runs without pulling in
+# nexis-gui; needs Qt6::Widgets for QPushButton.
+add_nexis_test(NAME TrayMenuModelTests
+  SOURCES
+    managers/test_tray_menu_model.cpp
+    "${GUI_SHARED_DIR}/Managers/tray_menu_model.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets
 )
 
 # SSO-3389 / WI-27: InfoManager facade wiring for BootAnalysisInfo +

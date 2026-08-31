@@ -140,6 +140,22 @@ QMenu::indicator:non-exclusive:checked {
     image: url(:/static/themes/common/img/check.png);
 }
 
+/* SSO-23896: tray menu submenus (Manage/System) and their separators. Reuses
+   the sidebar's section-expand chevron so the two surfaces read as one
+   visual language. Ignored under GNOME's DBusMenu export (AppIndicator), which
+   renders the tray menu with the shell's own widgets. */
+QMenu::separator {
+    height: 1px;
+    background-color: @borderColor;
+    margin: @dp4 @dp8;
+}
+
+QMenu::right-arrow {
+    width: @dp14px;
+    height: @dp14px;
+    image: url(:/static/themes/@themeName/img/sidebar-icons/section-expand.svg);
+}
+
 /*****************
     QRadioButton
 ******************/

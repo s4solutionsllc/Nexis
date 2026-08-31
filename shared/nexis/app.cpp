@@ -14,6 +14,7 @@
 #include "Pages/Helpers/cpu_tuning_widget.h"
 #endif
 #include <Managers/info_manager.h>
+#include <Managers/tray_menu_model.h>
 #include <Info/power_profile_info.h>
 #include <QStyle>
 #include <QDebug>
@@ -777,7 +778,43 @@ void App::init()
     connect(SignalMapper::ins(), &SignalMapper::sigMenuBarMonitorToggled,
             mMenuBarMonitor, &MenuBarMonitor::setEnabled);
     mMenuBarMonitor->setEnabled(SettingManager::ins()->getMenuBarMonitorEnabled());
+#else
+    // SSO-23854: optional Linux tray health score + Clean Now, off by default.
+    mTrayHealthMonitor = new TrayHealthMonitor(this);
+    connect(mTrayHealthMonitor, &TrayHealthMonitor::scoreTextChanged, this, [this](const QString &text) {
+        mTrayHealthAction->setText(text);
+        mTrayIcon->setToolTip(text);
+    });
+    connect(mTrayHealthMonitor, &TrayHealthMonitor::cleanStateChanged, this,
+            [this](const QString &label, bool enabled) {
+        mTrayCleanAction->setText(label);
+        mTrayCleanAction->setEnabled(enabled);
+    });
+    connect(mTrayCleanAction, &QAction::triggered, mTrayHealthMonitor, &TrayHealthMonitor::startClean);
+
+    auto applyTrayHealthScoreEnabled = [this](bool enabled) {
+        mTrayHealthAction->setVisible(enabled);
+        mTrayCleanAction->setVisible(enabled);
+        mTrayHealthMonitor->setEnabled(enabled);
+        if (!enabled)
+            mTrayIcon->setToolTip(QString());
+    };
+    connect(SignalMapper::ins(), &SignalMapper::sigTrayHealthScoreToggled, this, applyTrayHealthScoreEnabled);
+    applyTrayHealthScoreEnabled(SettingManager::ins()->getTrayHealthScoreEnabled());
 #endif
+
+    // SSO-23855: compact always-on-top mini-monitor window — cross-platform
+    // (shared/nexis QWidget, not a native NSPanel), unlike mMenuBarMonitor
+    // above. Off by default; restores its last open/closed state below.
+    mMiniMonitorWindow = new MiniMonitorWindow(this);
+    connect(SignalMapper::ins(), &SignalMapper::sigMiniMonitorToggled,
+            mMiniMonitorWindow, &QWidget::setVisible);
+    connect(mMiniMonitorWindow, &MiniMonitorWindow::visibilityToggled,
+            this, [this](bool visible) {
+        if (mMiniMonitorAction)
+            mMiniMonitorAction->setChecked(visible);
+    });
+    mMiniMonitorWindow->setVisible(SettingManager::ins()->getMiniMonitorVisible());
 
     // Kiosk mode shortcuts
     QAction *kioskToggle = new QAction(this);
@@ -903,17 +940,7 @@ void App::changeEvent(QEvent *event)
 
 void App::createTrayActions()
 {
-    for (QPushButton *button : mListSidebarButtons) {
-        QString toolTip = button->toolTip();
-        QAction *action = new QAction(toolTip, this);
-        connect(action, &QAction::triggered, [=] {
-            clickSidebarButton(toolTip, true);
-        });
-
-        mTrayMenu->addAction(action);
-    }
-
-    connect(mTrayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason) {
+    auto showAndRaise = [this] {
 #ifdef Q_OS_MAC
         nexis_macos_show_dock_icon();
 #endif
@@ -922,7 +949,63 @@ void App::createTrayActions()
         if (windowHandle())
             windowHandle()->requestActivate();
         emit SignalMapper::ins()->sigAppVisibilityChanged(true);
+    };
+
+    connect(mTrayIcon, &QSystemTrayIcon::activated, this, [showAndRaise](QSystemTrayIcon::ActivationReason) {
+        showAndRaise();
     });
+
+    // SSO-23896: groups derived from mSections (same model the sidebar
+    // builds from) so a page added to a sidebar section lands in the
+    // matching tray group with no tray-side edit.
+    QAction *openAction = new QAction(tr("Open Nexis"), this);
+    connect(openAction, &QAction::triggered, this, showAndRaise);
+    mTrayMenu->addAction(openAction);
+    mTrayMenu->addSeparator();
+
+#ifndef Q_OS_MAC
+    // SSO-23854: Linux tray counterpart of the macOS menu-bar health score +
+    // Clean Now surface (SSO-23853). Actions exist unconditionally so
+    // TrayHealthMonitor's signals always have somewhere to write; visibility
+    // follows the off-by-default TrayHealthScoreEnabled setting (see init()).
+    mTrayHealthAction = new QAction(this);
+    mTrayHealthAction->setEnabled(false);
+    mTrayMenu->addAction(mTrayHealthAction);
+
+    mTrayCleanAction = new QAction(tr("Clean Now"), this);
+    mTrayMenu->addAction(mTrayCleanAction);
+
+    mTrayMenu->addSeparator();
+#endif
+
+    auto addNavAction = [this](QMenu *menu, QPushButton *button) {
+        const QString toolTip = button->toolTip();
+        QAction *action = menu->addAction(toolTip);
+        connect(action, &QAction::triggered, this, [this, toolTip] {
+            clickSidebarButton(toolTip, true);
+        });
+    };
+
+    const QList<TrayMenuGroup> groups = buildTrayMenuGroups(mSections);
+    bool previousHeaderless = true;
+    bool anyGroupEmitted = false;
+    for (const TrayMenuGroup &group : groups) {
+        if (anyGroupEmitted && group.headerless != previousHeaderless)
+            mTrayMenu->addSeparator();
+
+        if (group.headerless) {
+            for (QPushButton *button : group.items)
+                addNavAction(mTrayMenu, button);
+        } else {
+            QMenu *submenu = mTrayMenu->addMenu(trayMenuGroupTitle(group.name));
+            for (QPushButton *button : group.items)
+                addNavAction(submenu, button);
+        }
+
+        previousHeaderless = group.headerless;
+        anyGroupEmitted = true;
+    }
+    mTrayMenu->addSeparator();
 
     // FR-125: Quick Actions submenu
     QMenu *quickMenu = mTrayMenu->addMenu(tr("Quick Actions"));
@@ -938,6 +1021,15 @@ void App::createTrayActions()
         clickSidebarButton(btnSystemCleaner->toolTip(), true);
         if (systemCleanerPage)
             systemCleanerPage->quickScan();
+    });
+
+    // SSO-23855: toggles the compact mini-monitor window from the tray, the
+    // same surface used to open/navigate the main window.
+    mMiniMonitorAction = quickMenu->addAction(tr("Mini Monitor"));
+    mMiniMonitorAction->setCheckable(true);
+    mMiniMonitorAction->setChecked(SettingManager::ins()->getMiniMonitorVisible());
+    connect(mMiniMonitorAction, &QAction::triggered, this, [](bool checked) {
+        emit SignalMapper::ins()->sigMiniMonitorToggled(checked);
     });
 
 #ifndef Q_OS_MACOS

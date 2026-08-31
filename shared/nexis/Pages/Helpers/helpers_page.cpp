@@ -12,6 +12,7 @@
 #include "wol_widget.h"
 #ifdef Q_OS_MACOS
 #include "cache_rebuild_widget.h"
+#include "snapshot_manager_widget.h"
 #endif
 #include "ui_helpers_page.h"
 
@@ -99,6 +100,10 @@ void HelpersPage::init()
     // SSO-23866: granular cache rebuilds.
     mCacheRebuildWidget = new CacheRebuildWidget;
     ui->stackedWidget->addWidget(mCacheRebuildWidget);
+
+    // SSO-23867: APFS/Time Machine local snapshot manager — macOS only.
+    mSnapshotManagerWidget = new SnapshotManagerWidget;
+    ui->stackedWidget->addWidget(mSnapshotManagerWidget);
 #endif
 
     // Prevent buttons from shrinking below their text width
@@ -123,6 +128,15 @@ void HelpersPage::init()
     mBtnCacheRebuild->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnCacheRebuild);
     connect(mBtnCacheRebuild, &QPushButton::clicked, this, &HelpersPage::onCacheRebuildClicked);
+
+    // SSO-23867: Snapshot manager button (macOS only).
+    mBtnSnapshotManager = new QPushButton(tr("Snapshots"));
+    mBtnSnapshotManager->setCheckable(true);
+    mBtnSnapshotManager->setCursor(Qt::PointingHandCursor);
+    mBtnSnapshotManager->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnSnapshotManager);
+    connect(mBtnSnapshotManager, &QPushButton::clicked,
+            this, &HelpersPage::onSnapshotManagerClicked);
 #else
     // FR-81: Swappiness button. Always visible on Linux — the widget itself
     // handles the "not supported" state if /proc/sys/vm/swappiness isn't
@@ -185,6 +199,8 @@ void HelpersPage::init()
         mToolItems << mBtnTrim;
     if (mBtnCacheRebuild)
         mToolItems << mBtnCacheRebuild;
+    if (mBtnSnapshotManager)
+        mToolItems << mBtnSnapshotManager;
 #else
     if (mBtnSwappiness)
         mToolItems << mBtnSwappiness;
@@ -294,6 +310,16 @@ void HelpersPage::onCacheRebuildClicked()
     if (!mCacheRebuildWidget)
         return;
     ui->stackedWidget->setCurrentWidget(mCacheRebuildWidget);
+#endif
+}
+
+void HelpersPage::onSnapshotManagerClicked()
+{
+#ifdef Q_OS_MACOS
+    if (!mSnapshotManagerWidget)
+        return;
+    mSnapshotManagerWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mSnapshotManagerWidget);
 #endif
 }
 

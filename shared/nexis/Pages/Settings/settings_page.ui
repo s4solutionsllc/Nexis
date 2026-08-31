@@ -193,13 +193,30 @@
 
           <item row="8" column="0" colspan="2">
            <widget class="QCheckBox" name="checkMenuBarMonitor">
-            <property name="text"><string>Show CPU &amp; Memory in the menu bar</string></property>
+            <property name="text"><string>Show health score and Clean Now in the menu bar</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
             <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
           <item row="9" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkTrayHealthScore">
+            <property name="text"><string>Show health score and Clean Now in the tray menu</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
+          <item row="10" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkMiniMonitor">
+            <property name="text"><string>Show compact mini-monitor window</string></property>
+            <property name="toolTip"><string>A small, always-on-top window showing health score and CPU/MEM/disk usage.</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+           </widget>
+          </item>
+
+          <item row="11" column="0" colspan="2">
            <widget class="QCheckBox" name="checkLaunchInKioskMode">
             <property name="text"><string>Launch directly into Kiosk Mode</string></property>
             <property name="toolTip"><string>Starts Nexis in full-screen kiosk mode as soon as it launches, without needing to press F11.</string></property>
@@ -208,12 +225,12 @@
            </widget>
           </item>
 
-          <item row="10" column="0">
+          <item row="12" column="0">
            <widget class="QLabel" name="lblKioskMonitor">
             <property name="text"><string>Kiosk Monitor</string></property>
            </widget>
           </item>
-          <item row="10" column="1">
+          <item row="12" column="1">
            <widget class="QComboBox" name="cmbKioskMonitor">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">

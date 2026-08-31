@@ -18,16 +18,7 @@ class QScreen;
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
-
-struct SidebarSection {
-    QString name;
-    QPushButton *header = nullptr;
-    QWidget *container = nullptr;
-    QVBoxLayout *containerLayout = nullptr;
-    QList<QPushButton*> buttons;
-    bool collapsed = false;
-    bool headerless = false;
-};
+#include "Managers/sidebar_section.h"
 
 // Page registry entry. factory constructs the page lazily; widget caches the
 // result once built. onConstructed runs after the widget is created and
@@ -63,6 +54,7 @@ struct PageSlot {
 #include "Pages/MailCleanup/mail_attachment_cleanup_page.h"
 #else
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
+#include "Managers/tray_health_monitor.h"
 #endif
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
@@ -73,6 +65,7 @@ struct PageSlot {
 #include "Pages/Docker/docker_page.h"
 #include "feedback.h"
 #include "command_palette.h"
+#include "Pages/MiniMonitor/mini_monitor_window.h"
 
 class QLabel;
 
@@ -168,12 +161,20 @@ private:
     MailAttachmentCleanupPage *mailAttachmentCleanupPage = nullptr;
 #else
     APTSourceManagerPage *aptSourceManagerPage = nullptr;
+    // SSO-23854: Linux tray counterpart of mMenuBarMonitor above.
+    TrayHealthMonitor *mTrayHealthMonitor = nullptr;
+    QAction *mTrayHealthAction = nullptr;
+    QAction *mTrayCleanAction = nullptr;
 #endif
     DockerPage *dockerPage;
     GnomeSettingsPage *gnomeSettingsPage;
     SettingsPage *settingsPage;
     HelpersPage *helpersPage;
     SystemLogsPage *systemLogsPage;
+
+    // SSO-23855: compact always-on-top mini-monitor window, cross-platform.
+    MiniMonitorWindow *mMiniMonitorWindow = nullptr;
+    QAction *mMiniMonitorAction = nullptr;
 
     QSharedPointer<Feedback> feedback;
 

@@ -43,6 +43,8 @@ private slots:
     void on_checkStartMinimizedToTray_clicked(bool checked);
     void on_checkDashboardFooter_clicked(bool checked);
     void on_checkMenuBarMonitor_clicked(bool checked);
+    void on_checkTrayHealthScore_clicked(bool checked);
+    void on_checkMiniMonitor_clicked(bool checked);
     void on_checkLaunchInKioskMode_clicked(bool checked);
     void cmbKioskMonitorChanged(int index);
     void cmbColorSchemeChanged(int index);

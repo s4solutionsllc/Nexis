@@ -149,9 +149,16 @@ void SettingsPage::init()
     // FW-20 (SSO-3748): menu-bar monitor is macOS-only surface
 #ifdef Q_OS_MAC
     ui->checkMenuBarMonitor->setChecked(mSettingManager->getMenuBarMonitorEnabled());
+    ui->checkTrayHealthScore->hide();
 #else
     ui->checkMenuBarMonitor->hide();
+    // SSO-23854: Linux/tray counterpart of the macOS menu-bar surface above.
+    ui->checkTrayHealthScore->setChecked(mSettingManager->getTrayHealthScoreEnabled());
 #endif
+
+    // SSO-23855: mini-monitor window is cross-platform (Qt-based, not a
+    // native NSPanel), unlike the menu-bar monitor above.
+    ui->checkMiniMonitor->setChecked(mSettingManager->getMiniMonitorVisible());
 
     // launch directly into kiosk mode, on a chosen monitor (GH#207 / SSO-8351)
     ui->checkLaunchInKioskMode->setChecked(mSettingManager->getLaunchInKioskMode());
@@ -397,6 +404,18 @@ void SettingsPage::on_checkMenuBarMonitor_clicked(bool checked)
 {
     mSettingManager->setMenuBarMonitorEnabled(checked);
     emit SignalMapper::ins()->sigMenuBarMonitorToggled(checked);
+}
+
+void SettingsPage::on_checkTrayHealthScore_clicked(bool checked)
+{
+    mSettingManager->setTrayHealthScoreEnabled(checked);
+    emit SignalMapper::ins()->sigTrayHealthScoreToggled(checked);
+}
+
+void SettingsPage::on_checkMiniMonitor_clicked(bool checked)
+{
+    mSettingManager->setMiniMonitorVisible(checked);
+    emit SignalMapper::ins()->sigMiniMonitorToggled(checked);
 }
 
 void SettingsPage::on_checkLaunchInKioskMode_clicked(bool checked)

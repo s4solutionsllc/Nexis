@@ -1,8 +1,6 @@
 #include "treemap_view.h"
 
-#include <QAction>
 #include <QContextMenuEvent>
-#include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QToolTip>
@@ -11,35 +9,6 @@
 #include <limits>
 
 namespace {
-
-// Format bytes the same way Format util would, but kept local so the test
-// build can compile this in isolation (FormatUtil is in nexis-core which
-// is fine; we just don't want a circular include from a test).
-QString formatBytes(qint64 b)
-{
-    if (b < 1024)
-        return QString::number(b) + " B";
-    static const char *suffixes[] = {"KiB", "MiB", "GiB", "TiB", "PiB"};
-    double v = static_cast<double>(b);
-    int i = -1;
-    do { v /= 1024.0; ++i; } while (v >= 1024.0 && i < 4);
-    return QString::number(v, 'f', v < 10 ? 2 : 1) + " " + suffixes[i];
-}
-
-// Stable colour pick — keeps the same tile colour across re-layouts so the
-// eye can follow a "hot" directory while drilling.
-QColor stableColor(const QString &key, qreal saturation, qreal value)
-{
-    // Mix the name into a hue; simple FNV-1a so we don't drag in QHash::hash
-    // determinism guarantees.
-    quint32 h = 2166136261u;
-    for (QChar c : key)
-        h = (h ^ c.unicode()) * 16777619u;
-    qreal hue = static_cast<qreal>(h % 360);
-    QColor c;
-    c.setHsvF(hue / 360.0, saturation, value);
-    return c;
-}
 
 qreal worstAspect(const QVector<DirSizeNode*> &row, qint64 sum, qreal width)
 {
@@ -63,65 +32,14 @@ qreal worstAspect(const QVector<DirSizeNode*> &row, qint64 sum, qreal width)
 } // namespace
 
 TreemapView::TreemapView(QWidget *parent)
-    : QWidget(parent)
+    : DiskMapView(parent)
 {
-    setMouseTracking(true);
-    setAttribute(Qt::WA_OpaquePaintEvent, true);
-    setMinimumSize(320, 240);
-    setFocusPolicy(Qt::StrongFocus);
 }
 
-void TreemapView::setRoot(DirSizeNodePtr root)
-{
-    mRoot = std::move(root);
-    mFocus = mRoot.get();
-    mPath.clear();
-    mHovered = nullptr;
-    rebuildTiles();
-    update();
-}
-
-void TreemapView::applyTheme(const QColor &textColor,
-                             const QColor &borderColor,
-                             const QColor &backgroundColor)
-{
-    if (textColor.isValid())       mTextColor = textColor;
-    if (borderColor.isValid())     mBorderColor = borderColor;
-    if (backgroundColor.isValid()) mBackgroundColor = backgroundColor;
-    update();
-}
-
-bool TreemapView::drillUp()
-{
-    if (mPath.isEmpty())
-        return false;
-    mFocus = mPath.takeLast();
-    mHovered = nullptr;
-    rebuildTiles();
-    update();
-    return true;
-}
-
-void TreemapView::drillInto(DirSizeNode *node)
-{
-    if (!node || !node->isDir || node == mFocus)
-        return;
-    mPath.append(mFocus);
-    mFocus = node;
-    mHovered = nullptr;
-    rebuildTiles();
-    update();
-}
-
-void TreemapView::resizeEvent(QResizeEvent *event)
-{
-    QWidget::resizeEvent(event);
-    rebuildTiles();
-}
-
-void TreemapView::rebuildTiles()
+void TreemapView::rebuildLayout()
 {
     mTiles.clear();
+    mHoveredTile = nullptr;
     if (!mFocus || !mFocus->isDir || mFocus->size <= 0)
         return;
 
@@ -248,15 +166,6 @@ void TreemapView::layoutRow(const QVector<DirSizeNode*> &row,
     }
 }
 
-QColor TreemapView::colourFor(DirSizeNode *node, int depth) const
-{
-    Q_UNUSED(depth);
-    // Saturate/desaturate by leaf vs dir so directories read as warmer.
-    const qreal sat = node->isDir ? 0.55 : 0.35;
-    const qreal val = node->isDir ? 0.75 : 0.65;
-    return stableColor(node->name.isEmpty() ? node->path : node->name, sat, val);
-}
-
 TreemapView::Tile *TreemapView::tileAt(const QPointF &pos)
 {
     // Iterate in reverse so smaller tiles (which come last) win when nested.
@@ -289,7 +198,7 @@ void TreemapView::paintEvent(QPaintEvent * /*event*/)
     }
 
     for (const Tile &t : mTiles) {
-        const QColor base = colourFor(t.node, t.depth);
+        const QColor base = colourFor(t.node);
         p.fillRect(t.rect, base);
         p.setPen(QPen(mBorderColor, 1));
         p.drawRect(t.rect.adjusted(0, 0, -1, -1));
@@ -308,21 +217,20 @@ void TreemapView::paintEvent(QPaintEvent * /*event*/)
         }
     }
 
-    if (mHovered) {
+    if (mHoveredTile) {
         QPen pen(mTextColor, 2);
         p.setPen(pen);
         p.setBrush(Qt::NoBrush);
-        p.drawRect(mHovered->rect.adjusted(1, 1, -2, -2));
+        p.drawRect(mHoveredTile->rect.adjusted(1, 1, -2, -2));
     }
 }
 
 void TreemapView::mouseMoveEvent(QMouseEvent *event)
 {
     Tile *t = tileAt(event->position());
-    if (t != mHovered) {
-        mHovered = t;
-        emit tileHovered(t ? t->node : nullptr);
-        update();
+    if (t != mHoveredTile) {
+        mHoveredTile = t;
+        setHoveredNode(t ? t->node : nullptr);
     }
     if (t) {
         QToolTip::showText(event->globalPosition().toPoint(),
@@ -338,42 +246,20 @@ void TreemapView::mouseMoveEvent(QMouseEvent *event)
 void TreemapView::mouseDoubleClickEvent(QMouseEvent *event)
 {
     Tile *t = tileAt(event->position());
-    if (!t || !t->node)
-        return;
-    if (t->node->isDir)
-        emit drillRequested(t->node);
+    requestDrillIfDir(t ? t->node : nullptr);
 }
 
 void TreemapView::contextMenuEvent(QContextMenuEvent *event)
 {
     Tile *t = tileAt(event->pos());
-    if (!t || !t->node)
-        return;
-
-    QMenu menu(this);
-    QAction *reveal = menu.addAction(tr("Reveal in file manager"));
-    QAction *trash  = menu.addAction(tr("Move to trash"));
-    QAction *drill  = nullptr;
-    if (t->node->isDir)
-        drill = menu.addAction(tr("Drill into"));
-
-    QAction *chosen = menu.exec(event->globalPos());
-    if (!chosen)
-        return;
-    if (chosen == reveal)
-        emit revealRequested(t->node);
-    else if (chosen == trash)
-        emit trashRequested(t->node);
-    else if (drill && chosen == drill)
-        emit drillRequested(t->node);
+    showContextMenuFor(t ? t->node : nullptr, event->globalPos());
 }
 
 void TreemapView::leaveEvent(QEvent * /*event*/)
 {
-    if (mHovered) {
-        mHovered = nullptr;
-        emit tileHovered(nullptr);
-        update();
+    if (mHoveredTile) {
+        mHoveredTile = nullptr;
+        setHoveredNode(nullptr);
     }
     QToolTip::hideText();
 }

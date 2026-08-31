@@ -437,19 +437,9 @@ void MaintenanceWizardDialog::onCleanSafeItems()
     // risky set (BROWSER_PRIVACY, TRASH, DOWNLOADS_AGED are intentionally
     // excluded), so all items are Standard risk — the risky-category gate
     // is wired in the shared dialog but unused here by design.
-    QList<CleanerService::CleanCategory> safeCategories = {
-        CleanerService::PACKAGE_CACHE,
-        CleanerService::CRASH_REPORTS,
-        CleanerService::APPLICATION_LOGS,
-        CleanerService::APPLICATION_CACHES,
-        CleanerService::DEV_TOOL_CACHES,
-        CleanerService::BROKEN_SYMLINKS,
-#ifndef Q_OS_MACOS
-        CleanerService::SNAP_FLATPAK_REVISIONS,
-#endif
-    };
-
-    MaintenanceWizardCleanProvider provider(mScanResult, safeCategories);
+    // SSO-23853: category set now lives in CleanerService::safeCategories()
+    // so the menu-bar "Clean Now" one-click action shares it verbatim.
+    MaintenanceWizardCleanProvider provider(mScanResult, CleanerService::safeCategories());
 
     TrustSafetyPreviewDialog::Config cfg;
     cfg.windowTitle          = tr("Review Items to Clean");
