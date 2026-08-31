@@ -187,6 +187,12 @@ void BrowserSqliteCleaner::scanHistory(
     const bool isFirefox = profile.family == BrowserProfileLocator::Family::Firefox;
     const QString urlsTable = isFirefox ? QStringLiteral("moz_places") : QStringLiteral("urls");
     const QString visitsTable = isFirefox ? QStringLiteral("moz_historyvisits") : QStringLiteral("visits");
+    // Firefox stores bookmarked URLs as moz_places rows referenced by
+    // moz_bookmarks.fk, including URLs with zero visits that exist only
+    // because they're bookmarked — those must survive a "history" delete.
+    const QString urlsWhereClause = isFirefox
+        ? QStringLiteral(" WHERE id NOT IN (SELECT fk FROM moz_bookmarks WHERE fk IS NOT NULL)")
+        : QString();
 
     qint64 siteCount = -1;
     qint64 visitCount = -1;
@@ -194,7 +200,7 @@ void BrowserSqliteCleaner::scanHistory(
         ScopedReadOnlyDb ro(profile.historyDbPath);
         if (!ro.isOpen())
             return;
-        siteCount = countRows(ro.db(), QStringLiteral("SELECT COUNT(*) FROM %1").arg(urlsTable));
+        siteCount = countRows(ro.db(), QStringLiteral("SELECT COUNT(*) FROM %1%2").arg(urlsTable, urlsWhereClause));
         visitCount = countRows(ro.db(), QStringLiteral("SELECT COUNT(*) FROM %1").arg(visitsTable));
     }
     if (siteCount <= 0 && visitCount <= 0)
@@ -206,7 +212,7 @@ void BrowserSqliteCleaner::scanHistory(
     item.description = QObject::tr("%1 history entries across %2 sites will be deleted.")
                             .arg(visitCount < 0 ? 0 : visitCount)
                             .arg(siteCount < 0 ? 0 : siteCount);
-    item.command = QStringLiteral("DELETE FROM %1; DELETE FROM %2;").arg(visitsTable, urlsTable);
+    item.command = QStringLiteral("DELETE FROM %1; DELETE FROM %2%3;").arg(visitsTable, urlsTable, urlsWhereClause);
     item.categoryId = QStringLiteral("browser_deep_clean_history");
     item.categoryLabel = QObject::tr("Browser History");
     item.riskTier = TrustSafetyActionItem::RiskTier::Standard;
@@ -299,6 +305,10 @@ TrustSafetyActionResult BrowserSqliteCleaner::deleteHistory(const QString &dbPat
 
     const QString urlsTable = isFirefox ? QStringLiteral("moz_places") : QStringLiteral("urls");
     const QString visitsTable = isFirefox ? QStringLiteral("moz_historyvisits") : QStringLiteral("visits");
+    // Keep moz_places rows a bookmark still points to — see scanHistory.
+    const QString urlsWhereClause = isFirefox
+        ? QStringLiteral(" WHERE id NOT IN (SELECT fk FROM moz_bookmarks WHERE fk IS NOT NULL)")
+        : QString();
 
     if (dryRun) {
         result.succeeded = QFileInfo::exists(dbPath);
@@ -328,7 +338,7 @@ TrustSafetyActionResult BrowserSqliteCleaner::deleteHistory(const QString &dbPat
         return result;
     }
     const bool deletedVisits = q.exec(QStringLiteral("DELETE FROM %1").arg(visitsTable));
-    const bool deletedUrls = deletedVisits && q.exec(QStringLiteral("DELETE FROM %1").arg(urlsTable));
+    const bool deletedUrls = deletedVisits && q.exec(QStringLiteral("DELETE FROM %1%2").arg(urlsTable, urlsWhereClause));
     if (!deletedUrls) {
         result.error = q.lastError().text();
         q.exec(QStringLiteral("ROLLBACK"));

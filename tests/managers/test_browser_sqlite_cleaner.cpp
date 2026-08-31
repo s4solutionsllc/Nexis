@@ -39,6 +39,9 @@ void createFirefoxFixture(const QString &placesPath, const QString &cookiesPath)
         QSqlQuery q(db);
         execOrFail(q, QStringLiteral("CREATE TABLE moz_places(id INTEGER PRIMARY KEY, url TEXT)"));
         execOrFail(q, QStringLiteral("CREATE TABLE moz_historyvisits(id INTEGER PRIMARY KEY, place_id INTEGER)"));
+        // Real Firefox profiles always have this table; kept empty here so
+        // existing fixture rows (none bookmarked) behave exactly as before.
+        execOrFail(q, QStringLiteral("CREATE TABLE moz_bookmarks(id INTEGER PRIMARY KEY, fk INTEGER)"));
         for (int i = 0; i < 5; ++i) {
             execOrFail(q, QStringLiteral("INSERT INTO moz_places(url) VALUES ('https://site%1.example/')").arg(i));
             execOrFail(q, QStringLiteral("INSERT INTO moz_historyvisits(place_id) VALUES (%1)").arg(i + 1));
@@ -135,6 +138,7 @@ private slots:
 
     void firefox_scan_reportsHistoryAndCookieCounts();
     void firefox_liveRun_deletesHistoryAndKeepsAllowlistedCookies();
+    void firefox_liveRun_preservesBookmarkedPlaceWithZeroVisits();
     void chromium_liveRun_deletesHistoryAndKeepsAllowlistedCookies();
 
     void performItem_dryRun_neverModifiesDatabase();
@@ -245,6 +249,60 @@ void TestBrowserSqliteCleaner::firefox_liveRun_deletesHistoryAndKeepsAllowlisted
     QCOMPARE(remaining.size(), 2);
     for (const QString &host : remaining)
         QVERIFY(host.contains(QStringLiteral("example.com")) && !host.contains(QStringLiteral("bank")));
+}
+
+void TestBrowserSqliteCleaner::firefox_liveRun_preservesBookmarkedPlaceWithZeroVisits()
+{
+    createFirefoxFixture(mPlaces, mCookiesFx);
+
+    // A bookmarked URL with no visits — the exact shape moz_places holds for
+    // "bookmarked but never (re)visited" pages. moz_bookmarks.fk points at it.
+    const QString conn = newConnection("fx-bookmark-setup");
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), conn);
+        db.setDatabaseName(mPlaces);
+        QVERIFY(db.open());
+        QSqlQuery q(db);
+        execOrFail(q, QStringLiteral("INSERT INTO moz_places(url) VALUES ('https://bookmarked.example/')"));
+        execOrFail(q, QStringLiteral("INSERT INTO moz_bookmarks(fk) VALUES (last_insert_rowid())"));
+        db.close();
+    }
+    QSqlDatabase::removeDatabase(conn);
+
+    Profile profile;
+    profile.family = Family::Firefox;
+    profile.browserName = QStringLiteral("Firefox");
+    profile.profileName = QStringLiteral("default-release");
+    profile.historyDbPath = mPlaces;
+    profile.cookiesDbPath = mCookiesFx;
+
+    BrowserSqliteCleaner cleaner({profile}, {});
+    const auto items = collect(cleaner);
+
+    // Preview counts the 5 non-bookmarked sites as eligible, not the bookmark.
+    const auto historyItem = findItem(items, QStringLiteral("history::"));
+    QVERIFY(!historyItem.id.isEmpty());
+    QVERIFY(historyItem.description.contains(QStringLiteral("5")));
+
+    for (const auto &item : items) {
+        const auto result = cleaner.performItem(item, /*dryRun=*/false);
+        QVERIFY2(result.succeeded, qPrintable(result.error));
+    }
+
+    // Only the bookmarked row survives; its zero visits are still gone.
+    QCOMPARE(rowCount(mPlaces, QStringLiteral("moz_places")), qint64(1));
+    QCOMPARE(rowCount(mPlaces, QStringLiteral("moz_historyvisits")), qint64(0));
+
+    const QString verifyConn = newConnection("fx-bookmark-verify");
+    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), verifyConn);
+    db.setDatabaseName(mPlaces);
+    QVERIFY(db.open());
+    QSqlQuery q(db);
+    QVERIFY(q.exec(QStringLiteral("SELECT url FROM moz_places")));
+    QVERIFY(q.next());
+    QCOMPARE(q.value(0).toString(), QStringLiteral("https://bookmarked.example/"));
+    db.close();
+    QSqlDatabase::removeDatabase(verifyConn);
 }
 
 void TestBrowserSqliteCleaner::chromium_liveRun_deletesHistoryAndKeepsAllowlistedCookies()
