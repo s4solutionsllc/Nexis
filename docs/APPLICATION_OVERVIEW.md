@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-08-31 (SSO-23896, SSO-23862, SSO-23856, SSO-23853, SSO-23854) | Version 2.9.1
+> Last updated: 2026-08-31 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23853, SSO-23854) | Version 2.9.1
 
 ---
 
@@ -75,7 +75,7 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 | Utility classes | 5 | `CommandUtil`, `DisplayServerUtil`, `FileUtil`, `FormatUtil`, `HeadlessUtil` in `shared/nexis-core/Utils/` |
 | Manager singletons | 9 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `CleaningProfilesService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |
 | Domain services | 9 | `shared/nexis/Services/` (`StartupService`, `FileSearchService`, `HostService`, `ProcessService`, `SystemServiceManager`, `DockerService`, `PackageService`, `DuplicateFinderService`, `SnapshotService`) |
-| `SignalMapper` signals | 10 | `shared/nexis/signal_mapper.h` |
+| `SignalMapper` signals | 12 | `shared/nexis/signal_mapper.h` |
 | `DataRefreshService` QTimers | 5 | fast (1 s) / medium (5 s) / slow (30 s) / process (configurable) / update (1 h) |
 | `DataRefreshService` signals | 16 | 14 cross-platform + Linux-only `psiUpdated`/`oomdUpdated` (FW-11/SSO-3739) |
 | Themes | 2 (Dark = `default/`, Light = `light/`) | `shared/nexis/static/themes/` |
@@ -131,6 +131,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | Sudo elevation | `pkexec` / `sudo` | `osascript` (AppleScript admin prompt) |
 | Scheduled cleaning | systemd timers / cron | launchd plists |
 | Menu-bar monitor | — (not offered) | `NSStatusItem` + dropdown `NSMenu` (AppKit bridge, `macos/nexis/MenuBar/`, FW-20 / SSO-23853) |
+| Mini-monitor window | Qt `QWidget`, always-on-top (`shared/nexis/Pages/MiniMonitor/`, SSO-23855) | Qt `QWidget`, always-on-top (`shared/nexis/Pages/MiniMonitor/`, SSO-23855) |
 
 ---
 
@@ -185,7 +186,7 @@ Real-time system monitoring at a glance in a **fixed-cell responsive grid layout
 - Update checker — compares installed version against GitHub releases
 - **Maintenance Wizard** (FR-83) — "System Checkup" modal dialog launched from Health Score tile quick action. Runs 4 checks in parallel via `QtConcurrent::run()`: (1) cleanable junk scan, (2) orphan package detection, (3) pending system updates, (4) health score calculation. Each check shows a running/complete/warning/error icon with detailed results. "Clean Safe Items" button auto-cleans low-risk categories (package cache, crash reports, app logs/caches, dev tool caches, broken symlinks, snap/flatpak revisions on Linux). Theme-aware with step status colors from `@successColor`/`@warningColor`/`@destructiveColor` tokens.
 - Reset Layout also available on the Settings page
-- **Quick Actions tray submenu (FR-125)** — "Quick Actions" submenu in the system tray right-click menu providing one-click access to: Open Command Palette, Run System Cleaner Scan (navigates to the cleaner page and starts a full scan), and Power Profile switch (Linux only — shows available profiles from the detected backend as a checkable submenu; checked state refreshes on every open).
+- **Quick Actions tray submenu (FR-125)** — "Quick Actions" submenu in the system tray right-click menu providing one-click access to: Open Command Palette, Run System Cleaner Scan (navigates to the cleaner page and starts a full scan), the checkable "Mini Monitor" toggle (SSO-23855 — opens/closes the compact always-on-top mini-monitor window; checked state stays in sync if the window is closed directly via its title bar), and Power Profile switch (Linux only — shows available profiles from the detected backend as a checkable submenu; checked state refreshes on every open).
 - Kiosk mode — fullscreen dashboard-only view (hides sidebar + title bar), state persisted across sessions. Three entry/exit methods:
   - **Keyboard:** F11 to toggle, ESC to exit
   - **System tray:** Checkable "Kiosk Mode (F11)" action in tray context menu
@@ -654,6 +655,7 @@ per card — never per control), below a page-level accent-bar header
 - **Show Dashboard Footer** — Toggle visibility of the system summary bar and status footer on the Dashboard (default: visible; FR-75)
 - **Show health score and Clean Now in the menu bar** (macOS only, off by default) — adds an optional `NSStatusItem` showing the Dashboard health score (`Health n · Label`, same 0–100 composite/label as the Dashboard's Health Score tile, computed from identical CPU/memory/disk formulas — temperature/battery/SMART are left unavailable here to avoid polling those sensors from an always-on background monitor) that subscribes to `DataRefreshService`'s Cpu/Memory/DiskUsage signals like a page would. Clicking it opens a dropdown menu: "Open Nexis" brings the main window forward on the Dashboard (the prior click-to-activate behavior); "Clean Now" runs the same curated safe-category clean as the Maintenance Wizard's "Clean Safe Items" off the main thread and reports bytes/items freed in a one-sentence completion dialog. Toggling live creates/destroys the status item without a restart (FW-20 / SSO-3748, extended SSO-23853)
 - **Show health score and Clean Now in the tray menu** (Linux only, off by default, SSO-23854) — the Linux counterpart to the macOS menu-bar surface above, reusing the same existing `QSystemTrayIcon` (no second tray icon) and the same 0–100 `Health n · Label` composite score and formulas. Adds a disabled label row and a "Clean Now" action to the tray's right-click menu, alongside the existing minimize-to-tray, Quick Actions submenu (FR-125), and sidebar-derived MONITOR/Manage/System groups (SSO-23896); both stay hidden unless the setting is on. Respects whichever icon the tray icon style selector (FR-48) has picked rather than adding a new one. Toggling live shows/hides the rows and subscribes/unsubscribes from sensor updates without a restart.
+- **Show compact mini-monitor window** (both platforms, off by default) — a small, resizable (200×160–360×320), always-on-top window (`Qt::Window | Qt::WindowStaysOnTopHint`, plain `shared/nexis` `QWidget` — not a native NSPanel, so behavior is identical on Linux and macOS) showing the same composite health score plus CPU/MEM/DSK usage percentages as the Dashboard. Subscribes to `DataRefreshService`'s Cpu/Memory/DiskUsage signals only while shown (FR-103 subscriber counting, same pattern as the menu-bar monitor above) and reuses `HealthScoreCalculator` for the score. Also toggleable from the tray menu's checkable "Mini Monitor" action. Closing the window via its native title-bar control hides rather than destroys it; open/closed state and window geometry persist across restarts (`SettingManager::MiniMonitorVisible`/`MiniMonitorGeometry`). Part of the Glanceable Surfaces epic (SSO-15365 / SSO-23855).
 - **Dashboard Layout** — Reset Layout button to restore default tile arrangement (mirrors edit toolbar action)
 - **Scheduled Cleaning** — Quick-setup toggle, schedule manager dialog, threshold alerts, cleaning notifications, history viewer
 - **Version Display** — Current version from `APP_VERSION` compile definition
@@ -765,7 +767,7 @@ Eight singleton managers mediate between UI pages and the core library (count: s
 | `ProcessPrefsManager` | Persistent per-process state (pin flags, alert thresholds) used by `ProcessesPage`. JSON-in-QSettings, same shape as `ScheduleManager` / `CleanerExclusions`. |
 | `DataRefreshService` | Centralized polling service with 5 QTimers (fast/medium/slow/process/update). Polls InfoManager once per interval, emits 16 typed data-change signals (14 cross-platform + Linux-only `psiUpdated`/`oomdUpdated`). Pages subscribe as reactive consumers. Supports pause/resume on app minimize (kiosk mode overrides pause). |
 
-**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 10 global signals (see `shared/nexis/signal_mapper.h`):
+**Cross-component events** are handled by `SignalMapper`, a singleton `QObject` with 12 global signals (see `shared/nexis/signal_mapper.h`):
 - `sigChangedAppTheme()` — triggers stylesheet/icon refresh across all pages
 - `sigUninstallStarted()` / `sigUninstallFinished()` — progress feedback
 - `sigKioskToggleRequested()` — Dashboard button requests kiosk toggle from App
@@ -775,6 +777,8 @@ Eight singleton managers mediate between UI pages and the core library (count: s
 - `sigNavigateToPage(QString)` — CommandPalette triggers page navigation
 - `sigCleanableSizeChanged(quint64)` — System Cleaner broadcasts total cleanable size for cross-tile data flow
 - `sigDashboardFooterChanged(bool)` — Settings page broadcasts dashboard footer visibility preference
+- `sigMenuBarMonitorToggled(bool)` — Settings page broadcasts the macOS menu-bar monitor's enabled state to `MenuBarMonitor` (FW-20 / SSO-3748)
+- `sigMiniMonitorToggled(bool)` — Settings page and the tray menu's "Mini Monitor" action both broadcast the mini-monitor window's open/closed state to `MiniMonitorWindow::setVisible` (SSO-23855)
 
 ---
 

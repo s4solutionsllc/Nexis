@@ -65,6 +65,7 @@ struct PageSlot {
 #include "Pages/Docker/docker_page.h"
 #include "feedback.h"
 #include "command_palette.h"
+#include "Pages/MiniMonitor/mini_monitor_window.h"
 
 class QLabel;
 
@@ -170,6 +171,10 @@ private:
     SettingsPage *settingsPage;
     HelpersPage *helpersPage;
     SystemLogsPage *systemLogsPage;
+
+    // SSO-23855: compact always-on-top mini-monitor window, cross-platform.
+    MiniMonitorWindow *mMiniMonitorWindow = nullptr;
+    QAction *mMiniMonitorAction = nullptr;
 
     QSharedPointer<Feedback> feedback;
 

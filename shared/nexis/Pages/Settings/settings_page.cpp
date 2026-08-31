@@ -156,6 +156,10 @@ void SettingsPage::init()
     ui->checkTrayHealthScore->setChecked(mSettingManager->getTrayHealthScoreEnabled());
 #endif
 
+    // SSO-23855: mini-monitor window is cross-platform (Qt-based, not a
+    // native NSPanel), unlike the menu-bar monitor above.
+    ui->checkMiniMonitor->setChecked(mSettingManager->getMiniMonitorVisible());
+
     // launch directly into kiosk mode, on a chosen monitor (GH#207 / SSO-8351)
     ui->checkLaunchInKioskMode->setChecked(mSettingManager->getLaunchInKioskMode());
 
@@ -406,6 +410,12 @@ void SettingsPage::on_checkTrayHealthScore_clicked(bool checked)
 {
     mSettingManager->setTrayHealthScoreEnabled(checked);
     emit SignalMapper::ins()->sigTrayHealthScoreToggled(checked);
+}
+
+void SettingsPage::on_checkMiniMonitor_clicked(bool checked)
+{
+    mSettingManager->setMiniMonitorVisible(checked);
+    emit SignalMapper::ins()->sigMiniMonitorToggled(checked);
 }
 
 void SettingsPage::on_checkLaunchInKioskMode_clicked(bool checked)
