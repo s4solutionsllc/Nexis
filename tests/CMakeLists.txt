@@ -49,6 +49,7 @@ if(UNIX AND NOT APPLE)
   add_nexis_test(NAME AptSourceToolExecSeamTests SOURCES core/test_apt_source_tool_exec_seam.cpp)
 endif()
 add_nexis_test(NAME RepoKnowledgeBaseTests SOURCES core/test_repo_knowledge_base.cpp)
+add_nexis_test(NAME CleanerMLParserTests SOURCES core/test_cleanerml_parser.cpp)
 add_nexis_test(NAME RepoHealthCheckerTests SOURCES core/test_repo_health_checker.cpp LIBS Qt6::Network)
 add_nexis_test(NAME RepoRepairEngineTests SOURCES core/test_repo_repair_engine.cpp LIBS Qt6::Network)
 add_nexis_test(NAME FanInfoTests      SOURCES core/test_fan_info.cpp)
@@ -457,6 +458,25 @@ add_nexis_test(NAME FirewallTests
     Qt6::Widgets Qt6::Network
 )
 
+# SSO-23867: SnapshotManagerWidget's tmutil listlocalsnapshots parsing —
+# pure/static, no live filesystem needed. Lives in the GUI target; compile
+# its source + deps directly like FirewallTests above.
+add_nexis_test(NAME SnapshotManagerWidgetTests
+  SOURCES
+    core/test_snapshot_manager_widget.cpp
+    "${GUI_SHARED_DIR}/Pages/Helpers/snapshot_manager_widget.cpp"
+    "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+    "${GUI_SHARED_DIR}/signal_mapper.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Helpers"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets Qt6::Network
+)
+
 # ── Service tests ─────────────────────────────────────────────────────────────
 # HostService lives in the GUI target; compile its source directly.
 add_nexis_test(NAME HostServiceTests
@@ -585,6 +605,22 @@ add_nexis_test(NAME HealthReportTests
     "${GUI_SHARED_DIR}/Managers"
   LIBS
     nexis-gui Qt6::Widgets
+)
+
+# SSO-23896: pure tray-menu grouping helper — derives the tray's MONITOR
+# (flat) / MANAGE / SYSTEM (submenus) structure from the same SidebarSection
+# model the sidebar itself uses, so the two surfaces cannot drift. Compiled
+# directly (like DashboardLayoutUtilTests) so it runs without pulling in
+# nexis-gui; needs Qt6::Widgets for QPushButton.
+add_nexis_test(NAME TrayMenuModelTests
+  SOURCES
+    managers/test_tray_menu_model.cpp
+    "${GUI_SHARED_DIR}/Managers/tray_menu_model.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets
 )
 
 # SSO-3389 / WI-27: InfoManager facade wiring for BootAnalysisInfo +

@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-08-30 (SSO-23853) | Version 2.9.1
+> Last updated: 2026-08-31 (SSO-23896, SSO-23862, SSO-23856, SSO-23853) | Version 2.9.1
 
 ---
 
@@ -64,10 +64,10 @@ Nexis is a **cross-platform (Linux + macOS) system optimizer and monitoring tool
 |--------|-------|-----------------|
 | Version | 2.8.3 | `project(... VERSION ...)` in `CMakeLists.txt` |
 | Source LOC (C++) | ~48,700 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
-| Source files (C++) | 338 | same |
+| Source files (C++) | 341 | same |
 | Test LOC | ~14,500 | `tests/` |
-| Test executables | 61 (60 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
-| Test methods | ~845 | `private slots:` in `tests/*/test_*.cpp` |
+| Test executables | 62 (61 unit + 1 screenshot; some platform-gated) | `tests/CMakeLists.txt` |
+| Test methods | ~865 | `private slots:` in `tests/*/test_*.cpp` |
 | Always-visible pages | 16 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, Search, Services, Processes, Uninstaller, Shredder, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
@@ -446,7 +446,8 @@ Historical time-series charts for system resource usage.
 **Disk Usage Launcher:**
 - Quick-launch card for platform-appropriate disk analyzer tools
 - Configurable preference in Settings (Linux: Baobab, Filelight, QDirStat, ncdu; macOS: GrandPerspective, DaisyDisk, OmniDiskSweeper; or custom path)
-- **Built-in Treemap (FW-09, SSO-3737):** secondary "Built-in Treemap" button on the same card opens a built-in `DiskTreemapDialog` that runs a `DirSizeScanner` on a `QtConcurrent` worker, then renders a squarified treemap with `TreemapView` (pure `QPainter`). Supports drill-down (double-click), hover tooltips, "Reveal in file manager", and "Move to trash" (reuses `FileSearchService` → cleaner trash path). Skips symlinks and dedups hard links so byte counts match what Baobab/DaisyDisk would report. The external-tool launcher remains as a parallel option.
+- **Built-in Treemap (FW-09, SSO-3737):** secondary "Built-in Treemap" button on the same card opens a built-in `DiskTreemapDialog` that runs a `DirSizeScanner` on a `QtConcurrent` worker, then renders the scan (pure `QPainter`) via one of three interchangeable visualization modes. Supports drill-down (double-click), hover tooltips, "Reveal in file manager", and "Move to trash" (reuses `FileSearchService` → cleaner trash path). Skips symlinks and dedups hard links so byte counts match what Baobab/DaisyDisk would report. The external-tool launcher remains as a parallel option.
+- **Visualization picker (SSO-23862):** a toolbar picker switches live between **Treemap** (squarified, `TreemapView`), **Bubble Map** (circle-packing, `BubbleMapView`), and **Sunburst** (radial donut, `SunburstView`) without re-scanning — all three share the same `DirSizeNode` scan data and drill-down/hover/context-menu behavior via a common `DiskMapView` base class.
 
 ### 10a. Network Usage
 
@@ -529,6 +530,14 @@ Miscellaneous utility tools, organized into two clearly labelled header sections
 
 - "Cancel" button kills the running process; "Run Again" available after completion
 - Does not bundle the scanner — works with whatever is installed on the system
+
+**Local Snapshots (SSO-23867, macOS only)** — APFS/Time Machine local snapshot manager driven by `tmutil`, for reclaiming purgeable disk space held by local snapshots:
+- Lists local snapshots (`tmutil listlocalsnapshots /`), newest first, with the date/time parsed from each snapshot identifier
+- "Create Snapshot" (`tmutil localsnapshot`) and a per-row "Delete" action (`tmutil deletelocalsnapshots <date>`); both refresh the list on completion
+- Delete requires explicit confirmation via `QMessageBox`
+- Surfaces current available disk space (`QStorageInfo`, which already reports the purgeable-inclusive figure APFS computes) so the effect of deleting a snapshot is visible immediately after the list refreshes
+- Self-contained `SnapshotManagerWidget` (stacked widget page); lazy-loaded on first click; runs `tmutil` via `CommandUtil` on a `QThreadPool` worker thread
+- Deliberately independent of `SnapshotService` — that class is FR-112's silent pre-clean safety snapshot (a one-way `tmutil localsnapshot` write with no listing/deletion), not a management surface
 
 ### 12. APT Repository Manager / Homebrew
 
@@ -733,6 +742,10 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `FileUtil` | File read/write, directory listing, file size |
 | `CommandUtil` | Process execution (`QProcess`), sudo elevation, timeout handling — unified non-throwing `ExecResult` contract across `exec` / `sudoExec` / `execWithStatus` / `sudoExecWithStatus` / `execAsync` (SSO-3367) |
 | `FormatUtil` | Byte formatting (KB/MB/GB/TB with binary units) |
+
+### CleanerML Parser (SSO-23856, Deep Cleaning Engine epic SSO-15366)
+
+`CleanerML::parseFile`/`parseDirectory` (`shared/nexis-core/Tools/cleanerml_parser.h`) load BleachBit-compatible CleanerML XML cleaner definitions into a typed `Cleaner`/`Option`/`Action` model. Supports the `delete`/`glob`/`walk`/`regex`/`truncate`/`sqlite.vacuum` action types; `winreg` actions are recognized and silently skipped (no Windows registry on Linux/macOS). A malformed or unsupported action fails parsing for just that one cleaner (logged via `qWarning`), never the whole batch or the app. Parser and model only — no execution engine yet; that's future SSO-15366 epic work.
 
 ---
 
@@ -1032,7 +1045,9 @@ The sidebar is **collapsible**, organized into three labelled groups — **MONIT
 
 A **Command Palette** (activated with **Ctrl+K**) provides a fuzzy-search popup for navigating directly to any page and executing common actions (e.g., "run clean", "toggle kiosk") without touching the sidebar.
 
-Sidebar buttons trigger `SlidingStackedWidget::slideInIndex()` with horizontal slide animation. The tray icon context menu provides the same page navigation plus a checkable kiosk mode toggle. F11, the tray action, and the Dashboard button all toggle kiosk mode through synchronized signals.
+Sidebar buttons trigger `SlidingStackedWidget::slideInIndex()` with horizontal slide animation. F11, the tray action, and the Dashboard button all toggle kiosk mode through synchronized signals.
+
+**System tray menu (SSO-23896):** `App::createTrayActions()` derives the tray's structure from the same `mSections` model the sidebar builds from (`buildTrayMenuGroups()`, `shared/nexis/Managers/tray_menu_model.{h,cpp}`), so the two surfaces cannot drift — a page added to a sidebar section appears in the matching tray group automatically. The menu is 12 top-level rows in 5 blocks: **Open Nexis**; the headerless MONITOR pages flat (Dashboard, Hardware Info, Resources, Network Usage); **Manage** and **System** submenus (grouped, mirroring the sidebar's MANAGE/SYSTEM sections); **Quick Actions** (FR-125); the checkable **Kiosk Mode (F11)** toggle; **Quit**. Hidden sidebar buttons (platform-unavailable pages) are excluded from their group, and a group left with no visible members is omitted rather than rendered as a dead submenu. Built once at startup — no timer or per-open rebuild.
 
 ---
 

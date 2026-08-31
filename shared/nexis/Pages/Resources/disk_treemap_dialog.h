@@ -1,25 +1,34 @@
 // SSO-3737 / FW-09: built-in disk-space visualizer dialog.
+// SSO-23862: added the bubble-map/sunburst visualization modes + picker.
 //
-// Wraps DirSizeScanner + TreemapView with a small toolbar (folder picker,
-// scan/cancel, drill-up) and a status bar. Reveal / move-to-trash actions
-// are routed through FileSearchService so they share the cleaner's trash
-// path on Linux and macOS.
+// Wraps DirSizeScanner + a DiskMapView (treemap / bubble-map / sunburst,
+// switchable live) with a small toolbar (folder picker, scan/cancel,
+// drill-up, visualization picker) and a status bar. Reveal / move-to-trash
+// actions are routed through FileSearchService so they share the cleaner's
+// trash path on Linux and macOS.
+//
+// All three views are kept in lockstep: every drill/scan/theme change is
+// applied to all of them, not just the currently visible one, so switching
+// visualization types is instant and never re-scans or re-derives from a
+// different snapshot of the tree.
 
 #ifndef DISK_TREEMAP_DIALOG_H
 #define DISK_TREEMAP_DIALOG_H
 
 #include <QDialog>
+#include <QVector>
 
 class QLabel;
 class QPushButton;
 class QProgressBar;
 class QComboBox;
+class QStackedWidget;
 
 #include "Managers/dir_size_scanner.h"
 
 class AppManager;
 class SignalMapper;
-class TreemapView;
+class DiskMapView;
 
 class DiskTreemapDialog : public QDialog
 {
@@ -47,6 +56,7 @@ private slots:
     void onDrillRequested(DirSizeNode *node);
     void onRevealRequested(DirSizeNode *node);
     void onTrashRequested(DirSizeNode *node);
+    void onVisualizationChanged(int index);
     void applyThemeColors();
 
 private:
@@ -59,15 +69,22 @@ private:
 
     DirSizeScanner *mScanner = nullptr;
 
-    QComboBox    *mFolderCombo   = nullptr;
-    QPushButton  *mChooseButton  = nullptr;
-    QPushButton  *mScanButton    = nullptr;
-    QPushButton  *mCancelButton  = nullptr;
-    QPushButton  *mDrillUpButton = nullptr;
-    QLabel       *mBreadcrumb    = nullptr;
-    QLabel       *mStatusLabel   = nullptr;
-    QProgressBar *mProgress      = nullptr;
-    TreemapView  *mView          = nullptr;
+    QComboBox    *mFolderCombo    = nullptr;
+    QPushButton  *mChooseButton   = nullptr;
+    QPushButton  *mScanButton     = nullptr;
+    QPushButton  *mCancelButton   = nullptr;
+    QPushButton  *mDrillUpButton  = nullptr;
+    QComboBox    *mVisPicker      = nullptr;
+    QLabel       *mBreadcrumb     = nullptr;
+    QLabel       *mStatusLabel    = nullptr;
+    QProgressBar *mProgress       = nullptr;
+
+    // All three visualization modes, kept in lockstep and pre-built so
+    // switching between them (mStack) never re-scans or re-lays-out on
+    // demand. mView is whichever one is currently visible.
+    QStackedWidget      *mStack = nullptr;
+    QVector<DiskMapView*> mViews;
+    DiskMapView          *mView = nullptr;
 };
 
 #endif // DISK_TREEMAP_DIALOG_H

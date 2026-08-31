@@ -14,6 +14,7 @@
 #include "Pages/Helpers/cpu_tuning_widget.h"
 #endif
 #include <Managers/info_manager.h>
+#include <Managers/tray_menu_model.h>
 #include <Info/power_profile_info.h>
 #include <QStyle>
 #include <QDebug>
@@ -903,17 +904,7 @@ void App::changeEvent(QEvent *event)
 
 void App::createTrayActions()
 {
-    for (QPushButton *button : mListSidebarButtons) {
-        QString toolTip = button->toolTip();
-        QAction *action = new QAction(toolTip, this);
-        connect(action, &QAction::triggered, [=] {
-            clickSidebarButton(toolTip, true);
-        });
-
-        mTrayMenu->addAction(action);
-    }
-
-    connect(mTrayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason) {
+    auto showAndRaise = [this] {
 #ifdef Q_OS_MAC
         nexis_macos_show_dock_icon();
 #endif
@@ -922,7 +913,48 @@ void App::createTrayActions()
         if (windowHandle())
             windowHandle()->requestActivate();
         emit SignalMapper::ins()->sigAppVisibilityChanged(true);
+    };
+
+    connect(mTrayIcon, &QSystemTrayIcon::activated, this, [showAndRaise](QSystemTrayIcon::ActivationReason) {
+        showAndRaise();
     });
+
+    // SSO-23896: groups derived from mSections (same model the sidebar
+    // builds from) so a page added to a sidebar section lands in the
+    // matching tray group with no tray-side edit.
+    QAction *openAction = new QAction(tr("Open Nexis"), this);
+    connect(openAction, &QAction::triggered, this, showAndRaise);
+    mTrayMenu->addAction(openAction);
+    mTrayMenu->addSeparator();
+
+    auto addNavAction = [this](QMenu *menu, QPushButton *button) {
+        const QString toolTip = button->toolTip();
+        QAction *action = menu->addAction(toolTip);
+        connect(action, &QAction::triggered, this, [this, toolTip] {
+            clickSidebarButton(toolTip, true);
+        });
+    };
+
+    const QList<TrayMenuGroup> groups = buildTrayMenuGroups(mSections);
+    bool previousHeaderless = true;
+    bool anyGroupEmitted = false;
+    for (const TrayMenuGroup &group : groups) {
+        if (anyGroupEmitted && group.headerless != previousHeaderless)
+            mTrayMenu->addSeparator();
+
+        if (group.headerless) {
+            for (QPushButton *button : group.items)
+                addNavAction(mTrayMenu, button);
+        } else {
+            QMenu *submenu = mTrayMenu->addMenu(trayMenuGroupTitle(group.name));
+            for (QPushButton *button : group.items)
+                addNavAction(submenu, button);
+        }
+
+        previousHeaderless = group.headerless;
+        anyGroupEmitted = true;
+    }
+    mTrayMenu->addSeparator();
 
     // FR-125: Quick Actions submenu
     QMenu *quickMenu = mTrayMenu->addMenu(tr("Quick Actions"));
