@@ -81,8 +81,19 @@ CVE / security patches: see §6.
 ### Cutting the tag
 
 ```bash
-# 1. Update CHANGELOG.md: rename "## [Unreleased]" to "## [X.Y.Z] - YYYY-MM-DD"
-#    and add a fresh empty "## [Unreleased]" section above it.
+# 1. Assemble CHANGELOG.md from the changelog.d/ fragments. This folds every
+#    fragment into a new "## [X.Y.Z] - YYYY-MM-DD" section (merging anything
+#    already sitting in "## [Unreleased]"), leaves a fresh empty "[Unreleased]"
+#    above it, and deletes the consumed fragments. Feature PRs never edit
+#    CHANGELOG.md directly — see changelog.d/README.md (SSO-23951).
+python3 scripts/changelog_fragments.py apply --version X.Y.Z --date YYYY-MM-DD
+#    Review the assembled section and edit the prose freely before committing.
+#
+# 1b. Regenerate the derivable stats block in docs/APPLICATION_OVERVIEW.md.
+#     The "Docs hygiene / Generated stats block" job re-checks this on the tag,
+#     so a skipped run fails the release rather than silently rotting the docs.
+python3 scripts/gen_doc_stats.py
+#
 # 2. Bump the CMakeLists.txt project() version (`project(Nexis VERSION X.Y.Z)`
 #    at the top of CMakeLists.txt). The tag-driven release pipeline passes
 #    -DAPP_VERSION_OVERRIDE=<tag> so published artifacts always match the tag,
@@ -101,7 +112,8 @@ CVE / security patches: see §6.
 #    the AppImage version). Note: release.yml's "Sync metainfo release version
 #    from tag" step auto-inserts a matching top entry if it differs from the
 #    tag — recoverable like debian/changelog — but add a real entry with notes.
-git add CHANGELOG.md CMakeLists.txt linux/aur/PKGBUILD linux/debian/changelog \
+git add CHANGELOG.md changelog.d docs/APPLICATION_OVERVIEW.md CMakeLists.txt \
+        linux/aur/PKGBUILD linux/debian/changelog \
         linux/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml
 git commit -m "chore(release): X.Y.Z"
 git push origin native
