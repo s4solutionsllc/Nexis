@@ -2,6 +2,7 @@
 #include "Managers/tool_manager.h"
 #include "ui_app.h"
 #include "Pages/Network/net_usage_tracker.h"
+#include "Pages/Resources/disk_treemap_dialog.h"
 #include "utilities.h"
 #include "signal_mapper.h"
 #include "nexis_page.h"
@@ -194,6 +195,20 @@ void App::buildSidebar()
         btnResources = createSidebarButton(tr("Resources"));
         sec.containerLayout->addWidget(btnResources);
         sec.buttons.append(btnResources);
+
+        // SSO-23863: top-level entry point for the built-in disk-space
+        // treemap (previously only reachable via a launcher widget buried
+        // in the Resources page). Not checkable/exclusive and not part of
+        // sec.buttons — like btnFeedback, it opens a dialog rather than
+        // switching the stacked page, so it must not join mSidebarBtnGroup
+        // or the checked-highlight would get stuck on it.
+        btnDiskMap = new QPushButton(ui->sidebar);
+        btnDiskMap->setToolTip(tr("Disk Map"));
+        btnDiskMap->setCursor(Qt::PointingHandCursor);
+        btnDiskMap->setCheckable(false);
+        btnDiskMap->setIconSize(Dpi::scale(20, 20));
+        btnDiskMap->setObjectName("btnDiskMap");
+        sec.containerLayout->addWidget(btnDiskMap);
 
         btnNetworkUsage = createSidebarButton(tr("Network Usage"));
         sec.containerLayout->addWidget(btnNetworkUsage);
@@ -404,6 +419,7 @@ void App::init()
     btnDash->setText(tr("Dashboard"));
     btnHardwareInfo->setText(tr("Hardware Info"));
     btnResources->setText(tr("Resources"));
+    btnDiskMap->setText(tr("Disk Map"));
     btnNetworkUsage->setText(tr("Network Usage"));
     btnSystemCleaner->setText(tr("System Cleaner"));
     btnDiskTools->setText(tr("Disk Tools"));
@@ -701,6 +717,7 @@ void App::init()
             feedback = QSharedPointer<Feedback>(new Feedback(this));
         feedback->show();
     });
+    connect(btnDiskMap,          &QPushButton::clicked, this, &App::openDiskTreemapDialog);
 
     // Conditional page button clicks
     if (ToolManager::ins()->checkDocker())
@@ -1217,6 +1234,7 @@ void App::updateSidebarIcons()
     setIcon(btnDash,             "dash.svg");
     setIcon(btnHardwareInfo,     "hardware-info.svg");
     setIcon(btnResources,        "resources.svg");
+    setIcon(btnDiskMap,          "disk-map.svg");
     setIcon(btnNetworkUsage,     "network-usage.svg");
     setIcon(btnSystemCleaner,    "cleaner.svg");
     setIcon(btnDiskTools,        "disk-tools.svg");
@@ -1262,6 +1280,18 @@ void App::toggleSidebarCollapse()
     mSidebarCollapsed = !mSidebarCollapsed;
     SettingManager::ins()->setSidebarCollapsed(mSidebarCollapsed);
     applySidebarCollapse(mSidebarCollapsed, true);
+}
+
+// SSO-23863: shared by the sidebar button and the command palette entry.
+// Same call disk_usage_launcher_widget.cpp's "Built-in Treemap" button
+// makes — this is a second door to the same dialog, not a fork of it.
+void App::openDiskTreemapDialog()
+{
+    auto *dlg = new DiskTreemapDialog(this, AppManager::ins(), SignalMapper::ins());
+    dlg->setAttribute(Qt::WA_DeleteOnClose);
+    dlg->show();
+    dlg->raise();
+    dlg->activateWindow();
 }
 
 void App::applySidebarCollapse(bool collapsed, bool animate)
@@ -1328,6 +1358,18 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
             btnFeedback->setText(savedFeedback);
     }
 
+    // Toggle Disk Map button text — not in mListSidebarButtons (same reason
+    // as btnFeedback: it opens a dialog, not a page), so it needs the same
+    // manual handling here.
+    if (collapsed) {
+        btnDiskMap->setProperty("sidebarText", btnDiskMap->text());
+        btnDiskMap->setText(QString());
+    } else {
+        QString savedDiskMap = btnDiskMap->property("sidebarText").toString();
+        if (!savedDiskMap.isEmpty())
+            btnDiskMap->setText(savedDiskMap);
+    }
+
     // Update toggle icon and logo
     QString theme = AppManager::ins()->resolveThemeName();
     {
@@ -1364,6 +1406,8 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     }
     btnFeedback->style()->unpolish(btnFeedback);
     btnFeedback->style()->polish(btnFeedback);
+    btnDiskMap->style()->unpolish(btnDiskMap);
+    btnDiskMap->style()->polish(btnDiskMap);
     mBtnSidebarToggle->style()->unpolish(mBtnSidebarToggle);
     mBtnSidebarToggle->style()->polish(mBtnSidebarToggle);
 }
@@ -1659,5 +1703,9 @@ void App::setupCommandPalette()
 
     mCommandPalette->addCommand(tr("Quick Clean"), tr("Action"), [this]() {
         clickSidebarButton(tr("System Cleaner"), true);
+    });
+
+    mCommandPalette->addCommand(tr("Disk Map"), tr("Action"), [this]() {
+        openDiskTreemapDialog();
     });
 }
