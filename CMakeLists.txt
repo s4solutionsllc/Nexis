@@ -416,6 +416,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Managers/health_report_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/tool_manager.cpp"
+  "${GUI_SHARED_DIR}/Managers/tray_menu_model.cpp"
   "${GUI_SHARED_DIR}/Managers/schedule_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
   "${GUI_SHARED_DIR}/Services/file_search_service.cpp"
