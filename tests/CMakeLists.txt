@@ -588,6 +588,22 @@ add_nexis_test(NAME HealthReportTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-23896: pure tray-menu grouping helper — derives the tray's MONITOR
+# (flat) / MANAGE / SYSTEM (submenus) structure from the same SidebarSection
+# model the sidebar itself uses, so the two surfaces cannot drift. Compiled
+# directly (like DashboardLayoutUtilTests) so it runs without pulling in
+# nexis-gui; needs Qt6::Widgets for QPushButton.
+add_nexis_test(NAME TrayMenuModelTests
+  SOURCES
+    managers/test_tray_menu_model.cpp
+    "${GUI_SHARED_DIR}/Managers/tray_menu_model.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets
+)
+
 # SSO-3389 / WI-27: InfoManager facade wiring for BootAnalysisInfo +
 # StartupInfo. Links against nexis-gui because InfoManager and the providers
 # it owns are compiled into the GUI target.

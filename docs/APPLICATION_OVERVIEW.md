@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-08-30 (SSO-23862, SSO-23856) | Version 2.9.1
+> Last updated: 2026-08-31 (SSO-23896, SSO-23862, SSO-23856) | Version 2.9.1
 
 ---
 
@@ -1037,7 +1037,9 @@ The sidebar is **collapsible**, organized into three labelled groups — **MONIT
 
 A **Command Palette** (activated with **Ctrl+K**) provides a fuzzy-search popup for navigating directly to any page and executing common actions (e.g., "run clean", "toggle kiosk") without touching the sidebar.
 
-Sidebar buttons trigger `SlidingStackedWidget::slideInIndex()` with horizontal slide animation. The tray icon context menu provides the same page navigation plus a checkable kiosk mode toggle. F11, the tray action, and the Dashboard button all toggle kiosk mode through synchronized signals.
+Sidebar buttons trigger `SlidingStackedWidget::slideInIndex()` with horizontal slide animation. F11, the tray action, and the Dashboard button all toggle kiosk mode through synchronized signals.
+
+**System tray menu (SSO-23896):** `App::createTrayActions()` derives the tray's structure from the same `mSections` model the sidebar builds from (`buildTrayMenuGroups()`, `shared/nexis/Managers/tray_menu_model.{h,cpp}`), so the two surfaces cannot drift — a page added to a sidebar section appears in the matching tray group automatically. The menu is 12 top-level rows in 5 blocks: **Open Nexis**; the headerless MONITOR pages flat (Dashboard, Hardware Info, Resources, Network Usage); **Manage** and **System** submenus (grouped, mirroring the sidebar's MANAGE/SYSTEM sections); **Quick Actions** (FR-125); the checkable **Kiosk Mode (F11)** toggle; **Quit**. Hidden sidebar buttons (platform-unavailable pages) are excluded from their group, and a group left with no visible members is omitted rather than rendered as a dead submenu. Built once at startup — no timer or per-open rebuild.
 
 ---
 

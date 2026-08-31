@@ -18,16 +18,7 @@ class QScreen;
 #include "sliding_stacked_widget.h"
 #include "Managers/app_manager.h"
 #include "Managers/setting_manager.h"
-
-struct SidebarSection {
-    QString name;
-    QPushButton *header = nullptr;
-    QWidget *container = nullptr;
-    QVBoxLayout *containerLayout = nullptr;
-    QList<QPushButton*> buttons;
-    bool collapsed = false;
-    bool headerless = false;
-};
+#include "Managers/sidebar_section.h"
 
 // Page registry entry. factory constructs the page lazily; widget caches the
 // result once built. onConstructed runs after the widget is created and

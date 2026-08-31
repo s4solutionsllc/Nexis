@@ -1,7 +1,7 @@
 # Nexis — Architecture Review
 
 > A deep and comprehensive review of the Nexis architecture: how logic and UI work together, what's working well, what should change, and where the application should go next.
-> Last updated: 2026-08-30 (SSO-3469 / WI-05.a, SSO-3497, SSO-3383, SSO-3391 / WI-29, SSO-3396 / WI-33, SSO-3738 / FW-10, SSO-3739 / FW-11, SSO-3740 / FW-12, SSO-3743 / FW-15, GH#191, GH#182, GH#214, SSO-15566, SSO-17776, SSO-21680, BUG-56, SSO-23862) | Version 2.9.1
+> Last updated: 2026-08-31 (SSO-23896, SSO-3469 / WI-05.a, SSO-3497, SSO-3383, SSO-3391 / WI-29, SSO-3396 / WI-33, SSO-3738 / FW-10, SSO-3739 / FW-11, SSO-3740 / FW-12, SSO-3743 / FW-15, GH#191, GH#182, GH#214, SSO-15566, SSO-17776, SSO-21680, BUG-56, SSO-23862) | Version 2.9.1
 
 > **Packaging note (SSO-3376, 2026-06):** The Flatpak (Flathub) distribution channel was retired. There is no `flatpak-spawn`/sandbox-detection layer in the codebase — the privileged-host operations Nexis depends on (`pkexec`, `systemctl`, `smartctl`, `fstrim`, `nvidia-smi`, `/proc` and `/sys` reads) are architecturally unsuited to a bubblewrap sandbox, and adding one would require routing `CommandUtil` through `flatpak-spawn --host` plus holding the `org.freedesktop.Flatpak` portal — i.e. eliminating the sandbox benefit. Linux ships via `.deb` (PPA + GitHub releases), AppImage, and AUR. **Reaffirmed 2026-08-02 (SSO-21643/SSO-21680):** a second relitigation hit the same architectural blocker, not new staleness; the `s4solutionsllc/flathub` fork is archived, and re-opening requires a fresh CEO decision with new technical facts.
 
@@ -253,10 +253,11 @@ if (ToolManager::ins()->checkDocker()) {
 }
 ```
 
-**The pattern applies at three levels:**
+**The pattern applies at four levels:**
 1. **Page level** — Docker, GNOME Settings, and APT/Homebrew pages are hidden entirely if tools aren't detected
 2. **Widget level** — Battery, GPU, and temperature gauges hide if hardware is absent; disk health info is shown inline on the DiskTile when available
 3. **Feature level** — macOS filters Apple system agents from startup apps; purge option hidden on non-APT systems
+4. **Surface level (SSO-23896)** — the system tray menu derives its MONITOR/Manage/System grouping from the sidebar's `mSections` model (`buildTrayMenuGroups()`, `shared/nexis/Managers/tray_menu_model.cpp`); the same `button->isHidden()` check that removes a page from the sidebar also drops it from its tray group, and a group left with no visible members is omitted rather than rendered as a dead submenu
 
 **Why this matters:** Cross-platform apps often show all features with "not available on this platform" messages, which clutters the UI. Nexis's approach presents a **clean, relevant interface** tailored to each system's actual capabilities.
 
