@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-08-31
+
 ### Changed
 - System tray menu (SSO-23896): the tray's right-click menu was a flat 22-row list mirroring the sidebar with its grouping discarded. It's now 12 top-level rows in 5 blocks — a new **Open Nexis** action; the headerless MONITOR pages flat (Dashboard, Hardware Info, Resources, Network Usage); **Manage** and **System** as native `QMenu` submenus; the existing **Quick Actions** submenu (FR-125); the checkable **Kiosk Mode (F11)** toggle; **Quit**. The grouping is derived from the same `mSections` model the sidebar itself builds from (`buildTrayMenuGroups()`, new `shared/nexis/Managers/tray_menu_model.{h,cpp}`), so a page added to a sidebar section appears in the matching tray group automatically — no tray-side edit, no second hand-maintained list to drift. Every tray item still only navigates via `clickSidebarButton()`; the sole action item remains the read-only "Run System Cleaner Scan". `QMenu::separator`/`QMenu::right-arrow` QSS added, reusing the sidebar's existing chevron SVGs so both surfaces read as one visual language (styling lands on Qt-rendered menus; GNOME's AppIndicator/DBusMenu export ignores QSS but the structural grouping still applies there).
 
