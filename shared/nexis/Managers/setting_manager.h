@@ -88,6 +88,10 @@ namespace SettingKeys {
     // FW-20 (SSO-3748)
     const QString MenuBarMonitorEnabled("MenuBarMonitorEnabled");
 
+    // SSO-23854: Linux/QSystemTrayIcon health score + Clean Now, off by
+    // default like its macOS menu-bar sibling above.
+    const QString TrayHealthScoreEnabled("TrayHealthScoreEnabled");
+
     // GH#207 (SSO-8351)
     const QString LaunchInKioskMode("LaunchInKioskMode");
     const QString KioskMonitorName("KioskMonitorName");
@@ -290,6 +294,10 @@ public:
     // FW-20 (SSO-3748) — macOS menu-bar CPU/memory monitor, off by default
     void setMenuBarMonitorEnabled(bool value);
     bool getMenuBarMonitorEnabled() const;
+
+    // SSO-23854 — Linux tray health score + Clean Now, off by default
+    void setTrayHealthScoreEnabled(bool value);
+    bool getTrayHealthScoreEnabled() const;
 
     // GH#207 (SSO-8351) — launch directly into kiosk mode, optionally on a specific monitor
     void setLaunchInKioskMode(bool value);

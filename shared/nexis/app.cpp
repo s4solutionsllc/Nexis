@@ -778,6 +778,29 @@ void App::init()
     connect(SignalMapper::ins(), &SignalMapper::sigMenuBarMonitorToggled,
             mMenuBarMonitor, &MenuBarMonitor::setEnabled);
     mMenuBarMonitor->setEnabled(SettingManager::ins()->getMenuBarMonitorEnabled());
+#else
+    // SSO-23854: optional Linux tray health score + Clean Now, off by default.
+    mTrayHealthMonitor = new TrayHealthMonitor(this);
+    connect(mTrayHealthMonitor, &TrayHealthMonitor::scoreTextChanged, this, [this](const QString &text) {
+        mTrayHealthAction->setText(text);
+        mTrayIcon->setToolTip(text);
+    });
+    connect(mTrayHealthMonitor, &TrayHealthMonitor::cleanStateChanged, this,
+            [this](const QString &label, bool enabled) {
+        mTrayCleanAction->setText(label);
+        mTrayCleanAction->setEnabled(enabled);
+    });
+    connect(mTrayCleanAction, &QAction::triggered, mTrayHealthMonitor, &TrayHealthMonitor::startClean);
+
+    auto applyTrayHealthScoreEnabled = [this](bool enabled) {
+        mTrayHealthAction->setVisible(enabled);
+        mTrayCleanAction->setVisible(enabled);
+        mTrayHealthMonitor->setEnabled(enabled);
+        if (!enabled)
+            mTrayIcon->setToolTip(QString());
+    };
+    connect(SignalMapper::ins(), &SignalMapper::sigTrayHealthScoreToggled, this, applyTrayHealthScoreEnabled);
+    applyTrayHealthScoreEnabled(SettingManager::ins()->getTrayHealthScoreEnabled());
 #endif
 
     // Kiosk mode shortcuts
@@ -926,6 +949,21 @@ void App::createTrayActions()
     connect(openAction, &QAction::triggered, this, showAndRaise);
     mTrayMenu->addAction(openAction);
     mTrayMenu->addSeparator();
+
+#ifndef Q_OS_MAC
+    // SSO-23854: Linux tray counterpart of the macOS menu-bar health score +
+    // Clean Now surface (SSO-23853). Actions exist unconditionally so
+    // TrayHealthMonitor's signals always have somewhere to write; visibility
+    // follows the off-by-default TrayHealthScoreEnabled setting (see init()).
+    mTrayHealthAction = new QAction(this);
+    mTrayHealthAction->setEnabled(false);
+    mTrayMenu->addAction(mTrayHealthAction);
+
+    mTrayCleanAction = new QAction(tr("Clean Now"), this);
+    mTrayMenu->addAction(mTrayCleanAction);
+
+    mTrayMenu->addSeparator();
+#endif
 
     auto addNavAction = [this](QMenu *menu, QPushButton *button) {
         const QString toolTip = button->toolTip();
