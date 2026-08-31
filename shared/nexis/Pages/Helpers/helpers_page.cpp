@@ -10,6 +10,9 @@
 #endif
 #include "trim_widget.h"
 #include "wol_widget.h"
+#ifdef Q_OS_MACOS
+#include "snapshot_manager_widget.h"
+#endif
 #include "ui_helpers_page.h"
 
 #include <Utils/command_util.h>
@@ -92,6 +95,12 @@ void HelpersPage::init()
     mWolWidget = new WolWidget;
     ui->stackedWidget->addWidget(mWolWidget);
 
+#ifdef Q_OS_MACOS
+    // SSO-23867: APFS/Time Machine local snapshot manager — macOS only.
+    mSnapshotManagerWidget = new SnapshotManagerWidget;
+    ui->stackedWidget->addWidget(mSnapshotManagerWidget);
+#endif
+
     // Prevent buttons from shrinking below their text width
     for (auto *btn : {ui->btnHostManage, ui->btnNetDiag,
                       ui->btnOpenPorts, ui->btnFirewall}) {
@@ -106,6 +115,15 @@ void HelpersPage::init()
     mBtnTrim->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
     ui->buttonGroup->addButton(mBtnTrim);
     connect(mBtnTrim, &QPushButton::clicked, this, &HelpersPage::onTrimClicked);
+
+    // SSO-23867: Snapshot manager button (macOS only).
+    mBtnSnapshotManager = new QPushButton(tr("Snapshots"));
+    mBtnSnapshotManager->setCheckable(true);
+    mBtnSnapshotManager->setCursor(Qt::PointingHandCursor);
+    mBtnSnapshotManager->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnSnapshotManager);
+    connect(mBtnSnapshotManager, &QPushButton::clicked,
+            this, &HelpersPage::onSnapshotManagerClicked);
 #else
     // FR-81: Swappiness button. Always visible on Linux — the widget itself
     // handles the "not supported" state if /proc/sys/vm/swappiness isn't
@@ -166,6 +184,8 @@ void HelpersPage::init()
 #ifdef Q_OS_MACOS
     if (mBtnTrim)
         mToolItems << mBtnTrim;
+    if (mBtnSnapshotManager)
+        mToolItems << mBtnSnapshotManager;
 #else
     if (mBtnSwappiness)
         mToolItems << mBtnSwappiness;
@@ -267,6 +287,16 @@ void HelpersPage::onWolClicked()
         return;
     mWolWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mWolWidget);
+}
+
+void HelpersPage::onSnapshotManagerClicked()
+{
+#ifdef Q_OS_MACOS
+    if (!mSnapshotManagerWidget)
+        return;
+    mSnapshotManagerWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mSnapshotManagerWidget);
+#endif
 }
 
 void HelpersPage::on_btnFlushDNS_clicked()

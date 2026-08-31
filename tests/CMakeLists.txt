@@ -458,6 +458,25 @@ add_nexis_test(NAME FirewallTests
     Qt6::Widgets Qt6::Network
 )
 
+# SSO-23867: SnapshotManagerWidget's tmutil listlocalsnapshots parsing —
+# pure/static, no live filesystem needed. Lives in the GUI target; compile
+# its source + deps directly like FirewallTests above.
+add_nexis_test(NAME SnapshotManagerWidgetTests
+  SOURCES
+    core/test_snapshot_manager_widget.cpp
+    "${GUI_SHARED_DIR}/Pages/Helpers/snapshot_manager_widget.cpp"
+    "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
+    "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+    "${GUI_SHARED_DIR}/signal_mapper.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Helpers"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets Qt6::Network
+)
+
 # ── Service tests ─────────────────────────────────────────────────────────────
 # HostService lives in the GUI target; compile its source directly.
 add_nexis_test(NAME HostServiceTests

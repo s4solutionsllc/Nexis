@@ -17,6 +17,7 @@ class CpuTuningWidget;
 class BatteryChargeThresholdWidget;
 class TrimWidget;
 class WolWidget;
+class SnapshotManagerWidget;
 
 namespace Ui {
 class HelpersPage;
@@ -41,6 +42,7 @@ private slots:
     void onBatteryThresholdClicked();      // FW-15
     void onTrimClicked();                  // FR-118
     void onWolClicked();                   // FR-120
+    void onSnapshotManagerClicked();       // SSO-23867
     void onRebuildSpotlight();
     void onVerifyDisk();
     void onRebuildLaunchServices();
@@ -70,6 +72,10 @@ private:
 #endif
     WolWidget   *mWolWidget = nullptr;
     QPushButton *mBtnWol    = nullptr;
+#ifdef Q_OS_MACOS
+    SnapshotManagerWidget *mSnapshotManagerWidget = nullptr;   // SSO-23867
+    QPushButton           *mBtnSnapshotManager    = nullptr;
+#endif
 
     QList<QWidget*> mToolItems;
     bool mNavCompact = false;
