@@ -28,6 +28,7 @@ add_nexis_test(NAME CommandUtilTests       SOURCES utils/test_command_util.cpp)
 add_nexis_test(NAME CommandUtilAsyncTests  SOURCES utils/test_command_util_async.cpp LIBS Qt6::Concurrent)
 add_nexis_test(NAME HeadlessUtilTests SOURCES utils/test_headless_util.cpp)
 add_nexis_test(NAME DisplayServerUtilTests SOURCES utils/test_display_server_util.cpp)
+add_nexis_test(NAME MacOsVersionUtilTests SOURCES utils/test_mac_os_version_util.cpp)
 
 # ── Core library tests ─────────────────────────────────────────────────────────
 add_nexis_test(NAME DiskHealthTests   SOURCES core/test_disk_health_info.cpp)
@@ -58,6 +59,12 @@ add_nexis_test(NAME FanInfoTests      SOURCES core/test_fan_info.cpp)
 add_nexis_test(NAME ThermalInfoTests  SOURCES core/test_thermal_info.cpp)
 add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
 add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
+
+# SSO-23857: Tweaks pane backend. Pure argv-build/parse/catalog logic —
+# no macOS APIs touched, so these build and run on every platform, unlike
+# the widget itself which only ever gets instantiated on macOS.
+add_nexis_test(NAME MacDefaultsToolTests   SOURCES core/test_mac_defaults_tool.cpp)
+add_nexis_test(NAME MacTweaksCatalogTests  SOURCES core/test_mac_tweaks_catalog.cpp)
 
 # FW-15 (SSO-3743): battery charge-threshold control is Linux-only — the
 # header/source live under linux/nexis-core and are compiled into nexis-core

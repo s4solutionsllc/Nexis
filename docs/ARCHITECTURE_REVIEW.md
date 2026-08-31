@@ -387,7 +387,7 @@ This leads to ambiguity. The `CleanerService` duplicates some scanning logic tha
 
 ### 5. ~~No Automated Test Suite~~ (Resolved)
 
-**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76. Now 23 CTest executables with ~312 test methods covering utilities (FormatUtil, FileUtil, CommandUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing (AptSourceTool, PackageTool), widget parsing (NetworkDiag, OpenPorts, Firewall), service logic (HostService), manager logic (ScheduleManager), power profile parsing (PowerProfileInfo), theme token validation, and screenshot regression tests.
+**Status:** Unit test suite implemented in Phase 7 (FR-36), then significantly expanded in FR-76 and many subsequent features — see the canonical "By the numbers" table in [`APPLICATION_OVERVIEW.md`](APPLICATION_OVERVIEW.md#project-identity) for the live CTest executable / test-method counts. Coverage spans utilities (FormatUtil, FileUtil, CommandUtil, MacOsVersionUtil), core library parsing (DiskHealthInfo, MemoryInfo, CpuInfo, GpuInfo, FanInfo, ThermalInfo, BatteryInfo, DiskInfo), tool parsing/logic (AptSourceTool, PackageTool, MacDefaultsTool, MacTweaksCatalog), widget parsing (NetworkDiag, OpenPorts, Firewall), service logic (HostService), manager logic (ScheduleManager), power profile parsing (PowerProfileInfo), theme token validation, and screenshot regression tests.
 
 **Refactoring for testability:**
 - `parseSmartctlJson()` deduplicated from 2 platform files into shared public static `parseSmartctlJsonInto()`

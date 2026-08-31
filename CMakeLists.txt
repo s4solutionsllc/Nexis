@@ -126,6 +126,8 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Tools/app_uninstall_deny_list.cpp"
   "${CORE_SHARED_DIR}/Tools/service_tool_shared.cpp"
   "${CORE_SHARED_DIR}/Tools/cleanerml_parser.cpp"
+  "${CORE_SHARED_DIR}/Tools/mac_defaults_tool.cpp"
+  "${CORE_SHARED_DIR}/Tools/mac_tweaks_catalog.cpp"
   "${CORE_SHARED_DIR}/Utils/command_util_shared.cpp"
   "${CORE_SHARED_DIR}/Utils/display_server_util.cpp"
   "${CORE_SHARED_DIR}/Utils/file_util.cpp"
@@ -135,6 +137,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/mini_monitor_format_util.cpp"
   "${CORE_SHARED_DIR}/Utils/headless_util.cpp"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.cpp"
+  "${CORE_SHARED_DIR}/Utils/mac_os_version_util.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -174,6 +177,8 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Tools/service_tool.h"
   "${CORE_SHARED_DIR}/Tools/cleanerml_model.h"
   "${CORE_SHARED_DIR}/Tools/cleanerml_parser.h"
+  "${CORE_SHARED_DIR}/Tools/mac_defaults_tool.h"
+  "${CORE_SHARED_DIR}/Tools/mac_tweaks_catalog.h"
   "${CORE_SHARED_DIR}/Utils/command_util.h"
   "${CORE_SHARED_DIR}/Utils/display_server_util.h"
   "${CORE_SHARED_DIR}/Utils/file_util.h"
@@ -183,6 +188,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/mini_monitor_format_util.h"
   "${CORE_SHARED_DIR}/Utils/headless_util.h"
   "${CORE_SHARED_DIR}/Utils/macos_xattr_util.h"
+  "${CORE_SHARED_DIR}/Utils/mac_os_version_util.h"
 )
 
 if(APPLE)
@@ -483,6 +489,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Helpers/wol_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/cache_rebuild_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/snapshot_manager_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/Helpers/mac_tweaks_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/HardwareInfo/hardware_info_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/kill_button_delegate.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/pin_sort_filter_proxy_model.cpp"
