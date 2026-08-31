@@ -8,6 +8,9 @@
 #include "battery_charge_threshold_widget.h"
 #include <Info/battery_charge_threshold.h>
 #endif
+#ifdef Q_OS_MACOS
+#include "mac_tweaks_widget.h"
+#endif
 #include "trim_widget.h"
 #include "wol_widget.h"
 #ifdef Q_OS_MACOS
@@ -137,6 +140,16 @@ void HelpersPage::init()
     ui->buttonGroup->addButton(mBtnSnapshotManager);
     connect(mBtnSnapshotManager, &QPushButton::clicked,
             this, &HelpersPage::onSnapshotManagerClicked);
+
+    // SSO-23857: Tweaks pane — hidden `defaults` preferences.
+    mMacTweaksWidget = new MacTweaksWidget;
+    ui->stackedWidget->addWidget(mMacTweaksWidget);
+    mBtnMacTweaks = new QPushButton(tr("Tweaks"));
+    mBtnMacTweaks->setCheckable(true);
+    mBtnMacTweaks->setCursor(Qt::PointingHandCursor);
+    mBtnMacTweaks->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+    ui->buttonGroup->addButton(mBtnMacTweaks);
+    connect(mBtnMacTweaks, &QPushButton::clicked, this, &HelpersPage::onMacTweaksClicked);
 #else
     // FR-81: Swappiness button. Always visible on Linux — the widget itself
     // handles the "not supported" state if /proc/sys/vm/swappiness isn't
@@ -201,6 +214,8 @@ void HelpersPage::init()
         mToolItems << mBtnCacheRebuild;
     if (mBtnSnapshotManager)
         mToolItems << mBtnSnapshotManager;
+    if (mBtnMacTweaks)
+        mToolItems << mBtnMacTweaks;
 #else
     if (mBtnSwappiness)
         mToolItems << mBtnSwappiness;
@@ -320,6 +335,16 @@ void HelpersPage::onSnapshotManagerClicked()
         return;
     mSnapshotManagerWidget->loadIfNeeded();
     ui->stackedWidget->setCurrentWidget(mSnapshotManagerWidget);
+#endif
+}
+
+void HelpersPage::onMacTweaksClicked()
+{
+#ifdef Q_OS_MACOS
+    if (!mMacTweaksWidget)
+        return;
+    mMacTweaksWidget->loadIfNeeded();
+    ui->stackedWidget->setCurrentWidget(mMacTweaksWidget);
 #endif
 }
 
