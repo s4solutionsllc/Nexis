@@ -803,6 +803,19 @@ void App::init()
     applyTrayHealthScoreEnabled(SettingManager::ins()->getTrayHealthScoreEnabled());
 #endif
 
+    // SSO-23855: compact always-on-top mini-monitor window — cross-platform
+    // (shared/nexis QWidget, not a native NSPanel), unlike mMenuBarMonitor
+    // above. Off by default; restores its last open/closed state below.
+    mMiniMonitorWindow = new MiniMonitorWindow(this);
+    connect(SignalMapper::ins(), &SignalMapper::sigMiniMonitorToggled,
+            mMiniMonitorWindow, &QWidget::setVisible);
+    connect(mMiniMonitorWindow, &MiniMonitorWindow::visibilityToggled,
+            this, [this](bool visible) {
+        if (mMiniMonitorAction)
+            mMiniMonitorAction->setChecked(visible);
+    });
+    mMiniMonitorWindow->setVisible(SettingManager::ins()->getMiniMonitorVisible());
+
     // Kiosk mode shortcuts
     QAction *kioskToggle = new QAction(this);
     kioskToggle->setShortcut(Qt::Key_F11);
@@ -1008,6 +1021,15 @@ void App::createTrayActions()
         clickSidebarButton(btnSystemCleaner->toolTip(), true);
         if (systemCleanerPage)
             systemCleanerPage->quickScan();
+    });
+
+    // SSO-23855: toggles the compact mini-monitor window from the tray, the
+    // same surface used to open/navigate the main window.
+    mMiniMonitorAction = quickMenu->addAction(tr("Mini Monitor"));
+    mMiniMonitorAction->setCheckable(true);
+    mMiniMonitorAction->setChecked(SettingManager::ins()->getMiniMonitorVisible());
+    connect(mMiniMonitorAction, &QAction::triggered, this, [](bool checked) {
+        emit SignalMapper::ins()->sigMiniMonitorToggled(checked);
     });
 
 #ifndef Q_OS_MACOS

@@ -92,6 +92,10 @@ namespace SettingKeys {
     // default like its macOS menu-bar sibling above.
     const QString TrayHealthScoreEnabled("TrayHealthScoreEnabled");
 
+    // SSO-23855
+    const QString MiniMonitorVisible("MiniMonitorVisible");
+    const QString MiniMonitorGeometry("MiniMonitorGeometry");
+
     // GH#207 (SSO-8351)
     const QString LaunchInKioskMode("LaunchInKioskMode");
     const QString KioskMonitorName("KioskMonitorName");
@@ -298,6 +302,12 @@ public:
     // SSO-23854 — Linux tray health score + Clean Now, off by default
     void setTrayHealthScoreEnabled(bool value);
     bool getTrayHealthScoreEnabled() const;
+
+    // SSO-23855 — compact always-on-top mini-monitor window, off by default
+    void setMiniMonitorVisible(bool value);
+    bool getMiniMonitorVisible() const;
+    void setMiniMonitorGeometry(const QByteArray &value);
+    QByteArray getMiniMonitorGeometry() const;
 
     // GH#207 (SSO-8351) — launch directly into kiosk mode, optionally on a specific monitor
     void setLaunchInKioskMode(bool value);

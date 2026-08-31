@@ -689,6 +689,26 @@ bool SettingManager::getTrayHealthScoreEnabled() const
     return mSettings->value(SettingKeys::TrayHealthScoreEnabled, false).toBool();
 }
 
+void SettingManager::setMiniMonitorVisible(bool value)
+{
+    mSettings->setValue(SettingKeys::MiniMonitorVisible, value);
+}
+
+bool SettingManager::getMiniMonitorVisible() const
+{
+    return mSettings->value(SettingKeys::MiniMonitorVisible, false).toBool();
+}
+
+void SettingManager::setMiniMonitorGeometry(const QByteArray &value)
+{
+    mSettings->setValue(SettingKeys::MiniMonitorGeometry, value);
+}
+
+QByteArray SettingManager::getMiniMonitorGeometry() const
+{
+    return mSettings->value(SettingKeys::MiniMonitorGeometry).toByteArray();
+}
+
 void SettingManager::setLaunchInKioskMode(bool value)
 {
     mSettings->setValue(SettingKeys::LaunchInKioskMode, value);
