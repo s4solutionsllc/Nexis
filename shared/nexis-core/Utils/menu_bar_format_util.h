@@ -12,6 +12,11 @@ class NEXISCORESHARED_EXPORT MenuBarFormatUtil
 {
 public:
     static QString formatTitle(int cpuPercent, int memPercent);
+
+    // SSO-23853: formats the Dashboard health score (same 0-100 composite
+    // value/label as HealthScoreCalculator::compositeScore()/scoreLabel())
+    // for the menu-bar title, replacing the raw CPU/MEM readout.
+    static QString formatHealthTitle(int healthScore, const QString &scoreLabel);
 };
 
 #endif // MENU_BAR_FORMAT_UTIL_H
