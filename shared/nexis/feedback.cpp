@@ -2,6 +2,7 @@
 #include "ui_feedback.h"
 
 #include <QDesktopServices>
+#include <QThreadPool>
 #include <QUrl>
 
 const QString Feedback::ISSUES_BASE_URL =
@@ -19,22 +20,34 @@ Feedback::Feedback(QWidget *parent) :
     ui->setupUi(this);
 }
 
+void Feedback::openIssueTemplate(const QString &templateFile)
+{
+    const QUrl url(ISSUES_BASE_URL + templateFile);
+#ifdef Q_OS_LINUX
+    // QDesktopServices::openUrl() can block the calling thread on some Linux
+    // desktops (e.g. a registered but unresponsive xdg-desktop-portal backend,
+    // GH#424) — dispatch it off the UI thread so the dialog always closes
+    // immediately regardless of what the URL handler does.
+    QThreadPool::globalInstance()->start([url]() { QDesktopServices::openUrl(url); });
+#else
+    QDesktopServices::openUrl(url);
+#endif
+    close();
+}
+
 void Feedback::on_btnReportBug_clicked()
 {
-    QDesktopServices::openUrl(QUrl(ISSUES_BASE_URL + "bug_report.yml"));
-    close();
+    openIssueTemplate("bug_report.yml");
 }
 
 void Feedback::on_btnRequestFeature_clicked()
 {
-    QDesktopServices::openUrl(QUrl(ISSUES_BASE_URL + "feature_request.yml"));
-    close();
+    openIssueTemplate("feature_request.yml");
 }
 
 void Feedback::on_btnFeedback_clicked()
 {
-    QDesktopServices::openUrl(QUrl(ISSUES_BASE_URL + "feedback.yml"));
-    close();
+    openIssueTemplate("feedback.yml");
 }
 
 void Feedback::on_btnClose_clicked()
