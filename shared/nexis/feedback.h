@@ -22,6 +22,8 @@ private slots:
     void on_btnClose_clicked();
 
 private:
+    void openIssueTemplate(const QString &templateFile);
+
     Ui::Feedback *ui;
 
     static const QString ISSUES_BASE_URL;
