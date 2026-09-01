@@ -8,7 +8,8 @@ on:
   # Required by GitHub merge queue (SSO-23951): a queued PR is tested as a
   # speculative merge commit on a `merge_group` event, not a `pull_request` one.
   # Without this trigger the required check never reports and the entry stalls in
-  # the queue forever. Harmless no-op until the queue is switched on.
+  # the queue forever. Merge queue enabled on the native ruleset and verified
+  # end-to-end via this trigger (SSO-23959).
   merge_group:
   workflow_dispatch:
 
