@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-08-31 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23853, SSO-23854) | Version 2.10.0
+> Last updated: 2026-08-31 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23859, SSO-23860, SSO-23853, SSO-23854) | Version 2.10.0
 
 ---
 
@@ -769,6 +769,10 @@ The `nexis-core` static library provides platform-abstracted system information 
 ### Cleaner Action Interpreter (SSO-23859, Deep Cleaning Engine epic SSO-15366)
 
 `SandboxedPathResolver` (`shared/nexis-core/Utils/sandboxed_path_resolver.h`) resolves glob/walk/regex matches confined to a caller-supplied base directory — a traversal segment, absolute-path pattern, or symlink hop out of the sandbox is silently dropped, never surfaced. `CleanerActionInterpreter` (`shared/nexis/Managers/cleaner_action_interpreter.h`) builds on it to execute a parsed `Cleaner`'s selected-option actions as a `TrustSafetyActionProvider` (SSO-15380), so dry-run preview, live confirm, and cancel come from the existing `TrustSafetyPreviewDialog`/`TrustSafetyRunner` with no new confirmation dialog. Only the generic `$$home$$`/`$$cache$$` CleanerML variables are expanded; an action whose path still contains an app-specific token (e.g. `$$profile$$`) is dropped at scan time (browser-profile discovery is SSO-23860 scope). `sqlite.vacuum` runs `VACUUM` on the target database and estimates reclaimable bytes via `PRAGMA freelist_count`/`page_size` — the CleanerML model carries no per-row/table delete predicate for this command, so row/table deletion is out of scope here (also SSO-23860). Not yet wired into a page.
+
+### Browser Deep-Clean Engine (SSO-23860, Deep Cleaning Engine epic SSO-15366)
+
+`BrowserProfileLocator` (`shared/nexis-core/Utils/browser_profile_locator.h`) discovers installed Firefox and Chromium-family (Chrome, Chromium, Brave, Edge) browser profiles under a caller-supplied home dir and returns each profile's history/cookie DB paths — `places.sqlite`/`cookies.sqlite` for Firefox, `History`/`Cookies` (checking the modern `Network/Cookies` location first, then the pre-Chrome-96 profile-root path) for Chromium-family. `BrowserSqliteCleaner` (`shared/nexis/Managers/browser_sqlite_cleaner.h`) is a `TrustSafetyActionProvider` (SSO-15380) over those profiles: it deletes matched history/cookie rows — never whole DB files — and runs `VACUUM` afterward, same preview/confirm/cancel seam as `CleanerActionInterpreter`. On Firefox, `moz_places` rows still referenced by `moz_bookmarks.fk` are excluded from the history delete (in both the preview count and the live run) so bookmarked pages — including ones with zero visits — survive. A selective cookie keeper allowlist (exact host or subdomain match, case-insensitive) excludes chosen domains from deletion; since that subdomain rule isn't expressible in a single `WHERE`, cookie rows are read back, decided in C++, and deleted by `rowid`. Before any live write, a `BEGIN IMMEDIATE`/`ROLLBACK` probe with a zero busy-timeout detects a DB still held open for writing by a running browser and refuses with a clear error instead of racing it. Not yet wired into a page (same as SSO-23859).
 
 ---
 
