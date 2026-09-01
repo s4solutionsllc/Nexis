@@ -296,7 +296,11 @@ QList<Package> PackageToolLinux::getPacmanPackages()
 {
     QList<Package> packages;
 
-    ExecResult result = CommandUtil::execWithStatus("bash", {"-c", "pacman -Qi 2> /dev/null"}, 60000);
+    // GH#426: pacman -Qi field labels (Name, Description, Groups, ...) are
+    // translated under a non-English locale, so the key == "Name" match
+    // below silently drops every package. Force English output like every
+    // other locale-sensitive parser in this file (apt, apt-mark, ...).
+    ExecResult result = CommandUtil::execWithStatus("bash", {"-c", "LANG=C pacman -Qi 2> /dev/null"}, 60000);
     if (!result.ok()) {
         qCritical() << result.error;
         return packages;
