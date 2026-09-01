@@ -27,6 +27,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qt6-l10n-tools qt6-tools-dev-tools
+          # Debian/Ubuntu Qt6 packaging installs tools under /usr/lib/qt6/bin,
+          # not on PATH by default (unlike the Qt5 packaging this repo used before).
+          echo "/usr/lib/qt6/bin" >> "$GITHUB_PATH"
 
       - name: Run lupdate
         run: |
