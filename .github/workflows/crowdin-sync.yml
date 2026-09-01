@@ -43,7 +43,9 @@ jobs:
           # ("GitHub Actions is not permitted to create or approve pull requests", SSO-24052).
           # CROWDIN_SYNC_TOKEN is a PAT-backed secret so the sync authenticates as a real
           # identity instead — narrower blast radius than flipping that repo-wide setting.
-          GITHUB_TOKEN: ${{ secrets.CROWDIN_SYNC_TOKEN }}
+          # Falls back to GITHUB_TOKEN until the secret is provisioned (SSO-24054) so the
+          # branch-push half of this job (which works today) doesn't regress in the meantime.
+          GITHUB_TOKEN: ${{ secrets.CROWDIN_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
@@ -55,11 +57,12 @@ jobs:
       - name: Normalize translations with lupdate
         run: |
           set -euo pipefail
-          # Crowdin pushes new translations to l10n_crowdin_translations using
-          # GITHUB_TOKEN, which suppresses workflow_run triggers — so the
-          # standalone lupdate.yml workflow never runs on that push. Do the
-          # normalization here, in the same job, then commit it back to the
-          # localization branch so the PR Crowdin opened picks it up.
+          # lupdate.yml is workflow_dispatch-only (manual backstop) precisely so it
+          # never runs automatically on the Crowdin push to l10n_crowdin_translations,
+          # regardless of which token/actor made that push. This is the single
+          # authoritative normalization path — do it here, in the same job, then
+          # commit it back to the localization branch so the PR Crowdin opened
+          # picks it up.
           if ! git ls-remote --exit-code --heads origin l10n_crowdin_translations >/dev/null; then
             echo "No l10n_crowdin_translations branch — nothing to normalize."
             exit 0
