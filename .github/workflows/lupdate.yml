@@ -1,15 +1,17 @@
 name: Qt lupdate
 
 on:
-  push:
-    branches:
-      - l10n_crowdin_translations
+  workflow_dispatch:
 
-# Primary normalization path is inlined in crowdin-sync.yml because the
-# Crowdin action uses GITHUB_TOKEN, whose pushes do not fire workflow
-# triggers. This workflow is kept as a manual/edge-case backstop for
-# pushes to l10n_crowdin_translations from a non-token actor; the
-# explicit permissions block is required for its commit step.
+# Primary normalization path is inlined in crowdin-sync.yml, which is the
+# single authoritative normalizer for l10n_crowdin_translations. This
+# workflow is workflow_dispatch-only — a manual edge-case backstop — and
+# deliberately does NOT trigger on push: a push-triggered run here would
+# race the inline normalize step in crowdin-sync.yml (both commit
+# 'chore(i18n): normalize with lupdate' to the same branch), which is
+# exactly the failure mode this workflow must not reintroduce now that
+# CROWDIN_SYNC_TOKEN pushes (a non-token-actor push) can fire triggers.
+# The explicit permissions block is required for its commit step.
 permissions:
   contents: write
 
