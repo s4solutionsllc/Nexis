@@ -60,6 +60,13 @@ jobs:
       - name: Normalize translations with lupdate
         run: |
           set -euo pipefail
+          # crowdin/github-action is a Docker container action that runs as root
+          # inside the container, and its own git operations (branch switch, push)
+          # leave the bind-mounted .git/ owned by root. This step runs as the
+          # unprivileged runner user, so reclaim ownership before touching git —
+          # otherwise `git commit` fails with "could not open .git/COMMIT_EDITMSG:
+          # Permission denied" (SSO-24079).
+          sudo chown -R "$(id -u):$(id -g)" "$GITHUB_WORKSPACE"
           # lupdate.yml is workflow_dispatch-only (manual backstop) precisely so it
           # never runs automatically on the Crowdin push to l10n_crowdin_translations,
           # regardless of which token/actor made that push. This is the single
