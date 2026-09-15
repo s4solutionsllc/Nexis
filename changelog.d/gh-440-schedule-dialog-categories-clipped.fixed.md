@@ -1,0 +1,1 @@
+Fixed the "Categories to Clean" list being vertically clipped in the System Cleaner Schedule dialog on setups with taller widget metrics (e.g. KDE Breeze) or limited screen height. The dialog body now scrolls instead of cutting off content, with Save/Cancel always reachable (GH#440).
