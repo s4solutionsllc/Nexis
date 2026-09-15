@@ -23,11 +23,10 @@ jobs:
   publish-aur:
     name: Update AUR package
     runs-on: ubuntu-latest
-    # contents:write is needed by the post-publish step that commits the
-    # regenerated PKGBUILD/.SRCINFO back to `native`. The top-level default
-    # stays read-only; only this job is granted write.
+    # The sync-back step writes via a PAT (see its env block), so the job needs
+    # no elevated GITHUB_TOKEN permissions.
     permissions:
-      contents: write
+      contents: read
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
@@ -37,11 +36,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Pin to the branch we publish from and write back to. For
-          # workflow_run events checkout would otherwise resolve the default
-          # branch HEAD implicitly; being explicit keeps the post-publish
-          # `git push origin HEAD:native` a fast-forward.
+          # Pin to the branch we publish from. For workflow_run events checkout
+          # would otherwise resolve the default branch HEAD implicitly.
           ref: native
+          # The sync-back step pushes with a PAT; a persisted GITHUB_TOKEN
+          # header would silently override it and the PR's CI would not run.
+          persist-credentials: false
 
       - name: Extract version from tag
         id: version
@@ -110,53 +110,86 @@ jobs:
         if: steps.gate.outputs.SHOULD_BUMP == 'true'
         env:
           VERSION: ${{ steps.version.outputs.VERSION }}
+          AUR_SSH_KEY: ${{ secrets.AUR_SSH_KEY }}
+          AUR_GIT_URL: ssh://aur@aur.archlinux.org/nexis.git
+          # `native` is ruleset-protected (required status checks, no bypass
+          # actors), so a direct bot push is rejected — every mirror-back since
+          # 2026-08-25 would have failed here. Open a PR instead and let the
+          # merge queue land it. That needs a PAT-backed identity: the default
+          # GITHUB_TOKEN is blocked from creating PRs in this repo (SSO-24052),
+          # and a GITHUB_TOKEN push would not trigger the PR's required checks
+          # either. CROWDIN_SYNC_TOKEN is the repo's existing PAT-backed
+          # identity (crowdin-sync.yml); reuse it.
+          GH_TOKEN: ${{ secrets.CROWDIN_SYNC_TOKEN }}
         # Root cause of the recurring linux/aur drift: the steps above sed
         # pkgver/pkgrel into an ephemeral checkout, and KSXGitHub/
         # github-actions-deploy-aur fills sha256sums (updpkgsums) + regenerates
         # .SRCINFO inside *its own* clone of the AUR repo. None of that ever
         # lands back here, so the in-repo copies go stale after every release
         # (found at 2.3.x while AUR was 2.4.0). Pull the authoritative published
-        # files straight from AUR cgit and commit them so the repo self-heals.
+        # files back and open a PR so the repo self-heals.
+        #
+        # Source: clone the AUR package repo over SSH. The cgit `plain/`
+        # endpoint used previously is served from a replica that lagged the
+        # push by more than the 5 minutes we polled on every release that
+        # reached this step (2.6.1, 2.10.0), so the mirror never actually
+        # happened. The SSH git endpoint is the repo the publish step just
+        # pushed to — no replica, no lag.
         run: |
-          fetch_aur() {
-            curl -fsSL --retry 5 --retry-delay 3 \
-              "https://aur.archlinux.org/cgit/aur.git/plain/$1?h=nexis"
-          }
-          # The "Publish to AUR" step above has already pushed the new version;
-          # this step only mirrors the published files back into the repo. The
-          # cgit `plain/` endpoint is served from a replica that can lag the SSH
-          # push by *minutes* — far longer than the RPC metadata DB, which is
-          # why v2.6.1 failed here at 60s while the RPC `info` endpoint already
-          # showed 2.6.1-1 (SSO-7306). Poll cgit longer (up to ~5 min), but if
-          # it still hasn't caught up, emit a warning and exit 0 rather than
-          # red-failing an already-successful publish — the next release (or a
-          # manual re-run) self-heals the in-repo mirror.
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::CROWDIN_SYNC_TOKEN is not set — cannot open the linux/aur sync PR. The AUR publish itself succeeded."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AUR_SSH_KEY" > ~/.ssh/aur_sync
+          chmod 600 ~/.ssh/aur_sync
+          ssh-keyscan -t ed25519,rsa aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/aur_sync -o IdentitiesOnly=yes"
+
+          AUR_CLONE=$(mktemp -d)
           PUBLISHED_VER=""
-          for attempt in $(seq 1 30); do
-            PUBLISHED_VER=$(fetch_aur PKGBUILD | awk -F= '/^pkgver=/{print $2; exit}')
-            if [ "$PUBLISHED_VER" = "$VERSION" ]; then
-              break
+          for attempt in $(seq 1 5); do
+            rm -rf "$AUR_CLONE"
+            if git clone --quiet --depth=1 "$AUR_GIT_URL" "$AUR_CLONE" 2>/dev/null; then
+              PUBLISHED_VER=$(awk -F= '/^pkgver=/{print $2; exit}' "$AUR_CLONE/PKGBUILD")
+              [ "$PUBLISHED_VER" = "$VERSION" ] && break
             fi
-            echo "AUR cgit shows '$PUBLISHED_VER', waiting for '$VERSION' (attempt $attempt/30)"
+            echo "AUR repo shows '${PUBLISHED_VER:-<clone failed>}', waiting for '$VERSION' (attempt $attempt/5)"
             sleep 10
           done
           if [ "$PUBLISHED_VER" != "$VERSION" ]; then
-            echo "::warning::AUR cgit has not reflected $VERSION after ~5 min of polling. The publish itself succeeded (see the 'Publish to AUR' step and the AUR RPC info endpoint); only the in-repo linux/aur mirror was skipped this run. It will self-heal on the next release or a manual re-run. Not failing the job."
+            echo "::warning::AUR repo does not show $VERSION after 5 attempts. The publish itself succeeded (see the 'Publish to AUR' step); only the in-repo linux/aur mirror was skipped this run. It will self-heal on the next release or a manual re-run. Not failing the job."
             exit 0
           fi
-          fetch_aur PKGBUILD  > linux/aur/PKGBUILD
-          fetch_aur .SRCINFO  > linux/aur/.SRCINFO
+
+          cp "$AUR_CLONE/PKGBUILD" linux/aur/PKGBUILD
+          cp "$AUR_CLONE/.SRCINFO" linux/aur/.SRCINFO
 
           if git diff --quiet -- linux/aur/PKGBUILD linux/aur/.SRCINFO; then
             echo "linux/aur/ already matches published AUR state — nothing to commit"
             exit 0
           fi
+
+          BRANCH="ci/aur-sync-${VERSION}"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
           git add linux/aur/PKGBUILD linux/aur/.SRCINFO
           git commit -m "chore(aur): sync packaging files to ${VERSION}" \
-            -m "Mirror the published AUR PKGBUILD/.SRCINFO back into the repo so linux/aur/ stops drifting from what users install. These files are CI-managed (pkgver/pkgrel sed'd here, sha256sums + .SRCINFO regenerated by the deploy-aur action), so they cannot be kept correct by hand — this pulls the authoritative post-publish state from AUR cgit."
-          # GITHUB_TOKEN-authored pushes do not fire other workflows (same
-          # reason noted in lupdate.yml), so this won't retrigger build/codeql
-          # or loop back into Release -> this job.
-          git push origin HEAD:native
+            -m "Mirror the published AUR PKGBUILD/.SRCINFO back into the repo so linux/aur/ stops drifting from what users install. These files are CI-managed (pkgver/pkgrel sed'd in aur.yml, sha256sums + .SRCINFO regenerated by the deploy-aur action), so they cannot be kept correct by hand — this pulls the authoritative post-publish state from the AUR git repo."
+          # Push as the PAT identity (checkout ran with persist-credentials:
+          # false, so no GITHUB_TOKEN header is left to override this). A
+          # re-run for the same version simply refreshes the branch.
+          git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
+
+          PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -z "$PR" ]; then
+            PR=$(gh pr create --repo "$GITHUB_REPOSITORY" --base native --head "$BRANCH" \
+              --title "chore(aur): sync packaging files to ${VERSION}" \
+              --body "Automated by aur.yml after publishing nexis ${VERSION} to the AUR: mirrors the published PKGBUILD/.SRCINFO back into linux/aur/ so the repo copy matches what users install. Auto-merge is enabled; it lands through the merge queue once required checks pass." \
+              | grep -oE '[0-9]+$')
+          fi
+          gh pr merge --repo "$GITHUB_REPOSITORY" --auto --squash "$PR"
+          echo "Opened/updated PR #$PR with auto-merge enabled"
