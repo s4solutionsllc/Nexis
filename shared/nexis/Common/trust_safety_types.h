@@ -76,6 +76,19 @@ public:
     virtual void scan(QAtomicInt *cancelled,
                        const std::function<void(const TrustSafetyActionItem &)> &itemFound) = 0;
 
+    // Optional hook called once with the full selected batch before the
+    // per-item performItem() loop starts (never called for a dry run).
+    // Providers whose items can require a shared elevation prompt (e.g.
+    // pkexec/polkit) should use this to perform that elevated work as one
+    // batched operation instead of once per item — see SystemCleanerProvider
+    // for the reference implementation (GH#441). Default is a no-op so
+    // providers that don't need batching are unaffected.
+    virtual void beginExecution(const QList<TrustSafetyActionItem> &items, bool dryRun)
+    {
+        Q_UNUSED(items);
+        Q_UNUSED(dryRun);
+    }
+
     // Perform the underlying operation for a single item, or simulate it when
     // dryRun is true. dryRun MUST NOT cause any filesystem/registry/service
     // side effects — it still does enough work (e.g. stat a path) to report

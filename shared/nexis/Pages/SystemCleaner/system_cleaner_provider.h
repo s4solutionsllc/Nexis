@@ -11,6 +11,7 @@
 #include <Tools/package_tool_shared.h>
 
 #include <QFileInfoList>
+#include <QSet>
 #include <QStringList>
 
 class CleanerService;
@@ -56,12 +57,19 @@ public:
     void scan(QAtomicInt *cancelled,
               const std::function<void(const TrustSafetyActionItem &)> &itemFound) override;
 
+    void beginExecution(const QList<TrustSafetyActionItem> &items, bool dryRun) override;
+
     TrustSafetyActionResult performItem(const TrustSafetyActionItem &item, bool dryRun) override;
 
 private:
     Config         mConfig;
     CleanerService *mCleanerService;
     ToolManager    *mToolManager;
+
+    // GH#441: paths already removed by the single batched cleanFiles() call
+    // in beginExecution(), so performItem() doesn't re-trigger a separate
+    // elevated removal (and a separate pkexec prompt) per item.
+    QSet<QString>  mBatchRemovedPaths;
 };
 
 #endif // SYSTEM_CLEANER_PROVIDER_H
