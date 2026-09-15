@@ -112,6 +112,8 @@ TrustSafetyRunSummary TrustSafetyRunner::executeSynchronous(
     if (!provider)
         return summary;
 
+    provider->beginExecution(items, dryRun);
+
     int done = 0;
     for (const TrustSafetyActionItem &item : items) {
         // Checked between items (not preempted mid-item) — matches the
