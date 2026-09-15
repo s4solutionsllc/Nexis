@@ -23,6 +23,8 @@ error rather than recording a partial (misleadingly low) snapshot.
 import json
 import os
 import sys
+import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,12 +38,37 @@ LAUNCHPAD_ARCHIVE = "https://api.launchpad.net/devel/~s4solutionsllc/+archive/ub
 AUR_RPC = "https://aur.archlinux.org/rpc/v5/info?arg[]=nexis"
 
 
+FETCH_ATTEMPTS = 4
+FETCH_TIMEOUT = 120
+
+
 def fetch_json(url, github=False):
+    """GET a JSON document, retrying transient failures with backoff.
+
+    Launchpad in particular is fetched once per published binary and is
+    intermittently slow enough to trip a single 60s read timeout, which took
+    the whole nightly run down (Sep 2026). Retry timeouts, connection errors
+    and 5xx/429 responses; let 4xx and JSON errors fail loudly as before.
+    """
     req = urllib.request.Request(url, headers={"User-Agent": "nexis-install-stats"})
     if github and TOKEN:
         req.add_header("Authorization", f"Bearer {TOKEN}")
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.load(resp)
+    for attempt in range(1, FETCH_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=FETCH_TIMEOUT) as resp:
+                return json.load(resp)
+        except urllib.error.HTTPError as exc:
+            if exc.code < 500 and exc.code != 429:
+                raise
+            err = exc
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            err = exc
+        if attempt == FETCH_ATTEMPTS:
+            raise err
+        delay = 5 * 2 ** (attempt - 1)
+        print(f"fetch {url}: {err!r} (attempt {attempt}/{FETCH_ATTEMPTS}), retrying in {delay}s",
+              file=sys.stderr)
+        time.sleep(delay)
 
 
 def classify(asset_name):
