@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # Validates fragment filenames (<slug>.<type>.md) and bodies. Does NOT
       # require that a PR add a fragment — dependabot and chore PRs legitimately
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Verify docs/APPLICATION_OVERVIEW.md stats are regenerated
         run: python3 scripts/gen_doc_stats.py --check
