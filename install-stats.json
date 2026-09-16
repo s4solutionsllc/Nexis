@@ -1,0 +1,2011 @@
+[
+  {
+    "date": "2026-07-05",
+    "totals": {
+      "all": 3262,
+      "byChannel": {
+        "deb-direct": 1170,
+        "appimage": 1600,
+        "dmg-direct": 281,
+        "brew": 0,
+        "apt": 211,
+        "aur": 0
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.2",
+      "byChannel": {
+        "deb-direct": 8,
+        "appimage": 23,
+        "dmg-direct": 4,
+        "brew": 0,
+        "apt": 0,
+        "aur": 0
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.695757
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1421,
+        "arm64": 179
+      },
+      "aptBySeries": {
+        "resolute": 0,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-07",
+    "totals": {
+      "all": 3314,
+      "byChannel": {
+        "deb-direct": 1188,
+        "appimage": 1632,
+        "dmg-direct": 283,
+        "brew": 0,
+        "apt": 211,
+        "aur": 0
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.2",
+      "byChannel": {
+        "deb-direct": 26,
+        "appimage": 55,
+        "dmg-direct": 6,
+        "brew": 0,
+        "apt": 0,
+        "aur": 0
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.603772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1451,
+        "arm64": 181
+      },
+      "aptBySeries": {
+        "resolute": 0,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-08",
+    "totals": {
+      "all": 3380,
+      "byChannel": {
+        "deb-direct": 1202,
+        "appimage": 1668,
+        "dmg-direct": 283,
+        "brew": 5,
+        "apt": 211,
+        "aur": 11
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 4,
+        "appimage": 18,
+        "dmg-direct": 0,
+        "brew": 5,
+        "apt": 0,
+        "aur": 11
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.603772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1479,
+        "arm64": 189
+      },
+      "aptBySeries": {
+        "resolute": 0,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-09",
+    "totals": {
+      "all": 3419,
+      "byChannel": {
+        "deb-direct": 1211,
+        "appimage": 1691,
+        "dmg-direct": 285,
+        "brew": 5,
+        "apt": 211,
+        "aur": 16
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 9,
+        "appimage": 40,
+        "dmg-direct": 1,
+        "brew": 5,
+        "apt": 0,
+        "aur": 16
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.603772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1498,
+        "arm64": 193
+      },
+      "aptBySeries": {
+        "resolute": 0,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-10",
+    "totals": {
+      "all": 3434,
+      "byChannel": {
+        "deb-direct": 1211,
+        "appimage": 1703,
+        "dmg-direct": 286,
+        "brew": 5,
+        "apt": 211,
+        "aur": 18
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 9,
+        "appimage": 51,
+        "dmg-direct": 2,
+        "brew": 5,
+        "apt": 0,
+        "aur": 18
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.603772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1509,
+        "arm64": 194
+      },
+      "aptBySeries": {
+        "resolute": 0,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-11",
+    "totals": {
+      "all": 3452,
+      "byChannel": {
+        "deb-direct": 1213,
+        "appimage": 1713,
+        "dmg-direct": 286,
+        "brew": 5,
+        "apt": 211,
+        "aur": 24
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 10,
+        "appimage": 61,
+        "dmg-direct": 2,
+        "brew": 5,
+        "apt": 0,
+        "aur": 24
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.603772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1519,
+        "arm64": 194
+      },
+      "aptBySeries": {
+        "resolute": 0,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-12",
+    "totals": {
+      "all": 3483,
+      "byChannel": {
+        "deb-direct": 1223,
+        "appimage": 1730,
+        "dmg-direct": 287,
+        "brew": 5,
+        "apt": 211,
+        "aur": 27
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 19,
+        "appimage": 77,
+        "dmg-direct": 2,
+        "brew": 5,
+        "apt": 0,
+        "aur": 27
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.603772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1533,
+        "arm64": 197
+      },
+      "aptBySeries": {
+        "resolute": 0,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-13",
+    "totals": {
+      "all": 3501,
+      "byChannel": {
+        "deb-direct": 1228,
+        "appimage": 1741,
+        "dmg-direct": 287,
+        "brew": 5,
+        "apt": 211,
+        "aur": 29
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 24,
+        "appimage": 87,
+        "dmg-direct": 2,
+        "brew": 5,
+        "apt": 0,
+        "aur": 29
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.603772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1543,
+        "arm64": 198
+      },
+      "aptBySeries": {
+        "resolute": 0,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-14",
+    "totals": {
+      "all": 3509,
+      "byChannel": {
+        "deb-direct": 1228,
+        "appimage": 1747,
+        "dmg-direct": 288,
+        "brew": 5,
+        "apt": 212,
+        "aur": 29
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 24,
+        "appimage": 93,
+        "dmg-direct": 2,
+        "brew": 5,
+        "apt": 1,
+        "aur": 29
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.524013
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1548,
+        "arm64": 199
+      },
+      "aptBySeries": {
+        "resolute": 1,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-15",
+    "totals": {
+      "all": 3533,
+      "byChannel": {
+        "deb-direct": 1236,
+        "appimage": 1757,
+        "dmg-direct": 290,
+        "brew": 7,
+        "apt": 212,
+        "aur": 31
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 32,
+        "appimage": 103,
+        "dmg-direct": 4,
+        "brew": 7,
+        "apt": 1,
+        "aur": 31
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.524013
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1557,
+        "arm64": 200
+      },
+      "aptBySeries": {
+        "resolute": 1,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-16",
+    "totals": {
+      "all": 3543,
+      "byChannel": {
+        "deb-direct": 1240,
+        "appimage": 1762,
+        "dmg-direct": 290,
+        "brew": 7,
+        "apt": 213,
+        "aur": 31
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 36,
+        "appimage": 108,
+        "dmg-direct": 4,
+        "brew": 7,
+        "apt": 2,
+        "aur": 31
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.524013
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1562,
+        "arm64": 200
+      },
+      "aptBySeries": {
+        "resolute": 2,
+        "questing": 35,
+        "noble": 163,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-17",
+    "totals": {
+      "all": 3556,
+      "byChannel": {
+        "deb-direct": 1241,
+        "appimage": 1769,
+        "dmg-direct": 290,
+        "brew": 7,
+        "apt": 216,
+        "aur": 33
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 36,
+        "appimage": 115,
+        "dmg-direct": 4,
+        "brew": 7,
+        "apt": 3,
+        "aur": 33
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.524013
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1567,
+        "arm64": 202
+      },
+      "aptBySeries": {
+        "resolute": 3,
+        "questing": 35,
+        "noble": 165,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-18",
+    "totals": {
+      "all": 3577,
+      "byChannel": {
+        "deb-direct": 1247,
+        "appimage": 1782,
+        "dmg-direct": 290,
+        "brew": 7,
+        "apt": 217,
+        "aur": 34
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 41,
+        "appimage": 128,
+        "dmg-direct": 4,
+        "brew": 7,
+        "apt": 4,
+        "aur": 34
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.524013
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1576,
+        "arm64": 206
+      },
+      "aptBySeries": {
+        "resolute": 4,
+        "questing": 35,
+        "noble": 165,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-20",
+    "totals": {
+      "all": 3603,
+      "byChannel": {
+        "deb-direct": 1254,
+        "appimage": 1794,
+        "dmg-direct": 291,
+        "brew": 8,
+        "apt": 219,
+        "aur": 37
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 47,
+        "appimage": 139,
+        "dmg-direct": 5,
+        "brew": 8,
+        "apt": 4,
+        "aur": 37
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.524013
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1587,
+        "arm64": 207
+      },
+      "aptBySeries": {
+        "resolute": 4,
+        "questing": 35,
+        "noble": 167,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-21",
+    "totals": {
+      "all": 3631,
+      "byChannel": {
+        "deb-direct": 1262,
+        "appimage": 1808,
+        "dmg-direct": 293,
+        "brew": 9,
+        "apt": 219,
+        "aur": 40
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 52,
+        "appimage": 150,
+        "dmg-direct": 6,
+        "brew": 9,
+        "apt": 4,
+        "aur": 40
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.454258
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1597,
+        "arm64": 211
+      },
+      "aptBySeries": {
+        "resolute": 4,
+        "questing": 35,
+        "noble": 167,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-22",
+    "totals": {
+      "all": 3636,
+      "byChannel": {
+        "deb-direct": 1263,
+        "appimage": 1812,
+        "dmg-direct": 293,
+        "brew": 9,
+        "apt": 219,
+        "aur": 40
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 52,
+        "appimage": 153,
+        "dmg-direct": 6,
+        "brew": 9,
+        "apt": 4,
+        "aur": 40
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.454258
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1600,
+        "arm64": 212
+      },
+      "aptBySeries": {
+        "resolute": 4,
+        "questing": 35,
+        "noble": 167,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-23",
+    "totals": {
+      "all": 3658,
+      "byChannel": {
+        "deb-direct": 1269,
+        "appimage": 1822,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 222,
+        "aur": 41
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 56,
+        "appimage": 163,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 4,
+        "aur": 41
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.454258
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1610,
+        "arm64": 212
+      },
+      "aptBySeries": {
+        "resolute": 4,
+        "questing": 35,
+        "noble": 170,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-24",
+    "totals": {
+      "all": 3681,
+      "byChannel": {
+        "deb-direct": 1271,
+        "appimage": 1835,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 225,
+        "aur": 46
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 58,
+        "appimage": 175,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 6,
+        "aur": 46
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.454258
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1622,
+        "arm64": 213
+      },
+      "aptBySeries": {
+        "resolute": 6,
+        "questing": 35,
+        "noble": 171,
+        "jammy": 13
+      }
+    }
+  },
+  {
+    "date": "2026-07-25",
+    "totals": {
+      "all": 3699,
+      "byChannel": {
+        "deb-direct": 1275,
+        "appimage": 1846,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 228,
+        "aur": 46
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 61,
+        "appimage": 186,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 6,
+        "aur": 46
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.454258
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1631,
+        "arm64": 215
+      },
+      "aptBySeries": {
+        "resolute": 6,
+        "questing": 35,
+        "noble": 173,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-07-26",
+    "totals": {
+      "all": 3713,
+      "byChannel": {
+        "deb-direct": 1280,
+        "appimage": 1854,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 228,
+        "aur": 47
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 65,
+        "appimage": 194,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 6,
+        "aur": 47
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.454258
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1639,
+        "arm64": 215
+      },
+      "aptBySeries": {
+        "resolute": 6,
+        "questing": 35,
+        "noble": 173,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-07-27",
+    "totals": {
+      "all": 3722,
+      "byChannel": {
+        "deb-direct": 1283,
+        "appimage": 1859,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 229,
+        "aur": 47
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 68,
+        "appimage": 199,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 7,
+        "aur": 47
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.454258
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1643,
+        "arm64": 216
+      },
+      "aptBySeries": {
+        "resolute": 7,
+        "questing": 35,
+        "noble": 173,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-07-28",
+    "totals": {
+      "all": 3739,
+      "byChannel": {
+        "deb-direct": 1285,
+        "appimage": 1869,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 232,
+        "aur": 49
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 70,
+        "appimage": 209,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 8,
+        "aur": 49
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.393884
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1651,
+        "arm64": 218
+      },
+      "aptBySeries": {
+        "resolute": 8,
+        "questing": 35,
+        "noble": 175,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-07-29",
+    "totals": {
+      "all": 3754,
+      "byChannel": {
+        "deb-direct": 1297,
+        "appimage": 1871,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 233,
+        "aur": 49
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 82,
+        "appimage": 211,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 8,
+        "aur": 49
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.393884
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1653,
+        "arm64": 218
+      },
+      "aptBySeries": {
+        "resolute": 8,
+        "questing": 35,
+        "noble": 176,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-07-30",
+    "totals": {
+      "all": 3765,
+      "byChannel": {
+        "deb-direct": 1300,
+        "appimage": 1874,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 238,
+        "aur": 49
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 85,
+        "appimage": 214,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 9,
+        "aur": 49
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.393884
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1656,
+        "arm64": 218
+      },
+      "aptBySeries": {
+        "resolute": 9,
+        "questing": 35,
+        "noble": 180,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-07-31",
+    "totals": {
+      "all": 3783,
+      "byChannel": {
+        "deb-direct": 1307,
+        "appimage": 1883,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 239,
+        "aur": 50
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 92,
+        "appimage": 223,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 10,
+        "aur": 50
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.393884
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1664,
+        "arm64": 219
+      },
+      "aptBySeries": {
+        "resolute": 10,
+        "questing": 35,
+        "noble": 180,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-08-01",
+    "totals": {
+      "all": 3800,
+      "byChannel": {
+        "deb-direct": 1313,
+        "appimage": 1892,
+        "dmg-direct": 293,
+        "brew": 11,
+        "apt": 240,
+        "aur": 51
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 97,
+        "appimage": 232,
+        "dmg-direct": 6,
+        "brew": 11,
+        "apt": 10,
+        "aur": 51
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.393884
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1673,
+        "arm64": 219
+      },
+      "aptBySeries": {
+        "resolute": 10,
+        "questing": 35,
+        "noble": 181,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-08-02",
+    "totals": {
+      "all": 3814,
+      "byChannel": {
+        "deb-direct": 1316,
+        "appimage": 1898,
+        "dmg-direct": 293,
+        "brew": 14,
+        "apt": 242,
+        "aur": 51
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 99,
+        "appimage": 238,
+        "dmg-direct": 6,
+        "brew": 14,
+        "apt": 10,
+        "aur": 51
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.393884
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1678,
+        "arm64": 220
+      },
+      "aptBySeries": {
+        "resolute": 10,
+        "questing": 35,
+        "noble": 183,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-08-03",
+    "totals": {
+      "all": 3827,
+      "byChannel": {
+        "deb-direct": 1318,
+        "appimage": 1908,
+        "dmg-direct": 293,
+        "brew": 14,
+        "apt": 243,
+        "aur": 51
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 101,
+        "appimage": 248,
+        "dmg-direct": 6,
+        "brew": 14,
+        "apt": 10,
+        "aur": 51
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.393884
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1685,
+        "arm64": 223
+      },
+      "aptBySeries": {
+        "resolute": 10,
+        "questing": 35,
+        "noble": 184,
+        "jammy": 14
+      }
+    }
+  },
+  {
+    "date": "2026-08-04",
+    "totals": {
+      "all": 3833,
+      "byChannel": {
+        "deb-direct": 1320,
+        "appimage": 1910,
+        "dmg-direct": 293,
+        "brew": 14,
+        "apt": 245,
+        "aur": 51
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 103,
+        "appimage": 250,
+        "dmg-direct": 6,
+        "brew": 14,
+        "apt": 10,
+        "aur": 51
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.341489
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1687,
+        "arm64": 223
+      },
+      "aptBySeries": {
+        "resolute": 10,
+        "questing": 35,
+        "noble": 185,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-05",
+    "totals": {
+      "all": 3844,
+      "byChannel": {
+        "deb-direct": 1322,
+        "appimage": 1919,
+        "dmg-direct": 293,
+        "brew": 14,
+        "apt": 245,
+        "aur": 51
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 105,
+        "appimage": 259,
+        "dmg-direct": 6,
+        "brew": 14,
+        "apt": 10,
+        "aur": 51
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.341489
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1694,
+        "arm64": 225
+      },
+      "aptBySeries": {
+        "resolute": 10,
+        "questing": 35,
+        "noble": 185,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-06",
+    "totals": {
+      "all": 3849,
+      "byChannel": {
+        "deb-direct": 1323,
+        "appimage": 1923,
+        "dmg-direct": 293,
+        "brew": 14,
+        "apt": 245,
+        "aur": 51
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 106,
+        "appimage": 263,
+        "dmg-direct": 6,
+        "brew": 14,
+        "apt": 10,
+        "aur": 51
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.341489
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1698,
+        "arm64": 225
+      },
+      "aptBySeries": {
+        "resolute": 10,
+        "questing": 35,
+        "noble": 185,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-07",
+    "totals": {
+      "all": 3860,
+      "byChannel": {
+        "deb-direct": 1327,
+        "appimage": 1928,
+        "dmg-direct": 293,
+        "brew": 14,
+        "apt": 245,
+        "aur": 53
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 110,
+        "appimage": 268,
+        "dmg-direct": 6,
+        "brew": 14,
+        "apt": 10,
+        "aur": 53
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.341489
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1702,
+        "arm64": 226
+      },
+      "aptBySeries": {
+        "resolute": 10,
+        "questing": 35,
+        "noble": 185,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-08",
+    "totals": {
+      "all": 3885,
+      "byChannel": {
+        "deb-direct": 1339,
+        "appimage": 1937,
+        "dmg-direct": 293,
+        "brew": 15,
+        "apt": 247,
+        "aur": 54
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 115,
+        "appimage": 277,
+        "dmg-direct": 6,
+        "brew": 15,
+        "apt": 11,
+        "aur": 54
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.341489
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1711,
+        "arm64": 226
+      },
+      "aptBySeries": {
+        "resolute": 11,
+        "questing": 35,
+        "noble": 186,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-09",
+    "totals": {
+      "all": 3899,
+      "byChannel": {
+        "deb-direct": 1342,
+        "appimage": 1945,
+        "dmg-direct": 293,
+        "brew": 15,
+        "apt": 250,
+        "aur": 54
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 118,
+        "appimage": 285,
+        "dmg-direct": 6,
+        "brew": 15,
+        "apt": 11,
+        "aur": 54
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.341489
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1716,
+        "arm64": 229
+      },
+      "aptBySeries": {
+        "resolute": 11,
+        "questing": 35,
+        "noble": 189,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-10",
+    "totals": {
+      "all": 3915,
+      "byChannel": {
+        "deb-direct": 1345,
+        "appimage": 1955,
+        "dmg-direct": 293,
+        "brew": 15,
+        "apt": 253,
+        "aur": 54
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 121,
+        "appimage": 295,
+        "dmg-direct": 6,
+        "brew": 15,
+        "apt": 12,
+        "aur": 54
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.341489
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1725,
+        "arm64": 230
+      },
+      "aptBySeries": {
+        "resolute": 12,
+        "questing": 35,
+        "noble": 191,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-11",
+    "totals": {
+      "all": 3928,
+      "byChannel": {
+        "deb-direct": 1352,
+        "appimage": 1959,
+        "dmg-direct": 293,
+        "brew": 15,
+        "apt": 253,
+        "aur": 56
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 127,
+        "appimage": 299,
+        "dmg-direct": 6,
+        "brew": 15,
+        "apt": 12,
+        "aur": 56
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.296086
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1729,
+        "arm64": 230
+      },
+      "aptBySeries": {
+        "resolute": 12,
+        "questing": 35,
+        "noble": 191,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-12",
+    "totals": {
+      "all": 3946,
+      "byChannel": {
+        "deb-direct": 1357,
+        "appimage": 1970,
+        "dmg-direct": 295,
+        "brew": 15,
+        "apt": 253,
+        "aur": 56
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 132,
+        "appimage": 310,
+        "dmg-direct": 8,
+        "brew": 15,
+        "apt": 12,
+        "aur": 56
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.296086
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1738,
+        "arm64": 232
+      },
+      "aptBySeries": {
+        "resolute": 12,
+        "questing": 35,
+        "noble": 191,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-14",
+    "totals": {
+      "all": 3974,
+      "byChannel": {
+        "deb-direct": 1367,
+        "appimage": 1983,
+        "dmg-direct": 295,
+        "brew": 15,
+        "apt": 254,
+        "aur": 60
+      }
+    },
+    "latestVersion": {
+      "version": "2.8.3",
+      "byChannel": {
+        "deb-direct": 141,
+        "appimage": 323,
+        "dmg-direct": 8,
+        "brew": 15,
+        "apt": 12,
+        "aur": 60
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.296086
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1750,
+        "arm64": 233
+      },
+      "aptBySeries": {
+        "resolute": 12,
+        "questing": 35,
+        "noble": 192,
+        "jammy": 15
+      }
+    }
+  },
+  {
+    "date": "2026-08-15",
+    "totals": {
+      "all": 4266,
+      "byChannel": {
+        "deb-direct": 1411,
+        "appimage": 2134,
+        "dmg-direct": 298,
+        "brew": 21,
+        "apt": 288,
+        "aur": 114
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 1,
+        "appimage": 20,
+        "dmg-direct": 0,
+        "brew": 2,
+        "apt": 0,
+        "aur": 10
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.296086
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1864,
+        "arm64": 270
+      },
+      "aptBySeries": {
+        "resolute": 23,
+        "questing": 35,
+        "noble": 212,
+        "jammy": 18
+      }
+    }
+  },
+  {
+    "date": "2026-08-16",
+    "totals": {
+      "all": 4458,
+      "byChannel": {
+        "deb-direct": 1441,
+        "appimage": 2227,
+        "dmg-direct": 301,
+        "brew": 23,
+        "apt": 307,
+        "aur": 159
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 30,
+        "appimage": 113,
+        "dmg-direct": 3,
+        "brew": 4,
+        "apt": 0,
+        "aur": 55
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.296086
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1931,
+        "arm64": 296
+      },
+      "aptBySeries": {
+        "resolute": 29,
+        "questing": 35,
+        "noble": 224,
+        "jammy": 19
+      }
+    }
+  },
+  {
+    "date": "2026-08-17",
+    "totals": {
+      "all": 4553,
+      "byChannel": {
+        "deb-direct": 1458,
+        "appimage": 2276,
+        "dmg-direct": 303,
+        "brew": 27,
+        "apt": 318,
+        "aur": 171
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 47,
+        "appimage": 162,
+        "dmg-direct": 5,
+        "brew": 8,
+        "apt": 0,
+        "aur": 67
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.296086
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1972,
+        "arm64": 304
+      },
+      "aptBySeries": {
+        "resolute": 33,
+        "questing": 35,
+        "noble": 230,
+        "jammy": 20
+      }
+    }
+  },
+  {
+    "date": "2026-08-18",
+    "totals": {
+      "all": 4622,
+      "byChannel": {
+        "deb-direct": 1471,
+        "appimage": 2307,
+        "dmg-direct": 305,
+        "brew": 32,
+        "apt": 325,
+        "aur": 182
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 60,
+        "appimage": 192,
+        "dmg-direct": 7,
+        "brew": 13,
+        "apt": 0,
+        "aur": 78
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.256772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 1998,
+        "arm64": 309
+      },
+      "aptBySeries": {
+        "resolute": 35,
+        "questing": 35,
+        "noble": 235,
+        "jammy": 20
+      }
+    }
+  },
+  {
+    "date": "2026-08-19",
+    "totals": {
+      "all": 4695,
+      "byChannel": {
+        "deb-direct": 1483,
+        "appimage": 2352,
+        "dmg-direct": 307,
+        "brew": 33,
+        "apt": 332,
+        "aur": 188
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 71,
+        "appimage": 237,
+        "dmg-direct": 9,
+        "brew": 14,
+        "apt": 0,
+        "aur": 84
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.256772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 2036,
+        "arm64": 316
+      },
+      "aptBySeries": {
+        "resolute": 35,
+        "questing": 37,
+        "noble": 240,
+        "jammy": 20
+      }
+    }
+  },
+  {
+    "date": "2026-08-20",
+    "totals": {
+      "all": 4744,
+      "byChannel": {
+        "deb-direct": 1493,
+        "appimage": 2376,
+        "dmg-direct": 308,
+        "brew": 34,
+        "apt": 340,
+        "aur": 193
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 81,
+        "appimage": 260,
+        "dmg-direct": 10,
+        "brew": 15,
+        "apt": 0,
+        "aur": 89
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.256772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 2056,
+        "arm64": 320
+      },
+      "aptBySeries": {
+        "resolute": 35,
+        "questing": 37,
+        "noble": 247,
+        "jammy": 21
+      }
+    }
+  },
+  {
+    "date": "2026-08-21",
+    "totals": {
+      "all": 4807,
+      "byChannel": {
+        "deb-direct": 1511,
+        "appimage": 2402,
+        "dmg-direct": 308,
+        "brew": 35,
+        "apt": 349,
+        "aur": 202
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 98,
+        "appimage": 286,
+        "dmg-direct": 10,
+        "brew": 16,
+        "apt": 0,
+        "aur": 98
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.256772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 2078,
+        "arm64": 324
+      },
+      "aptBySeries": {
+        "resolute": 36,
+        "questing": 37,
+        "noble": 255,
+        "jammy": 21
+      }
+    }
+  },
+  {
+    "date": "2026-08-22",
+    "totals": {
+      "all": 4860,
+      "byChannel": {
+        "deb-direct": 1524,
+        "appimage": 2425,
+        "dmg-direct": 308,
+        "brew": 36,
+        "apt": 355,
+        "aur": 212
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 111,
+        "appimage": 309,
+        "dmg-direct": 10,
+        "brew": 17,
+        "apt": 0,
+        "aur": 108
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.256772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 2100,
+        "arm64": 325
+      },
+      "aptBySeries": {
+        "resolute": 37,
+        "questing": 37,
+        "noble": 260,
+        "jammy": 21
+      }
+    }
+  },
+  {
+    "date": "2026-08-23",
+    "totals": {
+      "all": 4895,
+      "byChannel": {
+        "deb-direct": 1529,
+        "appimage": 2443,
+        "dmg-direct": 308,
+        "brew": 36,
+        "apt": 358,
+        "aur": 221
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 116,
+        "appimage": 326,
+        "dmg-direct": 10,
+        "brew": 17,
+        "apt": 0,
+        "aur": 117
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.256772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 2115,
+        "arm64": 328
+      },
+      "aptBySeries": {
+        "resolute": 37,
+        "questing": 37,
+        "noble": 263,
+        "jammy": 21
+      }
+    }
+  },
+  {
+    "date": "2026-08-24",
+    "totals": {
+      "all": 4926,
+      "byChannel": {
+        "deb-direct": 1536,
+        "appimage": 2455,
+        "dmg-direct": 308,
+        "brew": 36,
+        "apt": 364,
+        "aur": 227
+      }
+    },
+    "latestVersion": {
+      "version": "2.9.1",
+      "byChannel": {
+        "deb-direct": 123,
+        "appimage": 338,
+        "dmg-direct": 10,
+        "brew": 17,
+        "apt": 0,
+        "aur": 123
+      }
+    },
+    "aur": {
+      "votes": 2,
+      "popularity": 0.256772
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 2124,
+        "arm64": 331
+      },
+      "aptBySeries": {
+        "resolute": 39,
+        "questing": 37,
+        "noble": 267,
+        "jammy": 21
+      }
+    }
+  },
+  {
+    "date": "2026-09-16",
+    "totals": {
+      "all": 5791,
+      "byChannel": {
+        "deb-direct": 1683,
+        "appimage": 2816,
+        "dmg-direct": 328,
+        "brew": 55,
+        "apt": 513,
+        "aur": 396
+      }
+    },
+    "latestVersion": {
+      "version": "2.10.0",
+      "byChannel": {
+        "deb-direct": 91,
+        "appimage": 256,
+        "dmg-direct": 7,
+        "brew": 11,
+        "apt": 51,
+        "aur": 132
+      }
+    },
+    "aur": {
+      "votes": 3,
+      "popularity": 0.89692
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 2430,
+        "arm64": 386
+      },
+      "aptBySeries": {
+        "resolute": 133,
+        "questing": 39,
+        "noble": 314,
+        "jammy": 27
+      }
+    }
+  }
+]
