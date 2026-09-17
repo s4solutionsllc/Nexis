@@ -2007,5 +2007,46 @@
         "jammy": 27
       }
     }
+  },
+  {
+    "date": "2026-09-17",
+    "totals": {
+      "all": 5804,
+      "byChannel": {
+        "deb-direct": 1684,
+        "appimage": 2827,
+        "dmg-direct": 328,
+        "brew": 55,
+        "apt": 513,
+        "aur": 397
+      }
+    },
+    "latestVersion": {
+      "version": "2.10.0",
+      "byChannel": {
+        "deb-direct": 92,
+        "appimage": 267,
+        "dmg-direct": 7,
+        "brew": 11,
+        "apt": 51,
+        "aur": 133
+      }
+    },
+    "aur": {
+      "votes": 3,
+      "popularity": 0.89692
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 2439,
+        "arm64": 388
+      },
+      "aptBySeries": {
+        "resolute": 133,
+        "questing": 39,
+        "noble": 314,
+        "jammy": 27
+      }
+    }
   }
 ]
