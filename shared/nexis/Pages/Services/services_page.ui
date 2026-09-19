@@ -329,9 +329,6 @@
       </item>
       <item>
        <widget class="QListWidget" name="listWidgetServices">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>

@@ -171,9 +171,6 @@
             <property name="cursor" stdset="0">
              <cursorShape>ArrowCursor</cursorShape>
             </property>
-            <property name="focusPolicy">
-             <enum>Qt::NoFocus</enum>
-            </property>
             <property name="styleSheet">
              <string notr="true"/>
             </property>

@@ -168,7 +168,6 @@ void HomebrewPage::buildUI()
     mBtnCheckNow = new QPushButton(tr("Check Now"), updHeaderWidget);
     mBtnCheckNow->setObjectName("btnCheckNow");
     mBtnCheckNow->setCursor(Qt::PointingHandCursor);
-    mBtnCheckNow->setFocusPolicy(Qt::NoFocus);
     mBtnCheckNow->setAccessibleName("primary");
     mBtnCheckNow->setFixedHeight(28);
     updTitleRow->addWidget(mBtnCheckNow);
@@ -200,7 +199,6 @@ void HomebrewPage::buildUI()
     mUpdatesTree->header()->setFixedHeight(Dpi::scale(30));
     mUpdatesTree->setColumnCount(3);
     mUpdatesTree->setRootIsDecorated(false);
-    mUpdatesTree->setFocusPolicy(Qt::NoFocus);
     mUpdatesTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mUpdatesTree->setSelectionMode(QAbstractItemView::NoSelection);
     mUpdatesTree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
@@ -219,14 +217,12 @@ void HomebrewPage::buildUI()
     updBtnRow->setSpacing(8);
 
     mChkSelectAll = new QCheckBox(tr("Select All"), updInner);
-    mChkSelectAll->setFocusPolicy(Qt::NoFocus);
     updBtnRow->addWidget(mChkSelectAll);
     updBtnRow->addStretch();
 
     mBtnUpdateSelected = new QPushButton(tr("Update Selected"), updInner);
     mBtnUpdateSelected->setObjectName("btnUpdateSelected");
     mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
-    mBtnUpdateSelected->setFocusPolicy(Qt::NoFocus);
     mBtnUpdateSelected->setAccessibleName("primary");
     mBtnUpdateSelected->setEnabled(false);
     updBtnRow->addWidget(mBtnUpdateSelected);
@@ -297,7 +293,6 @@ void HomebrewPage::buildUI()
     mTreeWidget->header()->setFixedHeight(Dpi::scale(30));
     mTreeWidget->header()->setStretchLastSection(true);
     mTreeWidget->setColumnCount(1);
-    mTreeWidget->setFocusPolicy(Qt::NoFocus);
     mTreeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mTreeWidget->setSelectionMode(QAbstractItemView::NoSelection);
     mTreeWidget->setIconSize(Dpi::scale(20, 20));
@@ -319,13 +314,11 @@ void HomebrewPage::buildUI()
     mBtnInstall->setObjectName("btnAddAPTSourceRepository");
     mBtnInstall->setCheckable(true);
     mBtnInstall->setCursor(Qt::PointingHandCursor);
-    mBtnInstall->setFocusPolicy(Qt::NoFocus);
     bottomRow->addWidget(mBtnInstall);
 
     mBtnCancel = new QPushButton(tr("Cancel"), contentWidget);
     mBtnCancel->setObjectName("btnCancel");
     mBtnCancel->setCursor(Qt::PointingHandCursor);
-    mBtnCancel->setFocusPolicy(Qt::NoFocus);
     mBtnCancel->hide();
     bottomRow->addWidget(mBtnCancel);
 
@@ -334,7 +327,6 @@ void HomebrewPage::buildUI()
     mBtnUninstall = new QPushButton(tr("Uninstall"), contentWidget);
     mBtnUninstall->setObjectName("btnDeleteAptSource");
     mBtnUninstall->setCursor(Qt::PointingHandCursor);
-    mBtnUninstall->setFocusPolicy(Qt::NoFocus);
     bottomRow->addWidget(mBtnUninstall);
 
     contentLayout->addLayout(bottomRow);
@@ -657,7 +649,6 @@ void HomebrewPage::buildSparkleSection(QVBoxLayout *pageLayout)
     mBtnSparkleUpdateSelected = new QPushButton(tr("Update Selected"), headerWidget);
     mBtnSparkleUpdateSelected->setObjectName("btnUpdateSelected");
     mBtnSparkleUpdateSelected->setCursor(Qt::PointingHandCursor);
-    mBtnSparkleUpdateSelected->setFocusPolicy(Qt::NoFocus);
     mBtnSparkleUpdateSelected->setAccessibleName("primary");
     mBtnSparkleUpdateSelected->setFixedHeight(28);
     mBtnSparkleUpdateSelected->setEnabled(false); // disabled until checkbox checked
@@ -691,7 +682,6 @@ void HomebrewPage::buildSparkleSection(QVBoxLayout *pageLayout)
     mSparkleTree->header()->setFixedHeight(Dpi::scale(30));
     mSparkleTree->setColumnCount(3);
     mSparkleTree->setRootIsDecorated(false);
-    mSparkleTree->setFocusPolicy(Qt::NoFocus);
     mSparkleTree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     mSparkleTree->setSelectionMode(QAbstractItemView::NoSelection);
     mSparkleTree->header()->setStretchLastSection(true);

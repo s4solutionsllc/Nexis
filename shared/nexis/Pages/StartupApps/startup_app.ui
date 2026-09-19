@@ -126,9 +126,6 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
           <property name="toolTip">
            <string>Edit App</string>
           </property>
@@ -148,9 +145,6 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
           <property name="toolTip">
            <string>Delete App</string>
           </property>
@@ -169,9 +163,6 @@
          <widget class="QCheckBox" name="checkStartup">
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
-          </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
           </property>
           <property name="styleSheet">
            <string notr="true"/>

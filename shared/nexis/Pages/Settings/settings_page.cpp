@@ -177,19 +177,27 @@ void SettingsPage::init()
 
     // load pages — store a stable untranslated id as item data so the
     // saved start page survives a UI language change (SSO-3388 / audit Q3).
+    // Same pages, same order and same labels as the sidebar.
     ui->cmbStartPage->addItem(tr("Dashboard"),      "dashboard");
-    ui->cmbStartPage->addItem(tr("Startup Apps"),   "startupApps");
+    ui->cmbStartPage->addItem(tr("Hardware Info"),  "hardwareInfo");
+    ui->cmbStartPage->addItem(tr("Resources"),      "resources");
+    ui->cmbStartPage->addItem(tr("Network Usage"),  "networkUsage");
     ui->cmbStartPage->addItem(tr("System Cleaner"), "systemCleaner");
+    ui->cmbStartPage->addItem(tr("Disk Tools"),     "diskTools");
     ui->cmbStartPage->addItem(tr("Search"),         "search");
-    ui->cmbStartPage->addItem(tr("Services"),       "services");
     ui->cmbStartPage->addItem(tr("Processes"),      "processes");
-    ui->cmbStartPage->addItem(tr("Helpers"),        "helpers");
+    ui->cmbStartPage->addItem(tr("Services"),       "services");
+    ui->cmbStartPage->addItem(tr("Startup Apps"),   "startupApps");
+    ui->cmbStartPage->addItem(tr("Boot Analysis"),  "bootAnalysis");
 #ifdef Q_OS_MAC
     ui->cmbStartPage->addItem(tr("Applications"),   "uninstaller");
+    ui->cmbStartPage->addItem(tr("Mail Cleanup"),   "mailCleanup");
 #else
     ui->cmbStartPage->addItem(tr("Uninstaller"),    "uninstaller");
 #endif
-    ui->cmbStartPage->addItem(tr("Resources"),      "resources");
+    ui->cmbStartPage->addItem(tr("File Shredder"),  "shredder");
+    ui->cmbStartPage->addItem(tr("Helpers"),        "helpers");
+    ui->cmbStartPage->addItem(tr("System Logs"),    "systemLogs");
 
     ui->cmbStartPage->setCurrentIndex(
         ui->cmbStartPage->findData(mSettingManager->getStartPage()));

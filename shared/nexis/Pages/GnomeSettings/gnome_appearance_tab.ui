@@ -53,7 +53,6 @@
            <widget class="QComboBox" name="cmbColorScheme">
             <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -250,7 +249,6 @@
            <widget class="QComboBox" name="cmbAntialiasing">
             <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -263,7 +261,6 @@
            <widget class="QComboBox" name="cmbHinting">
             <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
           </layout>
@@ -297,7 +294,6 @@
           <item row="0" column="1">
            <widget class="QCheckBox" name="chkAnimations">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -309,7 +305,6 @@
           <item row="1" column="1">
            <widget class="QCheckBox" name="chkHotCorners">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
           </layout>
@@ -344,7 +339,6 @@
            <widget class="QComboBox" name="cmbClockFormat">
             <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -356,7 +350,6 @@
           <item row="1" column="1">
            <widget class="QCheckBox" name="chkClockSeconds">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -368,7 +361,6 @@
           <item row="2" column="1">
            <widget class="QCheckBox" name="chkClockWeekday">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -380,7 +372,6 @@
           <item row="3" column="1">
            <widget class="QCheckBox" name="chkBatteryPct">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
           </layout>

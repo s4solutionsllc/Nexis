@@ -136,9 +136,6 @@
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
        <property name="accessibleName">
         <string notr="true">circle</string>
        </property>
@@ -197,9 +194,6 @@
       </property>
       <item>
        <widget class="QTreeView" name="tableProcess">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -301,9 +295,6 @@
              <property name="cursor">
               <cursorShape>PointingHandCursor</cursorShape>
              </property>
-             <property name="focusPolicy">
-              <enum>Qt::NoFocus</enum>
-             </property>
              <property name="accessibleName">
               <string notr="true">primary</string>
              </property>
@@ -376,9 +367,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="styleSheet">
          <string notr="true"/>
         </property>
@@ -404,9 +392,6 @@
        <widget class="QPushButton" name="btnEndProcess">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="accessibleName">
          <string notr="true">primary</string>

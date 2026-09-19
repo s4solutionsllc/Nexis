@@ -53,9 +53,6 @@
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
      <property name="accessibleName">
       <string>primary</string>
      </property>
@@ -125,9 +122,6 @@
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
        <property name="accessibleName">
         <string>primary</string>
        </property>
@@ -185,9 +179,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="accessibleName">
          <string>primary</string>
         </property>
@@ -200,9 +191,6 @@
        <widget class="QPushButton" name="btnCancel">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="accessibleName">
          <string>danger</string>
@@ -241,9 +229,6 @@
       </property>
       <item>
        <widget class="QTableView" name="tableViewHosts">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>

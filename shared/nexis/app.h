@@ -12,6 +12,8 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QLabel>
+#include <QPointer>
+#include <QDialog>
 #include <functional>
 
 class QScreen;
@@ -194,10 +196,15 @@ private:
     QLabel *mLoadingLabel = nullptr;
     QString mPendingNavTitle;
     void navigateToTitle(const QString &title);
+    void setupMenuBar();
+    void showAndRaise();
+    void runCleanerScan();
 
     QSystemTrayIcon *mTrayIcon;
     QMenu *mTrayMenu;
     QAction *mKioskAction;
+    QAction *mKioskExitAction = nullptr;
+    QPointer<QDialog> mDiskTreemapDialog;
 
     // Sidebar widgets
     QVBoxLayout *mSidebarLayout;

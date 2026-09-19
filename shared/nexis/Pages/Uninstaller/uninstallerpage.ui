@@ -157,9 +157,6 @@
            <pointsize>10</pointsize>
           </font>
          </property>
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -277,9 +274,6 @@
           <font>
            <pointsize>10</pointsize>
           </font>
-         </property>
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
          </property>
          <property name="styleSheet">
           <string notr="true"/>
@@ -400,9 +394,6 @@
            <pointsize>10</pointsize>
           </font>
          </property>
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -466,7 +457,6 @@
        </item>
        <item row="1" column="0">
         <widget class="QTableWidget" name="tableWidgetAptHistory">
-         <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
          <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
          <property name="alternatingRowColors"><bool>true</bool></property>
          <property name="selectionMode"><enum>QAbstractItemView::SingleSelection</enum></property>
@@ -492,7 +482,6 @@
           <item>
            <widget class="QPushButton" name="btnAptHistoryUndoLast">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
             <property name="text"><string>Undo Last Transaction</string></property>
             <property name="toolTip"><string>Reverses the most recent apt transaction (apt history-undo).</string></property>
            </widget>
@@ -500,7 +489,6 @@
           <item>
            <widget class="QPushButton" name="btnAptHistoryUndoSelected">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
             <property name="text"><string>Undo Selected</string></property>
             <property name="enabled"><bool>false</bool></property>
            </widget>
@@ -508,7 +496,6 @@
           <item>
            <widget class="QPushButton" name="btnAptHistoryRollback">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
             <property name="text"><string>Rollback To Selected</string></property>
             <property name="enabled"><bool>false</bool></property>
            </widget>
@@ -536,14 +523,12 @@
             <item>
              <widget class="QPushButton" name="btnAptWhy">
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
               <property name="text"><string>Why?</string></property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="btnAptWhyNot">
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
               <property name="text"><string>Why Not?</string></property>
              </widget>
             </item>
@@ -640,9 +625,6 @@
        </item>
        <item row="1" column="0">
         <widget class="QTableWidget" name="tableWidgetOrphanPackages">
-         <property name="focusPolicy">
-          <enum>Qt::NoFocus</enum>
-         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -743,9 +725,6 @@
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
      <property name="accessibleName">
       <string notr="true">primary</string>
      </property>
@@ -780,9 +759,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="text">
          <string>System Packages</string>
         </property>
@@ -802,9 +778,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="text">
          <string>Snap Packages</string>
         </property>
@@ -820,9 +793,6 @@
        <widget class="QPushButton" name="btnFlatpakPackages">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="text">
          <string>Flatpak Packages</string>
@@ -840,9 +810,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="text">
          <string>Orphan Packages</string>
         </property>
@@ -859,9 +826,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="text">
          <string>Orphan Leftovers…</string>
         </property>
@@ -871,9 +835,6 @@
        <widget class="QPushButton" name="btnAptHistory">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="text">
          <string>APT History</string>
