@@ -101,6 +101,10 @@ static const QVector<PageInfo> kPageMap = {
     {"HelpersPage",       "helpers",           {}, {}},
     {"NetworkUsagePage",  "network_usage",     {"BarChartWidget"}, {}},
     {"SettingsPage",      "settings",          {}, {}},
+    {"DiskToolsPage",     "disk_tools",        {"QAbstractItemView"}, {}},
+    {"BootAnalysisPage",  "boot_analysis",     {"QAbstractItemView"}, {"metricTileValue"}},
+    {"ShredderPage",      "shredder",          {}, {}},
+    {"SystemLogsPage",    "system_logs",       {"QAbstractItemView"}, {}},
 // SSO-13745 / SSO-14981: Linux-only pages deferred from round-1 capture.
 // All three require their runtime check to pass (APT tool, docker CLI,
 // gsettings + org.gnome.desktop.interface schema) for the page widget to
@@ -318,6 +322,7 @@ private:
 
         const QString themeRefDir = mRefDir + "/" + theme;
         const QString themeFailDir = mFailDir + "/" + theme;
+        QStringList mismatches;
 
         // Explicit-gap handling: if the platform/theme has no committed
         // baseline PNGs at all, skip with a loud message instead of QFAILing
@@ -388,10 +393,12 @@ private:
             }
 
             const QString refPath = themeRefDir + "/" + page.screenshotName + ".png";
-            QVERIFY2(QFile::exists(refPath),
-                qPrintable(QString("Reference missing: %1 — the baseline set is out of sync "
-                                   "with kPageMap. Regenerate with scripts/update_screenshots.sh.")
-                           .arg(refPath)));
+            if (!QFile::exists(refPath)) {
+                mismatches << QString("Reference missing: %1 — the baseline set is out of sync "
+                                      "with kPageMap. Regenerate with scripts/update_screenshots.sh.")
+                              .arg(refPath);
+                continue;
+            }
 
             QImage reference(refPath);
             QStringList unmatchedMaskNames;
@@ -421,16 +428,20 @@ private:
                            << cmp.maskedPixels << "pixels masked";
             }
 
-            QVERIFY2(cmp.passed,
-                qPrintable(QString("%1 (%2): %3% of unmasked pixels differ "
-                                   "(%4/%5; %6 masked) — see %7")
+            // Record and keep going: stopping at the first mismatch hid every
+            // later page, so one stale baseline meant nothing else was checked.
+            if (!cmp.passed) {
+                mismatches << QString("%1 (%2): %3% of unmasked pixels differ (%4/%5; %6 masked) — see %7")
                     .arg(page.screenshotName, theme)
                     .arg(cmp.diffPercent, 0, 'f', 3)
                     .arg(cmp.diffPixels)
                     .arg(cmp.comparedPixels)
                     .arg(cmp.maskedPixels)
-                    .arg(themeFailDir + "/" + page.screenshotName + "_diff.png")));
+                    .arg(themeFailDir + "/" + page.screenshotName + "_diff.png");
+            }
         }
+
+        QVERIFY2(mismatches.isEmpty(), qPrintable(mismatches.join("\n")));
     }
 
 private slots:

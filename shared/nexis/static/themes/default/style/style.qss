@@ -1121,31 +1121,9 @@ QLabel[accessibleName="dialog-title"] {
     font-weight: 600;
 }
 
-#sectionHeaderMeta {
-    color: @tertiaryText;
-    font-size: 8pt;
-    font-weight: 500;
-}
-
 #sectionHeaderSource {
     color: @tertiaryText;
     font-size: 8pt;
-}
-
-#sectionHeaderAction {
-    border: 0;
-    background-color: transparent;
-    border-radius: 4;
-    padding: 0;
-}
-
-#sectionHeaderAction:hover {
-    background-color: @cardBgElevated;
-}
-
-#sectionHeaderAction::menu-indicator {
-    width: 0;
-    height: 0;
 }
 
 /* - Disk Donut Tile - */
@@ -1156,36 +1134,9 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
 }
 
-#diskTileTitle {
-    color: @textSecondary;
-    font-size: 9pt;
-    font-weight: 600;
-}
-
-#diskTileSubtitle {
-    color: @tertiaryText;
-    font-size: 9pt;
-}
-
 #diskHealthStatus {
     font-size: 9pt;
     font-weight: 600;
-}
-
-#btnDiskGear {
-    border: 0;
-    background-color: transparent;
-    border-radius: 4;
-    padding: 0;
-}
-
-#btnDiskGear:hover {
-    background-color: @cardBgElevated;
-}
-
-#btnDiskGear::menu-indicator {
-    width: 0;
-    height: 0;
 }
 
 /* - Network Tile - */
@@ -1194,12 +1145,6 @@ QLabel[accessibleName="dialog-title"] {
     background-color: @cardBg;
     border-radius: 12;
     border: 1px solid @borderColor;
-}
-
-#networkTileTitle {
-    color: @textSecondary;
-    font-size: 9pt;
-    font-weight: 600;
 }
 
 #networkDivider {
@@ -1221,11 +1166,6 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #networkTileFooter {
-    color: @tertiaryText;
-    font-size: 8pt;
-}
-
-#networkTileInterface {
     color: @tertiaryText;
     font-size: 8pt;
 }
@@ -1326,11 +1266,6 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 /* - Temperature Gauge - */
-
-#tempContainer {
-    background-color: @cardBg;
-    border-radius: 12;
-}
 
 #btnMetricGear {
     border: 0;
@@ -1567,36 +1502,9 @@ QProgressBar[progressRole="thin"]::chunk {
     background-color: @primaryHoverFill;
 }
 
-#btnViewResults {
-    border: 0;
-    background: transparent;
-    color: @accentText;
-    font-size: 9pt;
-}
-
-#btnViewResults:hover {
-    color: @accentHover;
-}
-
 /* - System Clean Button (page 1 tree results) - */
 
-#SystemCleanerPage #btnClean {
-    border: 0;
-    background: url(:/static/themes/@themeName/img/clean.png) no-repeat center;
-}
-
-#SystemCleanerPage #btnClean:hover {
-    background: url(:/static/themes/@themeName/img/clean-active.png) no-repeat center;
-}
-
 /* - System Scan Results - */
-
-#btnBackToCategories {
-    border: 0;
-    font-size: 11pt;
-    color: @accentText;
-    background-color: @accentBgTint;
-}
 
 #lblSortBy {
     font-size: 9pt;
@@ -1659,16 +1567,6 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #treeWidgetScanResult::branch {
     border-bottom: 1px solid @borderColor;
-}
-
-#lblRemovedTotalSize {
-    font-size: 11pt;
-    color: @successText;
-}
-
-#lblTotalBytes {
-    font-size: 11pt;
-    color: @textPrimary;
 }
 
 /* - Schedule Indicator - */
@@ -2239,46 +2137,6 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 /* -- Orphan package list (matching snap package style) -- */
-
-#listWidgetOrphanPackages {
-    border: 0;
-    background-color: transparent;
-    font-size: 10pt;
-}
-
-#listWidgetOrphanPackages::indicator {
-    width: @dp16;
-    height: @dp16;
-}
-
-#listWidgetOrphanPackages::indicator:unchecked {
-    image: url(:/static/themes/common/img/un-check.png);
-}
-
-#listWidgetOrphanPackages::indicator:checked {
-    image: url(:/static/themes/common/img/check.png);
-}
-
-#listWidgetOrphanPackages::item {
-    border-radius: @dp8;
-    min-height: @dp36;
-    background-color: @cardBg;
-    margin: 1 0;
-}
-
-#listWidgetOrphanPackages::item:text {
-    color: @textPrimary;
-    padding-left: @dp12;
-}
-
-#listWidgetOrphanPackages::item:selected {
-    background-color: @cardBgElevated;
-    border: 0;
-}
-
-#listWidgetOrphanPackages::item:hover {
-    background-color: @cardBgElevated;
-}
 
 /**************************
     DISK TOOLS PAGE
