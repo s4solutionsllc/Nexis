@@ -15,13 +15,13 @@ QScrollBar:vertical {
 }
 
 QScrollBar::handle:vertical {
-    background-color: @color06;
+    background-color: @textSecondary;
     min-height: @dp30px;
     border-radius: @dp4;
 }
 
 QScrollBar::handle:vertical:hover {
-    background-color: @color04;
+    background-color: @textSecondary;
 }
 
 QScrollBar::add-line:vertical,
@@ -42,13 +42,13 @@ QScrollBar:horizontal {
 }
 
 QScrollBar::handle:horizontal {
-    background-color: @color06;
+    background-color: @textSecondary;
     min-width: @dp30px;
     border-radius: @dp4;
 }
 
 QScrollBar::handle:horizontal:hover {
-    background-color: @color04;
+    background-color: @textSecondary;
 }
 
 QScrollBar::add-line:horizontal,
@@ -69,11 +69,11 @@ QAbstractScrollArea::corner {
     QDialog
 **************/
 QDialog {
-    background-color: @color01;
+    background-color: @cardBg;
 }
 
 QDialog QLabel {
-    color: @color05;
+    color: @textPrimary;
 }
 
 QDialog QGroupBox {
@@ -88,7 +88,7 @@ QDialog QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 6;
-    color: @color05;
+    color: @textPrimary;
     font-size: 11pt;
     font-weight: bold;
 }
@@ -97,18 +97,18 @@ QDialog QGroupBox::title {
     QMessageBox
 **************/
 QMessageBox {
-    background-color: @color01;
+    background-color: @cardBg;
 }
 
 QMessageBox QLabel {
-    color: @color05;
+    color: @textPrimary;
 }
 
 /*************
     QMenu
 **************/
 QMenu {
-    background-color: @color01;
+    background-color: @cardBg;
     border-radius: 8;
     border: 1px solid @borderColor;
     padding: 4 0;
@@ -116,14 +116,14 @@ QMenu {
 
 QMenu::item {
     padding: @dp6 @dp24;
-    color: @color05;
+    color: @textPrimary;
     font-size: 10pt;
     border-radius: @dp6;
     margin: @dp2 @dp4;
 }
 
 QMenu::item:selected {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
 }
 
@@ -161,7 +161,7 @@ QMenu::right-arrow {
 ******************/
 
 QRadioButton {
-    color: @color12;
+    color: @textSecondary;
     font-size: 11pt;
 }
 
@@ -183,7 +183,7 @@ QRadioButton::indicator:checked {
 ******************/
 
 QCheckBox {
-    color: @color05;
+    color: @textPrimary;
 }
 
 QCheckBox::indicator {
@@ -201,7 +201,7 @@ QCheckBox::indicator:unchecked {
 
 QCheckBox[accessibleName="circle"] {
     font-size: 10pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 QCheckBox[accessibleName="circle"]::indicator {
@@ -222,9 +222,9 @@ QCheckBox[accessibleName="circle"]::indicator:checked {
 ******************/
 
 QToolTip {
-    color: @color05;
+    color: @textPrimary;
     padding: 4 8;
-    background-color: @color01;
+    background-color: @cardBg;
     border: 1px solid @borderColor;
     border-radius: 6;
 }
@@ -238,7 +238,7 @@ QToolTip {
 }
 
 #notFoundWidget QLabel, QWidget[accessibleName="notFoundWidget"] {
-    color: @color06;
+    color: @textSecondary;
     font-size: 13pt;
 }
 
@@ -281,7 +281,7 @@ QSlider::handle:horizontal {
     width: @dp16px;
     height: @dp16px;
     margin: -@dp6px 0;
-    border-radius: @dp8px;
+    border-radius: @dp8;
 }
 
 /***************
@@ -289,17 +289,17 @@ QSlider::handle:horizontal {
 ***************/
 
 QComboBox {
-    border: 1px solid @borderColor;
+    border: 1px solid @controlBorder;
     border-radius: @dp6;
-    background-color: @color02;
+    background-color: @cardBgElevated;
     padding: @dp6 @dp12;
     font-size: 10pt;
-    color: @color05;
+    color: @textPrimary;
     min-width: @dp100;
 }
 
 QComboBox:hover {
-    border-color: @color04;
+    border-color: @textSecondary;
 }
 
 QComboBox::drop-down {
@@ -319,10 +319,10 @@ QComboBox::down-arrow {
 }
 
 QComboBox QAbstractItemView {
-    background-color: @color02;
+    background-color: @cardBgElevated;
     border: 1px solid @borderColor;
     border-radius: 6;
-    color: @color05;
+    color: @textPrimary;
     selection-background-color: @accentColor;
     selection-color: @color07;
 }
@@ -334,7 +334,7 @@ QComboBox QAbstractItemView {
 QGroupBox::title {
     font-size: 11pt;
     font-weight: bold;
-    color: @color06;
+    color: @textSecondary;
 }
 
 /***************
@@ -343,8 +343,8 @@ QGroupBox::title {
 
 QTableView {
     background-color: transparent;
-    selection-color: @color05;
-    color: @color05;
+    selection-color: @textPrimary;
+    color: @textPrimary;
     font-size: 10pt;
     gridline-color: @borderColor;
     border-radius: 6;
@@ -352,13 +352,13 @@ QTableView {
 
 QTableView::item {
     font-size: 10pt;
-    color: @color05;
+    color: @textPrimary;
     padding: @dp8 @dp6;
-    background-color: @color01;
+    background-color: @cardBg;
 }
 
 QTableView::item:selected {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 #tableProcess::item {
@@ -366,12 +366,12 @@ QTableView::item:selected {
 }
 
 QHeaderView::section {
-    background-color: @color02;
+    background-color: @cardBgElevated;
     border-width: 0 0 1 0;
     border-style: solid;
     border-color: @borderColor;
     font-size: 10pt;
-    color: @color04;
+    color: @textSecondary;
     padding: @dp8 @dp12;
 }
 
@@ -399,13 +399,13 @@ QWidget {
 QLabel[textRole="panelTitle"] {
     font-size: 11pt;
     font-weight: 600;
-    color: @color05;
+    color: @textPrimary;
 }
 
 QLabel[textRole="valueLarge"] {
     font-size: 14pt;
     font-weight: 700;
-    color: @color05;
+    color: @textPrimary;
 }
 
 QLabel[textRole="caption"] {
@@ -418,12 +418,12 @@ QLineEdit,
 QPlainTextEdit,
 QSpinBox,
 QDoubleSpinBox {
-    border: 1px solid @borderColor;
+    border: 1px solid @controlBorder;
     border-radius: @dp6;
     padding: @dp8;
-    background-color: @color02;
+    background-color: @cardBgElevated;
     font-size: 10pt;
-    color: @color05;
+    color: @textPrimary;
 }
 
 QLineEdit:focus,
@@ -438,38 +438,81 @@ QPushButton {
     font-size: 10pt;
     padding: @dp8 @dp16;
     min-height: @dp18;
-    background-color: @color01;
-    color: @color05;
+    background-color: @cardBg;
+    color: @textPrimary;
     border: 1px solid @borderColor;
 }
 
 QPushButton:hover {
     border-color: @accentColor;
-    color: @accentColor;
+    color: @accentText;
 }
 
 QPushButton[accessibleName="danger"] {
-    background-color: @destructiveColor;
+    background-color: @dangerFill;
     color: @color07;
     border: 0;
 }
 
 QPushButton[accessibleName="danger"]:hover {
-    background-color: @color09;
+    background-color: @dangerHoverFill;
 }
 
 QPushButton[accessibleName="primary"] {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
     border: 0;
 }
 
 QPushButton[accessibleName="primary"]:hover {
-    background-color: @accentHover;
+    background-color: @primaryHoverFill;
+}
+
+/* -- Interaction states shared by every button and input -- */
+
+QPushButton:pressed {
+    background-color: @accentBgTint;
+    border-color: @accentColor;
+}
+
+QPushButton[accessibleName="primary"]:pressed {
+    background-color: @primaryHoverFill;
+}
+
+QPushButton[accessibleName="danger"]:pressed {
+    background-color: @dangerHoverFill;
+}
+
+QPushButton:disabled,
+QPushButton[accessibleName="primary"]:disabled,
+QPushButton[accessibleName="danger"]:disabled,
+#btnScanSystem:disabled,
+#btnCleanSelected:disabled,
+#btnEditDone:disabled,
+#btnSearchAdvance:disabled,
+#btnRepairBtm:disabled,
+#DiskToolsPage #btnScan:disabled,
+
+QLineEdit:disabled,
+QComboBox:disabled,
+QSpinBox:disabled,
+QDoubleSpinBox:disabled,
+QCheckBox:disabled,
+QRadioButton:disabled {
+    color: @tertiaryText;
+}
+
+QCheckBox:hover,
+QRadioButton:hover {
+    color: @accentText;
+}
+
+QHeaderView::section:hover {
+    color: @textPrimary;
 }
 
 QLabel[accessibleName="dialog-title"] {
-    color: @color05;
+    color: @textPrimary;
     font-size: 12pt;
     font-weight: bold;
     padding-bottom: 8;
@@ -478,7 +521,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #lblErrorMsg {
-    color: @destructiveColor;
+    color: @destructiveText;
 }
 
 /**************
@@ -494,7 +537,7 @@ QLabel[accessibleName="dialog-title"] {
     border: 0;
     height: @dp32;
     border-radius: @dp6;
-    color: @color06;
+    color: @textSecondary;
     margin: 1 @dp8;
     padding: 0 @dp12;
     text-align: left;
@@ -505,14 +548,14 @@ QLabel[accessibleName="dialog-title"] {
 
 #sidebar QPushButton:checked {
     background-color: @accentBgTint;
-    color: @accentColor;
+    color: @accentText;
     font-weight: 600;
     border-left: 3px solid @accentColor;
 }
 
 #sidebar QPushButton:hover:!checked {
-    background-color: @color02;
-    color: @color05;
+    background-color: @cardBgElevated;
+    color: @textPrimary;
     border-left: 3px solid @borderColor;
 }
 
@@ -522,16 +565,16 @@ QLabel[accessibleName="dialog-title"] {
     font-weight: 600;
     color: @tertiaryText;
     padding: 12px 12px 4px 20px;
-    text-transform: uppercase;
     border: 0;
     border-top: 1px solid @borderColor;
     margin-top: 6px;
     background: transparent;
     text-align: left;
+    text-transform: uppercase;
 }
 
 #sidebar #sectionToggle:hover {
-    color: @color05;
+    color: @textPrimary;
     background-color: transparent;
 }
 
@@ -550,7 +593,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #btnSidebarToggle:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 /* Collapsed sidebar overrides */
@@ -563,7 +606,7 @@ QLabel[accessibleName="dialog-title"] {
 
 #sidebar[collapsed="true"] QPushButton:checked {
     background-color: @accentBgTint;
-    color: @accentColor;
+    color: @accentText;
     border-left: 0;
     border-bottom: 3px solid @accentColor;
 }
@@ -607,12 +650,12 @@ QLabel[accessibleName="dialog-title"] {
     margin: 0;
 }
 #sidebarScrollArea QScrollBar::handle:vertical {
-    background: @color04;
+    background: @textSecondary;
     border-radius: 2px;
     min-height: 20px;
 }
 #sidebarScrollArea QScrollBar::handle:vertical:hover {
-    background: @color05;
+    background: @textPrimary;
 }
 #sidebarScrollArea QScrollBar::add-line:vertical,
 #sidebarScrollArea QScrollBar::sub-line:vertical {
@@ -626,7 +669,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #sidebarBadge {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
     font-size: 7pt;
     font-weight: 700;
@@ -647,7 +690,7 @@ QLabel[accessibleName="dialog-title"] {
 
 #updatesBadge {
     background-color: @updatesColor;
-    color: @color07;
+    color: @onStatus;
     font-size: 7pt;
     font-weight: 700;
     border-radius: 8;
@@ -683,8 +726,8 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #commandPaletteSearch {
-    background-color: @color01;
-    color: @color05;
+    background-color: @cardBg;
+    color: @textPrimary;
     border: 0;
     border-bottom: 1px solid @borderColor;
     border-radius: 12px 12px 0 0;
@@ -703,25 +746,25 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #commandPaletteResults::item {
-    color: @color06;
+    color: @textSecondary;
     padding: 8 16;
     border: 0;
     font-size: 10pt;
 }
 
 #commandPaletteResults::item:selected {
-    background-color: @color02;
-    color: @color05;
+    background-color: @cardBgElevated;
+    color: @textPrimary;
     border-left: 3px solid @accentColor;
 }
 
 #commandPaletteResults::item:hover:!selected {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 #commandPaletteFooter {
     border-top: 1px solid @borderColor;
-    background-color: @color01;
+    background-color: @cardBg;
 }
 
 #commandPaletteKey {
@@ -731,7 +774,7 @@ QLabel[accessibleName="dialog-title"] {
     padding: 1 4;
     border: 1px solid @borderColor;
     border-radius: 4;
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 #commandPaletteHintLabel {
@@ -756,7 +799,7 @@ QLabel[accessibleName="dialog-title"] {
 
 #lblCircleChartTitle,
 #lblCircleChartValue {
-    color: @color05;
+    color: @textPrimary;
     font-size: 13pt;
     margin: 0;
 }
@@ -769,22 +812,22 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #lblLineChartTitle {
-    color: @color05;
+    color: @textPrimary;
     font-size: 13pt;
 }
 
 #lblLineChartValue {
-    color: @color05;
+    color: @textPrimary;
     font-size: 13pt;
 }
 
 #lblLineChartTotal {
-    color: @color06;
+    color: @textSecondary;
     font-size: 10pt;
 }
 
 #lineChartProgress {
-    background-color: @color02;
+    background-color: @cardBgElevated;
     border: 0;
     border-radius: 3;
     max-height: 6;
@@ -902,9 +945,8 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
 }
 
-
 #metricTileTitle {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
     font-weight: 600;
 }
@@ -916,7 +958,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #metricTileValue {
-    color: @color05;
+    color: @textPrimary;
     font-size: 14pt;
     font-weight: 700;
 }
@@ -1069,7 +1111,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #sectionHeaderTitle {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
     font-weight: 600;
 }
@@ -1093,7 +1135,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #sectionHeaderAction:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 #sectionHeaderAction::menu-indicator {
@@ -1109,9 +1151,8 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
 }
 
-
 #diskTileTitle {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
     font-weight: 600;
 }
@@ -1134,7 +1175,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #btnDiskGear:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 #btnDiskGear::menu-indicator {
@@ -1150,9 +1191,8 @@ QLabel[accessibleName="dialog-title"] {
     border: 1px solid @borderColor;
 }
 
-
 #networkTileTitle {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
     font-weight: 600;
 }
@@ -1170,7 +1210,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #networkTileValue {
-    color: @color05;
+    color: @textPrimary;
     font-size: 13pt;
     font-weight: 700;
 }
@@ -1194,7 +1234,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #editToolbarLabel {
-    color: @color05;
+    color: @textPrimary;
     font-size: 10pt;
     font-weight: 600;
 }
@@ -1207,7 +1247,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #btnEditToggle:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 #btnResetLayout {
@@ -1215,25 +1255,25 @@ QLabel[accessibleName="dialog-title"] {
     padding: 4 12;
     border-radius: 6;
     border: 1px solid @borderColor;
-    color: @color05;
+    color: @textPrimary;
     background-color: transparent;
 }
 
 #btnResetLayout:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 #btnEditDone {
     font-size: 9pt;
     padding: 4 12;
     border-radius: 6;
-    border: 1px solid @accentColor;
+    border: 1px solid @primaryFill;
     color: @color07;
-    background-color: @accentColor;
+    background-color: @primaryFill;
 }
 
 #btnEditDone:hover {
-    background-color: @accentHover;
+    background-color: @primaryHoverFill;
 }
 
 #dragIndicator {
@@ -1263,7 +1303,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #summaryValue {
-    color: @color05;
+    color: @textPrimary;
     font-size: 10pt;
 }
 
@@ -1295,7 +1335,7 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #btnMetricGear:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 #btnMetricGear::menu-indicator {
@@ -1312,9 +1352,8 @@ QLabel[accessibleName="dialog-title"] {
 }
 
 #btnKioskToggle:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
-
 
 /**************************
     HARDWARE INFO PAGE
@@ -1372,7 +1411,7 @@ QLabel[accessibleName="dialog-title"] {
 #HardwareInfoPage #sectionHeaderTitleMemory,
 #HardwareInfoPage #sectionHeaderTitleBattery,
 #HardwareInfoPage #sectionHeaderTitleFans {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
     font-weight: 600;
 }
@@ -1384,13 +1423,13 @@ QLabel[accessibleName="dialog-title"] {
 
 /* DS §4 key/value typography (SSO-13735): 9pt base for both columns, with an
    @borderColor divider between rows. Label-column overrides (9pt/600
-   @color06) are applied per-item in C++ (addRow()) since Qt QSS has no
+   @textSecondary) are applied per-item in C++ (addRow()) since Qt QSS has no
    per-column ::item selector — see hardware_info_page.cpp. */
 #HardwareInfoPage QTableWidget::item {
     font-size: 9pt;
-    color: @color05;
+    color: @textPrimary;
     padding: @dp8 @dp6;
-    background-color: @color01;
+    background-color: @cardBg;
     border-top: 1px solid @borderColor;
 }
 
@@ -1413,18 +1452,18 @@ QLabel[accessibleName="dialog-title"] {
 #cleanerCategoryCard #lblCatName {
     font-size: 10pt;
     font-weight: 600;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #cleanerCategoryCard #lblCatSubtitle {
     font-size: 8pt;
-    color: @color06;
+    color: @textSecondary;
     font-family: @monoFontFamily;
 }
 
 #cleanerCategoryCard #lblCatSize {
     font-size: 9pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 /* - Scan progress bar - */
@@ -1468,7 +1507,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: 1px solid @borderColor;
     border-radius: @dp6;
     background-color: transparent;
-    color: @color05;
+    color: @textPrimary;
     padding: @dp6 @dp14;
 }
 
@@ -1479,14 +1518,14 @@ QProgressBar[progressRole="thin"]::chunk {
 #btnScanSystem {
     border: 0;
     border-radius: @dp6;
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
     font-weight: 700;
     padding: @dp6 @dp16;
 }
 
 #btnScanSystem:hover {
-    background-color: @accentHover;
+    background-color: @primaryHoverFill;
 }
 
 /* - Footer bar - */
@@ -1499,13 +1538,13 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #lblEstimatedLabel {
     font-size: 7pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 #lblEstimatedSize {
     font-size: 13pt;
     font-weight: 700;
-    color: @successColor;
+    color: @successText;
 }
 
 /* Primary action, matching #btnScanSystem — deletion is confirmed by the
@@ -1513,25 +1552,20 @@ QProgressBar[progressRole="thin"]::chunk {
 #btnCleanSelected {
     border: 0;
     border-radius: @dp6;
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
     font-weight: 700;
     padding: @dp6 @dp16;
 }
 
 #btnCleanSelected:hover {
-    background-color: @accentHover;
-}
-
-#btnCleanSelected:disabled {
-    background-color: @color14;
-    color: @color06;
+    background-color: @primaryHoverFill;
 }
 
 #btnViewResults {
     border: 0;
     background: transparent;
-    color: @accentColor;
+    color: @accentText;
     font-size: 9pt;
 }
 
@@ -1555,13 +1589,13 @@ QProgressBar[progressRole="thin"]::chunk {
 #btnBackToCategories {
     border: 0;
     font-size: 11pt;
-    color: @accentColor;
+    color: @accentText;
     background-color: @accentBgTint;
 }
 
 #lblSortBy {
     font-size: 9pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 #cbSortBy {
@@ -1584,7 +1618,7 @@ QProgressBar[progressRole="thin"]::chunk {
 #treeWidgetScanResult::item {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
-    color: @color11;
+    color: @textPrimary;
 }
 
 #treeWidgetScanResult::indicator {
@@ -1624,12 +1658,12 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #lblRemovedTotalSize {
     font-size: 11pt;
-    color: @successColor;
+    color: @successText;
 }
 
 #lblTotalBytes {
     font-size: 11pt;
-    color: @color05;
+    color: @textPrimary;
 }
 
 /* - Schedule Indicator - */
@@ -1643,23 +1677,23 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #lblNextSchedule {
     font-size: 10pt;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #lblLastSchedule {
     font-size: 9pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 #lblSnapshotToast {
-    color: @successColor;
+    color: @successText;
     border-left: 3px solid @successColor;
     padding: 4px 10px;
     font-size: 9pt;
 }
 
 #lblExclusionNotice {
-    color: @color05;
+    color: @textPrimary;
     padding: 6px 0;
 }
 
@@ -1705,7 +1739,7 @@ QProgressBar[progressRole="thin"]::chunk {
 #widgetStartupApp #lblStartupAppName {
     font-size: 9pt;
     font-weight: 600;
-    color: @color06;
+    color: @textSecondary;
 }
 
 #checkStartup {
@@ -1729,9 +1763,9 @@ QProgressBar[progressRole="thin"]::chunk {
     color: @tertiaryText;
     font-size: 8pt;
     font-weight: 600;
-    text-transform: uppercase;
     padding: @dp12 @dp16 @dp6;
     background-color: @cardBg;
+    text-transform: uppercase;
 }
 
 /* DS §4 meta role */
@@ -1751,7 +1785,7 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #widgetBtmRow #lblBtmRowName {
-    color: @color05;
+    color: @textPrimary;
     font-size: 10pt;
     font-weight: 600;
 }
@@ -1773,7 +1807,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #widgetBtmRow #btmBadgeOn {
     background-color: @successColor;
-    color: @overlayText;
+    color: @onStatus;
 }
 
 #widgetBtmRow #btmBadgeOff {
@@ -1782,22 +1816,22 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #widgetBtmRow #btmBadgeOrphan {
-    background-color: @destructiveColor;
+    background-color: @dangerFill;
     color: @overlayText;
 }
 
 #widgetBtmRow #btmBadgeDuplicate {
     background-color: @warningColor;
-    color: @overlayText;
+    color: @onStatus;
 }
 
 #widgetBtmRow #btmBadgeApple {
     background-color: @infoColor;
-    color: @overlayText;
+    color: @onStatus;
 }
 
 #btnRepairBtm {
-    background-color: @destructiveColor;
+    background-color: @dangerFill;
     color: @overlayText;
     border-radius: @dp4;
     padding: @dp6 @dp10;
@@ -1805,7 +1839,7 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #btnRepairBtm:hover {
-    background-color: @accentHover;
+    background-color: @dangerHoverFill;
 }
 
 /* - Startup App Edit - */
@@ -1834,11 +1868,10 @@ QProgressBar[progressRole="thin"]::chunk {
     background-color: @cardBgElevated;
 }
 
-
 #ServiceItem #lblServiceName {
     font-size: 9pt;
     font-weight: 600;
-    color: @color06;
+    color: @textSecondary;
     font-family: @monoFontFamily;
 }
 
@@ -1867,7 +1900,7 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #ServiceItem #checkServiceRunning:checked {
-    color: @successColor;
+    color: @successText;
 }
 
 #ServiceItem #checkServiceRunning:!checked {
@@ -1905,7 +1938,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #checkAllProcesses {
     margin-top: 2;
-    color: @color12;
+    color: @textSecondary;
     font-size: 10pt;
 }
 
@@ -1918,13 +1951,13 @@ QProgressBar[progressRole="thin"]::chunk {
     width: @dp180;
     padding: @dp6 @dp12;
     border-radius: @dp6;
-    background-color: @color01;
+    background-color: @cardBg;
     border: 1px solid @borderColor;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #lblRefresh {
-    color: @color12;
+    color: @textSecondary;
     font-size: 10pt;
 }
 
@@ -1944,16 +1977,23 @@ QProgressBar[progressRole="thin"]::chunk {
     font-size: 9pt;
     font-weight: 500;
     background-color: @cardBg;
-    color: @color05;
+    color: @textPrimary;
     border: 1px solid @borderColor;
 }
 
-#btnSystemPackages:hover, #btnSnapPackages:hover, #btnOrphanPackages:hover, #btnAptHistory:hover,
-#btnSystemPackages:checked, #btnSnapPackages:checked, #btnOrphanPackages:checked, #btnAptHistory:checked {
-    background-color: @accentColor;
+#btnSystemPackages:checked, #btnSnapPackages:checked, #btnOrphanPackages:checked,
+#btnFlatpakPackages:checked, #btnAptHistory:checked {
+    background-color: @primaryFill;
     color: @overlayText;
-    border-color: @accentColor;
+    border-color: @primaryFill;
     font-weight: 600;
+}
+
+#btnSystemPackages:hover:!checked, #btnSnapPackages:hover:!checked, #btnOrphanPackages:hover:!checked,
+#btnFlatpakPackages:hover:!checked, #btnAptHistory:hover:!checked {
+    background-color: @accentBgTint;
+    border-color: @accentColor;
+    color: @textPrimary;
 }
 
 /**************************
@@ -1964,16 +2004,21 @@ QProgressBar[progressRole="thin"]::chunk {
     border-radius: @dp6;
     padding: @dp6 @dp12;
     font-size: 10pt;
-    background-color: @color01;
-    color: @color05;
+    background-color: @cardBg;
+    color: @textPrimary;
     border: 1px solid @borderColor;
 }
 
-#nav QPushButton:hover,
 #nav QPushButton:checked {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
+    border-color: @primaryFill;
+}
+
+#nav QPushButton:hover:!checked {
+    background-color: @accentBgTint;
     border-color: @accentColor;
+    color: @textPrimary;
 }
 
 #lblToolsSection, #lblMaintenanceSectionHeader {
@@ -1991,7 +2036,7 @@ QProgressBar[progressRole="thin"]::chunk {
 #maintenanceCard #lblCardTitle {
     font-size: 9pt;
     font-weight: 600;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #maintenanceCard #lblCardDesc {
@@ -2002,7 +2047,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 /* Host Manage table: flat @cardBg rows nested inside the
    #hostsTableContainer elevated card (DS §7) — overrides the generic
-   QTableView/[::item] recipe's @color01 fill for this table only.
+   QTableView/[::item] recipe's @cardBg fill for this table only.
    border-radius nests 1px inside the container's 12px radius
    (hostsTableContainerLayout margin, SSO-14306) so the flat fill doesn't
    clash against the elevated card's rounded corners. */
@@ -2033,9 +2078,9 @@ QProgressBar[progressRole="thin"]::chunk {
 #txtSearchAptSource {
     padding: @dp6 @dp12;
     border-radius: @dp6;
-    background-color: @color01;
+    background-color: @cardBg;
     border: 1px solid @borderColor;
-    color: @color05;
+    color: @textPrimary;
 }
 
 /* -- Package tree (Uninstaller) -- flat content inside #uninstallerContainer,
@@ -2058,7 +2103,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
     font-size: 10pt;
-    color: @color11;
+    color: @textPrimary;
 }
 
 #treeWidgetPackages::indicator {
@@ -2113,7 +2158,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
     font-size: 10pt;
-    color: @color11;
+    color: @textPrimary;
 }
 
 /* - Homebrew page (macOS only): fixed monospace stack for the Available
@@ -2142,7 +2187,6 @@ QProgressBar[progressRole="thin"]::chunk {
     border: 0;
     border-radius: 0;
 }
-
 
 /* -- Snap package list (card style, unchanged) -- */
 
@@ -2173,17 +2217,17 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #listWidgetSnapPackages::item:text {
-    color: @color05;
+    color: @textPrimary;
     padding-left: @dp12;
 }
 
 #listWidgetSnapPackages::item:selected {
-    background-color: @color02;
+    background-color: @cardBgElevated;
     border: 0;
 }
 
 #listWidgetSnapPackages::item:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 /* -- Orphan package list (matching snap package style) -- */
@@ -2215,17 +2259,17 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #listWidgetOrphanPackages::item:text {
-    color: @color05;
+    color: @textPrimary;
     padding-left: @dp12;
 }
 
 #listWidgetOrphanPackages::item:selected {
-    background-color: @color02;
+    background-color: @cardBgElevated;
     border: 0;
 }
 
 #listWidgetOrphanPackages::item:hover {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 /**************************
@@ -2250,7 +2294,7 @@ QProgressBar[progressRole="thin"]::chunk {
 #DiskToolsPage QPushButton#segmentedLeft,
 #DiskToolsPage QPushButton#segmentedRight {
     background-color: @cardBg;
-    color: @color05;
+    color: @textPrimary;
     border: 1px solid @borderColor;
     border-radius: @dp8;
     padding: @dp8 @dp16;
@@ -2260,9 +2304,9 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #DiskToolsPage QPushButton#segmentedLeft:checked,
 #DiskToolsPage QPushButton#segmentedRight:checked {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
-    border-color: @accentColor;
+    border-color: @primaryFill;
 }
 
 #DiskToolsPage QPushButton#segmentedLeft:hover:!checked,
@@ -2276,18 +2320,18 @@ QProgressBar[progressRole="thin"]::chunk {
     border: 0;
     background-color: transparent;
     font-size: 10pt;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #diskToolsDirList::item {
     padding: @dp10 @dp12;
-    color: @color05;
+    color: @textPrimary;
     border-bottom: 1px solid @borderColor;
     font-family: @monoFontFamily;
 }
 
 #diskToolsDirList::item:selected {
-    background-color: @color02;
+    background-color: @cardBgElevated;
 }
 
 /* Large & Old results tree — frozen elevated-surface header, flat rows */
@@ -2308,7 +2352,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
     font-size: 10pt;
-    color: @color11;
+    color: @textPrimary;
 }
 
 #treeWidgetLargeOld::indicator {
@@ -2342,7 +2386,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
     font-size: 10pt;
-    color: @color11;
+    color: @textPrimary;
 }
 
 #treeWidgetDuplicates::indicator {
@@ -2401,7 +2445,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
     font-size: 10pt;
-    color: @color11;
+    color: @textPrimary;
 }
 
 #treeWidgetImages::indicator {
@@ -2460,7 +2504,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
     font-size: 10pt;
-    color: @color11;
+    color: @textPrimary;
 }
 
 #treeWidgetContainers::indicator,
@@ -2517,11 +2561,11 @@ QProgressBar[progressRole="thin"]::chunk {
 #fwTitle {
     font-size: 11pt;
     font-weight: 600;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #fwStatusText {
-    color: @color05;
+    color: @textPrimary;
     font-size: 11pt;
     font-weight: bold;
 }
@@ -2533,20 +2577,20 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #fwDetailCard QLabel {
-    color: @color04;
+    color: @textSecondary;
     font-size: 10pt;
 }
 
 #fwWarning {
-    color: @warningColor;
+    color: @warningText;
     font-size: 10pt;
 }
 
 #fwHelpBtn {
-    color: @color04;
+    color: @textSecondary;
     font-size: 11pt;
     font-weight: bold;
-    border: 1px solid @color04;
+    border: 1px solid @textSecondary;
     border-radius: 10px;
     min-width: 20px;
     max-width: 20px;
@@ -2559,12 +2603,12 @@ QProgressBar[progressRole="thin"]::chunk {
 #portsTitle {
     font-size: 11pt;
     font-weight: 600;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #portsSearch {
     background-color: @cardBg;
-    color: @color05;
+    color: @textPrimary;
     border: 1px solid @borderColor;
     border-radius: @dp6;
     padding: 6px 10px;
@@ -2577,7 +2621,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #portsListenToggle {
     background-color: @cardBg;
-    color: @color04;
+    color: @textSecondary;
     border: 1px solid @borderColor;
     border-radius: @dp6;
     padding: 6px 14px;
@@ -2585,9 +2629,9 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #portsListenToggle:checked {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
-    border-color: @accentColor;
+    border-color: @primaryFill;
 }
 
 #portsListenToggle:hover:!checked {
@@ -2608,12 +2652,12 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #portsTable::item:selected {
     background-color: @accentBgTint;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #portsTable QHeaderView::section {
     background-color: @cardBgElevated;
-    color: @color06;
+    color: @textSecondary;
     border: 0;
     border-bottom: 1px solid @borderColor;
     padding: @dp6 @dp8;
@@ -2622,7 +2666,7 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #portsSecondary {
-    color: @color04;
+    color: @textSecondary;
     font-size: 10pt;
 }
 
@@ -2631,7 +2675,7 @@ QProgressBar[progressRole="thin"]::chunk {
 #netDiagTitle {
     font-size: 11pt;
     font-weight: 600;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #netDiagCard {
@@ -2641,18 +2685,18 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #netDiagSubheader {
-    color: @color05;
+    color: @textPrimary;
     font-size: 11pt;
     font-weight: bold;
 }
 
 #netDiagSecondary {
-    color: @color04;
+    color: @textSecondary;
     font-size: 10pt;
 }
 
 #netDiagLoading {
-    color: @color04;
+    color: @textSecondary;
     font-size: 10pt;
 }
 
@@ -2662,15 +2706,15 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #netDiagCheckIcon[checkPassed="true"] {
-    color: @successColor;
+    color: @successText;
 }
 
 #netDiagCheckIcon[checkPassed="false"] {
-    color: @destructiveColor;
+    color: @destructiveText;
 }
 
 #netDiagCheckLabel {
-    color: @color05;
+    color: @textPrimary;
     font-size: 10pt;
 }
 
@@ -2679,15 +2723,15 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #netDiagCheckValue[checkPassed="true"] {
-    color: @color04;
+    color: @textSecondary;
 }
 
 #netDiagCheckValue[checkPassed="false"] {
-    color: @destructiveColor;
+    color: @destructiveText;
 }
 
 #netDiagDnsServer {
-    color: @color05;
+    color: @textPrimary;
     font-size: 10pt;
 }
 
@@ -2700,13 +2744,13 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #powerProfileLabel {
-    color: @color05;
+    color: @textPrimary;
     font-size: 10pt;
 }
 
 #powerProfileWidget QPushButton {
     background-color: @cardBg;
-    color: @color04;
+    color: @textSecondary;
     border: 1px solid @borderColor;
     border-radius: @dp6;
     padding: 6px 14px;
@@ -2714,9 +2758,9 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #powerProfileWidget QPushButton:checked {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
-    border-color: @accentColor;
+    border-color: @primaryFill;
 }
 
 #powerProfileWidget QPushButton:hover:!checked {
@@ -2728,7 +2772,7 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #powerProfileWarning {
-    color: @warningColor;
+    color: @warningText;
     font-size: 9pt;
     padding: 2px 0;
 }
@@ -2747,7 +2791,7 @@ QProgressBar[progressRole="thin"]::chunk {
 #DiskToolsPage #btnScan {
     border: 0;
     border-radius: @dp6;
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
     font-size: 10pt;
     font-weight: bold;
@@ -2755,13 +2799,13 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #DiskToolsPage #btnScan:hover {
-    background-color: @accentHover;
+    background-color: @primaryHoverFill;
 }
 
 #DiskToolsPage #btnTrash {
     border: 0;
     border-radius: @dp6;
-    background-color: @destructiveColor;
+    background-color: @dangerFill;
     color: @color07;
     font-size: 10pt;
     font-weight: bold;
@@ -2769,17 +2813,17 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #DiskToolsPage #btnTrash:hover {
-    background-color: @color09;
+    background-color: @dangerHoverFill;
 }
 
 #DiskToolsPage #btnTrash:disabled {
     background-color: @borderColor;
-    color: @color04;
+    color: @textSecondary;
 }
 
 #DiskToolsPage #lblStatus {
     font-size: 10pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 /****************
@@ -2794,7 +2838,7 @@ QProgressBar[progressRole="thin"]::chunk {
 #lblHistoryTitle {
     font-size: 11pt;
     margin: 6 0 10 0;
-    color: @color12;
+    color: @textSecondary;
 }
 
 #checkHistoryTitle::indicator {
@@ -2821,7 +2865,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #SettingsPage QLabel {
     font-size: 10pt;
-    color: @color12;
+    color: @textSecondary;
 }
 
 /* DS §3 (NEX F2): the shared #sectionHeaderTitle/#sectionHeaderSource
@@ -2829,7 +2873,7 @@ QProgressBar[progressRole="thin"]::chunk {
    blanket "#SettingsPage QLabel" rule just above — an extra #SettingsPage
    ID qualifier raises specificity above a plain ID + type selector. */
 #SettingsPage #sectionHeaderTitle {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
     font-weight: 600;
 }
@@ -2841,23 +2885,23 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #lblCreatedBy {
     font-size: 9pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 #lblQuickSetupSummary {
     font-size: 9pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 /* - Shared dialog label styles - */
 
 QLabel[accessibleName="dimmed"] {
-    color: @color06;
+    color: @textSecondary;
 }
 
 QLabel[accessibleName="dimmed-small"] {
     font-size: 9pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 /* - Status property selectors (semi-dynamic: set via setProperty("status", ...)) - */
@@ -2870,7 +2914,7 @@ QLabel[accessibleName="dimmed-small"] {
  *
  * Open observation for whoever implements the System Logs page item:
  * notes/system_logs.md describes NOTICE severity as "info (@infoColor)", but
- * [status="info"] below resolves to @color05 (primary text, not the blue
+ * [status="info"] below resolves to @textPrimary (primary text, not the blue
  * @infoColor token used elsewhere e.g. style.qss:1472). [status="info"] is
  * also live on the Dashboard maintenance wizard's step icon
  * (maintenance_wizard_dialog.cpp) — changing its value here is a
@@ -2880,11 +2924,11 @@ QLabel[accessibleName="dimmed-small"] {
  * another existing semantic for NOTICE instead).
  */
 
-[status="success"] { color: @successColor; }
-[status="warning"] { color: @warningColor; }
-[status="error"]   { color: @destructiveColor; }
-[status="info"]    { color: @color05; }
-[status="dimmed"]  { color: @color04; }
+[status="success"] { color: @successText; }
+[status="warning"] { color: @warningText; }
+[status="error"]   { color: @destructiveText; }
+[status="info"]    { color: @textPrimary; }
+[status="dimmed"]  { color: @textSecondary; }
 [status="neutral"] { color: @tertiaryText; }
 
 #wizardStepIcon {
@@ -2898,7 +2942,7 @@ QLabel[accessibleName="dimmed-small"] {
 
 #lblTrashWarning {
     font-size: 9pt;
-    color: @warningColor;
+    color: @warningText;
 }
 
 /*****************
@@ -2916,8 +2960,8 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #btnDownloadUpdate {
-    background-color: @color01;
-    color: @color05;
+    background-color: @cardBg;
+    color: @textPrimary;
     padding: @dp2 @dp10;
     border-radius: @dp4;
     font-size: 9pt;
@@ -2933,7 +2977,7 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #Feedback #lblSubtitle {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
 }
 
@@ -2985,7 +3029,7 @@ QLabel[accessibleName="dimmed-small"] {
 
 #lblAptSourceName {
     font-size: 10pt;
-    color: @color05;
+    color: @textPrimary;
     font-family: @monoFontFamily;
 }
 
@@ -3015,11 +3059,11 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #repoDetailName {
-    color: @color05;
+    color: @textPrimary;
 }
 
 #repoDetailDescription {
-    color: @color04;
+    color: @textSecondary;
 }
 
 #repoDetailMetadata {
@@ -3033,7 +3077,7 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #repoMetaValue {
-    color: @color05;
+    color: @textPrimary;
     background-color: transparent;
 }
 
@@ -3049,9 +3093,9 @@ QLabel[accessibleName="dimmed-small"] {
 #repoStatusBadge[repoStatus="error"]   { background-color: @destructiveColor; }
 #repoStatusBadge[repoStatus="unknown"] { background-color: @tertiaryText; }
 
-#repoMetaValue[repoStatus="healthy"] { color: @successColor; }
-#repoMetaValue[repoStatus="warning"] { color: @warningColor; }
-#repoMetaValue[repoStatus="error"]   { color: @destructiveColor; }
+#repoMetaValue[repoStatus="healthy"] { color: @successText; }
+#repoMetaValue[repoStatus="warning"] { color: @warningText; }
+#repoMetaValue[repoStatus="error"]   { color: @destructiveText; }
 #repoMetaValue[repoStatus="unknown"] { color: @tertiaryText; }
 
 #repoIssueCard {
@@ -3064,7 +3108,7 @@ QLabel[accessibleName="dimmed-small"] {
 #repoIssueCard[issueSeverity="info"]    { border-left: 3px solid @tertiaryText; }
 
 #repoIssueCard QPushButton[accessibleName="primary"] {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
     border: 0;
     border-radius: @dp4;
@@ -3072,11 +3116,11 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #repoIssueCard QPushButton[accessibleName="primary"]:hover {
-    background-color: @accentHover;
+    background-color: @primaryHoverFill;
 }
 
 #repoRemoveBtn {
-    color: @destructiveColor;
+    color: @destructiveText;
     background-color: transparent;
     border: 1px solid @destructiveColor;
     border-radius: @dp4;
@@ -3084,8 +3128,8 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #repoIssueSummary { font-weight: bold; }
-#repoIssueSummary[issueSeverity="error"]   { color: @destructiveColor; }
-#repoIssueSummary[issueSeverity="warning"] { color: @warningColor; }
+#repoIssueSummary[issueSeverity="error"]   { color: @destructiveText; }
+#repoIssueSummary[issueSeverity="warning"] { color: @warningText; }
 #repoIssueSummary[issueSeverity="info"]    { color: @tertiaryText; }
 
 #repoIssueDetail {
@@ -3093,17 +3137,17 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #repoDiagIcon { font-weight: bold; }
-#repoDiagIcon[diagStatus="ok"]      { color: @successColor; }
-#repoDiagIcon[diagStatus="warning"] { color: @warningColor; }
-#repoDiagIcon[diagStatus="failed"]  { color: @destructiveColor; }
+#repoDiagIcon[diagStatus="ok"]      { color: @successText; }
+#repoDiagIcon[diagStatus="warning"] { color: @warningText; }
+#repoDiagIcon[diagStatus="failed"]  { color: @destructiveText; }
 
 #repoSuggestion {
-    color: @warningColor;
+    color: @warningText;
     font-style: italic;
 }
 
 #repoDiagnoseStep {
-    color: @color05;
+    color: @textPrimary;
     background-color: transparent;
 }
 
@@ -3119,7 +3163,7 @@ QLabel[accessibleName="dimmed-small"] {
 
 #GnomeSettingsPage QLabel {
     font-size: 10pt;
-    color: @color12;
+    color: @textSecondary;
 }
 
 /* DS §3 (NEX F2): the shared #sectionHeaderTitle/#sectionHeaderSource
@@ -3129,7 +3173,7 @@ QLabel[accessibleName="dimmed-small"] {
    type selector. Covers both the page-level header and the Appearance
    tab's per-group card headers (SSO-15098). */
 #GnomeSettingsPage #sectionHeaderTitle {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
     font-weight: 600;
 }
@@ -3151,7 +3195,7 @@ QLabel[accessibleName="dimmed-small"] {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 6;
-    color: @color05;
+    color: @textPrimary;
     font-size: 11pt;
     font-weight: bold;
 }
@@ -3161,43 +3205,48 @@ QLabel[accessibleName="dimmed-small"] {
     border-radius: @dp6;
     padding: @dp6 @dp12;
     font-size: 10pt;
-    background-color: @color01;
-    color: @color05;
+    background-color: @cardBg;
+    color: @textPrimary;
     border: 1px solid @borderColor;
 }
 
-#GnomeSettingsPage QPushButton[accessibleName="navBtn"]:hover,
 #GnomeSettingsPage QPushButton[accessibleName="navBtn"]:checked {
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
+    border-color: @primaryFill;
+}
+
+#GnomeSettingsPage QPushButton[accessibleName="navBtn"]:hover:!checked {
+    background-color: @accentBgTint;
     border-color: @accentColor;
+    color: @textPrimary;
 }
 
 /* Browse buttons */
 #btnBrowseWallpaper,
 #btnBrowseWallpaperDark {
-    background-color: @color01;
+    background-color: @cardBg;
     padding: @dp6 @dp12;
-    color: @color05;
+    color: @textPrimary;
     border: 1px solid @borderColor;
     border-radius: @dp6;
 }
 
 #btnBrowseWallpaper:hover,
 #btnBrowseWallpaperDark:hover {
-    border-color: @color04;
+    border-color: @textSecondary;
 }
 
 /* Speed value labels */
 #GnomeSettingsPage #lblMouseSpeedVal,
 #GnomeSettingsPage #lblTouchpadSpeedVal {
-    color: @color05;
+    color: @textPrimary;
     font-weight: bold;
 }
 
 /* Inline error status label */
 #GnomeSettingsPage #lblStatus {
-    color: @destructiveColor;
+    color: @destructiveText;
     background-color: @cardBg;
     border: 1px solid @destructiveColor;
     border-radius: 6;
@@ -3227,12 +3276,12 @@ SEARCH
 }
 
 #pageLoadingLabel {
-    color: @color06;
+    color: @textSecondary;
     font-size: 10pt;
 }
 
 #lblSearchEmptyHeading {
-    color: @color06;
+    color: @textSecondary;
     font-size: 10pt;
     font-weight: 600;
 }
@@ -3240,31 +3289,31 @@ SEARCH
 #txtSearchInput {
     padding: @dp6 @dp12;
     border-radius: @dp6;
-    background-color: @color01;
+    background-color: @cardBg;
     border: 1px solid @borderColor;
-    color: @color05;
+    color: @textPrimary;
 }
 
 #btnSearchAdvance {
     padding: @dp6 @dp12;
-    background-color: @accentColor;
+    background-color: @primaryFill;
     color: @color07;
     border-radius: @dp6;
 }
 
 #lblFoundFilesInfo {
-    color: @successColor;
+    color: @successText;
 }
 
 #lblSearchDir {
     font-size: 10pt;
-    color: @color06;
+    color: @textSecondary;
 }
 
 #btnBrowseSearchDir {
-    background-color: @color01;
+    background-color: @cardBg;
     padding: @dp6 @dp12;
-    color: @color05;
+    color: @textPrimary;
     border: 1px solid @borderColor;
     border-radius: @dp6;
 }
@@ -3279,11 +3328,11 @@ SEARCH
 }
 
 #advanceSearchPane QLabel {
-    color: @color06;
+    color: @textSecondary;
 }
 
 /* - Advanced Search group labels (Time/Permissions/Size/Owner), SSO-14295 -
- * Reuses the DS §4 "Title" role (9pt/600/@color06 — see #metricTileTitle,
+ * Reuses the DS §4 "Title" role (9pt/600/@textSecondary — see #metricTileTitle,
  * style.qss:871-875) so the four filter-group headers read as sub-section
  * labels instead of plain body text, without introducing a new visual
  * language. #lblFileOrFolder (the same pane's inline "File or Folder:"
@@ -3292,7 +3341,7 @@ SEARCH
 #advanceSearchPane QLabel#lblPermissions,
 #advanceSearchPane QLabel#lblSize,
 #advanceSearchPane QLabel#lblOwner {
-    color: @color06;
+    color: @textSecondary;
     font-size: 9pt;
     font-weight: 600;
 }
@@ -3304,7 +3353,7 @@ SEARCH
 #btnAdvancePaneToggle,
 #btnNewHost {
     font-size: 10pt;
-    color: @accentColor;
+    color: @accentText;
     border: 0;
     background-color: @accentBgTint;
 }
@@ -3354,7 +3403,38 @@ QPlainTextEdit:focus,
 QTextEdit:focus,
 QSpinBox:focus,
 QDoubleSpinBox:focus {
-    border: 2px solid @focusRingColor;
+    border: 1px solid @focusRingColor;
+}
+
+/* Filled and ID-styled buttons set their own border, which outranks the type
+   selector above; name them so they still show a ring. The ring uses the
+   primary text colour because the focus token equals the accent fill. */
+QPushButton[accessibleName="primary"]:focus,
+QPushButton[accessibleName="danger"]:focus,
+#btnScanSystem:focus,
+#btnCleanSelected:focus,
+#btnEditDone:focus,
+#btnSearchAdvance:focus,
+#btnRepairBtm:focus,
+#DiskToolsPage #btnScan:focus,
+#DiskToolsPage #btnTrash:focus {
+    border: 1px solid @textPrimary;
+}
+
+#nav QPushButton:focus,
+#btnSystemPackages:focus,
+#btnSnapPackages:focus,
+#btnFlatpakPackages:focus,
+#btnOrphanPackages:focus,
+#btnOrphanLeftovers:focus,
+#btnAptHistory:focus,
+#portsListenToggle:focus,
+#btnAdvancePaneToggle:focus,
+#btnNewHost:focus,
+#DiskToolsPage QPushButton#segmentedLeft:focus,
+#DiskToolsPage QPushButton#segmentedRight:focus,
+#GnomeSettingsPage QPushButton[accessibleName="navBtn"]:focus {
+    border: 1px solid @focusRingColor;
 }
 
 QCheckBox:focus,
@@ -3383,4 +3463,9 @@ QListWidget::item:focus {
 
 #sidebar QPushButton:focus {
     border-left: 3px solid @focusRingColor;
+}
+
+#sidebar[collapsed="true"] QPushButton:focus {
+    border-left: 0;
+    border-bottom: 3px solid @focusRingColor;
 }

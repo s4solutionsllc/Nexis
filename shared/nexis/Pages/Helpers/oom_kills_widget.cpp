@@ -212,7 +212,7 @@ void OomKillsWidget::refreshThemeColors()
         return;
 
     const QString secondary = sv->value("@color04").toString();
-    const QString warnCol   = sv->value("@warningColor").toString();
+    const QString warnCol   = sv->value("@warningText").toString();
 
     // mCard's background/border/radius come from the global QSS
     // [cardRole="elevated"] recipe (set in setElevated()) — no per-widget

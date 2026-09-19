@@ -194,7 +194,7 @@ void WolWidget::onHostsFetched(QList<WolHost> hosts)
 
     QSettings *sv = AppManager::ins()->getStyleValues();
     if (hosts.isEmpty()) {
-        const QString warn = sv->value("@warningColor", "#e67e22").toString();
+        const QString warn = sv->value("@warningText", "#e67e22").toString();
         mLblStatus->setStyleSheet(QStringLiteral("color:%1;").arg(warn));
         mLblStatus->setText(tr("No hosts found in ARP cache. Try pinging devices on your network first."));
         mLblStatus->show();
@@ -234,7 +234,7 @@ void WolWidget::populateTable(const QList<WolHost> &hosts)
         connect(wakeBtn, &QToolButton::clicked, this, [this, mac] {
             sendMagicPacket(mac);
             QSettings *sv = AppManager::ins()->getStyleValues();
-            const QString ok = sv->value("@successColor", "#27ae60").toString();
+            const QString ok = sv->value("@successText", "#27ae60").toString();
             mLblStatus->setStyleSheet(QStringLiteral("color:%1;").arg(ok));
             mLblStatus->setText(tr("Magic packet sent to %1.").arg(mac));
             mLblStatus->show();

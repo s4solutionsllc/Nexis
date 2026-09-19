@@ -307,8 +307,8 @@ void BatteryChargeThresholdWidget::refreshThemeColors()
 
     const QString cardBg    = sv->value("@cardBgElevated").toString();
     const QString border    = sv->value("@borderColor").toString();
-    const QString successCol = sv->value("@successColor").toString();
-    const QString warnCol   = sv->value("@warningColor").toString();
+    const QString successCol = sv->value("@successText").toString();
+    const QString warnCol   = sv->value("@warningText").toString();
 
     mDetailWidget->setStyleSheet(QString(
         "QFrame#chargeThresholdCard {"

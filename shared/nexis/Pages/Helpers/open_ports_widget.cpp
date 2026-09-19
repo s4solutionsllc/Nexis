@@ -399,8 +399,8 @@ void OpenPortsWidget::onConnectionsFetched(QList<ConnectionEntry> entries)
     mModel->removeRows(0, mModel->rowCount());
 
     QSettings *sv = AppManager::ins()->getStyleValues();
-    QString successColor = sv ? sv->value("@successColor").toString() : "#2ec27e";
-    QString warningColor = sv ? sv->value("@warningColor").toString() : "#FFB347";
+    QString successColor = sv ? sv->value("@successText").toString() : "#2ec27e";
+    QString warningColor = sv ? sv->value("@warningText").toString() : "#FFB347";
     QString failColor    = sv ? sv->value("@destructiveColor").toString() : "#E05454";
 
     for (const ConnectionEntry &e : entries) {

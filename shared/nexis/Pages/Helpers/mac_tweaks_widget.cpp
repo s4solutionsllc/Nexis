@@ -381,8 +381,8 @@ void MacTweaksWidget::refreshThemeColors()
     const QString border    = sv->value("@borderColor").toString();
     const QString secondary = sv->value("@color04").toString();
     const QString tertiary  = sv->value("@tertiaryText").toString();
-    const QString successCol = sv->value("@successColor").toString();
-    const QString warnCol    = sv->value("@warningColor").toString();
+    const QString successCol = sv->value("@successText").toString();
+    const QString warnCol    = sv->value("@warningText").toString();
 
     setStyleSheet(QString(
         "QFrame#macTweaksRow {"
