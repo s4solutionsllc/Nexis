@@ -265,7 +265,7 @@ void SystemCleanerPage::buildCategoryCards()
     scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     QWidget *container = new QWidget;
-    container->setStyleSheet("background-color:transparent;");
+    Utilities::makeBackgroundTransparent(container);
     container->setObjectName("cleanerCardsContainer");
     QGridLayout *grid = new QGridLayout(container);
     grid->setContentsMargins(0, 0, 0, 8);

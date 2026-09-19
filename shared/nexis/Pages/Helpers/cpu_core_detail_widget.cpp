@@ -46,10 +46,7 @@ void CpuCoreDetailWidget::buildUI()
 
     mTitle = new QLabel(tr("Per-Core Detail"), mCard);
     mTitle->setObjectName("cpuCoreDetailTitle");
-    QFont titleFont = mTitle->font();
-    titleFont.setPointSize(titleFont.pointSize() + 3);
-    titleFont.setBold(true);
-    mTitle->setFont(titleFont);
+    mTitle->setProperty("textRole", "panelTitle");
 
     auto *titleRow = new QHBoxLayout;
     titleRow->setContentsMargins(0, 0, 0, 0);

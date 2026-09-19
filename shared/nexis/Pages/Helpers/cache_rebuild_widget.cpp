@@ -157,10 +157,7 @@ void CacheRebuildWidget::buildUI()
 
     auto *title = new QLabel(tr("Cache Rebuilds"), this);
     title->setObjectName("cacheRebuildTitle");
-    QFont titleFont = title->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    title->setFont(titleFont);
+    title->setProperty("textRole", "panelTitle");
     root->addWidget(title);
 
     auto *intro = new QLabel(
@@ -186,6 +183,9 @@ QFrame *CacheRebuildWidget::buildRow(Action action)
     auto *card = new QVBoxLayout(row.card);
     card->setContentsMargins(16, 16, 16, 16);
     card->setSpacing(6);
+    // Word-wrapped labels under-report their height; without this the card
+    // is squeezed and the Rebuild button overlaps the card's bottom edge.
+    card->setSizeConstraint(QLayout::SetMinimumSize);
 
     auto *lblTitle = new QLabel(actionTitle(action), row.card);
     QFont f = lblTitle->font();
@@ -309,16 +309,16 @@ void CacheRebuildWidget::refreshThemeColors()
     if (!sv)
         return;
 
-    const QString cardBg     = sv->value("@cardBg").toString();
+    const QString cardBg     = sv->value("@cardBgElevated").toString();
     const QString border     = sv->value("@borderColor").toString();
-    const QString successCol = sv->value("@successColor").toString();
-    const QString warnCol    = sv->value("@warningColor").toString();
+    const QString successCol = sv->value("@successText").toString();
+    const QString warnCol    = sv->value("@warningText").toString();
 
     const QString cardCss = QString(
         "QFrame#cacheRebuildCard {"
         "  background-color: %1;"
         "  border: 1px solid %2;"
-        "  border-radius: 8px;"
+        "  border-radius: 12px;"
         "}").arg(cardBg, border);
 
     for (const ActionRow &row : std::as_const(mRows)) {

@@ -237,6 +237,14 @@ void AppManager::updateStylesheet() {
 
 **User-configurable tokens** (like `@fontFamily`) are handled separately from theme tokens — they live in `SettingManager` (not `values.ini`) and are replaced after the theme token loop. This avoids polluting `values.ini` with non-color values that would fail hex validation.
 
+**Ordering and base rules that the theme pass depends on:**
+- `updateStylesheet()` applies the token-derived `QPalette` **before** `qApp->setStyleSheet()`. The stylesheet style snapshots each widget's palette while polishing, so polishing against the previous theme's palette leaves palette-coloured text and item views stale after a live theme switch.
+- Text size comes from the QSS base rule `QWidget { font-family: @fontFamily; font-size: 10pt; }`, not from `QApplication::setFont()` alone: platform themes register per-class fonts (13pt on macOS) that beat the application font at polish time. `setFont()` is still called so painters and delegates read the same font. Size variations are expressed as `textRole` properties (`panelTitle`, `valueLarge`, `caption`) rather than `QFont` point-size bumps in C++.
+- Semantic tokens separate role from hue: `@textPrimary`/`@textSecondary`/`@tertiaryText` for text, `@primaryFill`/`@dangerFill` (+ `Hover`) for filled buttons, `@accentText`/`@successText`/`@warningText`/`@destructiveText` for coloured text, `@onStatus` for text on status fills, `@controlBorder` for input boundaries. Each pair meets WCAG AA in both themes. The legacy `@colorNN` tokens remain in `values.ini` for C++ readers but are no longer referenced by `style.qss`.
+- A widget-level `setStyleSheet("background-color:transparent;")` cascades to every descendant; use `Utilities::makeBackgroundTransparent()` (ID-scoped) for scroll-area content.
+
+**Page scaffold:** `PageScaffold` in `shared/nexis/nexis_page.h` provides the single page gutter (`pageMargins()`), spacing, and `buildHeader()` (accent bar + title + source line + trailing action layout, styled by the `#sectionHeader*` recipe). Page titles use the sidebar label verbatim.
+
 **Bundled assets:** All icons use bundled SVGs from QRC resources rather than `QIcon::fromTheme()`, ensuring consistent visuals across desktop environments. Four font families (Inter, Ubuntu, JetBrains Mono) are embedded in the binary via `QFontDatabase::addApplicationFont()`, with a user-configurable font picker on the Settings page.
 
 **Assessment:** **Elegant and maintainable.** This approach is better than the common alternative of maintaining separate QSS files per theme, which leads to divergence and missed updates.

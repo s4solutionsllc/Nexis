@@ -15,16 +15,16 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
-    <number>30</number>
+    <number>20</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>30</number>
+    <number>20</number>
    </property>
    <property name="bottomMargin">
-    <number>25</number>
+    <number>16</number>
    </property>
    <property name="spacing">
     <number>8</number>
@@ -89,7 +89,7 @@
         <item alignment="Qt::AlignLeft|Qt::AlignVCenter">
          <widget class="QLabel" name="sectionHeaderTitle">
           <property name="text">
-           <string notr="true">System Services</string>
+           <string>Services</string>
           </property>
          </widget>
         </item>
@@ -329,9 +329,6 @@
       </item>
       <item>
        <widget class="QListWidget" name="listWidgetServices">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>

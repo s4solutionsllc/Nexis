@@ -1,4 +1,5 @@
 #include "mac_tweaks_widget.h"
+#include "utilities.h"
 
 #include "signal_mapper.h"
 #include <Managers/app_manager.h>
@@ -77,10 +78,7 @@ void MacTweaksWidget::buildUI()
 
     QLabel *title = new QLabel(tr("Tweaks"), this);
     title->setObjectName("macTweaksTitle");
-    QFont titleFont = title->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    title->setFont(titleFont);
+    title->setProperty("textRole", "panelTitle");
     root->addWidget(title);
 
     QLabel *intro = new QLabel(
@@ -107,7 +105,7 @@ void MacTweaksWidget::buildUI()
     scrollArea->setStyleSheet(QStringLiteral("QScrollArea{background-color:transparent;}"));
 
     auto *listWidget = new QWidget(scrollArea);
-    listWidget->setStyleSheet(QStringLiteral("background-color:transparent;"));
+    Utilities::makeBackgroundTransparent(listWidget);
     mListLayout = new QVBoxLayout(listWidget);
     mListLayout->setContentsMargins(0, 0, 0, 0);
     mListLayout->setSpacing(16);
@@ -379,18 +377,18 @@ void MacTweaksWidget::refreshThemeColors()
     if (!sv)
         return;
 
-    const QString cardBg    = sv->value("@cardBg").toString();
+    const QString cardBg    = sv->value("@cardBgElevated").toString();
     const QString border    = sv->value("@borderColor").toString();
     const QString secondary = sv->value("@color04").toString();
     const QString tertiary  = sv->value("@tertiaryText").toString();
-    const QString successCol = sv->value("@successColor").toString();
-    const QString warnCol    = sv->value("@warningColor").toString();
+    const QString successCol = sv->value("@successText").toString();
+    const QString warnCol    = sv->value("@warningText").toString();
 
     setStyleSheet(QString(
         "QFrame#macTweaksRow {"
         "  background-color: %1;"
         "  border: 1px solid %2;"
-        "  border-radius: 8px;"
+        "  border-radius: 12px;"
         "}"
         "QLabel#macTweaksDescription { color: %3; }"
         "QLabel#macTweaksCurrent { color: %4; }"

@@ -54,7 +54,7 @@
       <set>Qt::AlignCenter</set>
      </property>
      <property name="styleSheet">
-      <string notr="true">color: #888; font-size: 11px;</string>
+      <string notr="true"/>
      </property>
     </widget>
    </item>

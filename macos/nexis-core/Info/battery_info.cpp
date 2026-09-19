@@ -106,16 +106,34 @@ void BatteryInfoMacOS::updateBatteryInfo()
     if (cfDictGetInt(props, CFSTR("DesignCapacity"), val))
         mData.designCapacityMah = val;
 
-    // Max capacity (current maximum — degrades over time)
-    // Apple Silicon uses AppleRawMaxCapacity; Intel uses MaxCapacity
+    // Max / current capacity in mAh. Apple Silicon exposes AppleRaw* keys;
+    // newer macOS releases drop them and report the top-level MaxCapacity /
+    // CurrentCapacity as *percentages*, with the real mAh figures nested in
+    // BatteryData. Never present a percentage as mAh.
+    CFDictionaryRef batteryData = nullptr;
+    {
+        CFTypeRef bd = CFDictionaryGetValue(props, CFSTR("BatteryData"));
+        if (bd && CFGetTypeID(bd) == CFDictionaryGetTypeID())
+            batteryData = static_cast<CFDictionaryRef>(bd);
+    }
+
     if (cfDictGetInt(props, CFSTR("AppleRawMaxCapacity"), val))
         mData.maxCapacityMah = val;
-    else if (cfDictGetInt(props, CFSTR("MaxCapacity"), val))
+    else if (batteryData && cfDictGetInt(batteryData, CFSTR("FullChargeCapacity"), val))
+        mData.maxCapacityMah = val;
+    else if (cfDictGetInt(props, CFSTR("MaxCapacity"), val) && val > 100)
         mData.maxCapacityMah = val;
 
-    // Current capacity (current charge level)
-    if (cfDictGetInt(props, CFSTR("CurrentCapacity"), val))
+    if (cfDictGetInt(props, CFSTR("AppleRawCurrentCapacity"), val))
         mData.currentCapacityMah = val;
+    else if (batteryData && cfDictGetInt(batteryData, CFSTR("RemainingCapacity"), val))
+        mData.currentCapacityMah = val;
+    else if (cfDictGetInt(props, CFSTR("CurrentCapacity"), val) && val > 100)
+        mData.currentCapacityMah = val;
+
+    if (mData.designCapacityMah <= 0 && batteryData
+        && cfDictGetInt(batteryData, CFSTR("DesignCapacity"), val))
+        mData.designCapacityMah = val;
 
     // Temperature (reported in tenths of °C)
     if (cfDictGetInt(props, CFSTR("Temperature"), val))

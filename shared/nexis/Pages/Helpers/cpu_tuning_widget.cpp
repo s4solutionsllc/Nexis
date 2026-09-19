@@ -114,10 +114,7 @@ void CpuTuningWidget::buildUI()
     root->setSpacing(12);
 
     mLblTitle = new QLabel(tr("CPU Tuning"), this);
-    QFont titleFont = mLblTitle->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    mLblTitle->setFont(titleFont);
+    mLblTitle->setProperty("textRole", "panelTitle");
     root->addWidget(mLblTitle);
 
     mLblDriver = new QLabel(this);
@@ -445,17 +442,17 @@ void CpuTuningWidget::refreshThemeColors()
     if (!sv)
         return;
 
-    const QString cardBg     = sv->value("@cardBg").toString();
+    const QString cardBg     = sv->value("@cardBgElevated").toString();
     const QString border     = sv->value("@borderColor").toString();
     const QString secondary  = sv->value("@color04").toString();
-    const QString warnCol    = sv->value("@warningColor").toString();
-    const QString successCol = sv->value("@successColor").toString();
+    const QString warnCol    = sv->value("@warningText").toString();
+    const QString successCol = sv->value("@successText").toString();
 
     mCard->setStyleSheet(QString(
         "QFrame#cpuTuningCard {"
         "  background-color: %1;"
         "  border: 1px solid %2;"
-        "  border-radius: 8px;"
+        "  border-radius: 12px;"
         "}").arg(cardBg, border));
     mLblDriver->setStyleSheet(QString("color: %1;").arg(secondary));
     mLblConflict->setStyleSheet(QString("color: %1;").arg(warnCol));

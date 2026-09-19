@@ -75,9 +75,6 @@
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
      <property name="accessibleName">
       <string notr="true">danger</string>
      </property>
@@ -113,9 +110,6 @@
     <widget class="QPushButton" name="btnSave">
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
      </property>
      <property name="accessibleName">
       <string notr="true">primary</string>
@@ -159,9 +153,6 @@
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
      </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
      <property name="text">
       <string>Source</string>
      </property>
@@ -183,9 +174,6 @@
      </property>
      <property name="cursor">
       <cursorShape>PointingHandCursor</cursorShape>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
      </property>
      <property name="text">
       <string>Binary</string>

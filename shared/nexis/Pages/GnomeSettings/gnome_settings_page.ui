@@ -21,16 +21,16 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="leftMargin">
-    <number>12</number>
+    <number>20</number>
    </property>
    <property name="topMargin">
     <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>12</number>
+    <number>20</number>
    </property>
    <property name="bottomMargin">
-    <number>12</number>
+    <number>16</number>
    </property>
    <item>
     <widget class="QWidget" name="pageHeader" native="true">
@@ -94,9 +94,6 @@
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
        <property name="accessibleName">
         <string notr="true">navBtn</string>
        </property>
@@ -115,9 +112,6 @@
        </property>
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
-       </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
        </property>
        <property name="accessibleName">
         <string notr="true">navBtn</string>
@@ -138,9 +132,6 @@
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
        <property name="accessibleName">
         <string notr="true">navBtn</string>
        </property>
@@ -159,9 +150,6 @@
        </property>
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
-       </property>
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
        </property>
        <property name="accessibleName">
         <string notr="true">navBtn</string>

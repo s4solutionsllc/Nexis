@@ -1,4 +1,5 @@
 #include "snapshot_manager_widget.h"
+#include "utilities.h"
 
 #include "signal_mapper.h"
 #include <Managers/app_manager.h>
@@ -135,10 +136,7 @@ void SnapshotManagerWidget::buildUI()
     root->setSpacing(12);
 
     mLblTitle = new QLabel(tr("Local Snapshots"), this);
-    QFont titleFont = mLblTitle->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    mLblTitle->setFont(titleFont);
+    mLblTitle->setProperty("textRole", "panelTitle");
     root->addWidget(mLblTitle);
 
     auto *intro = new QLabel(
@@ -195,7 +193,7 @@ void SnapshotManagerWidget::buildUI()
     scrollArea->setStyleSheet(QStringLiteral("QScrollArea{background-color:transparent;}"));
 
     mListContainer = new QWidget(scrollArea);
-    mListContainer->setStyleSheet(QStringLiteral("background-color:transparent;"));
+    Utilities::makeBackgroundTransparent(mListContainer);
     mListLayout = new QVBoxLayout(mListContainer);
     mListLayout->setContentsMargins(0, 0, 0, 0);
     mListLayout->setSpacing(6);
@@ -344,18 +342,18 @@ void SnapshotManagerWidget::refreshThemeColors()
     if (!sv)
         return;
 
-    const QString cardBg     = sv->value("@cardBg").toString();
+    const QString cardBg     = sv->value("@cardBgElevated").toString();
     const QString border     = sv->value("@borderColor").toString();
     const QString secondary  = sv->value("@color04").toString();
-    const QString successCol = sv->value("@successColor").toString();
-    const QString warnCol    = sv->value("@warningColor").toString();
+    const QString successCol = sv->value("@successText").toString();
+    const QString warnCol    = sv->value("@warningText").toString();
 
     if (mCard) {
         mCard->setStyleSheet(QString(
             "QFrame#snapshotManagerCard {"
             "  background-color: %1;"
             "  border: 1px solid %2;"
-            "  border-radius: 8px;"
+            "  border-radius: 12px;"
             "}").arg(cardBg, border));
     }
 

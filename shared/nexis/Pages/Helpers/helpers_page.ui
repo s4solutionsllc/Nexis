@@ -15,16 +15,16 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
-    <number>15</number>
+    <number>20</number>
    </property>
    <property name="topMargin">
-    <number>10</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>15</number>
+    <number>20</number>
    </property>
    <property name="bottomMargin">
-    <number>10</number>
+    <number>16</number>
    </property>
    <property name="spacing">
     <number>10</number>
@@ -32,7 +32,7 @@
    <item row="2" column="0" colspan="3">
     <widget class="QStackedWidget" name="stackedWidget"/>
    </item>
-   <item row="0" column="0" colspan="3">
+   <item row="1" column="0" colspan="3">
     <widget class="QWidget" name="nav" native="true">
      <layout class="QHBoxLayout" name="navLayout">
       <property name="spacing">
@@ -62,9 +62,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="text">
          <string>Host Manage</string>
         </property>
@@ -84,9 +81,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="text">
          <string>Flush DNS Cache</string>
         </property>
@@ -99,9 +93,6 @@
        <widget class="QPushButton" name="btnNetDiag">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="text">
          <string>Network Diagnostics</string>
@@ -119,9 +110,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="text">
          <string>Open Ports</string>
         </property>
@@ -137,9 +125,6 @@
        <widget class="QPushButton" name="btnFirewall">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="text">
          <string>Firewall</string>

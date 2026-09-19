@@ -1,4 +1,5 @@
 #include "schedule_editor_dialog.h"
+#include "utilities.h"
 #include <Managers/cleaner_service.h>
 
 #include <QVBoxLayout>
@@ -64,7 +65,7 @@ void ScheduleEditorDialog::buildUI()
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     QWidget *scrollWidget = new QWidget;
-    scrollWidget->setStyleSheet("background-color:transparent;");
+    Utilities::makeBackgroundTransparent(scrollWidget);
     QVBoxLayout *bodyLayout = new QVBoxLayout(scrollWidget);
     bodyLayout->setSpacing(12);
     bodyLayout->setContentsMargins(0, 0, 0, 0);

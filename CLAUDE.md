@@ -119,8 +119,9 @@ Keep updates concise — modify existing sections rather than appending paragrap
 ```cpp
 scrollArea->setFrameShape(QFrame::NoFrame);
 scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
-scrollWidget->setStyleSheet("background-color:transparent;");
+Utilities::makeBackgroundTransparent(scrollWidget);   // scoped to the widget
 ```
+Never call `setStyleSheet("background-color:transparent;")` on a container — a bare declaration cascades to every child and erases card fills and accent bars.
 
 ### Hardcoded Colors (BUG-47)
 Never use hardcoded hex colors in C++. All colors come from `values.ini` theme tokens via `AppManager::getStyleValues()`. Widgets store token strings (e.g., `"@cpuColor"`) and implement `refreshThemeColors()` connected to `SignalMapper::sigChangedAppTheme`.

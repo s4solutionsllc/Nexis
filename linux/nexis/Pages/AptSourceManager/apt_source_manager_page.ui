@@ -134,9 +134,6 @@
          </item>
          <item>
           <widget class="QListWidget" name="listWidgetAptSources">
-           <property name="focusPolicy">
-            <enum>Qt::NoFocus</enum>
-           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
@@ -211,9 +208,6 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
           <property name="accessibleName">
            <string notr="true">primary</string>
           </property>
@@ -248,9 +242,6 @@
           </property>
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
-          </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
           </property>
           <property name="accessibleName">
            <string notr="true">danger</string>
@@ -303,9 +294,6 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
           <property name="accessibleName">
            <string notr="true">primary</string>
           </property>
@@ -330,9 +318,6 @@
           </property>
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
-          </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
           </property>
           <property name="accessibleName">
            <string notr="true">danger</string>

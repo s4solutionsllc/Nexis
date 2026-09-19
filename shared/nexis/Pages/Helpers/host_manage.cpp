@@ -35,7 +35,7 @@ HostManage::HostManage(QWidget *parent, HostService *hostService):
 
 void HostManage::init()
 {
-    ui->sectionHeaderTitle->setText(tr("Hosts (%1)").arg(1));
+    ui->sectionHeaderTitle->setText(tr("Hosts"));
 
     // DS §3 accent-bar sub-section header (NEX F2) — neutral "accent" token,
     // compact (card-header) height variant.

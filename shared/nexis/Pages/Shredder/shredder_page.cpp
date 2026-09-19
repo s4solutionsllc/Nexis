@@ -1,4 +1,5 @@
 #include "shredder_page.h"
+#include "nexis_page.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -46,7 +47,7 @@ QWidget *ShredderPage::makeElevatedContainer(QWidget *parent)
 void ShredderPage::buildUi()
 {
     auto *outer = new QVBoxLayout(this);
-    outer->setContentsMargins(60, 10, 60, 20);
+    outer->setContentsMargins(PageScaffold::pageMargins());
     outer->setSpacing(8);
 
     // ---- Header (DS §3 shared recipe) ----
@@ -93,13 +94,14 @@ void ShredderPage::buildUi()
     dropZoneLayout->setSpacing(10);
     dropZoneLayout->addStretch();
 
-    auto *dropIcon = new QLabel(QString::fromUtf8("\xF0\x9F\x97\x91"), mDropZone); // wastebasket glyph
+    auto *dropIcon = new QLabel(mDropZone);
     dropIcon->setObjectName("emptyStateIcon");
+    Utilities::setEmptyStateIcon(dropIcon, QStringLiteral("shredder.svg"));
     dropIcon->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     dropZoneLayout->addWidget(dropIcon);
 
     auto *dropHeading = new QLabel(tr("Drag files or folders here to shred"), mDropZone);
-    dropHeading->setObjectName("lblShredderDropHeading");
+    dropHeading->setObjectName("emptyStateHeading");
     dropHeading->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     dropZoneLayout->addWidget(dropHeading);
 

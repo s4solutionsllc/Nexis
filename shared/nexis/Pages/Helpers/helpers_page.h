@@ -56,6 +56,7 @@ private slots:
     void applyNavLayout(bool compact);
     void computeNavMinWidth();
     void resizeEvent(QResizeEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
 private:
     Ui::HelpersPage *ui;

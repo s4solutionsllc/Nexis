@@ -156,10 +156,7 @@ void TrimWidget::buildUI()
     root->setSpacing(12);
 
     mLblTitle = new QLabel(tr("SSD TRIM"), this);
-    QFont titleFont = mLblTitle->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    mLblTitle->setFont(titleFont);
+    mLblTitle->setProperty("textRole", "panelTitle");
     root->addWidget(mLblTitle);
 
     auto *intro = new QLabel(
@@ -373,17 +370,17 @@ void TrimWidget::refreshThemeColors()
     if (!sv)
         return;
 
-    const QString cardBg     = sv->value("@cardBg").toString();
+    const QString cardBg     = sv->value("@cardBgElevated").toString();
     const QString border     = sv->value("@borderColor").toString();
     const QString secondary  = sv->value("@color04").toString();
-    const QString successCol = sv->value("@successColor").toString();
-    const QString warnCol    = sv->value("@warningColor").toString();
+    const QString successCol = sv->value("@successText").toString();
+    const QString warnCol    = sv->value("@warningText").toString();
 
     mCard->setStyleSheet(QString(
         "QFrame#trimCard {"
         "  background-color: %1;"
         "  border: 1px solid %2;"
-        "  border-radius: 8px;"
+        "  border-radius: 12px;"
         "}").arg(cardBg, border));
 
     mLblPlatform->setStyleSheet(QString("color: %1;").arg(secondary));

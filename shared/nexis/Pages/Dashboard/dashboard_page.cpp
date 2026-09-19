@@ -29,6 +29,15 @@ DashboardPage::~DashboardPage()
     delete ui;
 }
 
+static QString kioskShortcutText()
+{
+#ifdef Q_OS_MAC
+    return QKeySequence(Qt::CTRL | Qt::META | Qt::Key_F).toString(QKeySequence::NativeText);
+#else
+    return QKeySequence(Qt::Key_F11).toString(QKeySequence::NativeText);
+#endif
+}
+
 DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
                              SettingManager *settingManager, AppManager *appManager,
                              SignalMapper *signalMapper, DataRefreshService *refreshService) :
@@ -57,6 +66,8 @@ DashboardPage::DashboardPage(QWidget *parent, InfoManager *infoManager,
     mActive(true)
 {
     ui->setupUi(this);
+    ui->lblFooterLeft->setText(tr("%1: Command Palette")
+        .arg(QKeySequence(Qt::CTRL | Qt::Key_K).toString(QKeySequence::NativeText)));
 
     init();
 }
@@ -331,7 +342,7 @@ void DashboardPage::init()
     mKioskButton->setFixedSize(32, 32);
     mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
     mKioskButton->setIconSize(QSize(16, 16));
-    mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
+    mKioskButton->setToolTip(tr("Enter Kiosk Mode (%1)").arg(kioskShortcutText()));
     mKioskButton->setCursor(Qt::PointingHandCursor);
     mKioskButton->setObjectName("btnKioskToggle");
     mKioskButton->setAutoRaise(true);
@@ -346,7 +357,7 @@ void DashboardPage::init()
     mEditButton->setFixedSize(32, 32);
     mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
     mEditButton->setIconSize(QSize(16, 16));
-    mEditButton->setToolTip(tr("Customize Layout (Ctrl+E)"));
+    mEditButton->setToolTip(tr("Customize Layout (%1)").arg(QKeySequence(Qt::CTRL | Qt::Key_E).toString(QKeySequence::NativeText)));
     mEditButton->setCursor(Qt::PointingHandCursor);
     mEditButton->setObjectName("btnEditToggle");
     mEditButton->setAutoRaise(true);
@@ -1061,7 +1072,7 @@ void DashboardPage::onKioskModeChanged(bool enabled)
         mEditButton->show();
         mEditShortcut->setEnabled(true);
         mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
-        mKioskButton->setToolTip(tr("Enter Kiosk Mode (F11)"));
+        mKioskButton->setToolTip(tr("Enter Kiosk Mode (%1)").arg(kioskShortcutText()));
         applyFooterVisibility();
     }
 }

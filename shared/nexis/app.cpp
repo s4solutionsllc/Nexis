@@ -29,6 +29,7 @@
 #include <QWindow>
 #include <QThreadPool>
 #include <QLabel>
+#include <QMenuBar>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
 #include <QTimer>
@@ -294,13 +295,16 @@ void App::buildSidebar()
         sec.containerLayout->addWidget(btnGnomeSettings);
         sec.buttons.append(btnGnomeSettings);
 
+        // Settings lives in the pinned footer (below) so it is always one
+        // click away, not the last row of a collapsible, scrolling group.
         btnSettings = createSidebarButton(tr("Settings"));
-        sec.containerLayout->addWidget(btnSettings);
         sec.buttons.append(btnSettings);
     }
 
     // Connect section header clicks
     for (int i = 0; i < mSections.size(); ++i) {
+        if (!mSections[i].header)
+            continue;
         connect(mSections[i].header, &QPushButton::clicked, this, [this, i]() {
             toggleSection(i);
         });
@@ -316,8 +320,13 @@ void App::buildSidebar()
     mVersionLabel = new QLabel(QString("v%1").arg(qApp->applicationVersion()), ui->sidebar);
     mVersionLabel->setObjectName("sidebarVersionLabel");
     mVersionLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    mSidebarLayout->addWidget(mVersionLabel);
-    mSidebarLayout->addSpacing(4);
+
+    auto *footerSeparator = new QFrame(ui->sidebar);
+    footerSeparator->setObjectName("sidebarDividerLine");
+    footerSeparator->setFrameShape(QFrame::HLine);
+    footerSeparator->setFixedHeight(1);
+    mSidebarLayout->addWidget(footerSeparator);
+    mSidebarLayout->addWidget(btnSettings);
 
     // Feedback button (not a page - opens dialog)
     btnFeedback = new QPushButton(ui->sidebar);
@@ -327,6 +336,7 @@ void App::buildSidebar()
     btnFeedback->setIconSize(Dpi::scale(20, 20));
     btnFeedback->setObjectName("btnFeedback");
     mSidebarLayout->addWidget(btnFeedback);
+    mSidebarLayout->addWidget(mVersionLabel);
 
     // System Cleaner badge overlay (#8, #29)
     mCleanerBadge = new QLabel(ui->sidebar);
@@ -416,6 +426,7 @@ void App::init()
 
     ui->pageContentLayout->setContentsMargins(0, 0, 0, 0);
     ui->pageContentLayout->addWidget(mHeaderActionsRow);
+    mHeaderActionsRow->hide();
     ui->pageContentLayout->addWidget(mSlidingStacked);
 
     // Set button labels
@@ -839,25 +850,20 @@ void App::init()
     addAction(kioskToggle);
     connect(kioskToggle, &QAction::triggered, this, &App::toggleKioskMode);
 
-    QAction *kioskExit = new QAction(this);
-    kioskExit->setShortcut(Qt::Key_Escape);
-    addAction(kioskExit);
-    connect(kioskExit, &QAction::triggered, this, &App::exitKioskMode);
+    // Enabled only while in kiosk mode: a window-scope Esc shortcut is
+    // dispatched before key events, so leaving it on would stop every page
+    // from handling Esc itself.
+    mKioskExitAction = new QAction(this);
+    mKioskExitAction->setShortcut(Qt::Key_Escape);
+    mKioskExitAction->setEnabled(false);
+    addAction(mKioskExitAction);
+    connect(mKioskExitAction, &QAction::triggered, this, &App::exitKioskMode);
 
     // Sidebar collapse shortcut (Ctrl+B)
-    QAction *sidebarToggle = new QAction(this);
-    sidebarToggle->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
-    addAction(sidebarToggle);
-    connect(sidebarToggle, &QAction::triggered, this, &App::toggleSidebarCollapse);
 
     // Command palette shortcut (Ctrl+K)
     setupCommandPalette();
-    QAction *cmdPaletteAction = new QAction(this);
-    cmdPaletteAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_K));
-    addAction(cmdPaletteAction);
-    connect(cmdPaletteAction, &QAction::triggered, this, [this]() {
-        mCommandPalette->show();
-    });
+    setupMenuBar();
 
     // Restore kiosk mode from last session, or force it on if the user has
     // configured Nexis to always launch straight into kiosk mode (GH#207).
@@ -957,16 +963,7 @@ void App::changeEvent(QEvent *event)
 
 void App::createTrayActions()
 {
-    auto showAndRaise = [this] {
-#ifdef Q_OS_MAC
-        nexis_macos_show_dock_icon();
-#endif
-        setWindowState(windowState() & ~Qt::WindowMinimized);
-        show();
-        if (windowHandle())
-            windowHandle()->requestActivate();
-        emit SignalMapper::ins()->sigAppVisibilityChanged(true);
-    };
+    auto showAndRaise = [this] { this->showAndRaise(); };
 
     connect(mTrayIcon, &QSystemTrayIcon::activated, this, [showAndRaise](QSystemTrayIcon::ActivationReason) {
         showAndRaise();
@@ -1029,15 +1026,17 @@ void App::createTrayActions()
 
     QAction *paletteAction = quickMenu->addAction(tr("Open Command Palette"));
     connect(paletteAction, &QAction::triggered, this, [this] {
-        show();
+        this->showAndRaise();
         mCommandPalette->show();
     });
 
     QAction *scanAction = quickMenu->addAction(tr("Run System Cleaner Scan"));
-    connect(scanAction, &QAction::triggered, this, [this] {
-        clickSidebarButton(btnSystemCleaner->toolTip(), true);
-        if (systemCleanerPage)
-            systemCleanerPage->quickScan();
+    connect(scanAction, &QAction::triggered, this, &App::runCleanerScan);
+
+    QAction *diskMapAction = quickMenu->addAction(tr("Disk Map"));
+    connect(diskMapAction, &QAction::triggered, this, [this] {
+        this->showAndRaise();
+        openDiskTreemapDialog();
     });
 
     // SSO-23855: toggles the compact mini-monitor window from the tray, the
@@ -1084,7 +1083,7 @@ void App::createTrayActions()
 
     mTrayMenu->addSeparator();
 
-    mKioskAction = new QAction(tr("Kiosk Mode (F11)"), this);
+    mKioskAction = new QAction(tr("Kiosk Mode"), this);
     mKioskAction->setCheckable(true);
     mKioskAction->setChecked(mKioskMode);
     connect(mKioskAction, &QAction::triggered, this, &App::toggleKioskMode);
@@ -1239,6 +1238,9 @@ void App::setPageHeaderActions(QWidget *widget)
         mHeaderActionsRowLayout->addWidget(widget);
         widget->show();
     }
+    // Only the Dashboard uses this strip; an empty one pushes every other
+    // page's content down by its height.
+    mHeaderActionsRow->setVisible(widget != nullptr);
 }
 
 void App::pageClick(QWidget *widget, bool slide)
@@ -1252,7 +1254,17 @@ void App::pageClick(QWidget *widget, bool slide)
         }
 
         if (slide) {
-            mSlidingStacked->slideInIdx(mSlidingStacked->indexOf(widget));
+            // Stack indices follow lazy construction order, so derive the
+            // direction from sidebar order instead.
+            auto slotIndexOf = [this](QWidget *w) {
+                for (int i = 0; i < mPageSlots.size(); ++i)
+                    if (mPageSlots[i].widget == w)
+                        return i;
+                return -1;
+            };
+            const bool forward = slotIndexOf(widget) >= slotIndexOf(current);
+            mSlidingStacked->slideInIdx(mSlidingStacked->indexOf(widget),
+                forward ? SlidingStackedWidget::BOTTOM2TOP : SlidingStackedWidget::TOP2BOTTOM);
         } else {
             mSlidingStacked->finishAnimation();
             mSlidingStacked->setCurrentWidget(widget);
@@ -1260,6 +1272,13 @@ void App::pageClick(QWidget *widget, bool slide)
 
         if (auto *page = qobject_cast<NexisPage*>(widget))
             page->onPageActivated();
+
+        for (const PageSlot &slot : mPageSlots) {
+            if (slot.widget == widget) {
+                setWindowTitle(tr("%1 — Nexis").arg(slot.title));
+                break;
+            }
+        }
     }
 }
 
@@ -1329,11 +1348,15 @@ void App::toggleSidebarCollapse()
 // makes — this is a second door to the same dialog, not a fork of it.
 void App::openDiskTreemapDialog()
 {
-    auto *dlg = new DiskTreemapDialog(this, AppManager::ins(), SignalMapper::ins());
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->show();
-    dlg->raise();
-    dlg->activateWindow();
+    // One window: a second click raises the open dialog instead of stacking
+    // another copy.
+    if (!mDiskTreemapDialog) {
+        mDiskTreemapDialog = new DiskTreemapDialog(this, AppManager::ins(), SignalMapper::ins());
+        mDiskTreemapDialog->setAttribute(Qt::WA_DeleteOnClose);
+    }
+    mDiskTreemapDialog->show();
+    mDiskTreemapDialog->raise();
+    mDiskTreemapDialog->activateWindow();
 }
 
 void App::applySidebarCollapse(bool collapsed, bool animate)
@@ -1368,11 +1391,13 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     for (int i = 0; i < mSections.size(); ++i) {
         if (mSections[i].header)
             mSections[i].header->setVisible(!collapsed);
-        mSections[i].container->setVisible(!mSections[i].collapsed);
+        // In rail mode the headers are hidden, so a group collapsed in the
+        // expanded sidebar would otherwise have no way back.
+        mSections[i].container->setVisible(collapsed || !mSections[i].collapsed);
     }
 
     for (QFrame *indicator : mSectionIndicators)
-        indicator->setVisible(false);
+        indicator->setVisible(collapsed);
 
     // Toggle version label
     if (mVersionLabel)
@@ -1634,10 +1659,15 @@ void App::applyKioskMode(bool enable)
     mKioskAction->setChecked(enable);
     mKioskAction->blockSignals(false);
 
+    if (mKioskExitAction)
+        mKioskExitAction->setEnabled(enable);
+
     if (enable) {
         mPreKioskCollapsed = mSidebarCollapsed;
         ui->sidebar->hide();
-        pageClick(dashboardPage, false);
+        mPendingNavTitle = tr("Dashboard");
+        pageClick(ensurePage(0), false);
+        checkSidebarButtonByTooltip(tr("Dashboard"));
 
         // GH#207: place the kiosk window on the configured monitor, if any.
         if (QScreen *targetScreen = resolveKioskScreen()) {
@@ -1714,6 +1744,91 @@ void App::showKioskOverlay()
     connect(fadeOut, &QPropertyAnimation::finished, overlay, &QLabel::deleteLater);
 }
 
+void App::showAndRaise()
+{
+#ifdef Q_OS_MAC
+    nexis_macos_show_dock_icon();
+#endif
+    setWindowState(windowState() & ~Qt::WindowMinimized);
+    show();
+    raise();
+    if (windowHandle())
+        windowHandle()->requestActivate();
+    emit SignalMapper::ins()->sigAppVisibilityChanged(true);
+}
+
+void App::runCleanerScan()
+{
+    clickSidebarButton(tr("System Cleaner"), true);
+    if (!systemCleanerPage)
+        ensurePageByTitle(tr("System Cleaner"));
+    if (systemCleanerPage)
+        systemCleanerPage->quickScan();
+}
+
+// A native menu bar gives macOS users the standard Preferences / View / Go
+// entries and makes every shortcut discoverable on all platforms.
+void App::setupMenuBar()
+{
+    QMenuBar *bar = menuBar();
+#ifndef Q_OS_MAC
+    bar->hide();   // shortcuts still work; Linux keeps its chrome-free window
+#endif
+
+    QMenu *appMenu = bar->addMenu(tr("&File"));
+    QAction *prefs = appMenu->addAction(tr("Settings…"));
+    prefs->setMenuRole(QAction::PreferencesRole);
+    prefs->setShortcut(QKeySequence::Preferences);
+    connect(prefs, &QAction::triggered, this, [this] { clickSidebarButton(tr("Settings"), true); });
+    QAction *quit = appMenu->addAction(tr("Quit Nexis"));
+    quit->setMenuRole(QAction::QuitRole);
+    quit->setShortcut(QKeySequence::Quit);
+    connect(quit, &QAction::triggered, this, &QWidget::close);
+
+    QMenu *viewMenu = bar->addMenu(tr("&View"));
+    QAction *palette = viewMenu->addAction(tr("Command Palette"));
+    palette->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_K));
+    connect(palette, &QAction::triggered, this, [this] { mCommandPalette->show(); });
+    QAction *sidebar = viewMenu->addAction(tr("Toggle Sidebar"));
+    sidebar->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
+    connect(sidebar, &QAction::triggered, this, &App::toggleSidebarCollapse);
+    QAction *kiosk = viewMenu->addAction(tr("Kiosk Mode"));
+#ifdef Q_OS_MAC
+    // F11 is "Show Desktop" on macOS; the existing F11 action stays for
+    // keyboards where it reaches the app.
+    kiosk->setShortcut(QKeySequence(Qt::CTRL | Qt::META | Qt::Key_F));
+#endif
+    connect(kiosk, &QAction::triggered, this, &App::toggleKioskMode);
+    viewMenu->addSeparator();
+    QAction *theme = viewMenu->addAction(tr("Toggle Theme"));
+    connect(theme, &QAction::triggered, this, [] {
+        const QString next = (SettingManager::ins()->getColorScheme() == "light") ? "dark" : "light";
+        SettingManager::ins()->setColorScheme(next);
+        AppManager::ins()->updateStylesheet();
+    });
+
+    QMenu *goMenu = bar->addMenu(tr("&Go"));
+    int shortcutIndex = 1;
+    for (const PageSlot &slot : mPageSlots) {
+        const QString title = slot.title;
+        QAction *go = goMenu->addAction(title);
+        if (shortcutIndex <= 9)
+            go->setShortcut(QKeySequence(Qt::CTRL | (Qt::Key_0 + shortcutIndex++)));
+        connect(go, &QAction::triggered, this, [this, title] { clickSidebarButton(title, true); });
+    }
+
+    QMenu *helpMenu = bar->addMenu(tr("&Help"));
+    QAction *feedbackAction = helpMenu->addAction(tr("Feedback…"));
+    connect(feedbackAction, &QAction::triggered, this, [this] { btnFeedback->click(); });
+
+    // With the actions living in the menu bar, the menu owns the shortcuts;
+    // on Linux the bar is hidden, so register them on the window as well.
+#ifndef Q_OS_MAC
+    for (QMenu *menu : {appMenu, viewMenu, goMenu, helpMenu})
+        addActions(menu->actions());
+#endif
+}
+
 void App::setupCommandPalette()
 {
     mCommandPalette = new CommandPalette(this);
@@ -1743,8 +1858,17 @@ void App::setupCommandPalette()
         toggleKioskMode();
     });
 
-    mCommandPalette->addCommand(tr("Quick Clean"), tr("Action"), [this]() {
-        clickSidebarButton(tr("System Cleaner"), true);
+    mCommandPalette->addCommand(tr("Run System Cleaner Scan"), tr("Action"), [this]() {
+        runCleanerScan();
+    });
+
+    mCommandPalette->addCommand(tr("Feedback"), tr("Action"), [this]() {
+        btnFeedback->click();
+    });
+
+    mCommandPalette->addCommand(tr("Mini Monitor"), tr("Action"), [this]() {
+        const bool show = !(mMiniMonitorWindow && mMiniMonitorWindow->isVisible());
+        emit SignalMapper::ins()->sigMiniMonitorToggled(show);
     });
 
     mCommandPalette->addCommand(tr("Disk Map"), tr("Action"), [this]() {

@@ -90,9 +90,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="accessibleName">
          <string notr="true">primary</string>
         </property>
@@ -176,7 +173,7 @@
            <item>
             <widget class="QLabel" name="sectionHeaderTitle">
              <property name="text">
-              <string notr="true">Startup Applications</string>
+              <string>Startup Apps</string>
              </property>
             </widget>
            </item>
@@ -264,9 +261,6 @@
          </item>
          <item>
           <widget class="QListWidget" name="listWidgetStartup">
-           <property name="focusPolicy">
-            <enum>Qt::NoFocus</enum>
-           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
