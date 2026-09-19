@@ -211,8 +211,11 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
     quint64 readBytes  = io.at(0);
     quint64 writeBytes = io.at(1);
 
-    quint64 d_readByte = (readBytes - l_readBytes);
-    quint64 d_writeByte = (writeBytes - l_writeBytes);
+    // Counters can step backwards (device re-enumeration, a sample that
+    // fails and reports 0). Unsigned subtraction would wrap to ~16 EiB/s and
+    // latch the Y axis at that scale for the rest of the session.
+    quint64 d_readByte = readBytes >= l_readBytes ? readBytes - l_readBytes : 0;
+    quint64 d_writeByte = writeBytes >= l_writeBytes ? writeBytes - l_writeBytes : 0;
 
     seriesList.at(0)->insert(0, QPointF(0, d_readByte));
     seriesList.at(0)->setName(tr("Read: %1/s Total: %2")

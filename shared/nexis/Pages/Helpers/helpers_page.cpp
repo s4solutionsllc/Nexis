@@ -1,4 +1,5 @@
 #include "helpers_page.h"
+#include <QShowEvent>
 #include "nexis_page.h"
 #include "network_diag_widget.h"
 #include "open_ports_widget.h"
@@ -668,6 +669,15 @@ void HelpersPage::applyNavLayout(bool compact)
         row2->addStretch();
         col->addLayout(row2);
     }
+}
+
+// Host Manage is the tab shown first, so it has to load when the page is
+// first displayed — not only when its tab button is clicked.
+void HelpersPage::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    if (ui->stackedWidget->currentIndex() == 0)
+        widgetHostManage->loadIfNeeded();
 }
 
 void HelpersPage::resizeEvent(QResizeEvent *event)
