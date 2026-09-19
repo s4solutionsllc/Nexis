@@ -11,6 +11,7 @@
 #include <QHBoxLayout>
 #include <QScrollArea>
 #include <QPushButton>
+#include <QLabel>
 #include <functional>
 
 class QScreen;
@@ -186,6 +187,13 @@ private:
     // After this flag flips, any lazily-constructed page missed the initial
     // sigChangedAppTheme emission, so ensurePage() re-emits to catch it up.
     bool mInitialThemeApplied = false;
+
+    // Shown while a lazily-built page constructs, so the previous page is
+    // never left on screen under the new sidebar highlight.
+    QWidget *mLoadingPage = nullptr;
+    QLabel *mLoadingLabel = nullptr;
+    QString mPendingNavTitle;
+    void navigateToTitle(const QString &title);
 
     QSystemTrayIcon *mTrayIcon;
     QMenu *mTrayMenu;

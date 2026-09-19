@@ -3273,6 +3273,11 @@ SEARCH
     border-bottom: 1px solid @borderColor;
 }
 
+#pageLoadingLabel {
+    color: @color06;
+    font-size: 10pt;
+}
+
 #lblSearchEmptyHeading {
     color: @color06;
     font-size: 10pt;

@@ -686,10 +686,7 @@ void App::init()
     // Connect sidebar button clicks to page navigation. Click handlers route
     // through ensurePageByTitle() so they work when the target page has not
     // yet been constructed (FR-97 lazy construction).
-    auto navByTitle = [this](const QString &title) {
-        if (QWidget *w = ensurePageByTitle(title))
-            pageClick(w);
-    };
+    auto navByTitle = [this](const QString &title) { navigateToTitle(title); };
     connect(btnDash,             &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Dashboard")); });
     connect(btnHardwareInfo,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Hardware Info")); });
     connect(btnResources,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Resources")); });
@@ -1106,6 +1103,7 @@ void App::clickSidebarButton(QString pageTitle, bool isShow)
 {
     QWidget *selectedWidget = getPageByTitle(pageTitle);
     if (selectedWidget) {
+        mPendingNavTitle = pageTitle;
         pageClick(selectedWidget, !isShow);
         checkSidebarButtonByTooltip(pageTitle);
     } else {
@@ -1164,6 +1162,45 @@ QWidget* App::ensurePage(int index)
     return w;
 }
 
+void App::navigateToTitle(const QString &title)
+{
+    int index = -1;
+    for (int i = 0; i < mPageSlots.size(); ++i) {
+        if (mPageSlots[i].title == title) {
+            index = i;
+            break;
+        }
+    }
+    if (index < 0)
+        return;
+
+    mPendingNavTitle = title;
+    if (mPageSlots[index].widget) {
+        pageClick(mPageSlots[index].widget);
+        return;
+    }
+
+    if (!mLoadingPage) {
+        mLoadingPage = new QWidget(mSlidingStacked);
+        mLoadingPage->setObjectName("pageLoading");
+        auto *layout = new QVBoxLayout(mLoadingPage);
+        mLoadingLabel = new QLabel(mLoadingPage);
+        mLoadingLabel->setObjectName("pageLoadingLabel");
+        mLoadingLabel->setAlignment(Qt::AlignCenter);
+        layout->addWidget(mLoadingLabel);
+        mSlidingStacked->addWidget(mLoadingPage);
+    }
+    mLoadingLabel->setText(tr("Loading %1…").arg(title));
+    pageClick(mLoadingPage, false);
+
+    // Let the placeholder paint before the (possibly slow) constructor runs.
+    QTimer::singleShot(20, this, [this, title]() {
+        QWidget *w = ensurePageByTitle(title);
+        if (w && mPendingNavTitle == title)
+            pageClick(w, false);
+    });
+}
+
 QWidget* App::ensurePageByTitle(const QString &title)
 {
     for (int i = 0; i < mPageSlots.size(); ++i) {
@@ -1207,6 +1244,7 @@ void App::setPageHeaderActions(QWidget *widget)
 void App::pageClick(QWidget *widget, bool slide)
 {
     if (widget) {
+        mSlidingStacked->finishAnimation();
         QWidget *current = mSlidingStacked->currentWidget();
         if (current != widget) {
             if (auto *page = qobject_cast<NexisPage*>(current))
@@ -1216,6 +1254,7 @@ void App::pageClick(QWidget *widget, bool slide)
         if (slide) {
             mSlidingStacked->slideInIdx(mSlidingStacked->indexOf(widget));
         } else {
+            mSlidingStacked->finishAnimation();
             mSlidingStacked->setCurrentWidget(widget);
         }
 

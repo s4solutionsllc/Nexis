@@ -41,13 +41,14 @@ void ShredConfirmDialog::buildUI(int itemCount, quint64 totalBytes)
 
     auto *btnCancel = new QPushButton(tr("Cancel"), this);
     btnCancel->setCursor(Qt::PointingHandCursor);
+    btnCancel->setDefault(true);
     connect(btnCancel, &QPushButton::clicked, this, &QDialog::reject);
     buttons->addWidget(btnCancel);
 
     auto *btnShred = new QPushButton(tr("Shred"), this);
     btnShred->setCursor(Qt::PointingHandCursor);
     btnShred->setProperty("accessibleName", "danger");
-    btnShred->setDefault(true);
+    btnShred->setAutoDefault(false);
     connect(btnShred, &QPushButton::clicked, this, &QDialog::accept);
     buttons->addWidget(btnShred);
 
