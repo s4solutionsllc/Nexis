@@ -158,13 +158,14 @@ void BootAnalysisPage::buildUi()
     emptyLayout->setSpacing(10);
     emptyLayout->addStretch();
 
-    auto *emptyIcon = new QLabel(QString::fromUtf8("\xE2\x8F\xB0"), mEmptyState); // alarm-clock glyph
+    auto *emptyIcon = new QLabel(mEmptyState);
     emptyIcon->setObjectName("emptyStateIcon");
+    Utilities::setEmptyStateIcon(emptyIcon, QStringLiteral("boot-analysis.svg"));
     emptyIcon->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     emptyLayout->addWidget(emptyIcon);
 
     mLblEmptyHeading = new QLabel(mEmptyState);
-    mLblEmptyHeading->setObjectName("lblBootAnalysisEmptyHeading");
+    mLblEmptyHeading->setObjectName("emptyStateHeading");
     mLblEmptyHeading->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     mLblEmptyHeading->setWordWrap(true);
     mLblEmptyHeading->setText(tr("Per-service boot timing isn't available on macOS"));
@@ -182,7 +183,6 @@ void BootAnalysisPage::buildUi()
     emptyBtnRow->addStretch();
     mBtnRefreshUptime = new QPushButton(tr("Refresh uptime"), mEmptyState);
     mBtnRefreshUptime->setObjectName("btnBootAnalysisRefreshUptime");
-    mBtnRefreshUptime->setAccessibleName("primary");
     mBtnRefreshUptime->setCursor(Qt::PointingHandCursor);
     emptyBtnRow->addWidget(mBtnRefreshUptime);
     emptyBtnRow->addStretch();
@@ -246,6 +246,15 @@ void BootAnalysisPage::populate(const BootAnalysisData &data)
         mUptimeContainer->setVisible(true);
         mLblUptimeValue->setText(tr("%1 s").arg(secs, 0, 'f', 1));
 #ifdef Q_OS_MACOS
+        // Uptime runs to days; raw seconds are unreadable at that scale.
+        const qint64 total = static_cast<qint64>(secs);
+        const qint64 days = total / 86400, hours = (total % 86400) / 3600, mins = (total % 3600) / 60;
+        if (days > 0)
+            mLblUptimeValue->setText(tr("%1d %2h %3m").arg(days).arg(hours).arg(mins));
+        else if (hours > 0)
+            mLblUptimeValue->setText(tr("%1h %2m").arg(hours).arg(mins));
+        else
+            mLblUptimeValue->setText(tr("%1m").arg(mins));
         mLblUptimeTitle->setText(tr("System uptime since last boot"));
         mLblUptimeMeta->setVisible(false);
 #else

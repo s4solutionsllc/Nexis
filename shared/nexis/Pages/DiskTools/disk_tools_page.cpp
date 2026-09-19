@@ -894,13 +894,14 @@ QWidget *DiskToolsPage::makeEmptyState(QWidget *parent, const QString &heading,
     layout->setSpacing(10);
     layout->addStretch();
 
-    auto *icon = new QLabel(QString::fromUtf8("\xF0\x9F\x96\xB4"), empty); // hard-disk glyph
+    auto *icon = new QLabel(empty);
     icon->setObjectName("emptyStateIcon");
+    Utilities::setEmptyStateIcon(icon, QStringLiteral("disk-tools.svg"));
     icon->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     layout->addWidget(icon);
 
     auto *lblHeading = new QLabel(heading, empty);
-    lblHeading->setObjectName("lblDiskToolsEmptyHeading");
+    lblHeading->setObjectName("emptyStateHeading");
     lblHeading->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     layout->addWidget(lblHeading);
 
@@ -912,8 +913,9 @@ QWidget *DiskToolsPage::makeEmptyState(QWidget *parent, const QString &heading,
 
     auto *btnRow = new QHBoxLayout();
     btnRow->addStretch();
+    // The toolbar owns the page's one primary "Scan"; this is its shortcut.
     auto *btn = new QPushButton(buttonText, empty);
-    btn->setObjectName("btnScan");
+    btn->setObjectName("btnScanEmptyState");
     btn->setCursor(Qt::PointingHandCursor);
     btnRow->addWidget(btn);
     btnRow->addStretch();

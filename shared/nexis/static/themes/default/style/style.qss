@@ -239,7 +239,8 @@ QToolTip {
 
 #notFoundWidget QLabel, QWidget[accessibleName="notFoundWidget"] {
     color: @textSecondary;
-    font-size: 13pt;
+    font-size: 10pt;
+    font-weight: 600;
 }
 
 /***************
@@ -351,10 +352,9 @@ QTableView {
 }
 
 QTableView::item {
-    font-size: 10pt;
     color: @textPrimary;
     padding: @dp8 @dp6;
-    background-color: @cardBg;
+    background-color: transparent;
 }
 
 QTableView::item:selected {
@@ -492,6 +492,11 @@ QPushButton[accessibleName="danger"]:disabled,
 #btnSearchAdvance:disabled,
 #btnRepairBtm:disabled,
 #DiskToolsPage #btnScan:disabled,
+#DiskToolsPage #btnTrash:disabled {
+    background-color: @borderColor;
+    border: 1px solid @borderColor;
+    color: @tertiaryText;
+}
 
 QLineEdit:disabled,
 QComboBox:disabled,
@@ -1845,7 +1850,7 @@ QProgressBar[progressRole="thin"]::chunk {
 /* - Startup App Edit - */
 
 #StartupAppEdit {
-    background-color: @pageContent;
+    background-color: @cardBg;
 }
 
 /**************************
@@ -2052,13 +2057,13 @@ QProgressBar[progressRole="thin"]::chunk {
    (hostsTableContainerLayout margin, SSO-14306) so the flat fill doesn't
    clash against the elevated card's rounded corners. */
 #tableViewHosts {
-    background-color: @cardBg;
+    background-color: @cardBgElevated;
     border: 0;
     border-radius: 11;
 }
 
 #tableViewHosts::item {
-    background-color: @cardBg;
+    background-color: transparent;
     font-family: @monoFontFamily;
 }
 
@@ -2143,18 +2148,21 @@ QProgressBar[progressRole="thin"]::chunk {
 
 /* -- Available Updates tree (FR-60) -- matching treeWidgetPackages -- */
 
-#treeWidgetUpdates {
+#treeWidgetUpdates,
+#treeWidgetSparkleUpdates {
     border: 1px solid @borderColor;
     background-color: transparent;
-    border-radius: 8;
+    border-radius: 12;
     font-size: 10pt;
 }
 
-#treeWidgetUpdates QHeaderView::section {
+#treeWidgetUpdates QHeaderView::section,
+#treeWidgetSparkleUpdates QHeaderView::section {
     border-top: 1;
 }
 
-#treeWidgetUpdates::item {
+#treeWidgetUpdates::item,
+#treeWidgetSparkleUpdates::item {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
     font-size: 10pt;
@@ -2816,11 +2824,6 @@ QProgressBar[progressRole="thin"]::chunk {
     background-color: @dangerHoverFill;
 }
 
-#DiskToolsPage #btnTrash:disabled {
-    background-color: @borderColor;
-    color: @textSecondary;
-}
-
 #DiskToolsPage #lblStatus {
     font-size: 10pt;
     color: @textSecondary;
@@ -2973,7 +2976,7 @@ QLabel[accessibleName="dimmed-small"] {
 *****************/
 
 #Feedback {
-    background-color: @pageContent;
+    background-color: @cardBg;
 }
 
 #Feedback #lblSubtitle {
@@ -3154,7 +3157,7 @@ QLabel[accessibleName="dimmed-small"] {
 /* - APT Source Repository Item Edit - */
 
 #APTSourceEdit {
-    background-color: @pageContent;
+    background-color: @cardBg;
 }
 
 /**************************
@@ -3280,7 +3283,8 @@ SEARCH
     font-size: 10pt;
 }
 
-#lblSearchEmptyHeading {
+#lblSearchEmptyHeading,
+#emptyStateHeading {
     color: @textSecondary;
     font-size: 10pt;
     font-weight: 600;
@@ -3371,11 +3375,16 @@ SEARCH
    item's #tableProcess treatment. Severity pills are painted by
    SeverityPillDelegate (DS §5), not QSS. */
 #logTableView::item {
-    background-color: @cardBg;
+    background-color: transparent;
+    border-bottom: 1px solid @borderColor;
 }
 
 #logTableView {
+    background-color: @cardBgElevated;
     alternate-background-color: @cardBgElevated;
+    border: 1px solid @borderColor;
+    border-radius: 12;
+    gridline-color: transparent;
 }
 
 #logTableView::item:hover {
@@ -3449,7 +3458,7 @@ QTableView:focus,
 QTableWidget:focus,
 QListView:focus,
 QListWidget:focus {
-    border: 2px solid @focusRingColor;
+    border: 1px solid @focusRingColor;
 }
 
 QTreeView::item:focus,
@@ -3468,4 +3477,16 @@ QListWidget::item:focus {
 #sidebar[collapsed="true"] QPushButton:focus {
     border-left: 0;
     border-bottom: 3px solid @focusRingColor;
+}
+
+/* Sparkle updates table: same elevated surface as the Homebrew lists above it */
+#treeWidgetSparkleUpdates {
+    background-color: @cardBgElevated;
+}
+
+/* File Shredder staging list: rounded like every other card */
+#listShredderStaged {
+    background-color: @cardBgElevated;
+    border: 1px solid @borderColor;
+    border-radius: 12;
 }

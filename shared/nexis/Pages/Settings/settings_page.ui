@@ -518,14 +518,12 @@
              <widget class="QPushButton" name="btnManageSchedules">
               <property name="text"><string>Manage Schedules...</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="accessibleName"><string notr="true">primary</string></property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="btnViewHistory">
               <property name="text"><string>View Cleaning History</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="accessibleName"><string notr="true">primary</string></property>
              </widget>
             </item>
             <item>
@@ -670,7 +668,6 @@
              <widget class="QPushButton" name="btnImportFromStacer">
               <property name="text"><string>Import from Stacer…</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="accessibleName"><string notr="true">primary</string></property>
              </widget>
             </item>
             <item>

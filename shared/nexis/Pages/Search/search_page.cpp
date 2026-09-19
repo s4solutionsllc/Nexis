@@ -1,4 +1,5 @@
 #include "search_page.h"
+#include "Managers/app_manager.h"
 #include "nexis_page.h"
 #include "ui_search_page.h"
 #include "nexis_roles.h"
@@ -81,7 +82,7 @@ void SearchPage::init()
 
     ui->lblErrorMsg->hide();
 
-    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(mSettingManager->getThemeName());
+    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(AppManager::ins()->resolveThemeName());
     QMovie *loadingMovie = new QMovie(iconLoading, QByteArray(), this);
     ui->lblLoadingSearching->setMovie(loadingMovie);
     loadingMovie->start();

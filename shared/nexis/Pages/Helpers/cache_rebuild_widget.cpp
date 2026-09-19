@@ -183,6 +183,9 @@ QFrame *CacheRebuildWidget::buildRow(Action action)
     auto *card = new QVBoxLayout(row.card);
     card->setContentsMargins(16, 16, 16, 16);
     card->setSpacing(6);
+    // Word-wrapped labels under-report their height; without this the card
+    // is squeezed and the Rebuild button overlaps the card's bottom edge.
+    card->setSizeConstraint(QLayout::SetMinimumSize);
 
     auto *lblTitle = new QLabel(actionTitle(action), row.card);
     QFont f = lblTitle->font();

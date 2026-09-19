@@ -140,7 +140,7 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Not Found Installed Packages</string>
+             <string>No installed packages found</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignBottom|Qt::AlignHCenter</set>
@@ -258,7 +258,7 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Not Found Installed Packages</string>
+             <string>No installed packages found</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignBottom|Qt::AlignHCenter</set>
@@ -377,7 +377,7 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Not Found Installed Packages</string>
+             <string>No installed packages found</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignBottom|Qt::AlignHCenter</set>

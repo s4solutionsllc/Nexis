@@ -4,7 +4,11 @@
 #include <QWidget>
 #include <QGraphicsDropShadowEffect>
 #include <QRegularExpression>
+#include <QIcon>
+#include <QLabel>
 #include "Managers/app_manager.h"
+#include "dpi.h"
+#include "signal_mapper.h"
 
 class Utilities
 {
@@ -32,6 +36,20 @@ public:
             effect->setOffset(0, 2);
             widget->setGraphicsEffect(effect);
         }
+    }
+
+    // Empty states use the monochrome, per-theme sidebar icon set rather than
+    // colour emoji, so they match the rest of the chrome in both themes.
+    static void
+    setEmptyStateIcon(QLabel *label, const QString &sidebarIconFile)
+    {
+        auto apply = [label, sidebarIconFile]() {
+            const QString path = QStringLiteral(":/static/themes/%1/img/sidebar-icons/%2")
+                .arg(AppManager::ins()->resolveThemeName(), sidebarIconFile);
+            label->setPixmap(QIcon(path).pixmap(Dpi::scale(36, 36)));
+        };
+        apply();
+        QObject::connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, label, apply);
     }
 
     // Clears a scroll-area content widget's background without touching its

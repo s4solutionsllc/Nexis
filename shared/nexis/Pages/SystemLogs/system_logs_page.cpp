@@ -139,6 +139,7 @@ void SystemLogsPage::buildLayout()
 
     mTableView = new QTableView(mLogsContainer);
     mTableView->setObjectName("logTableView");
+    mTableView->setShowGrid(false);
     mTableView->setModel(mProxy);
     mTableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     mTableView->setSelectionMode(QAbstractItemView::SingleSelection);
