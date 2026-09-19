@@ -21,13 +21,13 @@
     <number>20</number>
    </property>
    <property name="topMargin">
-    <number>5</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
     <number>20</number>
    </property>
    <property name="bottomMargin">
-    <number>20</number>
+    <number>16</number>
    </property>
    <property name="horizontalSpacing">
     <number>0</number>

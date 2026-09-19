@@ -1,4 +1,5 @@
 #include "repo_detail_panel.h"
+#include "utilities.h"
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
 #include "Utils/command_util.h"
@@ -91,7 +92,7 @@ void RepoDetailPanel::setupUi()
     issueScroll->setStyleSheet("QScrollArea{background-color:transparent;}");
 
     mIssuesContainer = new QWidget();
-    mIssuesContainer->setStyleSheet("background-color:transparent;");
+    Utilities::makeBackgroundTransparent(mIssuesContainer);
     mIssuesLayout = new QVBoxLayout(mIssuesContainer);
     mIssuesLayout->setContentsMargins(0, 0, 0, 0);
     mIssuesLayout->setSpacing(6);

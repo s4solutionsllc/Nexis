@@ -655,7 +655,7 @@ void SettingsPage::onManageSchedules()
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
     QWidget *scrollWidget = new QWidget;
-    scrollWidget->setStyleSheet("background-color:transparent;");
+    Utilities::makeBackgroundTransparent(scrollWidget);
     QVBoxLayout *listLayout = new QVBoxLayout(scrollWidget);
 
     std::function<void()> refreshList = [&]() {

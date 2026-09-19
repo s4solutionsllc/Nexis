@@ -130,7 +130,7 @@ void HomebrewPage::buildUI()
 
     auto *updInner = new QWidget(mUpdatesSection);
     auto *updInnerLayout = new QVBoxLayout(updInner);
-    updInnerLayout->setContentsMargins(30, 0, 30, 0);
+    updInnerLayout->setContentsMargins(20, 12, 20, 0);
     updInnerLayout->setSpacing(8);
 
     // DS §3 header anatomy: accent bar + title row (title, Check Now) / source line
@@ -243,7 +243,7 @@ void HomebrewPage::buildUI()
     // Main content widget
     auto *contentWidget = new QWidget(this);
     auto *contentLayout = new QVBoxLayout(contentWidget);
-    contentLayout->setContentsMargins(30, 5, 30, 20);
+    contentLayout->setContentsMargins(20, 8, 20, 16);
     contentLayout->setSpacing(8);
 
     // DS §3 header anatomy (NEX F2 shared recipe): accent bar + title row

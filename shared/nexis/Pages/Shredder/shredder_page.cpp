@@ -1,4 +1,5 @@
 #include "shredder_page.h"
+#include "nexis_page.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -46,7 +47,7 @@ QWidget *ShredderPage::makeElevatedContainer(QWidget *parent)
 void ShredderPage::buildUi()
 {
     auto *outer = new QVBoxLayout(this);
-    outer->setContentsMargins(60, 10, 60, 20);
+    outer->setContentsMargins(PageScaffold::pageMargins());
     outer->setSpacing(8);
 
     // ---- Header (DS §3 shared recipe) ----

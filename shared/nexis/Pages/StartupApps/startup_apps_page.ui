@@ -176,7 +176,7 @@
            <item>
             <widget class="QLabel" name="sectionHeaderTitle">
              <property name="text">
-              <string notr="true">Startup Applications</string>
+              <string>Startup Apps</string>
              </property>
             </widget>
            </item>

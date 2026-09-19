@@ -34,6 +34,17 @@ public:
         }
     }
 
+    // Clears a scroll-area content widget's background without touching its
+    // children. A bare "background-color:transparent;" widget stylesheet
+    // cascades to every descendant and wipes out card fills and accent bars.
+    static void
+    makeBackgroundTransparent(QWidget *widget)
+    {
+        if (widget->objectName().isEmpty())
+            widget->setObjectName(QStringLiteral("transparentContent"));
+        widget->setStyleSheet(QStringLiteral("#%1{background-color:transparent;}").arg(widget->objectName()));
+    }
+
     static QString
     getDesktopValue(const QRegularExpression &val, const QStringList &lines)
     {

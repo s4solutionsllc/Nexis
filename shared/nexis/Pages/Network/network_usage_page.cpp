@@ -224,7 +224,7 @@ void NetworkUsagePage::buildUI()
     scroll->setStyleSheet("QScrollArea{background-color:transparent;}");
 
     auto *container = new QWidget(scroll);
-    container->setStyleSheet("background-color:transparent;");
+    Utilities::makeBackgroundTransparent(container);
     scroll->setWidget(container);
 
     auto *root = new QVBoxLayout(this);
@@ -232,7 +232,7 @@ void NetworkUsagePage::buildUI()
     root->addWidget(scroll);
 
     auto *lay = new QVBoxLayout(container);
-    lay->setContentsMargins(20, 20, 20, 20);
+    lay->setContentsMargins(PageScaffold::pageMargins());
     lay->setSpacing(16);
 
     // ── Page header (DS §3): accent bar + "Network Usage" title + source

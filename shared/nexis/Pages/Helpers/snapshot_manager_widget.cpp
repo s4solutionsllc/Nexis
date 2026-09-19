@@ -1,4 +1,5 @@
 #include "snapshot_manager_widget.h"
+#include "utilities.h"
 
 #include "signal_mapper.h"
 #include <Managers/app_manager.h>
@@ -192,7 +193,7 @@ void SnapshotManagerWidget::buildUI()
     scrollArea->setStyleSheet(QStringLiteral("QScrollArea{background-color:transparent;}"));
 
     mListContainer = new QWidget(scrollArea);
-    mListContainer->setStyleSheet(QStringLiteral("background-color:transparent;"));
+    Utilities::makeBackgroundTransparent(mListContainer);
     mListLayout = new QVBoxLayout(mListContainer);
     mListLayout->setContentsMargins(0, 0, 0, 0);
     mListLayout->setSpacing(6);

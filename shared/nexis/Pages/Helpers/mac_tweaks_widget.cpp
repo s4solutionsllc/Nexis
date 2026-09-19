@@ -1,4 +1,5 @@
 #include "mac_tweaks_widget.h"
+#include "utilities.h"
 
 #include "signal_mapper.h"
 #include <Managers/app_manager.h>
@@ -104,7 +105,7 @@ void MacTweaksWidget::buildUI()
     scrollArea->setStyleSheet(QStringLiteral("QScrollArea{background-color:transparent;}"));
 
     auto *listWidget = new QWidget(scrollArea);
-    listWidget->setStyleSheet(QStringLiteral("background-color:transparent;"));
+    Utilities::makeBackgroundTransparent(listWidget);
     mListLayout = new QVBoxLayout(listWidget);
     mListLayout->setContentsMargins(0, 0, 0, 0);
     mListLayout->setSpacing(16);

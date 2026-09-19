@@ -416,6 +416,7 @@ void App::init()
 
     ui->pageContentLayout->setContentsMargins(0, 0, 0, 0);
     ui->pageContentLayout->addWidget(mHeaderActionsRow);
+    mHeaderActionsRow->hide();
     ui->pageContentLayout->addWidget(mSlidingStacked);
 
     // Set button labels
@@ -1239,6 +1240,9 @@ void App::setPageHeaderActions(QWidget *widget)
         mHeaderActionsRowLayout->addWidget(widget);
         widget->show();
     }
+    // Only the Dashboard uses this strip; an empty one pushes every other
+    // page's content down by its height.
+    mHeaderActionsRow->setVisible(widget != nullptr);
 }
 
 void App::pageClick(QWidget *widget, bool slide)

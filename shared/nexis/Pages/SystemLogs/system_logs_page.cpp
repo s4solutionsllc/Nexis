@@ -1,4 +1,5 @@
 #include "system_logs_page.h"
+#include "nexis_page.h"
 #include "log_provider.h"
 #include "severity_pill_delegate.h"
 
@@ -46,7 +47,7 @@ SystemLogsPage::~SystemLogsPage()
 void SystemLogsPage::buildLayout()
 {
     auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(16, 16, 16, 16);
+    mainLayout->setContentsMargins(PageScaffold::pageMargins());
     mainLayout->setSpacing(8);
 
     // Toolbar header row (DS \u00A73, SSO-14314): accent bar + "System Logs" /

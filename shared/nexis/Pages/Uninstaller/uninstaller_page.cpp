@@ -1,4 +1,5 @@
 #include "uninstaller_page.h"
+#include "nexis_page.h"
 #include "ui_uninstallerpage.h"
 #ifdef Q_OS_MAC
 #include "crumbs_review_dialog.h"
@@ -41,6 +42,13 @@ UninstallerPage::UninstallerPage(QWidget *parent, PackageService *packageService
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins())
 {
     ui->setupUi(this);
+#ifdef Q_OS_MAC
+    const QString pageTitle = tr("Applications");
+#else
+    const QString pageTitle = tr("Uninstaller");
+#endif
+    ui->gridLayout->addWidget(PageScaffold::buildHeader(
+        pageTitle, tr("Installed software and leftovers"), this).row, 0, 0, 1, 3);
 
     init();
 }

@@ -1,4 +1,5 @@
 #include "boot_analysis_page.h"
+#include "nexis_page.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -33,7 +34,7 @@ BootAnalysisPage::~BootAnalysisPage()
 void BootAnalysisPage::buildUi()
 {
     auto *outer = new QVBoxLayout(this);
-    outer->setContentsMargins(60, 10, 60, 20);
+    outer->setContentsMargins(PageScaffold::pageMargins());
     outer->setSpacing(0);
 
     // ---- Toolbar (DS §3 header anatomy, NEX F2 shared recipe) ----

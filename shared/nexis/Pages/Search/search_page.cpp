@@ -1,4 +1,5 @@
 #include "search_page.h"
+#include "nexis_page.h"
 #include "ui_search_page.h"
 #include "nexis_roles.h"
 #include "dpi.h"
@@ -21,6 +22,8 @@ SearchPage::SearchPage(QWidget *parent, InfoManager *infoManager,
     mSortFilterModel(new QSortFilterProxyModel(this))
 {
     ui->setupUi(this);
+    ui->gridLayout->addWidget(PageScaffold::buildHeader(
+        tr("Search"), tr("Find files and folders"), this).row, 0, 0, 1, 2);
 
     init();
 }

@@ -1,4 +1,5 @@
 #include "helpers_page.h"
+#include "nexis_page.h"
 #include "network_diag_widget.h"
 #include "open_ports_widget.h"
 #include "firewall_widget.h"
@@ -68,6 +69,8 @@ HelpersPage::HelpersPage(QWidget *parent) :
     ui(new Ui::HelpersPage)
 {
     ui->setupUi(this);
+    ui->gridLayout->addWidget(PageScaffold::buildHeader(
+        tr("Helpers"), tr("System tools and maintenance"), this).row, 0, 0, 1, 3);
 
     init();
 }

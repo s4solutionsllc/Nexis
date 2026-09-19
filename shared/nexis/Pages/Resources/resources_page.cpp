@@ -1,4 +1,5 @@
 #include "resources_page.h"
+#include "nexis_page.h"
 #include "ui_resources_page.h"
 #include "utilities.h"
 #include "Managers/data_refresh_service.h"
@@ -33,6 +34,9 @@ ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
     mActive(false)
 {
     ui->setupUi(this);
+    ui->verticalLayout->setSpacing(PageScaffold::pageSpacing());
+    ui->verticalLayout->insertWidget(0, PageScaffold::buildHeader(
+        tr("Resources"), tr("Live history of CPU, memory, disk and network"), this).row);
 
     init();
 }
