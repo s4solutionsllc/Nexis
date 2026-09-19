@@ -47,10 +47,11 @@ public:
 
     // DS §6: static plot chrome (background fill + gridlines), painted even
     // when there is no history yet — matches the approved empty capture.
-    void setChrome(QColor background, QColor grid)
+    void setChrome(QColor background, QColor grid, QColor label)
     {
         mBgColor = background;
         mGridColor = grid;
+        mLabelColor = label;
         update();
     }
 
@@ -108,9 +109,9 @@ protected:
 
             // Date label every 7 days
             if (i % 7 == 0) {
-                p.setPen(QColor(128, 128, 128));
+                p.setPen(mLabelColor);
                 QFont f = p.font();
-                f.setPointSize(7);
+                f.setPointSize(8);
                 p.setFont(f);
                 p.drawText(x, chartH + 1, barW * 3, labelH,
                            Qt::AlignLeft | Qt::AlignVCenter,
@@ -127,6 +128,7 @@ private:
     QColor mTxColor;
     QColor mBgColor;
     QColor mGridColor;
+    QColor mLabelColor;
 };
 
 #include "network_usage_page.moc"
@@ -570,13 +572,14 @@ void NetworkUsagePage::refreshThemeColors()
     if (!sv)
         return;
 
-    const QString netColor = sv->value("@networkDownloadColor", "#5294e2").toString();
-    const QString txColor  = sv->value("@networkUploadColor", "#7ec8e3").toString();
+    const QString netColor = sv->value("@networkDownloadColor", "#26A69A").toString();
+    const QString txColor  = sv->value("@networkUploadColor", "#E05454").toString();
     mBarChart->setColor(QColor(netColor), QColor(txColor));
 
     const QString chartBg   = sv->value("@chartBackgroundColor", "#2A2C32").toString();
     const QString chartGrid = sv->value("@chartGridColor", "#3A3D4A").toString();
-    mBarChart->setChrome(QColor(chartBg), QColor(chartGrid));
+    const QString chartLabel = sv->value("@chartLabelColor", "#9A9DA6").toString();
+    mBarChart->setChrome(QColor(chartBg), QColor(chartGrid), QColor(chartLabel));
 
     refreshCapBar();
 }

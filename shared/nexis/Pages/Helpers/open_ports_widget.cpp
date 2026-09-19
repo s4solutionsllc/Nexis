@@ -1,4 +1,5 @@
 #include "open_ports_widget.h"
+#include "signal_mapper.h"
 
 #include <Utils/command_util.h>
 #include <Managers/app_manager.h>
@@ -274,6 +275,12 @@ OpenPortsWidget::OpenPortsWidget(QWidget *parent)
     buildUI();
     connect(this, &OpenPortsWidget::connectionsFetched,
             this, &OpenPortsWidget::onConnectionsFetched);
+    // Row colours are baked into the items, so rebuild them from the cached
+    // entries when the theme changes instead of waiting for the next scan.
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, [this] {
+        if (!mEntries.isEmpty())
+            onConnectionsFetched(mEntries);
+    });
 }
 
 void OpenPortsWidget::buildUI()

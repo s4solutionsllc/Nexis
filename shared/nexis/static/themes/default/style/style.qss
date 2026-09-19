@@ -421,7 +421,7 @@ QDoubleSpinBox {
     border: 1px solid @controlBorder;
     border-radius: @dp6;
     padding: @dp8;
-    background-color: @cardBgElevated;
+    background-color: @cardBg;
     font-size: 10pt;
     color: @textPrimary;
 }
@@ -1855,7 +1855,7 @@ QProgressBar[progressRole="thin"]::chunk {
     padding: @dp6 @dp12;
     border-radius: @dp6;
     background-color: @cardBg;
-    border: 1px solid @borderColor;
+    border: 1px solid @controlBorder;
     color: @textPrimary;
 }
 
@@ -1982,7 +1982,7 @@ QProgressBar[progressRole="thin"]::chunk {
     padding: @dp6 @dp12;
     border-radius: @dp6;
     background-color: @cardBg;
-    border: 1px solid @borderColor;
+    border: 1px solid @controlBorder;
     color: @textPrimary;
 }
 
@@ -2475,9 +2475,9 @@ QProgressBar[progressRole="thin"]::chunk {
 #portsSearch {
     background-color: @cardBg;
     color: @textPrimary;
-    border: 1px solid @borderColor;
+    border: 1px solid @controlBorder;
     border-radius: @dp6;
-    padding: 6px 10px;
+    padding: @dp6 @dp12;
     font-size: 10pt;
 }
 
@@ -3152,7 +3152,7 @@ SEARCH
     padding: @dp6 @dp12;
     border-radius: @dp6;
     background-color: @cardBg;
-    border: 1px solid @borderColor;
+    border: 1px solid @controlBorder;
     color: @textPrimary;
 }
 

@@ -37,6 +37,7 @@ private slots:
     void onHostsFetched(QList<WolHost> hosts);
     void onItemChanged(QTableWidgetItem *item);
     void refreshThemeColors();
+    void setStatusRole(const QString &role);
 
 private:
     void buildUI();

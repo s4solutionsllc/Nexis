@@ -1,4 +1,5 @@
 #include "mini_monitor_window.h"
+#include <QMouseEvent>
 
 #include <Managers/data_refresh_service.h>
 #include <Managers/info_manager.h>
@@ -248,6 +249,12 @@ void MiniMonitorWindow::hideEvent(QHideEvent *event)
     persistGeometry();
     SettingManager::ins()->setMiniMonitorVisible(false);
     emit visibilityToggled(false);
+}
+
+void MiniMonitorWindow::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    QWidget::mouseDoubleClickEvent(event);
+    emit openMainWindowRequested();
 }
 
 void MiniMonitorWindow::closeEvent(QCloseEvent *event)
