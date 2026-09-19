@@ -114,10 +114,7 @@ void CpuTuningWidget::buildUI()
     root->setSpacing(12);
 
     mLblTitle = new QLabel(tr("CPU Tuning"), this);
-    QFont titleFont = mLblTitle->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    mLblTitle->setFont(titleFont);
+    mLblTitle->setProperty("textRole", "panelTitle");
     root->addWidget(mLblTitle);
 
     mLblDriver = new QLabel(this);

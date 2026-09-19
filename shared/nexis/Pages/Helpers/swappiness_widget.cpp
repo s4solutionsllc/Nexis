@@ -173,10 +173,7 @@ void SwappinessWidget::buildUI()
     // Header
     mLblTitle = new QLabel(tr("Swappiness"), this);
     mLblTitle->setObjectName("swappinessTitle");
-    QFont titleFont = mLblTitle->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    mLblTitle->setFont(titleFont);
+    mLblTitle->setProperty("textRole", "panelTitle");
     root->addWidget(mLblTitle);
 
     auto *intro = new QLabel(

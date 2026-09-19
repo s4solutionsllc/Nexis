@@ -1,4 +1,5 @@
 #include "app_manager.h"
+#include <QFontDatabase>
 #include "setting_manager.h"
 #include "dpi.h"
 #include <QDebug>
@@ -9,6 +10,8 @@
 #include <algorithm>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 #include <QStyleHints>
+
+static constexpr int kBaseFontPointSize = 10;
 #endif
 
 AppManager *AppManager::instance = nullptr;
@@ -202,6 +205,16 @@ void AppManager::updateStylesheet()
         else
             mStylesheetFileContent.replace(QStringLiteral("@fontFamily"),
                 QString("\"%1\", system-ui, sans-serif").arg(fontFamily));
+
+        // Painters and delegates read the application font directly, so keep
+        // it in step with the QSS base rule (QWidget { font-family; font-size }).
+        // The QSS rule is what sizes widgets: platform themes register
+        // per-class fonts (13pt on macOS) that beat the application font.
+        QFont appFont = (fontFamily == QStringLiteral("system-ui"))
+            ? QFontDatabase::systemFont(QFontDatabase::GeneralFont)
+            : QFont(fontFamily);
+        appFont.setPointSize(kBaseFontPointSize);
+        qApp->setFont(appFont);
     }
 
     // Monospace font (fixed — always JetBrains Mono with monospace fallback)

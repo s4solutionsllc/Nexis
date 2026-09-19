@@ -64,10 +64,7 @@ void OomKillsWidget::buildUI()
 
     mTitle = new QLabel(tr("Out-of-Memory Kills"), mCard);
     mTitle->setObjectName("oomTitle");
-    QFont titleFont = mTitle->font();
-    titleFont.setPointSize(titleFont.pointSize() + 3);
-    titleFont.setBold(true);
-    mTitle->setFont(titleFont);
+    mTitle->setProperty("textRole", "panelTitle");
 
     auto *titleRow = new QHBoxLayout;
     titleRow->setContentsMargins(0, 0, 0, 0);

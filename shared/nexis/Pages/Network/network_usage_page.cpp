@@ -196,10 +196,7 @@ static QFrame *makeSummaryCard(const QString &title, QLabel *&valueOut, QWidget 
 
     valueOut = new QLabel(QStringLiteral("—"), card);
     valueOut->setObjectName("netUsageCardValue");
-    QFont f = valueOut->font();
-    f.setPointSize(f.pointSize() + 3);
-    f.setBold(true);
-    valueOut->setFont(f);
+    valueOut->setProperty("textRole", "valueLarge");
     lay->addWidget(valueOut);
 
     return card;

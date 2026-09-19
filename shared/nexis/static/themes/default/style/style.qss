@@ -391,8 +391,27 @@ QHeaderView::down-arrow {
     QMainWindow
 *******************/
 
-QMainWindow * {
+QWidget {
     font-family: @fontFamily;
+    font-size: 10pt;
+}
+
+QLabel[textRole="panelTitle"] {
+    font-size: 11pt;
+    font-weight: 600;
+    color: @color05;
+}
+
+QLabel[textRole="valueLarge"] {
+    font-size: 14pt;
+    font-weight: 700;
+    color: @color05;
+}
+
+QLabel[textRole="caption"] {
+    font-size: 8pt;
+    font-weight: 500;
+    color: @tertiaryText;
 }
 
 QLineEdit,
@@ -2492,18 +2511,18 @@ QProgressBar[progressRole="thin"]::chunk {
 /* Firewall Widget */
 
 #fwStatusDot {
-    font-size: 16px;
+    font-size: 11pt;
 }
 
 #fwTitle {
     color: @color05;
-    font-size: 16px;
+    font-size: 11pt;
     font-weight: bold;
 }
 
 #fwStatusText {
     color: @color05;
-    font-size: 14px;
+    font-size: 11pt;
     font-weight: bold;
 }
 
@@ -2513,7 +2532,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: none;
     border-radius: 4px;
     padding: 6px 16px;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #fwToggle:hover {
@@ -2533,17 +2552,17 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #fwDetailCard QLabel {
     color: @color04;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #fwWarning {
     color: @warningColor;
-    font-size: 13px;
+    font-size: 10pt;
 }
 
 #fwHelpBtn {
     color: @color04;
-    font-size: 14px;
+    font-size: 11pt;
     font-weight: bold;
     border: 1px solid @color04;
     border-radius: 10px;
@@ -2559,7 +2578,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: 1px solid @borderColor;
     border-radius: 4px;
     padding: 6px 14px;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #fwRefresh:hover {
@@ -2574,7 +2593,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #portsTitle {
     color: @color05;
-    font-size: 16px;
+    font-size: 11pt;
     font-weight: bold;
 }
 
@@ -2584,7 +2603,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: 1px solid @borderColor;
     border-radius: 4px;
     padding: 6px 10px;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #portsSearch:focus {
@@ -2597,7 +2616,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: 1px solid @borderColor;
     border-radius: 4px;
     padding: 6px 14px;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #portsListenToggle:checked {
@@ -2616,7 +2635,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: none;
     border-radius: 4px;
     padding: 6px 16px;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #portsRefresh:hover {
@@ -2634,7 +2653,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: 1px solid @borderColor;
     border-radius: 6px;
     gridline-color: @borderColor;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #portsTable::item {
@@ -2652,20 +2671,20 @@ QProgressBar[progressRole="thin"]::chunk {
     border: none;
     border-bottom: 1px solid @borderColor;
     padding: 6px 8px;
-    font-size: 12px;
+    font-size: 10pt;
     font-weight: bold;
 }
 
 #portsSecondary {
     color: @color04;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 /* Network Diagnostics Widget */
 
 #netDiagTitle {
     color: @color05;
-    font-size: 16px;
+    font-size: 11pt;
     font-weight: bold;
 }
 
@@ -2677,18 +2696,18 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #netDiagSubheader {
     color: @color05;
-    font-size: 14px;
+    font-size: 11pt;
     font-weight: bold;
 }
 
 #netDiagSecondary {
     color: @color04;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #netDiagLoading {
     color: @color04;
-    font-size: 13px;
+    font-size: 10pt;
 }
 
 #netDiagRetest {
@@ -2697,7 +2716,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: none;
     border-radius: 4px;
     padding: 6px 16px;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #netDiagRetest:hover {
@@ -2711,7 +2730,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #netDiagCheckIcon {
     font-weight: bold;
-    font-size: 14px;
+    font-size: 11pt;
 }
 
 #netDiagCheckIcon[checkPassed="true"] {
@@ -2724,11 +2743,11 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #netDiagCheckLabel {
     color: @color05;
-    font-size: 13px;
+    font-size: 10pt;
 }
 
 #netDiagCheckValue {
-    font-size: 13px;
+    font-size: 10pt;
 }
 
 #netDiagCheckValue[checkPassed="true"] {
@@ -2741,7 +2760,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #netDiagDnsServer {
     color: @color05;
-    font-size: 13px;
+    font-size: 10pt;
 }
 
 /* Power Profile Widget (Helpers page, Linux only) */
@@ -2753,7 +2772,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #powerProfileLabel {
     color: @color05;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #powerProfileWidget QPushButton {
@@ -2762,7 +2781,7 @@ QProgressBar[progressRole="thin"]::chunk {
     border: 1px solid @borderColor;
     border-radius: 4px;
     padding: 6px 14px;
-    font-size: 12px;
+    font-size: 10pt;
 }
 
 #powerProfileWidget QPushButton:checked {
@@ -2781,7 +2800,7 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #powerProfileWarning {
     color: @warningColor;
-    font-size: 11px;
+    font-size: 9pt;
     padding: 2px 0;
 }
 
@@ -2943,10 +2962,10 @@ QLabel[accessibleName="dimmed-small"] {
     font-weight: bold;
 }
 
-#wizardStepIcon[status="success"] { font-size: 16px; }
-#wizardStepIcon[status="warning"] { font-size: 14px; font-weight: normal; }
-#wizardStepIcon[status="info"]    { font-size: 14px; }
-#wizardStepIcon[status="error"]   { font-size: 16px; }
+#wizardStepIcon[status="success"] { font-size: 11pt; }
+#wizardStepIcon[status="warning"] { font-size: 11pt; font-weight: normal; }
+#wizardStepIcon[status="info"]    { font-size: 11pt; }
+#wizardStepIcon[status="error"]   { font-size: 11pt; }
 
 #lblTrashWarning {
     font-size: 9pt;
@@ -2982,6 +3001,11 @@ QLabel[accessibleName="dimmed-small"] {
 
 #Feedback {
     background-color: @pageContent;
+}
+
+#Feedback #lblSubtitle {
+    color: @color06;
+    font-size: 9pt;
 }
 
 /**************************
@@ -3041,7 +3065,7 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #repoStatusDot {
-    font-size: 10px;
+    font-size: 8pt;
     font-weight: bold;
 }
 
@@ -3074,7 +3098,7 @@ QLabel[accessibleName="dimmed-small"] {
 }
 
 #repoMetaLabel {
-    font-size: 9px;
+    font-size: 8pt;
     color: @tertiaryText;
     background-color: transparent;
 }
@@ -3088,7 +3112,7 @@ QLabel[accessibleName="dimmed-small"] {
     color: @color07;
     border-radius: 10px;
     padding: 2px 10px;
-    font-size: 11px;
+    font-size: 9pt;
 }
 
 #repoStatusBadge[repoStatus="healthy"] { background-color: @successColor; }

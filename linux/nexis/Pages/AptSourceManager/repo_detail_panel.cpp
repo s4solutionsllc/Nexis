@@ -33,10 +33,7 @@ void RepoDetailPanel::setupUi()
     QHBoxLayout *headerRow = new QHBoxLayout();
     mLblName = new QLabel(this);
     mLblName->setObjectName("repoDetailName");
-    QFont nameFont = mLblName->font();
-    nameFont.setPointSize(nameFont.pointSize() + 2);
-    nameFont.setBold(true);
-    mLblName->setFont(nameFont);
+    mLblName->setProperty("textRole", "panelTitle");
     mLblName->setWordWrap(true);
     headerRow->addWidget(mLblName, 1);
 

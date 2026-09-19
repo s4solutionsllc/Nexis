@@ -77,10 +77,7 @@ void MacTweaksWidget::buildUI()
 
     QLabel *title = new QLabel(tr("Tweaks"), this);
     title->setObjectName("macTweaksTitle");
-    QFont titleFont = title->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    title->setFont(titleFont);
+    title->setProperty("textRole", "panelTitle");
     root->addWidget(title);
 
     QLabel *intro = new QLabel(

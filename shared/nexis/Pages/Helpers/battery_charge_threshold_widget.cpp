@@ -66,10 +66,7 @@ void BatteryChargeThresholdWidget::buildUI()
 
     mLblTitle = new QLabel(tr("Battery Charge Threshold"), this);
     mLblTitle->setObjectName("chargeThresholdTitle");
-    QFont f = mLblTitle->font();
-    f.setPointSize(f.pointSize() + 4);
-    f.setBold(true);
-    mLblTitle->setFont(f);
+    mLblTitle->setProperty("textRole", "panelTitle");
     root->addWidget(mLblTitle);
 
     auto *intro = new QLabel(

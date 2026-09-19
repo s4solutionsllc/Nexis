@@ -198,7 +198,7 @@ void MiniMonitorWindow::updateScoreDisplay()
         return;
     const QString colorHex = sv->value(MiniMonitorFormatUtil::scoreColorToken(score)).toString();
     mLblScore->setStyleSheet(
-        QStringLiteral("font-family: %1; font-size: 28px; font-weight: 700; color: %2;")
+        QStringLiteral("font-family: %1; font-size: 21pt; font-weight: 700; color: %2;")
             .arg(kMonoFontFamily, colorHex));
 }
 

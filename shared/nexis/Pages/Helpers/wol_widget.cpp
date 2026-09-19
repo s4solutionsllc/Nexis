@@ -114,10 +114,7 @@ void WolWidget::buildUI()
     root->setSpacing(12);
 
     mLblTitle = new QLabel(tr("Wake-on-LAN"), this);
-    QFont f   = mLblTitle->font();
-    f.setBold(true);
-    f.setPointSize(f.pointSize() + 2);
-    mLblTitle->setFont(f);
+    mLblTitle->setProperty("textRole", "panelTitle");
     root->addWidget(mLblTitle);
 
     auto *intro = new QLabel(

@@ -157,10 +157,7 @@ void CacheRebuildWidget::buildUI()
 
     auto *title = new QLabel(tr("Cache Rebuilds"), this);
     title->setObjectName("cacheRebuildTitle");
-    QFont titleFont = title->font();
-    titleFont.setPointSize(titleFont.pointSize() + 4);
-    titleFont.setBold(true);
-    title->setFont(titleFont);
+    title->setProperty("textRole", "panelTitle");
     root->addWidget(title);
 
     auto *intro = new QLabel(
