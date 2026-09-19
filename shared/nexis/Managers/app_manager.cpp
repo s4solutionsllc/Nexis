@@ -219,10 +219,12 @@ void AppManager::updateStylesheet()
         offset = m.capturedStart() + scaled.length();
     }
 
-    qApp->setStyleSheet(mStylesheetFileContent);
-
     // Sync QPalette with theme tokens so Fusion style renders
-    // QComboBox popups and other native-fallback widgets correctly
+    // QComboBox popups and other native-fallback widgets correctly.
+    // This must happen before setStyleSheet(): the stylesheet style snapshots
+    // each widget's palette while polishing, so polishing against the previous
+    // theme's palette leaves palette-colored text and item views stale after a
+    // live theme switch.
     {
         auto col = [this](const char *token) {
             return QColor(mStyleValues->value(QLatin1String(token)).toString());
@@ -252,6 +254,9 @@ void AppManager::updateStylesheet()
 
         qApp->setPalette(pal);
     }
+
+    qApp->setStyleSheet(mStylesheetFileContent);
+
 
     emit SignalMapper::ins()->sigChangedAppTheme();
 }
