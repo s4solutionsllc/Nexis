@@ -2352,11 +2352,12 @@ QProgressBar[progressRole="thin"]::chunk {
 /* -- Docker Containers / Volumes trees -- out of scope for SSO-15097 (no
    live-captured content); unchanged self-contained bordered-tree look. -- */
 
+/* Same flat-in-card treatment as #treeWidgetImages so all three Docker tabs match. */
 #treeWidgetContainers,
 #treeWidgetVolumes {
-    border: 1px solid @borderColor;
-    background-color: transparent;
-    border-radius: 8;
+    border: 0;
+    background-color: @cardBg;
+    border-radius: 0;
     font-size: 10pt;
 }
 
