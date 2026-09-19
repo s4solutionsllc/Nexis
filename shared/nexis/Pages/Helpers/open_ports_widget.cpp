@@ -307,6 +307,7 @@ void OpenPortsWidget::buildUI()
     mBtnRefresh = new QPushButton(tr("Refresh"));
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
     mBtnRefresh->setObjectName("portsRefresh");
+    mBtnRefresh->setAccessibleName("primary");
     connect(mBtnRefresh, &QPushButton::clicked, this, &OpenPortsWidget::refresh);
     filterBar->addWidget(mBtnRefresh);
 

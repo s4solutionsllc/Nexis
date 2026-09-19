@@ -130,6 +130,11 @@ void ProcessesPage::init()
     mItemModel->setHorizontalHeaderItem(kKillCol, new QStandardItem());
     ui->tableProcess->header()->setSectionResizeMode(kKillCol, QHeaderView::Fixed);
     ui->tableProcess->header()->resizeSection(kKillCol, Dpi::scale(30));
+    // The kill column is the last section, so stretchLastSection would hand
+    // it all the spare width and leave the command line elided at 100px.
+    ui->tableProcess->header()->setStretchLastSection(false);
+    ui->tableProcess->header()->setSectionResizeMode(Col_Cmd, QHeaderView::Stretch);
+    ui->tableProcess->header()->resizeSection(Col_Rss, Dpi::scale(130));
     mKillDelegate = new KillButtonDelegate(this);
     ui->tableProcess->setItemDelegateForColumn(kKillCol, mKillDelegate);
     ui->tableProcess->setMouseTracking(true);

@@ -442,7 +442,7 @@ void CpuTuningWidget::refreshThemeColors()
     if (!sv)
         return;
 
-    const QString cardBg     = sv->value("@cardBg").toString();
+    const QString cardBg     = sv->value("@cardBgElevated").toString();
     const QString border     = sv->value("@borderColor").toString();
     const QString secondary  = sv->value("@color04").toString();
     const QString warnCol    = sv->value("@warningColor").toString();
@@ -452,7 +452,7 @@ void CpuTuningWidget::refreshThemeColors()
         "QFrame#cpuTuningCard {"
         "  background-color: %1;"
         "  border: 1px solid %2;"
-        "  border-radius: 8px;"
+        "  border-radius: 12px;"
         "}").arg(cardBg, border));
     mLblDriver->setStyleSheet(QString("color: %1;").arg(secondary));
     mLblConflict->setStyleSheet(QString("color: %1;").arg(warnCol));

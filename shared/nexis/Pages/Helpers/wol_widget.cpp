@@ -297,13 +297,13 @@ void WolWidget::loadNames()
 void WolWidget::refreshThemeColors()
 {
     QSettings *sv = AppManager::ins()->getStyleValues();
-    const QString cardBg    = sv->value("@cardBg",      "#ffffff").toString();
+    const QString cardBg    = sv->value("@cardBgElevated",      "#ffffff").toString();
     const QString borderCol = sv->value("@borderColor", "#e0e0e0").toString();
 
     mCard->setStyleSheet(
         QStringLiteral("QFrame#wolCard{"
                        "background-color:%1;"
                        "border:1px solid %2;"
-                       "border-radius:8px;}")
+                       "border-radius: 12px;}")
             .arg(cardBg, borderCol));
 }

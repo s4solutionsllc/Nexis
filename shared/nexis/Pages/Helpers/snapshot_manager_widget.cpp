@@ -342,7 +342,7 @@ void SnapshotManagerWidget::refreshThemeColors()
     if (!sv)
         return;
 
-    const QString cardBg     = sv->value("@cardBg").toString();
+    const QString cardBg     = sv->value("@cardBgElevated").toString();
     const QString border     = sv->value("@borderColor").toString();
     const QString secondary  = sv->value("@color04").toString();
     const QString successCol = sv->value("@successColor").toString();
@@ -353,7 +353,7 @@ void SnapshotManagerWidget::refreshThemeColors()
             "QFrame#snapshotManagerCard {"
             "  background-color: %1;"
             "  border: 1px solid %2;"
-            "  border-radius: 8px;"
+            "  border-radius: 12px;"
             "}").arg(cardBg, border));
     }
 
