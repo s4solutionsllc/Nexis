@@ -207,13 +207,25 @@ static QPixmap colorSwatchPixmap(const QColor &color, int size)
     return pm;
 }
 
+// Edit-mode chrome (grip, dashed outline, empty swatch) uses the theme's
+// tertiary text colour rather than a fixed grey.
+static QColor editChromeColor(int alpha = 255)
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    QColor c(sv ? sv->value("@tertiaryText").toString() : QString());
+    if (!c.isValid())
+        c = QColor(QStringLiteral("#8E919B"));
+    c.setAlpha(alpha);
+    return c;
+}
+
 static QPixmap defaultSwatchPixmap(int size)
 {
     QPixmap pm(size, size);
     pm.fill(Qt::transparent);
     QPainter p(&pm);
     p.setRenderHint(QPainter::Antialiasing);
-    QPen pen(QColor(150, 150, 150), 1.5);
+    QPen pen(editChromeColor(), 1.5);
     p.setPen(pen);
     p.setBrush(Qt::NoBrush);
     p.drawEllipse(2, 2, size - 4, size - 4);
@@ -437,14 +449,14 @@ void DashboardTileWrapper::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing);
 
     // Dashed border overlay
-    QPen pen(QColor(150, 150, 150, 120), 2, Qt::DashLine);
+    QPen pen(editChromeColor(120), 2, Qt::DashLine);
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
     painter.drawRoundedRect(rect().adjusted(1, 1, -1, -1), 12, 12);
 
     // Resize grip triangle at bottom-right
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(150, 150, 150, 160));
+    painter.setBrush(editChromeColor(160));
     QPolygon triangle;
     int s = RESIZE_HANDLE_SIZE;
     triangle << QPoint(width(), height())
