@@ -492,6 +492,11 @@ QPushButton[accessibleName="danger"]:disabled,
 #btnSearchAdvance:disabled,
 #btnRepairBtm:disabled,
 #DiskToolsPage #btnScan:disabled,
+#DiskToolsPage #btnTrash:disabled {
+    background-color: @borderColor;
+    border: 1px solid @borderColor;
+    color: @tertiaryText;
+}
 
 QLineEdit:disabled,
 QComboBox:disabled,
@@ -2814,11 +2819,6 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #DiskToolsPage #btnTrash:hover {
     background-color: @dangerHoverFill;
-}
-
-#DiskToolsPage #btnTrash:disabled {
-    background-color: @borderColor;
-    color: @textSecondary;
 }
 
 #DiskToolsPage #lblStatus {
