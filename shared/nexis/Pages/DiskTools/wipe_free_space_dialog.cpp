@@ -1,4 +1,5 @@
 #include "wipe_free_space_dialog.h"
+#include "Common/dialog_buttons.h"
 
 #include <QCloseEvent>
 #include <QHBoxLayout>
@@ -61,7 +62,7 @@ void WipeFreeSpaceDialog::buildUi()
 {
     auto *root = new QVBoxLayout(this);
     root->setSpacing(12);
-    root->setContentsMargins(20, 20, 20, 20);
+    root->setContentsMargins(DialogButtons::dialogMargins());
 
     mStack = new QStackedWidget(this);
     root->addWidget(mStack);
@@ -96,19 +97,13 @@ void WipeFreeSpaceDialog::buildUi()
     disclosure->setWordWrap(true);
     pickLayout->addWidget(disclosure);
 
-    auto *pickBtnRow = new QHBoxLayout();
-    pickBtnRow->addStretch();
-    auto *cancelBtn = new QPushButton(tr("Cancel"), pickPage);
-    connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
-    pickBtnRow->addWidget(cancelBtn);
-
-    mBtnWipe = new QPushButton(tr("Wipe Free Space…"), pickPage);
+    DialogButtons::Row pickRow = DialogButtons::build(this, tr("Wipe Free Space…"),
+                                                      DialogButtons::Confirm::Danger, tr("Cancel"));
+    mBtnWipe = pickRow.confirm;
     mBtnWipe->setObjectName(QStringLiteral("btnWipeFreeSpaceConfirm"));
-    mBtnWipe->setAccessibleName(QStringLiteral("danger"));
     mBtnWipe->setEnabled(false);
     connect(mBtnWipe, &QPushButton::clicked, this, &WipeFreeSpaceDialog::onWipeClicked);
-    pickBtnRow->addWidget(mBtnWipe);
-    pickLayout->addLayout(pickBtnRow);
+    pickLayout->addWidget(pickRow.box);
 
     mStack->addWidget(pickPage);
 
