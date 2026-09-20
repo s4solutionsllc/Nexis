@@ -243,6 +243,8 @@ void AppManager::updateStylesheet() {
 - Semantic tokens separate role from hue: `@textPrimary`/`@textSecondary`/`@tertiaryText` for text, `@primaryFill`/`@dangerFill` (+ `Hover`) for filled buttons, `@accentText`/`@successText`/`@warningText`/`@destructiveText` for coloured text, `@onStatus` for text on status fills, `@controlBorder` for input boundaries. Each pair meets WCAG AA in both themes. The legacy `@colorNN` tokens remain in `values.ini` for C++ readers but are no longer referenced by `style.qss`.
 - A widget-level `setStyleSheet("background-color:transparent;")` cascades to every descendant; use `Utilities::makeBackgroundTransparent()` (ID-scoped) for scroll-area content.
 
+**Navigation:** every entry point (sidebar buttons, tray, command palette, menu bar, kiosk, start page, `SignalMapper::sigNavigateToPage`) calls `App::navigateTo(pageId)` with the stable `PageSlot::id`; translated titles are display text only. Each `PageSlot` holds its sidebar button, and sidebar group state is persisted under `SidebarSection::id` via the widget-free `SidebarSectionState` helpers (legacy translated keys are migrated once).
+
 **Page scaffold:** `PageScaffold` in `shared/nexis/nexis_page.h` provides the single page gutter (`pageMargins()`), spacing, and `buildHeader()` (accent bar + title + source line + trailing action layout, styled by the `#sectionHeader*` recipe). Page titles use the sidebar label verbatim.
 
 **Bundled assets:** All icons use bundled SVGs from QRC resources rather than `QIcon::fromTheme()`, ensuring consistent visuals across desktop environments. Four font families (Inter, Ubuntu, JetBrains Mono) are embedded in the binary via `QFontDatabase::addApplicationFont()`, with a user-configurable font picker on the Settings page.

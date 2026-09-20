@@ -29,6 +29,7 @@
 #include <QWindow>
 #include <QThreadPool>
 #include <QLabel>
+#include <QSet>
 #include <QMenuBar>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
@@ -155,8 +156,9 @@ void App::buildSidebar()
 
     // Helper lambda to create a section with header, indicator, and container.
     // Pass headerless=true to omit the toggle header and separator (always-visible section).
-    auto addSection = [&](const QString &name, bool headerless = false) -> SidebarSection & {
+    auto addSection = [&](const QString &id, const QString &name, bool headerless = false) -> SidebarSection & {
         SidebarSection section;
+        section.id = id;
         section.name = name;
         section.collapsed = false;
         section.headerless = headerless;
@@ -186,7 +188,7 @@ void App::buildSidebar()
 
     // ---- MONITOR section (headerless — always visible, no toggle) ----
     {
-        auto &sec = addSection(tr("MONITOR"), true);
+        auto &sec = addSection(QStringLiteral("monitor"), tr("MONITOR"), true);
         btnDash = createSidebarButton(tr("Dashboard"));
         btnDash->setChecked(true);
         sec.containerLayout->addWidget(btnDash);
@@ -221,7 +223,7 @@ void App::buildSidebar()
 
     // ---- MANAGE section ----
     {
-        auto &sec = addSection(tr("MANAGE"));
+        auto &sec = addSection(QStringLiteral("manage"), tr("MANAGE"));
         btnSystemCleaner = createSidebarButton(tr("System Cleaner"));
         sec.containerLayout->addWidget(btnSystemCleaner);
         sec.buttons.append(btnSystemCleaner);
@@ -270,7 +272,7 @@ void App::buildSidebar()
 
     // ---- SYSTEM section ----
     {
-        auto &sec = addSection(tr("SYSTEM"));
+        auto &sec = addSection(QStringLiteral("system"), tr("SYSTEM"));
         btnDocker = createSidebarButton(tr("Docker"));
         sec.containerLayout->addWidget(btnDocker);
         sec.buttons.append(btnDocker);
@@ -694,35 +696,11 @@ void App::init()
     }
 #endif
 
-    // Connect sidebar button clicks to page navigation. Click handlers route
-    // through ensurePageByTitle() so they work when the target page has not
-    // yet been constructed (FR-97 lazy construction).
-    auto navByTitle = [this](const QString &title) { navigateToTitle(title); };
-    connect(btnDash,             &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Dashboard")); });
-    connect(btnHardwareInfo,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Hardware Info")); });
-    connect(btnResources,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Resources")); });
-    connect(btnNetworkUsage,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Network Usage")); });
-    connect(btnSystemCleaner,    &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Cleaner")); });
-    connect(btnDiskTools,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Disk Tools")); });
-    connect(btnSearch,           &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Search")); });
-    connect(btnProcesses,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Processes")); });
-    connect(btnServices,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Services")); });
-    connect(btnStartupApps,      &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Startup Apps")); });
-    connect(btnBootAnalysis,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Boot Analysis")); });
-    connect(btnUninstaller,      &QPushButton::clicked, this, [this, navByTitle]() {
-#ifdef Q_OS_MAC
-        navByTitle(tr("Applications"));
-#else
-        navByTitle(tr("Uninstaller"));
-#endif
-    });
-#ifdef Q_OS_MAC
-    connect(btnMailCleanup,      &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Mail Cleanup")); });
-#endif
-    connect(btnShredder,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("File Shredder")); });
-    connect(btnHelpers,          &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Helpers")); });
-    connect(btnSystemLogs,       &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Logs")); });
-    connect(btnSettings,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Settings")); });
+    // Sidebar page buttons are connected further down, once each button is
+    // linked to its page slot; navigateTo() handles pages that have not been
+    // constructed yet (FR-97 lazy construction).
+    // Every page button navigates by its slot's stable id (wired below, once
+    // the slot list and the button list are final).
     connect(btnFeedback,         &QPushButton::clicked, this, [this]() {
         if (feedback.isNull())
             feedback = QSharedPointer<Feedback>(new Feedback(this));
@@ -730,21 +708,8 @@ void App::init()
     });
     connect(btnDiskMap,          &QPushButton::clicked, this, &App::openDiskTreemapDialog);
 
-    // Conditional page button clicks
-    if (ToolManager::ins()->checkDocker())
-        connect(btnDocker, &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Docker")); });
-    if (ToolManager::ins()->checkSourceRepository())
-        connect(btnAptSourceManager, &QPushButton::clicked, this, [this, navByTitle]() {
-#ifdef Q_OS_MAC
-            navByTitle(tr("Homebrew"));
-#else
-            navByTitle(tr("APT Repository Manager"));
-#endif
-        });
-#ifndef Q_OS_MAC
-    if (ToolManager::ins()->checkGnomeSettings())
-        connect(btnGnomeSettings, &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("GNOME Settings")); });
-#endif
+    // Conditional pages (Docker, Homebrew/APT, GNOME Settings) are wired by the
+    // same slot loop below when their tool is present.
 
     // Reposition badges when the nav scroll position changes
     connect(mNavScrollArea->verticalScrollBar(), &QScrollBar::valueChanged,
@@ -756,13 +721,27 @@ void App::init()
 
     // Navigate-to-page signal from any widget (e.g. dashboard quick actions)
     connect(SignalMapper::ins(), &SignalMapper::sigNavigateToPage,
-            this, [this](const QString &title) {
-        QWidget *page = getPageByTitle(title);
-        if (page) {
-            pageClick(page);
-            checkSidebarButtonByTooltip(title);
+            this, [this](const QString &pageId) { navigateTo(pageId, true); });
+
+    // The slot list and the button list are built in the same order (the
+    // conditional pages insert into both at the same index), so link them
+    // once here and navigate by the slot's stable id from now on.
+    Q_ASSERT(mPageSlots.size() == mListSidebarButtons.size());
+#ifndef QT_NO_DEBUG
+    {
+        QSet<QString> seenIds;
+        for (const PageSlot &slot : mPageSlots) {
+            Q_ASSERT_X(!slot.id.isEmpty() && !seenIds.contains(slot.id), "App", "page ids must be unique and non-empty");
+            seenIds.insert(slot.id);
         }
-    });
+    }
+#endif
+    for (int i = 0; i < mPageSlots.size() && i < mListSidebarButtons.size(); ++i) {
+        mPageSlots[i].button = mListSidebarButtons[i];
+        const QString pageId = mPageSlots[i].id;
+        connect(mListSidebarButtons[i], &QPushButton::clicked, this,
+                [this, pageId]() { navigateTo(pageId, true); });
+    }
 
     // Construct Dashboard eagerly (it is the default landing page and owns
     // most of the DataRefreshService signal subscriptions). Other pages are
@@ -777,9 +756,8 @@ void App::init()
     // Set start page. Must run before DataRefreshService::start() so the
     // landing page's onPageActivated() can register subscribers (FR-103)
     // before the service fires its initial immediate ticks. SSO-3388: the
-    // setting is now a stable id; resolve it to the currently-localized
-    // title that clickSidebarButton/checkSidebarButtonByTooltip expect.
-    clickSidebarButton(pageTitleById(SettingManager::ins()->getStartPage()));
+    // setting is a stable page id, which navigateTo() takes directly.
+    navigateTo(SettingManager::ins()->getStartPage());
 
     DataRefreshService::ins()->start();
     NetUsageTracker::ins()->start(DataRefreshService::ins());
@@ -993,11 +971,15 @@ void App::createTrayActions()
 #endif
 
     auto addNavAction = [this](QMenu *menu, QPushButton *button) {
-        const QString toolTip = button->toolTip();
-        QAction *action = menu->addAction(toolTip);
-        connect(action, &QAction::triggered, this, [this, toolTip] {
-            clickSidebarButton(toolTip, true);
-        });
+        QString pageId;
+        for (const PageSlot &slot : mPageSlots) {
+            if (slot.button == button) {
+                pageId = slot.id;
+                break;
+            }
+        }
+        QAction *action = menu->addAction(button->toolTip());
+        connect(action, &QAction::triggered, this, [this, pageId] { navigateTo(pageId, true); });
     };
 
     const QList<TrayMenuGroup> groups = buildTrayMenuGroups(mSections);
@@ -1098,16 +1080,50 @@ void App::createTrayActions()
     mTrayIcon->setContextMenu(mTrayMenu);
 }
 
-void App::clickSidebarButton(QString pageTitle, bool isShow)
+int App::slotIndexById(const QString &pageId) const
 {
-    QWidget *selectedWidget = getPageByTitle(pageTitle);
-    if (selectedWidget) {
-        mPendingNavTitle = pageTitle;
-        pageClick(selectedWidget, !isShow);
-        checkSidebarButtonByTooltip(pageTitle);
-    } else {
-        pageClick(ensurePage(0));
+    for (int i = 0; i < mPageSlots.size(); ++i) {
+        if (mPageSlots[i].id == pageId)
+            return i;
     }
+    return -1;
+}
+
+void App::navigateTo(const QString &pageId, bool isShow)
+{
+    int index = slotIndexById(pageId);
+    if (index < 0)
+        index = 0;   // unknown or unavailable page (e.g. a saved start page for a tool that is gone)
+    const QString id = mPageSlots[index].id;
+
+    mPendingNavId = id;
+    checkSidebarButton(id);
+
+    if (mPageSlots[index].widget) {
+        // A hidden window has nothing to animate.
+        pageClick(mPageSlots[index].widget, isShow && isVisible());
+    } else {
+        if (!mLoadingPage) {
+            mLoadingPage = new QWidget(mSlidingStacked);
+            mLoadingPage->setObjectName("pageLoading");
+            auto *layout = new QVBoxLayout(mLoadingPage);
+            mLoadingLabel = new QLabel(mLoadingPage);
+            mLoadingLabel->setObjectName("pageLoadingLabel");
+            mLoadingLabel->setAlignment(Qt::AlignCenter);
+            layout->addWidget(mLoadingLabel);
+            mSlidingStacked->addWidget(mLoadingPage);
+        }
+        mLoadingLabel->setText(tr("Loading %1…").arg(mPageSlots[index].title));
+        pageClick(mLoadingPage, false);
+
+        // Let the placeholder paint before the (possibly slow) constructor runs.
+        QTimer::singleShot(20, this, [this, id]() {
+            QWidget *w = ensurePageById(id);
+            if (w && mPendingNavId == id)
+                pageClick(w, false);
+        });
+    }
+
 #ifdef Q_OS_MAC
     if (isShow)
         nexis_macos_show_dock_icon();
@@ -1119,19 +1135,22 @@ void App::clickSidebarButton(QString pageTitle, bool isShow)
         emit SignalMapper::ins()->sigAppVisibilityChanged(true);
 }
 
-void App::checkSidebarButtonByTooltip(const QString &text)
+void App::checkSidebarButton(const QString &pageId)
 {
-    for (QPushButton *button : mListSidebarButtons) {
-        if (button->toolTip() == text) {
-            expandSectionForButton(button);
-            button->setChecked(true);
-        }
-    }
+    const int index = slotIndexById(pageId);
+    if (index < 0 || !mPageSlots[index].button)
+        return;
+    expandSectionForButton(mPageSlots[index].button);
+    mPageSlots[index].button->setChecked(true);
 }
 
 QWidget* App::getPageByTitle(const QString &title)
 {
-    return ensurePageByTitle(title);
+    for (int i = 0; i < mPageSlots.size(); ++i) {
+        if (mPageSlots[i].title == title)
+            return ensurePage(i);
+    }
+    return nullptr;
 }
 
 QWidget* App::ensurePage(int index)
@@ -1161,52 +1180,9 @@ QWidget* App::ensurePage(int index)
     return w;
 }
 
-void App::navigateToTitle(const QString &title)
+QWidget* App::ensurePageById(const QString &pageId)
 {
-    int index = -1;
-    for (int i = 0; i < mPageSlots.size(); ++i) {
-        if (mPageSlots[i].title == title) {
-            index = i;
-            break;
-        }
-    }
-    if (index < 0)
-        return;
-
-    mPendingNavTitle = title;
-    if (mPageSlots[index].widget) {
-        pageClick(mPageSlots[index].widget);
-        return;
-    }
-
-    if (!mLoadingPage) {
-        mLoadingPage = new QWidget(mSlidingStacked);
-        mLoadingPage->setObjectName("pageLoading");
-        auto *layout = new QVBoxLayout(mLoadingPage);
-        mLoadingLabel = new QLabel(mLoadingPage);
-        mLoadingLabel->setObjectName("pageLoadingLabel");
-        mLoadingLabel->setAlignment(Qt::AlignCenter);
-        layout->addWidget(mLoadingLabel);
-        mSlidingStacked->addWidget(mLoadingPage);
-    }
-    mLoadingLabel->setText(tr("Loading %1…").arg(title));
-    pageClick(mLoadingPage, false);
-
-    // Let the placeholder paint before the (possibly slow) constructor runs.
-    QTimer::singleShot(20, this, [this, title]() {
-        QWidget *w = ensurePageByTitle(title);
-        if (w && mPendingNavTitle == title)
-            pageClick(w, false);
-    });
-}
-
-QWidget* App::ensurePageByTitle(const QString &title)
-{
-    for (int i = 0; i < mPageSlots.size(); ++i) {
-        if (mPageSlots[i].title == title)
-            return ensurePage(i);
-    }
-    return nullptr;
+    return ensurePage(slotIndexById(pageId));
 }
 
 QString App::pageTitleById(const QString &id) const
@@ -1556,28 +1532,37 @@ void App::expandSectionForButton(QPushButton *btn)
     }
 }
 
+static QList<SidebarSectionState::Key> sectionKeys(const QList<SidebarSection> &sections)
+{
+    QList<SidebarSectionState::Key> keys;
+    for (const SidebarSection &sec : sections)
+        keys.append({sec.id, sec.name, sec.headerless});
+    return keys;
+}
+
 void App::saveSectionStates()
 {
-    QJsonObject obj;
-    for (const auto &sec : mSections) {
-        if (!sec.headerless)
-            obj[sec.name] = sec.collapsed;
-    }
+    QHash<QString, bool> collapsed;
+    for (const auto &sec : mSections)
+        collapsed.insert(sec.id, sec.collapsed);
     SettingManager::ins()->setSidebarSectionsCollapsed(
-        QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
+        SidebarSectionState::toJson(sectionKeys(mSections), collapsed));
 }
 
 void App::restoreSectionStates()
 {
-    QString json = SettingManager::ins()->getSidebarSectionsCollapsed();
+    const QString json = SettingManager::ins()->getSidebarSectionsCollapsed();
     if (json.isEmpty())
         return;
-    QJsonObject obj = QJsonDocument::fromJson(json.toUtf8()).object();
+    bool migrated = false;
+    const QHash<QString, bool> collapsed =
+        SidebarSectionState::fromJson(json, sectionKeys(mSections), &migrated);
     for (int i = 0; i < mSections.size(); ++i) {
-        if (obj.contains(mSections[i].name)) {
-            applySectionCollapse(i, obj[mSections[i].name].toBool(), false);
-        }
+        if (collapsed.contains(mSections[i].id))
+            applySectionCollapse(i, collapsed.value(mSections[i].id), false);
     }
+    if (migrated)
+        saveSectionStates();
 }
 
 void App::updateSectionChevrons()
@@ -1665,9 +1650,9 @@ void App::applyKioskMode(bool enable)
     if (enable) {
         mPreKioskCollapsed = mSidebarCollapsed;
         ui->sidebar->hide();
-        mPendingNavTitle = tr("Dashboard");
+        mPendingNavId = QStringLiteral("dashboard");
         pageClick(ensurePage(0), false);
-        checkSidebarButtonByTooltip(tr("Dashboard"));
+        checkSidebarButton(QStringLiteral("dashboard"));
 
         // GH#207: place the kiosk window on the configured monitor, if any.
         if (QScreen *targetScreen = resolveKioskScreen()) {
@@ -1759,9 +1744,9 @@ void App::showAndRaise()
 
 void App::runCleanerScan()
 {
-    clickSidebarButton(tr("System Cleaner"), true);
+    navigateTo(QStringLiteral("systemCleaner"), true);
     if (!systemCleanerPage)
-        ensurePageByTitle(tr("System Cleaner"));
+        ensurePageById(QStringLiteral("systemCleaner"));
     if (systemCleanerPage)
         systemCleanerPage->quickScan();
 }
@@ -1779,7 +1764,7 @@ void App::setupMenuBar()
     QAction *prefs = appMenu->addAction(tr("Settings…"));
     prefs->setMenuRole(QAction::PreferencesRole);
     prefs->setShortcut(QKeySequence::Preferences);
-    connect(prefs, &QAction::triggered, this, [this] { clickSidebarButton(tr("Settings"), true); });
+    connect(prefs, &QAction::triggered, this, [this] { navigateTo(QStringLiteral("settings"), true); });
     QAction *quit = appMenu->addAction(tr("Quit Nexis"));
     quit->setMenuRole(QAction::QuitRole);
     quit->setShortcut(QKeySequence::Quit);
@@ -1810,11 +1795,11 @@ void App::setupMenuBar()
     QMenu *goMenu = bar->addMenu(tr("&Go"));
     int shortcutIndex = 1;
     for (const PageSlot &slot : mPageSlots) {
-        const QString title = slot.title;
-        QAction *go = goMenu->addAction(title);
+        const QString pageId = slot.id;
+        QAction *go = goMenu->addAction(slot.title);
         if (shortcutIndex <= 9)
             go->setShortcut(QKeySequence(Qt::CTRL | (Qt::Key_0 + shortcutIndex++)));
-        connect(go, &QAction::triggered, this, [this, title] { clickSidebarButton(title, true); });
+        connect(go, &QAction::triggered, this, [this, pageId] { navigateTo(pageId, true); });
     }
 
     QMenu *helpMenu = bar->addMenu(tr("&Help"));
@@ -1836,9 +1821,9 @@ void App::setupCommandPalette()
     // Navigation commands — iterate slots so titles are available even if
     // pages are not yet constructed (Commit B).
     for (const PageSlot &slot : mPageSlots) {
-        QString title = slot.title;
-        mCommandPalette->addCommand(title, tr("Navigate"), [this, title]() {
-            clickSidebarButton(title, true);
+        const QString pageId = slot.id;
+        mCommandPalette->addCommand(slot.title, tr("Navigate"), [this, pageId]() {
+            navigateTo(pageId, true);
         });
     }
 

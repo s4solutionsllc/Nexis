@@ -551,6 +551,13 @@ add_nexis_test(NAME ScheduleTests
 # SettingManager — start-page id migration (SSO-3388). Pure unit test: we
 # only need SettingManager itself; QStandardPaths is redirected to a temp
 # dir via setTestModeEnabled() in initTestCase.
+add_nexis_test(NAME SidebarSectionStateTests
+  SOURCES
+    managers/test_sidebar_section_state.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}/Managers"
+)
+
 add_nexis_test(NAME SettingManagerTests
   SOURCES
     managers/test_setting_manager.cpp
