@@ -1,3 +1,14 @@
+nexis (2.11.0-1) unstable; urgency=medium
+
+  * New release: searchable Tweaks pane for hidden macOS defaults preferences,
+    granular macOS cache rebuilds (dyld, XPC, font, Launchpad), and a UI
+    consistency audit unifying fonts, page scaffold, tokens, navigation and
+    surfaces across the app (including a new native menu bar with Ctrl+1-9
+    page navigation). Also fixes theme-switch staleness and navigation
+    desync. See CHANGELOG.md for full details.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Sun, 20 Sep 2026 00:00:00 +0000
+
 nexis (2.10.0-1) unstable; urgency=medium
 
   * New release: macOS menu-bar health score + Clean Now, Linux tray health

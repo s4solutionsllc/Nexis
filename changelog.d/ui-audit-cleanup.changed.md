@@ -1,1 +1,0 @@
-Screenshot regression tests now report every mismatching page instead of stopping at the first one, and cover Disk Tools, Boot Analysis, File Shredder and System Logs. Removed 27 dead stylesheet rules and corrected the application overview (page order, lazy page construction, command palette and navigation behaviour).
