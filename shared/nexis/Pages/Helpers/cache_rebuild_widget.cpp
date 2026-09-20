@@ -1,4 +1,6 @@
 #include "cache_rebuild_widget.h"
+#include "utilities.h"
+#include <QScrollArea>
 
 #include "signal_mapper.h"
 #include <Managers/app_manager.h>
@@ -166,12 +168,28 @@ void CacheRebuildWidget::buildUI()
     intro->setWordWrap(true);
     root->addWidget(intro);
 
+    // Four cards plus the title are taller than the panel at the default
+    // window size; without a scroll area the layout squeezed the cards until
+    // their buttons overlapped the next card.
+    auto *scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrollArea->setStyleSheet(QStringLiteral("QScrollArea{background-color:transparent;}"));
+    auto *listWidget = new QWidget(scrollArea);
+    Utilities::makeBackgroundTransparent(listWidget);
+    auto *list = new QVBoxLayout(listWidget);
+    list->setContentsMargins(0, 0, 0, 0);
+    list->setSpacing(12);
+
     for (Action action : {Action::DyldSharedCache, Action::XpcCache,
                           Action::FontCache, Action::LaunchpadReset}) {
-        root->addWidget(buildRow(action));
+        list->addWidget(buildRow(action));
     }
+    list->addStretch();
 
-    root->addStretch();
+    scrollArea->setWidget(listWidget);
+    root->addWidget(scrollArea, 1);
 }
 
 QFrame *CacheRebuildWidget::buildRow(Action action)
