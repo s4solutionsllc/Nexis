@@ -168,7 +168,7 @@ void HomebrewPage::buildUI()
     mBtnCheckNow = new QPushButton(tr("Check Now"), updHeaderWidget);
     mBtnCheckNow->setObjectName("btnCheckNow");
     mBtnCheckNow->setCursor(Qt::PointingHandCursor);
-    mBtnCheckNow->setAccessibleName("primary");
+    mBtnCheckNow->setProperty("variant", "primary");
     mBtnCheckNow->setFixedHeight(28);
     updTitleRow->addWidget(mBtnCheckNow);
 
@@ -223,7 +223,7 @@ void HomebrewPage::buildUI()
     mBtnUpdateSelected = new QPushButton(tr("Update Selected"), updInner);
     mBtnUpdateSelected->setObjectName("btnUpdateSelected");
     mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
-    mBtnUpdateSelected->setAccessibleName("primary");
+    mBtnUpdateSelected->setProperty("variant", "primary");
     mBtnUpdateSelected->setEnabled(false);
     updBtnRow->addWidget(mBtnUpdateSelected);
 
@@ -649,7 +649,7 @@ void HomebrewPage::buildSparkleSection(QVBoxLayout *pageLayout)
     mBtnSparkleUpdateSelected = new QPushButton(tr("Update Selected"), headerWidget);
     mBtnSparkleUpdateSelected->setObjectName("btnUpdateSelected");
     mBtnSparkleUpdateSelected->setCursor(Qt::PointingHandCursor);
-    mBtnSparkleUpdateSelected->setAccessibleName("primary");
+    mBtnSparkleUpdateSelected->setProperty("variant", "primary");
     mBtnSparkleUpdateSelected->setFixedHeight(28);
     mBtnSparkleUpdateSelected->setEnabled(false); // disabled until checkbox checked
     titleRow->addWidget(mBtnSparkleUpdateSelected);

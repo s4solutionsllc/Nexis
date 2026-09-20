@@ -448,23 +448,23 @@ QPushButton:hover {
     color: @accentText;
 }
 
-QPushButton[accessibleName="danger"] {
+QPushButton[variant="danger"] {
     background-color: @dangerFill;
     color: @color07;
     border: 0;
 }
 
-QPushButton[accessibleName="danger"]:hover {
+QPushButton[variant="danger"]:hover {
     background-color: @dangerHoverFill;
 }
 
-QPushButton[accessibleName="primary"] {
+QPushButton[variant="primary"] {
     background-color: @primaryFill;
     color: @color07;
     border: 0;
 }
 
-QPushButton[accessibleName="primary"]:hover {
+QPushButton[variant="primary"]:hover {
     background-color: @primaryHoverFill;
 }
 
@@ -475,17 +475,17 @@ QPushButton:pressed {
     border-color: @accentColor;
 }
 
-QPushButton[accessibleName="primary"]:pressed {
+QPushButton[variant="primary"]:pressed {
     background-color: @primaryHoverFill;
 }
 
-QPushButton[accessibleName="danger"]:pressed {
+QPushButton[variant="danger"]:pressed {
     background-color: @dangerHoverFill;
 }
 
 QPushButton:disabled,
-QPushButton[accessibleName="primary"]:disabled,
-QPushButton[accessibleName="danger"]:disabled,
+QPushButton[variant="primary"]:disabled,
+QPushButton[variant="danger"]:disabled,
 #btnScanSystem:disabled,
 #btnCleanSelected:disabled,
 #btnEditDone:disabled,
@@ -891,7 +891,7 @@ QLabel[accessibleName="dialog-title"] {
  *   - Explanation: a QLabel with objectName "emptyStateText" (muted
  *     @tertiaryText, matches DS §5).
  *   - Next action: a QPushButton — reuses the global QPushButton recipe
- *     (style.qss:400-408) or QPushButton[accessibleName="primary"]
+ *     (style.qss:400-408) or QPushButton[variant="primary"]
  *     (style.qss:426-434) for emphasis; no new button selector needed
  *     (DS §9 item 1, QSS-first).
  *   - No per-frame animation on the icon or any empty-state child
@@ -2964,7 +2964,7 @@ QLabel[accessibleName="dimmed-small"] {
 #repoIssueCard[issueSeverity="warning"] { border-left: 3px solid @warningColor; }
 #repoIssueCard[issueSeverity="info"]    { border-left: 3px solid @tertiaryText; }
 
-#repoIssueCard QPushButton[accessibleName="primary"] {
+#repoIssueCard QPushButton[variant="primary"] {
     background-color: @primaryFill;
     color: @color07;
     border: 0;
@@ -2972,7 +2972,7 @@ QLabel[accessibleName="dimmed-small"] {
     padding: @dp2 @dp10;
 }
 
-#repoIssueCard QPushButton[accessibleName="primary"]:hover {
+#repoIssueCard QPushButton[variant="primary"]:hover {
     background-color: @primaryHoverFill;
 }
 
@@ -3272,8 +3272,8 @@ QDoubleSpinBox:focus {
 /* Filled and ID-styled buttons set their own border, which outranks the type
    selector above; name them so they still show a ring. The ring uses the
    primary text colour because the focus token equals the accent fill. */
-QPushButton[accessibleName="primary"]:focus,
-QPushButton[accessibleName="danger"]:focus,
+QPushButton[variant="primary"]:focus,
+QPushButton[variant="danger"]:focus,
 #btnScanSystem:focus,
 #btnCleanSelected:focus,
 #btnEditDone:focus,

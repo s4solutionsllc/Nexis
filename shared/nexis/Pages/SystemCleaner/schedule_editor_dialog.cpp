@@ -1,4 +1,5 @@
 #include "schedule_editor_dialog.h"
+#include "Common/dialog_buttons.h"
 #include "utilities.h"
 #include <Managers/cleaner_service.h>
 
@@ -49,7 +50,7 @@ void ScheduleEditorDialog::buildUI()
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(12);
-    mainLayout->setContentsMargins(20, 15, 20, 15);
+    mainLayout->setContentsMargins(DialogButtons::dialogMargins());
 
     // Dialog title (themed via QSS accessibleName="dialog-title")
     mLblDialogTitle = new QLabel;
@@ -206,20 +207,14 @@ void ScheduleEditorDialog::buildUI()
     mainLayout->addWidget(scrollArea, 1);
 
     // Buttons (kept outside the scroll area so they're always reachable)
-    QHBoxLayout *btnRow = new QHBoxLayout;
-    btnRow->addStretch();
-    mBtnCancel = new QPushButton(tr("Cancel"));
-    mBtnSave = new QPushButton(tr("Save"));
-    mBtnSave->setDefault(true);
-    mBtnSave->setProperty("accessibleName", "primary");
-    btnRow->addWidget(mBtnCancel);
-    btnRow->addWidget(mBtnSave);
-    mainLayout->addLayout(btnRow);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Save"), DialogButtons::Confirm::Primary, tr("Cancel"));
+    mBtnCancel = row.dismiss;
+    mBtnSave = row.confirm;
+    mainLayout->addWidget(row.box);
 
     // Connections
     connect(mFrequencyGroup, &QButtonGroup::idClicked, this, &ScheduleEditorDialog::onFrequencyChanged);
     connect(mBtnSave, &QPushButton::clicked, this, &ScheduleEditorDialog::onSave);
-    connect(mBtnCancel, &QPushButton::clicked, this, &QDialog::reject);
 }
 
 void ScheduleEditorDialog::populateFromSchedule(const ScheduleManager::CleaningSchedule &schedule)

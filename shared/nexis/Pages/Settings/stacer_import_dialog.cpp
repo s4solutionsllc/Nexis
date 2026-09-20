@@ -1,4 +1,5 @@
 #include "stacer_import_dialog.h"
+#include <QPushButton>
 #include "ui_stacer_import_dialog.h"
 
 #include <QAbstractButton>
@@ -11,6 +12,13 @@ StacerImportDialog::StacerImportDialog(const StacerImportResult &result, QWidget
     ui->setupUi(this);
     setModal(true);
     populate(result);
+
+    // Confirm buttons name their action ("Import"), and carry the primary style.
+    if (QPushButton *apply = ui->buttonBox->button(QDialogButtonBox::Apply)) {
+        apply->setText(tr("Import"));
+        apply->setProperty("variant", "primary");
+        apply->setDefault(true);
+    }
 
     // Wire Apply button to accept() so the caller can detect acceptance.
     connect(ui->buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton *btn) {

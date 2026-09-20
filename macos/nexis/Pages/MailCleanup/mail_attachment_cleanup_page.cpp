@@ -55,7 +55,7 @@ void MailAttachmentCleanupPage::buildUI()
         tr("Mail Cleanup"), tr("Locally stored Mail attachments"), this);
     mLblTitle = header.title;
     mBtnScan = new QPushButton(tr("Scan for Attachments"), header.row);
-    mBtnScan->setAccessibleName("primary");
+    mBtnScan->setProperty("variant", "primary");
     mBtnScan->setCursor(Qt::PointingHandCursor);
     header.layout->addWidget(mBtnScan, 0, Qt::AlignTop);
     root->addWidget(header.row);
@@ -149,7 +149,7 @@ void MailAttachmentCleanupPage::buildUI()
     cfLayout->addWidget(riskLabel);
 
     mBtnDelete = new QPushButton(tr("Delete Selected Attachments"), mConfirmFrame);
-    mBtnDelete->setAccessibleName("danger");
+    mBtnDelete->setProperty("variant", "danger");
     mBtnDelete->setEnabled(false);
     cfLayout->addWidget(mBtnDelete, 0, Qt::AlignRight);
 

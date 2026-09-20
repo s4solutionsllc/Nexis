@@ -1,4 +1,5 @@
 #include "exclusion_manager_dialog.h"
+#include "Common/dialog_buttons.h"
 #include <Managers/app_manager.h>
 
 #include <QVBoxLayout>
@@ -29,7 +30,7 @@ void ExclusionManagerDialog::buildUI()
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(12);
-    mainLayout->setContentsMargins(20, 15, 20, 15);
+    mainLayout->setContentsMargins(DialogButtons::dialogMargins());
 
     mLblTitle = new QLabel(tr("Manage Exclusion Rules"));
     mLblTitle->setProperty("accessibleName", "dialog-title");
@@ -77,7 +78,9 @@ void ExclusionManagerDialog::buildUI()
     mainLayout->addLayout(btnRow);
 
     mBtnClose = new QPushButton(tr("Close"));
-    mBtnClose->setProperty("accessibleName", "primary");
+    // Nothing is pending here (changes apply as they are made), so this is a
+    // plain "Close", not a primary action.
+    mBtnClose->setDefault(true);
     QHBoxLayout *closeRow = new QHBoxLayout;
     closeRow->addStretch();
     closeRow->addWidget(mBtnClose);

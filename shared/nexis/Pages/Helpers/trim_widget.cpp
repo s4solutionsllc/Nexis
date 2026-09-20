@@ -207,7 +207,7 @@ void TrimWidget::buildUI()
     actionRow->setSpacing(8);
     mBtnToggle = new QPushButton(mCard);
     mBtnToggle->setCursor(Qt::PointingHandCursor);
-    mBtnToggle->setAccessibleName("primary");
+    mBtnToggle->setProperty("variant", "primary");
     connect(mBtnToggle, &QPushButton::clicked, this, &TrimWidget::onToggleTimer);
     actionRow->addWidget(mBtnToggle);
 

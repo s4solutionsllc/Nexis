@@ -177,7 +177,7 @@ void ShredderPage::buildUi()
 
     mBtnShredSelected = new QPushButton(tr("Shred Selected"), this);
     mBtnShredSelected->setObjectName("btnShredSelected");
-    mBtnShredSelected->setProperty("accessibleName", "danger");
+    mBtnShredSelected->setProperty("variant", "danger");
     mBtnShredSelected->setCursor(Qt::PointingHandCursor);
     // Design Anchor / GH-173 / GH-226 disabled-state regression class: never
     // a silent no-op — stays disabled until at least one item is staged and
