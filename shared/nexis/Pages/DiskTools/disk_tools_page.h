@@ -82,6 +82,7 @@ private:
     QLabel *mLblMatch = nullptr;
     QWidget *mLargeOldFilterWidget = nullptr;
     bool mLargeOldFilterCompact = false;
+    int mLargeOldFilterFullRowWidth = 0;
     QSpinBox *mSpinSize;
     QComboBox *mCbSizeUnit;
     QSpinBox *mSpinAge;

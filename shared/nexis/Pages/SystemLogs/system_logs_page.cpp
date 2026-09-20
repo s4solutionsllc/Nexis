@@ -44,6 +44,16 @@ SystemLogsPage::~SystemLogsPage()
     mProvider->cancel();
 }
 
+void SystemLogsPage::resetForScreenshotTest()
+{
+    disconnect(mProvider, nullptr, this, nullptr);
+    mProvider->cancel();
+    mCachedEntries.clear();
+    populateModel({});
+    mLblStatus->setText(tr("Ready"));
+    mBtnRefresh->setEnabled(true);
+}
+
 void SystemLogsPage::buildLayout()
 {
     auto *mainLayout = new QVBoxLayout(this);
@@ -148,7 +158,10 @@ void SystemLogsPage::buildLayout()
     mTableView->horizontalHeader()->setStretchLastSection(true);
     mTableView->setAlternatingRowColors(true);
     mTableView->setSortingEnabled(true);
-    mTableView->setColumnWidth(0, 170);
+    // Wide enough to fit "Timestamp" plus its sort-indicator glyph at the
+    // 10pt base font on every platform's default font metrics — 170px let
+    // the indicator bleed into the Severity header on Linux (SSO-24820).
+    mTableView->setColumnWidth(0, 200);
     mTableView->setColumnWidth(1, 70);
     mTableView->setColumnWidth(2, 150);
     mTableView->setItemDelegateForColumn(1, new SeverityPillDelegate(mTableView));
