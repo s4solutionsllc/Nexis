@@ -1,0 +1,1 @@
+Startup Apps now uses the same page gutter as every other page, the Processes header keeps its natural height when the table is empty instead of filling a third of the page, and the Disk Tools filter row switches to its stacked form before its labels and dropdowns start overlapping.

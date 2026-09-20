@@ -198,6 +198,10 @@ void ProcessesPage::init()
     Utilities::addDropShadow(ui->processesContainer, 90, 26);
 
     ui->processesEmptyState->setVisible(false);
+    // Keep the header at its natural height; with an empty table it used to
+    // soak up the spare vertical space.
+    ui->sectionHeaderRow->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    ui->gridLayout->setRowStretch(3, 1);
     connect(ui->btnRefreshNow, &QPushButton::clicked, this, [this]() {
         mRefresh->triggerProcessRefresh();
     });

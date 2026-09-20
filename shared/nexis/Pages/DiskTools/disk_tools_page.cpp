@@ -1,4 +1,5 @@
 #include "disk_tools_page.h"
+#include "dpi.h"
 #include "ui_disk_tools_page.h"
 
 #include <QButtonGroup>
@@ -865,7 +866,9 @@ void DiskToolsPage::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     if (!mLargeOldFilterWidget)
         return;
-    const bool compact = event->size().width() < 720;
+    // The single-row form needs ~880px; below that its labels and combos
+    // overlap, so switch to the stacked form earlier.
+    const bool compact = event->size().width() < Dpi::scale(900);
     if (compact != mLargeOldFilterCompact)
         applyLargeOldFilterLayout(compact);
 }
