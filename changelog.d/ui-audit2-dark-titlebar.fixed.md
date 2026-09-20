@@ -1,1 +1,0 @@
-On macOS the window title bar now follows the Nexis theme. It used to follow the system appearance, so a Dark Nexis on a Light system showed a white title bar (and the reverse); the main window, dialogs and the Mini Monitor now switch with the theme, including a live switch.

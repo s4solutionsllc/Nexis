@@ -1,1 +1,0 @@
-Helpers → Cache Rebuild no longer squeezes its cards until the Rebuild buttons overlap the next card at the default window size; the list now scrolls. The screenshot harness also writes a capture of every Helpers tab (including the Linux-only tuning panels) in both themes for review on each baseline regeneration.

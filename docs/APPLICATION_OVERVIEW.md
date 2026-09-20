@@ -59,10 +59,10 @@ conflict-prone region in the repo (SSO-23891, SSO-23951).
 | Metric | Value | Source of truth |
 |--------|-------|-----------------|
 | Version | 2.11.0 | `project(... VERSION ...)` in `CMakeLists.txt` |
-| Source LOC (C++) | ~79,000 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
-| Source files (C++) | 520 | same |
-| Test LOC | ~23,200 | `tests/` |
-| Test executables | 103 (101 unit + 2 screenshot; some platform-gated) | `add_nexis_test()` / `add_executable()` in `tests/CMakeLists.txt` |
+| Source LOC (C++) | ~79,300 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
+| Source files (C++) | 523 | same |
+| Test LOC | ~23,500 | `tests/` |
+| Test executables | 105 (103 unit + 2 screenshot; some platform-gated) | `add_nexis_test()` / `add_executable()` in `tests/CMakeLists.txt` |
 | Test methods | ~1103 | `private slots:` in `tests/*/test_*.cpp` |
 | Translations | 34 languages | `shared/translations/*.ts` |
 

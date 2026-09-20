@@ -1,1 +1,0 @@
-The Dashboard now uses the width it has. Tiles keep exactly the arrangement you saved, but their cells stretch (up to 1.5×) so the layout fills the window instead of leaving half of a wide window empty; beyond that the layout is centred. Customize mode still shows the full grid of drop targets at the normal cell size.
