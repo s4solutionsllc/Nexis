@@ -18,16 +18,16 @@
     <number>0</number>
    </property>
    <property name="leftMargin">
-    <number>15</number>
+    <number>20</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>15</number>
+    <number>20</number>
    </property>
    <property name="bottomMargin">
-    <number>15</number>
+    <number>16</number>
    </property>
    <item>
     <widget class="QStackedWidget" name="stackedWidget">
@@ -170,9 +170,6 @@
             </property>
             <property name="cursor" stdset="0">
              <cursorShape>ArrowCursor</cursorShape>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::NoFocus</enum>
             </property>
             <property name="styleSheet">
              <string notr="true"/>

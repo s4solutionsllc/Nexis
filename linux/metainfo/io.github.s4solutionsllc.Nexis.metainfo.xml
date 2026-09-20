@@ -74,6 +74,25 @@
   </screenshots>
 
   <releases>
+    <release version="2.11.0" date="2026-09-20">
+      <description>
+        <p>New features:</p>
+        <ul>
+          <li>Searchable Tweaks pane for hidden macOS defaults preferences.</li>
+          <li>Granular macOS cache rebuilds (dyld, XPC, font, Launchpad).</li>
+          <li>Native menu bar with Ctrl/Cmd+1-9 page navigation.</li>
+        </ul>
+        <p>Changed:</p>
+        <ul>
+          <li>UI consistency audit: fonts, page scaffold, tokens, navigation, and surfaces
+              unified across the app.</li>
+        </ul>
+        <p>Fixed:</p>
+        <ul>
+          <li>Theme-switch staleness and navigation desync after rapid page switches.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.10.0" date="2026-08-31">
       <description>
         <p>New features:</p>

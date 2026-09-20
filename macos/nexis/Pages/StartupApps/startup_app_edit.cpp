@@ -54,7 +54,6 @@ void StartupAppEdit::init()
     ui->txtStartupAppGenericName->hide();
     ui->txtStartupAppIcon->hide();
 
-    setStyleSheet(AppManager::ins()->getStylesheetFileContent());
 }
 
 void StartupAppEdit::show()

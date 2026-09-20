@@ -1,4 +1,5 @@
 #include "open_ports_widget.h"
+#include "signal_mapper.h"
 
 #include <Utils/command_util.h>
 #include <Managers/app_manager.h>
@@ -274,6 +275,12 @@ OpenPortsWidget::OpenPortsWidget(QWidget *parent)
     buildUI();
     connect(this, &OpenPortsWidget::connectionsFetched,
             this, &OpenPortsWidget::onConnectionsFetched);
+    // Row colours are baked into the items, so rebuild them from the cached
+    // entries when the theme changes instead of waiting for the next scan.
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, [this] {
+        if (!mEntries.isEmpty())
+            onConnectionsFetched(mEntries);
+    });
 }
 
 void OpenPortsWidget::buildUI()
@@ -307,6 +314,7 @@ void OpenPortsWidget::buildUI()
     mBtnRefresh = new QPushButton(tr("Refresh"));
     mBtnRefresh->setCursor(Qt::PointingHandCursor);
     mBtnRefresh->setObjectName("portsRefresh");
+    mBtnRefresh->setProperty("variant", "primary");
     connect(mBtnRefresh, &QPushButton::clicked, this, &OpenPortsWidget::refresh);
     filterBar->addWidget(mBtnRefresh);
 
@@ -398,8 +406,8 @@ void OpenPortsWidget::onConnectionsFetched(QList<ConnectionEntry> entries)
     mModel->removeRows(0, mModel->rowCount());
 
     QSettings *sv = AppManager::ins()->getStyleValues();
-    QString successColor = sv ? sv->value("@successColor").toString() : "#2ec27e";
-    QString warningColor = sv ? sv->value("@warningColor").toString() : "#FFB347";
+    QString successColor = sv ? sv->value("@successText").toString() : "#2ec27e";
+    QString warningColor = sv ? sv->value("@warningText").toString() : "#FFB347";
     QString failColor    = sv ? sv->value("@destructiveColor").toString() : "#E05454";
 
     for (const ConnectionEntry &e : entries) {

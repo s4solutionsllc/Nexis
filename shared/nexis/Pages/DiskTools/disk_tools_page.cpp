@@ -231,6 +231,11 @@ void DiskToolsPage::buildLargeOldPage()
     connect(mBtnLargeOldScan, &QPushButton::clicked, this, &DiskToolsPage::onLargeOldScan);
 
     applyLargeOldFilterLayout(false);
+    // Measured once from the actual widgets/font in play rather than a fixed
+    // pixel guess — a static threshold silently assumed one platform's font
+    // metrics and clipped mLblNotAccessed's text on narrower Linux system
+    // fonts once the base font size grew (SSO-24820).
+    mLargeOldFilterFullRowWidth = mLargeOldFilterWidget->sizeHint().width();
     layout->addWidget(mLargeOldFilterWidget);
 
     // Status
@@ -865,7 +870,10 @@ void DiskToolsPage::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     if (!mLargeOldFilterWidget)
         return;
-    const bool compact = event->size().width() < 720;
+    // mLargeOldFilterWidget fills its parent's width in both layout modes
+    // (only its height differs), so its current width is exactly the space
+    // available to the row regardless of which mode is active right now.
+    const bool compact = mLargeOldFilterWidget->width() < mLargeOldFilterFullRowWidth;
     if (compact != mLargeOldFilterCompact)
         applyLargeOldFilterLayout(compact);
 }
@@ -894,13 +902,14 @@ QWidget *DiskToolsPage::makeEmptyState(QWidget *parent, const QString &heading,
     layout->setSpacing(10);
     layout->addStretch();
 
-    auto *icon = new QLabel(QString::fromUtf8("\xF0\x9F\x96\xB4"), empty); // hard-disk glyph
+    auto *icon = new QLabel(empty);
     icon->setObjectName("emptyStateIcon");
+    Utilities::setEmptyStateIcon(icon, QStringLiteral("disk-tools.svg"));
     icon->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     layout->addWidget(icon);
 
     auto *lblHeading = new QLabel(heading, empty);
-    lblHeading->setObjectName("lblDiskToolsEmptyHeading");
+    lblHeading->setObjectName("emptyStateHeading");
     lblHeading->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     layout->addWidget(lblHeading);
 
@@ -912,8 +921,9 @@ QWidget *DiskToolsPage::makeEmptyState(QWidget *parent, const QString &heading,
 
     auto *btnRow = new QHBoxLayout();
     btnRow->addStretch();
+    // The toolbar owns the page's one primary "Scan"; this is its shortcut.
     auto *btn = new QPushButton(buttonText, empty);
-    btn->setObjectName("btnScan");
+    btn->setObjectName("btnScanEmptyState");
     btn->setCursor(Qt::PointingHandCursor);
     btnRow->addWidget(btn);
     btnRow->addStretch();

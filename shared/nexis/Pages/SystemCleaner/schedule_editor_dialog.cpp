@@ -1,4 +1,6 @@
 #include "schedule_editor_dialog.h"
+#include "Common/dialog_buttons.h"
+#include "utilities.h"
 #include <Managers/cleaner_service.h>
 
 #include <QVBoxLayout>
@@ -6,6 +8,7 @@
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QFormLayout>
+#include <QScrollArea>
 
 ScheduleEditorDialog::ScheduleEditorDialog(QWidget *parent)
     : QDialog(parent)
@@ -42,24 +45,38 @@ ScheduleEditorDialog::ScheduleEditorDialog(const ScheduleManager::CleaningSchedu
 
 void ScheduleEditorDialog::buildUI()
 {
-    setMinimumSize(450, 480);
+    setMinimumSize(450, 520);
     setObjectName("scheduleEditorDialog");
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(12);
-    mainLayout->setContentsMargins(20, 15, 20, 15);
+    mainLayout->setContentsMargins(DialogButtons::dialogMargins());
 
     // Dialog title (themed via QSS accessibleName="dialog-title")
     mLblDialogTitle = new QLabel;
     mLblDialogTitle->setProperty("accessibleName", "dialog-title");
     mainLayout->addWidget(mLblDialogTitle);
 
+    // Scrollable body: keeps every row (incl. "Categories to Clean") reachable
+    // when content height exceeds the available screen/dialog height (GH#440).
+    QScrollArea *scrollArea = new QScrollArea;
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setFrameShape(QFrame::NoFrame);
+    scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
+    QWidget *scrollWidget = new QWidget;
+    Utilities::makeBackgroundTransparent(scrollWidget);
+    QVBoxLayout *bodyLayout = new QVBoxLayout(scrollWidget);
+    bodyLayout->setSpacing(12);
+    bodyLayout->setContentsMargins(0, 0, 0, 0);
+
     // Schedule name
     QFormLayout *nameForm = new QFormLayout;
     mTxtName = new QLineEdit;
     mTxtName->setPlaceholderText(tr("e.g. Weekly Cleanup"));
     nameForm->addRow(tr("Schedule Name:"), mTxtName);
-    mainLayout->addLayout(nameForm);
+    bodyLayout->addLayout(nameForm);
 
     // Frequency
     QGroupBox *freqGroup = new QGroupBox(tr("Frequency"));
@@ -111,7 +128,7 @@ void ScheduleEditorDialog::buildUI()
     condRow->addStretch();
     freqLayout->addLayout(condRow);
 
-    mainLayout->addWidget(freqGroup);
+    bodyLayout->addWidget(freqGroup);
 
     // Time
     QHBoxLayout *timeRow = new QHBoxLayout;
@@ -129,7 +146,7 @@ void ScheduleEditorDialog::buildUI()
     mSpnMinute->setSuffix(tr(" m"));
     timeRow->addWidget(mSpnMinute);
     timeRow->addStretch();
-    mainLayout->addLayout(timeRow);
+    bodyLayout->addLayout(timeRow);
 
     // Categories
     QGroupBox *catGroup = new QGroupBox(tr("Categories to Clean"));
@@ -162,7 +179,7 @@ void ScheduleEditorDialog::buildUI()
 
     connect(mChkTrash, &QCheckBox::toggled, mLblTrashWarning, &QLabel::setVisible);
 
-    mainLayout->addWidget(catGroup);
+    bodyLayout->addWidget(catGroup);
 
     // Min file age
     QHBoxLayout *ageRow = new QHBoxLayout;
@@ -174,7 +191,7 @@ void ScheduleEditorDialog::buildUI()
     ageRow->addWidget(mChkSkipRecent);
     ageRow->addWidget(mSpnMinFileAge);
     ageRow->addStretch();
-    mainLayout->addLayout(ageRow);
+    bodyLayout->addLayout(ageRow);
 
     connect(mChkSkipRecent, &QCheckBox::toggled, mSpnMinFileAge, &QSpinBox::setEnabled);
 
@@ -182,24 +199,22 @@ void ScheduleEditorDialog::buildUI()
     mLblError = new QLabel;
     mLblError->setObjectName("lblErrorMsg");
     mLblError->setVisible(false);
-    mainLayout->addWidget(mLblError);
+    bodyLayout->addWidget(mLblError);
 
-    // Buttons
-    mainLayout->addStretch();
-    QHBoxLayout *btnRow = new QHBoxLayout;
-    btnRow->addStretch();
-    mBtnCancel = new QPushButton(tr("Cancel"));
-    mBtnSave = new QPushButton(tr("Save"));
-    mBtnSave->setDefault(true);
-    mBtnSave->setProperty("accessibleName", "primary");
-    btnRow->addWidget(mBtnCancel);
-    btnRow->addWidget(mBtnSave);
-    mainLayout->addLayout(btnRow);
+    bodyLayout->addStretch();
+
+    scrollArea->setWidget(scrollWidget);
+    mainLayout->addWidget(scrollArea, 1);
+
+    // Buttons (kept outside the scroll area so they're always reachable)
+    DialogButtons::Row row = DialogButtons::build(this, tr("Save"), DialogButtons::Confirm::Primary, tr("Cancel"));
+    mBtnCancel = row.dismiss;
+    mBtnSave = row.confirm;
+    mainLayout->addWidget(row.box);
 
     // Connections
     connect(mFrequencyGroup, &QButtonGroup::idClicked, this, &ScheduleEditorDialog::onFrequencyChanged);
     connect(mBtnSave, &QPushButton::clicked, this, &ScheduleEditorDialog::onSave);
-    connect(mBtnCancel, &QPushButton::clicked, this, &QDialog::reject);
 }
 
 void ScheduleEditorDialog::populateFromSchedule(const ScheduleManager::CleaningSchedule &schedule)

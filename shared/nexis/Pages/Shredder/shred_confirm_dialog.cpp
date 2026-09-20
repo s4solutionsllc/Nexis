@@ -1,4 +1,5 @@
 #include "shred_confirm_dialog.h"
+#include "Common/dialog_buttons.h"
 
 #include <QHBoxLayout>
 #include <QLabel>
@@ -19,8 +20,8 @@ ShredConfirmDialog::ShredConfirmDialog(int itemCount, quint64 totalBytes, QWidge
 void ShredConfirmDialog::buildUI(int itemCount, quint64 totalBytes)
 {
     auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(20, 16, 20, 16);
-    layout->setSpacing(10);
+    layout->setContentsMargins(DialogButtons::dialogMargins());
+    layout->setSpacing(DialogButtons::dialogSpacing());
 
     auto *lblTitle = new QLabel(
         tr("Shred %n item(s) (%1)?", "", itemCount).arg(FormatUtil::formatBytes(totalBytes)), this);
@@ -36,20 +37,7 @@ void ShredConfirmDialog::buildUI(int itemCount, quint64 totalBytes)
     lblBody->setWordWrap(true);
     layout->addWidget(lblBody);
 
-    auto *buttons = new QHBoxLayout();
-    buttons->addStretch();
-
-    auto *btnCancel = new QPushButton(tr("Cancel"), this);
-    btnCancel->setCursor(Qt::PointingHandCursor);
-    connect(btnCancel, &QPushButton::clicked, this, &QDialog::reject);
-    buttons->addWidget(btnCancel);
-
-    auto *btnShred = new QPushButton(tr("Shred"), this);
-    btnShred->setCursor(Qt::PointingHandCursor);
-    btnShred->setProperty("accessibleName", "danger");
-    btnShred->setDefault(true);
-    connect(btnShred, &QPushButton::clicked, this, &QDialog::accept);
-    buttons->addWidget(btnShred);
-
-    layout->addLayout(buttons);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Shred"), DialogButtons::Confirm::Danger, tr("Cancel"));
+    connect(row.confirm, &QPushButton::clicked, this, &QDialog::accept);
+    layout->addWidget(row.box);
 }

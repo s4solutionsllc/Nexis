@@ -1,4 +1,5 @@
 #include "app_manager.h"
+#include <QFontDatabase>
 #include "setting_manager.h"
 #include "dpi.h"
 #include <QDebug>
@@ -9,6 +10,8 @@
 #include <algorithm>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 #include <QStyleHints>
+
+static constexpr int kBaseFontPointSize = 10;
 #endif
 
 AppManager *AppManager::instance = nullptr;
@@ -202,6 +205,16 @@ void AppManager::updateStylesheet()
         else
             mStylesheetFileContent.replace(QStringLiteral("@fontFamily"),
                 QString("\"%1\", system-ui, sans-serif").arg(fontFamily));
+
+        // Painters and delegates read the application font directly, so keep
+        // it in step with the QSS base rule (QWidget { font-family; font-size }).
+        // The QSS rule is what sizes widgets: platform themes register
+        // per-class fonts (13pt on macOS) that beat the application font.
+        QFont appFont = (fontFamily == QStringLiteral("system-ui"))
+            ? QFontDatabase::systemFont(QFontDatabase::GeneralFont)
+            : QFont(fontFamily);
+        appFont.setPointSize(kBaseFontPointSize);
+        qApp->setFont(appFont);
     }
 
     // Monospace font (fixed — always JetBrains Mono with monospace fallback)
@@ -219,10 +232,12 @@ void AppManager::updateStylesheet()
         offset = m.capturedStart() + scaled.length();
     }
 
-    qApp->setStyleSheet(mStylesheetFileContent);
-
     // Sync QPalette with theme tokens so Fusion style renders
-    // QComboBox popups and other native-fallback widgets correctly
+    // QComboBox popups and other native-fallback widgets correctly.
+    // This must happen before setStyleSheet(): the stylesheet style snapshots
+    // each widget's palette while polishing, so polishing against the previous
+    // theme's palette leaves palette-colored text and item views stale after a
+    // live theme switch.
     {
         auto col = [this](const char *token) {
             return QColor(mStyleValues->value(QLatin1String(token)).toString());
@@ -253,6 +268,9 @@ void AppManager::updateStylesheet()
         qApp->setPalette(pal);
     }
 
+    qApp->setStyleSheet(mStylesheetFileContent);
+
+
     emit SignalMapper::ins()->sigChangedAppTheme();
 }
 
@@ -272,6 +290,10 @@ QString AppManager::applyIndicatorPngFallback(const QString &qss)
         { "checkbox.svg",         "checkbox.png" },
     };
     QString out = qss;
+    // The checked indicator is themed per accent colour as an SVG; its PNG
+    // sibling only exists in common/.
+    out.replace(QLatin1String("themes/@themeName/img/circle-checked.svg"),
+                QLatin1String("themes/common/img/circle-checked.svg"));
     for (const auto &s : kSwaps)
         out.replace(QLatin1String(s.from), QLatin1String(s.to));
     return out;

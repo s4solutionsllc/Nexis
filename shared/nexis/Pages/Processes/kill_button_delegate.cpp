@@ -27,7 +27,7 @@ void KillButtonDelegate::paint(QPainter *painter,
     painter->save();
     painter->setRenderHint(QPainter::TextAntialiasing);
     QFont f = option.font;
-    f.setPointSize(9);
+    f.setPointSize(11);
     f.setBold(true);
     painter->setFont(f);
     painter->setPen(killColor);

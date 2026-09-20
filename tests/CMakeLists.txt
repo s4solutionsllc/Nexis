@@ -551,6 +551,13 @@ add_nexis_test(NAME ScheduleTests
 # SettingManager — start-page id migration (SSO-3388). Pure unit test: we
 # only need SettingManager itself; QStandardPaths is redirected to a temp
 # dir via setTestModeEnabled() in initTestCase.
+add_nexis_test(NAME SidebarSectionStateTests
+  SOURCES
+    managers/test_sidebar_section_state.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}/Managers"
+)
+
 add_nexis_test(NAME SettingManagerTests
   SOURCES
     managers/test_setting_manager.cpp
@@ -933,6 +940,7 @@ add_nexis_test(NAME BrowserSqliteCleanerTests
 # ── Theme validation tests ─────────────────────────────────────────────────────
 add_nexis_test(NAME ThemeTokenTests   SOURCES theme/test_theme_tokens.cpp)
 add_nexis_test(NAME FocusVisibleTests SOURCES theme/test_focus_visible.cpp)
+add_nexis_test(NAME DialogButtonsTests SOURCES theme/test_dialog_buttons.cpp)
 
 # ── Screenshot regression tests (FR-41) ───────────────────────────────────────
 # Links against the full nexis-gui library (not just nexis-core) because it

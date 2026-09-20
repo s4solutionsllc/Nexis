@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
 
       - name: Crowdin Sync
-        uses: crowdin/github-action@e4a6c1338b4063c77d46a81875265f9e8bd76f95 # v2.9.1
+        uses: crowdin/github-action@0d5670f539973aea2f01abce61a8989934df0025 # v2.9.1
         with:
           upload_sources: true
           upload_translations: false

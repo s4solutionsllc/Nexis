@@ -21,7 +21,8 @@ signals:
     // / WindowDeactivate). Used by DataRefreshService to downshift cadence when
     // the user is working in another app.
     void sigAppFocusChanged(bool focused);
-    void sigNavigateToPage(const QString &pageTitle);
+    // Payload is the stable PageSlot id (e.g. "systemCleaner"), not a title.
+    void sigNavigateToPage(const QString &pageId);
     void sigCleanableSizeChanged(quint64 bytes);
     void sigDashboardFooterChanged(bool visible);
     void sigMenuBarMonitorToggled(bool enabled);

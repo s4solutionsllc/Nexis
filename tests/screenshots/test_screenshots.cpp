@@ -12,6 +12,8 @@
 #include <QStyleFactory>
 #include <QStandardPaths>
 #include <QStringList>
+#include <QRegularExpression>
+#include <QPushButton>
 
 #include "app.h"
 #include "Managers/app_manager.h"
@@ -20,6 +22,7 @@
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
 #include "Pages/SystemCleaner/system_cleaner_page.h"
+#include "Pages/SystemLogs/system_logs_page.h"
 
 // Per-channel fuzz: pixels whose R/G/B/A all differ by ≤ this value count as
 // equal. Tolerates anti-aliasing + minor font-rendering drift without letting
@@ -101,6 +104,10 @@ static const QVector<PageInfo> kPageMap = {
     {"HelpersPage",       "helpers",           {}, {}},
     {"NetworkUsagePage",  "network_usage",     {"BarChartWidget"}, {}},
     {"SettingsPage",      "settings",          {}, {}},
+    {"DiskToolsPage",     "disk_tools",        {"QAbstractItemView"}, {}},
+    {"BootAnalysisPage",  "boot_analysis",     {"QAbstractItemView"}, {"metricTileValue"}},
+    {"ShredderPage",      "shredder",          {}, {}},
+    {"SystemLogsPage",    "system_logs",       {"QAbstractItemView"}, {}},
 // SSO-13745 / SSO-14981: Linux-only pages deferred from round-1 capture.
 // All three require their runtime check to pass (APT tool, docker CLI,
 // gsettings + org.gnome.desktop.interface schema) for the page widget to
@@ -306,6 +313,39 @@ private:
         return nullptr;
     }
 
+    void captureHelpersTabsForReview(QWidget *helpersPage, const QString &reviewDir)
+    {
+        QDir().mkpath(reviewDir);
+        QPushButton *first = nullptr;
+        // ONLY the tab row. Panels contain their own checkable buttons that
+        // act on the system (Power Profile sets the CPU governor), so a
+        // page-wide search for checkable buttons must never be clicked through.
+        QWidget *tabRow = helpersPage->findChild<QWidget *>(QStringLiteral("toolsContainer"));
+        QVERIFY2(tabRow, "HelpersPage tab row (#toolsContainer) not found");
+        // Direct children only: the Linux Power Profile switcher sits in this
+        // row as a nested widget, and its buttons change the CPU governor.
+        const QList<QPushButton *> buttons =
+            tabRow->findChildren<QPushButton *>(QString(), Qt::FindDirectChildrenOnly);
+        for (QPushButton *button : buttons) {
+            if (!button->isCheckable() || !button->isVisible())
+                continue;
+            if (!first)
+                first = button;
+            button->click();
+            QApplication::processEvents();
+            QTest::qWait(400);
+            // Tabs built in code have no objectName; name the file after the label.
+            QString name = button->text().toLower();
+            name.replace(QRegularExpression(QStringLiteral("[^a-z0-9]+")), QStringLiteral("_"));
+            mApp->grab().toImage().save(reviewDir + "/helpers_" + name + ".png");
+        }
+        if (first) {
+            first->click();
+            QApplication::processEvents();
+            QTest::qWait(100);
+        }
+    }
+
     void captureAndCompare(const QString &theme)
     {
         SettingManager::ins()->setColorScheme(theme == "dark" ? "dark" : "light");
@@ -318,6 +358,7 @@ private:
 
         const QString themeRefDir = mRefDir + "/" + theme;
         const QString themeFailDir = mFailDir + "/" + theme;
+        QStringList mismatches;
 
         // Explicit-gap handling: if the platform/theme has no committed
         // baseline PNGs at all, skip with a loud message instead of QFAILing
@@ -373,11 +414,29 @@ private:
                     "— capture would race it (SSO-15956)");
             }
 
+            // SSO-24820: SystemLogsPage auto-fetches up to 500 real entries
+            // from the host's log service on display. On macOS that returns
+            // genuine live system/network log lines; a screenshot baseline
+            // committed to git forever must never bake in real host data.
+            // Force it back to a deterministic empty state before capture.
+            if (auto *logsPage = qobject_cast<SystemLogsPage *>(widget)) {
+                logsPage->resetForScreenshotTest();
+            }
+
             QPixmap pixmap = mApp->grab();
             QImage captured = pixmap.toImage();
 
             const QString outPath = themeOutDir + "/" + page.screenshotName + ".png";
             captured.save(outPath);
+
+            // Helpers hosts a dozen tool panels behind its tab row, several of
+            // them platform-specific (CPU tuning, swappiness, battery threshold
+            // on Linux; Tweaks, snapshots, cache rebuild on macOS). They show
+            // live system data, so they are not compared; instead every tab is
+            // written to <out>/review/ so a human can check each panel in both
+            // themes on each platform.
+            if (page.className == QLatin1String("HelpersPage"))
+                captureHelpersTabsForReview(widget, themeOutDir + "/review");
 
             if (mGenerateMode) {
                 const QString refPath = themeRefDir + "/" + page.screenshotName + ".png";
@@ -388,10 +447,12 @@ private:
             }
 
             const QString refPath = themeRefDir + "/" + page.screenshotName + ".png";
-            QVERIFY2(QFile::exists(refPath),
-                qPrintable(QString("Reference missing: %1 — the baseline set is out of sync "
-                                   "with kPageMap. Regenerate with scripts/update_screenshots.sh.")
-                           .arg(refPath)));
+            if (!QFile::exists(refPath)) {
+                mismatches << QString("Reference missing: %1 — the baseline set is out of sync "
+                                      "with kPageMap. Regenerate with scripts/update_screenshots.sh.")
+                              .arg(refPath);
+                continue;
+            }
 
             QImage reference(refPath);
             QStringList unmatchedMaskNames;
@@ -421,16 +482,20 @@ private:
                            << cmp.maskedPixels << "pixels masked";
             }
 
-            QVERIFY2(cmp.passed,
-                qPrintable(QString("%1 (%2): %3% of unmasked pixels differ "
-                                   "(%4/%5; %6 masked) — see %7")
+            // Record and keep going: stopping at the first mismatch hid every
+            // later page, so one stale baseline meant nothing else was checked.
+            if (!cmp.passed) {
+                mismatches << QString("%1 (%2): %3% of unmasked pixels differ (%4/%5; %6 masked) — see %7")
                     .arg(page.screenshotName, theme)
                     .arg(cmp.diffPercent, 0, 'f', 3)
                     .arg(cmp.diffPixels)
                     .arg(cmp.comparedPixels)
                     .arg(cmp.maskedPixels)
-                    .arg(themeFailDir + "/" + page.screenshotName + "_diff.png")));
+                    .arg(themeFailDir + "/" + page.screenshotName + "_diff.png");
+            }
         }
+
+        QVERIFY2(mismatches.isEmpty(), qPrintable(mismatches.join("\n")));
     }
 
 private slots:

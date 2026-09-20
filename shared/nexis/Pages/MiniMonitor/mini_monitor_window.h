@@ -29,11 +29,14 @@ signals:
     // or tray action can stay in sync when the user closes the window
     // directly (native close button) instead of via the toggle.
     void visibilityToggled(bool visible);
+    // The compact window had no way back to the main window.
+    void openMainWindowRequested();
 
 protected:
     void showEvent(QShowEvent *event) override;
     void hideEvent(QHideEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 private slots:
     void onCpuUpdated(const QList<int> &percents, double clockGHz, const QList<double> &loadAvgs);

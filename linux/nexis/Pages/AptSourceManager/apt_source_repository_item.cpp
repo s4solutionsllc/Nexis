@@ -45,9 +45,7 @@ void APTSourceRepositoryItem::init()
     mLblDescription->setTextInteractionFlags(Qt::NoTextInteraction);
     mLblDescription->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     mLblDescription->setMinimumWidth(0);
-    QFont descFont = mLblDescription->font();
-    descFont.setPointSize(descFont.pointSize() - 1);
-    mLblDescription->setFont(descFont);
+    mLblDescription->setProperty("textRole", "caption");
 
     // Create vertical layout for name + description
     QVBoxLayout *textVBox = new QVBoxLayout();

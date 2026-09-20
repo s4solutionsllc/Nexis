@@ -102,3 +102,8 @@ epic ([SSO-15364](/SSO/issues/SSO-15364)).
 - Real items that `performItem()` reports as succeeded are removed from the
   preview tree once execution finishes (they no longer exist); failed or
   not-yet-reached items (Stop was hit) stay visible so the user can retry.
+- If your items can require a shared elevation prompt (pkexec/polkit),
+  override `beginExecution(items, dryRun)` to perform that elevated work once
+  for the whole selected batch instead of once per item in `performItem()` —
+  see `SystemCleanerProvider` (GH#441). It's called once, non-dry-run only,
+  before the `performItem()` loop starts; the default is a no-op.

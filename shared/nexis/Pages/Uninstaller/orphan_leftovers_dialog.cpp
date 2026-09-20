@@ -1,4 +1,5 @@
 #include "orphan_leftovers_dialog.h"
+#include "Common/dialog_buttons.h"
 
 #include "Services/package_service.h"
 #include <Utils/format_util.h>
@@ -49,7 +50,7 @@ OrphanLeftoversDialog::~OrphanLeftoversDialog()
 void OrphanLeftoversDialog::buildUI()
 {
     auto *root = new QVBoxLayout(this);
-    root->setContentsMargins(16, 16, 16, 16);
+    root->setContentsMargins(DialogButtons::dialogMargins());
     root->setSpacing(10);
 
     // CISO §1 (SSO-15373): size + item-count summary, always visible before
@@ -76,25 +77,12 @@ void OrphanLeftoversDialog::buildUI()
     connect(mTable, &QTableWidget::itemChanged, this, &OrphanLeftoversDialog::onTableItemChanged);
     root->addWidget(mTable, 1);
 
-    auto *buttons = new QHBoxLayout();
-    buttons->addStretch();
-
-    mBtnSkip = new QPushButton(tr("Skip"), this);
-    mBtnSkip->setCursor(Qt::PointingHandCursor);
-    connect(mBtnSkip, &QPushButton::clicked, this, &QDialog::reject);
-    buttons->addWidget(mBtnSkip);
-
-    // CISO §1: destructive action uses the red/danger accent
-    // (QSS: QPushButton[accessibleName="danger"]). Disabled until at least
-    // one item is checked.
-    mBtnTrash = new QPushButton(tr("Move to Trash"), this);
-    mBtnTrash->setAccessibleName("danger");
-    mBtnTrash->setCursor(Qt::PointingHandCursor);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Move to Trash"), DialogButtons::Confirm::Danger, tr("Cancel"));
+    mBtnCancel = row.dismiss;
+    mBtnTrash = row.confirm;
     mBtnTrash->setEnabled(false);
     connect(mBtnTrash, &QPushButton::clicked, this, &OrphanLeftoversDialog::onMoveToTrash);
-    buttons->addWidget(mBtnTrash);
-
-    root->addLayout(buttons);
+    root->addWidget(row.box);
 
     mLblSummary->setText(tr("Scanning for orphan leftovers…"));
     mTable->setEnabled(false);

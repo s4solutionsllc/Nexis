@@ -21,6 +21,13 @@ public:
     explicit SystemLogsPage(QWidget *parent = nullptr);
     ~SystemLogsPage();
 
+    // Test-only: aborts any in-flight fetch, severs the provider so a
+    // late-arriving result can't race back in, and clears the table to a
+    // deterministic empty state. The live log stream can surface real host
+    // data (hostnames, process/network internals) that must never be baked
+    // into a committed screenshot baseline (SSO-24820).
+    void resetForScreenshotTest();
+
 private slots:
     void onRefreshClicked();
     void onLogsReady(const QList<LogEntry> &entries);

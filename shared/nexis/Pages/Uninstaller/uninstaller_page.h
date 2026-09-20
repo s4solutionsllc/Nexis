@@ -81,6 +81,7 @@ private:
     PackageService *mPackageService;
     AppManager *mAppManager;
     SignalMapper *mSignalMapper;
+    bool mPackagesLoaded = false;
 
     // FR-123: bundle ids captured at on_btnUninstall_clicked for the
     // macOS path, consumed when sigUninstallFinished fires. Cleared

@@ -1,4 +1,5 @@
 #include "resources_page.h"
+#include "nexis_page.h"
 #include "ui_resources_page.h"
 #include "utilities.h"
 #include "Managers/data_refresh_service.h"
@@ -33,6 +34,9 @@ ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
     mActive(false)
 {
     ui->setupUi(this);
+    ui->verticalLayout->setSpacing(PageScaffold::pageSpacing());
+    ui->verticalLayout->insertWidget(0, PageScaffold::buildHeader(
+        tr("Resources"), tr("Live history of CPU, memory, disk and network"), this).row);
 
     init();
 }
@@ -207,8 +211,11 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
     quint64 readBytes  = io.at(0);
     quint64 writeBytes = io.at(1);
 
-    quint64 d_readByte = (readBytes - l_readBytes);
-    quint64 d_writeByte = (writeBytes - l_writeBytes);
+    // Counters can step backwards (device re-enumeration, a sample that
+    // fails and reports 0). Unsigned subtraction would wrap to ~16 EiB/s and
+    // latch the Y axis at that scale for the rest of the session.
+    quint64 d_readByte = readBytes >= l_readBytes ? readBytes - l_readBytes : 0;
+    quint64 d_writeByte = writeBytes >= l_writeBytes ? writeBytes - l_writeBytes : 0;
 
     seriesList.at(0)->insert(0, QPointF(0, d_readByte));
     seriesList.at(0)->setName(tr("Read: %1/s Total: %2")
@@ -240,6 +247,8 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
 {
     Q_UNUSED(clockGHz)
     if (!mActive) return;
+
+    advanceDiskTempChart();
 
     // --- CPU per-core chart ---
     {
@@ -496,7 +505,9 @@ void ResourcesPage::ensureDiskHealthChart(const QList<DriveHealth> &drives)
 
     mChartDiskHealth = new HistoryChart(tr("History of Disk Temperature"),
                                         tempDriveCount, nullptr, this);
-    mChartDiskHealth->setYMax(100);
+    // 0–100 flattens a drive that lives between 30 and 60 °C into a straight
+    // line at the bottom third; 20–90 covers idle to thermal-throttle.
+    mChartDiskHealth->setYRange(20, 90);
 
     // Insert at the end of the charts layout (after Network), before
     // the DiskUsageLauncher if it already exists.
@@ -522,40 +533,48 @@ void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
     if (!mChartDiskHealth)
         ensureDiskHealthChart(drives);
 
-    if (!mChartDiskHealth || !mActive)
+    if (!mChartDiskHealth)
         return;
 
-    static int tick = 0;
-
-    QVector<QSplineSeries *> seriesList = mChartDiskHealth->getSeriesList();
-
-    int seriesIdx = 0;
+    // Remember the reading even while the page is hidden.
+    const bool firstReading = mLastDiskTemps.isEmpty();
+    mLastDiskTemps.clear();
+    mLastDiskNames.clear();
     for (const DriveHealth &d : drives) {
         if (d.temperatureCelsius < 0)
             continue;
-        if (seriesIdx >= seriesList.count())
-            break;
+        mLastDiskTemps.append(d.temperatureCelsius);
+        mLastDiskNames.append(d.model.isEmpty() ? d.deviceName : d.model);
+    }
 
-        double temp = d.temperatureCelsius;
+    if (firstReading && mActive)
+        advanceDiskTempChart();
+}
 
-        for (int i = 0; i < (tick < 61 ? tick : 61); i++)
-            seriesList.at(seriesIdx)->replace(i, (i + 1), seriesList.at(seriesIdx)->at(i).y());
+void ResourcesPage::advanceDiskTempChart()
+{
+    if (!mChartDiskHealth || mLastDiskTemps.isEmpty())
+        return;
 
-        seriesList.at(seriesIdx)->insert(0, QPointF(0, temp));
+    QVector<QSplineSeries *> seriesList = mChartDiskHealth->getSeriesList();
+    const int count = qMin(seriesList.count(), mLastDiskTemps.count());
 
-        QString model = d.model.isEmpty() ? d.deviceName : d.model;
-        seriesList.at(seriesIdx)->setName(QString("%1: %2 \u00B0C")
-                                          .arg(model)
-                                          .arg(temp, 0, 'f', 0));
+    for (int idx = 0; idx < count; ++idx) {
+        QSplineSeries *series = seriesList.at(idx);
+        const double temp = mLastDiskTemps.at(idx);
 
-        if (tick > 61) seriesList.at(seriesIdx)->removePoints(61, 1);
+        for (int i = 0; i < (mDiskTempTick < 61 ? mDiskTempTick : 61); i++)
+            series->replace(i, (i + 1), series->at(i).y());
 
-        seriesIdx++;
+        series->insert(0, QPointF(0, temp));
+        series->setName(QString("%1: %2 \u00B0C").arg(mLastDiskNames.at(idx)).arg(temp, 0, 'f', 0));
+
+        if (mDiskTempTick > 61)
+            series->removePoints(61, 1);
     }
 
     mChartDiskHealth->setSeriesList(seriesList);
-
-    tick++;
+    mDiskTempTick++;
 }
 
 #ifdef Q_OS_LINUX

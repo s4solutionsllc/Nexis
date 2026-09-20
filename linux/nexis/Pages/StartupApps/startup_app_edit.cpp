@@ -42,7 +42,6 @@ void StartupAppEdit::init()
 
     ui->lblErrorMsg->hide();
 
-    setStyleSheet(AppManager::ins()->getStylesheetFileContent());
 }
 
 void StartupAppEdit::show()

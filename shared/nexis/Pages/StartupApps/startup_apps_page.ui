@@ -45,16 +45,16 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <property name="leftMargin">
-       <number>60</number>
+       <number>20</number>
       </property>
       <property name="topMargin">
-       <number>10</number>
+       <number>12</number>
       </property>
       <property name="rightMargin">
-       <number>60</number>
+       <number>20</number>
       </property>
       <property name="bottomMargin">
-       <number>20</number>
+       <number>16</number>
       </property>
       <property name="spacing">
        <number>5</number>
@@ -90,10 +90,7 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="accessibleName">
+        <property name="variant" stdset="0">
          <string notr="true">primary</string>
         </property>
         <property name="styleSheet">
@@ -176,7 +173,7 @@
            <item>
             <widget class="QLabel" name="sectionHeaderTitle">
              <property name="text">
-              <string notr="true">Startup Applications</string>
+              <string>Startup Apps</string>
              </property>
             </widget>
            </item>
@@ -264,9 +261,6 @@
          </item>
          <item>
           <widget class="QListWidget" name="listWidgetStartup">
-           <property name="focusPolicy">
-            <enum>Qt::NoFocus</enum>
-           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>

@@ -11,6 +11,9 @@
 #include <QHBoxLayout>
 #include <QScrollArea>
 #include <QPushButton>
+#include <QLabel>
+#include <QPointer>
+#include <QDialog>
 #include <functional>
 
 class QScreen;
@@ -34,6 +37,9 @@ struct PageSlot {
     std::function<QWidget*()> factory;
     QWidget *widget = nullptr;
     std::function<void(QWidget*)> onConstructed;
+    // Sidebar button for this page; filled in once the sidebar is built.
+    // Kept last so the positional initialisers in app.cpp stay valid.
+    QPushButton *button = nullptr;
 };
 
 // Pages
@@ -91,11 +97,14 @@ protected:
     void closeEvent(QCloseEvent *event) override;
     void changeEvent(QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
     void init();
     void pageClick(QWidget *widget, bool slide = true);
-    void clickSidebarButton(QString pageTitle, bool isShow = false);
+    // Single navigation entry point. pageId is the stable PageSlot::id, so
+    // callers never depend on the UI language.
+    void navigateTo(const QString &pageId, bool isShow = false);
 
     void toggleKioskMode();
     void exitKioskMode();
@@ -105,12 +114,13 @@ private slots:
 private:
     QWidget *getPageByTitle(const QString &title);
     QWidget *ensurePage(int index);
-    QWidget *ensurePageByTitle(const QString &title);
+    QWidget *ensurePageById(const QString &pageId);
+    int slotIndexById(const QString &pageId) const;
     // SSO-3388: resolve a stable page id (e.g. "dashboard") to its
     // currently-localized sidebar title, or an empty string if no page
     // with that id is registered.
     QString pageTitleById(const QString &id) const;
-    void checkSidebarButtonByTooltip(const QString &text);
+    void checkSidebarButton(const QString &pageId);
     void createTrayActions();
     void updateSidebarIcons();
     void applyKioskMode(bool enable);
@@ -187,9 +197,22 @@ private:
     // sigChangedAppTheme emission, so ensurePage() re-emits to catch it up.
     bool mInitialThemeApplied = false;
 
+    // Shown while a lazily-built page constructs, so the previous page is
+    // never left on screen under the new sidebar highlight.
+    QWidget *mLoadingPage = nullptr;
+    QLabel *mLoadingLabel = nullptr;
+    QString mPendingNavId;
+    void setupMenuBar();
+    // macOS: keep native window chrome (title bars) in step with the app theme.
+    void syncNativeWindowAppearance(QWidget *window = nullptr);
+    void showAndRaise();
+    void runCleanerScan();
+
     QSystemTrayIcon *mTrayIcon;
     QMenu *mTrayMenu;
     QAction *mKioskAction;
+    QAction *mKioskExitAction = nullptr;
+    QPointer<QDialog> mDiskTreemapDialog;
 
     // Sidebar widgets
     QVBoxLayout *mSidebarLayout;

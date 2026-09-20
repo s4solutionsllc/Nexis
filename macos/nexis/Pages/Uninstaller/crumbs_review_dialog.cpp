@@ -1,4 +1,5 @@
 #include "crumbs_review_dialog.h"
+#include "Common/dialog_buttons.h"
 
 #include "Tools/crumbs_scanner.h"
 #include "Utils/format_util.h"
@@ -31,7 +32,7 @@ CrumbsReviewDialog::CrumbsReviewDialog(const QStringList &bundleIds, QWidget *pa
 void CrumbsReviewDialog::buildUI()
 {
     auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(16, 16, 16, 16);
+    layout->setContentsMargins(DialogButtons::dialogMargins());
     layout->setSpacing(10);
 
     mLblSummary = new QLabel(this);
@@ -50,24 +51,12 @@ void CrumbsReviewDialog::buildUI()
     connect(mTable, &QTableWidget::itemChanged, this, &CrumbsReviewDialog::onItemChanged);
     layout->addWidget(mTable, 1);
 
-    auto *buttons = new QHBoxLayout();
-    buttons->addStretch();
-
-    mBtnSkip = new QPushButton(tr("Skip"), this);
-    mBtnSkip->setCursor(Qt::PointingHandCursor);
-    connect(mBtnSkip, &QPushButton::clicked, this, &QDialog::reject);
-    buttons->addWidget(mBtnSkip);
-
-    // SSO-15384 / Design Anchor: destructive action button uses the
-    // red/destructive accent.  Disabled until at least one item is checked.
-    mBtnDelete = new QPushButton(tr("Move to Trash"), this);
-    mBtnDelete->setCursor(Qt::PointingHandCursor);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Move to Trash"), DialogButtons::Confirm::Danger, tr("Cancel"));
+    mBtnCancel = row.dismiss;
+    mBtnDelete = row.confirm;
     mBtnDelete->setEnabled(false);
-    mBtnDelete->setProperty("buttonRole", "destructive");
     connect(mBtnDelete, &QPushButton::clicked, this, &CrumbsReviewDialog::onDeleteSelected);
-    buttons->addWidget(mBtnDelete);
-
-    layout->addLayout(buttons);
+    layout->addWidget(row.box);
 }
 
 void CrumbsReviewDialog::startScan()

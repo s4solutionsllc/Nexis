@@ -66,6 +66,12 @@ QList<DriveHealth> DiskHealthInfoMacOS::collectDriveHealth()
         if (drive.protocol.isEmpty() || drive.protocol == "Disk Image")
             continue;
 
+        // Synthesized APFS containers show up in WholeDisks with their own
+        // sizes, so the (model, size) dedupe below cannot catch them; they
+        // are views of a physical store already in the list, not drives.
+        if (info.value("VirtualOrPhysical").toString() == QLatin1String("Virtual"))
+            continue;
+
         // Model
         drive.model = info.value("MediaName").toString();
         if (drive.model.isEmpty())
