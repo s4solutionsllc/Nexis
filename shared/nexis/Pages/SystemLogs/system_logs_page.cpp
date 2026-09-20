@@ -158,11 +158,11 @@ void SystemLogsPage::buildLayout()
     mTableView->horizontalHeader()->setStretchLastSection(true);
     mTableView->setAlternatingRowColors(true);
     mTableView->setSortingEnabled(true);
-    // Wide enough to fit "Timestamp" plus its sort-indicator glyph at the
-    // 10pt base font on every platform's default font metrics — 170px let
-    // the indicator bleed into the Severity header on Linux (SSO-24820).
-    mTableView->setColumnWidth(0, 200);
-    mTableView->setColumnWidth(1, 70);
+    mTableView->setColumnWidth(0, 170);
+    // QHeaderView center-aligns section labels by default: at the new 10pt
+    // base font, "Severity" (plus the ~24px of QSS section padding) no
+    // longer fit 70px and was clipped on both sides on Linux (SSO-24820).
+    mTableView->setColumnWidth(1, 110);
     mTableView->setColumnWidth(2, 150);
     mTableView->setItemDelegateForColumn(1, new SeverityPillDelegate(mTableView));
 
