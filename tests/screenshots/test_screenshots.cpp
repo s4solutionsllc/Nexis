@@ -20,6 +20,7 @@
 #include "Managers/data_refresh_service.h"
 #include "signal_mapper.h"
 #include "Pages/SystemCleaner/system_cleaner_page.h"
+#include "Pages/SystemLogs/system_logs_page.h"
 
 // Per-channel fuzz: pixels whose R/G/B/A all differ by ≤ this value count as
 // equal. Tolerates anti-aliasing + minor font-rendering drift without letting
@@ -376,6 +377,15 @@ private:
                 QVERIFY2(!cleanerPage->isScanInProgress(),
                     "SystemCleanerPage background scan did not settle within 15s "
                     "— capture would race it (SSO-15956)");
+            }
+
+            // SSO-24820: SystemLogsPage auto-fetches up to 500 real entries
+            // from the host's log service on display. On macOS that returns
+            // genuine live system/network log lines; a screenshot baseline
+            // committed to git forever must never bake in real host data.
+            // Force it back to a deterministic empty state before capture.
+            if (auto *logsPage = qobject_cast<SystemLogsPage *>(widget)) {
+                logsPage->resetForScreenshotTest();
             }
 
             QPixmap pixmap = mApp->grab();

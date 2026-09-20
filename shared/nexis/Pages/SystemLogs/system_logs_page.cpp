@@ -44,6 +44,16 @@ SystemLogsPage::~SystemLogsPage()
     mProvider->cancel();
 }
 
+void SystemLogsPage::resetForScreenshotTest()
+{
+    disconnect(mProvider, nullptr, this, nullptr);
+    mProvider->cancel();
+    mCachedEntries.clear();
+    populateModel({});
+    mLblStatus->setText(tr("Ready"));
+    mBtnRefresh->setEnabled(true);
+}
+
 void SystemLogsPage::buildLayout()
 {
     auto *mainLayout = new QVBoxLayout(this);
@@ -149,7 +159,10 @@ void SystemLogsPage::buildLayout()
     mTableView->setAlternatingRowColors(true);
     mTableView->setSortingEnabled(true);
     mTableView->setColumnWidth(0, 170);
-    mTableView->setColumnWidth(1, 70);
+    // QHeaderView center-aligns section labels by default: at the new 10pt
+    // base font, "Severity" (plus the ~24px of QSS section padding) no
+    // longer fit 70px and was clipped on both sides on Linux (SSO-24820).
+    mTableView->setColumnWidth(1, 110);
     mTableView->setColumnWidth(2, 150);
     mTableView->setItemDelegateForColumn(1, new SeverityPillDelegate(mTableView));
 

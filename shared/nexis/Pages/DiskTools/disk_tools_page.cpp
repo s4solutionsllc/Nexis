@@ -1,5 +1,4 @@
 #include "disk_tools_page.h"
-#include "dpi.h"
 #include "ui_disk_tools_page.h"
 
 #include <QButtonGroup>
@@ -232,6 +231,11 @@ void DiskToolsPage::buildLargeOldPage()
     connect(mBtnLargeOldScan, &QPushButton::clicked, this, &DiskToolsPage::onLargeOldScan);
 
     applyLargeOldFilterLayout(false);
+    // Measured once from the actual widgets/font in play rather than a fixed
+    // pixel guess — a static threshold silently assumed one platform's font
+    // metrics and clipped mLblNotAccessed's text on narrower Linux system
+    // fonts once the base font size grew (SSO-24820).
+    mLargeOldFilterFullRowWidth = mLargeOldFilterWidget->sizeHint().width();
     layout->addWidget(mLargeOldFilterWidget);
 
     // Status
@@ -866,9 +870,10 @@ void DiskToolsPage::resizeEvent(QResizeEvent *event)
     QWidget::resizeEvent(event);
     if (!mLargeOldFilterWidget)
         return;
-    // The single-row form needs ~880px; below that its labels and combos
-    // overlap, so switch to the stacked form earlier.
-    const bool compact = event->size().width() < Dpi::scale(900);
+    // mLargeOldFilterWidget fills its parent's width in both layout modes
+    // (only its height differs), so its current width is exactly the space
+    // available to the row regardless of which mode is active right now.
+    const bool compact = mLargeOldFilterWidget->width() < mLargeOldFilterFullRowWidth;
     if (compact != mLargeOldFilterCompact)
         applyLargeOldFilterLayout(compact);
 }
