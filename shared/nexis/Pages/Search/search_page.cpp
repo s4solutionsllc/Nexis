@@ -24,7 +24,7 @@ SearchPage::SearchPage(QWidget *parent, InfoManager *infoManager,
 {
     ui->setupUi(this);
     ui->gridLayout->addWidget(PageScaffold::buildHeader(
-        tr("Search"), tr("Find files and folders"), this).row, 0, 0, 1, 2);
+        tr("File Search"), tr("Find files and folders"), this).row, 0, 0, 1, 2);
 
     init();
 }
