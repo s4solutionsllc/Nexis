@@ -1,0 +1,1 @@
+The Dashboard's Customize, Kiosk, tile-style and tile-remove icons, and the checked radio/toggle indicator, now use the active theme's accent colour; in Dark they were still drawn in the Light theme's orange. Removed nine unused category icons.

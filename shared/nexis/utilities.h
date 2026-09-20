@@ -5,6 +5,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QRegularExpression>
 #include <QIcon>
+#include <QPainter>
 #include <QLabel>
 #include "Managers/app_manager.h"
 #include "dpi.h"
@@ -36,6 +37,35 @@ public:
             effect->setOffset(0, 2);
             widget->setGraphicsEffect(effect);
         }
+    }
+
+    // Accent-coloured glyphs in themes/common are authored in the Light accent
+    // (#E95420). Re-colour them to the active theme's @accentColor so they match
+    // the rest of the chrome in Dark as well.
+    static QIcon
+    accentIcon(const QString &svgPath, int logicalSize = 20)
+    {
+        const QIcon source(svgPath);
+        QSettings *sv = AppManager::ins()->getStyleValues();
+        const QColor accent(sv ? sv->value("@accentColor").toString() : QString());
+        if (!accent.isValid())
+            return source;
+
+        // These glyphs are single-colour, so a SourceIn fill re-colours them
+        // while keeping their anti-aliased alpha.
+        QIcon icon;
+        for (int scale : {1, 2, 3}) {
+            QPixmap pm = source.pixmap(QSize(logicalSize, logicalSize) * scale);
+            if (pm.isNull())
+                continue;
+            QPainter painter(&pm);
+            painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+            painter.fillRect(pm.rect(), accent);
+            painter.end();
+            pm.setDevicePixelRatio(scale);
+            icon.addPixmap(pm);
+        }
+        return icon.isNull() ? source : icon;
     }
 
     // Empty states use the monochrome, per-theme sidebar icon set rather than

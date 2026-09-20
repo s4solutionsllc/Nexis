@@ -340,7 +340,7 @@ void DashboardPage::init()
 
     // Kiosk mode toggle button
     mKioskButton->setFixedSize(32, 32);
-    mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
+    mKioskButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/fullscreen.svg"));
     mKioskButton->setIconSize(QSize(16, 16));
     mKioskButton->setToolTip(tr("Enter Kiosk Mode (%1)").arg(kioskShortcutText()));
     mKioskButton->setCursor(Qt::PointingHandCursor);
@@ -355,7 +355,7 @@ void DashboardPage::init()
 
     // Edit mode toggle button (to the left of the kiosk button)
     mEditButton->setFixedSize(32, 32);
-    mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
+    mEditButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/grid-edit.svg"));
     mEditButton->setIconSize(QSize(16, 16));
     mEditButton->setToolTip(tr("Customize Layout (%1)").arg(QKeySequence(Qt::CTRL | Qt::Key_E).toString(QKeySequence::NativeText)));
     mEditButton->setCursor(Qt::PointingHandCursor);
@@ -472,6 +472,15 @@ void DashboardPage::buildSystemSummary()
     refreshSummaryColors();
 
     connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, &DashboardPage::refreshSummaryColors);
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, &DashboardPage::refreshHeaderIcons);
+}
+
+void DashboardPage::refreshHeaderIcons()
+{
+    mEditButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/grid-edit.svg"));
+    mKioskButton->setIcon(Utilities::accentIcon(mKioskActive
+        ? ":/static/themes/common/img/fullscreen-exit.svg"
+        : ":/static/themes/common/img/fullscreen.svg"));
 }
 
 void DashboardPage::refreshSummaryColors()
@@ -1059,19 +1068,20 @@ void DashboardPage::onResetLayout()
 void DashboardPage::onKioskModeChanged(bool enabled)
 {
     mKioskMode = enabled;
+    mKioskActive = enabled;
     if (enabled) {
         if (mEditMode)
             exitEditMode();
         mEditButton->hide();
         mEditShortcut->setEnabled(false);
-        mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen-exit.svg"));
+        mKioskButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/fullscreen-exit.svg"));
         mKioskButton->setToolTip(tr("Exit Kiosk Mode (ESC)"));
         ui->systemSummary->hide();
         ui->statusFooter->hide();
     } else {
         mEditButton->show();
         mEditShortcut->setEnabled(true);
-        mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
+        mKioskButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/fullscreen.svg"));
         mKioskButton->setToolTip(tr("Enter Kiosk Mode (%1)").arg(kioskShortcutText()));
         applyFooterVisibility();
     }

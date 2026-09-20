@@ -138,6 +138,7 @@ private:
     QPushButton *mBtnDone;
     QShortcut *mEditShortcut;
     bool mEditMode;
+    bool mKioskActive = false;
     bool mKioskMode;
 
     // SSO-15037: shell header-action-bar row content. mHeaderActionsStack
@@ -178,6 +179,7 @@ private:
     void applyFooterVisibility();
     void buildSystemSummary();
     void refreshSummaryColors();
+    void refreshHeaderIcons();
     void updateDiskHealthBadge();
     void refreshDiskUsageTile(DashboardTileWrapper *w);
     void buildGrid();

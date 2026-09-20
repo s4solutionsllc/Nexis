@@ -32,6 +32,8 @@
         <file>static/themes/light/img/app.png</file>
         <file>static/themes/light/img/clean-active.png</file>
         <file>static/themes/light/img/clean.png</file>
+        <file>static/themes/light/img/circle-checked.svg</file>
+        <file>static/themes/default/img/circle-checked.svg</file>
         <file>static/themes/light/img/edit.png</file>
         <file>static/themes/light/img/scan-active.png</file>
         <file>static/themes/light/img/scan.png</file>
@@ -71,15 +73,6 @@
         <file>static/themes/common/img/sort-dsc.svg</file>
         <file>static/themes/common/img/circle-checked.svg</file>
         <file>static/themes/common/img/circle-unchecked.svg</file>
-        <file>static/themes/common/img/c_package.svg</file>
-        <file>static/themes/common/img/c_crash.svg</file>
-        <file>static/themes/common/img/c_logs.svg</file>
-        <file>static/themes/common/img/c_cache.svg</file>
-        <file>static/themes/common/img/c_trash.svg</file>
-        <file>static/themes/common/img/c_devtools.svg</file>
-        <file>static/themes/common/img/c_symlink.svg</file>
-        <file>static/themes/common/img/c_privacy.svg</file>
-        <file>static/themes/common/img/c_snapflatpak.svg</file>
         <file>static/themes/common/img/disk-baobab.svg</file>
         <file>static/themes/common/img/disk-filelight.svg</file>
         <file>static/themes/common/img/disk-qdirstat.svg</file>

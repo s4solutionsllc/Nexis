@@ -214,7 +214,7 @@ QCheckBox[accessibleName="circle"]::indicator:unchecked {
 }
 
 QCheckBox[accessibleName="circle"]::indicator:checked {
-    image: url(:/static/themes/common/img/circle-checked.svg);
+    image: url(:/static/themes/@themeName/img/circle-checked.svg);
 }
 
 /*****************
