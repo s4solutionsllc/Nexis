@@ -97,6 +97,7 @@ protected:
     void closeEvent(QCloseEvent *event) override;
     void changeEvent(QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
     void init();
@@ -202,6 +203,8 @@ private:
     QLabel *mLoadingLabel = nullptr;
     QString mPendingNavId;
     void setupMenuBar();
+    // macOS: keep native window chrome (title bars) in step with the app theme.
+    void syncNativeWindowAppearance(QWidget *window = nullptr);
     void showAndRaise();
     void runCleanerScan();
 
