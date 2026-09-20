@@ -21,6 +21,15 @@ int columnsForWidth(int panelWidth)
     return std::clamp(cols, kMinCols, kMaxCols);
 }
 
+int elasticCellWidth(int availW, int occupiedCols)
+{
+    if (occupiedCols <= 0)
+        return kCellW;
+    const int fill = (availW - (occupiedCols - 1) * kGap) / occupiedCols;
+    const int cap = static_cast<int>(kCellW * kMaxCellScale);
+    return std::clamp(fill, kCellW, cap);
+}
+
 QJsonArray reflow(const QJsonArray &tiles, int cols)
 {
     cols = std::max(1, cols);
