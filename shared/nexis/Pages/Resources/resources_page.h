@@ -68,6 +68,13 @@ private:
     HistoryChart *mChartNetwork;
     HistoryChart *mChartGpu;
     HistoryChart *mChartDiskHealth;
+    // Disk health is polled every 30 s; the chart advances once a second
+    // holding the last reading, so its 60 s axis is truthful and a line is
+    // visible as soon as the first sample arrives.
+    QList<double> mLastDiskTemps;
+    QStringList mLastDiskNames;
+    int mDiskTempTick = 0;
+    void advanceDiskTempChart();
 #ifdef Q_OS_LINUX
     HistoryChart *mChartPsiCpu = nullptr;
     OomKillsWidget *mOomKills = nullptr;
