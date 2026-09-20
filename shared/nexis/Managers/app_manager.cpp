@@ -290,6 +290,10 @@ QString AppManager::applyIndicatorPngFallback(const QString &qss)
         { "checkbox.svg",         "checkbox.png" },
     };
     QString out = qss;
+    // The checked indicator is themed per accent colour as an SVG; its PNG
+    // sibling only exists in common/.
+    out.replace(QLatin1String("themes/@themeName/img/circle-checked.svg"),
+                QLatin1String("themes/common/img/circle-checked.svg"));
     for (const auto &s : kSwaps)
         out.replace(QLatin1String(s.from), QLatin1String(s.to));
     return out;
