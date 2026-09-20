@@ -1,0 +1,1 @@
+Navigation no longer depends on the UI language. The sidebar, tray, command palette, menu bar, kiosk mode and start page all go through one id-based entry point instead of matching translated page titles, and the collapsed/expanded state of sidebar groups is stored under stable ids — so switching language keeps your collapsed groups (existing settings are migrated once).

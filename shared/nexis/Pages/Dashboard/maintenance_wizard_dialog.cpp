@@ -490,8 +490,8 @@ void MaintenanceWizardDialog::setStepStatus(QLabel *icon, QLabel *detail,
     icon->style()->polish(icon);
 }
 
-void MaintenanceWizardDialog::navigateToPage(const QString &pageTitle)
+void MaintenanceWizardDialog::navigateToPage(const QString &pageId)
 {
-    emit mSignalMapper->sigNavigateToPage(pageTitle);
+    emit mSignalMapper->sigNavigateToPage(pageId);
     accept();
 }
