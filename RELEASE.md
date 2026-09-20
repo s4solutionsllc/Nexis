@@ -89,9 +89,14 @@ CVE / security patches: see §6.
 python3 scripts/changelog_fragments.py apply --version X.Y.Z --date YYYY-MM-DD
 #    Review the assembled section and edit the prose freely before committing.
 #
-# 1b. Regenerate the derivable stats block in docs/APPLICATION_OVERVIEW.md.
-#     The "Docs hygiene / Generated stats block" job re-checks this on the tag,
-#     so a skipped run fails the release rather than silently rotting the docs.
+# 1b. Regenerate the derivable stats block in docs/APPLICATION_OVERVIEW.md,
+#     and sync the "Last updated: YYYY-MM-DD | Version X.Y.Z" prose header in
+#     both docs/APPLICATION_OVERVIEW.md and docs/ARCHITECTURE_REVIEW.md to
+#     today's date and the CMakeLists.txt version (SSO-24822). The "Docs
+#     hygiene / Generated stats block" job re-checks the stats block on the
+#     tag, and scripts/check_doc_versions.sh (run in every Build job) checks
+#     the header — so a skipped run fails the release rather than silently
+#     rotting the docs.
 python3 scripts/gen_doc_stats.py
 #
 # 2. Bump the CMakeLists.txt project() version (`project(Nexis VERSION X.Y.Z)`
