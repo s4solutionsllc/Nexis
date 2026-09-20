@@ -104,6 +104,11 @@ void HistoryChart::setYMax(double value)
     mChart->axes(Qt::Vertical).first()->setRange(0, value);
 }
 
+void HistoryChart::setYRange(double min, double max)
+{
+    mChart->axes(Qt::Vertical).first()->setRange(min, max);
+}
+
 QCategoryAxis *HistoryChart::getAxisY()
 {
     return mAxisY;
