@@ -1,5 +1,4 @@
 #include "disk_tools_page.h"
-#include "dpi.h"
 #include "ui_disk_tools_page.h"
 
 #include <QButtonGroup>
