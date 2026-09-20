@@ -317,10 +317,16 @@ private:
     {
         QDir().mkpath(reviewDir);
         QPushButton *first = nullptr;
-        const QList<QPushButton *> buttons = helpersPage->findChildren<QPushButton *>();
+        // ONLY the tab row. Panels contain their own checkable buttons that
+        // act on the system (Power Profile sets the CPU governor), so a
+        // page-wide search for checkable buttons must never be clicked through.
+        QWidget *tabRow = helpersPage->findChild<QWidget *>(QStringLiteral("toolsContainer"));
+        QVERIFY2(tabRow, "HelpersPage tab row (#toolsContainer) not found");
+        // Direct children only: the Linux Power Profile switcher sits in this
+        // row as a nested widget, and its buttons change the CPU governor.
+        const QList<QPushButton *> buttons =
+            tabRow->findChildren<QPushButton *>(QString(), Qt::FindDirectChildrenOnly);
         for (QPushButton *button : buttons) {
-            // Tab buttons are the checkable, visible ones; maintenance actions
-            // and in-panel buttons are not checkable.
             if (!button->isCheckable() || !button->isVisible())
                 continue;
             if (!first)
