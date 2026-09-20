@@ -507,11 +507,6 @@ QRadioButton:disabled {
     color: @tertiaryText;
 }
 
-QCheckBox:hover,
-QRadioButton:hover {
-    color: @accentText;
-}
-
 QHeaderView::section:hover {
     color: @textPrimary;
 }

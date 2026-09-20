@@ -134,7 +134,9 @@ void ProcessesPage::init()
     // it all the spare width and leave the command line elided at 100px.
     ui->tableProcess->header()->setStretchLastSection(false);
     ui->tableProcess->header()->setSectionResizeMode(Col_Cmd, QHeaderView::Stretch);
-    ui->tableProcess->header()->resizeSection(Col_Rss, Dpi::scale(130));
+    // Size from the header text so it fits at any platform's font metrics.
+    ui->tableProcess->header()->resizeSection(Col_Rss,
+        ui->tableProcess->header()->fontMetrics().horizontalAdvance(tr("Resident Memory")) + Dpi::scale(40));
     mKillDelegate = new KillButtonDelegate(this);
     ui->tableProcess->setItemDelegateForColumn(kKillCol, mKillDelegate);
     ui->tableProcess->setMouseTracking(true);
