@@ -37,6 +37,15 @@ DisplayTier tierForArea(int area);
 // Responsive visible column count for a given panel (viewport) width.
 int columnsForWidth(int panelWidth);
 
+// Elastic cell width for wide windows. The column count is derived from the
+// base kCellW, so on a wide window the saved layout occupies only some of the
+// available columns and the rest stays empty. Instead of moving tiles, widen
+// the cells so the occupied columns fill `availW`, capped at kMaxCellScale so
+// tiles do not become billboards; beyond the cap the block is centred.
+// Returns kCellW when there is nothing to stretch.
+inline constexpr double kMaxCellScale = 1.5;
+int elasticCellWidth(int availW, int occupiedCols);
+
 // Repacks tiles row-major into the first free region of a `cols`-wide grid:
 // colSpan is clamped to <= cols, rowSpan >= 1, and row/col are rewritten so no
 // two tiles overlap and tiles fill from the top-left. Input order is preserved
