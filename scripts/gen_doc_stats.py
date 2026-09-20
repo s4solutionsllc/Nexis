@@ -25,7 +25,8 @@ line, including the curated component table, stays hand-written.
 
 Usage:
   gen_doc_stats.py            # rewrite the stats block and version headers in place
-  gen_doc_stats.py --check    # exit 1 if either is stale (CI / release gate)
+  gen_doc_stats.py --check    # exit 1 if the stats block or header VERSION is stale
+                               # (the header DATE is ignored — see blank_header_date())
   gen_doc_stats.py --print    # print the computed values, touch nothing
 """
 
@@ -47,8 +48,10 @@ END = "<!-- END NEXIS-STATS -->"
 
 # Matches "> Last updated: YYYY-MM-DD (hand-curated SSO/issue list) | Version X.Y.Z".
 # The parenthetical never contains ")" itself, so [^)]* is a safe, simple bound.
+# Date and version are captured separately (groups 2 and 4) so --check can
+# blank out just the date before comparing — see blank_header_date().
 HEADER_RE = re.compile(
-    r"(> Last updated: )\d{4}-\d{2}-\d{2}(\s*\([^)]*\)\s*\|\s*Version\s+)\d+\.\d+\.\d+"
+    r"(> Last updated: )(\d{4}-\d{2}-\d{2})(\s*\([^)]*\)\s*\|\s*Version\s+)(\d+\.\d+\.\d+)"
 )
 
 SOURCE_DIRS = ["shared", "linux", "macos"]
@@ -97,10 +100,22 @@ def today_utc() -> str:
 def sync_header(text: str, version: str, today: str) -> str:
     """Rewrite the "Last updated ... | Version" header line in place, keeping
     the hand-curated parenthetical SSO/issue-id list untouched."""
-    new_text, n = HEADER_RE.subn(rf"\g<1>{today}\g<2>{version}", text, count=1)
+    new_text, n = HEADER_RE.subn(rf"\g<1>{today}\g<3>{version}", text, count=1)
     if n == 0:
         raise SystemExit("error: could not find 'Last updated ... | Version' header to sync")
     return new_text
+
+
+def blank_header_date(text: str) -> str:
+    """Replace the header's date with a fixed placeholder.
+
+    --check must fail on a stale version or a stale stats block, but never
+    merely because the calendar day rolled over between the release cut and
+    the tag push landing (SSO-24822): both write today's date, so a same-day
+    rewrite is a no-op diff, but a next-day --check on an otherwise-correct
+    file would spuriously report staleness without this normalization.
+    """
+    return HEADER_RE.sub(r"\g<1>DATE-IGNORED\g<3>\g<4>", text, count=1)
 
 
 def compute() -> list[tuple[str, str, str]]:
@@ -198,7 +213,11 @@ def main() -> int:
     ]
 
     if args.check:
-        stale = [path for path, old, new in targets if new != old]
+        stale = [
+            path
+            for path, old, new in targets
+            if blank_header_date(old) != blank_header_date(new)
+        ]
         if stale:
             names = ", ".join(str(path.relative_to(REPO_ROOT)) for path in stale)
             print(
