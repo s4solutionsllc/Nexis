@@ -1,4 +1,5 @@
 #include "wol_widget.h"
+#include <QStyle>
 
 #include "signal_mapper.h"
 #include <Managers/app_manager.h>
@@ -192,10 +193,8 @@ void WolWidget::onHostsFetched(QList<WolHost> hosts)
 
     populateTable(hosts);
 
-    QSettings *sv = AppManager::ins()->getStyleValues();
     if (hosts.isEmpty()) {
-        const QString warn = sv->value("@warningText", "#e67e22").toString();
-        mLblStatus->setStyleSheet(QStringLiteral("color:%1;").arg(warn));
+        setStatusRole(QStringLiteral("warning"));
         mLblStatus->setText(tr("No hosts found in ARP cache. Try pinging devices on your network first."));
         mLblStatus->show();
     } else {
@@ -233,9 +232,7 @@ void WolWidget::populateTable(const QList<WolHost> &hosts)
         const QString mac = h.mac;
         connect(wakeBtn, &QToolButton::clicked, this, [this, mac] {
             sendMagicPacket(mac);
-            QSettings *sv = AppManager::ins()->getStyleValues();
-            const QString ok = sv->value("@successText", "#27ae60").toString();
-            mLblStatus->setStyleSheet(QStringLiteral("color:%1;").arg(ok));
+            setStatusRole(QStringLiteral("success"));
             mLblStatus->setText(tr("Magic packet sent to %1.").arg(mac));
             mLblStatus->show();
         });
@@ -292,6 +289,15 @@ void WolWidget::loadNames()
     mFriendlyNames.clear();
     for (auto it = obj.constBegin(); it != obj.constEnd(); ++it)
         mFriendlyNames.insert(it.key(), it.value().toString());
+}
+
+// [status="…"] selectors in style.qss follow the theme on their own; a
+// dynamic property needs an explicit re-polish (BUG-56).
+void WolWidget::setStatusRole(const QString &role)
+{
+    mLblStatus->setProperty("status", role);
+    mLblStatus->style()->unpolish(mLblStatus);
+    mLblStatus->style()->polish(mLblStatus);
 }
 
 void WolWidget::refreshThemeColors()

@@ -797,12 +797,9 @@ void App::init()
 #ifdef Q_OS_MAC
     // FW-20 (SSO-3748): optional menu-bar CPU/memory monitor, off by default.
     mMenuBarMonitor = new MenuBarMonitor(this);
-    connect(mMenuBarMonitor, &MenuBarMonitor::activationRequested, this, [this]() {
-        setWindowState(windowState() & ~Qt::WindowMinimized);
-        clickSidebarButton(tr("Dashboard"), true);
-        if (windowHandle())
-            windowHandle()->requestActivate();
-    });
+    // Same behaviour as the tray's "Open": bring the window back on the page
+    // the user left it on rather than jumping to Dashboard.
+    connect(mMenuBarMonitor, &MenuBarMonitor::activationRequested, this, &App::showAndRaise);
     connect(SignalMapper::ins(), &SignalMapper::sigMenuBarMonitorToggled,
             mMenuBarMonitor, &MenuBarMonitor::setEnabled);
     mMenuBarMonitor->setEnabled(SettingManager::ins()->getMenuBarMonitorEnabled());
@@ -837,6 +834,9 @@ void App::init()
     mMiniMonitorWindow = new MiniMonitorWindow(this);
     connect(SignalMapper::ins(), &SignalMapper::sigMiniMonitorToggled,
             mMiniMonitorWindow, &QWidget::setVisible);
+    connect(mMiniMonitorWindow, &MiniMonitorWindow::openMainWindowRequested,
+            this, &App::showAndRaise);
+    mMiniMonitorWindow->setToolTip(tr("Double-click to open Nexis"));
     connect(mMiniMonitorWindow, &MiniMonitorWindow::visibilityToggled,
             this, [this](bool visible) {
         if (mMiniMonitorAction)
