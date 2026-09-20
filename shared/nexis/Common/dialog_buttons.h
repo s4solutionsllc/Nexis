@@ -47,8 +47,9 @@ inline Row build(QDialog *dialog, const QString &confirmText, Confirm kind, cons
     if (!confirmText.isEmpty()) {
         row.confirm = row.box->addButton(confirmText, QDialogButtonBox::AcceptRole);
         row.confirm->setCursor(Qt::PointingHandCursor);
-        row.confirm->setAccessibleName(kind == Confirm::Danger ? QStringLiteral("danger")
-                                                               : QStringLiteral("primary"));
+        // Styling hook only (QPushButton[variant=...] in style.qss); it used to
+        // be accessibleName, which made screen readers announce "danger".
+        row.confirm->setProperty("variant", kind == Confirm::Danger ? "danger" : "primary");
         row.confirm->setAutoDefault(false);
     }
 

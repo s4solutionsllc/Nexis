@@ -105,7 +105,7 @@ void RepoDetailPanel::setupUi()
     QHBoxLayout *actionRow = new QHBoxLayout();
 #ifdef Q_OS_LINUX
     mBtnEdit = new QPushButton(tr("Edit"), this);
-    mBtnEdit->setAccessibleName("primary");
+    mBtnEdit->setProperty("variant", "primary");
     mBtnEdit->setCursor(Qt::PointingHandCursor);
     connect(mBtnEdit, &QPushButton::clicked, this, [this]() {
         if (mCurrentSource)
@@ -122,7 +122,7 @@ void RepoDetailPanel::setupUi()
     actionRow->addWidget(mBtnOpenUri);
 
     mBtnDisable = new QPushButton(tr("Disable"), this);
-    mBtnDisable->setAccessibleName("danger");
+    mBtnDisable->setProperty("variant", "danger");
     mBtnDisable->setCursor(Qt::PointingHandCursor);
     connect(mBtnDisable, &QPushButton::clicked, this, [this]() {
         if (mCurrentSource)
@@ -256,7 +256,7 @@ void RepoDetailPanel::addIssueWidget(const RepoHealthIssue &issue)
             if (action.type == RepoRepairAction::RemoveSource)
                 btn->setObjectName("repoRemoveBtn");
             else
-                btn->setAccessibleName("primary");
+                btn->setProperty("variant", "primary");
 
             RepoRepairAction capturedAction = action;
             connect(btn, &QPushButton::clicked, this, [this, capturedAction]() {
@@ -341,7 +341,7 @@ void RepoDetailPanel::showDiagnoseResult(const DiagnoseResult &result, QVBoxLayo
             btn->setFixedHeight(26);
 
             if (action.type == RepoRepairAction::DisableSource)
-                btn->setAccessibleName("primary");
+                btn->setProperty("variant", "primary");
 
             RepoRepairAction capturedAction = action;
             connect(btn, &QPushButton::clicked, this, [this, capturedAction]() {

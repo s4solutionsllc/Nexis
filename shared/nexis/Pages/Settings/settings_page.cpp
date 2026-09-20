@@ -712,7 +712,7 @@ void SettingsPage::onManageSchedules()
 
             QPushButton *editBtn = new QPushButton(tr("Edit"));
             QPushButton *deleteBtn = new QPushButton(tr("Delete"));
-            deleteBtn->setProperty("accessibleName", "danger");
+            deleteBtn->setProperty("variant", "danger");
             cardLayout->addWidget(editBtn);
             cardLayout->addWidget(deleteBtn);
 
@@ -752,7 +752,7 @@ void SettingsPage::onManageSchedules()
 
     QPushButton *addBtn = new QPushButton(tr("Add Schedule"));
     addBtn->setCursor(Qt::PointingHandCursor);
-    addBtn->setProperty("accessibleName", "primary");
+    addBtn->setProperty("variant", "primary");
     connect(addBtn, &QPushButton::clicked, [this, &dialog, &refreshList]() {
         ScheduleEditorDialog editor(&dialog);
         connect(&editor, &ScheduleEditorDialog::scheduleCreated, this, [this](const ScheduleManager::CleaningSchedule &s) {
@@ -811,7 +811,7 @@ void SettingsPage::onViewCleaningHistory()
 
     QHBoxLayout *btnRow = new QHBoxLayout;
     QPushButton *clearBtn = new QPushButton(tr("Clear History"));
-    clearBtn->setProperty("accessibleName", "danger");
+    clearBtn->setProperty("variant", "danger");
     connect(clearBtn, &QPushButton::clicked, [logPath, textEdit]() {
         QFile::remove(logPath);
         textEdit->setPlainText("");

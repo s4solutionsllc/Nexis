@@ -1,4 +1,5 @@
 #include "add_tile_dialog.h"
+#include "Common/dialog_buttons.h"
 #include "dashboard_layout_util.h"
 
 #include <QDialogButtonBox>
@@ -39,12 +40,14 @@ AddTileDialog::AddTileDialog(const QList<QPair<QString, QString>> &typeOptions,
     lists->addLayout(typeCol);
     lists->addLayout(inputCol);
 
-    auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-    mOkButton = buttons->button(QDialogButtonBox::Ok);
-    connect(buttons, &QDialogButtonBox::accepted, this, &QDialog::accept);
-    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Add Tile"), DialogButtons::Confirm::Primary, tr("Cancel"));
+    mOkButton = row.confirm;
+    connect(row.confirm, &QPushButton::clicked, this, &QDialog::accept);
+    QDialogButtonBox *buttons = row.box;
 
     auto *root = new QVBoxLayout(this);
+    root->setContentsMargins(DialogButtons::dialogMargins());
+    root->setSpacing(DialogButtons::dialogSpacing());
     root->addLayout(lists);
     root->addWidget(buttons);
 

@@ -208,7 +208,7 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="accessibleName">
+          <property name="variant" stdset="0">
            <string notr="true">primary</string>
           </property>
           <property name="styleSheet">
@@ -243,7 +243,7 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="accessibleName">
+          <property name="variant" stdset="0">
            <string notr="true">danger</string>
           </property>
           <property name="styleSheet">
@@ -294,7 +294,7 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="accessibleName">
+          <property name="variant" stdset="0">
            <string notr="true">primary</string>
           </property>
           <property name="styleSheet">
@@ -319,7 +319,7 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="accessibleName">
+          <property name="variant" stdset="0">
            <string notr="true">danger</string>
           </property>
           <property name="styleSheet">

@@ -1,4 +1,5 @@
 #include "process_alert_dialog.h"
+#include "Common/dialog_buttons.h"
 
 #include <QComboBox>
 #include <QFormLayout>
@@ -21,7 +22,7 @@ ProcessAlertDialog::ProcessAlertDialog(const QString &processName, QWidget *pare
 void ProcessAlertDialog::buildUI()
 {
     auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(16, 16, 16, 16);
+    layout->setContentsMargins(DialogButtons::dialogMargins());
     layout->setSpacing(10);
 
     mLblName = new QLabel(tr("Alerts for processes named \"%1\"").arg(mProcessName), this);
@@ -53,26 +54,13 @@ void ProcessAlertDialog::buildUI()
     form->addRow(tr("Memory threshold:"), memRow);
     layout->addLayout(form);
 
-    auto *buttons = new QHBoxLayout();
-    mBtnDelete = new QPushButton(tr("Delete"), this);
-    mBtnDelete->setCursor(Qt::PointingHandCursor);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Save"), DialogButtons::Confirm::Primary, tr("Cancel"));
+    mBtnCancel = row.dismiss;
+    mBtnSave = row.confirm;
+    mBtnDelete = DialogButtons::addDestructive(row, tr("Delete"));
     connect(mBtnDelete, &QPushButton::clicked, this, &ProcessAlertDialog::onDelete);
-    buttons->addWidget(mBtnDelete);
-    buttons->addStretch();
-
-    mBtnCancel = new QPushButton(tr("Cancel"), this);
-    mBtnCancel->setCursor(Qt::PointingHandCursor);
-    connect(mBtnCancel, &QPushButton::clicked, this, &QDialog::reject);
-    buttons->addWidget(mBtnCancel);
-
-    mBtnSave = new QPushButton(tr("Save"), this);
-    mBtnSave->setCursor(Qt::PointingHandCursor);
-    mBtnSave->setAccessibleName("primary");
-    mBtnSave->setDefault(true);
     connect(mBtnSave, &QPushButton::clicked, this, &ProcessAlertDialog::onSave);
-    buttons->addWidget(mBtnSave);
-
-    layout->addLayout(buttons);
+    layout->addWidget(row.box);
 }
 
 void ProcessAlertDialog::populateFromPrefs()

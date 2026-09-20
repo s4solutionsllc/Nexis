@@ -317,7 +317,7 @@ void TrustSafetyPreviewDialog::onDryRunToggled(bool checked)
     // action never touches the filesystem, so it gets the non-destructive
     // accent style instead of the red "danger" style.
     mBtnPrimary->setText(checked ? tr("%1 (Dry Run)").arg(mConfig.primaryActionLabel) : mConfig.primaryActionLabel);
-    mBtnPrimary->setProperty("accessibleName", checked ? "primary" : "danger");
+    mBtnPrimary->setProperty("variant", checked ? "primary" : "danger");
     mBtnPrimary->style()->unpolish(mBtnPrimary);
     mBtnPrimary->style()->polish(mBtnPrimary);
 }

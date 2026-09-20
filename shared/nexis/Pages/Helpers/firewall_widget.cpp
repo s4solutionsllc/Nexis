@@ -206,7 +206,7 @@ void FirewallWidget::buildUI()
     mBtnToggle = new QPushButton;
     mBtnToggle->setCursor(Qt::PointingHandCursor);
     mBtnToggle->setObjectName("fwToggle");
-    mBtnToggle->setAccessibleName("primary");
+    mBtnToggle->setProperty("variant", "primary");
     connect(mBtnToggle, &QPushButton::clicked, this, &FirewallWidget::onToggleClicked);
     statusRow->addWidget(mBtnToggle);
 
