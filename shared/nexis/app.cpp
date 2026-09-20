@@ -44,6 +44,7 @@
 
 #ifdef Q_OS_MAC
 #include "macos_dock_helper.h"
+#include "macos_window_helper.h"
 #endif
 
 App::~App()
@@ -682,6 +683,14 @@ void App::init()
     // Refresh sidebar icons when theme changes
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
             this, &App::updateSidebarIcons);
+
+#ifdef Q_OS_MAC
+    // Title bars are drawn by the system and otherwise follow the *system*
+    // appearance, leaving a white title bar on a dark app (and the reverse).
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
+            this, [this]() { syncNativeWindowAppearance(); });
+    qApp->installEventFilter(this);
+#endif
 
     // Navigate-to-page signal from any widget (e.g. dashboard quick actions)
     connect(SignalMapper::ins(), &SignalMapper::sigNavigateToPage,
@@ -1726,6 +1735,38 @@ void App::showKioskOverlay()
         fadeOut->start(QAbstractAnimation::DeleteWhenStopped);
     });
     connect(fadeOut, &QPropertyAnimation::finished, overlay, &QLabel::deleteLater);
+}
+
+void App::syncNativeWindowAppearance(QWidget *window)
+{
+#ifdef Q_OS_MAC
+    const bool dark = AppManager::ins()->resolveThemeName() != QLatin1String("light");
+    const QList<QWidget*> targets = window ? QList<QWidget*>{window} : QApplication::topLevelWidgets();
+    for (QWidget *w : targets) {
+        // Only real windows that already have a native handle; creating one
+        // here would turn popups and tooltips into native windows.
+        if (!w->isWindow() || !w->testAttribute(Qt::WA_WState_Created) || !w->internalWinId())
+            continue;
+        const Qt::WindowType type = w->windowType();
+        if (type != Qt::Window && type != Qt::Dialog && type != Qt::Tool)
+            continue;
+        nexis_macos_set_window_dark(reinterpret_cast<void *>(w->internalWinId()), dark ? 1 : 0);
+    }
+#else
+    Q_UNUSED(window)
+#endif
+}
+
+bool App::eventFilter(QObject *watched, QEvent *event)
+{
+#ifdef Q_OS_MAC
+    if (event->type() == QEvent::Show && watched->isWidgetType()) {
+        auto *widget = static_cast<QWidget *>(watched);
+        if (widget->isWindow())
+            syncNativeWindowAppearance(widget);
+    }
+#endif
+    return QMainWindow::eventFilter(watched, event);
 }
 
 void App::showAndRaise()

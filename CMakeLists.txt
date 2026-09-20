@@ -662,6 +662,7 @@ if(APPLE)
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.cpp"
     "${GUI_PLAT_DIR}/Pages/MailCleanup/mail_attachment_cleanup_page.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
+    "${GUI_PLAT_DIR}/macos_window_helper.mm"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.cpp"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.mm"
   )
@@ -673,6 +674,7 @@ if(APPLE)
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.h"
     "${GUI_PLAT_DIR}/Pages/MailCleanup/mail_attachment_cleanup_page.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"
+    "${GUI_PLAT_DIR}/macos_window_helper.h"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.h"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.h"
   )
