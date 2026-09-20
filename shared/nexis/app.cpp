@@ -29,6 +29,7 @@
 #include <QWindow>
 #include <QThreadPool>
 #include <QLabel>
+#include <algorithm>
 #include <QSet>
 #include <QMenuBar>
 #include <QGraphicsOpacityEffect>
@@ -186,28 +187,41 @@ void App::buildSidebar()
         return mSections.last();
     };
 
+    auto addPageButton = [this](SidebarSection &sec, QPushButton *&button, const QString &label) {
+        button = createSidebarButton(label);
+        sec.containerLayout->addWidget(button);
+        sec.buttons.append(button);
+    };
+
     // ---- MONITOR section (headerless — always visible, no toggle) ----
     {
         auto &sec = addSection(QStringLiteral("monitor"), tr("MONITOR"), true);
-        btnDash = createSidebarButton(tr("Dashboard"));
+        addPageButton(sec, btnDash, tr("Dashboard"));
         btnDash->setChecked(true);
-        sec.containerLayout->addWidget(btnDash);
-        sec.buttons.append(btnDash);
+        addPageButton(sec, btnResources, tr("Resources"));
+        addPageButton(sec, btnProcesses, tr("Processes"));
+        addPageButton(sec, btnNetworkUsage, tr("Network Usage"));
+    }
 
-        btnHardwareInfo = createSidebarButton(tr("Hardware Info"));
-        sec.containerLayout->addWidget(btnHardwareInfo);
-        sec.buttons.append(btnHardwareInfo);
+    // ---- DIAGNOSE section ----
+    {
+        auto &sec = addSection(QStringLiteral("diagnose"), tr("DIAGNOSE"));
+        addPageButton(sec, btnHardwareInfo, tr("Hardware Info"));
+        addPageButton(sec, btnBootAnalysis, tr("Boot Analysis"));
+        addPageButton(sec, btnSystemLogs, tr("System Logs"));
+    }
 
-        btnResources = createSidebarButton(tr("Resources"));
-        sec.containerLayout->addWidget(btnResources);
-        sec.buttons.append(btnResources);
+    // ---- CLEAN section ----
+    {
+        auto &sec = addSection(QStringLiteral("clean"), tr("CLEAN"));
+        addPageButton(sec, btnSystemCleaner, tr("System Cleaner"));
+        addPageButton(sec, btnDiskTools, tr("Disk Tools"));
 
         // SSO-23863: top-level entry point for the built-in disk-space
-        // treemap (previously only reachable via a launcher widget buried
-        // in the Resources page). Not checkable/exclusive and not part of
-        // sec.buttons — like btnFeedback, it opens a dialog rather than
-        // switching the stacked page, so it must not join mSidebarBtnGroup
-        // or the checked-highlight would get stuck on it.
+        // treemap. Not checkable/exclusive and not part of sec.buttons —
+        // like btnFeedback, it opens a dialog rather than switching the
+        // stacked page, so it must not join mSidebarBtnGroup or the
+        // checked-highlight would get stuck on it.
         btnDiskMap = new QPushButton(ui->sidebar);
         btnDiskMap->setToolTip(tr("Disk Map"));
         btnDiskMap->setCursor(Qt::PointingHandCursor);
@@ -216,86 +230,36 @@ void App::buildSidebar()
         btnDiskMap->setObjectName("btnDiskMap");
         sec.containerLayout->addWidget(btnDiskMap);
 
-        btnNetworkUsage = createSidebarButton(tr("Network Usage"));
-        sec.containerLayout->addWidget(btnNetworkUsage);
-        sec.buttons.append(btnNetworkUsage);
+#ifdef Q_OS_MAC
+        addPageButton(sec, btnMailCleanup, tr("Mail Cleanup"));
+#endif
+        addPageButton(sec, btnShredder, tr("File Shredder"));
+        addPageButton(sec, btnSearch, tr("File Search"));
     }
 
     // ---- MANAGE section ----
     {
         auto &sec = addSection(QStringLiteral("manage"), tr("MANAGE"));
-        btnSystemCleaner = createSidebarButton(tr("System Cleaner"));
-        sec.containerLayout->addWidget(btnSystemCleaner);
-        sec.buttons.append(btnSystemCleaner);
-
-        btnDiskTools = createSidebarButton(tr("Disk Tools"));
-        sec.containerLayout->addWidget(btnDiskTools);
-        sec.buttons.append(btnDiskTools);
-
-        btnSearch = createSidebarButton(tr("Search"));
-        sec.containerLayout->addWidget(btnSearch);
-        sec.buttons.append(btnSearch);
-
-        btnProcesses = createSidebarButton(tr("Processes"));
-        sec.containerLayout->addWidget(btnProcesses);
-        sec.buttons.append(btnProcesses);
-
-        btnServices = createSidebarButton(tr("Services"));
-        sec.containerLayout->addWidget(btnServices);
-        sec.buttons.append(btnServices);
-
-        btnStartupApps = createSidebarButton(tr("Startup Apps"));
-        sec.containerLayout->addWidget(btnStartupApps);
-        sec.buttons.append(btnStartupApps);
-
-        btnBootAnalysis = createSidebarButton(tr("Boot Analysis"));
-        sec.containerLayout->addWidget(btnBootAnalysis);
-        sec.buttons.append(btnBootAnalysis);
-
 #ifdef Q_OS_MAC
-        btnUninstaller = createSidebarButton(tr("Applications"));
+        addPageButton(sec, btnUninstaller, tr("Applications"));
 #else
-        btnUninstaller = createSidebarButton(tr("Uninstaller"));
+        addPageButton(sec, btnUninstaller, tr("Uninstaller"));
 #endif
-        sec.containerLayout->addWidget(btnUninstaller);
-        sec.buttons.append(btnUninstaller);
-
+        addPageButton(sec, btnStartupApps, tr("Startup Apps"));
+        addPageButton(sec, btnServices, tr("Services"));
 #ifdef Q_OS_MAC
-        btnMailCleanup = createSidebarButton(tr("Mail Cleanup"));
-        sec.containerLayout->addWidget(btnMailCleanup);
-        sec.buttons.append(btnMailCleanup);
+        addPageButton(sec, btnAptSourceManager, tr("Homebrew"));
+#else
+        addPageButton(sec, btnAptSourceManager, tr("APT Repository Manager"));
 #endif
-        btnShredder = createSidebarButton(tr("File Shredder"));
-        sec.containerLayout->addWidget(btnShredder);
-        sec.buttons.append(btnShredder);
+        addPageButton(sec, btnDocker, tr("Docker"));
     }
 
-    // ---- SYSTEM section ----
+    // ---- TOOLS section ----
     {
-        auto &sec = addSection(QStringLiteral("system"), tr("SYSTEM"));
-        btnDocker = createSidebarButton(tr("Docker"));
-        sec.containerLayout->addWidget(btnDocker);
-        sec.buttons.append(btnDocker);
-
-        btnHelpers = createSidebarButton(tr("Helpers"));
-        sec.containerLayout->addWidget(btnHelpers);
-        sec.buttons.append(btnHelpers);
-
-        btnSystemLogs = createSidebarButton(tr("System Logs"));
-        sec.containerLayout->addWidget(btnSystemLogs);
-        sec.buttons.append(btnSystemLogs);
-
-#ifdef Q_OS_MAC
-        btnAptSourceManager = createSidebarButton(tr("Homebrew"));
-#else
-        btnAptSourceManager = createSidebarButton(tr("APT Repository Manager"));
-#endif
-        sec.containerLayout->addWidget(btnAptSourceManager);
-        sec.buttons.append(btnAptSourceManager);
-
-        btnGnomeSettings = createSidebarButton(tr("GNOME Settings"));
-        sec.containerLayout->addWidget(btnGnomeSettings);
-        sec.buttons.append(btnGnomeSettings);
+        auto &sec = addSection(QStringLiteral("tools"), tr("TOOLS"));
+        addPageButton(sec, btnHelpers, tr("Helpers"));
+        addPageButton(sec, btnGnomeSettings, tr("GNOME Settings"));
 
         // Settings lives in the pinned footer (below) so it is always one
         // click away, not the last row of a collapsible, scrolling group.
@@ -439,7 +403,7 @@ void App::init()
     btnNetworkUsage->setText(tr("Network Usage"));
     btnSystemCleaner->setText(tr("System Cleaner"));
     btnDiskTools->setText(tr("Disk Tools"));
-    btnSearch->setText(tr("Search"));
+    btnSearch->setText(tr("File Search"));
     btnProcesses->setText(tr("Processes"));
     btnServices->setText(tr("Services"));
     btnStartupApps->setText(tr("Startup Apps"));
@@ -531,7 +495,7 @@ void App::init()
     });
     mPageSlots.append({
         "search",
-        tr("Search"),
+        tr("File Search"),
         [this]() -> QWidget* { searchPage = new SearchPage(mSlidingStacked); return searchPage; },
         nullptr, {}
     });
@@ -723,10 +687,45 @@ void App::init()
     connect(SignalMapper::ins(), &SignalMapper::sigNavigateToPage,
             this, [this](const QString &pageId) { navigateTo(pageId, true); });
 
-    // The slot list and the button list are built in the same order (the
-    // conditional pages insert into both at the same index), so link them
-    // once here and navigate by the slot's stable id from now on.
-    Q_ASSERT(mPageSlots.size() == mListSidebarButtons.size());
+    // Slots are registered above in historical order and the conditional
+    // pages are inserted as their tools are detected. Put them into sidebar
+    // order here — slide direction, the Go menu shortcuts and the tray all
+    // derive from it — and link each slot to its button by stable id.
+    {
+        const QHash<QString, QPushButton*> buttonById = {
+            {"dashboard", btnDash}, {"resources", btnResources}, {"processes", btnProcesses},
+            {"networkUsage", btnNetworkUsage}, {"hardwareInfo", btnHardwareInfo},
+            {"bootAnalysis", btnBootAnalysis}, {"systemLogs", btnSystemLogs},
+            {"systemCleaner", btnSystemCleaner}, {"diskTools", btnDiskTools},
+#ifdef Q_OS_MAC
+            {"mailCleanup", btnMailCleanup},
+#endif
+            {"shredder", btnShredder}, {"search", btnSearch}, {"uninstaller", btnUninstaller},
+            {"startupApps", btnStartupApps}, {"services", btnServices},
+            {"aptSourceManager", btnAptSourceManager}, {"docker", btnDocker},
+            {"helpers", btnHelpers}, {"gnomeSettings", btnGnomeSettings}, {"settings", btnSettings}
+        };
+        static const QStringList kSidebarOrder = {
+            "dashboard", "resources", "processes", "networkUsage",
+            "hardwareInfo", "bootAnalysis", "systemLogs",
+            "systemCleaner", "diskTools", "mailCleanup", "shredder", "search",
+            "uninstaller", "startupApps", "services", "aptSourceManager", "docker",
+            "helpers", "gnomeSettings", "settings"
+        };
+        std::stable_sort(mPageSlots.begin(), mPageSlots.end(),
+            [](const PageSlot &a, const PageSlot &b) {
+                return kSidebarOrder.indexOf(a.id) < kSidebarOrder.indexOf(b.id);
+            });
+        mListSidebarButtons.clear();
+        for (PageSlot &slot : mPageSlots) {
+            slot.button = buttonById.value(slot.id, nullptr);
+            Q_ASSERT_X(slot.button, "App", "every page slot needs a sidebar button");
+            mListSidebarButtons.append(slot.button);
+            const QString pageId = slot.id;
+            connect(slot.button, &QPushButton::clicked, this,
+                    [this, pageId]() { navigateTo(pageId, true); });
+        }
+    }
 #ifndef QT_NO_DEBUG
     {
         QSet<QString> seenIds;
@@ -736,12 +735,6 @@ void App::init()
         }
     }
 #endif
-    for (int i = 0; i < mPageSlots.size() && i < mListSidebarButtons.size(); ++i) {
-        mPageSlots[i].button = mListSidebarButtons[i];
-        const QString pageId = mPageSlots[i].id;
-        connect(mListSidebarButtons[i], &QPushButton::clicked, this,
-                [this, pageId]() { navigateTo(pageId, true); });
-    }
 
     // Construct Dashboard eagerly (it is the default landing page and owns
     // most of the DataRefreshService signal subscriptions). Other pages are
@@ -1142,6 +1135,10 @@ void App::checkSidebarButton(const QString &pageId)
         return;
     expandSectionForButton(mPageSlots[index].button);
     mPageSlots[index].button->setChecked(true);
+    // Shortcut, palette and tray navigation can target a row that is scrolled
+    // out of view; bring the highlight along.
+    if (mNavScrollArea && mPageSlots[index].button != btnSettings)
+        mNavScrollArea->ensureWidgetVisible(mPageSlots[index].button, 0, Dpi::scale(8));
 }
 
 QWidget* App::getPageByTitle(const QString &title)
@@ -1556,7 +1553,9 @@ void App::restoreSectionStates()
         return;
     bool migrated = false;
     const QHash<QString, bool> collapsed =
-        SidebarSectionState::fromJson(json, sectionKeys(mSections), &migrated);
+        SidebarSectionState::fromJson(json, sectionKeys(mSections), &migrated,
+            // 2.12 regrouping: CLEAN was split out of MANAGE, TOOLS replaces SYSTEM.
+            {{"clean", "manage"}, {"tools", "system"}});
     for (int i = 0; i < mSections.size(); ++i) {
         if (collapsed.contains(mSections[i].id))
             applySectionCollapse(i, collapsed.value(mSections[i].id), false);

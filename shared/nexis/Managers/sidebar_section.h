@@ -45,7 +45,10 @@ inline QString toJson(const QList<Key> &keys, const QHash<QString, bool> &collap
     return QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact));
 }
 
-inline QHash<QString, bool> fromJson(const QString &json, const QList<Key> &keys, bool *migrated = nullptr)
+// `inheritsFrom` maps a section id introduced by a regrouping to the id it was
+// split out of, so a group the user had collapsed stays collapsed.
+inline QHash<QString, bool> fromJson(const QString &json, const QList<Key> &keys, bool *migrated = nullptr,
+                                     const QHash<QString, QString> &inheritsFrom = {})
 {
     QHash<QString, bool> result;
     if (migrated)
@@ -61,6 +64,13 @@ inline QHash<QString, bool> fromJson(const QString &json, const QList<Key> &keys
             if (migrated)
                 *migrated = true;
         }
+    }
+    for (auto it = inheritsFrom.constBegin(); it != inheritsFrom.constEnd(); ++it) {
+        if (result.contains(it.key()) || !obj.contains(it.value()))
+            continue;
+        result.insert(it.key(), obj.value(it.value()).toBool());
+        if (migrated)
+            *migrated = true;
     }
     return result;
 }

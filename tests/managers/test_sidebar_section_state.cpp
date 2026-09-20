@@ -55,6 +55,24 @@ private slots:
         QVERIFY(out.isEmpty());
     }
 
+    void regroupedSectionsInheritTheirOldGroup()
+    {
+        const QList<Key> regrouped = { {"clean", "CLEAN", false}, {"manage", "MANAGE", false}, {"tools", "TOOLS", false} };
+        const QHash<QString, QString> inherits { {"clean", "manage"}, {"tools", "system"} };
+        bool migrated = false;
+        QHash<QString, bool> out = fromJson(R"({"manage":true,"system":false})", regrouped, &migrated, inherits);
+        QVERIFY(migrated);
+        QCOMPARE(out.value("clean"), true);
+        QCOMPARE(out.value("manage"), true);
+        QCOMPARE(out.value("tools"), false);
+
+        // Once the new ids are saved, the old group no longer overrides them.
+        migrated = true;
+        out = fromJson(R"({"clean":false,"manage":true,"tools":true})", regrouped, &migrated, inherits);
+        QVERIFY(!migrated);
+        QCOMPARE(out.value("clean"), false);
+    }
+
     void garbageJsonYieldsNoState()
     {
         QVERIFY(fromJson("not json", keys()).isEmpty());
