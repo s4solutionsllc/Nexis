@@ -157,7 +157,7 @@ void WolWidget::buildUI()
 
     auto *btnRow = new QHBoxLayout;
     mBtnDiscover = new QPushButton(tr("Discover Hosts"), mCard);
-    mBtnDiscover->setAccessibleName("primary");
+    mBtnDiscover->setProperty("variant", "primary");
     mBtnDiscover->setCursor(Qt::PointingHandCursor);
     connect(mBtnDiscover, &QPushButton::clicked, this, &WolWidget::onDiscoverClicked);
     btnRow->addWidget(mBtnDiscover);

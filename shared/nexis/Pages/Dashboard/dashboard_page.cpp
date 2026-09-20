@@ -340,7 +340,7 @@ void DashboardPage::init()
 
     // Kiosk mode toggle button
     mKioskButton->setFixedSize(32, 32);
-    mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
+    mKioskButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/fullscreen.svg"));
     mKioskButton->setIconSize(QSize(16, 16));
     mKioskButton->setToolTip(tr("Enter Kiosk Mode (%1)").arg(kioskShortcutText()));
     mKioskButton->setCursor(Qt::PointingHandCursor);
@@ -355,7 +355,7 @@ void DashboardPage::init()
 
     // Edit mode toggle button (to the left of the kiosk button)
     mEditButton->setFixedSize(32, 32);
-    mEditButton->setIcon(QIcon(":/static/themes/common/img/grid-edit.svg"));
+    mEditButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/grid-edit.svg"));
     mEditButton->setIconSize(QSize(16, 16));
     mEditButton->setToolTip(tr("Customize Layout (%1)").arg(QKeySequence(Qt::CTRL | Qt::Key_E).toString(QKeySequence::NativeText)));
     mEditButton->setCursor(Qt::PointingHandCursor);
@@ -472,6 +472,15 @@ void DashboardPage::buildSystemSummary()
     refreshSummaryColors();
 
     connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, &DashboardPage::refreshSummaryColors);
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, &DashboardPage::refreshHeaderIcons);
+}
+
+void DashboardPage::refreshHeaderIcons()
+{
+    mEditButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/grid-edit.svg"));
+    mKioskButton->setIcon(Utilities::accentIcon(mKioskActive
+        ? ":/static/themes/common/img/fullscreen-exit.svg"
+        : ":/static/themes/common/img/fullscreen.svg"));
 }
 
 void DashboardPage::refreshSummaryColors()
@@ -971,6 +980,8 @@ void DashboardPage::toggleEditMode()
         exitEditMode();
     else {
         mEditMode = true;
+        if (updateCellWidth())
+            buildGrid();
         mHeaderActionsStack->setCurrentIndex(1);
         mGearVisibleTiles.clear();
         for (DashboardTileWrapper *w : mTileWrappers) {
@@ -996,6 +1007,8 @@ void DashboardPage::toggleEditMode()
 void DashboardPage::exitEditMode()
 {
     mEditMode = false;
+    if (updateCellWidth())
+        buildGrid();
     mHeaderActionsStack->setCurrentIndex(0);
     for (DashboardTileWrapper *w : mTileWrappers) {
         w->setEditMode(false);
@@ -1059,19 +1072,20 @@ void DashboardPage::onResetLayout()
 void DashboardPage::onKioskModeChanged(bool enabled)
 {
     mKioskMode = enabled;
+    mKioskActive = enabled;
     if (enabled) {
         if (mEditMode)
             exitEditMode();
         mEditButton->hide();
         mEditShortcut->setEnabled(false);
-        mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen-exit.svg"));
+        mKioskButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/fullscreen-exit.svg"));
         mKioskButton->setToolTip(tr("Exit Kiosk Mode (ESC)"));
         ui->systemSummary->hide();
         ui->statusFooter->hide();
     } else {
         mEditButton->show();
         mEditShortcut->setEnabled(true);
-        mKioskButton->setIcon(QIcon(":/static/themes/common/img/fullscreen.svg"));
+        mKioskButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/fullscreen.svg"));
         mKioskButton->setToolTip(tr("Enter Kiosk Mode (%1)").arg(kioskShortcutText()));
         applyFooterVisibility();
     }
@@ -1341,9 +1355,14 @@ void DashboardPage::recomputeColumns()
         int frame = 2 * mGridScroll->frameWidth();
         availW = mGridScroll->width() - frame - sbw;
     }
-    int cols = DashboardLayout::columnsForWidth(qMax(0, availW));
-    if (cols == mVisibleCols && !mOccupancy.isEmpty())
+    mAvailW = qMax(0, availW);
+    int cols = DashboardLayout::columnsForWidth(mAvailW);
+    if (cols == mVisibleCols && !mOccupancy.isEmpty()) {
+        // Same column count, but the width may still have changed.
+        if (updateCellWidth())
+            buildGrid();
         return;
+    }
     mVisibleCols = cols;
 
     // Reflow current tiles into the new column count (pure logic), then apply
@@ -1406,8 +1425,39 @@ void DashboardPage::recomputeColumns()
     // launch/resize. Saves happen only on explicit edits (drag/resize/Done).
 }
 
+// Returns true when the cell width changed (caller rebuilds the grid).
+bool DashboardPage::updateCellWidth()
+{
+    int occupiedCols = 0;
+    for (DashboardTileWrapper *w : mTileWrappers) {
+        if (mHiddenTiles.contains(w->tileId()))
+            continue;
+        occupiedCols = qMax(occupiedCols, w->gridCol() + w->gridColSpan());
+    }
+    mOccupiedCols = occupiedCols;
+    // While editing, keep base cells so every available column stays a drop target.
+    const int cellW = (mEditMode || mAvailW <= 0)
+        ? DashboardLayout::kCellW
+        : DashboardLayout::elasticCellWidth(mAvailW, occupiedCols);
+
+    // Once the cap is reached, centre the block instead of leaving the slack on the right.
+    const int blockW = occupiedCols * cellW + qMax(0, occupiedCols - 1) * DashboardLayout::kGap;
+    const int leftPad = (!mEditMode && occupiedCols > 0 && mAvailW > blockW) ? (mAvailW - blockW) / 2 : 0;
+    QMargins margins = ui->bentoGrid->contentsMargins();
+    const bool padChanged = margins.left() != leftPad;
+    margins.setLeft(leftPad);
+    ui->bentoGrid->setContentsMargins(margins);
+
+    if (cellW == mCellW && !padChanged)
+        return false;
+    mCellW = cellW;
+    return true;
+}
+
 void DashboardPage::buildGrid()
 {
+    updateCellWidth();
+
     while (ui->bentoGrid->count() > 0) {
         QLayoutItem *item = ui->bentoGrid->takeAt(0);
         if (item->widget()) item->widget()->setParent(nullptr);
@@ -1421,7 +1471,7 @@ void DashboardPage::buildGrid()
     for (DashboardTileWrapper *w : mTileWrappers) {
         if (mHiddenTiles.contains(w->tileId())) { w->hide(); continue; }
         w->setParent(mGridContainer);
-        w->setFixedSize(w->gridColSpan() * DashboardLayout::kCellW + (w->gridColSpan() - 1) * DashboardLayout::kGap,
+        w->setFixedSize(w->gridColSpan() * mCellW + (w->gridColSpan() - 1) * DashboardLayout::kGap,
                         w->gridRowSpan() * DashboardLayout::kCellH + (w->gridRowSpan() - 1) * DashboardLayout::kGap);
         ui->bentoGrid->addWidget(w, w->gridRow(), w->gridCol(), w->gridRowSpan(), w->gridColSpan());
         applyDisplayModeForSpan(w);
@@ -1434,7 +1484,7 @@ void DashboardPage::buildGrid()
             if (mOccupancy[r][c].isEmpty()) {
                 auto *ph = new QWidget(mGridContainer);
                 ph->setObjectName("dashPlaceholder");
-                ph->setFixedSize(DashboardLayout::kCellW, DashboardLayout::kCellH);
+                ph->setFixedSize(mCellW, DashboardLayout::kCellH);
                 ph->setVisible(mEditMode);
                 ui->bentoGrid->addWidget(ph, r, c);
                 mPlaceholders.append(ph);
@@ -1462,7 +1512,9 @@ void DashboardPage::buildGrid()
     ui->bentoGrid->setHorizontalSpacing(DashboardLayout::kGap);
     ui->bentoGrid->setVerticalSpacing(DashboardLayout::kGap);
     for (int c = 0; c < mVisibleCols; ++c) {
-        ui->bentoGrid->setColumnMinimumWidth(c, DashboardLayout::kCellW);
+        // Outside edit mode only the occupied columns carry width; the rest
+        // would push a stretched grid past the viewport.
+        ui->bentoGrid->setColumnMinimumWidth(c, (mEditMode || c < mOccupiedCols) ? mCellW : 0);
         ui->bentoGrid->setColumnStretch(c, 0);
     }
     for (int r = 0; r < mRowCount; ++r) {
@@ -1525,7 +1577,7 @@ bool DashboardPage::gridCellAtPos(const QPoint &globalPos, int &outRow, int &out
     QPoint local = mGridContainer->mapFromGlobal(globalPos);
     if (local.x() < 0 || local.y() < 0) return false;
 
-    int pitchX = DashboardLayout::kCellW + DashboardLayout::kGap;
+    int pitchX = mCellW + DashboardLayout::kGap;
     int pitchY = DashboardLayout::kCellH + DashboardLayout::kGap;
     int col = local.x() / pitchX;
     int row = local.y() / pitchY;
@@ -1558,7 +1610,7 @@ void DashboardPage::onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint 
         return;
     }
 
-    int pitchX = DashboardLayout::kCellW + DashboardLayout::kGap;
+    int pitchX = mCellW + DashboardLayout::kGap;
     int pitchY = DashboardLayout::kCellH + DashboardLayout::kGap;
 
     // GH#191: size the drop preview to the dragged tile's FULL footprint
@@ -1568,7 +1620,7 @@ void DashboardPage::onTileDragMoved(DashboardTileWrapper *wrapper, const QPoint 
     // so the highlight matches the actual drop.
     int rowSpan = mDragSource ? mDragSource->gridRowSpan() : 1;
     int colSpan = mDragSource ? mDragSource->gridColSpan() : 1;
-    int indW = colSpan * DashboardLayout::kCellW + (colSpan - 1) * DashboardLayout::kGap;
+    int indW = colSpan * mCellW + (colSpan - 1) * DashboardLayout::kGap;
     int indH = rowSpan * DashboardLayout::kCellH + (rowSpan - 1) * DashboardLayout::kGap;
 
     QPoint topLeftInContainer(targetCol * pitchX, targetRow * pitchY);

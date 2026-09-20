@@ -12,6 +12,8 @@
 #include <QStyleFactory>
 #include <QStandardPaths>
 #include <QStringList>
+#include <QRegularExpression>
+#include <QPushButton>
 
 #include "app.h"
 #include "Managers/app_manager.h"
@@ -311,6 +313,39 @@ private:
         return nullptr;
     }
 
+    void captureHelpersTabsForReview(QWidget *helpersPage, const QString &reviewDir)
+    {
+        QDir().mkpath(reviewDir);
+        QPushButton *first = nullptr;
+        // ONLY the tab row. Panels contain their own checkable buttons that
+        // act on the system (Power Profile sets the CPU governor), so a
+        // page-wide search for checkable buttons must never be clicked through.
+        QWidget *tabRow = helpersPage->findChild<QWidget *>(QStringLiteral("toolsContainer"));
+        QVERIFY2(tabRow, "HelpersPage tab row (#toolsContainer) not found");
+        // Direct children only: the Linux Power Profile switcher sits in this
+        // row as a nested widget, and its buttons change the CPU governor.
+        const QList<QPushButton *> buttons =
+            tabRow->findChildren<QPushButton *>(QString(), Qt::FindDirectChildrenOnly);
+        for (QPushButton *button : buttons) {
+            if (!button->isCheckable() || !button->isVisible())
+                continue;
+            if (!first)
+                first = button;
+            button->click();
+            QApplication::processEvents();
+            QTest::qWait(400);
+            // Tabs built in code have no objectName; name the file after the label.
+            QString name = button->text().toLower();
+            name.replace(QRegularExpression(QStringLiteral("[^a-z0-9]+")), QStringLiteral("_"));
+            mApp->grab().toImage().save(reviewDir + "/helpers_" + name + ".png");
+        }
+        if (first) {
+            first->click();
+            QApplication::processEvents();
+            QTest::qWait(100);
+        }
+    }
+
     void captureAndCompare(const QString &theme)
     {
         SettingManager::ins()->setColorScheme(theme == "dark" ? "dark" : "light");
@@ -393,6 +428,15 @@ private:
 
             const QString outPath = themeOutDir + "/" + page.screenshotName + ".png";
             captured.save(outPath);
+
+            // Helpers hosts a dozen tool panels behind its tab row, several of
+            // them platform-specific (CPU tuning, swappiness, battery threshold
+            // on Linux; Tweaks, snapshots, cache rebuild on macOS). They show
+            // live system data, so they are not compared; instead every tab is
+            // written to <out>/review/ so a human can check each panel in both
+            // themes on each platform.
+            if (page.className == QLatin1String("HelpersPage"))
+                captureHelpersTabsForReview(widget, themeOutDir + "/review");
 
             if (mGenerateMode) {
                 const QString refPath = themeRefDir + "/" + page.screenshotName + ".png";

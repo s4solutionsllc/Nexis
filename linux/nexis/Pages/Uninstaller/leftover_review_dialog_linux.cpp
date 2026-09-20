@@ -1,4 +1,5 @@
 #include "leftover_review_dialog_linux.h"
+#include "Common/dialog_buttons.h"
 #include "leftover_review_hook.h"
 
 #include "Services/package_service.h"
@@ -37,7 +38,7 @@ LeftoverReviewDialogLinux::LeftoverReviewDialogLinux(const QStringList &packageN
 void LeftoverReviewDialogLinux::buildUI()
 {
     auto *root = new QVBoxLayout(this);
-    root->setContentsMargins(16, 16, 16, 16);
+    root->setContentsMargins(DialogButtons::dialogMargins());
     root->setSpacing(10);
 
     // CISO §1 (SSO-15373): one-sentence summary showing size + item count.
@@ -71,24 +72,12 @@ void LeftoverReviewDialogLinux::buildUI()
     connect(mTable, &QTableWidget::itemChanged, this, &LeftoverReviewDialogLinux::onTableItemChanged);
     root->addWidget(mTable, 1);
 
-    auto *buttons = new QHBoxLayout();
-    buttons->addStretch();
-
-    mBtnSkip = new QPushButton(tr("Skip"), this);
-    mBtnSkip->setCursor(Qt::PointingHandCursor);
-    connect(mBtnSkip, &QPushButton::clicked, this, &QDialog::reject);
-    buttons->addWidget(mBtnSkip);
-
-    // CISO §1: destructive action uses red/danger accent (SSO-15373).
-    // Disabled until at least one item is checked.
-    mBtnTrash = new QPushButton(tr("Move to Trash"), this);
-    mBtnTrash->setAccessibleName("danger");
-    mBtnTrash->setCursor(Qt::PointingHandCursor);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Move to Trash"), DialogButtons::Confirm::Danger, tr("Cancel"));
+    mBtnCancel = row.dismiss;
+    mBtnTrash = row.confirm;
     mBtnTrash->setEnabled(false);
     connect(mBtnTrash, &QPushButton::clicked, this, &LeftoverReviewDialogLinux::onMoveToTrash);
-    buttons->addWidget(mBtnTrash);
-
-    root->addLayout(buttons);
+    root->addWidget(row.box);
 }
 
 void LeftoverReviewDialogLinux::populate()

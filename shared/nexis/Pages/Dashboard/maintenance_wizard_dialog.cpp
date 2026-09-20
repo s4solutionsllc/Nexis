@@ -1,4 +1,5 @@
 #include "maintenance_wizard_dialog.h"
+#include "Common/dialog_buttons.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -198,22 +199,16 @@ void MaintenanceWizardDialog::buildUI()
     scrollArea->setWidget(mResultsWidget);
     mainLayout->addWidget(scrollArea, 1);
 
-    auto *btnRow = new QHBoxLayout;
-    btnRow->setSpacing(8);
-
-    mBtnClean = new QPushButton(tr("Clean Safe Items"));
-    mBtnClean->setProperty("accessibleName", "primary");
+    // Closing keeps the historical accept() result, so the helper's reject
+    // wiring is skipped.
+    DialogButtons::Row row = DialogButtons::build(this, tr("Clean Safe Items"),
+        DialogButtons::Confirm::Primary, tr("Close"), /*wireReject=*/false);
+    mBtnClean = row.confirm;
     mBtnClean->setEnabled(false);
     connect(mBtnClean, &QPushButton::clicked, this, &MaintenanceWizardDialog::onCleanSafeItems);
-    btnRow->addWidget(mBtnClean);
-
-    btnRow->addStretch();
-
-    mBtnClose = new QPushButton(tr("Close"));
+    mBtnClose = row.dismiss;
     connect(mBtnClose, &QPushButton::clicked, this, &QDialog::accept);
-    btnRow->addWidget(mBtnClose);
-
-    mainLayout->addLayout(btnRow);
+    mainLayout->addWidget(row.box);
 }
 
 void MaintenanceWizardDialog::runChecks()

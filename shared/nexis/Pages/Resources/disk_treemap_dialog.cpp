@@ -80,6 +80,7 @@ DiskTreemapDialog::DiskTreemapDialog(QWidget *parent,
 
     mChooseButton  = new QPushButton(tr("Choose..."), this);
     mScanButton    = new QPushButton(tr("Scan"), this);
+    mScanButton->setProperty("variant", "primary");
     mCancelButton  = new QPushButton(tr("Cancel"), this);
     mDrillUpButton = new QPushButton(tr("Up"), this);
     mCancelButton->setEnabled(false);

@@ -263,7 +263,7 @@ void SwappinessWidget::buildUI()
     actions->setSpacing(8);
     mBtnApply = new QPushButton(tr("Apply"), this);
     mBtnApply->setObjectName("swappinessApply");
-    mBtnApply->setAccessibleName("primary");
+    mBtnApply->setProperty("variant", "primary");
     mBtnApply->setCursor(Qt::PointingHandCursor);
     mBtnApply->setEnabled(false);
     connect(mBtnApply, &QPushButton::clicked, this, &SwappinessWidget::onApplyClicked);

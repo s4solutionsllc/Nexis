@@ -48,7 +48,6 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &uid, const QString &ty
     mStyleButton->setObjectName("btnStyleSelector");
     mStyleButton->setFixedSize(24, 24);
     mStyleButton->setIconSize(QSize(14, 14));
-    mStyleButton->setIcon(QIcon(":/static/themes/common/img/style-brush.svg"));
     mStyleButton->setAutoRaise(true);
     mStyleButton->setCursor(Qt::PointingHandCursor);
     mStyleButton->setToolTip(tr("Change Widget Style"));
@@ -75,11 +74,18 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &uid, const QString &ty
     mRemoveButton->setObjectName("btnTileRemove");
     mRemoveButton->setFixedSize(24, 24);
     mRemoveButton->setIconSize(QSize(14, 14));
-    mRemoveButton->setIcon(QIcon(":/static/themes/common/img/tile-remove.svg"));
     mRemoveButton->setAutoRaise(true);
     mRemoveButton->setCursor(Qt::PointingHandCursor);
     mRemoveButton->setToolTip(tr("Remove Widget"));
     mRemoveButton->hide();
+
+    // Accent-tinted per theme; refreshed with the theme like the card chrome.
+    auto refreshEditIcons = [this]() {
+        mStyleButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/style-brush.svg", 14));
+        mRemoveButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/tile-remove.svg", 14));
+    };
+    refreshEditIcons();
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, refreshEditIcons);
 
     connect(mRemoveButton, &QToolButton::clicked, this, [this]() {
         emit removeRequested(this);

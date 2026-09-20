@@ -93,7 +93,7 @@ private:
     QLabel       *mLblSummary = nullptr;
     QTableWidget *mTable      = nullptr;
     QPushButton  *mBtnTrash   = nullptr;
-    QPushButton  *mBtnSkip    = nullptr;
+    QPushButton  *mBtnCancel    = nullptr;
 
     qint64 mTotalBytes = 0;
     int    mItemCount  = 0;

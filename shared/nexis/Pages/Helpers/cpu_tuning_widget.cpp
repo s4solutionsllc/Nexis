@@ -227,7 +227,7 @@ void CpuTuningWidget::buildUI()
 
     mBtnApply = new QPushButton(tr("Apply"), this);
     mBtnApply->setObjectName("cpuTuningApply");
-    mBtnApply->setAccessibleName("primary");
+    mBtnApply->setProperty("variant", "primary");
     mBtnApply->setCursor(Qt::PointingHandCursor);
     mBtnApply->setEnabled(false);
     connect(mBtnApply, &QPushButton::clicked, this, &CpuTuningWidget::onApplyClicked);

@@ -472,7 +472,7 @@ void HelpersPage::onVerifyDisk()
     layout->addWidget(lblStatus);
 
     QPushButton *btnClose = new QPushButton(tr("Close"));
-    btnClose->setProperty("accessibleName", "primary");
+    btnClose->setProperty("variant", "primary");
     connect(btnClose, &QPushButton::clicked, &dlg, &QDialog::accept);
     QHBoxLayout *btnRow = new QHBoxLayout;
     btnRow->addStretch();

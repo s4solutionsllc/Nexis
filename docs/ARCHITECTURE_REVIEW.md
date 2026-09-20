@@ -245,6 +245,8 @@ void AppManager::updateStylesheet() {
 
 **Navigation:** every entry point (sidebar buttons, tray, command palette, menu bar, kiosk, start page, `SignalMapper::sigNavigateToPage`) calls `App::navigateTo(pageId)` with the stable `PageSlot::id`; translated titles are display text only. Each `PageSlot` holds its sidebar button, and sidebar group state is persisted under `SidebarSection::id` via the widget-free `SidebarSectionState` helpers (legacy translated keys are migrated once).
 
+**Dialogs:** button rows come from `DialogButtons::build()` (`shared/nexis/Common/dialog_buttons.h`): platform-native order via `QDialogButtonBox` roles, "Cancel" abandons a pending action, "Close" dismisses a view, confirm buttons are verbs, and a destructive confirm is never the default button. Button styling is selected with the `variant` dynamic property (`primary`/`danger`), not `accessibleName`, so assistive technology no longer reads the style name. `DialogButtonsTests` scans the sources to keep these rules.
+
 **Page scaffold:** `PageScaffold` in `shared/nexis/nexis_page.h` provides the single page gutter (`pageMargins()`), spacing, and `buildHeader()` (accent bar + title + source line + trailing action layout, styled by the `#sectionHeader*` recipe). Page titles use the sidebar label verbatim.
 
 **Bundled assets:** All icons use bundled SVGs from QRC resources rather than `QIcon::fromTheme()`, ensuring consistent visuals across desktop environments. Four font families (Inter, Ubuntu, JetBrains Mono) are embedded in the binary via `QFontDatabase::addApplicationFont()`, with a user-configurable font picker on the Settings page.

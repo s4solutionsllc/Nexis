@@ -1,4 +1,5 @@
 #include "running_app_warning_dialog.h"
+#include "Common/dialog_buttons.h"
 
 #include "Services/package_service.h"
 
@@ -37,7 +38,7 @@ RunningAppWarningDialog::RunningAppWarningDialog(const QString &appName,
 void RunningAppWarningDialog::buildUI(const QString &appName)
 {
     auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(20, 16, 20, 16);
+    layout->setContentsMargins(DialogButtons::dialogMargins());
     layout->setSpacing(10);
 
     auto *lblTitle = new QLabel(tr("\"%1\" is running").arg(appName), this);
@@ -54,21 +55,11 @@ void RunningAppWarningDialog::buildUI(const QString &appName)
     mLblBody->setWordWrap(true);
     layout->addWidget(mLblBody);
 
-    auto *buttons = new QHBoxLayout();
-    buttons->addStretch();
-
-    mBtnCancel = new QPushButton(tr("Cancel"), this);
-    mBtnCancel->setCursor(Qt::PointingHandCursor);
-    connect(mBtnCancel, &QPushButton::clicked, this, &QDialog::reject);
-    buttons->addWidget(mBtnCancel);
-
-    mBtnQuit = new QPushButton(tr("Quit App"), this);
-    mBtnQuit->setCursor(Qt::PointingHandCursor);
-    mBtnQuit->setDefault(true);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Quit App"), DialogButtons::Confirm::Primary, tr("Cancel"));
+    mBtnCancel = row.dismiss;
+    mBtnQuit = row.confirm;
     connect(mBtnQuit, &QPushButton::clicked, this, &RunningAppWarningDialog::onQuitClicked);
-    buttons->addWidget(mBtnQuit);
-
-    layout->addLayout(buttons);
+    layout->addWidget(row.box);
 }
 
 void RunningAppWarningDialog::setWaiting(bool waiting, const QString &statusText)
