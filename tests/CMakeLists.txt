@@ -827,6 +827,18 @@ add_nexis_test(NAME DirSizeScannerTests
     Qt6::Concurrent
 )
 
+# SSO-24963: TreemapLayout — pure nested treemap geometry consumed by
+# TreemapView. Compiled directly into the test (like DirSizeScannerTests
+# above) so it runs cross-platform without pulling in nexis-gui.
+add_nexis_test(NAME TreemapLayoutTests
+  SOURCES
+    managers/test_treemap_layout.cpp
+    "${GUI_SHARED_DIR}/Pages/DiskMap/treemap_layout.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+)
+
 # SSO-15380: Trust & Safety shared component — scan/execute orchestration.
 # Compiled directly into the test (like DirSizeScannerTests above) so it
 # runs cross-platform without pulling in nexis-gui; the dialog half of the
