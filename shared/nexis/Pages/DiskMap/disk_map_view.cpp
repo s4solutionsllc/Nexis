@@ -6,6 +6,7 @@
 #include <QResizeEvent>
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 
 DiskMapView::DiskMapView(QWidget *parent)
@@ -108,6 +109,37 @@ void DiskMapView::showContextMenuFor(DirSizeNode *node, const QPoint &globalPos)
         emit trashRequested(node);
     else if (drill && chosen == drill)
         emit drillRequested(node);
+}
+
+namespace {
+qreal srgbToLinear(qreal c)
+{
+    return c <= 0.03928 ? c / 12.92 : std::pow((c + 0.055) / 1.055, 2.4);
+}
+
+qreal relativeLuminance(const QColor &c)
+{
+    const qreal r = srgbToLinear(c.redF());
+    const qreal g = srgbToLinear(c.greenF());
+    const qreal b = srgbToLinear(c.blueF());
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+qreal contrastRatio(const QColor &a, const QColor &b)
+{
+    const qreal la = relativeLuminance(a), lb = relativeLuminance(b);
+    return (std::max(la, lb) + 0.05) / (std::min(la, lb) + 0.05);
+}
+}
+
+QColor DiskMapView::higherContrastColour(const QColor &fill, const QColor &optionA, const QColor &optionB)
+{
+    return contrastRatio(fill, optionA) >= contrastRatio(fill, optionB) ? optionA : optionB;
+}
+
+QColor DiskMapView::labelColourOn(const QColor &fill) const
+{
+    return higherContrastColour(fill, mTextColor, mBackgroundColor);
 }
 
 QString DiskMapView::formatBytes(qint64 b)

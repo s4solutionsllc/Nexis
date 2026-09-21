@@ -143,7 +143,8 @@ void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
     }
 
     for (const Circle &c : mCircles) {
-        p.setBrush(colourFor(c.node));
+        const QColor fill = colourFor(c.node);
+        p.setBrush(fill);
         p.setPen(QPen(mBorderColor, 1));
         p.drawEllipse(c.center, c.radius, c.radius);
 
@@ -151,7 +152,7 @@ void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
             const QString label = c.node->name + "\n" + formatBytes(c.node->size);
             const QRectF textRect(c.center.x() - c.radius, c.center.y() - c.radius,
                                   c.radius * 2, c.radius * 2);
-            p.setPen(mTextColor);
+            p.setPen(labelColourOn(fill));
             QFont f = p.font();
             f.setPointSizeF(std::max(8.0, std::min(11.0, c.radius / 5.0)));
             p.setFont(f);

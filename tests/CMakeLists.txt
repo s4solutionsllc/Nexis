@@ -853,6 +853,22 @@ add_nexis_test(NAME TreemapLayoutTests
     "${GUI_SHARED_DIR}/Managers"
 )
 
+# SSO-24963: DiskMapView::higherContrastColour() — the pure WCAG contrast
+# pick behind contrast-aware treemap/bubble/sunburst labels. Compiled
+# directly into the test (like TreemapLayoutTests above); disk_map_view.cpp
+# only touches the DirSizeNode struct, not DirSizeScanner's implementation,
+# so no scanner source or nexis-gui link is needed.
+add_nexis_test(NAME DiskMapLabelContrastTests
+  SOURCES
+    managers/test_disk_map_label_contrast.cpp
+    "${GUI_SHARED_DIR}/Pages/DiskMap/disk_map_view.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    Qt6::Widgets
+)
+
 # SSO-15380: Trust & Safety shared component — scan/execute orchestration.
 # Compiled directly into the test (like DirSizeScannerTests above) so it
 # runs cross-platform without pulling in nexis-gui; the dialog half of the

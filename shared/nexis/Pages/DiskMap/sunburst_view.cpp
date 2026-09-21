@@ -134,7 +134,8 @@ void SunburstView::paintEvent(QPaintEvent * /*event*/)
     };
 
     for (const Wedge &w : mWedges) {
-        p.setBrush(colourFor(w.node));
+        const QColor fill = colourFor(w.node);
+        p.setBrush(fill);
         p.setPen(QPen(mBorderColor, 1));
         p.drawPath(donutPath(w));
 
@@ -144,7 +145,7 @@ void SunburstView::paintEvent(QPaintEvent * /*event*/)
             const qreal qtMidRad = (90.0 - midDeg) * M_PI / 180.0;
             const QPointF labelPos = mCenter + QPointF(midR * std::cos(qtMidRad),
                                                         -midR * std::sin(qtMidRad));
-            p.setPen(mTextColor);
+            p.setPen(labelColourOn(fill));
             QFont f = p.font();
             f.setPointSizeF(8.0);
             p.setFont(f);

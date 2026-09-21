@@ -33,6 +33,15 @@ QTransform mapRect(const QRectF &from, const QRectF &to)
     return tf;
 }
 
+// Alpha-composite `fg` (its own alpha honoured) over the opaque `bg`.
+QColor alphaOver(const QColor &fg, const QColor &bg)
+{
+    const qreal a = fg.alphaF();
+    return QColor::fromRgbF(fg.redF() * a + bg.redF() * (1.0 - a),
+                            fg.greenF() * a + bg.greenF() * (1.0 - a),
+                            fg.blueF() * a + bg.blueF() * (1.0 - a));
+}
+
 } // namespace
 
 TreemapView::TreemapView(QWidget *parent)
@@ -190,7 +199,7 @@ void TreemapView::paintTile(QPainter &p, const QRectF &rectIn, DirSizeNode *node
 
     const bool full = r.width() >= 60 && r.height() >= 22;
     if (full || (r.width() >= 40 && r.height() >= 14)) {
-        p.setPen(mTextColor);
+        p.setPen(labelColourOn(base));
         QFont f = p.font(); f.setPointSizeF(full ? 10.0 : 9.0); p.setFont(f);
         const QRectF tr = r.adjusted(5, 3, -5, -3);
         const QString name = p.fontMetrics().elidedText(node->name, Qt::ElideRight, int(tr.width()));
@@ -223,7 +232,8 @@ void TreemapView::paintLayout(QPainter &p, const TreemapLayout::Result &layout, 
         QPainterPath clip; clip.addRoundedRect(f.outer, fr, fr);
         p.save(); p.setClipPath(clip); p.fillRect(f.header, strip); p.restore();
 
-        p.setPen(mTextColor);
+        const QColor headerLabel = labelColourOn(alphaOver(strip, mBackgroundColor));
+        p.setPen(headerLabel);
         QFont hf = p.font(); hf.setPointSizeF(9.5); hf.setBold(true); p.setFont(hf);
         const QRectF ht = f.header.adjusted(7, 0, -7, 0);
         const QString size = formatBytes(f.node->size);

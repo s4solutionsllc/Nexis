@@ -53,6 +53,12 @@ public:
                     const QColor &backgroundColor,
                     const QVector<QColor> &palette);
 
+    /// Pure WCAG contrast pick: returns whichever of `optionA` / `optionB`
+    /// has the higher contrast ratio against `fill` (relative luminance from
+    /// linearised sRGB; contrast = (L1+0.05)/(L2+0.05)). Free of instance
+    /// state, so it's public and directly unit-testable.
+    static QColor higherContrastColour(const QColor &fill, const QColor &optionA, const QColor &optionB);
+
 signals:
     /// Emitted when the user hovers a shape so the dialog status bar can
     /// echo the path/size. node may be nullptr if nothing is under the
@@ -97,6 +103,14 @@ protected:
     void requestDrillIfDir(DirSizeNode *node);
 
     static QString formatBytes(qint64 bytes);
+
+    /// Label colour to paint on top of `fill` — whichever of the theme's
+    /// text/background colours reads better there. Use this instead of
+    /// mTextColor for any label drawn directly on a coloured shape (tile,
+    /// frame header strip, bubble, wedge); mTextColor alone is dark-on-dark
+    /// or light-on-light against roughly half the hue palette depending on
+    /// theme.
+    QColor labelColourOn(const QColor &fill) const;
 
     /// Per-node colour, derived from the theme hue palette assigned to its
     /// top-level ancestor by assignHues() (directories read warmer than
