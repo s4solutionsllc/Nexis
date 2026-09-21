@@ -47,6 +47,17 @@ struct Result {
 Result build(DirSizeNode *focus, const QRectF &area, const Metrics &m = Metrics());
 DirSizeNode *hitTest(const Result &r, const QPointF &pos);
 
+/// The rectangle a group's "name · size" label should be drawn into —
+/// positioned inside the membrane just below the rim (its vertical centre
+/// sits roughly 3/4 of the way down the reserved label band, so the
+/// baseline lands there too) and wide enough to fit its chord at that
+/// height. Returns an empty QRectF (check with isEmpty()) when the group is
+/// too small for the band to fit at all, or the chord there is under 60px —
+/// the single source of truth both build()'s nested-pack room reservation
+/// and BubbleMapView's paint use, so they can never disagree about whether
+/// a label shows.
+QRectF labelBandRect(const Group &g, const Metrics &m = Metrics());
+
 } // namespace BubbleLayout
 
 #endif // BUBBLE_LAYOUT_H

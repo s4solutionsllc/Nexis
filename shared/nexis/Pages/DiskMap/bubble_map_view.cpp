@@ -77,7 +77,10 @@ void BubbleMapView::paintGroup(QPainter &p, const BubbleLayout::Group &g, bool h
         p.drawEllipse(g.center + QPointF(0, i), g.radius + i * 0.5, g.radius + i * 0.5);
     }
 
-    QColor fill = hue; fill.setAlpha(40);
+    // Fill alpha raised to 60-70 (was 40): at 40 the tint was too weak to
+    // read against a light theme's near-white background, so the membrane
+    // looked like flat grey rather than a tint of the folder's hue.
+    QColor fill = hue; fill.setAlpha(65);
     QColor rim = hue.lighter(hovered ? 160 : 130);
     rim.setAlpha(hovered ? 210 : 115);
 
@@ -85,23 +88,21 @@ void BubbleMapView::paintGroup(QPainter &p, const BubbleLayout::Group &g, bool h
     p.setPen(QPen(rim, hovered ? Dpi::scale(2) : 1.2));
     p.drawEllipse(g.center, g.radius, g.radius);
 
-    const qreal labelBand = scaledMetrics().labelBand;
-    if (g.radius > labelBand) {
-        const qreal dy = g.radius - labelBand / 2.0;
-        const qreal chord = chordAt(g.radius, g.radius - labelBand);
-        if (chord >= 60.0) {
-            const QColor membrane = alphaOver(fill, mBackgroundColor);
-            p.setPen(labelColourOn(membrane));
-            QFont f = p.font();
-            f.setPointSizeF(10.5);
-            f.setBold(true);
-            p.setFont(f);
-            const QRectF labelRect(g.center.x() - chord / 2.0, g.center.y() - dy - labelBand / 2.0,
-                                   chord, labelBand);
-            const QString text = g.node->name + "  ·  " + formatBytes(g.node->size);
-            const QString elided = p.fontMetrics().elidedText(text, Qt::ElideRight, int(labelRect.width()));
-            p.drawText(labelRect, Qt::AlignCenter, elided);
-        }
+    const QRectF labelRect = BubbleLayout::labelBandRect(g, scaledMetrics());
+    if (!labelRect.isEmpty()) {
+        // Composite the translucent fill over the actual page background
+        // before picking a label colour against it — contrasting against
+        // the un-composited (partly transparent) fill alone reads wrong.
+        const QColor membrane = alphaOver(fill, mBackgroundColor);
+        p.setPen(labelColourOn(membrane));
+        QFont f = p.font();
+        f.setPointSizeF(10.5);
+        f.setBold(true);
+        p.setFont(f);
+        const QString text = g.node->name + "  ·  " + formatBytes(g.node->size);
+        const int maxW = std::max(0, int(labelRect.width()) - 12);
+        const QString elided = p.fontMetrics().elidedText(text, Qt::ElideRight, maxW);
+        p.drawText(labelRect, Qt::AlignCenter, elided);
     }
 }
 
