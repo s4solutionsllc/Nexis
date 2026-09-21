@@ -42,6 +42,11 @@ jobs:
   build-linux:
     name: Linux Build (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    # SSO-24907: blanket job-level guard. Any of the apt installs, the debhelper
+    # package build, or the AppImage assembly below can hang without a bounded
+    # step timeout of its own; this caps the whole job well short of the 6h
+    # GitHub ceiling instead of taking the release pipeline down with it.
+    timeout-minutes: 60
     container:
       image: ubuntu:26.04
 
@@ -305,6 +310,8 @@ jobs:
   build-appimage-x86_64:
     name: AppImage Build (x86_64 · glibc 2.35)
     runs-on: ubuntu-22.04
+    # SSO-24907: blanket job-level guard, see build-linux.
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -430,6 +437,14 @@ jobs:
   build-macos:
     name: macOS Build
     runs-on: macos-14
+    # SSO-24907: blanket job-level guard. The last clean release (v2.10.0)
+    # ran this job in 6m32s; 60m is a generous ceiling against `brew install
+    # qt@6`, `macdeployqt`, `hdiutil create`, or `xcrun stapler staple` each
+    # stalling to the 6h GitHub job ceiling the way Developer ID signing did
+    # on v2.8.1 and v2.11.0. The individually-bounded codesign retries below
+    # are the tighter guard for the known failure surface; this is the net
+    # under everything else in the job.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -502,31 +517,74 @@ jobs:
         if: steps.signing.outputs.ENABLED == 'true'
         timeout-minutes: 20   # SSO-24905: codesign --timestamp can stall on Apple's TSA; fail fast instead of eating the 6h job ceiling
         run: |
+          set -euo pipefail
           APP="build/output/nexis.app"
 
           # Find the Developer ID identity dynamically (avoids hardcoding the org name)
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
           echo "Signing with: $IDENTITY"
 
+          # SSO-24907: codesign --timestamp round-trips to Apple's TSA, which has
+          # twice stalled a job to the 6h GitHub ceiling (v2.8.1, v2.11.0). Bound
+          # every invocation to a short per-attempt timeout with a small retry
+          # budget so one bad TSA round trip costs seconds, not a release.
+          # --timestamp is never dropped — an un-timestamped signature breaks
+          # notarization/Gatekeeper once the signing cert expires.
+          #
+          # `timeout(1)` isn't a stock macOS binary, so the bound is implemented
+          # in pure bash rather than depending on GNU coreutils being on PATH.
+          run_with_timeout() {
+            local secs="$1"; shift
+            "$@" &
+            local pid=$! waited=0
+            while kill -0 "$pid" 2>/dev/null; do
+              if [ "$waited" -ge "$secs" ]; then
+                kill -TERM "$pid" 2>/dev/null || true
+                sleep 2
+                kill -KILL "$pid" 2>/dev/null || true
+                wait "$pid" 2>/dev/null
+                return 124
+              fi
+              sleep 1
+              waited=$((waited + 1))
+            done
+            wait "$pid"
+          }
+
+          sign_with_retry() {
+            local target="$1"; shift
+            local n
+            for n in 1 2 3; do
+              if run_with_timeout 60 codesign --force --sign "$IDENTITY" --timestamp "$@" "$target"; then
+                return 0
+              fi
+              echo "::warning::codesign attempt $n/3 failed or timed out for $(basename "$target"), retrying in 5s..."
+              sleep 5
+            done
+            echo "::error::codesign failed after 3 attempts for $(basename "$target")"
+            return 1
+          }
+
           # Sign frameworks (inside-out)
-          find "$APP/Contents/Frameworks" -name "*.framework" -type d | while read fw; do
-            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$fw"
-          done
-          find "$APP/Contents/Frameworks" -name "*.dylib" | while read lib; do
-            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$lib"
-          done
+          while IFS= read -r -d '' fw; do
+            echo "Signing framework: $(basename "$fw")"
+            sign_with_retry "$fw" --options runtime
+          done < <(find "$APP/Contents/Frameworks" -name "*.framework" -type d -print0)
+
+          while IFS= read -r -d '' lib; do
+            echo "Signing dylib: $(basename "$lib")"
+            sign_with_retry "$lib" --options runtime
+          done < <(find "$APP/Contents/Frameworks" -name "*.dylib" -print0)
 
           # Sign plugins
-          find "$APP/Contents/PlugIns" -name "*.dylib" 2>/dev/null | while read plugin; do
-            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$plugin"
-          done
+          while IFS= read -r -d '' plugin; do
+            echo "Signing plugin: $(basename "$plugin")"
+            sign_with_retry "$plugin" --options runtime
+          done < <(find "$APP/Contents/PlugIns" -name "*.dylib" -print0 2>/dev/null || true)
 
           # Sign the .app bundle with entitlements
-          codesign --force --sign "$IDENTITY" \
-            --options runtime \
-            --entitlements macos/entitlements.plist \
-            --timestamp \
-            "$APP"
+          echo "Signing app bundle: $(basename "$APP")"
+          sign_with_retry "$APP" --options runtime --entitlements macos/entitlements.plist
 
           # Verify
           codesign --verify --deep --strict "$APP"
@@ -547,8 +605,39 @@ jobs:
         if: steps.signing.outputs.ENABLED == 'true'
         timeout-minutes: 10   # SSO-24905: same codesign --timestamp stall risk as the .app signing step
         run: |
+          set -euo pipefail
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          codesign --force --sign "$IDENTITY" --timestamp build/output/nexis.dmg
+
+          # SSO-24907: same bounded-retry rationale as the .app signing step above.
+          run_with_timeout() {
+            local secs="$1"; shift
+            "$@" &
+            local pid=$! waited=0
+            while kill -0 "$pid" 2>/dev/null; do
+              if [ "$waited" -ge "$secs" ]; then
+                kill -TERM "$pid" 2>/dev/null || true
+                sleep 2
+                kill -KILL "$pid" 2>/dev/null || true
+                wait "$pid" 2>/dev/null
+                return 124
+              fi
+              sleep 1
+              waited=$((waited + 1))
+            done
+            wait "$pid"
+          }
+
+          DMG="build/output/nexis.dmg"
+          echo "Signing dmg: $(basename "$DMG")"
+          for n in 1 2 3; do
+            if run_with_timeout 60 codesign --force --sign "$IDENTITY" --timestamp "$DMG"; then
+              exit 0
+            fi
+            echo "::warning::codesign attempt $n/3 failed or timed out for $(basename "$DMG"), retrying in 5s..."
+            sleep 5
+          done
+          echo "::error::codesign failed after 3 attempts for $(basename "$DMG")"
+          exit 1
 
       - name: Notarize .dmg
         if: steps.signing.outputs.ENABLED == 'true'
@@ -624,6 +713,10 @@ jobs:
     if: github.event_name == 'push'
     needs: [build-linux, build-appimage-x86_64, build-macos]
     runs-on: ubuntu-latest
+    # SSO-24907: blanket job-level guard, see build-linux. Notarization already
+    # carries its own `--timeout 30m` (release.yml, unchanged); this bounds
+    # everything else in the job around it.
+    timeout-minutes: 45
     permissions:
       contents: write
       actions: write
