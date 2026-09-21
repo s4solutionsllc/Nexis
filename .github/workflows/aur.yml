@@ -118,9 +118,12 @@ jobs:
           # merge queue land it. That needs a PAT-backed identity: the default
           # GITHUB_TOKEN is blocked from creating PRs in this repo (SSO-24052),
           # and a GITHUB_TOKEN push would not trigger the PR's required checks
-          # either. CROWDIN_SYNC_TOKEN is the repo's existing PAT-backed
-          # identity (crowdin-sync.yml); reuse it.
-          GH_TOKEN: ${{ secrets.CROWDIN_SYNC_TOKEN }}
+          # either. CROWDIN_SYNC_TOKEN (a Crowdin-sync-scoped credential) was
+          # reused here and doesn't have push/PR rights against this repo —
+          # every mirror-back 403'd (SSO-24952). GITHUB_S4_AGENTS_DELIVERY_RW
+          # is the org's repo-write delivery credential for s4solutionsllc
+          # repos; use it instead.
+          GH_TOKEN: ${{ secrets.GITHUB_S4_AGENTS_DELIVERY_RW }}
         # Root cause of the recurring linux/aur drift: the steps above sed
         # pkgver/pkgrel into an ephemeral checkout, and KSXGitHub/
         # github-actions-deploy-aur fills sha256sums (updpkgsums) + regenerates
