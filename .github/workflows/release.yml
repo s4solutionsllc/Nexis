@@ -500,6 +500,7 @@ jobs:
 
       - name: Sign .app bundle (Developer ID)
         if: steps.signing.outputs.ENABLED == 'true'
+        timeout-minutes: 20   # SSO-24905: codesign --timestamp can stall on Apple's TSA; fail fast instead of eating the 6h job ceiling
         run: |
           APP="build/output/nexis.app"
 
@@ -544,6 +545,7 @@ jobs:
 
       - name: Sign .dmg (Developer ID)
         if: steps.signing.outputs.ENABLED == 'true'
+        timeout-minutes: 10   # SSO-24905: same codesign --timestamp stall risk as the .app signing step
         run: |
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
           codesign --force --sign "$IDENTITY" --timestamp build/output/nexis.dmg
