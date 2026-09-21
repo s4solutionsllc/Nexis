@@ -1,18 +1,16 @@
-// SSO-23862: bubble-map (circle-packing) visualization for the disk-space
-// visualizer.
+// SSO-23862 / SSO-24963: bubble-map (nested circle-packing) visualization
+// for the disk-space visualizer.
 //
-// Sibling circles are packed by area (radius ∝ sqrt(size)) using an
-// iterative relaxation — cheap, dependency-free, and tight enough for a
-// disk map. Tree/focus/drill-stack/theme/hover/context-menu are owned by
-// DiskMapView (shared with TreemapView and SunburstView); this class only
-// builds and hit-tests circle geometry.
+// Two nested levels, lit shapes, hover lift, and a drill cross-fade — mirrors
+// the treemap redesign. Geometry lives in BubbleLayout (SSO-24963); this
+// class only paints it and hit-tests it. Tree/focus/drill-stack/theme/hover/
+// context-menu are owned by DiskMapView (shared with TreemapView and
+// SunburstView).
 
 #ifndef BUBBLE_MAP_VIEW_H
 #define BUBBLE_MAP_VIEW_H
 
-#include <QPointF>
-#include <QVector>
-
+#include "bubble_layout.h"
 #include "disk_map_view.h"
 
 class BubbleMapView : public DiskMapView
@@ -29,19 +27,15 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
     void leaveEvent(QEvent *event) override;
+    void aboutToDrill(DirSizeNode *target, bool drillingIn) override;
 
 private:
-    struct Circle {
-        QPointF center;
-        qreal radius = 0;
-        DirSizeNode *node = nullptr;
-    };
+    BubbleLayout::Metrics scaledMetrics() const;
+    void paintGroup(QPainter &p, const BubbleLayout::Group &g, bool hovered);
+    void paintBubble(QPainter &p, const BubbleLayout::Bubble &b, bool hovered);
+    void paintLayout(QPainter &p, const BubbleLayout::Result &layout);
 
-    void packCircles(const QVector<DirSizeNode*> &items);
-    Circle *circleAt(const QPointF &pos);
-
-    QVector<Circle> mCircles;
-    Circle         *mHoveredCircle = nullptr;
+    BubbleLayout::Result mLayout;
 };
 
 #endif // BUBBLE_MAP_VIEW_H

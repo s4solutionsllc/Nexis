@@ -770,6 +770,18 @@ add_nexis_test(NAME TreemapZoomTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-24963: DiskMapView's shared drill cross-fade arming invariants,
+# exercised through BubbleMapView (the first mode to opt in) — mirrors
+# TreemapZoomTests above for TreemapView's own geometric zoom transition.
+add_nexis_test(NAME DiskMapCrossFadeTests
+  SOURCES
+    managers/test_disk_map_crossfade.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3736 / FW-08: DuplicateFinderService — duplicate grouping (content-
 # verified), top-N large-file ranking, empty-folder detection, exclusion
 # engine compliance, and the never-delete-last-copy invariant. Builds on

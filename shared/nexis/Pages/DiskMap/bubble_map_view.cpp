@@ -3,120 +3,197 @@
 #include <QContextMenuEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QRadialGradient>
 #include <QToolTip>
 
 #include <algorithm>
 #include <cmath>
+
+#include "dpi.h"
+
+namespace {
+
+// Alpha-composite `fg` (its own alpha honoured) over the opaque `bg` —
+// mirrors TreemapView's alphaOver(), used to work out a readable label
+// colour against the translucent membrane fill actually painted underneath.
+QColor alphaOver(const QColor &fg, const QColor &bg)
+{
+    const qreal a = fg.alphaF();
+    return QColor::fromRgbF(fg.redF() * a + bg.redF() * (1.0 - a),
+                            fg.greenF() * a + bg.greenF() * (1.0 - a),
+                            fg.blueF() * a + bg.blueF() * (1.0 - a));
+}
+
+// Width of the horizontal chord of a circle of radius `r` at vertical
+// distance `dy` from its center.
+qreal chordAt(qreal r, qreal dy)
+{
+    return 2.0 * std::sqrt(std::max<qreal>(0, r * r - dy * dy));
+}
+
+} // namespace
 
 BubbleMapView::BubbleMapView(QWidget *parent)
     : DiskMapView(parent)
 {
 }
 
-// Packs `items` (already sorted, sizes > 0) into non-overlapping circles
-// whose areas are proportional to size. Circles are seeded on a
-// golden-angle spiral, then relaxed for a fixed number of iterations with a
-// pairwise separation force plus a gentle centroid pull — approximate but
-// visually tight, and O(n^2 * iterations) is trivial for the sibling counts
-// a disk map actually shows.
-void BubbleMapView::packCircles(const QVector<DirSizeNode*> &items)
+BubbleLayout::Metrics BubbleMapView::scaledMetrics() const
 {
-    const int n = items.size();
-    if (n == 0)
-        return;
-
-    QVector<qreal> r(n);
-    for (int i = 0; i < n; ++i)
-        r[i] = std::sqrt(static_cast<qreal>(items[i]->size));
-
-    QVector<QPointF> pos(n);
-    const qreal golden = 137.50776405 * M_PI / 180.0;
-    qreal spread = 0;
-    for (int i = 0; i < n; ++i)
-        spread += r[i];
-    spread = std::max(spread, 1.0);
-    for (int i = 0; i < n; ++i) {
-        const qreal a = i * golden;
-        const qreal radius = spread * std::sqrt(static_cast<qreal>(i + 1) / n);
-        pos[i] = QPointF(radius * std::cos(a), radius * std::sin(a));
-    }
-
-    // This is a visual disk map, not a physics sim: an approximate pack is
-    // fine, so we run a fixed, small iteration count rather than iterating
-    // to convergence.
-    const int iterations = 200;
-    for (int iter = 0; iter < iterations; ++iter) {
-        for (int i = 0; i < n; ++i)
-            pos[i] -= pos[i] * 0.02;
-
-        for (int i = 0; i < n; ++i) {
-            for (int j = i + 1; j < n; ++j) {
-                QPointF d = pos[j] - pos[i];
-                const qreal dist = std::hypot(d.x(), d.y());
-                const qreal minDist = r[i] + r[j];
-                if (dist < minDist) {
-                    const qreal overlap = minDist - dist;
-                    const QPointF dir = dist > 1e-6 ? d / dist : QPointF(1, 0);
-                    pos[i] -= dir * (overlap * 0.5);
-                    pos[j] += dir * (overlap * 0.5);
-                }
-            }
-        }
-    }
-
-    qreal boundingR = 1.0;
-    for (int i = 0; i < n; ++i)
-        boundingR = std::max(boundingR, std::hypot(pos[i].x(), pos[i].y()) + r[i]);
-
-    const QRectF area = rect().adjusted(4, 4, -4, -4);
-    if (area.width() <= 0 || area.height() <= 0)
-        return;
-    const qreal targetR = std::min(area.width(), area.height()) / 2.0;
-    const qreal scale = targetR / boundingR;
-    const QPointF center = area.center();
-
-    mCircles.reserve(n);
-    for (int i = 0; i < n; ++i) {
-        Circle c;
-        c.center = center + pos[i] * scale;
-        c.radius = r[i] * scale;
-        c.node = items[i];
-        mCircles.append(c);
-    }
+    BubbleLayout::Metrics m;
+    m.minGroupR   = Dpi::scale(45);
+    m.innerPad    = Dpi::scale(4);
+    m.labelBand   = Dpi::scale(16);
+    m.minBubbleR  = 1.5;
+    m.outerMargin = Dpi::scale(4);
+    return m;
 }
 
 void BubbleMapView::rebuildLayout()
 {
-    mCircles.clear();
-    mHoveredCircle = nullptr;
-    if (!mFocus || !mFocus->isDir || mFocus->size <= 0)
-        return;
-
-    QVector<DirSizeNode*> children;
-    children.reserve(static_cast<int>(mFocus->children.size()));
-    for (auto &c : mFocus->children) {
-        if (c->size > 0)
-            children.append(c.get());
-    }
-    if (children.isEmpty())
-        return;
-    std::sort(children.begin(), children.end(),
-              [](DirSizeNode *a, DirSizeNode *b) { return a->size > b->size; });
-
-    packCircles(children);
+    mLayout = BubbleLayout::build(mFocus, QRectF(rect()), scaledMetrics());
+    startCrossFadeIfArmed();
 }
 
-BubbleMapView::Circle *BubbleMapView::circleAt(const QPointF &pos)
+void BubbleMapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
 {
-    // Reverse iteration doesn't matter for correctness here (circles never
-    // overlap once packed) but keeps hit-testing consistent with the other
-    // modes' "last wins" convention.
-    for (int i = mCircles.size() - 1; i >= 0; --i) {
-        const QPointF d = pos - mCircles[i].center;
-        if (std::hypot(d.x(), d.y()) <= mCircles[i].radius)
-            return &mCircles[i];
+    Q_UNUSED(target);
+    Q_UNUSED(drillingIn);
+    armCrossFade();
+}
+
+void BubbleMapView::paintGroup(QPainter &p, const BubbleLayout::Group &g, bool hovered)
+{
+    if (g.radius < 4)
+        return;
+
+    const QColor hue = colourFor(g.node);
+
+    QColor shadow = mBackgroundColor.darker(260);
+    for (int i = 3; i >= 1; --i) {
+        shadow.setAlpha(22);
+        p.setPen(Qt::NoPen);
+        p.setBrush(shadow);
+        p.drawEllipse(g.center + QPointF(0, i), g.radius + i * 0.5, g.radius + i * 0.5);
     }
-    return nullptr;
+
+    QColor fill = hue; fill.setAlpha(40);
+    QColor rim = hue.lighter(hovered ? 160 : 130);
+    rim.setAlpha(hovered ? 210 : 115);
+
+    p.setBrush(fill);
+    p.setPen(QPen(rim, hovered ? Dpi::scale(2) : 1.2));
+    p.drawEllipse(g.center, g.radius, g.radius);
+
+    const qreal labelBand = scaledMetrics().labelBand;
+    if (g.radius > labelBand) {
+        const qreal dy = g.radius - labelBand / 2.0;
+        const qreal chord = chordAt(g.radius, g.radius - labelBand);
+        if (chord >= 60.0) {
+            const QColor membrane = alphaOver(fill, mBackgroundColor);
+            p.setPen(labelColourOn(membrane));
+            QFont f = p.font();
+            f.setPointSizeF(10.5);
+            f.setBold(true);
+            p.setFont(f);
+            const QRectF labelRect(g.center.x() - chord / 2.0, g.center.y() - dy - labelBand / 2.0,
+                                   chord, labelBand);
+            const QString text = g.node->name + "  ·  " + formatBytes(g.node->size);
+            const QString elided = p.fontMetrics().elidedText(text, Qt::ElideRight, int(labelRect.width()));
+            p.drawText(labelRect, Qt::AlignCenter, elided);
+        }
+    }
+}
+
+void BubbleMapView::paintBubble(QPainter &p, const BubbleLayout::Bubble &b, bool hovered)
+{
+    QPointF c = b.center;
+    const qreal r = b.radius;
+    if (r <= 0)
+        return;
+    if (hovered)
+        c -= QPointF(0, Dpi::scale(2));
+
+    const bool tiny = r < 4;
+    const QColor base = colourFor(b.node);
+
+    if (!tiny) {
+        QColor shadow = mBackgroundColor.darker(260);
+        if (hovered) {
+            for (int i = 4; i >= 1; --i) {
+                shadow.setAlpha(26);
+                p.setPen(Qt::NoPen);
+                p.setBrush(shadow);
+                p.drawEllipse(c + QPointF(0, i + 3), r + i, r + i);
+            }
+        } else {
+            shadow.setAlpha(100);
+            p.setPen(Qt::NoPen);
+            p.setBrush(shadow);
+            p.drawEllipse(c + QPointF(0, 1), r, r);
+        }
+    }
+
+    p.setPen(Qt::NoPen);
+    QColor mid = base;
+    if (tiny) {
+        p.setBrush(base);
+    } else {
+        const QPointF focal = c + QPointF(-r * (0.5 - 0.32) * 2.0, -r * (0.5 - 0.26) * 2.0);
+        QRadialGradient grad(c, r, focal);
+        grad.setColorAt(0.0, base.lighter(150));
+        grad.setColorAt(0.45, base);
+        grad.setColorAt(1.0, base.darker(150));
+        p.setBrush(grad);
+    }
+    p.drawEllipse(c, r, r);
+
+    if (hovered) {
+        p.setBrush(Qt::NoBrush);
+        p.setPen(QPen(mTextColor, 1.5));
+        p.drawEllipse(c, r, r);
+    }
+
+    if (r >= 24) {
+        const bool full = r >= 34;
+        QFont f = p.font();
+        f.setPointSizeF(std::clamp(r / 5.0, 8.0, 11.0));
+        f.setBold(true);
+        p.setFont(f);
+        p.setPen(labelColourOn(mid));
+
+        const qreal nameDy = full ? 2.0 : -3.0;
+        const int nameW = std::max(0, int(chordAt(r, nameDy)) - 6);
+        const QString name = p.fontMetrics().elidedText(b.node->name, Qt::ElideRight, nameW);
+        p.drawText(QRectF(c.x() - r, c.y() - nameDy - f.pointSizeF(), r * 2, f.pointSizeF() * 2),
+                   Qt::AlignHCenter | Qt::AlignVCenter, name);
+
+        if (full) {
+            QFont sf = f; sf.setBold(false); sf.setPointSizeF(std::max(8.0, f.pointSizeF() - 1.0));
+            p.setFont(sf);
+            const qreal sizeDy = -11.0;
+            const int sizeW = std::max(0, int(chordAt(r, sizeDy)) - 6);
+            const QString size = p.fontMetrics().elidedText(formatBytes(b.node->size), Qt::ElideRight, sizeW);
+            p.drawText(QRectF(c.x() - r, c.y() - sizeDy - sf.pointSizeF(), r * 2, sf.pointSizeF() * 2),
+                       Qt::AlignHCenter | Qt::AlignVCenter, size);
+        }
+    }
+}
+
+void BubbleMapView::paintLayout(QPainter &p, const BubbleLayout::Result &layout)
+{
+    DirSizeNode *hn = hoveredNode();
+
+    for (const auto &g : layout.groups)
+        paintGroup(p, g, g.node == hn);
+
+    const BubbleLayout::Bubble *hot = nullptr;
+    for (const auto &b : layout.bubbles) {
+        if (b.node == hn) { hot = &b; continue; }
+        paintBubble(p, b, false);
+    }
+    if (hot)
+        paintBubble(p, *hot, true);
 }
 
 void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
@@ -125,62 +202,34 @@ void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
         return;
 
     QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setRenderHint(QPainter::TextAntialiasing);
     p.fillRect(rect(), mBackgroundColor);
 
     if (!mFocus) {
         p.setPen(mTextColor);
         p.drawText(rect(), Qt::AlignCenter,
                    tr("No scan loaded. Choose a folder and press Scan."));
-        return;
-    }
-
-    if (mCircles.isEmpty()) {
+    } else if (mLayout.groups.isEmpty() && mLayout.bubbles.isEmpty()) {
         p.setPen(mTextColor);
         p.drawText(rect(), Qt::AlignCenter,
                    tr("This folder is empty."));
-        return;
+    } else {
+        paintLayout(p, mLayout);
     }
 
-    for (const Circle &c : mCircles) {
-        const QColor fill = colourFor(c.node);
-        p.setBrush(fill);
-        p.setPen(QPen(mBorderColor, 1));
-        p.drawEllipse(c.center, c.radius, c.radius);
-
-        if (c.radius >= 28) {
-            const QString label = c.node->name + "\n" + formatBytes(c.node->size);
-            const QRectF textRect(c.center.x() - c.radius, c.center.y() - c.radius,
-                                  c.radius * 2, c.radius * 2);
-            p.setPen(labelColourOn(fill));
-            QFont f = p.font();
-            f.setPointSizeF(std::max(8.0, std::min(11.0, c.radius / 5.0)));
-            p.setFont(f);
-            p.drawText(textRect, Qt::AlignCenter | Qt::TextWordWrap, label);
-        }
-    }
-
-    if (mHoveredCircle) {
-        QPen pen(mTextColor, 1.5);
-        p.setPen(pen);
-        p.setBrush(Qt::NoBrush);
-        p.drawEllipse(mHoveredCircle->center,
-                      mHoveredCircle->radius - 1, mHoveredCircle->radius - 1);
-    }
+    paintCrossFadeOverlay(p);
 }
 
 void BubbleMapView::mouseMoveEvent(QMouseEvent *event)
 {
-    Circle *c = circleAt(event->position());
-    if (c != mHoveredCircle) {
-        mHoveredCircle = c;
-        setHoveredNode(c ? c->node : nullptr);
-    }
-    if (c) {
+    DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->position());
+    setHoveredNode(node);
+    if (node) {
         QToolTip::showText(event->globalPosition().toPoint(),
                            QString("%1\n%2")
-                               .arg(c->node->path)
-                               .arg(formatBytes(c->node->size)),
+                               .arg(node->path)
+                               .arg(formatBytes(node->size)),
                            this);
     } else {
         QToolTip::hideText();
@@ -189,21 +238,18 @@ void BubbleMapView::mouseMoveEvent(QMouseEvent *event)
 
 void BubbleMapView::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    Circle *c = circleAt(event->position());
-    requestDrillIfDir(c ? c->node : nullptr);
+    DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->position());
+    requestDrillIfDir(node);
 }
 
 void BubbleMapView::contextMenuEvent(QContextMenuEvent *event)
 {
-    Circle *c = circleAt(event->pos());
-    showContextMenuFor(c ? c->node : nullptr, event->globalPos());
+    DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->pos());
+    showContextMenuFor(node, event->globalPos());
 }
 
 void BubbleMapView::leaveEvent(QEvent * /*event*/)
 {
-    if (mHoveredCircle) {
-        mHoveredCircle = nullptr;
-        setHoveredNode(nullptr);
-    }
+    setHoveredNode(nullptr);
     QToolTip::hideText();
 }
