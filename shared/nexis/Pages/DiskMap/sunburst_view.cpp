@@ -113,12 +113,12 @@ void SunburstView::paintShadowDisc(QPainter &p)
     }
 }
 
-void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool hovered)
+void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool pushed, bool outlined)
 {
     if (w.sweepDeg <= 0 || w.outerR <= w.innerR)
         return;
 
-    const qreal pushOffset = hovered ? Dpi::scale(5) : 0;
+    const qreal pushOffset = pushed ? Dpi::scale(5) : 0;
     const QPainterPath path = wedgePath(w, pushOffset);
     if (path.isEmpty())
         return;
@@ -173,7 +173,7 @@ void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool 
     grad.setColorAt(1.0, highlight);
     p.fillPath(path, grad);
 
-    if (hovered) {
+    if (outlined) {
         p.setBrush(Qt::NoBrush);
         p.setPen(QPen(mTextColor, 1.5));
         p.drawPath(path);
@@ -193,7 +193,7 @@ void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool 
     const qreal midRad = midDeg * M_PI / 180.0;
     const qreal midR = (w.innerR + w.outerR) / 2.0;
     QPointF labelPos = mLayout.center + QPointF(midR * std::sin(midRad), -midR * std::cos(midRad));
-    if (hovered)
+    if (pushed)
         labelPos += QPointF(pushOffset * std::sin(midRad), -pushOffset * std::cos(midRad));
 
     const qreal sweepRad = std::min(w.sweepDeg, 180.0) * M_PI / 180.0;
@@ -273,13 +273,25 @@ void SunburstView::paintEvent(QPaintEvent * /*event*/)
     } else {
         paintShadowDisc(p);
 
+        // A hovered ring-0 wedge lifts together with its ring-1 children:
+        // pushed alone it would slide 5 px into the 3 px ring gap and paint
+        // over the inner edge of its own contents.
         DirSizeNode *hn = hoveredNode();
-        for (const auto &w : mLayout.wedges)
-            if (w.node != hn)
-                paintWedge(p, w, false);
-        for (const auto &w : mLayout.wedges)
-            if (w.node == hn)
-                paintWedge(p, w, true);
+        const auto &ws = mLayout.wedges;
+        QVector<bool> pushed(ws.size(), false);
+        for (int i = 0; i < ws.size(); ++i) {
+            if (ws[i].node == hn)
+                pushed[i] = true;
+            else if (ws[i].parentIndex >= 0 && ws[i].parentIndex < ws.size()
+                     && ws[ws[i].parentIndex].node == hn && ws[ws[i].parentIndex].ring == 0)
+                pushed[i] = true;
+        }
+        for (int i = 0; i < ws.size(); ++i)
+            if (!pushed[i])
+                paintWedge(p, ws[i], false, false);
+        for (int i = 0; i < ws.size(); ++i)
+            if (pushed[i])
+                paintWedge(p, ws[i], true, ws[i].node == hn);
 
         paintHub(p);
     }

@@ -40,7 +40,7 @@ public:
 private:
     SunburstLayout::Metrics scaledMetrics() const;
     void paintShadowDisc(QPainter &p);
-    void paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool hovered);
+    void paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool pushed, bool outlined);
     void paintHub(QPainter &p);
 
     SunburstLayout::Result mLayout;
