@@ -12,6 +12,21 @@
 
 #include "dpi.h"
 
+namespace {
+
+// Alpha-composite `fg` (its own alpha honoured) over the opaque `bg` —
+// mirrors BubbleMapView's alphaOver(), used to work out a readable label
+// colour against what's actually painted underneath, not a bare fill colour.
+QColor alphaOver(const QColor &fg, const QColor &bg)
+{
+    const qreal a = fg.alphaF();
+    return QColor::fromRgbF(fg.redF() * a + bg.redF() * (1.0 - a),
+                            fg.greenF() * a + bg.greenF() * (1.0 - a),
+                            fg.blueF() * a + bg.blueF() * (1.0 - a));
+}
+
+} // namespace
+
 SunburstView::SunburstView(QWidget *parent)
     : DiskMapView(parent)
 {
@@ -87,8 +102,12 @@ void SunburstView::paintShadowDisc(QPainter &p)
     if (mLayout.outerR < 4)
         return;
     QColor shadow = mBackgroundColor.darker(260);
-    for (int i = 3; i >= 1; --i) {
-        shadow.setAlpha(22);
+    // Outer rings fainter, innermost (closest to the disc's own rim)
+    // strongest — a real falloff instead of three passes at one flat alpha.
+    constexpr int kSteps = 3;
+    for (int i = kSteps; i >= 1; --i) {
+        const qreal t = static_cast<qreal>(kSteps - i) / (kSteps - 1);
+        shadow.setAlpha(int(8 + t * 14));
         p.setPen(Qt::NoPen);
         p.setBrush(shadow);
         p.drawEllipse(mLayout.center + QPointF(0, i), mLayout.outerR + i * 0.5, mLayout.outerR + i * 0.5);
@@ -105,7 +124,25 @@ void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool 
     if (path.isEmpty())
         return;
 
-    QColor fill = colourFor(w.node);
+    QColor fill;
+    if (w.remainder && w.ring == 0) {
+        // A ring-0 remainder's node is `focus` itself, which assignHues()
+        // never assigns a slot to (it only walks focus's descendants) — so
+        // colourFor() would silently fall back to slot 0, i.e. borrow the
+        // largest real child's hue. Use a theme-neutral colour instead,
+        // blended from the border/background rather than any hue.
+        float bh, bs, bl, ba;
+        mBackgroundColor.getHslF(&bh, &bs, &bl, &ba);
+        float rh, rs, rl, ra;
+        mBorderColor.getHslF(&rh, &rs, &rl, &ra);
+        fill = mBorderColor;
+        fill.setHslF(rh, rs * 0.5f, (rl + bl) / 2.0f, ra);
+    } else {
+        // Ring-1 remainders keep a muted version of the real parent
+        // directory's hue (w.node is the parent, not `focus`) so they still
+        // read as "more of the same folder" rather than a neutral gap.
+        fill = colourFor(w.node);
+    }
     if (w.placeholder || w.remainder) {
         float h, s, l, a;
         fill.getHslF(&h, &s, &l, &a);
@@ -166,11 +203,18 @@ void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool 
     if (textW < 12)
         return;
 
+    // The label sits at midR, i.e. exactly at the gradient's midFrac stop
+    // (see its derivation above) — composite that stop's own colour over
+    // fill, mirroring how bubble_map_view composites a membrane's fill over
+    // the page background, instead of assuming the bare fill is what's
+    // actually on screen there.
+    const QColor onScreen = alphaOver(mid, fill);
+
     QFont f = p.font();
     f.setBold(true);
     f.setPointSizeF(9.5);
     p.setFont(f);
-    p.setPen(labelColourOn(fill));
+    p.setPen(labelColourOn(onScreen));
     const QString elided = p.fontMetrics().elidedText(w.node->name, Qt::ElideRight, textW);
     const QRectF labelRect(labelPos.x() - chord / 2.0, labelPos.y() - f.pointSizeF(),
                            chord, f.pointSizeF() * 2);

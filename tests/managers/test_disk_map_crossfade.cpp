@@ -7,6 +7,7 @@
 
 #include <QtTest>
 #include <QApplication>
+#include <QCoreApplication>
 #include <QColor>
 
 #include <memory>
@@ -62,6 +63,7 @@ private slots:
     void setRootMidFade_cancelsIt();
     void resizeMidFade_cancelsIt();
     void sunburstView_shownFadesOnDrillInto();
+    void resizeAfterFadeCancelledByResize_doesNotRestartIt();
 };
 
 void TestDiskMapCrossFade::hiddenView_neverFadesOnDrillInto()
@@ -152,6 +154,7 @@ void TestDiskMapCrossFade::resizeMidFade_cancelsIt()
     QVERIFY2(view.isCrossFadeRunning(), "drilling should start the cross-fade");
 
     view.resize(700, 500);
+    QCoreApplication::processEvents();
     QVERIFY2(!view.isCrossFadeRunning(), "resizing mid-fade must cancel it");
 }
 
@@ -176,6 +179,39 @@ void TestDiskMapCrossFade::sunburstView_shownFadesOnDrillInto()
     QVERIFY2(view.isCrossFadeRunning(),
              "drilling on a shown, non-reduced-motion SunburstView should start the cross-fade");
     QCOMPARE(view.focus(), big);
+}
+
+// SSO-24963 review round 2 (Minor 12): arming the fade via a genuine drill,
+// then resizing (which cancels it per resizeEvent()), must leave the fade
+// off — and a later plain resize (no drill in between) must not somehow
+// restart it, since only aboutToDrill() ever arms one.
+void TestDiskMapCrossFade::resizeAfterFadeCancelledByResize_doesNotRestartIt()
+{
+    if (Utilities::prefersReducedMotion())
+        QSKIP("System has reduce-motion enabled; the cross-fade is intentionally skipped there.");
+
+    BubbleMapView view;
+    view.resize(800, 600);
+    applyTestTheme(view);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    DirSizeNodePtr root = buildTree();
+    view.setRoot(root);
+
+    DirSizeNode *big = root->children[0].get();
+    QVERIFY(big && big->isDir);
+
+    view.drillInto(big);
+    QVERIFY2(view.isCrossFadeRunning(), "drilling on a shown view should start the cross-fade");
+
+    view.resize(700, 500);
+    QCoreApplication::processEvents();
+    QVERIFY2(!view.isCrossFadeRunning(), "resizing mid-fade must cancel it");
+
+    view.resize(650, 480);
+    QCoreApplication::processEvents();
+    QVERIFY2(!view.isCrossFadeRunning(), "a plain resize (no drill) must never start a cross-fade");
 }
 
 QTEST_MAIN(TestDiskMapCrossFade)

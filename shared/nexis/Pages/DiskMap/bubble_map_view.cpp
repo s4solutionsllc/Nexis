@@ -1,6 +1,7 @@
 #include "bubble_map_view.h"
 
 #include <QContextMenuEvent>
+#include <QFontMetricsF>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QRadialGradient>
@@ -77,8 +78,12 @@ void BubbleMapView::paintGroup(QPainter &p, const BubbleLayout::Group &g, bool h
     const QColor hue = colourFor(g.node);
 
     QColor shadow = mBackgroundColor.darker(260);
-    for (int i = 3; i >= 1; --i) {
-        shadow.setAlpha(22);
+    // Outer rings fainter, innermost (closest to the membrane's own rim)
+    // strongest — a real falloff instead of three passes at one flat alpha.
+    constexpr int kShadowSteps = 3;
+    for (int i = kShadowSteps; i >= 1; --i) {
+        const qreal t = static_cast<qreal>(kShadowSteps - i) / (kShadowSteps - 1);
+        shadow.setAlpha(int(8 + t * 14));
         p.setPen(Qt::NoPen);
         p.setBrush(shadow);
         p.drawEllipse(g.center + QPointF(0, i), g.radius + i * 0.5, g.radius + i * 0.5);
@@ -128,8 +133,12 @@ void BubbleMapView::paintBubble(QPainter &p, const BubbleLayout::Bubble &b, bool
     if (!tiny) {
         QColor shadow = mBackgroundColor.darker(260);
         if (hovered) {
-            for (int i = 4; i >= 1; --i) {
-                shadow.setAlpha(26);
+            // Outer rings fainter, innermost strongest — see paintGroup()'s
+            // shadow loop for the same falloff.
+            constexpr int kShadowSteps = 4;
+            for (int i = kShadowSteps; i >= 1; --i) {
+                const qreal t = static_cast<qreal>(kShadowSteps - i) / (kShadowSteps - 1);
+                shadow.setAlpha(int(9 + t * 17));
                 p.setPen(Qt::NoPen);
                 p.setBrush(shadow);
                 p.drawEllipse(c + QPointF(0, i + 3), r + i, r + i);
@@ -143,7 +152,6 @@ void BubbleMapView::paintBubble(QPainter &p, const BubbleLayout::Bubble &b, bool
     }
 
     p.setPen(Qt::NoPen);
-    QColor mid = base;
     if (tiny) {
         p.setBrush(base);
     } else {
@@ -168,21 +176,25 @@ void BubbleMapView::paintBubble(QPainter &p, const BubbleLayout::Bubble &b, bool
         f.setPointSizeF(std::clamp(r / 5.0, 8.0, 11.0));
         f.setBold(true);
         p.setFont(f);
-        p.setPen(labelColourOn(mid));
+        // `base` is exactly the gradient's own mid stop (grad.setColorAt(0.45,
+        // base) above), so it's already the actual on-screen colour there.
+        p.setPen(labelColourOn(base));
 
+        const qreal nameH = QFontMetricsF(f).height();
         const qreal nameDy = full ? 2.0 : -3.0;
         const int nameW = std::max(0, int(chordAt(r, nameDy)) - 6);
         const QString name = p.fontMetrics().elidedText(b.node->name, Qt::ElideRight, nameW);
-        p.drawText(QRectF(c.x() - r, c.y() - nameDy - f.pointSizeF(), r * 2, f.pointSizeF() * 2),
+        p.drawText(QRectF(c.x() - r, c.y() - nameDy - nameH, r * 2, nameH * 2),
                    Qt::AlignHCenter | Qt::AlignVCenter, name);
 
         if (full) {
             QFont sf = f; sf.setBold(false); sf.setPointSizeF(std::max(8.0, f.pointSizeF() - 1.0));
             p.setFont(sf);
+            const qreal sizeH = QFontMetricsF(sf).height();
             const qreal sizeDy = -11.0;
             const int sizeW = std::max(0, int(chordAt(r, sizeDy)) - 6);
             const QString size = p.fontMetrics().elidedText(formatBytes(b.node->size), Qt::ElideRight, sizeW);
-            p.drawText(QRectF(c.x() - r, c.y() - sizeDy - sf.pointSizeF(), r * 2, sf.pointSizeF() * 2),
+            p.drawText(QRectF(c.x() - r, c.y() - sizeDy - sizeH, r * 2, sizeH * 2),
                        Qt::AlignHCenter | Qt::AlignVCenter, size);
         }
     }
