@@ -490,6 +490,20 @@ jobs:
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          # SSO-24909: a fresh keychain keeps macOS's default auto-lock timeout,
+          # which is well under the ~15-20min Configure+Build+Unit-Tests+Deploy
+          # phase between this unlock and the first codesign call. When it
+          # relocks mid-build, codesign's private-key ACL check
+          # (SecKeyCopyAttributes -> checkIntegrity -> securityd) blocks
+          # indefinitely on a Mach IPC reply waiting for an interactive unlock
+          # prompt that can never come in headless CI -- confirmed via a live
+          # `sample` stack trace of the hung process, not guessed. This was the
+          # actual root cause of every codesign stall investigated under
+          # SSO-24905/24907/24909, not a TSA/network issue -- widening the
+          # retry budget only ever produced a slower, still-total failure.
+          # Extend the timeout well past the longest plausible build (60m job
+          # guard) so the keychain never relocks mid-job.
+          security set-keychain-settings -lut 3600 build.keychain
           security import certificate.p12 -k build.keychain \
             -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
           security set-key-partition-list -S apple-tool:,apple: \
