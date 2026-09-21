@@ -8,7 +8,9 @@
 #ifndef TREEMAP_VIEW_H
 #define TREEMAP_VIEW_H
 
+#include <QPixmap>
 #include <QRectF>
+#include <QVariantAnimation>
 #include <QVector>
 
 #include "disk_map_view.h"
@@ -24,10 +26,12 @@ public:
 protected:
     void rebuildLayout() override;
     void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
     void leaveEvent(QEvent *event) override;
+    void aboutToDrill(DirSizeNode *target, bool drillingIn) override;
 
 private:
     TreemapLayout::Metrics scaledMetrics() const;
@@ -35,6 +39,14 @@ private:
     void paintTile(QPainter &p, const QRectF &r, DirSizeNode *node, bool hovered);
 
     TreemapLayout::Result mLayout;
+
+    QVariantAnimation *mZoom = nullptr;
+    QPixmap mFromPixmap;
+    QRectF mZoomRect;
+    DirSizeNode *mZoomTarget = nullptr;
+    bool mZoomIn = true;
+    bool mPendingZoom = false;
+    qreal mZoomT = 1.0;
 };
 
 #endif // TREEMAP_VIEW_H

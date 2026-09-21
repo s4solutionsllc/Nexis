@@ -44,6 +44,7 @@ bool DiskMapView::drillUp()
 {
     if (mPath.isEmpty())
         return false;
+    aboutToDrill(mFocus, false);
     mFocus = mPath.takeLast();
     mHoveredNode = nullptr;
     assignHues();
@@ -56,6 +57,7 @@ void DiskMapView::drillInto(DirSizeNode *node)
 {
     if (!node || !node->isDir || node == mFocus)
         return;
+    aboutToDrill(node, true);
     mPath.append(mFocus);
     mFocus = node;
     mHoveredNode = nullptr;

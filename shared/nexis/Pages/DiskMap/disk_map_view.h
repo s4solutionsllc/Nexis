@@ -75,6 +75,12 @@ protected:
     /// the widget resizes.
     virtual void rebuildLayout() = 0;
 
+    /// Called right before the focus changes in drillInto()/drillUp(), with
+    /// the node being entered (drillingIn = true) or left (drillingIn =
+    /// false). Subclasses that animate the transition use this hook to
+    /// capture the outgoing layout before assignHues()/rebuildLayout() run.
+    virtual void aboutToDrill(DirSizeNode *target, bool drillingIn) { Q_UNUSED(target); Q_UNUSED(drillingIn); }
+
     void resizeEvent(QResizeEvent *event) override;
 
     /// Shared hover bookkeeping: emits tileHovered() and repaints only when

@@ -1,19 +1,57 @@
 #include "treemap_view.h"
 
 #include <QContextMenuEvent>
+#include <QEasingCurve>
 #include <QLinearGradient>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QResizeEvent>
 #include <QToolTip>
 
 #include <algorithm>
 
 #include "dpi.h"
+#include "utilities.h"
+
+namespace {
+
+QRectF lerpRect(const QRectF &a, const QRectF &b, qreal t)
+{
+    return QRectF(a.x() + (b.x() - a.x()) * t,
+                  a.y() + (b.y() - a.y()) * t,
+                  a.width() + (b.width() - a.width()) * t,
+                  a.height() + (b.height() - a.height()) * t);
+}
+
+QTransform mapRect(const QRectF &from, const QRectF &to)
+{
+    QTransform tf;
+    tf.translate(to.x(), to.y());
+    tf.scale(to.width() / from.width(), to.height() / from.height());
+    tf.translate(-from.x(), -from.y());
+    return tf;
+}
+
+} // namespace
 
 TreemapView::TreemapView(QWidget *parent)
     : DiskMapView(parent)
 {
+    mZoom = new QVariantAnimation(this);
+    mZoom->setDuration(200);
+    mZoom->setEasingCurve(QEasingCurve::OutCubic);
+    mZoom->setStartValue(0.0);
+    mZoom->setEndValue(1.0);
+    connect(mZoom, &QVariantAnimation::valueChanged, this, [this](const QVariant &v) {
+        mZoomT = v.toReal();
+        update();
+    });
+    connect(mZoom, &QVariantAnimation::finished, this, [this] {
+        mZoomT = 1.0;
+        mFromPixmap = QPixmap();
+        update();
+    });
 }
 
 TreemapLayout::Metrics TreemapView::scaledMetrics() const
@@ -29,6 +67,57 @@ void TreemapView::rebuildLayout()
 {
     const qreal pad = Dpi::scale(3);
     mLayout = TreemapLayout::build(mFocus, QRectF(rect()).adjusted(pad, pad, -pad, -pad), scaledMetrics());
+
+    if (!mPendingZoom)
+        return;
+    mPendingZoom = false;
+
+    if (!mZoomIn) {
+        mZoomRect = QRectF();
+        for (const auto &f : mLayout.frames)
+            if (f.node == mZoomTarget) mZoomRect = f.outer;
+        for (const auto &t : mLayout.tiles)
+            if (t.node == mZoomTarget) mZoomRect = t.rect;
+    }
+
+    if (mZoomRect.isValid()) {
+        mZoom->stop();
+        mZoom->start();
+    }
+}
+
+void TreemapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
+{
+    if (Utilities::prefersReducedMotion() || !isVisible())
+        return;
+
+    mZoomRect = QRectF();
+    for (const auto &f : mLayout.frames)
+        if (f.node == target) mZoomRect = f.outer;
+    for (const auto &t : mLayout.tiles)
+        if (t.node == target) mZoomRect = t.rect;
+
+    mFromPixmap = QPixmap(size() * devicePixelRatioF());
+    mFromPixmap.setDevicePixelRatio(devicePixelRatioF());
+    mFromPixmap.fill(mBackgroundColor);
+    {
+        QPainter p(&mFromPixmap);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setRenderHint(QPainter::TextAntialiasing);
+        paintLayout(p, mLayout, 1.0);
+    }
+
+    mZoomTarget = target;
+    mZoomIn = drillingIn;
+    mPendingZoom = drillingIn ? mZoomRect.isValid() : true;
+}
+
+void TreemapView::resizeEvent(QResizeEvent *event)
+{
+    mZoom->stop();
+    mZoomT = 1.0;
+    mFromPixmap = QPixmap();
+    DiskMapView::resizeEvent(event);
 }
 
 void TreemapView::paintTile(QPainter &p, const QRectF &rectIn, DirSizeNode *node, bool hovered)
@@ -163,11 +252,47 @@ void TreemapView::paintEvent(QPaintEvent * /*event*/)
         return;
     }
 
+    if (mZoom->state() == QAbstractAnimation::Running) {
+        p.setRenderHint(QPainter::SmoothPixmapTransform);
+        const QRectF full(rect());
+        const qreal t = mZoomT;
+
+        if (mZoomIn) {
+            const QRectF cur = lerpRect(mZoomRect, full, t);
+            p.save();
+            p.setOpacity(1.0 - t);
+            p.setTransform(mapRect(mZoomRect, cur), true);
+            p.drawPixmap(rect(), mFromPixmap);
+            p.restore();
+
+            p.save();
+            p.setTransform(mapRect(full, cur), true);
+            paintLayout(p, mLayout, t);
+            p.restore();
+        } else {
+            const QRectF cur = lerpRect(full, mZoomRect, t);
+            p.save();
+            p.setOpacity(1.0 - t);
+            p.setTransform(mapRect(full, cur), true);
+            p.drawPixmap(rect(), mFromPixmap);
+            p.restore();
+
+            p.save();
+            p.setTransform(mapRect(mZoomRect, cur), true);
+            paintLayout(p, mLayout, t);
+            p.restore();
+        }
+        return;
+    }
+
     paintLayout(p, mLayout, 1.0);
 }
 
 void TreemapView::mouseMoveEvent(QMouseEvent *event)
 {
+    if (mZoom->state() == QAbstractAnimation::Running)
+        return;
+
     DirSizeNode *node = TreemapLayout::hitTest(mLayout, event->position());
     setHoveredNode(node);
     if (node) {
@@ -183,12 +308,18 @@ void TreemapView::mouseMoveEvent(QMouseEvent *event)
 
 void TreemapView::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    if (mZoom->state() == QAbstractAnimation::Running)
+        return;
+
     DirSizeNode *node = TreemapLayout::hitTest(mLayout, event->position());
     requestDrillIfDir(node);
 }
 
 void TreemapView::contextMenuEvent(QContextMenuEvent *event)
 {
+    if (mZoom->state() == QAbstractAnimation::Running)
+        return;
+
     DirSizeNode *node = TreemapLayout::hitTest(mLayout, event->pos());
     showContextMenuFor(node, event->globalPos());
 }

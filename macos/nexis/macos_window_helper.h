@@ -11,6 +11,10 @@ extern "C" {
 // winId() on macOS.
 void nexis_macos_set_window_dark(void *nsView, int dark);
 
+// Returns non-zero if the user has enabled Reduce Motion in
+// System Settings > Accessibility > Display.
+int nexis_macos_prefers_reduced_motion(void);
+
 #ifdef __cplusplus
 }
 #endif

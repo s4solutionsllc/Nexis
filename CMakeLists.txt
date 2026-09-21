@@ -420,6 +420,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/feedback.cpp"
   "${GUI_SHARED_DIR}/signal_mapper.cpp"
   "${GUI_SHARED_DIR}/sliding_stacked_widget.cpp"
+  "${GUI_SHARED_DIR}/utilities.cpp"
   "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.cpp"
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"

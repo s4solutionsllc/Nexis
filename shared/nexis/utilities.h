@@ -14,6 +14,14 @@
 class Utilities
 {
 public:
+    // True if the user has requested reduced motion in the OS accessibility
+    // settings; callers should skip decorative animations when set. Defined
+    // in utilities.cpp (rather than inline here) because the macOS
+    // implementation needs macos_window_helper.h, which only nexis-gui links
+    // against — several test targets compile files that include this header
+    // without linking nexis-gui.
+    static bool prefersReducedMotion();
+
     static void
     addDropShadow(QWidget *widget, const int alpha, const int blur = 15)
     {
