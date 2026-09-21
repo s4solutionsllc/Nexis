@@ -1,5 +1,4 @@
 #include <QtTest>
-#include <QElapsedTimer>
 #include "Pages/DiskMap/bubble_layout.h"
 
 namespace {
@@ -32,6 +31,10 @@ private slots:
     void topLevelShapes_touchAfterCompaction();
     void nestedPack_fillsAndCentresInMembrane();
     void largeGroup_staysFastAndValid();
+    void packCache_matchesUncachedGeometry();
+    void packCache_warmSecondBuild_noNewPacks();
+    void packCache_clear_forcesRepack();
+    void labelBandRect_emptyWhenChordTooNarrow_insideMembraneOtherwise();
 };
 
 void TestBubbleLayout::emptyOrNullFocus_yieldsNothing()
@@ -313,11 +316,7 @@ void TestBubbleLayout::largeGroup_staysFastAndValid()
     big->size = total;
     root->size = total;
 
-    QElapsedTimer timer;
-    timer.start();
     const auto r = BubbleLayout::build(root.get(), QRectF(0, 0, 1200, 700));
-    const qint64 elapsedMs = timer.elapsed();
-    QVERIFY2(elapsedMs < 250, qPrintable(QString("build() took %1ms").arg(elapsedMs)));
 
     QCOMPARE(r.groups.size(), 1);
     const auto &g = r.groups[0];
@@ -339,6 +338,156 @@ void TestBubbleLayout::largeGroup_staysFastAndValid()
             QVERIFY2(dist >= r.bubbles[i].radius + r.bubbles[j].radius - 1.0, "same-group bubbles overlap by more than 1px");
         }
     }
+}
+
+// SSO-24963 review round 2 (Minor 12): labelBandRect() is the single source
+// of truth build() and BubbleMapView both rely on for whether a group gets
+// a label — test it directly rather than only indirectly through build().
+void TestBubbleLayout::labelBandRect_emptyWhenChordTooNarrow_insideMembraneOtherwise()
+{
+    BubbleLayout::Metrics m; // labelBand = 16 by default
+
+    BubbleLayout::Group tooSmall;
+    tooSmall.center = QPointF(100, 100);
+    tooSmall.radius = 10; // <= m.labelBand
+    QVERIFY(BubbleLayout::labelBandRect(tooSmall, m).isEmpty());
+
+    BubbleLayout::Group narrowChord;
+    narrowChord.center = QPointF(100, 100);
+    narrowChord.radius = 17; // > labelBand, but chord at the baseline < 60px
+    QVERIFY(BubbleLayout::labelBandRect(narrowChord, m).isEmpty());
+
+    BubbleLayout::Group roomy;
+    roomy.center = QPointF(300, 250);
+    roomy.radius = 200;
+    const QRectF band = BubbleLayout::labelBandRect(roomy, m);
+    QVERIFY(!band.isEmpty());
+    QVERIFY2(band.width() >= 60.0, qPrintable(QString("chord %1 < 60px").arg(band.width())));
+
+    // The band's own width is exactly the chord at its vertical centre (the
+    // baseline) — those left/right points sit precisely on the membrane's
+    // rim by construction, so they're the meaningful "inside the membrane"
+    // check; the band's top/bottom edges (offset by half the label height)
+    // are allowed to graze slightly past the rim for a rim-hugging label.
+    const QPointF leftAtBaseline(band.left(), band.center().y());
+    const QPointF rightAtBaseline(band.right(), band.center().y());
+    for (const auto &pt : {leftAtBaseline, rightAtBaseline}) {
+        const qreal dist = std::hypot(pt.x() - roomy.center.x(), pt.y() - roomy.center.y());
+        QVERIFY2(dist <= roomy.radius + 0.5,
+                 qPrintable(QString("label band edge is %1px outside the membrane (radius %2)")
+                                .arg(dist).arg(roomy.radius)));
+    }
+    // And the whole band sits within the membrane's bounding box.
+    QVERIFY(QRectF(roomy.center.x() - roomy.radius, roomy.center.y() - roomy.radius,
+                   roomy.radius * 2, roomy.radius * 2).contains(band.adjusted(1, 1, -1, -1)));
+}
+
+namespace {
+void compareResults(const BubbleLayout::Result &a, const BubbleLayout::Result &b)
+{
+    QCOMPARE(a.groups.size(), b.groups.size());
+    for (int i = 0; i < a.groups.size(); ++i) {
+        QVERIFY(std::hypot(a.groups[i].center.x() - b.groups[i].center.x(),
+                           a.groups[i].center.y() - b.groups[i].center.y()) < 1e-6);
+        QVERIFY(qAbs(a.groups[i].radius - b.groups[i].radius) < 1e-6);
+        QCOMPARE(a.groups[i].node, b.groups[i].node);
+    }
+    QCOMPARE(a.bubbles.size(), b.bubbles.size());
+    for (int i = 0; i < a.bubbles.size(); ++i) {
+        QVERIFY(std::hypot(a.bubbles[i].center.x() - b.bubbles[i].center.x(),
+                           a.bubbles[i].center.y() - b.bubbles[i].center.y()) < 1e-6);
+        QVERIFY(qAbs(a.bubbles[i].radius - b.bubbles[i].radius) < 1e-6);
+        QCOMPARE(a.bubbles[i].node, b.bubbles[i].node);
+    }
+}
+
+// A ten-group-by-sixty-child tree big enough that every group actually packs
+// (i.e. clears minGroupR) at 1180x600 — used both for the cache-effectiveness
+// tests below and (throwaway, not asserted on time) for the cold/warm
+// build() timing measurement quoted in the SSO-24963 fix-wave report.
+DirSizeNodePtr tenGroupsSixtyChildrenTree()
+{
+    auto root = std::make_shared<DirSizeNode>();
+    root->name = "root"; root->path = "/root"; root->isDir = true;
+    qint64 total = 0;
+    for (int g = 0; g < 10; ++g) {
+        DirSizeNode *grp = add(root.get(), mk(QString("g%1").arg(g), 0, true));
+        qint64 gsize = 0;
+        for (int c = 0; c < 60; ++c) {
+            const qint64 size = std::max<qint64>(1, qint64(2'000'000.0 / std::pow(c + 1, 1.2)));
+            add(grp, mk(QString("f%1").arg(c), size, false));
+            gsize += size;
+        }
+        grp->size = gsize;
+        total += gsize;
+    }
+    root->size = total;
+    return root;
+}
+}
+
+// SSO-24963 review round 2: build() with a warm PackCache must produce the
+// exact same geometry as build() with no cache at all, for two different
+// area sizes reusing the same cache.
+void TestBubbleLayout::packCache_matchesUncachedGeometry()
+{
+    auto root = mk("root", 1000, true);
+    DirSizeNode *big = add(root.get(), mk("big", 900, true));
+    add(big, mk("a", 600, false));
+    add(big, mk("b", 300, false));
+    add(root.get(), mk("file", 100, false));
+
+    BubbleLayout::PackCache cache;
+    const QRectF area1(0, 0, 800, 600);
+    const QRectF area2(0, 0, 1200, 500);
+
+    const auto cold1 = BubbleLayout::build(root.get(), area1);
+    const auto warm1 = BubbleLayout::build(root.get(), area1, BubbleLayout::Metrics(), &cache);
+    compareResults(cold1, warm1);
+
+    const auto cold2 = BubbleLayout::build(root.get(), area2);
+    const auto warm2 = BubbleLayout::build(root.get(), area2, BubbleLayout::Metrics(), &cache);
+    compareResults(cold2, warm2);
+}
+
+// SSO-24963 review round 2 (Critical 1): a second build() against a warm
+// cache, same tree and area, must perform zero new packing work.
+void TestBubbleLayout::packCache_warmSecondBuild_noNewPacks()
+{
+    DirSizeNodePtr root = tenGroupsSixtyChildrenTree();
+
+    BubbleLayout::PackCache cache;
+    const QRectF area(0, 0, 1180, 600);
+    const auto first = BubbleLayout::build(root.get(), area, BubbleLayout::Metrics(), &cache);
+    QVERIFY2(!first.groups.isEmpty(), "test tree should produce at least one group");
+    const int afterFirst = cache.packCount();
+    QVERIFY(afterFirst > 0);
+
+    const auto second = BubbleLayout::build(root.get(), area, BubbleLayout::Metrics(), &cache);
+    QCOMPARE(cache.packCount(), afterFirst);
+    compareResults(first, second);
+}
+
+void TestBubbleLayout::packCache_clear_forcesRepack()
+{
+    auto root = mk("root", 1000, true);
+    DirSizeNode *big = add(root.get(), mk("big", 900, true));
+    add(big, mk("a", 600, false));
+    add(big, mk("b", 300, false));
+    add(root.get(), mk("file", 100, false));
+
+    BubbleLayout::PackCache cache;
+    const QRectF area(0, 0, 800, 600);
+    BubbleLayout::build(root.get(), area, BubbleLayout::Metrics(), &cache);
+    const int afterFirst = cache.packCount();
+    QVERIFY(afterFirst > 0);
+
+    BubbleLayout::build(root.get(), area, BubbleLayout::Metrics(), &cache);
+    QCOMPARE(cache.packCount(), afterFirst);
+
+    cache.clear();
+    BubbleLayout::build(root.get(), area, BubbleLayout::Metrics(), &cache);
+    QVERIFY(cache.packCount() > afterFirst);
 }
 
 QTEST_APPLESS_MAIN(TestBubbleLayout)

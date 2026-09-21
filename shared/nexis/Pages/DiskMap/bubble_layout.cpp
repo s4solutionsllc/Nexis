@@ -26,7 +26,7 @@ void separationSweep(QVector<QPointF> &pos, const QVector<qreal> &radii)
     for (int i = 0; i < n; ++i) {
         for (int j = i + 1; j < n; ++j) {
             QPointF d = pos[j] - pos[i];
-            const qreal dist = std::hypot(d.x(), d.y());
+            const qreal dist = std::sqrt(d.x() * d.x() + d.y() * d.y());
             const qreal minDist = radii[i] + radii[j];
             if (dist < minDist) {
                 const qreal overlap = minDist - dist;
@@ -44,7 +44,9 @@ void separationSweep(QVector<QPointF> &pos, const QVector<qreal> &radii)
 // overlap rather than trading it for drift. Used both right after the
 // coarse relaxation and again after compaction, since compaction's larger
 // pull coefficient can reintroduce overlap that its own fixed 5-sweep
-// budget doesn't always fully clear.
+// budget doesn't always fully clear. The tolerance is unit-space (radii are
+// always normalised to max == 1, see build()) — 1e-4 stays well under 1px
+// once scaled back up to any plausible on-screen radius.
 void resolveOverlaps(QVector<QPointF> &pos, const QVector<qreal> &radii, int maxPasses)
 {
     const int n = pos.size();
@@ -53,9 +55,9 @@ void resolveOverlaps(QVector<QPointF> &pos, const QVector<qreal> &radii, int max
         for (int i = 0; i < n; ++i) {
             for (int j = i + 1; j < n; ++j) {
                 QPointF d = pos[j] - pos[i];
-                const qreal dist = std::hypot(d.x(), d.y());
+                const qreal dist = std::sqrt(d.x() * d.x() + d.y() * d.y());
                 const qreal minDist = radii[i] + radii[j];
-                if (dist < minDist - 0.01) {
+                if (dist < minDist - 1e-4) {
                     any = true;
                     const qreal overlap = minDist - dist;
                     const QPointF dir = dist > 1e-6 ? d / dist : QPointF(1, 0);
@@ -69,18 +71,25 @@ void resolveOverlaps(QVector<QPointF> &pos, const QVector<qreal> &radii, int max
     }
 }
 
-// Packs `radii` (already sized ∝ sqrt(value), any common scale) into
-// non-overlapping circles. Golden-angle seed + pairwise separation
-// relaxation (pulled anisotropically toward `aspect` = target width/height
-// so a wide destination rect gets a wide cluster instead of a disc) + a
-// deterministic overlap-resolution pass, then a compaction phase that
-// repeatedly pulls every circle toward the cluster centroid and resolves
-// the overlap that creates, until movement drops below 0.1px or the (small
-// but generous for n < 20) iteration budget runs out — this is what
-// actually closes the visible gaps a coarse relaxation leaves between
-// neighbouring circles. `aspect` only biases the first relaxation; the
-// compaction phase re-applies it too so the horizontal spread it bought
-// doesn't get pulled back into a disc while tightening gaps.
+// Packs `radii` into non-overlapping circles. Callers always pass unit-space
+// radii (largest == 1, see build()'s normalisation) so the convergence
+// threshold below is a meaningful fraction of the cluster's own scale
+// regardless of how large the underlying byte counts are — packing is
+// self-similar (homogeneous of degree 1 in the radii), so running it in
+// unit space and scaling the result afterwards is equivalent to running it
+// at the true scale, and immune to that scale's magnitude.
+//
+// Golden-angle seed + pairwise separation relaxation (pulled anisotropically
+// toward `aspect` = target width/height so a wide destination rect gets a
+// wide cluster instead of a disc) + a deterministic overlap-resolution pass,
+// then a compaction phase that repeatedly pulls every circle toward the
+// cluster centroid and resolves the overlap that creates, until movement
+// drops below 1e-3 (unit space) or the (small but generous for n < 20)
+// iteration budget runs out — this is what actually closes the visible gaps
+// a coarse relaxation leaves between neighbouring circles. `aspect` only
+// biases the first relaxation; the compaction phase re-applies it too so the
+// horizontal spread it bought doesn't get pulled back into a disc while
+// tightening gaps.
 PackResult pack(const QVector<qreal> &radii, qreal aspect = 1.0)
 {
     PackResult out;
@@ -131,9 +140,9 @@ PackResult pack(const QVector<qreal> &radii, qreal aspect = 1.0)
     // a chain of 3+ circles the pull just crowded together) at a much larger
     // pull coefficient — the cluster is already roughly packed by now, so a
     // big pull mostly resolves through separation rather than distorting the
-    // shape — until the cluster stops moving (< 0.1px) or the iteration
-    // budget (generous for the small-n case this matters most for) runs
-    // out. Proportional (not normalized-and-capped) so it keeps the same
+    // shape — until the cluster stops moving (< 1e-3, unit space) or the
+    // iteration budget (generous for the small-n case this matters most for)
+    // runs out. Proportional (not normalized-and-capped) so it keeps the same
     // aspect bias as the relaxation above instead of drifting back toward a
     // disc.
     const int compactIters = n <= 20 ? 3000 : (n <= 60 ? 800 : 200);
@@ -155,7 +164,7 @@ PackResult pack(const QVector<qreal> &radii, qreal aspect = 1.0)
         for (int sp = 0; sp < 5; ++sp)
             separationSweep(pos, radii);
 
-        if (maxMove < 0.1)
+        if (maxMove < 1e-3)
             break;
     }
 
@@ -203,7 +212,44 @@ QVector<DirSizeNode*> selectAndSort(DirSizeNode *parent)
     return kids;
 }
 
+BubbleLayout::PackCache::UnitPack toUnitPack(const PackResult &pr)
+{
+    BubbleLayout::PackCache::UnitPack up;
+    up.pos = pr.pos;
+    up.boundingBox = pr.boundingBox;
+    up.enclosingCenter = pr.enclosingCenter;
+    up.enclosingR = pr.enclosingR;
+    return up;
+}
+
 } // namespace
+
+void BubbleLayout::PackCache::clear()
+{
+    mNested.clear();
+    mTop.clear();
+}
+
+const BubbleLayout::PackCache::UnitPack &BubbleLayout::PackCache::nestedPack(DirSizeNode *node, const QVector<qreal> &unitRadii)
+{
+    auto it = mNested.constFind(node);
+    if (it != mNested.constEnd())
+        return it.value();
+    ++mPackCount;
+    // Nested packs go into a circular disc, so no aspect bias here.
+    return mNested.insert(node, toUnitPack(pack(unitRadii))).value();
+}
+
+const BubbleLayout::PackCache::UnitPack &BubbleLayout::PackCache::topPack(DirSizeNode *node, const QVector<qreal> &unitRadii, qreal aspect)
+{
+    const int bucket = int(std::lround(aspect / 0.05));
+    const auto key = qMakePair(static_cast<const DirSizeNode*>(node), bucket);
+    auto it = mTop.constFind(key);
+    if (it != mTop.constEnd())
+        return it.value();
+    ++mPackCount;
+    return mTop.insert(key, toUnitPack(pack(unitRadii, aspect))).value();
+}
 
 QRectF BubbleLayout::labelBandRect(const Group &g, const Metrics &m)
 {
@@ -225,7 +271,7 @@ QRectF BubbleLayout::labelBandRect(const Group &g, const Metrics &m)
     return QRectF(g.center.x() - chord / 2.0, baselineY - h / 2.0, chord, h);
 }
 
-BubbleLayout::Result BubbleLayout::build(DirSizeNode *focus, const QRectF &area, const Metrics &m)
+BubbleLayout::Result BubbleLayout::build(DirSizeNode *focus, const QRectF &area, const Metrics &m, PackCache *cache)
 {
     Result res;
     if (!focus || !focus->isDir || focus->size <= 0)
@@ -237,31 +283,46 @@ BubbleLayout::Result BubbleLayout::build(DirSizeNode *focus, const QRectF &area,
     if (tops.isEmpty())
         return res;
 
+    // Pack in unit space (largest radius == 1) — see pack()'s comment for
+    // why this is equivalent to packing at true scale. `radii` (true scale,
+    // ∝ sqrt(bytes)) is only needed afterwards to derive `unitRadii`; the
+    // final geometry below is independent of it (maxRadius cancels out).
     QVector<qreal> radii(tops.size());
-    for (int i = 0; i < tops.size(); ++i)
+    qreal maxRadius = 0;
+    for (int i = 0; i < tops.size(); ++i) {
         radii[i] = std::sqrt(static_cast<qreal>(tops[i]->size));
+        maxRadius = std::max(maxRadius, radii[i]);
+    }
+    maxRadius = std::max(maxRadius, 1e-9);
+    QVector<qreal> unitRadii(tops.size());
+    for (int i = 0; i < tops.size(); ++i)
+        unitRadii[i] = radii[i] / maxRadius;
 
     const QRectF usable = area.adjusted(m.outerMargin, m.outerMargin, -m.outerMargin, -m.outerMargin);
     if (usable.width() <= 0 || usable.height() <= 0)
         return res;
 
     const qreal aspect = usable.width() / std::max(usable.height(), 1e-6);
-    const PackResult packed = pack(radii, aspect);
+
+    PackCache::UnitPack localTop;
+    if (!cache)
+        localTop = toUnitPack(pack(unitRadii, aspect));
+    const PackCache::UnitPack &top = cache ? cache->topPack(focus, unitRadii, aspect) : localTop;
 
     // Fit the packed cluster's true bounding BOX (not a bounding circle
     // around its seed origin) into the usable rect, limited by whichever
     // dimension is tighter, so the cluster fills the card instead of
     // floating as an undersized disc in the middle of it.
-    const QRectF box = packed.boundingBox;
-    const qreal scale = std::min(usable.width() / std::max(box.width(), 1e-6),
-                                 usable.height() / std::max(box.height(), 1e-6));
-    const QPointF boxCenter = box.center();
+    const QRectF unitBox = top.boundingBox;
+    const qreal fitScale = std::min(usable.width() / std::max(unitBox.width(), 1e-6),
+                                    usable.height() / std::max(unitBox.height(), 1e-6));
+    const QPointF unitBoxCenter = unitBox.center();
     const QPointF areaCenter = usable.center();
 
     for (int i = 0; i < tops.size(); ++i) {
         DirSizeNode *node = tops[i];
-        const QPointF finalCenter = areaCenter + (packed.pos[i] - boxCenter) * scale;
-        const qreal finalRadius = radii[i] * scale;
+        const QPointF finalCenter = areaCenter + (top.pos[i] - unitBoxCenter) * fitScale;
+        const qreal finalRadius = unitRadii[i] * fitScale;
 
         const bool wantsGroup = node->isDir && !node->children.empty() && finalRadius >= m.minGroupR;
         if (!wantsGroup) {
@@ -291,17 +352,27 @@ BubbleLayout::Result BubbleLayout::build(DirSizeNode *focus, const QRectF &area,
             continue;
 
         QVector<qreal> kidRadii(kids.size());
-        for (int j = 0; j < kids.size(); ++j)
+        qreal kidMaxRadius = 0;
+        for (int j = 0; j < kids.size(); ++j) {
             kidRadii[j] = std::sqrt(static_cast<qreal>(kids[j]->size));
-        // Nested packs go into a circular disc, so no aspect bias here.
-        const PackResult kidPacked = pack(kidRadii);
-        const qreal kidScale = discR / std::max(kidPacked.enclosingR, 1e-6);
+            kidMaxRadius = std::max(kidMaxRadius, kidRadii[j]);
+        }
+        kidMaxRadius = std::max(kidMaxRadius, 1e-9);
+        QVector<qreal> unitKidRadii(kids.size());
+        for (int j = 0; j < kids.size(); ++j)
+            unitKidRadii[j] = kidRadii[j] / kidMaxRadius;
+
+        PackCache::UnitPack localKid;
+        if (!cache)
+            localKid = toUnitPack(pack(unitKidRadii));
+        const PackCache::UnitPack &kid = cache ? cache->nestedPack(node, unitKidRadii) : localKid;
+        const qreal kidFitScale = discR / std::max(kid.enclosingR, 1e-6);
 
         for (int j = 0; j < kids.size(); ++j) {
-            const qreal r = kidRadii[j] * kidScale;
+            const qreal r = unitKidRadii[j] * kidFitScale;
             if (r < m.minBubbleR)
                 continue;
-            const QPointF pos = discCenter + (kidPacked.pos[j] - kidPacked.enclosingCenter) * kidScale;
+            const QPointF pos = discCenter + (kid.pos[j] - kid.enclosingCenter) * kidFitScale;
             res.bubbles.append({pos, r, kids[j], groupIndex});
         }
     }

@@ -28,6 +28,7 @@ protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
     void leaveEvent(QEvent *event) override;
     void aboutToDrill(DirSizeNode *target, bool drillingIn) override;
+    void rootAboutToChange() override;
 
 private:
     BubbleLayout::Metrics scaledMetrics() const;
@@ -36,6 +37,10 @@ private:
     void paintLayout(QPainter &p, const BubbleLayout::Result &layout);
 
     BubbleLayout::Result mLayout;
+    // Persists across resizes (only invalidated when the tree itself is
+    // replaced, in rootAboutToChange()) so a resize/window-drag only pays
+    // for the cheap affine fit, not the O(n^2) circle-packing relaxation.
+    BubbleLayout::PackCache mPackCache;
 };
 
 #endif // BUBBLE_MAP_VIEW_H

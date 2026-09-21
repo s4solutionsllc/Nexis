@@ -51,7 +51,7 @@ BubbleLayout::Metrics BubbleMapView::scaledMetrics() const
 
 void BubbleMapView::rebuildLayout()
 {
-    mLayout = BubbleLayout::build(mFocus, QRectF(rect()), scaledMetrics());
+    mLayout = BubbleLayout::build(mFocus, QRectF(rect()), scaledMetrics(), &mPackCache);
     startCrossFadeIfArmed();
 }
 
@@ -60,6 +60,13 @@ void BubbleMapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
     Q_UNUSED(target);
     Q_UNUSED(drillingIn);
     armCrossFade();
+}
+
+void BubbleMapView::rootAboutToChange()
+{
+    // Cached nested/top-level packs are keyed by DirSizeNode* — pointers
+    // from the tree being replaced must never be looked up again.
+    mPackCache.clear();
 }
 
 void BubbleMapView::paintGroup(QPainter &p, const BubbleLayout::Group &g, bool hovered)

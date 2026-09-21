@@ -10,6 +10,8 @@
 #ifndef BUBBLE_LAYOUT_H
 #define BUBBLE_LAYOUT_H
 
+#include <QHash>
+#include <QPair>
 #include <QPointF>
 #include <QRectF>
 #include <QVector>
@@ -44,7 +46,42 @@ struct Result {
     QVector<Bubble> bubbles;
 };
 
-Result build(DirSizeNode *focus, const QRectF &area, const Metrics &m = Metrics());
+/// Caches the expensive, size-independent part of circle-packing (see
+/// build()) across affine-only resizes. Packing is done once per tree node
+/// in unit space (radii normalised so the largest is 1 — a pure function of
+/// the node's children and their sizes) and reused; only the cheap fit-to-
+/// area scale/translate is recomputed every call. Owned by the view; pass
+/// nullptr to build() to disable caching (e.g. from tests that don't want
+/// to reason about cache state). Never look up an entry keyed by a node
+/// from a tree that has since been replaced — call clear() first.
+class PackCache
+{
+public:
+    void clear();
+
+    /// Number of packs actually computed (cache misses) since construction
+    /// or the last clear() — a running total, never reset by clear() itself
+    /// (clearing just forces the *next* build() to recompute). Test seam:
+    /// assert cache effectiveness via this counter, never via timing.
+    int packCount() const { return mPackCount; }
+
+    // Internal to BubbleLayout::build() — not part of the public contract.
+    struct UnitPack {
+        QVector<QPointF> pos;
+        QRectF boundingBox;
+        QPointF enclosingCenter;
+        qreal enclosingR = 1.0;
+    };
+    const UnitPack &nestedPack(DirSizeNode *node, const QVector<qreal> &unitRadii);
+    const UnitPack &topPack(DirSizeNode *node, const QVector<qreal> &unitRadii, qreal aspect);
+
+private:
+    QHash<const DirSizeNode*, UnitPack> mNested;
+    QHash<QPair<const DirSizeNode*, int>, UnitPack> mTop;
+    int mPackCount = 0;
+};
+
+Result build(DirSizeNode *focus, const QRectF &area, const Metrics &m = Metrics(), PackCache *cache = nullptr);
 DirSizeNode *hitTest(const Result &r, const QPointF &pos);
 
 /// The rectangle a group's "name · size" label should be drawn into —
