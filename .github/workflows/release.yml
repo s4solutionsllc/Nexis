@@ -584,11 +584,14 @@ jobs:
           # immediately rather than burning the budget again per item.
           sign_with_retry() {
             local target="$1"; shift
-            local backoffs=(5 10 20 40 80)
+            # DIAGNOSTIC ONLY (SSO-24909): single attempt with --verbose=4.
+            # NOT part of the reviewed PR -- normal budget/backoffs restored
+            # before merge.
+            local backoffs=()
             local max_attempts=$((${#backoffs[@]} + 1))
             local n=1
             while [ "$n" -le "$max_attempts" ]; do
-              if run_with_timeout 60 codesign --force --sign "$IDENTITY" --timestamp "$@" "$target"; then
+              if run_with_timeout 90 codesign --force --sign "$IDENTITY" --timestamp --verbose=4 "$@" "$target"; then
                 return 0
               fi
               if [ "$n" -lt "$max_attempts" ]; then
@@ -602,16 +605,19 @@ jobs:
             return 1
           }
 
-          # Sign frameworks (inside-out)
-          while IFS= read -r -d '' fw; do
-            echo "Signing framework: $(basename "$fw")"
-            sign_with_retry "$fw" --options runtime
-          done < <(find "$APP/Contents/Frameworks" -name "*.framework" -type d -print0)
-
+          # DIAGNOSTIC ONLY (SSO-24909): dylibs signed FIRST (order swapped from
+          # the reviewed PR) to test whether a flat Mach-O .dylib from the real
+          # build also hangs, or only bundle-directory .framework targets do.
           while IFS= read -r -d '' lib; do
-            echo "Signing dylib: $(basename "$lib")"
+            echo "Signing dylib: $(basename "$lib") ($(du -h "$lib" | cut -f1))"
             sign_with_retry "$lib" --options runtime
           done < <(find "$APP/Contents/Frameworks" -name "*.dylib" -print0)
+
+          # Sign frameworks (inside-out)
+          while IFS= read -r -d '' fw; do
+            echo "Signing framework: $(basename "$fw") ($(du -sh "$fw" | cut -f1))"
+            sign_with_retry "$fw" --options runtime
+          done < <(find "$APP/Contents/Frameworks" -name "*.framework" -type d -print0)
 
           # Sign plugins
           while IFS= read -r -d '' plugin; do
