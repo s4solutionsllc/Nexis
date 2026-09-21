@@ -50,6 +50,7 @@ TreemapView::TreemapView(QWidget *parent)
     connect(mZoom, &QVariantAnimation::finished, this, [this] {
         mZoomT = 1.0;
         mFromPixmap = QPixmap();
+        mZoomTarget = nullptr;
         update();
     });
 }
@@ -80,23 +81,46 @@ void TreemapView::rebuildLayout()
             if (t.node == mZoomTarget) mZoomRect = t.rect;
     }
 
-    if (mZoomRect.isValid()) {
+    // A drill into (or out of) a folder that lays out to nothing must not
+    // animate: paintEvent's empty-state branch returns before the zoom
+    // block, which would otherwise leave input dead for the animation's
+    // duration with nothing visibly moving.
+    const bool newLayoutNonEmpty = !mLayout.tiles.isEmpty() || !mLayout.frames.isEmpty();
+    if (mZoomRect.isValid() && newLayoutNonEmpty) {
         mZoom->stop();
         mZoom->start();
+    } else {
+        mFromPixmap = QPixmap();
+        mZoomTarget = nullptr;
     }
 }
 
 void TreemapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
 {
+    if (size().isEmpty())
+        return;
     if (Utilities::prefersReducedMotion() || !isVisible())
         return;
 
-    mZoomRect = QRectF();
-    for (const auto &f : mLayout.frames)
-        if (f.node == target) mZoomRect = f.outer;
-    for (const auto &t : mLayout.tiles)
-        if (t.node == target) mZoomRect = t.rect;
+    // Nothing to cross-fade from if the outgoing view has no shapes (e.g.
+    // drilling out of a folder that laid out to nothing) — skip arming so
+    // the drill stays instant instead of fading from a blank frame.
+    if (mLayout.tiles.isEmpty() && mLayout.frames.isEmpty())
+        return;
 
+    QRectF zoomRect;
+    for (const auto &f : mLayout.frames)
+        if (f.node == target) zoomRect = f.outer;
+    for (const auto &t : mLayout.tiles)
+        if (t.node == target) zoomRect = t.rect;
+
+    // Drilling in where the target has no rect in the current layout (too
+    // small to have been tiled, or driven by another view's lockstep drill
+    // while this one was hidden) stays instant.
+    if (drillingIn && !zoomRect.isValid())
+        return;
+
+    mZoomRect = zoomRect;
     mFromPixmap = QPixmap(size() * devicePixelRatioF());
     mFromPixmap.setDevicePixelRatio(devicePixelRatioF());
     mFromPixmap.fill(mBackgroundColor);
@@ -109,7 +133,7 @@ void TreemapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
 
     mZoomTarget = target;
     mZoomIn = drillingIn;
-    mPendingZoom = drillingIn ? mZoomRect.isValid() : true;
+    mPendingZoom = true;
 }
 
 void TreemapView::resizeEvent(QResizeEvent *event)
@@ -117,6 +141,7 @@ void TreemapView::resizeEvent(QResizeEvent *event)
     mZoom->stop();
     mZoomT = 1.0;
     mFromPixmap = QPixmap();
+    mZoomTarget = nullptr;
     DiskMapView::resizeEvent(event);
 }
 
@@ -290,8 +315,10 @@ void TreemapView::paintEvent(QPaintEvent * /*event*/)
 
 void TreemapView::mouseMoveEvent(QMouseEvent *event)
 {
-    if (mZoom->state() == QAbstractAnimation::Running)
+    if (mZoom->state() == QAbstractAnimation::Running) {
+        QToolTip::hideText();
         return;
+    }
 
     DirSizeNode *node = TreemapLayout::hitTest(mLayout, event->position());
     setHoveredNode(node);

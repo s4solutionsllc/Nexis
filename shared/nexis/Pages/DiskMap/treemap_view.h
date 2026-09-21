@@ -23,6 +23,10 @@ class TreemapView : public DiskMapView
 public:
     explicit TreemapView(QWidget *parent = nullptr);
 
+    /// Test seam: true while the drill zoom/reduce-motion transition is
+    /// actively animating.
+    bool isZoomRunning() const { return mZoom->state() == QAbstractAnimation::Running; }
+
 protected:
     void rebuildLayout() override;
     void paintEvent(QPaintEvent *event) override;

@@ -756,6 +756,20 @@ add_nexis_test(NAME DiskMapDeleteConfirmTests
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )
 
+# SSO-24963: TreemapView's drill zoom transition arming invariants (hidden
+# views never animate, a shown view with a framed directory does and a
+# mid-animation resize stops it, an empty-layout drill stays instant).
+# Links against nexis-gui like DiskMapDeleteConfirmTests above because
+# TreemapView/DiskMapView live in the GUI library.
+add_nexis_test(NAME TreemapZoomTests
+  SOURCES
+    managers/test_treemap_zoom.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3736 / FW-08: DuplicateFinderService — duplicate grouping (content-
 # verified), top-N large-file ranking, empty-folder detection, exclusion
 # engine compliance, and the never-delete-last-copy invariant. Builds on
