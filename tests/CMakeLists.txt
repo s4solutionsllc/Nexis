@@ -853,6 +853,18 @@ add_nexis_test(NAME TreemapLayoutTests
     "${GUI_SHARED_DIR}/Managers"
 )
 
+# SSO-24963: BubbleLayout — pure nested bubble-pack geometry consumed by
+# BubbleMapView. Compiled directly into the test (like TreemapLayoutTests
+# above) so it runs cross-platform without pulling in nexis-gui.
+add_nexis_test(NAME BubbleLayoutTests
+  SOURCES
+    managers/test_bubble_layout.cpp
+    "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_layout.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+)
+
 # SSO-24963: DiskMapView::higherContrastColour() — the pure WCAG contrast
 # pick behind contrast-aware treemap/bubble/sunburst labels. Compiled
 # directly into the test (like TreemapLayoutTests above); disk_map_view.cpp
