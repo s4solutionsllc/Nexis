@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "Pages/DiskMap/bubble_map_view.h"
+#include "Pages/DiskMap/sunburst_view.h"
 #include "Managers/dir_size_scanner.h"
 #include "utilities.h"
 
@@ -43,7 +44,7 @@ DirSizeNodePtr buildTree()
     return root;
 }
 
-void applyTestTheme(BubbleMapView &view)
+void applyTestTheme(DiskMapView &view)
 {
     view.applyTheme(QColor("#f2f2f2"), QColor("#888888"), QColor("#202020"),
                      {QColor("#e95420"), QColor("#33cc99"), QColor("#4477ee")});
@@ -60,6 +61,7 @@ private slots:
     void shownView_fadesOnDrillInto();
     void setRootMidFade_cancelsIt();
     void resizeMidFade_cancelsIt();
+    void sunburstView_shownFadesOnDrillInto();
 };
 
 void TestDiskMapCrossFade::hiddenView_neverFadesOnDrillInto()
@@ -151,6 +153,29 @@ void TestDiskMapCrossFade::resizeMidFade_cancelsIt()
 
     view.resize(700, 500);
     QVERIFY2(!view.isCrossFadeRunning(), "resizing mid-fade must cancel it");
+}
+
+void TestDiskMapCrossFade::sunburstView_shownFadesOnDrillInto()
+{
+    if (Utilities::prefersReducedMotion())
+        QSKIP("System has reduce-motion enabled; the cross-fade is intentionally skipped there.");
+
+    SunburstView view;
+    view.resize(800, 600);
+    applyTestTheme(view);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    DirSizeNodePtr root = buildTree();
+    view.setRoot(root);
+
+    DirSizeNode *big = root->children[0].get();
+    QVERIFY(big && big->isDir);
+
+    view.drillInto(big);
+    QVERIFY2(view.isCrossFadeRunning(),
+             "drilling on a shown, non-reduced-motion SunburstView should start the cross-fade");
+    QCOMPARE(view.focus(), big);
 }
 
 QTEST_MAIN(TestDiskMapCrossFade)

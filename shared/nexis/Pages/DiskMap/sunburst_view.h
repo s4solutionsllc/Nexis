@@ -1,20 +1,19 @@
-// SSO-23862: sunburst (radial) visualization for the disk-space visualizer.
+// SSO-23862 / SSO-24963: two-ring sunburst (radial) visualization for the
+// disk-space visualizer.
 //
-// Renders mFocus's children as a single donut ring — wedge angle ∝ size,
-// with the centre hole labelled with the focus node itself — rather than a
-// multi-level ring stack, so drill-down/hover/context-menu behave exactly
-// like TreemapView and BubbleMapView (one level shown at a time, double
-// click drills in). Tree/focus/drill-stack/theme/hover/context-menu are
-// owned by DiskMapView; this class only builds and hit-tests wedge
-// geometry.
+// Two nested rings, lit wedges, hover push-out, and a drill cross-fade —
+// mirrors the treemap/bubble-map redesigns. Geometry lives in SunburstLayout
+// (SSO-24963); this class only paints it and hit-tests it. Tree/focus/
+// drill-stack/theme/hover/context-menu are owned by DiskMapView (shared with
+// TreemapView and BubbleMapView).
 
 #ifndef SUNBURST_VIEW_H
 #define SUNBURST_VIEW_H
 
-#include <QPointF>
-#include <QVector>
-
+#include "sunburst_layout.h"
 #include "disk_map_view.h"
+
+class QPainterPath;
 
 class SunburstView : public DiskMapView
 {
@@ -30,22 +29,16 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void contextMenuEvent(QContextMenuEvent *event) override;
     void leaveEvent(QEvent *event) override;
+    void aboutToDrill(DirSizeNode *target, bool drillingIn) override;
 
 private:
-    struct Wedge {
-        qreal startDeg = 0;   ///< clockwise from 12 o'clock, [0, 360)
-        qreal sweepDeg = 0;
-        DirSizeNode *node = nullptr;
-    };
+    SunburstLayout::Metrics scaledMetrics() const;
+    QPainterPath wedgePath(const SunburstLayout::Wedge &w, qreal radialOffset = 0) const;
+    void paintShadowDisc(QPainter &p);
+    void paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool hovered);
+    void paintHub(QPainter &p);
 
-    Wedge *wedgeAt(const QPointF &pos);
-
-    QPointF mCenter;
-    qreal   mOuterR = 0;
-    qreal   mInnerR = 0;
-
-    QVector<Wedge> mWedges;
-    Wedge         *mHoveredWedge = nullptr;
+    SunburstLayout::Result mLayout;
 };
 
 #endif // SUNBURST_VIEW_H
