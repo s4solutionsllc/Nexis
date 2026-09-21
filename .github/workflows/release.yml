@@ -490,6 +490,20 @@ jobs:
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          # SSO-24909: a fresh keychain keeps macOS's default auto-lock timeout,
+          # which is well under the ~15-20min Configure+Build+Unit-Tests+Deploy
+          # phase between this unlock and the first codesign call. When it
+          # relocks mid-build, codesign's private-key ACL check
+          # (SecKeyCopyAttributes -> checkIntegrity -> securityd) blocks
+          # indefinitely on a Mach IPC reply waiting for an interactive unlock
+          # prompt that can never come in headless CI -- confirmed via a live
+          # `sample` stack trace of the hung process, not guessed. This was the
+          # actual root cause of every codesign stall investigated under
+          # SSO-24905/24907/24909, not a TSA/network issue -- widening the
+          # retry budget only ever produced a slower, still-total failure.
+          # Extend the timeout well past the longest plausible build (60m job
+          # guard) so the keychain never relocks mid-job.
+          security set-keychain-settings -lut 3600 build.keychain
           security import certificate.p12 -k build.keychain \
             -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
           security set-key-partition-list -S apple-tool:,apple: \
@@ -533,35 +547,72 @@ jobs:
           #
           # `timeout(1)` isn't a stock macOS binary, so the bound is implemented
           # in pure bash rather than depending on GNU coreutils being on PATH.
+          #
+          # SSO-24909: poll every 0.2s instead of 1s for the first 2s so a
+          # codesign call that returns quickly isn't held to a full-second
+          # minimum — measured at ~1.07s/item (82s for 77 items) under the
+          # old flat 1s granularity, almost entirely poll overhead. Falls
+          # back to 1s polling after that: a first attempt at polling the
+          # full budget at 0.2s (300 iterations for a 60s budget) measured
+          # ~92-98s wall time on the actual macos-14 runner instead of the
+          # intended ~62s -- fork+exec overhead for `sleep 0.2` 300 times
+          # over, non-negligible on that runner, was silently inflating the
+          # per-attempt ceiling by ~50%. Most codesign calls finish well
+          # inside 2s on the healthy path, so the fast phase still captures
+          # nearly all of the Gap 1 win; the slow phase keeps a stalled call
+          # bounded close to the stated `secs` ceiling, same as before.
           run_with_timeout() {
             local secs="$1"; shift
             "$@" &
-            local pid=$! waited=0
+            local pid=$! elapsed_ms=0
+            local budget_ms=$((secs * 1000))
+            local fast_phase_ms=2000
             while kill -0 "$pid" 2>/dev/null; do
-              if [ "$waited" -ge "$secs" ]; then
+              if [ "$elapsed_ms" -ge "$budget_ms" ]; then
                 kill -TERM "$pid" 2>/dev/null || true
                 sleep 2
                 kill -KILL "$pid" 2>/dev/null || true
                 wait "$pid" 2>/dev/null
                 return 124
               fi
-              sleep 1
-              waited=$((waited + 1))
+              if [ "$elapsed_ms" -lt "$fast_phase_ms" ]; then
+                sleep 0.2
+                elapsed_ms=$((elapsed_ms + 200))
+              else
+                sleep 1
+                elapsed_ms=$((elapsed_ms + 1000))
+              fi
             done
             wait "$pid"
           }
 
+          # SSO-24909: widened from 3 flat attempts (~3.5min total patience,
+          # which a real TSA stall on dry-run 1 burned through without ever
+          # getting through) to 6 attempts with exponential backoff (~10m45s
+          # total patience per item: 6 * 60s attempts + 5+10+20+40+80s backoff).
+          # That's enough to ride out a short TSA blip while staying far below
+          # the build-macos job's 60m guard and leaving headroom for the rest
+          # of the pipeline. A sustained outage still exhausts the budget and
+          # fails loud, unchanged from SSO-24907 Must 4 -- `set -euo pipefail`
+          # means the first item to exhaust its budget aborts the step
+          # immediately rather than burning the budget again per item.
           sign_with_retry() {
             local target="$1"; shift
-            local n
-            for n in 1 2 3; do
+            local backoffs=(5 10 20 40 80)
+            local max_attempts=$((${#backoffs[@]} + 1))
+            local n=1
+            while [ "$n" -le "$max_attempts" ]; do
               if run_with_timeout 60 codesign --force --sign "$IDENTITY" --timestamp "$@" "$target"; then
                 return 0
               fi
-              echo "::warning::codesign attempt $n/3 failed or timed out for $(basename "$target"), retrying in 5s..."
-              sleep 5
+              if [ "$n" -lt "$max_attempts" ]; then
+                local delay="${backoffs[$((n - 1))]}"
+                echo "::warning::codesign attempt $n/$max_attempts failed or timed out for $(basename "$target"), retrying in ${delay}s..."
+                sleep "$delay"
+              fi
+              n=$((n + 1))
             done
-            echo "::error::codesign failed after 3 attempts for $(basename "$target")"
+            echo "::error::codesign failed after $max_attempts attempts for $(basename "$target")"
             return 1
           }
 
@@ -609,34 +660,50 @@ jobs:
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
 
           # SSO-24907: same bounded-retry rationale as the .app signing step above.
+          # SSO-24909: same hybrid fast/slow polling + widened backoff budget as
+          # the .app signing step above -- see the comments there for the numbers.
           run_with_timeout() {
             local secs="$1"; shift
             "$@" &
-            local pid=$! waited=0
+            local pid=$! elapsed_ms=0
+            local budget_ms=$((secs * 1000))
+            local fast_phase_ms=2000
             while kill -0 "$pid" 2>/dev/null; do
-              if [ "$waited" -ge "$secs" ]; then
+              if [ "$elapsed_ms" -ge "$budget_ms" ]; then
                 kill -TERM "$pid" 2>/dev/null || true
                 sleep 2
                 kill -KILL "$pid" 2>/dev/null || true
                 wait "$pid" 2>/dev/null
                 return 124
               fi
-              sleep 1
-              waited=$((waited + 1))
+              if [ "$elapsed_ms" -lt "$fast_phase_ms" ]; then
+                sleep 0.2
+                elapsed_ms=$((elapsed_ms + 200))
+              else
+                sleep 1
+                elapsed_ms=$((elapsed_ms + 1000))
+              fi
             done
             wait "$pid"
           }
 
           DMG="build/output/nexis.dmg"
           echo "Signing dmg: $(basename "$DMG")"
-          for n in 1 2 3; do
+          backoffs=(5 10 20 40 80)
+          max_attempts=$((${#backoffs[@]} + 1))
+          n=1
+          while [ "$n" -le "$max_attempts" ]; do
             if run_with_timeout 60 codesign --force --sign "$IDENTITY" --timestamp "$DMG"; then
               exit 0
             fi
-            echo "::warning::codesign attempt $n/3 failed or timed out for $(basename "$DMG"), retrying in 5s..."
-            sleep 5
+            if [ "$n" -lt "$max_attempts" ]; then
+              delay="${backoffs[$((n - 1))]}"
+              echo "::warning::codesign attempt $n/$max_attempts failed or timed out for $(basename "$DMG"), retrying in ${delay}s..."
+              sleep "$delay"
+            fi
+            n=$((n + 1))
           done
-          echo "::error::codesign failed after 3 attempts for $(basename "$DMG")"
+          echo "::error::codesign failed after $max_attempts attempts for $(basename "$DMG")"
           exit 1
 
       - name: Notarize .dmg
