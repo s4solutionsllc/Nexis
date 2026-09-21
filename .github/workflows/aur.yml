@@ -118,9 +118,16 @@ jobs:
           # merge queue land it. That needs a PAT-backed identity: the default
           # GITHUB_TOKEN is blocked from creating PRs in this repo (SSO-24052),
           # and a GITHUB_TOKEN push would not trigger the PR's required checks
-          # either. CROWDIN_SYNC_TOKEN is the repo's existing PAT-backed
-          # identity (crowdin-sync.yml); reuse it.
-          GH_TOKEN: ${{ secrets.CROWDIN_SYNC_TOKEN }}
+          # either. CROWDIN_SYNC_TOKEN (a Crowdin-sync-scoped credential) was
+          # reused here and doesn't have push/PR rights against this repo —
+          # every mirror-back 403'd (SSO-24952). S4_AGENTS_DELIVERY_RW is the
+          # org's repo-write delivery credential for s4solutionsllc repos;
+          # use it instead. Note: the Actions secret is named without the
+          # `GITHUB_` prefix that the agent-sandbox env var of the same
+          # credential carries (TOOLS.md) — GitHub Actions rejects secret
+          # names starting with `GITHUB_` as reserved, so that prefixed name
+          # can never resolve here.
+          GH_TOKEN: ${{ secrets.S4_AGENTS_DELIVERY_RW }}
         # Root cause of the recurring linux/aur drift: the steps above sed
         # pkgver/pkgrel into an ephemeral checkout, and KSXGitHub/
         # github-actions-deploy-aur fills sha256sums (updpkgsums) + regenerates
@@ -138,7 +145,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::CROWDIN_SYNC_TOKEN is not set — cannot open the linux/aur sync PR. The AUR publish itself succeeded."
+            echo "::error::S4_AGENTS_DELIVERY_RW is not set — cannot open the linux/aur sync PR. The AUR publish itself succeeded."
             exit 1
           fi
 
