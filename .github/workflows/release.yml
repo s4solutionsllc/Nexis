@@ -502,7 +502,12 @@ jobs:
           # SSO-24905/24907/24909, not a TSA/network issue -- widening the
           # retry budget only ever produced a slower, still-total failure.
           # Extend the timeout well past the longest plausible build (60m job
-          # guard) so the keychain never relocks mid-job.
+          # guard) so the keychain never relocks mid-job. Spelled out since
+          # this exact line was once described as "disabling" the timeout
+          # (SSO-24946): it does the opposite. `-u` *enables* lock-after-
+          # timeout (omitting it would disable that lock entirely), `-t 3600`
+          # sets that timeout to 1h, and `-l` separately enables lock-on-
+          # sleep. This is a 1h extension of the default, not a disable.
           security set-keychain-settings -lut 3600 build.keychain
           security import certificate.p12 -k build.keychain \
             -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
@@ -615,6 +620,31 @@ jobs:
             echo "::error::codesign failed after $max_attempts attempts for $(basename "$target")"
             return 1
           }
+
+          # SSO-24946: verify the keychain didn't relock before wasting a
+          # retry budget on a state retrying can never fix. `security
+          # show-keychain-info` only reads keychain-level settings
+          # (lock-on-sleep + timeout) and should return in single-digit
+          # milliseconds -- but empirically (workflow_dispatch run
+          # 35627157270, step "DIAG ONLY -- show-keychain-info while
+          # locked") it blocks indefinitely on a LOCKED keychain instead of
+          # reporting a lock state in its output: there is no
+          # "locked"/"unlocked" text to parse, the confirmed output is just
+          # `Keychain "build.keychain" lock-on-sleep timeout=3600s`, and a
+          # locked keychain makes the call simply never return -- the same
+          # securityd private-key ACL block codesign hits, one step
+          # earlier. So this doesn't parse the probe's output; it bounds
+          # how long we wait for it, reusing run_with_timeout above. An
+          # unlocked keychain returns near-instantly (measured <15ms on the
+          # runner), so this costs nothing on the healthy path; not
+          # returning within the bound is, empirically, what a locked
+          # keychain looks like here, and failing loud at that point costs
+          # ~5s instead of the ~10m45s sign_with_retry would spend
+          # rediscovering the same thing one framework at a time.
+          if ! run_with_timeout 5 security show-keychain-info build.keychain; then
+            echo "::error::build.keychain did not respond to 'security show-keychain-info' within 5s -- consistent with the keychain having relocked mid-build (the same securityd private-key ACL block that hangs codesign). Failing now instead of entering the signing retry loop, which cannot unlock a keychain and would only spend ~10 more minutes finding that out one framework at a time."
+            exit 1
+          fi
 
           # Sign frameworks (inside-out)
           while IFS= read -r -d '' fw; do
