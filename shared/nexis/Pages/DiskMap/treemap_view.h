@@ -2,8 +2,8 @@
 //
 // TreemapView paints a squarified treemap (Bruls/Huijsing/van Wijk) of a
 // DirSizeNode subtree. Tree/focus/drill-stack/theme/hover/context-menu are
-// owned by DiskMapView (SSO-23862) — this class only builds and hit-tests
-// the tile geometry.
+// owned by DiskMapView (SSO-23862) — this class only builds and paints the
+// tile/frame geometry (SSO-24963: geometry now lives in TreemapLayout).
 
 #ifndef TREEMAP_VIEW_H
 #define TREEMAP_VIEW_H
@@ -12,6 +12,7 @@
 #include <QVector>
 
 #include "disk_map_view.h"
+#include "treemap_layout.h"
 
 class TreemapView : public DiskMapView
 {
@@ -29,25 +30,11 @@ protected:
     void leaveEvent(QEvent *event) override;
 
 private:
-    struct Tile {
-        QRectF rect;
-        DirSizeNode *node = nullptr;
-        int depth = 0;        ///< 0 == focus's children; deeper for nested
-    };
+    TreemapLayout::Metrics scaledMetrics() const;
+    void paintLayout(QPainter &p, const TreemapLayout::Result &layout, qreal opacity);
+    void paintTile(QPainter &p, const QRectF &r, DirSizeNode *node, bool hovered);
 
-    void squarify(const QVector<DirSizeNode*> &items,
-                  QRectF rect,
-                  qreal pendingValue,
-                  int depth);
-    void layoutRow(const QVector<DirSizeNode*> &row,
-                   qreal rowSum,
-                   qreal pendingValue,
-                   QRectF &remaining,
-                   int depth);
-    Tile *tileAt(const QPointF &pos);
-
-    QVector<Tile> mTiles;
-    Tile         *mHoveredTile = nullptr;
+    TreemapLayout::Result mLayout;
 };
 
 #endif // TREEMAP_VIEW_H

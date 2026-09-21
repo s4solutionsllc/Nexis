@@ -1,179 +1,141 @@
 #include "treemap_view.h"
 
 #include <QContextMenuEvent>
+#include <QLinearGradient>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 #include <QToolTip>
 
 #include <algorithm>
-#include <limits>
 
-namespace {
-
-qreal worstAspect(const QVector<DirSizeNode*> &row, qint64 sum, qreal width)
-{
-    if (row.isEmpty() || sum <= 0 || width <= 0)
-        return std::numeric_limits<qreal>::infinity();
-
-    qint64 maxVal = 0, minVal = std::numeric_limits<qint64>::max();
-    for (auto *n : row) {
-        maxVal = std::max(maxVal, n->size);
-        minVal = std::min(minVal, n->size);
-    }
-    // Treat zero-byte items as 1 so the divisor doesn't explode.
-    if (minVal <= 0) minVal = 1;
-
-    const qreal s2 = static_cast<qreal>(sum) * static_cast<qreal>(sum);
-    const qreal w2 = width * width;
-    const qreal worst = std::max(w2 * maxVal / s2, s2 / (w2 * minVal));
-    return worst;
-}
-
-} // namespace
+#include "dpi.h"
 
 TreemapView::TreemapView(QWidget *parent)
     : DiskMapView(parent)
 {
 }
 
+TreemapLayout::Metrics TreemapView::scaledMetrics() const
+{
+    TreemapLayout::Metrics m;
+    m.frameGap  = Dpi::scale(6);  m.tileGap   = Dpi::scale(3);
+    m.headerH   = Dpi::scale(18); m.minFrameW = Dpi::scale(90);
+    m.minFrameH = Dpi::scale(60);
+    return m;
+}
+
 void TreemapView::rebuildLayout()
 {
-    mTiles.clear();
-    mHoveredTile = nullptr;
-    if (!mFocus || !mFocus->isDir || mFocus->size <= 0)
-        return;
-
-    QVector<DirSizeNode*> children;
-    children.reserve(static_cast<int>(mFocus->children.size()));
-    qreal totalValue = 0;
-    for (auto &c : mFocus->children) {
-        if (c->size > 0) {
-            children.append(c.get());
-            totalValue += c->size;
-        }
-    }
-    std::sort(children.begin(), children.end(),
-              [](DirSizeNode *a, DirSizeNode *b) { return a->size > b->size; });
-
-    const QRectF area(rect().adjusted(0, 0, -1, -1));
-    if (area.width() <= 0 || area.height() <= 0 || totalValue <= 0)
-        return;
-
-    squarify(children, area, totalValue, 0);
+    const qreal pad = Dpi::scale(3);
+    mLayout = TreemapLayout::build(mFocus, QRectF(rect()).adjusted(pad, pad, -pad, -pad), scaledMetrics());
 }
 
-// Squarified treemap (Bruls, Huijsing, van Wijk 2000). `pendingValue` is the
-// sum of the values that still need to fit into `rect`; every recursive call
-// keeps the invariant that rect.area() corresponds exactly to pendingValue
-// at the current scale, which is what makes the strip math come out clean.
-void TreemapView::squarify(const QVector<DirSizeNode*> &items,
-                           QRectF rect,
-                           qreal pendingValue,
-                           int depth)
+void TreemapView::paintTile(QPainter &p, const QRectF &rectIn, DirSizeNode *node, bool hovered)
 {
-    if (items.isEmpty() || rect.width() <= 1 || rect.height() <= 1 ||
-        pendingValue <= 0)
-        return;
+    QRectF r = rectIn;
+    const qreal radius = std::min<qreal>(Dpi::scale(5), std::min(r.width(), r.height()) / 2);
+    const bool tiny = std::min(r.width(), r.height()) < 4;
 
-    QVector<DirSizeNode*> row;
-    qreal rowSum = 0;
-    qreal shortSide = std::min(rect.width(), rect.height());
-
-    int i = 0;
-    while (i < items.size()) {
-        DirSizeNode *cand = items[i];
-        QVector<DirSizeNode*> withCand = row;
-        withCand.append(cand);
-        const qreal candSum = rowSum + cand->size;
-
-        const qreal worstBefore = worstAspect(row, static_cast<qint64>(rowSum),
-                                              shortSide);
-        const qreal worstAfter  = worstAspect(withCand, static_cast<qint64>(candSum),
-                                              shortSide);
-
-        if (row.isEmpty() || worstAfter <= worstBefore) {
-            row = std::move(withCand);
-            rowSum = candSum;
-            ++i;
-        } else {
-            layoutRow(row, rowSum, pendingValue, rect, depth);
-            pendingValue -= rowSum;
-            row.clear();
-            rowSum = 0;
-            shortSide = std::min(rect.width(), rect.height());
+    QColor shadow = mBackgroundColor.darker(260);
+    if (hovered) {
+        r.translate(0, -Dpi::scale(2));
+        if (!tiny) {
+            for (int i = 4; i >= 1; --i) {
+                shadow.setAlpha(28);
+                p.setPen(Qt::NoPen); p.setBrush(shadow);
+                p.drawRoundedRect(r.adjusted(-i, -i + 3, i, i + 3), radius + i, radius + i);
+            }
         }
+    } else if (!tiny) {
+        shadow.setAlpha(110);
+        p.setPen(Qt::NoPen); p.setBrush(shadow);
+        p.drawRoundedRect(r.translated(0, 1), radius, radius);
     }
-    if (!row.isEmpty())
-        layoutRow(row, rowSum, pendingValue, rect, depth);
-}
 
-void TreemapView::layoutRow(const QVector<DirSizeNode*> &row,
-                            qreal rowSum,
-                            qreal pendingValue,
-                            QRectF &remaining,
-                            int depth)
-{
-    if (rowSum <= 0 || row.isEmpty() || pendingValue <= 0)
-        return;
+    const QColor base = colourFor(node);
+    QLinearGradient g(r.topLeft(), r.bottomRight());
+    g.setColorAt(0.0, base.lighter(128));
+    g.setColorAt(0.45, base);
+    g.setColorAt(1.0, base.darker(128));
+    p.setPen(Qt::NoPen);
+    p.setBrush(g);
+    p.drawRoundedRect(r, radius, radius);
 
-    const bool horizontalSlab = remaining.width() >= remaining.height();
-    const qreal share = rowSum / pendingValue;
+    if (!tiny && r.width() > 2 * radius) {
+        QColor hi = base.lighter(170); hi.setAlpha(120);
+        p.setPen(QPen(hi, 1));
+        p.drawLine(QPointF(r.left() + radius, r.top() + 0.5), QPointF(r.right() - radius, r.top() + 0.5));
+    }
 
-    if (horizontalSlab) {
-        // Strip eats from the left; height = remaining.height(); width =
-        // share × remaining.width() so its area is `share × remaining.area`.
-        qreal stripW = remaining.width() * share;
-        stripW = std::min(stripW, remaining.width());
-        QRectF strip(remaining.x(), remaining.y(), stripW, remaining.height());
+    if (hovered) {
+        p.setBrush(Qt::NoBrush);
+        p.setPen(QPen(mTextColor, 1.5));
+        p.drawRoundedRect(r, radius, radius);
+    }
 
-        qreal y = strip.y();
-        for (int idx = 0; idx < row.size(); ++idx) {
-            DirSizeNode *n = row[idx];
-            const qreal h = (idx == row.size() - 1)
-                ? strip.bottom() - y
-                : strip.height() * (static_cast<qreal>(n->size) / rowSum);
-            Tile t;
-            t.rect  = QRectF(strip.x(), y, strip.width(), h);
-            t.node  = n;
-            t.depth = depth;
-            mTiles.append(t);
-            y += h;
-        }
-        remaining = QRectF(strip.right(), remaining.y(),
-                           remaining.width() - strip.width(),
-                           remaining.height());
-    } else {
-        qreal stripH = remaining.height() * share;
-        stripH = std::min(stripH, remaining.height());
-        QRectF strip(remaining.x(), remaining.y(), remaining.width(), stripH);
-
-        qreal x = strip.x();
-        for (int idx = 0; idx < row.size(); ++idx) {
-            DirSizeNode *n = row[idx];
-            const qreal w = (idx == row.size() - 1)
-                ? strip.right() - x
-                : strip.width() * (static_cast<qreal>(n->size) / rowSum);
-            Tile t;
-            t.rect  = QRectF(x, strip.y(), w, strip.height());
-            t.node  = n;
-            t.depth = depth;
-            mTiles.append(t);
-            x += w;
-        }
-        remaining = QRectF(remaining.x(), strip.bottom(),
-                           remaining.width(),
-                           remaining.height() - strip.height());
+    const bool full = r.width() >= 60 && r.height() >= 22;
+    if (full || (r.width() >= 40 && r.height() >= 14)) {
+        p.setPen(mTextColor);
+        QFont f = p.font(); f.setPointSizeF(full ? 10.0 : 9.0); p.setFont(f);
+        const QRectF tr = r.adjusted(5, 3, -5, -3);
+        const QString name = p.fontMetrics().elidedText(node->name, Qt::ElideRight, int(tr.width()));
+        p.drawText(tr, Qt::AlignLeft | Qt::AlignTop,
+                   full ? name + "\n" + formatBytes(node->size) : name);
     }
 }
 
-TreemapView::Tile *TreemapView::tileAt(const QPointF &pos)
+void TreemapView::paintLayout(QPainter &p, const TreemapLayout::Result &layout, qreal opacity)
 {
-    // Iterate in reverse so smaller tiles (which come last) win when nested.
-    for (int i = mTiles.size() - 1; i >= 0; --i) {
-        if (mTiles[i].rect.contains(pos))
-            return &mTiles[i];
+    p.save();
+    p.setOpacity(opacity);
+    const qreal fr = Dpi::scale(8);
+    for (const auto &f : layout.frames) {
+        const QColor hue = colourFor(f.node);
+        QColor shadow = mBackgroundColor.darker(260);
+        for (int i = 3; i >= 1; --i) {
+            shadow.setAlpha(24);
+            p.setPen(Qt::NoPen); p.setBrush(shadow);
+            p.drawRoundedRect(f.outer.adjusted(-i, -i + 3, i, i + 3), fr + i, fr + i);
+        }
+        QColor fill = hue;   fill.setAlpha(38);
+        QColor edge = hue.lighter(130); edge.setAlpha(110);
+        p.setBrush(mBackgroundColor); p.setPen(Qt::NoPen);
+        p.drawRoundedRect(f.outer, fr, fr);
+        p.setBrush(fill); p.setPen(QPen(edge, 1));
+        p.drawRoundedRect(f.outer, fr, fr);
+
+        QColor strip = hue; strip.setAlpha(80);
+        QPainterPath clip; clip.addRoundedRect(f.outer, fr, fr);
+        p.save(); p.setClipPath(clip); p.fillRect(f.header, strip); p.restore();
+
+        p.setPen(mTextColor);
+        QFont hf = p.font(); hf.setPointSizeF(9.5); hf.setBold(true); p.setFont(hf);
+        const QRectF ht = f.header.adjusted(7, 0, -7, 0);
+        const QString size = formatBytes(f.node->size);
+        const int sizeW = p.fontMetrics().horizontalAdvance(size) + 8;
+        p.drawText(ht, Qt::AlignVCenter | Qt::AlignLeft,
+                   p.fontMetrics().elidedText(f.node->name, Qt::ElideRight, int(ht.width()) - sizeW));
+        hf.setBold(false); p.setFont(hf);
+        p.drawText(ht, Qt::AlignVCenter | Qt::AlignRight, size);
     }
-    return nullptr;
+    const TreemapLayout::Tile *hot = nullptr;
+    for (const auto &t : layout.tiles) {
+        if (t.node == hoveredNode()) { hot = &t; continue; }
+        paintTile(p, t.rect, t.node, false);
+    }
+    if (hot)
+        paintTile(p, hot->rect, hot->node, true);
+
+    for (const auto &f : layout.frames) {
+        if (f.node == hoveredNode()) {
+            p.setBrush(Qt::NoBrush);
+            p.setPen(QPen(mTextColor, 1.5));
+            p.drawRoundedRect(f.outer, fr, fr);
+            break;
+        }
+    }
+    p.restore();
 }
 
 void TreemapView::paintEvent(QPaintEvent * /*event*/)
@@ -182,7 +144,8 @@ void TreemapView::paintEvent(QPaintEvent * /*event*/)
         return;
 
     QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, false);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setRenderHint(QPainter::TextAntialiasing);
 
     p.fillRect(rect(), mBackgroundColor);
 
@@ -193,53 +156,25 @@ void TreemapView::paintEvent(QPaintEvent * /*event*/)
         return;
     }
 
-    if (mTiles.isEmpty()) {
+    if (mLayout.tiles.isEmpty() && mLayout.frames.isEmpty()) {
         p.setPen(mTextColor);
         p.drawText(rect(), Qt::AlignCenter,
                    tr("This folder is empty."));
         return;
     }
 
-    for (const Tile &t : mTiles) {
-        const QColor base = colourFor(t.node);
-        p.fillRect(t.rect, base);
-        p.setPen(QPen(mBorderColor, 1));
-        p.drawRect(t.rect.adjusted(0, 0, -1, -1));
-
-        // Tile label: only if there's enough room.
-        if (t.rect.width() >= 60 && t.rect.height() >= 22) {
-            const QString label = t.node->name + "\n" + formatBytes(t.node->size);
-            QRectF textRect = t.rect.adjusted(4, 2, -4, -2);
-            p.setPen(mTextColor);
-            QFont f = p.font();
-            f.setPointSizeF(std::max(8.0, std::min(11.0, textRect.height() / 5.0)));
-            p.setFont(f);
-            p.drawText(textRect,
-                       Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
-                       label);
-        }
-    }
-
-    if (mHoveredTile) {
-        QPen pen(mTextColor, 2);
-        p.setPen(pen);
-        p.setBrush(Qt::NoBrush);
-        p.drawRect(mHoveredTile->rect.adjusted(1, 1, -2, -2));
-    }
+    paintLayout(p, mLayout, 1.0);
 }
 
 void TreemapView::mouseMoveEvent(QMouseEvent *event)
 {
-    Tile *t = tileAt(event->position());
-    if (t != mHoveredTile) {
-        mHoveredTile = t;
-        setHoveredNode(t ? t->node : nullptr);
-    }
-    if (t) {
+    DirSizeNode *node = TreemapLayout::hitTest(mLayout, event->position());
+    setHoveredNode(node);
+    if (node) {
         QToolTip::showText(event->globalPosition().toPoint(),
                            QString("%1\n%2")
-                               .arg(t->node->path)
-                               .arg(formatBytes(t->node->size)),
+                               .arg(node->path)
+                               .arg(formatBytes(node->size)),
                            this);
     } else {
         QToolTip::hideText();
@@ -248,21 +183,18 @@ void TreemapView::mouseMoveEvent(QMouseEvent *event)
 
 void TreemapView::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    Tile *t = tileAt(event->position());
-    requestDrillIfDir(t ? t->node : nullptr);
+    DirSizeNode *node = TreemapLayout::hitTest(mLayout, event->position());
+    requestDrillIfDir(node);
 }
 
 void TreemapView::contextMenuEvent(QContextMenuEvent *event)
 {
-    Tile *t = tileAt(event->pos());
-    showContextMenuFor(t ? t->node : nullptr, event->globalPos());
+    DirSizeNode *node = TreemapLayout::hitTest(mLayout, event->pos());
+    showContextMenuFor(node, event->globalPos());
 }
 
 void TreemapView::leaveEvent(QEvent * /*event*/)
 {
-    if (mHoveredTile) {
-        mHoveredTile = nullptr;
-        setHoveredNode(nullptr);
-    }
+    setHoveredNode(nullptr);
     QToolTip::hideText();
 }
