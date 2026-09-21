@@ -13,6 +13,7 @@
 #define DISK_MAP_VIEW_H
 
 #include <QColor>
+#include <QHash>
 #include <QString>
 #include <QVector>
 #include <QWidget>
@@ -45,11 +46,12 @@ public:
     /// focus). No-op if it isn't a directory.
     void drillInto(DirSizeNode *node);
 
-    /// Apply text/border colours fetched from the active theme. Called by
-    /// the dialog when the theme changes.
+    /// Apply text/border/background colours and the hue palette fetched from
+    /// the active theme. Called by the dialog when the theme changes.
     void applyTheme(const QColor &textColor,
                     const QColor &borderColor,
-                    const QColor &backgroundColor);
+                    const QColor &backgroundColor,
+                    const QVector<QColor> &palette);
 
 signals:
     /// Emitted when the user hovers a shape so the dialog status bar can
@@ -90,18 +92,26 @@ protected:
 
     static QString formatBytes(qint64 bytes);
 
-    /// Stable per-node colour (directories read warmer than files) so the
-    /// same subtree keeps the same colour across mode switches.
-    static QColor colourFor(DirSizeNode *node);
+    /// Per-node colour, derived from the theme hue palette assigned to its
+    /// top-level ancestor by assignHues() (directories read warmer than
+    /// files) so the same subtree keeps the same colour across mode
+    /// switches.
+    QColor colourFor(DirSizeNode *node) const;
 
     DirSizeNodePtr        mRoot;      ///< keeps the tree alive
     DirSizeNode           *mFocus = nullptr;
     QVector<DirSizeNode*>  mPath;     ///< drill stack (excluding focus)
     DirSizeNode           *mHoveredNode = nullptr;
 
-    QColor mTextColor       = QColor(0xee, 0xee, 0xee);
-    QColor mBorderColor     = QColor(0x10, 0x10, 0x10);
-    QColor mBackgroundColor = QColor(0x1e, 0x1e, 0x1e);
+    QColor mTextColor;
+    QColor mBorderColor;
+    QColor mBackgroundColor;
+    QVector<QColor> mPalette;
+
+private:
+    struct HueSlot { int hue = 0; int depth = 0; int rank = 0; };
+    QHash<const DirSizeNode*, HueSlot> mHueSlots;
+    void assignHues();
 };
 
 #endif // DISK_MAP_VIEW_H

@@ -121,6 +121,9 @@ BubbleMapView::Circle *BubbleMapView::circleAt(const QPointF &pos)
 
 void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
 {
+    if (!mBackgroundColor.isValid())
+        return;
+
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, true);
     p.fillRect(rect(), mBackgroundColor);
@@ -157,7 +160,7 @@ void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
     }
 
     if (mHoveredCircle) {
-        QPen pen(mTextColor, 2);
+        QPen pen(mTextColor, 1.5);
         p.setPen(pen);
         p.setBrush(Qt::NoBrush);
         p.drawEllipse(mHoveredCircle->center,

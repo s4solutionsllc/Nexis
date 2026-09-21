@@ -94,6 +94,9 @@ SunburstView::Wedge *SunburstView::wedgeAt(const QPointF &pos)
 
 void SunburstView::paintEvent(QPaintEvent * /*event*/)
 {
+    if (!mBackgroundColor.isValid())
+        return;
+
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, true);
     p.fillRect(rect(), mBackgroundColor);
@@ -151,7 +154,7 @@ void SunburstView::paintEvent(QPaintEvent * /*event*/)
     }
 
     if (mHoveredWedge) {
-        QPen pen(mTextColor, 2);
+        QPen pen(mTextColor, 1.5);
         p.setPen(pen);
         p.setBrush(Qt::NoBrush);
         p.drawPath(donutPath(*mHoveredWedge));

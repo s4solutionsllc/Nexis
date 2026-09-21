@@ -398,8 +398,14 @@ void DiskMapPage::applyThemeColors()
                                             sv->value("@color03")).toString());
     const QColor bg     = QColor(sv->value("@chartBackgroundColor",
                                             sv->value("@color01")).toString());
+    QVector<QColor> palette;
+    for (int i = 1; i <= 8; ++i) {
+        const QColor c(sv->value(QStringLiteral("@diskMapHue%1").arg(i)).toString());
+        if (c.isValid())
+            palette.append(c);
+    }
     for (DiskMapView *v : mViews)
-        v->applyTheme(text, border, bg);
+        v->applyTheme(text, border, bg, palette);
     if (text.isValid())
         mStatusLabel->setStyleSheet(QString("color: %1;").arg(text.name()));
     if (text.isValid())

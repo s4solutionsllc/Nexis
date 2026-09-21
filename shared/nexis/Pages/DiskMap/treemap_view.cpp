@@ -178,6 +178,9 @@ TreemapView::Tile *TreemapView::tileAt(const QPointF &pos)
 
 void TreemapView::paintEvent(QPaintEvent * /*event*/)
 {
+    if (!mBackgroundColor.isValid())
+        return;
+
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, false);
 

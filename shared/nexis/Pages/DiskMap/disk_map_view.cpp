@@ -5,25 +5,8 @@
 #include <QMenu>
 #include <QResizeEvent>
 
-namespace {
-
-// Stable colour pick — keeps the same shape colour across re-layouts (and
-// across mode switches, since it's keyed on name, not geometry) so the eye
-// can follow a "hot" directory while drilling or switching visualizations.
-QColor stableColor(const QString &key, qreal saturation, qreal value)
-{
-    // Mix the name into a hue; simple FNV-1a so we don't drag in QHash::hash
-    // determinism guarantees.
-    quint32 h = 2166136261u;
-    for (QChar c : key)
-        h = (h ^ c.unicode()) * 16777619u;
-    qreal hue = static_cast<qreal>(h % 360);
-    QColor c;
-    c.setHsvF(hue / 360.0, saturation, value);
-    return c;
-}
-
-} // namespace
+#include <algorithm>
+#include <functional>
 
 DiskMapView::DiskMapView(QWidget *parent)
     : QWidget(parent)
@@ -40,17 +23,20 @@ void DiskMapView::setRoot(DirSizeNodePtr root)
     mFocus = mRoot.get();
     mPath.clear();
     mHoveredNode = nullptr;
+    assignHues();
     rebuildLayout();
     update();
 }
 
 void DiskMapView::applyTheme(const QColor &textColor,
                              const QColor &borderColor,
-                             const QColor &backgroundColor)
+                             const QColor &backgroundColor,
+                             const QVector<QColor> &palette)
 {
     if (textColor.isValid())       mTextColor = textColor;
     if (borderColor.isValid())     mBorderColor = borderColor;
     if (backgroundColor.isValid()) mBackgroundColor = backgroundColor;
+    if (!palette.isEmpty())        mPalette = palette;
     update();
 }
 
@@ -60,6 +46,7 @@ bool DiskMapView::drillUp()
         return false;
     mFocus = mPath.takeLast();
     mHoveredNode = nullptr;
+    assignHues();
     rebuildLayout();
     update();
     return true;
@@ -72,6 +59,7 @@ void DiskMapView::drillInto(DirSizeNode *node)
     mPath.append(mFocus);
     mFocus = node;
     mHoveredNode = nullptr;
+    assignHues();
     rebuildLayout();
     update();
 }
@@ -131,10 +119,48 @@ QString DiskMapView::formatBytes(qint64 b)
     return QString::number(v, 'f', v < 10 ? 2 : 1) + " " + suffixes[i];
 }
 
-QColor DiskMapView::colourFor(DirSizeNode *node)
+void DiskMapView::assignHues()
 {
-    // Saturate/desaturate by leaf vs dir so directories read as warmer.
-    const qreal sat = node->isDir ? 0.55 : 0.35;
-    const qreal val = node->isDir ? 0.75 : 0.65;
-    return stableColor(node->name.isEmpty() ? node->path : node->name, sat, val);
+    mHueSlots.clear();
+    if (!mFocus)
+        return;
+    QVector<DirSizeNode*> tops;
+    for (auto &c : mFocus->children)
+        tops.append(c.get());
+    std::sort(tops.begin(), tops.end(),
+              [](DirSizeNode *a, DirSizeNode *b) { return a->size > b->size; });
+
+    std::function<void(DirSizeNode*, int, int)> walk = [&](DirSizeNode *n, int hue, int depth) {
+        if (depth > 4)
+            return;
+        QVector<DirSizeNode*> kids;
+        for (auto &c : n->children)
+            kids.append(c.get());
+        std::sort(kids.begin(), kids.end(),
+                  [](DirSizeNode *a, DirSizeNode *b) { return a->size > b->size; });
+        for (int i = 0; i < kids.size(); ++i) {
+            mHueSlots.insert(kids[i], {hue, depth, i});
+            walk(kids[i], hue, depth + 1);
+        }
+    };
+    for (int i = 0; i < tops.size(); ++i) {
+        mHueSlots.insert(tops[i], {i, 0, 0});
+        walk(tops[i], i, 1);
+    }
+}
+
+QColor DiskMapView::colourFor(DirSizeNode *node) const
+{
+    if (mPalette.isEmpty())
+        return mBorderColor;
+    const HueSlot s = mHueSlots.value(node);
+    QColor c = mPalette[s.hue % mPalette.size()];
+    float h, sat, l, a;
+    c.getHslF(&h, &sat, &l, &a);
+    const float step = 0.045f * std::min(s.rank, 5) + 0.03f * std::max(0, s.depth - 1);
+    l = std::clamp(l - step, 0.18f, 0.80f);
+    if (!node->isDir)
+        sat *= 0.78f;
+    c.setHslF(h, sat, l, a);
+    return c;
 }
