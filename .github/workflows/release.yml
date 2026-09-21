@@ -534,25 +534,40 @@ jobs:
           # `timeout(1)` isn't a stock macOS binary, so the bound is implemented
           # in pure bash rather than depending on GNU coreutils being on PATH.
           #
-          # SSO-24909: poll every 0.2s (ticks scaled 5x) instead of 1s so a
-          # codesign call that returns in well under a second isn't held to a
-          # full-second minimum — measured at ~1.07s/item (82s for 77 items)
-          # under the old 1s granularity, almost entirely poll overhead.
+          # SSO-24909: poll every 0.2s instead of 1s for the first 2s so a
+          # codesign call that returns quickly isn't held to a full-second
+          # minimum — measured at ~1.07s/item (82s for 77 items) under the
+          # old flat 1s granularity, almost entirely poll overhead. Falls
+          # back to 1s polling after that: a first attempt at polling the
+          # full budget at 0.2s (300 iterations for a 60s budget) measured
+          # ~92-98s wall time on the actual macos-14 runner instead of the
+          # intended ~62s -- fork+exec overhead for `sleep 0.2` 300 times
+          # over, non-negligible on that runner, was silently inflating the
+          # per-attempt ceiling by ~50%. Most codesign calls finish well
+          # inside 2s on the healthy path, so the fast phase still captures
+          # nearly all of the Gap 1 win; the slow phase keeps a stalled call
+          # bounded close to the stated `secs` ceiling, same as before.
           run_with_timeout() {
             local secs="$1"; shift
             "$@" &
-            local pid=$! ticks=0
-            local max_ticks=$((secs * 5))
+            local pid=$! elapsed_ms=0
+            local budget_ms=$((secs * 1000))
+            local fast_phase_ms=2000
             while kill -0 "$pid" 2>/dev/null; do
-              if [ "$ticks" -ge "$max_ticks" ]; then
+              if [ "$elapsed_ms" -ge "$budget_ms" ]; then
                 kill -TERM "$pid" 2>/dev/null || true
                 sleep 2
                 kill -KILL "$pid" 2>/dev/null || true
                 wait "$pid" 2>/dev/null
                 return 124
               fi
-              sleep 0.2
-              ticks=$((ticks + 1))
+              if [ "$elapsed_ms" -lt "$fast_phase_ms" ]; then
+                sleep 0.2
+                elapsed_ms=$((elapsed_ms + 200))
+              else
+                sleep 1
+                elapsed_ms=$((elapsed_ms + 1000))
+              fi
             done
             wait "$pid"
           }
@@ -631,23 +646,29 @@ jobs:
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
 
           # SSO-24907: same bounded-retry rationale as the .app signing step above.
-          # SSO-24909: same sub-second polling + widened backoff budget as the
-          # .app signing step above -- see the comments there for the numbers.
+          # SSO-24909: same hybrid fast/slow polling + widened backoff budget as
+          # the .app signing step above -- see the comments there for the numbers.
           run_with_timeout() {
             local secs="$1"; shift
             "$@" &
-            local pid=$! ticks=0
-            local max_ticks=$((secs * 5))
+            local pid=$! elapsed_ms=0
+            local budget_ms=$((secs * 1000))
+            local fast_phase_ms=2000
             while kill -0 "$pid" 2>/dev/null; do
-              if [ "$ticks" -ge "$max_ticks" ]; then
+              if [ "$elapsed_ms" -ge "$budget_ms" ]; then
                 kill -TERM "$pid" 2>/dev/null || true
                 sleep 2
                 kill -KILL "$pid" 2>/dev/null || true
                 wait "$pid" 2>/dev/null
                 return 124
               fi
-              sleep 0.2
-              ticks=$((ticks + 1))
+              if [ "$elapsed_ms" -lt "$fast_phase_ms" ]; then
+                sleep 0.2
+                elapsed_ms=$((elapsed_ms + 200))
+              else
+                sleep 1
+                elapsed_ms=$((elapsed_ms + 1000))
+              fi
             done
             wait "$pid"
           }
