@@ -31,9 +31,14 @@ protected:
     void leaveEvent(QEvent *event) override;
     void aboutToDrill(DirSizeNode *target, bool drillingIn) override;
 
+public:
+    /// Test seams: pure geometry of one wedge (optionally pushed outward by
+    /// `radialOffset`) and the chart centre it is drawn around.
+    QPainterPath wedgePath(const SunburstLayout::Wedge &w, qreal radialOffset = 0) const;
+    QPointF chartCenter() const { return mLayout.center; }
+
 private:
     SunburstLayout::Metrics scaledMetrics() const;
-    QPainterPath wedgePath(const SunburstLayout::Wedge &w, qreal radialOffset = 0) const;
     void paintShadowDisc(QPainter &p);
     void paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool hovered);
     void paintHub(QPainter &p);

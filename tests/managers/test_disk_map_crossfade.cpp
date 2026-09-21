@@ -9,7 +9,9 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QColor>
+#include <QPainterPath>
 
+#include <cmath>
 #include <memory>
 
 #include "Pages/DiskMap/bubble_map_view.h"
@@ -63,6 +65,7 @@ private slots:
     void setRootMidFade_cancelsIt();
     void resizeMidFade_cancelsIt();
     void sunburstView_shownFadesOnDrillInto();
+    void sunburstHoverPush_isConcentricForWideWedge();
     void resizeAfterFadeCancelledByResize_doesNotRestartIt();
 };
 
@@ -179,6 +182,42 @@ void TestDiskMapCrossFade::sunburstView_shownFadesOnDrillInto()
     QVERIFY2(view.isCrossFadeRunning(),
              "drilling on a shown, non-reduced-motion SunburstView should start the cross-fade");
     QCOMPARE(view.focus(), big);
+}
+
+// A hovered wedge is pushed outward concentrically. The old implementation
+// translated the path along its mid-angle, which slid a wide wedge sideways
+// into the hub: every point of the pushed path must stay at least
+// innerR + offset from the chart centre, whatever the sweep.
+void TestDiskMapCrossFade::sunburstHoverPush_isConcentricForWideWedge()
+{
+    SunburstView view;
+    view.resize(800, 600);
+    applyTestTheme(view);
+    view.setRoot(buildTree());
+
+    SunburstLayout::Wedge w;
+    w.startDeg = 30;
+    w.sweepDeg = 200;
+    w.innerR = 80;
+    w.outerR = 150;
+    const qreal offset = 5;
+
+    const QPointF c = view.chartCenter();
+    const QPainterPath pushed = view.wedgePath(w, offset);
+    QVERIFY(!pushed.isEmpty());
+
+    qreal minDist = 1e9, maxDist = 0;
+    for (const QPolygonF &poly : pushed.toSubpathPolygons()) {
+        for (const QPointF &pt : poly) {
+            const qreal d = std::hypot(pt.x() - c.x(), pt.y() - c.y());
+            minDist = std::min(minDist, d);
+            maxDist = std::max(maxDist, d);
+        }
+    }
+    QVERIFY2(minDist >= w.innerR + offset - 0.5,
+             qPrintable(QStringLiteral("pushed wedge intrudes toward the hub: min distance %1").arg(minDist)));
+    QVERIFY2(maxDist <= w.outerR + offset + 0.5,
+             qPrintable(QStringLiteral("pushed wedge overshoots: max distance %1").arg(maxDist)));
 }
 
 // SSO-24963 review round 2 (Minor 12): arming the fade via a genuine drill,

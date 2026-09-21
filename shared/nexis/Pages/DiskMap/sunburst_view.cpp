@@ -55,13 +55,18 @@ void SunburstView::aboutToDrill(DirSizeNode *target, bool drillingIn)
     armCrossFade();
 }
 
+// `radialOffset` pushes the wedge outward concentrically (both radii grow)
+// rather than translating it: a translation only looks like "push out" for a
+// narrow wedge — a wide one slides sideways into the hub and its neighbours.
 QPainterPath SunburstView::wedgePath(const SunburstLayout::Wedge &w, qreal radialOffset) const
 {
     QPainterPath path;
     if (w.sweepDeg <= 0 || w.outerR <= w.innerR)
         return path;
 
-    const qreal midR = (w.innerR + w.outerR) / 2.0;
+    const qreal innerR = w.innerR + radialOffset;
+    const qreal outerR = w.outerR + radialOffset;
+    const qreal midR = (innerR + outerR) / 2.0;
     qreal gapDeg = 0;
     if (midR > 1.0)
         gapDeg = (scaledMetrics().wedgeGapPx / midR) * (180.0 / M_PI);
@@ -75,10 +80,10 @@ QPainterPath SunburstView::wedgePath(const SunburstLayout::Wedge &w, qreal radia
     if (sweep <= 0)
         return path;
 
-    const QRectF outerRect(mLayout.center.x() - w.outerR, mLayout.center.y() - w.outerR,
-                           w.outerR * 2, w.outerR * 2);
-    const QRectF innerRect(mLayout.center.x() - w.innerR, mLayout.center.y() - w.innerR,
-                           w.innerR * 2, w.innerR * 2);
+    const QRectF outerRect(mLayout.center.x() - outerR, mLayout.center.y() - outerR,
+                           outerR * 2, outerR * 2);
+    const QRectF innerRect(mLayout.center.x() - innerR, mLayout.center.y() - innerR,
+                           innerR * 2, innerR * 2);
 
     // Qt angles are degrees CCW from 3 o'clock; our chart angles are degrees
     // CW from 12 o'clock, so qtAngle = 90 - chartAngle.
@@ -88,12 +93,6 @@ QPainterPath SunburstView::wedgePath(const SunburstLayout::Wedge &w, qreal radia
     path.arcTo(outerRect, qtStart, qtSweep);
     path.arcTo(innerRect, qtStart + qtSweep, -qtSweep);
     path.closeSubpath();
-
-    if (radialOffset != 0) {
-        const qreal midDeg = w.startDeg + w.sweepDeg / 2.0;
-        const qreal midRad = midDeg * M_PI / 180.0;
-        path.translate(radialOffset * std::sin(midRad), -radialOffset * std::cos(midRad));
-    }
     return path;
 }
 
@@ -159,7 +158,7 @@ void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool 
     // through transparent at mid-band to a highlight at the outer edge,
     // derived purely from the theme background so it reads consistently
     // across every wedge's own hue.
-    const qreal innerFrac = std::clamp(w.innerR / w.outerR, 0.0, 1.0);
+    const qreal innerFrac = std::clamp((w.innerR + pushOffset) / (w.outerR + pushOffset), 0.0, 1.0);
     const qreal midFrac = std::clamp((innerFrac + 1.0) / 2.0, 0.0, 1.0);
     QColor shade = mBackgroundColor.darker(200);
     shade.setAlpha(55);
@@ -168,7 +167,7 @@ void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool 
     QColor mid = shade;
     mid.setAlpha(0);
 
-    QRadialGradient grad(mLayout.center, w.outerR);
+    QRadialGradient grad(mLayout.center, w.outerR + pushOffset);
     grad.setColorAt(innerFrac, shade);
     grad.setColorAt(midFrac, mid);
     grad.setColorAt(1.0, highlight);
