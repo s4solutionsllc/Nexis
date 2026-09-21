@@ -32,6 +32,8 @@ private slots:
     void fileOrEmptyDirRing0_producesRing1PlaceholderSameNode();
     void radiiOrdering_andDiscFitsArea();
     void hitTest_ring1ChildRing0ParentHubOutside_andSeamBoundary();
+    void tinyRing1Siblings_aggregateIntoOneRemainderOnParent();
+    void ring1Wedges_clearMinArcLengthAtMidRadius();
 };
 
 void TestSunburstLayout::emptyOrNullFocus_yieldsNothing()
@@ -223,6 +225,73 @@ void TestSunburstLayout::hitTest_ring1ChildRing0ParentHubOutside_andSeamBoundary
     QCOMPARE(SunburstLayout::hitTest(synth, pointAt(5.0, 50)), leaf);
     QCOMPARE(SunburstLayout::hitTest(synth, pointAt(180.0, 50)),
              static_cast<DirSizeNode*>(nullptr));
+}
+
+void TestSunburstLayout::tinyRing1Siblings_aggregateIntoOneRemainderOnParent()
+{
+    auto root = mk("root", 1000000, true);
+    DirSizeNode *cellar = add(root.get(), mk("Cellar", 1000000, true));
+    add(cellar, mk("big1", 400000, false));
+    add(cellar, mk("big2", 300000, false));
+    add(cellar, mk("big3", 200000, false));
+    for (int i = 0; i < 300; ++i)
+        add(cellar, mk(QString("tiny%1").arg(i), 100000 / 300 + 1, false));
+
+    const auto r = SunburstLayout::build(root.get(), QRectF(0, 0, 800, 600));
+
+    const SunburstLayout::Wedge *parent = nullptr;
+    for (const auto &w : r.wedges)
+        if (w.ring == 0 && w.node == cellar) parent = &w;
+    QVERIFY(parent);
+
+    qreal childSum = 0;
+    int remainderCount = 0;
+    const SunburstLayout::Wedge *remainder = nullptr;
+    for (const auto &w : r.wedges) {
+        if (w.ring != 1 || w.parentIndex < 0 || r.wedges[w.parentIndex].node != cellar)
+            continue;
+        childSum += w.sweepDeg;
+        if (w.remainder) {
+            ++remainderCount;
+            remainder = &w;
+            QCOMPARE(w.node, cellar);
+        }
+    }
+    QVERIFY2(qAbs(childSum - parent->sweepDeg) < 0.01,
+             qPrintable(QString("childSum=%1 parentSweep=%2").arg(childSum).arg(parent->sweepDeg)));
+    QCOMPARE(remainderCount, 1);
+    QVERIFY(remainder);
+
+    const qreal midDeg = remainder->startDeg + remainder->sweepDeg / 2.0;
+    const qreal midRad = midDeg * M_PI / 180.0;
+    const qreal midR = (remainder->innerR + remainder->outerR) / 2.0;
+    const QPointF pt = r.center + QPointF(midR * std::sin(midRad), -midR * std::cos(midRad));
+    QCOMPARE(SunburstLayout::hitTest(r, pt), cellar);
+}
+
+void TestSunburstLayout::ring1Wedges_clearMinArcLengthAtMidRadius()
+{
+    auto root = mk("root", 1000000, true);
+    DirSizeNode *dir = add(root.get(), mk("dir", 1000000, true));
+    add(dir, mk("a", 500000, false));
+    add(dir, mk("b", 300000, false));
+    add(dir, mk("c", 100000, false));
+    for (int i = 0; i < 200; ++i)
+        add(dir, mk(QString("f%1").arg(i), 500 + i, false));
+
+    const SunburstLayout::Metrics m; // defaults, incl. minArcPx = 6
+    const auto r = SunburstLayout::build(root.get(), QRectF(0, 0, 800, 600), m);
+
+    for (const auto &w : r.wedges) {
+        if (w.ring != 1 || w.remainder)
+            continue;
+        const qreal midR = (w.innerR + w.outerR) / 2.0;
+        const qreal arcLen = midR * (w.sweepDeg * M_PI / 180.0);
+        QVERIFY2(arcLen >= m.minArcPx - 0.01,
+                 qPrintable(QString("wedge for %1 has arc length %2 < minArcPx")
+                                .arg(w.node ? w.node->name : QString())
+                                .arg(arcLen)));
+    }
 }
 
 QTEST_APPLESS_MAIN(TestSunburstLayout)

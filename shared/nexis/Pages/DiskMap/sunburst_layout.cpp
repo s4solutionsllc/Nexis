@@ -43,6 +43,19 @@ bool angleWithin(qreal deg, qreal startDeg, qreal sweepDeg)
     return false;
 }
 
+// A wedge is drawn individually only if it clears both an absolute degree
+// floor and a radius-aware minimum arc length — a fan of many same-degree
+// slivers reads very differently near the hub than out at the rim, so a
+// fixed-degree cutoff alone either over- or under-aggregates depending on
+// which ring it's applied to.
+bool arcKept(qreal sweepDeg, qreal midR, const SunburstLayout::Metrics &m)
+{
+    if (sweepDeg < m.minSweepDeg)
+        return false;
+    const qreal arcLen = midR * (sweepDeg * M_PI / 180.0);
+    return arcLen >= m.minArcPx;
+}
+
 } // namespace
 
 SunburstLayout::Result SunburstLayout::build(DirSizeNode *focus, const QRectF &area, const Metrics &m)
@@ -75,28 +88,68 @@ SunburstLayout::Result SunburstLayout::build(DirSizeNode *focus, const QRectF &a
     if (total <= 0)
         return res;
 
-    // Ring 0 keeps every size>0 child regardless of minSweepDeg — mirrors
-    // the single-ring sunburst's existing behaviour, which never dropped
-    // small wedges either.
+    // Ring 0: children are size-descending, so at a fixed mid-radius arc
+    // length is monotonic in size — once one child's wedge is too thin to
+    // draw, every child after it is too. Stop there and fold the rest into
+    // one trailing remainder wedge owned by `focus` itself, rather than
+    // leaving their span blank.
+    const qreal ring0MidR = (res.ring0InnerR + res.ring0OuterR) / 2.0;
     qreal cursor = 0;
     res.wedges.reserve(children.size());
-    for (auto *n : children) {
+    int i0 = 0;
+    for (; i0 < children.size(); ++i0) {
+        DirSizeNode *n = children[i0];
+        const qreal sweep = 360.0 * (static_cast<qreal>(n->size) / total);
+        if (!arcKept(sweep, ring0MidR, m))
+            break;
         Wedge w;
         w.startDeg = cursor;
-        w.sweepDeg = 360.0 * (static_cast<qreal>(n->size) / total);
+        w.sweepDeg = sweep;
         w.innerR = res.ring0InnerR;
         w.outerR = res.ring0OuterR;
         w.node = n;
         w.ring = 0;
         res.wedges.append(w);
-        cursor += w.sweepDeg;
+        cursor += sweep;
+    }
+    if (i0 < children.size()) {
+        const qreal remSweep = 360.0 - cursor;
+        if (remSweep > 1e-6) {
+            Wedge rem;
+            rem.startDeg = cursor;
+            rem.sweepDeg = remSweep;
+            rem.innerR = res.ring0InnerR;
+            rem.outerR = res.ring0OuterR;
+            rem.node = focus;
+            rem.ring = 0;
+            rem.remainder = true;
+            res.wedges.append(rem);
+        }
     }
 
     const int ring0Count = res.wedges.size();
+    const qreal ring1MidR = (res.ring1InnerR + res.ring1OuterR) / 2.0;
     for (int i = 0; i < ring0Count; ++i) {
         const Wedge parent = res.wedges[i]; // copy: res.wedges grows below
-        DirSizeNode *pnode = parent.node;
 
+        if (parent.remainder) {
+            // Aggregated top-level items: no single real directory to
+            // subdivide, but the ring-1 band under it should still read
+            // as "more of the same" rather than a gap.
+            Wedge ph;
+            ph.startDeg = parent.startDeg;
+            ph.sweepDeg = parent.sweepDeg;
+            ph.innerR = res.ring1InnerR;
+            ph.outerR = res.ring1OuterR;
+            ph.node = focus;
+            ph.ring = 1;
+            ph.parentIndex = i;
+            ph.placeholder = true;
+            res.wedges.append(ph);
+            continue;
+        }
+
+        DirSizeNode *pnode = parent.node;
         QVector<DirSizeNode*> grandkids = pnode->isDir ? sortedSizedChildren(pnode) : QVector<DirSizeNode*>();
         if (grandkids.isEmpty()) {
             Wedge ph;
@@ -117,36 +170,40 @@ SunburstLayout::Result SunburstLayout::build(DirSizeNode *focus, const QRectF &a
             grandTotal += g->size;
 
         qreal gcursor = parent.startDeg;
-        int addedBefore = res.wedges.size();
-        for (auto *g : grandkids) {
-            const qreal sweep = parent.sweepDeg * (static_cast<qreal>(g->size) / grandTotal);
-            if (sweep >= m.minSweepDeg) {
-                Wedge w;
-                w.startDeg = gcursor;
-                w.sweepDeg = sweep;
-                w.innerR = res.ring1InnerR;
-                w.outerR = res.ring1OuterR;
-                w.node = g;
-                w.ring = 1;
-                w.parentIndex = i;
-                res.wedges.append(w);
-            }
+        int j = 0;
+        for (; j < grandkids.size(); ++j) {
+            const qreal sweep = parent.sweepDeg * (static_cast<qreal>(grandkids[j]->size) / grandTotal);
+            if (!arcKept(sweep, ring1MidR, m))
+                break;
+            Wedge w;
+            w.startDeg = gcursor;
+            w.sweepDeg = sweep;
+            w.innerR = res.ring1InnerR;
+            w.outerR = res.ring1OuterR;
+            w.node = grandkids[j];
+            w.ring = 1;
+            w.parentIndex = i;
+            res.wedges.append(w);
             gcursor += sweep;
         }
 
-        // Every grandchild was too small to survive minSweepDeg — fall back
-        // to a single placeholder so the parent's arc isn't left blank.
-        if (res.wedges.size() == addedBefore) {
-            Wedge ph;
-            ph.startDeg = parent.startDeg;
-            ph.sweepDeg = parent.sweepDeg;
-            ph.innerR = res.ring1InnerR;
-            ph.outerR = res.ring1OuterR;
-            ph.node = pnode;
-            ph.ring = 1;
-            ph.parentIndex = i;
-            ph.placeholder = true;
-            res.wedges.append(ph);
+        // Remaining grandkids (possibly all of them) were too thin to draw
+        // individually — one trailing remainder wedge, owned by the parent
+        // directory itself, covers the rest of its arc.
+        if (j < grandkids.size()) {
+            const qreal remSweep = (parent.startDeg + parent.sweepDeg) - gcursor;
+            if (remSweep > 1e-6) {
+                Wedge rem;
+                rem.startDeg = gcursor;
+                rem.sweepDeg = remSweep;
+                rem.innerR = res.ring1InnerR;
+                rem.outerR = res.ring1OuterR;
+                rem.node = pnode;
+                rem.ring = 1;
+                rem.parentIndex = i;
+                rem.remainder = true;
+                res.wedges.append(rem);
+            }
         }
     }
 

@@ -22,6 +22,7 @@ SunburstLayout::Metrics SunburstView::scaledMetrics() const
     SunburstLayout::Metrics m;
     m.ringGap    = Dpi::scale(3);
     m.wedgeGapPx = 1.5 * Dpi::factor();
+    m.minArcPx   = Dpi::scale(6);
     m.margin     = Dpi::scale(8);
     return m;
 }
@@ -99,13 +100,13 @@ void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool 
     if (w.sweepDeg <= 0 || w.outerR <= w.innerR)
         return;
 
-    const qreal pushOffset = hovered ? Dpi::scale(3) : 0;
+    const qreal pushOffset = hovered ? Dpi::scale(5) : 0;
     const QPainterPath path = wedgePath(w, pushOffset);
     if (path.isEmpty())
         return;
 
     QColor fill = colourFor(w.node);
-    if (w.placeholder) {
+    if (w.placeholder || w.remainder) {
         float h, s, l, a;
         fill.getHslF(&h, &s, &l, &a);
         s *= 0.4f;
