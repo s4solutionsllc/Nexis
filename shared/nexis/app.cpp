@@ -1009,12 +1009,6 @@ void App::createTrayActions()
     QAction *scanAction = quickMenu->addAction(tr("Run System Cleaner Scan"));
     connect(scanAction, &QAction::triggered, this, &App::runCleanerScan);
 
-    QAction *diskMapAction = quickMenu->addAction(tr("Disk Map"));
-    connect(diskMapAction, &QAction::triggered, this, [this] {
-        this->showAndRaise();
-        navigateTo(QStringLiteral("diskMap"), true);
-    });
-
     // SSO-23855: toggles the compact mini-monitor window from the tray, the
     // same surface used to open/navigate the main window.
     mMiniMonitorAction = quickMenu->addAction(tr("Mini Monitor"));
@@ -1856,10 +1850,6 @@ void App::setupCommandPalette()
     mCommandPalette->addCommand(tr("Mini Monitor"), tr("Action"), [this]() {
         const bool show = !(mMiniMonitorWindow && mMiniMonitorWindow->isVisible());
         emit SignalMapper::ins()->sigMiniMonitorToggled(show);
-    });
-
-    mCommandPalette->addCommand(tr("Disk Map"), tr("Action"), [this]() {
-        navigateTo(QStringLiteral("diskMap"), true);
     });
 
 #ifdef Q_OS_MAC
