@@ -145,13 +145,24 @@ void TreemapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
     mPendingZoom = true;
 }
 
-void TreemapView::resizeEvent(QResizeEvent *event)
+void TreemapView::cancelZoom()
 {
     mZoom->stop();
     mZoomT = 1.0;
     mFromPixmap = QPixmap();
     mZoomTarget = nullptr;
+    mPendingZoom = false;
+}
+
+void TreemapView::resizeEvent(QResizeEvent *event)
+{
+    cancelZoom();
     DiskMapView::resizeEvent(event);
+}
+
+void TreemapView::rootAboutToChange()
+{
+    cancelZoom();
 }
 
 void TreemapView::paintTile(QPainter &p, const QRectF &rectIn, DirSizeNode *node, bool hovered)
@@ -199,7 +210,8 @@ void TreemapView::paintTile(QPainter &p, const QRectF &rectIn, DirSizeNode *node
 
     const bool full = r.width() >= 60 && r.height() >= 22;
     if (full || (r.width() >= 40 && r.height() >= 14)) {
-        p.setPen(labelColourOn(base));
+        // Text sits at the gradient's top-left, not the flat `base`.
+        p.setPen(labelColourOn(base.lighter(128)));
         QFont f = p.font(); f.setPointSizeF(full ? 10.0 : 9.0); p.setFont(f);
         const QRectF tr = r.adjusted(5, 3, -5, -3);
         const QString name = p.fontMetrics().elidedText(node->name, Qt::ElideRight, int(tr.width()));
@@ -232,14 +244,15 @@ void TreemapView::paintLayout(QPainter &p, const TreemapLayout::Result &layout, 
         QPainterPath clip; clip.addRoundedRect(f.outer, fr, fr);
         p.save(); p.setClipPath(clip); p.fillRect(f.header, strip); p.restore();
 
-        const QColor headerLabel = labelColourOn(alphaOver(strip, mBackgroundColor));
+        const QColor headerLabel = labelColourOn(alphaOver(strip, alphaOver(fill, mBackgroundColor)));
         p.setPen(headerLabel);
         QFont hf = p.font(); hf.setPointSizeF(9.5); hf.setBold(true); p.setFont(hf);
         const QRectF ht = f.header.adjusted(7, 0, -7, 0);
         const QString size = formatBytes(f.node->size);
         const int sizeW = p.fontMetrics().horizontalAdvance(size) + 8;
         p.drawText(ht, Qt::AlignVCenter | Qt::AlignLeft,
-                   p.fontMetrics().elidedText(f.node->name, Qt::ElideRight, int(ht.width()) - sizeW));
+                   p.fontMetrics().elidedText(f.node->name, Qt::ElideRight,
+                                              std::max(0, int(ht.width()) - sizeW)));
         hf.setBold(false); p.setFont(hf);
         p.drawText(ht, Qt::AlignVCenter | Qt::AlignRight, size);
     }

@@ -184,7 +184,7 @@ TreemapLayout::Result TreemapLayout::build(DirSizeNode *focus, const QRectF &are
         f.node = node;
         f.outer = outer;
         f.header = QRectF(outer.x(), outer.y(), outer.width(), m.headerH);
-        f.content = outer.adjusted(m.tileGap, m.headerH, -m.tileGap, -m.tileGap);
+        f.content = outer.adjusted(m.tileGap, m.headerH + m.tileGap, -m.tileGap, -m.tileGap);
         const int idx = res.frames.size();
         res.frames.append(f);
         for (const auto &kid : place(node, f.content)) {

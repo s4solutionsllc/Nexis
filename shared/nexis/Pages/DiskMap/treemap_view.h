@@ -36,8 +36,10 @@ protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
     void leaveEvent(QEvent *event) override;
     void aboutToDrill(DirSizeNode *target, bool drillingIn) override;
+    void rootAboutToChange() override;
 
 private:
+    void cancelZoom();
     TreemapLayout::Metrics scaledMetrics() const;
     void paintLayout(QPainter &p, const TreemapLayout::Result &layout, qreal opacity);
     void paintTile(QPainter &p, const QRectF &r, DirSizeNode *node, bool hovered);

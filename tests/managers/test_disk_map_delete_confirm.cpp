@@ -52,7 +52,7 @@ void writeFile(const QString &path, const QString &contents)
     QTextStream(&f) << contents;
 }
 
-// Runs a real scan through the dialog's own UI path (sets the folder combo,
+// Runs a real scan through the page's own UI path (sets the folder combo,
 // invokes the private onScanClicked() slot exactly like clicking "Scan"
 // would) and waits for the treemap to populate.
 void scanAndWait(DiskMapPage &page, const QString &rootPath)

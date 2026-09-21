@@ -70,6 +70,7 @@ private slots:
     void hiddenView_doesNotAnimateOnDrillInto();
     void shownView_animatesOnDrillInto_andResizeStopsIt();
     void emptyDirectory_doesNotAnimate();
+    void setRootMidZoom_cancelsAnimation();
 };
 
 void TestTreemapZoom::hiddenView_doesNotAnimateOnDrillInto()
@@ -136,6 +137,34 @@ void TestTreemapZoom::emptyDirectory_doesNotAnimate()
     QVERIFY2(!view.isZoomRunning(),
              "drilling into a directory that lays out to nothing must not animate");
     QCOMPARE(view.focus(), empty);
+}
+
+void TestTreemapZoom::setRootMidZoom_cancelsAnimation()
+{
+    if (Utilities::prefersReducedMotion())
+        QSKIP("System has reduce-motion enabled; drill zoom is intentionally instant there.");
+
+    TreemapView view;
+    view.resize(800, 600);
+    applyTestTheme(view);
+    view.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&view));
+
+    DirSizeNodePtr root = buildTreeWithFramedDir();
+    view.setRoot(root);
+
+    DirSizeNode *big = root->children[0].get();
+    QVERIFY(big && big->isDir);
+
+    view.drillInto(big);
+    QVERIFY2(view.isZoomRunning(), "drilling into a framed directory should animate");
+
+    // A rescan landing mid-zoom (fresh tree) must cancel the in-flight
+    // transition rather than leave a stale cross-fade and dead input.
+    DirSizeNodePtr freshRoot = buildTreeWithFramedDir();
+    view.setRoot(freshRoot);
+
+    QVERIFY2(!view.isZoomRunning(), "setRoot mid-zoom must cancel the animation");
 }
 
 QTEST_MAIN(TestTreemapZoom)

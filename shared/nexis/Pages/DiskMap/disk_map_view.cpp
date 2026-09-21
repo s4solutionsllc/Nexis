@@ -20,6 +20,7 @@ DiskMapView::DiskMapView(QWidget *parent)
 
 void DiskMapView::setRoot(DirSizeNodePtr root)
 {
+    rootAboutToChange();
     mRoot = std::move(root);
     mFocus = mRoot.get();
     mPath.clear();

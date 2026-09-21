@@ -9,6 +9,7 @@
 #include "signal_mapper.h"
 #include "Services/file_search_service.h"
 #include "dpi.h"
+#include "nexis_page.h"
 #include "utilities.h"
 
 #include <QApplication>
@@ -122,9 +123,6 @@ DiskMapPage::DiskMapPage(QWidget *parent,
     crumbBar->addWidget(mBreadcrumb, 1);
     crumbBar->addWidget(mProgress);
 
-    mTitleLabel = new QLabel(tr("Disk Map"), this);
-    mTitleLabel->setObjectName("sectionHeaderTitle");
-
     // DS §2 elevated container (NEX F1): fill/border/radius/shadow come from
     // the shared [cardRole="elevated"] QSS recipe — see
     // DiskToolsPage::makeElevatedContainer() for the same recipe.
@@ -137,9 +135,9 @@ DiskMapPage::DiskMapPage(QWidget *parent,
     cardLayout->addWidget(mStack);
 
     auto *outer = new QVBoxLayout(this);
-    outer->setContentsMargins(Dpi::scale(16), Dpi::scale(16), Dpi::scale(16), Dpi::scale(12));
-    outer->setSpacing(Dpi::scale(8));
-    outer->addWidget(mTitleLabel);
+    outer->setContentsMargins(PageScaffold::pageMargins());
+    outer->setSpacing(PageScaffold::pageSpacing());
+    outer->addWidget(PageScaffold::buildHeader(tr("Disk Map"), QString(), this).row);
     outer->addLayout(topBar);
     outer->addLayout(crumbBar);
     outer->addWidget(mCard, 1);

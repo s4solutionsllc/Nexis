@@ -28,7 +28,7 @@ public:
     explicit DiskMapView(QWidget *parent = nullptr);
 
     /// Display this subtree. Cheap reference — the node must outlive the
-    /// view (the dialog holds the shared_ptr).
+    /// view (the page holds the shared_ptr).
     void setRoot(DirSizeNodePtr root);
 
     /// Current focus node (may be a descendant of the original root after
@@ -39,7 +39,7 @@ public:
     bool drillUp();
 
     /// True iff drillUp() would actually move (i.e. the path stack is
-    /// non-empty). Used by the dialog to enable/disable the Up button.
+    /// non-empty). Used by the page to enable/disable the Up button.
     bool canDrillUp() const { return !mPath.isEmpty(); }
 
     /// Drill down into a specific node (must be a child of the current
@@ -47,7 +47,7 @@ public:
     void drillInto(DirSizeNode *node);
 
     /// Apply text/border/background colours and the hue palette fetched from
-    /// the active theme. Called by the dialog when the theme changes.
+    /// the active theme. Called by the page when the theme changes.
     void applyTheme(const QColor &textColor,
                     const QColor &borderColor,
                     const QColor &backgroundColor,
@@ -60,13 +60,13 @@ public:
     static QColor higherContrastColour(const QColor &fill, const QColor &optionA, const QColor &optionB);
 
 signals:
-    /// Emitted when the user hovers a shape so the dialog status bar can
+    /// Emitted when the user hovers a shape so the page status bar can
     /// echo the path/size. node may be nullptr if nothing is under the
     /// cursor.
     void tileHovered(DirSizeNode *node);
 
     /// User double-clicked (or pressed Enter on) a directory shape — the
-    /// dialog should call drillInto().
+    /// page should call drillInto().
     void drillRequested(DirSizeNode *node);
 
     /// User asked to reveal this shape in the system file manager.
@@ -86,6 +86,12 @@ protected:
     /// false). Subclasses that animate the transition use this hook to
     /// capture the outgoing layout before assignHues()/rebuildLayout() run.
     virtual void aboutToDrill(DirSizeNode *target, bool drillingIn) { Q_UNUSED(target); Q_UNUSED(drillingIn); }
+
+    /// Called at the top of setRoot(), before the tree is replaced.
+    /// Subclasses that animate transitions use this hook to cancel any
+    /// in-flight animation so a rescan landing mid-zoom doesn't leave a
+    /// stale cross-fade and dead input.
+    virtual void rootAboutToChange() {}
 
     void resizeEvent(QResizeEvent *event) override;
 

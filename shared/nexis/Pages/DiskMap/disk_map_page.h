@@ -73,7 +73,6 @@ private:
 
     DirSizeScanner *mScanner = nullptr;
 
-    QLabel       *mTitleLabel     = nullptr;
     QFrame       *mCard           = nullptr;
     QComboBox    *mFolderCombo    = nullptr;
     QPushButton  *mChooseButton   = nullptr;
