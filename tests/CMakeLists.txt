@@ -741,15 +741,15 @@ add_nexis_test(NAME FileSearchServiceTests
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )
 
-# SSO-23861: DiskTreemapDialog's trash confirm/cancel wiring, driven the same
+# SSO-23861: DiskMapPage's trash confirm/cancel wiring, driven the same
 # way TreemapView's context menu does (invoke the private onTrashRequested()
 # slot via the meta-object system) against a real QMessageBox and a real
 # FileSearchService::moveToTrash() run. No interactive desktop is available
 # in CI, so this is the automated stand-in for a manual click-through — see
 # the file header for why that's a faithful substitute here.
-add_nexis_test(NAME DiskTreemapDeleteConfirmTests
+add_nexis_test(NAME DiskMapDeleteConfirmTests
   SOURCES
-    managers/test_disk_treemap_delete_confirm.cpp
+    managers/test_disk_map_delete_confirm.cpp
   INCLUDES
     "${GUI_SHARED_DIR}"
   LIBS

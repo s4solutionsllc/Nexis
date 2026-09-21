@@ -2,7 +2,6 @@
 #include "Managers/tool_manager.h"
 #include "ui_app.h"
 #include "Pages/Network/net_usage_tracker.h"
-#include "Pages/Resources/disk_treemap_dialog.h"
 #include "utilities.h"
 #include "signal_mapper.h"
 #include "nexis_page.h"
@@ -217,19 +216,7 @@ void App::buildSidebar()
         auto &sec = addSection(QStringLiteral("clean"), tr("CLEAN"));
         addPageButton(sec, btnSystemCleaner, tr("System Cleaner"));
         addPageButton(sec, btnDiskTools, tr("Disk Tools"));
-
-        // SSO-23863: top-level entry point for the built-in disk-space
-        // treemap. Not checkable/exclusive and not part of sec.buttons —
-        // like btnFeedback, it opens a dialog rather than switching the
-        // stacked page, so it must not join mSidebarBtnGroup or the
-        // checked-highlight would get stuck on it.
-        btnDiskMap = new QPushButton(ui->sidebar);
-        btnDiskMap->setToolTip(tr("Disk Map"));
-        btnDiskMap->setCursor(Qt::PointingHandCursor);
-        btnDiskMap->setCheckable(false);
-        btnDiskMap->setIconSize(Dpi::scale(20, 20));
-        btnDiskMap->setObjectName("btnDiskMap");
-        sec.containerLayout->addWidget(btnDiskMap);
+        addPageButton(sec, btnDiskMap, tr("Disk Map"));
 
 #ifdef Q_OS_MAC
         addPageButton(sec, btnMailCleanup, tr("Mail Cleanup"));
@@ -495,6 +482,12 @@ void App::init()
         nullptr, {}
     });
     mPageSlots.append({
+        "diskMap",
+        tr("Disk Map"),
+        [this]() -> QWidget* { diskMapPage = new DiskMapPage(mSlidingStacked); return diskMapPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
         "search",
         tr("File Search"),
         [this]() -> QWidget* { searchPage = new SearchPage(mSlidingStacked); return searchPage; },
@@ -568,7 +561,7 @@ void App::init()
     });
 
     mListSidebarButtons = {
-        btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnSearch,
+        btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnDiskMap, btnSearch,
         btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller,
 #ifdef Q_OS_MAC
         btnMailCleanup,
@@ -671,7 +664,6 @@ void App::init()
             feedback = QSharedPointer<Feedback>(new Feedback(this));
         feedback->show();
     });
-    connect(btnDiskMap,          &QPushButton::clicked, this, &App::openDiskTreemapDialog);
 
     // Conditional pages (Docker, Homebrew/APT, GNOME Settings) are wired by the
     // same slot loop below when their tool is present.
@@ -705,7 +697,7 @@ void App::init()
             {"dashboard", btnDash}, {"resources", btnResources}, {"processes", btnProcesses},
             {"networkUsage", btnNetworkUsage}, {"hardwareInfo", btnHardwareInfo},
             {"bootAnalysis", btnBootAnalysis}, {"systemLogs", btnSystemLogs},
-            {"systemCleaner", btnSystemCleaner}, {"diskTools", btnDiskTools},
+            {"systemCleaner", btnSystemCleaner}, {"diskTools", btnDiskTools}, {"diskMap", btnDiskMap},
 #ifdef Q_OS_MAC
             {"mailCleanup", btnMailCleanup},
 #endif
@@ -717,7 +709,7 @@ void App::init()
         static const QStringList kSidebarOrder = {
             "dashboard", "resources", "processes", "networkUsage",
             "hardwareInfo", "bootAnalysis", "systemLogs",
-            "systemCleaner", "diskTools", "mailCleanup", "shredder", "search",
+            "systemCleaner", "diskTools", "diskMap", "mailCleanup", "shredder", "search",
             "uninstaller", "startupApps", "services", "aptSourceManager", "docker",
             "helpers", "gnomeSettings", "settings"
         };
@@ -1020,7 +1012,7 @@ void App::createTrayActions()
     QAction *diskMapAction = quickMenu->addAction(tr("Disk Map"));
     connect(diskMapAction, &QAction::triggered, this, [this] {
         this->showAndRaise();
-        openDiskTreemapDialog();
+        navigateTo(QStringLiteral("diskMap"), true);
     });
 
     // SSO-23855: toggles the compact mini-monitor window from the tray, the
@@ -1325,22 +1317,6 @@ void App::toggleSidebarCollapse()
     applySidebarCollapse(mSidebarCollapsed, true);
 }
 
-// SSO-23863: shared by the sidebar button and the command palette entry.
-// Same call disk_usage_launcher_widget.cpp's "Built-in Treemap" button
-// makes — this is a second door to the same dialog, not a fork of it.
-void App::openDiskTreemapDialog()
-{
-    // One window: a second click raises the open dialog instead of stacking
-    // another copy.
-    if (!mDiskTreemapDialog) {
-        mDiskTreemapDialog = new DiskTreemapDialog(this, AppManager::ins(), SignalMapper::ins());
-        mDiskTreemapDialog->setAttribute(Qt::WA_DeleteOnClose);
-    }
-    mDiskTreemapDialog->show();
-    mDiskTreemapDialog->raise();
-    mDiskTreemapDialog->activateWindow();
-}
-
 void App::applySidebarCollapse(bool collapsed, bool animate)
 {
     mSidebarCollapsed = collapsed;
@@ -1407,18 +1383,6 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
             btnFeedback->setText(savedFeedback);
     }
 
-    // Toggle Disk Map button text — not in mListSidebarButtons (same reason
-    // as btnFeedback: it opens a dialog, not a page), so it needs the same
-    // manual handling here.
-    if (collapsed) {
-        btnDiskMap->setProperty("sidebarText", btnDiskMap->text());
-        btnDiskMap->setText(QString());
-    } else {
-        QString savedDiskMap = btnDiskMap->property("sidebarText").toString();
-        if (!savedDiskMap.isEmpty())
-            btnDiskMap->setText(savedDiskMap);
-    }
-
     // Update toggle icon and logo
     QString theme = AppManager::ins()->resolveThemeName();
     {
@@ -1455,8 +1419,6 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     }
     btnFeedback->style()->unpolish(btnFeedback);
     btnFeedback->style()->polish(btnFeedback);
-    btnDiskMap->style()->unpolish(btnDiskMap);
-    btnDiskMap->style()->polish(btnDiskMap);
     mBtnSidebarToggle->style()->unpolish(mBtnSidebarToggle);
     mBtnSidebarToggle->style()->polish(mBtnSidebarToggle);
 }
@@ -1897,7 +1859,7 @@ void App::setupCommandPalette()
     });
 
     mCommandPalette->addCommand(tr("Disk Map"), tr("Action"), [this]() {
-        openDiskTreemapDialog();
+        navigateTo(QStringLiteral("diskMap"), true);
     });
 
 #ifdef Q_OS_MAC
