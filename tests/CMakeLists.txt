@@ -877,6 +877,19 @@ add_nexis_test(NAME BubbleLayoutTests
     "${GUI_SHARED_DIR}/Managers"
 )
 
+# SSO-24963: SunburstLayout — pure two-ring sunburst geometry consumed by
+# SunburstView. Compiled directly into the test (like TreemapLayoutTests /
+# BubbleLayoutTests above) so it runs cross-platform without pulling in
+# nexis-gui.
+add_nexis_test(NAME SunburstLayoutTests
+  SOURCES
+    managers/test_sunburst_layout.cpp
+    "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_layout.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+)
+
 # SSO-24963: DiskMapView::higherContrastColour() — the pure WCAG contrast
 # pick behind contrast-aware treemap/bubble/sunburst labels. Compiled
 # directly into the test (like TreemapLayoutTests above); disk_map_view.cpp
