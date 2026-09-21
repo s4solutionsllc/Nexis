@@ -13,7 +13,11 @@
 // are not drawn individually — since siblings are processed size-descending
 // and arc length is monotonic in size at a fixed radius, they always form a
 // contiguous trailing run, so they're folded into a single trailing
-// "remainder" wedge covering the rest of their parent's span. A remainder's
+// "remainder" wedge covering the rest of their parent's span. To keep a
+// parent with many similar-sized children (all below minArcPx) navigable,
+// at least Metrics::minKeptWedges of the largest siblings are always kept as
+// real wedges regardless of minArcPx, as long as they still clear the
+// absolute minSweepDeg floor. A remainder's
 // node is the *parent* (the ring-0 directory for a ring-1 remainder, or
 // `focus` itself for a ring-0 remainder), so hover/drill/tooltip land on
 // something real instead of a blank gap. Marked `remainder` (painted muted,
@@ -43,6 +47,7 @@ struct Metrics {
     qreal minSweepDeg    = 0.4;   ///< absolute floor, regardless of radius
     qreal minArcPx       = 6;     ///< arc length at the ring's mid-radius below which a wedge is folded into its parent's remainder
     qreal margin         = 8;
+    int minKeptWedges    = 12;    ///< always keep at least this many (largest) siblings per parent span before aggregating the rest, as long as each still clears minSweepDeg
 };
 
 struct Wedge {

@@ -143,6 +143,9 @@ void SunburstView::paintWedge(QPainter &p, const SunburstLayout::Wedge &w, bool 
         p.drawPath(path);
     }
 
+    if (w.placeholder || w.remainder)
+        return;
+
     const bool ring0 = w.ring == 0;
     const bool labelEligible = ring0
         ? w.sweepDeg >= 8.0

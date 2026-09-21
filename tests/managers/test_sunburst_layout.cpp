@@ -34,6 +34,8 @@ private slots:
     void hitTest_ring1ChildRing0ParentHubOutside_andSeamBoundary();
     void tinyRing1Siblings_aggregateIntoOneRemainderOnParent();
     void ring1Wedges_clearMinArcLengthAtMidRadius();
+    void manySimilarSizedRing0Children_keepsFloorOfWedges();
+    void manySimilarSizedRing1Children_keepsFloorOfWedges();
 };
 
 void TestSunburstLayout::emptyOrNullFocus_yieldsNothing()
@@ -292,6 +294,70 @@ void TestSunburstLayout::ring1Wedges_clearMinArcLengthAtMidRadius()
                                 .arg(w.node ? w.node->name : QString())
                                 .arg(arcLen)));
     }
+}
+
+// SSO-24963 review round 2 (Critical 2): a folder with ~155+ similar-sized
+// children used to render as one blank remainder wedge — 0 real wedges —
+// because the keep-loop broke at the first child whose arc fell below
+// minArcPx, and with 160 equal children that's every one of them. The
+// minKeptWedges floor guarantees at least 12 real wedges regardless.
+void TestSunburstLayout::manySimilarSizedRing0Children_keepsFloorOfWedges()
+{
+    auto root = mk("root", 0, true);
+    for (int i = 0; i < 160; ++i) {
+        add(root.get(), mk(QString("d%1").arg(i), 1000, false));
+        root->size += 1000;
+    }
+
+    const auto r = SunburstLayout::build(root.get(), QRectF(0, 0, 800, 600));
+
+    int realCount = 0, remainderCount = 0;
+    qreal sum = 0;
+    for (const auto &w : r.wedges) {
+        if (w.ring != 0)
+            continue;
+        sum += w.sweepDeg;
+        if (w.remainder) ++remainderCount; else ++realCount;
+    }
+    QVERIFY2(realCount >= 12, qPrintable(QString("only %1 real ring-0 wedges").arg(realCount)));
+    QCOMPARE(remainderCount, 1);
+    QVERIFY2(qAbs(sum - 360.0) < 0.01, qPrintable(QString("sum=%1").arg(sum)));
+}
+
+void TestSunburstLayout::manySimilarSizedRing1Children_keepsFloorOfWedges()
+{
+    // "big" needs a ring-0 sweep small enough that splitting it 160 ways
+    // lands each grandkid's sweep between minSweepDeg (so the floor keeps
+    // it) and the arc-length threshold (so it wouldn't otherwise clear it)
+    // — a sibling large enough to dominate the ring-0 split gets there.
+    auto root = mk("root", 0, true);
+    DirSizeNode *big = add(root.get(), mk("big", 0, true));
+    for (int i = 0; i < 160; ++i) {
+        add(big, mk(QString("f%1").arg(i), 1000, false));
+        big->size += 1000;
+    }
+    add(root.get(), mk("dominant", 290080, false));
+    root->size = big->size + 290080;
+
+    const auto r = SunburstLayout::build(root.get(), QRectF(0, 0, 800, 600));
+
+    const SunburstLayout::Wedge *parent = nullptr;
+    for (const auto &w : r.wedges)
+        if (w.ring == 0 && w.node == big) parent = &w;
+    QVERIFY(parent);
+
+    int realCount = 0, remainderCount = 0;
+    qreal sum = 0;
+    for (const auto &w : r.wedges) {
+        if (w.ring != 1 || w.parentIndex < 0 || r.wedges[w.parentIndex].node != big)
+            continue;
+        sum += w.sweepDeg;
+        if (w.remainder) ++remainderCount; else ++realCount;
+    }
+    QVERIFY2(realCount >= 12, qPrintable(QString("only %1 real ring-1 wedges").arg(realCount)));
+    QCOMPARE(remainderCount, 1);
+    QVERIFY2(qAbs(sum - parent->sweepDeg) < 0.01,
+             qPrintable(QString("sum=%1 parentSweep=%2").arg(sum).arg(parent->sweepDeg)));
 }
 
 QTEST_APPLESS_MAIN(TestSunburstLayout)

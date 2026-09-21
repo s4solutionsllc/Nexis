@@ -100,7 +100,13 @@ SunburstLayout::Result SunburstLayout::build(DirSizeNode *focus, const QRectF &a
     for (; i0 < children.size(); ++i0) {
         DirSizeNode *n = children[i0];
         const qreal sweep = 360.0 * (static_cast<qreal>(n->size) / total);
-        if (!arcKept(sweep, ring0MidR, m))
+        // Always show at least minKeptWedges siblings (largest first) even
+        // if their arc is below minArcPx, so a folder full of many
+        // similar-sized children still renders navigable real wedges rather
+        // than collapsing entirely into one blank remainder — as long as
+        // the wedge still clears the absolute degree floor.
+        const bool keptByFloor = i0 < m.minKeptWedges && sweep >= m.minSweepDeg;
+        if (!arcKept(sweep, ring0MidR, m) && !keptByFloor)
             break;
         Wedge w;
         w.startDeg = cursor;
@@ -173,7 +179,9 @@ SunburstLayout::Result SunburstLayout::build(DirSizeNode *focus, const QRectF &a
         int j = 0;
         for (; j < grandkids.size(); ++j) {
             const qreal sweep = parent.sweepDeg * (static_cast<qreal>(grandkids[j]->size) / grandTotal);
-            if (!arcKept(sweep, ring1MidR, m))
+            // Same minKeptWedges floor as ring 0 — see the comment there.
+            const bool keptByFloor = j < m.minKeptWedges && sweep >= m.minSweepDeg;
+            if (!arcKept(sweep, ring1MidR, m) && !keptByFloor)
                 break;
             Wedge w;
             w.startDeg = gcursor;
