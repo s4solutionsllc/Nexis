@@ -14,11 +14,15 @@
 
 #include <QColor>
 #include <QHash>
+#include <QPixmap>
 #include <QString>
+#include <QVariantAnimation>
 #include <QVector>
 #include <QWidget>
 
 #include "Managers/dir_size_scanner.h"
+
+class QPainter;
 
 class DiskMapView : public QWidget
 {
@@ -58,6 +62,10 @@ public:
     /// linearised sRGB; contrast = (L1+0.05)/(L2+0.05)). Free of instance
     /// state, so it's public and directly unit-testable.
     static QColor higherContrastColour(const QColor &fill, const QColor &optionA, const QColor &optionB);
+
+    /// Test seam: true while the shared drill cross-fade (see armCrossFade())
+    /// is actively animating.
+    bool isCrossFadeRunning() const;
 
 signals:
     /// Emitted when the user hovers a shape so the page status bar can
@@ -124,6 +132,17 @@ protected:
     /// switches.
     QColor colourFor(DirSizeNode *node) const;
 
+    /// SSO-24963: shared drill cross-fade, opt-in for subclasses that don't
+    /// want (or don't yet have) a geometric zoom transition like
+    /// TreemapView's. A subclass arms it from its aboutToDrill() override,
+    /// starts it at the end of rebuildLayout() only when reached via a
+    /// drill (not a resize), and paints the snapshot last in paintEvent().
+    /// Mouse input is never blocked while it runs.
+    void armCrossFade();
+    void startCrossFadeIfArmed();
+    void paintCrossFadeOverlay(QPainter &p);
+    void cancelCrossFade();
+
     DirSizeNodePtr        mRoot;      ///< keeps the tree alive
     DirSizeNode           *mFocus = nullptr;
     QVector<DirSizeNode*>  mPath;     ///< drill stack (excluding focus)
@@ -138,6 +157,11 @@ private:
     struct HueSlot { int hue = 0; int depth = 0; int rank = 0; };
     QHash<const DirSizeNode*, HueSlot> mHueSlots;
     void assignHues();
+
+    QVariantAnimation *mCrossFade = nullptr;
+    QPixmap mCrossFadePixmap;
+    bool mCrossFadePending = false;
+    qreal mCrossFadeT = 1.0;
 };
 
 #endif // DISK_MAP_VIEW_H

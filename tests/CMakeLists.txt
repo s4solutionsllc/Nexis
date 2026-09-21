@@ -858,13 +858,26 @@ add_nexis_test(NAME TreemapLayoutTests
 # directly into the test (like TreemapLayoutTests above); disk_map_view.cpp
 # only touches the DirSizeNode struct, not DirSizeScanner's implementation,
 # so no scanner source or nexis-gui link is needed.
+# SSO-24963: disk_map_view.cpp now also pulls in Utilities::prefersReducedMotion()
+# (the shared drill cross-fade). On macOS that's implemented in
+# macos/nexis/macos_window_helper.mm, which only nexis-gui links by default —
+# add it directly here (like utilities.cpp) rather than linking all of
+# nexis-gui, which would duplicate disk_map_view.cpp's MOC symbols.
+set(DISK_MAP_LABEL_CONTRAST_TEST_SRCS
+  managers/test_disk_map_label_contrast.cpp
+  "${GUI_SHARED_DIR}/Pages/DiskMap/disk_map_view.cpp"
+  "${GUI_SHARED_DIR}/utilities.cpp"
+)
+if(APPLE)
+  list(APPEND DISK_MAP_LABEL_CONTRAST_TEST_SRCS
+    "${CMAKE_SOURCE_DIR}/macos/nexis/macos_window_helper.mm")
+endif()
 add_nexis_test(NAME DiskMapLabelContrastTests
-  SOURCES
-    managers/test_disk_map_label_contrast.cpp
-    "${GUI_SHARED_DIR}/Pages/DiskMap/disk_map_view.cpp"
+  SOURCES ${DISK_MAP_LABEL_CONTRAST_TEST_SRCS}
   INCLUDES
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Managers"
+    "${CMAKE_SOURCE_DIR}/macos/nexis"
   LIBS
     Qt6::Widgets
 )

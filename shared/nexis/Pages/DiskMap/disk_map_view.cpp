@@ -2,12 +2,16 @@
 
 #include <QAction>
 #include <QContextMenuEvent>
+#include <QEasingCurve>
 #include <QMenu>
+#include <QPainter>
 #include <QResizeEvent>
 
 #include <algorithm>
 #include <cmath>
 #include <functional>
+
+#include "utilities.h"
 
 DiskMapView::DiskMapView(QWidget *parent)
     : QWidget(parent)
@@ -16,11 +20,27 @@ DiskMapView::DiskMapView(QWidget *parent)
     setAttribute(Qt::WA_OpaquePaintEvent, true);
     setMinimumSize(320, 240);
     setFocusPolicy(Qt::StrongFocus);
+
+    mCrossFade = new QVariantAnimation(this);
+    mCrossFade->setDuration(200);
+    mCrossFade->setEasingCurve(QEasingCurve::OutCubic);
+    mCrossFade->setStartValue(0.0);
+    mCrossFade->setEndValue(1.0);
+    connect(mCrossFade, &QVariantAnimation::valueChanged, this, [this](const QVariant &v) {
+        mCrossFadeT = v.toReal();
+        update();
+    });
+    connect(mCrossFade, &QVariantAnimation::finished, this, [this] {
+        mCrossFadeT = 1.0;
+        mCrossFadePixmap = QPixmap();
+        update();
+    });
 }
 
 void DiskMapView::setRoot(DirSizeNodePtr root)
 {
     rootAboutToChange();
+    cancelCrossFade();
     mRoot = std::move(root);
     mFocus = mRoot.get();
     mPath.clear();
@@ -70,6 +90,7 @@ void DiskMapView::drillInto(DirSizeNode *node)
 
 void DiskMapView::resizeEvent(QResizeEvent *event)
 {
+    cancelCrossFade();
     QWidget::resizeEvent(event);
     rebuildLayout();
 }
@@ -182,6 +203,57 @@ void DiskMapView::assignHues()
         mHueSlots.insert(tops[i], {i, 0, 0});
         walk(tops[i], i, 1);
     }
+}
+
+void DiskMapView::armCrossFade()
+{
+    if (Utilities::prefersReducedMotion() || !isVisible() || size().isEmpty())
+        return;
+
+    QPixmap pm(size() * devicePixelRatioF());
+    pm.setDevicePixelRatio(devicePixelRatioF());
+    if (mBackgroundColor.isValid())
+        pm.fill(mBackgroundColor);
+    else
+        pm.fill(Qt::transparent);
+    render(&pm);
+
+    mCrossFadePixmap = pm;
+    mCrossFadePending = true;
+}
+
+void DiskMapView::startCrossFadeIfArmed()
+{
+    if (!mCrossFadePending)
+        return;
+    mCrossFadePending = false;
+    if (mCrossFadePixmap.isNull())
+        return;
+    mCrossFade->stop();
+    mCrossFade->start();
+}
+
+void DiskMapView::paintCrossFadeOverlay(QPainter &p)
+{
+    if (mCrossFade->state() != QAbstractAnimation::Running || mCrossFadePixmap.isNull())
+        return;
+    p.save();
+    p.setOpacity(1.0 - mCrossFadeT);
+    p.drawPixmap(rect(), mCrossFadePixmap);
+    p.restore();
+}
+
+bool DiskMapView::isCrossFadeRunning() const
+{
+    return mCrossFade->state() == QAbstractAnimation::Running;
+}
+
+void DiskMapView::cancelCrossFade()
+{
+    mCrossFade->stop();
+    mCrossFadeT = 1.0;
+    mCrossFadePixmap = QPixmap();
+    mCrossFadePending = false;
 }
 
 QColor DiskMapView::colourFor(DirSizeNode *node) const
