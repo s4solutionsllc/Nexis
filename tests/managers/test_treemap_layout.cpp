@@ -26,6 +26,8 @@ private slots:
     void tiles_doNotOverlap();
     void topLevelAreas_areProportionalToSize();
     void hitTest_prefersTileThenFrameHeader();
+    void equalItems_layOutNearSquare();
+    void manyDecreasingItems_avoidSlivers();
 };
 
 void TestTreemapLayout::emptyOrNullFocus_yieldsNothing()
@@ -115,6 +117,54 @@ void TestTreemapLayout::hitTest_prefersTileThenFrameHeader()
     QCOMPARE(TreemapLayout::hitTest(r, r.tiles[0].rect.center()), leaf);
     QCOMPARE(TreemapLayout::hitTest(r, r.frames[0].header.center()), big);
     QCOMPARE(TreemapLayout::hitTest(r, QPointF(-5, -5)), nullptr);
+}
+
+void TestTreemapLayout::equalItems_layOutNearSquare()
+{
+    auto root = mk("root", 0, true);
+    for (int i = 1; i <= 16; ++i) {
+        add(root.get(), mk(QString("f%1").arg(i), 100, false));
+        root->size += 100;
+    }
+    TreemapLayout::Metrics m; m.frameGap = 0; m.tileGap = 0;
+    const auto r = TreemapLayout::build(root.get(), QRectF(0, 0, 400, 400), m);
+    QCOMPARE(r.tiles.size(), 16);
+    for (const auto &t : r.tiles) {
+        const qreal w = t.rect.width(), h = t.rect.height();
+        const qreal aspect = std::max(w / h, h / w);
+        QVERIFY2(aspect <= 2.0, qPrintable(QString("aspect %1 for tile %2x%3")
+                                            .arg(aspect).arg(w).arg(h)));
+    }
+}
+
+void TestTreemapLayout::manyDecreasingItems_avoidSlivers()
+{
+    auto root = mk("root", 0, true);
+    for (int i = 0; i < 60; ++i) {
+        const qint64 size = 1200 - 20 * i;
+        add(root.get(), mk(QString("f%1").arg(i), size, false));
+        root->size += size;
+    }
+    TreemapLayout::Metrics m; m.frameGap = 0; m.tileGap = 0;
+    const QRectF area(0, 0, 900, 600);
+    const auto r = TreemapLayout::build(root.get(), area, m);
+    QCOMPARE(r.tiles.size(), 60);
+
+    int goodAspect = 0;
+    int fullSpanCount = 0;
+    for (const auto &t : r.tiles) {
+        const qreal w = t.rect.width(), h = t.rect.height();
+        const qreal aspect = std::max(w / h, h / w);
+        if (aspect <= 4.0)
+            ++goodAspect;
+        const bool spansFull = qFuzzyCompare(w, area.width()) || qFuzzyCompare(h, area.height());
+        if (spansFull)
+            ++fullSpanCount;
+    }
+    QVERIFY2(goodAspect >= int(0.8 * r.tiles.size()),
+             qPrintable(QString("only %1/%2 tiles had aspect <= 4.0").arg(goodAspect).arg(r.tiles.size())));
+    QVERIFY2(fullSpanCount <= 1,
+             qPrintable(QString("%1 tiles spanned the full area").arg(fullSpanCount)));
 }
 
 QTEST_APPLESS_MAIN(TestTreemapLayout)

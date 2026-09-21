@@ -7,20 +7,27 @@ namespace {
 
 using Placed = QVector<QPair<DirSizeNode*, QRectF>>;
 
-qreal worstAspect(const QVector<DirSizeNode*> &row, qint64 sum, qreal width)
+// `row`'s sizes are raw byte counts, not pixel areas, so worstAspect must be
+// given `scale` (pixel-area per byte, held constant for the whole squarify()
+// call — see squarify()'s comment) to convert them before applying the
+// Bruls et al. formula, which is only valid when values and width² share
+// units.
+qreal worstAspect(const QVector<DirSizeNode*> &row, qreal sum, qreal width, qreal scale)
 {
     if (row.isEmpty() || sum <= 0 || width <= 0)
         return std::numeric_limits<qreal>::infinity();
 
-    qint64 maxVal = 0, minVal = std::numeric_limits<qint64>::max();
+    qreal maxVal = 0, minVal = std::numeric_limits<qreal>::max();
     for (auto *n : row) {
-        maxVal = std::max(maxVal, n->size);
-        minVal = std::min(minVal, n->size);
+        const qreal area = n->size * scale;
+        maxVal = std::max(maxVal, area);
+        minVal = std::min(minVal, area);
     }
-    // Treat zero-byte items as 1 so the divisor doesn't explode.
-    if (minVal <= 0) minVal = 1;
+    // Treat zero-area items as a hair above zero so the divisor doesn't explode.
+    if (minVal <= 0) minVal = std::numeric_limits<qreal>::min();
 
-    const qreal s2 = static_cast<qreal>(sum) * static_cast<qreal>(sum);
+    const qreal areaSum = sum * scale;
+    const qreal s2 = areaSum * areaSum;
     const qreal w2 = width * width;
     const qreal worst = std::max(w2 * maxVal / s2, s2 / (w2 * minVal));
     return worst;
@@ -90,6 +97,11 @@ void squarify(const QVector<DirSizeNode*> &items,
         pendingValue <= 0)
         return;
 
+    // rect.area() corresponds to pendingValue at the current scale (see the
+    // function comment above), so this ratio is constant for the whole call
+    // and converts raw byte sizes into the pixel areas worstAspect needs.
+    const qreal scale = rect.width() * rect.height() / pendingValue;
+
     QVector<DirSizeNode*> row;
     qreal rowSum = 0;
     qreal shortSide = std::min(rect.width(), rect.height());
@@ -101,10 +113,8 @@ void squarify(const QVector<DirSizeNode*> &items,
         withCand.append(cand);
         const qreal candSum = rowSum + cand->size;
 
-        const qreal worstBefore = worstAspect(row, static_cast<qint64>(rowSum),
-                                              shortSide);
-        const qreal worstAfter  = worstAspect(withCand, static_cast<qint64>(candSum),
-                                              shortSide);
+        const qreal worstBefore = worstAspect(row, rowSum, shortSide, scale);
+        const qreal worstAfter  = worstAspect(withCand, candSum, shortSide, scale);
 
         if (row.isEmpty() || worstAfter <= worstBefore) {
             row = std::move(withCand);
