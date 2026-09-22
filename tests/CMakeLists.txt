@@ -782,6 +782,23 @@ add_nexis_test(NAME DiskMapCrossFadeTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-25047 (GH#475 follow-up): BtmRow's sizeHint-bounding invariant under
+# setAvailableWidth(). BtmRow (and the BtmRecord type it takes) only exist
+# under Q_OS_MACOS, so this is gated to APPLE like ThermalInfoMacOSTests
+# above rather than QSKIPped per-slot. Links nexis-gui (like
+# DiskMapDeleteConfirmTests) rather than recompiling btm_row.cpp directly,
+# since it's already compiled into that library.
+if(APPLE)
+  add_nexis_test(NAME BtmRowTests
+    SOURCES
+      managers/test_btm_row.cpp
+    INCLUDES
+      "${GUI_SHARED_DIR}"
+    LIBS
+      nexis-gui Qt6::Widgets
+  )
+endif()
+
 # SSO-3736 / FW-08: DuplicateFinderService — duplicate grouping (content-
 # verified), top-N large-file ranking, empty-folder detection, exclusion
 # engine compliance, and the never-delete-last-copy invariant. Builds on
