@@ -1,4 +1,5 @@
 #include "hardware_info_page.h"
+#include "nexis_page.h"
 #include "ui_hardware_info_page.h"
 
 #include <Utils/format_util.h>
@@ -82,6 +83,8 @@ HardwareInfoPage::HardwareInfoPage(QWidget *parent, InfoManager *infoManager) :
     im(infoManager ? infoManager : InfoManager::ins())
 {
     ui->setupUi(this);
+    ui->scrollLayout->insertWidget(0, PageScaffold::buildHeader(
+        tr("Hardware Info"), tr("System, processor, memory and storage details"), this).row);
 
     // DS §2 (NEX F1): elevated-card chrome for the System/Processor/Graphics/
     // Memory/Battery/Storage/Fans sections — structural, so it's fine to set

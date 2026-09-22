@@ -96,7 +96,7 @@ void DockerPage::setDaemonStatus(bool running, const QString &version)
         ui->lblDockerStatus->setProperty("accessibleName", "success");
     } else {
         ui->lblDockerStatus->setText(tr("Docker daemon: Not running"));
-        ui->lblDockerStatus->setProperty("accessibleName", "danger");
+        ui->lblDockerStatus->setProperty("variant", "danger");
     }
     ui->lblDockerStatus->style()->unpolish(ui->lblDockerStatus);
     ui->lblDockerStatus->style()->polish(ui->lblDockerStatus);

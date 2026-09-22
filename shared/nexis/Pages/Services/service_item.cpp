@@ -23,6 +23,12 @@ ServiceItem::ServiceItem(const QString &name,
 
     ui->lblServiceName->setText(name);
     ui->lblServiceDescription->setMinimumWidth(0);
+    // The description must own the spare width. With a Preferred policy its
+    // size hint is the already-elided text, so it could never grow back and
+    // stayed clipped at a dozen characters while the spacer took the room.
+    ui->lblServiceDescription->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
+    ui->serviceItemLayout->setColumnStretch(2, 1);
+    ui->serviceItemLayout->setColumnStretch(3, 0);
     updateDescriptionElision();
     ui->checkServiceRunning->setChecked(active);
     ui->checkServiceRunning->setText(active ? tr("Running") : tr("Stopped"));

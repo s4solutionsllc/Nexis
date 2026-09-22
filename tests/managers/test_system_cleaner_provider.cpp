@@ -16,8 +16,35 @@
 
 #include "Pages/SystemCleaner/system_cleaner_provider.h"
 #include "Common/trust_safety_runner.h"
+#include "Managers/cleaner_service.h"
 
 namespace {
+
+// GH#441: mirrors TestCleanerService's TestableCleanerService seam so the
+// elevated `rm -rf` branch (normally pkexec) can be exercised, and counted,
+// without root. pretendUserOwns defaults to false so paths route through
+// removeElevated() the same way root-owned package-cache files do on a real
+// system, where the test's own temp files would otherwise be user-owned.
+class TestableCleanerService : public CleanerService
+{
+public:
+    QStringList elevatedCallSizes; // one entry per removeElevated() call, "N" paths each
+    QStringList allElevatedPaths;
+
+protected:
+    bool currentUserOwns(const QString &) const override
+    {
+        return false;
+    }
+
+    void removeElevated(const QStringList &paths) override
+    {
+        elevatedCallSizes << QString::number(paths.size());
+        allElevatedPaths << paths;
+        for (const QString &p : paths)
+            QFile::remove(p);
+    }
+};
 
 // Subclass that overrides performItem() to directly delete/skip files
 // without routing through CleanerService (which needs a full Qt environment).
@@ -86,6 +113,7 @@ private slots:
     void scan_marks_trash_as_risky();
     void per_item_deselect_skips_deselected_files();
     void dry_run_reports_same_numbers_with_zero_side_effects();
+    void clean_selected_batches_elevated_removal_into_single_call();
 };
 
 void TestSystemCleanerProvider::scan_emits_one_item_per_file_per_category()
@@ -222,6 +250,40 @@ void TestSystemCleanerProvider::dry_run_reports_same_numbers_with_zero_side_effe
 
     // Byte count matches what a real run would report
     QCOMPARE(dryRun.totalBytesFreed, expectedBytes);
+}
+
+void TestSystemCleanerProvider::clean_selected_batches_elevated_removal_into_single_call()
+{
+    // GH#441: selecting multiple root-owned package-cache items and running
+    // Clean Selected must trigger exactly one elevated removal call (one
+    // pkexec/polkit prompt), not one per item.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    QDir(tmp.path()).mkpath("pkg");
+
+    SystemCleanerProvider::Config cfg;
+    cfg.packageCaches = makeFiles(tmp.path() + "/pkg", 4);
+
+    TestableCleanerService cleanerService;
+    SystemCleanerProvider provider(cfg, &cleanerService, nullptr);
+
+    QList<TrustSafetyActionItem> items = TrustSafetyRunner::scanSynchronous(&provider, nullptr);
+    QCOMPARE(items.size(), 4);
+
+    TrustSafetyRunSummary summary =
+        TrustSafetyRunner::executeSynchronous(&provider, items, /*dryRun=*/false, nullptr);
+
+    QCOMPARE(summary.totalItemsRequested, 4);
+    QCOMPARE(summary.totalItemsSucceeded, 4);
+
+    // Exactly one removeElevated() call (one prompt) covering all 4 files —
+    // not 4 separate calls.
+    QCOMPARE(cleanerService.elevatedCallSizes.size(), 1);
+    QCOMPARE(cleanerService.elevatedCallSizes.first(), QStringLiteral("4"));
+    QCOMPARE(cleanerService.allElevatedPaths.size(), 4);
+
+    for (const TrustSafetyActionItem &item : items)
+        QVERIFY(!QFile::exists(item.id));
 }
 
 QTEST_MAIN(TestSystemCleanerProvider)

@@ -44,7 +44,7 @@ private slots:
 private:
     void buildUI();
     void setStepStatus(QLabel *icon, QLabel *detail, const QString &status, const QString &detailText);
-    void navigateToPage(const QString &pageTitle);
+    void navigateToPage(const QString &pageId);
 
     AppManager *mAppManager;
     InfoManager *mInfoManager;

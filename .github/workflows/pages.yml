@@ -22,8 +22,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The nightly install-stats collector writes to the `install-stats` data
+      # branch (native is ruleset-protected, so bots cannot push there). Overlay
+      # that file onto the committed seed so /stats shows the live series.
+      - name: Overlay install stats from data branch
+        run: |
+          if git fetch --depth=1 origin install-stats 2>/dev/null; then
+            git show FETCH_HEAD:install-stats.json > website/src/data/install-stats.json
+            echo "Using install-stats.json from the install-stats branch"
+          else
+            echo "No install-stats branch — building with the committed seed"
+          fi
+
       - name: Build with Astro
-        uses: withastro/action@e84f40bd8d2caa9e768ec82ad30dd81f0b280853 # v6.1.2
+        uses: withastro/action@3eafd002e65cc31b4f0eae0bb05450d521562247 # v6.1.3
         with:
           path: ./website
 
@@ -36,4 +48,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

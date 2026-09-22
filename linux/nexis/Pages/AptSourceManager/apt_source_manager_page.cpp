@@ -96,7 +96,7 @@ void APTSourceManagerPage::init()
     mBtnCheckNow->setObjectName("btnCheckNow");
     mBtnCheckNow->setCursor(Qt::PointingHandCursor);
     mBtnCheckNow->setFocusPolicy(Qt::NoFocus);
-    mBtnCheckNow->setAccessibleName("primary");
+    mBtnCheckNow->setProperty("variant", "primary");
     mBtnCheckNow->setFixedHeight(28);
     updTitleRow->addWidget(mBtnCheckNow);
 
@@ -104,7 +104,7 @@ void APTSourceManagerPage::init()
     mBtnRefreshHealth->setObjectName("btnRefreshHealth");
     mBtnRefreshHealth->setCursor(Qt::PointingHandCursor);
     mBtnRefreshHealth->setFocusPolicy(Qt::NoFocus);
-    mBtnRefreshHealth->setAccessibleName("primary");
+    mBtnRefreshHealth->setProperty("variant", "primary");
     mBtnRefreshHealth->setFixedHeight(28);
     updTitleRow->addWidget(mBtnRefreshHealth);
 
@@ -132,7 +132,7 @@ void APTSourceManagerPage::init()
     mBtnUpdateSelected = new QPushButton(tr("Update Selected"), updHeaderWidget);
     mBtnUpdateSelected->setObjectName("btnUpdateSelected");
     mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
-    mBtnUpdateSelected->setAccessibleName("primary");
+    mBtnUpdateSelected->setProperty("variant", "primary");
     mBtnUpdateSelected->setFixedHeight(28);
     mBtnUpdateSelected->setEnabled(false);
     updTitleRow->addWidget(mBtnUpdateSelected);

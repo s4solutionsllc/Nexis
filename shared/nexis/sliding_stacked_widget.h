@@ -7,6 +7,8 @@
 #include <QWidget>
 #include <QDebug>
 #include <QEasingCurve>
+#include <QParallelAnimationGroup>
+#include <QPointer>
 
 class SlidingStackedWidget : public QStackedWidget
 {
@@ -32,6 +34,7 @@ public slots:
     void slideInNext();
     void slideInPrev();
     void slideInIdx(int idx, t_direction direction = AUTOMATIC);
+    void finishAnimation();
 
 signals:
     void animationFinished();
@@ -49,6 +52,7 @@ private:
     int next;
     QPoint pnow;
     bool active;
+    QPointer<QParallelAnimationGroup> mAnimGroup;
 };
 
 #endif // SLIDINGSTACKEDWIDGET_H

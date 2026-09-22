@@ -1,5 +1,4 @@
 #include "disk_usage_launcher_widget.h"
-#include "disk_treemap_dialog.h"
 #include "dpi.h"
 #include "utilities.h"
 
@@ -128,7 +127,7 @@ DiskUsageLauncherWidget::DiskUsageLauncherWidget(QWidget *parent,
 
     // --- Action button ---
     mActionButton = new QPushButton(this);
-    mActionButton->setAccessibleName("primary");
+    mActionButton->setProperty("variant", "primary");
     mActionButton->setCursor(Qt::PointingHandCursor);
     connect(mActionButton, &QPushButton::clicked, this, &DiskUsageLauncherWidget::onActionClicked);
 
@@ -595,14 +594,7 @@ void DiskUsageLauncherWidget::onActionClicked()
 
 void DiskUsageLauncherWidget::onBuiltinClicked()
 {
-    // Dialog parents to the launcher's top-level window so it raises and
-    // closes with Nexis. It owns its own scanner thread; multiple opens
-    // create independent dialogs.
-    auto *dlg = new DiskTreemapDialog(window(), mAppManager, mSignalMapper);
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->show();
-    dlg->raise();
-    dlg->activateWindow();
+    emit mSignalMapper->sigNavigateToPage(QStringLiteral("diskMap"));
 }
 
 void DiskUsageLauncherWidget::applyThemeColors()

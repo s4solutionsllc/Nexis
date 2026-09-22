@@ -44,10 +44,7 @@ void PowerDrawWidget::buildUI()
 
     mTitle = new QLabel(tr("Package Power"), mCard);
     mTitle->setObjectName("powerDrawTitle");
-    QFont titleFont = mTitle->font();
-    titleFont.setPointSize(titleFont.pointSize() + 3);
-    titleFont.setBold(true);
-    mTitle->setFont(titleFont);
+    mTitle->setProperty("textRole", "panelTitle");
 
     auto *titleRow = new QHBoxLayout;
     titleRow->setContentsMargins(0, 0, 0, 0);
@@ -59,10 +56,7 @@ void PowerDrawWidget::buildUI()
 
     mWattsLabel = new QLabel(mCard);
     mWattsLabel->setObjectName("powerDrawWatts");
-    QFont wattsFont = mWattsLabel->font();
-    wattsFont.setPointSize(wattsFont.pointSize() + 8);
-    wattsFont.setBold(true);
-    mWattsLabel->setFont(wattsFont);
+    mWattsLabel->setProperty("textRole", "valueLarge");
     card->addWidget(mWattsLabel);
 
     mBreakdown = new QLabel(mCard);

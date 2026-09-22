@@ -254,6 +254,7 @@ void NetworkDiagWidget::buildUI()
     mBtnRetest = new QPushButton(tr("Re-test"));
     mBtnRetest->setCursor(Qt::PointingHandCursor);
     mBtnRetest->setObjectName("netDiagRetest");
+    mBtnRetest->setProperty("variant", "primary");
     connect(mBtnRetest, &QPushButton::clicked, this, &NetworkDiagWidget::runTest);
     footer->addWidget(mBtnRetest);
     root->addLayout(footer);

@@ -2,7 +2,6 @@
 #include "Managers/tool_manager.h"
 #include "ui_app.h"
 #include "Pages/Network/net_usage_tracker.h"
-#include "Pages/Resources/disk_treemap_dialog.h"
 #include "utilities.h"
 #include "signal_mapper.h"
 #include "nexis_page.h"
@@ -29,6 +28,9 @@
 #include <QWindow>
 #include <QThreadPool>
 #include <QLabel>
+#include <algorithm>
+#include <QSet>
+#include <QMenuBar>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
 #include <QTimer>
@@ -41,6 +43,7 @@
 
 #ifdef Q_OS_MAC
 #include "macos_dock_helper.h"
+#include "macos_window_helper.h"
 #endif
 
 App::~App()
@@ -154,8 +157,9 @@ void App::buildSidebar()
 
     // Helper lambda to create a section with header, indicator, and container.
     // Pass headerless=true to omit the toggle header and separator (always-visible section).
-    auto addSection = [&](const QString &name, bool headerless = false) -> SidebarSection & {
+    auto addSection = [&](const QString &id, const QString &name, bool headerless = false) -> SidebarSection & {
         SidebarSection section;
+        section.id = id;
         section.name = name;
         section.collapsed = false;
         section.headerless = headerless;
@@ -183,124 +187,78 @@ void App::buildSidebar()
         return mSections.last();
     };
 
+    auto addPageButton = [this](SidebarSection &sec, QPushButton *&button, const QString &label) {
+        button = createSidebarButton(label);
+        sec.containerLayout->addWidget(button);
+        sec.buttons.append(button);
+    };
+
     // ---- MONITOR section (headerless — always visible, no toggle) ----
     {
-        auto &sec = addSection(tr("MONITOR"), true);
-        btnDash = createSidebarButton(tr("Dashboard"));
+        auto &sec = addSection(QStringLiteral("monitor"), tr("MONITOR"), true);
+        addPageButton(sec, btnDash, tr("Dashboard"));
         btnDash->setChecked(true);
-        sec.containerLayout->addWidget(btnDash);
-        sec.buttons.append(btnDash);
+        addPageButton(sec, btnResources, tr("Resources"));
+        addPageButton(sec, btnProcesses, tr("Processes"));
+        addPageButton(sec, btnNetworkUsage, tr("Network Usage"));
+    }
 
-        btnHardwareInfo = createSidebarButton(tr("Hardware Info"));
-        sec.containerLayout->addWidget(btnHardwareInfo);
-        sec.buttons.append(btnHardwareInfo);
+    // ---- DIAGNOSE section ----
+    {
+        auto &sec = addSection(QStringLiteral("diagnose"), tr("DIAGNOSE"));
+        addPageButton(sec, btnHardwareInfo, tr("Hardware Info"));
+        addPageButton(sec, btnBootAnalysis, tr("Boot Analysis"));
+        addPageButton(sec, btnSystemLogs, tr("System Logs"));
+    }
 
-        btnResources = createSidebarButton(tr("Resources"));
-        sec.containerLayout->addWidget(btnResources);
-        sec.buttons.append(btnResources);
+    // ---- CLEAN section ----
+    {
+        auto &sec = addSection(QStringLiteral("clean"), tr("CLEAN"));
+        addPageButton(sec, btnSystemCleaner, tr("System Cleaner"));
+        addPageButton(sec, btnDiskTools, tr("Disk Tools"));
+        addPageButton(sec, btnDiskMap, tr("Disk Map"));
 
-        // SSO-23863: top-level entry point for the built-in disk-space
-        // treemap (previously only reachable via a launcher widget buried
-        // in the Resources page). Not checkable/exclusive and not part of
-        // sec.buttons — like btnFeedback, it opens a dialog rather than
-        // switching the stacked page, so it must not join mSidebarBtnGroup
-        // or the checked-highlight would get stuck on it.
-        btnDiskMap = new QPushButton(ui->sidebar);
-        btnDiskMap->setToolTip(tr("Disk Map"));
-        btnDiskMap->setCursor(Qt::PointingHandCursor);
-        btnDiskMap->setCheckable(false);
-        btnDiskMap->setIconSize(Dpi::scale(20, 20));
-        btnDiskMap->setObjectName("btnDiskMap");
-        sec.containerLayout->addWidget(btnDiskMap);
-
-        btnNetworkUsage = createSidebarButton(tr("Network Usage"));
-        sec.containerLayout->addWidget(btnNetworkUsage);
-        sec.buttons.append(btnNetworkUsage);
+#ifdef Q_OS_MAC
+        addPageButton(sec, btnMailCleanup, tr("Mail Cleanup"));
+#endif
+        addPageButton(sec, btnShredder, tr("File Shredder"));
+        addPageButton(sec, btnSearch, tr("File Search"));
     }
 
     // ---- MANAGE section ----
     {
-        auto &sec = addSection(tr("MANAGE"));
-        btnSystemCleaner = createSidebarButton(tr("System Cleaner"));
-        sec.containerLayout->addWidget(btnSystemCleaner);
-        sec.buttons.append(btnSystemCleaner);
-
-        btnDiskTools = createSidebarButton(tr("Disk Tools"));
-        sec.containerLayout->addWidget(btnDiskTools);
-        sec.buttons.append(btnDiskTools);
-
-        btnSearch = createSidebarButton(tr("Search"));
-        sec.containerLayout->addWidget(btnSearch);
-        sec.buttons.append(btnSearch);
-
-        btnProcesses = createSidebarButton(tr("Processes"));
-        sec.containerLayout->addWidget(btnProcesses);
-        sec.buttons.append(btnProcesses);
-
-        btnServices = createSidebarButton(tr("Services"));
-        sec.containerLayout->addWidget(btnServices);
-        sec.buttons.append(btnServices);
-
-        btnStartupApps = createSidebarButton(tr("Startup Apps"));
-        sec.containerLayout->addWidget(btnStartupApps);
-        sec.buttons.append(btnStartupApps);
-
-        btnBootAnalysis = createSidebarButton(tr("Boot Analysis"));
-        sec.containerLayout->addWidget(btnBootAnalysis);
-        sec.buttons.append(btnBootAnalysis);
-
+        auto &sec = addSection(QStringLiteral("manage"), tr("MANAGE"));
 #ifdef Q_OS_MAC
-        btnUninstaller = createSidebarButton(tr("Applications"));
+        addPageButton(sec, btnUninstaller, tr("Applications"));
 #else
-        btnUninstaller = createSidebarButton(tr("Uninstaller"));
+        addPageButton(sec, btnUninstaller, tr("Uninstaller"));
 #endif
-        sec.containerLayout->addWidget(btnUninstaller);
-        sec.buttons.append(btnUninstaller);
-
+        addPageButton(sec, btnStartupApps, tr("Startup Apps"));
+        addPageButton(sec, btnServices, tr("Services"));
 #ifdef Q_OS_MAC
-        btnMailCleanup = createSidebarButton(tr("Mail Cleanup"));
-        sec.containerLayout->addWidget(btnMailCleanup);
-        sec.buttons.append(btnMailCleanup);
+        addPageButton(sec, btnAptSourceManager, tr("Homebrew"));
+#else
+        addPageButton(sec, btnAptSourceManager, tr("APT Repository Manager"));
 #endif
-        btnShredder = createSidebarButton(tr("File Shredder"));
-        sec.containerLayout->addWidget(btnShredder);
-        sec.buttons.append(btnShredder);
+        addPageButton(sec, btnDocker, tr("Docker"));
     }
 
-    // ---- SYSTEM section ----
+    // ---- TOOLS section ----
     {
-        auto &sec = addSection(tr("SYSTEM"));
-        btnDocker = createSidebarButton(tr("Docker"));
-        sec.containerLayout->addWidget(btnDocker);
-        sec.buttons.append(btnDocker);
+        auto &sec = addSection(QStringLiteral("tools"), tr("TOOLS"));
+        addPageButton(sec, btnHelpers, tr("Helpers"));
+        addPageButton(sec, btnGnomeSettings, tr("GNOME Settings"));
 
-        btnHelpers = createSidebarButton(tr("Helpers"));
-        sec.containerLayout->addWidget(btnHelpers);
-        sec.buttons.append(btnHelpers);
-
-        btnSystemLogs = createSidebarButton(tr("System Logs"));
-        sec.containerLayout->addWidget(btnSystemLogs);
-        sec.buttons.append(btnSystemLogs);
-
-#ifdef Q_OS_MAC
-        btnAptSourceManager = createSidebarButton(tr("Homebrew"));
-#else
-        btnAptSourceManager = createSidebarButton(tr("APT Repository Manager"));
-#endif
-        sec.containerLayout->addWidget(btnAptSourceManager);
-        sec.buttons.append(btnAptSourceManager);
-
-        btnGnomeSettings = createSidebarButton(tr("GNOME Settings"));
-        sec.containerLayout->addWidget(btnGnomeSettings);
-        sec.buttons.append(btnGnomeSettings);
-
+        // Settings lives in the pinned footer (below) so it is always one
+        // click away, not the last row of a collapsible, scrolling group.
         btnSettings = createSidebarButton(tr("Settings"));
-        sec.containerLayout->addWidget(btnSettings);
         sec.buttons.append(btnSettings);
     }
 
     // Connect section header clicks
     for (int i = 0; i < mSections.size(); ++i) {
+        if (!mSections[i].header)
+            continue;
         connect(mSections[i].header, &QPushButton::clicked, this, [this, i]() {
             toggleSection(i);
         });
@@ -316,8 +274,13 @@ void App::buildSidebar()
     mVersionLabel = new QLabel(QString("v%1").arg(qApp->applicationVersion()), ui->sidebar);
     mVersionLabel->setObjectName("sidebarVersionLabel");
     mVersionLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    mSidebarLayout->addWidget(mVersionLabel);
-    mSidebarLayout->addSpacing(4);
+
+    auto *footerSeparator = new QFrame(ui->sidebar);
+    footerSeparator->setObjectName("sidebarDividerLine");
+    footerSeparator->setFrameShape(QFrame::HLine);
+    footerSeparator->setFixedHeight(1);
+    mSidebarLayout->addWidget(footerSeparator);
+    mSidebarLayout->addWidget(btnSettings);
 
     // Feedback button (not a page - opens dialog)
     btnFeedback = new QPushButton(ui->sidebar);
@@ -327,6 +290,7 @@ void App::buildSidebar()
     btnFeedback->setIconSize(Dpi::scale(20, 20));
     btnFeedback->setObjectName("btnFeedback");
     mSidebarLayout->addWidget(btnFeedback);
+    mSidebarLayout->addWidget(mVersionLabel);
 
     // System Cleaner badge overlay (#8, #29)
     mCleanerBadge = new QLabel(ui->sidebar);
@@ -416,6 +380,7 @@ void App::init()
 
     ui->pageContentLayout->setContentsMargins(0, 0, 0, 0);
     ui->pageContentLayout->addWidget(mHeaderActionsRow);
+    mHeaderActionsRow->hide();
     ui->pageContentLayout->addWidget(mSlidingStacked);
 
     // Set button labels
@@ -426,7 +391,7 @@ void App::init()
     btnNetworkUsage->setText(tr("Network Usage"));
     btnSystemCleaner->setText(tr("System Cleaner"));
     btnDiskTools->setText(tr("Disk Tools"));
-    btnSearch->setText(tr("Search"));
+    btnSearch->setText(tr("File Search"));
     btnProcesses->setText(tr("Processes"));
     btnServices->setText(tr("Services"));
     btnStartupApps->setText(tr("Startup Apps"));
@@ -517,8 +482,14 @@ void App::init()
         nullptr, {}
     });
     mPageSlots.append({
+        "diskMap",
+        tr("Disk Map"),
+        [this]() -> QWidget* { diskMapPage = new DiskMapPage(mSlidingStacked); return diskMapPage; },
+        nullptr, {}
+    });
+    mPageSlots.append({
         "search",
-        tr("Search"),
+        tr("File Search"),
         [this]() -> QWidget* { searchPage = new SearchPage(mSlidingStacked); return searchPage; },
         nullptr, {}
     });
@@ -590,7 +561,7 @@ void App::init()
     });
 
     mListSidebarButtons = {
-        btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnSearch,
+        btnDash, btnHardwareInfo, btnResources, btnNetworkUsage, btnSystemCleaner, btnDiskTools, btnDiskMap, btnSearch,
         btnProcesses, btnServices, btnStartupApps, btnBootAnalysis, btnUninstaller,
 #ifdef Q_OS_MAC
         btnMailCleanup,
@@ -683,60 +654,19 @@ void App::init()
     }
 #endif
 
-    // Connect sidebar button clicks to page navigation. Click handlers route
-    // through ensurePageByTitle() so they work when the target page has not
-    // yet been constructed (FR-97 lazy construction).
-    auto navByTitle = [this](const QString &title) {
-        if (QWidget *w = ensurePageByTitle(title))
-            pageClick(w);
-    };
-    connect(btnDash,             &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Dashboard")); });
-    connect(btnHardwareInfo,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Hardware Info")); });
-    connect(btnResources,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Resources")); });
-    connect(btnNetworkUsage,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Network Usage")); });
-    connect(btnSystemCleaner,    &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Cleaner")); });
-    connect(btnDiskTools,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Disk Tools")); });
-    connect(btnSearch,           &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Search")); });
-    connect(btnProcesses,        &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Processes")); });
-    connect(btnServices,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Services")); });
-    connect(btnStartupApps,      &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Startup Apps")); });
-    connect(btnBootAnalysis,     &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Boot Analysis")); });
-    connect(btnUninstaller,      &QPushButton::clicked, this, [this, navByTitle]() {
-#ifdef Q_OS_MAC
-        navByTitle(tr("Applications"));
-#else
-        navByTitle(tr("Uninstaller"));
-#endif
-    });
-#ifdef Q_OS_MAC
-    connect(btnMailCleanup,      &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Mail Cleanup")); });
-#endif
-    connect(btnShredder,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("File Shredder")); });
-    connect(btnHelpers,          &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Helpers")); });
-    connect(btnSystemLogs,       &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("System Logs")); });
-    connect(btnSettings,         &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Settings")); });
+    // Sidebar page buttons are connected further down, once each button is
+    // linked to its page slot; navigateTo() handles pages that have not been
+    // constructed yet (FR-97 lazy construction).
+    // Every page button navigates by its slot's stable id (wired below, once
+    // the slot list and the button list are final).
     connect(btnFeedback,         &QPushButton::clicked, this, [this]() {
         if (feedback.isNull())
             feedback = QSharedPointer<Feedback>(new Feedback(this));
         feedback->show();
     });
-    connect(btnDiskMap,          &QPushButton::clicked, this, &App::openDiskTreemapDialog);
 
-    // Conditional page button clicks
-    if (ToolManager::ins()->checkDocker())
-        connect(btnDocker, &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("Docker")); });
-    if (ToolManager::ins()->checkSourceRepository())
-        connect(btnAptSourceManager, &QPushButton::clicked, this, [this, navByTitle]() {
-#ifdef Q_OS_MAC
-            navByTitle(tr("Homebrew"));
-#else
-            navByTitle(tr("APT Repository Manager"));
-#endif
-        });
-#ifndef Q_OS_MAC
-    if (ToolManager::ins()->checkGnomeSettings())
-        connect(btnGnomeSettings, &QPushButton::clicked, this, [this, navByTitle]() { navByTitle(tr("GNOME Settings")); });
-#endif
+    // Conditional pages (Docker, Homebrew/APT, GNOME Settings) are wired by the
+    // same slot loop below when their tool is present.
 
     // Reposition badges when the nav scroll position changes
     connect(mNavScrollArea->verticalScrollBar(), &QScrollBar::valueChanged,
@@ -746,15 +676,66 @@ void App::init()
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
             this, &App::updateSidebarIcons);
 
+#ifdef Q_OS_MAC
+    // Title bars are drawn by the system and otherwise follow the *system*
+    // appearance, leaving a white title bar on a dark app (and the reverse).
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme,
+            this, [this]() { syncNativeWindowAppearance(); });
+    qApp->installEventFilter(this);
+#endif
+
     // Navigate-to-page signal from any widget (e.g. dashboard quick actions)
     connect(SignalMapper::ins(), &SignalMapper::sigNavigateToPage,
-            this, [this](const QString &title) {
-        QWidget *page = getPageByTitle(title);
-        if (page) {
-            pageClick(page);
-            checkSidebarButtonByTooltip(title);
+            this, [this](const QString &pageId) { navigateTo(pageId, true); });
+
+    // Slots are registered above in historical order and the conditional
+    // pages are inserted as their tools are detected. Put them into sidebar
+    // order here — slide direction, the Go menu shortcuts and the tray all
+    // derive from it — and link each slot to its button by stable id.
+    {
+        const QHash<QString, QPushButton*> buttonById = {
+            {"dashboard", btnDash}, {"resources", btnResources}, {"processes", btnProcesses},
+            {"networkUsage", btnNetworkUsage}, {"hardwareInfo", btnHardwareInfo},
+            {"bootAnalysis", btnBootAnalysis}, {"systemLogs", btnSystemLogs},
+            {"systemCleaner", btnSystemCleaner}, {"diskTools", btnDiskTools}, {"diskMap", btnDiskMap},
+#ifdef Q_OS_MAC
+            {"mailCleanup", btnMailCleanup},
+#endif
+            {"shredder", btnShredder}, {"search", btnSearch}, {"uninstaller", btnUninstaller},
+            {"startupApps", btnStartupApps}, {"services", btnServices},
+            {"aptSourceManager", btnAptSourceManager}, {"docker", btnDocker},
+            {"helpers", btnHelpers}, {"gnomeSettings", btnGnomeSettings}, {"settings", btnSettings}
+        };
+        static const QStringList kSidebarOrder = {
+            "dashboard", "resources", "processes", "networkUsage",
+            "hardwareInfo", "bootAnalysis", "systemLogs",
+            "systemCleaner", "diskTools", "diskMap", "mailCleanup", "shredder", "search",
+            "uninstaller", "startupApps", "services", "aptSourceManager", "docker",
+            "helpers", "gnomeSettings", "settings"
+        };
+        std::stable_sort(mPageSlots.begin(), mPageSlots.end(),
+            [](const PageSlot &a, const PageSlot &b) {
+                return kSidebarOrder.indexOf(a.id) < kSidebarOrder.indexOf(b.id);
+            });
+        mListSidebarButtons.clear();
+        for (PageSlot &slot : mPageSlots) {
+            slot.button = buttonById.value(slot.id, nullptr);
+            Q_ASSERT_X(slot.button, "App", "every page slot needs a sidebar button");
+            mListSidebarButtons.append(slot.button);
+            const QString pageId = slot.id;
+            connect(slot.button, &QPushButton::clicked, this,
+                    [this, pageId]() { navigateTo(pageId, true); });
         }
-    });
+    }
+#ifndef QT_NO_DEBUG
+    {
+        QSet<QString> seenIds;
+        for (const PageSlot &slot : mPageSlots) {
+            Q_ASSERT_X(!slot.id.isEmpty() && !seenIds.contains(slot.id), "App", "page ids must be unique and non-empty");
+            seenIds.insert(slot.id);
+        }
+    }
+#endif
 
     // Construct Dashboard eagerly (it is the default landing page and owns
     // most of the DataRefreshService signal subscriptions). Other pages are
@@ -769,9 +750,8 @@ void App::init()
     // Set start page. Must run before DataRefreshService::start() so the
     // landing page's onPageActivated() can register subscribers (FR-103)
     // before the service fires its initial immediate ticks. SSO-3388: the
-    // setting is now a stable id; resolve it to the currently-localized
-    // title that clickSidebarButton/checkSidebarButtonByTooltip expect.
-    clickSidebarButton(pageTitleById(SettingManager::ins()->getStartPage()));
+    // setting is a stable page id, which navigateTo() takes directly.
+    navigateTo(SettingManager::ins()->getStartPage());
 
     DataRefreshService::ins()->start();
     NetUsageTracker::ins()->start(DataRefreshService::ins());
@@ -789,12 +769,9 @@ void App::init()
 #ifdef Q_OS_MAC
     // FW-20 (SSO-3748): optional menu-bar CPU/memory monitor, off by default.
     mMenuBarMonitor = new MenuBarMonitor(this);
-    connect(mMenuBarMonitor, &MenuBarMonitor::activationRequested, this, [this]() {
-        setWindowState(windowState() & ~Qt::WindowMinimized);
-        clickSidebarButton(tr("Dashboard"), true);
-        if (windowHandle())
-            windowHandle()->requestActivate();
-    });
+    // Same behaviour as the tray's "Open": bring the window back on the page
+    // the user left it on rather than jumping to Dashboard.
+    connect(mMenuBarMonitor, &MenuBarMonitor::activationRequested, this, &App::showAndRaise);
     connect(SignalMapper::ins(), &SignalMapper::sigMenuBarMonitorToggled,
             mMenuBarMonitor, &MenuBarMonitor::setEnabled);
     mMenuBarMonitor->setEnabled(SettingManager::ins()->getMenuBarMonitorEnabled());
@@ -829,6 +806,9 @@ void App::init()
     mMiniMonitorWindow = new MiniMonitorWindow(this);
     connect(SignalMapper::ins(), &SignalMapper::sigMiniMonitorToggled,
             mMiniMonitorWindow, &QWidget::setVisible);
+    connect(mMiniMonitorWindow, &MiniMonitorWindow::openMainWindowRequested,
+            this, &App::showAndRaise);
+    mMiniMonitorWindow->setToolTip(tr("Double-click to open Nexis"));
     connect(mMiniMonitorWindow, &MiniMonitorWindow::visibilityToggled,
             this, [this](bool visible) {
         if (mMiniMonitorAction)
@@ -842,25 +822,20 @@ void App::init()
     addAction(kioskToggle);
     connect(kioskToggle, &QAction::triggered, this, &App::toggleKioskMode);
 
-    QAction *kioskExit = new QAction(this);
-    kioskExit->setShortcut(Qt::Key_Escape);
-    addAction(kioskExit);
-    connect(kioskExit, &QAction::triggered, this, &App::exitKioskMode);
+    // Enabled only while in kiosk mode: a window-scope Esc shortcut is
+    // dispatched before key events, so leaving it on would stop every page
+    // from handling Esc itself.
+    mKioskExitAction = new QAction(this);
+    mKioskExitAction->setShortcut(Qt::Key_Escape);
+    mKioskExitAction->setEnabled(false);
+    addAction(mKioskExitAction);
+    connect(mKioskExitAction, &QAction::triggered, this, &App::exitKioskMode);
 
     // Sidebar collapse shortcut (Ctrl+B)
-    QAction *sidebarToggle = new QAction(this);
-    sidebarToggle->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
-    addAction(sidebarToggle);
-    connect(sidebarToggle, &QAction::triggered, this, &App::toggleSidebarCollapse);
 
     // Command palette shortcut (Ctrl+K)
     setupCommandPalette();
-    QAction *cmdPaletteAction = new QAction(this);
-    cmdPaletteAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_K));
-    addAction(cmdPaletteAction);
-    connect(cmdPaletteAction, &QAction::triggered, this, [this]() {
-        mCommandPalette->show();
-    });
+    setupMenuBar();
 
     // Restore kiosk mode from last session, or force it on if the user has
     // configured Nexis to always launch straight into kiosk mode (GH#207).
@@ -960,16 +935,7 @@ void App::changeEvent(QEvent *event)
 
 void App::createTrayActions()
 {
-    auto showAndRaise = [this] {
-#ifdef Q_OS_MAC
-        nexis_macos_show_dock_icon();
-#endif
-        setWindowState(windowState() & ~Qt::WindowMinimized);
-        show();
-        if (windowHandle())
-            windowHandle()->requestActivate();
-        emit SignalMapper::ins()->sigAppVisibilityChanged(true);
-    };
+    auto showAndRaise = [this] { this->showAndRaise(); };
 
     connect(mTrayIcon, &QSystemTrayIcon::activated, this, [showAndRaise](QSystemTrayIcon::ActivationReason) {
         showAndRaise();
@@ -999,11 +965,15 @@ void App::createTrayActions()
 #endif
 
     auto addNavAction = [this](QMenu *menu, QPushButton *button) {
-        const QString toolTip = button->toolTip();
-        QAction *action = menu->addAction(toolTip);
-        connect(action, &QAction::triggered, this, [this, toolTip] {
-            clickSidebarButton(toolTip, true);
-        });
+        QString pageId;
+        for (const PageSlot &slot : mPageSlots) {
+            if (slot.button == button) {
+                pageId = slot.id;
+                break;
+            }
+        }
+        QAction *action = menu->addAction(button->toolTip());
+        connect(action, &QAction::triggered, this, [this, pageId] { navigateTo(pageId, true); });
     };
 
     const QList<TrayMenuGroup> groups = buildTrayMenuGroups(mSections);
@@ -1032,16 +1002,12 @@ void App::createTrayActions()
 
     QAction *paletteAction = quickMenu->addAction(tr("Open Command Palette"));
     connect(paletteAction, &QAction::triggered, this, [this] {
-        show();
+        this->showAndRaise();
         mCommandPalette->show();
     });
 
     QAction *scanAction = quickMenu->addAction(tr("Run System Cleaner Scan"));
-    connect(scanAction, &QAction::triggered, this, [this] {
-        clickSidebarButton(btnSystemCleaner->toolTip(), true);
-        if (systemCleanerPage)
-            systemCleanerPage->quickScan();
-    });
+    connect(scanAction, &QAction::triggered, this, &App::runCleanerScan);
 
     // SSO-23855: toggles the compact mini-monitor window from the tray, the
     // same surface used to open/navigate the main window.
@@ -1087,7 +1053,7 @@ void App::createTrayActions()
 
     mTrayMenu->addSeparator();
 
-    mKioskAction = new QAction(tr("Kiosk Mode (F11)"), this);
+    mKioskAction = new QAction(tr("Kiosk Mode"), this);
     mKioskAction->setCheckable(true);
     mKioskAction->setChecked(mKioskMode);
     connect(mKioskAction, &QAction::triggered, this, &App::toggleKioskMode);
@@ -1102,15 +1068,50 @@ void App::createTrayActions()
     mTrayIcon->setContextMenu(mTrayMenu);
 }
 
-void App::clickSidebarButton(QString pageTitle, bool isShow)
+int App::slotIndexById(const QString &pageId) const
 {
-    QWidget *selectedWidget = getPageByTitle(pageTitle);
-    if (selectedWidget) {
-        pageClick(selectedWidget, !isShow);
-        checkSidebarButtonByTooltip(pageTitle);
-    } else {
-        pageClick(ensurePage(0));
+    for (int i = 0; i < mPageSlots.size(); ++i) {
+        if (mPageSlots[i].id == pageId)
+            return i;
     }
+    return -1;
+}
+
+void App::navigateTo(const QString &pageId, bool isShow)
+{
+    int index = slotIndexById(pageId);
+    if (index < 0)
+        index = 0;   // unknown or unavailable page (e.g. a saved start page for a tool that is gone)
+    const QString id = mPageSlots[index].id;
+
+    mPendingNavId = id;
+    checkSidebarButton(id);
+
+    if (mPageSlots[index].widget) {
+        // A hidden window has nothing to animate.
+        pageClick(mPageSlots[index].widget, isShow && isVisible());
+    } else {
+        if (!mLoadingPage) {
+            mLoadingPage = new QWidget(mSlidingStacked);
+            mLoadingPage->setObjectName("pageLoading");
+            auto *layout = new QVBoxLayout(mLoadingPage);
+            mLoadingLabel = new QLabel(mLoadingPage);
+            mLoadingLabel->setObjectName("pageLoadingLabel");
+            mLoadingLabel->setAlignment(Qt::AlignCenter);
+            layout->addWidget(mLoadingLabel);
+            mSlidingStacked->addWidget(mLoadingPage);
+        }
+        mLoadingLabel->setText(tr("Loading %1…").arg(mPageSlots[index].title));
+        pageClick(mLoadingPage, false);
+
+        // Let the placeholder paint before the (possibly slow) constructor runs.
+        QTimer::singleShot(20, this, [this, id]() {
+            QWidget *w = ensurePageById(id);
+            if (w && mPendingNavId == id)
+                pageClick(w, false);
+        });
+    }
+
 #ifdef Q_OS_MAC
     if (isShow)
         nexis_macos_show_dock_icon();
@@ -1122,19 +1123,26 @@ void App::clickSidebarButton(QString pageTitle, bool isShow)
         emit SignalMapper::ins()->sigAppVisibilityChanged(true);
 }
 
-void App::checkSidebarButtonByTooltip(const QString &text)
+void App::checkSidebarButton(const QString &pageId)
 {
-    for (QPushButton *button : mListSidebarButtons) {
-        if (button->toolTip() == text) {
-            expandSectionForButton(button);
-            button->setChecked(true);
-        }
-    }
+    const int index = slotIndexById(pageId);
+    if (index < 0 || !mPageSlots[index].button)
+        return;
+    expandSectionForButton(mPageSlots[index].button);
+    mPageSlots[index].button->setChecked(true);
+    // Shortcut, palette and tray navigation can target a row that is scrolled
+    // out of view; bring the highlight along.
+    if (mNavScrollArea && mPageSlots[index].button != btnSettings)
+        mNavScrollArea->ensureWidgetVisible(mPageSlots[index].button, 0, Dpi::scale(8));
 }
 
 QWidget* App::getPageByTitle(const QString &title)
 {
-    return ensurePageByTitle(title);
+    for (int i = 0; i < mPageSlots.size(); ++i) {
+        if (mPageSlots[i].title == title)
+            return ensurePage(i);
+    }
+    return nullptr;
 }
 
 QWidget* App::ensurePage(int index)
@@ -1164,13 +1172,9 @@ QWidget* App::ensurePage(int index)
     return w;
 }
 
-QWidget* App::ensurePageByTitle(const QString &title)
+QWidget* App::ensurePageById(const QString &pageId)
 {
-    for (int i = 0; i < mPageSlots.size(); ++i) {
-        if (mPageSlots[i].title == title)
-            return ensurePage(i);
-    }
-    return nullptr;
+    return ensurePage(slotIndexById(pageId));
 }
 
 QString App::pageTitleById(const QString &id) const
@@ -1202,11 +1206,15 @@ void App::setPageHeaderActions(QWidget *widget)
         mHeaderActionsRowLayout->addWidget(widget);
         widget->show();
     }
+    // Only the Dashboard uses this strip; an empty one pushes every other
+    // page's content down by its height.
+    mHeaderActionsRow->setVisible(widget != nullptr);
 }
 
 void App::pageClick(QWidget *widget, bool slide)
 {
     if (widget) {
+        mSlidingStacked->finishAnimation();
         QWidget *current = mSlidingStacked->currentWidget();
         if (current != widget) {
             if (auto *page = qobject_cast<NexisPage*>(current))
@@ -1214,13 +1222,31 @@ void App::pageClick(QWidget *widget, bool slide)
         }
 
         if (slide) {
-            mSlidingStacked->slideInIdx(mSlidingStacked->indexOf(widget));
+            // Stack indices follow lazy construction order, so derive the
+            // direction from sidebar order instead.
+            auto slotIndexOf = [this](QWidget *w) {
+                for (int i = 0; i < mPageSlots.size(); ++i)
+                    if (mPageSlots[i].widget == w)
+                        return i;
+                return -1;
+            };
+            const bool forward = slotIndexOf(widget) >= slotIndexOf(current);
+            mSlidingStacked->slideInIdx(mSlidingStacked->indexOf(widget),
+                forward ? SlidingStackedWidget::BOTTOM2TOP : SlidingStackedWidget::TOP2BOTTOM);
         } else {
+            mSlidingStacked->finishAnimation();
             mSlidingStacked->setCurrentWidget(widget);
         }
 
         if (auto *page = qobject_cast<NexisPage*>(widget))
             page->onPageActivated();
+
+        for (const PageSlot &slot : mPageSlots) {
+            if (slot.widget == widget) {
+                setWindowTitle(tr("%1 — Nexis").arg(slot.title));
+                break;
+            }
+        }
     }
 }
 
@@ -1285,18 +1311,6 @@ void App::toggleSidebarCollapse()
     applySidebarCollapse(mSidebarCollapsed, true);
 }
 
-// SSO-23863: shared by the sidebar button and the command palette entry.
-// Same call disk_usage_launcher_widget.cpp's "Built-in Treemap" button
-// makes — this is a second door to the same dialog, not a fork of it.
-void App::openDiskTreemapDialog()
-{
-    auto *dlg = new DiskTreemapDialog(this, AppManager::ins(), SignalMapper::ins());
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->show();
-    dlg->raise();
-    dlg->activateWindow();
-}
-
 void App::applySidebarCollapse(bool collapsed, bool animate)
 {
     mSidebarCollapsed = collapsed;
@@ -1329,11 +1343,13 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     for (int i = 0; i < mSections.size(); ++i) {
         if (mSections[i].header)
             mSections[i].header->setVisible(!collapsed);
-        mSections[i].container->setVisible(!mSections[i].collapsed);
+        // In rail mode the headers are hidden, so a group collapsed in the
+        // expanded sidebar would otherwise have no way back.
+        mSections[i].container->setVisible(collapsed || !mSections[i].collapsed);
     }
 
     for (QFrame *indicator : mSectionIndicators)
-        indicator->setVisible(false);
+        indicator->setVisible(collapsed);
 
     // Toggle version label
     if (mVersionLabel)
@@ -1359,18 +1375,6 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
         QString savedFeedback = btnFeedback->property("sidebarText").toString();
         if (!savedFeedback.isEmpty())
             btnFeedback->setText(savedFeedback);
-    }
-
-    // Toggle Disk Map button text — not in mListSidebarButtons (same reason
-    // as btnFeedback: it opens a dialog, not a page), so it needs the same
-    // manual handling here.
-    if (collapsed) {
-        btnDiskMap->setProperty("sidebarText", btnDiskMap->text());
-        btnDiskMap->setText(QString());
-    } else {
-        QString savedDiskMap = btnDiskMap->property("sidebarText").toString();
-        if (!savedDiskMap.isEmpty())
-            btnDiskMap->setText(savedDiskMap);
     }
 
     // Update toggle icon and logo
@@ -1409,8 +1413,6 @@ void App::applySidebarCollapse(bool collapsed, bool animate)
     }
     btnFeedback->style()->unpolish(btnFeedback);
     btnFeedback->style()->polish(btnFeedback);
-    btnDiskMap->style()->unpolish(btnDiskMap);
-    btnDiskMap->style()->polish(btnDiskMap);
     mBtnSidebarToggle->style()->unpolish(mBtnSidebarToggle);
     mBtnSidebarToggle->style()->polish(mBtnSidebarToggle);
 }
@@ -1492,28 +1494,39 @@ void App::expandSectionForButton(QPushButton *btn)
     }
 }
 
+static QList<SidebarSectionState::Key> sectionKeys(const QList<SidebarSection> &sections)
+{
+    QList<SidebarSectionState::Key> keys;
+    for (const SidebarSection &sec : sections)
+        keys.append({sec.id, sec.name, sec.headerless});
+    return keys;
+}
+
 void App::saveSectionStates()
 {
-    QJsonObject obj;
-    for (const auto &sec : mSections) {
-        if (!sec.headerless)
-            obj[sec.name] = sec.collapsed;
-    }
+    QHash<QString, bool> collapsed;
+    for (const auto &sec : mSections)
+        collapsed.insert(sec.id, sec.collapsed);
     SettingManager::ins()->setSidebarSectionsCollapsed(
-        QString::fromUtf8(QJsonDocument(obj).toJson(QJsonDocument::Compact)));
+        SidebarSectionState::toJson(sectionKeys(mSections), collapsed));
 }
 
 void App::restoreSectionStates()
 {
-    QString json = SettingManager::ins()->getSidebarSectionsCollapsed();
+    const QString json = SettingManager::ins()->getSidebarSectionsCollapsed();
     if (json.isEmpty())
         return;
-    QJsonObject obj = QJsonDocument::fromJson(json.toUtf8()).object();
+    bool migrated = false;
+    const QHash<QString, bool> collapsed =
+        SidebarSectionState::fromJson(json, sectionKeys(mSections), &migrated,
+            // 2.12 regrouping: CLEAN was split out of MANAGE, TOOLS replaces SYSTEM.
+            {{"clean", "manage"}, {"tools", "system"}});
     for (int i = 0; i < mSections.size(); ++i) {
-        if (obj.contains(mSections[i].name)) {
-            applySectionCollapse(i, obj[mSections[i].name].toBool(), false);
-        }
+        if (collapsed.contains(mSections[i].id))
+            applySectionCollapse(i, collapsed.value(mSections[i].id), false);
     }
+    if (migrated)
+        saveSectionStates();
 }
 
 void App::updateSectionChevrons()
@@ -1595,10 +1608,15 @@ void App::applyKioskMode(bool enable)
     mKioskAction->setChecked(enable);
     mKioskAction->blockSignals(false);
 
+    if (mKioskExitAction)
+        mKioskExitAction->setEnabled(enable);
+
     if (enable) {
         mPreKioskCollapsed = mSidebarCollapsed;
         ui->sidebar->hide();
-        pageClick(dashboardPage, false);
+        mPendingNavId = QStringLiteral("dashboard");
+        pageClick(ensurePage(0), false);
+        checkSidebarButton(QStringLiteral("dashboard"));
 
         // GH#207: place the kiosk window on the configured monitor, if any.
         if (QScreen *targetScreen = resolveKioskScreen()) {
@@ -1675,6 +1693,123 @@ void App::showKioskOverlay()
     connect(fadeOut, &QPropertyAnimation::finished, overlay, &QLabel::deleteLater);
 }
 
+void App::syncNativeWindowAppearance(QWidget *window)
+{
+#ifdef Q_OS_MAC
+    const bool dark = AppManager::ins()->resolveThemeName() != QLatin1String("light");
+    const QList<QWidget*> targets = window ? QList<QWidget*>{window} : QApplication::topLevelWidgets();
+    for (QWidget *w : targets) {
+        // Only real windows that already have a native handle; creating one
+        // here would turn popups and tooltips into native windows.
+        if (!w->isWindow() || !w->testAttribute(Qt::WA_WState_Created) || !w->internalWinId())
+            continue;
+        const Qt::WindowType type = w->windowType();
+        if (type != Qt::Window && type != Qt::Dialog && type != Qt::Tool)
+            continue;
+        nexis_macos_set_window_dark(reinterpret_cast<void *>(w->internalWinId()), dark ? 1 : 0);
+    }
+#else
+    Q_UNUSED(window)
+#endif
+}
+
+bool App::eventFilter(QObject *watched, QEvent *event)
+{
+#ifdef Q_OS_MAC
+    if (event->type() == QEvent::Show && watched->isWidgetType()) {
+        auto *widget = static_cast<QWidget *>(watched);
+        if (widget->isWindow())
+            syncNativeWindowAppearance(widget);
+    }
+#endif
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void App::showAndRaise()
+{
+#ifdef Q_OS_MAC
+    nexis_macos_show_dock_icon();
+#endif
+    setWindowState(windowState() & ~Qt::WindowMinimized);
+    show();
+    raise();
+    if (windowHandle())
+        windowHandle()->requestActivate();
+    emit SignalMapper::ins()->sigAppVisibilityChanged(true);
+}
+
+void App::runCleanerScan()
+{
+    navigateTo(QStringLiteral("systemCleaner"), true);
+    if (!systemCleanerPage)
+        ensurePageById(QStringLiteral("systemCleaner"));
+    if (systemCleanerPage)
+        systemCleanerPage->quickScan();
+}
+
+// A native menu bar gives macOS users the standard Preferences / View / Go
+// entries and makes every shortcut discoverable on all platforms.
+void App::setupMenuBar()
+{
+    QMenuBar *bar = menuBar();
+#ifndef Q_OS_MAC
+    bar->hide();   // shortcuts still work; Linux keeps its chrome-free window
+#endif
+
+    QMenu *appMenu = bar->addMenu(tr("&File"));
+    QAction *prefs = appMenu->addAction(tr("Settings…"));
+    prefs->setMenuRole(QAction::PreferencesRole);
+    prefs->setShortcut(QKeySequence::Preferences);
+    connect(prefs, &QAction::triggered, this, [this] { navigateTo(QStringLiteral("settings"), true); });
+    QAction *quit = appMenu->addAction(tr("Quit Nexis"));
+    quit->setMenuRole(QAction::QuitRole);
+    quit->setShortcut(QKeySequence::Quit);
+    connect(quit, &QAction::triggered, this, &QWidget::close);
+
+    QMenu *viewMenu = bar->addMenu(tr("&View"));
+    QAction *palette = viewMenu->addAction(tr("Command Palette"));
+    palette->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_K));
+    connect(palette, &QAction::triggered, this, [this] { mCommandPalette->show(); });
+    QAction *sidebar = viewMenu->addAction(tr("Toggle Sidebar"));
+    sidebar->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_B));
+    connect(sidebar, &QAction::triggered, this, &App::toggleSidebarCollapse);
+    QAction *kiosk = viewMenu->addAction(tr("Kiosk Mode"));
+#ifdef Q_OS_MAC
+    // F11 is "Show Desktop" on macOS; the existing F11 action stays for
+    // keyboards where it reaches the app.
+    kiosk->setShortcut(QKeySequence(Qt::CTRL | Qt::META | Qt::Key_F));
+#endif
+    connect(kiosk, &QAction::triggered, this, &App::toggleKioskMode);
+    viewMenu->addSeparator();
+    QAction *theme = viewMenu->addAction(tr("Toggle Theme"));
+    connect(theme, &QAction::triggered, this, [] {
+        const QString next = (SettingManager::ins()->getColorScheme() == "light") ? "dark" : "light";
+        SettingManager::ins()->setColorScheme(next);
+        AppManager::ins()->updateStylesheet();
+    });
+
+    QMenu *goMenu = bar->addMenu(tr("&Go"));
+    int shortcutIndex = 1;
+    for (const PageSlot &slot : mPageSlots) {
+        const QString pageId = slot.id;
+        QAction *go = goMenu->addAction(slot.title);
+        if (shortcutIndex <= 9)
+            go->setShortcut(QKeySequence(Qt::CTRL | (Qt::Key_0 + shortcutIndex++)));
+        connect(go, &QAction::triggered, this, [this, pageId] { navigateTo(pageId, true); });
+    }
+
+    QMenu *helpMenu = bar->addMenu(tr("&Help"));
+    QAction *feedbackAction = helpMenu->addAction(tr("Feedback…"));
+    connect(feedbackAction, &QAction::triggered, this, [this] { btnFeedback->click(); });
+
+    // With the actions living in the menu bar, the menu owns the shortcuts;
+    // on Linux the bar is hidden, so register them on the window as well.
+#ifndef Q_OS_MAC
+    for (QMenu *menu : {appMenu, viewMenu, goMenu, helpMenu})
+        addActions(menu->actions());
+#endif
+}
+
 void App::setupCommandPalette()
 {
     mCommandPalette = new CommandPalette(this);
@@ -1682,9 +1817,9 @@ void App::setupCommandPalette()
     // Navigation commands — iterate slots so titles are available even if
     // pages are not yet constructed (Commit B).
     for (const PageSlot &slot : mPageSlots) {
-        QString title = slot.title;
-        mCommandPalette->addCommand(title, tr("Navigate"), [this, title]() {
-            clickSidebarButton(title, true);
+        const QString pageId = slot.id;
+        mCommandPalette->addCommand(slot.title, tr("Navigate"), [this, pageId]() {
+            navigateTo(pageId, true);
         });
     }
 
@@ -1704,12 +1839,17 @@ void App::setupCommandPalette()
         toggleKioskMode();
     });
 
-    mCommandPalette->addCommand(tr("Quick Clean"), tr("Action"), [this]() {
-        clickSidebarButton(tr("System Cleaner"), true);
+    mCommandPalette->addCommand(tr("Run System Cleaner Scan"), tr("Action"), [this]() {
+        runCleanerScan();
     });
 
-    mCommandPalette->addCommand(tr("Disk Map"), tr("Action"), [this]() {
-        openDiskTreemapDialog();
+    mCommandPalette->addCommand(tr("Feedback"), tr("Action"), [this]() {
+        btnFeedback->click();
+    });
+
+    mCommandPalette->addCommand(tr("Mini Monitor"), tr("Action"), [this]() {
+        const bool show = !(mMiniMonitorWindow && mMiniMonitorWindow->isVisible());
+        emit SignalMapper::ins()->sigMiniMonitorToggled(show);
     });
 
 #ifdef Q_OS_MAC

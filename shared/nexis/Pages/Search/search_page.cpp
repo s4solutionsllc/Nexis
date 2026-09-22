@@ -1,4 +1,6 @@
 #include "search_page.h"
+#include "Managers/app_manager.h"
+#include "nexis_page.h"
 #include "ui_search_page.h"
 #include "nexis_roles.h"
 #include "dpi.h"
@@ -21,6 +23,8 @@ SearchPage::SearchPage(QWidget *parent, InfoManager *infoManager,
     mSortFilterModel(new QSortFilterProxyModel(this))
 {
     ui->setupUi(this);
+    ui->gridLayout->addWidget(PageScaffold::buildHeader(
+        tr("File Search"), tr("Find files and folders"), this).row, 0, 0, 1, 2);
 
     init();
 }
@@ -78,7 +82,7 @@ void SearchPage::init()
 
     ui->lblErrorMsg->hide();
 
-    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(mSettingManager->getThemeName());
+    QString iconLoading = QString(":/static/themes/%1/img/loading.gif").arg(AppManager::ins()->resolveThemeName());
     QMovie *loadingMovie = new QMovie(iconLoading, QByteArray(), this);
     ui->lblLoadingSearching->setMovie(loadingMovie);
     loadingMovie->start();

@@ -1,4 +1,5 @@
 #include "mail_attachment_cleanup_page.h"
+#include "nexis_page.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -46,15 +47,26 @@ MailAttachmentCleanupPage::MailAttachmentCleanupPage(QWidget *parent)
 void MailAttachmentCleanupPage::buildUI()
 {
     auto *root = new QVBoxLayout(this);
-    root->setContentsMargins(24, 24, 24, 24);
-    root->setSpacing(16);
+    root->setContentsMargins(PageScaffold::pageMargins());
+    root->setSpacing(PageScaffold::pageSpacing());
 
-    // ── Title ──
-    mLblTitle = new QLabel(tr("Mail Attachment Cleanup"), this);
-    mLblTitle->setObjectName("pageTitle");
-    root->addWidget(mLblTitle);
+    // ── Header (shared scaffold) ──
+    PageScaffold::Header header = PageScaffold::buildHeader(
+        tr("Mail Cleanup"), tr("Locally stored Mail attachments"), this);
+    mLblTitle = header.title;
+    mBtnScan = new QPushButton(tr("Scan for Attachments"), header.row);
+    mBtnScan->setProperty("variant", "primary");
+    mBtnScan->setCursor(Qt::PointingHandCursor);
+    header.layout->addWidget(mBtnScan, 0, Qt::AlignTop);
+    root->addWidget(header.row);
 
-    // ── Description ──
+    // ── Description card ──
+    auto *introCard = new QFrame(this);
+    introCard->setProperty("cardRole", "elevated");
+    auto *introLayout = new QVBoxLayout(introCard);
+    introLayout->setContentsMargins(14, 12, 14, 12);
+    introLayout->setSpacing(8);
+
     mLblDescription = new QLabel(
         tr("Nexis can remove locally stored Mail attachments from "
            "~/Library/Mail to recover disk space. Attachments deleted here "
@@ -62,30 +74,25 @@ void MailAttachmentCleanupPage::buildUI()
            "can typically be re-downloaded from the mail server on next sync, "
            "but attachments from POP or locally-only accounts may not be "
            "recoverable."),
-        this);
+        introCard);
     mLblDescription->setWordWrap(true);
-    mLblDescription->setObjectName("descriptionLabel");
-    root->addWidget(mLblDescription);
+    mLblDescription->setAccessibleName("dimmed");
+    introLayout->addWidget(mLblDescription);
 
     // ── Mail-running warning (hidden until scan detects it) ──
     mLblMailWarning = new QLabel(
         tr("Mail is currently open. Close Mail before deleting attachments to "
            "avoid mailbox index corruption."),
-        this);
+        introCard);
     mLblMailWarning->setWordWrap(true);
-    mLblMailWarning->setObjectName("warningBanner");
+    mLblMailWarning->setProperty("status", "warning");
     mLblMailWarning->setVisible(false);
-    root->addWidget(mLblMailWarning);
+    introLayout->addWidget(mLblMailWarning);
 
-    // ── Scan row ──
-    auto *scanRow = new QHBoxLayout();
-    mBtnScan = new QPushButton(tr("Scan for Attachments"), this);
-    mBtnScan->setObjectName("primaryButton");
-    scanRow->addWidget(mBtnScan);
-    mLblScanStatus = new QLabel(this);
+    mLblScanStatus = new QLabel(introCard);
     mLblScanStatus->setVisible(false);
-    scanRow->addWidget(mLblScanStatus, 1);
-    root->addLayout(scanRow);
+    introLayout->addWidget(mLblScanStatus);
+    root->addWidget(introCard);
 
     // ── Indeterminate scan progress ──
     mScanProgress = new QProgressBar(this);
@@ -127,8 +134,7 @@ void MailAttachmentCleanupPage::buildUI()
 
     // ── Confirmation frame + delete button ──
     mConfirmFrame = new QFrame(this);
-    mConfirmFrame->setObjectName("confirmFrame");
-    mConfirmFrame->setFrameShape(QFrame::StyledPanel);
+    mConfirmFrame->setProperty("cardRole", "elevated");
     auto *cfLayout = new QVBoxLayout(mConfirmFrame);
     cfLayout->setContentsMargins(12, 12, 12, 12);
     cfLayout->setSpacing(8);
@@ -139,11 +145,11 @@ void MailAttachmentCleanupPage::buildUI()
            "accounts cannot."),
         mConfirmFrame);
     riskLabel->setWordWrap(true);
-    riskLabel->setObjectName("riskNote");
+    riskLabel->setAccessibleName("dimmed");
     cfLayout->addWidget(riskLabel);
 
     mBtnDelete = new QPushButton(tr("Delete Selected Attachments"), mConfirmFrame);
-    mBtnDelete->setObjectName("destructiveButton");
+    mBtnDelete->setProperty("variant", "danger");
     mBtnDelete->setEnabled(false);
     cfLayout->addWidget(mBtnDelete, 0, Qt::AlignRight);
 

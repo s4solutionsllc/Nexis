@@ -1,4 +1,5 @@
 #include "trust_safety_preview_dialog.h"
+#include "dialog_buttons.h"
 
 #include "dpi.h"
 #include "signal_mapper.h"
@@ -148,15 +149,14 @@ void TrustSafetyPreviewDialog::buildUI()
     // Design Anchor: primary action always visible, disabled (never a
     // silent no-op) until at least one item is checked. Destructive primary
     // = red accent ("danger"); secondary/cancel = default outlined style.
-    QHBoxLayout *btnRow = new QHBoxLayout;
-    mBtnCancel = new QPushButton(tr("Close"), this);
-    mBtnPrimary = new QPushButton(mConfig.primaryActionLabel, this);
-    mBtnPrimary->setProperty("accessibleName", "danger");
+    // The dismiss button doubles as "Stop" while a run is in progress, so it
+    // keeps its own slot instead of the helper's reject wiring.
+    DialogButtons::Row row = DialogButtons::build(this, mConfig.primaryActionLabel,
+        DialogButtons::Confirm::Danger, tr("Cancel"), /*wireReject=*/false);
+    mBtnCancel = row.dismiss;
+    mBtnPrimary = row.confirm;
     mBtnPrimary->setEnabled(false);
-    btnRow->addWidget(mBtnCancel);
-    btnRow->addStretch();
-    btnRow->addWidget(mBtnPrimary);
-    content->addLayout(btnRow);
+    content->addWidget(row.box);
 
     connect(mChkSelectAll, &QCheckBox::toggled, this, &TrustSafetyPreviewDialog::onSelectAllToggled);
     connect(mChkDryRun, &QCheckBox::toggled, this, &TrustSafetyPreviewDialog::onDryRunToggled);
@@ -317,7 +317,7 @@ void TrustSafetyPreviewDialog::onDryRunToggled(bool checked)
     // action never touches the filesystem, so it gets the non-destructive
     // accent style instead of the red "danger" style.
     mBtnPrimary->setText(checked ? tr("%1 (Dry Run)").arg(mConfig.primaryActionLabel) : mConfig.primaryActionLabel);
-    mBtnPrimary->setProperty("accessibleName", checked ? "primary" : "danger");
+    mBtnPrimary->setProperty("variant", checked ? "primary" : "danger");
     mBtnPrimary->style()->unpolish(mBtnPrimary);
     mBtnPrimary->style()->polish(mBtnPrimary);
 }

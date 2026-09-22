@@ -138,6 +138,7 @@ private:
     QPushButton *mBtnDone;
     QShortcut *mEditShortcut;
     bool mEditMode;
+    bool mKioskActive = false;
     bool mKioskMode;
 
     // SSO-15037: shell header-action-bar row content. mHeaderActionsStack
@@ -149,6 +150,12 @@ private:
     std::function<void(QWidget*)> mHeaderActionsCallback;
 
     int mVisibleCols = DashboardLayout::kMaxCols;   // responsive in Task 3
+    // Current cell width: kCellW while editing (so every column is a drop
+    // target), otherwise stretched to fill a wide window.
+    int mCellW = DashboardLayout::kCellW;
+    int mAvailW = 0;
+    int mOccupiedCols = 0;
+    bool updateCellWidth();
     int mRowCount = 0;                              // grows to fit placed tiles
     QVector<QVector<QString>> mOccupancy;           // [row][col] -> tile uid/id
     QScrollArea *mGridScroll = nullptr;
@@ -178,6 +185,7 @@ private:
     void applyFooterVisibility();
     void buildSystemSummary();
     void refreshSummaryColors();
+    void refreshHeaderIcons();
     void updateDiskHealthBadge();
     void refreshDiskUsageTile(DashboardTileWrapper *w);
     void buildGrid();

@@ -110,7 +110,6 @@
             </property>
             <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -128,7 +127,6 @@
             </property>
             <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -146,7 +144,6 @@
             </property>
             <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -154,7 +151,6 @@
            <widget class="QCheckBox" name="checkAutostart">
             <property name="text"><string>Start Nexis on boot</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -162,7 +158,6 @@
            <widget class="QCheckBox" name="checkAppQuitDontAsk">
             <property name="text"><string>Skip quit confirmation dialog</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -170,7 +165,6 @@
            <widget class="QCheckBox" name="checkMinimizeToTray">
             <property name="text"><string>Minimize to system tray on close</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -179,7 +173,6 @@
             <property name="text"><string>Start minimized in system tray</string></property>
             <property name="toolTip"><string>When enabled, Nexis launches hidden and only shows the tray icon. Useful when Nexis is in your autostart list.</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -187,7 +180,6 @@
            <widget class="QCheckBox" name="checkDashboardFooter">
             <property name="text"><string>Show Dashboard system summary and status bar</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -195,7 +187,6 @@
            <widget class="QCheckBox" name="checkMenuBarMonitor">
             <property name="text"><string>Show health score and Clean Now in the menu bar</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -203,7 +194,6 @@
            <widget class="QCheckBox" name="checkTrayHealthScore">
             <property name="text"><string>Show health score and Clean Now in the tray menu</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -212,7 +202,6 @@
             <property name="text"><string>Show compact mini-monitor window</string></property>
             <property name="toolTip"><string>A small, always-on-top window showing health score and CPU/MEM/disk usage.</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -221,7 +210,6 @@
             <property name="text"><string>Launch directly into Kiosk Mode</string></property>
             <property name="toolTip"><string>Starts Nexis in full-screen kiosk mode as soon as it launches, without needing to press F11.</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -239,7 +227,6 @@
             </property>
             <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
             <property name="toolTip"><string>Which monitor kiosk mode moves the window to when it activates. Only used on multi-monitor setups.</string></property>
            </widget>
           </item>
@@ -281,7 +268,6 @@
             </property>
             <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -299,7 +285,6 @@
             </property>
             <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -317,7 +302,6 @@
             </property>
             <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -417,7 +401,6 @@
            <widget class="QCheckBox" name="checkDiskHealthAlert">
             <property name="text"><string>Enable disk health alerts</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -425,7 +408,6 @@
            <widget class="QCheckBox" name="checkUpdateAlert">
             <property name="text"><string>Notify when system updates are available</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -466,7 +448,6 @@
             </property>
             <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -515,7 +496,6 @@
              <widget class="QCheckBox" name="chkQuickSetup">
               <property name="text"><string>Enable automatic weekly cleaning</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
              </widget>
             </item>
             <item>
@@ -538,16 +518,12 @@
              <widget class="QPushButton" name="btnManageSchedules">
               <property name="text"><string>Manage Schedules...</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
-              <property name="accessibleName"><string notr="true">primary</string></property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="btnViewHistory">
               <property name="text"><string>View Cleaning History</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
-              <property name="accessibleName"><string notr="true">primary</string></property>
              </widget>
             </item>
             <item>
@@ -565,7 +541,6 @@
              <widget class="QCheckBox" name="chkThresholdAlert">
               <property name="text"><string>Notify when junk exceeds</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
              </widget>
             </item>
             <item>
@@ -590,7 +565,6 @@
            <widget class="QCheckBox" name="chkCleaningNotifications">
             <property name="text"><string>Show notification after scheduled clean</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
            </widget>
           </item>
 
@@ -599,7 +573,6 @@
            <widget class="QCheckBox" name="chkPreCleanSnapshot">
             <property name="text"><string>Create restore point before cleaning</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
             <property name="toolTip"><string>Runs Timeshift (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back.</string></property>
            </widget>
           </item>
@@ -609,7 +582,6 @@
            <widget class="QCheckBox" name="chkDownloadsAutoClean">
             <property name="text"><string>Auto-clean old Downloads</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
             <property name="toolTip"><string>Move files older than the configured age from the selected folder to Trash. Applies only when Old Downloads is included in a scheduled clean.</string></property>
            </widget>
           </item>
@@ -631,7 +603,6 @@
              <widget class="QPushButton" name="btnDownloadsBrowse">
               <property name="text"><string>Browse…</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
              </widget>
             </item>
            </layout>
@@ -697,8 +668,6 @@
              <widget class="QPushButton" name="btnImportFromStacer">
               <property name="text"><string>Import from Stacer…</string></property>
               <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-              <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
-              <property name="accessibleName"><string notr="true">primary</string></property>
              </widget>
             </item>
             <item>

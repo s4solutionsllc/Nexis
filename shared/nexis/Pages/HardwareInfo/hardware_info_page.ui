@@ -29,10 +29,10 @@
      <widget class="QWidget" name="scrollContent">
       <layout class="QVBoxLayout" name="scrollLayout">
        <property name="spacing"><number>12</number></property>
-       <property name="leftMargin"><number>15</number></property>
-       <property name="topMargin"><number>10</number></property>
-       <property name="rightMargin"><number>15</number></property>
-       <property name="bottomMargin"><number>10</number></property>
+       <property name="leftMargin"><number>20</number></property>
+       <property name="topMargin"><number>12</number></property>
+       <property name="rightMargin"><number>20</number></property>
+       <property name="bottomMargin"><number>16</number></property>
 
        <!-- System section: DS §3 header (NEX F2) + DS §2 elevated card (NEX F1) -->
        <item>
@@ -481,7 +481,7 @@
          <property name="focusPolicy">
           <enum>Qt::NoFocus</enum>
          </property>
-         <property name="accessibleName">
+         <property name="variant" stdset="0">
           <string notr="true">primary</string>
          </property>
          <property name="text">

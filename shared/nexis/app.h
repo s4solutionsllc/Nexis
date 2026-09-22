@@ -11,6 +11,7 @@
 #include <QHBoxLayout>
 #include <QScrollArea>
 #include <QPushButton>
+#include <QLabel>
 #include <functional>
 
 class QScreen;
@@ -34,6 +35,9 @@ struct PageSlot {
     std::function<QWidget*()> factory;
     QWidget *widget = nullptr;
     std::function<void(QWidget*)> onConstructed;
+    // Sidebar button for this page; filled in once the sidebar is built.
+    // Kept last so the positional initialisers in app.cpp stay valid.
+    QPushButton *button = nullptr;
 };
 
 // Pages
@@ -59,6 +63,7 @@ struct PageSlot {
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
 #include "Pages/DiskTools/disk_tools_page.h"
+#include "Pages/DiskMap/disk_map_page.h"
 #include "Pages/Helpers/helpers_page.h"
 #include "Pages/HardwareInfo/hardware_info_page.h"
 #include "Pages/SystemLogs/system_logs_page.h"
@@ -91,26 +96,29 @@ protected:
     void closeEvent(QCloseEvent *event) override;
     void changeEvent(QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
     void init();
     void pageClick(QWidget *widget, bool slide = true);
-    void clickSidebarButton(QString pageTitle, bool isShow = false);
+    // Single navigation entry point. pageId is the stable PageSlot::id, so
+    // callers never depend on the UI language.
+    void navigateTo(const QString &pageId, bool isShow = false);
 
     void toggleKioskMode();
     void exitKioskMode();
     void toggleSidebarCollapse();
-    void openDiskTreemapDialog();
 
 private:
     QWidget *getPageByTitle(const QString &title);
     QWidget *ensurePage(int index);
-    QWidget *ensurePageByTitle(const QString &title);
+    QWidget *ensurePageById(const QString &pageId);
+    int slotIndexById(const QString &pageId) const;
     // SSO-3388: resolve a stable page id (e.g. "dashboard") to its
     // currently-localized sidebar title, or an empty string if no page
     // with that id is registered.
     QString pageTitleById(const QString &id) const;
-    void checkSidebarButtonByTooltip(const QString &text);
+    void checkSidebarButton(const QString &pageId);
     void createTrayActions();
     void updateSidebarIcons();
     void applyKioskMode(bool enable);
@@ -149,6 +157,7 @@ private:
     StartupAppsPage *startupAppsPage;
     SystemCleanerPage *systemCleanerPage;
     DiskToolsPage *diskToolsPage;
+    DiskMapPage *diskMapPage = nullptr;
     SearchPage *searchPage;
     ServicesPage *servicesPage;
     ProcessesPage *processPage;
@@ -187,9 +196,21 @@ private:
     // sigChangedAppTheme emission, so ensurePage() re-emits to catch it up.
     bool mInitialThemeApplied = false;
 
+    // Shown while a lazily-built page constructs, so the previous page is
+    // never left on screen under the new sidebar highlight.
+    QWidget *mLoadingPage = nullptr;
+    QLabel *mLoadingLabel = nullptr;
+    QString mPendingNavId;
+    void setupMenuBar();
+    // macOS: keep native window chrome (title bars) in step with the app theme.
+    void syncNativeWindowAppearance(QWidget *window = nullptr);
+    void showAndRaise();
+    void runCleanerScan();
+
     QSystemTrayIcon *mTrayIcon;
     QMenu *mTrayMenu;
     QAction *mKioskAction;
+    QAction *mKioskExitAction = nullptr;
 
     // Sidebar widgets
     QVBoxLayout *mSidebarLayout;
@@ -216,8 +237,6 @@ private:
     QPushButton *btnDash;
     QPushButton *btnHardwareInfo;
     QPushButton *btnResources;
-    // SSO-23863: opens DiskTreemapDialog directly rather than a stacked
-    // page — non-checkable, same pattern as btnFeedback below.
     QPushButton *btnDiskMap;
     QPushButton *btnNetworkUsage;
     QPushButton *btnSystemCleaner;

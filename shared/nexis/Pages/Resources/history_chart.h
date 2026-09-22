@@ -28,6 +28,7 @@ public:
     QVector<QSplineSeries *> getSeriesList() const;
     QCategoryAxis *getAxisY();
     void setYMax(double value);
+    void setYRange(double min, double max);
     void setSeriesList(const QVector<QSplineSeries *> &seriesList);
     void setCategoryAxisYLabels();
 

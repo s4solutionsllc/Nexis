@@ -48,7 +48,6 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &uid, const QString &ty
     mStyleButton->setObjectName("btnStyleSelector");
     mStyleButton->setFixedSize(24, 24);
     mStyleButton->setIconSize(QSize(14, 14));
-    mStyleButton->setIcon(QIcon(":/static/themes/common/img/style-brush.svg"));
     mStyleButton->setAutoRaise(true);
     mStyleButton->setCursor(Qt::PointingHandCursor);
     mStyleButton->setToolTip(tr("Change Widget Style"));
@@ -75,11 +74,18 @@ DashboardTileWrapper::DashboardTileWrapper(const QString &uid, const QString &ty
     mRemoveButton->setObjectName("btnTileRemove");
     mRemoveButton->setFixedSize(24, 24);
     mRemoveButton->setIconSize(QSize(14, 14));
-    mRemoveButton->setIcon(QIcon(":/static/themes/common/img/tile-remove.svg"));
     mRemoveButton->setAutoRaise(true);
     mRemoveButton->setCursor(Qt::PointingHandCursor);
     mRemoveButton->setToolTip(tr("Remove Widget"));
     mRemoveButton->hide();
+
+    // Accent-tinted per theme; refreshed with the theme like the card chrome.
+    auto refreshEditIcons = [this]() {
+        mStyleButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/style-brush.svg", 14));
+        mRemoveButton->setIcon(Utilities::accentIcon(":/static/themes/common/img/tile-remove.svg", 14));
+    };
+    refreshEditIcons();
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, refreshEditIcons);
 
     connect(mRemoveButton, &QToolButton::clicked, this, [this]() {
         emit removeRequested(this);
@@ -207,13 +213,25 @@ static QPixmap colorSwatchPixmap(const QColor &color, int size)
     return pm;
 }
 
+// Edit-mode chrome (grip, dashed outline, empty swatch) uses the theme's
+// tertiary text colour rather than a fixed grey.
+static QColor editChromeColor(int alpha = 255)
+{
+    QSettings *sv = AppManager::ins()->getStyleValues();
+    QColor c(sv ? sv->value("@tertiaryText").toString() : QString());
+    if (!c.isValid())
+        c = QColor(QStringLiteral("#8E919B"));
+    c.setAlpha(alpha);
+    return c;
+}
+
 static QPixmap defaultSwatchPixmap(int size)
 {
     QPixmap pm(size, size);
     pm.fill(Qt::transparent);
     QPainter p(&pm);
     p.setRenderHint(QPainter::Antialiasing);
-    QPen pen(QColor(150, 150, 150), 1.5);
+    QPen pen(editChromeColor(), 1.5);
     p.setPen(pen);
     p.setBrush(Qt::NoBrush);
     p.drawEllipse(2, 2, size - 4, size - 4);
@@ -437,14 +455,14 @@ void DashboardTileWrapper::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing);
 
     // Dashed border overlay
-    QPen pen(QColor(150, 150, 150, 120), 2, Qt::DashLine);
+    QPen pen(editChromeColor(120), 2, Qt::DashLine);
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
     painter.drawRoundedRect(rect().adjusted(1, 1, -1, -1), 12, 12);
 
     // Resize grip triangle at bottom-right
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(150, 150, 150, 160));
+    painter.setBrush(editChromeColor(160));
     QPolygon triangle;
     int s = RESIZE_HANDLE_SIZE;
     triangle << QPoint(width(), height())

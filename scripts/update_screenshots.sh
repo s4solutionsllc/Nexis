@@ -10,8 +10,9 @@
 #     required (important on Wayland-only hosts like Ubuntu 26.04 / GNOME 50,
 #     where the X11 session is removed; SSO-3729 / FW-02).
 #
-# The script runs the screenshot test in generate mode, which captures all 11
-# pages in both Dark and Light themes and saves them as reference PNGs under
+# The script runs the screenshot test in generate mode, which captures every
+# page registered in kPageMap (tests/screenshots/test_screenshots.cpp) in both
+# Dark and Light themes and saves them as reference PNGs under
 # tests/reference_screenshots/{platform}/{theme}/.
 
 set -euo pipefail

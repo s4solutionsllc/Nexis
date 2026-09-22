@@ -1,4 +1,5 @@
 #include "uninstaller_page.h"
+#include "nexis_page.h"
 #include "ui_uninstallerpage.h"
 #ifdef Q_OS_MAC
 #include "crumbs_review_dialog.h"
@@ -41,6 +42,13 @@ UninstallerPage::UninstallerPage(QWidget *parent, PackageService *packageService
     mSignalMapper(signalMapper ? signalMapper : SignalMapper::ins())
 {
     ui->setupUi(this);
+#ifdef Q_OS_MAC
+    const QString pageTitle = tr("Applications");
+#else
+    const QString pageTitle = tr("Uninstaller");
+#endif
+    ui->gridLayout->addWidget(PageScaffold::buildHeader(
+        pageTitle, tr("Installed software and leftovers"), this).row, 0, 0, 1, 3);
 
     init();
 }
@@ -86,6 +94,8 @@ void UninstallerPage::init()
             this, &UninstallerPage::onOrphanPackagesLoaded);
     connect(ui->treeWidgetPackages, &QTreeWidget::itemChanged, this, &UninstallerPage::onTreeItemChanged);
 
+    ui->notFoundWidget->hide();
+    ui->lblLoadingUninstaller->show();
     mPackageService->fetchPackages();
     mPackageService->fetchSnapPackages();
     mPackageService->fetchFlatpakPackages();
@@ -226,6 +236,7 @@ void UninstallerPage::onPackagesLoaded(QList<Package> packages)
     }
 
     ui->treeWidgetPackages->blockSignals(false);
+    mPackagesLoaded = true;
     setAppCount();
 
     ui->treeWidgetPackages->setEnabled(true);
@@ -394,7 +405,9 @@ void UninstallerPage::setAppCount()
 #else
     ui->btnSystemPackages->setText(tr("Packages (%1)").arg(count));
 #endif
-    ui->notFoundWidget->setVisible(! count);
+    // Until the first fetch returns, an empty tree means "still loading",
+    // not "nothing installed".
+    ui->notFoundWidget->setVisible(mPackagesLoaded && ! count);
     ui->treeWidgetPackages->setVisible(count);
 
     int snapCount = ui->listWidgetSnapPackages->count();

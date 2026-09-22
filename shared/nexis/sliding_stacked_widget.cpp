@@ -4,8 +4,8 @@ SlidingStackedWidget::SlidingStackedWidget(QWidget *parent)
     : QStackedWidget(parent)
 {
     vertical = false;
-    speed = 150;
-    animationtype = QEasingCurve::Type::Linear;
+    speed = 200;
+    animationtype = QEasingCurve::Type::OutCubic;
     now = 0;
     next = 0;
     pnow = QPoint(0,0);
@@ -58,11 +58,11 @@ void SlidingStackedWidget::slideInIdx(int idx, t_direction direction)
 
 void SlidingStackedWidget::slideInWgt(QWidget * newwidget, t_direction direction)
 {
-    // do not allow re-entrance before an animation is completed.
-    if (active)
-        return ;
-    else
-        active = true;
+    // A request that arrives mid-slide must win: settle the running
+    // animation first so the displayed page, the caller's sidebar state and
+    // the page lifecycle stay in step.
+    finishAnimation();
+    active = true;
 
     enum t_direction directionhint;
     int now = currentIndex();
@@ -134,7 +134,19 @@ void SlidingStackedWidget::slideInWgt(QWidget * newwidget, t_direction direction
     this->next = next;
     this->now = now;
     active = true;
-    animgroup->start();
+    mAnimGroup = animgroup;
+    animgroup->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void SlidingStackedWidget::finishAnimation()
+{
+    if (!active || !mAnimGroup)
+        return;
+    QParallelAnimationGroup *group = mAnimGroup;
+    mAnimGroup = nullptr;
+    disconnect(group, &QParallelAnimationGroup::finished, this, &SlidingStackedWidget::animationDoneSlot);
+    group->stop();
+    animationDoneSlot();
 }
 
 void SlidingStackedWidget::animationDoneSlot()
@@ -142,6 +154,8 @@ void SlidingStackedWidget::animationDoneSlot()
     setCurrentIndex(next); // this function is inherited from QStackedWidget
     widget(now)->hide();
     widget(now)->move(pnow);
+    widget(next)->move(pnow);
+    mAnimGroup = nullptr;
     active = false;
     emit animationFinished();
 }

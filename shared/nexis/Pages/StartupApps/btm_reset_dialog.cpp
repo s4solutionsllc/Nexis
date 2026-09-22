@@ -1,4 +1,5 @@
 #include "btm_reset_dialog.h"
+#include "Common/dialog_buttons.h"
 
 #ifdef Q_OS_MACOS
 
@@ -16,8 +17,8 @@ BtmResetDialog::BtmResetDialog(QWidget *parent)
     setMinimumWidth(480);
 
     auto *root = new QVBoxLayout(this);
-    root->setSpacing(10);
-    root->setContentsMargins(20, 20, 20, 20);
+    root->setSpacing(DialogButtons::dialogSpacing());
+    root->setContentsMargins(DialogButtons::dialogMargins());
 
     auto *header = new QLabel(tr("Reset the Background Task Management database?"), this);
     header->setObjectName(QStringLiteral("lblBtmResetHeader"));
@@ -45,18 +46,16 @@ BtmResetDialog::BtmResetDialog(QWidget *parent)
     mConfirmEdit->setObjectName(QStringLiteral("txtBtmResetConfirm"));
     mConfirmEdit->setPlaceholderText(tr("Type RESET to confirm"));
 
-    auto *btns = new QDialogButtonBox(QDialogButtonBox::Cancel, this);
-    mResetBtn = btns->addButton(tr("Run sfltool resetbtm"),
-                                QDialogButtonBox::DestructiveRole);
+    DialogButtons::Row row = DialogButtons::build(this, tr("Run sfltool resetbtm"),
+                                                  DialogButtons::Confirm::Danger, tr("Cancel"));
+    QDialogButtonBox *btns = row.box;
+    mResetBtn = row.confirm;
     mResetBtn->setObjectName(QStringLiteral("btnBtmResetRun"));
     mResetBtn->setEnabled(false);
-    mResetBtn->setAutoDefault(false);
-    btns->button(QDialogButtonBox::Cancel)->setDefault(true);
 
     connect(mConfirmEdit, &QLineEdit::textChanged,
             this, &BtmResetDialog::onConfirmTextChanged);
     connect(mResetBtn, &QPushButton::clicked, this, &QDialog::accept);
-    connect(btns, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
     root->addWidget(header);
     root->addWidget(body);

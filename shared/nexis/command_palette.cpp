@@ -1,4 +1,5 @@
 #include "command_palette.h"
+#include "dpi.h"
 #include <QApplication>
 #include "Managers/app_manager.h"
 #include "signal_mapper.h"
@@ -10,7 +11,7 @@ CommandPalette::CommandPalette(QWidget *parent)
     setWindowFlags(Qt::Popup | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground);
     setObjectName("commandPalette");
-    setFixedWidth(480);
+    setFixedWidth(Dpi::scale(480));
 
     buildLayout();
     refreshThemeColors();
@@ -79,6 +80,11 @@ void CommandPalette::buildLayout()
 
     connect(mSearchBox, &QLineEdit::textChanged, this, &CommandPalette::filterCommands);
     connect(mResultsList, &QListWidget::itemActivated, this, [this]() {
+        executeSelected();
+    });
+    // itemActivated needs a double-click on macOS; a single click should run
+    // the command like it does in every other palette.
+    connect(mResultsList, &QListWidget::itemClicked, this, [this]() {
         executeSelected();
     });
 }

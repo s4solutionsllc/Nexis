@@ -89,17 +89,25 @@ CVE / security patches: see §6.
 python3 scripts/changelog_fragments.py apply --version X.Y.Z --date YYYY-MM-DD
 #    Review the assembled section and edit the prose freely before committing.
 #
-# 1b. Regenerate the derivable stats block in docs/APPLICATION_OVERVIEW.md.
-#     The "Docs hygiene / Generated stats block" job re-checks this on the tag,
-#     so a skipped run fails the release rather than silently rotting the docs.
-python3 scripts/gen_doc_stats.py
-#
 # 2. Bump the CMakeLists.txt project() version (`project(Nexis VERSION X.Y.Z)`
 #    at the top of CMakeLists.txt). The tag-driven release pipeline passes
 #    -DAPP_VERSION_OVERRIDE=<tag> so published artifacts always match the tag,
 #    but non-override builds (untagged developer builds, distro-side rebuilds
 #    that don't pass the override, the macOS Info.plist short-version baseline)
 #    fall back to PROJECT_VERSION — keep it in sync with the tag.
+#
+# 2b. Regenerate the derivable stats block in docs/APPLICATION_OVERVIEW.md,
+#     and sync the "Last updated: YYYY-MM-DD | Version X.Y.Z" prose header in
+#     both docs/APPLICATION_OVERVIEW.md and docs/ARCHITECTURE_REVIEW.md to
+#     today's date and the CMakeLists.txt version (SSO-24822). This step MUST
+#     run after step 2 — it reads PROJECT_VERSION out of CMakeLists.txt, so
+#     running it before the bump writes the outgoing version into the docs.
+#     The "Docs hygiene / Generated stats block" job re-checks the stats block
+#     on the tag, and scripts/check_doc_versions.sh (run in every Build job)
+#     checks the header — so a skipped or reordered run fails the release
+#     rather than silently rotting the docs.
+python3 scripts/gen_doc_stats.py
+#
 # 3. Bump the AUR PKGBUILD version (linux/aur/PKGBUILD: pkgver=X.Y.Z, pkgrel=1)
 # 4. Add a new debian/changelog entry for X.Y.Z (Linux maintainer email).
 #    Note: release.yml's "Sync debian changelog version from tag" step
@@ -112,7 +120,8 @@ python3 scripts/gen_doc_stats.py
 #    the AppImage version). Note: release.yml's "Sync metainfo release version
 #    from tag" step auto-inserts a matching top entry if it differs from the
 #    tag — recoverable like debian/changelog — but add a real entry with notes.
-git add CHANGELOG.md changelog.d docs/APPLICATION_OVERVIEW.md CMakeLists.txt \
+git add CHANGELOG.md changelog.d docs/APPLICATION_OVERVIEW.md \
+        docs/ARCHITECTURE_REVIEW.md CMakeLists.txt \
         linux/aur/PKGBUILD linux/debian/changelog \
         linux/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml
 git commit -m "chore(release): X.Y.Z"

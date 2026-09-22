@@ -11,7 +11,7 @@ if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "Minimum macOS deployment version")
 endif()
 
-project(Nexis VERSION 2.10.0)
+project(Nexis VERSION 2.11.0)
 
 # Adding features(build cache + faster linkers) and reasonable defaults(Debug build by default)
 include("${CMAKE_CURRENT_SOURCE_DIR}/shared/cmake/cxxbasics/CXXBasics.cmake")
@@ -420,6 +420,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/feedback.cpp"
   "${GUI_SHARED_DIR}/signal_mapper.cpp"
   "${GUI_SHARED_DIR}/sliding_stacked_widget.cpp"
+  "${GUI_SHARED_DIR}/utilities.cpp"
   "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.cpp"
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
@@ -502,13 +503,16 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Processes/process_alert_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/process_group_header_delegate.cpp"
   "${GUI_SHARED_DIR}/Pages/Processes/processes_page.cpp"
-  "${GUI_SHARED_DIR}/Pages/Resources/disk_map_view.cpp"
-  "${GUI_SHARED_DIR}/Pages/Resources/disk_treemap_dialog.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/disk_map_view.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/disk_map_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Resources/disk_usage_launcher_widget.cpp"
-  "${GUI_SHARED_DIR}/Pages/Resources/bubble_map_view.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_map_view.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_layout.cpp"
   "${GUI_SHARED_DIR}/Pages/Resources/history_chart.cpp"
-  "${GUI_SHARED_DIR}/Pages/Resources/sunburst_view.cpp"
-  "${GUI_SHARED_DIR}/Pages/Resources/treemap_view.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_view.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_layout.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/treemap_view.cpp"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/treemap_layout.cpp"
   "${GUI_SHARED_DIR}/Pages/Resources/resources_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Search/search_page.cpp"
   "${GUI_SHARED_DIR}/Pages/Services/service_item.cpp"
@@ -614,13 +618,16 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/Processes/process_alert_dialog.h"
   "${GUI_SHARED_DIR}/Pages/Processes/process_group_header_delegate.h"
   "${GUI_SHARED_DIR}/Pages/Processes/processes_page.h"
-  "${GUI_SHARED_DIR}/Pages/Resources/disk_map_view.h"
-  "${GUI_SHARED_DIR}/Pages/Resources/disk_treemap_dialog.h"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/disk_map_view.h"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/disk_map_page.h"
   "${GUI_SHARED_DIR}/Pages/Resources/disk_usage_launcher_widget.h"
-  "${GUI_SHARED_DIR}/Pages/Resources/bubble_map_view.h"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_map_view.h"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_layout.h"
   "${GUI_SHARED_DIR}/Pages/Resources/history_chart.h"
-  "${GUI_SHARED_DIR}/Pages/Resources/sunburst_view.h"
-  "${GUI_SHARED_DIR}/Pages/Resources/treemap_view.h"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_view.h"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_layout.h"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/treemap_view.h"
+  "${GUI_SHARED_DIR}/Pages/DiskMap/treemap_layout.h"
   "${GUI_SHARED_DIR}/Pages/Resources/resources_page.h"
   "${GUI_SHARED_DIR}/Pages/Search/search_page.h"
   "${GUI_SHARED_DIR}/Pages/Services/service_item.h"
@@ -662,6 +669,7 @@ if(APPLE)
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.cpp"
     "${GUI_PLAT_DIR}/Pages/MailCleanup/mail_attachment_cleanup_page.cpp"
     "${GUI_PLAT_DIR}/macos_dock_helper.mm"
+    "${GUI_PLAT_DIR}/macos_window_helper.mm"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.cpp"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.mm"
   )
@@ -673,6 +681,7 @@ if(APPLE)
     "${GUI_PLAT_DIR}/Pages/Homebrew/homebrew_page.h"
     "${GUI_PLAT_DIR}/Pages/MailCleanup/mail_attachment_cleanup_page.h"
     "${GUI_PLAT_DIR}/macos_dock_helper.h"
+    "${GUI_PLAT_DIR}/macos_window_helper.h"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_monitor.h"
     "${GUI_PLAT_DIR}/MenuBar/menu_bar_status_item.h"
   )

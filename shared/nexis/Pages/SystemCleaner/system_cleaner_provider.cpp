@@ -148,6 +148,42 @@ void SystemCleanerProvider::scan(
     }
 }
 
+// ─── beginExecution ────────────────────────────────────────────────────────────
+
+void SystemCleanerProvider::beginExecution(const QList<TrustSafetyActionItem> &items, bool dryRun)
+{
+    mBatchRemovedPaths.clear();
+
+    // GH#441: selecting several package-cache (or other root-owned) items and
+    // running Clean Selected used to call CleanerService::cleanFiles() once
+    // per item from performItem() below, so each root-owned file triggered
+    // its own removeElevated() call and its own pkexec/polkit prompt.
+    // CleanerService::cleanFiles() already splits user-owned vs. root-owned
+    // paths internally and issues a single elevated removal for all
+    // root-owned paths in one call — so batch the whole selection through
+    // one cleanFiles() call here, before the per-item loop, and have
+    // performItem() just report on paths this call already handled.
+    if (dryRun || !mCleanerService)
+        return;
+
+    QStringList paths;
+    for (const TrustSafetyActionItem &item : items) {
+        if (item.id.startsWith(QLatin1String(ID_PREFIX_TRASH)))
+            continue;
+        if (item.id.startsWith(QLatin1String(ID_PREFIX_SNAP)))
+            continue;
+        if (item.id == QLatin1String(ID_FLATPAK_ALL))
+            continue;
+        paths << item.id;
+    }
+    if (paths.isEmpty())
+        return;
+
+    mCleanerService->cleanFiles(paths);
+    for (const QString &path : std::as_const(paths))
+        mBatchRemovedPaths.insert(path);
+}
+
 // ─── performItem ──────────────────────────────────────────────────────────────
 
 TrustSafetyActionResult SystemCleanerProvider::performItem(
@@ -231,6 +267,14 @@ TrustSafetyActionResult SystemCleanerProvider::performItem(
             result.bytesFreed = static_cast<qint64>(FileUtil::getFileSize(path));
             if (!result.succeeded)
                 result.error = QObject::tr("Path no longer exists: %1").arg(path);
+        } else if (mBatchRemovedPaths.contains(path)) {
+            // GH#441: already removed as part of the single batched
+            // cleanFiles() call in beginExecution() — just confirm and
+            // report, don't trigger a second (possibly elevated) removal.
+            result.succeeded  = !fi.exists();
+            result.bytesFreed = result.succeeded ? item.estimatedSizeBytes : 0;
+            if (!result.succeeded)
+                result.error = QObject::tr("Failed to remove: %1").arg(path);
         } else {
             // Route through CleanerService so exclusion enforcement and the
             // elevated-removal path (sudo rm -rf for system-owned files) are

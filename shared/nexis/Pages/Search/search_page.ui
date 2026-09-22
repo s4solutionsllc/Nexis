@@ -15,16 +15,16 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="leftMargin">
-    <number>14</number>
+    <number>20</number>
    </property>
    <property name="topMargin">
     <number>12</number>
    </property>
    <property name="rightMargin">
-    <number>14</number>
+    <number>20</number>
    </property>
    <property name="bottomMargin">
-    <number>10</number>
+    <number>16</number>
    </property>
    <property name="spacing">
     <number>10</number>
@@ -52,9 +52,6 @@
       </property>
       <item>
        <widget class="QTableView" name="tableFoundResults">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -193,9 +190,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="accessibleName">
          <string/>
         </property>
@@ -239,9 +233,6 @@
        <widget class="QPushButton" name="btnSearchAdvance">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="accessibleName">
          <string>primary</string>
@@ -303,9 +294,6 @@
        <widget class="QCheckBox" name="checkCaseInsensitive">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="accessibleName">
          <string>circle</string>
@@ -463,9 +451,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="accessibleName">
          <string>circle</string>
         </property>
@@ -498,9 +483,6 @@
        <widget class="QCheckBox" name="checkRegEx">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="accessibleName">
          <string>circle</string>
@@ -607,9 +589,6 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
           <property name="accessibleName">
            <string>circle</string>
           </property>
@@ -623,9 +602,6 @@
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
           <property name="accessibleName">
            <string>circle</string>
           </property>
@@ -638,9 +614,6 @@
          <widget class="QCheckBox" name="checkPermExecutable">
           <property name="cursor">
            <cursorShape>PointingHandCursor</cursorShape>
-          </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
           </property>
           <property name="accessibleName">
            <string>circle</string>
@@ -677,9 +650,6 @@
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
         <property name="accessibleName">
          <string>circle</string>
         </property>
@@ -699,9 +669,6 @@
        <widget class="QCheckBox" name="checkInvert">
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
         </property>
         <property name="accessibleName">
          <string>circle</string>

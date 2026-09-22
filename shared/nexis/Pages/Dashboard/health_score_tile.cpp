@@ -35,7 +35,7 @@ void HealthScoreTile::buildLayout()
     mLblScore = new QLabel("--", this);
     mLblScore->setObjectName("healthScoreValue");
     mLblScore->setAlignment(Qt::AlignHCenter);
-    mLblScore->setStyleSheet("font-size: 32px; font-weight: bold;");
+    mLblScore->setStyleSheet("font-size: 24pt; font-weight: bold;");
     mainLayout->addWidget(mLblScore);
 
     mLblScoreLabel = new QLabel("", this);
@@ -105,7 +105,7 @@ void HealthScoreTile::recalculate()
         colorHex = sv->value("@destructiveColor").toString();
 
     mLblScore->setStyleSheet(
-        QStringLiteral("font-size: 32px; font-weight: bold; color: %1;").arg(colorHex));
+        QStringLiteral("font-size: 24pt; font-weight: bold; color: %1;").arg(colorHex));
     applyAccentColor(QColor(colorHex));
 
     update();

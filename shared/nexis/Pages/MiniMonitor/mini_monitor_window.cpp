@@ -1,4 +1,5 @@
 #include "mini_monitor_window.h"
+#include <QMouseEvent>
 
 #include <Managers/data_refresh_service.h>
 #include <Managers/info_manager.h>
@@ -198,7 +199,7 @@ void MiniMonitorWindow::updateScoreDisplay()
         return;
     const QString colorHex = sv->value(MiniMonitorFormatUtil::scoreColorToken(score)).toString();
     mLblScore->setStyleSheet(
-        QStringLiteral("font-family: %1; font-size: 28px; font-weight: 700; color: %2;")
+        QStringLiteral("font-family: %1; font-size: 21pt; font-weight: 700; color: %2;")
             .arg(kMonoFontFamily, colorHex));
 }
 
@@ -248,6 +249,12 @@ void MiniMonitorWindow::hideEvent(QHideEvent *event)
     persistGeometry();
     SettingManager::ins()->setMiniMonitorVisible(false);
     emit visibilityToggled(false);
+}
+
+void MiniMonitorWindow::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    QWidget::mouseDoubleClickEvent(event);
+    emit openMainWindowRequested();
 }
 
 void MiniMonitorWindow::closeEvent(QCloseEvent *event)

@@ -42,6 +42,11 @@ jobs:
   build-linux:
     name: Linux Build (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    # SSO-24907: blanket job-level guard. Any of the apt installs, the debhelper
+    # package build, or the AppImage assembly below can hang without a bounded
+    # step timeout of its own; this caps the whole job well short of the 6h
+    # GitHub ceiling instead of taking the release pipeline down with it.
+    timeout-minutes: 60
     container:
       image: ubuntu:26.04
 
@@ -305,6 +310,8 @@ jobs:
   build-appimage-x86_64:
     name: AppImage Build (x86_64 · glibc 2.35)
     runs-on: ubuntu-22.04
+    # SSO-24907: blanket job-level guard, see build-linux.
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
@@ -430,6 +437,14 @@ jobs:
   build-macos:
     name: macOS Build
     runs-on: macos-14
+    # SSO-24907: blanket job-level guard. The last clean release (v2.10.0)
+    # ran this job in 6m32s; 60m is a generous ceiling against `brew install
+    # qt@6`, `macdeployqt`, `hdiutil create`, or `xcrun stapler staple` each
+    # stalling to the 6h GitHub job ceiling the way Developer ID signing did
+    # on v2.8.1 and v2.11.0. The individually-bounded codesign retries below
+    # are the tighter guard for the known failure surface; this is the net
+    # under everything else in the job.
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -475,6 +490,25 @@ jobs:
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          # SSO-24909: a fresh keychain keeps macOS's default auto-lock timeout,
+          # which is well under the ~15-20min Configure+Build+Unit-Tests+Deploy
+          # phase between this unlock and the first codesign call. When it
+          # relocks mid-build, codesign's private-key ACL check
+          # (SecKeyCopyAttributes -> checkIntegrity -> securityd) blocks
+          # indefinitely on a Mach IPC reply waiting for an interactive unlock
+          # prompt that can never come in headless CI -- confirmed via a live
+          # `sample` stack trace of the hung process, not guessed. This was the
+          # actual root cause of every codesign stall investigated under
+          # SSO-24905/24907/24909, not a TSA/network issue -- widening the
+          # retry budget only ever produced a slower, still-total failure.
+          # Extend the timeout well past the longest plausible build (60m job
+          # guard) so the keychain never relocks mid-job. Spelled out since
+          # this exact line was once described as "disabling" the timeout
+          # (SSO-24946): it does the opposite. `-u` *enables* lock-after-
+          # timeout (omitting it would disable that lock entirely), `-t 3600`
+          # sets that timeout to 1h, and `-l` separately enables lock-on-
+          # sleep. This is a 1h extension of the default, not a disable.
+          security set-keychain-settings -lut 3600 build.keychain
           security import certificate.p12 -k build.keychain \
             -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
           security set-key-partition-list -S apple-tool:,apple: \
@@ -500,32 +534,152 @@ jobs:
 
       - name: Sign .app bundle (Developer ID)
         if: steps.signing.outputs.ENABLED == 'true'
+        timeout-minutes: 20   # SSO-24905: codesign --timestamp can stall on Apple's TSA; fail fast instead of eating the 6h job ceiling
         run: |
+          set -euo pipefail
           APP="build/output/nexis.app"
+
+          # SSO-24907: codesign --timestamp round-trips to Apple's TSA, which has
+          # twice stalled a job to the 6h GitHub ceiling (v2.8.1, v2.11.0). Bound
+          # every invocation to a short per-attempt timeout with a small retry
+          # budget so one bad TSA round trip costs seconds, not a release.
+          # --timestamp is never dropped — an un-timestamped signature breaks
+          # notarization/Gatekeeper once the signing cert expires.
+          #
+          # `timeout(1)` isn't a stock macOS binary, so the bound is implemented
+          # in pure bash rather than depending on GNU coreutils being on PATH.
+          #
+          # SSO-24909: poll every 0.2s instead of 1s for the first 2s so a
+          # codesign call that returns quickly isn't held to a full-second
+          # minimum — measured at ~1.07s/item (82s for 77 items) under the
+          # old flat 1s granularity, almost entirely poll overhead. Falls
+          # back to 1s polling after that: a first attempt at polling the
+          # full budget at 0.2s (300 iterations for a 60s budget) measured
+          # ~92-98s wall time on the actual macos-14 runner instead of the
+          # intended ~62s -- fork+exec overhead for `sleep 0.2` 300 times
+          # over, non-negligible on that runner, was silently inflating the
+          # per-attempt ceiling by ~50%. Most codesign calls finish well
+          # inside 2s on the healthy path, so the fast phase still captures
+          # nearly all of the Gap 1 win; the slow phase keeps a stalled call
+          # bounded close to the stated `secs` ceiling, same as before.
+          #
+          # SSO-24946: defined before the first keychain touch below (not
+          # just before its first codesign use) so the pre-sign assertion
+          # can reuse it too.
+          run_with_timeout() {
+            local secs="$1"; shift
+            "$@" &
+            local pid=$! elapsed_ms=0
+            local budget_ms=$((secs * 1000))
+            local fast_phase_ms=2000
+            while kill -0 "$pid" 2>/dev/null; do
+              if [ "$elapsed_ms" -ge "$budget_ms" ]; then
+                kill -TERM "$pid" 2>/dev/null || true
+                sleep 2
+                kill -KILL "$pid" 2>/dev/null || true
+                wait "$pid" 2>/dev/null
+                return 124
+              fi
+              if [ "$elapsed_ms" -lt "$fast_phase_ms" ]; then
+                sleep 0.2
+                elapsed_ms=$((elapsed_ms + 200))
+              else
+                sleep 1
+                elapsed_ms=$((elapsed_ms + 1000))
+              fi
+            done
+            wait "$pid"
+          }
+
+          # SSO-24946: verify the keychain didn't relock before touching it
+          # at all -- deliberately placed before `security find-identity`
+          # below, not just before the signing loop. A relock is a
+          # wall-clock event (3600s after the unlock in "Import signing
+          # certificate") that isn't timed to this step; if the keychain is
+          # locked, it's already locked on entry, which makes find-identity
+          # the first command to hit it, not codesign. Probing after
+          # find-identity would leave this assertion unreachable in exactly
+          # the scenario it exists for (find-identity's own behavior on a
+          # locked keychain is unverified and every plausible outcome --
+          # blocking, an empty match tripping `grep`+`pipefail`, or a
+          # prompt -- defeats the assertion before it runs).
+          #
+          # `security show-keychain-info` only reads keychain-level
+          # settings (lock-on-sleep + timeout) and should return in
+          # single-digit milliseconds -- but empirically (workflow_dispatch
+          # run 35627157270, step "DIAG ONLY -- show-keychain-info while
+          # locked") it blocks indefinitely on a LOCKED keychain instead of
+          # reporting a lock state in its output: there is no
+          # "locked"/"unlocked" text to parse, the confirmed output is just
+          # `Keychain "build.keychain" lock-on-sleep timeout=3600s`, and a
+          # locked keychain makes the call simply never return -- the same
+          # securityd private-key ACL block codesign hits. So this doesn't
+          # parse the probe's output; it bounds how long we wait for it. An
+          # unlocked keychain returns near-instantly (measured <15ms on the
+          # runner), so this costs nothing on the healthy path; not
+          # returning within the bound is, empirically, what a locked
+          # keychain looks like here, and failing loud at that point costs
+          # ~5s instead of the ~10m45s sign_with_retry would spend
+          # rediscovering the same thing one framework at a time.
+          if ! run_with_timeout 5 security show-keychain-info build.keychain; then
+            echo "::error::build.keychain did not respond to 'security show-keychain-info' within 5s -- consistent with the keychain having relocked mid-build (the same securityd private-key ACL block that hangs codesign). Failing now instead of proceeding to find-identity/signing, which cannot unlock a keychain and would only spend ~10 more minutes finding that out one framework at a time."
+            exit 1
+          fi
 
           # Find the Developer ID identity dynamically (avoids hardcoding the org name)
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
           echo "Signing with: $IDENTITY"
 
+          # SSO-24909: widened from 3 flat attempts (~3.5min total patience,
+          # which a real TSA stall on dry-run 1 burned through without ever
+          # getting through) to 6 attempts with exponential backoff (~10m45s
+          # total patience per item: 6 * 60s attempts + 5+10+20+40+80s backoff).
+          # That's enough to ride out a short TSA blip while staying far below
+          # the build-macos job's 60m guard and leaving headroom for the rest
+          # of the pipeline. A sustained outage still exhausts the budget and
+          # fails loud, unchanged from SSO-24907 Must 4 -- `set -euo pipefail`
+          # means the first item to exhaust its budget aborts the step
+          # immediately rather than burning the budget again per item.
+          sign_with_retry() {
+            local target="$1"; shift
+            local backoffs=(5 10 20 40 80)
+            local max_attempts=$((${#backoffs[@]} + 1))
+            local n=1
+            while [ "$n" -le "$max_attempts" ]; do
+              if run_with_timeout 60 codesign --force --sign "$IDENTITY" --timestamp "$@" "$target"; then
+                return 0
+              fi
+              if [ "$n" -lt "$max_attempts" ]; then
+                local delay="${backoffs[$((n - 1))]}"
+                echo "::warning::codesign attempt $n/$max_attempts failed or timed out for $(basename "$target"), retrying in ${delay}s..."
+                sleep "$delay"
+              fi
+              n=$((n + 1))
+            done
+            echo "::error::codesign failed after $max_attempts attempts for $(basename "$target")"
+            return 1
+          }
+
           # Sign frameworks (inside-out)
-          find "$APP/Contents/Frameworks" -name "*.framework" -type d | while read fw; do
-            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$fw"
-          done
-          find "$APP/Contents/Frameworks" -name "*.dylib" | while read lib; do
-            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$lib"
-          done
+          while IFS= read -r -d '' fw; do
+            echo "Signing framework: $(basename "$fw")"
+            sign_with_retry "$fw" --options runtime
+          done < <(find "$APP/Contents/Frameworks" -name "*.framework" -type d -print0)
+
+          while IFS= read -r -d '' lib; do
+            echo "Signing dylib: $(basename "$lib")"
+            sign_with_retry "$lib" --options runtime
+          done < <(find "$APP/Contents/Frameworks" -name "*.dylib" -print0)
 
           # Sign plugins
-          find "$APP/Contents/PlugIns" -name "*.dylib" 2>/dev/null | while read plugin; do
-            codesign --force --sign "$IDENTITY" --options runtime --timestamp "$plugin"
-          done
+          while IFS= read -r -d '' plugin; do
+            echo "Signing plugin: $(basename "$plugin")"
+            sign_with_retry "$plugin" --options runtime
+          done < <(find "$APP/Contents/PlugIns" -name "*.dylib" -print0 2>/dev/null || true)
 
           # Sign the .app bundle with entitlements
-          codesign --force --sign "$IDENTITY" \
-            --options runtime \
-            --entitlements macos/entitlements.plist \
-            --timestamp \
-            "$APP"
+          echo "Signing app bundle: $(basename "$APP")"
+          sign_with_retry "$APP" --options runtime --entitlements macos/entitlements.plist
 
           # Verify
           codesign --verify --deep --strict "$APP"
@@ -544,9 +698,72 @@ jobs:
 
       - name: Sign .dmg (Developer ID)
         if: steps.signing.outputs.ENABLED == 'true'
+        timeout-minutes: 10   # SSO-24905: same codesign --timestamp stall risk as the .app signing step
         run: |
+          set -euo pipefail
+
+          # SSO-24907: same bounded-retry rationale as the .app signing step above.
+          # SSO-24909: same hybrid fast/slow polling + widened backoff budget as
+          # the .app signing step above -- see the comments there for the numbers.
+          # SSO-24946: defined before find-identity below -- see the same
+          # rationale in the .app signing step above (a relock is a
+          # wall-clock event, not tied to this step's own start, so it can
+          # already be locked before the first keychain touch here too).
+          run_with_timeout() {
+            local secs="$1"; shift
+            "$@" &
+            local pid=$! elapsed_ms=0
+            local budget_ms=$((secs * 1000))
+            local fast_phase_ms=2000
+            while kill -0 "$pid" 2>/dev/null; do
+              if [ "$elapsed_ms" -ge "$budget_ms" ]; then
+                kill -TERM "$pid" 2>/dev/null || true
+                sleep 2
+                kill -KILL "$pid" 2>/dev/null || true
+                wait "$pid" 2>/dev/null
+                return 124
+              fi
+              if [ "$elapsed_ms" -lt "$fast_phase_ms" ]; then
+                sleep 0.2
+                elapsed_ms=$((elapsed_ms + 200))
+              else
+                sleep 1
+                elapsed_ms=$((elapsed_ms + 1000))
+              fi
+            done
+            wait "$pid"
+          }
+
+          # SSO-24946: pre-sign keychain-state assertion, same as the .app
+          # signing step above -- see the comment there for the full
+          # rationale (why show-keychain-info's output isn't parsed, why
+          # the bound is the signal, and why this runs before find-identity
+          # rather than before the retry loop).
+          if ! run_with_timeout 5 security show-keychain-info build.keychain; then
+            echo "::error::build.keychain did not respond to 'security show-keychain-info' within 5s -- consistent with the keychain having relocked mid-build (the same securityd private-key ACL block that hangs codesign). Failing now instead of proceeding to find-identity/signing, which cannot unlock a keychain and would only spend ~10 more minutes finding that out one framework at a time."
+            exit 1
+          fi
+
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          codesign --force --sign "$IDENTITY" --timestamp build/output/nexis.dmg
+
+          DMG="build/output/nexis.dmg"
+          echo "Signing dmg: $(basename "$DMG")"
+          backoffs=(5 10 20 40 80)
+          max_attempts=$((${#backoffs[@]} + 1))
+          n=1
+          while [ "$n" -le "$max_attempts" ]; do
+            if run_with_timeout 60 codesign --force --sign "$IDENTITY" --timestamp "$DMG"; then
+              exit 0
+            fi
+            if [ "$n" -lt "$max_attempts" ]; then
+              delay="${backoffs[$((n - 1))]}"
+              echo "::warning::codesign attempt $n/$max_attempts failed or timed out for $(basename "$DMG"), retrying in ${delay}s..."
+              sleep "$delay"
+            fi
+            n=$((n + 1))
+          done
+          echo "::error::codesign failed after $max_attempts attempts for $(basename "$DMG")"
+          exit 1
 
       - name: Notarize .dmg
         if: steps.signing.outputs.ENABLED == 'true'
@@ -622,6 +839,10 @@ jobs:
     if: github.event_name == 'push'
     needs: [build-linux, build-appimage-x86_64, build-macos]
     runs-on: ubuntu-latest
+    # SSO-24907: blanket job-level guard, see build-linux. Notarization already
+    # carries its own `--timeout 30m` (release.yml, unchanged); this bounds
+    # everything else in the job around it.
+    timeout-minutes: 45
     permissions:
       contents: write
       actions: write
@@ -866,7 +1087,7 @@ jobs:
           echo "SUMS_PATH=$SUMS_FILE" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: Nexis ${{ github.ref_name }}
           make_latest: ${{ steps.latest.outputs.MAKE_LATEST }}

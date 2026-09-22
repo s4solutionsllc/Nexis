@@ -10,6 +10,27 @@ class TestDashboardLayoutUtil : public QObject
     Q_OBJECT
 
 private slots:
+    void elasticCellWidth_fillsThenCaps()
+    {
+        using namespace DashboardLayout;
+        // Nothing to stretch.
+        QCOMPARE(elasticCellWidth(1200, 0), kCellW);
+        // Never narrower than the base cell.
+        QCOMPARE(elasticCellWidth(300, 6), kCellW);
+        // Fills: 6 cols in 900px -> (900 - 5*gap) / 6.
+        QCOMPARE(elasticCellWidth(900, 6), (900 - 5 * kGap) / 6);
+        // Capped at kMaxCellScale.
+        QCOMPARE(elasticCellWidth(4000, 6), static_cast<int>(kCellW * kMaxCellScale));
+        // The stretched block never exceeds the available width.
+        for (int w = 500; w <= 3000; w += 137) {
+            for (int cols = 1; cols <= 16; ++cols) {
+                const int cw = elasticCellWidth(w, cols);
+                if (cw > kCellW)
+                    QVERIFY(cols * cw + (cols - 1) * kGap <= w);
+            }
+        }
+    }
+
     void tierForArea_boundaries()
     {
         QCOMPARE(tierForArea(1), Compact);
