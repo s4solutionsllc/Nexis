@@ -222,12 +222,105 @@ BubbleLayout::PackCache::UnitPack toUnitPack(const PackResult &pr)
     return up;
 }
 
+// Prepared, shared top-level state for one build()/packsCached() call: which
+// nodes are being laid out, their unit-space radii, and the usable-area
+// aspect the top pack is keyed on. The single definition both functions
+// derive from, so they can never select a different set of "top-level
+// items" or compute the aspect differently.
+struct TopLevelPrep {
+    QVector<DirSizeNode*> tops;
+    QVector<qreal> unitRadii;
+    QRectF usable;
+    qreal aspect = 1.0;
+};
+
+TopLevelPrep prepareTopLevel(DirSizeNode *focus, const QRectF &area, const BubbleLayout::Metrics &m)
+{
+    TopLevelPrep prep;
+    if (!focus || !focus->isDir || focus->size <= 0)
+        return prep;
+    if (area.width() <= 0 || area.height() <= 0)
+        return prep;
+
+    prep.tops = selectAndSort(focus);
+    if (prep.tops.isEmpty())
+        return prep;
+
+    QVector<qreal> radii(prep.tops.size());
+    qreal maxRadius = 0;
+    for (int i = 0; i < prep.tops.size(); ++i) {
+        radii[i] = std::sqrt(static_cast<qreal>(prep.tops[i]->size));
+        maxRadius = std::max(maxRadius, radii[i]);
+    }
+    maxRadius = std::max(maxRadius, 1e-9);
+    prep.unitRadii.resize(prep.tops.size());
+    for (int i = 0; i < prep.tops.size(); ++i)
+        prep.unitRadii[i] = radii[i] / maxRadius;
+
+    prep.usable = area.adjusted(m.outerMargin, m.outerMargin, -m.outerMargin, -m.outerMargin);
+    if (prep.usable.width() <= 0 || prep.usable.height() <= 0) {
+        prep.tops.clear();
+        return prep;
+    }
+    prep.aspect = prep.usable.width() / std::max(prep.usable.height(), 1e-6);
+    return prep;
+}
+
+qreal fitScaleFor(const QRectF &unitBox, const QRectF &usable)
+{
+    return std::min(usable.width() / std::max(unitBox.width(), 1e-6),
+                    usable.height() / std::max(unitBox.height(), 1e-6));
+}
+
+bool wantsGroupFor(DirSizeNode *node, qreal finalRadius, const BubbleLayout::Metrics &m)
+{
+    return node->isDir && !node->children.empty() && finalRadius >= m.minGroupR;
+}
+
+// Cheap emptiness check equivalent to selectAndSort(node).isEmpty() (same
+// `size > 0` filter) without paying for the sort — packsCached() runs on
+// every rebuildLayout(), including the warm/fast-path ones, so it must not
+// re-sort a node's children just to answer "would there be anything to
+// pack".
+bool hasPackableChildren(DirSizeNode *node)
+{
+    for (const auto &c : node->children)
+        if (c->size > 0)
+            return true;
+    return false;
+}
+
+// Mirrors the exact condition build() uses (further down, inline) to decide
+// whether a group actually needs its own nested pack: kids.isEmpty() (here,
+// the cheaper hasPackableChildren()) and discR > 0. A node whose children
+// are all zero-sized (or whose label band leaves no usable inner disc)
+// never gets a nested pack from build() at all, so packsCached() must not
+// report a permanent miss over one — that would send BubbleMapView back to
+// the worker thread forever for a pack that will never actually be
+// computed.
+bool needsNestedPack(DirSizeNode *node, qreal finalRadius, const BubbleLayout::Metrics &m)
+{
+    if (!hasPackableChildren(node))
+        return false;
+    BubbleLayout::Group g;
+    g.radius = finalRadius;
+    qreal discR = std::max<qreal>(0, finalRadius - m.innerPad);
+    if (!BubbleLayout::labelBandRect(g, m).isEmpty())
+        discR = std::max<qreal>(0, discR - m.labelBand / 2.0);
+    return discR > 0;
+}
+
 } // namespace
 
 void BubbleLayout::PackCache::clear()
 {
     mNested.clear();
     mTop.clear();
+}
+
+int BubbleLayout::PackCache::aspectBucket(qreal aspect)
+{
+    return int(std::lround(aspect / 0.05));
 }
 
 const BubbleLayout::PackCache::UnitPack &BubbleLayout::PackCache::nestedPack(DirSizeNode *node, const QVector<qreal> &unitRadii)
@@ -242,13 +335,40 @@ const BubbleLayout::PackCache::UnitPack &BubbleLayout::PackCache::nestedPack(Dir
 
 const BubbleLayout::PackCache::UnitPack &BubbleLayout::PackCache::topPack(DirSizeNode *node, const QVector<qreal> &unitRadii, qreal aspect)
 {
-    const int bucket = int(std::lround(aspect / 0.05));
-    const auto key = qMakePair(static_cast<const DirSizeNode*>(node), bucket);
+    const auto key = qMakePair(static_cast<const DirSizeNode*>(node), aspectBucket(aspect));
     auto it = mTop.constFind(key);
     if (it != mTop.constEnd())
         return it.value();
     ++mPackCount;
     return mTop.insert(key, toUnitPack(pack(unitRadii, aspect))).value();
+}
+
+const BubbleLayout::PackCache::UnitPack *BubbleLayout::PackCache::tryNestedPack(const DirSizeNode *node) const
+{
+    auto it = mNested.constFind(node);
+    return it != mNested.constEnd() ? &it.value() : nullptr;
+}
+
+const BubbleLayout::PackCache::UnitPack *BubbleLayout::PackCache::tryTopPack(const DirSizeNode *node, qreal aspect) const
+{
+    auto it = mTop.constFind(qMakePair(node, aspectBucket(aspect)));
+    return it != mTop.constEnd() ? &it.value() : nullptr;
+}
+
+void BubbleLayout::PackCache::mergeFrom(const PackCache &other)
+{
+    for (auto it = other.mTop.constBegin(); it != other.mTop.constEnd(); ++it) {
+        if (!mTop.contains(it.key())) {
+            mTop.insert(it.key(), it.value());
+            ++mPackCount;
+        }
+    }
+    for (auto it = other.mNested.constBegin(); it != other.mNested.constEnd(); ++it) {
+        if (!mNested.contains(it.key())) {
+            mNested.insert(it.key(), it.value());
+            ++mPackCount;
+        }
+    }
 }
 
 QRectF BubbleLayout::labelBandRect(const Group &g, const Metrics &m)
@@ -274,35 +394,13 @@ QRectF BubbleLayout::labelBandRect(const Group &g, const Metrics &m)
 BubbleLayout::Result BubbleLayout::build(DirSizeNode *focus, const QRectF &area, const Metrics &m, PackCache *cache)
 {
     Result res;
-    if (!focus || !focus->isDir || focus->size <= 0)
+    const TopLevelPrep prep = prepareTopLevel(focus, area, m);
+    if (prep.tops.isEmpty())
         return res;
-    if (area.width() <= 0 || area.height() <= 0)
-        return res;
-
-    QVector<DirSizeNode*> tops = selectAndSort(focus);
-    if (tops.isEmpty())
-        return res;
-
-    // Pack in unit space (largest radius == 1) — see pack()'s comment for
-    // why this is equivalent to packing at true scale. `radii` (true scale,
-    // ∝ sqrt(bytes)) is only needed afterwards to derive `unitRadii`; the
-    // final geometry below is independent of it (maxRadius cancels out).
-    QVector<qreal> radii(tops.size());
-    qreal maxRadius = 0;
-    for (int i = 0; i < tops.size(); ++i) {
-        radii[i] = std::sqrt(static_cast<qreal>(tops[i]->size));
-        maxRadius = std::max(maxRadius, radii[i]);
-    }
-    maxRadius = std::max(maxRadius, 1e-9);
-    QVector<qreal> unitRadii(tops.size());
-    for (int i = 0; i < tops.size(); ++i)
-        unitRadii[i] = radii[i] / maxRadius;
-
-    const QRectF usable = area.adjusted(m.outerMargin, m.outerMargin, -m.outerMargin, -m.outerMargin);
-    if (usable.width() <= 0 || usable.height() <= 0)
-        return res;
-
-    const qreal aspect = usable.width() / std::max(usable.height(), 1e-6);
+    const QVector<DirSizeNode*> &tops = prep.tops;
+    const QVector<qreal> &unitRadii = prep.unitRadii;
+    const QRectF &usable = prep.usable;
+    const qreal aspect = prep.aspect;
 
     PackCache::UnitPack localTop;
     if (!cache)
@@ -314,8 +412,7 @@ BubbleLayout::Result BubbleLayout::build(DirSizeNode *focus, const QRectF &area,
     // dimension is tighter, so the cluster fills the card instead of
     // floating as an undersized disc in the middle of it.
     const QRectF unitBox = top.boundingBox;
-    const qreal fitScale = std::min(usable.width() / std::max(unitBox.width(), 1e-6),
-                                    usable.height() / std::max(unitBox.height(), 1e-6));
+    const qreal fitScale = fitScaleFor(unitBox, usable);
     const QPointF unitBoxCenter = unitBox.center();
     const QPointF areaCenter = usable.center();
 
@@ -324,8 +421,7 @@ BubbleLayout::Result BubbleLayout::build(DirSizeNode *focus, const QRectF &area,
         const QPointF finalCenter = areaCenter + (top.pos[i] - unitBoxCenter) * fitScale;
         const qreal finalRadius = unitRadii[i] * fitScale;
 
-        const bool wantsGroup = node->isDir && !node->children.empty() && finalRadius >= m.minGroupR;
-        if (!wantsGroup) {
+        if (!wantsGroupFor(node, finalRadius, m)) {
             if (finalRadius >= m.minBubbleR)
                 res.bubbles.append({finalCenter, finalRadius, node, -1});
             continue;
@@ -378,6 +474,37 @@ BubbleLayout::Result BubbleLayout::build(DirSizeNode *focus, const QRectF &area,
     }
 
     return res;
+}
+
+bool BubbleLayout::packsCached(DirSizeNode *focus, const QRectF &area, const Metrics &m, const PackCache *cache)
+{
+    const TopLevelPrep prep = prepareTopLevel(focus, area, m);
+    if (prep.tops.isEmpty())
+        return true;
+    if (!cache)
+        return false;
+
+    const PackCache::UnitPack *top = cache->tryTopPack(focus, prep.aspect);
+    if (!top)
+        return false;
+
+    const qreal fitScale = fitScaleFor(top->boundingBox, prep.usable);
+    for (int i = 0; i < prep.tops.size(); ++i) {
+        DirSizeNode *node = prep.tops[i];
+        const qreal finalRadius = prep.unitRadii[i] * fitScale;
+        if (wantsGroupFor(node, finalRadius, m) && needsNestedPack(node, finalRadius, m)
+            && !cache->tryNestedPack(node))
+            return false;
+    }
+    return true;
+}
+
+BubbleLayout::PackKey BubbleLayout::packKeyFor(DirSizeNode *focus, const QRectF &area, const Metrics &m)
+{
+    const TopLevelPrep prep = prepareTopLevel(focus, area, m);
+    if (prep.tops.isEmpty())
+        return PackKey{};
+    return PackKey{focus, PackCache::aspectBucket(prep.aspect)};
 }
 
 DirSizeNode *BubbleLayout::hitTest(const Result &r, const QPointF &pos)

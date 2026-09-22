@@ -5,7 +5,10 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QRadialGradient>
+#include <QThreadPool>
+#include <QTimer>
 #include <QToolTip>
+#include <QtConcurrent>
 
 #include <algorithm>
 #include <cmath>
@@ -32,11 +35,42 @@ qreal chordAt(qreal r, qreal dy)
     return 2.0 * std::sqrt(std::max<qreal>(0, r * r - dy * dy));
 }
 
+// Every BubbleMapView's async pack jobs share this one dedicated,
+// single-thread pool instead of QtConcurrent's default (global) one: it
+// caps actual concurrent packing at exactly one job regardless of how many
+// distinct requests (e.g. a resize drag walking many aspect buckets) get
+// dispatched before earlier ones land, and — just as important — keeps
+// those CPU-bound jobs from competing with DirSizeScanner's own worker,
+// which uses the global pool (see Managers/dir_size_scanner.cpp). Only
+// ever touched from the GUI thread (BubbleMapView::startAsyncPack()), so
+// the lazy one-time setMaxThreadCount() below needs no extra guarding.
+QThreadPool &bubblePackThreadPool()
+{
+    static QThreadPool pool;
+    static bool configured = false;
+    if (!configured) {
+        pool.setMaxThreadCount(1);
+        configured = true;
+    }
+    return pool;
+}
+
 } // namespace
 
 BubbleMapView::BubbleMapView(QWidget *parent)
     : DiskMapView(parent)
 {
+    mPackDelayTimer = new QTimer(this);
+    mPackDelayTimer->setSingleShot(true);
+    connect(mPackDelayTimer, &QTimer::timeout, this, [this] {
+        // A landed/superseded request already stopped this timer, so
+        // reaching here means the pack this delay was measuring is still
+        // running.
+        if (!mPendingPack)
+            return;
+        mShowPackingMessage = true;
+        update();
+    });
 }
 
 BubbleLayout::Metrics BubbleMapView::scaledMetrics() const
@@ -52,8 +86,135 @@ BubbleLayout::Metrics BubbleMapView::scaledMetrics() const
 
 void BubbleMapView::rebuildLayout()
 {
-    mLayout = BubbleLayout::build(mFocus, QRectF(rect()), scaledMetrics(), &mPackCache);
+    const QRectF area(rect());
+    const BubbleLayout::Metrics m = scaledMetrics();
+
+    if (BubbleLayout::packsCached(mFocus, area, m, &mPackCache)) {
+        // Fast path: every pack this build needs is already cached, so this
+        // is just the cheap affine fit — stay fully synchronous, exactly as
+        // before this feature existed.
+        mPendingPack = false;
+        mShowPackingMessage = false;
+        mPackDelayTimer->stop();
+        mLayout = BubbleLayout::build(mFocus, area, m, &mPackCache);
+        mDisplayedTree = mRoot;
+        mDisplayedHueSlots = hueSlotsSnapshot();
+        startCrossFadeIfArmed();
+        return;
+    }
+
+    // Cache miss: hand the expensive circle-packing to a worker thread.
+    // Deliberately do NOT touch mLayout/mDisplayedHueSlots here — they keep
+    // painting whatever they already held (or the empty-state text, if
+    // this is the very first load) until a result actually lands in
+    // onPackFinished(), so the view never goes blank while packing.
+    mPendingPack = true;
+    mPackDelayTimer->start(120);
+    dispatchPackIfNeeded(area, m);
+}
+
+void BubbleMapView::dispatchPackIfNeeded(const QRectF &area, const BubbleLayout::Metrics &m)
+{
+    const BubbleLayout::PackKey key = BubbleLayout::packKeyFor(mFocus, area, m);
+    if (mPackWorkerTrackedSeq != 0 && mPackWorkerTreeGeneration == mTreeGeneration && mPackWorkerKey == key) {
+        // A worker is already packing exactly this request's top-level key
+        // (a resize drag re-entering the same aspect bucket, or the
+        // lockstep hidden view asking for what the visible one already
+        // triggered) — dispatching another would just queue redundant work
+        // behind it on bubblePackThreadPool(). onPackFinished() re-derives
+        // the live focus/area once that one lands and re-dispatches on its
+        // own (through this same function) if it's still not enough, so
+        // this always converges without ever running more than one pack
+        // job at a time for a given (tree, key).
+        return;
+    }
+    startAsyncPack(area, m, key);
+}
+
+void BubbleMapView::startAsyncPack(const QRectF &area, const BubbleLayout::Metrics &m, const BubbleLayout::PackKey &key)
+{
+    // Keep the whole tree alive for the worker even if setRoot()/a rescan
+    // replaces mRoot (and mFocus) on the GUI thread before this finishes —
+    // mFocus is always a node inside mRoot's tree, so holding this shared_ptr
+    // copy is what keeps `focus` below from dangling.
+    const DirSizeNodePtr rootKeepAlive = mRoot;
+    DirSizeNode *focus = mFocus;
+    // A private copy: the worker fills in whatever this build needs on top
+    // of it, but that mutation happens only to its own copy (Qt's
+    // copy-on-write detaches on first write) — mPackCache itself is never
+    // touched off the GUI thread.
+    BubbleLayout::PackCache localCache = mPackCache;
+
+    // dispatchSeq identifies THIS dispatch specifically; mPackWorkerTrackedSeq
+    // identifies whichever dispatch is the most recently issued one. A
+    // second dispatch for a different key (or tree) started while this one
+    // is still running overwrites mPackWorkerTrackedSeq — onPackFinished()
+    // below only clears it back to "nothing in flight" when it's still the
+    // one that dispatch belongs to, so a superseded dispatch landing late
+    // never clobbers the bookkeeping for a newer one still in flight.
+    const quint64 dispatchSeq = ++mPackDispatchSeq;
+    mPackWorkerTrackedSeq = dispatchSeq;
+    mPackWorkerTreeGeneration = mTreeGeneration;
+    mPackWorkerKey = key;
+    ++mPackDispatchCount;
+    const quint64 dispatchTreeGeneration = mTreeGeneration;
+
+    auto *watcher = new QFutureWatcher<BubbleLayout::PackCache>(this);
+    connect(watcher, &QFutureWatcher<BubbleLayout::PackCache>::finished, this,
+            [this, watcher, dispatchSeq, dispatchTreeGeneration] {
+        onPackFinished(watcher, dispatchSeq, dispatchTreeGeneration);
+    });
+    watcher->setFuture(QtConcurrent::run(&bubblePackThreadPool(), [rootKeepAlive, focus, area, m, localCache]() mutable {
+        Q_UNUSED(rootKeepAlive);
+        BubbleLayout::build(focus, area, m, &localCache);
+        return localCache;
+    }));
+}
+
+void BubbleMapView::onPackFinished(QFutureWatcher<BubbleLayout::PackCache> *watcher, quint64 dispatchSeq, quint64 dispatchTreeGeneration)
+{
+    const BubbleLayout::PackCache result = watcher->result();
+    watcher->deleteLater();
+
+    // Only clear the "in-flight" bookkeeping if this dispatch is still the
+    // one it refers to — see the comment in startAsyncPack().
+    if (mPackWorkerTrackedSeq == dispatchSeq)
+        mPackWorkerTrackedSeq = 0;
+
+    // The tree this was packed against was replaced (setRoot()/a rescan)
+    // while this was packing — rootAboutToChange() may already have
+    // cleared mPackCache for an entirely new tree, and this result's keys
+    // (raw DirSizeNode*) could even collide with the new tree's own node
+    // addresses (heap reuse), so it must never be merged. Per the design,
+    // the worker itself was never cancelled; only its result is ignored
+    // here.
+    if (dispatchTreeGeneration != mTreeGeneration)
+        return;
+
+    mPackCache.mergeFrom(result);
+
+    // Re-derive against the *live* focus/area rather than trusting that
+    // this landing pack is automatically enough: a drill or a resize into a
+    // new aspect bucket can have arrived while this was in flight (and, per
+    // dispatchPackIfNeeded()'s coalescing, not dispatched its own worker).
+    // Calling build() unguarded here would silently reintroduce a
+    // GUI-thread freeze the moment that stops being true, so re-check and
+    // hand off to another worker rather than assume.
+    const QRectF area(rect());
+    const BubbleLayout::Metrics m = scaledMetrics();
+    if (!BubbleLayout::packsCached(mFocus, area, m, &mPackCache)) {
+        dispatchPackIfNeeded(area, m);
+        return;
+    }
+
+    mPendingPack = false;
+    mShowPackingMessage = false;
+    mPackDelayTimer->stop();
+    mLayout = BubbleLayout::build(mFocus, area, m, &mPackCache);
+    mDisplayedTree = mRoot;
+    mDisplayedHueSlots = hueSlotsSnapshot();
     startCrossFadeIfArmed();
+    update();
 }
 
 void BubbleMapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
@@ -65,6 +226,7 @@ void BubbleMapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
 
 void BubbleMapView::rootAboutToChange()
 {
+    ++mTreeGeneration;
     // Cached nested/top-level packs are keyed by DirSizeNode* — pointers
     // from the tree being replaced must never be looked up again.
     mPackCache.clear();
@@ -75,7 +237,7 @@ void BubbleMapView::paintGroup(QPainter &p, const BubbleLayout::Group &g, bool h
     if (g.radius < 4)
         return;
 
-    const QColor hue = colourFor(g.node);
+    const QColor hue = colourFor(g.node, mDisplayedHueSlots);
 
     QColor shadow = mBackgroundColor.darker(260);
     // Outer rings fainter, innermost (closest to the membrane's own rim)
@@ -128,7 +290,7 @@ void BubbleMapView::paintBubble(QPainter &p, const BubbleLayout::Bubble &b, bool
         c -= QPointF(0, Dpi::scale(2));
 
     const bool tiny = r < 4;
-    const QColor base = colourFor(b.node);
+    const QColor base = colourFor(b.node, mDisplayedHueSlots);
 
     if (!tiny) {
         QColor shadow = mBackgroundColor.darker(260);
@@ -230,6 +392,9 @@ void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
         p.setPen(mTextColor);
         p.drawText(rect(), Qt::AlignCenter,
                    tr("No scan loaded. Choose a folder and press Scan."));
+    } else if (mShowPackingMessage) {
+        p.setPen(mTextColor);
+        p.drawText(rect(), Qt::AlignCenter, tr("Laying out…"));
     } else if (mLayout.groups.isEmpty() && mLayout.bubbles.isEmpty()) {
         p.setPen(mTextColor);
         p.drawText(rect(), Qt::AlignCenter,
@@ -243,6 +408,11 @@ void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
 
 void BubbleMapView::mouseMoveEvent(QMouseEvent *event)
 {
+    if (mPendingPack) {
+        QToolTip::hideText();
+        return;
+    }
+
     DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->position());
     setHoveredNode(node);
     if (node) {
@@ -258,12 +428,18 @@ void BubbleMapView::mouseMoveEvent(QMouseEvent *event)
 
 void BubbleMapView::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    if (mPendingPack)
+        return;
+
     DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->position());
     requestDrillIfDir(node);
 }
 
 void BubbleMapView::contextMenuEvent(QContextMenuEvent *event)
 {
+    if (mPendingPack)
+        return;
+
     DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->pos());
     showContextMenuFor(node, event->globalPos());
 }

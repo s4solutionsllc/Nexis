@@ -114,34 +114,24 @@ void BtmRow::setAvailableWidth(int totalWidth)
     // instead of collapsing the elided text to just an ellipsis. Invariant:
     // sizeHint().width() never exceeds max(totalWidth, reserved + 40) — the
     // floor deliberately overrides totalWidth below that minimum usable width.
-    int available = qMax(40, totalWidth - reserved);
+    const int available = qMax(40, totalWidth - reserved);
 
     const QFontMetrics fmName(mLblName->font());
-    const QFontMetrics fmSub(mLblSub->font());
-
-    // QLabel::sizeHint() is derived from QFontMetrics::boundingRect(), which
-    // can exceed the elidedText() advance width by a few pixels (glyph side
-    // bearings) — font- and DPI-dependent. Re-elide against the measured
-    // overshoot so the row's own sizeHint() honors `available`; bounded to a
-    // few attempts so reflow (run per row from showEvent/resizeEvent) stays
-    // O(rows) instead of O(rows * unbounded).
-    for (int attempt = 0; attempt < 3; ++attempt) {
-        mLblName->setText(fmName.elidedText(mNameFull, Qt::ElideMiddle, available));
-        mLblSub->setText(fmSub.elidedText(mSecondaryFull, Qt::ElideMiddle, available));
-
-        const int nameHint = mLblName->sizeHint().width();
-        const int subHint = mLblSub->sizeHint().width();
-        const int overshoot = qMax(nameHint, subHint) - available;
-        qWarning("SSO-25051 diag: attempt=%d totalWidth=%d reserved=%d available=%d nameHint=%d subHint=%d overshoot=%d rowHint=%d",
-                 attempt, totalWidth, reserved, available, nameHint, subHint, overshoot, sizeHint().width());
-        if (overshoot <= 0)
-            break;
-        available = qMax(1, available - overshoot);
-    }
-
+    mLblName->setText(fmName.elidedText(mNameFull, Qt::ElideMiddle, available));
     mLblName->setToolTip(mNameFull);
+
+    const QFontMetrics fmSub(mLblSub->font());
+    mLblSub->setText(fmSub.elidedText(mSecondaryFull, Qt::ElideMiddle, available));
     mLblSub->setToolTip(mSecondaryFull);
 
+    // QLabel::setText() only forwards updateGeometry() to the parent layout
+    // when the label isn't hidden (QWidgetPrivate skips the ancestor-layout
+    // invalidate for a hidden widget) — a row whose sizeHint() was read
+    // before it was ever shown (headless tests; possibly an off-screen list
+    // item) would otherwise keep serving the pre-elision cached sizeHint
+    // forever. Invalidate this row's own layout directly so the very next
+    // sizeHint() call always recomputes from the labels' current text.
+    layout()->invalidate();
     updateGeometry();
 }
 

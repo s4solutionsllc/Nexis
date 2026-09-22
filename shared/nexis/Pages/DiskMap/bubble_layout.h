@@ -59,10 +59,14 @@ class PackCache
 public:
     void clear();
 
-    /// Number of packs actually computed (cache misses) since construction
-    /// or the last clear() — a running total, never reset by clear() itself
-    /// (clearing just forces the *next* build() to recompute). Test seam:
-    /// assert cache effectiveness via this counter, never via timing.
+    /// Number of packs this cache actually holds work for — computed here
+    /// directly (a cache miss during nestedPack()/topPack()) or folded in
+    /// from a worker-thread cache via mergeFrom() (still real, newly-
+    /// obtained work from this cache's point of view, just computed
+    /// elsewhere) — since construction or the last clear(). A running
+    /// total, never reset by clear() itself (clearing just forces the
+    /// *next* build() to recompute). Test seam: assert cache effectiveness
+    /// via this counter, never via timing.
     int packCount() const { return mPackCount; }
 
     // Internal to BubbleLayout::build() — not part of the public contract.
@@ -75,6 +79,30 @@ public:
     const UnitPack &nestedPack(DirSizeNode *node, const QVector<qreal> &unitRadii);
     const UnitPack &topPack(DirSizeNode *node, const QVector<qreal> &unitRadii, qreal aspect);
 
+    /// Read-only peeks at an already-cached pack — nullptr on a miss, never
+    /// computing or inserting anything. The single source of truth for
+    /// whether a given key is cached, shared by packsCached() (the
+    /// sync/async decision) and by nestedPack()/topPack() themselves via
+    /// aspectBucket(), so the two can never quantise a key differently and
+    /// disagree about the same entry.
+    const UnitPack *tryNestedPack(const DirSizeNode *node) const;
+    const UnitPack *tryTopPack(const DirSizeNode *node, qreal aspect) const;
+
+    /// Copies in any pack from `other` this cache doesn't already have.
+    /// GUI-thread only: `other` is a worker-thread-computed cache (see
+    /// BubbleMapView's async pack path) being folded back in after the
+    /// fact — never call this with a cache another thread might still be
+    /// touching, and never call it from that worker thread.
+    void mergeFrom(const PackCache &other);
+
+    /// The 0.05-quantised aspect bucket topPack()/tryTopPack() key on.
+    /// Public so packKeyFor() below (and anything else identifying a
+    /// top-level pack request from the outside, e.g. BubbleMapView's
+    /// in-flight-worker dedup) can derive the exact same bucket rather
+    /// than re-deriving its own quantisation that could drift from this
+    /// one.
+    static int aspectBucket(qreal aspect);
+
 private:
     QHash<const DirSizeNode*, UnitPack> mNested;
     QHash<QPair<const DirSizeNode*, int>, UnitPack> mTop;
@@ -83,6 +111,35 @@ private:
 
 Result build(DirSizeNode *focus, const QRectF &area, const Metrics &m = Metrics(), PackCache *cache = nullptr);
 DirSizeNode *hitTest(const Result &r, const QPointF &pos);
+
+/// True iff build() with these exact arguments would be a pure cache hit
+/// (affine fit only, no circle-packing relaxation) — used to decide whether
+/// BubbleMapView can lay out synchronously or must hand the miss to a
+/// worker thread. Walks the same top-level/group selection build() does,
+/// but only *asks* the cache (via PackCache::tryTopPack()/tryNestedPack())
+/// instead of computing anything, so it can never do the expensive work
+/// itself. Always returns true when there is nothing to pack (null/empty
+/// focus, degenerate area) and always false when `cache` is null, since
+/// there is then nothing to have cached.
+bool packsCached(DirSizeNode *focus, const QRectF &area, const Metrics &m = Metrics(), const PackCache *cache = nullptr);
+
+/// Identifies one build() request's top-level pack — the exact key
+/// PackCache::topPack() would use internally (same node, same quantised
+/// aspect bucket — see PackCache::aspectBucket()). Two requests with an
+/// equal PackKey will always look up (or, on a miss, compute) the same
+/// cache entry. Used by BubbleMapView to recognise a request that's
+/// already covered by an in-flight worker so it doesn't dispatch a
+/// redundant one (e.g. a resize drag re-entering the same aspect bucket).
+struct PackKey {
+    const DirSizeNode *node = nullptr;
+    int aspectBucket = 0;
+
+    bool operator==(const PackKey &other) const
+    {
+        return node == other.node && aspectBucket == other.aspectBucket;
+    }
+};
+PackKey packKeyFor(DirSizeNode *focus, const QRectF &area, const Metrics &m = Metrics());
 
 /// The rectangle a group's "name · size" label should be drawn into —
 /// positioned inside the membrane just below the rim (its vertical centre

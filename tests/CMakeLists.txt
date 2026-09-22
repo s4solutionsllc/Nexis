@@ -799,6 +799,22 @@ if(APPLE)
   )
 endif()
 
+# Moves BubbleMapView's cold circle-packing off the UI thread: the
+# synchronous fast path on a warm cache, the async path on a cold one, and
+# the generation-counter/tree-lifetime safety invariants that make a worker
+# thread racing the GUI thread (drill/resize/setRoot superseding an
+# in-flight pack, or the view being destroyed mid-pack) safe. Links against
+# nexis-gui/Qt6::Concurrent like DiskMapCrossFadeTests above (BubbleMapView
+# lives in the GUI library and now pulls in QtConcurrent).
+add_nexis_test(NAME DiskMapBubbleAsyncTests
+  SOURCES
+    managers/test_disk_map_bubble_async.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
 # SSO-3736 / FW-08: DuplicateFinderService — duplicate grouping (content-
 # verified), top-N large-file ranking, empty-folder detection, exclusion
 # engine compliance, and the never-delete-last-copy invariant. Builds on
