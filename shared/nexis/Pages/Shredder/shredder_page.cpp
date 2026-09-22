@@ -76,6 +76,9 @@ void ShredderPage::buildUi()
 
     auto *lblSource = new QLabel(tr("Permanently overwrite and delete files and folders"), headerRow);
     lblSource->setObjectName("sectionHeaderSource");
+    // GH#475: without word wrap this forces the page to never shrink narrower
+    // than the sentence — this page has no scroll area to fall back on.
+    lblSource->setWordWrap(true);
     headerTextCol->addWidget(lblSource);
 
     headerLayout->addLayout(headerTextCol, 1);
