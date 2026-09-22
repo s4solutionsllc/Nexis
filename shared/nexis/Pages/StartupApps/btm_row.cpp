@@ -111,15 +111,31 @@ void BtmRow::setAvailableWidth(int totalWidth)
     const int reserved = m.left() + m.right() + layout()->spacing() + badgesWidth;
 
     // Floor so a very narrow window still leaves a few readable characters
-    // instead of collapsing the elided text to just an ellipsis.
-    const int available = qMax(40, totalWidth - reserved);
+    // instead of collapsing the elided text to just an ellipsis. Invariant:
+    // sizeHint().width() never exceeds max(totalWidth, reserved + 40) — the
+    // floor deliberately overrides totalWidth below that minimum usable width.
+    int available = qMax(40, totalWidth - reserved);
 
     const QFontMetrics fmName(mLblName->font());
-    mLblName->setText(fmName.elidedText(mNameFull, Qt::ElideMiddle, available));
-    mLblName->setToolTip(mNameFull);
-
     const QFontMetrics fmSub(mLblSub->font());
-    mLblSub->setText(fmSub.elidedText(mSecondaryFull, Qt::ElideMiddle, available));
+
+    // QLabel::sizeHint() is derived from QFontMetrics::boundingRect(), which
+    // can exceed the elidedText() advance width by a few pixels (glyph side
+    // bearings) — font- and DPI-dependent. Re-elide against the measured
+    // overshoot so the row's own sizeHint() honors `available`; bounded to a
+    // few attempts so reflow (run per row from showEvent/resizeEvent) stays
+    // O(rows) instead of O(rows * unbounded).
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        mLblName->setText(fmName.elidedText(mNameFull, Qt::ElideMiddle, available));
+        mLblSub->setText(fmSub.elidedText(mSecondaryFull, Qt::ElideMiddle, available));
+
+        const int overshoot = qMax(mLblName->sizeHint().width(), mLblSub->sizeHint().width()) - available;
+        if (overshoot <= 0)
+            break;
+        available = qMax(1, available - overshoot);
+    }
+
+    mLblName->setToolTip(mNameFull);
     mLblSub->setToolTip(mSecondaryFull);
 
     updateGeometry();
