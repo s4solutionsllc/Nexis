@@ -100,11 +100,18 @@ void TestDiskMapCrossFade::shownView_fadesOnDrillInto()
 
     DirSizeNodePtr root = buildTree();
     view.setRoot(root);
+    // The cold-cache circle-pack the async feature defers to a worker
+    // thread must land before drilling — see BubbleMapView::rebuildLayout()
+    // — otherwise this drill's own request just supersedes it and the fade
+    // (armed here, but only started once the *new* layout lands) hasn't
+    // started yet either.
+    QVERIFY(QTest::qWaitFor([&] { return !view.isPackPending(); }, 5000));
 
     DirSizeNode *big = root->children[0].get();
     QVERIFY(big && big->isDir);
 
     view.drillInto(big);
+    QVERIFY(QTest::qWaitFor([&] { return !view.isPackPending(); }, 5000));
     QVERIFY2(view.isCrossFadeRunning(),
              "drilling on a shown, non-reduced-motion view should start the cross-fade");
     QCOMPARE(view.focus(), big);
@@ -123,11 +130,13 @@ void TestDiskMapCrossFade::setRootMidFade_cancelsIt()
 
     DirSizeNodePtr root = buildTree();
     view.setRoot(root);
+    QVERIFY(QTest::qWaitFor([&] { return !view.isPackPending(); }, 5000));
 
     DirSizeNode *big = root->children[0].get();
     QVERIFY(big && big->isDir);
 
     view.drillInto(big);
+    QVERIFY(QTest::qWaitFor([&] { return !view.isPackPending(); }, 5000));
     QVERIFY2(view.isCrossFadeRunning(), "drilling should start the cross-fade");
 
     DirSizeNodePtr freshRoot = buildTree();
@@ -149,11 +158,13 @@ void TestDiskMapCrossFade::resizeMidFade_cancelsIt()
 
     DirSizeNodePtr root = buildTree();
     view.setRoot(root);
+    QVERIFY(QTest::qWaitFor([&] { return !view.isPackPending(); }, 5000));
 
     DirSizeNode *big = root->children[0].get();
     QVERIFY(big && big->isDir);
 
     view.drillInto(big);
+    QVERIFY(QTest::qWaitFor([&] { return !view.isPackPending(); }, 5000));
     QVERIFY2(view.isCrossFadeRunning(), "drilling should start the cross-fade");
 
     view.resize(700, 500);
@@ -237,11 +248,13 @@ void TestDiskMapCrossFade::resizeAfterFadeCancelledByResize_doesNotRestartIt()
 
     DirSizeNodePtr root = buildTree();
     view.setRoot(root);
+    QVERIFY(QTest::qWaitFor([&] { return !view.isPackPending(); }, 5000));
 
     DirSizeNode *big = root->children[0].get();
     QVERIFY(big && big->isDir);
 
     view.drillInto(big);
+    QVERIFY(QTest::qWaitFor([&] { return !view.isPackPending(); }, 5000));
     QVERIFY2(view.isCrossFadeRunning(), "drilling on a shown view should start the cross-fade");
 
     view.resize(700, 500);
