@@ -12,8 +12,6 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QLabel>
-#include <QPointer>
-#include <QDialog>
 #include <functional>
 
 class QScreen;
@@ -65,6 +63,7 @@ struct PageSlot {
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
 #include "Pages/DiskTools/disk_tools_page.h"
+#include "Pages/DiskMap/disk_map_page.h"
 #include "Pages/Helpers/helpers_page.h"
 #include "Pages/HardwareInfo/hardware_info_page.h"
 #include "Pages/SystemLogs/system_logs_page.h"
@@ -109,7 +108,6 @@ private slots:
     void toggleKioskMode();
     void exitKioskMode();
     void toggleSidebarCollapse();
-    void openDiskTreemapDialog();
 
 private:
     QWidget *getPageByTitle(const QString &title);
@@ -159,6 +157,7 @@ private:
     StartupAppsPage *startupAppsPage;
     SystemCleanerPage *systemCleanerPage;
     DiskToolsPage *diskToolsPage;
+    DiskMapPage *diskMapPage = nullptr;
     SearchPage *searchPage;
     ServicesPage *servicesPage;
     ProcessesPage *processPage;
@@ -212,7 +211,6 @@ private:
     QMenu *mTrayMenu;
     QAction *mKioskAction;
     QAction *mKioskExitAction = nullptr;
-    QPointer<QDialog> mDiskTreemapDialog;
 
     // Sidebar widgets
     QVBoxLayout *mSidebarLayout;
@@ -239,8 +237,6 @@ private:
     QPushButton *btnDash;
     QPushButton *btnHardwareInfo;
     QPushButton *btnResources;
-    // SSO-23863: opens DiskTreemapDialog directly rather than a stacked
-    // page — non-checkable, same pattern as btnFeedback below.
     QPushButton *btnDiskMap;
     QPushButton *btnNetworkUsage;
     QPushButton *btnSystemCleaner;

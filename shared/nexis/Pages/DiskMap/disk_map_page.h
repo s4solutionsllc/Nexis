@@ -1,5 +1,6 @@
-// SSO-3737 / FW-09: built-in disk-space visualizer dialog.
+// SSO-3737 / FW-09: built-in disk-space visualizer page.
 // SSO-23862: added the bubble-map/sunburst visualization modes + picker.
+// SSO-24963: hosted in the primary pane; a scan survives navigating away.
 //
 // Wraps DirSizeScanner + a DiskMapView (treemap / bubble-map / sunburst,
 // switchable live) with a small toolbar (folder picker, scan/cancel,
@@ -12,10 +13,10 @@
 // visualization types is instant and never re-scans or re-derives from a
 // different snapshot of the tree.
 
-#ifndef DISK_TREEMAP_DIALOG_H
-#define DISK_TREEMAP_DIALOG_H
+#ifndef DISK_MAP_PAGE_H
+#define DISK_MAP_PAGE_H
 
-#include <QDialog>
+#include <QWidget>
 #include <QVector>
 
 class QLabel;
@@ -23,6 +24,7 @@ class QPushButton;
 class QProgressBar;
 class QComboBox;
 class QStackedWidget;
+class QFrame;
 
 #include "Managers/dir_size_scanner.h"
 #include "Services/file_search_service.h"
@@ -31,19 +33,17 @@ class AppManager;
 class SignalMapper;
 class DiskMapView;
 
-class DiskTreemapDialog : public QDialog
+class DiskMapPage : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit DiskTreemapDialog(QWidget *parent = nullptr,
-                               AppManager *appManager = nullptr,
-                               SignalMapper *signalMapper = nullptr);
+    explicit DiskMapPage(QWidget *parent = nullptr,
+                         AppManager *appManager = nullptr,
+                         SignalMapper *signalMapper = nullptr);
+    ~DiskMapPage() override;
 
     void prefillVolumes(const QStringList &volumeRoots);
-
-protected:
-    void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void onChooseFolder();
@@ -73,6 +73,7 @@ private:
 
     DirSizeScanner *mScanner = nullptr;
 
+    QFrame       *mCard           = nullptr;
     QComboBox    *mFolderCombo    = nullptr;
     QPushButton  *mChooseButton   = nullptr;
     QPushButton  *mScanButton     = nullptr;
@@ -96,4 +97,4 @@ private:
     QString mLastScannedPath;
 };
 
-#endif // DISK_TREEMAP_DIALOG_H
+#endif // DISK_MAP_PAGE_H

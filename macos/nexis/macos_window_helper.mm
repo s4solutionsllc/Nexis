@@ -12,3 +12,8 @@ void nexis_macos_set_window_dark(void *nsView, int dark)
     [window setAppearance:[NSAppearance appearanceNamed:
         dark ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua]];
 }
+
+int nexis_macos_prefers_reduced_motion(void)
+{
+    return [[NSWorkspace sharedWorkspace] accessibilityDisplayShouldReduceMotion] ? 1 : 0;
+}

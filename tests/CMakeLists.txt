@@ -741,19 +741,45 @@ add_nexis_test(NAME FileSearchServiceTests
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )
 
-# SSO-23861: DiskTreemapDialog's trash confirm/cancel wiring, driven the same
+# SSO-23861: DiskMapPage's trash confirm/cancel wiring, driven the same
 # way TreemapView's context menu does (invoke the private onTrashRequested()
 # slot via the meta-object system) against a real QMessageBox and a real
 # FileSearchService::moveToTrash() run. No interactive desktop is available
 # in CI, so this is the automated stand-in for a manual click-through — see
 # the file header for why that's a faithful substitute here.
-add_nexis_test(NAME DiskTreemapDeleteConfirmTests
+add_nexis_test(NAME DiskMapDeleteConfirmTests
   SOURCES
-    managers/test_disk_treemap_delete_confirm.cpp
+    managers/test_disk_map_delete_confirm.cpp
   INCLUDES
     "${GUI_SHARED_DIR}"
   LIBS
     nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
+# SSO-24963: TreemapView's drill zoom transition arming invariants (hidden
+# views never animate, a shown view with a framed directory does and a
+# mid-animation resize stops it, an empty-layout drill stays instant).
+# Links against nexis-gui like DiskMapDeleteConfirmTests above because
+# TreemapView/DiskMapView live in the GUI library.
+add_nexis_test(NAME TreemapZoomTests
+  SOURCES
+    managers/test_treemap_zoom.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
+# SSO-24963: DiskMapView's shared drill cross-fade arming invariants,
+# exercised through BubbleMapView (the first mode to opt in) — mirrors
+# TreemapZoomTests above for TreemapView's own geometric zoom transition.
+add_nexis_test(NAME DiskMapCrossFadeTests
+  SOURCES
+    managers/test_disk_map_crossfade.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+  LIBS
+    nexis-gui Qt6::Widgets
 )
 
 # SSO-3736 / FW-08: DuplicateFinderService — duplicate grouping (content-
@@ -825,6 +851,72 @@ add_nexis_test(NAME DirSizeScannerTests
     "${GUI_SHARED_DIR}/Managers"
   LIBS
     Qt6::Concurrent
+)
+
+# SSO-24963: TreemapLayout — pure nested treemap geometry consumed by
+# TreemapView. Compiled directly into the test (like DirSizeScannerTests
+# above) so it runs cross-platform without pulling in nexis-gui.
+add_nexis_test(NAME TreemapLayoutTests
+  SOURCES
+    managers/test_treemap_layout.cpp
+    "${GUI_SHARED_DIR}/Pages/DiskMap/treemap_layout.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+)
+
+# SSO-24963: BubbleLayout — pure nested bubble-pack geometry consumed by
+# BubbleMapView. Compiled directly into the test (like TreemapLayoutTests
+# above) so it runs cross-platform without pulling in nexis-gui.
+add_nexis_test(NAME BubbleLayoutTests
+  SOURCES
+    managers/test_bubble_layout.cpp
+    "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_layout.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+)
+
+# SSO-24963: SunburstLayout — pure two-ring sunburst geometry consumed by
+# SunburstView. Compiled directly into the test (like TreemapLayoutTests /
+# BubbleLayoutTests above) so it runs cross-platform without pulling in
+# nexis-gui.
+add_nexis_test(NAME SunburstLayoutTests
+  SOURCES
+    managers/test_sunburst_layout.cpp
+    "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_layout.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+)
+
+# SSO-24963: DiskMapView::higherContrastColour() — the pure WCAG contrast
+# pick behind contrast-aware treemap/bubble/sunburst labels. Compiled
+# directly into the test (like TreemapLayoutTests above); disk_map_view.cpp
+# only touches the DirSizeNode struct, not DirSizeScanner's implementation,
+# so no scanner source or nexis-gui link is needed.
+# SSO-24963: disk_map_view.cpp now also pulls in Utilities::prefersReducedMotion()
+# (the shared drill cross-fade). On macOS that's implemented in
+# macos/nexis/macos_window_helper.mm, which only nexis-gui links by default —
+# add it directly here (like utilities.cpp) rather than linking all of
+# nexis-gui, which would duplicate disk_map_view.cpp's MOC symbols.
+set(DISK_MAP_LABEL_CONTRAST_TEST_SRCS
+  managers/test_disk_map_label_contrast.cpp
+  "${GUI_SHARED_DIR}/Pages/DiskMap/disk_map_view.cpp"
+  "${GUI_SHARED_DIR}/utilities.cpp"
+)
+if(APPLE)
+  list(APPEND DISK_MAP_LABEL_CONTRAST_TEST_SRCS
+    "${CMAKE_SOURCE_DIR}/macos/nexis/macos_window_helper.mm")
+endif()
+add_nexis_test(NAME DiskMapLabelContrastTests
+  SOURCES ${DISK_MAP_LABEL_CONTRAST_TEST_SRCS}
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+    "${CMAKE_SOURCE_DIR}/macos/nexis"
+  LIBS
+    Qt6::Widgets
 )
 
 # SSO-15380: Trust & Safety shared component — scan/execute orchestration.

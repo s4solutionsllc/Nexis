@@ -6,7 +6,7 @@
 // No interactive desktop session is available in CI/sandbox environments, so
 // this drives the actual compiled widgets under QT_QPA_PLATFORM=offscreen
 // (the same headless backend already relied on by the screenshot regression
-// suite) instead of a human clicking through a real display: DiskTreemapDialog
+// suite) instead of a human clicking through a real display: DiskMapPage
 // is invoked exactly as production code invokes it (TreemapView's context menu
 // emits trashRequested(), which Qt's meta-object system dispatches to the
 // private onTrashRequested() slot — QMetaObject::invokeMethod() reaches that
@@ -25,8 +25,8 @@
 #include <QTextStream>
 #include <QTimer>
 
-#include "Pages/Resources/disk_treemap_dialog.h"
-#include "Pages/Resources/treemap_view.h"
+#include "Pages/DiskMap/disk_map_page.h"
+#include "Pages/DiskMap/treemap_view.h"
 #include "Managers/dir_size_scanner.h"
 #include "Services/file_search_service.h"
 
@@ -52,17 +52,17 @@ void writeFile(const QString &path, const QString &contents)
     QTextStream(&f) << contents;
 }
 
-// Runs a real scan through the dialog's own UI path (sets the folder combo,
+// Runs a real scan through the page's own UI path (sets the folder combo,
 // invokes the private onScanClicked() slot exactly like clicking "Scan"
 // would) and waits for the treemap to populate.
-void scanAndWait(DiskTreemapDialog &dialog, const QString &rootPath)
+void scanAndWait(DiskMapPage &page, const QString &rootPath)
 {
-    auto *combo = dialog.findChild<QComboBox *>();
+    auto *combo = page.findChild<QComboBox *>();
     QVERIFY(combo);
     combo->setCurrentText(rootPath);
-    QVERIFY(QMetaObject::invokeMethod(&dialog, "onScanClicked"));
+    QVERIFY(QMetaObject::invokeMethod(&page, "onScanClicked"));
 
-    auto *view = dialog.findChild<TreemapView *>();
+    auto *view = page.findChild<TreemapView *>();
     QVERIFY(view);
     QVERIFY2(QTest::qWaitFor([&]() { return view->focus() != nullptr; }, 10000),
              "directory scan did not complete in time");
@@ -84,7 +84,7 @@ void clickNextConfirmButton(QMessageBox::StandardButton which)
 
 } // namespace
 
-class TestDiskTreemapDeleteConfirm : public QObject
+class TestDiskMapDeleteConfirm : public QObject
 {
     Q_OBJECT
 
@@ -112,7 +112,7 @@ private slots:
 // fails. Use the same NEXIS_SUDO_BYPASS=1 seam AptSourceToolExecSeamTests
 // relies on (tests/core/test_apt_source_tool_exec_seam.cpp) so this test
 // exercises the real mv/trash-metadata path without depending on pkexec.
-void TestDiskTreemapDeleteConfirm::initTestCase()
+void TestDiskMapDeleteConfirm::initTestCase()
 {
     qputenv("NEXIS_SUDO_BYPASS", "1");
 
@@ -121,28 +121,28 @@ void TestDiskTreemapDeleteConfirm::initTestCase()
     QVERIFY(QDir().mkpath(trash + "/info"));
 }
 
-void TestDiskTreemapDeleteConfirm::cleanupTestCase()
+void TestDiskMapDeleteConfirm::cleanupTestCase()
 {
     qunsetenv("NEXIS_SUDO_BYPASS");
 }
 
-void TestDiskTreemapDeleteConfirm::cancel_leavesFileInPlaceAndTriggersNoOperation()
+void TestDiskMapDeleteConfirm::cancel_leavesFileInPlaceAndTriggersNoOperation()
 {
     QTemporaryDir tmp;
     QVERIFY(tmp.isValid());
     const QString victimPath = tmp.filePath("victim-cancel.txt");
     writeFile(victimPath, "do not delete me");
 
-    DiskTreemapDialog dialog;
-    scanAndWait(dialog, tmp.path());
+    DiskMapPage page;
+    scanAndWait(page, tmp.path());
 
-    DirSizeNode *victim = findByPath(dialog.findChild<TreemapView *>()->focus(), victimPath);
+    DirSizeNode *victim = findByPath(page.findChild<TreemapView *>()->focus(), victimPath);
     QVERIFY2(victim, "scan did not surface the test file");
 
     QSignalSpy opSpy(FileSearchService::ins(), &FileSearchService::fileOperationFinished);
 
     clickNextConfirmButton(QMessageBox::No);
-    QVERIFY(QMetaObject::invokeMethod(&dialog, "onTrashRequested",
+    QVERIFY(QMetaObject::invokeMethod(&page, "onTrashRequested",
                                       Q_ARG(DirSizeNode *, victim)));
 
     QVERIFY2(QFile::exists(victimPath), "Cancel must leave the file in place");
@@ -150,7 +150,7 @@ void TestDiskTreemapDeleteConfirm::cancel_leavesFileInPlaceAndTriggersNoOperatio
     QCOMPARE(opSpy.count(), 0); // Cancel must never touch FileSearchService
 }
 
-void TestDiskTreemapDeleteConfirm::confirm_movesFileToTrashAndRefreshesMap()
+void TestDiskMapDeleteConfirm::confirm_movesFileToTrashAndRefreshesMap()
 {
     QTemporaryDir tmp;
     QVERIFY(tmp.isValid());
@@ -158,10 +158,10 @@ void TestDiskTreemapDeleteConfirm::confirm_movesFileToTrashAndRefreshesMap()
     writeFile(victimPath, "delete me for real");
     writeFile(tmp.filePath("bystander.txt"), "leave me alone");
 
-    DiskTreemapDialog dialog;
-    scanAndWait(dialog, tmp.path());
+    DiskMapPage page;
+    scanAndWait(page, tmp.path());
 
-    auto *view = dialog.findChild<TreemapView *>();
+    auto *view = page.findChild<TreemapView *>();
     const int fileCountBeforeDelete = view->focus()->fileCount;
 
     DirSizeNode *victim = findByPath(view->focus(), victimPath);
@@ -170,7 +170,7 @@ void TestDiskTreemapDeleteConfirm::confirm_movesFileToTrashAndRefreshesMap()
     QSignalSpy opSpy(FileSearchService::ins(), &FileSearchService::fileOperationFinished);
 
     clickNextConfirmButton(QMessageBox::Yes);
-    QVERIFY(QMetaObject::invokeMethod(&dialog, "onTrashRequested",
+    QVERIFY(QMetaObject::invokeMethod(&page, "onTrashRequested",
                                       Q_ARG(DirSizeNode *, victim)));
 
     QVERIFY2(opSpy.wait(10000), "FileSearchService::fileOperationFinished never fired");
@@ -184,7 +184,7 @@ void TestDiskTreemapDeleteConfirm::confirm_movesFileToTrashAndRefreshesMap()
 
     QVERIFY2(!QFile::exists(victimPath), "Confirm must actually remove the file from its original path");
 
-    // Map refresh: the dialog re-scans mLastScannedPath on
+    // Map refresh: the page re-scans mLastScannedPath on
     // fileOperationFinished, so the tree's file count should drop by
     // exactly one (the bystander file must still be present, only the
     // deleted entry is gone).
@@ -204,5 +204,5 @@ void TestDiskTreemapDeleteConfirm::confirm_movesFileToTrashAndRefreshesMap()
     QFile::remove(trash + "/info/" + fileName + ".trashinfo");
 }
 
-QTEST_MAIN(TestDiskTreemapDeleteConfirm)
-#include "test_disk_treemap_delete_confirm.moc"
+QTEST_MAIN(TestDiskMapDeleteConfirm)
+#include "test_disk_map_delete_confirm.moc"
