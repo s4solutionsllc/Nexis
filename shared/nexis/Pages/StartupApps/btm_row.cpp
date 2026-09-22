@@ -46,8 +46,8 @@ BtmRow::BtmRow(const BtmRecord &record, QWidget *parent)
     root->setSpacing(8);
 
     // Left column: name + identifier/path.
-    auto *textCol = new QVBoxLayout();
-    textCol->setSpacing(2);
+    mTextLayout = new QVBoxLayout();
+    mTextLayout->setSpacing(2);
 
     const QString displayName = record.name.isEmpty()
         ? (record.identifier.isEmpty() ? tr("Unnamed BTM record") : record.identifier)
@@ -67,9 +67,9 @@ BtmRow::BtmRow(const BtmRecord &record, QWidget *parent)
     mLblSub->setWordWrap(false);
     mLblSub->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    textCol->addWidget(mLblName);
-    textCol->addWidget(mLblSub);
-    root->addLayout(textCol, 1);
+    mTextLayout->addWidget(mLblName);
+    mTextLayout->addWidget(mLblSub);
+    root->addLayout(mTextLayout, 1);
 
     // Right column: badges.
     mBadgesLayout = new QHBoxLayout();
@@ -124,13 +124,15 @@ void BtmRow::setAvailableWidth(int totalWidth)
     mLblSub->setText(fmSub.elidedText(mSecondaryFull, Qt::ElideMiddle, available));
     mLblSub->setToolTip(mSecondaryFull);
 
-    // QLabel::setText() only forwards updateGeometry() to the parent layout
-    // when the label isn't hidden (QWidgetPrivate skips the ancestor-layout
-    // invalidate for a hidden widget) — a row whose sizeHint() was read
-    // before it was ever shown (headless tests; possibly an off-screen list
-    // item) would otherwise keep serving the pre-elision cached sizeHint
-    // forever. Invalidate this row's own layout directly so the very next
-    // sizeHint() call always recomputes from the labels' current text.
+    // Each QBoxLayout caches its own sizeHint independently of its parent:
+    // once something (e.g. a pre-elision sizeHint() query) has computed and
+    // cached mTextLayout's sizeHint from the old label text, invalidating
+    // only the top-level `layout()` leaves mTextLayout's cache untouched —
+    // root recomputes but still asks the still-dirty-false mTextLayout for
+    // its (stale) cached width. Invalidate every nested layout that wraps
+    // the labels, not just the row's own, so the next sizeHint() call is
+    // guaranteed fresh top to bottom.
+    mTextLayout->invalidate();
     layout()->invalidate();
     updateGeometry();
 }

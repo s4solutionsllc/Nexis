@@ -15,6 +15,7 @@
 #include <Info/btm_parser.h>
 
 class QHBoxLayout;
+class QVBoxLayout;
 class QLabel;
 
 class BtmRow : public QWidget
@@ -44,6 +45,7 @@ private:
     BtmRecord mRecord;
     QLabel *mLblName = nullptr;
     QLabel *mLblSub = nullptr;
+    QVBoxLayout *mTextLayout = nullptr;
     QHBoxLayout *mBadgesLayout = nullptr;
     QString mNameFull;
     QString mSecondaryFull;
