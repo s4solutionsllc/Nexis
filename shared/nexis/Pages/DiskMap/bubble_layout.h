@@ -75,7 +75,25 @@ public:
     const UnitPack &nestedPack(DirSizeNode *node, const QVector<qreal> &unitRadii);
     const UnitPack &topPack(DirSizeNode *node, const QVector<qreal> &unitRadii, qreal aspect);
 
+    /// Read-only peeks at an already-cached pack — nullptr on a miss, never
+    /// computing or inserting anything. The single source of truth for
+    /// whether a given key is cached, shared by packsCached() (the
+    /// sync/async decision) and by nestedPack()/topPack() themselves via
+    /// aspectBucket(), so the two can never quantise a key differently and
+    /// disagree about the same entry.
+    const UnitPack *tryNestedPack(const DirSizeNode *node) const;
+    const UnitPack *tryTopPack(const DirSizeNode *node, qreal aspect) const;
+
+    /// Copies in any pack from `other` this cache doesn't already have.
+    /// GUI-thread only: `other` is a worker-thread-computed cache (see
+    /// BubbleMapView's async pack path) being folded back in after the
+    /// fact — never call this with a cache another thread might still be
+    /// touching, and never call it from that worker thread.
+    void mergeFrom(const PackCache &other);
+
 private:
+    static int aspectBucket(qreal aspect);
+
     QHash<const DirSizeNode*, UnitPack> mNested;
     QHash<QPair<const DirSizeNode*, int>, UnitPack> mTop;
     int mPackCount = 0;
@@ -83,6 +101,17 @@ private:
 
 Result build(DirSizeNode *focus, const QRectF &area, const Metrics &m = Metrics(), PackCache *cache = nullptr);
 DirSizeNode *hitTest(const Result &r, const QPointF &pos);
+
+/// True iff build() with these exact arguments would be a pure cache hit
+/// (affine fit only, no circle-packing relaxation) — used to decide whether
+/// BubbleMapView can lay out synchronously or must hand the miss to a
+/// worker thread. Walks the same top-level/group selection build() does,
+/// but only *asks* the cache (via PackCache::tryTopPack()/tryNestedPack())
+/// instead of computing anything, so it can never do the expensive work
+/// itself. Always returns true when there is nothing to pack (null/empty
+/// focus, degenerate area) and always false when `cache` is null, since
+/// there is then nothing to have cached.
+bool packsCached(DirSizeNode *focus, const QRectF &area, const Metrics &m = Metrics(), const PackCache *cache = nullptr);
 
 /// The rectangle a group's "name · size" label should be drawn into —
 /// positioned inside the membrane just below the rim (its vertical centre

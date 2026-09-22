@@ -35,6 +35,9 @@ private slots:
     void packCache_warmSecondBuild_noNewPacks();
     void packCache_clear_forcesRepack();
     void labelBandRect_emptyWhenChordTooNarrow_insideMembraneOtherwise();
+    void packsCached_trueForTrivialOrNullCache();
+    void packsCached_falseOnMissTrueOnceWarm();
+    void packsCached_falseWhenOnlyNestedPackIsMissing();
 };
 
 void TestBubbleLayout::emptyOrNullFocus_yieldsNothing()
@@ -488,6 +491,76 @@ void TestBubbleLayout::packCache_clear_forcesRepack()
     cache.clear();
     BubbleLayout::build(root.get(), area, BubbleLayout::Metrics(), &cache);
     QVERIFY(cache.packCount() > afterFirst);
+}
+
+// Moving the cold pack off the UI thread: packsCached() is what
+// BubbleMapView asks to decide sync-vs-async, so it needs its own direct
+// coverage beyond what the async view-level tests exercise indirectly.
+void TestBubbleLayout::packsCached_trueForTrivialOrNullCache()
+{
+    // Null focus / empty tree: nothing to pack, trivially "cached" (no
+    // async needed) regardless of whether a cache was even supplied.
+    QVERIFY(BubbleLayout::packsCached(nullptr, QRectF(0, 0, 800, 600)));
+
+    auto empty = mk("root", 0, true);
+    QVERIFY(BubbleLayout::packsCached(empty.get(), QRectF(0, 0, 800, 600)));
+
+    // A non-trivial tree but no cache to check against: never a "free"
+    // build, since there's nothing that could have been cached.
+    auto root = mk("root", 1000, true);
+    add(root.get(), mk("file", 1000, false));
+    QVERIFY(!BubbleLayout::packsCached(root.get(), QRectF(0, 0, 800, 600), BubbleLayout::Metrics(), nullptr));
+}
+
+void TestBubbleLayout::packsCached_falseOnMissTrueOnceWarm()
+{
+    DirSizeNodePtr root = tenGroupsSixtyChildrenTree();
+    BubbleLayout::PackCache cache;
+    const QRectF area(0, 0, 1180, 600);
+
+    QVERIFY2(!BubbleLayout::packsCached(root.get(), area, BubbleLayout::Metrics(), &cache),
+             "a fresh cache must report a miss for a tree that needs packing");
+
+    BubbleLayout::build(root.get(), area, BubbleLayout::Metrics(), &cache);
+    QVERIFY2(BubbleLayout::packsCached(root.get(), area, BubbleLayout::Metrics(), &cache),
+             "after a real build, the identical request must report a hit");
+
+    // A sufficiently different aspect ratio needs its own top-level pack
+    // (see PackCache::aspectBucket()) even though the tree is unchanged.
+    const QRectF wideArea(0, 0, 2000, 400);
+    QVERIFY2(!BubbleLayout::packsCached(root.get(), wideArea, BubbleLayout::Metrics(), &cache),
+             "a different aspect bucket is a fresh top-level-pack miss");
+}
+
+// The check must walk into group membership, not stop at the top-level
+// pack: a cached top pack alone isn't enough if a group it produces still
+// needs its own (uncached) nested pack.
+void TestBubbleLayout::packsCached_falseWhenOnlyNestedPackIsMissing()
+{
+    auto root = mk("root", 1000, true);
+    add(root.get(), mk("big", 900, true));
+    DirSizeNode *big = root->children[0].get();
+    add(big, mk("a", 600, false));
+    add(big, mk("b", 300, false));
+    add(root.get(), mk("file", 100, false));
+
+    BubbleLayout::PackCache cache;
+    const QRectF area(0, 0, 800, 600);
+
+    // Warm only the top-level pack: an enormous minGroupR means nothing
+    // ever qualifies as a group, so this build never calls nestedPack().
+    BubbleLayout::Metrics noGroups;
+    noGroups.minGroupR = 1e9;
+    BubbleLayout::build(root.get(), area, noGroups, &cache);
+
+    // Same tree/area/top-level key, but with the real metrics "big" now
+    // wants a group whose nested pack was never computed.
+    QVERIFY2(!BubbleLayout::packsCached(root.get(), area, BubbleLayout::Metrics(), &cache),
+             "a cached top pack alone must not read as a hit when a group's own nested pack is missing");
+
+    BubbleLayout::build(root.get(), area, BubbleLayout::Metrics(), &cache);
+    QVERIFY2(BubbleLayout::packsCached(root.get(), area, BubbleLayout::Metrics(), &cache),
+             "after the real build, both the top and nested packs are cached");
 }
 
 QTEST_APPLESS_MAIN(TestBubbleLayout)

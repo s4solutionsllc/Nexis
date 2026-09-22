@@ -5,7 +5,9 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QRadialGradient>
+#include <QTimer>
 #include <QToolTip>
+#include <QtConcurrent>
 
 #include <algorithm>
 #include <cmath>
@@ -37,6 +39,17 @@ qreal chordAt(qreal r, qreal dy)
 BubbleMapView::BubbleMapView(QWidget *parent)
     : DiskMapView(parent)
 {
+    mPackDelayTimer = new QTimer(this);
+    mPackDelayTimer->setSingleShot(true);
+    connect(mPackDelayTimer, &QTimer::timeout, this, [this] {
+        // A landed/superseded request already stopped this timer, so
+        // reaching here means the pack this delay was measuring is still
+        // running.
+        if (!mPendingPack)
+            return;
+        mShowPackingMessage = true;
+        update();
+    });
 }
 
 BubbleLayout::Metrics BubbleMapView::scaledMetrics() const
@@ -52,8 +65,86 @@ BubbleLayout::Metrics BubbleMapView::scaledMetrics() const
 
 void BubbleMapView::rebuildLayout()
 {
+    // Every request (drill/resize/setRoot — the only callers of
+    // rebuildLayout(), see disk_map_view.cpp) gets its own generation so a
+    // worker that's still packing for an earlier one can be recognised as
+    // stale once it finishes; see onPackFinished().
+    ++mPackGeneration;
+    const quint64 generation = mPackGeneration;
+    const QRectF area(rect());
+    const BubbleLayout::Metrics m = scaledMetrics();
+
+    if (BubbleLayout::packsCached(mFocus, area, m, &mPackCache)) {
+        // Fast path: every pack this build needs is already cached, so this
+        // is just the cheap affine fit — stay fully synchronous, exactly as
+        // before this feature existed.
+        mPendingPack = false;
+        mShowPackingMessage = false;
+        mPackDelayTimer->stop();
+        mLayout = BubbleLayout::build(mFocus, area, m, &mPackCache);
+        mDisplayedTree = mRoot;
+        startCrossFadeIfArmed();
+        return;
+    }
+
+    // Cache miss: hand the expensive circle-packing to a worker thread.
+    // Deliberately do NOT touch mLayout here — it keeps painting whatever
+    // it already held (or the empty-state text, if this is the very first
+    // load) until the result actually lands in onPackFinished(), so the
+    // view never goes blank while packing.
+    mPendingPack = true;
+    mPackDelayTimer->start(120);
+    startAsyncPack(area, m, generation);
+}
+
+void BubbleMapView::startAsyncPack(const QRectF &area, const BubbleLayout::Metrics &m, quint64 generation)
+{
+    // Keep the whole tree alive for the worker even if setRoot()/a rescan
+    // replaces mRoot (and mFocus) on the GUI thread before this finishes —
+    // mFocus is always a node inside mRoot's tree, so holding this shared_ptr
+    // copy is what keeps `focus` below from dangling.
+    const DirSizeNodePtr rootKeepAlive = mRoot;
+    DirSizeNode *focus = mFocus;
+    // A private copy: the worker fills in whatever this build needs on top
+    // of it, but that mutation happens only to its own copy (Qt's
+    // copy-on-write detaches on first write) — mPackCache itself is never
+    // touched off the GUI thread.
+    BubbleLayout::PackCache localCache = mPackCache;
+
+    auto *watcher = new QFutureWatcher<BubbleLayout::PackCache>(this);
+    connect(watcher, &QFutureWatcher<BubbleLayout::PackCache>::finished, this, [this, watcher, generation] {
+        onPackFinished(watcher, generation);
+    });
+    watcher->setFuture(QtConcurrent::run([rootKeepAlive, focus, area, m, localCache]() mutable {
+        Q_UNUSED(rootKeepAlive);
+        BubbleLayout::build(focus, area, m, &localCache);
+        return localCache;
+    }));
+}
+
+void BubbleMapView::onPackFinished(QFutureWatcher<BubbleLayout::PackCache> *watcher, quint64 generation)
+{
+    const BubbleLayout::PackCache result = watcher->result();
+    watcher->deleteLater();
+
+    // A later request (another drill/resize/setRoot, which itself may have
+    // dispatched its own async pack) superseded this one. The tree this was
+    // packed against may already be gone from mFocus's point of view, and
+    // rootAboutToChange() may have cleared mPackCache for an entirely new
+    // tree by now — merging or applying this result would silently corrupt
+    // that state, so just drop it. Per the design, the worker itself was
+    // never cancelled; only its result is ignored here.
+    if (generation != mPackGeneration)
+        return;
+
+    mPackCache.mergeFrom(result);
+    mPendingPack = false;
+    mShowPackingMessage = false;
+    mPackDelayTimer->stop();
     mLayout = BubbleLayout::build(mFocus, QRectF(rect()), scaledMetrics(), &mPackCache);
+    mDisplayedTree = mRoot;
     startCrossFadeIfArmed();
+    update();
 }
 
 void BubbleMapView::aboutToDrill(DirSizeNode *target, bool drillingIn)
@@ -230,6 +321,9 @@ void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
         p.setPen(mTextColor);
         p.drawText(rect(), Qt::AlignCenter,
                    tr("No scan loaded. Choose a folder and press Scan."));
+    } else if (mShowPackingMessage) {
+        p.setPen(mTextColor);
+        p.drawText(rect(), Qt::AlignCenter, tr("Laying out…"));
     } else if (mLayout.groups.isEmpty() && mLayout.bubbles.isEmpty()) {
         p.setPen(mTextColor);
         p.drawText(rect(), Qt::AlignCenter,
@@ -243,6 +337,11 @@ void BubbleMapView::paintEvent(QPaintEvent * /*event*/)
 
 void BubbleMapView::mouseMoveEvent(QMouseEvent *event)
 {
+    if (mPendingPack) {
+        QToolTip::hideText();
+        return;
+    }
+
     DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->position());
     setHoveredNode(node);
     if (node) {
@@ -258,12 +357,18 @@ void BubbleMapView::mouseMoveEvent(QMouseEvent *event)
 
 void BubbleMapView::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    if (mPendingPack)
+        return;
+
     DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->position());
     requestDrillIfDir(node);
 }
 
 void BubbleMapView::contextMenuEvent(QContextMenuEvent *event)
 {
+    if (mPendingPack)
+        return;
+
     DirSizeNode *node = BubbleLayout::hitTest(mLayout, event->pos());
     showContextMenuFor(node, event->globalPos());
 }
