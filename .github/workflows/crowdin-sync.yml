@@ -21,6 +21,19 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # The "Normalize translations with lupdate" step below pushes back to
+          # l10n_crowdin_translations using the credential actions/checkout
+          # persists. Without this that is the default GITHUB_TOKEN, so the push
+          # lands as github-actions[bot] and GitHub holds the pull_request
+          # workflow runs it triggers in `action_required` — blocked pending
+          # manual approval. The Crowdin PR's required checks then never report
+          # and it stalls short of the merge queue (observed on #474 on
+          # 2026-09-22: three runs at 02:59 all action_required, cleared only by
+          # a manual "Update branch"). Pushing as the PAT-backed identity fires
+          # the triggers normally — the same property lupdate.yml's header note
+          # relies on. Falls back to GITHUB_TOKEN so the job still runs if the
+          # secret is ever unset (the stall returns, but nothing breaks).
+          token: ${{ secrets.CROWDIN_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Crowdin Sync
         uses: crowdin/github-action@9af557de76d70c480f88065d336f445a362f402b # v2.9.1

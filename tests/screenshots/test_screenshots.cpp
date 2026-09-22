@@ -105,6 +105,11 @@ static const QVector<PageInfo> kPageMap = {
     {"NetworkUsagePage",  "network_usage",     {"BarChartWidget"}, {}},
     {"SettingsPage",      "settings",          {}, {}},
     {"DiskToolsPage",     "disk_tools",        {"QAbstractItemView"}, {}},
+    // SSO-24963: the page renders its "No scan loaded." empty state until the
+    // user presses Scan, so the map area itself is deterministic. The folder
+    // combo is not — it is prefilled with QDir::homePath(), which differs on
+    // every runner — so it is masked by objectName.
+    {"DiskMapPage",       "disk_map",          {}, {"diskMapFolderCombo"}},
     {"BootAnalysisPage",  "boot_analysis",     {"QAbstractItemView"}, {"metricTileValue"}},
     {"ShredderPage",      "shredder",          {}, {}},
     {"SystemLogsPage",    "system_logs",       {"QAbstractItemView"}, {}},
