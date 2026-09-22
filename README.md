@@ -65,25 +65,27 @@
 | **Battery & disk health** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
 | **System cleaning** | :white_check_mark: | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | **Scheduled cleaning** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
-| **Secure file shredding** | :x: | :x: | :x: | :white_check_mark: | :x: | :white_check_mark: |
+| **Secure file shredding** | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: | :white_check_mark: |
 | **Disk analysis & duplicates** | :white_check_mark: | :x: | :x: | :x: | :x: | :white_check_mark: |
 | **Process/service management** | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: | :x: | Partial |
 | **Package uninstaller** | :white_check_mark: | :white_check_mark: | :x: | :x: | :white_check_mark: | :white_check_mark: |
-| **App updater** | :x: | :x: | :x: | :x: | :x: | :white_check_mark: |
+| **App updater** | Partial⁴ | :x: | :x: | :x: | :x: | :white_check_mark: |
 | **Malware removal** | :x: | :x: | :x: | :x: | :x: | :white_check_mark: |
 | **Docker management** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
 | **System log viewer** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
 | **Network diagnostics** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
+| **Wake-on-LAN** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
 | **Kiosk mode** | :white_check_mark: | :x: | :x: | :x: | :x: | :x: |
 | **Open source** | :white_check_mark: GPL-3.0 | :white_check_mark: GPL-3.0 | :white_check_mark: GPL-3.0 | :white_check_mark: GPL-3.0 | :x: | :x: |
 | **Price** | **Free** | Free | Free | Free | Free | $39.95/year² |
-| **Last release**³ | Jul 2026 | May 2026 | Nov 2025 | Jul 2026 | Jun 2026 | Active |
+| **Last release**³ | Sep 2026 | May 2026 | Nov 2025 | Jul 2026 | Jun 2026 | Active |
 
 ¹ Upstream [Stacer](https://github.com/oguzhaninan/Stacer) was officially abandoned (last release 2019); the actively maintained community fork ([QuentiumYT/Stacer](https://github.com/QuentiumYT/Stacer), now the Debian upstream) is compared here.
 ² Subscription; a one-time license is also available.
-³ As of July 2026.
+³ As of July 2026; Nexis's own cell reflects its actual last release rather than that check date.
+⁴ macOS only: Homebrew cask update checks plus a verified download/install path for non-Homebrew apps that publish a Sparkle feed.
 
-*Based on each project's documented features and release data, verified July 2026. Spotted an error? Corrections welcome via [issue](https://github.com/s4solutionsllc/Nexis/issues).*
+*Based on each project's documented features and release data, verified July 2026 (Nexis's own cells re-verified against its v2.12.0 source tree, September 2026). Spotted an error? Corrections welcome via [issue](https://github.com/s4solutionsllc/Nexis/issues).*
 
 ## Background
 
