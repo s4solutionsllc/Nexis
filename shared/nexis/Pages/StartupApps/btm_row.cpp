@@ -129,7 +129,11 @@ void BtmRow::setAvailableWidth(int totalWidth)
         mLblName->setText(fmName.elidedText(mNameFull, Qt::ElideMiddle, available));
         mLblSub->setText(fmSub.elidedText(mSecondaryFull, Qt::ElideMiddle, available));
 
-        const int overshoot = qMax(mLblName->sizeHint().width(), mLblSub->sizeHint().width()) - available;
+        const int nameHint = mLblName->sizeHint().width();
+        const int subHint = mLblSub->sizeHint().width();
+        const int overshoot = qMax(nameHint, subHint) - available;
+        qWarning("SSO-25051 diag: attempt=%d totalWidth=%d reserved=%d available=%d nameHint=%d subHint=%d overshoot=%d rowHint=%d",
+                 attempt, totalWidth, reserved, available, nameHint, subHint, overshoot, sizeHint().width());
         if (overshoot <= 0)
             break;
         available = qMax(1, available - overshoot);
