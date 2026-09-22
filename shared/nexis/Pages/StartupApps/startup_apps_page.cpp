@@ -166,6 +166,7 @@ void StartupAppsPage::loadApps()
         for (const BtmRecord &record : btmRecords) {
             auto *item = new QListWidgetItem(ui->listWidgetStartup);
             auto *row = new BtmRow(record, this);
+            row->setAvailableWidth(ui->listWidgetStartup->viewport()->width());
 
             QSize hint = row->sizeHint();
             hint.setHeight(qMax(hint.height(), row->minimumHeight()));
@@ -256,5 +257,38 @@ void StartupAppsPage::onRepairBtmClicked()
                 ? tr("sfltool resetbtm failed for an unknown reason.")
                 : error);
     }
+}
+
+void StartupAppsPage::reflowBtmRows()
+{
+    const int viewportWidth = ui->listWidgetStartup->viewport()->width();
+    if (viewportWidth <= 0)
+        return;
+
+    for (const SectionGroup &group : mSectionGroups) {
+        if (!group.isBtmGroup)
+            continue;
+        for (QListWidgetItem *item : group.appItems) {
+            auto *row = qobject_cast<BtmRow*>(ui->listWidgetStartup->itemWidget(item));
+            if (!row)
+                continue;
+            row->setAvailableWidth(viewportWidth);
+            QSize hint = row->sizeHint();
+            hint.setHeight(qMax(hint.height(), row->minimumHeight()));
+            item->setSizeHint(hint);
+        }
+    }
+}
+
+void StartupAppsPage::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    reflowBtmRows();
+}
+
+void StartupAppsPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    reflowBtmRows();
 }
 #endif

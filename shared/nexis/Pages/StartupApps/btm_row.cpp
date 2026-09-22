@@ -2,8 +2,10 @@
 
 #ifdef Q_OS_MACOS
 
+#include <QFontMetrics>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QMargins>
 #include <QVBoxLayout>
 
 namespace {
@@ -51,51 +53,76 @@ BtmRow::BtmRow(const BtmRecord &record, QWidget *parent)
         ? (record.identifier.isEmpty() ? tr("Unnamed BTM record") : record.identifier)
         : record.name;
 
-    auto *lblName = new QLabel(displayName, this);
-    lblName->setObjectName(QStringLiteral("lblBtmRowName"));
+    mNameFull = displayName;
+    mLblName = new QLabel(displayName, this);
+    mLblName->setObjectName(QStringLiteral("lblBtmRowName"));
 
-    const QString secondary = record.identifier.isEmpty()
+    mSecondaryFull = record.identifier.isEmpty()
         ? record.executablePath
         : (record.executablePath.isEmpty()
                ? record.identifier
                : QStringLiteral("%1 — %2").arg(record.identifier, record.executablePath));
-    auto *lblSub = new QLabel(secondary, this);
-    lblSub->setObjectName(QStringLiteral("lblBtmRowSubtext"));
-    lblSub->setWordWrap(false);
-    lblSub->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    mLblSub = new QLabel(mSecondaryFull, this);
+    mLblSub->setObjectName(QStringLiteral("lblBtmRowSubtext"));
+    mLblSub->setWordWrap(false);
+    mLblSub->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    textCol->addWidget(lblName);
-    textCol->addWidget(lblSub);
+    textCol->addWidget(mLblName);
+    textCol->addWidget(mLblSub);
     root->addLayout(textCol, 1);
 
     // Right column: badges.
-    auto *badges = new QHBoxLayout();
-    badges->setSpacing(4);
+    mBadgesLayout = new QHBoxLayout();
+    mBadgesLayout->setSpacing(4);
 
-    badges->addWidget(makeBadge(typeLabel(record.type),
+    mBadgesLayout->addWidget(makeBadge(typeLabel(record.type),
                                 QStringLiteral("btmBadgeType"), this));
 
     if (record.appleManaged) {
-        badges->addWidget(makeBadge(tr("Apple"),
+        mBadgesLayout->addWidget(makeBadge(tr("Apple"),
                                     QStringLiteral("btmBadgeApple"), this));
     }
     if (record.enabled) {
-        badges->addWidget(makeBadge(tr("On"),
+        mBadgesLayout->addWidget(makeBadge(tr("On"),
                                     QStringLiteral("btmBadgeOn"), this));
     } else {
-        badges->addWidget(makeBadge(tr("Off"),
+        mBadgesLayout->addWidget(makeBadge(tr("Off"),
                                     QStringLiteral("btmBadgeOff"), this));
     }
     if (record.duplicateIdentifier || record.duplicateExecutable) {
-        badges->addWidget(makeBadge(tr("Duplicate"),
+        mBadgesLayout->addWidget(makeBadge(tr("Duplicate"),
                                     QStringLiteral("btmBadgeDuplicate"), this));
     }
     if (record.orphan) {
-        badges->addWidget(makeBadge(tr("Orphan"),
+        mBadgesLayout->addWidget(makeBadge(tr("Orphan"),
                                     QStringLiteral("btmBadgeOrphan"), this));
     }
 
-    root->addLayout(badges, 0);
+    root->addLayout(mBadgesLayout, 0);
+}
+
+void BtmRow::setAvailableWidth(int totalWidth)
+{
+    if (totalWidth <= 0 || !mLblName || !mLblSub)
+        return;
+
+    const QMargins m = layout()->contentsMargins();
+    const int badgesWidth = mBadgesLayout ? mBadgesLayout->sizeHint().width() : 0;
+    const int reserved = m.left() + m.right() + layout()->spacing() + badgesWidth;
+
+    // Floor so a very narrow window still leaves a few readable characters
+    // instead of collapsing the elided text to just an ellipsis.
+    const int available = qMax(40, totalWidth - reserved);
+
+    const QFontMetrics fmName(mLblName->font());
+    mLblName->setText(fmName.elidedText(mNameFull, Qt::ElideMiddle, available));
+    mLblName->setToolTip(mNameFull);
+
+    const QFontMetrics fmSub(mLblSub->font());
+    mLblSub->setText(fmSub.elidedText(mSecondaryFull, Qt::ElideMiddle, available));
+    mLblSub->setToolTip(mSecondaryFull);
+
+    updateGeometry();
 }
 
 bool BtmRow::matches(const QString &needle) const

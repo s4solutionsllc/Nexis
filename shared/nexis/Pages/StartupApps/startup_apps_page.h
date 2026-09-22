@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QList>
 #include <QListWidgetItem>
+#include <QResizeEvent>
 #include <QSharedPointer>
 #include <QAbstractItemModel>
 
@@ -43,6 +44,15 @@ private slots:
     void onRepairBtmClicked();
 #endif
 
+#ifdef Q_OS_MACOS
+protected:
+    // SSO-25047: BtmRow elides name/subtext to the list viewport width
+    // (setAvailableWidth), so a viewport-width change needs to re-elide and
+    // re-apply each row's QListWidgetItem sizeHint.
+    void showEvent(QShowEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
+#endif
+
 private:
     Ui::StartupAppsPage *ui;
 
@@ -61,6 +71,9 @@ private:
 #endif
 
     void addSectionHeader(const QString &title, bool isBtmGroup = false);
+#ifdef Q_OS_MACOS
+    void reflowBtmRows();
+#endif
 };
 
 #endif // STARTUPAPPSPAGE_H
