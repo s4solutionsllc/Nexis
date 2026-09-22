@@ -32,16 +32,26 @@ Every release must satisfy these — fail closed if any check fails.
    the next release or has a documented carve-out. The retired
    `scripts/nexis_db.py` / `BUGS.md` / `FEATURE_REQUESTS.md` flow no longer
    applies.
-5. **Screenshot baselines green (or explicit waiver).** Per NEX-3381, the
-   `ScreenshotTests` suite runs non-blocking in `build.yml` on every push to
-   `native` (Linux x64 + macOS; ARM64 Linux is skipped due to a known xvfb
-   hang). Before tagging:
+5. **macOS screenshot baselines green (or explicit waiver).** Per NEX-3381,
+   the `ScreenshotTests` suite runs non-blocking in `build.yml` on every push
+   to `native`, but only on the macOS job. Linux x64 and ARM64 have no
+   screenshot step at all — both matrix legs run `ctest ... -E
+   ScreenshotTests`, permanently excluding the suite. This is a known,
+   by-design gap, not a red check: there are no committed Linux baselines (so
+   the comparison would always QSKIP) and the suite hangs indefinitely under
+   xvfb on both architectures. See the comment above the Linux `Unit Tests`
+   step (`.github/workflows/build.yml` ~L92-100) for the full rationale.
+   Linux visual checks happen on demand via the `Regenerate Screenshot
+   Baselines` workflow (`workflow_dispatch`) or a local `ctest -R
+   ScreenshotTests` — neither is part of this gate. Before tagging:
    ```bash
-   # Latest Build run on the tagged SHA — screenshot step must be green on
-   # Linux x64 and macOS, OR you must download the screenshot-diffs-*
-   # artifacts, visually confirm every diff is an intended change, and either
-   # re-run `Regenerate Screenshot Baselines` (workflow_dispatch) and commit
-   # the refreshed PNGs before tagging, or note the waiver in CHANGELOG.md.
+   # Latest Build run on the tagged SHA — the macOS job's "Screenshot
+   # regression tests (non-blocking)" step must be green, OR you must
+   # download the screenshot-diffs-nexis-macos-arm64 artifact, visually
+   # confirm every diff is an intended change, and either re-run `Regenerate
+   # Screenshot Baselines` (workflow_dispatch) and commit the refreshed PNGs
+   # before tagging, or note the waiver in CHANGELOG.md. There is no Linux
+   # screenshot step to check.
    gh run list --workflow build.yml --branch native --limit 1
    gh run view <run-id> --log | grep -E "Screenshot regression tests"
    ```
