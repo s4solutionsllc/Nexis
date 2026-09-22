@@ -258,9 +258,14 @@ void DiskMapView::cancelCrossFade()
 
 QColor DiskMapView::colourFor(DirSizeNode *node) const
 {
+    return colourFor(node, mHueSlots);
+}
+
+QColor DiskMapView::colourFor(DirSizeNode *node, const QHash<const DirSizeNode*, HueSlot> &hueSlots) const
+{
     if (mPalette.isEmpty())
         return mBorderColor;
-    const HueSlot s = mHueSlots.value(node);
+    const HueSlot s = hueSlots.value(node);
     QColor c = mPalette[s.hue % mPalette.size()];
     float h, sat, l, a;
     c.getHslF(&h, &sat, &l, &a);

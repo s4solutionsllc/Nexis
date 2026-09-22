@@ -84,6 +84,13 @@ signals:
     void trashRequested(DirSizeNode *node);
 
 protected:
+    /// Per-node hue/depth/rank assigned by assignHues() — see mHueSlots.
+    /// Protected (rather than private, alongside mHueSlots/assignHues())
+    /// purely so a subclass can name the type for hueSlotsSnapshot()/the
+    /// two-argument colourFor() below; nothing about how it's populated is
+    /// exposed.
+    struct HueSlot { int hue = 0; int depth = 0; int rank = 0; };
+
     /// Recompute this mode's geometry (tiles/circles/wedges) from mFocus's
     /// children. Called after setRoot()/drillUp()/drillInto() and whenever
     /// the widget resizes.
@@ -129,8 +136,28 @@ protected:
     /// Per-node colour, derived from the theme hue palette assigned to its
     /// top-level ancestor by assignHues() (directories read warmer than
     /// files) so the same subtree keeps the same colour across mode
-    /// switches.
+    /// switches. Reads the *live* hue map — see the two-argument overload
+    /// below for a subclass that may still be painting an older focus's
+    /// nodes (assignHues() has already moved on to the new one).
     QColor colourFor(DirSizeNode *node) const;
+
+    /// Per-node colour against an explicit hue map instead of the live one.
+    /// setRoot()/drillInto()/drillUp() all call assignHues() (replacing the
+    /// live map for the NEW focus) synchronously, before rebuildLayout()
+    /// runs — fine for a subclass that replaces its own geometry
+    /// synchronously too, but a subclass that can still be displaying an
+    /// *older* focus's nodes after that point (BubbleMapView, while an
+    /// async pack for a newer request is in flight) needs to resolve those
+    /// stale nodes' colours against a snapshot of the map as it was when
+    /// that geometry was built, not the live one — otherwise every stale
+    /// node misses and repaints in the same flat fallback colour. Take
+    /// that snapshot with hueSlotsSnapshot().
+    QColor colourFor(DirSizeNode *node, const QHash<const DirSizeNode*, HueSlot> &hueSlots) const;
+
+    /// A copy of the current per-node hue assignment — see colourFor()'s
+    /// two-argument overload above for why a subclass would want to freeze
+    /// one.
+    QHash<const DirSizeNode*, HueSlot> hueSlotsSnapshot() const { return mHueSlots; }
 
     /// SSO-24963: shared drill cross-fade, opt-in for subclasses that don't
     /// want (or don't yet have) a geometric zoom transition like
@@ -154,7 +181,6 @@ protected:
     QVector<QColor> mPalette;
 
 private:
-    struct HueSlot { int hue = 0; int depth = 0; int rank = 0; };
     QHash<const DirSizeNode*, HueSlot> mHueSlots;
     void assignHues();
 

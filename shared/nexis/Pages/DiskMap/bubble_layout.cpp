@@ -277,6 +277,39 @@ bool wantsGroupFor(DirSizeNode *node, qreal finalRadius, const BubbleLayout::Met
     return node->isDir && !node->children.empty() && finalRadius >= m.minGroupR;
 }
 
+// Cheap emptiness check equivalent to selectAndSort(node).isEmpty() (same
+// `size > 0` filter) without paying for the sort — packsCached() runs on
+// every rebuildLayout(), including the warm/fast-path ones, so it must not
+// re-sort a node's children just to answer "would there be anything to
+// pack".
+bool hasPackableChildren(DirSizeNode *node)
+{
+    for (const auto &c : node->children)
+        if (c->size > 0)
+            return true;
+    return false;
+}
+
+// Mirrors the exact condition build() uses (further down, inline) to decide
+// whether a group actually needs its own nested pack: kids.isEmpty() (here,
+// the cheaper hasPackableChildren()) and discR > 0. A node whose children
+// are all zero-sized (or whose label band leaves no usable inner disc)
+// never gets a nested pack from build() at all, so packsCached() must not
+// report a permanent miss over one — that would send BubbleMapView back to
+// the worker thread forever for a pack that will never actually be
+// computed.
+bool needsNestedPack(DirSizeNode *node, qreal finalRadius, const BubbleLayout::Metrics &m)
+{
+    if (!hasPackableChildren(node))
+        return false;
+    BubbleLayout::Group g;
+    g.radius = finalRadius;
+    qreal discR = std::max<qreal>(0, finalRadius - m.innerPad);
+    if (!BubbleLayout::labelBandRect(g, m).isEmpty())
+        discR = std::max<qreal>(0, discR - m.labelBand / 2.0);
+    return discR > 0;
+}
+
 } // namespace
 
 void BubbleLayout::PackCache::clear()
@@ -459,10 +492,19 @@ bool BubbleLayout::packsCached(DirSizeNode *focus, const QRectF &area, const Met
     for (int i = 0; i < prep.tops.size(); ++i) {
         DirSizeNode *node = prep.tops[i];
         const qreal finalRadius = prep.unitRadii[i] * fitScale;
-        if (wantsGroupFor(node, finalRadius, m) && !cache->tryNestedPack(node))
+        if (wantsGroupFor(node, finalRadius, m) && needsNestedPack(node, finalRadius, m)
+            && !cache->tryNestedPack(node))
             return false;
     }
     return true;
+}
+
+BubbleLayout::PackKey BubbleLayout::packKeyFor(DirSizeNode *focus, const QRectF &area, const Metrics &m)
+{
+    const TopLevelPrep prep = prepareTopLevel(focus, area, m);
+    if (prep.tops.isEmpty())
+        return PackKey{};
+    return PackKey{focus, PackCache::aspectBucket(prep.aspect)};
 }
 
 DirSizeNode *BubbleLayout::hitTest(const Result &r, const QPointF &pos)
