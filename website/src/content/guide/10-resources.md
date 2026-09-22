@@ -76,13 +76,17 @@ A chart showing the temperature of each detected drive over time. Unlike the oth
 
 ## Disk Usage Launcher
 
-At the bottom of the Resources page, a quick-launch card lets you open your preferred **disk analyzer** tool -- a separate application that visualizes how disk space is used across your filesystem.
+At the bottom of the Resources page, a quick-launch card gives you two ways to visualize disk usage: your preferred **external disk analyzer**, or the **built-in Disk Map**.
 
-Click the launcher card to open the configured tool. You can change which tool is used in **Settings > Disk Analyzer**.
+### Built-in Treemap
 
-### Available Tools
+Click **Built-in Treemap** to jump straight into Nexis's own [Disk Map](./20-disk-map) page -- no separate application required. This is the same page you can reach from the sidebar's CLEAN section, the tray quick menu, or the Command Palette.
 
-The list of available analyzers depends on your platform:
+### External Tools
+
+Click the launcher card itself to open your configured external disk analyzer. You can change which tool is used in **Settings > Disk Analyzer**.
+
+The list of available external analyzers depends on your platform:
 
 > **Linux:** Baobab (GNOME Disk Usage Analyzer), Filelight, QDirStat, or ncdu.
 
@@ -92,4 +96,4 @@ You can also specify a **custom path** to any disk analyzer application you pref
 
 ## What's Next
 
-Learn about the Hosts File Manager and other utility tools on the [Helpers](./11-helpers) page.
+See how the built-in visualizer works on the [Disk Map](./20-disk-map) page, or learn about the Hosts File Manager and other utility tools on the [Helpers](./11-helpers) page.
