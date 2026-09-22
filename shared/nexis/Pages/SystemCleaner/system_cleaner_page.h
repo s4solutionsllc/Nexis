@@ -24,6 +24,7 @@ class QToolButton;
 class QMenu;
 class QPushButton;
 class QScrollArea;
+class QGridLayout;
 class SignalMapper;
 class ScheduleManager;
 
@@ -103,6 +104,7 @@ private slots:
     void onAccessNeededDetected(const QString &message, const QString &deepLink);
 
     void showEvent(QShowEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     void init();
@@ -117,6 +119,7 @@ private:
     void refreshInlineTree();
     void initScheduleIndicator();
     void repositionScheduleIndicator();
+    void reflowCardGrid(int cols);
 
 private:
     Ui::SystemCleanerPage *ui;
@@ -130,6 +133,12 @@ private:
 
     // New card-based category widgets
     QVector<CategoryCard> mCards;        // indexed by CleanCategories enum value
+    // GH#475: card build order for reflowCardGrid() — mCards is indexed by
+    // enum value, not build order, so it can't drive the grid placement.
+    QList<QFrame*> mCardOrder;
+    QGridLayout *mCardGrid        = nullptr;
+    int          mCardCols        = 2;
+    int          mCardStretchRow  = -1;
     QLabel      *mLblCleanerTitle    = nullptr;
     QPushButton *mBtnScanSystem      = nullptr;
     QPushButton *mBtnSchedule        = nullptr;
