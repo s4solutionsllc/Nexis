@@ -181,6 +181,12 @@ void SystemCleanerPage::buildCategoryHeader()
 
     QLabel *lblSubtitle = new QLabel(tr("Reclaim disk space by removing caches, logs, and crash reports."), headerWidget);
     lblSubtitle->setObjectName("sectionHeaderSource");
+    // GH#475: without word wrap, a non-wrapping QLabel's minimumSizeHint
+    // equals its full-text sizeHint, which forced the whole header (and the
+    // page, since nothing here sits in a scroll area) to never shrink
+    // narrower than this sentence — clipping the page with no way to reach
+    // the clipped part.
+    lblSubtitle->setWordWrap(true);
     textCol->addWidget(lblSubtitle);
 
     headerRow->addLayout(textCol, 1);
@@ -259,7 +265,13 @@ void SystemCleanerPage::buildCategoryCards()
     QScrollArea *scrollArea = new QScrollArea(ui->cleanerCategories);
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
-    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    // GH#475: was ScrollBarAlwaysOff, which relied entirely on the 2-column
+    // grid always having enough width for each card's longest single-line
+    // subtitle. reflowCardGrid() now drops to one column below that width, so
+    // this is a defense-in-depth fallback (e.g. a longer translated string)
+    // rather than the primary narrow-width mechanism — never a substitute for
+    // it, since clipped content with a disabled scrollbar is unreachable.
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     scrollArea->setStyleSheet("QScrollArea{background-color:transparent;}");
     scrollArea->setMinimumHeight(Dpi::scale(160));
     scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -271,10 +283,8 @@ void SystemCleanerPage::buildCategoryCards()
     grid->setContentsMargins(0, 0, 0, 8);
     grid->setHorizontalSpacing(8);
     grid->setVerticalSpacing(8);
-    grid->setColumnStretch(0, 1);
-    grid->setColumnStretch(1, 1);
+    mCardGrid = grid;
 
-    int index = 0;
     auto addCard = [&](const CatDef &def) {
         QFrame *card = new QFrame(container);
         card->setObjectName("cleanerCategoryCard");
@@ -329,11 +339,7 @@ void SystemCleanerPage::buildCategoryCards()
         cc.check   = check;
         cc.lblSize = lblSize;
         mCards[def.cat] = cc;
-
-        int row = index / 2;
-        int col = index % 2;
-        grid->addWidget(card, row, col);
-        ++index;
+        mCardOrder.append(card);
     };
 
     for (const CatDef &def : defs)
@@ -348,8 +354,10 @@ void SystemCleanerPage::buildCategoryCards()
     mCheckSnapFlatpak = mCards[SNAP_FLATPAK_REVISIONS].check;
 #endif
 
-    // Push cards to top — empty stretch row below the last card row absorbs extra space
-    grid->setRowStretch((index + 1) / 2, 1);
+    // GH#475: place the cards for the first time. Real width isn't known yet
+    // (the page isn't laid out), so start at the FR-130 design column count;
+    // resizeEvent() reflows to one column once a real (narrow) width lands.
+    reflowCardGrid(mCardCols);
 
     scrollArea->setWidget(container);
 
@@ -1177,8 +1185,52 @@ void SystemCleanerPage::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     repositionScheduleIndicator();
+    // GH#475: mirrors resizeEvent()'s reflow — a widget can receive its first
+    // real geometry as part of becoming the stacked widget's current page,
+    // without a QResizeEvent ever firing, so showEvent() needs its own check.
+    int cols = width() >= Dpi::scale(760) ? 2 : 1;
+    if (cols != mCardCols)
+        reflowCardGrid(cols);
     if (!mHasScanned && !mScanInProgress && !mCleanInProgress)
         startBackgroundSizeScan();
+}
+
+void SystemCleanerPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    repositionScheduleIndicator();
+
+    // GH#475: the 2-column grid only has room for each card's longest
+    // single-line subtitle (e.g. "Chrome · Firefox · Chromium · Safari") at
+    // roughly the FR-130 design width; below that, drop to one column so
+    // cards take the full row width instead of forcing the page wider than
+    // the window.
+    int cols = width() >= Dpi::scale(760) ? 2 : 1;
+    if (cols != mCardCols)
+        reflowCardGrid(cols);
+}
+
+void SystemCleanerPage::reflowCardGrid(int cols)
+{
+    if (!mCardGrid || mCardOrder.isEmpty()) return;
+    mCardCols = cols;
+
+    for (QFrame *card : std::as_const(mCardOrder))
+        mCardGrid->removeWidget(card);
+
+    for (int i = 0; i < mCardOrder.size(); ++i)
+        mCardGrid->addWidget(mCardOrder[i], i / cols, i % cols);
+
+    mCardGrid->setColumnStretch(0, 1);
+    mCardGrid->setColumnStretch(1, cols > 1 ? 1 : 0);
+
+    // Clear the previous stretch row before assigning a new one — QGridLayout
+    // never shrinks its tracked row count, so a stale stretch factor on a row
+    // that now holds a card would leave a gap above it.
+    if (mCardStretchRow >= 0)
+        mCardGrid->setRowStretch(mCardStretchRow, 0);
+    mCardStretchRow = (mCardOrder.size() + cols - 1) / cols;
+    mCardGrid->setRowStretch(mCardStretchRow, 1);
 }
 
 void SystemCleanerPage::updateScheduleIndicator()

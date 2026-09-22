@@ -76,6 +76,10 @@ DiskMapPage::DiskMapPage(QWidget *parent,
     mFolderCombo = new QComboBox(this);
     mFolderCombo->setEditable(true);
     mFolderCombo->setMinimumWidth(Dpi::scale(280));
+    // Prefilled with QDir::homePath(), which differs on every machine — the
+    // screenshot suite masks this rectangle by objectName (see kPageMap in
+    // tests/screenshots/test_screenshots.cpp).
+    mFolderCombo->setObjectName(QStringLiteral("diskMapFolderCombo"));
 
     mChooseButton  = new QPushButton(tr("Choose..."), this);
     mScanButton    = new QPushButton(tr("Scan"), this);

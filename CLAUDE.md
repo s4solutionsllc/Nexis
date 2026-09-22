@@ -156,13 +156,40 @@ Filing a support ticket, bug report, feedback submission, rating, or reproductio
 
 ## GitHub Issues Sync (Run at Every Session Start)
 
-**EXECUTE WITHOUT ASKING.** At the start of every session, fetch open GitHub issues and report them. No automated sync to Paperclip (its MCP is not yet connected).
+**EXECUTE WITHOUT ASKING.** At the start of every session, fetch open GitHub issues:
 
 ```bash
 gh issue list --repo s4solutionsllc/Nexis --state open --limit 100 --json number,title,body,labels
 ```
 
 Report open issues grouped by label (bugs vs enhancements). Note any that look actionable for the current session.
+
+### Intake is a step, not a report (SSO-25043)
+
+Reporting an issue is **not** intake. GH#475 was opened 2026-09-22, got a triage reply on the
+thread three hours later, and never landed on the board — so the 7-day triage SLA above read as
+met on GitHub while the work was invisible to Paperclip. Two rules close that:
+
+1. **Every open GH issue must have a Paperclip counterpart titled `[GH#NN] <summary>`, on the
+   Nexis project, assigned to NexisMaintainer.** After the `gh issue list` above, check each
+   open number against open Nexis issues and create the missing ones. Match on the `[GH#NN]`
+   prefix — it is the dedupe key, so never file a second issue for a number that already has
+   one, and never drop the prefix.
+2. **No agent reply on a GH thread before its Paperclip issue exists.** Create the board issue
+   first, then reply. "We'll follow up here once it's scheduled" with nothing on the board is
+   the exact failure this rule exists to stop.
+
+Rule 1 is the load-bearing control and rule 2 is a cheap assist: an issue nobody replies to is
+just as invisible, and only rule 1 catches it.
+
+A session that cannot reach the Paperclip API (see **Work Item Tracking** above — the MCP server
+does not exist; agent seats use the REST API, human-driven sessions may have neither) must say so
+explicitly and list the un-filed numbers. Silence reads as "nothing missing" and is what failed here.
+
+**Backstop.** Paperclip routine *"Nexis GitHub-issue intake sweep — daily"* runs the same
+reconciliation every day at 05:40 UTC under NexisMaintainer, so intake does not depend on a
+session happening or on anyone remembering. The rules above are still the first line; the sweep
+is what makes a miss self-correcting rather than permanent.
 
 ## Feature / Bug Resolution Workflow (Project Override)
 
