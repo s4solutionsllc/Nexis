@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.12.0] - 2026-09-22
+
+### Changed
+- **Disk Map** now opens as a full page in the main window instead of a separate dialog, and all three visualization modes have been redesigned to show two folder levels at once: the treemap uses nested frames, the bubble map uses nested circles, and the sunburst uses two rings — every mode gets lit shapes that lift on hover, colours that follow the app theme, and a smooth cross-fade when drilling in or out (respecting the system Reduce Motion setting). In the sunburst, very small items are grouped into a single muted wedge instead of each getting an invisible sliver. Scans keep running if you switch to another page. (SSO-24963)
+
+### Fixed
+- Disk Map's bubble-map view no longer freezes the app while laying out a folder it hasn't shown before — circle-packing on a cache miss (a fresh scan, an unseen drill, or a big resize) now runs on a background thread instead of the UI thread, and a "Laying out…" message appears if it takes more than a moment. Already-seen layouts (resizes, revisiting a folder) are unaffected and stay instant.
+- Page headers (GH#475 follow-up audit): the shared page-header scaffold and the
+  File Shredder page's hand-built header both had a non-wrapping subtitle label
+  that could force the page wider than the window at narrow widths. Affects
+  Shredder, Resources, Uninstaller, Search, Disk Map, Hardware Info, Helpers,
+  and the macOS Mail Cleanup page.
+- System Cleaner page (GH#475): the page no longer clips unreachable content at
+  narrow window widths. The category card grid now drops from two columns to
+  one below a width threshold instead of forcing the page wider than the
+  window, the header subtitle wraps instead of forcing a minimum width, and the
+  card list's scroll area can show a horizontal scrollbar as a fallback.
+- Disk Tools page (SSO-24820): the "Not accessed in ≥" filter label no longer
+  truncates on Linux at the new base font — the compact-layout breakpoint is now
+  measured from the row's actual size hint instead of a hardcoded pixel width.
+- System Logs page (SSO-24820): the "Severity" column header was clipped on
+  Linux at the new base font; the column is now wide enough for the
+  center-aligned header text.
+- Docker page (GH#475 follow-up): the header row's subtitle label ("Images,
+  containers, and volumes") did not wrap, forcing the whole row — and, since
+  this page has no scroll area, the page itself — to never shrink below the
+  subtitle's full-text width. The label now wraps like the other pages fixed
+  under this audit.
+- Startup Apps page, macOS BTM records section (GH#475 follow-up, SSO-25047):
+  each row's identifier/path subtitle (and name) had no wrap and no elision, so
+  a long value's sizeHint was captured as the QListWidgetItem's fixed size —
+  with the list's horizontal scrollbar off, that pushed the status badges (and
+  part of the row) past the viewport with no way to reach them. The row now
+  elides both labels to the list's actual width and shows the full text as a
+  tooltip; the list's horizontal scrollbar policy also switched to AsNeeded as
+  a defense-in-depth fallback.
+
 ## [2.11.0] - 2026-09-20
 
 ### Added

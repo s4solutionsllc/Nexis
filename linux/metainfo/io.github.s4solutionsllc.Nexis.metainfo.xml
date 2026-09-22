@@ -74,6 +74,24 @@
   </screenshots>
 
   <releases>
+    <release version="2.12.0" date="2026-09-22">
+      <description>
+        <p>Changed:</p>
+        <ul>
+          <li>Disk Map now opens as a full page with redesigned treemap, bubble-map, and
+              sunburst visualizations showing two folder levels at once, plus smooth
+              drill in/out transitions.</li>
+        </ul>
+        <p>Fixed:</p>
+        <ul>
+          <li>Disk Map's bubble-map layout no longer freezes the app on a cache miss —
+              circle-packing now runs on a background thread.</li>
+          <li>Narrow-width and text-wrap fixes across page headers, System Cleaner,
+              Disk Tools, System Logs, the Docker page, and the Startup Apps macOS BTM
+              records list.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.11.0" date="2026-09-20">
       <description>
         <p>New features:</p>
