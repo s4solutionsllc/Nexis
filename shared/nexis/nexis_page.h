@@ -63,6 +63,12 @@ inline Header buildHeader(const QString &title, const QString &source, QWidget *
     if (!source.isEmpty()) {
         h.source = new QLabel(source, h.row);
         h.source->setObjectName("sectionHeaderSource");
+        // GH#475: without word wrap, a non-wrapping QLabel's minimumSizeHint
+        // equals its full-text sizeHint, forcing every page that builds its
+        // header via this scaffold (and doesn't otherwise sit in a scroll
+        // area) to never shrink narrower than the source line — clipping the
+        // page at narrow window widths with no way to reach the clipped part.
+        h.source->setWordWrap(true);
         textCol->addWidget(h.source);
     }
     h.layout->addLayout(textCol, 1);
