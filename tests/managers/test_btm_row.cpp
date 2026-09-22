@@ -13,6 +13,7 @@
 #include <QtTest>
 #include <QApplication>
 #include <QLabel>
+#include <QPixmap>
 
 #include "Pages/StartupApps/btm_row.h"
 
@@ -35,6 +36,7 @@ private slots:
     void longIdentifierAndPath_rowNeverWiderThanAvailableWidth();
     void pathologicallyNarrowWidth_stillProducesUsableRow();
     void elidedLabels_keepFullTextAsTooltip();
+    void shownRow_realPostLayoutGeometryNeverClipsBadges();
 };
 
 void TestBtmRow::longIdentifierAndPath_rowNeverWiderThanAvailableWidth()
@@ -85,6 +87,57 @@ void TestBtmRow::elidedLabels_keepFullTextAsTooltip()
     QVERIFY(lblSub->text().length() < (longIdentifier.length() + longPath.length()));
     QVERIFY(lblSub->toolTip().contains(longIdentifier));
     QVERIFY(lblSub->toolTip().contains(longPath));
+}
+
+void TestBtmRow::shownRow_realPostLayoutGeometryNeverClipsBadges()
+{
+    // The other cases above only ever ask an unshown BtmRow for sizeHint() —
+    // useful arithmetic coverage, but not proof of what actually gets laid
+    // out and painted, and this investigation already hit one real
+    // shown-vs-hidden divergence this cycle (QWidget::updateGeometry() only
+    // forwards to the parent layout when the widget isn't hidden, which is
+    // what made the previous fix attempt pass sizeHint() checks but still
+    // misbehave). Drive the row through a real show()/expose cycle under the
+    // offscreen QPA platform (same headless backend as
+    // DiskMapDeleteConfirmTests/TreemapZoomTests) and assert on its actual
+    // post-layout geometry instead.
+    const QString longIdentifier = QStringLiteral(
+        "com.example.vendor.some.very.long.reverse.dns.bundle.identifier.helper");
+    const QString longPath = QStringLiteral(
+        "/Users/exampleuser/Library/Application Support/SomeVendor/SomeApp/"
+        "Contents/Resources/HelperTool.app/Contents/MacOS/HelperTool");
+
+    BtmRow row(makeRecord(longIdentifier, longPath));
+    row.setAvailableWidth(320);
+
+    row.resize(row.sizeHint());
+    row.show();
+    QVERIFY(QTest::qWaitForWindowExposed(&row));
+
+    QVERIFY(row.width() <= 320);
+
+    // GH#475 originally reported the status badges pushed past the viewport
+    // with no way to reach them — assert the rightmost badge's real,
+    // post-layout geometry (not a computed sizeHint) sits inside the shown
+    // row's actual width.
+    const auto directChildren = row.findChildren<QLabel *>(QString(), Qt::FindDirectChildrenOnly);
+    QLabel *rightmostBadge = nullptr;
+    for (QLabel *label : directChildren) {
+        if (!label->property("badge").toBool())
+            continue;
+        if (!rightmostBadge || label->geometry().right() > rightmostBadge->geometry().right())
+            rightmostBadge = label;
+    }
+    QVERIFY(rightmostBadge != nullptr);
+    QVERIFY(rightmostBadge->geometry().right() < row.width());
+
+    // Confirm the row was actually painted, not merely laid out: grab()
+    // renders the real widget contents even under the offscreen platform, so
+    // a pixmap of the expected size backs the geometry assertions above with
+    // real rendered output rather than layout bookkeeping alone.
+    const QPixmap pixmap = row.grab();
+    QCOMPARE(pixmap.width(), row.width());
+    QVERIFY(!pixmap.toImage().isNull());
 }
 
 QTEST_MAIN(TestBtmRow)
