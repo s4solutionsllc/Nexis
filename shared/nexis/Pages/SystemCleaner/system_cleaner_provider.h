@@ -31,6 +31,7 @@ public:
     static constexpr const char *CAT_BROWSER_PRIVACY    = "browser_privacy";
     static constexpr const char *CAT_TRASH              = "trash";
     static constexpr const char *CAT_SNAP_FLATPAK       = "snap_flatpak";
+    static constexpr const char *CAT_APP_PROFILES       = "app_profiles";
 
     // Item ID prefixes — used in performItem() to dispatch the correct operation.
     static constexpr const char *ID_PREFIX_TRASH        = "trash::";
@@ -45,6 +46,7 @@ public:
         QFileInfoList devToolCaches;
         QFileInfoList brokenSymlinks;
         QFileInfoList browserPrivacy;
+        QFileInfoList appProfiles;
         QStringList   trashRoots;
         QList<StaleSnapRevision> snapRevisions;
         QStringList   unusedFlatpakRefs;
