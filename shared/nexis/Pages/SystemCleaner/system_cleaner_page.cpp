@@ -256,7 +256,7 @@ void SystemCleanerPage::buildCategoryCards()
     };
 
     // Pre-size mCards so enum-indexed access is safe
-    mCards.resize(SNAP_FLATPAK_REVISIONS + 1);
+    mCards.resize(APP_PROFILES + 1);
 
     // GH#55 / SSO-355: cards must scroll inside their own region so the page
     // fits in windows smaller than the FR-130 design size (1025×736). Give the
@@ -353,6 +353,14 @@ void SystemCleanerPage::buildCategoryCards()
     addCard(snapDef);
     mCheckSnapFlatpak = mCards[SNAP_FLATPAK_REVISIONS].check;
 #endif
+
+    // GH#487 / FW-12: data-driven profiles, bundled + user JSON under
+    // ~/.config/Nexis/cleaning_profiles — cross-platform, so added
+    // unconditionally (unlike the Snap/Flatpak card above).
+    CatDef appProfilesDef { APP_PROFILES,
+                            tr("Application Profiles"),
+                            QStringLiteral("~/.config/Nexis/cleaning_profiles") };
+    addCard(appProfilesDef);
 
     // GH#475: place the cards for the first time. Real width isn't known yet
     // (the page isn't laid out), so start at the FR-130 design column count;
@@ -570,6 +578,7 @@ void SystemCleanerPage::onBtnScanSystemClicked()
     mScanBrokenSymlinks = true;
     mScanBrowserPrivacy = true;
     mScanSnapFlatpak    = (mCheckSnapFlatpak != nullptr);
+    mScanAppProfiles    = true;
 
     mLblPackageCacheText   = tr("Package Caches");
     mLblCrashReportsText   = tr("Crash Reports");
@@ -580,6 +589,7 @@ void SystemCleanerPage::onBtnScanSystemClicked()
     mLblBrokenSymlinksText = tr("Broken Symlinks");
     mLblBrowserPrivacyText = tr("Browser Privacy");
     mLblSnapFlatpakText    = tr("Snap/Flatpak Revisions");
+    mLblAppProfilesText    = tr("Application Profiles");
 
     // Disable UI during scan
     mBtnScanSystem->setEnabled(false);
@@ -593,12 +603,12 @@ void SystemCleanerPage::onBtnScanSystemClicked()
     mPackageCaches.clear();  mCrashReports.clear();
     mAppLogs.clear();        mAppCaches.clear();
     mDevToolCaches.clear();  mBrokenSymlinks.clear();
-    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
+    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear(); mAppProfiles.clear();
 
     mRetainedPackageCaches.clear();  mRetainedCrashReports.clear();
     mRetainedAppLogs.clear();        mRetainedAppCaches.clear();
     mRetainedDevToolCaches.clear();  mRetainedBrokenSymlinks.clear();
-    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
+    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear(); mRetainedAppProfiles.clear();
 
     mScanInProgress = true;
     mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
@@ -615,6 +625,7 @@ void SystemCleanerPage::startBackgroundSizeScan()
     mScanBrokenSymlinks = true;
     mScanBrowserPrivacy = true;
     mScanSnapFlatpak    = (mCheckSnapFlatpak != nullptr);
+    mScanAppProfiles    = true;
 
     mLblPackageCacheText   = tr("Package Caches");
     mLblCrashReportsText   = tr("Crash Reports");
@@ -625,6 +636,7 @@ void SystemCleanerPage::startBackgroundSizeScan()
     mLblBrokenSymlinksText = tr("Broken Symlinks");
     mLblBrowserPrivacyText = tr("Browser Privacy");
     mLblSnapFlatpakText    = tr("Snap/Flatpak Revisions");
+    mLblAppProfilesText    = tr("Application Profiles");
 
     mInitialScan = true;
 
@@ -637,12 +649,12 @@ void SystemCleanerPage::startBackgroundSizeScan()
     mPackageCaches.clear();  mCrashReports.clear();
     mAppLogs.clear();        mAppCaches.clear();
     mDevToolCaches.clear();  mBrokenSymlinks.clear();
-    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
+    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear(); mAppProfiles.clear();
 
     mRetainedPackageCaches.clear();  mRetainedCrashReports.clear();
     mRetainedAppLogs.clear();        mRetainedAppCaches.clear();
     mRetainedDevToolCaches.clear();  mRetainedBrokenSymlinks.clear();
-    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
+    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear(); mRetainedAppProfiles.clear();
 
     mScanInProgress = true;
     mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
@@ -662,6 +674,7 @@ void SystemCleanerPage::quickScan()
     mScanBrokenSymlinks = true;
     mScanBrowserPrivacy = true;
     mScanSnapFlatpak    = (mCheckSnapFlatpak != nullptr);
+    mScanAppProfiles    = true;
 
     mLblPackageCacheText   = tr("Package Caches");
     mLblCrashReportsText   = tr("Crash Reports");
@@ -672,6 +685,7 @@ void SystemCleanerPage::quickScan()
     mLblBrokenSymlinksText = tr("Broken Symlinks");
     mLblBrowserPrivacyText = tr("Browser Privacy");
     mLblSnapFlatpakText    = tr("Snap/Flatpak Revisions");
+    mLblAppProfilesText    = tr("Application Profiles");
 
     // Check all cards
     for (const CategoryCard &c : mCards)
@@ -688,12 +702,12 @@ void SystemCleanerPage::quickScan()
     mPackageCaches.clear(); mCrashReports.clear();
     mAppLogs.clear();       mAppCaches.clear();
     mDevToolCaches.clear(); mBrokenSymlinks.clear();
-    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
+    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear(); mAppProfiles.clear();
 
     mRetainedPackageCaches.clear(); mRetainedCrashReports.clear();
     mRetainedAppLogs.clear();       mRetainedAppCaches.clear();
     mRetainedDevToolCaches.clear(); mRetainedBrokenSymlinks.clear();
-    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
+    mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear(); mRetainedAppProfiles.clear();
 
     mScanInProgress = true;
     mWorkerFuture = QtConcurrent::run([this]() { systemScan(); });
@@ -710,6 +724,7 @@ void SystemCleanerPage::systemScan()
     if (mScanBrokenSymlinks) categories << CleanerService::BROKEN_SYMLINKS;
     if (mScanBrowserPrivacy) categories << CleanerService::BROWSER_PRIVACY;
     if (mScanSnapFlatpak)    categories << CleanerService::SNAP_FLATPAK_REVISIONS;
+    if (mScanAppProfiles)    categories << CleanerService::APP_PROFILES;
 
     CleanerService::ScanResult result = mCleanerService->scan(categories);
 
@@ -721,6 +736,7 @@ void SystemCleanerPage::systemScan()
     mBrokenSymlinks       = result.categoryFiles.value(CleanerService::BROKEN_SYMLINKS);
     mBrowserPrivacy       = result.categoryFiles.value(CleanerService::BROWSER_PRIVACY);
     mSnapFlatpakRevisions = result.categoryFiles.value(CleanerService::SNAP_FLATPAK_REVISIONS);
+    mAppProfiles          = result.categoryFiles.value(CleanerService::APP_PROFILES);
 
     emit scanFinishedS();
 }
@@ -751,6 +767,7 @@ void SystemCleanerPage::onScanFinished()
     if (mScanBrokenSymlinks) updateCard(BROKEN_SYMLINKS,        computeSize(mBrokenSymlinks));
     if (mScanBrowserPrivacy) updateCard(BROWSER_PRIVACY,        computeSize(mBrowserPrivacy));
     if (mScanSnapFlatpak)    updateCard(SNAP_FLATPAK_REVISIONS, computeSize(mSnapFlatpakRevisions));
+    if (mScanAppProfiles)    updateCard(APP_PROFILES,           computeSize(mAppProfiles));
     if (mScanTrash) {
         quint64 trashSize = 0;
         for (const QString &trashRoot : mCleanerService->getTrashRoots())
@@ -767,12 +784,13 @@ void SystemCleanerPage::onScanFinished()
     mRetainedBrokenSymlinks = mBrokenSymlinks;
     mRetainedBrowserPrivacy = mBrowserPrivacy;
     mRetainedSnapFlatpak    = mSnapFlatpakRevisions;
+    mRetainedAppProfiles    = mAppProfiles;
 
     // Clear worker copies (BUG-10)
     mPackageCaches.clear(); mCrashReports.clear();
     mAppLogs.clear();       mAppCaches.clear();
     mDevToolCaches.clear(); mBrokenSymlinks.clear();
-    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear();
+    mBrowserPrivacy.clear(); mSnapFlatpakRevisions.clear(); mAppProfiles.clear();
 
     mHasScanned = true;
     mScanInProgress = false;
@@ -814,6 +832,7 @@ void SystemCleanerPage::refreshInlineTree()
     addIfChecked(BROKEN_SYMLINKS,      mLblBrokenSymlinksText, mRetainedBrokenSymlinks);
     addIfChecked(BROWSER_PRIVACY,      mLblBrowserPrivacyText, mRetainedBrowserPrivacy);
     addIfChecked(SNAP_FLATPAK_REVISIONS, mLblSnapFlatpakText,  mRetainedSnapFlatpak);
+    addIfChecked(APP_PROFILES,         mLblAppProfilesText,    mRetainedAppProfiles);
 
     if (catChecked(TRASH)) {
         // GH#182: display each trash root (home + mounted FSes) separately
@@ -897,6 +916,7 @@ void SystemCleanerPage::quickCleanByCategory()
     providerConfig.devToolCaches    = checkedFiles(DEV_TOOL_CACHES,      mRetainedDevToolCaches);
     providerConfig.brokenSymlinks   = checkedFiles(BROKEN_SYMLINKS,      mRetainedBrokenSymlinks);
     providerConfig.browserPrivacy   = checkedFiles(BROWSER_PRIVACY,      mRetainedBrowserPrivacy);
+    providerConfig.appProfiles      = checkedFiles(APP_PROFILES,        mRetainedAppProfiles);
     providerConfig.trashRoots       = wantTrash ? mCleanerService->getTrashRoots() : QStringList{};
     providerConfig.snapRevisions    = snapRevisions;
     providerConfig.unusedFlatpakRefs = unusedFlatpakRefs;
@@ -909,6 +929,7 @@ void SystemCleanerPage::quickCleanByCategory()
                 || !providerConfig.devToolCaches.isEmpty()
                 || !providerConfig.brokenSymlinks.isEmpty()
                 || !providerConfig.browserPrivacy.isEmpty()
+                || !providerConfig.appProfiles.isEmpty()
                 || !providerConfig.trashRoots.isEmpty()
                 || !providerConfig.snapRevisions.isEmpty()
                 || !providerConfig.unusedFlatpakRefs.isEmpty();
@@ -924,6 +945,7 @@ void SystemCleanerPage::quickCleanByCategory()
         if (!providerConfig.devToolCaches.isEmpty())  cats << CleanerService::DEV_TOOL_CACHES;
         if (!providerConfig.brokenSymlinks.isEmpty()) cats << CleanerService::BROKEN_SYMLINKS;
         if (!providerConfig.browserPrivacy.isEmpty()) cats << CleanerService::BROWSER_PRIVACY;
+        if (!providerConfig.appProfiles.isEmpty())    cats << CleanerService::APP_PROFILES;
         if (!providerConfig.trashRoots.isEmpty())     cats << CleanerService::TRASH;
         if (!providerConfig.snapRevisions.isEmpty() || !providerConfig.unusedFlatpakRefs.isEmpty())
             cats << CleanerService::SNAP_FLATPAK_REVISIONS;
@@ -968,7 +990,7 @@ void SystemCleanerPage::quickCleanByCategory()
         mRetainedPackageCaches.clear(); mRetainedCrashReports.clear();
         mRetainedAppLogs.clear();       mRetainedAppCaches.clear();
         mRetainedDevToolCaches.clear(); mRetainedBrokenSymlinks.clear();
-        mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear();
+        mRetainedBrowserPrivacy.clear(); mRetainedSnapFlatpak.clear(); mRetainedAppProfiles.clear();
 
         for (CategoryCard &c : mCards) {
             if (c.check && c.check->isChecked() && c.lastSize > 0) {

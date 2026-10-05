@@ -46,7 +46,8 @@ public:
         DEV_TOOL_CACHES,
         BROKEN_SYMLINKS,
         BROWSER_PRIVACY,
-        SNAP_FLATPAK_REVISIONS
+        SNAP_FLATPAK_REVISIONS,
+        APP_PROFILES    // GH#487 / FW-12: data-driven cleaning profiles
     };
 
     struct CategoryCard {
@@ -171,6 +172,8 @@ private:
     QString mLblBrowserPrivacyText;
     bool mScanSnapFlatpak;
     QString mLblSnapFlatpakText;
+    bool mScanAppProfiles;
+    QString mLblAppProfilesText;
 
     // Scan results (written on worker, read on main thread in onScanFinished)
     QFileInfoList mPackageCaches;
@@ -181,6 +184,7 @@ private:
     QFileInfoList mBrokenSymlinks;
     QFileInfoList mBrowserPrivacy;
     QFileInfoList mSnapFlatpakRevisions;
+    QFileInfoList mAppProfiles;
 
     // Retained scan results for "Clean selected" on page 0
     QFileInfoList mRetainedPackageCaches;
@@ -191,6 +195,7 @@ private:
     QFileInfoList mRetainedBrokenSymlinks;
     QFileInfoList mRetainedBrowserPrivacy;
     QFileInfoList mRetainedSnapFlatpak;
+    QFileInfoList mRetainedAppProfiles;
 
     // Prevent overlapping scan/clean workers (BUG-10)
     bool mScanInProgress = false;

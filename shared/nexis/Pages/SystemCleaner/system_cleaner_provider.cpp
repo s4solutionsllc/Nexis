@@ -71,6 +71,11 @@ void SystemCleanerProvider::scan(
           QT_TR_NOOP("Browser privacy data (cookies, history, or cached session); deleting this will sign you out of websites."),
           TrustSafetyActionItem::RiskTier::Risky,
           &mConfig.browserPrivacy },
+        { CAT_APP_PROFILES,
+          QT_TR_NOOP("Application Profiles"),
+          QT_TR_NOOP("Path matched by a bundled or user-supplied cleaning profile."),
+          TrustSafetyActionItem::RiskTier::Standard,
+          &mConfig.appProfiles },
     };
 
     for (const CatSpec &spec : specs) {
