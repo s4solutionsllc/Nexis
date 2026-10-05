@@ -6,7 +6,7 @@ caches, logs, and other disposable state. Profiles are data, not code: adding
 support for a new application is a new JSON file, not a recompile.
 
 This document describes the schema and the loader behaviour so contributors
-(and end users with a `~/.config/nexis/cleaning_profiles/` directory) can add
+(and end users — see §7 for the per-platform profiles directory) can add
 their own profiles.
 
 ---
@@ -19,10 +19,11 @@ Two locations are merged at load time:
    `:/cleaning_profiles/linux/*.json` and `:/cleaning_profiles/macos/*.json`.
    The source of truth is `shared/nexis/cleaning_profiles/` in the Nexis
    repository.
-2. **User profiles** — read from `~/.config/nexis/cleaning_profiles/` on
-   both Linux and macOS. (More precisely, `QStandardPaths::AppConfigLocation`
-   joined with `cleaning_profiles/`.) Users can drop a JSON file here without
-   touching the Nexis install.
+2. **User profiles** — read from `QStandardPaths::AppConfigLocation` joined
+   with `cleaning_profiles/`, which is `~/.config/nexis/cleaning_profiles/`
+   on Linux and `~/Library/Preferences/nexis/cleaning_profiles/` on macOS —
+   the two resolve to different directories, not a shared path. Users can
+   drop a JSON file here without touching the Nexis install.
 
 If a user profile and a bundled profile share the same `id`, the user profile
 **replaces** the bundled one entirely. Otherwise, both are loaded.
@@ -145,7 +146,9 @@ file at load time and routes malformed files to
 
 ## 7. Adding a user profile (end users)
 
-1. Create `~/.config/nexis/cleaning_profiles/` if it doesn't exist.
+1. Create the profiles directory if it doesn't exist:
+   `~/.config/nexis/cleaning_profiles/` on Linux,
+   `~/Library/Preferences/nexis/cleaning_profiles/` on macOS.
 2. Drop a `.json` file matching the schema. The filename does not have to
    match the `id`.
 3. Run a scan from the System Cleaner page — your profile will appear in
