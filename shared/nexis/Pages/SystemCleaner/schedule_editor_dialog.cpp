@@ -2,6 +2,7 @@
 #include "Common/dialog_buttons.h"
 #include "utilities.h"
 #include <Managers/cleaner_service.h>
+#include <Managers/cleaning_profiles_service.h>
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -9,6 +10,7 @@
 #include <QGroupBox>
 #include <QFormLayout>
 #include <QScrollArea>
+#include <QDir>
 
 ScheduleEditorDialog::ScheduleEditorDialog(QWidget *parent)
     : QDialog(parent)
@@ -163,9 +165,19 @@ void ScheduleEditorDialog::buildUI()
         tr("Moves files older than the configured age from your Downloads folder to the Trash. "
            "Path and age threshold are set on the Settings page."));
     mChkAppProfiles = new QCheckBox(tr("Application Profiles"));
-    mChkAppProfiles->setToolTip(
-        tr("Paths matched by bundled or user-supplied cleaning profiles under "
-           "~/.config/Nexis/cleaning_profiles."));
+    {
+        // GH#487: the displayed path must come from the same resolver the
+        // service actually reads (~/.config/nexis/... on Linux, lowercase,
+        // no org name set — see CleaningProfilesService::defaultUserProfilesDir()),
+        // not a hand-typed guess.
+        QString profilesDirDisplay = CleaningProfilesService::defaultUserProfilesDir();
+        const QString homePath = QDir::homePath();
+        if (profilesDirDisplay.startsWith(homePath))
+            profilesDirDisplay.replace(0, homePath.length(), QStringLiteral("~"));
+        mChkAppProfiles->setToolTip(
+            tr("Paths matched by bundled or user-supplied cleaning profiles under %1.")
+                .arg(profilesDirDisplay));
+    }
 
     catGrid->addWidget(mChkPackageCache, 0, 0);
     catGrid->addWidget(mChkCrashReports, 0, 1);

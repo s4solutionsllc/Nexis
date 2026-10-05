@@ -6,7 +6,7 @@ caches, logs, and other disposable state. Profiles are data, not code: adding
 support for a new application is a new JSON file, not a recompile.
 
 This document describes the schema and the loader behaviour so contributors
-(and end users with a `~/.config/Nexis/cleaning_profiles/` directory) can add
+(and end users with a `~/.config/nexis/cleaning_profiles/` directory) can add
 their own profiles.
 
 ---
@@ -19,7 +19,7 @@ Two locations are merged at load time:
    `:/cleaning_profiles/linux/*.json` and `:/cleaning_profiles/macos/*.json`.
    The source of truth is `shared/nexis/cleaning_profiles/` in the Nexis
    repository.
-2. **User profiles** — read from `~/.config/Nexis/cleaning_profiles/` on
+2. **User profiles** — read from `~/.config/nexis/cleaning_profiles/` on
    both Linux and macOS. (More precisely, `QStandardPaths::AppConfigLocation`
    joined with `cleaning_profiles/`.) Users can drop a JSON file here without
    touching the Nexis install.
@@ -145,7 +145,7 @@ file at load time and routes malformed files to
 
 ## 7. Adding a user profile (end users)
 
-1. Create `~/.config/Nexis/cleaning_profiles/` if it doesn't exist.
+1. Create `~/.config/nexis/cleaning_profiles/` if it doesn't exist.
 2. Drop a `.json` file matching the schema. The filename does not have to
    match the `id`.
 3. Run a scan from the System Cleaner page — your profile will appear in
@@ -157,7 +157,7 @@ entirely. Use a different `id` if you only want to add paths.
 ## 8. Worked example: overriding a bundled profile
 
 To extend the bundled `firefox-cache` profile with an extra path, drop the
-following into `~/.config/Nexis/cleaning_profiles/firefox-cache.json`:
+following into `~/.config/nexis/cleaning_profiles/firefox-cache.json`:
 
 ```json
 {

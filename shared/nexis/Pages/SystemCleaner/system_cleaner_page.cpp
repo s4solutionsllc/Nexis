@@ -8,6 +8,7 @@
 #include "dpi.h"
 #include <Managers/schedule_manager.h>
 #include <Managers/tool_manager.h>
+#include <Managers/cleaning_profiles_service.h>
 #include "signal_mapper.h"
 #include <Utils/format_util.h>
 #include "exclusion_manager_dialog.h"
@@ -354,12 +355,21 @@ void SystemCleanerPage::buildCategoryCards()
     mCheckSnapFlatpak = mCards[SNAP_FLATPAK_REVISIONS].check;
 #endif
 
-    // GH#487 / FW-12: data-driven profiles, bundled + user JSON under
-    // ~/.config/Nexis/cleaning_profiles — cross-platform, so added
-    // unconditionally (unlike the Snap/Flatpak card above).
+    // GH#487 / FW-12: data-driven profiles, bundled + user JSON under the
+    // resolved profiles dir — cross-platform, so added unconditionally
+    // (unlike the Snap/Flatpak card above). The displayed path is built from
+    // CleaningProfilesService::defaultUserProfilesDir() rather than a
+    // literal string: it's QStandardPaths::AppConfigLocation + "/cleaning_profiles",
+    // which is ~/.config/nexis/... on Linux (lowercase "nexis" — no
+    // organization name is set) and ~/Library/Preferences/nexis/... on
+    // macOS, not the "~/.config/Nexis" a hand-typed string would guess.
+    QString profilesDirDisplay = CleaningProfilesService::defaultUserProfilesDir();
+    const QString homePath = QDir::homePath();
+    if (profilesDirDisplay.startsWith(homePath))
+        profilesDirDisplay.replace(0, homePath.length(), QStringLiteral("~"));
     CatDef appProfilesDef { APP_PROFILES,
                             tr("Application Profiles"),
-                            QStringLiteral("~/.config/Nexis/cleaning_profiles") };
+                            profilesDirDisplay };
     addCard(appProfilesDef);
 
     // GH#475: place the cards for the first time. Real width isn't known yet

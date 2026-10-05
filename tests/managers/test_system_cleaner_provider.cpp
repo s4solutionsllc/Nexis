@@ -109,6 +109,7 @@ class TestSystemCleanerProvider : public QObject
 
 private slots:
     void scan_emits_one_item_per_file_per_category();
+    void scan_emits_app_profiles_items();
     void scan_marks_browser_privacy_as_risky();
     void scan_marks_trash_as_risky();
     void per_item_deselect_skips_deselected_files();
@@ -146,6 +147,30 @@ void TestSystemCleanerProvider::scan_emits_one_item_per_file_per_category()
     }
     QCOMPARE(pkgCount,   2);
     QCOMPARE(crashCount, 3);
+}
+
+void TestSystemCleanerProvider::scan_emits_app_profiles_items()
+{
+    // GH#487 / SSO-25634: Config::appProfiles was added when APP_PROFILES
+    // got wired into the System Cleaner UI — guard against a silent regression
+    // where the field exists but scan() forgets to read it (the original bug
+    // was exactly this shape one layer up, in the UI's category lists).
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    QDir(tmp.path()).mkpath("profiles");
+
+    SystemCleanerProvider::Config cfg;
+    cfg.appProfiles = makeFiles(tmp.path() + "/profiles", 2);
+
+    TestableSystemCleanerProvider provider(cfg);
+    QList<TrustSafetyActionItem> items = TrustSafetyRunner::scanSynchronous(&provider, nullptr);
+
+    QCOMPARE(items.size(), 2);
+    for (const TrustSafetyActionItem &item : items) {
+        QCOMPARE(item.categoryId, QLatin1String(SystemCleanerProvider::CAT_APP_PROFILES));
+        QCOMPARE(item.riskTier, TrustSafetyActionItem::RiskTier::Standard);
+        QVERIFY(!item.id.isEmpty());
+    }
 }
 
 void TestSystemCleanerProvider::scan_marks_browser_privacy_as_risky()
