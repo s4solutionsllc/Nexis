@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.12.1] - 2026-10-06
+
+### Fixed
+- System Cleaner (GH#487 / SSO-25634): custom cleaning profiles dropped under
+  `~/.config/nexis/cleaning_profiles/` (Linux) or the platform's equivalent
+  app-config profiles directory now actually reach a scan. The
+  "Application Profiles" category had a complete backend (`CleaningProfilesService`,
+  the `APP_PROFILES` case in `CleanerService::scan()`) but was never wired into
+  the System Cleaner page's category cards or the schedule dialog's category
+  list, so it never ran. Both now include it.
+
 ## [2.12.0] - 2026-09-22
 
 ### Changed

@@ -1,3 +1,11 @@
+nexis (2.12.1-1) unstable; urgency=medium
+
+  * Bug-fix release: System Cleaner's "Application Profiles" category is now
+    wired into the scan category cards and the schedule dialog, so custom
+    cleaning profiles actually run (GH#487). See CHANGELOG.md for details.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Tue, 06 Oct 2026 00:00:00 +0000
+
 nexis (2.12.0-1) unstable; urgency=medium
 
   * New release: Disk Map full-page redesign with two-level treemap/bubble-map/
