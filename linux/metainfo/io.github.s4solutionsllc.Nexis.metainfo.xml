@@ -74,6 +74,16 @@
   </screenshots>
 
   <releases>
+    <release version="2.12.1" date="2026-10-06">
+      <description>
+        <p>Fixed:</p>
+        <ul>
+          <li>System Cleaner's Application Profiles category now appears in the scan
+              categories and the schedule dialog, so custom cleaning profiles are
+              actually scanned.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.12.0" date="2026-09-22">
       <description>
         <p>Changed:</p>
