@@ -81,6 +81,7 @@ void HealthScoreTile::setQuickAction(const QString &text, std::function<void()> 
     mLblTrend->hide();
     QObject::disconnect(mBtnAction, &QPushButton::clicked, nullptr, nullptr);
     connect(mBtnAction, &QPushButton::clicked, this, [callback]() { callback(); });
+    updateFooterVisibility();
 }
 
 void HealthScoreTile::setDisplayMode(DisplayMode mode)

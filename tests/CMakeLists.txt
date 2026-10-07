@@ -645,6 +645,21 @@ add_nexis_test(NAME HealthReportTests
     nexis-gui Qt6::Widgets
 )
 
+# GH#493 (SSO-25711): HealthScoreTile is the only MetricTileBase subclass
+# with setQuickAction() implemented in C++ rather than exercised by a
+# screenshot test. Links against nexis-gui for AppManager/SignalMapper
+# (same pattern as CleanerExclusionTests/HealthReportTests above).
+add_nexis_test(NAME HealthScoreTileTests
+  SOURCES
+    managers/test_health_score_tile.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Dashboard"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-23896: pure tray-menu grouping helper — derives the tray's MONITOR
 # (flat) / MANAGE / SYSTEM (submenus) structure from the same SidebarSection
 # model the sidebar itself uses, so the two surfaces cannot drift. Compiled
