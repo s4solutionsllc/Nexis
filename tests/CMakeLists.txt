@@ -469,6 +469,28 @@ add_nexis_test(NAME FirewallTests
     Qt6::Widgets Qt6::Network
 )
 
+# GH#490: SwappinessWidget is Linux-only (constructed only under
+# Q_OS_LINUX in helpers_page.cpp) -- gate like BatteryChargeThresholdTests.
+# Lives in the GUI target; compile its source + deps directly like
+# FirewallTests above.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME SwappinessWidgetTests
+    SOURCES
+      core/test_swappiness_widget.cpp
+      "${GUI_SHARED_DIR}/Pages/Helpers/swappiness_widget.cpp"
+      "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
+      "${GUI_SHARED_DIR}/Managers/info_manager.cpp"
+      "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
+      "${GUI_SHARED_DIR}/signal_mapper.cpp"
+    INCLUDES
+      "${GUI_SHARED_DIR}"
+      "${GUI_SHARED_DIR}/Pages/Helpers"
+      "${GUI_SHARED_DIR}/Managers"
+    LIBS
+      Qt6::Widgets Qt6::Network
+  )
+endif()
+
 # SSO-23866: CacheRebuildWidget's command-construction and macOS-version
 # gating logic — pure/static, no live rebuild needed. Lives in the GUI
 # target; compile its source + deps directly like NetworkDiagTests/

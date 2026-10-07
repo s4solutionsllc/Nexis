@@ -673,11 +673,20 @@ void HelpersPage::applyNavLayout(bool compact)
 
 // Host Manage is the tab shown first, so it has to load when the page is
 // first displayed — not only when its tab button is clicked.
+//
+// GH#490: returning to HelpersPage via the main sidebar (rather than by
+// clicking a Helpers tab button) only re-shows this page — it never calls
+// onSwappinessClicked() again — so a tab left stale by hideEvent() (see
+// SwappinessWidget::hideEvent) needs its own reload trigger here too.
 void HelpersPage::showEvent(QShowEvent *event)
 {
     QWidget::showEvent(event);
     if (ui->stackedWidget->currentIndex() == 0)
         widgetHostManage->loadIfNeeded();
+#ifdef Q_OS_LINUX
+    else if (mSwappinessWidget && ui->stackedWidget->currentWidget() == mSwappinessWidget)
+        mSwappinessWidget->loadIfNeeded();
+#endif
 }
 
 void HelpersPage::resizeEvent(QResizeEvent *event)

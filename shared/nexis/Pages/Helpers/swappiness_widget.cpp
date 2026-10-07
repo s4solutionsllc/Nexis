@@ -11,6 +11,7 @@
 #include <QFileInfo>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QHideEvent>
 #include <QLabel>
 #include <QPushButton>
 #include <QRegularExpression>
@@ -76,6 +77,17 @@ void SwappinessWidget::loadIfNeeded()
 {
     if (!mLoaded)
         refresh();
+}
+
+void SwappinessWidget::hideEvent(QHideEvent *event)
+{
+    // Leaving the Helpers->Swappiness tool invalidates the cached read —
+    // something other than Nexis (another sysctl writer, a manual edit)
+    // may change vm.swappiness while the user is away, so the next
+    // loadIfNeeded() on re-entry must re-read /proc/sys/vm/swappiness
+    // instead of redisplaying whatever was last rendered (GH#490).
+    mLoaded = false;
+    QWidget::hideEvent(event);
 }
 
 void SwappinessWidget::refresh()
