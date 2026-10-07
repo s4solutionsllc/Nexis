@@ -6,6 +6,7 @@
 class QButtonGroup;
 class QCheckBox;
 class QFrame;
+class QHideEvent;
 class QLabel;
 class QPushButton;
 class QSlider;
@@ -37,6 +38,9 @@ public:
 
 signals:
     void statusFetched(SwappinessStatus status);
+
+protected:
+    void hideEvent(QHideEvent *event) override;
 
 private slots:
     void onStatusFetched(SwappinessStatus status);
