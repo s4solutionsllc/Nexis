@@ -380,12 +380,18 @@ void MetricTileBase::updateFooterVisibility()
 {
     if (!mFooterWidget)
         return;
+    // isVisible() is recursive on the ancestor chain, so right after this same
+    // call shows mLblTrend/mBtnAction, isVisible() still reads false while
+    // mFooterWidget itself is still hidden from a prior call -- a chicken-and-
+    // egg deadlock that leaves the footer hidden forever (GH#493/SSO-25711).
+    // isHidden() reflects only the widget's own show()/hide() intent, so it
+    // isn't affected by the parent we're about to toggle.
     const bool hasContent =
         (mFooterVisual != nullptr) ||
         (mLblValue    && !mLblValue->text().isEmpty()) ||
-        (mLblValueSub && mLblValueSub->isVisible() && !mLblValueSub->text().isEmpty()) ||
-        (mLblTrend    && mLblTrend->isVisible()) ||
-        (mBtnAction   && mBtnAction->isVisible());
+        (mLblValueSub && !mLblValueSub->text().isEmpty()) ||
+        (mLblTrend    && !mLblTrend->isHidden()) ||
+        (mBtnAction   && !mBtnAction->isHidden());
     mFooterWidget->setVisible(hasContent);
 }
 
