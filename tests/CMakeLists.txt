@@ -491,6 +491,19 @@ if(UNIX AND NOT APPLE)
   )
 endif()
 
+# GH#490 follow-up: HelpersPage::showEvent() dispatch regression. HelpersPage
+# pulls in too many sibling widgets to list individually like
+# SwappinessWidgetTests above, so link the full nexis-gui library instead,
+# same as ScreenshotTests further down. Gated to Linux like
+# SwappinessWidgetTests since mSwappinessWidget only exists under
+# Q_OS_LINUX.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME HelpersPageReentryTests
+    SOURCES core/test_helpers_page_reentry.cpp
+    LIBS nexis-gui
+  )
+endif()
+
 # SSO-23866: CacheRebuildWidget's command-construction and macOS-version
 # gating logic — pure/static, no live rebuild needed. Lives in the GUI
 # target; compile its source + deps directly like NetworkDiagTests/
