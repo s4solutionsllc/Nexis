@@ -44,6 +44,7 @@ void HealthScoreTile::buildLayout()
     mainLayout->addWidget(mLblScoreLabel);
 
     mainLayout->addStretch();
+    appendFooter(mainLayout);
 }
 
 void HealthScoreTile::setValue(int percent, const QString &valueText)
@@ -73,8 +74,14 @@ void HealthScoreTile::setSecondaryValue(const QString &)
 {
 }
 
-void HealthScoreTile::setQuickAction(const QString &, std::function<void()>)
+void HealthScoreTile::setQuickAction(const QString &text, std::function<void()> callback)
 {
+    mBtnAction->setText(text);
+    mBtnAction->show();
+    mLblTrend->hide();
+    QObject::disconnect(mBtnAction, &QPushButton::clicked, nullptr, nullptr);
+    connect(mBtnAction, &QPushButton::clicked, this, [callback]() { callback(); });
+    updateFooterVisibility();
 }
 
 void HealthScoreTile::setDisplayMode(DisplayMode mode)
