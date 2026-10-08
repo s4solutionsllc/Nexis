@@ -17,7 +17,7 @@ Every release must satisfy these — fail closed if any check fails.
    from upstream Stacer attribution + S4 Solutions copyright lines. Nexis is and
    always will be free software; no monetization, ever.
    ```bash
-   head -1 LICENSE | grep -F "Linux & macOS System Optimizer"   # sanity
+   head -1 LICENSE | grep -F "GNU GENERAL PUBLIC LICENSE"        # sanity: verbatim GPL text (#308)
    grep -c "GNU GENERAL PUBLIC LICENSE" LICENSE                  # must be ≥ 1
    grep -c "Version 3" LICENSE                                   # must be ≥ 1
    ```
