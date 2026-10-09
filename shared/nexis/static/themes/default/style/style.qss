@@ -1436,9 +1436,25 @@ QProgressBar[progressRole="thin"]::chunk {
     border-radius: 2;
 }
 
+/* - Browser deep-clean picker: checkable profile rows - */
+
+#browserProfileList::indicator {
+    width: @dp14;
+    height: @dp14;
+}
+
+#browserProfileList::indicator:unchecked {
+    image: url(:/static/themes/common/img/un-check.png);
+}
+
+#browserProfileList::indicator:checked {
+    image: url(:/static/themes/common/img/check.png);
+}
+
 /* - Header action buttons - */
 
-#btnScheduleCleaner {
+#btnScheduleCleaner,
+#btnBrowserDeepClean {
     border: 1px solid @borderColor;
     border-radius: @dp6;
     background-color: transparent;
@@ -1446,7 +1462,8 @@ QProgressBar[progressRole="thin"]::chunk {
     padding: @dp6 @dp14;
 }
 
-#btnScheduleCleaner:hover {
+#btnScheduleCleaner:hover,
+#btnBrowserDeepClean:hover {
     background-color: @cardBg;
 }
 

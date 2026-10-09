@@ -450,6 +450,16 @@ QString SettingManager::getCleanerExclusions() const
     return mSettings->value(SettingKeys::CleanerExclusions, "[]").toString();
 }
 
+void SettingManager::setCleanerCookieKeepDomains(const QStringList &domains)
+{
+    mSettings->setValue(SettingKeys::CleanerCookieKeepDomains, domains);
+}
+
+QStringList SettingManager::getCleanerCookieKeepDomains() const
+{
+    return mSettings->value(SettingKeys::CleanerCookieKeepDomains).toStringList();
+}
+
 // FR-112
 void SettingManager::setPreCleanSnapshotEnabled(bool value)
 {

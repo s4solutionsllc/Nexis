@@ -8,9 +8,14 @@
 #include "dpi.h"
 #include <Managers/schedule_manager.h>
 #include <Managers/tool_manager.h>
+#include <Managers/browser_sqlite_cleaner.h>
 #include <Managers/cleaning_profiles_service.h>
+#include <Managers/setting_manager.h>
+#include <Common/trust_safety_preview_dialog.h>
+#include <QMessageBox>
 #include "signal_mapper.h"
 #include <Utils/format_util.h>
+#include "browser_deep_clean_dialog.h"
 #include "exclusion_manager_dialog.h"
 #include "schedule_editor_dialog.h"
 #include "utilities.h"
@@ -169,12 +174,19 @@ void SystemCleanerPage::buildCategoryHeader()
         dlg->exec();
     });
 
+    mBtnBrowserDeepClean = new QPushButton(tr("Browser deep clean\u2026"), headerWidget);
+    mBtnBrowserDeepClean->setObjectName("btnBrowserDeepClean");
+    mBtnBrowserDeepClean->setCursor(Qt::PointingHandCursor);
+    mBtnBrowserDeepClean->setToolTip(tr("Remove browsing history and cookies from chosen browser profiles"));
+    connect(mBtnBrowserDeepClean, &QPushButton::clicked, this, &SystemCleanerPage::openBrowserDeepClean);
+
     mBtnScanSystem = new QPushButton(tr("Scan system"), headerWidget);
     mBtnScanSystem->setObjectName("btnScanSystem");
     mBtnScanSystem->setCursor(Qt::PointingHandCursor);
     connect(mBtnScanSystem, &QPushButton::clicked, this, &SystemCleanerPage::onBtnScanSystemClicked);
 
     titleRow->addWidget(mBtnExclusions);
+    titleRow->addWidget(mBtnBrowserDeepClean);
     titleRow->addWidget(mBtnSchedule);
     titleRow->addWidget(mBtnScanSystem);
 
@@ -252,7 +264,12 @@ void SystemCleanerPage::buildCategoryCards()
           tr("Broken Symlinks"), QStringLiteral("~/ recursive symlink scan")
         },
         { BROWSER_PRIVACY,
-          tr("Browser Privacy"), QStringLiteral("Chrome \u00b7 Firefox \u00b7 Chromium \u00b7 Safari")
+          tr("Browser Privacy"),
+#ifdef Q_OS_MACOS
+          QStringLiteral("Chrome \u00b7 Edge \u00b7 Brave \u00b7 Firefox \u00b7 Safari")
+#else
+          QStringLiteral("Chrome \u00b7 Edge \u00b7 Brave \u00b7 Firefox")
+#endif
         },
     };
 
@@ -1159,6 +1176,34 @@ void SystemCleanerPage::onTreeContextMenu(const QPoint &pos)
                         .arg(parent->childCount()));
         parent->setText(1, FormatUtil::formatBytes(remaining));
     }
+}
+
+void SystemCleanerPage::openBrowserDeepClean()
+{
+    const QList<BrowserProfileLocator::Profile> profiles = BrowserProfileLocator::detectProfiles();
+    if (profiles.isEmpty()) {
+        QMessageBox::information(this, tr("Browser Deep Clean"),
+            tr("No Firefox, Chrome, Chromium, Brave or Edge profiles were found."));
+        return;
+    }
+
+    SettingManager *settings = SettingManager::ins();
+    BrowserDeepCleanDialog picker(profiles, settings->getCleanerCookieKeepDomains(), this);
+    if (picker.exec() != QDialog::Accepted)
+        return;
+
+    const QStringList kept = picker.keptCookieDomains();
+    settings->setCleanerCookieKeepDomains(kept);
+
+    BrowserSqliteCleaner provider(picker.selectedProfiles(), QSet<QString>(kept.constBegin(), kept.constEnd()));
+
+    TrustSafetyPreviewDialog::Config cfg;
+    cfg.windowTitle          = tr("Review Browser Data to Delete");
+    cfg.primaryActionLabel   = tr("Delete Selected");
+    cfg.confirmationSentence = tr("This will permanently delete the selected browsing history and cookies.");
+
+    TrustSafetyPreviewDialog dlg(&provider, cfg, this, mAppManager);
+    dlg.exec();
 }
 
 void SystemCleanerPage::onManageExclusions()

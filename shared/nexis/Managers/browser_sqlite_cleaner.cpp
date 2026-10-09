@@ -208,7 +208,7 @@ void BrowserSqliteCleaner::scanHistory(
 
     TrustSafetyActionItem item;
     item.id = QLatin1String(ID_PREFIX_HISTORY) + familyToken(profile.family) + profile.historyDbPath;
-    item.label = QStringLiteral("%1 — %2 — Browsing History").arg(profile.browserName, profile.profileName);
+    item.label = QObject::tr("%1 — %2 — Browsing History").arg(profile.browserName, profile.profileName);
     item.description = QObject::tr("%1 history entries across %2 sites will be deleted.")
                             .arg(visitCount < 0 ? 0 : visitCount)
                             .arg(siteCount < 0 ? 0 : siteCount);
@@ -266,7 +266,7 @@ void BrowserSqliteCleaner::scanCookies(
 
     TrustSafetyActionItem item;
     item.id = QLatin1String(ID_PREFIX_COOKIES) + familyToken(profile.family) + profile.cookiesDbPath;
-    item.label = QStringLiteral("%1 — %2 — Cookies").arg(profile.browserName, profile.profileName);
+    item.label = QObject::tr("%1 — %2 — Cookies").arg(profile.browserName, profile.profileName);
     item.description = keptCookies > 0
         ? QObject::tr("%1 cookies across %2 domains will be deleted (%3 kept: %4).")
               .arg(deletedCookies).arg(deletedDomains.size()).arg(keptCookies).arg(domainList)

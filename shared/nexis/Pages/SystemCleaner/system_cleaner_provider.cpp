@@ -68,7 +68,7 @@ void SystemCleanerProvider::scan(
           &mConfig.brokenSymlinks },
         { CAT_BROWSER_PRIVACY,
           QT_TR_NOOP("Browser Privacy"),
-          QT_TR_NOOP("Browser privacy data (cookies, history, or cached session); deleting this will sign you out of websites."),
+          QT_TR_NOOP("Browser cache or saved session; deleting a saved session closes that browser's restored tabs. Cookies and history are not touched here."),
           TrustSafetyActionItem::RiskTier::Risky,
           &mConfig.browserPrivacy },
         { CAT_APP_PROFILES,

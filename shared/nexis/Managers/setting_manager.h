@@ -43,6 +43,7 @@ namespace SettingKeys {
     const QString UpdateLastCount("UpdateLastCount");
     const QString DashboardFooterVisible("DashboardFooterVisible");
     const QString CleanerExclusions("CleanerExclusions");
+    const QString CleanerCookieKeepDomains("CleanerCookieKeepDomains");
 
     // FR-112
     const QString PreCleanSnapshotEnabled("PreCleanSnapshotEnabled");
@@ -233,6 +234,10 @@ public:
 
     void setCleanerExclusions(const QString &json);
     QString getCleanerExclusions() const;
+
+    // SSO-25782: browser deep-clean cookie keep-list (bare host names).
+    void setCleanerCookieKeepDomains(const QStringList &domains);
+    QStringList getCleanerCookieKeepDomains() const;
 
     // FR-112
     void setPreCleanSnapshotEnabled(bool value);
