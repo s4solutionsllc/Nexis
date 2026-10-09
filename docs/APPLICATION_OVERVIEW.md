@@ -348,7 +348,7 @@ Modes 2–4 share the service's single worker, so only one of them scans at a ti
 - Selection tracking label showing count and total size of checked files
 
 **Wipe Free Space (SSO-15382):**
-- "Wipe Free Space…" button opens a two-step `WipeFreeSpaceDialog` alongside the two scan modes
+- "Wipe Free Space…" button (page header row, top right) opens a two-step `WipeFreeSpaceDialog`
 - Step 1 lists mounted, writable volumes (`WipeFreeSpaceService::listWipeableVolumes()`) with live free space and a TRIM-eligibility badge, then previews the selected volume: free space, safety-margin headroom kept untouched, and (for non-TRIM targets) a rough time/data estimate; a persistent one-line disclosure states the SSD/TRIM honesty point (TRIM signals blocks as reclaimable, not a cryptographic-erase guarantee)
 - Confirmation is the codebase's standard one-sentence `QMessageBox::warning` ("Wipe free space on `<Volume>` (`<X>` GB free)?") behind a destructive-accent (`variant="danger"`) button
 - `WipeFreeSpaceService` detects SSD/TRIM support per volume — Linux: `/sys/block/<dev>/queue/rotational` + `fstrim` availability, then `pkexec fstrim -v <mount>`; macOS: `diskutil info -plist` `SolidState` key, with TRIM reported as automatic (APFS has no user-space "run TRIM now") — and otherwise runs a fill-and-delete pass: a 4 MiB-chunked zero-fill of a single fixed-name temp file (`.nexis-wipe-fill.tmp`) in the volume root, stopping once free space reaches a safety-margin headroom (5% of volume capacity, floored at 1 GiB, capped at 8 GiB — `WipeFreeSpaceService::headroomForVolume()`), then deleting the temp file
