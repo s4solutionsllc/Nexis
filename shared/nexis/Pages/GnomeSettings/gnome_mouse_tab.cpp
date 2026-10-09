@@ -1,5 +1,7 @@
 #include "gnome_mouse_tab.h"
 #include "Managers/tool_manager.h"
+#include "gnome_section_cards.h"
+#include "signal_mapper.h"
 #include "ui_gnome_mouse_tab.h"
 
 #include <QSignalBlocker>
@@ -31,6 +33,13 @@ GnomeMouseTab::GnomeMouseTab(QWidget *parent) :
         ui->groupTouchpad->hide();
 
     loadSettings();
+
+    GnomeSectionCards::buildHeader(ui->headerMouse, tr("Mouse"));
+    GnomeSectionCards::buildHeader(ui->headerTouchpad, tr("Touchpad"));
+    GnomeSectionCards::applyCardChrome(ui->groupMouse, ui->gridMouse);
+    GnomeSectionCards::applyCardChrome(ui->groupTouchpad, ui->gridTouchpad);
+    refreshThemeColors();
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &GnomeMouseTab::refreshThemeColors);
 
     // Mouse connections
     connect(ui->chkMouseNatural, &QCheckBox::toggled, this, [this](bool checked) {
@@ -176,4 +185,9 @@ void GnomeMouseTab::loadSettings()
     }
 
     mLoading = false;
+}
+
+void GnomeMouseTab::refreshThemeColors()
+{
+    GnomeSectionCards::applyShadows({ui->groupMouse, ui->groupTouchpad});
 }

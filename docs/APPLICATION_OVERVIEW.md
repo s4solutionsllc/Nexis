@@ -131,7 +131,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | Disk health | `smartctl` | `smartctl` + `diskutil` plist |
 | Process listing | `/proc/[pid]/` | `sysctl` KERN_PROC |
 | Network info | `/sys/class/net/` + `QNetworkInterface` | `QNetworkInterface` |
-| Services | `systemctl` (systemd) | `launchctl` (stubbed) |
+| Services | `systemctl` (systemd) | `launchctl` (partial — user launchd domain only) |
 | Packages | APT/DNF/Pacman/Snap | Homebrew + native `.app` bundles |
 | Autostart | `~/.config/autostart/*.desktop` | `~/Library/LaunchAgents/*.plist` |
 | Sudo elevation | `pkexec` / `sudo` | `osascript` (AppleScript admin prompt) |
@@ -597,7 +597,7 @@ When a health check identifies an issue, actionable repair buttons appear in the
 
 Manage Docker images, containers, and volumes. Conditional: shown only when Docker CLI is installed.
 
-- **UX modernization (NEX Phase-2, SSO-15097):** the Images tab tree sits inside a single DS §2 elevated container card (`#imagesContainer`, one drop shadow) with a frozen "Image / Size / Created" header and flat rows; the toolbar leads with the shared section-header recipe (3px accent bar + "Docker" title + "Images, containers, and volumes" source line), keeping the Search field, Refresh button, and Images/Containers/Volumes tabs unchanged. The Size column is right-aligned with tabular figures. Containers and Volumes tabs are out of scope (no live-captured content) and keep their existing self-contained tree look.
+- **UX modernization (NEX Phase-2, SSO-15097):** the Images tab tree sits inside a single DS §2 elevated container card (`#imagesContainer`, one drop shadow) with a frozen "Image / Size / Created" header and flat rows; the toolbar leads with the shared section-header recipe (3px accent bar + "Docker" title + "Images, containers, and volumes" source line), keeping the Search field, Refresh button, and Images/Containers/Volumes tabs unchanged. The Size column is right-aligned. The Containers and Volumes tabs follow the same recipe (SSO-25782): each tree sits in its own elevated container card (`#containersContainer` / `#volumesContainer`, one drop shadow each) with the same frozen header and flat rows.
 
 **Three tabs:**
 1. **Images** — Grouped by In Use / Dangling / Other
@@ -624,7 +624,7 @@ Configure GNOME desktop environment settings. Conditional: shown only when `gset
 
 Changes apply immediately via `gsettings set`. Error feedback with inline messages if setting fails. Font fields use `QFontComboBox` with live preview; monospace combo filtered to fixed-pitch families.
 
-**UI layout — Appearance tab (NEX Phase-2 round 2, SSO-15098):** a page-level DS §3 header ("GNOME Settings" / "GNOME desktop preferences") sits above the unchanged tab strip; each of the tab's four `QGroupBox` groups (Themes, Fonts, Interface, Clock & Status) is now its own DS §2 elevated section card (`[cardRole="elevated"]`, one `Utilities::addDropShadow(card, 90, 26)` per card — shadow count 4) with a DS §3 "compact" accent-bar header, per the shared `SettingsPage`-style recipe. Window Manager, Mouse & Touchpad, and Desktop tabs are out of scope for this pass and keep their original `QGroupBox` chrome.
+**UI layout — Appearance tab (NEX Phase-2 round 2, SSO-15098):** a page-level DS §3 header ("GNOME Settings" / "GNOME desktop preferences") sits above the unchanged tab strip; each of the tab's four `QGroupBox` groups (Themes, Fonts, Interface, Clock & Status) is now its own DS §2 elevated section card (`[cardRole="elevated"]`, one `Utilities::addDropShadow(card, 90, 26)` per card — shadow count 4) with a DS §3 "compact" accent-bar header, per the shared `SettingsPage`-style recipe. The Window Manager, Mouse & Touchpad, and Desktop tabs use the same recipe (SSO-25782) for their two groups each (Window Preferences / Compositor; Mouse / Touchpad; Background / Sound); the header, card chrome, and shadow code is shared by all four tabs via `GnomeSectionCards` (`gnome_section_cards.{h,cpp}`).
 
 > **macOS:** the GNOME Settings page is hidden in the sidebar and `ToolManager::checkGnomeSettings()` returns false. The macOS `GnomeSettingsTool` adapter is a hard no-op stub (`isAvailable()` returns false; setters never invoke `defaults write`) so no code path can write GNOME-mapped values into Apple preference domains, even if the sidebar guard were to regress (audit WI-29).
 
@@ -727,7 +727,7 @@ Nexis follows a **three-tier architecture**:
 
 The `nexis-core` static library provides platform-abstracted system information and tool APIs.
 
-### Info Providers (12 classes)
+### Info Providers
 
 | Class | Purpose | macOS Backend | Linux Backend |
 |-------|---------|---------------|---------------|
@@ -745,7 +745,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `PowerProfileInfo` | CPU power profile (Performance/Balanced/Power Saver) | Stub (not supported) | `powerprofilesctl` (PPD) + sysfs governor fallback |
 | (via `SystemInfo`) | Cleaner scan paths | Platform-specific paths | Platform-specific paths |
 
-### Tool Classes (5)
+### Tool Classes
 
 | Class | Purpose | Backend |
 |-------|---------|---------|
@@ -755,7 +755,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `GnomeSettingsTool` | Read/write GNOME settings (Linux only — macOS implementation is a hard no-op stub, see GNOME Settings section) | `gsettings` CLI |
 | `DockerTool` | Manage Docker resources | `docker` CLI (shared implementation) |
 
-### Utility Classes (3)
+### Utility Classes
 
 | Class | Purpose |
 |-------|---------|
@@ -765,7 +765,7 @@ The `nexis-core` static library provides platform-abstracted system information 
 
 ### CleanerML Parser (SSO-23856, Deep Cleaning Engine epic SSO-15366)
 
-`CleanerML::parseFile`/`parseDirectory` (`shared/nexis-core/Tools/cleanerml_parser.h`) load BleachBit-compatible CleanerML XML cleaner definitions into a typed `Cleaner`/`Option`/`Action` model. Supports the `delete`/`glob`/`walk`/`regex`/`truncate`/`sqlite.vacuum` action types; `winreg` actions are recognized and silently skipped (no Windows registry on Linux/macOS). A malformed or unsupported action fails parsing for just that one cleaner (logged via `qWarning`), never the whole batch or the app. Parser and model only — no execution engine yet; that's future SSO-15366 epic work.
+`CleanerML::parseFile`/`parseDirectory` (`shared/nexis-core/Tools/cleanerml_parser.h`) load BleachBit-compatible CleanerML XML cleaner definitions into a typed `Cleaner`/`Option`/`Action` model. Supports the `delete`/`glob`/`walk`/`regex`/`truncate`/`sqlite.vacuum` action types; `winreg` actions are recognized and silently skipped (no Windows registry on Linux/macOS). A malformed or unsupported action fails parsing for just that one cleaner (logged via `qWarning`), never the whole batch or the app. Parser and model only — execution lives in the Cleaner Action Interpreter below.
 
 ### Cleaner Action Interpreter (SSO-23859, Deep Cleaning Engine epic SSO-15366)
 
@@ -832,7 +832,7 @@ tests/
   theme/                (theme token validation tests)
   fixtures/             (sample system output files for fixture-based testing)
   screenshots/          (FR-41 screenshot regression tests; mask + per-channel fuzz comparator, NEX-3382)
-  reference_screenshots/  (per-platform reference PNGs: macos/{dark,light}/ committed; linux baselines not yet committed — NEX-3382 removed the empty placeholders so the gap is explicit)
+  reference_screenshots/  (per-platform reference PNGs: macos/{dark,light}/ and linux/{dark,light}/ committed; refreshed via the Regenerate Screenshot Baselines workflow)
 ```
 
 ### Build Targets
@@ -859,7 +859,7 @@ tests/
 **Test executables** — see the canonical table at the top of this doc for counts
 - Unit test executables registered via the `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable); plus one screenshot regression test linked against `nexis-gui`
 - Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`. macOS live-tool output (`nettop` CSV, `diskutil` plist, `sysctl kern.boottime`) is covered by fixtures under `tests/fixtures/macos/` and exercised via the FR-127 compile-source-into-test pattern (WI-33); the parsers are exposed as pure static methods so the tests run on any host. Package-manager uninstall command construction (apt/dnf/yum/pacman/snap/brew argv + macOS osascript shell escaping) is exercised via the same seam pattern as `TestableRepairEngine`.
-- Screenshot test: captures 12 pages × 2 themes, masks declared dynamic-data regions (charts, tables, dashboard tiles, live system summary), then per-channel-fuzz compares the remaining chrome against reference PNGs under a tight 1% default unmasked-diff threshold; missing page class or reference PNG `QFAIL`s loudly, missing platform/theme baseline directory `QSKIP`s with regeneration instructions (NEX-3381: non-blocking in CI on Linux x64 and macOS, skipped on ARM64 Linux due to xvfb hang; NEX-3382 hardened the comparator and added seven self-test slots that validate the mask + fuzz contract against synthetic images on every run)
+- Screenshot test: captures every page in `kPageMap` (17 common + 3 Linux-only conditional pages) × 2 themes, masks declared dynamic-data regions (charts, tables, dashboard tiles, live system summary), then per-channel-fuzz compares the remaining chrome against reference PNGs under a tight 1% default unmasked-diff threshold; missing page class or reference PNG `QFAIL`s loudly, missing platform/theme baseline directory `QSKIP`s with regeneration instructions (NEX-3381: non-blocking in CI on macOS only — the Linux jobs exclude the suite because it hangs under xvfb, so the committed Linux baselines are checked on demand; NEX-3382 hardened the comparator and added seven self-test slots that validate the mask + fuzz contract against synthetic images on every run)
 - Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)
 - Run via: `ctest --test-dir build --output-on-failure`

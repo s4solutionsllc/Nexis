@@ -20,6 +20,9 @@ public:
 signals:
     void settingFailed(const QString &message);
 
+private slots:
+    void refreshThemeColors();
+
 private:
     void loadSettings();
 

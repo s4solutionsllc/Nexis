@@ -1,15 +1,12 @@
 #include "gnome_appearance_tab.h"
 #include "Managers/tool_manager.h"
+#include "gnome_section_cards.h"
 #include "signal_mapper.h"
 #include "ui_gnome_appearance_tab.h"
-#include "utilities.h"
 
 #include <QDir>
 #include <QFontComboBox>
 #include <QFontDatabase>
-#include <QFrame>
-#include <QHBoxLayout>
-#include <QLabel>
 #include <QSignalBlocker>
 #include <QSpinBox>
 #include <QStandardPaths>
@@ -30,13 +27,14 @@ GnomeAppearanceTab::GnomeAppearanceTab(QWidget *parent) :
 
     loadSettings();
 
-    // DS §2/§3 (NEX F1/F2 shared recipe): section-card headers + elevated
-    // card chrome + shadow, mirrors SettingsPage::buildSectionCards().
-    buildSectionHeader(ui->headerThemes, tr("Themes"));
-    buildSectionHeader(ui->headerFonts, tr("Fonts"));
-    buildSectionHeader(ui->headerInterface, tr("Interface"));
-    buildSectionHeader(ui->headerClock, tr("Clock & Status"));
-    buildSectionCards();
+    GnomeSectionCards::buildHeader(ui->headerThemes, tr("Themes"));
+    GnomeSectionCards::buildHeader(ui->headerFonts, tr("Fonts"));
+    GnomeSectionCards::buildHeader(ui->headerInterface, tr("Interface"));
+    GnomeSectionCards::buildHeader(ui->headerClock, tr("Clock & Status"));
+    GnomeSectionCards::applyCardChrome(ui->groupThemes, ui->gridThemes);
+    GnomeSectionCards::applyCardChrome(ui->groupFonts, ui->gridFonts);
+    GnomeSectionCards::applyCardChrome(ui->groupInterface, ui->gridInterface);
+    GnomeSectionCards::applyCardChrome(ui->groupClock, ui->gridClock);
     refreshThemeColors();
     connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &GnomeAppearanceTab::refreshThemeColors);
 
@@ -415,58 +413,5 @@ void GnomeAppearanceTab::applyFont(const QString &schema, const QString &key,
 
 void GnomeAppearanceTab::refreshThemeColors()
 {
-    // DS §2 elevated-card shadow (alpha 90, blur 26) — one per section card,
-    // never per control (DS §7/§9). Re-applied on theme change because the
-    // shadow color resolves from @shadowColor at call time.
-    Utilities::addDropShadow(ui->groupThemes, 90, 26);
-    Utilities::addDropShadow(ui->groupFonts, 90, 26);
-    Utilities::addDropShadow(ui->groupInterface, 90, 26);
-    Utilities::addDropShadow(ui->groupClock, 90, 26);
-}
-
-void GnomeAppearanceTab::buildSectionHeader(QWidget *headerContainer, const QString &title)
-{
-    // DS §3 section-card header (NEX F2 shared recipe, "compact" variant —
-    // >=18px accent bar instead of the >=26px page/tile-header bar) built
-    // programmatically, mirroring SettingsPage::buildSectionHeader().
-    headerContainer->setObjectName("sectionHeaderRow");
-
-    QHBoxLayout *row = new QHBoxLayout(headerContainer);
-    row->setContentsMargins(14, 12, 14, 8);
-    row->setSpacing(8);
-
-    QFrame *accentBar = new QFrame(headerContainer);
-    accentBar->setObjectName("sectionHeaderAccent");
-    accentBar->setProperty("compact", true);
-    accentBar->setProperty("accentToken", "accent");
-    accentBar->setFrameShape(QFrame::NoFrame);
-    accentBar->setFixedWidth(3);
-    accentBar->setMinimumHeight(18);
-    accentBar->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-    row->addWidget(accentBar);
-
-    QLabel *lblTitle = new QLabel(title, headerContainer);
-    lblTitle->setObjectName("sectionHeaderTitle");
-    row->addWidget(lblTitle);
-    row->addStretch();
-}
-
-void GnomeAppearanceTab::buildSectionCards()
-{
-    // DS §2 elevated card chrome (NEX F1 shared recipe) — background,
-    // border, radius come from [cardRole="elevated"] in style.qss.
-    const QList<QWidget *> cards = {
-        ui->groupThemes, ui->groupFonts, ui->groupInterface, ui->groupClock
-    };
-    for (QWidget *card : cards) {
-        card->setAttribute(Qt::WA_StyledBackground, true);
-        card->setProperty("cardRole", "elevated");
-    }
-
-    // Inner content padding now that the QGroupBox native title/frame is
-    // gone — the header row above supplies its own top padding.
-    ui->gridThemes->setContentsMargins(14, 0, 14, 14);
-    ui->gridFonts->setContentsMargins(14, 0, 14, 14);
-    ui->gridInterface->setContentsMargins(14, 0, 14, 14);
-    ui->gridClock->setContentsMargins(14, 0, 14, 14);
+    GnomeSectionCards::applyShadows({ui->groupThemes, ui->groupFonts, ui->groupInterface, ui->groupClock});
 }

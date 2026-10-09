@@ -2344,10 +2344,10 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
 }
 
-/* -- Docker Containers / Volumes trees -- out of scope for SSO-15097 (no
-   live-captured content); unchanged self-contained bordered-tree look. -- */
+/* -- Docker Containers / Volumes trees -- flat content inside
+   #containersContainer / #volumesContainer, same recipe as #treeWidgetImages
+   (DS §2/§7, SSO-25782) -- */
 
-/* Same flat-in-card treatment as #treeWidgetImages so all three Docker tabs match. */
 #treeWidgetContainers,
 #treeWidgetVolumes {
     border: 0;
@@ -2358,7 +2358,9 @@ QProgressBar[progressRole="thin"]::chunk {
 
 #treeWidgetContainers QHeaderView::section,
 #treeWidgetVolumes QHeaderView::section {
-    border-top: 1;
+    background-color: @cardBgElevated;
+    border-top: 0;
+    border-bottom: 1px solid @borderColor;
 }
 
 #treeWidgetContainers::item,
@@ -3027,8 +3029,8 @@ QLabel[accessibleName="dimmed-small"] {
    recipe (style.qss "Section Header" block above) must win over the
    blanket "#GnomeSettingsPage QLabel" rule just above — an extra
    #GnomeSettingsPage ID qualifier raises specificity above a plain ID +
-   type selector. Covers both the page-level header and the Appearance
-   tab's per-group card headers (SSO-15098). */
+   type selector. Covers both the page-level header and every tab's
+   per-group card headers (SSO-15098, SSO-25782). */
 #GnomeSettingsPage #sectionHeaderTitle {
     color: @textSecondary;
     font-size: 9pt;
@@ -3038,23 +3040,6 @@ QLabel[accessibleName="dimmed-small"] {
 #GnomeSettingsPage #sectionHeaderSource {
     color: @tertiaryText;
     font-size: 8pt;
-}
-
-#GnomeSettingsPage QGroupBox {
-    border: 1px solid @borderColor;
-    border-radius: 12;
-    margin-top: 12;
-    padding: 12 12 6 12;
-    background-color: @cardBg;
-}
-
-#GnomeSettingsPage QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    padding: 0 6;
-    color: @textPrimary;
-    font-size: 11pt;
-    font-weight: bold;
 }
 
 /* Tab nav buttons */

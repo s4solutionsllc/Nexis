@@ -35,12 +35,13 @@ void DockerPage::init()
     // DS §7 / Design Anchor data-table convention: right-align the tabular Size column.
     ui->treeWidgetImages->headerItem()->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
 
-    // DS §2/§7: single elevated container around the Images tab tree; rows
-    // inside stay flat (no per-row shadow). Containers/Volumes tabs are out
-    // of scope (SSO-15097) and keep their existing self-contained tree look.
-    ui->imagesContainer->setAttribute(Qt::WA_StyledBackground, true);
-    ui->imagesContainer->setProperty("cardRole", "elevated");
-    Utilities::addDropShadow(ui->imagesContainer, 90, 26);
+    // DS §2/§7: one elevated container per tab around its tree; rows inside
+    // stay flat (no per-row shadow).
+    for (QWidget *container : {ui->imagesContainer, ui->containersContainer, ui->volumesContainer}) {
+        container->setAttribute(Qt::WA_StyledBackground, true);
+        container->setProperty("cardRole", "elevated");
+        Utilities::addDropShadow(container, 90, 26);
+    }
 
     ui->treeWidgetContainers->header()->setFixedHeight(Dpi::scale(30));
     ui->treeWidgetContainers->setHeaderLabels({tr("Container"), tr("Image"), tr("Status"), tr("Ports")});
@@ -216,14 +217,19 @@ void DockerPage::buildContainersTree()
         grouped[key].append(c);
     }
 
-    QStringList order = {"Running", "Exited", "Paused", "Created"};
-    for (const QString &state : order) {
+    const QList<QPair<QString, QString>> order = {
+        {"Running", tr("Running")},
+        {"Exited", tr("Exited")},
+        {"Paused", tr("Paused")},
+        {"Created", tr("Created")},
+    };
+    for (const auto &[state, title] : order) {
         if (!grouped.contains(state))
             continue;
         const QList<DockerContainer> &items = grouped[state];
 
         auto *section = new QTreeWidgetItem(ui->treeWidgetContainers);
-        section->setText(0, QString("%1 (%2)").arg(state).arg(items.size()));
+        section->setText(0, QString("%1 (%2)").arg(title).arg(items.size()));
         section->setFlags(Qt::ItemIsEnabled);
         QFont f = section->font(0);
         f.setBold(true);

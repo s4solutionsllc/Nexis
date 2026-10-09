@@ -21,12 +21,26 @@
      <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
      <widget class="QWidget" name="scrollContents">
       <layout class="QVBoxLayout" name="scrollLayout">
+       <property name="leftMargin"><number>12</number></property>
+       <property name="topMargin"><number>6</number></property>
+       <property name="rightMargin"><number>12</number></property>
+       <property name="bottomMargin"><number>12</number></property>
+       <property name="spacing"><number>16</number></property>
 
        <!-- Background Group -->
        <item>
-        <widget class="QGroupBox" name="groupBackground">
-         <property name="title"><string>Background</string></property>
-         <layout class="QGridLayout" name="gridBackground">
+        <widget class="QWidget" name="groupBackground" native="true">
+         <layout class="QVBoxLayout" name="vboxBackground">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerBackground" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridBackground">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>6</number></property>
 
@@ -83,15 +97,26 @@
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
            </widget>
           </item>
+           </layout>
+          </item>
          </layout>
         </widget>
        </item>
 
        <!-- Sound Group -->
        <item>
-        <widget class="QGroupBox" name="groupSound">
-         <property name="title"><string>Sound</string></property>
-         <layout class="QGridLayout" name="gridSound">
+        <widget class="QWidget" name="groupSound" native="true">
+         <layout class="QVBoxLayout" name="vboxSound">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerSound" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridSound">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>6</number></property>
 
@@ -126,6 +151,8 @@
            <widget class="QCheckBox" name="chkVolumeOver100">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
            </widget>
+          </item>
+           </layout>
           </item>
          </layout>
         </widget>

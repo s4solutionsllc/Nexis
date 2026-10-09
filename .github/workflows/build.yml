@@ -89,11 +89,11 @@ jobs:
       - name: Unit Tests
         run: xvfb-run -a ctest --test-dir build --output-on-failure -E ScreenshotTests
 
-      # ScreenshotTests are intentionally NOT run on the Linux per-PR jobs:
-      # there are no committed Linux baselines (so the comparison always QSKIPs —
-      # no regression value), and the test hangs indefinitely under xvfb while
-      # gathering live system data on both ARM64 (commit 5c173c7) and x64 (PR
-      # #209) Linux runners. Linux visual checks run on demand via the
+      # ScreenshotTests are intentionally NOT run on the Linux per-PR jobs: the
+      # test hangs indefinitely under xvfb while gathering live system data on
+      # both ARM64 (commit 5c173c7) and x64 (PR #209) Linux runners. Linux
+      # baselines are committed (tests/reference_screenshots/linux/) but are
+      # only compared on demand. Linux visual checks run via the
       # `Regenerate Screenshot Baselines` workflow (workflow_dispatch) and the
       # local build cycle (`ctest -R ScreenshotTests`). The macOS job below keeps
       # the per-PR screenshot guard, where baselines exist and rendering is

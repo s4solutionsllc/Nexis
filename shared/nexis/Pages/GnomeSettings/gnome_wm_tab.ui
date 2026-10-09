@@ -21,12 +21,26 @@
      <property name="frameShape"><enum>QFrame::NoFrame</enum></property>
      <widget class="QWidget" name="scrollContents">
       <layout class="QVBoxLayout" name="scrollLayout">
+       <property name="leftMargin"><number>12</number></property>
+       <property name="topMargin"><number>6</number></property>
+       <property name="rightMargin"><number>12</number></property>
+       <property name="bottomMargin"><number>12</number></property>
+       <property name="spacing"><number>16</number></property>
 
        <!-- Window Preferences Group -->
        <item>
-        <widget class="QGroupBox" name="groupWmPrefs">
-         <property name="title"><string>Window Preferences</string></property>
-         <layout class="QGridLayout" name="gridWmPrefs">
+        <widget class="QWidget" name="groupWmPrefs" native="true">
+         <layout class="QVBoxLayout" name="vboxWmPrefs">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerWmPrefs" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridWmPrefs">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>6</number></property>
 
@@ -155,15 +169,26 @@
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
            </widget>
           </item>
+           </layout>
+          </item>
          </layout>
         </widget>
        </item>
 
        <!-- Mutter Group -->
        <item>
-        <widget class="QGroupBox" name="groupMutter">
-         <property name="title"><string>Compositor (Mutter)</string></property>
-         <layout class="QGridLayout" name="gridMutter">
+        <widget class="QWidget" name="groupMutter" native="true">
+         <layout class="QVBoxLayout" name="vboxMutter">
+          <property name="spacing"><number>0</number></property>
+          <property name="leftMargin"><number>0</number></property>
+          <property name="topMargin"><number>0</number></property>
+          <property name="rightMargin"><number>0</number></property>
+          <property name="bottomMargin"><number>0</number></property>
+          <item>
+           <widget class="QWidget" name="headerMutter" native="true"/>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridMutter">
           <property name="horizontalSpacing"><number>12</number></property>
           <property name="verticalSpacing"><number>6</number></property>
 
@@ -220,6 +245,8 @@
            <widget class="QCheckBox" name="chkWorkspacesPrimary">
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
            </widget>
+          </item>
+           </layout>
           </item>
          </layout>
         </widget>
