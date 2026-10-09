@@ -7,6 +7,7 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QStackedWidget>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <QTreeWidget>
@@ -88,6 +89,13 @@ private:
     }
 
 private slots:
+    void initTestCase()
+    {
+        // Large & Old reads exclusions through the CleanerService singleton;
+        // keep that off the developer's real settings file.
+        QStandardPaths::setTestModeEnabled(true);
+    }
+
     void fourModes_shareOneDirectoryList()
     {
         FakeFinderService service;
