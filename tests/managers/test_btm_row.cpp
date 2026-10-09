@@ -134,9 +134,14 @@ void TestBtmRow::shownRow_realPostLayoutGeometryNeverClipsBadges()
     // Confirm the row was actually painted, not merely laid out: grab()
     // renders the real widget contents even under the offscreen platform, so
     // a pixmap of the expected size backs the geometry assertions above with
-    // real rendered output rather than layout bookkeeping alone.
+    // real rendered output rather than layout bookkeeping alone. grab()
+    // returns device pixels (2x on a Retina display), so scale back to the
+    // logical pixels row.size() is expressed in before comparing.
     const QPixmap pixmap = row.grab();
-    QCOMPARE(pixmap.width(), row.width());
+    const qreal dpr = pixmap.devicePixelRatio();
+    QVERIFY(dpr >= 1.0);
+    QCOMPARE(qRound(pixmap.width() / dpr), row.width());
+    QCOMPARE(qRound(pixmap.height() / dpr), row.height());
     QVERIFY(!pixmap.toImage().isNull());
 }
 
