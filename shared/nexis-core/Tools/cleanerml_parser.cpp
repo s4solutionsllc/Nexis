@@ -90,7 +90,16 @@ bool resolveActionType(const QString &command, const QString &search,
 
 } // namespace
 
-ParseResult parseXml(const QByteArray &data, const QString &source)
+namespace {
+
+QStringList osList(const QXmlStreamAttributes &attrs)
+{
+    return attrs.value(QStringLiteral("os")).toString().split(QLatin1Char(','), Qt::SkipEmptyParts);
+}
+
+} // namespace
+
+ParseResult parseXml(const QByteArray &data, const QString &source, ParseMode mode)
 {
     ParseResult result;
 
@@ -103,6 +112,7 @@ ParseResult parseXml(const QByteArray &data, const QString &source)
 
     Option currentOption;
     bool inOption = false;
+    QString currentVar;
 
     while (!xml.atEnd() && !xml.hasError()) {
         xml.readNext();
@@ -125,12 +135,29 @@ ParseResult parseXml(const QByteArray &data, const QString &source)
             } else if (name == QStringLiteral("option")) {
                 currentOption = Option();
                 currentOption.id = xml.attributes().value(QStringLiteral("id")).toString();
+                currentOption.os = osList(xml.attributes());
                 inOption = true;
 
                 if (currentOption.id.isEmpty() && !cleanerFailed) {
                     cleanerFailed = true;
                     failureReason = QStringLiteral("<option> element is missing a required id attribute");
                 }
+            } else if (name == QStringLiteral("var")) {
+                currentVar = xml.attributes().value(QStringLiteral("name")).toString().toLower();
+            } else if (name == QStringLiteral("value") && !currentVar.isEmpty()) {
+                VarValue value;
+                value.os = osList(xml.attributes());
+                value.glob = xml.attributes().value(QStringLiteral("search")) == QLatin1String("glob");
+                value.value = xml.readElementText(QXmlStreamReader::SkipChildElements).trimmed();
+                if (!value.value.isEmpty())
+                    cleaner.vars[currentVar].append(value);
+            } else if (name == QStringLiteral("running")) {
+                RunningCheck check;
+                check.type = xml.attributes().value(QStringLiteral("type")).toString();
+                check.os = osList(xml.attributes());
+                check.value = xml.readElementText(QXmlStreamReader::SkipChildElements).trimmed();
+                if (!check.value.isEmpty())
+                    cleaner.running.append(check);
             } else if (name == QStringLiteral("label")) {
                 const QString text = xml.readElementText(QXmlStreamReader::SkipChildElements);
                 if (inOption) currentOption.label = text; else cleaner.label = text;
@@ -157,7 +184,12 @@ ParseResult parseXml(const QByteArray &data, const QString &source)
 
                     ActionType type;
                     QString actionError;
-                    if (!resolveActionType(command, search, path, !regex.isEmpty(), type, actionError)) {
+                    bool resolved = resolveActionType(command, search, path, !regex.isEmpty(), type, actionError);
+                    if (!resolved && mode == ParseMode::Lenient) {
+                        type = ActionType::Unsupported;
+                        resolved = true;
+                    }
+                    if (!resolved) {
                         if (!cleanerFailed) {
                             cleanerFailed = true;
                             failureReason = actionError;
@@ -169,18 +201,19 @@ ParseResult parseXml(const QByteArray &data, const QString &source)
                         action.regex = regex;
                         action.command = command;
                         action.search = search;
+                        action.os = osList(attrs);
                         currentOption.actions.append(action);
                     }
                     // type == Winreg: recognized, silently dropped (SSO-23856 AC).
                 }
             }
-            // <var>, <running>, and anything else are intentionally ignored —
-            // variable substitution is an execution-time concern out of scope
-            // for this parser.
+            // Anything else is ignored.
         } else if (xml.isEndElement()) {
             if (xml.name() == QStringLiteral("option") && inOption) {
                 cleaner.options.append(currentOption);
                 inOption = false;
+            } else if (xml.name() == QStringLiteral("var")) {
+                currentVar.clear();
             }
         }
     }
@@ -208,7 +241,7 @@ ParseResult parseXml(const QByteArray &data, const QString &source)
     return result;
 }
 
-ParseResult parseFile(const QString &filePath)
+ParseResult parseFile(const QString &filePath, ParseMode mode)
 {
     ParseResult result;
 
@@ -219,10 +252,10 @@ ParseResult parseFile(const QString &filePath)
         return result;
     }
 
-    return parseXml(f.readAll(), filePath);
+    return parseXml(f.readAll(), filePath, mode);
 }
 
-ParseResult parseDirectory(const QString &dirPath)
+ParseResult parseDirectory(const QString &dirPath, ParseMode mode)
 {
     ParseResult result;
 
@@ -230,7 +263,7 @@ ParseResult parseDirectory(const QString &dirPath)
     const QStringList files = dir.entryList(QStringList{QStringLiteral("*.xml")}, QDir::Files, QDir::Name);
 
     for (const QString &fileName : files) {
-        const ParseResult fileResult = parseFile(dir.filePath(fileName));
+        const ParseResult fileResult = parseFile(dir.filePath(fileName), mode);
         result.cleaners.append(fileResult.cleaners);
         result.errors.append(fileResult.errors);
     }

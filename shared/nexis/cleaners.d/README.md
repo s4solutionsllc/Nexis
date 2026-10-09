@@ -1,6 +1,6 @@
-# CleanerML fixture corpus (BleachBit import)
+# CleanerML cleaner definitions (BleachBit import)
 
-`cleaners.d/` is a vendored, unmodified snapshot of BleachBit's community
+This directory is a vendored, unmodified snapshot of BleachBit's community
 CleanerML cleaner definitions. It serves two purposes:
 
 1. **Parser test fixtures** — a large, real-world corpus of CleanerML XML for
@@ -26,7 +26,7 @@ table with the new tag/commit/date/file count.
 
 ## License and attribution
 
-Every file in `cleaners.d/` is copyright (c) 2008–2026 Andrew Ziem and the
+Every `.xml` file in this directory is copyright (c) 2008–2026 Andrew Ziem and the
 BleachBit contributors, licensed **GPL-3.0-or-later** (some files carry the
 full GPL boilerplate header, others the short `SPDX-License-Identifier:
 GPL-3.0-or-later` form — both denote the same license). The full license text

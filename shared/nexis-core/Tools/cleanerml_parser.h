@@ -35,17 +35,25 @@ struct NEXISCORESHARED_EXPORT ParseResult {
     QList<ParseError> errors;
 };
 
+// Strict: an action Nexis cannot run fails its whole cleaner (the original
+// SSO-23856 contract). Lenient: such an action is kept as
+// ActionType::Unsupported so CleanerML::forPlatform() can decide per option,
+// which is what lets a real-world cleaner with one exotic option still be
+// used for its ordinary ones.
+enum class ParseMode { Strict, Lenient };
+
 // Parse a single CleanerML document already in memory. `source` is used only
 // to label any ParseError produced (typically the originating file path).
-NEXISCORESHARED_EXPORT ParseResult parseXml(const QByteArray &data, const QString &source = QString());
+NEXISCORESHARED_EXPORT ParseResult parseXml(const QByteArray &data, const QString &source = QString(),
+                                            ParseMode mode = ParseMode::Strict);
 
 // Read and parse a single .xml file.
-NEXISCORESHARED_EXPORT ParseResult parseFile(const QString &filePath);
+NEXISCORESHARED_EXPORT ParseResult parseFile(const QString &filePath, ParseMode mode = ParseMode::Strict);
 
 // Parse every *.xml file directly inside `dirPath` (non-recursive, sorted by
 // name for determinism) and aggregate the results. A directory that doesn't
 // exist or contains no .xml files yields an empty (not erroring) result.
-NEXISCORESHARED_EXPORT ParseResult parseDirectory(const QString &dirPath);
+NEXISCORESHARED_EXPORT ParseResult parseDirectory(const QString &dirPath, ParseMode mode = ParseMode::Strict);
 
 } // namespace CleanerML
 

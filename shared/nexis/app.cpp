@@ -1851,6 +1851,14 @@ void App::setupCommandPalette()
             systemCleanerPage->openBrowserDeepClean();
     });
 
+    mCommandPalette->addCommand(tr("App Cleaners\u2026"), tr("Action"), [this]() {
+        navigateTo(QStringLiteral("systemCleaner"), true);
+        if (!systemCleanerPage)
+            ensurePageById(QStringLiteral("systemCleaner"));
+        if (systemCleanerPage)
+            systemCleanerPage->openAppCleaners();
+    });
+
     mCommandPalette->addCommand(tr("Feedback"), tr("Action"), [this]() {
         btnFeedback->click();
     });

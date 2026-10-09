@@ -16,7 +16,7 @@ dropped with a logged `ParseError`, not a crash.
 The full 104-file BleachBit corpus (used as both a broader parser regression
 set and Nexis's shipped default cleaner definitions, with the complete
 `COPYING.bleachbit` license text) is vendored separately under
-`cleaners.d/` by SSO-23858; nothing here duplicates that effort.
+`shared/nexis/cleaners.d/` by SSO-23858 (moved out of this fixtures directory by SSO-25782, when the app began shipping it); nothing here duplicates that effort.
 
 `malformed.xml` is Nexis-authored (not from BleachBit) — deliberately invalid
 XML used to test the parser's syntax-error path.
