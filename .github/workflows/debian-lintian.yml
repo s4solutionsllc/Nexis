@@ -29,7 +29,10 @@ jobs:
     name: lintian --pedantic
     runs-on: ubuntu-24.04
     container:
-      image: debian:trixie
+      # Pulled from the MCR mirror, not docker.io, to avoid Docker Hub's
+      # unauthenticated per-IP pull rate limit (SSO-25798). Digest-identical
+      # to docker.io's debian:trixie.
+      image: mcr.microsoft.com/mirror/docker/library/debian:trixie
 
     steps:
       - name: Install git and ca-certificates

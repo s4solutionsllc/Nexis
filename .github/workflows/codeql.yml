@@ -31,7 +31,10 @@ jobs:
     # Noble's qt6-base-dev is 6.4 and no longer satisfies CMake's minimum;
     # Plucky (25.04) was retired at EOL.
     container:
-      image: ubuntu:26.04
+      # Pulled from the MCR mirror, not docker.io, to avoid Docker Hub's
+      # unauthenticated per-IP pull rate limit (SSO-25798). `resolute` is the
+      # 26.04 codename — the MCR mirror does not publish the numeric tag.
+      image: mcr.microsoft.com/mirror/docker/library/ubuntu:resolute
     permissions:
       security-events: write
       packages: read
