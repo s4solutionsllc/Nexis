@@ -14,6 +14,7 @@
 #include <QStringList>
 #include <QRegularExpression>
 #include <QPushButton>
+#include <QTabWidget>
 
 #include "app.h"
 #include "Managers/app_manager.h"
@@ -351,6 +352,43 @@ private:
         }
     }
 
+    // Non-default tabs of pages whose tab switch only changes a stacked
+    // widget. Uncompared, like the Helpers captures above.
+    void captureGnomeTabsForReview(QWidget *gnomePage, const QString &reviewDir)
+    {
+        QDir().mkpath(reviewDir);
+        for (const char *name : {"btnWindowManager", "btnMouse", "btnDesktop"}) {
+            auto *button = gnomePage->findChild<QPushButton *>(QLatin1String(name));
+            if (!button || button->isHidden())
+                continue;
+            button->click();
+            QApplication::processEvents();
+            QTest::qWait(400);
+            mApp->grab().toImage().save(reviewDir + "/gnome_settings_" + QString::fromLatin1(name).mid(3).toLower() + ".png");
+        }
+        if (auto *first = gnomePage->findChild<QPushButton *>(QStringLiteral("btnAppearance"))) {
+            first->click();
+            QApplication::processEvents();
+            QTest::qWait(100);
+        }
+    }
+
+    void captureDockerTabsForReview(QWidget *dockerPage, const QString &reviewDir)
+    {
+        auto *tabs = dockerPage->findChild<QTabWidget *>(QStringLiteral("tabWidget"));
+        QVERIFY2(tabs, "DockerPage #tabWidget not found");
+        QDir().mkpath(reviewDir);
+        for (int i = 1; i < tabs->count(); ++i) {
+            tabs->setCurrentIndex(i);
+            QApplication::processEvents();
+            QTest::qWait(400);
+            mApp->grab().toImage().save(reviewDir + "/docker_" + tabs->tabText(i).toLower() + ".png");
+        }
+        tabs->setCurrentIndex(0);
+        QApplication::processEvents();
+        QTest::qWait(100);
+    }
+
     void captureAndCompare(const QString &theme)
     {
         SettingManager::ins()->setColorScheme(theme == "dark" ? "dark" : "light");
@@ -442,6 +480,10 @@ private:
             // themes on each platform.
             if (page.className == QLatin1String("HelpersPage"))
                 captureHelpersTabsForReview(widget, themeOutDir + "/review");
+            else if (page.className == QLatin1String("GnomeSettingsPage"))
+                captureGnomeTabsForReview(widget, themeOutDir + "/review");
+            else if (page.className == QLatin1String("DockerPage"))
+                captureDockerTabsForReview(widget, themeOutDir + "/review");
 
             if (mGenerateMode) {
                 const QString refPath = themeRefDir + "/" + page.screenshotName + ".png";

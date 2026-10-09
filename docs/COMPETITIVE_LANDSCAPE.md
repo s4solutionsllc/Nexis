@@ -735,11 +735,11 @@ Most existing tools lack GPU monitoring, battery health tracking (cycle count, c
 
 ## Nexis Weaknesses vs Competition
 
-1. **Cleaning depth** — BleachBit has 1,000+ application-specific cleaning profiles. CleanMyMac X has deep macOS-specific cleaning (mail attachments, Xcode caches, system logs). Nexis has 6 general categories. Adding more application-specific cleaning profiles would close this gap.
+1. **Cleaning depth** — BleachBit has 1,000+ application-specific cleaning profiles. CleanMyMac X has deep macOS-specific cleaning (mail attachments, Xcode caches, system logs). Nexis has 10 scan categories plus roughly 30 bundled application profiles per platform (see `docs/CLEANING_PROFILES.md`), which narrows the gap but does not close it.
 
-2. **Duplicate file detection** — Czkawka is specialized and excellent at finding duplicate files, similar images, and broken files. CleanMyMac X includes a duplicate finder. Nexis has no duplicate detection capability.
+2. **Duplicate file detection** — Czkawka is specialized and excellent at finding duplicate files, similar images, and broken files. Nexis has a hash-based duplicate finder in Disk Tools but no similar-image or broken-file detection.
 
-3. **macOS monitoring detail** — iStat Menus offers per-app network bandwidth, menu bar integration, GPU frame rates, fan control, and extensive customizable alerts. Nexis's Dashboard is useful but less detailed for macOS-specific monitoring.
+3. **macOS monitoring detail** — iStat Menus offers GPU frame rates, fan control, a fully configurable menu bar, and extensive customizable alerts. Nexis has per-process network columns and an optional menu-bar health score, but is less detailed for macOS-specific monitoring.
 
 4. **Package management depth** — Synaptic provides full APT control: version locking, dependency graphs, broken package repair, source editing. Nexis handles basic install/uninstall across multiple package managers but lacks advanced package management features.
 
@@ -771,9 +771,9 @@ Most existing tools lack GPU monitoring, battery health tracking (cycle count, c
 ### Not the Target
 
 - **Enterprise/DevOps teams** managing server fleets (use Netdata, Grafana, Cockpit instead)
-- **Deep duplicate/junk hunters** needing specialized file analysis (use Czkawka, BleachBit instead)
+- **Deep duplicate/junk hunters** needing similar-image detection or BleachBit's full cleaner catalog (use Czkawka, BleachBit instead)
 - **Terminal-only/SSH users** who need monitoring in headless environments (use htop, btop instead)
-- **Users needing ultra-detailed macOS monitoring** with menu bar integration (use iStat Menus instead)
+- **Users needing ultra-detailed macOS monitoring** with a fully configurable menu bar (use iStat Menus instead)
 
 ---
 
@@ -789,7 +789,7 @@ Most existing tools lack GPU monitoring, battery health tracking (cycle count, c
 
 ### Feature Priorities (Competitive)
 
-4. **Consider duplicate file detection** — This is a gap vs. both Czkawka and CleanMyMac X. Could be a new System Cleaner category or a standalone page. Alternatively, integrate with Czkawka as a recommended companion tool (similar to the disk analyzer launcher pattern).
+4. **Duplicate file detection — shipped** (Disk Tools → Duplicate Finder, FW-08). Similar-image detection remains a gap vs. Czkawka.
 
 5. **Deepen application-specific cleaning** — BleachBit's 1,000+ profiles are its core advantage. Adding profiles for common applications (browsers, IDEs, media players) would strengthen Nexis's cleaning capabilities. Even covering the top 20-30 most common applications would close much of the gap.
 
@@ -797,7 +797,7 @@ Most existing tools lack GPU monitoring, battery health tracking (cycle count, c
 
 ### Distribution
 
-7. **Expand packaging** — Currently available as `.deb`, `.AppImage`, and `.dmg`. Adding to Homebrew Cask (macOS), AUR (Arch), and PPA (Ubuntu) would significantly increase discoverability and ease of installation on the most popular platforms.
+7. **Expand packaging** — Currently available as `.deb` (PPA + GitHub releases), `.AppImage`, AUR, `.dmg`, and a Homebrew cask. Fedora-family users have only the AppImage.
 
 8. **Flatpak (Flathub) — retired 2026-06 (SSO-3376):** Previously listed as a follow-up. The Flathub channel was retired after a packaging audit confirmed the sandbox model (bubblewrap + KDE runtime, host root at `/run/host`, inert `pkexec` setuid, isolated PID namespace) cannot host Nexis's privileged system-maintenance feature set without holding the strongest host-escape portal (`org.freedesktop.Flatpak` + `flatpak-spawn --host`) — which then meaningfully removes the sandbox value proposition. Linux reach is covered by `.deb` (PPA + GitHub releases), AppImage, and AUR. Reconsider only if Nexis grows a portal-only feature subset that is genuinely sandbox-shaped.
 

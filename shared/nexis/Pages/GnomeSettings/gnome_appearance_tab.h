@@ -33,9 +33,6 @@ private:
     void applyFont(const QString &schema, const QString &key,
                    QFontComboBox *combo, QSpinBox *spin, const QString &label);
 
-    void buildSectionHeader(QWidget *headerContainer, const QString &title);
-    void buildSectionCards();
-
     Ui::GnomeAppearanceTab *ui;
     bool mLoading;
 };

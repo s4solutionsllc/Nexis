@@ -1,5 +1,7 @@
 #include "gnome_desktop_tab.h"
 #include "Managers/tool_manager.h"
+#include "gnome_section_cards.h"
+#include "signal_mapper.h"
 #include "ui_gnome_desktop_tab.h"
 
 #include <QFileDialog>
@@ -23,6 +25,13 @@ GnomeDesktopTab::GnomeDesktopTab(QWidget *parent) :
         ui->groupSound->hide();
 
     loadSettings();
+
+    GnomeSectionCards::buildHeader(ui->headerBackground, tr("Background"));
+    GnomeSectionCards::buildHeader(ui->headerSound, tr("Sound"));
+    GnomeSectionCards::applyCardChrome(ui->groupBackground, ui->gridBackground);
+    GnomeSectionCards::applyCardChrome(ui->groupSound, ui->gridSound);
+    refreshThemeColors();
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &GnomeDesktopTab::refreshThemeColors);
 
     // Wallpaper light
     connect(ui->editWallpaper, &QLineEdit::editingFinished, this, [this]() {
@@ -148,4 +157,9 @@ void GnomeDesktopTab::loadSettings()
     }
 
     mLoading = false;
+}
+
+void GnomeDesktopTab::refreshThemeColors()
+{
+    GnomeSectionCards::applyShadows({ui->groupBackground, ui->groupSound});
 }

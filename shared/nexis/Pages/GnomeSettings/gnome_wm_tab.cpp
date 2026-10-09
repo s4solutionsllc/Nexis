@@ -1,5 +1,7 @@
 #include "gnome_wm_tab.h"
 #include "Managers/tool_manager.h"
+#include "gnome_section_cards.h"
+#include "signal_mapper.h"
 #include "ui_gnome_wm_tab.h"
 
 #include <QFontComboBox>
@@ -39,6 +41,13 @@ GnomeWmTab::GnomeWmTab(QWidget *parent) :
         ui->groupMutter->hide();
 
     loadSettings();
+
+    GnomeSectionCards::buildHeader(ui->headerWmPrefs, tr("Window Preferences"));
+    GnomeSectionCards::buildHeader(ui->headerMutter, tr("Compositor (Mutter)"));
+    GnomeSectionCards::applyCardChrome(ui->groupWmPrefs, ui->gridWmPrefs);
+    GnomeSectionCards::applyCardChrome(ui->groupMutter, ui->gridMutter);
+    refreshThemeColors();
+    connect(SignalMapper::ins(), &SignalMapper::sigChangedAppTheme, this, &GnomeWmTab::refreshThemeColors);
 
     // WM Preferences connections
     connect(ui->editButtonLayout, &QLineEdit::editingFinished, this, [this]() {
@@ -251,4 +260,9 @@ void GnomeWmTab::loadSettings()
     }
 
     mLoading = false;
+}
+
+void GnomeWmTab::refreshThemeColors()
+{
+    GnomeSectionCards::applyShadows({ui->groupWmPrefs, ui->groupMutter});
 }

@@ -278,48 +278,72 @@
           </attribute>
           <layout class="QVBoxLayout" name="containersLayout">
            <property name="leftMargin">
-            <number>0</number>
+            <number>8</number>
            </property>
            <property name="topMargin">
-            <number>5</number>
+            <number>8</number>
            </property>
            <property name="rightMargin">
-            <number>0</number>
+            <number>8</number>
            </property>
            <property name="bottomMargin">
+            <number>8</number>
+           </property>
+           <property name="spacing">
             <number>0</number>
            </property>
            <item>
-            <widget class="QTreeWidget" name="treeWidgetContainers">
-             <property name="alternatingRowColors">
-              <bool>false</bool>
-             </property>
-             <property name="selectionMode">
-              <enum>QAbstractItemView::NoSelection</enum>
-             </property>
-             <property name="rootIsDecorated">
-              <bool>true</bool>
-             </property>
-             <column>
-              <property name="text">
-               <string>Container</string>
+            <widget class="QWidget" name="containersContainer" native="true">
+             <layout class="QVBoxLayout" name="containersContainerLayout">
+              <property name="leftMargin">
+               <number>4</number>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Image</string>
+              <property name="topMargin">
+               <number>4</number>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Status</string>
+              <property name="rightMargin">
+               <number>4</number>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Ports</string>
+              <property name="bottomMargin">
+               <number>4</number>
               </property>
-             </column>
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+                <widget class="QTreeWidget" name="treeWidgetContainers">
+                 <property name="alternatingRowColors">
+                  <bool>false</bool>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::NoSelection</enum>
+                 </property>
+                 <property name="rootIsDecorated">
+                  <bool>true</bool>
+                 </property>
+                 <column>
+                  <property name="text">
+                   <string>Container</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Image</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Status</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Ports</string>
+                  </property>
+                 </column>
+                </widget>
+              </item>
+             </layout>
             </widget>
            </item>
           </layout>
@@ -331,43 +355,67 @@
           </attribute>
           <layout class="QVBoxLayout" name="volumesLayout">
            <property name="leftMargin">
-            <number>0</number>
+            <number>8</number>
            </property>
            <property name="topMargin">
-            <number>5</number>
+            <number>8</number>
            </property>
            <property name="rightMargin">
-            <number>0</number>
+            <number>8</number>
            </property>
            <property name="bottomMargin">
+            <number>8</number>
+           </property>
+           <property name="spacing">
             <number>0</number>
            </property>
            <item>
-            <widget class="QTreeWidget" name="treeWidgetVolumes">
-             <property name="alternatingRowColors">
-              <bool>false</bool>
-             </property>
-             <property name="selectionMode">
-              <enum>QAbstractItemView::NoSelection</enum>
-             </property>
-             <property name="rootIsDecorated">
-              <bool>true</bool>
-             </property>
-             <column>
-              <property name="text">
-               <string>Volume</string>
+            <widget class="QWidget" name="volumesContainer" native="true">
+             <layout class="QVBoxLayout" name="volumesContainerLayout">
+              <property name="leftMargin">
+               <number>4</number>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Driver</string>
+              <property name="topMargin">
+               <number>4</number>
               </property>
-             </column>
-             <column>
-              <property name="text">
-               <string>Mount Point</string>
+              <property name="rightMargin">
+               <number>4</number>
               </property>
-             </column>
+              <property name="bottomMargin">
+               <number>4</number>
+              </property>
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+                <widget class="QTreeWidget" name="treeWidgetVolumes">
+                 <property name="alternatingRowColors">
+                  <bool>false</bool>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::NoSelection</enum>
+                 </property>
+                 <property name="rootIsDecorated">
+                  <bool>true</bool>
+                 </property>
+                 <column>
+                  <property name="text">
+                   <string>Volume</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Driver</string>
+                  </property>
+                 </column>
+                 <column>
+                  <property name="text">
+                   <string>Mount Point</string>
+                  </property>
+                 </column>
+                </widget>
+              </item>
+             </layout>
             </widget>
            </item>
           </layout>
