@@ -133,6 +133,12 @@ if(APPLE)
   add_nexis_test(NAME PackageToolMacOSTests
     SOURCES core/test_package_tool_macos.cpp)
 
+  # SSO-25782: ServiceToolMacOS launchctl parsing, plist discovery and
+  # domain-aware command construction (no launchctl is executed).
+  add_nexis_test(NAME ServiceToolMacOSTests
+    SOURCES core/test_service_tool_macos.cpp
+    INCLUDES "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools")
+
   # SSO-15390: pure Sparkle appcast XML parser — compiled cross-platform
   # because the parser has no macOS-only dependencies.
   add_nexis_test(NAME SparkleAppcastTests

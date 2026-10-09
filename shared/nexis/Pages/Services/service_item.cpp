@@ -1,8 +1,11 @@
 #include "service_item.h"
 #include "ui_service_item.h"
 
+#include <QApplication>
 #include <QFontMetrics>
+#include <QPointer>
 #include <QResizeEvent>
+#include <QtConcurrent>
 
 ServiceItem::~ServiceItem()
 {
@@ -56,22 +59,43 @@ void ServiceItem::updateDescriptionElision()
     }
 }
 
+// The change can wait on an admin prompt, so it runs off the UI thread; the
+// switch is locked until the service's real state has been read back.
 void ServiceItem::on_checkServiceStartup_clicked(bool status)
 {
-    QString name = ui->lblServiceName->text();
+    const QString name = ui->lblServiceName->text();
+    ui->checkServiceStartup->setEnabled(false);
 
-    tm->changeServiceStatus(name, status);
-
-    ui->checkServiceStartup->setChecked(tm->serviceIsEnabled(name));
+    ToolManager *tools = tm;
+    QPointer<ServiceItem> self(this);
+    (void)QtConcurrent::run([tools, self, name, status]() {
+        tools->changeServiceStatus(name, status);
+        const bool enabled = tools->serviceIsEnabled(name);
+        QMetaObject::invokeMethod(qApp, [self, enabled]() {
+            if (!self)
+                return;
+            self->ui->checkServiceStartup->setChecked(enabled);
+            self->ui->checkServiceStartup->setEnabled(true);
+        }, Qt::QueuedConnection);
+    });
 }
 
 void ServiceItem::on_checkServiceRunning_clicked(bool status)
 {
-    QString name = ui->lblServiceName->text();
+    const QString name = ui->lblServiceName->text();
+    ui->checkServiceRunning->setEnabled(false);
 
-    tm->changeServiceActive(name, status);
-
-    bool nowActive = tm->serviceIsActive(name);
-    ui->checkServiceRunning->setChecked(nowActive);
-    ui->checkServiceRunning->setText(nowActive ? tr("Running") : tr("Stopped"));
+    ToolManager *tools = tm;
+    QPointer<ServiceItem> self(this);
+    (void)QtConcurrent::run([tools, self, name, status]() {
+        tools->changeServiceActive(name, status);
+        const bool active = tools->serviceIsActive(name);
+        QMetaObject::invokeMethod(qApp, [self, active]() {
+            if (!self)
+                return;
+            self->ui->checkServiceRunning->setChecked(active);
+            self->ui->checkServiceRunning->setText(active ? tr("Running") : tr("Stopped"));
+            self->ui->checkServiceRunning->setEnabled(true);
+        }, Qt::QueuedConnection);
+    });
 }
