@@ -131,7 +131,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | Disk health | `smartctl` | `smartctl` + `diskutil` plist |
 | Process listing | `/proc/[pid]/` | `sysctl` KERN_PROC |
 | Network info | `/sys/class/net/` + `QNetworkInterface` | `QNetworkInterface` |
-| Services | `systemctl` (systemd) | `launchctl` (partial — user launchd domain only) |
+| Services | `systemctl` (systemd) | `launchctl` (launchd) |
 | Packages | APT/DNF/Pacman/Snap | Homebrew + native `.app` bundles |
 | Autostart | `~/.config/autostart/*.desktop` | `~/Library/LaunchAgents/*.plist` |
 | Sudo elevation | `pkexec` / `sudo` | `osascript` (AppleScript admin prompt) |
