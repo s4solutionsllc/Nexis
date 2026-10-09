@@ -868,6 +868,20 @@ add_nexis_test(NAME DuplicateFinderTests
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )
 
+# SSO-25782: DiskToolsPage Largest Files / Empty Folders modes — results
+# populate unchecked, trash routes through the service (exclusion engine),
+# and an empty result returns to the empty state.
+add_nexis_test(NAME DiskToolsPageTests
+  SOURCES
+    managers/test_disk_tools_page.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
 # SSO-15381: FileShredderService — overwrite-then-unlink correctness (proven
 # at the filesystem level via a hard link), recursive folder shredding +
 # empty-dir cleanup, symlink safety, per-item failure accounting, and the

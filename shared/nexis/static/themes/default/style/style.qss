@@ -2153,6 +2153,7 @@ QProgressBar[progressRole="thin"]::chunk {
    that selector; active tab uses @accentColor. */
 
 #DiskToolsPage QPushButton#segmentedLeft,
+#DiskToolsPage QPushButton#segmentedMiddle,
 #DiskToolsPage QPushButton#segmentedRight {
     background-color: @cardBg;
     color: @textPrimary;
@@ -2164,6 +2165,7 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #DiskToolsPage QPushButton#segmentedLeft:checked,
+#DiskToolsPage QPushButton#segmentedMiddle:checked,
 #DiskToolsPage QPushButton#segmentedRight:checked {
     background-color: @primaryFill;
     color: @color07;
@@ -2171,6 +2173,7 @@ QProgressBar[progressRole="thin"]::chunk {
 }
 
 #DiskToolsPage QPushButton#segmentedLeft:hover:!checked,
+#DiskToolsPage QPushButton#segmentedMiddle:hover:!checked,
 #DiskToolsPage QPushButton#segmentedRight:hover:!checked {
     border-color: @accentColor;
 }
@@ -2195,37 +2198,49 @@ QProgressBar[progressRole="thin"]::chunk {
     background-color: @cardBgElevated;
 }
 
-/* Large & Old results tree — frozen elevated-surface header, flat rows */
+/* Large & Old / Largest Files / Empty Folders results trees — frozen elevated-surface header, flat rows */
 
-#treeWidgetLargeOld {
+#treeWidgetLargeOld,
+#treeWidgetLargest,
+#treeWidgetEmptyFolders {
     border: 0;
     background-color: transparent;
     font-size: 10pt;
 }
 
-#treeWidgetLargeOld QHeaderView::section {
+#treeWidgetLargeOld QHeaderView::section,
+#treeWidgetLargest QHeaderView::section,
+#treeWidgetEmptyFolders QHeaderView::section {
     background-color: @cardBgElevated;
     border-top: 0;
     border-bottom: 1px solid @borderColor;
 }
 
-#treeWidgetLargeOld::item {
+#treeWidgetLargeOld::item,
+#treeWidgetLargest::item,
+#treeWidgetEmptyFolders::item {
     border-bottom: 1px solid @borderColor;
     padding: @dp8 @dp6;
     font-size: 10pt;
     color: @textPrimary;
 }
 
-#treeWidgetLargeOld::indicator {
+#treeWidgetLargeOld::indicator,
+#treeWidgetLargest::indicator,
+#treeWidgetEmptyFolders::indicator {
     width: @dp14;
     height: @dp14;
 }
 
-#treeWidgetLargeOld::indicator:unchecked {
+#treeWidgetLargeOld::indicator:unchecked,
+#treeWidgetLargest::indicator:unchecked,
+#treeWidgetEmptyFolders::indicator:unchecked {
     image: url(:/static/themes/common/img/un-check.png);
 }
 
-#treeWidgetLargeOld::indicator:checked {
+#treeWidgetLargeOld::indicator:checked,
+#treeWidgetLargest::indicator:checked,
+#treeWidgetEmptyFolders::indicator:checked {
     image: url(:/static/themes/common/img/check.png);
 }
 
@@ -3295,6 +3310,7 @@ QPushButton[variant="danger"]:focus,
 #btnAdvancePaneToggle:focus,
 #btnNewHost:focus,
 #DiskToolsPage QPushButton#segmentedLeft:focus,
+#DiskToolsPage QPushButton#segmentedMiddle:focus,
 #DiskToolsPage QPushButton#segmentedRight:focus,
 #GnomeSettingsPage QPushButton[accessibleName="navBtn"]:focus {
     border: 1px solid @focusRingColor;

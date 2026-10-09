@@ -11,6 +11,7 @@
 class QButtonGroup;
 class QLabel;
 class QSpinBox;
+class QVBoxLayout;
 class QComboBox;
 class QLineEdit;
 class QListWidget;
@@ -29,11 +30,12 @@ class DiskToolsPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit DiskToolsPage(QWidget *parent = nullptr);
+    explicit DiskToolsPage(QWidget *parent = nullptr, DuplicateFinderService *dupService = nullptr);
     ~DiskToolsPage();
 
 signals:
     void largeOldScanFinishedS(const QList<QFileInfo> &results);
+    void largeOldScanCancelledS();
 
 private slots:
     void switchMode(int index);
@@ -42,17 +44,49 @@ private slots:
     void removeDirectory();
     void onLargeOldScan();
     void onLargeOldScanFinished(const QList<QFileInfo> &results);
+    void onLargeOldCancelled();
     void onLargeOldTrash();
     void onDupScan();
     void onDupProgress(int stage, int current, int total, const QString &message);
     void onDupScanFinished(const QList<DuplicateGroup> &results);
     void onDupCancelled();
+    void onServiceScanCancelled();
+    void onLargestScan();
+    void onLargestScanFinished(const QList<LargeFileEntry> &results);
+    void onEmptyFoldersScan();
+    void onEmptyFoldersScanFinished(const QStringList &folders);
     void onDupTrash();
     void updateLargeOldSelection();
     void updateDupSelection();
 
 private:
+    // A flat, checkable results page driven by DuplicateFinderService:
+    // Largest Files and Empty Folders share this shape.
+    struct FlatMode {
+        QListWidget *dirList = nullptr;
+        QSpinBox *spinTopN = nullptr;
+        QPushButton *btnScan = nullptr;
+        QPushButton *btnCancel = nullptr;
+        QPushButton *btnTrash = nullptr;
+        QTreeWidget *tree = nullptr;
+        QWidget *emptyState = nullptr;
+        QProgressBar *busy = nullptr;
+        QLabel *lblStatus = nullptr;
+        QLabel *lblSelection = nullptr;
+        int sizeColumn = -1;
+    };
+    enum class ServiceScan { None, Duplicates, Largest, EmptyFolders };
+
     void init();
+    QListWidget *buildDirPicker(QVBoxLayout *pageLayout);
+    void buildFlatModePage(QWidget *page, FlatMode &mode, const QStringList &columns,
+                           const QString &emptyText, const QString &scanText);
+    bool beginServiceScan(ServiceScan kind, QLabel *statusLabel, const QListWidget *dirList);
+    QStringList directoriesOf(const QListWidget *list) const;
+    void setFlatModeScanning(FlatMode &mode, bool scanning);
+    void finishFlatScan(FlatMode &mode, const QString &status);
+    void trashFlatSelection(FlatMode &mode, bool folders);
+    void updateFlatSelection(FlatMode &mode, bool folders);
     void buildLargeOldPage();
     void buildDuplicatePage();
     void refreshThemeColors();
@@ -75,6 +109,11 @@ private:
     // Directory picker (shared data, separate widgets per mode)
     QListWidget *mDirListLargeOld;
     QListWidget *mDirListDup;
+    QList<QListWidget *> mDirLists;
+
+    FlatMode mLargest;
+    FlatMode mEmptyFolders;
+    ServiceScan mActiveServiceScan = ServiceScan::None;
 
     // Large & Old mode — filter widgets
     QLabel *mLblSize = nullptr;

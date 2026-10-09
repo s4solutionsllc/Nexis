@@ -303,7 +303,7 @@ On-demand and scheduled Markdown export of a full system health snapshot via `He
 
 ### 5. Disk Tools
 
-Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar section.
+Four-mode page for finding space-wasting files (Large & Old Files, Duplicate Finder, Largest Files, Empty Folders), in the CLEAN sidebar section.
 
 - **UX modernization (NEX Phase-2, SSO-13739):** the scan-roots list and the results tree (per mode) each sit inside their own DS §2 elevated container (`cardRole="elevated"`, one drop shadow each via `DiskToolsPage::makeElevatedContainer()`), replacing the old bordered-widget-per-list look; scan-root rows use the fixed monospace stack (`@monoFontFamily`) with a row divider. The "Large & Old Files"/"Duplicate Finder" tabs sit in their own `#modeBarRow` with DS §3 header-anatomy spacing (plain, no title/accent bar) with the active tab now filled `@accentColor` instead of unstyled default buttons. Each results tree freezes its header to the container's elevated surface color and right-aligns the tabular Size column; the pre-scan empty tree is replaced with a full DS §5 empty state (disk icon, explanation, and a "Scan"/"Find Duplicates" button wired to that mode's scan action) via `DiskToolsPage::makeEmptyState()`. The bottom action bar drops its bordered box for a plain footer with a top hairline. Directory picker, filter controls and values, the Scan/Find Duplicates actions, the five result columns, and "Move to Trash" are unchanged.
 - **Page header + Scan Locations title bar (SSO-14311 follow-up, SSO-14440):** the page now has a real DS §3/F2 page header (3px `@accentColor` accent bar + "Disk Tools" title, `#sectionHeaderRow`/`#sectionHeaderAccent`/`#sectionHeaderTitle`) above the mode-bar row, structurally matching the Processes/System Cleaner page headers. Each mode's scan-roots elevated container also gains a compact "Scan Locations" section-card title bar (`DiskToolsPage::buildSectionHeader()`, `compact="true"` variant of the same recipe, mirroring `SettingsPage::buildSectionHeader()`) as the first child inside the existing container — no new/duplicate container.
@@ -314,7 +314,8 @@ Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar
 - Three match modes: Either (large OR old), Large only, Old only
 - Recursive QDirIterator scan in background thread with cancellation support
 - Results in sortable QTreeWidget with columns: Name, Path, Size, Last Accessed, Last Modified
-- Checkboxes for selective deletion via QFile::moveToTrash()
+- Checkboxes for selective deletion; trashing routes through `DuplicateFinderService::trashFiles()` so cleaner exclusions apply, and excluded paths are skipped at scan time too (SSO-25782 — this mode previously ignored exclusions)
+- Cancelling a scan restores the Scan button and the empty state
 
 **Mode 2 — Duplicate Finder (FR-63 / FW-08):**
 - Shared directory picker (synced with Large & Old mode)
@@ -329,12 +330,20 @@ Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar
   never-delete-last-copy invariant (retains the lexicographically smallest path
   of any duplicate group whose entire surviving set was selected) and drops
   excluded paths before the moveToTrash seam
-- FW-08 additional service surface (UI hookup pending): `scanLargest(topN)`
-  for explicit top-N largest-file ranking and `scanEmptyFolders()` for empty-
-  directory cleanup; both honor exclusions and share the same cancel path
+
+**Mode 3 — Largest Files (FW-08, UI in SSO-25782):**
+- "Show top N" spinner (10–5000, default 100) over `DuplicateFinderService::scanLargest(topN)`
+- Flat checkable tree (Name, Path, Size, Last Modified), largest first, nothing pre-checked; the Size column sorts by real byte count
+- Honors cleaner exclusions; Move to Trash goes through `trashFiles()`
+
+**Mode 4 — Empty Folders (FW-08, UI in SSO-25782):**
+- `DuplicateFinderService::scanEmptyFolders()` lists folders that contain nothing at all (leaf folders only; the scan roots themselves are never listed)
+- Flat checkable tree (Folder, Path), nothing pre-checked; Move to Trash goes through `trashFiles()`
+
+Modes 2–4 share the service's single worker, so only one of them scans at a time; starting a second shows "Another scan is still running" instead of doing nothing. Largest Files and Empty Folders report no incremental progress and show a busy bar.
 
 **Shared features:**
-- Segmented control (QButtonGroup + QStackedWidget) for mode switching
+- Segmented control (QButtonGroup + QStackedWidget) for mode switching; the scan-location list is shared by all four modes
 - Confirmation dialog before trashing files
 - Selection tracking label showing count and total size of checked files
 
