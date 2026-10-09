@@ -8,6 +8,9 @@
 void GnomeSectionCards::buildHeader(QWidget *headerContainer, const QString &title)
 {
     headerContainer->setObjectName("sectionHeaderRow");
+    // The accent bar expands vertically, so without this a card with spare
+    // height grows its header instead of leaving the space to the page.
+    headerContainer->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
     QHBoxLayout *row = new QHBoxLayout(headerContainer);
     row->setContentsMargins(14, 12, 14, 8);
