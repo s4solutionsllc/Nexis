@@ -37,9 +37,9 @@ Every release must satisfy these — fail closed if any check fails.
    to `native`, but only on the macOS job. Linux x64 and ARM64 have no
    screenshot step at all — both matrix legs run `ctest ... -E
    ScreenshotTests`, permanently excluding the suite. This is a known,
-   by-design gap, not a red check: there are no committed Linux baselines (so
-   the comparison would always QSKIP) and the suite hangs indefinitely under
-   xvfb on both architectures. See the comment above the Linux `Unit Tests`
+   by-design gap, not a red check: the suite hangs indefinitely under xvfb on
+   both architectures. Linux baselines are committed
+   (`tests/reference_screenshots/linux/`) but are only compared on demand. See the comment above the Linux `Unit Tests`
    step (`.github/workflows/build.yml` ~L92-100) for the full rationale.
    Linux visual checks happen on demand via the `Regenerate Screenshot
    Baselines` workflow (`workflow_dispatch`) or a local `ctest -R

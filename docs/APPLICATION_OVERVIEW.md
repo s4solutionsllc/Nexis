@@ -131,7 +131,7 @@ Pages that don't apply to the current platform are hidden entirely — no grayed
 | Disk health | `smartctl` | `smartctl` + `diskutil` plist |
 | Process listing | `/proc/[pid]/` | `sysctl` KERN_PROC |
 | Network info | `/sys/class/net/` + `QNetworkInterface` | `QNetworkInterface` |
-| Services | `systemctl` (systemd) | `launchctl` (stubbed) |
+| Services | `systemctl` (systemd) | `launchctl` (launchd) |
 | Packages | APT/DNF/Pacman/Snap | Homebrew + native `.app` bundles |
 | Autostart | `~/.config/autostart/*.desktop` | `~/Library/LaunchAgents/*.plist` |
 | Sudo elevation | `pkexec` / `sudo` | `osascript` (AppleScript admin prompt) |
@@ -314,7 +314,7 @@ On-demand and scheduled Markdown export of a full system health snapshot via `He
 
 ### 5. Disk Tools
 
-Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar section.
+Four-mode page for finding space-wasting files (Large & Old Files, Duplicate Finder, Largest Files, Empty Folders), in the CLEAN sidebar section.
 
 - **UX modernization (NEX Phase-2, SSO-13739):** the scan-roots list and the results tree (per mode) each sit inside their own DS §2 elevated container (`cardRole="elevated"`, one drop shadow each via `DiskToolsPage::makeElevatedContainer()`), replacing the old bordered-widget-per-list look; scan-root rows use the fixed monospace stack (`@monoFontFamily`) with a row divider. The "Large & Old Files"/"Duplicate Finder" tabs sit in their own `#modeBarRow` with DS §3 header-anatomy spacing (plain, no title/accent bar) with the active tab now filled `@accentColor` instead of unstyled default buttons. Each results tree freezes its header to the container's elevated surface color and right-aligns the tabular Size column; the pre-scan empty tree is replaced with a full DS §5 empty state (disk icon, explanation, and a "Scan"/"Find Duplicates" button wired to that mode's scan action) via `DiskToolsPage::makeEmptyState()`. The bottom action bar drops its bordered box for a plain footer with a top hairline. Directory picker, filter controls and values, the Scan/Find Duplicates actions, the five result columns, and "Move to Trash" are unchanged.
 - **Page header + Scan Locations title bar (SSO-14311 follow-up, SSO-14440):** the page now has a real DS §3/F2 page header (3px `@accentColor` accent bar + "Disk Tools" title, `#sectionHeaderRow`/`#sectionHeaderAccent`/`#sectionHeaderTitle`) above the mode-bar row, structurally matching the Processes/System Cleaner page headers. Each mode's scan-roots elevated container also gains a compact "Scan Locations" section-card title bar (`DiskToolsPage::buildSectionHeader()`, `compact="true"` variant of the same recipe, mirroring `SettingsPage::buildSectionHeader()`) as the first child inside the existing container — no new/duplicate container.
@@ -325,7 +325,8 @@ Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar
 - Three match modes: Either (large OR old), Large only, Old only
 - Recursive QDirIterator scan in background thread with cancellation support
 - Results in sortable QTreeWidget with columns: Name, Path, Size, Last Accessed, Last Modified
-- Checkboxes for selective deletion via QFile::moveToTrash()
+- Checkboxes for selective deletion; trashing routes through `DuplicateFinderService::trashFiles()` so cleaner exclusions apply, and excluded paths are skipped at scan time too (SSO-25782 — this mode previously ignored exclusions)
+- Cancelling a scan restores the Scan button and the empty state
 
 **Mode 2 — Duplicate Finder (FR-63 / FW-08):**
 - Shared directory picker (synced with Large & Old mode)
@@ -340,17 +341,25 @@ Two-mode page for finding space-wasting files, accessible via the MANAGE sidebar
   never-delete-last-copy invariant (retains the lexicographically smallest path
   of any duplicate group whose entire surviving set was selected) and drops
   excluded paths before the moveToTrash seam
-- FW-08 additional service surface (UI hookup pending): `scanLargest(topN)`
-  for explicit top-N largest-file ranking and `scanEmptyFolders()` for empty-
-  directory cleanup; both honor exclusions and share the same cancel path
+
+**Mode 3 — Largest Files (FW-08, UI in SSO-25782):**
+- "Show top N" spinner (10–5000, default 100) over `DuplicateFinderService::scanLargest(topN)`
+- Flat checkable tree (Name, Path, Size, Last Modified), largest first, nothing pre-checked; the Size column sorts by real byte count
+- Honors cleaner exclusions; Move to Trash goes through `trashFiles()`
+
+**Mode 4 — Empty Folders (FW-08, UI in SSO-25782):**
+- `DuplicateFinderService::scanEmptyFolders()` lists folders that contain nothing at all (leaf folders only; the scan roots themselves are never listed)
+- Flat checkable tree (Folder, Path), nothing pre-checked; Move to Trash goes through `trashFiles()`
+
+Modes 2–4 share the service's single worker, so only one of them scans at a time; starting a second shows "Another scan is still running" instead of doing nothing. Largest Files and Empty Folders report no incremental progress and show a busy bar.
 
 **Shared features:**
-- Segmented control (QButtonGroup + QStackedWidget) for mode switching
+- Segmented control (QButtonGroup + QStackedWidget) for mode switching; the scan-location list is shared by all four modes
 - Confirmation dialog before trashing files
 - Selection tracking label showing count and total size of checked files
 
 **Wipe Free Space (SSO-15382):**
-- "Wipe Free Space…" button opens a two-step `WipeFreeSpaceDialog` alongside the two scan modes
+- "Wipe Free Space…" button (page header row, top right) opens a two-step `WipeFreeSpaceDialog`
 - Step 1 lists mounted, writable volumes (`WipeFreeSpaceService::listWipeableVolumes()`) with live free space and a TRIM-eligibility badge, then previews the selected volume: free space, safety-margin headroom kept untouched, and (for non-TRIM targets) a rough time/data estimate; a persistent one-line disclosure states the SSD/TRIM honesty point (TRIM signals blocks as reclaimable, not a cryptographic-erase guarantee)
 - Confirmation is the codebase's standard one-sentence `QMessageBox::warning` ("Wipe free space on `<Volume>` (`<X>` GB free)?") behind a destructive-accent (`variant="danger"`) button
 - `WipeFreeSpaceService` detects SSD/TRIM support per volume — Linux: `/sys/block/<dev>/queue/rotational` + `fstrim` availability, then `pkexec fstrim -v <mount>`; macOS: `diskutil info -plist` `SolidState` key, with TRIM reported as automatic (APFS has no user-space "run TRIM now") — and otherwise runs a fill-and-delete pass: a 4 MiB-chunked zero-fill of a single fixed-name temp file (`.nexis-wipe-fill.tmp`) in the volume root, stopping once free space reaches a safety-margin headroom (5% of volume capacity, floored at 1 GiB, capped at 8 GiB — `WipeFreeSpaceService::headroomForVolume()`), then deleting the temp file
@@ -383,7 +392,9 @@ Manage system services (daemons).
 - Status filters: Running/Not Running, Enabled/Disabled
 - Actions: Start/Stop service, Enable/Disable auto-start (all require sudo)
 - Linux: `systemctl` for systemd services
-- macOS: `launchctl` for launchd services
+- macOS: `launchctl` for launchd jobs (`ServiceToolMacOS`, reworked in SSO-25782). The list is every plist in `~/Library/LaunchAgents`, `/Library/LaunchAgents` and `/Library/LaunchDaemons` (by its `Label`, not its file name) plus any other agent loaded in the user's session, so stopped and disabled jobs are listed too. Apple's own jobs and launchd's per-launch `application.*` entries are hidden. The description is the job's program path. Startup state comes from `launchctl print-disabled` (falling back to the plist's `Disabled` key); running state from the job's PID / `launchctl print`.
+- macOS toggles act in the job's own launchd domain: agents in `gui/<uid>` with no password prompt, daemons in `system` behind the admin prompt. Startup uses `enable` / `disable` and does not start or stop the job; Running uses `bootstrap` + `kickstart` to start and `bootout` to stop.
+- Toggles run off the UI thread on both platforms; the switch is locked until the service's real state has been read back.
 
 ### 8. Processes
 
@@ -608,7 +619,7 @@ When a health check identifies an issue, actionable repair buttons appear in the
 
 Manage Docker images, containers, and volumes. Conditional: shown only when Docker CLI is installed.
 
-- **UX modernization (NEX Phase-2, SSO-15097):** the Images tab tree sits inside a single DS §2 elevated container card (`#imagesContainer`, one drop shadow) with a frozen "Image / Size / Created" header and flat rows; the toolbar leads with the shared section-header recipe (3px accent bar + "Docker" title + "Images, containers, and volumes" source line), keeping the Search field, Refresh button, and Images/Containers/Volumes tabs unchanged. The Size column is right-aligned with tabular figures. Containers and Volumes tabs are out of scope (no live-captured content) and keep their existing self-contained tree look.
+- **UX modernization (NEX Phase-2, SSO-15097):** the Images tab tree sits inside a single DS §2 elevated container card (`#imagesContainer`, one drop shadow) with a frozen "Image / Size / Created" header and flat rows; the toolbar leads with the shared section-header recipe (3px accent bar + "Docker" title + "Images, containers, and volumes" source line), keeping the Search field, Refresh button, and Images/Containers/Volumes tabs unchanged. The Size column is right-aligned. The Containers and Volumes tabs follow the same recipe (SSO-25782): each tree sits in its own elevated container card (`#containersContainer` / `#volumesContainer`, one drop shadow each) with the same frozen header and flat rows.
 
 **Three tabs:**
 1. **Images** — Grouped by In Use / Dangling / Other
@@ -635,7 +646,7 @@ Configure GNOME desktop environment settings. Conditional: shown only when `gset
 
 Changes apply immediately via `gsettings set`. Error feedback with inline messages if setting fails. Font fields use `QFontComboBox` with live preview; monospace combo filtered to fixed-pitch families.
 
-**UI layout — Appearance tab (NEX Phase-2 round 2, SSO-15098):** a page-level DS §3 header ("GNOME Settings" / "GNOME desktop preferences") sits above the unchanged tab strip; each of the tab's four `QGroupBox` groups (Themes, Fonts, Interface, Clock & Status) is now its own DS §2 elevated section card (`[cardRole="elevated"]`, one `Utilities::addDropShadow(card, 90, 26)` per card — shadow count 4) with a DS §3 "compact" accent-bar header, per the shared `SettingsPage`-style recipe. Window Manager, Mouse & Touchpad, and Desktop tabs are out of scope for this pass and keep their original `QGroupBox` chrome.
+**UI layout — Appearance tab (NEX Phase-2 round 2, SSO-15098):** a page-level DS §3 header ("GNOME Settings" / "GNOME desktop preferences") sits above the unchanged tab strip; each of the tab's four `QGroupBox` groups (Themes, Fonts, Interface, Clock & Status) is now its own DS §2 elevated section card (`[cardRole="elevated"]`, one `Utilities::addDropShadow(card, 90, 26)` per card — shadow count 4) with a DS §3 "compact" accent-bar header, per the shared `SettingsPage`-style recipe. The Window Manager, Mouse & Touchpad, and Desktop tabs use the same recipe (SSO-25782) for their two groups each (Window Preferences / Compositor; Mouse / Touchpad; Background / Sound); the header, card chrome, and shadow code is shared by all four tabs via `GnomeSectionCards` (`gnome_section_cards.{h,cpp}`).
 
 > **macOS:** the GNOME Settings page is hidden in the sidebar and `ToolManager::checkGnomeSettings()` returns false. The macOS `GnomeSettingsTool` adapter is a hard no-op stub (`isAvailable()` returns false; setters never invoke `defaults write`) so no code path can write GNOME-mapped values into Apple preference domains, even if the sidebar guard were to regress (audit WI-29).
 
@@ -738,7 +749,7 @@ Nexis follows a **three-tier architecture**:
 
 The `nexis-core` static library provides platform-abstracted system information and tool APIs.
 
-### Info Providers (12 classes)
+### Info Providers
 
 | Class | Purpose | macOS Backend | Linux Backend |
 |-------|---------|---------------|---------------|
@@ -756,17 +767,17 @@ The `nexis-core` static library provides platform-abstracted system information 
 | `PowerProfileInfo` | CPU power profile (Performance/Balanced/Power Saver) | Stub (not supported) | `powerprofilesctl` (PPD) + sysfs governor fallback |
 | (via `SystemInfo`) | Cleaner scan paths | Platform-specific paths | Platform-specific paths |
 
-### Tool Classes (5)
+### Tool Classes
 
 | Class | Purpose | Backend |
 |-------|---------|---------|
 | `PackageTool` | List/remove packages | APT, DNF, Pacman, Snap (Linux); Homebrew, `.app` bundles (macOS) |
-| `ServiceTool` | List/start/stop/enable services | `systemctl` (Linux); `launchctl` (macOS, partial) |
+| `ServiceTool` | List/start/stop/enable services | `systemctl` (Linux); `launchctl` (macOS) |
 | `AptSourceTool` | Manage APT repositories | `/etc/apt/sources.list.d/` parsing |
 | `GnomeSettingsTool` | Read/write GNOME settings (Linux only — macOS implementation is a hard no-op stub, see GNOME Settings section) | `gsettings` CLI |
 | `DockerTool` | Manage Docker resources | `docker` CLI (shared implementation) |
 
-### Utility Classes (3)
+### Utility Classes
 
 | Class | Purpose |
 |-------|---------|
@@ -847,7 +858,7 @@ tests/
   theme/                (theme token validation tests)
   fixtures/             (sample system output files for fixture-based testing)
   screenshots/          (FR-41 screenshot regression tests; mask + per-channel fuzz comparator, NEX-3382)
-  reference_screenshots/  (per-platform reference PNGs: macos/{dark,light}/ committed; linux baselines not yet committed — NEX-3382 removed the empty placeholders so the gap is explicit)
+  reference_screenshots/  (per-platform reference PNGs: macos/{dark,light}/ and linux/{dark,light}/ committed; refreshed via the Regenerate Screenshot Baselines workflow)
 ```
 
 ### Build Targets
@@ -874,7 +885,7 @@ tests/
 **Test executables** — see the canonical table at the top of this doc for counts
 - Unit test executables registered via the `add_nexis_test()` CMake macro (QTEST_MAIN requires one main per executable); plus one screenshot regression test linked against `nexis-gui`
 - Static parser pattern: parsing logic extracted into public static methods on shared base classes, tested with fixture data files in `tests/fixtures/`. macOS live-tool output (`nettop` CSV, `diskutil` plist, `sysctl kern.boottime`) is covered by fixtures under `tests/fixtures/macos/` and exercised via the FR-127 compile-source-into-test pattern (WI-33); the parsers are exposed as pure static methods so the tests run on any host. Package-manager uninstall command construction (apt/dnf/yum/pacman/snap/brew argv + macOS osascript shell escaping) is exercised via the same seam pattern as `TestableRepairEngine`.
-- Screenshot test: captures 12 pages × 2 themes, masks declared dynamic-data regions (charts, tables, dashboard tiles, live system summary), then per-channel-fuzz compares the remaining chrome against reference PNGs under a tight 1% default unmasked-diff threshold; missing page class or reference PNG `QFAIL`s loudly, missing platform/theme baseline directory `QSKIP`s with regeneration instructions (NEX-3381: non-blocking in CI on Linux x64 and macOS, skipped on ARM64 Linux due to xvfb hang; NEX-3382 hardened the comparator and added seven self-test slots that validate the mask + fuzz contract against synthetic images on every run)
+- Screenshot test: captures every page in `kPageMap` (17 common + 3 Linux-only conditional pages) × 2 themes, masks declared dynamic-data regions (charts, tables, dashboard tiles, live system summary), then per-channel-fuzz compares the remaining chrome against reference PNGs under a tight 1% default unmasked-diff threshold; missing page class or reference PNG `QFAIL`s loudly, missing platform/theme baseline directory `QSKIP`s with regeneration instructions (NEX-3381: non-blocking in CI on macOS only — the Linux jobs exclude the suite because it hangs under xvfb, so the committed Linux baselines are checked on demand; NEX-3382 hardened the comparator and added seven self-test slots that validate the mask + fuzz contract against synthetic images on every run)
 - Dependencies: `nexis-core`/`nexis-gui`, Qt6::Test
 - Gated behind `BUILD_TESTING` option (default ON)
 - Run via: `ctest --test-dir build --output-on-failure`

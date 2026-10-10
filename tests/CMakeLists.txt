@@ -134,6 +134,12 @@ if(APPLE)
   add_nexis_test(NAME PackageToolMacOSTests
     SOURCES core/test_package_tool_macos.cpp)
 
+  # SSO-25782: ServiceToolMacOS launchctl parsing, plist discovery and
+  # domain-aware command construction (no launchctl is executed).
+  add_nexis_test(NAME ServiceToolMacOSTests
+    SOURCES core/test_service_tool_macos.cpp
+    INCLUDES "${CMAKE_SOURCE_DIR}/macos/nexis-core/Tools")
+
   # SSO-15390: pure Sparkle appcast XML parser — compiled cross-platform
   # because the parser has no macOS-only dependencies.
   add_nexis_test(NAME SparkleAppcastTests
@@ -861,6 +867,20 @@ add_nexis_test(NAME DiskMapBubbleAsyncTests
 add_nexis_test(NAME DuplicateFinderTests
   SOURCES
     managers/test_duplicate_finder.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
+# SSO-25782: DiskToolsPage Largest Files / Empty Folders modes — results
+# populate unchecked, trash routes through the service (exclusion engine),
+# and an empty result returns to the empty state.
+add_nexis_test(NAME DiskToolsPageTests
+  SOURCES
+    managers/test_disk_tools_page.cpp
   INCLUDES
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Services"

@@ -70,6 +70,11 @@
         </property>
        </spacer>
       </item>
+      <item>
+       <widget class="QPushButton" name="btnWipeFreeSpace">
+        <property name="text"><string>Wipe Free Space…</string></property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -95,14 +100,21 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnModeLargest">
+        <property name="text"><string>Largest Files</string></property>
+        <property name="checkable"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnModeEmptyFolders">
+        <property name="text"><string>Empty Folders</string></property>
+        <property name="checkable"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
        <spacer name="modeBarSpacer">
         <property name="orientation"><enum>Qt::Horizontal</enum></property>
        </spacer>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnWipeFreeSpace">
-        <property name="text"><string>Wipe Free Space…</string></property>
-       </widget>
       </item>
      </layout>
     </widget>
@@ -112,6 +124,8 @@
      <property name="currentIndex"><number>0</number></property>
      <widget class="QWidget" name="pageLargeOld"/>
      <widget class="QWidget" name="pageDuplicates"/>
+     <widget class="QWidget" name="pageLargest"/>
+     <widget class="QWidget" name="pageEmptyFolders"/>
     </widget>
    </item>
   </layout>

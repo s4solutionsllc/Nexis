@@ -25,18 +25,19 @@
 #include <QtConcurrent>
 
 #include "Managers/app_manager.h"
+#include "Managers/cleaner_service.h"
 #include "Services/duplicate_finder_service.h"
 #include "wipe_free_space_dialog.h"
 #include "signal_mapper.h"
 #include "utilities.h"
 #include <Utils/format_util.h>
 
-DiskToolsPage::DiskToolsPage(QWidget *parent)
+DiskToolsPage::DiskToolsPage(QWidget *parent, DuplicateFinderService *dupService)
     : QWidget(parent)
     , ui(new Ui::DiskToolsPage)
     , mAppManager(AppManager::ins())
     , mSignalMapper(SignalMapper::ins())
-    , mDupService(DuplicateFinderService::ins())
+    , mDupService(dupService ? dupService : DuplicateFinderService::ins())
 {
     ui->setupUi(this);
     init();
@@ -57,12 +58,16 @@ void DiskToolsPage::init()
     mModeGroup->setExclusive(true);
     mModeGroup->addButton(ui->btnModeLargeOld, 0);
     mModeGroup->addButton(ui->btnModeDuplicates, 1);
+    mModeGroup->addButton(ui->btnModeLargest, 2);
+    mModeGroup->addButton(ui->btnModeEmptyFolders, 3);
     connect(mModeGroup, &QButtonGroup::idClicked, this, &DiskToolsPage::switchMode);
 
-    ui->btnModeLargeOld->setCursor(Qt::PointingHandCursor);
-    ui->btnModeDuplicates->setCursor(Qt::PointingHandCursor);
+    for (QAbstractButton *button : mModeGroup->buttons())
+        button->setCursor(Qt::PointingHandCursor);
     ui->btnModeLargeOld->setObjectName("segmentedLeft");
-    ui->btnModeDuplicates->setObjectName("segmentedRight");
+    ui->btnModeDuplicates->setObjectName("segmentedMiddle");
+    ui->btnModeLargest->setObjectName("segmentedMiddle");
+    ui->btnModeEmptyFolders->setObjectName("segmentedRight");
 
     ui->stackedModes->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     ui->mainLayout->setStretchFactor(ui->stackedModes, 1);
@@ -73,16 +78,32 @@ void DiskToolsPage::init()
 
     buildLargeOldPage();
     buildDuplicatePage();
+    mDirLists = {mDirListLargeOld, mDirListDup};
+
+    buildFlatModePage(ui->pageLargest, mLargest,
+        {tr("Name"), tr("Path"), tr("Size"), tr("Last Modified")},
+        tr("List the biggest files across the selected folders, largest first."),
+        tr("Find Largest"));
+    buildFlatModePage(ui->pageEmptyFolders, mEmptyFolders,
+        {tr("Folder"), tr("Path")},
+        tr("List folders that contain nothing at all across the selected folders."),
+        tr("Find Empty Folders"));
 
     connect(mDupService, &DuplicateFinderService::progressUpdated,
             this, &DiskToolsPage::onDupProgress);
     connect(mDupService, &DuplicateFinderService::scanFinished,
             this, &DiskToolsPage::onDupScanFinished);
+    connect(mDupService, &DuplicateFinderService::largestScanFinished,
+            this, &DiskToolsPage::onLargestScanFinished);
+    connect(mDupService, &DuplicateFinderService::emptyFoldersScanFinished,
+            this, &DiskToolsPage::onEmptyFoldersScanFinished);
     connect(mDupService, &DuplicateFinderService::scanCancelled,
-            this, &DiskToolsPage::onDupCancelled);
+            this, &DiskToolsPage::onServiceScanCancelled);
 
     connect(this, &DiskToolsPage::largeOldScanFinishedS,
             this, &DiskToolsPage::onLargeOldScanFinished);
+    connect(this, &DiskToolsPage::largeOldScanCancelledS,
+            this, &DiskToolsPage::onLargeOldCancelled);
 
     connect(mSignalMapper, &SignalMapper::sigChangedAppTheme,
             this, &DiskToolsPage::refreshThemeColors);
@@ -121,32 +142,21 @@ void DiskToolsPage::addDirectory()
     if (dir.isEmpty())
         return;
 
-    auto addIfMissing = [](QListWidget *list, const QString &d) {
-        for (int i = 0; i < list->count(); ++i)
-            if (list->item(i)->text() == d) return;
-        list->addItem(d);
-    };
-    addIfMissing(mDirListLargeOld, dir);
-    addIfMissing(mDirListDup, dir);
+    for (QListWidget *list : std::as_const(mDirLists)) {
+        if (list->findItems(dir, Qt::MatchExactly).isEmpty())
+            list->addItem(dir);
+    }
 }
 
 void DiskToolsPage::removeDirectory()
 {
-    QListWidget *current = (ui->stackedModes->currentIndex() == 0) ? mDirListLargeOld : mDirListDup;
-    QListWidget *other = (current == mDirListLargeOld) ? mDirListDup : mDirListLargeOld;
+    QListWidget *current = mDirLists.value(ui->stackedModes->currentIndex());
+    if (!current || !current->currentItem())
+        return;
 
-    auto *item = current->currentItem();
-    if (!item) return;
-
-    QString path = item->text();
-    delete item;
-
-    for (int i = 0; i < other->count(); ++i) {
-        if (other->item(i)->text() == path) {
-            delete other->takeItem(i);
-            break;
-        }
-    }
+    const QString path = current->currentItem()->text();
+    for (QListWidget *list : std::as_const(mDirLists))
+        qDeleteAll(list->findItems(path, Qt::MatchExactly));
 }
 
 // ---- Large & Old Files Mode ----
@@ -332,11 +342,10 @@ void DiskToolsPage::onLargeOldScan()
 
     int filterMode = mCbFilterMode->currentIndex();
 
-    QStringList dirs;
-    for (int i = 0; i < mDirListLargeOld->count(); ++i)
-        dirs.append(mDirListLargeOld->item(i)->text());
+    const QStringList dirs = directoriesOf(mDirListLargeOld);
+    const QList<CleanerService::ExclusionEntry> exclusions = CleanerService::ins()->loadExclusions();
 
-    mLargeOldFuture = QtConcurrent::run([this, dirs, sizeThreshold, ageMinutes, filterMode]() {
+    mLargeOldFuture = QtConcurrent::run([this, dirs, exclusions, sizeThreshold, ageMinutes, filterMode]() {
         QList<QFileInfo> results;
 
         for (const QString &dir : dirs) {
@@ -353,6 +362,8 @@ void DiskToolsPage::onLargeOldScan()
                 QFileInfo info = it.fileInfo();
 
                 if (info.isSymLink())
+                    continue;
+                if (CleanerService::isExcluded(info.absoluteFilePath(), exclusions))
                     continue;
 
                 bool isLarge = info.size() >= sizeThreshold;
@@ -371,8 +382,10 @@ void DiskToolsPage::onLargeOldScan()
             }
         }
 
-        if (mLargeOldCancelled.loadRelaxed())
+        if (mLargeOldCancelled.loadRelaxed()) {
+            emit largeOldScanCancelledS();
             return;
+        }
 
         std::sort(results.begin(), results.end(), [](const QFileInfo &a, const QFileInfo &b) {
             return a.size() > b.size();
@@ -408,6 +421,15 @@ void DiskToolsPage::onLargeOldScanFinished(const QList<QFileInfo> &results)
     updateLargeOldSelection();
 }
 
+void DiskToolsPage::onLargeOldCancelled()
+{
+    mBtnLargeOldCancel->hide();
+    mBtnLargeOldScan->show();
+    mTreeLargeOld->hide();
+    mEmptyStateLargeOld->show();
+    mLblLargeOldStatus->setText(tr("Scan cancelled"));
+}
+
 void DiskToolsPage::onLargeOldTrash()
 {
     QStringList filesToTrash;
@@ -430,22 +452,16 @@ void DiskToolsPage::onLargeOldTrash()
     if (reply != QMessageBox::Yes)
         return;
 
-    int trashed = 0;
-    for (const QString &path : filesToTrash) {
-        if (QFile::moveToTrash(path))
-            trashed++;
-    }
+    // Through the service so the cleaner exclusion engine applies here too.
+    const QStringList trashedPaths = mDupService->trashFiles(filesToTrash, {});
+    const QSet<QString> trashedSet(trashedPaths.constBegin(), trashedPaths.constEnd());
 
     for (int i = mTreeLargeOld->topLevelItemCount() - 1; i >= 0; --i) {
-        auto *item = mTreeLargeOld->topLevelItem(i);
-        if (item->checkState(0) == Qt::Checked) {
-            QString path = item->data(0, Qt::UserRole).toString();
-            if (!QFile::exists(path))
-                delete mTreeLargeOld->takeTopLevelItem(i);
-        }
+        if (trashedSet.contains(mTreeLargeOld->topLevelItem(i)->data(0, Qt::UserRole).toString()))
+            delete mTreeLargeOld->takeTopLevelItem(i);
     }
 
-    mLblLargeOldStatus->setText(tr("Moved %1 files to trash").arg(trashed));
+    mLblLargeOldStatus->setText(tr("Moved %1 files to trash").arg(trashedPaths.size()));
     updateLargeOldSelection();
 }
 
@@ -628,7 +644,7 @@ void DiskToolsPage::buildDuplicatePage()
 
 void DiskToolsPage::onDupScan()
 {
-    if (mDupService->isScanning() || mDirListDup->count() == 0)
+    if (!beginServiceScan(ServiceScan::Duplicates, mLblDupStatus, mDirListDup))
         return;
 
     mTreeDuplicates->clear();
@@ -647,12 +663,8 @@ void DiskToolsPage::onDupScan()
 
     QString glob = mEditGlob->text().trimmed();
 
-    QStringList dirs;
-    for (int i = 0; i < mDirListDup->count(); ++i)
-        dirs.append(mDirListDup->item(i)->text());
-
     mLblDupStatus->setText(tr("Starting scan..."));
-    mDupService->scan(dirs, minSize, glob);
+    mDupService->scan(directoriesOf(mDirListDup), minSize, glob);
 }
 
 void DiskToolsPage::onDupProgress(int stage, int current, int total, const QString &message)
@@ -669,6 +681,7 @@ void DiskToolsPage::onDupProgress(int stage, int current, int total, const QStri
 
 void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
 {
+    mActiveServiceScan = ServiceScan::None;
     mDupProgress->hide();
     mBtnDupCancel->hide();
     mBtnDupScan->show();
@@ -805,6 +818,366 @@ void DiskToolsPage::updateDupSelection()
         mLblDupSelection->setText(tr("No files selected"));
         mBtnDupTrash->setEnabled(false);
     }
+}
+
+// ---- Largest Files / Empty Folders Modes ----
+
+namespace {
+
+// Sorts a column by the raw number stored in its UserRole (bytes) when there
+// is one, so "3.0 KB" does not sort below "200 B".
+class NumericAwareItem : public QTreeWidgetItem
+{
+public:
+    using QTreeWidgetItem::QTreeWidgetItem;
+
+    bool operator<(const QTreeWidgetItem &other) const override
+    {
+        const int column = treeWidget() ? treeWidget()->sortColumn() : 0;
+        const QVariant mine = data(column, Qt::UserRole);
+        const QVariant theirs = other.data(column, Qt::UserRole);
+        if (mine.typeId() == QMetaType::ULongLong && theirs.typeId() == QMetaType::ULongLong)
+            return mine.toULongLong() < theirs.toULongLong();
+        return QTreeWidgetItem::operator<(other);
+    }
+};
+
+}
+
+QStringList DiskToolsPage::directoriesOf(const QListWidget *list) const
+{
+    QStringList dirs;
+    for (int i = 0; i < list->count(); ++i)
+        dirs.append(list->item(i)->text());
+    return dirs;
+}
+
+// The service runs one scan of any kind at a time and silently drops a
+// second request, so say why nothing happened instead.
+bool DiskToolsPage::beginServiceScan(ServiceScan kind, QLabel *statusLabel, const QListWidget *dirList)
+{
+    if (dirList->count() == 0)
+        return false;
+    if (mDupService->isScanning()) {
+        statusLabel->setText(tr("Another scan is still running. Cancel it or wait for it to finish."));
+        return false;
+    }
+    mActiveServiceScan = kind;
+    return true;
+}
+
+QListWidget *DiskToolsPage::buildDirPicker(QVBoxLayout *pageLayout)
+{
+    auto *dirFrame = new QFrame(this);
+    auto *dirLayout = new QHBoxLayout(dirFrame);
+    dirLayout->setContentsMargins(0, 0, 0, 0);
+    dirLayout->setSpacing(8);
+
+    auto *dirListContainer = makeElevatedContainer(dirFrame);
+    auto *dirListContainerLayout = new QVBoxLayout(dirListContainer);
+    dirListContainerLayout->setContentsMargins(0, 0, 0, 0);
+    dirListContainerLayout->setSpacing(0);
+
+    auto *scanLocationsHeader = new QWidget(dirListContainer);
+    buildSectionHeader(scanLocationsHeader, tr("Scan Locations"));
+    dirListContainerLayout->addWidget(scanLocationsHeader);
+
+    auto *list = new QListWidget(dirListContainer);
+    list->setObjectName("diskToolsDirList");
+    list->setFrameShape(QFrame::NoFrame);
+    list->setMaximumHeight(80);
+    for (const QString &dir : directoriesOf(mDirListLargeOld))
+        list->addItem(dir);
+    dirListContainerLayout->addWidget(list);
+    dirLayout->addWidget(dirListContainer, 1);
+
+    auto *dirBtnLayout = new QVBoxLayout();
+    dirBtnLayout->setSpacing(4);
+    auto *btnAdd = new QPushButton(tr("Add..."), dirFrame);
+    btnAdd->setCursor(Qt::PointingHandCursor);
+    connect(btnAdd, &QPushButton::clicked, this, &DiskToolsPage::addDirectory);
+    dirBtnLayout->addWidget(btnAdd);
+    auto *btnRemove = new QPushButton(tr("Remove"), dirFrame);
+    btnRemove->setCursor(Qt::PointingHandCursor);
+    connect(btnRemove, &QPushButton::clicked, this, &DiskToolsPage::removeDirectory);
+    dirBtnLayout->addWidget(btnRemove);
+    dirBtnLayout->addStretch();
+    dirLayout->addLayout(dirBtnLayout);
+    pageLayout->addWidget(dirFrame);
+
+    mDirLists.append(list);
+    return list;
+}
+
+void DiskToolsPage::buildFlatModePage(QWidget *page, FlatMode &mode, const QStringList &columns,
+                                      const QString &emptyText, const QString &scanText)
+{
+    const bool isLargest = (&mode == &mLargest);
+    const bool folders = !isLargest;
+
+    auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 8, 0, 0);
+    layout->setSpacing(8);
+
+    mode.dirList = buildDirPicker(layout);
+
+    auto *filterLayout = new QHBoxLayout();
+    filterLayout->setSpacing(8);
+    if (isLargest) {
+        filterLayout->addWidget(new QLabel(tr("Show top:"), page));
+        mode.spinTopN = new QSpinBox(page);
+        mode.spinTopN->setObjectName("spinTopN");
+        mode.spinTopN->setRange(10, 5000);
+        mode.spinTopN->setSingleStep(10);
+        mode.spinTopN->setValue(100);
+        filterLayout->addWidget(mode.spinTopN);
+        mode.sizeColumn = 2;
+    }
+    filterLayout->addStretch();
+
+    mode.btnCancel = new QPushButton(tr("Cancel"), page);
+    mode.btnCancel->setCursor(Qt::PointingHandCursor);
+    mode.btnCancel->hide();
+    connect(mode.btnCancel, &QPushButton::clicked, mDupService, &DuplicateFinderService::cancel);
+    filterLayout->addWidget(mode.btnCancel);
+
+    mode.btnScan = new QPushButton(scanText, page);
+    mode.btnScan->setObjectName("btnScan");
+    mode.btnScan->setCursor(Qt::PointingHandCursor);
+    filterLayout->addWidget(mode.btnScan);
+    layout->addLayout(filterLayout);
+
+    // These scans report no progress, so the bar only ever runs busy.
+    mode.busy = new QProgressBar(page);
+    mode.busy->setTextVisible(false);
+    mode.busy->setRange(0, 0);
+    mode.busy->hide();
+    layout->addWidget(mode.busy);
+
+    mode.lblStatus = new QLabel(page);
+    mode.lblStatus->setObjectName("lblStatus");
+    layout->addWidget(mode.lblStatus);
+
+    auto *resultsContainer = makeElevatedContainer(page);
+    auto *resultsContainerLayout = new QVBoxLayout(resultsContainer);
+    resultsContainerLayout->setContentsMargins(0, 0, 0, 0);
+    resultsContainerLayout->setSpacing(0);
+
+    mode.tree = new QTreeWidget(resultsContainer);
+    mode.tree->setObjectName(isLargest ? "treeWidgetLargest" : "treeWidgetEmptyFolders");
+    mode.tree->setFrameShape(QFrame::NoFrame);
+    mode.tree->setHeaderLabels(columns);
+    mode.tree->setRootIsDecorated(false);
+    mode.tree->setSortingEnabled(true);
+    mode.tree->setAlternatingRowColors(true);
+    mode.tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    mode.tree->header()->setStretchLastSection(true);
+    mode.tree->header()->setSectionResizeMode(0, QHeaderView::Interactive);
+    mode.tree->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+    for (int column = 2; column < columns.size(); ++column)
+        mode.tree->header()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
+    if (mode.sizeColumn >= 0)
+        mode.tree->headerItem()->setTextAlignment(mode.sizeColumn, Qt::AlignRight | Qt::AlignVCenter);
+    mode.tree->hide();
+    resultsContainerLayout->addWidget(mode.tree);
+
+    QPushButton *emptyStateBtn = nullptr;
+    mode.emptyState = makeEmptyState(resultsContainer, tr("No results yet"), emptyText,
+                                     &emptyStateBtn, scanText);
+    mode.emptyState->setObjectName("diskToolsEmptyState");
+    resultsContainerLayout->addWidget(mode.emptyState);
+    layout->addWidget(resultsContainer, 1);
+
+    auto *actionBar = new QFrame(page);
+    actionBar->setObjectName("actionBarFrame");
+    auto *actionLayout = new QHBoxLayout(actionBar);
+    actionLayout->setContentsMargins(0, 12, 0, 0);
+    actionLayout->setSpacing(12);
+
+    mode.lblSelection = new QLabel(actionBar);
+    actionLayout->addWidget(mode.lblSelection);
+    actionLayout->addStretch();
+
+    mode.btnTrash = new QPushButton(tr("Move to Trash"), actionBar);
+    mode.btnTrash->setObjectName("btnTrash");
+    mode.btnTrash->setCursor(Qt::PointingHandCursor);
+    actionLayout->addWidget(mode.btnTrash);
+    layout->addWidget(actionBar);
+
+    FlatMode *m = &mode;
+    auto startScan = isLargest ? &DiskToolsPage::onLargestScan : &DiskToolsPage::onEmptyFoldersScan;
+    connect(mode.btnScan, &QPushButton::clicked, this, startScan);
+    connect(emptyStateBtn, &QPushButton::clicked, this, startScan);
+    connect(mode.tree, &QTreeWidget::itemChanged, this, [this, m, folders]() { updateFlatSelection(*m, folders); });
+    connect(mode.btnTrash, &QPushButton::clicked, this, [this, m, folders]() { trashFlatSelection(*m, folders); });
+    updateFlatSelection(mode, folders);
+}
+
+void DiskToolsPage::setFlatModeScanning(FlatMode &mode, bool scanning)
+{
+    mode.btnScan->setVisible(!scanning);
+    mode.btnCancel->setVisible(scanning);
+    mode.busy->setVisible(scanning);
+}
+
+void DiskToolsPage::finishFlatScan(FlatMode &mode, const QString &status)
+{
+    mActiveServiceScan = ServiceScan::None;
+    setFlatModeScanning(mode, false);
+    const bool hasRows = mode.tree->topLevelItemCount() > 0;
+    mode.tree->setVisible(hasRows);
+    mode.emptyState->setVisible(!hasRows);
+    mode.lblStatus->setText(status);
+}
+
+void DiskToolsPage::onLargestScan()
+{
+    if (!beginServiceScan(ServiceScan::Largest, mLargest.lblStatus, mLargest.dirList))
+        return;
+
+    mLargest.tree->clear();
+    mLargest.emptyState->hide();
+    mLargest.tree->show();
+    setFlatModeScanning(mLargest, true);
+    mLargest.lblStatus->setText(tr("Scanning..."));
+    mDupService->scanLargest(directoriesOf(mLargest.dirList), mLargest.spinTopN->value());
+}
+
+void DiskToolsPage::onLargestScanFinished(const QList<LargeFileEntry> &results)
+{
+    QTreeWidget *tree = mLargest.tree;
+    tree->setUpdatesEnabled(false);
+    tree->setSortingEnabled(false);
+    for (const LargeFileEntry &entry : results) {
+        auto *item = new NumericAwareItem(tree);
+        item->setCheckState(0, Qt::Unchecked);
+        item->setText(0, entry.info.fileName());
+        item->setText(1, entry.info.absolutePath());
+        item->setText(2, FormatUtil::formatBytes(entry.size));
+        item->setData(2, Qt::UserRole, static_cast<qulonglong>(entry.size));
+        item->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
+        item->setText(3, entry.info.lastModified().toString("yyyy-MM-dd hh:mm"));
+        item->setData(0, Qt::UserRole, entry.info.absoluteFilePath());
+    }
+    tree->setSortingEnabled(true);
+    tree->sortByColumn(2, Qt::DescendingOrder);
+    tree->setUpdatesEnabled(true);
+
+    finishFlatScan(mLargest, tr("%1 files found").arg(results.size()));
+    updateFlatSelection(mLargest, false);
+}
+
+void DiskToolsPage::onEmptyFoldersScan()
+{
+    if (!beginServiceScan(ServiceScan::EmptyFolders, mEmptyFolders.lblStatus, mEmptyFolders.dirList))
+        return;
+
+    mEmptyFolders.tree->clear();
+    mEmptyFolders.emptyState->hide();
+    mEmptyFolders.tree->show();
+    setFlatModeScanning(mEmptyFolders, true);
+    mEmptyFolders.lblStatus->setText(tr("Scanning..."));
+    mDupService->scanEmptyFolders(directoriesOf(mEmptyFolders.dirList));
+}
+
+void DiskToolsPage::onEmptyFoldersScanFinished(const QStringList &folders)
+{
+    QTreeWidget *tree = mEmptyFolders.tree;
+    tree->setUpdatesEnabled(false);
+    tree->setSortingEnabled(false);
+    for (const QString &path : folders) {
+        const QFileInfo info(path);
+        auto *item = new QTreeWidgetItem(tree);
+        item->setCheckState(0, Qt::Unchecked);
+        item->setText(0, info.fileName());
+        item->setText(1, info.absolutePath());
+        item->setData(0, Qt::UserRole, path);
+    }
+    tree->setSortingEnabled(true);
+    tree->sortByColumn(1, Qt::AscendingOrder);
+    tree->setUpdatesEnabled(true);
+
+    finishFlatScan(mEmptyFolders, tr("%1 empty folders found").arg(folders.size()));
+    updateFlatSelection(mEmptyFolders, true);
+}
+
+void DiskToolsPage::onServiceScanCancelled()
+{
+    switch (mActiveServiceScan) {
+    case ServiceScan::Largest:
+        finishFlatScan(mLargest, tr("Scan cancelled"));
+        break;
+    case ServiceScan::EmptyFolders:
+        finishFlatScan(mEmptyFolders, tr("Scan cancelled"));
+        break;
+    case ServiceScan::Duplicates:
+    case ServiceScan::None:
+        mActiveServiceScan = ServiceScan::None;
+        onDupCancelled();
+        break;
+    }
+}
+
+void DiskToolsPage::trashFlatSelection(FlatMode &mode, bool folders)
+{
+    QStringList paths;
+    quint64 totalSize = 0;
+    for (int i = 0; i < mode.tree->topLevelItemCount(); ++i) {
+        auto *item = mode.tree->topLevelItem(i);
+        if (item->checkState(0) != Qt::Checked)
+            continue;
+        paths.append(item->data(0, Qt::UserRole).toString());
+        if (mode.sizeColumn >= 0)
+            totalSize += item->data(mode.sizeColumn, Qt::UserRole).toULongLong();
+    }
+    if (paths.isEmpty())
+        return;
+
+    const QString question = folders
+        ? (paths.size() == 1 ? tr("Move 1 empty folder to trash?")
+                             : tr("Move %1 empty folders to trash?").arg(paths.size()))
+        : tr("Move %1 files (%2) to trash?").arg(paths.size()).arg(FormatUtil::formatBytes(totalSize));
+    if (QMessageBox::question(this, tr("Move to Trash"), question,
+                              QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes)
+        return;
+
+    const QStringList trashedPaths = mDupService->trashFiles(paths, {});
+    const QSet<QString> trashedSet(trashedPaths.constBegin(), trashedPaths.constEnd());
+    for (int i = mode.tree->topLevelItemCount() - 1; i >= 0; --i) {
+        if (trashedSet.contains(mode.tree->topLevelItem(i)->data(0, Qt::UserRole).toString()))
+            delete mode.tree->takeTopLevelItem(i);
+    }
+
+    const int kept = paths.size() - trashedPaths.size();
+    QString status = folders ? (trashedPaths.size() == 1 ? tr("Moved 1 folder to trash")
+                                                         : tr("Moved %1 folders to trash").arg(trashedPaths.size()))
+                             : tr("Moved %1 files to trash").arg(trashedPaths.size());
+    if (kept > 0)
+        status += tr(" · %1 kept (excluded or could not be moved)").arg(kept);
+    mode.lblStatus->setText(status);
+    updateFlatSelection(mode, folders);
+}
+
+void DiskToolsPage::updateFlatSelection(FlatMode &mode, bool folders)
+{
+    int count = 0;
+    quint64 size = 0;
+    for (int i = 0; i < mode.tree->topLevelItemCount(); ++i) {
+        auto *item = mode.tree->topLevelItem(i);
+        if (item->checkState(0) != Qt::Checked)
+            continue;
+        count++;
+        if (mode.sizeColumn >= 0)
+            size += item->data(mode.sizeColumn, Qt::UserRole).toULongLong();
+    }
+
+    if (count == 0)
+        mode.lblSelection->setText(folders ? tr("No folders selected") : tr("No files selected"));
+    else if (folders)
+        mode.lblSelection->setText(count == 1 ? tr("1 folder selected") : tr("%1 folders selected").arg(count));
+    else
+        mode.lblSelection->setText(tr("%1 files selected (%2)").arg(count).arg(FormatUtil::formatBytes(size)));
+    mode.btnTrash->setEnabled(count > 0);
 }
 
 void DiskToolsPage::refreshThemeColors()
