@@ -26,7 +26,15 @@ jobs:
     name: Linux (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     container:
-      image: ubuntu:26.04
+      # Pulled from the MCR mirror, not docker.io, to avoid Docker Hub's
+      # unauthenticated per-IP pull rate limit — GitHub-hosted runners share
+      # IP pools, so direct `ubuntu:26.04` pulls flaked under runner-pool load
+      # with "toomanyrequests" / auth.docker.io timeouts (SSO-25798). The MCR
+      # mirror serves the same official image with no such limit and needs
+      # no registry credential. `resolute` is the 26.04 codename — the MCR
+      # mirror does not publish the numeric `26.04` tag, only codenames; its
+      # manifest-list digest is identical to Docker Hub's `ubuntu:26.04`.
+      image: mcr.microsoft.com/mirror/docker/library/ubuntu:resolute
 
     strategy:
       fail-fast: false
