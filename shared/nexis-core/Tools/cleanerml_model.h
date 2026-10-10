@@ -1,6 +1,7 @@
 #ifndef CLEANERML_MODEL_H
 #define CLEANERML_MODEL_H
 
+#include <QHash>
 #include <QString>
 #include <QStringList>
 #include <QList>
@@ -30,6 +31,10 @@ enum class ActionType {
     Winreg,        // command="winreg"/"winreg.*": recognized, but the parser always
                    // filters these out of Option::actions before returning — Linux/macOS
                    // builds have no registry, so this value never reaches a caller.
+    Unsupported,   // ParseMode::Lenient only: a command or search mode Nexis cannot
+                   // run (cookie, json, ini, chrome.*, apt.*, search="deep", ...).
+                   // Kept so CleanerML::forPlatform() can drop the whole option
+                   // rather than run it half-done; never executed.
 };
 
 struct NEXISCORESHARED_EXPORT Action {
@@ -38,6 +43,24 @@ struct NEXISCORESHARED_EXPORT Action {
     QString regex;   // populated for ActionType::Regex from the regex= or wholeregex= attribute
     QString command; // raw command= attribute, kept for diagnostics/logging
     QString search;  // raw search= attribute (may be empty), kept for diagnostics/logging
+    QStringList os;  // os= attribute; empty means "all platforms"
+};
+
+// One <value> of a <var>: the text a $$name$$ token expands to on the
+// platforms listed in `os`. With glob set, the last path component is a
+// pattern and the token expands to every matching entry.
+struct NEXISCORESHARED_EXPORT VarValue {
+    QString value;
+    QStringList os;
+    bool glob = false;
+};
+
+// <running type="exe|pathname">: the application is considered running when
+// a process with that name exists, or a path matching that pattern exists.
+struct NEXISCORESHARED_EXPORT RunningCheck {
+    QString type;
+    QString value;
+    QStringList os;
 };
 
 struct NEXISCORESHARED_EXPORT Option {
@@ -45,6 +68,7 @@ struct NEXISCORESHARED_EXPORT Option {
     QString label;
     QString description;
     QString warning; // optional <warning> text; empty when the option carries none
+    QStringList os;  // os= attribute; empty means "all platforms"
     QList<Action> actions;
 };
 
@@ -55,6 +79,8 @@ struct NEXISCORESHARED_EXPORT Cleaner {
     QString warning;    // optional cleaner-level <warning> text
     QStringList os;      // parsed from os="linux,windows,macos"; empty means "all platforms"
     QList<Option> options;
+    QHash<QString, QList<VarValue>> vars; // keyed by lower-cased <var name>
+    QList<RunningCheck> running;
 };
 
 } // namespace CleanerML

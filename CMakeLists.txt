@@ -126,6 +126,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Tools/app_uninstall_deny_list.cpp"
   "${CORE_SHARED_DIR}/Tools/service_tool_shared.cpp"
   "${CORE_SHARED_DIR}/Tools/cleanerml_parser.cpp"
+  "${CORE_SHARED_DIR}/Tools/cleanerml_platform.cpp"
   "${CORE_SHARED_DIR}/Tools/mac_defaults_tool.cpp"
   "${CORE_SHARED_DIR}/Tools/mac_tweaks_catalog.cpp"
   "${CORE_SHARED_DIR}/Utils/command_util_shared.cpp"
@@ -179,6 +180,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Tools/service_tool.h"
   "${CORE_SHARED_DIR}/Tools/cleanerml_model.h"
   "${CORE_SHARED_DIR}/Tools/cleanerml_parser.h"
+  "${CORE_SHARED_DIR}/Tools/cleanerml_platform.h"
   "${CORE_SHARED_DIR}/Tools/mac_defaults_tool.h"
   "${CORE_SHARED_DIR}/Tools/mac_tweaks_catalog.h"
   "${CORE_SHARED_DIR}/Utils/command_util.h"
@@ -427,6 +429,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Managers/cleaner_action_interpreter.cpp"
   "${GUI_SHARED_DIR}/Managers/browser_sqlite_cleaner.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.cpp"
+  "${GUI_SHARED_DIR}/Managers/cleanerml_registry.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.cpp"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.cpp"
   "${GUI_SHARED_DIR}/Managers/dir_size_scanner.cpp"
@@ -527,6 +530,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/StartupApps/startup_app.cpp"
   "${GUI_SHARED_DIR}/Pages/StartupApps/startup_apps_page.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/byte_tree_widget.cpp"
+  "${GUI_SHARED_DIR}/Pages/SystemCleaner/app_cleaners_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/browser_deep_clean_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/exclusion_manager_dialog.cpp"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.cpp"
@@ -560,6 +564,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Managers/cleaner_action_interpreter.h"
   "${GUI_SHARED_DIR}/Managers/browser_sqlite_cleaner.h"
   "${GUI_SHARED_DIR}/Managers/cleaner_service.h"
+  "${GUI_SHARED_DIR}/Managers/cleanerml_registry.h"
   "${GUI_SHARED_DIR}/Managers/cleaning_profiles_service.h"
   "${GUI_SHARED_DIR}/Managers/data_refresh_service.h"
   "${GUI_SHARED_DIR}/Managers/dir_size_scanner.h"
@@ -645,6 +650,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/StartupApps/startup_app_edit.h"
   "${GUI_SHARED_DIR}/Pages/StartupApps/startup_apps_page.h"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/byte_tree_widget.h"
+  "${GUI_SHARED_DIR}/Pages/SystemCleaner/app_cleaners_dialog.h"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/browser_deep_clean_dialog.h"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/exclusion_manager_dialog.h"
   "${GUI_SHARED_DIR}/Pages/SystemCleaner/schedule_editor_dialog.h"
@@ -796,6 +802,7 @@ add_library(nexis-gui STATIC
   ${GUI_PLAT_HDRS}
   "${GUI_SHARED_DIR}/static.qrc"
   "${GUI_SHARED_DIR}/cleaning_profiles.qrc"
+  "${GUI_SHARED_DIR}/cleanerml.qrc"
 )
 
 # Include dirs are PUBLIC so that consumers (nexis executable, screenshot tests)

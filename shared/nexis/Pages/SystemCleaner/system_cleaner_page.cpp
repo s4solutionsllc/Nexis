@@ -9,12 +9,15 @@
 #include <Managers/schedule_manager.h>
 #include <Managers/tool_manager.h>
 #include <Managers/browser_sqlite_cleaner.h>
+#include <Managers/cleanerml_registry.h>
 #include <Managers/cleaning_profiles_service.h>
 #include <Managers/setting_manager.h>
 #include <Common/trust_safety_preview_dialog.h>
+#include <QApplication>
 #include <QMessageBox>
 #include "signal_mapper.h"
 #include <Utils/format_util.h>
+#include "app_cleaners_dialog.h"
 #include "browser_deep_clean_dialog.h"
 #include "exclusion_manager_dialog.h"
 #include "schedule_editor_dialog.h"
@@ -174,11 +177,19 @@ void SystemCleanerPage::buildCategoryHeader()
         dlg->exec();
     });
 
-    mBtnBrowserDeepClean = new QPushButton(tr("Browser deep clean\u2026"), headerWidget);
-    mBtnBrowserDeepClean->setObjectName("btnBrowserDeepClean");
-    mBtnBrowserDeepClean->setCursor(Qt::PointingHandCursor);
-    mBtnBrowserDeepClean->setToolTip(tr("Remove browsing history and cookies from chosen browser profiles"));
-    connect(mBtnBrowserDeepClean, &QPushButton::clicked, this, &SystemCleanerPage::openBrowserDeepClean);
+    // One header slot for both deep-clean tools; a button each would not
+    // fit beside Schedule and Scan at narrow widths (GH#475).
+    mBtnDeepClean = new QPushButton(tr("Deep clean"), headerWidget);
+    mBtnDeepClean->setObjectName("btnDeepClean");
+    mBtnDeepClean->setCursor(Qt::PointingHandCursor);
+    QMenu *deepCleanMenu = new QMenu(mBtnDeepClean);
+    QAction *browserAction = deepCleanMenu->addAction(tr("Browser history && cookies\u2026"));
+    browserAction->setObjectName("actionBrowserDeepClean");
+    connect(browserAction, &QAction::triggered, this, &SystemCleanerPage::openBrowserDeepClean);
+    QAction *appAction = deepCleanMenu->addAction(tr("App cleaners\u2026"));
+    appAction->setObjectName("actionAppCleaners");
+    connect(appAction, &QAction::triggered, this, &SystemCleanerPage::openAppCleaners);
+    mBtnDeepClean->setMenu(deepCleanMenu);
 
     mBtnScanSystem = new QPushButton(tr("Scan system"), headerWidget);
     mBtnScanSystem->setObjectName("btnScanSystem");
@@ -186,7 +197,7 @@ void SystemCleanerPage::buildCategoryHeader()
     connect(mBtnScanSystem, &QPushButton::clicked, this, &SystemCleanerPage::onBtnScanSystemClicked);
 
     titleRow->addWidget(mBtnExclusions);
-    titleRow->addWidget(mBtnBrowserDeepClean);
+    titleRow->addWidget(mBtnDeepClean);
     titleRow->addWidget(mBtnSchedule);
     titleRow->addWidget(mBtnScanSystem);
 
@@ -1201,6 +1212,49 @@ void SystemCleanerPage::openBrowserDeepClean()
     cfg.windowTitle          = tr("Review Browser Data to Delete");
     cfg.primaryActionLabel   = tr("Delete Selected");
     cfg.confirmationSentence = tr("This will permanently delete the selected browsing history and cookies.");
+
+    TrustSafetyPreviewDialog dlg(&provider, cfg, this, mAppManager);
+    dlg.exec();
+}
+
+void SystemCleanerPage::openAppCleaners()
+{
+    const CleanerActionInterpreter::SandboxRoots roots = CleanerActionInterpreter::defaultSandboxRoots();
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    QList<CleanerML::Cleaner> present;
+    QSet<QString> running;
+    for (const CleanerML::Cleaner &cleaner : CleanerMLRegistry::loadDefault()) {
+        if (!CleanerMLRegistry::hasData(cleaner, roots))
+            continue;
+        present.append(cleaner);
+        if (CleanerMLRegistry::isRunning(cleaner))
+            running.insert(cleaner.id);
+    }
+    QApplication::restoreOverrideCursor();
+
+    if (present.isEmpty()) {
+        QMessageBox::information(this, tr("App Cleaners"),
+            tr("None of the applications Nexis has cleaners for have left data on this computer."));
+        return;
+    }
+
+    AppCleanersDialog picker(present, running, this);
+    if (picker.exec() != QDialog::Accepted)
+        return;
+
+    const QHash<QString, QSet<QString>> selection = picker.selection();
+    const QList<CleanerService::ExclusionEntry> exclusions = mCleanerService->loadExclusions();
+    CleanerMLRegistry::BatchProvider provider;
+    for (const CleanerML::Cleaner &cleaner : std::as_const(present))
+        provider.add(cleaner, selection.value(cleaner.id), roots, exclusions);
+    if (provider.isEmpty())
+        return;
+
+    TrustSafetyPreviewDialog::Config cfg;
+    cfg.windowTitle          = tr("Review App Data to Delete");
+    cfg.primaryActionLabel   = tr("Delete Selected");
+    cfg.confirmationSentence = tr("This will permanently delete the selected application data.");
 
     TrustSafetyPreviewDialog dlg(&provider, cfg, this, mAppManager);
     dlg.exec();

@@ -55,6 +55,7 @@ if(UNIX AND NOT APPLE)
 endif()
 add_nexis_test(NAME RepoKnowledgeBaseTests SOURCES core/test_repo_knowledge_base.cpp)
 add_nexis_test(NAME CleanerMLParserTests SOURCES core/test_cleanerml_parser.cpp)
+add_nexis_test(NAME CleanerMLPlatformTests SOURCES core/test_cleanerml_platform.cpp)
 add_nexis_test(NAME RepoHealthCheckerTests SOURCES core/test_repo_health_checker.cpp LIBS Qt6::Network)
 add_nexis_test(NAME RepoRepairEngineTests SOURCES core/test_repo_repair_engine.cpp LIBS Qt6::Network)
 add_nexis_test(NAME FanInfoTests      SOURCES core/test_fan_info.cpp)
@@ -1108,6 +1109,13 @@ add_nexis_test(NAME CleanerActionInterpreterTests
 # browser_sqlite_cleaner.cpp is already compiled into nexis-gui
 # (GUI_SHARED_SRCS); link it rather than recompiling here, same reasoning as
 # CleanerActionInterpreterTests.
+# SSO-25782: bundled CleanerML definitions end to end (resource -> platform
+# filter -> batch provider on a temp home) and the App Cleaners picker.
+add_nexis_test(NAME CleanerMLRegistryTests
+  SOURCES managers/test_cleanerml_registry.cpp
+  INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Common" "${GUI_SHARED_DIR}/Managers" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  LIBS nexis-gui Qt6::Widgets Qt6::Sql)
+
 # SSO-25782: BrowserDeepCleanDialog — nothing pre-selected, Review gated on
 # a selection, keep-list normalisation/validation/dedup.
 add_nexis_test(NAME BrowserDeepCleanDialogTests

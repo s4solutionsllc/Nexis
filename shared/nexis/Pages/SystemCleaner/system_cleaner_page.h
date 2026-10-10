@@ -69,6 +69,8 @@ public:
     // SSO-25782: profile + cookie keep-list picker, then the Trust & Safety
     // preview over BrowserSqliteCleaner.
     void openBrowserDeepClean();
+    // SSO-25782: CleanerML per-application cleaners, same preview dialog.
+    void openAppCleaners();
 
     // SSO-15956: showEvent() kicks off an async background disk-size scan on
     // first display (startBackgroundSizeScan), which races the initial
@@ -146,7 +148,7 @@ private:
     QLabel      *mLblCleanerTitle    = nullptr;
     QPushButton *mBtnScanSystem      = nullptr;
     QPushButton *mBtnSchedule        = nullptr;
-    QPushButton *mBtnBrowserDeepClean = nullptr;
+    QPushButton *mBtnDeepClean       = nullptr;
     QPushButton *mBtnSelectAll       = nullptr;
     QPushButton *mBtnCleanSelected   = nullptr;
     QLabel      *mLblEstimated       = nullptr;
