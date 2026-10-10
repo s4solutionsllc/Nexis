@@ -1843,6 +1843,14 @@ void App::setupCommandPalette()
         runCleanerScan();
     });
 
+    mCommandPalette->addCommand(tr("Browser Deep Clean\u2026"), tr("Action"), [this]() {
+        navigateTo(QStringLiteral("systemCleaner"), true);
+        if (!systemCleanerPage)
+            ensurePageById(QStringLiteral("systemCleaner"));
+        if (systemCleanerPage)
+            systemCleanerPage->openBrowserDeepClean();
+    });
+
     mCommandPalette->addCommand(tr("Feedback"), tr("Action"), [this]() {
         btnFeedback->click();
     });

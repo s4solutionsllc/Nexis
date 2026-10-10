@@ -39,6 +39,10 @@ private slots:
     void kioskLaunch_roundTrips();
     void kioskMonitorName_defaultsToEmpty();
     void kioskMonitorName_roundTrips();
+
+    // SSO-25782 — browser deep-clean cookie keep-list.
+    void cookieKeepDomains_defaultsToEmpty();
+    void cookieKeepDomains_roundTrips();
 };
 
 void TestSettingManager::initTestCase()
@@ -166,6 +170,21 @@ void TestSettingManager::kioskMonitorName_roundTrips()
     QCOMPARE(sm->getKioskMonitorName(), QString("DP-2"));
     sm->setKioskMonitorName("");
     QCOMPARE(sm->getKioskMonitorName(), QString(""));
+}
+
+void TestSettingManager::cookieKeepDomains_defaultsToEmpty()
+{
+    QVERIFY(SettingManager::ins()->getCleanerCookieKeepDomains().isEmpty());
+}
+
+void TestSettingManager::cookieKeepDomains_roundTrips()
+{
+    const QStringList domains{"example.com", "mail.example.org"};
+    SettingManager::ins()->setCleanerCookieKeepDomains(domains);
+    QCOMPARE(SettingManager::ins()->getCleanerCookieKeepDomains(), domains);
+
+    SettingManager::ins()->setCleanerCookieKeepDomains({});
+    QVERIFY(SettingManager::ins()->getCleanerCookieKeepDomains().isEmpty());
 }
 
 QTEST_MAIN(TestSettingManager)

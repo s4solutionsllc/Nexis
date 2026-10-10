@@ -5,6 +5,7 @@
 #include <QDialogButtonBox>
 #include <QMargins>
 #include <QPushButton>
+#include <QStyle>
 
 // One button row for every dialog, so the same meaning always has the same
 // word in the same place:
@@ -50,6 +51,10 @@ inline Row build(QDialog *dialog, const QString &confirmText, Confirm kind, cons
         // Styling hook only (QPushButton[variant=...] in style.qss); it used to
         // be accessibleName, which made screen readers announce "danger".
         row.confirm->setProperty("variant", kind == Confirm::Danger ? "danger" : "primary");
+        // addButton() has already polished the button, and Qt does not
+        // re-evaluate property selectors on its own (BUG-56).
+        row.confirm->style()->unpolish(row.confirm);
+        row.confirm->style()->polish(row.confirm);
         row.confirm->setAutoDefault(false);
     }
 
