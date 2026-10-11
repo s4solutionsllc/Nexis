@@ -400,6 +400,22 @@ jobs:
           echo "${LINUXDEPLOY_PLUGIN_QT_SHA256_X86_64}  ${ldq_file}" | sha256sum -c -
           chmod +x "${ld_file}" "${ldq_file}"
 
+      # linuxdeploy's qt plugin deploys every driver file it finds under
+      # plugins/sqldrivers/, not just the ones Nexis actually uses. The
+      # official aqtinstall Qt binaries ship a libqsqlmimer.so stub for Mimer
+      # SQL regardless of platform, and it depends on the proprietary
+      # libmimerapi.so, which is never present on a GitHub runner --
+      # linuxdeploy's dependency resolution then fails hard (SSO-25848,
+      # first hit on the v2.13.0 tag). Nexis's only Qt::Sql usage is SQLite
+      # (browser_sqlite_cleaner.cpp, cleaner_action_interpreter.cpp), so drop
+      # every other sqldrivers plugin before linuxdeploy scans the Qt tree.
+      # The apt-installed Qt used by the arm64 AppImage leg in build-linux
+      # doesn't ship non-open drivers, so it isn't affected.
+      - name: Prune unused Qt SQL driver plugins before AppImage deploy
+        run: |
+          SQLDRIVERS_DIR="${{ env.QT_ROOT_DIR }}/plugins/sqldrivers"
+          find "$SQLDRIVERS_DIR" -maxdepth 1 -name '*.so' ! -name 'libqsqlite.so' -print -delete
+
       - name: Build AppImage
         env:
           # install-qt-action exports QT_ROOT_DIR for the selected Qt.
