@@ -1,3 +1,15 @@
+nexis (2.13.0-1) unstable; urgency=medium
+
+  * New release: System Cleaner app cleaners (bundled BleachBit CleanerML
+    definitions) and browser deep clean with a cookie keep-list, plus Disk
+    Tools Largest Files and Empty Folders modes. Docker and GNOME Settings
+    tabs now use the elevated-card layout. Fixes dialog confirm-button
+    styling, Disk Tools exclusion handling, macOS Services launchd state,
+    the Dashboard Health Score quick action, and stale Swappiness values.
+    See CHANGELOG.md for full details.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Sun, 11 Oct 2026 00:00:00 +0000
+
 nexis (2.12.1-1) unstable; urgency=medium
 
   * Bug-fix release: System Cleaner's "Application Profiles" category is now
