@@ -27,7 +27,15 @@ Files: shared/nexis/static/font/Ubuntu-R.ttf
 Copyright: 2010, 2011 Canonical Ltd.
 License: Ubuntu-font-1.0
 
+Files: shared/nexis/cleaners.d/*
+Copyright: 2008-2026 Andrew Ziem
+License: GPL-3.0-or-later
+
 License: GPL-3.0-only
+ On Debian systems, the complete text of the GNU General Public
+ License version 3 can be found in "/usr/share/common-licenses/GPL-3".
+
+License: GPL-3.0-or-later
  On Debian systems, the complete text of the GNU General Public
  License version 3 can be found in "/usr/share/common-licenses/GPL-3".
 
