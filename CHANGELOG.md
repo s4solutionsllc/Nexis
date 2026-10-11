@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.13.0] - 2026-10-11
+
+### Added
+- App cleaners (SSO-25782): System Cleaner → Deep clean → "App cleaners…" runs
+  per-application cleanup rules from BleachBit's community CleanerML definitions,
+  now bundled with Nexis (about 80 applications on Linux, about 38 on macOS). It
+  lists only apps that have left data on your computer, pre-selects nothing,
+  shows every file for review before deleting, honors your exclusion rules, and
+  will not clean an app that is open. You can add your own definitions; see
+  `docs/CLEANERML.md`. The two deep-clean tools now share one "Deep clean" menu
+  in the System Cleaner header.
+- Browser deep clean (SSO-25782): System Cleaner has a new "Browser deep clean…"
+  action that removes browsing history and cookies from the Firefox, Chrome,
+  Chromium, Brave and Edge profiles you pick. A "Cookies to keep" list lets
+  chosen sites stay signed in. Nothing is pre-selected, every item is shown for
+  review (with a dry-run option) before anything is deleted, and bookmarks, saved
+  passwords and extensions are never touched.
+- Disk Tools (SSO-25782): two new modes. **Largest Files** lists the biggest
+  files across your scan locations, largest first, with a "Show top N" control.
+  **Empty Folders** lists folders that contain nothing at all. Both leave every
+  row unchecked, honor your cleaner exclusions, and move only what you tick to
+  the Trash.
+
+### Changed
+- Docker and GNOME Settings (SSO-25782): the Docker Containers and Volumes tabs
+  and the GNOME Settings Window Manager, Mouse & Touchpad, and Desktop tabs now
+  use the same elevated-card layout as the rest of the app, so every tab on those
+  pages matches. Docker container group names (Running, Exited, Paused, Created)
+  are now translatable.
+
+### Fixed
+- Helpers → Swappiness (GH#490): returning to the Swappiness tool after
+  navigating away now re-reads the live `vm.swappiness` value instead of
+  redisplaying whatever was last loaded, which could show a stale "Current
+  value" after the setting changed outside of Nexis.
+- Dashboard (SSO-25711, GH#493): the Health Score tile's "System Checkup" quick
+  action now actually opens the Maintenance Wizard. `HealthScoreTile::setQuickAction()`
+  was an empty stub, so the wizard had no working entry point from the dashboard.
+- Dialogs (SSO-25782): the confirm button in dialogs (Save, Move to Trash, Wipe,
+  and similar) now gets its filled primary or red destructive styling reliably;
+  it could previously render as a plain outlined button. The System Cleaner
+  "Browser Privacy" card and review text no longer claim to remove cookies and
+  history, which that category never did.
+- Disk Tools → Large & Old Files (SSO-25782): the scan now skips paths on your
+  cleaner exclusion list and Move to Trash can no longer trash an excluded file;
+  previously this mode ignored exclusions entirely. Cancelling a scan also
+  restores the Scan button instead of leaving the page stuck on "Scanning...".
+- macOS Services (SSO-25782): the Services page now shows the real state of
+  launchd jobs. Stopped and disabled services are listed (previously only loaded
+  ones were), the Startup switch reflects whether a service is actually enabled
+  instead of always showing on, system daemons appear alongside agents, and each
+  row shows the program it runs. Changing one of your own agents no longer asks
+  for an admin password; system daemons still do. Running apps no longer show up
+  in the list as "application.…" entries. On both macOS and Linux the window no
+  longer freezes while a password prompt is open.
+
 ## [2.12.1] - 2026-10-06
 
 ### Fixed

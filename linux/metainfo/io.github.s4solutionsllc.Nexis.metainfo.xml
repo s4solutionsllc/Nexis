@@ -74,6 +74,29 @@
   </screenshots>
 
   <releases>
+    <release version="2.13.0" date="2026-10-11">
+      <description>
+        <p>Added:</p>
+        <ul>
+          <li>System Cleaner App cleaners: per-application cleanup rules from BleachBit's
+              community CleanerML definitions, now bundled with Nexis.</li>
+          <li>System Cleaner Browser deep clean: removes browsing history and cookies
+              from chosen browser profiles, with a cookie keep-list.</li>
+          <li>Disk Tools Largest Files and Empty Folders modes.</li>
+        </ul>
+        <p>Changed:</p>
+        <ul>
+          <li>Docker and GNOME Settings tabs now use the same elevated-card layout as
+              the rest of the app.</li>
+        </ul>
+        <p>Fixed:</p>
+        <ul>
+          <li>Dialog confirm-button styling, Disk Tools Large &amp; Old Files exclusion
+              handling, macOS Services launchd state reporting, the Dashboard Health
+              Score tile's quick action, and stale Swappiness values.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.12.1" date="2026-10-06">
       <description>
         <p>Fixed:</p>
