@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload regenerated baselines
         if: steps.skip-check.outputs.skipped != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: reference-screenshots-linux
           path: tests/reference_screenshots/linux/
@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload Helpers tab review captures
         if: steps.skip-check.outputs.skipped != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: helpers-review-linux
           path: build/test_screenshots/linux/*/review/
@@ -112,7 +112,7 @@ jobs:
 
       - name: Upload design-doc captures (SSO-14981)
         if: steps.skip-check.outputs.skipped != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: design-captures-linux
           path: design-captures-linux/
@@ -160,7 +160,7 @@ jobs:
 
       - name: Upload regenerated baselines
         if: steps.skip-check.outputs.skipped != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: reference-screenshots-macos
           path: tests/reference_screenshots/macos/
@@ -169,7 +169,7 @@ jobs:
 
       - name: Upload Helpers tab review captures
         if: steps.skip-check.outputs.skipped != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: helpers-review-macos
           path: build/test_screenshots/macos/*/review/
