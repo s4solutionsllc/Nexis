@@ -91,6 +91,7 @@ private:
     void buildDuplicatePage();
     void refreshThemeColors();
     void applyLargeOldFilterLayout(bool compact);
+    void applyModeBarLayout(bool stacked);
     void resizeEvent(QResizeEvent *event) override;
     static QWidget *makeElevatedContainer(QWidget *parent);
     static QWidget *makeEmptyState(QWidget *parent, const QString &heading,
@@ -105,6 +106,7 @@ private:
     DuplicateFinderService *mDupService;
 
     QButtonGroup *mModeGroup;
+    bool mModeBarStacked = false;
 
     // Directory picker (shared data, separate widgets per mode)
     QListWidget *mDirListLargeOld;

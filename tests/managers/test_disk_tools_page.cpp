@@ -266,6 +266,53 @@ private slots:
         QCOMPARE(tree->topLevelItemCount(), 0);
         QVERIFY(tree->isHidden());
     }
+
+    // SSO-26117: at the app's 700px minimum window width (page width here is
+    // narrower still, since the sidebar and margins also eat into it), the
+    // four mode buttons used to shrink below sizeHint() and clip their
+    // labels on both sides. Drive a real show()/expose cycle (same headless
+    // offscreen backend as TestBtmRow::shownRow_realPostLayoutGeometryNeverClipsBadges)
+    // so this asserts on actual post-layout geometry, not just sizeHint() math.
+    void modeBar_narrowWidth_reflowsToGridWithNoClipping()
+    {
+        FakeFinderService service;
+        DiskToolsPage page(nullptr, &service);
+
+        QWidget *modeBarRow = page.findChild<QWidget *>(QStringLiteral("modeBarRow"));
+        QVERIFY(modeBarRow);
+        const QList<QPushButton *> modeButtons =
+            modeBarRow->findChildren<QPushButton *>(QString(), Qt::FindDirectChildrenOnly);
+        QCOMPARE(modeButtons.size(), 4);
+
+        page.resize(440, 480);
+        page.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+        for (QPushButton *button : modeButtons)
+            QVERIFY(button->width() >= button->sizeHint().width());
+    }
+
+    // Companion to the narrow-width case above: once all four fit, they stay
+    // in a single row rather than the 2x2 grid the narrow case reflows into.
+    void modeBar_wideWidth_staysSingleRow()
+    {
+        FakeFinderService service;
+        DiskToolsPage page(nullptr, &service);
+
+        QWidget *modeBarRow = page.findChild<QWidget *>(QStringLiteral("modeBarRow"));
+        QVERIFY(modeBarRow);
+        const QList<QPushButton *> modeButtons =
+            modeBarRow->findChildren<QPushButton *>(QString(), Qt::FindDirectChildrenOnly);
+        QCOMPARE(modeButtons.size(), 4);
+
+        page.resize(1000, 480);
+        page.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&page));
+
+        const int firstY = modeButtons.first()->y();
+        for (QPushButton *button : modeButtons)
+            QCOMPARE(button->y(), firstY);
+    }
 };
 
 QTEST_MAIN(TestDiskToolsPage)
