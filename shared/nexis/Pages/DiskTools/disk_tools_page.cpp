@@ -7,6 +7,7 @@
 #include <QDirIterator>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QGridLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QLabel>
@@ -68,6 +69,10 @@ void DiskToolsPage::init()
     ui->btnModeDuplicates->setObjectName("segmentedMiddle");
     ui->btnModeLargest->setObjectName("segmentedMiddle");
     ui->btnModeEmptyFolders->setObjectName("segmentedRight");
+
+    // Starts as the single-row QHBoxLayout the .ui file declares; resizeEvent()
+    // switches it to a 2x2 grid once the buttons no longer fit (SSO-26117).
+    applyModeBarLayout(false);
 
     ui->stackedModes->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     ui->mainLayout->setStretchFactor(ui->stackedModes, 1);
@@ -1238,9 +1243,60 @@ void DiskToolsPage::applyLargeOldFilterLayout(bool compact)
     }
 }
 
+// Switches #modeBarRow between the single-row QHBoxLayout the .ui file
+// declares and a 2x2 QGridLayout, replacing the full #modeBarRow layout in
+// place (SSO-26117). Button object names (segmentedLeft/Middle/Right), the
+// QButtonGroup membership and the tab order are all on the buttons
+// themselves, not the layout, so they survive the switch untouched.
+void DiskToolsPage::applyModeBarLayout(bool stacked)
+{
+    delete ui->modeBarRow->layout();
+    mModeBarStacked = stacked;
+
+    const QList<QPushButton *> buttons = {
+        ui->btnModeLargeOld, ui->btnModeDuplicates, ui->btnModeLargest, ui->btnModeEmptyFolders
+    };
+
+    if (!stacked) {
+        auto *row = new QHBoxLayout(ui->modeBarRow);
+        row->setContentsMargins(0, 0, 0, 4);
+        row->setSpacing(8);
+        for (QPushButton *button : buttons)
+            row->addWidget(button);
+        row->addStretch();
+    } else {
+        auto *grid = new QGridLayout(ui->modeBarRow);
+        grid->setContentsMargins(0, 0, 0, 4);
+        grid->setHorizontalSpacing(8);
+        grid->setVerticalSpacing(8);
+        grid->addWidget(buttons[0], 0, 0);
+        grid->addWidget(buttons[1], 0, 1);
+        grid->addWidget(buttons[2], 1, 0);
+        grid->addWidget(buttons[3], 1, 1);
+        grid->setColumnStretch(0, 1);
+        grid->setColumnStretch(1, 1);
+    }
+}
+
 void DiskToolsPage::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
+
+    // Decided from the buttons' own sizeHint(), never from the bar's current
+    // arrangement, so switching rows can't feed back into switching again
+    // (required: the reflow must not oscillate).
+    const QList<QPushButton *> modeButtons = {
+        ui->btnModeLargeOld, ui->btnModeDuplicates, ui->btnModeLargest, ui->btnModeEmptyFolders
+    };
+    int neededWidth = 0;
+    for (const QPushButton *button : modeButtons)
+        neededWidth += button->sizeHint().width();
+    neededWidth += (modeButtons.size() - 1) * 8; // matches the row layout's own spacing
+
+    const bool stacked = neededWidth > ui->modeBarRow->width();
+    if (stacked != mModeBarStacked)
+        applyModeBarLayout(stacked);
+
     if (!mLargeOldFilterWidget)
         return;
     // mLargeOldFilterWidget fills its parent's width in both layout modes
