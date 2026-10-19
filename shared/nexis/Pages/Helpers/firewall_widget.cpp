@@ -78,12 +78,18 @@ FirewallStatus FirewallWidget::parseUfwFallback(const QString &systemctlIsActive
     static const QRegularExpression reEnabled(R"(^\s*ENABLED\s*=\s*(\w+))",
                                                QRegularExpression::MultilineOption);
     QRegularExpressionMatch m = reEnabled.match(ufwConfContents);
-    const bool confEnabled = m.hasMatch()
-        && m.captured(1).compare("yes", Qt::CaseInsensitive) == 0;
-    const bool serviceActive =
-        systemctlIsActiveOutput.trimmed().compare("active", Qt::CaseInsensitive) == 0;
 
-    s.enabled = confEnabled || serviceActive;
+    // ufw.conf's ENABLED is authoritative when present: the ufw.service
+    // systemd unit only applies the saved rules at boot, so it still reports
+    // "active" after `ufw disable` and would otherwise produce a false
+    // positive (GH#513). Only fall back to service-active when ufw.conf
+    // doesn't tell us anything.
+    if (m.hasMatch())
+        s.enabled = m.captured(1).compare("yes", Qt::CaseInsensitive) == 0;
+    else
+        s.enabled =
+            systemctlIsActiveOutput.trimmed().compare("active", Qt::CaseInsensitive) == 0;
+
     return s;
 }
 
