@@ -470,13 +470,21 @@ void APTSourceManagerPage::onUpdateSelectedClicked()
         QStringList errors;
         for (const UpgradeTarget &t : targets) {
             ExecResult r;
+            bool isSnap = t.source == QLatin1String("snap");
             if (t.source == QLatin1String("flatpak")) {
                 r = CommandUtil::execWithStatus("flatpak", {"update", "-y", "--noninteractive", t.name}, -1);
-            } else if (t.source == QLatin1String("snap")) {
-                r = CommandUtil::execWithStatus("snap", {"refresh", t.name}, -1);
+            } else if (isSnap) {
+                // snap refresh requires root; elevate via pkexec like every other
+                // privileged package operation (PackageTool::runSudoCommand).
+                r = CommandUtil::sudoExecWithStatus("snap", {"refresh", t.name}, QByteArray(), -1);
             }
-            if (!r.ok())
-                errors.append(tr("%1: %2").arg(t.name, r.error.trimmed()));
+            if (!r.ok()) {
+                if (isSnap && (r.exitCode == 126 || r.exitCode == 127)) {
+                    errors.append(tr("%1: %2").arg(t.name, tr("Authentication cancelled")));
+                } else {
+                    errors.append(tr("%1: %2").arg(t.name, r.error.trimmed()));
+                }
+            }
         }
 
         QMetaObject::invokeMethod(this, [this, errors]() {
