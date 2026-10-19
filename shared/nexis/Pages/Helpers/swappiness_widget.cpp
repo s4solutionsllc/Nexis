@@ -98,10 +98,15 @@ void SwappinessWidget::refresh()
     mBtnRefresh->setEnabled(false);
     mLblResult->clear();
 
-    QThreadPool::globalInstance()->start([this]() {
+    auto job = [this]() {
         SwappinessStatus s = fetchStatus();
         emit statusFetched(s);
-    });
+    };
+
+    if (runsAsynchronously())
+        QThreadPool::globalInstance()->start(job);
+    else
+        job();
 }
 
 SwappinessStatus SwappinessWidget::fetchStatus()

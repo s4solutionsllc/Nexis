@@ -42,6 +42,15 @@ signals:
 protected:
     void hideEvent(QHideEvent *event) override;
 
+    // SSO-26264: test seam. refresh() emits statusFetched from a
+    // QThreadPool worker thread by default, so a QSignalSpy on it has to
+    // survive a cross-thread queued-connection hop. That hop intermittently
+    // exceeds a fixed QSignalSpy::wait() timeout under CPU-throttled CI
+    // runners even though the fetch result is correct (same bug class as
+    // SSO-17858, SSO-14443). Tests that only assert the lazy-load / re-entry
+    // logic, not the real threading, override this to run the fetch inline.
+    virtual bool runsAsynchronously() const { return true; }
+
 private slots:
     void onStatusFetched(SwappinessStatus status);
     void onPresetClicked(int preset);
