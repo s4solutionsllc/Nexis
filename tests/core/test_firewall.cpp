@@ -147,9 +147,22 @@ private slots:
     // --- parseUfwFallback (SSO-23402: unprivileged `ufw status` fails with
     // empty output, so detection falls back to systemctl + ufw.conf) ---
 
-    void ufwFallback_activeService()
+    // GH#513: ufw.service merely applies saved rules at boot, so it reports
+    // "active" even after `ufw disable`. ufw.conf's ENABLED must win over a
+    // merely-active systemd unit, or a disabled firewall is misreported as
+    // enabled.
+    void ufwFallback_disabledConfOverridesActiveService()
     {
         auto s = FirewallWidget::parseUfwFallback("active\n", "ENABLED=no\n");
+
+        QVERIFY(s.available);
+        QVERIFY(!s.enabled);
+        QCOMPARE(s.backend, "ufw");
+    }
+
+    void ufwFallback_noConfFallsBackToServiceActive()
+    {
+        auto s = FirewallWidget::parseUfwFallback("active\n", "");
 
         QVERIFY(s.available);
         QVERIFY(s.enabled);
