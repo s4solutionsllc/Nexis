@@ -12,6 +12,17 @@
 
 #include <Pages/Helpers/swappiness_widget.h>
 
+// SSO-26264: runs the fetch inline instead of on a QThreadPool worker
+// thread, removing the cross-thread queued-connection hop that made
+// QSignalSpy::wait() here intermittently exceed its fixed timeout under
+// CPU-throttled CI runners (same bug class as SSO-17858, SSO-14443). These
+// tests assert the lazy-load / re-entry logic, not the real threading.
+class TestableSwappinessWidget : public SwappinessWidget
+{
+protected:
+    bool runsAsynchronously() const override { return false; }
+};
+
 class TestSwappinessWidget : public QObject
 {
     Q_OBJECT
@@ -23,14 +34,18 @@ private slots:
 
 void TestSwappinessWidget::loadIfNeeded_secondCallDuringSameVisitDoesNotRefetch()
 {
-    SwappinessWidget widget;
+    TestableSwappinessWidget widget;
     widget.show();
     QVERIFY(QTest::qWaitForWindowExposed(&widget));
 
     QSignalSpy spy(&widget, &SwappinessWidget::statusFetched);
 
     widget.loadIfNeeded();
-    QVERIFY(spy.wait(5000));
+    // The fetch above already ran and emitted inline (runsAsynchronously()
+    // is false), so the spy may already have recorded it; wait() only
+    // detects emissions that happen after it's called.
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(5000));
     QCOMPARE(spy.count(), 1);
 
     // No hide() in between -- this is still the same visit, so the lazy
@@ -42,14 +57,15 @@ void TestSwappinessWidget::loadIfNeeded_secondCallDuringSameVisitDoesNotRefetch(
 
 void TestSwappinessWidget::loadIfNeeded_reentryAfterHideRefetches()
 {
-    SwappinessWidget widget;
+    TestableSwappinessWidget widget;
     widget.show();
     QVERIFY(QTest::qWaitForWindowExposed(&widget));
 
     QSignalSpy spy(&widget, &SwappinessWidget::statusFetched);
 
     widget.loadIfNeeded();
-    QVERIFY(spy.wait(5000));
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(5000));
     QCOMPARE(spy.count(), 1);
 
     // Simulate navigating away from and back to the Helpers->Swappiness
@@ -58,8 +74,10 @@ void TestSwappinessWidget::loadIfNeeded_reentryAfterHideRefetches()
     widget.show();
     QVERIFY(QTest::qWaitForWindowExposed(&widget));
 
+    const qsizetype countBeforeReentry = spy.count();
     widget.loadIfNeeded();
-    QVERIFY(spy.wait(5000));
+    if (spy.count() == countBeforeReentry)
+        QVERIFY(spy.wait(5000));
     QCOMPARE(spy.count(), 2);
 }
 
