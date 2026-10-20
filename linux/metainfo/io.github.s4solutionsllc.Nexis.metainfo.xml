@@ -74,6 +74,19 @@
   </screenshots>
 
   <releases>
+    <release version="2.13.1" date="2026-10-20">
+      <description>
+        <p>Fixed:</p>
+        <ul>
+          <li>Disk Tools mode bar no longer clips labels below the app's 700px minimum
+              window width; it reflows into a 2x2 grid when needed.</li>
+          <li>Apt Source Manager's "Update Selected" now elevates via pkexec when
+              refreshing Snap packages, instead of failing with "access denied".</li>
+          <li>Firewall widget's unprivileged status fallback no longer reports UFW as
+              enabled solely because the systemd unit is active.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.13.0" date="2026-10-11">
       <description>
         <p>Added:</p>
