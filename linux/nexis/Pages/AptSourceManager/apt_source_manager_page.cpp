@@ -129,6 +129,17 @@ void APTSourceManagerPage::init()
     updContainerLayout->setContentsMargins(0, 0, 0, 0);
     updContainerLayout->setSpacing(0);
 
+    // Scope selector for flatpak updates only (snap/apt are unaffected);
+    // "System" is the first entry so the default selection matches the
+    // pre-existing unscoped `flatpak update` invocation exactly.
+    mComboFlatpakScope = new QComboBox(updHeaderWidget);
+    mComboFlatpakScope->setObjectName("comboFlatpakScope");
+    mComboFlatpakScope->addItem(tr("System"), QStringLiteral("system"));
+    mComboFlatpakScope->addItem(tr("User"), QStringLiteral("user"));
+    mComboFlatpakScope->setToolTip(tr("Flatpak installation scope for Update Selected"));
+    mComboFlatpakScope->setFixedHeight(28);
+    updTitleRow->addWidget(mComboFlatpakScope);
+
     mBtnUpdateSelected = new QPushButton(tr("Update Selected"), updHeaderWidget);
     mBtnUpdateSelected->setObjectName("btnUpdateSelected");
     mBtnUpdateSelected->setCursor(Qt::PointingHandCursor);
@@ -460,19 +471,27 @@ void APTSourceManagerPage::onUpdateSelectedClicked()
     if (targets.isEmpty())
         return;
 
+    // "system" (the default item) keeps the invocation exactly as before —
+    // no scope flag — so users who never touch the selector see no change.
+    const bool flatpakUserScope = mComboFlatpakScope->currentData().toString() == QLatin1String("user");
+
     mUpgradeRunning = true;
     mBtnUpdateSelected->setEnabled(false);
     mBtnCheckNow->setEnabled(false);
     mLblUpgradeStatus->setText(tr("Upgrading…"));
     mLblUpgradeStatus->show();
 
-    QtConcurrent::run([this, targets]() {
+    QtConcurrent::run([this, targets, flatpakUserScope]() {
         QStringList errors;
         for (const UpgradeTarget &t : targets) {
             ExecResult r;
             bool isSnap = t.source == QLatin1String("snap");
             if (t.source == QLatin1String("flatpak")) {
-                r = CommandUtil::execWithStatus("flatpak", {"update", "-y", "--noninteractive", t.name}, -1);
+                QStringList args = {"update", "-y", "--noninteractive"};
+                if (flatpakUserScope)
+                    args.append("--user");
+                args.append(t.name);
+                r = CommandUtil::execWithStatus("flatpak", args, -1);
             } else if (isSnap) {
                 // snap refresh requires root; elevate via pkexec like every other
                 // privileged package operation (PackageTool::runSudoCommand).

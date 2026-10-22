@@ -5,6 +5,7 @@
 #include <QListWidgetItem>
 #include <QLabel>
 #include <QPushButton>
+#include <QComboBox>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 
@@ -70,6 +71,7 @@ private:
     QWidget *mUpdatesSection = nullptr;
     QLabel *mLblUpdatesTitle = nullptr;
     QPushButton *mBtnCheckNow = nullptr;
+    QComboBox *mComboFlatpakScope = nullptr;
     QPushButton *mBtnUpdateSelected = nullptr;
     QLabel *mLblUpgradeStatus = nullptr;
     QTreeWidget *mUpdatesTree = nullptr;
