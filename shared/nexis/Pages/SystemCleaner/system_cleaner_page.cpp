@@ -1041,6 +1041,19 @@ void SystemCleanerPage::quickCleanByCategory()
         ui->cleanerPage->hide();
         ui->treeWidgetScanResult->clear();
         updateFooterTotal();
+
+        // SSO-26504 / GH#523: confirm the completed run the same way the
+        // pre-clean snapshot notice does. Shows for any succeeded item count
+        // > 0, including a cancelled/partial run, using the actual succeeded
+        // count — not the requested one.
+        if (summary.totalItemsSucceeded > 0) {
+            const quint64 freed = static_cast<quint64>(qMax<qint64>(0, summary.totalBytesFreed));
+            mLblSnapshotToast->setText(tr("✓ Cleaned %1 item(s) — %2 freed.")
+                .arg(summary.totalItemsSucceeded)
+                .arg(FormatUtil::formatBytes(freed)));
+            mLblSnapshotToast->show();
+            QTimer::singleShot(5000, mLblSnapshotToast, &QLabel::hide);
+        }
     }
 }
 
