@@ -13,11 +13,12 @@ public:
     static void parseAptLines(const QStringList &lines, UpdateCheckResult &result);
 
     // Parses `apt-cache policy <pkg...>` output and returns, per package
-    // name, the Phased-Update-Percentage apt reports for its candidate
-    // version. A package with no such field (not phased, or apt doesn't
-    // report one) is absent from the result — callers treat that as fully
-    // available (GH#524: apt list --upgradable's "[phased N%]" annotation is
-    // not reliably present, so detection reads this field directly instead).
+    // name, the percentage from the "(phased N%)" annotation apt appends to
+    // its candidate version's line in the version table. A package with no
+    // such annotation (not phased, or apt doesn't report one) is absent from
+    // the result — callers treat that as fully available (GH#524: apt list
+    // --upgradable's "[phased N%]" annotation is not reliably present, so
+    // detection reads this annotation directly instead).
     static QMap<QString, int> parseAptCachePolicyPhased(const QString &output);
 
 private:

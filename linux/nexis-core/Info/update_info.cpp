@@ -53,7 +53,7 @@ void UpdateInfoLinux::parseAptLines(const QStringList &lines, UpdateCheckResult 
     // GH#524: the "[phased N%]" annotation here is not reliably present for
     // every package apt is actually phasing, so every upgradable candidate
     // is kept — checkApt() annotates phased status afterwards from
-    // `apt-cache policy`'s Phased-Update-Percentage field instead.
+    // `apt-cache policy`'s version-table "(phased N%)" annotation instead.
     for (const QString &line : lines) {
         if (!line.contains("upgradable"))
             continue;
@@ -70,7 +70,11 @@ QMap<QString, int> UpdateInfoLinux::parseAptCachePolicyPhased(const QString &out
     QMap<QString, int> percentages;
     QString currentPackage;
 
-    static const QString phasedPrefix = QStringLiteral("Phased-Update-Percentage:");
+    // apt's policy formatter annotates the phased candidate's version-table
+    // line itself, e.g. "     0.14-1ubuntu2 500 (phased 20%)" — there is no
+    // separate "Phased-Update-Percentage:" field in `apt-cache policy` output
+    // (that key only appears in `apt-cache show`'s Packages-record dump).
+    static const QRegularExpression phasedRe(QStringLiteral("\\(phased\\s+(\\d+)%\\)"));
 
     const QStringList lines = output.split('\n');
     for (const QString &line : lines) {
@@ -85,12 +89,12 @@ QMap<QString, int> UpdateInfoLinux::parseAptCachePolicyPhased(const QString &out
         if (currentPackage.isEmpty() || percentages.contains(currentPackage))
             continue;
 
-        const QString trimmed = line.trimmed();
-        if (!trimmed.startsWith(phasedPrefix))
+        const QRegularExpressionMatch match = phasedRe.match(line);
+        if (!match.hasMatch())
             continue;
 
         bool ok = false;
-        const int percent = trimmed.mid(phasedPrefix.length()).trimmed().remove('%').toInt(&ok);
+        const int percent = match.captured(1).toInt(&ok);
         if (ok)
             percentages.insert(currentPackage, percent);
     }
