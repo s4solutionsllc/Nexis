@@ -14,6 +14,13 @@ struct NEXISCORESHARED_EXPORT UpdateEntry {
     QString installedVersion; // currently installed version
     bool isCask = false;
 
+    // apt-only: Ubuntu is staging this update via phased rollout and it is
+    // not yet available to everyone (GH#524). Nexis doesn't run apt
+    // upgrade/full-upgrade itself, so a phased entry below 100% cannot
+    // actually be installed yet even though apt lists it as upgradable.
+    bool isPhased = false;
+    int  phasedPercentage = -1; // valid only when isPhased is true
+
     // Sparkle-only fields (empty for brew/system sources).
     // signatureMetadataPresent is set when the appcast carries a signature
     // AND the app bundle contains a matching public key. This is metadata

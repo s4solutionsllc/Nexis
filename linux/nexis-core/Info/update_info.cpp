@@ -50,15 +50,52 @@ QStringList UpdateInfoLinux::availableSources() const
 
 void UpdateInfoLinux::parseAptLines(const QStringList &lines, UpdateCheckResult &result)
 {
+    // GH#524: the "[phased N%]" annotation here is not reliably present for
+    // every package apt is actually phasing, so every upgradable candidate
+    // is kept — checkApt() annotates phased status afterwards from
+    // `apt-cache policy`'s Phased-Update-Percentage field instead.
     for (const QString &line : lines) {
-        if (line.contains("upgradable") && !line.contains("[phased")) {
-            UpdateEntry entry;
-            entry.source = "apt";
-            int slashIdx = line.indexOf('/');
-            entry.name = (slashIdx > 0) ? line.left(slashIdx) : line.trimmed();
-            result.entries.append(entry);
-        }
+        if (!line.contains("upgradable"))
+            continue;
+        UpdateEntry entry;
+        entry.source = "apt";
+        int slashIdx = line.indexOf('/');
+        entry.name = (slashIdx > 0) ? line.left(slashIdx) : line.trimmed();
+        result.entries.append(entry);
     }
+}
+
+QMap<QString, int> UpdateInfoLinux::parseAptCachePolicyPhased(const QString &output)
+{
+    QMap<QString, int> percentages;
+    QString currentPackage;
+
+    static const QString phasedPrefix = QStringLiteral("Phased-Update-Percentage:");
+
+    const QStringList lines = output.split('\n');
+    for (const QString &line : lines) {
+        // Package header lines start in column 0 and end with ':'; every
+        // other line in a block ("Installed:", "Candidate:", the version
+        // table) is indented.
+        if (!line.isEmpty() && !line.at(0).isSpace() && line.endsWith(':')) {
+            currentPackage = line.left(line.length() - 1);
+            continue;
+        }
+
+        if (currentPackage.isEmpty() || percentages.contains(currentPackage))
+            continue;
+
+        const QString trimmed = line.trimmed();
+        if (!trimmed.startsWith(phasedPrefix))
+            continue;
+
+        bool ok = false;
+        const int percent = trimmed.mid(phasedPrefix.length()).trimmed().remove('%').toInt(&ok);
+        if (ok)
+            percentages.insert(currentPackage, percent);
+    }
+
+    return percentages;
 }
 
 void UpdateInfoLinux::checkApt(UpdateCheckResult &result) const
@@ -71,7 +108,41 @@ void UpdateInfoLinux::checkApt(UpdateCheckResult &result) const
         return;
     }
 
+    const int firstAptIdx = result.entries.size();
     parseAptLines(r.output.split('\n'), result);
+
+    // Debian package names only ever use [A-Za-z0-9+.~-]; reject anything
+    // else defensively before it's interpolated into the shell command below.
+    static const QRegularExpression packageNameRe(QStringLiteral("^[A-Za-z0-9][A-Za-z0-9+.~-]*$"));
+
+    QStringList pkgNames;
+    for (int i = firstAptIdx; i < result.entries.size(); ++i) {
+        const QString &name = result.entries.at(i).name;
+        if (packageNameRe.match(name).hasMatch())
+            pkgNames << name;
+    }
+    if (pkgNames.isEmpty())
+        return;
+
+    ExecResult policy = CommandUtil::execWithStatus(
+        "bash",
+        {"-c", QStringLiteral("LANG=C apt-cache policy %1 2>/dev/null").arg(pkgNames.join(' '))},
+        30000);
+
+    if (policy.exitCode != 0) {
+        qWarning() << "update_info: apt-cache policy check failed:" << policy.error;
+        return;
+    }
+
+    const QMap<QString, int> phasedPercentages = parseAptCachePolicyPhased(policy.output);
+    for (int i = firstAptIdx; i < result.entries.size(); ++i) {
+        UpdateEntry &entry = result.entries[i];
+        auto it = phasedPercentages.constFind(entry.name);
+        if (it != phasedPercentages.constEnd() && it.value() < 100) {
+            entry.isPhased = true;
+            entry.phasedPercentage = it.value();
+        }
+    }
 }
 
 void UpdateInfoLinux::checkDnf(UpdateCheckResult &result) const

@@ -550,7 +550,14 @@ void APTSourceManagerPage::onSystemUpdatesChecked(const UpdateCheckResult &resul
         }
         item->setText(1, entry.source);
         item->setText(2, entry.name);
-        item->setText(3, entry.version);
+        if (entry.isPhased) {
+            item->setText(3, tr("Phased update (%1%)").arg(entry.phasedPercentage));
+            item->setToolTip(3, tr("Ubuntu is gradually rolling out this update. "
+                                    "It isn't available to everyone yet and can't "
+                                    "be installed from Nexis until the rollout completes."));
+        } else {
+            item->setText(3, entry.version);
+        }
     }
 
     mUpdatesTree->blockSignals(false);
