@@ -113,7 +113,7 @@ jobs:
       - name: Mint release App token
         id: release-app
         if: steps.gate.outputs.SHOULD_BUMP == 'true'
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: 4654078
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
