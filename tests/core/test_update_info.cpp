@@ -88,9 +88,8 @@ void TestUpdateInfo::aptCachePolicy_phasedPackage_percentageParsed()
         "  Installed: 0.13-3\n"
         "  Candidate: 0.14-1ubuntu2\n"
         "  Version table:\n"
-        "     0.14-1ubuntu2 500\n"
+        "     0.14-1ubuntu2 500 (phased 20%)\n"
         "        500 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages\n"
-        "        Phased-Update-Percentage: 20\n"
         " *** 0.13-3 100\n"
         "        100 /var/lib/dpkg/status\n";
 
@@ -129,18 +128,16 @@ void TestUpdateInfo::aptCachePolicy_multiplePackages_eachKeyedCorrectly()
         "  Installed: 0.13-3\n"
         "  Candidate: 0.14-1ubuntu2\n"
         "  Version table:\n"
-        "     0.14-1ubuntu2 500\n"
+        "     0.14-1ubuntu2 500 (phased 20%)\n"
         "        500 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages\n"
-        "        Phased-Update-Percentage: 20\n"
         " *** 0.13-3 100\n"
         "        100 /var/lib/dpkg/status\n"
         "ubuntu-pro-client-l10n:\n"
         "  Installed: 36~24.04\n"
         "  Candidate: 37~24.04\n"
         "  Version table:\n"
-        "     37~24.04 500\n"
+        "     37~24.04 500 (phased 100%)\n"
         "        500 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages\n"
-        "        Phased-Update-Percentage: 100\n"
         " *** 36~24.04 100\n"
         "        100 /var/lib/dpkg/status\n";
 
@@ -180,9 +177,8 @@ void TestUpdateInfo::aptCachePolicy_reporterRegressionFixture_allTwelvePackagesD
         output += "  Installed: " + f.installed + "\n";
         output += "  Candidate: " + f.candidate + "\n";
         output += "  Version table:\n";
-        output += "     " + f.candidate + " 500\n";
+        output += "     " + f.candidate + " 500 (phased " + QString::number(f.percent) + "%)\n";
         output += "        500 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages\n";
-        output += "        Phased-Update-Percentage: " + QString::number(f.percent) + "\n";
         output += " *** " + f.installed + " 100\n";
         output += "        100 /var/lib/dpkg/status\n";
     }
