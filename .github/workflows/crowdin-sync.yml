@@ -36,7 +36,7 @@ jobs:
           token: ${{ secrets.CROWDIN_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Crowdin Sync
-        uses: crowdin/github-action@72955432d4aa4f6dd64cf17eeb88dd34d6ba064c # v2.9.1
+        uses: crowdin/github-action@959dc74ac104447731cba99a016f85d0ae719788 # v2.9.1
         with:
           upload_sources: true
           upload_translations: false
