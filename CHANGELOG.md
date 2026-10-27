@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.13.1] - 2026-10-20
+
+### Fixed
+- Disk Tools (SSO-26117): the four mode buttons (Large & Old Files, Duplicate
+  Finder, Largest Files, Empty Folders) no longer clip their labels at the app's
+  700px minimum window width. The bar now reflows into a 2x2 grid whenever the
+  buttons don't all fit on one row, and returns to a single row once they do.
+- Apt Source Manager (SSO-26261, GH#514): "Update Selected" now elevates via
+  pkexec when refreshing Snap packages, matching how every other privileged
+  package operation is run. Snap updates that previously failed with
+  "access denied" now succeed after authentication; declining the
+  authentication prompt surfaces a clear "Authentication cancelled" message
+  instead of the raw snapd stderr.
+- Firewall widget (SSO-26262, GH#513): the unprivileged UFW status fallback no
+  longer reports the firewall as enabled just because the `ufw.service`
+  systemd unit is active. The unit only reapplies saved rules at boot and stays
+  active after `sudo ufw disable`, so `/etc/ufw/ufw.conf`'s `ENABLED` setting is
+  now the authoritative signal whenever it is present, with the systemd unit's
+  state used only when `ufw.conf` can't be read.
+
 ## [2.13.0] - 2026-10-11
 
 ### Added

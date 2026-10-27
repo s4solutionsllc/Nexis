@@ -1,3 +1,13 @@
+nexis (2.13.1-1) unstable; urgency=medium
+
+  * Bug-fix release: Disk Tools mode bar no longer clips labels below 700px
+    width, Apt Source Manager's "Update Selected" now elevates Snap refreshes
+    via pkexec, and the Firewall widget's unprivileged status fallback no
+    longer reports UFW as enabled solely because the systemd unit is active.
+    See CHANGELOG.md for full details.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Tue, 20 Oct 2026 00:00:00 +0000
+
 nexis (2.13.0-1) unstable; urgency=medium
 
   * New release: System Cleaner app cleaners (bundled BleachBit CleanerML

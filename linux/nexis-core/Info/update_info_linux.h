@@ -2,6 +2,7 @@
 #define UPDATE_INFO_LINUX_H
 
 #include <Info/update_info.h>
+#include <QMap>
 
 class UpdateInfoLinux : public UpdateInfo
 {
@@ -10,6 +11,15 @@ public:
     QStringList availableSources() const override;
 
     static void parseAptLines(const QStringList &lines, UpdateCheckResult &result);
+
+    // Parses `apt-cache policy <pkg...>` output and returns, per package
+    // name, the percentage from the "(phased N%)" annotation apt appends to
+    // its candidate version's line in the version table. A package with no
+    // such annotation (not phased, or apt doesn't report one) is absent from
+    // the result — callers treat that as fully available (GH#524: apt list
+    // --upgradable's "[phased N%]" annotation is not reliably present, so
+    // detection reads this annotation directly instead).
+    static QMap<QString, int> parseAptCachePolicyPhased(const QString &output);
 
 private:
     void checkApt(UpdateCheckResult &result) const;

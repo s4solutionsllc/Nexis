@@ -256,6 +256,13 @@ void TrustSafetyPreviewDialog::onExecutionFinished(TrustSafetyRunSummary summary
     }
 
     updateControlsForState();
+
+    // SSO-26504 / GH#523: a real (non-dry-run) run is done the moment
+    // execution finishes — close automatically so callers' post-dlg.exec()
+    // refresh logic runs without the user having to click Close first. Dry
+    // runs stay open so the user can review the simulated results.
+    if (!summary.dryRun)
+        accept();
 }
 
 // ─── User actions ──────────────────────────────────────────────────────────
