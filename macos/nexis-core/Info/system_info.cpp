@@ -202,19 +202,43 @@ QFileInfoList SystemInfoMacOS::getDevToolCaches() const
     return result;
 }
 
-static void scanBrokenSymlinks(const QString &dirPath, QFileInfoList &result)
+// Directories whose dangling symlinks are internal plumbing, not user-visible
+// breakage — never descend into them.
+static bool isExcludedBrokenSymlinkDir(const QString &absoluteDirPath, const QString &home)
+{
+    const QStringList excludedDirs = {
+        home + "/.local/share/flatpak",
+        home + "/.local/share/icons",
+        home + "/.local/share/Trash",
+    };
+    return excludedDirs.contains(absoluteDirPath);
+}
+
+// Symlinks apps intentionally leave dangling (single-instance locks) once the
+// owning process exits — not evidence of a broken install.
+static bool isKnownIntentionalDanglingSymlink(const QString &fileName)
+{
+    static const QStringList knownNames = {
+        "SingletonLock", "SingletonCookie", "SingletonSocket", "lock", ".parentlock",
+    };
+    return knownNames.contains(fileName);
+}
+
+static void scanBrokenSymlinks(const QString &dirPath, const QString &home, QFileInfoList &result)
 {
     QDir dir(dirPath);
-    if (!dir.exists())
+    if (!dir.exists() || isExcludedBrokenSymlinkDir(dir.absolutePath(), home))
         return;
 
-    QDirIterator it(dirPath, QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot,
-                    QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-        it.next();
-        QFileInfo fi = it.fileInfo();
-        if (fi.isSymLink() && !fi.exists())
-            result.append(fi);
+    const QFileInfoList entries = dir.entryInfoList(
+        QDir::AllEntries | QDir::Hidden | QDir::System | QDir::NoDotAndDotDot);
+    for (const QFileInfo &fi : entries) {
+        if (fi.isSymLink()) {
+            if (!fi.exists() && !isKnownIntentionalDanglingSymlink(fi.fileName()))
+                result.append(fi);
+        } else if (fi.isDir()) {
+            scanBrokenSymlinks(fi.absoluteFilePath(), home, result);
+        }
     }
 }
 
@@ -223,16 +247,16 @@ QFileInfoList SystemInfoMacOS::getBrokenSymlinks() const
     QFileInfoList result;
     QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 
-    scanBrokenSymlinks(home + "/.local", result);
-    scanBrokenSymlinks(home + "/bin", result);
+    scanBrokenSymlinks(home + "/.local", home, result);
+    scanBrokenSymlinks(home + "/bin", home, result);
 
     // Scan Homebrew prefix (varies by Intel/Apple Silicon)
     ExecResult brewResult = CommandUtil::execWithStatus("brew", {"--prefix"});
     if (brewResult.ok()) {
         QString brewPrefix = brewResult.output.trimmed();
         if (!brewPrefix.isEmpty()) {
-            scanBrokenSymlinks(brewPrefix + "/bin", result);
-            scanBrokenSymlinks(brewPrefix + "/lib", result);
+            scanBrokenSymlinks(brewPrefix + "/bin", home, result);
+            scanBrokenSymlinks(brewPrefix + "/lib", home, result);
         }
     } else {
         // Homebrew not installed — expected on many systems, not an error.

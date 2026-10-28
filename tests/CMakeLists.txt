@@ -222,6 +222,11 @@ if(APPLE)
       "${CMAKE_SOURCE_DIR}/macos/nexis-core/Utils"
   )
 
+  # GH#532 / SSO-26631: same QDir::System omission as the Linux scanner
+  # (system_info.cpp is duplicated per-platform) — see BrokenSymlinksLinuxTests.
+  add_nexis_test(NAME BrokenSymlinksMacOSTests
+    SOURCES core/test_broken_symlinks_macos.cpp)
+
   # SSO-15386 T3 (SSO-15373 §5): multi-signal orphan-leftover scanner.
   # QSKIP'd off-macOS. Gate for SSO-15386 T3 merge acceptance.
   add_nexis_test(NAME OrphanLeftoverScannerMacOSTests
@@ -409,6 +414,16 @@ if(UNIX AND NOT APPLE)
       "${CMAKE_SOURCE_DIR}/linux/nexis-core"
       "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
   )
+endif()
+
+# GH#532 / SSO-26631: SystemInfoLinux::getBrokenSymlinks() always returned
+# empty because QDirIterator needs QDir::System to enumerate dangling
+# symlinks. Exercises the real nexis-core implementation (fix + exclusion
+# list for Flatpak/icons/Trash/known intentional locks) against a fake
+# $HOME. Gated to Linux since SystemInfoLinux is only compiled there.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME BrokenSymlinksLinuxTests
+    SOURCES core/test_broken_symlinks_linux.cpp)
 endif()
 
 # SSO-351: pure parser for /proc/net/route — compiled directly so the test
