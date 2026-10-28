@@ -47,6 +47,7 @@ private slots:
     void onLargeOldCancelled();
     void onLargeOldTrash();
     void onDupScan();
+    void onDupMatchModeChanged(int index);
     void onDupProgress(int stage, int current, int total, const QString &message);
     void onDupScanFinished(const QList<DuplicateGroup> &results);
     void onDupCancelled();
@@ -141,6 +142,12 @@ private:
     QSpinBox *mSpinMinDupSize;
     QComboBox *mCbMinDupUnit;
     QLineEdit *mEditGlob;
+    // SSO-26638: D3/D4 — Match toggles Exact vs. Similar images; Similarity
+    // (a Hamming-distance preset) is enabled only in Similar mode, and the
+    // glob filter is disabled there since image-extension filtering
+    // replaces it.
+    QComboBox *mCbDupMatch;
+    QComboBox *mCbSimilarity;
     QPushButton *mBtnDupScan;
     QPushButton *mBtnDupCancel;
     QTreeWidget *mTreeDuplicates;

@@ -879,6 +879,9 @@ add_nexis_test(NAME DiskMapBubbleAsyncTests
 # engine compliance, and the never-delete-last-copy invariant. Builds on
 # the WI-08 trash/elevation seam pattern, so the destructive paths are
 # exercised without touching the user's real trash.
+# SSO-26638 extends this with similar-image detection (seed-anchored
+# clustering over dHash fingerprints; see ImageHashTests for the hash
+# primitive itself).
 add_nexis_test(NAME DuplicateFinderTests
   SOURCES
     managers/test_duplicate_finder.cpp
@@ -886,6 +889,20 @@ add_nexis_test(NAME DuplicateFinderTests
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Services"
     "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
+# SSO-26638: ImageHash::dHash/hashFile — the perceptual-hash primitive
+# behind Duplicate Finder's similar-image mode. Covers resize/re-encode
+# stability, dissimilar-image separation, and corrupt-file handling in
+# isolation from the clustering pipeline.
+add_nexis_test(NAME ImageHashTests
+  SOURCES
+    managers/test_image_hash.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
   LIBS
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )

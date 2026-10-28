@@ -737,7 +737,7 @@ Most existing tools lack GPU monitoring, battery health tracking (cycle count, c
 
 1. **Cleaning depth** — BleachBit has 1,000+ application-specific cleaning profiles. CleanMyMac X has deep macOS-specific cleaning (mail attachments, Xcode caches, system logs). Nexis has 10 scan categories plus roughly 30 bundled application profiles per platform (see `docs/CLEANING_PROFILES.md`), which narrows the gap but does not close it.
 
-2. **Duplicate file detection** — Czkawka is specialized and excellent at finding duplicate files, similar images, and broken files. Nexis has a hash-based duplicate finder in Disk Tools but no similar-image or broken-file detection.
+2. **Duplicate file detection** — Czkawka is specialized and excellent at finding duplicate files, similar images, and broken files. Nexis's Disk Tools → Duplicate Finder now covers both hash-based exact duplicates and dHash-based similar images (SSO-26638); broken-file detection is still a gap.
 
 3. **macOS monitoring detail** — iStat Menus offers GPU frame rates, fan control, a fully configurable menu bar, and extensive customizable alerts. Nexis has per-process network columns and an optional menu-bar health score, but is less detailed for macOS-specific monitoring.
 
@@ -789,7 +789,7 @@ Most existing tools lack GPU monitoring, battery health tracking (cycle count, c
 
 ### Feature Priorities (Competitive)
 
-4. **Duplicate file detection — shipped** (Disk Tools → Duplicate Finder, FW-08). Similar-image detection remains a gap vs. Czkawka.
+4. **Duplicate file detection — shipped** (Disk Tools → Duplicate Finder, FW-08), including similar-image detection (SSO-26638). Broken-file detection remains a gap vs. Czkawka.
 
 5. **Deepen application-specific cleaning** — BleachBit's 1,000+ profiles are its core advantage. Adding profiles for common applications (browsers, IDEs, media players) would strengthen Nexis's cleaning capabilities. Even covering the top 20-30 most common applications would close much of the gap.
 

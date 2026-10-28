@@ -25,7 +25,8 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
          libqt6svg6,
          qt6-qpa-plugins,
          qt6-gtk-platformtheme | qt6ct
-Recommends: systemd, curl, adwaita-icon-theme | yaru-theme-icon
+Recommends: systemd, curl, adwaita-icon-theme | yaru-theme-icon,
+            qt6-image-formats-plugins
 Description: Linux system optimizer and monitor
  Nexis is an open-source system optimizer and application monitor
  that helps users manage startup applications, clean system caches,
