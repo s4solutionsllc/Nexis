@@ -32,6 +32,7 @@
 #include "Managers/app_manager.h"
 #include "Managers/cleaner_service.h"
 #include "Services/duplicate_finder_service.h"
+#include "Services/image_hash.h"
 #include "wipe_free_space_dialog.h"
 #include "signal_mapper.h"
 #include "utilities.h"
@@ -744,15 +745,22 @@ namespace {
 // data: URI, which Qt's rich-text tooltip renderer supports natively with
 // no filesystem/image-provider plumbing. Returns an empty string (no
 // tooltip) for an undecodable file.
-QString makeThumbnailTooltipHtml(const QString &path)
+//
+// SSO-26642: `reader` and `headerSize` are the same ones the caller already
+// opened/read for the Dimensions column — one QImageReader (one file open)
+// per row, reused for both. Applies ImageHash's shared decode-guard policy
+// and, on top of it, refuses to decode when the header gives no size at
+// all: without a known size, `setScaledSize` can't be set below, and
+// `read()` would decode at full resolution bounded only by the allocation
+// limit, on the GUI thread.
+QString makeThumbnailTooltipHtml(QImageReader &reader, const QSize &headerSize)
 {
-    QImageReader reader(path);
-    reader.setAutoTransform(true);
-    reader.setAllocationLimit(128);
+    if (!headerSize.isValid())
+        return QString();
+    if (!ImageHash::applyDecodeGuards(reader))
+        return QString();
 
-    const QSize headerSize = reader.size();
-    if (headerSize.isValid())
-        reader.setScaledSize(headerSize.scaled(200, 200, Qt::KeepAspectRatio));
+    reader.setScaledSize(headerSize.scaled(200, 200, Qt::KeepAspectRatio));
 
     const QImage thumb = reader.read();
     if (thumb.isNull())
@@ -834,11 +842,14 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
             child->setData(2, Qt::UserRole, static_cast<qulonglong>(fi.size()));
             child->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
             if (isSimilar) {
-                const QSize dims = QImageReader(fi.absoluteFilePath()).size();
+                // SSO-26642: one QImageReader (one file open) per row,
+                // reused for both the Dimensions column and the tooltip.
+                QImageReader reader(fi.absoluteFilePath());
+                const QSize dims = reader.size();
                 if (dims.isValid())
                     child->setText(3, tr("%1 × %2").arg(dims.width()).arg(dims.height()));
 
-                const QString thumbnailHtml = makeThumbnailTooltipHtml(fi.absoluteFilePath());
+                const QString thumbnailHtml = makeThumbnailTooltipHtml(reader, dims);
                 if (!thumbnailHtml.isEmpty())
                     child->setToolTip(0, thumbnailHtml);
             }

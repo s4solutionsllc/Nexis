@@ -14,6 +14,19 @@ constexpr int kMaxDimensionPx = 20000;
 
 } // namespace
 
+bool ImageHash::applyDecodeGuards(QImageReader &reader)
+{
+    reader.setAutoTransform(true);
+    reader.setAllocationLimit(kAllocationLimitMB);
+
+    const QSize headerSize = reader.size();
+    if (headerSize.isValid() &&
+        (headerSize.width() > kMaxDimensionPx || headerSize.height() > kMaxDimensionPx))
+        return false;
+
+    return true;
+}
+
 quint64 ImageHash::dHash(const QImage &image)
 {
     const QImage scaled = image.convertToFormat(QImage::Format_Grayscale8)
@@ -37,12 +50,7 @@ quint64 ImageHash::dHash(const QImage &image)
 std::optional<quint64> ImageHash::hashFile(const QString &path)
 {
     QImageReader reader(path);
-    reader.setAutoTransform(true);
-    reader.setAllocationLimit(kAllocationLimitMB);
-
-    const QSize headerSize = reader.size();
-    if (headerSize.isValid() &&
-        (headerSize.width() > kMaxDimensionPx || headerSize.height() > kMaxDimensionPx))
+    if (!applyDecodeGuards(reader))
         return std::nullopt;
 
     // Decode directly to the hash's target size: the full-resolution

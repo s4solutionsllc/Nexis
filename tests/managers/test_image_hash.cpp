@@ -7,6 +7,7 @@
 #include <QColor>
 #include <QFile>
 #include <QImage>
+#include <QImageReader>
 #include <QLinearGradient>
 #include <QPainter>
 #include <QTemporaryDir>
@@ -14,6 +15,46 @@
 #include "Services/image_hash.h"
 
 namespace {
+
+// A hand-assembled BMP file: just the 14-byte BITMAPFILEHEADER + 40-byte
+// BITMAPINFOHEADER, no pixel data. QImageReader::size() reads only this
+// header, so it reports `width`x`height` without the file needing to
+// contain a single real pixel — the minimal fixture for SSO-26642's
+// "header reports an over-cap size" guard case.
+QByteArray makeBmpHeaderOnly(qint32 width, qint32 height)
+{
+    QByteArray data;
+    auto appendLE16 = [&data](quint16 v) {
+        data.append(char(v & 0xFF));
+        data.append(char((v >> 8) & 0xFF));
+    };
+    auto appendLE32 = [&data](quint32 v) {
+        data.append(char(v & 0xFF));
+        data.append(char((v >> 8) & 0xFF));
+        data.append(char((v >> 16) & 0xFF));
+        data.append(char((v >> 24) & 0xFF));
+    };
+
+    data.append("BM", 2);
+    appendLE32(54); // file size (header only, no pixel data follows)
+    appendLE16(0);  // reserved1
+    appendLE16(0);  // reserved2
+    appendLE32(54); // pixel data offset
+
+    appendLE32(40);                          // BITMAPINFOHEADER size
+    appendLE32(static_cast<quint32>(width));  // biWidth
+    appendLE32(static_cast<quint32>(height)); // biHeight
+    appendLE16(1);  // biPlanes
+    appendLE16(24); // biBitCount
+    appendLE32(0);  // biCompression (BI_RGB)
+    appendLE32(0);  // biSizeImage
+    appendLE32(0);  // biXPelsPerMeter
+    appendLE32(0);  // biYPelsPerMeter
+    appendLE32(0);  // biClrUsed
+    appendLE32(0);  // biClrImportant
+
+    return data;
+}
 
 // A smooth diagonal gradient — enough low-frequency structure for dHash's
 // neighbour-pixel comparison to be meaningful, and it survives a 50%
@@ -65,6 +106,8 @@ private slots:
     void hashFile_corruptFile_returnsNullopt();
     void hashFile_missingFile_returnsNullopt();
     void hammingDistance_isSymmetricAndZeroForEqualHashes();
+    void applyDecodeGuards_overCapHeader_rejectsHighDimensionHeader();
+    void applyDecodeGuards_normalImage_accepts();
 };
 
 void TestImageHash::dHash_sameImage_isIdentical()
@@ -152,6 +195,37 @@ void TestImageHash::hammingDistance_isSymmetricAndZeroForEqualHashes()
 
     QCOMPARE(ImageHash::hammingDistance(a, a), 0);
     QCOMPARE(ImageHash::hammingDistance(a, b), ImageHash::hammingDistance(b, a));
+}
+
+void TestImageHash::applyDecodeGuards_overCapHeader_rejectsHighDimensionHeader()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString path = tmp.path() + "/oversized.bmp";
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    // Width alone exceeds kMaxDimensionPx; height stays tiny so the
+    // fixture stays a 54-byte header with no pixel data to speak of.
+    f.write(makeBmpHeaderOnly(25000, 1));
+    f.close();
+
+    QImageReader reader(path);
+    QVERIFY2(!ImageHash::applyDecodeGuards(reader),
+             "a header reporting dimensions above the cap must be rejected before any decode");
+}
+
+void TestImageHash::applyDecodeGuards_normalImage_accepts()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString path = tmp.path() + "/normal.png";
+    QVERIFY(makeGradientImage(64).save(path, "PNG"));
+
+    QImageReader reader(path);
+    QVERIFY2(ImageHash::applyDecodeGuards(reader),
+             "an image within the cap must be accepted");
 }
 
 QTEST_MAIN(TestImageHash)
