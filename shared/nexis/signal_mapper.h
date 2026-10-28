@@ -28,6 +28,8 @@ signals:
     void sigMenuBarMonitorToggled(bool enabled);
     void sigTrayHealthScoreToggled(bool enabled);
     void sigMiniMonitorToggled(bool visible);
+    // SSO-10930 / GH#220: persistent resource-history logging on/off.
+    void sigResourceHistoryToggled(bool enabled);
 
 private:
     static SignalMapper *instance;

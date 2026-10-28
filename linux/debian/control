@@ -24,7 +24,8 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends},
          libqt6svg6,
          qt6-qpa-plugins,
-         qt6-gtk-platformtheme | qt6ct
+         qt6-gtk-platformtheme | qt6ct,
+         libqt6sql6-sqlite
 Recommends: systemd, curl, adwaita-icon-theme | yaru-theme-icon,
             qt6-image-formats-plugins
 Description: Linux system optimizer and monitor

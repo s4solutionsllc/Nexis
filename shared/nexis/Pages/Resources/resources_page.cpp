@@ -2,7 +2,9 @@
 #include "nexis_page.h"
 #include "ui_resources_page.h"
 #include "utilities.h"
+#include "signal_mapper.h"
 #include "Managers/data_refresh_service.h"
+#include "Managers/resource_history_service.h"
 #include <QFile>
 #include <algorithm>
 
@@ -65,6 +67,14 @@ void ResourcesPage::init()
     if (mChartGpu)
         widgets.insert(2, mChartGpu);  // after CPU Load Avg, before Disk R/W
 
+    // SSO-10930 / GH#220: historical view, right after the live Network
+    // chart and before the disk-health / PSI / OOM / power cards below.
+    mResourceHistory = new ResourceHistoryPanel(this);
+    {
+        const int netIdx = widgets.indexOf(mChartNetwork);
+        widgets.insert(netIdx + 1, mResourceHistory);
+    }
+
     // Insert disk health chart after Network, before Disk Launcher
     if (mChartDiskHealth)
         widgets.append(mChartDiskHealth);
@@ -110,6 +120,7 @@ void ResourcesPage::init()
     mChartDiskReadWrite->setElevated(QStringLiteral("disk"));
     mChartMemory->setElevated(QStringLiteral("memory"));
     mChartNetwork->setElevated(QStringLiteral("network"));
+    mResourceHistory->setElevated(QStringLiteral("cpu"));
     // mChartDiskHealth, if already constructed at this point, was elevated
     // inside ensureDiskHealthChart() above — that single call site also
     // handles the lazy (FR-96) creation path from onDiskHealthUpdated().
@@ -120,6 +131,7 @@ void ResourcesPage::init()
     flatShadowWidgets.removeOne(mChartDiskReadWrite);
     flatShadowWidgets.removeOne(mChartMemory);
     flatShadowWidgets.removeOne(mChartNetwork);
+    flatShadowWidgets.removeOne(mResourceHistory);
     if (mChartGpu)
         flatShadowWidgets.removeOne(mChartGpu);
     if (mChartDiskHealth)
@@ -182,6 +194,15 @@ void ResourcesPage::init()
     mDiskLauncher = new DiskUsageLauncherWidget(this);
     ui->chartsLayout->addWidget(mDiskLauncher);
     mDiskLauncher->setElevated(QStringLiteral("disk"));
+
+    // SSO-10930 / GH#220
+    connect(mResourceHistory, &ResourceHistoryPanel::openSettingsRequested, this, [] {
+        emit SignalMapper::ins()->sigNavigateToPage(QStringLiteral("settings"));
+    });
+    connect(SignalMapper::ins(), &SignalMapper::sigResourceHistoryToggled,
+            mResourceHistory, &ResourceHistoryPanel::refresh);
+    connect(ResourceHistoryService::ins(), &ResourceHistoryService::historyChanged,
+            mResourceHistory, &ResourceHistoryPanel::refresh);
 }
 
 void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
@@ -653,6 +674,10 @@ void ResourcesPage::onPageActivated()
     // Kick an immediate disk health refresh so the temperature chart populates
     // on first open rather than waiting up to 30 s for the slow tick.
     mRefresh->triggerDiskHealthCheck();
+
+    // SSO-10930 / GH#220: pick up any setting/data change made while this
+    // page was hidden (e.g. the user enabled history from Settings).
+    mResourceHistory->refresh();
 }
 
 void ResourcesPage::onPageDeactivated()

@@ -100,6 +100,12 @@ namespace SettingKeys {
     // GH#207 (SSO-8351)
     const QString LaunchInKioskMode("LaunchInKioskMode");
     const QString KioskMonitorName("KioskMonitorName");
+
+    // SSO-10930 / GH#220: persistent CPU/load/memory history logging,
+    // off by default (see docs/ARCHITECTURE_REVIEW.md for the hidden-window
+    // background-timer exception this enables).
+    const QString ResourceHistoryEnabled("ResourceHistoryEnabled");
+    const QString ResourceHistoryRetentionDays("ResourceHistoryRetentionDays");
 }
 
 class SettingManager
@@ -319,6 +325,12 @@ public:
     bool getLaunchInKioskMode() const;
     void setKioskMonitorName(const QString &value);
     QString getKioskMonitorName() const;
+
+    // SSO-10930 / GH#220 — off by default; retention choices are 1/7/30 days.
+    void setResourceHistoryEnabled(bool value);
+    bool getResourceHistoryEnabled() const;
+    void setResourceHistoryRetentionDays(int days);
+    int getResourceHistoryRetentionDays() const;
 
 private:
     static SettingManager *instance;

@@ -3,6 +3,7 @@
 
 #include "nexis_page.h"
 #include "history_chart.h"
+#include "resource_history_panel.h"
 #include "disk_usage_launcher_widget.h"
 #include "Managers/info_manager.h"
 #include <QChart>
@@ -66,6 +67,10 @@ private:
     HistoryChart *mChartDiskReadWrite;
     HistoryChart *mChartMemory;
     HistoryChart *mChartNetwork;
+    // SSO-10930 / GH#220: persistent history view, separate from the live
+    // 0-60s charts above — see resource_history_panel.h for why it isn't a
+    // HistoryChart.
+    ResourceHistoryPanel *mResourceHistory = nullptr;
     HistoryChart *mChartGpu;
     HistoryChart *mChartDiskHealth;
     // Disk health is polled every 30 s; the chart advances once a second
