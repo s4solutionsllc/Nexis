@@ -272,7 +272,12 @@ void SystemCleanerPage::buildCategoryCards()
           tr("Dev Tool Caches"), QStringLiteral("~/.electron \u00b7 ~/.cache/vscode*")
         },
         { BROKEN_SYMLINKS,
-          tr("Broken Symlinks"), QStringLiteral("~/ recursive symlink scan")
+          tr("Broken Symlinks"),
+#ifdef Q_OS_MACOS
+          QStringLiteral("~/.local · ~/bin · Homebrew prefix")
+#else
+          QStringLiteral("~/.local · ~/bin · /usr/local/bin")
+#endif
         },
         { BROWSER_PRIVACY,
           tr("Browser Privacy"),
