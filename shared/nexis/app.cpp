@@ -8,6 +8,7 @@
 #include "dpi.h"
 #include <Managers/cleaner_service.h>
 #include <Managers/data_refresh_service.h>
+#include <Managers/resource_history_service.h>
 #include "Info/update_info.h"
 #include <Utils/format_util.h>
 #ifdef Q_OS_LINUX
@@ -815,6 +816,15 @@ void App::init()
             mMiniMonitorAction->setChecked(visible);
     });
     mMiniMonitorWindow->setVisible(SettingManager::ins()->getMiniMonitorVisible());
+
+    // SSO-10930 / GH#220: persistent CPU/load/memory history logging —
+    // cross-platform, off by default. The service is a DataRefreshService-
+    // style singleton (not owned by App) so the Resources page's historical
+    // view can reach it directly; this just applies the saved on/off state
+    // and keeps it live-updating on the Settings toggle.
+    connect(SignalMapper::ins(), &SignalMapper::sigResourceHistoryToggled,
+            ResourceHistoryService::ins(), &ResourceHistoryService::setEnabled);
+    ResourceHistoryService::ins()->setEnabled(SettingManager::ins()->getResourceHistoryEnabled());
 
     // Kiosk mode shortcuts
     QAction *kioskToggle = new QAction(this);

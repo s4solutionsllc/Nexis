@@ -468,6 +468,57 @@
            </widget>
           </item>
 
+          <!-- SSO-10930 / GH#220: persistent CPU/load/memory history logging. -->
+          <item row="2" column="0" colspan="2">
+           <widget class="QCheckBox" name="chkResourceHistoryEnabled">
+            <property name="text"><string>Record resource history</string></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+           </widget>
+          </item>
+
+          <item row="3" column="0">
+           <widget class="QLabel" name="lblResourceHistoryRetention">
+            <property name="text"><string>Keep history for</string></property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QComboBox" name="cmbResourceHistoryRetention">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch><verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
+            <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+           </widget>
+          </item>
+
+          <item row="4" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="layoutResourceHistoryClear">
+            <item>
+             <widget class="QPushButton" name="btnClearResourceHistory">
+              <property name="text"><string>Clear History</string></property>
+              <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+              <property name="variant" stdset="0"><string notr="true">danger</string></property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="hspacerResourceHistoryClear">
+              <property name="orientation"><enum>Qt::Horizontal</enum></property>
+              <property name="sizeHint" stdset="0"><size><width>0</width><height>0</height></size></property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+
+          <item row="5" column="0" colspan="2">
+           <widget class="QLabel" name="lblResourceHistoryHelp">
+            <property name="text"><string>Recorded locally every 10 seconds while Nexis is running, including when minimized to the tray. Nothing is uploaded.</string></property>
+            <property name="wordWrap"><bool>true</bool></property>
+            <property name="accessibleName"><string notr="true">dimmed-small</string></property>
+           </widget>
+          </item>
+
          </layout>
           </item>
          </layout>

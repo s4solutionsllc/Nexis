@@ -55,6 +55,11 @@ private slots:
     void on_checkDiskHealthAlert_clicked(bool checked);
     void on_checkUpdateAlert_clicked(bool checked);
 
+    // SSO-10930 / GH#220
+    void on_chkResourceHistoryEnabled_clicked(bool checked);
+    void cmbResourceHistoryRetentionChanged(int index);
+    void onClearResourceHistory();
+
     void onQuickSetupToggled(bool checked);
     void onThresholdToggled(bool checked);
     void onThresholdGBChanged(int value);

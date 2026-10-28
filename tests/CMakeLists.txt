@@ -63,6 +63,10 @@ add_nexis_test(NAME ThermalInfoTests  SOURCES core/test_thermal_info.cpp)
 add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
 add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
 
+# SSO-10930 / GH#220: persistent resource-history SQLite store. Lives in
+# nexis-core (not nexis-gui) so it's unit-testable without the GUI.
+add_nexis_test(NAME ResourceHistoryStoreTests SOURCES core/test_resource_history_store.cpp LIBS Qt6::Sql)
+
 # SSO-23857: Tweaks pane backend. Pure argv-build/parse/catalog logic —
 # no macOS APIs touched, so these build and run on every platform, unlike
 # the widget itself which only ever gets instantiated on macOS.
@@ -786,6 +790,22 @@ add_nexis_test(NAME DataRefreshServiceTests
     "${GUI_SHARED_DIR}/Managers"
   LIBS
     nexis-gui Qt6::Widgets
+)
+
+# SSO-10930 / GH#220: ResourceHistoryService's avg/max/NULL-tolerance
+# aggregation math, exercised as pure static functions (no timer, no real
+# DataRefreshService subscription). Links against nexis-gui because the
+# service lives in the GUI library; needs Qt6::Sql transitively for
+# ResourceHistoryStore (nexis-core already links it, but link explicitly
+# here too, matching CleanerActionInterpreterTests/BrowserSqliteCleanerTests).
+add_nexis_test(NAME ResourceHistoryServiceTests
+  SOURCES
+    managers/test_resource_history_service.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Sql
 )
 
 # SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
