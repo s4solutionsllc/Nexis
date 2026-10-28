@@ -7,6 +7,8 @@
 
 #include <optional>
 
+class QImageReader;
+
 // SSO-26638: in-house 64-bit difference hash (dHash) for near-duplicate
 // image detection. The algorithm choice sits behind this enum so a future
 // perceptual-hash algorithm (e.g. pHash) can be added without changing
@@ -15,6 +17,18 @@
 enum class ImageHashAlgorithm { DHash };
 
 namespace ImageHash {
+
+// SSO-26642: the one definition of the decode-guard policy every
+// QImageReader decode site in Nexis must apply before calling read().
+// Threat model: these readers decode untrusted image files (Downloads,
+// mounted media, browser caches, scanned directories) that may be
+// decompression bombs or carry a header engineered to defeat a single
+// guard. Sets setAutoTransform(true) and an allocation limit, and rejects
+// a header that reports dimensions above the cap. A reader whose header
+// gives no size at all is NOT rejected here — some callers (e.g. a scaled
+// hash decode) are safe to proceed anyway; others must add their own
+// "no header size" refusal. Returns false if `reader` must not be decoded.
+bool applyDecodeGuards(QImageReader &reader);
 
 // Scales `image` to 9x8 grayscale and sets each bit to whether a pixel is
 // brighter than its right-hand neighbour, producing a 64-bit fingerprint.
