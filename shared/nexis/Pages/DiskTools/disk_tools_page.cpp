@@ -1,7 +1,9 @@
 #include "disk_tools_page.h"
 #include "ui_disk_tools_page.h"
 
+#include <QBuffer>
 #include <QButtonGroup>
+#include <QColor>
 #include <QComboBox>
 #include <QDir>
 #include <QDirIterator>
@@ -10,12 +12,14 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QImageReader>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QSettings>
 #include <QSizePolicy>
 #include <QSpinBox>
 #include <QStandardPaths>
@@ -561,6 +565,31 @@ void DiskToolsPage::buildDuplicatePage()
     mEditGlob->setMaximumWidth(200);
     filterLayout->addWidget(mEditGlob);
 
+    filterLayout->addSpacing(16);
+
+    // SSO-26638 D3: Match toggles Exact vs. Similar images inside this
+    // mode rather than a fifth #modeBarRow button (SSO-26117 tuned that
+    // bar for exactly four).
+    filterLayout->addWidget(new QLabel(tr("Match:"), this));
+    mCbDupMatch = new QComboBox(this);
+    mCbDupMatch->addItem(tr("Exact duplicates"), 0);
+    mCbDupMatch->addItem(tr("Similar images"), 1);
+    connect(mCbDupMatch, &QComboBox::currentIndexChanged,
+            this, &DiskToolsPage::onDupMatchModeChanged);
+    filterLayout->addWidget(mCbDupMatch);
+
+    // SSO-26638 D4: preset Hamming-distance thresholds. The service takes
+    // a plain int so a future slider could replace this without an API
+    // change.
+    mCbSimilarity = new QComboBox(this);
+    mCbSimilarity->addItem(tr("Very high (≤2)"), 2);
+    mCbSimilarity->addItem(tr("High (≤5)"), 5);
+    mCbSimilarity->addItem(tr("Medium (≤10)"), 10);
+    mCbSimilarity->addItem(tr("Low (≤15)"), 15);
+    mCbSimilarity->setCurrentIndex(1); // High (<=5) default
+    mCbSimilarity->setEnabled(false);
+    filterLayout->addWidget(mCbSimilarity);
+
     filterLayout->addStretch();
 
     mBtnDupCancel = new QPushButton(tr("Cancel"), this);
@@ -600,7 +629,12 @@ void DiskToolsPage::buildDuplicatePage()
     mTreeDuplicates = new QTreeWidget(resultsContainer);
     mTreeDuplicates->setObjectName("treeWidgetDuplicates");
     mTreeDuplicates->setFrameShape(QFrame::NoFrame);
-    mTreeDuplicates->setHeaderLabels({tr("Name / Group"), tr("Path"), tr("Size"), tr("Last Modified")});
+    // SSO-26638: Dimensions (W x H) sits before Last Modified so Last
+    // Modified keeps stretching as the last column, as it did before.
+    // Dimensions is populated for Similar-group children only (SSO-26638
+    // "should"); it stays empty for Exact groups.
+    mTreeDuplicates->setHeaderLabels({tr("Name / Group"), tr("Path"), tr("Size"),
+                                      tr("Dimensions"), tr("Last Modified")});
     // DS §7: right-align the tabular Size column, header and cells.
     mTreeDuplicates->headerItem()->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
     mTreeDuplicates->setRootIsDecorated(true);
@@ -611,6 +645,7 @@ void DiskToolsPage::buildDuplicatePage()
     mTreeDuplicates->header()->setSectionResizeMode(1, QHeaderView::Stretch);
     mTreeDuplicates->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     mTreeDuplicates->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    mTreeDuplicates->header()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     connect(mTreeDuplicates, &QTreeWidget::itemChanged, this, &DiskToolsPage::updateDupSelection);
     mTreeDuplicates->hide();
     resultsContainerLayout->addWidget(mTreeDuplicates);
@@ -666,10 +701,27 @@ void DiskToolsPage::onDupScan()
     else if (unitIdx == 1) minSize *= 1024LL * 1024;
     else minSize *= 1024LL * 1024 * 1024;
 
-    QString glob = mEditGlob->text().trimmed();
-
     mLblDupStatus->setText(tr("Starting scan..."));
-    mDupService->scan(directoriesOf(mDirListDup), minSize, glob);
+
+    const bool similarMode = mCbDupMatch->currentData().toInt() == 1;
+    if (similarMode) {
+        const int maxDistance = mCbSimilarity->currentData().toInt();
+        mDupService->scanSimilarImages(directoriesOf(mDirListDup), minSize, maxDistance);
+    } else {
+        const QString glob = mEditGlob->text().trimmed();
+        mDupService->scan(directoriesOf(mDirListDup), minSize, glob);
+    }
+}
+
+void DiskToolsPage::onDupMatchModeChanged(int index)
+{
+    Q_UNUSED(index);
+    const bool similarMode = mCbDupMatch->currentData().toInt() == 1;
+    // SSO-26638 D3: Similarity only means something in Similar mode; the
+    // glob filter is disabled there because image-extension filtering
+    // replaces it.
+    mCbSimilarity->setEnabled(similarMode);
+    mEditGlob->setEnabled(!similarMode);
 }
 
 void DiskToolsPage::onDupProgress(int stage, int current, int total, const QString &message)
@@ -684,6 +736,39 @@ void DiskToolsPage::onDupProgress(int stage, int current, int total, const QStri
     }
 }
 
+namespace {
+
+// SSO-26638 ("should"): a small thumbnail tooltip for Similar-group rows —
+// without seeing the images, "similar" is hard to act on. Decodes straight
+// to a capped size (never the full-resolution bitmap) and embeds it as a
+// data: URI, which Qt's rich-text tooltip renderer supports natively with
+// no filesystem/image-provider plumbing. Returns an empty string (no
+// tooltip) for an undecodable file.
+QString makeThumbnailTooltipHtml(const QString &path)
+{
+    QImageReader reader(path);
+    reader.setAutoTransform(true);
+    reader.setAllocationLimit(128);
+
+    const QSize headerSize = reader.size();
+    if (headerSize.isValid())
+        reader.setScaledSize(headerSize.scaled(200, 200, Qt::KeepAspectRatio));
+
+    const QImage thumb = reader.read();
+    if (thumb.isNull())
+        return QString();
+
+    QByteArray bytes;
+    QBuffer buffer(&bytes);
+    buffer.open(QIODevice::WriteOnly);
+    thumb.save(&buffer, "PNG");
+
+    return QStringLiteral("<img src=\"data:image/png;base64,%1\">")
+        .arg(QString::fromLatin1(bytes.toBase64()));
+}
+
+} // namespace
+
 void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
 {
     mActiveServiceScan = ServiceScan::None;
@@ -695,30 +780,69 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
     // sees the full group, not just the rows the user happens to have checked.
     mDupResults = results;
 
+    // SSO-26638 (BUG-47): the Similar-group label/badge colour comes from
+    // the theme, never a hardcoded hex.
+    QColor similarColor;
+    if (QSettings *sv = mAppManager->getStyleValues())
+        similarColor = QColor(sv->value("@similarImageColor").toString());
+
     mTreeDuplicates->setUpdatesEnabled(false);
 
     quint64 totalWasted = 0;
+    int exactGroupCount = 0;
+    int similarGroupCount = 0;
 
     for (const DuplicateGroup &group : results) {
-        quint64 wastedBytes = group.fileSize * static_cast<quint64>(group.files.size() - 1);
-        totalWasted += wastedBytes;
+        const bool isSimilar = (group.kind == DuplicateGroup::Kind::Similar);
 
         auto *groupItem = new QTreeWidgetItem(mTreeDuplicates);
-        groupItem->setText(0, tr("%1 duplicates").arg(group.files.size()));
-        groupItem->setText(2, tr("%1 wasted").arg(FormatUtil::formatBytes(wastedBytes)));
-        groupItem->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
         groupItem->setFlags(groupItem->flags() & ~Qt::ItemIsUserCheckable);
+
+        if (isSimilar) {
+            ++similarGroupCount;
+            // SSO-26638: Similar groups have no byte-identical "wasted
+            // space" figure — distinguish them by kind and distance
+            // instead (acceptance criterion: shown distinctly from Exact).
+            groupItem->setText(0, tr("Similar — %1 images, distance ≤ %2")
+                .arg(group.files.size()).arg(group.maxDistance));
+            if (similarColor.isValid())
+                groupItem->setForeground(0, similarColor);
+        } else {
+            ++exactGroupCount;
+            const quint64 wastedBytes =
+                group.fileSize * static_cast<quint64>(group.files.size() - 1);
+            totalWasted += wastedBytes;
+            groupItem->setText(0, tr("Identical — %1 files, %2 reclaimable")
+                .arg(group.files.size()).arg(FormatUtil::formatBytes(wastedBytes)));
+        }
 
         for (int i = 0; i < group.files.size(); ++i) {
             const QFileInfo &fi = group.files[i];
             auto *child = new QTreeWidgetItem(groupItem);
-            child->setCheckState(0, (i == 0) ? Qt::Unchecked : Qt::Checked);
+            // SSO-26638: Similar images are not interchangeable copies —
+            // one may be the higher-resolution original — so the user
+            // must opt in to every deletion, never pre-checked. Exact
+            // groups keep the existing "first file kept, rest pre-checked"
+            // behaviour.
+            if (isSimilar)
+                child->setCheckState(0, Qt::Unchecked);
+            else
+                child->setCheckState(0, (i == 0) ? Qt::Unchecked : Qt::Checked);
             child->setText(0, fi.fileName());
             child->setText(1, fi.absolutePath());
             child->setText(2, FormatUtil::formatBytes(fi.size()));
             child->setData(2, Qt::UserRole, static_cast<qulonglong>(fi.size()));
             child->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
-            child->setText(3, fi.lastModified().toString("yyyy-MM-dd hh:mm"));
+            if (isSimilar) {
+                const QSize dims = QImageReader(fi.absoluteFilePath()).size();
+                if (dims.isValid())
+                    child->setText(3, tr("%1 × %2").arg(dims.width()).arg(dims.height()));
+
+                const QString thumbnailHtml = makeThumbnailTooltipHtml(fi.absoluteFilePath());
+                if (!thumbnailHtml.isEmpty())
+                    child->setToolTip(0, thumbnailHtml);
+            }
+            child->setText(4, fi.lastModified().toString("yyyy-MM-dd hh:mm"));
             child->setData(0, Qt::UserRole, fi.absoluteFilePath());
         }
     }
@@ -726,8 +850,15 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
     mTreeDuplicates->expandAll();
     mTreeDuplicates->setUpdatesEnabled(true);
 
-    mLblDupStatus->setText(tr("%1 duplicate groups found — %2 wasted space")
-        .arg(results.size()).arg(FormatUtil::formatBytes(totalWasted)));
+    if (similarGroupCount > 0) {
+        mLblDupStatus->setText(
+            tr("%1 identical + %2 similar groups found — %3 wasted space")
+                .arg(exactGroupCount).arg(similarGroupCount)
+                .arg(FormatUtil::formatBytes(totalWasted)));
+    } else {
+        mLblDupStatus->setText(tr("%1 duplicate groups found — %2 wasted space")
+            .arg(exactGroupCount).arg(FormatUtil::formatBytes(totalWasted)));
+    }
 
     updateDupSelection();
 }

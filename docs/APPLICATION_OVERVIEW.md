@@ -328,19 +328,41 @@ Four-mode page for finding space-wasting files (Large & Old Files, Duplicate Fin
 - Checkboxes for selective deletion; trashing routes through `DuplicateFinderService::trashFiles()` so cleaner exclusions apply, and excluded paths are skipped at scan time too (SSO-25782 — this mode previously ignored exclusions)
 - Cancelling a scan restores the Scan button and the empty state
 
-**Mode 2 — Duplicate Finder (FR-63 / FW-08):**
+**Mode 2 — Duplicate Finder (FR-63 / FW-08; similar images in SSO-26638):**
 - Shared directory picker (synced with Large & Old mode)
 - Configurable minimum file size (KB/MB/GB) and optional glob pattern filter
-- DuplicateFinderService: 3-stage pipeline (size grouping → partial 4KB SHA-256 → full SHA-256)
+- A **Match** combo (Exact duplicates / Similar images) and, when Similar is
+  selected, a **Similarity** preset combo (Very high ≤2 / High ≤5 default /
+  Medium ≤10 / Low ≤15, a Hamming-distance threshold); the glob filter is
+  disabled in Similar mode since image-extension filtering replaces it
+- Exact mode: `DuplicateFinderService::scan()`, a 3-stage pipeline (size
+  grouping → partial 4KB SHA-256 → full SHA-256)
+- Similar mode: `DuplicateFinderService::scanSimilarImages()` — candidate
+  images are chosen by extension against `QImageReader::supportedImageFormats()`;
+  an exact pass groups byte-identical images first, then one representative
+  per exact group plus every remaining image is fingerprinted with an
+  in-house 64-bit difference hash (dHash, `ImageHash::dHash`/`hashFile`) and
+  clustered into seed-anchored groups (each member within the chosen
+  threshold of one seed image, never of each other — avoids chaining
+  visually unrelated images transitively). A corrupt/undecodable image is
+  skipped and counted, not fatal to the scan
 - Progress bar with stage-by-stage status messages
-- Results in grouped QTreeWidget: parent = duplicate group (wasted space), children = files
-- First file in each group unchecked (kept), remaining pre-checked for deletion
+- Results in grouped QTreeWidget: parent = group ("Identical — N files, X
+  reclaimable" or, in a theme-token colour, "Similar — N images, distance ≤
+  d"), children = files, with a Dimensions (W×H) column and a decoded
+  thumbnail tooltip populated for Similar-group children
+- Exact groups: first file unchecked (kept), remaining pre-checked for
+  deletion. Similar groups: **no file is pre-checked** — near-duplicates are
+  not interchangeable copies (one may be the higher-resolution original), so
+  every deletion is opt-in; the seed is listed first
 - Cancellable scan with Cancel button
-- FW-08 (SSO-3736): scans honor the CleanerService exclusion engine; trashing
-  routes through `DuplicateFinderService::trashFiles()` which enforces the
-  never-delete-last-copy invariant (retains the lexicographically smallest path
-  of any duplicate group whose entire surviving set was selected) and drops
-  excluded paths before the moveToTrash seam
+- FW-08 (SSO-3736): scans honor the CleanerService exclusion engine and skip
+  symlinks; trashing routes through `DuplicateFinderService::trashFiles()`
+  which enforces the never-delete-last-copy invariant (retains the
+  lexicographically smallest path of any duplicate group whose entire
+  surviving set was selected) and drops excluded paths before the
+  moveToTrash seam — unchanged for Similar groups, since the guard is
+  kind-agnostic
 
 **Mode 3 — Largest Files (FW-08, UI in SSO-25782):**
 - "Show top N" spinner (10–5000, default 100) over `DuplicateFinderService::scanLargest(topN)`
