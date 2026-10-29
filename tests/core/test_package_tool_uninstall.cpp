@@ -103,7 +103,9 @@ private slots:
     void orphan_pacman_emptyOutput_skipsRemove();
 
     // ── PackageToolLinux::removeStaleSnapRevisions ──────────────────────────
-    void staleSnap_buildsRevisionFlagPerPackage();
+    void staleSnap_batchesAllRevisionsIntoSingleElevatedCall();
+    void staleSnap_emptyList_skipsElevatedCall();
+    void staleSnap_safelyHandlesShellMetacharactersInName();
 
     // ── PackageToolMacOS uninstall paths ────────────────────────────────────
     void brew_uninstall_passesUninstallVerb();
@@ -269,8 +271,10 @@ void TestPackageToolUninstall::orphan_pacman_emptyOutput_skipsRemove()
 
 // ── PackageToolLinux::removeStaleSnapRevisions ────────────────────────────────
 
-void TestPackageToolUninstall::staleSnap_buildsRevisionFlagPerPackage()
+void TestPackageToolUninstall::staleSnap_batchesAllRevisionsIntoSingleElevatedCall()
 {
+    // SSO-26715: 2+ selected revisions must cost exactly one password
+    // prompt, not one `pkexec` per revision.
     CapturingPackageToolLinux tool;
     QList<StaleSnapRevision> revs;
     revs.push_back({"firefox", "4173", "/var/lib/snapd/snaps/firefox_4173.snap", 0});
@@ -278,12 +282,37 @@ void TestPackageToolUninstall::staleSnap_buildsRevisionFlagPerPackage()
 
     QVERIFY(tool.removeStaleSnapRevisions(revs));
 
-    QCOMPARE(tool.calls.size(), 2);
-    QCOMPARE(tool.calls.at(0).cmd, QStringLiteral("snap"));
-    QCOMPARE(tool.calls.at(0).args,
-             (QStringList{"remove", "firefox", "--revision=4173"}));
-    QCOMPARE(tool.calls.at(1).args,
-             (QStringList{"remove", "core20", "--revision=2100"}));
+    QCOMPARE(tool.calls.size(), 1);
+    const auto &c = tool.calls.first();
+    QCOMPARE(c.kind, ExecCall::Sudo);
+    QCOMPARE(c.cmd, QStringLiteral("sh"));
+    QCOMPARE(c.args.size(), 2);
+    QCOMPARE(c.args.at(0), QStringLiteral("-c"));
+    QVERIFY(c.args.at(1).contains(QStringLiteral("snap remove 'firefox' --revision='4173'")));
+    QVERIFY(c.args.at(1).contains(QStringLiteral("snap remove 'core20' --revision='2100'")));
+}
+
+void TestPackageToolUninstall::staleSnap_emptyList_skipsElevatedCall()
+{
+    CapturingPackageToolLinux tool;
+
+    QVERIFY(tool.removeStaleSnapRevisions({}));
+
+    QCOMPARE(tool.calls.size(), 0);
+}
+
+void TestPackageToolUninstall::staleSnap_safelyHandlesShellMetacharactersInName()
+{
+    // Defensive: even if a snap name carried shell metacharacters, the
+    // single-quoting must neutralise them inside the batched sh -c script.
+    CapturingPackageToolLinux tool;
+    QList<StaleSnapRevision> revs;
+    revs.push_back({"pkg'; rm -rf /", "1", "/var/lib/snapd/snaps/x_1.snap", 0});
+
+    QVERIFY(tool.removeStaleSnapRevisions(revs));
+
+    QCOMPARE(tool.calls.size(), 1);
+    QVERIFY(tool.calls.first().args.at(1).contains(QStringLiteral("'pkg'\\''; rm -rf /'")));
 }
 
 // ── PackageToolMacOS uninstall paths ──────────────────────────────────────────
