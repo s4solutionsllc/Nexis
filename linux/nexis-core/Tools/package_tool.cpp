@@ -440,16 +440,37 @@ QList<StaleSnapRevision> PackageToolLinux::getStaleSnapRevisions()
     return revisions;
 }
 
+namespace {
+// `snap remove` only accepts one name/revision pair, so batching N revisions
+// into a single pkexec prompt means running N `snap remove` invocations
+// inside one `sh -c` script rather than one pkexec call per revision.
+// Single-quote each value to neutralise shell metacharacters (mirrors
+// CommandUtil::buildMacOsSudoShellCommand's escaping idiom).
+QString shellQuoteSingle(const QString &value)
+{
+    QString escaped = value;
+    escaped.replace("'", "'\\''");
+    return "'" + escaped + "'";
+}
+} // namespace
+
 bool PackageToolLinux::removeStaleSnapRevisions(const QList<StaleSnapRevision> &revisions)
 {
-    bool allOk = true;
+    if (revisions.isEmpty())
+        return true;
+
+    QStringList script;
+    script << QStringLiteral("rc=0");
     for (const StaleSnapRevision &rev : revisions) {
-        if (!runSudoCommand("snap", {"remove", rev.name, "--revision=" + rev.revision})) {
-            qCritical() << "Failed to remove snap revision:" << rev.name << rev.revision;
-            allOk = false;
-        }
+        script << QStringLiteral("snap remove %1 --revision=%2 || rc=1")
+                      .arg(shellQuoteSingle(rev.name), shellQuoteSingle(rev.revision));
     }
-    return allOk;
+    script << QStringLiteral("exit $rc");
+
+    const bool ok = runSudoCommand("sh", {"-c", script.join(" ; ")});
+    if (!ok)
+        qCritical() << "Failed to remove one or more stale snap revisions";
+    return ok;
 }
 
 /**********
