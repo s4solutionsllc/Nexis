@@ -231,6 +231,11 @@ quint64 InfoManager::getMemAvailable() const
     return mi->getMemAvailable();
 }
 
+quint64 InfoManager::getMemCached() const
+{
+    return mi->getMemCached();
+}
+
 int InfoManager::getMemPressureLevel() const
 {
     return mi->getPressureLevel();
@@ -609,6 +614,26 @@ void InfoManager::updateCpuPsi()
 PsiSnapshot InfoManager::getCpuPsi() const
 {
     return psii->getCpuSnapshot();
+}
+
+void InfoManager::updateMemoryPsi()
+{
+    psii->updateMemoryPsi();
+}
+
+PsiSnapshot InfoManager::getMemoryPsi() const
+{
+    return psii->getMemorySnapshot();
+}
+
+void InfoManager::updateIoPsi()
+{
+    psii->updateIoPsi();
+}
+
+PsiSnapshot InfoManager::getIoPsi() const
+{
+    return psii->getIoSnapshot();
 }
 
 void InfoManager::updateOomdInfo()

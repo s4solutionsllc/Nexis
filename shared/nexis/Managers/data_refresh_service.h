@@ -108,7 +108,8 @@ signals:
     void batteryUpdated(const BatteryData &data);
     void diskUsageUpdated(const QList<Disk> &disks);
 #ifdef Q_OS_LINUX
-    void psiUpdated(const PsiSnapshot &cpu);
+    // SSO-26721: memory/io PSI join the existing CPU-only reading, same tick.
+    void psiUpdated(const PsiSnapshot &cpu, const PsiSnapshot &memory, const PsiSnapshot &io);
     // FW-11 (SSO-3739): systemd-oomd / cgroup v2 observability tick.
     void oomdUpdated(const OomdSnapshot &snap);
     // SSO-15378: powercap/RAPL package power tick.

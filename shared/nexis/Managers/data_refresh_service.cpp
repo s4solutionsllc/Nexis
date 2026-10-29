@@ -325,6 +325,7 @@ void DataRefreshService::onFastTick()
         snap.inactive = im->getMemInactive();
         snap.compressed = im->getMemCompressed();
         snap.available = im->getMemAvailable();
+        snap.cached = im->getMemCached();
         snap.pressureLevel = im->getMemPressureLevel();
         emit memoryUpdated(snap);
     }
@@ -351,7 +352,9 @@ void DataRefreshService::onFastTick()
 #ifdef Q_OS_LINUX
     if (hasSubscribers(Signal::Psi)) {
         im->updateCpuPsi();
-        emit psiUpdated(im->getCpuPsi());
+        im->updateMemoryPsi();
+        im->updateIoPsi();
+        emit psiUpdated(im->getCpuPsi(), im->getMemoryPsi(), im->getIoPsi());
     }
 
     // SSO-15378: package power draw is transient, sample it at the same

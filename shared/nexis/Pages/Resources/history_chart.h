@@ -50,6 +50,29 @@ public:
     // passing an empty string hides whichever of the two has no content.
     void setHeaderValue(const QString &primary, const QString &secondary = QString());
 
+    // SSO-26721: a value dropped from the chart (e.g. Memory's Wired/Active)
+    // moves here instead — visible on hover over the header's hero value
+    // rather than its own line. Call after setHeaderValue(); empty clears it.
+    void setHeaderTooltip(const QString &tooltip);
+
+    // SSO-26721: series whose scale is unrelated to the chart's primary Y
+    // axis (Load & Pressure's 0-100% PSI lines alongside load averages that
+    // range with core count) get a second, independent value axis on the
+    // right. Returned series reuse the same @chartSeriesNN coloring
+    // convention as the primary-axis series (appended to getSeriesList()),
+    // but the caller must push their values into a separate RollingSeries —
+    // sharing one RollingSeries across both axes would let the 0-100 PSI
+    // points dominate windowYMax() and squash the load-average lines.
+    QVector<QSplineSeries *> addSecondaryAxisSeries(int count, double rangeMin, double rangeMax,
+                                                      const QString &axisTitle);
+
+    // SSO-26721: a static dashed guide line (Load & Pressure's core-count
+    // reference) — not rolling data, so it bypasses RollingSeries entirely.
+    // Lazily created on first call; later calls just move it to the new
+    // value. Uses @chartGridColor (a passive guide-line token already in
+    // every theme) rather than a new per-purpose token.
+    void setReferenceLine(double value, const QString &legendName);
+
     // A small checkable QToolButton (BUG-52: QToolButton, not QPushButton,
     // for an icon/text toggle on macOS) inserted into the header row, to the
     // left of the hero value. Caller owns wiring toggled(bool); HistoryChart
@@ -109,6 +132,10 @@ private:
     QLabel  *mLblHeaderValue = nullptr;
     QLabel  *mLblHeaderSecondary = nullptr;
     QWidget *mExtrasRow = nullptr;
+
+    // SSO-26721
+    QValueAxis *mSecondaryAxisY = nullptr;
+    QLineSeries *mReferenceLine = nullptr;
 };
 
 #endif // HISTORYCHART_H

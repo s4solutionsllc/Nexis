@@ -61,7 +61,9 @@ private slots:
     void onGpuUpdated(const QList<GpuDevice> &gpus);
     void onDiskHealthUpdated(const QList<DriveHealth> &drives);
 #ifdef Q_OS_LINUX
-    void onPsiUpdated(const PsiSnapshot &snap);
+    // SSO-26721: cpu/memory/io `some avg10`, one line each, replacing the
+    // old CPU-only text status line.
+    void onPsiUpdated(const PsiSnapshot &cpu, const PsiSnapshot &memory, const PsiSnapshot &io);
     void onOomdUpdated(const OomdSnapshot &snap);
     void onPowerUpdated(const RaplPowerSnapshot &snap);
 #endif
@@ -100,6 +102,13 @@ private:
     // which renders current values directly rather than a trend.
     std::unique_ptr<RollingSeries> mRollingCpu;
     std::unique_ptr<RollingSeries> mRollingLoadPressure;
+#ifdef Q_OS_LINUX
+    // SSO-26721: a separate RollingSeries on the Load & Pressure card's
+    // secondary (0-100%) axis — kept apart from mRollingLoadPressure so a
+    // PSI spike can't drag that axis's windowYMax() around and squash the
+    // load-average lines, which scale with core count instead.
+    std::unique_ptr<RollingSeries> mRollingPsi;
+#endif
     std::unique_ptr<RollingSeries> mRollingDiskIO;
     std::unique_ptr<RollingSeries> mRollingMemory;
     std::unique_ptr<RollingSeries> mRollingNetwork;
@@ -114,9 +123,13 @@ private:
 #ifdef Q_OS_LINUX
     // Folded into the Memory card's extrasRow() rather than its own card.
     OomKillsWidget *mOomKills = nullptr;
-    // Folded into the Load & Pressure card's extrasRow() as a status line;
-    // null (and never subscribed) on a host without /proc/pressure/cpu.
-    QLabel *mPsiStatusLabel = nullptr;
+    // SSO-26721: cpu/memory/io `some avg10` lines on the Load & Pressure
+    // card's secondary axis, replacing the old CPU-only text status line.
+    // Empty (and never subscribed) on a host without /proc/pressure/cpu —
+    // each individual line still independently hides itself (onPsiUpdated)
+    // if its own file is missing, so a kernel with only partial PSI support
+    // just shows fewer lines rather than none.
+    QVector<QSplineSeries *> mPsiSeries;
 #endif
 
     // SSO-10930 / GH#220: persistent history view, behind the Live/History

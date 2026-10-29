@@ -46,7 +46,11 @@ ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
     mChartCpu(new HistoryChart(tr("CPU"), 1, nullptr, this)),
     mChartLoadPressure(new HistoryChart(tr("Load & Pressure"), 3, nullptr, this)),
     mChartDiskReadWrite(new HistoryChart(tr("Disk I/O"), 2, new QCategoryAxis, this)),
-    mChartMemory(new HistoryChart(tr("Memory"), 4, nullptr, this)),
+    // SSO-26721: 3 series — Used, Swap, one platform series (Compressed on
+    // macOS, Cached on Linux). Wired (macOS) / Active (Linux) moved to the
+    // header tooltip; Linux's Available dropped — it's close to the inverse
+    // of Used.
+    mChartMemory(new HistoryChart(tr("Memory"), 3, nullptr, this)),
     mChartNetwork(new HistoryChart(tr("Network"), 2, new QCategoryAxis, this)),
     mDiskLauncher(nullptr),
     mActive(false)
@@ -133,17 +137,18 @@ void ResourcesPage::init()
     mChartNetwork->setElevated(QStringLiteral("network"));
 
 #ifdef Q_OS_LINUX
-    // PSI → a status line in the Load & Pressure card, not its own card.
-    // Only created when the PSI file is present (kernel 4.20+, CONFIG_PSI=y)
-    // — zero cost when absent, since it's never subscribed either.
+    // SSO-26721: cpu/memory/io `some avg10` plotted as 3 lines on the Load &
+    // Pressure card's secondary (0-100%) axis, replacing the old CPU-only
+    // text status line. Only created when CPU PSI is present (kernel 4.20+,
+    // CONFIG_PSI=y) — zero cost when absent, since it's never subscribed
+    // either; memory/io each independently hide their own line in
+    // onPsiUpdated() if their file is missing, rather than hiding the card.
     if (QFile::exists(QStringLiteral("/proc/pressure/cpu"))) {
-        mPsiStatusLabel = new QLabel(mChartLoadPressure);
-        mPsiStatusLabel->setObjectName("psiStatusLine");
-        mPsiStatusLabel->setWordWrap(true);
-        mPsiStatusLabel->hide();
-        QWidget *extras = mChartLoadPressure->extrasRow();
-        static_cast<QVBoxLayout *>(extras->layout())->addWidget(mPsiStatusLabel);
-        extras->setVisible(true);
+        mPsiSeries = mChartLoadPressure->addSecondaryAxisSeries(3, 0, 100, tr("PSI"));
+        static const QString psiNames[] = { tr("PSI CPU"), tr("PSI Memory"), tr("PSI IO") };
+        for (int i = 0; i < mPsiSeries.count(); ++i)
+            mPsiSeries.at(i)->setName(psiNames[i]);
+        mRollingPsi = std::make_unique<RollingSeries>(toXYSeries(mPsiSeries));
     }
 
     // FW-11 (SSO-3739): OOM-kill status line, folded into the Memory card.
@@ -178,7 +183,7 @@ void ResourcesPage::init()
             this, &ResourcesPage::onDiskHealthUpdated);
 
 #ifdef Q_OS_LINUX
-    if (mPsiStatusLabel)
+    if (!mPsiSeries.isEmpty())
         connect(mRefresh, &DataRefreshService::psiUpdated,
                 this, &ResourcesPage::onPsiUpdated);
     connect(mRefresh, &DataRefreshService::oomdUpdated,
@@ -429,6 +434,12 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
 
         mChartLoadPressure->setSeriesList(seriesList);
 
+        // SSO-26721: a dashed core-count reference line makes load average
+        // meaningful across core counts — users compare raw load numbers
+        // with `uptime`/`top`, which report against core count too, rather
+        // than a normalized ratio.
+        mChartLoadPressure->setReferenceLine(im->getCpuCoreCount(), tr("Cores"));
+
         if (!loadAvgs.isEmpty())
             mChartLoadPressure->setHeaderValue(QString::asprintf("%.2f", loadAvgs.at(0)));
     }
@@ -496,34 +507,32 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
     double memPct = snap.total ? ((double)snap.used / (double)snap.total) * 100.0 : 0;
     values.append(memPct);
 
-    // FR-57: Series 2 — Wired % (macOS) or Available % (Linux)
-    if (seriesList.count() > 2) {
-        double pct2 = 0;
-        QString name2;
-        if (snap.wired > 0) {
-            pct2 = snap.total ? ((double)snap.wired / (double)snap.total) * 100.0 : 0;
-            name2 = tr("Wired");
-        } else {
-            pct2 = snap.total ? ((double)snap.available / (double)snap.total) * 100.0 : 0;
-            name2 = tr("Available");
-        }
-        values.append(pct2);
-        seriesList.at(2)->setName(name2);
+    // SSO-26721 (report §4): one platform series instead of two — macOS →
+    // Compressed, Linux → Cached (Linux's memory_info.cpp never sets wired,
+    // so snap.wired > 0 is still the reliable mac/Linux tell used elsewhere
+    // in this file). Wired (macOS) / Active (Linux) move to the header
+    // tooltip instead of their own line; Linux's Available is dropped
+    // entirely — it's close to the inverse of Used and added nothing the
+    // Used line didn't already show.
+    double otherPct = 0;
+    QString otherName;
+    double droppedPct = 0;
+    QString droppedName;
+    const bool isMac = snap.wired > 0;
+    if (isMac) {
+        otherPct = snap.total ? ((double)snap.compressed / (double)snap.total) * 100.0 : 0;
+        otherName = tr("Compressed");
+        droppedPct = snap.total ? ((double)snap.wired / (double)snap.total) * 100.0 : 0;
+        droppedName = tr("Wired");
+    } else {
+        otherPct = snap.total ? ((double)snap.cached / (double)snap.total) * 100.0 : 0;
+        otherName = tr("Cached");
+        droppedPct = snap.total ? ((double)snap.active / (double)snap.total) * 100.0 : 0;
+        droppedName = tr("Active");
     }
-
-    // FR-57: Series 3 — Compressed % (macOS) or Active % (Linux)
-    if (seriesList.count() > 3) {
-        double pct3 = 0;
-        QString name3;
-        if (snap.compressed > 0 || snap.wired > 0) {
-            pct3 = snap.total ? ((double)snap.compressed / (double)snap.total) * 100.0 : 0;
-            name3 = tr("Compressed");
-        } else {
-            pct3 = snap.total ? ((double)snap.active / (double)snap.total) * 100.0 : 0;
-            name3 = tr("Active");
-        }
-        values.append(pct3);
-        seriesList.at(3)->setName(name3);
+    if (seriesList.count() > 2) {
+        values.append(otherPct);
+        seriesList.at(2)->setName(otherName);
     }
 
     // Series names 0/1 are constant ("Swap"/"Memory") — SSO-26719: legends
@@ -535,6 +544,7 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
     mChartMemory->setSeriesList(seriesList);
 
     mChartMemory->setHeaderValue(QString::asprintf("%.0f%%", memPct));
+    mChartMemory->setHeaderTooltip(tr("%1: %2%").arg(droppedName).arg(droppedPct, 0, 'f', 0));
 }
 
 void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
@@ -588,21 +598,32 @@ void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 }
 
 #ifdef Q_OS_LINUX
-void ResourcesPage::onPsiUpdated(const PsiSnapshot &snap)
+void ResourcesPage::onPsiUpdated(const PsiSnapshot &cpu, const PsiSnapshot &memory, const PsiSnapshot &io)
 {
-    if (!mPsiStatusLabel)
+    if (mPsiSeries.isEmpty())
         return;
 
-    if (!mActive || !snap.available) {
-        mPsiStatusLabel->hide();
+    if (!mActive) {
+        for (QSplineSeries *s : std::as_const(mPsiSeries))
+            s->setVisible(false);
         return;
     }
 
-    mPsiStatusLabel->setText(tr("CPU pressure (PSI): avg10 %1% · avg60 %2% · avg300 %3%")
-                                  .arg(snap.someAvg10, 0, 'f', 1)
-                                  .arg(snap.someAvg60, 0, 'f', 1)
-                                  .arg(snap.someAvg300, 0, 'f', 1));
-    mPsiStatusLabel->show();
+    // SSO-26721: "a missing file hides that line, not the card" — each of
+    // the 3 lines independently follows its own snapshot's `available`
+    // flag. Push 0 for an unavailable metric rather than skipping it in
+    // the values vector: RollingSeries::push() only supports dropping
+    // *trailing* series by passing fewer values, not a gap in the middle,
+    // and the hidden line's buffered zero never renders anyway.
+    const PsiSnapshot *snaps[3] = { &cpu, &memory, &io };
+    QVector<double> values;
+    values.reserve(mPsiSeries.count());
+    for (int i = 0; i < mPsiSeries.count() && i < 3; ++i) {
+        mPsiSeries.at(i)->setVisible(snaps[i]->available);
+        values.append(snaps[i]->available ? snaps[i]->someAvg10 : 0.0);
+    }
+    mRollingPsi->push(values);
+    mChartLoadPressure->setSeriesList(mChartLoadPressure->getSeriesList());
 }
 
 void ResourcesPage::onOomdUpdated(const OomdSnapshot &snap)
@@ -629,6 +650,9 @@ void ResourcesPage::resetRollingSeries()
     if (mRollingMemory) mRollingMemory->reset();
     if (mRollingNetwork) mRollingNetwork->reset();
     if (mRollingGpu) mRollingGpu->reset();
+#ifdef Q_OS_LINUX
+    if (mRollingPsi) mRollingPsi->reset();
+#endif
 }
 
 void ResourcesPage::onPageActivated()
@@ -646,7 +670,7 @@ void ResourcesPage::onPageActivated()
     if (mChartGpu)
         mRefresh->subscribe(DataRefreshService::Signal::Gpu);
 #ifdef Q_OS_LINUX
-    if (mPsiStatusLabel)
+    if (!mPsiSeries.isEmpty())
         mRefresh->subscribe(DataRefreshService::Signal::Psi);
     mRefresh->subscribe(DataRefreshService::Signal::Oomd);
     mRefresh->subscribe(DataRefreshService::Signal::Power);
@@ -681,7 +705,7 @@ void ResourcesPage::onPageDeactivated()
     if (mChartGpu)
         mRefresh->unsubscribe(DataRefreshService::Signal::Gpu);
 #ifdef Q_OS_LINUX
-    if (mPsiStatusLabel)
+    if (!mPsiSeries.isEmpty())
         mRefresh->unsubscribe(DataRefreshService::Signal::Psi);
     mRefresh->unsubscribe(DataRefreshService::Signal::Oomd);
     mRefresh->unsubscribe(DataRefreshService::Signal::Power);
