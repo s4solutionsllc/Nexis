@@ -158,6 +158,7 @@ void SystemCleanerProvider::scan(
 void SystemCleanerProvider::beginExecution(const QList<TrustSafetyActionItem> &items, bool dryRun)
 {
     mBatchRemovedPaths.clear();
+    mBatchRemovedSnapRevisions.clear();
 
     // GH#441: selecting several package-cache (or other root-owned) items and
     // running Clean Selected used to call CleanerService::cleanFiles() once
@@ -181,12 +182,42 @@ void SystemCleanerProvider::beginExecution(const QList<TrustSafetyActionItem> &i
             continue;
         paths << item.id;
     }
-    if (paths.isEmpty())
+    if (!paths.isEmpty()) {
+        mCleanerService->cleanFiles(paths);
+        for (const QString &path : std::as_const(paths))
+            mBatchRemovedPaths.insert(path);
+    }
+
+    // SSO-26715: same issue as GH#441 above, but for stale snap revisions —
+    // selecting several of them used to call
+    // ToolManager::removeStaleSnapRevisions() once per item from
+    // performItem() below, and that call elevates via pkexec on Linux, so
+    // each selected revision prompted for the password separately.
+    // removeStaleSnapRevisions() already accepts a full list and removes it
+    // with a single elevated call, so batch the whole selection through one
+    // call here too. Independent of the file-path batching above so a
+    // selection of only snap revisions (no plain files) still batches.
+    if (!mToolManager)
         return;
 
-    mCleanerService->cleanFiles(paths);
-    for (const QString &path : std::as_const(paths))
-        mBatchRemovedPaths.insert(path);
+    QList<StaleSnapRevision> revisions;
+    for (const TrustSafetyActionItem &item : items) {
+        if (!item.id.startsWith(QLatin1String(ID_PREFIX_SNAP)))
+            continue;
+        QString filePath = item.id.mid(qstrlen(ID_PREFIX_SNAP));
+        for (const StaleSnapRevision &rev : mConfig.snapRevisions) {
+            if (rev.filePath == filePath) {
+                revisions << rev;
+                break;
+            }
+        }
+    }
+    if (revisions.isEmpty())
+        return;
+
+    mToolManager->removeStaleSnapRevisions(revisions);
+    for (const StaleSnapRevision &rev : std::as_const(revisions))
+        mBatchRemovedSnapRevisions.insert(rev.filePath);
 }
 
 // ─── performItem ──────────────────────────────────────────────────────────────
@@ -239,7 +270,10 @@ TrustSafetyActionResult SystemCleanerProvider::performItem(
         for (const StaleSnapRevision &rev : mConfig.snapRevisions) {
             if (rev.filePath == filePath) {
                 result.bytesFreed = static_cast<qint64>(rev.size);
-                if (!dryRun && mToolManager)
+                // SSO-26715: already removed as part of the single batched
+                // removeStaleSnapRevisions() call in beginExecution() —
+                // don't trigger a second (separately elevated) removal.
+                if (!dryRun && mToolManager && !mBatchRemovedSnapRevisions.contains(filePath))
                     mToolManager->removeStaleSnapRevisions({rev});
                 result.succeeded = true;
                 return result;
