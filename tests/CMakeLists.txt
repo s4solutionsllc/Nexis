@@ -298,6 +298,18 @@ add_nexis_test(NAME OomdInfoParserTests
     "${CMAKE_SOURCE_DIR}/shared/nexis-core/Info"
 )
 
+# SSO-26721: pure parser for /proc/pressure/{cpu,memory,io} — PsiInfo now
+# covers all three, not just cpu. Compiled directly so the test runs
+# cross-platform even though PsiInfo is only wired into the real
+# nexis-core build on Linux.
+add_nexis_test(NAME PsiInfoTests
+  SOURCES
+    core/test_psi_info.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info/psi_info.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Info"
+)
+
 # SSO-15379: persistent `nethogs -t` streamer for per-process network I/O.
 # Compiled directly so the parser test runs cross-platform even though
 # nethogs_streamer.cpp is only wired into the real nexis-core build on

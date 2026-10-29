@@ -79,6 +79,11 @@ quint64 MemoryInfo::getMemAvailable() const
     return memAvailable;
 }
 
+quint64 MemoryInfo::getMemCached() const
+{
+    return cached;
+}
+
 int MemoryInfo::getPressureLevel() const
 {
     return pressureLevel;

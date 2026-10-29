@@ -6,10 +6,20 @@
 
 void PsiInfo::updateCpuPsi()
 {
-    mCpu = parseFile("/proc/pressure/cpu");
+    mCpu = parsePressureFile("/proc/pressure/cpu");
 }
 
-PsiSnapshot PsiInfo::parseFile(const char *path)
+void PsiInfo::updateMemoryPsi()
+{
+    mMemory = parsePressureFile("/proc/pressure/memory");
+}
+
+void PsiInfo::updateIoPsi()
+{
+    mIo = parsePressureFile("/proc/pressure/io");
+}
+
+PsiSnapshot PsiInfo::parsePressureFile(const char *path)
 {
     PsiSnapshot snap;
 

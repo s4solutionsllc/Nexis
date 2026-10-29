@@ -15,12 +15,22 @@ class PsiInfo
 {
 public:
     void updateCpuPsi();
+    void updateMemoryPsi();
+    void updateIoPsi();
     PsiSnapshot getCpuSnapshot() const { return mCpu; }
+    PsiSnapshot getMemorySnapshot() const { return mMemory; }
+    PsiSnapshot getIoSnapshot() const { return mIo; }
+
+    // Public (FR-76-style) for testability — parses any /proc/pressure/*
+    // file; a missing file returns a default-constructed (unavailable)
+    // snapshot rather than throwing, since SSO-26721 wants a missing memory
+    // or io pressure file to just hide that line, not the card.
+    static PsiSnapshot parsePressureFile(const char *path);
 
 private:
-    static PsiSnapshot parseFile(const char *path);
-
     PsiSnapshot mCpu;
+    PsiSnapshot mMemory;
+    PsiSnapshot mIo;
 };
 
 #endif // PSI_INFO_H
