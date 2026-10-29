@@ -17,6 +17,8 @@
 #include <QPainter>
 #include <QPushButton>
 #include <QSettings>
+#include <QShowEvent>
+#include <QSignalBlocker>
 #include <QStandardPaths>
 #include <QStyle>
 #include <QVBoxLayout>
@@ -56,12 +58,11 @@ void ResourceHistoryPanel::buildUI()
     mTitle->setObjectName("resourceHistoryTitle");
     mTitle->setProperty("textRole", "panelTitle");
 
+    // B13: populated by updateRangeOptions() (called from refresh()) rather
+    // than hardcoded here, so the offered ranges track the configured
+    // retention from the start.
     mRangeCombo = new QComboBox(mCard);
     mRangeCombo->setCursor(Qt::PointingHandCursor);
-    mRangeCombo->addItem(tr("Last Hour"), QVariant::fromValue<qint64>(3600));
-    mRangeCombo->addItem(tr("Last 24 Hours"), QVariant::fromValue<qint64>(86400));
-    mRangeCombo->addItem(tr("Last 7 Days"), QVariant::fromValue<qint64>(604800));
-    mRangeCombo->addItem(tr("Last 30 Days"), QVariant::fromValue<qint64>(2592000));
 
     mExportButton = new QPushButton(tr("Export CSV…"), mCard);
     mExportButton->setCursor(Qt::PointingHandCursor);
@@ -161,6 +162,18 @@ void ResourceHistoryPanel::setElevated(const QString &accentToken)
 
 void ResourceHistoryPanel::refresh()
 {
+    // B13 (SSO-26720): the panel can be hidden either because Live mode is
+    // active or because the Resources page itself isn't current. Either
+    // way, isVisible() is false and there's no point querying the store or
+    // rebuilding charts nobody can see — catch up once in showEvent().
+    if (!isVisible()) {
+        mNeedsRefresh = true;
+        return;
+    }
+    mNeedsRefresh = false;
+
+    updateRangeOptions();
+
     if (!SettingManager::ins()->getResourceHistoryEnabled()) {
         mDisabledState->setVisible(true);
         mEmptyState->setVisible(false);
@@ -172,10 +185,68 @@ void ResourceHistoryPanel::refresh()
     rebuildCharts();
 }
 
+void ResourceHistoryPanel::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    if (mNeedsRefresh)
+        refresh();
+}
+
 void ResourceHistoryPanel::onRangeChanged(int index)
 {
     Q_UNUSED(index)
     refresh();
+}
+
+QList<qint64> ResourceHistoryPanel::availableRangeSecsForRetention(int retentionDays)
+{
+    // B13: offer only ranges the configured retention can actually fill.
+    // Chosen behavior (stated in the PR): hide a range outright once it
+    // exceeds retention, rather than leaving it in the list disabled — a
+    // disabled "30 d" next to an enabled "7 d" invites a click that can
+    // only ever show an empty chart.
+    static const QList<qint64> kAllRangeSecs = { 3600, 86400, 604800, 2592000 };
+
+    QList<qint64> out;
+    for (qint64 spanSecs : kAllRangeSecs) {
+        const qint64 spanDays = (spanSecs + 86399) / 86400; // ceil to whole days
+        if (spanDays <= retentionDays)
+            out.append(spanSecs);
+    }
+    if (out.isEmpty())
+        out.append(kAllRangeSecs.first()); // always offer something
+    return out;
+}
+
+QString ResourceHistoryPanel::labelForRangeSecs(qint64 spanSecs)
+{
+    switch (spanSecs) {
+    case 3600:    return tr("Last Hour");
+    case 86400:   return tr("Last 24 Hours");
+    case 604800:  return tr("Last 7 Days");
+    case 2592000: return tr("Last 30 Days");
+    default:      return QString::number(spanSecs);
+    }
+}
+
+void ResourceHistoryPanel::updateRangeOptions()
+{
+    const int retentionDays = SettingManager::ins()->getResourceHistoryRetentionDays();
+    const QList<qint64> available = availableRangeSecsForRetention(retentionDays);
+    if (available == mAvailableRangeSecs)
+        return;
+
+    const qint64 previousSpan = mRangeCombo->count() > 0
+        ? mRangeCombo->currentData().value<qint64>() : 0;
+
+    mAvailableRangeSecs = available;
+    const QSignalBlocker blocker(mRangeCombo);
+    mRangeCombo->clear();
+    for (qint64 spanSecs : available)
+        mRangeCombo->addItem(labelForRangeSecs(spanSecs), QVariant::fromValue<qint64>(spanSecs));
+
+    const int idx = mRangeCombo->findData(QVariant::fromValue<qint64>(previousSpan));
+    mRangeCombo->setCurrentIndex(idx >= 0 ? idx : mRangeCombo->count() - 1);
 }
 
 qint64 ResourceHistoryPanel::bucketSecondsForSpan(qint64 spanSecs)

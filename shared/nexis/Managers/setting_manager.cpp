@@ -758,3 +758,13 @@ int SettingManager::getResourceHistoryRetentionDays() const
 {
     return mSettings->value(SettingKeys::ResourceHistoryRetentionDays, 7).toInt();
 }
+
+void SettingManager::setResourcesHistoryModeActive(bool value)
+{
+    mSettings->setValue(SettingKeys::ResourcesHistoryModeActive, value);
+}
+
+bool SettingManager::getResourcesHistoryModeActive() const
+{
+    return mSettings->value(SettingKeys::ResourcesHistoryModeActive, false).toBool();
+}

@@ -106,6 +106,10 @@ namespace SettingKeys {
     // background-timer exception this enables).
     const QString ResourceHistoryEnabled("ResourceHistoryEnabled");
     const QString ResourceHistoryRetentionDays("ResourceHistoryRetentionDays");
+
+    // SSO-26720: Resources page Live/History switch — last selected mode,
+    // remembered across sessions. Live (false) is the default.
+    const QString ResourcesHistoryModeActive("ResourcesHistoryModeActive");
 }
 
 class SettingManager
@@ -331,6 +335,10 @@ public:
     bool getResourceHistoryEnabled() const;
     void setResourceHistoryRetentionDays(int days);
     int getResourceHistoryRetentionDays() const;
+
+    // SSO-26720 — Live/History switch's last selected mode.
+    void setResourcesHistoryModeActive(bool value);
+    bool getResourcesHistoryModeActive() const;
 
 private:
     static SettingManager *instance;

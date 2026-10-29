@@ -35,11 +35,27 @@ public:
     // Re-reads the enabled setting and (if on) re-queries and redraws for
     // the currently selected range. Cheap enough to call on page activation,
     // on the enabled/disabled toggle, and whenever the store changes.
+    //
+    // B13 (SSO-26720): a no-op (deferred to the next showEvent()) while the
+    // panel isn't visible — Live mode active, or the Resources page itself
+    // not current — so the periodic ResourceHistoryService::historyChanged
+    // signal can't rebuild charts nobody can see.
     void refresh();
+
+    // Exposed for QTest (ResourceHistoryPanelRangeTests) without needing a
+    // live SettingManager/store. Returns the range spans (seconds) offered
+    // by the combo for a given retention window — B13: only ranges the
+    // configured retention can actually fill. 30 d is hidden (not merely
+    // disabled) once it exceeds retention, keeping the dropdown free of
+    // choices that would just render empty.
+    static QList<qint64> availableRangeSecsForRetention(int retentionDays);
 
 signals:
     // Emitted when the user clicks through from the disabled-state prompt.
     void openSettingsRequested();
+
+protected:
+    void showEvent(QShowEvent *event) override;
 
 private slots:
     void onRangeChanged(int index);
@@ -49,7 +65,9 @@ private slots:
 private:
     void buildUI();
     void rebuildCharts();
+    void updateRangeOptions();
     static qint64 bucketSecondsForSpan(qint64 spanSecs);
+    static QString labelForRangeSecs(qint64 spanSecs);
 
     // Builds one or more QLineSeries for `accessor(bucket)` split wherever
     // the gap between consecutive buckets exceeds 3x bucketSecs (B4) so a
@@ -72,6 +90,14 @@ private:
     QPushButton *mOpenSettingsButton = nullptr;
     QLabel *mEmptyState = nullptr;
     QWidget *mChartsContainer = nullptr;
+
+    // B13: set when refresh() is skipped because the panel is hidden;
+    // showEvent() catches up exactly once when it next becomes visible.
+    bool mNeedsRefresh = false;
+    // Tracks the combo's current range set so updateRangeOptions() only
+    // rebuilds it (and risks losing the user's selection) when the
+    // retention setting actually changed it.
+    QList<qint64> mAvailableRangeSecs;
 
     QChartView *mCpuChartView = nullptr;
     QChart *mCpuChart = nullptr;
