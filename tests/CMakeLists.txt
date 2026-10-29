@@ -62,6 +62,9 @@ add_nexis_test(NAME FanInfoTests      SOURCES core/test_fan_info.cpp)
 add_nexis_test(NAME ThermalInfoTests  SOURCES core/test_thermal_info.cpp)
 add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
 add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
+# SSO-26717 (B1): shared guard used by Resources' disk-I/O and network rate
+# charts so a backwards-stepping counter can't wrap to ~16 EiB.
+add_nexis_test(NAME RateCounterUtilTests SOURCES core/test_rate_counter_util.cpp)
 
 # SSO-10930 / GH#220: persistent resource-history SQLite store. Lives in
 # nexis-core (not nexis-gui) so it's unit-testable without the GUI.
@@ -95,6 +98,15 @@ endif()
 if(UNIX AND NOT APPLE)
   add_nexis_test(NAME RaplPowerInfoTests
     SOURCES core/test_rapl_power_info.cpp)
+endif()
+# SSO-26717 (B3): systemd-oomd / cgroup v2 provider (OomdInfoLinux) is
+# Linux-only (see CMakeLists.txt CORE_PLAT_SRCS) — gate like
+# BatteryChargeThresholdTests above. Locks down that update() runs its
+# systemctl/journalctl query off the calling thread.
+if(UNIX AND NOT APPLE)
+  add_nexis_test(NAME OomdInfoLinuxTests
+    SOURCES core/test_oomd_info_linux.cpp
+    LIBS Qt6::Concurrent)
 endif()
 # SSO-15378: CpuCoreListModel is the virtualized backing store for the
 # per-core detail view (cross-platform, pure QAbstractListModel logic — no

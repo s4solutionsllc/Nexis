@@ -24,6 +24,12 @@ public:
     // wrap. Returns 0 if maxEnergyRangeUj is 0 (can't infer wrap distance).
     static quint64 energyDeltaUj(quint64 previousUj, quint64 currentUj, quint64 maxEnergyRangeUj);
 
+    // Seam for tests — overrides the sysfs powercap root directory used for
+    // zone discovery and energy_uj reads, and forces re-discovery under it.
+    // Mirrors OomdInfoLinux::setCgroupRootForTesting(). Default is
+    // "/sys/class/powercap".
+    void setPowercapRootForTesting(const QString &root);
+
 private:
     struct ZoneState {
         QString energyPath;
@@ -40,6 +46,7 @@ private:
     int mDiscovered = -1;
     QList<ZoneState> mZones;
     RaplPowerSnapshot mSnapshot;
+    QString mPowercapRoot = QStringLiteral("/sys/class/powercap");
 
     void discoverZones();
 };

@@ -6,8 +6,6 @@
 #include <QDir>
 #include <QRegularExpression>
 
-static constexpr const char *POWERCAP_ROOT = "/sys/class/powercap";
-
 quint64 RaplPowerInfo::energyDeltaUj(quint64 previousUj, quint64 currentUj, quint64 maxEnergyRangeUj)
 {
     if (currentUj >= previousUj)
@@ -17,11 +15,18 @@ quint64 RaplPowerInfo::energyDeltaUj(quint64 previousUj, quint64 currentUj, quin
     return (maxEnergyRangeUj - previousUj) + currentUj;
 }
 
+void RaplPowerInfo::setPowercapRootForTesting(const QString &root)
+{
+    mPowercapRoot = root;
+    mDiscovered = -1;
+    mZones.clear();
+}
+
 void RaplPowerInfo::discoverZones()
 {
     mZones.clear();
 
-    QDir root(QString::fromLatin1(POWERCAP_ROOT));
+    QDir root(mPowercapRoot);
     if (!root.exists())
         return;
 
@@ -64,7 +69,6 @@ void RaplPowerInfo::update()
     const qint64 nowMs = QDateTime::currentMSecsSinceEpoch();
 
     RaplPowerSnapshot snap;
-    snap.available = true;
 
     for (ZoneState &zone : mZones) {
         const QString raw = FileUtil::readStringFromFile(zone.energyPath).trimmed();
@@ -72,6 +76,12 @@ void RaplPowerInfo::update()
         const quint64 energyUj = raw.toULongLong(&ok);
         if (!ok)
             continue;
+
+        // energy_uj has been root-only on Intel since CVE-2020-8694 — zones
+        // can be discovered (the name/max_energy_range_uj files are world
+        // readable) while every energy_uj read still fails for a non-root
+        // process. Only report available once a read actually succeeds.
+        snap.available = true;
 
         RaplPackageSnapshot pkg;
         pkg.name = zone.name;

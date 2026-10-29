@@ -389,12 +389,25 @@ void DataRefreshService::onMediumTick()
         emit fanUpdated();
 
 #ifdef Q_OS_LINUX
-    // FW-11 (SSO-3739): systemd-oomd / cgroup v2 observability. Sampling on
-    // the medium tick is intentional — OOM kills are rare, the journal walk
-    // and `systemctl show` fork are noticeably heavier than a /proc read.
-    if (hasSubscribers(Signal::Oomd)) {
-        im->updateOomdInfo();
-        emit oomdUpdated(im->getOomdSnapshot());
+    // FW-11 (SSO-3739) / SSO-26717 (B3): systemd-oomd / cgroup v2
+    // observability. `systemctl show` and the journalctl walk fork real
+    // processes and are noticeably heavier than a /proc read, so this must
+    // not run synchronously on the GUI thread — offload to a QtConcurrent
+    // worker and publish the result on the UI thread, mirroring
+    // onSlowTick()/onProcessTick(). OOM kills are rare, so throttle to at
+    // most once per 30s even under a faster medium-tick cadence (FR-105).
+    if (hasSubscribers(Signal::Oomd) && !mOomdRunning
+            && (!mOomdElapsedTimer.isValid() || mOomdElapsedTimer.hasExpired(30000))) {
+        mOomdRunning = true;
+        mOomdElapsedTimer.start();
+        QtConcurrent::run([this]() {
+            im->updateOomdInfo();
+            const OomdSnapshot snap = im->getOomdSnapshot();
+            QMetaObject::invokeMethod(this, [this, snap]() {
+                mOomdRunning = false;
+                emit oomdUpdated(snap);
+            }, Qt::QueuedConnection);
+        });
     }
 #endif
 }

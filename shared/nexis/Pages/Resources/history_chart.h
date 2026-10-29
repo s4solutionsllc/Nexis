@@ -58,7 +58,10 @@ private:
     QChart *mChart;
     QVector<QSplineSeries *> mSeriesList;
 
-    QCategoryAxis *mAxisY;
+    // SSO-26717 (B8): must default to nullptr — most charts are constructed
+    // with categoriAxisY == nullptr and never set this in that path, but
+    // getAxisY() / setCategoryAxisYLabels() both branch on it being null.
+    QCategoryAxis *mAxisY = nullptr;
 
     QString mBackgroundToken = QStringLiteral("@historyChartBackgroundColor");
 };
