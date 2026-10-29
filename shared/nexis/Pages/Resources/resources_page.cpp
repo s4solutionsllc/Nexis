@@ -7,13 +7,24 @@
 #include "Managers/resource_history_service.h"
 #include "Utils/rate_counter_util.h"
 #include <QFile>
-#include <algorithm>
 
 #ifdef Q_OS_LINUX
 #include "Pages/Helpers/oom_kills_widget.h"
 #include "Pages/Helpers/power_draw_widget.h"
 #endif
 #include "Pages/Helpers/cpu_core_detail_widget.h"
+
+namespace {
+// QSplineSeries IS-A QXYSeries; RollingSeries only needs the base interface.
+QVector<QXYSeries *> toXYSeries(const QVector<QSplineSeries *> &series)
+{
+    QVector<QXYSeries *> out;
+    out.reserve(series.size());
+    for (QSplineSeries *s : series)
+        out.append(s);
+    return out;
+}
+}
 
 ResourcesPage::~ResourcesPage()
 {
@@ -49,11 +60,21 @@ void ResourcesPage::init()
     mChartCpu->setYMax(100);
     mChartMemory->setYMax(100);
 
+    // SSO-26718: one RollingSeries per chart, replacing the shift-and-insert
+    // loop each handler used to carry. Default window (60s) / capacity (256)
+    // match every chart's existing 0-60 axis range.
+    mRollingCpu = std::make_unique<RollingSeries>(toXYSeries(mChartCpu->getSeriesList()));
+    mRollingCpuLoadAvg = std::make_unique<RollingSeries>(toXYSeries(mChartCpuLoadAvg->getSeriesList()));
+    mRollingDiskIO = std::make_unique<RollingSeries>(toXYSeries(mChartDiskReadWrite->getSeriesList()));
+    mRollingMemory = std::make_unique<RollingSeries>(toXYSeries(mChartMemory->getSeriesList()));
+    mRollingNetwork = std::make_unique<RollingSeries>(toXYSeries(mChartNetwork->getSeriesList()));
+
     // GPU chart — only if GPU(s) detected
     if (im->hasGpu()) {
         int gpuCount = im->getGpuDevices().size();
         mChartGpu = new HistoryChart(tr("History of GPU"), gpuCount, nullptr, this);
         mChartGpu->setYMax(100);
+        mRollingGpu = std::make_unique<RollingSeries>(toXYSeries(mChartGpu->getSeriesList()));
     }
 
     // Disk health temperature chart is created lazily on first
@@ -84,6 +105,7 @@ void ResourcesPage::init()
     if (QFile::exists(QStringLiteral("/proc/pressure/cpu"))) {
         mChartPsiCpu = new HistoryChart(tr("CPU Pressure Stall (some)"), 3, nullptr, this);
         mChartPsiCpu->setYMax(1.0);
+        mRollingPsi = std::make_unique<RollingSeries>(toXYSeries(mChartPsiCpu->getSeriesList()));
         widgets.append(mChartPsiCpu);
     }
 
@@ -126,38 +148,16 @@ void ResourcesPage::init()
     // inside ensureDiskHealthChart() above — that single call site also
     // handles the lazy (FR-96) creation path from onDiskHealthUpdated().
 
-    QList<QWidget*> flatShadowWidgets = widgets;
-    flatShadowWidgets.removeOne(mChartCpu);
-    flatShadowWidgets.removeOne(mChartCpuLoadAvg);
-    flatShadowWidgets.removeOne(mChartDiskReadWrite);
-    flatShadowWidgets.removeOne(mChartMemory);
-    flatShadowWidgets.removeOne(mChartNetwork);
-    flatShadowWidgets.removeOne(mResourceHistory);
-    if (mChartGpu)
-        flatShadowWidgets.removeOne(mChartGpu);
-    if (mChartDiskHealth)
-        flatShadowWidgets.removeOne(mChartDiskHealth);
-
 #ifdef Q_OS_LINUX
-    if (mChartPsiCpu) {
+    if (mChartPsiCpu)
         mChartPsiCpu->setElevated(QStringLiteral("cpu"));
-        flatShadowWidgets.removeOne(mChartPsiCpu);
-    }
-    if (mOomKills) {
+    if (mOomKills)
         mOomKills->setElevated(QStringLiteral("memory"));
-        flatShadowWidgets.removeOne(mOomKills);
-    }
-    if (mPowerDraw) {
+    if (mPowerDraw)
         mPowerDraw->setElevated(QStringLiteral("cpu"));
-        flatShadowWidgets.removeOne(mPowerDraw);
-    }
 #endif
-    if (mCoreDetail) {
+    if (mCoreDetail)
         mCoreDetail->setElevated(QStringLiteral("cpu"));
-        flatShadowWidgets.removeOne(mCoreDetail);
-    }
-
-    Utilities::addDropShadow(flatShadowWidgets, 40);
 
     // Subscribe to DataRefreshService signals
     connect(mRefresh, &DataRefreshService::cpuUpdated,
@@ -240,19 +240,6 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
         return;
     }
 
-    static int second = 0;
-    static quint64 maxY = (1L << 10) * 100; // 100 KIBI
-
-    QVector<QSplineSeries*> seriesList = mChartDiskReadWrite->getSeriesList();
-
-    for (int j = 0; j < seriesList.count(); ++j) {
-        for (int i = 0; i < (second < 61 ? second : 61); ++i) {
-            seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
-        }
-
-        if(second > 61) seriesList.at(j)->removePoints(61, 1);
-    }
-
     // SSO-26717 (B1): counters can step backwards (device re-enumeration, a
     // sample that fails and reports 0). Unsigned subtraction would wrap to
     // ~16 EiB/s and latch the Y axis at that scale for the rest of the
@@ -260,29 +247,28 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
     const quint64 d_readByte  = RateCounterUtil::guardedDelta(mLastReadBytes, readBytes);
     const quint64 d_writeByte = RateCounterUtil::guardedDelta(mLastWriteBytes, writeBytes);
 
-    seriesList.at(0)->insert(0, QPointF(0, d_readByte));
+    QVector<QSplineSeries*> seriesList = mChartDiskReadWrite->getSeriesList();
+    mRollingDiskIO->push({ double(d_readByte), double(d_writeByte) });
+
     seriesList.at(0)->setName(tr("Read: %1/s Total: %2")
                               .arg(FormatUtil::formatBytes(d_readByte))
                               .arg(FormatUtil::formatBytes(readBytes)));
 
-
-    seriesList.at(1)->insert(0, QPointF(0, d_writeByte));
     seriesList.at(1)->setName(tr("Write: %1/s Total: %2")
                               .arg(FormatUtil::formatBytes(d_writeByte))
                               .arg(FormatUtil::formatBytes(writeBytes)));
 
-    maxY = qMax(qMax(maxY, d_readByte), d_writeByte);
-
     mLastReadBytes  = readBytes;
     mLastWriteBytes = writeBytes;
 
+    // SSO-26718 (B9): floor matches the old static's initial 100 KIBI, but
+    // the max now shrinks once a spike's point ages out of the window.
+    const double maxY = mRollingDiskIO->windowYMax(double((1L << 10) * 100));
     mChartDiskReadWrite->setYMax(maxY);
 
     mChartDiskReadWrite->setSeriesList(seriesList);
 
     mChartDiskReadWrite->setCategoryAxisYLabels();
-
-    second++;
 }
 
 void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
@@ -305,62 +291,42 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
         const int neededPercents = seriesList.count() + 1; // index 0 + per-core
         const bool percentsOk = percents.size() >= neededPercents;
 
-        // SSO-26717 (B4): bound the shift/trim on each series' own actual
-        // point count, not a separately-tracked tick counter — when
-        // percentsOk is false this whole loop is skipped, so a counter
-        // incremented unconditionally on every call would drift ahead of
-        // what's really in the series and the next shift loop would index
-        // past the end of it.
-        for (int j = 0; percentsOk && j < seriesList.count(); j++){
-            int p = percents.at(j+1);
-            QSplineSeries *series = seriesList.at(j);
-
-            const int shiftCount = qMin(series->count(), 61);
-            for (int i = 0; i < shiftCount; i++)
-                series->replace(i, (i+1), series->at(i).y());
-
-            series->insert(0, QPointF(0, p));
-
-            series->setName(QString("CPU%1: %2%").arg(j+1).arg(p));
-
-            if (series->count() > 61)
-                series->removePoints(61, series->count() - 61);
+        if (percentsOk) {
+            QVector<double> values;
+            values.reserve(seriesList.count());
+            for (int j = 0; j < seriesList.count(); j++) {
+                int p = percents.at(j + 1);
+                values.append(p);
+                seriesList.at(j)->setName(QString("CPU%1: %2%").arg(j + 1).arg(p));
+            }
+            mRollingCpu->push(values);
+            mChartCpu->setSeriesList(seriesList);
         }
-
-        mChartCpu->setSeriesList(seriesList);
     }
 
     // --- CPU load average chart ---
     {
-        static int second = 0;
-        static int maxAvg = im->getCpuCoreCount();
-        static int minutes[] = {1, 5, 15};
+        static const int minutes[] = {1, 5, 15};
 
         QVector<QSplineSeries*> seriesList = mChartCpuLoadAvg->getSeriesList();
 
+        QVector<double> values;
+        values.reserve(seriesList.count());
         for (int j = 0; j < seriesList.count(); ++j) {
             double avg = loadAvgs.at(j);
-
-            for (int i = 0; i < (second < 61 ? second : 61); ++i) {
-                seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
-            }
-
-            seriesList.at(j)->insert(0, QPointF(0, avg));
-
+            values.append(avg);
             seriesList.at(j)->setName(tr("%1 Minute Average: %2")
                                       .arg(minutes[j])
                                       .arg(avg));
-
-            if (second > 61) seriesList.at(j)->removePoints(61, 1);
-
-            maxAvg = qMax((int)ceil(avg), maxAvg);
         }
+        mRollingCpuLoadAvg->push(values);
 
+        // SSO-26718 (B9): floor matches the old static's initial core count,
+        // but the max now shrinks once a spike's point ages out of the window.
+        const double maxAvg = mRollingCpuLoadAvg->windowYMax(im->getCpuCoreCount());
         mChartCpuLoadAvg->setYMax(maxAvg);
 
         mChartCpuLoadAvg->setSeriesList(seriesList);
-
-        second++;
     }
 
     // --- Per-core detail list (SSO-15378) ---
@@ -379,85 +345,51 @@ void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
         return;
     }
 
-    static int second = 0;
-
-    QVector<QSplineSeries *> seriesList = mChartNetwork->getSeriesList();
-
-    // points swap
-    for (int j = 0; j < seriesList.count(); j++) {
-        for (int i = 0; i < (second < 61 ? second : 61); i++)
-            seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
-
-        if(second > 61) seriesList.at(j)->removePoints(61, 1);
-    }
-    static quint64 max_RXbytes = 1L << 20; // 1 MEBI
-    static quint64 max_TXbytes = 1L << 20; // 1 MEBI
-
     // SSO-26717 (B1): same backwards-step guard as disk I/O — plain unsigned
-    // subtraction here could wrap to ~16 EiB/s, and since max_RXbytes/
-    // max_TXbytes are static and only ever grow, that would latch the Y axis
-    // at that scale for the rest of the session.
+    // subtraction here could wrap to ~16 EiB/s and latch the Y axis at that
+    // scale for the rest of the session.
     const quint64 d_RXbytes = RateCounterUtil::guardedDelta(mLastRxBytes, rxBytes);
     const quint64 d_TXbytes = RateCounterUtil::guardedDelta(mLastTxBytes, txBytes);
 
-    QString downText = FormatUtil::formatBytes(d_RXbytes);
-    QString upText   = FormatUtil::formatBytes(d_TXbytes);
+    QVector<QSplineSeries *> seriesList = mChartNetwork->getSeriesList();
+    mRollingNetwork->push({ double(d_RXbytes), double(d_TXbytes) });
 
-    // Download
-    seriesList.at(0)->insert(0, QPointF(0, d_RXbytes));
     seriesList.at(0)->setName(tr("Download: %1/s Total: %2")
-                              .arg(downText)
+                              .arg(FormatUtil::formatBytes(d_RXbytes))
                               .arg(FormatUtil::formatBytes(rxBytes)));
 
-    seriesList.at(1)->insert(0, QPointF(0, d_TXbytes));
     seriesList.at(1)->setName(tr("Upload: %1/s  Total: %2")
-                              .arg(upText)
+                              .arg(FormatUtil::formatBytes(d_TXbytes))
                               .arg(FormatUtil::formatBytes(txBytes)));
-
-    max_RXbytes = qMax(max_RXbytes, d_RXbytes);
-    max_TXbytes = qMax(max_TXbytes, d_TXbytes);
-
-    // SSO-26717 (B1): keep this a quint64 — narrowing to `int` here is what
-    // let a huge guarded-away-from-now delta still corrupt the Y axis in the
-    // old code (setYMax() takes a double, so there was never a need to
-    // narrow at all).
-    const quint64 max = qMax(max_RXbytes, max_TXbytes);
 
     mLastRxBytes = rxBytes;
     mLastTxBytes = txBytes;
 
+    // SSO-26718 (B9): floor matches the old statics' initial 1 MEBI, but the
+    // max now shrinks once a spike's point ages out of the window.
+    const double max = mRollingNetwork->windowYMax(double(1L << 20));
     mChartNetwork->setYMax(max);
 
     mChartNetwork->setSeriesList(seriesList);
 
     mChartNetwork->setCategoryAxisYLabels();
-
-    second++;
 }
 
 void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
 {
     if (!mActive) return;
 
-    static int second = 0;
-
     QVector<QSplineSeries *> seriesList = mChartMemory->getSeriesList();
 
-    // Shift existing points right for all series
-    for (int j = 0; j < seriesList.count(); j++) {
-        for (int i = 0; i < (second < 61 ? second : 61); i++)
-            seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
-
-        if(second > 61)
-            seriesList.at(j)->removePoints(61, 1);
-    }
+    QVector<double> values;
+    values.reserve(seriesList.count());
 
     // Series 0: Swap
     double swapPct = 0;
     if (snap.swapTotal)
         swapPct = ((double)snap.swapUsed / (double)snap.swapTotal) * 100.0;
 
-    seriesList.at(0)->insert(0, QPointF(0, swapPct));
+    values.append(swapPct);
     seriesList.at(0)->setName(tr("Swap: %1 (%2%) %3")
                               .arg(FormatUtil::formatBytes(snap.swapUsed))
                               .arg(QString::asprintf("%.1f", swapPct))
@@ -466,7 +398,7 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
     // Series 1: Memory Used
     double memPct = snap.total ? ((double)snap.used / (double)snap.total) * 100.0 : 0;
 
-    seriesList.at(1)->insert(0, QPointF(0, memPct));
+    values.append(memPct);
     seriesList.at(1)->setName(tr("Memory: %1 (%2%) %3")
                               .arg(FormatUtil::formatBytes(snap.used))
                               .arg(QString::asprintf("%.1f", memPct))
@@ -487,7 +419,7 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
                 .arg(FormatUtil::formatBytes(snap.available))
                 .arg(QString::asprintf("%.1f", pct2));
         }
-        seriesList.at(2)->insert(0, QPointF(0, pct2));
+        values.append(pct2);
         seriesList.at(2)->setName(name2);
     }
 
@@ -506,13 +438,12 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
                 .arg(FormatUtil::formatBytes(snap.active))
                 .arg(QString::asprintf("%.1f", pct3));
         }
-        seriesList.at(3)->insert(0, QPointF(0, pct3));
+        values.append(pct3);
         seriesList.at(3)->setName(name3);
     }
 
+    mRollingMemory->push(values);
     mChartMemory->setSeriesList(seriesList);
-
-    second++;
 }
 
 void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
@@ -522,31 +453,26 @@ void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 
     QVector<QSplineSeries *> seriesList = mChartGpu->getSeriesList();
 
-    // SSO-26717 (B4): bound shift/trim on each series' own count(), not a
-    // shared tick counter — a GPU dropping out (gpus.size() < seriesList.
-    // count()) skips that series' insert for this tick without skipping the
-    // others, so a single counter shared across all series would drift out
-    // of sync with the series it no longer matches.
-    for (int j = 0; j < seriesList.count() && j < gpus.size(); j++) {
+    // SSO-26717 (B4) / SSO-26718: a GPU dropping out (gpus.size() <
+    // seriesList.count()) just means fewer values get pushed this tick —
+    // RollingSeries ages the remaining series without a new point rather
+    // than drifting them out of sync with each other.
+    const int count = qMin(seriesList.count(), gpus.size());
+
+    QVector<double> values;
+    values.reserve(count);
+    for (int j = 0; j < count; j++) {
         const GpuDevice &gpu = gpus.at(j);
         int util = qMax(0, gpu.utilization);  // -1 → 0 for chart data point
-        QSplineSeries *series = seriesList.at(j);
-
-        const int shiftCount = qMin(series->count(), 61);
-        for (int i = 0; i < shiftCount; i++)
-            series->replace(i, (i+1), series->at(i).y());
-
-        series->insert(0, QPointF(0, util));
+        values.append(util);
 
         QString label = (gpu.utilization < 0)
             ? QString("%1: N/A").arg(gpu.name)
             : QString("%1: %2%").arg(gpu.name).arg(util);
-        series->setName(label);
-
-        if (series->count() > 61)
-            series->removePoints(61, series->count() - 61);
+        seriesList.at(j)->setName(label);
     }
 
+    mRollingGpu->push(values);
     mChartGpu->setSeriesList(seriesList);
 }
 
@@ -568,6 +494,7 @@ void ResourcesPage::ensureDiskHealthChart(const QList<DriveHealth> &drives)
     // 0–100 flattens a drive that lives between 30 and 60 °C into a straight
     // line at the bottom third; 20–90 covers idle to thermal-throttle.
     mChartDiskHealth->setYRange(20, 90);
+    mRollingDiskHealth = std::make_unique<RollingSeries>(toXYSeries(mChartDiskHealth->getSeriesList()));
 
     // Insert at the end of the charts layout (after Network), before
     // the DiskUsageLauncher if it already exists.
@@ -617,28 +544,21 @@ void ResourcesPage::advanceDiskTempChart()
         return;
 
     QVector<QSplineSeries *> seriesList = mChartDiskHealth->getSeriesList();
+
+    // SSO-26717 (B4) / SSO-26718: a drive that temporarily stops reporting a
+    // temperature (mLastDiskTemps shrinks) just pushes fewer values this
+    // tick \u2014 RollingSeries ages the remaining series without a new point.
     const int count = qMin(seriesList.count(), mLastDiskTemps.count());
 
-    // SSO-26717 (B4): bound shift/trim on each series' own count(), not a
-    // shared tick counter - a drive that temporarily stops reporting a
-    // temperature (mLastDiskTemps shrinks) means `count` no longer covers
-    // every series, so a counter advanced once per call would drift ahead of
-    // what a skipped series actually holds.
+    QVector<double> values;
+    values.reserve(count);
     for (int idx = 0; idx < count; ++idx) {
-        QSplineSeries *series = seriesList.at(idx);
         const double temp = mLastDiskTemps.at(idx);
-
-        const int shiftCount = qMin(series->count(), 61);
-        for (int i = 0; i < shiftCount; i++)
-            series->replace(i, (i + 1), series->at(i).y());
-
-        series->insert(0, QPointF(0, temp));
-        series->setName(QString("%1: %2 \u00B0C").arg(mLastDiskNames.at(idx)).arg(temp, 0, 'f', 0));
-
-        if (series->count() > 61)
-            series->removePoints(61, series->count() - 61);
+        values.append(temp);
+        seriesList.at(idx)->setName(QString("%1: %2 \u00B0C").arg(mLastDiskNames.at(idx)).arg(temp, 0, 'f', 0));
     }
 
+    mRollingDiskHealth->push(values);
     mChartDiskHealth->setSeriesList(seriesList);
 }
 
@@ -648,37 +568,27 @@ void ResourcesPage::onPsiUpdated(const PsiSnapshot &snap)
     if (!mChartPsiCpu || !mActive || !snap.available)
         return;
 
-    static int second = 0;
-
     QVector<QSplineSeries*> seriesList = mChartPsiCpu->getSeriesList();
-
-    for (int j = 0; j < seriesList.count(); ++j) {
-        for (int i = 0; i < (second < 61 ? second : 61); ++i)
-            seriesList.at(j)->replace(i, i + 1, seriesList.at(j)->at(i).y());
-        if (second > 61)
-            seriesList.at(j)->removePoints(61, 1);
-    }
 
     const double values[3] = { snap.someAvg10, snap.someAvg60, snap.someAvg300 };
     const char  *labels[3] = { "avg10", "avg60", "avg300" };
 
     for (int i = 0; i < 3; ++i) {
-        seriesList.at(i)->insert(0, QPointF(0, values[i]));
         seriesList.at(i)->setName(
             tr("CPU %1: %2%").arg(QLatin1String(labels[i]))
                              .arg(values[i], 0, 'f', 1));
     }
 
-    // Auto-scale Y: expand when data exceeds the current ceiling, floor at 1%.
-    static double maxPsi = 1.0;
-    double tickMax = std::max({snap.someAvg10, snap.someAvg60, snap.someAvg300});
-    if (tickMax * 1.25 > maxPsi) {
-        maxPsi = tickMax * 1.25;
-        mChartPsiCpu->setYMax(maxPsi);
-    }
+    mRollingPsi->push({ values[0], values[1], values[2] });
+
+    // SSO-26718 (B9): auto-scale Y with 25% headroom over the real window
+    // max, floored flat at 1% (matching the old static's initial value) —
+    // and now shrinks once a spike's point ages out of the window instead of
+    // only ever growing.
+    const double maxPsi = qMax(1.0, mRollingPsi->windowYMax(0.0) * 1.25);
+    mChartPsiCpu->setYMax(maxPsi);
 
     mChartPsiCpu->setSeriesList(seriesList);
-    second++;
 }
 
 void ResourcesPage::onOomdUpdated(const OomdSnapshot &snap)
@@ -694,9 +604,27 @@ void ResourcesPage::onPowerUpdated(const RaplPowerSnapshot &snap)
 }
 #endif
 
+void ResourcesPage::resetRollingSeries()
+{
+    // SSO-26718 (B12): clear every chart's buffered history on re-activate
+    // rather than leaving a hidden gap mid-"last 60 s" — it starts collecting
+    // fresh samples from empty instead of rendering a frozen, stale chart.
+    if (mRollingCpu) mRollingCpu->reset();
+    if (mRollingCpuLoadAvg) mRollingCpuLoadAvg->reset();
+    if (mRollingDiskIO) mRollingDiskIO->reset();
+    if (mRollingMemory) mRollingMemory->reset();
+    if (mRollingNetwork) mRollingNetwork->reset();
+    if (mRollingGpu) mRollingGpu->reset();
+    if (mRollingDiskHealth) mRollingDiskHealth->reset();
+#ifdef Q_OS_LINUX
+    if (mRollingPsi) mRollingPsi->reset();
+#endif
+}
+
 void ResourcesPage::onPageActivated()
 {
     mActive = true;
+    resetRollingSeries();
 
     // FR-103: subscribe to the signals the resources view renders. Combined
     // with Dashboard subscriptions, these are the only consumers of CPU /

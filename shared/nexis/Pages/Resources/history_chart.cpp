@@ -70,33 +70,48 @@ void HistoryChart::init()
 
     mChart->axes(Qt::Horizontal).first()->setRange(0, 60);
     mChart->axes(Qt::Horizontal).first()->setReverse(true);
+    // SSO-26718 (B11): the axis now plots real elapsed seconds (see
+    // RollingSeries) rather than a sample count, so "Seconds" is honest even
+    // when DataRefreshService's tick interval isn't 1s (battery/unfocused).
+    mChart->axes(Qt::Horizontal).first()->setTitleText(tr("Seconds"));
 
     mChart->setContentsMargins(-Dpi::scale(11), -Dpi::scale(11), -Dpi::scale(11), -Dpi::scale(11));
     mChart->setMargins(QMargins(Dpi::scale(20), 0, Dpi::scale(10), Dpi::scale(10)));
     ui->layoutHistoryChart->addWidget(mChartView, 1, 0, 1, 4);
 
-    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, [=] {
-        QSettings *sv = mAppManager->getStyleValues();
-        if (!sv) return;
-        QString chartLabelColor = sv->value("@chartLabelColor").toString();
-        QString chartGridColor = sv->value("@chartGridColor").toString();
-        QString historyChartBackground = sv->value(mBackgroundToken).toString();
-
-        mChart->axes(Qt::Horizontal).first()->setLabelsColor(chartLabelColor);
-        mChart->axes(Qt::Horizontal).first()->setGridLineColor(chartGridColor);
-
-        mChart->axes(Qt::Vertical).first()->setLabelsColor(chartLabelColor);
-        mChart->axes(Qt::Vertical).first()->setGridLineColor(chartGridColor);
-
-        mChart->setBackgroundBrush(QColor(historyChartBackground));
-        mChart->legend()->setLabelColor(chartLabelColor);
-
-        for (int i = 0; i < mSeriesList.count(); ++i) {
-            QString token = QString("@chartSeries%1").arg(i + 1, 2, 10, QChar('0'));
-            QColor c(sv->value(token).toString());
-            dynamic_cast<QSplineSeries*>(mChart->series().at(i))->setColor(c);
-        }
+    // SSO-26718 (B14): apply the current theme immediately, not just on the
+    // next sigChangedAppTheme — a chart created lazily (GPU, disk health,
+    // PSI) well after the page's own construction-time replay would
+    // otherwise sit with unthemed axis/grid/background colors until the user
+    // happens to switch themes.
+    applyThemeColors();
+    connect(mSignalMapper, &SignalMapper::sigChangedAppTheme, this, [=] {
+        applyThemeColors();
     });
+}
+
+void HistoryChart::applyThemeColors()
+{
+    QSettings *sv = mAppManager->getStyleValues();
+    if (!sv) return;
+    QString chartLabelColor = sv->value("@chartLabelColor").toString();
+    QString chartGridColor = sv->value("@chartGridColor").toString();
+    QString historyChartBackground = sv->value(mBackgroundToken).toString();
+
+    mChart->axes(Qt::Horizontal).first()->setLabelsColor(chartLabelColor);
+    mChart->axes(Qt::Horizontal).first()->setGridLineColor(chartGridColor);
+
+    mChart->axes(Qt::Vertical).first()->setLabelsColor(chartLabelColor);
+    mChart->axes(Qt::Vertical).first()->setGridLineColor(chartGridColor);
+
+    mChart->setBackgroundBrush(QColor(historyChartBackground));
+    mChart->legend()->setLabelColor(chartLabelColor);
+
+    for (int i = 0; i < mSeriesList.count(); ++i) {
+        QString token = QString("@chartSeries%1").arg(i + 1, 2, 10, QChar('0'));
+        QColor c(sv->value(token).toString());
+        dynamic_cast<QSplineSeries*>(mChart->series().at(i))->setColor(c);
+    }
 }
 
 void HistoryChart::setYMax(double value)
@@ -138,7 +153,11 @@ void HistoryChart::setSeriesList(const QVector<QSplineSeries *> &seriesList)
     // In Qt6, series() returns by value so modifying the returned list is a no-op.
     // The series are already being modified in-place via their pointers (insert, replace, removePoints),
     // so we only need to trigger a repaint.
-    mChartView->repaint();
+    // SSO-26718: repaint() forces an immediate synchronous redraw on the GUI
+    // thread; update() just schedules one for the next event-loop iteration,
+    // which is all a per-tick chart refresh needs and lets Qt coalesce
+    // repeated calls within one tick instead of blocking on each.
+    mChartView->update();
 }
 
 void HistoryChart::on_checkHistoryTitle_clicked(bool checked)

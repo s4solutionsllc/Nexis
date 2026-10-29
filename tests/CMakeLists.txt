@@ -820,6 +820,20 @@ add_nexis_test(NAME ResourceHistoryServiceTests
     nexis-gui Qt6::Widgets Qt6::Sql
 )
 
+# SSO-26718: RollingSeries — the Resources page's shared ring-buffer chart
+# feed (capacity/wrap, windowed Y max shrinking after a spike ages out,
+# reset()). Links against nexis-gui for Qt6::Charts (QSplineSeries/QXYSeries)
+# which nexis-gui already links publicly.
+add_nexis_test(NAME RollingSeriesTests
+  SOURCES
+    managers/test_rolling_series.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Resources"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
 # against nexis-gui because FileSearchService lives in the GUI library.
 add_nexis_test(NAME FileSearchServiceTests

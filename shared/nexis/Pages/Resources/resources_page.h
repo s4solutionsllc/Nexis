@@ -3,11 +3,13 @@
 
 #include "nexis_page.h"
 #include "history_chart.h"
+#include "rolling_series.h"
 #include "resource_history_panel.h"
 #include "disk_usage_launcher_widget.h"
 #include "Managers/info_manager.h"
 #include <QChart>
 #include <QSpacerItem>
+#include <memory>
 #ifdef Q_OS_LINUX
 #include <Info/psi_info.h>
 #include <Info/oomd_snapshot.h>
@@ -67,6 +69,20 @@ private:
     HistoryChart *mChartDiskReadWrite;
     HistoryChart *mChartMemory;
     HistoryChart *mChartNetwork;
+
+    // SSO-26718: one RollingSeries per chart, built against that chart's own
+    // getSeriesList() once it exists. Charts built lazily (GPU, disk health,
+    // PSI) get theirs constructed at the same point the chart itself is
+    // created. reset() on every page re-activate (B12) so a hidden gap never
+    // renders as a frozen, stale chart.
+    std::unique_ptr<RollingSeries> mRollingCpu;
+    std::unique_ptr<RollingSeries> mRollingCpuLoadAvg;
+    std::unique_ptr<RollingSeries> mRollingDiskIO;
+    std::unique_ptr<RollingSeries> mRollingMemory;
+    std::unique_ptr<RollingSeries> mRollingNetwork;
+    std::unique_ptr<RollingSeries> mRollingGpu;
+    std::unique_ptr<RollingSeries> mRollingDiskHealth;
+    void resetRollingSeries();
     // SSO-10930 / GH#220: persistent history view, separate from the live
     // 0-60s charts above — see resource_history_panel.h for why it isn't a
     // HistoryChart.
@@ -94,6 +110,7 @@ private:
     void invalidateIOBaselines();
 #ifdef Q_OS_LINUX
     HistoryChart *mChartPsiCpu = nullptr;
+    std::unique_ptr<RollingSeries> mRollingPsi;
     OomKillsWidget *mOomKills = nullptr;
     PowerDrawWidget *mPowerDraw = nullptr;
 #endif
