@@ -63,6 +63,10 @@ add_nexis_test(NAME ThermalInfoTests  SOURCES core/test_thermal_info.cpp)
 add_nexis_test(NAME BatteryInfoTests  SOURCES core/test_battery_info.cpp)
 add_nexis_test(NAME DiskInfoTests     SOURCES core/test_disk_info.cpp)
 
+# SSO-10930 / GH#220: persistent resource-history SQLite store. Lives in
+# nexis-core (not nexis-gui) so it's unit-testable without the GUI.
+add_nexis_test(NAME ResourceHistoryStoreTests SOURCES core/test_resource_history_store.cpp LIBS Qt6::Sql)
+
 # SSO-23857: Tweaks pane backend. Pure argv-build/parse/catalog logic —
 # no macOS APIs touched, so these build and run on every platform, unlike
 # the widget itself which only ever gets instantiated on macOS.
@@ -788,6 +792,22 @@ add_nexis_test(NAME DataRefreshServiceTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-10930 / GH#220: ResourceHistoryService's avg/max/NULL-tolerance
+# aggregation math, exercised as pure static functions (no timer, no real
+# DataRefreshService subscription). Links against nexis-gui because the
+# service lives in the GUI library; needs Qt6::Sql transitively for
+# ResourceHistoryStore (nexis-core already links it, but link explicitly
+# here too, matching CleanerActionInterpreterTests/BrowserSqliteCleanerTests).
+add_nexis_test(NAME ResourceHistoryServiceTests
+  SOURCES
+    managers/test_resource_history_service.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Sql
+)
+
 # SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
 # against nexis-gui because FileSearchService lives in the GUI library.
 add_nexis_test(NAME FileSearchServiceTests
@@ -879,6 +899,9 @@ add_nexis_test(NAME DiskMapBubbleAsyncTests
 # engine compliance, and the never-delete-last-copy invariant. Builds on
 # the WI-08 trash/elevation seam pattern, so the destructive paths are
 # exercised without touching the user's real trash.
+# SSO-26638 extends this with similar-image detection (seed-anchored
+# clustering over dHash fingerprints; see ImageHashTests for the hash
+# primitive itself).
 add_nexis_test(NAME DuplicateFinderTests
   SOURCES
     managers/test_duplicate_finder.cpp
@@ -886,6 +909,20 @@ add_nexis_test(NAME DuplicateFinderTests
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Services"
     "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets Qt6::Concurrent
+)
+
+# SSO-26638: ImageHash::dHash/hashFile — the perceptual-hash primitive
+# behind Duplicate Finder's similar-image mode. Covers resize/re-encode
+# stability, dissimilar-image separation, and corrupt-file handling in
+# isolation from the clustering pipeline.
+add_nexis_test(NAME ImageHashTests
+  SOURCES
+    managers/test_image_hash.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Services"
   LIBS
     nexis-gui Qt6::Widgets Qt6::Concurrent
 )

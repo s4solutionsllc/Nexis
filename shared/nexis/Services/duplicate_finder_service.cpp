@@ -5,11 +5,14 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QImageReader>
 #include <QRegularExpression>
 #include <QSet>
+#include <QVector>
 #include <QtConcurrent>
 
 #include <algorithm>
+#include <functional>
 
 DuplicateFinderService *DuplicateFinderService::instance = nullptr;
 
@@ -72,6 +75,31 @@ void DuplicateFinderService::scan(const QStringList &directories,
     auto job = [this, directories, minSize, globFilter, exclusions]() {
         QList<DuplicateGroup> results =
             runPipeline(directories, minSize, globFilter, exclusions);
+        if (mCancelled.loadRelaxed())
+            emit scanCancelled();
+        else
+            emit scanFinished(results);
+    };
+
+    if (runsAsynchronously())
+        mWorkerFuture = QtConcurrent::run(job);
+    else
+        job();
+}
+
+void DuplicateFinderService::scanSimilarImages(const QStringList &directories,
+                                                qint64 minSize,
+                                                int maxDistance)
+{
+    if (mWorkerFuture.isRunning())
+        return;
+
+    mCancelled.storeRelaxed(0);
+    const auto exclusions = loadExclusions();
+
+    auto job = [this, directories, minSize, maxDistance, exclusions]() {
+        QList<DuplicateGroup> results =
+            runSimilarPipeline(directories, minSize, maxDistance, exclusions);
         if (mCancelled.loadRelaxed())
             emit scanCancelled();
         else
@@ -327,6 +355,30 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
         }
     }
 
+    if (mCancelled.loadRelaxed())
+        return {};
+
+    const QList<DuplicateGroup> results =
+        groupExactByContent(sizeGroups, totalScanned, /*baseStage=*/2);
+
+    if (mCancelled.loadRelaxed())
+        return {};
+
+    emit progressUpdated(3, results.size(), results.size(),
+        tr("Scan complete: %1 duplicate groups found").arg(results.size()));
+
+    return results;
+}
+
+QList<DuplicateGroup> DuplicateFinderService::groupExactByContent(
+    QHash<qint64, QList<QFileInfo>> sizeGroups,
+    int totalScanned,
+    int baseStage,
+    const QString &phaseLabel)
+{
+    const QString label = phaseLabel.isEmpty() ? tr("Stage %1").arg(baseStage)
+                                                : phaseLabel;
+
     // Remove size groups with only one file
     QList<qint64> sizesToRemove;
     for (auto it = sizeGroups.constBegin(); it != sizeGroups.constEnd(); ++it) {
@@ -336,19 +388,19 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
     for (qint64 s : sizesToRemove)
         sizeGroups.remove(s);
 
-    // Count candidates for stage 2
+    // Count candidates for the partial-hash pass
     int totalCandidates = 0;
     for (auto it = sizeGroups.constBegin(); it != sizeGroups.constEnd(); ++it)
         totalCandidates += it.value().size();
 
-    emit progressUpdated(1, totalScanned, totalScanned,
-        tr("Stage 1 complete: %1 candidates in %2 size groups")
-            .arg(totalCandidates).arg(sizeGroups.size()));
+    emit progressUpdated(baseStage, totalScanned, totalScanned,
+        tr("%1 complete: %2 candidates in %3 size groups")
+            .arg(label).arg(totalCandidates).arg(sizeGroups.size()));
 
     if (mCancelled.loadRelaxed())
         return {};
 
-    // --- Stage 2: Partial hash (first 4 KB) ---
+    // --- Partial hash (first 4 KB) ---
     QHash<QByteArray, QList<QFileInfo>> partialHashGroups;
     int hashProgress = 0;
 
@@ -365,9 +417,9 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
 
             hashProgress++;
             if (hashProgress % 100 == 0)
-                emit progressUpdated(2, hashProgress, totalCandidates,
-                    tr("Stage 2: Partial hashing... %1/%2")
-                        .arg(hashProgress).arg(totalCandidates));
+                emit progressUpdated(baseStage, hashProgress, totalCandidates,
+                    tr("%1: Partial hashing... %2/%3")
+                        .arg(label).arg(hashProgress).arg(totalCandidates));
         }
     }
 
@@ -386,13 +438,13 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
          it != partialHashGroups.constEnd(); ++it)
         stage3Candidates += it.value().size();
 
-    emit progressUpdated(2, totalCandidates, totalCandidates,
-        tr("Stage 2 complete: %1 candidates remaining").arg(stage3Candidates));
+    emit progressUpdated(baseStage, totalCandidates, totalCandidates,
+        tr("%1 complete: %2 candidates remaining").arg(label).arg(stage3Candidates));
 
     if (mCancelled.loadRelaxed())
         return {};
 
-    // --- Stage 3: Full hash ---
+    // --- Full hash ---
     QHash<QByteArray, QList<QFileInfo>> fullHashGroups;
     int fullProgress = 0;
 
@@ -408,9 +460,9 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
 
             fullProgress++;
             if (fullProgress % 10 == 0)
-                emit progressUpdated(3, fullProgress, stage3Candidates,
-                    tr("Stage 3: Full hashing... %1/%2")
-                        .arg(fullProgress).arg(stage3Candidates));
+                emit progressUpdated(baseStage + 1, fullProgress, stage3Candidates,
+                    tr("%1: Full hashing... %2/%3")
+                        .arg(label).arg(fullProgress).arg(stage3Candidates));
         }
     }
 
@@ -423,6 +475,7 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
             group.files = it.value();
             group.fileSize = group.files.first().size();
             group.hash = it.key();
+            group.kind = DuplicateGroup::Kind::Exact;
             results.append(group);
         }
     }
@@ -434,8 +487,296 @@ QList<DuplicateGroup> DuplicateFinderService::runPipeline(
                b.fileSize * (b.files.size() - 1);
     });
 
-    emit progressUpdated(3, stage3Candidates, stage3Candidates,
-        tr("Scan complete: %1 duplicate groups found").arg(results.size()));
+    return results;
+}
+
+namespace {
+
+// SSO-26638 (spec D2): a BK-tree keyed by Hamming distance over 64-bit
+// image hashes. Hamming distance is a proper metric (satisfies the triangle
+// inequality), so the standard BK-tree child-by-exact-distance layout and
+// range-query pruning both apply unmodified. Exists to keep clustering
+// 50,000 hashes under the spec's 2-second budget — plain O(n^2) pairwise
+// comparison does not.
+class HammingBkTree
+{
+public:
+    void insert(quint64 hash, int index)
+    {
+        if (mNodes.isEmpty()) {
+            mNodes.append({hash, index, {}});
+            return;
+        }
+        int cur = 0;
+        while (true) {
+            const int d = ImageHash::hammingDistance(mNodes[cur].hash, hash);
+            auto it = mNodes[cur].children.constFind(d);
+            if (it == mNodes[cur].children.constEnd()) {
+                mNodes[cur].children.insert(d, mNodes.size());
+                mNodes.append({hash, index, {}});
+                return;
+            }
+            cur = it.value();
+        }
+    }
+
+    // Calls `visit(index)` for every inserted point within `maxDistance` of
+    // `query`, including a point equal to `query` itself.
+    void queryWithin(quint64 query, int maxDistance,
+                      const std::function<void(int)> &visit) const
+    {
+        if (mNodes.isEmpty())
+            return;
+
+        QVector<int> stack;
+        stack.append(0);
+        while (!stack.isEmpty()) {
+            const int cur = stack.takeLast();
+            const Node &node = mNodes[cur];
+            const int d = ImageHash::hammingDistance(node.hash, query);
+            if (d <= maxDistance)
+                visit(node.index);
+
+            const int lo = d - maxDistance;
+            const int hi = d + maxDistance;
+            for (auto it = node.children.constBegin(); it != node.children.constEnd(); ++it) {
+                if (it.key() >= lo && it.key() <= hi)
+                    stack.append(it.value());
+            }
+        }
+    }
+
+private:
+    struct Node {
+        quint64 hash = 0;
+        int index = -1;
+        QHash<int, int> children; // distance from this node -> index into mNodes
+    };
+    QVector<Node> mNodes;
+};
+
+} // namespace
+
+QList<DuplicateGroup> DuplicateFinderService::clusterSimilarImages(
+    QList<HashedImage> images, int maxDistance)
+{
+    // Spec D2: sort by path first so the seed chosen for each new group —
+    // and therefore the final grouping — is deterministic regardless of
+    // directory-walk order.
+    std::sort(images.begin(), images.end(),
+              [](const HashedImage &a, const HashedImage &b) {
+        return a.info.absoluteFilePath() < b.info.absoluteFilePath();
+    });
+
+    HammingBkTree tree;
+    for (int i = 0; i < images.size(); ++i)
+        tree.insert(images[i].hash, i);
+
+    QVector<bool> grouped(images.size(), false);
+    QList<DuplicateGroup> results;
+
+    for (int i = 0; i < images.size(); ++i) {
+        if (grouped[i])
+            continue;
+
+        // Neighbours are measured against this seed only (never against
+        // each other), so a chain A~B~C with A and C both far from the
+        // other cannot pull A and C into the same group — the exact
+        // failure mode union-find allows and the spec rejects.
+        QList<int> neighbors;
+        tree.queryWithin(images[i].hash, maxDistance, [&](int idx) {
+            if (idx != i && !grouped[idx])
+                neighbors.append(idx);
+        });
+
+        if (neighbors.isEmpty())
+            continue;
+
+        DuplicateGroup group;
+        group.kind = DuplicateGroup::Kind::Similar;
+        grouped[i] = true;
+        group.files.append(images[i].info); // seed listed first
+        group.fileSize = static_cast<quint64>(images[i].info.size());
+
+        int maxMemberDistance = 0;
+        for (int idx : neighbors) {
+            grouped[idx] = true;
+            group.files.append(images[idx].info);
+            maxMemberDistance = qMax(maxMemberDistance,
+                ImageHash::hammingDistance(images[i].hash, images[idx].hash));
+        }
+        group.maxDistance = maxMemberDistance;
+        results.append(group);
+    }
+
+    return results;
+}
+
+namespace {
+
+QStringList supportedImageExtensions()
+{
+    QStringList exts;
+    for (const QByteArray &fmt : QImageReader::supportedImageFormats())
+        exts.append(QString::fromLatin1(fmt).toLower());
+    return exts;
+}
+
+bool hasImageExtension(const QFileInfo &info, const QStringList &extensions)
+{
+    return extensions.contains(info.suffix().toLower());
+}
+
+} // namespace
+
+QList<DuplicateGroup> DuplicateFinderService::runSimilarPipeline(
+    const QStringList &directories,
+    qint64 minSize,
+    int maxDistance,
+    const QList<CleanerService::ExclusionEntry> &exclusions)
+{
+    const QStringList imageExtensions = supportedImageExtensions();
+
+    // --- Stage 1: Collect candidate images, grouped by size for the exact pass ---
+    QHash<qint64, QList<QFileInfo>> sizeGroups;
+    QList<QFileInfo> allImages;
+    int totalScanned = 0;
+
+    for (const QString &dir : directories) {
+        if (mCancelled.loadRelaxed())
+            return {};
+
+        QDirIterator it(dir, QDir::Files | QDir::NoDotAndDotDot,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            if (mCancelled.loadRelaxed())
+                return {};
+
+            it.next();
+            const QFileInfo info = it.fileInfo();
+
+            if (info.isSymLink())
+                continue;
+            if (info.size() < minSize)
+                continue;
+            if (!hasImageExtension(info, imageExtensions))
+                continue;
+            if (CleanerService::isExcluded(info.absoluteFilePath(), exclusions))
+                continue;
+
+            sizeGroups[info.size()].append(info);
+            allImages.append(info);
+            totalScanned++;
+
+            if (totalScanned % 500 == 0)
+                emit progressUpdated(1, totalScanned, 0,
+                    tr("Collecting images... %1 found").arg(totalScanned));
+        }
+    }
+
+    emit progressUpdated(1, totalScanned, totalScanned,
+        tr("Collected %1 candidate images").arg(totalScanned));
+
+    if (mCancelled.loadRelaxed())
+        return {};
+
+    // --- Stage 2: Exact matching over the image candidates ---
+    const QList<DuplicateGroup> exactGroups =
+        groupExactByContent(sizeGroups, totalScanned, /*baseStage=*/2, tr("Exact matching"));
+
+    if (mCancelled.loadRelaxed())
+        return {};
+
+    // One representative per exact group stands in for the whole set in
+    // the similarity pass — its siblings are not hashed or clustered a
+    // second time. This is the spec's explicit exception to "a file
+    // appears in at most one group": the representative may also appear in
+    // a Similar group, but no other member of its Exact group ever does.
+    QSet<QString> exactMemberPaths;
+    QList<QFileInfo> candidates;
+    candidates.reserve(exactGroups.size() + allImages.size());
+    for (const DuplicateGroup &g : exactGroups) {
+        candidates.append(g.files.first());
+        for (const QFileInfo &fi : g.files)
+            exactMemberPaths.insert(fi.absoluteFilePath());
+    }
+    for (const QFileInfo &fi : allImages) {
+        if (!exactMemberPaths.contains(fi.absoluteFilePath()))
+            candidates.append(fi);
+    }
+
+    // --- Stage 3: Hash candidates (parallel; tolerant of corrupt files) ---
+    struct HashAttempt {
+        QFileInfo info;
+        quint64 hash = 0;
+        bool ok = false;
+    };
+
+    QAtomicInt skipped{0};
+    QAtomicInt hashedCount{0};
+    const int totalCandidates = candidates.size();
+
+    auto hashOne = [this, &skipped, &hashedCount, totalCandidates](const QFileInfo &fi) {
+        HashAttempt attempt;
+        attempt.info = fi;
+        if (mCancelled.loadRelaxed())
+            return attempt;
+
+        // Must not fail the scan on an undecodable/corrupt file — just
+        // skip it and keep a count for the final status line.
+        const auto hash = ImageHash::hashFile(fi.absoluteFilePath());
+        if (!hash) {
+            skipped.fetchAndAddRelaxed(1);
+            return attempt;
+        }
+        attempt.hash = *hash;
+        attempt.ok = true;
+
+        const int done = hashedCount.fetchAndAddRelaxed(1) + 1;
+        if (done % 200 == 0)
+            emit progressUpdated(3, done, totalCandidates,
+                tr("Hashing images... %1/%2").arg(done).arg(totalCandidates));
+        return attempt;
+    };
+
+    QList<HashAttempt> attempts;
+    if (runsAsynchronously())
+        attempts = QtConcurrent::blockingMapped(candidates, hashOne);
+    else {
+        attempts.reserve(candidates.size());
+        for (const QFileInfo &fi : candidates)
+            attempts.append(hashOne(fi));
+    }
+
+    if (mCancelled.loadRelaxed())
+        return {};
+
+    QList<HashedImage> validHashed;
+    validHashed.reserve(attempts.size());
+    for (const HashAttempt &attempt : attempts) {
+        if (attempt.ok)
+            validHashed.append({attempt.info, attempt.hash});
+    }
+
+    emit progressUpdated(3, totalCandidates, totalCandidates,
+        tr("Hashed %1 images — %2 skipped (corrupt or unsupported)")
+            .arg(validHashed.size()).arg(skipped.loadRelaxed()));
+
+    if (mCancelled.loadRelaxed())
+        return {};
+
+    // --- Stage 4: Grouping ---
+    const QList<DuplicateGroup> similarGroups =
+        clusterSimilarImages(validHashed, maxDistance);
+
+    QList<DuplicateGroup> results;
+    results.reserve(exactGroups.size() + similarGroups.size());
+    results.append(exactGroups);
+    results.append(similarGroups);
+
+    emit progressUpdated(4, results.size(), results.size(),
+        tr("Scan complete: %1 exact + %2 similar groups found — %3 images skipped")
+            .arg(exactGroups.size()).arg(similarGroups.size()).arg(skipped.loadRelaxed()));
 
     return results;
 }

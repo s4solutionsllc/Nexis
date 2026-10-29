@@ -6,14 +6,19 @@
 // without touching the user's real trash or settings.
 
 #include <QtTest>
+#include <QColor>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QImage>
+#include <QLinearGradient>
+#include <QPainter>
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTemporaryDir>
 
 #include "Services/duplicate_finder_service.h"
+#include "Services/image_hash.h"
 #include "Managers/cleaner_service.h"
 
 namespace {
@@ -88,6 +93,24 @@ DuplicateGroup makeGroup(quint64 size, const QStringList &paths)
     return g;
 }
 
+// SSO-26638: a gradient has enough low-frequency structure for dHash to be
+// meaningful, and survives a resize/re-encode without flipping many bits —
+// see test_image_hash.cpp for the hash primitive's own focused tests.
+QString writeGradientImage(const QString &path, int size = 64)
+{
+    QImage image(size, size, QImage::Format_RGB32);
+    QPainter painter(&image);
+    QLinearGradient gradient(0, 0, size, size);
+    gradient.setColorAt(0.0, QColor(10, 10, 10));
+    gradient.setColorAt(1.0, QColor(245, 245, 245));
+    painter.fillRect(image.rect(), gradient);
+    painter.end();
+
+    QFileInfo(path).absoluteDir().mkpath(".");
+    image.save(path, "PNG");
+    return path;
+}
+
 } // namespace
 
 class TestDuplicateFinder : public QObject
@@ -125,6 +148,20 @@ private slots:
     void lastCopy_trashFiles_dropsLastCopyEntry();
     void lastCopy_trashFiles_dropsExcludedEntry();
     void lastCopy_wouldRemoveLastCopy_detectsViolation();
+
+    // --- SSO-26638: similar-image clustering (D2 seed anchoring) ---
+    void similarCluster_seedAnchoring_doesNotChainUnrelatedImages();
+    void similarCluster_singleUngroupedImage_formsNoGroup();
+
+    // --- SSO-26638: scanSimilarImages() pipeline ---
+    void similarScan_findsExactAndSimilarGroups_noFileInTwoGroups();
+    void similarScan_exclusionsAndSymlinks_honored();
+    void similarScan_corruptImage_skippedNotFatal();
+    void similarScan_cancel_emitsScanCancelled();
+
+    // --- SSO-26638: never-delete-last-copy applies to Similar groups too ---
+    void lastCopy_similarGroup_trashFilesRefusesToEmptyIt();
+    void lastCopy_similarGroup_wouldRemoveLastCopy_detectsViolation();
 };
 
 void TestDuplicateFinder::initTestCase()
@@ -578,6 +615,231 @@ void TestDuplicateFinder::lastCopy_wouldRemoveLastCopy_detectsViolation()
     QVERIFY(DuplicateFinderService::wouldRemoveLastCopy({"/g/a", "/g/b"}, {g}));
     QVERIFY(!DuplicateFinderService::wouldRemoveLastCopy({"/g/a"}, {g}));
     QVERIFY(!DuplicateFinderService::wouldRemoveLastCopy({}, {g}));
+}
+
+// ─── SSO-26638: similar-image clustering (D2 seed anchoring) ────────────────
+
+void TestDuplicateFinder::similarCluster_seedAnchoring_doesNotChainUnrelatedImages()
+{
+    // A-B distance 3, B-C distance 4 — both within threshold 5 — but A-C
+    // distance 7 is not. Union-find would chain A~B~C into one group; D2
+    // seed anchoring must not.
+    HashedImage a; a.info = QFileInfo("/images/a.png"); a.hash = 0x0;
+    HashedImage b; b.info = QFileInfo("/images/b.png"); b.hash = 0x7;
+    HashedImage c; c.info = QFileInfo("/images/c.png"); c.hash = 0x7F;
+
+    QCOMPARE(ImageHash::hammingDistance(a.hash, b.hash), 3);
+    QCOMPARE(ImageHash::hammingDistance(b.hash, c.hash), 4);
+    QVERIFY(ImageHash::hammingDistance(a.hash, c.hash) > 5);
+
+    const auto groups = DuplicateFinderService::clusterSimilarImages({a, b, c}, 5);
+
+    QCOMPARE(groups.size(), 1);
+    QCOMPARE(groups.first().files.size(), 2);
+
+    QStringList paths;
+    for (const QFileInfo &fi : groups.first().files)
+        paths << fi.absoluteFilePath();
+    QVERIFY(paths.contains(a.info.absoluteFilePath()));
+    QVERIFY(paths.contains(b.info.absoluteFilePath()));
+    QVERIFY2(!paths.contains(c.info.absoluteFilePath()),
+             "A and C must not end up in the same group via a B-mediated chain");
+}
+
+void TestDuplicateFinder::similarCluster_singleUngroupedImage_formsNoGroup()
+{
+    HashedImage only;
+    only.info = QFileInfo("/images/only.png");
+    only.hash = 0x1234;
+
+    const auto groups = DuplicateFinderService::clusterSimilarImages({only}, 5);
+    QVERIFY(groups.isEmpty());
+}
+
+// ─── SSO-26638: scanSimilarImages() pipeline ────────────────────────────────
+
+void TestDuplicateFinder::similarScan_findsExactAndSimilarGroups_noFileInTwoGroups()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString a1 = writeGradientImage(tmp.path() + "/a1.png", 64);
+    const QString a2 = writeGradientImage(tmp.path() + "/a2.png", 64); // byte-identical to a1
+
+    QImage gradient(64, 64, QImage::Format_RGB32);
+    QPainter painter(&gradient);
+    QLinearGradient grad(0, 0, 64, 64);
+    grad.setColorAt(0.0, QColor(10, 10, 10));
+    grad.setColorAt(1.0, QColor(245, 245, 245));
+    painter.fillRect(gradient.rect(), grad);
+    painter.end();
+
+    const QImage resized = gradient.scaled(32, 32, Qt::IgnoreAspectRatio,
+                                            Qt::SmoothTransformation);
+    const QString similarPath = tmp.path() + "/similar.png";
+    QVERIFY(resized.save(similarPath, "PNG"));
+
+    TestableDuplicateFinderService svc;
+    QSignalSpy spy(&svc, &DuplicateFinderService::scanFinished);
+    svc.scanSimilarImages({tmp.path()}, /*minSize=*/0, /*maxDistance=*/15);
+
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
+    const auto results = spy.takeFirst().at(0).value<QList<DuplicateGroup>>();
+
+    DuplicateGroup exactGroup, similarGroup;
+    bool haveExact = false, haveSimilar = false;
+    for (const DuplicateGroup &g : results) {
+        if (g.kind == DuplicateGroup::Kind::Exact) { exactGroup = g; haveExact = true; }
+        if (g.kind == DuplicateGroup::Kind::Similar) { similarGroup = g; haveSimilar = true; }
+    }
+    QVERIFY2(haveExact, "a1/a2 are byte-identical and must form an Exact group");
+    QVERIFY2(haveSimilar, "similar.png must cluster with the exact group's representative");
+
+    QCOMPARE(exactGroup.files.size(), 2);
+    QCOMPARE(similarGroup.files.size(), 2);
+
+    QStringList exactPaths, similarPaths;
+    for (const QFileInfo &fi : exactGroup.files)
+        exactPaths << fi.absoluteFilePath();
+    for (const QFileInfo &fi : similarGroup.files)
+        similarPaths << fi.absoluteFilePath();
+
+    QVERIFY(exactPaths.contains(a1));
+    QVERIFY(exactPaths.contains(a2));
+    QVERIFY2(similarPaths.contains(similarPath),
+             "the resized copy must land in the Similar group");
+
+    // Exactly one of a1/a2 — the exact group's representative — stands in
+    // for the whole set in the Similar group; "a file appears in at most
+    // one group" means the *other* member must not appear there too.
+    const bool a1InSimilar = similarPaths.contains(a1);
+    const bool a2InSimilar = similarPaths.contains(a2);
+    QVERIFY2(a1InSimilar != a2InSimilar,
+             "exactly one exact-group representative must stand in for the Similar group");
+}
+
+void TestDuplicateFinder::similarScan_exclusionsAndSymlinks_honored()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString a = writeGradientImage(tmp.path() + "/a.png");
+    const QString b = writeGradientImage(tmp.path() + "/b.png");
+    const QString d = writeGradientImage(tmp.path() + "/d.png");
+
+    const QString linkPath = tmp.path() + "/link.png";
+    QVERIFY2(QFile::link(a, linkPath), "test requires symlink support on this filesystem");
+
+    TestableDuplicateFinderService svc;
+    svc.injectedExclusions = entries({{Entry::File, b}});
+
+    QSignalSpy spy(&svc, &DuplicateFinderService::scanFinished);
+    svc.scanSimilarImages({tmp.path()}, /*minSize=*/0, /*maxDistance=*/5);
+
+    if (spy.isEmpty())
+        QVERIFY(spy.wait(30000));
+    const auto results = spy.takeFirst().at(0).value<QList<DuplicateGroup>>();
+
+    QCOMPARE(results.size(), 1);
+    QCOMPARE(results.first().kind, DuplicateGroup::Kind::Exact);
+    QCOMPARE(results.first().files.size(), 2);
+
+    QStringList paths;
+    for (const QFileInfo &fi : results.first().files)
+        paths << fi.absoluteFilePath();
+    QVERIFY(paths.contains(a));
+    QVERIFY(paths.contains(d));
+    QVERIFY2(!paths.contains(b), "excluded file must not appear in any group");
+    QVERIFY2(!paths.contains(linkPath), "a symlink must never appear in any group");
+}
+
+void TestDuplicateFinder::similarScan_corruptImage_skippedNotFatal()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    writeGradientImage(tmp.path() + "/good.png");
+    writeFile(tmp.path() + "/corrupt.jpg",
+              QByteArray("this is not a real jpeg, just garbage bytes"));
+
+    TestableDuplicateFinderService svc;
+    QSignalSpy progressSpy(&svc, &DuplicateFinderService::progressUpdated);
+    QSignalSpy finishedSpy(&svc, &DuplicateFinderService::scanFinished);
+
+    svc.scanSimilarImages({tmp.path()}, /*minSize=*/0, /*maxDistance=*/5);
+
+    if (finishedSpy.isEmpty())
+        QVERIFY(finishedSpy.wait(30000));
+    QCOMPARE(finishedSpy.count(), 1);
+
+    bool sawSkipCount = false;
+    for (const QList<QVariant> &call : progressSpy) {
+        if (call.at(3).toString().contains("1 skipped"))
+            sawSkipCount = true;
+    }
+    QVERIFY2(sawSkipCount,
+             "a corrupt file must be skipped and counted, not fail the scan");
+}
+
+void TestDuplicateFinder::similarScan_cancel_emitsScanCancelled()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    for (int i = 0; i < 5; ++i)
+        writeGradientImage(QStringLiteral("%1/img%2.png").arg(tmp.path()).arg(i));
+
+    TestableDuplicateFinderService svc;
+    // Cancel as soon as the pipeline reports its first progress — the
+    // synchronous test seam (SSO-17858) makes this a direct, same-thread
+    // call, so mCancelled is set before the pipeline's next check.
+    QObject::connect(&svc, &DuplicateFinderService::progressUpdated,
+                      &svc, [&svc](int, int, int, const QString &) {
+        svc.cancel();
+    });
+
+    QSignalSpy cancelSpy(&svc, &DuplicateFinderService::scanCancelled);
+    QSignalSpy finishedSpy(&svc, &DuplicateFinderService::scanFinished);
+    svc.scanSimilarImages({tmp.path()}, /*minSize=*/0, /*maxDistance=*/5);
+
+    if (cancelSpy.isEmpty())
+        QVERIFY(cancelSpy.wait(30000));
+    QCOMPARE(cancelSpy.count(), 1);
+    QCOMPARE(finishedSpy.count(), 0);
+}
+
+// ─── SSO-26638: never-delete-last-copy applies to Similar groups too ───────
+
+void TestDuplicateFinder::lastCopy_similarGroup_trashFilesRefusesToEmptyIt()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString a = writeFile(tmp.path() + "/a.bin", QByteArray(64, 'S'));
+    const QString b = writeFile(tmp.path() + "/b.bin", QByteArray(64, 'S'));
+    auto group = makeGroup(64, {a, b});
+    group.kind = DuplicateGroup::Kind::Similar;
+    group.maxDistance = 4;
+
+    TestableDuplicateFinderService svc;
+    svc.injectedExclusions = {};
+
+    const QStringList trashed = svc.trashFiles({a, b}, {group});
+    QCOMPARE(trashed.size(), 1);
+    QCOMPARE(trashed.first(), b); // deterministic: lexicographically smallest survives
+    QVERIFY2(QFile::exists(a),
+             "filterSafeTrashCandidates/trashFiles must not fork logic by Kind — "
+             "the last-copy guard must protect Similar groups exactly like Exact ones");
+    QVERIFY(!QFile::exists(b));
+}
+
+void TestDuplicateFinder::lastCopy_similarGroup_wouldRemoveLastCopy_detectsViolation()
+{
+    auto g = makeGroup(100, {"/g/a", "/g/b"});
+    g.kind = DuplicateGroup::Kind::Similar;
+    QVERIFY(DuplicateFinderService::wouldRemoveLastCopy({"/g/a", "/g/b"}, {g}));
+    QVERIFY(!DuplicateFinderService::wouldRemoveLastCopy({"/g/a"}, {g}));
 }
 
 QTEST_MAIN(TestDuplicateFinder)

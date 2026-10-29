@@ -5,13 +5,29 @@
 #include <QFileInfo>
 #include <QAtomicInt>
 #include <QFuture>
+#include <QHash>
 
 #include "Managers/cleaner_service.h"
+#include "image_hash.h"
 
 struct DuplicateGroup {
+    enum class Kind { Exact, Similar };
+
     QList<QFileInfo> files;
     quint64 fileSize = 0;
     QByteArray hash;
+    Kind kind = Kind::Exact;
+    // SSO-26638: the largest member-to-seed Hamming distance in the group.
+    // Meaningful for Kind::Similar only; Exact groups leave this 0.
+    int maxDistance = 0;
+};
+
+// SSO-26638: a candidate image plus its dHash, as produced by the hashing
+// stage of the Similar-images pipeline. Exposed (with clusterSimilarImages)
+// so clustering correctness can be tested without decoding real images.
+struct HashedImage {
+    QFileInfo info;
+    quint64 hash = 0;
 };
 
 struct LargeFileEntry {
@@ -28,6 +44,25 @@ public:
 
     void scan(const QStringList &directories, qint64 minSize,
               const QString &globFilter = QString());
+
+    // SSO-26638: near-duplicate image detection. Candidate files are chosen
+    // by extension against QImageReader::supportedImageFormats() at
+    // runtime. Follows scan()'s shape exactly (running-guard, exclusion
+    // snapshot, runsAsynchronously() gating, cancellation) and reuses
+    // scanFinished — the result list carries both Kind::Exact and
+    // Kind::Similar groups, Exact first.
+    void scanSimilarImages(const QStringList &directories, qint64 minSize,
+                            int maxDistance);
+
+    // SSO-26638: seed-anchored clustering (spec D2) over pre-computed image
+    // hashes. Sorts `images` by path, then walks the list; each image not
+    // yet grouped seeds a new Kind::Similar group that collects every other
+    // ungrouped image within `maxDistance` of that seed (not of each
+    // other), so a chain A~B~C cannot merge visually unrelated A and C.
+    // Exposed for tests — clustering can be checked with synthetic hashes,
+    // without decoding real images.
+    static QList<DuplicateGroup> clusterSimilarImages(QList<HashedImage> images,
+                                                       int maxDistance);
 
     // FW-08: top-N largest files in `directories`. Emits largestScanFinished
     // on completion; honors the CleanerService exclusion engine and skips
@@ -113,6 +148,23 @@ private:
         qint64 minSize,
         const QString &globFilter,
         const QList<CleanerService::ExclusionEntry> &exclusions);
+
+    QList<DuplicateGroup> runSimilarPipeline(
+        const QStringList &directories,
+        qint64 minSize,
+        int maxDistance,
+        const QList<CleanerService::ExclusionEntry> &exclusions);
+
+    // Shared by runPipeline() and runSimilarPipeline(): partial-then-full
+    // content hashing over files already grouped by size, producing
+    // Kind::Exact groups. `baseStage`/`phaseLabel` only affect the
+    // progressUpdated text, since the UI does not key behaviour off the
+    // stage number (DiskToolsPage::onDupProgress ignores it).
+    QList<DuplicateGroup> groupExactByContent(
+        QHash<qint64, QList<QFileInfo>> sizeGroups,
+        int totalScanned,
+        int baseStage,
+        const QString &phaseLabel = QString());
 
     QList<LargeFileEntry> runLargestPipeline(
         const QStringList &directories,

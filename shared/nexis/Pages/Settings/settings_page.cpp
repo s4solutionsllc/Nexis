@@ -6,6 +6,7 @@
 #include "Managers/schedule_manager.h"
 #include "Managers/cleaner_service.h"
 #include "Managers/data_refresh_service.h"
+#include "Managers/resource_history_service.h"
 #include "Services/snapshot_service.h"
 #include "Pages/SystemCleaner/schedule_editor_dialog.h"
 #include "utilities.h"
@@ -262,6 +263,16 @@ void SettingsPage::init()
     // disk analyzer preference
     initDiskAnalyzerCombo();
 
+    // SSO-10930 / GH#220: persistent CPU/load/memory history logging.
+    ui->chkResourceHistoryEnabled->setChecked(mSettingManager->getResourceHistoryEnabled());
+    ui->cmbResourceHistoryRetention->addItem(tr("1 day"), 1);
+    ui->cmbResourceHistoryRetention->addItem(tr("7 days"), 7);
+    ui->cmbResourceHistoryRetention->addItem(tr("30 days"), 30);
+    const int retentionIdx = ui->cmbResourceHistoryRetention->findData(mSettingManager->getResourceHistoryRetentionDays());
+    ui->cmbResourceHistoryRetention->setCurrentIndex(retentionIdx >= 0 ? retentionIdx : 1);
+    connect(ui->cmbResourceHistoryRetention, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &SettingsPage::cmbResourceHistoryRetentionChanged);
+    connect(ui->btnClearResourceHistory, &QPushButton::clicked, this, &SettingsPage::onClearResourceHistory);
+
     // DS §2/§3 (NEX F1/F2): page header, section-card headers, elevated
     // card chrome + shadow. Shadow color is theme-dependent (@shadowColor),
     // so refreshThemeColors() re-applies it on theme change.
@@ -513,6 +524,33 @@ void SettingsPage::on_checkDiskHealthAlert_clicked(bool checked)
 void SettingsPage::on_checkUpdateAlert_clicked(bool checked)
 {
     mSettingManager->setUpdateAlertEnabled(checked);
+}
+
+void SettingsPage::on_chkResourceHistoryEnabled_clicked(bool checked)
+{
+    mSettingManager->setResourceHistoryEnabled(checked);
+    emit SignalMapper::ins()->sigResourceHistoryToggled(checked);
+}
+
+void SettingsPage::cmbResourceHistoryRetentionChanged(int index)
+{
+    const int days = ui->cmbResourceHistoryRetention->itemData(index).toInt();
+    mSettingManager->setResourceHistoryRetentionDays(days);
+}
+
+void SettingsPage::onClearResourceHistory()
+{
+    const auto choice = QMessageBox::question(
+        this, tr("Clear Resource History"),
+        tr("This permanently deletes all recorded CPU, load, and memory history. Continue?"),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if (choice != QMessageBox::Yes)
+        return;
+
+    if (!ResourceHistoryService::ins()->clearAll()) {
+        QMessageBox::warning(this, tr("Clear Resource History"),
+                              tr("Could not clear resource history."));
+    }
 }
 
 void SettingsPage::initScheduledCleaning()

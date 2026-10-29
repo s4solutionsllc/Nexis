@@ -738,3 +738,23 @@ QString SettingManager::getKioskMonitorName() const
 {
     return mSettings->value(SettingKeys::KioskMonitorName, "").toString();
 }
+
+void SettingManager::setResourceHistoryEnabled(bool value)
+{
+    mSettings->setValue(SettingKeys::ResourceHistoryEnabled, value);
+}
+
+bool SettingManager::getResourceHistoryEnabled() const
+{
+    return mSettings->value(SettingKeys::ResourceHistoryEnabled, false).toBool();
+}
+
+void SettingManager::setResourceHistoryRetentionDays(int days)
+{
+    mSettings->setValue(SettingKeys::ResourceHistoryRetentionDays, days);
+}
+
+int SettingManager::getResourceHistoryRetentionDays() const
+{
+    return mSettings->value(SettingKeys::ResourceHistoryRetentionDays, 7).toInt();
+}

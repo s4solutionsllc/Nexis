@@ -76,11 +76,11 @@ or removed, so they stay hand-written:
 | Always-visible pages | 17 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, DiskMap, Search, Services, Processes, Uninstaller, Shredder, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
-| Tool classes | 10 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool`, `FileSearchTool`, `MacDefaultsTool`, and `MacTweaksCatalog` (SSO-23857) consumed directly by their services/widgets |
+| Tool classes | 11 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool`, `FileSearchTool`, `MacDefaultsTool`, `MacTweaksCatalog` (SSO-23857), and `ResourceHistoryStore` (SSO-10930, consumed directly by `ResourceHistoryService`) |
 | Utility classes | 6 | `CommandUtil`, `DisplayServerUtil`, `FileUtil`, `FormatUtil`, `HeadlessUtil`, `MacOsVersionUtil` (SSO-23857) in `shared/nexis-core/Utils/` |
-| Manager singletons | 9 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `CleaningProfilesService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`) |
+| Manager singletons | 10 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `CleaningProfilesService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`, `ResourceHistoryService` (SSO-10930)) |
 | Domain services | 9 | `shared/nexis/Services/` (`StartupService`, `FileSearchService`, `HostService`, `ProcessService`, `SystemServiceManager`, `DockerService`, `PackageService`, `DuplicateFinderService`, `SnapshotService`) |
-| `SignalMapper` signals | 12 | `shared/nexis/signal_mapper.h` |
+| `SignalMapper` signals | 14 | `shared/nexis/signal_mapper.h` |
 | `DataRefreshService` QTimers | 5 | fast (1 s) / medium (5 s) / slow (30 s) / process (configurable) / update (1 h) |
 | `DataRefreshService` signals | 16 | 14 cross-platform + Linux-only `psiUpdated`/`oomdUpdated` (FW-11/SSO-3739) |
 | Themes | 2 (Dark = `default/`, Light = `light/`) | `shared/nexis/static/themes/` |
@@ -328,19 +328,41 @@ Four-mode page for finding space-wasting files (Large & Old Files, Duplicate Fin
 - Checkboxes for selective deletion; trashing routes through `DuplicateFinderService::trashFiles()` so cleaner exclusions apply, and excluded paths are skipped at scan time too (SSO-25782 — this mode previously ignored exclusions)
 - Cancelling a scan restores the Scan button and the empty state
 
-**Mode 2 — Duplicate Finder (FR-63 / FW-08):**
+**Mode 2 — Duplicate Finder (FR-63 / FW-08; similar images in SSO-26638):**
 - Shared directory picker (synced with Large & Old mode)
 - Configurable minimum file size (KB/MB/GB) and optional glob pattern filter
-- DuplicateFinderService: 3-stage pipeline (size grouping → partial 4KB SHA-256 → full SHA-256)
+- A **Match** combo (Exact duplicates / Similar images) and, when Similar is
+  selected, a **Similarity** preset combo (Very high ≤2 / High ≤5 default /
+  Medium ≤10 / Low ≤15, a Hamming-distance threshold); the glob filter is
+  disabled in Similar mode since image-extension filtering replaces it
+- Exact mode: `DuplicateFinderService::scan()`, a 3-stage pipeline (size
+  grouping → partial 4KB SHA-256 → full SHA-256)
+- Similar mode: `DuplicateFinderService::scanSimilarImages()` — candidate
+  images are chosen by extension against `QImageReader::supportedImageFormats()`;
+  an exact pass groups byte-identical images first, then one representative
+  per exact group plus every remaining image is fingerprinted with an
+  in-house 64-bit difference hash (dHash, `ImageHash::dHash`/`hashFile`) and
+  clustered into seed-anchored groups (each member within the chosen
+  threshold of one seed image, never of each other — avoids chaining
+  visually unrelated images transitively). A corrupt/undecodable image is
+  skipped and counted, not fatal to the scan
 - Progress bar with stage-by-stage status messages
-- Results in grouped QTreeWidget: parent = duplicate group (wasted space), children = files
-- First file in each group unchecked (kept), remaining pre-checked for deletion
+- Results in grouped QTreeWidget: parent = group ("Identical — N files, X
+  reclaimable" or, in a theme-token colour, "Similar — N images, distance ≤
+  d"), children = files, with a Dimensions (W×H) column and a decoded
+  thumbnail tooltip populated for Similar-group children
+- Exact groups: first file unchecked (kept), remaining pre-checked for
+  deletion. Similar groups: **no file is pre-checked** — near-duplicates are
+  not interchangeable copies (one may be the higher-resolution original), so
+  every deletion is opt-in; the seed is listed first
 - Cancellable scan with Cancel button
-- FW-08 (SSO-3736): scans honor the CleanerService exclusion engine; trashing
-  routes through `DuplicateFinderService::trashFiles()` which enforces the
-  never-delete-last-copy invariant (retains the lexicographically smallest path
-  of any duplicate group whose entire surviving set was selected) and drops
-  excluded paths before the moveToTrash seam
+- FW-08 (SSO-3736): scans honor the CleanerService exclusion engine and skip
+  symlinks; trashing routes through `DuplicateFinderService::trashFiles()`
+  which enforces the never-delete-last-copy invariant (retains the
+  lexicographically smallest path of any duplicate group whose entire
+  surviving set was selected) and drops excluded paths before the
+  moveToTrash seam — unchanged for Similar groups, since the guard is
+  kind-agnostic
 
 **Mode 3 — Largest Files (FW-08, UI in SSO-25782):**
 - "Show top N" spinner (10–5000, default 100) over `DuplicateFinderService::scanLargest(topN)`
@@ -463,6 +485,8 @@ Historical time-series charts for system resource usage.
 - Network download/upload bytes/sec
 - Disk temperature per-drive (30s refresh, if SMART supported)
 - **CPU Pressure Stall (FR-124, Linux only)** — 3-series chart (avg10, avg60, avg300) sourced from `/proc/pressure/cpu`. Shows the percentage of time at least one task was stalled waiting for CPU. Only created when the PSI file is present (kernel 4.20+, `CONFIG_PSI=y`). Zero cost when hidden (uses DataRefreshService subscription gating).
+
+**Resource History (SSO-10930, GH#220, opt-in, off by default):** a persistent, cross-session log of CPU%, 1/5/15-minute load averages, and memory/swap, sampled every 10 seconds — including while the window is minimized to the tray, unlike every other chart on this page. Enabled from Settings ("Record resource history", with a 1/7/30-day retention choice and a "Clear History" button); `ResourceHistoryService` (`shared/nexis/Managers/`) owns a dedicated 10s `QTimer` so it keeps sampling independent of `DataRefreshService`'s window-hidden pause (see Architecture Review for why this is a deliberate exception) and writes through `ResourceHistoryStore` (`shared/nexis-core/Tools/`), a small SQLite store (`resource_history.db` in the config dir, mode 0600, prepared statements only). The Resources page's `ResourceHistoryPanel` adds a Last Hour/24 Hours/7 Days/30 Days range selector next to the live CPU/Memory charts above — a separate `QDateTimeAxis` chart rather than a `HistoryChart` reuse, since `HistoryChart` is hardwired to a reversed 0-60s axis — plus "Export CSV…" for the raw rows in the selected range. Shows a one-line opt-in prompt when the setting is off, and "No history recorded for this period yet." when it's on but the range is empty.
 
 **Elevated-card chrome (NEX-Resources, UX modernization):** all twelve Resources tiles render as DS §2 elevated cards with a DS §3 accent bar in a metric-appropriate color token and a plot surface on `@chartBackgroundColor`. CPU, CPU Load Averages, GPU, and Disk Read Write (SSO-13731/#247) use `HistoryChart::setElevated()` with `@cpuColor`/`@gpuColor`/`@diskColor`. Memory, Network, Disk Temperature, CPU Pressure Stall, OOM Kills, and Disk Usage Analysis (SSO-14437) get the same treatment: Memory/Network reuse `@memoryColor`/`@networkColor`; Disk Temperature uses a new `accentToken="temp"` (`@tempColor`); CPU Pressure Stall reuses `@cpuColor`; OOM Kills reuses `@memoryColor`; Disk Usage Analysis reuses `@diskColor`. Package Power and Per-Core Detail (SSO-15378) reuse `@cpuColor`. `OomKillsWidget`, `DiskUsageLauncherWidget`, `PowerDrawWidget`, and `CpuCoreDetailWidget` (not `HistoryChart` subclasses) each gained their own `setElevated(accentToken)` method for the same `[cardRole="elevated"]` + accent-bar + drop-shadow recipe.
 

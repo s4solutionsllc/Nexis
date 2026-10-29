@@ -129,6 +129,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Tools/cleanerml_platform.cpp"
   "${CORE_SHARED_DIR}/Tools/mac_defaults_tool.cpp"
   "${CORE_SHARED_DIR}/Tools/mac_tweaks_catalog.cpp"
+  "${CORE_SHARED_DIR}/Tools/resource_history_store.cpp"
   "${CORE_SHARED_DIR}/Utils/command_util_shared.cpp"
   "${CORE_SHARED_DIR}/Utils/display_server_util.cpp"
   "${CORE_SHARED_DIR}/Utils/file_util.cpp"
@@ -183,6 +184,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Tools/cleanerml_platform.h"
   "${CORE_SHARED_DIR}/Tools/mac_defaults_tool.h"
   "${CORE_SHARED_DIR}/Tools/mac_tweaks_catalog.h"
+  "${CORE_SHARED_DIR}/Tools/resource_history_store.h"
   "${CORE_SHARED_DIR}/Utils/command_util.h"
   "${CORE_SHARED_DIR}/Utils/display_server_util.h"
   "${CORE_SHARED_DIR}/Utils/file_util.h"
@@ -389,7 +391,11 @@ target_include_directories(nexis-core PUBLIC
 )
 
 target_compile_definitions(nexis-core PRIVATE NEXISCORE_LIBRARY QT_DEPRECATED_WARNINGS)
-target_link_libraries(nexis-core Qt6::Core Qt6::Network Qt6::Concurrent)
+# SSO-10930: ResourceHistoryStore (Tools/resource_history_store.cpp) needs
+# QtSql here so it's unit-testable without the GUI; Qt6::Sql was already
+# linked into nexis-gui (see nexis-gui's target_link_libraries below) for
+# BrowserSqliteCleaner / CleanerActionInterpreter.
+target_link_libraries(nexis-core Qt6::Core Qt6::Network Qt6::Concurrent Qt6::Sql)
 
 # SSO-15374: NvmlLibraryBackend dlopen's libnvidia-ml.so.1 at runtime instead
 # of linking it — no CUDA toolkit build dependency — but still needs libdl
@@ -442,6 +448,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Managers/setting_manager.cpp"
   "${GUI_SHARED_DIR}/Services/file_search_service.cpp"
   "${GUI_SHARED_DIR}/Services/duplicate_finder_service.cpp"
+  "${GUI_SHARED_DIR}/Services/image_hash.cpp"
   "${GUI_SHARED_DIR}/Services/file_shredder_service.cpp"
   "${GUI_SHARED_DIR}/Services/host_service.cpp"
   "${GUI_SHARED_DIR}/Services/process_service.cpp"
@@ -452,6 +459,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Services/snapshot_service.cpp"
   "${GUI_SHARED_DIR}/Services/wipe_free_space_service.cpp"
   "${GUI_SHARED_DIR}/Managers/process_prefs_manager.cpp"
+  "${GUI_SHARED_DIR}/Managers/resource_history_service.cpp"
   # APT-specific GUI components live under linux/ only — they're built into
   # GUI_PLAT_SRCS on Linux. On macOS the Homebrew page replaces them.
   "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.cpp"
@@ -513,6 +521,7 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_map_view.cpp"
   "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_layout.cpp"
   "${GUI_SHARED_DIR}/Pages/Resources/history_chart.cpp"
+  "${GUI_SHARED_DIR}/Pages/Resources/resource_history_panel.cpp"
   "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_view.cpp"
   "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_layout.cpp"
   "${GUI_SHARED_DIR}/Pages/DiskMap/treemap_view.cpp"
@@ -576,6 +585,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Managers/tray_health_monitor.h"
   "${GUI_SHARED_DIR}/Services/file_search_service.h"
   "${GUI_SHARED_DIR}/Services/duplicate_finder_service.h"
+  "${GUI_SHARED_DIR}/Services/image_hash.h"
   "${GUI_SHARED_DIR}/Services/file_shredder_service.h"
   "${GUI_SHARED_DIR}/Services/host_service.h"
   "${GUI_SHARED_DIR}/Services/process_service.h"
@@ -586,6 +596,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Services/snapshot_service.h"
   "${GUI_SHARED_DIR}/Services/wipe_free_space_service.h"
   "${GUI_SHARED_DIR}/Managers/process_prefs_manager.h"
+  "${GUI_SHARED_DIR}/Managers/resource_history_service.h"
   # APT-specific GUI headers live under linux/ only (see GUI_PLAT_HDRS).
   "${GUI_SHARED_DIR}/Pages/Dashboard/circlebar.h"
   "${GUI_SHARED_DIR}/Pages/Dashboard/dashboard_page.h"
@@ -632,6 +643,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_map_view.h"
   "${GUI_SHARED_DIR}/Pages/DiskMap/bubble_layout.h"
   "${GUI_SHARED_DIR}/Pages/Resources/history_chart.h"
+  "${GUI_SHARED_DIR}/Pages/Resources/resource_history_panel.h"
   "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_view.h"
   "${GUI_SHARED_DIR}/Pages/DiskMap/sunburst_layout.h"
   "${GUI_SHARED_DIR}/Pages/DiskMap/treemap_view.h"
