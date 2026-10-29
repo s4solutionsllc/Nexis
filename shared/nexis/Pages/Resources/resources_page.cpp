@@ -6,6 +6,7 @@
 #include "dpi.h"
 #include "Managers/data_refresh_service.h"
 #include "Managers/resource_history_service.h"
+#include "Managers/setting_manager.h"
 #include "Utils/rate_counter_util.h"
 #include <QFile>
 #include <QButtonGroup>
@@ -226,6 +227,12 @@ void ResourcesPage::init()
         if (!visible)
             invalidateIOBaselines();
     });
+
+    // SSO-26720: apply the persisted Live/History mode now that mCardGrid,
+    // mDiskLauncher and mResourceHistory all exist — buildLiveHistorySwitch()
+    // only set the buttons' checked state, deliberately without firing
+    // setLiveModeActive() this early.
+    setLiveModeActive(mBtnLive->isChecked());
 }
 
 void ResourcesPage::buildLiveHistorySwitch()
@@ -236,16 +243,28 @@ void ResourcesPage::buildLiveHistorySwitch()
     layout->setSpacing(6);
     layout->addStretch();
 
+    // SSO-26720: remember the last selected mode across sessions. Set the
+    // initial checked state before the toggled() connections below so this
+    // doesn't fire setLiveModeActive() before mCardGrid/mResourceHistory
+    // exist — init() applies the persisted mode explicitly once everything
+    // is built.
+    const bool startInHistory = SettingManager::ins()->getResourcesHistoryModeActive();
+
     mBtnLive = new QToolButton(row);
+    // Named so the screenshot test can switch modes before capturing
+    // resources_history.png (SSO-26720).
+    mBtnLive->setObjectName("resourcesLiveModeButton");
     mBtnLive->setText(tr("Live"));
     mBtnLive->setCheckable(true);
-    mBtnLive->setChecked(true);
+    mBtnLive->setChecked(!startInHistory);
     mBtnLive->setAutoRaise(true); // BUG-52
     mBtnLive->setCursor(Qt::PointingHandCursor);
 
     mBtnHistory = new QToolButton(row);
+    mBtnHistory->setObjectName("resourcesHistoryModeButton");
     mBtnHistory->setText(tr("History"));
     mBtnHistory->setCheckable(true);
+    mBtnHistory->setChecked(startInHistory);
     mBtnHistory->setAutoRaise(true); // BUG-52
     mBtnHistory->setCursor(Qt::PointingHandCursor);
 
@@ -277,6 +296,8 @@ void ResourcesPage::setLiveModeActive(bool live)
         if (!live)
             mResourceHistory->refresh();
     }
+    // SSO-26720: remember the mode across sessions.
+    SettingManager::ins()->setResourcesHistoryModeActive(!live);
 }
 
 void ResourcesPage::buildCardGrid()
