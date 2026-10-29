@@ -3,14 +3,15 @@
 #include "ui_resources_page.h"
 #include "utilities.h"
 #include "signal_mapper.h"
+#include "dpi.h"
 #include "Managers/data_refresh_service.h"
 #include "Managers/resource_history_service.h"
 #include "Utils/rate_counter_util.h"
 #include <QFile>
+#include <QButtonGroup>
 
 #ifdef Q_OS_LINUX
 #include "Pages/Helpers/oom_kills_widget.h"
-#include "Pages/Helpers/power_draw_widget.h"
 #endif
 #include "Pages/Helpers/cpu_core_detail_widget.h"
 
@@ -24,6 +25,11 @@ QVector<QXYSeries *> toXYSeries(const QVector<QSplineSeries *> &series)
         out.append(s);
     return out;
 }
+
+// SSO-26719: 2 columns above this width, collapsing to 1 below it — wider
+// than SystemCleanerPage's threshold since these cards carry a chart, not
+// just a subtitle line.
+constexpr int kTwoColumnThreshold = 1100;
 }
 
 ResourcesPage::~ResourcesPage()
@@ -37,13 +43,11 @@ ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
     ui(new Ui::ResourcesPage),
     im(infoManager ? infoManager : InfoManager::ins()),
     mRefresh(refreshService ? refreshService : DataRefreshService::ins()),
-    mChartCpu(new HistoryChart(tr("History of CPU"), im->getCpuCoreCount(), nullptr, this)),
-    mChartCpuLoadAvg(new HistoryChart(tr("History of CPU Load Averages"), 3, nullptr, this)),
-    mChartDiskReadWrite(new HistoryChart(tr("History of Disk Read Write"), 2, new QCategoryAxis, this)),
-    mChartMemory(new HistoryChart(tr("History of Memory"), 4, nullptr, this)),
-    mChartNetwork(new HistoryChart(tr("History of Network"), 2, new QCategoryAxis, this)),
-    mChartGpu(nullptr),
-    mChartDiskHealth(nullptr),
+    mChartCpu(new HistoryChart(tr("CPU"), 1, nullptr, this)),
+    mChartLoadPressure(new HistoryChart(tr("Load & Pressure"), 3, nullptr, this)),
+    mChartDiskReadWrite(new HistoryChart(tr("Disk I/O"), 2, new QCategoryAxis, this)),
+    mChartMemory(new HistoryChart(tr("Memory"), 4, nullptr, this)),
+    mChartNetwork(new HistoryChart(tr("Network"), 2, new QCategoryAxis, this)),
     mDiskLauncher(nullptr),
     mActive(false)
 {
@@ -57,107 +61,101 @@ ResourcesPage::ResourcesPage(QWidget *parent, InfoManager *infoManager,
 
 void ResourcesPage::init()
 {
+    // --- CPU: one "Total" line; per-core moves to the "Per-core" toggle ---
     mChartCpu->setYMax(100);
-    mChartMemory->setYMax(100);
-
-    // SSO-26718: one RollingSeries per chart, replacing the shift-and-insert
-    // loop each handler used to carry. Default window (60s) / capacity (256)
-    // match every chart's existing 0-60 axis range.
+    mChartCpu->getSeriesList().at(0)->setName(tr("Total"));
     mRollingCpu = std::make_unique<RollingSeries>(toXYSeries(mChartCpu->getSeriesList()));
-    mRollingCpuLoadAvg = std::make_unique<RollingSeries>(toXYSeries(mChartCpuLoadAvg->getSeriesList()));
-    mRollingDiskIO = std::make_unique<RollingSeries>(toXYSeries(mChartDiskReadWrite->getSeriesList()));
+
+    mPerCoreToggle = mChartCpu->addHeaderToggle(tr("Per-core"));
+    mCoreDetail = new CpuCoreDetailWidget(mChartCpu);
+    const int perCorePage = mChartCpu->addBodyPage(mCoreDetail);
+    connect(mPerCoreToggle, &QToolButton::toggled, this, [this, perCorePage](bool checked) {
+        mChartCpu->setBodyPage(checked ? perCorePage : 0);
+    });
+
+    // --- Load & Pressure: load averages; PSI folds in below as a status line ---
+    {
+        QVector<QSplineSeries *> series = mChartLoadPressure->getSeriesList();
+        static const QString names[] = { tr("1m"), tr("5m"), tr("15m") };
+        for (int i = 0; i < series.count() && i < 3; ++i)
+            series.at(i)->setName(names[i]);
+    }
+    mRollingLoadPressure = std::make_unique<RollingSeries>(toXYSeries(mChartLoadPressure->getSeriesList()));
+
+    // --- Memory ---
+    mChartMemory->setYMax(100);
     mRollingMemory = std::make_unique<RollingSeries>(toXYSeries(mChartMemory->getSeriesList()));
+
+    // --- Disk I/O: legends show series names only; rate + (B6) disk temp
+    // move to the header ---
+    {
+        QVector<QSplineSeries *> series = mChartDiskReadWrite->getSeriesList();
+        series.at(0)->setName(tr("Read"));
+        series.at(1)->setName(tr("Write"));
+    }
+    mRollingDiskIO = std::make_unique<RollingSeries>(toXYSeries(mChartDiskReadWrite->getSeriesList()));
+
+    // --- Network: no "Total" anywhere here — that word is reserved for the
+    // cumulative bytes-since-boot figure on the separate Network Usage page ---
+    {
+        QVector<QSplineSeries *> series = mChartNetwork->getSeriesList();
+        series.at(0)->setName(tr("Download"));
+        series.at(1)->setName(tr("Upload"));
+    }
     mRollingNetwork = std::make_unique<RollingSeries>(toXYSeries(mChartNetwork->getSeriesList()));
 
-    // GPU chart — only if GPU(s) detected
+    // --- GPU (only if detected) ---
     if (im->hasGpu()) {
-        int gpuCount = im->getGpuDevices().size();
-        mChartGpu = new HistoryChart(tr("History of GPU"), gpuCount, nullptr, this);
+        const int gpuCount = im->getGpuDevices().size();
+        mChartGpu = new HistoryChart(tr("GPU"), gpuCount, nullptr, this);
         mChartGpu->setYMax(100);
         mRollingGpu = std::make_unique<RollingSeries>(toXYSeries(mChartGpu->getSeriesList()));
     }
 
-    // Disk health temperature chart is created lazily on first
-    // diskHealthUpdated signal — drive discovery is async (FR-96) so drive
-    // data may not be available at construction time.
-    if (im->hasDiskHealth())
-        ensureDiskHealthChart(im->getDriveHealth());
-
-    QList<QWidget*> widgets = { mChartCpu, mChartCpuLoadAvg, mChartDiskReadWrite, mChartMemory, mChartNetwork };
-
-    // Insert GPU chart after CPU charts
+    // SSO-26719: six cards, fixed order, defined in exactly one place.
+    mCardOrder = { mChartCpu, mChartLoadPressure, mChartMemory };
     if (mChartGpu)
-        widgets.insert(2, mChartGpu);  // after CPU Load Avg, before Disk R/W
+        mCardOrder.append(mChartGpu);
+    mCardOrder.append(mChartDiskReadWrite);
+    mCardOrder.append(mChartNetwork);
 
-    // SSO-10930 / GH#220: historical view, right after the live Network
-    // chart and before the disk-health / PSI / OOM / power cards below.
-    mResourceHistory = new ResourceHistoryPanel(this);
-    {
-        const int netIdx = widgets.indexOf(mChartNetwork);
-        widgets.insert(netIdx + 1, mResourceHistory);
-    }
-
-    // Insert disk health chart after Network, before Disk Launcher
-    if (mChartDiskHealth)
-        widgets.append(mChartDiskHealth);
-
-#ifdef Q_OS_LINUX
-    if (QFile::exists(QStringLiteral("/proc/pressure/cpu"))) {
-        mChartPsiCpu = new HistoryChart(tr("CPU Pressure Stall (some)"), 3, nullptr, this);
-        mChartPsiCpu->setYMax(1.0);
-        mRollingPsi = std::make_unique<RollingSeries>(toXYSeries(mChartPsiCpu->getSeriesList()));
-        widgets.append(mChartPsiCpu);
-    }
-
-    // FW-11 (SSO-3739): OOM-kill observability panel. Always constructed —
-    // the widget hides itself on hosts without any oomd / cgroup v2 signal,
-    // so this costs nothing on, say, a stock macOS-port build target.
-    mOomKills = new OomKillsWidget(this);
-    widgets.append(mOomKills);
-
-    // SSO-15378: package power via powercap/RAPL. Hides itself on hosts
-    // without any RAPL zones (VMs, non-x86, unsupported CPUs).
-    mPowerDraw = new PowerDrawWidget(this);
-    widgets.append(mPowerDraw);
-#endif
-
-    // SSO-15378: compact per-core utilization/frequency detail — cross
-    // platform, unlike the RAPL card above.
-    mCoreDetail = new CpuCoreDetailWidget(this);
-    widgets.append(mCoreDetail);
-
-    for (QWidget *widget : widgets) {
-        ui->chartsLayout->addWidget(widget);
-    }
+    buildLiveHistorySwitch();
+    buildCardGrid();
 
     // DS §2/§3 (NEX-Resources): elevated container + accent-bar header for
-    // every history-chart band. SSO-13731 (PR #247) covered CPU, CPU Load
-    // Averages, GPU, Disk Read Write; SSO-14437 extends the same treatment to
-    // the remaining tiles named in notes/resources_remaining.md (Memory,
-    // Network, Disk Temperature — elevated below; PSI and OOM Kills —
-    // elevated further down since they're conditional/Linux-only).
+    // every subsystem card.
     mChartCpu->setElevated(QStringLiteral("cpu"));
-    mChartCpuLoadAvg->setElevated(QStringLiteral("cpu"));
+    mChartLoadPressure->setElevated(QStringLiteral("cpu"));
     if (mChartGpu)
         mChartGpu->setElevated(QStringLiteral("gpu"));
     mChartDiskReadWrite->setElevated(QStringLiteral("disk"));
     mChartMemory->setElevated(QStringLiteral("memory"));
     mChartNetwork->setElevated(QStringLiteral("network"));
-    mResourceHistory->setElevated(QStringLiteral("cpu"));
-    // mChartDiskHealth, if already constructed at this point, was elevated
-    // inside ensureDiskHealthChart() above — that single call site also
-    // handles the lazy (FR-96) creation path from onDiskHealthUpdated().
 
 #ifdef Q_OS_LINUX
-    if (mChartPsiCpu)
-        mChartPsiCpu->setElevated(QStringLiteral("cpu"));
-    if (mOomKills)
-        mOomKills->setElevated(QStringLiteral("memory"));
-    if (mPowerDraw)
-        mPowerDraw->setElevated(QStringLiteral("cpu"));
+    // PSI → a status line in the Load & Pressure card, not its own card.
+    // Only created when the PSI file is present (kernel 4.20+, CONFIG_PSI=y)
+    // — zero cost when absent, since it's never subscribed either.
+    if (QFile::exists(QStringLiteral("/proc/pressure/cpu"))) {
+        mPsiStatusLabel = new QLabel(mChartLoadPressure);
+        mPsiStatusLabel->setObjectName("psiStatusLine");
+        mPsiStatusLabel->setWordWrap(true);
+        mPsiStatusLabel->hide();
+        QWidget *extras = mChartLoadPressure->extrasRow();
+        static_cast<QVBoxLayout *>(extras->layout())->addWidget(mPsiStatusLabel);
+        extras->setVisible(true);
+    }
+
+    // FW-11 (SSO-3739): OOM-kill status line, folded into the Memory card.
+    // Always constructed — it hides itself on hosts without any oomd /
+    // cgroup v2 signal, so this costs nothing on, say, a macOS-port build.
+    mOomKills = new OomKillsWidget(mChartMemory);
+    {
+        QWidget *extras = mChartMemory->extrasRow();
+        static_cast<QVBoxLayout *>(extras->layout())->addWidget(mOomKills);
+        extras->setVisible(true);
+    }
 #endif
-    if (mCoreDetail)
-        mCoreDetail->setElevated(QStringLiteral("cpu"));
 
     // Subscribe to DataRefreshService signals
     connect(mRefresh, &DataRefreshService::cpuUpdated,
@@ -175,28 +173,35 @@ void ResourcesPage::init()
 
     // Always subscribe to diskHealthUpdated: even if no drives were present
     // at construction, the first async discovery (FR-96) will fire this and
-    // we can build the chart then.
+    // the Disk I/O header's temperature text can be filled in then.
     connect(mRefresh, &DataRefreshService::diskHealthUpdated,
             this, &ResourcesPage::onDiskHealthUpdated);
 
 #ifdef Q_OS_LINUX
-    if (mChartPsiCpu)
+    if (mPsiStatusLabel)
         connect(mRefresh, &DataRefreshService::psiUpdated,
                 this, &ResourcesPage::onPsiUpdated);
-    if (mOomKills)
-        connect(mRefresh, &DataRefreshService::oomdUpdated,
-                this, &ResourcesPage::onOomdUpdated);
-    if (mPowerDraw)
-        connect(mRefresh, &DataRefreshService::powerUpdated,
-                this, &ResourcesPage::onPowerUpdated);
+    connect(mRefresh, &DataRefreshService::oomdUpdated,
+            this, &ResourcesPage::onOomdUpdated);
+    connect(mRefresh, &DataRefreshService::powerUpdated,
+            this, &ResourcesPage::onPowerUpdated);
 #endif
 
-    // Disk Usage Analyzer launcher (FR-23)
+    // Disk Usage Analyzer launcher (FR-23) — the operator declined removing
+    // it (SSO-26716 item D); kept outside the six-card grid as a compact
+    // full-width row below it, behaviour unchanged.
     mDiskLauncher = new DiskUsageLauncherWidget(this);
     ui->chartsLayout->addWidget(mDiskLauncher);
     mDiskLauncher->setElevated(QStringLiteral("disk"));
 
-    // SSO-10930 / GH#220
+    // SSO-10930 / GH#220: historical view, now behind the Live/History
+    // switch (item C) instead of stacked below the live charts. Starts
+    // hidden — Live is the default mode.
+    mResourceHistory = new ResourceHistoryPanel(this);
+    mResourceHistory->setElevated(QStringLiteral("cpu"));
+    mResourceHistory->setVisible(false);
+    ui->chartsLayout->addWidget(mResourceHistory);
+
     connect(mResourceHistory, &ResourceHistoryPanel::openSettingsRequested, this, [] {
         emit SignalMapper::ins()->sigNavigateToPage(QStringLiteral("settings"));
     });
@@ -218,10 +223,135 @@ void ResourcesPage::init()
     });
 }
 
+void ResourcesPage::buildLiveHistorySwitch()
+{
+    auto *row = new QWidget(this);
+    auto *layout = new QHBoxLayout(row);
+    layout->setContentsMargins(0, 0, 0, 4);
+    layout->setSpacing(6);
+    layout->addStretch();
+
+    mBtnLive = new QToolButton(row);
+    mBtnLive->setText(tr("Live"));
+    mBtnLive->setCheckable(true);
+    mBtnLive->setChecked(true);
+    mBtnLive->setAutoRaise(true); // BUG-52
+    mBtnLive->setCursor(Qt::PointingHandCursor);
+
+    mBtnHistory = new QToolButton(row);
+    mBtnHistory->setText(tr("History"));
+    mBtnHistory->setCheckable(true);
+    mBtnHistory->setAutoRaise(true); // BUG-52
+    mBtnHistory->setCursor(Qt::PointingHandCursor);
+
+    auto *group = new QButtonGroup(row);
+    group->setExclusive(true);
+    group->addButton(mBtnLive);
+    group->addButton(mBtnHistory);
+
+    layout->addWidget(mBtnLive);
+    layout->addWidget(mBtnHistory);
+
+    connect(mBtnLive, &QToolButton::toggled, this, [this](bool checked) {
+        if (checked) setLiveModeActive(true);
+    });
+    connect(mBtnHistory, &QToolButton::toggled, this, [this](bool checked) {
+        if (checked) setLiveModeActive(false);
+    });
+
+    ui->chartsLayout->addWidget(row);
+}
+
+void ResourcesPage::setLiveModeActive(bool live)
+{
+    mCardGrid->setVisible(live);
+    if (mDiskLauncher)
+        mDiskLauncher->setVisible(live);
+    if (mResourceHistory) {
+        mResourceHistory->setVisible(!live);
+        if (!live)
+            mResourceHistory->refresh();
+    }
+}
+
+void ResourcesPage::buildCardGrid()
+{
+    mCardGrid = new QWidget(this);
+    // Named so HistoryChart::on_checkHistoryTitle_clicked() can find it to
+    // fullscreen a single card within the grid.
+    mCardGrid->setObjectName("resourcesCardGrid");
+    mCardGridLayout = new QGridLayout(mCardGrid);
+    mCardGridLayout->setContentsMargins(0, 0, 0, 0);
+    mCardGridLayout->setSpacing(10);
+
+    ui->chartsLayout->addWidget(mCardGrid);
+
+    mCardCols = 0; // force the first reflow to actually place every card
+    reflowCardGrid(2);
+}
+
+void ResourcesPage::reflowCardGrid(int cols)
+{
+    if (!mCardGridLayout || mCardOrder.isEmpty())
+        return;
+    mCardCols = cols;
+
+    for (QWidget *card : std::as_const(mCardOrder))
+        mCardGridLayout->removeWidget(card);
+
+    for (int i = 0; i < mCardOrder.size(); ++i)
+        mCardGridLayout->addWidget(mCardOrder[i], i / cols, i % cols);
+
+    mCardGridLayout->setColumnStretch(0, 1);
+    mCardGridLayout->setColumnStretch(1, cols > 1 ? 1 : 0);
+
+    // Clear the previous stretch row before assigning a new one — QGridLayout
+    // never shrinks its tracked row count, so a stale stretch factor on a row
+    // that now holds a card would leave a gap above it.
+    if (mCardStretchRow >= 0)
+        mCardGridLayout->setRowStretch(mCardStretchRow, 0);
+    mCardStretchRow = (mCardOrder.size() + cols - 1) / cols;
+    mCardGridLayout->setRowStretch(mCardStretchRow, 1);
+}
+
+void ResourcesPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    const int cols = width() >= Dpi::scale(kTwoColumnThreshold) ? 2 : 1;
+    if (cols != mCardCols)
+        reflowCardGrid(cols);
+}
+
+void ResourcesPage::showEvent(QShowEvent *event)
+{
+    QWidget::showEvent(event);
+    // Mirrors resizeEvent()'s reflow — a widget can receive its first real
+    // geometry as part of becoming the stacked widget's current page without
+    // a QResizeEvent ever firing.
+    const int cols = width() >= Dpi::scale(kTwoColumnThreshold) ? 2 : 1;
+    if (cols != mCardCols)
+        reflowCardGrid(cols);
+}
+
 void ResourcesPage::invalidateIOBaselines()
 {
     mDiskIOBaselineValid = false;
     mNetworkBaselineValid = false;
+}
+
+void ResourcesPage::refreshDiskIOHeader()
+{
+    QString secondary = mLastDiskWriteText;
+    if (!mLastDiskTempText.isEmpty()) {
+        secondary = secondary.isEmpty() ? mLastDiskTempText
+                                         : secondary + QStringLiteral(" · ") + mLastDiskTempText;
+    }
+    mChartDiskReadWrite->setHeaderValue(mLastDiskReadText, secondary);
+}
+
+void ResourcesPage::refreshCpuHeader()
+{
+    mChartCpu->setHeaderValue(mLastCpuPercentText, mLastPowerText);
 }
 
 void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
@@ -250,14 +380,6 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
     QVector<QSplineSeries*> seriesList = mChartDiskReadWrite->getSeriesList();
     mRollingDiskIO->push({ double(d_readByte), double(d_writeByte) });
 
-    seriesList.at(0)->setName(tr("Read: %1/s Total: %2")
-                              .arg(FormatUtil::formatBytes(d_readByte))
-                              .arg(FormatUtil::formatBytes(readBytes)));
-
-    seriesList.at(1)->setName(tr("Write: %1/s Total: %2")
-                              .arg(FormatUtil::formatBytes(d_writeByte))
-                              .arg(FormatUtil::formatBytes(writeBytes)));
-
     mLastReadBytes  = readBytes;
     mLastWriteBytes = writeBytes;
 
@@ -267,8 +389,11 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
     mChartDiskReadWrite->setYMax(maxY);
 
     mChartDiskReadWrite->setSeriesList(seriesList);
-
     mChartDiskReadWrite->setCategoryAxisYLabels();
+
+    mLastDiskReadText  = tr("%1/s").arg(FormatUtil::formatBytes(d_readByte));
+    mLastDiskWriteText = tr("Write %1/s").arg(FormatUtil::formatBytes(d_writeByte));
+    refreshDiskIOHeader();
 }
 
 void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
@@ -277,59 +402,38 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
     Q_UNUSED(clockGHz)
     if (!mActive) return;
 
-    advanceDiskTempChart();
+    // --- CPU total line (per-core moved to the "Per-core" toggle view) ---
+    if (!percents.isEmpty()) {
+        const int totalPercent = percents.at(0);
+        mRollingCpu->push({ double(totalPercent) });
+        mChartCpu->setSeriesList(mChartCpu->getSeriesList());
 
-    // --- CPU per-core chart ---
-    {
-        QVector<QSplineSeries *> seriesList = mChartCpu->getSeriesList();
-
-        // SSO-3380 / WI-18: DataRefreshService gates the emit on a non-empty
-        // percents list, but guard the per-core indexing here too — `.at(j+1)`
-        // is UB in release if the producer ever returns fewer entries than
-        // chart series. The load-avg block below is safe (loadAvgs is always
-        // 3 elements) and runs regardless.
-        const int neededPercents = seriesList.count() + 1; // index 0 + per-core
-        const bool percentsOk = percents.size() >= neededPercents;
-
-        if (percentsOk) {
-            QVector<double> values;
-            values.reserve(seriesList.count());
-            for (int j = 0; j < seriesList.count(); j++) {
-                int p = percents.at(j + 1);
-                values.append(p);
-                seriesList.at(j)->setName(QString("CPU%1: %2%").arg(j + 1).arg(p));
-            }
-            mRollingCpu->push(values);
-            mChartCpu->setSeriesList(seriesList);
-        }
+        mLastCpuPercentText = tr("%1%").arg(totalPercent);
+        refreshCpuHeader();
     }
 
-    // --- CPU load average chart ---
+    // --- Load & Pressure: load averages ---
     {
-        static const int minutes[] = {1, 5, 15};
-
-        QVector<QSplineSeries*> seriesList = mChartCpuLoadAvg->getSeriesList();
+        QVector<QSplineSeries*> seriesList = mChartLoadPressure->getSeriesList();
 
         QVector<double> values;
         values.reserve(seriesList.count());
-        for (int j = 0; j < seriesList.count(); ++j) {
-            double avg = loadAvgs.at(j);
-            values.append(avg);
-            seriesList.at(j)->setName(tr("%1 Minute Average: %2")
-                                      .arg(minutes[j])
-                                      .arg(avg));
-        }
-        mRollingCpuLoadAvg->push(values);
+        for (int j = 0; j < seriesList.count() && j < loadAvgs.count(); ++j)
+            values.append(loadAvgs.at(j));
+        mRollingLoadPressure->push(values);
 
         // SSO-26718 (B9): floor matches the old static's initial core count,
         // but the max now shrinks once a spike's point ages out of the window.
-        const double maxAvg = mRollingCpuLoadAvg->windowYMax(im->getCpuCoreCount());
-        mChartCpuLoadAvg->setYMax(maxAvg);
+        const double maxAvg = mRollingLoadPressure->windowYMax(im->getCpuCoreCount());
+        mChartLoadPressure->setYMax(maxAvg);
 
-        mChartCpuLoadAvg->setSeriesList(seriesList);
+        mChartLoadPressure->setSeriesList(seriesList);
+
+        if (!loadAvgs.isEmpty())
+            mChartLoadPressure->setHeaderValue(QString::asprintf("%.2f", loadAvgs.at(0)));
     }
 
-    // --- Per-core detail list (SSO-15378) ---
+    // --- Per-core detail (toggle view) ---
     if (mCoreDetail)
         mCoreDetail->onCpuUpdated(percents, im->getCpuClocks());
 }
@@ -354,14 +458,6 @@ void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
     QVector<QSplineSeries *> seriesList = mChartNetwork->getSeriesList();
     mRollingNetwork->push({ double(d_RXbytes), double(d_TXbytes) });
 
-    seriesList.at(0)->setName(tr("Download: %1/s Total: %2")
-                              .arg(FormatUtil::formatBytes(d_RXbytes))
-                              .arg(FormatUtil::formatBytes(rxBytes)));
-
-    seriesList.at(1)->setName(tr("Upload: %1/s  Total: %2")
-                              .arg(FormatUtil::formatBytes(d_TXbytes))
-                              .arg(FormatUtil::formatBytes(txBytes)));
-
     mLastRxBytes = rxBytes;
     mLastTxBytes = txBytes;
 
@@ -371,8 +467,14 @@ void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
     mChartNetwork->setYMax(max);
 
     mChartNetwork->setSeriesList(seriesList);
-
     mChartNetwork->setCategoryAxisYLabels();
+
+    // SSO-26719: hero = current download rate; secondary = upload rate.
+    // Deliberately not labelled "Total" anywhere here — that word is
+    // reserved for the cumulative bytes-since-boot figure on the separate
+    // Network Usage page.
+    mChartNetwork->setHeaderValue(tr("%1/s").arg(FormatUtil::formatBytes(d_RXbytes)),
+                                  tr("↑ %1/s").arg(FormatUtil::formatBytes(d_TXbytes)));
 }
 
 void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
@@ -388,21 +490,11 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
     double swapPct = 0;
     if (snap.swapTotal)
         swapPct = ((double)snap.swapUsed / (double)snap.swapTotal) * 100.0;
-
     values.append(swapPct);
-    seriesList.at(0)->setName(tr("Swap: %1 (%2%) %3")
-                              .arg(FormatUtil::formatBytes(snap.swapUsed))
-                              .arg(QString::asprintf("%.1f", swapPct))
-                              .arg(FormatUtil::formatBytes(snap.swapTotal)));
 
     // Series 1: Memory Used
     double memPct = snap.total ? ((double)snap.used / (double)snap.total) * 100.0 : 0;
-
     values.append(memPct);
-    seriesList.at(1)->setName(tr("Memory: %1 (%2%) %3")
-                              .arg(FormatUtil::formatBytes(snap.used))
-                              .arg(QString::asprintf("%.1f", memPct))
-                              .arg(FormatUtil::formatBytes(snap.total)));
 
     // FR-57: Series 2 — Wired % (macOS) or Available % (Linux)
     if (seriesList.count() > 2) {
@@ -410,14 +502,10 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
         QString name2;
         if (snap.wired > 0) {
             pct2 = snap.total ? ((double)snap.wired / (double)snap.total) * 100.0 : 0;
-            name2 = tr("Wired: %1 (%2%)")
-                .arg(FormatUtil::formatBytes(snap.wired))
-                .arg(QString::asprintf("%.1f", pct2));
+            name2 = tr("Wired");
         } else {
             pct2 = snap.total ? ((double)snap.available / (double)snap.total) * 100.0 : 0;
-            name2 = tr("Available: %1 (%2%)")
-                .arg(FormatUtil::formatBytes(snap.available))
-                .arg(QString::asprintf("%.1f", pct2));
+            name2 = tr("Available");
         }
         values.append(pct2);
         seriesList.at(2)->setName(name2);
@@ -429,21 +517,24 @@ void ResourcesPage::onMemoryUpdated(const MemorySnapshot &snap)
         QString name3;
         if (snap.compressed > 0 || snap.wired > 0) {
             pct3 = snap.total ? ((double)snap.compressed / (double)snap.total) * 100.0 : 0;
-            name3 = tr("Compressed: %1 (%2%)")
-                .arg(FormatUtil::formatBytes(snap.compressed))
-                .arg(QString::asprintf("%.1f", pct3));
+            name3 = tr("Compressed");
         } else {
             pct3 = snap.total ? ((double)snap.active / (double)snap.total) * 100.0 : 0;
-            name3 = tr("Active: %1 (%2%)")
-                .arg(FormatUtil::formatBytes(snap.active))
-                .arg(QString::asprintf("%.1f", pct3));
+            name3 = tr("Active");
         }
         values.append(pct3);
         seriesList.at(3)->setName(name3);
     }
 
+    // Series names 0/1 are constant ("Swap"/"Memory") — SSO-26719: legends
+    // show series names only now, the live percentage moved to the header.
+    seriesList.at(0)->setName(tr("Swap"));
+    seriesList.at(1)->setName(tr("Memory"));
+
     mRollingMemory->push(values);
     mChartMemory->setSeriesList(seriesList);
+
+    mChartMemory->setHeaderValue(QString::asprintf("%.0f%%", memPct));
 }
 
 void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
@@ -461,134 +552,57 @@ void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
 
     QVector<double> values;
     values.reserve(count);
+    int utilSum = 0;
+    int utilCount = 0;
     for (int j = 0; j < count; j++) {
         const GpuDevice &gpu = gpus.at(j);
-        int util = qMax(0, gpu.utilization);  // -1 → 0 for chart data point
+        const int util = qMax(0, gpu.utilization); // -1 → 0 for chart data point
         values.append(util);
-
-        QString label = (gpu.utilization < 0)
-            ? QString("%1: N/A").arg(gpu.name)
-            : QString("%1: %2%").arg(gpu.name).arg(util);
-        seriesList.at(j)->setName(label);
+        seriesList.at(j)->setName(gpu.name);
+        if (gpu.utilization >= 0) {
+            utilSum += util;
+            utilCount++;
+        }
     }
 
     mRollingGpu->push(values);
     mChartGpu->setSeriesList(seriesList);
-}
 
-void ResourcesPage::ensureDiskHealthChart(const QList<DriveHealth> &drives)
-{
-    if (mChartDiskHealth)
-        return;
-
-    int tempDriveCount = 0;
-    for (const DriveHealth &d : drives) {
-        if (d.temperatureCelsius >= 0)
-            tempDriveCount++;
-    }
-    if (tempDriveCount == 0)
-        return;
-
-    mChartDiskHealth = new HistoryChart(tr("History of Disk Temperature"),
-                                        tempDriveCount, nullptr, this);
-    // 0–100 flattens a drive that lives between 30 and 60 °C into a straight
-    // line at the bottom third; 20–90 covers idle to thermal-throttle.
-    mChartDiskHealth->setYRange(20, 90);
-    mRollingDiskHealth = std::make_unique<RollingSeries>(toXYSeries(mChartDiskHealth->getSeriesList()));
-
-    // Insert at the end of the charts layout (after Network), before
-    // the DiskUsageLauncher if it already exists.
-    if (mDiskLauncher) {
-        int idx = ui->chartsLayout->indexOf(mDiskLauncher);
-        if (idx >= 0) {
-            ui->chartsLayout->insertWidget(idx, mChartDiskHealth);
-        } else {
-            ui->chartsLayout->addWidget(mChartDiskHealth);
-        }
-    } else {
-        ui->chartsLayout->addWidget(mChartDiskHealth);
-    }
-    // Single call site for both the construction-time and lazy (FR-96)
-    // creation paths (see setElevated() comment in init()).
-    mChartDiskHealth->setElevated(QStringLiteral("temp"));
+    if (utilCount > 0)
+        mChartGpu->setHeaderValue(tr("%1%").arg(utilSum / utilCount));
 }
 
 void ResourcesPage::onDiskHealthUpdated(const QList<DriveHealth> &drives)
 {
-    // FR-96: create the chart on first data arrival if it wasn't built
-    // during construction (discovery was still running then).
-    if (!mChartDiskHealth)
-        ensureDiskHealthChart(drives);
-
-    if (!mChartDiskHealth)
-        return;
-
-    // Remember the reading even while the page is hidden.
-    const bool firstReading = mLastDiskTemps.isEmpty();
-    mLastDiskTemps.clear();
-    mLastDiskNames.clear();
+    // B6 (by construction): the header shows one representative drive, so
+    // there's no timing-dependent chart position to fix.
+    mLastDiskTempText.clear();
     for (const DriveHealth &d : drives) {
         if (d.temperatureCelsius < 0)
             continue;
-        mLastDiskTemps.append(d.temperatureCelsius);
-        mLastDiskNames.append(d.model.isEmpty() ? d.deviceName : d.model);
+        const QString name = d.model.isEmpty() ? d.deviceName : d.model;
+        mLastDiskTempText = QString("%1 %2°C").arg(name).arg(d.temperatureCelsius, 0, 'f', 0);
+        break;
     }
-
-    if (firstReading && mActive)
-        advanceDiskTempChart();
-}
-
-void ResourcesPage::advanceDiskTempChart()
-{
-    if (!mChartDiskHealth || mLastDiskTemps.isEmpty())
-        return;
-
-    QVector<QSplineSeries *> seriesList = mChartDiskHealth->getSeriesList();
-
-    // SSO-26717 (B4) / SSO-26718: a drive that temporarily stops reporting a
-    // temperature (mLastDiskTemps shrinks) just pushes fewer values this
-    // tick \u2014 RollingSeries ages the remaining series without a new point.
-    const int count = qMin(seriesList.count(), mLastDiskTemps.count());
-
-    QVector<double> values;
-    values.reserve(count);
-    for (int idx = 0; idx < count; ++idx) {
-        const double temp = mLastDiskTemps.at(idx);
-        values.append(temp);
-        seriesList.at(idx)->setName(QString("%1: %2 \u00B0C").arg(mLastDiskNames.at(idx)).arg(temp, 0, 'f', 0));
-    }
-
-    mRollingDiskHealth->push(values);
-    mChartDiskHealth->setSeriesList(seriesList);
+    refreshDiskIOHeader();
 }
 
 #ifdef Q_OS_LINUX
 void ResourcesPage::onPsiUpdated(const PsiSnapshot &snap)
 {
-    if (!mChartPsiCpu || !mActive || !snap.available)
+    if (!mPsiStatusLabel)
         return;
 
-    QVector<QSplineSeries*> seriesList = mChartPsiCpu->getSeriesList();
-
-    const double values[3] = { snap.someAvg10, snap.someAvg60, snap.someAvg300 };
-    const char  *labels[3] = { "avg10", "avg60", "avg300" };
-
-    for (int i = 0; i < 3; ++i) {
-        seriesList.at(i)->setName(
-            tr("CPU %1: %2%").arg(QLatin1String(labels[i]))
-                             .arg(values[i], 0, 'f', 1));
+    if (!mActive || !snap.available) {
+        mPsiStatusLabel->hide();
+        return;
     }
 
-    mRollingPsi->push({ values[0], values[1], values[2] });
-
-    // SSO-26718 (B9): auto-scale Y with 25% headroom over the real window
-    // max, floored flat at 1% (matching the old static's initial value) —
-    // and now shrinks once a spike's point ages out of the window instead of
-    // only ever growing.
-    const double maxPsi = qMax(1.0, mRollingPsi->windowYMax(0.0) * 1.25);
-    mChartPsiCpu->setYMax(maxPsi);
-
-    mChartPsiCpu->setSeriesList(seriesList);
+    mPsiStatusLabel->setText(tr("CPU pressure (PSI): avg10 %1% · avg60 %2% · avg300 %3%")
+                                  .arg(snap.someAvg10, 0, 'f', 1)
+                                  .arg(snap.someAvg60, 0, 'f', 1)
+                                  .arg(snap.someAvg300, 0, 'f', 1));
+    mPsiStatusLabel->show();
 }
 
 void ResourcesPage::onOomdUpdated(const OomdSnapshot &snap)
@@ -599,8 +613,8 @@ void ResourcesPage::onOomdUpdated(const OomdSnapshot &snap)
 
 void ResourcesPage::onPowerUpdated(const RaplPowerSnapshot &snap)
 {
-    if (mPowerDraw)
-        mPowerDraw->onPowerUpdated(snap);
+    mLastPowerText = snap.available ? tr("%1 W").arg(snap.totalPackageWatts, 0, 'f', 1) : QString();
+    refreshCpuHeader();
 }
 #endif
 
@@ -610,15 +624,11 @@ void ResourcesPage::resetRollingSeries()
     // rather than leaving a hidden gap mid-"last 60 s" — it starts collecting
     // fresh samples from empty instead of rendering a frozen, stale chart.
     if (mRollingCpu) mRollingCpu->reset();
-    if (mRollingCpuLoadAvg) mRollingCpuLoadAvg->reset();
+    if (mRollingLoadPressure) mRollingLoadPressure->reset();
     if (mRollingDiskIO) mRollingDiskIO->reset();
     if (mRollingMemory) mRollingMemory->reset();
     if (mRollingNetwork) mRollingNetwork->reset();
     if (mRollingGpu) mRollingGpu->reset();
-    if (mRollingDiskHealth) mRollingDiskHealth->reset();
-#ifdef Q_OS_LINUX
-    if (mRollingPsi) mRollingPsi->reset();
-#endif
 }
 
 void ResourcesPage::onPageActivated()
@@ -633,23 +643,25 @@ void ResourcesPage::onPageActivated()
     mRefresh->subscribe(DataRefreshService::Signal::Memory);
     mRefresh->subscribe(DataRefreshService::Signal::Network);
     mRefresh->subscribe(DataRefreshService::Signal::DiskIO);
-    mRefresh->subscribe(DataRefreshService::Signal::Gpu);
+    if (mChartGpu)
+        mRefresh->subscribe(DataRefreshService::Signal::Gpu);
 #ifdef Q_OS_LINUX
-    if (mChartPsiCpu)
+    if (mPsiStatusLabel)
         mRefresh->subscribe(DataRefreshService::Signal::Psi);
-    if (mOomKills)
-        mRefresh->subscribe(DataRefreshService::Signal::Oomd);
-    if (mPowerDraw)
-        mRefresh->subscribe(DataRefreshService::Signal::Power);
+    mRefresh->subscribe(DataRefreshService::Signal::Oomd);
+    mRefresh->subscribe(DataRefreshService::Signal::Power);
 #endif
 
-    // Kick an immediate disk health refresh so the temperature chart populates
-    // on first open rather than waiting up to 30 s for the slow tick.
+    // Kick an immediate disk health refresh so the Disk I/O header's
+    // temperature text populates on first open rather than waiting up to
+    // 30 s for the slow tick.
     mRefresh->triggerDiskHealthCheck();
 
     // SSO-10930 / GH#220: pick up any setting/data change made while this
-    // page was hidden (e.g. the user enabled history from Settings).
-    mResourceHistory->refresh();
+    // page was hidden (e.g. the user enabled history from Settings) — only
+    // matters while History mode is the active switch position.
+    if (mBtnHistory && mBtnHistory->isChecked() && mResourceHistory)
+        mResourceHistory->refresh();
 }
 
 void ResourcesPage::onPageDeactivated()
@@ -666,13 +678,12 @@ void ResourcesPage::onPageDeactivated()
     mRefresh->unsubscribe(DataRefreshService::Signal::Memory);
     mRefresh->unsubscribe(DataRefreshService::Signal::Network);
     mRefresh->unsubscribe(DataRefreshService::Signal::DiskIO);
-    mRefresh->unsubscribe(DataRefreshService::Signal::Gpu);
+    if (mChartGpu)
+        mRefresh->unsubscribe(DataRefreshService::Signal::Gpu);
 #ifdef Q_OS_LINUX
-    if (mChartPsiCpu)
+    if (mPsiStatusLabel)
         mRefresh->unsubscribe(DataRefreshService::Signal::Psi);
-    if (mOomKills)
-        mRefresh->unsubscribe(DataRefreshService::Signal::Oomd);
-    if (mPowerDraw)
-        mRefresh->unsubscribe(DataRefreshService::Signal::Power);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Oomd);
+    mRefresh->unsubscribe(DataRefreshService::Signal::Power);
 #endif
 }
