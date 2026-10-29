@@ -1,3 +1,14 @@
+nexis (2.14.0-1) unstable; urgency=medium
+
+  * New release: persistent CPU/load/memory resource history logging,
+    a Flatpak System/User scope selector for "Update Selected", and a
+    similar-image (dHash) mode in the Duplicate Finder. Also fixes phased
+    APT update detection, the System Cleaner preview dialog not
+    auto-closing, and the Broken Symlinks scanner always reporting zero
+    items. See CHANGELOG.md for full details.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Thu, 29 Oct 2026 00:00:00 +0000
+
 nexis (2.13.1-1) unstable; urgency=medium
 
   * Bug-fix release: Disk Tools mode bar no longer clips labels below 700px

@@ -74,6 +74,23 @@
   </screenshots>
 
   <releases>
+    <release version="2.14.0" date="2026-10-29">
+      <description>
+        <p>Added:</p>
+        <ul>
+          <li>Persistent CPU/load/memory resource history logging, with 1/7/30-day
+              retention and a historical view on the Resources page.</li>
+          <li>Flatpak updates gain a System/User scope selector in "Update Selected".</li>
+          <li>Duplicate Finder gains a Similar images mode using perceptual hashing.</li>
+        </ul>
+        <p>Fixed:</p>
+        <ul>
+          <li>Phased APT updates are now detected reliably via apt-cache policy.</li>
+          <li>System Cleaner's Preview dialog now auto-closes after a real clean.</li>
+          <li>The Broken Symlinks scanner no longer always reports zero items.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.13.1" date="2026-10-20">
       <description>
         <p>Fixed:</p>
