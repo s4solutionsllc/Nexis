@@ -793,6 +793,7 @@ void App::init()
     auto applyTrayHealthScoreEnabled = [this](bool enabled) {
         mTrayHealthAction->setVisible(enabled);
         mTrayCleanAction->setVisible(enabled);
+        mTrayHealthSeparator->setVisible(enabled);
         mTrayHealthMonitor->setEnabled(enabled);
         if (!enabled)
             mTrayIcon->setToolTip(QString());
@@ -971,7 +972,7 @@ void App::createTrayActions()
     mTrayCleanAction = new QAction(tr("Clean Now"), this);
     mTrayMenu->addAction(mTrayCleanAction);
 
-    mTrayMenu->addSeparator();
+    mTrayHealthSeparator = mTrayMenu->addSeparator();
 #endif
 
     auto addNavAction = [this](QMenu *menu, QPushButton *button) {

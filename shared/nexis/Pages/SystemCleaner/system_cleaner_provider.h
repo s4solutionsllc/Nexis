@@ -72,6 +72,11 @@ private:
     // in beginExecution(), so performItem() doesn't re-trigger a separate
     // elevated removal (and a separate pkexec prompt) per item.
     QSet<QString>  mBatchRemovedPaths;
+
+    // SSO-26715: snap-revision filePaths already removed by the single
+    // batched removeStaleSnapRevisions() call in beginExecution(), for the
+    // same reason as mBatchRemovedPaths above.
+    QSet<QString>  mBatchRemovedSnapRevisions;
 };
 
 #endif // SYSTEM_CLEANER_PROVIDER_H
