@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.14.0] - 2026-10-29
+
+### Added
+- Persistent resource history (SSO-10930, GH#220): an opt-in "Record resource history" setting (off by default) logs CPU, load average, and memory/swap every 10 seconds, including while minimized to the tray, with 1/7/30-day retention. The Resources page gains a 1h/24h/7d/30d historical view alongside the existing live charts, plus a "Clear History" button in Settings and CSV export.
+- APT Repository Manager (SSO-26260, GH#515): "Update Selected" now exposes a
+  System/User scope selector for Flatpak updates, so users with per-user Flatpak
+  installs alongside system-wide ones can choose which scope to update. System
+  remains the default and behaves exactly as before.
+- Disk Tools → Duplicate Finder (SSO-26638): a new "Match" control adds a
+  Similar images mode alongside today's exact (byte-identical) matching, using
+  an in-house 64-bit perceptual hash (dHash) with a configurable similarity
+  preset (Very high/High/Medium/Low). Results show Identical and Similar
+  groups distinctly, with a Dimensions column and no files pre-checked in
+  Similar groups, since near-duplicates are not interchangeable copies.
+
+### Fixed
+- APT Repository Manager (SSO-26503, GH#524): phased Ubuntu updates are now
+  detected reliably via `apt-cache policy`'s "(phased N%)" version-table
+  annotation instead of string-matching `apt list --upgradable` output, which
+  missed many packages apt was actually holding back. A phased package now
+  shows as "Phased update (N%)" in Available Updates instead of looking like a
+  normal, installable update, and reverts to a normal entry once its rollout
+  reaches 100%.
+- System Cleaner (SSO-26504, GH#523): the "System Cleaner — Preview" dialog now
+  closes automatically once a real (non-dry-run) clean finishes, so the main
+  view's category cards refresh without an extra click, and a toast confirms
+  the items cleaned and space freed. Dry runs still leave the dialog open for
+  review.
+- System Cleaner (SSO-26631, GH#532): the "Broken Symlinks" category always
+  reported 0 items, even with dangling symlinks present in the scanned
+  directories — Qt only enumerates broken symlinks when `QDir::System` is set,
+  and the Linux and macOS scanners both omitted it. Fixed on both platforms,
+  paired with an exclusion list (Flatpak internals, icon caches, Trash, and
+  known intentionally-dangling locks like browser `SingletonLock`/`lock`
+  files) so the now-working scan doesn't surface symlinks that are unsafe to
+  delete. Also corrected the card subtitle, which claimed a `~/` recursive
+  scan when the scanner only covers `~/.local`, `~/bin`, and `/usr/local/bin`
+  (Homebrew prefix on macOS).
+
+### Security
+- Duplicate Finder (SSO-26642): Similar-group thumbnail tooltips now share the
+  same decode-guard policy (allocation limit, header-dimension cap) as the
+  similar-image hashing path, and no longer show a thumbnail for a file whose
+  header reports no size. Also fixes the Dimensions column and tooltip opening
+  the same file twice per row.
+
 ## [2.13.1] - 2026-10-20
 
 ### Fixed
