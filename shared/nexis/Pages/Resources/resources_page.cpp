@@ -5,6 +5,7 @@
 #include "signal_mapper.h"
 #include "Managers/data_refresh_service.h"
 #include "Managers/resource_history_service.h"
+#include "Utils/rate_counter_util.h"
 #include <QFile>
 #include <algorithm>
 
@@ -203,16 +204,39 @@ void ResourcesPage::init()
             mResourceHistory, &ResourceHistoryPanel::refresh);
     connect(ResourceHistoryService::ins(), &ResourceHistoryService::historyChanged,
             mResourceHistory, &ResourceHistoryPanel::refresh);
+
+    // SSO-26717 (B5): DataRefreshService::pause() (app minimized/backgrounded)
+    // stops every timer, so no disk-I/O/network ticks arrive at all for the
+    // duration — unlike page deactivation, where another subscribed page can
+    // keep ticks flowing. Invalidate the baselines here too so the first
+    // sample after resume re-baselines instead of plotting a delta spanning
+    // the whole paused interval.
+    connect(SignalMapper::ins(), &SignalMapper::sigAppVisibilityChanged,
+            this, [this](bool visible) {
+        if (!visible)
+            invalidateIOBaselines();
+    });
+}
+
+void ResourcesPage::invalidateIOBaselines()
+{
+    mDiskIOBaselineValid = false;
+    mNetworkBaselineValid = false;
 }
 
 void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
 {
-    static quint64 l_readBytes  = io.at(0);
-    static quint64 l_writeBytes = io.at(1);
+    const quint64 readBytes  = io.at(0);
+    const quint64 writeBytes = io.at(1);
 
-    if (!mActive) {
-        l_readBytes  = io.at(0);
-        l_writeBytes = io.at(1);
+    // SSO-26717 (B5): re-baseline (rather than plot) whenever the page is
+    // inactive, or the very first tick after it was reactivated / the app
+    // resumed from DataRefreshService::pause() — otherwise that first delta
+    // would span however long sampling was actually stopped.
+    if (!mActive || !mDiskIOBaselineValid) {
+        mLastReadBytes  = readBytes;
+        mLastWriteBytes = writeBytes;
+        mDiskIOBaselineValid = true;
         return;
     }
 
@@ -229,14 +253,12 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
         if(second > 61) seriesList.at(j)->removePoints(61, 1);
     }
 
-    quint64 readBytes  = io.at(0);
-    quint64 writeBytes = io.at(1);
-
-    // Counters can step backwards (device re-enumeration, a sample that
-    // fails and reports 0). Unsigned subtraction would wrap to ~16 EiB/s and
-    // latch the Y axis at that scale for the rest of the session.
-    quint64 d_readByte = readBytes >= l_readBytes ? readBytes - l_readBytes : 0;
-    quint64 d_writeByte = writeBytes >= l_writeBytes ? writeBytes - l_writeBytes : 0;
+    // SSO-26717 (B1): counters can step backwards (device re-enumeration, a
+    // sample that fails and reports 0). Unsigned subtraction would wrap to
+    // ~16 EiB/s and latch the Y axis at that scale for the rest of the
+    // session — guard via the helper shared with onNetworkUpdated().
+    const quint64 d_readByte  = RateCounterUtil::guardedDelta(mLastReadBytes, readBytes);
+    const quint64 d_writeByte = RateCounterUtil::guardedDelta(mLastWriteBytes, writeBytes);
 
     seriesList.at(0)->insert(0, QPointF(0, d_readByte));
     seriesList.at(0)->setName(tr("Read: %1/s Total: %2")
@@ -251,8 +273,8 @@ void ResourcesPage::onDiskIOUpdated(const QList<quint64> &io)
 
     maxY = qMax(qMax(maxY, d_readByte), d_writeByte);
 
-    l_readBytes  = readBytes;
-    l_writeBytes = writeBytes;
+    mLastReadBytes  = readBytes;
+    mLastWriteBytes = writeBytes;
 
     mChartDiskReadWrite->setYMax(maxY);
 
@@ -273,8 +295,6 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
 
     // --- CPU per-core chart ---
     {
-        static int second = 0;
-
         QVector<QSplineSeries *> seriesList = mChartCpu->getSeriesList();
 
         // SSO-3380 / WI-18: DataRefreshService gates the emit on a non-empty
@@ -285,22 +305,29 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
         const int neededPercents = seriesList.count() + 1; // index 0 + per-core
         const bool percentsOk = percents.size() >= neededPercents;
 
+        // SSO-26717 (B4): bound the shift/trim on each series' own actual
+        // point count, not a separately-tracked tick counter — when
+        // percentsOk is false this whole loop is skipped, so a counter
+        // incremented unconditionally on every call would drift ahead of
+        // what's really in the series and the next shift loop would index
+        // past the end of it.
         for (int j = 0; percentsOk && j < seriesList.count(); j++){
             int p = percents.at(j+1);
+            QSplineSeries *series = seriesList.at(j);
 
-            for (int i = 0; i < (second < 61 ? second : 61); i++)
-                seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
+            const int shiftCount = qMin(series->count(), 61);
+            for (int i = 0; i < shiftCount; i++)
+                series->replace(i, (i+1), series->at(i).y());
 
-            seriesList.at(j)->insert(0, QPointF(0, p));
+            series->insert(0, QPointF(0, p));
 
-            seriesList.at(j)->setName(QString("CPU%1: %2%").arg(j+1).arg(p));
+            series->setName(QString("CPU%1: %2%").arg(j+1).arg(p));
 
-            if(second > 61) seriesList.at(j)->removePoints(61, 1);
+            if (series->count() > 61)
+                series->removePoints(61, series->count() - 61);
         }
 
         mChartCpu->setSeriesList(seriesList);
-
-        second++;
     }
 
     // --- CPU load average chart ---
@@ -343,12 +370,12 @@ void ResourcesPage::onCpuUpdated(const QList<int> &percents, double clockGHz,
 
 void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
 {
-    static quint64 l_RXbytes = rxBytes;
-    static quint64 l_TXbytes = txBytes;
-
-    if (!mActive) {
-        l_RXbytes = rxBytes;
-        l_TXbytes = txBytes;
+    // SSO-26717 (B5): see onDiskIOUpdated() above — same re-baseline-on-gap
+    // treatment for the network counters.
+    if (!mActive || !mNetworkBaselineValid) {
+        mLastRxBytes = rxBytes;
+        mLastTxBytes = txBytes;
+        mNetworkBaselineValid = true;
         return;
     }
 
@@ -366,8 +393,12 @@ void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
     static quint64 max_RXbytes = 1L << 20; // 1 MEBI
     static quint64 max_TXbytes = 1L << 20; // 1 MEBI
 
-    quint64 d_RXbytes = (rxBytes - l_RXbytes);
-    quint64 d_TXbytes = (txBytes - l_TXbytes);
+    // SSO-26717 (B1): same backwards-step guard as disk I/O — plain unsigned
+    // subtraction here could wrap to ~16 EiB/s, and since max_RXbytes/
+    // max_TXbytes are static and only ever grow, that would latch the Y axis
+    // at that scale for the rest of the session.
+    const quint64 d_RXbytes = RateCounterUtil::guardedDelta(mLastRxBytes, rxBytes);
+    const quint64 d_TXbytes = RateCounterUtil::guardedDelta(mLastTxBytes, txBytes);
 
     QString downText = FormatUtil::formatBytes(d_RXbytes);
     QString upText   = FormatUtil::formatBytes(d_TXbytes);
@@ -386,10 +417,14 @@ void ResourcesPage::onNetworkUpdated(quint64 rxBytes, quint64 txBytes)
     max_RXbytes = qMax(max_RXbytes, d_RXbytes);
     max_TXbytes = qMax(max_TXbytes, d_TXbytes);
 
-    int max = qMax(max_RXbytes, max_TXbytes);
+    // SSO-26717 (B1): keep this a quint64 — narrowing to `int` here is what
+    // let a huge guarded-away-from-now delta still corrupt the Y axis in the
+    // old code (setYMax() takes a double, so there was never a need to
+    // narrow at all).
+    const quint64 max = qMax(max_RXbytes, max_TXbytes);
 
-    l_RXbytes = rxBytes;
-    l_TXbytes = txBytes;
+    mLastRxBytes = rxBytes;
+    mLastTxBytes = txBytes;
 
     mChartNetwork->setYMax(max);
 
@@ -485,30 +520,34 @@ void ResourcesPage::onGpuUpdated(const QList<GpuDevice> &gpus)
     if (!mChartGpu || !mActive)
         return;
 
-    static int second = 0;
-
     QVector<QSplineSeries *> seriesList = mChartGpu->getSeriesList();
 
+    // SSO-26717 (B4): bound shift/trim on each series' own count(), not a
+    // shared tick counter — a GPU dropping out (gpus.size() < seriesList.
+    // count()) skips that series' insert for this tick without skipping the
+    // others, so a single counter shared across all series would drift out
+    // of sync with the series it no longer matches.
     for (int j = 0; j < seriesList.count() && j < gpus.size(); j++) {
         const GpuDevice &gpu = gpus.at(j);
         int util = qMax(0, gpu.utilization);  // -1 → 0 for chart data point
+        QSplineSeries *series = seriesList.at(j);
 
-        for (int i = 0; i < (second < 61 ? second : 61); i++)
-            seriesList.at(j)->replace(i, (i+1), seriesList.at(j)->at(i).y());
+        const int shiftCount = qMin(series->count(), 61);
+        for (int i = 0; i < shiftCount; i++)
+            series->replace(i, (i+1), series->at(i).y());
 
-        seriesList.at(j)->insert(0, QPointF(0, util));
+        series->insert(0, QPointF(0, util));
 
         QString label = (gpu.utilization < 0)
             ? QString("%1: N/A").arg(gpu.name)
             : QString("%1: %2%").arg(gpu.name).arg(util);
-        seriesList.at(j)->setName(label);
+        series->setName(label);
 
-        if (second > 61) seriesList.at(j)->removePoints(61, 1);
+        if (series->count() > 61)
+            series->removePoints(61, series->count() - 61);
     }
 
     mChartGpu->setSeriesList(seriesList);
-
-    second++;
 }
 
 void ResourcesPage::ensureDiskHealthChart(const QList<DriveHealth> &drives)
@@ -580,22 +619,27 @@ void ResourcesPage::advanceDiskTempChart()
     QVector<QSplineSeries *> seriesList = mChartDiskHealth->getSeriesList();
     const int count = qMin(seriesList.count(), mLastDiskTemps.count());
 
+    // SSO-26717 (B4): bound shift/trim on each series' own count(), not a
+    // shared tick counter - a drive that temporarily stops reporting a
+    // temperature (mLastDiskTemps shrinks) means `count` no longer covers
+    // every series, so a counter advanced once per call would drift ahead of
+    // what a skipped series actually holds.
     for (int idx = 0; idx < count; ++idx) {
         QSplineSeries *series = seriesList.at(idx);
         const double temp = mLastDiskTemps.at(idx);
 
-        for (int i = 0; i < (mDiskTempTick < 61 ? mDiskTempTick : 61); i++)
+        const int shiftCount = qMin(series->count(), 61);
+        for (int i = 0; i < shiftCount; i++)
             series->replace(i, (i + 1), series->at(i).y());
 
         series->insert(0, QPointF(0, temp));
         series->setName(QString("%1: %2 \u00B0C").arg(mLastDiskNames.at(idx)).arg(temp, 0, 'f', 0));
 
-        if (mDiskTempTick > 61)
-            series->removePoints(61, 1);
+        if (series->count() > 61)
+            series->removePoints(61, series->count() - 61);
     }
 
     mChartDiskHealth->setSeriesList(seriesList);
-    mDiskTempTick++;
 }
 
 #ifdef Q_OS_LINUX
@@ -683,6 +727,12 @@ void ResourcesPage::onPageActivated()
 void ResourcesPage::onPageDeactivated()
 {
     mActive = false;
+
+    // SSO-26717 (B5): don't rely on ticks continuing to arrive while hidden
+    // (another page may not be subscribed to Network/DiskIO either) —
+    // unconditionally invalidate so onPageActivated()'s first sample always
+    // re-baselines rather than risking a delta spanning the whole hidden span.
+    invalidateIOBaselines();
 
     mRefresh->unsubscribe(DataRefreshService::Signal::Cpu);
     mRefresh->unsubscribe(DataRefreshService::Signal::Memory);

@@ -142,6 +142,7 @@ set(CORE_SHARED_SRCS
   "${CORE_SHARED_DIR}/Utils/mac_os_version_util.cpp"
   "${CORE_SHARED_DIR}/Utils/sandboxed_path_resolver.cpp"
   "${CORE_SHARED_DIR}/Utils/browser_profile_locator.cpp"
+  "${CORE_SHARED_DIR}/Utils/rate_counter_util.cpp"
 )
 
 set(CORE_SHARED_HDRS
@@ -197,6 +198,7 @@ set(CORE_SHARED_HDRS
   "${CORE_SHARED_DIR}/Utils/mac_os_version_util.h"
   "${CORE_SHARED_DIR}/Utils/sandboxed_path_resolver.h"
   "${CORE_SHARED_DIR}/Utils/browser_profile_locator.h"
+  "${CORE_SHARED_DIR}/Utils/rate_counter_util.h"
 )
 
 if(APPLE)

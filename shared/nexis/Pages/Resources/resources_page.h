@@ -78,8 +78,20 @@ private:
     // visible as soon as the first sample arrives.
     QList<double> mLastDiskTemps;
     QStringList mLastDiskNames;
-    int mDiskTempTick = 0;
     void advanceDiskTempChart();
+
+    // SSO-26717 (B5): per-instance I/O counter baselines — deliberately NOT
+    // function-local statics, since those can't be invalidated from outside
+    // the slot. Invalidated on page deactivation and on app-visibility loss
+    // (DataRefreshService::pause()) so the first sample after a hidden/paused
+    // gap re-baselines instead of plotting a delta spanning the whole gap.
+    quint64 mLastReadBytes = 0;
+    quint64 mLastWriteBytes = 0;
+    bool mDiskIOBaselineValid = false;
+    quint64 mLastRxBytes = 0;
+    quint64 mLastTxBytes = 0;
+    bool mNetworkBaselineValid = false;
+    void invalidateIOBaselines();
 #ifdef Q_OS_LINUX
     HistoryChart *mChartPsiCpu = nullptr;
     OomKillsWidget *mOomKills = nullptr;

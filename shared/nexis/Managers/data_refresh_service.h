@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QList>
+#include <QElapsedTimer>
 
 #include <Info/disk_info.h>
 #include <Info/gpu_info.h>
@@ -150,6 +151,15 @@ private:
     // WI-21 (SSO-3383): guards re-entry while the off-thread updateProcesses
     // worker is in flight, mirroring mDiskHealthRunning for onSlowTick.
     bool mProcessRunning = false;
+#ifdef Q_OS_LINUX
+    // SSO-26717 (B3): guards re-entry while the off-thread oomd query
+    // (systemctl show + journalctl) is in flight, and throttles it to at
+    // most once per 30s even though the medium tick itself can fire faster
+    // (FR-105 power modes) — OOM kills are rare, so sampling that often is
+    // wasted work for a process fork + journal walk.
+    bool mOomdRunning = false;
+    QElapsedTimer mOomdElapsedTimer;
+#endif
 
     // BUG-110: cache of last emissions so late subscribers can backfill.
     UpdateCheckResult mLastUpdateCheckResult;
