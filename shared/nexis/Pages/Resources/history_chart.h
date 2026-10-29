@@ -45,6 +45,12 @@ private slots:
 
 private:
     void init();
+    // SSO-26718 (B14): shared by init() (so a chart picks up the current
+    // theme immediately at creation — including one created lazily well
+    // after the page's own construction-time sigChangedAppTheme replay, e.g.
+    // ensureDiskHealthChart()) and by the sigChangedAppTheme handler (so a
+    // live theme switch still repaints it).
+    void applyThemeColors();
 
 private:
     Ui::HistoryChart *ui;
