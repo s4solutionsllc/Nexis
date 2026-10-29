@@ -175,6 +175,7 @@ private:
     TrayHealthMonitor *mTrayHealthMonitor = nullptr;
     QAction *mTrayHealthAction = nullptr;
     QAction *mTrayCleanAction = nullptr;
+    QAction *mTrayHealthSeparator = nullptr;
 #endif
     DockerPage *dockerPage;
     GnomeSettingsPage *gnomeSettingsPage;
