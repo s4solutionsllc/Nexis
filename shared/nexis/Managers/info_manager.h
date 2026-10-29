@@ -57,6 +57,7 @@ public:
     quint64 getMemInactive() const;
     quint64 getMemCompressed() const;
     quint64 getMemAvailable() const;
+    quint64 getMemCached() const;
     int getMemPressureLevel() const;
     void updateMemoryInfo();
 
@@ -163,6 +164,12 @@ public:
 #ifdef Q_OS_LINUX
     void updateCpuPsi();
     PsiSnapshot getCpuPsi() const;
+    // SSO-26721: memory/io join the existing CPU-only PSI, same
+    // /proc/pressure/* family.
+    void updateMemoryPsi();
+    PsiSnapshot getMemoryPsi() const;
+    void updateIoPsi();
+    PsiSnapshot getIoPsi() const;
 
     // FW-11 (SSO-3739): systemd-oomd / cgroup v2 observability.
     void updateOomdInfo();

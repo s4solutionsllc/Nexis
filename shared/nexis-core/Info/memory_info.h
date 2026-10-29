@@ -18,6 +18,7 @@ struct MemorySnapshot {
     quint64 inactive = 0;
     quint64 compressed = 0;
     quint64 available = 0;
+    quint64 cached = 0;      // SSO-26721: macOS → inactive+purgeable approx, Linux → Cached+SReclaimable-Shmem
     int pressureLevel = -1;  // -1=unavailable, 1=normal, 2=warning, 4=critical
 };
 Q_DECLARE_METATYPE(MemorySnapshot)
@@ -59,6 +60,7 @@ public:
     quint64 getMemInactive() const;
     quint64 getMemCompressed() const;
     quint64 getMemAvailable() const;
+    quint64 getMemCached() const;
     int getPressureLevel() const;
 
     // Static parsing methods for testability (FR-76).

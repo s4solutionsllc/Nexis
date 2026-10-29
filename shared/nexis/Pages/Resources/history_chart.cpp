@@ -125,6 +125,17 @@ void HistoryChart::applyThemeColors()
         QColor c(sv->value(token).toString());
         dynamic_cast<QSplineSeries*>(mChart->series().at(i))->setColor(c);
     }
+
+    if (mSecondaryAxisY) {
+        mSecondaryAxisY->setLabelsColor(chartLabelColor);
+        mSecondaryAxisY->setGridLineVisible(false);
+    }
+
+    if (mReferenceLine) {
+        QPen pen = mReferenceLine->pen();
+        pen.setColor(QColor(chartGridColor));
+        mReferenceLine->setPen(pen);
+    }
 }
 
 void HistoryChart::setYMax(double value)
@@ -230,6 +241,63 @@ void HistoryChart::setHeaderValue(const QString &primary, const QString &seconda
     mLblHeaderSecondary->setText(secondary);
     mLblHeaderSecondary->setVisible(!secondary.isEmpty());
     mHeaderValueContainer->setVisible(!primary.isEmpty() || !secondary.isEmpty());
+}
+
+void HistoryChart::setHeaderTooltip(const QString &tooltip)
+{
+    if (mHeaderValueContainer)
+        mHeaderValueContainer->setToolTip(tooltip);
+}
+
+QVector<QSplineSeries *> HistoryChart::addSecondaryAxisSeries(int count, double rangeMin,
+                                                                double rangeMax,
+                                                                const QString &axisTitle)
+{
+    if (!mSecondaryAxisY) {
+        mSecondaryAxisY = new QValueAxis;
+        // Integer labels ("0".."100") rather than QValueAxis's default
+        // float formatting — in a half-width grid card there isn't room for
+        // two multi-decimal Y axes side by side without Qt eliding one.
+        mSecondaryAxisY->setLabelFormat(QStringLiteral("%d"));
+        mChart->addAxis(mSecondaryAxisY, Qt::AlignRight);
+    }
+    mSecondaryAxisY->setRange(rangeMin, rangeMax);
+    mSecondaryAxisY->setTitleText(axisTitle);
+
+    QAbstractAxis *axisX = mChart->axes(Qt::Horizontal).first();
+
+    QVector<QSplineSeries *> added;
+    added.reserve(count);
+    for (int i = 0; i < count; ++i) {
+        auto *s = new QSplineSeries;
+        mChart->addSeries(s);
+        s->attachAxis(axisX);
+        s->attachAxis(mSecondaryAxisY);
+        mSeriesList.append(s);
+        added.append(s);
+    }
+
+    applyThemeColors();
+    return added;
+}
+
+void HistoryChart::setReferenceLine(double value, const QString &legendName)
+{
+    if (!mReferenceLine) {
+        mReferenceLine = new QLineSeries;
+        mReferenceLine->setName(legendName);
+        QPen pen(mReferenceLine->pen());
+        pen.setStyle(Qt::DashLine);
+        mReferenceLine->setPen(pen);
+
+        mChart->addSeries(mReferenceLine);
+        mReferenceLine->attachAxis(mChart->axes(Qt::Horizontal).first());
+        mReferenceLine->attachAxis(mChart->axes(Qt::Vertical).first());
+
+        applyThemeColors();
+    }
+
+    mReferenceLine->replace(QList<QPointF>{ QPointF(0, value), QPointF(60, value) });
 }
 
 QToolButton *HistoryChart::addHeaderToggle(const QString &text)
