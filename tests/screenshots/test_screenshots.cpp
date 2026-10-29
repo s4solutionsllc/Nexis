@@ -105,6 +105,13 @@ static const QVector<PageInfo> kPageMap = {
     // values folded into the CPU/Memory cards — mask them too.
     {"ResourcesPage",     "resources",
         {"HistoryChart", "DiskUsageLauncherWidget", "OomKillsWidget", "CpuCoreDetailWidget"}, {}},
+    // SSO-26720: same page, History mode. Resource history recording is off
+    // by default (SettingManager::getResourceHistoryEnabled() == false in a
+    // fresh test environment), so this always renders the deterministic
+    // disabled-state prompt rather than any live/host-specific chart data —
+    // no dynamic masking needed. See the "resources_history" special-case
+    // below for the mode switch.
+    {"ResourcesPage",     "resources_history", {}, {}},
     {"HelpersPage",       "helpers",           {}, {}},
     {"NetworkUsagePage",  "network_usage",     {"BarChartWidget"}, {}},
     {"SettingsPage",      "settings",          {}, {}},
@@ -467,6 +474,28 @@ private:
             // Force it back to a deterministic empty state before capture.
             if (auto *logsPage = qobject_cast<SystemLogsPage *>(widget)) {
                 logsPage->resetForScreenshotTest();
+            }
+
+            // SSO-26720: ResourcesPage now covers two screenshotName entries
+            // ("resources" for Live, "resources_history" for History) backed
+            // by the same widget — click the matching mode button before
+            // capture. Both entries explicitly (re-)select their mode rather
+            // than trusting the page's current state, since the two share
+            // one widget across both dark/light captureAndCompare() runs.
+            if (page.className == QLatin1String("ResourcesPage")) {
+                const QString buttonName = page.screenshotName == QLatin1String("resources_history")
+                    ? QStringLiteral("resourcesHistoryModeButton")
+                    : QStringLiteral("resourcesLiveModeButton");
+                auto *modeButton = widget->findChild<QToolButton *>(buttonName);
+                QVERIFY2(modeButton, qPrintable(QString("ResourcesPage: '%1' not found — "
+                                                         "Live/History switch renamed?").arg(buttonName)));
+                if (!modeButton->isChecked()) {
+                    QTest::mouseClick(modeButton, Qt::LeftButton);
+                    for (int i = 0; i < 10; ++i) {
+                        QApplication::processEvents();
+                        QTest::qWait(100);
+                    }
+                }
             }
 
             QPixmap pixmap = mApp->grab();

@@ -834,6 +834,20 @@ add_nexis_test(NAME RollingSeriesTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-26720 (B13): ResourceHistoryPanel::availableRangeSecsForRetention() —
+# the range-vs-retention rule (hide a range the configured retention can't
+# fill). Links against nexis-gui like RollingSeriesTests above, since
+# ResourceHistoryPanel lives in the GUI library.
+add_nexis_test(NAME ResourceHistoryPanelRangeTests
+  SOURCES
+    managers/test_resource_history_panel_range.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Resources"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
 # against nexis-gui because FileSearchService lives in the GUI library.
 add_nexis_test(NAME FileSearchServiceTests
