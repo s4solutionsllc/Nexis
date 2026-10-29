@@ -502,7 +502,6 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/Pages/Helpers/cpu_tuning_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/battery_charge_threshold_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/oom_kills_widget.cpp"
-  "${GUI_SHARED_DIR}/Pages/Helpers/power_draw_widget.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/cpu_core_list_model.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/cpu_core_item_delegate.cpp"
   "${GUI_SHARED_DIR}/Pages/Helpers/cpu_core_detail_widget.cpp"

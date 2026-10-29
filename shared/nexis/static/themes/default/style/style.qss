@@ -1121,6 +1121,42 @@ QLabel[accessibleName="dialog-title"] {
     font-size: 8pt;
 }
 
+/* - History Chart Header Value (SSO-26719) - */
+/*
+ * The Resources page's six subsystem cards lead with a Dashboard-tile-style
+ * hero number (HistoryChart::setHeaderValue()) instead of the old verbose
+ * per-series legend text — mirrors #metricTileValue/#metricTileSubtitle
+ * exactly so the two look like the same design system.
+ */
+
+#historyChartHeaderValue {
+    color: @textPrimary;
+    font-size: 14pt;
+    font-weight: 700;
+}
+
+#historyChartHeaderSecondary {
+    color: @tertiaryText;
+    font-size: 8pt;
+}
+
+/* SSO-26719: OOM kills (Memory card) and PSI (Load & Pressure card) status
+   lines folded into a HistoryChart's extrasRow() instead of their own card. */
+#oomStatusLine, #psiStatusLine {
+    color: @textSecondary;
+    font-size: 9pt;
+}
+
+#oomEventsHeader {
+    color: @textSecondary;
+    font-size: 9pt;
+}
+
+#oomEventRow {
+    color: @tertiaryText;
+    font-size: 8pt;
+}
+
 /* - Disk Donut Tile - */
 
 #diskTile {

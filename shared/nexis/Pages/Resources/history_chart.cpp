@@ -77,7 +77,20 @@ void HistoryChart::init()
 
     mChart->setContentsMargins(-Dpi::scale(11), -Dpi::scale(11), -Dpi::scale(11), -Dpi::scale(11));
     mChart->setMargins(QMargins(Dpi::scale(20), 0, Dpi::scale(10), Dpi::scale(10)));
-    ui->layoutHistoryChart->addWidget(mChartView, 1, 0, 1, 4);
+
+    // SSO-26719: the chart view is body page 0 of a stack so a card can swap
+    // in an alternate view (CPU's per-core toggle) in the same footprint
+    // instead of a second grid cell. Row 1 is reserved for extrasRow() (a
+    // status line folded in above the body); the body itself moves to row 2.
+    mBodyStack = new QStackedWidget(this);
+    mBodyStack->addWidget(mChartView);
+    ui->layoutHistoryChart->addWidget(mBodyStack, 2, 0, 1, 4);
+
+    // Header row originally ended at the fullscreen checkbox in column 3;
+    // move it out to column 5 so an optional per-card toggle (column 3) and
+    // hero value (column 4) can sit between the title spacer and it.
+    ui->layoutHistoryChart->removeWidget(ui->checkHistoryTitle);
+    ui->layoutHistoryChart->addWidget(ui->checkHistoryTitle, 0, 5);
 
     // SSO-26718 (B14): apply the current theme immediately, not just on the
     // next sigChangedAppTheme — a chart created lazily (GPU, disk health,
@@ -162,24 +175,95 @@ void HistoryChart::setSeriesList(const QVector<QSplineSeries *> &seriesList)
 
 void HistoryChart::on_checkHistoryTitle_clicked(bool checked)
 {
-    QWidget *chartsContainer = topLevelWidget()->findChild<QWidget*>("charts");
-    if (!chartsContainer)
+    // SSO-26719: the six subsystem cards now live inside a grid container
+    // (objectName "resourcesCardGrid"), not as direct children of the page's
+    // outer charts layout — fullscreen one card by hiding its siblings
+    // within that grid instead of every top-level section of the page (which
+    // would also hide the Live/History switch and the Disk Usage launcher).
+    QWidget *cardGrid = topLevelWidget()->findChild<QWidget*>("resourcesCardGrid");
+    if (!cardGrid)
         return;
 
-    QLayout *charts = chartsContainer->layout();
+    QLayout *grid = cardGrid->layout();
+    if (!grid)
+        return;
 
-    // An elevated chart (setElevated()) still IS the direct charts-layout
+    // An elevated chart (setElevated()) still IS the direct grid-layout
     // item — no wrapper widget is introduced — so `this` already matches
     // whatever itemAt(i)->widget() returns; walk up defensively in case a
     // future wrapper is added around a chart.
     QWidget *topLevelItem = this;
-    while (topLevelItem->parentWidget() && topLevelItem->parentWidget() != chartsContainer)
+    while (topLevelItem->parentWidget() && topLevelItem->parentWidget() != cardGrid)
         topLevelItem = topLevelItem->parentWidget();
 
-    for (int i = 0; i < charts->count(); ++i) {
-        if (QWidget *w = charts->itemAt(i)->widget())
+    for (int i = 0; i < grid->count(); ++i) {
+        if (QWidget *w = grid->itemAt(i)->widget())
             w->setVisible(!checked || w == topLevelItem);
     }
+}
+
+void HistoryChart::setHeaderValue(const QString &primary, const QString &secondary)
+{
+    if (!mHeaderValueContainer) {
+        mHeaderValueContainer = new QWidget(this);
+        auto *vl = new QVBoxLayout(mHeaderValueContainer);
+        vl->setContentsMargins(0, 0, 0, 0);
+        vl->setSpacing(0);
+
+        mLblHeaderValue = new QLabel(mHeaderValueContainer);
+        mLblHeaderValue->setObjectName("historyChartHeaderValue");
+        mLblHeaderValue->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+        mLblHeaderSecondary = new QLabel(mHeaderValueContainer);
+        mLblHeaderSecondary->setObjectName("historyChartHeaderSecondary");
+        mLblHeaderSecondary->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+
+        vl->addWidget(mLblHeaderValue);
+        vl->addWidget(mLblHeaderSecondary);
+
+        ui->layoutHistoryChart->addWidget(mHeaderValueContainer, 0, 4,
+                                           Qt::AlignRight | Qt::AlignVCenter);
+    }
+
+    mLblHeaderValue->setText(primary);
+    mLblHeaderValue->setVisible(!primary.isEmpty());
+    mLblHeaderSecondary->setText(secondary);
+    mLblHeaderSecondary->setVisible(!secondary.isEmpty());
+    mHeaderValueContainer->setVisible(!primary.isEmpty() || !secondary.isEmpty());
+}
+
+QToolButton *HistoryChart::addHeaderToggle(const QString &text)
+{
+    auto *btn = new QToolButton(this);
+    btn->setText(text);
+    btn->setCheckable(true);
+    btn->setAutoRaise(true); // BUG-52: QToolButton, not QPushButton, for macOS
+    btn->setCursor(Qt::PointingHandCursor);
+    ui->layoutHistoryChart->addWidget(btn, 0, 3, Qt::AlignRight | Qt::AlignVCenter);
+    return btn;
+}
+
+QWidget *HistoryChart::extrasRow()
+{
+    if (!mExtrasRow) {
+        mExtrasRow = new QWidget(this);
+        auto *l = new QVBoxLayout(mExtrasRow);
+        l->setContentsMargins(0, 2, 0, 2);
+        l->setSpacing(4);
+        mExtrasRow->setVisible(false);
+        ui->layoutHistoryChart->addWidget(mExtrasRow, 1, 0, 1, 4);
+    }
+    return mExtrasRow;
+}
+
+int HistoryChart::addBodyPage(QWidget *widget)
+{
+    return mBodyStack->addWidget(widget);
+}
+
+void HistoryChart::setBodyPage(int index)
+{
+    mBodyStack->setCurrentIndex(index);
 }
 
 void HistoryChart::setElevated(const QString &accentToken)

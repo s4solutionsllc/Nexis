@@ -10,10 +10,9 @@
 // registered by the kernel's RAPL powercap framework on supported AMD hosts
 // too, so no separate AMD backend is needed.
 //
-// Lives in shared/ (mirrors oomd_snapshot.h) so PowerDrawWidget can include
-// it unconditionally — the producer (RaplPowerInfo) is Linux-only, but the
-// widget still needs to compile on the macOS build target even though
-// nothing wires it up there.
+// Lives in shared/ (mirrors oomd_snapshot.h) even though the producer
+// (RaplPowerInfo) is Linux-only, matching the convention for every other
+// Linux-only snapshot type this codebase defines.
 struct RaplPackageSnapshot {
     QString name;          // sysfs zone name, e.g. "package-0"
     double  watts = 0.0;   // average draw since the previous sample

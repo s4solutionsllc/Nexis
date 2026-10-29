@@ -100,8 +100,11 @@ static const QVector<PageInfo> kPageMap = {
     // entry-point button for the built-in treemap, and its labelling
     // already depends on which disk-usage tool the host has installed —
     // mask it the same way HistoryChart is masked.
+    // SSO-26719: OomKillsWidget's status line and (if toggled on)
+    // CpuCoreDetailWidget's per-core list both render live, host-dependent
+    // values folded into the CPU/Memory cards — mask them too.
     {"ResourcesPage",     "resources",
-        {"HistoryChart", "DiskUsageLauncherWidget"}, {}},
+        {"HistoryChart", "DiskUsageLauncherWidget", "OomKillsWidget", "CpuCoreDetailWidget"}, {}},
     {"HelpersPage",       "helpers",           {}, {}},
     {"NetworkUsagePage",  "network_usage",     {"BarChartWidget"}, {}},
     {"SettingsPage",      "settings",          {}, {}},
