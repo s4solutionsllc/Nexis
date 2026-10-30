@@ -465,6 +465,15 @@ private:
                 QVERIFY2(!cleanerPage->isScanInProgress(),
                     "SystemCleanerPage background scan did not settle within 15s "
                     "— capture would race it (SSO-15956)");
+
+                // SSO-26742: isScanInProgress() drops as soon as
+                // onScanFinished() runs, but that same slot's setText() and
+                // widget hide() calls only post a layout request — they land
+                // on the next event-loop pass, not this one. Settle that
+                // posted layout before grab() or the capture can catch the
+                // card grid and size labels mid-reflow.
+                QApplication::processEvents();
+                QTest::qWait(200);
             }
 
             // SSO-24820: SystemLogsPage auto-fetches up to 500 real entries
