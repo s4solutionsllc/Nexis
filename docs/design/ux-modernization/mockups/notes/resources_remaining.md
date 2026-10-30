@@ -1,3 +1,11 @@
+> **Superseded by SSO-26716.** The six-card redesign (SSO-26716 through SSO-26722)
+> shipped and folded, removed, or restructured every tile this note audits —
+> Memory, Network, PSI, and OOM Kills are now folded into the six-card grid
+> (see `docs/APPLICATION_OVERVIEW.md` §10), Disk Temperature folds into the
+> Disk I/O header instead of its own chart, and Disk Usage Analysis is
+> unchanged below the grid. This note is kept for history, not as a current
+> design reference.
+
 # Resources — remaining tiles (Phase 1 audit, SSO-14436)
 
 **Status:** Code audit complete; visual reference is code-derived and UNVERIFIED (rendered from the committed HTML, no live capture — see "Capture gap" below). Not yet approved for implementation; this is the Phase 1 deliverable for [SSO-14294](/SSO/issues/SSO-14294) — implementation is a separate, future Phase 2 item.
