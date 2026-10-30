@@ -34,3 +34,11 @@ QString trayMenuGroupTitle(const QString &sectionName)
     }
     return words.join(QLatin1Char(' '));
 }
+
+bool trayActivationOpensWindow(QSystemTrayIcon::ActivationReason reason, bool isMacPlatform)
+{
+    if (isMacPlatform)
+        return false;
+
+    return reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick;
+}

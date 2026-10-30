@@ -11,11 +11,11 @@ struct MemorySnapshot;
 struct Disk;
 
 // SSO-23855 (Glanceable Surfaces epic): a small, resizable, always-on-top
-// window showing the Dashboard health score plus CPU/MEM/DSK usage. Unlike
-// MenuBarMonitor (macos/nexis/MenuBar) this lives entirely in shared/nexis —
-// it is a QWidget, not a native NSPanel, so the same implementation covers
-// both macOS and Linux. Subscribes to DataRefreshService only while shown
-// (FR-103 subscriber counting), same pattern as MenuBarMonitor::setEnabled.
+// window showing the Dashboard health score plus CPU/MEM/DSK usage. This
+// lives entirely in shared/nexis — it is a QWidget, not a native NSPanel, so
+// the same implementation covers both macOS and Linux. Subscribes to
+// DataRefreshService only while shown (FR-103 subscriber counting), same
+// pattern as TrayHealthMonitor::setEnabled.
 class MiniMonitorWindow : public QWidget
 {
     Q_OBJECT

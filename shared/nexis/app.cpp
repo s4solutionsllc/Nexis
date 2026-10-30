@@ -28,6 +28,8 @@
 #include <QEvent>
 #include <QWindow>
 #include <QThreadPool>
+#include <QCursor>
+#include <QMessageBox>
 #include <QLabel>
 #include <algorithm>
 #include <QSet>
@@ -767,17 +769,10 @@ void App::init()
 
     mTrayIcon->show();
 
-#ifdef Q_OS_MAC
-    // FW-20 (SSO-3748): optional menu-bar CPU/memory monitor, off by default.
-    mMenuBarMonitor = new MenuBarMonitor(this);
-    // Same behaviour as the tray's "Open": bring the window back on the page
-    // the user left it on rather than jumping to Dashboard.
-    connect(mMenuBarMonitor, &MenuBarMonitor::activationRequested, this, &App::showAndRaise);
-    connect(SignalMapper::ins(), &SignalMapper::sigMenuBarMonitorToggled,
-            mMenuBarMonitor, &MenuBarMonitor::setEnabled);
-    mMenuBarMonitor->setEnabled(SettingManager::ins()->getMenuBarMonitorEnabled());
-#else
-    // SSO-23854: optional Linux tray health score + Clean Now, off by default.
+    // SSO-26762: health score + Clean Now tray surface, shared by both
+    // platforms (was Linux-only via TrayHealthMonitor, with macOS carrying a
+    // separate NSStatusItem/MenuBarMonitor retired in this change — off by
+    // default on both).
     mTrayHealthMonitor = new TrayHealthMonitor(this);
     connect(mTrayHealthMonitor, &TrayHealthMonitor::scoreTextChanged, this, [this](const QString &text) {
         mTrayHealthAction->setText(text);
@@ -790,6 +785,18 @@ void App::init()
     });
     connect(mTrayCleanAction, &QAction::triggered, mTrayHealthMonitor, &TrayHealthMonitor::startClean);
 
+    // SSO-26762 requirement 9: a parentless QMessageBox after Clean Now can
+    // crash on macOS when the main window is hidden (AppKit has no window to
+    // own the modal). Show the result in the tray balloon when the window is
+    // hidden, and only fall back to a parented dialog when it is visible.
+    connect(mTrayHealthMonitor, &TrayHealthMonitor::cleanCompleted, this, [this](const QString &message) {
+        if (isVisible()) {
+            QMessageBox::information(this, tr("Nexis"), message);
+        } else if (SettingManager::ins()->getCleaningNotificationsEnabled()) {
+            mTrayIcon->showMessage(tr("Nexis"), message, QSystemTrayIcon::Information, 5000);
+        }
+    });
+
     auto applyTrayHealthScoreEnabled = [this](bool enabled) {
         mTrayHealthAction->setVisible(enabled);
         mTrayCleanAction->setVisible(enabled);
@@ -800,11 +807,11 @@ void App::init()
     };
     connect(SignalMapper::ins(), &SignalMapper::sigTrayHealthScoreToggled, this, applyTrayHealthScoreEnabled);
     applyTrayHealthScoreEnabled(SettingManager::ins()->getTrayHealthScoreEnabled());
-#endif
 
     // SSO-23855: compact always-on-top mini-monitor window — cross-platform
-    // (shared/nexis QWidget, not a native NSPanel), unlike mMenuBarMonitor
-    // above. Off by default; restores its last open/closed state below.
+    // (shared/nexis QWidget, not a native NSPanel), unlike the retired
+    // macOS-only MenuBarMonitor. Off by default; restores its last
+    // open/closed state below.
     mMiniMonitorWindow = new MiniMonitorWindow(this);
     connect(SignalMapper::ins(), &SignalMapper::sigMiniMonitorToggled,
             mMiniMonitorWindow, &QWidget::setVisible);
@@ -948,8 +955,25 @@ void App::createTrayActions()
 {
     auto showAndRaise = [this] { this->showAndRaise(); };
 
-    connect(mTrayIcon, &QSystemTrayIcon::activated, this, [showAndRaise](QSystemTrayIcon::ActivationReason) {
-        showAndRaise();
+    // SSO-26762: on macOS, Qt reports every status-item click as Trigger
+    // even though a context menu is set (and already shown automatically by
+    // Qt) — so raising the window here would pop the main window alongside
+    // the menu. "Open Nexis" below is the only click-path that should raise
+    // it. On Linux, only Trigger/DoubleClick (left-click) open the window;
+    // Context (right-click) already auto-shows the menu, and MiddleClick
+    // needs an explicit popup since Qt has no default action for it.
+    connect(mTrayIcon, &QSystemTrayIcon::activated, this,
+            [this, showAndRaise](QSystemTrayIcon::ActivationReason reason) {
+#ifdef Q_OS_MAC
+        const bool isMac = true;
+#else
+        const bool isMac = false;
+#endif
+        if (trayActivationOpensWindow(reason, isMac)) {
+            showAndRaise();
+        } else if (!isMac && reason == QSystemTrayIcon::MiddleClick) {
+            mTrayMenu->popup(QCursor::pos());
+        }
     });
 
     // SSO-23896: groups derived from mSections (same model the sidebar
@@ -960,11 +984,11 @@ void App::createTrayActions()
     mTrayMenu->addAction(openAction);
     mTrayMenu->addSeparator();
 
-#ifndef Q_OS_MAC
-    // SSO-23854: Linux tray counterpart of the macOS menu-bar health score +
-    // Clean Now surface (SSO-23853). Actions exist unconditionally so
-    // TrayHealthMonitor's signals always have somewhere to write; visibility
-    // follows the off-by-default TrayHealthScoreEnabled setting (see init()).
+    // SSO-26762: health score + Clean Now, shared by both platforms (was
+    // Linux-only, with macOS carrying a separate NSStatusItem — SSO-23854 /
+    // SSO-23853). Actions exist unconditionally so TrayHealthMonitor's
+    // signals always have somewhere to write; visibility follows the
+    // off-by-default TrayHealthScoreEnabled setting (see init()).
     mTrayHealthAction = new QAction(this);
     mTrayHealthAction->setEnabled(false);
     mTrayMenu->addAction(mTrayHealthAction);
@@ -973,7 +997,6 @@ void App::createTrayActions()
     mTrayMenu->addAction(mTrayCleanAction);
 
     mTrayHealthSeparator = mTrayMenu->addSeparator();
-#endif
 
     auto addNavAction = [this](QMenu *menu, QPushButton *button) {
         QString pageId;
@@ -1014,7 +1037,13 @@ void App::createTrayActions()
     QAction *paletteAction = quickMenu->addAction(tr("Open Command Palette"));
     connect(paletteAction, &QAction::triggered, this, [this] {
         this->showAndRaise();
+#ifdef Q_OS_MAC
+        // SSO-26762 requirement 7: keep the palette's own show() after the
+        // deferred window raise above, rather than racing it mid menu-track.
+        QTimer::singleShot(0, this, [this] { mCommandPalette->show(); });
+#else
         mCommandPalette->show();
+#endif
     });
 
     QAction *scanAction = quickMenu->addAction(tr("Run System Cleaner Scan"));
@@ -1067,7 +1096,15 @@ void App::createTrayActions()
     mKioskAction = new QAction(tr("Kiosk Mode"), this);
     mKioskAction->setCheckable(true);
     mKioskAction->setChecked(mKioskMode);
-    connect(mKioskAction, &QAction::triggered, this, &App::toggleKioskMode);
+    connect(mKioskAction, &QAction::triggered, this, [this] {
+#ifdef Q_OS_MAC
+        // SSO-26762 requirement 7: same menu-tracking hazard as showAndRaise()
+        // — entering kiosk raises/full-screens the window, so defer it too.
+        QTimer::singleShot(0, this, [this] { toggleKioskMode(); });
+#else
+        toggleKioskMode();
+#endif
+    });
     mTrayMenu->addAction(mKioskAction);
 
     mTrayMenu->addSeparator();
@@ -1124,14 +1161,28 @@ void App::navigateTo(const QString &pageId, bool isShow)
     }
 
 #ifdef Q_OS_MAC
-    if (isShow)
-        nexis_macos_show_dock_icon();
-#endif
+    // SSO-26762 requirement 7: a tray page-navigation item can land here
+    // while AppKit is still tracking the status-item menu; defer the
+    // activation-policy change and window raise to the next event loop turn,
+    // same as showAndRaise(), so it never runs mid menu-track.
+    if (isShow) {
+        QTimer::singleShot(0, this, [this] {
+            nexis_macos_show_dock_icon();
+            setVisible(true);
+            if (windowHandle())
+                windowHandle()->requestActivate();
+            emit SignalMapper::ins()->sigAppVisibilityChanged(true);
+        });
+    } else {
+        setVisible(false);
+    }
+#else
     setVisible(isShow);
     if (isShow && windowHandle())
         windowHandle()->requestActivate();
     if (isShow)
         emit SignalMapper::ins()->sigAppVisibilityChanged(true);
+#endif
 }
 
 void App::checkSidebarButton(const QString &pageId)
@@ -1623,6 +1674,15 @@ void App::applyKioskMode(bool enable)
         mKioskExitAction->setEnabled(enable);
 
     if (enable) {
+#ifdef Q_OS_MAC
+        // SSO-26762: entering kiosk can be reached from the tray while the
+        // window is hidden-to-tray (Accessory activation policy); without
+        // this, the fullscreen window below comes up under a policy that
+        // doesn't own a visible window. Safe to call synchronously here —
+        // callers that reach applyKioskMode() via the tray already deferred
+        // past menu tracking (see the mKioskAction connection above).
+        nexis_macos_show_dock_icon();
+#endif
         mPreKioskCollapsed = mSidebarCollapsed;
         ui->sidebar->hide();
         mPendingNavId = QStringLiteral("dashboard");
@@ -1739,14 +1799,28 @@ bool App::eventFilter(QObject *watched, QEvent *event)
 void App::showAndRaise()
 {
 #ifdef Q_OS_MAC
-    nexis_macos_show_dock_icon();
-#endif
+    // SSO-26762 requirement 7: a tray-menu action can call this while AppKit
+    // is still tracking the status-item menu. Changing the activation policy
+    // (inside nexis_macos_show_dock_icon()) synchronously in that window is
+    // the likely crash cause, so defer the whole raise to the next event
+    // loop turn, after menu tracking has ended.
+    QTimer::singleShot(0, this, [this] {
+        nexis_macos_show_dock_icon();
+        setWindowState(windowState() & ~Qt::WindowMinimized);
+        show();
+        raise();
+        if (windowHandle())
+            windowHandle()->requestActivate();
+        emit SignalMapper::ins()->sigAppVisibilityChanged(true);
+    });
+#else
     setWindowState(windowState() & ~Qt::WindowMinimized);
     show();
     raise();
     if (windowHandle())
         windowHandle()->requestActivate();
     emit SignalMapper::ins()->sigAppVisibilityChanged(true);
+#endif
 }
 
 void App::runCleanerScan()

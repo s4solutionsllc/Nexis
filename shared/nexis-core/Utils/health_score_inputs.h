@@ -9,10 +9,10 @@ struct MemorySnapshot;
 struct Disk;
 
 // SSO-23854: the CPU/memory/disk score formulas that feed HealthScoreCalculator
-// were duplicated between DashboardPage (shared/nexis/Pages/Dashboard) and
-// MenuBarMonitor (macos/nexis/MenuBar) so the Dashboard tile and the macOS
-// menu-bar surface agree. Extracted here so the Linux tray surface is a third
-// caller of the same formulas rather than a third copy.
+// were duplicated between DashboardPage (shared/nexis/Pages/Dashboard) and the
+// macOS-only MenuBarMonitor (now retired, SSO-26762) so the Dashboard tile and
+// the macOS menu-bar surface agreed. Extracted here so the cross-platform tray
+// surface (TrayHealthMonitor) is a caller of the same formulas rather than a copy.
 class NEXISCORESHARED_EXPORT HealthScoreInputs
 {
 public:

@@ -25,7 +25,6 @@ signals:
     void sigNavigateToPage(const QString &pageId);
     void sigCleanableSizeChanged(quint64 bytes);
     void sigDashboardFooterChanged(bool visible);
-    void sigMenuBarMonitorToggled(bool enabled);
     void sigTrayHealthScoreToggled(bool enabled);
     void sigMiniMonitorToggled(bool visible);
     // SSO-10930 / GH#220: persistent resource-history logging on/off.

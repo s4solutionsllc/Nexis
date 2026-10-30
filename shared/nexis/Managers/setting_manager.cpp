@@ -6,6 +6,34 @@ SettingManager::SettingManager()
 {
     mConfigPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     mSettings = new QSettings(QString("%1/settings.ini").arg(mConfigPath), QSettings::IniFormat);
+    applyMenuBarMonitorMigration();
+}
+
+void SettingManager::applyMenuBarMonitorMigration()
+{
+    if (!mSettings->contains(SettingKeys::MenuBarMonitorEnabled))
+        return;
+
+    const bool legacyEnabled = mSettings->value(SettingKeys::MenuBarMonitorEnabled, false).toBool();
+    const bool hasExisting = mSettings->contains(SettingKeys::TrayHealthScoreEnabled);
+    const bool current = mSettings->value(SettingKeys::TrayHealthScoreEnabled, false).toBool();
+
+    mSettings->setValue(SettingKeys::TrayHealthScoreEnabled,
+                         migrateMenuBarMonitorEnabled(legacyEnabled, hasExisting, current));
+    mSettings->remove(SettingKeys::MenuBarMonitorEnabled);
+}
+
+bool SettingManager::migrateMenuBarMonitorEnabled(bool legacyEnabled,
+                                                   bool hasExistingTrayHealthScoreValue,
+                                                   bool currentTrayHealthScoreEnabled)
+{
+    // An explicit prior choice for TrayHealthScoreEnabled (the user's own,
+    // or a previous run's migration) always wins — the legacy key only ever
+    // turns the new one on, and only once, never off.
+    if (hasExistingTrayHealthScoreValue)
+        return currentTrayHealthScoreEnabled;
+
+    return legacyEnabled ? true : currentTrayHealthScoreEnabled;
 }
 
 SettingManager *SettingManager::instance = nullptr;
@@ -677,16 +705,6 @@ void SettingManager::setWindowState(const QByteArray &value)
 QByteArray SettingManager::getWindowState() const
 {
     return mSettings->value(SettingKeys::WindowState).toByteArray();
-}
-
-void SettingManager::setMenuBarMonitorEnabled(bool value)
-{
-    mSettings->setValue(SettingKeys::MenuBarMonitorEnabled, value);
-}
-
-bool SettingManager::getMenuBarMonitorEnabled() const
-{
-    return mSettings->value(SettingKeys::MenuBarMonitorEnabled, false).toBool();
 }
 
 void SettingManager::setTrayHealthScoreEnabled(bool value)

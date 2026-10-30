@@ -3,6 +3,7 @@
 
 #include <QList>
 #include <QString>
+#include <QSystemTrayIcon>
 #include "sidebar_section.h"
 
 // One block of the tray menu: either a flat run of items (headerless, e.g.
@@ -23,5 +24,14 @@ QList<TrayMenuGroup> buildTrayMenuGroups(const QList<SidebarSection> &sections);
 // ("Manage") — the sidebar uses all-caps section headers, but a native OS
 // menu submenu reads as a normal title-case row.
 QString trayMenuGroupTitle(const QString &sectionName);
+
+// SSO-26762: pure per-platform answer for whether a tray-icon activation
+// reason should raise the main window. macOS never does — Qt reports every
+// status-item click as Trigger even when a context menu is shown and Qt is
+// already popping it up, so raising there would surface the window
+// alongside the menu; "Open Nexis" in the menu is the only way in. Linux
+// keeps the pre-existing split: left-click/double-click opens, right-click/
+// middle-click shows the menu only.
+bool trayActivationOpensWindow(QSystemTrayIcon::ActivationReason reason, bool isMacPlatform);
 
 #endif // TRAY_MENU_MODEL_H

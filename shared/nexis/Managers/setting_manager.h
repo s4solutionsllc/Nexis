@@ -86,11 +86,13 @@ namespace SettingKeys {
     const QString WindowGeometry("WindowGeometry");
     const QString WindowState("WindowState");
 
-    // FW-20 (SSO-3748)
+    // FW-20 (SSO-3748). Retired in SSO-26762 along with the macOS-only
+    // NSStatusItem it drove; kept here only as the legacy key name read (and
+    // then removed) by SettingManager::applyMenuBarMonitorMigration().
     const QString MenuBarMonitorEnabled("MenuBarMonitorEnabled");
 
-    // SSO-23854: Linux/QSystemTrayIcon health score + Clean Now, off by
-    // default like its macOS menu-bar sibling above.
+    // SSO-23854, unified cross-platform in SSO-26762: health score + Clean
+    // Now in the QSystemTrayIcon menu, off by default on both platforms.
     const QString TrayHealthScoreEnabled("TrayHealthScoreEnabled");
 
     // SSO-23855
@@ -310,13 +312,20 @@ public:
     void setWindowState(const QByteArray &value);
     QByteArray getWindowState() const;
 
-    // FW-20 (SSO-3748) — macOS menu-bar CPU/memory monitor, off by default
-    void setMenuBarMonitorEnabled(bool value);
-    bool getMenuBarMonitorEnabled() const;
-
-    // SSO-23854 — Linux tray health score + Clean Now, off by default
+    // SSO-23854, unified cross-platform in SSO-26762 — tray health score +
+    // Clean Now, off by default. Retired the macOS-only MenuBarMonitorEnabled
+    // (FW-20 / SSO-3748) this setting now replaces; see migrateMenuBarMonitorEnabled().
     void setTrayHealthScoreEnabled(bool value);
     bool getTrayHealthScoreEnabled() const;
+
+    // SSO-26762: pure migration decision, exposed statically so the policy
+    // is unit-testable without touching disk. legacyEnabled is the retired
+    // MenuBarMonitorEnabled value; hasExistingTrayHealthScoreValue is whether
+    // the user (or a prior migration) already made an explicit choice for
+    // TrayHealthScoreEnabled, which must never be overwritten.
+    static bool migrateMenuBarMonitorEnabled(bool legacyEnabled,
+                                              bool hasExistingTrayHealthScoreValue,
+                                              bool currentTrayHealthScoreEnabled);
 
     // SSO-23855 — compact always-on-top mini-monitor window, off by default
     void setMiniMonitorVisible(bool value);
@@ -343,6 +352,10 @@ public:
 private:
     static SettingManager *instance;
     SettingManager();
+
+    // SSO-26762: runs once at construction, migrating the retired
+    // MenuBarMonitorEnabled key into TrayHealthScoreEnabled and removing it.
+    void applyMenuBarMonitorMigration();
 
     QSettings *mSettings;
     QString mConfigPath;

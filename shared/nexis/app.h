@@ -54,12 +54,11 @@ struct PageSlot {
 #include "Pages/Settings/settings_page.h"
 #ifdef Q_OS_MAC
 #include "Pages/Homebrew/homebrew_page.h"
-#include "MenuBar/menu_bar_monitor.h"
 #include "Pages/MailCleanup/mail_attachment_cleanup_page.h"
 #else
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
-#include "Managers/tray_health_monitor.h"
 #endif
+#include "Managers/tray_health_monitor.h"
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
 #include "Pages/DiskTools/disk_tools_page.h"
@@ -167,16 +166,17 @@ private:
     NetworkUsagePage *networkUsagePage;
 #ifdef Q_OS_MAC
     HomebrewPage *homebrewPage = nullptr;
-    MenuBarMonitor *mMenuBarMonitor = nullptr;
     MailAttachmentCleanupPage *mailAttachmentCleanupPage = nullptr;
 #else
     APTSourceManagerPage *aptSourceManagerPage = nullptr;
-    // SSO-23854: Linux tray counterpart of mMenuBarMonitor above.
+#endif
+    // SSO-26762: health score + Clean Now tray surface, shared by both
+    // platforms now that the macOS-only NSStatusItem (MenuBarMonitor) has
+    // been retired in favor of one QSystemTrayIcon surface.
     TrayHealthMonitor *mTrayHealthMonitor = nullptr;
     QAction *mTrayHealthAction = nullptr;
     QAction *mTrayCleanAction = nullptr;
     QAction *mTrayHealthSeparator = nullptr;
-#endif
     DockerPage *dockerPage;
     GnomeSettingsPage *gnomeSettingsPage;
     SettingsPage *settingsPage;

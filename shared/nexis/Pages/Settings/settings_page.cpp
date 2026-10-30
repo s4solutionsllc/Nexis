@@ -147,18 +147,18 @@ void SettingsPage::init()
     // dashboard footer visibility
     ui->checkDashboardFooter->setChecked(mSettingManager->getDashboardFooterVisible());
 
-    // FW-20 (SSO-3748): menu-bar monitor is macOS-only surface
+    // SSO-26762: one cross-platform QSystemTrayIcon surface — only the label
+    // differs by how each platform's tray UI reads ("menu bar" on macOS,
+    // "tray menu" on Linux).
 #ifdef Q_OS_MAC
-    ui->checkMenuBarMonitor->setChecked(mSettingManager->getMenuBarMonitorEnabled());
-    ui->checkTrayHealthScore->hide();
+    ui->checkTrayHealthScore->setText(tr("Show health score and Clean Now in the menu bar"));
 #else
-    ui->checkMenuBarMonitor->hide();
-    // SSO-23854: Linux/tray counterpart of the macOS menu-bar surface above.
-    ui->checkTrayHealthScore->setChecked(mSettingManager->getTrayHealthScoreEnabled());
+    ui->checkTrayHealthScore->setText(tr("Show health score and Clean Now in the tray menu"));
 #endif
+    ui->checkTrayHealthScore->setChecked(mSettingManager->getTrayHealthScoreEnabled());
 
     // SSO-23855: mini-monitor window is cross-platform (Qt-based, not a
-    // native NSPanel), unlike the menu-bar monitor above.
+    // native NSPanel).
     ui->checkMiniMonitor->setChecked(mSettingManager->getMiniMonitorVisible());
 
     // launch directly into kiosk mode, on a chosen monitor (GH#207 / SSO-8351)
@@ -419,12 +419,6 @@ void SettingsPage::on_checkDashboardFooter_clicked(bool checked)
 {
     mSettingManager->setDashboardFooterVisible(checked);
     emit SignalMapper::ins()->sigDashboardFooterChanged(checked);
-}
-
-void SettingsPage::on_checkMenuBarMonitor_clicked(bool checked)
-{
-    mSettingManager->setMenuBarMonitorEnabled(checked);
-    emit SignalMapper::ins()->sigMenuBarMonitorToggled(checked);
 }
 
 void SettingsPage::on_checkTrayHealthScore_clicked(bool checked)
