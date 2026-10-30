@@ -399,13 +399,17 @@ void ResourcesPage::placeExpandedCard()
     // now-empty row would otherwise reserve dead space under it.
     if (mCardStretchRow >= 0)
         mCardGridLayout->setRowStretch(mCardStretchRow, 0);
-    mCardStretchRow = -1;
 
     const int span = qMax(mCardCols, 1);
     mCardGridLayout->addWidget(mExpandedCard, 0, 0, 1, span);
     mCardGridLayout->setColumnStretch(0, 1);
     mCardGridLayout->setColumnStretch(1, span > 1 ? 1 : 0);
     mCardGridLayout->setRowStretch(0, 1);
+    // Track row 0 as the current stretch row so collapseExpandedCard()'s
+    // reflowCardGrid() call clears it before assigning the restored stretch
+    // row — otherwise row 0 keeps stretch 1 forever and the first card row
+    // grows past its original height on every collapse (SSO-26775).
+    mCardStretchRow = 0;
 }
 
 void ResourcesPage::resizeEvent(QResizeEvent *event)

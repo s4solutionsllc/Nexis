@@ -52,6 +52,10 @@ private slots:
         page.resize(1400, 900); // SSO-26719's kTwoColumnThreshold (1100) -> 2 cols
         page.show();
         QVERIFY(QTest::qWaitForWindowExposed(&page));
+        // The window manager can settle a requested geometry asynchronously
+        // (seen on macOS CI) — wait for the real width before asserting
+        // anything that depends on the 2-column layout it drives.
+        QTRY_COMPARE(page.width(), 1400);
 
         auto *cardGrid = page.findChild<QWidget *>(QStringLiteral("resourcesCardGrid"));
         QVERIFY(cardGrid);
@@ -65,6 +69,7 @@ private slots:
         QHash<HistoryChart *, GridSpan> originalSpans;
         for (HistoryChart *card : cards)
             originalSpans[card] = spanOf(grid, card);
+        const int originalRow0Stretch = grid->rowStretch(0);
 
         HistoryChart *target = cards.first();
         QCheckBox *checkbox = expandCheckbox(target);
@@ -90,6 +95,10 @@ private slots:
             QCOMPARE(spanOf(grid, card).row, originalSpans[card].row);
         for (HistoryChart *card : cards)
             QCOMPARE(spanOf(grid, card).col, originalSpans[card].col);
+        // SSO-26775: placeExpandedCard() sets row 0's stretch directly; if
+        // collapse doesn't clear it, row 0 keeps stretch 1 forever and grows
+        // past its original height on every subsequent collapse.
+        QCOMPARE(grid->rowStretch(0), originalRow0Stretch);
     }
 
     void expand_thenNarrowResize_staysExpandedAndSpansSingleColumn()
@@ -98,6 +107,7 @@ private slots:
         page.resize(1400, 900); // 2 cols
         page.show();
         QVERIFY(QTest::qWaitForWindowExposed(&page));
+        QTRY_COMPARE(page.width(), 1400);
 
         auto *cardGrid = page.findChild<QWidget *>(QStringLiteral("resourcesCardGrid"));
         auto *grid = qobject_cast<QGridLayout *>(cardGrid->layout());
@@ -111,7 +121,7 @@ private slots:
         QVERIFY(checkbox->isChecked());
 
         page.resize(700, 900); // below kTwoColumnThreshold -> 1 col
-        QTest::qWait(0);
+        QTRY_COMPARE(page.width(), 700);
 
         // A resize must not silently drop the expanded state — the card
         // stays the only visible one, still fullscreened in its new span.
@@ -131,6 +141,7 @@ private slots:
         page.resize(1400, 900);
         page.show();
         QVERIFY(QTest::qWaitForWindowExposed(&page));
+        QTRY_COMPARE(page.width(), 1400);
 
         auto *cardGrid = page.findChild<QWidget *>(QStringLiteral("resourcesCardGrid"));
         const QList<HistoryChart *> cards =
