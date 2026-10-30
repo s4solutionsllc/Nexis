@@ -1,0 +1,1 @@
+Resources page: expanding a card now hides every other card and grows the expanded card to fill the freed-up space, instead of leaving it in its original grid cell; collapsing restores the original layout (SSO-26775).

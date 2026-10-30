@@ -127,6 +127,13 @@ void ResourcesPage::init()
     buildLiveHistorySwitch();
     buildCardGrid();
 
+    // SSO-26775 stage 2: each card reports its own expand/collapse request;
+    // ResourcesPage (which owns the grid) does the relayout.
+    for (QWidget *card : std::as_const(mCardOrder)) {
+        connect(static_cast<HistoryChart *>(card), &HistoryChart::expandToggled,
+                this, [this, card](bool expanded) { onCardExpandToggled(card, expanded); });
+    }
+
     // DS §2/§3 (NEX-Resources): elevated container + accent-bar header for
     // every subsystem card.
     mChartCpu->setElevated(QStringLiteral("cpu"));
@@ -288,6 +295,15 @@ void ResourcesPage::buildLiveHistorySwitch()
 
 void ResourcesPage::setLiveModeActive(bool live)
 {
+    // SSO-26775 stage 2: switching to History mode hides the whole card
+    // grid, including the expanded card itself — collapse it first so it
+    // doesn't come back still-expanded (and its siblings still hidden) the
+    // next time Live mode is selected.
+    if (!live && mExpandedCard) {
+        static_cast<HistoryChart *>(mExpandedCard)->resetExpandState();
+        collapseExpandedCard();
+    }
+
     mCardGrid->setVisible(live);
     if (mDiskLauncher)
         mDiskLauncher->setVisible(live);
@@ -303,8 +319,7 @@ void ResourcesPage::setLiveModeActive(bool live)
 void ResourcesPage::buildCardGrid()
 {
     mCardGrid = new QWidget(this);
-    // Named so HistoryChart::on_checkHistoryTitle_clicked() can find it to
-    // fullscreen a single card within the grid.
+    // Named so tests can find it by objectName.
     mCardGrid->setObjectName("resourcesCardGrid");
     mCardGridLayout = new QGridLayout(mCardGrid);
     mCardGridLayout->setContentsMargins(0, 0, 0, 0);
@@ -340,12 +355,67 @@ void ResourcesPage::reflowCardGrid(int cols)
     mCardGridLayout->setRowStretch(mCardStretchRow, 1);
 }
 
+void ResourcesPage::onCardExpandToggled(QWidget *card, bool expanded)
+{
+    if (expanded)
+        expandCard(card);
+    else
+        collapseExpandedCard();
+}
+
+void ResourcesPage::expandCard(QWidget *card)
+{
+    if (!mCardGridLayout || !mCardOrder.contains(card) || mExpandedCard == card)
+        return;
+
+    mExpandedCard = card;
+    for (QWidget *w : std::as_const(mCardOrder))
+        w->setVisible(w == card);
+    placeExpandedCard();
+}
+
+void ResourcesPage::collapseExpandedCard()
+{
+    if (!mExpandedCard)
+        return;
+
+    mExpandedCard = nullptr;
+    for (QWidget *w : std::as_const(mCardOrder))
+        w->setVisible(true);
+    // Restores exactly the layout reflowCardGrid() would already have in
+    // place, had the card never expanded.
+    reflowCardGrid(mCardCols);
+}
+
+void ResourcesPage::placeExpandedCard()
+{
+    if (!mExpandedCard || !mCardGridLayout)
+        return;
+
+    mCardGridLayout->removeWidget(mExpandedCard);
+
+    // Clear the trailing stretch row reflowCardGrid() left behind — the
+    // expanded card gets that stretch itself below, and a stale factor on a
+    // now-empty row would otherwise reserve dead space under it.
+    if (mCardStretchRow >= 0)
+        mCardGridLayout->setRowStretch(mCardStretchRow, 0);
+
+    const int span = qMax(mCardCols, 1);
+    mCardGridLayout->addWidget(mExpandedCard, 0, 0, 1, span);
+    mCardGridLayout->setColumnStretch(0, 1);
+    mCardGridLayout->setColumnStretch(1, span > 1 ? 1 : 0);
+    mCardGridLayout->setRowStretch(0, 1);
+    // Track row 0 as the current stretch row so collapseExpandedCard()'s
+    // reflowCardGrid() call clears it before assigning the restored stretch
+    // row — otherwise row 0 keeps stretch 1 forever and the first card row
+    // grows past its original height on every collapse (SSO-26775).
+    mCardStretchRow = 0;
+}
+
 void ResourcesPage::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    const int cols = width() >= Dpi::scale(kTwoColumnThreshold) ? 2 : 1;
-    if (cols != mCardCols)
-        reflowCardGrid(cols);
+    updateCardGridForWidth();
 }
 
 void ResourcesPage::showEvent(QShowEvent *event)
@@ -354,9 +424,24 @@ void ResourcesPage::showEvent(QShowEvent *event)
     // Mirrors resizeEvent()'s reflow — a widget can receive its first real
     // geometry as part of becoming the stacked widget's current page without
     // a QResizeEvent ever firing.
+    updateCardGridForWidth();
+}
+
+void ResourcesPage::updateCardGridForWidth()
+{
     const int cols = width() >= Dpi::scale(kTwoColumnThreshold) ? 2 : 1;
-    if (cols != mCardCols)
+    if (cols == mCardCols)
+        return;
+
+    // SSO-26775 stage 2: a resize must not silently drop the expanded card
+    // back into the normal grid — re-span it across the new column count
+    // instead of reflowing every card.
+    if (mExpandedCard) {
+        mCardCols = cols;
+        placeExpandedCard();
+    } else {
         reflowCardGrid(cols);
+    }
 }
 
 void ResourcesPage::invalidateIOBaselines()

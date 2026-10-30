@@ -860,6 +860,23 @@ add_nexis_test(NAME ResourceHistoryPanelRangeTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-26775 stage 2: expanding a Resources card fullscreens it within the
+# grid — hides every sibling and re-spans the card across the current
+# column count, restoring the original layout exactly on collapse. Drives
+# the real expand checkbox and Live/History buttons (not the relayout
+# methods directly) through a real show()/expose cycle, same rationale as
+# DiskToolsPageTests' modeBar_* cases. Links against nexis-gui like
+# RollingSeriesTests above.
+add_nexis_test(NAME ResourcesCardExpandTests
+  SOURCES
+    managers/test_resources_card_expand.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Pages/Resources"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3365: FileSearchService — guard the UI-thread delete/trash path. Links
 # against nexis-gui because FileSearchService lives in the GUI library.
 add_nexis_test(NAME FileSearchServiceTests

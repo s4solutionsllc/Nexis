@@ -194,31 +194,18 @@ void HistoryChart::setSeriesList(const QVector<QSplineSeries *> &seriesList)
 
 void HistoryChart::on_checkHistoryTitle_clicked(bool checked)
 {
-    // SSO-26719: the six subsystem cards now live inside a grid container
-    // (objectName "resourcesCardGrid"), not as direct children of the page's
-    // outer charts layout — fullscreen one card by hiding its siblings
-    // within that grid instead of every top-level section of the page (which
-    // would also hide the Live/History switch and the Disk Usage launcher).
-    QWidget *cardGrid = topLevelWidget()->findChild<QWidget*>("resourcesCardGrid");
-    if (!cardGrid)
-        return;
+    // SSO-26775 stage 2: ResourcesPage owns the card grid and does the
+    // actual expand/collapse relayout (hide siblings, re-span the expanded
+    // card, restore on collapse) — this chart only reports the request.
+    // Reaching into the grid directly from here (the old approach) left the
+    // expanded card in its original single cell instead of filling the
+    // space freed up by its hidden siblings.
+    emit expandToggled(checked);
+}
 
-    QLayout *grid = cardGrid->layout();
-    if (!grid)
-        return;
-
-    // An elevated chart (setElevated()) still IS the direct grid-layout
-    // item — no wrapper widget is introduced — so `this` already matches
-    // whatever itemAt(i)->widget() returns; walk up defensively in case a
-    // future wrapper is added around a chart.
-    QWidget *topLevelItem = this;
-    while (topLevelItem->parentWidget() && topLevelItem->parentWidget() != cardGrid)
-        topLevelItem = topLevelItem->parentWidget();
-
-    for (int i = 0; i < grid->count(); ++i) {
-        if (QWidget *w = grid->itemAt(i)->widget())
-            w->setVisible(!checked || w == topLevelItem);
-    }
+void HistoryChart::resetExpandState()
+{
+    ui->checkHistoryTitle->setChecked(false);
 }
 
 void HistoryChart::setHeaderValue(const QString &primary, const QString &secondary)

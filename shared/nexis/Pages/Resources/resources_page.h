@@ -76,7 +76,22 @@ private:
     // ~1100px, collapsing to 1 below so no card forces the page wider than
     // the window.
     void reflowCardGrid(int cols);
+    // Recomputes the 1-vs-2-column breakpoint and either reflows the grid
+    // (collapsed state) or re-spans the expanded card (SSO-26775 stage 2) —
+    // shared by resizeEvent() and showEvent() so an expanded card survives
+    // both a live resize and a first-show geometry change.
+    void updateCardGridForWidth();
     void setLiveModeActive(bool live);
+    // SSO-26775 stage 2: a card's expand checkbox reports its own state via
+    // HistoryChart::expandToggled(); ResourcesPage owns the grid and does
+    // the actual relayout here, not the chart.
+    void onCardExpandToggled(QWidget *card, bool expanded);
+    void expandCard(QWidget *card);
+    void collapseExpandedCard();
+    // Re-spans mExpandedCard across every current column at grid (0,0) and
+    // gives it the stretch factor that would otherwise go to the trailing
+    // empty row, so it fills the space freed up by its hidden siblings.
+    void placeExpandedCard();
     // Disk I/O and CPU headers each fold in a second, independently-cadenced
     // signal (30s disk-health poll; Linux-only RAPL poll) alongside the
     // fast-tick rate/percent — these re-render from the last known value of
@@ -145,6 +160,10 @@ private:
     QList<QWidget*> mCardOrder;
     int mCardCols = 0;
     int mCardStretchRow = -1;
+    // SSO-26775 stage 2: non-null while a card is fullscreened within the
+    // grid. Only one card can be expanded at a time — every sibling is
+    // hidden while this is set, so no other card's checkbox is reachable.
+    QWidget *mExpandedCard = nullptr;
 
     DiskUsageLauncherWidget *mDiskLauncher;
 

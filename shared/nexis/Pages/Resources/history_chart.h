@@ -94,6 +94,18 @@ public:
     int addBodyPage(QWidget *widget);
     void setBodyPage(int index);
 
+    // SSO-26775 stage 2: programmatically clears the expand checkbox without
+    // emitting expandToggled() — setChecked() only fires clicked() on real
+    // user interaction, so ResourcesPage can force a card back to collapsed
+    // (e.g. leaving Live mode) without re-entering its own collapse path.
+    void resetExpandState();
+
+signals:
+    // Emitted on user interaction with the expand/fullscreen checkbox.
+    // ResourcesPage owns the grid, so it does the actual relayout — this
+    // chart only reports the request (see stage2-expand-spec, SSO-26775).
+    void expandToggled(bool expanded);
+
 private slots:
     void on_checkHistoryTitle_clicked(bool checked);
 
