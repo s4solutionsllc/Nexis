@@ -19,7 +19,7 @@ public:
 
     // Capacity-weighted average of per-disk used space, matching the
     // weighting HealthScoreCalculator's disk component uses (see
-    // MenuBarMonitor::onDiskUsageUpdated) but returning used% directly
+    // TrayHealthMonitor::onDiskUsageUpdated) but returning used% directly
     // rather than an inverted health score.
     static int aggregateDiskUsedPercent(const QList<Disk> &disks);
 

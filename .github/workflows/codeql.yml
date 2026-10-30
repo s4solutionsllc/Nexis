@@ -81,6 +81,12 @@ jobs:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
           queries: security-and-quality
+          # merge_group runs land this container job on an ephemeral
+          # gh-readonly-queue ref; codeql-action's workspace auto-detection
+          # loses track of the checkout root under that event + container
+          # combo ("is not in the work tree of a git repository"), so pin it
+          # explicitly (SSO-26762 merge-queue CodeQL flake).
+          checkout_path: ${{ github.workspace }}
 
       - name: Build (manual)
         run: |
@@ -91,3 +97,4 @@ jobs:
         uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           category: "/language:${{ matrix.language }}"
+          checkout_path: ${{ github.workspace }}

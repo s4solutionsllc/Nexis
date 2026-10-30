@@ -6,6 +6,14 @@
 #include "utilities.h"
 #include <QStyle>
 
+namespace {
+// SSO-26775: header row (row 0) columns are accent bar, title, spacer,
+// optional per-card toggle, hero value, expand checkbox — rows below it
+// (extrasRow, body stack) must span all of them to reach the card's full
+// width instead of stopping short at the toggle column.
+constexpr int kHeaderColumnCount = 6;
+}
+
 HistoryChart::~HistoryChart()
 {
     delete ui;
@@ -84,7 +92,7 @@ void HistoryChart::init()
     // status line folded in above the body); the body itself moves to row 2.
     mBodyStack = new QStackedWidget(this);
     mBodyStack->addWidget(mChartView);
-    ui->layoutHistoryChart->addWidget(mBodyStack, 2, 0, 1, 4);
+    ui->layoutHistoryChart->addWidget(mBodyStack, 2, 0, 1, kHeaderColumnCount);
 
     // Header row originally ended at the fullscreen checkbox in column 3;
     // move it out to column 5 so an optional per-card toggle (column 3) and
@@ -319,7 +327,7 @@ QWidget *HistoryChart::extrasRow()
         l->setContentsMargins(0, 2, 0, 2);
         l->setSpacing(4);
         mExtrasRow->setVisible(false);
-        ui->layoutHistoryChart->addWidget(mExtrasRow, 1, 0, 1, 4);
+        ui->layoutHistoryChart->addWidget(mExtrasRow, 1, 0, 1, kHeaderColumnCount);
     }
     return mExtrasRow;
 }

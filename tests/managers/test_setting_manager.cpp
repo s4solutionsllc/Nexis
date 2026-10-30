@@ -43,6 +43,13 @@ private slots:
     // SSO-25782 — browser deep-clean cookie keep-list.
     void cookieKeepDomains_defaultsToEmpty();
     void cookieKeepDomains_roundTrips();
+
+    // SSO-26762 — retired MenuBarMonitorEnabled migrates once into the
+    // cross-platform TrayHealthScoreEnabled. Pure decision function, tested
+    // directly like migrateStartPageId above.
+    void migrateMenuBarMonitorEnabled_legacyOnMigratesOnce();
+    void migrateMenuBarMonitorEnabled_legacyOffStaysOff();
+    void migrateMenuBarMonitorEnabled_existingChoiceNeverOverwritten();
 };
 
 void TestSettingManager::initTestCase()
@@ -185,6 +192,29 @@ void TestSettingManager::cookieKeepDomains_roundTrips()
 
     SettingManager::ins()->setCleanerCookieKeepDomains({});
     QVERIFY(SettingManager::ins()->getCleanerCookieKeepDomains().isEmpty());
+}
+
+void TestSettingManager::migrateMenuBarMonitorEnabled_legacyOnMigratesOnce()
+{
+    // Fresh install from a build that had the legacy macOS-only setting on,
+    // and never touched the new cross-platform one: migrate it on.
+    QCOMPARE(SettingManager::migrateMenuBarMonitorEnabled(true, false, false), true);
+}
+
+void TestSettingManager::migrateMenuBarMonitorEnabled_legacyOffStaysOff()
+{
+    // Legacy setting present but off, new one never set: stays off (the
+    // default), not forced to any particular value by the legacy key.
+    QCOMPARE(SettingManager::migrateMenuBarMonitorEnabled(false, false, false), false);
+}
+
+void TestSettingManager::migrateMenuBarMonitorEnabled_existingChoiceNeverOverwritten()
+{
+    // Once TrayHealthScoreEnabled has an explicit value — the user's own
+    // choice, or a previous run's migration — the legacy key must never
+    // flip it again, in either direction.
+    QCOMPARE(SettingManager::migrateMenuBarMonitorEnabled(true, true, false), false);
+    QCOMPARE(SettingManager::migrateMenuBarMonitorEnabled(false, true, true), true);
 }
 
 QTEST_MAIN(TestSettingManager)

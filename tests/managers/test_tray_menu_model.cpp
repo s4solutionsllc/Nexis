@@ -94,6 +94,28 @@ private slots:
         QCOMPARE(trayMenuGroupTitle(QStringLiteral("MANAGE")), QStringLiteral("Manage"));
         QCOMPARE(trayMenuGroupTitle(QStringLiteral("SYSTEM")), QStringLiteral("System"));
     }
+
+    // SSO-26762: macOS never raises the window from a tray-icon activation —
+    // Qt reports every status-item click as Trigger even though a context
+    // menu is already shown, so raising there would pop the window alongside
+    // the menu. "Open Nexis" in the menu is the only click-path that raises it.
+    void activation_macNeverOpensWindow()
+    {
+        QVERIFY(!trayActivationOpensWindow(QSystemTrayIcon::Trigger, true));
+        QVERIFY(!trayActivationOpensWindow(QSystemTrayIcon::DoubleClick, true));
+        QVERIFY(!trayActivationOpensWindow(QSystemTrayIcon::Context, true));
+        QVERIFY(!trayActivationOpensWindow(QSystemTrayIcon::MiddleClick, true));
+    }
+
+    // Linux keeps the pre-existing split: left-click/double-click opens the
+    // window; right-click/middle-click show the menu only.
+    void activation_linuxOpensOnlyForTriggerAndDoubleClick()
+    {
+        QVERIFY(trayActivationOpensWindow(QSystemTrayIcon::Trigger, false));
+        QVERIFY(trayActivationOpensWindow(QSystemTrayIcon::DoubleClick, false));
+        QVERIFY(!trayActivationOpensWindow(QSystemTrayIcon::Context, false));
+        QVERIFY(!trayActivationOpensWindow(QSystemTrayIcon::MiddleClick, false));
+    }
 };
 
 QTEST_MAIN(TestTrayMenuModel)

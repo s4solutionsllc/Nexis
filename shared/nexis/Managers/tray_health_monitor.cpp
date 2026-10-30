@@ -11,7 +11,6 @@
 
 #include <QtConcurrent>
 #include <QPointer>
-#include <QMessageBox>
 
 TrayHealthMonitor::TrayHealthMonitor(QObject *parent) : QObject(parent)
 {
@@ -22,8 +21,7 @@ TrayHealthMonitor::~TrayHealthMonitor()
     setEnabled(false);
 
     // Backstop: block destruction until a detached clean worker that may
-    // still hold a QPointer to *this* has finished, mirroring
-    // MenuBarMonitor's destructor contract.
+    // still hold a QPointer to *this* has finished.
     mCleanFuture.waitForFinished();
 }
 
@@ -79,10 +77,9 @@ void TrayHealthMonitor::onDiskUsageUpdated(const QList<Disk> &disks)
 
 void TrayHealthMonitor::updateScoreText()
 {
-    // SSO-23854: same composite/label + format string as the macOS menu-bar
-    // surface (MenuBarFormatUtil::formatHealthTitle) and the Dashboard tile —
-    // temp/battery/SMART stay unavailable for the same reason MenuBarMonitor
-    // leaves them unavailable (see menu_bar_monitor.cpp).
+    // SSO-23854: same composite/label + format string as the Dashboard tile
+    // (MenuBarFormatUtil::formatHealthTitle) — temp/battery/SMART stay
+    // unavailable to keep this always-on background monitor cheap.
     const int score = mHealthCalculator.compositeScore();
     const QString label = mHealthCalculator.scoreLabel();
     emit scoreTextChanged(MenuBarFormatUtil::formatHealthTitle(score, label));
@@ -91,7 +88,7 @@ void TrayHealthMonitor::updateScoreText()
 void TrayHealthMonitor::startClean()
 {
     // SSO-23854: same CleanerService::safeCategories() set and QtConcurrent +
-    // QPointer + invokeMethod pattern as MenuBarMonitor::startClean().
+    // QPointer + invokeMethod pattern as MaintenanceWizardDialog::runChecks().
     if (mCleaning)
         return;
     mCleaning = true;
@@ -119,5 +116,5 @@ void TrayHealthMonitor::onCleanFinished(quint64 bytesFreed, int filesRemoved)
         ? tr("Freed %1 across %n item(s).", "", filesRemoved).arg(FormatUtil::formatBytes(bytesFreed))
         : tr("Nothing to clean — your system is already tidy.");
 
-    QMessageBox::information(nullptr, tr("Nexis"), message);
+    emit cleanCompleted(message);
 }
