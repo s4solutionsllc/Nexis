@@ -1,0 +1,1 @@
+Resources page cards: the metric/history body below each card's title row now spans the card's full width on macOS and Linux, instead of stopping short of the hero value and expand-checkbox columns (SSO-26775).
