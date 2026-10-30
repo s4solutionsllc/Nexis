@@ -124,7 +124,10 @@ jobs:
 
   build-macos:
     name: macOS (ARM64)
-    runs-on: macos-14
+    # macos-14 is in GitHub's scheduled runner-image brownout ahead of its
+    # 2026-11-02 retirement (actions/runner-images#13518), already causing
+    # immediate 0s job failures (SSO-26762 merge-queue flake).
+    runs-on: macos-15
 
     steps:
       - name: Checkout
