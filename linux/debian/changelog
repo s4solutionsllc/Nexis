@@ -1,3 +1,15 @@
+nexis (2.14.1-1) unstable; urgency=medium
+
+  * Bug-fix release: System Cleaner "Clean Selected" no longer prompts for
+    the admin password per stale snap revision (GH#550), the tray menu's
+    duplicate separator is fixed, and the Resources page gains a six-card
+    responsive grid with a Live/History switch plus several chart and
+    sampling fixes (network-rate underflow, OOM-kill UI stalls, Package
+    Power false zero on RAPL-restricted hosts). See CHANGELOG.md for full
+    details.
+
+ -- Luke Simpson <luke@s4solutions.ai>  Wed, 04 Nov 2026 00:00:00 +0000
+
 nexis (2.14.0-1) unstable; urgency=medium
 
   * New release: persistent CPU/load/memory resource history logging,
