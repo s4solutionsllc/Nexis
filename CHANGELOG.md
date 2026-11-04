@@ -7,6 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.14.1] - 2026-11-04
+
+### Changed
+- Resources page (SSO-26719): the 13 full-width, single-column cards are now
+  six subsystem cards — CPU, Load & Pressure, Memory, GPU, Disk I/O, Network —
+  in a responsive 2-column grid, each leading with a current-value header
+  instead of a verbose legend. Per-Core Detail is now a "Per-core" toggle on
+  the CPU card; Package Power (RAPL) and Disk Temperature show as values in
+  the CPU and Disk I/O headers; CPU Pressure Stall (PSI) and OOM kills show as
+  compact status lines on the Load & Pressure and Memory cards. A Live/History
+  switch replaces the always-visible persisted-history panel. The Disk Usage
+  Launcher is unchanged, below the grid.
+- Resources page (SSO-26720): a Live / History segmented control now separates
+  the 60-second live subsystem grid from the persisted Resource History panel,
+  which previously sat in the middle of the same scroll with no signal that it
+  showed recorded, not live, data. History shows an explanatory empty state
+  with a link to Settings when recording is off (the default) instead of an
+  empty chart, and offers only the history ranges the configured retention can
+  actually fill — e.g. "30 d" is hidden once retention is 7 d. The last
+  selected mode is remembered across sessions, and switching modes never
+  resets the live buffers.
+- Resources page (SSO-26721): the Memory card now plots Used, Swap and one
+  platform series — Compressed on macOS, Cached on Linux — with the dropped
+  Wired/Active values shown in a header tooltip instead; Linux's Available
+  line is removed (it tracked close to the inverse of Used). The Load &
+  Pressure card's CPU Pressure Stall status line is replaced with charted
+  `some avg10` lines for CPU, memory and io pressure on a secondary axis
+  (Linux only, each line hides independently if its `/proc/pressure/*` file is
+  missing), and a dashed reference line marks the host's core count so load
+  average reads the same way `uptime`/`top` do regardless of core count.
+- Resources page docs (SSO-26722): the user guide and the public website
+  screenshot now match the six-card Live/History layout instead of the
+  retired twelve-tile page. The old `resource-monitor.png` screenshot, which
+  publicly showed the disk-I/O underflow bug ("Read: 16777216.0 TiB/s"), has
+  been replaced.
+- "Show health score and Clean Now" is now one setting on both platforms,
+  living in the same tray icon's menu (SSO-26762). macOS previously carried a
+  second, separate menu-bar icon for this; that icon is gone, and so is its
+  live score text next to the icon, since the shared tray icon can't show a
+  title — the score is still shown as the first menu row and the icon tooltip.
+  Anyone with the old macOS-only setting on gets it carried over once,
+  automatically.
+
+### Fixed
+- System Cleaner (SSO-26715): "Clean Selected" no longer prompts for the admin
+  password once per selected stale snap revision. Selecting multiple stale snap
+  revisions now removes them with a single elevated request, matching the
+  existing batched behavior for root-owned cache files.
+- Tray menu (SSO-26715): fixed a duplicate separator appearing directly under
+  "Open Nexis" when "Show health score and Clean Now in the tray menu" is
+  disabled in Settings. The separator that closed off the health score/Clean
+  Now block now hides along with those actions instead of always showing.
+- Resources page (SSO-26717): the Network history chart no longer latches at
+  an absurd ~16 EiB/s scale for the rest of the session when the RX/TX byte
+  counters step backwards (e.g. an interface re-enumerating). The rate is now
+  clamped to 0 for that sample instead of wrapping, using the same guard
+  already applied to the Disk Read/Write chart.
+- Resources page (SSO-26717): the OOM Kills card's `systemctl`/`journalctl`
+  sampling no longer blocks the UI thread for up to 5 seconds every 5 seconds
+  on Linux. The query now runs on a background worker, is skipped while a
+  previous one is still in flight, and polls at most once every 30 seconds.
+- Resources page (SSO-26717): the Package Power card no longer shows a
+  misleading "0.0 W" on Intel Linux hosts where `energy_uj` is root-only
+  (CVE-2020-8694). The card now correctly auto-hides when no RAPL zone can
+  actually be read, instead of reporting a false zero reading.
+- Resources page (SSO-26717): the Disk Read/Write and Network charts no
+  longer show one huge, meaningless spike right after the Resources page is
+  reopened or the app is restored from being minimized. The disk and network
+  counters are re-baselined on reactivation instead of plotting a delta that
+  spans however long sampling was actually paused.
+- Resources page history charts (SSO-26718): the X axis is now labeled
+  "Seconds" and plots real elapsed time. Previously it counted samples with no
+  label, which silently stopped matching the "last 60 seconds" it visually
+  implied whenever the sampling rate slowed down (on battery or while the
+  window was unfocused).
+- Resources page history charts (SSO-26718): the Disk I/O, Network, CPU Load
+  Average and CPU Pressure Stall charts' Y axes used to only ever grow — once a
+  usage spike happened, the axis stayed scaled to it for the rest of the
+  session even after activity dropped back down. The axis now shrinks back down
+  once the spike's data point ages out of the visible window.
+- macOS: clicking the tray icon could open the main window alongside its menu,
+  or crash the app, when minimized/hidden to tray (SSO-26761, SSO-26762). The
+  tray icon now shows only its menu on click; "Open Nexis" is the only action
+  that raises the window, and it — along with every other tray action that can
+  raise the window on macOS — now does so after the menu has closed instead of
+  mid-click. "Clean Now" completion no longer shows a parentless dialog while
+  the window is hidden; it reports through the tray notification instead.
+- Resources page cards: the metric/history body below each card's title row now spans the card's full width on macOS and Linux, instead of stopping short of the hero value and expand-checkbox columns (SSO-26775).
+- Resources page: expanding a card now hides every other card and grows the expanded card to fill the freed-up space, instead of leaving it in its original grid cell; collapsing restores the original layout (SSO-26775).
+
 ## [2.14.0] - 2026-10-29
 
 ### Added

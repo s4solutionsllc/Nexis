@@ -74,6 +74,26 @@
   </screenshots>
 
   <releases>
+    <release version="2.14.1" date="2026-11-04">
+      <description>
+        <p>Fixed:</p>
+        <ul>
+          <li>System Cleaner's "Clean Selected" no longer prompts for the admin password
+              once per selected stale snap revision; it now removes them with a single
+              elevated request.</li>
+          <li>Tray menu no longer shows a duplicate separator under "Open Nexis" when
+              health score display is disabled.</li>
+          <li>Resources page network, disk and power readings no longer show implausible
+              spikes, UI stalls, or false-zero values on certain hosts.</li>
+        </ul>
+        <p>Changed:</p>
+        <ul>
+          <li>Resources page now presents six subsystem cards in a responsive 2-column
+              grid with a Live/History switch, replacing the previous single-column
+              layout.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.14.0" date="2026-10-29">
       <description>
         <p>Added:</p>
