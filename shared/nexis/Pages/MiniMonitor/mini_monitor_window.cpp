@@ -40,6 +40,12 @@ MiniMonitorWindow::MiniMonitorWindow(QWidget *parent)
     : QWidget(parent, Qt::Window | Qt::WindowStaysOnTopHint)
 {
     setObjectName("miniMonitorWindow");
+    // Plain top-level QWidgets don't paint their QSS background by default;
+    // without this, the window falls back to native window-chrome painting
+    // (platform-dependent) and the themed text color can land on an
+    // unthemed background — unreadable on macOS even though the same QSS
+    // renders fine on Linux. See BUG-47 in CLAUDE.md.
+    setAttribute(Qt::WA_StyledBackground, true);
     setWindowTitle(tr("Nexis Mini Monitor"));
     setMinimumSize(200, 160);
     setMaximumSize(360, 320);
@@ -213,7 +219,9 @@ void MiniMonitorWindow::refreshThemeColors()
     if (auto *bar = findChild<QFrame *>("miniMonitorAccentBar"))
         bar->setStyleSheet(QStringLiteral("background-color: %1; border-radius: 1px;").arg(accent));
 
-    const QString metricStyle = QStringLiteral("font-family: %1;").arg(kMonoFontFamily);
+    const QString textColor = sv->value("@textPrimary").toString();
+    const QString metricStyle = QStringLiteral("font-family: %1; color: %2;")
+        .arg(kMonoFontFamily, textColor);
     mLblCpu->setStyleSheet(metricStyle);
     mLblMem->setStyleSheet(metricStyle);
     mLblDisk->setStyleSheet(metricStyle);
