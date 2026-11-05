@@ -396,6 +396,10 @@ QWidget {
     font-size: 10pt;
 }
 
+#miniMonitorWindow {
+    background-color: @cardBg;
+}
+
 QLabel[textRole="panelTitle"] {
     font-size: 11pt;
     font-weight: 600;
