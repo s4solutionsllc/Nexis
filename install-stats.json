@@ -3975,5 +3975,46 @@
         "jammy": 33
       }
     }
+  },
+  {
+    "date": "2026-11-05",
+    "totals": {
+      "all": 8766,
+      "byChannel": {
+        "deb-direct": 2231,
+        "appimage": 3951,
+        "dmg-direct": 530,
+        "brew": 199,
+        "apt": 842,
+        "aur": 1013
+      }
+    },
+    "latestVersion": {
+      "version": "2.14.1",
+      "byChannel": {
+        "deb-direct": 7,
+        "appimage": 42,
+        "dmg-direct": 7,
+        "brew": 4,
+        "apt": 0,
+        "aur": 48
+      }
+    },
+    "aur": {
+      "votes": 3,
+      "popularity": 0.331105
+    },
+    "detail": {
+      "appimageByArch": {
+        "x86_64": 3374,
+        "arm64": 577
+      },
+      "aptBySeries": {
+        "resolute": 413,
+        "questing": 39,
+        "noble": 356,
+        "jammy": 34
+      }
+    }
   }
 ]
