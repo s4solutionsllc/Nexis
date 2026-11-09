@@ -217,10 +217,9 @@ This extends the global Phase 3 workflow.
 
 ## graphify
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+Nexis is indexed in the central S4 knowledge graph (`graphify-service`, rebuilt every 6h from the default branch), exposed as the `graphify` MCP server. There is no local `graphify-out/`.
 
 Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- For "where is X / what calls X / how does A reach B" questions, query the graph before grepping: `query_graph` (use a small `depth` and a specific question), `get_node`/`get_neighbors` for a known symbol, `shortest_path` for relationships.
+- The graph merges several repos and results don't carry a repo name. Trust only nodes whose `src` path exists in this repo (`shared/`, `src/`, `tests/`, `docs/`, ...), and ignore the others.
+- The graph can lag `HEAD` by up to 6h. Read the actual files before editing.
