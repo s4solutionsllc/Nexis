@@ -4,6 +4,8 @@
 #include "nvml_process_sampler.h"
 #include "proc_info_parser.h"
 
+#include <Utils/process_cpu_util.h>
+
 #include <QByteArray>
 #include <QDateTime>
 #include <QDebug>
@@ -243,7 +245,8 @@ QList<Process> ProcessInfoLinux::collectProcesses()
         proc.setGroup(sufields.hasGid ? lookupGid(static_cast<gid_t>(sufields.gid))
                                       : QStringLiteral("?"));
 
-        // %CPU — delta in clock ticks over delta wall seconds.
+        // %CPU — delta in clock ticks over delta wall seconds, as a share of
+        // the whole machine (see ProcessCpuUtil).
         const quint64 cpuTotal = sf.utime + sf.stime;
         activeCpuPids.insert(pid);
         double pcpu = 0.0;
@@ -252,7 +255,9 @@ QList<Process> ProcessInfoLinux::collectProcesses()
             const quint64 prev = prevIt.value();
             if (cpuTotal >= prev) {
                 const double deltaTicks = static_cast<double>(cpuTotal - prev);
-                pcpu = (deltaTicks / static_cast<double>(mClkTck)) / cpuElapsedSec * 100.0;
+                pcpu = ProcessCpuUtil::toSystemPercent(
+                    (deltaTicks / static_cast<double>(mClkTck)) / cpuElapsedSec * 100.0,
+                    ProcessCpuUtil::logicalCpuCount());
             }
         }
         mPrevCpuTotal.insert(pid, cpuTotal);
