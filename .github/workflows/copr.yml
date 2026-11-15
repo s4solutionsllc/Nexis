@@ -112,7 +112,11 @@ jobs:
         with:
           name: srpm
           path: ~/rpmbuild/SRPMS/*.src.rpm
-          retention-days: 1
+          # A tag-push publish waits on the `copr-publish` environment for up
+          # to 30 days; the artifact must outlive that wait or the publish job
+          # fails with "Artifact not found" once approved (SSO-27419).
+          # Validation runs are never approved, so they keep the 1-day cap.
+          retention-days: ${{ github.event_name == 'push' && 30 || 1 }}
 
   publish-copr:
     name: Publish to COPR
