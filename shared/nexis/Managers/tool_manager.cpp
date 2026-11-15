@@ -51,6 +51,11 @@ ToolManager *ToolManager::ins()
 /*
  * Services
  */
+bool ToolManager::servicesSupported() const
+{
+    return mServiceTool->isSupported();
+}
+
 QList<Service> ToolManager::getServices() const
 {
     return mServiceTool->getServices();

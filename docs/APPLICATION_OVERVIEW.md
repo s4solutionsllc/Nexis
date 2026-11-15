@@ -413,7 +413,7 @@ Manage system services (daemons).
 - Service list with status shown on the shared status-pill recipe (neutral track, `@successColor`/`@tertiaryText` text)
 - Status filters: Running/Not Running, Enabled/Disabled
 - Actions: Start/Stop service, Enable/Disable auto-start (all require sudo)
-- Linux: `systemctl` for systemd services
+- Linux: `systemctl` for systemd services. When the host was not booted with systemd (`/run/systemd/system` absent, e.g. Devuan) `ServiceTool::isSupported()` is false and the page shows a "Services requires systemd" empty state with the filters disabled instead of querying `systemctl` (SSO-27435)
 - macOS: `launchctl` for launchd jobs (`ServiceToolMacOS`, reworked in SSO-25782). The list is every plist in `~/Library/LaunchAgents`, `/Library/LaunchAgents` and `/Library/LaunchDaemons` (by its `Label`, not its file name) plus any other agent loaded in the user's session, so stopped and disabled jobs are listed too. Apple's own jobs and launchd's per-launch `application.*` entries are hidden. The description is the job's program path. Startup state comes from `launchctl print-disabled` (falling back to the plist's `Disabled` key); running state from the job's PID / `launchctl print`.
 - macOS toggles act in the job's own launchd domain: agents in `gui/<uid>` with no password prompt, daemons in `system` behind the admin prompt. Startup uses `enable` / `disable` and does not start or stop the job; Running uses `bootstrap` + `kickstart` to start and `bootout` to stop.
 - Toggles run off the UI thread on both platforms; the switch is locked until the service's real state has been read back.

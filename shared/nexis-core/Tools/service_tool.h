@@ -21,6 +21,10 @@ class NEXISCORESHARED_EXPORT ServiceTool
 public:
     virtual ~ServiceTool() = default;
 
+    // False when the host has no service manager Nexis can drive (e.g. a
+    // Linux install booted with sysvinit/OpenRC, as on Devuan).
+    virtual bool isSupported() const { return true; }
+
     virtual QList<Service> getServices() = 0;
     virtual bool serviceIsActive(const QString &serviceName) = 0;
     virtual bool changeServiceStatus(const QString &sname, bool status) = 0;
