@@ -12,6 +12,8 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # issues: write opens/comments/closes the crowdin-sync-failing alert;
+  # actions: read lets it list prior runs of this workflow.
   issues: write
   actions: read
 
