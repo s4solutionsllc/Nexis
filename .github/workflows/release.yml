@@ -295,6 +295,136 @@ jobs:
           retention-days: 3
 
   # ============================================================================
+  # Debian 13 (trixie) .deb — x86_64 + ARM64 (SSO-27438). The Resolute-built
+  # .deb above cannot install on Debian: dpkg-shlibdeps pins the build host's
+  # Qt (`libqt6core6t64 (>= 6.10.2)`), and trixie ships Qt 6.8.2. Building the
+  # same linux/debian/ tree on debian:trixie pins `>= 6.8.2` instead, which
+  # satisfies Debian 13 and Devuan 6 (and Ubuntu releases that ship Qt >= 6.8
+  # as well, though those use the Resolute .deb). Debian 12 / Devuan 5 stay on
+  # the AppImage: bookworm's Qt 6.4 is below the 6.8 source floor.
+  # ============================================================================
+  build-linux-deb-debian13:
+    name: Debian 13 .deb (${{ matrix.deb-arch }})
+    runs-on: ${{ matrix.runner }}
+    # SSO-24907: blanket job-level guard, see build-linux.
+    timeout-minutes: 60
+    container:
+      # MCR mirror, not docker.io (SSO-25798) — same image as debian-lintian.yml.
+      image: mcr.microsoft.com/mirror/docker/library/debian:trixie
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            deb-arch: amd64
+          - runner: ubuntu-24.04-arm
+            deb-arch: arm64
+
+    steps:
+      - name: Install git and ca-certificates
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq git ca-certificates
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install build dependencies
+        run: |
+          apt-get install -y -qq \
+            build-essential \
+            cmake \
+            g++ \
+            libgl1-mesa-dev \
+            qt6-base-dev \
+            qt6-charts-dev \
+            qt6-svg-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            qt6-l10n-tools \
+            libqt6charts6-dev \
+            libqt6svg6-dev \
+            devscripts \
+            debhelper \
+            fakeroot \
+            xvfb
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # GH#222: same metainfo / debian-changelog tag sync as build-linux, so the
+      # packaged metadata matches the tag.
+      - name: Sync metainfo release version from tag
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          META="linux/metainfo/io.github.s4solutionsllc.Nexis.metainfo.xml"
+          TOP_VERSION=$(grep -oP '<release version="\K[^"]+' "$META" | head -1)
+          if [ "$TOP_VERSION" != "$TAG_VERSION" ]; then
+            echo "Inserting metainfo <release> $TAG_VERSION (top was ${TOP_VERSION:-none})"
+            DATE=$(date -u +%Y-%m-%d)
+            sed -i "s|<releases>|<releases>\n    <release version=\"${TAG_VERSION}\" date=\"${DATE}\"/>|" "$META"
+          else
+            echo "metainfo already at $TAG_VERSION — no sync needed"
+          fi
+
+      - name: Symlink debian packaging directory
+        run: ln -s linux/debian debian
+
+      - name: Sync debian changelog version from tag
+        run: |
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          CURRENT_DEB_VERSION=$(head -1 debian/changelog | grep -oP '\(\K[^)]+' | cut -d- -f1)
+          if [ "$CURRENT_DEB_VERSION" != "$TAG_VERSION" ]; then
+            echo "Updating debian/changelog from $CURRENT_DEB_VERSION to $TAG_VERSION"
+            sed -i "1s/($CURRENT_DEB_VERSION-/(${TAG_VERSION}-/" debian/changelog
+          fi
+
+      # Unit tests run inside dpkg-buildpackage via debian/rules
+      # override_dh_auto_test, so no separate ctest step here.
+      - name: Build .deb package
+        run: dpkg-buildpackage -us -uc -b
+        env:
+          APP_VERSION_OVERRIDE: ${{ steps.version.outputs.VERSION }}
+
+      - name: Collect and rename .deb file
+        id: deb
+        run: |
+          cp ../nexis_*.deb .
+          SRC=$(ls nexis_*.deb | head -1)
+          DEST=$(echo "$SRC" | sed 's/\.deb$/_debian13.deb/')
+          mv "$SRC" "$DEST"
+          echo "DEB_PATH=$DEST" >> "$GITHUB_OUTPUT"
+
+      # SSO-27438: prove the artifact installs from the stock trixie archive.
+      # The Qt -dev packages (and the runtime libs only they kept) are removed
+      # first, so apt must resolve Qt purely from the .deb's Depends.
+      - name: Smoke-test install on trixie
+        run: |
+          set -euo pipefail
+          DEB="${{ steps.deb.outputs.DEB_PATH }}"
+          dpkg-deb -f "$DEB" Depends
+          apt-get remove -y -qq --autoremove \
+            qt6-base-dev qt6-charts-dev qt6-svg-dev qt6-tools-dev qt6-tools-dev-tools \
+            qt6-l10n-tools libqt6charts6-dev libqt6svg6-dev
+          apt-get install -y ./"$DEB"
+          ldd /usr/bin/nexis | { ! grep 'not found'; }
+
+      - name: Upload Debian 13 .deb
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: linux-deb-debian13-${{ matrix.deb-arch }}
+          path: ${{ steps.deb.outputs.DEB_PATH }}
+          # Job-to-job handoff only; the durable copy is the GitHub Release asset.
+          retention-days: 3
+
+  # ============================================================================
   # AppImage (x86_64) — built on the ubuntu-22.04 runner (glibc 2.35) so the
   # AppImage launches on Ubuntu 22.04+ / Linux Mint 21+ (GH#195). The `.deb`
   # leg above builds on ubuntu:26.04 because it links that distro's system Qt
@@ -856,7 +986,7 @@ jobs:
     # a build-only dry-run — skipping this job means no GitHub Release is created
     # (so Homebrew/AUR never fire) and no tag exists (so the PPA never fires).
     if: github.event_name == 'push'
-    needs: [build-linux, build-appimage-x86_64, build-macos]
+    needs: [build-linux, build-linux-deb-debian13, build-appimage-x86_64, build-macos]
     runs-on: ubuntu-latest
     # SSO-24907: blanket job-level guard, see build-linux. Notarization already
     # carries its own `--timeout 30m` (release.yml, unchanged); this bounds
@@ -890,6 +1020,18 @@ jobs:
           name: linux-artifacts-arm64
           path: artifacts/linux-arm64
 
+      - name: Download Debian 13 .deb (amd64)
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: linux-deb-debian13-amd64
+          path: artifacts/debian13-amd64
+
+      - name: Download Debian 13 .deb (arm64)
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: linux-deb-debian13-arm64
+          path: artifacts/debian13-arm64
+
       - name: Download macOS artifacts
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -921,6 +1063,12 @@ jobs:
           echo "APPIMAGE_ARM64_PATH=$APPIMAGE_ARM64" >> "$GITHUB_OUTPUT"
           echo "APPIMAGE_ARM64_NAME=$(basename $APPIMAGE_ARM64)" >> "$GITHUB_OUTPUT"
           echo "BINARY_ARM64_PATH=$BINARY_ARM64" >> "$GITHUB_OUTPUT"
+
+          # Debian 13 (trixie) .deb — separate dirs so the Resolute `*.deb` finds above stay unambiguous
+          DEB_D13_X64=$(find artifacts/debian13-amd64 -name '*.deb' | head -1)
+          DEB_D13_ARM64=$(find artifacts/debian13-arm64 -name '*.deb' | head -1)
+          echo "DEB_D13_X64_PATH=$DEB_D13_X64" >> "$GITHUB_OUTPUT"
+          echo "DEB_D13_ARM64_PATH=$DEB_D13_ARM64" >> "$GITHUB_OUTPUT"
 
           # macOS (exclude the brew-named copy in case it ever lands in the
           # artifact dir — DMG_PATH must always be the direct-download DMG)
@@ -1010,7 +1158,8 @@ jobs:
             echo "#### Linux (x86_64)"
             echo "| Format | File | Description |"
             echo "|--------|------|-------------|"
-            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 26.04+ (Resolute LTS and newer). On 25.10 (Questing, EOL), Debian or Devuan use the AppImage. |"
+            echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_X64_PATH }})\` | For Ubuntu 26.04+ (Resolute LTS and newer). On 25.10 (Questing, EOL) use the AppImage. |"
+            echo "| \`.deb\` (Debian 13) | \`$(basename ${{ steps.files.outputs.DEB_D13_X64_PATH }})\` | For Debian 13 (trixie) and Devuan 6 — \`sudo apt install ./<file>\`. Debian 12 / Devuan 5 use the AppImage. |"
             echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_X64_PATH }})\` | Portable — runs on any Linux distro with glibc ≥ 2.35 (Ubuntu 22.04+, all Mint, Debian 12+, Devuan 5+) |"
             echo "| Binary | \`nexis\` | Standalone executable (requires Qt6 ≥ 6.10 runtime, as shipped on Ubuntu 26.04) |"
             echo ""
@@ -1018,6 +1167,7 @@ jobs:
             echo "| Format | File | Description |"
             echo "|--------|------|-------------|"
             echo "| \`.deb\` | \`$(basename ${{ steps.files.outputs.DEB_ARM64_PATH }})\` | For Ubuntu 26.04+ ARM64 (Resolute LTS and newer; Raspberry Pi 5, Jetson, Graviton) |"
+            echo "| \`.deb\` (Debian 13) | \`$(basename ${{ steps.files.outputs.DEB_D13_ARM64_PATH }})\` | For Debian 13 (trixie) and Devuan 6 ARM64 — \`sudo apt install ./<file>\` |"
             echo "| \`.AppImage\` | \`$(basename ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }})\` | Portable ARM64 — runs on any ARM64 Linux distro with glibc ≥ 2.35 |"
             echo "| Binary | \`nexis\` | Standalone ARM64 executable (requires Qt6 ≥ 6.10 runtime, as shipped on Ubuntu 26.04) |"
             echo ""
@@ -1086,9 +1236,11 @@ jobs:
           : > "$SUMS_FILE"
           for f in \
             "${{ steps.files.outputs.DEB_X64_PATH }}" \
+            "${{ steps.files.outputs.DEB_D13_X64_PATH }}" \
             "${{ steps.files.outputs.APPIMAGE_X64_PATH }}" \
             "${{ steps.files.outputs.BINARY_X64_PATH }}" \
             "${{ steps.files.outputs.DEB_ARM64_PATH }}" \
+            "${{ steps.files.outputs.DEB_D13_ARM64_PATH }}" \
             "${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}" \
             "${{ steps.files.outputs.BINARY_ARM64_PATH }}" \
             "${{ steps.files.outputs.DMG_PATH }}" \
@@ -1114,9 +1266,11 @@ jobs:
           body_path: /tmp/release_body.md
           files: |
             ${{ steps.files.outputs.DEB_X64_PATH }}
+            ${{ steps.files.outputs.DEB_D13_X64_PATH }}
             ${{ steps.files.outputs.APPIMAGE_X64_PATH }}
             ${{ steps.files.outputs.BINARY_X64_PATH }}
             ${{ steps.files.outputs.DEB_ARM64_PATH }}
+            ${{ steps.files.outputs.DEB_D13_ARM64_PATH }}
             ${{ steps.files.outputs.APPIMAGE_ARM64_PATH }}
             ${{ steps.files.outputs.BINARY_ARM64_PATH }}
             ${{ steps.files.outputs.DMG_PATH }}
