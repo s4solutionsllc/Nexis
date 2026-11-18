@@ -1,0 +1,1 @@
+Release notes, `RELEASE.md` and the getting-started guide no longer say the Linux `.deb` and standalone binary need only Qt 6.8; the shipped Ubuntu 26.04 artifacts are built against Qt 6.10 (`.deb` depends on `libqt6core6t64 (>= 6.10.2)`), so Debian 13 and other Qt 6.8 distros should use the AppImage. The Qt 6.8 LTS source-build floor is unchanged (SSO-27702).
