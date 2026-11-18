@@ -25,7 +25,7 @@ sudo apt update
 sudo apt install nexis
 ```
 
-Supports Ubuntu 26.04 (Resolute) on x86_64 and ARM64. Ubuntu 22.04, 24.04, and Linux Mint Zena aren't supported via the PPA (Nexis requires Qt 6.8 LTS, which isn't available in those repos) -- use the AppImage instead.
+Supports Ubuntu 26.04 (Resolute) on x86_64 and ARM64. Ubuntu 22.04, 24.04, and Linux Mint Zena aren't supported via the PPA (the PPA package is built against Ubuntu 26.04's Qt, which is newer than those repos ship) -- use the AppImage instead.
 
 **DNF / COPR (Fedora)**
 
