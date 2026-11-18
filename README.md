@@ -143,14 +143,20 @@ Also works with `paru` or any other AUR helper. Builds from source — requires 
 
 ### Install on Debian / Devuan
 
-There is no Debian apt repository or Debian-archive package yet, so on Debian and Devuan install the **AppImage** from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest). It bundles Qt 6 and runs on glibc 2.35 or newer, which covers every release below.
+There is no Debian apt repository or Debian-archive package yet. On Debian 13 and Devuan 6 install the native **`_debian13.deb`** from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest); on Debian 12 and Devuan 5 install the **AppImage**, which bundles Qt 6 and runs on glibc 2.35 or newer.
 
 | Distribution | Install with |
 |---|---|
-| Debian 13 (trixie) / Devuan 6 Excalibur | AppImage |
-| Debian 12 (bookworm) / Devuan 5 Daedalus | AppImage |
+| Debian 13 (trixie) / Devuan 6 Excalibur | `nexis_<version>-1_<arch>_debian13.deb` (amd64 or arm64) |
+| Debian 12 (bookworm) / Devuan 5 Daedalus | AppImage (bookworm's Qt 6.4 is below Nexis's Qt 6.8 floor) |
 
 ```bash
+# Debian 13 / Devuan 6 — apt resolves Qt 6.8 from the stock archive
+sudo apt install ./nexis_*_debian13.deb
+```
+
+```bash
+# AppImage (Debian 12 / Devuan 5, or any release if you prefer it).
 # AppImages need FUSE 2 to mount themselves.
 sudo apt install libfuse2t64        # Debian 13 / Devuan 6 (on Debian 12 / Devuan 5: libfuse2)
 
@@ -160,7 +166,7 @@ chmod +x Nexis-*-x86_64.AppImage
 
 Use the `aarch64` AppImage on ARM64. If you would rather not install FUSE, run `./Nexis-*.AppImage --appimage-extract-and-run`.
 
-> **Why not the `.deb`?** The `_ubuntu2604.deb` is built against Ubuntu 26.04's Qt 6.10 and depends on `libqt6core6t64 (>= 6.10.2)`. Debian 13 ships Qt 6.8 and Debian 12 ships Qt 6.4, so `apt install ./nexis_*.deb` fails with unmet dependencies on both (and on the Devuan releases built on them).
+> **Don't use the `_ubuntu2604.deb` on Debian.** It is built against Ubuntu 26.04's Qt 6.10 and depends on `libqt6core6t64 (>= 6.10.2)`, so `apt install` fails with unmet dependencies on Debian 12/13 and Devuan. The `_debian13.deb` is built on Debian 13 and pins Qt 6.8.
 
 **Devuan and other systems without systemd.** Nexis runs, but the parts that talk to systemd do nothing useful:
 

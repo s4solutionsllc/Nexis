@@ -157,6 +157,7 @@ Defined in `.github/workflows/release.yml`. As of v2.6.x (SSO-4093):
 |---|---|---|---|
 | `build-linux (x86_64)` | `ubuntu-24.04` (container `ubuntu:26.04`) | `.deb` (`_ubuntu2604.deb`), AppImage, raw binary `nexis-x86_64` | linuxdeploy + qt plugin (run with `APPIMAGE_EXTRACT_AND_RUN=1` — no `/dev/fuse` in container) |
 | `build-linux (arm64)` | `ubuntu-24.04-arm` (container `ubuntu:26.04`) | `.deb` (`_ubuntu2604.deb`), AppImage, raw binary `nexis-arm64` | linuxdeploy aarch64 (same FUSE workaround) |
+| `build-linux-deb-debian13 (amd64 / arm64)` | `ubuntu-24.04` / `ubuntu-24.04-arm` (container `debian:trixie`) | `.deb` (`_debian13.deb`) | Same `linux/debian/` tree as the Resolute `.deb`, built against trixie's Qt 6.8.2 so it installs on Debian 13 / Devuan 6 (SSO-27438). Smoke-tests `apt install ./…deb` on a clean trixie before uploading |
 | `build-macos` | `macos-14` (Apple Silicon) | `nexis.app`, `.dmg` | macdeployqt + notarized |
 | `release` | `ubuntu-latest` | GitHub Release, attaches all artifacts | extracts notes from `CHANGELOG.md` |
 
@@ -214,7 +215,8 @@ Downstream-triggered (run on success of `Release`):
 
 ### Currently supported targets
 
-- Linux x86_64 (Ubuntu 26.04 Resolute and newer) — `.deb` requires Qt 6.10 and is built on Resolute LTS; Debian 12/13 and Devuan use the AppImage (SSO-27435); see below
+- Linux x86_64 (Ubuntu 26.04 Resolute and newer) — `.deb` requires Qt 6.10 and is built on Resolute LTS; see below
+- Debian 13 (trixie) and Devuan 6, x86_64 and ARM64 — `_debian13.deb` built on `debian:trixie` (Qt 6.8.2) (SSO-27438). Debian 12 / Devuan 5 use the AppImage: bookworm's Qt 6.4 is below the 6.8 floor
 - Linux ARM64 (same matrix, for Pi 5 / Jetson / Graviton)
 - AppImage (any glibc-recent Linux, including Ubuntu 22.04/24.04, all Linux Mint versions, Debian 12+ and Devuan 5+)
 - macOS Apple Silicon (`arm64`) on macOS 14+ — **macOS Intel (`x86_64`) is sunset (SSO-3733 / FW-06)**, see below
@@ -523,9 +525,10 @@ VERSION=2.3.4
 gh release view "v${VERSION}" --repo s4solutionsllc/Nexis | grep -E '(deb|AppImage|dmg|nexis-|SHA256)'
 # Expect (single Resolute .deb per arch since SSO-4093; Noble/Plucky .debs gone;
 # install-tracking assets since the 2026-07-05 plan):
-#   2 deb (`_ubuntu2604.deb` x86_64/arm64) + 2 AppImage (x86_64/arm64) +
-#   2 raw binaries (nexis-x86_64/nexis-arm64) + 1 dmg + 1 brew.dmg +
-#   1 source tarball (nexis-X.Y.Z-source.tar.gz) + 1 SHA256SUMS = 10 artifacts.
+#   2 deb (`_ubuntu2604.deb` amd64/arm64) + 2 deb (`_debian13.deb` amd64/arm64) +
+#   2 AppImage (x86_64/arm64) + 2 raw binaries (nexis-x86_64/nexis-arm64) +
+#   1 dmg + 1 brew.dmg + 1 source tarball (nexis-X.Y.Z-source.tar.gz) +
+#   1 SHA256SUMS = 12 artifacts.
 
 # 2. Homebrew Cask was bumped.
 curl -fsSL https://raw.githubusercontent.com/s4solutionsllc/homebrew-nexis/main/Casks/nexis.rb \
