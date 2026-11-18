@@ -93,7 +93,7 @@ Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popu
 
 ## Downloads
 
-Install via [PPA](#install-via-ppa-ubuntu), [COPR](#install-via-copr-fedora), [AUR](#install-via-aur-arch-linux), or [Homebrew](#install-via-homebrew-macos) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
+Install via [PPA](#install-via-ppa-ubuntu), [COPR](#install-via-copr-fedora), [AUR](#install-via-aur-arch-linux), or [Homebrew](#install-via-homebrew-macos) for automatic updates (on Debian or Devuan, see [Install on Debian / Devuan](#install-on-debian--devuan)), or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
@@ -140,6 +140,37 @@ yay -S nexis
 ```
 
 Also works with `paru` or any other AUR helper. Builds from source — requires Qt6 development packages which are pulled in automatically. Updates are delivered via `yay -Syu`.
+
+### Install on Debian / Devuan
+
+There is no Debian apt repository or Debian-archive package yet, so on Debian and Devuan install the **AppImage** from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest). It bundles Qt 6 and runs on glibc 2.35 or newer, which covers every release below.
+
+| Distribution | Install with |
+|---|---|
+| Debian 13 (trixie) / Devuan 6 Excalibur | AppImage |
+| Debian 12 (bookworm) / Devuan 5 Daedalus | AppImage |
+
+```bash
+# AppImages need FUSE 2 to mount themselves.
+sudo apt install libfuse2t64        # Debian 13 / Devuan 6 (on Debian 12 / Devuan 5: libfuse2)
+
+chmod +x Nexis-*-x86_64.AppImage
+./Nexis-*-x86_64.AppImage
+```
+
+Use the `aarch64` AppImage on ARM64. If you would rather not install FUSE, run `./Nexis-*.AppImage --appimage-extract-and-run`.
+
+> **Why not the `.deb`?** The `_ubuntu2604.deb` is built against Ubuntu 26.04's Qt 6.10 and depends on `libqt6core6t64 (>= 6.10.2)`. Debian 13 ships Qt 6.8 and Debian 12 ships Qt 6.4, so `apt install ./nexis_*.deb` fails with unmet dependencies on both (and on the Devuan releases built on them).
+
+**Devuan and other systems without systemd.** Nexis runs, but the parts that talk to systemd do nothing useful:
+
+- **Services** shows "Services requires systemd" instead of a service list; start, stop, enable and disable are not available. Use `service` / `rc-update` / `update-rc.d` from a terminal.
+- **System Logs** needs `journalctl`; without journald the page reports that it could not start it.
+- **Boot analysis** and the **systemd-oomd** panel report that `systemd-analyze` / `systemd-oomd` are not available.
+- **SSD TRIM** can still run `fstrim` on demand, but its weekly-timer status and toggle are systemd-only and will read "disabled".
+- **Firewall** (ufw) status is read from `/etc/ufw/ufw.conf` when `systemctl` is absent.
+
+Everything else (dashboard, processes, resources, cleaner, uninstaller, disk tools, network) does not depend on systemd.
 
 ### Install via Homebrew (macOS)
 

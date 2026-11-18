@@ -6,6 +6,7 @@
 class ServiceToolLinux : public ServiceTool
 {
 public:
+    bool isSupported() const override;
     QList<Service> getServices() override;
     bool serviceIsActive(const QString &serviceName) override;
     bool changeServiceStatus(const QString &sname, bool status) override;
