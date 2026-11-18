@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  # issues: write opens/comments/closes the crowdin-sync-failing alert;
+  # actions: read lets it list prior runs of this workflow.
+  issues: write
+  actions: read
 
 jobs:
   crowdin-sync:
@@ -104,3 +108,46 @@ jobs:
           git add shared/translations/*.ts
           git commit -m 'chore(i18n): normalize with lupdate'
           git push origin l10n_crowdin_translations
+
+      # This job went red on every run from 2026-09-22 to 2026-11-15 (SSO-27417) and
+      # nobody noticed, so the third consecutive failure opens ONE tracking issue and
+      # later failures comment on it instead of opening more. It authenticates with the
+      # job's GITHUB_TOKEN, not the sync PAT, so it still works when that PAT is the
+      # thing that broke. The issue is closed again on the next successful run.
+      - name: Alert on repeated failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          prior=$(gh run list --workflow crowdin-sync.yml --branch native --status completed \
+            --limit 2 --json conclusion --jq '[.[] | select(.conclusion == "failure")] | length')
+          if [ "$prior" -lt 2 ]; then
+            echo "Fewer than three consecutive failures — not alerting yet."
+            exit 0
+          fi
+          gh label create crowdin-sync-failing --color B60205 \
+            --description 'Scheduled Crowdin Sync has failed repeatedly' 2>/dev/null || true
+          existing=$(gh issue list --state open --label crowdin-sync-failing \
+            --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "Crowdin Sync failed again: $RUN_URL"
+          else
+            gh issue create --label crowdin-sync-failing \
+              --title 'Crowdin Sync has failed three runs in a row' \
+              --body "The scheduled Crowdin Sync workflow has failed at least three consecutive runs, so Crowdin translations are not reaching the repo. Latest run: $RUN_URL. This issue is updated on further failures and closed automatically by the next successful run."
+          fi
+
+      - name: Close failure alert after recovery
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          for n in $(gh issue list --state open --label crowdin-sync-failing --json number --jq '.[].number'); do
+            gh issue close "$n" --comment "Crowdin Sync succeeded again: $RUN_URL"
+          done

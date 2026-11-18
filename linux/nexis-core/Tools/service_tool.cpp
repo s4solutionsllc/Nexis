@@ -4,8 +4,15 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QDir>
+#include <QFileInfo>
 
 // Service constructor is in shared/nexis-core/Tools/service_tool_shared.cpp
+
+bool ServiceToolLinux::isSupported() const
+{
+    // Same test as sd_booted(3): this directory exists only while systemd is PID 1.
+    return QFileInfo::exists(QStringLiteral("/run/systemd/system"));
+}
 
 QList<Service> ServiceToolLinux::getServices()
 {

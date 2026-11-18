@@ -15,7 +15,7 @@ This guide walks you through installation and introduces the main parts of the a
 
 ### Linux
 
-**APT (Ubuntu / Debian, recommended)**
+**APT (Ubuntu, recommended)**
 
 Install from the PPA to get automatic updates through `apt`:
 
@@ -36,7 +36,7 @@ sudo dnf install nexis
 
 Supports Fedora 43, Fedora 44, and Rawhide on x86_64. COPR is Fedora's community build service, not an official Fedora repository, so `dnf` will ask you to confirm before adding it.
 
-**Debian / Ubuntu (.deb, manual)**
+**Ubuntu 26.04+ (.deb, manual)**
 
 Download the latest `.deb` package from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases) and install it:
 
@@ -45,7 +45,7 @@ sudo dpkg -i nexis_*.deb
 sudo apt-get install -f   # resolve any missing dependencies
 ```
 
-**AppImage (any distro)**
+**AppImage (any distro, including Debian and Devuan)**
 
 Download the `.AppImage` file, make it executable, and run:
 
@@ -53,6 +53,8 @@ Download the `.AppImage` file, make it executable, and run:
 chmod +x Nexis-*.AppImage
 ./Nexis-*.AppImage
 ```
+
+> **Debian / Devuan:** the `.deb` needs Qt 6.10 and does not install on Debian 12/13 or Devuan 5/6 -- use the AppImage (install `libfuse2t64`, or `libfuse2` on Debian 12 / Devuan 5, first). Without systemd (Devuan) the Services page is unavailable. See the [README](https://github.com/s4solutionsllc/Nexis#install-on-debian--devuan) for details.
 
 > **Tip:** Move the AppImage to `~/Applications/` or `/opt/` so it has a permanent home. Most desktop environments let you right-click and "Allow executing as program" instead of using the terminal.
 

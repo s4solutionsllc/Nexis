@@ -214,9 +214,9 @@ Downstream-triggered (run on success of `Release`):
 
 ### Currently supported targets
 
-- Linux x86_64 (Ubuntu 26.04 Resolute and newer / Debian 13+) — `.deb` requires Qt 6.8 and is built on Resolute LTS; see below
+- Linux x86_64 (Ubuntu 26.04 Resolute and newer) — `.deb` requires Qt 6.10 and is built on Resolute LTS; Debian 12/13 and Devuan use the AppImage (SSO-27435); see below
 - Linux ARM64 (same matrix, for Pi 5 / Jetson / Graviton)
-- AppImage (any glibc-recent Linux, including Ubuntu 22.04/24.04 and all Linux Mint versions)
+- AppImage (any glibc-recent Linux, including Ubuntu 22.04/24.04, all Linux Mint versions, Debian 12+ and Devuan 5+)
 - macOS Apple Silicon (`arm64`) on macOS 14+ — **macOS Intel (`x86_64`) is sunset (SSO-3733 / FW-06)**, see below
 - AUR (Arch + derivatives)
 - Launchpad PPA (`resolute`; `plucky` and `questing` both dropped at EOL — see "Ubuntu 24.04 (Noble) dropped" below)

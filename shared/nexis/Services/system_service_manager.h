@@ -16,6 +16,7 @@ public:
     explicit SystemServiceManager(QObject *parent = nullptr,
                                   ToolManager *toolManager = nullptr);
 
+    bool isSupported() const;
     void fetchServices();
 
     const QList<Service> &services() const { return mServices; }
