@@ -415,6 +415,7 @@ jobs:
             qt6-l10n-tools libqt6charts6-dev libqt6svg6-dev
           apt-get install -y ./"$DEB"
           ldd /usr/bin/nexis | { ! grep 'not found'; }
+          QT_QPA_PLATFORM=offscreen nexis --version
 
       - name: Upload Debian 13 .deb
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
