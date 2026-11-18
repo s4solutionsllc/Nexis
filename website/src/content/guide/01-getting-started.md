@@ -54,7 +54,7 @@ chmod +x Nexis-*.AppImage
 ./Nexis-*.AppImage
 ```
 
-> **Debian / Devuan:** on Debian 13 / Devuan 6 install the `_debian13.deb` with `sudo apt install ./nexis_*_debian13.deb`. The `_ubuntu2604.deb` needs Qt 6.10 and does not install on Debian or Devuan. On Debian 12 / Devuan 5 use the AppImage (install `libfuse2`, or `libfuse2t64` on Debian 13 / Devuan 6, first). Without systemd (Devuan) the Services page is unavailable. See the [README](https://github.com/s4solutionsllc/Nexis#install-on-debian--devuan) for details.
+> **Debian / Devuan:** the `.deb` needs Qt 6.10 and does not install on Debian 12/13 or Devuan 5/6 -- use the AppImage (install `libfuse2t64`, or `libfuse2` on Debian 12 / Devuan 5, first). Without systemd (Devuan) the Services page is unavailable. See the [README](https://github.com/s4solutionsllc/Nexis#install-on-debian--devuan) for details.
 
 > **Tip:** Move the AppImage to `~/Applications/` or `/opt/` so it has a permanent home. Most desktop environments let you right-click and "Allow executing as program" instead of using the terminal.
 
