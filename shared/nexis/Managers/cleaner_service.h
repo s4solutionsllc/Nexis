@@ -5,6 +5,7 @@
 #include <QMap>
 #include <QFileInfoList>
 #include <QDateTime>
+#include <QString>
 #include <memory>
 
 class AppInUseGate;
@@ -204,10 +205,30 @@ protected:
     // and home root so no real browser has to be open.
     virtual std::unique_ptr<AppInUseGate> makeAppInUseGate() const;
 
+    // SSO-27097: run source recorded in the audit log for a clean that is not
+    // a named schedule — "headless" when this process was launched with a
+    // non-interactive CLI flag, "interactive" otherwise. Test seam.
+    virtual QString defaultRunSource() const;
+
 private:
     static CleanerService *instance;
 
     void logCleanResult(const CleanResult &result);
+
+    // SSO-27097: identifies one cleaning run in the lifecycle audit log.
+    // clean()/cleanSchedule() share one across every category they process;
+    // a direct cleanFiles()/cleanTrash() call is a run of its own.
+    struct AuditRun {
+        QString batchId;
+        QString runSource;
+        QString category;   // display name; empty when the caller has no category
+    };
+    AuditRun newAuditRun(const QString &runSource) const;
+    quint64 cleanFilesImpl(const QStringList &paths, int minFileAgeSecs,
+                           bool moveToTrashInstead, const AuditRun &run);
+    quint64 cleanTrashImpl(const AuditRun &run);
+    CleanResult cleanImpl(const QList<CleanCategory> &categories, int minFileAgeSecs,
+                          const QString &runSource);
     void persistScanTotals(const ScanResult &result);   // FR-114
 
     // WI-08: walk `dirPath` and remove entries that pass the exclusion + age

@@ -6,10 +6,13 @@
 #include <Managers/info_manager.h>
 #include <Managers/tool_manager.h>
 #include <Services/snapshot_service.h>
+#include <Tools/lifecycle_audit_log.h>
 #include <Tools/lifecycle_deny_list.h>
 #include <Utils/command_util.h>
 #include <Utils/file_util.h>
 #include <Utils/format_util.h>
+#include <Utils/headless_util.h>
+#include <QCoreApplication>
 #include <QDir>
 #include <QStandardPaths>
 #include <QStorageInfo>
@@ -17,11 +20,33 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QTextStream>
+#include <QUuid>
 #include <QDebug>
 
 #include <unistd.h>
 
 CleanerService *CleanerService::instance = nullptr;
+
+namespace {
+
+LifecycleAuditLog::Entry makeAuditEntry(const QString &batchId, const QString &runSource,
+                                        const QString &category, const QString &path,
+                                        const QString &canonicalPath,
+                                        LifecycleAuditLog::Action action)
+{
+    LifecycleAuditLog::Entry entry;
+    entry.timestamp = QDateTime::currentDateTimeUtc();
+    entry.batchId = batchId;
+    entry.originalPath = path;
+    entry.canonicalPath = canonicalPath;
+    entry.action = action;
+    entry.nexisVersion = QCoreApplication::applicationVersion();
+    entry.runSource = runSource;
+    entry.category = category;
+    return entry;
+}
+
+} // namespace
 
 CleanerService::CleanerService() : QObject(nullptr)
 {
@@ -356,6 +381,12 @@ QList<CleanerService::TrendPoint> CleanerService::getCategoryTrend(CleanCategory
 
 CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &categories, int minFileAgeSecs)
 {
+    return cleanImpl(categories, minFileAgeSecs, defaultRunSource());
+}
+
+CleanerService::CleanResult CleanerService::cleanImpl(const QList<CleanCategory> &categories,
+                                                      int minFileAgeSecs, const QString &runSource)
+{
     CleanResult result;
     result.timestamp = QDateTime::currentDateTime();
     ToolManager *tmr = ToolManager::ins();
@@ -365,11 +396,15 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
     // FR-112: take a snapshot before we start deleting, if the user opted in.
     maybeTakeSnapshot(categories);
 
+    // SSO-27097: every category of this clean lands in one audit-log run.
+    AuditRun run = newAuditRun(runSource);
+
     for (CleanCategory cat : categories) {
         quint64 catBytes = 0;
+        run.category = categoryName(cat);
 
         if (cat == TRASH) {
-            catBytes = cleanTrash();
+            catBytes = cleanTrashImpl(run);
             result.skipped.append(lastSkipped());
         } else if (cat == SNAP_FLATPAK_REVISIONS) {
             // Special-case: use package manager commands, not file deletion
@@ -386,7 +421,7 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
             // so the user can recover them if they were wrong about the age
             // threshold.
             const bool moveToTrashInstead = (cat == DOWNLOADS_AGED);
-            catBytes = cleanFiles(paths, minFileAgeSecs, moveToTrashInstead);
+            catBytes = cleanFilesImpl(paths, minFileAgeSecs, moveToTrashInstead, run);
             // SSO-3732 / FW-05: roll up the per-call policy-denial count so a
             // scheduled clean's CleanResult exposes it for the cleaning log
             // and any downstream reporting. The signal is already emitted
@@ -399,7 +434,20 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
         result.totalBytesFreed += catBytes;
     }
 
+    LifecycleAuditLog::prune();
     return result;
+}
+
+CleanerService::AuditRun CleanerService::newAuditRun(const QString &runSource) const
+{
+    return {QUuid::createUuid().toString(QUuid::WithoutBraces), runSource, QString()};
+}
+
+QString CleanerService::defaultRunSource() const
+{
+    return HeadlessUtil::isHeadlessArguments(QCoreApplication::arguments())
+        ? LifecycleAuditLog::RunSource::Headless
+        : LifecycleAuditLog::RunSource::Interactive;
 }
 
 QStringList CleanerService::trashRoots() const
@@ -450,16 +498,31 @@ QStringList CleanerService::getTrashRoots() const
 
 quint64 CleanerService::cleanTrash()
 {
+    AuditRun run = newAuditRun(defaultRunSource());
+    run.category = categoryName(TRASH);
+    const quint64 freed = cleanTrashImpl(run);
+    LifecycleAuditLog::prune();
+    return freed;
+}
+
+quint64 CleanerService::cleanTrashImpl(const AuditRun &run)
+{
     quint64 totalSizeBefore = 0;
     mLastSkipped.clear();
+    QList<LifecycleAuditLog::Entry> auditEntries;
 
-    auto emptyDir = [this](const QString &dirPath) {
+    // Bytes in entries skipForSafety() left in place, so the audit entry for
+    // a Trash root only claims what was actually emptied.
+    quint64 skippedBytes = 0;
+    auto emptyDir = [this, &skippedBytes](const QString &dirPath) {
         QDir dir(dirPath);
         if (!dir.exists())
             return;
         for (const QFileInfo &entry : dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
-            if (skipForSafety(entry.absoluteFilePath(), nullptr))
+            if (skipForSafety(entry.absoluteFilePath(), nullptr)) {
+                skippedBytes += FileUtil::getFileSize(entry.absoluteFilePath());
                 continue;
+            }
             if (entry.isSymLink()) {
                 QFile::remove(entry.absoluteFilePath());
             } else if (entry.isDir()) {
@@ -471,20 +534,50 @@ quint64 CleanerService::cleanTrash()
     };
 
     for (const QString &trashPath : trashRoots()) {
-        totalSizeBefore += FileUtil::getFileSize(trashPath);
+        const quint64 rootSize = FileUtil::getFileSize(trashPath);
+        totalSizeBefore += rootSize;
+        skippedBytes = 0;
 #ifdef Q_OS_MACOS
         emptyDir(trashPath);
 #else
         emptyDir(trashPath + "/files");
         emptyDir(trashPath + "/info");
 #endif
+        // Emptying Trash is permanent and not restorable, so it is recorded
+        // as one entry per Trash root rather than one per trashed item.
+        if (rootSize > skippedBytes) {
+            LifecycleAuditLog::Entry entry = makeAuditEntry(
+                run.batchId, run.runSource, run.category, trashPath,
+                QFileInfo(trashPath).canonicalFilePath(),
+                LifecycleAuditLog::Action::PermanentlyDeleted);
+            entry.sizeBytes = rootSize - skippedBytes;
+            auditEntries << entry;
+        }
     }
+
+    for (const SkippedPath &skip : std::as_const(mLastSkipped)) {
+        LifecycleAuditLog::Entry entry = makeAuditEntry(
+            run.batchId, run.runSource, run.category, skip.path,
+            QFileInfo(skip.path).canonicalFilePath(), LifecycleAuditLog::Action::Skipped);
+        entry.skipReason = skipReasonText(skip);
+        auditEntries << entry;
+    }
+    LifecycleAuditLog::appendAll(auditEntries);
 
     return totalSizeBefore;
 }
 
 quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
                                      bool moveToTrashInstead)
+{
+    const AuditRun run = newAuditRun(defaultRunSource());
+    const quint64 freed = cleanFilesImpl(paths, minFileAgeSecs, moveToTrashInstead, run);
+    LifecycleAuditLog::prune();
+    return freed;
+}
+
+quint64 CleanerService::cleanFilesImpl(const QStringList &paths, int minFileAgeSecs,
+                                       bool moveToTrashInstead, const AuditRun &run)
 {
     quint64 totalFreed = 0;
     QDateTime cutoff;
@@ -517,6 +610,12 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
     // silently, so "freed" must follow successful removal calls.
     QMap<QString, quint64> queuedSize;
 
+    // SSO-27097: what actually happened to each top-level path, for the audit
+    // log. Only confirmed removals land here, mirroring the bytes accounting.
+    QMap<QString, quint64> freedByPath;
+    QMap<QString, QString> trashedTo;
+    QMap<QString, QString> canonicalOf;
+
     for (const QString &path : paths) {
         QFileInfo fi(path);
 
@@ -528,6 +627,7 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
         // deleted, whichever branch below would have handled it.
         if (skipForSafety(path, gate.get()))
             continue;
+        canonicalOf.insert(path, fi.canonicalFilePath());
 
         // SSO-3370: for the recursive-delete path, a directory's own mtime
         // carries no useful signal — a cache dir we just wrote to looks
@@ -552,16 +652,23 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
                 continue;   // don't count bytes we didn't actually move.
             }
             totalFreed += size;
+            freedByPath.insert(path, size);
+            trashedTo.insert(path, trashedPath);
         } else if (fi.isSymLink()) {
             const quint64 size = FileUtil::getFileSize(path);
             const FileRemoval outcome = removeFile(path);
-            if (outcome == FileRemoval::Removed)
+            if (outcome == FileRemoval::Removed) {
                 totalFreed += size;
-            else if (outcome == FileRemoval::AccessDeniedByPolicy)
+                freedByPath.insert(path, size);
+            } else if (outcome == FileRemoval::AccessDeniedByPolicy) {
                 ++mLastAccessDeniedCount;
+            }
         } else if (fi.isDir()) {
-            totalFreed += removeDirContentsRespectingExclusions(
+            const quint64 dirFreed = removeDirContentsRespectingExclusions(
                 path, exclusions, minFileAgeSecs, cutoff, *gate);
+            totalFreed += dirFreed;
+            if (dirFreed > 0)
+                freedByPath.insert(path, dirFreed);
         } else {
             filesToRemove << path;
             queuedSize.insert(path, FileUtil::getFileSize(path));
@@ -591,6 +698,7 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
             const FileRemoval outcome = removeFile(p);
             if (outcome == FileRemoval::Removed) {
                 totalFreed += queuedSize.value(p, 0);
+                freedByPath.insert(p, queuedSize.value(p, 0));
             } else if (outcome == FileRemoval::AccessDeniedByPolicy) {
                 ++mLastAccessDeniedCount;
             } else {
@@ -602,10 +710,34 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
             // so we credit those bytes here. removeElevated() itself doesn't
             // return per-path status; pre-credit the queued size as before.
             removeElevated(rootPaths);
-            for (const QString &p : std::as_const(rootPaths))
+            for (const QString &p : std::as_const(rootPaths)) {
                 totalFreed += queuedSize.value(p, 0);
+                freedByPath.insert(p, queuedSize.value(p, 0));
+            }
         }
     }
+
+    // SSO-27097: one entry per top-level path touched — removed, or left in
+    // place by a safety gate. Metadata only; the log never sees file contents.
+    QList<LifecycleAuditLog::Entry> auditEntries;
+    for (auto it = freedByPath.cbegin(); it != freedByPath.cend(); ++it) {
+        const bool trashed = trashedTo.contains(it.key());
+        LifecycleAuditLog::Entry entry = makeAuditEntry(
+            run.batchId, run.runSource, run.category, it.key(), canonicalOf.value(it.key()),
+            trashed ? LifecycleAuditLog::Action::MovedToTrash
+                    : LifecycleAuditLog::Action::PermanentlyDeleted);
+        entry.trashDestination = trashedTo.value(it.key());
+        entry.sizeBytes = it.value();
+        auditEntries << entry;
+    }
+    for (const SkippedPath &skip : std::as_const(mLastSkipped)) {
+        LifecycleAuditLog::Entry entry = makeAuditEntry(
+            run.batchId, run.runSource, run.category, skip.path,
+            QFileInfo(skip.path).canonicalFilePath(), LifecycleAuditLog::Action::Skipped);
+        entry.skipReason = skipReasonText(skip);
+        auditEntries << entry;
+    }
+    LifecycleAuditLog::appendAll(auditEntries);
 
     // SSO-3732 / FW-05: surface the policy-denial signal once per cleanFiles
     // call so the cleaner page can post the actionable "Grant Full Disk
@@ -887,7 +1019,7 @@ CleanerService::CleanResult CleanerService::cleanSchedule(const QString &schedul
 
     emit cleaningStarted(scheduleName);
 
-    CleanResult result = clean(categories, minAge);
+    CleanResult result = cleanImpl(categories, minAge, LifecycleAuditLog::RunSource::Scheduled);
     result.scheduleName = scheduleName;
 
     found["lastRun"] = QDateTime::currentDateTime().toString(Qt::ISODate);
