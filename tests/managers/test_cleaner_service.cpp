@@ -8,6 +8,10 @@
 #include "Managers/app_in_use_gate.h"
 #include "Managers/cleaner_service.h"
 #include "Managers/setting_manager.h"
+#include <Tools/lifecycle_audit_log.h>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 // SSO-27095: a gate that resolves rules against a fake home and reports a
 // fixed set of processes as running, so no real browser has to be open.
@@ -48,8 +52,15 @@ public:
     bool pretendUserOwns = false;
     // SSO-27095: null = the production gate.
     std::function<std::unique_ptr<AppInUseGate>()> gateFactory;
+    // SSO-27097: empty = the production process-based answer.
+    QString runSourceOverride;
 
 protected:
+    QString defaultRunSource() const override
+    {
+        return runSourceOverride.isEmpty() ? CleanerService::defaultRunSource() : runSourceOverride;
+    }
+
     std::unique_ptr<AppInUseGate> makeAppInUseGate() const override
     {
         return gateFactory ? gateFactory() : CleanerService::makeAppInUseGate();
@@ -151,6 +162,19 @@ private slots:
     void cleanTrash_symlinkToDeniedLocation_skipped();
     void gate_symlinkIntoProfile_isJudgedByTarget();
     void gate_unrelatedPath_neverProbesProcesses();
+
+    // SSO-27097: audit-log entries written by cleaner runs.
+    void audit_cleanFiles_recordsRemovedPathsWithRunMetadata();
+    void audit_cleanFiles_separateCallsAreSeparateRuns();
+    void audit_cleanFiles_untouchedPathsWriteNothing();
+    void audit_cleanFiles_skippedPathRecordedWithReason();
+    void audit_cleanFiles_runningAppSkipRecordedWithAppName();
+    void audit_cleanFiles_directoryRecordedOnceWithFreedBytes();
+    void audit_cleanFiles_moveToTrash_recordsRestorableEntry();
+    void audit_cleanFiles_headlessSource();
+    void audit_cleanTrash_oneEntryPerRoot();
+    void audit_clean_interactiveRunSharesOneBatch();
+    void audit_cleanSchedule_recordsScheduledRun();
 };
 
 void TestCleanerService::initTestCase()
@@ -165,6 +189,7 @@ void TestCleanerService::cleanup()
     // Reset exclusions between tests so they do not leak across cases.
     TestableCleanerService cs;
     cs.saveExclusions({});
+    QFile::remove(LifecycleAuditLog::logFilePath());
 }
 
 void TestCleanerService::cleanFiles_excludedTopLevelFile_survives()
@@ -650,6 +675,255 @@ void TestCleanerService::gate_unrelatedPath_neverProbesProcesses()
     FakeAppInUseGate gate(home.path(), {"chrome", "slack", "code"}, &probeLog);
     QVERIFY(gate.runningOwnerOf(home.path() + "/Documents/a.txt").isEmpty());
     QVERIFY(probeLog.isEmpty());
+}
+
+void TestCleanerService::audit_cleanFiles_recordsRemovedPathsWithRunMetadata()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = writeFile(tmp.path() + "/a.log", "AAA");
+    const QString b = writeFile(tmp.path() + "/b.log", "BBBBB");
+
+    TestableCleanerService cs;
+    cs.pretendUserOwns = true;
+    cs.cleanFiles({a, b});
+
+    const QList<LifecycleAuditLog::Entry> entries = LifecycleAuditLog::readAll();
+    QCOMPARE(entries.size(), 2);
+    QCOMPARE(entries[0].batchId, entries[1].batchId);
+    QVERIFY(!entries[0].batchId.isEmpty());
+    quint64 total = 0;
+    for (const auto &e : entries) {
+        QCOMPARE(e.action, LifecycleAuditLog::Action::PermanentlyDeleted);
+        QCOMPARE(e.runSource, LifecycleAuditLog::RunSource::Interactive);
+        QVERIFY(e.trashDestination.isEmpty());
+        QVERIFY(e.originalPath == a || e.originalPath == b);
+        total += e.sizeBytes;
+    }
+    QCOMPARE(total, static_cast<quint64>(8));
+}
+
+void TestCleanerService::audit_cleanFiles_separateCallsAreSeparateRuns()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = writeFile(tmp.path() + "/a.log", "A");
+    const QString b = writeFile(tmp.path() + "/b.log", "B");
+
+    TestableCleanerService cs;
+    cs.pretendUserOwns = true;
+    cs.cleanFiles({a});
+    cs.cleanFiles({b});
+
+    QCOMPARE(LifecycleAuditLog::groupIntoRuns(LifecycleAuditLog::readAll()).size(), 2);
+}
+
+void TestCleanerService::audit_cleanFiles_untouchedPathsWriteNothing()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString excluded = writeFile(tmp.path() + "/keep.log", "keep");
+    const QString young = writeFile(tmp.path() + "/young.log", "young");
+
+    TestableCleanerService cs;
+    cs.pretendUserOwns = true;
+    setExclusions(&cs, {{Entry::File, excluded}});
+    cs.cleanFiles({excluded, young}, 3600);
+
+    QVERIFY(QFile::exists(excluded));
+    QVERIFY(QFile::exists(young));
+    QVERIFY(LifecycleAuditLog::readAll().isEmpty());
+}
+
+void TestCleanerService::audit_cleanFiles_skippedPathRecordedWithReason()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString link = tmp.path() + "/to-usr";
+    QVERIFY(QFile::link("/usr", link));
+
+    TestableCleanerService cs;
+    cs.cleanFiles({link});
+
+    const QList<LifecycleAuditLog::Entry> entries = LifecycleAuditLog::readAll();
+    QCOMPARE(entries.size(), 1);
+    QCOMPARE(entries[0].action, LifecycleAuditLog::Action::Skipped);
+    QCOMPARE(entries[0].originalPath, link);
+    QCOMPARE(entries[0].skipReason, CleanerService::skipReasonText(cs.lastSkipped().first()));
+    QVERIFY(!entries[0].skipReason.isEmpty());
+    QCOMPARE(entries[0].sizeBytes, static_cast<quint64>(0));
+    const LifecycleAuditLog::Run run = LifecycleAuditLog::groupIntoRuns(entries).first();
+    QCOMPARE(run.skippedCount, 1);
+    QCOMPARE(run.bytesFreed, static_cast<quint64>(0));
+}
+
+void TestCleanerService::audit_cleanFiles_runningAppSkipRecordedWithAppName()
+{
+    QTemporaryDir home;
+    QVERIFY(home.isValid());
+    const QString chromeCache = home.path() + "/.config/google-chrome/Default/Cache";
+    writeFile(chromeCache + "/data_0", "CHROME");
+    const QString other = writeFile(home.path() + "/.cache/other-app/blob", "x");
+
+    TestableCleanerService cs;
+    cs.pretendUserOwns = true;
+    const QString homePath = home.path();
+    cs.gateFactory = [homePath] {
+        return std::make_unique<FakeAppInUseGate>(homePath, QStringList{"chrome"});
+    };
+    cs.cleanFiles({chromeCache, other});
+
+    const LifecycleAuditLog::Run run =
+        LifecycleAuditLog::groupIntoRuns(LifecycleAuditLog::readAll()).first();
+    QCOMPARE(run.items.size(), 2);
+    QCOMPARE(run.removedCount, 1);
+    QCOMPARE(run.skippedCount, 1);
+    QCOMPARE(run.bytesFreed, static_cast<quint64>(1));
+    for (const auto &e : run.items) {
+        if (e.action == LifecycleAuditLog::Action::Skipped) {
+            QCOMPARE(e.originalPath, chromeCache);
+            QVERIFY2(e.skipReason.contains(QStringLiteral("Google Chrome")), qPrintable(e.skipReason));
+        }
+    }
+}
+
+void TestCleanerService::audit_cleanFiles_directoryRecordedOnceWithFreedBytes()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString dir = tmp.path() + "/cache";
+    writeFile(dir + "/one", "11");
+    writeFile(dir + "/nested/two", "222");
+
+    TestableCleanerService cs;
+    cs.pretendUserOwns = true;
+    cs.cleanFiles({dir});
+
+    const QList<LifecycleAuditLog::Entry> entries = LifecycleAuditLog::readAll();
+    QCOMPARE(entries.size(), 1);
+    QCOMPARE(entries[0].originalPath, dir);
+    QCOMPARE(entries[0].sizeBytes, static_cast<quint64>(5));
+}
+
+void TestCleanerService::audit_cleanFiles_moveToTrash_recordsRestorableEntry()
+{
+    // Same filesystem as the home Trash, so the move is a rename.
+    QTemporaryDir tmp(QDir::home().filePath(QStringLiteral(".nexis-audit-test-XXXXXX")));
+    if (!tmp.isValid())
+        QSKIP("home directory is not writable");
+    const QString file = writeFile(tmp.path() + "/old-download.bin", "DATA");
+
+    TestableCleanerService cs;
+    cs.cleanFiles({file}, 0, /*moveToTrashInstead=*/true);
+    if (QFile::exists(file))
+        QSKIP("QFile::moveToTrash is unavailable on this filesystem");
+
+    const QList<LifecycleAuditLog::Entry> entries = LifecycleAuditLog::readAll();
+    QCOMPARE(entries.size(), 1);
+    QCOMPARE(entries[0].action, LifecycleAuditLog::Action::MovedToTrash);
+    QCOMPARE(entries[0].originalPath, file);
+    QVERIFY(!entries[0].trashDestination.isEmpty());
+    QVERIFY(QFileInfo::exists(entries[0].trashDestination));
+
+    // Leave no trace in the real Trash of the machine running the test.
+    QFile::remove(entries[0].trashDestination);
+#ifndef Q_OS_MACOS
+    QFile::remove(QDir(QFileInfo(entries[0].trashDestination).absolutePath() + "/../info")
+                      .absoluteFilePath(QFileInfo(entries[0].trashDestination).fileName() + ".trashinfo"));
+#endif
+}
+
+void TestCleanerService::audit_cleanFiles_headlessSource()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = writeFile(tmp.path() + "/a.log", "A");
+
+    TestableCleanerService cs;
+    cs.pretendUserOwns = true;
+    cs.runSourceOverride = LifecycleAuditLog::RunSource::Headless;
+    cs.cleanFiles({a});
+
+    const QList<LifecycleAuditLog::Entry> entries = LifecycleAuditLog::readAll();
+    QCOMPARE(entries.size(), 1);
+    QCOMPARE(entries[0].runSource, LifecycleAuditLog::RunSource::Headless);
+}
+
+void TestCleanerService::audit_cleanTrash_oneEntryPerRoot()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+#ifdef Q_OS_MACOS
+    writeFile(tmp.path() + "/a.txt", "AAA");
+    writeFile(tmp.path() + "/b.txt", "BBBB");
+#else
+    writeFile(tmp.path() + "/files/a.txt", "AAA");
+    writeFile(tmp.path() + "/files/b.txt", "BBBB");
+#endif
+
+    TestableCleanerService cs;
+    cs.mockTrashRoot = tmp.path();
+    const quint64 before = cs.cleanTrash();
+
+    const QList<LifecycleAuditLog::Entry> entries = LifecycleAuditLog::readAll();
+    QCOMPARE(entries.size(), 1);
+    QCOMPARE(entries[0].action, LifecycleAuditLog::Action::PermanentlyDeleted);
+    QCOMPARE(entries[0].originalPath, tmp.path());
+    QCOMPARE(entries[0].category, CleanerService::categoryName(CleanerService::TRASH));
+    QCOMPARE(entries[0].sizeBytes, before);
+}
+
+void TestCleanerService::audit_clean_interactiveRunSharesOneBatch()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+#ifdef Q_OS_MACOS
+    writeFile(tmp.path() + "/a.txt", "AAA");
+#else
+    writeFile(tmp.path() + "/files/a.txt", "AAA");
+#endif
+
+    TestableCleanerService cs;
+    cs.mockTrashRoot = tmp.path();
+    cs.clean({CleanerService::TRASH});
+
+    const QList<LifecycleAuditLog::Run> runs =
+        LifecycleAuditLog::groupIntoRuns(LifecycleAuditLog::readAll());
+    QCOMPARE(runs.size(), 1);
+    QCOMPARE(runs[0].runSource, LifecycleAuditLog::RunSource::Interactive);
+    QCOMPARE(runs[0].items.first().category,
+             CleanerService::categoryName(CleanerService::TRASH));
+}
+
+void TestCleanerService::audit_cleanSchedule_recordsScheduledRun()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+#ifdef Q_OS_MACOS
+    writeFile(tmp.path() + "/a.txt", "AAA");
+#else
+    writeFile(tmp.path() + "/files/a.txt", "AAA");
+#endif
+
+    QJsonObject schedule;
+    schedule["id"] = QStringLiteral("audit-test-schedule");
+    schedule["name"] = QStringLiteral("Audit test");
+    schedule["categories"] = QJsonArray{static_cast<int>(CleanerService::TRASH)};
+    schedule["dryRunCompleted"] = true;
+    SettingManager *sm = SettingManager::ins();
+    const QString previous = sm->getSchedules();
+    sm->setSchedules(QString::fromUtf8(QJsonDocument(QJsonArray{schedule}).toJson(QJsonDocument::Compact)));
+
+    TestableCleanerService cs;
+    cs.mockTrashRoot = tmp.path();
+    cs.cleanSchedule(QStringLiteral("audit-test-schedule"));
+    sm->setSchedules(previous);
+
+    const QList<LifecycleAuditLog::Run> runs =
+        LifecycleAuditLog::groupIntoRuns(LifecycleAuditLog::readAll());
+    QCOMPARE(runs.size(), 1);
+    QCOMPARE(runs[0].runSource, LifecycleAuditLog::RunSource::Scheduled);
+    QCOMPARE(runs[0].removedCount, 1);
 }
 
 QTEST_MAIN(TestCleanerService)
