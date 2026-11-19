@@ -1,0 +1,12 @@
+{
+  "id": "cypress-binary",
+  "name": "Cypress Binary Cache",
+  "app": "Cypress",
+  "description": "Cypress app binaries downloaded by `npm install cypress`. Cypress will not run until the binary is installed again.",
+  "platforms": ["linux"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.cache/Cypress"
+  ],
+  "minAgeDays": 0
+}

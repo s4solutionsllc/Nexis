@@ -1,0 +1,16 @@
+{
+  "id": "cursor-cache",
+  "name": "Cursor Caches",
+  "app": "Cursor",
+  "description": "Editor cache, code cache, GPU cache and logs for Cursor.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Application Support/Cursor/Cache",
+    "$HOME/Library/Application Support/Cursor/CachedData",
+    "$HOME/Library/Application Support/Cursor/Code Cache",
+    "$HOME/Library/Application Support/Cursor/GPUCache",
+    "$HOME/Library/Application Support/Cursor/logs"
+  ],
+  "minAgeDays": 7
+}

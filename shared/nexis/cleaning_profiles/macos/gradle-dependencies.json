@@ -1,0 +1,12 @@
+{
+  "id": "gradle-dependencies",
+  "name": "Gradle Downloaded Dependencies",
+  "app": "Gradle",
+  "description": "Dependency jars Gradle downloaded; builds need a network round-trip to restore them.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.gradle/caches/modules-*"
+  ],
+  "minAgeDays": 14
+}

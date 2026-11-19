@@ -488,6 +488,16 @@ QStringList SettingManager::getCleanerCookieKeepDomains() const
     return mSettings->value(SettingKeys::CleanerCookieKeepDomains).toStringList();
 }
 
+void SettingManager::setDevArtifactRoots(const QStringList &roots)
+{
+    mSettings->setValue(SettingKeys::DevArtifactRoots, roots);
+}
+
+QStringList SettingManager::getDevArtifactRoots() const
+{
+    return mSettings->value(SettingKeys::DevArtifactRoots).toStringList();
+}
+
 // FR-112
 void SettingManager::setPreCleanSnapshotEnabled(bool value)
 {

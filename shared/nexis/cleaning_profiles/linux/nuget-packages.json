@@ -1,0 +1,12 @@
+{
+  "id": "nuget-packages",
+  "name": "NuGet Global Packages",
+  "app": "NuGet",
+  "description": "The global packages folder is where restored packages are installed, not a disposable cache; deleting it breaks offline builds until a restore.",
+  "platforms": ["linux"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.nuget/packages"
+  ],
+  "minAgeDays": 14
+}

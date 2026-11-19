@@ -108,16 +108,49 @@ active project is not wiped.
 
 Every profile must declare a safety class. The cleaner enforces it:
 
-- **`safe`** — profiles that touch only well-known cache, log, or
-  temp-file locations that an application is built to regenerate. These run
-  on every System Cleaner scan.
-- **`aggressive`** — profiles that touch locations where loss would force a
-  rebuild or re-download (Maven `~/.m2`, Cargo registry sources, Mail
-  Downloads, Xcode Archives, Dropbox `.dropbox.cache`). These are skipped
-  unless the user opted in via the System Cleaner's "Allow aggressive
-  profiles" toggle (`SettingManager::CleanerAggressiveProfilesEnabled`).
+- **`safe`** — every listed path is a cache, log, or temp location **that the
+  owning app rebuilds on its own**, with no action from the user and no loss of
+  settings, state, or the ability to work offline. These run on every System
+  Cleaner scan.
+- **`aggressive`** — anything else: loss would force a rebuild or re-download,
+  or removes the only local copy of something (Maven `~/.m2`, Cargo registry
+  sources, Gradle downloaded dependencies, NuGet global packages, Yarn berry's
+  global cache, Spotify offline downloads, Mail Downloads, Xcode Archives,
+  Dropbox `.dropbox.cache`). These are skipped unless the user opted in via the
+  System Cleaner's "Allow aggressive profiles" toggle
+  (`SettingManager::CleanerAggressiveProfilesEnabled`).
 
-When in doubt, choose `safe` and document the trade-off in `description`.
+**The rule is `safe` only if the owning app rebuilds it on its own.** When in
+doubt, choose `aggressive`. "A download cache" is not enough: a package store
+that projects load from (NuGet global packages, Yarn Plug'n'Play zips) or a
+folder that holds offline downloads is the only copy, not a cache. A profile
+that mixes both kinds of path is split in two rather than labelled by its
+riskiest path (see `gradle-cache` / `gradle-dependencies`).
+
+### Machine-checked policy
+
+`shared/nexis/cleaning_profiles/safety_policy.json` encodes the rule and is
+checked by `tests/policy/test_cleaning_profile_safety.py` (CTest
+`CleaningProfileSafety`, and the `Cleaning profile safety` job in the
+`Docs hygiene` workflow):
+
+- **Deny-list** — locations no bundled profile may touch, safe or aggressive:
+  credentials (`~/.ssh`, `~/.gnupg`, keyrings, Keychains…), personal folders,
+  installed toolchains and SDKs, editor user data, and the roots that hold many
+  apps' data (`~/.config`, `~/Library/Caches`…), which may not be deleted or
+  wildcarded as `<root>/*`.
+- **Dangerous classes** — path patterns for app settings, keys, history,
+  databases, installed toolchains and offline data. A `safe` profile path must
+  not match any of them; an `aggressive` profile may.
+
+A wildcard in a profile path only matches an identical wildcard in the policy
+(`~/.config/*/Cache` is not flagged for `~/.config/gcloud` just because `*` could
+expand to it); generic globs are reviewed on the generated page below.
+
+[`WHAT_NEXIS_TOUCHES.md`](WHAT_NEXIS_TOUCHES.md) lists every location the
+bundled profiles may delete and every deny-listed location. It is generated:
+run `python3 scripts/cleaning_profile_policy.py` after changing a profile or the
+policy. CI fails if it is stale.
 
 ## 5. Exclusions
 
@@ -134,15 +167,21 @@ of safety class. There is no separate exclusion list per profile — by design.
    override with their own JSON.
 2. Register the file in `shared/nexis/cleaning_profiles.qrc` so it's baked
    into the Qt resource bundle.
-3. Verify locally with `ctest --test-dir build -R CleaningProfiles`.
-4. Update `CHANGELOG.md` under `## [Unreleased]` if your addition is
-   user-visible.
+3. Run `python3 scripts/cleaning_profile_policy.py` to regenerate
+   [`WHAT_NEXIS_TOUCHES.md`](WHAT_NEXIS_TOUCHES.md), and commit it with the
+   profile. Choose `safe` only by the rule in §4.
+4. Verify locally with `ctest --test-dir build -R CleaningProfile` (loader
+   tests and the safety policy check).
+5. If your addition is user-visible, add a `changelog.d/` fragment (see
+   `changelog.d/README.md`). A profile you move from `safe` to `aggressive`
+   always counts as user-visible.
 
 `tests/managers/test_cleaning_profiles.cpp` covers the schema validator,
 the bundled+user merge, glob expansion, and the safe/aggressive gate. New
 profiles do not require a new test — the validator runs over every bundled
 file at load time and routes malformed files to
-`CleaningProfilesService::lastErrors()`.
+`CleaningProfilesService::lastErrors()`, and the safety policy check (§4) runs
+over every bundled profile.
 
 ## 7. Adding a user profile (end users)
 

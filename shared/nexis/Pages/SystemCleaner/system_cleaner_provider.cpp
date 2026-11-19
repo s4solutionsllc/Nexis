@@ -158,6 +158,7 @@ void SystemCleanerProvider::scan(
 void SystemCleanerProvider::beginExecution(const QList<TrustSafetyActionItem> &items, bool dryRun)
 {
     mBatchRemovedPaths.clear();
+    mBatchSkippedPaths.clear();
     mBatchRemovedSnapRevisions.clear();
 
     // GH#441: selecting several package-cache (or other root-owned) items and
@@ -184,6 +185,8 @@ void SystemCleanerProvider::beginExecution(const QList<TrustSafetyActionItem> &i
     }
     if (!paths.isEmpty()) {
         mCleanerService->cleanFiles(paths);
+        for (const CleanerService::SkippedPath &skip : mCleanerService->lastSkipped())
+            mBatchSkippedPaths.insert(skip.path, CleanerService::skipReasonText(skip));
         for (const QString &path : std::as_const(paths))
             mBatchRemovedPaths.insert(path);
     }
@@ -312,8 +315,11 @@ TrustSafetyActionResult SystemCleanerProvider::performItem(
             // report, don't trigger a second (possibly elevated) removal.
             result.succeeded  = !fi.exists();
             result.bytesFreed = result.succeeded ? item.estimatedSizeBytes : 0;
-            if (!result.succeeded)
-                result.error = QObject::tr("Failed to remove: %1").arg(path);
+            if (!result.succeeded) {
+                result.error = mBatchSkippedPaths.contains(path)
+                    ? QObject::tr("Skipped: %1").arg(mBatchSkippedPaths.value(path))
+                    : QObject::tr("Failed to remove: %1").arg(path);
+            }
         } else {
             // Route through CleanerService so exclusion enforcement and the
             // elevated-removal path (sudo rm -rf for system-owned files) are

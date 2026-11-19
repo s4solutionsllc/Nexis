@@ -1,0 +1,12 @@
+{
+  "id": "terraform-plugin-cache",
+  "name": "Terraform Plugin Cache",
+  "app": "Terraform",
+  "description": "Provider plugins in the shared plugin cache folder. `terraform init` downloads them again, so offline runs break until it has.",
+  "platforms": ["linux"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.terraform.d/plugin-cache"
+  ],
+  "minAgeDays": 0
+}

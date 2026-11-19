@@ -1,0 +1,26 @@
+{
+  "id": "vscode-forks-cache",
+  "name": "VS Code Fork Caches",
+  "app": "VSCodium, Windsurf, VS Code Insiders",
+  "description": "Editor cache, code cache, GPU cache and logs for VSCodium, Windsurf and Visual Studio Code Insiders.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.config/VSCodium/Cache",
+    "$HOME/.config/VSCodium/CachedData",
+    "$HOME/.config/VSCodium/Code Cache",
+    "$HOME/.config/VSCodium/GPUCache",
+    "$HOME/.config/VSCodium/logs",
+    "$HOME/.config/Windsurf/Cache",
+    "$HOME/.config/Windsurf/CachedData",
+    "$HOME/.config/Windsurf/Code Cache",
+    "$HOME/.config/Windsurf/GPUCache",
+    "$HOME/.config/Windsurf/logs",
+    "$HOME/.config/Code - Insiders/Cache",
+    "$HOME/.config/Code - Insiders/CachedData",
+    "$HOME/.config/Code - Insiders/Code Cache",
+    "$HOME/.config/Code - Insiders/GPUCache",
+    "$HOME/.config/Code - Insiders/logs"
+  ],
+  "minAgeDays": 7
+}

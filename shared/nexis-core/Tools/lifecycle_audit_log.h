@@ -14,14 +14,26 @@
 // file contents, so a leftover config that happens to contain a secret is
 // never captured by the log itself.
 //
-// This log is the intended data source for a future "Recently removed"
-// restore view; this header only covers the writer/reader/prune API.
+// This log is the data source for the "Recently removed" history view
+// (System Cleaner → History). System Cleaner runs (interactive, scheduled,
+// headless) write into it too, one entry per top-level path they touched, so
+// the view covers both lifecycle cleanup and cleaner runs.
 namespace LifecycleAuditLog {
 
 enum class Action {
     MovedToTrash,
     PermanentlyDeleted,
+    Skipped,   // cleaner left the path alone; skipReason says why
+    Restored,  // a MovedToTrash entry was put back (links via trashDestination)
 };
+
+// Values of Entry::runSource. Empty means a lifecycle-manager entry
+// (paired-uninstaller leftovers / orphan scanner), which has no "run".
+namespace RunSource {
+inline const QString Interactive = QStringLiteral("interactive");
+inline const QString Scheduled = QStringLiteral("scheduled");
+inline const QString Headless = QStringLiteral("headless");
+} // namespace RunSource
 
 struct NEXISCORESHARED_EXPORT Entry {
     QDateTime timestamp;
@@ -38,6 +50,39 @@ struct NEXISCORESHARED_EXPORT Entry {
     QString nexisVersion;
     QString processStopAction;    // optional; empty if no process was stopped
                                    // as part of this batch
+    QString runSource;            // System Cleaner runs only: a RunSource value
+    QString category;             // System Cleaner runs only: cleaner category
+                                   // display name the path belongs to
+    QString skipReason;           // populated only when action == Skipped
+};
+
+// One batch of entries as shown in the history view. Restored entries are
+// folded into `restoredDestinations` rather than listed as items.
+struct NEXISCORESHARED_EXPORT Run {
+    QString batchId;
+    QDateTime timestamp;          // earliest entry in the batch
+    QString runSource;
+    QList<Entry> items;           // everything except Restored entries
+    QStringList restoredDestinations;
+    quint64 bytesFreed = 0;       // MovedToTrash + PermanentlyDeleted
+    int removedCount = 0;
+    int skippedCount = 0;
+
+    bool isRestorable(const Entry &item) const;
+};
+
+struct NEXISCORESHARED_EXPORT RestoreResult {
+    enum class Status {
+        Restored,
+        NotRestorable,       // not a trashed entry, or not inside a Trash dir
+        TrashItemMissing,    // the Trash copy is gone (emptied / restored by hand)
+        DestinationExists,   // something already lives at the original path
+        Failed,              // the move itself failed
+    };
+    Status status = Status::Failed;
+    QString message;         // user-facing, translated
+
+    bool ok() const { return status == Status::Restored; }
 };
 
 // Appends one entry to the on-disk log (JSON Lines, one JSON object per
@@ -45,6 +90,10 @@ struct NEXISCORESHARED_EXPORT Entry {
 // (0600 / 0700) permissions on first write. Returns false if the entry
 // could not be written.
 NEXISCORESHARED_EXPORT bool append(const Entry &entry);
+
+// Appends several entries in one open/close of the log. Returns false if any
+// entry could not be written.
+NEXISCORESHARED_EXPORT bool appendAll(const QList<Entry> &entries);
 
 // Reads every entry currently on disk, oldest first. Malformed lines are
 // skipped rather than aborting the read.
@@ -54,6 +103,14 @@ NEXISCORESHARED_EXPORT QList<Entry> readAll();
 // recent `minRetainedCount` entries regardless of age — CISO §3 requires
 // "at minimum the last N operations or 90 days, whichever is longer".
 NEXISCORESHARED_EXPORT void prune(int minRetainedCount = 200);
+
+// Groups entries by batchId into runs, newest first.
+NEXISCORESHARED_EXPORT QList<Run> groupIntoRuns(const QList<Entry> &entries);
+
+// Moves a MovedToTrash entry back to its original path. Refuses — leaving
+// everything untouched — when the Trash copy is gone or something already
+// exists at the original path. On success appends a Restored entry.
+NEXISCORESHARED_EXPORT RestoreResult restore(const Entry &entry);
 
 // Path to the underlying log file
 // (QStandardPaths::AppDataLocation + "/lifecycle_audit.jsonl"). Exposed

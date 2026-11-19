@@ -1,0 +1,16 @@
+{
+  "id": "cursor-cache",
+  "name": "Cursor Caches",
+  "app": "Cursor",
+  "description": "Editor cache, code cache, GPU cache and logs for Cursor.",
+  "platforms": ["linux"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/.config/Cursor/Cache",
+    "$HOME/.config/Cursor/CachedData",
+    "$HOME/.config/Cursor/Code Cache",
+    "$HOME/.config/Cursor/GPUCache",
+    "$HOME/.config/Cursor/logs"
+  ],
+  "minAgeDays": 7
+}

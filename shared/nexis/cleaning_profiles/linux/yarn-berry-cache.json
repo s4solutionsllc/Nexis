@@ -1,0 +1,13 @@
+{
+  "id": "yarn-berry-cache",
+  "name": "Yarn Berry Global Cache",
+  "app": "Yarn",
+  "description": "Yarn berry's global package cache; Plug'n'Play projects load packages straight from it, so deleting it breaks them until `yarn install`.",
+  "platforms": ["linux"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.yarn/cache",
+    "$HOME/.yarn/berry/cache"
+  ],
+  "minAgeDays": 0
+}

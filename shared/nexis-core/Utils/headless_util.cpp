@@ -19,6 +19,13 @@ bool HeadlessUtil::isHeadlessArgv(int argc, char *const argv[])
     return false;
 }
 
+bool HeadlessUtil::isHeadlessArguments(const QStringList &arguments)
+{
+    return arguments.contains(QLatin1String("--clean")) ||
+           arguments.contains(QLatin1String("--check-threshold")) ||
+           arguments.contains(QLatin1String("--report"));
+}
+
 bool HeadlessUtil::shouldForceOffscreen(bool isHeadless, bool qpaPlatformAlreadySet)
 {
     return isHeadless && !qpaPlatformAlreadySet;

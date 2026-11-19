@@ -1,0 +1,190 @@
+{
+  "denyList": [
+    {
+      "id": "credentials",
+      "scope": "tree",
+      "description": "Keys, tokens and credential stores. No profile, safe or aggressive, may touch these.",
+      "paths": [
+        "$HOME/.ssh",
+        "$HOME/.gnupg",
+        "$HOME/.aws",
+        "$HOME/.kube",
+        "$HOME/.config/gcloud",
+        "$HOME/.password-store",
+        "$HOME/.local/share/keyrings",
+        "$HOME/Library/Keychains"
+      ]
+    },
+    {
+      "id": "personal-content",
+      "scope": "tree",
+      "description": "The user's own files and app-managed personal data.",
+      "paths": [
+        "$HOME/Documents",
+        "$HOME/Desktop",
+        "$HOME/Downloads",
+        "$HOME/Pictures",
+        "$HOME/Music",
+        "$HOME/Movies",
+        "$HOME/Videos",
+        "$HOME/Library/Mobile Documents",
+        "$HOME/Library/Mail",
+        "$HOME/Library/Messages"
+      ]
+    },
+    {
+      "id": "toolchains",
+      "scope": "tree",
+      "description": "Installed toolchains and SDKs. Removing them uninstalls the tool.",
+      "paths": [
+        "$HOME/.rustup",
+        "$HOME/.nvm",
+        "$HOME/.pyenv",
+        "$HOME/.rbenv",
+        "$HOME/.sdkman",
+        "$HOME/.asdf",
+        "$HOME/.volta",
+        "$HOME/.cargo/bin",
+        "$HOME/.gradle/wrapper",
+        "$HOME/.gradle/jdks",
+        "$HOME/Android/Sdk",
+        "$HOME/Library/Android/sdk",
+        "$HOME/Library/Developer/CoreSimulator/Devices"
+      ]
+    },
+    {
+      "id": "app-user-data",
+      "scope": "tree",
+      "description": "Editor and app settings, snippets, and local databases.",
+      "paths": [
+        "$HOME/.config/Code/User",
+        "$HOME/Library/Application Support/Code/User",
+        "$HOME/Library/Developer/Xcode/UserData",
+        "$HOME/.local/share/containers/storage/volumes",
+        "$HOME/.local/share/flatpak/app",
+        "$HOME/.var/app/*/config",
+        "$HOME/.var/app/*/data"
+      ]
+    },
+    {
+      "id": "container-roots",
+      "scope": "container",
+      "description": "Roots that hold many apps' data. A profile may reach into them but never delete them or a bare wildcard child of them.",
+      "paths": [
+        "$HOME",
+        "$HOME/.cache",
+        "$HOME/.config",
+        "$HOME/.local",
+        "$HOME/.local/share",
+        "$HOME/.var/app",
+        "$HOME/Library",
+        "$HOME/Library/Application Support",
+        "$HOME/Library/Caches",
+        "$HOME/Library/Containers",
+        "$HOME/Library/Logs",
+        "$HOME/Library/Preferences"
+      ]
+    }
+  ],
+  "dangerousClasses": [
+    {
+      "id": "app-settings",
+      "description": "Preferences and settings an app does not recreate to the user's liking.",
+      "patterns": [
+        "Preferences",
+        "Local State",
+        "settings.json",
+        "*.plist",
+        "registrymodifications.xcu"
+      ]
+    },
+    {
+      "id": "keys",
+      "description": "Keys, saved logins and session credentials.",
+      "patterns": [
+        ".ssh",
+        ".gnupg",
+        "keyrings",
+        "Keychains",
+        "Login Data",
+        "Cookies",
+        "*.pem",
+        "*.key",
+        "*.p12",
+        "*.kdbx"
+      ]
+    },
+    {
+      "id": "history",
+      "description": "Browsing, shell and recent-file history.",
+      "patterns": [
+        "History",
+        "Visited Links",
+        "Top Sites",
+        "places.sqlite",
+        "formhistory.sqlite",
+        "*_history",
+        "recently-used.xbel"
+      ]
+    },
+    {
+      "id": "databases",
+      "description": "Local databases and web storage that hold state, not derived data.",
+      "patterns": [
+        "*.sqlite",
+        "*.sqlite3",
+        "*.db",
+        "*.mdb",
+        "IndexedDB",
+        "Local Storage",
+        "Databases"
+      ]
+    },
+    {
+      "id": "toolchains",
+      "description": "Installed toolchains, SDKs, runtimes and VM or container state.",
+      "patterns": [
+        ".rustup",
+        ".nvm",
+        ".pyenv",
+        ".rbenv",
+        ".sdkman",
+        ".asdf",
+        ".volta",
+        ".cargo/bin",
+        ".gradle/wrapper",
+        ".gradle/jdks",
+        "toolchains",
+        "Toolchains",
+        "Android/Sdk",
+        "CoreSimulator/Devices",
+        "containers/storage/volumes",
+        ".wine/drive_c/Program Files*",
+        ".wine/drive_c/windows"
+      ]
+    },
+    {
+      "id": "offline-data",
+      "description": "Downloaded content or dependencies that are the only local copy: removing them breaks offline use until the user fetches them again.",
+      "patterns": [
+        ".m2/repository",
+        ".nuget/packages",
+        ".gradle/caches/modules-*",
+        ".cargo/registry",
+        ".cargo/git",
+        ".yarn/cache",
+        ".yarn/berry/cache",
+        ".pnpm-store",
+        "pnpm/store",
+        ".dropbox.cache",
+        "Mail Downloads",
+        "PersistentCache",
+        "Offline*",
+        "Spotify",
+        "spotify",
+        "Archives",
+        "*DeviceSupport"
+      ]
+    }
+  ]
+}

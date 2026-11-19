@@ -2,11 +2,10 @@
   "id": "nuget-cache",
   "name": "NuGet Cache",
   "app": "NuGet",
-  "description": "Downloaded .NET package payloads cached by NuGet/dotnet.",
+  "description": "HTTP and metadata cache used by NuGet/dotnet.",
   "platforms": ["linux"],
   "safety": "safe",
   "paths": [
-    "$HOME/.nuget/packages",
     "$HOME/.local/share/NuGet/v3-cache"
   ],
   "minAgeDays": 14

@@ -5,6 +5,9 @@
 #include <QMap>
 #include <QFileInfoList>
 #include <QDateTime>
+#include <memory>
+
+class AppInUseGate;
 
 class CleanerService : public QObject
 {
@@ -41,6 +44,18 @@ public:
         AccessDeniedByPolicy,    // platform sandbox/permission policy refused the op
     };
 
+    // SSO-27095: a path the cleaner refused to delete. Skips only ever remove
+    // work from a clean; they never change what a clean is allowed to delete.
+    struct SkippedPath {
+        enum Reason {
+            ProtectedLocation,   // canonical path is under a hard-denied OS root / credential store
+            AppRunning,          // the owning application is open right now
+        };
+        QString path;
+        Reason reason = ProtectedLocation;
+        QString app;             // owning application, set for AppRunning
+    };
+
     struct ScanResult {
         QMap<CleanCategory, QFileInfoList> categoryFiles;
         quint64 totalSize = 0;
@@ -57,6 +72,9 @@ public:
         // clean. Non-zero means the user needs to grant Full Disk Access for
         // the cleaner to make further progress on those paths.
         int accessDeniedPaths = 0;
+        // SSO-27095: paths skipped by the deny-list / app-in-use gates during
+        // this clean (interactive, scheduled and headless alike).
+        QList<SkippedPath> skipped;
     };
 
     static CleanerService *ins();
@@ -89,6 +107,15 @@ public:
     // clean() to populate CleanResult::accessDeniedPaths and by tests via the
     // accessNeededDetected() signal or this getter.
     int lastAccessDeniedCount() const { return mLastAccessDeniedCount; }
+
+    // SSO-27095: paths the most recent cleanFiles()/cleanTrash() call refused
+    // to delete. Reset on entry to each. Read by clean() to populate
+    // CleanResult::skipped and by the System Cleaner provider to explain why
+    // a selected item was left in place.
+    const QList<SkippedPath> &lastSkipped() const { return mLastSkipped; }
+
+    // SSO-27095: human-readable reason for a skip, shared by the UI and log.
+    static QString skipReasonText(const SkippedPath &skip);
 
     // SSO-3732 / FW-05: deep link the UI passes to QDesktopServices::openUrl()
     // to drop the user directly into the Privacy & Security pane where Full
@@ -172,6 +199,11 @@ protected:
     // the real home directory.
     virtual bool macOSContainerAccessProbablyDenied() const;
 
+    // SSO-27095: test seam for the running-app lookup. Production returns a
+    // gate that probes `pgrep -x`; tests return one with a fake process list
+    // and home root so no real browser has to be open.
+    virtual std::unique_ptr<AppInUseGate> makeAppInUseGate() const;
+
 private:
     static CleanerService *instance;
 
@@ -185,12 +217,22 @@ private:
         const QString &dirPath,
         const QList<ExclusionEntry> &exclusions,
         int minFileAgeSecs,
-        const QDateTime &cutoff);
+        const QDateTime &cutoff,
+        AppInUseGate &gate);
+
+    // SSO-27095: the safety gates every delete passes through — the shared
+    // canonical-path LifecycleDenyList and, when `gate` is given, the
+    // app-in-use check. Records the skip and returns true when `path` must
+    // not be deleted.
+    bool skipForSafety(const QString &path, AppInUseGate *gate);
 
     // SSO-3732: bumped by removeFile()'s AccessDeniedByPolicy return inside the
     // cleanFiles()/removeDirContentsRespectingExclusions() recursion. Reset at
     // the top of cleanFiles() so the value reflects the most recent call.
     int mLastAccessDeniedCount = 0;
+
+    // SSO-27095: reset at the top of cleanFiles()/cleanTrash().
+    QList<SkippedPath> mLastSkipped;
 };
 
 #endif // CLEANER_SERVICE_H

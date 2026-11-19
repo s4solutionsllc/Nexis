@@ -118,6 +118,15 @@ TrustSafetyActionResult BatchProvider::performItem(const TrustSafetyActionItem &
         result.error = QObject::tr("No cleaner is loaded for this item.");
         return result;
     }
+    // SSO-27095: the picker greys out an open app when it is shown, but the
+    // app can be launched during the review, so check again before deleting.
+    if (!dryRun && isRunning(interpreter->cleaner())) {
+        TrustSafetyActionResult result;
+        result.itemId = item.id;
+        result.error = QObject::tr("%1 is running — close it and clean again")
+                           .arg(interpreter->cleaner().label);
+        return result;
+    }
     return interpreter->performItem(item, dryRun);
 }
 

@@ -1,0 +1,12 @@
+{
+  "id": "playwright-browsers",
+  "name": "Playwright Browsers",
+  "app": "Playwright",
+  "description": "Browser builds downloaded by `playwright install`. Tests fail until the browsers are installed again.",
+  "platforms": ["linux"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.cache/ms-playwright"
+  ],
+  "minAgeDays": 0
+}
