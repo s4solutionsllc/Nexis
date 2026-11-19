@@ -31,6 +31,9 @@ public:
     QString getFilePath() const;
     void setFilePath(const QString &value);
 
+    // SSO-27149: marks the row as new/changed since the persistence baseline.
+    void setPersistenceBadge(const QString &text);
+
 private slots:
     void on_checkStartup_clicked(bool);
     void on_btnDeleteStartupApp_clicked();

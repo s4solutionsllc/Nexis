@@ -230,6 +230,7 @@ Manage applications that auto-start at login.
 - Delete autostart entries
 - Real app icons via `QIcon::fromTheme()` (Linux) or `QFileIconProvider` (macOS)
 - macOS automatically filters out `com.apple.*` system agents
+- **Persistence watch (SSO-27149):** report-only diff against a baseline (`persistence_baseline.json` in the app config dir) of every autostart `.desktop` / LaunchAgent / LaunchDaemon plist plus the user's crontab (new "Cron Jobs" section, read-only). The first scan adopts the current state silently; afterwards items that appeared get a NEW badge and items whose command changed a CHANGED badge, with a banner whose "Acknowledge" button moves the baseline forward. Enable/disable toggles do not count as changes; items added or edited through Nexis itself are acknowledged automatically; removed items drop out of the baseline so a re-appearance is flagged again. Nothing is blocked or removed and no privileged helper runs (`PersistenceWatch`, `shared/nexis-core/Utils/persistence_watch.*`).
 - **macOS:** Items grouped into three categories with section headers:
   - **User Agents** (`~/Library/LaunchAgents`) — full edit/toggle/delete control; enabled state sourced from `launchctl print-disabled user/<uid>`
   - **System Agents** (`/Library/LaunchAgents`) — read-only; shows plist path

@@ -4,7 +4,7 @@
 #include <QString>
 #include <QList>
 
-enum class LoginItemCategory { UserAgent, SystemAgent, SystemDaemon };
+enum class LoginItemCategory { UserAgent, SystemAgent, SystemDaemon, CronJob };
 
 struct StartupAppData {
     QString name;
