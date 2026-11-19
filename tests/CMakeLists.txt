@@ -126,6 +126,9 @@ add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 # runs on both platforms; platform-specific deny-list cases are #ifdef-gated
 # inside the test file itself.
 add_nexis_test(NAME LifecycleDenyListTests SOURCES core/test_lifecycle_deny_list.cpp)
+# SSO-27098: stale developer-project artifact scanner (age from real project
+# activity, in-use / git-operation skips, $HOME refusal, Trash-only deletes).
+add_nexis_test(NAME DevArtifactScannerTests SOURCES core/test_dev_artifact_scanner.cpp)
 # SSO-15566 / SSO-15373 CISO §4: pure decision logic for the running-process
 # warn/quit gate ahead of trashApps() — platform-neutral, runs everywhere.
 add_nexis_test(NAME RunningAppGateTests SOURCES core/test_running_app_gate.cpp)
