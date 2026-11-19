@@ -1,0 +1,12 @@
+{
+  "id": "uv-cache",
+  "name": "uv Cache",
+  "app": "uv",
+  "description": "Downloaded wheels, built sdists and index metadata from the uv Python package manager. Installed Python versions (uv python) are not touched.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/uv"
+  ],
+  "minAgeDays": 0
+}

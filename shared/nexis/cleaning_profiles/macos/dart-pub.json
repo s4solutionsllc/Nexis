@@ -1,0 +1,14 @@
+{
+  "id": "dart-pub-cache",
+  "name": "Dart / Flutter Pub Cache",
+  "app": "Dart, Flutter",
+  "description": "Hosted and git packages downloaded by `pub get`. Globally activated tools (global_packages, bin) and the Flutter SDK are not touched.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.pub-cache/hosted",
+    "$HOME/.pub-cache/git",
+    "$HOME/.pub-cache/_temp"
+  ],
+  "minAgeDays": 0
+}

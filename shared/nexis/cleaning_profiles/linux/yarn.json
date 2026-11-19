@@ -2,13 +2,11 @@
   "id": "yarn-cache",
   "name": "Yarn Cache",
   "app": "Yarn",
-  "description": "Yarn berry/classic global cache directories.",
+  "description": "Yarn classic global cache directory.",
   "platforms": ["linux"],
   "safety": "safe",
   "paths": [
-    "$HOME/.cache/yarn",
-    "$HOME/.yarn/cache",
-    "$HOME/.yarn/berry/cache"
+    "$HOME/.cache/yarn"
   ],
   "minAgeDays": 0
 }

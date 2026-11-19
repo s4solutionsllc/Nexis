@@ -6,7 +6,6 @@
   "platforms": ["macos"],
   "safety": "safe",
   "paths": [
-    "$HOME/.gradle/caches/modules-*",
     "$HOME/.gradle/caches/transforms-*",
     "$HOME/.gradle/caches/jars-*",
     "$HOME/.gradle/caches/build-cache-*",

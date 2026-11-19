@@ -34,6 +34,8 @@ public:
                               QSet<QString> selectedOptionIds,
                               SandboxRoots sandboxRoots);
 
+    const CleanerML::Cleaner &cleaner() const { return mCleaner; }
+
     // Paths the user has excluded from cleaning are never listed or touched.
     void setExclusions(const QList<CleanerService::ExclusionEntry> &exclusions);
 
@@ -74,6 +76,11 @@ private:
     // is asked once per literal target or searched directory at scan time,
     // not once per matched file.
     bool passesDenyList(const QString &path) const;
+    // SSO-27095: the checks repeated right before an item runs. Returns the
+    // user-facing reason to refuse, or an empty string when the item may run.
+    // `followsLinks`: the action opens the path (truncate, VACUUM) and would
+    // act on a symlink's target.
+    QString executionBlock(const QString &path, bool followsLinks = false) const;
 
     CleanerML::Cleaner mCleaner;
     QSet<QString> mSelectedOptionIds;

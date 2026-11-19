@@ -2,9 +2,9 @@
   "id": "spotify-cache",
   "name": "Spotify Cache",
   "app": "Spotify",
-  "description": "Spotify offline cache and download buffer.",
+  "description": "Spotify offline cache and download buffer. Offline downloads live here and are not rebuilt automatically.",
   "platforms": ["linux"],
-  "safety": "safe",
+  "safety": "aggressive",
   "paths": [
     "$HOME/.cache/spotify",
     "$HOME/.config/spotify/Storage"

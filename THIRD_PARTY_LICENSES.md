@@ -55,3 +55,38 @@ Nexis bundles the following third-party assets. Their license texts are included
 - **License:** GPL-3.0-or-later
 - **License text:** `shared/nexis/cleaners.d/COPYING.bleachbit` (also compiled into the Qt resource, readable at runtime as `:/cleaners.d/COPYING.bleachbit`)
 - **Note:** GPL-3.0-or-later data files bundled unmodified inside a GPL-3.0-only work; see `shared/nexis/cleaners.d/README.md` for the compatibility rationale and refresh procedure.
+
+---
+
+## jithin-sabu/purge-app (store layouts and Ollama name handling, ported to C++)
+
+- **What it is:** Nexis's local AI model finder (SSO-27099) is a C++ port of the model-store discovery in this macOS app: the store root locations (Ollama incl. `OLLAMA_MODELS`, Hugging Face hub cache incl. `HF_HUB_CACHE` / `HF_HOME`, LM Studio current and legacy roots), the manifest/blob reference counting used to size Ollama models, and the manifest-path-to-model-name rule. No Swift source, name, logo, icons or screenshots are shipped.
+- **Source:** https://github.com/jithin-sabu/purge-app
+- **Pinned commit:** `291efb552256bab08c80109230b444eaeae5bd17`
+- **Files carrying the notice:** `shared/nexis-core/Tools/ai_model_store_tool.cpp`, `shared/nexis-core/Tools/ai_model_store_tool.h`
+- **Copyright:** (c) 2026 Jithin Sabu
+- **License:** MIT
+
+```
+MIT License
+
+Copyright (c) 2026 Jithin Sabu
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

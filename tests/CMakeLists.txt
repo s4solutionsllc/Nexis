@@ -58,6 +58,9 @@ if(UNIX AND NOT APPLE)
   add_nexis_test(NAME AptSourceToolExecSeamTests SOURCES core/test_apt_source_tool_exec_seam.cpp)
 endif()
 add_nexis_test(NAME RepoKnowledgeBaseTests SOURCES core/test_repo_knowledge_base.cpp)
+# SSO-27099: local AI model store finder (Ollama, Hugging Face, LM Studio,
+# llama.cpp) over fixture stores: shared-blob sizing, removal route, audit log.
+add_nexis_test(NAME AiModelStoreToolTests SOURCES core/test_ai_model_store_tool.cpp)
 add_nexis_test(NAME CleanerMLParserTests SOURCES core/test_cleanerml_parser.cpp)
 add_nexis_test(NAME CleanerMLPlatformTests SOURCES core/test_cleanerml_platform.cpp)
 add_nexis_test(NAME RepoHealthCheckerTests SOURCES core/test_repo_health_checker.cpp LIBS Qt6::Network)
@@ -129,6 +132,9 @@ add_nexis_test(NAME PowerProfileTests SOURCES core/test_power_profile_info.cpp)
 # runs on both platforms; platform-specific deny-list cases are #ifdef-gated
 # inside the test file itself.
 add_nexis_test(NAME LifecycleDenyListTests SOURCES core/test_lifecycle_deny_list.cpp)
+# SSO-27098: stale developer-project artifact scanner (age from real project
+# activity, in-use / git-operation skips, $HOME refusal, Trash-only deletes).
+add_nexis_test(NAME DevArtifactScannerTests SOURCES core/test_dev_artifact_scanner.cpp)
 # SSO-15566 / SSO-15373 CISO §4: pure decision logic for the running-process
 # warn/quit gate ahead of trashApps() — platform-neutral, runs everywhere.
 add_nexis_test(NAME RunningAppGateTests SOURCES core/test_running_app_gate.cpp)
@@ -136,6 +142,11 @@ add_nexis_test(NAME RunningAppGateTests SOURCES core/test_running_app_gate.cpp)
 # deletions (uninstaller + orphan-leftover scanner). Lives in
 # shared/nexis-core so it builds and runs on both platforms.
 add_nexis_test(NAME LifecycleAuditLogTests SOURCES core/test_lifecycle_audit_log.cpp)
+# SSO-27100: git worktree scan/remove against real fixture repos (needs git on
+# PATH; skips otherwise). Unix-only: uses utime().
+if(UNIX)
+  add_nexis_test(NAME GitWorktreeToolTests SOURCES core/test_git_worktree_tool.cpp)
+endif()
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real (non-overridden) PackageTool
 # runCommand/runSudoCommand seam against the migrated execWithStatus contract.
@@ -828,6 +839,17 @@ add_nexis_test(NAME CleanerAccessNeededTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-27096: safety-regression checks over the bundled cleaning profiles (no
+# `safe` profile may touch settings/keys/history/databases/toolchains/offline
+# data; none may touch the deny-list; docs/WHAT_NEXIS_TOUCHES.md is current).
+# Pure Python over the JSON, so it needs no Qt build and also runs in the
+# toolchain-free docs-hygiene workflow.
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+  add_test(NAME CleaningProfileSafety
+    COMMAND ${Python3_EXECUTABLE} -m unittest discover -s "${CMAKE_SOURCE_DIR}/tests/policy")
+endif()
+
 # FW-12: data-driven cleaning profiles. Loader and glob expansion are
 # pure (no InfoManager/ToolManager touch), but the service lives in the
 # GUI library alongside CleanerService, so we link nexis-gui here too.
@@ -1237,6 +1259,19 @@ add_nexis_test(NAME SystemCleanerProviderTests
 # one-sentence, size+count, trash-only copy). orphan_leftovers_dialog.cpp is
 # already compiled into nexis-gui (GUI_SHARED_SRCS); link it rather than
 # recompiling the source here, same reasoning as SystemCleanerProviderTests.
+# SSO-27100: AgentWorktreesDialog's pure display rules (nothing preselected,
+# block reasons carried, Changes text, one-sentence confirmation). The dialog is
+# already compiled into nexis-gui; link it rather than recompiling.
+add_nexis_test(NAME AgentWorktreesDialogTests
+  SOURCES
+    managers/test_agent_worktrees_dialog.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+  LIBS
+    Qt6::Concurrent
+    nexis-gui Qt6::Widgets
+)
+
 add_nexis_test(NAME OrphanLeftoversDialogTests
   SOURCES
     managers/test_orphan_leftovers_dialog.cpp
@@ -1292,6 +1327,27 @@ add_nexis_test(NAME CleanerMLRegistryTests
 add_nexis_test(NAME BrowserDeepCleanDialogTests
   SOURCES managers/test_browser_deep_clean_dialog.cpp
   INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  LIBS nexis-gui Qt6::Widgets)
+
+# "Recently removed" history dialog: Restore only offered for trashed,
+# not-yet-restored items.
+add_nexis_test(NAME CleaningHistoryDialogTests
+  SOURCES managers/test_cleaning_history_dialog.cpp
+  INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  LIBS nexis-gui Qt6::Widgets)
+
+# SSO-27099: local AI models picker — nothing pre-selected, summary counts
+# shared data once, every row carries its re-download / stale-list warning.
+add_nexis_test(NAME AiModelsDialogTests
+  SOURCES managers/test_ai_models_dialog.cpp
+  INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  LIBS nexis-gui Qt6::Widgets)
+
+# SSO-27098: developer-project cleaner dialog — nothing pre-selected, recent
+# projects hidden, Trash disabled until a project is ticked.
+add_nexis_test(NAME DevArtifactsDialogTests
+  SOURCES managers/test_dev_artifacts_dialog.cpp
+  INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/DiskTools"
   LIBS nexis-gui Qt6::Widgets)
 
 add_nexis_test(NAME BrowserSqliteCleanerTests

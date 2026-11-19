@@ -1,10 +1,12 @@
 #include "cleaner_service.h"
+#include "app_in_use_gate.h"
 #include "cleaning_profiles_service.h"
 #include "schedule_manager.h"
 #include "setting_manager.h"
 #include <Managers/info_manager.h>
 #include <Managers/tool_manager.h>
 #include <Services/snapshot_service.h>
+#include <Tools/lifecycle_deny_list.h>
 #include <Utils/command_util.h>
 #include <Utils/file_util.h>
 #include <Utils/format_util.h>
@@ -368,6 +370,7 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
 
         if (cat == TRASH) {
             catBytes = cleanTrash();
+            result.skipped.append(lastSkipped());
         } else if (cat == SNAP_FLATPAK_REVISIONS) {
             // Special-case: use package manager commands, not file deletion
             for (const QFileInfo &fi : scanResult.categoryFiles[cat])
@@ -389,6 +392,7 @@ CleanerService::CleanResult CleanerService::clean(const QList<CleanCategory> &ca
             // and any downstream reporting. The signal is already emitted
             // from cleanFiles() for live UI consumers.
             result.accessDeniedPaths += lastAccessDeniedCount();
+            result.skipped.append(lastSkipped());
         }
 
         result.categoryBreakdown[cat] = catBytes;
@@ -447,12 +451,15 @@ QStringList CleanerService::getTrashRoots() const
 quint64 CleanerService::cleanTrash()
 {
     quint64 totalSizeBefore = 0;
+    mLastSkipped.clear();
 
-    auto emptyDir = [](const QString &dirPath) {
+    auto emptyDir = [this](const QString &dirPath) {
         QDir dir(dirPath);
         if (!dir.exists())
             return;
         for (const QFileInfo &entry : dir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+            if (skipForSafety(entry.absoluteFilePath(), nullptr))
+                continue;
             if (entry.isSymLink()) {
                 QFile::remove(entry.absoluteFilePath());
             } else if (entry.isDir()) {
@@ -490,6 +497,11 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
     // exactly once per cleanFiles() invocation and CleanResult bookkeeping
     // (populated by clean()) reflects this call only.
     mLastAccessDeniedCount = 0;
+    mLastSkipped.clear();
+
+    // SSO-27095: one gate per call so each owning app's process is probed at
+    // most once, however many of its paths are in the batch.
+    const std::unique_ptr<AppInUseGate> gate = makeAppInUseGate();
 
     // WI-08 / audit H9: load exclusions once and re-check at every depth so
     // an excluded child inside a scanned directory survives. scan() filters
@@ -509,6 +521,12 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
         QFileInfo fi(path);
 
         if (isExcluded(fi.absoluteFilePath(), exclusions))
+            continue;
+
+        // SSO-27095: canonical-path deny-list + running-app gate. Applied
+        // before any removal so a denied or in-use path is reported, not
+        // deleted, whichever branch below would have handled it.
+        if (skipForSafety(path, gate.get()))
             continue;
 
         // SSO-3370: for the recursive-delete path, a directory's own mtime
@@ -543,7 +561,7 @@ quint64 CleanerService::cleanFiles(const QStringList &paths, int minFileAgeSecs,
                 ++mLastAccessDeniedCount;
         } else if (fi.isDir()) {
             totalFreed += removeDirContentsRespectingExclusions(
-                path, exclusions, minFileAgeSecs, cutoff);
+                path, exclusions, minFileAgeSecs, cutoff, *gate);
         } else {
             filesToRemove << path;
             queuedSize.insert(path, FileUtil::getFileSize(path));
@@ -608,7 +626,8 @@ quint64 CleanerService::removeDirContentsRespectingExclusions(
     const QString &dirPath,
     const QList<ExclusionEntry> &exclusions,
     int minFileAgeSecs,
-    const QDateTime &cutoff)
+    const QDateTime &cutoff,
+    AppInUseGate &gate)
 {
     quint64 freed = 0;
     QDir dir(dirPath);
@@ -625,6 +644,12 @@ quint64 CleanerService::removeDirContentsRespectingExclusions(
         if (minFileAgeSecs > 0 && entry.lastModified() > cutoff)
             continue;
 
+        // SSO-27095: re-checked at every depth — a symlink inside an
+        // otherwise-safe directory can resolve into a denied location, and a
+        // broad directory can contain an open app's profile.
+        if (skipForSafety(entryPath, &gate))
+            continue;
+
         if (entry.isSymLink()) {
             const quint64 size = FileUtil::getFileSize(entryPath);
             const FileRemoval outcome = removeFile(entryPath);
@@ -634,7 +659,7 @@ quint64 CleanerService::removeDirContentsRespectingExclusions(
                 ++mLastAccessDeniedCount;
         } else if (entry.isDir()) {
             freed += removeDirContentsRespectingExclusions(
-                entryPath, exclusions, minFileAgeSecs, cutoff);
+                entryPath, exclusions, minFileAgeSecs, cutoff, gate);
             // If the recursive walk emptied the directory, remove the now-empty
             // shell so a scanned cache directory does not linger.
             QDir sub(entryPath);
@@ -651,6 +676,40 @@ quint64 CleanerService::removeDirContentsRespectingExclusions(
     }
 
     return freed;
+}
+
+bool CleanerService::skipForSafety(const QString &path, AppInUseGate *gate)
+{
+    if (!LifecycleDenyList::isSafeForCleaning(path)) {
+        mLastSkipped.append(SkippedPath{path, SkippedPath::ProtectedLocation, QString()});
+        qWarning() << "CleanerService: skipped protected location:" << path;
+        return true;
+    }
+    if (gate) {
+        const QString app = gate->runningOwnerOf(path);
+        if (!app.isEmpty()) {
+            mLastSkipped.append(SkippedPath{path, SkippedPath::AppRunning, app});
+            qWarning() << "CleanerService: skipped" << path << "—" << app << "is running";
+            return true;
+        }
+    }
+    return false;
+}
+
+QString CleanerService::skipReasonText(const SkippedPath &skip)
+{
+    switch (skip.reason) {
+    case SkippedPath::AppRunning:
+        return QObject::tr("%1 is running — close it and clean again").arg(skip.app);
+    case SkippedPath::ProtectedLocation:
+        return QObject::tr("Protected system location");
+    }
+    return QString();
+}
+
+std::unique_ptr<AppInUseGate> CleanerService::makeAppInUseGate() const
+{
+    return std::make_unique<AppInUseGate>();
 }
 
 bool CleanerService::currentUserOwns(const QString &path) const
@@ -865,4 +924,9 @@ void CleanerService::logCleanResult(const CleanResult &result)
               .arg(ts, result.scheduleName, catNames.join(", "),
                    FormatUtil::formatBytes(result.totalBytesFreed),
                    QString::number(result.totalFilesRemoved));
+
+    // SSO-27095: a headless/scheduled run has no UI, so the history log is
+    // where a user finds out why something was left in place.
+    for (const SkippedPath &skip : result.skipped)
+        stream << QString("[%1]   Skipped: %2 (%3)\n").arg(ts, skip.path, skipReasonText(skip));
 }

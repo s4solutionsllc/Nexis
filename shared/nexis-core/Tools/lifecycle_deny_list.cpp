@@ -10,22 +10,28 @@ namespace LifecycleDenyList {
 
 namespace {
 
-// Resolves symlinks when the path exists; falls back to the cleaned
-// absolute path when it doesn't (e.g. a broken symlink, or a target that
-// was already removed by the time the caller checks) so the deny-list
-// still applies to whatever literal location was requested.
+// Resolves symlinks when the path exists. When it doesn't (a broken symlink,
+// or a target already removed by the time the caller checks) the leaf cannot
+// be resolved, so resolve its parent directory and re-attach the leaf — a
+// dangling link inside a directory that is itself a symlink to a denied
+// location must still be judged by where it really lives. Falls back to the
+// cleaned absolute path when even the parent does not resolve.
 QString canonicalOrAbsolute(const QString &path)
 {
     QFileInfo info(path);
     const QString canonical = info.canonicalFilePath();
     if (!canonical.isEmpty())
         return canonical;
+
+    const QString parent = QFileInfo(info.absolutePath()).canonicalFilePath();
+    if (!parent.isEmpty() && !info.fileName().isEmpty())
+        return QDir::cleanPath(parent + QLatin1Char('/') + info.fileName());
     return QDir::cleanPath(info.absoluteFilePath());
 }
 
-bool isUnderAny(const QString &canonicalPath, const QStringList &deniedRoots)
+bool isUnderAny(const QString &canonicalPath, const QStringList &roots)
 {
-    for (const QString &root : deniedRoots) {
+    for (const QString &root : roots) {
         if (canonicalPath == root)
             return true;
         if (canonicalPath.startsWith(root + QLatin1Char('/')))
@@ -36,7 +42,7 @@ bool isUnderAny(const QString &canonicalPath, const QStringList &deniedRoots)
 
 #if defined(Q_OS_MAC)
 
-bool isSafeMacOS(const QString &canonicalPath, const QString &homeRoot)
+const QStringList &deniedRoots()
 {
     static const QStringList kDeniedRoots = {
         QStringLiteral("/System"),
@@ -50,7 +56,12 @@ bool isSafeMacOS(const QString &canonicalPath, const QString &homeRoot)
         QStringLiteral("/usr/local/Cellar"),
         QStringLiteral("/usr/local/opt"),
     };
-    if (isUnderAny(canonicalPath, kDeniedRoots))
+    return kDeniedRoots;
+}
+
+bool isSafeMacOS(const QString &canonicalPath, const QString &homeRoot)
+{
+    if (isUnderAny(canonicalPath, deniedRoots()))
         return false;
 
     // Any bundle/path with a com.apple.* leaf name (bundle id or plist)
@@ -102,7 +113,7 @@ bool pathOwnedByPackage(const QString &canonicalPath)
     return false;
 }
 
-bool isSafeLinux(const QString &canonicalPath, const QString &homeRoot)
+const QStringList &deniedRoots()
 {
     static const QStringList kDeniedRoots = {
         QStringLiteral("/etc"),
@@ -118,7 +129,12 @@ bool isSafeLinux(const QString &canonicalPath, const QString &homeRoot)
         QStringLiteral("/usr/lib/systemd"),
         QStringLiteral("/run/systemd"),
     };
-    if (isUnderAny(canonicalPath, kDeniedRoots))
+    return kDeniedRoots;
+}
+
+bool isSafeLinux(const QString &canonicalPath, const QString &homeRoot)
+{
+    if (isUnderAny(canonicalPath, deniedRoots()))
         return false;
 
     // Credential stores: GNOME Keyring and common browser cookie/token
@@ -143,7 +159,60 @@ bool isSafeLinux(const QString &canonicalPath, const QString &homeRoot)
 
 #endif
 
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+
+// Credential stores that no cleaner action may touch, whichever directory the
+// canonical path sits under.
+bool isCredentialStore(const QString &canonicalPath)
+{
+#if defined(Q_OS_MAC)
+    return canonicalPath.contains(QLatin1String("/Library/Keychains/"));
+#else
+    return canonicalPath.contains(QLatin1String("/.local/share/keyrings/"));
+#endif
+}
+
+// The cleaner's own roots (/var/cache, /var/log, /var/crash, the user's
+// caches) legitimately sit outside $HOME and outside any package's files, so
+// the uninstaller's $HOME-confinement and package-ownership rules would veto
+// the whole job. /usr/local is the admin-managed prefix (the broken-symlink
+// scan walks /usr/local/bin) rather than OS-owned, so it is carved out of the
+// /usr rule; the macOS Homebrew roots stay denied because they are listed
+// explicitly.
+bool isSafeForCleaningCanonical(const QString &canonicalPath)
+{
+    if (isCredentialStore(canonicalPath))
+        return false;
+
+    const bool underUsrLocal = isUnderAny(canonicalPath, {QStringLiteral("/usr/local")});
+    for (const QString &root : deniedRoots()) {
+        if (underUsrLocal && root == QLatin1String("/usr"))
+            continue;
+        if (isUnderAny(canonicalPath, {root}))
+            return false;
+    }
+    return true;
+}
+
+#endif
+
 } // namespace
+
+bool isSafeForCleaning(const QString &path)
+{
+    if (path.isEmpty())
+        return false;
+
+    const QString canonical = canonicalOrAbsolute(path);
+    if (canonical.isEmpty() || canonical == QLatin1String("/"))
+        return false;
+
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+    return isSafeForCleaningCanonical(canonical);
+#else
+    return false;
+#endif
+}
 
 bool isSafe(const QString &path, const QString &homeRootOverride)
 {

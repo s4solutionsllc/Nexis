@@ -61,3 +61,17 @@ jobs:
 
       - name: Verify docs/APPLICATION_OVERVIEW.md stats are regenerated
         run: python3 scripts/gen_doc_stats.py --check
+
+  cleaning-profile-safety:
+    name: Cleaning profile safety
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # No `safe` bundled profile may touch a dangerous class or a deny-listed
+      # location (docs/CLEANING_PROFILES.md §4), and the published
+      # docs/WHAT_NEXIS_TOUCHES.md must match the profiles. Fails when either
+      # drifts; fix a stale page with `python3 scripts/cleaning_profile_policy.py`.
+      - name: Check profiles against the safety policy
+        run: python3 -m unittest discover -s tests/policy -v

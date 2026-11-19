@@ -71,6 +71,8 @@ public:
     void openBrowserDeepClean();
     // SSO-25782: CleanerML per-application cleaners, same preview dialog.
     void openAppCleaners();
+    // SSO-27099: user-picked removal of downloaded local AI models.
+    void openAiModels();
 
     // SSO-15956: showEvent() kicks off an async background disk-size scan on
     // first display (startBackgroundSizeScan), which races the initial
@@ -100,6 +102,7 @@ private slots:
     void on_cbSortBy_currentIndexChanged(int idx);
     void updateScheduleIndicator();
     void onManageExclusions();
+    void onShowCleaningHistory();
     void onTreeContextMenu(const QPoint &pos);
     void onSnapshotTaken(const QString &toolName);
     void onSnapshotSkipped(const QString &message);
@@ -223,6 +226,7 @@ private:
 
     // Exclusion rules gear button (in header row)
     QToolButton *mBtnExclusions = nullptr;
+    QToolButton *mBtnHistory = nullptr;
 
     // Schedule indicator panel (floating overlay, bottom of page 0)
     QFrame *mScheduleIndicator = nullptr;

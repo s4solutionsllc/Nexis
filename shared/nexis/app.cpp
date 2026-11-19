@@ -901,11 +901,13 @@ void App::init()
     connect(CleanerService::ins(), &CleanerService::cleaningFinished,
             this, [this](CleanerService::CleanResult result) {
         if (SettingManager::ins()->getCleaningNotificationsEnabled()) {
+            QString message = tr("Cleaned %1 — %2")
+                .arg(FormatUtil::formatBytes(result.totalBytesFreed),
+                     result.scheduleName);
+            if (!result.skipped.isEmpty())
+                message += tr(" (%n item(s) skipped)", "", result.skipped.size());
             mTrayIcon->showMessage(
-                tr("Scheduled Clean Complete"),
-                tr("Cleaned %1 — %2")
-                    .arg(FormatUtil::formatBytes(result.totalBytesFreed),
-                         result.scheduleName),
+                tr("Scheduled Clean Complete"), message,
                 QSystemTrayIcon::Information, 5000);
         }
     });

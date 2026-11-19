@@ -1,0 +1,13 @@
+{
+  "id": "poetry-cache",
+  "name": "Poetry Cache",
+  "app": "Poetry",
+  "description": "Downloaded package artifacts and repository metadata cached by Poetry. Poetry's virtual environments are not touched.",
+  "platforms": ["macos"],
+  "safety": "safe",
+  "paths": [
+    "$HOME/Library/Caches/pypoetry/cache",
+    "$HOME/Library/Caches/pypoetry/artifacts"
+  ],
+  "minAgeDays": 0
+}
