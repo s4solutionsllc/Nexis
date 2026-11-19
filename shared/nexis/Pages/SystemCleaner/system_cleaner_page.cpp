@@ -19,6 +19,7 @@
 #include <Utils/format_util.h>
 #include "app_cleaners_dialog.h"
 #include "browser_deep_clean_dialog.h"
+#include "cleaning_history_dialog.h"
 #include "exclusion_manager_dialog.h"
 #include "schedule_editor_dialog.h"
 #include "utilities.h"
@@ -164,6 +165,15 @@ void SystemCleanerPage::buildCategoryHeader()
     mBtnExclusions->setCursor(Qt::PointingHandCursor);
     connect(mBtnExclusions, &QToolButton::clicked, this, &SystemCleanerPage::onManageExclusions);
 
+    mBtnHistory = new QToolButton(headerWidget);
+    mBtnHistory->setObjectName("btnCleaningHistory");
+    mBtnHistory->setText(tr("History"));
+    mBtnHistory->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    mBtnHistory->setAutoRaise(true);
+    mBtnHistory->setToolTip(tr("Recently removed: past cleans and what they removed"));
+    mBtnHistory->setCursor(Qt::PointingHandCursor);
+    connect(mBtnHistory, &QToolButton::clicked, this, &SystemCleanerPage::onShowCleaningHistory);
+
     mBtnSchedule = new QPushButton(tr("Schedule\u2026"), headerWidget);
     mBtnSchedule->setObjectName("btnScheduleCleaner");
     mBtnSchedule->setCursor(Qt::PointingHandCursor);
@@ -196,6 +206,7 @@ void SystemCleanerPage::buildCategoryHeader()
     mBtnScanSystem->setCursor(Qt::PointingHandCursor);
     connect(mBtnScanSystem, &QPushButton::clicked, this, &SystemCleanerPage::onBtnScanSystemClicked);
 
+    titleRow->addWidget(mBtnHistory);
     titleRow->addWidget(mBtnExclusions);
     titleRow->addWidget(mBtnDeepClean);
     titleRow->addWidget(mBtnSchedule);
@@ -1275,6 +1286,12 @@ void SystemCleanerPage::openAppCleaners()
     cfg.confirmationSentence = tr("This will permanently delete the selected application data.");
 
     TrustSafetyPreviewDialog dlg(&provider, cfg, this, mAppManager);
+    dlg.exec();
+}
+
+void SystemCleanerPage::onShowCleaningHistory()
+{
+    CleaningHistoryDialog dlg(this);
     dlg.exec();
 }
 

@@ -100,6 +100,7 @@ private slots:
     void on_cbSortBy_currentIndexChanged(int idx);
     void updateScheduleIndicator();
     void onManageExclusions();
+    void onShowCleaningHistory();
     void onTreeContextMenu(const QPoint &pos);
     void onSnapshotTaken(const QString &toolName);
     void onSelectAllClicked();
@@ -222,6 +223,7 @@ private:
 
     // Exclusion rules gear button (in header row)
     QToolButton *mBtnExclusions = nullptr;
+    QToolButton *mBtnHistory = nullptr;
 
     // Schedule indicator panel (floating overlay, bottom of page 0)
     QFrame *mScheduleIndicator = nullptr;

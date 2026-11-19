@@ -1256,6 +1256,13 @@ add_nexis_test(NAME BrowserDeepCleanDialogTests
   INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
   LIBS nexis-gui Qt6::Widgets)
 
+# "Recently removed" history dialog: Restore only offered for trashed,
+# not-yet-restored items.
+add_nexis_test(NAME CleaningHistoryDialogTests
+  SOURCES managers/test_cleaning_history_dialog.cpp
+  INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  LIBS nexis-gui Qt6::Widgets)
+
 add_nexis_test(NAME BrowserSqliteCleanerTests
   SOURCES
     managers/test_browser_sqlite_cleaner.cpp
