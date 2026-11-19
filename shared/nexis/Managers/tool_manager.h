@@ -45,6 +45,8 @@ public:
     // PackageTool::findOrphanLeftovers() for the confidence bar. Trashing
     // reuses trashLeftovers() above — same deny-list/audit-log/fail-secure path.
     QList<OrphanLeftover> findOrphanLeftovers() const;
+    // SSO-27151: ids of currently installed apps, for the shared-data guard.
+    QStringList installedAppIds() const;
     // SSO-15566 / CISO §4: running-process warn/quit gate ahead of trashApps().
     bool isAppRunning(const QString &bundlePath) const;
     bool quitApp(const QString &bundlePath);

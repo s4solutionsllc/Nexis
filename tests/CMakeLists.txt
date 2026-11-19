@@ -424,6 +424,18 @@ add_nexis_test(NAME LeftoverScannerLinuxRealTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
 )
 
+# SSO-27151: uninstaller shared-data guard — SharedDataGuard::classify() for
+# bundle ids and package names, plus the real Linux leftover scanner against a
+# synthetic sibling-app fixture. Platform-neutral.
+add_nexis_test(NAME SharedDataGuardTests
+  SOURCES
+    core/test_shared_data_guard.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+)
+
 # SSO-15387: orphan-scan heuristics fixture suite — leftovers with no
 # corresponding installed package (Linux XDG + macOS Library).  Covers true
 # orphans, near-miss shared-vendor dirs, and precision/recall harness.

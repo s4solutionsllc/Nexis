@@ -1,5 +1,6 @@
 #include "crumbs_scanner.h"
 
+#include "Tools/shared_data_guard.h"
 #include "Utils/file_util.h"
 
 #include <QDir>
@@ -58,17 +59,19 @@ bool leafMatchesAnyId(const QString &leaf, const QStringList &bundleIds, QString
 QList<CrumbCandidate> scanCrumbs(
     const QStringList &bundleIds,
     QAtomicInt *cancelled,
-    const std::function<void(const CrumbCandidate &)> &itemFoundCb)
+    const std::function<void(const CrumbCandidate &)> &itemFoundCb,
+    const QStringList &installedBundleIds)
 {
     const QString home = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    return scanCrumbsUnderHome(home, bundleIds, cancelled, itemFoundCb);
+    return scanCrumbsUnderHome(home, bundleIds, cancelled, itemFoundCb, installedBundleIds);
 }
 
 QList<CrumbCandidate> scanCrumbsUnderHome(
     const QString &homeDir,
     const QStringList &bundleIds,
     QAtomicInt *cancelled,
-    const std::function<void(const CrumbCandidate &)> &itemFoundCb)
+    const std::function<void(const CrumbCandidate &)> &itemFoundCb,
+    const QStringList &installedBundleIds)
 {
     QList<CrumbCandidate> out;
     if (bundleIds.isEmpty())
@@ -96,6 +99,11 @@ QList<CrumbCandidate> scanCrumbsUnderHome(
             c.path = fi.absoluteFilePath();
             c.sizeBytes = static_cast<qint64>(FileUtil::getFileSize(c.path));
             c.matchedBundleId = matched;
+
+            const SharedDataGuard::Claim claim =
+                SharedDataGuard::classify(fi.fileName(), matched, installedBundleIds);
+            c.sharedWith = claim.siblingId;
+            c.sharedReason = claim.reason;
             out.append(c);
             if (itemFoundCb)
                 itemFoundCb(c);
@@ -129,18 +137,18 @@ CrumbsScanRunner::~CrumbsScanRunner()
     }
 }
 
-void CrumbsScanRunner::startScan(const QStringList &bundleIds)
+void CrumbsScanRunner::startScan(const QStringList &bundleIds, const QStringList &installedBundleIds)
 {
     if (mScanFuture.isRunning())
         return;
     mCancelled.storeRelaxed(0);
 
-    mScanFuture = QtConcurrent::run([this, bundleIds]() {
+    mScanFuture = QtConcurrent::run([this, bundleIds, installedBundleIds]() {
         auto itemFoundCb = [this](const CrumbsScanner::CrumbCandidate &item) {
             emit itemFound(item);
         };
         const QList<CrumbsScanner::CrumbCandidate> items =
-            CrumbsScanner::scanCrumbs(bundleIds, &mCancelled, itemFoundCb);
+            CrumbsScanner::scanCrumbs(bundleIds, &mCancelled, itemFoundCb, installedBundleIds);
         if (mCancelled.loadRelaxed())
             emit scanCancelled();
         else

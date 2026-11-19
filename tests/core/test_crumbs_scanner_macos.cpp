@@ -36,6 +36,8 @@ private slots:
     void scanCrumbs_finalResultUnaffectedByStreaming();
     void scanCrumbs_emptyBundleIdsReturnsEmptyAndNoCallbacks();
     void scanCrumbs_cancellationStopsEarly();
+    void scanCrumbs_marksDataOfInstalledSiblingAsShared();
+    void scanCrumbs_noInstalledIdsMarksNothingShared();
 };
 
 #ifdef Q_OS_MAC
@@ -199,6 +201,54 @@ void TestCrumbsScannerMacOS::scanCrumbs_cancellationStopsEarly()
 
     QCOMPARE(callbackCount, 1);
     QCOMPARE(found.size(), 1);
+#endif
+}
+
+// SSO-27151: removing com.example.App must not offer the data of the
+// still-installed com.example.App.beta (the bundle-id prefix scan matches it).
+void TestCrumbsScannerMacOS::scanCrumbs_marksDataOfInstalledSiblingAsShared()
+{
+#ifndef Q_OS_MAC
+    QSKIP("CrumbsScanner is macOS-only");
+#else
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString bid = QStringLiteral("com.example.App");
+    const QString beta = QStringLiteral("com.example.App.beta");
+    QVERIFY(mkdirP(tmp.filePath("Library/Caches/" + bid)));
+    QVERIFY(mkdirP(tmp.filePath("Library/Caches/" + beta)));
+    QVERIFY(mkdirP(tmp.filePath("Library/Preferences")));
+    QVERIFY(writeFile(tmp.filePath("Library/Preferences/" + beta + ".plist"), 64));
+
+    const auto found = CrumbsScanner::scanCrumbsUnderHome(
+        tmp.path(), { bid }, nullptr, {}, { beta });
+
+    QCOMPARE(found.size(), 3);
+    for (const auto &c : found) {
+        QCOMPARE(c.sharedWith, beta);
+        QVERIFY(!c.sharedReason.isEmpty());
+    }
+#endif
+}
+
+void TestCrumbsScannerMacOS::scanCrumbs_noInstalledIdsMarksNothingShared()
+{
+#ifndef Q_OS_MAC
+    QSKIP("CrumbsScanner is macOS-only");
+#else
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString bid = QStringLiteral("com.example.App");
+    QVERIFY(mkdirP(tmp.filePath("Library/Caches/" + bid)));
+    QVERIFY(mkdirP(tmp.filePath("Library/Caches/" + bid + ".beta")));
+
+    const auto found = CrumbsScanner::scanCrumbsUnderHome(tmp.path(), { bid });
+
+    QCOMPARE(found.size(), 2);
+    for (const auto &c : found)
+        QVERIFY(c.sharedWith.isEmpty() && c.sharedReason.isEmpty());
 #endif
 }
 

@@ -35,6 +35,8 @@ public:
 
     // SSO-15385: scan XDG user dirs for leftover files from removed packages.
     QList<AppLeftover> findAppLeftovers(const Package &app) override;
+    // SSO-27151: package, snap and Flatpak names currently installed.
+    QStringList installedAppIds() override;
     // Move each path in `paths` to the freedesktop.org Trash. Returns true
     // iff every path was trashed successfully; aborts on deny-list hit.
     bool trashLeftovers(const QStringList &paths) override;

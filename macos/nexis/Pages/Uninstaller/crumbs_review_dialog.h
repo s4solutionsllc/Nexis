@@ -2,6 +2,7 @@
 #define CRUMBS_REVIEW_DIALOG_H
 
 #include <QDialog>
+#include <QFutureWatcher>
 #include <QList>
 #include <QStringList>
 
@@ -23,6 +24,10 @@ class QPushButton;
 // thread on a large ~/Library tree; interaction (checkboxes, Move to Trash)
 // is held off until the scan finishes and the list has settled into its
 // final sort-by-size-desc order.
+//
+// SSO-27151: before scanning, the installed apps' bundle ids are collected
+// (off the UI thread) so matches that a still-installed sibling or channel
+// variant also uses are listed with a reason but cannot be selected.
 class CrumbsReviewDialog : public QDialog
 {
     Q_OBJECT
@@ -45,6 +50,7 @@ private:
 
     QStringList mBundleIds;
     CrumbsScanRunner *mScanRunner = nullptr;
+    QFutureWatcher<QStringList> *mInstalledIdsWatcher = nullptr;
 
     QLabel       *mLblSummary  = nullptr;
     QTableWidget *mTable       = nullptr;
@@ -52,6 +58,7 @@ private:
     QPushButton  *mBtnCancel     = nullptr;
 
     qint64 mTotalBytes = 0;
+    int mSharedCount = 0;
 };
 
 #endif // CRUMBS_REVIEW_DIALOG_H

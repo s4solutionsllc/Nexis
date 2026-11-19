@@ -30,12 +30,19 @@ struct NEXISCORESHARED_EXPORT LeftoverCandidate {
     quint64 sizeBytes = 0;
     QString category;       // "Config", "Cache", "Data", "Autostart"
     QString matchedName;    // which packageName in the input matched
+    QString sharedWith;     // SSO-27151: still-installed sibling that also claims it
+    QString sharedReason;   // SSO-27151: user-facing reason; empty = not shared
 };
 
 // Scan for leftovers belonging to any of the supplied package / app names.
 // packageNames may include the raw dpkg/rpm/flatpak/snap package name.
 // On Flatpak the app id (e.g. "org.mozilla.firefox") is also accepted.
-NEXISCORESHARED_EXPORT QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames);
+//
+// SSO-27151: `installedIds` lists the apps still installed. A candidate that
+// one of them also claims (see SharedDataGuard) is still returned but carries
+// sharedWith / sharedReason so the review UI can exclude it by default.
+NEXISCORESHARED_EXPORT QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames,
+                                                              const QStringList &installedIds = {});
 
 } // namespace LeftoverScannerLinux
 

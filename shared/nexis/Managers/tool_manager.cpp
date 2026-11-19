@@ -147,6 +147,11 @@ QList<OrphanLeftover> ToolManager::findOrphanLeftovers() const
     return mPackageTool->findOrphanLeftovers();
 }
 
+QStringList ToolManager::installedAppIds() const
+{
+    return mPackageTool->installedAppIds();
+}
+
 bool ToolManager::isAppRunning(const QString &bundlePath) const
 {
     return mPackageTool->isAppRunning(bundlePath);
