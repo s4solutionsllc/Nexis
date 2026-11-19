@@ -791,6 +791,17 @@ add_nexis_test(NAME CleanerAccessNeededTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-27096: safety-regression checks over the bundled cleaning profiles (no
+# `safe` profile may touch settings/keys/history/databases/toolchains/offline
+# data; none may touch the deny-list; docs/WHAT_NEXIS_TOUCHES.md is current).
+# Pure Python over the JSON, so it needs no Qt build and also runs in the
+# toolchain-free docs-hygiene workflow.
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+  add_test(NAME CleaningProfileSafety
+    COMMAND ${Python3_EXECUTABLE} -m unittest discover -s "${CMAKE_SOURCE_DIR}/tests/policy")
+endif()
+
 # FW-12: data-driven cleaning profiles. Loader and glob expansion are
 # pure (no InfoManager/ToolManager touch), but the service lives in the
 # GUI library alongside CleanerService, so we link nexis-gui here too.

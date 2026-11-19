@@ -13,11 +13,13 @@
         <file>cleaning_profiles/linux/firefox.json</file>
         <file>cleaning_profiles/linux/flatpak.json</file>
         <file>cleaning_profiles/linux/go-build.json</file>
+        <file>cleaning_profiles/linux/gradle-dependencies.json</file>
         <file>cleaning_profiles/linux/gradle.json</file>
         <file>cleaning_profiles/linux/jetbrains.json</file>
         <file>cleaning_profiles/linux/libreoffice.json</file>
         <file>cleaning_profiles/linux/maven.json</file>
         <file>cleaning_profiles/linux/npm.json</file>
+        <file>cleaning_profiles/linux/nuget-packages.json</file>
         <file>cleaning_profiles/linux/nuget.json</file>
         <file>cleaning_profiles/linux/opera.json</file>
         <file>cleaning_profiles/linux/pip.json</file>
@@ -29,6 +31,7 @@
         <file>cleaning_profiles/linux/thumbnails.json</file>
         <file>cleaning_profiles/linux/vscode.json</file>
         <file>cleaning_profiles/linux/wine.json</file>
+        <file>cleaning_profiles/linux/yarn-berry-cache.json</file>
         <file>cleaning_profiles/linux/yarn.json</file>
         <file>cleaning_profiles/linux/zoom.json</file>
         <file>cleaning_profiles/macos/brave.json</file>
@@ -42,6 +45,7 @@
         <file>cleaning_profiles/macos/edge.json</file>
         <file>cleaning_profiles/macos/firefox.json</file>
         <file>cleaning_profiles/macos/go-build.json</file>
+        <file>cleaning_profiles/macos/gradle-dependencies.json</file>
         <file>cleaning_profiles/macos/gradle.json</file>
         <file>cleaning_profiles/macos/homebrew.json</file>
         <file>cleaning_profiles/macos/ios-simulator.json</file>
@@ -61,6 +65,7 @@
         <file>cleaning_profiles/macos/xcode-archives.json</file>
         <file>cleaning_profiles/macos/xcode-deriveddata.json</file>
         <file>cleaning_profiles/macos/xcode-device-support.json</file>
+        <file>cleaning_profiles/macos/yarn-berry-cache.json</file>
         <file>cleaning_profiles/macos/yarn.json</file>
         <file>cleaning_profiles/macos/zoom.json</file>
     </qresource>
