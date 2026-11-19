@@ -228,7 +228,8 @@ private slots:
         QDir().mkpath(repo + "/snapshots/rev1");
         // A hard link to the same inode, as on filesystems without symlinks.
         QVERIFY(::link(QFile::encodeName(repo + "/blobs/h1"), QFile::encodeName(repo + "/snapshots/rev1/w.bin")) == 0);
-        const Model *m = find(scan(env()), "huggingface:acme/copy");
+        const QList<Model> models = scan(env());
+        const Model *m = find(models, "huggingface:acme/copy");
         QVERIFY(m);
         QCOMPARE(m->totalBytes(), quint64(600));
     }
