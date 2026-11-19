@@ -76,7 +76,7 @@ or removed, so they stay hand-written:
 | Always-visible pages | 17 | `shared/nexis/Pages/` (Dashboard, HardwareInfo, StartupApps, BootAnalysis, SystemCleaner, DiskTools, DiskMap, Search, Services, Processes, Uninstaller, Shredder, Resources, Network, Helpers, SystemLogs, Settings) |
 | Conditional pages | 3 | APTSourceManager / Docker / GnomeSettings — guarded in `app.cpp` by `ToolManager` capability checks |
 | Info providers | 17 | `shared/nexis-core/Info/` (15 cross-platform + `PsiInfo` + `OomdInfoLinux` Linux-only); all wired through `InfoManager` (`BootAnalysisInfo`/`StartupInfo` added in WI-27 / SSO-3389; `OomdInfoLinux` added in FW-11 / SSO-3739) |
-| Tool classes | 11 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `DockerTool`, `FileSearchTool`, `MacDefaultsTool`, `MacTweaksCatalog` (SSO-23857), and `ResourceHistoryStore` (SSO-10930, consumed directly by `ResourceHistoryService`) |
+| Tool classes | 12 | `shared/nexis-core/Tools/` — 6 wired through `ToolManager` (`ServiceTool`, `PackageTool`, `AptSourceTool`, `GnomeSettingsTool`, `RepoHealthChecker`, `RepoRepairEngine`) plus `AiModelStore` (SSO-27099, called directly by `AiModelsDialog`), `DockerTool`, `FileSearchTool`, `MacDefaultsTool`, `MacTweaksCatalog` (SSO-23857), and `ResourceHistoryStore` (SSO-10930, consumed directly by `ResourceHistoryService`) |
 | Utility classes | 6 | `CommandUtil`, `DisplayServerUtil`, `FileUtil`, `FormatUtil`, `HeadlessUtil`, `MacOsVersionUtil` (SSO-23857) in `shared/nexis-core/Utils/` |
 | Manager singletons | 10 | `shared/nexis/Managers/` (`AppManager`, `InfoManager`, `ToolManager`, `SettingManager`, `CleanerService`, `CleaningProfilesService`, `ScheduleManager`, `ProcessPrefsManager`, `DataRefreshService`, `ResourceHistoryService` (SSO-10930)) |
 | Domain services | 9 | `shared/nexis/Services/` (`StartupService`, `FileSearchService`, `HostService`, `ProcessService`, `SystemServiceManager`, `DockerService`, `PackageService`, `DuplicateFinderService`, `SnapshotService`) |
@@ -273,6 +273,12 @@ Scan and remove system junk files across 10 categories.
 - "Deep clean → App cleaners…" (also a command-palette action) lists the bundled CleanerML cleaners for applications that have left data on this machine, each with its options (none pre-checked) and a filter box; an application that is currently open is listed but locked
 - "Review…" runs the ticked options through the standard `TrustSafetyPreviewDialog`; options carrying a warning are shown as risky. Cleaner exclusions are honored
 - Like browser deep clean, this is never part of "Scan system", the Maintenance Wizard, or scheduled cleaning
+
+**Local AI models (SSO-27099):**
+- "Deep clean → Local AI models…" lists downloaded models from Ollama, the Hugging Face hub cache, LM Studio and llama.cpp (`AiModelStore`, `Tools/ai_model_store_tool`), one row per model with the owning tool, the bytes removal really frees, last used, and a heads-up. Nothing is pre-checked
+- "Frees" counts data two models share (Ollama blobs) once, and only when every model using it is ticked; the heads-up states the re-download size and that the tool's own model list may keep showing the model
+- Ollama models are removed with `ollama rm` when the binary is found (so its list stays correct), else the manifest and unshared blobs go to the Trash; Hugging Face, LM Studio and llama.cpp go to the Trash. Every removal passes the cleaner deny-list and is recorded in the History view
+- Like the deep-clean tools above, never part of "Scan system", the Maintenance Wizard, or scheduled/headless cleaning
 
 **Exclusion rules:**
 - Manage exclusion rules via gear button on the categories page → opens ExclusionManagerDialog

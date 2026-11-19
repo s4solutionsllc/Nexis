@@ -17,6 +17,7 @@
 #include <QMessageBox>
 #include "signal_mapper.h"
 #include <Utils/format_util.h>
+#include "ai_models_dialog.h"
 #include "app_cleaners_dialog.h"
 #include "browser_deep_clean_dialog.h"
 #include "cleaning_history_dialog.h"
@@ -199,6 +200,9 @@ void SystemCleanerPage::buildCategoryHeader()
     QAction *appAction = deepCleanMenu->addAction(tr("App cleaners\u2026"));
     appAction->setObjectName("actionAppCleaners");
     connect(appAction, &QAction::triggered, this, &SystemCleanerPage::openAppCleaners);
+    QAction *aiModelsAction = deepCleanMenu->addAction(tr("Local AI models\u2026"));
+    aiModelsAction->setObjectName("actionAiModels");
+    connect(aiModelsAction, &QAction::triggered, this, &SystemCleanerPage::openAiModels);
     mBtnDeepClean->setMenu(deepCleanMenu);
 
     mBtnScanSystem = new QPushButton(tr("Scan system"), headerWidget);
@@ -1286,6 +1290,24 @@ void SystemCleanerPage::openAppCleaners()
     cfg.confirmationSentence = tr("This will permanently delete the selected application data.");
 
     TrustSafetyPreviewDialog dlg(&provider, cfg, this, mAppManager);
+    dlg.exec();
+}
+
+void SystemCleanerPage::openAiModels()
+{
+    const AiModelStore::Environment env = AiModelStore::Environment::current();
+
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    const QList<AiModelStore::Model> models = AiModelStore::scan(env);
+    QApplication::restoreOverrideCursor();
+
+    if (models.isEmpty()) {
+        QMessageBox::information(this, tr("Local AI Models"),
+            tr("No models downloaded by Ollama, Hugging Face, LM Studio or llama.cpp were found."));
+        return;
+    }
+
+    AiModelsDialog dlg(models, env, this);
     dlg.exec();
 }
 

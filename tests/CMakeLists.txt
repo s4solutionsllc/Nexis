@@ -55,6 +55,9 @@ if(UNIX AND NOT APPLE)
   add_nexis_test(NAME AptSourceToolExecSeamTests SOURCES core/test_apt_source_tool_exec_seam.cpp)
 endif()
 add_nexis_test(NAME RepoKnowledgeBaseTests SOURCES core/test_repo_knowledge_base.cpp)
+# SSO-27099: local AI model store finder (Ollama, Hugging Face, LM Studio,
+# llama.cpp) over fixture stores: shared-blob sizing, removal route, audit log.
+add_nexis_test(NAME AiModelStoreToolTests SOURCES core/test_ai_model_store_tool.cpp)
 add_nexis_test(NAME CleanerMLParserTests SOURCES core/test_cleanerml_parser.cpp)
 add_nexis_test(NAME CleanerMLPlatformTests SOURCES core/test_cleanerml_platform.cpp)
 add_nexis_test(NAME RepoHealthCheckerTests SOURCES core/test_repo_health_checker.cpp LIBS Qt6::Network)
@@ -1263,6 +1266,13 @@ add_nexis_test(NAME BrowserDeepCleanDialogTests
 # not-yet-restored items.
 add_nexis_test(NAME CleaningHistoryDialogTests
   SOURCES managers/test_cleaning_history_dialog.cpp
+  INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
+  LIBS nexis-gui Qt6::Widgets)
+
+# SSO-27099: local AI models picker — nothing pre-selected, summary counts
+# shared data once, every row carries its re-download / stale-list warning.
+add_nexis_test(NAME AiModelsDialogTests
+  SOURCES managers/test_ai_models_dialog.cpp
   INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
   LIBS nexis-gui Qt6::Widgets)
 

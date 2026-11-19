@@ -71,6 +71,8 @@ public:
     void openBrowserDeepClean();
     // SSO-25782: CleanerML per-application cleaners, same preview dialog.
     void openAppCleaners();
+    // SSO-27099: user-picked removal of downloaded local AI models.
+    void openAiModels();
 
     // SSO-15956: showEvent() kicks off an async background disk-size scan on
     // first display (startBackgroundSizeScan), which races the initial
