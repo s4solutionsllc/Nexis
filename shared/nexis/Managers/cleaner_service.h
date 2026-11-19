@@ -100,10 +100,11 @@ public:
     // surface that wants to explain why cleaning regressed.
     static QString accessNeededMessage();
 
-    // FR-112: take a Timeshift / APFS snapshot before a clean if the user
-    // has opted in via SettingKeys::PreCleanSnapshotEnabled. Silent no-op
-    // when disabled or when the platform tool is unavailable. Always
-    // returns (never throws) so the clean itself is never blocked.
+    // FR-112: take a Timeshift / snapper / btrfs / APFS snapshot before a
+    // clean if the user has opted in via SettingKeys::PreCleanSnapshotEnabled.
+    // Silent no-op when disabled; emits snapshotSkipped() when opted in but
+    // no tool is available or the snapshot failed. Always returns (never
+    // throws) so the clean itself is never blocked.
     void maybeTakeSnapshot(const QList<CleanCategory> &categories);
 
     QList<ExclusionEntry> loadExclusions();
@@ -125,6 +126,7 @@ signals:
     void cleaningStarted(QString scheduleName);
     void cleaningFinished(CleanResult result);
     void snapshotTaken(QString toolName);   // emitted on worker thread after a successful pre-clean snapshot
+    void snapshotSkipped(QString message);  // emitted on worker thread when the opted-in snapshot was unavailable or failed; the clean proceeds
 
     // SSO-3732 / FW-05: emitted when scanning or cleaning detects that a
     // platform policy refused access — concretely, macOS 27 denying

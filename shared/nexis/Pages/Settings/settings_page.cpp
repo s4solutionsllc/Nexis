@@ -555,15 +555,19 @@ void SettingsPage::initScheduledCleaning()
     ui->spnThresholdGB->setEnabled(mSettingManager->getThresholdAlertEnabled());
     ui->chkCleaningNotifications->setChecked(mSettingManager->getCleaningNotificationsEnabled());
 
-    // FR-112: hide the snapshot toggle when the platform tool (Timeshift /
-    // tmutil) isn't available. Show a per-platform tool name in the label.
+    // FR-112: label the toggle with the detected snapshot tool (Timeshift /
+    // snapper / btrfs / tmutil). With none installed it stays visible but
+    // disabled so the feature is discoverable; Nexis never installs one.
     SnapshotService *snap = SnapshotService::ins();
     if (snap->isAvailable()) {
         ui->chkPreCleanSnapshot->setText(
             tr("Create restore point before cleaning (%1)").arg(snap->toolDisplayName()));
         ui->chkPreCleanSnapshot->setChecked(mSettingManager->getPreCleanSnapshotEnabled());
     } else {
-        ui->chkPreCleanSnapshot->hide();
+        ui->chkPreCleanSnapshot->setChecked(false);
+        ui->chkPreCleanSnapshot->setEnabled(false);
+        ui->chkPreCleanSnapshot->setToolTip(
+            tr("No snapshot tool found. Install Timeshift or snapper, or use a btrfs root filesystem, to enable this."));
     }
 
     // FR-113: Downloads auto-cleanup — checkbox gates the path/days sub-controls.

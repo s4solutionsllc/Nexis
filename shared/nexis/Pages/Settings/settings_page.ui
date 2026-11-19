@@ -617,7 +617,7 @@
            <widget class="QCheckBox" name="chkPreCleanSnapshot">
             <property name="text"><string>Create restore point before cleaning</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="toolTip"><string>Runs Timeshift (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back.</string></property>
+            <property name="toolTip"><string>Runs Timeshift, snapper or a btrfs snapshot (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back. Off by default.</string></property>
            </widget>
           </item>
 

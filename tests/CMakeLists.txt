@@ -561,6 +561,16 @@ add_nexis_test(NAME CacheRebuildWidgetTests
     Qt6::Widgets Qt6::Network
 )
 
+# SSO-27147: pre-clean snapshot backend detection (Timeshift / snapper / btrfs)
+# is pure — compile SnapshotService directly, no live tools needed.
+add_nexis_test(NAME SnapshotServiceTests
+  SOURCES
+    core/test_snapshot_service.cpp
+    "${GUI_SHARED_DIR}/Services/snapshot_service.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+)
+
 # SSO-23867: SnapshotManagerWidget's tmutil listlocalsnapshots parsing —
 # pure/static, no live filesystem needed. Lives in the GUI target; compile
 # its source + deps directly like FirewallTests above.

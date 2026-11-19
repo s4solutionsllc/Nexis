@@ -102,6 +102,7 @@ private slots:
     void onManageExclusions();
     void onTreeContextMenu(const QPoint &pos);
     void onSnapshotTaken(const QString &toolName);
+    void onSnapshotSkipped(const QString &message);
     void onSelectAllClicked();
     // SSO-3732 / FW-05: surface a persistent banner when CleanerService
     // detects macOS 27 TCC denial on cross-team app-container access. The
