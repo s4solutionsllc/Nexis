@@ -936,6 +936,7 @@ void CleanerService::maybeTakeSnapshot(const QList<CleanCategory> &categories)
     SnapshotService *svc = SnapshotService::ins();
     if (!svc->isAvailable()) {
         qWarning() << "CleanerService: snapshot enabled but tool unavailable — skipping";
+        emit snapshotSkipped(svc->unavailableMessage());
         return;
     }
 
@@ -945,8 +946,11 @@ void CleanerService::maybeTakeSnapshot(const QList<CleanCategory> &categories)
         catNames << categoryName(cat);
 
     const QString reason = QStringLiteral("Nexis pre-clean: %1").arg(catNames.join(", "));
+    const QString toolName = svc->toolDisplayName();
     if (svc->takeSnapshot(reason))
-        emit snapshotTaken(svc->toolDisplayName());
+        emit snapshotTaken(toolName);
+    else
+        emit snapshotSkipped(tr("Restore point via %1 failed. The clean continued without one.").arg(toolName));
 }
 
 CleanerService::CleanResult CleanerService::cleanSchedule(const QString &scheduleId)

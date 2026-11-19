@@ -713,6 +713,18 @@ bool PackageToolLinux::aptHistoryRollback(int transactionId)
 
 // SSO-15385: Linux leftover scanner implementation.
 
+QStringList PackageToolLinux::installedAppIds()
+{
+    QStringList ids;
+    for (const Package &pkg : getPackages()) {
+        if (!pkg.name.isEmpty())
+            ids << pkg.name;
+    }
+    ids << getSnapPackages() << getFlatpakPackages();
+    ids.removeDuplicates();
+    return ids;
+}
+
 QList<AppLeftover> PackageToolLinux::findAppLeftovers(const Package &app)
 {
     // Build the search name set: package name plus any reverse-DNS app id
@@ -730,7 +742,7 @@ QList<AppLeftover> PackageToolLinux::findAppLeftovers(const Package &app)
     }
     names.removeDuplicates();
 
-    const auto candidates = LeftoverScannerLinux::scanLeftovers(names);
+    const auto candidates = LeftoverScannerLinux::scanLeftovers(names, installedAppIds());
 
     QList<AppLeftover> out;
     out.reserve(candidates.size());
@@ -739,6 +751,8 @@ QList<AppLeftover> PackageToolLinux::findAppLeftovers(const Package &app)
         lf.path     = c.path;
         lf.category = c.category;
         lf.size     = c.sizeBytes;
+        lf.sharedWith   = c.sharedWith;
+        lf.sharedReason = c.sharedReason;
         out.append(lf);
     }
     return out;

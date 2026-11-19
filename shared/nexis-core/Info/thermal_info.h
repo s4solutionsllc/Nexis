@@ -15,6 +15,16 @@ struct ThermalSensor {
     double critTemp;     // from temp*_crit, or -1.0 if unavailable/bogus
 };
 
+// Aggregate over the valid readings of a sensor set. Averages hide a single hot
+// sensor, so the max (and which sensor produced it) always travels with it.
+struct ThermalSummary {
+    int count = 0;        // readings that passed validation
+    double average = 0.0;
+    double max = 0.0;
+    int maxIndex = -1;    // index into the input list, -1 when count == 0
+    bool isValid() const { return count > 0; }
+};
+
 class NEXISCORESHARED_EXPORT ThermalInfo
 {
 public:
@@ -23,6 +33,13 @@ public:
     QList<ThermalSensor> getSensors() const { return mSensors; }
     virtual double getTemperature(int index) const = 0;
     bool hasSensors() const { return !mSensors.isEmpty(); }
+
+    // Dashboard tile input key meaning "all sensors: average + max" instead of one sensor.
+    static QString summaryInputKey() { return QStringLiteral("__summary__"); }
+
+    // Ignores non-finite, non-positive and above-sane (>200 C) readings, which
+    // sensors report when absent or faulted and would drag the average.
+    static ThermalSummary summarize(const QList<double> &readings);
 
     // Static parsing methods for testability (FR-76).
     static double parseSysfsTemperature(const QString &millidegStr);

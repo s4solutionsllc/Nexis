@@ -1,0 +1,1 @@
+CPU, memory and temperature tray alerts now wait for the value to stay above its threshold for a configurable number of seconds (Settings → Alerts, default 30 s; 0 s keeps the old warn-immediately behaviour), so a brief spike no longer triggers a warning. Each alert fires once per episode and at most once per 10 minutes. New hottest-sensor temperature threshold (SSO-27148).

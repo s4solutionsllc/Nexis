@@ -508,6 +508,13 @@ void HardwareInfoPage::populateFans()
     }
 
     QList<ThermalSensor> sensors = im->getThermalSensors();
+    const ThermalSummary summary = im->getThermalSummary();
+    if (sensors.size() >= 2 && summary.isValid()) {
+        addRow(t, tr("Temperature \u2013 average (%n sensor(s))", nullptr, summary.count),
+               QString::number(summary.average, 'f', 1) + QStringLiteral(" °C"));
+        addRow(t, tr("Temperature \u2013 max (%1)").arg(sensors.at(summary.maxIndex).label),
+               QString::number(summary.max, 'f', 1) + QStringLiteral(" °C"));
+    }
     for (int i = 0; i < sensors.size(); ++i) {
         double tempC = im->getThermalTemperature(i);
         addRow(t, sensors.at(i).label, QString::number(tempC, 'f', 1) + QStringLiteral(" °C"));

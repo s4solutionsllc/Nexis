@@ -12,6 +12,12 @@ namespace SettingKeys {
     const QString StartPage("StartPage");
     const QString CPUAlertPercent("CPUAlertPercent");
     const QString MemoryAlertPercent("MemoryAlertPercent");
+    // SSO-27148: sustained-threshold alerts — seconds a metric must stay above
+    // its threshold before the tray warning fires (0 = immediately).
+    const QString CPUAlertSeconds("CPUAlertSeconds");
+    const QString MemoryAlertSeconds("MemoryAlertSeconds");
+    const QString TempAlertCelsius("TempAlertCelsius");
+    const QString TempAlertSeconds("TempAlertSeconds");
     const QString DiskAlertPercent("DiskAlertPercent");
     const QString AppQuitDialogDontAsk("AppQuitDialogDontAsk");
     const QString AppQuitDialogChoice("AppQuitDialogChoice");
@@ -150,6 +156,14 @@ public:
 
     void setMemoryAlertPercent(const int value);
     int getMemoryAlertPercent() const;
+    void setCpuAlertSeconds(const int value);
+    int getCpuAlertSeconds() const;
+    void setMemoryAlertSeconds(const int value);
+    int getMemoryAlertSeconds() const;
+    void setTempAlertCelsius(const int value);
+    int getTempAlertCelsius() const;
+    void setTempAlertSeconds(const int value);
+    int getTempAlertSeconds() const;
 
     void setDiskAlertPercent(const int value);
     int getDiskAlertPercent() const;
@@ -355,6 +369,12 @@ public:
     // SSO-26720 — Live/History switch's last selected mode.
     void setResourcesHistoryModeActive(bool value);
     bool getResourcesHistoryModeActive() const;
+
+    // SSO-27150 — key-addressed access for SettingsBundle (settings import /
+    // export). Only keys on its allow-list are ever passed through here.
+    bool hasValue(const QString &key) const;
+    QVariant rawValue(const QString &key) const;
+    void setRawValue(const QString &key, const QVariant &value);
 
 private:
     static SettingManager *instance;

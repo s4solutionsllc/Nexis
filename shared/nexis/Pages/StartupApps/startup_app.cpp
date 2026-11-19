@@ -1,6 +1,7 @@
 #include "startup_app.h"
 #include "ui_startup_app.h"
 #include <QIcon>
+#include <QLabel>
 #include <QFileInfo>
 #ifdef Q_OS_MACOS
 #include <QFileIconProvider>
@@ -166,4 +167,12 @@ QString StartupApp::getFilePath() const
 void StartupApp::setFilePath(const QString &value)
 {
     mFilePath = value;
+}
+
+void StartupApp::setPersistenceBadge(const QString &text)
+{
+    auto *badge = new QLabel(text, this);
+    badge->setObjectName(QStringLiteral("persistenceBadge"));
+    // Slot 2 sits between the name and the stretch spacer.
+    ui->startupAppLayout->insertWidget(2, badge, 0, Qt::AlignLeft | Qt::AlignVCenter);
 }

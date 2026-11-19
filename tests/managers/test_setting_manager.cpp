@@ -40,6 +40,9 @@ private slots:
     void kioskMonitorName_defaultsToEmpty();
     void kioskMonitorName_roundTrips();
 
+    // SSO-27147 — pre-clean restore point is opt-in.
+    void preCleanSnapshot_defaultsToFalse();
+
     // SSO-25782 — browser deep-clean cookie keep-list.
     void cookieKeepDomains_defaultsToEmpty();
     void cookieKeepDomains_roundTrips();
@@ -153,6 +156,11 @@ void TestSettingManager::kioskLaunch_defaultsToFalse()
 {
     // Fresh install: kiosk-at-startup is off unless the user opts in.
     QCOMPARE(SettingManager::ins()->getLaunchInKioskMode(), false);
+}
+
+void TestSettingManager::preCleanSnapshot_defaultsToFalse()
+{
+    QCOMPARE(SettingManager::ins()->getPreCleanSnapshotEnabled(), false);
 }
 
 void TestSettingManager::kioskLaunch_roundTrips()

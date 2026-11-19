@@ -1,0 +1,1 @@
+Linux pre-clean restore point now works with snapper and btrfs as well as Timeshift (picked automatically from what is installed; off by default, nothing is ever installed for you). If the option is on but no tool is available, or the snapshot fails, the Cleaner says so and the clean carries on (SSO-27147).

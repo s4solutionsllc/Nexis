@@ -352,6 +352,16 @@ static void collectMatches(QList<AppLeftover> &out,
     }
 }
 
+QStringList PackageToolMacOS::installedAppIds()
+{
+    QStringList ids;
+    for (const Package &app : getInstalledApps()) {
+        if (!app.bundleId.isEmpty())
+            ids << app.bundleId;
+    }
+    return ids;
+}
+
 QList<AppLeftover> PackageToolMacOS::findAppLeftovers(const Package &app)
 {
     if (app.bundleId.isEmpty())

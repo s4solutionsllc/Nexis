@@ -81,6 +81,7 @@ private slots:
     void onNetworkUpdated(quint64 rxBytes, quint64 txBytes);
     void onDiskUsageUpdated(const QList<Disk> &disks);
     void updateTempTile();
+    void updateTempSummaryTile(DashboardTileWrapper *w, const QList<ThermalSensor> &sensors);
     void updateFanTile();
     void onGpuUpdated(const QList<GpuDevice> &gpus);
     void onTileInputSelected(DashboardTileWrapper *wrapper, const QString &input);

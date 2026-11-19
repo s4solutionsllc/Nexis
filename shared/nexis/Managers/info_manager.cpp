@@ -436,6 +436,15 @@ double InfoManager::getThermalTemperature(int index) const
     return ti->getTemperature(index);
 }
 
+ThermalSummary InfoManager::getThermalSummary() const
+{
+    QList<double> readings;
+    const int count = ti->getSensors().size();
+    for (int i = 0; i < count; ++i)
+        readings.append(ti->getTemperature(i));
+    return ThermalInfo::summarize(readings);
+}
+
 bool InfoManager::hasThermalSensors() const
 {
     return ti->hasSensors();

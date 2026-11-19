@@ -34,6 +34,7 @@ public:
 
     // FW-18: leftover artifact scanner for macOS app uninstalls.
     QList<AppLeftover> findAppLeftovers(const Package &app) override;
+    QStringList installedAppIds() override;
     bool trashLeftovers(const QStringList &paths) override;
 
     // SSO-15386 T3: multi-signal orphan-leftover scanner.

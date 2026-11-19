@@ -65,6 +65,8 @@ struct AppLeftover {
     QString path;       // full filesystem path to the leftover artifact
     QString category;   // human-readable label: "Application Support", "Caches", etc.
     quint64 size = 0;   // size in bytes (0 when size could not be determined)
+    QString sharedWith;   // SSO-27151: still-installed sibling that also claims it; empty = not shared
+    QString sharedReason; // SSO-27151: user-facing reason; empty = not shared
 };
 
 // SSO-15386 (Orphan-Leftover Scanner) / SSO-15373 §5: one corroborating
@@ -147,6 +149,12 @@ public:
     // LifecycleDenyList::isSafe() before inclusion. Returns an empty list on
     // platforms without an implementation.
     virtual QList<OrphanLeftover> findOrphanLeftovers() { return {}; }
+
+    // SSO-27151: ids of the apps installed right now (macOS bundle ids; Linux
+    // package / snap / Flatpak names), used by the uninstaller shared-data
+    // guard to spot leftovers a still-installed sibling or variant also uses.
+    // Synchronous and potentially slow — call off the UI thread.
+    virtual QStringList installedAppIds() { return {}; }
 
     // SSO-15566 / SSO-15373 CISO §4: true when any process whose executable
     // path lives inside bundlePath is currently running. Returns false on

@@ -117,6 +117,7 @@ public:
 
     QList<ThermalSensor> getThermalSensors() const;
     double getThermalTemperature(int index) const;
+    ThermalSummary getThermalSummary() const;
     bool hasThermalSensors() const;
 
     QList<FanSensor> getFanSensors() const;

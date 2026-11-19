@@ -1,6 +1,7 @@
 #include "crumbs_review_dialog.h"
 #include "Common/dialog_buttons.h"
 
+#include "Services/package_service.h"
 #include "Tools/crumbs_scanner.h"
 #include "Utils/format_util.h"
 
@@ -13,11 +14,13 @@
 #include <QTableWidget>
 #include <QTableWidgetItem>
 #include <QVBoxLayout>
+#include <QtConcurrent>
 
 CrumbsReviewDialog::CrumbsReviewDialog(const QStringList &bundleIds, QWidget *parent)
     : QDialog(parent),
       mBundleIds(bundleIds),
-      mScanRunner(new CrumbsScanRunner(this))
+      mScanRunner(new CrumbsScanRunner(this)),
+      mInstalledIdsWatcher(new QFutureWatcher<QStringList>(this))
 {
     setWindowTitle(tr("Residual Files"));
     setMinimumSize(640, 400);
@@ -25,6 +28,9 @@ CrumbsReviewDialog::CrumbsReviewDialog(const QStringList &bundleIds, QWidget *pa
 
     connect(mScanRunner, &CrumbsScanRunner::itemFound, this, &CrumbsReviewDialog::onItemFound);
     connect(mScanRunner, &CrumbsScanRunner::scanFinished, this, &CrumbsReviewDialog::onScanFinished);
+    connect(mInstalledIdsWatcher, &QFutureWatcher<QStringList>::finished, this, [this]() {
+        mScanRunner->startScan(mBundleIds, mInstalledIdsWatcher->result());
+    });
 
     startScan();
 }
@@ -40,11 +46,12 @@ void CrumbsReviewDialog::buildUI()
     layout->addWidget(mLblSummary);
 
     mTable = new QTableWidget(this);
-    mTable->setColumnCount(3);
-    mTable->setHorizontalHeaderLabels({ tr(""), tr("Path"), tr("Size") });
+    mTable->setColumnCount(4);
+    mTable->setHorizontalHeaderLabels({ tr(""), tr("Path"), tr("Size"), tr("Note") });
     mTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     mTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
     mTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    mTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     mTable->verticalHeader()->setVisible(false);
     mTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     mTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -63,6 +70,7 @@ void CrumbsReviewDialog::startScan()
 {
     mTable->setRowCount(0);
     mTotalBytes = 0;
+    mSharedCount = 0;
 
     // SSO-15567: interaction is held off until the scan settles into its
     // final sort-by-size-desc order — rows still stream in below so the
@@ -72,7 +80,10 @@ void CrumbsReviewDialog::startScan()
     mBtnDelete->setEnabled(false);
     mLblSummary->setText(tr("Scanning for residual files…"));
 
-    mScanRunner->startScan(mBundleIds);
+    PackageService *service = PackageService::ins();
+    mInstalledIdsWatcher->setFuture(QtConcurrent::run([service]() {
+        return service->installedAppIds();
+    }));
 }
 
 void CrumbsReviewDialog::addRow(int row, const CrumbsScanner::CrumbCandidate &c)
@@ -84,6 +95,11 @@ void CrumbsReviewDialog::addRow(int row, const CrumbsScanner::CrumbCandidate &c)
     // The user must explicitly opt-in to deletion of each item.
     chkItem->setCheckState(Qt::Unchecked);
     chkItem->setData(Qt::UserRole, static_cast<qlonglong>(c.sizeBytes));
+    // SSO-27151: data a still-installed sibling/variant also uses is excluded —
+    // shown with its reason, never selectable.
+    const bool shared = !c.sharedReason.isEmpty();
+    if (shared)
+        chkItem->setFlags(chkItem->flags() & ~Qt::ItemIsUserCheckable);
     mTable->setItem(row, 0, chkItem);
 
     auto *pathItem = new QTableWidgetItem(c.path);
@@ -93,6 +109,10 @@ void CrumbsReviewDialog::addRow(int row, const CrumbsScanner::CrumbCandidate &c)
     auto *sizeItem = new QTableWidgetItem(FormatUtil::formatBytes(c.sizeBytes));
     sizeItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
     mTable->setItem(row, 2, sizeItem);
+
+    auto *noteItem = new QTableWidgetItem(c.sharedReason);
+    noteItem->setToolTip(c.sharedReason);
+    mTable->setItem(row, 3, noteItem);
 }
 
 void CrumbsReviewDialog::onItemFound(CrumbsScanner::CrumbCandidate item)
@@ -102,6 +122,8 @@ void CrumbsReviewDialog::onItemFound(CrumbsScanner::CrumbCandidate item)
     // (per scan-location) order here; onScanFinished() below rebuilds the
     // table in the final sort-by-size-desc order once the walk is done.
     mTotalBytes += item.sizeBytes;
+    if (!item.sharedReason.isEmpty())
+        ++mSharedCount;
 
     const int row = mTable->rowCount();
     mTable->insertRow(row);
@@ -126,10 +148,13 @@ void CrumbsReviewDialog::populate(const QList<CrumbsScanner::CrumbCandidate> &cr
     mTable->blockSignals(true);
     mTable->setRowCount(crumbs.size());
     mTotalBytes = 0;
+    mSharedCount = 0;
 
     for (int row = 0; row < crumbs.size(); ++row) {
         const auto &c = crumbs.at(row);
         mTotalBytes += c.sizeBytes;
+        if (!c.sharedReason.isEmpty())
+            ++mSharedCount;
         addRow(row, c);
     }
     mTable->blockSignals(false);
@@ -145,6 +170,12 @@ void CrumbsReviewDialog::populate(const QList<CrumbsScanner::CrumbCandidate> &cr
             tr("Found %1 residual file(s) totalling %2. Check the items you want to move to Trash.")
                 .arg(crumbs.size())
                 .arg(FormatUtil::formatBytes(static_cast<quint64>(mTotalBytes))));
+        if (mSharedCount > 0) {
+            mLblSummary->setText(
+                mLblSummary->text() + QLatin1Char(' ')
+                + tr("%n item(s) are also used by apps that are still installed and cannot be selected.",
+                     nullptr, mSharedCount));
+        }
     }
 
     updateDeleteButton();

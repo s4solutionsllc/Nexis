@@ -69,6 +69,7 @@ void TestProcInfoParser::stat_simple()
 
     QCOMPARE(f.comm, QString("bash"));
     QCOMPARE(f.state, QChar('S'));
+    QCOMPARE(f.ppid, qint64(1000));
     QCOMPARE(f.session, qint64(1234));
     QCOMPARE(f.utime, quint64(102));
     QCOMPARE(f.stime, quint64(45));

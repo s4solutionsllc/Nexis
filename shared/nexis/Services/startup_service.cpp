@@ -1,10 +1,11 @@
 #include "startup_service.h"
 
 #include <QDir>
+#include <QStandardPaths>
+#include <Utils/command_util.h>
 
 #ifdef Q_OS_MACOS
 #include "startup_info_macos.h"
-#include <Utils/command_util.h>
 #else
 #include "startup_info_linux.h"
 #endif
@@ -20,6 +21,8 @@ StartupService *StartupService::ins()
 
 StartupService::StartupService(QObject *parent)
     : QObject(parent)
+    , mPersistence(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)
+                   + QStringLiteral("/persistence_baseline.json"))
 {
 #ifdef Q_OS_MACOS
     mInfo = std::make_unique<StartupInfoMacOS>();
@@ -70,6 +73,43 @@ QString StartupService::autostartPath() const
 bool StartupService::isAutostartDisabled() const
 {
     return mInfo->isAutostartDisabled();
+}
+
+QList<StartupAppData> StartupService::getCronJobs() const
+{
+    QList<StartupAppData> jobs;
+    if (!CommandUtil::isExecutable(QStringLiteral("crontab")))
+        return jobs;
+
+    // Exit 1 with "no crontab for <user>" is the normal empty case.
+    const ExecResult res = CommandUtil::execWithStatus(
+        QStringLiteral("crontab"), {QStringLiteral("-l")}, 5000);
+    if (!res.ok())
+        return jobs;
+
+    for (const CronEntry &cron : PersistenceWatch::parseCrontab(res.output))
+        jobs << PersistenceWatch::itemForCron(cron);
+    return jobs;
+}
+
+static QList<PersistenceEntry> persistenceEntries(const QList<StartupAppData> &items)
+{
+    QList<PersistenceEntry> entries;
+    entries.reserve(items.size());
+    for (const StartupAppData &d : items)
+        entries << PersistenceWatch::entryFor(d);
+    return entries;
+}
+
+PersistenceDiff StartupService::evaluatePersistence(const QList<StartupAppData> &items)
+{
+    return mPersistence.evaluate(persistenceEntries(items)).diff;
+}
+
+void StartupService::acknowledgePersistence(const QList<StartupAppData> &items,
+                                            const QSet<QString> &keys)
+{
+    mPersistence.acknowledge(persistenceEntries(items), keys);
 }
 
 #ifdef Q_OS_MACOS

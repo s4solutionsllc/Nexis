@@ -3,6 +3,9 @@
 #include "utilities.h"
 #include "Services/startup_service.h"
 
+#include <QFrame>
+#include <QHBoxLayout>
+
 #ifdef Q_OS_MACOS
 #include "btm_reset_dialog.h"
 #include "btm_row.h"
@@ -29,6 +32,25 @@ StartupAppsPage::StartupAppsPage(QWidget *parent, StartupService *startupService
 
 void StartupAppsPage::init()
 {
+    mPersistenceBanner = new QFrame(ui->startupAppsContainer);
+    mPersistenceBanner->setObjectName(QStringLiteral("persistenceBanner"));
+    auto *bannerLayout = new QHBoxLayout(mPersistenceBanner);
+    mPersistenceBannerText = new QLabel(mPersistenceBanner);
+    mPersistenceBannerText->setObjectName(QStringLiteral("persistenceBannerText"));
+    mPersistenceBannerText->setWordWrap(true);
+    auto *btnAcknowledge = new QPushButton(tr("Acknowledge"), mPersistenceBanner);
+    btnAcknowledge->setObjectName(QStringLiteral("btnAcknowledgePersistence"));
+    btnAcknowledge->setCursor(Qt::PointingHandCursor);
+    btnAcknowledge->setToolTip(tr(
+        "Accept the items flagged as new or changed and make the current list "
+        "the new baseline. Nothing is removed or blocked."));
+    bannerLayout->addWidget(mPersistenceBannerText, 1);
+    bannerLayout->addWidget(btnAcknowledge, 0, Qt::AlignVCenter);
+    mPersistenceBanner->hide();
+    ui->verticalLayout->insertWidget(0, mPersistenceBanner);
+    connect(btnAcknowledge, &QPushButton::clicked,
+            this, &StartupAppsPage::onAcknowledgeClicked);
+
     if (mStartupService->isAutostartDisabled()) {
         ui->lblNotFound->setText(tr("Startup Apps are disabled."));
         ui->btnAddStartupApp->setEnabled(false);
@@ -107,19 +129,21 @@ void StartupAppsPage::loadApps()
     mBtmRowCount = 0;
 #endif
 
-#ifdef Q_OS_MACOS
-    QList<StartupAppData> all = mStartupService->getAllLoginItems();
-#else
-    QList<StartupAppData> all = mStartupService->getApps();
-#endif
+    const QList<StartupAppData> all = collectItems();
+
+    mItems = all;
+    const PersistenceDiff diff = mStartupService->evaluatePersistence(all);
+    mFlaggedKeys = diff.flagged();
+    updatePersistenceBanner(diff);
 
     // Partition into buckets
-    QList<StartupAppData> userAgents, systemAgents, systemDaemons;
+    QList<StartupAppData> userAgents, systemAgents, systemDaemons, cronJobs;
     for (const StartupAppData &d : all) {
         switch (d.category) {
         case LoginItemCategory::UserAgent:   userAgents   << d; break;
         case LoginItemCategory::SystemAgent:  systemAgents  << d; break;
         case LoginItemCategory::SystemDaemon: systemDaemons << d; break;
+        case LoginItemCategory::CronJob:      cronJobs      << d; break;
         }
     }
 
@@ -141,6 +165,12 @@ void StartupAppsPage::loadApps()
                 connect(app, &StartupApp::editStartupAppS, this, &StartupAppsPage::openStartupAppEdit);
             }
 
+            const QString key = PersistenceWatch::keyFor(appData);
+            if (diff.added.contains(key))
+                app->setPersistenceBadge(tr("NEW"));
+            else if (diff.changed.contains(key))
+                app->setPersistenceBadge(tr("CHANGED"));
+
             QSize hint = app->sizeHint();
             hint.setHeight(qMax(hint.height(), app->minimumHeight()));
             item->setSizeHint(hint);
@@ -152,6 +182,7 @@ void StartupAppsPage::loadApps()
     addGroup(tr("User Agents"), userAgents);
     addGroup(tr("System Agents"), systemAgents);
     addGroup(tr("System Daemons"), systemDaemons);
+    addGroup(tr("Cron Jobs"), cronJobs);
 
 #ifdef Q_OS_MACOS
     // FW-10: append the BTM section after the launchd-derived sections so
@@ -181,6 +212,53 @@ void StartupAppsPage::loadApps()
 #endif
 
     setAppCount();
+}
+
+void StartupAppsPage::updatePersistenceBanner(const PersistenceDiff &diff)
+{
+    if (!diff.hasFlagged()) {
+        mPersistenceBanner->hide();
+        return;
+    }
+
+    QStringList parts;
+    if (!diff.added.isEmpty())
+        parts << tr("%n new item(s)", nullptr, diff.added.size());
+    if (!diff.changed.isEmpty())
+        parts << tr("%n changed item(s)", nullptr, diff.changed.size());
+    mPersistenceBannerText->setText(
+        tr("%1 since you last acknowledged. Review them below; Nexis only reports, "
+           "it never blocks or removes anything.").arg(parts.join(tr(" and "))));
+    mPersistenceBanner->show();
+}
+
+void StartupAppsPage::onAcknowledgeClicked()
+{
+    mStartupService->acknowledgePersistence(mItems);
+    loadApps();
+}
+
+void StartupAppsPage::onStartupAppSaved()
+{
+    // Anything the user just added or edited here is theirs; only items that
+    // appeared on their own (flagged before this save) stay flagged.
+    const QList<StartupAppData> items = collectItems();
+    QSet<QString> mine = mStartupService->evaluatePersistence(items).flagged();
+    mine.subtract(mFlaggedKeys);
+    if (!mine.isEmpty())
+        mStartupService->acknowledgePersistence(items, mine);
+    loadApps();
+}
+
+QList<StartupAppData> StartupAppsPage::collectItems() const
+{
+#ifdef Q_OS_MACOS
+    QList<StartupAppData> all = mStartupService->getAllLoginItems();
+#else
+    QList<StartupAppData> all = mStartupService->getApps();
+#endif
+    all += mStartupService->getCronJobs();
+    return all;
 }
 
 void StartupAppsPage::setAppCount()
@@ -233,7 +311,7 @@ void StartupAppsPage::openStartupAppEdit(const QString filePath)
     StartupAppEdit::selectedFilePath = filePath;
     if (mStartupAppEdit.isNull()) {
         mStartupAppEdit = QSharedPointer<StartupAppEdit>(new StartupAppEdit(this));
-        connect(mStartupAppEdit.data(), &StartupAppEdit::startupAppAdded, this, &StartupAppsPage::loadApps);
+        connect(mStartupAppEdit.data(), &StartupAppEdit::startupAppAdded, this, &StartupAppsPage::onStartupAppSaved);
     }
     mStartupAppEdit->show();
 }

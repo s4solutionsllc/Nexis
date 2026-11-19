@@ -1,6 +1,7 @@
 #include "leftover_scanner_linux.h"
 
 #include "Tools/lifecycle_deny_list.h"
+#include "Tools/shared_data_guard.h"
 #include "Utils/file_util.h"
 
 #include <QDir>
@@ -86,7 +87,8 @@ bool leafMatches(const QString &leaf, const QStringList &names, QString *matched
 
 } // namespace
 
-QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames)
+QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames,
+                                       const QStringList &installedIds)
 {
     QList<LeftoverCandidate> out;
     if (packageNames.isEmpty())
@@ -127,6 +129,11 @@ QList<LeftoverCandidate> scanLeftovers(const QStringList &packageNames)
             c.sizeBytes     = FileUtil::getFileSize(canonical);
             c.category      = root.category;
             c.matchedName   = matched;
+
+            const SharedDataGuard::Claim claim =
+                SharedDataGuard::classify(fi.fileName(), matched, installedIds);
+            c.sharedWith   = claim.siblingId;
+            c.sharedReason = claim.reason;
             out.append(c);
         }
     }

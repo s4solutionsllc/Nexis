@@ -7,8 +7,11 @@
 #include <QList>
 #include <QListWidgetItem>
 #include <QResizeEvent>
+#include <QSet>
 #include <QSharedPointer>
 #include <QAbstractItemModel>
+
+#include <Utils/persistence_watch.h>
 
 #include "startup_app.h"
 #include "startup_app_edit.h"
@@ -17,6 +20,7 @@
 class QPushButton;
 #endif
 
+class QFrame;
 class StartupService;
 
 namespace Ui {
@@ -40,6 +44,8 @@ private slots:
     void openStartupAppEdit(const QString filePath = QString());
     void setAppCount();
     void filterStartupApps(const QString &text);
+    void onStartupAppSaved();
+    void onAcknowledgeClicked();
 #ifdef Q_OS_MACOS
     void onRepairBtmClicked();
 #endif
@@ -65,6 +71,16 @@ private:
         bool isBtmGroup = false;
     };
     QList<SectionGroup> mSectionGroups;
+
+    // SSO-27149: persistence watch. mItems is what the last load displayed
+    // (login items + cron), mFlaggedKeys the subset new/changed since the
+    // acknowledged baseline.
+    QFrame *mPersistenceBanner = nullptr;
+    QLabel *mPersistenceBannerText = nullptr;
+    QList<StartupAppData> mItems;
+    QSet<QString> mFlaggedKeys;
+    void updatePersistenceBanner(const PersistenceDiff &diff);
+    QList<StartupAppData> collectItems() const;
 #ifdef Q_OS_MACOS
     QPushButton *mBtnRepairBtm = nullptr;
     int mBtmRowCount = 0;

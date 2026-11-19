@@ -1,4 +1,5 @@
 #include <QtTest>
+#include <atomic>
 #include <QApplication>
 #include <QComboBox>
 #include <QLabel>
@@ -39,11 +40,19 @@ protected:
     }
 };
 
-void writeFile(const QString &path, int bytes)
+// Same stubs on a real worker thread, for the pause/resume wiring.
+class AsyncFakeFinderService : public FakeFinderService
 {
+protected:
+    bool runsAsynchronously() const override { return true; }
+};
+
+void writeFile(const QString &path, int bytes, char fill = 'x')
+{
+    QFileInfo(path).absoluteDir().mkpath(QStringLiteral("."));
     QFile f(path);
     QVERIFY(f.open(QIODevice::WriteOnly));
-    f.write(QByteArray(bytes, 'x'));
+    f.write(QByteArray(bytes, fill));
 }
 
 // Answers the page's "Move to Trash?" QMessageBox::question with Yes.
@@ -53,6 +62,19 @@ void acceptNextMessageBox()
         auto *box = qobject_cast<QMessageBox *>(QApplication::activeModalWidget());
         QVERIFY2(box, "expected a confirmation dialog");
         box->button(QMessageBox::Yes)->click();
+    });
+}
+
+
+// Clicks the confirm button of the "Replace Duplicates with Links" preview.
+void confirmNextLinkDialog()
+{
+    QTimer::singleShot(0, []() {
+        QWidget *dlg = QApplication::activeModalWidget();
+        QVERIFY2(dlg && dlg->objectName() == "LinkReplaceDialog", "expected the link preview");
+        auto *confirm = dlg->findChild<QPushButton *>(QStringLiteral("btnLinkReplaceConfirm"));
+        QVERIFY(confirm && confirm->isEnabled());
+        confirm->click();
     });
 }
 
@@ -80,6 +102,24 @@ private:
         // The page-level Scan button sits in the same stacked page as the tree.
         QWidget *modePage = tree->parentWidget()->parentWidget();
         return modePage->findChild<QPushButton *>(QStringLiteral("btnScan"));
+    }
+
+    // The Duplicate Finder page's Match combo, and its min-size unit combo.
+    QComboBox *comboWithItem(DiskToolsPage &page, const QString &item)
+    {
+        for (QComboBox *c : page.findChildren<QComboBox *>()) {
+            if (c->findText(item) >= 0)
+                return c;
+        }
+        return nullptr;
+    }
+
+    // Duplicate mode defaults to "files of at least 1 MB"; the test files are small.
+    void allowSmallDuplicates(DiskToolsPage &page)
+    {
+        QComboBox *unit = comboWithItem(page, QStringLiteral("KB"));
+        QVERIFY(unit);
+        unit->setCurrentIndex(0);
     }
 
     QPushButton *trashButton(QTreeWidget *tree)
@@ -249,6 +289,108 @@ private slots:
 
         QCOMPARE(service.trashed, QStringList{QFileInfo(tmp.filePath("huge.bin")).absoluteFilePath()});
         QCOMPARE(tree->topLevelItemCount(), 0);
+    }
+
+    // SSO-27146: the Match combo gains "Duplicate folders"; folder groups
+    // are trashed through the service and never offered link replacement.
+    void dupFolders_listsIdenticalFolders_trashGoesThroughService()
+    {
+        QTemporaryDir tmp;
+        writeFile(tmp.filePath("a/f.bin"), 2000, 'q');
+        writeFile(tmp.filePath("b/f.bin"), 2000, 'q');
+
+        FakeFinderService service;
+        DiskToolsPage page(nullptr, &service);
+        useOnlyDirectory(page, tmp.path());
+        allowSmallDuplicates(page);
+        QComboBox *match = comboWithItem(page, QStringLiteral("Duplicate folders"));
+        QVERIFY(match);
+        match->setCurrentIndex(match->findText(QStringLiteral("Duplicate folders")));
+
+        auto *tree = page.findChild<QTreeWidget *>(QStringLiteral("treeWidgetDuplicates"));
+        QVERIFY(tree);
+        scanButton(tree)->click();
+
+        QCOMPARE(tree->topLevelItemCount(), 1);
+        QTreeWidgetItem *group = tree->topLevelItem(0);
+        QVERIFY(group->text(0).startsWith(QStringLiteral("Identical folders")));
+        QCOMPARE(group->childCount(), 2);
+        QCOMPARE(group->child(0)->checkState(0), Qt::Unchecked);
+        QCOMPARE(group->child(1)->checkState(0), Qt::Checked);
+        QCOMPARE(group->child(1)->data(2, Qt::UserRole).toULongLong(), quint64(2000));
+        QVERIFY(!page.findChild<QPushButton *>(QStringLiteral("btnDupLink"))->isEnabled());
+
+        acceptNextMessageBox();
+        trashButton(tree)->click();
+        QCOMPARE(service.trashed, QStringList{QFileInfo(tmp.filePath("b")).absoluteFilePath()});
+    }
+
+    // SSO-27146: preview dialog -> hard links -> rows leave the tree.
+    void dupLinks_replaceCheckedCopyWithHardLink()
+    {
+        QTemporaryDir tmp;
+        const QString a = tmp.filePath("a.bin");
+        const QString b = tmp.filePath("b.bin");
+        writeFile(a, 2000, 'z');
+        writeFile(b, 2000, 'z');
+
+        FakeFinderService service;
+        DiskToolsPage page(nullptr, &service);
+        useOnlyDirectory(page, tmp.path());
+        allowSmallDuplicates(page);
+
+        auto *tree = page.findChild<QTreeWidget *>(QStringLiteral("treeWidgetDuplicates"));
+        scanButton(tree)->click();
+        QCOMPARE(tree->topLevelItemCount(), 1);
+
+        auto *linkButton = page.findChild<QPushButton *>(QStringLiteral("btnDupLink"));
+        QVERIFY(linkButton);
+        QVERIFY2(linkButton->isEnabled(), "the pre-checked duplicate is linkable");
+
+        confirmNextLinkDialog();
+        linkButton->click();
+
+        QVERIFY(DuplicateFinderService::isSameFile(a, b));
+        QCOMPARE(tree->topLevelItemCount(), 0); // no longer two separate copies
+        QVERIFY(!linkButton->isEnabled());
+    }
+
+    // SSO-27146: Pause on the page parks the service; the same button resumes.
+    void dupScan_pauseButton_parksAndResumes()
+    {
+        QTemporaryDir tmp;
+        for (int i = 0; i < 8; ++i) {
+            writeFile(tmp.filePath(QStringLiteral("x/%1.bin").arg(i)), 2000, char('a' + i));
+            writeFile(tmp.filePath(QStringLiteral("y/%1.bin").arg(i)), 2000, char('a' + i));
+        }
+
+        AsyncFakeFinderService service;
+        std::atomic<bool> pausedOnce{false};
+        QObject::connect(&service, &DuplicateFinderService::progressUpdated, &service,
+                         [&](int, int, int, const QString &) {
+            if (!pausedOnce.exchange(true))
+                service.pause();
+        }, Qt::DirectConnection);
+
+        DiskToolsPage page(nullptr, &service);
+        useOnlyDirectory(page, tmp.path());
+        allowSmallDuplicates(page);
+
+        auto *tree = page.findChild<QTreeWidget *>(QStringLiteral("treeWidgetDuplicates"));
+        auto *pauseButton = page.findChild<QPushButton *>(QStringLiteral("btnDupPause"));
+        QVERIFY(pauseButton);
+        QVERIFY(pauseButton->isHidden());
+
+        scanButton(tree)->click();
+        QTRY_VERIFY(service.isPaused());
+        QTRY_COMPARE(pauseButton->text(), QStringLiteral("Resume"));
+        QVERIFY(!pauseButton->isHidden());
+        QCOMPARE(tree->topLevelItemCount(), 0);
+
+        pauseButton->click();
+        QVERIFY(!service.isPaused());
+        QTRY_COMPARE_WITH_TIMEOUT(tree->topLevelItemCount(), 8, 15000);
+        QTRY_VERIFY(pauseButton->isHidden());
     }
 
     void emptyScan_showsEmptyStateAgain()

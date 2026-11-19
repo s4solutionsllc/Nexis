@@ -6,12 +6,19 @@
 #include <QAtomicInt>
 #include <QFuture>
 #include <QHash>
+#include <QMutex>
+#include <QWaitCondition>
+
+#include <functional>
 
 #include "Managers/cleaner_service.h"
 #include "image_hash.h"
 
 struct DuplicateGroup {
-    enum class Kind { Exact, Similar };
+    // SSO-27146: Directory groups hold whole folders (files[i] is a
+    // directory) whose names, structure and file contents are identical;
+    // fileSize is one folder's total bytes.
+    enum class Kind { Exact, Similar, Directory };
 
     QList<QFileInfo> files;
     quint64 fileSize = 0;
@@ -33,6 +40,37 @@ struct HashedImage {
 struct LargeFileEntry {
     QFileInfo info;
     quint64 size = 0;
+};
+
+// SSO-27146: replace-with-link support. A plan is built (and shown to the
+// user) before anything on disk changes; applying it re-verifies every entry.
+enum class LinkType { Hard, Symbolic };
+
+struct LinkReplaceEntry {
+    enum class Status {
+        Ready,
+        KeptAsOriginal,       // every group member was selected; this one stays
+        SkipNotInGroup,       // not a member of an identical-file group
+        SkipMissing,          // path or keeper no longer a regular file
+        SkipExcluded,         // protected by the cleaner exclusion engine
+        SkipAlreadyLinked,    // already the same inode as the keeper
+        SkipCrossFilesystem   // keeper lives on another filesystem
+    };
+
+    QString duplicatePath;
+    QString keeperPath;
+    LinkType type = LinkType::Hard;
+    Status status = Status::SkipNotInGroup;
+    quint64 size = 0;
+
+    bool isReady() const { return status == Status::Ready; }
+};
+
+struct LinkReplaceResult {
+    QString path;
+    QString keeperPath;
+    bool replaced = false;
+    QString error;
 };
 
 class DuplicateFinderService : public QObject
@@ -74,8 +112,27 @@ public:
     // the CleanerService exclusion engine.
     void scanEmptyFolders(const QStringList &directories);
 
+    // SSO-27146: duplicate-folder detection. Two folders are duplicates when
+    // they hold the same entry names, the same sub-folder layout and
+    // byte-identical files (symlinks must point at the same target). Reuses
+    // scanFinished with Kind::Directory groups. Only the outermost match is
+    // reported: when A and B are duplicates, A/x and B/x are not listed too.
+    // A folder holding any cleaner-excluded or unreadable entry, and a folder
+    // with no files at all, is never a candidate. `minSize` is compared with
+    // the folder's total size.
+    void scanDuplicateDirectories(const QStringList &directories, qint64 minSize);
+
     void cancel();
     bool isScanning() const;
+
+    // SSO-27146: pause/resume of a running scan or link replacement. The
+    // worker parks at its next checkpoint (between files / directory
+    // entries / hash chunks) and continues where it left off on resume().
+    // In-session only; cancel() releases a paused worker. Does nothing when
+    // no scan is running.
+    void pause();
+    void resume();
+    bool isPaused() const;
 
     // FW-08: safe delete-to-trash. Filters `paths` through the exclusion
     // engine AND the never-delete-last-copy rule (any path that would
@@ -107,12 +164,58 @@ public:
     static QList<LargeFileEntry> rankLargest(QList<LargeFileEntry> candidates,
                                              int topN);
 
+    // SSO-27146: true iff both paths exist and sit on the same filesystem
+    // (st_dev). A hard link cannot cross filesystems, and a symlink that
+    // does breaks the moment that volume is unmounted, so the planner
+    // refuses both.
+    static bool onSameFilesystem(const QString &pathA, const QString &pathB);
+
+    // SSO-27146: true iff both paths resolve to the same inode (st_dev +
+    // st_ino) — i.e. they are already hard links of one file.
+    static bool isSameFile(const QString &pathA, const QString &pathB);
+
+    // SSO-27146: preview for "replace duplicates with links". `selected` are
+    // the paths the user ticked in Kind::Exact groups of `knownGroups`. Per
+    // group the keeper is the first member NOT selected (list order); when
+    // every member is selected the lexicographically smallest path is kept,
+    // matching filterSafeTrashCandidates(). Touches nothing on disk — it only
+    // stats. Entries that cannot be linked carry a skip Status.
+    static QList<LinkReplaceEntry> buildLinkReplacePlan(
+        const QStringList &selected,
+        const QList<DuplicateGroup> &knownGroups,
+        LinkType type,
+        const QList<CleanerService::ExclusionEntry> &exclusions);
+
+    // Same, using the production exclusion list.
+    QList<LinkReplaceEntry> previewLinkReplace(
+        const QStringList &selected,
+        const QList<DuplicateGroup> &knownGroups,
+        LinkType type) const;
+
+    // Replaces one duplicate with a link to its keeper. Re-validates at call
+    // time (still regular files, same filesystem, not already the same
+    // inode, byte-identical content), builds the link under a temporary name
+    // and renames it over the duplicate, so the path is never missing and a
+    // failure leaves the original untouched. Symbolic links are relative.
+    // `shouldStop`, if set, aborts the content comparison.
+    static LinkReplaceResult applyLinkReplace(
+        const LinkReplaceEntry &entry,
+        const std::function<bool()> &shouldStop = {});
+
+    // Runs every Ready entry of `plan` off the GUI thread (same threading
+    // contract as scan()), then emits linkReplaceFinished with one result
+    // per attempted entry. Honors pause()/cancel(); a cancelled run reports
+    // the entries completed so far.
+    void replaceWithLinks(const QList<LinkReplaceEntry> &plan);
+
 signals:
     void progressUpdated(int stage, int current, int total, const QString &message);
     void scanFinished(const QList<DuplicateGroup> &results);
     void largestScanFinished(const QList<LargeFileEntry> &results);
     void emptyFoldersScanFinished(const QStringList &folders);
     void scanCancelled();
+    void pausedChanged(bool paused);
+    void linkReplaceFinished(const QList<LinkReplaceResult> &results);
 
 protected:
     // FW-08: test seam — production routes through QFile::moveToTrash;
@@ -166,6 +269,15 @@ private:
         int baseStage,
         const QString &phaseLabel = QString());
 
+    QList<DuplicateGroup> runDirectoryPipeline(
+        const QStringList &directories,
+        qint64 minSize,
+        const QList<CleanerService::ExclusionEntry> &exclusions);
+
+    // Checkpoint used by every long loop in the pipelines: parks the worker
+    // while paused, then reports whether the scan has been cancelled.
+    bool shouldStop();
+
     QList<LargeFileEntry> runLargestPipeline(
         const QStringList &directories,
         int topN,
@@ -176,10 +288,14 @@ private:
         const QList<CleanerService::ExclusionEntry> &exclusions);
 
     QAtomicInt mCancelled{0};
+    QAtomicInt mPaused{0};
+    QMutex mPauseMutex;
+    QWaitCondition mPauseCondition;
     QFuture<void> mWorkerFuture;
 };
 
 Q_DECLARE_METATYPE(DuplicateGroup)
 Q_DECLARE_METATYPE(LargeFileEntry)
+Q_DECLARE_METATYPE(LinkReplaceResult)
 
 #endif // DUPLICATE_FINDER_SERVICE_H

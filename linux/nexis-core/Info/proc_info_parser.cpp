@@ -37,6 +37,7 @@ bool parseStat(const QByteArray &content, StatFields &out)
 
     // Index map (0-based into `fields`, relative to state):
     //   0 = state (field 3)
+    //   1 = ppid (field 4)
     //   3 = session (field 6)
     //  11 = utime (14)
     //  12 = stime (15)
@@ -48,6 +49,9 @@ bool parseStat(const QByteArray &content, StatFields &out)
     out.state = stateBytes.isEmpty() ? QChar('?') : QChar::fromLatin1(stateBytes.at(0));
 
     bool ok = false;
+    out.ppid = fields.at(1).toLongLong(&ok);
+    if (!ok) out.ppid = 0;
+
     out.session = fields.at(3).toLongLong(&ok);
     if (!ok) out.session = 0;
 

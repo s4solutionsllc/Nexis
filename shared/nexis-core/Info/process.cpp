@@ -10,6 +10,16 @@ void Process::setPid(const pid_t &value)
     pid = value;
 }
 
+pid_t Process::getPpid() const
+{
+    return ppid;
+}
+
+void Process::setPpid(const pid_t &value)
+{
+    ppid = value;
+}
+
 quint64 Process::getRss() const
 {
     return rss;

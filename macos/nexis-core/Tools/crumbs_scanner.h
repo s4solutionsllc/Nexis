@@ -25,12 +25,20 @@ struct NEXISCORESHARED_EXPORT CrumbCandidate {
     QString path;
     qint64  sizeBytes = 0;
     QString matchedBundleId;   // which id in the input produced this hit
+    QString sharedWith;        // SSO-27151: still-installed sibling that also claims it
+    QString sharedReason;      // SSO-27151: user-facing reason; empty = not shared
 };
 
 // Walks the standard ~/Library/* roots and returns every entry whose
 // leaf name begins with any of the supplied bundle ids. Results are
 // returned sorted by sizeBytes desc so the UI can show the largest
 // crumbs first.
+//
+// SSO-27151: `installedBundleIds` lists the apps still installed. A match that
+// one of them also claims (a longer bundle id sharing the prefix, or the
+// unsuffixed profile of a channel variant still installed — see
+// SharedDataGuard) is returned with sharedWith / sharedReason set so the
+// review dialog can exclude it by default.
 //
 // `cancelled` (if non-null) is polled between scan roots and between
 // entries within a root, so an async caller can abort a long-running walk.
@@ -41,7 +49,8 @@ struct NEXISCORESHARED_EXPORT CrumbCandidate {
 NEXISCORESHARED_EXPORT QList<CrumbCandidate> scanCrumbs(
     const QStringList &bundleIds,
     QAtomicInt *cancelled = nullptr,
-    const std::function<void(const CrumbCandidate &)> &itemFoundCb = {});
+    const std::function<void(const CrumbCandidate &)> &itemFoundCb = {},
+    const QStringList &installedBundleIds = {});
 
 // Test seam: identical walk to scanCrumbs(), but rooted at an explicit
 // "home" directory instead of the real QStandardPaths::HomeLocation, so
@@ -52,7 +61,8 @@ NEXISCORESHARED_EXPORT QList<CrumbCandidate> scanCrumbsUnderHome(
     const QString &homeDir,
     const QStringList &bundleIds,
     QAtomicInt *cancelled = nullptr,
-    const std::function<void(const CrumbCandidate &)> &itemFoundCb = {});
+    const std::function<void(const CrumbCandidate &)> &itemFoundCb = {},
+    const QStringList &installedBundleIds = {});
 
 } // namespace CrumbsScanner
 
@@ -73,7 +83,7 @@ public:
     ~CrumbsScanRunner() override;
 
     // No-op if a scan is already running.
-    void startScan(const QStringList &bundleIds);
+    void startScan(const QStringList &bundleIds, const QStringList &installedBundleIds = {});
     void cancelScan();
     bool isScanning() const;
 

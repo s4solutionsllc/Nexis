@@ -145,6 +145,22 @@
       </widget>
      </item>
      <item>
+      <widget class="QCheckBox" name="checkProcessTree">
+       <property name="cursor">
+        <cursorShape>PointingHandCursor</cursorShape>
+       </property>
+       <property name="accessibleName">
+        <string notr="true">circle</string>
+       </property>
+       <property name="toolTip">
+        <string>Nest each process under its parent, with collapse / expand</string>
+       </property>
+       <property name="text">
+        <string>Process Tree</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>

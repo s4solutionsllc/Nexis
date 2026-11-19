@@ -323,7 +323,7 @@
 
           <item row="0" column="0" colspan="2">
            <widget class="QLabel" name="lblAlertMessages">
-            <property name="text"><string>Show a tray warning when usage exceeds the threshold</string></property>
+            <property name="text"><string>Show a tray warning when a value stays above its threshold for the set time (0 = off)</string></property>
             <property name="accessibleName"><string notr="true">dimmed</string></property>
            </widget>
           </item>
@@ -339,6 +339,19 @@
             <property name="suffix"><string notr="true"> %</string></property>
             <property name="minimum"><number>0</number></property>
             <property name="maximum"><number>100</number></property>
+            <property name="maximumSize"><size><width>120</width><height>16777215</height></size></property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QSpinBox" name="spinCpuSeconds">
+            <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
+            <property name="keyboardTracking"><bool>false</bool></property>
+            <property name="toolTip"><string>How long the value must stay above the threshold before the warning is shown. 0 = warn immediately.</string></property>
+            <property name="prefix"><string>for </string></property>
+            <property name="suffix"><string notr="true"> s</string></property>
+            <property name="minimum"><number>0</number></property>
+            <property name="maximum"><number>3600</number></property>
+            <property name="singleStep"><number>5</number></property>
             <property name="maximumSize"><size><width>120</width><height>16777215</height></size></property>
            </widget>
           </item>
@@ -358,13 +371,55 @@
             <property name="maximumSize"><size><width>120</width><height>16777215</height></size></property>
            </widget>
           </item>
+          <item row="2" column="2">
+           <widget class="QSpinBox" name="spinMemorySeconds">
+            <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
+            <property name="keyboardTracking"><bool>false</bool></property>
+            <property name="toolTip"><string>How long the value must stay above the threshold before the warning is shown. 0 = warn immediately.</string></property>
+            <property name="prefix"><string>for </string></property>
+            <property name="suffix"><string notr="true"> s</string></property>
+            <property name="minimum"><number>0</number></property>
+            <property name="maximum"><number>3600</number></property>
+            <property name="singleStep"><number>5</number></property>
+            <property name="maximumSize"><size><width>120</width><height>16777215</height></size></property>
+           </widget>
+          </item>
 
           <item row="3" column="0">
+           <widget class="QLabel" name="lblTempCelsius">
+            <property name="text"><string>Temperature</string></property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QSpinBox" name="spinTempCelsius">
+            <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
+            <property name="keyboardTracking"><bool>false</bool></property>
+            <property name="suffix"><string notr="true"> °C</string></property>
+            <property name="minimum"><number>0</number></property>
+            <property name="maximum"><number>150</number></property>
+            <property name="maximumSize"><size><width>120</width><height>16777215</height></size></property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="QSpinBox" name="spinTempSeconds">
+            <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
+            <property name="keyboardTracking"><bool>false</bool></property>
+            <property name="toolTip"><string>How long the value must stay above the threshold before the warning is shown. 0 = warn immediately.</string></property>
+            <property name="prefix"><string>for </string></property>
+            <property name="suffix"><string notr="true"> s</string></property>
+            <property name="minimum"><number>0</number></property>
+            <property name="maximum"><number>3600</number></property>
+            <property name="singleStep"><number>5</number></property>
+            <property name="maximumSize"><size><width>120</width><height>16777215</height></size></property>
+           </widget>
+          </item>
+
+          <item row="4" column="0">
            <widget class="QLabel" name="lblDiskPercent">
             <property name="text"><string>Disk Usage</string></property>
            </widget>
           </item>
-          <item row="3" column="1">
+          <item row="4" column="1">
            <widget class="QSpinBox" name="spinDiskPercent">
             <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
             <property name="suffix"><string notr="true"> %</string></property>
@@ -374,12 +429,12 @@
            </widget>
           </item>
 
-          <item row="4" column="0">
+          <item row="5" column="0">
            <widget class="QLabel" name="lblBatteryHealthPercent">
             <property name="text"><string>Battery Health</string></property>
            </widget>
           </item>
-          <item row="4" column="1">
+          <item row="5" column="1">
            <widget class="QSpinBox" name="spinBatteryHealthPercent">
             <property name="focusPolicy"><enum>Qt::ClickFocus</enum></property>
             <property name="keyboardTracking"><bool>false</bool></property>
@@ -390,14 +445,14 @@
            </widget>
           </item>
 
-          <item row="5" column="0" colspan="2">
+          <item row="6" column="0" colspan="2">
            <widget class="QCheckBox" name="checkDiskHealthAlert">
             <property name="text"><string>Enable disk health alerts</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
            </widget>
           </item>
 
-          <item row="6" column="0" colspan="2">
+          <item row="7" column="0" colspan="2">
            <widget class="QCheckBox" name="checkUpdateAlert">
             <property name="text"><string>Notify when system updates are available</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
@@ -617,7 +672,7 @@
            <widget class="QCheckBox" name="chkPreCleanSnapshot">
             <property name="text"><string>Create restore point before cleaning</string></property>
             <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
-            <property name="toolTip"><string>Runs Timeshift (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back.</string></property>
+            <property name="toolTip"><string>Runs Timeshift, snapper or a btrfs snapshot (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back. Off by default.</string></property>
            </widget>
           </item>
 
@@ -700,7 +755,7 @@
 
           <item>
            <widget class="QLabel" name="lblMigrationDesc">
-            <property name="text"><string>Import settings from a Stacer configuration file.</string></property>
+            <property name="text"><string>Back up or move your Nexis settings, cleaner exclusions and cleaning profiles, or import settings from a Stacer configuration file.</string></property>
             <property name="wordWrap"><bool>true</bool></property>
             <property name="accessibleName"><string notr="true">dimmed</string></property>
            </widget>
@@ -708,6 +763,18 @@
 
           <item>
            <layout class="QHBoxLayout" name="layoutMigrationButtons">
+            <item>
+             <widget class="QPushButton" name="btnExportSettings">
+              <property name="text"><string>Export settings…</string></property>
+              <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnImportSettings">
+              <property name="text"><string>Import settings…</string></property>
+              <property name="cursor"><cursorShape>PointingHandCursor</cursorShape></property>
+             </widget>
+            </item>
             <item>
              <widget class="QPushButton" name="btnImportFromStacer">
               <property name="text"><string>Import from Stacer…</string></property>

@@ -227,6 +227,7 @@ QList<Process> ProcessInfoLinux::collectProcesses()
 
         Process proc;
         proc.setPid(pid);
+        proc.setPpid(static_cast<pid_t>(sf.ppid));
 
         // RSS: kernel gives us pages; convert to bytes.
         const quint64 rssBytes = sf.rssPages * static_cast<quint64>(mPageSize);

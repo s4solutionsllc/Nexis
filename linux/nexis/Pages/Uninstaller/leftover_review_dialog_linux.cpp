@@ -20,7 +20,8 @@ static constexpr int COL_CHECK    = 0;
 static constexpr int COL_CATEGORY = 1;
 static constexpr int COL_PATH     = 2;
 static constexpr int COL_SIZE     = 3;
-static constexpr int COL_COUNT    = 4;
+static constexpr int COL_NOTE     = 4;
+static constexpr int COL_COUNT    = 5;
 
 // Qt::UserRole stores the raw byte count (quint64) for the summary counter.
 static constexpr int ROLE_BYTES = Qt::UserRole;
@@ -51,7 +52,7 @@ void LeftoverReviewDialogLinux::buildUI()
         mUpdatingAll = true;
         for (int row = 0; row < mTable->rowCount(); ++row) {
             auto *item = mTable->item(row, COL_CHECK);
-            if (item)
+            if (item && (item->flags() & Qt::ItemIsUserCheckable))
                 item->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
         }
         mUpdatingAll = false;
@@ -61,11 +62,12 @@ void LeftoverReviewDialogLinux::buildUI()
 
     mTable = new QTableWidget(this);
     mTable->setColumnCount(COL_COUNT);
-    mTable->setHorizontalHeaderLabels({ tr(""), tr("Category"), tr("Path"), tr("Size") });
+    mTable->setHorizontalHeaderLabels({ tr(""), tr("Category"), tr("Path"), tr("Size"), tr("Note") });
     mTable->horizontalHeader()->setSectionResizeMode(COL_CHECK,    QHeaderView::ResizeToContents);
     mTable->horizontalHeader()->setSectionResizeMode(COL_CATEGORY, QHeaderView::ResizeToContents);
     mTable->horizontalHeader()->setSectionResizeMode(COL_PATH,     QHeaderView::Stretch);
     mTable->horizontalHeader()->setSectionResizeMode(COL_SIZE,     QHeaderView::ResizeToContents);
+    mTable->horizontalHeader()->setSectionResizeMode(COL_NOTE,     QHeaderView::ResizeToContents);
     mTable->verticalHeader()->setVisible(false);
     mTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     mTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -82,10 +84,12 @@ void LeftoverReviewDialogLinux::buildUI()
 
 void LeftoverReviewDialogLinux::populate()
 {
-    const auto candidates = LeftoverScannerLinux::scanLeftovers(mPackageNames);
+    const auto candidates =
+        LeftoverScannerLinux::scanLeftovers(mPackageNames, PackageService::ins()->installedAppIds());
 
     mTotalBytes = 0;
     mItemCount  = candidates.size();
+    mSharedCount = 0;
     mTable->setRowCount(mItemCount);
 
     for (int row = 0; row < candidates.size(); ++row) {
@@ -96,6 +100,12 @@ void LeftoverReviewDialogLinux::populate()
         chkItem->setFlags(chkItem->flags() | Qt::ItemIsUserCheckable);
         chkItem->setCheckState(Qt::Unchecked);   // CISO §5: default unchecked — explicit review required
         chkItem->setData(ROLE_BYTES, QVariant::fromValue(c.sizeBytes));
+        // SSO-27151: data a still-installed sibling/variant also uses is
+        // excluded — shown with its reason, never selectable.
+        if (!c.sharedReason.isEmpty()) {
+            chkItem->setFlags(chkItem->flags() & ~Qt::ItemIsUserCheckable);
+            ++mSharedCount;
+        }
         mTable->setItem(row, COL_CHECK, chkItem);
 
         mTable->setItem(row, COL_CATEGORY, new QTableWidgetItem(c.category));
@@ -107,6 +117,10 @@ void LeftoverReviewDialogLinux::populate()
         auto *sizeItem = new QTableWidgetItem(FormatUtil::formatBytes(c.sizeBytes));
         sizeItem->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
         mTable->setItem(row, COL_SIZE, sizeItem);
+
+        auto *noteItem = new QTableWidgetItem(c.sharedReason);
+        noteItem->setToolTip(c.sharedReason);
+        mTable->setItem(row, COL_NOTE, noteItem);
     }
 
     updateSummary();
@@ -139,6 +153,13 @@ void LeftoverReviewDialogLinux::updateSummary()
             .arg(checkedCount)
             .arg(FormatUtil::formatBytes(static_cast<quint64>(checkedBytes))));
 
+    if (mSharedCount > 0) {
+        mLblSummary->setText(
+            mLblSummary->text() + QLatin1Char(' ')
+            + tr("%n item(s) are also used by apps that are still installed and cannot be selected.",
+                 nullptr, mSharedCount));
+    }
+
     // CISO AC: "Uninstall Selected" (here "Move to Trash") disabled until
     // at least one item is checked.
     mBtnTrash->setEnabled(checkedCount > 0);
@@ -147,7 +168,7 @@ void LeftoverReviewDialogLinux::updateSummary()
     mChkSelectAll->blockSignals(true);
     if (checkedCount == 0)
         mChkSelectAll->setCheckState(Qt::Unchecked);
-    else if (checkedCount == mItemCount)
+    else if (checkedCount == mItemCount - mSharedCount)
         mChkSelectAll->setCheckState(Qt::Checked);
     else
         mChkSelectAll->setCheckState(Qt::PartiallyChecked);

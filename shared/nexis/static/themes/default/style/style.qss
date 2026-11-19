@@ -1736,6 +1736,29 @@ QProgressBar[progressRole="thin"]::chunk {
     text-transform: uppercase;
 }
 
+/* SSO-27149: persistence watch. Report-only banner + per-row badge for items
+   that appeared or changed since the acknowledged baseline. */
+#persistenceBanner {
+    background-color: @accentBgTint;
+    border: 0;
+    border-left: 3px solid @warningColor;
+    margin: @dp4 @dp16;
+}
+
+#persistenceBannerText {
+    color: @textPrimary;
+    font-size: 9pt;
+}
+
+#widgetStartupApp #persistenceBadge {
+    color: @warningText;
+    border: 1px solid @warningColor;
+    border-radius: @dp4;
+    font-size: 7pt;
+    font-weight: 700;
+    padding: 1px @dp6;
+}
+
 /* DS §4 meta role */
 #widgetStartupApp #lblStartupAppPath {
     color: @tertiaryText;
@@ -1904,13 +1927,13 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
 }
 
-#checkAllProcesses {
+#checkAllProcesses, #checkProcessTree {
     margin-top: 2;
     color: @textSecondary;
     font-size: 10pt;
 }
 
-#checkAllProcesses::indicator {
+#checkAllProcesses::indicator, #checkProcessTree::indicator {
     width: @dp14;
     height: @dp14;
 }

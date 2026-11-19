@@ -22,8 +22,11 @@ set(GUI_SHARED_DIR "${CMAKE_SOURCE_DIR}/shared/nexis")
 add_nexis_test(NAME FormatUtilTests   SOURCES utils/test_format_util.cpp)
 add_nexis_test(NAME MenuBarFormatUtilTests SOURCES utils/test_menu_bar_format_util.cpp)
 add_nexis_test(NAME ProcessCpuUtilTests SOURCES utils/test_process_cpu_util.cpp)
+add_nexis_test(NAME ProcessTreeUtilTests SOURCES utils/test_process_tree_util.cpp)
 add_nexis_test(NAME HealthScoreInputsTests SOURCES utils/test_health_score_inputs.cpp)
 add_nexis_test(NAME MiniMonitorFormatUtilTests SOURCES utils/test_mini_monitor_format_util.cpp)
+add_nexis_test(NAME SustainedThresholdTrackerTests SOURCES utils/test_sustained_threshold_tracker.cpp)
+add_nexis_test(NAME PersistenceWatchTests SOURCES utils/test_persistence_watch.cpp)
 add_nexis_test(NAME FileUtilTests     SOURCES utils/test_file_util.cpp)
 add_nexis_test(NAME CommandUtilTests       SOURCES utils/test_command_util.cpp)
 add_nexis_test(NAME CommandUtilAsyncTests  SOURCES utils/test_command_util_async.cpp LIBS Qt6::Concurrent)
@@ -433,6 +436,18 @@ add_nexis_test(NAME LeftoverScannerLinuxRealTests
     "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
 )
 
+# SSO-27151: uninstaller shared-data guard — SharedDataGuard::classify() for
+# bundle ids and package names, plus the real Linux leftover scanner against a
+# synthetic sibling-app fixture. Platform-neutral.
+add_nexis_test(NAME SharedDataGuardTests
+  SOURCES
+    core/test_shared_data_guard.cpp
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools/leftover_scanner_linux.cpp"
+  INCLUDES
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core"
+    "${CMAKE_SOURCE_DIR}/linux/nexis-core/Tools"
+)
+
 # SSO-15387: orphan-scan heuristics fixture suite — leftovers with no
 # corresponding installed package (Linux XDG + macOS Library).  Covers true
 # orphans, near-miss shared-vendor dirs, and precision/recall harness.
@@ -571,6 +586,16 @@ add_nexis_test(NAME CacheRebuildWidgetTests
     "${GUI_SHARED_DIR}/Managers"
   LIBS
     Qt6::Widgets Qt6::Network
+)
+
+# SSO-27147: pre-clean snapshot backend detection (Timeshift / snapper / btrfs)
+# is pure — compile SnapshotService directly, no live tools needed.
+add_nexis_test(NAME SnapshotServiceTests
+  SOURCES
+    core/test_snapshot_service.cpp
+    "${GUI_SHARED_DIR}/Services/snapshot_service.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
 )
 
 # SSO-23867: SnapshotManagerWidget's tmutil listlocalsnapshots parsing —
@@ -729,6 +754,18 @@ add_nexis_test(NAME HealthReportTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-27153: ProcessesPage tree mode — drives the page's processesUpdated
+# slot with synthetic snapshots and checks the resulting model/view layout.
+add_nexis_test(NAME ProcessesPageTreeTests
+  SOURCES
+    managers/test_processes_page_tree.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # GH#493 (SSO-25711): HealthScoreTile is the only MetricTileBase subclass
 # with setQuickAction() implemented in C++ rather than exercised by a
 # screenshot test. Links against nexis-gui for AppManager/SignalMapper
@@ -819,6 +856,18 @@ endif()
 add_nexis_test(NAME CleaningProfilesTests
   SOURCES
     managers/test_cleaning_profiles.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
+# SSO-27150: settings export/import bundle — versioning, validation report,
+# round trip. Lives in the GUI library (reads CleaningProfilesService).
+add_nexis_test(NAME SettingsBundleTests
+  SOURCES
+    managers/test_settings_bundle.cpp
   INCLUDES
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Managers"

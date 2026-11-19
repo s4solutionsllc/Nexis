@@ -29,6 +29,8 @@ signals:
     void sigMiniMonitorToggled(bool visible);
     // SSO-10930 / GH#220: persistent resource-history logging on/off.
     void sigResourceHistoryToggled(bool enabled);
+    // SSO-27148: a CPU/memory/temperature alert threshold or duration changed.
+    void sigResourceAlertsChanged();
 
 private:
     static SignalMapper *instance;

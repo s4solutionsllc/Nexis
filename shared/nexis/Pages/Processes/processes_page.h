@@ -55,6 +55,9 @@ private slots:
     // GH#174: inline kill icon
     void onKillColumnClicked(const QModelIndex &index);
 
+    // SSO-27153: parent/child tree mode
+    void onProcessTreeToggled(bool enabled);
+
 private:
     // FR-108: tell InfoManager whether to collect per-PID disk/net I/O based
     // on the current column visibility. Called from init() and after the
@@ -83,6 +86,15 @@ private:
     // Searches both groups' proxy-visible children for a pid; used to
     // restore selection across a refresh tick without assuming a flat model.
     QModelIndex proxyIndexForPid(pid_t pid) const;
+    // Span + expand the two section headers. The proxy drops and re-adds
+    // them when tree mode flips, which discards both pieces of view state.
+    void applyGroupHeaderLayout();
+    // SSO-27153: the model parent a row belongs under right now (the
+    // invisible root for a root-level row, whose QStandardItem::parent()
+    // is null) and whether `maybeDescendant` sits anywhere below `item`.
+    QStandardItem *rowParentOf(QStandardItem *item) const;
+    static bool isDescendantOf(QStandardItem *maybeDescendant, QStandardItem *item);
+    void trackCollapseState(const QModelIndex &proxyIndex, bool collapsed);
     // SSO-15376: icon for a process row — the resolved Process::iconHint
     // (per-process, XDG .desktop match on Linux / .app bundle on macOS) or a
     // generic fallback. Never returns a null icon, matching the acceptance
@@ -149,6 +161,12 @@ private:
     ProcessGroupHeaderDelegate *mGroupHeaderDelegate = nullptr; // SSO-15376
     QStandardItem *mAppsGroupItem = nullptr;       // SSO-15376
     QStandardItem *mBackgroundGroupItem = nullptr; // SSO-15376
+    // SSO-27153: last snapshot (so toggling tree mode re-lays-out at once
+    // instead of waiting a tick) and the PIDs the user collapsed, which new
+    // children must not re-expand.
+    QList<Process> mLastProcesses;
+    QString mLastUserName;
+    QSet<pid_t> mCollapsedPids;
 };
 
 #endif // PROCESSESPAGE_H

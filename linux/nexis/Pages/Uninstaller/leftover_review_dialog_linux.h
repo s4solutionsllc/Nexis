@@ -43,6 +43,7 @@ private:
 
     qint64 mTotalBytes  = 0;
     int    mItemCount   = 0;
+    int    mSharedCount = 0;
     bool   mUpdatingAll = false;
 };
 

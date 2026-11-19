@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <Info/startup_info.h>
+#include <Utils/persistence_watch.h>
 
 #ifdef Q_OS_MACOS
 #include <Info/btm_parser.h>
@@ -23,6 +24,14 @@ public:
     QString autostartPath() const;
     bool isAutostartDisabled() const;
 
+    // SSO-27149: report-only persistence watch. `items` is everything the
+    // page is about to show (login items plus getCronJobs()).
+    QList<StartupAppData> getCronJobs() const;
+    PersistenceDiff evaluatePersistence(const QList<StartupAppData> &items);
+    // Empty `keys` acknowledges everything currently present.
+    void acknowledgePersistence(const QList<StartupAppData> &items,
+                                const QSet<QString> &keys = QSet<QString>());
+
 #ifdef Q_OS_MACOS
     // SSO-3738 / FW-10
     QList<BtmRecord> getBtmRecords(QString *error = nullptr) const;
@@ -39,6 +48,7 @@ private:
     static StartupService *instance;
 
     std::unique_ptr<StartupInfo> mInfo;
+    PersistenceWatch mPersistence;
     QFileSystemWatcher mWatcher;
 };
 

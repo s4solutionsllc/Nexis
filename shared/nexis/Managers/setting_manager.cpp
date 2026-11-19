@@ -163,6 +163,46 @@ int SettingManager::getMemoryAlertPercent() const
     return mSettings->value(SettingKeys::MemoryAlertPercent, 0).toInt();
 }
 
+void SettingManager::setCpuAlertSeconds(const int value)
+{
+    mSettings->setValue(SettingKeys::CPUAlertSeconds, value);
+}
+
+int SettingManager::getCpuAlertSeconds() const
+{
+    return mSettings->value(SettingKeys::CPUAlertSeconds, 30).toInt();
+}
+
+void SettingManager::setMemoryAlertSeconds(const int value)
+{
+    mSettings->setValue(SettingKeys::MemoryAlertSeconds, value);
+}
+
+int SettingManager::getMemoryAlertSeconds() const
+{
+    return mSettings->value(SettingKeys::MemoryAlertSeconds, 30).toInt();
+}
+
+void SettingManager::setTempAlertCelsius(const int value)
+{
+    mSettings->setValue(SettingKeys::TempAlertCelsius, value);
+}
+
+int SettingManager::getTempAlertCelsius() const
+{
+    return mSettings->value(SettingKeys::TempAlertCelsius, 0).toInt();
+}
+
+void SettingManager::setTempAlertSeconds(const int value)
+{
+    mSettings->setValue(SettingKeys::TempAlertSeconds, value);
+}
+
+int SettingManager::getTempAlertSeconds() const
+{
+    return mSettings->value(SettingKeys::TempAlertSeconds, 30).toInt();
+}
+
 void SettingManager::setDiskAlertPercent(const int value)
 {
     mSettings->setValue(SettingKeys::DiskAlertPercent, value);
@@ -795,4 +835,19 @@ void SettingManager::setResourcesHistoryModeActive(bool value)
 bool SettingManager::getResourcesHistoryModeActive() const
 {
     return mSettings->value(SettingKeys::ResourcesHistoryModeActive, false).toBool();
+}
+
+bool SettingManager::hasValue(const QString &key) const
+{
+    return mSettings->contains(key);
+}
+
+QVariant SettingManager::rawValue(const QString &key) const
+{
+    return mSettings->value(key);
+}
+
+void SettingManager::setRawValue(const QString &key, const QVariant &value)
+{
+    mSettings->setValue(key, value);
 }

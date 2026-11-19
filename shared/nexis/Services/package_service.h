@@ -35,6 +35,9 @@ public:
     // QtConcurrent) since this walks the user's home directory.
     QList<OrphanLeftover> findOrphanLeftovers();
     void removeOrphanPackages();
+    // SSO-27151: synchronous and potentially slow — callers scan off the UI
+    // thread or accept a short pause while a review dialog opens.
+    QStringList installedAppIds() const;
     // SSO-15566 / CISO §4: synchronous — called from the UI thread by the
     // pre-uninstall running-process gate and its blocking warn/quit dialog.
     bool isAppRunning(const QString &bundlePath) const;

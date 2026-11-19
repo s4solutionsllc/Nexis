@@ -86,6 +86,9 @@ void SystemCleanerPage::init()
     connect(mCleanerService, &CleanerService::snapshotTaken,
             this, &SystemCleanerPage::onSnapshotTaken,
             Qt::QueuedConnection);
+    connect(mCleanerService, &CleanerService::snapshotSkipped,
+            this, &SystemCleanerPage::onSnapshotSkipped,
+            Qt::QueuedConnection);
     // SSO-3732 / FW-05: queued so the signal — emitted from the cleaner's
     // QtConcurrent worker thread when QFile::remove hits TCC denial — is
     // marshalled back to the UI thread before the banner is shown.
@@ -1077,6 +1080,13 @@ void SystemCleanerPage::quickCleanByCategory()
     }
 }
 
+
+void SystemCleanerPage::onSnapshotSkipped(const QString &message)
+{
+    mLblSnapshotToast->setText(message);
+    mLblSnapshotToast->show();
+    QTimer::singleShot(8000, mLblSnapshotToast, &QLabel::hide);
+}
 
 void SystemCleanerPage::onSnapshotTaken(const QString &toolName)
 {

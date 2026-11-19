@@ -1,8 +1,31 @@
 #include "pin_sort_filter_proxy_model.h"
+#include "nexis_roles.h"
 
 PinSortFilterProxyModel::PinSortFilterProxyModel(QObject *parent)
     : QSortFilterProxyModel(parent)
 {
+}
+
+void PinSortFilterProxyModel::setTreeMode(bool enabled)
+{
+    if (mTreeMode == enabled)
+        return;
+    mTreeMode = enabled;
+    invalidateFilter();
+}
+
+bool PinSortFilterProxyModel::isGroupHeader(const QModelIndex &sourceIndex) const
+{
+    return sourceModel()->index(sourceIndex.row(), 0, sourceIndex.parent())
+        .data(GroupHeaderRole).toBool();
+}
+
+bool PinSortFilterProxyModel::filterAcceptsRow(int sourceRow,
+                                                const QModelIndex &sourceParent) const
+{
+    if (mTreeMode && isGroupHeader(sourceModel()->index(sourceRow, 0, sourceParent)))
+        return false;
+    return QSortFilterProxyModel::filterAcceptsRow(sourceRow, sourceParent);
 }
 
 bool PinSortFilterProxyModel::lessThan(const QModelIndex &left,
@@ -13,7 +36,7 @@ bool PinSortFilterProxyModel::lessThan(const QModelIndex &left,
     // the user sorts by. Only rows *within* a group should reorder on a
     // column-header click. Mirrors the pinned-row inversion below so the
     // group order also survives an Ascending/Descending toggle.
-    if (!left.parent().isValid() && !right.parent().isValid()) {
+    if (isGroupHeader(left) && isGroupHeader(right)) {
         return (sortOrder() == Qt::AscendingOrder) ? (left.row() < right.row())
                                                      : (left.row() > right.row());
     }

@@ -834,6 +834,17 @@ void App::init()
             ResourceHistoryService::ins(), &ResourceHistoryService::setEnabled);
     ResourceHistoryService::ins()->setEnabled(SettingManager::ins()->getResourceHistoryEnabled());
 
+    // SSO-27148: CPU/memory/temperature tray warnings that wait for the value
+    // to stay over its threshold (moved out of DashboardPage so they no longer
+    // depend on that page's lifetime).
+    mResourceAlertMonitor = new ResourceAlertMonitor(this);
+    connect(mResourceAlertMonitor, &ResourceAlertMonitor::alertTriggered, this,
+            [this](const QString &title, const QString &message) {
+        mTrayIcon->showMessage(title, message, QSystemTrayIcon::Warning);
+    });
+    connect(SignalMapper::ins(), &SignalMapper::sigResourceAlertsChanged,
+            mResourceAlertMonitor, &ResourceAlertMonitor::reloadSettings);
+
     // Kiosk mode shortcuts
     QAction *kioskToggle = new QAction(this);
     kioskToggle->setShortcut(Qt::Key_F11);

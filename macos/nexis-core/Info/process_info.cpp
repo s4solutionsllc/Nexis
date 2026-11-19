@@ -30,7 +30,7 @@ QList<Process> ProcessInfoMacOS::collectProcesses()
     {
         // macOS ps doesn't support --no-headings but supports the same columns
         // Use -weo with slightly different format specifiers
-        QStringList columns = { "pid", "rss", "pmem", "vsize", "user", "pcpu", "start",
+        QStringList columns = { "pid", "ppid", "rss", "pmem", "vsize", "user", "pcpu", "start",
                                 "state", "group", "nice", "cputime", "sess", "command"};
 
         ExecResult psResult = CommandUtil::execWithStatus("ps", {"ax", "-weo", columns.join(",")});
@@ -47,10 +47,11 @@ QList<Process> ProcessInfoMacOS::collectProcesses()
                 for (const QString &line : lines) {
                     QStringList procLine = line.trimmed().split(sep);
 
-                    if (procLine.count() >= 13) {
+                    if (procLine.count() >= 14) {
                         Process proc;
 
                         proc.setPid(procLine.takeFirst().toLongLong());
+                        proc.setPpid(procLine.takeFirst().toLongLong());
                         proc.setRss(procLine.takeFirst().toLongLong() << 10);
                         proc.setPmem(procLine.takeFirst().toDouble());
                         proc.setVsize(procLine.takeFirst().toLongLong() << 10);

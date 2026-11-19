@@ -29,10 +29,13 @@
 #include <QVBoxLayout>
 #include <QtConcurrent>
 
+#include <algorithm>
+
 #include "Managers/app_manager.h"
 #include "Managers/cleaner_service.h"
 #include "Services/duplicate_finder_service.h"
 #include "Services/image_hash.h"
+#include "link_replace_dialog.h"
 #include "wipe_free_space_dialog.h"
 #include "dev_artifacts_dialog.h"
 #include "agent_worktrees_dialog.h"
@@ -117,6 +120,10 @@ void DiskToolsPage::init()
             this, &DiskToolsPage::onEmptyFoldersScanFinished);
     connect(mDupService, &DuplicateFinderService::scanCancelled,
             this, &DiskToolsPage::onServiceScanCancelled);
+    connect(mDupService, &DuplicateFinderService::pausedChanged,
+            this, &DiskToolsPage::onDupPausedChanged);
+    connect(mDupService, &DuplicateFinderService::linkReplaceFinished,
+            this, &DiskToolsPage::onLinkReplaceFinished);
 
     connect(this, &DiskToolsPage::largeOldScanFinishedS,
             this, &DiskToolsPage::onLargeOldScanFinished);
@@ -596,6 +603,7 @@ void DiskToolsPage::buildDuplicatePage()
     mCbDupMatch = new QComboBox(this);
     mCbDupMatch->addItem(tr("Exact duplicates"), 0);
     mCbDupMatch->addItem(tr("Similar images"), 1);
+    mCbDupMatch->addItem(tr("Duplicate folders"), 2);
     connect(mCbDupMatch, &QComboBox::currentIndexChanged,
             this, &DiskToolsPage::onDupMatchModeChanged);
     filterLayout->addWidget(mCbDupMatch);
@@ -613,6 +621,13 @@ void DiskToolsPage::buildDuplicatePage()
     filterLayout->addWidget(mCbSimilarity);
 
     filterLayout->addStretch();
+
+    mBtnDupPause = new QPushButton(tr("Pause"), this);
+    mBtnDupPause->setObjectName("btnDupPause");
+    mBtnDupPause->setCursor(Qt::PointingHandCursor);
+    mBtnDupPause->hide();
+    connect(mBtnDupPause, &QPushButton::clicked, this, &DiskToolsPage::onDupPauseClicked);
+    filterLayout->addWidget(mBtnDupPause);
 
     mBtnDupCancel = new QPushButton(tr("Cancel"), this);
     mBtnDupCancel->setCursor(Qt::PointingHandCursor);
@@ -694,6 +709,13 @@ void DiskToolsPage::buildDuplicatePage()
     actionLayout->addWidget(mLblDupSelection);
     actionLayout->addStretch();
 
+    mBtnDupLink = new QPushButton(tr("Replace with Links…"), actionBar);
+    mBtnDupLink->setObjectName("btnDupLink");
+    mBtnDupLink->setCursor(Qt::PointingHandCursor);
+    mBtnDupLink->setEnabled(false);
+    connect(mBtnDupLink, &QPushButton::clicked, this, &DiskToolsPage::onDupReplaceWithLinks);
+    actionLayout->addWidget(mBtnDupLink);
+
     mBtnDupTrash = new QPushButton(tr("Move to Trash"), actionBar);
     mBtnDupTrash->setObjectName("btnTrash");
     mBtnDupTrash->setCursor(Qt::PointingHandCursor);
@@ -712,10 +734,8 @@ void DiskToolsPage::onDupScan()
     mTreeDuplicates->clear();
     mEmptyStateDup->hide();
     mTreeDuplicates->show();
-    mDupProgress->show();
     mDupProgress->setRange(0, 0);
-    mBtnDupScan->hide();
-    mBtnDupCancel->show();
+    setDupRunning(true);
 
     qint64 minSize = mSpinMinDupSize->value();
     int unitIdx = mCbMinDupUnit->currentIndex();
@@ -725,10 +745,12 @@ void DiskToolsPage::onDupScan()
 
     mLblDupStatus->setText(tr("Starting scan..."));
 
-    const bool similarMode = mCbDupMatch->currentData().toInt() == 1;
-    if (similarMode) {
+    const int matchMode = mCbDupMatch->currentData().toInt();
+    if (matchMode == 1) {
         const int maxDistance = mCbSimilarity->currentData().toInt();
         mDupService->scanSimilarImages(directoriesOf(mDirListDup), minSize, maxDistance);
+    } else if (matchMode == 2) {
+        mDupService->scanDuplicateDirectories(directoriesOf(mDirListDup), minSize);
     } else {
         const QString glob = mEditGlob->text().trimmed();
         mDupService->scan(directoriesOf(mDirListDup), minSize, glob);
@@ -738,12 +760,44 @@ void DiskToolsPage::onDupScan()
 void DiskToolsPage::onDupMatchModeChanged(int index)
 {
     Q_UNUSED(index);
-    const bool similarMode = mCbDupMatch->currentData().toInt() == 1;
+    const int matchMode = mCbDupMatch->currentData().toInt();
     // SSO-26638 D3: Similarity only means something in Similar mode; the
     // glob filter is disabled there because image-extension filtering
-    // replaces it.
-    mCbSimilarity->setEnabled(similarMode);
-    mEditGlob->setEnabled(!similarMode);
+    // replaces it. SSO-27146: folders are compared whole, so a file pattern
+    // doesn't apply to them either.
+    mCbSimilarity->setEnabled(matchMode == 1);
+    mEditGlob->setEnabled(matchMode == 0);
+}
+
+void DiskToolsPage::setDupRunning(bool running)
+{
+    mDupRunning = running;
+    mDupProgress->setVisible(running);
+    mBtnDupScan->setVisible(!running);
+    mBtnDupCancel->setVisible(running);
+    mBtnDupPause->setVisible(running);
+    mBtnDupPause->setText(tr("Pause"));
+    if (running) {
+        mBtnDupTrash->setEnabled(false);
+        mBtnDupLink->setEnabled(false);
+    }
+}
+
+void DiskToolsPage::onDupPauseClicked()
+{
+    if (mDupService->isPaused())
+        mDupService->resume();
+    else
+        mDupService->pause();
+}
+
+void DiskToolsPage::onDupPausedChanged(bool paused)
+{
+    if (!mDupRunning)
+        return;
+    mBtnDupPause->setText(paused ? tr("Resume") : tr("Pause"));
+    if (paused)
+        mLblDupStatus->setText(tr("Paused — press Resume to continue"));
 }
 
 void DiskToolsPage::onDupProgress(int stage, int current, int total, const QString &message)
@@ -801,13 +855,13 @@ QString makeThumbnailTooltipHtml(QImageReader &reader, const QSize &headerSize)
 void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
 {
     mActiveServiceScan = ServiceScan::None;
-    mDupProgress->hide();
-    mBtnDupCancel->hide();
-    mBtnDupScan->show();
+    setDupRunning(false);
 
     // FW-08: retain for the trash path so the service-side last-copy guard
     // sees the full group, not just the rows the user happens to have checked.
     mDupResults = results;
+    mDupShowingFolders = !results.isEmpty()
+        && results.first().kind == DuplicateGroup::Kind::Directory;
 
     // SSO-26638 (BUG-47): the Similar-group label/badge colour comes from
     // the theme, never a hardcoded hex.
@@ -823,11 +877,20 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
 
     for (const DuplicateGroup &group : results) {
         const bool isSimilar = (group.kind == DuplicateGroup::Kind::Similar);
+        const bool isFolder = (group.kind == DuplicateGroup::Kind::Directory);
 
         auto *groupItem = new QTreeWidgetItem(mTreeDuplicates);
         groupItem->setFlags(groupItem->flags() & ~Qt::ItemIsUserCheckable);
+        groupItem->setData(0, Qt::UserRole + 1, static_cast<int>(group.kind));
 
-        if (isSimilar) {
+        if (isFolder) {
+            ++exactGroupCount;
+            const quint64 wastedBytes =
+                group.fileSize * static_cast<quint64>(group.files.size() - 1);
+            totalWasted += wastedBytes;
+            groupItem->setText(0, tr("Identical folders — %1 folders, %2 reclaimable")
+                .arg(group.files.size()).arg(FormatUtil::formatBytes(wastedBytes)));
+        } else if (isSimilar) {
             ++similarGroupCount;
             // SSO-26638: Similar groups have no byte-identical "wasted
             // space" figure — distinguish them by kind and distance
@@ -859,8 +922,11 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
                 child->setCheckState(0, (i == 0) ? Qt::Unchecked : Qt::Checked);
             child->setText(0, fi.fileName());
             child->setText(1, fi.absolutePath());
-            child->setText(2, FormatUtil::formatBytes(fi.size()));
-            child->setData(2, Qt::UserRole, static_cast<qulonglong>(fi.size()));
+            // A folder's own inode size means nothing; show its contents' total.
+            const quint64 shownSize = isFolder ? group.fileSize
+                                               : static_cast<quint64>(fi.size());
+            child->setText(2, FormatUtil::formatBytes(shownSize));
+            child->setData(2, Qt::UserRole, static_cast<qulonglong>(shownSize));
             child->setTextAlignment(2, Qt::AlignRight | Qt::AlignVCenter);
             if (isSimilar) {
                 // SSO-26642: one QImageReader (one file open) per row,
@@ -882,7 +948,10 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
     mTreeDuplicates->expandAll();
     mTreeDuplicates->setUpdatesEnabled(true);
 
-    if (similarGroupCount > 0) {
+    if (mDupShowingFolders) {
+        mLblDupStatus->setText(tr("%1 duplicate folder groups found — %2 wasted space")
+            .arg(exactGroupCount).arg(FormatUtil::formatBytes(totalWasted)));
+    } else if (similarGroupCount > 0) {
         mLblDupStatus->setText(
             tr("%1 identical + %2 similar groups found — %3 wasted space")
                 .arg(exactGroupCount).arg(similarGroupCount)
@@ -897,10 +966,9 @@ void DiskToolsPage::onDupScanFinished(const QList<DuplicateGroup> &results)
 
 void DiskToolsPage::onDupCancelled()
 {
-    mDupProgress->hide();
-    mBtnDupCancel->hide();
-    mBtnDupScan->show();
+    setDupRunning(false);
     mLblDupStatus->setText(tr("Scan cancelled"));
+    updateDupSelection();
 }
 
 void DiskToolsPage::onDupTrash()
@@ -923,7 +991,8 @@ void DiskToolsPage::onDupTrash()
         return;
 
     auto reply = QMessageBox::question(this, tr("Move to Trash"),
-        tr("Move %1 duplicate files (%2) to trash?")
+        (mDupShowingFolders ? tr("Move %1 duplicate folders (%2) to trash?")
+                            : tr("Move %1 duplicate files (%2) to trash?"))
             .arg(filesToTrash.size()).arg(FormatUtil::formatBytes(totalSize)),
         QMessageBox::Yes | QMessageBox::No);
 
@@ -954,11 +1023,14 @@ void DiskToolsPage::onDupTrash()
     const int skipped = filesToTrash.size() - trashed;
     if (skipped > 0) {
         mLblDupStatus->setText(
-            tr("Moved %1 files to trash · %2 kept to honor exclusions or "
-               "preserve at least one copy")
+            (mDupShowingFolders ? tr("Moved %1 folders to trash · %2 kept to honor exclusions or "
+                                     "preserve at least one copy")
+                                : tr("Moved %1 files to trash · %2 kept to honor exclusions or "
+                                     "preserve at least one copy"))
                 .arg(trashed).arg(skipped));
     } else {
-        mLblDupStatus->setText(tr("Moved %1 files to trash").arg(trashed));
+        mLblDupStatus->setText((mDupShowingFolders ? tr("Moved %1 folders to trash")
+                                                   : tr("Moved %1 files to trash")).arg(trashed));
     }
     updateDupSelection();
 }
@@ -966,25 +1038,123 @@ void DiskToolsPage::onDupTrash()
 void DiskToolsPage::updateDupSelection()
 {
     int count = 0;
+    int linkable = 0;
     quint64 size = 0;
     for (int g = 0; g < mTreeDuplicates->topLevelItemCount(); ++g) {
         auto *groupItem = mTreeDuplicates->topLevelItem(g);
+        const bool exact = groupItem->data(0, Qt::UserRole + 1).toInt()
+            == static_cast<int>(DuplicateGroup::Kind::Exact);
         for (int c = 0; c < groupItem->childCount(); ++c) {
             auto *child = groupItem->child(c);
             if (child->checkState(0) == Qt::Checked) {
                 count++;
+                if (exact)
+                    linkable++;
                 size += child->data(2, Qt::UserRole).toULongLong();
             }
         }
     }
 
     if (count > 0) {
-        mLblDupSelection->setText(tr("%1 files selected (%2)")
+        mLblDupSelection->setText((mDupShowingFolders ? tr("%1 folders selected (%2)")
+                                                      : tr("%1 files selected (%2)"))
             .arg(count).arg(FormatUtil::formatBytes(size)));
-        mBtnDupTrash->setEnabled(true);
     } else {
-        mLblDupSelection->setText(tr("No files selected"));
-        mBtnDupTrash->setEnabled(false);
+        mLblDupSelection->setText(mDupShowingFolders ? tr("No folders selected")
+                                                     : tr("No files selected"));
+    }
+    mBtnDupTrash->setEnabled(count > 0 && !mDupRunning);
+    mBtnDupLink->setEnabled(linkable > 0 && !mDupRunning);
+}
+
+void DiskToolsPage::onDupReplaceWithLinks()
+{
+    if (mDupService->isScanning())
+        return;
+
+    QStringList selected;
+    for (int g = 0; g < mTreeDuplicates->topLevelItemCount(); ++g) {
+        auto *groupItem = mTreeDuplicates->topLevelItem(g);
+        if (groupItem->data(0, Qt::UserRole + 1).toInt()
+                != static_cast<int>(DuplicateGroup::Kind::Exact))
+            continue;
+        for (int c = 0; c < groupItem->childCount(); ++c) {
+            auto *child = groupItem->child(c);
+            if (child->checkState(0) == Qt::Checked)
+                selected.append(child->data(0, Qt::UserRole).toString());
+        }
+    }
+    if (selected.isEmpty())
+        return;
+
+    LinkReplaceDialog dialog(mDupService, selected, mDupResults, this);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+
+    const QList<LinkReplaceEntry> plan = dialog.plan();
+    mLinkReplaceSizes.clear();
+    for (const LinkReplaceEntry &e : plan) {
+        if (e.isReady())
+            mLinkReplaceSizes.insert(e.duplicatePath, e.size);
+    }
+
+    mActiveServiceScan = ServiceScan::LinkReplace;
+    mDupProgress->setRange(0, 0);
+    setDupRunning(true);
+    mLblDupStatus->setText(tr("Replacing duplicates with links..."));
+    mDupService->replaceWithLinks(plan);
+}
+
+void DiskToolsPage::onLinkReplaceFinished(const QList<LinkReplaceResult> &results)
+{
+    mActiveServiceScan = ServiceScan::None;
+    setDupRunning(false);
+
+    QSet<QString> replaced;
+    QStringList failures;
+    quint64 freed = 0;
+    for (const LinkReplaceResult &r : results) {
+        if (r.replaced) {
+            replaced.insert(r.path);
+            freed += mLinkReplaceSizes.value(r.path);
+        } else {
+            failures.append(tr("%1 — %2").arg(r.path, r.error));
+        }
+    }
+    mLinkReplaceSizes.clear();
+
+    // A replaced path is now a link to the kept file, so it is no longer a
+    // separate copy: drop it from the tree and from the retained result set
+    // so the last-copy guard keeps counting only real copies.
+    for (int g = mTreeDuplicates->topLevelItemCount() - 1; g >= 0; --g) {
+        auto *groupItem = mTreeDuplicates->topLevelItem(g);
+        for (int c = groupItem->childCount() - 1; c >= 0; --c) {
+            if (replaced.contains(groupItem->child(c)->data(0, Qt::UserRole).toString()))
+                delete groupItem->takeChild(c);
+        }
+        if (groupItem->childCount() <= 1)
+            delete mTreeDuplicates->takeTopLevelItem(g);
+    }
+    for (DuplicateGroup &group : mDupResults) {
+        group.files.erase(std::remove_if(group.files.begin(), group.files.end(),
+            [&replaced](const QFileInfo &fi) { return replaced.contains(fi.absoluteFilePath()); }),
+            group.files.end());
+    }
+
+    QString status = tr("Replaced %1 files with links — %2 freed")
+        .arg(replaced.size()).arg(FormatUtil::formatBytes(freed));
+    if (!failures.isEmpty())
+        status += tr(" · %1 could not be replaced").arg(failures.size());
+    mLblDupStatus->setText(status);
+    updateDupSelection();
+
+    if (!failures.isEmpty()) {
+        constexpr int kShown = 10;
+        QString detail = failures.mid(0, kShown).join('\n');
+        if (failures.size() > kShown)
+            detail += tr("\n…and %1 more").arg(failures.size() - kShown);
+        QMessageBox::warning(this, tr("Replace with Links"),
+            tr("These files were left as they were:\n\n%1").arg(detail));
     }
 }
 
@@ -1279,6 +1449,7 @@ void DiskToolsPage::onServiceScanCancelled()
         finishFlatScan(mEmptyFolders, tr("Scan cancelled"));
         break;
     case ServiceScan::Duplicates:
+    case ServiceScan::LinkReplace:
     case ServiceScan::None:
         mActiveServiceScan = ServiceScan::None;
         onDupCancelled();
