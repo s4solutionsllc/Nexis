@@ -266,6 +266,12 @@ Scan and remove system junk files across 10 categories.
 
 **Pre-clean restore point (FR-112, Linux backends SSO-27147):** opt-in Settings toggle, off by default. Linux uses the first tool already installed — Timeshift, then snapper (needs a `root` config), then a read-only btrfs snapshot of `/` under `/.nexis-snapshots` (btrfs root only); macOS uses `tmutil localsnapshot`. Nexis never installs a tool: with none present the toggle is disabled with an explanatory tooltip, and if the option is on but no tool works or the snapshot fails, the Cleaner shows a notice and the clean proceeds. btrfs snapshots are not pruned by Nexis.
 
+**Cleaning history — "Recently removed" (SSO-27097):**
+- "History" in the System Cleaner header opens `CleaningHistoryDialog`, built on `LifecycleAuditLog` (`Tools/lifecycle_audit_log`, JSON Lines under the app data dir). It lists runs newest first — source (interactive, scheduled, headless), time, space freed, removed/skipped counts — each expandable to its items
+- `CleanerService` writes one entry per top-level path a run removed or left in place, tagged with the run's batch id, source, category and (for skips) the deny-list / app-in-use reason. `clean()` and `cleanSchedule()` share one batch across their categories; a direct `cleanFiles()` / `cleanTrash()` call is a run of its own. Emptying Trash is one entry per Trash root. Metadata only; `prune()` applies the existing retention (90 days, minimum 200 entries) at the end of each run
+- Items that went to the Trash (aged Downloads) have a Restore action. `LifecycleAuditLog::restore()` refuses, with a message, when something already exists at the original path, the Trash copy is gone, or the logged source is not inside a Trash directory; a successful restore appends a `Restored` entry
+- Not yet logged: snap revision / Flatpak runtime removal (done through the package managers, not file deletion)
+
 **Browser deep clean (SSO-25782, backend SSO-23860):**
 - "Deep clean → Browser history & cookies…" in the page header (also a command-palette action) opens `BrowserDeepCleanDialog`: a list of detected Firefox / Chrome / Chromium / Brave / Edge profiles (`BrowserProfileLocator`), none pre-checked, plus a "Cookies to keep" list of site names
 - The keep-list persists in `SettingManager` (`CleanerCookieKeepDomains`); entries are normalised to a bare host (a pasted URL is reduced to its host) and anything that is not a plausible host name is rejected
