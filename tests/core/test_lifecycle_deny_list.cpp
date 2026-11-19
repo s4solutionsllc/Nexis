@@ -30,6 +30,14 @@ private slots:
     void isSafe_ordinaryUserPath_isSafe();
     void isSafe_symlinkIntoDeniedLocation_isDenied();
 
+    // SSO-27095: the System Cleaner / CleanerML variant.
+    void isSafeForCleaning_degenerateInputs_areDenied();
+    void isSafeForCleaning_symlinkIntoDeniedLocation_isDenied();
+    void isSafeForCleaning_danglingLeafUnderSymlinkedDeniedDir_isDenied();
+    void isSafeForCleaning_ordinaryPathOutsideHome_isAllowed();
+    void isSafeForCleaning_usrLocalIsNotDeniedByUsr();
+    void isSafeForCleaning_deniedRootsAndCredentialStores();
+
 #ifdef Q_OS_MAC
     void isSafe_systemDirectory_isDenied();
     void isSafe_launchDaemons_isDenied();
@@ -96,6 +104,94 @@ void TestLifecycleDenyList::isSafe_symlinkIntoDeniedLocation_isDenied()
     // The literal path lives in a harmless temp dir; only resolving the
     // symlink reveals it points into a denied location.
     QVERIFY(!LifecycleDenyList::isSafe(linkPath));
+#endif
+}
+
+void TestLifecycleDenyList::isSafeForCleaning_degenerateInputs_areDenied()
+{
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QString()));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/")));
+}
+
+void TestLifecycleDenyList::isSafeForCleaning_symlinkIntoDeniedLocation_isDenied()
+{
+#if !defined(Q_OS_MAC) && !defined(Q_OS_LINUX)
+    QSKIP("no platform-specific deny-list implemented for this OS");
+#else
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString linkPath = tmp.filePath("looks-like-a-cache");
+    QVERIFY(QFile::link(QStringLiteral("/usr"), linkPath));
+
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(linkPath));
+#endif
+}
+
+void TestLifecycleDenyList::isSafeForCleaning_danglingLeafUnderSymlinkedDeniedDir_isDenied()
+{
+#if !defined(Q_OS_MAC) && !defined(Q_OS_LINUX)
+    QSKIP("no platform-specific deny-list implemented for this OS");
+#else
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+
+    const QString linkedDir = tmp.filePath("linked");
+    QVERIFY(QFile::link(QStringLiteral("/usr"), linkedDir));
+
+    // The leaf does not exist, so it cannot be canonicalised itself; the check
+    // must still resolve the directory it would live in.
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(linkedDir + QStringLiteral("/no-such-entry")));
+#endif
+}
+
+void TestLifecycleDenyList::isSafeForCleaning_ordinaryPathOutsideHome_isAllowed()
+{
+#if !defined(Q_OS_MAC) && !defined(Q_OS_LINUX)
+    QSKIP("no platform-specific deny-list implemented for this OS");
+#else
+    // isSafe() would deny this (outside $HOME); the cleaner's own targets
+    // (/var/cache, /var/log, the temp dir) live outside $HOME by design.
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    QVERIFY(!tmp.path().startsWith(QDir::homePath()));
+
+    QVERIFY(LifecycleDenyList::isSafeForCleaning(tmp.filePath("some-cache-file")));
+    QVERIFY(LifecycleDenyList::isSafeForCleaning(QStringLiteral("/var/cache/apt/archives/pkg.deb")));
+    QVERIFY(LifecycleDenyList::isSafeForCleaning(QStringLiteral("/var/log/syslog.1")));
+#endif
+}
+
+void TestLifecycleDenyList::isSafeForCleaning_usrLocalIsNotDeniedByUsr()
+{
+#if !defined(Q_OS_MAC) && !defined(Q_OS_LINUX)
+    QSKIP("no platform-specific deny-list implemented for this OS");
+#else
+    // The broken-symlink scan walks /usr/local/bin; that prefix is
+    // admin-managed, not OS-owned.
+    QVERIFY(LifecycleDenyList::isSafeForCleaning(QStringLiteral("/usr/local/bin/stale-link")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/usr/bin/env")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/usr/share/doc")));
+#endif
+}
+
+void TestLifecycleDenyList::isSafeForCleaning_deniedRootsAndCredentialStores()
+{
+#if defined(Q_OS_MAC)
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/System/Library/CoreServices")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/Library/LaunchDaemons/x.plist")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/usr/local/Cellar/wget/1.21")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/opt/homebrew/bin/brew")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QDir::homePath() + QStringLiteral("/Library/Keychains/login.keychain-db")));
+    // Unlike the uninstaller, a com.apple.* leaf is an ordinary cache dir here.
+    QVERIFY(LifecycleDenyList::isSafeForCleaning(QDir::homePath() + QStringLiteral("/Library/Caches/com.apple.Safari")));
+#elif defined(Q_OS_LINUX)
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/etc/systemd/system")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/boot/vmlinuz")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QStringLiteral("/lib/modules")));
+    QVERIFY(!LifecycleDenyList::isSafeForCleaning(QDir::homePath() + QStringLiteral("/.local/share/keyrings/login.keyring")));
+#else
+    QSKIP("no platform-specific deny-list implemented for this OS");
 #endif
 }
 

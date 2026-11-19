@@ -37,6 +37,19 @@ namespace LifecycleDenyList {
 // can diverge from the root the caller actually operated against.
 NEXISCORESHARED_EXPORT bool isSafe(const QString &path, const QString &homeRootOverride = QString());
 
+// SSO-27095: the System Cleaner / CleanerML delete gate. Same canonical-path
+// resolution and the same hard-denied OS roots and credential stores as
+// isSafe(), but without the uninstaller-only rules that would veto the
+// cleaner's own targets: no $HOME confinement (the cleaner legitimately
+// clears /var/cache, /var/log, /var/crash) and no per-path dpkg/rpm
+// ownership probe (a process spawn per file in a recursive walk). /usr/local
+// is exempt from the /usr rule on both platforms.
+//
+// Returns false for an empty path, a path that canonicalizes to "/", and any
+// path whose canonical form is under a denied root. Like isSafe(), there is no
+// user-facing bypass: callers must skip and report a false result.
+NEXISCORESHARED_EXPORT bool isSafeForCleaning(const QString &path);
+
 } // namespace LifecycleDenyList
 
 #endif // LIFECYCLE_DENY_LIST_H

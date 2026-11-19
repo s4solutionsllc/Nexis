@@ -83,6 +83,11 @@ private slots:
     void excludedPath_isNotListed_andRefusedIfForced();
     void optionWarning_makesItemsRisky();
 
+    // SSO-27095: execution-time gates.
+    void delete_symlinkToDirectory_removesLinkNotTargetContents();
+    void delete_symlinkOutOfSandbox_isRefused();
+    void truncate_symlink_isRefused();
+
 private:
     QScopedPointer<QTemporaryDir> mTmp;
     QString mHome;
@@ -494,6 +499,59 @@ void TestCleanerActionInterpreter::optionWarning_makesItemsRisky()
     QVERIFY(items.at(0).riskTier == TrustSafetyActionItem::RiskTier::Risky);
     QVERIFY(items.at(0).description.contains("saved passwords"));
     QVERIFY(items.at(1).riskTier == TrustSafetyActionItem::RiskTier::Standard);
+}
+
+void TestCleanerActionInterpreter::delete_symlinkToDirectory_removesLinkNotTargetContents()
+{
+    // QDir::removeRecursively() on a symlink-to-directory empties the target,
+    // so a link a glob matched inside the sandbox must be removed as a link.
+    writeFile(mHome + "/Documents/thesis.txt", "IMPORTANT");
+    const QString link = mHome + "/.app/cache-link";
+    QVERIFY(QDir().mkpath(mHome + "/.app"));
+    QVERIFY(QFile::link(mHome + "/Documents", link));
+
+    Cleaner cleaner = makeCleaner("opt", {makeAction(ActionType::Delete, "~/.app/cache-link")});
+    CleanerActionInterpreter interpreter(cleaner, {"opt"}, roots());
+
+    TrustSafetyActionItem forced;
+    forced.id = "delete::" + link;
+    interpreter.performItem(forced, /*dryRun=*/false);
+
+    QVERIFY2(QFileInfo::exists(mHome + "/Documents/thesis.txt"),
+             "the link's target must keep its contents");
+    QVERIFY(!QFileInfo(link).isSymLink());
+}
+
+void TestCleanerActionInterpreter::delete_symlinkOutOfSandbox_isRefused()
+{
+    const QString link = mHome + "/.app/to-usr";
+    QVERIFY(QDir().mkpath(mHome + "/.app"));
+    QVERIFY(QFile::link("/usr", link));
+
+    Cleaner cleaner = makeCleaner("opt", {makeAction(ActionType::Delete, "~/.app/to-usr")});
+    CleanerActionInterpreter interpreter(cleaner, {"opt"}, roots());
+
+    TrustSafetyActionItem forced;
+    forced.id = "delete::" + link;
+    QVERIFY(!interpreter.performItem(forced, /*dryRun=*/false).succeeded);
+    QVERIFY(QFileInfo(link).isSymLink());
+}
+
+void TestCleanerActionInterpreter::truncate_symlink_isRefused()
+{
+    // Truncate opens the path, which follows a link to a file nothing vetted.
+    writeFile(mHome + "/.bashrc", "export KEEP=1");
+    const QString link = mHome + "/.app/log-link";
+    QVERIFY(QDir().mkpath(mHome + "/.app"));
+    QVERIFY(QFile::link(mHome + "/.bashrc", link));
+
+    Cleaner cleaner = makeCleaner("opt", {makeAction(ActionType::Truncate, "~/.app/log-link")});
+    CleanerActionInterpreter interpreter(cleaner, {"opt"}, roots());
+
+    TrustSafetyActionItem forced;
+    forced.id = "truncate::" + link;
+    QVERIFY(!interpreter.performItem(forced, /*dryRun=*/false).succeeded);
+    QCOMPARE(QFileInfo(mHome + "/.bashrc").size(), qint64(13));
 }
 
 QTEST_MAIN(TestCleanerActionInterpreter)

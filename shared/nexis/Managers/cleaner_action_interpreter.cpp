@@ -188,6 +188,26 @@ bool CleanerActionInterpreter::isAllowedTarget(const QString &path) const
     return !CleanerService::isExcluded(path, mExclusions);
 }
 
+QString CleanerActionInterpreter::executionBlock(const QString &path, bool followsLinks) const
+{
+    if (!isAllowedTarget(path))
+        return QObject::tr("Path is outside the sandboxed roots or excluded: %1").arg(path);
+
+    // SSO-27095: the scan-time deny-list runs once per literal target or
+    // searched directory, so a file matched inside it (a symlink, say) was
+    // never judged on where it really points. The canonical-path check is
+    // cheap enough to repeat per item.
+    if (!LifecycleDenyList::isSafeForCleaning(path))
+        return QObject::tr("Protected system location: %1").arg(path);
+
+    // Truncate and VACUUM open the path and so act on a symlink's target,
+    // which nothing above has vetted; refuse rather than follow it.
+    if (followsLinks && QFileInfo(path).isSymLink())
+        return QObject::tr("Refusing to follow a symbolic link: %1").arg(path);
+
+    return QString();
+}
+
 bool CleanerActionInterpreter::passesDenyList(const QString &path) const
 {
     return LifecycleDenyList::isSafe(path, confiningRoot(path));
@@ -360,18 +380,21 @@ TrustSafetyActionResult CleanerActionInterpreter::performItem(const TrustSafetyA
 
         // Defense in depth: re-verify confinement right before touching disk,
         // even though scan() already gated discovery on it.
-        if (!isAllowedTarget(path)) {
-            result.error = QObject::tr("Path is outside the sandboxed roots or excluded: %1").arg(path);
+        result.error = executionBlock(path);
+        if (!result.error.isEmpty())
             return result;
-        }
 
         const qint64 sizeBefore = static_cast<qint64>(FileUtil::getFileSize(path));
         if (dryRun) {
             result.succeeded = QFileInfo::exists(path);
             result.bytesFreed = sizeBefore;
         } else {
+            // SSO-27095: QDir::removeRecursively() on a symlink to a
+            // directory empties the link's *target*, so a link is removed
+            // as a link and never recursed into.
             QFileInfo info(path);
-            const bool removed = info.isDir() ? QDir(path).removeRecursively() : QFile::remove(path);
+            const bool removed = (info.isDir() && !info.isSymLink())
+                ? QDir(path).removeRecursively() : QFile::remove(path);
             result.succeeded = removed || !QFileInfo::exists(path);
             result.bytesFreed = sizeBefore;
             if (!result.succeeded)
@@ -383,10 +406,9 @@ TrustSafetyActionResult CleanerActionInterpreter::performItem(const TrustSafetyA
     if (item.id.startsWith(QLatin1String(ID_PREFIX_TRUNCATE))) {
         const QString path = item.id.mid(qstrlen(ID_PREFIX_TRUNCATE));
 
-        if (!isAllowedTarget(path)) {
-            result.error = QObject::tr("Path is outside the sandboxed roots or excluded: %1").arg(path);
+        result.error = executionBlock(path, /*followsLinks=*/true);
+        if (!result.error.isEmpty())
             return result;
-        }
 
         const qint64 sizeBefore = static_cast<qint64>(FileUtil::getFileSize(path));
         if (dryRun) {
@@ -406,10 +428,9 @@ TrustSafetyActionResult CleanerActionInterpreter::performItem(const TrustSafetyA
     if (item.id.startsWith(QLatin1String(ID_PREFIX_VACUUM))) {
         const QString dbPath = item.id.mid(qstrlen(ID_PREFIX_VACUUM));
 
-        if (!isAllowedTarget(dbPath)) {
-            result.error = QObject::tr("Path is outside the sandboxed roots or excluded: %1").arg(dbPath);
+        result.error = executionBlock(dbPath, /*followsLinks=*/true);
+        if (!result.error.isEmpty())
             return result;
-        }
 
         if (dryRun) {
             const qint64 estimate = estimateVacuumReclaimableBytes(dbPath);

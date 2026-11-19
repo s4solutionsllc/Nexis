@@ -11,6 +11,7 @@
 #include <Tools/package_tool_shared.h>
 
 #include <QFileInfoList>
+#include <QHash>
 #include <QSet>
 #include <QStringList>
 
@@ -72,6 +73,9 @@ private:
     // in beginExecution(), so performItem() doesn't re-trigger a separate
     // elevated removal (and a separate pkexec prompt) per item.
     QSet<QString>  mBatchRemovedPaths;
+    // SSO-27095: batched paths cleanFiles() refused to delete (protected
+    // location / owning app running) -> the reason shown on the item.
+    QHash<QString, QString> mBatchSkippedPaths;
 
     // SSO-26715: snap-revision filePaths already removed by the single
     // batched removeStaleSnapRevisions() call in beginExecution(), for the
