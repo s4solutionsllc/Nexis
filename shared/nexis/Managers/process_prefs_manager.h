@@ -25,7 +25,7 @@ class ProcessPrefsManager : public QObject
 public:
     struct Threshold {
         QString name;            // process comm
-        int     cpuPercent = 0;  // 0 = no threshold on CPU
+        int     cpuPercent = 0;  // share of whole machine, 0-100; 0 = no threshold
         qint64  memoryBytes = 0; // 0 = no threshold on memory
     };
 

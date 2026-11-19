@@ -2,6 +2,8 @@
 
 #include "nettop_streamer.h"
 
+#include <Utils/process_cpu_util.h>
+
 #include <QDebug>
 #include <QMutexLocker>
 #include <QRegularExpression>
@@ -53,7 +55,9 @@ QList<Process> ProcessInfoMacOS::collectProcesses()
                         proc.setPmem(procLine.takeFirst().toDouble());
                         proc.setVsize(procLine.takeFirst().toLongLong() << 10);
                         proc.setUname(procLine.takeFirst());
-                        proc.setPcpu(procLine.takeFirst().toDouble());
+                        proc.setPcpu(ProcessCpuUtil::toSystemPercent(
+                            procLine.takeFirst().toDouble(),
+                            ProcessCpuUtil::logicalCpuCount()));
                         proc.setStartTime(procLine.takeFirst());
                         proc.setState(procLine.takeFirst());
                         proc.setGroup(procLine.takeFirst());

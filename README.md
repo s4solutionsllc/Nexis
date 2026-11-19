@@ -93,7 +93,7 @@ Nexis began as a fork of [Stacer](https://github.com/oguzhaninan/Stacer), a popu
 
 ## Downloads
 
-Install via [PPA](#install-via-ppa-ubuntu), [COPR](#install-via-copr-fedora), [AUR](#install-via-aur-arch-linux), or [Homebrew](#install-via-homebrew-macos) for automatic updates, or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
+Install via [PPA](#install-via-ppa-ubuntu), [COPR](#install-via-copr-fedora), [AUR](#install-via-aur-arch-linux), or [Homebrew](#install-via-homebrew-macos) for automatic updates (on Debian or Devuan, see [Install on Debian / Devuan](#install-on-debian--devuan)), or download pre-built binaries from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest):
 
 - **Linux x86_64**: `.deb` package, `.AppImage` portable, standalone binary
 - **Linux ARM64** (aarch64): `.deb` package, `.AppImage` portable, standalone binary
@@ -140,6 +140,43 @@ yay -S nexis
 ```
 
 Also works with `paru` or any other AUR helper. Builds from source — requires Qt6 development packages which are pulled in automatically. Updates are delivered via `yay -Syu`.
+
+### Install on Debian / Devuan
+
+There is no Debian apt repository or Debian-archive package yet. On Debian 13 and Devuan 6 install the native **`_debian13.deb`** from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases/latest); on Debian 12 and Devuan 5 install the **AppImage**, which bundles Qt 6 and runs on glibc 2.35 or newer.
+
+| Distribution | Install with |
+|---|---|
+| Debian 13 (trixie) / Devuan 6 Excalibur | `nexis_<version>-1_<arch>_debian13.deb` (amd64 or arm64) |
+| Debian 12 (bookworm) / Devuan 5 Daedalus | AppImage (bookworm's Qt 6.4 is below Nexis's Qt 6.8 floor) |
+
+```bash
+# Debian 13 / Devuan 6 — apt resolves Qt 6.8 from the stock archive
+sudo apt install ./nexis_*_debian13.deb
+```
+
+```bash
+# AppImage (Debian 12 / Devuan 5, or any release if you prefer it).
+# AppImages need FUSE 2 to mount themselves.
+sudo apt install libfuse2t64        # Debian 13 / Devuan 6 (on Debian 12 / Devuan 5: libfuse2)
+
+chmod +x Nexis-*-x86_64.AppImage
+./Nexis-*-x86_64.AppImage
+```
+
+Use the `aarch64` AppImage on ARM64. If you would rather not install FUSE, run `./Nexis-*.AppImage --appimage-extract-and-run`.
+
+> **Don't use the `_ubuntu2604.deb` on Debian.** It is built against Ubuntu 26.04's Qt 6.10 and depends on `libqt6core6t64 (>= 6.10.2)`, so `apt install` fails with unmet dependencies on Debian 12/13 and Devuan. The `_debian13.deb` is built on Debian 13 and pins Qt 6.8.
+
+**Devuan and other systems without systemd.** Nexis runs, but the parts that talk to systemd do nothing useful:
+
+- **Services** shows "Services requires systemd" instead of a service list; start, stop, enable and disable are not available. Use `service` / `rc-update` / `update-rc.d` from a terminal.
+- **System Logs** needs `journalctl`; without journald the page reports that it could not start it.
+- **Boot analysis** and the **systemd-oomd** panel report that `systemd-analyze` / `systemd-oomd` are not available.
+- **SSD TRIM** can still run `fstrim` on demand, but its weekly-timer status and toggle are systemd-only and will read "disabled".
+- **Firewall** (ufw) status is read from `/etc/ufw/ufw.conf` when `systemctl` is absent.
+
+Everything else (dashboard, processes, resources, cleaner, uninstaller, disk tools, network) does not depend on systemd.
 
 ### Install via Homebrew (macOS)
 
@@ -283,4 +320,4 @@ Nexis is a free, GPL-3.0 reference product with a single named full-time maintai
 - [`RELEASE.md`](RELEASE.md) — end-to-end release runbook (tag, build matrix, code signing, Homebrew/AUR/PPA bumps, CVE expedited path, post-release verification, dry-run procedure).
 
 ---
-Nexis is maintained by [S4 Solutions](https://s4solutions.ai/products/nexis?utm_source=github&utm_medium=referral&utm_campaign=nexis_readme), a fixed-price IT, operations and AI consulting firm.
+Nexis is maintained by [S4 Solutions](https://s4solutions.ai/products/nexis?utm_source=github&utm_medium=referral&utm_campaign=nexis_readme). IT, operations and AI consulting for growing businesses. Our fee is tied to the results we deliver.

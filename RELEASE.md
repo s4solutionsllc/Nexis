@@ -157,6 +157,7 @@ Defined in `.github/workflows/release.yml`. As of v2.6.x (SSO-4093):
 |---|---|---|---|
 | `build-linux (x86_64)` | `ubuntu-24.04` (container `ubuntu:26.04`) | `.deb` (`_ubuntu2604.deb`), AppImage, raw binary `nexis-x86_64` | linuxdeploy + qt plugin (run with `APPIMAGE_EXTRACT_AND_RUN=1` — no `/dev/fuse` in container) |
 | `build-linux (arm64)` | `ubuntu-24.04-arm` (container `ubuntu:26.04`) | `.deb` (`_ubuntu2604.deb`), AppImage, raw binary `nexis-arm64` | linuxdeploy aarch64 (same FUSE workaround) |
+| `build-linux-deb-debian13 (amd64 / arm64)` | `ubuntu-24.04` / `ubuntu-24.04-arm` (container `debian:trixie`) | `.deb` (`_debian13.deb`) | Same `linux/debian/` tree as the Resolute `.deb`, built against trixie's Qt 6.8.2 so it installs on Debian 13 / Devuan 6 (SSO-27438). Smoke-tests `apt install ./…deb` on a clean trixie before uploading |
 | `build-macos` | `macos-14` (Apple Silicon) | `nexis.app`, `.dmg` | macdeployqt + notarized |
 | `release` | `ubuntu-latest` | GitHub Release, attaches all artifacts | extracts notes from `CHANGELOG.md` |
 
@@ -214,9 +215,10 @@ Downstream-triggered (run on success of `Release`):
 
 ### Currently supported targets
 
-- Linux x86_64 (Ubuntu 26.04 Resolute and newer / Debian 13+) — `.deb` requires Qt 6.8 and is built on Resolute LTS; see below
+- Linux x86_64 (Ubuntu 26.04 Resolute and newer) — `.deb` requires Qt 6.10 and is built on Resolute LTS; see below
+- Debian 13 (trixie) and Devuan 6, x86_64 and ARM64 — `_debian13.deb` built on `debian:trixie` (Qt 6.8.2) (SSO-27438). Debian 12 / Devuan 5 use the AppImage: bookworm's Qt 6.4 is below the 6.8 floor
 - Linux ARM64 (same matrix, for Pi 5 / Jetson / Graviton)
-- AppImage (any glibc-recent Linux, including Ubuntu 22.04/24.04 and all Linux Mint versions)
+- AppImage (any glibc-recent Linux, including Ubuntu 22.04/24.04, all Linux Mint versions, Debian 12+ and Devuan 5+)
 - macOS Apple Silicon (`arm64`) on macOS 14+ — **macOS Intel (`x86_64`) is sunset (SSO-3733 / FW-06)**, see below
 - AUR (Arch + derivatives)
 - Launchpad PPA (`resolute`; `plucky` and `questing` both dropped at EOL — see "Ubuntu 24.04 (Noble) dropped" below)
@@ -225,7 +227,7 @@ Downstream-triggered (run on success of `Release`):
 
 > **Ubuntu 24.04 (Noble) is no longer a supported PPA series as of v2.6.0 (SSO-3733 / FW-06).** Noble ships Qt 6.4, and the project's Qt floor is now 6.8 LTS (see `CMakeLists.txt`). The `noble` Launchpad source upload is removed from `ppa.yml`; PPA users on 24.04 should upgrade to 26.04 (Resolute), which ships a Qt that satisfies the 6.8 floor. (Ubuntu 25.04 Plucky and 25.10 Questing also satisfied the floor but both reached end-of-life and were dropped as PPA series under SSO-7306 and SSO-23401 respectively.) AppImage and the AUR continue to cover older Ubuntu hosts that build against a newer Qt sysroot.
 
-> **Linux Mint 21.x / 22 and Ubuntu 22.04 / 24.04 users: use the AppImage (GH#185).** The `.deb` package (`_ubuntu2604.deb`) requires `libqt6charts6 ≥ 6.8`, which is not available in Ubuntu 22.04 (Qt 6.2), 24.04 (Qt 6.4), or any current Linux Mint release (Mint 22 "Wilma" is Ubuntu 24.04-based; Mint 21.x is Ubuntu 22.04-based). No `.deb` targeting these distributions is planned because their system Qt does not satisfy the Qt 6.8 floor. **The AppImage bundles Qt and runs on any Linux with glibc 2.35+, including all Ubuntu 22.04+ and Mint 21+ hosts.** Use the `.AppImage` download from the GitHub Release.
+> **Linux Mint 21.x / 22 and Ubuntu 22.04 / 24.04 users: use the AppImage (GH#185).** The `.deb` package (`_ubuntu2604.deb`) requires `libqt6core6t64 (>= 6.10.2)` (it is built against Ubuntu 26.04's Qt 6.10), which is not available in Ubuntu 22.04 (Qt 6.2), 24.04 (Qt 6.4), or any current Linux Mint release (Mint 22 "Wilma" is Ubuntu 24.04-based; Mint 21.x is Ubuntu 22.04-based). No `.deb` targeting these distributions is planned because their system Qt is older than the `.deb`'s Qt 6.10 floor. **The AppImage bundles Qt and runs on any Linux with glibc 2.35+, including all Ubuntu 22.04+ and Mint 21+ hosts.** Use the `.AppImage` download from the GitHub Release.
 
 > **macOS distribution format is `.dmg`, not `.pkg` (SSO-3733 / FW-06).** Tahoe (macOS 26) skips the first-run XProtect prompt for notarized `.dmg`/`.app` artifacts but **not** for `.pkg` installers, and Tahoe 26.3 saw `.pkg` Gatekeeper rejections in the field. Nexis is a drag-to-`/Applications` `.app` with no install-time launchd / scripting that would justify `.pkg` (the `ScheduleManager` plists are written at runtime to `~/Library/LaunchAgents/`, not at install time). Changing macOS distribution format is a maintainer-only scope decision and must be reopened explicitly — do not silently add a `.pkg` job to `release.yml`. See `docs/MAINTAINER_SOP.md` for the matching policy line.
 
@@ -523,9 +525,10 @@ VERSION=2.3.4
 gh release view "v${VERSION}" --repo s4solutionsllc/Nexis | grep -E '(deb|AppImage|dmg|nexis-|SHA256)'
 # Expect (single Resolute .deb per arch since SSO-4093; Noble/Plucky .debs gone;
 # install-tracking assets since the 2026-07-05 plan):
-#   2 deb (`_ubuntu2604.deb` x86_64/arm64) + 2 AppImage (x86_64/arm64) +
-#   2 raw binaries (nexis-x86_64/nexis-arm64) + 1 dmg + 1 brew.dmg +
-#   1 source tarball (nexis-X.Y.Z-source.tar.gz) + 1 SHA256SUMS = 10 artifacts.
+#   2 deb (`_ubuntu2604.deb` amd64/arm64) + 2 deb (`_debian13.deb` amd64/arm64) +
+#   2 AppImage (x86_64/arm64) + 2 raw binaries (nexis-x86_64/nexis-arm64) +
+#   1 dmg + 1 brew.dmg + 1 source tarball (nexis-X.Y.Z-source.tar.gz) +
+#   1 SHA256SUMS = 12 artifacts.
 
 # 2. Homebrew Cask was bumped.
 curl -fsSL https://raw.githubusercontent.com/s4solutionsllc/homebrew-nexis/main/Casks/nexis.rb \

@@ -17,6 +17,11 @@ SystemServiceManager::SystemServiceManager(QObject *parent, ToolManager *toolMan
 {
 }
 
+bool SystemServiceManager::isSupported() const
+{
+    return mToolManager->servicesSupported();
+}
+
 void SystemServiceManager::fetchServices()
 {
     QThreadPool::globalInstance()->start([this]() {

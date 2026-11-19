@@ -16,6 +16,7 @@
 #include <QRegularExpression>
 #include <QSystemTrayIcon>
 #include <Utils/format_util.h>
+#include <Utils/process_cpu_util.h>
 #ifdef Q_OS_MACOS
 #include <QFileIconProvider>
 #endif
@@ -74,6 +75,10 @@ void ProcessesPage::init()
     mItemModel->setHeaderData(Col_Rss, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
     mItemModel->setHeaderData(Col_Pmem, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
     mItemModel->setHeaderData(Col_Pcpu, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
+    mItemModel->setHeaderData(Col_Pcpu, Qt::Horizontal,
+        tr("Share of total CPU across all %n logical processor(s)", nullptr,
+           ProcessCpuUtil::logicalCpuCount()),
+        Qt::ToolTipRole);
     // SSO-15374: GPU % / GPU VRAM are tabular numerics too — same DS §7
     // right-align convention as PID/Resident Memory/%Memory/%CPU above.
     mItemModel->setHeaderData(Col_GpuPct, Qt::Horizontal, rightAlign, Qt::TextAlignmentRole);
@@ -467,7 +472,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     rss_i->setData(FormatUtil::formatBytes(proc.getRss()), Qt::ToolTipRole);
     rss_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 
-    QStandardItem *pmem_i = new QStandardItem(QString::number(proc.getPmem()));
+    QStandardItem *pmem_i = new QStandardItem(ProcessCpuUtil::formatPercent(proc.getPmem()));
     pmem_i->setData(proc.getPmem(), data);
     pmem_i->setData(proc.getPmem(), Qt::ToolTipRole);
     pmem_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -480,7 +485,7 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
     uname_i->setData(proc.getUname(), data);
     uname_i->setData(proc.getUname(), Qt::ToolTipRole);
 
-    QStandardItem *pcpu_i = new QStandardItem(QString::number(proc.getPcpu()));
+    QStandardItem *pcpu_i = new QStandardItem(ProcessCpuUtil::formatPercent(proc.getPcpu()));
     pcpu_i->setData(proc.getPcpu(), data);
     pcpu_i->setData(proc.getPcpu(), Qt::ToolTipRole);
     pcpu_i->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -610,10 +615,10 @@ void ProcessesPage::updateRow(QStandardItem *pidItem, const Process &proc)
     setCell(Col_Name, proc.getName(), proc.getName(), proc.getName());   // GH#194
 #endif
     setCell(Col_Rss,     FormatUtil::formatBytes(proc.getRss()), proc.getRss(), FormatUtil::formatBytes(proc.getRss()));
-    setCell(Col_Pmem,    QString::number(proc.getPmem()), proc.getPmem(), proc.getPmem());
+    setCell(Col_Pmem,    ProcessCpuUtil::formatPercent(proc.getPmem()), proc.getPmem(), proc.getPmem());
     setCell(Col_Vsize,   FormatUtil::formatBytes(proc.getVsize()), proc.getVsize(), FormatUtil::formatBytes(proc.getVsize()));
     setCell(Col_User,    proc.getUname(), proc.getUname(), proc.getUname());
-    setCell(Col_Pcpu,    QString::number(proc.getPcpu()), proc.getPcpu(), proc.getPcpu());
+    setCell(Col_Pcpu,    ProcessCpuUtil::formatPercent(proc.getPcpu()), proc.getPcpu(), proc.getPcpu());
     setCell(Col_StartTime, proc.getStartTime(), proc.getStartTime(), proc.getStartTime());
     setCell(Col_State,   proc.getState(), proc.getState(), proc.getState());
     setCell(Col_Group,   proc.getGroup(), proc.getGroup(), proc.getGroup());

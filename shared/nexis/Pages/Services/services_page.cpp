@@ -22,13 +22,22 @@ ServicesPage::ServicesPage(QWidget *parent, SystemServiceManager *serviceManager
 
 void ServicesPage::init()
 {
-    connect(mServiceManager, &SystemServiceManager::servicesFetched,
-            this, &ServicesPage::loadServices);
+    const bool supported = mServiceManager->isSupported();
 
-    mServiceManager->fetchServices();
+    if (supported) {
+        connect(mServiceManager, &SystemServiceManager::servicesFetched,
+                this, &ServicesPage::loadServices);
+
+        mServiceManager->fetchServices();
+    } else {
+        ui->lblNotFound->setText(tr("Services requires systemd, which this system is not running."));
+    }
 
     ui->cmbRunningStatus->addItems({ tr("Running Status"), tr("Running"), tr("Not Running") });
     ui->cmbStartupStatus->addItems({ tr("Startup Status"), tr("Enabled"), tr("Disabled") });
+
+    ui->cmbRunningStatus->setEnabled(supported);
+    ui->cmbStartupStatus->setEnabled(supported);
 
     Utilities::addDropShadow(ui->cmbRunningStatus, 30);
     Utilities::addDropShadow(ui->cmbStartupStatus, 30);

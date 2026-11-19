@@ -15,7 +15,7 @@ This guide walks you through installation and introduces the main parts of the a
 
 ### Linux
 
-**APT (Ubuntu / Debian, recommended)**
+**APT (Ubuntu, recommended)**
 
 Install from the PPA to get automatic updates through `apt`:
 
@@ -25,7 +25,7 @@ sudo apt update
 sudo apt install nexis
 ```
 
-Supports Ubuntu 26.04 (Resolute) on x86_64 and ARM64. Ubuntu 22.04, 24.04, and Linux Mint Zena aren't supported via the PPA (Nexis requires Qt 6.8 LTS, which isn't available in those repos) -- use the AppImage instead.
+Supports Ubuntu 26.04 (Resolute) on x86_64 and ARM64. Ubuntu 22.04, 24.04, and Linux Mint Zena aren't supported via the PPA (the PPA package is built against Ubuntu 26.04's Qt, which is newer than those repos ship) -- use the AppImage instead.
 
 **DNF / COPR (Fedora)**
 
@@ -36,7 +36,7 @@ sudo dnf install nexis
 
 Supports Fedora 43, Fedora 44, and Rawhide on x86_64. COPR is Fedora's community build service, not an official Fedora repository, so `dnf` will ask you to confirm before adding it.
 
-**Debian / Ubuntu (.deb, manual)**
+**Ubuntu 26.04+ (.deb, manual)**
 
 Download the latest `.deb` package from the [Releases page](https://github.com/s4solutionsllc/Nexis/releases) and install it:
 
@@ -45,7 +45,7 @@ sudo dpkg -i nexis_*.deb
 sudo apt-get install -f   # resolve any missing dependencies
 ```
 
-**AppImage (any distro)**
+**AppImage (any distro, including Debian and Devuan)**
 
 Download the `.AppImage` file, make it executable, and run:
 
@@ -53,6 +53,8 @@ Download the `.AppImage` file, make it executable, and run:
 chmod +x Nexis-*.AppImage
 ./Nexis-*.AppImage
 ```
+
+> **Debian / Devuan:** on Debian 13 / Devuan 6 install the `_debian13.deb` with `sudo apt install ./nexis_*_debian13.deb`. The `_ubuntu2604.deb` needs Qt 6.10 and does not install on Debian or Devuan. On Debian 12 / Devuan 5 use the AppImage (install `libfuse2`, or `libfuse2t64` on Debian 13 / Devuan 6, first). Without systemd (Devuan) the Services page is unavailable. See the [README](https://github.com/s4solutionsllc/Nexis#install-on-debian--devuan) for details.
 
 > **Tip:** Move the AppImage to `~/Applications/` or `/opt/` so it has a permanent home. Most desktop environments let you right-click and "Allow executing as program" instead of using the terminal.
 

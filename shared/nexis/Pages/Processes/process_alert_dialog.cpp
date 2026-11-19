@@ -31,14 +31,15 @@ void ProcessAlertDialog::buildUI()
 
     auto *intro = new QLabel(
         tr("Fires a tray notification when any of these thresholds is exceeded. "
-           "Values across PIDs with the same name are summed. Use 0 to disable "
+           "Values across PIDs with the same name are summed. CPU is a share of "
+           "the whole machine (100% = every processor busy). Use 0 to disable "
            "a threshold."), this);
     intro->setWordWrap(true);
     layout->addWidget(intro);
 
     auto *form = new QFormLayout();
     mSpnCpu = new QSpinBox(this);
-    mSpnCpu->setRange(0, 1000);       // allow >100 for multi-core aggregation
+    mSpnCpu->setRange(0, 100);        // share of the whole machine
     mSpnCpu->setSuffix("%");
     form->addRow(tr("CPU threshold:"), mSpnCpu);
 

@@ -2,11 +2,17 @@
 
 #include "setting_manager.h"
 
+#include <Utils/process_cpu_util.h>
+
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 
 ProcessPrefsManager *ProcessPrefsManager::instance = nullptr;
+
+namespace {
+constexpr const char kCpuScaleSystem[] = "system";
+}
 
 ProcessPrefsManager *ProcessPrefsManager::ins()
 {
@@ -34,16 +40,26 @@ void ProcessPrefsManager::load()
 
     const QJsonArray ts = QJsonDocument::fromJson(
         sm->getProcessThresholds().toUtf8()).array();
+    bool migrated = false;
     for (const QJsonValue &v : ts) {
         const QJsonObject obj = v.toObject();
         Threshold t;
         t.name = obj.value("name").toString();
         t.cpuPercent = obj.value("cpuPercent").toInt(0);
+        // Entries written before %CPU became a share of the whole machine
+        // carry no cpuScale and hold a per-core value.
+        if (obj.value("cpuScale").toString() != QLatin1String(kCpuScaleSystem)) {
+            t.cpuPercent = ProcessCpuUtil::migratePerCoreThreshold(
+                t.cpuPercent, ProcessCpuUtil::logicalCpuCount());
+            migrated = true;
+        }
         t.memoryBytes = static_cast<qint64>(
             obj.value("memoryBytes").toVariant().toLongLong());
         if (!t.name.isEmpty())
             mThresholds.append(t);
     }
+    if (migrated)
+        saveThresholds();
 }
 
 void ProcessPrefsManager::saveNames()
@@ -62,6 +78,7 @@ void ProcessPrefsManager::saveThresholds()
         QJsonObject obj;
         obj.insert("name", t.name);
         obj.insert("cpuPercent", t.cpuPercent);
+        obj.insert("cpuScale", QLatin1String(kCpuScaleSystem));
         obj.insert("memoryBytes", QJsonValue::fromVariant(
             QVariant::fromValue<qint64>(t.memoryBytes)));
         arr.append(obj);

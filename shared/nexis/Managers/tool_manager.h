@@ -20,6 +20,7 @@ class ToolManager
 public:
     static ToolManager *ins();
 
+    bool servicesSupported() const;
     QList<Service> getServices() const;
     QList<Package> getPackages() const;
     QStringList getSnapPackages() const;

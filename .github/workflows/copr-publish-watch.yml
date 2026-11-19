@@ -1,0 +1,86 @@
+# Makes a stalled or failed COPR publish visible (SSO-27419).
+#
+# The `copr-publish` environment holds every tag-push publish for a required
+# reviewer. GitHub fails a job that waits 30 days for that approval, with no
+# notification: 2.10.0-2.12.0 all expired that way and 2.13.1-2.14.1 sat
+# `waiting` for weeks before anyone looked. This job checks the newest tag-push
+# run of copr.yml once a day and keeps ONE standing issue current, never one
+# issue per run. The environment gate itself is deliberate and stays.
+name: COPR publish watch
+
+on:
+  schedule:
+    # Daily, off the top of the hour to avoid the GitHub cron thundering herd.
+    - cron: '41 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  STALE_HOURS: 24
+  ISSUE_TITLE: '[copr-watch] COPR publish stalled or failed'
+
+jobs:
+  watch:
+    name: Check latest COPR publish
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      issues: write
+
+    steps:
+      - name: Inspect newest tag-push run and update the standing issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          run=$(gh run list --workflow copr.yml --event push --limit 1 \
+            --json databaseId,headBranch,status,conclusion,createdAt,url \
+            --jq '.[0] // empty')
+          if [ -z "$run" ]; then
+            echo "No tag-push COPR runs yet; nothing to check."
+            exit 0
+          fi
+
+          tag=$(jq -r .headBranch <<<"$run")
+          status=$(jq -r .status <<<"$run")
+          conclusion=$(jq -r .conclusion <<<"$run")
+          created=$(jq -r .createdAt <<<"$run")
+          url=$(jq -r .url <<<"$run")
+          age_h=$(( ( $(date -u +%s) - $(date -u -d "$created" +%s) ) / 3600 ))
+
+          problem=""
+          if [ "$status" = "waiting" ] && [ "$age_h" -ge "$STALE_HOURS" ]; then
+            expires=$(date -u -d "$created + 30 days" +%F)
+            problem="Publish for **$tag** has been waiting on the \`copr-publish\` environment approval for ${age_h}h. GitHub fails it automatically on **$expires** (30-day limit)."
+          elif [ "$status" = "completed" ] && [ "$conclusion" != "success" ]; then
+            problem="Publish for **$tag** finished as \`$conclusion\`."
+          fi
+
+          existing=$(gh issue list --state open --search "\"$ISSUE_TITLE\" in:title" \
+            --json number,title --jq "[.[]|select(.title==\"$ISSUE_TITLE\")][0].number // empty")
+
+          if [ -z "$problem" ]; then
+            echo "Latest publish ($tag) is $status/${conclusion:-none}, ${age_h}h old: healthy."
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --comment "Latest COPR publish ($tag) is now \`$status/${conclusion:-none}\`: $url"
+            fi
+            exit 0
+          fi
+
+          body="$problem
+
+          - Run: $url
+          - Checked: $(date -u +%FT%TZ) by the \`COPR publish watch\` workflow; this issue is edited in place, one per stall.
+          - Fix: approve or reject the pending \`copr-publish\` deployment on that run; if it failed, read the job log, fix, and re-run. Closes itself when the newest tag-push run succeeds."
+
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --body "$body"
+            echo "Updated standing issue #$existing."
+          else
+            gh issue create --title "$ISSUE_TITLE" --body "$body" --label github-actions
+          fi
+          echo "::warning title=COPR publish::$problem"
