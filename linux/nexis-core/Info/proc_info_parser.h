@@ -16,6 +16,7 @@ namespace ProcInfoParser {
 struct StatFields {
     QString  comm;        // binary name, parens stripped
     QChar    state;       // R, S, D, Z, T, …
+    qint64   ppid     = 0;    // parent pid (SSO-27153)
     qint64   session  = 0;
     quint64  utime    = 0;    // clock ticks (user)
     quint64  stime    = 0;    // clock ticks (kernel)

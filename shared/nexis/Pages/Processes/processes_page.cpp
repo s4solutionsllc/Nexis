@@ -14,9 +14,11 @@
 #include <QFileInfo>
 #include <QItemSelectionModel>
 #include <QRegularExpression>
+#include <QSet>
 #include <QSystemTrayIcon>
 #include <Utils/format_util.h>
 #include <Utils/process_cpu_util.h>
+#include <Utils/process_tree_util.h>
 #ifdef Q_OS_MACOS
 #include <QFileIconProvider>
 #endif
@@ -159,23 +161,20 @@ void ProcessesPage::init()
     mBackgroundGroupItem = createGroupHeaderItem(tr("Background"));
     mItemModel->appendRow(mAppsGroupItem);
     mItemModel->appendRow(mBackgroundGroupItem);
-    // SSO-15376: the view's model is the proxy (setModel(mSortFilterModel)
-    // above), not mItemModel directly — setFirstColumnSpanned()/setExpanded()
-    // take indices in the *view's* model, so source-model indices from
-    // QStandardItem::row()/index() must be mapped through the proxy first.
-    // Getting this wrong doesn't crash; it silently leaves every process row
-    // uncollapsed-but-never-shown, since setItemsExpandable(false) removes
-    // any user affordance to expand them manually.
-    const QModelIndex proxyAppsIdx = mSortFilterModel->mapFromSource(mAppsGroupItem->index());
-    const QModelIndex proxyBackgroundIdx = mSortFilterModel->mapFromSource(mBackgroundGroupItem->index());
-    ui->tableProcess->setFirstColumnSpanned(proxyAppsIdx.row(), proxyAppsIdx.parent(), true);
-    ui->tableProcess->setFirstColumnSpanned(proxyBackgroundIdx.row(), proxyBackgroundIdx.parent(), true);
-    ui->tableProcess->setExpanded(proxyAppsIdx, true);
-    ui->tableProcess->setExpanded(proxyBackgroundIdx, true);
+    applyGroupHeaderLayout();
     updateGroupHeaderCounts();
 
     connect(mRefresh, &DataRefreshService::processesUpdated,
             this, &ProcessesPage::onProcessesUpdated);
+
+    // SSO-27153: tree mode. Collapse state is tracked per PID so a new child
+    // doesn't pop a branch the user closed back open.
+    connect(ui->checkProcessTree, &QCheckBox::toggled,
+            this, &ProcessesPage::onProcessTreeToggled);
+    connect(ui->tableProcess, &QTreeView::collapsed, this,
+            [this](const QModelIndex &idx) { trackCollapseState(idx, true); });
+    connect(ui->tableProcess, &QTreeView::expanded, this,
+            [this](const QModelIndex &idx) { trackCollapseState(idx, false); });
 
     ui->tableProcess->header()->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -242,18 +241,66 @@ void ProcessesPage::updateGroupHeaderCounts()
 
 QModelIndex ProcessesPage::proxyIndexForPid(pid_t pid) const
 {
+    QStandardItem *item = mPidToRow.value(pid, nullptr);
+    return item ? mSortFilterModel->mapFromSource(item->index()) : QModelIndex();
+}
+
+void ProcessesPage::applyGroupHeaderLayout()
+{
+    // SSO-15376: the view's model is the proxy (setModel(mSortFilterModel)
+    // above), not mItemModel directly — setFirstColumnSpanned()/setExpanded()
+    // take indices in the *view's* model, so source-model indices from
+    // QStandardItem::row()/index() must be mapped through the proxy first.
+    // Getting this wrong doesn't crash; it silently leaves every process row
+    // uncollapsed-but-never-shown, since setItemsExpandable(false) removes
+    // any user affordance to expand them manually.
     for (QStandardItem *group : {mAppsGroupItem, mBackgroundGroupItem}) {
-        if (!group)
+        const QModelIndex proxyIdx = mSortFilterModel->mapFromSource(group->index());
+        if (!proxyIdx.isValid())
             continue;
-        const QModelIndex proxyParent = mSortFilterModel->mapFromSource(group->index());
-        const int rows = mSortFilterModel->rowCount(proxyParent);
-        for (int i = 0; i < rows; ++i) {
-            const QModelIndex idx = mSortFilterModel->index(i, 0, proxyParent);
-            if (idx.data(SortRole).toInt() == pid)
-                return idx;
-        }
+        ui->tableProcess->setFirstColumnSpanned(proxyIdx.row(), proxyIdx.parent(), true);
+        ui->tableProcess->setExpanded(proxyIdx, true);
     }
-    return QModelIndex();
+}
+
+QStandardItem *ProcessesPage::rowParentOf(QStandardItem *item) const
+{
+    return item->parent() ? item->parent() : mItemModel->invisibleRootItem();
+}
+
+bool ProcessesPage::isDescendantOf(QStandardItem *maybeDescendant, QStandardItem *item)
+{
+    for (QStandardItem *p = maybeDescendant->parent(); p; p = p->parent()) {
+        if (p == item)
+            return true;
+    }
+    return false;
+}
+
+void ProcessesPage::trackCollapseState(const QModelIndex &proxyIndex, bool collapsed)
+{
+    const QModelIndex src = mSortFilterModel->mapToSource(proxyIndex).siblingAtColumn(0);
+    if (!src.isValid() || src.data(GroupHeaderRole).toBool())
+        return;
+    const pid_t pid = src.data(SortRole).toLongLong();
+    if (collapsed)
+        mCollapsedPids.insert(pid);
+    else
+        mCollapsedPids.remove(pid);
+}
+
+void ProcessesPage::onProcessTreeToggled(bool enabled)
+{
+    ui->tableProcess->setRootIsDecorated(enabled);
+    ui->tableProcess->setItemsExpandable(enabled);
+    ui->tableProcess->setExpandsOnDoubleClick(enabled);
+    ui->tableProcess->setIndentation(enabled ? Dpi::scale(18) : 0);
+    mSortFilterModel->setTreeMode(enabled);
+
+    if (!mLastProcesses.isEmpty())
+        onProcessesUpdated(mLastProcesses, mLastUserName);
+    if (!enabled)
+        applyGroupHeaderLayout();
 }
 
 QIcon ProcessesPage::resolveProcessIcon(const Process &proc) const
@@ -370,49 +417,112 @@ void ProcessesPage::onProcessesUpdated(const QList<Process> &processes, const QS
     if (!selecteds.isEmpty())
         selectedPid = selecteds.first().data(SortRole).toInt();
 
-    bool showAll = ui->checkAllProcesses->isChecked();
-    QSet<pid_t> incomingPids;
+    mLastProcesses = processes;
+    mLastUserName = userName;
 
+    const bool showAll = ui->checkAllProcesses->isChecked();
+    const bool treeMode = ui->checkProcessTree->isChecked();
+    QList<const Process *> visible;
+    QHash<pid_t, pid_t> ppidByPid;
     for (const Process &proc : processes) {
         if (!showAll && userName != proc.getUname())
             continue;
+        visible.append(&proc);
+        ppidByPid.insert(proc.getPid(), proc.getPpid());
+    }
+    const QSet<pid_t> incomingPids = QSet<pid_t>(ppidByPid.keyBegin(), ppidByPid.keyEnd());
+    const QHash<pid_t, pid_t> treeParents =
+        treeMode ? ProcessTreeUtil::resolveParents(ppidByPid) : QHash<pid_t, pid_t>();
 
-        pid_t pid = proc.getPid();
-        incomingPids.insert(pid);
-        mPidToName.insert(pid, proc.getCmd());   // FR-116
+    // Pass 1: refresh existing rows in place; build new rows detached, since
+    // a child's parent row may not exist yet.
+    QHash<pid_t, QList<QStandardItem *>> newRows;
+    for (const Process *proc : visible) {
+        const pid_t pid = proc->getPid();
+        mPidToName.insert(pid, proc->getCmd());   // FR-116
 
-        // SSO-15376: route the row to its classified group. A process can
-        // (rarely) flip classification between ticks — drop and recreate
-        // under the new parent rather than trying to reparent in place.
-        QStandardItem *targetGroup = groupItemFor(proc.getIsAppProcess());
         auto it = mPidToRow.find(pid);
-        if (it != mPidToRow.end() && it.value()->parent() == targetGroup) {
-            updateRow(it.value(), proc);
+        if (it != mPidToRow.end()) {
+            updateRow(it.value(), *proc);
         } else {
-            if (it != mPidToRow.end()) {
-                QStandardItem *oldParent = it.value()->parent();
-                if (oldParent)
-                    oldParent->removeRow(it.value()->row());
-            }
-            targetGroup->appendRow(createRow(proc));
-            mPidToRow.insert(pid, targetGroup->child(targetGroup->rowCount() - 1, 0));
+            QList<QStandardItem *> row = createRow(*proc);
+            mPidToRow.insert(pid, row.first());
+            newRows.insert(pid, row);
         }
     }
 
-    // Remove exited processes. QStandardItem* pointers stay valid across
-    // sibling removals (row() is recomputed from the parent), so — unlike
-    // the old flat-index scheme — no pid->row map rebuild pass is needed.
+    // Pass 2: put every row under its target parent — a classified group
+    // (SSO-15376) or, in tree mode, its parent process (SSO-27153). A row
+    // can change parent between ticks (re-classification, reparenting to
+    // init, a mode toggle): takeRow() moves it with its subtree intact.
+    QSet<QStandardItem *> expandTargets;
+    for (const Process *proc : visible) {
+        const pid_t pid = proc->getPid();
+        QStandardItem *item = mPidToRow.value(pid);
+
+        QStandardItem *target;
+        if (treeMode) {
+            const pid_t parentPid = treeParents.value(pid);
+            target = parentPid ? mPidToRow.value(parentPid) : mItemModel->invisibleRootItem();
+        } else {
+            target = groupItemFor(proc->getIsAppProcess());
+        }
+
+        auto fresh = newRows.constFind(pid);
+        if (fresh != newRows.constEnd()) {
+            target->appendRow(fresh.value());
+        } else if (rowParentOf(item) != target) {
+            // The old structure can still have the target inside this row's
+            // subtree (parent/child swapped); lift it out first or the
+            // re-parent would form a cycle.
+            if (isDescendantOf(target, item)) {
+                QStandardItem *targetParent = rowParentOf(target);
+                mItemModel->invisibleRootItem()->appendRow(targetParent->takeRow(target->row()));
+            }
+            QStandardItem *oldParent = rowParentOf(item);
+            target->appendRow(oldParent->takeRow(item->row()));
+        } else {
+            continue;
+        }
+        if (treeMode && target != mItemModel->invisibleRootItem())
+            expandTargets.insert(target);
+    }
+
+    // Remove exited processes. Survivors were re-parented away in pass 2, so
+    // whatever is still under an exited row has exited too and goes with it:
+    // only the topmost exited rows are removed explicitly (removing a row
+    // deletes its descendants' items, so touching those would dangle).
+    QSet<QStandardItem *> exitedItems;
     QList<pid_t> exitedPids;
     for (auto it = mPidToRow.begin(); it != mPidToRow.end(); ++it) {
-        if (!incomingPids.contains(it.key()))
+        if (!incomingPids.contains(it.key())) {
             exitedPids.append(it.key());
+            exitedItems.insert(it.value());
+        }
     }
+    QList<QStandardItem *> topmostExited;
+    for (QStandardItem *item : std::as_const(exitedItems)) {
+        bool nested = false;
+        for (QStandardItem *p = item->parent(); p && !nested; p = p->parent())
+            nested = exitedItems.contains(p);
+        if (!nested)
+            topmostExited.append(item);
+    }
+    for (QStandardItem *item : std::as_const(topmostExited))
+        rowParentOf(item)->removeRow(item->row());
     for (pid_t pid : exitedPids) {
-        QStandardItem *item = mPidToRow.value(pid);
-        if (item && item->parent())
-            item->parent()->removeRow(item->row());
         mPidToRow.remove(pid);
         mPidToName.remove(pid);   // FR-116
+        mCollapsedPids.remove(pid);
+    }
+
+    // New branches open by default (like htop); one the user closed stays closed.
+    for (QStandardItem *parentItem : std::as_const(expandTargets)) {
+        if (mCollapsedPids.contains(static_cast<pid_t>(parentItem->data(SortRole).toLongLong())))
+            continue;
+        const QModelIndex idx = mSortFilterModel->mapFromSource(parentItem->index());
+        if (idx.isValid() && !ui->tableProcess->isExpanded(idx))
+            ui->tableProcess->setExpanded(idx, true);
     }
 
     // DS §5: swap between the process tree and the empty-state affordance
@@ -590,9 +700,9 @@ QList<QStandardItem*> ProcessesPage::createRow(const Process &proc)
 
 void ProcessesPage::updateRow(QStandardItem *pidItem, const Process &proc)
 {
-    QStandardItem *parentItem = pidItem ? pidItem->parent() : nullptr;
-    if (!parentItem)
-        return;   // defensive: a data row always has a group parent
+    if (!pidItem)
+        return;
+    QStandardItem *parentItem = rowParentOf(pidItem);
     const int row = pidItem->row();
 
     int d = SortRole;
@@ -791,22 +901,10 @@ void ProcessesPage::onPinPrefsChanged()
 
 void ProcessesPage::refreshPinnedRoles()
 {
-    // SSO-15376: iterate each group's children — mItemModel->rowCount() at
-    // the root now only counts the two section headers, not process rows.
     auto *prefs = ProcessPrefsManager::ins();
-    for (QStandardItem *group : {mAppsGroupItem, mBackgroundGroupItem}) {
-        if (!group)
-            continue;
-        for (int row = 0; row < group->rowCount(); ++row) {
-            QStandardItem *pidItem = group->child(row, 0);
-            if (!pidItem)
-                continue;
-            const pid_t pid = pidItem->data(SortRole).toLongLong();
-            const QString name = mPidToName.value(pid);
-            pidItem->setData(prefs->isPinned(name),
-                             PinSortFilterProxyModel::PinnedRole);
-        }
-    }
+    for (auto it = mPidToRow.constBegin(); it != mPidToRow.constEnd(); ++it)
+        it.value()->setData(prefs->isPinned(mPidToName.value(it.key())),
+                            PinSortFilterProxyModel::PinnedRole);
     // Nudge the proxy to re-sort.
     mSortFilterModel->invalidate();
 }

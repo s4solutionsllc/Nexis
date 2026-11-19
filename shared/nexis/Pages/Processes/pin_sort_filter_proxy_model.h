@@ -13,6 +13,9 @@
 // SSO-15376: also keeps the two root-level Apps/Background section headers
 // in a fixed order (Apps first), independent of both pin state and the
 // chosen sort column — see lessThan()'s root-level branch.
+//
+// SSO-27153: in tree mode the section headers are hidden and root-level rows
+// are ordinary (parentless) process rows.
 class PinSortFilterProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
@@ -22,8 +25,16 @@ public:
 
     explicit PinSortFilterProxyModel(QObject *parent = nullptr);
 
+    void setTreeMode(bool enabled);
+
 protected:
     bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
+    bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+
+private:
+    bool isGroupHeader(const QModelIndex &sourceIndex) const;
+
+    bool mTreeMode = false;
 };
 
 #endif // PIN_SORT_FILTER_PROXY_MODEL_H

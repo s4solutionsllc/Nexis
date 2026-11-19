@@ -11,6 +11,11 @@ public:
     pid_t getPid() const;
     void setPid(const pid_t &value);
 
+    // SSO-27153: parent PID for the Processes page's tree mode. 0 = unknown
+    // (the page then treats the process as a root).
+    pid_t getPpid() const;
+    void setPpid(const pid_t &value);
+
     quint64 getRss() const;
     void setRss(const quint64 &value);
 
@@ -88,6 +93,7 @@ public:
 
 private:
     pid_t pid;
+    pid_t ppid = 0;
     quint64 rss;
     double pmem;
     quint64 vsize;

@@ -22,6 +22,7 @@ set(GUI_SHARED_DIR "${CMAKE_SOURCE_DIR}/shared/nexis")
 add_nexis_test(NAME FormatUtilTests   SOURCES utils/test_format_util.cpp)
 add_nexis_test(NAME MenuBarFormatUtilTests SOURCES utils/test_menu_bar_format_util.cpp)
 add_nexis_test(NAME ProcessCpuUtilTests SOURCES utils/test_process_cpu_util.cpp)
+add_nexis_test(NAME ProcessTreeUtilTests SOURCES utils/test_process_tree_util.cpp)
 add_nexis_test(NAME HealthScoreInputsTests SOURCES utils/test_health_score_inputs.cpp)
 add_nexis_test(NAME MiniMonitorFormatUtilTests SOURCES utils/test_mini_monitor_format_util.cpp)
 add_nexis_test(NAME SustainedThresholdTrackerTests SOURCES utils/test_sustained_threshold_tracker.cpp)
@@ -735,6 +736,18 @@ add_nexis_test(NAME CleanerExclusionTests
 add_nexis_test(NAME HealthReportTests
   SOURCES
     managers/test_health_report.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
+# SSO-27153: ProcessesPage tree mode — drives the page's processesUpdated
+# slot with synthetic snapshots and checks the resulting model/view layout.
+add_nexis_test(NAME ProcessesPageTreeTests
+  SOURCES
+    managers/test_processes_page_tree.cpp
   INCLUDES
     "${GUI_SHARED_DIR}"
     "${GUI_SHARED_DIR}/Managers"

@@ -1927,13 +1927,13 @@ QProgressBar[progressRole="thin"]::chunk {
     border-bottom: 1px solid @borderColor;
 }
 
-#checkAllProcesses {
+#checkAllProcesses, #checkProcessTree {
     margin-top: 2;
     color: @textSecondary;
     font-size: 10pt;
 }
 
-#checkAllProcesses::indicator {
+#checkAllProcesses::indicator, #checkProcessTree::indicator {
     width: @dp14;
     height: @dp14;
 }
