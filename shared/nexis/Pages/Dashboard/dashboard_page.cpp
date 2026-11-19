@@ -667,6 +667,10 @@ void DashboardPage::updateTempTile()
     if (!mActive) return;
     QList<ThermalSensor> sensors = im->getThermalSensors();
     for (DashboardTileWrapper *w : wrappersOfType("temp")) {
+        if (w->inputKey() == ThermalInfo::summaryInputKey()) {
+            updateTempSummaryTile(w, sensors);
+            continue;
+        }
         int idx = 0;
         for (int i = 0; i < sensors.size(); ++i)
             if (sensors.at(i).id == w->inputKey()) { idx = i; break; }
@@ -679,6 +683,22 @@ void DashboardPage::updateTempTile()
         tile->setValue(percent, QString("%1\u00B0C").arg(temp, 0, 'f', 1));
         tile->addDataPoint(temp);
     }
+}
+
+// Avg headline with the hottest sensor in the subtitle: an average alone can
+// hide one overheating component, so max is never omitted.
+void DashboardPage::updateTempSummaryTile(DashboardTileWrapper *w, const QList<ThermalSensor> &sensors)
+{
+    auto *tile = qobject_cast<MetricTileBase*>(w->innerWidget());
+    if (!tile) return;
+    const ThermalSummary s = im->getThermalSummary();
+    if (!s.isValid()) return;
+    const QString hottest = s.maxIndex < sensors.size() ? sensors.at(s.maxIndex).label : QString();
+    tile->setSubtitle(tr("Avg of %n sensor(s) \u00B7 Max %1\u00B0C %2", nullptr, s.count)
+                          .arg(s.max, 0, 'f', 1).arg(hottest).trimmed());
+    tile->setValue(qBound(0, static_cast<int>(s.average), 100),
+                   QString("%1\u00B0C").arg(s.average, 0, 'f', 1));
+    tile->addDataPoint(s.average);
 }
 
 void DashboardPage::updateFanTile()
@@ -1764,9 +1784,12 @@ void DashboardPage::setupTileGearMenu(DashboardTileWrapper *wrapper)
     }
 
     QList<QPair<QString,QString>> inputs; // label, key
-    if (type == "temp")
-        for (const ThermalSensor &s : im->getThermalSensors()) inputs.append({s.label, s.id});
-    else if (type == "fan")
+    if (type == "temp") {
+        const QList<ThermalSensor> sensors = im->getThermalSensors();
+        if (sensors.size() >= 2)
+            inputs.append({tr("All sensors (average / max)"), ThermalInfo::summaryInputKey()});
+        for (const ThermalSensor &s : sensors) inputs.append({s.label, s.id});
+    } else if (type == "fan")
         for (const FanSensor &f : im->getFanSensors()) inputs.append({f.label, f.id});
     else if (type == "gpu")
         for (const GpuDevice &g : im->getGpuDevices()) inputs.append({g.name, g.name});
@@ -1926,7 +1949,14 @@ void DashboardPage::onAddTileClicked()
                 free.append(p);
         avail[type] = free;
     };
-    { QList<QPair<QString, QString>> v; for (const ThermalSensor &s : im->getThermalSensors()) v.append({s.id, s.label}); addAvail("temp", v); }
+    {
+        QList<QPair<QString, QString>> v;
+        const QList<ThermalSensor> sensors = im->getThermalSensors();
+        if (sensors.size() >= 2)
+            v.append({ThermalInfo::summaryInputKey(), tr("All sensors (average / max)")});
+        for (const ThermalSensor &s : sensors) v.append({s.id, s.label});
+        addAvail("temp", v);
+    }
     { QList<QPair<QString, QString>> v; for (const FanSensor &f : im->getFanSensors()) v.append({f.id, f.label}); addAvail("fan", v); }
     { QList<QPair<QString, QString>> v; for (const GpuDevice &g : im->getGpuDevices()) v.append({g.name, g.name}); addAvail("gpu", v); }
     { QList<QPair<QString, QString>> v; for (const Disk &d : im->getDisks()) v.append({d.name, d.name}); addAvail("disk", v); }
@@ -2194,6 +2224,8 @@ void DashboardPage::onHealthTempUpdated()
             if (sensors.at(i).id == key) { sensorIdx = i; break; }
     }
     double tempC = im->getThermalTemperature(sensorIdx);
+    if (!tempWrappers.isEmpty() && tempWrappers.first()->inputKey() == ThermalInfo::summaryInputKey())
+        tempC = im->getThermalSummary().max;
     int score = 100;
     if (tempC >= 100.0) score = 0;
     else if (tempC > 60.0) score = qRound(100.0 * (100.0 - tempC) / 40.0);

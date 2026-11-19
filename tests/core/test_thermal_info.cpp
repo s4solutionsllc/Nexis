@@ -3,6 +3,7 @@
 #include <QFile>
 #include <QHash>
 #include <QTemporaryDir>
+#include <limits>
 #include "Info/thermal_info.h"
 
 namespace {
@@ -82,6 +83,9 @@ private slots:
     void enumerate_synthesizesLabelWhenAbsent();
     void enumerate_noRegressionWithoutVendorNodes();
     void enumerate_picksUpDimmAndNvmeSensors();
+    void summarize_averageAndMax();
+    void summarize_skipsInvalidReadings();
+    void summarize_emptyAndAllInvalid();
 };
 
 void TestThermalInfo::temp_normalValue()
@@ -394,6 +398,40 @@ void TestThermalInfo::enumerate_picksUpDimmAndNvmeSensors()
 
     QVERIFY(byDevice.contains("coretemp"));
     QCOMPARE(byDevice.value("coretemp").label, QStringLiteral("CPU – Package id 0"));
+}
+
+void TestThermalInfo::summarize_averageAndMax()
+{
+    const ThermalSummary s = ThermalInfo::summarize({40.0, 60.0, 80.0});
+    QCOMPARE(s.count, 3);
+    QCOMPARE(s.average, 60.0);
+    QCOMPARE(s.max, 80.0);
+    QCOMPARE(s.maxIndex, 2);
+    QVERIFY(s.isValid());
+}
+
+void TestThermalInfo::summarize_skipsInvalidReadings()
+{
+    // 0 (absent), negative, >200 (bogus) and NaN readings must not skew the average,
+    // and maxIndex must still point into the original (unfiltered) list.
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const ThermalSummary s = ThermalInfo::summarize({0.0, 50.0, -5.0, 250.0, nan, 70.0});
+    QCOMPARE(s.count, 2);
+    QCOMPARE(s.average, 60.0);
+    QCOMPARE(s.max, 70.0);
+    QCOMPARE(s.maxIndex, 5);
+}
+
+void TestThermalInfo::summarize_emptyAndAllInvalid()
+{
+    const ThermalSummary empty = ThermalInfo::summarize({});
+    QVERIFY(!empty.isValid());
+    QCOMPARE(empty.maxIndex, -1);
+
+    const ThermalSummary bad = ThermalInfo::summarize({0.0, -1.0, 999.0});
+    QVERIFY(!bad.isValid());
+    QCOMPARE(bad.count, 0);
+    QCOMPARE(bad.maxIndex, -1);
 }
 
 QTEST_MAIN(TestThermalInfo)

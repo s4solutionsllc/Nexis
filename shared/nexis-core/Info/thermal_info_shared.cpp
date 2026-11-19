@@ -5,9 +5,30 @@
 #include <QDir>
 #include <QHash>
 #include <QRegularExpression>
+#include <cmath>
 
 namespace {
 constexpr double MAX_SANE_TEMP = 200.0;
+}
+
+ThermalSummary ThermalInfo::summarize(const QList<double> &readings)
+{
+    ThermalSummary out;
+    double sum = 0.0;
+    for (int i = 0; i < readings.size(); ++i) {
+        const double t = readings.at(i);
+        if (!std::isfinite(t) || t <= 0.0 || t > MAX_SANE_TEMP)
+            continue;
+        sum += t;
+        if (out.count == 0 || t > out.max) {
+            out.max = t;
+            out.maxIndex = i;
+        }
+        ++out.count;
+    }
+    if (out.count > 0)
+        out.average = sum / out.count;
+    return out;
 }
 
 double ThermalInfo::parseSysfsTemperature(const QString &millidegStr)
