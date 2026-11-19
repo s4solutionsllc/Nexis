@@ -444,7 +444,7 @@ RemoveResult removeWorktree(const Worktree &wt, const RemoveOptions &options)
         if (!QFileInfo(wt.path).isDir() || !stillListed(wt))
             return refuse(tr("The repository no longer lists this worktree."));
         const QString canonical = QFileInfo(wt.path).canonicalFilePath();
-        if (canonical.isEmpty() || !LifecycleDenyList::isSafe(canonical))
+        if (canonical.isEmpty() || !LifecycleDenyList::isSafe(canonical, options.homeRoot))
             return refuse(tr("This location is protected and cannot be removed."));
         if (probe(options.inUse, wt.path))
             return refuse(tr("A process is running inside this folder."));
@@ -463,7 +463,7 @@ RemoveResult removeWorktree(const Worktree &wt, const RemoveOptions &options)
         if (!lf.linked || lf.registered)
             return refuse(tr("This folder is no longer an orphaned worktree."));
         const QString canonical = QFileInfo(wt.path).canonicalFilePath();
-        if (canonical.isEmpty() || !LifecycleDenyList::isSafe(canonical))
+        if (canonical.isEmpty() || !LifecycleDenyList::isSafe(canonical, options.homeRoot))
             return refuse(tr("This location is protected and cannot be removed."));
         if (probe(options.inUse, wt.path))
             return refuse(tr("A process is running inside this folder."));

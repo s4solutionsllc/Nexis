@@ -81,6 +81,9 @@ struct NEXISCORESHARED_EXPORT RemoveOptions {
     QStringList appArguments;
     bool appArgumentsSet = false;
     std::function<bool(const QString &)> inUse;  // as in ScanOptions
+    // Folder the deny-list confines removal to. Defaults to the real home;
+    // tests set it because macOS does not resolve a redirected $HOME.
+    QString homeRoot;
     // Defaults to QFile::moveToTrash. Tests substitute a fake Trash.
     std::function<bool(const QString &path, QString *trashDestination)> moveToTrash;
 };

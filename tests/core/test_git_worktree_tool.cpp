@@ -66,9 +66,10 @@ void writeFile(const QString &path, const QByteArray &data = "x")
     f.write(data);
 }
 
-RemoveOptions interactive()
+RemoveOptions interactive(const QString &home)
 {
     RemoveOptions o;
+    o.homeRoot = home;
     o.appArguments = {QStringLiteral("nexis")};
     o.appArgumentsSet = true;
     o.inUse = [](const QString &) { return false; };
@@ -175,7 +176,7 @@ void TestGitWorktreeTool::missingFolder_isListedAndPrunedWithGit()
     QVERIFY(!row->folderExists);
     QVERIFY(blockReason(*row).isEmpty());
 
-    const RemoveResult r = removeWorktree(*row, interactive());
+    const RemoveResult r = removeWorktree(*row, interactive(mHome));
     QVERIFY2(r.ok, qPrintable(r.message));
     QVERIFY(!gitOut(mRepo, {"worktree", "list", "--porcelain"}).contains(wt));
     QVERIFY(gitOut(mRepo, {"branch", "--list", "gone"}).contains("gone"));
@@ -208,7 +209,7 @@ void TestGitWorktreeTool::missingFolder_removalLeavesOtherRecordsAlone()
     const QList<Worktree> rows = scan(options());
     const Worktree *one = find(rows, first);
     QVERIFY(one && find(rows, second));
-    QVERIFY(removeWorktree(*one, interactive()).ok);
+    QVERIFY(removeWorktree(*one, interactive(mHome)).ok);
 
     const QString listing = gitOut(mRepo, {"worktree", "list", "--porcelain"});
     QVERIFY(!listing.contains(first));
@@ -234,7 +235,7 @@ void TestGitWorktreeTool::unregistered_isListedAndTrashedWithAuditEntry()
     const int before = LifecycleAuditLog::readAll().size();
     const QString trash = mHome + QStringLiteral("/.local/share/Trash/files");
     QDir().mkpath(trash);
-    RemoveOptions ro = interactive();
+    RemoveOptions ro = interactive(mHome);
     ro.moveToTrash = [&](const QString &path, QString *dest) {
         *dest = trash + QLatin1Char('/') + QFileInfo(path).fileName();
         return QDir().rename(path, *dest);
@@ -274,7 +275,7 @@ void TestGitWorktreeTool::idle_cleanIsRemovedWithGit()
     QCOMPARE(row->unpushedCount, -1);
     QVERIFY(blockReason(*row).isEmpty());
 
-    const RemoveResult r = removeWorktree(*row, interactive());
+    const RemoveResult r = removeWorktree(*row, interactive(mHome));
     QVERIFY2(r.ok, qPrintable(r.message));
     QVERIFY(!QFileInfo::exists(wt));
     QVERIFY(!gitOut(mRepo, {"worktree", "list", "--porcelain"}).contains(wt));
@@ -301,7 +302,7 @@ void TestGitWorktreeTool::idle_dirtyIsBlockedAndRefused()
     QCOMPARE(row->dirtyCount, 1);
     QVERIFY(!blockReason(*row).isEmpty());
 
-    const RemoveResult r = removeWorktree(*row, interactive());
+    const RemoveResult r = removeWorktree(*row, interactive(mHome));
     QVERIFY(!r.ok);
     QVERIFY(QFileInfo::exists(wt + QStringLiteral("/wip.txt")));
 }
@@ -328,7 +329,7 @@ void TestGitWorktreeTool::idle_unpushedCommitsAreCountedButDoNotBlock()
     QCOMPARE(row->dirtyCount, 0);
     QVERIFY(blockReason(*row).isEmpty());
 
-    QVERIFY(removeWorktree(*row, interactive()).ok);
+    QVERIFY(removeWorktree(*row, interactive(mHome)).ok);
     QVERIFY(gitOut(mRepo, {"branch", "--list", "ahead"}).contains("ahead"));
 }
 
@@ -365,7 +366,7 @@ void TestGitWorktreeTool::inUse_blocksListingAndRemoval()
     // The probe runs again at removal time, whatever the scan said.
     Worktree stale = *row;
     stale.inUse = false;
-    RemoveOptions ro = interactive();
+    RemoveOptions ro = interactive(mHome);
     ro.inUse = [&](const QString &p) { return p == wt; };
     QVERIFY(!removeWorktree(stale, ro).ok);
     QVERIFY(QFileInfo::exists(wt));
@@ -382,7 +383,7 @@ void TestGitWorktreeTool::headlessRun_refusesRemoval()
 
     for (const QString &flag : {QStringLiteral("--clean"), QStringLiteral("--report"),
                                  QStringLiteral("--check-threshold")}) {
-        RemoveOptions ro = interactive();
+        RemoveOptions ro = interactive(mHome);
         ro.appArguments = {QStringLiteral("nexis"), flag};
         QVERIFY2(!removeWorktree(*row, ro).ok, qPrintable(flag));
     }
