@@ -2,6 +2,8 @@
 #include "ui_settings_page.h"
 #include "stacer_import_dialog.h"
 #include "Utils/stacer_importer.h"
+#include "Utils/settings_bundle.h"
+#include "Managers/cleaning_profiles_service.h"
 #include "Managers/info_manager.h"
 #include "Managers/schedule_manager.h"
 #include "Managers/cleaner_service.h"
@@ -12,6 +14,7 @@
 #include "utilities.h"
 #include <QApplication>
 #include <QFileDialog>
+#include <QSaveFile>
 #include <QMessageBox>
 #include <QProcess>
 #include <QRegularExpression>
@@ -307,6 +310,8 @@ void SettingsPage::init()
 
     // migration
     connect(ui->btnImportFromStacer, &QPushButton::clicked, this, &SettingsPage::onImportFromStacer);
+    connect(ui->btnExportSettings, &QPushButton::clicked, this, &SettingsPage::onExportSettings);
+    connect(ui->btnImportSettings, &QPushButton::clicked, this, &SettingsPage::onImportSettings);
 
     // scheduled cleaning
     initScheduledCleaning();
@@ -1010,6 +1015,87 @@ void SettingsPage::buildSectionCards()
     ui->gridTools->setContentsMargins(14, 0, 14, 14);
     ui->layoutScheduledCleaning->setContentsMargins(14, 0, 14, 14);
     ui->layoutMigration->setContentsMargins(14, 0, 14, 14);
+}
+
+void SettingsPage::onExportSettings()
+{
+    const QString path = QFileDialog::getSaveFileName(
+        this, tr("Export Nexis Settings"),
+        QDir::homePath() + "/nexis-settings.json",
+        tr("Nexis settings (*.json)"));
+    if (path.isEmpty())
+        return;
+
+    const QByteArray bundle = SettingsBundle::exportBundle(
+        mSettingManager, CleaningProfilesService::defaultUserProfilesDir(),
+        qApp->applicationVersion());
+
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly) || file.write(bundle) != bundle.size() || !file.commit()) {
+        QMessageBox::warning(this, tr("Export Nexis Settings"),
+                             tr("Could not write %1: %2").arg(path, file.errorString()));
+        return;
+    }
+    QMessageBox::information(
+        this, tr("Export Nexis Settings"),
+        tr("Settings exported to %1.\n\nWindow layout, sensor choices, usage history, "
+           "schedules and other machine-specific data are not included.").arg(path));
+}
+
+void SettingsPage::onImportSettings()
+{
+    const QString path = QFileDialog::getOpenFileName(
+        this, tr("Import Nexis Settings"), QDir::homePath(),
+        tr("Nexis settings (*.json);;All files (*)"));
+    if (path.isEmpty())
+        return;
+
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        QMessageBox::warning(this, tr("Import Nexis Settings"),
+                             tr("Could not read %1: %2").arg(path, file.errorString()));
+        return;
+    }
+    const QByteArray data = file.readAll();
+    const QString profilesDir = CleaningProfilesService::defaultUserProfilesDir();
+
+    const SettingsBundleReport preview =
+        SettingsBundle::importBundle(data, mSettingManager, profilesDir, true);
+    if (!preview.ok) {
+        QMessageBox::warning(this, tr("Import Nexis Settings"), preview.error);
+        return;
+    }
+
+    QStringList lines;
+    lines << tr("%1 setting(s) and %2 cleaning profile(s) will be imported.")
+                 .arg(preview.applied.size()).arg(preview.profilesApplied.size());
+    if (!preview.unknownKeys.isEmpty())
+        lines << tr("Ignored unknown keys: %1").arg(preview.unknownKeys.join(", "));
+    if (!preview.invalidKeys.isEmpty())
+        lines << tr("Skipped invalid values:\n  %1").arg(preview.invalidKeys.join("\n  "));
+    if (!preview.profilesRejected.isEmpty())
+        lines << tr("Skipped invalid profiles:\n  %1").arg(preview.profilesRejected.join("\n  "));
+    lines << tr("Cleaner exclusions and cookie keep-domains are merged with yours; "
+                "other settings are replaced.");
+
+    if (preview.applied.isEmpty() && preview.profilesApplied.isEmpty()) {
+        QMessageBox::information(this, tr("Import Nexis Settings"),
+                                 tr("Nothing to import.\n\n%1").arg(lines.mid(1).join("\n\n")));
+        return;
+    }
+    if (QMessageBox::question(this, tr("Import Nexis Settings"), lines.join("\n\n"),
+                              QMessageBox::Ok | QMessageBox::Cancel) != QMessageBox::Ok)
+        return;
+
+    const SettingsBundleReport result =
+        SettingsBundle::importBundle(data, mSettingManager, profilesDir, false);
+    QMessageBox::information(
+        this, tr("Import Nexis Settings"),
+        tr("Imported %1 setting(s) and %2 cleaning profile(s). Some changes (language, "
+           "theme, start page) take effect after restarting Nexis.")
+            .arg(result.applied.size()).arg(result.profilesApplied.size()));
+
+    init();
 }
 
 void SettingsPage::onImportFromStacer()

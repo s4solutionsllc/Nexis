@@ -826,3 +826,18 @@ bool SettingManager::getResourcesHistoryModeActive() const
 {
     return mSettings->value(SettingKeys::ResourcesHistoryModeActive, false).toBool();
 }
+
+bool SettingManager::hasValue(const QString &key) const
+{
+    return mSettings->contains(key);
+}
+
+QVariant SettingManager::rawValue(const QString &key) const
+{
+    return mSettings->value(key);
+}
+
+void SettingManager::setRawValue(const QString &key, const QVariant &value)
+{
+    mSettings->setValue(key, value);
+}

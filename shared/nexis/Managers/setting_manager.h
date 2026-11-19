@@ -363,6 +363,12 @@ public:
     void setResourcesHistoryModeActive(bool value);
     bool getResourcesHistoryModeActive() const;
 
+    // SSO-27150 — key-addressed access for SettingsBundle (settings import /
+    // export). Only keys on its allow-list are ever passed through here.
+    bool hasValue(const QString &key) const;
+    QVariant rawValue(const QString &key) const;
+    void setRawValue(const QString &key, const QVariant &value);
+
 private:
     static SettingManager *instance;
     SettingManager();

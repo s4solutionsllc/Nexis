@@ -76,6 +76,8 @@ private slots:
     void updateScheduleSummary();
     void refreshThemeColors();
     void onImportFromStacer();
+    void onExportSettings();
+    void onImportSettings();
 
 private:
     Ui::SettingsPage *ui;

@@ -1092,6 +1092,10 @@ Forcing INI format on both platforms keeps the on-disk layout identical for both
 **Cleaning:** Schedules (JSON), CleaningNotificationsEnabled, ThresholdAlertEnabled, ThresholdGB
 **Health:** BatteryAlertLastHealth, BatteryAlertSnoozedUntil, DiskHealthAlertEnabled
 
+### Settings Export / Import (SSO-27150)
+
+Settings → Migration → **Export settings…** writes a versioned JSON bundle (`{"format":"nexis-settings","version":1,…}`) holding an allow-listed subset of `settings.ini` (appearance, behavior, alert thresholds, cleaner exclusions and cookie keep-domains, opt-in toggles) plus the user's cleaning profiles. **Import settings…** validates the file first and shows a preview — settings and profiles to apply, unknown keys, invalid values — before anything is written; valid entries apply even when others are skipped, and a bundle from a newer format version is refused whole. Exclusions and cookie keep-domains merge into the existing lists, other keys replace. Window geometry, sensor/disk bindings, usage history, trusted-binder prefixes, WoL hosts, schedules and auto-clean targets are never exported (nothing secret or machine-specific travels). Logic lives in `shared/nexis/Utils/settings_bundle.{h,cpp}`.
+
 ### Scheduled Cleaning Persistence
 
 Cleaning schedules are stored as JSON in QSettings. Each schedule includes: ID, name, enabled flag, frequency (Daily/EveryNDays/Weekly/Monthly), timing, selected categories, minimum file age, and execution history.

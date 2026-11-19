@@ -816,6 +816,18 @@ add_nexis_test(NAME CleaningProfilesTests
     nexis-gui Qt6::Widgets
 )
 
+# SSO-27150: settings export/import bundle — versioning, validation report,
+# round trip. Lives in the GUI library (reads CleaningProfilesService).
+add_nexis_test(NAME SettingsBundleTests
+  SOURCES
+    managers/test_settings_bundle.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+    "${GUI_SHARED_DIR}/Managers"
+  LIBS
+    nexis-gui Qt6::Widgets
+)
+
 # SSO-3380 / WI-18: DataRefreshService::isCpuPayloadEmittable() guards
 # the cpuUpdated emit against an empty producer payload. Links against
 # nexis-gui because the predicate lives in the GUI-side service.
