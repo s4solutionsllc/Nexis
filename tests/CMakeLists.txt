@@ -1294,6 +1294,13 @@ add_nexis_test(NAME AiModelsDialogTests
   INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/SystemCleaner"
   LIBS nexis-gui Qt6::Widgets)
 
+# SSO-27098: developer-project cleaner dialog — nothing pre-selected, recent
+# projects hidden, Trash disabled until a project is ticked.
+add_nexis_test(NAME DevArtifactsDialogTests
+  SOURCES managers/test_dev_artifacts_dialog.cpp
+  INCLUDES "${GUI_SHARED_DIR}" "${GUI_SHARED_DIR}/Pages/DiskTools"
+  LIBS nexis-gui Qt6::Widgets)
+
 add_nexis_test(NAME BrowserSqliteCleanerTests
   SOURCES
     managers/test_browser_sqlite_cleaner.cpp

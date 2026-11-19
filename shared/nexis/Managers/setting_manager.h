@@ -45,6 +45,9 @@ namespace SettingKeys {
     const QString CleanerExclusions("CleanerExclusions");
     const QString CleanerCookieKeepDomains("CleanerCookieKeepDomains");
 
+    // SSO-27098: folders the stale developer-project cleaner searches.
+    const QString DevArtifactRoots("DevArtifactRoots");
+
     // FR-112
     const QString PreCleanSnapshotEnabled("PreCleanSnapshotEnabled");
 
@@ -250,6 +253,10 @@ public:
     // SSO-25782: browser deep-clean cookie keep-list (bare host names).
     void setCleanerCookieKeepDomains(const QStringList &domains);
     QStringList getCleanerCookieKeepDomains() const;
+
+    // SSO-27098: user-chosen search roots for the dev-project artifact cleaner.
+    void setDevArtifactRoots(const QStringList &roots);
+    QStringList getDevArtifactRoots() const;
 
     // FR-112
     void setPreCleanSnapshotEnabled(bool value);
