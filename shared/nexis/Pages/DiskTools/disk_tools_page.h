@@ -51,6 +51,10 @@ private slots:
     void onDupProgress(int stage, int current, int total, const QString &message);
     void onDupScanFinished(const QList<DuplicateGroup> &results);
     void onDupCancelled();
+    void onDupPauseClicked();
+    void onDupPausedChanged(bool paused);
+    void onDupReplaceWithLinks();
+    void onLinkReplaceFinished(const QList<LinkReplaceResult> &results);
     void onServiceScanCancelled();
     void onLargestScan();
     void onLargestScanFinished(const QList<LargeFileEntry> &results);
@@ -76,7 +80,7 @@ private:
         QLabel *lblSelection = nullptr;
         int sizeColumn = -1;
     };
-    enum class ServiceScan { None, Duplicates, Largest, EmptyFolders };
+    enum class ServiceScan { None, Duplicates, Largest, EmptyFolders, LinkReplace };
 
     void init();
     QListWidget *buildDirPicker(QVBoxLayout *pageLayout);
@@ -90,6 +94,7 @@ private:
     void updateFlatSelection(FlatMode &mode, bool folders);
     void buildLargeOldPage();
     void buildDuplicatePage();
+    void setDupRunning(bool running);
     void refreshThemeColors();
     void applyLargeOldFilterLayout(bool compact);
     void applyModeBarLayout(bool stacked);
@@ -150,12 +155,20 @@ private:
     QComboBox *mCbSimilarity;
     QPushButton *mBtnDupScan;
     QPushButton *mBtnDupCancel;
+    // SSO-27146: parks the running scan/link replacement; doubles as Resume.
+    QPushButton *mBtnDupPause = nullptr;
+    QPushButton *mBtnDupLink = nullptr;
     QTreeWidget *mTreeDuplicates;
     QWidget *mEmptyStateDup = nullptr;
     QProgressBar *mDupProgress;
     QLabel *mLblDupStatus;
     QLabel *mLblDupSelection;
     QPushButton *mBtnDupTrash;
+    bool mDupRunning = false;
+    // True when the current result set is duplicate folders, so the labels
+    // say "folders" rather than "files".
+    bool mDupShowingFolders = false;
+    QHash<QString, quint64> mLinkReplaceSizes;
 
     // State
     QAtomicInt mLargeOldCancelled{0};

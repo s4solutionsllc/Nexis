@@ -12,6 +12,12 @@ namespace SettingKeys {
     const QString StartPage("StartPage");
     const QString CPUAlertPercent("CPUAlertPercent");
     const QString MemoryAlertPercent("MemoryAlertPercent");
+    // SSO-27148: sustained-threshold alerts — seconds a metric must stay above
+    // its threshold before the tray warning fires (0 = immediately).
+    const QString CPUAlertSeconds("CPUAlertSeconds");
+    const QString MemoryAlertSeconds("MemoryAlertSeconds");
+    const QString TempAlertCelsius("TempAlertCelsius");
+    const QString TempAlertSeconds("TempAlertSeconds");
     const QString DiskAlertPercent("DiskAlertPercent");
     const QString AppQuitDialogDontAsk("AppQuitDialogDontAsk");
     const QString AppQuitDialogChoice("AppQuitDialogChoice");
@@ -147,6 +153,14 @@ public:
 
     void setMemoryAlertPercent(const int value);
     int getMemoryAlertPercent() const;
+    void setCpuAlertSeconds(const int value);
+    int getCpuAlertSeconds() const;
+    void setMemoryAlertSeconds(const int value);
+    int getMemoryAlertSeconds() const;
+    void setTempAlertCelsius(const int value);
+    int getTempAlertCelsius() const;
+    void setTempAlertSeconds(const int value);
+    int getTempAlertSeconds() const;
 
     void setDiskAlertPercent(const int value);
     int getDiskAlertPercent() const;

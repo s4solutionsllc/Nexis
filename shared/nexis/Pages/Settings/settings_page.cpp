@@ -233,6 +233,15 @@ void SettingsPage::init()
     ui->spinCpuPercent->setValue(mSettingManager->getCpuAlertPercent());
     ui->spinMemoryPercent->setValue(mSettingManager->getMemoryAlertPercent());
     ui->spinDiskPercent->setValue(mSettingManager->getDiskAlertPercent());
+    ui->spinCpuSeconds->setValue(mSettingManager->getCpuAlertSeconds());
+    ui->spinMemorySeconds->setValue(mSettingManager->getMemoryAlertSeconds());
+    ui->spinTempCelsius->setValue(mSettingManager->getTempAlertCelsius());
+    ui->spinTempSeconds->setValue(mSettingManager->getTempAlertSeconds());
+    if (!mInfoManager->hasThermalSensors()) {
+        ui->lblTempCelsius->hide();
+        ui->spinTempCelsius->hide();
+        ui->spinTempSeconds->hide();
+    }
 
     // battery health alert (hide row if no battery)
     ui->spinBatteryHealthPercent->setValue(mSettingManager->getBatteryAlertPercent());
@@ -383,11 +392,37 @@ void SettingsPage::cmbStartPageChanged(const int index)
 void SettingsPage::on_spinCpuPercent_valueChanged(int value)
 {
     mSettingManager->setCpuAlertPercent(value);
+    emit SignalMapper::ins()->sigResourceAlertsChanged();
 }
 
 void SettingsPage::on_spinMemoryPercent_valueChanged(int value)
 {
     mSettingManager->setMemoryAlertPercent(value);
+    emit SignalMapper::ins()->sigResourceAlertsChanged();
+}
+
+void SettingsPage::on_spinCpuSeconds_valueChanged(int value)
+{
+    mSettingManager->setCpuAlertSeconds(value);
+    emit SignalMapper::ins()->sigResourceAlertsChanged();
+}
+
+void SettingsPage::on_spinMemorySeconds_valueChanged(int value)
+{
+    mSettingManager->setMemoryAlertSeconds(value);
+    emit SignalMapper::ins()->sigResourceAlertsChanged();
+}
+
+void SettingsPage::on_spinTempCelsius_valueChanged(int value)
+{
+    mSettingManager->setTempAlertCelsius(value);
+    emit SignalMapper::ins()->sigResourceAlertsChanged();
+}
+
+void SettingsPage::on_spinTempSeconds_valueChanged(int value)
+{
+    mSettingManager->setTempAlertSeconds(value);
+    emit SignalMapper::ins()->sigResourceAlertsChanged();
 }
 
 void SettingsPage::on_spinDiskPercent_valueChanged(int value)

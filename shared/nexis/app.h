@@ -58,6 +58,7 @@ struct PageSlot {
 #else
 #include "Pages/AptSourceManager/apt_source_manager_page.h"
 #endif
+#include "Managers/resource_alert_monitor.h"
 #include "Managers/tray_health_monitor.h"
 #include "Pages/GnomeSettings/gnome_settings_page.h"
 #include "Pages/Search/search_page.h"
@@ -174,6 +175,7 @@ private:
     // platforms now that the macOS-only NSStatusItem (MenuBarMonitor) has
     // been retired in favor of one QSystemTrayIcon surface.
     TrayHealthMonitor *mTrayHealthMonitor = nullptr;
+    ResourceAlertMonitor *mResourceAlertMonitor = nullptr;
     QAction *mTrayHealthAction = nullptr;
     QAction *mTrayCleanAction = nullptr;
     QAction *mTrayHealthSeparator = nullptr;

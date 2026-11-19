@@ -17,6 +17,10 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 
+#include <atomic>
+
+#include <unistd.h>
+
 #include "Services/duplicate_finder_service.h"
 #include "Services/image_hash.h"
 #include "Managers/cleaner_service.h"
@@ -83,6 +87,34 @@ protected:
         return true;
     }
 };
+
+// SSO-27146: same as the synchronous test service but on a real worker
+// thread, for the pause/resume tests — pausing parks the calling thread, so
+// it has to be a different one from the test body.
+class AsyncDuplicateFinderService : public TestableDuplicateFinderService
+{
+protected:
+    bool runsAsynchronously() const override { return true; }
+};
+
+// A fresh directory on a different filesystem from `reference` (the caller
+// removes it), or an empty string when this machine has none to offer
+// (single-filesystem CI).
+QString makeForeignFilesystemDir(const QString &reference)
+{
+    const QStringList roots = {QStringLiteral("/dev/shm"), QStringLiteral("/var/tmp"),
+                               QStringLiteral("/run/user"), QDir::homePath()};
+    for (const QString &root : roots) {
+        if (!QFileInfo(root).isWritable()
+            || DuplicateFinderService::onSameFilesystem(root, reference))
+            continue;
+        const QString dir = QStringLiteral("%1/nexis-dup-test-%2")
+            .arg(root).arg(QCoreApplication::applicationPid());
+        if (QDir().mkpath(dir))
+            return dir;
+    }
+    return {};
+}
 
 DuplicateGroup makeGroup(quint64 size, const QStringList &paths)
 {
@@ -162,6 +194,33 @@ private slots:
     // --- SSO-26638: never-delete-last-copy applies to Similar groups too ---
     void lastCopy_similarGroup_trashFilesRefusesToEmptyIt();
     void lastCopy_similarGroup_wouldRemoveLastCopy_detectsViolation();
+
+    // --- SSO-27146: duplicate folders ---
+    void folders_identicalFolders_grouped();
+    void folders_differentContentNameOrLayout_notGrouped();
+    void folders_nestedMatch_reportsOutermostOnly();
+    void folders_excludedEntryInside_makesFolderIneligible();
+    void folders_minSize_comparesTotalFolderSize();
+    void folders_trash_honorsLastCopyAndInnerExclusions();
+
+    // --- SSO-27146: replace with links ---
+    void links_sameFilesystemCheck();
+    void links_isSameFile_detectsHardlinks();
+    void links_plan_keepsFirstUnselectedMember();
+    void links_plan_allSelected_keepsSmallestPath();
+    void links_plan_skipsAlreadyLinkedExcludedAndForeign();
+    void links_plan_refusesCrossFilesystem();
+    void links_apply_hardlink_replacesAndKeepsContent();
+    void links_apply_symlink_isRelative();
+    void links_apply_changedSinceScan_leavesDuplicateUntouched();
+    void links_apply_crossFilesystem_refused();
+    void links_replaceWithLinks_reportsEveryAttempt();
+    void links_scan_collapsesHardlinkedNames();
+
+    // --- SSO-27146: pause / resume ---
+    void pause_parksWorkerUntilResume();
+    void pause_cancelReleasesPausedWorker();
+    void pause_whileIdle_doesNotAffectNextScan();
 };
 
 void TestDuplicateFinder::initTestCase()
@@ -840,6 +899,472 @@ void TestDuplicateFinder::lastCopy_similarGroup_wouldRemoveLastCopy_detectsViola
     g.kind = DuplicateGroup::Kind::Similar;
     QVERIFY(DuplicateFinderService::wouldRemoveLastCopy({"/g/a", "/g/b"}, {g}));
     QVERIFY(!DuplicateFinderService::wouldRemoveLastCopy({"/g/a"}, {g}));
+}
+
+// ─── SSO-27146: duplicate folders ───────────────────────────────────────────
+
+void TestDuplicateFinder::folders_identicalFolders_grouped()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    for (const char *side : {"a", "b"}) {
+        writeFile(QStringLiteral("%1/%2/one.txt").arg(tmp.path(), side), "alpha");
+        writeFile(QStringLiteral("%1/%2/sub/two.txt").arg(tmp.path(), side), "bravo bravo");
+    }
+    writeFile(tmp.path() + "/c/one.txt", "alpha"); // same file, but no sub/
+
+    TestableDuplicateFinderService svc;
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+    svc.scanDuplicateDirectories({tmp.path()}, 0);
+    QCOMPARE(finished.count(), 1);
+
+    const auto groups = finished.first().first().value<QList<DuplicateGroup>>();
+    QCOMPARE(groups.size(), 1);
+    QCOMPARE(groups[0].kind, DuplicateGroup::Kind::Directory);
+    QCOMPARE(groups[0].files.size(), 2);
+    QCOMPARE(groups[0].files[0].absoluteFilePath(), QFileInfo(tmp.path() + "/a").absoluteFilePath());
+    QCOMPARE(groups[0].files[1].absoluteFilePath(), QFileInfo(tmp.path() + "/b").absoluteFilePath());
+    QCOMPARE(groups[0].fileSize, quint64(5 + 11));
+}
+
+void TestDuplicateFinder::folders_differentContentNameOrLayout_notGrouped()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    writeFile(tmp.path() + "/base/f.txt", "same-size-1");
+    writeFile(tmp.path() + "/content/f.txt", "same-size-2"); // same size, other bytes
+    writeFile(tmp.path() + "/renamed/g.txt", "same-size-1"); // same bytes, other name
+    // same bytes, other layout (g.txt sits in a sub-folder on one side only)
+    writeFile(tmp.path() + "/layoutA/f.txt", "one-1");
+    writeFile(tmp.path() + "/layoutA/sub/g.txt", "two-2");
+    writeFile(tmp.path() + "/layoutB/f.txt", "one-1");
+    writeFile(tmp.path() + "/layoutB/g.txt", "two-2");
+
+    TestableDuplicateFinderService svc;
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+    svc.scanDuplicateDirectories({tmp.path()}, 0);
+    QCOMPARE(finished.count(), 1);
+    QVERIFY(finished.first().first().value<QList<DuplicateGroup>>().isEmpty());
+}
+
+void TestDuplicateFinder::folders_nestedMatch_reportsOutermostOnly()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    for (const char *side : {"a", "b"}) {
+        writeFile(QStringLiteral("%1/%2/x/deep.txt").arg(tmp.path(), side), "deep");
+        writeFile(QStringLiteral("%1/%2/top.txt").arg(tmp.path(), side), "top");
+    }
+
+    TestableDuplicateFinderService svc;
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+    svc.scanDuplicateDirectories({tmp.path()}, 0);
+
+    const auto groups = finished.first().first().value<QList<DuplicateGroup>>();
+    QCOMPARE(groups.size(), 1); // a ≅ b; a/x ≅ b/x is implied, not listed again
+    QVERIFY(groups[0].files[0].absoluteFilePath().endsWith("/a"));
+}
+
+void TestDuplicateFinder::folders_excludedEntryInside_makesFolderIneligible()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    for (const char *side : {"a", "b"}) {
+        writeFile(QStringLiteral("%1/%2/keep.txt").arg(tmp.path(), side), "same");
+        writeFile(QStringLiteral("%1/%2/secret.txt").arg(tmp.path(), side), "same-secret");
+    }
+
+    TestableDuplicateFinderService svc;
+    svc.injectedExclusions = entries({{Entry::File, tmp.path() + "/a/secret.txt"}});
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+    svc.scanDuplicateDirectories({tmp.path()}, 0);
+
+    // a holds a protected file, so it can't be offered for removal; with a
+    // out, b has no partner.
+    QVERIFY(finished.first().first().value<QList<DuplicateGroup>>().isEmpty());
+}
+
+void TestDuplicateFinder::folders_minSize_comparesTotalFolderSize()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    for (const char *side : {"a", "b"})
+        writeFile(QStringLiteral("%1/%2/f.bin").arg(tmp.path(), side), QByteArray(100, 'z'));
+
+    TestableDuplicateFinderService svc;
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+    svc.scanDuplicateDirectories({tmp.path()}, 101);
+    QVERIFY(finished.first().first().value<QList<DuplicateGroup>>().isEmpty());
+
+    svc.scanDuplicateDirectories({tmp.path()}, 100);
+    QCOMPARE(finished.count(), 2);
+    QCOMPARE(finished.last().first().value<QList<DuplicateGroup>>().size(), 1);
+}
+
+void TestDuplicateFinder::folders_trash_honorsLastCopyAndInnerExclusions()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = tmp.path() + "/a";
+    const QString b = tmp.path() + "/b";
+    writeFile(a + "/f.txt", "x");
+    writeFile(b + "/f.txt", "x");
+    auto group = makeGroup(1, {a, b});
+    group.kind = DuplicateGroup::Kind::Directory;
+
+    TestableDuplicateFinderService svc;
+    // Both selected: the last-copy rule keeps the smallest path.
+    QCOMPARE(svc.trashFiles({a, b}, {group}), QStringList{b});
+
+    // A protected entry inside a folder keeps the whole folder off the list.
+    svc.trashed.clear();
+    svc.injectedExclusions = entries({{Entry::File, a + "/f.txt"}});
+    QVERIFY(svc.trashFiles({a}, {group}).isEmpty());
+}
+
+// ─── SSO-27146: replace with links ──────────────────────────────────────────
+
+void TestDuplicateFinder::links_sameFilesystemCheck()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = writeFile(tmp.path() + "/a.bin", "a");
+    const QString b = writeFile(tmp.path() + "/sub/b.bin", "b");
+
+    QVERIFY(DuplicateFinderService::onSameFilesystem(a, b));
+    QVERIFY(DuplicateFinderService::onSameFilesystem(a, tmp.path()));
+    QVERIFY(!DuplicateFinderService::onSameFilesystem(a, tmp.path() + "/missing"));
+    QVERIFY(!DuplicateFinderService::onSameFilesystem(tmp.path() + "/missing", a));
+
+    const QString procfs = QStringLiteral("/proc/self");
+    const QString foreign = QFileInfo(procfs).exists() ? procfs : QStringLiteral("/dev");
+    QVERIFY2(!DuplicateFinderService::onSameFilesystem(a, foreign),
+             "a pseudo-filesystem mount is a different st_dev from the temp dir");
+}
+
+void TestDuplicateFinder::links_isSameFile_detectsHardlinks()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = writeFile(tmp.path() + "/a.bin", "same bytes");
+    const QString copy = writeFile(tmp.path() + "/copy.bin", "same bytes");
+    const QString hard = tmp.path() + "/hard.bin";
+    QVERIFY(QFile::link(a, tmp.path() + "/sym.bin")); // a symlink, not a hardlink
+    QCOMPARE(::link(QFile::encodeName(a).constData(), QFile::encodeName(hard).constData()), 0);
+
+    QVERIFY(DuplicateFinderService::isSameFile(a, hard));
+    QVERIFY(!DuplicateFinderService::isSameFile(a, copy));
+    QVERIFY(!DuplicateFinderService::isSameFile(a, tmp.path() + "/missing"));
+}
+
+void TestDuplicateFinder::links_plan_keepsFirstUnselectedMember()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = writeFile(tmp.path() + "/a.bin", "dup");
+    const QString b = writeFile(tmp.path() + "/b.bin", "dup");
+    const QString c = writeFile(tmp.path() + "/c.bin", "dup");
+    const auto group = makeGroup(3, {a, b, c});
+
+    const auto plan = DuplicateFinderService::buildLinkReplacePlan(
+        {b, c}, {group}, LinkType::Hard, {});
+    QCOMPARE(plan.size(), 2);
+    for (const auto &e : plan) {
+        QCOMPARE(e.keeperPath, a);
+        QCOMPARE(e.status, LinkReplaceEntry::Status::Ready);
+        QCOMPARE(e.size, quint64(3));
+    }
+}
+
+void TestDuplicateFinder::links_plan_allSelected_keepsSmallestPath()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = writeFile(tmp.path() + "/a.bin", "dup");
+    const QString b = writeFile(tmp.path() + "/b.bin", "dup");
+    const auto group = makeGroup(3, {b, a});
+
+    const auto plan = DuplicateFinderService::buildLinkReplacePlan(
+        {a, b}, {group}, LinkType::Symbolic, {});
+    QCOMPARE(plan.size(), 2);
+    int kept = 0, ready = 0;
+    for (const auto &e : plan) {
+        QCOMPARE(e.keeperPath, a);
+        if (e.status == LinkReplaceEntry::Status::KeptAsOriginal) {
+            QCOMPARE(e.duplicatePath, a);
+            ++kept;
+        } else if (e.isReady()) {
+            QCOMPARE(e.duplicatePath, b);
+            ++ready;
+        }
+    }
+    QCOMPARE(kept, 1);
+    QCOMPARE(ready, 1);
+}
+
+void TestDuplicateFinder::links_plan_skipsAlreadyLinkedExcludedAndForeign()
+{
+    using Status = LinkReplaceEntry::Status;
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString keep = writeFile(tmp.path() + "/keep.bin", "dup");
+    const QString linked = tmp.path() + "/linked.bin";
+    QCOMPARE(::link(QFile::encodeName(keep).constData(), QFile::encodeName(linked).constData()), 0);
+    const QString excluded = writeFile(tmp.path() + "/excluded.bin", "dup");
+    const QString gone = tmp.path() + "/gone.bin";
+    const QString outsider = writeFile(tmp.path() + "/outsider.bin", "dup");
+    const auto group = makeGroup(3, {keep, linked, excluded, gone});
+
+    const auto plan = DuplicateFinderService::buildLinkReplacePlan(
+        {linked, excluded, gone, outsider}, {group}, LinkType::Hard,
+        entries({{Entry::File, excluded}}));
+
+    QHash<QString, Status> byPath;
+    for (const auto &e : plan)
+        byPath.insert(e.duplicatePath, e.status);
+    QCOMPARE(byPath.value(linked), Status::SkipAlreadyLinked);
+    QCOMPARE(byPath.value(excluded), Status::SkipExcluded);
+    QCOMPARE(byPath.value(gone), Status::SkipMissing);
+    QCOMPARE(byPath.value(outsider), Status::SkipNotInGroup);
+}
+
+void TestDuplicateFinder::links_plan_refusesCrossFilesystem()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString foreignDir = makeForeignFilesystemDir(tmp.path());
+    if (foreignDir.isEmpty())
+        QSKIP("no second writable filesystem on this machine");
+    const QString keeper = writeFile(tmp.path() + "/keep.bin", "dup");
+    const QString dup = writeFile(foreignDir + "/dup.bin", "dup");
+    const auto group = makeGroup(3, {keeper, dup});
+
+    for (LinkType type : {LinkType::Hard, LinkType::Symbolic}) {
+        const auto plan = DuplicateFinderService::buildLinkReplacePlan({dup}, {group}, type, {});
+        QCOMPARE(plan.size(), 1);
+        QCOMPARE(plan[0].status, LinkReplaceEntry::Status::SkipCrossFilesystem);
+    }
+    QDir(foreignDir).removeRecursively();
+}
+
+void TestDuplicateFinder::links_apply_hardlink_replacesAndKeepsContent()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString keeper = writeFile(tmp.path() + "/keep.bin", "payload");
+    const QString dup = writeFile(tmp.path() + "/nested/dup.bin", "payload");
+    const auto plan = DuplicateFinderService::buildLinkReplacePlan(
+        {dup}, {makeGroup(7, {keeper, dup})}, LinkType::Hard, {});
+    QCOMPARE(plan.size(), 1);
+
+    const LinkReplaceResult r = DuplicateFinderService::applyLinkReplace(plan[0]);
+    QVERIFY2(r.replaced, qPrintable(r.error));
+    QVERIFY(DuplicateFinderService::isSameFile(keeper, dup));
+    QVERIFY(!QFileInfo(dup).isSymLink());
+
+    QFile f(dup);
+    QVERIFY(f.open(QIODevice::ReadOnly));
+    QCOMPARE(f.readAll(), QByteArray("payload"));
+    QCOMPARE(QDir(tmp.path() + "/nested").entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot),
+             QStringList{"dup.bin"}); // no temp link left behind
+}
+
+void TestDuplicateFinder::links_apply_symlink_isRelative()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString keeper = writeFile(tmp.path() + "/keep.bin", "payload");
+    const QString dup = writeFile(tmp.path() + "/nested/dup.bin", "payload");
+    const auto plan = DuplicateFinderService::buildLinkReplacePlan(
+        {dup}, {makeGroup(7, {keeper, dup})}, LinkType::Symbolic, {});
+
+    const LinkReplaceResult r = DuplicateFinderService::applyLinkReplace(plan[0]);
+    QVERIFY2(r.replaced, qPrintable(r.error));
+    QVERIFY(QFileInfo(dup).isSymLink());
+    QCOMPARE(QFile::symLinkTarget(dup), QFileInfo(keeper).canonicalFilePath());
+
+    char buf[256];
+    const ssize_t n = ::readlink(QFile::encodeName(dup).constData(), buf, sizeof(buf));
+    QVERIFY(n > 0);
+    QCOMPARE(QByteArray(buf, int(n)), QByteArray("../keep.bin"));
+}
+
+void TestDuplicateFinder::links_apply_changedSinceScan_leavesDuplicateUntouched()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString keeper = writeFile(tmp.path() + "/keep.bin", "payload");
+    const QString dup = writeFile(tmp.path() + "/dup.bin", "payload");
+    const auto plan = DuplicateFinderService::buildLinkReplacePlan(
+        {dup}, {makeGroup(7, {keeper, dup})}, LinkType::Hard, {});
+    QCOMPARE(plan.size(), 1);
+
+    writeFile(dup, "PAYLOAD"); // same length, different bytes — edited after the scan
+
+    const LinkReplaceResult r = DuplicateFinderService::applyLinkReplace(plan[0]);
+    QVERIFY(!r.replaced);
+    QVERIFY(!r.error.isEmpty());
+    QVERIFY(!DuplicateFinderService::isSameFile(keeper, dup));
+    QFile f(dup);
+    QVERIFY(f.open(QIODevice::ReadOnly));
+    QCOMPARE(f.readAll(), QByteArray("PAYLOAD"));
+}
+
+void TestDuplicateFinder::links_apply_crossFilesystem_refused()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString foreignDir = makeForeignFilesystemDir(tmp.path());
+    if (foreignDir.isEmpty())
+        QSKIP("no second writable filesystem on this machine");
+    const QString keeper = writeFile(tmp.path() + "/keep.bin", "payload");
+    const QString dup = writeFile(foreignDir + "/dup.bin", "payload");
+
+    // A hand-built "Ready" entry: apply must re-check, not trust the plan.
+    LinkReplaceEntry e;
+    e.duplicatePath = dup;
+    e.keeperPath = keeper;
+    e.type = LinkType::Hard;
+    e.status = LinkReplaceEntry::Status::Ready;
+
+    const LinkReplaceResult r = DuplicateFinderService::applyLinkReplace(e);
+    QVERIFY(!r.replaced);
+    QVERIFY(!DuplicateFinderService::isSameFile(keeper, dup));
+    QDir(foreignDir).removeRecursively();
+}
+
+void TestDuplicateFinder::links_replaceWithLinks_reportsEveryAttempt()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString keeper = writeFile(tmp.path() + "/keep.bin", "payload");
+    const QString d1 = writeFile(tmp.path() + "/d1.bin", "payload");
+    const QString d2 = writeFile(tmp.path() + "/d2.bin", "payload");
+
+    TestableDuplicateFinderService svc;
+    const auto plan = svc.previewLinkReplace({d1, d2}, {makeGroup(7, {keeper, d1, d2})},
+                                             LinkType::Hard);
+    QSignalSpy finished(&svc, &DuplicateFinderService::linkReplaceFinished);
+    svc.replaceWithLinks(plan);
+    QCOMPARE(finished.count(), 1);
+
+    const auto results = finished.first().first().value<QList<LinkReplaceResult>>();
+    QCOMPARE(results.size(), 2);
+    for (const auto &r : results)
+        QVERIFY2(r.replaced, qPrintable(r.error));
+    QVERIFY(DuplicateFinderService::isSameFile(keeper, d1));
+    QVERIFY(DuplicateFinderService::isSameFile(keeper, d2));
+}
+
+void TestDuplicateFinder::links_scan_collapsesHardlinkedNames()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    const QString a = writeFile(tmp.path() + "/a.bin", "payload");
+    QCOMPARE(::link(QFile::encodeName(a).constData(),
+                    QFile::encodeName(tmp.path() + "/a-alias.bin").constData()), 0);
+
+    TestableDuplicateFinderService svc;
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+    svc.scan({tmp.path()}, 0);
+    QVERIFY2(finished.first().first().value<QList<DuplicateGroup>>().isEmpty(),
+             "two names of one inode are one file — nothing to reclaim");
+
+    writeFile(tmp.path() + "/real-copy.bin", "payload");
+    svc.scan({tmp.path()}, 0);
+    const auto groups = finished.last().first().value<QList<DuplicateGroup>>();
+    QCOMPARE(groups.size(), 1);
+    QCOMPARE(groups[0].files.size(), 2); // the alias is not listed separately
+}
+
+// ─── SSO-27146: pause / resume ──────────────────────────────────────────────
+
+namespace {
+
+void makeDuplicatePair(const QString &dir)
+{
+    for (int i = 0; i < 20; ++i) {
+        const QByteArray body = QByteArray(2048, char('a' + i % 20));
+        writeFile(QStringLiteral("%1/x/%2.bin").arg(dir).arg(i), body);
+        writeFile(QStringLiteral("%1/y/%2.bin").arg(dir).arg(i), body);
+    }
+}
+
+} // namespace
+
+void TestDuplicateFinder::pause_parksWorkerUntilResume()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    makeDuplicatePair(tmp.path());
+
+    AsyncDuplicateFinderService svc;
+    qRegisterMetaType<QList<DuplicateGroup>>("QList<DuplicateGroup>");
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+    QSignalSpy pausedSpy(&svc, &DuplicateFinderService::pausedChanged);
+
+    // Pause from the worker's own first progress report: deterministic, no
+    // race between the test thread and the scan finishing.
+    std::atomic<bool> pausedOnce{false};
+    QObject::connect(&svc, &DuplicateFinderService::progressUpdated, &svc,
+                     [&svc, &pausedOnce](int, int, int, const QString &) {
+        if (!pausedOnce.exchange(true))
+            svc.pause();
+    }, Qt::DirectConnection);
+
+    svc.scan({tmp.path()}, 0);
+    QTRY_VERIFY(svc.isPaused());
+    QTest::qWait(300);
+    QCOMPARE(finished.count(), 0);
+    QVERIFY(svc.isScanning());
+
+    svc.resume();
+    QVERIFY(!svc.isPaused());
+    QTRY_COMPARE_WITH_TIMEOUT(finished.count(), 1, 15000);
+    QCOMPARE(finished.first().first().value<QList<DuplicateGroup>>().size(), 20);
+    QCOMPARE(pausedSpy.count(), 2);
+    QCOMPARE(pausedSpy.at(0).at(0).toBool(), true);
+    QCOMPARE(pausedSpy.at(1).at(0).toBool(), false);
+}
+
+void TestDuplicateFinder::pause_cancelReleasesPausedWorker()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    makeDuplicatePair(tmp.path());
+
+    AsyncDuplicateFinderService svc;
+    QSignalSpy cancelled(&svc, &DuplicateFinderService::scanCancelled);
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+
+    std::atomic<bool> pausedOnce{false};
+    QObject::connect(&svc, &DuplicateFinderService::progressUpdated, &svc,
+                     [&svc, &pausedOnce](int, int, int, const QString &) {
+        if (!pausedOnce.exchange(true))
+            svc.pause();
+    }, Qt::DirectConnection);
+
+    svc.scan({tmp.path()}, 0);
+    QTRY_VERIFY(svc.isPaused());
+
+    svc.cancel();
+    QTRY_COMPARE_WITH_TIMEOUT(cancelled.count(), 1, 15000);
+    QCOMPARE(finished.count(), 0);
+    QVERIFY(!svc.isPaused());
+}
+
+void TestDuplicateFinder::pause_whileIdle_doesNotAffectNextScan()
+{
+    QTemporaryDir tmp;
+    QVERIFY(tmp.isValid());
+    writeFile(tmp.path() + "/a.bin", "payload");
+    writeFile(tmp.path() + "/b.bin", "payload");
+
+    TestableDuplicateFinderService svc;
+    svc.pause(); // nothing running: a stale pause must not freeze the next scan
+    QSignalSpy finished(&svc, &DuplicateFinderService::scanFinished);
+    svc.scan({tmp.path()}, 0);
+    QCOMPARE(finished.count(), 1);
 }
 
 QTEST_MAIN(TestDuplicateFinder)
