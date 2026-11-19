@@ -69,7 +69,7 @@ private slots:
     void scan_probeUnavailableListsNothing();
     void scan_monorepoPackageGuardedByRepoRoot();
     void heldPathsProbe_matchesDirectoryAndDescendantsOnly();
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)   // /proc on Linux, lsof on macOS
     void fromSystem_seesProcessWithCwdInsideProject();
 #endif
 
@@ -349,7 +349,7 @@ void TestDevArtifactScanner::heldPathsProbe_matchesDirectoryAndDescendantsOnly()
     QVERIFY(HeldPathsProbe({"/w/proj"}, true).holdsPathUnder("/w/proj"));
 }
 
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)   // /proc on Linux, lsof on macOS
 void TestDevArtifactScanner::fromSystem_seesProcessWithCwdInsideProject()
 {
     const QString root = makeNodeProject("running", QDateTime::currentDateTime().addDays(-60));
