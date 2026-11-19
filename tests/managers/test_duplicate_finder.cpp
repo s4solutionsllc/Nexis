@@ -1181,7 +1181,7 @@ void TestDuplicateFinder::links_apply_symlink_isRelative()
     const LinkReplaceResult r = DuplicateFinderService::applyLinkReplace(plan[0]);
     QVERIFY2(r.replaced, qPrintable(r.error));
     QVERIFY(QFileInfo(dup).isSymLink());
-    QCOMPARE(QFile::symLinkTarget(dup), QFileInfo(keeper).canonicalFilePath());
+    QCOMPARE(QFileInfo(QFile::symLinkTarget(dup)).canonicalFilePath(), QFileInfo(keeper).canonicalFilePath());
 
     char buf[256];
     const ssize_t n = ::readlink(QFile::encodeName(dup).constData(), buf, sizeof(buf));
