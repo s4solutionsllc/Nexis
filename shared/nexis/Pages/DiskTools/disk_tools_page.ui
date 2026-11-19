@@ -71,6 +71,11 @@
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="btnAgentWorktrees">
+        <property name="text"><string>Agent Worktrees…</string></property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="btnWipeFreeSpace">
         <property name="text"><string>Wipe Free Space…</string></property>
        </widget>

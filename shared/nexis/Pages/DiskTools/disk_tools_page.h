@@ -40,6 +40,7 @@ signals:
 private slots:
     void switchMode(int index);
     void openWipeFreeSpaceDialog();
+    void openAgentWorktreesDialog();
     void addDirectory();
     void removeDirectory();
     void onLargeOldScan();

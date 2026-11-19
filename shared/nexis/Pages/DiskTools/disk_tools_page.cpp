@@ -34,6 +34,7 @@
 #include "Services/duplicate_finder_service.h"
 #include "Services/image_hash.h"
 #include "wipe_free_space_dialog.h"
+#include "agent_worktrees_dialog.h"
 #include "signal_mapper.h"
 #include "utilities.h"
 #include <Utils/format_util.h>
@@ -85,6 +86,9 @@ void DiskToolsPage::init()
     ui->btnWipeFreeSpace->setCursor(Qt::PointingHandCursor);
     connect(ui->btnWipeFreeSpace, &QPushButton::clicked,
             this, &DiskToolsPage::openWipeFreeSpaceDialog);
+    ui->btnAgentWorktrees->setCursor(Qt::PointingHandCursor);
+    connect(ui->btnAgentWorktrees, &QPushButton::clicked,
+            this, &DiskToolsPage::openAgentWorktreesDialog);
 
     buildLargeOldPage();
     buildDuplicatePage();
@@ -129,6 +133,13 @@ void DiskToolsPage::switchMode(int index)
 void DiskToolsPage::openWipeFreeSpaceDialog()
 {
     WipeFreeSpaceDialog dialog(this);
+    dialog.exec();
+}
+
+void DiskToolsPage::openAgentWorktreesDialog()
+{
+    AgentWorktreesDialog dialog(this);
+    dialog.scan();
     dialog.exec();
 }
 

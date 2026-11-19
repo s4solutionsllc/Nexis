@@ -139,6 +139,11 @@ add_nexis_test(NAME RunningAppGateTests SOURCES core/test_running_app_gate.cpp)
 # deletions (uninstaller + orphan-leftover scanner). Lives in
 # shared/nexis-core so it builds and runs on both platforms.
 add_nexis_test(NAME LifecycleAuditLogTests SOURCES core/test_lifecycle_audit_log.cpp)
+# SSO-27100: git worktree scan/remove against real fixture repos (needs git on
+# PATH; skips otherwise). Unix-only: uses utime().
+if(UNIX)
+  add_nexis_test(NAME GitWorktreeToolTests SOURCES core/test_git_worktree_tool.cpp)
+endif()
 add_nexis_test(NAME PackageToolTests  SOURCES core/test_package_tool.cpp)
 # SSO-3470 (WI-05.b): exercises the real (non-overridden) PackageTool
 # runCommand/runSudoCommand seam against the migrated execWithStatus contract.
@@ -1205,6 +1210,19 @@ add_nexis_test(NAME SystemCleanerProviderTests
 # one-sentence, size+count, trash-only copy). orphan_leftovers_dialog.cpp is
 # already compiled into nexis-gui (GUI_SHARED_SRCS); link it rather than
 # recompiling the source here, same reasoning as SystemCleanerProviderTests.
+# SSO-27100: AgentWorktreesDialog's pure display rules (nothing preselected,
+# block reasons carried, Changes text, one-sentence confirmation). The dialog is
+# already compiled into nexis-gui; link it rather than recompiling.
+add_nexis_test(NAME AgentWorktreesDialogTests
+  SOURCES
+    managers/test_agent_worktrees_dialog.cpp
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+  LIBS
+    Qt6::Concurrent
+    nexis-gui Qt6::Widgets
+)
+
 add_nexis_test(NAME OrphanLeftoversDialogTests
   SOURCES
     managers/test_orphan_leftovers_dialog.cpp

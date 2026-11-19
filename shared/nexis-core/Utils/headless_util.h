@@ -1,6 +1,8 @@
 #ifndef HEADLESS_UTIL_H
 #define HEADLESS_UTIL_H
 
+#include <QStringList>
+
 #include "nexis-core_global.h"
 
 // SSO-3368 / audit H6: helpers for deciding whether a Nexis invocation is a
@@ -17,6 +19,10 @@ public:
     // performs no env access or Qt calls so it is safe to call before
     // QApplication.
     static bool isHeadlessArgv(int argc, char *const argv[]);
+
+    // Same test over QCoreApplication::arguments() for code that runs after
+    // QApplication exists (SSO-27100: destructive tools refuse headless runs).
+    static bool isHeadlessArguments(const QStringList &arguments);
 
     // True if main() should `qputenv("QT_QPA_PLATFORM", "offscreen")` before
     // constructing QApplication. We only override when the user has not
