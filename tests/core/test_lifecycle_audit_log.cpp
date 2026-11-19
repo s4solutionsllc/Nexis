@@ -275,7 +275,10 @@ void TestLifecycleAuditLog::restore_movesTrashedItemBackAndRecordsIt()
     QVERIFY2(result.ok(), qPrintable(result.message));
     QVERIFY(QFile::exists(item.original));
     QVERIFY(!QFile::exists(item.inTrash));
+#ifndef Q_OS_MACOS
+    // macOS has no XDG info/ sidecar, so restore() leaves it alone there.
     QVERIFY(!QFile::exists(root.filePath(QStringLiteral(".local/share/Trash/info/old.zip.trashinfo"))));
+#endif
 
     // The Restored entry hides the Restore action for that item in the view.
     const QList<LifecycleAuditLog::Run> runs = LifecycleAuditLog::groupIntoRuns(
