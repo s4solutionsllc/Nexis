@@ -14,7 +14,7 @@ location they are barred from touching. Generated from
 
 Paths are globs; `$HOME` is the user's home directory.
 
-## Linux profiles (34)
+## Linux profiles (44)
 
 | Profile | App | Safety | Min age | Paths |
 |---|---|---|---|---|
@@ -24,6 +24,7 @@ Paths are globs; `$HOME` is the user's home directory.
 | `chrome-cache` | Google Chrome | safe | - | `$HOME/.cache/google-chrome/*/Cache`<br>`$HOME/.cache/google-chrome/*/Code Cache`<br>`$HOME/.cache/google-chrome/*/GPUCache`<br>`$HOME/.config/google-chrome/*/Service Worker/CacheStorage` |
 | `chromium-cache` | Chromium | safe | - | `$HOME/.cache/chromium/*/Cache`<br>`$HOME/.cache/chromium/*/Code Cache`<br>`$HOME/.cache/chromium/*/GPUCache` |
 | `composer-cache` | Composer (PHP) | safe | - | `$HOME/.cache/composer` |
+| `cursor-cache` | Cursor | safe | 7 d | `$HOME/.config/Cursor/Cache`<br>`$HOME/.config/Cursor/CachedData`<br>`$HOME/.config/Cursor/Code Cache`<br>`$HOME/.config/Cursor/GPUCache`<br>`$HOME/.config/Cursor/logs` |
 | `discord-cache` | Discord | safe | - | `$HOME/.config/discord/Cache`<br>`$HOME/.config/discord/Code Cache`<br>`$HOME/.config/discord/GPUCache` |
 | `docker-tmp` | Docker | safe | 7 d | `$HOME/.docker/buildx/cache`<br>`$HOME/.docker/scout` |
 | `electron-generic-cache` | Electron apps | safe | 14 d | `$HOME/.config/*/Cache`<br>`$HOME/.config/*/Code Cache`<br>`$HOME/.config/*/GPUCache` |
@@ -38,22 +39,31 @@ Paths are globs; `$HOME` is the user's home directory.
 | `opera-cache` | Opera | safe | - | `$HOME/.cache/opera/Cache`<br>`$HOME/.cache/opera/GPUCache` |
 | `pip-cache` | pip | safe | - | `$HOME/.cache/pip` |
 | `podman-tmp` | Podman | safe | 7 d | `$HOME/.local/share/containers/cache`<br>`$HOME/.local/share/containers/storage/tmp` |
+| `poetry-cache` | Poetry | safe | - | `$HOME/.cache/pypoetry/cache`<br>`$HOME/.cache/pypoetry/artifacts` |
 | `slack-cache` | Slack | safe | - | `$HOME/.config/Slack/Cache`<br>`$HOME/.config/Slack/Code Cache`<br>`$HOME/.config/Slack/GPUCache`<br>`$HOME/.config/Slack/Service Worker/CacheStorage` |
 | `snap-user-cache` | Snap | safe | - | `$HOME/snap/*/common/.cache`<br>`$HOME/snap/*/current/.cache` |
 | `thumbnail-cache` | XDG thumbnail cache | safe | 30 d | `$HOME/.cache/thumbnails/normal`<br>`$HOME/.cache/thumbnails/large`<br>`$HOME/.cache/thumbnails/fail` |
+| `uv-cache` | uv | safe | - | `$HOME/.cache/uv` |
 | `vscode-cache` | Visual Studio Code | safe | 7 d | `$HOME/.config/Code/Cache`<br>`$HOME/.config/Code/CachedData`<br>`$HOME/.config/Code/Code Cache`<br>`$HOME/.config/Code/GPUCache`<br>`$HOME/.config/Code/logs` |
+| `vscode-forks-cache` | VSCodium, Windsurf, VS Code Insiders | safe | 7 d | `$HOME/.config/VSCodium/Cache`<br>`$HOME/.config/VSCodium/CachedData`<br>`$HOME/.config/VSCodium/Code Cache`<br>`$HOME/.config/VSCodium/GPUCache`<br>`$HOME/.config/VSCodium/logs`<br>`$HOME/.config/Windsurf/Cache`<br>`$HOME/.config/Windsurf/CachedData`<br>`$HOME/.config/Windsurf/Code Cache`<br>`$HOME/.config/Windsurf/GPUCache`<br>`$HOME/.config/Windsurf/logs`<br>`$HOME/.config/Code - Insiders/Cache`<br>`$HOME/.config/Code - Insiders/CachedData`<br>`$HOME/.config/Code - Insiders/Code Cache`<br>`$HOME/.config/Code - Insiders/GPUCache`<br>`$HOME/.config/Code - Insiders/logs` |
 | `wine-tmp` | Wine | safe | 7 d | `$HOME/.wine/drive_c/users/*/Temp`<br>`$HOME/.wine/drive_c/users/*/AppData/Local/Temp` |
 | `yarn-cache` | Yarn | safe | - | `$HOME/.cache/yarn` |
 | `zoom-logs` | Zoom | safe | 14 d | `$HOME/.zoom/logs`<br>`$HOME/.cache/zoom` |
 | `cargo-cache` | Cargo (Rust) | aggressive | 30 d | `$HOME/.cargo/registry/cache`<br>`$HOME/.cargo/registry/src`<br>`$HOME/.cargo/git/db` |
+| `conda-packages` | conda, mamba | aggressive | - | `$HOME/.conda/pkgs`<br>`$HOME/.mamba/pkgs`<br>`$HOME/miniconda3/pkgs`<br>`$HOME/anaconda3/pkgs`<br>`$HOME/miniforge3/pkgs`<br>`$HOME/mambaforge/pkgs`<br>`$HOME/micromamba/pkgs` |
+| `cypress-binary` | Cypress | aggressive | - | `$HOME/.cache/Cypress` |
+| `dart-pub-cache` | Dart, Flutter | aggressive | - | `$HOME/.pub-cache/hosted`<br>`$HOME/.pub-cache/git`<br>`$HOME/.pub-cache/_temp` |
 | `gradle-dependencies` | Gradle | aggressive | 14 d | `$HOME/.gradle/caches/modules-*` |
 | `maven-cache` | Apache Maven | aggressive | 30 d | `$HOME/.m2/repository` |
 | `nuget-packages` | NuGet | aggressive | 14 d | `$HOME/.nuget/packages` |
+| `playwright-browsers` | Playwright | aggressive | - | `$HOME/.cache/ms-playwright` |
 | `pnpm-cache` | pnpm | aggressive | - | `$HOME/.local/share/pnpm/store`<br>`$HOME/.pnpm-store` |
+| `puppeteer-browsers` | Puppeteer | aggressive | - | `$HOME/.cache/puppeteer` |
 | `spotify-cache` | Spotify | aggressive | - | `$HOME/.cache/spotify`<br>`$HOME/.config/spotify/Storage` |
+| `terraform-plugin-cache` | Terraform | aggressive | - | `$HOME/.terraform.d/plugin-cache` |
 | `yarn-berry-cache` | Yarn | aggressive | - | `$HOME/.yarn/cache`<br>`$HOME/.yarn/berry/cache` |
 
-## Macos profiles (34)
+## Macos profiles (44)
 
 | Profile | App | Safety | Min age | Paths |
 |---|---|---|---|---|
@@ -62,6 +72,7 @@ Paths are globs; `$HOME` is the user's home directory.
 | `chrome-cache` | Google Chrome | safe | - | `$HOME/Library/Caches/Google/Chrome`<br>`$HOME/Library/Application Support/Google/Chrome/*/Service Worker/CacheStorage` |
 | `cocoapods-cache` | CocoaPods | safe | - | `$HOME/Library/Caches/CocoaPods` |
 | `colima-cache` | Colima | safe | 7 d | `$HOME/.colima/_cache` |
+| `cursor-cache` | Cursor | safe | 7 d | `$HOME/Library/Application Support/Cursor/Cache`<br>`$HOME/Library/Application Support/Cursor/CachedData`<br>`$HOME/Library/Application Support/Cursor/Code Cache`<br>`$HOME/Library/Application Support/Cursor/GPUCache`<br>`$HOME/Library/Application Support/Cursor/logs` |
 | `discord-cache` | Discord | safe | - | `$HOME/Library/Application Support/discord/Cache`<br>`$HOME/Library/Application Support/discord/Code Cache`<br>`$HOME/Library/Application Support/discord/GPUCache` |
 | `docker-desktop-logs` | Docker Desktop | safe | 7 d | `$HOME/Library/Containers/com.docker.docker/Data/log`<br>`$HOME/Library/Logs/Docker Desktop` |
 | `edge-cache` | Microsoft Edge | safe | - | `$HOME/Library/Caches/Microsoft Edge`<br>`$HOME/Library/Application Support/Microsoft Edge/*/Service Worker/CacheStorage` |
@@ -73,21 +84,30 @@ Paths are globs; `$HOME` is the user's home directory.
 | `jetbrains-cache` | JetBrains IDEs | safe | 14 d | `$HOME/Library/Caches/JetBrains/*`<br>`$HOME/Library/Logs/JetBrains/*` |
 | `npm-cache` | npm | safe | - | `$HOME/.npm/_cacache`<br>`$HOME/.npm/_logs` |
 | `pip-cache` | pip | safe | - | `$HOME/Library/Caches/pip` |
+| `poetry-cache` | Poetry | safe | - | `$HOME/Library/Caches/pypoetry/cache`<br>`$HOME/Library/Caches/pypoetry/artifacts` |
 | `quicklook-thumbnails` | macOS Quick Look | safe | 30 d | `$HOME/Library/Caches/com.apple.QuickLook.thumbnailcache`<br>`$HOME/Library/Caches/com.apple.QuickLookDaemon` |
 | `safari-cache` | Safari | safe | - | `$HOME/Library/Caches/com.apple.Safari`<br>`$HOME/Library/Caches/com.apple.Safari.SafeBrowsing`<br>`$HOME/Library/Caches/com.apple.WebKit.PluginProcess` |
 | `slack-cache` | Slack | safe | - | `$HOME/Library/Application Support/Slack/Cache`<br>`$HOME/Library/Application Support/Slack/Code Cache`<br>`$HOME/Library/Application Support/Slack/GPUCache`<br>`$HOME/Library/Application Support/Slack/Service Worker/CacheStorage` |
 | `swiftpm-cache` | Swift Package Manager | safe | 14 d | `$HOME/Library/Caches/org.swift.swiftpm` |
 | `teams-cache` | Microsoft Teams | safe | - | `$HOME/Library/Application Support/Microsoft/Teams/Cache`<br>`$HOME/Library/Application Support/Microsoft/Teams/Code Cache`<br>`$HOME/Library/Application Support/Microsoft/Teams/GPUCache`<br>`$HOME/Library/Application Support/Microsoft/Teams/Service Worker/CacheStorage` |
+| `uv-cache` | uv | safe | - | `$HOME/Library/Caches/uv` |
 | `vscode-cache` | Visual Studio Code | safe | 7 d | `$HOME/Library/Application Support/Code/Cache`<br>`$HOME/Library/Application Support/Code/CachedData`<br>`$HOME/Library/Application Support/Code/Code Cache`<br>`$HOME/Library/Application Support/Code/GPUCache`<br>`$HOME/Library/Application Support/Code/logs` |
+| `vscode-forks-cache` | VSCodium, Windsurf, VS Code Insiders | safe | 7 d | `$HOME/Library/Application Support/VSCodium/Cache`<br>`$HOME/Library/Application Support/VSCodium/CachedData`<br>`$HOME/Library/Application Support/VSCodium/Code Cache`<br>`$HOME/Library/Application Support/VSCodium/GPUCache`<br>`$HOME/Library/Application Support/VSCodium/logs`<br>`$HOME/Library/Application Support/Windsurf/Cache`<br>`$HOME/Library/Application Support/Windsurf/CachedData`<br>`$HOME/Library/Application Support/Windsurf/Code Cache`<br>`$HOME/Library/Application Support/Windsurf/GPUCache`<br>`$HOME/Library/Application Support/Windsurf/logs`<br>`$HOME/Library/Application Support/Code - Insiders/Cache`<br>`$HOME/Library/Application Support/Code - Insiders/CachedData`<br>`$HOME/Library/Application Support/Code - Insiders/Code Cache`<br>`$HOME/Library/Application Support/Code - Insiders/GPUCache`<br>`$HOME/Library/Application Support/Code - Insiders/logs` |
 | `xcode-deriveddata` | Xcode | safe | 7 d | `$HOME/Library/Developer/Xcode/DerivedData/*` |
 | `yarn-cache` | Yarn | safe | - | `$HOME/Library/Caches/Yarn` |
 | `zoom-logs` | Zoom | safe | 14 d | `$HOME/Library/Application Support/zoom.us/logs`<br>`$HOME/Library/Logs/zoom.us` |
 | `cargo-cache` | Cargo (Rust) | aggressive | 30 d | `$HOME/.cargo/registry/cache`<br>`$HOME/.cargo/registry/src`<br>`$HOME/.cargo/git/db` |
+| `conda-packages` | conda, mamba | aggressive | - | `$HOME/.conda/pkgs`<br>`$HOME/.mamba/pkgs`<br>`$HOME/miniconda3/pkgs`<br>`$HOME/anaconda3/pkgs`<br>`$HOME/miniforge3/pkgs`<br>`$HOME/mambaforge/pkgs`<br>`$HOME/micromamba/pkgs` |
+| `cypress-binary` | Cypress | aggressive | - | `$HOME/Library/Caches/Cypress` |
+| `dart-pub-cache` | Dart, Flutter | aggressive | - | `$HOME/.pub-cache/hosted`<br>`$HOME/.pub-cache/git`<br>`$HOME/.pub-cache/_temp` |
 | `dropbox-cache` | Dropbox | aggressive | 14 d | `$HOME/Dropbox/.dropbox.cache` |
 | `gradle-dependencies` | Gradle | aggressive | 14 d | `$HOME/.gradle/caches/modules-*` |
 | `mail-downloads` | Apple Mail | aggressive | 30 d | `$HOME/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/*` |
 | `maven-cache` | Apache Maven | aggressive | 30 d | `$HOME/.m2/repository` |
+| `playwright-browsers` | Playwright | aggressive | - | `$HOME/Library/Caches/ms-playwright` |
+| `puppeteer-browsers` | Puppeteer | aggressive | - | `$HOME/.cache/puppeteer` |
 | `spotify-cache` | Spotify | aggressive | - | `$HOME/Library/Caches/com.spotify.client`<br>`$HOME/Library/Application Support/Spotify/PersistentCache` |
+| `terraform-plugin-cache` | Terraform | aggressive | - | `$HOME/.terraform.d/plugin-cache` |
 | `xcode-archives` | Xcode | aggressive | 60 d | `$HOME/Library/Developer/Xcode/Archives/*` |
 | `xcode-device-support` | Xcode | aggressive | 90 d | `$HOME/Library/Developer/Xcode/iOS DeviceSupport/*`<br>`$HOME/Library/Developer/Xcode/watchOS DeviceSupport/*`<br>`$HOME/Library/Developer/Xcode/tvOS DeviceSupport/*` |
 | `yarn-berry-cache` | Yarn | aggressive | - | `$HOME/.yarn/cache`<br>`$HOME/.yarn/berry/cache` |

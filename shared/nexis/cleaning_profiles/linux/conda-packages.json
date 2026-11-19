@@ -1,0 +1,18 @@
+{
+  "id": "conda-packages",
+  "name": "conda / mamba Package Cache",
+  "app": "conda, mamba",
+  "description": "Downloaded and unpacked conda packages in each distribution's pkgs folder. Environments are not touched, but removing the package cache forces a re-download for the next install and for offline installs.",
+  "platforms": ["linux"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.conda/pkgs",
+    "$HOME/.mamba/pkgs",
+    "$HOME/miniconda3/pkgs",
+    "$HOME/anaconda3/pkgs",
+    "$HOME/miniforge3/pkgs",
+    "$HOME/mambaforge/pkgs",
+    "$HOME/micromamba/pkgs"
+  ],
+  "minAgeDays": 0
+}

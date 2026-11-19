@@ -1,0 +1,12 @@
+{
+  "id": "puppeteer-browsers",
+  "name": "Puppeteer Browsers",
+  "app": "Puppeteer",
+  "description": "Chrome and Firefox builds downloaded by Puppeteer. Scripts fail until the browsers are downloaded again.",
+  "platforms": ["macos"],
+  "safety": "aggressive",
+  "paths": [
+    "$HOME/.cache/puppeteer"
+  ],
+  "minAgeDays": 0
+}
