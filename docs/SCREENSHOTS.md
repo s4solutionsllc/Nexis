@@ -52,10 +52,11 @@ Captures come out at the display's pixel density: on a Retina or 200%-scaled dis
 - **Hostname.** The Dashboard system bar and Hardware Info show the machine's hostname. Use a machine
   or session whose hostname you're happy to publish.
 - **Live data.** Machine-specific names are blurred automatically on both platforms: every name and
-  path on Services and Startup Apps (`blur`), and the name columns of Processes (Name, User, Process),
-  Boot Analysis (Service), Docker (Image, Container, Volume, Mount Point) and Helpers → Hosts (Full
-  Qualified, Aliases) (`blurColumns`). The Uninstaller, APT repositories and System Logs are not
-  blurred; review those shots before committing them. Disk Map scans `/Applications` on macOS and `/usr` on Linux, never your home
+  path on Services and Startup Apps, and APT repository names (`blur`); and the name columns of
+  Processes (Name, User, Process), Boot Analysis (Service), Docker (Image), Helpers → Hosts (Full
+  Qualified, Aliases), the Uninstaller (Application), APT updates (Package) and Homebrew (App,
+  Package) (`blurColumns`). List only columns the shot actually shows — a column on a hidden tab
+  counts as missing and fails the shot. System Logs is not blurred; review it before committing. Disk Map scans `/Applications` on macOS and `/usr` on Linux, never your home
   folder.
 - **Linux specifics.** Run on Ubuntu 26.04 with GNOME (the reference platform). Docker must be running
   with at least one container for `docker.png` and `Nexis-12.png`. `Nexis-04.png` needs an NVIDIA or AMD

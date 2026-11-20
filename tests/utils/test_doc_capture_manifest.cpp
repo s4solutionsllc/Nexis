@@ -120,22 +120,39 @@ private slots:
     // Tables that list machine-specific names (process commands and users,
     // boot units, Docker images, hosts entries) must be redacted in every
     // shot of those pages.
+    // Tables that list machine-specific names (process commands and users,
+    // boot units, Docker images, hosts entries, installed packages and
+    // repositories) must be redacted in every shot of those pages.
     void bundledManifestBlursNameColumns()
     {
-        const QHash<QString, QStringList> required = {
-            {"processes",    {"User", "Process"}},   // + "Name" on Linux (column is Linux-only)
-            {"bootAnalysis", {"Service"}},
-            {"docker",       {"Image", "Container", "Volume", "Mount Point"}},
-            {"helpers",      {"Full Qualified", "Aliases"}},
+        struct Rule { QStringList columns; QStringList widgets; };
+        const QHash<QString, QHash<QString, Rule>> required = {
+            {"macos", {
+                {"processes",        {{"User", "Process"}, {}}},
+                {"helpers",          {{"Full Qualified", "Aliases"}, {}}},
+                {"uninstaller",      {{"Application"}, {}}},
+                {"aptSourceManager", {{"App", "Package"}, {}}},          // Homebrew
+            }},
+            {"linux", {
+                {"processes",        {{"Name", "User", "Process"}, {}}},
+                {"bootAnalysis",     {{"Service"}, {}}},
+                {"docker",           {{"Image"}, {}}},
+                {"helpers",          {{"Full Qualified", "Aliases"}, {}}},
+                {"uninstaller",      {{"Application"}, {}}},
+                {"aptSourceManager", {{"Package"}, {"lblAptSourceName"}}},
+            }},
         };
         const QByteArray json = bundledManifest();
-        for (const char *platform : {"macos", "linux"}) {
+        for (auto plat = required.cbegin(); plat != required.cend(); ++plat) {
             QString error;
-            for (const DocCaptureShot &s : DocCaptureManifest::parse(json, QString::fromLatin1(platform), &error)) {
-                if (!required.contains(s.page))
+            for (const DocCaptureShot &s : DocCaptureManifest::parse(json, plat.key(), &error)) {
+                if (!plat.value().contains(s.page))
                     continue;
-                for (const QString &col : required.value(s.page))
-                    QVERIFY2(s.blurColumns.contains(col), qPrintable(s.file + " missing " + col));
+                const Rule rule = plat.value().value(s.page);
+                for (const QString &col : rule.columns)
+                    QVERIFY2(s.blurColumns.contains(col), qPrintable(plat.key() + " " + s.file + " missing column " + col));
+                for (const QString &w : rule.widgets)
+                    QVERIFY2(s.blur.contains(w), qPrintable(plat.key() + " " + s.file + " missing widget " + w));
             }
         }
     }
