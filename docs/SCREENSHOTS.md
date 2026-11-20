@@ -51,10 +51,11 @@ Captures come out at the display's pixel density: on a Retina or 200%-scaled dis
 
 - **Hostname.** The Dashboard system bar and Hardware Info show the machine's hostname. Use a machine
   or session whose hostname you're happy to publish.
-- **Live data.** Every name and path on the Services and Startup Apps pages is blurred automatically
-  (the manifest's `blur` lists), on both platforms. Processes, the Uninstaller and System Logs still
-  show what's actually on the machine; review those shots for usernames and private paths before
-  committing them. Disk Map scans `/Applications` on macOS and `/usr` on Linux, never your home
+- **Live data.** Machine-specific names are blurred automatically on both platforms: every name and
+  path on Services and Startup Apps (`blur`), and the name columns of Processes (Name, User, Process),
+  Boot Analysis (Service), Docker (Image, Container, Volume, Mount Point) and Helpers → Hosts (Full
+  Qualified, Aliases) (`blurColumns`). The Uninstaller, APT repositories and System Logs are not
+  blurred; review those shots before committing them. Disk Map scans `/Applications` on macOS and `/usr` on Linux, never your home
   folder.
 - **Linux specifics.** Run on Ubuntu 26.04 with GNOME (the reference platform). Docker must be running
   with at least one container for `docker.png` and `Nexis-12.png`. `Nexis-04.png` needs an NVIDIA or AMD
@@ -81,6 +82,7 @@ failed, re-run just that file with `--capture-only <name>.png`.
     "after": [ { "do": "click", "object": "btnAdvancePaneToggle" } ],
     "dialog": "",                                        // capture this window title instead
     "blur": ["lblServiceName"],                          // objectNames to blur (redaction)
+    "blurColumns": ["Process"],                          // item-view column headers to blur
     "frame": true }
 ] }
 ```
@@ -89,8 +91,9 @@ Steps: `click` (`object` = objectName, or `text` = button label), `setText` (lin
 combo), `wait` (`seconds`), `waitEnabled` (`object`, `seconds` timeout), `waitUptime` (wait until the
 app has run `seconds`), `scroll` (`position` 0–1 of the page's main scroll area), `expandTrees`, `sort`
 (`text` = column header, `order` asc/desc), `showPalette`, `key` (`text` = key sequence, e.g.
-`Escape`), `closeDialog` (`text` = window title). `blur` blurs every visible widget with the listed
-object names (clipped to what's on screen) before the frame is added; the shot fails if none are visible. Page ids are the `PageSlot` ids in `app.cpp`
+`Escape`), `closeDialog` (`text` = window title), `showColumn` (`text` = header of a hidden column). `blur` blurs every visible widget with the listed
+object names (clipped to what's on screen) before the frame is added; `blurColumns` blurs the visible
+cells of every table/tree column with that header. A shot fails if any blur target isn't visible. Page ids are the `PageSlot` ids in `app.cpp`
 (`dashboard`, `resources`, `processes`, `networkUsage`, `hardwareInfo`, `bootAnalysis`, `systemLogs`,
 `systemCleaner`, `diskTools`, `diskMap`, `mailCleanup`, `shredder`, `search`, `uninstaller`,
 `startupApps`, `services`, `aptSourceManager` (Homebrew on macOS), `docker`, `helpers`, `gnomeSettings`,

@@ -4,6 +4,7 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QRegularExpression>
+#include <QHash>
 #include <QSet>
 
 #include "Common/doc_capture_frame.h"
@@ -64,6 +65,8 @@ private slots:
         QTest::newRow("scroll out of range") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","steps":[{"do":"scroll","position":2}]}]})") << "position";
         QTest::newRow("blur not array") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","blur":"lblName"}]})") << "blur";
         QTest::newRow("blur empty name") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","blur":[""]}]})") << "blur";
+        QTest::newRow("blurColumns not array") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","blurColumns":"Name"}]})") << "blurColumns";
+        QTest::newRow("showColumn without text") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","steps":[{"do":"showColumn"}]}]})") << "needs";
         QTest::newRow("duplicate for platform") << QByteArray(R"({"version":1,"shots":[{"file":"x.png"},{"file":"x.png","platforms":["linux"]}]})") << "listed twice";
     }
 
@@ -98,6 +101,41 @@ private slots:
                     QVERIFY2(s.blur.contains("lblServiceName") && s.blur.contains("lblServiceDescription"), qPrintable(s.file));
                 if (s.page == QLatin1String("startupApps"))
                     QVERIFY2(s.blur.contains("lblStartupAppName") && s.blur.contains("lblStartupAppPath"), qPrintable(s.file));
+            }
+        }
+    }
+
+    void parsesBlurColumnsAndShowColumn()
+    {
+        const QByteArray json = R"({"version":1,"shots":[{"file":"x.png","blurColumns":["Name","Process"],
+            "steps":[{"do":"showColumn","text":"GPU %"}]}]})";
+        QString error;
+        const auto shots = DocCaptureManifest::parse(json, "linux", &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QCOMPARE(shots.at(0).blurColumns, QStringList({"Name", "Process"}));
+        QCOMPARE(shots.at(0).steps.at(0).type, DocCaptureStep::Type::ShowColumn);
+        QCOMPARE(shots.at(0).steps.at(0).text, QStringLiteral("GPU %"));
+    }
+
+    // Tables that list machine-specific names (process commands and users,
+    // boot units, Docker images, hosts entries) must be redacted in every
+    // shot of those pages.
+    void bundledManifestBlursNameColumns()
+    {
+        const QHash<QString, QStringList> required = {
+            {"processes",    {"User", "Process"}},   // + "Name" on Linux (column is Linux-only)
+            {"bootAnalysis", {"Service"}},
+            {"docker",       {"Image", "Container", "Volume", "Mount Point"}},
+            {"helpers",      {"Full Qualified", "Aliases"}},
+        };
+        const QByteArray json = bundledManifest();
+        for (const char *platform : {"macos", "linux"}) {
+            QString error;
+            for (const DocCaptureShot &s : DocCaptureManifest::parse(json, QString::fromLatin1(platform), &error)) {
+                if (!required.contains(s.page))
+                    continue;
+                for (const QString &col : required.value(s.page))
+                    QVERIFY2(s.blurColumns.contains(col), qPrintable(s.file + " missing " + col));
             }
         }
     }

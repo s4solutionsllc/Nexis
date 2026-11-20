@@ -24,6 +24,7 @@ const QHash<QString, DocCaptureStep::Type> &stepTypes()
         {"showPalette", DocCaptureStep::Type::ShowPalette},
         {"key",         DocCaptureStep::Type::Key},
         {"closeDialog", DocCaptureStep::Type::CloseDialog},
+        {"showColumn",  DocCaptureStep::Type::ShowColumn},
     };
     return kTypes;
 }
@@ -91,6 +92,7 @@ bool parseStep(const QJsonValue &value, DocCaptureStep *out, QString *why)
     case DocCaptureStep::Type::Sort:
     case DocCaptureStep::Type::Key:
     case DocCaptureStep::Type::CloseDialog:
+    case DocCaptureStep::Type::ShowColumn:
         if (s.text.isEmpty()) {
             *why = QStringLiteral("%1 needs \"text\"").arg(kind);
             return false;
@@ -205,6 +207,18 @@ QList<DocCaptureShot> parse(const QByteArray &json, const QString &platform, QSt
                 if (name.isEmpty())
                     return fail(QStringLiteral("shot %1: \"blur\" entries must be non-empty object names").arg(label));
                 shot.blur << name;
+            }
+        }
+
+        const QJsonValue blurCols = o.value("blurColumns");
+        if (!blurCols.isUndefined()) {
+            if (!blurCols.isArray())
+                return fail(QStringLiteral("shot %1: \"blurColumns\" must be an array of column headers").arg(label));
+            for (const QJsonValue &b : blurCols.toArray()) {
+                const QString header = b.toString();
+                if (header.isEmpty())
+                    return fail(QStringLiteral("shot %1: \"blurColumns\" entries must be non-empty headers").arg(label));
+                shot.blurColumns << header;
             }
         }
         shot.settle = o.value("settle").toDouble(1.5);

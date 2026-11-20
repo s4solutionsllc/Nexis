@@ -266,6 +266,17 @@ void DocCaptureRunner::runStep(const DocCaptureStep &step, std::function<void()>
         done();
         return;
     }
+    case T::ShowColumn: {
+        bool shown = false;
+        forEachColumn(step.text, [&shown](QAbstractItemView *, QHeaderView *header, int col) {
+            header->setSectionHidden(col, false);
+            shown = true;
+        }, /*includeHidden=*/true);
+        if (!shown)
+            fail(QStringLiteral("showColumn: no column \"%1\"").arg(step.text));
+        done();
+        return;
+    }
     case T::CloseDialog: {
         if (QWidget *dlg = findDialog(step.text))
             dlg->close();
@@ -296,6 +307,10 @@ void DocCaptureRunner::capture()
         const int blurred = blurWidgets(target, shot.blur, &image);
         if (!shot.blur.isEmpty() && blurred == 0)
             fail(QStringLiteral("blur: none of %1 visible").arg(shot.blur.join(", ")));
+        for (const QString &header : shot.blurColumns) {
+            if (blurColumn(target, header, &image) == 0)
+                fail(QStringLiteral("blurColumns: no visible column \"%1\"").arg(header));
+        }
         const bool fullScreen = target->isFullScreen();
         if (mOptions.frame && shot.frame && !fullScreen)
             image = DocCaptureFrame::decorate(image, title, frameStyle());
@@ -403,6 +418,50 @@ int DocCaptureRunner::blurWidgets(QWidget *window, const QStringList &names, QIm
             ++count;
         }
     }
+    return count;
+}
+
+void DocCaptureRunner::forEachColumn(const QString &label,
+                                     const std::function<void(QAbstractItemView*, QHeaderView*, int)> &fn,
+                                     bool includeHidden) const
+{
+    QWidget *scope = currentPage() ? currentPage() : mWindow;
+    for (QAbstractItemView *view : scope->findChildren<QAbstractItemView*>()) {
+        if (!view->isVisible() || !view->model())
+            continue;
+        QHeaderView *header = nullptr;
+        if (auto *tv = qobject_cast<QTreeView*>(view))
+            header = tv->header();
+        else if (auto *tab = qobject_cast<QTableView*>(view))
+            header = tab->horizontalHeader();
+        if (!header)
+            continue;
+        for (int c = 0; c < view->model()->columnCount(); ++c) {
+            const QString text = view->model()->headerData(c, Qt::Horizontal).toString().trimmed();
+            if (text.compare(label, Qt::CaseInsensitive) != 0)
+                continue;
+            if (!includeHidden && header->isSectionHidden(c))
+                continue;
+            fn(view, header, c);
+        }
+    }
+}
+
+int DocCaptureRunner::blurColumn(QWidget *window, const QString &label, QImage *image) const
+{
+    const qreal dpr = image->devicePixelRatio() > 0 ? image->devicePixelRatio() : 1.0;
+    int count = 0;
+    forEachColumn(label, [&](QAbstractItemView *view, QHeaderView *header, int col) {
+        QWidget *vp = view->viewport();
+        const QRect cells = QRect(header->sectionViewportPosition(col), 0,
+                                  header->sectionSize(col), vp->height()).intersected(vp->rect());
+        if (cells.isEmpty())
+            return;
+        const QRect inWindow(vp->mapTo(window, cells.topLeft()), cells.size());
+        DocCaptureFrame::blurRect(*image, QRect(qRound(inWindow.x() * dpr), qRound(inWindow.y() * dpr),
+                                                qRound(inWindow.width() * dpr), qRound(inWindow.height() * dpr)));
+        ++count;
+    }, /*includeHidden=*/false);
     return count;
 }
 

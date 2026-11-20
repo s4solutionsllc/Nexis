@@ -12,6 +12,8 @@
 #include "doc_capture_manifest.h"
 
 class QWidget;
+class QAbstractItemView;
+class QHeaderView;
 
 // Drives a live App window through the documentation screenshot manifest
 // (`nexis --capture-docs <outdir>`): navigates to each page, runs the
@@ -50,6 +52,10 @@ private:
     QWidget *findDialog(const QString &title) const;
     QImage grabWithPopups(QWidget *window) const;
     int blurWidgets(QWidget *window, const QStringList &names, QImage *image) const;
+    int blurColumn(QWidget *window, const QString &label, QImage *image) const;
+    void forEachColumn(const QString &label,
+                       const std::function<void(QAbstractItemView*, QHeaderView*, int)> &fn,
+                       bool includeHidden) const;
     void fail(const QString &reason);
 
     QWidget *mWindow;

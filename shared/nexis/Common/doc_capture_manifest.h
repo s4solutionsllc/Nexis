@@ -31,6 +31,7 @@ struct DocCaptureStep
         ShowPalette,    // open the command palette
         Key,            // send key `text` (e.g. "Escape") to the focused window
         CloseDialog,    // close the top-level dialog whose title matches `text`
+        ShowColumn,     // unhide the item-view column whose header is `text`
     };
 
     Type type = Type::Wait;
@@ -52,6 +53,7 @@ struct DocCaptureShot
     QString dialog;          // non-empty: capture the top-level window with this title
     bool frame = true;       // draw window chrome + shadow around the capture
     QStringList blur;        // objectNames whose visible widgets are blurred (redaction)
+    QStringList blurColumns; // item-view header labels whose visible cells are blurred
 };
 
 namespace DocCaptureManifest {
