@@ -599,6 +599,7 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Common/trust_safety_runner.h"
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.h"
   "${GUI_SHARED_DIR}/Common/doc_capture_manifest.h"
+  "${GUI_SHARED_DIR}/Common/doc_capture_mode.h"
   "${GUI_SHARED_DIR}/Common/doc_capture_frame.h"
   "${GUI_SHARED_DIR}/Common/doc_capture_runner.h"
   "${GUI_SHARED_DIR}/Managers/app_in_use_gate.h"

@@ -10,7 +10,9 @@
 
 #include <QtTest/QtTest>
 #include <QCoreApplication>
+#include <QSysInfo>
 
+#include "Common/doc_capture_mode.h"
 #include "Managers/info_manager.h"
 #include <Info/boot_analysis_info.h>
 #include <Info/startup_info.h>
@@ -47,6 +49,23 @@ private slots:
         InfoManager *im = InfoManager::ins();
         QCOMPARE(im->bootAnalysisInfo(), im->bootAnalysisInfo());
         QCOMPARE(im->startupInfo(),      im->startupInfo());
+    }
+
+    // SSO-27842: --capture-docs substitutes the machine hostname at the source
+    // so published screenshots never show a real one.
+    void hostnameIsPlaceholderOnlyInCaptureMode()
+    {
+        InfoManager *im = InfoManager::ins();
+        DocCaptureMode::setActive(false);
+        const QString real = im->getHostname();
+        QCOMPARE(real, QSysInfo::machineHostName());
+
+        DocCaptureMode::setActive(true);
+        const QString captured = im->getHostname();
+        DocCaptureMode::setActive(false);
+        QCOMPARE(captured, QStringLiteral("nexis-demo"));
+
+        QCOMPARE(im->getHostname(), real);
     }
 };
 

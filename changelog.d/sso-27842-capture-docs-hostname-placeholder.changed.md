@@ -1,0 +1,1 @@
+`nexis --capture-docs` now substitutes the machine hostname with the placeholder `nexis-demo` at the source (`InfoManager::getHostname()`), so regenerated documentation screenshots no longer show the capture host's name on the Dashboard or Hardware Info; normal launches are unchanged, and `docs/SCREENSHOTS.md` lists the remaining accepted exposures (SSO-27842).

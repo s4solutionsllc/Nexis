@@ -49,8 +49,23 @@ Captures come out at the display's pixel density: on a Retina or 200%-scaled dis
 
 ## Before you run it
 
-- **Hostname.** The Dashboard system bar and Hardware Info show the machine's hostname. Use a machine
-  or session whose hostname you're happy to publish.
+- **Hostname.** Substituted automatically: while `--capture-docs` runs, `InfoManager::getHostname()`
+  returns `nexis-demo` (`Common/doc_capture_mode.h`), so the Dashboard system bar, Hardware Info and the
+  health report never show the real one. Normal launches are unaffected. Any new place that renders a
+  machine-identifying value should get the same treatment at its source rather than a `blur` entry.
+- **Known accepted exposures.** These render real machine values and are not substituted. Check them
+  by eye before committing:
+
+  | Where | What | Why accepted |
+  |---|---|---|
+  | System Logs | Free-text log messages can contain the hostname, username or paths. | Arbitrary content from the OS log; can't be rewritten without changing what the page shows. Review the image. |
+  | Helpers → Hosts | The `IP Address` column of `/etc/hosts`. | Normally loopback and broadcast entries; hostnames and aliases are blurred. Review for LAN addresses. |
+  | Docker | Container names, ports and IDs. | The image column is blurred; the rest comes from whatever containers the capture host runs. Use a clean demo container. |
+  | Dashboard / Settings / Disk Tools | Volume labels (for example `Macintosh HD`). | Stock OS labels; check a custom-named volume isn't on screen. |
+
+  Audited and not rendered by any manifest page: local username (Processes `User` is blurred; Search
+  shows none), home path (the Settings Downloads path is below the fold; the System Cleaner shortens it
+  to `~`), IP and MAC addresses (Network Usage shows interface names only), and hardware serials or UUIDs.
 - **Live data.** Machine-specific names are blurred automatically on both platforms: every name and
   path on Services and Startup Apps, and APT repository names (`blur`); and the name columns of
   Processes (Name, User, Process), Boot Analysis (Service), Docker (Image), Helpers → Hosts (Full
