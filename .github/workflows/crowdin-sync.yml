@@ -8,6 +8,17 @@ on:
   schedule:
     - cron: '0 */12 * * *'
   workflow_dispatch:
+    inputs:
+      upload_translations_language:
+        description: >-
+          One-time import: Crowdin language code (e.g. fr) whose repo
+          shared/translations/nexis_<code>.ts is uploaded to Crowdin as that
+          language's translations. Leave empty for the normal download-only sync.
+          Run only after a community .ts contribution has merged, before the next
+          scheduled download overwrites it (GH#574).
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: write
@@ -43,7 +54,10 @@ jobs:
         uses: crowdin/github-action@d651c77756acbe11a31d77a6fb79d8a239e1e05a # v2.9.1
         with:
           upload_sources: true
-          upload_translations: false
+          # Download-only by default. A manual dispatch can name one language to
+          # import from the repo into Crowdin (see the workflow_dispatch input).
+          upload_translations: ${{ inputs.upload_translations_language != '' }}
+          upload_language: ${{ inputs.upload_translations_language }}
           download_translations: true
           create_pull_request: true
           pull_request_title: 'chore(i18n): new Crowdin translations'
