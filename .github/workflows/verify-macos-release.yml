@@ -1,7 +1,7 @@
 name: Verify macOS Release
 
 # One-shot verifier for macOS release artifacts (SSO-3493 / audit B3 follow-up).
-# Downloads the DMG from a published release on macos-14, mounts it, extracts the
+# Downloads the DMG from a published release on macos-15, mounts it, extracts the
 # .app, and runs the three notarization checks: CFBundleIdentifier, stapler
 # validate, spctl --assess. Output goes to the run summary and job log.
 
@@ -23,8 +23,8 @@ permissions:
 
 jobs:
   verify:
-    name: Verify ${{ inputs.tag }} on macos-14
-    runs-on: macos-14
+    name: Verify ${{ inputs.tag }} on macos-15
+    runs-on: macos-15
     timeout-minutes: 15
 
     steps:
