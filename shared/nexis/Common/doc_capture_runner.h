@@ -43,6 +43,16 @@ private:
     void nextShot();
     void runSteps(const QList<DocCaptureStep> &steps, int index, std::function<void()> done);
     void runStep(const DocCaptureStep &step, std::function<void()> done);
+    void runInstantStep(const DocCaptureStep &step);
+    void waitUntilEnabled(const QString &name, qint64 limitMs, std::function<void()> done);
+    void stepClick(const DocCaptureStep &step);
+    void stepSetText(const DocCaptureStep &step);
+    void stepScroll(const DocCaptureStep &step);
+    void stepExpandTrees();
+    void stepSort(const DocCaptureStep &step);
+    void stepShowColumn(const DocCaptureStep &step);
+    void stepShowPalette();
+    void stepKey(const DocCaptureStep &step);
     void capture();
     void finish();
 

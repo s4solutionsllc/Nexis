@@ -122,169 +122,190 @@ void DocCaptureRunner::runSteps(const QList<DocCaptureStep> &steps, int index,
     });
 }
 
+// Timed steps (wait, waitUptime, waitEnabled) finish asynchronously and call
+// `done` themselves; every other step acts immediately and then continues.
 void DocCaptureRunner::runStep(const DocCaptureStep &step, std::function<void()> done)
 {
     using T = DocCaptureStep::Type;
     switch (step.type) {
-    case T::Click: {
-        QWidget *w = step.object.isEmpty() ? findButtonByText(step.text) : findWidget(step.object);
-        auto *btn = qobject_cast<QAbstractButton*>(w);
-        if (!btn) {
-            fail(QStringLiteral("click: no button \"%1\"").arg(step.object.isEmpty() ? step.text : step.object));
-        } else {
-            btn->click();
-        }
-        done();
-        return;
-    }
-    case T::SetText: {
-        QWidget *w = findWidget(step.object);
-        if (auto *edit = qobject_cast<QLineEdit*>(w)) {
-            edit->setText(step.text);
-        } else if (auto *combo = qobject_cast<QComboBox*>(w); combo && combo->isEditable()) {
-            combo->setEditText(step.text);
-        } else {
-            fail(QStringLiteral("setText: no text field \"%1\"").arg(step.object));
-        }
-        done();
-        return;
-    }
     case T::Wait:
         QTimer::singleShot(static_cast<int>(step.seconds * 1000), this, done);
         return;
     case T::WaitUptime: {
+        // Counted from start(): lets slow-filling pages (Resources) share one
+        // warm-up across shots instead of each waiting the full period.
         const qint64 remaining = static_cast<qint64>(step.seconds * 1000) - mUptime.elapsed();
         QTimer::singleShot(static_cast<int>(qMax<qint64>(0, remaining)), this, done);
         return;
     }
-    case T::WaitEnabled: {
-        auto *timer = new QTimer(this);
-        auto *clock = new QElapsedTimer;
-        clock->start();
-        const QString name = step.object;
-        const qint64 limit = static_cast<qint64>(step.seconds * 1000);
-        connect(timer, &QTimer::timeout, this, [this, timer, clock, name, limit, done]() {
-            QWidget *w = findWidget(name);
-            const bool ready = w && w->isEnabled();
-            if (ready || clock->elapsed() > limit) {
-                if (!ready)
-                    fail(QStringLiteral("waitEnabled: \"%1\" not enabled after %2 s").arg(name).arg(limit / 1000));
-                timer->stop();
-                timer->deleteLater();
-                delete clock;
-                done();
-            }
-        });
-        timer->start(250);
+    case T::WaitEnabled:
+        waitUntilEnabled(step.object, static_cast<qint64>(step.seconds * 1000), done);
         return;
-    }
-    case T::Scroll: {
-        QWidget *page = currentPage();
-        QAbstractScrollArea *best = nullptr;
-        if (page) {
-            for (QAbstractScrollArea *a : page->findChildren<QAbstractScrollArea*>()) {
-                if (!a->isVisible() || !a->verticalScrollBar() || a->verticalScrollBar()->maximum() == 0)
-                    continue;
-                if (!best || a->height() > best->height())
-                    best = a;
-            }
-        }
-        if (best) {
-            QScrollBar *bar = best->verticalScrollBar();
-            bar->setValue(static_cast<int>(bar->minimum() + step.position * (bar->maximum() - bar->minimum())));
-        } else {
-            fail(QStringLiteral("scroll: no scrollable area on the page"));
-        }
+    default:
+        runInstantStep(step);
         done();
         return;
     }
-    case T::ExpandTrees: {
-        if (QWidget *page = currentPage()) {
-            for (QTreeView *tv : page->findChildren<QTreeView*>()) {
-                if (tv->isVisible())
-                    tv->expandToDepth(0);
-            }
-        }
-        done();
-        return;
-    }
-    case T::Sort: {
-        bool sorted = false;
-        if (QWidget *page = currentPage()) {
-            for (QAbstractItemView *view : page->findChildren<QAbstractItemView*>()) {
-                if (!view->isVisible() || !view->model())
-                    continue;
-                QHeaderView *header = nullptr;
-                if (auto *tv = qobject_cast<QTreeView*>(view))
-                    header = tv->header();
-                else if (auto *tab = qobject_cast<QTableView*>(view))
-                    header = tab->horizontalHeader();
-                if (!header)
-                    continue;
-                for (int c = 0; c < view->model()->columnCount(); ++c) {
-                    const QString label = view->model()->headerData(c, Qt::Horizontal).toString().trimmed();
-                    if (label.compare(step.text, Qt::CaseInsensitive) == 0) {
-                        header->setSortIndicator(c, step.descending ? Qt::DescendingOrder : Qt::AscendingOrder);
-                        view->model()->sort(c, step.descending ? Qt::DescendingOrder : Qt::AscendingOrder);
-                        sorted = true;
-                        break;
-                    }
-                }
-                if (sorted)
-                    break;
-            }
-        }
-        if (!sorted)
-            fail(QStringLiteral("sort: no column \"%1\"").arg(step.text));
-        done();
-        return;
-    }
-    case T::ShowPalette: {
-        if (auto *palette = mWindow->findChild<CommandPalette*>())
-            palette->show();
-        else
-            fail(QStringLiteral("showPalette: command palette not found"));
-        done();
-        return;
-    }
-    case T::Key: {
-        const QKeySequence seq(step.text);
-        QWidget *target = QApplication::activePopupWidget();
-        if (!target)
-            target = QApplication::focusWidget();
-        if (!target)
-            target = mWindow;
-        if (seq.isEmpty()) {
-            fail(QStringLiteral("key: cannot parse \"%1\"").arg(step.text));
-        } else {
-            const QKeyCombination combo = seq[0];
-            QKeyEvent press(QEvent::KeyPress, combo.key(), combo.keyboardModifiers());
-            QKeyEvent release(QEvent::KeyRelease, combo.key(), combo.keyboardModifiers());
-            QCoreApplication::sendEvent(target, &press);
-            QCoreApplication::sendEvent(target, &release);
-        }
-        done();
-        return;
-    }
-    case T::ShowColumn: {
-        bool shown = false;
-        forEachColumn(step.text, [&shown](QAbstractItemView *, QHeaderView *header, int col) {
-            header->setSectionHidden(col, false);
-            shown = true;
-        }, /*includeHidden=*/true);
-        if (!shown)
-            fail(QStringLiteral("showColumn: no column \"%1\"").arg(step.text));
-        done();
-        return;
-    }
-    case T::CloseDialog: {
+}
+
+// Dispatch for steps that complete synchronously. Each helper records a
+// failure (fail()) instead of aborting, so one missing control never stops
+// the rest of the run.
+void DocCaptureRunner::runInstantStep(const DocCaptureStep &step)
+{
+    using T = DocCaptureStep::Type;
+    switch (step.type) {
+    case T::Click:       stepClick(step); break;
+    case T::SetText:     stepSetText(step); break;
+    case T::Scroll:      stepScroll(step); break;
+    case T::ExpandTrees: stepExpandTrees(); break;
+    case T::Sort:        stepSort(step); break;
+    case T::ShowColumn:  stepShowColumn(step); break;
+    case T::ShowPalette: stepShowPalette(); break;
+    case T::Key:         stepKey(step); break;
+    case T::CloseDialog:
         if (QWidget *dlg = findDialog(step.text))
             dlg->close();
+        break;
+    case T::Wait:
+    case T::WaitUptime:
+    case T::WaitEnabled:
+        break;   // handled asynchronously in runStep()
+    }
+}
+
+// Poll every 250 ms until widget `name` is enabled (e.g. a scan button that
+// is disabled while scanning), or give up after `limitMs`.
+void DocCaptureRunner::waitUntilEnabled(const QString &name, qint64 limitMs, std::function<void()> done)
+{
+    auto *timer = new QTimer(this);
+    auto *clock = new QElapsedTimer;
+    clock->start();
+    connect(timer, &QTimer::timeout, this, [this, timer, clock, name, limitMs, done]() {
+        QWidget *w = findWidget(name);
+        const bool ready = w && w->isEnabled();
+        if (!ready && clock->elapsed() <= limitMs)
+            return;
+        if (!ready)
+            fail(QStringLiteral("waitEnabled: \"%1\" not enabled after %2 s").arg(name).arg(limitMs / 1000));
+        timer->stop();
+        timer->deleteLater();
+        delete clock;
         done();
+    });
+    timer->start(250);
+}
+
+// Click a button found by objectName, or by its visible label when no
+// objectName is given (for buttons built in code without one).
+void DocCaptureRunner::stepClick(const DocCaptureStep &step)
+{
+    QWidget *w = step.object.isEmpty() ? findButtonByText(step.text) : findWidget(step.object);
+    if (auto *btn = qobject_cast<QAbstractButton*>(w))
+        btn->click();
+    else
+        fail(QStringLiteral("click: no button \"%1\"").arg(step.object.isEmpty() ? step.text : step.object));
+}
+
+// Fill a line edit or an editable combo box (e.g. the Disk Map folder).
+void DocCaptureRunner::stepSetText(const DocCaptureStep &step)
+{
+    QWidget *w = findWidget(step.object);
+    if (auto *edit = qobject_cast<QLineEdit*>(w))
+        edit->setText(step.text);
+    else if (auto *combo = qobject_cast<QComboBox*>(w); combo && combo->isEditable())
+        combo->setEditText(step.text);
+    else
+        fail(QStringLiteral("setText: no text field \"%1\"").arg(step.object));
+}
+
+// Scroll the page's main scroll area — the tallest visible one that can
+// scroll — to `position` (0 = top, 1 = bottom).
+void DocCaptureRunner::stepScroll(const DocCaptureStep &step)
+{
+    QAbstractScrollArea *best = nullptr;
+    if (QWidget *page = currentPage()) {
+        for (QAbstractScrollArea *a : page->findChildren<QAbstractScrollArea*>()) {
+            if (!a->isVisible() || !a->verticalScrollBar() || a->verticalScrollBar()->maximum() == 0)
+                continue;
+            if (!best || a->height() > best->height())
+                best = a;
+        }
+    }
+    if (!best) {
+        fail(QStringLiteral("scroll: no scrollable area on the page"));
         return;
     }
+    QScrollBar *bar = best->verticalScrollBar();
+    bar->setValue(static_cast<int>(bar->minimum() + step.position * (bar->maximum() - bar->minimum())));
+}
+
+// Open the first level of every visible tree (Uninstaller groups).
+void DocCaptureRunner::stepExpandTrees()
+{
+    if (QWidget *page = currentPage()) {
+        for (QTreeView *tv : page->findChildren<QTreeView*>()) {
+            if (tv->isVisible())
+                tv->expandToDepth(0);
+        }
     }
-    done();
+}
+
+// Sort the first visible item view that has a column headed `step.text`.
+void DocCaptureRunner::stepSort(const DocCaptureStep &step)
+{
+    const Qt::SortOrder order = step.descending ? Qt::DescendingOrder : Qt::AscendingOrder;
+    bool sorted = false;
+    forEachColumn(step.text, [&sorted, order](QAbstractItemView *view, QHeaderView *header, int col) {
+        if (sorted)
+            return;
+        header->setSortIndicator(col, order);
+        view->model()->sort(col, order);
+        sorted = true;
+    }, /*includeHidden=*/false);
+    if (!sorted)
+        fail(QStringLiteral("sort: no column \"%1\"").arg(step.text));
+}
+
+// Unhide a column the page hides by default (Processes GPU % / GPU VRAM).
+void DocCaptureRunner::stepShowColumn(const DocCaptureStep &step)
+{
+    bool shown = false;
+    forEachColumn(step.text, [&shown](QAbstractItemView *, QHeaderView *header, int col) {
+        header->setSectionHidden(col, false);
+        shown = true;
+    }, /*includeHidden=*/true);
+    if (!shown)
+        fail(QStringLiteral("showColumn: no column \"%1\"").arg(step.text));
+}
+
+void DocCaptureRunner::stepShowPalette()
+{
+    if (auto *palette = mWindow->findChild<CommandPalette*>())
+        palette->show();
+    else
+        fail(QStringLiteral("showPalette: command palette not found"));
+}
+
+// Deliver a key press/release to the open popup (e.g. Escape closes the
+// command palette), else the focused widget, else the main window.
+void DocCaptureRunner::stepKey(const DocCaptureStep &step)
+{
+    const QKeySequence seq(step.text);
+    if (seq.isEmpty()) {
+        fail(QStringLiteral("key: cannot parse \"%1\"").arg(step.text));
+        return;
+    }
+    QWidget *target = QApplication::activePopupWidget();
+    if (!target)
+        target = QApplication::focusWidget();
+    if (!target)
+        target = mWindow;
+    const QKeyCombination combo = seq[0];
+    QKeyEvent press(QEvent::KeyPress, combo.key(), combo.keyboardModifiers());
+    QKeyEvent release(QEvent::KeyRelease, combo.key(), combo.keyboardModifiers());
+    QCoreApplication::sendEvent(target, &press);
+    QCoreApplication::sendEvent(target, &release);
 }
 
 void DocCaptureRunner::capture()
