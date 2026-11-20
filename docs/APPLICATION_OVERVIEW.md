@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-11-04 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23859, SSO-23860, SSO-23853, SSO-23854) | Version 2.14.1
+> Last updated: 2026-11-20 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23859, SSO-23860, SSO-23853, SSO-23854) | Version 2.15.0
 
 ---
 
@@ -58,12 +58,12 @@ conflict-prone region in the repo (SSO-23891, SSO-23951).
 
 | Metric | Value | Source of truth |
 |--------|-------|-----------------|
-| Version | 2.14.1 | `project(... VERSION ...)` in `CMakeLists.txt` |
-| Source LOC (C++) | ~86,100 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
-| Source files (C++) | 546 | same |
-| Test LOC | ~29,000 | `tests/` |
-| Test executables | 131 (129 unit + 2 screenshot; some platform-gated) | `add_nexis_test()` / `add_executable()` in `tests/CMakeLists.txt` |
-| Test methods | ~1242 | `private slots:` in `tests/*/test_*.cpp` |
+| Version | 2.15.0 | `project(... VERSION ...)` in `CMakeLists.txt` |
+| Source LOC (C++) | ~94,200 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
+| Source files (C++) | 578 | same |
+| Test LOC | ~34,000 | `tests/` |
+| Test executables | 146 (144 unit + 2 screenshot; some platform-gated) | `add_nexis_test()` / `add_executable()` in `tests/CMakeLists.txt` |
+| Test methods | ~1462 | `private slots:` in `tests/*/test_*.cpp` |
 | Translations | 34 languages | `shared/translations/*.ts` |
 
 <!-- END NEXIS-STATS -->

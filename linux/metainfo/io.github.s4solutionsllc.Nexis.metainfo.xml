@@ -74,6 +74,19 @@
   </screenshots>
 
   <releases>
+    <release version="2.15.0" date="2026-11-20">
+      <description>
+        <p>Added:</p>
+        <ul>
+          <li>System Cleaner history with restore from Trash, cleaning-profile safety checks and deny-list gates</li>
+          <li>Developer project, local AI model and agent worktree cleaners; new developer-tool cleaning profiles</li>
+          <li>Duplicate Finder v2: duplicate folders, link replacement, pause/resume</li>
+          <li>Linux pre-clean restore point via Timeshift, snapper or btrfs</li>
+          <li>Sustained-threshold tray alerts, persistence watch, settings import/export, process tree view, temperature average/max</li>
+          <li>Native Debian 13 .deb for amd64 and arm64</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.14.1" date="2026-11-04">
       <description>
         <p>Fixed:</p>
