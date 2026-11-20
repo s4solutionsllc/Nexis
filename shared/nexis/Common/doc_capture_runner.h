@@ -49,6 +49,7 @@ private:
     QWidget *findButtonByText(const QString &text) const;
     QWidget *findDialog(const QString &title) const;
     QImage grabWithPopups(QWidget *window) const;
+    int blurWidgets(QWidget *window, const QStringList &names, QImage *image) const;
     void fail(const QString &reason);
 
     QWidget *mWindow;

@@ -96,4 +96,27 @@ QImage decorate(const QImage &content, const QString &title, const Style &style)
     return out;
 }
 
+void blurRect(QImage &image, const QRect &rect)
+{
+    const QRect r = rect.intersected(image.rect());
+    if (r.width() < 2 || r.height() < 2)
+        return;
+
+    QImage region = image.copy(r);
+    // Two passes of a ~1/12 downscale with smoothing: glyph shapes are gone,
+    // the band keeps the row's tone so the screenshot still reads naturally.
+    for (int pass = 0; pass < 2; ++pass) {
+        const QSize small(qMax(1, region.width() / 12), qMax(1, region.height() / 12));
+        region = region.scaled(small, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                       .scaled(r.size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    }
+
+    QPainter p(&image);
+    p.setCompositionMode(QPainter::CompositionMode_Source);
+    QImage plain = region;
+    plain.setDevicePixelRatio(1.0);
+    const qreal dpr = image.devicePixelRatio() > 0 ? image.devicePixelRatio() : 1.0;
+    p.drawImage(QRectF(r.x() / dpr, r.y() / dpr, r.width() / dpr, r.height() / dpr), plain);
+}
+
 } // namespace DocCaptureFrame

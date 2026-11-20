@@ -51,9 +51,10 @@ Captures come out at the display's pixel density: on a Retina or 200%-scaled dis
 
 - **Hostname.** The Dashboard system bar and Hardware Info show the machine's hostname. Use a machine
   or session whose hostname you're happy to publish.
-- **Live data.** Processes, Services, Startup Apps, the Uninstaller and System Logs show what's
-  actually on the machine. Review those shots for internal service names, usernames and private paths
-  before committing them. Disk Map scans `/Applications` on macOS and `/usr` on Linux, never your home
+- **Live data.** Every name and path on the Services and Startup Apps pages is blurred automatically
+  (the manifest's `blur` lists), on both platforms. Processes, the Uninstaller and System Logs still
+  show what's actually on the machine; review those shots for usernames and private paths before
+  committing them. Disk Map scans `/Applications` on macOS and `/usr` on Linux, never your home
   folder.
 - **Linux specifics.** Run on Ubuntu 26.04 with GNOME (the reference platform). Docker must be running
   with at least one container for `docker.png` and `Nexis-12.png`. `Nexis-04.png` needs an NVIDIA or AMD
@@ -79,6 +80,7 @@ failed, re-run just that file with `--capture-only <name>.png`.
     "steps": [ { "do": "click", "object": "btnAdvancePaneToggle" } ],
     "after": [ { "do": "click", "object": "btnAdvancePaneToggle" } ],
     "dialog": "",                                        // capture this window title instead
+    "blur": ["lblServiceName"],                          // objectNames to blur (redaction)
     "frame": true }
 ] }
 ```
@@ -87,7 +89,8 @@ Steps: `click` (`object` = objectName, or `text` = button label), `setText` (lin
 combo), `wait` (`seconds`), `waitEnabled` (`object`, `seconds` timeout), `waitUptime` (wait until the
 app has run `seconds`), `scroll` (`position` 0–1 of the page's main scroll area), `expandTrees`, `sort`
 (`text` = column header, `order` asc/desc), `showPalette`, `key` (`text` = key sequence, e.g.
-`Escape`), `closeDialog` (`text` = window title). Page ids are the `PageSlot` ids in `app.cpp`
+`Escape`), `closeDialog` (`text` = window title). `blur` blurs every visible widget with the listed
+object names (clipped to what's on screen) before the frame is added; the shot fails if none are visible. Page ids are the `PageSlot` ids in `app.cpp`
 (`dashboard`, `resources`, `processes`, `networkUsage`, `hardwareInfo`, `bootAnalysis`, `systemLogs`,
 `systemCleaner`, `diskTools`, `diskMap`, `mailCleanup`, `shredder`, `search`, `uninstaller`,
 `startupApps`, `services`, `aptSourceManager` (Homebrew on macOS), `docker`, `helpers`, `gnomeSettings`,

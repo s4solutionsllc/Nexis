@@ -195,6 +195,18 @@ QList<DocCaptureShot> parse(const QByteArray &json, const QString &platform, QSt
         shot.page = o.value("page").toString();
         shot.dialog = o.value("dialog").toString();
         shot.frame = o.value("frame").toBool(true);
+
+        const QJsonValue blur = o.value("blur");
+        if (!blur.isUndefined()) {
+            if (!blur.isArray())
+                return fail(QStringLiteral("shot %1: \"blur\" must be an array of object names").arg(label));
+            for (const QJsonValue &b : blur.toArray()) {
+                const QString name = b.toString();
+                if (name.isEmpty())
+                    return fail(QStringLiteral("shot %1: \"blur\" entries must be non-empty object names").arg(label));
+                shot.blur << name;
+            }
+        }
         shot.settle = o.value("settle").toDouble(1.5);
         if (shot.settle < 0 || shot.settle > 60)
             return fail(QStringLiteral("shot %1: \"settle\" must be between 0 and 60").arg(label));

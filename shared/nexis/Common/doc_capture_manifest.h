@@ -51,6 +51,7 @@ struct DocCaptureShot
     double settle = 1.5;     // seconds to wait after navigation, before steps
     QString dialog;          // non-empty: capture the top-level window with this title
     bool frame = true;       // draw window chrome + shadow around the capture
+    QStringList blur;        // objectNames whose visible widgets are blurred (redaction)
 };
 
 namespace DocCaptureManifest {

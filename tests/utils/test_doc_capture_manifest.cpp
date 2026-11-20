@@ -62,6 +62,8 @@ private slots:
         QTest::newRow("click without target") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","steps":[{"do":"click"}]}]})") << "click needs";
         QTest::newRow("wait too long") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","steps":[{"do":"wait","seconds":9999}]}]})") << "seconds";
         QTest::newRow("scroll out of range") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","steps":[{"do":"scroll","position":2}]}]})") << "position";
+        QTest::newRow("blur not array") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","blur":"lblName"}]})") << "blur";
+        QTest::newRow("blur empty name") << QByteArray(R"({"version":1,"shots":[{"file":"x.png","blur":[""]}]})") << "blur";
         QTest::newRow("duplicate for platform") << QByteArray(R"({"version":1,"shots":[{"file":"x.png"},{"file":"x.png","platforms":["linux"]}]})") << "listed twice";
     }
 
@@ -73,6 +75,64 @@ private slots:
         const auto shots = DocCaptureManifest::parse(json, "macos", &error);
         QVERIFY(shots.isEmpty());
         QVERIFY2(error.contains(expected, Qt::CaseInsensitive), qPrintable(error));
+    }
+
+    void parsesBlurList()
+    {
+        const QByteArray json = R"({"version":1,"shots":[{"file":"x.png","blur":["lblA","lblB"]}]})";
+        QString error;
+        const auto shots = DocCaptureManifest::parse(json, "linux", &error);
+        QVERIFY2(error.isEmpty(), qPrintable(error));
+        QCOMPARE(shots.at(0).blur, QStringList({"lblA", "lblB"}));
+    }
+
+    // Services and Startup Apps list real service/agent names: every shot of
+    // those pages must redact them.
+    void bundledManifestBlursServiceAndStartupNames()
+    {
+        const QByteArray json = bundledManifest();
+        for (const char *platform : {"macos", "linux"}) {
+            QString error;
+            for (const DocCaptureShot &s : DocCaptureManifest::parse(json, QString::fromLatin1(platform), &error)) {
+                if (s.page == QLatin1String("services"))
+                    QVERIFY2(s.blur.contains("lblServiceName") && s.blur.contains("lblServiceDescription"), qPrintable(s.file));
+                if (s.page == QLatin1String("startupApps"))
+                    QVERIFY2(s.blur.contains("lblStartupAppName") && s.blur.contains("lblStartupAppPath"), qPrintable(s.file));
+            }
+        }
+    }
+
+    void blurRectRemovesDetailOnlyInsideRect()
+    {
+        // Alternating 1px black/white stripes: maximal detail.
+        QImage img(240, 120, QImage::Format_ARGB32_Premultiplied);
+        for (int y = 0; y < img.height(); ++y)
+            for (int x = 0; x < img.width(); ++x)
+                img.setPixelColor(x, y, (x % 2) ? Qt::white : Qt::black);
+
+        const QRect r(40, 20, 120, 60);
+        DocCaptureFrame::blurRect(img, r);
+
+        // Inside: neighbouring pixels are now nearly equal (stripes gone).
+        int maxStep = 0;
+        for (int x = r.left() + 4; x < r.right() - 4; ++x)
+            maxStep = qMax(maxStep, qAbs(img.pixelColor(x, r.center().y()).red()
+                                         - img.pixelColor(x + 1, r.center().y()).red()));
+        QVERIFY2(maxStep < 40, qPrintable(QString::number(maxStep)));
+
+        // Outside: untouched.
+        QCOMPARE(img.pixelColor(10, 10), QColor(Qt::black));
+        QCOMPARE(img.pixelColor(11, 10), QColor(Qt::white));
+        QCOMPARE(img.pixelColor(r.right() + 5, r.bottom() + 5).red() % 255, 0);
+    }
+
+    void blurRectClipsToImage()
+    {
+        QImage img(50, 50, QImage::Format_ARGB32_Premultiplied);
+        img.fill(Qt::red);
+        DocCaptureFrame::blurRect(img, QRect(40, 40, 100, 100));   // must not crash
+        DocCaptureFrame::blurRect(img, QRect(200, 200, 10, 10));   // fully outside: no-op
+        QCOMPARE(img.pixelColor(0, 0), QColor(Qt::red));
     }
 
     void samePathAllowedOncePerPlatform()

@@ -293,6 +293,9 @@ void DocCaptureRunner::capture()
 
     if (target) {
         QImage image = shot.dialog.isEmpty() ? grabWithPopups(target) : target->grab().toImage();
+        const int blurred = blurWidgets(target, shot.blur, &image);
+        if (!shot.blur.isEmpty() && blurred == 0)
+            fail(QStringLiteral("blur: none of %1 visible").arg(shot.blur.join(", ")));
         const bool fullScreen = target->isFullScreen();
         if (mOptions.frame && shot.frame && !fullScreen)
             image = DocCaptureFrame::decorate(image, title, frameStyle());
@@ -378,6 +381,29 @@ QWidget *DocCaptureRunner::findDialog(const QString &title) const
             return top;
     }
     return nullptr;
+}
+
+int DocCaptureRunner::blurWidgets(QWidget *window, const QStringList &names, QImage *image) const
+{
+    const qreal dpr = image->devicePixelRatio() > 0 ? image->devicePixelRatio() : 1.0;
+    int count = 0;
+    for (const QString &name : names) {
+        for (QWidget *w : window->findChildren<QWidget*>(name)) {
+            if (!w->isVisible())
+                continue;
+            // visibleRegion() is already clipped by scroll viewports and
+            // parents, so rows scrolled out of view are skipped.
+            const QRect visible = w->visibleRegion().boundingRect();
+            if (visible.isEmpty())
+                continue;
+            const QRect inWindow(w->mapTo(window, visible.topLeft()), visible.size());
+            const QRect padded = inWindow.adjusted(-2, -2, 2, 2);
+            DocCaptureFrame::blurRect(*image, QRect(qRound(padded.x() * dpr), qRound(padded.y() * dpr),
+                                                    qRound(padded.width() * dpr), qRound(padded.height() * dpr)));
+            ++count;
+        }
+    }
+    return count;
 }
 
 QImage DocCaptureRunner::grabWithPopups(QWidget *window) const

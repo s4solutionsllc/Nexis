@@ -3,6 +3,7 @@
 
 #include <QColor>
 #include <QImage>
+#include <QRect>
 #include <QString>
 
 // Draws neutral window chrome (title bar, rounded corners, drop shadow)
@@ -39,6 +40,11 @@ constexpr int kCornerRadius = 10;
 // pixels, with the content placed under the title bar. The returned image
 // carries the content's devicePixelRatio.
 QImage decorate(const QImage &content, const QString &title, const Style &style);
+
+// Redact a rectangle (device pixels) in place: heavy downscale/upscale so
+// text inside is unreadable while the area keeps its overall color and
+// shape. The rectangle is clipped to the image.
+void blurRect(QImage &image, const QRect &rect);
 
 } // namespace DocCaptureFrame
 
