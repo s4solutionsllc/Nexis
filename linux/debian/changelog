@@ -4,7 +4,8 @@ nexis (2.15.0-1) unstable; urgency=medium
     safety checks and deny-list gates, developer-project, local AI model and
     agent-worktree cleaners, Duplicate Finder v2, snapper/btrfs pre-clean
     snapshots, sustained-threshold alerts, persistence watch, settings
-    import/export, process tree view, and a native Debian 13 .deb. See
+    import/export, process tree view, a native Debian 13 .deb, and the
+    nexis --capture-docs screenshot tool for contributors. See
     CHANGELOG.md for full details.
 
  -- Luke Simpson <luke@s4solutions.ai>  Fri, 20 Nov 2026 00:00:00 +0000

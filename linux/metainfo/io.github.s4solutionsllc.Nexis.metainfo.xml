@@ -84,6 +84,7 @@
           <li>Linux pre-clean restore point via Timeshift, snapper or btrfs</li>
           <li>Sustained-threshold tray alerts, persistence watch, settings import/export, process tree view, temperature average/max</li>
           <li>Native Debian 13 .deb for amd64 and arm64</li>
+          <li>Contributors can regenerate documentation screenshots with nexis --capture-docs</li>
         </ul>
       </description>
     </release>
