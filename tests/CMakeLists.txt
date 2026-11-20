@@ -28,6 +28,19 @@ add_nexis_test(NAME MiniMonitorFormatUtilTests SOURCES utils/test_mini_monitor_f
 add_nexis_test(NAME SustainedThresholdTrackerTests SOURCES utils/test_sustained_threshold_tracker.cpp)
 add_nexis_test(NAME PersistenceWatchTests SOURCES utils/test_persistence_watch.cpp)
 add_nexis_test(NAME FileUtilTests     SOURCES utils/test_file_util.cpp)
+# Documentation screenshot manifest (nexis --capture-docs): parser,
+# validation, frame painter, and that the bundled manifest covers every
+# screenshot the README, website guide and AppStream metainfo reference.
+add_nexis_test(NAME DocCaptureManifestTests
+  SOURCES
+    utils/test_doc_capture_manifest.cpp
+    "${GUI_SHARED_DIR}/Common/doc_capture_manifest.cpp"
+    "${GUI_SHARED_DIR}/Common/doc_capture_frame.cpp"
+  INCLUDES
+    "${GUI_SHARED_DIR}"
+  LIBS
+    Qt6::Gui
+)
 add_nexis_test(NAME CommandUtilTests       SOURCES utils/test_command_util.cpp)
 add_nexis_test(NAME CommandUtilAsyncTests  SOURCES utils/test_command_util_async.cpp LIBS Qt6::Concurrent)
 add_nexis_test(NAME HeadlessUtilTests SOURCES utils/test_headless_util.cpp)

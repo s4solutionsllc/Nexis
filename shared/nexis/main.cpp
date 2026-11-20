@@ -8,6 +8,7 @@
 #include <QLockFile>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QMessageBox>
 #include <QMutex>
 #include <QMutexLocker>
@@ -16,6 +17,10 @@
 #include <QSettings>
 #include <QSystemTrayIcon>
 #include <QTimer>
+#include <QCommandLineParser>
+#include <QStandardPaths>
+#include <QJsonDocument>
+#include <cstdio>
 
 #include "app.h"
 #include <Managers/setting_manager.h>
@@ -25,6 +30,8 @@
 #include <Services/wipe_free_space_service.h>
 #include <Utils/format_util.h>
 #include <Utils/headless_util.h>
+#include "Common/doc_capture_manifest.h"
+#include "Common/doc_capture_runner.h"
 #ifdef Q_OS_MAC
 #include <Info/sparkle_update_installer.h>
 #endif
@@ -176,6 +183,134 @@ static QString detectSystemIconTheme()
 }
 #endif
 
+// ── --capture-docs support ──────────────────────────────────────────────
+// See docs/SCREENSHOTS.md and Common/doc_capture_runner.h.
+
+struct DocCaptureArgs
+{
+    bool enabled = false;
+    bool listOnly = false;
+    bool freshProfile = true;
+    bool frame = true;
+    QString outputRoot;
+    QString manifestPath;           // empty = bundled manifest
+    QString only;                   // comma-separated wildcard filter
+    QString theme = QStringLiteral("dark");
+    QSize windowSize{1320, 840};
+};
+
+static void addDocCaptureOptions(QCommandLineParser &parser)
+{
+    parser.addOption({"capture-docs", "Capture the documentation screenshots into <dir> (normally the repo root) and quit.", "dir"});
+    parser.addOption({"capture-manifest", "Use this manifest instead of the bundled one.", "file"});
+    parser.addOption({"capture-only", "Only capture files matching these comma-separated wildcards.", "patterns"});
+    parser.addOption({"capture-size", "Main window size for captures (default 1320x840).", "WxH"});
+    parser.addOption({"capture-theme", "Color scheme for captures: dark (default) or light.", "theme"});
+    parser.addOption({"capture-profile", "fresh (default: isolated default settings) or current (your settings).", "profile"});
+    parser.addOption(QCommandLineOption("capture-no-frame", "Do not draw window chrome around captures."));
+    parser.addOption(QCommandLineOption("capture-list", "List the shots for this platform and quit."));
+}
+
+static DocCaptureArgs parseDocCaptureArgs(int argc, char *argv[])
+{
+    DocCaptureArgs a;
+    auto value = [&](int &i) { return (i + 1 < argc) ? QString::fromLocal8Bit(argv[++i]) : QString(); };
+    for (int i = 1; i < argc; ++i) {
+        const QString arg = QString::fromLocal8Bit(argv[i]);
+        if (arg == "--capture-docs") {
+            a.enabled = true;
+            a.outputRoot = value(i);
+        } else if (arg == "--capture-list") {
+            a.enabled = true;
+            a.listOnly = true;
+        } else if (arg == "--capture-manifest") {
+            a.manifestPath = value(i);
+        } else if (arg == "--capture-only") {
+            a.only = value(i);
+        } else if (arg == "--capture-theme") {
+            a.theme = value(i);
+        } else if (arg == "--capture-profile") {
+            a.freshProfile = value(i) != QLatin1String("current");
+        } else if (arg == "--capture-no-frame") {
+            a.frame = false;
+        } else if (arg == "--capture-size") {
+            const QStringList wh = value(i).toLower().split('x');
+            if (wh.size() == 2 && wh[0].toInt() >= 640 && wh[1].toInt() >= 480)
+                a.windowSize = QSize(wh[0].toInt(), wh[1].toInt());
+        }
+    }
+    return a;
+}
+
+static QList<DocCaptureShot> loadDocCaptureShots(const DocCaptureArgs &a, QString *error)
+{
+    if (!a.listOnly) {
+        if (a.outputRoot.isEmpty() || !QDir(a.outputRoot).exists()) {
+            *error = QObject::tr("output directory \"%1\" does not exist").arg(a.outputRoot);
+            return {};
+        }
+    }
+    if (a.theme != QLatin1String("dark") && a.theme != QLatin1String("light")) {
+        *error = QObject::tr("--capture-theme must be dark or light");
+        return {};
+    }
+    QFile f(a.manifestPath.isEmpty() ? QStringLiteral(":/static/doc_capture/manifest.json") : a.manifestPath);
+    if (!f.open(QIODevice::ReadOnly)) {
+        *error = QObject::tr("cannot read manifest %1").arg(f.fileName());
+        return {};
+    }
+    QList<DocCaptureShot> shots = DocCaptureManifest::parse(
+        f.readAll(), DocCaptureManifest::currentPlatform(), error);
+    if (!error->isEmpty())
+        return {};
+    shots = DocCaptureManifest::filter(shots, a.only);
+    if (shots.isEmpty())
+        *error = QObject::tr("no shots match this platform and filter");
+    return shots;
+}
+
+static bool prepareDocCaptureProfile(const DocCaptureArgs &a, QString *error)
+{
+    if (a.freshProfile) {
+        QStandardPaths::setTestModeEnabled(true);
+        // Start from defaults every run. Only ever delete inside Qt's
+        // test-mode tree, never a real profile directory.
+        for (auto loc : {QStandardPaths::AppConfigLocation, QStandardPaths::AppDataLocation,
+                         QStandardPaths::AppLocalDataLocation, QStandardPaths::CacheLocation}) {
+            const QString dir = QDir::cleanPath(QStandardPaths::writableLocation(loc));
+            const bool inTestTree = dir.contains(QLatin1String("qttest"), Qt::CaseInsensitive)
+                                    || dir.contains(QLatin1String("qtest"), Qt::CaseInsensitive);
+            const bool appScoped = QFileInfo(dir).fileName() == qApp->applicationName();
+            if (inTestTree && appScoped) {
+                QDir(dir).removeRecursively();
+            } else {
+                *error = QObject::tr("refusing to reset unexpected profile path %1").arg(dir);
+                return false;
+            }
+        }
+    }
+    const QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    QDir().mkpath(configDir);
+    QSettings settings(configDir + "/settings.ini", QSettings::IniFormat);
+    settings.setValue("ColorScheme", a.theme);
+    if (a.freshProfile) {
+        settings.setValue("StartPage", "dashboard");
+        settings.setValue("LaunchInKioskMode", false);
+        settings.setValue("StartMinimizedToTray", false);
+        // A fixed, hardware-neutral dashboard arrangement so every capture run
+        // (and both platforms) document the same layout.
+        QFile layout(QStringLiteral(":/static/doc_capture/dashboard_layout.json"));
+        if (layout.open(QIODevice::ReadOnly)) {
+            const QJsonDocument doc = QJsonDocument::fromJson(layout.readAll());
+            if (doc.isObject())
+                settings.setValue("DashboardLayout",
+                                  QString::fromUtf8(doc.toJson(QJsonDocument::Compact)));
+        }
+    }
+    settings.sync();
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     // Force-include the Qt Resource data from the nexis-gui static library.
@@ -204,6 +339,31 @@ int main(int argc, char *argv[])
     qApp->setWindowIcon(QIcon(":/static/logo.svg"));
 #endif
     qApp->setDesktopFileName("nexis");
+
+    // ── Documentation screenshots (--capture-docs) ─────────────────────
+    // Parsed before any QStandardPaths use: the default "fresh" profile
+    // switches Qt to test-mode paths so the capture never reads or writes the
+    // user's real settings, history or schedules.
+    DocCaptureArgs capture = parseDocCaptureArgs(argc, argv);
+    QList<DocCaptureShot> captureShots;
+    if (capture.enabled) {
+        QString error;
+        captureShots = loadDocCaptureShots(capture, &error);
+        if (!error.isEmpty()) {
+            std::fprintf(stderr, "nexis --capture-docs: %s\n", qPrintable(error));
+            return 2;
+        }
+        if (capture.listOnly) {
+            for (const DocCaptureShot &s : captureShots)
+                std::fprintf(stdout, "%s\t%s\n", qPrintable(s.file),
+                             qPrintable(s.page.isEmpty() ? s.dialog : s.page));
+            return 0;
+        }
+        if (!prepareDocCaptureProfile(capture, &error)) {
+            std::fprintf(stderr, "nexis --capture-docs: %s\n", qPrintable(error));
+            return 2;
+        }
+    }
 
     // ── Headless mode detection (before QLockFile) ──────────────────────
     // Parse --clean <schedule-id>, --check-threshold, and --report
@@ -291,7 +451,10 @@ int main(int argc, char *argv[])
     QLockFile lockFile(lockPath);
     lockFile.setStaleLockTime(0);
 
-    if (!lockFile.tryLock(100)) {
+    // A fresh-profile capture shares no settings or data with a running
+    // Nexis, so it may run alongside one.
+    const bool skipLock = capture.enabled && capture.freshProfile;
+    if (!skipLock && !lockFile.tryLock(100)) {
         QMessageBox::warning(nullptr, "Nexis",
             QObject::tr("Another instance of Nexis is already running."));
         return 1;
@@ -305,6 +468,7 @@ int main(int argc, char *argv[])
         parser.addHelpOption();
 	    parser.addOption(hideOption);
         parser.addOption(noSplashOption);
+        addDocCaptureOptions(parser);
         parser.process(app);
     }
 
@@ -401,7 +565,7 @@ int main(int argc, char *argv[])
     QPixmap pixSplash(splashPath);
     QSplashScreen *splash = new QSplashScreen(pixSplash);
 
-    if (!isNoSplash) splash->show();
+    if (!isNoSplash && !capture.enabled) splash->show();
 
     app.processEvents();
 
@@ -410,6 +574,17 @@ int main(int argc, char *argv[])
     WipeFreeSpaceService::recoverFromCrash();
 
     App w;
+
+    if (capture.enabled) {
+        delete splash;
+        DocCaptureRunner::Options opts;
+        opts.outputRoot = capture.outputRoot;
+        opts.windowSize = capture.windowSize;
+        opts.frame = capture.frame;
+        auto *runner = new DocCaptureRunner(&w, captureShots, opts, &app);
+        runner->start();
+        return app.exec();
+    }
 
     // SSO-354: setting-based equivalent of --hide for any launch path. Never
     // honor this without a usable tray — otherwise the app launches with no

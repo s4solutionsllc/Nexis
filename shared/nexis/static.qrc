@@ -41,6 +41,8 @@
         <file>static/themes/light/img/loading.gif</file>
         <file>static/themes/light/style/values.ini</file>
         <file>static/themes/default/style/values.ini</file>
+        <file>static/doc_capture/manifest.json</file>
+        <file>static/doc_capture/dashboard_layout.json</file>
         <file>static/logo.svg</file>
         <file>static/tray-icon.svg</file>
         <file>static/tray-icon-symbolic.svg</file>

@@ -1151,6 +1151,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 
 1. **Pre-QApplication headless gate (SSO-3368):** Scan `argv` for `--clean` / `--check-threshold`. If headless and `QT_QPA_PLATFORM` is unset, `qputenv("QT_QPA_PLATFORM", "offscreen")`. Done before `QApplication` so cron/timer runs do not abort on missing QPA platforms.
 2. Create `QApplication`
+   - **Documentation capture (`--capture-docs <dir>`):** parse the capture options; with the default `--capture-profile fresh`, switch `QStandardPaths` to test mode and reset that tree so the run never touches the user's settings or history, and skip the single-instance lock. See [`docs/SCREENSHOTS.md`](SCREENSHOTS.md).
 3. Install custom message handler (logs to `~/.config/nexis/nexis.log`)
 4. **Headless mode check:** `--clean <id>` or `--check-threshold` → run `CleanerService`, exit
 5. **Single-instance enforcement:** `QLockFile` at `/tmp/nexis.lock` — shows warning dialog if already running
@@ -1159,6 +1160,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 8. Load Ubuntu font from embedded resources
 9. Show theme-aware splash screen matching Color Scheme setting (unless `--nosplash`)
 10. Create `App` main window
+    - With `--capture-docs`, hand the window to `DocCaptureRunner` (`shared/nexis/Common/doc_capture_runner.h`), which walks the bundled manifest (`static/doc_capture/manifest.json`), grabs each page with `QWidget::grab()`, writes the PNGs and quits
 11. Show window (unless `--hide`)
 12. Enter Qt event loop: `app.exec()`
 
