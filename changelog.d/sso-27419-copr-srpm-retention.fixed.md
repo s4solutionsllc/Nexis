@@ -1,1 +1,0 @@
-Fedora COPR publish no longer fails with "Artifact not found" when the `copr-publish` approval comes more than a day after the tag: the SRPM artifact is now kept for 30 days on tag pushes, matching GitHub's approval wait limit. A daily `COPR publish watch` job also keeps one standing issue for a stalled or failed publish (SSO-27419).
