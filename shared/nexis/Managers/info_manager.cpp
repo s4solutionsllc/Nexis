@@ -1,4 +1,5 @@
 #include "info_manager.h"
+#include "Common/doc_capture_mode.h"
 #include <QStandardPaths>
 #include <QNetworkInterface>
 #include <QHostAddress>
@@ -112,6 +113,8 @@ QStringList InfoManager::getGroupList() const
  */
 QString InfoManager::getHostname() const
 {
+    if (DocCaptureMode::isActive())
+        return DocCaptureMode::placeholderHostname();
     return si->getHostname();
 }
 

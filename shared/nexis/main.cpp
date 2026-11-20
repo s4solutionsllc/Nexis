@@ -31,6 +31,7 @@
 #include <Utils/format_util.h>
 #include <Utils/headless_util.h>
 #include "Common/doc_capture_manifest.h"
+#include "Common/doc_capture_mode.h"
 #include "Common/doc_capture_runner.h"
 #ifdef Q_OS_MAC
 #include <Info/sparkle_update_installer.h>
@@ -363,6 +364,7 @@ int main(int argc, char *argv[])
             std::fprintf(stderr, "nexis --capture-docs: %s\n", qPrintable(error));
             return 2;
         }
+        DocCaptureMode::setActive(true);
     }
 
     // ── Headless mode detection (before QLockFile) ──────────────────────
