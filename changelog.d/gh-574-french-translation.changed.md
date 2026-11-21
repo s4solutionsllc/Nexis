@@ -1,0 +1,1 @@
+French translation brought to near-complete coverage (1830 of 1906 strings, up from 113), contributed by @tycooon33 (GH#574). Marked `needs-native-qa` pending native-speaker review; the 76 newest strings remain untranslated.
