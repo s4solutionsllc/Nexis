@@ -433,8 +433,8 @@ void TestGitWorktreeTool::procProbe_findsCwdInsidePath()
 
 void TestGitWorktreeTool::procProbe_seesARealProcess()
 {
-#ifndef Q_OS_LINUX
-    QSKIP("reads /proc");
+#if !defined(Q_OS_LINUX) && !defined(Q_OS_MACOS)
+    QSKIP("needs /proc or lsof");
 #endif
     QTemporaryDir area;
     const QString dir = QFileInfo(area.path()).canonicalFilePath();
