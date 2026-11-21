@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "tiles": [
+    {"id": "cpu", "uid": "cpu", "row": 0, "col": 0, "rowSpan": 3, "colSpan": 3, "style": "hybrid"},
+    {"id": "gpu", "uid": "gpu", "row": 0, "col": 3, "rowSpan": 3, "colSpan": 3, "style": "hybrid"},
+    {"id": "memory", "uid": "memory", "row": 3, "col": 0, "rowSpan": 2, "colSpan": 2, "style": "hybrid"},
+    {"id": "network", "uid": "network", "row": 3, "col": 2, "rowSpan": 2, "colSpan": 3, "style": "network"},
+    {"id": "disk", "uid": "disk", "row": 3, "col": 5, "rowSpan": 2, "colSpan": 1, "style": "vumeter"},
+    {"id": "health", "uid": "health", "row": 0, "col": 6, "rowSpan": 5, "colSpan": 2, "style": "health"}
+  ]
+}

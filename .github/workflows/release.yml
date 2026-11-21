@@ -586,7 +586,7 @@ jobs:
   # ============================================================================
   build-macos:
     name: macOS Build
-    runs-on: macos-14
+    runs-on: macos-15
     # SSO-24907: blanket job-level guard. The last clean release (v2.10.0)
     # ran this job in 6m32s; 60m is a generous ceiling against `brew install
     # qt@6`, `macdeployqt`, `hdiutil create`, or `xcrun stapler staple` each

@@ -1,7 +1,7 @@
 # Nexis — Application Overview
 
 > A comprehensive reference for what Nexis does and how it is built.
-> Last updated: 2026-11-04 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23859, SSO-23860, SSO-23853, SSO-23854) | Version 2.14.1
+> Last updated: 2026-11-20 (SSO-23855, SSO-23896, SSO-23862, SSO-23856, SSO-23859, SSO-23860, SSO-23853, SSO-23854) | Version 2.15.0
 
 ---
 
@@ -58,12 +58,12 @@ conflict-prone region in the repo (SSO-23891, SSO-23951).
 
 | Metric | Value | Source of truth |
 |--------|-------|-----------------|
-| Version | 2.14.1 | `project(... VERSION ...)` in `CMakeLists.txt` |
-| Source LOC (C++) | ~86,100 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
-| Source files (C++) | 546 | same |
-| Test LOC | ~29,000 | `tests/` |
-| Test executables | 131 (129 unit + 2 screenshot; some platform-gated) | `add_nexis_test()` / `add_executable()` in `tests/CMakeLists.txt` |
-| Test methods | ~1242 | `private slots:` in `tests/*/test_*.cpp` |
+| Version | 2.15.0 | `project(... VERSION ...)` in `CMakeLists.txt` |
+| Source LOC (C++) | ~95,500 | `shared/`, `linux/`, `macos/` (`*.cpp`/`*.h`/`*.mm`) |
+| Source files (C++) | 584 | same |
+| Test LOC | ~34,300 | `tests/` |
+| Test executables | 147 (145 unit + 2 screenshot; some platform-gated) | `add_nexis_test()` / `add_executable()` in `tests/CMakeLists.txt` |
+| Test methods | ~1462 | `private slots:` in `tests/*/test_*.cpp` |
 | Translations | 34 languages | `shared/translations/*.ts` |
 
 <!-- END NEXIS-STATS -->
@@ -1151,6 +1151,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 
 1. **Pre-QApplication headless gate (SSO-3368):** Scan `argv` for `--clean` / `--check-threshold`. If headless and `QT_QPA_PLATFORM` is unset, `qputenv("QT_QPA_PLATFORM", "offscreen")`. Done before `QApplication` so cron/timer runs do not abort on missing QPA platforms.
 2. Create `QApplication`
+   - **Documentation capture (`--capture-docs <dir>`):** parse the capture options; with the default `--capture-profile fresh`, switch `QStandardPaths` to test mode and reset that tree so the run never touches the user's settings or history, and skip the single-instance lock. See [`docs/SCREENSHOTS.md`](SCREENSHOTS.md).
 3. Install custom message handler (logs to `~/.config/nexis/nexis.log`)
 4. **Headless mode check:** `--clean <id>` or `--check-threshold` → run `CleanerService`, exit
 5. **Single-instance enforcement:** `QLockFile` at `/tmp/nexis.lock` — shows warning dialog if already running
@@ -1159,6 +1160,7 @@ Arabic, Afrikaans, Catalan, Chinese (Simplified/Traditional), Czech, Danish, Dut
 8. Load Ubuntu font from embedded resources
 9. Show theme-aware splash screen matching Color Scheme setting (unless `--nosplash`)
 10. Create `App` main window
+    - With `--capture-docs`, hand the window to `DocCaptureRunner` (`shared/nexis/Common/doc_capture_runner.h`), which walks the bundled manifest (`static/doc_capture/manifest.json`), grabs each page with `QWidget::grab()`, writes the PNGs and quits
 11. Show window (unless `--hide`)
 12. Enter Qt event loop: `app.exec()`
 

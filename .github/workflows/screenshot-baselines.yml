@@ -121,7 +121,7 @@ jobs:
 
   regenerate-macos:
     name: Regenerate (macos)
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Skip if not requested
         id: skip-check

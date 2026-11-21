@@ -11,7 +11,7 @@ if(NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "Minimum macOS deployment version")
 endif()
 
-project(Nexis VERSION 2.14.1)
+project(Nexis VERSION 2.15.0)
 
 # Adding features(build cache + faster linkers) and reasonable defaults(Debug build by default)
 include("${CMAKE_CURRENT_SOURCE_DIR}/shared/cmake/cxxbasics/CXXBasics.cmake")
@@ -449,6 +449,9 @@ set(GUI_SHARED_SRCS
   "${GUI_SHARED_DIR}/utilities.cpp"
   "${GUI_SHARED_DIR}/Common/trust_safety_runner.cpp"
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.cpp"
+  "${GUI_SHARED_DIR}/Common/doc_capture_manifest.cpp"
+  "${GUI_SHARED_DIR}/Common/doc_capture_frame.cpp"
+  "${GUI_SHARED_DIR}/Common/doc_capture_runner.cpp"
   "${GUI_SHARED_DIR}/Managers/app_in_use_gate.cpp"
   "${GUI_SHARED_DIR}/Managers/app_manager.cpp"
   "${GUI_SHARED_DIR}/Managers/cleaner_action_interpreter.cpp"
@@ -595,6 +598,10 @@ set(GUI_SHARED_HDRS
   "${GUI_SHARED_DIR}/Common/trust_safety_types.h"
   "${GUI_SHARED_DIR}/Common/trust_safety_runner.h"
   "${GUI_SHARED_DIR}/Common/trust_safety_preview_dialog.h"
+  "${GUI_SHARED_DIR}/Common/doc_capture_manifest.h"
+  "${GUI_SHARED_DIR}/Common/doc_capture_mode.h"
+  "${GUI_SHARED_DIR}/Common/doc_capture_frame.h"
+  "${GUI_SHARED_DIR}/Common/doc_capture_runner.h"
   "${GUI_SHARED_DIR}/Managers/app_in_use_gate.h"
   "${GUI_SHARED_DIR}/Managers/app_manager.h"
   "${GUI_SHARED_DIR}/Managers/cleaner_action_interpreter.h"
