@@ -103,7 +103,7 @@
     </message>
     <message>
       <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.ui" line="304"/>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="327"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="338"/>
       <source>Add Repository</source>
       <translation>Ajouter un dépôt</translation>
     </message>
@@ -124,13 +124,13 @@
     </message>
     <message>
       <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="95"/>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="502"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="529"/>
       <source>Check Now</source>
       <translation type="unfinished">Check Now</translation>
     </message>
     <message>
       <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="103"/>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="547"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="581"/>
       <source>Refresh Health</source>
       <translation type="unfinished">Refresh Health</translation>
     </message>
@@ -140,71 +140,102 @@
       <translation type="unfinished">apt update / apt list --upgradable, on demand or hourly</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="132"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="137"/>
+      <source>System</source>
+      <translation type="unfinished">System</translation>
+    </message>
+    <message>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="138"/>
+      <source>User</source>
+      <translation type="unfinished">User</translation>
+    </message>
+    <message>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="139"/>
+      <source>Flatpak installation scope for Update Selected</source>
+      <translation type="unfinished">Flatpak installation scope for Update Selected</translation>
+    </message>
+    <message>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="143"/>
       <source>Update Selected</source>
       <translation type="unfinished">Update Selected</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="149"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="160"/>
       <source>Source</source>
       <translation type="unfinished">Source</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="149"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="160"/>
       <source>Version</source>
       <translation type="unfinished">Version</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="175"/>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="222"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="186"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="233"/>
       <source>Checking...</source>
       <translation type="unfinished">Checking...</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="245"/>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="248"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="256"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="259"/>
       <source>example %1</source>
       <translation>exemple %1</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="307"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="318"/>
       <source>Adding...</source>
       <translation type="unfinished">Adding...</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="466"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="481"/>
       <source>Upgrading…</source>
       <translation type="unfinished">Upgrading…</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="479"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="502"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="504"/>
       <source>%1: %2</source>
       <translation type="unfinished">%1: %2</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="488"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="502"/>
+      <source>Authentication cancelled</source>
+      <translation type="unfinished">Authentication cancelled</translation>
+    </message>
+    <message>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="515"/>
       <source>Upgrade complete.</source>
       <translation type="unfinished">Upgrade complete.</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="490"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="517"/>
       <source>Upgrade finished with errors:
 %1</source>
       <translation type="unfinished">Upgrade finished with errors:
 %1</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="510"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="537"/>
       <source>Available Updates (%1)</source>
       <translation type="unfinished">Available Updates (%1)</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="607"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="554"/>
+      <source>Phased update (%1%)</source>
+      <translation type="unfinished">Phased update (%1%)</translation>
+    </message>
+    <message>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="555"/>
+      <source>Ubuntu is gradually rolling out this update. It isn&apos;t available to everyone yet and can&apos;t be installed from Nexis until the rollout completes.</source>
+      <translation type="unfinished">Ubuntu is gradually rolling out this update. It isn&apos;t available to everyone yet and can&apos;t be installed from Nexis until the rollout completes.</translation>
+    </message>
+    <message>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="641"/>
       <source>Ask Claude.ai</source>
       <translation type="unfinished">Ask Claude.ai</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="614"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="648"/>
       <source>A question about this repository issue has been copied to your clipboard.
 
 Paste it into Claude to get personalized help.</source>
@@ -213,17 +244,17 @@ Paste it into Claude to get personalized help.</source>
 Paste it into Claude to get personalized help.</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="623"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="657"/>
       <source>Open Claude.ai</source>
       <translation type="unfinished">Open Claude.ai</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="631"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="665"/>
       <source>Close</source>
       <translation type="unfinished">Close</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="656"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="690"/>
       <source>This will permanently delete this repository entry.
 
 This action cannot be undone.
@@ -236,7 +267,7 @@ This action cannot be undone.
 Proceed?</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="659"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="693"/>
       <source>This will modify your system&apos;s repository configuration.
 
 Action: %1
@@ -249,17 +280,17 @@ Action: %1
 This requires administrator privileges. Proceed?</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="665"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="699"/>
       <source>Confirm: %1</source>
       <translation type="unfinished">Confirm: %1</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="699"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="733"/>
       <source>Action Failed</source>
       <translation type="unfinished">Action Failed</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="700"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="734"/>
       <source>%1
 
 %2</source>
@@ -268,17 +299,17 @@ This requires administrator privileges. Proceed?</translation>
 %2</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="149"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="160"/>
       <source>Package</source>
       <translation type="unfinished">Package</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="291"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="302"/>
       <source>APT Repositories (%1)</source>
       <translation>Dépôt APT (%1)</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="301"/>
+      <location filename="../../linux/nexis/Pages/AptSourceManager/apt_source_manager_page.cpp" line="312"/>
       <source>Save</source>
       <translation>Sauvegarder</translation>
     </message>
@@ -336,391 +367,774 @@ This requires administrator privileges. Proceed?</translation>
     </message>
   </context>
   <context>
+    <name>AgentWorktreesDialog</name>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="38"/>
+      <source>Agent Worktrees</source>
+      <translation type="unfinished">Agent Worktrees</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="55"/>
+      <source>Git worktrees left behind by AI coding agents (Claude Code, Codex, Cursor, Paperclip). Registered worktrees are removed with git, which refuses any that have uncommitted changes. Folders their repository no longer registers cannot be inspected, so they move to the Trash and can be restored from System Cleaner → History.</source>
+      <translation type="unfinished">Git worktrees left behind by AI coding agents (Claude Code, Codex, Cursor, Paperclip). Registered worktrees are removed with git, which refuses any that have uncommitted changes. Folders their repository no longer registers cannot be inspected, so they move to the Trash and can be restored from System Cleaner → History.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="69"/>
+      <source>Status</source>
+      <translation type="unfinished">Status</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="69"/>
+      <source>Path</source>
+      <translation type="unfinished">Path</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="69"/>
+      <source>Branch</source>
+      <translation type="unfinished">Branch</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="70"/>
+      <source>Changes</source>
+      <translation type="unfinished">Changes</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="70"/>
+      <source>Size</source>
+      <translation type="unfinished">Size</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="70"/>
+      <source>Last activity</source>
+      <translation type="unfinished">Last activity</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="85"/>
+      <source>Remove Selected</source>
+      <translation type="unfinished">Remove Selected</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="86"/>
+      <source>Close</source>
+      <translation type="unfinished">Close</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="92"/>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="100"/>
+      <source>Scanning for agent worktrees…</source>
+      <translation type="unfinished">Scanning for agent worktrees…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="110"/>
+      <source>git is not installed, so worktrees cannot be listed.</source>
+      <translation type="unfinished">git is not installed, so worktrees cannot be listed.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="130"/>
+      <source>Folder gone</source>
+      <translation type="unfinished">Folder gone</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="131"/>
+      <source>Not registered</source>
+      <translation type="unfinished">Not registered</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="132"/>
+      <source>Idle</source>
+      <translation type="unfinished">Idle</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="143"/>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="149"/>
+      <source>Unknown</source>
+      <translation type="unfinished">Unknown</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="151"/>
+      <source>Clean</source>
+      <translation type="unfinished">Clean</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="153"/>
+      <source>%1 uncommitted</source>
+      <translation type="unfinished">%1 uncommitted</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="155"/>
+      <source>%1 unpushed</source>
+      <translation type="unfinished">%1 unpushed</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="178"/>
+      <source>Remove %n worktree(s), %1 with git and %2 to the Trash?</source>
+      <translation type="unfinished">
+        <numerusform>Remove %n worktree(s), %1 with git and %2 to the Trash?</numerusform>
+        <numerusform>Remove %n worktree(s), %1 with git and %2 to the Trash?</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="211"/>
+      <source>%1
+Repository: %2</source>
+      <translation type="unfinished">%1
+Repository: %2</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="243"/>
+      <source>No abandoned agent worktrees found.</source>
+      <translation type="unfinished">No abandoned agent worktrees found.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="257"/>
+      <source>Found %1 worktree(s) using %2 — %3 selected (%4).</source>
+      <translation type="unfinished">Found %1 worktree(s) using %2 — %3 selected (%4).</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="281"/>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="304"/>
+      <source>Remove Worktrees</source>
+      <translation type="unfinished">Remove Worktrees</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="288"/>
+      <source>Removing…</source>
+      <translation type="unfinished">Removing…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/agent_worktrees_dialog.cpp" line="305"/>
+      <source>Some worktrees were left in place:
+
+%1</source>
+      <translation type="unfinished">Some worktrees were left in place:
+
+%1</translation>
+    </message>
+  </context>
+  <context>
+    <name>AiModelStore</name>
+    <message>
+      <location filename="../nexis-core/Tools/ai_model_store_tool.cpp" line="637"/>
+      <source>Already gone.</source>
+      <translation type="unfinished">Already gone.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/ai_model_store_tool.cpp" line="651"/>
+      <source>Ollama reported success but the model is still in this store.</source>
+      <translation type="unfinished">Ollama reported success but the model is still in this store.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/ai_model_store_tool.cpp" line="652"/>
+      <source>ollama rm failed: %1 Start Ollama and try again.</source>
+      <translation type="unfinished">ollama rm failed: %1 Start Ollama and try again.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/ai_model_store_tool.cpp" line="665"/>
+      <source>Removed with ollama rm.</source>
+      <translation type="unfinished">Removed with ollama rm.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/ai_model_store_tool.cpp" line="710"/>
+      <source>Moved to the Trash.</source>
+      <translation type="unfinished">Moved to the Trash.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/ai_model_store_tool.cpp" line="713"/>
+      <source>%n item(s) could not be moved to the Trash.</source>
+      <translation type="unfinished">%n item(s) could not be moved to the Trash.</translation>
+    </message>
+  </context>
+  <context>
+    <name>AiModelsDialog</name>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="31"/>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="39"/>
+      <source>Local AI Models</source>
+      <translation type="unfinished">Local AI Models</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="44"/>
+      <source>Models downloaded by Ollama, Hugging Face, LM Studio and llama.cpp. You pick what to remove: nothing here is ticked for you and it is never part of a scheduled clean. &quot;Frees&quot; is what is really given back to disk; data two models share is counted once, and only when you tick every model that uses it. A removed model has to be downloaded again.</source>
+      <translation type="unfinished">Models downloaded by Ollama, Hugging Face, LM Studio and llama.cpp. You pick what to remove: nothing here is ticked for you and it is never part of a scheduled clean. &quot;Frees&quot; is what is really given back to disk; data two models share is counted once, and only when you tick every model that uses it. A removed model has to be downloaded again.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="59"/>
+      <source>Model</source>
+      <translation type="unfinished">Model</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="59"/>
+      <source>Tool</source>
+      <translation type="unfinished">Tool</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="59"/>
+      <source>Frees</source>
+      <translation type="unfinished">Frees</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="59"/>
+      <source>Last used</source>
+      <translation type="unfinished">Last used</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="59"/>
+      <source>Heads-up</source>
+      <translation type="unfinished">Heads-up</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="72"/>
+      <source>Remove Selected</source>
+      <translation type="unfinished">Remove Selected</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="73"/>
+      <source>Close</source>
+      <translation type="unfinished">Close</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="90"/>
+      <source>No downloaded models were found.</source>
+      <translation type="unfinished">No downloaded models were found.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="128"/>
+      <source>Re-download: %1.</source>
+      <translation type="unfinished">Re-download: %1.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="132"/>
+      <source> Removed with `ollama rm`, so Ollama&apos;s list stays correct.</source>
+      <translation type="unfinished"> Removed with `ollama rm`, so Ollama&apos;s list stays correct.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="133"/>
+      <source> Ollama was not found, so its files go to the Trash; Ollama may keep listing the model until it is restarted.</source>
+      <translation type="unfinished"> Ollama was not found, so its files go to the Trash; Ollama may keep listing the model until it is restarted.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="137"/>
+      <source> Every cached version goes to the Trash. Projects that link into this cache stop working until the next download.</source>
+      <translation type="unfinished"> Every cached version goes to the Trash. Projects that link into this cache stop working until the next download.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="141"/>
+      <source> The folder goes to the Trash; LM Studio may keep listing the model until it is restarted.</source>
+      <translation type="unfinished"> The folder goes to the Trash; LM Studio may keep listing the model until it is restarted.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="145"/>
+      <source> The files go to the Trash; llama.cpp downloads the model again on next use.</source>
+      <translation type="unfinished"> The files go to the Trash; llama.cpp downloads the model again on next use.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="149"/>
+      <source> %1 is shared with another model and stays unless that one is removed too.</source>
+      <translation type="unfinished"> %1 is shared with another model and stays unless that one is removed too.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="158"/>
+      <source>Nothing selected.</source>
+      <translation type="unfinished">Nothing selected.</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="159"/>
+      <source>%n model(s) selected, frees %1</source>
+      <translation type="unfinished">
+        <numerusform>%n model(s) selected, frees %1</numerusform>
+        <numerusform>%n model(s) selected, frees %1</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="182"/>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="213"/>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="215"/>
+      <source>Remove AI Models</source>
+      <translation type="unfinished">Remove AI Models</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="183"/>
+      <source>Remove %n model(s) and free about %1?</source>
+      <translation type="unfinished">
+        <numerusform>Remove %n model(s) and free about %1?</numerusform>
+        <numerusform>Remove %n model(s) and free about %1?</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="187"/>
+      <source>Remove</source>
+      <translation type="unfinished">Remove</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="188"/>
+      <source>Cancel</source>
+      <translation type="unfinished">Cancel</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/SystemCleaner/ai_models_dialog.cpp" line="211"/>
+      <source>Removed %n model(s), freed %1.</source>
+      <translation type="unfinished">
+        <numerusform>Removed %n model(s), freed %1.</numerusform>
+        <numerusform>Removed %n model(s), freed %1.</numerusform>
+      </translation>
+    </message>
+  </context>
+  <context>
     <name>App</name>
     <message>
-      <location filename="../nexis/app.cpp" line="199"/>
-      <location filename="../nexis/app.cpp" line="387"/>
-      <location filename="../nexis/app.cpp" line="426"/>
+      <location filename="../nexis/app.cpp" line="202"/>
+      <location filename="../nexis/app.cpp" line="390"/>
+      <location filename="../nexis/app.cpp" line="429"/>
       <source>Dashboard</source>
       <translation>Tableau de bord</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="236"/>
-      <location filename="../nexis/app.cpp" line="397"/>
-      <location filename="../nexis/app.cpp" line="510"/>
+      <location filename="../nexis/app.cpp" line="239"/>
+      <location filename="../nexis/app.cpp" line="400"/>
+      <location filename="../nexis/app.cpp" line="513"/>
       <source>Startup Apps</source>
       <translation>Applications de démarrage</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="217"/>
-      <location filename="../nexis/app.cpp" line="392"/>
-      <location filename="../nexis/app.cpp" line="458"/>
+      <location filename="../nexis/app.cpp" line="220"/>
+      <location filename="../nexis/app.cpp" line="395"/>
+      <location filename="../nexis/app.cpp" line="461"/>
       <source>System Cleaner</source>
       <translation>Nettoyage du système</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="234"/>
-      <location filename="../nexis/app.cpp" line="402"/>
-      <location filename="../nexis/app.cpp" line="525"/>
+      <location filename="../nexis/app.cpp" line="237"/>
+      <location filename="../nexis/app.cpp" line="405"/>
+      <location filename="../nexis/app.cpp" line="528"/>
       <source>Uninstaller</source>
       <translation>Désinstaller</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="201"/>
-      <location filename="../nexis/app.cpp" line="389"/>
-      <location filename="../nexis/app.cpp" line="446"/>
+      <location filename="../nexis/app.cpp" line="204"/>
+      <location filename="../nexis/app.cpp" line="392"/>
+      <location filename="../nexis/app.cpp" line="449"/>
       <source>Resources</source>
       <translation>Ressources</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="198"/>
+      <location filename="../nexis/app.cpp" line="201"/>
       <source>MONITOR</source>
       <translation type="unfinished">MONITOR</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="209"/>
-      <location filename="../nexis/app.cpp" line="388"/>
-      <location filename="../nexis/app.cpp" line="440"/>
+      <location filename="../nexis/app.cpp" line="212"/>
+      <location filename="../nexis/app.cpp" line="391"/>
+      <location filename="../nexis/app.cpp" line="443"/>
       <source>Hardware Info</source>
       <translation type="unfinished">Hardware Info</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="219"/>
-      <location filename="../nexis/app.cpp" line="390"/>
-      <location filename="../nexis/app.cpp" line="486"/>
+      <location filename="../nexis/app.cpp" line="222"/>
+      <location filename="../nexis/app.cpp" line="393"/>
+      <location filename="../nexis/app.cpp" line="489"/>
       <source>Disk Map</source>
       <translation type="unfinished">Disk Map</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="203"/>
-      <location filename="../nexis/app.cpp" line="391"/>
-      <location filename="../nexis/app.cpp" line="452"/>
+      <location filename="../nexis/app.cpp" line="206"/>
+      <location filename="../nexis/app.cpp" line="394"/>
+      <location filename="../nexis/app.cpp" line="455"/>
       <source>Network Usage</source>
       <translation type="unfinished">Network Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="230"/>
+      <location filename="../nexis/app.cpp" line="233"/>
       <source>MANAGE</source>
       <translation type="unfinished">MANAGE</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="218"/>
-      <location filename="../nexis/app.cpp" line="393"/>
-      <location filename="../nexis/app.cpp" line="480"/>
+      <location filename="../nexis/app.cpp" line="221"/>
+      <location filename="../nexis/app.cpp" line="396"/>
+      <location filename="../nexis/app.cpp" line="483"/>
       <source>Disk Tools</source>
       <translation type="unfinished">Disk Tools</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="210"/>
-      <location filename="../nexis/app.cpp" line="398"/>
-      <location filename="../nexis/app.cpp" line="516"/>
+      <location filename="../nexis/app.cpp" line="213"/>
+      <location filename="../nexis/app.cpp" line="401"/>
+      <location filename="../nexis/app.cpp" line="519"/>
       <source>Boot Analysis</source>
       <translation type="unfinished">Boot Analysis</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="222"/>
-      <location filename="../nexis/app.cpp" line="407"/>
-      <location filename="../nexis/app.cpp" line="533"/>
+      <location filename="../nexis/app.cpp" line="225"/>
+      <location filename="../nexis/app.cpp" line="410"/>
+      <location filename="../nexis/app.cpp" line="536"/>
       <source>Mail Cleanup</source>
       <translation type="unfinished">Mail Cleanup</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="224"/>
-      <location filename="../nexis/app.cpp" line="404"/>
-      <location filename="../nexis/app.cpp" line="540"/>
+      <location filename="../nexis/app.cpp" line="227"/>
+      <location filename="../nexis/app.cpp" line="407"/>
+      <location filename="../nexis/app.cpp" line="543"/>
       <source>File Shredder</source>
       <translation type="unfinished">File Shredder</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="243"/>
-      <location filename="../nexis/app.cpp" line="405"/>
-      <location filename="../nexis/app.cpp" line="630"/>
+      <location filename="../nexis/app.cpp" line="246"/>
+      <location filename="../nexis/app.cpp" line="408"/>
+      <location filename="../nexis/app.cpp" line="633"/>
       <source>Docker</source>
       <translation type="unfinished">Docker</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="249"/>
-      <location filename="../nexis/app.cpp" line="409"/>
-      <location filename="../nexis/app.cpp" line="546"/>
+      <location filename="../nexis/app.cpp" line="252"/>
+      <location filename="../nexis/app.cpp" line="412"/>
+      <location filename="../nexis/app.cpp" line="549"/>
       <source>Helpers</source>
       <translation type="unfinished">Helpers</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="211"/>
-      <location filename="../nexis/app.cpp" line="410"/>
-      <location filename="../nexis/app.cpp" line="552"/>
+      <location filename="../nexis/app.cpp" line="214"/>
+      <location filename="../nexis/app.cpp" line="413"/>
+      <location filename="../nexis/app.cpp" line="555"/>
       <source>System Logs</source>
       <translation type="unfinished">System Logs</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="241"/>
-      <location filename="../nexis/app.cpp" line="414"/>
-      <location filename="../nexis/app.cpp" line="581"/>
+      <location filename="../nexis/app.cpp" line="244"/>
+      <location filename="../nexis/app.cpp" line="417"/>
+      <location filename="../nexis/app.cpp" line="584"/>
       <source>APT Repository Manager</source>
       <translation>Gestionnaire de dépôt APT</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="250"/>
-      <location filename="../nexis/app.cpp" line="416"/>
-      <location filename="../nexis/app.cpp" line="647"/>
+      <location filename="../nexis/app.cpp" line="253"/>
+      <location filename="../nexis/app.cpp" line="419"/>
+      <location filename="../nexis/app.cpp" line="650"/>
       <source>GNOME Settings</source>
       <translation type="unfinished">GNOME Settings</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="202"/>
-      <location filename="../nexis/app.cpp" line="395"/>
-      <location filename="../nexis/app.cpp" line="498"/>
+      <location filename="../nexis/app.cpp" line="205"/>
+      <location filename="../nexis/app.cpp" line="398"/>
+      <location filename="../nexis/app.cpp" line="501"/>
       <source>Processes</source>
       <translation>Processus</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="237"/>
-      <location filename="../nexis/app.cpp" line="396"/>
-      <location filename="../nexis/app.cpp" line="504"/>
+      <location filename="../nexis/app.cpp" line="240"/>
+      <location filename="../nexis/app.cpp" line="399"/>
+      <location filename="../nexis/app.cpp" line="507"/>
       <source>Services</source>
       <translation type="unfinished">Services</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="254"/>
-      <location filename="../nexis/app.cpp" line="417"/>
-      <location filename="../nexis/app.cpp" line="558"/>
+      <location filename="../nexis/app.cpp" line="257"/>
+      <location filename="../nexis/app.cpp" line="420"/>
+      <location filename="../nexis/app.cpp" line="561"/>
       <source>Settings</source>
       <translation>Options</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="287"/>
-      <location filename="../nexis/app.cpp" line="418"/>
-      <location filename="../nexis/app.cpp" line="1846"/>
+      <location filename="../nexis/app.cpp" line="290"/>
+      <location filename="../nexis/app.cpp" line="421"/>
+      <location filename="../nexis/app.cpp" line="1960"/>
       <source>Feedback</source>
       <translation>Commentaires</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="232"/>
-      <location filename="../nexis/app.cpp" line="400"/>
-      <location filename="../nexis/app.cpp" line="523"/>
+      <location filename="../nexis/app.cpp" line="235"/>
+      <location filename="../nexis/app.cpp" line="403"/>
+      <location filename="../nexis/app.cpp" line="526"/>
       <source>Applications</source>
       <translation type="unfinished">Applications</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="208"/>
+      <location filename="../nexis/app.cpp" line="211"/>
       <source>DIAGNOSE</source>
       <translation type="unfinished">DIAGNOSE</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="216"/>
+      <location filename="../nexis/app.cpp" line="219"/>
       <source>CLEAN</source>
       <translation type="unfinished">CLEAN</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="225"/>
-      <location filename="../nexis/app.cpp" line="394"/>
-      <location filename="../nexis/app.cpp" line="492"/>
+      <location filename="../nexis/app.cpp" line="228"/>
+      <location filename="../nexis/app.cpp" line="397"/>
+      <location filename="../nexis/app.cpp" line="495"/>
       <source>File Search</source>
       <translation type="unfinished">File Search</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="239"/>
-      <location filename="../nexis/app.cpp" line="412"/>
-      <location filename="../nexis/app.cpp" line="578"/>
+      <location filename="../nexis/app.cpp" line="242"/>
+      <location filename="../nexis/app.cpp" line="415"/>
+      <location filename="../nexis/app.cpp" line="581"/>
       <source>Homebrew</source>
       <translation type="unfinished">Homebrew</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="248"/>
+      <location filename="../nexis/app.cpp" line="251"/>
       <source>TOOLS</source>
       <translation type="unfinished">TOOLS</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="608"/>
+      <location filename="../nexis/app.cpp" line="611"/>
       <source>System Updates Available</source>
       <translation type="unfinished">System Updates Available</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="609"/>
+      <location filename="../nexis/app.cpp" line="612"/>
       <source>%1 %2 available</source>
       <translation type="unfinished">%1 %2 available</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="609"/>
+      <location filename="../nexis/app.cpp" line="612"/>
       <source>update</source>
       <translation type="unfinished">update</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="609"/>
+      <location filename="../nexis/app.cpp" line="612"/>
       <source>updates</source>
       <translation type="unfinished">updates</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="620"/>
+      <location filename="../nexis/app.cpp" line="623"/>
       <source>Network Cap Alert</source>
       <translation type="unfinished">Network Cap Alert</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="621"/>
+      <location filename="../nexis/app.cpp" line="624"/>
       <source>You&apos;ve used %1% of your monthly data cap.</source>
       <translation type="unfinished">You&apos;ve used %1% of your monthly data cap.</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="811"/>
+      <location filename="../nexis/app.cpp" line="820"/>
       <source>Double-click to open Nexis</source>
       <translation type="unfinished">Double-click to open Nexis</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="876"/>
+      <location filename="../nexis/app.cpp" line="910"/>
       <source>Scheduled Clean Complete</source>
       <translation type="unfinished">Scheduled Clean Complete</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="877"/>
+      <location filename="../nexis/app.cpp" line="904"/>
       <source>Cleaned %1 — %2</source>
       <translation type="unfinished">Cleaned %1 — %2</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="947"/>
+      <location filename="../nexis/app.cpp" line="794"/>
+      <location filename="../nexis/app.cpp" line="796"/>
+      <source>Nexis</source>
+      <translation type="unfinished">Nexis</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/app.cpp" line="908"/>
+      <source> (%n item(s) skipped)</source>
+      <translation type="unfinished">
+        <numerusform> (%n item(s) skipped)</numerusform>
+        <numerusform> (%n item(s) skipped)</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/app.cpp" line="995"/>
       <source>Open Nexis</source>
       <translation type="unfinished">Open Nexis</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="961"/>
+      <location filename="../nexis/app.cpp" line="1009"/>
       <source>Clean Now</source>
       <translation type="unfinished">Clean Now</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1001"/>
+      <location filename="../nexis/app.cpp" line="1048"/>
       <source>Quick Actions</source>
       <translation type="unfinished">Quick Actions</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1003"/>
+      <location filename="../nexis/app.cpp" line="1050"/>
       <source>Open Command Palette</source>
       <translation type="unfinished">Open Command Palette</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1009"/>
-      <location filename="../nexis/app.cpp" line="1842"/>
+      <location filename="../nexis/app.cpp" line="1062"/>
+      <location filename="../nexis/app.cpp" line="1940"/>
       <source>Run System Cleaner Scan</source>
       <translation type="unfinished">Run System Cleaner Scan</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1014"/>
-      <location filename="../nexis/app.cpp" line="1850"/>
+      <location filename="../nexis/app.cpp" line="1067"/>
+      <location filename="../nexis/app.cpp" line="1964"/>
       <source>Mini Monitor</source>
       <translation type="unfinished">Mini Monitor</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1024"/>
+      <location filename="../nexis/app.cpp" line="1077"/>
       <source>Power Profile</source>
       <translation type="unfinished">Power Profile</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1064"/>
+      <location filename="../nexis/app.cpp" line="1125"/>
       <source>Quit</source>
       <translation>Quitter</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1104"/>
+      <location filename="../nexis/app.cpp" line="1165"/>
       <source>Loading %1…</source>
       <translation type="unfinished">Loading %1…</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1246"/>
+      <location filename="../nexis/app.cpp" line="1321"/>
       <source>%1 — Nexis</source>
       <translation type="unfinished">%1 — Nexis</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1657"/>
+      <location filename="../nexis/app.cpp" line="1741"/>
       <source>Press ESC to exit kiosk mode</source>
       <translation type="unfinished">Press ESC to exit kiosk mode</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1759"/>
+      <location filename="../nexis/app.cpp" line="1857"/>
       <source>&amp;File</source>
       <translation type="unfinished">&amp;File</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1760"/>
+      <location filename="../nexis/app.cpp" line="1858"/>
       <source>Settings…</source>
       <translation type="unfinished">Settings…</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1764"/>
+      <location filename="../nexis/app.cpp" line="1862"/>
       <source>Quit Nexis</source>
       <translation type="unfinished">Quit Nexis</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1769"/>
+      <location filename="../nexis/app.cpp" line="1867"/>
       <source>&amp;View</source>
       <translation type="unfinished">&amp;View</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1770"/>
+      <location filename="../nexis/app.cpp" line="1868"/>
       <source>Command Palette</source>
       <translation type="unfinished">Command Palette</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1791"/>
+      <location filename="../nexis/app.cpp" line="1889"/>
       <source>&amp;Go</source>
       <translation type="unfinished">&amp;Go</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1801"/>
+      <location filename="../nexis/app.cpp" line="1899"/>
       <source>&amp;Help</source>
       <translation type="unfinished">&amp;Help</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1802"/>
+      <location filename="../nexis/app.cpp" line="1900"/>
       <source>Feedback…</source>
       <translation type="unfinished">Feedback…</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1821"/>
+      <location filename="../nexis/app.cpp" line="1919"/>
       <source>Navigate</source>
       <translation type="unfinished">Navigate</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1784"/>
-      <location filename="../nexis/app.cpp" line="1827"/>
+      <location filename="../nexis/app.cpp" line="1882"/>
+      <location filename="../nexis/app.cpp" line="1925"/>
       <source>Toggle Theme</source>
       <translation type="unfinished">Toggle Theme</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1827"/>
-      <location filename="../nexis/app.cpp" line="1834"/>
-      <location filename="../nexis/app.cpp" line="1838"/>
-      <location filename="../nexis/app.cpp" line="1842"/>
-      <location filename="../nexis/app.cpp" line="1846"/>
-      <location filename="../nexis/app.cpp" line="1850"/>
+      <location filename="../nexis/app.cpp" line="1925"/>
+      <location filename="../nexis/app.cpp" line="1932"/>
+      <location filename="../nexis/app.cpp" line="1936"/>
+      <location filename="../nexis/app.cpp" line="1940"/>
+      <location filename="../nexis/app.cpp" line="1944"/>
+      <location filename="../nexis/app.cpp" line="1952"/>
+      <location filename="../nexis/app.cpp" line="1960"/>
+      <location filename="../nexis/app.cpp" line="1964"/>
       <source>Action</source>
       <translation type="unfinished">Action</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1773"/>
-      <location filename="../nexis/app.cpp" line="1834"/>
+      <location filename="../nexis/app.cpp" line="1871"/>
+      <location filename="../nexis/app.cpp" line="1932"/>
       <source>Toggle Sidebar</source>
       <translation type="unfinished">Toggle Sidebar</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1056"/>
-      <location filename="../nexis/app.cpp" line="1776"/>
-      <location filename="../nexis/app.cpp" line="1838"/>
+      <location filename="../nexis/app.cpp" line="1109"/>
+      <location filename="../nexis/app.cpp" line="1874"/>
+      <location filename="../nexis/app.cpp" line="1936"/>
       <source>Kiosk Mode</source>
       <translation type="unfinished">Kiosk Mode</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1862"/>
+      <location filename="../nexis/app.cpp" line="1944"/>
+      <source>Browser Deep Clean…</source>
+      <translation type="unfinished">Browser Deep Clean…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/app.cpp" line="1952"/>
+      <source>App Cleaners…</source>
+      <translation type="unfinished">App Cleaners…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/app.cpp" line="1976"/>
       <source>Tweaks: Toggle %1</source>
       <translation type="unfinished">Tweaks: Toggle %1</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1862"/>
-      <location filename="../nexis/app.cpp" line="1865"/>
+      <location filename="../nexis/app.cpp" line="1976"/>
+      <location filename="../nexis/app.cpp" line="1979"/>
       <source>Tweaks</source>
       <translation type="unfinished">Tweaks</translation>
     </message>
     <message>
-      <location filename="../nexis/app.cpp" line="1865"/>
+      <location filename="../nexis/app.cpp" line="1979"/>
       <source>Tweaks: Reset %1 to Default</source>
       <translation type="unfinished">Tweaks: Reset %1 to Default</translation>
+    </message>
+  </context>
+  <context>
+    <name>AppCleanersDialog</name>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="20"/>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="28"/>
+      <source>App Cleaners</source>
+      <translation type="unfinished">App Cleaners</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="33"/>
+      <source>Per-application cleanup rules for apps that have left data on this computer. Tick what to clean; you review every file before anything is deleted. An app that is open cannot be cleaned until you close it.</source>
+      <translation type="unfinished">Per-application cleanup rules for apps that have left data on this computer. Tick what to clean; you review every file before anything is deleted. An app that is open cannot be cleaned until you close it.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="42"/>
+      <source>Filter apps…</source>
+      <translation type="unfinished">Filter apps…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="48"/>
+      <source>App / option</source>
+      <translation type="unfinished">App / option</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="48"/>
+      <source>What it removes</source>
+      <translation type="unfinished">What it removes</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="58"/>
+      <source>Open — close it to clean</source>
+      <translation type="unfinished">Open — close it to clean</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="80"/>
+      <source>Review…</source>
+      <translation type="unfinished">Review…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/app_cleaners_dialog.cpp" line="81"/>
+      <source>Cancel</source>
+      <translation type="unfinished">Cancel</translation>
     </message>
   </context>
   <context>
@@ -903,6 +1317,60 @@ This requires administrator privileges. Proceed?</translation>
     </message>
   </context>
   <context>
+    <name>BrowserDeepCleanDialog</name>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="18"/>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="26"/>
+      <source>Browser Deep Clean</source>
+      <translation type="unfinished">Browser Deep Clean</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="31"/>
+      <source>Removes browsing history and cookies from the profiles you choose. Bookmarks, saved passwords and extensions are not touched. Close the browser first; a profile that is in use is skipped. You review every item before anything is deleted.</source>
+      <translation type="unfinished">Removes browsing history and cookies from the profiles you choose. Bookmarks, saved passwords and extensions are not touched. Close the browser first; a profile that is in use is skipped. You review every item before anything is deleted.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="38"/>
+      <source>Profiles</source>
+      <translation type="unfinished">Profiles</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="52"/>
+      <source>Cookies to keep — sites listed here, and their subdomains, stay signed in.</source>
+      <translation type="unfinished">Cookies to keep — sites listed here, and their subdomains, stay signed in.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="70"/>
+      <source>example.com</source>
+      <translation type="unfinished">example.com</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="72"/>
+      <source>Add</source>
+      <translation type="unfinished">Add</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="77"/>
+      <source>Remove</source>
+      <translation type="unfinished">Remove</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="90"/>
+      <source>Review…</source>
+      <translation type="unfinished">Review…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="91"/>
+      <source>Cancel</source>
+      <translation type="unfinished">Cancel</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/browser_deep_clean_dialog.cpp" line="130"/>
+      <source>Enter a site name such as example.com.</source>
+      <translation type="unfinished">Enter a site name such as example.com.</translation>
+    </message>
+  </context>
+  <context>
     <name>BtmResetDialog</name>
     <message>
       <location filename="../nexis/Pages/StartupApps/btm_reset_dialog.cpp" line="16"/>
@@ -959,78 +1427,78 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
   <context>
     <name>BtmRow</name>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="24"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="26"/>
       <source>Login Item (legacy)</source>
       <translation type="unfinished">Login Item (legacy)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="25"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="27"/>
       <source>Login Item</source>
       <translation type="unfinished">Login Item</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="26"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="28"/>
       <source>Launch Agent</source>
       <translation type="unfinished">Launch Agent</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="27"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="29"/>
       <source>Launch Daemon</source>
       <translation type="unfinished">Launch Daemon</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="28"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="30"/>
       <source>Helper Launcher</source>
       <translation type="unfinished">Helper Launcher</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="29"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="31"/>
       <source>App Extension</source>
       <translation type="unfinished">App Extension</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="30"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="32"/>
       <source>MDM-Managed</source>
       <translation type="unfinished">MDM-Managed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="31"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="33"/>
       <source>Daemon</source>
       <translation type="unfinished">Daemon</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="32"/>
       <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="34"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="36"/>
       <source>Unknown</source>
       <translation type="unfinished">Unknown</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="51"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="53"/>
       <source>Unnamed BTM record</source>
       <translation type="unfinished">Unnamed BTM record</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="79"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="82"/>
       <source>Apple</source>
       <translation type="unfinished">Apple</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="83"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="86"/>
       <source>On</source>
       <translation type="unfinished">On</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="86"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="89"/>
       <source>Off</source>
       <translation type="unfinished">Off</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="90"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="93"/>
       <source>Duplicate</source>
       <translation type="unfinished">Duplicate</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="94"/>
+      <location filename="../nexis/Pages/StartupApps/btm_row.cpp" line="97"/>
       <source>Orphan</source>
       <translation type="unfinished">Orphan</translation>
     </message>
@@ -1038,12 +1506,17 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
   <context>
     <name>BubbleMapView</name>
     <message>
-      <location filename="../nexis/Pages/DiskMap/bubble_map_view.cpp" line="232"/>
+      <location filename="../nexis/Pages/DiskMap/bubble_map_view.cpp" line="394"/>
       <source>No scan loaded. Choose a folder and press Scan.</source>
       <translation type="unfinished">No scan loaded. Choose a folder and press Scan.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/bubble_map_view.cpp" line="236"/>
+      <location filename="../nexis/Pages/DiskMap/bubble_map_view.cpp" line="397"/>
+      <source>Laying out…</source>
+      <translation type="unfinished">Laying out…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskMap/bubble_map_view.cpp" line="401"/>
       <source>This folder is empty.</source>
       <translation type="unfinished">This folder is empty.</translation>
     </message>
@@ -1193,6 +1666,160 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
     </message>
   </context>
   <context>
+    <name>CleanerService</name>
+    <message>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="953"/>
+      <source>Restore point via %1 failed. The clean continued without one.</source>
+      <translation type="unfinished">Restore point via %1 failed. The clean continued without one.</translation>
+    </message>
+  </context>
+  <context>
+    <name>CleaningHistoryDialog</name>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="30"/>
+      <source>Manual clean</source>
+      <translation type="unfinished">Manual clean</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="32"/>
+      <source>Scheduled clean</source>
+      <translation type="unfinished">Scheduled clean</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="34"/>
+      <source>Scheduled clean (background)</source>
+      <translation type="unfinished">Scheduled clean (background)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="35"/>
+      <source>App cleanup</source>
+      <translation type="unfinished">App cleanup</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="41"/>
+      <source>Skipped: excluded by you</source>
+      <translation type="unfinished">Skipped: excluded by you</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="43"/>
+      <source>Skipped: too recently modified</source>
+      <translation type="unfinished">Skipped: too recently modified</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="45"/>
+      <source>Skipped: access denied</source>
+      <translation type="unfinished">Skipped: access denied</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="47"/>
+      <source>Skipped: could not be removed</source>
+      <translation type="unfinished">Skipped: could not be removed</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="49"/>
+      <source>Skipped</source>
+      <translation type="unfinished">Skipped</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="50"/>
+      <source>Skipped: %1</source>
+      <translation type="unfinished">Skipped: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="56"/>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="65"/>
+      <source>Restored</source>
+      <translation type="unfinished">Restored</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="59"/>
+      <source>Moved to Trash</source>
+      <translation type="unfinished">Moved to Trash</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="61"/>
+      <source>Deleted</source>
+      <translation type="unfinished">Deleted</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="72"/>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="80"/>
+      <source>Recently Removed</source>
+      <translation type="unfinished">Recently Removed</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="84"/>
+      <source>Each clean and the paths it removed or skipped. Only items moved to the Trash can be restored; deleted items are gone.</source>
+      <translation type="unfinished">Each clean and the paths it removed or skipped. Only items moved to the Trash can be restored; deleted items are gone.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="92"/>
+      <source>Run / path</source>
+      <translation type="unfinished">Run / path</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="92"/>
+      <source>Category</source>
+      <translation type="unfinished">Category</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="92"/>
+      <source>Size</source>
+      <translation type="unfinished">Size</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="92"/>
+      <source>Result</source>
+      <translation type="unfinished">Result</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="103"/>
+      <source>Restore</source>
+      <translation type="unfinished">Restore</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="105"/>
+      <source>Move the selected item from the Trash back to where it was</source>
+      <translation type="unfinished">Move the selected item from the Trash back to where it was</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="108"/>
+      <source>Close</source>
+      <translation type="unfinished">Close</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="129"/>
+      <source>Nothing has been removed yet.</source>
+      <translation type="unfinished">Nothing has been removed yet.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="139"/>
+      <source>%1 — %2</source>
+      <translation type="unfinished">%1 — %2</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="144"/>
+      <source>%n removed, %1 skipped</source>
+      <translation type="unfinished">
+        <numerusform>%n removed, %1 skipped</numerusform>
+        <numerusform>%n removed, %1 skipped</numerusform>
+      </translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="145"/>
+      <source>%n removed</source>
+      <translation type="unfinished">
+        <numerusform>%n removed</numerusform>
+        <numerusform>%n removed</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/cleaning_history_dialog.cpp" line="196"/>
+      <source>Cannot restore</source>
+      <translation type="unfinished">Cannot restore</translation>
+    </message>
+  </context>
+  <context>
     <name>CommandPalette</name>
     <message>
       <location filename="../nexis/command_palette.cpp" line="36"/>
@@ -1213,14 +1840,6 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
       <location filename="../nexis/command_palette.cpp" line="68"/>
       <source>close</source>
       <translation type="unfinished">close</translation>
-    </message>
-  </context>
-  <context>
-    <name>CpuCoreDetailWidget</name>
-    <message>
-      <location filename="../nexis/Pages/Helpers/cpu_core_detail_widget.cpp" line="47"/>
-      <source>Per-Core Detail</source>
-      <translation type="unfinished">Per-Core Detail</translation>
     </message>
   </context>
   <context>
@@ -1345,58 +1964,71 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
   <context>
     <name>CrumbsReviewDialog</name>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="22"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="25"/>
       <source>Residual Files</source>
       <translation type="unfinished">Residual Files</translation>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="44"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="50"/>
       <source>Path</source>
       <translation type="unfinished">Path</translation>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="44"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="50"/>
       <source>Size</source>
       <translation type="unfinished">Size</translation>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="44"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="50"/>
       <source/>
       <translation type="unfinished"/>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="54"/>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="179"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="50"/>
+      <source>Note</source>
+      <translation type="unfinished">Note</translation>
+    </message>
+    <message>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="61"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="210"/>
       <source>Move to Trash</source>
       <translation type="unfinished">Move to Trash</translation>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="54"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="61"/>
       <source>Cancel</source>
       <translation type="unfinished">Cancel</translation>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="73"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="81"/>
       <source>Scanning for residual files…</source>
       <translation type="unfinished">Scanning for residual files…</translation>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="114"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="136"/>
       <source>Scanning… found %1 residual file(s) totalling %2 so far.</source>
       <translation type="unfinished">Scanning… found %1 residual file(s) totalling %2 so far.</translation>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="140"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="165"/>
       <source>No residual files found for the uninstalled app(s).</source>
       <translation type="unfinished">No residual files found for the uninstalled app(s).</translation>
     </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="145"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="170"/>
       <source>Found %1 residual file(s) totalling %2. Check the items you want to move to Trash.</source>
       <translation type="unfinished">Found %1 residual file(s) totalling %2. Check the items you want to move to Trash.</translation>
     </message>
+    <message numerus="yes">
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="176"/>
+      <source>%n item(s) are also used by apps that are still installed and cannot be selected.</source>
+      <translation type="unfinished">
+        <numerusform>%n item(s) are also used by apps that are still installed and cannot be selected.</numerusform>
+        <numerusform>%n item(s) are also used by apps that are still installed and cannot be selected.</numerusform>
+      </translation>
+    </message>
     <message>
-      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="175"/>
+      <location filename="../../macos/nexis/Pages/Uninstaller/crumbs_review_dialog.cpp" line="206"/>
       <source>Move to Trash — %1 item(s), %2</source>
       <translation type="unfinished">Move to Trash — %1 item(s), %2</translation>
     </message>
@@ -1424,27 +2056,27 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
       <translation type="unfinished">Ctrl+K: Command Palette</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1728"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1720"/>
       <source>CPU</source>
       <translation type="unfinished">CPU</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1729"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1721"/>
       <source>MEMORY</source>
       <translation>MÉMOIRE</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1730"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1722"/>
       <source>DISK</source>
       <translation>DISQUE</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1731"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1723"/>
       <source>TEMP</source>
       <translation type="unfinished">TEMP</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1732"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1724"/>
       <source>GPU</source>
       <translation type="unfinished">GPU</translation>
     </message>
@@ -1460,7 +2092,7 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="345"/>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1089"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1081"/>
       <source>Enter Kiosk Mode (%1)</source>
       <translation type="unfinished">Enter Kiosk Mode (%1)</translation>
     </message>
@@ -1495,132 +2127,126 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
       <translation type="unfinished">SYSTEM</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="550"/>
-      <source>High CPU Usage</source>
-      <translation>Utilisation élevée du CPU</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="551"/>
-      <source>The amount of CPU used is over %1%.</source>
-      <translation>La quantité de CPU utilisée est terminée %1%.</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="585"/>
-      <source>High Memory Usage</source>
-      <translation>Utilisation élevée de la mémoire</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="586"/>
-      <source>The amount of memory used is over %1%.</source>
-      <translation>La quantité de mémoire utilisée est supérieure à %1%.</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="649"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="621"/>
       <source>High Disk Usage</source>
       <translation>Utilisation élevée du disque</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="650"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="622"/>
       <source>The amount of disk used is over %1%.</source>
       <translation>La quantité de disque utilisée est supérieure à %1%.</translation>
     </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="697"/>
+      <source>Avg of %n sensor(s) · Max %1°C %2</source>
+      <translation type="unfinished">
+        <numerusform>Avg of %n sensor(s) · Max %1°C %2</numerusform>
+        <numerusform>Avg of %n sensor(s) · Max %1°C %2</numerusform>
+      </translation>
+    </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="745"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="737"/>
       <source>N/A</source>
       <translation type="unfinished">N/A</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="797"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="789"/>
       <source>cycles</source>
       <translation type="unfinished">cycles</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="819"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="811"/>
       <source>Battery health is %1% (%2).</source>
       <translation type="unfinished">Battery health is %1% (%2).</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="821"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="813"/>
       <source>cycles used</source>
       <translation type="unfinished">cycles used</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="824"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="816"/>
       <source>Battery Health Warning</source>
       <translation type="unfinished">Battery Health Warning</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="964"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="956"/>
       <source>Disk Health Warning</source>
       <translation type="unfinished">Disk Health Warning</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="965"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="957"/>
       <source>%1 status: %2</source>
       <translation type="unfinished">%1 status: %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1082"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1074"/>
       <source>Exit Kiosk Mode (ESC)</source>
       <translation type="unfinished">Exit Kiosk Mode (ESC)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1733"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1725"/>
       <source>BATTERY</source>
       <translation type="unfinished">BATTERY</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1734"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1726"/>
       <source>FANS</source>
       <translation type="unfinished">FANS</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1735"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1727"/>
       <source>HEALTH</source>
       <translation type="unfinished">HEALTH</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1996"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1790"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1956"/>
+      <source>All sensors (average / max)</source>
+      <translation type="unfinished">All sensors (average / max)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1998"/>
       <source>CPU Usage</source>
       <translation type="unfinished">CPU Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1996"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1998"/>
       <source>Memory Usage</source>
       <translation type="unfinished">Memory Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1996"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1998"/>
       <source>Disk Usage</source>
       <translation type="unfinished">Disk Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1997"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1999"/>
       <source>Network Speed</source>
       <translation type="unfinished">Network Speed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1997"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1999"/>
       <source>GPU Usage</source>
       <translation type="unfinished">GPU Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1997"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1999"/>
       <source>Temperature</source>
       <translation type="unfinished">Temperature</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1998"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="2000"/>
       <source>Battery</source>
       <translation type="unfinished">Battery</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1998"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="2000"/>
       <source>Fan Speed</source>
       <translation type="unfinished">Fan Speed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="1998"/>
+      <location filename="../nexis/Pages/Dashboard/dashboard_page.cpp" line="2000"/>
       <source>Health Score</source>
       <translation type="unfinished">Health Score</translation>
     </message>
@@ -1660,124 +2286,355 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
     </message>
   </context>
   <context>
+    <name>DevArtifactsDialog</name>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="38"/>
+      <source>Developer Projects</source>
+      <translation type="unfinished">Developer Projects</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="63"/>
+      <source>Finds code projects you have not touched for a while and offers their rebuildable folders (node_modules, virtual environments, build output) for removal. Age counts from the project&apos;s own files and git activity, not from the folder itself. Projects with a running program inside, or with a git operation in progress, are never listed. Everything goes to the Trash.</source>
+      <translation type="unfinished">Finds code projects you have not touched for a while and offers their rebuildable folders (node_modules, virtual environments, build output) for removal. Age counts from the project&apos;s own files and git activity, not from the folder itself. Projects with a running program inside, or with a git operation in progress, are never listed. Everything goes to the Trash.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="82"/>
+      <source>Add Folder…</source>
+      <translation type="unfinished">Add Folder…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="86"/>
+      <source>Remove</source>
+      <translation type="unfinished">Remove</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="95"/>
+      <source>Only show projects idle for at least</source>
+      <translation type="unfinished">Only show projects idle for at least</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="99"/>
+      <source> days</source>
+      <translation type="unfinished"> days</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="103"/>
+      <source>Find Projects</source>
+      <translation type="unfinished">Find Projects</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="107"/>
+      <source>Stop</source>
+      <translation type="unfinished">Stop</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="124"/>
+      <source>Project</source>
+      <translation type="unfinished">Project</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="124"/>
+      <source>Type</source>
+      <translation type="unfinished">Type</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="124"/>
+      <source>Size</source>
+      <translation type="unfinished">Size</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="124"/>
+      <source>Idle</source>
+      <translation type="unfinished">Idle</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="124"/>
+      <source>Folder</source>
+      <translation type="unfinished">Folder</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="135"/>
+      <source>Add the folders where you keep your code, then choose Find Projects.</source>
+      <translation type="unfinished">Add the folders where you keep your code, then choose Find Projects.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="144"/>
+      <source>Move to Trash…</source>
+      <translation type="unfinished">Move to Trash…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="145"/>
+      <source>Close</source>
+      <translation type="unfinished">Close</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="171"/>
+      <source>Add a folder to search</source>
+      <translation type="unfinished">Add a folder to search</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="177"/>
+      <source>Folder not allowed</source>
+      <translation type="unfinished">Folder not allowed</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="178"/>
+      <source>Nexis will not search %1 because it is %2. Choose the folder that holds your projects instead.</source>
+      <translation type="unfinished">Nexis will not search %1 because it is %2. Choose the folder that holds your projects instead.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="215"/>
+      <source>Add at least one folder to search first.</source>
+      <translation type="unfinished">Add at least one folder to search first.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="229"/>
+      <source>Searching…</source>
+      <translation type="unfinished">Searching…</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="269"/>
+      <source>%n day(s)</source>
+      <translation type="unfinished">
+        <numerusform>%n day(s)</numerusform>
+        <numerusform>%n day(s)</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="271"/>
+      <source>Last activity: %1</source>
+      <translation type="unfinished">Last activity: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="288"/>
+      <source>Could not check which projects are in use, so nothing is listed.</source>
+      <translation type="unfinished">Could not check which projects are in use, so nothing is listed.</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="291"/>
+      <source>%n project(s) in use were skipped.</source>
+      <translation type="unfinished">
+        <numerusform>%n project(s) in use were skipped.</numerusform>
+        <numerusform>%n project(s) in use were skipped.</numerusform>
+      </translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="293"/>
+      <source>%n project(s) with a git operation in progress were skipped.</source>
+      <translation type="unfinished">
+        <numerusform>%n project(s) with a git operation in progress were skipped.</numerusform>
+        <numerusform>%n project(s) with a git operation in progress were skipped.</numerusform>
+      </translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="296"/>
+      <source>%n project(s) too large to check were skipped.</source>
+      <translation type="unfinished">
+        <numerusform>%n project(s) too large to check were skipped.</numerusform>
+        <numerusform>%n project(s) too large to check were skipped.</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="300"/>
+      <source>Not searched: %1</source>
+      <translation type="unfinished">Not searched: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="302"/>
+      <source>Search stopped early.</source>
+      <translation type="unfinished">Search stopped early.</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="307"/>
+      <source>%n project(s), %1 can be freed.</source>
+      <translation type="unfinished">
+        <numerusform>%n project(s), %1 can be freed.</numerusform>
+        <numerusform>%n project(s), %1 can be freed.</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="308"/>
+      <source>No stale projects found.</source>
+      <translation type="unfinished">No stale projects found.</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="332"/>
+      <source>%n project(s) selected, %1</source>
+      <translation type="unfinished">
+        <numerusform>%n project(s) selected, %1</numerusform>
+        <numerusform>%n project(s) selected, %1</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="362"/>
+      <source>Move to Trash</source>
+      <translation type="unfinished">Move to Trash</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="363"/>
+      <source>Move the rebuildable folders of %n project(s) (%1) to the Trash?
+
+Your source files are not touched. Reinstall dependencies or rebuild to get these folders back. Space is only freed once the Trash is emptied.</source>
+      <translation type="unfinished">
+        <numerusform>Move the rebuildable folders of %n project(s) (%1) to the Trash?
+
+Your source files are not touched. Reinstall dependencies or rebuild to get these folders back. Space is only freed once the Trash is emptied.</numerusform>
+        <numerusform>Move the rebuildable folders of %n project(s) (%1) to the Trash?
+
+Your source files are not touched. Reinstall dependencies or rebuild to get these folders back. Space is only freed once the Trash is emptied.</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="372"/>
+      <source>Moving to the Trash…</source>
+      <translation type="unfinished">Moving to the Trash…</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="421"/>
+      <source>Moved %n folder(s) (%1) to the Trash.</source>
+      <translation type="unfinished">
+        <numerusform>Moved %n folder(s) (%1) to the Trash.</numerusform>
+        <numerusform>Moved %n folder(s) (%1) to the Trash.</numerusform>
+      </translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="424"/>
+      <source>%n folder(s) left alone.</source>
+      <translation type="unfinished">
+        <numerusform>%n folder(s) left alone.</numerusform>
+        <numerusform>%n folder(s) left alone.</numerusform>
+      </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="428"/>
+      <source>Some folders were left alone</source>
+      <translation type="unfinished">Some folders were left alone</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/dev_artifacts_dialog.cpp" line="429"/>
+      <source>These folders were not moved, because something changed since the search or a safety check failed:</source>
+      <translation type="unfinished">These folders were not moved, because something changed since the search or a safety check failed:</translation>
+    </message>
+  </context>
+  <context>
     <name>DiskMapPage</name>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="80"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="84"/>
       <source>Choose...</source>
       <translation type="unfinished">Choose...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="81"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="85"/>
       <source>Scan</source>
       <translation type="unfinished">Scan</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="83"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="87"/>
       <source>Cancel</source>
       <translation type="unfinished">Cancel</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="84"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="88"/>
       <source>Up</source>
       <translation type="unfinished">Up</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="89"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="93"/>
       <source>Treemap</source>
       <translation type="unfinished">Treemap</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="90"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="94"/>
       <source>Bubble Map</source>
       <translation type="unfinished">Bubble Map</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="91"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="95"/>
       <source>Sunburst</source>
       <translation type="unfinished">Sunburst</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="113"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="117"/>
       <source>Folder:</source>
       <translation type="unfinished">Folder:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="119"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="123"/>
       <source>View:</source>
       <translation type="unfinished">View:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="140"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="144"/>
       <source>Disk Map</source>
       <translation type="unfinished">Disk Map</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="200"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="204"/>
       <source>Choose folder to scan</source>
       <translation type="unfinished">Choose folder to scan</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="215"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="219"/>
       <source>Disk Space Visualizer</source>
       <translation type="unfinished">Disk Space Visualizer</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="216"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="220"/>
       <source>That folder doesn&apos;t exist.</source>
       <translation type="unfinished">That folder doesn&apos;t exist.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="254"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="258"/>
       <source>Scanning %1...</source>
       <translation type="unfinished">Scanning %1...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="263"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="267"/>
       <source>Scan finished but no data was returned.</source>
       <translation type="unfinished">Scan finished but no data was returned.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="270"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="274"/>
       <source>Scanned %1 — %2 across %3 files</source>
       <translation type="unfinished">Scanned %1 — %2 across %3 files</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="280"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="284"/>
       <source>Scan cancelled.</source>
       <translation type="unfinished">Scan cancelled.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="285"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="289"/>
       <source>Scanning... %1 files / %2</source>
       <translation type="unfinished">Scanning... %1 files / %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="327"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="331"/>
       <source>Move to trash?</source>
       <translation type="unfinished">Move to trash?</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="328"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="332"/>
       <source>Move &quot;%1&quot; (%2) to the trash?</source>
       <translation type="unfinished">Move &quot;%1&quot; (%2) to the trash?</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="337"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="341"/>
       <source>Moving %1 to trash...</source>
       <translation type="unfinished">Moving %1 to trash...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="349"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="353"/>
       <source>Failed to move %1 to trash.</source>
       <translation type="unfinished">Failed to move %1 to trash.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="350"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="354"/>
       <source>Failed to move %1 to trash: %2</source>
       <translation type="unfinished">Failed to move %1 to trash: %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="354"/>
+      <location filename="../nexis/Pages/DiskMap/disk_map_page.cpp" line="358"/>
       <source>Moved %1 to trash.</source>
       <translation type="unfinished">Moved %1 to trash.</translation>
     </message>
@@ -1817,245 +2674,508 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
       <translation type="unfinished">Disk Tools</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="86"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="75"/>
+      <source>Agent Worktrees…</source>
+      <translation type="unfinished">Agent Worktrees…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="80"/>
+      <source>Developer Projects…</source>
+      <translation type="unfinished">Developer Projects…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="101"/>
       <source>Large &amp;&amp; Old Files</source>
       <translation type="unfinished">Large &amp;&amp; Old Files</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="93"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="108"/>
       <source>Duplicate Finder</source>
       <translation type="unfinished">Duplicate Finder</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="104"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="114"/>
+      <source>Largest Files</source>
+      <translation type="unfinished">Largest Files</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="120"/>
+      <source>Empty Folders</source>
+      <translation type="unfinished">Empty Folders</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.ui" line="85"/>
       <source>Wipe Free Space…</source>
       <translation type="unfinished">Wipe Free Space…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="119"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="178"/>
       <source>Select Directory</source>
       <translation type="unfinished">Select Directory</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="173"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="495"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="221"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="549"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1220"/>
       <source>Scan Locations</source>
       <translation type="unfinished">Scan Locations</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="186"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="508"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="234"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="562"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1234"/>
       <source>Add...</source>
       <translation type="unfinished">Add...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="190"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="512"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="238"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="566"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1238"/>
       <source>Remove</source>
       <translation type="unfinished">Remove</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="201"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="249"/>
       <source>Size &gt;=</source>
       <translation type="unfinished">Size &gt;=</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="209"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="257"/>
       <source>Not accessed in &gt;=</source>
       <translation type="unfinished">Not accessed in &gt;=</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="215"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="263"/>
       <source>days</source>
       <translation type="unfinished">days</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="215"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="263"/>
       <source>months</source>
       <translation type="unfinished">months</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="215"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="263"/>
       <source>years</source>
       <translation type="unfinished">years</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="217"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="265"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="602"/>
       <source>Match:</source>
       <translation type="unfinished">Match:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="219"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="267"/>
       <source>Either</source>
       <translation type="unfinished">Either</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="219"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="267"/>
       <source>Large only</source>
       <translation type="unfinished">Large only</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="219"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="267"/>
       <source>Old only</source>
       <translation type="unfinished">Old only</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="221"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="545"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="269"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="632"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1276"/>
       <source>Cancel</source>
       <translation type="unfinished">Cancel</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="228"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="279"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="276"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="327"/>
       <source>Scan</source>
       <translation type="unfinished">Scan</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="257"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="105"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="305"/>
       <source>Name</source>
       <translation type="unfinished">Name</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="257"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="582"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="105"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="109"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="305"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="673"/>
       <source>Path</source>
       <translation type="unfinished">Path</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="257"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="582"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="105"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="305"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="673"/>
       <source>Size</source>
       <translation type="unfinished">Size</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="258"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="306"/>
       <source>Last Accessed</source>
       <translation type="unfinished">Last Accessed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="258"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="582"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="105"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="306"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="674"/>
       <source>Last Modified</source>
       <translation type="unfinished">Last Modified</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="276"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="598"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="106"/>
+      <source>List the biggest files across the selected folders, largest first.</source>
+      <translation type="unfinished">List the biggest files across the selected folders, largest first.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="107"/>
+      <source>Find Largest</source>
+      <translation type="unfinished">Find Largest</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="109"/>
+      <source>Folder</source>
+      <translation type="unfinished">Folder</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="110"/>
+      <source>List folders that contain nothing at all across the selected folders.</source>
+      <translation type="unfinished">List folders that contain nothing at all across the selected folders.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="111"/>
+      <source>Find Empty Folders</source>
+      <translation type="unfinished">Find Empty Folders</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="324"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="691"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1323"/>
       <source>No results yet</source>
       <translation type="unfinished">No results yet</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="277"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="325"/>
       <source>Set your size and age thresholds above, then run a scan to list large or long-untouched files across the selected folders.</source>
       <translation type="unfinished">Set your size and age thresholds above, then run a scan to list large or long-untouched files across the selected folders.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="293"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="468"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="615"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="805"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="341"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="522"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="708"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1064"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1514"/>
       <source>No files selected</source>
       <translation type="unfinished">No files selected</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="297"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="426"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="619"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="744"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="345"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="486"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="719"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="993"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1339"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1479"/>
       <source>Move to Trash</source>
       <translation type="unfinished">Move to Trash</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="318"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="366"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1380"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1417"/>
       <source>Scanning...</source>
       <translation type="unfinished">Scanning...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="407"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="458"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1404"/>
       <source>%1 files found</source>
       <translation type="unfinished">%1 files found</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="427"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="487"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1478"/>
       <source>Move %1 files (%2) to trash?</source>
       <translation type="unfinished">Move %1 files (%2) to trash?</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="448"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="780"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="502"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1033"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1493"/>
       <source>Moved %1 files to trash</source>
       <translation type="unfinished">Moved %1 files to trash</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="464"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="801"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="518"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1060"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1518"/>
       <source>%1 files selected (%2)</source>
       <translation type="unfinished">%1 files selected (%2)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="524"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="578"/>
       <source>Min file size:</source>
       <translation type="unfinished">Min file size:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="537"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="591"/>
       <source>File pattern:</source>
       <translation type="unfinished">File pattern:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="539"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="593"/>
       <source>e.g., *.jpg or leave empty for all</source>
       <translation type="unfinished">e.g., *.jpg or leave empty for all</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="553"/>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="601"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="604"/>
+      <source>Exact duplicates</source>
+      <translation type="unfinished">Exact duplicates</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="605"/>
+      <source>Similar images</source>
+      <translation type="unfinished">Similar images</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="606"/>
+      <source>Duplicate folders</source>
+      <translation type="unfinished">Duplicate folders</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="615"/>
+      <source>Very high (≤2)</source>
+      <translation type="unfinished">Very high (≤2)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="616"/>
+      <source>High (≤5)</source>
+      <translation type="unfinished">High (≤5)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="617"/>
+      <source>Medium (≤10)</source>
+      <translation type="unfinished">Medium (≤10)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="618"/>
+      <source>Low (≤15)</source>
+      <translation type="unfinished">Low (≤15)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="625"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="779"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="798"/>
+      <source>Pause</source>
+      <translation type="unfinished">Pause</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="640"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="694"/>
       <source>Find Duplicates</source>
       <translation type="unfinished">Find Duplicates</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="582"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="673"/>
       <source>Name / Group</source>
       <translation type="unfinished">Name / Group</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="599"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="674"/>
+      <source>Dimensions</source>
+      <translation type="unfinished">Dimensions</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="692"/>
       <source>Set your minimum size and file pattern above, then find duplicate files across the selected folders.</source>
       <translation type="unfinished">Set your minimum size and file pattern above, then find duplicate files across the selected folders.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="654"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="712"/>
+      <source>Replace with Links…</source>
+      <translation type="unfinished">Replace with Links…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="746"/>
       <source>Starting scan...</source>
       <translation type="unfinished">Starting scan...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="689"/>
-      <source>%1 duplicates</source>
-      <translation type="unfinished">%1 duplicates</translation>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1032"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1492"/>
+      <source>Moved %1 folders to trash</source>
+      <translation type="unfinished">Moved %1 folders to trash</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="690"/>
-      <source>%1 wasted</source>
-      <translation type="unfinished">%1 wasted</translation>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1059"/>
+      <source>%1 folders selected (%2)</source>
+      <translation type="unfinished">%1 folders selected (%2)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="711"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1063"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1514"/>
+      <source>No folders selected</source>
+      <translation type="unfinished">No folders selected</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1104"/>
+      <source>Replacing duplicates with links...</source>
+      <translation type="unfinished">Replacing duplicates with links...</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1121"/>
+      <source>%1 — %2</source>
+      <translation type="unfinished">%1 — %2</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1144"/>
+      <source>Replaced %1 files with links — %2 freed</source>
+      <translation type="unfinished">Replaced %1 files with links — %2 freed</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1147"/>
+      <source> · %1 could not be replaced</source>
+      <translation type="unfinished"> · %1 could not be replaced</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1155"/>
+      <source>
+…and %1 more</source>
+      <translation type="unfinished">
+…and %1 more</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1156"/>
+      <source>Replace with Links</source>
+      <translation type="unfinished">Replace with Links</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1157"/>
+      <source>These files were left as they were:
+
+%1</source>
+      <translation type="unfinished">These files were left as they were:
+
+%1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1200"/>
+      <source>Another scan is still running. Cancel it or wait for it to finish.</source>
+      <translation type="unfinished">Another scan is still running. Cancel it or wait for it to finish.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1265"/>
+      <source>Show top:</source>
+      <translation type="unfinished">Show top:</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1438"/>
+      <source>%1 empty folders found</source>
+      <translation type="unfinished">%1 empty folders found</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1476"/>
+      <source>Move 1 empty folder to trash?</source>
+      <translation type="unfinished">Move 1 empty folder to trash?</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1477"/>
+      <source>Move %1 empty folders to trash?</source>
+      <translation type="unfinished">Move %1 empty folders to trash?</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1491"/>
+      <source>Moved 1 folder to trash</source>
+      <translation type="unfinished">Moved 1 folder to trash</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1495"/>
+      <source> · %1 kept (excluded or could not be moved)</source>
+      <translation type="unfinished"> · %1 kept (excluded or could not be moved)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1516"/>
+      <source>1 folder selected</source>
+      <translation type="unfinished">1 folder selected</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1516"/>
+      <source>%1 folders selected</source>
+      <translation type="unfinished">%1 folders selected</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="960"/>
       <source>%1 duplicate groups found — %2 wasted space</source>
       <translation type="unfinished">%1 duplicate groups found — %2 wasted space</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="722"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="468"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="970"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1446"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1449"/>
       <source>Scan cancelled</source>
       <translation type="unfinished">Scan cancelled</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="745"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="798"/>
+      <source>Resume</source>
+      <translation type="unfinished">Resume</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="800"/>
+      <source>Paused — press Resume to continue</source>
+      <translation type="unfinished">Paused — press Resume to continue</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="891"/>
+      <source>Identical folders — %1 folders, %2 reclaimable</source>
+      <translation type="unfinished">Identical folders — %1 folders, %2 reclaimable</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="898"/>
+      <source>Similar — %1 images, distance ≤ %2</source>
+      <translation type="unfinished">Similar — %1 images, distance ≤ %2</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="907"/>
+      <source>Identical — %1 files, %2 reclaimable</source>
+      <translation type="unfinished">Identical — %1 files, %2 reclaimable</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="937"/>
+      <source>%1 × %2</source>
+      <translation type="unfinished">%1 × %2</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="952"/>
+      <source>%1 duplicate folder groups found — %2 wasted space</source>
+      <translation type="unfinished">%1 duplicate folder groups found — %2 wasted space</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="956"/>
+      <source>%1 identical + %2 similar groups found — %3 wasted space</source>
+      <translation type="unfinished">%1 identical + %2 similar groups found — %3 wasted space</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="994"/>
+      <source>Move %1 duplicate folders (%2) to trash?</source>
+      <translation type="unfinished">Move %1 duplicate folders (%2) to trash?</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="995"/>
       <source>Move %1 duplicate files (%2) to trash?</source>
       <translation type="unfinished">Move %1 duplicate files (%2) to trash?</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="776"/>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1026"/>
+      <source>Moved %1 folders to trash · %2 kept to honor exclusions or preserve at least one copy</source>
+      <translation type="unfinished">Moved %1 folders to trash · %2 kept to honor exclusions or preserve at least one copy</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/disk_tools_page.cpp" line="1028"/>
       <source>Moved %1 files to trash · %2 kept to honor exclusions or preserve at least one copy</source>
       <translation type="unfinished">Moved %1 files to trash · %2 kept to honor exclusions or preserve at least one copy</translation>
     </message>
@@ -2334,265 +3454,269 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
       <translation type="unfinished">Images, containers, and volumes</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="112"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="115"/>
       <source>Search docker resources...</source>
       <translation type="unfinished">Search docker resources...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="132"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="135"/>
       <source>Refresh</source>
       <translation type="unfinished">Refresh</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="160"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="163"/>
       <source>Checking Docker daemon...</source>
       <translation type="unfinished">Checking Docker daemon...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="199"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="202"/>
       <source>Images</source>
       <translation type="unfinished">Images</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="238"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="241"/>
       <source>treeWidgetImages</source>
       <translation type="unfinished">treeWidgetImages</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="251"/>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="307"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="254"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="331"/>
       <location filename="../nexis/Pages/Docker/docker_page.cpp" line="31"/>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="46"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="47"/>
       <source>Image</source>
       <translation type="unfinished">Image</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="256"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="259"/>
       <location filename="../nexis/Pages/Docker/docker_page.cpp" line="31"/>
       <source>Size</source>
       <translation type="unfinished">Size</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="261"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="264"/>
       <location filename="../nexis/Pages/Docker/docker_page.cpp" line="31"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="224"/>
       <source>Created</source>
       <translation type="unfinished">Created</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="274"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="277"/>
       <source>Containers</source>
       <translation type="unfinished">Containers</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="302"/>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="46"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="326"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="47"/>
       <source>Container</source>
       <translation type="unfinished">Container</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="312"/>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="46"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="336"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="47"/>
       <source>Status</source>
       <translation type="unfinished">Status</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="317"/>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="46"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="341"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="47"/>
       <source>Ports</source>
       <translation type="unfinished">Ports</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="327"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="354"/>
       <source>Volumes</source>
       <translation type="unfinished">Volumes</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="355"/>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="51"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="403"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="52"/>
       <source>Volume</source>
       <translation type="unfinished">Volume</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="360"/>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="51"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="408"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="52"/>
       <source>Driver</source>
       <translation type="unfinished">Driver</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="365"/>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="51"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="413"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="52"/>
       <source>Mount Point</source>
       <translation type="unfinished">Mount Point</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="389"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="440"/>
       <source>Docker daemon is not running. Start Docker and click Refresh.</source>
       <translation type="unfinished">Docker daemon is not running. Start Docker and click Refresh.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="440"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="491"/>
       <source>Start</source>
       <translation type="unfinished">Start</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="446"/>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="476"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="497"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="527"/>
       <source>primary</source>
       <translation type="unfinished">primary</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="453"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="504"/>
       <source>Stop</source>
       <translation type="unfinished">Stop</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="470"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="521"/>
       <source>Prune Unused</source>
       <translation type="unfinished">Prune Unused</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="483"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="534"/>
       <source>Remove Selected</source>
       <translation type="unfinished">Remove Selected</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.ui" line="489"/>
+      <location filename="../nexis/Pages/Docker/docker_page.ui" line="540"/>
       <source>danger</source>
       <translation type="unfinished">danger</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="55"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="56"/>
       <source>All</source>
       <translation type="unfinished">All</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="55"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="56"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="221"/>
       <source>Running</source>
       <translation type="unfinished">Running</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="55"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="56"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="222"/>
       <source>Exited</source>
       <translation type="unfinished">Exited</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="55"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="56"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="223"/>
       <source>Paused</source>
       <translation type="unfinished">Paused</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="92"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="93"/>
       <source>Docker daemon: Running</source>
       <translation type="unfinished">Docker daemon: Running</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="98"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="99"/>
       <source>Docker daemon: Not running</source>
       <translation type="unfinished">Docker daemon: Not running</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="127"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="128"/>
       <source>%1 images</source>
       <translation type="unfinished">%1 images</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="129"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="130"/>
       <source> (%1 dangling, %2 reclaimable)</source>
       <translation type="unfinished"> (%1 dangling, %2 reclaimable)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="146"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="147"/>
       <source>%1 containers (%2 running)</source>
       <translation type="unfinished">%1 containers (%2 running)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="160"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="161"/>
       <source>%1 volumes (%2 unused)</source>
       <translation type="unfinished">%1 volumes (%2 unused)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="197"/>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="279"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="198"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="285"/>
       <source>In Use</source>
       <translation type="unfinished">In Use</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="198"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="199"/>
       <source>Dangling</source>
       <translation type="unfinished">Dangling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="199"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="200"/>
       <source>Other</source>
       <translation type="unfinished">Other</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="213"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="214"/>
       <source>all</source>
       <translation type="unfinished">all</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="280"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="286"/>
       <source>Unused</source>
       <translation type="unfinished">Unused</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="402"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="408"/>
       <source>Remove Images</source>
       <translation type="unfinished">Remove Images</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="403"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="409"/>
       <source>Remove %1 selected image(s)? This cannot be undone.</source>
       <translation type="unfinished">Remove %1 selected image(s)? This cannot be undone.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="410"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="416"/>
       <source>Remove Containers</source>
       <translation type="unfinished">Remove Containers</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="411"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="417"/>
       <source>Remove %1 selected container(s)? This cannot be undone.</source>
       <translation type="unfinished">Remove %1 selected container(s)? This cannot be undone.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="418"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="424"/>
       <source>Remove Volumes</source>
       <translation type="unfinished">Remove Volumes</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="419"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="425"/>
       <source>Remove %1 selected volume(s)? All data in these volumes will be permanently lost.</source>
       <translation type="unfinished">Remove %1 selected volume(s)? All data in these volumes will be permanently lost.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="431"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="437"/>
       <source>Prune Images</source>
       <translation type="unfinished">Prune Images</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="432"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="438"/>
       <source>Remove all dangling (unused) images? This cannot be undone.</source>
       <translation type="unfinished">Remove all dangling (unused) images? This cannot be undone.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="437"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="443"/>
       <source>Prune Containers</source>
       <translation type="unfinished">Prune Containers</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="438"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="444"/>
       <source>Remove all stopped containers? This cannot be undone.</source>
       <translation type="unfinished">Remove all stopped containers? This cannot be undone.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="443"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="449"/>
       <source>Prune Volumes</source>
       <translation type="unfinished">Prune Volumes</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="444"/>
+      <location filename="../nexis/Pages/Docker/docker_page.cpp" line="450"/>
       <source>Remove all unused volumes? All data in these volumes will be permanently lost.</source>
       <translation type="unfinished">Remove all unused volumes? All data in these volumes will be permanently lost.</translation>
     </message>
@@ -2600,32 +3724,128 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
   <context>
     <name>DuplicateFinderService</name>
     <message>
-      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="326"/>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="554"/>
+      <source>Not eligible for link replacement</source>
+      <translation type="unfinished">Not eligible for link replacement</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="559"/>
+      <source>File no longer exists or is not a regular file</source>
+      <translation type="unfinished">File no longer exists or is not a regular file</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="561"/>
+      <source>Already the same file</source>
+      <translation type="unfinished">Already the same file</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="568"/>
+      <source>Keeper is on a different filesystem</source>
+      <translation type="unfinished">Keeper is on a different filesystem</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="570"/>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="577"/>
+      <source>Files differ — changed since the scan</source>
+      <translation type="unfinished">Files differ — changed since the scan</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="575"/>
+      <source>Could not read the files</source>
+      <translation type="unfinished">Could not read the files</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="636"/>
+      <source>Replacing duplicates with links... %1/%2</source>
+      <translation type="unfinished">Replacing duplicates with links... %1/%2</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="704"/>
       <source>Stage 1: Scanning files... %1 found</source>
       <translation type="unfinished">Stage 1: Scanning files... %1 found</translation>
     </message>
     <message>
-      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="345"/>
-      <source>Stage 1 complete: %1 candidates in %2 size groups</source>
-      <translation type="unfinished">Stage 1 complete: %1 candidates in %2 size groups</translation>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="729"/>
+      <source>Stage %1</source>
+      <translation type="unfinished">Stage %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="369"/>
-      <source>Stage 2: Partial hashing... %1/%2</source>
-      <translation type="unfinished">Stage 2: Partial hashing... %1/%2</translation>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="747"/>
+      <source>%1 complete: %2 candidates in %3 size groups</source>
+      <translation type="unfinished">%1 complete: %2 candidates in %3 size groups</translation>
     </message>
     <message>
-      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="390"/>
-      <source>Stage 2 complete: %1 candidates remaining</source>
-      <translation type="unfinished">Stage 2 complete: %1 candidates remaining</translation>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="771"/>
+      <source>%1: Partial hashing... %2/%3</source>
+      <translation type="unfinished">%1: Partial hashing... %2/%3</translation>
     </message>
     <message>
-      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="412"/>
-      <source>Stage 3: Full hashing... %1/%2</source>
-      <translation type="unfinished">Stage 3: Full hashing... %1/%2</translation>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="792"/>
+      <source>%1 complete: %2 candidates remaining</source>
+      <translation type="unfinished">%1 complete: %2 candidates remaining</translation>
     </message>
     <message>
-      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="438"/>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="814"/>
+      <source>%1: Full hashing... %2/%3</source>
+      <translation type="unfinished">%1: Full hashing... %2/%3</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1027"/>
+      <source>Collecting images... %1 found</source>
+      <translation type="unfinished">Collecting images... %1 found</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1032"/>
+      <source>Collected %1 candidate images</source>
+      <translation type="unfinished">Collected %1 candidate images</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1039"/>
+      <source>Exact matching</source>
+      <translation type="unfinished">Exact matching</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1092"/>
+      <source>Hashing images... %1/%2</source>
+      <translation type="unfinished">Hashing images... %1/%2</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1119"/>
+      <source>Hashed %1 images — %2 skipped (corrupt or unsupported)</source>
+      <translation type="unfinished">Hashed %1 images — %2 skipped (corrupt or unsupported)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1135"/>
+      <source>Scan complete: %1 exact + %2 similar groups found — %3 images skipped</source>
+      <translation type="unfinished">Scan complete: %1 exact + %2 similar groups found — %3 images skipped</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1344"/>
+      <source>Stage 1: Scanning folders... %1 found</source>
+      <translation type="unfinished">Stage 1: Scanning folders... %1 found</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1371"/>
+      <source>Stage 2 complete: %1 candidate folders</source>
+      <translation type="unfinished">Stage 2 complete: %1 candidate folders</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1399"/>
+      <source>Stage 3: Partial hashing folders... %1 files</source>
+      <translation type="unfinished">Stage 3: Partial hashing folders... %1 files</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1403"/>
+      <source>Stage 4: Full hashing folders... %1 files</source>
+      <translation type="unfinished">Stage 4: Full hashing folders... %1 files</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="1451"/>
+      <source>Scan complete: %1 duplicate folder groups found</source>
+      <translation type="unfinished">Scan complete: %1 duplicate folder groups found</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/duplicate_finder_service.cpp" line="718"/>
       <source>Scan complete: %1 duplicate groups found</source>
       <translation type="unfinished">Scan complete: %1 duplicate groups found</translation>
     </message>
@@ -2764,37 +3984,37 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
   <context>
     <name>FirewallWidget</name>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="137"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="143"/>
       <source>Command failed (exit code %1).</source>
       <translation type="unfinished">Command failed (exit code %1).</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="186"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="192"/>
       <source>Firewall Status</source>
       <translation type="unfinished">Firewall Status</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="225"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="231"/>
       <source>Backend:</source>
       <translation type="unfinished">Backend:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="229"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="235"/>
       <source>Stealth Mode:</source>
       <translation type="unfinished">Stealth Mode:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="233"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="239"/>
       <source>Block All Incoming:</source>
       <translation type="unfinished">Block All Incoming:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="237"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="243"/>
       <source>App Rules:</source>
       <translation type="unfinished">App Rules:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="257"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="263"/>
       <source>Install one of the following to enable firewall management:
 
 • ufw — sudo apt install ufw
@@ -2805,78 +4025,78 @@ Type &lt;b&gt;RESET&lt;/b&gt; below to enable the repair button.</translation>
 • firewalld — sudo dnf install firewalld</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="270"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="276"/>
       <source>Refresh</source>
       <translation type="unfinished">Refresh</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="276"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="282"/>
       <source>Checking firewall status...</source>
       <translation type="unfinished">Checking firewall status...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="322"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="328"/>
       <source>⚠ No supported firewall detected.</source>
       <translation type="unfinished">⚠ No supported firewall detected.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="339"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="345"/>
       <source>Firewall: Enabled</source>
       <translation type="unfinished">Firewall: Enabled</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="340"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="346"/>
       <source>Disable</source>
       <translation type="unfinished">Disable</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="342"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="348"/>
       <source>Firewall: Disabled</source>
       <translation type="unfinished">Firewall: Disabled</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="343"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="349"/>
       <source>Enable</source>
       <translation type="unfinished">Enable</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="362"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="368"/>
       <source>On</source>
       <translation type="unfinished">On</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="362"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="368"/>
       <source>Off</source>
       <translation type="unfinished">Off</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="363"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="369"/>
       <source>Enabled</source>
       <translation type="unfinished">Enabled</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="363"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="369"/>
       <source>Disabled</source>
       <translation type="unfinished">Disabled</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="376"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="382"/>
       <source>enable</source>
       <translation type="unfinished">enable</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="376"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="382"/>
       <source>disable</source>
       <translation type="unfinished">disable</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="378"/>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="399"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="384"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="405"/>
       <source>Firewall</source>
       <translation type="unfinished">Firewall</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="379"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="385"/>
       <source>This will %1 the firewall. Administrator privileges are required.
 
 Continue?</source>
@@ -2885,19 +4105,83 @@ Continue?</source>
 Continue?</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="386"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="392"/>
       <source>Enabling firewall...</source>
       <translation type="unfinished">Enabling firewall...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="386"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="392"/>
       <source>Disabling firewall...</source>
       <translation type="unfinished">Disabling firewall...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="400"/>
+      <location filename="../nexis/Pages/Helpers/firewall_widget.cpp" line="406"/>
       <source>Could not update firewall settings: %1</source>
       <translation type="unfinished">Could not update firewall settings: %1</translation>
+    </message>
+  </context>
+  <context>
+    <name>GitWorktreeTool</name>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="279"/>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="450"/>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="469"/>
+      <source>A process is running inside this folder.</source>
+      <translation type="unfinished">A process is running inside this folder.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="282"/>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="453"/>
+      <source>Its status could not be read.</source>
+      <translation type="unfinished">Its status could not be read.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="284"/>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="454"/>
+      <source>It has uncommitted changes.</source>
+      <translation type="unfinished">It has uncommitted changes.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="419"/>
+      <source>git did not remove it: %1</source>
+      <translation type="unfinished">git did not remove it: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="430"/>
+      <source>Worktrees are only removed from an interactive session.</source>
+      <translation type="unfinished">Worktrees are only removed from an interactive session.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="433"/>
+      <source>git is not available.</source>
+      <translation type="unfinished">git is not available.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="438"/>
+      <source>The folder has reappeared, so nothing was removed.</source>
+      <translation type="unfinished">The folder has reappeared, so nothing was removed.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="440"/>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="445"/>
+      <source>The repository no longer lists this worktree.</source>
+      <translation type="unfinished">The repository no longer lists this worktree.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="448"/>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="467"/>
+      <source>This location is protected and cannot be removed.</source>
+      <translation type="unfinished">This location is protected and cannot be removed.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="464"/>
+      <source>This folder is no longer an orphaned worktree.</source>
+      <translation type="unfinished">This folder is no longer an orphaned worktree.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/git_worktree_tool.cpp" line="474"/>
+      <source>The folder could not be moved to the Trash.</source>
+      <translation type="unfinished">The folder could not be moved to the Trash.</translation>
     </message>
   </context>
   <context>
@@ -2941,15 +4225,15 @@ Continue?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="167"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="116"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="121"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="114"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="119"/>
       <source>Document Font</source>
       <translation type="unfinished">Document Font</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.ui" line="199"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="128"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="133"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="126"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="131"/>
       <source>Monospace Font</source>
       <translation type="unfinished">Monospace Font</translation>
     </message>
@@ -2999,159 +4283,159 @@ Continue?</translation>
       <translation type="unfinished">Show Battery Percentage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="35"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="30"/>
       <source>Themes</source>
       <translation type="unfinished">Themes</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="36"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="31"/>
       <source>Fonts</source>
       <translation type="unfinished">Fonts</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="37"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="32"/>
       <source>Interface</source>
       <translation type="unfinished">Interface</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="38"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="33"/>
       <source>Clock &amp; Status</source>
       <translation type="unfinished">Clock &amp; Status</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="52"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="50"/>
       <source>Failed to apply Color Scheme</source>
       <translation type="unfinished">Failed to apply Color Scheme</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="63"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="61"/>
       <source>Failed to apply GTK Theme</source>
       <translation type="unfinished">Failed to apply GTK Theme</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="74"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="72"/>
       <source>Failed to apply Icon Theme</source>
       <translation type="unfinished">Failed to apply Icon Theme</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="85"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="83"/>
       <source>Failed to apply Cursor Theme</source>
       <translation type="unfinished">Failed to apply Cursor Theme</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="96"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="94"/>
       <source>Failed to apply Cursor Size</source>
       <translation type="unfinished">Failed to apply Cursor Size</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="104"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="109"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="102"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="107"/>
       <source>Font</source>
       <translation type="unfinished">Font</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="143"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="141"/>
       <source>Failed to apply Text Scaling</source>
       <translation type="unfinished">Failed to apply Text Scaling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="153"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="151"/>
       <source>Failed to apply Animations</source>
       <translation type="unfinished">Failed to apply Animations</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="161"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="159"/>
       <source>Failed to apply Hot Corners</source>
       <translation type="unfinished">Failed to apply Hot Corners</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="169"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="167"/>
       <source>Failed to apply Clock Seconds</source>
       <translation type="unfinished">Failed to apply Clock Seconds</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="177"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="175"/>
       <source>Failed to apply Clock Weekday</source>
       <translation type="unfinished">Failed to apply Clock Weekday</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="185"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="183"/>
       <source>Failed to apply Battery Percentage</source>
       <translation type="unfinished">Failed to apply Battery Percentage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="198"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="196"/>
       <source>Failed to apply Clock Format</source>
       <translation type="unfinished">Failed to apply Clock Format</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="211"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="209"/>
       <source>Failed to apply Font Antialiasing</source>
       <translation type="unfinished">Failed to apply Font Antialiasing</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="224"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="222"/>
       <source>Failed to apply Font Hinting</source>
       <translation type="unfinished">Failed to apply Font Hinting</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="239"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="237"/>
       <source>Default</source>
       <translation type="unfinished">Default</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="240"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="238"/>
       <source>Prefer Dark</source>
       <translation type="unfinished">Prefer Dark</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="241"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="239"/>
       <source>Prefer Light</source>
       <translation type="unfinished">Prefer Light</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="284"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="282"/>
       <source>12 Hour</source>
       <translation type="unfinished">12 Hour</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="285"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="283"/>
       <source>24 Hour</source>
       <translation type="unfinished">24 Hour</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="291"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="299"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="289"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="297"/>
       <source>None</source>
       <translation type="unfinished">None</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="292"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="290"/>
       <source>Grayscale</source>
       <translation type="unfinished">Grayscale</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="293"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="291"/>
       <source>RGBA</source>
       <translation type="unfinished">RGBA</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="300"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="298"/>
       <source>Slight</source>
       <translation type="unfinished">Slight</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="301"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="299"/>
       <source>Medium</source>
       <translation type="unfinished">Medium</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="302"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="300"/>
       <source>Full</source>
       <translation type="unfinished">Full</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="412"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_appearance_tab.cpp" line="410"/>
       <source>Failed to apply %1</source>
       <translation type="unfinished">Failed to apply %1</translation>
     </message>
@@ -3159,131 +4443,131 @@ Continue?</translation>
   <context>
     <name>GnomeDesktopTab</name>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="28"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="29"/>
       <source>Background</source>
       <translation type="unfinished">Background</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="35"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="49"/>
       <source>Wallpaper (Light)</source>
       <translation type="unfinished">Wallpaper (Light)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="47"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="68"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="61"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="82"/>
       <source>Browse...</source>
       <translation type="unfinished">Browse...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="56"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="70"/>
       <source>Wallpaper (Dark)</source>
       <translation type="unfinished">Wallpaper (Dark)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="77"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="91"/>
       <source>Picture Options</source>
       <translation type="unfinished">Picture Options</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="93"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="30"/>
       <source>Sound</source>
       <translation type="unfinished">Sound</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="100"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="125"/>
       <source>Event Sounds</source>
       <translation type="unfinished">Event Sounds</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="111"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="136"/>
       <source>Input Feedback Sounds</source>
       <translation type="unfinished">Input Feedback Sounds</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="122"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.ui" line="147"/>
       <source>Allow Volume Over 100%</source>
       <translation type="unfinished">Allow Volume Over 100%</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="34"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="45"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="43"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="54"/>
       <source>Failed to apply Wallpaper</source>
       <translation type="unfinished">Failed to apply Wallpaper</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="38"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="47"/>
       <source>Select Wallpaper</source>
       <translation type="unfinished">Select Wallpaper</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="39"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="64"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="48"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="73"/>
       <source>Images (*.png *.jpg *.jpeg *.bmp *.svg *.webp)</source>
       <translation type="unfinished">Images (*.png *.jpg *.jpeg *.bmp *.svg *.webp)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="59"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="70"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="68"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="79"/>
       <source>Failed to apply Dark Wallpaper</source>
       <translation type="unfinished">Failed to apply Dark Wallpaper</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="63"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="72"/>
       <source>Select Dark Wallpaper</source>
       <translation type="unfinished">Select Dark Wallpaper</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="86"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="95"/>
       <source>Failed to apply Picture Options</source>
       <translation type="unfinished">Failed to apply Picture Options</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="96"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="105"/>
       <source>Failed to apply Event Sounds</source>
       <translation type="unfinished">Failed to apply Event Sounds</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="104"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="113"/>
       <source>Failed to apply Input Feedback Sounds</source>
       <translation type="unfinished">Failed to apply Input Feedback Sounds</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="112"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="121"/>
       <source>Failed to apply Volume Over 100%%</source>
       <translation type="unfinished">Failed to apply Volume Over 100%%</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="131"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="140"/>
       <source>None</source>
       <translation type="unfinished">None</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="132"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="141"/>
       <source>Wallpaper</source>
       <translation type="unfinished">Wallpaper</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="133"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="142"/>
       <source>Centered</source>
       <translation type="unfinished">Centered</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="134"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="143"/>
       <source>Scaled</source>
       <translation type="unfinished">Scaled</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="135"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="144"/>
       <source>Stretched</source>
       <translation type="unfinished">Stretched</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="136"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="145"/>
       <source>Zoom</source>
       <translation type="unfinished">Zoom</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="137"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_desktop_tab.cpp" line="146"/>
       <source>Spanned</source>
       <translation type="unfinished">Spanned</translation>
     </message>
@@ -3291,125 +4575,125 @@ Continue?</translation>
   <context>
     <name>GnomeMouseTab</name>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="28"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="37"/>
       <source>Mouse</source>
       <translation type="unfinished">Mouse</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="35"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="116"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="49"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="141"/>
       <source>Natural Scrolling</source>
       <translation type="unfinished">Natural Scrolling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="46"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="127"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="60"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="152"/>
       <source>Speed</source>
       <translation type="unfinished">Speed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="62"/>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="143"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="76"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="168"/>
       <source>0.00</source>
       <translation type="unfinished">0.00</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="71"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="85"/>
       <source>Acceleration Profile</source>
       <translation type="unfinished">Acceleration Profile</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="83"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="97"/>
       <source>Left-Handed</source>
       <translation type="unfinished">Left-Handed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="98"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="38"/>
       <source>Touchpad</source>
       <translation type="unfinished">Touchpad</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="105"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="130"/>
       <source>Tap to Click</source>
       <translation type="unfinished">Tap to Click</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="152"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="177"/>
       <source>Two-Finger Scrolling</source>
       <translation type="unfinished">Two-Finger Scrolling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="163"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="188"/>
       <source>Edge Scrolling</source>
       <translation type="unfinished">Edge Scrolling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="174"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.ui" line="199"/>
       <source>Disable While Typing</source>
       <translation type="unfinished">Disable While Typing</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="41"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="50"/>
       <source>Failed to apply Natural Scrolling</source>
       <translation type="unfinished">Failed to apply Natural Scrolling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="56"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="65"/>
       <source>Failed to apply Mouse Speed</source>
       <translation type="unfinished">Failed to apply Mouse Speed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="67"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="76"/>
       <source>Failed to apply Acceleration Profile</source>
       <translation type="unfinished">Failed to apply Acceleration Profile</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="75"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="84"/>
       <source>Failed to apply Left Handed</source>
       <translation type="unfinished">Failed to apply Left Handed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="85"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="94"/>
       <source>Failed to apply Tap to Click</source>
       <translation type="unfinished">Failed to apply Tap to Click</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="93"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="102"/>
       <source>Failed to apply Touchpad Natural Scrolling</source>
       <translation type="unfinished">Failed to apply Touchpad Natural Scrolling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="108"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="117"/>
       <source>Failed to apply Touchpad Speed</source>
       <translation type="unfinished">Failed to apply Touchpad Speed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="116"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="125"/>
       <source>Failed to apply Two Finger Scroll</source>
       <translation type="unfinished">Failed to apply Two Finger Scroll</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="124"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="133"/>
       <source>Failed to apply Edge Scrolling</source>
       <translation type="unfinished">Failed to apply Edge Scrolling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="132"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="141"/>
       <source>Failed to apply Disable While Typing</source>
       <translation type="unfinished">Failed to apply Disable While Typing</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="154"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="163"/>
       <source>Default</source>
       <translation type="unfinished">Default</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="155"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="164"/>
       <source>Flat</source>
       <translation type="unfinished">Flat</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="156"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_mouse_tab.cpp" line="165"/>
       <source>Adaptive</source>
       <translation type="unfinished">Adaptive</translation>
     </message>
@@ -3451,197 +4735,197 @@ Continue?</translation>
   <context>
     <name>GnomeWmTab</name>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="28"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="45"/>
       <source>Window Preferences</source>
       <translation type="unfinished">Window Preferences</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="35"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="49"/>
       <source>Button Layout</source>
       <translation type="unfinished">Button Layout</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="46"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="60"/>
       <source>Focus Mode</source>
       <translation type="unfinished">Focus Mode</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="58"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="72"/>
       <source>Titlebar Font</source>
       <translation type="unfinished">Titlebar Font</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="80"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="94"/>
       <source> pt</source>
       <translation type="unfinished"> pt</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="90"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="104"/>
       <source>Workspaces</source>
       <translation type="unfinished">Workspaces</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="103"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="117"/>
       <source>Double-Click Titlebar</source>
       <translation type="unfinished">Double-Click Titlebar</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="115"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="129"/>
       <source>Middle-Click Titlebar</source>
       <translation type="unfinished">Middle-Click Titlebar</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="127"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="141"/>
       <source>Right-Click Titlebar</source>
       <translation type="unfinished">Right-Click Titlebar</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="139"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="153"/>
       <source>Auto-Raise</source>
       <translation type="unfinished">Auto-Raise</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="150"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="164"/>
       <source>Raise on Click</source>
       <translation type="unfinished">Raise on Click</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="165"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="46"/>
       <source>Compositor (Mutter)</source>
       <translation type="unfinished">Compositor (Mutter)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="172"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="197"/>
       <source>Dynamic Workspaces</source>
       <translation type="unfinished">Dynamic Workspaces</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="183"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="208"/>
       <source>Edge Tiling</source>
       <translation type="unfinished">Edge Tiling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="194"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="219"/>
       <source>Auto-Maximize</source>
       <translation type="unfinished">Auto-Maximize</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="205"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="230"/>
       <source>Center New Windows</source>
       <translation type="unfinished">Center New Windows</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="216"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.ui" line="241"/>
       <source>Workspaces on Primary Display Only</source>
       <translation type="unfinished">Workspaces on Primary Display Only</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="50"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="59"/>
       <source>Failed to apply Button Layout</source>
       <translation type="unfinished">Failed to apply Button Layout</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="61"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="70"/>
       <source>Failed to apply Focus Mode</source>
       <translation type="unfinished">Failed to apply Focus Mode</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="77"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="86"/>
       <source>Failed to apply Titlebar Font</source>
       <translation type="unfinished">Failed to apply Titlebar Font</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="88"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="97"/>
       <source>Failed to apply Workspaces</source>
       <translation type="unfinished">Failed to apply Workspaces</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="101"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="110"/>
       <source>Failed to apply Double Click Action</source>
       <translation type="unfinished">Failed to apply Double Click Action</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="112"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="121"/>
       <source>Failed to apply Middle Click Action</source>
       <translation type="unfinished">Failed to apply Middle Click Action</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="123"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="132"/>
       <source>Failed to apply Right Click Action</source>
       <translation type="unfinished">Failed to apply Right Click Action</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="133"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="142"/>
       <source>Failed to apply Auto Raise</source>
       <translation type="unfinished">Failed to apply Auto Raise</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="141"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="150"/>
       <source>Failed to apply Raise on Click</source>
       <translation type="unfinished">Failed to apply Raise on Click</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="151"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="160"/>
       <source>Failed to apply Dynamic Workspaces</source>
       <translation type="unfinished">Failed to apply Dynamic Workspaces</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="159"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="168"/>
       <source>Failed to apply Edge Tiling</source>
       <translation type="unfinished">Failed to apply Edge Tiling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="167"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="176"/>
       <source>Failed to apply Auto Maximize</source>
       <translation type="unfinished">Failed to apply Auto Maximize</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="175"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="184"/>
       <source>Failed to apply Center New Windows</source>
       <translation type="unfinished">Failed to apply Center New Windows</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="183"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="192"/>
       <source>Failed to apply Workspaces on Primary</source>
       <translation type="unfinished">Failed to apply Workspaces on Primary</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="198"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="207"/>
       <source>Toggle Maximize</source>
       <translation type="unfinished">Toggle Maximize</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="199"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="208"/>
       <source>Minimize</source>
       <translation type="unfinished">Minimize</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="200"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="209"/>
       <source>Lower</source>
       <translation type="unfinished">Lower</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="201"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="210"/>
       <source>Menu</source>
       <translation type="unfinished">Menu</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="202"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="211"/>
       <source>None</source>
       <translation type="unfinished">None</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="209"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="218"/>
       <source>Click</source>
       <translation type="unfinished">Click</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="210"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="219"/>
       <source>Sloppy</source>
       <translation type="unfinished">Sloppy</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="211"/>
+      <location filename="../nexis/Pages/GnomeSettings/gnome_wm_tab.cpp" line="220"/>
       <source>Mouse</source>
       <translation type="unfinished">Mouse</translation>
     </message>
@@ -3656,37 +4940,37 @@ Continue?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.ui" line="61"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="890"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1044"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="897"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1051"/>
       <source>System</source>
       <translation type="unfinished">System</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.ui" line="121"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="891"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1045"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="898"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1052"/>
       <source>Processor</source>
       <translation type="unfinished">Processor</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.ui" line="181"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="892"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1046"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="899"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1053"/>
       <source>Graphics</source>
       <translation type="unfinished">Graphics</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.ui" line="241"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="893"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1003"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1047"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="900"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1010"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1054"/>
       <source>Memory</source>
       <translation type="unfinished">Memory</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.ui" line="304"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="894"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1048"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="901"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1055"/>
       <source>Battery</source>
       <translation type="unfinished">Battery</translation>
     </message>
@@ -3697,8 +4981,8 @@ Continue?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.ui" line="439"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="896"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1050"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="903"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1057"/>
       <source>Storage</source>
       <translation type="unfinished">Storage</translation>
     </message>
@@ -3709,7 +4993,7 @@ Continue?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.ui" line="502"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1080"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1087"/>
       <source>Export as HTML...</source>
       <translation type="unfinished">Export as HTML...</translation>
     </message>
@@ -3792,7 +5076,7 @@ Continue?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="341"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1000"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1007"/>
       <source>Name</source>
       <translation type="unfinished">Name</translation>
     </message>
@@ -3836,194 +5120,207 @@ Continue?</translation>
       <source>Battery %1 — %2</source>
       <translation type="unfinished">Battery %1 — %2</translation>
     </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="513"/>
+      <source>Temperature – average (%n sensor(s))</source>
+      <translation type="unfinished">
+        <numerusform>Temperature – average (%n sensor(s))</numerusform>
+        <numerusform>Temperature – average (%n sensor(s))</numerusform>
+      </translation>
+    </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="562"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="515"/>
+      <source>Temperature – max (%1)</source>
+      <translation type="unfinished">Temperature – max (%1)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="569"/>
       <source>Unlock All Drives</source>
       <translation type="unfinished">Unlock All Drives</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="564"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="571"/>
       <source>Re-read SMART data for all drives with elevated permissions</source>
       <translation type="unfinished">Re-read SMART data for all drives with elevated permissions</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="579"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="586"/>
       <source>Drive %1</source>
       <translation type="unfinished">Drive %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="581"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="588"/>
       <source>Drive</source>
       <translation type="unfinished">Drive</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="584"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="591"/>
       <source>  Size</source>
       <translation type="unfinished">  Size</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="594"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="601"/>
       <source>  Type</source>
       <translation type="unfinished">  Type</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="609"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="616"/>
       <source>  Health</source>
       <translation type="unfinished">  Health</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="628"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="635"/>
       <source>  Temperature</source>
       <translation type="unfinished">  Temperature</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="635"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="642"/>
       <source>  Endurance Used</source>
       <translation type="unfinished">  Endurance Used</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="637"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="644"/>
       <source>  Available Spare</source>
       <translation type="unfinished">  Available Spare</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="640"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="647"/>
       <source>  Data Written</source>
       <translation type="unfinished">  Data Written</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="644"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="651"/>
       <source>  Data Read</source>
       <translation type="unfinished">  Data Read</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="647"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="654"/>
       <source>  Unsafe Shutdowns</source>
       <translation type="unfinished">  Unsafe Shutdowns</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="649"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="656"/>
       <source>  Media Errors</source>
       <translation type="unfinished">  Media Errors</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="654"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="661"/>
       <source>  Wear Leveling</source>
       <translation type="unfinished">  Wear Leveling</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="656"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="661"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="663"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="668"/>
       <source>  Reallocated Sectors</source>
       <translation type="unfinished">  Reallocated Sectors</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="663"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="670"/>
       <source>  Pending Sectors</source>
       <translation type="unfinished">  Pending Sectors</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="665"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="672"/>
       <source>  Uncorrectable Sectors</source>
       <translation type="unfinished">  Uncorrectable Sectors</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="670"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="677"/>
       <source>  Power-On Time</source>
       <translation type="unfinished">  Power-On Time</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="673"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="680"/>
       <source>  Power Cycles</source>
       <translation type="unfinished">  Power Cycles</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="676"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="683"/>
       <source>  SMART Status</source>
       <translation type="unfinished">  SMART Status</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="676"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="683"/>
       <source>FAILING</source>
       <translation type="unfinished">FAILING</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="684"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="691"/>
       <source>  Note</source>
       <translation type="unfinished">  Note</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="692"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="710"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="699"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="717"/>
       <source>Limited data — smartctl requires elevated permissions</source>
       <translation type="unfinished">Limited data — smartctl requires elevated permissions</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="697"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="704"/>
       <source>Unlock</source>
       <translation type="unfinished">Unlock</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="699"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="706"/>
       <source>Re-read SMART data with elevated permissions (pkexec)</source>
       <translation type="unfinished">Re-read SMART data with elevated permissions (pkexec)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="730"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="737"/>
       <source>Copied to clipboard</source>
       <translation type="unfinished">Copied to clipboard</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="877"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="884"/>
       <source>Export System Report</source>
       <translation type="unfinished">Export System Report</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="878"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="885"/>
       <source>Text Files (*.txt);;All Files (*)</source>
       <translation type="unfinished">Text Files (*.txt);;All Files (*)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="895"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1049"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="902"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1056"/>
       <source>Fans</source>
       <translation type="unfinished">Fans</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="900"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1084"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="907"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1091"/>
       <source>Export Failed</source>
       <translation type="unfinished">Export Failed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="901"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1085"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="908"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1092"/>
       <source>Could not write to %1: %2</source>
       <translation type="unfinished">Could not write to %1: %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="909"/>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1092"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="916"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1099"/>
       <source>Report Exported</source>
       <translation type="unfinished">Report Exported</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="910"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="917"/>
       <source>System report saved to %1</source>
       <translation type="unfinished">System report saved to %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="953"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="960"/>
       <source>Update check unavailable.</source>
       <translation type="unfinished">Update check unavailable.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="955"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="962"/>
       <source>No pending updates.</source>
       <translation type="unfinished">No pending updates.</translation>
     </message>
     <message numerus="yes">
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="958"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="965"/>
       <source>%n update(s) available</source>
       <translation type="unfinished">
         <numerusform>%n update(s) available</numerusform>
@@ -4031,47 +5328,47 @@ Continue?</translation>
       </translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="999"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1006"/>
       <source>Top Processes (by CPU)</source>
       <translation type="unfinished">Top Processes (by CPU)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1001"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1008"/>
       <source>User</source>
       <translation type="unfinished">User</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1002"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1009"/>
       <source>CPU %</source>
       <translation type="unfinished">CPU %</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1041"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1048"/>
       <source>System Overview</source>
       <translation type="unfinished">System Overview</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1054"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1061"/>
       <source>Pending Updates</source>
       <translation type="unfinished">Pending Updates</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1067"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1074"/>
       <source>Export as HTML</source>
       <translation type="unfinished">Export as HTML</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1068"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1075"/>
       <source>HTML Files (*.html);;All Files (*)</source>
       <translation type="unfinished">HTML Files (*.html);;All Files (*)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1074"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1081"/>
       <source>Generating…</source>
       <translation type="unfinished">Generating…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1093"/>
+      <location filename="../nexis/Pages/HardwareInfo/hardware_info_page.cpp" line="1100"/>
       <source>HTML report saved to %1</source>
       <translation type="unfinished">HTML report saved to %1</translation>
     </message>
@@ -4123,7 +5420,7 @@ Continue?</translation>
     <message>
       <location filename="../nexis/Pages/Helpers/helpers_page.ui" line="85"/>
       <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="357"/>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="733"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="742"/>
       <source>Flush DNS Cache</source>
       <translation type="unfinished">Flush DNS Cache</translation>
     </message>
@@ -4258,7 +5555,7 @@ Continue?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="430"/>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="745"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="754"/>
       <source>Verify Disk</source>
       <translation type="unfinished">Verify Disk</translation>
     </message>
@@ -4294,7 +5591,7 @@ This may take 1–5 minutes. Continue?</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="489"/>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="750"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="759"/>
       <source>Rebuild Launch Services</source>
       <translation type="unfinished">Rebuild Launch Services</translation>
     </message>
@@ -4367,34 +5664,42 @@ Continue?</translation>
       <translation type="unfinished">Performance</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="702"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="711"/>
       <source>MAINTENANCE</source>
       <translation type="unfinished">MAINTENANCE</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="734"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="743"/>
       <source>Clear the system DNS resolver cache</source>
       <translation type="unfinished">Clear the system DNS resolver cache</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="740"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="749"/>
       <source>Rebuild Spotlight</source>
       <translation type="unfinished">Rebuild Spotlight</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="741"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="750"/>
       <source>Delete and rebuild the Spotlight search index</source>
       <translation type="unfinished">Delete and rebuild the Spotlight search index</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="746"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="755"/>
       <source>Verify the integrity of the startup disk</source>
       <translation type="unfinished">Verify the integrity of the startup disk</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="751"/>
+      <location filename="../nexis/Pages/Helpers/helpers_page.cpp" line="760"/>
       <source>Rescan app database and restart Finder</source>
       <translation type="unfinished">Rescan app database and restart Finder</translation>
+    </message>
+  </context>
+  <context>
+    <name>HistoryChart</name>
+    <message>
+      <location filename="../nexis/Pages/Resources/history_chart.cpp" line="84"/>
+      <source>Seconds</source>
+      <translation type="unfinished">Seconds</translation>
     </message>
   </context>
   <context>
@@ -4798,54 +6103,193 @@ Do you want to save anyway?</translation>
   <context>
     <name>LeftoverReviewDialogLinux</name>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="32"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="33"/>
       <source>Leftover Files</source>
       <translation type="unfinished">Leftover Files</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="49"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="50"/>
       <source>Select All</source>
       <translation type="unfinished">Select All</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="64"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="65"/>
       <source>Category</source>
       <translation type="unfinished">Category</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="64"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="65"/>
       <source>Path</source>
       <translation type="unfinished">Path</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="64"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="65"/>
       <source>Size</source>
       <translation type="unfinished">Size</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="64"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="65"/>
       <source/>
       <translation type="unfinished"/>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="75"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="65"/>
+      <source>Note</source>
+      <translation type="unfinished">Note</translation>
+    </message>
+    <message>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="77"/>
       <source>Move to Trash</source>
       <translation type="unfinished">Move to Trash</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="75"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="77"/>
       <source>Cancel</source>
       <translation type="unfinished">Cancel</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="129"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="143"/>
       <source>No leftover files found for the uninstalled package(s).</source>
       <translation type="unfinished">No leftover files found for the uninstalled package(s).</translation>
     </message>
     <message>
-      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="136"/>
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="150"/>
       <source>Found %1 leftover file(s) totalling %2 — %3 selected (%4).</source>
       <translation type="unfinished">Found %1 leftover file(s) totalling %2 — %3 selected (%4).</translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../../linux/nexis/Pages/Uninstaller/leftover_review_dialog_linux.cpp" line="159"/>
+      <source>%n item(s) are also used by apps that are still installed and cannot be selected.</source>
+      <translation type="unfinished">
+        <numerusform>%n item(s) are also used by apps that are still installed and cannot be selected.</numerusform>
+        <numerusform>%n item(s) are also used by apps that are still installed and cannot be selected.</numerusform>
+      </translation>
+    </message>
+  </context>
+  <context>
+    <name>LifecycleAuditLog</name>
+    <message>
+      <location filename="../nexis-core/Tools/lifecycle_audit_log.cpp" line="284"/>
+      <source>This item was not moved to the Trash, so it cannot be restored.</source>
+      <translation type="unfinished">This item was not moved to the Trash, so it cannot be restored.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/lifecycle_audit_log.cpp" line="290"/>
+      <source>The item is no longer in the Trash (it may have been emptied or restored already).</source>
+      <translation type="unfinished">The item is no longer in the Trash (it may have been emptied or restored already).</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/lifecycle_audit_log.cpp" line="296"/>
+      <source>Something already exists at the original location, so nothing was restored: %1</source>
+      <translation type="unfinished">Something already exists at the original location, so nothing was restored: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/lifecycle_audit_log.cpp" line="304"/>
+      <source>Could not move the item back to %1.</source>
+      <translation type="unfinished">Could not move the item back to %1.</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/lifecycle_audit_log.cpp" line="322"/>
+      <source>Restored to %1</source>
+      <translation type="unfinished">Restored to %1</translation>
+    </message>
+  </context>
+  <context>
+    <name>LinkReplaceDialog</name>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="23"/>
+      <source>Replace Duplicates with Links</source>
+      <translation type="unfinished">Replace Duplicates with Links</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="31"/>
+      <source>Each ticked file is replaced by a link to the file kept in its group, so every path still opens the same content while the extra copy stops using disk space. Nothing changes until you confirm.</source>
+      <translation type="unfinished">Each ticked file is replaced by a link to the file kept in its group, so every path still opens the same content while the extra copy stops using disk space. Nothing changes until you confirm.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="38"/>
+      <source>Hard links — the paths become one file; it is deleted only when the last one is</source>
+      <translation type="unfinished">Hard links — the paths become one file; it is deleted only when the last one is</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="41"/>
+      <source>Symbolic links — relative shortcuts to the kept file; they break if it is moved or deleted</source>
+      <translation type="unfinished">Symbolic links — relative shortcuts to the kept file; they break if it is moved or deleted</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="57"/>
+      <source>Duplicate</source>
+      <translation type="unfinished">Duplicate</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="57"/>
+      <source>Becomes a link to</source>
+      <translation type="unfinished">Becomes a link to</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="57"/>
+      <source>Result</source>
+      <translation type="unfinished">Result</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="69"/>
+      <source>Before each replacement the two files are compared again, and a file that changed since the scan is left alone. A hard link makes the path share the kept file&apos;s permissions and modification time.</source>
+      <translation type="unfinished">Before each replacement the two files are compared again, and a file that changed since the scan is left alone. A hard link makes the path share the kept file&apos;s permissions and modification time.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="75"/>
+      <source>Replace with Links</source>
+      <translation type="unfinished">Replace with Links</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="76"/>
+      <source>Cancel</source>
+      <translation type="unfinished">Cancel</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="89"/>
+      <source>Will be replaced</source>
+      <translation type="unfinished">Will be replaced</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="90"/>
+      <source>Kept as the original</source>
+      <translation type="unfinished">Kept as the original</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="91"/>
+      <source>Skipped — not part of an identical-files group</source>
+      <translation type="unfinished">Skipped — not part of an identical-files group</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="92"/>
+      <source>Skipped — file is missing or not a regular file</source>
+      <translation type="unfinished">Skipped — file is missing or not a regular file</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="93"/>
+      <source>Skipped — protected by your exclusions</source>
+      <translation type="unfinished">Skipped — protected by your exclusions</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="94"/>
+      <source>Skipped — already the same file</source>
+      <translation type="unfinished">Skipped — already the same file</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="95"/>
+      <source>Skipped — kept file is on a different drive</source>
+      <translation type="unfinished">Skipped — kept file is on a different drive</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="125"/>
+      <source>%1 files will be replaced, freeing %2 · %3 skipped</source>
+      <translation type="unfinished">%1 files will be replaced, freeing %2 · %3 skipped</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/DiskTools/link_replace_dialog.cpp" line="127"/>
+      <source>%1 files will be replaced, freeing %2</source>
+      <translation type="unfinished">%1 files will be replaced, freeing %2</translation>
     </message>
   </context>
   <context>
@@ -5182,27 +6626,6 @@ Do you want to save anyway?</translation>
     </message>
   </context>
   <context>
-    <name>MenuBarMonitor</name>
-    <message numerus="yes">
-      <location filename="../../macos/nexis/MenuBar/menu_bar_monitor.cpp" line="152"/>
-      <source>Freed %1 across %n item(s).</source>
-      <translation type="unfinished">
-        <numerusform>Freed %1 across %n item(s).</numerusform>
-        <numerusform>Freed %1 across %n item(s).</numerusform>
-      </translation>
-    </message>
-    <message>
-      <location filename="../../macos/nexis/MenuBar/menu_bar_monitor.cpp" line="153"/>
-      <source>Nothing to clean — your system is already tidy.</source>
-      <translation type="unfinished">Nothing to clean — your system is already tidy.</translation>
-    </message>
-    <message>
-      <location filename="../../macos/nexis/MenuBar/menu_bar_monitor.cpp" line="155"/>
-      <source>Nexis</source>
-      <translation type="unfinished">Nexis</translation>
-    </message>
-  </context>
-  <context>
     <name>MetricTileBase</name>
     <message>
       <location filename="../nexis/Pages/Dashboard/metric_tile_base.cpp" line="123"/>
@@ -5243,27 +6666,27 @@ Do you want to save anyway?</translation>
   <context>
     <name>MiniMonitorWindow</name>
     <message>
-      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="43"/>
+      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="49"/>
       <source>Nexis Mini Monitor</source>
       <translation type="unfinished">Nexis Mini Monitor</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="86"/>
+      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="92"/>
       <source>Nexis</source>
       <translation type="unfinished">Nexis</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="186"/>
+      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="192"/>
       <source>CPU</source>
       <translation type="unfinished">CPU</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="187"/>
+      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="193"/>
       <source>MEM</source>
       <translation type="unfinished">MEM</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="188"/>
+      <location filename="../nexis/Pages/MiniMonitor/mini_monitor_window.cpp" line="194"/>
       <source>DSK</source>
       <translation type="unfinished">DSK</translation>
     </message>
@@ -5432,79 +6855,59 @@ Do you want to save anyway?</translation>
   <context>
     <name>OomKillsWidget</name>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="65"/>
-      <source>Out-of-Memory Kills</source>
-      <translation type="unfinished">Out-of-Memory Kills</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="78"/>
-      <source>systemd-oomd terminates processes before the kernel does when memory pressure spikes. This panel shows its current state and the most recent things it killed.</source>
-      <translation type="unfinished">systemd-oomd terminates processes before the kernel does when memory pressure spikes. This panel shows its current state and the most recent things it killed.</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="102"/>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="56"/>
       <source>Recent kills</source>
       <translation type="unfinished">Recent kills</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="115"/>
-      <source>No OOM kills recorded since the last journal rotation.</source>
-      <translation type="unfinished">No OOM kills recorded since the last journal rotation.</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="93"/>
+      <source>systemd-oomd not installed</source>
+      <translation type="unfinished">systemd-oomd not installed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="149"/>
-      <source>systemd-oomd is not installed on this host.</source>
-      <translation type="unfinished">systemd-oomd is not installed on this host.</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="95"/>
+      <source>systemd-oomd masked</source>
+      <translation type="unfinished">systemd-oomd masked</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="151"/>
-      <source>systemd-oomd is masked — the kernel OOM killer is the only line of defence.</source>
-      <translation type="unfinished">systemd-oomd is masked — the kernel OOM killer is the only line of defence.</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="97"/>
+      <source>systemd-oomd not present</source>
+      <translation type="unfinished">systemd-oomd not present</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="154"/>
-      <source>systemd-oomd is not present in this systemd build.</source>
-      <translation type="unfinished">systemd-oomd is not present in this systemd build.</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="99"/>
+      <source>systemd-oomd active</source>
+      <translation type="unfinished">systemd-oomd active</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="156"/>
-      <source>systemd-oomd: active.</source>
-      <translation type="unfinished">systemd-oomd: active.</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="101"/>
+      <source>systemd-oomd inactive</source>
+      <translation type="unfinished">systemd-oomd inactive</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="158"/>
-      <source>systemd-oomd: installed but inactive — start it with &lt;code&gt;systemctl enable --now systemd-oomd&lt;/code&gt; to get early intervention.</source>
-      <translation type="unfinished">systemd-oomd: installed but inactive — start it with &lt;code&gt;systemctl enable --now systemd-oomd&lt;/code&gt; to get early intervention.</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="103"/>
+      <source>systemd-oomd failed</source>
+      <translation type="unfinished">systemd-oomd failed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="162"/>
-      <source>systemd-oomd: failed — check &lt;code&gt;journalctl -u systemd-oomd&lt;/code&gt;.</source>
-      <translation type="unfinished">systemd-oomd: failed — check &lt;code&gt;journalctl -u systemd-oomd&lt;/code&gt;.</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="105"/>
+      <source>systemd-oomd: %1</source>
+      <translation type="unfinished">systemd-oomd: %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="165"/>
-      <source>systemd-oomd: %1 (%2).</source>
-      <translation type="unfinished">systemd-oomd: %1 (%2).</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="107"/>
+      <source>%1 · %2 kills</source>
+      <translation type="unfinished">%1 · %2 kills</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="172"/>
-      <source>Total kills (oomd): &lt;b&gt;%1&lt;/b&gt;</source>
-      <translation type="unfinished">Total kills (oomd): &lt;b&gt;%1&lt;/b&gt;</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="109"/>
+      <source> (kernel: %1)</source>
+      <translation type="unfinished"> (kernel: %1)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="174"/>
-      <source>Managed (oomd policy): &lt;b&gt;%1&lt;/b&gt;</source>
-      <translation type="unfinished">Managed (oomd policy): &lt;b&gt;%1&lt;/b&gt;</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="176"/>
-      <source>Kernel oom_kill (cgroup v2): &lt;b&gt;%1&lt;/b&gt;</source>
-      <translation type="unfinished">Kernel oom_kill (cgroup v2): &lt;b&gt;%1&lt;/b&gt;</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="184"/>
-      <source>⚠ This host does not expose the cgroup v2 unified hierarchy. systemd 259+ (Ubuntu 26.04) requires v2; per-process and memory.events readings will be unavailable.</source>
-      <translation type="unfinished">⚠ This host does not expose the cgroup v2 unified hierarchy. systemd 259+ (Ubuntu 26.04) requires v2; per-process and memory.events readings will be unavailable.</translation>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="116"/>
+      <source>⚠ No cgroup v2 unified hierarchy — systemd 259+ (Ubuntu 26.04) needs it; per-process OOM readings are unavailable.</source>
+      <translation type="unfinished">⚠ No cgroup v2 unified hierarchy — systemd 259+ (Ubuntu 26.04) needs it; per-process OOM readings are unavailable.</translation>
     </message>
   </context>
   <context>
@@ -5691,24 +7094,6 @@ Not under a trusted system prefix.</translation>
     </message>
   </context>
   <context>
-    <name>PowerDrawWidget</name>
-    <message>
-      <location filename="../nexis/Pages/Helpers/power_draw_widget.cpp" line="45"/>
-      <source>Package Power</source>
-      <translation type="unfinished">Package Power</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Helpers/power_draw_widget.cpp" line="76"/>
-      <source>%1 W</source>
-      <translation type="unfinished">%1 W</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Helpers/power_draw_widget.cpp" line="81"/>
-      <source>%1: %2 W</source>
-      <translation type="unfinished">%1: %2 W</translation>
-    </message>
-  </context>
-  <context>
     <name>ProcessAlertDialog</name>
     <message>
       <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="16"/>
@@ -5721,32 +7106,32 @@ Not under a trusted system prefix.</translation>
       <translation type="unfinished">Alerts for processes named &quot;%1&quot;</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="33"/>
-      <source>Fires a tray notification when any of these thresholds is exceeded. Values across PIDs with the same name are summed. Use 0 to disable a threshold.</source>
-      <translation type="unfinished">Fires a tray notification when any of these thresholds is exceeded. Values across PIDs with the same name are summed. Use 0 to disable a threshold.</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="43"/>
+      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="44"/>
       <source>CPU threshold:</source>
       <translation type="unfinished">CPU threshold:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="54"/>
+      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="55"/>
       <source>Memory threshold:</source>
       <translation type="unfinished">Memory threshold:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="60"/>
+      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="61"/>
       <source>Delete</source>
       <translation type="unfinished">Delete</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="57"/>
+      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="58"/>
       <source>Cancel</source>
       <translation type="unfinished">Cancel</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="57"/>
+      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="33"/>
+      <source>Fires a tray notification when any of these thresholds is exceeded. Values across PIDs with the same name are summed. CPU is a share of the whole machine (100% = every processor busy). Use 0 to disable a threshold.</source>
+      <translation type="unfinished">Fires a tray notification when any of these thresholds is exceeded. Values across PIDs with the same name are summed. CPU is a share of the whole machine (100% = every processor busy). Use 0 to disable a threshold.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Processes/process_alert_dialog.cpp" line="58"/>
       <source>Save</source>
       <translation type="unfinished">Save</translation>
     </message>
@@ -5770,205 +7155,223 @@ Not under a trusted system prefix.</translation>
       <translation>Tous les processus</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.ui" line="168"/>
+      <location filename="../nexis/Pages/Processes/processes_page.ui" line="156"/>
+      <source>Nest each process under its parent, with collapse / expand</source>
+      <translation type="unfinished">Nest each process under its parent, with collapse / expand</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Processes/processes_page.ui" line="159"/>
+      <source>Process Tree</source>
+      <translation type="unfinished">Process Tree</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Processes/processes_page.ui" line="184"/>
       <source>Search...</source>
       <translation>Recherche...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.ui" line="261"/>
+      <location filename="../nexis/Pages/Processes/processes_page.ui" line="277"/>
       <source>No processes to display</source>
       <translation type="unfinished">No processes to display</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.ui" line="274"/>
+      <location filename="../nexis/Pages/Processes/processes_page.ui" line="290"/>
       <source>The process list is empty. Sampling starts on the interval set below — refresh to populate it now.</source>
       <translation type="unfinished">The process list is empty. Sampling starts on the interval set below — refresh to populate it now.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.ui" line="302"/>
+      <location filename="../nexis/Pages/Processes/processes_page.ui" line="318"/>
       <source>Refresh now</source>
       <translation type="unfinished">Refresh now</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.ui" line="400"/>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="761"/>
+      <location filename="../nexis/Pages/Processes/processes_page.ui" line="416"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="876"/>
       <source>End Process</source>
       <translation>Processus de fin</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="54"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="57"/>
       <source>User</source>
       <translation>Utilisateur</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="53"/>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="139"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="56"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="146"/>
       <source>Resident Memory</source>
       <translation>Mémoire utilisée</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="51"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="54"/>
       <source>Name</source>
       <translation type="unfinished">Name</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="53"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="56"/>
       <source>%Memory</source>
       <translation>%Mémoire</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="53"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="56"/>
       <source>Virtual Memory</source>
       <translation>Mémoire Virtuelle</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="54"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="57"/>
       <source>Start Time</source>
       <translation>Heure de début</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="54"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="57"/>
       <source>State</source>
       <translation>État</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="54"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="57"/>
       <source>Group</source>
       <translation>Groupe</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="55"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="58"/>
       <source>Nice</source>
       <translation>Agréable</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="55"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="58"/>
       <source>CPU Time</source>
       <translation>Temps CPU</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="55"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="58"/>
       <source>Session</source>
       <translation type="unfinished">Session</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="56"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="59"/>
       <source>Disk Read/s</source>
       <translation type="unfinished">Disk Read/s</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="56"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="59"/>
       <source>Disk Write/s</source>
       <translation type="unfinished">Disk Write/s</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="56"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="59"/>
       <source>Net Down/s</source>
       <translation type="unfinished">Net Down/s</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="56"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="59"/>
       <source>Net Up/s</source>
       <translation type="unfinished">Net Up/s</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="57"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="60"/>
       <source>GPU %</source>
       <translation type="unfinished">GPU %</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="57"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="60"/>
       <source>GPU VRAM</source>
       <translation type="unfinished">GPU VRAM</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="58"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="61"/>
       <source>Process</source>
       <translation>Processus</translation>
     </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="81"/>
+      <source>Share of total CPU across all %n logical processor(s)</source>
+      <translation type="unfinished">
+        <numerusform>Share of total CPU across all %n logical processor(s)</numerusform>
+        <numerusform>Share of total CPU across all %n logical processor(s)</numerusform>
+      </translation>
+    </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="153"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="160"/>
       <source>Apps</source>
       <translation type="unfinished">Apps</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="154"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="161"/>
       <source>Background</source>
       <translation type="unfinished">Background</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="233"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="237"/>
       <source>Apps (%1)</source>
       <translation type="unfinished">Apps (%1)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="235"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="239"/>
       <source>Background (%1)</source>
       <translation type="unfinished">Background (%1)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="304"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="356"/>
       <source>Per-process network usage requires nethogs. Install it (e.g. `apt install nethogs`) and reopen this page.</source>
       <translation type="unfinished">Per-process network usage requires nethogs. Install it (e.g. `apt install nethogs`) and reopen this page.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="308"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="360"/>
       <source>Per-process network usage needs elevated permissions. Run Nexis as root, or grant nethogs capture rights (e.g. `sudo setcap cap_net_raw,cap_net_admin+ep $(which nethogs)`).</source>
       <translation type="unfinished">Per-process network usage needs elevated permissions. Run Nexis as root, or grant nethogs capture rights (e.g. `sudo setcap cap_net_raw,cap_net_admin+ep $(which nethogs)`).</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="571"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="686"/>
       <source>Kill process</source>
       <translation type="unfinished">Kill process</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="756"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="871"/>
       <source>Unpin %1</source>
       <translation type="unfinished">Unpin %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="757"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="872"/>
       <source>Pin %1</source>
       <translation type="unfinished">Pin %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="759"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="874"/>
       <source>Edit Alert…</source>
       <translation type="unfinished">Edit Alert…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="759"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="874"/>
       <source>Set Alert…</source>
       <translation type="unfinished">Set Alert…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="851"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="954"/>
       <source>%1 (%2 processes) exceeded %3% CPU</source>
       <translation type="unfinished">%1 (%2 processes) exceeded %3% CPU</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="852"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="955"/>
       <source>%1 exceeded %2% CPU</source>
       <translation type="unfinished">%1 exceeded %2% CPU</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="853"/>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="866"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="956"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="969"/>
       <source>Process Threshold Alert</source>
       <translation type="unfinished">Process Threshold Alert</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="862"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="965"/>
       <source>%1 (%2 processes) exceeded %3</source>
       <translation type="unfinished">%1 (%2 processes) exceeded %3</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="864"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="967"/>
       <source>%1 exceeded %2</source>
       <translation type="unfinished">%1 exceeded %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="667"/>
+      <location filename="../nexis/Pages/Processes/processes_page.cpp" line="782"/>
       <source>Refresh (%1)</source>
       <translation>Rafraîchir (%1)</translation>
     </message>
@@ -5997,6 +7400,11 @@ Not under a trusted system prefix.</translation>
       <translation type="unfinished">Unknown</translation>
     </message>
     <message>
+      <location filename="../nexis/Managers/browser_sqlite_cleaner.cpp" line="211"/>
+      <source>%1 — %2 — Browsing History</source>
+      <translation type="unfinished">%1 — %2 — Browsing History</translation>
+    </message>
+    <message>
       <location filename="../nexis/Managers/browser_sqlite_cleaner.cpp" line="212"/>
       <source>%1 history entries across %2 sites will be deleted.</source>
       <translation type="unfinished">%1 history entries across %2 sites will be deleted.</translation>
@@ -6010,6 +7418,11 @@ Not under a trusted system prefix.</translation>
       <location filename="../nexis/Managers/browser_sqlite_cleaner.cpp" line="262"/>
       <source>, +%1 more</source>
       <translation type="unfinished">, +%1 more</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/browser_sqlite_cleaner.cpp" line="269"/>
+      <source>%1 — %2 — Cookies</source>
+      <translation type="unfinished">%1 — %2 — Cookies</translation>
     </message>
     <message>
       <location filename="../nexis/Managers/browser_sqlite_cleaner.cpp" line="271"/>
@@ -6028,7 +7441,7 @@ Not under a trusted system prefix.</translation>
     </message>
     <message>
       <location filename="../nexis/Managers/browser_sqlite_cleaner.cpp" line="297"/>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="352"/>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="469"/>
       <source>Unknown item id: %1</source>
       <translation type="unfinished">Unknown item id: %1</translation>
     </message>
@@ -6041,99 +7454,118 @@ Not under a trusted system prefix.</translation>
       <translation type="unfinished">%1 is currently in use by a running browser — close it and try again.</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="161"/>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="194"/>
+      <source>Path is outside the sandboxed roots or excluded: %1</source>
+      <translation type="unfinished">Path is outside the sandboxed roots or excluded: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="201"/>
+      <source>Protected system location: %1</source>
+      <translation type="unfinished">Protected system location: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="206"/>
+      <source>Refusing to follow a symbolic link: %1</source>
+      <translation type="unfinished">Refusing to follow a symbolic link: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="294"/>
       <source>File will be truncated to zero bytes.</source>
       <translation type="unfinished">File will be truncated to zero bytes.</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="162"/>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="206"/>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="295"/>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="331"/>
       <source>File or directory will be permanently deleted.</source>
       <translation type="unfinished">File or directory will be permanently deleted.</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="246"/>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="365"/>
       <source>Database will be compacted (VACUUM); no rows are removed by this action alone.</source>
       <translation type="unfinished">Database will be compacted (VACUUM); no rows are removed by this action alone.</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="268"/>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="291"/>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="314"/>
-      <source>Path is outside the sandboxed roots: %1</source>
-      <translation type="unfinished">Path is outside the sandboxed roots: %1</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="282"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="277"/>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="401"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="321"/>
       <source>Failed to remove: %1</source>
       <translation type="unfinished">Failed to remove: %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="305"/>
+      <location filename="../nexis/Managers/cleaner_action_interpreter.cpp" line="423"/>
       <source>Failed to truncate: %1</source>
       <translation type="unfinished">Failed to truncate: %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="39"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="66"/>
       <source>Package Caches</source>
       <translation type="unfinished">Package Caches</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="40"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="67"/>
       <source>Crash Reports</source>
       <translation type="unfinished">Crash Reports</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="41"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="68"/>
       <source>Application Logs</source>
       <translation type="unfinished">Application Logs</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="42"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="69"/>
       <source>Application Caches</source>
       <translation type="unfinished">Application Caches</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="43"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="104"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="70"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="109"/>
       <source>Trash</source>
       <translation type="unfinished">Trash</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="44"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="71"/>
       <source>Dev Tool Caches</source>
       <translation type="unfinished">Dev Tool Caches</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="45"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="72"/>
       <source>Broken Symlinks</source>
       <translation type="unfinished">Broken Symlinks</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="46"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="73"/>
       <source>Browser Privacy</source>
       <translation type="unfinished">Browser Privacy</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="47"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="121"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="144"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="74"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="126"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="149"/>
       <source>Snap/Flatpak Revisions</source>
       <translation type="unfinished">Snap/Flatpak Revisions</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="48"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="75"/>
       <source>Old Downloads</source>
       <translation type="unfinished">Old Downloads</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="49"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="76"/>
       <source>Application Profiles</source>
       <translation type="unfinished">Application Profiles</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/cleaner_service.cpp" line="722"/>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="835"/>
+      <location filename="../nexis/Managers/cleanerml_registry.cpp" line="126"/>
+      <source>%1 is running — close it and clean again</source>
+      <translation type="unfinished">%1 is running — close it and clean again</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="837"/>
+      <source>Protected system location</source>
+      <translation type="unfinished">Protected system location</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/cleaner_service.cpp" line="913"/>
       <source>macOS blocked access to some app data while cleaning. To clean those caches, grant Nexis Full Disk Access in System Settings → Privacy &amp; Security, then re-run the cleaner.</source>
       <translation type="unfinished">macOS blocked access to some app data while cleaning. To clean those caches, grant Nexis Full Disk Access in System Settings → Privacy &amp; Security, then re-run the cleaner.</translation>
     </message>
@@ -6323,17 +7755,17 @@ Not under a trusted system prefix.</translation>
       <translation type="unfinished">Off</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="15"/>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="12"/>
       <source>(unknown unit)</source>
       <translation type="unfinished">(unknown unit)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="16"/>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="13"/>
       <source>unknown reason</source>
       <translation type="unfinished">unknown reason</translation>
     </message>
     <message numerus="yes">
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="18"/>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="15"/>
       <source>%n task(s)</source>
       <translation type="unfinished">
         <numerusform>%n task(s)</numerusform>
@@ -6341,12 +7773,12 @@ Not under a trusted system prefix.</translation>
       </translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="23"/>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="20"/>
       <source>%1 — %2 — %3</source>
       <translation type="unfinished">%1 — %2 — %3</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="24"/>
+      <location filename="../nexis/Pages/Helpers/oom_kills_widget.cpp" line="21"/>
       <source>%1 — %2 — %3 — %4</source>
       <translation type="unfinished">%1 — %2 — %3 — %4</translation>
     </message>
@@ -6380,29 +7812,34 @@ Not under a trusted system prefix.</translation>
       <translation type="unfinished">Bridge</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="101"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="106"/>
       <source>Items in the Trash will be permanently deleted.</source>
       <translation type="unfinished">Items in the Trash will be permanently deleted.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="118"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="123"/>
       <source>Stale snap package revision; only the active revision is kept.</source>
       <translation type="unfinished">Stale snap package revision; only the active revision is kept.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="140"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="145"/>
       <source>Unused Flatpak runtimes (%1)</source>
       <translation type="unfinished">Unused Flatpak runtimes (%1)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="141"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="146"/>
       <source>Unused Flatpak runtimes not required by any installed application.</source>
       <translation type="unfinished">Unused Flatpak runtimes not required by any installed application.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="269"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="311"/>
       <source>Path no longer exists: %1</source>
       <translation type="unfinished">Path no longer exists: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="320"/>
+      <source>Skipped: %1</source>
+      <translation type="unfinished">Skipped: %1</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Uninstaller/orphan_leftovers_dialog.cpp" line="183"/>
@@ -7015,6 +8452,11 @@ Not under a trusted system prefix.</translation>
       <source>Disable Repository</source>
       <translation type="unfinished">Disable Repository</translation>
     </message>
+    <message>
+      <location filename="../nexis/Managers/cleanerml_registry.cpp" line="118"/>
+      <source>No cleaner is loaded for this item.</source>
+      <translation type="unfinished">No cleaner is loaded for this item.</translation>
+    </message>
   </context>
   <context>
     <name>RepoDetailPanel</name>
@@ -7111,115 +8553,335 @@ Not under a trusted system prefix.</translation>
     </message>
   </context>
   <context>
+    <name>ResourceAlertMonitor</name>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="98"/>
+      <source>High CPU Usage</source>
+      <translation type="unfinished">High CPU Usage</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="99"/>
+      <source>CPU usage has stayed over %1% for %2 seconds.</source>
+      <translation type="unfinished">CPU usage has stayed over %1% for %2 seconds.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="100"/>
+      <source>The amount of CPU used is over %1%.</source>
+      <translation type="unfinished">The amount of CPU used is over %1%.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="103"/>
+      <source>High Memory Usage</source>
+      <translation type="unfinished">High Memory Usage</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="104"/>
+      <source>Memory usage has stayed over %1% for %2 seconds.</source>
+      <translation type="unfinished">Memory usage has stayed over %1% for %2 seconds.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="105"/>
+      <source>The amount of memory used is over %1%.</source>
+      <translation type="unfinished">The amount of memory used is over %1%.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="108"/>
+      <source>High Temperature</source>
+      <translation type="unfinished">High Temperature</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="109"/>
+      <source>A sensor has stayed over %1 °C for %2 seconds.</source>
+      <translation type="unfinished">A sensor has stayed over %1 °C for %2 seconds.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Managers/resource_alert_monitor.cpp" line="110"/>
+      <source>A sensor is over %1 °C.</source>
+      <translation type="unfinished">A sensor is over %1 °C.</translation>
+    </message>
+  </context>
+  <context>
+    <name>ResourceHistoryPanel</name>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="57"/>
+      <source>Resource History</source>
+      <translation type="unfinished">Resource History</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="67"/>
+      <source>Export CSV…</source>
+      <translation type="unfinished">Export CSV…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="85"/>
+      <source>Resource history is off. Enable it in Settings to see CPU, load, and memory trends over time.</source>
+      <translation type="unfinished">Resource history is off. Enable it in Settings to see CPU, load, and memory trends over time.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="88"/>
+      <source>Open Settings</source>
+      <translation type="unfinished">Open Settings</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="95"/>
+      <source>No history recorded for this period yet.</source>
+      <translation type="unfinished">No history recorded for this period yet.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="112"/>
+      <source>Load</source>
+      <translation type="unfinished">Load</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="118"/>
+      <source>CPU &amp; Load</source>
+      <translation type="unfinished">CPU &amp; Load</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="133"/>
+      <source>Memory &amp; Swap</source>
+      <translation type="unfinished">Memory &amp; Swap</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="224"/>
+      <source>Last Hour</source>
+      <translation type="unfinished">Last Hour</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="225"/>
+      <source>Last 24 Hours</source>
+      <translation type="unfinished">Last 24 Hours</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="226"/>
+      <source>Last 7 Days</source>
+      <translation type="unfinished">Last 7 Days</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="227"/>
+      <source>Last 30 Days</source>
+      <translation type="unfinished">Last 30 Days</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="346"/>
+      <source>CPU avg</source>
+      <translation type="unfinished">CPU avg</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="348"/>
+      <source>CPU max</source>
+      <translation type="unfinished">CPU max</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="350"/>
+      <source>Load (1m)</source>
+      <translation type="unfinished">Load (1m)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="361"/>
+      <source>Memory used</source>
+      <translation type="unfinished">Memory used</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="367"/>
+      <source>Swap used</source>
+      <translation type="unfinished">Swap used</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="402"/>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="442"/>
+      <source>Export Resource History</source>
+      <translation type="unfinished">Export Resource History</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="402"/>
+      <source>CSV files (*.csv)</source>
+      <translation type="unfinished">CSV files (*.csv)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resource_history_panel.cpp" line="443"/>
+      <source>Could not write %1.</source>
+      <translation type="unfinished">Could not write %1.</translation>
+    </message>
+  </context>
+  <context>
     <name>ResourcesPage</name>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="26"/>
-      <source>History of CPU</source>
-      <translation>Historique du CPU</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="47"/>
+      <source>CPU</source>
+      <translation type="unfinished">CPU</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="27"/>
-      <source>History of CPU Load Averages</source>
-      <translation>Historique des moyennes de charge du CPU</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="48"/>
+      <source>Load &amp; Pressure</source>
+      <translation type="unfinished">Load &amp; Pressure</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="28"/>
-      <source>History of Disk Read Write</source>
-      <translation>Historique de l’écriture de lecture de disque</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="49"/>
+      <source>Disk I/O</source>
+      <translation type="unfinished">Disk I/O</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="29"/>
-      <source>History of Memory</source>
-      <translation>Historique de la Mémoire</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="54"/>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="647"/>
+      <source>Memory</source>
+      <translation type="unfinished">Memory</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="30"/>
-      <source>History of Network</source>
-      <translation>Historique du Réseau</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="55"/>
+      <source>Network</source>
+      <translation type="unfinished">Network</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="39"/>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="62"/>
       <source>Live history of CPU, memory, disk and network</source>
       <translation type="unfinished">Live history of CPU, memory, disk and network</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="52"/>
-      <source>History of GPU</source>
-      <translation type="unfinished">History of GPU</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="71"/>
+      <source>Total</source>
+      <translation type="unfinished">Total</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="74"/>
-      <source>CPU Pressure Stall (some)</source>
-      <translation type="unfinished">CPU Pressure Stall (some)</translation>
+      <source>Per-core</source>
+      <translation type="unfinished">Per-core</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="221"/>
-      <source>Read: %1/s Total: %2</source>
-      <translation>Lecture : %1/s Total : %2</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="84"/>
+      <source>1m</source>
+      <translation type="unfinished">1m</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="227"/>
-      <source>Write: %1/s Total: %2</source>
-      <translation>Écriture : %1/s Total : %2</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="84"/>
+      <source>5m</source>
+      <translation type="unfinished">5m</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="302"/>
-      <source>%1 Minute Average: %2</source>
-      <translation>%1 moyenne par minute : %2</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="84"/>
+      <source>15m</source>
+      <translation type="unfinished">15m</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="356"/>
-      <source>Download: %1/s Total: %2</source>
-      <translation>Téléchargement : %1/s Total : %2</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="98"/>
+      <source>Read</source>
+      <translation type="unfinished">Read</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="361"/>
-      <source>Upload: %1/s  Total: %2</source>
-      <translation>Téléversement : %1/s  Total : %2</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="99"/>
+      <source>Write</source>
+      <translation type="unfinished">Write</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="405"/>
-      <source>Swap: %1 (%2%) %3</source>
-      <translation>Swap : %1 (%2%) %3</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="107"/>
+      <source>Download</source>
+      <translation type="unfinished">Download</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="414"/>
-      <source>Memory: %1 (%2%) %3</source>
-      <translation>Mémoire : %1 (%2%) %3</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="108"/>
+      <source>Upload</source>
+      <translation type="unfinished">Upload</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="425"/>
-      <source>Wired: %1 (%2%)</source>
-      <translation type="unfinished">Wired: %1 (%2%)</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="115"/>
+      <source>GPU</source>
+      <translation type="unfinished">GPU</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="430"/>
-      <source>Available: %1 (%2%)</source>
-      <translation type="unfinished">Available: %1 (%2%)</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="155"/>
+      <source>PSI</source>
+      <translation type="unfinished">PSI</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="444"/>
-      <source>Compressed: %1 (%2%)</source>
-      <translation type="unfinished">Compressed: %1 (%2%)</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="156"/>
+      <source>PSI CPU</source>
+      <translation type="unfinished">PSI CPU</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="449"/>
-      <source>Active: %1 (%2%)</source>
-      <translation type="unfinished">Active: %1 (%2%)</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="156"/>
+      <source>PSI Memory</source>
+      <translation type="unfinished">PSI Memory</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="156"/>
+      <source>PSI IO</source>
+      <translation type="unfinished">PSI IO</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="264"/>
+      <source>Live</source>
+      <translation type="unfinished">Live</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="272"/>
+      <source>History</source>
+      <translation type="unfinished">History</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="505"/>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="593"/>
+      <source>%1/s</source>
+      <translation type="unfinished">%1/s</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.cpp" line="506"/>
-      <source>History of Disk Temperature</source>
-      <translation type="unfinished">History of Disk Temperature</translation>
+      <source>Write %1/s</source>
+      <translation type="unfinished">Write %1/s</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="603"/>
-      <source>CPU %1: %2%</source>
-      <translation type="unfinished">CPU %1: %2%</translation>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="522"/>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="688"/>
+      <source>%1%</source>
+      <translation type="unfinished">%1%</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="547"/>
+      <source>Cores</source>
+      <translation type="unfinished">Cores</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="594"/>
+      <source>↑ %1/s</source>
+      <translation type="unfinished">↑ %1/s</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="630"/>
+      <source>Compressed</source>
+      <translation type="unfinished">Compressed</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="632"/>
+      <source>Wired</source>
+      <translation type="unfinished">Wired</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="635"/>
+      <source>Cached</source>
+      <translation type="unfinished">Cached</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="637"/>
+      <source>Active</source>
+      <translation type="unfinished">Active</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="646"/>
+      <source>Swap</source>
+      <translation type="unfinished">Swap</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="653"/>
+      <source>%1: %2%</source>
+      <translation type="unfinished">%1: %2%</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="743"/>
+      <source>%1 W</source>
+      <translation type="unfinished">%1 W</translation>
     </message>
     <message>
       <location filename="../nexis/Pages/Resources/resources_page.ui" line="14"/>
-      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="39"/>
+      <location filename="../nexis/Pages/Resources/resources_page.cpp" line="62"/>
       <source>Resources</source>
       <translation>Ressources</translation>
     </message>
@@ -7265,214 +8927,224 @@ Not under a trusted system prefix.</translation>
   <context>
     <name>ScheduleEditorDialog</name>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="17"/>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="18"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="19"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="20"/>
       <source>New Cleaning Schedule</source>
       <translation type="unfinished">New Cleaning Schedule</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="21"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="23"/>
       <source>Weekly Cleanup</source>
       <translation type="unfinished">Weekly Cleanup</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="40"/>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="41"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="42"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="43"/>
       <source>Edit Cleaning Schedule</source>
       <translation type="unfinished">Edit Cleaning Schedule</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="77"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="79"/>
       <source>e.g. Weekly Cleanup</source>
       <translation type="unfinished">e.g. Weekly Cleanup</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="78"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="80"/>
       <source>Schedule Name:</source>
       <translation type="unfinished">Schedule Name:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="82"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="84"/>
       <source>Frequency</source>
       <translation type="unfinished">Frequency</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="87"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="89"/>
       <source>Daily</source>
       <translation type="unfinished">Daily</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="88"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="90"/>
       <source>Every N Days</source>
       <translation type="unfinished">Every N Days</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="89"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="91"/>
       <source>Weekly</source>
       <translation type="unfinished">Weekly</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="90"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="92"/>
       <source>Monthly</source>
       <translation type="unfinished">Monthly</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="106"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="108"/>
       <source>Every</source>
       <translation type="unfinished">Every</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="110"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="112"/>
       <source> days</source>
       <translation type="unfinished"> days</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="114"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="116"/>
       <source>Day:</source>
       <translation type="unfinished">Day:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="116"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="118"/>
       <source>Sunday</source>
       <translation type="unfinished">Sunday</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="116"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="118"/>
       <source>Monday</source>
       <translation type="unfinished">Monday</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="116"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="118"/>
       <source>Tuesday</source>
       <translation type="unfinished">Tuesday</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="117"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="119"/>
       <source>Wednesday</source>
       <translation type="unfinished">Wednesday</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="117"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="119"/>
       <source>Thursday</source>
       <translation type="unfinished">Thursday</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="117"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="119"/>
       <source>Friday</source>
       <translation type="unfinished">Friday</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="118"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="120"/>
       <source>Saturday</source>
       <translation type="unfinished">Saturday</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="122"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="124"/>
       <source>Day of month:</source>
       <translation type="unfinished">Day of month:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="135"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="137"/>
       <source>Time:</source>
       <translation type="unfinished">Time:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="139"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="141"/>
       <source/>
       <translation type="unfinished"/>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="140"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="142"/>
       <source> h</source>
       <translation type="unfinished"> h</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="146"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="148"/>
       <source> m</source>
       <translation type="unfinished"> m</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="152"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="154"/>
       <source>Categories to Clean</source>
       <translation type="unfinished">Categories to Clean</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="154"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="156"/>
       <source>Package Caches</source>
       <translation type="unfinished">Package Caches</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="155"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="157"/>
       <source>Crash Reports</source>
       <translation type="unfinished">Crash Reports</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="156"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="158"/>
       <source>Application Logs</source>
       <translation type="unfinished">Application Logs</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="157"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="159"/>
       <source>Application Caches</source>
       <translation type="unfinished">Application Caches</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="158"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="160"/>
       <source>Trash</source>
       <translation type="unfinished">Trash</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="159"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="161"/>
       <source>Dev Tool Caches</source>
       <translation type="unfinished">Dev Tool Caches</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="160"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="162"/>
       <source>Browser Privacy</source>
       <translation type="unfinished">Browser Privacy</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="161"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="163"/>
       <source>Old Downloads</source>
       <translation type="unfinished">Old Downloads</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="163"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="165"/>
       <source>Moves files older than the configured age from your Downloads folder to the Trash. Path and age threshold are set on the Settings page.</source>
       <translation type="unfinished">Moves files older than the configured age from your Downloads folder to the Trash. Path and age threshold are set on the Settings page.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="175"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="167"/>
+      <source>Application Profiles</source>
+      <translation type="unfinished">Application Profiles</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="178"/>
+      <source>Paths matched by bundled or user-supplied cleaning profiles under %1.</source>
+      <translation type="unfinished">Paths matched by bundled or user-supplied cleaning profiles under %1.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="192"/>
       <source>⚠ Trash is permanently deleted and cannot be recovered</source>
       <translation type="unfinished">⚠ Trash is permanently deleted and cannot be recovered</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="186"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="203"/>
       <source>Skip files newer than</source>
       <translation type="unfinished">Skip files newer than</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="190"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="207"/>
       <source> hours</source>
       <translation type="unfinished"> hours</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="210"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="227"/>
       <source>Cancel</source>
       <translation type="unfinished">Cancel</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="210"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="227"/>
       <source>Save</source>
       <translation type="unfinished">Save</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="277"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="295"/>
       <source>Schedule name is required.</source>
       <translation type="unfinished">Schedule name is required.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="287"/>
+      <location filename="../nexis/Pages/SystemCleaner/schedule_editor_dialog.cpp" line="306"/>
       <source>Select at least one category.</source>
       <translation type="unfinished">Select at least one category.</translation>
     </message>
@@ -7787,14 +9459,14 @@ Not under a trusted system prefix.</translation>
   <context>
     <name>ServiceItem</name>
     <message>
-      <location filename="../nexis/Pages/Services/service_item.cpp" line="34"/>
-      <location filename="../nexis/Pages/Services/service_item.cpp" line="76"/>
+      <location filename="../nexis/Pages/Services/service_item.cpp" line="37"/>
+      <location filename="../nexis/Pages/Services/service_item.cpp" line="97"/>
       <source>Running</source>
       <translation type="unfinished">Running</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Services/service_item.cpp" line="34"/>
-      <location filename="../nexis/Pages/Services/service_item.cpp" line="76"/>
+      <location filename="../nexis/Pages/Services/service_item.cpp" line="37"/>
+      <location filename="../nexis/Pages/Services/service_item.cpp" line="97"/>
       <source>Stopped</source>
       <translation type="unfinished">Stopped</translation>
     </message>
@@ -7823,37 +9495,42 @@ Not under a trusted system prefix.</translation>
       <translation>Service système non trouvé</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Services/services_page.cpp" line="30"/>
+      <location filename="../nexis/Pages/Services/services_page.cpp" line="33"/>
+      <source>Services requires systemd, which this system is not running.</source>
+      <translation type="unfinished">Services requires systemd, which this system is not running.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Services/services_page.cpp" line="36"/>
       <source>Running Status</source>
       <translation>Statut de fonctionnement</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Services/services_page.cpp" line="30"/>
+      <location filename="../nexis/Pages/Services/services_page.cpp" line="36"/>
       <source>Running</source>
       <translation>Fonctionnement</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Services/services_page.cpp" line="30"/>
+      <location filename="../nexis/Pages/Services/services_page.cpp" line="36"/>
       <source>Not Running</source>
       <translation> N’est pas en cours d’exécution</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Services/services_page.cpp" line="31"/>
+      <location filename="../nexis/Pages/Services/services_page.cpp" line="37"/>
       <source>Startup Status</source>
       <translation>Statut de démarrage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Services/services_page.cpp" line="31"/>
+      <location filename="../nexis/Pages/Services/services_page.cpp" line="37"/>
       <source>Enabled</source>
       <translation>Activer</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Services/services_page.cpp" line="31"/>
+      <location filename="../nexis/Pages/Services/services_page.cpp" line="37"/>
       <source>Disabled</source>
       <translation>Désactiver</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Services/services_page.cpp" line="78"/>
+      <location filename="../nexis/Pages/Services/services_page.cpp" line="87"/>
       <source>%1 services</source>
       <translation type="unfinished">%1 services</translation>
     </message>
@@ -7867,7 +9544,7 @@ Not under a trusted system prefix.</translation>
       <translation>Options</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="270"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="293"/>
       <source>Appearance</source>
       <translation type="unfinished">Appearance</translation>
     </message>
@@ -7912,187 +9589,232 @@ Not under a trusted system prefix.</translation>
       <translation type="unfinished">Show Dashboard system summary and status bar</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="188"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="157"/>
       <source>Show health score and Clean Now in the menu bar</source>
       <translation type="unfinished">Show health score and Clean Now in the menu bar</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="195"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="188"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="159"/>
       <source>Show health score and Clean Now in the tray menu</source>
       <translation type="unfinished">Show health score and Clean Now in the tray menu</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="202"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="195"/>
       <source>Show compact mini-monitor window</source>
       <translation type="unfinished">Show compact mini-monitor window</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="203"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="196"/>
       <source>A small, always-on-top window showing health score and CPU/MEM/disk usage.</source>
       <translation type="unfinished">A small, always-on-top window showing health score and CPU/MEM/disk usage.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="210"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="203"/>
       <source>Launch directly into Kiosk Mode</source>
       <translation type="unfinished">Launch directly into Kiosk Mode</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="211"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="204"/>
       <source>Starts Nexis in full-screen kiosk mode as soon as it launches, without needing to press F11.</source>
       <translation type="unfinished">Starts Nexis in full-screen kiosk mode as soon as it launches, without needing to press F11.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="218"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="211"/>
       <source>Kiosk Monitor</source>
       <translation type="unfinished">Kiosk Monitor</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="230"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="223"/>
       <source>Which monitor kiosk mode moves the window to when it activates. Only used on multi-monitor setups.</source>
       <translation type="unfinished">Which monitor kiosk mode moves the window to when it activates. Only used on multi-monitor setups.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="259"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="252"/>
       <source>Color Scheme</source>
       <translation type="unfinished">Color Scheme</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="276"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="269"/>
       <source>Font</source>
       <translation type="unfinished">Font</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="293"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="286"/>
       <source>Tray Icon Style</source>
       <translation type="unfinished">Tray Icon Style</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="333"/>
-      <source>Show a tray warning when usage exceeds the threshold</source>
-      <translation type="unfinished">Show a tray warning when usage exceeds the threshold</translation>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="326"/>
+      <source>Show a tray warning when a value stays above its threshold for the set time (0 = off)</source>
+      <translation type="unfinished">Show a tray warning when a value stays above its threshold for the set time (0 = off)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="340"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="333"/>
       <source>CPU Usage</source>
       <translation type="unfinished">CPU Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="355"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="349"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="378"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="407"/>
+      <source>How long the value must stay above the threshold before the warning is shown. 0 = warn immediately.</source>
+      <translation type="unfinished">How long the value must stay above the threshold before the warning is shown. 0 = warn immediately.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="350"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="379"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="408"/>
+      <source>for </source>
+      <translation type="unfinished">for </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="361"/>
       <source>Memory Usage</source>
       <translation type="unfinished">Memory Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="371"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="390"/>
+      <source>Temperature</source>
+      <translation type="unfinished">Temperature</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="419"/>
       <source>Disk Usage</source>
       <translation type="unfinished">Disk Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="386"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="434"/>
       <source>Battery Health</source>
       <translation type="unfinished">Battery Health</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="402"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="450"/>
       <source>Enable disk health alerts</source>
       <translation type="unfinished">Enable disk health alerts</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="409"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="457"/>
       <source>Notify when system updates are available</source>
       <translation type="unfinished">Notify when system updates are available</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="439"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="487"/>
       <source>Disk Analyzer</source>
       <translation type="unfinished">Disk Analyzer</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="456"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="504"/>
       <source>Custom Executable Path</source>
       <translation type="unfinished">Custom Executable Path</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="467"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="515"/>
       <source>/usr/bin/my-analyzer</source>
       <translation type="unfinished">/usr/bin/my-analyzer</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="497"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="522"/>
+      <source>Record resource history</source>
+      <translation type="unfinished">Record resource history</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="529"/>
+      <source>Keep history for</source>
+      <translation type="unfinished">Keep history for</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="564"/>
+      <source>Recorded locally every 10 seconds while Nexis is running, including when minimized to the tray. Nothing is uploaded.</source>
+      <translation type="unfinished">Recorded locally every 10 seconds while Nexis is running, including when minimized to the tray. Nothing is uploaded.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="596"/>
       <source>Enable automatic weekly cleaning</source>
       <translation type="unfinished">Enable automatic weekly cleaning</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="519"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="618"/>
       <source>Manage Schedules...</source>
       <translation type="unfinished">Manage Schedules...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="525"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="624"/>
       <source>View Cleaning History</source>
       <translation type="unfinished">View Cleaning History</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="542"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="641"/>
       <source>Notify when junk exceeds</source>
       <translation type="unfinished">Notify when junk exceeds</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="549"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="648"/>
       <source> GB</source>
       <translation type="unfinished"> GB</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="566"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="665"/>
       <source>Show notification after scheduled clean</source>
       <translation type="unfinished">Show notification after scheduled clean</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="574"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="673"/>
       <source>Create restore point before cleaning</source>
       <translation type="unfinished">Create restore point before cleaning</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="576"/>
-      <source>Runs Timeshift (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back.</source>
-      <translation type="unfinished">Runs Timeshift (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back.</translation>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="675"/>
+      <source>Runs Timeshift, snapper or a btrfs snapshot (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back. Off by default.</source>
+      <translation type="unfinished">Runs Timeshift, snapper or a btrfs snapshot (Linux) or tmutil localsnapshot (macOS) before each clean so you can roll back. Off by default.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="583"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="758"/>
+      <source>Back up or move your Nexis settings, cleaner exclusions and cleaning profiles, or import settings from a Stacer configuration file.</source>
+      <translation type="unfinished">Back up or move your Nexis settings, cleaner exclusions and cleaning profiles, or import settings from a Stacer configuration file.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="768"/>
+      <source>Export settings…</source>
+      <translation type="unfinished">Export settings…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="774"/>
+      <source>Import settings…</source>
+      <translation type="unfinished">Import settings…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="682"/>
       <source>Auto-clean old Downloads</source>
       <translation type="unfinished">Auto-clean old Downloads</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="585"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="684"/>
       <source>Move files older than the configured age from the selected folder to Trash. Applies only when Old Downloads is included in a scheduled clean.</source>
       <translation type="unfinished">Move files older than the configured age from the selected folder to Trash. Applies only when Old Downloads is included in a scheduled clean.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="593"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="692"/>
       <source>Folder:</source>
       <translation type="unfinished">Folder:</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="604"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="703"/>
       <source>Browse…</source>
       <translation type="unfinished">Browse…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="615"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="714"/>
       <source>Move files older than</source>
       <translation type="unfinished">Move files older than</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="623"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="722"/>
       <source> days</source>
       <translation type="unfinished"> days</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="659"/>
-      <source>Import settings from a Stacer configuration file.</source>
-      <translation type="unfinished">Import settings from a Stacer configuration file.</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Pages/Settings/settings_page.ui" line="669"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="780"/>
       <source>Import from Stacer…</source>
       <translation type="unfinished">Import from Stacer…</translation>
     </message>
@@ -8107,187 +9829,202 @@ Not under a trusted system prefix.</translation>
       <translation>Page de démarrage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="181"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="185"/>
       <source>Dashboard</source>
       <translation>Tableau de bord</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="200"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="204"/>
       <source>Startup Apps</source>
       <translation>Applications de démarrage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="188"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="192"/>
       <source>System Cleaner</source>
       <translation>Nettoyage du système</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="201"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="205"/>
       <source>Services</source>
       <translation type="unfinished">Services</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="183"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="187"/>
       <source>Processes</source>
       <translation>Processus</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="198"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="202"/>
       <source>Uninstaller</source>
       <translation>Paquets Installés sur le Système</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="182"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="186"/>
       <source>Resources</source>
       <translation>Ressources</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="202"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="206"/>
       <source>Helpers</source>
       <translation type="unfinished">Helpers</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="141"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="145"/>
       <source>No system tray is available on this desktop environment.</source>
       <translation type="unfinished">No system tray is available on this desktop environment.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="166"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="170"/>
       <source>Same as last time</source>
       <translation type="unfinished">Same as last time</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="170"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="174"/>
       <source>Monitor</source>
       <translation type="unfinished">Monitor</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="184"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="188"/>
       <source>Network Usage</source>
       <translation type="unfinished">Network Usage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="185"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="189"/>
       <source>Hardware Info</source>
       <translation type="unfinished">Hardware Info</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="186"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="190"/>
       <source>Boot Analysis</source>
       <translation type="unfinished">Boot Analysis</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="187"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="191"/>
       <source>System Logs</source>
       <translation type="unfinished">System Logs</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="189"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="193"/>
       <source>Disk Tools</source>
       <translation type="unfinished">Disk Tools</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="191"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="195"/>
       <source>Mail Cleanup</source>
       <translation type="unfinished">Mail Cleanup</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="193"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="197"/>
       <source>File Shredder</source>
       <translation type="unfinished">File Shredder</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="194"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="198"/>
       <source>File Search</source>
       <translation type="unfinished">File Search</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="196"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="200"/>
       <source>Applications</source>
       <translation type="unfinished">Applications</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="208"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="212"/>
       <source>Auto</source>
       <translation type="unfinished">Auto</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="209"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="213"/>
       <source>Light</source>
       <translation type="unfinished">Light</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="210"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="214"/>
       <source>Dark</source>
       <translation type="unfinished">Dark</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="215"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="219"/>
       <source>Inter (Recommended)</source>
       <translation type="unfinished">Inter (Recommended)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="218"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="222"/>
       <source>System Default</source>
       <translation type="unfinished">System Default</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="223"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="227"/>
       <source>Color (Default)</source>
       <translation type="unfinished">Color (Default)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="224"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="228"/>
       <source>Symbolic</source>
       <translation type="unfinished">Symbolic</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="225"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="229"/>
       <source>Outline</source>
       <translation type="unfinished">Outline</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="226"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="230"/>
       <source>Accent</source>
       <translation type="unfinished">Accent</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="227"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="231"/>
       <source>System Theme</source>
       <translation type="unfinished">System Theme</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="269"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="280"/>
+      <source>1 day</source>
+      <translation type="unfinished">1 day</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="281"/>
+      <source>7 days</source>
+      <translation type="unfinished">7 days</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="282"/>
+      <source>30 days</source>
+      <translation type="unfinished">30 days</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="292"/>
       <source>General</source>
       <translation type="unfinished">General</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="271"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="294"/>
       <source>Alerts</source>
       <translation type="unfinished">Alerts</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="272"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="295"/>
       <source>Tools</source>
       <translation type="unfinished">Tools</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="273"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="296"/>
       <source>Scheduled Cleaning</source>
       <translation type="unfinished">Scheduled Cleaning</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="274"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="297"/>
       <source>Migration</source>
       <translation type="unfinished">Migration</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="310"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="335"/>
       <source>Language Changed</source>
       <translation type="unfinished">Language Changed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="311"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="336"/>
       <source>The language change will take effect after Nexis is restarted.
 
 Restart now?</source>
@@ -8296,153 +10033,277 @@ Restart now?</source>
 Restart now?</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="465"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="510"/>
       <source>Auto (Detect)</source>
       <translation type="unfinished">Auto (Detect)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="467"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="512"/>
       <source>GrandPerspective</source>
       <translation type="unfinished">GrandPerspective</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="468"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="513"/>
       <source>DaisyDisk</source>
       <translation type="unfinished">DaisyDisk</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="469"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="514"/>
       <source>OmniDiskSweeper</source>
       <translation type="unfinished">OmniDiskSweeper</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="471"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="516"/>
       <source>Baobab (GNOME Disk Usage Analyzer)</source>
       <translation type="unfinished">Baobab (GNOME Disk Usage Analyzer)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="472"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="517"/>
       <source>Filelight (KDE)</source>
       <translation type="unfinished">Filelight (KDE)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="473"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="518"/>
       <source>QDirStat</source>
       <translation type="unfinished">QDirStat</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="474"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="519"/>
       <source>ncdu (Terminal)</source>
       <translation type="unfinished">ncdu (Terminal)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="476"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="521"/>
       <source>Custom...</source>
       <translation type="unfinished">Custom...</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="531"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="578"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="585"/>
+      <source>Clear Resource History</source>
+      <translation type="unfinished">Clear Resource History</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="579"/>
+      <source>This permanently deletes all recorded CPU, load, and memory history. Continue?</source>
+      <translation type="unfinished">This permanently deletes all recorded CPU, load, and memory history. Continue?</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="586"/>
+      <source>Could not clear resource history.</source>
+      <translation type="unfinished">Could not clear resource history.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="604"/>
       <source>Create restore point before cleaning (%1)</source>
       <translation type="unfinished">Create restore point before cleaning (%1)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="633"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="610"/>
+      <source>No snapshot tool found. Install Timeshift or snapper, or use a btrfs root filesystem, to enable this.</source>
+      <translation type="unfinished">No snapshot tool found. Install Timeshift or snapper, or use a btrfs root filesystem, to enable this.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="709"/>
       <source>Select Downloads folder</source>
       <translation type="unfinished">Select Downloads folder</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="653"/>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="659"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="729"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="735"/>
       <source>Manage Cleaning Schedules</source>
       <translation type="unfinished">Manage Cleaning Schedules</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="681"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="757"/>
       <source>No schedules configured.</source>
       <translation type="unfinished">No schedules configured.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="699"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="775"/>
       <source>Last: %1 — %2</source>
       <translation type="unfinished">Last: %1 — %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="703"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="779"/>
       <source>Never run</source>
       <translation type="unfinished">Never run</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="713"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="789"/>
       <source>Edit</source>
       <translation type="unfinished">Edit</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="714"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="790"/>
       <source>Delete</source>
       <translation type="unfinished">Delete</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="753"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="829"/>
       <source>Add Schedule</source>
       <translation type="unfinished">Add Schedule</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="765"/>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="821"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="841"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="897"/>
       <source>Close</source>
       <translation type="unfinished">Close</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="780"/>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="786"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="856"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="862"/>
       <source>Cleaning History</source>
       <translation type="unfinished">Cleaning History</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="807"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="883"/>
       <source>No cleaning history available.</source>
       <translation type="unfinished">No cleaning history available.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="813"/>
+      <location filename="../nexis/Pages/Settings/settings_page.ui" line="548"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="889"/>
       <source>Clear History</source>
       <translation type="unfinished">Clear History</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="834"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="910"/>
       <source>No schedules active</source>
       <translation type="unfinished">No schedules active</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="851"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="927"/>
       <source>Next: %1 — %2</source>
       <translation type="unfinished">Next: %1 — %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="853"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="929"/>
       <source>%1 schedule(s) configured</source>
       <translation type="unfinished">%1 schedule(s) configured</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="952"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1023"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1035"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1040"/>
+      <source>Export Nexis Settings</source>
+      <translation type="unfinished">Export Nexis Settings</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1025"/>
+      <source>Nexis settings (*.json)</source>
+      <translation type="unfinished">Nexis settings (*.json)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1036"/>
+      <source>Could not write %1: %2</source>
+      <translation type="unfinished">Could not write %1: %2</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1041"/>
+      <source>Settings exported to %1.
+
+Window layout, sensor choices, usage history, schedules and other machine-specific data are not included.</source>
+      <translation type="unfinished">Settings exported to %1.
+
+Window layout, sensor choices, usage history, schedules and other machine-specific data are not included.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1048"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1055"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1065"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1082"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1086"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1093"/>
+      <source>Import Nexis Settings</source>
+      <translation type="unfinished">Import Nexis Settings</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1049"/>
+      <source>Nexis settings (*.json);;All files (*)</source>
+      <translation type="unfinished">Nexis settings (*.json);;All files (*)</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1056"/>
+      <source>Could not read %1: %2</source>
+      <translation type="unfinished">Could not read %1: %2</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1070"/>
+      <source>%1 setting(s) and %2 cleaning profile(s) will be imported.</source>
+      <translation type="unfinished">%1 setting(s) and %2 cleaning profile(s) will be imported.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1073"/>
+      <source>Ignored unknown keys: %1</source>
+      <translation type="unfinished">Ignored unknown keys: %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1075"/>
+      <source>Skipped invalid values:
+  %1</source>
+      <translation type="unfinished">Skipped invalid values:
+  %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1077"/>
+      <source>Skipped invalid profiles:
+  %1</source>
+      <translation type="unfinished">Skipped invalid profiles:
+  %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1078"/>
+      <source>Cleaner exclusions and cookie keep-domains are merged with yours; other settings are replaced.</source>
+      <translation type="unfinished">Cleaner exclusions and cookie keep-domains are merged with yours; other settings are replaced.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1083"/>
+      <source>Nothing to import.
+
+%1</source>
+      <translation type="unfinished">Nothing to import.
+
+%1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1094"/>
+      <source>Imported %1 setting(s) and %2 cleaning profile(s). Some changes (language, theme, start page) take effect after restarting Nexis.</source>
+      <translation type="unfinished">Imported %1 setting(s) and %2 cleaning profile(s). Some changes (language, theme, start page) take effect after restarting Nexis.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1109"/>
       <source>Locate Stacer Configuration File</source>
       <translation type="unfinished">Locate Stacer Configuration File</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="954"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1111"/>
       <source>INI files (*.ini *.conf);;All files (*)</source>
       <translation type="unfinished">INI files (*.ini *.conf);;All files (*)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="962"/>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="974"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1119"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1131"/>
       <source>Import from Stacer</source>
       <translation type="unfinished">Import from Stacer</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="975"/>
+      <location filename="../nexis/Pages/Settings/settings_page.cpp" line="1132"/>
       <source>%1 setting(s) imported successfully. Some changes (language, start page) take effect after restarting Nexis.</source>
       <translation type="unfinished">%1 setting(s) imported successfully. Some changes (language, start page) take effect after restarting Nexis.</translation>
+    </message>
+  </context>
+  <context>
+    <name>SharedDataGuard</name>
+    <message>
+      <location filename="../nexis-core/Tools/shared_data_guard.cpp" line="80"/>
+      <source>Also used by %1, which is still installed</source>
+      <translation type="unfinished">Also used by %1, which is still installed</translation>
+    </message>
+    <message>
+      <location filename="../nexis-core/Tools/shared_data_guard.cpp" line="89"/>
+      <source>Profile data is shared with %1, a variant that is still installed</source>
+      <translation type="unfinished">Profile data is shared with %1, a variant that is still installed</translation>
     </message>
   </context>
   <context>
@@ -8489,42 +10350,42 @@ Restart now?</translation>
       <translation type="unfinished">Permanently overwrite and delete files and folders</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="103"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="106"/>
       <source>Drag files or folders here to shred</source>
       <translation type="unfinished">Drag files or folders here to shred</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="111"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="114"/>
       <source>Choose Files…</source>
       <translation type="unfinished">Choose Files…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="116"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="119"/>
       <source>Choose Folder…</source>
       <translation type="unfinished">Choose Folder…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="132"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="135"/>
       <source>Overwrites file contents once, then deletes. On SSDs (wear leveling) and copy-on-write filesystems (APFS, Btrfs, ZFS), the overwritten blocks may not be the ones holding the original data — this does not guarantee unrecoverable erasure.</source>
       <translation type="unfinished">Overwrites file contents once, then deletes. On SSDs (wear leveling) and copy-on-write filesystems (APFS, Btrfs, ZFS), the overwritten blocks may not be the ones holding the original data — this does not guarantee unrecoverable erasure.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="178"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="181"/>
       <source>Shred Selected</source>
       <translation type="unfinished">Shred Selected</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="201"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="204"/>
       <source>Select Files to Shred</source>
       <translation type="unfinished">Select Files to Shred</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="209"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="212"/>
       <source>Select Folder to Shred</source>
       <translation type="unfinished">Select Folder to Shred</translation>
     </message>
     <message numerus="yes">
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="266"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="269"/>
       <source>%n file(s) · %1</source>
       <translation type="unfinished">
         <numerusform>%n file(s) · %1</numerusform>
@@ -8532,18 +10393,18 @@ Restart now?</translation>
       </translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="269"/>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="324"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="272"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="327"/>
       <source>Calculating…</source>
       <translation type="unfinished">Calculating…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="301"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="304"/>
       <source>Remove from selection</source>
       <translation type="unfinished">Remove from selection</translation>
     </message>
     <message numerus="yes">
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="321"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="324"/>
       <source>%n item(s) selected — %1 total</source>
       <translation type="unfinished">
         <numerusform>%n item(s) selected — %1 total</numerusform>
@@ -8551,22 +10412,22 @@ Restart now?</translation>
       </translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="366"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="369"/>
       <source>Shredding…</source>
       <translation type="unfinished">Shredding…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="379"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="382"/>
       <source>Shredding %1 (%2/%3) — %4 freed so far…</source>
       <translation type="unfinished">Shredding %1 (%2/%3) — %4 freed so far…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="388"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="391"/>
       <source>%1 — %2</source>
       <translation type="unfinished">%1 — %2</translation>
     </message>
     <message numerus="yes">
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="400"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="403"/>
       <source>Shredded %n item(s) — %1 freed.</source>
       <translation type="unfinished">
         <numerusform>Shredded %n item(s) — %1 freed.</numerusform>
@@ -8574,7 +10435,7 @@ Restart now?</translation>
       </translation>
     </message>
     <message numerus="yes">
-      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="403"/>
+      <location filename="../nexis/Pages/Shredder/shredder_page.cpp" line="406"/>
       <source>%n item(s) could not be shredded.</source>
       <translation type="unfinished">
         <numerusform>%n item(s) could not be shredded.</numerusform>
@@ -8711,6 +10572,19 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
       <location filename="../nexis/Pages/Helpers/snapshot_manager_widget.cpp" line="331"/>
       <source>⚠ Failed to delete snapshot: %1</source>
       <translation type="unfinished">⚠ Failed to delete snapshot: %1</translation>
+    </message>
+  </context>
+  <context>
+    <name>SnapshotService</name>
+    <message>
+      <location filename="../nexis/Services/snapshot_service.cpp" line="106"/>
+      <source>Restore point skipped: tmutil was not found. The clean continued without one.</source>
+      <translation type="unfinished">Restore point skipped: tmutil was not found. The clean continued without one.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Services/snapshot_service.cpp" line="108"/>
+      <source>Restore point skipped: no snapshot tool found (Timeshift, snapper, or a btrfs root). The clean continued without one.</source>
+      <translation type="unfinished">Restore point skipped: no snapshot tool found (Timeshift, snapper, or a btrfs root). The clean continued without one.</translation>
     </message>
   </context>
   <context>
@@ -8851,67 +10725,118 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
       <translation>Ajouter une application de démarrage</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="33"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="41"/>
+      <source>Acknowledge</source>
+      <translation type="unfinished">Acknowledge</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="44"/>
+      <source>Accept the items flagged as new or changed and make the current list the new baseline. Nothing is removed or blocked.</source>
+      <translation type="unfinished">Accept the items flagged as new or changed and make the current list the new baseline. Nothing is removed or blocked.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="55"/>
       <source>Startup Apps are disabled.</source>
       <translation type="unfinished">Startup Apps are disabled.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="57"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="79"/>
       <source>Repair BTM…</source>
       <translation type="unfinished">Repair BTM…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="62"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="84"/>
       <source>Run sudo sfltool resetbtm. Wipes the Background Task Management database; every Login Item re-prompts on next login.</source>
       <translation type="unfinished">Run sudo sfltool resetbtm. Wipes the Background Task Management database; every Login Item re-prompts on next login.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="152"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="170"/>
+      <source>NEW</source>
+      <translation type="unfinished">NEW</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="172"/>
+      <source>CHANGED</source>
+      <translation type="unfinished">CHANGED</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="182"/>
       <source>User Agents</source>
       <translation type="unfinished">User Agents</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="153"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="183"/>
       <source>System Agents</source>
       <translation type="unfinished">System Agents</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="154"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="184"/>
       <source>System Daemons</source>
       <translation type="unfinished">System Daemons</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="163"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="185"/>
+      <source>Cron Jobs</source>
+      <translation type="unfinished">Cron Jobs</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="194"/>
       <source>BTM Records (%1)</source>
       <translation type="unfinished">BTM Records (%1)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="178"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="210"/>
       <source>BTM Records — %1</source>
       <translation type="unfinished">BTM Records — %1</translation>
     </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="226"/>
+      <source>%n new item(s)</source>
+      <translation type="unfinished">
+        <numerusform>%n new item(s)</numerusform>
+        <numerusform>%n new item(s)</numerusform>
+      </translation>
+    </message>
+    <message numerus="yes">
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="228"/>
+      <source>%n changed item(s)</source>
+      <translation type="unfinished">
+        <numerusform>%n changed item(s)</numerusform>
+        <numerusform>%n changed item(s)</numerusform>
+      </translation>
+    </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="194"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="230"/>
+      <source>%1 since you last acknowledged. Review them below; Nexis only reports, it never blocks or removes anything.</source>
+      <translation type="unfinished">%1 since you last acknowledged. Review them below; Nexis only reports, it never blocks or removes anything.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="231"/>
+      <source> and </source>
+      <translation type="unfinished"> and </translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="273"/>
       <source>%1 items</source>
       <translation type="unfinished">%1 items</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="249"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="328"/>
       <source>BTM Repair Complete</source>
       <translation type="unfinished">BTM Repair Complete</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="250"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="329"/>
       <source>sfltool resetbtm completed. Background items will re-prompt on next login.</source>
       <translation type="unfinished">sfltool resetbtm completed. Background items will re-prompt on next login.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="254"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="333"/>
       <source>BTM Repair Failed</source>
       <translation type="unfinished">BTM Repair Failed</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="256"/>
+      <location filename="../nexis/Pages/StartupApps/startup_apps_page.cpp" line="335"/>
       <source>sfltool resetbtm failed for an unknown reason.</source>
       <translation type="unfinished">sfltool resetbtm failed for an unknown reason.</translation>
     </message>
@@ -8919,7 +10844,7 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
   <context>
     <name>StartupService</name>
     <message>
-      <location filename="../nexis/Services/startup_service.cpp" line="93"/>
+      <location filename="../nexis/Services/startup_service.cpp" line="133"/>
       <source>sfltool resetbtm failed (exit %1).</source>
       <translation type="unfinished">sfltool resetbtm failed (exit %1).</translation>
     </message>
@@ -8940,102 +10865,102 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
   <context>
     <name>SwappinessWidget</name>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="102"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="119"/>
       <source>/proc/sys/vm/swappiness is not readable on this system.</source>
       <translation type="unfinished">/proc/sys/vm/swappiness is not readable on this system.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="108"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="125"/>
       <source>Failed to parse swappiness value &quot;%1&quot;.</source>
       <translation type="unfinished">Failed to parse swappiness value &quot;%1&quot;.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="130"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="147"/>
       <source>Swappiness tuning is a Linux-only feature.</source>
       <translation type="unfinished">Swappiness tuning is a Linux-only feature.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="174"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="191"/>
       <source>Swappiness</source>
       <translation type="unfinished">Swappiness</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="180"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="197"/>
       <source>Controls how eagerly the kernel moves idle memory pages to swap. Lower = keep more in RAM (interactive); higher = swap sooner (helpful on low-RAM systems).</source>
       <translation type="unfinished">Controls how eagerly the kernel moves idle memory pages to swap. Lower = keep more in RAM (interactive); higher = swap sooner (helpful on low-RAM systems).</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="210"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="227"/>
       <source>Desktop (60)</source>
       <translation type="unfinished">Desktop (60)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="211"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="228"/>
       <source>Performance (10)</source>
       <translation type="unfinished">Performance (10)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="212"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="229"/>
       <source>Low-RAM (80)</source>
       <translation type="unfinished">Low-RAM (80)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="213"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="230"/>
       <source>Custom…</source>
       <translation type="unfinished">Custom…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="244"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="261"/>
       <source>Persist across reboots (writes %1)</source>
       <translation type="unfinished">Persist across reboots (writes %1)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="264"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="281"/>
       <source>Apply</source>
       <translation type="unfinished">Apply</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="272"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="289"/>
       <source>Refresh</source>
       <translation type="unfinished">Refresh</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="277"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="294"/>
       <source>Loading…</source>
       <translation type="unfinished">Loading…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="304"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="321"/>
       <source>Swappiness tuning isn&apos;t available.</source>
       <translation type="unfinished">Swappiness tuning isn&apos;t available.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="314"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="331"/>
       <source>Current value: &lt;b&gt;%1&lt;/b&gt;%2</source>
       <translation type="unfinished">Current value: &lt;b&gt;%1&lt;/b&gt;%2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="317"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="334"/>
       <source>  (persisted at %1)</source>
       <translation type="unfinished">  (persisted at %1)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="322"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="339"/>
       <source>Swap: %1 of %2 used  ·  %3 backend(s)</source>
       <translation type="unfinished">Swap: %1 of %2 used  ·  %3 backend(s)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="327"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="344"/>
       <source>No active swap backend.</source>
       <translation type="unfinished">No active swap backend.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="398"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="415"/>
       <source>✓ Applied swappiness = %1</source>
       <translation type="unfinished">✓ Applied swappiness = %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="401"/>
+      <location filename="../nexis/Pages/Helpers/swappiness_widget.cpp" line="418"/>
       <source>⚠ Apply failed — did you cancel the password prompt?</source>
       <translation type="unfinished">⚠ Apply failed — did you cancel the password prompt?</translation>
     </message>
@@ -9044,170 +10969,269 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
     <name>SystemCleanerPage</name>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.ui" line="14"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="139"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="153"/>
       <source>System Cleaner</source>
       <translation>Nettoyage Système</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="215"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="217"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="567"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="612"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="659"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="263"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="265"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="645"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="692"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="741"/>
       <source>Crash Reports</source>
       <translation>Rapport d’erreurs</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="222"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="224"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="568"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="613"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="660"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="270"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="272"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="646"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="693"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="742"/>
       <source>Application Logs</source>
       <translation>Journaux des applications</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="229"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="231"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="569"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="614"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="661"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="277"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="279"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="647"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="694"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="743"/>
       <source>Application Caches</source>
       <translation>Caches des applications</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="236"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="238"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="570"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="615"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="662"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="284"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="286"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="648"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="695"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="744"/>
       <source>Trash</source>
       <translation>Poubelle</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="208"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="210"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="566"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="611"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="658"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="256"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="258"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="644"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="691"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="740"/>
       <source>Package Caches</source>
       <translation>Caches des paquets</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="154"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="168"/>
       <source>Manage exclusion rules</source>
       <translation type="unfinished">Manage exclusion rules</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="158"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="174"/>
+      <source>History</source>
+      <translation type="unfinished">History</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="177"/>
+      <source>Recently removed: past cleans and what they removed</source>
+      <translation type="unfinished">Recently removed: past cleans and what they removed</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="181"/>
       <source>Schedule…</source>
       <translation type="unfinished">Schedule…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="171"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="196"/>
+      <source>Deep clean</source>
+      <translation type="unfinished">Deep clean</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="200"/>
+      <source>Browser history &amp;&amp; cookies…</source>
+      <translation type="unfinished">Browser history &amp;&amp; cookies…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="203"/>
+      <source>App cleaners…</source>
+      <translation type="unfinished">App cleaners…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="206"/>
+      <source>Local AI models…</source>
+      <translation type="unfinished">Local AI models…</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="211"/>
       <source>Scan system</source>
       <translation type="unfinished">Scan system</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="182"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="224"/>
       <source>Reclaim disk space by removing caches, logs, and crash reports.</source>
       <translation type="unfinished">Reclaim disk space by removing caches, logs, and crash reports.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="242"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="571"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="616"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="663"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="290"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="649"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="696"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="745"/>
       <source>Dev Tool Caches</source>
       <translation type="unfinished">Dev Tool Caches</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="245"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="572"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="617"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="664"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="293"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="650"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="697"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="746"/>
       <source>Broken Symlinks</source>
       <translation type="unfinished">Broken Symlinks</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="248"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="573"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="618"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="665"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="301"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="651"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="698"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="747"/>
       <source>Browser Privacy</source>
       <translation type="unfinished">Browser Privacy</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="345"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="574"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="619"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="666"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="403"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="652"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="699"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="748"/>
       <source>Snap/Flatpak Revisions</source>
       <translation type="unfinished">Snap/Flatpak Revisions</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="406"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="422"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="653"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="700"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="749"/>
+      <source>Application Profiles</source>
+      <translation type="unfinished">Application Profiles</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="483"/>
       <source>ESTIMATED RECOVERABLE</source>
       <translation type="unfinished">ESTIMATED RECOVERABLE</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="422"/>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="518"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="499"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="595"/>
       <source>Select All</source>
       <translation type="unfinished">Select All</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="429"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="506"/>
       <source>Clean selected</source>
       <translation type="unfinished">Clean selected</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="518"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="595"/>
       <source>Clear All</source>
       <translation type="unfinished">Clear All</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="938"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1029"/>
       <source>System Cleaner — Preview</source>
       <translation type="unfinished">System Cleaner — Preview</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="939"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1030"/>
       <source>Clean Selected</source>
       <translation type="unfinished">Clean Selected</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="940"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1031"/>
       <source>This will permanently delete the selected items.</source>
       <translation type="unfinished">This will permanently delete the selected items.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="982"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1074"/>
+      <source>✓ Cleaned %1 item(s) — %2 freed.</source>
+      <translation type="unfinished">✓ Cleaned %1 item(s) — %2 freed.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1093"/>
       <source>✓ Restore point created via %1. Disable in Settings.</source>
       <translation type="unfinished">✓ Restore point created via %1. Disable in Settings.</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1005"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1116"/>
       <source>Open Privacy &amp; Security…</source>
       <translation type="unfinished">Open Privacy &amp; Security…</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1102"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1213"/>
       <source>Always exclude this</source>
       <translation type="unfinished">Always exclude this</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1219"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1239"/>
+      <source>Browser Deep Clean</source>
+      <translation type="unfinished">Browser Deep Clean</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1240"/>
+      <source>No Firefox, Chrome, Chromium, Brave or Edge profiles were found.</source>
+      <translation type="unfinished">No Firefox, Chrome, Chromium, Brave or Edge profiles were found.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1255"/>
+      <source>Review Browser Data to Delete</source>
+      <translation type="unfinished">Review Browser Data to Delete</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1256"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1299"/>
+      <source>Delete Selected</source>
+      <translation type="unfinished">Delete Selected</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1257"/>
+      <source>This will permanently delete the selected browsing history and cookies.</source>
+      <translation type="unfinished">This will permanently delete the selected browsing history and cookies.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1280"/>
+      <source>App Cleaners</source>
+      <translation type="unfinished">App Cleaners</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1281"/>
+      <source>None of the applications Nexis has cleaners for have left data on this computer.</source>
+      <translation type="unfinished">None of the applications Nexis has cleaners for have left data on this computer.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1298"/>
+      <source>Review App Data to Delete</source>
+      <translation type="unfinished">Review App Data to Delete</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1300"/>
+      <source>This will permanently delete the selected application data.</source>
+      <translation type="unfinished">This will permanently delete the selected application data.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1315"/>
+      <source>Local AI Models</source>
+      <translation type="unfinished">Local AI Models</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1316"/>
+      <source>No models downloaded by Ollama, Hugging Face, LM Studio or llama.cpp were found.</source>
+      <translation type="unfinished">No models downloaded by Ollama, Hugging Face, LM Studio or llama.cpp were found.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1469"/>
       <source>Next: %1 — %2</source>
       <translation type="unfinished">Next: %1 — %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1223"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1473"/>
       <source>Last: %1 — cleaned %2</source>
       <translation type="unfinished">Last: %1 — cleaned %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1227"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="1477"/>
       <source>No previous scheduled cleans</source>
       <translation type="unfinished">No previous scheduled cleans</translation>
     </message>
@@ -9237,12 +11261,12 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
       <translation type="unfinished">Size (Large–Small)</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="94"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="108"/>
       <source>File Name</source>
       <translation>Nom de fichier</translation>
     </message>
     <message>
-      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="94"/>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_page.cpp" line="108"/>
       <source>Size</source>
       <translation>Taille</translation>
     </message>
@@ -9316,8 +11340,18 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
     </message>
     <message>
       <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="71"/>
-      <source>Browser privacy data (cookies, history, or cached session); deleting this will sign you out of websites.</source>
-      <translation type="unfinished">Browser privacy data (cookies, history, or cached session); deleting this will sign you out of websites.</translation>
+      <source>Browser cache or saved session; deleting a saved session closes that browser&apos;s restored tabs. Cookies and history are not touched here.</source>
+      <translation type="unfinished">Browser cache or saved session; deleting a saved session closes that browser&apos;s restored tabs. Cookies and history are not touched here.</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="75"/>
+      <source>Application Profiles</source>
+      <translation type="unfinished">Application Profiles</translation>
+    </message>
+    <message>
+      <location filename="../nexis/Pages/SystemCleaner/system_cleaner_provider.cpp" line="76"/>
+      <source>Path matched by a bundled or user-supplied cleaning profile.</source>
+      <translation type="unfinished">Path matched by a bundled or user-supplied cleaning profile.</translation>
     </message>
   </context>
   <context>
@@ -9408,17 +11442,17 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
   <context>
     <name>TrayHealthMonitor</name>
     <message>
-      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="98"/>
+      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="95"/>
       <source>Cleaning…</source>
       <translation type="unfinished">Cleaning…</translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="115"/>
+      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="112"/>
       <source>Clean Now</source>
       <translation type="unfinished">Clean Now</translation>
     </message>
     <message numerus="yes">
-      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="119"/>
+      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="116"/>
       <source>Freed %1 across %n item(s).</source>
       <translation type="unfinished">
         <numerusform>Freed %1 across %n item(s).</numerusform>
@@ -9426,14 +11460,9 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
       </translation>
     </message>
     <message>
-      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="120"/>
+      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="117"/>
       <source>Nothing to clean — your system is already tidy.</source>
       <translation type="unfinished">Nothing to clean — your system is already tidy.</translation>
-    </message>
-    <message>
-      <location filename="../nexis/Managers/tray_health_monitor.cpp" line="122"/>
-      <source>Nexis</source>
-      <translation type="unfinished">Nexis</translation>
     </message>
   </context>
   <context>
@@ -9610,7 +11639,7 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
       <translation type="unfinished">0 selected · %1</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="519"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="526"/>
       <source>Close</source>
       <translation type="unfinished">Close</translation>
     </message>
@@ -9650,52 +11679,52 @@ This reclaims the purgeable disk space it holds and cannot be undone.</translati
       <translation type="unfinished">Done — freed %1 from %2 of %3 item(s).</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="283"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="290"/>
       <source>%1 item(s) · %2</source>
       <translation type="unfinished">%1 item(s) · %2</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="319"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="326"/>
       <source>%1 (Dry Run)</source>
       <translation type="unfinished">%1 (Dry Run)</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="407"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="414"/>
       <source>Higher-Risk Category</source>
       <translation type="unfinished">Higher-Risk Category</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="408"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="415"/>
       <source>“%1” includes higher-risk items — select anyway?</source>
       <translation type="unfinished">“%1” includes higher-risk items — select anyway?</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="463"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="470"/>
       <source>…</source>
       <translation type="unfinished">…</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="495"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="502"/>
       <source>%1 (%2) · Risky</source>
       <translation type="unfinished">%1 (%2) · Risky</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="496"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="503"/>
       <source>%1 (%2)</source>
       <translation type="unfinished">%1 (%2)</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="497"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="504"/>
       <source>%1+…</source>
       <translation type="unfinished">%1+…</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="519"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="526"/>
       <source>Stop</source>
       <translation type="unfinished">Stop</translation>
     </message>
     <message>
-      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="540"/>
+      <location filename="../nexis/Common/trust_safety_preview_dialog.cpp" line="547"/>
       <source>%1 selected · %2</source>
       <translation type="unfinished">%1 selected · %2</translation>
     </message>
