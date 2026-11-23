@@ -1,6 +1,7 @@
 #ifndef THERMAL_INFO_H
 #define THERMAL_INFO_H
 
+#include <QByteArray>
 #include <QList>
 #include <QString>
 #include "Utils/file_util.h"
@@ -49,6 +50,18 @@ public:
     // device label. Exposed for testing FW-16 vendor WMI surfaces (asus-wmi,
     // hp-wmi, legion-laptop) added in kernel 7.0.
     static QString friendlyDeviceName(const QString &driverName);
+
+    // Decode an AppleSMC temperature value: "sp78" (signed 7.8 fixed point, big
+    // endian, 2 bytes) or "flt " (IEEE float, little endian, 4 bytes). Returns -1.0
+    // for any other type or a short payload.
+    static double decodeSmcTemperature(const QByteArray &dataType, const QByteArray &bytes);
+
+    // True for a reading that can be a live temperature in C. SMC keys report 0,
+    // negative sentinels or garbage when the sensor is absent or powered down.
+    static bool isPlausibleSmcTemperature(double celsius);
+
+    // User-facing label for an SMC temperature key (e.g. "Tp01" -> "CPU Performance (Tp01)").
+    static QString smcSensorLabel(const QString &key);
 
     // Walk a hwmon root (sysfs-shaped: <root>/hwmon*/name + temp*_input + temp*_label)
     // and return the discovered sensors. Linux passes /sys/class/hwmon; tests

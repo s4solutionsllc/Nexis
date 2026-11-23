@@ -46,6 +46,13 @@ class TestThermalInfo : public QObject
     Q_OBJECT
 
 private slots:
+    // AppleSMC decoding / labelling (SSO-27979)
+    void smc_decodeSp78();
+    void smc_decodeFloatLittleEndian();
+    void smc_decodeRejectsBadTypeOrSize();
+    void smc_plausibility();
+    void smc_labels();
+
     // parseSysfsTemperature
     void temp_normalValue();
     void temp_zero();
@@ -432,6 +439,48 @@ void TestThermalInfo::summarize_emptyAndAllInvalid()
     QVERIFY(!bad.isValid());
     QCOMPARE(bad.count, 0);
     QCOMPARE(bad.maxIndex, -1);
+}
+
+void TestThermalInfo::smc_decodeSp78()
+{
+    // 0x2A80 = 42.5 C; 0xF600 = -10 C.
+    QCOMPARE(ThermalInfo::decodeSmcTemperature("sp78", QByteArray::fromHex("2a80")), 42.5);
+    QCOMPARE(ThermalInfo::decodeSmcTemperature("sp78", QByteArray::fromHex("f600")), -10.0);
+}
+
+void TestThermalInfo::smc_decodeFloatLittleEndian()
+{
+    // 45.5f = 0x42360000, stored little-endian by the SMC on Intel and Apple Silicon.
+    QCOMPARE(ThermalInfo::decodeSmcTemperature("flt ", QByteArray::fromHex("00003642")), 45.5);
+    // NaN payload must not leak through as a reading.
+    QCOMPARE(ThermalInfo::decodeSmcTemperature("flt ", QByteArray::fromHex("0000c07f")), -1.0);
+}
+
+void TestThermalInfo::smc_decodeRejectsBadTypeOrSize()
+{
+    QCOMPARE(ThermalInfo::decodeSmcTemperature("ui32", QByteArray::fromHex("00000001")), -1.0);
+    QCOMPARE(ThermalInfo::decodeSmcTemperature("sp78", QByteArray::fromHex("2a")), -1.0);
+    QCOMPARE(ThermalInfo::decodeSmcTemperature("flt ", QByteArray::fromHex("0000")), -1.0);
+    QCOMPARE(ThermalInfo::decodeSmcTemperature("", QByteArray()), -1.0);
+}
+
+void TestThermalInfo::smc_plausibility()
+{
+    QVERIFY(ThermalInfo::isPlausibleSmcTemperature(35.0));
+    QVERIFY(ThermalInfo::isPlausibleSmcTemperature(110.0));
+    QVERIFY(!ThermalInfo::isPlausibleSmcTemperature(0.0));
+    QVERIFY(!ThermalInfo::isPlausibleSmcTemperature(-1.0));
+    QVERIFY(!ThermalInfo::isPlausibleSmcTemperature(-127.0));
+    QVERIFY(!ThermalInfo::isPlausibleSmcTemperature(200.0));
+    QVERIFY(!ThermalInfo::isPlausibleSmcTemperature(std::numeric_limits<double>::quiet_NaN()));
+}
+
+void TestThermalInfo::smc_labels()
+{
+    QCOMPARE(ThermalInfo::smcSensorLabel("Tp01"), QString("CPU Performance (Tp01)"));
+    QCOMPARE(ThermalInfo::smcSensorLabel("Te05"), QString("CPU Efficiency (Te05)"));
+    QCOMPARE(ThermalInfo::smcSensorLabel("Tg0D"), QString("GPU (Tg0D)"));
+    QCOMPARE(ThermalInfo::smcSensorLabel("TZ9Z"), QString("SMC TZ9Z"));
 }
 
 QTEST_MAIN(TestThermalInfo)

@@ -1,0 +1,1 @@
+macOS: temperature sensors (and fans) were never detected on Apple Silicon because the AppleSMC request struct was 49 bytes instead of the 80 the kernel requires; the layout is fixed and thermal discovery now walks the SMC key table for every `T*` temperature key instead of probing only `TC0P`/`TC0D`/`TG0P`, so the Dashboard temp tile and avg/max summary appear (SSO-27979).

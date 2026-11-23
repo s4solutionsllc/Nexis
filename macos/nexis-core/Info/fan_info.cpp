@@ -1,30 +1,8 @@
 #include "fan_info_macos.h"
+#include "smc_protocol.h"
 
 #include <IOKit/IOKitLib.h>
 #include <cstring>
-
-#define KERNEL_INDEX_SMC  2
-
-enum SmcFanCmd : uint8_t {
-    kSMCReadKey    = 5,
-    kSMCGetKeyInfo = 9
-};
-
-#pragma pack(push, 1)
-
-struct SmcFanKeyData {
-    uint32_t key;
-    struct {
-        uint8_t  dataSize;
-        uint32_t dataType;
-        uint8_t  dataAttributes;
-    } keyInfo;
-    uint8_t  result;
-    uint8_t  status;
-    uint8_t  data8;
-    uint32_t data32;
-    uint8_t  bytes[32];
-};
 
 using SmcFanBytes = uint8_t[32];
 
@@ -34,8 +12,6 @@ struct SmcFanVal {
     char     dataType[5];
     SmcFanBytes bytes;
 };
-
-#pragma pack(pop)
 
 static io_connect_t sFanConn = 0;
 
@@ -65,26 +41,26 @@ static bool smcFanReadKey(const char *key, SmcFanVal &val)
 {
     if (!smcFanOpen()) return false;
 
-    SmcFanKeyData inData{};
-    SmcFanKeyData outData{};
+    SmcKeyData inData{};
+    SmcKeyData outData{};
 
     inData.key  = fanFourCharToUInt(key);
     inData.data8 = kSMCGetKeyInfo;
 
-    size_t outSize = sizeof(SmcFanKeyData);
+    size_t outSize = sizeof(SmcKeyData);
     kern_return_t kr = IOConnectCallStructMethod(
         sFanConn, KERNEL_INDEX_SMC,
-        &inData, sizeof(SmcFanKeyData),
+        &inData, sizeof(SmcKeyData),
         &outData, &outSize);
     if (kr != KERN_SUCCESS) return false;
 
     inData.keyInfo.dataSize = outData.keyInfo.dataSize;
     inData.data8 = kSMCReadKey;
 
-    outSize = sizeof(SmcFanKeyData);
+    outSize = sizeof(SmcKeyData);
     kr = IOConnectCallStructMethod(
         sFanConn, KERNEL_INDEX_SMC,
-        &inData, sizeof(SmcFanKeyData),
+        &inData, sizeof(SmcKeyData),
         &outData, &outSize);
     if (kr != KERN_SUCCESS) return false;
 

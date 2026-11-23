@@ -1,8 +1,12 @@
 #include "thermal_info_macos.h"
+#include "smc_protocol.h"
 
 #include <IOKit/IOKitLib.h>
+#include <QByteArray>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QSet>
+#include <QtGlobal>
 #include <atomic>
 #include <cstring>
 #include <mutex>
@@ -15,31 +19,6 @@
 #define SMC_KEY_CPU_DIE   "TC0D"   // CPU die temperature (Intel)
 #define SMC_KEY_GPU_TEMP  "TG0P"   // GPU proximity
 
-// SMC command constants
-#define KERNEL_INDEX_SMC  2
-
-enum SmcCmd : uint8_t {
-    kSMCReadKey  = 5,
-    kSMCGetKeyInfo = 9
-};
-
-// SMC data structures (must match kernel driver layout)
-#pragma pack(push, 1)
-
-struct SmcKeyData {
-    uint32_t key;
-    struct {
-        uint8_t  dataSize;
-        uint32_t dataType;
-        uint8_t  dataAttributes;
-    } keyInfo;
-    uint8_t  result;
-    uint8_t  status;
-    uint8_t  data8;
-    uint32_t data32;
-    uint8_t  bytes[32];
-};
-
 using SmcBytes = uint8_t[32];
 
 struct SmcVal {
@@ -48,8 +27,6 @@ struct SmcVal {
     char     dataType[5];
     SmcBytes bytes;
 };
-
-#pragma pack(pop)
 
 // ── SMC helper functions ────────────────────────────────────────────
 // WI-23 (M4): the wizard health-score worker and the medium-tick UI thread
@@ -123,7 +100,7 @@ static bool smcReadKey(const char *key, SmcVal &val)
         sConn, KERNEL_INDEX_SMC,
         &inData, sizeof(SmcKeyData),
         &outData, &outSize);
-    if (kr != KERN_SUCCESS) return false;
+    if (kr != KERN_SUCCESS || outData.result != kSMCResultSuccess) return false;
 
     // Now read the actual value
     inData.keyInfo.dataSize = outData.keyInfo.dataSize;
@@ -134,7 +111,7 @@ static bool smcReadKey(const char *key, SmcVal &val)
         sConn, KERNEL_INDEX_SMC,
         &inData, sizeof(SmcKeyData),
         &outData, &outSize);
-    if (kr != KERN_SUCCESS) return false;
+    if (kr != KERN_SUCCESS || outData.result != kSMCResultSuccess) return false;
 
     std::strncpy(val.key, key, 4);
     val.key[4] = '\0';
@@ -151,23 +128,51 @@ static bool smcReadKey(const char *key, SmcVal &val)
     return true;
 }
 
+// Resolve the SMC key at `index` in the key table (selector kSMCGetKeyFromIndex).
+// Apple Silicon parts carry different T* key sets per generation, so
+// enumeration, not a hard-coded list, is what finds their sensors.
+static bool smcKeyAtIndex(uint32_t index, char out[5])
+{
+    if (!smcOpen()) return false;
+    QMutexLocker locker(&sSmcReadMutex);
+
+    SmcKeyData inData{};
+    SmcKeyData outData{};
+    inData.data8  = kSMCGetKeyFromIndex;
+    inData.data32 = index;
+
+    size_t outSize = sizeof(SmcKeyData);
+    kern_return_t kr = IOConnectCallStructMethod(
+        sConn, KERNEL_INDEX_SMC,
+        &inData, sizeof(SmcKeyData),
+        &outData, &outSize);
+    if (kr != KERN_SUCCESS || outData.result != kSMCResultSuccess) return false;
+
+    out[0] = char(outData.key >> 24);
+    out[1] = char(outData.key >> 16);
+    out[2] = char(outData.key >>  8);
+    out[3] = char(outData.key);
+    out[4] = '\0';
+    return true;
+}
+
+static int smcKeyCount()
+{
+    SmcVal val{};
+    if (!smcReadKey("#KEY", val) || val.dataSize != 4) return 0;
+    return int((uint32_t(val.bytes[0]) << 24) | (uint32_t(val.bytes[1]) << 16) |
+               (uint32_t(val.bytes[2]) <<  8) |  uint32_t(val.bytes[3]));
+}
+
 static double smcGetTemp(const char *key)
 {
     SmcVal val{};
     if (!smcReadKey(key, val))
         return -1.0;
 
-    // Most temp keys use "sp78" (signed fixed-point 7.8) or "flt " (float)
-    if (std::strcmp(val.dataType, "sp78") == 0 && val.dataSize == 2) {
-        int16_t raw = (int16_t(val.bytes[0]) << 8) | val.bytes[1];
-        return raw / 256.0;
-    }
-    if (std::strcmp(val.dataType, "flt ") == 0 && val.dataSize == 4) {
-        float f;
-        std::memcpy(&f, val.bytes, 4);
-        return double(f);
-    }
-    return -1.0;
+    return ThermalInfo::decodeSmcTemperature(
+        QByteArray(val.dataType, 4),
+        QByteArray(reinterpret_cast<const char *>(val.bytes), int(val.dataSize)));
 }
 
 // ── ThermalInfo implementation ──────────────────────────────────────
@@ -181,9 +186,8 @@ void ThermalInfoMacOS::discoverSensors()
 {
     mSensors.clear();
 
-    // Try the well-known SMC thermal keys.
-    // We probe each; if the read succeeds and returns a sane value we
-    // register the sensor.
+    // Well-known keys first, so the labels users already see on Intel and
+    // earlier Apple Silicon Macs stay stable.
     struct Probe {
         const char *smcKey;
         const char *label;
@@ -195,19 +199,43 @@ void ThermalInfoMacOS::discoverSensors()
         { SMC_KEY_GPU_TEMP,  "GPU Proximity" },
     };
 
+    QSet<QString> seen;
+    auto addSensor = [&](const QString &key, const QString &label) {
+        ThermalSensor sensor;
+        sensor.id         = QString("smc/%1").arg(key);
+        sensor.deviceName = "SMC";
+        sensor.label      = label;
+        sensor.inputPath  = key;   // store key for later reads
+        sensor.maxTemp    = 100.0;
+        sensor.critTemp   = 105.0;
+        mSensors.append(sensor);
+        seen.insert(key);
+    };
+
     for (const auto &p : probes) {
         double t = smcGetTemp(p.smcKey);
-        if (t > 0.0 && t < 130.0) {           // sane range
-            ThermalSensor sensor;
-            sensor.id         = QString("smc/%1").arg(p.smcKey);
-            sensor.deviceName = "SMC";
-            sensor.label      = QString(p.label);
-            sensor.inputPath  = QString(p.smcKey);   // store key for later reads
-            sensor.maxTemp    = 100.0;
-            sensor.critTemp   = 105.0;
-            mSensors.append(sensor);
-        }
+        if (ThermalInfo::isPlausibleSmcTemperature(t))
+            addSensor(p.smcKey, p.label);
     }
+
+    // Walk the SMC key table for the remaining T* keys (Apple Silicon P/E-core,
+    // GPU, memory, SSD, battery ...). Bounded so a misbehaving SMC can't stall startup.
+    constexpr int kMaxKeysScanned = 4096;
+    constexpr int kMaxSensors     = 64;
+    const int total = qMin(smcKeyCount(), kMaxKeysScanned);
+    for (int i = 0; i < total && mSensors.size() < kMaxSensors; ++i) {
+        char key[5];
+        if (!smcKeyAtIndex(uint32_t(i), key) || key[0] != 'T')
+            continue;
+        const QString qkey = QString::fromLatin1(key, 4);
+        if (seen.contains(qkey))
+            continue;
+        if (ThermalInfo::isPlausibleSmcTemperature(smcGetTemp(key)))
+            addSensor(qkey, ThermalInfo::smcSensorLabel(qkey));
+    }
+
+    qInfo("ThermalInfoMacOS: %lld SMC temperature sensor(s) of %d SMC keys",
+          static_cast<long long>(mSensors.size()), total);
 }
 
 double ThermalInfoMacOS::getTemperature(int index) const
