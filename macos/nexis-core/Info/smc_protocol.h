@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-// AppleSMC user-client wire format, shared by thermal_info.cpp and fan_info.cpp.
+// AppleSMC user-client wire format used by thermal_info.cpp.
 // The kernel validates the struct size on selector 2 and answers
 // kIOReturnBadArgument for anything but 80 bytes, so every field below
 // (including the ones Nexis never reads) has to be present, in this order,

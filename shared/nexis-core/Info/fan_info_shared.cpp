@@ -2,9 +2,6 @@
 
 #include "fan_info.h"
 #include <QRegularExpression>
-#include <cmath>
-#include <cstdint>
-#include <cstring>
 
 static constexpr int MAX_SANE_RPM = 30000;
 
@@ -17,28 +14,6 @@ int FanInfo::parseThinkpadFanSpeed(const QString &procFanContent)
 
     int rpm = match.captured(1).toInt();
     return (rpm >= 0 && rpm <= MAX_SANE_RPM) ? rpm : 0;
-}
-
-int FanInfo::decodeSmcFanRpm(const QByteArray &dataType, const QByteArray &bytes)
-{
-    double rpm;
-    if (dataType == "fpe2" && bytes.size() == 2) {
-        const uint16_t raw = uint16_t((uint16_t(uint8_t(bytes[0])) << 8) | uint8_t(bytes[1]));
-        rpm = raw / 4.0;
-    } else if (dataType == "flt " && bytes.size() == 4) {
-        const uint32_t bits = uint32_t(uint8_t(bytes[0])) |
-                              (uint32_t(uint8_t(bytes[1])) <<  8) |
-                              (uint32_t(uint8_t(bytes[2])) << 16) |
-                              (uint32_t(uint8_t(bytes[3])) << 24);
-        float f;
-        std::memcpy(&f, &bits, sizeof f);
-        rpm = f;
-    } else {
-        return -1;
-    }
-    if (!std::isfinite(rpm) || rpm < 0.0 || rpm > MAX_SANE_RPM)
-        return -1;
-    return int(std::lround(rpm));
 }
 
 QList<int> FanInfo::parseDellI8kFanSpeeds(const QString &i8kContent)
