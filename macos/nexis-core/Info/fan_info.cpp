@@ -89,11 +89,9 @@ static int smcGetFanRpm(const char *key)
     if (!smcFanReadKey(key, val))
         return -1;
 
-    if (std::strcmp(val.dataType, "fpe2") == 0 && val.dataSize == 2) {
-        uint16_t raw = (uint16_t(val.bytes[0]) << 8) | val.bytes[1];
-        return static_cast<int>(raw >> 2);
-    }
-    return -1;
+    return FanInfo::decodeSmcFanRpm(
+        QByteArray(val.dataType, 4),
+        QByteArray(reinterpret_cast<const char *>(val.bytes), int(val.dataSize)));
 }
 
 static int smcGetUInt8(const char *key)

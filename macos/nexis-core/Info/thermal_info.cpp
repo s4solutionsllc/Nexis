@@ -225,7 +225,7 @@ void ThermalInfoMacOS::discoverSensors()
     // Walk the SMC key table for the remaining T* keys (Apple Silicon P/E-core,
     // GPU, memory, SSD, battery ...). Bounded so a misbehaving SMC can't stall startup.
     constexpr int kMaxKeysScanned = 4096;
-    constexpr int kMaxSensors     = 64;
+    constexpr int kMaxSensors     = 256;
     const int total = qMin(smcKeyCount(), kMaxKeysScanned);
     for (int i = 0; i < total && mSensors.size() < kMaxSensors; ++i) {
         char key[5];
