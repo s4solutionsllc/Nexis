@@ -103,7 +103,11 @@ static bool smcReadKey(const char *key, SmcVal &val)
     if (kr != KERN_SUCCESS || outData.result != kSMCResultSuccess) return false;
 
     // Now read the actual value
-    inData.keyInfo.dataSize = outData.keyInfo.dataSize;
+    // The ReadKey reply carries only bytes[]; its keyInfo comes back zeroed.
+    const uint32_t keySize = outData.keyInfo.dataSize;
+    const uint32_t keyType = outData.keyInfo.dataType;
+
+    inData.keyInfo.dataSize = keySize;
     inData.data8 = kSMCReadKey;
 
     outSize = sizeof(SmcKeyData);
@@ -115,9 +119,9 @@ static bool smcReadKey(const char *key, SmcVal &val)
 
     std::strncpy(val.key, key, 4);
     val.key[4] = '\0';
-    val.dataSize = outData.keyInfo.dataSize;
+    val.dataSize = keySize;
 
-    uint32_t dt = outData.keyInfo.dataType;
+    uint32_t dt = keyType;
     val.dataType[0] = char(dt >> 24);
     val.dataType[1] = char(dt >> 16);
     val.dataType[2] = char(dt >>  8);
