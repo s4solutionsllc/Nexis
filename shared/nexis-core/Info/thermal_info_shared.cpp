@@ -6,6 +6,8 @@
 #include <QHash>
 #include <QRegularExpression>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
 
 namespace {
 constexpr double MAX_SANE_TEMP = 200.0;
@@ -29,6 +31,47 @@ ThermalSummary ThermalInfo::summarize(const QList<double> &readings)
     if (out.count > 0)
         out.average = sum / out.count;
     return out;
+}
+
+double ThermalInfo::decodeSmcTemperature(const QByteArray &dataType, const QByteArray &bytes)
+{
+    if (dataType == "sp78" && bytes.size() == 2) {
+        const int16_t raw = int16_t((uint16_t(uint8_t(bytes[0])) << 8) | uint8_t(bytes[1]));
+        return raw / 256.0;
+    }
+    if (dataType == "flt " && bytes.size() == 4) {
+        const uint32_t bits = uint32_t(uint8_t(bytes[0])) |
+                              (uint32_t(uint8_t(bytes[1])) <<  8) |
+                              (uint32_t(uint8_t(bytes[2])) << 16) |
+                              (uint32_t(uint8_t(bytes[3])) << 24);
+        float f;
+        std::memcpy(&f, &bits, sizeof f);
+        return std::isfinite(f) ? double(f) : -1.0;
+    }
+    return -1.0;
+}
+
+bool ThermalInfo::isPlausibleSmcTemperature(double celsius)
+{
+    return std::isfinite(celsius) && celsius >= 10.0 && celsius <= 130.0;
+}
+
+QString ThermalInfo::smcSensorLabel(const QString &key)
+{
+    static const QHash<QString, QString> prefixes = {
+        {"Tp", "CPU Performance"},
+        {"Te", "CPU Efficiency"},
+        {"Tg", "GPU"},
+        {"Tm", "Memory"},
+        {"TB", "Battery"},
+        {"TC", "CPU"},
+        {"TG", "GPU"},
+        {"Ta", "Ambient"},
+    };
+    const auto it = prefixes.constFind(key.left(2));
+    if (it == prefixes.constEnd())
+        return QStringLiteral("SMC %1").arg(key);
+    return QStringLiteral("%1 (%2)").arg(it.value(), key);
 }
 
 double ThermalInfo::parseSysfsTemperature(const QString &millidegStr)

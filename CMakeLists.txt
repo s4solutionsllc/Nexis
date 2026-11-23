@@ -282,6 +282,7 @@ if(APPLE)
     "${CORE_PLAT_DIR}/Info/startup_info_macos.h"
     "${CORE_PLAT_DIR}/Info/system_info_macos.h"
     "${CORE_PLAT_DIR}/Info/thermal_info_macos.h"
+    "${CORE_PLAT_DIR}/Info/smc_protocol.h"
     "${CORE_PLAT_DIR}/Info/fan_info_macos.h"
     "${CORE_PLAT_DIR}/Info/sparkle_appcast_parser.h"
     "${CORE_PLAT_DIR}/Info/sparkle_signature_verifier.h"
