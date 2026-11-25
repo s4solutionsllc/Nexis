@@ -7379,17 +7379,42 @@ Not under a trusted system prefix.</translation>
   <context>
     <name>QObject</name>
     <message>
-      <location filename="../nexis/main.cpp" line="238"/>
+      <location filename="../nexis/main.cpp" line="250"/>
+      <source>output directory &quot;%1&quot; does not exist</source>
+      <translation type="unfinished">output directory &quot;%1&quot; does not exist</translation>
+    </message>
+    <message>
+      <location filename="../nexis/main.cpp" line="255"/>
+      <source>--capture-theme must be dark or light</source>
+      <translation type="unfinished">--capture-theme must be dark or light</translation>
+    </message>
+    <message>
+      <location filename="../nexis/main.cpp" line="260"/>
+      <source>cannot read manifest %1</source>
+      <translation type="unfinished">cannot read manifest %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/main.cpp" line="269"/>
+      <source>no shots match this platform and filter</source>
+      <translation type="unfinished">no shots match this platform and filter</translation>
+    </message>
+    <message>
+      <location filename="../nexis/main.cpp" line="288"/>
+      <source>refusing to reset unexpected profile path %1</source>
+      <translation type="unfinished">refusing to reset unexpected profile path %1</translation>
+    </message>
+    <message>
+      <location filename="../nexis/main.cpp" line="400"/>
       <source>Cleaned %1 (%2)</source>
       <translation type="unfinished">Cleaned %1 (%2)</translation>
     </message>
     <message>
-      <location filename="../nexis/main.cpp" line="262"/>
+      <location filename="../nexis/main.cpp" line="424"/>
       <source>Nexis found %1 of cleanable files. Open Nexis to review.</source>
       <translation type="unfinished">Nexis found %1 of cleanable files. Open Nexis to review.</translation>
     </message>
     <message>
-      <location filename="../nexis/main.cpp" line="296"/>
+      <location filename="../nexis/main.cpp" line="461"/>
       <source>Another instance of Nexis is already running.</source>
       <translation type="unfinished">Another instance of Nexis is already running.</translation>
     </message>
