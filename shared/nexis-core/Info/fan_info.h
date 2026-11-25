@@ -1,6 +1,7 @@
 #ifndef FAN_INFO_H
 #define FAN_INFO_H
 
+#include <QByteArray>
 #include <QList>
 #include <QString>
 #include "Utils/file_util.h"
@@ -39,6 +40,12 @@ public:
     static int parseThinkpadFanSpeed(const QString &procFanContent);
     static QList<int> parseDellI8kFanSpeeds(const QString &i8kContent);
     static int parseNvidiaSmiGpuFanPercent(const QString &csvLine);
+
+    // Decodes an Apple SMC fan-speed value: "fpe2" (unsigned 14.2 fixed point, big
+    // endian, 2 bytes; Intel Macs) or "flt " (IEEE float, little endian, 4 bytes;
+    // Apple Silicon). Returns -1 for any other type, a short payload or a value
+    // outside 0..30000 rpm.
+    static int decodeSmcFanRpm(const QByteArray &dataType, const QByteArray &bytes);
 
 protected:
     virtual void discoverSensors() = 0;

@@ -1,30 +1,8 @@
 #include "fan_info_macos.h"
+#include "smc_protocol.h"
 
 #include <IOKit/IOKitLib.h>
 #include <cstring>
-
-#define KERNEL_INDEX_SMC  2
-
-enum SmcFanCmd : uint8_t {
-    kSMCReadKey    = 5,
-    kSMCGetKeyInfo = 9
-};
-
-#pragma pack(push, 1)
-
-struct SmcFanKeyData {
-    uint32_t key;
-    struct {
-        uint8_t  dataSize;
-        uint32_t dataType;
-        uint8_t  dataAttributes;
-    } keyInfo;
-    uint8_t  result;
-    uint8_t  status;
-    uint8_t  data8;
-    uint32_t data32;
-    uint8_t  bytes[32];
-};
 
 using SmcFanBytes = uint8_t[32];
 
@@ -34,8 +12,6 @@ struct SmcFanVal {
     char     dataType[5];
     SmcFanBytes bytes;
 };
-
-#pragma pack(pop)
 
 static io_connect_t sFanConn = 0;
 
@@ -65,34 +41,38 @@ static bool smcFanReadKey(const char *key, SmcFanVal &val)
 {
     if (!smcFanOpen()) return false;
 
-    SmcFanKeyData inData{};
-    SmcFanKeyData outData{};
+    SmcKeyData inData{};
+    SmcKeyData outData{};
 
     inData.key  = fanFourCharToUInt(key);
     inData.data8 = kSMCGetKeyInfo;
 
-    size_t outSize = sizeof(SmcFanKeyData);
+    size_t outSize = sizeof(SmcKeyData);
     kern_return_t kr = IOConnectCallStructMethod(
         sFanConn, KERNEL_INDEX_SMC,
-        &inData, sizeof(SmcFanKeyData),
+        &inData, sizeof(SmcKeyData),
         &outData, &outSize);
     if (kr != KERN_SUCCESS) return false;
 
-    inData.keyInfo.dataSize = outData.keyInfo.dataSize;
+    // The ReadKey reply carries only bytes[]; its keyInfo comes back zeroed.
+    const uint32_t keySize = outData.keyInfo.dataSize;
+    const uint32_t keyType = outData.keyInfo.dataType;
+
+    inData.keyInfo.dataSize = keySize;
     inData.data8 = kSMCReadKey;
 
-    outSize = sizeof(SmcFanKeyData);
+    outSize = sizeof(SmcKeyData);
     kr = IOConnectCallStructMethod(
         sFanConn, KERNEL_INDEX_SMC,
-        &inData, sizeof(SmcFanKeyData),
+        &inData, sizeof(SmcKeyData),
         &outData, &outSize);
     if (kr != KERN_SUCCESS) return false;
 
     std::strncpy(val.key, key, 4);
     val.key[4] = '\0';
-    val.dataSize = outData.keyInfo.dataSize;
+    val.dataSize = keySize;
 
-    uint32_t dt = outData.keyInfo.dataType;
+    uint32_t dt = keyType;
     val.dataType[0] = char(dt >> 24);
     val.dataType[1] = char(dt >> 16);
     val.dataType[2] = char(dt >>  8);
@@ -109,11 +89,9 @@ static int smcGetFanRpm(const char *key)
     if (!smcFanReadKey(key, val))
         return -1;
 
-    if (std::strcmp(val.dataType, "fpe2") == 0 && val.dataSize == 2) {
-        uint16_t raw = (uint16_t(val.bytes[0]) << 8) | val.bytes[1];
-        return static_cast<int>(raw >> 2);
-    }
-    return -1;
+    return FanInfo::decodeSmcFanRpm(
+        QByteArray(val.dataType, 4),
+        QByteArray(reinterpret_cast<const char *>(val.bytes), int(val.dataSize)));
 }
 
 static int smcGetUInt8(const char *key)

@@ -36,6 +36,11 @@ private slots:
 
     // IPMI BMC fan sensor parsing (static helper would be needed for testing)
     void ipmi_basic();
+
+    // SMC fan decode
+    void smc_fpe2();
+    void smc_fltAppleSilicon();
+    void smc_rejectsBadInput();
 };
 
 void TestFanInfo::thinkpad_normalSpeed()
@@ -190,6 +195,27 @@ void TestFanInfo::ipmi_basic()
 
     int rpm = match.captured(1).toInt();
     QCOMPARE(rpm, 3200);
+}
+
+void TestFanInfo::smc_fpe2()
+{
+    QCOMPARE(FanInfo::decodeSmcFanRpm("fpe2", QByteArray::fromHex("1f40")), 2000);
+}
+
+void TestFanInfo::smc_fltAppleSilicon()
+{
+    // Little-endian float 0x44fba000 = 2013.0 rpm (F0Ac read on an M5 Pro).
+    QCOMPARE(FanInfo::decodeSmcFanRpm("flt ", QByteArray::fromHex("00a0fb44")), 2013);
+    QCOMPARE(FanInfo::decodeSmcFanRpm("flt ", QByteArray::fromHex("00000000")), 0);
+}
+
+void TestFanInfo::smc_rejectsBadInput()
+{
+    QCOMPARE(FanInfo::decodeSmcFanRpm("flt ", QByteArray::fromHex("0000c07f")), -1);  // NaN
+    QCOMPARE(FanInfo::decodeSmcFanRpm("flt ", QByteArray::fromHex("000080bf")), -1);  // -1.0
+    QCOMPARE(FanInfo::decodeSmcFanRpm("flt ", QByteArray::fromHex("00a0fb")), -1);    // short
+    QCOMPARE(FanInfo::decodeSmcFanRpm("ui8 ", QByteArray::fromHex("01")), -1);
+    QCOMPARE(FanInfo::decodeSmcFanRpm("", QByteArray()), -1);
 }
 
 QTEST_MAIN(TestFanInfo)

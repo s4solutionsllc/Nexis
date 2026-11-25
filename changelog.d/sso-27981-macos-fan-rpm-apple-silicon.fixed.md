@@ -1,0 +1,1 @@
+macOS: fan RPM was never read on Apple Silicon because the fan code still sent the 49-byte AppleSMC request struct (the kernel requires 80), took key size/type from the zeroed ReadKey reply, and could not decode the little-endian `flt ` values Apple Silicon reports; fans now use the corrected layout and decode both `fpe2` and `flt ` (SSO-27981).
