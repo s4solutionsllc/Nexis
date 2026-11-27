@@ -1,0 +1,80 @@
+name: Dependabot enqueue
+
+# Enqueues Dependabot PRs that dependabot-automerge.yml vetted and armed.
+# `native` requires the merge queue, and a merge_group event started by
+# GITHUB_TOKEN runs no workflow, so the enqueue uses a short-lived GitHub App
+# token. This runs on schedule/dispatch only (native code, Actions secrets), so
+# no PR-controlled code ever runs next to the App key. SSO-28212.
+#
+# Do not add pull_request*, workflow_run or push triggers.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  enqueue:
+    if: github.ref == 'refs/heads/native'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint App token
+        id: app
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
+        with:
+          app-id: 4654078
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: s4solutionsllc
+          repositories: Nexis
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Enqueue armed Dependabot PRs
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          owner=${REPO%%/*}
+          name=${REPO#*/}
+          query='query($owner:String!,$name:String!){repository(owner:$owner,name:$name){pullRequests(states:OPEN,baseRefName:"native",first:100){nodes{id number headRefOid isDraft isInMergeQueue mergeStateStatus author{login} autoMergeRequest{enabledBy{login}}}}}}'
+          # Logins as GraphQL reports them (checked on Nexis #593): the author is
+          # "dependabot" and auto-merge was enabled by "github-actions".
+          prs=$(gh api graphql -f query="$query" -f owner="$owner" -f name="$name" \
+            --jq '.data.repository.pullRequests.nodes[]
+              | select(.author.login == "dependabot"
+                  and .autoMergeRequest.enabledBy.login == "github-actions"
+                  and .isDraft == false
+                  and .isInMergeQueue == false
+                  and .mergeStateStatus == "CLEAN")
+              | [.id, .number, .headRefOid] | @tsv')
+          if [ -z "$prs" ]; then
+            echo "no eligible PRs"
+            exit 0
+          fi
+          failed=0
+          while IFS=$'\t' read -r id num oid; do
+            case "$num" in ''|*[!0-9]*) echo "skip: bad PR number"; failed=1; continue;; esac
+            case "$oid" in ''|*[!0-9a-f]*) echo "skip #$num: bad head SHA"; failed=1; continue;; esac
+            # Enqueue only the head the vetting job passed (a later push to an
+            # armed Dependabot branch must not ride in under its name).
+            check=$(gh api "repos/$REPO/commits/$oid/check-runs?check_name=automerge" \
+              --jq '[.check_runs[] | select(.app.slug == "github-actions")] | sort_by(.id) | last
+                    | if . == null then "none none" else "\(.id) \(.conclusion)" end')
+            check_id=${check% *}
+            conclusion=${check#* }
+            if [ "$conclusion" != "success" ]; then
+              echo "skip #$num @ $oid: automerge check run not success"
+              continue
+            fi
+            if gh api graphql \
+              -f query='mutation($id:ID!,$oid:GitObjectID){enqueuePullRequest(input:{pullRequestId:$id,expectedHeadOid:$oid}){mergeQueueEntry{position}}}' \
+              -f id="$id" -f oid="$oid" >/dev/null 2>&1; then
+              echo "enqueued #$num @ $oid (automerge check run $check_id)"
+            else
+              echo "enqueue failed #$num @ $oid"
+              failed=1
+            fi
+          done <<< "$prs"
+          exit "$failed"
