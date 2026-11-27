@@ -3,13 +3,15 @@ name: Dependabot auto-merge
 # Patch and minor Dependabot bumps merge once every required check is green.
 # Majors take the normal pipeline. SSO-28187.
 #
-# `native` requires the merge queue. Auto-merge armed with GITHUB_TOKEN never
-# enqueues (its merge_group events start no workflow run), so the merge step
-# uses a short-lived GitHub App token instead. SSO-28212.
+# This job only vets and arms auto-merge, with GITHUB_TOKEN. It reads no secret
+# but GITHUB_TOKEN. `native` requires the merge queue and a merge_group event
+# started by GITHUB_TOKEN runs no workflow, so dependabot-enqueue.yml (scheduled,
+# native code, App token) enqueues the PRs armed here. SSO-28212.
 #
-# The App key is a Dependabot secret, so this job must never run code the PR
-# controls. The guard step fails the job when the PR edits this file; such a
-# PR is enqueued by hand.
+# The guard step fails the job when the PR edits this file; such a PR is
+# enqueued by hand. A bump of actions/create-github-app-token is never armed
+# (the enqueue workflow runs it next to the App key); it is enqueued by hand
+# after review.
 on: pull_request
 
 permissions: {}
@@ -40,21 +42,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Mint App token
-        id: app
-        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
-        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
-        with:
-          app-id: 4654078
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          owner: s4solutionsllc
-          repositories: Nexis
-          permission-contents: write
-          permission-pull-requests: write
-
       - name: Enable auto-merge for patch and minor
-        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
+        if: (steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor') && !contains(steps.meta.outputs.dependency-names, 'actions/create-github-app-token')
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ steps.app.outputs.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh pr merge --auto --squash "$PR_URL"
