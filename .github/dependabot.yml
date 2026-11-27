@@ -12,6 +12,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    cooldown:
+      default-days: 3
     open-pull-requests-limit: 5
     # CodeQL requires all its sub-actions (init, analyze, upload-sarif) to run
     # the same version — split bumps break the Analyze job (see PR #302).
