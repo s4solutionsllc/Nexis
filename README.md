@@ -320,4 +320,4 @@ Nexis is a free, GPL-3.0 reference product with a single named full-time maintai
 - [`RELEASE.md`](RELEASE.md) — end-to-end release runbook (tag, build matrix, code signing, Homebrew/AUR/PPA bumps, CVE expedited path, post-release verification, dry-run procedure).
 
 ---
-Nexis is maintained by [S4 Solutions](https://s4solutions.ai/products/nexis?utm_source=github&utm_medium=referral&utm_campaign=nexis_readme). IT, operations and AI consulting for growing businesses. Our fee is tied to the results we deliver.
+Nexis is maintained by [S4 Solutions](https://s4solutions.ai/products/nexis?utm_source=github&utm_medium=referral&utm_campaign=nexis_readme), built and operated by [S4's agent workforce](https://s4solutions.ai/?utm_source=github&utm_medium=referral&utm_campaign=nexis_readme). IT, operations and AI consulting for growing businesses. Our fee is tied to the results we deliver.
