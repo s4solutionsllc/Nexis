@@ -2,6 +2,14 @@ name: Dependabot auto-merge
 
 # Patch and minor Dependabot bumps merge once every required check is green.
 # Majors take the normal pipeline. SSO-28187.
+#
+# `native` requires the merge queue. Auto-merge armed with GITHUB_TOKEN never
+# enqueues (its merge_group events start no workflow run), so the merge step
+# uses a short-lived GitHub App token instead. SSO-28212.
+#
+# The App key is a Dependabot secret, so this job must never run code the PR
+# controls. The guard step fails the job when the PR edits this file; such a
+# PR is enqueued by hand.
 on: pull_request
 
 permissions: {}
@@ -14,15 +22,39 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Refuse PRs that edit this workflow
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          files=$(gh pr diff "$PR_URL" --name-only)
+          if printf '%s\n' "$files" | grep -qx '.github/workflows/dependabot-automerge.yml'; then
+            echo "::error::PR edits dependabot-automerge.yml; enqueue by hand after review"
+            exit 1
+          fi
+          echo "guard passed: PR does not touch dependabot-automerge.yml"
+
       - name: Read update type
         id: meta
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Mint App token
+        id: app
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
+        with:
+          app-id: 4654078
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: s4solutionsllc
+          repositories: Nexis
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Enable auto-merge for patch and minor
         if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app.outputs.token }}
         run: gh pr merge --auto --squash "$PR_URL"
